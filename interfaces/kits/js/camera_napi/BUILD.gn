@@ -57,7 +57,7 @@ ohos_shared_library("camera_napi") {
     "//foundation/arkui/napi:ace_napi",
     "//foundation/graphic/graphic_2d/frameworks/surface:surface",
     "//foundation/multimedia/camera_framework/frameworks/native/camera:camera_framework",
-    "//foundation/multimedia/image_standard/interfaces/innerkits:image_native",
+    "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
   ]
   external_deps = [
     "hisysevent_native:libhisysevent",
