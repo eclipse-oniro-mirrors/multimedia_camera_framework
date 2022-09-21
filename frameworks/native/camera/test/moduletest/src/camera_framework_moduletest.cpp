@@ -2352,18 +2352,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_043, TestSize.Le
     ASSERT_NE(session_3, nullptr);
     EXPECT_EQ(g_sessionclosed, true);
 
-    intResult = session_3->BeginConfig();
-    EXPECT_EQ(intResult, 0);
-
-    intResult = session_3->AddInput(input_2);
-    EXPECT_EQ(intResult, 0);
-
-    intResult = session_3->AddOutput(previewOutput_2);
-    EXPECT_EQ(intResult, 0);
-
-    intResult = session_3->CommitConfig();
-    EXPECT_EQ(intResult, 0);
-
     session_3->Stop();
 }
 
