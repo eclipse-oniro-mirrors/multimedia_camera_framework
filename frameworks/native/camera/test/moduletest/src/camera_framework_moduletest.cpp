@@ -2320,7 +2320,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_042, TestSize.Le
  * CaseDescription: Test Preview + Metadata
  * @tc.require: SR000GVK5P SR000GVO5O
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_044, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_043, TestSize.Level0)
 {
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
