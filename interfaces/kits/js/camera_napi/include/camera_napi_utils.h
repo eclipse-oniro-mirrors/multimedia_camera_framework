@@ -408,8 +408,8 @@ public:
                 jsCameraType = CAMERA_TYPE_TRUE_DEPTH;
                 break;
             case OHOS_CAMERA_TYPE_LOGICAL:
-                MEDIA_ERR_LOG("Logical camera type is not supported with JS");
-                jsCameraType = -1;
+                MEDIA_ERR_LOG("Logical camera type is treated as unspecified");
+                jsCameraType = CAMERA_TYPE_UNSPECIFIED;
                 break;
             case OHOS_CAMERA_TYPE_UNSPECIFIED:
             default:
