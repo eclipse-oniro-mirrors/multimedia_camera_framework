@@ -125,14 +125,11 @@ public:
     explicit PermissionStatusChangeCb(const Security::AccessToken::PermStateChangeScope &scopeInfo)
         : PermStateChangeCallbackCustomize(scopeInfo) {}
     ~PermissionStatusChangeCb() {}
-    void PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result)
-    {
-        if ((result.PermStateChangeType == 0) && (curCaptureSession != nullptr)) {
-            curCaptureSession->ReleaseInner();
-        }
-    };
+    void PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result) override;
+    void SetCaptureSession(sptr<HCaptureSession> captureSession);
 
-    sptr<HCaptureSession> curCaptureSession;
+private:
+    sptr<HCaptureSession> captureSession_;
 };
 
 class StreamOperatorCallback : public IStreamOperatorCallback {

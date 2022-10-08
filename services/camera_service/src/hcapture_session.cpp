@@ -710,9 +710,9 @@ void HCaptureSession::RegisterPermissionCallback(const uint32_t callingTokenId, 
     scopeInfo.permList = {permissionName};
     scopeInfo.tokenIDs = {callingTokenId};
     callbackPtr_ = std::make_shared<PermissionStatusChangeCb>(scopeInfo);
-    callbackPtr_->curCaptureSession = this;
+    callbackPtr_->SetCaptureSession(this);
     MEDIA_DEBUG_LOG("after tokenId:%{public}d register", callingTokenId);
-    int32_t res = Security::AccessToken::RegisterPermStateChangeCallback(callbackPtr_);
+    int32_t res = Security::AccessToken::AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr_);
     if (res != CAMERA_OK) {
         MEDIA_ERR_LOG("RegisterPermStateChangeCallback failed.");
     }
@@ -726,7 +726,7 @@ void HCaptureSession::UnregisterPermissionCallback(const uint32_t callingTokenId
         MEDIA_ERR_LOG("callbackPtr_ is null.");
         return;
     }
-    int32_t res = Security::AccessToken::UnRegisterPermStateChangeCallback(callbackPtr_);
+    int32_t res = Security::AccessToken::AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr_);
     if (res != CAMERA_OK) {
         MEDIA_ERR_LOG("UnRegisterPermStateChangeCallback failed.");
     }
@@ -801,6 +801,18 @@ void HCaptureSession::dumpSessionInfo(std::string& dumpString)
         stream->DumpStreamInfo(dumpString);
     }
 }
+
+void PermissionStatusChangeCb::SetCaptureSession(sptr<HCaptureSession> captureSession)
+{
+    captureSession_ = captureSession;
+}
+
+void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result)
+{
+    if ((result.PermStateChangeType == 0) && (captureSession_ != nullptr)) {
+        captureSession_->ReleaseInner();
+    }
+};
 
 StreamOperatorCallback::StreamOperatorCallback(sptr<HCaptureSession> session)
 {
