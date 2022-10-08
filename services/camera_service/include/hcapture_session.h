@@ -125,7 +125,8 @@ public:
     explicit PermissionStatusChangeCb(const Security::AccessToken::PermStateChangeScope &scopeInfo)
         : PermStateChangeCallbackCustomize(scopeInfo) {}
     ~PermissionStatusChangeCb() {}
-    void PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result) {
+    void PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result)
+    {
         if ((result.PermStateChangeType == 0) && (curCaptureSession != nullptr)) {
             curCaptureSession->ReleaseInner();
         }
