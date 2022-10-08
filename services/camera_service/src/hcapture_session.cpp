@@ -578,7 +578,8 @@ int32_t HCaptureSession::CommitConfig()
 
     rc = HandleCaptureOuputsConfig(device);
     if (rc != CAMERA_OK) {
-        MEDIA_ERR_LOG("HCaptureSession::CommitConfig() Failed to commit config. Handle Capture Ouputs Config rc: %{public}d", rc);
+        MEDIA_ERR_LOG("HCaptureSession::CommitConfig() Failed to commit config. "
+            "Handle Capture Ouputs Config rc: %{public}d", rc);
         if (device != nullptr && device != cameraDevice_) {
             device->Close();
         }
