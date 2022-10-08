@@ -16,14 +16,15 @@
 #ifndef OHOS_CAMERA_H_CAPTURE_SESSION_H
 #define OHOS_CAMERA_H_CAPTURE_SESSION_H
 
+#include "accesstoken_kit.h"
 #include "hcamera_device.h"
 #include "hcapture_session_stub.h"
 #include "hstream_capture.h"
 #include "hstream_metadata.h"
 #include "hstream_repeat.h"
+#include "perm_state_change_callback_customize.h"
 #include "v1_0/istream_operator_callback.h"
 #include "v1_0/istream_operator.h"
-#include "permission_status_change_cb.h"
 
 #include <refbase.h>
 #include <iostream>
@@ -32,7 +33,19 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
 class StreamOperatorCallback;
-class PermissionStatusChangeCb;
+class PermissionStatusChangeCb : public PermStateChangeCallbackCustomize {
+public:
+    explicit PermissionStatusChangeCb(const PermStateChangeScope &scopeInfo)
+        : PermStateChangeCallbackCustomize(scopeInfo) {}
+    ~PermissionStatusChangeCb() {}
+    void PermStateChangeCallback(PermStateChangeInfo& result) {
+        if ((result.PermStateChangeType == 0) && (curCaptureSession != nullptr)) {
+            curCaptureSession->ReleaseInner();
+        }
+    };
+
+    sptr<HCaptureSession> curCaptureSession;
+};
 
 enum class CaptureSessionState {
     SESSION_INIT = 0,
