@@ -706,13 +706,13 @@ int32_t HCaptureSession::Release(pid_t pid)
 
 void HCaptureSession::RegisterPermissionCallback(const uint32_t callingTokenId, const std::string permissionName)
 {
-    PermStateChangeScope scopeInfo;
+    Security::AccessToken::PermStateChangeScope scopeInfo;
     scopeInfo.permList = {permissionName};
     scopeInfo.tokenIDs = {callingTokenId};
     callbackPtr_ = std::make_shared<PermissionStatusChangeCb>(scopeInfo);
     callbackPtr_->curCaptureSession = this;
     MEDIA_DEBUG_LOG("after tokenId:%{public}d register", callingTokenId);
-    int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr_);
+    int32_t res = Security::AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr_);
     if (res != CAMERA_OK) {
         MEDIA_ERR_LOG("RegisterPermStateChangeCallback failed.");
     }
@@ -726,7 +726,7 @@ void HCaptureSession::UnregisterPermissionCallback(const uint32_t callingTokenId
         MEDIA_ERR_LOG("callbackPtr_ is null.");
         return;
     }
-    int32_t res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr_);
+    int32_t res = Security::AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr_);
     if (res != CAMERA_OK) {
         MEDIA_ERR_LOG("UnRegisterPermStateChangeCallback failed.");
     }
