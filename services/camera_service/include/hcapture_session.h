@@ -33,19 +33,7 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
 class StreamOperatorCallback;
-class PermissionStatusChangeCb : public PermStateChangeCallbackCustomize {
-public:
-    explicit PermissionStatusChangeCb(const PermStateChangeScope &scopeInfo)
-        : PermStateChangeCallbackCustomize(scopeInfo) {}
-    ~PermissionStatusChangeCb() {}
-    void PermStateChangeCallback(PermStateChangeInfo& result) {
-        if ((result.PermStateChangeType == 0) && (curCaptureSession != nullptr)) {
-            curCaptureSession->ReleaseInner();
-        }
-    };
-
-    sptr<HCaptureSession> curCaptureSession;
-};
+class PermissionStatusChangeCb;
 
 enum class CaptureSessionState {
     SESSION_INIT = 0,
@@ -130,6 +118,20 @@ private:
     int32_t uid_;
     uint32_t callerToken_;
     std::shared_ptr<PermissionStatusChangeCb> callbackPtr_;
+};
+
+class PermissionStatusChangeCb : public Security::AccessToken::PermStateChangeCallbackCustomize {
+public:
+    explicit PermissionStatusChangeCb(const Security::AccessToken::PermStateChangeScope &scopeInfo)
+        : PermStateChangeCallbackCustomize(scopeInfo) {}
+    ~PermissionStatusChangeCb() {}
+    void PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result) {
+        if ((result.PermStateChangeType == 0) && (curCaptureSession != nullptr)) {
+            curCaptureSession->ReleaseInner();
+        }
+    };
+
+    sptr<HCaptureSession> curCaptureSession;
 };
 
 class StreamOperatorCallback : public IStreamOperatorCallback {
