@@ -64,7 +64,7 @@ static std::string GetClientBundle(int uid)
 }
 
 HCaptureSession::HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
-    sptr<StreamOperatorCallback> streamOperatorCb)
+    sptr<StreamOperatorCallback> streamOperatorCb, const uint32_t callingTokenId)
     : cameraHostManager_(cameraHostManager), streamOperatorCallback_(streamOperatorCb),
     sessionCallback_(nullptr)
 {
@@ -97,6 +97,8 @@ HCaptureSession::HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
     } else {
         session_[pid_] = this;
     }
+    callerToken_ = callingTokenId;
+    RegisterPermissionCallback(callingTokenId, ACCESS_CAMERA);
     MEDIA_DEBUG_LOG("HCaptureSession: camera stub services(%{public}zu).", session_.size());
 }
 
@@ -674,6 +676,11 @@ void HCaptureSession::ReleaseStreams()
     }
 }
 
+int32_t HCaptureSession::ReleaseInner()
+{
+    return Release(pid_);
+}
+
 int32_t HCaptureSession::Release(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(sessionLock_);
@@ -695,6 +702,35 @@ int32_t HCaptureSession::Release(pid_t pid)
     }
     ClearCaptureSession(pid);
     return CAMERA_OK;
+}
+
+void HCaptureSession::RegisterPermissionCallback(const uint32_t callingTokenId, const std::string permissionName)
+{
+    Security::AccessToken::PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {permissionName};
+    scopeInfo.tokenIDs = {callingTokenId};
+    callbackPtr_ = std::make_shared<PermissionStatusChangeCb>(scopeInfo);
+    callbackPtr_->SetCaptureSession(this);
+    MEDIA_DEBUG_LOG("after tokenId:%{public}d register", callingTokenId);
+    int32_t res = Security::AccessToken::AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr_);
+    if (res != CAMERA_OK) {
+        MEDIA_ERR_LOG("RegisterPermStateChangeCallback failed.");
+    }
+}
+
+// will not call unregister method because access system has deadlock
+// will improve it after access system fix deadlock.
+void HCaptureSession::UnregisterPermissionCallback(const uint32_t callingTokenId)
+{
+    if (callbackPtr_ == nullptr) {
+        MEDIA_ERR_LOG("callbackPtr_ is null.");
+        return;
+    }
+    int32_t res = Security::AccessToken::AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr_);
+    if (res != CAMERA_OK) {
+        MEDIA_ERR_LOG("UnRegisterPermStateChangeCallback failed.");
+    }
+    MEDIA_DEBUG_LOG("after tokenId:%{public}d unregister", callingTokenId);
 }
 
 void HCaptureSession::DestroyStubObjectForPid(pid_t pid)
@@ -765,6 +801,18 @@ void HCaptureSession::dumpSessionInfo(std::string& dumpString)
         stream->DumpStreamInfo(dumpString);
     }
 }
+
+void PermissionStatusChangeCb::SetCaptureSession(sptr<HCaptureSession> captureSession)
+{
+    captureSession_ = captureSession;
+}
+
+void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result)
+{
+    if ((result.PermStateChangeType == 0) && (captureSession_ != nullptr)) {
+        captureSession_->ReleaseInner();
+    }
+};
 
 StreamOperatorCallback::StreamOperatorCallback(sptr<HCaptureSession> session)
 {
