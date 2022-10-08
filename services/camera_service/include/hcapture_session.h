@@ -45,8 +45,12 @@ const std::string ACCESS_CAMERA = "ohos.permission.CAMERA";
 
 class HCaptureSession : public HCaptureSessionStub {
 public:
+<<<<<<< HEAD
     HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
         sptr<StreamOperatorCallback> streamOperatorCb, const uint32_t callingTokenId);
+=======
+    HCaptureSession(sptr<HCameraHostManager> cameraHostManager, sptr<StreamOperatorCallback> streamOperatorCb, const uint32_t callingTokenId);
+>>>>>>> 75465f1c9932ff88fa35f29c4c24481ddd1f0ebe
     ~HCaptureSession();
 
     int32_t BeginConfig() override;
