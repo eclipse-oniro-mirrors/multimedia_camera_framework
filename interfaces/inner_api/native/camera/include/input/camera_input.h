@@ -21,104 +21,74 @@
 #include <set>
 #include <vector>
 #include "camera_info.h"
+#include "camera_device.h"
 #include "capture_input.h"
 #include "icamera_device_service.h"
 #include "icamera_device_service_callback.h"
-
 namespace OHOS {
 namespace CameraStandard {
-typedef struct {
-    uint32_t height;
-    uint32_t width;
-} CameraPicSize;
-
-typedef struct {
-    float x;
-    float y;
-}Point;
-
 class ErrorCallback {
 public:
     ErrorCallback() = default;
     virtual ~ErrorCallback() = default;
-    virtual void OnError(const int32_t errorType, const int32_t errorMsg) const = 0;
-};
-
-class ExposureCallback {
-public:
-    enum ExposureState {
-        SCAN = 0,
-        CONVERGED,
-    };
-    ExposureCallback() = default;
-    virtual ~ExposureCallback() = default;
-    virtual void OnExposureState(ExposureState state) = 0;
-};
-
-class FocusCallback {
-public:
-    enum FocusState {
-        SCAN = 0,
-        FOCUSED,
-        UNFOCUSED
-    };
-    FocusCallback() = default;
-    virtual ~FocusCallback() = default;
-    virtual void OnFocusState(FocusState state) = 0;
+    virtual void OnError(const int32_t errorType, const int32_t errorMsg) const;
 };
 
 class CameraInput : public CaptureInput {
 public:
-    CameraInput(sptr<ICameraDeviceService> &deviceObj, sptr<CameraInfo> &camera);
+    [[deprecated]] CameraInput(sptr<ICameraDeviceService> &deviceObj, sptr<CameraInfo> &camera);
+    CameraInput(sptr<ICameraDeviceService> &deviceObj, sptr<CameraDevice> &camera);
     ~CameraInput() {}
+
+    /**
+    * @brief open camera.
+    */
+    void Open() override;
+
+    /**
+    * @brief close camera.
+    */
+    void Close() override;
 
     /**
     * @brief create new device control setting.
     */
-    void LockForControl();
+    [[deprecated]] void LockForControl();
 
     /**
     * @brief submit device control setting.
     *
     * @return Returns CAMERA_OK is success.
     */
-    int32_t UnlockForControl();
+    [[deprecated]] int32_t UnlockForControl();
 
     /**
     * @brief Get the supported format for photo.
     *
     * @return Returns vector of camera_format_t supported format for photo.
     */
-    std::vector<camera_format_t> GetSupportedPhotoFormats();
+    [[deprecated]] std::vector<camera_format_t> GetSupportedPhotoFormats();
 
     /**
     * @brief Get the supported format for video.
     *
     * @return Returns vector of camera_format_t supported format for video.
     */
-    std::vector<camera_format_t> GetSupportedVideoFormats();
+    [[deprecated]] std::vector<camera_format_t> GetSupportedVideoFormats();
 
     /**
     * @brief Get the supported format for preview.
     *
     * @return Returns vector of camera_format_t supported format for preview.
     */
-    std::vector<camera_format_t> GetSupportedPreviewFormats();
-
-    /**
-    * @brief Get the supported sizes for given format.
-    *
-    * @param camera_format_t for which you want to get supported sizes.
-    * @return Returns vector of CameraPicSize supported sizes.
-    */
-    std::vector<CameraPicSize> getSupportedSizes(camera_format_t format);
+    [[deprecated]] std::vector<camera_format_t> GetSupportedPreviewFormats();
 
     /**
     * @brief Get the supported exposure modes.
     *
     * @return Returns vector of camera_exposure_mode_enum_t supported exposure modes.
     */
-    std::vector<camera_exposure_mode_enum_t> GetSupportedExposureModes();
+    [[deprecated]] std::vector<camera_exposure_mode_enum_t> GetSupportedExposureModes();
 
     /**
     * @brief Query whether given exposure mode supported.
@@ -126,79 +96,49 @@ public:
     * @param camera_exposure_mode_enum_t exposure mode to query.
     * @return True is supported false otherwise.
     */
-    bool IsExposureModeSupported(camera_exposure_mode_enum_t exposureMode);
+    [[deprecated]] bool IsExposureModeSupported(camera_exposure_mode_enum_t exposureMode);
 
     /**
     * @brief Set exposure mode.
     *
     * @param camera_exposure_mode_enum_t exposure mode to be set.
     */
-    void SetExposureMode(camera_exposure_mode_enum_t exposureMode);
+    [[deprecated]] void SetExposureMode(camera_exposure_mode_enum_t exposureMode);
 
     /**
     * @brief Get the current exposure mode.
     *
     * @return Returns current exposure mode.
     */
-    camera_exposure_mode_enum_t GetExposureMode();
-
-    /**
-    * @brief Set the exposure area.
-    *
-    * @param Point which specifies the area to expose.
-    */
-    void SetExposurePoint(Point exposurePoint);
+    [[deprecated]] camera_exposure_mode_enum_t GetExposureMode();
 
     /**
     * @brief Get the supported Focus modes.
     *
     * @return Returns vector of camera_focus_mode_enum_t supported exposure modes.
     */
-    std::vector<camera_focus_mode_enum_t> GetSupportedFocusModes();
-
-    /**
-    * @brief Get centre point of exposure area.
-    *
-    * @return Returns current exposure point.
-    */
-    Point GetExposurePoint();
+    [[deprecated]] std::vector<camera_focus_mode_enum_t> GetSupportedFocusModes();
 
     /**
     * @brief Get exposure compensation range.
     *
     * @return Returns supported exposure compensation range.
     */
-    std::vector<int32_t> GetExposureBiasRange();
+    [[deprecated]] std::vector<int32_t> GetExposureBiasRange();
 
     /**
     * @brief Set exposure compensation value.
     *
     * @param exposure compensation value to be set.
     */
-    void SetExposureBias(int32_t exposureBias);
+    [[deprecated]] void SetExposureBias(int32_t exposureBias);
 
     /**
     * @brief Get exposure compensation value.
     *
     * @return Returns current exposure compensation value.
     */
-    int32_t GetExposureValue();
-
-    /**
-    * @brief Set the exposure callback.
-    * which will be called when there is exposure state change.
-    *
-    * @param The ExposureCallback pointer.
-    */
-    void SetExposureCallback(std::shared_ptr<ExposureCallback> exposureCallback);
-
-    /**
-    * @brief Set the focus callback.
-    * which will be called when there is focus state change.
-    *
-    * @param The ExposureCallback pointer.
-    */
-    void SetFocusCallback(std::shared_ptr<FocusCallback> focusCallback);
+    [[deprecated]] int32_t GetExposureValue();
 
     /**
     * @brief Query whether given focus mode supported.
@@ -206,84 +146,70 @@ public:
     * @param camera_focus_mode_enum_t focus mode to query.
     * @return True is supported false otherwise.
     */
-    bool IsFocusModeSupported(camera_focus_mode_enum_t focusMode);
+    [[deprecated]] bool IsFocusModeSupported(camera_focus_mode_enum_t focusMode);
 
     /**
     * @brief Set Focus mode.
     *
     * @param camera_focus_mode_enum_t focus mode to be set.
     */
-    void SetFocusMode(camera_focus_mode_enum_t focusMode);
+    [[deprecated]] void SetFocusMode(camera_focus_mode_enum_t focusMode);
 
     /**
     * @brief Get the current focus mode.
     *
     * @return Returns current focus mode.
     */
-    camera_focus_mode_enum_t GetFocusMode();
-
-    /**
-    * @brief Set the Focus area.
-    *
-    * @param Point which specifies the area to focus.
-    */
-    void SetFocusPoint(Point focusPoint);
-
-    /**
-    * @brief Get centre point of focus area.
-    *
-    * @return Returns current focus point.
-    */
-    Point GetFocusPoint();
+    [[deprecated]] camera_focus_mode_enum_t GetFocusMode();
 
     /**
     * @brief Get focal length.
     *
     * @return Returns focal length value.
     */
-    float GetFocalLength();
+    [[deprecated]] float GetFocalLength();
 
     /**
     * @brief Get the supported Zoom Ratio range.
     *
     * @return Returns vector<float> of supported Zoom ratio range.
     */
-    std::vector<float> GetSupportedZoomRatioRange();
+    [[deprecated]] std::vector<float> GetSupportedZoomRatioRange();
 
     /**
     * @brief Get the current Zoom Ratio.
     *
     * @return Returns current Zoom Ratio.
     */
-    float GetZoomRatio();
+    [[deprecated]] float GetZoomRatio();
 
     /**
     * @brief Set Zoom ratio.
     *
     * @param Zoom ratio to be set.
     */
-    void SetZoomRatio(float zoomRatio);
+    [[deprecated]] void SetZoomRatio(float zoomRatio);
 
     /**
     * @brief Get the supported Focus modes.
     *
     * @return Returns vector of camera_focus_mode_enum_t supported exposure modes.
     */
-    std::vector<camera_flash_mode_enum_t> GetSupportedFlashModes();
+    [[deprecated]] std::vector<camera_flash_mode_enum_t> GetSupportedFlashModes();
 
     /**
     * @brief Get the current flash mode.
     *
     * @return Returns current flash mode.
     */
-    camera_flash_mode_enum_t GetFlashMode();
+    [[deprecated]] camera_flash_mode_enum_t GetFlashMode();
 
     /**
     * @brief Set flash mode.
     *
     * @param camera_flash_mode_enum_t flash mode to be set.
     */
-    void SetFlashMode(camera_flash_mode_enum_t flashMode);
+    [[deprecated]] void SetFlashMode(camera_flash_mode_enum_t flashMode);
 
     /**
     * @brief Set the error callback.
@@ -297,6 +223,13 @@ public:
     * @brief Release camera input.
     */
     void Release() override;
+
+    /**
+    * @brief Get the camera Id.
+    *
+    * @return Returns the camera Id.
+    */
+    std::string GetCameraId();
 
     /**
     * @brief Get Camera Device.
@@ -313,12 +246,27 @@ public:
     std::shared_ptr<ErrorCallback> GetErrorCallback();
 
     /**
+    * @brief get the camera info associated with the device.
+    *
+    * @return Returns camera info.
+    */
+    sptr<CameraDevice> GetCameraDeviceInfo() override;
+
+    /**
+    * @brief This function is called when there is device setting state change
+    * and process the state callback.
+    *
+    * @param result metadata got from callback from service layer.
+    */
+    void ProcessDeviceCallbackUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
+
+    /**
     * @brief This function is called when there is focus state change
     * and process the focus state callback.
     *
     * @param result metadata got from callback from service layer.
     */
-    void ProcessAutoFocusUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
+    [[deprecated]] void ProcessAutoFocusUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
 
     /**
     * @brief This function is called when there is exposure state change
@@ -326,7 +274,7 @@ public:
     *
     * @param result metadata got from callback from service layer.
     */
-    void ProcessAutoExposureUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
+    [[deprecated]] void ProcessAutoExposureUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
 
     /**
     * @brief Get current Camera Settings.
@@ -343,40 +291,14 @@ public:
     */
     int32_t SetCameraSettings(std::string setting);
 
-    /**
-    * @brief get the camera info associated with the device.
-    *
-    * @return Returns camera info.
-    */
-    sptr<CameraInfo> GetCameraDeviceInfo() override;
-
-    friend void SetVideoStabilizingMode(sptr<CameraInput> device, CameraVideoStabilizationMode VideoStabilizationMode);
-    friend void SetRecordingFrameRateRange(sptr<CameraInput> device, int32_t minFpsVal, int32_t maxFpsVal);
-    friend void SetCaptureMetadataObjectTypes(sptr<CameraInput> device,
-                                              std::set<camera_face_detect_mode_t> metadataObjectTypes);
-
 private:
-    std::mutex mutex_;
-    std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
-    sptr<CameraInfo> cameraObj_;
+    sptr<CameraDevice> cameraObj_;
     sptr<ICameraDeviceService> deviceObj_;
     std::shared_ptr<ErrorCallback> errorCallback_;
     sptr<ICameraDeviceServiceCallback> CameraDeviceSvcCallback_;
-    std::shared_ptr<ExposureCallback> exposureCallback_;
-    std::shared_ptr<FocusCallback> focusCallback_;
-    static const std::unordered_map<camera_focus_state_t, FocusCallback::FocusState> mapFromMetadataFocus_;
-    static const std::unordered_map<camera_exposure_state_t, ExposureCallback::ExposureState> mapFromMetadataExposure_;
 
-    template<typename DataPtr, typename Vec, typename VecType>
-    static void getVector(DataPtr data, size_t count, Vec &vect, VecType dataType);
-    int32_t SetCropRegion(float zoomRatio);
-    int32_t StartFocus(camera_focus_mode_enum_t focusMode);
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
 };
-    void SetVideoStabilizingMode(sptr<CameraInput> device, CameraVideoStabilizationMode VideoStabilizationMode);
-    void SetRecordingFrameRateRange(sptr<CameraInput> device, int32_t minFpsVal, int32_t maxFpsVal);
-    void SetCaptureMetadataObjectTypes(sptr<CameraInput> device,
-                                       std::set<camera_face_detect_mode_t> metadataObjectTypes);
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_CAMERA_INPUT_H

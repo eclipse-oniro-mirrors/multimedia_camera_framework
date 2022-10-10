@@ -30,17 +30,10 @@
 
 #define __FILENAME__ (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
 
-#ifndef OHOS_DEBUG
-#define DECORATOR_HILOG(op, fmt, args...) \
-    do {                                  \
-        op(LOG_CORE, fmt, ##args);        \
-    } while (0)
-#else
 #define DECORATOR_HILOG(op, fmt, args...)                                                \
     do {                                                                                 \
-        op(LOG_CORE, "{%s()-%s:%d} " fmt, __FUNCTION__, __FILENAME__, __LINE__, ##args); \
+        op(LOG_CORE, "{%{public}s()-%{public}s:%{public}d} " fmt, __FUNCTION__, __FILENAME__, __LINE__, ##args); \
     } while (0)
-#endif
 
 #define MEDIA_DEBUG_LOG(fmt, ...) DECORATOR_HILOG(HILOG_DEBUG, fmt, ##__VA_ARGS__)
 #define MEDIA_ERR_LOG(fmt, ...) DECORATOR_HILOG(HILOG_ERROR, fmt, ##__VA_ARGS__)

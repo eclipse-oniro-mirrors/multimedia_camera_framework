@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "input/camera_info.h"
+#include "input/camera_device.h"
 #include <securec.h>
 #include "camera_metadata_info.h"
 #include "camera_log.h"
@@ -21,7 +21,7 @@ using namespace std;
 
 namespace OHOS {
 namespace CameraStandard {
-const std::unordered_map<camera_type_enum_t, CameraType> CameraInfo::metaToFwCameraType_ = {
+const std::unordered_map<camera_type_enum_t, CameraType> CameraDevice::metaToFwCameraType_ = {
     {OHOS_CAMERA_TYPE_WIDE_ANGLE, CAMERA_TYPE_WIDE_ANGLE},
     {OHOS_CAMERA_TYPE_ULTRA_WIDE, CAMERA_TYPE_ULTRA_WIDE},
     {OHOS_CAMERA_TYPE_TELTPHOTO, CAMERA_TYPE_TELEPHOTO},
@@ -30,31 +30,31 @@ const std::unordered_map<camera_type_enum_t, CameraType> CameraInfo::metaToFwCam
     {OHOS_CAMERA_TYPE_UNSPECIFIED, CAMERA_TYPE_UNSPECIFIED}
 };
 
-const std::unordered_map<camera_position_enum_t, CameraPosition> CameraInfo::metaToFwCameraPosition_ = {
+const std::unordered_map<camera_position_enum_t, CameraPosition> CameraDevice::metaToFwCameraPosition_ = {
     {OHOS_CAMERA_POSITION_FRONT, CAMERA_POSITION_FRONT},
     {OHOS_CAMERA_POSITION_BACK, CAMERA_POSITION_BACK},
     {OHOS_CAMERA_POSITION_OTHER, CAMERA_POSITION_UNSPECIFIED}
 };
 
-const std::unordered_map<camera_connection_type_t, ConnectionType> CameraInfo::metaToFwConnectionType_ = {
+const std::unordered_map<camera_connection_type_t, ConnectionType> CameraDevice::metaToFwConnectionType_ = {
     {OHOS_CAMERA_CONNECTION_TYPE_REMOTE, CAMERA_CONNECTION_REMOTE},
     {OHOS_CAMERA_CONNECTION_TYPE_USB_PLUGIN, CAMERA_CONNECTION_USB_PLUGIN},
     {OHOS_CAMERA_CONNECTION_TYPE_BUILTIN, CAMERA_CONNECTION_BUILT_IN}
 };
 
-CameraInfo::CameraInfo(std::string cameraID, std::shared_ptr<Camera::CameraMetadata> metadata)
+CameraDevice::CameraDevice(std::string cameraID, std::shared_ptr<Camera::CameraMetadata> metadata)
 {
     cameraID_ = cameraID;
     metadata_ = metadata;
     init(metadata->get());
 }
 
-CameraInfo::~CameraInfo()
+CameraDevice::~CameraDevice()
 {
     metadata_.reset();
 }
 
-void CameraInfo::init(common_metadata_header_t* metadata)
+void CameraDevice::init(common_metadata_header_t* metadata)
 {
     camera_metadata_item_t item;
 
@@ -91,42 +91,37 @@ void CameraInfo::init(common_metadata_header_t* metadata)
                    cameraPosition_, cameraType_, connectionType_, isMirrorSupported_);
 }
 
-std::string CameraInfo::GetID()
+std::string CameraDevice::GetID()
 {
     return cameraID_;
 }
 
-std::shared_ptr<Camera::CameraMetadata> CameraInfo::GetMetadata()
+std::shared_ptr<Camera::CameraMetadata> CameraDevice::GetMetadata()
 {
     return metadata_;
 }
 
-void CameraInfo::SetMetadata(std::shared_ptr<Camera::CameraMetadata> metadata)
-{
-    metadata_ = metadata;
-}
-
-CameraPosition CameraInfo::GetPosition()
+CameraPosition CameraDevice::GetPosition()
 {
     return cameraPosition_;
 }
 
-CameraType CameraInfo::GetCameraType()
+CameraType CameraDevice::GetCameraType()
 {
     return cameraType_;
 }
 
-ConnectionType CameraInfo::GetConnectionType()
+ConnectionType CameraDevice::GetConnectionType()
 {
     return connectionType_;
 }
 
-bool CameraInfo::IsMirrorSupported()
+bool CameraDevice::IsMirrorSupported()
 {
     return isMirrorSupported_;
 }
 
-std::vector<float> CameraInfo::CalculateZoomRange()
+std::vector<float> CameraDevice::CalculateZoomRange()
 {
     int32_t ret;
     int32_t minIndex = 0;
@@ -174,7 +169,7 @@ std::vector<float> CameraInfo::CalculateZoomRange()
     return {minZoom, maxZoom};
 }
 
-std::vector<float> CameraInfo::GetZoomRatioRange()
+std::vector<float> CameraDevice::GetZoomRatioRange()
 {
     int32_t minIndex = 0;
     int32_t maxIndex = 1;
@@ -209,7 +204,7 @@ std::vector<float> CameraInfo::GetZoomRatioRange()
     return zoomRatioRange_;
 }
 
-std::vector<int32_t> CameraInfo::GetExposureBiasRange()
+std::vector<int32_t> CameraDevice::GetExposureBiasRange()
 {
     int32_t minIndex = 0;
     int32_t maxIndex = 1;

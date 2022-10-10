@@ -75,29 +75,6 @@ int32_t HStreamRepeatProxy::Release()
     return error;
 }
 
-int32_t HStreamRepeatProxy::SetFps(float fps)
-{
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option;
-
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamRepeatProxy SetFps Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteFloat(fps)) {
-        MEDIA_ERR_LOG("HStreamRepeatProxy SetFps Write Fps failed");
-        return IPC_PROXY_ERR;
-    }
-
-    int error = Remote()->SendRequest(CAMERA_STREAM_REPEAT_SET_FPS, data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamRepeatProxy SetFps failed, error: %{public}d", error);
-    }
-
-    return error;
-}
-
 int32_t HStreamRepeatProxy::SetCallback(sptr<IStreamRepeatCallback> &callback)
 {
     MessageParcel data;
@@ -121,6 +98,34 @@ int32_t HStreamRepeatProxy::SetCallback(sptr<IStreamRepeatCallback> &callback)
     int error = Remote()->SendRequest(CAMERA_STREAM_REPEAT_SET_CALLBACK, data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamRepeatProxy SetCallback failed, error: %{public}d", error);
+    }
+
+    return error;
+}
+
+int32_t HStreamRepeatProxy::AddDeferredSurface(const sptr<OHOS::IBufferProducer> &producer)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    if (producer == nullptr) {
+        MEDIA_ERR_LOG("HStreamRepeatProxy AddDeferredSurface producer is null");
+        return IPC_PROXY_ERR;
+    }
+
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        MEDIA_ERR_LOG("HStreamRepeatProxy AddDeferredSurface Write interface token failed");
+        return IPC_PROXY_ERR;
+    }
+    if (!data.WriteRemoteObject(producer->AsObject())) {
+        MEDIA_ERR_LOG("HStreamRepeatProxy AddDeferredSurface write producer obj failed");
+        return IPC_PROXY_ERR;
+    }
+    int error = Remote()->SendRequest(CAMERA_ADD_DEFERRED_SURFACE, data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamRepeatProxy::AddDeferredSurface failed, error: %{public}d", error);
+        return error;
     }
 
     return error;

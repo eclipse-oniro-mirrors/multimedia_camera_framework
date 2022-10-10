@@ -13,21 +13,43 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_CAMERA_CAMERA_INFO_H
-#define OHOS_CAMERA_CAMERA_INFO_H
+#ifndef OHOS_CAMERA_CAMERA_DEVICE_H
+#define OHOS_CAMERA_CAMERA_DEVICE_H
 
 #include <iostream>
+#include <unordered_map>
 #include <vector>
 #include <refbase.h>
 #include "camera_metadata_info.h"
 
 namespace OHOS {
 namespace CameraStandard {
-class CameraInfo : public RefBase {
+enum CameraPosition {
+    CAMERA_POSITION_UNSPECIFIED = 0,
+    CAMERA_POSITION_BACK,
+    CAMERA_POSITION_FRONT
+};
+
+enum CameraType {
+    CAMERA_TYPE_UNSUPPORTED = -1,
+    CAMERA_TYPE_UNSPECIFIED = 0,
+    CAMERA_TYPE_WIDE_ANGLE,
+    CAMERA_TYPE_ULTRA_WIDE,
+    CAMERA_TYPE_TELEPHOTO,
+    CAMERA_TYPE_TRUE_DEPTH
+};
+
+enum ConnectionType {
+    CAMERA_CONNECTION_BUILT_IN = 0,
+    CAMERA_CONNECTION_USB_PLUGIN,
+    CAMERA_CONNECTION_REMOTE
+};
+
+class CameraDevice : public RefBase {
 public:
-    CameraInfo() = default;
-    CameraInfo(std::string cameraID, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
-    ~CameraInfo();
+    CameraDevice() = default;
+    CameraDevice(std::string cameraID, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
+    ~CameraDevice();
     /**
     * @brief Get the camera Id.
     *
@@ -43,32 +65,25 @@ public:
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetMetadata();
 
     /**
-    * @brief Set the metadata to current camera object.
-    *
-    * @param Metadat to set.
-    */
-    void SetMetadata(std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
-
-    /**
     * @brief Get the position of the camera.
     *
     * @return Returns the position of the camera.
     */
-    camera_position_enum_t GetPosition();
+    CameraPosition GetPosition();
 
     /**
     * @brief Get the Camera type of the camera.
     *
     * @return Returns the Camera type of the camera.
     */
-    camera_type_enum_t GetCameraType();
+    CameraType GetCameraType();
 
     /**
     * @brief Get the Camera connection type.
     *
     * @return Returns the Camera type of the camera.
     */
-    camera_connection_type_t GetConnectionType();
+    ConnectionType GetConnectionType();
 
     /**
     * @brief Check if mirror mode supported.
@@ -77,6 +92,7 @@ public:
     */
     bool IsMirrorSupported();
 
+    // or can we move definition completely in session only?
     /**
     * @brief Get the supported Zoom Ratio range.
     *
@@ -94,16 +110,19 @@ public:
 private:
     std::string cameraID_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata_;
-    camera_position_enum_t cameraPosition_ = OHOS_CAMERA_POSITION_OTHER;
-    camera_type_enum_t cameraType_ = OHOS_CAMERA_TYPE_UNSPECIFIED;
-    camera_connection_type_t connectionType_ = OHOS_CAMERA_CONNECTION_TYPE_BUILTIN;
+    CameraPosition cameraPosition_ = CAMERA_POSITION_UNSPECIFIED;
+    CameraType cameraType_ = CAMERA_TYPE_UNSPECIFIED;
+    ConnectionType connectionType_ = CAMERA_CONNECTION_BUILT_IN;
     bool isMirrorSupported_ = false;
     std::vector<float> zoomRatioRange_;
     std::vector<int32_t> exposureBiasRange_;
+    static const std::unordered_map<camera_type_enum_t, CameraType> metaToFwCameraType_;
+    static const std::unordered_map<camera_position_enum_t, CameraPosition> metaToFwCameraPosition_;
+    static const std::unordered_map<camera_connection_type_t, ConnectionType> metaToFwConnectionType_;
 
     void init(common_metadata_header_t* metadataHeader);
     std::vector<float> CalculateZoomRange();
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_CAMERA_INFO_H
+#endif // OHOS_CAMERA_CAMERA_DEVICE_H

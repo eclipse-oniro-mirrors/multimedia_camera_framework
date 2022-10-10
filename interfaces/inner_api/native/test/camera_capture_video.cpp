@@ -65,7 +65,7 @@ static OHOS::Security::AccessToken::HapPolicyParams g_infoManagerTestPolicyPrams
 
 static OHOS::Security::AccessToken::AccessTokenIDEx tokenIdEx = {0};
 
-static void PhotoModeUsage(FILE *fp)
+static void PhotoModeUsage(FILE* fp)
 {
     int32_t result = 0;
 
@@ -84,7 +84,7 @@ static void PhotoModeUsage(FILE *fp)
     }
 }
 
-static void VideoModeUsage(FILE *fp)
+static void VideoModeUsage(FILE* fp)
 {
     int32_t result = 0;
 
@@ -103,7 +103,7 @@ static void VideoModeUsage(FILE *fp)
     }
 }
 
-static void DoublePreviewModeUsage(FILE *fp)
+static void DoublePreviewModeUsage(FILE* fp)
 {
     int32_t result = 0;
 
@@ -218,7 +218,7 @@ static void DisplayMenu(std::shared_ptr<CameraCaptureVideo> testObj)
                 testObj->Release();
                 (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
                     tokenIdEx.tokenIdExStruct.tokenID);
-                MEDIA_DEBUG_LOG("Deleted the allocated Token");
+                MEDIA_INFO_LOG("Deleted the allocated Token");
                 exit(EXIT_SUCCESS);
 
             default:
@@ -243,9 +243,9 @@ CameraCaptureVideo::CameraCaptureVideo()
     photoHeight_ = PHOTO_HEIGHT;
     videoWidth_ = VIDEO_WIDTH;
     videoHeight_ = VIDEO_HEIGHT;
-    previewFormat_ = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
-    photoFormat_ = OHOS_CAMERA_FORMAT_JPEG;
-    videoFormat_ = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
+    previewFormat_ = CAMERA_FORMAT_YUV_420_SP;
+    photoFormat_ = CAMERA_FORMAT_JPEG;
+    videoFormat_ = CAMERA_FORMAT_YUV_420_SP;
     currentState_ = State::PHOTO_CAPTURE;
     fd_ = -1;
 }
@@ -395,20 +395,39 @@ int32_t CameraCaptureVideo::InitCameraManager()
 
 int32_t CameraCaptureVideo::InitCameraFormatAndResolution(sptr<CameraInput> &cameraInput)
 {
-    std::vector<camera_format_t> previewFormats = cameraInput->GetSupportedPreviewFormats();
+    std::vector<CameraFormat> previewFormats;
+    std::vector<CameraFormat> photoFormats;
+    std::vector<CameraFormat> videoFormats;
+    std::vector<Size> previewSizes;
+    std::vector<Size> photoSizes;
+    std::vector<Size> videoSizes;
+    std::vector<sptr<CameraDevice>> cameraObjList = cameraManager_->GetSupportedCameras();
+    if (cameraObjList.size() <= 0) {
+        MEDIA_ERR_LOG("No cameras are available!!!");
+    }
+    sptr<CameraOutputCapability> outputcapability =  cameraManager_->GetSupportedOutputCapability(cameraObjList[0]);
+    std::vector<Profile> previewProfiles = outputcapability->GetPreviewProfiles();
+    for (auto i : previewProfiles) {
+        previewFormats.push_back(i.GetCameraFormat());
+        previewSizes.push_back(i.GetSize());
+    }
     MEDIA_DEBUG_LOG("Supported preview formats:");
     for (auto &formatPreview : previewFormats) {
         MEDIA_DEBUG_LOG("format : %{public}d", formatPreview);
     }
-    if (std::find(previewFormats.begin(), previewFormats.end(), OHOS_CAMERA_FORMAT_YCRCB_420_SP)
+    if (std::find(previewFormats.begin(), previewFormats.end(), CAMERA_FORMAT_YUV_420_SP)
         != previewFormats.end()) {
-        previewFormat_ = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
-        MEDIA_DEBUG_LOG("OHOS_CAMERA_FORMAT_YCRCB_420_SP format is present in supported preview formats");
+        previewFormat_ = CAMERA_FORMAT_YUV_420_SP;
+        MEDIA_DEBUG_LOG("CAMERA_FORMAT_YUV_420_SP format is present in supported preview formats");
     } else if (!previewFormats.empty()) {
         previewFormat_ = previewFormats[0];
-        MEDIA_DEBUG_LOG("OHOS_CAMERA_FORMAT_YCRCB_420_SP format is not present in supported preview formats");
+        MEDIA_DEBUG_LOG("CAMERA_FORMAT_YUV_420_SP format is not present in supported preview formats");
     }
-    std::vector<camera_format_t> photoFormats = cameraInput->GetSupportedPhotoFormats();
+    std::vector<Profile> photoProfiles =  outputcapability->GetPhotoProfiles();
+    for (auto i : photoProfiles) {
+            photoFormats.push_back(i.GetCameraFormat());
+            photoSizes.push_back(i.GetSize());
+    }
     MEDIA_DEBUG_LOG("Supported photo formats:");
     for (auto &formatPhoto : photoFormats) {
         MEDIA_DEBUG_LOG("format : %{public}d", formatPhoto);
@@ -416,32 +435,31 @@ int32_t CameraCaptureVideo::InitCameraFormatAndResolution(sptr<CameraInput> &cam
     if (!photoFormats.empty()) {
         photoFormat_ = photoFormats[0];
     }
-    std::vector<camera_format_t> videoFormats = cameraInput->GetSupportedVideoFormats();
+    std::vector<VideoProfile> videoProfiles = outputcapability->GetVideoProfiles();
+    for (auto i : videoProfiles) {
+        videoFormats.push_back(i.GetCameraFormat());
+        videoSizes.push_back(i.GetSize());
+        videoframerates_ = i.GetFrameRates();
+    }
     MEDIA_DEBUG_LOG("Supported video formats:");
     for (auto &formatVideo : videoFormats) {
         MEDIA_DEBUG_LOG("format : %{public}d", formatVideo);
     }
-    if (std::find(videoFormats.begin(), videoFormats.end(), OHOS_CAMERA_FORMAT_YCRCB_420_SP) != videoFormats.end()) {
-        videoFormat_ = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
-        MEDIA_DEBUG_LOG("OHOS_CAMERA_FORMAT_YCRCB_420_SP format is present in supported video formats");
+    if (std::find(videoFormats.begin(), videoFormats.end(), CAMERA_FORMAT_YUV_420_SP) != videoFormats.end()) {
+        videoFormat_ = CAMERA_FORMAT_YUV_420_SP;
+        MEDIA_DEBUG_LOG("CAMERA_FORMAT_YUV_420_SP format is present in supported video formats");
     } else if (!videoFormats.empty()) {
         videoFormat_ = videoFormats[0];
-        MEDIA_DEBUG_LOG("OHOS_CAMERA_FORMAT_YCRCB_420_SP format is not present in supported video formats");
+        MEDIA_DEBUG_LOG("CAMERA_FORMAT_YUV_420_SP format is not present in supported video formats");
     }
-    std::vector<CameraPicSize> previewSizes
-        = cameraInput->getSupportedSizes(static_cast<camera_format_t>(previewFormat_));
     MEDIA_DEBUG_LOG("Supported sizes for preview:");
     for (auto &sizePreview : previewSizes) {
         MEDIA_DEBUG_LOG("width: %{public}d, height: %{public}d", sizePreview.width, sizePreview.height);
     }
-    std::vector<CameraPicSize> photoSizes =
-        cameraInput->getSupportedSizes(static_cast<camera_format_t>(photoFormat_));
     MEDIA_DEBUG_LOG("Supported sizes for photo:");
     for (auto &sizePhoto : photoSizes) {
         MEDIA_DEBUG_LOG("width: %{public}d, height: %{public}d", sizePhoto.width, sizePhoto.height);
     }
-    std::vector<CameraPicSize> videoSizes =
-        cameraInput->getSupportedSizes(static_cast<camera_format_t>(videoFormat_));
     MEDIA_DEBUG_LOG("Supported sizes for video:");
     for (auto &sizeVideo : videoSizes) {
         MEDIA_DEBUG_LOG("width: %{public}d, height: %{public}d", sizeVideo.width, sizeVideo.height);
@@ -485,7 +503,7 @@ int32_t CameraCaptureVideo::InitCameraInput()
     }
 
     if (cameraInput_ == nullptr) {
-        std::vector<sptr<CameraInfo>> cameraObjList = cameraManager_->GetCameras();
+        std::vector<sptr<CameraDevice>> cameraObjList = cameraManager_->GetSupportedCameras();
         if (cameraObjList.size() <= 0) {
             MEDIA_ERR_LOG("No cameras are available!!!");
             return result;
@@ -510,6 +528,7 @@ int32_t CameraCaptureVideo::InitCameraInput()
 int32_t CameraCaptureVideo::InitPreviewOutput()
 {
     int32_t result = -1;
+    Size previewsize_;
 
     if (cameraManager_ == nullptr) {
         MEDIA_ERR_LOG("cameraManager_ is null");
@@ -522,12 +541,15 @@ int32_t CameraCaptureVideo::InitPreviewOutput()
             MEDIA_ERR_LOG("previewSurface_ is null");
             return result;
         }
+        previewsize_.width = previewWidth_;
+        previewsize_.height = previewHeight_;
         previewSurface_->SetDefaultWidthAndHeight(previewWidth_, previewHeight_);
         previewSurface_->SetUserData(CameraManager::surfaceFormat, std::to_string(previewFormat_));
+        Profile previewprofile_ = Profile(static_cast<CameraFormat>(previewFormat_), previewsize_);
         previewSurfaceListener_ = new(std::nothrow) SurfaceListener(testName_, SurfaceType::PREVIEW,
                                                                     fd_, previewSurface_);
         previewSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)previewSurfaceListener_);
-        previewOutput_ = cameraManager_->CreatePreviewOutput(previewSurface_);
+        previewOutput_ = cameraManager_->CreatePreviewOutput(previewprofile_, previewSurface_);
         if (previewOutput_ == nullptr) {
             MEDIA_ERR_LOG("Failed to create previewOutput");
             return result;
@@ -542,6 +564,7 @@ int32_t CameraCaptureVideo::InitPreviewOutput()
 int32_t CameraCaptureVideo::InitSecondPreviewOutput()
 {
     int32_t result = -1;
+    Size previewsize2_;
 
     if (cameraManager_ == nullptr) {
         MEDIA_ERR_LOG("cameraManager_ is null");
@@ -554,18 +577,18 @@ int32_t CameraCaptureVideo::InitSecondPreviewOutput()
             MEDIA_ERR_LOG("secondPreviewSurface_ is null");
             return result;
         }
-        secondPreviewSurface_->SetDefaultWidthAndHeight(previewWidth_, previewHeight_);
-        secondPreviewSurface_->SetUserData(CameraManager::surfaceFormat, std::to_string(previewFormat_));
+        previewsize2_.width = previewWidth2_;
+        previewsize2_.height = previewHeight2_;
+        Profile previewprofile2_ = Profile(static_cast<CameraFormat>(previewFormat_), previewsize2_);
         secondPreviewSurfaceListener_ = new(std::nothrow) SurfaceListener(testName_,
             SurfaceType::SECOND_PREVIEW, fd_, secondPreviewSurface_);
+        secondPreviewSurface_->RegisterConsumerListener(
+            (sptr<IBufferConsumerListener> &)secondPreviewSurfaceListener_);
+        secondPreviewOutput_ = cameraManager_->CreatePreviewOutput(previewprofile2_, secondPreviewSurface_);
         if (secondPreviewSurfaceListener_ ==  nullptr) {
             MEDIA_ERR_LOG("Failed to create new SurfaceListener");
             return result;
         }
-        secondPreviewSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)secondPreviewSurfaceListener_);
-        secondPreviewOutput_ = cameraManager_->CreateCustomPreviewOutput(secondPreviewSurface_->GetProducer(),
-                                                                         previewFormat_, previewWidth2_,
-                                                                         previewHeight2_);
         if (secondPreviewOutput_ == nullptr) {
             MEDIA_ERR_LOG("Failed to create second previewOutput");
             return result;
@@ -580,7 +603,7 @@ int32_t CameraCaptureVideo::InitSecondPreviewOutput()
 int32_t CameraCaptureVideo::InitPhotoOutput()
 {
     int32_t result = -1;
-
+    Size photosize_;
     if (cameraManager_ == nullptr) {
         MEDIA_ERR_LOG("cameraManager_ is null");
         return result;
@@ -592,15 +615,16 @@ int32_t CameraCaptureVideo::InitPhotoOutput()
             MEDIA_ERR_LOG("photoSurface_ is null");
             return result;
         }
-        photoSurface_->SetDefaultWidthAndHeight(photoWidth_, photoHeight_);
-        photoSurface_->SetUserData(CameraManager::surfaceFormat, std::to_string(photoFormat_));
+        photosize_.width = photoWidth_;
+        photosize_.height = photoHeight_;
+        Profile photoprofile_ = Profile(static_cast<CameraFormat>(photoFormat_), photosize_);
         photoSurfaceListener_ = new(std::nothrow) SurfaceListener(testName_, SurfaceType::PHOTO, fd_, photoSurface_);
         if (photoSurfaceListener_ == nullptr) {
             MEDIA_ERR_LOG("Failed to create new SurfaceListener");
             return result;
         }
         photoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)photoSurfaceListener_);
-        photoOutput_ = cameraManager_->CreatePhotoOutput(photoSurface_);
+        photoOutput_ = cameraManager_->CreatePhotoOutput(photoprofile_, photoSurface_);
         if (photoOutput_ == nullptr) {
             MEDIA_ERR_LOG("Failed to create PhotoOutput");
             return result;
@@ -615,6 +639,7 @@ int32_t CameraCaptureVideo::InitPhotoOutput()
 int32_t CameraCaptureVideo::InitVideoOutput()
 {
     int32_t result = -1;
+    Size videosize_;
 
     if (cameraManager_ == nullptr) {
         MEDIA_ERR_LOG("cameraManager_ is null");
@@ -627,15 +652,17 @@ int32_t CameraCaptureVideo::InitVideoOutput()
             MEDIA_ERR_LOG("videoSurface_ is null");
             return result;
         }
-        videoSurface_->SetDefaultWidthAndHeight(videoWidth_, videoHeight_);
-        videoSurface_->SetUserData(CameraManager::surfaceFormat, std::to_string(videoFormat_));
+        videosize_.width = videoWidth_;
+        videosize_.height = videoHeight_;
+        VideoProfile videoprofile_ =
+            VideoProfile(static_cast<CameraFormat>(videoFormat_), videosize_, videoframerates_);
         videoSurfaceListener_ = new(std::nothrow) SurfaceListener(testName_, SurfaceType::VIDEO, fd_, videoSurface_);
         if (videoSurfaceListener_ == nullptr) {
             MEDIA_ERR_LOG("Failed to create new SurfaceListener");
             return result;
         }
         videoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)videoSurfaceListener_);
-        videoOutput_ = cameraManager_->CreateVideoOutput(videoSurface_);
+        videoOutput_ = cameraManager_->CreateVideoOutput(videoprofile_, videoSurface_);
         if (videoOutput_ == nullptr) {
             MEDIA_ERR_LOG("Failed to create VideoOutput");
             return result;
@@ -735,7 +762,7 @@ int32_t CameraCaptureVideo::StartPreview()
         return result;
     }
     result = captureSession_->Start();
-    MEDIA_DEBUG_LOG("Preview started, result: %{public}d", result);
+    MEDIA_DEBUG_LOG("Session started, result: %{public}d", result);
     if (CAMERA_OK != result) {
         (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
             tokenIdEx.tokenIdExStruct.tokenID);
@@ -752,4 +779,3 @@ int32_t main(int32_t argc, char **argv)
     DisplayMenu(testObj);
     return 0;
 }
-

@@ -17,6 +17,7 @@
 #define OHOS_CAMERA_CAPTURE_SESSION_H
 
 #include <iostream>
+#include <set>
 #include <vector>
 #include "input/capture_input.h"
 #include "output/capture_output.h"
@@ -25,6 +26,43 @@
 
 namespace OHOS {
 namespace CameraStandard {
+enum ExposureMode {
+    EXPOSURE_MODE_UNSUPPORTED = -1,
+    EXPOSURE_MODE_LOCKED = 0,
+    EXPOSURE_MODE_AUTO,
+    EXPOSURE_MODE_CONTINUOUS_AUTO
+};
+
+enum FlashMode {
+    FLASH_MODE_CLOSE = 0,
+    FLASH_MODE_OPEN,
+    FLASH_MODE_AUTO,
+    FLASH_MODE_ALWAYS_OPEN,
+};
+
+enum FocusMode {
+    FOCUS_MODE_MANUAL = 0,
+    FOCUS_MODE_CONTINUOUS_AUTO,
+    FOCUS_MODE_AUTO,
+    FOCUS_MODE_LOCKED,
+};
+
+enum FocusState {
+    FOCUS_STATE_SCAN = 0,
+    FOCUS_STATE_FOCUSED,
+    FOCUS_STATE_UNFOCUSED
+};
+
+enum ExposureState {
+    EXPOSURE_STATE_SCAN = 0,
+    EXPOSURE_STATE_CONVERGED
+};
+
+typedef struct {
+    float x;
+    float y;
+}Point;
+
 class SessionCallback {
 public:
     SessionCallback() = default;
@@ -35,6 +73,29 @@ public:
      * @param errorCode Indicates a {@link ErrorCode} which will give information for capture session callback error.
      */
     virtual void OnError(int32_t errorCode) = 0;
+};
+
+class ExposureCallback {
+public:
+    enum ExposureState {
+        SCAN = 0,
+        CONVERGED,
+    };
+    ExposureCallback() = default;
+    virtual ~ExposureCallback() = default;
+    virtual void OnExposureState(ExposureState state) = 0;
+};
+
+class FocusCallback {
+public:
+    enum FocusState {
+        SCAN = 0,
+        FOCUSED,
+        UNFOCUSED
+    };
+    FocusCallback() = default;
+    virtual ~FocusCallback() = default;
+    virtual void OnFocusState(FocusState state) = 0;
 };
 
 enum VideoStabilizationMode {
@@ -62,11 +123,25 @@ public:
     int32_t CommitConfig();
 
     /**
+     * @brief Determine if the given Input can be added to session.
+     *
+     * @param CaptureInput to be added to session.
+     */
+    int32_t CanAddInput(sptr<CaptureInput> &input);
+
+    /**
      * @brief Add CaptureInput for the capture session.
      *
      * @param CaptureInput to be added to session.
      */
     int32_t AddInput(sptr<CaptureInput> &input);
+
+    /**
+     * @brief Determine if the given Ouput can be added to session.
+     *
+     * @param CaptureOutput to be added to session.
+     */
+    int32_t CanAddOutput(sptr<CaptureOutput> &output);
 
     /**
      * @brief Add CaptureOutput for the capture session.
@@ -119,6 +194,18 @@ public:
     void Release();
 
     /**
+    * @brief create new device control setting.
+    */
+    void LockForControl();
+
+    /**
+    * @brief submit device control setting.
+    *
+    * @return Returns CAMERA_OK is success.
+    */
+    int32_t UnlockForControl();
+
+    /**
     * @brief Get the supported video sabilization modes.
     *
     * @return Returns vector of CameraVideoStabilizationMode supported stabilization modes.
@@ -147,12 +234,237 @@ public:
     */
     void SetVideoStabilizationMode(VideoStabilizationMode stabilizationMode);
 
+    /**
+    * @brief Get the supported exposure modes.
+    *
+    * @return Returns vector of ExposureMode supported exposure modes.
+    */
+    std::vector<ExposureMode> GetSupportedExposureModes();
+
+    /**
+    * @brief Query whether given exposure mode supported.
+    *
+    * @param ExposureMode exposure mode to query.
+    * @return True is supported false otherwise.
+    */
+    bool IsExposureModeSupported(ExposureMode exposureMode);
+
+    /**
+    * @brief Set exposure mode.
+    *
+    * @param ExposureMode exposure mode to be set.
+    */
+    void SetExposureMode(ExposureMode exposureMode);
+
+    /**
+    * @brief Get the current exposure mode.
+    *
+    * @return Returns current exposure mode.
+    */
+    ExposureMode GetExposureMode();
+
+    /**
+    * @brief Set the centre point of exposure area.
+    *
+    * @param Point which specifies the area to expose.
+    */
+    void SetMeteringPoint(Point exposurePoint);
+
+    /**
+    * @brief Get centre point of exposure area.
+    *
+    * @return Returns current exposure point.
+    */
+    Point GetMeteringPoint();
+
+    /**
+    * @brief Get exposure compensation range.
+    *
+    * @return Returns supported exposure compensation range.
+    */
+    std::vector<int32_t> GetExposureBiasRange();
+
+    /**
+    * @brief Set exposure compensation value.
+    *
+    * @param exposure compensation value to be set.
+    */
+    void SetExposureBias(int32_t exposureBias);
+
+    /**
+    * @brief Get exposure compensation value.
+    *
+    * @return Returns current exposure compensation value.
+    */
+    int32_t GetExposureValue();
+
+    /**
+    * @brief Set the exposure callback.
+    * which will be called when there is exposure state change.
+    *
+    * @param The ExposureCallback pointer.
+    */
+    void SetExposureCallback(std::shared_ptr<ExposureCallback> exposureCallback);
+
+    /**
+    * @brief This function is called when there is exposure state change
+    * and process the exposure state callback.
+    *
+    * @param result metadata got from callback from service layer.
+    */
+    void ProcessAutoExposureUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
+
+    /**
+    * @brief Get the supported Focus modes.
+    *
+    * @return Returns vector of FocusMode supported exposure modes.
+    */
+    std::vector<FocusMode> GetSupportedFocusModes();
+
+    /**
+    * @brief Query whether given focus mode supported.
+    *
+    * @param camera_focus_mode_enum_t focus mode to query.
+    * @return True is supported false otherwise.
+    */
+    bool IsFocusModeSupported(FocusMode focusMode);
+
+    /**
+    * @brief Set Focus mode.
+    *
+    * @param FocusMode focus mode to be set.
+    */
+    void SetFocusMode(FocusMode focusMode);
+
+    /**
+    * @brief Get the current focus mode.
+    *
+    * @return Returns current focus mode.
+    */
+    FocusMode GetFocusMode();
+
+    /**
+    * @brief Set the focus callback.
+    * which will be called when there is focus state change.
+    *
+    * @param The ExposureCallback pointer.
+    */
+    void SetFocusCallback(std::shared_ptr<FocusCallback> focusCallback);
+
+    /**
+    * @brief This function is called when there is focus state change
+    * and process the focus state callback.
+    *
+    * @param result metadata got from callback from service layer.
+    */
+    void ProcessAutoFocusUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
+
+    /**
+    * @brief Set the Focus area.
+    *
+    * @param Point which specifies the area to focus.
+    */
+    void SetFocusPoint(Point focusPoint);
+
+    /**
+    * @brief Get centre point of focus area.
+    *
+    * @return Returns current focus point.
+    */
+    Point GetFocusPoint();
+
+    /**
+    * @brief Get focal length.
+    *
+    * @return Returns focal length value.
+    */
+    float GetFocalLength();
+
+    /**
+    * @brief Get the supported Focus modes.
+    *
+    * @return Returns vector of camera_focus_mode_enum_t supported exposure modes.
+    */
+    std::vector<FlashMode> GetSupportedFlashModes();
+
+    /**
+    * @brief Check whether camera has flash.
+    */
+    bool HasFlash();
+
+    /**
+    * @brief Query whether given flash mode supported.
+    *
+    * @param camera_flash_mode_enum_t flash mode to query.
+    * @return True if supported false otherwise.
+    */
+    bool IsFlashModeSupported(FlashMode flashMode);
+
+    /**
+    * @brief Get the current flash mode.
+    *
+    * @return Returns current flash mode.
+    */
+    FlashMode GetFlashMode();
+
+    /**
+    * @brief Set flash mode.
+    *
+    * @param camera_flash_mode_enum_t flash mode to be set.
+    */
+    void SetFlashMode(FlashMode flashMode);
+
+    /**
+    * @brief Get the supported Zoom Ratio range.
+    *
+    * @return Returns vector<float> of supported Zoom ratio range.
+    */
+    std::vector<float> GetZoomRatioRange();
+
+    /**
+    * @brief Get the current Zoom Ratio.
+    *
+    * @return Returns current Zoom Ratio.
+    */
+    float GetZoomRatio();
+
+    /**
+    * @brief Set Zoom ratio.
+    *
+    * @param Zoom ratio to be set.
+    */
+    void SetZoomRatio(float zoomRatio);
+
+    /**
+    * @brief Set Metadata Object types.
+    *
+    * @param set of camera_face_detect_mode_t types.
+    */
+    void SetCaptureMetadataObjectTypes(std::set<camera_face_detect_mode_t> metadataObjectTypes);
+
 private:
+    std::mutex changeMetaMutex_;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
     sptr<ICaptureSession> captureSession_;
     std::shared_ptr<SessionCallback> appCallback_;
     sptr<ICaptureSessionCallback> captureSessionCallback_;
+    std::shared_ptr<ExposureCallback> exposureCallback_;
+    std::shared_ptr<FocusCallback> focusCallback_;
+    static const std::unordered_map<camera_focus_state_t, FocusCallback::FocusState> metaToFwFocusState_;
+    static const std::unordered_map<camera_exposure_state_t, ExposureCallback::ExposureState> metaToFwExposureState_;
+    static const std::unordered_map<camera_exposure_mode_enum_t, ExposureMode> metaToFwExposureMode_;
+    static const std::unordered_map<ExposureMode, camera_exposure_mode_enum_t> fwToMetaExposureMode_;
+    static const std::unordered_map<camera_focus_mode_enum_t, FocusMode> metaToFwFocusMode_;
+    static const std::unordered_map<FocusMode, camera_focus_mode_enum_t> fwToMetaFocusMode_;
+    static const std::unordered_map<camera_flash_mode_enum_t, FlashMode> metaToFwFlashMode_;
+    static const std::unordered_map<FlashMode, camera_flash_mode_enum_t> fwToMetaFlashMode_;
     static const std::unordered_map<CameraVideoStabilizationMode, VideoStabilizationMode> metaToFwVideoStabModes_;
     static const std::unordered_map<VideoStabilizationMode, CameraVideoStabilizationMode> fwToMetaVideoStabModes_;
+
+    int32_t SetCropRegion(float zoomRatio);
+    int32_t StartFocus(FocusMode focusMode);
+    int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
+    bool IsOutputAdded = false;
 };
 } // namespace CameraStandard
 } // namespace OHOS

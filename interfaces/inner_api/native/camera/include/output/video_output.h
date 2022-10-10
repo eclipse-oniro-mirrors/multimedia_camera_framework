@@ -26,10 +26,10 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class VideoCallback {
+class VideoStateCallback {
 public:
-    VideoCallback() = default;
-    virtual ~VideoCallback() = default;
+    VideoStateCallback() = default;
+    virtual ~VideoStateCallback() = default;
 
     /**
      * @brief Called when video frame is started rendering.
@@ -63,9 +63,9 @@ public:
     /**
      * @brief Set the video callback for the video output.
      *
-     * @param VideoCallback pointer to be triggered.
+     * @param VideoStateCallback pointer to be triggered.
      */
-    void SetCallback(std::shared_ptr<VideoCallback> callback);
+    void SetCallback(std::shared_ptr<VideoStateCallback> callback);
 
     /**
      * @brief Start the video capture.
@@ -90,16 +90,16 @@ public:
     /**
      * @brief Get the application callback information.
      *
-     * @return VideoCallback pointer set by application.
+     * @return VideoStateCallback pointer set by application.
      */
-    std::shared_ptr<VideoCallback> GetApplicationCallback();
+    std::shared_ptr<VideoStateCallback> GetApplicationCallback();
 
     /**
     * @brief Get the supported video frame rate range.
     *
     * @return Returns vector<int32_t> of supported exposure compensation range.
     */
-    std::vector<int32_t> GetFrameRateRange();
+    [[deprecated]] std::vector<int32_t> GetFrameRateRange();
 
     /**
      * @brief Set the Video fps range. If fixed frame rate
@@ -108,10 +108,10 @@ public:
      * @param min frame rate value of range.
      * @param max frame rate value of range.
      */
-    void SetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate);
+    [[deprecated]] void SetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate);
 
 private:
-    std::shared_ptr<VideoCallback> appCallback_;
+    std::shared_ptr<VideoStateCallback> appCallback_;
     sptr<IStreamRepeatCallback> svcCallback_;
     std::vector<int32_t> videoFramerateRange_;
 };

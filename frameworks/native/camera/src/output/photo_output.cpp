@@ -17,7 +17,7 @@
 #include <securec.h>
 #include "camera_util.h"
 #include "hstream_capture_callback_stub.h"
-#include "input/camera_info.h"
+#include "input/camera_device.h"
 #include "session/capture_session.h"
 #include "camera_log.h"
 
@@ -39,33 +39,32 @@ PhotoCaptureSetting::PhotoCaptureSetting()
 
 PhotoCaptureSetting::QualityLevel PhotoCaptureSetting::GetQuality()
 {
-    QualityLevel quality = LOW_QUALITY;
+    QualityLevel quality = QUALITY_LEVEL_LOW;
     camera_metadata_item_t item;
 
     int ret = Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_QUALITY, &item);
     if (ret != CAM_META_SUCCESS) {
-        return NORMAL_QUALITY;
+        return QUALITY_LEVEL_MEDIUM;
     }
     if (item.data.u8[0] > QUALITY_NORMAL) {
-        quality = HIGH_QUALITY;
+        quality = QUALITY_LEVEL_HIGH;
     } else if (item.data.u8[0] > QUALITY_LOW) {
-        quality = NORMAL_QUALITY;
+        quality = QUALITY_LEVEL_MEDIUM;
     }
     return quality;
 }
 
 void PhotoCaptureSetting::SetQuality(PhotoCaptureSetting::QualityLevel qualityLevel)
 {
-    MEDIA_DEBUG_LOG("PhotoCaptureSetting::SetQuality qualityLevel=%{public}d", qualityLevel);
     bool status = false;
     camera_metadata_item_t item;
     uint8_t highQuality = 100;
     uint8_t normalQuality = 90;
     uint8_t quality = 50;
 
-    if (qualityLevel == HIGH_QUALITY) {
+    if (qualityLevel == QUALITY_LEVEL_HIGH) {
         quality = highQuality;
-    } else if (qualityLevel == NORMAL_QUALITY) {
+    } else if (qualityLevel == QUALITY_LEVEL_MEDIUM) {
         quality = normalQuality;
     }
     int ret = Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_QUALITY, &item);
@@ -228,9 +227,11 @@ public:
 
 PhotoOutput::PhotoOutput(sptr<IStreamCapture> &streamCapture)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PHOTO, StreamType::CAPTURE, streamCapture)
-{}
+{
+    defaultCaptureSetting_ = nullptr;
+}
 
-void PhotoOutput::SetCallback(std::shared_ptr<PhotoCallback> callback)
+void PhotoOutput::SetCallback(std::shared_ptr<PhotoStateCallback> callback)
 {
     int32_t errorCode = CAMERA_OK;
 
@@ -253,13 +254,14 @@ void PhotoOutput::SetCallback(std::shared_ptr<PhotoCallback> callback)
     }
 }
 
-std::shared_ptr<PhotoCallback> PhotoOutput::GetApplicationCallback()
+std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
 {
     return appCallback_;
 }
 
 int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSettings)
 {
+    defaultCaptureSetting_ = photoCaptureSettings;
     return static_cast<IStreamCapture *>(GetStream().GetRefPtr())->Capture(
         photoCaptureSettings->GetCaptureMetadataSetting());
 }
@@ -291,8 +293,8 @@ bool PhotoOutput::IsMirrorSupported()
 {
     bool isMirrorEnabled = false;
     camera_metadata_item_t item;
-    sptr<CameraInfo> cameraObj_;
-    CaptureSession *captureSession = GetSession();
+    sptr<CameraDevice> cameraObj_;
+    CaptureSession* captureSession = GetSession();
     if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
         return isMirrorEnabled;
     }
@@ -304,6 +306,11 @@ bool PhotoOutput::IsMirrorSupported()
         isMirrorEnabled = ((item.data.u8[0] == 1) || (item.data.u8[0] == 0));
     }
     return isMirrorEnabled;
+}
+
+std::shared_ptr<PhotoCaptureSetting> PhotoOutput::GetDefaultCaptureSetting()
+{
+    return defaultCaptureSetting_;
 }
 } // CameraStandard
 } // OHOS

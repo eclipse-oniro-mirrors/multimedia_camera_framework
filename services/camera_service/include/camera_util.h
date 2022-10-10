@@ -54,14 +54,14 @@ extern std::map<int, std::string> g_cameraVideoStabilizationMode;
 
 int32_t HdiToServiceError(CamRetCode ret);
 
-std::string CreateMsg(const char *format, ...);
+std::string CreateMsg(const char* format, ...);
 
 int32_t AllocateCaptureId(int32_t &captureId);
 
 void ReleaseCaptureId(int32_t captureId);
 
-bool IsValidSize(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility,
-    int32_t format, int32_t width, int32_t height);
+bool IsValidSize(
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t format, int32_t width, int32_t height);
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_UTIL_H

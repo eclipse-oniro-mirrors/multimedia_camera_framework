@@ -30,11 +30,11 @@ public:
 
     int32_t Stop() override;
 
-    int32_t SetFps(float fps) override;
-
     int32_t SetCallback(sptr<IStreamRepeatCallback> &callback) override;
 
     int32_t Release() override;
+
+    int32_t AddDeferredSurface(const sptr<OHOS::IBufferProducer> &producer) override;
 
 private:
     static inline BrokerDelegator<HStreamRepeatProxy> delegator_;

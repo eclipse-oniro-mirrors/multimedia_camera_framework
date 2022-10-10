@@ -28,21 +28,9 @@ static const int32_t STREAM_ROTATE_180 = 180;
 static const int32_t STREAM_ROTATE_270 = 270;
 static const int32_t STREAM_ROTATE_360 = 360;
 
-HStreamRepeat::HStreamRepeat(sptr<OHOS::IBufferProducer> producer, int32_t format)
-    : HStreamCommon(StreamType::REPEAT, producer, format)
-{
-    isVideo_ = false;
-}
-
-HStreamRepeat::HStreamRepeat(sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height)
-    : HStreamRepeat(producer, format)
-{
-    width_ = width;
-    height_ = height;
-}
-
-HStreamRepeat::HStreamRepeat(sptr<OHOS::IBufferProducer> producer, int32_t format, bool isVideo)
-    : HStreamRepeat(producer, format)
+HStreamRepeat::HStreamRepeat(
+    sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height, bool isVideo)
+    : HStreamCommon(StreamType::REPEAT, producer, format, width, height)
 {
     isVideo_ = isVideo;
 }
@@ -131,11 +119,6 @@ int32_t HStreamRepeat::Stop()
     return ret;
 }
 
-int32_t HStreamRepeat::SetFps(float Fps)
-{
-    return CAMERA_OK;
-}
-
 int32_t HStreamRepeat::Release()
 {
     if (curCaptureID_) {
@@ -190,6 +173,16 @@ int32_t HStreamRepeat::OnFrameError(int32_t errorType)
         CAMERA_SYSEVENT_FAULT(CreateMsg("Preview OnFrameError! errorCode:%d", repeatErrorCode));
         streamRepeatCallback_->OnFrameError(repeatErrorCode);
     }
+    return CAMERA_OK;
+}
+
+int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer> &producer)
+{
+    if (producer == nullptr) {
+        MEDIA_ERR_LOG("HStreamRepeat::AddDeferredSurface producer is null");
+        return CAMERA_INVALID_ARG;
+    }
+    producer_ = producer;
     return CAMERA_OK;
 }
 

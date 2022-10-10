@@ -31,9 +31,9 @@ public:
     static const int32_t PREVIEW_DEFAULT_HEIGHT = 480;
     static const int32_t VIDEO_DEFAULT_WIDTH = 640;
     static const int32_t VIDEO_DEFAULT_HEIGHT = 360;
-    camera_format_t previewFormat_;
-    camera_format_t photoFormat_;
-    camera_format_t videoFormat_;
+    CameraFormat previewFormat_;
+    CameraFormat photoFormat_;
+    CameraFormat videoFormat_;
     int32_t previewWidth_;
     int32_t previewHeight_;
     int32_t photoWidth_;
@@ -43,10 +43,14 @@ public:
     sptr<CameraManager> manager_;
     sptr<CaptureSession> session_;
     sptr<CaptureInput> input_;
-    std::vector<sptr<CameraInfo>> cameras_;
-    std::vector<camera_format_t> previewFormats_;
-    std::vector<camera_format_t> photoFormats_;
-    std::vector<camera_format_t> videoFormats_;
+    std::vector<sptr<CameraDevice>> cameras_;
+    std::vector<CameraFormat> previewFormats_;
+    std::vector<CameraFormat> photoFormats_;
+    std::vector<CameraFormat> videoFormats_;
+    std::vector<Size> previewSizes_;
+    std::vector<Size> photoSizes_;
+    std::vector<Size> videoSizes_;
+    std::vector<int32_t> videoFrameRates_;
 
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
     static void SetUpTestCase(void);
@@ -61,16 +65,16 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown();
 
-    sptr<CaptureOutput> CreatePreviewOutput(bool customPreview, int32_t width, int32_t height);
+    sptr<CaptureOutput> CreatePreviewOutput(int32_t width, int32_t height);
     sptr<CaptureOutput> CreatePreviewOutput();
     sptr<CaptureOutput> CreatePhotoOutput(int32_t width, int32_t height);
     sptr<CaptureOutput> CreatePhotoOutput();
     sptr<CaptureOutput> CreateVideoOutput(int32_t width, int32_t height);
     sptr<CaptureOutput> CreateVideoOutput();
-    void SetCameraParameters(sptr<CameraInput> &camInput, bool video);
+    void SetCameraParameters(sptr<CaptureSession> &session, bool video);
     void TestCallbacksSession(sptr<CaptureOutput> photoOutput,
 		    sptr<CaptureOutput> videoOutput);
-    void TestCallbacks(sptr<CameraInfo> &cameraInfo, bool video);
+    void TestCallbacks(sptr<CameraDevice> &cameraInfo, bool video);
     void TestSupportedResolution(int32_t previewWidth, int32_t previewHeight, int32_t photoWidth,
                                  int32_t photoHeight, int32_t videoWidth, int32_t videoHeight);
     void TestUnSupportedResolution(int32_t previewWidth, int32_t previewHeight, int32_t photoWidth,

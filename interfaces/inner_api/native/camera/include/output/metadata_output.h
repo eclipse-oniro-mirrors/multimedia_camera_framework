@@ -136,7 +136,7 @@ public:
     void OnBufferAvailable() override;
 
 private:
-    int32_t ProcessMetadataBuffer(void *buffer, int64_t timestamp);
+    int32_t ProcessMetadataBuffer(void* buffer, int64_t timestamp);
     int32_t ProcessFaceRectangles(int64_t timestamp, const camera_metadata_item_t &metadataItem,
                                   std::vector<sptr<MetadataObject>> &metaObjects);
     sptr<MetadataOutput> metadata_;

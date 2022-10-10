@@ -23,7 +23,44 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class PhotoCallback {
+class PhotoStateCallback {
+public:
+    PhotoStateCallback() = default;
+    virtual ~PhotoStateCallback() = default;
+
+    /**
+     * @brief Called when camera capture started.
+     *
+     * @param captureID Obtain the constant capture id for the photo capture callback.
+     */
+    virtual void OnCaptureStarted(const int32_t captureID) const = 0;
+
+    /**
+     * @brief Called when camera capture ended.
+     *
+     * @param captureID Obtain the constant capture id for the photo capture callback.
+     * @param frameCount Obtain the constant number of frames for the photo capture callback.
+     */
+    virtual void OnCaptureEnded(const int32_t captureID, const int32_t frameCount) const = 0;
+
+    /**
+     * @brief Called when camera capture ended.
+     *
+     * @param captureId Obtain the constant capture id for the photo capture callback.
+     * @param timestamp Represents timestamp information for the photo capture callback
+     */
+    virtual void OnFrameShutter(const int32_t captureId, const uint64_t timestamp) const = 0;
+
+    /**
+     * @brief Called when error occured during camera capture.
+     *
+     * @param captureId Indicates the pointer in which captureId will be requested.
+     * @param errorCode Indicates a {@link ErrorCode} which will give information for photo capture callback error
+     */
+    virtual void OnCaptureError(const int32_t captureId, const int32_t errorCode) const = 0;
+};
+
+class [[deprecated]] PhotoCallback {
 public:
     PhotoCallback() = default;
     virtual ~PhotoCallback() = default;
@@ -78,9 +115,12 @@ typedef struct {
 class PhotoCaptureSetting {
 public:
     enum QualityLevel {
-        HIGH_QUALITY = 0,
-        NORMAL_QUALITY,
-        LOW_QUALITY
+        QUALITY_LEVEL_LOW = 0,
+        QUALITY_LEVEL_MEDIUM,
+        QUALITY_LEVEL_HIGH,
+        HIGH_QUALITY [[deprecated]] = 0,
+        NORMAL_QUALITY [[deprecated]],
+        LOW_QUALITY [[deprecated]]
     };
     enum RotationConfig {
         Rotation_0 = 0,
@@ -161,7 +201,14 @@ public:
      *
      * @param callback Requested for the pointer where photo callback is present.
      */
-    void SetCallback(std::shared_ptr<PhotoCallback> callback);
+    void SetCallback(std::shared_ptr<PhotoStateCallback> callback);
+
+    /**
+     * @brief Set the photo callback.
+     *
+     * @param callback Requested for the pointer where photo callback is present.
+     */
+    [[deprecated]] void SetCallback(std::shared_ptr<PhotoCallback> callback);
 
     /**
      * @brief Photo capture request using photocapturesettings.
@@ -189,9 +236,9 @@ public:
     /**
      * @brief Get the application callback information.
      *
-     * @return Returns the pointer to PhotoCallback.
+     * @return Returns the pointer to PhotoStateCallback.
      */
-    std::shared_ptr<PhotoCallback> GetApplicationCallback();
+    std::shared_ptr<PhotoStateCallback> GetApplicationCallback();
 
     /**
      * @brief To check the photo capture is mirrored or not.
@@ -200,9 +247,17 @@ public:
      */
     bool IsMirrorSupported();
 
+    /**
+     * @brief Get default photo capture setting.
+     *
+     * @return default photo capture setting.
+     */
+    std::shared_ptr<PhotoCaptureSetting> GetDefaultCaptureSetting();
+
 private:
-    std::shared_ptr<PhotoCallback> appCallback_;
+    std::shared_ptr<PhotoStateCallback> appCallback_;
     sptr<IStreamCaptureCallback> cameraSvcCallback_;
+    std::shared_ptr<PhotoCaptureSetting> defaultCaptureSetting_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -149,7 +149,8 @@ int32_t HCameraServiceProxy::CreateCaptureSession(sptr<ICaptureSession>& session
 }
 
 int32_t HCameraServiceProxy::CreatePhotoOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
-    sptr<IStreamCapture>& photoOutput)
+                                               int32_t width, int32_t height,
+                                               sptr<IStreamCapture> &photoOutput)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -173,6 +174,14 @@ int32_t HCameraServiceProxy::CreatePhotoOutput(const sptr<OHOS::IBufferProducer>
         MEDIA_ERR_LOG("HCameraServiceProxy CreatePhotoOutput Write format failed");
         return IPC_PROXY_ERR;
     }
+    if (!data.WriteInt32(width)) {
+        MEDIA_ERR_LOG("HCameraServiceProxy Write width failed");
+        return IPC_PROXY_ERR;
+    }
+    if (!data.WriteInt32(height)) {
+        MEDIA_ERR_LOG("HCameraServiceProxy Write height failed");
+        return IPC_PROXY_ERR;
+    }
 
     int error = Remote()->SendRequest(CAMERA_SERVICE_CREATE_PHOTO_OUTPUT, data, reply, option);
     if (error != ERR_NONE) {
@@ -192,14 +201,15 @@ int32_t HCameraServiceProxy::CreatePhotoOutput(const sptr<OHOS::IBufferProducer>
 }
 
 int32_t HCameraServiceProxy::CreatePreviewOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
-    sptr<IStreamRepeat>& previewOutput)
+                                                 int32_t width, int32_t height,
+                                                 sptr<IStreamRepeat>& previewOutput)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
 
-    if (producer == nullptr) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreatePreviewOutput producer is null");
+    if ((producer == nullptr) || (width == 0) || (height == 0)) {
+        MEDIA_ERR_LOG("HCameraServiceProxy CreatePreviewOutput producer is null or invalid size is set");
         return IPC_PROXY_ERR;
     }
 
@@ -211,52 +221,8 @@ int32_t HCameraServiceProxy::CreatePreviewOutput(const sptr<OHOS::IBufferProduce
         MEDIA_ERR_LOG("HCameraServiceProxy CreatePreviewOutput write producer obj failed");
         return IPC_PROXY_ERR;
     }
-
     if (!data.WriteInt32(format)) {
         MEDIA_ERR_LOG("HCameraServiceProxy CreatePreviewOutput Write format failed");
-        return IPC_PROXY_ERR;
-    }
-
-    int error = Remote()->SendRequest(CAMERA_SERVICE_CREATE_PREVIEW_OUTPUT, data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreatePreviewOutput failed, error: %{public}d", error);
-        return error;
-    }
-
-    auto remoteObject = reply.ReadRemoteObject();
-    if (remoteObject != nullptr) {
-        previewOutput = iface_cast<IStreamRepeat>(remoteObject);
-    } else {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreatePreviewOutput previewOutput is null");
-        error = IPC_PROXY_ERR;
-    }
-
-    return error;
-}
-
-int32_t HCameraServiceProxy::CreateCustomPreviewOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
-                                                       int32_t width, int32_t height,
-                                                       sptr<IStreamRepeat>& previewOutput)
-{
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option;
-
-    if ((producer == nullptr) || (width == 0) || (height == 0)) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateCustomPreviewOutput producer is null or invalid size is set");
-        return IPC_PROXY_ERR;
-    }
-
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateCustomPreviewOutput Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteRemoteObject(producer->AsObject())) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateCustomPreviewOutput write producer obj failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteInt32(format)) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateCustomPreviewOutput Write format failed");
         return IPC_PROXY_ERR;
     }
     if (!data.WriteInt32(width)) {
@@ -267,16 +233,59 @@ int32_t HCameraServiceProxy::CreateCustomPreviewOutput(const sptr<OHOS::IBufferP
         MEDIA_ERR_LOG("HCameraServiceProxy Write height failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_SERVICE_CREATE_PREVIEW_OUTPUT_CUSTOM_SIZE, data, reply, option);
+    int error = Remote()->SendRequest(CAMERA_SERVICE_CREATE_PREVIEW_OUTPUT, data, reply, option);
     if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateCustomPreviewOutput failed, error: %{public}d", error);
+        MEDIA_ERR_LOG("HCameraServiceProxy CreatePreviewOutput failed, error: %{public}d", error);
         return error;
     }
     auto remoteObject = reply.ReadRemoteObject();
     if (remoteObject != nullptr) {
         previewOutput = iface_cast<IStreamRepeat>(remoteObject);
     } else {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreateCustomPreviewOutput previewOutput is null");
+        MEDIA_ERR_LOG("HCameraServiceProxy CreatePreviewOutput previewOutput is null");
+        error = IPC_PROXY_ERR;
+    }
+    return error;
+}
+
+int32_t HCameraServiceProxy::CreateDeferredPreviewOutput(int32_t format, int32_t width, int32_t height,
+                                                         sptr<IStreamRepeat> &previewOutput)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    if ((width == 0) || (height == 0)) {
+        MEDIA_ERR_LOG("HCameraServiceProxy CreateDeferredPreviewOutput producer is null or invalid size is set");
+        return IPC_PROXY_ERR;
+    }
+
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        MEDIA_ERR_LOG("HCameraServiceProxy CreateDeferredPreviewOutput Write interface token failed");
+        return IPC_PROXY_ERR;
+    }
+    if (!data.WriteInt32(format)) {
+        MEDIA_ERR_LOG("HCameraServiceProxy CreateDeferredPreviewOutput Write format failed");
+        return IPC_PROXY_ERR;
+    }
+    if (!data.WriteInt32(width)) {
+        MEDIA_ERR_LOG("HCameraServiceProxy Write width failed");
+        return IPC_PROXY_ERR;
+    }
+    if (!data.WriteInt32(height)) {
+        MEDIA_ERR_LOG("HCameraServiceProxy Write height failed");
+        return IPC_PROXY_ERR;
+    }
+    int error = Remote()->SendRequest(CAMERA_SERVICE_CREATE_DEFERRED_PREVIEW_OUTPUT, data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy CreateDeferredPreviewOutput failed, error: %{public}d", error);
+        return error;
+    }
+    auto remoteObject = reply.ReadRemoteObject();
+    if (remoteObject != nullptr) {
+        previewOutput = iface_cast<IStreamRepeat>(remoteObject);
+    } else {
+        MEDIA_ERR_LOG("HCameraServiceProxy CreateDeferredPreviewOutput previewOutput is null");
         error = IPC_PROXY_ERR;
     }
     return error;
@@ -326,6 +335,7 @@ int32_t HCameraServiceProxy::CreateMetadataOutput(const sptr<OHOS::IBufferProduc
 }
 
 int32_t HCameraServiceProxy::CreateVideoOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
+                                               int32_t width, int32_t height,
                                                sptr<IStreamRepeat>& videoOutput)
 {
     MessageParcel data;
@@ -348,6 +358,14 @@ int32_t HCameraServiceProxy::CreateVideoOutput(const sptr<OHOS::IBufferProducer>
 
     if (!data.WriteInt32(format)) {
         MEDIA_ERR_LOG("HCameraServiceProxy CreateVideoOutput Write format failed");
+        return IPC_PROXY_ERR;
+    }
+    if (!data.WriteInt32(width)) {
+        MEDIA_ERR_LOG("HCameraServiceProxy Write width failed");
+        return IPC_PROXY_ERR;
+    }
+    if (!data.WriteInt32(height)) {
+        MEDIA_ERR_LOG("HCameraServiceProxy Write height failed");
         return IPC_PROXY_ERR;
     }
 

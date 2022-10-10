@@ -17,13 +17,26 @@
 #define OHOS_CAMERA_CAPTURE_INPUT_H
 
 #include <refbase.h>
+#include "camera_device.h"
 #include "camera_info.h"
 
 namespace OHOS {
 namespace CameraStandard {
+class CaptureSession;
 class CaptureInput : public RefBase {
 public:
-    virtual ~CaptureInput() {}
+    CaptureInput();
+    virtual ~CaptureInput() = default;
+
+    /**
+    * @brief open camera.
+    */
+    virtual void Open() = 0;
+
+    /**
+    * @brief close camera.
+    */
+    virtual void Close() = 0;
 
     /**
     * @brief Release camera input.
@@ -35,7 +48,13 @@ public:
     *
     * @return Returns camera info.
     */
-    virtual sptr<CameraInfo> GetCameraDeviceInfo() = 0;
+    virtual sptr<CameraDevice> GetCameraDeviceInfo() = 0;
+
+    CaptureSession* GetSession();
+    void SetSession(CaptureSession* captureSession);
+
+private:
+    CaptureSession* session_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -28,7 +28,8 @@ namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
 class HStreamCommon : virtual public RefBase {
 public:
-    HStreamCommon(StreamType streamType, sptr<OHOS::IBufferProducer> producer, int32_t format);
+    HStreamCommon(StreamType streamType, sptr<OHOS::IBufferProducer> producer,
+                  int32_t format, int32_t width, int32_t height);
     virtual ~HStreamCommon();
     virtual int32_t LinkInput(sptr<IStreamOperator> streamOperator,
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t streamId) = 0;

@@ -38,7 +38,8 @@ public:
     static const int32_t VIDEO_WIDTH = 640;
     static const int32_t VIDEO_HEIGHT = 360;
     static const int32_t GAP_AFTER_STOP = 1;
-    const char *testName_ = "Camera_capture_video";
+    std::vector<int32_t> videoframerates_;
+    const char* testName_ = "Camera_capture_video";
     State currentState_;
     CameraCaptureVideo();
     virtual ~CameraCaptureVideo() = default;

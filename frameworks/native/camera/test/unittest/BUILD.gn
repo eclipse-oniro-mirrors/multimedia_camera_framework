@@ -61,7 +61,8 @@ ohos_unittest("camera_framework_unittest") {
   include_dirs += [
     "//drivers/peripheral/camera/interfaces/include",
     "//drivers/peripheral/camera/interfaces/hdi_ipc",
-    "//drivers/peripheral/camera/interfaces/hdi_ipc/server",
+    "//drivers/peripheral/camera/interfaces/hdi_ipc/utils/include",
+    "//drivers/peripheral/camera/interfaces/hdi_ipc/server/include",
     "//drivers/peripheral/camera/interfaces/hdi_ipc/callback/device/include",
     "//drivers/peripheral/camera/interfaces/hdi_ipc/callback/operator/include",
     "//drivers/peripheral/camera/interfaces/hdi_ipc/callback/host/include",
