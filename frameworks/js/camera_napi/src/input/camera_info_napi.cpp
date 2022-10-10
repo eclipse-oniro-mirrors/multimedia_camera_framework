@@ -21,29 +21,29 @@ using namespace std;
 using OHOS::HiviewDFX::HiLog;
 using OHOS::HiviewDFX::HiLogLabel;
 
-thread_local napi_ref CameraInfoNapi::sConstructor_ = nullptr;
-thread_local sptr<CameraInfo> CameraInfoNapi::sCameraInfo_ = nullptr;
+thread_local napi_ref CameraDeviceNapi::sConstructor_ = nullptr;
+thread_local sptr<CameraDevice> CameraDeviceNapi::sCameraDevice_ = nullptr;
 
-CameraInfoNapi::CameraInfoNapi() : env_(nullptr), wrapper_(nullptr)
+CameraDeviceNapi::CameraDeviceNapi() : env_(nullptr), wrapper_(nullptr)
 {
 }
 
-CameraInfoNapi::~CameraInfoNapi()
+CameraDeviceNapi::~CameraDeviceNapi()
 {
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
 }
 
-void CameraInfoNapi::CameraInfoNapiDestructor(napi_env env, void *nativeObject, void *finalize_hint)
+void CameraDeviceNapi::CameraDeviceNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
-    CameraInfoNapi *cameraObj = reinterpret_cast<CameraInfoNapi*>(nativeObject);
+    CameraDeviceNapi* cameraObj = reinterpret_cast<CameraDeviceNapi*>(nativeObject);
     if (cameraObj != nullptr) {
-        cameraObj->~CameraInfoNapi();
+        cameraObj->~CameraDeviceNapi();
     }
 }
 
-napi_value CameraInfoNapi::Init(napi_env env, napi_value exports)
+napi_value CameraDeviceNapi::Init(napi_env env, napi_value exports)
 {
     napi_status status;
     napi_value ctorObj;
@@ -57,7 +57,7 @@ napi_value CameraInfoNapi::Init(napi_env env, napi_value exports)
     };
 
     status = napi_define_class(env, CAMERA_OBJECT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
-                               CameraInfoNapiConstructor, nullptr,
+                               CameraDeviceNapiConstructor, nullptr,
                                sizeof(camera_object_props) / sizeof(camera_object_props[PARAM0]),
                                camera_object_props, &ctorObj);
     if (status == napi_ok) {
@@ -74,7 +74,7 @@ napi_value CameraInfoNapi::Init(napi_env env, napi_value exports)
 }
 
 // Constructor callback
-napi_value CameraInfoNapi::CameraInfoNapiConstructor(napi_env env, napi_callback_info info)
+napi_value CameraDeviceNapi::CameraDeviceNapiConstructor(napi_env env, napi_callback_info info)
 {
     napi_status status;
     napi_value result = nullptr;
@@ -84,12 +84,12 @@ napi_value CameraInfoNapi::CameraInfoNapiConstructor(napi_env env, napi_callback
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
 
     if (status == napi_ok && thisVar != nullptr) {
-        std::unique_ptr<CameraInfoNapi> obj = std::make_unique<CameraInfoNapi>();
+        std::unique_ptr<CameraDeviceNapi> obj = std::make_unique<CameraDeviceNapi>();
         if (obj != nullptr) {
             obj->env_ = env;
-            obj->cameraInfo_ = sCameraInfo_;
+            obj->cameraDevice_ = sCameraDevice_;
             status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                               CameraInfoNapi::CameraInfoNapiDestructor, nullptr, &(obj->wrapper_));
+                               CameraDeviceNapi::CameraDeviceNapiDestructor, nullptr, &(obj->wrapper_));
             if (status == napi_ok) {
                 obj.release();
                 return thisVar;
@@ -102,7 +102,7 @@ napi_value CameraInfoNapi::CameraInfoNapiConstructor(napi_env env, napi_callback
     return result;
 }
 
-napi_value CameraInfoNapi::CreateCameraObj(napi_env env, sptr<CameraInfo> cameraInfo)
+napi_value CameraDeviceNapi::CreateCameraObj(napi_env env, sptr<CameraDevice> cameraDevice)
 {
     napi_status status;
     napi_value result = nullptr;
@@ -110,9 +110,9 @@ napi_value CameraInfoNapi::CreateCameraObj(napi_env env, sptr<CameraInfo> camera
 
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
-        sCameraInfo_ = cameraInfo;
+        sCameraDevice_ = cameraDevice;
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
-        sCameraInfo_ = nullptr;
+        sCameraDevice_ = nullptr;
         if (status == napi_ok && result != nullptr) {
             return result;
         } else {
@@ -125,12 +125,12 @@ napi_value CameraInfoNapi::CreateCameraObj(napi_env env, sptr<CameraInfo> camera
     return result;
 }
 
-napi_value CameraInfoNapi::GetCameraId(napi_env env, napi_callback_info info)
+napi_value CameraDeviceNapi::GetCameraId(napi_env env, napi_callback_info info)
 {
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
-    CameraInfoNapi* obj = nullptr;
+    CameraDeviceNapi* obj = nullptr;
     std::string cameraId = "";
     napi_value thisVar = nullptr;
 
@@ -144,7 +144,7 @@ napi_value CameraInfoNapi::GetCameraId(napi_env env, napi_callback_info info)
 
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status == napi_ok && obj != nullptr) {
-        cameraId = obj->cameraInfo_->GetID();
+        cameraId = obj->cameraDevice_->GetID();
         status = napi_create_string_utf8(env, cameraId.c_str(), NAPI_AUTO_LENGTH, &jsResult);
         if (status == napi_ok) {
             return jsResult;
@@ -156,13 +156,13 @@ napi_value CameraInfoNapi::GetCameraId(napi_env env, napi_callback_info info)
     return undefinedResult;
 }
 
-napi_value CameraInfoNapi::GetCameraPosition(napi_env env, napi_callback_info info)
+napi_value CameraDeviceNapi::GetCameraPosition(napi_env env, napi_callback_info info)
 {
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
-    CameraInfoNapi* obj = nullptr;
-    int32_t jsCameraPosition = CAMERA_POSITION_UNSPECIFIED;
+    CameraDeviceNapi* obj = nullptr;
+    CameraPosition jsCameraPosition;
     napi_value thisVar = nullptr;
 
     napi_get_undefined(env, &undefinedResult);
@@ -175,8 +175,7 @@ napi_value CameraInfoNapi::GetCameraPosition(napi_env env, napi_callback_info in
 
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status == napi_ok && obj != nullptr) {
-        camera_position_enum_t nativeCameraPosition = obj->cameraInfo_->GetPosition();
-        CameraNapiUtils::MapCameraPositionEnum(nativeCameraPosition, jsCameraPosition);
+        jsCameraPosition = obj->cameraDevice_->GetPosition();
         status = napi_create_int32(env, jsCameraPosition, &jsResult);
         if (status == napi_ok) {
             return jsResult;
@@ -188,13 +187,13 @@ napi_value CameraInfoNapi::GetCameraPosition(napi_env env, napi_callback_info in
     return undefinedResult;
 }
 
-napi_value CameraInfoNapi::GetCameraType(napi_env env, napi_callback_info info)
+napi_value CameraDeviceNapi::GetCameraType(napi_env env, napi_callback_info info)
 {
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
-    CameraInfoNapi* obj = nullptr;
-    int32_t jsCameraType = CAMERA_TYPE_UNSPECIFIED;
+    CameraDeviceNapi* obj = nullptr;
+    CameraType jsCameraType;
     napi_value thisVar = nullptr;
 
     napi_get_undefined(env, &undefinedResult);
@@ -207,9 +206,8 @@ napi_value CameraInfoNapi::GetCameraType(napi_env env, napi_callback_info info)
 
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status == napi_ok && obj != nullptr) {
-        camera_type_enum_t nativeCameraType = obj->cameraInfo_->GetCameraType();
-        CameraNapiUtils::MapCameraTypeEnum(nativeCameraType, jsCameraType);
-        if (jsCameraType == -1) {
+        jsCameraType = obj->cameraDevice_->GetCameraType();
+        if (jsCameraType == CAMERA_TYPE_UNSUPPORTED) {
             MEDIA_ERR_LOG("Camera type is not a recognized camera type in JS");
             return undefinedResult;
         }
@@ -224,13 +222,13 @@ napi_value CameraInfoNapi::GetCameraType(napi_env env, napi_callback_info info)
     return undefinedResult;
 }
 
-napi_value CameraInfoNapi::GetConnectionType(napi_env env, napi_callback_info info)
+napi_value CameraDeviceNapi::GetConnectionType(napi_env env, napi_callback_info info)
 {
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
-    CameraInfoNapi* obj = nullptr;
-    int32_t jsConnectionType = CAMERA_CONNECTION_BUILT_IN;
+    CameraDeviceNapi* obj = nullptr;
+    ConnectionType jsConnectionType;
     napi_value thisVar = nullptr;
 
     napi_get_undefined(env, &undefinedResult);
@@ -243,8 +241,8 @@ napi_value CameraInfoNapi::GetConnectionType(napi_env env, napi_callback_info in
 
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status == napi_ok && obj != nullptr) {
-        camera_connection_type_t nativeConnectionType = obj->cameraInfo_->GetConnectionType();
-        CameraNapiUtils::MapCameraConnectionTypeEnum(nativeConnectionType, jsConnectionType);
+        jsConnectionType = obj->cameraDevice_->GetConnectionType();
+
         status = napi_create_int32(env, jsConnectionType, &jsResult);
         if (status == napi_ok) {
             return jsResult;

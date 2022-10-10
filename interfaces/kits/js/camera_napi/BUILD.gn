@@ -44,8 +44,10 @@ ohos_shared_library("camera_napi") {
     "//foundation/multimedia/camera_framework/frameworks/js/camera_napi/src/input/camera_manager_callback_napi.cpp",
     "//foundation/multimedia/camera_framework/frameworks/js/camera_napi/src/input/camera_manager_napi.cpp",
     "//foundation/multimedia/camera_framework/frameworks/js/camera_napi/src/input/camera_napi.cpp",
+    "//foundation/multimedia/camera_framework/frameworks/js/camera_napi/src/input/camera_profile_napi.cpp",
     "//foundation/multimedia/camera_framework/frameworks/js/camera_napi/src/input/camera_size_napi.cpp",
     "//foundation/multimedia/camera_framework/frameworks/js/camera_napi/src/native_module_ohos_camera.cpp",
+    "//foundation/multimedia/camera_framework/frameworks/js/camera_napi/src/output/camera_output_napi.cpp",
     "//foundation/multimedia/camera_framework/frameworks/js/camera_napi/src/output/metadata_object_napi.cpp",
     "//foundation/multimedia/camera_framework/frameworks/js/camera_napi/src/output/metadata_output_napi.cpp",
     "//foundation/multimedia/camera_framework/frameworks/js/camera_napi/src/output/photo_output_napi.cpp",
@@ -57,7 +59,7 @@ ohos_shared_library("camera_napi") {
     "//foundation/arkui/napi:ace_napi",
     "//foundation/graphic/graphic_2d/frameworks/surface:surface",
     "//foundation/multimedia/camera_framework/frameworks/native/camera:camera_framework",
-    "//foundation/multimedia/image_standard/interfaces/innerkits:image_native",
+    "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
   ]
   external_deps = [
     "hisysevent_native:libhisysevent",

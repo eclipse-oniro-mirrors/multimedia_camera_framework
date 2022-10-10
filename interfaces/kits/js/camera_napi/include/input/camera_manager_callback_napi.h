@@ -42,7 +42,7 @@ public:
     explicit CameraManagerCallbackNapi(napi_env env, napi_ref callbackRef_);
     virtual ~CameraManagerCallbackNapi();
     void OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const override;
-    void OnFlashlightStatusChanged(const std::string &cameraID, const FlashlightStatus flashStatus) const override;
+    void OnFlashlightStatusChanged(const std::string &cameraID, const FlashStatus flashStatus) const override;
 
 private:
     void OnCameraStatusCallback(const CameraStatusInfo &cameraStatusInfo) const;
@@ -54,8 +54,8 @@ private:
 
 struct CameraStatusCallbackInfo {
     CameraStatusInfo info_;
-    const CameraManagerCallbackNapi *listener_;
-    CameraStatusCallbackInfo(CameraStatusInfo info, const CameraManagerCallbackNapi *listener)
+    const CameraManagerCallbackNapi* listener_;
+    CameraStatusCallbackInfo(CameraStatusInfo info, const CameraManagerCallbackNapi* listener)
         : info_(info), listener_(listener) {}
 };
 } // namespace CameraStandard

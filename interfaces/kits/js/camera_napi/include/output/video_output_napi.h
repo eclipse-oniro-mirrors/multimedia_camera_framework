@@ -42,18 +42,7 @@ namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_VIDEO_OUTPUT_NAPI_CLASS_NAME[] = "VideoOutput";
 
-class SurfaceListener : public IBufferConsumerListener {
-public:
-    void OnBufferAvailable() override;
-    int32_t SaveData(const char *buffer, int32_t size);
-    void SetConsumerSurface(sptr<Surface> captureSurface);
-
-private:
-    sptr<Surface> captureSurface_;
-    std::string photoPath;
-};
-
-class VideoCallbackListener : public VideoCallback {
+class VideoCallbackListener : public VideoStateCallback  {
 public:
     explicit VideoCallbackListener(napi_env env);
     ~VideoCallbackListener() = default;
@@ -76,19 +65,19 @@ private:
 struct VideoOutputCallbackInfo {
     std::string eventName_;
     int32_t value_;
-    const VideoCallbackListener *listener_;
-    VideoOutputCallbackInfo(std::string eventName, int32_t value, const VideoCallbackListener *listener)
+    const VideoCallbackListener* listener_;
+    VideoOutputCallbackInfo(std::string eventName, int32_t value, const VideoCallbackListener* listener)
         : eventName_(eventName), value_(value), listener_(listener) {}
 };
 
 class VideoOutputNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
-    static napi_value CreateVideoOutput(napi_env env, uint64_t surfaceId);
+    static napi_value CreateVideoOutput(napi_env env, VideoProfile &profile, std::string surfaceId);
     static bool IsVideoOutput(napi_env env, napi_value obj);
     VideoOutputNapi();
     ~VideoOutputNapi();
-    sptr<CaptureOutput> GetVideoOutput();
+    sptr<VideoOutput> GetVideoOutput();
 
 private:
     static void VideoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
@@ -101,30 +90,20 @@ private:
     static napi_value Release(napi_env env, napi_callback_info info);
     static napi_value On(napi_env env, napi_callback_info info);
 
-    static thread_local uint64_t sSurfaceId_;
     static thread_local napi_ref sConstructor_;
-    static thread_local sptr<CaptureOutput> sVideoOutput_;
-    static thread_local sptr<SurfaceListener> listener;
+    static thread_local sptr<VideoOutput> sVideoOutput_;
 
     napi_env env_;
     napi_ref wrapper_;
-    uint64_t surfaceId_;
-    sptr<CaptureOutput> videoOutput_;
+    sptr<VideoOutput> videoOutput_;
     std::shared_ptr<VideoCallbackListener> videoCallback_;
     static thread_local uint32_t videoOutputTaskId;
 };
 
-struct VideoOutputAsyncContext {
-    napi_env env;
-    napi_async_work work;
-    napi_deferred deferred;
-    napi_ref callbackRef;
+struct VideoOutputAsyncContext : public AsyncContext {
     VideoOutputNapi* objectInfo;
-    int32_t status;
     std::string errorMsg;
     bool bRetBool;
-    std::string funcName;
-    int32_t taskId;
     std::vector<int32_t> vecFrameRateRangeList;
     int32_t minFrameRate;
     int32_t maxFrameRate;

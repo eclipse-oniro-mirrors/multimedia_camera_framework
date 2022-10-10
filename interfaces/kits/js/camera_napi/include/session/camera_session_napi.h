@@ -24,7 +24,7 @@
 #include "camera_napi_utils.h"
 
 #include "input/camera_manager.h"
-#include "input/camera_info.h"
+#include "input/camera_device.h"
 #include "session/capture_session.h"
 
 #include "input/camera_input_napi.h"
@@ -47,6 +47,64 @@ namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_SESSION_NAPI_CLASS_NAME[] = "CaptureSession";
 
+enum SessionAsyncCallbackModes {
+    EXPOSURE_VALUE_ASYNC_CALLBACK = 0,
+    ZOOM_RATIO_ASYNC_CALLBACK,
+    EXPOSURE_POINT_ASYNC_CALLBACK,
+    FOCUS_POINT_ASYNC_CALLBACK,
+    FLASH_MODE_ASYNC_CALLBACK,
+    EXPOSURE_MODE_ASYNC_CALLBACK,
+    FOCUS_MODE_ASYNC_CALLBACK,
+    FOCAL_LENGTH_ASYNC_CALLBACK,
+    EXPOSURE_BIAS_RANGE_ASYNCALLBACK,
+    BRETBOOL_TRUE,
+    BRETBOOL_FLASE,
+    SESSION_START_ASYNC_CALLBACK,
+    SESSION_STOP_ASYNC_CALLBACK,
+};
+
+class ExposureCallbackListener : public ExposureCallback {
+public:
+    ExposureCallbackListener(napi_env env, napi_ref ref) : env_(env), callbackRef_(ref) {}
+    ~ExposureCallbackListener() = default;
+    void OnExposureState(const ExposureState state) override;
+
+private:
+    void OnExposureStateCallback(ExposureState state) const;
+    void OnExposureStateCallbackAsync(ExposureState state) const;
+
+    napi_env env_;
+    napi_ref callbackRef_ = nullptr;
+};
+
+struct ExposureCallbackInfo {
+    ExposureCallback::ExposureState state_;
+    const ExposureCallbackListener* listener_;
+    ExposureCallbackInfo(ExposureCallback::ExposureState state, const ExposureCallbackListener* listener)
+        : state_(state), listener_(listener) {}
+};
+
+class FocusCallbackListener : public FocusCallback {
+public:
+    FocusCallbackListener(napi_env env, napi_ref ref) : env_(env), callbackRef_(ref) {}
+    ~FocusCallbackListener() = default;
+    void OnFocusState(FocusState state) override;
+
+private:
+    void OnFocusStateCallback(FocusState state) const;
+    void OnFocusStateCallbackAsync(FocusState state) const;
+
+    napi_env env_;
+    napi_ref callbackRef_ = nullptr;
+};
+
+struct FocusCallbackInfo {
+    FocusCallback::FocusState state_;
+    const FocusCallbackListener* listener_;
+    FocusCallbackInfo(FocusCallback::FocusState state, const FocusCallbackListener* listener)
+        : state_(state), listener_(listener) {}
+};
+
 class SessionCallbackListener : public SessionCallback {
 public:
     SessionCallbackListener(napi_env env, napi_ref ref) : env_(env), callbackRef_(ref) {}
@@ -63,8 +121,8 @@ private:
 
 struct SessionCallbackInfo {
     int32_t errorCode_;
-    const SessionCallbackListener *listener_;
-    SessionCallbackInfo(int32_t errorCode, const SessionCallbackListener *listener)
+    const SessionCallbackListener* listener_;
+    SessionCallbackInfo(int32_t errorCode, const SessionCallbackListener* listener)
         : errorCode_(errorCode), listener_(listener) {}
 };
 
@@ -75,17 +133,40 @@ public:
     CameraSessionNapi();
     ~CameraSessionNapi();
 
-private:
     static void CameraSessionNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value CameraSessionNapiConstructor(napi_env env, napi_callback_info info);
+
+    static napi_value HasFlash(napi_env env, napi_callback_info info);
+    static napi_value IsFlashModeSupported(napi_env env, napi_callback_info info);
+    static napi_value GetFlashMode(napi_env env, napi_callback_info info);
+    static napi_value SetFlashMode(napi_env env, napi_callback_info info);
+    static napi_value IsExposureModeSupported(napi_env env, napi_callback_info info);
+    static napi_value GetExposureMode(napi_env env, napi_callback_info info);
+    static napi_value SetExposureMode(napi_env env, napi_callback_info info);
+    static napi_value SetMeteringPoint(napi_env env, napi_callback_info info);
+    static napi_value GetMeteringPoint(napi_env env, napi_callback_info info);
+    static napi_value GetExposureBiasRange(napi_env env, napi_callback_info info);
+    static napi_value SetExposureBias(napi_env env, napi_callback_info info);
+    static napi_value GetExposureValue(napi_env env, napi_callback_info info);
+    static napi_value IsFocusModeSupported(napi_env env, napi_callback_info info);
+    static napi_value GetFocusMode(napi_env env, napi_callback_info info);
+    static napi_value SetFocusMode(napi_env env, napi_callback_info info);
+    static napi_value SetFocusPoint(napi_env env, napi_callback_info info);
+    static napi_value GetFocusPoint(napi_env env, napi_callback_info info);
+    static napi_value GetFocalLength(napi_env env, napi_callback_info info);
+    static napi_value GetZoomRatioRange(napi_env env, napi_callback_info info);
+    static napi_value GetZoomRatio(napi_env env, napi_callback_info info);
+    static napi_value SetZoomRatio(napi_env env, napi_callback_info info);
 
     static napi_value BeginConfig(napi_env env, napi_callback_info info);
     static napi_value CommitConfig(napi_env env, napi_callback_info info);
 
     static napi_value AddInput(napi_env env, napi_callback_info info);
+    static napi_value CanAddInput(napi_env env, napi_callback_info info);
     static napi_value RemoveInput(napi_env env, napi_callback_info info);
 
     static napi_value AddOutput(napi_env env, napi_callback_info info);
+    static napi_value CanAddOutput(napi_env env, napi_callback_info info);
     static napi_value RemoveOutput(napi_env env, napi_callback_info info);
 
     static napi_value Start(napi_env env, napi_callback_info info);
@@ -96,6 +177,9 @@ private:
     static napi_value SetVideoStabilizationMode(napi_env env, napi_callback_info info);
     static napi_value On(napi_env env, napi_callback_info info);
 
+    static napi_value LockForControl(napi_env env, napi_callback_info info);
+    static napi_value UnlockForControl(napi_env env, napi_callback_info info);
+
     napi_env env_;
     napi_ref wrapper_;
     sptr<CaptureSession> cameraSession_;
@@ -105,20 +189,27 @@ private:
     static thread_local uint32_t cameraSessionTaskId;
 };
 
-struct CameraSessionAsyncContext {
-    napi_env env;
-    napi_async_work work;
-    napi_deferred deferred;
-    napi_ref callbackRef;
+struct CameraSessionAsyncContext : public AsyncContext {
     napi_value object;
     CameraSessionNapi* objectInfo;
     sptr<CaptureInput> cameraInput;
     sptr<CaptureOutput> cameraOutput;
-    bool status;
+
+    FlashMode flashMode;
+    ExposureMode exposureMode;
+    FocusMode focusMode;
+    Point exposurePoint;
+    Point focusPoint;
+    int32_t exposureValue;
+    float focalLength;
+    float zoomRatio;
+
+    std::vector<float> vecZoomRatioList;
+    std::vector<int32_t> vecExposureBiasList;
+
+    SessionAsyncCallbackModes modeForAsync;
     std::string errorMsg;
     bool bRetBool;
-    std::string funcName;
-    int32_t taskId;
     std::string enumType;
     VideoStabilizationMode videoStabilizationMode;
     bool isSupported;

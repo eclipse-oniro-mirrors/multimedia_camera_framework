@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-
 #include "input/camera_size_napi.h"
 
 namespace OHOS {
@@ -23,11 +22,10 @@ using OHOS::HiviewDFX::HiLog;
 using OHOS::HiviewDFX::HiLogLabel;
 
 thread_local napi_ref CameraSizeNapi::sConstructor_ = nullptr;
-thread_local CameraPicSize *CameraSizeNapi::sCameraPicSize_ = nullptr;
+thread_local Size* CameraSizeNapi::sCameraPicSize_ = nullptr;
 
 CameraSizeNapi::CameraSizeNapi() : env_(nullptr), wrapper_(nullptr)
 {
-    cameraPicSize_ = {0};
 }
 
 CameraSizeNapi::~CameraSizeNapi()
@@ -37,9 +35,9 @@ CameraSizeNapi::~CameraSizeNapi()
     }
 }
 
-void CameraSizeNapi::CameraSizeNapiDestructor(napi_env env, void *nativeObject, void *finalize_hint)
+void CameraSizeNapi::CameraSizeNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
-    CameraSizeNapi *cameraSizeNapi = reinterpret_cast<CameraSizeNapi*>(nativeObject);
+    CameraSizeNapi* cameraSizeNapi = reinterpret_cast<CameraSizeNapi*>(nativeObject);
     if (cameraSizeNapi != nullptr) {
         cameraSizeNapi->~CameraSizeNapi();
     }
@@ -87,7 +85,10 @@ napi_value CameraSizeNapi::CameraSizeNapiConstructor(napi_env env, napi_callback
         std::unique_ptr<CameraSizeNapi> obj = std::make_unique<CameraSizeNapi>();
         if (obj != nullptr) {
             obj->env_ = env;
-            obj->cameraPicSize_ = *sCameraPicSize_;
+            obj->cameraPicSize_= sCameraPicSize_;
+            MEDIA_INFO_LOG("CameraSizeNapiConstructor "
+                "size.width = %{public}d, size.height = %{public}d, obj->cameraPicSize_ = %{public}p",
+                obj->cameraPicSize_->width, obj->cameraPicSize_->height, obj->cameraPicSize_);
             status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
                                CameraSizeNapi::CameraSizeNapiDestructor, nullptr, &(obj->wrapper_));
             if (status == napi_ok) {
@@ -102,7 +103,7 @@ napi_value CameraSizeNapi::CameraSizeNapiConstructor(napi_env env, napi_callback
     return result;
 }
 
-napi_value CameraSizeNapi::CreateCameraSize(napi_env env, CameraPicSize &cameraPicSize)
+napi_value CameraSizeNapi::CreateCameraSize(napi_env env, Size &cameraPicSize)
 {
     napi_status status;
     napi_value result = nullptr;
@@ -110,7 +111,14 @@ napi_value CameraSizeNapi::CreateCameraSize(napi_env env, CameraPicSize &cameraP
 
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
-        sCameraPicSize_ = &cameraPicSize;
+        std::unique_ptr<Size> sizePtr = std::make_unique<Size>();
+        sizePtr->width = cameraPicSize.width;
+        sizePtr->height = cameraPicSize.height;
+        MEDIA_INFO_LOG("CreateCameraSize cameraPicSize size.width = %{public}d, size.height = %{public}d",
+            sizePtr->width, sizePtr->height);
+        sCameraPicSize_ = reinterpret_cast<Size*>(sizePtr.get());
+        MEDIA_INFO_LOG("CreateCameraSize sCameraPicSize_ size.width = %{public}d, size.height = %{public}d",
+            sCameraPicSize_->width, sCameraPicSize_->height);
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         if (status == napi_ok && result != nullptr) {
             return result;
@@ -142,7 +150,10 @@ napi_value CameraSizeNapi::GetCameraSizeWidth(napi_env env, napi_callback_info i
 
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
-        cameraSizeWidth = obj->cameraPicSize_.width;
+        cameraSizeWidth = obj->cameraPicSize_->width;
+        MEDIA_INFO_LOG("CreateCameraSize GetCameraSizeWidth "
+            "size.width = %{public}d, size.height = %{public}d, obj->cameraPicSize_ = %{public}p",
+            obj->cameraPicSize_->width, obj->cameraPicSize_->height, obj->cameraPicSize_);
         status = napi_create_uint32(env, cameraSizeWidth, &jsResult);
         if (status == napi_ok) {
             return jsResult;
@@ -173,7 +184,9 @@ napi_value CameraSizeNapi::GetCameraSizeHeight(napi_env env, napi_callback_info 
 
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
-        cameraSizeHeight = obj->cameraPicSize_.height;
+        cameraSizeHeight = obj->cameraPicSize_->height;
+        MEDIA_INFO_LOG("CreateCameraSize GetCameraSizeWidth size.width = %{public}d, size.height = %{public}d",
+            obj->cameraPicSize_->width, obj->cameraPicSize_->height);
         status = napi_create_uint32(env, cameraSizeHeight, &jsResult);
         if (status == napi_ok) {
             return jsResult;

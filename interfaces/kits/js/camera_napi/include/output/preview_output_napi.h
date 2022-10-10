@@ -16,17 +16,6 @@
 #ifndef PREVIEW_OUTPUT_NAPI_H_
 #define PREVIEW_OUTPUT_NAPI_H_
 
-#include <securec.h>
-
-#include "camera_log.h"
-#include "napi/native_api.h"
-#include "napi/native_node_api.h"
-#include "output/preview_output.h"
-#include "input/camera_manager.h"
-
-#include "hilog/log.h"
-#include "camera_napi_utils.h"
-
 #include <cinttypes>
 #include <fstream>
 #include <iostream>
@@ -34,18 +23,29 @@
 #include <vector>
 
 #include <fcntl.h>
+#include <securec.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
+
+#include "camera_log.h"
+#include "camera_napi_utils.h"
+#include "camera_output_napi.h"
 #include "image_receiver.h"
 #include "surface_utils.h"
 
+#include "napi/native_api.h"
+#include "napi/native_node_api.h"
+#include "input/camera_manager.h"
+#include "output/camera_output_capability.h"
+#include "output/preview_output.h"
+#include "hilog/log.h"
 
 namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_PREVIEW_OUTPUT_NAPI_CLASS_NAME[] = "PreviewOutput";
 
-class PreviewOutputCallback : public PreviewCallback {
+class PreviewOutputCallback : public PreviewStateCallback {
 public:
     explicit PreviewOutputCallback(napi_env env);
     ~PreviewOutputCallback() = default;
@@ -68,50 +68,43 @@ private:
 struct PreviewOutputCallbackInfo {
     std::string eventName_;
     int32_t value_;
-    const PreviewOutputCallback *listener_;
-    PreviewOutputCallbackInfo(std::string eventName, int32_t value, const PreviewOutputCallback *listener)
+    const PreviewOutputCallback* listener_;
+    PreviewOutputCallbackInfo(std::string eventName, int32_t value, const PreviewOutputCallback* listener)
         : eventName_(eventName), value_(value), listener_(listener) {}
 };
 
-class PreviewOutputNapi {
+class PreviewOutputNapi : public CameraOutputNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
-    static napi_value CreatePreviewOutput(napi_env env, uint64_t surfaceId);
+    static napi_value CreatePreviewOutput(napi_env env, Profile &profile, std::string surfaceId);
     static bool IsPreviewOutput(napi_env env, napi_value obj);
+    static napi_value AddDeferredSurface(napi_env env, napi_callback_info info);
+    static napi_value Start(napi_env env, napi_callback_info info);
+    static napi_value Stop(napi_env env, napi_callback_info info);
+    static napi_value Release(napi_env env, napi_callback_info info);
+    static napi_value On(napi_env env, napi_callback_info info);
+    sptr<PreviewOutput> GetPreviewOutput();
+
     PreviewOutputNapi();
     ~PreviewOutputNapi();
-    sptr<CaptureOutput> GetPreviewOutput();
-
 private:
     static void PreviewOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value PreviewOutputNapiConstructor(napi_env env, napi_callback_info info);
 
-    static napi_value Release(napi_env env, napi_callback_info info);
-    static napi_value JSonFunc(napi_env env, napi_callback_info info);
-
     napi_env env_;
     napi_ref wrapper_;
-    uint64_t surfaceId_;
-    sptr<CaptureOutput> previewOutput_;
+    sptr<PreviewOutput> previewOutput_;
 
     static thread_local napi_ref sConstructor_;
-    static thread_local uint64_t sSurfaceId_;
-    static thread_local sptr<CaptureOutput> sPreviewOutput_;
+    static thread_local sptr<PreviewOutput> sPreviewOutput_;
     std::shared_ptr<PreviewOutputCallback> previewCallback_;
     static thread_local uint32_t previewOutputTaskId;
 };
 
-struct PreviewOutputAsyncContext {
-    napi_env env;
-    napi_async_work work;
-    napi_deferred deferred;
-    napi_ref callbackRef;
+struct PreviewOutputAsyncContext : public AsyncContext {
     PreviewOutputNapi* objectInfo;
-    bool status;
     std::string errorMsg;
     bool bRetBool;
-    std::string funcName;
-    int32_t taskId;
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -75,13 +75,8 @@ private:
     napi_env env_;
 };
 
-struct MetadataObjectAsyncContext {
-    napi_env env;
-    napi_async_work work;
-    napi_deferred deferred;
-    napi_ref callbackRef;
+struct MetadataObjectAsyncContext : public AsyncContext {
     MetadataObjectNapi* objectInfo;
-    int32_t status;
     std::string errorMsg;
     MetadataObjectType metadataObjType;
     double metaTimestamp;

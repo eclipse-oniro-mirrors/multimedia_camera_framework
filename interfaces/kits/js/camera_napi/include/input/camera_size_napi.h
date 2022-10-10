@@ -41,25 +41,24 @@ static const char CAMERA_SIZE_NAPI_CLASS_NAME[] = "Size";
 class CameraSizeNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
-    static napi_value CreateCameraSize(napi_env env, CameraPicSize &cameraPicSize);
+    static napi_value CreateCameraSize(napi_env env, Size &cameraPicSize);
+
+    static napi_value GetCameraSizeWidth(napi_env env, napi_callback_info info);
+    static napi_value GetCameraSizeHeight(napi_env env, napi_callback_info info);
 
     CameraSizeNapi();
     ~CameraSizeNapi();
-
-    static thread_local CameraPicSize *sCameraPicSize_;
+    Size* cameraPicSize_;
 
 private:
     static void CameraSizeNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value CameraSizeNapiConstructor(napi_env env, napi_callback_info info);
 
-    static napi_value GetCameraSizeWidth(napi_env env, napi_callback_info info);
-    static napi_value GetCameraSizeHeight(napi_env env, napi_callback_info info);
-
     napi_env env_;
     napi_ref wrapper_;
-    CameraPicSize cameraPicSize_;
 
     static thread_local napi_ref sConstructor_;
+    static thread_local Size* sCameraPicSize_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

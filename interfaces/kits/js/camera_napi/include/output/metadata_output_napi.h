@@ -59,9 +59,9 @@ private:
 
 struct  MetadataOutputCallbackInfo {
     const std::vector<sptr<MetadataObject>> info_;
-    const MetadataOutputCallback *listener_;
+    const MetadataOutputCallback* listener_;
     MetadataOutputCallbackInfo(std::vector<sptr<MetadataObject>> metadataObjList,
-        const MetadataOutputCallback *listener)
+        const MetadataOutputCallback* listener)
         : info_(metadataObjList), listener_(listener) {}
 };
 
@@ -93,15 +93,10 @@ private:
     std::shared_ptr<MetadataOutputCallback> metadataCallback_ = nullptr;
 };
 
-struct MetadataOutputAsyncContext {
-    napi_env env;
-    napi_async_work work;
-    napi_deferred deferred;
-    napi_ref callbackRef;
+struct MetadataOutputAsyncContext : public AsyncContext {
     MetadataOutputNapi* objectInfo;
     bool bRetBool;
     bool isSupported = false;
-    int32_t status;
     std::string errorMsg;
     std::vector<MetadataObjectType> SupportedMetadataObjectTypes;
     std::vector<MetadataObjectType> setSupportedMetadataObjectTypes;

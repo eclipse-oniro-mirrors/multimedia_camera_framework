@@ -35,13 +35,13 @@ MetadataOutputCallback::MetadataOutputCallback(napi_env env) : env_(env) {}
 void MetadataOutputCallback::OnMetadataObjectsAvailable(const std::vector<sptr<MetadataObject>> metadataObjList) const
 {
     MEDIA_INFO_LOG("MetadataOutputCallback::OnMetadataObjectsAvailable");
-    uv_loop_s *loop = nullptr;
+    uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
     if (!loop) {
         MEDIA_ERR_LOG("MetadataOutputCallback:OnMetadataObjectsAvailable() failed to get event loop");
         return;
     }
-    uv_work_t *work = new(std::nothrow) uv_work_t;
+    uv_work_t* work = new(std::nothrow) uv_work_t;
     if (!work) {
         MEDIA_ERR_LOG("MetadataOutputCallback:OnMetadataObjectsAvailable() failed to allocate work");
         return;
@@ -49,8 +49,8 @@ void MetadataOutputCallback::OnMetadataObjectsAvailable(const std::vector<sptr<M
     std::unique_ptr<MetadataOutputCallbackInfo> callbackInfo =
         std::make_unique<MetadataOutputCallbackInfo>(metadataObjList, this);
     work->data = reinterpret_cast<void *>(callbackInfo.get());
-    int ret = uv_queue_work(loop, work, [] (uv_work_t *work) {}, [] (uv_work_t *work, int status) {
-        MetadataOutputCallbackInfo *callbackInfo = reinterpret_cast<MetadataOutputCallbackInfo *>(work->data);
+    int ret = uv_queue_work(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+        MetadataOutputCallbackInfo* callbackInfo = reinterpret_cast<MetadataOutputCallbackInfo *>(work->data);
         if (callbackInfo) {
             callbackInfo->listener_->OnMetadataObjectsAvailableCallback(callbackInfo->info_);
             delete callbackInfo;
@@ -138,9 +138,9 @@ MetadataOutputNapi::~MetadataOutputNapi()
     }
 }
 
-void MetadataOutputNapi::MetadataOutputNapiDestructor(napi_env env, void *nativeObject, void *finalize_hint)
+void MetadataOutputNapi::MetadataOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
-    MetadataOutputNapi *metadataOutput = reinterpret_cast<MetadataOutputNapi*>(nativeObject);
+    MetadataOutputNapi* metadataOutput = reinterpret_cast<MetadataOutputNapi*>(nativeObject);
     if (metadataOutput != nullptr) {
         metadataOutput->~MetadataOutputNapi();
     }
@@ -282,6 +282,10 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
         }
     }
 
+    if (!context->funcName.empty()) {
+        jsContext->funcName = context->funcName;
+    }
+
     if (context->work != nullptr) {
         CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef,
                                              context->work, *jsContext);
@@ -390,6 +394,10 @@ static void GetSupportedMetadataObjectTypesAsyncCallbackComplete(napi_env env, n
     }
     jsContext->data = metadataObjectTypes;
 
+    if (!context->funcName.empty()) {
+        jsContext->funcName = context->funcName;
+    }
+
     if (context->work != nullptr) {
         CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef,
                                              context->work, *jsContext);
@@ -425,6 +433,7 @@ napi_value MetadataOutputNapi::GetSupportedMetadataObjectTypes(napi_env env, nap
                 auto context = static_cast<MetadataOutputAsyncContext*>(data);
                 context->status = false;
                 if (context->objectInfo != nullptr) {
+                    context->funcName = "MetadataOutputNapi::GetSupportedMetadataObjectTypes";
                     context->SupportedMetadataObjectTypes =
                         context->objectInfo->metadataOutput_->GetSupportedMetadataObjectTypes();
                     context->status = true;
@@ -471,6 +480,7 @@ napi_value MetadataOutputNapi::SetCapturingMetadataObjectTypes(napi_env env, nap
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
                     context->status = true;
+                    context->funcName = "MetadataOutputNapi::SetCapturingMetadataObjectTypes";
                     context->objectInfo->metadataOutput_->SetCapturingMetadataObjectTypes(
                         context->setSupportedMetadataObjectTypes);
                 }
@@ -520,6 +530,7 @@ napi_value MetadataOutputNapi::Start(napi_env env, napi_callback_info info)
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
                     context->status = true;
+                    context->funcName = "MetadataOutputNapi::Start";
                     context->objectInfo->metadataOutput_->Start();
                 }
             },
@@ -532,7 +543,6 @@ napi_value MetadataOutputNapi::Start(napi_env env, napi_callback_info info)
             asyncContext.release();
         }
     }
-
     return result;
 }
 
@@ -567,6 +577,7 @@ napi_value MetadataOutputNapi::Stop(napi_env env, napi_callback_info info)
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
                     context->status = true;
+                    context->funcName = "MetadataOutputNapi::Stop";
                     context->objectInfo->metadataOutput_->Stop();
                 }
             },
@@ -593,7 +604,7 @@ napi_value MetadataOutputNapi::On(napi_env env, napi_callback_info info)
     char buffer[SIZE];
     std::string eventType;
     const int32_t refCount = 1;
-    MetadataOutputNapi *obj = nullptr;
+    MetadataOutputNapi* obj = nullptr;
     napi_status status;
 
     napi_get_undefined(env, &undefinedResult);
