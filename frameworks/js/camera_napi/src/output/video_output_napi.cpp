@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-
 #include "output/video_output_napi.h"
 #include <uv.h>
 #include "hilog/log.h"
@@ -28,22 +27,20 @@ namespace {
 }
 
 thread_local napi_ref VideoOutputNapi::sConstructor_ = nullptr;
-thread_local sptr<CaptureOutput> VideoOutputNapi::sVideoOutput_ = nullptr;
-thread_local uint64_t VideoOutputNapi::sSurfaceId_ = 0;
-thread_local sptr<SurfaceListener> VideoOutputNapi::listener = nullptr;
+thread_local sptr<VideoOutput> VideoOutputNapi::sVideoOutput_ = nullptr;
 thread_local uint32_t VideoOutputNapi::videoOutputTaskId = CAMERA_VIDEO_OUTPUT_TASKID;
 
 VideoCallbackListener::VideoCallbackListener(napi_env env) : env_(env) {}
 
 void VideoCallbackListener::UpdateJSCallbackAsync(std::string propName, const int32_t value) const
 {
-    uv_loop_s *loop = nullptr;
+    uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
     if (!loop) {
         MEDIA_ERR_LOG("VideoCallbackListener:UpdateJSCallbackAsync() failed to get event loop");
         return;
     }
-    uv_work_t *work = new(std::nothrow) uv_work_t;
+    uv_work_t* work = new(std::nothrow) uv_work_t;
     if (!work) {
         MEDIA_ERR_LOG("VideoCallbackListener:UpdateJSCallbackAsync() failed to allocate work");
         return;
@@ -51,8 +48,8 @@ void VideoCallbackListener::UpdateJSCallbackAsync(std::string propName, const in
     std::unique_ptr<VideoOutputCallbackInfo> callbackInfo =
         std::make_unique<VideoOutputCallbackInfo>(propName, value, this);
     work->data = callbackInfo.get();
-    int ret = uv_queue_work(loop, work, [] (uv_work_t *work) {}, [] (uv_work_t *work, int status) {
-        VideoOutputCallbackInfo *callbackInfo = reinterpret_cast<VideoOutputCallbackInfo *>(work->data);
+    int ret = uv_queue_work(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+        VideoOutputCallbackInfo* callbackInfo = reinterpret_cast<VideoOutputCallbackInfo *>(work->data);
         if (callbackInfo) {
             callbackInfo->listener_->UpdateJSCallback(callbackInfo->eventName_, callbackInfo->value_);
             delete callbackInfo;
@@ -135,60 +132,6 @@ void VideoCallbackListener::UpdateJSCallback(std::string propName, const int32_t
     napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
 }
 
-void SurfaceListener::OnBufferAvailable()
-{
-    int32_t flushFence = 0;
-    int64_t timestamp = 0;
-    OHOS::Rect damage;
-    OHOS::sptr<OHOS::SurfaceBuffer> buffer = nullptr;
-    if (captureSurface_ == nullptr) {
-        return;
-    }
-    captureSurface_->AcquireBuffer(buffer, flushFence, timestamp, damage);
-    if (buffer != nullptr) {
-        const char *addr = static_cast<char *>(buffer->GetVirAddr());
-        uint32_t size = buffer->GetSize();
-        int32_t intResult = 0;
-        intResult = SaveData(addr, size);
-        if (intResult != 0) {
-            MEDIA_ERR_LOG("Save Data Failed!");
-        }
-        captureSurface_->ReleaseBuffer(buffer, -1);
-    } else {
-        MEDIA_ERR_LOG("AcquireBuffer failed!");
-    }
-}
-
-int32_t SurfaceListener::SaveData(const char *buffer, int32_t size)
-{
-    struct timeval tv = {};
-    gettimeofday(&tv, nullptr);
-    struct tm *ltm = localtime(&tv.tv_sec);
-    if (ltm != nullptr) {
-        std::ostringstream ss("Video_");
-        std::string path;
-        ss << "Video_" << ltm->tm_hour << "-" << ltm->tm_min << "-" << ltm->tm_sec << ".h264";
-        if (photoPath.empty()) {
-            photoPath = "/data/media/";
-        }
-        path = photoPath + ss.str();
-        std::ofstream vid(path, std::ofstream::out | std::ofstream::trunc);
-        vid.write(buffer, size);
-        if (vid.fail()) {
-            MEDIA_ERR_LOG("Write videe failed!");
-            vid.close();
-            return -1;
-        }
-        vid.close();
-    }
-    return 0;
-}
-
-void SurfaceListener::SetConsumerSurface(sptr<Surface> captureSurface)
-{
-    captureSurface_ = captureSurface;
-}
-
 VideoOutputNapi::VideoOutputNapi() : env_(nullptr), wrapper_(nullptr)
 {
 }
@@ -200,9 +143,9 @@ VideoOutputNapi::~VideoOutputNapi()
     }
 }
 
-void VideoOutputNapi::VideoOutputNapiDestructor(napi_env env, void *nativeObject, void *finalize_hint)
+void VideoOutputNapi::VideoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
-    VideoOutputNapi *videoOutput = reinterpret_cast<VideoOutputNapi*>(nativeObject);
+    VideoOutputNapi* videoOutput = reinterpret_cast<VideoOutputNapi*>(nativeObject);
     if (videoOutput != nullptr) {
         videoOutput->~VideoOutputNapi();
     }
@@ -255,7 +198,6 @@ napi_value VideoOutputNapi::VideoOutputNapiConstructor(napi_env env, napi_callba
         if (obj != nullptr) {
             obj->env_ = env;
             obj->videoOutput_ = sVideoOutput_;
-            obj->surfaceId_ = sSurfaceId_;
 
             std::shared_ptr<VideoCallbackListener> callback =
                             std::make_shared<VideoCallbackListener>(VideoCallbackListener(env));
@@ -333,6 +275,7 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
     if (!context->funcName.empty() && context->taskId > 0) {
         // Finish async trace
         CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
+        jsContext->funcName = context->funcName;
     }
 
     if (context->work != nullptr) {
@@ -342,7 +285,7 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
     delete context;
 }
 
-sptr<CaptureOutput> VideoOutputNapi::GetVideoOutput()
+sptr<VideoOutput> VideoOutputNapi::GetVideoOutput()
 {
     return videoOutput_;
 }
@@ -364,7 +307,7 @@ bool VideoOutputNapi::IsVideoOutput(napi_env env, napi_value obj)
     return result;
 }
 
-napi_value VideoOutputNapi::CreateVideoOutput(napi_env env, uint64_t surfaceId)
+napi_value VideoOutputNapi::CreateVideoOutput(napi_env env, VideoProfile &profile, std::string surfaceId)
 {
     CAMERA_SYNC_TRACE;
     napi_status status;
@@ -373,8 +316,10 @@ napi_value VideoOutputNapi::CreateVideoOutput(napi_env env, uint64_t surfaceId)
 
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
-        sSurfaceId_ = surfaceId;
-        sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(surfaceId);
+        uint64_t iSurfaceId;
+        std::istringstream iss(surfaceId);
+        iss >> iSurfaceId;
+        sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
         if (surface == nullptr) {
             MEDIA_ERR_LOG("failed to get surface from SurfaceUtils");
             return result;
@@ -384,13 +329,12 @@ napi_value VideoOutputNapi::CreateVideoOutput(napi_env env, uint64_t surfaceId)
 #else
         surface->SetUserData(CameraManager::surfaceFormat, std::to_string(OHOS_CAMERA_FORMAT_YCRCB_420_SP));
 #endif
-        sVideoOutput_ = CameraManager::GetInstance()->CreateVideoOutput(surface);
+        sVideoOutput_ = CameraManager::GetInstance()->CreateVideoOutput(profile, surface);
         if (sVideoOutput_ == nullptr) {
             MEDIA_ERR_LOG("failed to create VideoOutput");
             return result;
         }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
-        sSurfaceId_ = 0;
         sVideoOutput_ = nullptr;
         if (status == napi_ok && result != nullptr) {
             return result;
@@ -509,7 +453,7 @@ napi_value VideoOutputNapi::Stop(napi_env env, napi_callback_info info)
     return result;
 }
 
-void GetFrameRateRangeAsyncCallbackComplete(napi_env env, napi_status status, void *data)
+void GetFrameRateRangeAsyncCallbackComplete(napi_env env, napi_status status, void* data)
 {
     auto context = static_cast<VideoOutputAsyncContext*>(data);
     napi_value frameRateRange = nullptr;
@@ -534,6 +478,12 @@ void GetFrameRateRangeAsyncCallbackComplete(napi_env env, napi_status status, vo
         MEDIA_ERR_LOG("vecFrameRateRangeList is empty or failed to create array!");
         CameraNapiUtils::CreateNapiErrorObject(env,
             "vecFrameRateRangeList is empty or failed to create array!", jsContext);
+    }
+
+    if (!context->funcName.empty() && context->taskId > 0) {
+        // Finish async trace
+        CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
+        jsContext->funcName = context->funcName;
     }
 
     if (context->work != nullptr) {
@@ -571,8 +521,6 @@ napi_value VideoOutputNapi::GetFrameRateRange(napi_env env, napi_callback_info i
                 auto context = static_cast<VideoOutputAsyncContext*>(data);
                 context->status = false;
                 if (context->objectInfo != nullptr) {
-                    context->vecFrameRateRangeList = ((sptr<VideoOutput> &)
-                            (context->objectInfo->videoOutput_))->GetFrameRateRange();
                     if (!context->vecFrameRateRangeList.empty()) {
                         context->status = true;
                     } else {
@@ -594,7 +542,7 @@ napi_value VideoOutputNapi::GetFrameRateRange(napi_env env, napi_callback_info i
     return result;
 }
 
-bool isFrameRateRangeAvailable(napi_env env, void *data)
+bool isFrameRateRangeAvailable(napi_env env, void* data)
 {
     bool invalidFrameRate = true;
     const int32_t FRAME_RATE_RANGE_STEP = 2;
@@ -645,14 +593,14 @@ napi_value VideoOutputNapi::SetFrameRateRange(napi_env env, napi_callback_info i
             [](napi_env env, void* data) {
                 auto context = static_cast<VideoOutputAsyncContext*>(data);
                 context->status = false;
+                // Start async trace
+                context->funcName = "VideoOutputNapi::SetFrameRateRange";
+                context->taskId = CameraNapiUtils::IncreamentAndGet(videoOutputTaskId);
+                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
-                    context->vecFrameRateRangeList = ((sptr<VideoOutput> &)
-                            (context->objectInfo->videoOutput_))->GetFrameRateRange();
                     bool isValidRange = isFrameRateRangeAvailable(env, data);
                     if (!isValidRange) {
-                        ((sptr<VideoOutput> &)(context->objectInfo->videoOutput_))->
-                                SetFrameRateRange(context->minFrameRate, context->maxFrameRate);
                         context->status = true;
                     } else {
                         MEDIA_ERR_LOG("Failed to get range values for SetFrameRateRange");
@@ -735,7 +683,7 @@ napi_value VideoOutputNapi::On(napi_env env, napi_callback_info info)
     char buffer[SIZE];
     std::string eventType;
     const int32_t refCount = 1;
-    VideoOutputNapi *obj = nullptr;
+    VideoOutputNapi* obj = nullptr;
     napi_status status;
 
     napi_get_undefined(env, &undefinedResult);

@@ -53,7 +53,7 @@ int HStreamCaptureStub::OnRemoteRequest(
 int HStreamCaptureStub::HandleCapture(MessageParcel &data)
 {
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = nullptr;
-    Camera::MetadataUtils::DecodeCameraMetadata(data, metadata);
+    OHOS::Camera::MetadataUtils::DecodeCameraMetadata(data, metadata);
 
     return Capture(metadata);
 }

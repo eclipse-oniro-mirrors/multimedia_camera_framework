@@ -25,12 +25,14 @@
 #include "camera_metadata_info.h"
 #include "v1_0/icamera_device.h"
 #include "v1_0/icamera_host.h"
+#include "icamera_device_service.h"
 #include "icamera_service_callback.h"
 #include "iservstat_listener_hdi.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
+using namespace OHOS::HDI;
 class HCameraHostManager : public virtual RefBase, public HDI::ServiceManager::V1_0::ServStatListenerStub {
 public:
     class StatusCallback {
@@ -45,6 +47,10 @@ public:
 
     int32_t Init(void);
     void DeInit(void);
+    void AddCameraDevice(const std::string& cameraId, sptr<ICameraDeviceService> cameraDevice);
+    void RemoveCameraDevice(const std::string& cameraId);
+    void CloseCameraDevice(const std::string& cameraId);
+
     virtual int32_t GetCameras(std::vector<std::string> &cameraIds);
     virtual int32_t GetCameraAbility(std::string &cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata> &ability);
     virtual int32_t OpenCameraDevice(std::string &cameraId,
@@ -65,8 +71,10 @@ private:
     bool IsCameraHostInfoAdded(const std::string& svcName);
 
     std::mutex mutex_;
+    std::mutex deviceMutex_;
     StatusCallback* statusCallback_;
     std::vector<sptr<CameraHostInfo>> cameraHostInfos_;
+    std::map<std::string, sptr<ICameraDeviceService>> cameraDevices_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

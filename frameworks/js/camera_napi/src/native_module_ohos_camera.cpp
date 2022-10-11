@@ -23,7 +23,7 @@ namespace CameraStandard {
 static napi_value Export(napi_env env, napi_value exports)
 {
     MEDIA_INFO_LOG("Export called()");
-    CameraInfoNapi::Init(env, exports);
+    CameraDeviceNapi::Init(env, exports);
     CameraInputNapi::Init(env, exports);
     PreviewOutputNapi::Init(env, exports);
     PhotoOutputNapi::Init(env, exports);
@@ -31,10 +31,11 @@ static napi_value Export(napi_env env, napi_value exports)
     CameraSessionNapi::Init(env, exports);
     CameraManagerNapi::Init(env, exports);
     CameraNapi::Init(env, exports);
+    CameraOutputCapabilityNapi::Init(env, exports);
     CameraSizeNapi::Init(env, exports);
+    CameraVideoProfileNapi::Init(env, exports);
     MetadataOutputNapi::Init(env, exports);
     MetadataObjectNapi::Init(env, exports);
-
     return exports;
 }
 

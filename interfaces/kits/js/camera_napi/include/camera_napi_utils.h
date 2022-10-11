@@ -109,7 +109,6 @@
         }                                              \
     } while (0)
 
-
 namespace OHOS {
 namespace CameraStandard {
 /* Constants for array index */
@@ -123,67 +122,22 @@ const int32_t ARGS_TWO = 2;
 const int32_t ARGS_THREE = 3;
 const int32_t SIZE = 100;
 
+struct AsyncContext {
+    napi_env env;
+    napi_async_work work;
+    napi_deferred deferred;
+    napi_ref callbackRef;
+    bool status;
+    int32_t taskId;
+    std::string funcName;
+};
+
 struct JSAsyncContextOutput {
     napi_value error;
     napi_value data;
     bool status;
     bool bRetBool;
-};
-
-enum JSCameraPosition {
-    CAMERA_POSITION_UNSPECIFIED = 0,
-    CAMERA_POSITION_BACK,
-    CAMERA_POSITION_FRONT
-};
-
-enum JSCameraType {
-    CAMERA_TYPE_UNSPECIFIED = 0,
-    CAMERA_TYPE_WIDE_ANGLE,
-    CAMERA_TYPE_ULTRA_WIDE,
-    CAMERA_TYPE_TELEPHOTO,
-    CAMERA_TYPE_TRUE_DEPTH
-};
-
-enum JSConnectionType {
-    CAMERA_CONNECTION_BUILT_IN = 0,
-    CAMERA_CONNECTION_USB_PLUGIN,
-    CAMERA_CONNECTION_REMOTE
-};
-
-enum JSCameraFormat {
-    CAMERA_FORMAT_YUV_420_SP = 1003,
-    CAMERA_FORMAT_JPEG = 2000
-};
-
-enum JSFlashMode {
-    FLASH_MODE_CLOSE = 0,
-    FLASH_MODE_OPEN,
-    FLASH_MODE_AUTO,
-    FLASH_MODE_ALWAYS_OPEN,
-};
-
-enum JSExposureMode {
-    EXPOSURE_MODE_LOCKED = 0,
-    EXPOSURE_MODE_AUTO,
-    EXPOSURE_MODE_CONTINUOUS_AUTO
-};
-
-enum JSFocusMode {
-    FOCUS_MODE_MANUAL = 0,
-    FOCUS_MODE_CONTINUOUS_AUTO,
-    FOCUS_MODE_AUTO,
-    FOCUS_MODE_LOCKED,
-};
-
-enum JSFocusState {
-    FOCUS_STATE_SCAN = 0,
-    FOCUS_STATE_FOCUSED,
-    FOCUS_STATE_UNFOCUSED
-};
-
-enum JSExposureState {
-    EXPOSURE_STATE_SCAN = 0,
-    EXPOSURE_STATE_CONVERGED
+    std::string funcName;
 };
 
 enum JSQualityLevel {
@@ -465,13 +419,13 @@ public:
         MEDIA_INFO_LOG("js quality level = %{public}d", jsQuality);
         switch (jsQuality) {
             case QUALITY_LEVEL_HIGH:
-                nativeQuality = PhotoCaptureSetting::HIGH_QUALITY;
+                nativeQuality = PhotoCaptureSetting::QUALITY_LEVEL_HIGH;
                 break;
             case QUALITY_LEVEL_MEDIUM:
-                nativeQuality = PhotoCaptureSetting::NORMAL_QUALITY;
+                nativeQuality = PhotoCaptureSetting::QUALITY_LEVEL_MEDIUM;
                 break;
             case QUALITY_LEVEL_LOW:
-                nativeQuality = PhotoCaptureSetting::LOW_QUALITY;
+                nativeQuality = PhotoCaptureSetting::QUALITY_LEVEL_LOW;
                 break;
             default:
                 MEDIA_ERR_LOG("Invalid quality value received from application");
@@ -505,7 +459,7 @@ public:
         return 0;
     }
 
-    static void MapCameraStatusEnum(CameraDeviceStatus deviceStatus, int32_t &jsCameraStatus)
+    static void MapCameraStatusEnum(CameraStatus deviceStatus, int32_t &jsCameraStatus)
     {
         MEDIA_INFO_LOG("native camera status = %{public}d", static_cast<int32_t>(deviceStatus));
         switch (deviceStatus) {
@@ -548,7 +502,7 @@ public:
         }
     }
 
-    static void CreateNapiErrorObject(napi_env env, const char *errString,
+    static void CreateNapiErrorObject(napi_env env, const char* errString,
         std::unique_ptr<JSAsyncContextOutput> &jsContext)
     {
         napi_get_undefined(env, &jsContext->data);
@@ -563,23 +517,35 @@ public:
     {
         napi_value retVal;
         napi_value callback = nullptr;
-
+        std::string funcName = asyncContext.funcName;
+        MEDIA_INFO_LOG("%{public}s, context->InvokeJSAsyncMethod start", funcName.c_str());
         /* Deferred is used when JS Callback method expects a promise value */
         if (deferred) {
             if (asyncContext.status) {
                 napi_resolve_deferred(env, deferred, asyncContext.data);
+                MEDIA_INFO_LOG("%{public}s, InvokeJSAsyncMethod napi_resolve_deferred", funcName.c_str());
             } else {
                 napi_reject_deferred(env, deferred, asyncContext.error);
+                MEDIA_ERR_LOG("%{public}s, InvokeJSAsyncMethod napi_reject_deferred", funcName.c_str());
             }
+            MEDIA_INFO_LOG("%{public}s, InvokeJSAsyncMethod end deferred", funcName.c_str());
         } else {
+            MEDIA_INFO_LOG("%{public}s, InvokeJSAsyncMethod callback", funcName.c_str());
             napi_value result[ARGS_TWO];
             result[PARAM0] = asyncContext.error;
             result[PARAM1] = asyncContext.data;
+
+            MEDIA_INFO_LOG("%{public}s, InvokeJSAsyncMethod asyncContext.error = %{public}p, "
+                "asyncContext.data = %{public}p, result = %{public}p",
+                funcName.c_str(), &asyncContext.error, &asyncContext.data, result);
             napi_get_reference_value(env, callbackRef, &callback);
+            MEDIA_INFO_LOG("%{public}s, InvokeJSAsyncMethod napi_call_function start", funcName.c_str());
             napi_call_function(env, nullptr, callback, ARGS_TWO, result, &retVal);
+            MEDIA_INFO_LOG("%{public}s, InvokeJSAsyncMethod napi_call_function end", funcName.c_str());
             napi_delete_reference(env, callbackRef);
         }
         napi_delete_async_work(env, work);
+        MEDIA_INFO_LOG("%{public}s, InvokeJSAsyncMethod inner end", funcName.c_str());
     }
 
     static int32_t IncreamentAndGet(uint32_t &num)

@@ -24,6 +24,21 @@
 
 namespace OHOS {
 namespace CameraStandard {
+camera_format_t TestUtils::GetCameraMetadataFormat(CameraFormat format)
+{
+    camera_format_t metaFormat = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
+    const std::unordered_map<CameraFormat, camera_format_t> mapToMetadataFormat = {
+        {CAMERA_FORMAT_YUV_420_SP, OHOS_CAMERA_FORMAT_YCRCB_420_SP},
+        {CAMERA_FORMAT_JPEG, OHOS_CAMERA_FORMAT_JPEG},
+        {CAMERA_FORMAT_RGBA_8888, OHOS_CAMERA_FORMAT_RGBA_8888},
+        {CAMERA_FORMAT_YCBCR_420_888, OHOS_CAMERA_FORMAT_YCBCR_420_888}
+    };
+    auto itr = mapToMetadataFormat.find(format);
+    if (itr != mapToMetadataFormat.end()) {
+        metaFormat = itr->second;
+    }
+    return metaFormat;
+}
 uint64_t TestUtils::GetCurrentLocalTimeStamp()
 {
     std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds> tp =
@@ -32,7 +47,7 @@ uint64_t TestUtils::GetCurrentLocalTimeStamp()
     return tmp.count();
 }
 
-int32_t TestUtils::SaveYUV(const char *buffer, int32_t size, SurfaceType type)
+int32_t TestUtils::SaveYUV(const char* buffer, int32_t size, SurfaceType type)
 {
     char path[PATH_MAX] = {0};
     int32_t retVal;
@@ -98,7 +113,7 @@ bool TestUtils::IsNumber(const char number[])
     return true;
 }
 
-int32_t TestUtils::SaveVideoFile(const char *buffer, int32_t size, VideoSaveMode operationMode, int32_t &fd)
+int32_t TestUtils::SaveVideoFile(const char* buffer, int32_t size, VideoSaveMode operationMode, int32_t &fd)
 {
     int32_t retVal = 0;
 
@@ -135,7 +150,7 @@ int32_t TestUtils::SaveVideoFile(const char *buffer, int32_t size, VideoSaveMode
     return 0;
 }
 
-TestCameraMngerCallback::TestCameraMngerCallback(const char *testName) : testName_(testName) {
+TestCameraMngerCallback::TestCameraMngerCallback(const char* testName) : testName_(testName) {
 }
 
 void TestCameraMngerCallback::OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const
@@ -145,14 +160,14 @@ void TestCameraMngerCallback::OnCameraStatusChanged(const CameraStatusInfo &came
 }
 
 void TestCameraMngerCallback::OnFlashlightStatusChanged(const std::string &cameraID,
-                                                        const FlashlightStatus flashStatus) const
+                                                        const FlashStatus flashStatus) const
 {
     MEDIA_DEBUG_LOG("OnFlashlightStatusChanged(), testName_: %{public}s, cameraID: %{public}s, flashStatus: %{public}d",
                     testName_, cameraID.c_str(), flashStatus);
     return;
 }
 
-TestDeviceCallback::TestDeviceCallback(const char *testName) : testName_(testName) {
+TestDeviceCallback::TestDeviceCallback(const char* testName) : testName_(testName) {
 }
 
 void TestDeviceCallback::OnError(const int32_t errorType, const int32_t errorMsg) const
@@ -162,7 +177,7 @@ void TestDeviceCallback::OnError(const int32_t errorType, const int32_t errorMsg
     return;
 }
 
-TestPhotoOutputCallback::TestPhotoOutputCallback(const char *testName) : testName_(testName) {
+TestPhotoOutputCallback::TestPhotoOutputCallback(const char* testName) : testName_(testName) {
 }
 
 void TestPhotoOutputCallback::OnCaptureStarted(const int32_t captureID) const
@@ -188,7 +203,7 @@ void TestPhotoOutputCallback::OnCaptureError(const int32_t captureId, const int3
                    testName_, captureId, errorCode);
 }
 
-TestPreviewOutputCallback::TestPreviewOutputCallback(const char *testName) : testName_(testName) {
+TestPreviewOutputCallback::TestPreviewOutputCallback(const char* testName) : testName_(testName) {
 }
 
 void TestPreviewOutputCallback::OnFrameStarted() const
@@ -206,7 +221,7 @@ void TestPreviewOutputCallback::OnError(const int32_t errorCode) const
                    testName_, errorCode);
 }
 
-TestVideoOutputCallback::TestVideoOutputCallback(const char *testName) : testName_(testName) {
+TestVideoOutputCallback::TestVideoOutputCallback(const char* testName) : testName_(testName) {
 }
 
 void TestVideoOutputCallback::OnFrameStarted() const
@@ -226,7 +241,7 @@ void TestVideoOutputCallback::OnError(const int32_t errorCode) const
                    testName_, errorCode);
 }
 
-SurfaceListener::SurfaceListener(const char *testName, SurfaceType type, int32_t &fd, sptr<Surface> surface)
+SurfaceListener::SurfaceListener(const char* testName, SurfaceType type, int32_t &fd, sptr<Surface> surface)
     : testName_(testName), surfaceType_(type), fd_(fd), surface_(surface) {
 }
 
@@ -244,7 +259,7 @@ void SurfaceListener::OnBufferAvailable()
     }
     surface_->AcquireBuffer(buffer, flushFence, timestamp, damage);
     if (buffer != nullptr) {
-        char *addr = static_cast<char *>(buffer->GetVirAddr());
+        char* addr = static_cast<char *>(buffer->GetVirAddr());
         int32_t size = buffer->GetSize();
 
         switch (surfaceType_) {

@@ -144,6 +144,14 @@ int32_t HCaptureSession::AddInput(sptr<ICameraDeviceService> cameraDevice)
         tempCameraDevices_.emplace_back(localCameraDevice);
         CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::AddInput"));
     }
+
+    sptr<IStreamOperator> streamOperator;
+    int32_t rc = localCameraDevice->GetStreamOperator(streamOperatorCallback_, streamOperator);
+    if (rc != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCaptureSession::GetCameraDevice GetStreamOperator returned %{public}d", rc);
+        localCameraDevice->Close();
+        return rc;
+    }
     return CAMERA_OK;
 }
 
@@ -157,10 +165,23 @@ int32_t HCaptureSession::AddOutputStream(sptr<HStreamCommon> stream)
         MEDIA_ERR_LOG("HCaptureSession::AddOutputStream Need to call BeginConfig before adding output");
         return CAMERA_INVALID_STATE;
     }
-    if (std::find(tempStreams_.begin(), tempStreams_.end(), stream) != tempStreams_.end()
-        || std::find(streams_.begin(), streams_.end(), stream) != streams_.end()) {
-        MEDIA_ERR_LOG("HCaptureSession::AddOutputStream Adding same output multiple times");
+    if (std::find(tempStreams_.begin(), tempStreams_.end(), stream) != tempStreams_.end()) {
+        MEDIA_ERR_LOG("HCaptureSession::AddOutputStream Adding same output multiple times in tempStreams_");
         return CAMERA_INVALID_SESSION_CFG;
+    }
+    auto it = std::find(streams_.begin(), streams_.end(), stream);
+    if (it != streams_.end()) {
+        if (stream->IsReleaseStream()) {
+            stream->SetReleaseStream(false);
+            auto it2 = std::find(deletedStreamIds_.begin(), deletedStreamIds_.end(), stream->GetStreamId());
+            if (it2 != deletedStreamIds_.end()) {
+                deletedStreamIds_.erase(it2);
+            }
+            return CAMERA_OK;
+        } else {
+            MEDIA_ERR_LOG("HCaptureSession::AddOutputStream Adding same output multiple times in streams_");
+            return CAMERA_INVALID_SESSION_CFG;
+        }
     }
     stream->SetReleaseStream(false);
     tempStreams_.emplace_back(stream);
@@ -280,29 +301,17 @@ int32_t HCaptureSession::ValidateSessionOutputs()
 
 int32_t HCaptureSession::GetCameraDevice(sptr<HCameraDevice> &device)
 {
-    int32_t rc;
-    sptr<HCameraDevice> camDevice;
-    sptr<IStreamOperator> streamOperator;
-
     if (cameraDevice_ != nullptr && !cameraDevice_->IsReleaseCameraDevice()) {
         MEDIA_DEBUG_LOG("HCaptureSession::GetCameraDevice Camera device has not changed");
         device = cameraDevice_;
         return CAMERA_OK;
+    } else if (!tempCameraDevices_.empty()) {
+        device = tempCameraDevices_[0];
+        return CAMERA_OK;
     }
-    camDevice = tempCameraDevices_[0];
-    rc = camDevice->Open();
-    if (rc != CAMERA_OK) {
-        MEDIA_ERR_LOG("HCaptureSession::GetCameraDevice Failed to open camera, rc: %{public}d", rc);
-        return rc;
-    }
-    rc = camDevice->GetStreamOperator(streamOperatorCallback_, streamOperator);
-    if (rc != CAMERA_OK) {
-        MEDIA_ERR_LOG("HCaptureSession::GetCameraDevice GetStreamOperator returned %{public}d", rc);
-        camDevice->Close();
-        return rc;
-    }
-    device = camDevice;
-    return rc;
+
+    MEDIA_ERR_LOG("HCaptureSession::GetCurrentCameraDevice Failed because don't have camera device");
+    return CAMERA_INVALID_STATE;
 }
 
 int32_t HCaptureSession::GetCurrentCameraDevice(sptr<HCameraDevice> &device)
@@ -606,7 +615,6 @@ int32_t HCaptureSession::Start()
 {
     int32_t rc = CAMERA_OK;
     sptr<HStreamRepeat> curStreamRepeat;
-
     if (curState_ != CaptureSessionState::SESSION_CONFIG_COMMITTED) {
         MEDIA_ERR_LOG("HCaptureSession::Start(), Invalid session state: %{public}d", rc);
         return CAMERA_INVALID_STATE;
@@ -629,7 +637,6 @@ int32_t HCaptureSession::Stop()
 {
     int32_t rc = CAMERA_OK;
     sptr<HStreamRepeat> curStreamRepeat;
-
     if (curState_ != CaptureSessionState::SESSION_CONFIG_COMMITTED) {
         return CAMERA_INVALID_STATE;
     }
@@ -644,6 +651,7 @@ int32_t HCaptureSession::Stop()
             }
         }
     }
+
     return rc;
 }
 

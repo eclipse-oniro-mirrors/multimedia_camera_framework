@@ -22,10 +22,10 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class PreviewCallback {
+class PreviewStateCallback {
 public:
-    PreviewCallback() = default;
-    virtual ~PreviewCallback() = default;
+    PreviewStateCallback() = default;
+    virtual ~PreviewStateCallback() = default;
 
     /**
      * @brief Called when preview frame is started rendering.
@@ -54,9 +54,9 @@ public:
     /**
      * @brief Set the preview callback for the preview output.
      *
-     * @param PreviewCallback to be triggered.
+     * @param PreviewStateCallback to be triggered.
      */
-    void SetCallback(std::shared_ptr<PreviewCallback> callback);
+    void SetCallback(std::shared_ptr<PreviewStateCallback> callback);
 
     /**
      * @brief Releases a instance of the preview output.
@@ -64,15 +64,33 @@ public:
     void Release() override;
 
     /**
+     * @brief Add delayed preview surface.
+     *
+     * @param surface to add.
+     */
+    void AddDeferredSurface(sptr<Surface> surface);
+
+    /**
+     * @brief Start preview stream.
+     */
+    int32_t Start();
+
+    /**
+     * @brief stop preview stream.
+     */
+    int32_t Stop();
+
+    /**
      * @brief Get the application callback information.
      *
      * @return Returns the pointer application callback.
      */
-    std::shared_ptr<PreviewCallback> GetApplicationCallback();
+    std::shared_ptr<PreviewStateCallback> GetApplicationCallback();
 
 private:
-    std::shared_ptr<PreviewCallback> appCallback_;
+    std::shared_ptr<PreviewStateCallback> appCallback_;
     sptr<IStreamRepeatCallback> svcCallback_;
+    sptr<Surface> surface_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

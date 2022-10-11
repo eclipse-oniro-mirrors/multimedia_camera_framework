@@ -93,6 +93,7 @@ int32_t HCameraDevice::Open()
             MEDIA_DEBUG_LOG("HCameraDevice::Open Updated device settings");
         }
         errorCode = HdiToServiceError((CamRetCode)(hdiCameraDevice_->SetResultMode(ON_CHANGED)));
+        cameraHostManager_->AddCameraDevice(cameraID_, this);
     } else {
         MEDIA_ERR_LOG("HCameraDevice::Open Failed to open camera");
     }
@@ -109,6 +110,7 @@ int32_t HCameraDevice::Close()
     }
     isCameraOpened = false;
     hdiCameraDevice_ = nullptr;
+    cameraHostManager_->RemoveCameraDevice(cameraID_);
     return CAMERA_OK;
 }
 
@@ -185,12 +187,15 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
     return CAMERA_OK;
 }
 
-void HCameraDevice::ReportFlashEvent(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings) {
+void HCameraDevice::ReportFlashEvent(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings)
+{
     camera_metadata_item_t item;
     camera_flash_mode_enum_t flashMode = OHOS_CAMERA_FLASH_MODE_ALWAYS_OPEN;
     int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_FLASH_MODE, &item);
     if (ret == CAM_META_SUCCESS) {
         flashMode = static_cast<camera_flash_mode_enum_t>(item.data.u8[0]);
+    } else {
+        MEDIA_ERR_LOG("CameraInput::GetFlashMode Failed with return code %{public}d", ret);
     }
 
     if (flashMode == OHOS_CAMERA_FLASH_MODE_CLOSE) {
@@ -303,7 +308,7 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp,
         deviceSvcCallback_->OnResult(timestamp, result);
     }
     camera_metadata_item_t item;
-    common_metadata_header_t *metadata = result->get();
+    common_metadata_header_t* metadata = result->get();
     int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FLASH_MODE, &item);
     if (ret == 0) {
         MEDIA_INFO_LOG("CameraDeviceServiceCallback::OnResult() OHOS_CONTROL_FLASH_MODE is %{public}d",

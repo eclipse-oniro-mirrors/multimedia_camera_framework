@@ -18,6 +18,7 @@
 
 #include "istream_common.h"
 #include "istream_repeat_callback.h"
+#include "surface.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -27,11 +28,11 @@ public:
 
     virtual int32_t Stop() = 0;
 
-    virtual int32_t SetFps(float Fps) = 0;
-
     virtual int32_t SetCallback(sptr<IStreamRepeatCallback> &callback) = 0;
 
     virtual int32_t Release() = 0;
+
+    virtual int32_t AddDeferredSurface(const sptr<OHOS::IBufferProducer> &producer) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamRepeat");
 };

@@ -34,16 +34,14 @@ int HStreamRepeatStub::OnRemoteRequest(
         case CAMERA_STOP_VIDEO_RECORDING:
             errCode = Stop();
             break;
-        case CAMERA_STREAM_REPEAT_SET_FPS: {
-            float fps = data.ReadFloat();
-            errCode = SetFps(fps);
-            break;
-        }
         case CAMERA_STREAM_REPEAT_SET_CALLBACK:
             errCode = HStreamRepeatStub::HandleSetCallback(data);
             break;
         case CAMERA_STREAM_REPEAT_RELEASE:
             errCode = Release();
+            break;
+        case CAMERA_ADD_DEFERRED_SURFACE:
+            errCode = HStreamRepeatStub::HandleAddDeferredSurface(data);
             break;
         default:
             MEDIA_ERR_LOG("HStreamRepeatStub request code %{public}u not handled", code);
@@ -65,6 +63,25 @@ int HStreamRepeatStub::HandleSetCallback(MessageParcel &data)
     auto callback = iface_cast<IStreamRepeatCallback>(remoteObject);
 
     return SetCallback(callback);
+}
+
+int HStreamRepeatStub::HandleAddDeferredSurface(MessageParcel &data)
+{
+    sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
+
+    if (remoteObj == nullptr) {
+        MEDIA_ERR_LOG("HStreamRepeatStub HandleAddDeferredSurface BufferProducer is null");
+        return IPC_STUB_INVALID_DATA_ERR;
+    }
+
+    sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
+    int errCode = AddDeferredSurface(producer);
+    if (errCode != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamRepeatStub::HandleAddDeferredSurface add deferred surface failed : %{public}d", errCode);
+        return errCode;
+    }
+
+    return errCode;
 }
 } // namespace CameraStandard
 } // namespace OHOS

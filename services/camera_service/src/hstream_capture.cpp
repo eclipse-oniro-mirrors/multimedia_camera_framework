@@ -21,8 +21,8 @@
 
 namespace OHOS {
 namespace CameraStandard {
-HStreamCapture::HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t format)
-    : HStreamCommon(StreamType::CAPTURE, producer, format)
+HStreamCapture::HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height)
+    : HStreamCommon(StreamType::CAPTURE, producer, format, width, height)
 {}
 
 HStreamCapture::~HStreamCapture()
@@ -53,7 +53,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         MEDIA_ERR_LOG("HStreamCapture::Capture Failed to allocate a captureId");
         return ret;
     }
-
+    
     CaptureInfo captureInfoPhoto;
     captureInfoPhoto.streamIds_ = {streamId_};
     std::vector<uint8_t> setting;

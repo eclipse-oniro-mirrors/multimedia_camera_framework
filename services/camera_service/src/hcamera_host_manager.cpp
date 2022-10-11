@@ -19,6 +19,7 @@
 #include "metadata_utils.h"
 #include "camera_util.h"
 #include "hdf_io_service_if.h"
+#include "iproxy_broker.h"
 #include "iservmgr_hdi.h"
 #include "camera_log.h"
 
@@ -39,9 +40,28 @@ struct HCameraHostManager::CameraDeviceInfo {
 
 class HCameraHostManager::CameraHostInfo : public ICameraHostCallback {
 public:
+    class CameraHostDeathRecipient : public IRemoteObject::DeathRecipient {
+    public:
+        explicit CameraHostDeathRecipient(const sptr<HCameraHostManager::CameraHostInfo> &hostInfo) :
+            cameraHostInfo_(hostInfo) {};
+        virtual ~CameraHostDeathRecipient() = default;
+        void OnRemoteDied(const wptr<IRemoteObject> &remote) override
+        {
+            MEDIA_ERR_LOG("Remote died, do clean works.");
+            if (cameraHostInfo_ == nullptr) {
+                return;
+            }
+            cameraHostInfo_->CameraHostDied();
+        }
+
+    private:
+        sptr<HCameraHostManager::CameraHostInfo> cameraHostInfo_;
+    };
+
     explicit CameraHostInfo(HCameraHostManager* cameraHostManager, std::string name);
     ~CameraHostInfo();
     bool Init();
+    void CameraHostDied();
     bool IsCameraSupported(const std::string& cameraId);
     const std::string& GetName();
     int32_t GetCameras(std::vector<std::string>& cameraIds);
@@ -91,6 +111,13 @@ bool HCameraHostManager::CameraHostInfo::Init()
         return false;
     }
     cameraHostProxy_->SetCallback(this);
+    sptr<CameraHostDeathRecipient> cameraHostDeathRecipient = new CameraHostDeathRecipient(this);
+    const sptr<IRemoteObject> &remote = OHOS::HDI::hdi_objcast<ICameraHost>(cameraHostProxy_);
+    bool result = remote->AddDeathRecipient(cameraHostDeathRecipient);
+    if (!result) {
+        MEDIA_ERR_LOG("AddDeathRecipient for CameraHost failed.");
+    }
+
     std::lock_guard<std::mutex> lock(mutex_);
     CamRetCode ret = (CamRetCode)(cameraHostProxy_->GetCameraIds(cameraIds_));
     if (ret != HDI::Camera::V1_0::NO_ERROR) {
@@ -101,6 +128,15 @@ bool HCameraHostManager::CameraHostInfo::Init()
         devices_.push_back(std::make_shared<HCameraHostManager::CameraDeviceInfo>(cameraId));
     }
     return true;
+}
+
+void HCameraHostManager::CameraHostInfo::CameraHostDied()
+{
+    if (cameraHostManager_ == nullptr) {
+        MEDIA_ERR_LOG("CameraHostInfo::cameraHostManager is null.");
+        return;
+    }
+    cameraHostManager_->RemoveCameraHost(name_);
 }
 
 bool HCameraHostManager::CameraHostInfo::IsCameraSupported(const std::string& cameraId)
@@ -365,6 +401,31 @@ void HCameraHostManager::DeInit()
     }
 }
 
+void HCameraHostManager::AddCameraDevice(const std::string& cameraId, sptr<ICameraDeviceService> cameraDevice)
+{
+    std::lock_guard<std::mutex> lock(deviceMutex_);
+    cameraDevices_.emplace(cameraId, cameraDevice);
+}
+
+void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId)
+{
+    std::lock_guard<std::mutex> lock(deviceMutex_);
+    cameraDevices_.erase(cameraId);
+}
+
+void HCameraHostManager::CloseCameraDevice(const std::string& cameraId)
+{
+    sptr<ICameraDeviceService> deviceToDisconnect;
+    {
+        std::lock_guard<std::mutex> lock(deviceMutex_);
+        auto iter = cameraDevices_.find(cameraId);
+        if (iter != cameraDevices_.end()) {
+            deviceToDisconnect = iter->second;
+        }
+    }
+    deviceToDisconnect->Close();
+}
+
 int32_t HCameraHostManager::GetCameras(std::vector<std::string>& cameraIds)
 {
     CAMERA_SYNC_TRACE;
@@ -472,6 +533,7 @@ void HCameraHostManager::RemoveCameraHost(const std::string& svcName)
     if ((*it)->GetCameras(cameraIds) == CAMERA_OK) {
         for (const auto& cameraId : cameraIds) {
             (*it)->OnCameraStatus(cameraId, UN_AVAILABLE);
+            CloseCameraDevice(cameraId);
         }
     }
     cameraHostInfos_.erase(it);

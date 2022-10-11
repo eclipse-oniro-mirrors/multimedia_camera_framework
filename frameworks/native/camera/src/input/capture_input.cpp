@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,23 +13,22 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_CAMERA_HSTREAM_REPEAT_STUB_H
-#define OHOS_CAMERA_HSTREAM_REPEAT_STUB_H
-
-#include "iremote_stub.h"
-#include "istream_repeat.h"
+#include "input/capture_input.h"
 
 namespace OHOS {
 namespace CameraStandard {
-class HStreamRepeatStub : public IRemoteStub<IStreamRepeat> {
-public:
-    int OnRemoteRequest(uint32_t code, MessageParcel &data,
-                        MessageParcel &reply, MessageOption &option) override;
+CaptureInput::CaptureInput() : session_(nullptr)
+{}
 
-private:
-    int HandleSetCallback(MessageParcel &data);
-    int HandleAddDeferredSurface(MessageParcel &data);
-};
-} // namespace CameraStandard
-} // namespace OHOS
-#endif // OHOS_CAMERA_HSTREAM_REPEAT_STUB_H
+CaptureSession* CaptureInput::GetSession()
+{
+    return session_;
+}
+
+void CaptureInput::SetSession(CaptureSession* captureSession)
+{
+    session_ = captureSession;
+}
+} // CameraStandard
+} // OHOS
+

@@ -20,7 +20,8 @@
 
 namespace OHOS {
 namespace CameraStandard {
-HStreamCommon::HStreamCommon(StreamType streamType, sptr<OHOS::IBufferProducer> producer, int32_t format)
+HStreamCommon::HStreamCommon(StreamType streamType, sptr<OHOS::IBufferProducer> producer,
+                             int32_t format, int32_t width, int32_t height)
 {
     streamId_ = 0;
     curCaptureID_ = 0;
@@ -28,8 +29,8 @@ HStreamCommon::HStreamCommon(StreamType streamType, sptr<OHOS::IBufferProducer> 
     streamOperator_ = nullptr;
     cameraAbility_ = nullptr;
     producer_ = producer;
-    width_ = producer->GetDefaultWidth();
-    height_ = producer->GetDefaultHeight();
+    width_ = width;
+    height_ = height;
     format_ = format;
     streamType_ = streamType;
 }

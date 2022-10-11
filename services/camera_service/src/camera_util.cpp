@@ -110,7 +110,7 @@ int32_t HdiToServiceError(CamRetCode ret)
     return err;
 }
 
-std::string CreateMsg(const char *format, ...)
+std::string CreateMsg(const char* format, ...)
 {
     va_list args;
     va_start(args, format);
@@ -150,8 +150,8 @@ void ReleaseCaptureId(int32_t captureId)
     return;
 }
 
-bool IsValidSize(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility,
-    int32_t format, int32_t width, int32_t height)
+bool IsValidSize(
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t format, int32_t width, int32_t height)
 {
 #ifndef PRODUCT_M40
     return true;

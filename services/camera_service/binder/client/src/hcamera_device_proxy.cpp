@@ -18,7 +18,6 @@
 #include "metadata_utils.h"
 #include "remote_request_code.h"
 
-
 namespace OHOS {
 namespace CameraStandard {
 HCameraDeviceProxy::HCameraDeviceProxy(const sptr<IRemoteObject> &impl)

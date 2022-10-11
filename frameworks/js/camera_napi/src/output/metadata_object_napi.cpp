@@ -62,9 +62,9 @@ MetadataObjectNapi::~MetadataObjectNapi()
     }
 }
 
-void MetadataObjectNapi::MetadataObjectNapiDestructor(napi_env env, void *nativeObject, void *finalize_hint)
+void MetadataObjectNapi::MetadataObjectNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
-    MetadataObjectNapi *metadataObject = reinterpret_cast<MetadataObjectNapi*>(nativeObject);
+    MetadataObjectNapi* metadataObject = reinterpret_cast<MetadataObjectNapi*>(nativeObject);
     if (metadataObject != nullptr) {
         metadataObject->~MetadataObjectNapi();
     }
@@ -150,6 +150,11 @@ static void GetTypeAsyncCallbackComplete(napi_env env, napi_status status, void*
             "GetTypeAsyncCallbackComplete:napi_create_int32() failed", jsContext);
     }
 
+    if (!context->funcName.empty()) {
+        // Finish async trace
+        jsContext->funcName = context->funcName;
+    }
+
     if (context->work != nullptr) {
         CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef,
                                              context->work, *jsContext);
@@ -186,6 +191,7 @@ napi_value MetadataObjectNapi::GetType(napi_env env, napi_callback_info info)
                 auto context = static_cast<MetadataObjectAsyncContext*>(data);
                 context->status = false;
                 if (context->objectInfo != nullptr) {
+                    context->funcName = "MetadataObjectNapi::GetType";
                     context->status = true;
                     context->metadataObjType = context->objectInfo->metadataObject_->GetType();
                 }
@@ -217,6 +223,11 @@ static void GetTimestampAsyncCallbackComplete(napi_env env, napi_status status, 
         MEDIA_ERR_LOG("GetTimestampAsyncCallbackComplete:napi_create_double() failed");
         CameraNapiUtils::CreateNapiErrorObject(env,
             "GetTimestampAsyncCallbackComplete:napi_create_double() failed", jsContext);
+    }
+
+    if (!context->funcName.empty()) {
+        // Finish async trace
+        jsContext->funcName = context->funcName;
     }
 
     if (context->work != nullptr) {
@@ -256,6 +267,7 @@ napi_value MetadataObjectNapi::GetTimestamp(napi_env env, napi_callback_info inf
                 context->status = false;
                 if (context->objectInfo != nullptr) {
                     context->status = true;
+                    context->funcName = "MetadataObjectNapi::GetTimestamp";
                     context->metaTimestamp
                         = context->objectInfo->metadataObject_->GetTimestamp();
                 }
@@ -364,6 +376,11 @@ static void GetBoundingBoxAsyncCallbackComplete(napi_env env, napi_status status
             "napi_set_named_property failed for height", jsContext);
     }
 
+    if (!context->funcName.empty()) {
+        // Finish async trace
+        jsContext->funcName = context->funcName;
+    }
+
     if (context->work != nullptr) {
         CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef,
                                              context->work, *jsContext);
@@ -401,6 +418,7 @@ napi_value MetadataObjectNapi::GetBoundingBox(napi_env env, napi_callback_info i
                 context->status = false;
                 if (context->objectInfo != nullptr) {
                     context->status = true;
+                    context->funcName = "MetadataObjectNapi::GetBoundingBox";
                     context->metaFace
                         = context->objectInfo->metadataObject_->GetBoundingBox();
                 }

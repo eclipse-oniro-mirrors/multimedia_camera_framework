@@ -30,9 +30,7 @@ namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
 class HStreamRepeat : public HStreamRepeatStub, public HStreamCommon {
 public:
-    HStreamRepeat(sptr<OHOS::IBufferProducer> producer, int32_t format);
-    HStreamRepeat(sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height);
-    HStreamRepeat(sptr<OHOS::IBufferProducer> producer, int32_t format, bool isVideo);
+    HStreamRepeat(sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height, bool isVideo);
     ~HStreamRepeat();
 
     int32_t LinkInput(sptr<IStreamOperator> streamOperator,
@@ -41,11 +39,11 @@ public:
     int32_t Release() override;
     int32_t Start() override;
     int32_t Stop() override;
-    int32_t SetFps(float Fps) override;
     int32_t SetCallback(sptr<IStreamRepeatCallback> &callback) override;
     int32_t OnFrameStarted();
     int32_t OnFrameEnded(int32_t frameCount);
     int32_t OnFrameError(int32_t errorType);
+    int32_t AddDeferredSurface(const sptr<OHOS::IBufferProducer> &producer) override;
     bool IsVideo();
     void DumpStreamInfo(std::string& dumpString) override;
 

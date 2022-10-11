@@ -28,7 +28,7 @@ enum CaptureOutputType {
     CAPTURE_OUTPUT_TYPE_METADATA,
     CAPTURE_OUTPUT_TYPE_MAX
 };
-static const char *g_captureOutputTypeString[CAPTURE_OUTPUT_TYPE_MAX] = {"Preview", "Photo", "Video", "Metadata"};
+static const char* g_captureOutputTypeString[CAPTURE_OUTPUT_TYPE_MAX] = {"Preview", "Photo", "Video", "Metadata"};
 class CaptureSession;
 class CaptureOutput : public RefBase {
 public:
@@ -42,17 +42,17 @@ public:
     virtual void Release() = 0;
 
     CaptureOutputType GetOutputType();
-    const char *GetOutputTypeString();
+    const char* GetOutputTypeString();
     StreamType GetStreamType();
     sptr<IStreamCommon> GetStream();
-    CaptureSession *GetSession();
-    void SetSession(CaptureSession *captureSession);
+    CaptureSession* GetSession();
+    void SetSession(CaptureSession* captureSession);
 
 private:
     CaptureOutputType outputType_;
     StreamType streamType_;
     sptr<IStreamCommon> stream_;
-    CaptureSession *session_;
+    CaptureSession* session_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

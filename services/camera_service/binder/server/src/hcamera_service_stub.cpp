@@ -69,8 +69,8 @@ int HCameraServiceStub::OnRemoteRequest(
         case CAMERA_SERVICE_CREATE_PREVIEW_OUTPUT:
             errCode = HCameraServiceStub::HandleCreatePreviewOutput(data, reply);
             break;
-        case CAMERA_SERVICE_CREATE_PREVIEW_OUTPUT_CUSTOM_SIZE:
-            errCode = HCameraServiceStub::HandleCreatePreviewOutputCustomSize(data, reply);
+        case CAMERA_SERVICE_CREATE_DEFERRED_PREVIEW_OUTPUT:
+            errCode = HCameraServiceStub::HandleCreateDeferredPreviewOutput(data, reply);
             break;
         case CAMERA_SERVICE_CREATE_METADATA_OUTPUT:
             errCode = HCameraServiceStub::HandleCreateMetadataOutput(data, reply);
@@ -179,7 +179,9 @@ int HCameraServiceStub::HandleCreatePhotoOutput(MessageParcel &data, MessageParc
 
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
     int32_t format = data.ReadInt32();
-    int errCode = CreatePhotoOutput(producer, format, photoOutput);
+    int32_t width = data.ReadInt32();
+    int32_t height = data.ReadInt32();
+    int errCode = CreatePhotoOutput(producer, format, width, height, photoOutput);
     if (errCode != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceStub::HandleCreatePhotoOutput Create photo output failed : %{public}d", errCode);
         return errCode;
@@ -196,32 +198,6 @@ int HCameraServiceStub::HandleCreatePhotoOutput(MessageParcel &data, MessageParc
 int HCameraServiceStub::HandleCreatePreviewOutput(MessageParcel &data, MessageParcel &reply)
 {
     sptr<IStreamRepeat> previewOutput = nullptr;
-    sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
-
-    if (remoteObj == nullptr) {
-        MEDIA_ERR_LOG("HCameraServiceStub HandleCreatePreviewOutput BufferProducer is null");
-        return IPC_STUB_INVALID_DATA_ERR;
-    }
-
-    sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
-    int32_t format = data.ReadInt32();
-    int errCode = CreatePreviewOutput(producer, format, previewOutput);
-    if (errCode != ERR_NONE) {
-        MEDIA_ERR_LOG("HandleCreatePreviewOutput CreatePreviewOutput failed : %{public}d", errCode);
-        return errCode;
-    }
-
-    if (!reply.WriteRemoteObject(previewOutput->AsObject())) {
-        MEDIA_ERR_LOG("HCameraServiceStub HandleCreatePreviewOutput Write previewOutput obj failed");
-        return IPC_STUB_WRITE_PARCEL_ERR;
-    }
-
-    return errCode;
-}
-
-int HCameraServiceStub::HandleCreatePreviewOutputCustomSize(MessageParcel &data, MessageParcel &reply)
-{
-    sptr<IStreamRepeat> previewOutput = nullptr;
 
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
     if (remoteObj == nullptr) {
@@ -231,10 +207,32 @@ int HCameraServiceStub::HandleCreatePreviewOutputCustomSize(MessageParcel &data,
     int32_t format = data.ReadInt32();
     int32_t width = data.ReadInt32();
     int32_t height = data.ReadInt32();
-    MEDIA_INFO_LOG("CreatePreviewOutput with custom sizes, format: %{public}d, width: %{public}d, height: %{public}d",
+    MEDIA_INFO_LOG("CreatePreviewOutput, format: %{public}d, width: %{public}d, height: %{public}d",
                    format, width, height);
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
-    int errCode = CreateCustomPreviewOutput(producer, format, width, height, previewOutput);
+    int errCode = CreatePreviewOutput(producer, format, width, height, previewOutput);
+    if (errCode != ERR_NONE) {
+        MEDIA_ERR_LOG("HandleCreatePreviewOutput CreatePreviewOutput failed : %{public}d", errCode);
+        return errCode;
+    }
+    if (!reply.WriteRemoteObject(previewOutput->AsObject())) {
+        MEDIA_ERR_LOG("HCameraServiceStub HandleCreatePreviewOutput Write previewOutput obj failed");
+        return IPC_STUB_WRITE_PARCEL_ERR;
+    }
+    return errCode;
+}
+
+int HCameraServiceStub::HandleCreateDeferredPreviewOutput(MessageParcel &data, MessageParcel &reply)
+{
+    sptr<IStreamRepeat> previewOutput = nullptr;
+
+    int32_t format = data.ReadInt32();
+    int32_t width = data.ReadInt32();
+    int32_t height = data.ReadInt32();
+    MEDIA_INFO_LOG("CreatePreviewOutput, format: %{public}d, width: %{public}d, height: %{public}d",
+                   format, width, height);
+
+    int errCode = CreateDeferredPreviewOutput(format, width, height, previewOutput);
     if (errCode != ERR_NONE) {
         MEDIA_ERR_LOG("HandleCreatePreviewOutput CreatePreviewOutput failed : %{public}d", errCode);
         return errCode;
@@ -282,7 +280,9 @@ int HCameraServiceStub::HandleCreateVideoOutput(MessageParcel &data, MessageParc
 
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
     int32_t format = data.ReadInt32();
-    int errCode = CreateVideoOutput(producer, format, videoOutput);
+    int32_t width = data.ReadInt32();
+    int32_t height = data.ReadInt32();
+    int errCode = CreateVideoOutput(producer, format, width, height, videoOutput);
     if (errCode != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceStub HandleCreateVideoOutput CreateVideoOutput failed : %{public}d", errCode);
         return errCode;

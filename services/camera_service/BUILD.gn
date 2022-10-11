@@ -97,7 +97,10 @@ ohos_shared_library("camera_service") {
     cflags += [ "-DPRODUCT_M40" ]
   } else {
     if (device_name == "rk3566" || device_name == "rk3568") {
-      cflags += [ "-DRK_CAMERA" ]
+      cflags += [
+        "-DRK_CAMERA",
+        "-DOHOS_DEBUG",
+      ]
     }
   }
   cflags_cc = cflags

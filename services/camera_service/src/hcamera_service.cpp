@@ -94,7 +94,7 @@ int32_t HCameraService::GetCameras(std::vector<std::string> &cameraIds,
         }
 
         camera_metadata_item_t item;
-        common_metadata_header_t *metadata = cameraAbility->get();
+        common_metadata_header_t* metadata = cameraAbility->get();
         camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_OTHER;
         int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_POSITION, &item);
         if (ret == CAM_META_SUCCESS) {
@@ -189,14 +189,15 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession> &session)
 }
 
 int32_t HCameraService::CreatePhotoOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
+                                          int32_t width, int32_t height,
                                           sptr<IStreamCapture> &photoOutput)
 {
     CAMERA_SYNC_TRACE;
-    if (producer == nullptr) {
+    if ((producer == nullptr) || (width == 0) || (height == 0)) {
         MEDIA_ERR_LOG("HCameraService::CreatePhotoOutput producer is null");
         return CAMERA_INVALID_ARG;
     }
-    sptr<HStreamCapture> streamCapture = new(std::nothrow) HStreamCapture(producer, format);
+    sptr<HStreamCapture> streamCapture = new(std::nothrow) HStreamCapture(producer, format, width, height);
     if (streamCapture == nullptr) {
         MEDIA_ERR_LOG("HCameraService::CreatePhotoOutput HStreamCapture allocation failed");
         return CAMERA_ALLOC_ERROR;
@@ -207,40 +208,40 @@ int32_t HCameraService::CreatePhotoOutput(const sptr<OHOS::IBufferProducer> &pro
     return CAMERA_OK;
 }
 
+int32_t HCameraService::CreateDeferredPreviewOutput(int32_t format,
+                                                    int32_t width, int32_t height,
+                                                    sptr<IStreamRepeat> &previewOutput)
+{
+    CAMERA_SYNC_TRACE;
+    sptr<HStreamRepeat> streamDeferredPreview;
+
+    if ((width == 0) || (height == 0)) {
+        MEDIA_ERR_LOG("HCameraService::CreateDeferredPreviewOutput producer is null");
+        return CAMERA_INVALID_ARG;
+    }
+    streamDeferredPreview = new(std::nothrow) HStreamRepeat(nullptr, format, width, height, false);
+    if (streamDeferredPreview == nullptr) {
+        MEDIA_ERR_LOG("HCameraService::CreateDeferredPreviewOutput HStreamRepeat allocation failed");
+        return CAMERA_ALLOC_ERROR;
+    }
+    previewOutput = streamDeferredPreview;
+    return CAMERA_OK;
+}
+
 int32_t HCameraService::CreatePreviewOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
+                                            int32_t width, int32_t height,
                                             sptr<IStreamRepeat> &previewOutput)
 {
     CAMERA_SYNC_TRACE;
     sptr<HStreamRepeat> streamRepeatPreview;
 
-    if (producer == nullptr) {
+    if ((producer == nullptr) || (width == 0) || (height == 0)) {
         MEDIA_ERR_LOG("HCameraService::CreatePreviewOutput producer is null");
         return CAMERA_INVALID_ARG;
     }
-    streamRepeatPreview = new(std::nothrow) HStreamRepeat(producer, format);
+    streamRepeatPreview = new(std::nothrow) HStreamRepeat(producer, format, width, height, false);
     if (streamRepeatPreview == nullptr) {
         MEDIA_ERR_LOG("HCameraService::CreatePreviewOutput HStreamRepeat allocation failed");
-        return CAMERA_ALLOC_ERROR;
-    }
-    POWERMGR_SYSEVENT_CAMERA_CONFIG(PREVIEW, producer->GetDefaultWidth(),
-                                    producer->GetDefaultHeight());
-    previewOutput = streamRepeatPreview;
-    return CAMERA_OK;
-}
-
-int32_t HCameraService::CreateCustomPreviewOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
-                                                  int32_t width, int32_t height, sptr<IStreamRepeat> &previewOutput)
-{
-    CAMERA_SYNC_TRACE;
-    sptr<HStreamRepeat> streamRepeatPreview;
-
-    if ((producer == nullptr) || (width == 0) || (height == 0)) {
-        MEDIA_ERR_LOG("HCameraService::CreateCustomPreviewOutput producer is null or invalid custom size is set");
-        return CAMERA_INVALID_ARG;
-    }
-    streamRepeatPreview = new(std::nothrow) HStreamRepeat(producer, format, width, height);
-    if (streamRepeatPreview == nullptr) {
-        MEDIA_ERR_LOG("HCameraService::CreateCustomPreviewOutput HStreamRepeat allocation failed");
         return CAMERA_ALLOC_ERROR;
     }
     POWERMGR_SYSEVENT_CAMERA_CONFIG(PREVIEW, width, height);
@@ -270,16 +271,17 @@ int32_t HCameraService::CreateMetadataOutput(const sptr<OHOS::IBufferProducer> &
 }
 
 int32_t HCameraService::CreateVideoOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
+                                          int32_t width, int32_t height,
                                           sptr<IStreamRepeat> &videoOutput)
 {
     CAMERA_SYNC_TRACE;
     sptr<HStreamRepeat> streamRepeatVideo;
 
-    if (producer == nullptr) {
+    if ((producer == nullptr) || (width == 0) || (height == 0)) {
         MEDIA_ERR_LOG("HCameraService::CreateVideoOutput producer is null");
         return CAMERA_INVALID_ARG;
     }
-    streamRepeatVideo = new(std::nothrow) HStreamRepeat(producer, format, true);
+    streamRepeatVideo = new(std::nothrow) HStreamRepeat(producer, format, width, height, true);
     if (streamRepeatVideo == nullptr) {
         MEDIA_ERR_LOG("HCameraService::CreateVideoOutput HStreamRepeat allocation failed");
         return CAMERA_ALLOC_ERROR;
@@ -328,7 +330,7 @@ void HCameraService::CameraSummary(std::vector<std::string> cameraIds,
     HCaptureSession::CameraSessionSummary(dumpString);
 }
 
-void HCameraService::CameraDumpAbility(common_metadata_header_t *metadataEntry,
+void HCameraService::CameraDumpAbility(common_metadata_header_t* metadataEntry,
     std::string& dumpString)
 {
     camera_metadata_item_t item;
@@ -369,7 +371,7 @@ void HCameraService::CameraDumpAbility(common_metadata_header_t *metadataEntry,
     }
 }
 
-void HCameraService::CameraDumpStreaminfo(common_metadata_header_t *metadataEntry,
+void HCameraService::CameraDumpStreaminfo(common_metadata_header_t* metadataEntry,
     std::string& dumpString)
 {
     camera_metadata_item_t item;
@@ -400,7 +402,7 @@ void HCameraService::CameraDumpStreaminfo(common_metadata_header_t *metadataEntr
     }
 }
 
-void HCameraService::CameraDumpZoom(common_metadata_header_t *metadataEntry,
+void HCameraService::CameraDumpZoom(common_metadata_header_t* metadataEntry,
     std::string& dumpString)
 {
     dumpString += "    ## Zoom Related Info: \n";
@@ -441,7 +443,7 @@ void HCameraService::CameraDumpZoom(common_metadata_header_t *metadataEntry,
     }
 }
 
-void HCameraService::CameraDumpFlash(common_metadata_header_t *metadataEntry,
+void HCameraService::CameraDumpFlash(common_metadata_header_t* metadataEntry,
     std::string& dumpString)
 {
     camera_metadata_item_t item;
@@ -472,7 +474,7 @@ void HCameraService::CameraDumpFlash(common_metadata_header_t *metadataEntry,
     }
 }
 
-void HCameraService::CameraDumpAF(common_metadata_header_t *metadataEntry,
+void HCameraService::CameraDumpAF(common_metadata_header_t* metadataEntry,
     std::string& dumpString)
 {
     camera_metadata_item_t item;
@@ -504,7 +506,7 @@ void HCameraService::CameraDumpAF(common_metadata_header_t *metadataEntry,
     }
 }
 
-void HCameraService::CameraDumpAE(common_metadata_header_t *metadataEntry,
+void HCameraService::CameraDumpAE(common_metadata_header_t* metadataEntry,
     std::string& dumpString)
 {
     camera_metadata_item_t item;
@@ -536,7 +538,7 @@ void HCameraService::CameraDumpAE(common_metadata_header_t *metadataEntry,
     }
 }
 
-void HCameraService::CameraDumpSensorInfo(common_metadata_header_t *metadataEntry,
+void HCameraService::CameraDumpSensorInfo(common_metadata_header_t* metadataEntry,
     std::string& dumpString)
 {
     camera_metadata_item_t item;
@@ -557,7 +559,7 @@ void HCameraService::CameraDumpSensorInfo(common_metadata_header_t *metadataEntr
     }
 }
 
-void HCameraService::CameraDumpVideoStabilization(common_metadata_header_t *metadataEntry,
+void HCameraService::CameraDumpVideoStabilization(common_metadata_header_t* metadataEntry,
     std::string& dumpString)
 {
     camera_metadata_item_t item;
@@ -589,7 +591,7 @@ void HCameraService::CameraDumpVideoStabilization(common_metadata_header_t *meta
     }
 }
 
-void HCameraService::CameraDumpVideoFrameRateRange(common_metadata_header_t *metadataEntry,
+void HCameraService::CameraDumpVideoFrameRateRange(common_metadata_header_t* metadataEntry,
     std::string& dumpString)
 {
     camera_metadata_item_t item;
@@ -634,10 +636,10 @@ int32_t HCameraService::Dump(int fd, const std::vector<std::u16string>& args)
         CameraSummary(cameraIds, dumpString);
     }
     if (args.size() == 0 || argSets.count(arg2) != 0) {
-        dumpString += "-------- CameraInfo -------\n";
+        dumpString += "-------- CameraDevice -------\n";
         for (auto& it : cameraIds) {
             metadata = cameraAbilityList[capIdx++];
-            common_metadata_header_t *metadataEntry = metadata->get();
+            common_metadata_header_t* metadataEntry = metadata->get();
             dumpString += "# Camera ID:[" + it + "]: \n";
             CameraDumpAbility(metadataEntry, dumpString);
             CameraDumpStreaminfo(metadataEntry, dumpString);

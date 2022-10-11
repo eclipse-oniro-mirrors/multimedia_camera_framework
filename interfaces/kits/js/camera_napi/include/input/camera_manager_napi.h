@@ -25,11 +25,12 @@
 #include "napi/native_node_api.h"
 
 #include "input/camera_manager.h"
-#include "input/camera_info.h"
+#include "input/camera_device.h"
 #include "output/capture_output.h"
 
 #include "input/camera_input_napi.h"
 #include "input/camera_info_napi.h"
+#include "output/camera_output_capability.h"
 #include "output/preview_output_napi.h"
 #include "output/photo_output_napi.h"
 #include "output/video_output_napi.h"
@@ -50,10 +51,43 @@ namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_MANAGER_NAPI_CLASS_NAME[] = "CameraManager";
 
+enum CameraManagerAsyncCallbackModes {
+    GET_SUPPORTED_CAMERA_ASYNC_CALLBACK = 0,
+    GET_SUPPORTED_OUTPUT_CAPABILITY_ASYNC_CALLBACK,
+
+    IS_CAMERA_MUTED_ASYNC_CALLBACK,
+    IS_CAMERA_MUTE_SUPPORTED_ASYNC_CALLBACK,
+    MUTE_CAMERA_ASYNC_CALLBACK,
+
+    CREATE_CAMERA_INPUT_ASYNC_CALLBACK,
+
+    CREATE_PREVIEW_OUTPUT_ASYNC_CALLBACK,
+    CREATE_DEFERRED_PREVIEW_OUTPUT_ASYNC_CALLBACK,
+    CREATE_PHOTO_OUTPUT_ASYNC_CALLBACK,
+    CREATE_VIDEO_OUTPUT_ASYNC_CALLBACK,
+
+    CREATE_CAMERA_SESSION_ASYNC_CALLBACK
+};
+
 class CameraManagerNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
-    static napi_value CreateCameraManagerInstance(napi_env env);
+    static napi_value CreateCameraManager(napi_env env);
+
+    static napi_value GetSupportedOutputCapability(napi_env env, napi_callback_info info);
+    static napi_value IsCameraMuted(napi_env env, napi_callback_info info);
+    static napi_value IsCameraMuteSupported(napi_env env, napi_callback_info info);
+    static napi_value MuteCamera(napi_env env, napi_callback_info info);
+
+    static napi_value GetSupportedCameras(napi_env env, napi_callback_info info);
+    static napi_value CreateCameraInputInstance(napi_env env, napi_callback_info info);
+    static napi_value CreateCameraSessionInstance(napi_env env, napi_callback_info info);
+    static napi_value CreatePreviewOutputInstance(napi_env env, napi_callback_info info);
+    static napi_value CreateDeferredPreviewOutputInstance(napi_env env, napi_callback_info info);
+    static napi_value CreatePhotoOutputInstance(napi_env env, napi_callback_info info);
+    static napi_value CreateVideoOutputInstance(napi_env env, napi_callback_info info);
+    static napi_value CreateMetadataOutputInstance(napi_env env, napi_callback_info info);
+    static napi_value On(napi_env env, napi_callback_info info);
 
     CameraManagerNapi();
     ~CameraManagerNapi();
@@ -62,33 +96,28 @@ private:
     static void CameraManagerNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value CameraManagerNapiConstructor(napi_env env, napi_callback_info info);
 
-    static napi_value GetCameras(napi_env env, napi_callback_info info);
-    static napi_value CreateCameraInputInstance(napi_env env, napi_callback_info info);
-    static napi_value On(napi_env env, napi_callback_info info);
     static thread_local napi_ref sConstructor_;
 
     napi_env env_;
     napi_ref wrapper_;
     sptr<CameraManager> cameraManager_;
+
     static thread_local uint32_t cameraManagerTaskId;
 };
 
-struct CameraManagerNapiAsyncContext {
-    napi_env env;
-    napi_async_work work;
-    napi_deferred deferred;
-    napi_ref callbackRef;
-    bool status;
-    CameraManagerNapi *objectInfo;
-    std::string cameraId;
-    camera_position_enum_t cameraPosition;
-    camera_type_enum_t cameraType;
+struct CameraManagerContext : public AsyncContext {
+    bool isMuteCamera;
+    std::string surfaceId;
+    CameraManagerNapi* managerInstance;
+    CameraPosition cameraPosition;
+    CameraType cameraType;
+    Profile profile;
+    VideoProfile videoProfile;
     sptr<CameraInput> cameraInput;
-    sptr<CameraInfo> cameraInfo;
-    std::vector<sptr<CameraInfo>> cameraObjList;
+    sptr<CameraDevice> cameraInfo;
+    std::vector<sptr<CameraDevice>> cameraObjList;
+    CameraManagerAsyncCallbackModes modeForAsync;
     std::string errString;
-    std::string funcName;
-    int32_t taskId;
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -53,11 +53,11 @@ MetadataOutput::MetadataOutput(sptr<Surface> surface, sptr<IStreamMetadata> &str
 
 std::vector<MetadataObjectType> MetadataOutput::GetSupportedMetadataObjectTypes()
 {
-    CaptureSession *captureSession = GetSession();
+    CaptureSession* captureSession = GetSession();
     if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
         return {};
     }
-    sptr<CameraInfo> cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
+    sptr<CameraDevice> cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_STATISTICS_FACE_DETECT_MODE, &item);
@@ -75,7 +75,7 @@ std::vector<MetadataObjectType> MetadataOutput::GetSupportedMetadataObjectTypes(
 
 void MetadataOutput::SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> metadataObjectTypes)
 {
-    CaptureSession *captureSession = GetSession();
+    CaptureSession* captureSession = GetSession();
     if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
         return;
     }
@@ -89,7 +89,7 @@ void MetadataOutput::SetCapturingMetadataObjectTypes(std::vector<MetadataObjectT
         objectTypes.insert(OHOS_CAMERA_FACE_DETECT_MODE_OFF);
     }
 
-    SetCaptureMetadataObjectTypes((sptr<CameraInput> &)captureSession->inputDevice_, objectTypes);
+    captureSession->SetCaptureMetadataObjectTypes(objectTypes);
 }
 
 void MetadataOutput::SetCallback(std::shared_ptr<MetadataObjectCallback> metadataObjectCallback)
@@ -140,8 +140,9 @@ int32_t MetadataObjectListener::ProcessFaceRectangles(int64_t timestamp, const c
         return ERROR_UNKNOWN;
     }
     metaObjects.reserve(metadataItem.count / rectangleUnitLen);
-    for (float *start = metadataItem.data.f, *end = metadataItem.data.f + metadataItem.count; start < end;
-        start += rectangleUnitLen) {
+    float* start = metadataItem.data.f;
+    float* end = metadataItem.data.f + metadataItem.count;
+    for (; start < end; start += rectangleUnitLen) {
         sptr<MetadataObject> metadataObject = new(std::nothrow) MetadataFaceObject(timestamp,
             (Rect) {start[0], start[1], start[2], start[3]});
         if (!metadataObject) {
@@ -153,13 +154,13 @@ int32_t MetadataObjectListener::ProcessFaceRectangles(int64_t timestamp, const c
     return CAMERA_OK;
 }
 
-int32_t MetadataObjectListener::ProcessMetadataBuffer(void *buffer, int64_t timestamp)
+int32_t MetadataObjectListener::ProcessMetadataBuffer(void* buffer, int64_t timestamp)
 {
     if (!buffer) {
         MEDIA_ERR_LOG("Buffer is null");
         return ERROR_UNKNOWN;
     }
-    common_metadata_header_t *metadata = (common_metadata_header_t *)buffer;
+    common_metadata_header_t* metadata = (common_metadata_header_t *)buffer;
     uint32_t itemCount = Camera::GetCameraMetadataItemCount(metadata);
     camera_metadata_item_t metadataItem;
     std::vector<sptr<MetadataObject>> metaObjects;

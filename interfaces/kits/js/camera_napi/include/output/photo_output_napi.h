@@ -24,7 +24,8 @@
 #include "napi/native_node_api.h"
 
 #include "input/camera_manager.h"
-#include "input/camera_info.h"
+#include "input/camera_device.h"
+#include "output/camera_output_capability.h"
 #include "output/photo_output.h"
 
 #include "hilog/log.h"
@@ -52,7 +53,7 @@ struct CallbackInfo {
     int32_t errorCode;
 };
 
-class PhotoOutputCallback : public PhotoCallback {
+class PhotoOutputCallback : public PhotoStateCallback {
 public:
     explicit PhotoOutputCallback(napi_env env);
     ~PhotoOutputCallback() = default;
@@ -77,25 +78,16 @@ private:
 struct PhotoOutputCallbackInfo {
     std::string eventName_;
     CallbackInfo info_;
-    const PhotoOutputCallback *listener_;
-    PhotoOutputCallbackInfo(std::string eventName, CallbackInfo info, const PhotoOutputCallback *listener)
+    const PhotoOutputCallback* listener_;
+    PhotoOutputCallbackInfo(std::string eventName, CallbackInfo info, const PhotoOutputCallback* listener)
         : eventName_(eventName), info_(info), listener_(listener) {}
 };
 
 class PhotoOutputNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
-    static napi_value CreatePhotoOutput(napi_env env, std::string surfaceId);
-    static bool IsPhotoOutput(napi_env env, napi_value obj);
-    PhotoOutputNapi();
-    ~PhotoOutputNapi();
-
-    sptr<CaptureOutput> GetPhotoOutput();
-    std::string GetSurfaceId();
-
-private:
-    static void PhotoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
-    static napi_value PhotoOutputNapiConstructor(napi_env env, napi_callback_info info);
+    static napi_value CreatePhotoOutput(napi_env env, Profile &profile, std::string surfaceId);
+    static napi_value GetDefaultCaptureSetting(napi_env env, napi_callback_info info);
 
     static napi_value Capture(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
@@ -103,24 +95,28 @@ private:
     static napi_value SetMirror(napi_env env, napi_callback_info info);
     static napi_value On(napi_env env, napi_callback_info info);
 
+    static bool IsPhotoOutput(napi_env env, napi_value obj);
+    PhotoOutputNapi();
+    ~PhotoOutputNapi();
+
+    sptr<PhotoOutput> GetPhotoOutput();
+
+private:
+    static void PhotoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
+    static napi_value PhotoOutputNapiConstructor(napi_env env, napi_callback_info info);
+
     static thread_local napi_ref sConstructor_;
-    static thread_local std::string sSurfaceId_;
-    static thread_local sptr<CaptureOutput> sPhotoOutput_;
+    static thread_local sptr<PhotoOutput> sPhotoOutput_;
     static thread_local bool enableMirror;
 
     napi_env env_;
     napi_ref wrapper_;
-    std::string surfaceId_;
-    sptr<CaptureOutput> photoOutput_;
+    sptr<PhotoOutput> photoOutput_;
     std::shared_ptr<PhotoOutputCallback> photoCallback_ = nullptr;
     static thread_local uint32_t photoOutputTaskId;
 };
 
-struct PhotoOutputAsyncContext {
-    napi_env env;
-    napi_async_work work;
-    napi_deferred deferred;
-    napi_ref callbackRef;
+struct PhotoOutputAsyncContext : public AsyncContext {
     std::string surfaceId;
     int32_t quality = -1;
     int32_t mirror = -1;
@@ -128,13 +124,10 @@ struct PhotoOutputAsyncContext {
     double longitude = -1.0;
     int32_t rotation = -1;
     PhotoOutputNapi* objectInfo;
-    int32_t status;
     bool hasPhotoSettings = false;
     std::string errorMsg;
     bool bRetBool;
     std::unique_ptr<Location> location;
-    std::string funcName;
-    int32_t taskId;
     bool isSupported = false;
 };
 } // namespace CameraStandard

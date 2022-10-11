@@ -80,7 +80,7 @@ Steps to capture a photo:
             OHOS::sptr<OHOS::SurfaceBuffer> buffer = nullptr;
             surface_->AcquireBuffer(buffer, flushFence, timestamp, damage);
             if (buffer != nullptr) {
-                void *addr = buffer->GetVirAddr();
+                void* addr = buffer->GetVirAddr();
                 int32_t size = buffer->GetSize();
 
                 // Save the buffer(addr) to a file.

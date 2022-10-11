@@ -16,6 +16,8 @@
 #include <unistd.h>
 #include "input/camera_input.h"
 #include "input/camera_manager.h"
+#include "output/camera_output_capability.h"
+
 #include "camera_log.h"
 #include "surface.h"
 #include "test_common.h"
@@ -76,18 +78,19 @@ int main(int argc, char **argv)
     const int32_t validArgCount = 8;
     const int32_t gapAfterCapture = 1; // 1 second
     const int32_t previewCaptureGap = 5; // 5 seconds
-    const char *testName = "camera_capture";
+    const char* testName = "camera_capture";
     int32_t ret = -1;
     int32_t previewFd = -1;
     int32_t photoFd = -1;
-    int32_t previewFormat = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
+    int32_t previewFormat = CAMERA_FORMAT_YUV_420_SP;
     int32_t previewWidth = 640;
     int32_t previewHeight = 480;
-    int32_t photoFormat = OHOS_CAMERA_FORMAT_JPEG;
+    int32_t photoFormat = CAMERA_FORMAT_JPEG;
     int32_t photoWidth = 1280;
     int32_t photoHeight = 960;
     int32_t photoCaptureCount = 1;
     bool isResolutionConfigured = false;
+    Size previewsize, photosize;
 
     MEDIA_DEBUG_LOG("Camera new(std::nothrow) sample begin.");
     // Update sizes if enough number of valid arguments are passed
@@ -162,7 +165,7 @@ int main(int argc, char **argv)
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     MEDIA_DEBUG_LOG("Setting callback to listen camera status and flash status");
     camManagerObj->SetCallback(std::make_shared<TestCameraMngerCallback>(testName));
-    std::vector<sptr<CameraInfo>> cameraObjList = camManagerObj->GetCameras();
+    std::vector<sptr<CameraDevice>> cameraObjList = camManagerObj->GetSupportedCameras();
     if (cameraObjList.size() == 0) {
         MEDIA_DEBUG_LOG("No camera devices");
         (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
@@ -184,7 +187,6 @@ int main(int argc, char **argv)
     }
 
     captureSession->BeginConfig();
-
     sptr<CaptureInput> captureInput = camManagerObj->CreateCameraInput(cameraObjList[0]);
     if (captureInput == nullptr) {
         MEDIA_DEBUG_LOG("Failed to create camera input");
@@ -194,22 +196,35 @@ int main(int argc, char **argv)
     }
 
     sptr<CameraInput> cameraInput = (sptr<CameraInput> &)captureInput;
-
+    cameraInput->Open();
     if (!isResolutionConfigured) {
-        std::vector<camera_format_t> previewFormats = cameraInput->GetSupportedPreviewFormats();
+        std::vector<CameraFormat> previewFormats;
+        std::vector<CameraFormat> photoFormats;
+        std::vector<Size> previewSizes;
+        std::vector<Size> photoSizes;
+        sptr<CameraOutputCapability> outputcapability =  camManagerObj->GetSupportedOutputCapability(cameraObjList[0]);
+        std::vector<Profile> previewProfiles = outputcapability->GetPreviewProfiles();
+        for (auto i : previewProfiles) {
+            previewFormats.push_back(i.GetCameraFormat());
+            previewSizes.push_back(i.GetSize());
+        }
         MEDIA_DEBUG_LOG("Supported preview formats:");
         for (auto &formatPreview : previewFormats) {
             MEDIA_DEBUG_LOG("format : %{public}d", formatPreview);
         }
-        if (std::find(previewFormats.begin(), previewFormats.end(), OHOS_CAMERA_FORMAT_YCRCB_420_SP)
+        if (std::find(previewFormats.begin(), previewFormats.end(), CAMERA_FORMAT_YUV_420_SP)
             != previewFormats.end()) {
-            previewFormat = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
-            MEDIA_DEBUG_LOG("OHOS_CAMERA_FORMAT_YCRCB_420_SP format is present in supported preview formats");
+            previewFormat = CAMERA_FORMAT_YUV_420_SP;
+            MEDIA_DEBUG_LOG("CAMERA_FORMAT_YUV_420_SP format is present in supported preview formats");
         } else if (!previewFormats.empty()) {
             previewFormat = previewFormats[0];
-            MEDIA_DEBUG_LOG("OHOS_CAMERA_FORMAT_YCRCB_420_SP format is not present in supported preview formats");
+            MEDIA_DEBUG_LOG("CAMERA_FORMAT_YUV_420_SP format is not present in supported preview formats");
         }
-        std::vector<camera_format_t> photoFormats = cameraInput->GetSupportedPhotoFormats();
+        std::vector<Profile> photoProfiles =  outputcapability->GetPhotoProfiles();
+        for (auto i : photoProfiles) {
+            photoFormats.push_back(i.GetCameraFormat());
+            photoSizes.push_back(i.GetSize());
+        }
         MEDIA_DEBUG_LOG("Supported photo formats:");
         for (auto &formatPhoto : photoFormats) {
             MEDIA_DEBUG_LOG("format : %{public}d", formatPhoto);
@@ -217,14 +232,10 @@ int main(int argc, char **argv)
         if (!photoFormats.empty()) {
             photoFormat = photoFormats[0];
         }
-        std::vector<CameraPicSize> previewSizes
-            = cameraInput->getSupportedSizes(static_cast<camera_format_t>(previewFormat));
         MEDIA_DEBUG_LOG("Supported sizes for preview:");
         for (auto &size : previewSizes) {
             MEDIA_DEBUG_LOG("width: %{public}d, height: %{public}d", size.width, size.height);
         }
-        std::vector<CameraPicSize> photoSizes
-            = cameraInput->getSupportedSizes(static_cast<camera_format_t>(photoFormat));
         MEDIA_DEBUG_LOG("Supported sizes for photo:");
         for (auto &size : photoSizes) {
             MEDIA_DEBUG_LOG("width: %{public}d, height: %{public}d", size.width, size.height);
@@ -261,12 +272,13 @@ int main(int argc, char **argv)
             tokenIdEx.tokenIdExStruct.tokenID);
         return 0;
     }
-    photoSurface->SetDefaultWidthAndHeight(photoWidth, photoHeight);
-    photoSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(photoFormat));
+    photosize.width = photoWidth;
+    photosize.height = photoHeight;
+    Profile photoprofile = Profile(static_cast<CameraFormat>(photoFormat), photosize);
     sptr<SurfaceListener> captureListener = new(std::nothrow) SurfaceListener("Photo", SurfaceType::PHOTO,
                                                                               photoFd, photoSurface);
     photoSurface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)captureListener);
-    sptr<CaptureOutput> photoOutput = camManagerObj->CreatePhotoOutput(photoSurface);
+    sptr<CaptureOutput> photoOutput = camManagerObj->CreatePhotoOutput(photoprofile, photoSurface);
     if (photoOutput == nullptr) {
         MEDIA_DEBUG_LOG("Failed to create PhotoOutput");
         (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
@@ -291,13 +303,13 @@ int main(int argc, char **argv)
             tokenIdEx.tokenIdExStruct.tokenID);
         return 0;
     }
-    previewSurface->SetDefaultWidthAndHeight(previewWidth, previewHeight);
-    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewFormat));
+    previewsize.width = previewWidth;
+    previewsize.height = previewHeight;
+    Profile previewprofile = Profile(static_cast<CameraFormat>(previewFormat), previewsize);
     sptr<SurfaceListener> listener = new(std::nothrow) SurfaceListener("Preview", SurfaceType::PREVIEW,
                                                                        previewFd, previewSurface);
     previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)listener);
-    sptr<CaptureOutput> previewOutput = camManagerObj->CreateCustomPreviewOutput(previewSurface,
-        previewWidth, previewHeight);
+    sptr<CaptureOutput> previewOutput = camManagerObj->CreatePreviewOutput(previewprofile, previewSurface);
     if (previewOutput == nullptr) {
         MEDIA_DEBUG_LOG("Failed to create previewOutput");
         (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
@@ -330,6 +342,14 @@ int main(int argc, char **argv)
             tokenIdEx.tokenIdExStruct.tokenID);
         return 0;
     }
+    sleep(previewCaptureGap);
+    ret = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    if (ret != 0) {
+        MEDIA_DEBUG_LOG("Failed to start preview output, ret: %{public}d", ret);
+        (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
+            tokenIdEx.tokenIdExStruct.tokenID);
+        return 0;
+    }
 
     MEDIA_DEBUG_LOG("Preview started");
     sleep(previewCaptureGap);
@@ -346,6 +366,7 @@ int main(int argc, char **argv)
     }
 
     MEDIA_DEBUG_LOG("Closing the session");
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     captureSession->Stop();
     captureSession->Release();
     cameraInput->Release();

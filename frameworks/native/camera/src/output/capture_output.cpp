@@ -28,7 +28,7 @@ CaptureOutputType CaptureOutput::GetOutputType()
     return outputType_;
 }
 
-const char *CaptureOutput::GetOutputTypeString()
+const char* CaptureOutput::GetOutputTypeString()
 {
     return g_captureOutputTypeString[outputType_];
 }
@@ -43,12 +43,12 @@ sptr<IStreamCommon> CaptureOutput::GetStream()
     return stream_;
 }
 
-CaptureSession *CaptureOutput::GetSession()
+CaptureSession* CaptureOutput::GetSession()
 {
     return session_;
 }
 
-void CaptureOutput::SetSession(CaptureSession *captureSession)
+void CaptureOutput::SetSession(CaptureSession* captureSession)
 {
     session_ = captureSession;
 }

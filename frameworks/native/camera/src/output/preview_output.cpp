@@ -80,7 +80,26 @@ public:
     }
 };
 
-void PreviewOutput::SetCallback(std::shared_ptr<PreviewCallback> callback)
+void PreviewOutput::AddDeferredSurface(sptr<Surface> surface)
+{
+    if (surface == nullptr) {
+        MEDIA_ERR_LOG("PreviewOutput::AddDeferredSurface surface is null");
+        return;
+    }
+    static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->AddDeferredSurface(surface->GetProducer());
+}
+
+int32_t PreviewOutput::Start()
+{
+    return static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Start();
+}
+
+int32_t PreviewOutput::Stop()
+{
+    return static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Stop();
+}
+
+void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
 {
     int32_t errorCode = CAMERA_OK;
 
@@ -104,7 +123,7 @@ void PreviewOutput::SetCallback(std::shared_ptr<PreviewCallback> callback)
     return;
 }
 
-std::shared_ptr<PreviewCallback> PreviewOutput::GetApplicationCallback()
+std::shared_ptr<PreviewStateCallback> PreviewOutput::GetApplicationCallback()
 {
     return appCallback_;
 }

@@ -30,7 +30,7 @@ namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
 class HStreamCapture : public HStreamCaptureStub, public HStreamCommon {
 public:
-    HStreamCapture(sptr<OHOS::IBufferProducer> surface, int32_t format);
+    HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height);
     ~HStreamCapture();
 
     int32_t LinkInput(sptr<IStreamOperator> streamOperator,

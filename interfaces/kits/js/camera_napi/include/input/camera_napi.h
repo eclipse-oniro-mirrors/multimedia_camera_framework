@@ -21,6 +21,7 @@
 #include "napi/native_node_api.h"
 #include "hilog/log.h"
 #include "camera_napi_utils.h"
+#include "output/camera_output_capability.h"
 #include "output/metadata_output_napi.h"
 
 #include "input/camera_manager.h"
@@ -110,24 +111,68 @@ static const std::vector<std::string> vecVideoStabilizationMode {
     "OFF", "LOW", "MIDDLE", "HIGH", "AUTO"
 };
 
-enum FlashMode {
-    FLASHMODE_CLOSE = 1,
-    FLASHMODE_OPEN = 2,
-    FLASHMODE_AUTO = 3,
-    FLASHMODE_ALWAYS_OPEN = 4,
+static const std::unordered_map<std::string, int32_t> mapImageRotation = {
+    {"ROTATION_0", 0},
+    {"ROTATION_90", 90},
+    {"ROTATION_180", 180},
+    {"ROTATION_270", 270},
 };
 
-enum ExposureMode {
-    EXPOSUREMODE_LOCKED = 1,
-    EXPOSUREMODE_AUTO = 2,
-    EXPOSUREMODE_CONTINUOUS_AUTO = 3,
+static const std::unordered_map<std::string, int32_t> mapQualityLevel = {
+    {"QUALITY_LEVEL_HIGH", 0},
+    {"QUALITY_LEVEL_MEDIUM", 1},
+    {"QUALITY_LEVEL_LOW", 2},
 };
 
-enum FocusMode {
-    FOCUSMODE_MANUAL = 1,
-    FOCUSMODE_CONTINUOUS_AUTO_FOCUS = 2,
-    FOCUSMODE_AUTO_FOCUS = 3,
-    FOCUSMODE_LOCKED = 4,
+static const std::unordered_map<std::string, int32_t> mapFocusState = {
+    {"FOCUS_STATE_SCAN", 0},
+    {"FOCUS_STATE_FOCUSED", 1},
+    {"FOCUS_STATE_UNFOCUSED", 2},
+};
+
+static const std::unordered_map<std::string, int32_t> mapExposureState = {
+    {"EXPOSURE_STATE_SCAN", 0},
+    {"EXPOSURE_STATE_CONVERGED", 1},
+};
+
+static const std::unordered_map<std::string, int32_t> mapCameraInputErrorCode = {
+    {"ERROR_UNKNOWN", -1},
+    {"ERROR_NO_PERMISSION", 0},
+    {"ERROR_DEVICE_PREEMPTED", 1},
+    {"ERROR_DEVICE_DISCONNECTED", 2},
+    {"ERROR_DEVICE_IN_USE", 3},
+    {"ERROR_DRIVER_ERROR", 4}
+};
+
+static const std::unordered_map<std::string, int32_t> mapCaptureSessionErrorCode = {
+    {"ERROR_UNKNOWN", -1},
+    {"ERROR_INSUFFICIENT_RESOURCES", 0},
+    {"ERROR_TIMEOUT", 1}
+};
+
+static const std::unordered_map<std::string, int32_t> mapPreviewOutputErrorCode = {
+    {"ERROR_UNKNOWN", -1}
+};
+
+static const std::unordered_map<std::string, int32_t> mapPhotoOutputErrorCode = {
+    {"ERROR_UNKNOWN", -1},
+    {"ERROR_DRIVER_ERROR", 0},
+    {"ERROR_INSUFFICIENT_RESOURCES", 1},
+    {"ERROR_TIMEOUT", 2}
+};
+
+static const std::unordered_map<std::string, int32_t> mapVideoOutputErrorCode = {
+    {"ERROR_UNKNOWN", -1},
+    {"ERROR_DRIVER_ERROR", 0}
+};
+
+static const std::unordered_map<std::string, int32_t> mapMetaOutputErrorCode = {
+    {"ERROR_UNKNOWN", -1},
+    {"ERROR_INSUFFICIENT_RESOURCES", 0}
+};
+
+enum CreateAsyncCallbackModes {
+    CREATE_CAMERA_MANAGER_ASYNC_CALLBACK = 10,
 };
 
 class CameraNapi {
@@ -138,19 +183,13 @@ public:
     CameraNapi();
     ~CameraNapi();
 
-private:
-    static void CameraNapiDestructor(napi_env env, void *nativeObject, void *finalize_hint);
+    static void CameraNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_status AddNamedProperty(napi_env env, napi_value object,
                                         const std::string name, int32_t enumValue);
     static napi_value Construct(napi_env env, napi_callback_info info);
     static napi_value CameraNapiConstructor(napi_env env, napi_callback_info info);
 
     static napi_value CreateCameraManagerInstance(napi_env env, napi_callback_info info);
-    static napi_value CreateCameraSessionInstance(napi_env env, napi_callback_info info);
-    static napi_value CreatePreviewOutputInstance(napi_env env, napi_callback_info info);
-    static napi_value CreatePhotoOutputInstance(napi_env env, napi_callback_info info);
-    static napi_value CreateVideoOutputInstance(napi_env env, napi_callback_info info);
-    static napi_value CreateMetadataOutputInstance(napi_env env, napi_callback_info info);
     static napi_value CreateFlashModeObject(napi_env env);
     static napi_value CreateExposureModeObject(napi_env env);
     static napi_value CreateFocusModeObject(napi_env env);
@@ -160,12 +199,19 @@ private:
     static napi_value CreateCameraStatusObject(napi_env env);
     static napi_value CreateCameraFormatObject(napi_env env);
     static napi_value CreateImageRotationEnum(napi_env env);
-    static napi_value CreateErrorUnknownEnum(napi_env env);
     static napi_value CreateExposureStateEnum(napi_env env);
     static napi_value CreateFocusStateEnum(napi_env env);
     static napi_value CreateQualityLevelEnum(napi_env env);
     static napi_value CreateVideoStabilizationModeObject(napi_env env);
 
+    static napi_value CreateCameraInputErrorCode(napi_env env);
+    static napi_value CreateCaptureSessionErrorCode(napi_env env);
+    static napi_value CreatePreviewOutputErrorCode(napi_env env);
+    static napi_value CreatePhotoOutputErrorCode(napi_env env);
+    static napi_value CreateVideoOutputErrorCode(napi_env env);
+    static napi_value CreateMetaOutputErrorCode(napi_env env);
+
+private:
     static thread_local napi_ref sConstructor_;
 
     static thread_local napi_ref flashModeRef_;
@@ -180,21 +226,21 @@ private:
     static thread_local napi_ref cameraTypeRef_;
     static thread_local napi_ref imageRotationRef_;
     static thread_local napi_ref qualityLevelRef_;
-    static thread_local napi_ref errorUnknownRef_;
     static thread_local napi_ref videoStabilizationModeRef_;
 
+    static thread_local napi_ref errorCameraInputRef_;
+    static thread_local napi_ref errorCaptureSessionRef_;
+    static thread_local napi_ref errorPreviewOutputRef_;
+    static thread_local napi_ref errorPhotoOutputRef_;
+    static thread_local napi_ref errorVideoOutputRef_;
+    static thread_local napi_ref errorMetaOutputRef_;
     napi_env env_;
     napi_ref wrapper_;
     sptr<CameraManager> cameraManager_;
 };
 
-struct CameraNapiAsyncContext {
-    napi_env env;
-    napi_async_work work;
-    napi_deferred deferred;
-    napi_ref callbackRef;
-    bool status;
-    CameraNapi *objectInfo;
+struct CameraNapiAsyncContext : public AsyncContext {
+    CameraNapi* objectInfo;
     std::string photoSurfaceId;
     uint64_t surfaceId;
     sptr<CameraManager> cameraManager;
@@ -202,6 +248,7 @@ struct CameraNapiAsyncContext {
     sptr<CaptureOutput> previewOutput;
     sptr<CaptureOutput> photoOutput;
     sptr<CaptureOutput> videoOutput;
+    CreateAsyncCallbackModes modeForAsync;
 };
 } // namespace CameraStandard
 } // namespace OHOS

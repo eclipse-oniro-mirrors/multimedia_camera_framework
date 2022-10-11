@@ -36,13 +36,13 @@ CameraManagerCallbackNapi::~CameraManagerCallbackNapi()
 
 void CameraManagerCallbackNapi::OnCameraStatusCallbackAsync(const CameraStatusInfo &cameraStatusInfo) const
 {
-    uv_loop_s *loop = nullptr;
+    uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
     if (!loop) {
         MEDIA_ERR_LOG("CameraManagerCallbackNapi:OnCameraStatusCallbackAsync() failed to get event loop");
         return;
     }
-    uv_work_t *work = new(std::nothrow) uv_work_t;
+    uv_work_t* work = new(std::nothrow) uv_work_t;
     if (!work) {
         MEDIA_ERR_LOG("CameraManagerCallbackNapi:OnCameraStatusCallbackAsync() failed to allocate work");
         return;
@@ -50,8 +50,8 @@ void CameraManagerCallbackNapi::OnCameraStatusCallbackAsync(const CameraStatusIn
     std::unique_ptr<CameraStatusCallbackInfo> callbackInfo =
         std::make_unique<CameraStatusCallbackInfo>(cameraStatusInfo, this);
     work->data = callbackInfo.get();
-    int ret = uv_queue_work(loop, work, [] (uv_work_t *work) {}, [] (uv_work_t *work, int status) {
-        CameraStatusCallbackInfo *callbackInfo = reinterpret_cast<CameraStatusCallbackInfo *>(work->data);
+    int ret = uv_queue_work(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+        CameraStatusCallbackInfo* callbackInfo = reinterpret_cast<CameraStatusCallbackInfo *>(work->data);
         if (callbackInfo) {
             callbackInfo->listener_->OnCameraStatusCallback(callbackInfo->info_);
             delete callbackInfo;
@@ -81,16 +81,16 @@ void CameraManagerCallbackNapi::OnCameraStatusCallback(const CameraStatusInfo &c
 
     napi_create_object(env_, &result[PARAM1]);
 
-    if (cameraStatusInfo.cameraInfo != nullptr) {
-        napi_value cameraInfoNopi = CameraInfoNapi::CreateCameraObj(env_, cameraStatusInfo.cameraInfo);
-        napi_set_named_property(env_, result[PARAM1], "camera", cameraInfoNopi);
+    if (cameraStatusInfo.cameraDevice != nullptr) {
+        napi_value cameraDeviceNapi = CameraDeviceNapi::CreateCameraObj(env_, cameraStatusInfo.cameraDevice);
+        napi_set_named_property(env_, result[PARAM1], "camera", cameraDeviceNapi);
     } else {
         MEDIA_ERR_LOG("Camera info is null");
         napi_set_named_property(env_, result[PARAM1], "camera", undefinedResult);
     }
 
     int32_t jsCameraStatus = -1;
-    CameraNapiUtils::MapCameraStatusEnum(cameraStatusInfo.cameraStatus, jsCameraStatus);
+    jsCameraStatus = cameraStatusInfo.cameraStatus;
     napi_create_int64(env_, jsCameraStatus, &propValue);
     napi_set_named_property(env_, result[PARAM1], "status", propValue);
 
@@ -100,13 +100,13 @@ void CameraManagerCallbackNapi::OnCameraStatusCallback(const CameraStatusInfo &c
 
 void CameraManagerCallbackNapi::OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const
 {
-    MEDIA_DEBUG_LOG("CameraManagerCallbackNapi:OnCameraStatusChanged CameraDeviceStatus: %{public}d",
+    MEDIA_DEBUG_LOG("CameraManagerCallbackNapi:OnCameraStatusChanged CameraStatus: %{public}d",
                     cameraStatusInfo.cameraStatus);
     OnCameraStatusCallbackAsync(cameraStatusInfo);
 }
 
 void CameraManagerCallbackNapi::OnFlashlightStatusChanged(const std::string &cameraID,
-    const FlashlightStatus flashStatus) const
+    const FlashStatus flashStatus) const
 {
     (void)cameraID;
     (void)flashStatus;

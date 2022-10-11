@@ -27,8 +27,7 @@ namespace {
 }
 
 thread_local napi_ref PhotoOutputNapi::sConstructor_ = nullptr;
-thread_local sptr<CaptureOutput> PhotoOutputNapi::sPhotoOutput_ = nullptr;
-thread_local std::string PhotoOutputNapi::sSurfaceId_ = "invalid";
+thread_local sptr<PhotoOutput> PhotoOutputNapi::sPhotoOutput_ = nullptr;
 thread_local uint32_t PhotoOutputNapi::photoOutputTaskId = CAMERA_PHOTO_OUTPUT_TASKID;
 thread_local bool PhotoOutputNapi::enableMirror = false;
 
@@ -36,13 +35,13 @@ PhotoOutputCallback::PhotoOutputCallback(napi_env env) : env_(env) {}
 
 void PhotoOutputCallback::UpdateJSCallbackAsync(std::string propName, const CallbackInfo &info) const
 {
-    uv_loop_s *loop = nullptr;
+    uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
     if (!loop) {
         MEDIA_ERR_LOG("PhotoOutputCallback:UpdateJSCallbackAsync() failed to get event loop");
         return;
     }
-    uv_work_t *work = new(std::nothrow) uv_work_t;
+    uv_work_t* work = new(std::nothrow) uv_work_t;
     if (!work) {
         MEDIA_ERR_LOG("PhotoOutputCallback:UpdateJSCallbackAsync() failed to allocate work");
         return;
@@ -50,8 +49,8 @@ void PhotoOutputCallback::UpdateJSCallbackAsync(std::string propName, const Call
     std::unique_ptr<PhotoOutputCallbackInfo> callbackInfo =
         std::make_unique<PhotoOutputCallbackInfo>(propName, info, this);
     work->data = callbackInfo.get();
-    int ret = uv_queue_work(loop, work, [] (uv_work_t *work) {}, [] (uv_work_t *work, int status) {
-        PhotoOutputCallbackInfo *callbackInfo = reinterpret_cast<PhotoOutputCallbackInfo *>(work->data);
+    int ret = uv_queue_work(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+        PhotoOutputCallbackInfo* callbackInfo = reinterpret_cast<PhotoOutputCallbackInfo *>(work->data);
         if (callbackInfo) {
             callbackInfo->listener_->UpdateJSCallback(callbackInfo->eventName_, callbackInfo->info_);
             delete callbackInfo;
@@ -181,9 +180,9 @@ PhotoOutputNapi::~PhotoOutputNapi()
     }
 }
 
-void PhotoOutputNapi::PhotoOutputNapiDestructor(napi_env env, void *nativeObject, void *finalize_hint)
+void PhotoOutputNapi::PhotoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
-    PhotoOutputNapi *photoOutput = reinterpret_cast<PhotoOutputNapi*>(nativeObject);
+    PhotoOutputNapi* photoOutput = reinterpret_cast<PhotoOutputNapi*>(nativeObject);
     if (photoOutput != nullptr) {
         photoOutput->~PhotoOutputNapi();
     }
@@ -196,6 +195,7 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
     int32_t refCount = 1;
 
     napi_property_descriptor photo_output_props[] = {
+        DECLARE_NAPI_FUNCTION("getDefaultCaptureSetting", GetDefaultCaptureSetting),
         DECLARE_NAPI_FUNCTION("capture", Capture),
         DECLARE_NAPI_FUNCTION("release", Release),
         DECLARE_NAPI_FUNCTION("isMirrorSupported", IsMirrorSupported),
@@ -235,8 +235,6 @@ napi_value PhotoOutputNapi::PhotoOutputNapiConstructor(napi_env env, napi_callba
         if (obj != nullptr) {
             obj->env_ = env;
             obj->photoOutput_ = sPhotoOutput_;
-            obj->surfaceId_ = sSurfaceId_;
-
             std::shared_ptr<PhotoOutputCallback> callback =
                 std::make_shared<PhotoOutputCallback>(PhotoOutputCallback(env));
             ((sptr<PhotoOutput> &)(obj->photoOutput_))->SetCallback(callback);
@@ -256,14 +254,9 @@ napi_value PhotoOutputNapi::PhotoOutputNapiConstructor(napi_env env, napi_callba
     return result;
 }
 
-sptr<CaptureOutput> PhotoOutputNapi::GetPhotoOutput()
+sptr<PhotoOutput> PhotoOutputNapi::GetPhotoOutput()
 {
     return photoOutput_;
-}
-
-std::string PhotoOutputNapi::GetSurfaceId()
-{
-    return surfaceId_;
 }
 
 bool PhotoOutputNapi::IsPhotoOutput(napi_env env, napi_value obj)
@@ -283,16 +276,17 @@ bool PhotoOutputNapi::IsPhotoOutput(napi_env env, napi_value obj)
     return result;
 }
 
-napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, std::string surfaceId)
+napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile &profile, std::string surfaceId)
 {
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
     napi_value constructor;
-
+    MEDIA_INFO_LOG("CreatePhotoOutput start");
+    MEDIA_INFO_LOG("CreatePhotoOutput profile CameraFormat= %{public}d", profile.GetCameraFormat());
+    napi_get_undefined(env, &result);
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
-        sSurfaceId_ = surfaceId;
         MEDIA_INFO_LOG("CreatePhotoOutput surfaceId: %{public}s", surfaceId.c_str());
         sptr<Surface> surface = Media::ImageReceiver::getSurfaceById(surfaceId);
         if (surface == nullptr) {
@@ -306,7 +300,7 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, std::string surfaceI
 #else
         surface->SetUserData(CameraManager::surfaceFormat, std::to_string(OHOS_CAMERA_FORMAT_JPEG));
 #endif
-        sPhotoOutput_ = CameraManager::GetInstance()->CreatePhotoOutput(surface);
+        sPhotoOutput_ = CameraManager::GetInstance()->CreatePhotoOutput(profile, surface);
         if (sPhotoOutput_ == nullptr) {
             MEDIA_ERR_LOG("failed to create CreatePhotoOutput");
             return result;
@@ -314,13 +308,13 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, std::string surfaceI
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sPhotoOutput_ = nullptr;
         if (status == napi_ok && result != nullptr) {
+            MEDIA_ERR_LOG("Success to create photo output instance");
             return result;
         } else {
             MEDIA_ERR_LOG("Failed to create photo output instance");
         }
     }
-
-    napi_get_undefined(env, &result);
+    MEDIA_INFO_LOG("CreatePhotoOutput get undefined");
     return result;
 }
 
@@ -349,6 +343,7 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
     if (!context->funcName.empty() && context->taskId > 0) {
         // Finish async trace
         CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
+        jsContext->funcName = context->funcName;
     }
 
     if (context->work != nullptr) {
@@ -373,7 +368,7 @@ int32_t QueryAndGetProperty(napi_env env, napi_value arg, const string &property
 
 int32_t GetLocationProperties(napi_env env, napi_value locationObj, const PhotoOutputAsyncContext &context)
 {
-    PhotoOutputAsyncContext *asyncContext = const_cast<PhotoOutputAsyncContext *>(&context);
+    PhotoOutputAsyncContext* asyncContext = const_cast<PhotoOutputAsyncContext *>(&context);
     napi_value latproperty = nullptr;
     napi_value lonproperty = nullptr;
     napi_value altproperty = nullptr;
@@ -403,7 +398,7 @@ int32_t GetLocationProperties(napi_env env, napi_value locationObj, const PhotoO
 
 static void GetFetchOptionsParam(napi_env env, napi_value arg, const PhotoOutputAsyncContext &context, bool &err)
 {
-    PhotoOutputAsyncContext *asyncContext = const_cast<PhotoOutputAsyncContext *>(&context);
+    PhotoOutputAsyncContext* asyncContext = const_cast<PhotoOutputAsyncContext *>(&context);
     int32_t intValue;
     std::string strValue;
     napi_value property = nullptr;
@@ -605,6 +600,56 @@ napi_value PhotoOutputNapi::Release(napi_env env, napi_callback_info info)
     return result;
 }
 
+napi_value PhotoOutputNapi::GetDefaultCaptureSetting(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+    napi_value result = nullptr;
+    const int32_t refCount = 1;
+    napi_value resource = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
+
+    napi_get_undefined(env, &result);
+    std::unique_ptr<PhotoOutputAsyncContext> asyncContext = std::make_unique<PhotoOutputAsyncContext>();
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
+    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
+        if (argc == ARGS_ONE) {
+            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
+        }
+
+        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
+        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "GetDefaultCaptureSetting");
+
+        status = napi_create_async_work(
+            env, nullptr, resource, [](napi_env env, void* data) {
+                auto context = static_cast<PhotoOutputAsyncContext*>(data);
+                context->status = false;
+                // Start async trace
+                context->funcName = "PhotoOutputNapi::GetDefaultCaptureSetting";
+                context->taskId = CameraNapiUtils::IncreamentAndGet(photoOutputTaskId);
+                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
+                if (context->objectInfo != nullptr) {
+                    context->bRetBool = false;
+                    context->status = true;
+                }
+            },
+            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+        if (status != napi_ok) {
+            MEDIA_ERR_LOG("Failed to create napi_create_async_work for PhotoOutputNapi::GetDefaultCaptureSetting");
+            napi_get_undefined(env, &result);
+        } else {
+            napi_queue_async_work(env, asyncContext->work);
+            asyncContext.release();
+        }
+    }
+
+    return result;
+}
+
 napi_value PhotoOutputNapi::IsMirrorSupported(napi_env env, napi_callback_info info)
 {
     napi_status status;
@@ -632,6 +677,10 @@ napi_value PhotoOutputNapi::IsMirrorSupported(napi_env env, napi_callback_info i
             env, nullptr, resource, [](napi_env env, void* data) {
                 auto context = static_cast<PhotoOutputAsyncContext*>(data);
                 context->status = false;
+                // Start async trace
+                context->funcName = "PhotoOutputNapi::IsMirrorSupported";
+                context->taskId = CameraNapiUtils::IncreamentAndGet(photoOutputTaskId);
+                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = true;
                     context->status = true;
@@ -681,6 +730,10 @@ napi_value PhotoOutputNapi::SetMirror(napi_env env, napi_callback_info info)
             env, nullptr, resource, [](napi_env env, void* data) {
                 auto context = static_cast<PhotoOutputAsyncContext*>(data);
                 context->status = false;
+                // Start async trace
+                context->funcName = "PhotoOutputNapi::SetMirror";
+                context->taskId = CameraNapiUtils::IncreamentAndGet(photoOutputTaskId);
+                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
                     context->status = true;
@@ -710,7 +763,7 @@ napi_value PhotoOutputNapi::On(napi_env env, napi_callback_info info)
     char buffer[SIZE];
     std::string eventType;
     const int32_t refCount = 1;
-    PhotoOutputNapi *obj = nullptr;
+    PhotoOutputNapi* obj = nullptr;
     napi_status status;
 
     napi_get_undefined(env, &undefinedResult);
@@ -743,7 +796,6 @@ napi_value PhotoOutputNapi::On(napi_env env, napi_callback_info info)
             MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
         }
     }
-
     return undefinedResult;
 }
 } // namespace CameraStandard

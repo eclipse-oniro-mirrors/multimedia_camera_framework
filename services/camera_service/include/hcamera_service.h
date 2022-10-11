@@ -44,14 +44,17 @@ public:
     int32_t CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> &device) override;
     int32_t CreateCaptureSession(sptr<ICaptureSession> &session) override;
     int32_t CreatePhotoOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
+                              int32_t width, int32_t height,
                               sptr<IStreamCapture> &photoOutput) override;
+    int32_t CreateDeferredPreviewOutput(int32_t format, int32_t width, int32_t height,
+                                        sptr<IStreamRepeat> &previewOutput) override;
     int32_t CreatePreviewOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
+                                int32_t width, int32_t height,
                                 sptr<IStreamRepeat> &previewOutput) override;
-    int32_t CreateCustomPreviewOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format, int32_t width,
-                                      int32_t height, sptr<IStreamRepeat> &previewOutput) override;
     int32_t CreateMetadataOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
                                  sptr<IStreamMetadata> &metadataOutput) override;
     int32_t CreateVideoOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
+                              int32_t width, int32_t height,
                               sptr<IStreamRepeat> &videoOutput) override;
     int32_t SetCallback(sptr<ICameraServiceCallback> &callback) override;
     void OnDump() override;
@@ -69,23 +72,23 @@ protected:
 private:
     void CameraSummary(std::vector<std::string> cameraIds,
         std::string& dumpString);
-    void CameraDumpAbility(common_metadata_header_t *metadataEntry,
+    void CameraDumpAbility(common_metadata_header_t* metadataEntry,
     std::string& dumpString);
-    void CameraDumpStreaminfo(common_metadata_header_t *metadataEntry,
+    void CameraDumpStreaminfo(common_metadata_header_t* metadataEntry,
     std::string& dumpString);
-    void CameraDumpZoom(common_metadata_header_t *metadataEntry,
+    void CameraDumpZoom(common_metadata_header_t* metadataEntry,
     std::string& dumpString);
-    void CameraDumpFlash(common_metadata_header_t *metadataEntry,
+    void CameraDumpFlash(common_metadata_header_t* metadataEntry,
     std::string& dumpString);
-    void CameraDumpAF(common_metadata_header_t *metadataEntry,
+    void CameraDumpAF(common_metadata_header_t* metadataEntry,
     std::string& dumpString);
-    void CameraDumpAE(common_metadata_header_t *metadataEntry,
+    void CameraDumpAE(common_metadata_header_t* metadataEntry,
     std::string& dumpString);
-    void CameraDumpSensorInfo(common_metadata_header_t *metadataEntry,
+    void CameraDumpSensorInfo(common_metadata_header_t* metadataEntry,
     std::string& dumpString);
-    void CameraDumpVideoStabilization(common_metadata_header_t *metadataEntry,
+    void CameraDumpVideoStabilization(common_metadata_header_t* metadataEntry,
         std::string& dumpString);
-    void CameraDumpVideoFrameRateRange(common_metadata_header_t *metadataEntry,
+    void CameraDumpVideoFrameRateRange(common_metadata_header_t* metadataEntry,
         std::string& dumpString);
 
     std::mutex mutex_;

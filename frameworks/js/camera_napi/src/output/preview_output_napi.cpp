@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-
 #include "output/preview_output_napi.h"
 #include <unistd.h>
 #include <uv.h>
@@ -29,21 +28,20 @@ namespace {
 }
 
 thread_local napi_ref PreviewOutputNapi::sConstructor_ = nullptr;
-thread_local sptr<CaptureOutput> PreviewOutputNapi::sPreviewOutput_ = nullptr;
-thread_local uint64_t PreviewOutputNapi::sSurfaceId_ = 0;
+thread_local sptr<PreviewOutput> PreviewOutputNapi::sPreviewOutput_ = nullptr;
 thread_local uint32_t PreviewOutputNapi::previewOutputTaskId = CAMERA_PREVIEW_OUTPUT_TASKID;
 
 PreviewOutputCallback::PreviewOutputCallback(napi_env env) : env_(env) {}
 
 void PreviewOutputCallback::UpdateJSCallbackAsync(std::string propName, const int32_t value) const
 {
-    uv_loop_s *loop = nullptr;
+    uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
     if (!loop) {
         MEDIA_ERR_LOG("PreviewOutputCallback:UpdateJSCallbackAsync() failed to get event loop");
         return;
     }
-    uv_work_t *work = new(std::nothrow) uv_work_t;
+    uv_work_t* work = new(std::nothrow) uv_work_t;
     if (!work) {
         MEDIA_ERR_LOG("PreviewOutputCallback:UpdateJSCallbackAsync() failed to allocate work");
         return;
@@ -51,8 +49,8 @@ void PreviewOutputCallback::UpdateJSCallbackAsync(std::string propName, const in
     std::unique_ptr<PreviewOutputCallbackInfo> callbackInfo =
         std::make_unique<PreviewOutputCallbackInfo>(propName, value, this);
     work->data = callbackInfo.get();
-    int ret = uv_queue_work(loop, work, [] (uv_work_t *work) {}, [] (uv_work_t *work, int status) {
-        PreviewOutputCallbackInfo *callbackInfo = reinterpret_cast<PreviewOutputCallbackInfo *>(work->data);
+    int ret = uv_queue_work(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+        PreviewOutputCallbackInfo* callbackInfo = reinterpret_cast<PreviewOutputCallbackInfo *>(work->data);
         if (callbackInfo) {
             callbackInfo->listener_->UpdateJSCallback(callbackInfo->eventName_, callbackInfo->value_);
             delete callbackInfo;
@@ -146,9 +144,9 @@ PreviewOutputNapi::~PreviewOutputNapi()
     }
 }
 
-void PreviewOutputNapi::PreviewOutputNapiDestructor(napi_env env, void *nativeObject, void *finalize_hint)
+void PreviewOutputNapi::PreviewOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
-    PreviewOutputNapi *cameraObj = reinterpret_cast<PreviewOutputNapi*>(nativeObject);
+    PreviewOutputNapi* cameraObj = reinterpret_cast<PreviewOutputNapi*>(nativeObject);
     if (cameraObj != nullptr) {
         cameraObj->~PreviewOutputNapi();
     }
@@ -161,8 +159,11 @@ napi_value PreviewOutputNapi::Init(napi_env env, napi_value exports)
     int32_t refCount = 1;
 
     napi_property_descriptor preview_output_props[] = {
+        DECLARE_NAPI_FUNCTION("addDeferredSurface", AddDeferredSurface),
+        DECLARE_NAPI_FUNCTION("start", Start),
+        DECLARE_NAPI_FUNCTION("stop", Stop),
         DECLARE_NAPI_FUNCTION("release", Release),
-        DECLARE_NAPI_FUNCTION("on", JSonFunc)
+        DECLARE_NAPI_FUNCTION("on", On)
     };
 
     status = napi_define_class(env, CAMERA_PREVIEW_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -194,7 +195,6 @@ napi_value PreviewOutputNapi::PreviewOutputNapiConstructor(napi_env env, napi_ca
         std::unique_ptr<PreviewOutputNapi> obj = std::make_unique<PreviewOutputNapi>();
         if (obj != nullptr) {
             obj->env_ = env;
-            obj->surfaceId_ = sSurfaceId_;
             obj->previewOutput_ = sPreviewOutput_;
 
             std::shared_ptr<PreviewOutputCallback> callback =
@@ -241,6 +241,7 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
     if (!context->funcName.empty() && context->taskId > 0) {
         // Finish async trace
         CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
+        jsContext->funcName = context->funcName;
     }
 
     if (context->work != nullptr) {
@@ -250,7 +251,7 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
     delete context;
 }
 
-napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, uint64_t surfaceId)
+napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, Profile &profile, std::string surfaceId)
 {
     CAMERA_SYNC_TRACE;
     napi_status status;
@@ -259,54 +260,31 @@ napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, uint64_t surface
 
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
-        sSurfaceId_ = surfaceId;
         bool xCompPreviewSurface = true;
-        sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(surfaceId);
+        uint64_t iSurfaceId;
+        std::istringstream iss(surfaceId);
+        iss >> iSurfaceId;
+        sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
         if (!surface) {
             xCompPreviewSurface = false;
-            surface = Media::ImageReceiver::getSurfaceById(std::to_string(surfaceId));
+            surface = Media::ImageReceiver::getSurfaceById(surfaceId);
         }
         if (surface == nullptr) {
             MEDIA_ERR_LOG("failed to get surface");
             return result;
         }
 
-        int32_t surfaceWidth;
-        int32_t surfaceHeight;
-        if (xCompPreviewSurface) {
-            int retrytimes = 20;
-            int usleeptimes = 50000;
-            std::string width = "";
-            std::string height = "";
-            for (int tryIndx = 0; tryIndx < retrytimes; ++tryIndx) {
-                width = surface->GetUserData("SURFACE_WIDTH");
-                height = surface->GetUserData("SURFACE_HEIGHT");
-                MEDIA_INFO_LOG("create previewOutput, width = %{public}s, height = %{public}s",
-                               width.c_str(), height.c_str());
-                if (width.length() > 0 && height.length() > 0) {
-                    break;
-                }
-                usleep(usleeptimes);
-            }
-            surfaceWidth = std::stoi(width);
-            surfaceHeight = std::stoi(height);
-        } else {
-            surfaceWidth = surface->GetDefaultWidth();
-            surfaceHeight = surface->GetDefaultHeight();
-        }
 #ifdef RK_CAMERA
         surface->SetUserData(CameraManager::surfaceFormat, std::to_string(OHOS_CAMERA_FORMAT_RGBA_8888));
 #else
         surface->SetUserData(CameraManager::surfaceFormat, std::to_string(OHOS_CAMERA_FORMAT_YCRCB_420_SP));
 #endif
-        sPreviewOutput_ = CameraManager::GetInstance()->CreateCustomPreviewOutput(surface, surfaceWidth,
-                                                                                  surfaceHeight);
+        sPreviewOutput_ = CameraManager::GetInstance()->CreatePreviewOutput(profile, surface);
         if (sPreviewOutput_ == nullptr) {
             MEDIA_ERR_LOG("failed to create previewOutput");
             return result;
         }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
-        sSurfaceId_ = 0;
         sPreviewOutput_ = nullptr;
 
         if (status == napi_ok && result != nullptr) {
@@ -320,7 +298,7 @@ napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, uint64_t surface
     return result;
 }
 
-sptr<CaptureOutput> PreviewOutputNapi::GetPreviewOutput()
+sptr<PreviewOutput> PreviewOutputNapi::GetPreviewOutput()
 {
     return previewOutput_;
 }
@@ -393,7 +371,157 @@ napi_value PreviewOutputNapi::Release(napi_env env, napi_callback_info info)
     return result;
 }
 
-napi_value PreviewOutputNapi::JSonFunc(napi_env env, napi_callback_info info)
+napi_value PreviewOutputNapi::AddDeferredSurface(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+    napi_value result = nullptr;
+    const int32_t refCount = 1;
+    napi_value resource = nullptr;
+    size_t argc = ARGS_TWO;
+    napi_value argv[ARGS_TWO] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc <= ARGS_TWO, "requires 1 parameter maximum");
+
+    napi_get_undefined(env, &result);
+    std::unique_ptr<PreviewOutputAsyncContext> asyncContext = std::make_unique<PreviewOutputAsyncContext>();
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
+    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
+        if (argc == ARGS_TWO) {
+            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM1], refCount, asyncContext->callbackRef);
+        }
+
+        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
+        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "AddDeferredSurface");
+
+        status = napi_create_async_work(
+            env, nullptr, resource, [](napi_env env, void* data) {
+                auto context = static_cast<PreviewOutputAsyncContext*>(data);
+                context->status = false;
+                // Start async trace
+                context->funcName = "PreviewOutputNapi::AddDeferredSurface";
+                context->taskId = CameraNapiUtils::IncreamentAndGet(previewOutputTaskId);
+                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
+                if (context->objectInfo != nullptr) {
+                    context->bRetBool = false;
+                    context->status = true;
+                    ((sptr<PreviewOutput> &)(context->objectInfo->previewOutput_))->Stop();
+                }
+            },
+            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+        if (status != napi_ok) {
+            MEDIA_ERR_LOG("Failed to create napi_create_async_work for PreviewOutputNapi::Release");
+            napi_get_undefined(env, &result);
+        } else {
+            napi_queue_async_work(env, asyncContext->work);
+            asyncContext.release();
+        }
+    }
+
+    return result;
+}
+
+napi_value PreviewOutputNapi::Start(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+    napi_value result = nullptr;
+    const int32_t refCount = 1;
+    napi_value resource = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
+
+    napi_get_undefined(env, &result);
+    std::unique_ptr<PreviewOutputAsyncContext> asyncContext = std::make_unique<PreviewOutputAsyncContext>();
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
+    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
+        if (argc == ARGS_ONE) {
+            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
+        }
+
+        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
+        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "Start");
+
+        status = napi_create_async_work(
+            env, nullptr, resource, [](napi_env env, void* data) {
+                auto context = static_cast<PreviewOutputAsyncContext*>(data);
+                context->status = false;
+                // Start async trace
+                context->funcName = "PreviewOutputNapi::Start";
+                context->taskId = CameraNapiUtils::IncreamentAndGet(previewOutputTaskId);
+                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
+                if (context->objectInfo != nullptr) {
+                    context->bRetBool = false;
+                    context->status = true;
+                }
+            },
+            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+        if (status != napi_ok) {
+            MEDIA_ERR_LOG("Failed to create napi_create_async_work for PreviewOutputNapi::Release");
+            napi_get_undefined(env, &result);
+        } else {
+            napi_queue_async_work(env, asyncContext->work);
+            asyncContext.release();
+        }
+    }
+
+    return result;
+}
+
+napi_value PreviewOutputNapi::Stop(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+    napi_value result = nullptr;
+    const int32_t refCount = 1;
+    napi_value resource = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
+
+    napi_get_undefined(env, &result);
+    std::unique_ptr<PreviewOutputAsyncContext> asyncContext = std::make_unique<PreviewOutputAsyncContext>();
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
+    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
+        if (argc == ARGS_ONE) {
+            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
+        }
+
+        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
+        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "Stop");
+
+        status = napi_create_async_work(
+            env, nullptr, resource, [](napi_env env, void* data) {
+                auto context = static_cast<PreviewOutputAsyncContext*>(data);
+                context->status = false;
+                // Start async trace
+                context->funcName = "PreviewOutputNapi::Stop";
+                context->taskId = CameraNapiUtils::IncreamentAndGet(previewOutputTaskId);
+                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
+                if (context->objectInfo != nullptr) {
+                    context->bRetBool = false;
+                    context->status = true;
+                }
+            },
+            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+        if (status != napi_ok) {
+            MEDIA_ERR_LOG("Failed to create napi_create_async_work for PreviewOutputNapi::Release");
+            napi_get_undefined(env, &result);
+        } else {
+            napi_queue_async_work(env, asyncContext->work);
+            asyncContext.release();
+        }
+    }
+    return result;
+}
+
+napi_value PreviewOutputNapi::On(napi_env env, napi_callback_info info)
 {
     napi_value undefinedResult = nullptr;
     size_t argCount = ARGS_TWO;
@@ -403,7 +531,7 @@ napi_value PreviewOutputNapi::JSonFunc(napi_env env, napi_callback_info info)
     char buffer[SIZE];
     std::string eventType;
     const int32_t refCount = 1;
-    PreviewOutputNapi *obj = nullptr;
+    PreviewOutputNapi* obj = nullptr;
     napi_status status;
 
     napi_get_undefined(env, &undefinedResult);

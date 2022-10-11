@@ -21,8 +21,10 @@
 namespace OHOS {
 namespace CameraStandard {
 enum CameraStatus {
-    CAMERA_STATUS_UNAVAILABLE = 0,
-    CAMERA_STATUS_AVAILABLE
+    CAMERA_STATUS_APPEAR = 0,
+    CAMERA_STATUS_DISAPPEAR,
+    CAMERA_STATUS_AVAILABLE,
+    CAMERA_STATUS_UNAVAILABLE
 };
 
 enum FlashStatus {

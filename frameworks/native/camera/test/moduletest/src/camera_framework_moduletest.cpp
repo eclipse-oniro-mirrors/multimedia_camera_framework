@@ -68,23 +68,23 @@ namespace {
     std::unordered_map<std::string, bool> g_camStatusMap;
     std::unordered_map<std::string, bool> g_camFlashMap;
 
-    class AppCallback : public CameraManagerCallback, public ErrorCallback, public PhotoCallback,
-                        public PreviewCallback {
+    class AppCallback : public CameraManagerCallback, public ErrorCallback, public PhotoStateCallback,
+                        public PreviewStateCallback {
     public:
-        void OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const override
+        void OnCameraStatusChanged(const CameraStatusInfo &cameraDeviceInfo) const override
         {
-            const std::string cameraID = cameraStatusInfo.cameraInfo->GetID();
-            const CameraDeviceStatus cameraStatus = cameraStatusInfo.cameraStatus;
+            const std::string cameraID = cameraDeviceInfo.cameraDevice->GetID();
+            const CameraStatus cameraStatus = cameraDeviceInfo.cameraStatus;
 
             switch (cameraStatus) {
-                case CAMERA_DEVICE_STATUS_UNAVAILABLE: {
-                    MEDIA_DEBUG_LOG("AppCallback::OnCameraStatusChanged %{public}s: CAMERA_DEVICE_STATUS_UNAVAILABLE",
+                case CAMERA_STATUS_UNAVAILABLE: {
+                    MEDIA_DEBUG_LOG("AppCallback::OnCameraStatusChanged %{public}s: CAMERA_STATUS_UNAVAILABLE",
                                     cameraID.c_str());
                     g_camStatusMap.erase(cameraID);
                     break;
                 }
-                case CAMERA_DEVICE_STATUS_AVAILABLE: {
-                    MEDIA_DEBUG_LOG("AppCallback::OnCameraStatusChanged %{public}s: CAMERA_DEVICE_STATUS_AVAILABLE",
+                case CAMERA_STATUS_AVAILABLE: {
+                    MEDIA_DEBUG_LOG("AppCallback::OnCameraStatusChanged %{public}s: CAMERA_STATUS_AVAILABLE",
                                     cameraID.c_str());
                     g_camStatusMap[cameraID] = true;
                     break;
@@ -97,23 +97,23 @@ namespace {
             return;
         }
 
-        void OnFlashlightStatusChanged(const std::string &cameraID, const FlashlightStatus flashStatus) const override
+        void OnFlashlightStatusChanged(const std::string &cameraID, const FlashStatus flashStatus) const override
         {
             switch (flashStatus) {
-                case FLASHLIGHT_STATUS_OFF: {
-                    MEDIA_DEBUG_LOG("AppCallback::OnFlashlightStatusChanged %{public}s: FLASHLIGHT_STATUS_OFF",
+                case FLASH_STATUS_OFF: {
+                    MEDIA_DEBUG_LOG("AppCallback::OnFlashlightStatusChanged %{public}s: FLASH_STATUS_OFF",
                                     cameraID.c_str());
                     g_camFlashMap[cameraID] = false;
                     break;
                 }
-                case FLASHLIGHT_STATUS_ON: {
-                    MEDIA_DEBUG_LOG("AppCallback::OnFlashlightStatusChanged %{public}s: FLASHLIGHT_STATUS_ON",
+                case FLASH_STATUS_ON: {
+                    MEDIA_DEBUG_LOG("AppCallback::OnFlashlightStatusChanged %{public}s: FLASH_STATUS_ON",
                                     cameraID.c_str());
                     g_camFlashMap[cameraID] = true;
                     break;
                 }
-                case FLASHLIGHT_STATUS_UNAVAILABLE: {
-                    MEDIA_DEBUG_LOG("AppCallback::OnFlashlightStatusChanged %{public}s: FLASHLIGHT_STATUS_UNAVAILABLE",
+                case FLASH_STATUS_UNAVAILABLE: {
+                    MEDIA_DEBUG_LOG("AppCallback::OnFlashlightStatusChanged %{public}s: FLASH_STATUS_UNAVAILABLE",
                                     cameraID.c_str());
                     g_camFlashMap.erase(cameraID);
                     break;
@@ -187,7 +187,7 @@ namespace {
         }
     };
 
-    class AppVideoCallback : public VideoCallback {
+    class AppVideoCallback : public VideoStateCallback {
         void OnFrameStarted() const override
         {
             MEDIA_DEBUG_LOG("AppVideoCallback::OnFrameStarted");
@@ -258,13 +258,14 @@ static OHOS::Security::AccessToken::HapPolicyParams g_infoManagerTestPolicyPrams
 
 sptr<CaptureOutput> CameraFrameworkModuleTest::CreatePhotoOutput(int32_t width, int32_t height)
 {
-    int32_t fd = -1;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    surface->SetDefaultWidthAndHeight(width, height);
-    surface->SetUserData(CameraManager::surfaceFormat, std::to_string(photoFormat_));
-    sptr<SurfaceListener> listener = new(std::nothrow) SurfaceListener("Test_Capture", SurfaceType::PHOTO, fd, surface);
-    surface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)listener);
-    sptr<CaptureOutput> photoOutput = manager_->CreatePhotoOutput(surface);
+    CameraFormat photoFormat = CAMERA_FORMAT_JPEG;
+    Size photoSize;
+    photoSize.width = width;
+    photoSize.height = height;
+    Profile photoProfile = Profile(photoFormat, photoSize);
+    sptr<CaptureOutput> photoOutput = nullptr;
+    photoOutput = manager_->CreatePreviewOutput(photoProfile, surface);
     return photoOutput;
 }
 
@@ -274,40 +275,36 @@ sptr<CaptureOutput> CameraFrameworkModuleTest::CreatePhotoOutput()
     return photoOutput;
 }
 
-
-sptr<CaptureOutput> CameraFrameworkModuleTest::CreatePreviewOutput(bool customPreview, int32_t width, int32_t height)
+sptr<CaptureOutput> CameraFrameworkModuleTest::CreatePreviewOutput(int32_t width, int32_t height)
 {
-    int32_t fd = -1;
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    surface->SetDefaultWidthAndHeight(width, height);
-    surface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewFormat_));
-    sptr<SurfaceListener> listener = new(std::nothrow) SurfaceListener("Test_Preview", SurfaceType::PREVIEW,
-                                                                       fd, surface);
-    surface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)listener);
+    CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size previewSize;
+    previewSize.width = width;
+    previewSize.height = height;
+    Profile previewProfile = Profile(previewFormat, previewSize);
     sptr<CaptureOutput> previewOutput = nullptr;
-    if (customPreview) {
-        previewOutput = manager_->CreateCustomPreviewOutput(surface, width, height);
-    } else {
-        previewOutput = manager_->CreatePreviewOutput(surface);
-    }
+    previewOutput = manager_->CreatePreviewOutput(previewProfile, surface);
     return previewOutput;
 }
 
 sptr<CaptureOutput> CameraFrameworkModuleTest::CreatePreviewOutput()
 {
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(false, previewWidth_, previewHeight_);
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(previewWidth_, previewHeight_);
     return previewOutput;
 }
 
 sptr<CaptureOutput> CameraFrameworkModuleTest::CreateVideoOutput(int32_t width, int32_t height)
 {
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    surface->SetDefaultWidthAndHeight(width, height);
-    surface->SetUserData(CameraManager::surfaceFormat, std::to_string(videoFormat_));
-    sptr<SurfaceListener> listener = new(std::nothrow) SurfaceListener("Test_Video", SurfaceType::VIDEO,
-                                                                       g_videoFd, surface);
-    surface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)listener);
-    sptr<CaptureOutput> videoOutput = manager_->CreateVideoOutput(surface);
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = width;
+    videoSize.height = height;
+    std::vector<int32_t> frameRate = {30, 30};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, frameRate);
+    sptr<CaptureOutput> videoOutput = nullptr;
+    videoOutput = manager_->CreateVideoOutput(videoProfile, surface);
     return videoOutput;
 }
 
@@ -317,67 +314,67 @@ sptr<CaptureOutput> CameraFrameworkModuleTest::CreateVideoOutput()
     return videoOutput;
 }
 
-void CameraFrameworkModuleTest::SetCameraParameters(sptr<CameraInput> &camInput, bool video)
+void CameraFrameworkModuleTest::SetCameraParameters(sptr<CaptureSession> &session, bool video)
 {
-    camInput->LockForControl();
+    session->LockForControl();
 
-    std::vector<float> zoomRatioRange = camInput->GetSupportedZoomRatioRange();
+    std::vector<float> zoomRatioRange = session->GetZoomRatioRange();
     if (!zoomRatioRange.empty()) {
-        camInput->SetZoomRatio(zoomRatioRange[0]);
+        session->SetZoomRatio(zoomRatioRange[0]);
     }
 
     // GetExposureBiasRange
-    std::vector<int32_t> exposureBiasRange = camInput->GetExposureBiasRange();
+    std::vector<int32_t> exposureBiasRange = session->GetExposureBiasRange();
     if (!exposureBiasRange.empty()) {
-        camInput->SetExposureBias(exposureBiasRange[0]);
+        session->SetExposureBias(exposureBiasRange[0]);
     }
 
     // Get/Set Exposurepoint
     Point exposurePoint = {1, 2};
-    camInput->SetExposurePoint(exposurePoint);
+    session->SetMeteringPoint(exposurePoint);
 
     // GetFocalLength
-    float focalLength = camInput->GetFocalLength();
+    float focalLength = session->GetFocalLength();
     ASSERT_NE(focalLength, 0);
 
     // Get/Set focuspoint
     Point focusPoint = {1, 2};
-    camInput->SetFocusPoint(focusPoint);
+    session->SetFocusPoint(focusPoint);
 
-    camera_flash_mode_enum_t flash = OHOS_CAMERA_FLASH_MODE_OPEN;
+    FlashMode flash = FLASH_MODE_OPEN;
     if (video) {
-        flash = OHOS_CAMERA_FLASH_MODE_ALWAYS_OPEN;
+        flash = FLASH_MODE_ALWAYS_OPEN;
     }
-    camInput->SetFlashMode(flash);
+    session->SetFlashMode(flash);
 
-    camera_focus_mode_enum_t focus = OHOS_CAMERA_FOCUS_MODE_AUTO;
-    camInput->SetFocusMode(focus);
+    FocusMode focus = FOCUS_MODE_AUTO;
+    session->SetFocusMode(focus);
 
-    camera_exposure_mode_enum_t exposure = OHOS_CAMERA_EXPOSURE_MODE_AUTO;
-    camInput->SetExposureMode(exposure);
+    ExposureMode exposure = EXPOSURE_MODE_AUTO;
+    session->SetExposureMode(exposure);
 
-    camInput->UnlockForControl();
+    session->UnlockForControl();
 
-    Point exposurePointGet = camInput->GetExposurePoint();
+    Point exposurePointGet = session->GetMeteringPoint();
     EXPECT_EQ(exposurePointGet.x, exposurePoint.x);
     EXPECT_EQ(exposurePointGet.y, exposurePoint.y);
 
-    Point focusPointGet = camInput->GetFocusPoint();
+    Point focusPointGet = session->GetFocusPoint();
     EXPECT_EQ(focusPointGet.x, focusPoint.x);
     EXPECT_EQ(focusPointGet.y, focusPoint.y);
 
     if (!zoomRatioRange.empty()) {
-        EXPECT_EQ(camInput->GetZoomRatio(), zoomRatioRange[0]);
+        EXPECT_EQ(session->GetZoomRatio(), zoomRatioRange[0]);
     }
 
     // exposureBiasRange
     if (!exposureBiasRange.empty()) {
-        EXPECT_EQ(camInput->GetExposureValue(), exposureBiasRange[0]);
+        EXPECT_EQ(session->GetExposureValue(), exposureBiasRange[0]);
     }
 
-    EXPECT_EQ(camInput->GetFlashMode(), flash);
-    EXPECT_EQ(camInput->GetFocusMode(), focus);
-    EXPECT_EQ(camInput->GetExposureMode(), exposure);
+    EXPECT_EQ(session->GetFlashMode(), flash);
+    EXPECT_EQ(session->GetFocusMode(), focus);
+    EXPECT_EQ(session->GetExposureMode(), exposure);
 }
 
 void CameraFrameworkModuleTest::TestCallbacksSession(sptr<CaptureOutput> photoOutput,
@@ -408,7 +405,7 @@ void CameraFrameworkModuleTest::TestCallbacksSession(sptr<CaptureOutput> photoOu
     session_->Stop();
 }
 
-void CameraFrameworkModuleTest::TestCallbacks(sptr<CameraInfo> &cameraInfo, bool video)
+void CameraFrameworkModuleTest::TestCallbacks(sptr<CameraDevice> &cameraInfo, bool video)
 {
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
@@ -418,12 +415,12 @@ void CameraFrameworkModuleTest::TestCallbacks(sptr<CameraInfo> &cameraInfo, bool
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input_;
     camInput->SetErrorCallback(callback);
 
-    SetCameraParameters(camInput, video);
-
     EXPECT_EQ(g_camInputOnError, false);
 
     intResult = session_->AddInput(input_);
     EXPECT_EQ(intResult, 0);
+
+    SetCameraParameters(session_, video);
 
     sptr<CaptureOutput> photoOutput = nullptr;
     sptr<CaptureOutput> videoOutput = nullptr;
@@ -511,7 +508,7 @@ void CameraFrameworkModuleTest::TestSupportedResolution(int32_t previewWidth, in
     intResult = session->AddInput(input);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(true, previewWidth, previewHeight);
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(previewWidth, previewHeight);
     ASSERT_NE(previewOutput, nullptr);
 
     intResult = session->AddOutput(previewOutput);
@@ -537,6 +534,10 @@ void CameraFrameworkModuleTest::TestSupportedResolution(int32_t previewWidth, in
     intResult = session->Start();
     EXPECT_EQ(intResult, 0);
 
+    sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+
     if (photoOutput != nullptr) {
         intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture();
         EXPECT_EQ(intResult, 0);
@@ -555,6 +556,7 @@ void CameraFrameworkModuleTest::TestSupportedResolution(int32_t previewWidth, in
         TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
     }
 
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session->Stop();
     session->Release();
     input->Release();
@@ -572,7 +574,7 @@ void CameraFrameworkModuleTest::TestUnSupportedResolution(int32_t previewWidth, 
 
     sptr<CaptureOutput> previewOutput = nullptr;
     if ((previewWidth != previewWidth_) || (previewHeight != previewHeight_)) {
-        previewOutput = CreatePreviewOutput(true, previewWidth, previewHeight);
+        previewOutput = CreatePreviewOutput(previewWidth, previewHeight);
     } else {
         previewOutput = CreatePreviewOutput();
     }
@@ -616,9 +618,9 @@ void CameraFrameworkModuleTest::SetUpInit()
     g_videoFd = -1;
 
 #ifndef PRODUCT_M40
-    previewFormat_ = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
-    videoFormat_ = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
-    photoFormat_ = OHOS_CAMERA_FORMAT_JPEG;
+    previewFormat_ = CAMERA_FORMAT_YUV_420_SP;
+    videoFormat_ = CAMERA_FORMAT_YUV_420_SP;
+    photoFormat_ = CAMERA_FORMAT_JPEG;
     previewWidth_ = PREVIEW_DEFAULT_WIDTH;
     previewHeight_ = PREVIEW_DEFAULT_HEIGHT;
     photoWidth_ = PHOTO_DEFAULT_WIDTH;
@@ -680,46 +682,60 @@ void CameraFrameworkModuleTest::SetUp()
     ASSERT_NE(manager_, nullptr);
     manager_->SetCallback(std::make_shared<AppCallback>());
 
-    cameras_ = manager_->GetCameras();
+    cameras_ = manager_->GetSupportedCameras();
     ASSERT_TRUE(cameras_.size() != 0);
 
     input_ = manager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input_, nullptr);
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input_;
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    std::vector<sptr<CameraDevice>> cameraObjList = camManagerObj->GetSupportedCameras();
 #ifdef PRODUCT_M40
-    previewFormats_ = camInput->GetSupportedPreviewFormats();
-    ASSERT_TRUE(previewFormats_.size() != 0);
-    if (std::find(previewFormats_.begin(), previewFormats_.end(), OHOS_CAMERA_FORMAT_YCRCB_420_SP)
+    sptr<CameraOutputCapability> outputcapability =  camManagerObj->GetSupportedOutputCapability(cameraObjList[0]);
+    std::vector<Profile> previewProfiles = outputcapability->GetPreviewProfiles();
+    for (auto i : previewProfiles) {
+        previewFormats_.push_back(i.GetCameraFormat());
+        previewSizes_.push_back(i.GetSize());
+    }
+    ASSERT_TRUE(!previewFormats_.empty());
+    ASSERT_TRUE(!previewSizes_.empty());
+    if (std::find(previewFormats_.begin(), previewFormats_.end(), CAMERA_FORMAT_YUV_420_SP)
         != previewFormats_.end()) {
-        previewFormat_ = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
+        previewFormat_ = CAMERA_FORMAT_YUV_420_SP;
     } else {
         previewFormat_ = previewFormats_[0];
     }
-    photoFormats_ = camInput->GetSupportedPhotoFormats();
-    ASSERT_TRUE(photoFormats_.size() != 0);
+    std::vector<Profile> photoProfiles =  outputcapability->GetPhotoProfiles();
+        for (auto i : photoProfiles) {
+            photoFormats_.push_back(i.GetCameraFormat());
+            photoSizes_.push_back(i.GetSize());
+        }
+    ASSERT_TRUE(!photoFormats_.empty());
+    ASSERT_TRUE(!photoSizes_.empty());
     photoFormat_ = photoFormats_[0];
-    videoFormats_ = camInput->GetSupportedVideoFormats();
-    ASSERT_TRUE(videoFormats_.size() != 0);
-    if (std::find(videoFormats_.begin(), videoFormats_.end(), OHOS_CAMERA_FORMAT_YCRCB_420_SP)
+    std::vector<VideoProfile> videoProfiles = outputcapability->GetVideoProfiles();
+    for (auto i : videoProfiles) {
+        videoFormats_.push_back(i.GetCameraFormat());
+        videoSizes_.push_back(i.GetSize());
+        videoFrameRates_ = i.GetFrameRates();
+    }
+    ASSERT_TRUE(!videoFormats_.empty());
+    ASSERT_TRUE(!videoSizes_.empty());
+    ASSERT_TRUE(!videoFrameRates_.empty());
+    if (std::find(videoFormats_.begin(), videoFormats_.end(), CAMERA_FORMAT_YUV_420_SP)
         != videoFormats_.end()) {
-        videoFormat_ = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
+        videoFormat_ = CAMERA_FORMAT_YUV_420_SP;
     } else {
         videoFormat_ = videoFormats_[0];
     }
-    std::vector<CameraPicSize> previewSizes = camInput->getSupportedSizes(previewFormat_);
-    ASSERT_TRUE(previewSizes.size() != 0);
-    std::vector<CameraPicSize> photoSizes = camInput->getSupportedSizes(photoFormat_);
-    ASSERT_TRUE(photoSizes.size() != 0);
-    std::vector<CameraPicSize> videoSizes = camInput->getSupportedSizes(videoFormat_);
-    ASSERT_TRUE(videoSizes.size() != 0);
-    CameraPicSize size = previewSizes.back();
+    Size size = previewSizes_.back();
     previewWidth_ = size.width;
     previewHeight_ = size.height;
-    size = photoSizes.back();
+    size = photoSizes_.back();
     photoWidth_ = size.width;
     photoHeight_ = size.height;
-    size = videoSizes.back();
+    size = videoSizes_.back();
     videoWidth_ = size.width;
     videoHeight_ = size.height;
 #endif
@@ -806,10 +822,15 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_002, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
     intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture();
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session_->Stop();
 }
 
@@ -848,6 +869,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_003, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
 
     intResult = ((sptr<VideoOutput> &)videoOutput)->Start();
     EXPECT_EQ(intResult, 0);
@@ -860,6 +885,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_003, TestSize.Le
     TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
 
     sleep(WAIT_TIME_BEFORE_STOP);
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session_->Stop();
 }
 
@@ -918,7 +944,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_006, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
 
+    sleep(WAIT_TIME_AFTER_START);
+
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session_->Stop();
 }
 
@@ -965,13 +996,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_007, TestSize.Le
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_008, TestSize.Level0)
 {
     for (auto &format : previewFormats_) {
-        if (format != OHOS_CAMERA_FORMAT_YCRCB_420_SP) {
+        if (format != CAMERA_FORMAT_YUV_420_SP) {
             continue;
         }
-        previewFormat_ = format;
-        std::vector<CameraPicSize> previewSizes =
-            ((sptr<CameraInput> &)input_)->getSupportedSizes(previewFormat_);
-        for (auto &size : previewSizes) {
+        for (auto &size : previewSizes_) {
             TestSupportedResolution(size.width, size.height, photoWidth_, photoHeight_, videoWidth_, videoHeight_);
         }
     }
@@ -987,12 +1015,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_008, TestSize.Le
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_009, TestSize.Level0)
 {
-    for (auto &format : photoFormats_) {
-        photoFormat_ = format;
-        std::vector<CameraPicSize> photoSizes = ((sptr<CameraInput> &)input_)->getSupportedSizes(photoFormat_);
-        for (auto &size : photoSizes) {
+    for (auto &size : photoSizes_) {
             TestSupportedResolution(previewWidth_, previewHeight_, size.width, size.height, videoWidth_, videoHeight_);
-        }
     }
 }
 
@@ -1007,12 +1031,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_009, TestSize.Le
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_010, TestSize.Level0)
 {
     for (auto &format : videoFormats_) {
-        if (format != OHOS_CAMERA_FORMAT_YCRCB_420_SP) {
+        if (format != CAMERA_FORMAT_YUV_420_SP) {
             continue;
         }
-        videoFormat_ = format;
-        std::vector<CameraPicSize> videoSizes = ((sptr<CameraInput> &)input_)->getSupportedSizes(videoFormat_);
-        for (auto &size : videoSizes) {
+        for (auto &size : videoSizes_) {
             TestSupportedResolution(previewWidth_, previewHeight_, photoWidth_, photoHeight_, size.width, size.height);
         }
     }
@@ -1288,10 +1310,15 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_023, TestSize.Le
     EXPECT_NE(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_NE(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
     intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture();
     EXPECT_NE(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session_->Stop();
 }
 
@@ -1344,6 +1371,14 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_024, TestSize.Le
 #endif
 
     sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+#ifdef PRODUCT_M40
+    EXPECT_EQ(intResult, 0);
+#else
+    EXPECT_NE(intResult, 0);
+#endif
+
+    sleep(WAIT_TIME_AFTER_START);
     intResult = ((sptr<PhotoOutput> &)photoOutput1)->Capture();
 #ifdef PRODUCT_M40
     EXPECT_EQ(intResult, 0);
@@ -1360,6 +1395,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_024, TestSize.Le
 #endif
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session_->Stop();
 
     ((sptr<PhotoOutput> &)photoOutput1)->Release();
@@ -1398,6 +1434,14 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_025, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput1)->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput2)->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
@@ -1455,7 +1499,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_026, TestSize.Le
 #else
     EXPECT_NE(intResult, 0);
 #endif
-
+    sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+#ifdef PRODUCT_M40
+    EXPECT_EQ(intResult, 0);
+#else
+    EXPECT_NE(intResult, 0);
+#endif
     intResult = ((sptr<VideoOutput> &)videoOutput1)->Start();
 #ifdef PRODUCT_M40
     EXPECT_EQ(intResult, 0);
@@ -1488,6 +1538,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_026, TestSize.Le
 
     TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
 
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session_->Stop();
 
     ((sptr<PhotoOutput> &)videoOutput1)->Release();
@@ -1523,7 +1574,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_027, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
 
+    sleep(WAIT_TIME_AFTER_START);
+
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     intResult = session_->Stop();
     EXPECT_EQ(intResult, 0);
 
@@ -1533,7 +1589,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_027, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
 
+    sleep(WAIT_TIME_AFTER_START);
+
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session_->Stop();
 }
 
@@ -1572,6 +1633,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_028, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
 
     intResult = ((sptr<VideoOutput> &)videoOutput)->Start();
     EXPECT_EQ(intResult, 0);
@@ -1594,6 +1659,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_028, TestSize.Le
     TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
 
     sleep(WAIT_TIME_BEFORE_STOP);
+
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session_->Stop();
 }
 
@@ -1642,7 +1709,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_029, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
 
+    sleep(WAIT_TIME_AFTER_START);
+
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session_->Stop();
 }
 #endif
@@ -1697,10 +1769,15 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_030, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
     intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture();
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session_->Stop();
 }
 
@@ -1749,7 +1826,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_031, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
 
+    sleep(WAIT_TIME_AFTER_START);
+
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session_->Stop();
 }
 #endif
@@ -1804,6 +1886,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_032, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
 
     intResult = ((sptr<VideoOutput> &)videoOutput)->Start();
     EXPECT_EQ(intResult, 0);
@@ -1816,6 +1902,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_032, TestSize.Le
     TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
 
     sleep(WAIT_TIME_BEFORE_STOP);
+
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session_->Stop();
 }
 
@@ -1898,10 +1986,15 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_035, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
     intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture(photoSetting);
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session_->Stop();
 }
 
@@ -1948,10 +2041,15 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_036, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
     intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture(photoSetting);
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session_->Stop();
 }
 
@@ -1998,10 +2096,15 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_037, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
     intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture(photoSetting);
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session_->Stop();
 }
 
@@ -2046,6 +2149,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_038, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
 
     intResult = ((sptr<VideoOutput> &)videoOutput)->Start();
     EXPECT_EQ(intResult, 0);
@@ -2061,6 +2168,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_038, TestSize.Le
     TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
 
     sleep(WAIT_TIME_BEFORE_STOP);
+
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session_->Stop();
 }
 
@@ -2111,6 +2220,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_039, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
 
     intResult = ((sptr<VideoOutput> &)videoOutput)->Start();
     EXPECT_EQ(intResult, 0);
@@ -2126,6 +2239,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_039, TestSize.Le
     TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
 
     sleep(WAIT_TIME_BEFORE_STOP);
+
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session_->Stop();
 }
 
@@ -2180,6 +2295,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_040, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+
+
+    sleep(WAIT_TIME_AFTER_START);
 
     intResult = ((sptr<VideoOutput> &)videoOutput)->Start();
     EXPECT_EQ(intResult, 0);
@@ -2195,6 +2315,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_040, TestSize.Le
     TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
 
     sleep(WAIT_TIME_BEFORE_STOP);
+
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session_->Stop();
 }
 
@@ -2232,7 +2354,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_041, TestSize.Le
     intResult = session_->Start();
     EXPECT_EQ(intResult, 0);
 
-    std::vector<int32_t> videoFramerateRange = ((sptr<VideoOutput> &)videoOutput)->GetFrameRateRange();
+    std::vector<int32_t> videoFramerateRange = ((sptr<VideoProfile> &)videoOutput)->GetFrameRates();
     ASSERT_EQ(videoFramerateRange.empty(), false);
     ASSERT_GE(videoFramerateRange.size(), 2U);
     ((sptr<VideoOutput> &)videoOutput)->SetFrameRateRange(videoFramerateRange[0], videoFramerateRange[1]);
@@ -2292,6 +2414,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_042, TestSize.Le
     }
 
     intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
@@ -2358,6 +2484,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_043, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
 
     intResult = metaOutput->Start();
     EXPECT_EQ(intResult, 0);
@@ -2367,6 +2497,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_043, TestSize.Le
     intResult = metaOutput->Stop();
     EXPECT_EQ(intResult, 0);
 
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session_->Stop();
     metaOutput->Release();
 }

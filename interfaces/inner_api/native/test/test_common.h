@@ -38,38 +38,39 @@ public:
     static const std::int32_t FILE_PERMISSIONS_FLAG = 00766;
     static const std::int32_t PREVIEW_SKIP_FRAMES = 10;
 
+    static camera_format_t GetCameraMetadataFormat(CameraFormat format);
     static uint64_t GetCurrentLocalTimeStamp();
-    static int32_t SaveYUV(const char *buffer, int32_t size, SurfaceType type);
-    static int32_t SaveJpeg(const char *buffer, int32_t size);
+    static int32_t SaveYUV(const char* buffer, int32_t size, SurfaceType type);
+    static int32_t SaveJpeg(const char* buffer, int32_t size);
     static bool IsNumber(const char number[]);
-    static int32_t SaveVideoFile(const char *buffer, int32_t size, VideoSaveMode operationMode, int32_t &fd);
+    static int32_t SaveVideoFile(const char* buffer, int32_t size, VideoSaveMode operationMode, int32_t &fd);
 };
 
 class TestCameraMngerCallback : public CameraManagerCallback {
 public:
-    explicit TestCameraMngerCallback(const char *testName);
+    explicit TestCameraMngerCallback(const char* testName);
     virtual ~TestCameraMngerCallback() = default;
     void OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const override;
     void OnFlashlightStatusChanged(const std::string &cameraID,
-                                   const FlashlightStatus flashStatus) const override;
+                                   const FlashStatus flashStatus) const override;
 
 private:
-    const char *testName_;
+    const char* testName_;
 };
 
 class TestDeviceCallback : public ErrorCallback {
 public:
-    explicit TestDeviceCallback(const char *testName);
+    explicit TestDeviceCallback(const char* testName);
     virtual ~TestDeviceCallback() = default;
     void OnError(const int32_t errorType, const int32_t errorMsg) const override;
 
 private:
-    const char *testName_;
+    const char* testName_;
 };
 
-class TestPhotoOutputCallback : public PhotoCallback {
+class TestPhotoOutputCallback : public PhotoStateCallback {
 public:
-    explicit TestPhotoOutputCallback(const char *testName);
+    explicit TestPhotoOutputCallback(const char* testName);
     virtual ~TestPhotoOutputCallback() = default;
     void OnCaptureStarted(const int32_t captureID) const override;
     void OnCaptureEnded(const int32_t captureID, const int32_t frameCount) const override;
@@ -77,41 +78,41 @@ public:
     void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override;
 
 private:
-    const char *testName_;
+    const char* testName_;
 };
 
-class TestPreviewOutputCallback : public PreviewCallback {
+class TestPreviewOutputCallback : public PreviewStateCallback {
 public:
-    explicit TestPreviewOutputCallback(const char *testName);
+    explicit TestPreviewOutputCallback(const char* testName);
     virtual ~TestPreviewOutputCallback() = default;
     void OnFrameStarted() const override;
     void OnFrameEnded(const int32_t frameCount) const override;
     void OnError(const int32_t errorCode) const override;
 
 private:
-    const char *testName_;
+    const char* testName_;
 };
 
-class TestVideoOutputCallback : public VideoCallback {
+class TestVideoOutputCallback : public VideoStateCallback {
 public:
-    explicit TestVideoOutputCallback(const char *testName);
+    explicit TestVideoOutputCallback(const char* testName);
     virtual ~TestVideoOutputCallback() = default;
     void OnFrameStarted() const override;
     void OnFrameEnded(const int32_t frameCount) const override;
     void OnError(const int32_t errorCode) const override;
 
 private:
-    const char *testName_;
+    const char* testName_;
 };
 
 class SurfaceListener : public IBufferConsumerListener {
 public:
-    SurfaceListener(const char *testName, SurfaceType surfaceType, int32_t &fd, sptr<Surface> surface);
+    SurfaceListener(const char* testName, SurfaceType surfaceType, int32_t &fd, sptr<Surface> surface);
     virtual ~SurfaceListener() = default;
     void OnBufferAvailable() override;
 
 private:
-    const char *testName_;
+    const char* testName_;
     SurfaceType surfaceType_;
     int32_t &fd_;
     sptr<Surface> surface_;
