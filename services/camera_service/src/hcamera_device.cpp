@@ -312,16 +312,16 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp,
     int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FLASH_MODE, &item);
     if (ret == 0) {
         MEDIA_INFO_LOG("CameraDeviceServiceCallback::OnResult() OHOS_CONTROL_FLASH_MODE is %{public}d",
-                        item.data.u8[0]);
+                       item.data.u8[0]);
         CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("FlashModeChanged! current OHOS_CONTROL_FLASH_MODE is %d",
-                                            item.data.u8[0]));
+                                           item.data.u8[0]));
     }
     ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FLASH_STATE, &item);
     if (ret == 0) {
         MEDIA_INFO_LOG("CameraDeviceServiceCallback::OnResult() OHOS_CONTROL_FLASH_STATE is %{public}d",
-                        item.data.u8[0]);
+                       item.data.u8[0]);
         CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("FlashStateChanged! current OHOS_CONTROL_FLASH_STATE is %d",
-                                            item.data.u8[0]));
+                                           item.data.u8[0]));
         POWERMGR_SYSEVENT_TORCH_STATE(IPCSkeleton::GetCallingPid(),
                                       IPCSkeleton::GetCallingUid(), item.data.u8[0]);
     }
