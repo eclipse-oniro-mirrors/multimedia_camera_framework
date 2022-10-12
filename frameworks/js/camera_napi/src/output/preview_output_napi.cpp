@@ -274,11 +274,7 @@ napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, Profile &profile
             return result;
         }
 
-#ifdef RK_CAMERA
-        surface->SetUserData(CameraManager::surfaceFormat, std::to_string(OHOS_CAMERA_FORMAT_RGBA_8888));
-#else
-        surface->SetUserData(CameraManager::surfaceFormat, std::to_string(OHOS_CAMERA_FORMAT_YCRCB_420_SP));
-#endif
+        surface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
         sPreviewOutput_ = CameraManager::GetInstance()->CreatePreviewOutput(profile, surface);
         if (sPreviewOutput_ == nullptr) {
             MEDIA_ERR_LOG("failed to create previewOutput");

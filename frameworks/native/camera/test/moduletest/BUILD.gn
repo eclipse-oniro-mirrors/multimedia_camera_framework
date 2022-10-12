@@ -60,12 +60,5 @@ ohos_moduletest("camera_framework_moduletest") {
   ]
 
   cflags = [ "-fPIC" ]
-  if ("${product_name}" == "m40") {
-    cflags += [ "-DPRODUCT_M40" ]
-  } else {
-    if (device_name == "rk3566" || device_name == "rk3568") {
-      cflags += [ "-DRK_CAMERA" ]
-    }
-  }
   cflags_cc = cflags
 }
