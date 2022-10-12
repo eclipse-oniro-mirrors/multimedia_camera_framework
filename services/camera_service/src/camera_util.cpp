@@ -153,9 +153,6 @@ void ReleaseCaptureId(int32_t captureId)
 bool IsValidSize(
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t format, int32_t width, int32_t height)
 {
-#ifndef PRODUCT_M40
-    return true;
-#endif
     constexpr uint32_t unitLen = 3;
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(cameraAbility->get(),

@@ -77,16 +77,12 @@ int32_t HStreamCommon::LinkInput(sptr<IStreamOperator> streamOperator,
 
 void HStreamCommon::SetStreamInfo(StreamInfo &streamInfo)
 {
-    int32_t pixelFormat;
+    int32_t pixelFormat = PIXEL_FMT_YCRCB_420_SP;
     auto it = g_cameraToPixelFormat.find(format_);
     if (it != g_cameraToPixelFormat.end()) {
         pixelFormat = it->second;
     } else {
-#ifdef RK_CAMERA
-        pixelFormat = PIXEL_FMT_RGBA_8888;
-#else
-        pixelFormat = PIXEL_FMT_YCRCB_420_SP;
-#endif
+        MEDIA_ERR_LOG("HStreamCommon::SetStreamInfo find format error, pixelFormat use default format");
     }
     MEDIA_INFO_LOG("HStreamCommon::SetStreamInfo pixelFormat is %{public}d", pixelFormat);
     streamInfo.streamId_ = streamId_;

@@ -68,13 +68,6 @@ ohos_shared_library("camera_napi") {
     "ipc:ipc_core",
   ]
   cflags = [ "-fPIC" ]
-  if ("${product_name}" == "m40") {
-    cflags += [ "-DPRODUCT_M40" ]
-  } else {
-    if (device_name == "rk3566" || device_name == "rk3568") {
-      cflags += [ "-DRK_CAMERA" ]
-    }
-  }
   cflags_cc = cflags
   relative_install_dir = "module/multimedia"
   part_name = "multimedia_camera_framework"

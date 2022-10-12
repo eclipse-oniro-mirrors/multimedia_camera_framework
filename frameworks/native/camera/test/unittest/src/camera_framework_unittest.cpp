@@ -1020,10 +1020,9 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_030, TestSize.Level0
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     EXPECT_CALL(*mockCameraDevice, GetStreamOperator(_, _));
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
-#ifndef PRODUCT_M40
     EXPECT_CALL(*mockStreamOperator, IsStreamsSupported(_, _,
         A<const std::vector<StreamInfo> &>(), _));
-#endif
+
     EXPECT_CALL(*mockStreamOperator, CreateStreams(_));
     EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
     ret = session->CommitConfig();
@@ -1086,10 +1085,9 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_031, TestSize.Level0
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     EXPECT_CALL(*mockCameraDevice, GetStreamOperator(_, _));
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
-#ifndef PRODUCT_M40
     EXPECT_CALL(*mockStreamOperator, IsStreamsSupported(_, _,
         A<const std::vector<StreamInfo> &>(), _));
-#endif
+
     EXPECT_CALL(*mockStreamOperator, CreateStreams(_));
     EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
     ret = session->CommitConfig();
@@ -1174,10 +1172,9 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_032, TestSize.Level0
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     EXPECT_CALL(*mockCameraDevice, GetStreamOperator(_, _));
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
-#ifndef PRODUCT_M40
     EXPECT_CALL(*mockStreamOperator, IsStreamsSupported(_, _,
         A<const std::vector<StreamInfo> &>(), _));
-#endif
+
     EXPECT_CALL(*mockStreamOperator, CreateStreams(_));
     EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
     ret = session->CommitConfig();
@@ -1231,10 +1228,9 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_033, TestSize.Level0
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     EXPECT_CALL(*mockCameraDevice, GetStreamOperator(_, _));
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
-#ifndef PRODUCT_M40
     EXPECT_CALL(*mockStreamOperator, IsStreamsSupported(_, _,
         A<const std::vector<StreamInfo> &>(), _));
-#endif
+
     EXPECT_CALL(*mockStreamOperator, CreateStreams(_));
     EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
     ret = session->CommitConfig();
@@ -1404,10 +1400,9 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_038, TestSize.Level0
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     EXPECT_CALL(*mockCameraDevice, GetStreamOperator(_, _));
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
-#ifndef PRODUCT_M40
     EXPECT_CALL(*mockStreamOperator, IsStreamsSupported(_, _,
         A<const std::vector<StreamInfo> &>(), _));
-#endif
+
     EXPECT_CALL(*mockStreamOperator, CreateStreams(_));
     EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
     ret = session->CommitConfig();

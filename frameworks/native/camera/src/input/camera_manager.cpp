@@ -288,12 +288,10 @@ sptr<MetadataOutput> CameraManager::CreateMetadataOutput()
         MEDIA_ERR_LOG("CameraManager::CreateMetadataOutput Failed to create surface");
         return nullptr;
     }
+    // only for face recognize
     int32_t format = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
     int32_t width = 1920;
     int32_t height = 1080;
-#ifdef RK_CAMERA
-    format = OHOS_CAMERA_FORMAT_RGBA_8888;
-#endif
     surface->SetDefaultWidthAndHeight(width, height);
     retCode = serviceProxy_->CreateMetadataOutput(surface->GetProducer(), format, streamMetadata);
     if (retCode) {

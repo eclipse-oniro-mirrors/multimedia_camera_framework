@@ -455,9 +455,7 @@ void CameraFrameworkModuleTest::TestCallbacks(sptr<CameraDevice> &cameraInfo, bo
 
     /* In case of wagner device, once commit config is done with flash on
     it is not giving the flash status callback, removing it */
-#ifndef PRODUCT_M40
     EXPECT_TRUE(g_camFlashMap.count(cameraInfo->GetID()) != 0);
-#endif
     EXPECT_TRUE(g_photoEvents.none());
     EXPECT_TRUE(g_previewEvents.none());
     EXPECT_TRUE(g_videoEvents.none());
@@ -471,9 +469,7 @@ void CameraFrameworkModuleTest::TestCallbacks(sptr<CameraDevice> &cameraInfo, bo
         /* In case of wagner device, frame shutter callback not working,
         hence removed. Once supported by hdi, the same needs to be
         enabled */
-#ifndef PRODUCT_M40
         EXPECT_TRUE(g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_FRAME_SHUTTER)] == 1);
-#endif
         EXPECT_TRUE(g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_END)] == 1);
         ((sptr<PhotoOutput> &)photoOutput)->Release();
     }
@@ -617,7 +613,6 @@ void CameraFrameworkModuleTest::SetUpInit()
     g_camInputOnError = false;
     g_videoFd = -1;
 
-#ifndef PRODUCT_M40
     previewFormat_ = CAMERA_FORMAT_YUV_420_SP;
     videoFormat_ = CAMERA_FORMAT_YUV_420_SP;
     photoFormat_ = CAMERA_FORMAT_JPEG;
@@ -627,7 +622,6 @@ void CameraFrameworkModuleTest::SetUpInit()
     photoHeight_ = PHOTO_DEFAULT_HEIGHT;
     videoWidth_ = VIDEO_DEFAULT_WIDTH;
     videoHeight_ = VIDEO_DEFAULT_HEIGHT;
-#endif
 }
 
 OHOS::Security::AccessToken::AccessTokenIDEx tokenIdEx = {0};
@@ -691,7 +685,6 @@ void CameraFrameworkModuleTest::SetUp()
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input_;
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     std::vector<sptr<CameraDevice>> cameraObjList = camManagerObj->GetSupportedCameras();
-#ifdef PRODUCT_M40
     sptr<CameraOutputCapability> outputcapability =  camManagerObj->GetSupportedOutputCapability(cameraObjList[0]);
     std::vector<Profile> previewProfiles = outputcapability->GetPreviewProfiles();
     for (auto i : previewProfiles) {
@@ -738,7 +731,6 @@ void CameraFrameworkModuleTest::SetUp()
     size = videoSizes_.back();
     videoWidth_ = size.width;
     videoHeight_ = size.height;
-#endif
     session_ = manager_->CreateCaptureSession();
     ASSERT_NE(session_, nullptr);
 }
@@ -756,7 +748,6 @@ void CameraFrameworkModuleTest::TearDown()
     MEDIA_DEBUG_LOG("End of camera test case");
 }
 
-#ifndef PRODUCT_M40
 /*
  * Feature: Framework
  * Function: Test Capture
@@ -786,7 +777,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_001, TestSize.Le
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 }
-#endif
 /*
  * Feature: Framework
  * Function: Test Capture + Preview
@@ -976,15 +966,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_007, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     intResult = session_->CommitConfig();
-#ifdef PRODUCT_M40
     EXPECT_EQ(intResult, 0);
-#else
     // Video mode without preview is not supported
     EXPECT_NE(intResult, 0);
-#endif
 }
 
-#ifdef PRODUCT_M40
 /*
  * Feature: Framework
  * Function: Test Custom Preview with valid resolutions
@@ -1039,7 +1025,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_010, TestSize.Le
         }
     }
 }
-#endif
 
 /*
  * Feature: Framework
@@ -1055,7 +1040,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_011, TestSize.Le
     EXPECT_EQ(previewOutput, nullptr);
 }
 
-#ifdef PRODUCT_M40
 /*
  * Feature: Framework
  * Function: Test Video with invalid resolutions
@@ -1126,7 +1110,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_016, TestSize.Le
     int32_t photoHeight = 10;
     TestUnSupportedResolution(previewWidth_, previewHeight_, photoWidth, photoHeight, videoWidth_, videoHeight_);
 }
-#endif
 
 /*
  * Feature: Framework
@@ -1357,42 +1340,27 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_024, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     intResult = session_->CommitConfig();
-#ifdef PRODUCT_M40
     EXPECT_EQ(intResult, 0);
-#else
     EXPECT_NE(intResult, 0);
-#endif
 
     intResult = session_->Start();
-#ifdef PRODUCT_M40
     EXPECT_EQ(intResult, 0);
-#else
     EXPECT_NE(intResult, 0);
-#endif
 
     sleep(WAIT_TIME_AFTER_START);
     intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
-#ifdef PRODUCT_M40
     EXPECT_EQ(intResult, 0);
-#else
     EXPECT_NE(intResult, 0);
-#endif
 
     sleep(WAIT_TIME_AFTER_START);
     intResult = ((sptr<PhotoOutput> &)photoOutput1)->Capture();
-#ifdef PRODUCT_M40
     EXPECT_EQ(intResult, 0);
-#else
     EXPECT_NE(intResult, 0);
-#endif
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
     intResult = ((sptr<PhotoOutput> &)photoOutput2)->Capture();
-#ifdef PRODUCT_M40
     EXPECT_EQ(intResult, 0);
-#else
     EXPECT_NE(intResult, 0);
-#endif
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
     ((sptr<PreviewOutput> &)previewOutput)->Stop();
@@ -1487,54 +1455,33 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_026, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     intResult = session_->CommitConfig();
-#ifdef PRODUCT_M40
     EXPECT_EQ(intResult, 0);
-#else
     EXPECT_NE(intResult, 0);
-#endif
 
     intResult = session_->Start();
-#ifdef PRODUCT_M40
     EXPECT_EQ(intResult, 0);
-#else
     EXPECT_NE(intResult, 0);
-#endif
     sleep(WAIT_TIME_AFTER_START);
     intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
-#ifdef PRODUCT_M40
     EXPECT_EQ(intResult, 0);
-#else
     EXPECT_NE(intResult, 0);
-#endif
     intResult = ((sptr<VideoOutput> &)videoOutput1)->Start();
-#ifdef PRODUCT_M40
     EXPECT_EQ(intResult, 0);
-#else
     EXPECT_NE(intResult, 0);
-#endif
 
     intResult = ((sptr<VideoOutput> &)videoOutput2)->Start();
-#ifdef PRODUCT_M40
     EXPECT_EQ(intResult, 0);
-#else
     EXPECT_NE(intResult, 0);
-#endif
 
     sleep(WAIT_TIME_AFTER_START);
 
     intResult = ((sptr<VideoOutput> &)videoOutput1)->Stop();
-#ifdef PRODUCT_M40
     EXPECT_EQ(intResult, 0);
-#else
     EXPECT_NE(intResult, 0);
-#endif
 
     intResult = ((sptr<VideoOutput> &)videoOutput2)->Stop();
-#ifdef PRODUCT_M40
     EXPECT_EQ(intResult, 0);
-#else
     EXPECT_NE(intResult, 0);
-#endif
 
     TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
 
@@ -1664,7 +1611,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_028, TestSize.Le
     session_->Stop();
 }
 
-#ifdef PRODUCT_M40
 /*
  * Feature: Framework
  * Function: Test remove video output and commit when preview + video outputs were committed
@@ -1717,7 +1663,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_029, TestSize.Le
     ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session_->Stop();
 }
-#endif
 
 /*
  * Feature: Framework
@@ -1781,7 +1726,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_030, TestSize.Le
     session_->Stop();
 }
 
-#ifdef PRODUCT_M40
 /*
  * Feature: Framework
  * Function: Test remove photo output and commit when preview + photo outputs were committed
@@ -1834,7 +1778,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_031, TestSize.Le
     ((sptr<PreviewOutput> &)previewOutput)->Stop();
     session_->Stop();
 }
-#endif
 
 /*
  * Feature: Framework
@@ -2436,7 +2379,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_042, TestSize.Le
     session_->Stop();
 }
 
-#ifdef PRODUCT_M40
 /*
  * Feature: Framework
  * Function: Test Preview + Metadata
@@ -2501,7 +2443,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_043, TestSize.Le
     session_->Stop();
     metaOutput->Release();
 }
-#endif
 
 /*
  * Feature: Framework
