@@ -104,13 +104,6 @@ ohos_shared_library("camera_framework") {
     "samgr:samgr_proxy",
   ]
 
-  if ("${product_name}" == "m40") {
-    cflags += [ "-DPRODUCT_M40" ]
-  } else {
-    if (device_name == "rk3566" || device_name == "rk3568") {
-      cflags += [ "-DRK_CAMERA" ]
-    }
-  }
   cflags_cc = cflags
 
   part_name = "multimedia_camera_framework"

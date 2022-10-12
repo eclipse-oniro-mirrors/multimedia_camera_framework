@@ -324,11 +324,7 @@ napi_value VideoOutputNapi::CreateVideoOutput(napi_env env, VideoProfile &profil
             MEDIA_ERR_LOG("failed to get surface from SurfaceUtils");
             return result;
         }
-#ifdef RK_CAMERA
-        surface->SetUserData(CameraManager::surfaceFormat, std::to_string(OHOS_CAMERA_FORMAT_RGBA_8888));
-#else
-        surface->SetUserData(CameraManager::surfaceFormat, std::to_string(OHOS_CAMERA_FORMAT_YCRCB_420_SP));
-#endif
+        surface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
         sVideoOutput_ = CameraManager::GetInstance()->CreateVideoOutput(profile, surface);
         if (sVideoOutput_ == nullptr) {
             MEDIA_ERR_LOG("failed to create VideoOutput");

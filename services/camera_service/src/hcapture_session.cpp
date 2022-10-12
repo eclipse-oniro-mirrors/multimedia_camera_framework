@@ -403,7 +403,6 @@ int32_t HCaptureSession::CheckAndCommitStreams(sptr<HCameraDevice> &device,
                                                std::vector<StreamInfo> &allStreamInfos,
                                                std::vector<StreamInfo> &newStreamInfos)
 {
-#ifndef PRODUCT_M40
     CamRetCode hdiRc = HDI::Camera::V1_0::NO_ERROR;
     StreamSupportType supportType = DYNAMIC_SUPPORTED;
 
@@ -418,7 +417,6 @@ int32_t HCaptureSession::CheckAndCommitStreams(sptr<HCameraDevice> &device,
         MEDIA_ERR_LOG("HCaptureSession::CheckAndCommitStreams(), Config not supported %{public}d", supportType);
         return CAMERA_UNSUPPORTED;
     }
-#endif
     return CreateAndCommitStreams(device, deviceSettings, newStreamInfos);
 }
 

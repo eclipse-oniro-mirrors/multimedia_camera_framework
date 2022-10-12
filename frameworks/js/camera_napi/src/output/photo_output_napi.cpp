@@ -295,11 +295,7 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile &profile, st
         }
         MEDIA_INFO_LOG("surface width: %{public}d, height: %{public}d", surface->GetDefaultWidth(),
                        surface->GetDefaultHeight());
-#ifdef RK_CAMERA
-        surface->SetUserData(CameraManager::surfaceFormat, std::to_string(OHOS_CAMERA_FORMAT_RGBA_8888));
-#else
-        surface->SetUserData(CameraManager::surfaceFormat, std::to_string(OHOS_CAMERA_FORMAT_JPEG));
-#endif
+        surface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
         sPhotoOutput_ = CameraManager::GetInstance()->CreatePhotoOutput(profile, surface);
         if (sPhotoOutput_ == nullptr) {
             MEDIA_ERR_LOG("failed to create CreatePhotoOutput");
