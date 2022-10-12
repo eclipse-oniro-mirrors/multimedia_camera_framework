@@ -1034,6 +1034,11 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
             context->status = true;
             context->modeForAsync = CREATE_CAMERA_INPUT_ASYNC_CALLBACK;
             if (context->cameraInfo == nullptr) {
+                if (context->managerInstance != nullptr) {
+                    context->cameraObjList = context->managerInstance->cameraManager_->GetSupportedCameras();
+                    MEDIA_DEBUG_LOG("cameraInfo is null, cameraManager_->GetSupportedCameras() : %{public}zu",
+                        context->cameraObjList.size());
+                }
                 sptr<CameraDevice> camInfo = nullptr;
                 for (size_t i = 0; i < context->cameraObjList.size(); i += 1) {
                     camInfo = context->cameraObjList[i];
