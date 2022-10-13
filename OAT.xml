@@ -62,6 +62,11 @@ Note: If the text contains special characters, please escape them according to t
             <filefilter name="binaryFileTypePolicyFilter" desc="Filters for binary file policies" >
                 <filteritem type="filename" name="*.png" desc="Camera framework png files."/>
             </filefilter>
+			<filefilter name="defaultFilter" desc="Files not to check">
+				<filteritem type="filename" name="frameworks/js/camera_napi/camerademo/**/*.ets" desc="Camera framework ets files."/>
+				<filteritem type="filepath" name="frameworks/js/camera_napi/camerademo/.*.json5" desc="build config file"/>
+				<filteritem type="filepath" name="frameworks/js/camera_napi/camerademo/**/.*.json5" desc="build config file"/>
+			</filefilter>
         </filefilterlist>
     </oatconfig>
 </configuration>
