@@ -403,20 +403,7 @@ int32_t HCaptureSession::CheckAndCommitStreams(sptr<HCameraDevice> &device,
                                                std::vector<StreamInfo> &allStreamInfos,
                                                std::vector<StreamInfo> &newStreamInfos)
 {
-    CamRetCode hdiRc = HDI::Camera::V1_0::NO_ERROR;
-    StreamSupportType supportType = DYNAMIC_SUPPORTED;
-
-    std::vector<uint8_t> setting;
-    OHOS::Camera::MetadataUtils::ConvertMetadataToVec(deviceSettings, setting);
-    hdiRc = (CamRetCode)(device->GetStreamOperator()->IsStreamsSupported(
-        NORMAL, setting, allStreamInfos, supportType));
-    if (hdiRc != HDI::Camera::V1_0::NO_ERROR) {
-        MEDIA_ERR_LOG("HCaptureSession::CheckAndCommitStreams(), Error from HDI: %{public}d", hdiRc);
-        return HdiToServiceError(hdiRc);
-    } else if (supportType != DYNAMIC_SUPPORTED) {
-        MEDIA_ERR_LOG("HCaptureSession::CheckAndCommitStreams(), Config not supported %{public}d", supportType);
-        return CAMERA_UNSUPPORTED;
-    }
+    // HDI not support, return
     return CreateAndCommitStreams(device, deviceSettings, newStreamInfos);
 }
 
