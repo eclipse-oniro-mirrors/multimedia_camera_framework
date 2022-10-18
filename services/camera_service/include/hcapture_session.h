@@ -17,12 +17,14 @@
 #define OHOS_CAMERA_H_CAPTURE_SESSION_H
 
 #include "accesstoken_kit.h"
+#include "state_customized_cbk.h"
 #include "hcamera_device.h"
 #include "hcapture_session_stub.h"
 #include "hstream_capture.h"
 #include "hstream_metadata.h"
 #include "hstream_repeat.h"
 #include "perm_state_change_callback_customize.h"
+#include "privacy_kit.h"
 #include "v1_0/istream_operator_callback.h"
 #include "v1_0/istream_operator.h"
 
@@ -34,6 +36,7 @@ namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
 class StreamOperatorCallback;
 class PermissionStatusChangeCb;
+class CameraUseStateChangeCb;
 
 enum class CaptureSessionState {
     SESSION_INIT = 0,
@@ -42,7 +45,6 @@ enum class CaptureSessionState {
 };
 
 static const int32_t STREAMID_BEGIN = 1;
-const std::string ACCESS_CAMERA = "ohos.permission.CAMERA";
 
 class HCaptureSession : public HCaptureSessionStub {
 public:
@@ -96,6 +98,9 @@ private:
     void ClearCaptureSession(pid_t pid);
     void RegisterPermissionCallback(const uint32_t callingTokenId, const std::string permissionName);
     void UnregisterPermissionCallback(const uint32_t callingTokenId);
+    void StartUsingPermissionCallback(const uint32_t callingTokenId, const std::string permissionName);
+    void StopUsingPermissionCallback(const uint32_t callingTokenId, const std::string permissionName);
+
     std::string GetSessionState();
 
     CaptureSessionState curState_ = CaptureSessionState::SESSION_INIT;
@@ -118,6 +123,7 @@ private:
     int32_t uid_;
     uint32_t callerToken_;
     std::shared_ptr<PermissionStatusChangeCb> callbackPtr_;
+    std::shared_ptr<CameraUseStateChangeCb> cameraUseCallbackPtr_;
 };
 
 class PermissionStatusChangeCb : public Security::AccessToken::PermStateChangeCallbackCustomize {
@@ -126,6 +132,17 @@ public:
         : PermStateChangeCallbackCustomize(scopeInfo) {}
     ~PermissionStatusChangeCb() {}
     void PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result) override;
+    void SetCaptureSession(sptr<HCaptureSession> captureSession);
+
+private:
+    sptr<HCaptureSession> captureSession_;
+};
+
+class CameraUseStateChangeCb : public Security::AccessToken::StateCustomizedCbk {
+public:
+    CameraUseStateChangeCb() {}
+    ~CameraUseStateChangeCb() {}
+    void StateChangeNotify(Security::AccessToken::AccessTokenID tokenId, bool isShowing) override;
     void SetCaptureSession(sptr<HCaptureSession> captureSession);
 
 private:

@@ -147,14 +147,15 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice: Unsupported Access Token Type");
         return CAMERA_INVALID_ARG;
     }
-    if (permission_result != OHOS::Security::AccessToken::TypePermissionState::PERMISSION_GRANTED) {
+    bool isAllowed = Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken, permissionName);
+    if (!isAllowed || permission_result != OHOS::Security::AccessToken::TypePermissionState::PERMISSION_GRANTED) {
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice: Permission to Access Camera Denied!!!!");
         return CAMERA_ALLOC_ERROR;
     } else {
         MEDIA_DEBUG_LOG("HCameraService::CreateCameraDevice: Permission to Access Camera Granted!!!!");
     }
 
-    cameraDevice = new(std::nothrow) HCameraDevice(cameraHostManager_, cameraId);
+    cameraDevice = new(std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     if (cameraDevice == nullptr) {
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice HCameraDevice allocation failed");
         return CAMERA_ALLOC_ERROR;
