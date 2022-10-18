@@ -873,29 +873,10 @@ napi_value CameraManagerNapi::IsCameraMuted(napi_env env, napi_callback_info inf
     }
     CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
     CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "IsCameraMuted");
-    status = napi_create_async_work(
-        env, nullptr, resource,
-        [](napi_env env, void* data) {
-            auto context = static_cast<CameraManagerContext*>(data);
-            context->status = false;
-            // Start async trace
-            context->funcName = "CameraManagerNapi::IsCameraMuted";
-            context->taskId = CameraNapiUtils::IncreamentAndGet(cameraManagerTaskId);
-            CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-            if (context->managerInstance != nullptr) {
-                MEDIA_INFO_LOG("GetCameras cameraManager_->IsCameraMuted()");
-                context->status = true;
-                context->modeForAsync = IS_CAMERA_MUTED_ASYNC_CALLBACK;
-            }
-        },
-        CameraManagerCommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-    if (status != napi_ok) {
-        MEDIA_ERR_LOG("Failed to create napi_create_async_work for IsCameraMuted");
-        napi_get_undefined(env, &result);
-    } else {
-        napi_queue_async_work(env, asyncContext->work);
-        asyncContext.release();
-    }
+    bool isMuted = CameraManager::GetInstance()->IsCameraMuted();
+    MEDIA_INFO_LOG("CameraManager::GetInstance()->IsCameraMuted : %{public}d",
+                static_case<int>(isMuted));
+    napi_get_boolean(env, isMuted, &result);
     return result;
 }
 
@@ -926,28 +907,10 @@ napi_value CameraManagerNapi::IsCameraMuteSupported(napi_env env, napi_callback_
     }
     CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
     CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "IsCameraMuteSupported");
-    status = napi_create_async_work(
-        env, nullptr, resource,
-        [](napi_env env, void* data) {
-            auto context = static_cast<CameraManagerContext*>(data);
-            context->status = false;
-            // Start async trace
-            context->funcName = "CameraManagerNapi::IsCameraMuteSupported";
-            context->taskId = CameraNapiUtils::IncreamentAndGet(cameraManagerTaskId);
-            CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-            if (context->managerInstance != nullptr) {
-                context->status = true;
-                context->modeForAsync = IS_CAMERA_MUTE_SUPPORTED_ASYNC_CALLBACK;
-            }
-        },
-        CameraManagerCommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-    if (status != napi_ok) {
-        MEDIA_ERR_LOG("Failed to create napi_create_async_work for IsCameraMuteSupported");
-        napi_get_undefined(env, &result);
-    } else {
-        napi_queue_async_work(env, asyncContext->work);
-        asyncContext.release();
-    }
+    bool isMuteSupported = CameraManager::GetInstance()->IsCameraMuteSupported();
+    MEDIA_INFO_LOG("CameraManager::GetInstance()->IsCameraMuteSupported : %{public}d",
+        static_case<int>(isMuteSupported));
+    napi_get_boolean(env, isMuteSupported, &result);
     return result;
 }
 
@@ -979,29 +942,9 @@ napi_value CameraManagerNapi::MuteCamera(napi_env env, napi_callback_info info)
     }
     CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
     CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "MuteCamera");
-    status = napi_create_async_work(
-        env, nullptr, resource,
-        [](napi_env env, void* data) {
-            auto context = static_cast<CameraManagerContext*>(data);
-            context->status = false;
-            // Start async trace
-            context->funcName = "CameraManagerNapi::MuteCamera";
-            context->taskId = CameraNapiUtils::IncreamentAndGet(cameraManagerTaskId);
-            CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-            if (context->managerInstance != nullptr) {
-                MEDIA_INFO_LOG("MuteCamera MuteCamera()");
-                context->status = true;
-                context->modeForAsync = MUTE_CAMERA_ASYNC_CALLBACK;
-            }
-        },
-        CameraManagerCommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-    if (status != napi_ok) {
-        MEDIA_ERR_LOG("Failed to create napi_create_async_work for MuteCamera");
-        napi_get_undefined(env, &result);
-    } else {
-        napi_queue_async_work(env, asyncContext->work);
-        asyncContext.release();
-    }
+    CameraManager::GetInstance()->MuteCamera(context->isSupported);
+    MEDIA_INFO_LOG("MuteCamera");
+    napi_get_undefined(env, &result);
     return result;
 }
 
