@@ -61,6 +61,12 @@ public:
     virtual void OnFlashlightStatusChanged(const std::string &cameraID, const FlashStatus flashStatus) const = 0;
 };
 
+class CameraMuteListener {
+public:
+    CameraMuteListener() = default;
+    virtual ~CameraMuteListener() = default;
+    virtual void OnCameraMute(bool muteMode);
+};
 class CameraManager : public RefBase {
 public:
     /**
@@ -268,6 +274,35 @@ public:
     */
     [[deprecated]] sptr<CameraInfo> GetCameraInfo(std::string cameraId);
 
+    /**
+    * @brief Get the support of camera mute mode.
+    *
+    * @return Returns true is supported, false is not supported.
+    */
+    bool IsCameraMuteSupported();
+
+    /**
+    * @brief Get camera mute mode.
+    *
+    * @return Returns true is in mute, else is not in mute.
+    */
+    bool IsCameraMuted();
+
+    /**
+    * @brief Mute the camera
+    *
+    * @return.
+    */
+    void MuteCamera(bool muteMode);
+
+    /**
+    * @brief register camera mute listener
+    *
+    * @param CameraMuteListener listener object.
+    * @return.
+    */
+    void RegisterCameraMuteListener(std::shared_ptr<CameraMuteListener> listener);
+
     static const std::string surfaceFormat;
 
 protected:
@@ -291,6 +326,7 @@ private:
     static sptr<CameraManager> cameraManager_;
     sptr<ICameraServiceCallback> cameraSvcCallback_;
     std::shared_ptr<CameraManagerCallback> cameraMngrCallback_;
+    std::vector<std::shared_ptr<CameraMuteListener>> cameraMuteListenerList_;
     std::vector<sptr<CameraDevice>> cameraObjList;
     [[deprecated]] std::vector<sptr<CameraInfo>> dcameraObjList;
 };

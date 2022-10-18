@@ -258,14 +258,21 @@ void CameraManagerCommonCompleteCallback(napi_env env, napi_status status, void*
             }
             break;
         case IS_CAMERA_MUTED_ASYNC_CALLBACK:
-            napi_get_boolean(env, false, &jsContext->data);
+            bool isMuted = CameraManager::GetInstance()->IsCameraMuted();
+            MEDIA_INFO_LOG("CameraManager::GetInstance()->IsCameraMuted : %{public}d",
+                static_case<int>(isMuted));
+            napi_get_boolean(env, isMuted, &jsContext->data);
             MEDIA_INFO_LOG("IsCameraMuted");
             break;
         case IS_CAMERA_MUTE_SUPPORTED_ASYNC_CALLBACK:
-            napi_get_boolean(env, false, &jsContext->data);
+            bool isMuteSupported = CameraManager::GetInstance()->IsCameraMuteSupported();
+            MEDIA_INFO_LOG("CameraManager::GetInstance()->IsCameraMuteSupported : %{public}d",
+                static_case<int>(isMuteSupported));
+            napi_get_boolean(env, isMuteSupported, &jsContext->data);
             MEDIA_INFO_LOG("IsCameraMuteSupported");
             break;
         case MUTE_CAMERA_ASYNC_CALLBACK:
+            CameraManager::GetInstance()->MuteCamera(context->isSupported);
             napi_get_undefined(env, &jsContext->data);
             MEDIA_INFO_LOG("MuteCamera");
             break;
@@ -965,8 +972,8 @@ napi_value CameraManagerNapi::MuteCamera(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("napi_unwrap( ) failure!");
         return nullptr;
     }
-    napi_get_value_bool(env, argv[PARAM0], &asyncContext->isMuteCamera);
-    MEDIA_DEBUG_LOG("napi_get_value_bool isMuteCamera = %{public}d", asyncContext->isMuteCamera);
+    napi_get_value_bool(env, argv[PARAM0], &asyncContext->isSupported);
+    MEDIA_DEBUG_LOG("napi_get_value_bool isMuteCamera = %{public}d", asyncContext->isSupported);
     if (argc == ARGS_TWO) {
         CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM1], refCount, asyncContext->callbackRef);
     }

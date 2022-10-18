@@ -106,7 +106,7 @@ private:
 };
 
 struct CameraManagerContext : public AsyncContext {
-    bool isMuteCamera;
+    bool isSupported;
     std::string surfaceId;
     CameraManagerNapi* managerInstance;
     CameraPosition cameraPosition;

@@ -367,7 +367,7 @@ void CameraManager::Init()
     CAMERA_SYNC_TRACE;
     sptr<IRemoteObject> object = nullptr;
     cameraMngrCallback_ = nullptr;
-
+    cameraMuteListenerList_.clear();
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (samgr == nullptr) {
         MEDIA_ERR_LOG("Failed to get System ability manager");
@@ -656,6 +656,100 @@ camera_format_t CameraManager::GetCameraMetadataFormat(CameraFormat format)
     }
 
     return metaFormat;
+}
+
+void CameraManager::RegisterCameraMuteListener(std::shared_ptr<CameraMuteListener> listener)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    cameraMuteListenerList_.push_back(listener);
+}
+
+bool CameraManager::IsCameraMuteSupported()
+{
+    const uint8_t MUTE_ON = 1;
+    bool result = false;
+    if (cameraObjList.empty()) {
+        this->GetSupportedCameras();
+    }
+    for (size_t i = 0; i < cameraObjList.size(); i++) {
+        std::shared_ptr<Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
+        camera_metadata_item_t item;
+        int ret = Camera::FindCameraMetadataItem(metadata->get(),
+                                                OHOS_ABILITY_MUTE_MODES,
+                                                &item);
+        if (ret == 0) {
+            MEDIA_INFO_LOG("CameraManager::isCameraMuteSupported() OHOS_ABILITY_MUTE_MODES is %{public}d",
+                        item.data.u8[0]);
+            result = (item.data.u8[0] == MUTE_ON) ? true : false;
+        } else {
+            MEDIA_ERR_LOG("Failed to get stream configuration or Invalid stream"
+                        " configuation OHOS_ABILITY_MUTE_MODES ret = %{public}d", ret);
+        }
+        if (result == true) {
+            break;
+        }
+    }
+    return result;
+}
+
+bool CameraManager::IsCameraMuted()
+{
+    const uint8_t MUTE_ON = 1;
+    bool result = false;
+    if (cameraObjList.empty()) {
+        this->GetSupportedCameras();
+    }
+    for (size_t i = 0; i < cameraObjList.size(); i++) {
+        std::shared_ptr<Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
+        camera_metadata_item_t item;
+        int ret = Camera::FindCameraMetadataItem(metadata->get(),
+                                                OHOS_CONTROL_MUTE_MODE,
+                                                &item);
+        if (ret == 0) {
+            MEDIA_INFO_LOG("CameraManager::isCameraMuteSupported() OHOS_ABILITY_MUTE_MODES is %{public}d",
+                        item.data.u8[0]);
+            result = (item.data.u8[0] == MUTE_ON) ? true : false;
+        } else {
+            MEDIA_ERR_LOG("Failed to get stream configuration or Invalid stream"
+                        " configuation OHOS_CONTROL_MUTE_MODE ret = %{public}d", ret);
+        }
+        if (result == true) {
+            break;
+        }
+    }
+    return result;
+}
+
+void CameraManager::MuteCamera(bool muteMode)
+{
+    const uint8_t MUTE_ON = 1;
+    const uint8_t MUTE_OFF = 0;
+    const uint32_t count = 1;
+    uint8_t mode = muteMode ? MUTE_ON : MUTE_OFF;
+    if (cameraObjList.empty()) {
+        this->GetSupportedCameras();
+    }
+    bool status = false;
+    for (size_t i = 0; i < cameraObjList.size(); i++) {
+        std::shared_ptr<Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
+        camera_metadata_item_t item;
+        int ret = Camera::FindCameraMetadataItem(metadata->get(),
+                                                OHOS_CONTROL_MUTE_MODE,
+                                                &item);
+        if (ret == CAM_META_ITEM_NOT_FOUND) {
+            MEDIA_ERR_LOG("CameraManager::MuteCamera failed, OHOS_CONTROL_MUTE_MODE item is not found");
+        } else if (ret == CAM_META_SUCCESS) {
+            status = metadata->updateEntry(OHOS_CONTROL_MUTE_MODE, &mode, count);
+            if (status == 0) {
+                MEDIA_INFO_LOG("CameraManager::MuteCamera success");
+            } else {
+                MEDIA_ERR_LOG("CameraManager::MuteCamera Failed to set muteMode");
+            }
+            for (auto listener : cameraMuteListenerList_) {
+                listener->OnCameraMute(muteMode);
+            }
+        }
+    }
 }
 } // CameraStandard
 } // OHOS
