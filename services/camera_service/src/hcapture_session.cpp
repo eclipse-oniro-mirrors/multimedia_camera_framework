@@ -694,6 +694,7 @@ int32_t HCaptureSession::Release(pid_t pid)
         cameraDevice_ = nullptr;
     }
     StopUsingPermissionCallback(callerToken_, ACCESS_CAMERA);
+    UnregisterPermissionCallback(callerToken_);
     ClearCaptureSession(pid);
     return CAMERA_OK;
 }
@@ -712,8 +713,6 @@ void HCaptureSession::RegisterPermissionCallback(const uint32_t callingTokenId, 
     }
 }
 
-// will not call unregister method because access system has deadlock
-// will improve it after access system fix deadlock.
 void HCaptureSession::UnregisterPermissionCallback(const uint32_t callingTokenId)
 {
     if (callbackPtr_ == nullptr) {
@@ -800,10 +799,9 @@ void HCaptureSession::StartUsingPermissionCallback(const uint32_t callingTokenId
 {
     cameraUseCallbackPtr_ = std::make_shared<CameraUseStateChangeCb>();
     cameraUseCallbackPtr_->SetCaptureSession(this);
-    auto callbackWrap = new (std::nothrow) Security::AccessToken::StateChangeCallback(callbackPtr);
     MEDIA_DEBUG_LOG("after StartUsingPermissionCallback tokenId:%{public}d", callingTokenId);
     int32_t res = Security::AccessToken::PrivacyKit::StartUsingPermission(
-        callingTokenId, permissionName, callbackWrap);
+        callingTokenId, permissionName, cameraUseCallbackPtr_);
     if (res != CAMERA_OK) {
         MEDIA_ERR_LOG("StartUsingPermissionCallback failed.");
     }
@@ -825,7 +823,6 @@ void PermissionStatusChangeCb::SetCaptureSession(sptr<HCaptureSession> captureSe
 
 void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result)
 {
-    MEDIA_DEBUG_LOG("enter PermStateChangeCallback tokenId:%{public}d", callingTokenId);
     if ((result.PermStateChangeType == 0) && (captureSession_ != nullptr)) {
         captureSession_->ReleaseInner();
     }
@@ -836,9 +833,9 @@ void CameraUseStateChangeCb::SetCaptureSession(sptr<HCaptureSession> captureSess
     captureSession_ = captureSession;
 }
 
-void CameraUseStateChangeCb::CameraUseStateChangeNotice(Security::AccessToken::AccessTokenID tokenId, bool isShowing)
+void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessTokenID tokenId, bool isShowing)
 {
-    MEDIA_DEBUG_LOG("enter CameraUseStateChangeNotice tokenId:%{public}d", callingTokenId);
+    MEDIA_DEBUG_LOG("enter CameraUseStateChangeNotify tokenId:%{public}d", tokenId);
     if ((isShowing == false) && (captureSession_ != nullptr)) {
         captureSession_->ReleaseInner();
     }

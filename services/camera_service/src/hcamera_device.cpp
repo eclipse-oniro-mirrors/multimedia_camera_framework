@@ -23,7 +23,9 @@
 namespace OHOS {
 namespace CameraStandard {
 static bool isCameraOpened = false;
-HCameraDevice::HCameraDevice(sptr<HCameraHostManager> &cameraHostManager, std::string cameraID, const uint32_t callingTokenId)
+HCameraDevice::HCameraDevice(sptr<HCameraHostManager> &cameraHostManager,
+                             std::string cameraID,
+                             const uint32_t callingTokenId)
 {
     cameraHostManager_ = cameraHostManager;
     cameraID_ = cameraID;
@@ -79,7 +81,7 @@ int32_t HCameraDevice::Open()
             return CAMERA_ALLOC_ERROR;
         }
     }
-    bool isAllowed = Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken_, permissionName);
+    bool isAllowed = Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken_, ACCESS_CAMERA);
     if (!isAllowed) {
         MEDIA_ERR_LOG("HCameraDevice::Open IsAllowedUsingPermission failed");
         return CAMERA_ALLOC_ERROR;

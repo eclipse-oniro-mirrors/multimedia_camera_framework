@@ -17,7 +17,6 @@
 #define OHOS_CAMERA_H_CAPTURE_SESSION_H
 
 #include "accesstoken_kit.h"
-#include "state_change_callback.h"
 #include "state_customized_cbk.h"
 #include "hcamera_device.h"
 #include "hcapture_session_stub.h"
@@ -46,7 +45,6 @@ enum class CaptureSessionState {
 };
 
 static const int32_t STREAMID_BEGIN = 1;
-const std::string ACCESS_CAMERA = "ohos.permission.CAMERA";
 
 class HCaptureSession : public HCaptureSessionStub {
 public:
