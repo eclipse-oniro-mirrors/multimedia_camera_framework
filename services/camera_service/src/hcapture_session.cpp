@@ -98,7 +98,8 @@ HCaptureSession::HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
         session_[pid_] = this;
     }
     callerToken_ = callingTokenId;
-    RegisterPermissionCallback(callingTokenId, ACCESS_CAMERA);
+    StartUsingPermissionCallback(callerToken_, ACCESS_CAMERA);
+    RegisterPermissionCallback(callerToken_, ACCESS_CAMERA);
     MEDIA_DEBUG_LOG("HCaptureSession: camera stub services(%{public}zu).", session_.size());
 }
 
@@ -692,6 +693,7 @@ int32_t HCaptureSession::Release(pid_t pid)
         POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraDevice_->GetCameraId().c_str());
         cameraDevice_ = nullptr;
     }
+    StopUsingPermissionCallback(callerToken_, ACCESS_CAMERA);
     ClearCaptureSession(pid);
     return CAMERA_OK;
 }
@@ -794,6 +796,28 @@ void HCaptureSession::dumpSessionInfo(std::string& dumpString)
     }
 }
 
+void HCaptureSession::StartUsingPermissionCallback(const uint32_t callingTokenId, const std::string permissionName)
+{
+    cameraUseCallbackPtr_ = std::make_shared<CameraUseStateChangeCb>();
+    cameraUseCallbackPtr_->SetCaptureSession(this);
+    auto callbackWrap = new (std::nothrow) Security::AccessToken::StateChangeCallback(callbackPtr);
+    MEDIA_DEBUG_LOG("after StartUsingPermissionCallback tokenId:%{public}d", callingTokenId);
+    int32_t res = Security::AccessToken::PrivacyKit::StartUsingPermission(
+        callingTokenId, permissionName, callbackWrap);
+    if (res != CAMERA_OK) {
+        MEDIA_ERR_LOG("StartUsingPermissionCallback failed.");
+    }
+}
+
+void HCaptureSession::StopUsingPermissionCallback(const uint32_t callingTokenId, const std::string permissionName)
+{
+    MEDIA_DEBUG_LOG("enter StopUsingPermissionCallback tokenId:%{public}d", callingTokenId);
+    int32_t res = Security::AccessToken::PrivacyKit::StopUsingPermission(callingTokenId, permissionName);
+    if (res != CAMERA_OK) {
+        MEDIA_ERR_LOG("StopUsingPermissionCallback failed.");
+    }
+}
+
 void PermissionStatusChangeCb::SetCaptureSession(sptr<HCaptureSession> captureSession)
 {
     captureSession_ = captureSession;
@@ -801,10 +825,25 @@ void PermissionStatusChangeCb::SetCaptureSession(sptr<HCaptureSession> captureSe
 
 void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result)
 {
+    MEDIA_DEBUG_LOG("enter PermStateChangeCallback tokenId:%{public}d", callingTokenId);
     if ((result.PermStateChangeType == 0) && (captureSession_ != nullptr)) {
         captureSession_->ReleaseInner();
     }
 };
+
+void CameraUseStateChangeCb::SetCaptureSession(sptr<HCaptureSession> captureSession)
+{
+    captureSession_ = captureSession;
+}
+
+void CameraUseStateChangeCb::CameraUseStateChangeNotice(Security::AccessToken::AccessTokenID tokenId, bool isShowing)
+{
+    MEDIA_DEBUG_LOG("enter CameraUseStateChangeNotice tokenId:%{public}d", callingTokenId);
+    if ((isShowing == false) && (captureSession_ != nullptr)) {
+        captureSession_->ReleaseInner();
+    }
+};
+
 
 StreamOperatorCallback::StreamOperatorCallback(sptr<HCaptureSession> session)
 {

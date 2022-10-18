@@ -23,12 +23,13 @@
 namespace OHOS {
 namespace CameraStandard {
 static bool isCameraOpened = false;
-HCameraDevice::HCameraDevice(sptr<HCameraHostManager> &cameraHostManager, std::string cameraID)
+HCameraDevice::HCameraDevice(sptr<HCameraHostManager> &cameraHostManager, std::string cameraID, const uint32_t callingTokenId)
 {
     cameraHostManager_ = cameraHostManager;
     cameraID_ = cameraID;
     streamOperator_ = nullptr;
     isReleaseCameraDevice_ = false;
+    callerToken_ = callingTokenId;
 }
 
 HCameraDevice::~HCameraDevice()
@@ -77,6 +78,11 @@ int32_t HCameraDevice::Open()
             MEDIA_ERR_LOG("HCameraDevice::Open CameraDeviceCallback allocation failed");
             return CAMERA_ALLOC_ERROR;
         }
+    }
+    bool isAllowed = Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken_, permissionName);
+    if (!isAllowed) {
+        MEDIA_ERR_LOG("HCameraDevice::Open IsAllowedUsingPermission failed");
+        return CAMERA_ALLOC_ERROR;
     }
     MEDIA_INFO_LOG("HCameraDevice::Open Opening camera device: %{public}s", cameraID_.c_str());
     errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, deviceHDICallback_, hdiCameraDevice_);

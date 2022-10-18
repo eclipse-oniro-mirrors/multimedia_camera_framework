@@ -16,6 +16,8 @@
 #ifndef OHOS_CAMERA_H_CAMERA_DEVICE_H
 #define OHOS_CAMERA_H_CAMERA_DEVICE_H
 
+#include "accesstoken_kit.h"
+#include "privacy_kit.h"
 #include "v1_0/icamera_device_callback.h"
 #include "camera_metadata_info.h"
 #include "hcamera_device_stub.h"
@@ -32,7 +34,7 @@ class CameraDeviceCallback;
 
 class HCameraDevice : public HCameraDeviceStub {
 public:
-    HCameraDevice(sptr<HCameraHostManager> &cameraHostManager, std::string cameraID);
+    HCameraDevice(sptr<HCameraHostManager> &cameraHostManager, std::string cameraID, const uint32_t callingTokenId);
     ~HCameraDevice();
 
     int32_t Open() override;

@@ -24,6 +24,7 @@
 #include "hstream_metadata.h"
 #include "hstream_repeat.h"
 #include "iremote_stub.h"
+#include "privacy_kit.h"
 #include "system_ability.h"
 
 #include <iostream>
