@@ -19,19 +19,24 @@ namespace CameraStandard {
 using namespace std;
 using OHOS::HiviewDFX::HiLog;
 using OHOS::HiviewDFX::HiLogLabel;
-namespace {
-    constexpr HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "CameraMuteListenerNapi"};
-}
+// namespace {
+//     constexpr HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "CameraMuteListenerNapi"};
+// }
 CameraMuteListenerNapi::CameraMuteListenerNapi(napi_env env, napi_ref ref): env_(env), callbackRef_(ref)
-{}
+{
+    MEDIA_INFO_LOG("Enter CameraMuteListenerNapi::CameraMuteListenerNapi");
+}
 
 CameraMuteListenerNapi::~CameraMuteListenerNapi()
-{}
-
-void CameraMuteListenerNapi::OnCameraMute(bool muteMode) const
 {
-    mCallbackRef->OnCameraMute(muteMode);
+    MEDIA_INFO_LOG("Enter CameraMuteListenerNapi::~CameraMuteListenerNapi");
 }
 
+void CameraMuteListenerNapi::OnCameraMute(bool muteMode)
+{
+    MEDIA_INFO_LOG("Enter CameraMuteListenerNapi::OnCameraMute");
+    napi_value callback = nullptr;
+    napi_get_reference_value(env_, callbackRef_, &callback);
+}
 } // namespace CameraStandard
 } // namespace OHOS

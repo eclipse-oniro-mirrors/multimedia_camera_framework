@@ -37,18 +37,16 @@
 
 namespace OHOS {
 namespace CameraStandard {
-
 class CameraMuteListenerNapi : public CameraMuteListener {
 public:
     explicit CameraMuteListenerNapi(napi_env env, napi_ref callbackRef_);
     virtual ~CameraMuteListenerNapi();
     void OnCameraMute(bool muteMode) override;
+
 private: 
     napi_env env_ = nullptr;
     napi_ref callbackRef_;
 };
-
-
 } // namespace CameraStandard
 } // namespace OHOS
-#endif /* CAMERA_MANAGER_CALLBACK_NAPI_H_ */
+#endif /* CAMERA_MUTE_LISTENER_NAPI_H_ */
