@@ -1115,9 +1115,9 @@ napi_value CameraManagerNapi::On(napi_env env, napi_callback_info info)
                 make_shared<CameraManagerCallbackNapi>(env, callbackRef);
             obj->cameraManager_->SetCallback(callback);
         } else if (!eventType.empty() && (eventType.compare("cameraMute")==0)) {
-            shared_ptr<CameraManagerCallbackNapi> callback =
-                make_shared<CameraManagerCallbackNapi>(env, callbackRef);
-            obj->cameraManager_->SetCallback(callback);
+            shared_ptr<CameraMuteListenerNapi> listener =
+                make_shared<CameraMuteListenerNapi>(env, callbackRef);
+            obj->cameraManager_->RegisterCameraMuteListener(listener);
         } else {
             MEDIA_ERR_LOG("Incorrect callback event type provided for camera manager!");
             if (callbackRef != nullptr) {
