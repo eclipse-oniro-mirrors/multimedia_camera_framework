@@ -257,25 +257,6 @@ void CameraManagerCommonCompleteCallback(napi_env env, napi_status status, void*
                 MEDIA_ERR_LOG("Error: unable to get camera Info!");
             }
             break;
-        case IS_CAMERA_MUTED_ASYNC_CALLBACK:
-            bool isMuted = CameraManager::GetInstance()->IsCameraMuted();
-            MEDIA_INFO_LOG("CameraManager::GetInstance()->IsCameraMuted : %{public}d",
-                static_case<int>(isMuted));
-            napi_get_boolean(env, isMuted, &jsContext->data);
-            MEDIA_INFO_LOG("IsCameraMuted");
-            break;
-        case IS_CAMERA_MUTE_SUPPORTED_ASYNC_CALLBACK:
-            bool isMuteSupported = CameraManager::GetInstance()->IsCameraMuteSupported();
-            MEDIA_INFO_LOG("CameraManager::GetInstance()->IsCameraMuteSupported : %{public}d",
-                static_case<int>(isMuteSupported));
-            napi_get_boolean(env, isMuteSupported, &jsContext->data);
-            MEDIA_INFO_LOG("IsCameraMuteSupported");
-            break;
-        case MUTE_CAMERA_ASYNC_CALLBACK:
-            CameraManager::GetInstance()->MuteCamera(context->isSupported);
-            napi_get_undefined(env, &jsContext->data);
-            MEDIA_INFO_LOG("MuteCamera");
-            break;
         case GET_SUPPORTED_OUTPUT_CAPABILITY_ASYNC_CALLBACK:
             jsContext->data = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, context->cameraInfo);
             MEDIA_INFO_LOG("GetCameraOutputCapability");
@@ -875,7 +856,7 @@ napi_value CameraManagerNapi::IsCameraMuted(napi_env env, napi_callback_info inf
     CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "IsCameraMuted");
     bool isMuted = CameraManager::GetInstance()->IsCameraMuted();
     MEDIA_INFO_LOG("CameraManager::GetInstance()->IsCameraMuted : %{public}d",
-                static_case<int>(isMuted));
+                isMuted);
     napi_get_boolean(env, isMuted, &result);
     return result;
 }
@@ -909,7 +890,7 @@ napi_value CameraManagerNapi::IsCameraMuteSupported(napi_env env, napi_callback_
     CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "IsCameraMuteSupported");
     bool isMuteSupported = CameraManager::GetInstance()->IsCameraMuteSupported();
     MEDIA_INFO_LOG("CameraManager::GetInstance()->IsCameraMuteSupported : %{public}d",
-        static_case<int>(isMuteSupported));
+        isMuteSupported);
     napi_get_boolean(env, isMuteSupported, &result);
     return result;
 }
@@ -942,7 +923,7 @@ napi_value CameraManagerNapi::MuteCamera(napi_env env, napi_callback_info info)
     }
     CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
     CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "MuteCamera");
-    CameraManager::GetInstance()->MuteCamera(context->isSupported);
+    CameraManager::GetInstance()->MuteCamera(asyncContext->isSupported);
     MEDIA_INFO_LOG("MuteCamera");
     napi_get_undefined(env, &result);
     return result;

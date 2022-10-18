@@ -37,6 +37,7 @@
 #include "session/camera_session_napi.h"
 #include "camera_napi_utils.h"
 #include "camera_manager_callback_napi.h"
+#include "camera_mute_listener_napi.h"
 
 #include <fstream>
 #include <iostream>
@@ -54,10 +55,6 @@ static const char CAMERA_MANAGER_NAPI_CLASS_NAME[] = "CameraManager";
 enum CameraManagerAsyncCallbackModes {
     GET_SUPPORTED_CAMERA_ASYNC_CALLBACK = 0,
     GET_SUPPORTED_OUTPUT_CAPABILITY_ASYNC_CALLBACK,
-
-    IS_CAMERA_MUTED_ASYNC_CALLBACK,
-    IS_CAMERA_MUTE_SUPPORTED_ASYNC_CALLBACK,
-    MUTE_CAMERA_ASYNC_CALLBACK,
 
     CREATE_CAMERA_INPUT_ASYNC_CALLBACK,
 

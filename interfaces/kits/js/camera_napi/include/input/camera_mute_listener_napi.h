@@ -12,8 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef CAMERA_NAPI_H_
-#define CAMERA_NAPI_H_
+
+#ifndef CAMERA_MUTE_LISTENER_NAPI_H_
+#define CAMERA_MUTE_LISTENER_NAPI_H_
 
 #include "camera_log.h"
 #include "napi/native_api.h"
@@ -38,11 +39,13 @@ namespace OHOS {
 namespace CameraStandard {
 
 class CameraMuteListenerNapi : public CameraMuteListener {
-    public:
+public:
     explicit CameraMuteListenerNapi(napi_env env, napi_ref callbackRef_);
     virtual ~CameraMuteListenerNapi();
-    void OnCameraMute(const bool &muteMode) const override;
-    private: napi_ref callbackRef;
+    void OnCameraMute(bool muteMode) override;
+private: 
+    napi_env env_ = nullptr;
+    napi_ref callbackRef_;
 };
 
 
