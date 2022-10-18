@@ -30,7 +30,7 @@ CameraMuteListenerNapi::CameraMuteListenerNapi(napi_env env, napi_ref ref): env_
 CameraMuteListenerNapi::~CameraMuteListenerNapi()
 {}
 
-void CameraManagerCallbackNapi::OnCameraMute(bool &muteMode) const
+void CameraManagerCallbackNapi::OnCameraMute(bool muteMode) const
 {
     callbackRef->OnCameraMute(muteMode);
 }
