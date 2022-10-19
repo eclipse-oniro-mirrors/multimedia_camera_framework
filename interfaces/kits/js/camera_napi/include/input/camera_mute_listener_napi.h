@@ -42,7 +42,6 @@ public:
     explicit CameraMuteListenerNapi(napi_env env, napi_ref callbackRef_);
     virtual ~CameraMuteListenerNapi();
     void OnCameraMute(bool muteMode) override;
-
 private:
     napi_env env_ = nullptr;
     napi_ref callbackRef_;

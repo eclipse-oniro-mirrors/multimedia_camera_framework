@@ -40,7 +40,7 @@ public:
 
     int32_t OnCameraMute(bool muteMode) override;
 private:
-    static inline BrokerDelegator<HCameraServiceCallbackProxy> delegator_;
+    static inline BrokerDelegator<HCameraMuteServiceCallbackProxy> delegator_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

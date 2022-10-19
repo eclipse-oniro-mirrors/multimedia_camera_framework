@@ -116,18 +116,6 @@ public:
     }
 };
 
-int32_t CameraMuteServiceCallback::OnCameraMute(bool muteMode)
-{
-    CameraStatusInfo cameraStatusInfo;
-
-    if (camMngr_ != nullptr && camMngr_->GetApplicationCallback() != nullptr) {
-        camMngr_->GetApplicationCallback()->OnCameraStatusChanged(cameraStatusInfo);
-    } else {
-        MEDIA_INFO_LOG("CameraManager::Callback not registered!, Ignore the callback");
-    }
-    return CAMERA_OK;
-}
-
 sptr<CaptureSession> CameraManager::CreateCaptureSession()
 {
     CAMERA_SYNC_TRACE;
@@ -675,9 +663,22 @@ camera_format_t CameraManager::GetCameraMetadataFormat(CameraFormat format)
     return metaFormat;
 }
 
+int32_t CameraMuteServiceCallback::OnCameraMute(bool muteMode)
+{
+    MEDIA_DEBUG_LOG("CameraMuteServiceCallback::OnCameraMute call! muteMode is %{public}d", muteMode);
+    if (camMngr_ != nullptr && camMngr_->GetCameraMuteListener() != nullptr) {
+        camMngr_->GetCameraMuteListener()->OnCameraMute(muteMode);
+    } else {
+        MEDIA_INFO_LOG("CameraManager::CameraMuteListener not registered!, Ignore the callback");
+    }
+    return CAMERA_OK;
+}
+
 void CameraManager::RegisterCameraMuteListener(std::shared_ptr<CameraMuteListener> listener)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    if (listener == nullptr) {
+        MEDIA_INFO_LOG("CameraManager::RegisterCameraMuteListener(): unregistering the callback");
+    }
     cameraMuteListener_ = listener;
 }
 
@@ -711,16 +712,14 @@ bool CameraManager::IsCameraMuteSupported()
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         std::shared_ptr<Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
         camera_metadata_item_t item;
-        int ret = Camera::FindCameraMetadataItem(metadata->get(),
-                                                OHOS_ABILITY_MUTE_MODES,
-                                                &item);
+        int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_MUTE_MODES, &item);
         if (ret == 0) {
             MEDIA_INFO_LOG("CameraManager::isCameraMuteSupported() OHOS_ABILITY_MUTE_MODES is %{public}d",
-                        item.data.u8[0]);
+                           item.data.u8[0]);
             result = (item.data.u8[0] == MUTE_ON) ? true : false;
         } else {
-            MEDIA_ERR_LOG("Failed to get stream configuration or Invalid stream"
-                        " configuation OHOS_ABILITY_MUTE_MODES ret = %{public}d", ret);
+            MEDIA_ERR_LOG("Failed to get stream configuration or Invalid stream "
+                          "configuation OHOS_ABILITY_MUTE_MODES ret = %{public}d", ret);
         }
         if (result == true) {
             break;
@@ -740,15 +739,15 @@ bool CameraManager::IsCameraMuted()
         std::shared_ptr<Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
         camera_metadata_item_t item;
         int ret = Camera::FindCameraMetadataItem(metadata->get(),
-                                                OHOS_CONTROL_MUTE_MODE,
-                                                &item);
+                                                 OHOS_CONTROL_MUTE_MODE,
+                                                 &item);
         if (ret == 0) {
             MEDIA_INFO_LOG("CameraManager::isCameraMuteSupported() OHOS_ABILITY_MUTE_MODES is %{public}d",
-                        item.data.u8[0]);
+                           item.data.u8[0]);
             result = (item.data.u8[0] == MUTE_ON) ? true : false;
         } else {
-            MEDIA_ERR_LOG("Failed to get stream configuration or Invalid stream"
-                        " configuation OHOS_CONTROL_MUTE_MODE ret = %{public}d", ret);
+            MEDIA_ERR_LOG("Failed to get stream configuration or Invalid stream "
+                          "configuation OHOS_CONTROL_MUTE_MODE ret = %{public}d", ret);
         }
         if (result == true) {
             break;

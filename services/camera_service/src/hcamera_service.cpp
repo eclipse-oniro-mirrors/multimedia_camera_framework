@@ -342,7 +342,6 @@ int32_t HCameraService::SetMuteCallback(sptr<ICameraMuteServiceCallback> &callba
 
 int32_t UpdateMuteSetting(bool muteMode, std::shared_ptr<OHOS::Camera::CameraMetadata> &changedMetadata)
 {
-
     constexpr uint8_t MUTE_ON = 1;
     constexpr uint8_t MUTE_OFF = 0;
 
@@ -378,10 +377,14 @@ int32_t HCameraService::MuteCamera(bool muteMode)
     ret = UpdateMuteSetting(muteMode, changedMetadata);
     if (ret == CAMERA_OK) {
         MEDIA_DEBUG_LOG("HCameraService::MuteCamera UpdateMuteSetting success");
-    } else{
+    } else {
         MEDIA_ERR_LOG("HCameraService::MuteCamera UpdateMuteSetting failed: %{public}d", ret);
     }
-    for (auto &it : devices_) {
+    if (devices_.empty()) {
+        MEDIA_ERR_LOG("HCameraService::MuteCamera updateSetting Failed, cameraDevice is empty");
+        return CAMERA_UNKNOWN_ERROR;
+    }
+    for (auto it : devices_) {
         ret = it.second->UpdateSetting(changedMetadata);
         if (ret != CAMERA_OK) {
             MEDIA_ERR_LOG("HCameraService::MuteCamera updateSetting Failed, cameraId: %{public}s", it.first.c_str());

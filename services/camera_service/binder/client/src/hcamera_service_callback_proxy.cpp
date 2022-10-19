@@ -93,7 +93,7 @@ int32_t HCameraMuteServiceCallbackProxy::OnCameraMute(bool muteMode)
 
     int error = Remote()->SendRequest(CAMERA_CALLBACK_MUTE_MODE, data, reply, option);
     if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnCameraStatusChanged failed, error: %{public}d", error);
+        MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnCameraMute failed, error: %{public}d", error);
     }
     return error;
 }
