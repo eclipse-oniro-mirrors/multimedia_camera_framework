@@ -35,8 +35,13 @@ CameraMuteListenerNapi::~CameraMuteListenerNapi()
 void CameraMuteListenerNapi::OnCameraMute(bool muteMode)
 {
     MEDIA_INFO_LOG("Enter CameraMuteListenerNapi::OnCameraMute");
+    napi_value result[ARGS_TWO];
     napi_value callback = nullptr;
+    napi_value retVal;
     napi_get_reference_value(env_, callbackRef_, &callback);
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_get_boolean(env_, muteMode, &result[PARAM1]);
+    napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
 }
 } // namespace CameraStandard
 } // namespace OHOS
