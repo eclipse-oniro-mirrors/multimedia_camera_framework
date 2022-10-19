@@ -32,6 +32,16 @@ public:
 private:
     static inline BrokerDelegator<HCameraServiceCallbackProxy> delegator_;
 };
+
+class HCameraMuteServiceCallbackProxy : public IRemoteProxy<ICameraMuteServiceCallback> {
+public:
+    explicit HCameraMuteServiceCallbackProxy(const sptr<IRemoteObject> &impl);
+    virtual ~HCameraMuteServiceCallbackProxy() = default;
+
+    int32_t OnCameraMute(bool muteMode) override;
+private:
+    static inline BrokerDelegator<HCameraServiceCallbackProxy> delegator_;
+};
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_HCAMERA_SERVICE_CALLBACK_PROXY_H

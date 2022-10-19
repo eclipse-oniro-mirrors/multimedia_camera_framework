@@ -116,6 +116,18 @@ public:
     }
 };
 
+int32_t CameraMuteServiceCallback::OnCameraMute(bool muteMode)
+{
+    CameraStatusInfo cameraStatusInfo;
+
+    if (camMngr_ != nullptr && camMngr_->GetApplicationCallback() != nullptr) {
+        camMngr_->GetApplicationCallback()->OnCameraStatusChanged(cameraStatusInfo);
+    } else {
+        MEDIA_INFO_LOG("CameraManager::Callback not registered!, Ignore the callback");
+    }
+    return CAMERA_OK;
+}
+
 sptr<CaptureSession> CameraManager::CreateCaptureSession()
 {
     CAMERA_SYNC_TRACE;
@@ -367,7 +379,6 @@ void CameraManager::Init()
     CAMERA_SYNC_TRACE;
     sptr<IRemoteObject> object = nullptr;
     cameraMngrCallback_ = nullptr;
-    cameraMuteListenerList_.clear();
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (samgr == nullptr) {
         MEDIA_ERR_LOG("Failed to get System ability manager");
@@ -388,6 +399,12 @@ void CameraManager::Init()
             SetCameraServiceCallback(cameraSvcCallback_);
         } else {
             MEDIA_ERR_LOG("CameraManager::init Failed to new CameraStatusServiceCallback.");
+        }
+        cameraMuteSvcCallback_ = new(std::nothrow) CameraMuteServiceCallback(this);
+        if (cameraMuteSvcCallback_) {
+            SetCameraMuteServiceCallback(cameraMuteSvcCallback_);
+        } else {
+            MEDIA_ERR_LOG("CameraManager::init Failed to new CameraMuteServiceCallback.");
         }
     }
     pid_t pid = 0;
@@ -661,7 +678,27 @@ camera_format_t CameraManager::GetCameraMetadataFormat(CameraFormat format)
 void CameraManager::RegisterCameraMuteListener(std::shared_ptr<CameraMuteListener> listener)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    cameraMuteListenerList_.push_back(listener);
+    cameraMuteListener_ = listener;
+}
+
+void CameraManager::SetCameraMuteServiceCallback(sptr<ICameraMuteServiceCallback>& callback)
+{
+    int32_t retCode = CAMERA_OK;
+
+    if (serviceProxy_ == nullptr) {
+        MEDIA_ERR_LOG("CameraManager::SetMuteCameraServiceCallback serviceProxy_ is null");
+        return;
+    }
+    retCode = serviceProxy_->SetMuteCallback(callback);
+    if (retCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("CameraManager::Set Mute service Callback failed, retCode: %{public}d", retCode);
+    }
+    return;
+}
+
+std::shared_ptr<CameraMuteListener> CameraManager::GetCameraMuteListener()
+{
+    return cameraMuteListener_;
 }
 
 bool CameraManager::IsCameraMuteSupported()
@@ -696,9 +733,9 @@ bool CameraManager::IsCameraMuted()
 {
     const uint8_t MUTE_ON = 1;
     bool result = false;
-    if (cameraObjList.empty()) {
-        this->GetSupportedCameras();
-    }
+    // get most recently metadata
+    this->GetSupportedCameras();
+
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         std::shared_ptr<Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
         camera_metadata_item_t item;
@@ -722,34 +759,17 @@ bool CameraManager::IsCameraMuted()
 
 void CameraManager::MuteCamera(bool muteMode)
 {
-    const uint8_t MUTE_ON = 1;
-    const uint8_t MUTE_OFF = 0;
-    const uint32_t count = 1;
-    uint8_t mode = muteMode ? MUTE_ON : MUTE_OFF;
-    if (cameraObjList.empty()) {
-        this->GetSupportedCameras();
+    int32_t retCode = CAMERA_OK;
+
+    if (serviceProxy_ == nullptr) {
+        MEDIA_ERR_LOG("CameraManager::MuteCamera serviceProxy_ is null");
+        return;
     }
-    bool status = false;
-    for (size_t i = 0; i < cameraObjList.size(); i++) {
-        std::shared_ptr<Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
-        camera_metadata_item_t item;
-        int ret = Camera::FindCameraMetadataItem(metadata->get(),
-                                                OHOS_CONTROL_MUTE_MODE,
-                                                &item);
-        if (ret == CAM_META_ITEM_NOT_FOUND) {
-            MEDIA_ERR_LOG("CameraManager::MuteCamera failed, OHOS_CONTROL_MUTE_MODE item is not found");
-        } else if (ret == CAM_META_SUCCESS) {
-            status = metadata->updateEntry(OHOS_CONTROL_MUTE_MODE, &mode, count);
-            if (status == 0) {
-                MEDIA_INFO_LOG("CameraManager::MuteCamera success");
-            } else {
-                MEDIA_ERR_LOG("CameraManager::MuteCamera Failed to set muteMode");
-            }
-            for (auto listener : cameraMuteListenerList_) {
-                listener->OnCameraMute(muteMode);
-            }
-        }
+    retCode = serviceProxy_->MuteCamera(muteMode);
+    if (retCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("CameraManager::MuteCamera failed, retCode: %{public}d", retCode);
     }
+    return;
 }
 } // CameraStandard
 } // OHOS

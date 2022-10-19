@@ -51,6 +51,12 @@ int HCameraServiceStub::OnRemoteRequest(
         return errCode;
     }
     switch (code) {
+        case CAMERA_SERVICE_MUTE_CAMERA:
+            errCode = HCameraServiceStub::HandleMuteCamera(data, reply);
+            break;
+        case CAMERA_SERVICE_SET_MUTE_CALLBACK:
+            errCode = HCameraServiceStub::HandleSetMuteCallback(data);
+            break;
         case CAMERA_SERVICE_CREATE_DEVICE:
             errCode = HCameraServiceStub::HandleCreateCameraDevice(data, reply);
             break;
@@ -136,6 +142,16 @@ int HCameraServiceStub::HandleCreateCameraDevice(MessageParcel &data, MessagePar
     return errCode;
 }
 
+int HCameraServiceStub::HandleMuteCamera(MessageParcel &data, MessageParcel &reply)
+{
+    bool muteMode = data.ReadBool();
+    MEDIA_DEBUG_LOG("HCameraServiceStub HandleMuteCamera read muteMode : %{public}d", muteMode);
+
+    int32_t ret = MuteCamera(muteMode);
+    MEDIA_INFO_LOG("HCameraServiceStub HandleMuteCamera MuteCamera result: %{public}d", ret);
+    return ret;
+}
+
 int HCameraServiceStub::HandleSetCallback(MessageParcel &data)
 {
     auto remoteObject = data.ReadRemoteObject();
@@ -147,6 +163,19 @@ int HCameraServiceStub::HandleSetCallback(MessageParcel &data)
     auto callback = iface_cast<ICameraServiceCallback>(remoteObject);
 
     return SetCallback(callback);
+}
+
+int HCameraServiceStub::HandleSetMuteCallback(MessageParcel &data)
+{
+    auto remoteObject = data.ReadRemoteObject();
+    if (remoteObject == nullptr) {
+        MEDIA_ERR_LOG("HCameraServiceStub HandleSetMuteCallback CameraMuteServiceCallback is null");
+        return IPC_STUB_INVALID_DATA_ERR;
+    }
+
+    auto callback = iface_cast<ICameraMuteServiceCallback>(remoteObject);
+
+    return SetMuteCallback(callback);
 }
 
 int HCameraServiceStub::HandleCreateCaptureSession(MessageParcel &reply)

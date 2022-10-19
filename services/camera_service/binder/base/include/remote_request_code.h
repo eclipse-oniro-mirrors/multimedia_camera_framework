@@ -47,6 +47,16 @@ enum CameraServiceCallbackRequestCode {
 };
 
 /**
+ * @brief Camera mute service callback remote request code for IPC.
+ *
+ * @since 1.0
+ * @version 1.0
+ */
+enum CameraMuteServiceCallbackRequestCode {
+    CAMERA_CALLBACK_MUTE_MODE = 0
+};
+
+/**
  * @brief Camera service remote request code for IPC.
  *
  * @since 1.0
@@ -55,6 +65,7 @@ enum CameraServiceCallbackRequestCode {
 enum CameraServiceRequestCode {
     CAMERA_SERVICE_CREATE_DEVICE = 0,
     CAMERA_SERVICE_SET_CALLBACK,
+    CAMERA_SERVICE_SET_MUTE_CALLBACK,
     CAMERA_SERVICE_GET_CAMERAS,
     CAMERA_SERVICE_CREATE_CAPTURE_SESSION,
     CAMERA_SERVICE_CREATE_PHOTO_OUTPUT,
@@ -63,6 +74,7 @@ enum CameraServiceRequestCode {
     CAMERA_SERVICE_CREATE_VIDEO_OUTPUT,
     CAMERA_SERVICE_SET_LISTENER_OBJ,
     CAMERA_SERVICE_CREATE_METADATA_OUTPUT,
+    CAMERA_SERVICE_MUTE_CAMERA,
 };
 
 /**

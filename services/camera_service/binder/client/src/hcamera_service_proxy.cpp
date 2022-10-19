@@ -121,6 +121,34 @@ int32_t HCameraServiceProxy::SetCallback(sptr<ICameraServiceCallback>& callback)
     return error;
 }
 
+int32_t HCameraServiceProxy::SetMuteCallback(sptr<ICameraMuteServiceCallback>& callback)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    if (callback == nullptr) {
+        MEDIA_ERR_LOG("HCameraServiceProxy SetMuteCallback callback is null");
+        return IPC_PROXY_ERR;
+    }
+
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        MEDIA_ERR_LOG("HCameraServiceProxy SetMuteCallback Write interface token failed");
+        return IPC_PROXY_ERR;
+    }
+    if (!data.WriteRemoteObject(callback->AsObject())) {
+        MEDIA_ERR_LOG("HCameraServiceProxy SetMuteCallback write CameraServiceCallback obj failed");
+        return IPC_PROXY_ERR;
+    }
+
+    int error = Remote()->SendRequest(CAMERA_SERVICE_SET_MUTE_CALLBACK, data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy SetMuteCallback failed, error: %{public}d", error);
+    }
+
+    return error;
+}
+
 int32_t HCameraServiceProxy::CreateCaptureSession(sptr<ICaptureSession>& session)
 {
     MessageParcel data;
@@ -399,6 +427,27 @@ int32_t HCameraServiceProxy::SetListenerObject(const sptr<IRemoteObject> &object
 
     (void)data.WriteRemoteObject(object);
     int error = Remote()->SendRequest(CAMERA_SERVICE_SET_LISTENER_OBJ, data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy::SetListenerObject Set listener obj failed, error: %{public}d", error);
+        return IPC_PROXY_ERR;
+    }
+
+    return reply.ReadInt32();
+}
+
+int32_t HCameraServiceProxy::MuteCamera(bool muteMode)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        MEDIA_ERR_LOG("HCameraServiceProxy::SetListenerObject Failed to write descriptor");
+        return IPC_PROXY_ERR;
+    }
+
+    (void)data.WriteBool(muteMode);
+    int error = Remote()->SendRequest(CAMERA_SERVICE_MUTE_CAMERA, data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceProxy::SetListenerObject Set listener obj failed, error: %{public}d", error);
         return IPC_PROXY_ERR;

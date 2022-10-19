@@ -67,6 +67,24 @@ public:
     virtual ~CameraMuteListener() = default;
     virtual void OnCameraMute(bool muteMode);
 };
+class CameraManager;
+class CameraMuteServiceCallback : public HCameraMuteServiceCallbackStub {
+public:
+    sptr<CameraManager> camMngr_ = nullptr;
+    CameraMuteServiceCallback() : camMngr_(nullptr) {
+    }
+
+    explicit CameraMuteServiceCallback(const sptr<CameraManager>& cameraManager) : camMngr_(cameraManager) {
+    }
+
+    ~CameraMuteServiceCallback()
+    {
+        camMngr_ = nullptr;
+    }
+
+    int32_t OnCameraMute(bool muteMode) override;
+};
+
 class CameraManager : public RefBase {
 public:
     /**
@@ -303,6 +321,13 @@ public:
     */
     void RegisterCameraMuteListener(std::shared_ptr<CameraMuteListener> listener);
 
+    /**
+    * @brief get the camera mute listener
+    *
+    * @return CameraMuteListener point..
+    */
+    std::shared_ptr<CameraMuteListener> GetCameraMuteListener();
+
     static const std::string surfaceFormat;
 
 protected:
@@ -312,6 +337,7 @@ private:
     CameraManager();
     void Init();
     void SetCameraServiceCallback(sptr<ICameraServiceCallback>& callback);
+    void SetCameraMuteServiceCallback(sptr<ICameraMuteServiceCallback>& callback);
     int32_t CreateListenerObject();
     void CameraServerDied(pid_t pid);
     static const std::unordered_map<camera_format_t, CameraFormat> metaToFwCameraFormat_;
@@ -326,7 +352,9 @@ private:
     static sptr<CameraManager> cameraManager_;
     sptr<ICameraServiceCallback> cameraSvcCallback_;
     std::shared_ptr<CameraManagerCallback> cameraMngrCallback_;
-    std::vector<std::shared_ptr<CameraMuteListener>> cameraMuteListenerList_;
+
+    sptr<ICameraMuteServiceCallback> cameraMuteSvcCallback_;
+    std::shared_ptr<CameraMuteListener> cameraMuteListener_;
     std::vector<sptr<CameraDevice>> cameraObjList;
     [[deprecated]] std::vector<sptr<CameraInfo>> dcameraObjList;
 };

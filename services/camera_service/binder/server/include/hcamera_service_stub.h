@@ -35,12 +35,14 @@ private:
     int HandleGetCameras(MessageParcel& reply);
     int HandleCreateCameraDevice(MessageParcel &data, MessageParcel &reply);
     int HandleSetCallback(MessageParcel &data);
+    int HandleSetMuteCallback(MessageParcel &data);
     int HandleCreateCaptureSession(MessageParcel &reply);
     int HandleCreatePhotoOutput(MessageParcel &data, MessageParcel &reply);
     int HandleCreatePreviewOutput(MessageParcel &data, MessageParcel &reply);
     int HandleCreateDeferredPreviewOutput(MessageParcel &data, MessageParcel &reply);
     int HandleCreateMetadataOutput(MessageParcel &data, MessageParcel &reply);
     int HandleCreateVideoOutput(MessageParcel &data, MessageParcel &reply);
+    int HandleMuteCamera(MessageParcel &data, MessageParcel &reply);
     int DestroyStubForPid(pid_t pid);
     void ClientDied(pid_t pid);
     int SetListenerObject(const sptr<IRemoteObject> &object) override;

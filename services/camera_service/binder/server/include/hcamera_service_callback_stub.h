@@ -30,6 +30,15 @@ private:
     int HandleOnCameraStatusChanged(MessageParcel& data);
     int HandleOnFlashlightStatusChanged(MessageParcel& data);
 };
+
+class HCameraMuteServiceCallbackStub : public IRemoteStub<ICameraMuteServiceCallback> {
+public:
+    int OnRemoteRequest(uint32_t code, MessageParcel &data,
+                        MessageParcel &reply, MessageOption &option) override;
+
+private:
+    int HandleOnCameraMute(MessageParcel& data);
+};
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_HCAMERA_SERVICE_CALLBACK_STUB_H

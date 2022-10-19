@@ -31,7 +31,7 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
-class   HCameraService : public SystemAbility, public HCameraServiceStub, public HCameraHostManager::StatusCallback {
+class HCameraService : public SystemAbility, public HCameraServiceStub, public HCameraHostManager::StatusCallback {
     DECLARE_SYSTEM_ABILITY(HCameraService);
 
 public:
@@ -57,6 +57,9 @@ public:
                               int32_t width, int32_t height,
                               sptr<IStreamRepeat> &videoOutput) override;
     int32_t SetCallback(sptr<ICameraServiceCallback> &callback) override;
+    int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback> &callback) override;
+    int32_t MuteCamera(bool muteMode) override;
+
     void OnDump() override;
     void OnStart() override;
     void OnStop() override;
@@ -95,6 +98,7 @@ private:
     sptr<HCameraHostManager> cameraHostManager_;
     sptr<StreamOperatorCallback> streamOperatorCallback_;
     sptr<ICameraServiceCallback> cameraServiceCallback_;
+    sptr<ICameraMuteServiceCallback> cameraMuteServiceCallback_;
     std::map<std::string, sptr<HCameraDevice>> devices_;
 };
 } // namespace CameraStandard
