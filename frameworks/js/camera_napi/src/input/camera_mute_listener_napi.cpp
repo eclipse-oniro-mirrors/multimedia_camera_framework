@@ -18,10 +18,7 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace std;
 using OHOS::HiviewDFX::HiLog;
-using OHOS::HiviewDFX::HiLogLabel;
-// namespace {
-//     constexpr HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "CameraMuteListenerNapi"};
-// }
+
 CameraMuteListenerNapi::CameraMuteListenerNapi(napi_env env, napi_ref ref): env_(env), callbackRef_(ref)
 {
     MEDIA_INFO_LOG("Enter CameraMuteListenerNapi::CameraMuteListenerNapi");

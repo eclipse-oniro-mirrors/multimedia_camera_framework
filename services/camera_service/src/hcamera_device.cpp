@@ -338,7 +338,10 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp,
         CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("FocusStateChanged! current OHOS_CONTROL_FOCUS_STATE is %d",
                                            item.data.u8[0]));
     }
-
+    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_MUTE_MODE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        MEDIA_INFO_LOG("current mute mode: %{public}d", item.data.u8[0]);
+    }
     return CAMERA_OK;
 }
 
