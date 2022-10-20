@@ -33,7 +33,8 @@ HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
     : SystemAbility(systemAbilityId, runOnCreate),
       cameraHostManager_(nullptr),
       streamOperatorCallback_(nullptr),
-      cameraServiceCallback_(nullptr)
+      cameraServiceCallback_(nullptr),
+      muteMode_(false)
 {
 }
 
@@ -378,7 +379,12 @@ int32_t HCameraService::UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool
 int32_t HCameraService::MuteCamera(bool muteMode)
 {
     bool oldMuteMode = muteMode_;
-    muteMode_ = muteMode;
+    if (muteMode == oldMuteMode) {
+        MEDIA_INFO_LOG("HCameraService::MuteCamera muteMode not changed, muteMode: %{public}d", muteMode);
+        return CAMERA_OK;
+    } else {
+        muteMode_ = muteMode;
+    }
     if (devices_.empty()) {
         MEDIA_INFO_LOG("HCameraService::MuteCamera cameraDevice is empty, muteMode = %{public}d", muteMode);
         if (cameraMuteServiceCallback_) {

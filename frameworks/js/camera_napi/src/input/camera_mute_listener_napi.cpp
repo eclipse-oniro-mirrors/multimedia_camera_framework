@@ -31,7 +31,7 @@ CameraMuteListenerNapi::~CameraMuteListenerNapi()
 }
 
 
-void CameraMuteListenerNapi::OnCameraMuteCallbackAsync(const CameraMuteInfo &cameraMuteInfo) const
+void CameraMuteListenerNapi::OnCameraMuteCallbackAsync(bool muteMode) const
 {
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
@@ -45,17 +45,17 @@ void CameraMuteListenerNapi::OnCameraMuteCallbackAsync(const CameraMuteInfo &cam
         return;
     }
     std::unique_ptr<CameraMuteCallbackInfo> callbackInfo =
-        std::make_unique<CameraMuteCallbackInfo>(cameraMuteInfo, this);
+        std::make_unique<CameraMuteCallbackInfo>(muteMode, this);
     work->data = callbackInfo.get();
     int ret = uv_queue_work(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         CameraMuteCallbackInfo* callbackInfo = reinterpret_cast<CameraMuteCallbackInfo *>(work->data);
         if (callbackInfo) {
-            callbackInfo->listener_->OnCameraMuteCallback(callbackInfo->info_);
+            callbackInfo->listener_->OnCameraMuteCallback(callbackInfo->muteMode_);
             delete callbackInfo;
         }
         delete work;
     });
-    if (ret) {
+    if (!ret) {
         MEDIA_ERR_LOG("CameraMuteListenerNapi::OnCameraMuteCallbackAsync failed to execute work");
         delete work;
     } else {
@@ -63,25 +63,22 @@ void CameraMuteListenerNapi::OnCameraMuteCallbackAsync(const CameraMuteInfo &cam
     }
 }
 
-void CameraMuteListenerNapi::OnCameraMuteCallback(const CameraMuteInfo &cameraMuteInfo) const
+void CameraMuteListenerNapi::OnCameraMuteCallback(bool muteMode) const
 {
-    napi_value result[ARGS_TWO];
-    napi_value callback = nullptr;
+    MEDIA_DEBUG_LOG("CameraMuteListenerNapi::OnCameraMuteCallback called, muteMode: %{public}d", muteMode);
+    napi_value result[ARGS_ONE];
+    napi_value callback;
     napi_value retVal;
-    bool muteMode = cameraMuteInfo.muteMode;
     napi_get_reference_value(env_, callbackRef_, &callback);
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_get_boolean(env_, muteMode, &result[PARAM1]);
-    napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
+    napi_get_boolean(env_, muteMode, &result[PARAM0]);
+    napi_call_function(env_, nullptr, callback, ARGS_ONE, result, &retVal);
+    MEDIA_DEBUG_LOG("CameraMuteListenerNapi::OnCameraMuteCallback napi_call_function end");
 }
 
 void CameraMuteListenerNapi::OnCameraMute(bool muteMode) const
 {
     MEDIA_DEBUG_LOG("CameraMuteListenerNapi::OnCameraMute muteMode: %{public}d", muteMode);
-    const CameraMuteInfo cameraMuteInfo = {
-        .muteMode = muteMode
-    };
-    OnCameraMuteCallbackAsync(cameraMuteInfo);
+    OnCameraMuteCallbackAsync(muteMode);
 }
 } // namespace CameraStandard
 } // namespace OHOS

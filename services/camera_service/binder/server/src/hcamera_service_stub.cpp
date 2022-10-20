@@ -57,6 +57,9 @@ int HCameraServiceStub::OnRemoteRequest(
         case CAMERA_SERVICE_SET_MUTE_CALLBACK:
             errCode = HCameraServiceStub::HandleSetMuteCallback(data);
             break;
+        case CAMERA_SERVICE_IS_CAMERA_MUTED:
+            errCode = HCameraServiceStub::HandleIsCameraMuted(data, reply);
+            break;
         case CAMERA_SERVICE_CREATE_DEVICE:
             errCode = HCameraServiceStub::HandleCreateCameraDevice(data, reply);
             break;

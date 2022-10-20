@@ -37,27 +37,23 @@
 
 namespace OHOS {
 namespace CameraStandard {
-struct CameraMuteInfo {
-    bool muteMode;
-};
-
 class CameraMuteListenerNapi : public CameraMuteListener {
 public:
     explicit CameraMuteListenerNapi(napi_env env, napi_ref callbackRef_);
     virtual ~CameraMuteListenerNapi();
     void OnCameraMute(bool muteMode) const override;
 private:
-    void OnCameraMuteCallbackAsync(const CameraMuteInfo &cameraMuteInfo) const;
-    void OnCameraMuteCallback(const CameraMuteInfo &cameraMuteInfo) const;
+    void OnCameraMuteCallbackAsync(bool muteMode) const;
+    void OnCameraMuteCallback(bool muteMode) const;
     napi_env env_ = nullptr;
     napi_ref callbackRef_;
 };
 
 struct CameraMuteCallbackInfo {
-    CameraMuteInfo info_;
+    bool muteMode_;
     const CameraMuteListenerNapi* listener_;
-    CameraMuteCallbackInfo(CameraMuteInfo info, const CameraMuteListenerNapi* listener)
-        : info_(info), listener_(listener) {}
+    CameraMuteCallbackInfo(bool muteMode, const CameraMuteListenerNapi* listener)
+        : muteMode_(muteMode), listener_(listener) {}
 };
 } // namespace CameraStandard
 } // namespace OHOS
