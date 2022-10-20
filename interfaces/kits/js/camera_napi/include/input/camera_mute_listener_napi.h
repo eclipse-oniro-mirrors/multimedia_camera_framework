@@ -43,18 +43,10 @@ public:
     virtual ~CameraMuteListenerNapi();
     void OnCameraMute(bool muteMode) const override;
 private:
-    void OnCameraMuteCallbackAsync(bool muteMode) const;
-    void OnCameraMuteCallback(bool muteMode) const;
     napi_env env_ = nullptr;
     napi_ref callbackRef_;
 };
 
-struct CameraMuteCallbackInfo {
-    bool muteMode_;
-    const CameraMuteListenerNapi* listener_;
-    CameraMuteCallbackInfo(bool muteMode, const CameraMuteListenerNapi* listener)
-        : muteMode_(muteMode), listener_(listener) {}
-};
 } // namespace CameraStandard
 } // namespace OHOS
 #endif /* CAMERA_MUTE_LISTENER_NAPI_H_ */
