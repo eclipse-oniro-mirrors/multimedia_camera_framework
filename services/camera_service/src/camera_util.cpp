@@ -16,6 +16,7 @@
 #include "camera_util.h"
 #include <securec.h>
 #include "camera_log.h"
+#include "accesstoken_kit.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -148,6 +149,12 @@ void ReleaseCaptureId(int32_t captureId)
     std::lock_guard<std::mutex> lock(g_captureIdsMutex);
     g_captureIds.erase(captureId);
     return;
+}
+
+bool IsValidTokenId(int32_t tokenId)
+{
+    return Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(tokenId) ==
+        Security::AccessToken::ATokenTypeEnum::TOKEN_HAP;
 }
 
 bool IsValidSize(

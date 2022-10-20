@@ -81,7 +81,10 @@ int32_t HCameraDevice::Open()
             return CAMERA_ALLOC_ERROR;
         }
     }
-    bool isAllowed = Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken_, ACCESS_CAMERA);
+    bool isAllowed = true;
+    if (IsValidTokenId(callerToken_)) {
+        isAllowed = Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken_, ACCESS_CAMERA);
+    }
     if (!isAllowed) {
         MEDIA_ERR_LOG("HCameraDevice::Open IsAllowedUsingPermission failed");
         return CAMERA_ALLOC_ERROR;
