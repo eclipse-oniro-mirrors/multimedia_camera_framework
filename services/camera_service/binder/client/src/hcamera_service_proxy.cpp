@@ -473,7 +473,7 @@ int32_t HCameraServiceProxy::IsCameraMuted(bool &muteMode)
         return IPC_PROXY_ERR;
     }
 
-    auto muteMode = reply.ReadBool();
+    muteMode = reply.ReadBool();
     MEDIA_DEBUG_LOG("HCameraServiceProxy IsCameraMuted Read muteMode is %{public}d", muteMode);
     return error;
 }

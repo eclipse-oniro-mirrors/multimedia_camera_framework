@@ -730,13 +730,12 @@ bool CameraManager::IsCameraMuteSupported()
 
 bool CameraManager::IsCameraMuted()
 {
-    const uint8_t MUTE_ON = 1;
     int32_t retCode = CAMERA_OK;
     bool isMuted = false;
 
     if (serviceProxy_ == nullptr) {
         MEDIA_ERR_LOG("CameraManager::IsCameraMuted serviceProxy_ is null");
-        return;
+        return isMuted;
     }
     retCode = serviceProxy_->IsCameraMuted(isMuted);
     if (retCode != CAMERA_OK) {
