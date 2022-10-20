@@ -65,8 +65,9 @@ class CameraMuteListener {
 public:
     CameraMuteListener() = default;
     virtual ~CameraMuteListener() = default;
-    virtual void OnCameraMute(bool muteMode);
+    virtual void OnCameraMute(bool muteMode) const = 0;
 };
+
 class CameraManager;
 class CameraMuteServiceCallback : public HCameraMuteServiceCallbackStub {
 public:

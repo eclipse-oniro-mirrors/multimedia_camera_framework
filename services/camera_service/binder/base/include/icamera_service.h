@@ -60,6 +60,8 @@ public:
 
     virtual int32_t MuteCamera(bool muteMode) = 0;
 
+    virtual int32_t IsCameraMuted(bool &muteMode) = 0;
+
     DECLARE_INTERFACE_DESCRIPTOR(u"ICameraService");
 };
 } // namespace CameraStandard

@@ -59,7 +59,7 @@ public:
     int32_t SetCallback(sptr<ICameraServiceCallback> &callback) override;
     int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback> &callback) override;
     int32_t MuteCamera(bool muteMode) override;
-
+    int32_t IsCameraMuted(bool &muteMode) override;
     void OnDump() override;
     void OnStart() override;
     void OnStop() override;
@@ -94,12 +94,14 @@ private:
     void CameraDumpVideoFrameRateRange(common_metadata_header_t* metadataEntry,
         std::string& dumpString);
 
+    int32_t UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool muteMode);
     std::mutex mutex_;
     sptr<HCameraHostManager> cameraHostManager_;
     sptr<StreamOperatorCallback> streamOperatorCallback_;
     sptr<ICameraServiceCallback> cameraServiceCallback_;
     sptr<ICameraMuteServiceCallback> cameraMuteServiceCallback_;
     std::map<std::string, sptr<HCameraDevice>> devices_;
+    bool muteMode_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -167,6 +167,11 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice HCameraDevice allocation failed");
         return CAMERA_ALLOC_ERROR;
     }
+    // when create camera device, update mute setting truely.
+    if (UpdateMuteSetting(cameraDevice, muteMode_) != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCameraService::CreateCameraDevice UpdateMuteSetting Failed, cameraId: %{public}s",
+                      cameraId.c_str());
+    }
     devices_.insert(std::make_pair(cameraId, cameraDevice));
     device = cameraDevice;
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager_CreateCameraInput CameraId:%s", cameraId.c_str()));
@@ -340,11 +345,14 @@ int32_t HCameraService::SetMuteCallback(sptr<ICameraMuteServiceCallback> &callba
     return CAMERA_OK;
 }
 
-int32_t UpdateMuteSetting(bool muteMode, std::shared_ptr<OHOS::Camera::CameraMetadata> &changedMetadata)
+int32_t HCameraService::UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool muteMode)
 {
     constexpr uint8_t MUTE_ON = 1;
     constexpr uint8_t MUTE_OFF = 0;
-
+    constexpr int32_t DEFAULT_ITEMS = 1;
+    constexpr int32_t DEFAULT_DATA_LENGTH = 1;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
     bool status = false;
     int32_t ret;
     int32_t count = 1;
@@ -359,7 +367,8 @@ int32_t UpdateMuteSetting(bool muteMode, std::shared_ptr<OHOS::Camera::CameraMet
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata->updateEntry(OHOS_CONTROL_MUTE_MODE, &mode, count);
     }
-    if (!status) {
+    ret = cameraDevice->UpdateSetting(changedMetadata);
+    if (!status || ret != CAMERA_OK) {
         MEDIA_ERR_LOG("UpdateMuteSetting muteMode Failed");
         return CAMERA_UNKNOWN_ERROR;
     }
@@ -368,34 +377,39 @@ int32_t UpdateMuteSetting(bool muteMode, std::shared_ptr<OHOS::Camera::CameraMet
 
 int32_t HCameraService::MuteCamera(bool muteMode)
 {
-    constexpr int32_t DEFAULT_ITEMS = 1;
-    constexpr int32_t DEFAULT_DATA_LENGTH = 1;
-    std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
-        std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
-    int32_t ret = CAMERA_OK;
-    std::lock_guard<std::mutex> lock(mutex_);
-    ret = UpdateMuteSetting(muteMode, changedMetadata);
-    if (ret == CAMERA_OK) {
-        MEDIA_DEBUG_LOG("HCameraService::MuteCamera UpdateMuteSetting success");
-    } else {
-        MEDIA_ERR_LOG("HCameraService::MuteCamera UpdateMuteSetting failed: %{public}d", ret);
-    }
+    bool oldMuteMode = muteMode_;
+    muteMode_ = muteMode;
     if (devices_.empty()) {
-        MEDIA_ERR_LOG("HCameraService::MuteCamera updateSetting Failed, cameraDevice is empty");
-        return CAMERA_UNKNOWN_ERROR;
-    }
-    for (auto it : devices_) {
-        ret = it.second->UpdateSetting(changedMetadata);
-        if (ret != CAMERA_OK) {
-            MEDIA_ERR_LOG("HCameraService::MuteCamera updateSetting Failed, cameraId: %{public}s", it.first.c_str());
-            break;
+        MEDIA_INFO_LOG("HCameraService::MuteCamera cameraDevice is empty, muteMode = %{public}d", muteMode);
+        if (cameraMuteServiceCallback_) {
+            cameraMuteServiceCallback_->OnCameraMute(muteMode);
+            CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraMute! current Camera muteMode:%d", muteMode));
         }
+        return CAMERA_OK;
+    }
+
+    int32_t ret = CAMERA_OK;
+    for (auto it : devices_) {
+        ret = UpdateMuteSetting(it.second, muteMode);
+        if (ret != CAMERA_OK) {
+            MEDIA_ERR_LOG("HCameraService::MuteCamera UpdateMuteSetting Failed, cameraId: %{public}s",
+                          it.first.c_str());
+            muteMode_ = oldMuteMode;
+        }
+        break;
     }
     if (cameraMuteServiceCallback_ && ret == CAMERA_OK) {
         cameraMuteServiceCallback_->OnCameraMute(muteMode);
         CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraMute! current Camera muteMode:%d", muteMode));
     }
     return ret;
+}
+
+int32_t HCameraService::IsCameraMuted(bool &muteMode)
+{
+    muteMode = muteMode_;
+    MEDIA_DEBUG_LOG("HCameraService::IsCameraMuted success. isMuted: %{public}d", muteMode);
+    return CAMERA_OK;
 }
 
 void HCameraService::CameraSummary(std::vector<std::string> cameraIds,

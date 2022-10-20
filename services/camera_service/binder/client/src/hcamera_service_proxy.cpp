@@ -442,18 +442,40 @@ int32_t HCameraServiceProxy::MuteCamera(bool muteMode)
     MessageOption option;
 
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HCameraServiceProxy::SetListenerObject Failed to write descriptor");
+        MEDIA_ERR_LOG("HCameraServiceProxy::MuteCamera Failed to write descriptor");
         return IPC_PROXY_ERR;
     }
 
     (void)data.WriteBool(muteMode);
     int error = Remote()->SendRequest(CAMERA_SERVICE_MUTE_CAMERA, data, reply, option);
     if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy::SetListenerObject Set listener obj failed, error: %{public}d", error);
+        MEDIA_ERR_LOG("HCameraServiceProxy::MuteCamera failed, error: %{public}d", error);
+        return IPC_PROXY_ERR;
+    }
+    return error;
+}
+
+int32_t HCameraServiceProxy::IsCameraMuted(bool &muteMode)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        MEDIA_ERR_LOG("HCameraServiceProxy::IsCameraMuted Failed to write descriptor");
         return IPC_PROXY_ERR;
     }
 
-    return reply.ReadInt32();
+    (void)data.WriteBool(muteMode);
+    int error = Remote()->SendRequest(CAMERA_SERVICE_IS_CAMERA_MUTED, data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy::IsCameraMuted Set listener obj failed, error: %{public}d", error);
+        return IPC_PROXY_ERR;
+    }
+
+    auto muteMode = reply.ReadBool();
+    MEDIA_DEBUG_LOG("HCameraServiceProxy IsCameraMuted Read muteMode is %{public}d", muteMode);
+    return error;
 }
 } // namespace CameraStandard
 } // namespace OHOS

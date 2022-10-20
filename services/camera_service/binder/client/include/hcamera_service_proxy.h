@@ -58,6 +58,8 @@ public:
 
     int32_t MuteCamera(bool muteMode) override;
 
+    int32_t IsCameraMuted(bool &muteMode) override;
+
 private:
     static inline BrokerDelegator<HCameraServiceProxy> delegator_;
 };

@@ -152,6 +152,18 @@ int HCameraServiceStub::HandleMuteCamera(MessageParcel &data, MessageParcel &rep
     return ret;
 }
 
+int HCameraServiceStub::HandleIsCameraMuted(MessageParcel &data, MessageParcel &reply)
+{
+    bool isMuted = false;
+    int32_t ret = IsCameraMuted(isMuted);
+    MEDIA_INFO_LOG("HCameraServiceStub HandleIsCameraMuted result: %{public}d, isMuted: %{public}d", ret, isMuted);
+    if (!reply.WriteBool(isMuted)) {
+        MEDIA_ERR_LOG("HCameraServiceStub HandleIsCameraMuted Write isMuted failed");
+        return IPC_STUB_WRITE_PARCEL_ERR;
+    }
+    return ret;
+}
+
 int HCameraServiceStub::HandleSetCallback(MessageParcel &data)
 {
     auto remoteObject = data.ReadRemoteObject();

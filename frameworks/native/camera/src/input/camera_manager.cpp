@@ -731,29 +731,18 @@ bool CameraManager::IsCameraMuteSupported()
 bool CameraManager::IsCameraMuted()
 {
     const uint8_t MUTE_ON = 1;
-    bool result = false;
-    // get most recently metadata
-    this->GetSupportedCameras();
+    int32_t retCode = CAMERA_OK;
+    bool isMuted = false;
 
-    for (size_t i = 0; i < cameraObjList.size(); i++) {
-        std::shared_ptr<Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
-        camera_metadata_item_t item;
-        int ret = Camera::FindCameraMetadataItem(metadata->get(),
-                                                 OHOS_CONTROL_MUTE_MODE,
-                                                 &item);
-        if (ret == 0) {
-            MEDIA_INFO_LOG("CameraManager::isCameraMuteSupported() OHOS_ABILITY_MUTE_MODES is %{public}d",
-                           item.data.u8[0]);
-            result = (item.data.u8[0] == MUTE_ON) ? true : false;
-        } else {
-            MEDIA_ERR_LOG("Failed to get stream configuration or Invalid stream "
-                          "configuation OHOS_CONTROL_MUTE_MODE ret = %{public}d", ret);
-        }
-        if (result == true) {
-            break;
-        }
+    if (serviceProxy_ == nullptr) {
+        MEDIA_ERR_LOG("CameraManager::IsCameraMuted serviceProxy_ is null");
+        return;
     }
-    return result;
+    retCode = serviceProxy_->IsCameraMuted(isMuted);
+    if (retCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("CameraManager::IsCameraMuted failed, retCode: %{public}d", retCode);
+    }
+    return isMuted;
 }
 
 void CameraManager::MuteCamera(bool muteMode)
