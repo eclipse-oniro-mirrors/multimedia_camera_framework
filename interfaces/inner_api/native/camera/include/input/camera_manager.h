@@ -61,6 +61,31 @@ public:
     virtual void OnFlashlightStatusChanged(const std::string &cameraID, const FlashStatus flashStatus) const = 0;
 };
 
+class CameraMuteListener {
+public:
+    CameraMuteListener() = default;
+    virtual ~CameraMuteListener() = default;
+    virtual void OnCameraMute(bool muteMode) const = 0;
+};
+
+class CameraManager;
+class CameraMuteServiceCallback : public HCameraMuteServiceCallbackStub {
+public:
+    sptr<CameraManager> camMngr_ = nullptr;
+    CameraMuteServiceCallback() : camMngr_(nullptr) {
+    }
+
+    explicit CameraMuteServiceCallback(const sptr<CameraManager>& cameraManager) : camMngr_(cameraManager) {
+    }
+
+    ~CameraMuteServiceCallback()
+    {
+        camMngr_ = nullptr;
+    }
+
+    int32_t OnCameraMute(bool muteMode) override;
+};
+
 class CameraManager : public RefBase {
 public:
     /**
@@ -268,6 +293,42 @@ public:
     */
     [[deprecated]] sptr<CameraInfo> GetCameraInfo(std::string cameraId);
 
+    /**
+    * @brief Get the support of camera mute mode.
+    *
+    * @return Returns true is supported, false is not supported.
+    */
+    bool IsCameraMuteSupported();
+
+    /**
+    * @brief Get camera mute mode.
+    *
+    * @return Returns true is in mute, else is not in mute.
+    */
+    bool IsCameraMuted();
+
+    /**
+    * @brief Mute the camera
+    *
+    * @return.
+    */
+    void MuteCamera(bool muteMode);
+
+    /**
+    * @brief register camera mute listener
+    *
+    * @param CameraMuteListener listener object.
+    * @return.
+    */
+    void RegisterCameraMuteListener(std::shared_ptr<CameraMuteListener> listener);
+
+    /**
+    * @brief get the camera mute listener
+    *
+    * @return CameraMuteListener point..
+    */
+    std::shared_ptr<CameraMuteListener> GetCameraMuteListener();
+
     static const std::string surfaceFormat;
 
 protected:
@@ -277,6 +338,7 @@ private:
     CameraManager();
     void Init();
     void SetCameraServiceCallback(sptr<ICameraServiceCallback>& callback);
+    void SetCameraMuteServiceCallback(sptr<ICameraMuteServiceCallback>& callback);
     int32_t CreateListenerObject();
     void CameraServerDied(pid_t pid);
     static const std::unordered_map<camera_format_t, CameraFormat> metaToFwCameraFormat_;
@@ -291,6 +353,9 @@ private:
     static sptr<CameraManager> cameraManager_;
     sptr<ICameraServiceCallback> cameraSvcCallback_;
     std::shared_ptr<CameraManagerCallback> cameraMngrCallback_;
+
+    sptr<ICameraMuteServiceCallback> cameraMuteSvcCallback_;
+    std::shared_ptr<CameraMuteListener> cameraMuteListener_;
     std::vector<sptr<CameraDevice>> cameraObjList;
     [[deprecated]] std::vector<sptr<CameraInfo>> dcameraObjList;
 };

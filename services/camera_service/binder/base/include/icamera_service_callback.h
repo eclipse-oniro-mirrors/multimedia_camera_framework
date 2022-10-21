@@ -40,6 +40,13 @@ public:
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ICameraServiceCallback");
 };
+
+class ICameraMuteServiceCallback : public IRemoteBroker {
+public:
+    virtual int32_t OnCameraMute(bool muteMode) = 0;
+
+    DECLARE_INTERFACE_DESCRIPTOR(u"ICameraMuteServiceCallback");
+};
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_ICAMERA_SERVICE_CALLBACK_H

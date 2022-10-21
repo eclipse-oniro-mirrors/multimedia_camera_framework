@@ -349,7 +349,6 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp,
         CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("FocusStateChanged! current OHOS_CONTROL_FOCUS_STATE is %d",
                                            item.data.u8[0]));
     }
-
     return CAMERA_OK;
 }
 

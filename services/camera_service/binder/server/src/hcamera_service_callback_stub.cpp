@@ -60,5 +60,33 @@ int HCameraServiceCallbackStub::HandleOnFlashlightStatusChanged(MessageParcel& d
 
     return OnFlashlightStatusChanged(cameraId, (FlashStatus)status);
 }
+
+int HCameraMuteServiceCallbackStub::OnRemoteRequest(
+    uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
+{
+    int errCode = -1;
+
+    if (data.ReadInterfaceToken() != GetDescriptor()) {
+        return errCode;
+    }
+    switch (code) {
+        case CAMERA_CALLBACK_MUTE_MODE:
+            errCode = HCameraMuteServiceCallbackStub::HandleOnCameraMute(data);
+            break;
+        default:
+            MEDIA_ERR_LOG("HCameraMuteServiceCallbackStub request code %{public}u not handled", code);
+            errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+            break;
+    }
+
+    return errCode;
+}
+
+int HCameraMuteServiceCallbackStub::HandleOnCameraMute(MessageParcel& data)
+{
+    bool muteMode = data.ReadBool();
+
+    return OnCameraMute(muteMode);
+}
 } // namespace CameraStandard
 } // namespace OHOS

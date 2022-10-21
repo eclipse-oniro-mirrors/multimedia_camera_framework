@@ -72,6 +72,31 @@ int32_t HCameraServiceCallbackProxy::OnFlashlightStatusChanged(const std::string
     }
     return error;
 }
+
+HCameraMuteServiceCallbackProxy::HCameraMuteServiceCallbackProxy(const sptr<IRemoteObject> &impl)
+    : IRemoteProxy<ICameraMuteServiceCallback>(impl) { }
+
+int32_t HCameraMuteServiceCallbackProxy::OnCameraMute(bool muteMode)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        MEDIA_ERR_LOG("HCameraMuteServiceCallbackProxy OnCameraMute Write interface token failed");
+        return IPC_PROXY_ERR;
+    }
+    if (!data.WriteBool(muteMode)) {
+        MEDIA_ERR_LOG("HCameraMuteServiceCallbackProxy OnCameraMute Write muteMode failed");
+        return IPC_PROXY_ERR;
+    }
+
+    int error = Remote()->SendRequest(CAMERA_CALLBACK_MUTE_MODE, data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnCameraMute failed, error: %{public}d", error);
+    }
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS
 
