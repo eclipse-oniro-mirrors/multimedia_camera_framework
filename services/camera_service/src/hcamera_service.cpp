@@ -34,6 +34,7 @@ HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
       cameraHostManager_(nullptr),
       streamOperatorCallback_(nullptr),
       cameraServiceCallback_(nullptr),
+      cameraMuteServiceCallback_(nullptr),
       muteMode_(false)
 {
 }
@@ -120,13 +121,6 @@ int32_t HCameraService::GetCameras(std::vector<std::string> &cameraIds,
             isMirrorSupported = ((item.data.u8[0] == 1) || (item.data.u8[0] == 0));
         }
 
-        bool IsCameraMuteSupported = false;
-        ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_MUTE_MODES, &item);
-        if (ret == CAM_META_SUCCESS) {
-            IsCameraMuteSupported = item.data.u8[0] == 1 ? true : false;
-        }
-        MEDIA_DEBUG_LOG("HCameraService::GetCameras IsCameraMuteSupported: %{public}d", IsCameraMuteSupported);
-
         CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager GetCameras camera ID:%s, Camera position:%d,"
                                             " Camera Type:%d, Connection Type:%d, Mirror support:%d", id.c_str(),
                                             cameraPosition, cameraType, connectionType, isMirrorSupported));
@@ -169,9 +163,13 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
         return CAMERA_ALLOC_ERROR;
     }
     // when create camera device, update mute setting truely.
-    if (UpdateMuteSetting(cameraDevice, muteMode_) != CAMERA_OK) {
-        MEDIA_ERR_LOG("HCameraService::CreateCameraDevice UpdateMuteSetting Failed, cameraId: %{public}s",
-                      cameraId.c_str());
+    if (IsCameraMuteSupported(cameraId)) {
+        if (UpdateMuteSetting(cameraDevice, muteMode_) != CAMERA_OK) {
+            MEDIA_ERR_LOG("HCameraService::CreateCameraDevice UpdateMuteSetting Failed, cameraId: %{public}s",
+                          cameraId.c_str());
+        }
+    } else {
+        MEDIA_ERR_LOG("HCameraService::CreateCameraDevice MuteCamera not Supported");
     }
     devices_.insert(std::make_pair(cameraId, cameraDevice));
     device = cameraDevice;
@@ -346,6 +344,28 @@ int32_t HCameraService::SetMuteCallback(sptr<ICameraMuteServiceCallback> &callba
     return CAMERA_OK;
 }
 
+bool HCameraService::IsCameraMuteSupported(std::string cameraId)
+{
+    bool isMuteSupported = false;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
+    int32_t ret = cameraHostManager_->GetCameraAbility(cameraId, cameraAbility);
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCameraService::IsCameraMuted GetCameraAbility failed");
+        return false;
+    }
+    camera_metadata_item_t item;
+    common_metadata_header_t* metadata = cameraAbility->get();
+    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_MUTE_MODES, &item);
+    if (ret == CAM_META_SUCCESS) {
+        isMuteSupported = true;
+    } else {
+        isMuteSupported = false;
+        MEDIA_ERR_LOG("HCameraService::IsCameraMuted not find MUTE ability");
+    }
+    MEDIA_DEBUG_LOG("HCameraService::IsCameraMuted supported: %{public}d", isMuteSupported);
+    return isMuteSupported;
+}
+
 int32_t HCameraService::UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool muteMode)
 {
     constexpr uint8_t MUTE_ON = 1;
@@ -396,13 +416,17 @@ int32_t HCameraService::MuteCamera(bool muteMode)
 
     int32_t ret = CAMERA_OK;
     for (auto it : devices_) {
+        if (!IsCameraMuteSupported(it.first)) {
+            MEDIA_ERR_LOG("HCameraService::MuteCamera not Supported Mute,cameraId: %{public}s", it.first.c_str());
+            break;
+        }
         ret = UpdateMuteSetting(it.second, muteMode);
         if (ret != CAMERA_OK) {
             MEDIA_ERR_LOG("HCameraService::MuteCamera UpdateMuteSetting Failed, cameraId: %{public}s",
                           it.first.c_str());
             muteMode_ = oldMuteMode;
+            break;
         }
-        break;
     }
     if (cameraMuteServiceCallback_ && ret == CAMERA_OK) {
         cameraMuteServiceCallback_->OnCameraMute(muteMode);

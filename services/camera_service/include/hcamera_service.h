@@ -93,7 +93,7 @@ private:
         std::string& dumpString);
     void CameraDumpVideoFrameRateRange(common_metadata_header_t* metadataEntry,
         std::string& dumpString);
-
+    bool IsCameraMuteSupported(std::string cameraId);
     int32_t UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool muteMode);
     std::mutex mutex_;
     sptr<HCameraHostManager> cameraHostManager_;
