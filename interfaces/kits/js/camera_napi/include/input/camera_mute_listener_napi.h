@@ -46,7 +46,6 @@ private:
     napi_env env_ = nullptr;
     napi_ref callbackRef_;
 };
-
 } // namespace CameraStandard
 } // namespace OHOS
 #endif /* CAMERA_MUTE_LISTENER_NAPI_H_ */
