@@ -98,8 +98,10 @@ HCaptureSession::HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
         session_[pid_] = this;
     }
     callerToken_ = callingTokenId;
-    StartUsingPermissionCallback(callerToken_, ACCESS_CAMERA);
-    RegisterPermissionCallback(callerToken_, ACCESS_CAMERA);
+    if (IsValidTokenId(callerToken_)) {
+        StartUsingPermissionCallback(callerToken_, ACCESS_CAMERA);
+        RegisterPermissionCallback(callerToken_, ACCESS_CAMERA);
+    }
     MEDIA_DEBUG_LOG("HCaptureSession: camera stub services(%{public}zu).", session_.size());
 }
 
@@ -693,8 +695,10 @@ int32_t HCaptureSession::Release(pid_t pid)
         POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraDevice_->GetCameraId().c_str());
         cameraDevice_ = nullptr;
     }
-    StopUsingPermissionCallback(callerToken_, ACCESS_CAMERA);
-    UnregisterPermissionCallback(callerToken_);
+    if (IsValidTokenId(callerToken_)) {
+        StopUsingPermissionCallback(callerToken_, ACCESS_CAMERA);
+        UnregisterPermissionCallback(callerToken_);
+    }
     ClearCaptureSession(pid);
     return CAMERA_OK;
 }
