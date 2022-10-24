@@ -73,6 +73,7 @@ private:
     static napi_value GetPreviewProfiles(napi_env env, napi_callback_info info);
     static napi_value GetPhotoProfiles(napi_env env, napi_callback_info info);
     static napi_value GetVideoProfiles(napi_env env, napi_callback_info info);
+    static napi_value GetSupportedMetadataObjectTypes(napi_env env, napi_callback_info info);
 
     napi_env env_;
     napi_ref wrapper_;

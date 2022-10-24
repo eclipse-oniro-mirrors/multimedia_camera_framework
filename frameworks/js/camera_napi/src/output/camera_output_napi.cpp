@@ -56,7 +56,8 @@ napi_value CameraOutputCapabilityNapi::Init(napi_env env, napi_value exports)
     napi_property_descriptor camera_output_capability_props[] = {
         DECLARE_NAPI_GETTER("previewProfiles", GetPreviewProfiles),
         DECLARE_NAPI_GETTER("photoProfiles", GetPhotoProfiles),
-        DECLARE_NAPI_GETTER("videoProfiles", GetVideoProfiles)
+        DECLARE_NAPI_GETTER("videoProfiles", GetVideoProfiles),
+        DECLARE_NAPI_GETTER("supportedMetadataObjectTypes", GetSupportedMetadataObjectTypes)
     };
 
     status = napi_define_class(env, CAMERA_OUTPUT_CAPABILITY_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -173,6 +174,33 @@ static napi_value CreateVideoProfileJsArray(napi_env env, napi_status status, st
         }
     }
     return profileArray;
+}
+
+static napi_value CreateMetadataObjectTypeJsArray(napi_env env, napi_status status,
+    std::vector<MetadataObjectType> metadataTypeList)
+{
+    napi_value metadataTypeArray = nullptr;
+    napi_value metadataType = nullptr;
+
+    napi_get_undefined(env, &metadataTypeArray);
+    if (metadataTypeList.empty()) {
+        MEDIA_ERR_LOG("metadataTypeList is empty");
+        return metadataTypeArray;
+    }
+
+    status = napi_create_array(env, &metadataTypeArray);
+    if (status == napi_ok) {
+        for (size_t i = 0; i < metadataTypeList.size(); i++) {
+            napi_create_int32(env, static_cast<int32_t>(metadataTypeList[i]), &metadataType);
+            MEDIA_INFO_LOG("WrapJsVideoProfile success");
+            if (metadataType == nullptr || napi_set_element(env, metadataTypeArray, i, metadataType) != napi_ok) {
+                MEDIA_ERR_LOG("Failed to create metadataType napi wrapper object");
+                napi_get_undefined(env, &metadataTypeArray);
+                return metadataTypeArray;
+            }
+        }
+    }
+    return metadataTypeArray;
 }
 
 // Constructor callback
@@ -314,6 +342,33 @@ napi_value CameraOutputCapabilityNapi::GetVideoProfiles(napi_env env, napi_callb
     if ((status == napi_ok) && (obj != nullptr)) {
         profileList = obj->cameraOutputCapability_->GetVideoProfiles();
         jsResult = CreateVideoProfileJsArray(env, status, profileList);
+        return jsResult;
+    }
+
+    return undefinedResult;
+}
+
+napi_value CameraOutputCapabilityNapi::GetSupportedMetadataObjectTypes(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+    napi_value jsResult = nullptr;
+    napi_value undefinedResult = nullptr;
+    CameraOutputCapabilityNapi* obj = nullptr;
+    std::vector<MetadataObjectType> metadataTypeList;
+    napi_value thisVar = nullptr;
+
+    napi_get_undefined(env, &undefinedResult);
+    CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
+
+    if (status != napi_ok || thisVar == nullptr) {
+        MEDIA_ERR_LOG("Invalid arguments!");
+        return undefinedResult;
+    }
+
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    if ((status == napi_ok) && (obj != nullptr)) {
+        metadataTypeList = obj->cameraOutputCapability_->GetSupportedMetadataObjectType();
+        jsResult = CreateMetadataObjectTypeJsArray(env, status, metadataTypeList);
         return jsResult;
     }
 
