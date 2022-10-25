@@ -415,7 +415,7 @@ void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId)
 
 void HCameraHostManager::CloseCameraDevice(const std::string& cameraId)
 {
-    sptr<ICameraDeviceService> deviceToDisconnect;
+    sptr<ICameraDeviceService> deviceToDisconnect = nullptr;
     {
         std::lock_guard<std::mutex> lock(deviceMutex_);
         auto iter = cameraDevices_.find(cameraId);
@@ -423,7 +423,9 @@ void HCameraHostManager::CloseCameraDevice(const std::string& cameraId)
             deviceToDisconnect = iter->second;
         }
     }
-    deviceToDisconnect->Close();
+    if (deviceToDisconnect) {
+        deviceToDisconnect->Close();
+    }
 }
 
 int32_t HCameraHostManager::GetCameras(std::vector<std::string>& cameraIds)
