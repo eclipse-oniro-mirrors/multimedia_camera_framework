@@ -34,6 +34,8 @@ public:
 
     virtual int32_t SetCallback(sptr<ICameraServiceCallback>& callback) = 0;
 
+    virtual int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback>& callback) = 0;
+
     virtual int32_t GetCameras(std::vector<std::string> &cameraIds,
         std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> &cameraAbilityList) = 0;
 
@@ -55,6 +57,10 @@ public:
                                       int32_t width, int32_t height, sptr<IStreamRepeat> &videoOutput) = 0;
 
     virtual int32_t SetListenerObject(const sptr<IRemoteObject> &object) = 0;
+
+    virtual int32_t MuteCamera(bool muteMode) = 0;
+
+    virtual int32_t IsCameraMuted(bool &muteMode) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ICameraService");
 };

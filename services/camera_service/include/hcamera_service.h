@@ -24,6 +24,7 @@
 #include "hstream_metadata.h"
 #include "hstream_repeat.h"
 #include "iremote_stub.h"
+#include "privacy_kit.h"
 #include "system_ability.h"
 
 #include <iostream>
@@ -31,7 +32,7 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
-class   HCameraService : public SystemAbility, public HCameraServiceStub, public HCameraHostManager::StatusCallback {
+class HCameraService : public SystemAbility, public HCameraServiceStub, public HCameraHostManager::StatusCallback {
     DECLARE_SYSTEM_ABILITY(HCameraService);
 
 public:
@@ -57,6 +58,9 @@ public:
                               int32_t width, int32_t height,
                               sptr<IStreamRepeat> &videoOutput) override;
     int32_t SetCallback(sptr<ICameraServiceCallback> &callback) override;
+    int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback> &callback) override;
+    int32_t MuteCamera(bool muteMode) override;
+    int32_t IsCameraMuted(bool &muteMode) override;
     void OnDump() override;
     void OnStart() override;
     void OnStop() override;
@@ -90,12 +94,15 @@ private:
         std::string& dumpString);
     void CameraDumpVideoFrameRateRange(common_metadata_header_t* metadataEntry,
         std::string& dumpString);
-
+    bool IsCameraMuteSupported(std::string cameraId);
+    int32_t UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool muteMode);
     std::mutex mutex_;
     sptr<HCameraHostManager> cameraHostManager_;
     sptr<StreamOperatorCallback> streamOperatorCallback_;
     sptr<ICameraServiceCallback> cameraServiceCallback_;
+    sptr<ICameraMuteServiceCallback> cameraMuteServiceCallback_;
     std::map<std::string, sptr<HCameraDevice>> devices_;
+    bool muteMode_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

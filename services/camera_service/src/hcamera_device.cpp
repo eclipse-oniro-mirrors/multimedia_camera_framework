@@ -23,12 +23,15 @@
 namespace OHOS {
 namespace CameraStandard {
 static bool isCameraOpened = false;
-HCameraDevice::HCameraDevice(sptr<HCameraHostManager> &cameraHostManager, std::string cameraID)
+HCameraDevice::HCameraDevice(sptr<HCameraHostManager> &cameraHostManager,
+                             std::string cameraID,
+                             const uint32_t callingTokenId)
 {
     cameraHostManager_ = cameraHostManager;
     cameraID_ = cameraID;
     streamOperator_ = nullptr;
     isReleaseCameraDevice_ = false;
+    callerToken_ = callingTokenId;
 }
 
 HCameraDevice::~HCameraDevice()
@@ -77,6 +80,14 @@ int32_t HCameraDevice::Open()
             MEDIA_ERR_LOG("HCameraDevice::Open CameraDeviceCallback allocation failed");
             return CAMERA_ALLOC_ERROR;
         }
+    }
+    bool isAllowed = true;
+    if (IsValidTokenId(callerToken_)) {
+        isAllowed = Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken_, ACCESS_CAMERA);
+    }
+    if (!isAllowed) {
+        MEDIA_ERR_LOG("HCameraDevice::Open IsAllowedUsingPermission failed");
+        return CAMERA_ALLOC_ERROR;
     }
     MEDIA_INFO_LOG("HCameraDevice::Open Opening camera device: %{public}s", cameraID_.c_str());
     errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, deviceHDICallback_, hdiCameraDevice_);
@@ -338,7 +349,6 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp,
         CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("FocusStateChanged! current OHOS_CONTROL_FOCUS_STATE is %d",
                                            item.data.u8[0]));
     }
-
     return CAMERA_OK;
 }
 

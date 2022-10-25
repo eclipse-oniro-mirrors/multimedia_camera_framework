@@ -16,6 +16,8 @@
 #ifndef OHOS_CAMERA_H_CAMERA_DEVICE_H
 #define OHOS_CAMERA_H_CAMERA_DEVICE_H
 
+#include "accesstoken_kit.h"
+#include "privacy_kit.h"
 #include "v1_0/icamera_device_callback.h"
 #include "camera_metadata_info.h"
 #include "hcamera_device_stub.h"
@@ -30,9 +32,11 @@ namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
 class CameraDeviceCallback;
 
+const std::string ACCESS_CAMERA = "ohos.permission.CAMERA";
+
 class HCameraDevice : public HCameraDeviceStub {
 public:
-    HCameraDevice(sptr<HCameraHostManager> &cameraHostManager, std::string cameraID);
+    HCameraDevice(sptr<HCameraHostManager> &cameraHostManager, std::string cameraID, const uint32_t callingTokenId);
     ~HCameraDevice();
 
     int32_t Open() override;
@@ -63,6 +67,7 @@ private:
     std::shared_ptr<OHOS::Camera::CameraMetadata> updateSettings_;
     sptr<IStreamOperator> streamOperator_;
     std::mutex deviceLock_;
+    uint32_t callerToken_;
 
     void ReportFlashEvent(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
 };

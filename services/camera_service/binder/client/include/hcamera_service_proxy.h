@@ -32,6 +32,8 @@ public:
 
     int32_t SetCallback(sptr<ICameraServiceCallback>& callback) override;
 
+    int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback>& callback) override;
+
     int32_t GetCameras(std::vector<std::string> &cameraIds,
         std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> &cameraAbilityList) override;
 
@@ -53,6 +55,10 @@ public:
                               int32_t width, int32_t height, sptr<IStreamRepeat> &videoOutput) override;
 
     int32_t SetListenerObject(const sptr<IRemoteObject> &object) override;
+
+    int32_t MuteCamera(bool muteMode) override;
+
+    int32_t IsCameraMuted(bool &muteMode) override;
 
 private:
     static inline BrokerDelegator<HCameraServiceProxy> delegator_;
