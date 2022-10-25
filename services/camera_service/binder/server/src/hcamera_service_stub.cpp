@@ -25,6 +25,8 @@
 #include "hcamera_service.h"
 #include "input/i_standard_camera_listener.h"
 #include "ipc_skeleton.h"
+#include "xcollie/xcollie.h"
+#include "xcollie/xcollie_define.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -50,53 +52,48 @@ int HCameraServiceStub::OnRemoteRequest(
     if (data.ReadInterfaceToken() != GetDescriptor()) {
         return errCode;
     }
+    const int TIME_OUT_SECONDS = 10000;
+    int32_t id = HiviewDFX::XCollie::GetInstance().SetTimer(
+        "CameraServiceStub", TIME_OUT_SECONDS, nullptr, nullptr, HiviewDFX::XCOLLIE_FLAG_LOG);
+    int32_t ret = CheckRequestCode(code, data, reply, option);
+    HiviewDFX::XCollie::GetInstance().CancelTimer(id);
+    return ret;
+}
+
+int32_t HCameraServiceStub::CheckRequestCode(
+    const uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
+{
     switch (code) {
         case CAMERA_SERVICE_MUTE_CAMERA:
-            errCode = HCameraServiceStub::HandleMuteCamera(data, reply);
-            break;
+            return HCameraServiceStub::HandleMuteCamera(data, reply);
         case CAMERA_SERVICE_SET_MUTE_CALLBACK:
-            errCode = HCameraServiceStub::HandleSetMuteCallback(data);
-            break;
+            return HCameraServiceStub::HandleSetMuteCallback(data);
         case CAMERA_SERVICE_IS_CAMERA_MUTED:
-            errCode = HCameraServiceStub::HandleIsCameraMuted(data, reply);
-            break;
+            return HCameraServiceStub::HandleIsCameraMuted(data, reply);
         case CAMERA_SERVICE_CREATE_DEVICE:
-            errCode = HCameraServiceStub::HandleCreateCameraDevice(data, reply);
-            break;
+            return HCameraServiceStub::HandleCreateCameraDevice(data, reply);
         case CAMERA_SERVICE_SET_CALLBACK:
-            errCode = HCameraServiceStub::HandleSetCallback(data);
-            break;
+            return HCameraServiceStub::HandleSetCallback(data);
         case CAMERA_SERVICE_GET_CAMERAS:
-            errCode = HCameraServiceStub::HandleGetCameras(reply);
-            break;
+            return HCameraServiceStub::HandleGetCameras(reply);
         case CAMERA_SERVICE_CREATE_CAPTURE_SESSION:
-            errCode = HCameraServiceStub::HandleCreateCaptureSession(reply);
-            break;
+            return HCameraServiceStub::HandleCreateCaptureSession(reply);
         case CAMERA_SERVICE_CREATE_PHOTO_OUTPUT:
-            errCode = HCameraServiceStub::HandleCreatePhotoOutput(data, reply);
-            break;
+            return HCameraServiceStub::HandleCreatePhotoOutput(data, reply);
         case CAMERA_SERVICE_CREATE_PREVIEW_OUTPUT:
-            errCode = HCameraServiceStub::HandleCreatePreviewOutput(data, reply);
-            break;
+            return HCameraServiceStub::HandleCreatePreviewOutput(data, reply);
         case CAMERA_SERVICE_CREATE_DEFERRED_PREVIEW_OUTPUT:
-            errCode = HCameraServiceStub::HandleCreateDeferredPreviewOutput(data, reply);
-            break;
+            return HCameraServiceStub::HandleCreateDeferredPreviewOutput(data, reply);
         case CAMERA_SERVICE_CREATE_METADATA_OUTPUT:
-            errCode = HCameraServiceStub::HandleCreateMetadataOutput(data, reply);
-            break;
+            return HCameraServiceStub::HandleCreateMetadataOutput(data, reply);
         case CAMERA_SERVICE_CREATE_VIDEO_OUTPUT:
-            errCode = HCameraServiceStub::HandleCreateVideoOutput(data, reply);
-            break;
+            return HCameraServiceStub::HandleCreateVideoOutput(data, reply);
         case CAMERA_SERVICE_SET_LISTENER_OBJ:
-            errCode = HCameraServiceStub::SetListenerObject(data, reply);
-            break;
+            return HCameraServiceStub::SetListenerObject(data, reply);
         default:
             MEDIA_ERR_LOG("HCameraServiceStub request code %{public}u not handled", code);
-            errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
-            break;
+            return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
     }
-
-    return errCode;
 }
 
 int HCameraServiceStub::HandleGetCameras(MessageParcel& reply)
