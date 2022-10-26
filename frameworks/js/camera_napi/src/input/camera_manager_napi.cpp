@@ -675,6 +675,53 @@ void CreateMetadataOutputAsyncCallbackComplete(napi_env env, napi_status status,
     }
     delete context;
 }
+napi_value ParseMetadataObjectTypes(napi_env env, napi_value arrayParam, CameraManagerContext &asyncContext)
+{
+    auto context = &asyncContext;
+    napi_value result;
+    size_t length = 0;
+    napi_value value;
+    int32_t metadataType;
+    napi_get_array_length(env, arrayParam, &length);
+    napi_valuetype type = napi_undefined;
+    for (size_t i = 0; i < length; i++) {
+        napi_get_element(env, arrayParam, i, &value);
+        napi_typeof(env, value, &type);
+        if (type != napi_number) {
+            return nullptr;
+        }
+        napi_get_value_int32(env, value, &metadataType);
+        context->metadataObjectTypes.push_back(static_cast<MetadataObjectType>(metadataType));
+    }
+    napi_get_boolean(env, true, &result);
+    return result;
+}
+
+static napi_value ConvertMetadataJSArgsToNative(napi_env env, size_t argc, const napi_value argv[],
+    CameraManagerContext &asyncContext)
+{
+    const int32_t refCount = 1;
+    napi_value result;
+    auto context = &asyncContext;
+    bool isArray = false;
+    NAPI_ASSERT(env, argv != nullptr, "Argument list is empty");
+    for (size_t i = PARAM0; i < argc; i++) {
+        napi_valuetype valueType = napi_undefined;
+        napi_typeof(env, argv[i], &valueType);
+        napi_is_array(env, argv[i], &isArray);
+        if (i == PARAM0 && isArray) {
+            result = ParseMetadataObjectTypes(env, argv[i], asyncContext);
+            NAPI_ASSERT(env, result != nullptr, "MetadataObjectTypes type mismatch");
+        } else if (i == PARAM1 && valueType == napi_function) {
+            napi_create_reference(env, argv[i], refCount, &context->callbackRef);
+            break;
+        } else {
+            NAPI_ASSERT(env, false, "type mismatch");
+        }
+    }
+    napi_get_boolean(env, true, &result);
+    return result;
+}
 
 napi_value CameraManagerNapi::CreateMetadataOutputInstance(napi_env env, napi_callback_info info)
 {
@@ -691,6 +738,7 @@ napi_value CameraManagerNapi::CreateMetadataOutputInstance(napi_env env, napi_ca
 
     napi_get_undefined(env, &result);
     std::unique_ptr<CameraManagerContext> asyncContext = std::make_unique<CameraManagerContext>();
+    result = ConvertMetadataJSArgsToNative(env, argc, argv, *asyncContext);
     CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
     CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
     CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "CreateMetadataOutput");
