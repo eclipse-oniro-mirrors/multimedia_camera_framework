@@ -608,8 +608,8 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
             previewProfile.push_back(profile);
             int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FPS_RANGES, &fpsItem);
             if (ret == CAM_META_SUCCESS) {
-                const int32_t step = 2;
-                for (int32_t i = 0; i < (fpsItem.count - 1); i += step) {
+                const uint32_t step = 2;
+                for (uint32_t i = 0; i < (fpsItem.count - 1); i += step) {
                     std::vector<int32_t> fps = {fpsItem.data.i32[i], fpsItem.data.i32[i+1]};
                     VideoProfile vidProfile = VideoProfile(format, size, fps);
                     videoProfiles.push_back(vidProfile);
@@ -626,7 +626,7 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
 
     ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_STATISTICS_FACE_DETECT_MODE, &metadataItem);
     if (ret == CAM_META_SUCCESS) {
-        for (int index = 0; index < metadataItem.count; index++) {
+        for (uint32_t index = 0; index < metadataItem.count; index++) {
             if (metadataItem.data.u8[index] == OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE) {
                 objectTypes.push_back(MetadataObjectType::FACE);
             }
