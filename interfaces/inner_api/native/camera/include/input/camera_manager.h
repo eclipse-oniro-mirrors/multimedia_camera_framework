@@ -357,7 +357,7 @@ private:
     sptr<ICameraMuteServiceCallback> cameraMuteSvcCallback_;
     std::shared_ptr<CameraMuteListener> cameraMuteListener_;
     std::vector<sptr<CameraDevice>> cameraObjList;
-    [[deprecated]] std::vector<sptr<CameraInfo>> dcameraObjList;
+    std::vector<sptr<CameraInfo>> dcameraObjList;
 };
 } // namespace CameraStandard
 } // namespace OHOS
