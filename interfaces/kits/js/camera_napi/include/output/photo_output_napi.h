@@ -107,7 +107,6 @@ private:
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<PhotoOutput> sPhotoOutput_;
-    static thread_local bool enableMirror;
 
     napi_env env_;
     napi_ref wrapper_;
@@ -117,18 +116,18 @@ private:
 };
 
 struct PhotoOutputAsyncContext : public AsyncContext {
-    std::string surfaceId;
     int32_t quality = -1;
-    int32_t mirror = -1;
+    int32_t rotation = -1;
     double latitude = -1.0;
     double longitude = -1.0;
-    int32_t rotation = -1;
-    PhotoOutputNapi* objectInfo;
+    bool isMirror = false;
     bool hasPhotoSettings = false;
-    std::string errorMsg;
     bool bRetBool;
-    std::unique_ptr<Location> location;
     bool isSupported = false;
+    std::unique_ptr<Location> location;
+    PhotoOutputNapi* objectInfo;
+    std::string surfaceId;
+    std::string errorMsg;
 };
 } // namespace CameraStandard
 } // namespace OHOS
