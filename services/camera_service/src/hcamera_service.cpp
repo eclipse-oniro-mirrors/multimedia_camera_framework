@@ -36,7 +36,6 @@ HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
       cameraHostManager_(nullptr),
       streamOperatorCallback_(nullptr),
       cameraServiceCallback_(nullptr),
-      cameraMuteServiceCallback_(nullptr),
       muteMode_(false)
 {
 }
@@ -353,11 +352,12 @@ int32_t HCameraService::SetCallback(sptr<ICameraServiceCallback> &callback)
 
 int32_t HCameraService::SetMuteCallback(sptr<ICameraMuteServiceCallback> &callback)
 {
+    OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
     if (callback == nullptr) {
         MEDIA_ERR_LOG("HCameraService::SetMuteCallback callback is null");
         return CAMERA_INVALID_ARG;
     }
-    cameraMuteServiceCallback_ = callback;
+    cameraMuteServiceCallbacks_.insert(std::make_pair(callerToken, callback));
     return CAMERA_OK;
 }
 
@@ -433,9 +433,11 @@ int32_t HCameraService::MuteCamera(bool muteMode)
     }
     if (devices_.empty()) {
         MEDIA_INFO_LOG("HCameraService::MuteCamera cameraDevice is empty, muteMode = %{public}d", muteMode);
-        if (cameraMuteServiceCallback_) {
-            cameraMuteServiceCallback_->OnCameraMute(muteMode);
-            CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraMute! current Camera muteMode:%d", muteMode));
+        if (!cameraMuteServiceCallbacks_.empty()) {
+            for (auto cb : cameraMuteServiceCallbacks_) {
+                cb.second->OnCameraMute(muteMode);
+                CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraMute! current Camera muteMode:%d", muteMode));
+            }
         }
         return CAMERA_OK;
     }
@@ -453,9 +455,11 @@ int32_t HCameraService::MuteCamera(bool muteMode)
             break;
         }
     }
-    if (cameraMuteServiceCallback_ && ret == CAMERA_OK) {
-        cameraMuteServiceCallback_->OnCameraMute(muteMode);
-        CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraMute! current Camera muteMode:%d", muteMode));
+    if (!cameraMuteServiceCallbacks_.empty() && ret == CAMERA_OK) {
+        for (auto cb : cameraMuteServiceCallbacks_) {
+            cb.second->OnCameraMute(muteMode);
+            CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraMute! current Camera muteMode:%d", muteMode));
+        }
     }
     return ret;
 }
