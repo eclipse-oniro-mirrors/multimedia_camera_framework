@@ -679,12 +679,12 @@ napi_value ParseMetadataObjectTypes(napi_env env, napi_value arrayParam, CameraM
 {
     auto context = &asyncContext;
     napi_value result;
-    size_t length = 0;
+    uint32_t length = 0;
     napi_value value;
     int32_t metadataType;
     napi_get_array_length(env, arrayParam, &length);
     napi_valuetype type = napi_undefined;
-    for (size_t i = 0; i < length; i++) {
+    for (uint32_t i = 0; i < length; i++) {
         napi_get_element(env, arrayParam, i, &value);
         napi_typeof(env, value, &type);
         if (type != napi_number) {
