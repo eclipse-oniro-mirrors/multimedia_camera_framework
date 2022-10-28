@@ -100,7 +100,7 @@ private:
     sptr<HCameraHostManager> cameraHostManager_;
     sptr<StreamOperatorCallback> streamOperatorCallback_;
     sptr<ICameraServiceCallback> cameraServiceCallback_;
-    sptr<ICameraMuteServiceCallback> cameraMuteServiceCallback_;
+    std::map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
     std::map<std::string, sptr<HCameraDevice>> devices_;
     bool muteMode_;
 };
