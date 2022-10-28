@@ -167,10 +167,10 @@ int32_t HCameraHostManager::CameraHostInfo::GetCameraAbility(std::string& camera
         return CAMERA_UNKNOWN_ERROR;
     }
 
+    std::lock_guard<std::mutex> lock(deviceInfo->mutex);
     if (deviceInfo->ability) {
         ability = deviceInfo->ability;
     } else {
-        std::lock_guard<std::mutex> lock(deviceInfo->mutex);
         if (cameraHostProxy_ == nullptr) {
             MEDIA_ERR_LOG("CameraHostInfo::GetCameraAbility cameraHostProxy_ is null");
             return CAMERA_UNKNOWN_ERROR;
