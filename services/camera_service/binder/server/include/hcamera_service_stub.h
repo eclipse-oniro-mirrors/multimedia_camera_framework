@@ -48,6 +48,8 @@ private:
     void ClientDied(pid_t pid);
     int SetListenerObject(const sptr<IRemoteObject> &object) override;
     int SetListenerObject(MessageParcel &data, MessageParcel &reply);
+    int32_t CheckRequestCode(const uint32_t code, MessageParcel &data,
+                                                 MessageParcel &reply, MessageOption &option);
 
     std::mutex mutex_;
     std::map<pid_t, sptr<CameraDeathRecipient>> deathRecipientMap_;

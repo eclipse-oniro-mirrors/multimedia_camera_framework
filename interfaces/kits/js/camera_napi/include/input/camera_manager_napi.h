@@ -110,6 +110,7 @@ struct CameraManagerContext : public AsyncContext {
     CameraType cameraType;
     Profile profile;
     VideoProfile videoProfile;
+    std::vector<MetadataObjectType> metadataObjectTypes;
     sptr<CameraInput> cameraInput;
     sptr<CameraDevice> cameraInfo;
     std::vector<sptr<CameraDevice>> cameraObjList;

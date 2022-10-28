@@ -29,7 +29,6 @@ namespace {
 thread_local napi_ref PhotoOutputNapi::sConstructor_ = nullptr;
 thread_local sptr<PhotoOutput> PhotoOutputNapi::sPhotoOutput_ = nullptr;
 thread_local uint32_t PhotoOutputNapi::photoOutputTaskId = CAMERA_PHOTO_OUTPUT_TASKID;
-thread_local bool PhotoOutputNapi::enableMirror = false;
 
 PhotoOutputCallback::PhotoOutputCallback(napi_env env) : env_(env) {}
 
@@ -427,6 +426,16 @@ static void GetFetchOptionsParam(napi_env env, napi_value arg, const PhotoOutput
             return;
         }
     }
+
+    if (QueryAndGetProperty(env, arg, "mirror", property) == 0) {
+        bool isMirror = false;
+        if (napi_get_value_bool(env, property, &isMirror) != napi_ok) {
+            err = true;
+            return;
+        } else {
+            asyncContext->isMirror = isMirror;
+        }
+    }
 }
 
 static napi_value ConvertJSArgsToNative(napi_env env, size_t argc, const napi_value argv[],
@@ -503,7 +512,7 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
                 context->status = true;
                 sptr<PhotoOutput> photoOutput = ((sptr<PhotoOutput> &)(context->objectInfo->photoOutput_));
                 int32_t ret;
-                if ((context->hasPhotoSettings) || (enableMirror)) {
+                if ((context->hasPhotoSettings)) {
                     std::shared_ptr<PhotoCaptureSetting> capSettings = make_shared<PhotoCaptureSetting>();
 
                     if (context->quality != -1) {
@@ -516,9 +525,7 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
                             static_cast<PhotoCaptureSetting::RotationConfig>(context->rotation));
                     }
 
-                    if (enableMirror) {
-                        capSettings->SetMirror(enableMirror);
-                    }
+                    capSettings->SetMirror(context->isMirror);
 
                     if (context->location != nullptr) {
                         capSettings->SetLocation(context->location);
@@ -719,7 +726,7 @@ napi_value PhotoOutputNapi::SetMirror(napi_env env, napi_callback_info info)
         }
 
         result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
-        enableMirror = asyncContext->isSupported;
+        asyncContext->isMirror = asyncContext->isSupported;
         CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
         CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "SetMirror");
         status = napi_create_async_work(
