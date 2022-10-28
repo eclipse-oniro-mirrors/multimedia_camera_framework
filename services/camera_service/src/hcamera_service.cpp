@@ -94,6 +94,11 @@ int32_t HCameraService::GetCameras(std::vector<std::string> &cameraIds,
             return ret;
         }
 
+        if (cameraAbility == nullptr) {
+            MEDIA_ERR_LOG("HCameraService::GetCameraAbility return null");
+            return CAMERA_INVALID_ARG;
+        }
+
         camera_metadata_item_t item;
         common_metadata_header_t* metadata = cameraAbility->get();
         camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_OTHER;
