@@ -39,6 +39,7 @@ thread_local napi_ref CameraNapi::errorPreviewOutputRef_ = nullptr;
 thread_local napi_ref CameraNapi::errorPhotoOutputRef_ = nullptr;
 thread_local napi_ref CameraNapi::errorVideoOutputRef_ = nullptr;
 thread_local napi_ref CameraNapi::errorMetaOutputRef_ = nullptr;
+thread_local napi_ref CameraNapi::metadataObjectTypeRef_ = nullptr;
 thread_local napi_ref CameraNapi::exposureStateRef_ = nullptr;
 thread_local napi_ref CameraNapi::focusStateRef_ = nullptr;
 thread_local napi_ref CameraNapi::qualityLevelRef_ = nullptr;
@@ -123,8 +124,9 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("PreviewOutputErrorCode", CreatePreviewOutputErrorCode(env)),
         DECLARE_NAPI_PROPERTY("PhotoOutputErrorCode", CreatePhotoOutputErrorCode(env)),
         DECLARE_NAPI_PROPERTY("VideoOutputErrorCode", CreateVideoOutputErrorCode(env)),
-        DECLARE_NAPI_PROPERTY("MetaOutputErrorCode", CreateMetaOutputErrorCode(env)),
-        DECLARE_NAPI_PROPERTY("VideoStabilizationMode", CreateVideoStabilizationModeObject(env))
+        DECLARE_NAPI_PROPERTY("MetadataOutputErrorCode", CreateMetaOutputErrorCode(env)),
+        DECLARE_NAPI_PROPERTY("VideoStabilizationMode", CreateVideoStabilizationModeObject(env)),
+        DECLARE_NAPI_PROPERTY("MetadataObjectType", CreateMetadataObjectType(env)),
     };
 
     status = napi_define_class(env, CAMERA_LIB_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, CameraNapiConstructor,
@@ -487,7 +489,14 @@ napi_value CameraNapi::CreateCameraFormatObject(napi_env env)
     if (status == napi_ok) {
         for (unsigned int i = 0; i < vecCameraFormat.size(); i++) {
             propName = vecCameraFormat[i];
-            int32_t value = (propName.compare("CAMERA_FORMAT_JPEG") == 0) ? CAM_FORMAT_JPEG : CAMERA_FORMAT_YUV_420_SP;
+            int32_t value;
+            if (propName.compare("CAMERA_FORMAT_JPEG") == 0) {
+                value = CAM_FORMAT_JPEG;
+            } else if (propName.compare("CAMERA_FORMAT_YUV_420_SP") == 0) {
+                value = CAM_FORMAT_YUV_420_SP;
+            } else {
+                value = CAM_FORMAT_RGBA_8888;
+            }
             status = AddNamedProperty(env, result, propName, value);
             if (status != napi_ok) {
                 MEDIA_ERR_LOG("Failed to add named prop!");
@@ -745,6 +754,35 @@ napi_value CameraNapi::CreateVideoOutputErrorCode(napi_env env)
     MEDIA_ERR_LOG("CreateCameraInputErrorCode is Failed!");
     napi_get_undefined(env, &result);
 
+    return result;
+}
+
+napi_value CameraNapi::CreateMetadataObjectType(napi_env env)
+{
+    napi_value result = nullptr;
+    napi_status status;
+    std::string propName = "FACE_DETECTION";
+
+    status = napi_create_object(env, &result);
+    if (status == napi_ok) {
+        for (auto itr = mapMetadataObjectType.begin(); itr != mapMetadataObjectType.end(); ++itr) {
+            propName = itr->first;
+            status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);
+            if (status != napi_ok) {
+                MEDIA_ERR_LOG("Failed to add MetadataObjectType prop!");
+                break;
+            }
+            propName.clear();
+        }
+    }
+    if (status == napi_ok) {
+        status = napi_create_reference(env, result, 1, &metadataObjectTypeRef_);
+        if (status == napi_ok) {
+            return result;
+        }
+    }
+    MEDIA_ERR_LOG("CreateMetadataObjectType is Failed!");
+    napi_get_undefined(env, &result);
     return result;
 }
 
