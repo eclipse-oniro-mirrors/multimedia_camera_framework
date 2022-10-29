@@ -746,6 +746,7 @@ bool CameraManager::IsCameraMuted()
 
 void CameraManager::MuteCamera(bool muteMode)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     int32_t retCode = CAMERA_OK;
 
     if (serviceProxy_ == nullptr) {
