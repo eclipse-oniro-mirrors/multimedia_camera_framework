@@ -223,68 +223,74 @@ static napi_value CreateCameraJSArray(napi_env env, napi_status status,
     return cameraArray;
 }
 
+static napi_value CreateCameraInputNapiInstance(napi_env env, CameraManagerContext* context)
+{
+    napi_value cameraInputNapi = nullptr;
+    if (context->cameraInfo != nullptr) {
+        context->cameraInput = CameraManager::GetInstance()->CreateCameraInput(context->cameraInfo);
+        MEDIA_DEBUG_LOG("CreateCameraInput id = %{public}s", context->cameraInfo->GetID().c_str());
+        if (context->cameraInput == nullptr) {
+            return nullptr;
+        } else {
+            cameraInputNapi = CameraInputNapi::CreateCameraInput(env, context->cameraInput);
+            MEDIA_INFO_LOG("CreateCameraInputInstance created");
+        }
+    }
+    return cameraInputNapi;
+}
+
 void CameraManagerCommonCompleteCallback(napi_env env, napi_status status, void* data)
 {
     auto context = static_cast<CameraManagerContext*>(data);
 
     CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(context, "Async context is null");
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
-    jsContext->status = true;
     MEDIA_INFO_LOG("modeForAsync = %{public}d", context->modeForAsync);
     napi_get_undefined(env, &jsContext->error);
     switch (context->modeForAsync) {
         case GET_SUPPORTED_CAMERA_ASYNC_CALLBACK:
             jsContext->data = CreateCameraJSArray(env, status, context->cameraObjList);
-            if (jsContext->data == nullptr) {
-                CameraNapiUtils::CreateNapiErrorObject(env, "Failed to create napi cameraArray", jsContext);
-                MEDIA_ERR_LOG("Failed to create napi cameraArray");
-            }
             break;
         case CREATE_CAMERA_INPUT_ASYNC_CALLBACK:
-            if (context->cameraInfo != nullptr) {
-                context->cameraInput = CameraManager::GetInstance()->CreateCameraInput(context->cameraInfo);
-                MEDIA_DEBUG_LOG("CreateCameraInput id = %{public}s", context->cameraInfo->GetID().c_str());
-                if (context->cameraInput == nullptr) {
-                    context->status = false;
-                    context->errString = "CreateCameraInput( ) failed";
-                }
-                jsContext->data = CameraInputNapi::CreateCameraInput(env, context->cameraInput);
-                MEDIA_INFO_LOG("CreateCameraInputInstance created");
-            } else {
-                context->status = false;
-                context->errString = "unable to get camera Info";
-                napi_get_undefined(env, &jsContext->data);
-                MEDIA_ERR_LOG("Error: unable to get camera Info!");
-            }
+            jsContext->data = CreateCameraInputNapiInstance(env, context);
             break;
         case GET_SUPPORTED_OUTPUT_CAPABILITY_ASYNC_CALLBACK:
             jsContext->data = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, context->cameraInfo);
-            MEDIA_INFO_LOG("GetCameraOutputCapability");
             break;
         case CREATE_CAMERA_SESSION_ASYNC_CALLBACK:
             jsContext->data = CameraSessionNapi::CreateCameraSession(env);
-            MEDIA_INFO_LOG("CreateCameraSessionInstance created");
             break;
         case CREATE_PREVIEW_OUTPUT_ASYNC_CALLBACK:
             jsContext->data = PreviewOutputNapi::CreatePreviewOutput(env, context->profile, context->surfaceId);
-            MEDIA_INFO_LOG("context->surfaceId : %{public}s", context->surfaceId.c_str());
+            MEDIA_INFO_LOG("CreatePreviewOutput context->surfaceId : %{public}s", context->surfaceId.c_str());
             break;
         case CREATE_DEFERRED_PREVIEW_OUTPUT_ASYNC_CALLBACK:
             jsContext->data = PhotoOutputNapi::CreatePhotoOutput(env, context->profile, context->surfaceId);
-            MEDIA_INFO_LOG("context->photoSurfaceId : %{public}s", context->surfaceId.c_str());
+            MEDIA_INFO_LOG("CreatePhotoOutput context->photoSurfaceId : %{public}s", context->surfaceId.c_str());
             break;
         case CREATE_PHOTO_OUTPUT_ASYNC_CALLBACK:
             jsContext->data = PhotoOutputNapi::CreatePhotoOutput(env, context->profile, context->surfaceId);
-            MEDIA_INFO_LOG("context->photoSurfaceId : %{public}s", context->surfaceId.c_str());
+            MEDIA_INFO_LOG("CreatePhotoOutput context->photoSurfaceId : %{public}s", context->surfaceId.c_str());
             break;
         case CREATE_VIDEO_OUTPUT_ASYNC_CALLBACK:
             uint64_t surfaceId;
             std::istringstream iss(context->surfaceId);
             iss >> surfaceId;
             jsContext->data = VideoOutputNapi::CreateVideoOutput(env, context->videoProfile, context->surfaceId);
-            MEDIA_INFO_LOG("context->surfaceId : %{public}s", context->surfaceId.c_str());
+            MEDIA_INFO_LOG("CreateVideoOutput context->surfaceId : %{public}s", context->surfaceId.c_str());
             break;
     }
+
+    if (jsContext->data == nullptr) {
+        context->status = false;
+        context->errString = context->funcName + " failed";
+        MEDIA_ERR_LOG("Failed to create napi, funcName = %{public}s", context->funcName.c_str());
+        CameraNapiUtils::CreateNapiErrorObject(env, context->errString.c_str(), jsContext);
+    } else {
+        jsContext->status = true;
+        MEDIA_INFO_LOG("Success to create napi, funcName = %{public}s", context->funcName.c_str());
+    }
+
     // Finish async trace
     if (!context->funcName.empty() && context->taskId > 0) {
         CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
@@ -326,7 +332,6 @@ napi_value CameraManagerNapi::CreateCameraSessionInstance(napi_env env, napi_cal
         env, nullptr, resource,
         [](napi_env env, void* data) {
             auto context = static_cast<CameraManagerContext*>(data);
-            context->status = false;
             // Start async trace
             context->funcName = "CameraManagerNapi::CreateCameraSessionInstance";
             context->taskId = CameraNapiUtils::IncreamentAndGet(cameraManagerTaskId);
@@ -584,7 +589,6 @@ napi_value CameraManagerNapi::CreatePhotoOutputInstance(napi_env env, napi_callb
         env, nullptr, resource,
         [](napi_env env, void* data) {
             auto context = static_cast<CameraManagerContext*>(data);
-            context->status = false;
             // Start async trace
             context->funcName = "CameraManagerNapi::CreatePhotoOutputInstance";
             context->taskId = CameraNapiUtils::IncreamentAndGet(cameraManagerTaskId);
