@@ -241,7 +241,9 @@ napi_value CameraOutputCapabilityNapi::CreateCameraOutputCapability(napi_env env
     napi_status status;
     napi_value result = nullptr;
     napi_value constructor;
-
+    if (camera == nullptr) {
+        return result;
+    }
     status = napi_get_reference_value(env, sCapabilityConstructor_, &constructor);
     if (status == napi_ok) {
         sCameraOutputCapability_ = CameraManager::GetInstance()->GetSupportedOutputCapability(camera);
