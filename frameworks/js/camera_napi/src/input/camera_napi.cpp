@@ -490,11 +490,9 @@ napi_value CameraNapi::CreateCameraFormatObject(napi_env env)
         for (unsigned int i = 0; i < vecCameraFormat.size(); i++) {
             propName = vecCameraFormat[i];
             int32_t value;
-            if (propName.compare("CAMERA_FORMAT_JPEG") == 0)
-            {
+            if (propName.compare("CAMERA_FORMAT_JPEG") == 0) {
                 value = CAM_FORMAT_JPEG;
-            } else if (propName.compare("CAMERA_FORMAT_YUV_420_SP") == 0)
-            {
+            } else if (propName.compare("CAMERA_FORMAT_YUV_420_SP") == 0) {
                 value = CAM_FORMAT_YUV_420_SP;
             } else {
                 value = CAM_FORMAT_RGBA_8888;
