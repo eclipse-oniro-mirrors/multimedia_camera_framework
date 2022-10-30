@@ -169,7 +169,9 @@ napi_value CameraInputNapi::CreateCameraInput(napi_env env, sptr<CameraInput> ca
     napi_status status;
     napi_value result = nullptr;
     napi_value constructor;
-
+    if (cameraInput == nullptr) {
+        return result;
+    }
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
         sCameraInput_ = cameraInput;

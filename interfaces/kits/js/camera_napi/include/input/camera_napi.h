@@ -71,6 +71,7 @@ static const std::int32_t VIDEO_DEFAULT_HEIGHT = 360;
 
 static const std::int32_t SURFACE_QUEUE_SIZE = 10;
 
+static const std::int32_t CAM_FORMAT_RGBA_8888 = 3;
 static const std::int32_t CAM_FORMAT_JPEG = 2000;
 static const std::int32_t CAM_FORMAT_YUV_420_SP = 1003;
 
@@ -100,7 +101,7 @@ static const std::vector<std::string> vecConnectionTypeMode {
 };
 
 static const std::vector<std::string> vecCameraFormat {
-    "CAMERA_FORMAT_YUV_420_SP", "CAMERA_FORMAT_JPEG"
+    "CAMERA_FORMAT_YUV_420_SP", "CAMERA_FORMAT_JPEG", "CAMERA_FORMAT_RGBA_8888"
 };
 
 static const std::vector<std::string> vecCameraStatus {
@@ -166,6 +167,10 @@ static const std::unordered_map<std::string, int32_t> mapVideoOutputErrorCode = 
     {"ERROR_DRIVER_ERROR", 0}
 };
 
+static const std::unordered_map<std::string, int32_t> mapMetadataObjectType = {
+    {"FACE_DETECTION", 0}
+};
+
 static const std::unordered_map<std::string, int32_t> mapMetaOutputErrorCode = {
     {"ERROR_UNKNOWN", -1},
     {"ERROR_INSUFFICIENT_RESOURCES", 0}
@@ -210,6 +215,7 @@ public:
     static napi_value CreatePhotoOutputErrorCode(napi_env env);
     static napi_value CreateVideoOutputErrorCode(napi_env env);
     static napi_value CreateMetaOutputErrorCode(napi_env env);
+    static napi_value CreateMetadataObjectType(napi_env env);
 
 private:
     static thread_local napi_ref sConstructor_;
@@ -233,6 +239,7 @@ private:
     static thread_local napi_ref errorPreviewOutputRef_;
     static thread_local napi_ref errorPhotoOutputRef_;
     static thread_local napi_ref errorVideoOutputRef_;
+    static thread_local napi_ref metadataObjectTypeRef_;
     static thread_local napi_ref errorMetaOutputRef_;
     napi_env env_;
     napi_ref wrapper_;
