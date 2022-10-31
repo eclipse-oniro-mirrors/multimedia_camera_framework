@@ -51,6 +51,7 @@ private:
     void SetStreamTransform();
     bool isVideo_;
     sptr<IStreamRepeatCallback> streamRepeatCallback_;
+    std::mutex callbackLock_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
