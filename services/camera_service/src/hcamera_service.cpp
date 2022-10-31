@@ -80,20 +80,20 @@ void HCameraService::OnStop()
 
 int32_t CheckPermission(std::string permissionName, OHOS::Security::AccessToken::AccessTokenID callerToken)
 {
-    int permission_result
+    int permissionResult
         = OHOS::Security::AccessToken::TypePermissionState::PERMISSION_DENIED;
     Security::AccessToken::ATokenTypeEnum tokenType
         = OHOS::Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken);
     if ((tokenType == OHOS::Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE)
         || (tokenType == OHOS::Security::AccessToken::ATokenTypeEnum::TOKEN_HAP)) {
-        permission_result = OHOS::Security::AccessToken::AccessTokenKit::VerifyAccessToken(
+        permissionResult = OHOS::Security::AccessToken::AccessTokenKit::VerifyAccessToken(
             callerToken, permissionName);
     } else {
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice: Unsupported Access Token Type");
         return CAMERA_INVALID_ARG;
     }
 
-    if (permission_result != OHOS::Security::AccessToken::TypePermissionState::PERMISSION_GRANTED) {
+    if (permissionResult != OHOS::Security::AccessToken::TypePermissionState::PERMISSION_GRANTED) {
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice: Permission to Access Camera Denied!!!!");
         return CAMERA_ALLOC_ERROR;
     } else {
