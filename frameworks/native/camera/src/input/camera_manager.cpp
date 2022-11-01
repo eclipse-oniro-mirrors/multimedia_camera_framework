@@ -35,15 +35,13 @@ const std::string CameraManager::surfaceFormat = "CAMERA_SURFACE_FORMAT";
 const std::unordered_map<camera_format_t, CameraFormat> CameraManager::metaToFwCameraFormat_ = {
     {OHOS_CAMERA_FORMAT_YCRCB_420_SP, CAMERA_FORMAT_YUV_420_SP},
     {OHOS_CAMERA_FORMAT_JPEG, CAMERA_FORMAT_JPEG},
-    {OHOS_CAMERA_FORMAT_RGBA_8888, CAMERA_FORMAT_RGBA_8888},
-    {OHOS_CAMERA_FORMAT_YCBCR_420_888, CAMERA_FORMAT_YCBCR_420_888}
+    {OHOS_CAMERA_FORMAT_RGBA_8888, CAMERA_FORMAT_RGBA_8888}
 };
 
 const std::unordered_map<CameraFormat, camera_format_t> CameraManager::fwToMetaCameraFormat_ = {
     {CAMERA_FORMAT_YUV_420_SP, OHOS_CAMERA_FORMAT_YCRCB_420_SP},
     {CAMERA_FORMAT_JPEG, OHOS_CAMERA_FORMAT_JPEG},
     {CAMERA_FORMAT_RGBA_8888, OHOS_CAMERA_FORMAT_RGBA_8888},
-    {CAMERA_FORMAT_YCBCR_420_888, OHOS_CAMERA_FORMAT_YCBCR_420_888}
 };
 
 CameraManager::CameraManager()
@@ -502,6 +500,7 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
         MEDIA_ERR_LOG("CameraManager::GetCameras serviceProxy_ is null, returning empty list!");
         return cameraObjList;
     }
+    std::vector<sptr<CameraDevice>> supportedCameras;
     retCode = serviceProxy_->GetCameras(cameraIds, cameraAbilityList);
     if (retCode == CAMERA_OK) {
         for (auto& it : cameraIds) {
@@ -510,12 +509,33 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
                 MEDIA_ERR_LOG("CameraManager::GetCameras new CameraDevice failed for id={public}%s", it.c_str());
                 continue;
             }
-            cameraObjList.emplace_back(cameraObj);
+            supportedCameras.emplace_back(cameraObj);
         }
     } else {
         MEDIA_ERR_LOG("CameraManager::GetCameras failed!, retCode: %{public}d", retCode);
     }
+
+    ChooseDeFaultCameras(supportedCameras);
     return cameraObjList;
+}
+
+void CameraManager::ChooseDeFaultCameras(std::vector<sptr<CameraDevice>>& supportedCameras)
+{
+    for (auto camera : supportedCameras) {
+        bool hasDefaultCamera = false;
+        for (auto defaultCamera : cameraObjList) {
+            if ((defaultCamera->GetPosition() == camera->GetPosition()) &&
+                (defaultCamera->GetConnectionType() == camera->GetConnectionType())) {
+                hasDefaultCamera = true;
+                MEDIA_INFO_LOG("CameraManager::alreadly has default camera");
+            } else {
+                MEDIA_INFO_LOG("CameraManager::need add default camera");
+            }
+        }
+        if (!hasDefaultCamera) {
+            cameraObjList.emplace_back(camera);
+        }
+    }
 }
 
 sptr<CameraInput> CameraManager::CreateCameraInput(sptr<CameraInfo> &camera)
