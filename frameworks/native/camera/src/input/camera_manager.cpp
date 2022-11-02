@@ -84,8 +84,9 @@ public:
 
     int32_t OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status) override
     {
+        MEDIA_INFO_LOG("CameraStatusServiceCallback::OnCameraStatusChanged: cameraId: %{public}s, status: %{public}d",
+                       cameraId.c_str(), status);
         CameraStatusInfo cameraStatusInfo;
-
         if (camMngr_ != nullptr && camMngr_->GetApplicationCallback() != nullptr) {
             cameraStatusInfo.cameraDevice = camMngr_->GetCameraDeviceFromId(cameraId);
             cameraStatusInfo.cameraStatus = status;
@@ -449,6 +450,8 @@ void CameraManager::SetCallback(std::shared_ptr<CameraManagerCallback> callback)
 
 std::shared_ptr<CameraManagerCallback> CameraManager::GetApplicationCallback()
 {
+    MEDIA_INFO_LOG("CameraManager::GetApplicationCallback callback! isExist = %{public}d",
+                   cameraMngrCallback_ != nullptr);
     return cameraMngrCallback_;
 }
 

@@ -68,34 +68,36 @@ void CameraManagerCallbackNapi::OnCameraStatusCallbackAsync(const CameraStatusIn
 
 void CameraManagerCallbackNapi::OnCameraStatusCallback(const CameraStatusInfo &cameraStatusInfo) const
 {
-    napi_value result[ARGS_TWO];
+    napi_value result;
     napi_value callback = nullptr;
     napi_value retVal;
     napi_value propValue;
     napi_value undefinedResult;
 
-    napi_get_undefined(env_, &result[PARAM0]);
+    napi_get_undefined(env_, &result);
     napi_get_undefined(env_, &undefinedResult);
 
-    CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(cameraStatusInfo.cameraInfo, "callback cameraInfo is null");
+    CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(cameraStatusInfo.cameraDevice, "callback cameraDevice is null");
 
-    napi_create_object(env_, &result[PARAM1]);
+    napi_create_object(env_, &result);
 
     if (cameraStatusInfo.cameraDevice != nullptr) {
         napi_value cameraDeviceNapi = CameraDeviceNapi::CreateCameraObj(env_, cameraStatusInfo.cameraDevice);
-        napi_set_named_property(env_, result[PARAM1], "camera", cameraDeviceNapi);
+        napi_set_named_property(env_, result, "camera", cameraDeviceNapi);
     } else {
         MEDIA_ERR_LOG("Camera info is null");
-        napi_set_named_property(env_, result[PARAM1], "camera", undefinedResult);
+        napi_set_named_property(env_, result, "camera", undefinedResult);
     }
 
     int32_t jsCameraStatus = -1;
     jsCameraStatus = cameraStatusInfo.cameraStatus;
     napi_create_int64(env_, jsCameraStatus, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "status", propValue);
+    napi_set_named_property(env_, result, "status", propValue);
 
     napi_get_reference_value(env_, callbackRef_, &callback);
-    napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
+    MEDIA_INFO_LOG("CameraManagerCallbackNapi:OnCameraStatusChanged CameraId: %{public}s, CameraStatus: %{public}d",
+                   cameraStatusInfo.cameraDevice->GetID().c_str(), cameraStatusInfo.cameraStatus);
+    napi_call_function(env_, nullptr, callback, ARGS_ONE, &result, &retVal);
 }
 
 void CameraManagerCallbackNapi::OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const

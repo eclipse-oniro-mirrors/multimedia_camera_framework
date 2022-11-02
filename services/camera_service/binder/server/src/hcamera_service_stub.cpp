@@ -363,7 +363,7 @@ int HCameraServiceStub::DestroyStubForPid(pid_t pid)
 
         (void)cameraListenerMap_.erase(itListener);
     }
-
+    HCameraService::UnSetCallback(pid);
     HCaptureSession::DestroyStubObjectForPid(pid);
     return CAMERA_OK;
 }
