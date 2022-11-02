@@ -521,9 +521,9 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
 
 void CameraManager::ChooseDeFaultCameras(std::vector<sptr<CameraDevice>>& supportedCameras)
 {
-    for (auto camera : supportedCameras) {
+    for (auto& camera : supportedCameras) {
         bool hasDefaultCamera = false;
-        for (auto defaultCamera : cameraObjList) {
+        for (auto& defaultCamera : cameraObjList) {
             if ((defaultCamera->GetPosition() == camera->GetPosition()) &&
                 (defaultCamera->GetConnectionType() == camera->GetConnectionType())) {
                 hasDefaultCamera = true;
