@@ -105,6 +105,7 @@ int32_t HCameraDevice::Open()
         }
         errorCode = HdiToServiceError((CamRetCode)(hdiCameraDevice_->SetResultMode(ON_CHANGED)));
         cameraHostManager_->AddCameraDevice(cameraID_, this);
+        (void)OnCameraStatus(cameraID_, CAMERA_STATUS_UNAVAILABLE);
     } else {
         MEDIA_ERR_LOG("HCameraDevice::Open Failed to open camera");
     }
@@ -118,6 +119,7 @@ int32_t HCameraDevice::Close()
     if (hdiCameraDevice_ != nullptr) {
         MEDIA_INFO_LOG("HCameraDevice::Close Closing camera device: %{public}s", cameraID_.c_str());
         hdiCameraDevice_->Close();
+        (void)OnCameraStatus(cameraID_, CAMERA_STATUS_AVAILABLE);
     }
     isCameraOpened = false;
     hdiCameraDevice_ = nullptr;
@@ -267,6 +269,24 @@ int32_t HCameraDevice::SetCallback(sptr<ICameraDeviceServiceCallback> &callback)
     return CAMERA_OK;
 }
 
+int32_t HCameraDevice::SetStatusCallback(std::map<int32_t, sptr<ICameraServiceCallback>> &callbacks)
+{
+    MEDIA_INFO_LOG("HCameraDevice::SetStatusCallback callbacks size = %{public}zu",
+                   callbacks.size());
+    if (!statusSvcCallbacks_.empty()) {
+        MEDIA_ERR_LOG("HCameraDevice::SetStatusCallback statusSvcCallbacks_ is not empty, reset it");
+        for (auto it : statusSvcCallbacks_) {
+            delete it.second;
+            it.second = nullptr;
+        }
+    }
+    statusSvcCallbacks_.clear();
+    for (auto it : callbacks) {
+        statusSvcCallbacks_[it.first] = it.second;
+    }
+    return CAMERA_OK;
+}
+
 int32_t HCameraDevice::GetStreamOperator(sptr<IStreamOperatorCallback> callback,
     sptr<IStreamOperator> &streamOperator)
 {
@@ -308,6 +328,21 @@ int32_t HCameraDevice::OnError(const ErrorType type, const int32_t errorMsg)
         deviceSvcCallback_->OnError(errorType, errorMsg);
         CAMERA_SYSEVENT_FAULT(CreateMsg("CameraDeviceServiceCallback::OnError() is called!, errorType: %d,"
                                         "errorMsg: %d", errorType, errorMsg));
+    }
+    return CAMERA_OK;
+}
+
+int32_t HCameraDevice::OnCameraStatus(const std::string& cameraId, CameraStatus status)
+{
+    MEDIA_INFO_LOG("HCameraDevice::OnCameraStatus statusSvcCallbacks_ size = %{public}zu",
+                   statusSvcCallbacks_.size());
+    for (auto it : statusSvcCallbacks_) {
+        MEDIA_INFO_LOG("HCameraDevice::OnCameraStatus OnCameraStatusChanged pid = %{public}d"
+                       "cameraId = %{public}s, cameraStatus = %{public}d",
+                       it.first, cameraId.c_str(), status);
+        it.second->OnCameraStatusChanged(cameraId, status);
+        CAMERA_SYSEVENT_FAULT(CreateMsg("CameraDevice::OnCameraStatus() is called!, cameraId: %s,"
+                                        "status: %d", cameraId.c_str(), status));
     }
     return CAMERA_OK;
 }

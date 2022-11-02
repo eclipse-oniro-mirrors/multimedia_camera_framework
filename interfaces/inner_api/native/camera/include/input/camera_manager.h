@@ -341,6 +341,7 @@ private:
     void SetCameraMuteServiceCallback(sptr<ICameraMuteServiceCallback>& callback);
     int32_t CreateListenerObject();
     void CameraServerDied(pid_t pid);
+    void ChooseDeFaultCameras(std::vector<sptr<CameraDevice>>& supportedCameras);
     static const std::unordered_map<camera_format_t, CameraFormat> metaToFwCameraFormat_;
     static const std::unordered_map<CameraFormat, camera_format_t> fwToMetaCameraFormat_;
 

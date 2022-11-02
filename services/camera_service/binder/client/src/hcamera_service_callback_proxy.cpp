@@ -27,7 +27,7 @@ int32_t HCameraServiceCallbackProxy::OnCameraStatusChanged(const std::string& ca
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
-
+    MEDIA_INFO_LOG("HCameraServiceCallbackProxy OnCameraStatusChanged called");
     if (!data.WriteInterfaceToken(GetDescriptor())) {
         MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnCameraStatusChanged Write interface token failed");
         return IPC_PROXY_ERR;
@@ -99,4 +99,3 @@ int32_t HCameraMuteServiceCallbackProxy::OnCameraMute(bool muteMode)
 }
 } // namespace CameraStandard
 } // namespace OHOS
-

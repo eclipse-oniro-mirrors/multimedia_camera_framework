@@ -48,6 +48,7 @@ public:
 
 private:
     sptr<IStreamCaptureCallback> streamCaptureCallback_;
+    std::mutex callbackLock_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

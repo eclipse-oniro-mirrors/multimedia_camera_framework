@@ -88,6 +88,7 @@ public:
             return HDI::Camera::V1_0::NO_ERROR;
         });
         ON_CALL(*this, UpdateSettings(_)).WillByDefault(Return(HDI::Camera::V1_0::NO_ERROR));
+        ON_CALL(*this, GetSettings(_)).WillByDefault(Return(HDI::Camera::V1_0::NO_ERROR));
         ON_CALL(*this, SetResultMode(_)).WillByDefault(Return(HDI::Camera::V1_0::NO_ERROR));
         ON_CALL(*this, GetEnabledResults(_)).WillByDefault(Return(HDI::Camera::V1_0::NO_ERROR));
         ON_CALL(*this, EnableResult(_)).WillByDefault(Return(HDI::Camera::V1_0::NO_ERROR));
@@ -98,6 +99,7 @@ public:
     ~MockCameraDevice() {}
     MOCK_METHOD0(Close, int32_t());
     MOCK_METHOD1(UpdateSettings, int32_t(const std::vector<uint8_t>& settings));
+    MOCK_METHOD1(GetSettings, int32_t(std::vector<uint8_t>& settings));
     MOCK_METHOD1(SetResultMode, int32_t(ResultCallbackMode mode));
     MOCK_METHOD1(GetEnabledResults, int32_t(std::vector<int32_t>& results));
     MOCK_METHOD1(EnableResult, int32_t(const std::vector<int32_t>& results));
