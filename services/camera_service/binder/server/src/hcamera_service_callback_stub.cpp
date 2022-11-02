@@ -49,7 +49,8 @@ int HCameraServiceCallbackStub::HandleOnCameraStatusChanged(MessageParcel& data)
 {
     std::string cameraId = data.ReadString();
     int32_t status = data.ReadInt32();
-
+    MEDIA_INFO_LOG("HCameraServiceCallbackStub::HandleOnCameraStatusChanged called, cameraId = %{public}s, "
+                   "status = %{public}d", cameraId.c_str(), status);
     return OnCameraStatusChanged(cameraId, (CameraStatus)status);
 }
 

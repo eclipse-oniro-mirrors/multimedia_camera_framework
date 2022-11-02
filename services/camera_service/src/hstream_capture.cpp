@@ -88,6 +88,7 @@ int32_t HStreamCapture::Release()
     if (curCaptureID_) {
         ReleaseCaptureId(curCaptureID_);
     }
+    std::lock_guard<std::mutex> lock(callbackLock_);
     streamCaptureCallback_ = nullptr;
     return HStreamCommon::Release();
 }
@@ -98,6 +99,7 @@ int32_t HStreamCapture::SetCallback(sptr<IStreamCaptureCallback> &callback)
         MEDIA_ERR_LOG("HStreamCapture::SetCallback callback is null");
         return CAMERA_INVALID_ARG;
     }
+    std::lock_guard<std::mutex> lock(callbackLock_);
     streamCaptureCallback_ = callback;
     return CAMERA_OK;
 }
@@ -105,6 +107,7 @@ int32_t HStreamCapture::SetCallback(sptr<IStreamCaptureCallback> &callback)
 int32_t HStreamCapture::OnCaptureStarted(int32_t captureId)
 {
     CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(callbackLock_);
     if (streamCaptureCallback_ != nullptr) {
         streamCaptureCallback_->OnCaptureStarted(captureId);
     }
@@ -114,6 +117,7 @@ int32_t HStreamCapture::OnCaptureStarted(int32_t captureId)
 int32_t HStreamCapture::OnCaptureEnded(int32_t captureId, int32_t frameCount)
 {
     CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(callbackLock_);
     if (streamCaptureCallback_ != nullptr) {
         streamCaptureCallback_->OnCaptureEnded(captureId, frameCount);
     }
@@ -122,6 +126,7 @@ int32_t HStreamCapture::OnCaptureEnded(int32_t captureId, int32_t frameCount)
 
 int32_t HStreamCapture::OnCaptureError(int32_t captureId, int32_t errorCode)
 {
+    std::lock_guard<std::mutex> lock(callbackLock_);
     if (streamCaptureCallback_ != nullptr) {
         int32_t captureErrorCode;
         if (errorCode == BUFFER_LOST) {
@@ -139,6 +144,7 @@ int32_t HStreamCapture::OnCaptureError(int32_t captureId, int32_t errorCode)
 int32_t HStreamCapture::OnFrameShutter(int32_t captureId, uint64_t timestamp)
 {
     CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(callbackLock_);
     if (streamCaptureCallback_ != nullptr) {
         streamCaptureCallback_->OnFrameShutter(captureId, timestamp);
     }

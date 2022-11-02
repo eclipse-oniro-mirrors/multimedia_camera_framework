@@ -31,11 +31,11 @@ namespace CameraStandard {
 REGISTER_SYSTEM_ABILITY_BY_ID(HCameraService, CAMERA_SERVICE_ID, true)
 const std::string OHOS_PERMISSION_CAMERA = "ohos.permission.CAMERA";
 const std::string OHOS_PERMISSION_MANAGE_CAMERA_CONFIG = "ohos.permission.MANAGE_CAMERA_CONFIG";
+std::map<int32_t, sptr<ICameraServiceCallback>> HCameraService::cameraServiceCallbacks_;
 HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
     : SystemAbility(systemAbilityId, runOnCreate),
       cameraHostManager_(nullptr),
       streamOperatorCallback_(nullptr),
-      cameraServiceCallback_(nullptr),
       muteMode_(false)
 {
 }
@@ -89,15 +89,15 @@ int32_t CheckPermission(std::string permissionName, OHOS::Security::AccessToken:
         permissionResult = OHOS::Security::AccessToken::AccessTokenKit::VerifyAccessToken(
             callerToken, permissionName);
     } else {
-        MEDIA_ERR_LOG("HCameraService::CreateCameraDevice: Unsupported Access Token Type");
+        MEDIA_ERR_LOG("HCameraService::CheckPermission: Unsupported Access Token Type");
         return CAMERA_INVALID_ARG;
     }
 
     if (permissionResult != OHOS::Security::AccessToken::TypePermissionState::PERMISSION_GRANTED) {
-        MEDIA_ERR_LOG("HCameraService::CreateCameraDevice: Permission to Access Camera Denied!!!!");
+        MEDIA_ERR_LOG("HCameraService::CheckPermission: Permission to Access Camera Denied!!!!");
         return CAMERA_ALLOC_ERROR;
     } else {
-        MEDIA_DEBUG_LOG("HCameraService::CreateCameraDevice: Permission to Access Camera Granted!!!!");
+        MEDIA_DEBUG_LOG("HCameraService::CheckPermission: Permission to Access Camera Granted!!!!");
     }
     return CAMERA_OK;
 }
@@ -177,12 +177,16 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
         return CAMERA_ALLOC_ERROR;
     }
 
-    sptr<HCameraDevice> cameraDevice;
-    cameraDevice = new(std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    sptr<HCameraDevice> cameraDevice = new(std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     if (cameraDevice == nullptr) {
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice HCameraDevice allocation failed");
         return CAMERA_ALLOC_ERROR;
     }
+    MEDIA_INFO_LOG("HCameraService::CreateCameraDevice SetStatusCallback, caller = %{public}d", callerToken);
+    if (cameraDevice->SetStatusCallback(cameraServiceCallbacks_)) {
+        MEDIA_ERR_LOG("HCameraService::CreateCameraDevice HCameraDevice SetStatusCallback failed");
+    }
+
     // when create camera device, update mute setting truely.
     if (IsCameraMuteSupported(cameraId)) {
         if (UpdateMuteSetting(cameraDevice, muteMode_) != CAMERA_OK) {
@@ -327,8 +331,11 @@ int32_t HCameraService::CreateVideoOutput(const sptr<OHOS::IBufferProducer> &pro
 
 void HCameraService::OnCameraStatus(const std::string& cameraId, CameraStatus status)
 {
-    if (cameraServiceCallback_) {
-        cameraServiceCallback_->OnCameraStatusChanged(cameraId, status);
+    MEDIA_INFO_LOG("HCameraService::OnCameraStatus "
+                   "callbacks.size = %{public}zu, cameraId = %{public}s, status = %{public}d, pid = %{public}d",
+                   cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid());
+    for (auto it : cameraServiceCallbacks_) {
+        it.second->OnCameraStatusChanged(cameraId, status);
         CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d",
                                            cameraId.c_str(), status));
     }
@@ -336,8 +343,11 @@ void HCameraService::OnCameraStatus(const std::string& cameraId, CameraStatus st
 
 void HCameraService::OnFlashlightStatus(const std::string& cameraId, FlashStatus status)
 {
-    if (cameraServiceCallback_) {
-        cameraServiceCallback_->OnFlashlightStatusChanged(cameraId, status);
+    MEDIA_INFO_LOG("HCameraService::OnFlashlightStatus "
+                   "callbacks.size = %{public}zu, cameraId = %{public}s, status = %{public}d, pid = %{public}d",
+                   cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid());
+    for (auto it : cameraServiceCallbacks_) {
+        it.second->OnFlashlightStatusChanged(cameraId, status);
         CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnFlashlightStatusChanged! for cameraId:%s, current Flash Status:%d",
                                            cameraId.c_str(), status));
         POWERMGR_SYSEVENT_TORCH_STATE(IPCSkeleton::GetCallingPid(),
@@ -347,11 +357,28 @@ void HCameraService::OnFlashlightStatus(const std::string& cameraId, FlashStatus
 
 int32_t HCameraService::SetCallback(sptr<ICameraServiceCallback> &callback)
 {
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    MEDIA_INFO_LOG("HCameraService::SetCallback pid = %{public}d", pid);
     if (callback == nullptr) {
         MEDIA_ERR_LOG("HCameraService::SetCallback callback is null");
         return CAMERA_INVALID_ARG;
     }
-    cameraServiceCallback_ = callback;
+    cameraServiceCallbacks_.insert(std::make_pair(pid, callback));
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::UnSetCallback(pid_t pid)
+{
+    MEDIA_INFO_LOG("HCameraService::UnSetCallback pid = %{public}d", pid);
+    if (!cameraServiceCallbacks_.empty()) {
+        MEDIA_ERR_LOG("HCameraDevice::SetStatusCallback statusSvcCallbacks_ is not empty, reset it");
+        auto it = cameraServiceCallbacks_.find(pid);
+        if ((it != cameraServiceCallbacks_.end()) && (!it->second)) {
+            it->second.clear();
+            it->second = nullptr;
+            cameraServiceCallbacks_.erase(it);
+        }
+    }
     return CAMERA_OK;
 }
 
