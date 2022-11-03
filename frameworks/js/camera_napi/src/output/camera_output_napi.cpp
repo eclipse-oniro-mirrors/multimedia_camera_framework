@@ -215,20 +215,18 @@ napi_value CameraOutputCapabilityNapi::CameraOutputCapabilityNapiConstructor(nap
 
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<CameraOutputCapabilityNapi> obj = std::make_unique<CameraOutputCapabilityNapi>();
-        if (obj != nullptr) {
-            obj->env_ = env;
-            obj->cameraOutputCapability_ = sCameraOutputCapability_;
-            status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                               CameraOutputCapabilityNapi::CameraOutputCapabilityNapiDestructor,
-                               nullptr,
-                               &(obj->wrapper_));
-            if (status == napi_ok) {
-                obj.release();
-                MEDIA_ERR_LOG("CameraOutputCapabilityNapiConstructor Success wrapping js to native napi");
-                return thisVar;
-            } else {
-                MEDIA_ERR_LOG("Failure wrapping js to native napi");
-            }
+        obj->env_ = env;
+        obj->cameraOutputCapability_ = sCameraOutputCapability_;
+        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
+                            CameraOutputCapabilityNapi::CameraOutputCapabilityNapiDestructor,
+                            nullptr,
+                            &(obj->wrapper_));
+        if (status == napi_ok) {
+            obj.release();
+            MEDIA_ERR_LOG("CameraOutputCapabilityNapiConstructor Success wrapping js to native napi");
+            return thisVar;
+        } else {
+            MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
 

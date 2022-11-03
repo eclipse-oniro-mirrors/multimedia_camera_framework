@@ -188,23 +188,20 @@ napi_value MetadataOutputNapi::MetadataOutputNapiConstructor(napi_env env, napi_
 
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<MetadataOutputNapi> obj = std::make_unique<MetadataOutputNapi>();
-        if (obj != nullptr) {
-            obj->env_ = env;
-            obj->metadataOutput_ = sMetadataOutput_;
+        obj->env_ = env;
+        obj->metadataOutput_ = sMetadataOutput_;
+        std::shared_ptr<MetadataOutputCallback> callback =
+            std::make_shared<MetadataOutputCallback>(MetadataOutputCallback(env));
+        ((sptr<MetadataOutput> &)(obj->metadataOutput_))->SetCallback(callback);
+        obj->metadataCallback_ = callback;
 
-            std::shared_ptr<MetadataOutputCallback> callback =
-                std::make_shared<MetadataOutputCallback>(MetadataOutputCallback(env));
-            ((sptr<MetadataOutput> &)(obj->metadataOutput_))->SetCallback(callback);
-            obj->metadataCallback_ = callback;
-
-            status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                               MetadataOutputNapi::MetadataOutputNapiDestructor, nullptr, &(obj->wrapper_));
-            if (status == napi_ok) {
-                obj.release();
-                return thisVar;
-            } else {
-                MEDIA_ERR_LOG("Failure wrapping js to native napi");
-            }
+        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
+                            MetadataOutputNapi::MetadataOutputNapiDestructor, nullptr, &(obj->wrapper_));
+        if (status == napi_ok) {
+            obj.release();
+            return thisVar;
+        } else {
+            MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
 

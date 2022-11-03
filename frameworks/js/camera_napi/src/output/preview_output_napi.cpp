@@ -260,13 +260,11 @@ napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, Profile &profile
 
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
-        bool xCompPreviewSurface = true;
         uint64_t iSurfaceId;
         std::istringstream iss(surfaceId);
         iss >> iSurfaceId;
         sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
         if (!surface) {
-            xCompPreviewSurface = false;
             surface = Media::ImageReceiver::getSurfaceById(surfaceId);
         }
         if (surface == nullptr) {

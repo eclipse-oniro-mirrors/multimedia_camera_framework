@@ -81,25 +81,23 @@ napi_value CameraProfileNapi::CameraProfileNapiConstructor(napi_env env, napi_ca
 
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<CameraProfileNapi> obj = std::make_unique<CameraProfileNapi>();
-        if (obj != nullptr) {
-            obj->env_ = env;
-            obj->cameraProfile_ = sCameraProfile_;
-            MEDIA_INFO_LOG("CameraProfileNapi::CameraProfileNapiConstructor "
-                "size.width = %{public}d, size.height = %{public}d, "
-                "format = %{public}d, obj->cameraProfile_ = %{public}p",
-                obj->cameraProfile_->GetSize().width,
-                obj->cameraProfile_->GetSize().height,
-                obj->cameraProfile_->format_,
-                obj->cameraProfile_);
-            status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                               CameraProfileNapi::CameraProfileNapiDestructor, nullptr, &(obj->wrapper_));
-            MEDIA_INFO_LOG("GetCameraProfileSize cameraProfileSize thisVar = %{public}p", &thisVar);
-            if (status == napi_ok) {
-                obj.release();
-                return thisVar;
-            } else {
-                MEDIA_ERR_LOG("Failure wrapping js to native napi");
-            }
+        obj->env_ = env;
+        obj->cameraProfile_ = sCameraProfile_;
+        MEDIA_INFO_LOG("CameraProfileNapi::CameraProfileNapiConstructor "
+            "size.width = %{public}d, size.height = %{public}d, "
+            "format = %{public}d, obj->cameraProfile_ = %{public}p",
+            obj->cameraProfile_->GetSize().width,
+            obj->cameraProfile_->GetSize().height,
+            obj->cameraProfile_->format_,
+            obj->cameraProfile_);
+        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
+                            CameraProfileNapi::CameraProfileNapiDestructor, nullptr, &(obj->wrapper_));
+        MEDIA_INFO_LOG("GetCameraProfileSize cameraProfileSize thisVar = %{public}p", &thisVar);
+        if (status == napi_ok) {
+            obj.release();
+            return thisVar;
+        } else {
+            MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
     return result;
@@ -265,17 +263,15 @@ napi_value CameraVideoProfileNapi::CameraVideoProfileNapiConstructor(napi_env en
 
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<CameraVideoProfileNapi> obj = std::make_unique<CameraVideoProfileNapi>();
-        if (obj != nullptr) {
-            obj->env_ = env;
-            obj->videoProfile_ = sVideoProfile_;
-            status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                               CameraVideoProfileNapi::CameraVideoProfileNapiDestructor, nullptr, &(obj->wrapper_));
-            if (status == napi_ok) {
-                obj.release();
-                return thisVar;
-            } else {
-                MEDIA_ERR_LOG("Failure wrapping js to native napi");
-            }
+        obj->env_ = env;
+        obj->videoProfile_ = sVideoProfile_;
+        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
+                            CameraVideoProfileNapi::CameraVideoProfileNapiDestructor, nullptr, &(obj->wrapper_));
+        if (status == napi_ok) {
+            obj.release();
+            return thisVar;
+        } else {
+            MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
 

@@ -231,22 +231,20 @@ napi_value PhotoOutputNapi::PhotoOutputNapiConstructor(napi_env env, napi_callba
 
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<PhotoOutputNapi> obj = std::make_unique<PhotoOutputNapi>();
-        if (obj != nullptr) {
-            obj->env_ = env;
-            obj->photoOutput_ = sPhotoOutput_;
-            std::shared_ptr<PhotoOutputCallback> callback =
-                std::make_shared<PhotoOutputCallback>(PhotoOutputCallback(env));
-            ((sptr<PhotoOutput> &)(obj->photoOutput_))->SetCallback(callback);
-            obj->photoCallback_ = callback;
+        obj->env_ = env;
+        obj->photoOutput_ = sPhotoOutput_;
+        std::shared_ptr<PhotoOutputCallback> callback =
+            std::make_shared<PhotoOutputCallback>(PhotoOutputCallback(env));
+        ((sptr<PhotoOutput> &)(obj->photoOutput_))->SetCallback(callback);
+        obj->photoCallback_ = callback;
 
-            status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                               PhotoOutputNapi::PhotoOutputNapiDestructor, nullptr, &(obj->wrapper_));
-            if (status == napi_ok) {
-                obj.release();
-                return thisVar;
-            } else {
-                MEDIA_ERR_LOG("Failure wrapping js to native napi");
-            }
+        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
+                            PhotoOutputNapi::PhotoOutputNapiDestructor, nullptr, &(obj->wrapper_));
+        if (status == napi_ok) {
+            obj.release();
+            return thisVar;
+        } else {
+            MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
 
