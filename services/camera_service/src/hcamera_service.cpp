@@ -357,6 +357,7 @@ void HCameraService::OnFlashlightStatus(const std::string& cameraId, FlashStatus
 
 int32_t HCameraService::SetCallback(sptr<ICameraServiceCallback> &callback)
 {
+    std::lock_guard<std::mutex> lock(cbMutex_);
     pid_t pid = IPCSkeleton::GetCallingPid();
     MEDIA_INFO_LOG("HCameraService::SetCallback pid = %{public}d", pid);
     if (callback == nullptr) {
