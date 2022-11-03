@@ -1131,7 +1131,7 @@ void CaptureSession::SetCaptureMetadataObjectTypes(std::set<camera_face_detect_m
     }
     uint32_t count = 0;
     uint8_t objectTypes[metadataObjectTypes.size()];
-    for (auto &type : metadataObjectTypes) {
+    for (const auto &type : metadataObjectTypes) {
         objectTypes[count++] = type;
     }
     this->LockForControl();
