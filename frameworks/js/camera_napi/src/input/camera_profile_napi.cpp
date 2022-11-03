@@ -91,7 +91,7 @@ napi_value CameraProfileNapi::CameraProfileNapiConstructor(napi_env env, napi_ca
             obj->cameraProfile_->format_,
             obj->cameraProfile_);
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                            CameraProfileNapi::CameraProfileNapiDestructor, nullptr, &(obj->wrapper_));
+                           CameraProfileNapi::CameraProfileNapiDestructor, nullptr, &(obj->wrapper_));
         MEDIA_INFO_LOG("GetCameraProfileSize cameraProfileSize thisVar = %{public}p", &thisVar);
         if (status == napi_ok) {
             obj.release();
@@ -266,7 +266,7 @@ napi_value CameraVideoProfileNapi::CameraVideoProfileNapiConstructor(napi_env en
         obj->env_ = env;
         obj->videoProfile_ = sVideoProfile_;
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                            CameraVideoProfileNapi::CameraVideoProfileNapiDestructor, nullptr, &(obj->wrapper_));
+                           CameraVideoProfileNapi::CameraVideoProfileNapiDestructor, nullptr, &(obj->wrapper_));
         if (status == napi_ok) {
             obj.release();
             return thisVar;

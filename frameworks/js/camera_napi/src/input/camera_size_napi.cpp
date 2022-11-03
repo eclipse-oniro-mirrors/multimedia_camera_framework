@@ -89,7 +89,7 @@ napi_value CameraSizeNapi::CameraSizeNapiConstructor(napi_env env, napi_callback
             "size.width = %{public}d, size.height = %{public}d, obj->cameraPicSize_ = %{public}p",
             obj->cameraPicSize_->width, obj->cameraPicSize_->height, obj->cameraPicSize_);
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                            CameraSizeNapi::CameraSizeNapiDestructor, nullptr, &(obj->wrapper_));
+                           CameraSizeNapi::CameraSizeNapiDestructor, nullptr, &(obj->wrapper_));
         if (status == napi_ok) {
             obj.release();
             return thisVar;

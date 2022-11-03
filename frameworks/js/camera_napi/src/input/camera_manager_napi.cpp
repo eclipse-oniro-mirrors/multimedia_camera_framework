@@ -60,7 +60,7 @@ napi_value CameraManagerNapi::CameraManagerNapiConstructor(napi_env env, napi_ca
             return result;
         }
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                            CameraManagerNapi::CameraManagerNapiDestructor, nullptr, &(obj->wrapper_));
+                           CameraManagerNapi::CameraManagerNapiDestructor, nullptr, &(obj->wrapper_));
         if (status == napi_ok) {
             obj.release();
             return thisVar;

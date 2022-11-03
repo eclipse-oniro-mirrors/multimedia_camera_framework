@@ -149,7 +149,7 @@ napi_value CameraInputNapi::CameraInputNapiConstructor(napi_env env, napi_callba
         obj->env_ = env;
         obj->cameraInput_ = sCameraInput_;
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                            CameraInputNapi::CameraInputNapiDestructor, nullptr, &(obj->wrapper_));
+                           CameraInputNapi::CameraInputNapiDestructor, nullptr, &(obj->wrapper_));
         if (status == napi_ok) {
             obj.release();
             return thisVar;

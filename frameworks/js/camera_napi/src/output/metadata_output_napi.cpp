@@ -196,7 +196,7 @@ napi_value MetadataOutputNapi::MetadataOutputNapiConstructor(napi_env env, napi_
         obj->metadataCallback_ = callback;
 
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                            MetadataOutputNapi::MetadataOutputNapiDestructor, nullptr, &(obj->wrapper_));
+                           MetadataOutputNapi::MetadataOutputNapiDestructor, nullptr, &(obj->wrapper_));
         if (status == napi_ok) {
             obj.release();
             return thisVar;

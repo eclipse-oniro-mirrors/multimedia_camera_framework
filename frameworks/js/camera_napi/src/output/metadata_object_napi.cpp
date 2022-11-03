@@ -113,7 +113,7 @@ napi_value MetadataObjectNapi::MetadataObjectNapiConstructor(napi_env env, napi_
         obj->env_ = env;
         obj->metadataObject_ = g_metadataObject;
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                            MetadataObjectNapi::MetadataObjectNapiDestructor, nullptr, &(obj->wrapper_));
+                           MetadataObjectNapi::MetadataObjectNapiDestructor, nullptr, &(obj->wrapper_));
         if (status == napi_ok) {
             obj.release();
             return thisVar;

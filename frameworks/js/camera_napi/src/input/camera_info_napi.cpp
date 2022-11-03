@@ -88,7 +88,7 @@ napi_value CameraDeviceNapi::CameraDeviceNapiConstructor(napi_env env, napi_call
         obj->env_ = env;
         obj->cameraDevice_ = sCameraDevice_;
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                            CameraDeviceNapi::CameraDeviceNapiDestructor, nullptr, &(obj->wrapper_));
+                           CameraDeviceNapi::CameraDeviceNapiDestructor, nullptr, &(obj->wrapper_));
         if (status == napi_ok) {
             obj.release();
             return thisVar;

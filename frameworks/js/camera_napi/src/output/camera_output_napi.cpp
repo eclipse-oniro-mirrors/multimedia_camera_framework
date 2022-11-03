@@ -218,9 +218,9 @@ napi_value CameraOutputCapabilityNapi::CameraOutputCapabilityNapiConstructor(nap
         obj->env_ = env;
         obj->cameraOutputCapability_ = sCameraOutputCapability_;
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                            CameraOutputCapabilityNapi::CameraOutputCapabilityNapiDestructor,
-                            nullptr,
-                            &(obj->wrapper_));
+                           CameraOutputCapabilityNapi::CameraOutputCapabilityNapiDestructor,
+                           nullptr,
+                           &(obj->wrapper_));
         if (status == napi_ok) {
             obj.release();
             MEDIA_ERR_LOG("CameraOutputCapabilityNapiConstructor Success wrapping js to native napi");
