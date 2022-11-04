@@ -691,7 +691,7 @@ int32_t CameraMuteServiceCallback::OnCameraMute(bool muteMode)
     MEDIA_DEBUG_LOG("CameraMuteServiceCallback::OnCameraMute call! muteMode is %{public}d", muteMode);
     std::vector<shared_ptr<CameraMuteListener>> cameraMuteListenerList = camMngr_->GetCameraMuteListener();
     if (camMngr_ != nullptr && cameraMuteListenerList.size() > 0) {
-        for(auto i = 0; i < cameraMuteListenerList.size(); ++i) {
+        for (auto i = 0; i < cameraMuteListenerList.size(); ++i) {
             cameraMuteListenerList[i]->OnCameraMute(muteMode);
         }
     } else {
