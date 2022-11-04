@@ -689,8 +689,11 @@ camera_format_t CameraManager::GetCameraMetadataFormat(CameraFormat format)
 int32_t CameraMuteServiceCallback::OnCameraMute(bool muteMode)
 {
     MEDIA_DEBUG_LOG("CameraMuteServiceCallback::OnCameraMute call! muteMode is %{public}d", muteMode);
-    if (camMngr_ != nullptr && camMngr_->GetCameraMuteListener() != nullptr) {
-        camMngr_->GetCameraMuteListener()->OnCameraMute(muteMode);
+    std::vector<shared_ptr<CameraMuteListener>> cameraMuteListenerList = camMngr_->GetCameraMuteListener();
+    if (camMngr_ != nullptr && cameraMuteListenerList.size() > 0) {
+        for(auto i = 0; i < cameraMuteListenerList.size(); ++i) {
+            cameraMuteListenerList[i]->OnCameraMute(muteMode);
+        }
     } else {
         MEDIA_INFO_LOG("CameraManager::CameraMuteListener not registered!, Ignore the callback");
     }
@@ -702,7 +705,7 @@ void CameraManager::RegisterCameraMuteListener(std::shared_ptr<CameraMuteListene
     if (listener == nullptr) {
         MEDIA_INFO_LOG("CameraManager::RegisterCameraMuteListener(): unregistering the callback");
     }
-    cameraMuteListener_ = listener;
+    cameraMuteListenerList.push_back(listener);
 }
 
 void CameraManager::SetCameraMuteServiceCallback(sptr<ICameraMuteServiceCallback>& callback)
@@ -720,9 +723,9 @@ void CameraManager::SetCameraMuteServiceCallback(sptr<ICameraMuteServiceCallback
     return;
 }
 
-std::shared_ptr<CameraMuteListener> CameraManager::GetCameraMuteListener()
+std::vector<shared_ptr<CameraMuteListener>> CameraManager::GetCameraMuteListener()
 {
-    return cameraMuteListener_;
+    return cameraMuteListenerList;
 }
 
 bool CameraManager::IsCameraMuteSupported()
