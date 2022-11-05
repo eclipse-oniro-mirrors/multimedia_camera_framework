@@ -25,11 +25,6 @@ using namespace std;
 
 namespace OHOS {
 namespace CameraStandard {
-namespace {
-    constexpr uint8_t QUALITY_NORMAL = 90;
-    constexpr uint8_t QUALITY_LOW = 50;
-}
-
 PhotoCaptureSetting::PhotoCaptureSetting()
 {
     int32_t items = 10;
@@ -46,9 +41,9 @@ PhotoCaptureSetting::QualityLevel PhotoCaptureSetting::GetQuality()
     if (ret != CAM_META_SUCCESS) {
         return QUALITY_LEVEL_MEDIUM;
     }
-    if (item.data.u8[0] > QUALITY_NORMAL) {
+    if (item.data.u8[0] == OHOS_CAMERA_JPEG_LEVEL_HIGH) {
         quality = QUALITY_LEVEL_HIGH;
-    } else if (item.data.u8[0] > QUALITY_LOW) {
+    } else if (item.data.u8[0] == OHOS_CAMERA_JPEG_LEVEL_MIDDLE) {
         quality = QUALITY_LEVEL_MEDIUM;
     }
     return quality;
@@ -58,14 +53,12 @@ void PhotoCaptureSetting::SetQuality(PhotoCaptureSetting::QualityLevel qualityLe
 {
     bool status = false;
     camera_metadata_item_t item;
-    uint8_t highQuality = 100;
-    uint8_t normalQuality = 90;
-    uint8_t quality = 50;
+    uint8_t quality = OHOS_CAMERA_JPEG_LEVEL_LOW;
 
     if (qualityLevel == QUALITY_LEVEL_HIGH) {
-        quality = highQuality;
+        quality = OHOS_CAMERA_JPEG_LEVEL_HIGH;
     } else if (qualityLevel == QUALITY_LEVEL_MEDIUM) {
-        quality = normalQuality;
+        quality = OHOS_CAMERA_JPEG_LEVEL_MIDDLE;
     }
     int ret = Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_QUALITY, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {

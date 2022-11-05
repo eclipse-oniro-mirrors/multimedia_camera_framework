@@ -404,7 +404,7 @@ static void GetFetchOptionsParam(napi_env env, napi_value arg, const PhotoOutput
             err = true;
             return;
         } else {
-            asyncContext->quality = intValue;
+            asyncContext->quality = quality;
         }
     }
 
@@ -414,7 +414,7 @@ static void GetFetchOptionsParam(napi_env env, napi_value arg, const PhotoOutput
             err = true;
             return;
         } else {
-            asyncContext->rotation = intValue;
+            asyncContext->rotation = rotation;
         }
     }
 
