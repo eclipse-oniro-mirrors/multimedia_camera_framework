@@ -45,7 +45,10 @@ ohos_executable("camera_video") {
     "camera_video.cpp",
     "test_common.cpp",
   ]
-  cflags = [ "-fPIC" ]
+  cflags = [
+    "-fPIC",
+    "-g",
+  ]
   cflags += [ "-Wall" ]
   cflags_cc = cflags
 
@@ -60,6 +63,7 @@ ohos_executable("camera_video") {
 
   external_deps = [
     "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
     "access_token:libtoken_setproc",
     "c_utils:utils",
     "hisysevent_native:libhisysevent",
@@ -79,7 +83,10 @@ ohos_executable("camera_capture") {
     "camera_capture.cpp",
     "test_common.cpp",
   ]
-  cflags = [ "-fPIC" ]
+  cflags = [
+    "-fPIC",
+    "-g",
+  ]
   cflags += [ "-Wall" ]
   cflags_cc = cflags
 
@@ -94,6 +101,7 @@ ohos_executable("camera_capture") {
 
   external_deps = [
     "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
     "access_token:libtoken_setproc",
     "c_utils:utils",
     "hisysevent_native:libhisysevent",
@@ -111,7 +119,10 @@ ohos_executable("camera_capture_video") {
     "camera_capture_video.cpp",
     "test_common.cpp",
   ]
-  cflags = [ "-fPIC" ]
+  cflags = [
+    "-fPIC",
+    "-g",
+  ]
   cflags += [ "-Wall" ]
   cflags_cc = cflags
 
@@ -126,6 +137,7 @@ ohos_executable("camera_capture_video") {
 
   external_deps = [
     "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
     "access_token:libtoken_setproc",
     "c_utils:utils",
     "hisysevent_native:libhisysevent",
