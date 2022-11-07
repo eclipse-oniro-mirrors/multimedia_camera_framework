@@ -33,6 +33,15 @@ using namespace std;
 using namespace OHOS;
 using namespace OHOS::CameraStandard;
 
+static std::shared_ptr<PhotoCaptureSetting> ConfigPhotoCaptureSetting()
+{
+    std::shared_ptr<PhotoCaptureSetting> photoCaptureSettings = std::make_shared<PhotoCaptureSetting>();
+    // QualityLevel
+    PhotoCaptureSetting::QualityLevel quality = PhotoCaptureSetting::QualityLevel::QUALITY_LEVEL_HIGH;
+    photoCaptureSettings->SetQuality(quality);
+    return photoCaptureSettings;
+}
+
 int main(int argc, char **argv)
 {
     const int32_t previewFormatIndex = 1;
@@ -243,11 +252,6 @@ int main(int argc, char **argv)
     }
 
     ret = captureSession->Start();
-    if (ret != 0) {
-        return 0;
-    }
-    sleep(previewCaptureGap);
-    ret = ((sptr<PreviewOutput> &)previewOutput)->Start();
     if (ret != 0) {
         return 0;
     }

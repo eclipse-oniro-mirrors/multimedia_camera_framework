@@ -424,6 +424,7 @@ int32_t CameraCaptureVideo::InitCameraInput()
             MEDIA_ERR_LOG("Failed to create CameraInput");
             return result;
         }
+        cameraInput_->Open();
         cameraInputCallback_ = std::make_shared<TestDeviceCallback>(testName_);
         ((sptr<CameraInput> &)cameraInput_)->SetErrorCallback(cameraInputCallback_);
         result = InitCameraFormatAndResolution((sptr<CameraInput> &)cameraInput_);
