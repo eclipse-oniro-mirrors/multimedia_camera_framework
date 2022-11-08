@@ -26,45 +26,12 @@
 #include "access_token.h"
 #include "hap_token_info.h"
 #include "accesstoken_kit.h"
+#include "nativetoken_kit.h"
 #include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS;
 using namespace OHOS::CameraStandard;
-
-static std::string permissionName = "ohos.permission.CAMERA";
-static OHOS::Security::AccessToken::HapInfoParams g_infoManagerTestInfoParms = {
-    .userID = 1,
-    .bundleName = permissionName,
-    .instIndex = 0,
-    .appIDDesc = "testtesttesttest"
-};
-
-static OHOS::Security::AccessToken::PermissionDef g_infoManagerTestPermDef1 = {
-    .permissionName = "ohos.permission.CAMERA",
-    .bundleName = "ohos.permission.CAMERA",
-    .grantMode = 1,
-    .availableLevel = OHOS::Security::AccessToken::ATokenAplEnum::APL_NORMAL,
-    .label = "label",
-    .labelId = 1,
-    .description = "camera test",
-    .descriptionId = 1
-};
-
-static OHOS::Security::AccessToken::PermissionStateFull g_infoManagerTestState1 = {
-    .permissionName = "ohos.permission.CAMERA",
-    .isGeneral = true,
-    .resDeviceID = {"local"},
-    .grantStatus = {OHOS::Security::AccessToken::PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {1}
-};
-
-static OHOS::Security::AccessToken::HapPolicyParams g_infoManagerTestPolicyPrams = {
-    .apl = OHOS::Security::AccessToken::ATokenAplEnum::APL_NORMAL,
-    .domain = "test.domain",
-    .permList = {g_infoManagerTestPermDef1},
-    .permStateList = {g_infoManagerTestState1}
-};
 
 static std::shared_ptr<PhotoCaptureSetting> ConfigPhotoCaptureSetting()
 {
@@ -127,58 +94,28 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    /* Grant the permission so that create camera test can be success */
-    OHOS::Security::AccessToken::AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = OHOS::Security::AccessToken::AccessTokenKit::AllocHapToken(
-        g_infoManagerTestInfoParms,
-        g_infoManagerTestPolicyPrams);
-    if (tokenIdEx.tokenIdExStruct.tokenID == 0) {
-        unsigned int tokenIdOld = 0;
-        MEDIA_DEBUG_LOG("Alloc TokenID failure, cleaning the old token ID \n");
-        tokenIdOld = OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenID(
-            1, permissionName, 0);
-        if (tokenIdOld == 0) {
-            MEDIA_DEBUG_LOG("Unable to get the Old Token ID, need to reflash the board");
-            return 0;
-        }
-        ret = OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(tokenIdOld);
-        if (ret != 0) {
-            MEDIA_DEBUG_LOG("Unable to delete the Old Token ID, need to reflash the board");
-            return 0;
-        }
-
-        /* Retry the token allocation again */
-        tokenIdEx = OHOS::Security::AccessToken::AccessTokenKit::AllocHapToken(
-            g_infoManagerTestInfoParms,
-            g_infoManagerTestPolicyPrams);
-        if (tokenIdEx.tokenIdExStruct.tokenID == 0) {
-            MEDIA_DEBUG_LOG("Alloc TokenID failure, need to reflash the board \n");
-            return 0;
-        }
-    }
-
-    (void)SetSelfTokenID(tokenIdEx.tokenIdExStruct.tokenID);
-
-    ret = Security::AccessToken::AccessTokenKit::GrantPermission(
-        tokenIdEx.tokenIdExStruct.tokenID,
-        permissionName, OHOS::Security::AccessToken::PERMISSION_USER_FIXED);
-    if (ret != 0) {
-        MEDIA_ERR_LOG("GrantPermission( ) failed");
-        (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
-            tokenIdEx.tokenIdExStruct.tokenID);
-        return 0;
-    } else {
-        MEDIA_DEBUG_LOG("GrantPermission( ) success");
-    }
+    uint64_t tokenId;
+    const char *perms[0];
+    perms[0] = "ohos.permission.CAMERA";
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 1,
+        .aclsNum = 0,
+        .dcaps = NULL,
+        .perms = perms,
+        .acls = NULL,
+        .processName = "camera_capture",
+        .aplStr = "system_basic",
+    };
+    tokenId = GetAccessTokenId(&infoInstance);
+    SetSelfTokenID(tokenId);
+    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     MEDIA_DEBUG_LOG("Setting callback to listen camera status and flash status");
     camManagerObj->SetCallback(std::make_shared<TestCameraMngerCallback>(testName));
     std::vector<sptr<CameraDevice>> cameraObjList = camManagerObj->GetSupportedCameras();
     if (cameraObjList.size() == 0) {
-        MEDIA_DEBUG_LOG("No camera devices");
-        (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
-            tokenIdEx.tokenIdExStruct.tokenID);
         return 0;
     }
 
@@ -189,18 +126,12 @@ int main(int argc, char **argv)
 
     sptr<CaptureSession> captureSession = camManagerObj->CreateCaptureSession();
     if (captureSession == nullptr) {
-        MEDIA_DEBUG_LOG("Failed to create capture session");
-        (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
-            tokenIdEx.tokenIdExStruct.tokenID);
         return 0;
     }
 
     captureSession->BeginConfig();
     sptr<CaptureInput> captureInput = camManagerObj->CreateCameraInput(cameraObjList[0]);
     if (captureInput == nullptr) {
-        MEDIA_DEBUG_LOG("Failed to create camera input");
-        (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
-            tokenIdEx.tokenIdExStruct.tokenID);
         return 0;
     }
 
@@ -268,17 +199,11 @@ int main(int argc, char **argv)
     cameraInput->SetErrorCallback(std::make_shared<TestDeviceCallback>(testName));
     ret = captureSession->AddInput(captureInput);
     if (ret != 0) {
-        MEDIA_DEBUG_LOG("Add input to session is failed, ret: %{public}d", ret);
-        (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
-            tokenIdEx.tokenIdExStruct.tokenID);
         return 0;
     }
 
     sptr<Surface> photoSurface = Surface::CreateSurfaceAsConsumer();
     if (photoSurface == nullptr) {
-        MEDIA_DEBUG_LOG("Failed to create photoSurface");
-        (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
-            tokenIdEx.tokenIdExStruct.tokenID);
         return 0;
     }
     photosize.width = photoWidth;
@@ -289,9 +214,6 @@ int main(int argc, char **argv)
     photoSurface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)captureListener);
     sptr<CaptureOutput> photoOutput = camManagerObj->CreatePhotoOutput(photoprofile, photoSurface);
     if (photoOutput == nullptr) {
-        MEDIA_DEBUG_LOG("Failed to create PhotoOutput");
-        (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
-            tokenIdEx.tokenIdExStruct.tokenID);
         return 0;
     }
 
@@ -299,17 +221,11 @@ int main(int argc, char **argv)
     ((sptr<PhotoOutput> &)photoOutput)->SetCallback(std::make_shared<TestPhotoOutputCallback>(testName));
     ret = captureSession->AddOutput(photoOutput);
     if (ret != 0) {
-        MEDIA_DEBUG_LOG("Failed to Add output to session, ret: %{public}d", ret);
-        (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
-            tokenIdEx.tokenIdExStruct.tokenID);
         return 0;
     }
 
     sptr<Surface> previewSurface = Surface::CreateSurfaceAsConsumer();
     if (previewSurface == nullptr) {
-        MEDIA_DEBUG_LOG("Failed to create previewSurface");
-        (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
-            tokenIdEx.tokenIdExStruct.tokenID);
         return 0;
     }
     previewsize.width = previewWidth;
@@ -320,9 +236,6 @@ int main(int argc, char **argv)
     previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)listener);
     sptr<CaptureOutput> previewOutput = camManagerObj->CreatePreviewOutput(previewprofile, previewSurface);
     if (previewOutput == nullptr) {
-        MEDIA_DEBUG_LOG("Failed to create previewOutput");
-        (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
-            tokenIdEx.tokenIdExStruct.tokenID);
         return 0;
     }
 
@@ -330,33 +243,16 @@ int main(int argc, char **argv)
     ((sptr<PreviewOutput> &)previewOutput)->SetCallback(std::make_shared<TestPreviewOutputCallback>(testName));
     ret = captureSession->AddOutput(previewOutput);
     if (ret != 0) {
-        MEDIA_DEBUG_LOG("Failed to Add output to session, ret: %{public}d", ret);
-        (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
-            tokenIdEx.tokenIdExStruct.tokenID);
         return 0;
     }
 
     ret = captureSession->CommitConfig();
     if (ret != 0) {
-        MEDIA_DEBUG_LOG("Failed to commit session config, ret: %{public}d", ret);
-        (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
-            tokenIdEx.tokenIdExStruct.tokenID);
         return 0;
     }
 
     ret = captureSession->Start();
     if (ret != 0) {
-        MEDIA_DEBUG_LOG("Failed to start session, ret: %{public}d", ret);
-        (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
-            tokenIdEx.tokenIdExStruct.tokenID);
-        return 0;
-    }
-    sleep(previewCaptureGap);
-    ret = ((sptr<PreviewOutput> &)previewOutput)->Start();
-    if (ret != 0) {
-        MEDIA_DEBUG_LOG("Failed to start preview output, ret: %{public}d", ret);
-        (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
-            tokenIdEx.tokenIdExStruct.tokenID);
         return 0;
     }
 
@@ -366,9 +262,6 @@ int main(int argc, char **argv)
         MEDIA_DEBUG_LOG("Photo capture %{public}d started", i);
         ret = ((sptr<PhotoOutput> &)photoOutput)->Capture(ConfigPhotoCaptureSetting());
         if (ret != 0) {
-            MEDIA_DEBUG_LOG("Failed to capture, ret: %{public}d", ret);
-            (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
-                tokenIdEx.tokenIdExStruct.tokenID);
             return 0;
         }
         sleep(gapAfterCapture);
@@ -380,9 +273,6 @@ int main(int argc, char **argv)
     captureSession->Release();
     cameraInput->Release();
     camManagerObj->SetCallback(nullptr);
-    (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
-        tokenIdEx.tokenIdExStruct.tokenID);
-    MEDIA_DEBUG_LOG("Deleted the allocated Token");
 
     MEDIA_DEBUG_LOG("Camera new sample end.");
     return 0;
