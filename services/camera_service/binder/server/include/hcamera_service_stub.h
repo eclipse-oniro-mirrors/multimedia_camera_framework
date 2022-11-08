@@ -32,11 +32,11 @@ public:
                         MessageParcel &reply, MessageOption &option) override;
 
 private:
-    int HandleGetCameras(MessageParcel& reply);
+    int HandleGetCameras(MessageParcel &data, MessageParcel &reply);
     int HandleCreateCameraDevice(MessageParcel &data, MessageParcel &reply);
-    int HandleSetCallback(MessageParcel &data);
-    int HandleSetMuteCallback(MessageParcel &data);
-    int HandleCreateCaptureSession(MessageParcel &reply);
+    int HandleSetCallback(MessageParcel &data, MessageParcel &reply);
+    int HandleSetMuteCallback(MessageParcel &data, MessageParcel &reply);
+    int HandleCreateCaptureSession(MessageParcel &data, MessageParcel &reply);
     int HandleCreatePhotoOutput(MessageParcel &data, MessageParcel &reply);
     int HandleCreatePreviewOutput(MessageParcel &data, MessageParcel &reply);
     int HandleCreateDeferredPreviewOutput(MessageParcel &data, MessageParcel &reply);
@@ -50,10 +50,14 @@ private:
     int SetListenerObject(MessageParcel &data, MessageParcel &reply);
     int32_t CheckRequestCode(const uint32_t code, MessageParcel &data,
                                                  MessageParcel &reply, MessageOption &option);
+    void RegisterMethod();                                           
 
     std::mutex mutex_;
     std::map<pid_t, sptr<CameraDeathRecipient>> deathRecipientMap_;
     std::map<pid_t, sptr<IStandardCameraListener>> cameraListenerMap_;
+
+    typedef int (HCameraServiceStub::* HandleMethod)(MessageParcel &, MessageParcel &);
+    std::map<uint32_t, HandleMethod> methodFactory;
 };
 } // namespace CameraStandard
 } // namespace OHOS
