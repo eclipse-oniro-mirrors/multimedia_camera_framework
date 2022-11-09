@@ -32,6 +32,7 @@ namespace OHOS {
 namespace CameraStandard {
 HCameraServiceStub::HCameraServiceStub()
 {
+    RegisterMethod();
     deathRecipientMap_.clear();
     cameraListenerMap_.clear();
     MEDIA_DEBUG_LOG("0x%{public}06" PRIXPTR " Instances create",
@@ -60,43 +61,38 @@ int HCameraServiceStub::OnRemoteRequest(
     return ret;
 }
 
+void HCameraServiceStub::RegisterMethod()
+{
+    methodFactory[CAMERA_SERVICE_MUTE_CAMERA] = &HCameraServiceStub::HandleMuteCamera;
+    methodFactory[CAMERA_SERVICE_SET_MUTE_CALLBACK] = &HCameraServiceStub::HandleSetMuteCallback;
+    methodFactory[CAMERA_SERVICE_IS_CAMERA_MUTED] = &HCameraServiceStub::HandleIsCameraMuted;
+    methodFactory[CAMERA_SERVICE_CREATE_DEVICE] = &HCameraServiceStub::HandleCreateCameraDevice;
+    methodFactory[CAMERA_SERVICE_SET_CALLBACK] = &HCameraServiceStub::HandleSetCallback;
+    methodFactory[CAMERA_SERVICE_GET_CAMERAS] = &HCameraServiceStub::HandleGetCameras;
+    methodFactory[CAMERA_SERVICE_CREATE_CAPTURE_SESSION] = &HCameraServiceStub::HandleCreateCaptureSession;
+    methodFactory[CAMERA_SERVICE_CREATE_PHOTO_OUTPUT] = &HCameraServiceStub::HandleCreatePhotoOutput;
+    methodFactory[CAMERA_SERVICE_CREATE_PREVIEW_OUTPUT] = &HCameraServiceStub::HandleCreatePreviewOutput;
+    methodFactory[CAMERA_SERVICE_CREATE_DEFERRED_PREVIEW_OUTPUT] =
+        &HCameraServiceStub::HandleCreateDeferredPreviewOutput;
+    methodFactory[CAMERA_SERVICE_CREATE_METADATA_OUTPUT] = &HCameraServiceStub::HandleCreateMetadataOutput;
+    methodFactory[CAMERA_SERVICE_CREATE_VIDEO_OUTPUT] = &HCameraServiceStub::HandleCreateVideoOutput;
+    methodFactory[CAMERA_SERVICE_SET_LISTENER_OBJ] = &HCameraServiceStub::SetListenerObject;
+}
+
 int32_t HCameraServiceStub::CheckRequestCode(
     const uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
-    switch (code) {
-        case CAMERA_SERVICE_MUTE_CAMERA:
-            return HCameraServiceStub::HandleMuteCamera(data, reply);
-        case CAMERA_SERVICE_SET_MUTE_CALLBACK:
-            return HCameraServiceStub::HandleSetMuteCallback(data);
-        case CAMERA_SERVICE_IS_CAMERA_MUTED:
-            return HCameraServiceStub::HandleIsCameraMuted(data, reply);
-        case CAMERA_SERVICE_CREATE_DEVICE:
-            return HCameraServiceStub::HandleCreateCameraDevice(data, reply);
-        case CAMERA_SERVICE_SET_CALLBACK:
-            return HCameraServiceStub::HandleSetCallback(data);
-        case CAMERA_SERVICE_GET_CAMERAS:
-            return HCameraServiceStub::HandleGetCameras(reply);
-        case CAMERA_SERVICE_CREATE_CAPTURE_SESSION:
-            return HCameraServiceStub::HandleCreateCaptureSession(reply);
-        case CAMERA_SERVICE_CREATE_PHOTO_OUTPUT:
-            return HCameraServiceStub::HandleCreatePhotoOutput(data, reply);
-        case CAMERA_SERVICE_CREATE_PREVIEW_OUTPUT:
-            return HCameraServiceStub::HandleCreatePreviewOutput(data, reply);
-        case CAMERA_SERVICE_CREATE_DEFERRED_PREVIEW_OUTPUT:
-            return HCameraServiceStub::HandleCreateDeferredPreviewOutput(data, reply);
-        case CAMERA_SERVICE_CREATE_METADATA_OUTPUT:
-            return HCameraServiceStub::HandleCreateMetadataOutput(data, reply);
-        case CAMERA_SERVICE_CREATE_VIDEO_OUTPUT:
-            return HCameraServiceStub::HandleCreateVideoOutput(data, reply);
-        case CAMERA_SERVICE_SET_LISTENER_OBJ:
-            return HCameraServiceStub::SetListenerObject(data, reply);
-        default:
-            MEDIA_ERR_LOG("HCameraServiceStub request code %{public}u not handled", code);
-            return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+    typedef std::map<uint32_t, HandleMethod>::const_iterator Iterator;
+    Iterator iter = methodFactory.find(code);
+    if (methodFactory.end() == iter) {
+        MEDIA_ERR_LOG("HCameraServiceStub request code %{public}u not handled", code);
+        return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
     }
+    HandleMethod method = iter->second;
+    return (this->*method)(data, reply);
 }
 
-int HCameraServiceStub::HandleGetCameras(MessageParcel& reply)
+int HCameraServiceStub::HandleGetCameras(MessageParcel &data, MessageParcel &reply)
 {
     std::vector<std::string> cameraIds;
     std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
@@ -164,7 +160,7 @@ int HCameraServiceStub::HandleIsCameraMuted(MessageParcel &data, MessageParcel &
     return ret;
 }
 
-int HCameraServiceStub::HandleSetCallback(MessageParcel &data)
+int HCameraServiceStub::HandleSetCallback(MessageParcel &data, MessageParcel &reply)
 {
     auto remoteObject = data.ReadRemoteObject();
     if (remoteObject == nullptr) {
@@ -177,7 +173,7 @@ int HCameraServiceStub::HandleSetCallback(MessageParcel &data)
     return SetCallback(callback);
 }
 
-int HCameraServiceStub::HandleSetMuteCallback(MessageParcel &data)
+int HCameraServiceStub::HandleSetMuteCallback(MessageParcel &data, MessageParcel &reply)
 {
     auto remoteObject = data.ReadRemoteObject();
     if (remoteObject == nullptr) {
@@ -190,7 +186,7 @@ int HCameraServiceStub::HandleSetMuteCallback(MessageParcel &data)
     return SetMuteCallback(callback);
 }
 
-int HCameraServiceStub::HandleCreateCaptureSession(MessageParcel &reply)
+int HCameraServiceStub::HandleCreateCaptureSession(MessageParcel &data, MessageParcel &reply)
 {
     sptr<ICaptureSession> session = nullptr;
 
