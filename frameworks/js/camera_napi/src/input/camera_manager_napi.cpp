@@ -53,21 +53,19 @@ napi_value CameraManagerNapi::CameraManagerNapiConstructor(napi_env env, napi_ca
 
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<CameraManagerNapi> obj = std::make_unique<CameraManagerNapi>();
-        if (obj != nullptr) {
-            obj->env_ = env;
-            obj->cameraManager_ = CameraManager::GetInstance();
-            if (obj->cameraManager_ == nullptr) {
-                MEDIA_ERR_LOG("Failure wrapping js to native napi, obj->cameraManager_ null");
-                return result;
-            }
-            status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                               CameraManagerNapi::CameraManagerNapiDestructor, nullptr, &(obj->wrapper_));
-            if (status == napi_ok) {
-                obj.release();
-                return thisVar;
-            } else {
-                MEDIA_ERR_LOG("Failure wrapping js to native napi");
-            }
+        obj->env_ = env;
+        obj->cameraManager_ = CameraManager::GetInstance();
+        if (obj->cameraManager_ == nullptr) {
+            MEDIA_ERR_LOG("Failure wrapping js to native napi, obj->cameraManager_ null");
+            return result;
+        }
+        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
+                           CameraManagerNapi::CameraManagerNapiDestructor, nullptr, &(obj->wrapper_));
+        if (status == napi_ok) {
+            obj.release();
+            return thisVar;
+        } else {
+            MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
 

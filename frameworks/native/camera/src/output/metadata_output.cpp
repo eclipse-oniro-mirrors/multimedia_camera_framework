@@ -80,7 +80,7 @@ void MetadataOutput::SetCapturingMetadataObjectTypes(std::vector<MetadataObjectT
         return;
     }
     std::set<camera_face_detect_mode_t> objectTypes;
-    for (auto &type : metadataObjectTypes) {
+    for (const auto &type : metadataObjectTypes) {
         if (type == MetadataObjectType::FACE) {
             objectTypes.insert(OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE);
         }
