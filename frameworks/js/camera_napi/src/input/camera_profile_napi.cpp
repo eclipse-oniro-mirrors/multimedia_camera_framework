@@ -48,7 +48,6 @@ napi_value CameraProfileNapi::Init(napi_env env, napi_value exports)
 {
     napi_status status;
     napi_value ctorObj;
-    int32_t refCount = 1;
     napi_property_descriptor camera_profile_props[] = {
         DECLARE_NAPI_GETTER("format", GetCameraProfileFormat),
         DECLARE_NAPI_GETTER("size", GetCameraProfileSize)
@@ -58,6 +57,7 @@ napi_value CameraProfileNapi::Init(napi_env env, napi_value exports)
                                sizeof(camera_profile_props) / sizeof(camera_profile_props[PARAM0]),
                                camera_profile_props, &ctorObj);
     if (status == napi_ok) {
+        int32_t refCount = 1;
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, CAMERA_PROFILE_NAPI_CLASS_NAME, ctorObj);
@@ -226,7 +226,6 @@ napi_value CameraVideoProfileNapi::Init(napi_env env, napi_value exports)
 {
     napi_status status;
     napi_value ctorObj;
-    int32_t refCount = 1;
 
     napi_property_descriptor camera_video_profile_props[] = {
         DECLARE_NAPI_GETTER("format", CameraVideoProfileNapi::GetCameraProfileFormat),
@@ -239,6 +238,7 @@ napi_value CameraVideoProfileNapi::Init(napi_env env, napi_value exports)
                                sizeof(camera_video_profile_props) / sizeof(camera_video_profile_props[PARAM0]),
                                camera_video_profile_props, &ctorObj);
     if (status == napi_ok) {
+        int32_t refCount = 1;
         status = napi_create_reference(env, ctorObj, refCount, &sVideoConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, CAMERA_VIDEO_PROFILE_NAPI_CLASS_NAME, ctorObj);
@@ -390,7 +390,6 @@ napi_value CameraVideoProfileNapi::GetFrameRateRange(napi_env env, napi_callback
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
     CameraVideoProfileNapi* obj = nullptr;
-    std::vector<int32_t> frameRanges;
     napi_value thisVar = nullptr;
 
     napi_get_undefined(env, &undefinedResult);
@@ -403,7 +402,7 @@ napi_value CameraVideoProfileNapi::GetFrameRateRange(napi_env env, napi_callback
 
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
-        frameRanges = obj->videoProfile_.GetFrameRates();
+        std::vector<int32_t> frameRanges = obj->videoProfile_.GetFrameRates();
         jsResult = CreateJSArray(env, status, frameRanges);
         if (status == napi_ok) {
             MEDIA_ERR_LOG("GetFrameRateRange success ");
