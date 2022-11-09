@@ -129,7 +129,6 @@ napi_value CameraDeviceNapi::GetCameraId(napi_env env, napi_callback_info info)
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
     CameraDeviceNapi* obj = nullptr;
-    std::string cameraId = "";
     napi_value thisVar = nullptr;
 
     napi_get_undefined(env, &undefinedResult);
@@ -142,7 +141,7 @@ napi_value CameraDeviceNapi::GetCameraId(napi_env env, napi_callback_info info)
 
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status == napi_ok && obj != nullptr) {
-        cameraId = obj->cameraDevice_->GetID();
+        std::string cameraId = obj->cameraDevice_->GetID();
         status = napi_create_string_utf8(env, cameraId.c_str(), NAPI_AUTO_LENGTH, &jsResult);
         if (status == napi_ok) {
             return jsResult;

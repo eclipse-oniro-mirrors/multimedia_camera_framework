@@ -373,11 +373,8 @@ int32_t HCaptureSession::CreateAndCommitStreams(sptr<HCameraDevice> &device,
                                                 std::vector<StreamInfo> &streamInfos)
 {
     CamRetCode hdiRc = HDI::Camera::V1_0::NO_ERROR;
-    std::vector<int32_t> streamIds;
     StreamInfo curStreamInfo;
     sptr<IStreamOperator> streamOperator;
-    std::vector<uint8_t> setting;
-
     streamOperator = device->GetStreamOperator();
     if (streamOperator != nullptr && !streamInfos.empty()) {
         hdiRc = (CamRetCode)(streamOperator->CreateStreams(streamInfos));
@@ -385,10 +382,12 @@ int32_t HCaptureSession::CreateAndCommitStreams(sptr<HCameraDevice> &device,
         MEDIA_INFO_LOG("HCaptureSession::CreateAndCommitStreams(), No new streams to create");
     }
     if (streamOperator != nullptr && hdiRc == HDI::Camera::V1_0::NO_ERROR) {
+        std::vector<uint8_t> setting;
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(deviceSettings, setting);
         hdiRc = (CamRetCode)(streamOperator->CommitStreams(NORMAL, setting));
         if (hdiRc != HDI::Camera::V1_0::NO_ERROR) {
             MEDIA_ERR_LOG("HCaptureSession::CreateAndCommitStreams(), Failed to commit %{public}d", hdiRc);
+            std::vector<int32_t> streamIds;
             for (auto item = streamInfos.begin(); item != streamInfos.end(); ++item) {
                 curStreamInfo = *item;
                 streamIds.emplace_back(curStreamInfo.streamId_);

@@ -243,10 +243,10 @@ napi_value CameraNapi::CreateFlashModeObject(napi_env env)
 {
     napi_value result = nullptr;
     napi_status status;
-    std::string propName;
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
+        std::string propName;
         for (unsigned int i = 0; i < vecFlashMode.size(); i++) {
             propName = vecFlashMode[i];
             status = AddNamedProperty(env, result, propName, i);
@@ -273,10 +273,10 @@ napi_value CameraNapi::CreateExposureModeObject(napi_env env)
 {
     napi_value result = nullptr;
     napi_status status;
-    std::string propName;
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
+        std::string propName;
         for (unsigned int i = 0; i < vecExposureMode.size(); i++) {
             propName = vecExposureMode[i];
             status = AddNamedProperty(env, result, propName, i);
@@ -303,10 +303,10 @@ napi_value CameraNapi::CreateExposureStateEnum(napi_env env)
 {
     napi_value result = nullptr;
     napi_status status;
-    std::string propName;
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
+        std::string propName;
         for (auto itr = mapExposureState.begin(); itr != mapExposureState.end(); ++itr) {
             propName = itr->first;
             status = AddNamedProperty(env, result, propName, itr->second);
@@ -333,10 +333,10 @@ napi_value CameraNapi::CreateFocusModeObject(napi_env env)
 {
     napi_value result = nullptr;
     napi_status status;
-    std::string propName;
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
+        std::string propName;
         for (unsigned int i = 0; i < vecFocusMode.size(); i++) {
             propName = vecFocusMode[i];
             status = AddNamedProperty(env, result, propName, i);
@@ -363,10 +363,10 @@ napi_value CameraNapi::CreateFocusStateEnum(napi_env env)
 {
     napi_value result = nullptr;
     napi_status status;
-    std::string propName;
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
+        std::string propName;
         for (auto itr = mapFocusState.begin(); itr != mapFocusState.end(); ++itr) {
             propName = itr->first;
             status = AddNamedProperty(env, result, propName, itr->second);
@@ -393,10 +393,10 @@ napi_value CameraNapi::CreateCameraPositionEnum(napi_env env)
 {
     napi_value result = nullptr;
     napi_status status;
-    std::string propName;
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
+        std::string propName;
         for (unsigned int i = 0; i < vecCameraPositionMode.size(); i++) {
             propName = vecCameraPositionMode[i];
             status = AddNamedProperty(env, result, propName, i);
@@ -423,10 +423,10 @@ napi_value CameraNapi::CreateCameraTypeEnum(napi_env env)
 {
     napi_value result = nullptr;
     napi_status status;
-    std::string propName;
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
+        std::string propName;
         for (unsigned int i = 0; i < vecCameraTypeMode.size(); i++) {
             propName = vecCameraTypeMode[i];
             status = AddNamedProperty(env, result, propName, i);
@@ -453,10 +453,10 @@ napi_value CameraNapi::CreateConnectionTypeEnum(napi_env env)
 {
     napi_value result = nullptr;
     napi_status status;
-    std::string propName;
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
+        std::string propName;
         for (unsigned int i = 0; i < vecConnectionTypeMode.size(); i++) {
             propName =  vecConnectionTypeMode[i];
             status = AddNamedProperty(env, result, propName, i);
@@ -483,10 +483,10 @@ napi_value CameraNapi::CreateCameraFormatObject(napi_env env)
 {
     napi_value result = nullptr;
     napi_status status;
-    std::string propName;
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
+        std::string propName;
         for (unsigned int i = 0; i < vecCameraFormat.size(); i++) {
             propName = vecCameraFormat[i];
             int32_t value;
@@ -521,10 +521,10 @@ napi_value CameraNapi::CreateCameraStatusObject(napi_env env)
 {
     napi_value result = nullptr;
     napi_status status;
-    std::string propName;
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
+        std::string propName;
         for (unsigned int i = 0; i < vecCameraStatus.size(); i++) {
             propName = vecCameraStatus[i];
             status = AddNamedProperty(env, result, propName, i);
@@ -551,10 +551,10 @@ napi_value CameraNapi::CreateImageRotationEnum(napi_env env)
 {
     napi_value result = nullptr;
     napi_status status;
-    std::string propName;
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
+        std::string propName;
         for (auto itr = mapImageRotation.begin(); itr != mapImageRotation.end(); ++itr) {
             propName = itr->first;
             status = AddNamedProperty(env, result, propName, itr->second);
@@ -581,10 +581,10 @@ napi_value CameraNapi::CreateQualityLevelEnum(napi_env env)
 {
     napi_value result = nullptr;
     napi_status status;
-    std::string propName;
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
+        std::string propName;
         for (auto itr = mapQualityLevel.begin(); itr != mapQualityLevel.end(); ++itr) {
             propName = itr->first;
             status = AddNamedProperty(env, result, propName, itr->second);
@@ -611,10 +611,10 @@ napi_value CameraNapi::CreateCameraInputErrorCode(napi_env env)
 {
     napi_value result = nullptr;
     napi_status status;
-    std::string propName = "ERROR_UNKNOWN";
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
+        std::string propName = "ERROR_UNKNOWN";
         for (auto itr = mapCameraInputErrorCode.begin(); itr != mapCameraInputErrorCode.end(); ++itr) {
             propName = itr->first;
             status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);
@@ -641,10 +641,10 @@ napi_value CameraNapi::CreateCaptureSessionErrorCode(napi_env env)
 {
     napi_value result = nullptr;
     napi_status status;
-    std::string propName = "ERROR_UNKNOWN";
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
+        std::string propName = "ERROR_UNKNOWN";
         for (auto itr = mapCaptureSessionErrorCode.begin(); itr != mapCaptureSessionErrorCode.end(); ++itr) {
             propName = itr->first;
             status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);
@@ -671,10 +671,10 @@ napi_value CameraNapi::CreatePreviewOutputErrorCode(napi_env env)
 {
     napi_value result = nullptr;
     napi_status status;
-    std::string propName = "ERROR_UNKNOWN";
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
+        std::string propName = "ERROR_UNKNOWN";
         for (auto itr = mapPreviewOutputErrorCode.begin(); itr != mapPreviewOutputErrorCode.end(); ++itr) {
             propName = itr->first;
             status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);
@@ -701,10 +701,10 @@ napi_value CameraNapi::CreatePhotoOutputErrorCode(napi_env env)
 {
     napi_value result = nullptr;
     napi_status status;
-    std::string propName = "ERROR_UNKNOWN";
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
+        std::string propName = "ERROR_UNKNOWN";
         for (auto itr = mapPhotoOutputErrorCode.begin(); itr != mapPhotoOutputErrorCode.end(); ++itr) {
             propName = itr->first;
             status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);
@@ -731,10 +731,10 @@ napi_value CameraNapi::CreateVideoOutputErrorCode(napi_env env)
 {
     napi_value result = nullptr;
     napi_status status;
-    std::string propName = "ERROR_UNKNOWN";
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
+        std::string propName = "ERROR_UNKNOWN";
         for (auto itr = mapVideoOutputErrorCode.begin(); itr != mapVideoOutputErrorCode.end(); ++itr) {
             propName = itr->first;
             status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);
@@ -761,10 +761,10 @@ napi_value CameraNapi::CreateMetadataObjectType(napi_env env)
 {
     napi_value result = nullptr;
     napi_status status;
-    std::string propName = "FACE_DETECTION";
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
+        std::string propName = "FACE_DETECTION";
         for (auto itr = mapMetadataObjectType.begin(); itr != mapMetadataObjectType.end(); ++itr) {
             propName = itr->first;
             status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);
@@ -790,10 +790,10 @@ napi_value CameraNapi::CreateMetaOutputErrorCode(napi_env env)
 {
     napi_value result = nullptr;
     napi_status status;
-    std::string propName = "ERROR_UNKNOWN";
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
+        std::string propName = "ERROR_UNKNOWN";
         for (auto itr = mapMetaOutputErrorCode.begin(); itr != mapMetaOutputErrorCode.end(); ++itr) {
             propName = itr->first;
             status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);
@@ -820,10 +820,10 @@ napi_value CameraNapi::CreateVideoStabilizationModeObject(napi_env env)
 {
     napi_value result = nullptr;
     napi_status status;
-    std::string propName;
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
+        std::string propName;
         for (unsigned int i = 0; i < vecVideoStabilizationMode.size(); i++) {
             propName = vecVideoStabilizationMode[i];
             status = AddNamedProperty(env, result, propName, i);

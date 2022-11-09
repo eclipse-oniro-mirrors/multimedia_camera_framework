@@ -429,7 +429,6 @@ napi_value CameraInputNapi::On(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
     size_t res = 0;
     char buffer[SIZE];
-    std::string eventType;
     const int32_t refCount = 1;
     CameraInputNapi* obj = nullptr;
     napi_status status;
@@ -454,7 +453,7 @@ napi_value CameraInputNapi::On(napi_env env, napi_callback_info info)
         }
 
         napi_get_value_string_utf8(env, argv[PARAM0], buffer, SIZE, &res);
-        eventType = std::string(buffer);
+        std::string eventType = std::string(buffer);
 
         napi_ref callbackRef;
         napi_create_reference(env, argv[PARAM1], refCount, &callbackRef);
