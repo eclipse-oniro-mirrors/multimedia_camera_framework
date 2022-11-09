@@ -363,7 +363,8 @@ napi_value CameraOutputCapabilityNapi::GetSupportedMetadataObjectTypes(napi_env 
 
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
-        std::vector<MetadataObjectType> metadataTypeList = obj->cameraOutputCapability_->GetSupportedMetadataObjectType();
+        std::vector<MetadataObjectType> metadataTypeList;
+        metadataTypeList = obj->cameraOutputCapability_->GetSupportedMetadataObjectType();
         jsResult = CreateMetadataObjectTypeJsArray(env, status, metadataTypeList);
         return jsResult;
     }
