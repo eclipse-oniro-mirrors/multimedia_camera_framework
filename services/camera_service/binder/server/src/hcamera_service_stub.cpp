@@ -72,7 +72,8 @@ void HCameraServiceStub::RegisterMethod()
     methodFactory[CAMERA_SERVICE_CREATE_CAPTURE_SESSION] = &HCameraServiceStub::HandleCreateCaptureSession;
     methodFactory[CAMERA_SERVICE_CREATE_PHOTO_OUTPUT] = &HCameraServiceStub::HandleCreatePhotoOutput;
     methodFactory[CAMERA_SERVICE_CREATE_PREVIEW_OUTPUT] = &HCameraServiceStub::HandleCreatePreviewOutput;
-    methodFactory[CAMERA_SERVICE_CREATE_DEFERRED_PREVIEW_OUTPUT] = &HCameraServiceStub::HandleCreateDeferredPreviewOutput;
+    methodFactory[CAMERA_SERVICE_CREATE_DEFERRED_PREVIEW_OUTPUT] =
+        &HCameraServiceStub::HandleCreateDeferredPreviewOutput;
     methodFactory[CAMERA_SERVICE_CREATE_METADATA_OUTPUT] = &HCameraServiceStub::HandleCreateMetadataOutput;
     methodFactory[CAMERA_SERVICE_CREATE_VIDEO_OUTPUT] = &HCameraServiceStub::HandleCreateVideoOutput;
     methodFactory[CAMERA_SERVICE_SET_LISTENER_OBJ] = &HCameraServiceStub::SetListenerObject;
@@ -83,8 +84,7 @@ int32_t HCameraServiceStub::CheckRequestCode(
 {
     typedef std::map<uint32_t, HandleMethod>::const_iterator Iterator;
     Iterator iter = methodFactory.find(code);
-    if (methodFactory.end() == iter)
-    {
+    if (methodFactory.end() == iter) {
         MEDIA_ERR_LOG("HCameraServiceStub request code %{public}u not handled", code);
         return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
     }

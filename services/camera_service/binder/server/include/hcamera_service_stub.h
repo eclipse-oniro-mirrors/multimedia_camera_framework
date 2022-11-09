@@ -50,7 +50,7 @@ private:
     int SetListenerObject(MessageParcel &data, MessageParcel &reply);
     int32_t CheckRequestCode(const uint32_t code, MessageParcel &data,
                                                  MessageParcel &reply, MessageOption &option);
-    void RegisterMethod();                                           
+    void RegisterMethod();
 
     std::mutex mutex_;
     std::map<pid_t, sptr<CameraDeathRecipient>> deathRecipientMap_;
