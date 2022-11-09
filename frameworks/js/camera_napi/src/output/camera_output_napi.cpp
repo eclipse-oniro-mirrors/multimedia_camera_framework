@@ -282,8 +282,7 @@ napi_value CameraOutputCapabilityNapi::GetPreviewProfiles(napi_env env, napi_cal
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     MEDIA_INFO_LOG("GetPreviewProfiles 3!");
     if ((status == napi_ok) && (obj != nullptr)) {
-        std::vector<Profile> profileList;
-        profileList = obj->cameraOutputCapability_->GetPreviewProfiles();
+        std::vector<Profile> profileList = obj->cameraOutputCapability_->GetPreviewProfiles();
         MEDIA_INFO_LOG("GetPreviewProfiles 4!");
         jsResult = CreateProfileJsArray(env, status, profileList);
         MEDIA_INFO_LOG("GetPreviewProfiles 5!");
@@ -311,8 +310,7 @@ napi_value CameraOutputCapabilityNapi::GetPhotoProfiles(napi_env env, napi_callb
 
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
-        std::vector<Profile> profileList;
-        profileList = obj->cameraOutputCapability_->GetPhotoProfiles();
+        std::vector<Profile> profileList = obj->cameraOutputCapability_->GetPhotoProfiles();
         jsResult = CreateProfileJsArray(env, status, profileList);
         return jsResult;
     }
