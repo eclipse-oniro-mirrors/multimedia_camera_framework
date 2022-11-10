@@ -48,10 +48,8 @@ HCameraServiceStub::~HCameraServiceStub()
 int HCameraServiceStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
-    int errCode = -1;
-
     if (data.ReadInterfaceToken() != GetDescriptor()) {
-        return errCode;
+        return -1;
     }
     const int TIME_OUT_SECONDS = 10000;
     int32_t id = HiviewDFX::XCollie::GetInstance().SetTimer(

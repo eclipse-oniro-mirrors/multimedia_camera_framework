@@ -368,7 +368,6 @@ int32_t CaptureSession::UpdateSetting(std::shared_ptr<Camera::CameraMetadata> ch
         return ret;
     }
 
-    size_t length;
     uint32_t count = changedMetadata->get()->item_count;
     uint8_t* data = Camera::GetMetadataData(changedMetadata->get());
     camera_metadata_item_entry_t* itemEntry = Camera::GetMetadataItems(changedMetadata->get());
@@ -376,7 +375,7 @@ int32_t CaptureSession::UpdateSetting(std::shared_ptr<Camera::CameraMetadata> ch
     for (uint32_t i = 0; i < count; i++, itemEntry++) {
         bool status = false;
         camera_metadata_item_t item;
-        length = Camera::CalculateCameraMetadataItemDataSize(itemEntry->data_type, itemEntry->count);
+        size_t length = Camera::CalculateCameraMetadataItemDataSize(itemEntry->data_type, itemEntry->count);
         ret = Camera::FindCameraMetadataItem(baseMetadata->get(), itemEntry->item, &item);
         if (ret == CAM_META_SUCCESS) {
             status = baseMetadata->updateEntry(itemEntry->item,

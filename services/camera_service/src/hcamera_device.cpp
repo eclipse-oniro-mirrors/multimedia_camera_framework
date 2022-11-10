@@ -69,7 +69,6 @@ int32_t HCameraDevice::Open()
 {
     CAMERA_SYNC_TRACE;
     int32_t errorCode;
-    std::vector<uint8_t> setting;
     std::lock_guard<std::mutex> lock(deviceLock_);
     if (isCameraOpened) {
         MEDIA_ERR_LOG("HCameraDevice::Open failed, camera is busy");
@@ -94,6 +93,7 @@ int32_t HCameraDevice::Open()
     if (errorCode == CAMERA_OK) {
         isCameraOpened = true;
         if (updateSettings_ != nullptr) {
+            std::vector<uint8_t> setting;
             OHOS::Camera::MetadataUtils::ConvertMetadataToVec(updateSettings_, setting);
             CamRetCode rc = (CamRetCode)(hdiCameraDevice_->UpdateSettings(setting));
             if (rc != HDI::Camera::V1_0::NO_ERROR) {

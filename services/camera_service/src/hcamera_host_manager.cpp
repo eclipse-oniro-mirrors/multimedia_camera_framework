@@ -175,8 +175,8 @@ int32_t HCameraHostManager::CameraHostInfo::GetCameraAbility(std::string& camera
             MEDIA_ERR_LOG("CameraHostInfo::GetCameraAbility cameraHostProxy_ is null");
             return CAMERA_UNKNOWN_ERROR;
         }
-        std::vector<uint8_t> cameraAbility;
         if (!deviceInfo->ability) {
+            std::vector<uint8_t> cameraAbility;
             CamRetCode rc = (CamRetCode)(cameraHostProxy_->GetCameraAbility(cameraId, cameraAbility));
             if (rc != HDI::Camera::V1_0::NO_ERROR) {
                 MEDIA_ERR_LOG("CameraHostInfo::GetCameraAbility failed with error Code:%{public}d", rc);
