@@ -273,6 +273,7 @@ int32_t HCaptureSession::RemoveOutput(StreamType streamType, sptr<IStreamCommon>
         MEDIA_ERR_LOG("HCaptureSession::RemoveOutput stream is null");
         return rc;
     }
+    std::lock_guard<std::mutex> lock(sessionLock_);
     if (streamType == StreamType::CAPTURE) {
         rc = RemoveOutputStream(static_cast<HStreamCapture *>(stream.GetRefPtr()));
     } else if (streamType == StreamType::REPEAT) {
@@ -483,6 +484,10 @@ void HCaptureSession::UpdateSessionConfig(sptr<HCameraDevice> &device)
         streams_.emplace_back(curStream);
     }
     tempStreams_.clear();
+    if (streamOperatorCallback_ == nullptr) {
+        MEDIA_ERR_LOG("HCaptureSession::UpdateSessionConfig streamOperatorCallback_ is nullptr");
+        return;
+    }
     streamOperatorCallback_->SetCaptureSession(this);
     cameraDevice_ = device;
     curState_ = CaptureSessionState::SESSION_CONFIG_COMMITTED;
