@@ -188,23 +188,21 @@ napi_value MetadataOutputNapi::MetadataOutputNapiConstructor(napi_env env, napi_
 
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<MetadataOutputNapi> obj = std::make_unique<MetadataOutputNapi>();
-        if (obj != nullptr) {
-            obj->env_ = env;
-            obj->metadataOutput_ = sMetadataOutput_;
+        obj->env_ = env;
+        obj->metadataOutput_ = sMetadataOutput_;
 
-            std::shared_ptr<MetadataOutputCallback> callback =
-                std::make_shared<MetadataOutputCallback>(MetadataOutputCallback(env));
-            ((sptr<MetadataOutput> &)(obj->metadataOutput_))->SetCallback(callback);
-            obj->metadataCallback_ = callback;
+        std::shared_ptr<MetadataOutputCallback> callback =
+            std::make_shared<MetadataOutputCallback>(MetadataOutputCallback(env));
+        ((sptr<MetadataOutput> &)(obj->metadataOutput_))->SetCallback(callback);
+        obj->metadataCallback_ = callback;
 
-            status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                               MetadataOutputNapi::MetadataOutputNapiDestructor, nullptr, &(obj->wrapper_));
-            if (status == napi_ok) {
-                obj.release();
-                return thisVar;
-            } else {
-                MEDIA_ERR_LOG("Failure wrapping js to native napi");
-            }
+        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
+                           MetadataOutputNapi::MetadataOutputNapiDestructor, nullptr, &(obj->wrapper_));
+        if (status == napi_ok) {
+            obj.release();
+            return thisVar;
+        } else {
+            MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
 
@@ -602,7 +600,6 @@ napi_value MetadataOutputNapi::On(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
     size_t res = 0;
     char buffer[SIZE];
-    std::string eventType;
     const int32_t refCount = 1;
     MetadataOutputNapi* obj = nullptr;
     napi_status status;
@@ -626,7 +623,7 @@ napi_value MetadataOutputNapi::On(napi_env env, napi_callback_info info)
         }
 
         napi_get_value_string_utf8(env, argv[PARAM0], buffer, SIZE, &res);
-        eventType = std::string(buffer);
+        std::string eventType = std::string(buffer);
 
         napi_ref callbackRef;
         napi_create_reference(env, argv[PARAM1], refCount, &callbackRef);

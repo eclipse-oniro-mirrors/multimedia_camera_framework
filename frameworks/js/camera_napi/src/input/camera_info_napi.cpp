@@ -85,17 +85,15 @@ napi_value CameraDeviceNapi::CameraDeviceNapiConstructor(napi_env env, napi_call
 
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<CameraDeviceNapi> obj = std::make_unique<CameraDeviceNapi>();
-        if (obj != nullptr) {
-            obj->env_ = env;
-            obj->cameraDevice_ = sCameraDevice_;
-            status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                               CameraDeviceNapi::CameraDeviceNapiDestructor, nullptr, &(obj->wrapper_));
-            if (status == napi_ok) {
-                obj.release();
-                return thisVar;
-            } else {
-                MEDIA_ERR_LOG("Failure wrapping js to native napi");
-            }
+        obj->env_ = env;
+        obj->cameraDevice_ = sCameraDevice_;
+        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
+                           CameraDeviceNapi::CameraDeviceNapiDestructor, nullptr, &(obj->wrapper_));
+        if (status == napi_ok) {
+            obj.release();
+            return thisVar;
+        } else {
+            MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
 
@@ -131,7 +129,6 @@ napi_value CameraDeviceNapi::GetCameraId(napi_env env, napi_callback_info info)
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
     CameraDeviceNapi* obj = nullptr;
-    std::string cameraId = "";
     napi_value thisVar = nullptr;
 
     napi_get_undefined(env, &undefinedResult);
@@ -144,7 +141,7 @@ napi_value CameraDeviceNapi::GetCameraId(napi_env env, napi_callback_info info)
 
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status == napi_ok && obj != nullptr) {
-        cameraId = obj->cameraDevice_->GetID();
+        std::string cameraId = obj->cameraDevice_->GetID();
         status = napi_create_string_utf8(env, cameraId.c_str(), NAPI_AUTO_LENGTH, &jsResult);
         if (status == napi_ok) {
             return jsResult;

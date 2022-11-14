@@ -53,21 +53,19 @@ napi_value CameraManagerNapi::CameraManagerNapiConstructor(napi_env env, napi_ca
 
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<CameraManagerNapi> obj = std::make_unique<CameraManagerNapi>();
-        if (obj != nullptr) {
-            obj->env_ = env;
-            obj->cameraManager_ = CameraManager::GetInstance();
-            if (obj->cameraManager_ == nullptr) {
-                MEDIA_ERR_LOG("Failure wrapping js to native napi, obj->cameraManager_ null");
-                return result;
-            }
-            status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                               CameraManagerNapi::CameraManagerNapiDestructor, nullptr, &(obj->wrapper_));
-            if (status == napi_ok) {
-                obj.release();
-                return thisVar;
-            } else {
-                MEDIA_ERR_LOG("Failure wrapping js to native napi");
-            }
+        obj->env_ = env;
+        obj->cameraManager_ = CameraManager::GetInstance();
+        if (obj->cameraManager_ == nullptr) {
+            MEDIA_ERR_LOG("Failure wrapping js to native napi, obj->cameraManager_ null");
+            return result;
+        }
+        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
+                           CameraManagerNapi::CameraManagerNapiDestructor, nullptr, &(obj->wrapper_));
+        if (status == napi_ok) {
+            obj.release();
+            return thisVar;
+        } else {
+            MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
 
@@ -1006,10 +1004,8 @@ napi_value CameraManagerNapi::On(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
     size_t res = 0;
     char buffer[SIZE];
-    std::string eventType;
     CameraManagerNapi* obj = nullptr;
     napi_status status;
-    const int32_t refCount = 1;
 
     napi_get_undefined(env, &undefinedResult);
 
@@ -1030,9 +1026,10 @@ napi_value CameraManagerNapi::On(napi_env env, napi_callback_info info)
         }
 
         napi_get_value_string_utf8(env, argv[PARAM0], buffer, SIZE, &res);
-        eventType = std::string(buffer);
+        std::string eventType = std::string(buffer);
 
         napi_ref callbackRef;
+        const int32_t refCount = 1;
         napi_create_reference(env, argv[PARAM1], refCount, &callbackRef);
 
         if (!eventType.empty() && (eventType.compare("cameraStatus")==0)) {

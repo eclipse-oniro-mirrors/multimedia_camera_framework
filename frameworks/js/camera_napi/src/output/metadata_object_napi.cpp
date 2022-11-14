@@ -110,17 +110,15 @@ napi_value MetadataObjectNapi::MetadataObjectNapiConstructor(napi_env env, napi_
 
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<MetadataObjectNapi> obj = std::make_unique<MetadataObjectNapi>();
-        if (obj != nullptr) {
-            obj->env_ = env;
-            obj->metadataObject_ = g_metadataObject;
-            status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                               MetadataObjectNapi::MetadataObjectNapiDestructor, nullptr, &(obj->wrapper_));
-            if (status == napi_ok) {
-                obj.release();
-                return thisVar;
-            } else {
-                MEDIA_ERR_LOG("Failure wrapping js to native napi");
-            }
+        obj->env_ = env;
+        obj->metadataObject_ = g_metadataObject;
+        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
+                           MetadataObjectNapi::MetadataObjectNapiDestructor, nullptr, &(obj->wrapper_));
+        if (status == napi_ok) {
+            obj.release();
+            return thisVar;
+        } else {
+            MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
 

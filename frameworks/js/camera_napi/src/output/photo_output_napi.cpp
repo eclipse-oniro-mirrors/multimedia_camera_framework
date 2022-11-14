@@ -231,22 +231,20 @@ napi_value PhotoOutputNapi::PhotoOutputNapiConstructor(napi_env env, napi_callba
 
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<PhotoOutputNapi> obj = std::make_unique<PhotoOutputNapi>();
-        if (obj != nullptr) {
-            obj->env_ = env;
-            obj->photoOutput_ = sPhotoOutput_;
-            std::shared_ptr<PhotoOutputCallback> callback =
-                std::make_shared<PhotoOutputCallback>(PhotoOutputCallback(env));
-            ((sptr<PhotoOutput> &)(obj->photoOutput_))->SetCallback(callback);
-            obj->photoCallback_ = callback;
+        obj->env_ = env;
+        obj->photoOutput_ = sPhotoOutput_;
+        std::shared_ptr<PhotoOutputCallback> callback =
+            std::make_shared<PhotoOutputCallback>(PhotoOutputCallback(env));
+        ((sptr<PhotoOutput> &)(obj->photoOutput_))->SetCallback(callback);
+        obj->photoCallback_ = callback;
 
-            status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                               PhotoOutputNapi::PhotoOutputNapiDestructor, nullptr, &(obj->wrapper_));
-            if (status == napi_ok) {
-                obj.release();
-                return thisVar;
-            } else {
-                MEDIA_ERR_LOG("Failure wrapping js to native napi");
-            }
+        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
+                           PhotoOutputNapi::PhotoOutputNapiDestructor, nullptr, &(obj->wrapper_));
+        if (status == napi_ok) {
+            obj.release();
+            return thisVar;
+        } else {
+            MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
 
@@ -764,7 +762,6 @@ napi_value PhotoOutputNapi::On(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
     size_t res = 0;
     char buffer[SIZE];
-    std::string eventType;
     const int32_t refCount = 1;
     PhotoOutputNapi* obj = nullptr;
     napi_status status;
@@ -788,7 +785,7 @@ napi_value PhotoOutputNapi::On(napi_env env, napi_callback_info info)
         }
 
         napi_get_value_string_utf8(env, argv[PARAM0], buffer, SIZE, &res);
-        eventType = std::string(buffer);
+        std::string eventType = std::string(buffer);
 
         napi_ref callbackRef;
         napi_create_reference(env, argv[PARAM1], refCount, &callbackRef);
