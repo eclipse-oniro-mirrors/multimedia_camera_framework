@@ -190,7 +190,6 @@ napi_value MetadataOutputNapi::MetadataOutputNapiConstructor(napi_env env, napi_
         std::unique_ptr<MetadataOutputNapi> obj = std::make_unique<MetadataOutputNapi>();
         obj->env_ = env;
         obj->metadataOutput_ = sMetadataOutput_;
-
         std::shared_ptr<MetadataOutputCallback> callback =
             std::make_shared<MetadataOutputCallback>(MetadataOutputCallback(env));
         ((sptr<MetadataOutput> &)(obj->metadataOutput_))->SetCallback(callback);

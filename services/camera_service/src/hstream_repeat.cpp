@@ -208,7 +208,7 @@ void HStreamRepeat::SetStreamTransform()
     int32_t sensorOrientation = item.data.i32[0];
     MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform sensor orientation %{public}d", sensorOrientation);
     auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
-    if (display->GetWidth() < display->GetHeight()) {
+    if ((display->GetWidth() < display->GetHeight()) && (producer_ != nullptr)) {
         ret = SurfaceError::SURFACE_ERROR_OK;
         int32_t streamRotation = STREAM_ROTATE_360 - sensorOrientation;
         switch (streamRotation) {
