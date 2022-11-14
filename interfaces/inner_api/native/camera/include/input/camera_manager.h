@@ -327,7 +327,7 @@ public:
     *
     * @return CameraMuteListener point..
     */
-    std::shared_ptr<CameraMuteListener> GetCameraMuteListener();
+    std::vector<std::shared_ptr<CameraMuteListener>> GetCameraMuteListener();
 
     static const std::string surfaceFormat;
 
@@ -356,7 +356,7 @@ private:
     std::shared_ptr<CameraManagerCallback> cameraMngrCallback_;
 
     sptr<ICameraMuteServiceCallback> cameraMuteSvcCallback_;
-    std::shared_ptr<CameraMuteListener> cameraMuteListener_;
+    std::vector<std::shared_ptr<CameraMuteListener>> cameraMuteListenerList;
     std::vector<sptr<CameraDevice>> cameraObjList;
     std::vector<sptr<CameraInfo>> dcameraObjList;
 };
