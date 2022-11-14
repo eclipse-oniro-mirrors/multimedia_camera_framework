@@ -376,7 +376,6 @@ int32_t HCaptureSession::CreateAndCommitStreams(sptr<HCameraDevice> &device,
     CamRetCode hdiRc = HDI::Camera::V1_0::NO_ERROR;
     StreamInfo curStreamInfo;
     sptr<IStreamOperator> streamOperator;
-    
     streamOperator = device->GetStreamOperator();
     if (streamOperator != nullptr && !streamInfos.empty()) {
         hdiRc = (CamRetCode)(streamOperator->CreateStreams(streamInfos));

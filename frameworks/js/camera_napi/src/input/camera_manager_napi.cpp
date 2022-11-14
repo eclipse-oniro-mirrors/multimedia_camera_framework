@@ -1006,7 +1006,6 @@ napi_value CameraManagerNapi::On(napi_env env, napi_callback_info info)
     char buffer[SIZE];
     CameraManagerNapi* obj = nullptr;
     napi_status status;
-    const int32_t refCount = 1;
 
     napi_get_undefined(env, &undefinedResult);
 
@@ -1030,6 +1029,7 @@ napi_value CameraManagerNapi::On(napi_env env, napi_callback_info info)
         std::string eventType = std::string(buffer);
 
         napi_ref callbackRef;
+        const int32_t refCount = 1;
         napi_create_reference(env, argv[PARAM1], refCount, &callbackRef);
 
         if (!eventType.empty() && (eventType.compare("cameraStatus")==0)) {
