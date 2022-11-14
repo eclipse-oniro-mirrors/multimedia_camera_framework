@@ -66,6 +66,15 @@ static OHOS::Security::AccessToken::HapPolicyParams g_infoManagerTestPolicyPrams
     .permStateList = {g_infoManagerTestState1}
 };
 
+static std::shared_ptr<PhotoCaptureSetting> ConfigPhotoCaptureSetting()
+{
+    std::shared_ptr<PhotoCaptureSetting> photoCaptureSettings = std::make_shared<PhotoCaptureSetting>();
+    // QualityLevel
+    PhotoCaptureSetting::QualityLevel quality = PhotoCaptureSetting::QualityLevel::QUALITY_LEVEL_HIGH;
+    photoCaptureSettings->SetQuality(quality);
+    return photoCaptureSettings;
+}
+
 int main(int argc, char **argv)
 {
     const int32_t previewFormatIndex = 1;
@@ -355,7 +364,7 @@ int main(int argc, char **argv)
     sleep(previewCaptureGap);
     for (int i = 1; i <= photoCaptureCount; i++) {
         MEDIA_DEBUG_LOG("Photo capture %{public}d started", i);
-        ret = ((sptr<PhotoOutput> &)photoOutput)->Capture();
+        ret = ((sptr<PhotoOutput> &)photoOutput)->Capture(ConfigPhotoCaptureSetting());
         if (ret != 0) {
             MEDIA_DEBUG_LOG("Failed to capture, ret: %{public}d", ret);
             (void)OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(
