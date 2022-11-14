@@ -42,15 +42,6 @@ static std::shared_ptr<PhotoCaptureSetting> ConfigPhotoCaptureSetting()
     return photoCaptureSettings;
 }
 
-static std::shared_ptr<PhotoCaptureSetting> ConfigPhotoCaptureSetting()
-{
-    std::shared_ptr<PhotoCaptureSetting> photoCaptureSettings = std::make_shared<PhotoCaptureSetting>();
-    // QualityLevel
-    PhotoCaptureSetting::QualityLevel quality = PhotoCaptureSetting::QualityLevel::QUALITY_LEVEL_HIGH;
-    photoCaptureSettings->SetQuality(quality);
-    return photoCaptureSettings;
-}
-
 int main(int argc, char **argv)
 {
     const int32_t previewFormatIndex = 1;
