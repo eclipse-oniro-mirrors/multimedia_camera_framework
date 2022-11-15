@@ -101,9 +101,6 @@ public:
 
     int32_t OnFlashlightStatusChanged(const std::string& cameraId, const FlashStatus status) override
     {
-        POWERMGR_SYSEVENT_TORCH_STATE(IPCSkeleton::GetCallingPid(),
-                                      IPCSkeleton::GetCallingUid(), status);
-
         MEDIA_INFO_LOG("OnFlashlightStatusChanged: "
             "cameraId: %{public}s, status: %{public}d", cameraId.c_str(), status);
         if (camMngr_ != nullptr && camMngr_->GetApplicationCallback() != nullptr) {
