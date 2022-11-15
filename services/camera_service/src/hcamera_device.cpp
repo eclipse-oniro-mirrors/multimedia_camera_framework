@@ -364,8 +364,6 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp,
     if (ret == 0) {
         MEDIA_INFO_LOG("CameraDeviceServiceCallback::OnResult() OHOS_CONTROL_FLASH_STATE is %{public}d",
                        item.data.u8[0]);
-        POWERMGR_SYSEVENT_TORCH_STATE(IPCSkeleton::GetCallingPid(),
-                                      IPCSkeleton::GetCallingUid(), item.data.u8[0]);
     }
 
     ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_MODE, &item);
