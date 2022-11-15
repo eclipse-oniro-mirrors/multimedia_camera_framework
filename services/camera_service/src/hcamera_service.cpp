@@ -336,8 +336,6 @@ void HCameraService::OnCameraStatus(const std::string& cameraId, CameraStatus st
                    cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid());
     for (auto it : cameraServiceCallbacks_) {
         it.second->OnCameraStatusChanged(cameraId, status);
-        CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d",
-                                           cameraId.c_str(), status));
     }
 }
 
@@ -348,10 +346,6 @@ void HCameraService::OnFlashlightStatus(const std::string& cameraId, FlashStatus
                    cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid());
     for (auto it : cameraServiceCallbacks_) {
         it.second->OnFlashlightStatusChanged(cameraId, status);
-        CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnFlashlightStatusChanged! for cameraId:%s, current Flash Status:%d",
-                                           cameraId.c_str(), status));
-        POWERMGR_SYSEVENT_TORCH_STATE(IPCSkeleton::GetCallingPid(),
-                                      IPCSkeleton::GetCallingUid(), status);
     }
 }
 
