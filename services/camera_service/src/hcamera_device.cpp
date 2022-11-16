@@ -275,12 +275,10 @@ int32_t HCameraDevice::SetStatusCallback(std::map<int32_t, sptr<ICameraServiceCa
                    callbacks.size());
     if (!statusSvcCallbacks_.empty()) {
         MEDIA_ERR_LOG("HCameraDevice::SetStatusCallback statusSvcCallbacks_ is not empty, reset it");
-        for (auto it : statusSvcCallbacks_) {
-            delete it.second;
-            it.second = nullptr;
+        for (auto it = statusSvcCallbacks_.begin(); it != statusSvcCallbacks_.end();) {
+            statusSvcCallbacks_.erase(it++);
         }
     }
-    statusSvcCallbacks_.clear();
     for (auto it : callbacks) {
         statusSvcCallbacks_[it.first] = it.second;
     }
@@ -336,13 +334,18 @@ int32_t HCameraDevice::OnCameraStatus(const std::string& cameraId, CameraStatus 
 {
     MEDIA_INFO_LOG("HCameraDevice::OnCameraStatus statusSvcCallbacks_ size = %{public}zu",
                    statusSvcCallbacks_.size());
+    std::string callbackPids = "[";
     for (auto it : statusSvcCallbacks_) {
-        MEDIA_INFO_LOG("HCameraDevice::OnCameraStatus OnCameraStatusChanged pid = %{public}d"
-                       "cameraId = %{public}s, cameraStatus = %{public}d",
-                       it.first, cameraId.c_str(), status);
+        if (it.second) {
+            callbackPids += " " + std::to_string((int)it.first);
+        }
+    }
+    callbackPids += " ]";
+    MEDIA_INFO_LOG("HCameraDevice::OnCameraStatus OnCameraStatusChanged callbackPids = %{public}s, "
+                   "cameraId = %{public}s, cameraStatus = %{public}d",
+                   callbackPids.c_str(), cameraId.c_str(), status);
+    for (auto it : statusSvcCallbacks_) {
         it.second->OnCameraStatusChanged(cameraId, status);
-        CAMERA_SYSEVENT_FAULT(CreateMsg("CameraDevice::OnCameraStatus() is called!, cameraId: %s,"
-                                        "status: %d", cameraId.c_str(), status));
     }
     return CAMERA_OK;
 }
