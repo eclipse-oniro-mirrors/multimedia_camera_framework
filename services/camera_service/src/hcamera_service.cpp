@@ -335,6 +335,11 @@ void HCameraService::OnCameraStatus(const std::string& cameraId, CameraStatus st
                    "callbacks.size = %{public}zu, cameraId = %{public}s, status = %{public}d, pid = %{public}d",
                    cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid());
     for (auto it : cameraServiceCallbacks_) {
+        if (!it.second) {
+            MEDIA_ERR_LOG("HCameraService::OnCameraStatus cameraServiceCallback is null, pid = %{public}d",
+                          IPCSkeleton::GetCallingPid());
+            continue;
+        }
         it.second->OnCameraStatusChanged(cameraId, status);
         CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d",
                                            cameraId.c_str(), status));
@@ -347,6 +352,11 @@ void HCameraService::OnFlashlightStatus(const std::string& cameraId, FlashStatus
                    "callbacks.size = %{public}zu, cameraId = %{public}s, status = %{public}d, pid = %{public}d",
                    cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid());
     for (auto it : cameraServiceCallbacks_) {
+        if (!it.second) {
+            MEDIA_ERR_LOG("HCameraService::OnCameraStatus cameraServiceCallback is null, pid = %{public}d",
+                          IPCSkeleton::GetCallingPid());
+            continue;
+        }
         it.second->OnFlashlightStatusChanged(cameraId, status);
     }
 }
@@ -366,16 +376,17 @@ int32_t HCameraService::SetCallback(sptr<ICameraServiceCallback> &callback)
 
 int32_t HCameraService::UnSetCallback(pid_t pid)
 {
-    MEDIA_INFO_LOG("HCameraService::UnSetCallback pid = %{public}d", pid);
+    MEDIA_INFO_LOG("HCameraService::UnSetCallback pid = %{public}d, size = %{public}zu",
+                   pid, cameraServiceCallbacks_.size());
     if (!cameraServiceCallbacks_.empty()) {
-        MEDIA_ERR_LOG("HCameraDevice::SetStatusCallback statusSvcCallbacks_ is not empty, reset it");
+        MEDIA_INFO_LOG("HCameraDevice::SetStatusCallback statusSvcCallbacks_ is not empty, reset it");
         auto it = cameraServiceCallbacks_.find(pid);
-        if ((it != cameraServiceCallbacks_.end()) && (!it->second)) {
-            it->second.clear();
-            it->second = nullptr;
+        if ((it != cameraServiceCallbacks_.end()) && (it->second)) {
             cameraServiceCallbacks_.erase(it);
         }
     }
+    MEDIA_INFO_LOG("HCameraService::UnSetCallback after erase pid = %{public}d, size = %{public}zu",
+                   pid, cameraServiceCallbacks_.size());
     return CAMERA_OK;
 }
 
