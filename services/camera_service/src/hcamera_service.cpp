@@ -181,10 +181,6 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice HCameraDevice allocation failed");
         return CAMERA_ALLOC_ERROR;
     }
-    MEDIA_INFO_LOG("HCameraService::CreateCameraDevice SetStatusCallback, caller = %{public}d", callerToken);
-    if (cameraDevice->SetStatusCallback(cameraServiceCallbacks_)) {
-        MEDIA_ERR_LOG("HCameraService::CreateCameraDevice HCameraDevice SetStatusCallback failed");
-    }
 
     // when create camera device, update mute setting truely.
     if (IsCameraMuteSupported(cameraId)) {
