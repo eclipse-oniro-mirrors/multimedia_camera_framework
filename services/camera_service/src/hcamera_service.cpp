@@ -31,7 +31,6 @@ namespace CameraStandard {
 REGISTER_SYSTEM_ABILITY_BY_ID(HCameraService, CAMERA_SERVICE_ID, true)
 const std::string OHOS_PERMISSION_CAMERA = "ohos.permission.CAMERA";
 const std::string OHOS_PERMISSION_MANAGE_CAMERA_CONFIG = "ohos.permission.MANAGE_CAMERA_CONFIG";
-std::map<int32_t, sptr<ICameraServiceCallback>> HCameraService::cameraServiceCallbacks_;
 HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
     : SystemAbility(systemAbilityId, runOnCreate),
       cameraHostManager_(nullptr),
