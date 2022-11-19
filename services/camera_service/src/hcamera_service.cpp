@@ -369,6 +369,10 @@ int32_t HCameraService::SetCallback(sptr<ICameraServiceCallback> &callback)
         return CAMERA_INVALID_ARG;
     }
     cameraServiceCallbacks_.insert(std::make_pair(pid, callback));
+    for (auto it : devices_) {
+        MEDIA_INFO_LOG("HCameraService::SetCallback Camera:[%{public}s] SetStatusCallback", it.first.c_str());
+        it.second->SetStatusCallback(cameraServiceCallbacks_);
+    }
     return CAMERA_OK;
 }
 
@@ -385,6 +389,10 @@ int32_t HCameraService::UnSetCallback(pid_t pid)
     }
     MEDIA_INFO_LOG("HCameraService::UnSetCallback after erase pid = %{public}d, size = %{public}zu",
                    pid, cameraServiceCallbacks_.size());
+    for (auto it : devices_) {
+        MEDIA_INFO_LOG("HCameraService::UnSetCallback Camera:[%{public}s] SetStatusCallback", it.first.c_str());
+        it.second->SetStatusCallback(cameraServiceCallbacks_);
+    }
     return CAMERA_OK;
 }
 
