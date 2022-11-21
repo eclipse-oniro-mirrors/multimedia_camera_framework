@@ -736,7 +736,7 @@ bool CameraManager::IsCameraMuteSupported()
     if (cameraObjList.empty()) {
         this->GetSupportedCameras();
     }
-    for (uint32_t i = 0; i < cameraObjList.size(); i++) {
+    for (size_t i = 0; i < cameraObjList.size(); i++) {
         std::shared_ptr<Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
         camera_metadata_item_t item;
         int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_MUTE_MODES, &item);
