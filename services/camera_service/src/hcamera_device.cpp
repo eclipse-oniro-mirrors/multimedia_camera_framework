@@ -188,6 +188,8 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
     if (hdiCameraDevice_ != nullptr) {
         std::vector<uint8_t> setting;
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(updateSettings_, setting);
+        ReportMetadataDebugLog(updateSettings_);
+
         CamRetCode rc = (CamRetCode)(hdiCameraDevice_->UpdateSettings(setting));
         if (rc != HDI::Camera::V1_0::NO_ERROR) {
             MEDIA_ERR_LOG("HCameraDevice::UpdateSetting failed with error Code: %{public}d", rc);
@@ -198,6 +200,64 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
     }
     MEDIA_DEBUG_LOG("HCameraDevice::UpdateSetting Updated device settings");
     return CAMERA_OK;
+}
+
+void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings)
+{
+    // debug log for focus mode
+    camera_metadata_item_t item;
+    int32_t ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_FOCUS_MODE, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_FOCUS_MODE tag");
+    } else {
+        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_FOCUS_MODE value = %{public}d", item.data.u8[0]);
+    }
+
+    // debug log for af regions
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_AF_REGIONS, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_AF_REGIONS tag");
+    } else {
+        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_AF_REGIONS x = %{public}f, y = %{public}f",
+            item.data.f[0], item.data.f[1]);
+    }
+
+    // debug log for af regions
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(),
+        OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_VIDEO_STABILIZATION_MODE tag");
+    } else {
+        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_VIDEO_STABILIZATION_MODE value = %{public}d",
+            item.data.u8[0]);
+    }
+
+    // debug log for exposure mode
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_EXPOSURE_MODE, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_EXPOSURE_MODE tag");
+    } else {
+        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_EXPOSURE_MODE value = %{public}d", item.data.u8[0]);
+    }
+
+    // debug log for ae regions
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_AE_REGIONS, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_AE_REGIONS tag");
+    } else {
+        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_AE_REGIONS x = %{public}f, y = %{public}f",
+            item.data.f[0], item.data.f[1]);
+    }
+
+    // debug log for ae exposure compensation
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(),
+        OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_AE_EXPOSURE_COMPENSATION tag");
+    } else {
+        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_AE_EXPOSURE_COMPENSATION value = %{public}d",
+            item.data.u8[0]);
+    }
 }
 
 void HCameraDevice::ReportFlashEvent(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings)
