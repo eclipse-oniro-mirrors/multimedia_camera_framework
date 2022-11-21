@@ -69,35 +69,35 @@
 
 #define CAMERA_SYSEVENT_STATISTIC(str)                                             \
     do {                                                                           \
-        HiviewDFX::HiSysEvent::Write("CAMERA", "CAMERA_STATISTIC",                 \
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::CAMERA, "CAMERA_STATISTIC", \
                                      HiviewDFX::HiSysEvent::EventType::STATISTIC,  \
                                      "MSG", str);                                  \
     } while (0)
 
 #define CAMERA_SYSEVENT_SECURITY(str)                                              \
     do {                                                                           \
-        HiviewDFX::HiSysEvent::Write("CAMERA", "CAMERA_SECURITY",                  \
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::CAMERA, "CAMERA_SECURITY",   \
                                      HiviewDFX::HiSysEvent::EventType::SECURITY,   \
                                      "MSG", str);                                  \
     } while (0)
 
 #define CAMERA_SYSEVENT_BEHAVIOR(str)                                              \
     do {                                                                           \
-        HiviewDFX::HiSysEvent::Write("CAMERA", "CAMERA_STATE",                     \
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::CAMERA, "CAMERA_STATE",     \
                                      HiviewDFX::HiSysEvent::EventType::BEHAVIOR,   \
                                      "MSG", str);                                  \
     } while (0)
 
 #define CAMERA_SYSEVENT_FAULT(str)                                                 \
     do {                                                                           \
-        HiviewDFX::HiSysEvent::Write("CAMERA", "CAMERA_ERR",                       \
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::CAMERA, "CAMERA_ERR",       \
                                      HiviewDFX::HiSysEvent::EventType::FAULT,      \
                                      "MSG", str);                                  \
     } while (0)
 
 #define POWERMGR_SYSEVENT_CAMERA_CONNECT(pid, uid, camid, name)                    \
     do {                                                                           \
-        HiviewDFX::HiSysEvent::Write("CAMERA", "CAMERA_CONNECT",                   \
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::CAMERA, "CAMERA_CONNECT",   \
                                      HiviewDFX::HiSysEvent::EventType::STATISTIC,  \
                                      "PID", pid, "UID", uid, "ID", camid,          \
                                      "NAME", name);                                \
@@ -105,34 +105,35 @@
 
 #define POWERMGR_SYSEVENT_CAMERA_DISCONNECT(camid)                                 \
     do {                                                                           \
-        HiviewDFX::HiSysEvent::Write("CAMERA", "CAMERA_DISCONNECT",                \
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::CAMERA,                     \
+                                     "CAMERA_DISCONNECT",                          \
                                      HiviewDFX::HiSysEvent::EventType::STATISTIC,  \
                                      "ID", camid);                                 \
     } while (0)
 
 #define POWERMGR_SYSEVENT_TORCH_STATE(pid, uid, status)                            \
     do {                                                                           \
-        HiviewDFX::HiSysEvent::Write("CAMERA", "TORCH_STATE",                      \
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::CAMERA, "TORCH_STATE",      \
                                      HiviewDFX::HiSysEvent::EventType::STATISTIC,  \
                                      "PID", pid, "UID", uid, "STATE", status);     \
     } while (0)
 
 #define POWERMGR_SYSEVENT_CAMERA_CONFIG(type, width, height)                           \
     do {                                                                               \
-        HiviewDFX::HiSysEvent::Write("CAMERA", "CAMERA_CONFIG",                        \
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::CAMERA, "CAMERA_CONFIG",        \
                                      HiviewDFX::HiSysEvent::EventType::STATISTIC,      \
                                      "TYPE", #type, "WIDTH", width, "HEIGHT", height); \
     } while (0)
 
 #define POWERMGR_SYSEVENT_FLASH_ON()                                               \
     do {                                                                           \
-        HiviewDFX::HiSysEvent::Write("CAMERA", "FLASHLIGHT_ON",                    \
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::CAMERA, "FLASHLIGHT_ON",    \
                                      HiviewDFX::HiSysEvent::EventType::STATISTIC); \
     } while (0)
 
 #define POWERMGR_SYSEVENT_FLASH_OFF()                                              \
     do {                                                                           \
-        HiviewDFX::HiSysEvent::Write("CAMERA", "FLASHLIGHT_OFF",                   \
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::CAMERA, "FLASHLIGHT_OFF",   \
                                      HiviewDFX::HiSysEvent::EventType::STATISTIC); \
     } while (0)
 
