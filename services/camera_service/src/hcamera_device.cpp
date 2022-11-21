@@ -275,13 +275,13 @@ int32_t HCameraDevice::SetStatusCallback(std::map<int32_t, sptr<ICameraServiceCa
                    callbacks.size());
     if (!statusSvcCallbacks_.empty()) {
         MEDIA_ERR_LOG("HCameraDevice::SetStatusCallback statusSvcCallbacks_ is not empty, reset it");
-        for (auto it = statusSvcCallbacks_.begin(); it != statusSvcCallbacks_.end();) {
-            statusSvcCallbacks_.erase(it++);
-        }
+        statusSvcCallbacks_.clear();
     }
     for (auto it : callbacks) {
         statusSvcCallbacks_[it.first] = it.second;
     }
+    MEDIA_INFO_LOG("HCameraDevice::SetStatusCallback statusSvcCallbacks_ size = %{public}zu",
+                   statusSvcCallbacks_.size());
     return CAMERA_OK;
 }
 
