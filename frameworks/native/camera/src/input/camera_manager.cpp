@@ -692,7 +692,7 @@ int32_t CameraMuteServiceCallback::OnCameraMute(bool muteMode)
     }
     std::vector<shared_ptr<CameraMuteListener>> cameraMuteListenerList = camMngr_->GetCameraMuteListener();
     if (cameraMuteListenerList.size() > 0) {
-        for (auto i = 0; i < cameraMuteListenerList.size(); ++i) {
+        for (uint32_t i = 0; i < cameraMuteListenerList.size(); ++i) {
             cameraMuteListenerList[i]->OnCameraMute(muteMode);
         }
     } else {
@@ -736,7 +736,7 @@ bool CameraManager::IsCameraMuteSupported()
     if (cameraObjList.empty()) {
         this->GetSupportedCameras();
     }
-    for (size_t i = 0; i < cameraObjList.size(); i++) {
+    for (uint32_t i = 0; i < cameraObjList.size(); i++) {
         std::shared_ptr<Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
         camera_metadata_item_t item;
         int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_MUTE_MODES, &item);
