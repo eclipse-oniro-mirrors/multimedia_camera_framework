@@ -51,6 +51,7 @@ private:
     int32_t CheckRequestCode(const uint32_t code, MessageParcel &data,
                                                  MessageParcel &reply, MessageOption &option);
     void RegisterMethod();
+    virtual int32_t UnSetCallback(pid_t pid);
 
     std::mutex mutex_;
     std::map<pid_t, sptr<CameraDeathRecipient>> deathRecipientMap_;
