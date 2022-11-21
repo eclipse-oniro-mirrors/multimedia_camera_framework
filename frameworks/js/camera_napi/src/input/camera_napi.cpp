@@ -614,7 +614,7 @@ napi_value CameraNapi::CreateCameraInputErrorCode(napi_env env)
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
-        std::string propName = "ERROR_UNKNOWN";
+        std::string propName;
         for (auto itr = mapCameraInputErrorCode.begin(); itr != mapCameraInputErrorCode.end(); ++itr) {
             propName = itr->first;
             status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);
@@ -644,7 +644,7 @@ napi_value CameraNapi::CreateCaptureSessionErrorCode(napi_env env)
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
-        std::string propName = "ERROR_UNKNOWN";
+        std::string propName;
         for (auto itr = mapCaptureSessionErrorCode.begin(); itr != mapCaptureSessionErrorCode.end(); ++itr) {
             propName = itr->first;
             status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);
@@ -674,7 +674,7 @@ napi_value CameraNapi::CreatePreviewOutputErrorCode(napi_env env)
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
-        std::string propName = "ERROR_UNKNOWN";
+        std::string propName;
         for (auto itr = mapPreviewOutputErrorCode.begin(); itr != mapPreviewOutputErrorCode.end(); ++itr) {
             propName = itr->first;
             status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);
@@ -704,7 +704,7 @@ napi_value CameraNapi::CreatePhotoOutputErrorCode(napi_env env)
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
-        std::string propName = "ERROR_UNKNOWN";
+        std::string propName;
         for (auto itr = mapPhotoOutputErrorCode.begin(); itr != mapPhotoOutputErrorCode.end(); ++itr) {
             propName = itr->first;
             status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);
@@ -734,7 +734,7 @@ napi_value CameraNapi::CreateVideoOutputErrorCode(napi_env env)
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
-        std::string propName = "ERROR_UNKNOWN";
+        std::string propName;
         for (auto itr = mapVideoOutputErrorCode.begin(); itr != mapVideoOutputErrorCode.end(); ++itr) {
             propName = itr->first;
             status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);
@@ -764,7 +764,7 @@ napi_value CameraNapi::CreateMetadataObjectType(napi_env env)
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
-        std::string propName = "FACE_DETECTION";
+        std::string propName;
         for (auto itr = mapMetadataObjectType.begin(); itr != mapMetadataObjectType.end(); ++itr) {
             propName = itr->first;
             status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);
@@ -793,7 +793,7 @@ napi_value CameraNapi::CreateMetaOutputErrorCode(napi_env env)
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
-        std::string propName = "ERROR_UNKNOWN";
+        std::string propName;
         for (auto itr = mapMetaOutputErrorCode.begin(); itr != mapMetaOutputErrorCode.end(); ++itr) {
             propName = itr->first;
             status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);

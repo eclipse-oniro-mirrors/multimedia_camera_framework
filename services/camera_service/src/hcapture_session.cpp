@@ -84,7 +84,7 @@ HCaptureSession::HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
     for (auto it = oldSessions.begin(); it != oldSessions.end(); it++) {
         sptr<HCaptureSession> session = it->second;
         sptr<HCameraDevice> disconnectDevice;
-        int32_t rc = session->GetCurrentCameraDevice(disconnectDevice);
+        int32_t rc = session->GetCameraDevice(disconnectDevice);
         if (rc == CAMERA_OK) {
             disconnectDevice->OnError(DEVICE_PREEMPT, 0);
         }
@@ -115,6 +115,7 @@ int32_t HCaptureSession::BeginConfig()
         MEDIA_ERR_LOG("HCaptureSession::BeginConfig Already in config inprogress state!");
         return CAMERA_INVALID_STATE;
     }
+    std::lock_guard<std::mutex> lock(sessionLock_);
     prevState_ = curState_;
     curState_ = CaptureSessionState::SESSION_CONFIG_INPROGRESS;
     tempCameraDevices_.clear();
@@ -214,8 +215,6 @@ int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> st
 
 int32_t HCaptureSession::RemoveInput(sptr<ICameraDeviceService> cameraDevice)
 {
-    sptr<HCameraDevice> localCameraDevice;
-
     if (cameraDevice == nullptr) {
         MEDIA_ERR_LOG("HCaptureSession::RemoveInput cameraDevice is null");
         return CAMERA_INVALID_ARG;
@@ -224,6 +223,8 @@ int32_t HCaptureSession::RemoveInput(sptr<ICameraDeviceService> cameraDevice)
         MEDIA_ERR_LOG("HCaptureSession::RemoveInput Need to call BeginConfig before removing input");
         return CAMERA_INVALID_STATE;
     }
+    std::lock_guard<std::mutex> lock(sessionLock_);
+    sptr<HCameraDevice> localCameraDevice;
     localCameraDevice = static_cast<HCameraDevice*>(cameraDevice.GetRefPtr());
     auto it = std::find(tempCameraDevices_.begin(), tempCameraDevices_.end(), localCameraDevice);
     if (it != tempCameraDevices_.end()) {
@@ -314,22 +315,7 @@ int32_t HCaptureSession::GetCameraDevice(sptr<HCameraDevice> &device)
         return CAMERA_OK;
     }
 
-    MEDIA_ERR_LOG("HCaptureSession::GetCurrentCameraDevice Failed because don't have camera device");
-    return CAMERA_INVALID_STATE;
-}
-
-int32_t HCaptureSession::GetCurrentCameraDevice(sptr<HCameraDevice> &device)
-{
-    if (cameraDevice_ != nullptr && !cameraDevice_->IsReleaseCameraDevice()) {
-        MEDIA_DEBUG_LOG("HCaptureSession::GetCameraDevice Camera device has not changed");
-        device = cameraDevice_;
-        return CAMERA_OK;
-    } else if (!tempCameraDevices_.empty()) {
-        device = tempCameraDevices_[0];
-        return CAMERA_OK;
-    }
-
-    MEDIA_ERR_LOG("HCaptureSession::GetCurrentCameraDevice Failed because don't have camera device");
+    MEDIA_ERR_LOG("HCaptureSession::GetCameraDevice Failed because don't have camera device");
     return CAMERA_INVALID_STATE;
 }
 

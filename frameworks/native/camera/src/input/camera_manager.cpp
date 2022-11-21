@@ -686,9 +686,13 @@ camera_format_t CameraManager::GetCameraMetadataFormat(CameraFormat format)
 int32_t CameraMuteServiceCallback::OnCameraMute(bool muteMode)
 {
     MEDIA_DEBUG_LOG("CameraMuteServiceCallback::OnCameraMute call! muteMode is %{public}d", muteMode);
+    if (camMngr_ == nullptr) {
+        MEDIA_INFO_LOG("CameraMuteServiceCallback::OnCameraMute camMngr_ is nullptr");
+        return CAMERA_OK;
+    }
     std::vector<shared_ptr<CameraMuteListener>> cameraMuteListenerList = camMngr_->GetCameraMuteListener();
-    if (camMngr_ != nullptr && cameraMuteListenerList.size() > 0) {
-        for (auto i = 0; i < cameraMuteListenerList.size(); ++i) {
+    if (cameraMuteListenerList.size() > 0) {
+        for (uint32_t i = 0; i < cameraMuteListenerList.size(); ++i) {
             cameraMuteListenerList[i]->OnCameraMute(muteMode);
         }
     } else {
