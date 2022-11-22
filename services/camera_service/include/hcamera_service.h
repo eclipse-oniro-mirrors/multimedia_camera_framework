@@ -72,7 +72,11 @@ public:
     void OnFlashlightStatus(const std::string& cameraId, FlashStatus status) override;
     static std::map<int32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
 protected:
-    HCameraService(sptr<HCameraHostManager> cameraHostManager) : cameraHostManager_(cameraHostManager) {}
+    HCameraService(sptr<HCameraHostManager> cameraHostManager)
+    : cameraHostManager_(cameraHostManager), 
+      cameraHostManager_(nullptr),
+      streamOperatorCallback_(nullptr),
+      muteMode_(false){}
 
 private:
     void CameraSummary(std::vector<std::string> cameraIds,
