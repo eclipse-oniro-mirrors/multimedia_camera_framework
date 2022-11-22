@@ -73,6 +73,7 @@ private:
     uint32_t callerToken_;
 
     void ReportFlashEvent(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
+    void ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
 };
 
 class CameraDeviceCallback : public ICameraDeviceCallback {
