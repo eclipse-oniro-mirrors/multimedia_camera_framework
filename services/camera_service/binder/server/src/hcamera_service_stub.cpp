@@ -330,6 +330,11 @@ int HCameraServiceStub::HandleCreateVideoOutput(MessageParcel &data, MessageParc
     return errCode;
 }
 
+int32_t HCameraServiceStub::UnSetCallback(pid_t pid)
+{
+    return CAMERA_OK;
+}
+
 int HCameraServiceStub::DestroyStubForPid(pid_t pid)
 {
     sptr<CameraDeathRecipient> deathRecipient = nullptr;
@@ -357,7 +362,7 @@ int HCameraServiceStub::DestroyStubForPid(pid_t pid)
 
         (void)cameraListenerMap_.erase(itListener);
     }
-    HCameraService::UnSetCallback(pid);
+    UnSetCallback(pid);
     HCaptureSession::DestroyStubObjectForPid(pid);
     return CAMERA_OK;
 }

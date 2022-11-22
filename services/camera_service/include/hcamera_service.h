@@ -58,7 +58,7 @@ public:
                               int32_t width, int32_t height,
                               sptr<IStreamRepeat> &videoOutput) override;
     int32_t SetCallback(sptr<ICameraServiceCallback> &callback) override;
-    static int32_t UnSetCallback(pid_t pid);
+    int32_t UnSetCallback(pid_t pid) override;
     int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback> &callback) override;
     int32_t MuteCamera(bool muteMode) override;
     int32_t IsCameraMuted(bool &muteMode) override;
@@ -70,7 +70,6 @@ public:
     // HCameraHostManager::StatusCallback
     void OnCameraStatus(const std::string& cameraId, CameraStatus status) override;
     void OnFlashlightStatus(const std::string& cameraId, FlashStatus status) override;
-    static std::map<int32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
 protected:
     HCameraService(sptr<HCameraHostManager> cameraHostManager)
     : cameraHostManager_(cameraHostManager), 
@@ -106,6 +105,7 @@ private:
     sptr<HCameraHostManager> cameraHostManager_;
     sptr<StreamOperatorCallback> streamOperatorCallback_;
     std::map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
+    std::map<int32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
     std::map<std::string, sptr<HCameraDevice>> devices_;
     bool muteMode_;
 };
