@@ -73,7 +73,6 @@ public:
 protected:
     HCameraService(sptr<HCameraHostManager> cameraHostManager)
     : cameraHostManager_(cameraHostManager), 
-      cameraHostManager_(nullptr),
       streamOperatorCallback_(nullptr),
       muteMode_(false){}
 
