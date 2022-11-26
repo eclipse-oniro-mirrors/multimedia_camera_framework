@@ -109,6 +109,7 @@ enum VideoStabilizationMode {
 class CaptureSession : public RefBase {
 public:
     sptr<CaptureInput> inputDevice_;
+    bool IsCommitConfig = false;
     explicit CaptureSession(sptr<ICaptureSession> &captureSession);
     ~CaptureSession();
 

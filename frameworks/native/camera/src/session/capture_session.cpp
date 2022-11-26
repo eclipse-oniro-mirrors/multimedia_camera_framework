@@ -148,7 +148,11 @@ int32_t CaptureSession::BeginConfig()
 int32_t CaptureSession::CommitConfig()
 {
     CAMERA_SYNC_TRACE;
-    return captureSession_->CommitConfig();
+    int32_t retCode = captureSession_->CommitConfig();
+    if (retCode == CAMERA_OK) {
+        IsCommitConfig = true;
+    }
+    return retCode;
 }
 
 int32_t CaptureSession::CanAddInput(sptr<CaptureInput> &input)
@@ -1138,6 +1142,12 @@ void CaptureSession::SetCaptureMetadataObjectTypes(std::set<camera_face_detect_m
         MEDIA_ERR_LOG("SetCaptureMetadataObjectTypes: Failed to add detect object types to changed metadata");
     }
     this->UnlockForControl();
+}
+
+bool CaptureSession::IsCommitConfig()
+{
+    CAMERA_SYNC_TRACE;
+    return captureSession_->IsCommitConfig();
 }
 } // CameraStandard
 } // OHOS
