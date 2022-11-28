@@ -47,6 +47,8 @@ public:
 
     int32_t SetCallback(sptr<ICaptureSessionCallback> &callback) override;
 
+    int32_t IsCommitConfig(bool &isCommitConfig) override;
+
 private:
     static inline BrokerDelegator<HCaptureSessionProxy> delegator_;
 };

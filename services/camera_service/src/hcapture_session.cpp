@@ -602,6 +602,12 @@ int32_t HCaptureSession::CommitConfig()
     return rc;
 }
 
+int32_t HCaptureSession::IsCommitConfig(bool &isCommitConfig) {
+    int32_t rc = CAMERA_OK;
+    isCommitConfig = curState_ == CaptureSessionState::SESSION_CONFIG_COMMITTED;
+    return rc;
+}
+
 int32_t HCaptureSession::Start()
 {
     int32_t rc = CAMERA_OK;

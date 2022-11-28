@@ -109,7 +109,6 @@ enum VideoStabilizationMode {
 class CaptureSession : public RefBase {
 public:
     sptr<CaptureInput> inputDevice_;
-    bool IsCommitConfig = false;
     explicit CaptureSession(sptr<ICaptureSession> &captureSession);
     ~CaptureSession();
 
@@ -442,6 +441,13 @@ public:
     * @param set of camera_face_detect_mode_t types.
     */
     void SetCaptureMetadataObjectTypes(std::set<camera_face_detect_mode_t> metadataObjectTypes);
+
+    /**
+    * @brief Get whether or not commit config
+    *
+    * @return Returns whether or not commit config.
+    */
+    bool IsCommitConfig();
 
 private:
     std::mutex changeMetaMutex_;

@@ -68,6 +68,8 @@ public:
     static void DestroyStubObjectForPid(pid_t pid);
     int32_t SetCallback(sptr<ICaptureSessionCallback> &callback) override;
 
+    int32_t IsCommitConfig(bool &isCommitConfig) override;
+
     friend class StreamOperatorCallback;
     static void dumpSessions(std::string& dumpString);
     void dumpSessionInfo(std::string& dumpString);
