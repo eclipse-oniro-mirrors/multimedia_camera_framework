@@ -85,7 +85,7 @@ public:
     static void NapiCreateInt32Logs(
         napi_env env, int32_t contextMode, std::unique_ptr<JSAsyncContextOutput> &jsContext);
     static void NapiCreateDoubleLogs(
-        napi_env env, int32_t contextMode, std::unique_ptr<JSAsyncContextOutput> &jsContext);
+        napi_env env, double contextMode, std::unique_ptr<JSAsyncContextOutput> &jsContext);
 
     static napi_value Open(napi_env env, napi_callback_info info);
     static napi_value Close(napi_env env, napi_callback_info info);
