@@ -321,7 +321,7 @@ void NapiCreateInt32Logs(napi_env env, int32_t contextMode, std::unique_ptr<JSAs
     }
 }
 
-void NapiCreateDoubleLogs(napi_env env, int32_t contextMode, std::unique_ptr<JSAsyncContextOutput> &jsContext)
+void NapiCreateDoubleLogs(napi_env env, double contextMode, std::unique_ptr<JSAsyncContextOutput> &jsContext)
 {
     napi_status status = napi_create_double(env, contextMode, &jsContext->data);
     if (status != napi_ok) {
