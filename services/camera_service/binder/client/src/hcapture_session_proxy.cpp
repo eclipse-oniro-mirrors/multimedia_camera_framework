@@ -259,5 +259,27 @@ int32_t HCaptureSessionProxy::SetCallback(sptr<ICaptureSessionCallback> &callbac
 
     return error;
 }
+
+int32_t HCaptureSessionProxy::IsCommitConfig(bool &isCommitConfig)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        MEDIA_ERR_LOG("HCaptureSessionProxy IsCommitConfig Write interface token failed");
+        return IPC_PROXY_ERR;
+    }
+    if (!data.WriteBool(isCommitConfig)) {
+        MEDIA_ERR_LOG("HCaptureSessionProxy IsCommitConfig Write isCommitConfig failed");
+        return IPC_PROXY_ERR;
+    }
+    int error = Remote()->SendRequest(CAMERA_CAPTURE_SESSION_IS_COMMIT_CONFIG, data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCaptureSessionProxy IsCommitConfig failed, error: %{public}d", error);
+    }
+    isCommitConfig = reply.ReadBool();
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS

@@ -45,6 +45,8 @@ public:
 
     virtual int32_t SetCallback(sptr<ICaptureSessionCallback> &callback) = 0;
 
+    virtual int32_t IsCommitConfig(bool &isCommitConfig) = 0;
+
     DECLARE_INTERFACE_DESCRIPTOR(u"ICaptureSession");
 };
 } // namespace CameraStandard
