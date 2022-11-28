@@ -222,41 +222,6 @@ namespace {
     };
 } // namespace
 
-static std::string permissionName = "ohos.permission.CAMERA";
-static OHOS::Security::AccessToken::HapInfoParams g_infoManagerTestInfoParms = {
-    .userID = 1,
-    .bundleName = permissionName,
-    .instIndex = 0,
-    .dlpType = 0,
-    .appIDDesc = "testtesttesttest"
-};
-
-static OHOS::Security::AccessToken::PermissionDef g_infoManagerTestPermDef1 = {
-    .permissionName = "ohos.permission.CAMERA",
-    .bundleName = "ohos.permission.CAMERA",
-    .grantMode = 1,
-    .availableLevel = OHOS::Security::AccessToken::ATokenAplEnum::APL_NORMAL,
-    .label = "label",
-    .labelId = 1,
-    .description = "camera test",
-    .descriptionId = 1
-};
-
-static OHOS::Security::AccessToken::PermissionStateFull g_infoManagerTestState1 = {
-    .permissionName = "ohos.permission.CAMERA",
-    .isGeneral = true,
-    .resDeviceID = {"local"},
-    .grantStatus = {OHOS::Security::AccessToken::PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {1}
-};
-
-static OHOS::Security::AccessToken::HapPolicyParams g_infoManagerTestPolicyPrams = {
-    .apl = OHOS::Security::AccessToken::ATokenAplEnum::APL_NORMAL,
-    .domain = "test.domain",
-    .permList = {g_infoManagerTestPermDef1},
-    .permStateList = {g_infoManagerTestState1}
-};
-
 sptr<CaptureOutput> CameraFrameworkModuleTest::CreatePhotoOutput(int32_t width, int32_t height)
 {
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
@@ -456,7 +421,6 @@ void CameraFrameworkModuleTest::TestCallbacks(sptr<CameraDevice> &cameraInfo, bo
 
     /* In case of wagner device, once commit config is done with flash on
     it is not giving the flash status callback, removing it */
-    // EXPECT_TRUE(g_camFlashMap.count(cameraInfo->GetID()) == 0);
     EXPECT_TRUE(g_photoEvents.none());
     EXPECT_TRUE(g_previewEvents.none());
     EXPECT_TRUE(g_videoEvents.none());
@@ -468,8 +432,6 @@ void CameraFrameworkModuleTest::TestCallbacks(sptr<CameraDevice> &cameraInfo, bo
         /* In case of wagner device, frame shutter callback not working,
         hence removed. Once supported by hdi, the same needs to be
         enabled */
-        //EXPECT_TRUE(g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_FRAME_SHUTTER)] == 0);
-        //EXPECT_TRUE(g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_END)] == 1);
         ((sptr<PhotoOutput> &)photoOutput)->Release();
     }
 
@@ -485,8 +447,6 @@ void CameraFrameworkModuleTest::TestCallbacks(sptr<CameraDevice> &cameraInfo, bo
     }
 
     ((sptr<PreviewOutput> &)previewOutput)->Release();
-
-    //EXPECT_EQ(g_camStatusMap.count(cameraInfo->GetID()), 1);
 }
 
 void CameraFrameworkModuleTest::SetUpTestCase(void) {}
@@ -597,7 +557,6 @@ void CameraFrameworkModuleTest::SetUp()
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input_;
     camInput->Open();
-    //EXPECT_EQ(g_camStatusMap[cameras_[0]->GetID()], CAMERA_STATUS_UNAVAILABLE);
 
     session_ = manager_->CreateCaptureSession();
     ASSERT_NE(session_, nullptr);
@@ -611,7 +570,6 @@ void CameraFrameworkModuleTest::TearDown()
     if (input_) {
         sptr<CameraInput> camInput = (sptr<CameraInput> &)input_;
         camInput->Close();
-        //EXPECT_EQ(g_camStatusMap[cameras_[0]->GetID()], CAMERA_STATUS_AVAILABLE);
         input_->Release();
     }
     MEDIA_DEBUG_LOG("End of camera test case");
@@ -1863,7 +1821,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_040, TestSize.Le
 
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     camInput->Open();
-    //EXPECT_EQ(g_camStatusMap[cameras_[0]->GetID()], CAMERA_STATUS_UNAVAILABLE);
 
     intResult = session_->AddInput(input);
     EXPECT_EQ(intResult, 0);
@@ -2049,7 +2006,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_044, TestSize.Le
     std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
     sptr<CameraInput> camInput_2 = (sptr<CameraInput> &)input_;
     camInput_2->Open();
-    //EXPECT_EQ(g_camStatusMap[cameras_[0]->GetID()], CAMERA_STATUS_UNAVAILABLE);
 
     camInput_2->SetErrorCallback(callback);
 
@@ -2076,14 +2032,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_044, TestSize.Le
 
     sleep(WAIT_TIME_AFTER_START);
     camInput_2->Close();
-    //EXPECT_EQ(g_camStatusMap[cameras_[0]->GetID()], CAMERA_STATUS_AVAILABLE);
 
     sptr<CaptureInput> input_3 = manager_->CreateCameraInput(cameras_[1]);
     ASSERT_NE(input_3, nullptr);
 
     sptr<CameraInput> camInput_3 = (sptr<CameraInput> &)input_3;
     camInput_3->Open();
-    //EXPECT_EQ(g_camStatusMap[cameras_[1]->GetID()], CAMERA_STATUS_UNAVAILABLE);
 
     sptr<CaptureSession> session_3 = manager_->CreateCaptureSession();
     ASSERT_NE(session_3, nullptr);
