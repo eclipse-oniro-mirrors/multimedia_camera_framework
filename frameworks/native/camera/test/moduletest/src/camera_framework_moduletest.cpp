@@ -483,14 +483,14 @@ void CameraFrameworkModuleTest::SetUp()
     perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
     perms[1] = "ohos.permission.CAMERA";
     NativeTokenInfoParams infoInstance = {
-            .dcapsNum = 0,
-            .permsNum = 2,
-            .aclsNum = 0,
-            .dcaps = NULL,
-            .perms = perms,
-            .acls = NULL,
-            .processName = "native_camera_tdd",
-            .aplStr = "system_basic",
+        .dcapsNum = 0,
+        .permsNum = 2,
+        .aclsNum = 0,
+        .dcaps = NULL,
+        .perms = perms,
+        .acls = NULL,
+        .processName = "native_camera_tdd",
+        .aplStr = "system_basic",
     };
     tokenId = GetAccessTokenId(&infoInstance);
     SetSelfTokenID(tokenId);
