@@ -67,22 +67,25 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     captureInfoPhoto.enableShutterCallback_ = true;
 
     // debug log for jpeg quality
-    std::shared_ptr<OHOS::Camera::CameraMetadata> captureMetadataSetting_;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> captureMetadataSetting_ = nullptr;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(captureInfoPhoto.captureSetting_, captureMetadataSetting_);
-    camera_metadata_item_t item;
-    int32_t result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_QUALITY, &item);
-    if (result != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_JPEG_QUALITY tag");
-    } else {
-        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_JPEG_QUALITY value = %{public}d", item.data.u8[0]);
-    }
+    if (captureMetadataSetting_ != nullptr) {
+        camera_metadata_item_t item;
+        int32_t result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_QUALITY, &item);
+        if (result != CAM_META_SUCCESS) {
+            MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_JPEG_QUALITY tag");
+        } else {
+            MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_JPEG_QUALITY value = %{public}d", item.data.u8[0]);
+        }
 
-    // debug log for capture mirror
-    result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_CONTROL_CAPTURE_MIRROR, &item);
-    if (result != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_CAPTURE_MIRROR tag");
-    } else {
-        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_CAPTURE_MIRROR value = %{public}d", item.data.u8[0]);
+        // debug log for capture mirror
+        result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(),
+                                                      OHOS_CONTROL_CAPTURE_MIRROR, &item);
+        if (result != CAM_META_SUCCESS) {
+            MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_CAPTURE_MIRROR tag");
+        } else {
+            MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_CAPTURE_MIRROR value = %{public}d", item.data.u8[0]);
+        }
     }
 
     MEDIA_INFO_LOG("HStreamCapture::Capture Starting photo capture with capture ID: %{public}d", curCaptureID_);
