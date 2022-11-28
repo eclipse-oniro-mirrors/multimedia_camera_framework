@@ -1139,5 +1139,12 @@ void CaptureSession::SetCaptureMetadataObjectTypes(std::set<camera_face_detect_m
     }
     this->UnlockForControl();
 }
+
+bool CaptureSession::IsCommitConfig()
+{
+    bool isCommitConfig = false;
+    captureSession_->IsCommitConfig(isCommitConfig);
+    return isCommitConfig;
+}
 } // CameraStandard
 } // OHOS

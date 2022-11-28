@@ -61,6 +61,8 @@ int HCaptureSessionStub::OnRemoteRequest(
         case CAMERA_CAPTURE_SESSION_SET_CALLBACK:
             errCode = HandleSetCallback(data);
             break;
+        case CAMERA_CAPTURE_SESSION_IS_COMMIT_CONFIG:
+            errCode =  HandleIsCommitConfig(reply);
         default:
             MEDIA_ERR_LOG("HCaptureSessionStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -135,6 +137,17 @@ int HCaptureSessionStub::HandleSetCallback(MessageParcel &data)
     auto callback = iface_cast<ICaptureSessionCallback>(remoteObject);
 
     return SetCallback(callback);
+}
+
+int HCaptureSessionStub::HandleIsCommitConfig(MessageParcel &reply)
+{
+    bool isCommitConfig = false;
+    int32_t ret = IsCommitConfig(isCommitConfig);
+    if (!reply.WriteBool(isCommitConfig)) {
+        MEDIA_ERR_LOG("HCaptureSessionStub HandleIsCommitConfig Write isCommitConfig failed");
+        return IPC_STUB_WRITE_PARCEL_ERR;
+    }
+    return ret;
 }
 } // namespace CameraStandard
 } // namespace OHOS

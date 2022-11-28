@@ -442,6 +442,13 @@ public:
     */
     void SetCaptureMetadataObjectTypes(std::set<camera_face_detect_mode_t> metadataObjectTypes);
 
+    /**
+    * @brief Get whether or not commit config
+    *
+    * @return Returns whether or not commit config.
+    */
+    bool IsCommitConfig();
+
 private:
     std::mutex changeMetaMutex_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
