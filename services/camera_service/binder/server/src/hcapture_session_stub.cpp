@@ -62,7 +62,7 @@ int HCaptureSessionStub::OnRemoteRequest(
             errCode = HandleSetCallback(data);
             break;
         case CAMERA_CAPTURE_SESSION_IS_COMMIT_CONFIG:
-            errCode =  HandleIsCommitConfig(data);
+            errCode =  HandleIsCommitConfig(reply);
         default:
             MEDIA_ERR_LOG("HCaptureSessionStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -139,13 +139,14 @@ int HCaptureSessionStub::HandleSetCallback(MessageParcel &data)
     return SetCallback(callback);
 }
 
-int HCaptureSessionStub::HandleIsCommitConfig(MessageParcel &data)
+int HCaptureSessionStub::HandleIsCommitConfig(MessageParcel &reply)
 {
-    bool isCommitConfig = data.ReadBool();
-    MEDIA_DEBUG_LOG("HCameraServiceStub HandleIsCommitConfig read isCommitConfig : %{public}d", isCommitConfig);
-
+    bool isCommitConfig = false;
     int32_t ret = IsCommitConfig(isCommitConfig);
-    MEDIA_INFO_LOG("HCameraServiceStub HandleIsCommitConfig IsCommitConfig result: %{public}d", ret);
+    if (!reply.WriteBool(isCommitConfig)) {
+        MEDIA_ERR_LOG("HCaptureSessionStub HandleIsCommitConfig Write isCommitConfig failed");
+        return IPC_STUB_WRITE_PARCEL_ERR;
+    }
     return ret;
 }
 } // namespace CameraStandard
