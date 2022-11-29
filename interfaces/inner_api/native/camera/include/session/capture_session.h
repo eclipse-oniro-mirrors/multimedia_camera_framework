@@ -471,7 +471,7 @@ private:
     int32_t SetCropRegion(float zoomRatio);
     int32_t StartFocus(FocusMode focusMode);
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
-    bool IsOutputAdded = false;
+    void SetFrameRateRange(const std::vector<int32_t>& frameRateRange);
 };
 } // namespace CameraStandard
 } // namespace OHOS

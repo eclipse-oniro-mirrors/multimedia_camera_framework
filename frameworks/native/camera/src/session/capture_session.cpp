@@ -185,8 +185,11 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput> &output)
         return CAMERA_INVALID_ARG;
     }
     output->SetSession(this);
-    IsOutputAdded = true;
-    return captureSession_->AddOutput(output->GetStreamType(), output->GetStream());
+    int32_t ret = captureSession_->AddOutput(output->GetStreamType(), output->GetStream());
+    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_VIDEO) {
+        SetFrameRateRange(static_cast<VideoOutput *>(output.GetRefPtr())->GetFrameRateRange());
+    }
+    return ret;
 }
 
 int32_t CaptureSession::RemoveInput(sptr<CaptureInput> &input)
@@ -1136,6 +1139,22 @@ void CaptureSession::SetCaptureMetadataObjectTypes(std::set<camera_face_detect_m
     this->LockForControl();
     if (!this->changedMetadata_->addEntry(OHOS_STATISTICS_FACE_DETECT_SWITCH, objectTypes, count)) {
         MEDIA_ERR_LOG("SetCaptureMetadataObjectTypes: Failed to add detect object types to changed metadata");
+    }
+    this->UnlockForControl();
+}
+
+void CaptureSession::SetFrameRateRange(const std::vector<int32_t>& frameRateRange)
+{
+    if (inputDevice_ == nullptr) {
+        MEDIA_ERR_LOG("UpdateConfigSetting: inputDevice is null");
+        return;
+    }
+
+    std::vector<int32_t> videoFrameRateRange = frameRateRange;
+    this->LockForControl();
+    if (!this->changedMetadata_->addEntry(OHOS_CONTROL_FPS_RANGES,
+        videoFrameRateRange.data(), videoFrameRateRange.size())) {
+        MEDIA_ERR_LOG("Failed to SetFrameRateRange");
     }
     this->UnlockForControl();
 }
