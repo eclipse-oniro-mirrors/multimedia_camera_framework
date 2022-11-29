@@ -63,6 +63,7 @@ int HCaptureSessionStub::OnRemoteRequest(
             break;
         case CAMERA_CAPTURE_SESSION_IS_COMMIT_CONFIG:
             errCode =  HandleIsCommitConfig(reply);
+            break;
         default:
             MEDIA_ERR_LOG("HCaptureSessionStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
