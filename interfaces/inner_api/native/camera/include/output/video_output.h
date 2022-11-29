@@ -99,7 +99,7 @@ public:
     *
     * @return Returns vector<int32_t> of supported exposure compensation range.
     */
-    [[deprecated]] std::vector<int32_t> GetFrameRateRange();
+    const std::vector<int32_t>& GetFrameRateRange();
 
     /**
      * @brief Set the Video fps range. If fixed frame rate
@@ -108,12 +108,12 @@ public:
      * @param min frame rate value of range.
      * @param max frame rate value of range.
      */
-    [[deprecated]] void SetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate);
+    void SetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate);
 
 private:
     std::shared_ptr<VideoStateCallback> appCallback_;
     sptr<IStreamRepeatCallback> svcCallback_;
-    std::vector<int32_t> videoFramerateRange_;
+    std::vector<int32_t> videoFrameRateRange_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
