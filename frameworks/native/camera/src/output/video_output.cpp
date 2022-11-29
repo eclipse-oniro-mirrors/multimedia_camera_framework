@@ -128,5 +128,18 @@ std::shared_ptr<VideoStateCallback> VideoOutput::GetApplicationCallback()
 {
     return appCallback_;
 }
+
+const std::vector<int32_t>& VideoOutput::GetFrameRateRange()
+{
+    return videoFrameRateRange_;
+}
+
+void VideoOutput::SetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate)
+{
+    MEDIA_DEBUG_LOG("VideoOutput::SetFrameRateRange min = %{public}d and max = %{public}d",
+        minFrameRate, maxFrameRate);
+
+    videoFrameRateRange_ = {minFrameRate, maxFrameRate};
+}
 } // CameraStandard
 } // OHOS
