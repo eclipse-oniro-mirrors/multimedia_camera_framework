@@ -188,6 +188,7 @@ int32_t HCaptureSession::AddOutputStream(sptr<HStreamCommon> stream)
         }
     }
     stream->SetReleaseStream(false);
+    std::lock_guard<std::mutex> lock(sessionLock_);
     tempStreams_.emplace_back(stream);
     return CAMERA_OK;
 }
