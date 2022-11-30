@@ -71,9 +71,11 @@ private:
     sptr<IStreamOperator> streamOperator_;
     std::mutex deviceLock_;
     uint32_t callerToken_;
+    std::vector<int32_t> videoFrameRateRange_;
 
     void ReportFlashEvent(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
     void ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
+    void GetFrameRateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
 };
 
 class CameraDeviceCallback : public ICameraDeviceCallback {
