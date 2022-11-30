@@ -349,7 +349,9 @@ sptr<VideoOutput> CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<S
             MEDIA_ERR_LOG("Failed to new VideoOutput");
         } else {
             std::vector<int32_t> videoFrameRates = profile.GetFrameRates();
-            result->SetFrameRateRange(videoFrameRates[0], videoFrameRates[1]);
+            if (videoFrameRates.size() >= 2) { // vaild frame rate range length is 2
+                result->SetFrameRateRange(videoFrameRates[0], videoFrameRates[1]);
+            }
             POWERMGR_SYSEVENT_CAMERA_CONFIG(VIDEO,
                                             profile.GetSize().width,
                                             profile.GetSize().height);
