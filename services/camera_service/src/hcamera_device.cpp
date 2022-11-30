@@ -62,6 +62,22 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraDevice::GetSettings()
         MEDIA_ERR_LOG("HCameraDevice::GetSettings Failed to get Camera Ability: %{public}d", errCode);
         return nullptr;
     }
+
+    if (!videoFrameRateRange_.empty() && ability != nullptr) {
+        bool status = false;
+        camera_metadata_item_t item;
+        int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_CONTROL_FPS_RANGES, &item);
+        if (ret == CAM_META_ITEM_NOT_FOUND) {
+            status = ability->addEntry(OHOS_CONTROL_FPS_RANGES,
+                videoFrameRateRange_.data(), videoFrameRateRange_.size());
+        } else if (ret == CAM_META_SUCCESS) {
+            status = ability->updateEntry(OHOS_CONTROL_FPS_RANGES,
+                videoFrameRateRange_.data(), videoFrameRateRange_.size());
+        }
+        if (!status) {
+            MEDIA_ERR_LOG("HCameraDevice::Set fps renges Failed");
+        }
+    }
     return ability;
 }
 
@@ -189,6 +205,7 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
         std::vector<uint8_t> setting;
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(updateSettings_, setting);
         ReportMetadataDebugLog(updateSettings_);
+        GetFrameRateSetting(updateSettings_);
 
         CamRetCode rc = (CamRetCode)(hdiCameraDevice_->UpdateSettings(setting));
         if (rc != HDI::Camera::V1_0::NO_ERROR) {
@@ -206,19 +223,19 @@ void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::C
 {
     // debug log for focus mode
     camera_metadata_item_t item;
-    int32_t ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_FOCUS_MODE, &item);
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_FOCUS_MODE, &item);
     if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_FOCUS_MODE tag");
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_FOCUS_MODE tag");
     } else {
-        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_FOCUS_MODE value = %{public}d", item.data.u8[0]);
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_FOCUS_MODE value = %{public}d", item.data.u8[0]);
     }
 
     // debug log for af regions
     ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_AF_REGIONS, &item);
     if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_AF_REGIONS tag");
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_AF_REGIONS tag");
     } else {
-        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_AF_REGIONS x = %{public}f, y = %{public}f",
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_AF_REGIONS x = %{public}f, y = %{public}f",
             item.data.f[0], item.data.f[1]);
     }
 
@@ -226,26 +243,26 @@ void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::C
     ret = OHOS::Camera::FindCameraMetadataItem(settings->get(),
         OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &item);
     if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_VIDEO_STABILIZATION_MODE tag");
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_VIDEO_STABILIZATION_MODE tag");
     } else {
-        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_VIDEO_STABILIZATION_MODE value = %{public}d",
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_VIDEO_STABILIZATION_MODE value = %{public}d",
             item.data.u8[0]);
     }
 
     // debug log for exposure mode
     ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_EXPOSURE_MODE, &item);
     if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_EXPOSURE_MODE tag");
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_EXPOSURE_MODE tag");
     } else {
-        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_EXPOSURE_MODE value = %{public}d", item.data.u8[0]);
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_EXPOSURE_MODE value = %{public}d", item.data.u8[0]);
     }
 
     // debug log for ae regions
     ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_AE_REGIONS, &item);
     if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_AE_REGIONS tag");
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_AE_REGIONS tag");
     } else {
-        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_AE_REGIONS x = %{public}f, y = %{public}f",
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_AE_REGIONS x = %{public}f, y = %{public}f",
             item.data.f[0], item.data.f[1]);
     }
 
@@ -253,10 +270,23 @@ void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::C
     ret = OHOS::Camera::FindCameraMetadataItem(settings->get(),
         OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &item);
     if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_AE_EXPOSURE_COMPENSATION tag");
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_AE_EXPOSURE_COMPENSATION tag");
     } else {
-        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_AE_EXPOSURE_COMPENSATION value = %{public}d",
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_AE_EXPOSURE_COMPENSATION value = %{public}d",
             item.data.u8[0]);
+    }
+}
+
+void HCameraDevice::GetFrameRateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings)
+{
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_FPS_RANGES, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_FPS_RANGES tag");
+    } else {
+        videoFrameRateRange_ = {item.data.i32[0], item.data.i32[1]};
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_FPS_RANGES min = %{public}d, max = %{public}d",
+            item.data.i32[0], item.data.i32[1]);
     }
 }
 
