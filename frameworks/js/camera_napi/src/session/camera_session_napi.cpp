@@ -312,24 +312,6 @@ napi_value CameraSessionNapi::CameraSessionNapiConstructor(napi_env env, napi_ca
     return result;
 }
 
-void NapiCreateInt32Logs(napi_env env, int32_t contextMode, std::unique_ptr<JSAsyncContextOutput> &jsContext)
-{
-    napi_status status = napi_create_int32(env, contextMode, &jsContext->data);
-    if (status != napi_ok) {
-        MEDIA_ERR_LOG("napi_create_int32() failed");
-        CameraNapiUtils::CreateNapiErrorObject(env, "napi_create_int32() failed", jsContext);
-    }
-}
-
-void NapiCreateDoubleLogs(napi_env env, double contextMode, std::unique_ptr<JSAsyncContextOutput> &jsContext)
-{
-    napi_status status = napi_create_double(env, contextMode, &jsContext->data);
-    if (status != napi_ok) {
-        MEDIA_ERR_LOG("napi_create_double() failed");
-        CameraNapiUtils::CreateNapiErrorObject(env, "napi_create_double() failed", jsContext);
-    }
-}
-
 int32_t QueryAndGetInputProperty(napi_env env, napi_value arg, const string &propertyName, napi_value &property)
 {
     bool present = false;
@@ -343,9 +325,8 @@ int32_t QueryAndGetInputProperty(napi_env env, napi_value arg, const string &pro
     return retval;
 }
 
-int32_t GetPointProperties(napi_env env, napi_value pointObj, const CameraSessionAsyncContext &context)
+int32_t GetPointProperties(napi_env env, napi_value pointObj, Point &point)
 {
-    CameraSessionAsyncContext* asyncContext = const_cast<CameraSessionAsyncContext *>(&context);
     napi_value propertyX = nullptr;
     napi_value propertyY = nullptr;
     double pointX = -1.0;
@@ -358,14 +339,8 @@ int32_t GetPointProperties(napi_env env, napi_value pointObj, const CameraSessio
             MEDIA_ERR_LOG("GetPointProperties: get propery for x & y failed");
             return -1;
         } else {
-            Point* ptr;
-            if (asyncContext->enumType.compare("FocusPoint") == 0) {
-                ptr = &asyncContext->focusPoint;
-            } else {
-                ptr = &asyncContext->exposurePoint;
-            }
-            ptr->x = pointX;
-            ptr->y = pointY;
+            point.x = pointX;
+            point.y = pointY;
         }
     } else {
         return -1;
@@ -375,104 +350,15 @@ int32_t GetPointProperties(napi_env env, napi_value pointObj, const CameraSessio
     return 0;
 }
 
-void FetchOptionsParam(napi_env env, napi_value arg, const CameraSessionAsyncContext &context, bool &err)
+napi_value GetPointNapiValue(napi_env env, Point &point)
 {
-    CameraSessionAsyncContext* asyncContext = const_cast<CameraSessionAsyncContext *>(&context);
-    if (asyncContext == nullptr) {
-        MEDIA_INFO_LOG("FetchOptionsParam:asyncContext is null");
-        return;
-    }
-
-    if (asyncContext->enumType.compare("ExposureValue") == 0) {
-        int32_t ExposureValue;
-        napi_get_value_int32(env, arg, &ExposureValue);
-        MEDIA_INFO_LOG("Camera ExposureValue : %{public}d", ExposureValue);
-        asyncContext->exposureValue = ExposureValue;
-        return;
-    }
-
-    if (asyncContext->enumType.compare("ZoomRatio") == 0) {
-        double zoom;
-        napi_get_value_double(env, arg, &zoom);
-        MEDIA_INFO_LOG("Camera ZoomRatio : %{public}f", zoom);
-        asyncContext->zoomRatio = zoom;
-        return;
-    }
-
-    if (asyncContext->enumType.compare("ExposurePoint") == 0) {
-        if (GetPointProperties(env, arg, context) == -1) {
-            MEDIA_ERR_LOG("GetPointProperties for ExposurePoint failed");
-            err = true;
-            return;
-        }
-        MEDIA_INFO_LOG("GetPointProperties for ExposurePoint success. x=%{public}f & y=%{public}f",
-            asyncContext->exposurePoint.x, asyncContext->exposurePoint.y);
-        return;
-    }
-
-    if (asyncContext->enumType.compare("FocusPoint") == 0) {
-        if (GetPointProperties(env, arg, context) == -1) {
-            MEDIA_ERR_LOG("GetPointProperties for FocusPoint failed");
-            err = true;
-            return;
-        }
-        MEDIA_INFO_LOG("GetPointProperties for FocusPoint success. x=%{public}f & y=%{public}f",
-            asyncContext->focusPoint.x, asyncContext->focusPoint.y);
-        return;
-    }
-
-    int32_t value;
-    napi_get_value_int32(env, arg, &value);
-
-    if (asyncContext->enumType.compare("FlashMode") == 0) {
-        MEDIA_INFO_LOG("Camera flashMode : %{public}d", value);
-        asyncContext->flashMode = (FlashMode)value;
-    } else if (asyncContext->enumType.compare("ExposureMode") == 0) {
-        asyncContext->exposureMode = (ExposureMode)value;
-    } else if (asyncContext->enumType.compare("FocusMode") == 0) {
-        asyncContext->focusMode = (FocusMode)value;
-    } else if (asyncContext->enumType.compare("VideoStabilizationMode") == 0) {
-        asyncContext->videoStabilizationMode = (VideoStabilizationMode)value;
-    } else {
-        err = true;
-    }
-}
-
-static napi_value ConvertJSArgsToNative(napi_env env, size_t argc, const napi_value argv[],
-    CameraSessionAsyncContext &asyncContext)
-{
-    string str = "";
-    vector<string> strArr;
-    string order = "";
-    bool err = false;
-    const int32_t refCount = 1;
     napi_value result;
-    auto context = &asyncContext;
-
-    NAPI_ASSERT(env, argv != nullptr, "Argument list is empty");
-
-    for (size_t i = PARAM0; i < argc; i++) {
-        napi_valuetype valueType = napi_undefined;
-        napi_typeof(env, argv[i], &valueType);
-
-        if (i == PARAM0 && (valueType == napi_number || valueType == napi_object)) {
-            FetchOptionsParam(env, argv[PARAM0], asyncContext, err);
-            if (err) {
-                MEDIA_ERR_LOG("fetch options retrieval failed");
-                NAPI_ASSERT(env, false, "type mismatch");
-            }
-        } else if (i == PARAM0 && valueType == napi_function) {
-            napi_create_reference(env, argv[i], refCount, &context->callbackRef);
-            break;
-        } else if (i == PARAM1 && valueType == napi_function) {
-            napi_create_reference(env, argv[i], refCount, &context->callbackRef);
-            break;
-        } else {
-            NAPI_ASSERT(env, false, "type mismatch");
-        }
-    }
-    // Return true napi_value if params are successfully obtained
-    napi_get_boolean(env, true, &result);
+    napi_value propValue;
+    napi_create_object(env, &result);
+    napi_create_double(env, point.x, &propValue);
+    napi_set_named_property(env, result, "x", propValue);
+    napi_create_double(env, point.y, &propValue);
+    napi_set_named_property(env, result, "y", propValue);
     return result;
 }
 
@@ -512,91 +398,10 @@ napi_value CameraSessionNapi::CreateCameraSession(napi_env env)
 void PopulateRetVal(napi_env env, SessionAsyncCallbackModes mode,
     CameraSessionAsyncContext* context, std::unique_ptr<JSAsyncContextOutput> &jsContext)
 {
-    napi_value propValue;
     int32_t ret = 0;
-    napi_value exposureBiasRange = nullptr;
     jsContext->status = true;
     napi_get_undefined(env, &jsContext->error);
     switch (mode) {
-        case BRETBOOL_TRUE:
-            napi_get_boolean(env, context->isSupported, &jsContext->data);
-            MEDIA_DEBUG_LOG("%{public}s, BRETBOOL_TRUE: %{public}d", context->funcName.c_str(), context->isSupported);
-            break;
-        case BRETBOOL_FLASE:
-            napi_get_undefined(env, &jsContext->data);
-            MEDIA_DEBUG_LOG("%{public}s, BRETBOOL_FLASE, return void", context->funcName.c_str());
-            break;
-        case EXPOSURE_BIAS_RANGE_ASYNCALLBACK:
-            if (!context->vecExposureBiasList.empty() && napi_create_array(env, &exposureBiasRange) == napi_ok) {
-                int32_t j = 0;
-                size_t len = context->vecExposureBiasList.size();
-                for (size_t i = 0; i < len; i++) {
-                    int32_t  exposureBias = context->vecExposureBiasList[i];
-                    MEDIA_DEBUG_LOG("%{public}s, EXPOSURE_BIAS_RANGE_ASYNCALLBACK : exposureBias = %{public}d",
-                        context->funcName.c_str(), context->vecExposureBiasList[i]);
-                    napi_value value;
-                    if (napi_create_int32(env, exposureBias, &value) == napi_ok) {
-                        napi_set_element(env, exposureBiasRange, j, value);
-                        j++;
-                    }
-                }
-                jsContext->data = exposureBiasRange;
-                MEDIA_DEBUG_LOG("%{public}s, EXPOSURE_BIAS_RANGE_ASYNCALLBACK ExposureBiasList size : %{public}zu",
-                    context->funcName.c_str(), context->vecExposureBiasList.size());
-            } else {
-                MEDIA_ERR_LOG("vecExposureBiasList is empty or failed to create array!");
-                CameraNapiUtils::CreateNapiErrorObject(env,
-                    "vecExposureBiasList is empty or failed to create array!", jsContext);
-            }
-            break;
-        case EXPOSURE_POINT_ASYNC_CALLBACK:
-            napi_create_object(env, &jsContext->data);
-            napi_create_double(env, context->exposurePoint.x, &propValue);
-            napi_set_named_property(env, jsContext->data, "x", propValue);
-            napi_create_double(env, context->exposurePoint.y, &propValue);
-            napi_set_named_property(env, jsContext->data, "y", propValue);
-            MEDIA_DEBUG_LOG("%{public}s, EXPOSURE_POINT_ASYNC_CALLBACK : exposurePoint x = %{public}f, y = %{public}f",
-                context->funcName.c_str(), context->exposurePoint.x, context->exposurePoint.y);
-            break;
-        case FOCUS_POINT_ASYNC_CALLBACK:
-            napi_create_object(env, &jsContext->data);
-            napi_create_double(env, context->focusPoint.x, &propValue);
-            napi_set_named_property(env, jsContext->data, "x", propValue);
-            napi_create_double(env, context->focusPoint.y, &propValue);
-            napi_set_named_property(env, jsContext->data, "y", propValue);
-            MEDIA_DEBUG_LOG("%{public}s, FOCUS_POINT_ASYNC_CALLBACK : focusPoint x = %{public}f, y = %{public}f",
-                context->funcName.c_str(), context->focusPoint.x, context->focusPoint.y);
-            break;
-        case FLASH_MODE_ASYNC_CALLBACK:
-            NapiCreateInt32Logs(env, context->flashMode, jsContext);
-            MEDIA_INFO_LOG("%{public}s, FLASH_MODE_ASYNC_CALLBACK : flashMode = %{public}d",
-                context->funcName.c_str(), context->flashMode);
-            break;
-        case FOCUS_MODE_ASYNC_CALLBACK:
-            NapiCreateInt32Logs(env, context->focusMode, jsContext);
-            MEDIA_DEBUG_LOG("%{public}s, FOCUS_MODE_ASYNC_CALLBACK : focusMode = %{public}d",
-                context->funcName.c_str(), context->focusMode);
-            break;
-        case EXPOSURE_MODE_ASYNC_CALLBACK:
-            NapiCreateInt32Logs(env, context->exposureMode, jsContext);
-            MEDIA_DEBUG_LOG("%{public}s, EXPOSURE_MODE_ASYNC_CALLBACK : exposureMode = %{public}d",
-                context->funcName.c_str(), context->exposureMode);
-            break;
-        case EXPOSURE_VALUE_ASYNC_CALLBACK:
-            NapiCreateInt32Logs(env, context->exposureValue, jsContext);
-            MEDIA_DEBUG_LOG("%{public}s, EXPOSURE_VALUE_ASYNC_CALLBACK : exposureValue = %{public}d",
-                context->funcName.c_str(), context->exposureValue);
-            break;
-        case FOCAL_LENGTH_ASYNC_CALLBACK:
-            NapiCreateDoubleLogs(env, context->focalLength, jsContext);
-            MEDIA_INFO_LOG("%{public}s, FOCAL_LENGTH_ASYNC_CALLBACK : focalLength = %{public}f",
-                context->funcName.c_str(), context->focalLength);
-            break;
-        case ZOOM_RATIO_ASYNC_CALLBACK:
-            NapiCreateDoubleLogs(env, context->zoomRatio, jsContext);
-            MEDIA_DEBUG_LOG("%{public}s, ZOOM_RATIO_ASYNC_CALLBACK : zoomRatio = %{public}f",
-                context->funcName.c_str(), context->zoomRatio);
-            break;
         case SESSION_START_ASYNC_CALLBACK:
             ret = context->objectInfo->cameraSession_->Start();
             MEDIA_INFO_LOG("Start return : %{public}d", ret);
@@ -657,56 +462,18 @@ napi_value CameraSessionNapi::BeginConfig(napi_env env, napi_callback_info info)
     MEDIA_INFO_LOG("BeginConfig called");
     napi_status status;
     napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= 1, "requires 1 parameter maximum");
-
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "BeginConfig");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::BeginConfig";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->status = true;
-                    context->modeForAsync = BRETBOOL_FLASE;
-                    int32_t ret = context->objectInfo->cameraSession_->BeginConfig();
-                    if (ret != 0) {
-                        context->status = false;
-                        context->errorMsg = "BeginConfig( ) failure";
-                    }
-                    MEDIA_INFO_LOG("BeginConfig return : %{public}d", ret);
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for BeginConfig");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        int32_t ret = cameraSessionNapi->cameraSession_->BeginConfig();
+        CAMERA_NAPI_CHECK_ERROR(env, ret, "beginConfig failed");
     }
-
     return result;
 }
 
@@ -772,48 +539,17 @@ napi_value CameraSessionNapi::LockForControl(napi_env env, napi_callback_info in
     MEDIA_INFO_LOG("BeginConfig called");
     napi_status status;
     napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= 1, "requires 1 parameter maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
-
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "LockForControl");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::LockForControl";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->status = true;
-                    context->objectInfo->cameraSession_->LockForControl();
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for LockForControl");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        cameraSessionNapi->cameraSession_->LockForControl();
     }
 
     return result;
@@ -824,59 +560,26 @@ napi_value CameraSessionNapi::UnlockForControl(napi_env env, napi_callback_info 
     MEDIA_INFO_LOG("UnlockForControl called");
     napi_status status;
     napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= 1, "requires 1 parameter maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
-
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "UnlockForControl");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::UnlockForControl";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->status = true;
-                    context->objectInfo->cameraSession_->UnlockForControl();
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for UnlockForControl");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        cameraSessionNapi->cameraSession_->UnlockForControl();
     }
 
     return result;
 }
 
 napi_value GetJSArgsForCameraInput(napi_env env, size_t argc, const napi_value argv[],
-    CameraSessionAsyncContext &asyncContext)
+    sptr<CaptureInput> &cameraInput)
 {
-    const int32_t refCount = 1;
     napi_value result = nullptr;
-    auto context = &asyncContext;
     CameraInputNapi* cameraInputNapiObj = nullptr;
 
     NAPI_ASSERT(env, argv != nullptr, "Argument list is empty");
@@ -884,23 +587,18 @@ napi_value GetJSArgsForCameraInput(napi_env env, size_t argc, const napi_value a
     for (size_t i = PARAM0; i < argc; i++) {
         napi_valuetype valueType = napi_undefined;
         napi_typeof(env, argv[i], &valueType);
-
         if (i == PARAM0 && valueType == napi_object) {
             napi_unwrap(env, argv[i], reinterpret_cast<void**>(&cameraInputNapiObj));
             if (cameraInputNapiObj != nullptr) {
-                context->cameraInput = cameraInputNapiObj->GetCameraInput();
+                MEDIA_ERR_LOG("cameraInputNapiObj->GetCameraInput()");
+                cameraInput = cameraInputNapiObj->GetCameraInput();
             } else {
                 NAPI_ASSERT(env, false, "type mismatch");
             }
-        } else if (i == PARAM1 && valueType == napi_function) {
-            napi_create_reference(env, argv[i], refCount, &context->callbackRef);
-            break;
         } else {
             NAPI_ASSERT(env, false, "type mismatch");
         }
     }
-
-    // Return true napi_value if params are successfully obtained
     napi_get_boolean(env, true, &result);
     return result;
 }
@@ -910,101 +608,44 @@ napi_value CameraSessionNapi::AddInput(napi_env env, napi_callback_info info)
     MEDIA_INFO_LOG("AddInput called");
     napi_status status;
     napi_value result = nullptr;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_TWO, "requires 2 parameters maximum");
+    CAMERA_NAPI_CHECK_ARGS(env, ARGS_ONE, argc);
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        result = GetJSArgsForCameraInput(env, argc, argv, *asyncContext);
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "AddInput");
-        status = napi_create_async_work(
-            env, nullptr, resource,
-            [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::AddInput";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = true;
-                    context->status = true;
-                    context->isSupported = true;
-                    int32_t ret = context->objectInfo->cameraSession_->AddInput(context->cameraInput);
-                    if (ret != 0) {
-                        context->errorMsg = "AddInput( ) failure";
-                        context->isSupported = false;
-                    }
-                    MEDIA_INFO_LOG("AddInput status : %{public}d", context->status);
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for AddInput");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    sptr<CaptureInput> cameraInput;
+    GetJSArgsForCameraInput(env, argc, argv, cameraInput);
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        int32_t ret = cameraSessionNapi->cameraSession_->AddInput(cameraInput);
+        CAMERA_NAPI_CHECK_ERROR(env, ret, "addInput failed");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::CanAddInput(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("AddInput called");
+    MEDIA_INFO_LOG("CanAddInput called");
     napi_status status;
     napi_value result = nullptr;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_TWO, "requires 2 parameters maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        result = GetJSArgsForCameraInput(env, argc, argv, *asyncContext);
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "CanAddInput");
-        status = napi_create_async_work(
-            env, nullptr, resource,
-            [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::CanAddInput";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->status = true;
-                    context->isSupported = context->objectInfo->cameraSession_->CanAddInput(context->cameraInput);
-                    context->modeForAsync = BRETBOOL_TRUE;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for CanAddInput");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        sptr<CaptureInput> cameraInput;
+        GetJSArgsForCameraInput(env, argc, argv, cameraInput);
+        bool isSupported = cameraSessionNapi->cameraSession_->CanAddInput(cameraInput);
+        napi_get_boolean(env, isSupported, &result);
     }
 
     return result;
@@ -1014,61 +655,31 @@ napi_value CameraSessionNapi::RemoveInput(napi_env env, napi_callback_info info)
 {
     napi_status status;
     napi_value result = nullptr;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_TWO, "requires 2 parameters maximum");
+    CAMERA_NAPI_CHECK_ARGS(env, ARGS_ONE, argc);
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        result = GetJSArgsForCameraInput(env, argc, argv, *asyncContext);
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "RemoveInput");
-        status = napi_create_async_work(
-            env, nullptr, resource,
-            [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::RemoveInput";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->status = true;
-                    int32_t ret = context->objectInfo->cameraSession_->RemoveInput(context->cameraInput);
-                    if (ret != 0) {
-                        context->status = false;
-                        context->errorMsg = "RemoveInput( ) failure";
-                    }
-                    MEDIA_INFO_LOG("RemoveInput return : %{public}d", ret);
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for RemoveInput");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        sptr<CaptureInput> cameraInput;
+        GetJSArgsForCameraInput(env, argc, argv, cameraInput);
+        int32_t ret = cameraSessionNapi->cameraSession_->RemoveInput(cameraInput);
+        CAMERA_NAPI_CHECK_ERROR(env, ret, "removeInput failed");
+        return result;
     }
 
     return result;
 }
 
 napi_value GetJSArgsForCameraOutput(napi_env env, size_t argc, const napi_value argv[],
-    CameraSessionAsyncContext &asyncContext)
+    sptr<CaptureOutput> &cameraOutput)
 {
-    const int32_t refCount = 1;
     napi_value result = nullptr;
-    auto context = &asyncContext;
     PreviewOutputNapi* previewOutputNapiObj = nullptr;
     PhotoOutputNapi* photoOutputNapiObj = nullptr;
     VideoOutputNapi* videoOutputNapiObj = nullptr;
@@ -1084,31 +695,27 @@ napi_value GetJSArgsForCameraOutput(napi_env env, size_t argc, const napi_value 
             if (PreviewOutputNapi::IsPreviewOutput(env, argv[i])) {
                 MEDIA_INFO_LOG("preview output adding..");
                 napi_unwrap(env, argv[i], reinterpret_cast<void**>(&previewOutputNapiObj));
-                context->cameraOutput = previewOutputNapiObj->GetPreviewOutput();
+                cameraOutput = previewOutputNapiObj->GetPreviewOutput();
             } else if (PhotoOutputNapi::IsPhotoOutput(env, argv[i])) {
                 MEDIA_INFO_LOG("photo output adding..");
                 napi_unwrap(env, argv[i], reinterpret_cast<void**>(&photoOutputNapiObj));
-                context->cameraOutput = photoOutputNapiObj->GetPhotoOutput();
+                cameraOutput = photoOutputNapiObj->GetPhotoOutput();
             } else if (VideoOutputNapi::IsVideoOutput(env, argv[i])) {
                 MEDIA_INFO_LOG("video output adding..");
                 napi_unwrap(env, argv[i], reinterpret_cast<void**>(&videoOutputNapiObj));
-                context->cameraOutput = videoOutputNapiObj->GetVideoOutput();
+                cameraOutput = videoOutputNapiObj->GetVideoOutput();
             } else if (MetadataOutputNapi::IsMetadataOutput(env, argv[i])) {
                 MEDIA_INFO_LOG("metadata output adding..");
                 napi_unwrap(env, argv[i], reinterpret_cast<void**>(&metadataOutputNapiObj));
-                context->cameraOutput = metadataOutputNapiObj->GetMetadataOutput();
+                cameraOutput = metadataOutputNapiObj->GetMetadataOutput();
             } else {
                 MEDIA_INFO_LOG("invalid output ..");
                 NAPI_ASSERT(env, false, "type mismatch");
             }
-        } else if (i == PARAM1 && valueType == napi_function) {
-            napi_create_reference(env, argv[i], refCount, &context->callbackRef);
-            break;
         } else {
             NAPI_ASSERT(env, false, "type mismatch");
         }
     }
-
     // Return true napi_value if params are successfully obtained
     napi_get_boolean(env, true, &result);
     return result;
@@ -1119,52 +726,22 @@ napi_value CameraSessionNapi::AddOutput(napi_env env, napi_callback_info info)
     MEDIA_INFO_LOG("AddOutput called");
     napi_status status;
     napi_value result = nullptr;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_TWO, "requires 2 parameters maximum");
+    CAMERA_NAPI_CHECK_ARGS(env, ARGS_ONE, argc);
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        result = GetJSArgsForCameraOutput(env, argc, argv, *asyncContext);
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "AddOutput");
-        status = napi_create_async_work(
-            env, nullptr, resource,
-            [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::AddOutput";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->status = true;
-                    int32_t ret = context->objectInfo->cameraSession_->AddOutput(context->cameraOutput);
-                    if (ret != 0) {
-                        context->status = false;
-                        context->errorMsg = "AddOutput( ) failure";
-                    }
-                    MEDIA_INFO_LOG("AddOutput return : %{public}d", ret);
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for AddOutput");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        sptr<CaptureOutput> cameraOutput;
+        result = GetJSArgsForCameraOutput(env, argc, argv, cameraOutput);
+        int32_t ret = cameraSessionNapi->cameraSession_->AddOutput(cameraOutput);
+        CAMERA_NAPI_CHECK_ERROR(env, ret, "addOutput failed");
     }
-
     return result;
 }
 
@@ -1173,46 +750,20 @@ napi_value CameraSessionNapi::CanAddOutput(napi_env env, napi_callback_info info
     MEDIA_INFO_LOG("CanAddOutput called");
     napi_status status;
     napi_value result = nullptr;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_TWO, "requires 2 parameters maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        result = GetJSArgsForCameraOutput(env, argc, argv, *asyncContext);
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "CanAddOutput");
-        status = napi_create_async_work(
-            env, nullptr, resource,
-            [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::CanAddOutput";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->status = true;
-                    context->isSupported = context->objectInfo->cameraSession_->CanAddOutput(context->cameraOutput);
-                    context->modeForAsync = BRETBOOL_TRUE;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for CanAddOutput");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        sptr<CaptureOutput> cameraOutput;
+        result = GetJSArgsForCameraOutput(env, argc, argv, cameraOutput);
+        bool isSupported = cameraSessionNapi->cameraSession_->CanAddOutput(cameraOutput);
+        napi_get_boolean(env, isSupported, &result);
     }
 
     return result;
@@ -1223,50 +774,21 @@ napi_value CameraSessionNapi::RemoveOutput(napi_env env, napi_callback_info info
     MEDIA_INFO_LOG("RemoveOutput called");
     napi_status status;
     napi_value result = nullptr;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_TWO, "requires 2 parameters maximum");
+    CAMERA_NAPI_CHECK_ARGS(env, ARGS_ONE, argc);
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        result = GetJSArgsForCameraOutput(env, argc, argv, *asyncContext);
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "RemoveOutput");
-        status = napi_create_async_work(
-            env, nullptr, resource,
-            [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::RemoveOutput";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->status = true;
-                    int32_t ret = context->objectInfo->cameraSession_->RemoveOutput(context->cameraOutput);
-                    if (ret != 0) {
-                        context->status = false;
-                        context->errorMsg = "RemoveOutput( ) failure";
-                    }
-                    MEDIA_INFO_LOG("RemoveOutput return : %{public}d", ret);
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for RemoveOutput");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        sptr<CaptureOutput> cameraOutput;
+        result = GetJSArgsForCameraOutput(env, argc, argv, cameraOutput);
+        int32_t ret = cameraSessionNapi->cameraSession_->RemoveOutput(cameraOutput);
+        CAMERA_NAPI_CHECK_ERROR(env, ret, "removeOutput failed");
     }
 
     return result;
@@ -1431,125 +953,46 @@ napi_value CameraSessionNapi::IsVideoStabilizationModeSupported(napi_env env, na
 {
     napi_status status;
     napi_value result = nullptr;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, (argc == ARGS_ONE || argc == ARGS_TWO), "requires 2 parameter maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        asyncContext->enumType = "VideoStabilizationMode";
-        result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "IsVideoStabilizationModeSupported");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::IsVideoStabilizationModeSupported";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = true;
-                    context->status = true;
-                    context->isSupported = context->objectInfo->cameraSession_->
-                        IsVideoStabilizationModeSupported(context->videoStabilizationMode);
-                    context->modeForAsync = BRETBOOL_TRUE;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG(
-                "Failed to create napi_create_async_work for CameraSessionNapi::IsVideoStabilizationModeSupported");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        int32_t value;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        VideoStabilizationMode videoStabilizationMode = (VideoStabilizationMode)value;
+        bool isSupported = cameraSessionNapi->cameraSession_->
+                        IsVideoStabilizationModeSupported(videoStabilizationMode);
+        napi_get_boolean(env, isSupported, &result);
     }
 
     return result;
-}
-
-void GetActiveVideoStabilizationModeAsyncCallbackComplete(napi_env env, napi_status status, void* data)
-{
-    auto context = static_cast<CameraSessionAsyncContext*>(data);
-
-    CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(context, "Async context is null");
-
-    std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
-    jsContext->status = true;
-    napi_get_undefined(env, &jsContext->error);
-
-    status = napi_create_int32(env, context->videoStabilizationMode, &jsContext->data);
-    if (status != napi_ok) {
-        MEDIA_ERR_LOG("GetActiveVideoStabilizationMode:napi_create_int32() failed");
-            CameraNapiUtils::CreateNapiErrorObject(env,
-                "GetActiveVideoStabilizationMode:napi_create_int32() failed", jsContext);
-    }
-
-    if (!context->funcName.empty() && context->taskId > 0) {
-        // Finish async trace
-        CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
-        jsContext->funcName = context->funcName;
-    }
-
-    if (context->work != nullptr) {
-        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef,
-                                             context->work, *jsContext);
-    }
-    delete context;
 }
 
 napi_value CameraSessionNapi::GetActiveVideoStabilizationMode(napi_env env, napi_callback_info info)
 {
     napi_status status;
     napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "GetActiveVideoStabilizationMode");
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                if (context->objectInfo != nullptr) {
-                    context->videoStabilizationMode = context->objectInfo->cameraSession_->
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        VideoStabilizationMode videoStabilizationMode = cameraSessionNapi->cameraSession_->
                         GetActiveVideoStabilizationMode();
-                    context->status = true;
-                }
-            },
-            GetActiveVideoStabilizationModeAsyncCallbackComplete, static_cast<void*>(asyncContext.get()),
-            &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG(
-                "Failed to create napi_create_async_work for CameraSessionNapi::GetActiveVideoStabilizationMode");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+        napi_create_int32(env, videoStabilizationMode, &result);
     }
 
     return result;
@@ -1559,51 +1002,26 @@ napi_value CameraSessionNapi::SetVideoStabilizationMode(napi_env env, napi_callb
 {
     napi_status status;
     napi_value result = nullptr;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, (argc == ARGS_ONE || argc == ARGS_TWO), "requires 2 parameter maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        asyncContext->enumType = "VideoStabilizationMode";
-        result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "SetVideoStabilizationMode");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::SetVideoStabilizationMode";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                if (context->objectInfo != nullptr) {
-                    if (context->objectInfo->cameraSession_->
-                        IsVideoStabilizationModeSupported(context->videoStabilizationMode)) {
-                        context->bRetBool = false;
-                        context->status = true;
-                        context->objectInfo->cameraSession_->
-                        SetVideoStabilizationMode(context->videoStabilizationMode);
-                    } else {
-                        MEDIA_ERR_LOG("Video Stabilization Mode is not supported");
-                        context->errorMsg = "Video Stabilization Mode is not supported";
-                    }
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::SetVideoStabilizationMode");
-            napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        int32_t value;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        VideoStabilizationMode videoStabilizationMode = (VideoStabilizationMode)value;
+        if (cameraSessionNapi->cameraSession_->
+                                IsVideoStabilizationModeSupported(videoStabilizationMode)) {
+            cameraSessionNapi->cameraSession_->SetVideoStabilizationMode(videoStabilizationMode);
         } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
+            MEDIA_ERR_LOG("Video Stabilization Mode is not supported");
+            napi_throw_error(env, nullptr, "Video Stabilization Mode is not supported");
         }
     }
 
@@ -1614,51 +1032,21 @@ napi_value CameraSessionNapi::HasFlash(napi_env env, napi_callback_info info)
 {
     napi_status status;
     napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
-
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "HasFlash");
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::HasFlash";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = true;
-                    std::vector<FlashMode> list;
-                    list = context->objectInfo->cameraSession_->GetSupportedFlashModes();
-                    context->status = true;
-                    context->isSupported = !(list.empty());
-                    context->modeForAsync = BRETBOOL_TRUE;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for HasFlash");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        std::vector<FlashMode> list = cameraSessionNapi->cameraSession_->GetSupportedFlashModes();
+        bool isSupported = !(list.empty());
+        napi_get_boolean(env, isSupported, &result);
     }
-
     return result;
 }
 
@@ -1666,47 +1054,22 @@ napi_value CameraSessionNapi::IsFlashModeSupported(napi_env env, napi_callback_i
 {
     napi_status status;
     napi_value result = nullptr;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, (argc == ARGS_ONE || argc == ARGS_TWO), "requires 2 parameters maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        asyncContext->enumType = "FlashMode";
-        result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "IsFlashModeSupported");
-        status = napi_create_async_work(
-            env, nullptr, resource,
-            [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::IsFlashModeSupported";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = true;
-                    context->isSupported =
-                        context->objectInfo->cameraSession_->IsFlashModeSupported(context->flashMode);
-                    context->status = true;
-                    context->modeForAsync = BRETBOOL_TRUE;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for IsFlashModeSupported");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        int32_t value;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        FlashMode flashMode = (FlashMode)value;
+        bool isSupported = cameraSessionNapi->cameraSession_->IsFlashModeSupported(flashMode);
+        napi_get_boolean(env, isSupported, &result);
     }
 
     return result;
@@ -1717,54 +1080,29 @@ napi_value CameraSessionNapi::SetFlashMode(napi_env env, napi_callback_info info
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, (argc == ARGS_ONE || argc == ARGS_TWO), "requires 2 parameters maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        asyncContext->enumType = "FlashMode";
-        result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "SetFlashMode");
-        status = napi_create_async_work(
-            env, nullptr, resource,
-            [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::SetFlashMode";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    if (context->objectInfo->cameraSession_->IsFlashModeSupported(context->flashMode)) {
-                        context->objectInfo->cameraSession_->LockForControl();
-                        context->objectInfo->cameraSession_->SetFlashMode(context->flashMode);
-                        context->objectInfo->cameraSession_->UnlockForControl();
-                        context->status = true;
-                    } else {
-                        MEDIA_ERR_LOG("Flash mode is not supported");
-                        context->errorMsg = "Flash mode is not supported";
-                    }
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for SetFlashMode");
-            napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        int32_t value;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        FlashMode flashMode = (FlashMode)value;
+        if (cameraSessionNapi->cameraSession_->IsFlashModeSupported(flashMode)) {
+            cameraSessionNapi->cameraSession_->LockForControl();
+            cameraSessionNapi->cameraSession_->SetFlashMode(flashMode);
+            cameraSessionNapi->cameraSession_->UnlockForControl();
         } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
+            MEDIA_ERR_LOG("Flash mode is not supported");
+            napi_throw_error(env, nullptr, "Flash mode is not supported");
         }
     }
-
     return result;
 }
 
@@ -1772,46 +1110,18 @@ napi_value CameraSessionNapi::GetFlashMode(napi_env env, napi_callback_info info
 {
     napi_status status;
     napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
-
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "GetFlashMode");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::GetFlashMode";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                if (context->objectInfo != nullptr) {
-                    context->flashMode = context->objectInfo->cameraSession_->GetFlashMode();
-                    context->status = true;
-                    context->modeForAsync = FLASH_MODE_ASYNC_CALLBACK;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for GetFlashMode");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        FlashMode flashMode = cameraSessionNapi->cameraSession_->GetFlashMode();
+        napi_create_int32(env, flashMode, &result);
     }
 
     return result;
@@ -1821,46 +1131,24 @@ napi_value CameraSessionNapi::IsExposureModeSupported(napi_env env, napi_callbac
 {
     napi_status status;
     napi_value result = nullptr;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, (argc == ARGS_ONE || argc == ARGS_TWO), "requires 2 parameters maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        asyncContext->enumType = "ExposureMode";
-        result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "IsExposureModeSupported");
-        status = napi_create_async_work(
-            env, nullptr, resource,
-            [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                // Start async trace
-                context->funcName = "CameraSessionNapi::IsExposureModeSupported";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                context->bRetBool = true;
-                context->status = true;
-                context->isSupported = context->objectInfo->cameraSession_->
-                    IsExposureModeSupported(static_cast<ExposureMode>(context->exposureMode));
-                context->modeForAsync = BRETBOOL_TRUE;
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for IsExposureModeSupported");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        int32_t value;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        ExposureMode exposureMode = (ExposureMode)value;
+        bool isSupported = cameraSessionNapi->cameraSession_->
+                    IsExposureModeSupported(static_cast<ExposureMode>(exposureMode));
+        napi_get_boolean(env, isSupported, &result);
     }
-
     return result;
 }
 
@@ -1868,47 +1156,19 @@ napi_value CameraSessionNapi::GetExposureMode(napi_env env, napi_callback_info i
 {
     napi_status status;
     napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
-
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "GetExposureMode");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::GetExposureMode";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                if (context->objectInfo != nullptr) {
-                    context->exposureMode = context->objectInfo->cameraSession_->GetExposureMode();
-                    context->status = true;
-                    context->modeForAsync = EXPOSURE_MODE_ASYNC_CALLBACK;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for GetExposureMode");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        ExposureMode exposureMode = cameraSessionNapi->cameraSession_->GetExposureMode();
+        napi_create_int32(env, exposureMode, &result);
     }
 
     return result;
@@ -1919,52 +1179,27 @@ napi_value CameraSessionNapi::SetExposureMode(napi_env env, napi_callback_info i
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, (argc == ARGS_ONE || argc == ARGS_TWO), "requires 2 parameters maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        asyncContext->enumType = "ExposureMode";
-        result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "SetExposureMode");
-        status = napi_create_async_work(
-            env, nullptr, resource,
-            [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::SetExposureMode";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                if (context->objectInfo != nullptr) {
-                    if (context->objectInfo->cameraSession_->IsExposureModeSupported(context->exposureMode)) {
-                        context->bRetBool = false;
-                        context->objectInfo->cameraSession_->LockForControl();
-                        context->objectInfo->cameraSession_->SetExposureMode(context->exposureMode);
-                        context->objectInfo->cameraSession_->UnlockForControl();
-                        context->status = true;
-                        context->modeForAsync = BRETBOOL_FLASE;
-                    } else {
-                        MEDIA_ERR_LOG("Exposure mode is not supported");
-                        context->errorMsg = "Exposure mode is not supported";
-                    }
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for SetExposureMode");
-            napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        int32_t value;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        ExposureMode exposureMode = (ExposureMode)value;
+        if (cameraSessionNapi->cameraSession_->IsExposureModeSupported(exposureMode)) {
+            cameraSessionNapi->cameraSession_->LockForControl();
+            cameraSessionNapi->cameraSession_->SetExposureMode(exposureMode);
+            cameraSessionNapi->cameraSession_->UnlockForControl();
         } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
+            MEDIA_ERR_LOG("Exposure mode is not supported");
+            napi_throw_error(env, nullptr, "Exposure mode is not supported");
         }
     }
 
@@ -1976,47 +1211,24 @@ napi_value CameraSessionNapi::SetMeteringPoint(napi_env env, napi_callback_info 
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, (argc == ARGS_ONE || argc == ARGS_TWO), "requires 2 parameters maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        asyncContext->enumType = "ExposurePoint";
-        result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "SetMeteringPoint");
-        status = napi_create_async_work(
-            env, nullptr, resource,
-            [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::SetMeteringPoint";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->objectInfo->cameraSession_->LockForControl();
-                    context->objectInfo->cameraSession_->SetMeteringPoint(context->exposurePoint);
-                    context->objectInfo->cameraSession_->UnlockForControl();
-                    context->status = true;
-                    context->modeForAsync = BRETBOOL_FLASE;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for SetMeteringPoint");
-            napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        Point exposurePoint;
+        if (GetPointProperties(env, argv[PARAM0], exposurePoint) == 0) {
+            cameraSessionNapi->cameraSession_->LockForControl();
+            cameraSessionNapi->cameraSession_->SetMeteringPoint(exposurePoint);
+            cameraSessionNapi->cameraSession_->UnlockForControl();
         } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
+            MEDIA_ERR_LOG("get point failed");
         }
     }
 
@@ -2027,46 +1239,18 @@ napi_value CameraSessionNapi::GetMeteringPoint(napi_env env, napi_callback_info 
 {
     napi_status status;
     napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
-
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "GetMeteringPoint");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::GetMeteringPoint";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                if (context->objectInfo != nullptr) {
-                    context->exposurePoint = context->objectInfo->cameraSession_->GetMeteringPoint();
-                    context->status = true;
-                    context->modeForAsync = EXPOSURE_POINT_ASYNC_CALLBACK;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for GetMeteringPoint");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        Point exposurePoint = cameraSessionNapi->cameraSession_->GetMeteringPoint();
+        return GetPointNapiValue(env, exposurePoint);
     }
 
     return result;
@@ -2076,46 +1260,31 @@ napi_value CameraSessionNapi::GetExposureBiasRange(napi_env env, napi_callback_i
 {
     napi_status status;
     napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
-
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "GetExposureBiasRange");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::GetExposureBiasRange";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                if (context->objectInfo != nullptr) {
-                    context->vecExposureBiasList = context->objectInfo->cameraSession_->GetExposureBiasRange();
-                    context->status = true;
-                    context->modeForAsync = EXPOSURE_BIAS_RANGE_ASYNCALLBACK;
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        std::vector<int32_t> vecExposureBiasList = cameraSessionNapi->cameraSession_->GetExposureBiasRange();
+        if (!vecExposureBiasList.empty() && napi_create_array(env, &result) == napi_ok) {
+            int32_t j = 0;
+            size_t len = vecExposureBiasList.size();
+            for (size_t i = 0; i < len; i++) {
+                int32_t  exposureBias = vecExposureBiasList[i];
+                MEDIA_DEBUG_LOG("EXPOSURE_BIAS_RANGE : exposureBias = %{public}d", vecExposureBiasList[i]);
+                napi_value value;
+                if (napi_create_int32(env, exposureBias, &value) == napi_ok) {
+                    napi_set_element(env, result, j, value);
+                    j++;
                 }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for GetExposureBiasRange");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
+            }
+            MEDIA_DEBUG_LOG("EXPOSURE_BIAS_RANGE ExposureBiasList size : %{public}zu", vecExposureBiasList.size());
         }
     }
 
@@ -2126,46 +1295,20 @@ napi_value CameraSessionNapi::GetExposureValue(napi_env env, napi_callback_info 
 {
     napi_status status;
     napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
-
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "GetExposureValue");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                if (context->objectInfo != nullptr) {
-                    context->exposureValue = context->objectInfo->cameraSession_->GetExposureValue();
-                    context->status = true;
-                    context->modeForAsync = EXPOSURE_VALUE_ASYNC_CALLBACK;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for GetExposureValue");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi!= nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        int32_t exposureValue = cameraSessionNapi->cameraSession_->GetExposureValue();
+        napi_create_int32(env, exposureValue, &result);
     }
-
     return result;
 }
 
@@ -2174,48 +1317,22 @@ napi_value CameraSessionNapi::SetExposureBias(napi_env env, napi_callback_info i
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, (argc == ARGS_ONE || argc == ARGS_TWO), "requires 2 parameters maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        asyncContext->enumType = "ExposureValue";
-        result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "SetExposureBias");
-        status = napi_create_async_work(
-            env, nullptr, resource,
-            [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::SetExposureBias";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->objectInfo->cameraSession_->LockForControl();
-                    context->objectInfo->cameraSession_->SetExposureBias(context->exposureValue);
-                    context->objectInfo->cameraSession_->UnlockForControl();
-                    context->status = true;
-                    context->modeForAsync = BRETBOOL_FLASE;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for SetExposureBias");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        int32_t exposureValue;
+        napi_get_value_int32(env, argv[0], &exposureValue);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        cameraSessionNapi->cameraSession_->SetExposureBias(exposureValue);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
     }
 
     return result;
@@ -2223,49 +1340,26 @@ napi_value CameraSessionNapi::SetExposureBias(napi_env env, napi_callback_info i
 
 napi_value CameraSessionNapi::IsFocusModeSupported(napi_env env, napi_callback_info info)
 {
+    MEDIA_INFO_LOG("IsFocusModeSupported called");
     napi_status status;
     napi_value result = nullptr;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, (argc == ARGS_ONE || argc == ARGS_TWO), "requires 2 parameters maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        asyncContext->enumType = "FocusMode";
-        result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "IsFocusModeSupported");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::IsFocusModeSupported";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = true;
-                    context->status = true;
-                    context->isSupported = context->objectInfo->cameraSession_->
-                        IsFocusModeSupported(static_cast<FocusMode>(context->focusMode));
-                    context->modeForAsync = BRETBOOL_TRUE;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for IsFocusModeSupported");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        int32_t value;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        FocusMode focusMode = (FocusMode)value;
+        bool isSupported = cameraSessionNapi->cameraSession_->
+                        IsFocusModeSupported(focusMode);
+        napi_get_boolean(env, isSupported, &result);
     }
 
     return result;
@@ -2275,47 +1369,19 @@ napi_value CameraSessionNapi::GetFocalLength(napi_env env, napi_callback_info in
 {
     napi_status status;
     napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
-
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "GetFocalLength");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::GetFocalLength";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                if (context->objectInfo != nullptr) {
-                    context->focalLength = context->objectInfo->cameraSession_->GetFocalLength();
-                    context->status = true;
-                    context->modeForAsync = FOCAL_LENGTH_ASYNC_CALLBACK;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for GetFocalLength");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        float focalLength = cameraSessionNapi->cameraSession_->GetFocalLength();
+        napi_create_double(env, focalLength, &result);
     }
 
     return result;
@@ -2326,47 +1392,24 @@ napi_value CameraSessionNapi::SetFocusPoint(napi_env env, napi_callback_info inf
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, (argc == ARGS_ONE || argc == ARGS_TWO), "requires 2 parameters maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        asyncContext->enumType = "FocusPoint";
-        result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "SetFocusPoint");
-        status = napi_create_async_work(
-            env, nullptr, resource,
-            [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::SetFocusPoint";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->objectInfo->cameraSession_->LockForControl();
-                    context->objectInfo->cameraSession_->SetFocusPoint(context->focusPoint);
-                    context->objectInfo->cameraSession_->UnlockForControl();
-                    context->status = true;
-                    context->modeForAsync = BRETBOOL_FLASE;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for SetExposurePoint");
-            napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        Point focusPoint;
+        if (GetPointProperties(env, argv[PARAM0], focusPoint) == 0) {
+            cameraSessionNapi->cameraSession_->LockForControl();
+            cameraSessionNapi->cameraSession_->SetFocusPoint(focusPoint);
+            cameraSessionNapi->cameraSession_->UnlockForControl();
         } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
+            MEDIA_ERR_LOG("get point failed");
         }
     }
 
@@ -2377,47 +1420,19 @@ napi_value CameraSessionNapi::GetFocusPoint(napi_env env, napi_callback_info inf
 {
     napi_status status;
     napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
-
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "GetFocusPoint");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::GetFocusPoint";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                if (context->objectInfo != nullptr) {
-                    context->focusPoint = context->objectInfo->cameraSession_->GetFocusPoint();
-                    context->status = true;
-                    context->modeForAsync = FOCUS_POINT_ASYNC_CALLBACK;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for GetFocusPoint");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        Point focusPoint = cameraSessionNapi->cameraSession_->GetFocusPoint();
+        return GetPointNapiValue(env, focusPoint);
     }
 
     return result;
@@ -2427,47 +1442,19 @@ napi_value CameraSessionNapi::GetFocusMode(napi_env env, napi_callback_info info
 {
     napi_status status;
     napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
-
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "GetFocusMode");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::GetFocusMode";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                if (context->objectInfo != nullptr) {
-                    context->focusMode = context->objectInfo->cameraSession_->GetFocusMode();
-                    context->status = true;
-                    context->modeForAsync = FOCUS_MODE_ASYNC_CALLBACK;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for GetFocusMode");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        FocusMode focusMode = cameraSessionNapi->cameraSession_->GetFocusMode();
+        napi_create_int32(env, focusMode, &result);
     }
 
     return result;
@@ -2478,149 +1465,66 @@ napi_value CameraSessionNapi::SetFocusMode(napi_env env, napi_callback_info info
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, (argc == ARGS_ONE || argc == ARGS_TWO), "requires 2 parameters maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        asyncContext->enumType = "FocusMode";
-        result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "SetFocusMode");
-        status = napi_create_async_work(
-            env, nullptr, resource,
-            [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::SetFocusMode";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->status = true;
-                    context->modeForAsync = BRETBOOL_FLASE;
-                    if (context->objectInfo->cameraSession_->IsFocusModeSupported(context->focusMode)) {
-                        context->objectInfo->cameraSession_->LockForControl();
-                        context->objectInfo->cameraSession_->
-                                SetFocusMode(static_cast<FocusMode>(context->focusMode));
-                        context->objectInfo->cameraSession_->UnlockForControl();
-                    } else {
-                        MEDIA_ERR_LOG("Focus mode is not supported");
-                        context->status = false;
-                        context->errorMsg = "Focus mode is not supported";
-                    }
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for SetFocusMode");
-            napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        int32_t value;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        FocusMode focusMode = (FocusMode)value;
+        if (cameraSessionNapi->cameraSession_->IsFocusModeSupported(focusMode)) {
+            cameraSessionNapi->cameraSession_->LockForControl();
+            cameraSessionNapi->cameraSession_->
+                    SetFocusMode(static_cast<FocusMode>(focusMode));
+            cameraSessionNapi->cameraSession_->UnlockForControl();
         } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
+            MEDIA_ERR_LOG("Focus mode is not supported");
+            napi_throw_error(env, nullptr, "Focus mode is not supported");
         }
     }
 
     return result;
 }
 
-void GetZoomRatioRangeAsyncCallbackComplete(napi_env env, napi_status status, void* data)
-{
-    auto context = static_cast<CameraSessionAsyncContext*>(data);
-    napi_value zoomRatioRange = nullptr;
-
-    CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(context, "Async context is null");
-
-    std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
-    jsContext->status = true;
-    napi_get_undefined(env, &jsContext->error);
-    if (!context->vecZoomRatioList.empty() && napi_create_array(env, &zoomRatioRange) == napi_ok) {
-        int32_t j = 0;
-        for (size_t i = 0; i < context->vecZoomRatioList.size(); i++) {
-            int32_t zoomRatio = context->vecZoomRatioList[i];
-            MEDIA_DEBUG_LOG("GetZoomRatioRangeAsyncCallbackComplete index = %{public}zu, zoomRatio = %{public}d",
-                i, zoomRatio);
-            napi_value value;
-            if (napi_create_double(env, zoomRatio, &value) == napi_ok) {
-                napi_set_element(env, zoomRatioRange, j, value);
-                j++;
-            }
-        }
-        jsContext->data = zoomRatioRange;
-    } else {
-        MEDIA_ERR_LOG("vecSupportedZoomRatioList is empty or failed to create array!");
-        CameraNapiUtils::CreateNapiErrorObject(env,
-            "vecSupportedZoomRatioList is empty or failed to create array!", jsContext);
-    }
-
-    if (!context->funcName.empty() && context->taskId > 0) {
-        // Finish async trace
-        CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
-        jsContext->funcName = context->funcName;
-    }
-
-    if (context->work != nullptr) {
-        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef,
-                                             context->work, *jsContext);
-    }
-    delete context;
-}
-
 napi_value CameraSessionNapi::GetZoomRatioRange(napi_env env, napi_callback_info info)
 {
     napi_status status;
     napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        std::vector<float> vecZoomRatioList = cameraSessionNapi->cameraSession_->GetZoomRatioRange();
+        MEDIA_INFO_LOG("CameraSessionNapi::GetZoomRatioRange len = %{public}zu",
+            vecZoomRatioList.size());
 
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "GetSupportedZoomRatioRange");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::GetZoomRatioRange";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                if (context->objectInfo != nullptr) {
-                    context->vecZoomRatioList = context->objectInfo->cameraSession_->GetZoomRatioRange();
-                    context->status = true;
-                    MEDIA_INFO_LOG("CameraSessionNapi::GetZoomRatioRange len = %{public}zu",
-                        context->vecZoomRatioList.size());
-                } else {
-                    MEDIA_ERR_LOG("CameraSessionNapi::GetZoomRatioRange objectInfo = null");
+        if (!vecZoomRatioList.empty() && napi_create_array(env, &result) == napi_ok) {
+            int32_t j = 0;
+            for (size_t i = 0; i < vecZoomRatioList.size(); i++) {
+                float zoomRatio = vecZoomRatioList[i];
+                napi_value value;
+                status = napi_create_double(env, zoomRatio, &value);
+                if (status == napi_ok) {
+                    napi_set_element(env, result, j, value);
+                    j++;
                 }
-            },
-            GetZoomRatioRangeAsyncCallbackComplete, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for GetZoomRatioRange");
-            napi_get_undefined(env, &result);
+            }
         } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
+            MEDIA_ERR_LOG("vecSupportedZoomRatioList is empty or failed to create array!");
         }
     }
 
@@ -2631,47 +1535,19 @@ napi_value CameraSessionNapi::GetZoomRatio(napi_env env, napi_callback_info info
 {
     napi_status status;
     napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
-
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "GetZoomRatio");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::GetZoomRatio";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                if (context->objectInfo != nullptr) {
-                    context->zoomRatio = context->objectInfo->cameraSession_->GetZoomRatio();
-                    context->status = true;
-                    context->modeForAsync = ZOOM_RATIO_ASYNC_CALLBACK;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for GetZoomRatio");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        float zoomRatio = cameraSessionNapi->cameraSession_->GetZoomRatio();
+        napi_create_double(env, zoomRatio, &result);
     }
 
     return result;
@@ -2682,48 +1558,23 @@ napi_value CameraSessionNapi::SetZoomRatio(napi_env env, napi_callback_info info
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, (argc == ARGS_ONE || argc == ARGS_TWO), "requires 2 parameters maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraSessionAsyncContext> asyncContext = std::make_unique<CameraSessionAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        asyncContext->enumType = "ZoomRatio";
-        result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "SetZoomRatio");
-        status = napi_create_async_work(
-            env, nullptr, resource,
-            [](napi_env env, void* data) {
-                auto context = static_cast<CameraSessionAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraSessionNapi::SetZoomRatio";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraSessionTaskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->objectInfo->cameraSession_->LockForControl();
-                    context->objectInfo->cameraSession_->SetZoomRatio(context->zoomRatio);
-                    context->objectInfo->cameraSession_->UnlockForControl();
-                    context->status = true;
-                    context->modeForAsync = BRETBOOL_FLASE;
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for SetZoomRatio");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    CameraSessionNapi* cameraSessionNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
+        double zoomRatio;
+        napi_get_value_double(env, argv[PARAM0], &zoomRatio);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        cameraSessionNapi->cameraSession_->SetZoomRatio((float)zoomRatio);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
     }
 
     return result;
