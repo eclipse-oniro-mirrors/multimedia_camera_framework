@@ -109,6 +109,35 @@
         }                                              \
     } while (0)
 
+#define CAMERA_NAPI_CHECK_ARGS(env, limit, argc)                      \
+    do {                                                              \
+        if ((limit != argc)) {                                        \
+            std::string errorCode = std::to_string(INVALID_ARGUMENT); \
+            napi_throw_error(env, errorCode.c_str(),                  \
+                             "wrong number of arguments");            \
+            return nullptr;                                           \
+        }                                                             \
+    } while (0);
+
+#define CAMERA_NAPI_CHECK_ERROR(env, ret, msg)                        \
+    do {                                                              \
+        if ((ret != 0)) {                                             \
+            std::string errorCode = std::to_string(ret);              \
+            napi_throw_error(env, errorCode.c_str(), msg);            \
+            return nullptr;                                           \
+        }                                                             \
+    } while (0);
+
+#define CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, isCommitConfig)            \
+    do {                                                                \
+        if ((!isCommitConfig)) {                                        \
+            std::string errorCode = std::to_string(SESSION_NOT_CONFIG); \
+            napi_throw_error(env, errorCode.c_str(),                    \
+                             "session not config");                     \
+            return nullptr;                                             \
+        }                                                               \
+    } while (0);    
+
 namespace OHOS {
 namespace CameraStandard {
 /* Constants for array index */
@@ -117,10 +146,14 @@ const int32_t PARAM1 = 1;
 const int32_t PARAM2 = 2;
 
 /* Constants for array size */
+const int32_t ARGS_ZERO = 0;
 const int32_t ARGS_ONE = 1;
 const int32_t ARGS_TWO = 2;
 const int32_t ARGS_THREE = 3;
 const int32_t SIZE = 100;
+
+const int32_t INVALID_ARGUMENT = 7400101;
+const int32_t SESSION_NOT_CONFIG = 7400102;
 
 struct AsyncContext {
     napi_env env;

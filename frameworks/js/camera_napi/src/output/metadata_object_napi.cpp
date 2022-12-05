@@ -19,12 +19,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-using OHOS::HiviewDFX::HiLog;
-using OHOS::HiviewDFX::HiLogLabel;
-
-namespace {
-    constexpr HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "MetadataObjectNapi"};
-}
 
 thread_local napi_ref MetadataObjectNapi::sConstructor_ = nullptr;
 thread_local sptr<MetadataObject> g_metadataObject;
@@ -130,307 +124,122 @@ sptr<MetadataObject> MetadataObjectNapi::GetMetadataObject()
     return metadataObject_;
 }
 
-static void GetTypeAsyncCallbackComplete(napi_env env, napi_status status, void* data)
-{
-    auto context = static_cast<MetadataObjectAsyncContext*>(data);
-    CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(context, "Async context is null");
-
-    std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
-    jsContext->status = true;
-    napi_get_undefined(env, &jsContext->error);
-
-    int32_t iProp;
-    CameraNapiUtils::MapMetadataObjSupportedTypesEnum(context->metadataObjType, iProp);
-    status = napi_create_int32(env, iProp, &jsContext->data);
-    if (status != napi_ok) {
-        MEDIA_ERR_LOG("GetTypeAsyncCallbackComplete:napi_create_int32() failed");
-        CameraNapiUtils::CreateNapiErrorObject(env,
-            "GetTypeAsyncCallbackComplete:napi_create_int32() failed", jsContext);
-    }
-
-    if (!context->funcName.empty()) {
-        // Finish async trace
-        jsContext->funcName = context->funcName;
-    }
-
-    if (context->work != nullptr) {
-        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef,
-                                             context->work, *jsContext);
-    }
-    delete context;
-}
-
 napi_value MetadataObjectNapi::GetType(napi_env env, napi_callback_info info)
 {
     napi_status status;
     napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<MetadataObjectAsyncContext> asyncContext = std::make_unique<MetadataObjectAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
-
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "GetType");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<MetadataObjectAsyncContext*>(data);
-                context->status = false;
-                if (context->objectInfo != nullptr) {
-                    context->funcName = "MetadataObjectNapi::GetType";
-                    context->status = true;
-                    context->metadataObjType = context->objectInfo->metadataObject_->GetType();
-                }
-            },
-            GetTypeAsyncCallbackComplete, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for MetadataObjectNapi::GetType");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    MetadataObjectNapi* metadataObjectNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&metadataObjectNapi));
+    if (status == napi_ok && metadataObjectNapi != nullptr) {
+        MetadataObjectType metadataObjType = metadataObjectNapi->metadataObject_->GetType();
+        int32_t iProp;
+        CameraNapiUtils::MapMetadataObjSupportedTypesEnum(metadataObjType, iProp);
+        napi_create_int32(env, iProp, &result);
     }
 
     return result;
-}
-
-static void GetTimestampAsyncCallbackComplete(napi_env env, napi_status status, void* data)
-{
-    auto context = static_cast<MetadataObjectAsyncContext*>(data);
-    CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(context, "Async context is null");
-
-    std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
-    jsContext->status = true;
-    napi_get_undefined(env, &jsContext->error);
-
-    status = napi_create_double(env, context->metaTimestamp, &jsContext->data);
-    if (status != napi_ok) {
-        MEDIA_ERR_LOG("GetTimestampAsyncCallbackComplete:napi_create_double() failed");
-        CameraNapiUtils::CreateNapiErrorObject(env,
-            "GetTimestampAsyncCallbackComplete:napi_create_double() failed", jsContext);
-    }
-
-    if (!context->funcName.empty()) {
-        // Finish async trace
-        jsContext->funcName = context->funcName;
-    }
-
-    if (context->work != nullptr) {
-        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef,
-                                             context->work, *jsContext);
-    }
-    delete context;
 }
 
 napi_value MetadataObjectNapi::GetTimestamp(napi_env env, napi_callback_info info)
 {
     napi_status status;
     napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<MetadataObjectAsyncContext> asyncContext = std::make_unique<MetadataObjectAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-        }
-
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "GetTimestamp");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<MetadataObjectAsyncContext*>(data);
-                context->status = false;
-                if (context->objectInfo != nullptr) {
-                    context->status = true;
-                    context->funcName = "MetadataObjectNapi::GetTimestamp";
-                    context->metaTimestamp
-                        = context->objectInfo->metadataObject_->GetTimestamp();
-                }
-            },
-            GetTimestampAsyncCallbackComplete, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for MetadataObjectNapi::GetTimestamp");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
-        }
+    MetadataObjectNapi* metadataObjectNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&metadataObjectNapi));
+    if (status == napi_ok && metadataObjectNapi != nullptr) {
+        double metaTimestamp = metadataObjectNapi->metadataObject_->GetTimestamp();
+        napi_create_double(env, metaTimestamp, &result);
     }
 
     return result;
-}
-
-static void GetBoundingBoxAsyncCallbackComplete(napi_env env, napi_status status, void* data)
-{
-    napi_value propValue;
-    napi_status retStatVal;
-
-    auto context = static_cast<MetadataObjectAsyncContext*>(data);
-    CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(context, "Async context is null");
-
-    std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
-    jsContext->status = true;
-    napi_get_undefined(env, &jsContext->error);
-
-    retStatVal = napi_create_object(env, &jsContext->data);
-    if (retStatVal != napi_ok) {
-        MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete napi_create_object failed");
-        CameraNapiUtils::CreateNapiErrorObject(env,
-            "MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete napi_create_object failed", jsContext);
-    }
-
-    retStatVal = napi_create_double(env, context->metaFace.topLeftX, &propValue);
-    if (retStatVal != napi_ok) {
-        MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete napi_create_double "
-            "failed for topLeftX");
-        CameraNapiUtils::CreateNapiErrorObject(env,
-            "MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete napi_create_double "
-            "failed for topLeftX", jsContext);
-    }
-
-    retStatVal = napi_set_named_property(env, jsContext->data, "topLeftX", propValue);
-    if (retStatVal != napi_ok) {
-        MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
-            "napi_set_named_property failed for topLeftX");
-        CameraNapiUtils::CreateNapiErrorObject(env,
-            "MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
-            "napi_set_named_property failed for topLeftX", jsContext);
-    }
-
-    retStatVal = napi_create_double(env, context->metaFace.topLeftY, &propValue);
-    if (retStatVal != napi_ok) {
-        MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
-            "napi_create_double failed for topLeftY");
-        CameraNapiUtils::CreateNapiErrorObject(env,
-            "MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
-            "napi_create_double failed for topLeftY", jsContext);
-    }
-
-    retStatVal = napi_set_named_property(env, jsContext->data, "topLeftY", propValue);
-    if (retStatVal != napi_ok) {
-        MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
-            "napi_set_named_property failed for topLeftY");
-        CameraNapiUtils::CreateNapiErrorObject(env,
-            "MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
-            "napi_set_named_property failed for topLeftY", jsContext);
-    }
-
-    retStatVal = napi_create_double(env, context->metaFace.width, &propValue);
-    if (retStatVal != napi_ok) {
-        MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
-            "napi_create_double failed for width");
-        CameraNapiUtils::CreateNapiErrorObject(env,
-            "MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
-            "napi_create_double failed for width", jsContext);
-    }
-
-    retStatVal = napi_set_named_property(env, jsContext->data, "width", propValue);
-    if (retStatVal != napi_ok) {
-        MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
-            "napi_set_named_property failed for width");
-        CameraNapiUtils::CreateNapiErrorObject(env,
-            "MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
-            "napi_set_named_property failed for width", jsContext);
-    }
-
-    retStatVal = napi_create_double(env, context->metaFace.height, &propValue);
-    if (retStatVal != napi_ok) {
-        MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
-            "napi_create_double failed for height");
-        CameraNapiUtils::CreateNapiErrorObject(env,
-            "MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
-            "napi_create_double failed for height", jsContext);
-    }
-
-    retStatVal = napi_set_named_property(env, jsContext->data, "height", propValue);
-    if (retStatVal != napi_ok) {
-        MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
-            "napi_set_named_property failed for height");
-        CameraNapiUtils::CreateNapiErrorObject(env,
-            "MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
-            "napi_set_named_property failed for height", jsContext);
-    }
-
-    if (!context->funcName.empty()) {
-        // Finish async trace
-        jsContext->funcName = context->funcName;
-    }
-
-    if (context->work != nullptr) {
-        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef,
-                                             context->work, *jsContext);
-    }
-    delete context;
 }
 
 napi_value MetadataObjectNapi::GetBoundingBox(napi_env env, napi_callback_info info)
 {
     napi_status status;
     napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<MetadataObjectAsyncContext> asyncContext = std::make_unique<MetadataObjectAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
+    MetadataObjectNapi* metadataObjectNapi;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&metadataObjectNapi));
+    if (status == napi_ok && metadataObjectNapi != nullptr) {
+        Rect metaFace = metadataObjectNapi->metadataObject_->GetBoundingBox();
+
+        napi_value propValue;
+        napi_status retStatVal;
+
+        retStatVal = napi_create_object(env, &result);
+        if (retStatVal != napi_ok) {
+            MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete napi_create_object failed");
         }
 
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "GetBoundingBox");
+        retStatVal = napi_create_double(env, metaFace.topLeftX, &propValue);
+        if (retStatVal != napi_ok) {
+            MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete napi_create_double "
+                          "failed for topLeftX");
+        }
 
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<MetadataObjectAsyncContext*>(data);
-                context->status = false;
-                if (context->objectInfo != nullptr) {
-                    context->status = true;
-                    context->funcName = "MetadataObjectNapi::GetBoundingBox";
-                    context->metaFace
-                        = context->objectInfo->metadataObject_->GetBoundingBox();
-                }
-            },
-            GetBoundingBoxAsyncCallbackComplete, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for MetadataObjectNapi::GetBoundingBox");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work(env, asyncContext->work);
-            asyncContext.release();
+        retStatVal = napi_set_named_property(env, result, "topLeftX", propValue);
+        if (retStatVal != napi_ok) {
+            MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
+                          "napi_set_named_property failed for topLeftX");
+        }
+
+        retStatVal = napi_create_double(env, metaFace.topLeftY, &propValue);
+        if (retStatVal != napi_ok) {
+            MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
+                          "napi_create_double failed for topLeftY");
+        }
+
+        retStatVal = napi_set_named_property(env, result, "topLeftY", propValue);
+        if (retStatVal != napi_ok) {
+            MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
+                          "napi_set_named_property failed for topLeftY");
+        }
+
+        retStatVal = napi_create_double(env, metaFace.width, &propValue);
+        if (retStatVal != napi_ok) {
+            MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
+                          "napi_create_double failed for width");
+        }
+
+        retStatVal = napi_set_named_property(env, result, "width", propValue);
+        if (retStatVal != napi_ok) {
+            MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
+                          "napi_set_named_property failed for width");
+        }
+
+        retStatVal = napi_create_double(env, metaFace.height, &propValue);
+        if (retStatVal != napi_ok) {
+            MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
+                          "napi_create_double failed for height");
+        }
+
+        retStatVal = napi_set_named_property(env, result, "height", propValue);
+        if (retStatVal != napi_ok) {
+            MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
+                          "napi_set_named_property failed for height");
         }
     }
-
     return result;
 }
 } // namespace CameraStandard
