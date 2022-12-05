@@ -1513,15 +1513,11 @@ napi_value CameraSessionNapi::GetZoomRatioRange(napi_env env, napi_callback_info
             vecZoomRatioList.size());
 
         if (!vecZoomRatioList.empty() && napi_create_array(env, &result) == napi_ok) {
-            int32_t j = 0;
             for (size_t i = 0; i < vecZoomRatioList.size(); i++) {
                 float zoomRatio = vecZoomRatioList[i];
                 napi_value value;
-                status = napi_create_double(env, zoomRatio, &value);
-                if (status == napi_ok) {
-                    napi_set_element(env, result, j, value);
-                    j++;
-                }
+                napi_create_double(env, zoomRatio, &value);
+                napi_set_element(env, result, i, value);
             }
         } else {
             MEDIA_ERR_LOG("vecSupportedZoomRatioList is empty or failed to create array!");

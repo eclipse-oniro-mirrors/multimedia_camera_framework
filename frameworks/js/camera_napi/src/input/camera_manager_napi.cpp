@@ -529,7 +529,8 @@ napi_value CameraManagerNapi::CreateVideoOutputInstance(napi_env env, napi_callb
     return result;
 }
 
-napi_value ParseMetadataObjectTypes(napi_env env, napi_value arrayParam, std::vector<MetadataObjectType> &metadataObjectTypes)
+napi_value ParseMetadataObjectTypes(napi_env env, napi_value arrayParam,
+                                    std::vector<MetadataObjectType> &metadataObjectTypes)
 {
     napi_value result;
     uint32_t length = 0;

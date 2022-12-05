@@ -19,7 +19,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-
 thread_local napi_ref MetadataObjectNapi::sConstructor_ = nullptr;
 thread_local sptr<MetadataObject> g_metadataObject;
 
@@ -168,7 +167,8 @@ napi_value MetadataObjectNapi::GetTimestamp(napi_env env, napi_callback_info inf
     return result;
 }
 
-napi_value MetadataObjectNapi::GetBoundingBox(napi_env env, napi_callback_info info)
+napi_value MetadataObjectNapi::GetBoundingBox(napi_env env,
+                                              napi_callback_info info)
 {
     napi_status status;
     napi_value result = nullptr;
