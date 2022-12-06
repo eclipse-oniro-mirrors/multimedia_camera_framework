@@ -97,16 +97,14 @@ static napi_value CreateMetadataObjJSArray(napi_env env,
 void MetadataOutputCallback::OnMetadataObjectsAvailableCallback(
     const std::vector<sptr<MetadataObject>> metadataObjList) const
 {
-    napi_value result[ARGS_TWO];
+    napi_value result[ARGS_ONE];
     napi_value callback = nullptr;
     napi_value retVal;
 
-    napi_get_undefined(env_, &result[PARAM0]);
-
     CAMERA_NAPI_CHECK_AND_RETURN_LOG((metadataObjList.size() != 0), "callback metadataObjList is null");
 
-    result[PARAM1] = CreateMetadataObjJSArray(env_, metadataObjList);
-    if (result[PARAM1] == nullptr) {
+    result[PARAM0] = CreateMetadataObjJSArray(env_, metadataObjList);
+    if (result[PARAM0] == nullptr) {
         MEDIA_ERR_LOG("MetadataOutputCallback::OnMetadataObjectsAvailableCallback"
         " invoke CreateMetadataObjJSArray failed");
         return;
@@ -115,7 +113,7 @@ void MetadataOutputCallback::OnMetadataObjectsAvailableCallback(
     CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(metadataObjectsAvailableCallbackRef_,
         "metadataObjectsAvailable callback is not registered by JS");
     napi_get_reference_value(env_, metadataObjectsAvailableCallbackRef_, &callback);
-    napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
+    napi_call_function(env_, nullptr, callback, ARGS_ONE, result, &retVal);
 }
 
 void MetadataOutputCallback::SetCallbackRef(const std::string &eventType, const napi_ref &callbackRef)
