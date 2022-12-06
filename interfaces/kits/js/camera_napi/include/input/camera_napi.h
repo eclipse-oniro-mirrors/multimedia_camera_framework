@@ -143,7 +143,7 @@ static const std::unordered_map<std::string, int32_t> mapCameraErrorCode = {
     {"SESSION_NOT_RUNNING", 7400104},
     {"SESSION_CONFIG_LOCKED", 7400105},
     {"DEVICE_SETTING_LOCKED", 7400106},
-    {"CONFLICT_CAMERA", 7400107},
+    {"CONFILICT_CAMERA", 7400107},
     {"DEVICE_DISABLED", 7400108},
     {"SERVICE_FATAL_ERROR", 7400201}
 };
