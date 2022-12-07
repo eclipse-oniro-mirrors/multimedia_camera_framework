@@ -48,17 +48,6 @@ namespace CameraStandard {
 static const char CAMERA_SESSION_NAPI_CLASS_NAME[] = "CaptureSession";
 
 enum SessionAsyncCallbackModes {
-    EXPOSURE_VALUE_ASYNC_CALLBACK = 0,
-    ZOOM_RATIO_ASYNC_CALLBACK,
-    EXPOSURE_POINT_ASYNC_CALLBACK,
-    FOCUS_POINT_ASYNC_CALLBACK,
-    FLASH_MODE_ASYNC_CALLBACK,
-    EXPOSURE_MODE_ASYNC_CALLBACK,
-    FOCUS_MODE_ASYNC_CALLBACK,
-    FOCAL_LENGTH_ASYNC_CALLBACK,
-    EXPOSURE_BIAS_RANGE_ASYNCALLBACK,
-    BRETBOOL_TRUE,
-    BRETBOOL_FLASE,
     SESSION_START_ASYNC_CALLBACK,
     SESSION_STOP_ASYNC_CALLBACK,
 };
@@ -190,29 +179,11 @@ public:
 };
 
 struct CameraSessionAsyncContext : public AsyncContext {
-    napi_value object;
     CameraSessionNapi* objectInfo;
-    sptr<CaptureInput> cameraInput;
-    sptr<CaptureOutput> cameraOutput;
-
-    FlashMode flashMode;
-    ExposureMode exposureMode;
-    FocusMode focusMode;
-    Point exposurePoint;
-    Point focusPoint;
-    int32_t exposureValue;
-    float focalLength;
-    float zoomRatio;
-
-    std::vector<float> vecZoomRatioList;
-    std::vector<int32_t> vecExposureBiasList;
 
     SessionAsyncCallbackModes modeForAsync;
     std::string errorMsg;
     bool bRetBool;
-    std::string enumType;
-    VideoStabilizationMode videoStabilizationMode;
-    bool isSupported;
 };
 } // namespace CameraStandard
 } // namespace OHOS

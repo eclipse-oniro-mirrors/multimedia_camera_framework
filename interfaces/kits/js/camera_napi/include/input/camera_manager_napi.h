@@ -53,17 +53,7 @@ namespace CameraStandard {
 static const char CAMERA_MANAGER_NAPI_CLASS_NAME[] = "CameraManager";
 
 enum CameraManagerAsyncCallbackModes {
-    GET_SUPPORTED_CAMERA_ASYNC_CALLBACK = 0,
-    GET_SUPPORTED_OUTPUT_CAPABILITY_ASYNC_CALLBACK,
-
-    CREATE_CAMERA_INPUT_ASYNC_CALLBACK,
-
-    CREATE_PREVIEW_OUTPUT_ASYNC_CALLBACK,
     CREATE_DEFERRED_PREVIEW_OUTPUT_ASYNC_CALLBACK,
-    CREATE_PHOTO_OUTPUT_ASYNC_CALLBACK,
-    CREATE_VIDEO_OUTPUT_ASYNC_CALLBACK,
-
-    CREATE_CAMERA_SESSION_ASYNC_CALLBACK
 };
 
 class CameraManagerNapi {
@@ -103,17 +93,10 @@ private:
 };
 
 struct CameraManagerContext : public AsyncContext {
-    bool isSupported;
     std::string surfaceId;
     CameraManagerNapi* managerInstance;
-    CameraPosition cameraPosition;
-    CameraType cameraType;
     Profile profile;
     VideoProfile videoProfile;
-    std::vector<MetadataObjectType> metadataObjectTypes;
-    sptr<CameraInput> cameraInput;
-    sptr<CameraDevice> cameraInfo;
-    std::vector<sptr<CameraDevice>> cameraObjList;
     CameraManagerAsyncCallbackModes modeForAsync;
     std::string errString;
 };

@@ -172,32 +172,9 @@ void CameraManagerCommonCompleteCallback(napi_env env, napi_status status, void*
     MEDIA_INFO_LOG("modeForAsync = %{public}d", context->modeForAsync);
     napi_get_undefined(env, &jsContext->error);
     switch (context->modeForAsync) {
-        case GET_SUPPORTED_CAMERA_ASYNC_CALLBACK:
-            break;
-        case CREATE_CAMERA_INPUT_ASYNC_CALLBACK:
-            break;
-        case GET_SUPPORTED_OUTPUT_CAPABILITY_ASYNC_CALLBACK:
-            break;
-        case CREATE_CAMERA_SESSION_ASYNC_CALLBACK:
-            break;
-        case CREATE_PREVIEW_OUTPUT_ASYNC_CALLBACK:
-            jsContext->data = PreviewOutputNapi::CreatePreviewOutput(env, context->profile, context->surfaceId);
-            MEDIA_INFO_LOG("CreatePreviewOutput context->surfaceId : %{public}s", context->surfaceId.c_str());
-            break;
         case CREATE_DEFERRED_PREVIEW_OUTPUT_ASYNC_CALLBACK:
             jsContext->data = PhotoOutputNapi::CreatePhotoOutput(env, context->profile, context->surfaceId);
             MEDIA_INFO_LOG("CreatePhotoOutput context->photoSurfaceId : %{public}s", context->surfaceId.c_str());
-            break;
-        case CREATE_PHOTO_OUTPUT_ASYNC_CALLBACK:
-            jsContext->data = PhotoOutputNapi::CreatePhotoOutput(env, context->profile, context->surfaceId);
-            MEDIA_INFO_LOG("CreatePhotoOutput context->photoSurfaceId : %{public}s", context->surfaceId.c_str());
-            break;
-        case CREATE_VIDEO_OUTPUT_ASYNC_CALLBACK:
-            uint64_t surfaceId;
-            std::istringstream iss(context->surfaceId);
-            iss >> surfaceId;
-            jsContext->data = VideoOutputNapi::CreateVideoOutput(env, context->videoProfile, context->surfaceId);
-            MEDIA_INFO_LOG("CreateVideoOutput context->surfaceId : %{public}s", context->surfaceId.c_str());
             break;
     }
 
@@ -471,7 +448,7 @@ napi_value CameraManagerNapi::CreatePhotoOutputInstance(napi_env env, napi_callb
 
     Profile profile;
     ParseProfile(env, argv[PARAM0], &profile);
-    MEDIA_INFO_LOG("ConvertJSArgsToNative ParseProfile "
+    MEDIA_INFO_LOG("ParseProfile "
                    "size.width = %{public}d, size.height = %{public}d, format = %{public}d",
                    profile.size_.width, profile.size_.height, profile.format_);
 

@@ -258,18 +258,6 @@ private:
     napi_ref wrapper_;
     sptr<CameraManager> cameraManager_;
 };
-
-struct CameraNapiAsyncContext : public AsyncContext {
-    CameraNapi* objectInfo;
-    std::string photoSurfaceId;
-    uint64_t surfaceId;
-    sptr<CameraManager> cameraManager;
-    sptr<CaptureSession> cameraSession;
-    sptr<CaptureOutput> previewOutput;
-    sptr<CaptureOutput> photoOutput;
-    sptr<CaptureOutput> videoOutput;
-    CreateAsyncCallbackModes modeForAsync;
-};
 } // namespace CameraStandard
 } // namespace OHOS
 #endif /* CAMERA_NAPI_H_ */

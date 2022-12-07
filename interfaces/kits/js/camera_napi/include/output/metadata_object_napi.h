@@ -74,14 +74,6 @@ public:
 private:
     napi_env env_;
 };
-
-struct MetadataObjectAsyncContext : public AsyncContext {
-    MetadataObjectNapi* objectInfo;
-    std::string errorMsg;
-    MetadataObjectType metadataObjType;
-    double metaTimestamp;
-    Rect metaFace;
-};
 } // namespace CameraStandard
 } // namespace OHOS
 #endif /* METADATA_OBJECT_NAPI_H_ */
