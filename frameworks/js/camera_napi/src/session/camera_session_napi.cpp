@@ -399,6 +399,16 @@ void PopulateRetVal(napi_env env, SessionAsyncCallbackModes mode,
     jsContext->status = true;
     napi_get_undefined(env, &jsContext->error);
     switch (mode) {
+        case COMMIT_CONFIG_ASYNC_CALLBACK:
+            ret = context->objectInfo->cameraSession_->CommitConfig();
+            MEDIA_INFO_LOG("commit config return : %{public}d", ret);
+            if (ret != 0) {
+                context->errorMsg = "commit config failure";
+                context->status = false;
+                CameraNapiUtils::CreateNapiErrorObject(env, context->errorMsg.c_str(), jsContext);
+            }
+            napi_get_undefined(env, &jsContext->data);
+            break;
         case SESSION_START_ASYNC_CALLBACK:
             ret = context->objectInfo->cameraSession_->Start();
             MEDIA_INFO_LOG("Start return : %{public}d", ret);
@@ -417,6 +427,10 @@ void PopulateRetVal(napi_env env, SessionAsyncCallbackModes mode,
                 context->status = false;
                 CameraNapiUtils::CreateNapiErrorObject(env, context->errorMsg.c_str(), jsContext);
             }
+            napi_get_undefined(env, &jsContext->data);
+            break;
+        case SESSION_RELEASE_ASYNC_CALLBACK:
+            context->objectInfo->cameraSession_->Release();
             napi_get_undefined(env, &jsContext->data);
             break;
         default:
@@ -511,12 +525,6 @@ napi_value CameraSessionNapi::CommitConfig(napi_env env, napi_callback_info info
                     context->bRetBool = false;
                     context->status = true;
                     context->modeForAsync = COMMIT_CONFIG_ASYNC_CALLBACK;
-                    int32_t ret = context->objectInfo->cameraSession_->CommitConfig();
-                    if (ret != 0) {
-                        context->status = false;
-                        context->errorMsg = "CommitConfig( ) failure";
-                    }
-                    MEDIA_INFO_LOG("CommitConfig return : %{public}d", ret);
                 }
             },
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
@@ -898,6 +906,7 @@ napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
 
 napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
 {
+    MEDIA_INFO_LOG("Release called");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -932,7 +941,6 @@ napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
                     context->bRetBool = false;
                     context->status = true;
                     context->modeForAsync = SESSION_RELEASE_ASYNC_CALLBACK;
-                    context->objectInfo->cameraSession_->Release();
                 }
             },
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
