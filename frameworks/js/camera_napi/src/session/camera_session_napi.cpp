@@ -510,6 +510,7 @@ napi_value CameraSessionNapi::CommitConfig(napi_env env, napi_callback_info info
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
                     context->status = true;
+                    context->modeForAsync = COMMIT_CONFIG_ASYNC_CALLBACK;
                     int32_t ret = context->objectInfo->cameraSession_->CommitConfig();
                     if (ret != 0) {
                         context->status = false;
@@ -930,6 +931,7 @@ napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
                     context->status = true;
+                    context->modeForAsync = SESSION_RELEASE_ASYNC_CALLBACK;
                     context->objectInfo->cameraSession_->Release();
                 }
             },

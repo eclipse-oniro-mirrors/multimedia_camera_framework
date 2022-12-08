@@ -48,8 +48,10 @@ namespace CameraStandard {
 static const char CAMERA_SESSION_NAPI_CLASS_NAME[] = "CaptureSession";
 
 enum SessionAsyncCallbackModes {
+    COMMIT_CONFIG_ASYNC_CALLBACK,
     SESSION_START_ASYNC_CALLBACK,
     SESSION_STOP_ASYNC_CALLBACK,
+    SESSION_RELEASE_ASYNC_CALLBACK,
 };
 
 class ExposureCallbackListener : public ExposureCallback {
