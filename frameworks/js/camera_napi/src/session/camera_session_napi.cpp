@@ -619,7 +619,9 @@ napi_value CameraSessionNapi::AddInput(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    CAMERA_NAPI_CHECK_ARGS(env, ARGS_ONE, argc);
+    if (!CameraNapiUtils::CheckArgs(env, argc, argv, ADD_INPUT)) {
+        return result;
+    }
 
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi;
@@ -666,7 +668,9 @@ napi_value CameraSessionNapi::RemoveInput(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    CAMERA_NAPI_CHECK_ARGS(env, ARGS_ONE, argc);
+    if (!CameraNapiUtils::CheckArgs(env, argc, argv, REMOVE_INPUT)) {
+        return result;
+    }
 
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi;
@@ -737,7 +741,9 @@ napi_value CameraSessionNapi::AddOutput(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    CAMERA_NAPI_CHECK_ARGS(env, ARGS_ONE, argc);
+    if (!CameraNapiUtils::CheckArgs(env, argc, argv, ADD_OUTPUT)) {
+        return result;
+    }
 
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi;
@@ -785,7 +791,9 @@ napi_value CameraSessionNapi::RemoveOutput(napi_env env, napi_callback_info info
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    CAMERA_NAPI_CHECK_ARGS(env, ARGS_ONE, argc);
+    if (!CameraNapiUtils::CheckArgs(env, argc, argv, REMOVE_OUTPUT)) {
+        return result;
+    }
 
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi;
