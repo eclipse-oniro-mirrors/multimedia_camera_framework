@@ -171,11 +171,9 @@ void CameraManagerCommonCompleteCallback(napi_env env, napi_status status, void*
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
     MEDIA_INFO_LOG("modeForAsync = %{public}d", context->modeForAsync);
     napi_get_undefined(env, &jsContext->error);
-    switch (context->modeForAsync) {
-        case CREATE_DEFERRED_PREVIEW_OUTPUT_ASYNC_CALLBACK:
-            jsContext->data = PhotoOutputNapi::CreatePhotoOutput(env, context->profile, context->surfaceId);
-            MEDIA_INFO_LOG("CreatePhotoOutput context->photoSurfaceId : %{public}s", context->surfaceId.c_str());
-            break;
+    if (context->modeForAsync == CREATE_DEFERRED_PREVIEW_OUTPUT_ASYNC_CALLBACK) {
+        jsContext->data = PhotoOutputNapi::CreatePhotoOutput(env, context->profile, context->surfaceId);
+        MEDIA_INFO_LOG("CreatePhotoOutput context->photoSurfaceId : %{public}s", context->surfaceId.c_str());
     }
 
     if (jsContext->data == nullptr) {
@@ -356,7 +354,9 @@ napi_value CameraManagerNapi::CreatePreviewOutputInstance(napi_env env, napi_cal
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    CAMERA_NAPI_CHECK_ARGS(env, ARGS_TWO, argc);
+    if (!CameraNapiUtils::CheckArgs(env, argc, argv, CREATE_PREVIEW_OUTPUT_INSTANCE)) {
+        return result;
+    }
     napi_get_undefined(env, &result);
     CameraManagerNapi* cameraManagerNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
@@ -436,7 +436,9 @@ napi_value CameraManagerNapi::CreatePhotoOutputInstance(napi_env env, napi_callb
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    CAMERA_NAPI_CHECK_ARGS(env, ARGS_TWO, argc);
+    if (!CameraNapiUtils::CheckArgs(env, argc, argv, CREATE_PHOTO_OUTPUT_INSTANCE)) {
+        return result;
+    }
 
     napi_get_undefined(env, &result);
     CameraManagerNapi* cameraManagerNapi;
@@ -475,7 +477,9 @@ napi_value CameraManagerNapi::CreateVideoOutputInstance(napi_env env, napi_callb
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    CAMERA_NAPI_CHECK_ARGS(env, ARGS_TWO, argc);
+    if (!CameraNapiUtils::CheckArgs(env, argc, argv, CREATE_VIDEO_OUTPUT_INSTANCE)) {
+        return result;
+    }
 
     CameraManagerNapi* cameraManagerNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
@@ -538,7 +542,9 @@ napi_value CameraManagerNapi::CreateMetadataOutputInstance(napi_env env, napi_ca
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    CAMERA_NAPI_CHECK_ARGS(env, ARGS_ONE, argc);
+    if (!CameraNapiUtils::CheckArgs(env, argc, argv, CREATE_METADATA_OUTPUT_INSTANCE)) {
+        return result;
+    }
 
     napi_get_undefined(env, &result);
     CameraManagerNapi* cameraManagerNapi;
@@ -665,6 +671,9 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    if (!CameraNapiUtils::CheckArgs(env, argc, argv, CREATE_CAMERA_INPUT_INSTANCE)) {
+        return result;
+    }
 
     napi_get_undefined(env, &result);
     CameraManagerNapi* CameraManagerNapi;

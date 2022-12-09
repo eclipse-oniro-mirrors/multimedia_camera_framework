@@ -164,7 +164,6 @@ napi_value CameraNapi::CreateCameraManagerInstance(napi_env env, napi_callback_i
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    CAMERA_NAPI_CHECK_ARGS(env, ARGS_ONE, argc);
 
     napi_get_undefined(env, &result);
     result = CameraManagerNapi::CreateCameraManager(env);

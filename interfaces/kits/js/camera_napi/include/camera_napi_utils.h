@@ -109,16 +109,6 @@
         }                                              \
     } while (0)
 
-#define CAMERA_NAPI_CHECK_ARGS(env, limit, argc)                      \
-    do {                                                              \
-        if ((limit != argc)) {                                        \
-            std::string errorCode = std::to_string(INVALID_ARGUMENT); \
-            napi_throw_error(env, errorCode.c_str(),                  \
-                             "wrong number of arguments");            \
-            return nullptr;                                           \
-        }                                                             \
-    } while (0);
-
 #define CAMERA_NAPI_CHECK_ERROR(env, ret, msg)                        \
     do {                                                              \
         if ((ret != 0)) {                                             \
@@ -204,6 +194,18 @@ enum CameraTaskId {
 
 enum JSMetadataObjectType {
     FACE = 0
+};
+
+enum NapiCheckArgsModes {
+    CREATE_CAMERA_INPUT_INSTANCE,
+    CREATE_PREVIEW_OUTPUT_INSTANCE,
+    CREATE_PHOTO_OUTPUT_INSTANCE,
+    CREATE_VIDEO_OUTPUT_INSTANCE,
+    CREATE_METADATA_OUTPUT_INSTANCE,
+    ADD_INPUT,
+    REMOVE_INPUT,
+    ADD_OUTPUT,
+    REMOVE_OUTPUT,
 };
 
 /* Util class used by napi asynchronous methods for making call to js callback function */
@@ -589,6 +591,74 @@ public:
         }
         num++;
         return num;
+    }
+
+    static bool CheckArgs(napi_env env, size_t argc, napi_value argv[], NapiCheckArgsModes mode)
+    {
+        bool isPass = true;
+        napi_valuetype valueTypeArray[argc];
+        for (size_t i = 0; i < argc; i++) {
+            napi_typeof(env, argv[i], &valueTypeArray[i]);
+        }
+        switch (mode)
+        {
+            case CREATE_CAMERA_INPUT_INSTANCE:
+                if (argc == ARGS_ONE) {
+                    isPass = valueTypeArray[0] == napi_object;
+                } else if (argc == ARGS_TWO) {
+                    isPass = (valueTypeArray[0] == napi_number) && (valueTypeArray[1] == napi_number);
+                } else {
+                    isPass = false;
+                }
+                break;
+
+            case CREATE_PREVIEW_OUTPUT_INSTANCE:
+                isPass = (argc == ARGS_TWO) &&
+                         (valueTypeArray[0] == napi_object) && (valueTypeArray[1] == napi_string);
+                break;
+
+            case CREATE_PHOTO_OUTPUT_INSTANCE:
+                isPass = (argc == ARGS_TWO) &&
+                         (valueTypeArray[0] == napi_object) && (valueTypeArray[1] == napi_string);
+                break;
+
+            case CREATE_VIDEO_OUTPUT_INSTANCE:
+                isPass = (argc == ARGS_TWO) &&
+                         (valueTypeArray[0] == napi_object) && (valueTypeArray[1] == napi_string);
+                break;
+
+            case CREATE_METADATA_OUTPUT_INSTANCE:
+                isPass = argc == ARGS_ONE;
+                if (argc == ARGS_ONE) {
+                    napi_is_array(env, argv[0], &isPass);
+                } else {
+                   isPass = false;
+                }
+                break;
+
+            case ADD_INPUT:
+                isPass = (argc == ARGS_ONE) && (valueTypeArray[0] == napi_object);
+                break;
+
+            case REMOVE_INPUT:
+                isPass = (argc == ARGS_ONE) && (valueTypeArray[0] == napi_object);
+                break;
+
+            case ADD_OUTPUT:
+                isPass = (argc == ARGS_ONE) && (valueTypeArray[0] == napi_object);
+                break;
+
+            case REMOVE_OUTPUT:
+                isPass = (argc == ARGS_ONE) && (valueTypeArray[0] == napi_object);
+                break;
+            default:
+                break;
+        }
+        if (!isPass) {
+            std::string errorCode = std::to_string(INVALID_ARGUMENT);
+            napi_throw_type_error(env, errorCode.c_str(), "invalid argument"); 
+        }
+        return isPass;
     }
 };
 } // namespace CameraStandard
