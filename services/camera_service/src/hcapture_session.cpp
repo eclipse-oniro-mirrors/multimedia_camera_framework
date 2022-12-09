@@ -825,7 +825,7 @@ void PermissionStatusChangeCb::SetCaptureSession(sptr<HCaptureSession> captureSe
 
 void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result)
 {
-    if ((result.PermStateChangeType == 0) && (captureSession_ != nullptr)) {
+    if ((result.permStateChangeType == 0) && (captureSession_ != nullptr)) {
         captureSession_->ReleaseInner();
     }
 };
