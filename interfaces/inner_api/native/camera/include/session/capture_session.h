@@ -190,8 +190,9 @@ public:
 
     /**
      * @brief Releases CaptureSession instance.
+     * @return Returns errCode.
      */
-    void Release();
+    int32_t Release();
 
     /**
     * @brief create new device control setting.
@@ -207,96 +208,98 @@ public:
 
     /**
     * @brief Get the supported video sabilization modes.
-    *
-    * @return Returns vector of CameraVideoStabilizationMode supported stabilization modes.
+    * @param vector of CameraVideoStabilizationMode supported stabilization modes.
+    * @return Returns errCode.
     */
-    std::vector<VideoStabilizationMode> GetSupportedStabilizationMode();
+    int32_t GetSupportedStabilizationMode(std::vector<VideoStabilizationMode> &modes);
 
     /**
     * @brief Query whether given stabilization mode supported.
     *
     * @param VideoStabilizationMode stabilization mode to query.
-    * @return True is supported false otherwise.
+    * @param bool True is supported false otherwise.
+    * @return errCode.
     */
-    bool IsVideoStabilizationModeSupported(VideoStabilizationMode stabilizationMode);
+    int32_t IsVideoStabilizationModeSupported(VideoStabilizationMode stabilizationMode, bool &isSupported);
 
     /**
     * @brief Get the current Video Stabilizaion mode.
-    *
-    * @return Returns current Video Stabilizaion mode.
+    * @param current Video Stabilizaion mode.
+    * @return errCode
     */
-    VideoStabilizationMode GetActiveVideoStabilizationMode();
+    int32_t GetActiveVideoStabilizationMode(VideoStabilizationMode &mode);
 
     /**
     * @brief Set the Video Stabilizaion mode.
-    *
     * @param VideoStabilizationMode stabilization mode to set.
+    * @return errCode
     */
-    void SetVideoStabilizationMode(VideoStabilizationMode stabilizationMode);
+    int32_t SetVideoStabilizationMode(VideoStabilizationMode stabilizationMode);
 
     /**
     * @brief Get the supported exposure modes.
-    *
-    * @return Returns vector of ExposureMode supported exposure modes.
+    * @param vector of ExposureMode supported exposure modes.
+    * @return errCode.
     */
-    std::vector<ExposureMode> GetSupportedExposureModes();
+    int32_t GetSupportedExposureModes(std::vector<ExposureMode> &exposureModes);
 
     /**
     * @brief Query whether given exposure mode supported.
     *
     * @param ExposureMode exposure mode to query.
-    * @return True is supported false otherwise.
+    * @param bool True is supported false otherwise.
+    * @return errCode.
     */
-    bool IsExposureModeSupported(ExposureMode exposureMode);
+    int32_t IsExposureModeSupported(ExposureMode exposureMode, bool &isSupported);
 
     /**
     * @brief Set exposure mode.
-    *
     * @param ExposureMode exposure mode to be set.
+    * @return errCode
     */
-    void SetExposureMode(ExposureMode exposureMode);
+    int32_t SetExposureMode(ExposureMode exposureMode);
 
     /**
     * @brief Get the current exposure mode.
-    *
-    * @return Returns current exposure mode.
+    * @param ExposureMode current exposure mode.
+    * @return errCode.
     */
-    ExposureMode GetExposureMode();
+    int32_t GetExposureMode(ExposureMode &exposureMode);
 
     /**
     * @brief Set the centre point of exposure area.
-    *
     * @param Point which specifies the area to expose.
+    * @return errCode
     */
-    void SetMeteringPoint(Point exposurePoint);
+    int32_t SetMeteringPoint(Point exposurePoint);
 
     /**
     * @brief Get centre point of exposure area.
-    *
-    * @return Returns current exposure point.
+    * @param Point current exposure point.
+    * @return errCode
     */
-    Point GetMeteringPoint();
+    int32_t GetMeteringPoint(Point &exposurePoint);
 
     /**
     * @brief Get exposure compensation range.
-    *
-    * @return Returns supported exposure compensation range.
+    * @param vector of exposure bias range.
+    * @return errCode.
     */
-    std::vector<int32_t> GetExposureBiasRange();
+    int32_t GetExposureBiasRange(std::vector<int32_t> &exposureBiasRange);
 
     /**
     * @brief Set exposure compensation value.
-    *
     * @param exposure compensation value to be set.
+    * @return errCode.
     */
-    void SetExposureBias(int32_t exposureBias);
+    int32_t SetExposureBias(int32_t exposureBias);
 
     /**
     * @brief Get exposure compensation value.
-    *
-    * @return Returns current exposure compensation value.
+    * @param exposure current exposure compensation value .
+    * @return Returns errCode.
     */
-    int32_t GetExposureValue();
+    int32_t GetExposureValue(int32_t &exposure);
 
     /**
     * @brief Set the exposure callback.
@@ -316,32 +319,34 @@ public:
 
     /**
     * @brief Get the supported Focus modes.
-    *
-    * @return Returns vector of FocusMode supported exposure modes.
+    * @param vector of FocusMode supported.
+    * @return Returns errCode.
     */
-    std::vector<FocusMode> GetSupportedFocusModes();
+    int32_t GetSupportedFocusModes(std::vector<FocusMode> &modes);
 
     /**
     * @brief Query whether given focus mode supported.
     *
     * @param camera_focus_mode_enum_t focus mode to query.
-    * @return True is supported false otherwise.
+    * @param bool True is supported false otherwise.
+    * @return Returns errCode.
     */
-    bool IsFocusModeSupported(FocusMode focusMode);
+    int32_t IsFocusModeSupported(FocusMode focusMode, bool &isSupported);
 
     /**
     * @brief Set Focus mode.
     *
     * @param FocusMode focus mode to be set.
+    * @return Returns errCode.
     */
-    void SetFocusMode(FocusMode focusMode);
+    int32_t SetFocusMode(FocusMode focusMode);
 
     /**
     * @brief Get the current focus mode.
-    *
-    * @return Returns current focus mode.
+    * @param FocusMode current focus mode.
+    * @return Returns errCode.
     */
-    FocusMode GetFocusMode();
+    int32_t GetFocusMode(FocusMode &focusMode);
 
     /**
     * @brief Set the focus callback.
@@ -363,77 +368,84 @@ public:
     * @brief Set the Focus area.
     *
     * @param Point which specifies the area to focus.
+    * @return Returns errCode.
     */
-    void SetFocusPoint(Point focusPoint);
+    int32_t SetFocusPoint(Point focusPoint);
 
     /**
     * @brief Get centre point of focus area.
-    *
-    * @return Returns current focus point.
+    * @param Point current focus point.
+    * @return Returns errCode.
     */
-    Point GetFocusPoint();
+    int32_t GetFocusPoint(Point &focusPoint);
 
     /**
     * @brief Get focal length.
-    *
-    * @return Returns focal length value.
+    * @param focalLength current focal length compensation value .
+    * @return Returns errCode.
     */
-    float GetFocalLength();
+    int32_t GetFocalLength(float &focalLength);
 
     /**
     * @brief Get the supported Focus modes.
-    *
-    * @return Returns vector of camera_focus_mode_enum_t supported exposure modes.
+    * @param vector of camera_focus_mode_enum_t supported exposure modes.
+    * @return Returns errCode.
     */
-    std::vector<FlashMode> GetSupportedFlashModes();
+    int32_t GetSupportedFlashModes(std::vector<FlashMode> &flashModes);
 
     /**
     * @brief Check whether camera has flash.
+    * @param bool True is has flash false otherwise.
+    * @return Returns errCode.
     */
-    bool HasFlash();
+    int32_t HasFlash(bool &hasFlash);
 
     /**
     * @brief Query whether given flash mode supported.
     *
     * @param camera_flash_mode_enum_t flash mode to query.
-    * @return True if supported false otherwise.
+    * @param bool True if supported false otherwise.
+    * @return errCode.
     */
-    bool IsFlashModeSupported(FlashMode flashMode);
+    int32_t IsFlashModeSupported(FlashMode flashMode, bool &isSupported);
 
     /**
     * @brief Get the current flash mode.
-    *
-    * @return Returns current flash mode.
+    * @param current flash mode.
+    * @return Returns errCode.
     */
-    FlashMode GetFlashMode();
+    int32_t GetFlashMode(FlashMode &flashMode);
 
     /**
     * @brief Set flash mode.
     *
     * @param camera_flash_mode_enum_t flash mode to be set.
+    * @return Returns errCode.
     */
-    void SetFlashMode(FlashMode flashMode);
+    int32_t SetFlashMode(FlashMode flashMode);
 
     /**
     * @brief Get the supported Zoom Ratio range.
     *
-    * @return Returns vector<float> of supported Zoom ratio range.
+    * @param vector<float> of supported Zoom ratio range.
+    * @return Returns errCode.
     */
-    std::vector<float> GetZoomRatioRange();
+    int32_t GetZoomRatioRange(std::vector<float> &zoomRatioRange);
 
     /**
     * @brief Get the current Zoom Ratio.
-    *
-    * @return Returns current Zoom Ratio.
+    * @param zoomRatio current Zoom Ratio.
+    * @return Returns errCode.
     */
-    float GetZoomRatio();
+    int32_t GetZoomRatio(float &zoomRatio);
 
     /**
     * @brief Set Zoom ratio.
     *
     * @param Zoom ratio to be set.
+    * @return Returns errCode.
     */
-    void SetZoomRatio(float zoomRatio);
+    int32_t SetZoomRatio(float zoomRatio);
 
     /**
     * @brief Set Metadata Object types.
@@ -442,13 +454,20 @@ public:
     */
     void SetCaptureMetadataObjectTypes(std::set<camera_face_detect_mode_t> metadataObjectTypes);
 
+
     /**
-    * @brief Get whether or not commit config
+    * @brief Get whether or not commit config.
     *
     * @return Returns whether or not commit config.
     */
-    bool IsCommitConfig();
+    bool IsSessionCommited();
 
+    /**
+    * @brief Get whether or not commit config.
+    *
+    * @return Returns whether or not commit config.
+    */
+    bool IsSessionConfiged();
 private:
     std::mutex changeMetaMutex_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;

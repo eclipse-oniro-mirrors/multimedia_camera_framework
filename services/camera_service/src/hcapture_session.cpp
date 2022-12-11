@@ -211,6 +211,7 @@ int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> st
         rc = AddOutputStream(static_cast<HStreamMetadata *>(stream.GetRefPtr()));
     }
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::AddOutput with %d", streamType));
+    MEDIA_INFO_LOG("CaptureSession::AddOutput with with %{public}d, rc = %{public}d", streamType, rc);
     return rc;
 }
 
@@ -589,10 +590,10 @@ int32_t HCaptureSession::CommitConfig()
     return rc;
 }
 
-int32_t HCaptureSession::IsCommitConfig(bool &isCommitConfig)
+int32_t HCaptureSession::GetSessionState(CaptureSessionState &sessionState)
 {
     int32_t rc = CAMERA_OK;
-    isCommitConfig = (curState_ == CaptureSessionState::SESSION_CONFIG_COMMITTED);
+    sessionState = curState_;
     return rc;
 }
 

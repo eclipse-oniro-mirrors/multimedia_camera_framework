@@ -32,7 +32,7 @@ private:
     int HandleRemoveInput(MessageParcel &data);
     int HandleRemoveOutput(MessageParcel &data);
     int HandleSetCallback(MessageParcel &data);
-    int HandleIsCommitConfig(MessageParcel &reply);
+    int HandleGetSesstionState(MessageParcel &reply);
 };
 } // namespace CameraStandard
 } // namespace OHOS
