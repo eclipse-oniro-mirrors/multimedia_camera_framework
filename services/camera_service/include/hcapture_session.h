@@ -38,12 +38,6 @@ class StreamOperatorCallback;
 class PermissionStatusChangeCb;
 class CameraUseStateChangeCb;
 
-enum class CaptureSessionState {
-    SESSION_INIT = 0,
-    SESSION_CONFIG_INPROGRESS,
-    SESSION_CONFIG_COMMITTED,
-};
-
 static const int32_t STREAMID_BEGIN = 1;
 
 class HCaptureSession : public HCaptureSessionStub {
@@ -68,7 +62,7 @@ public:
     static void DestroyStubObjectForPid(pid_t pid);
     int32_t SetCallback(sptr<ICaptureSessionCallback> &callback) override;
 
-    int32_t IsCommitConfig(bool &isCommitConfig) override;
+    int32_t GetSessionState(CaptureSessionState &sessionState) override;
 
     friend class StreamOperatorCallback;
     static void dumpSessions(std::string& dumpString);
