@@ -95,13 +95,13 @@ int32_t HdiToServiceError(CamRetCode ret)
         case HDI::Camera::V1_0::NO_ERROR:
             err = CAMERA_OK;
             break;
-        case CAMERA_BUSY:
+        case HDI::Camera::V1_0::CAMERA_BUSY:
             err = CAMERA_DEVICE_BUSY;
             break;
-        case INVALID_ARGUMENT:
+        case HDI::Camera::V1_0::INVALID_ARGUMENT:
             err = CAMERA_INVALID_ARG;
             break;
-        case CAMERA_CLOSED:
+        case HDI::Camera::V1_0::CAMERA_CLOSED:
             err = CAMERA_DEVICE_CLOSED;
             break;
         default:
