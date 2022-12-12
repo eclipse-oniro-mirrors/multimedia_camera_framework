@@ -180,7 +180,7 @@ void CameraManagerCommonCompleteCallback(napi_env env, napi_status status, void*
         context->status = false;
         context->errString = context->funcName + " failed";
         MEDIA_ERR_LOG("Failed to create napi, funcName = %{public}s", context->funcName.c_str());
-        CameraNapiUtils::CreateNapiErrorObject(env, context->errString.c_str(), jsContext);
+        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errString.c_str(), jsContext);
     } else {
         jsContext->status = true;
         MEDIA_INFO_LOG("Success to create napi, funcName = %{public}s", context->funcName.c_str());
@@ -354,9 +354,11 @@ napi_value CameraManagerNapi::CreatePreviewOutputInstance(napi_env env, napi_cal
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    if (!CameraNapiUtils::CheckArgs(env, argc, argv, CREATE_PREVIEW_OUTPUT_INSTANCE)) {
+    if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_TWO, argv, CREATE_PREVIEW_OUTPUT_INSTANCE)) {
+        MEDIA_INFO_LOG("CheckInvalidArgument napi_throw_type_error ");
         return result;
     }
+    MEDIA_INFO_LOG("CheckInvalidArgument pass");
     napi_get_undefined(env, &result);
     CameraManagerNapi* cameraManagerNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
@@ -436,7 +438,7 @@ napi_value CameraManagerNapi::CreatePhotoOutputInstance(napi_env env, napi_callb
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    if (!CameraNapiUtils::CheckArgs(env, argc, argv, CREATE_PHOTO_OUTPUT_INSTANCE)) {
+    if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_TWO, argv, CREATE_PHOTO_OUTPUT_INSTANCE)) {
         return result;
     }
 
@@ -477,7 +479,7 @@ napi_value CameraManagerNapi::CreateVideoOutputInstance(napi_env env, napi_callb
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    if (!CameraNapiUtils::CheckArgs(env, argc, argv, CREATE_VIDEO_OUTPUT_INSTANCE)) {
+    if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_TWO, argv, CREATE_VIDEO_OUTPUT_INSTANCE)) {
         return result;
     }
 
@@ -542,7 +544,7 @@ napi_value CameraManagerNapi::CreateMetadataOutputInstance(napi_env env, napi_ca
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    if (!CameraNapiUtils::CheckArgs(env, argc, argv, CREATE_METADATA_OUTPUT_INSTANCE)) {
+    if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, CREATE_METADATA_OUTPUT_INSTANCE)) {
         return result;
     }
 
@@ -671,7 +673,7 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    if (!CameraNapiUtils::CheckArgs(env, argc, argv, CREATE_CAMERA_INPUT_INSTANCE)) {
+    if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_TWO, argv, CREATE_CAMERA_INPUT_INSTANCE)) {
         return result;
     }
 

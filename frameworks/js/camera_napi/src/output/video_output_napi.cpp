@@ -259,7 +259,7 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
 
     if (!context->status) {
-        CameraNapiUtils::CreateNapiErrorObject(env, context->errorMsg.c_str(), jsContext);
+        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
     } else {
         jsContext->status = true;
         napi_get_undefined(env, &jsContext->error);
@@ -470,7 +470,7 @@ void GetFrameRateRangeAsyncCallbackComplete(napi_env env, napi_status status, vo
         jsContext->data = frameRateRange;
     } else {
         MEDIA_ERR_LOG("vecFrameRateRangeList is empty or failed to create array!");
-        CameraNapiUtils::CreateNapiErrorObject(env,
+        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode,
             "vecFrameRateRangeList is empty or failed to create array!", jsContext);
     }
 
