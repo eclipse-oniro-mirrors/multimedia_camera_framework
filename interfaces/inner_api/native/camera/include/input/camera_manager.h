@@ -119,12 +119,30 @@ public:
     sptr<CameraInput> CreateCameraInput(CameraPosition position, CameraType cameraType);
 
     /**
+    * @brief Create camera input instance with provided camera position and type.
+    *
+    * @param The cameraDevice for which input has to be created.
+    * @param Returns pointer to camera input instance.
+    * @return Returns error code.
+    */
+    int CreateCameraInput(CameraPosition position, CameraType cameraType, sptr<CameraInput> *pCameraInput);
+
+    /**
     * @brief Create camera input instance.
     *
     * @param The cameraDevice for which input has to be created.
     * @return Returns pointer to camera input instance.
     */
     sptr<CameraInput> CreateCameraInput(sptr<CameraDevice> &camera);
+
+    /**
+    * @brief Create camera input instance.
+    *
+    * @param The cameraDevice for which input has to be created.
+    * @param Returns pointer to camera input instance.
+    * @return Returns error code.
+    */
+    int CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInput> *pCameraInput);
 
     /**
     * @brief Get all available cameras.
@@ -149,12 +167,29 @@ public:
     sptr<CaptureSession> CreateCaptureSession();
 
     /**
+    * @brief Create capture session.
+    *
+    * @param Returns pointer to capture session.
+    * @return Returns error code.
+    */
+    int CreateCaptureSession(sptr<CaptureSession> *pCaptureSession);
+
+    /**
     * @brief Create photo output instance using surface.
     *
     * @param The surface to be used for photo output.
     * @return Returns pointer to photo output instance.
     */
     sptr<PhotoOutput> CreatePhotoOutput(Profile &profile, sptr<Surface> &surface);
+
+    /**
+    * @brief Create photo output instance using surface.
+    *
+    * @param The surface to be used for photo output.
+    * @param Returns pointer to photo output instance.
+    * @return Returns error code.
+    */
+    int CreatePhotoOutput(Profile &profile, sptr<Surface> &surface, sptr<PhotoOutput> *pPhotoOutput);
 
     /**
     * @brief Create photo output instance using surface.
@@ -185,6 +220,15 @@ public:
     * @brief Create video output instance using surface.
     *
     * @param The surface to be used for video output.
+    * @param Returns pointer to video output instance.
+    * @return Returns error code.
+    */
+    int CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surface, sptr<VideoOutput> *pVideoOutput);
+
+    /**
+    * @brief Create video output instance using surface.
+    *
+    * @param The surface to be used for video output.
     * @return Returns pointer to video output instance.
     */
     [[deprecated]] sptr<VideoOutput> CreateVideoOutput(sptr<Surface> &surface);
@@ -205,6 +249,15 @@ public:
     * @return Returns pointer to preview output instance.
     */
     sptr<PreviewOutput> CreatePreviewOutput(Profile &profile, sptr<Surface> surface);
+
+    /**
+    * @brief Create preview output instance using surface.
+    *
+    * @param The surface to be used for preview.
+    * @param Returns pointer to camera preview output instance.
+    * @return Returns error code.
+    */
+    int CreatePreviewOutput(Profile &profile, sptr<Surface> surface, sptr<PreviewOutput> *pPreviewOutput);
 
     /**
     * @brief Create preview output instance using surface.
@@ -231,6 +284,15 @@ public:
     * @return Returns pointer to preview output instance.
     */
     sptr<PreviewOutput> CreateDeferredPreviewOutput(Profile &profile);
+
+    /**
+    * @brief Create preview output instance using surface.
+    *
+    * @param The surface to be used for preview.
+    * @param Returns pointer to preview output instance.
+    * @return Returns error code.
+    */
+    int CreateDeferredPreviewOutput(Profile &profile, sptr<PreviewOutput> *pPreviewOutput);
 
     /**
     * @brief Create preview output instance using surface
@@ -262,6 +324,14 @@ public:
     * @return Returns pointer to metadata output instance.
     */
     sptr<MetadataOutput> CreateMetadataOutput();
+
+    /**
+    * @brief Create metadata output instance.
+    *
+    * @param Returns pointer to metadata output instance.
+    * @return Returns error code.
+    */
+    int CreateMetadataOutput(sptr<MetadataOutput> *pMetadataOutput);
 
     /**
     * @brief Set camera manager callback.
@@ -346,7 +416,8 @@ private:
     static const std::unordered_map<CameraFormat, camera_format_t> fwToMetaCameraFormat_;
 
     std::mutex mutex_;
-    sptr<ICameraDeviceService> CreateCameraDevice(std::string cameraId);
+    //sptr<ICameraDeviceService> CreateCameraDevice(std::string cameraId);
+    int CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> *pICameraDeviceService);
     camera_format_t GetCameraMetadataFormat(CameraFormat format);
     sptr<ICameraService> serviceProxy_;
     sptr<CameraListenerStub> listenerStub_ = nullptr;
