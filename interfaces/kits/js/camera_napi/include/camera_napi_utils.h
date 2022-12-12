@@ -109,25 +109,6 @@
         }                                              \
     } while (0)
 
-#define CAMERA_NAPI_CHECK_ERROR(env, ret, msg)                        \
-    do {                                                              \
-        if ((ret != 0)) {                                             \
-            std::string errorCode = std::to_string(ret);              \
-            napi_throw_error(env, errorCode.c_str(), msg);            \
-            return nullptr;                                           \
-        }                                                             \
-    } while (0);
-
-#define CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, isCommitConfig)            \
-    do {                                                                \
-        if ((!isCommitConfig)) {                                        \
-            std::string errorCode = std::to_string(SESSION_NOT_CONFIG); \
-            napi_throw_error(env, errorCode.c_str(),                    \
-                             "session not config");                     \
-            return nullptr;                                             \
-        }                                                               \
-    } while (0);    
-
 namespace OHOS {
 namespace CameraStandard {
 /* Constants for array index */
@@ -152,7 +133,9 @@ struct AsyncContext {
     napi_ref callbackRef;
     bool status;
     int32_t taskId;
+    int32_t errorCode;
     std::string funcName;
+    bool isInvalidArgument;
 };
 
 struct JSAsyncContextOutput {
@@ -196,7 +179,7 @@ enum JSMetadataObjectType {
     FACE = 0
 };
 
-enum NapiCheckArgsModes {
+enum NapiCheckInvalidArgumentModes {
     CREATE_CAMERA_INPUT_INSTANCE,
     CREATE_PREVIEW_OUTPUT_INSTANCE,
     CREATE_PHOTO_OUTPUT_INSTANCE,
@@ -206,6 +189,7 @@ enum NapiCheckArgsModes {
     REMOVE_INPUT,
     ADD_OUTPUT,
     REMOVE_OUTPUT,
+    PHOTO_OUT_CAPTURE,
 };
 
 /* Util class used by napi asynchronous methods for making call to js callback function */
@@ -537,12 +521,17 @@ public:
         }
     }
 
-    static void CreateNapiErrorObject(napi_env env, const char* errString,
+    static void CreateNapiErrorObject(napi_env env, int32_t errorCode, const char* errString,
         std::unique_ptr<JSAsyncContextOutput> &jsContext)
     {
         napi_get_undefined(env, &jsContext->data);
+        napi_value napiErrorCode = nullptr;
         napi_value napiErrorMsg = nullptr;
+    
+        std::string errorCodeStr = std::to_string(errorCode);
+        napi_create_string_utf8(env, errorCodeStr.c_str(), NAPI_AUTO_LENGTH, &napiErrorCode);
         napi_create_string_utf8(env, errString, NAPI_AUTO_LENGTH, &napiErrorMsg);
+
         napi_create_error(env, nullptr, napiErrorMsg, &jsContext->error);
         jsContext->status = false;
     }
@@ -593,11 +582,11 @@ public:
         return num;
     }
 
-    static bool CheckArgs(napi_env env, size_t argc, napi_value argv[], NapiCheckArgsModes mode)
+    static bool CheckInvalidArgument(napi_env env, size_t argc, int32_t length, napi_value *argv, NapiCheckInvalidArgumentModes mode)
     {
         bool isPass = true;
-        napi_valuetype valueTypeArray[argc];
-        for (size_t i = 0; i < argc; i++) {
+        napi_valuetype valueTypeArray[length];
+        for (int32_t i = 0; i < length; i++) {
             napi_typeof(env, argv[i], &valueTypeArray[i]);
         }
         switch (mode)
@@ -614,7 +603,7 @@ public:
 
             case CREATE_PREVIEW_OUTPUT_INSTANCE:
                 isPass = (argc == ARGS_TWO) &&
-                         (valueTypeArray[0] == napi_object) && (valueTypeArray[1] == napi_string);
+                         (valueTypeArray[0] == napi_object) && (valueTypeArray[1] == napi_string);        
                 break;
 
             case CREATE_PHOTO_OUTPUT_INSTANCE:
@@ -651,6 +640,16 @@ public:
             case REMOVE_OUTPUT:
                 isPass = (argc == ARGS_ONE) && (valueTypeArray[0] == napi_object);
                 break;
+
+            case PHOTO_OUT_CAPTURE:
+                if (argc == ARGS_ONE) {
+                    isPass = valueTypeArray[0] == napi_object;
+                } else if (argc == ARGS_TWO) {
+                    isPass = (valueTypeArray[0] == napi_object) && (valueTypeArray[1] == napi_function);
+                } else {
+                    isPass = false;
+                }
+                break;
             default:
                 break;
         }
@@ -659,6 +658,15 @@ public:
             napi_throw_type_error(env, errorCode.c_str(), "invalid argument"); 
         }
         return isPass;
+    }
+
+    static bool CheckError(napi_env env, int32_t retCode) {
+        if ((retCode != 0)) {
+            std::string errorCode = std::to_string(retCode);
+            napi_throw_error(env, errorCode.c_str(), "");
+            return false;
+        }
+        return true;
     }
 };
 } // namespace CameraStandard

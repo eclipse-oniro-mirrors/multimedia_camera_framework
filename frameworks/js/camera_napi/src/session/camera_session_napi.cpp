@@ -405,7 +405,7 @@ void PopulateRetVal(napi_env env, SessionAsyncCallbackModes mode,
             if (ret != 0) {
                 context->errorMsg = "commit config failure";
                 context->status = false;
-                CameraNapiUtils::CreateNapiErrorObject(env, context->errorMsg.c_str(), jsContext);
+                CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
             }
             napi_get_undefined(env, &jsContext->data);
             break;
@@ -415,7 +415,7 @@ void PopulateRetVal(napi_env env, SessionAsyncCallbackModes mode,
             if (ret != 0) {
                 context->errorMsg = "Start( ) failure";
                 context->status = false;
-                CameraNapiUtils::CreateNapiErrorObject(env, context->errorMsg.c_str(), jsContext);
+                CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
             }
             napi_get_undefined(env, &jsContext->data);
             break;
@@ -425,7 +425,7 @@ void PopulateRetVal(napi_env env, SessionAsyncCallbackModes mode,
             if (ret != 0) {
                 context->errorMsg = "Stop( ) failure";
                 context->status = false;
-                CameraNapiUtils::CreateNapiErrorObject(env, context->errorMsg.c_str(), jsContext);
+                CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
             }
             napi_get_undefined(env, &jsContext->data);
             break;
@@ -450,7 +450,7 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
 
     if (!context->status) {
-        CameraNapiUtils::CreateNapiErrorObject(env, context->errorMsg.c_str(), jsContext);
+        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
     } else {
         PopulateRetVal(env, context->modeForAsync, context, jsContext);
     }
@@ -483,7 +483,9 @@ napi_value CameraSessionNapi::BeginConfig(napi_env env, napi_callback_info info)
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t ret = cameraSessionNapi->cameraSession_->BeginConfig();
-        CAMERA_NAPI_CHECK_ERROR(env, ret, "beginConfig failed");
+        if (!CameraNapiUtils::CheckError(env, ret)) {
+            return nullptr;
+        }
     }
     return result;
 }
@@ -619,7 +621,7 @@ napi_value CameraSessionNapi::AddInput(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    if (!CameraNapiUtils::CheckArgs(env, argc, argv, ADD_INPUT)) {
+    if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, ADD_INPUT)) {
         return result;
     }
 
@@ -630,7 +632,9 @@ napi_value CameraSessionNapi::AddInput(napi_env env, napi_callback_info info)
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         int32_t ret = cameraSessionNapi->cameraSession_->AddInput(cameraInput);
-        CAMERA_NAPI_CHECK_ERROR(env, ret, "addInput failed");
+        if (!CameraNapiUtils::CheckError(env, ret)) {
+            return nullptr;
+        }
     }
     return result;
 }
@@ -668,7 +672,7 @@ napi_value CameraSessionNapi::RemoveInput(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    if (!CameraNapiUtils::CheckArgs(env, argc, argv, REMOVE_INPUT)) {
+    if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, REMOVE_INPUT)) {
         return result;
     }
 
@@ -679,7 +683,9 @@ napi_value CameraSessionNapi::RemoveInput(napi_env env, napi_callback_info info)
         sptr<CaptureInput> cameraInput;
         GetJSArgsForCameraInput(env, argc, argv, cameraInput);
         int32_t ret = cameraSessionNapi->cameraSession_->RemoveInput(cameraInput);
-        CAMERA_NAPI_CHECK_ERROR(env, ret, "removeInput failed");
+        if (!CameraNapiUtils::CheckError(env, ret)) {
+            return nullptr;
+        }
         return result;
     }
 
@@ -741,7 +747,7 @@ napi_value CameraSessionNapi::AddOutput(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    if (!CameraNapiUtils::CheckArgs(env, argc, argv, ADD_OUTPUT)) {
+    if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, ADD_OUTPUT)) {
         return result;
     }
 
@@ -752,7 +758,9 @@ napi_value CameraSessionNapi::AddOutput(napi_env env, napi_callback_info info)
         sptr<CaptureOutput> cameraOutput;
         result = GetJSArgsForCameraOutput(env, argc, argv, cameraOutput);
         int32_t ret = cameraSessionNapi->cameraSession_->AddOutput(cameraOutput);
-        CAMERA_NAPI_CHECK_ERROR(env, ret, "addOutput failed");
+        if (!CameraNapiUtils::CheckError(env, ret)) {
+            return nullptr;
+        }
     }
     return result;
 }
@@ -791,7 +799,7 @@ napi_value CameraSessionNapi::RemoveOutput(napi_env env, napi_callback_info info
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    if (!CameraNapiUtils::CheckArgs(env, argc, argv, REMOVE_OUTPUT)) {
+    if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, REMOVE_OUTPUT)) {
         return result;
     }
 
@@ -802,7 +810,9 @@ napi_value CameraSessionNapi::RemoveOutput(napi_env env, napi_callback_info info
         sptr<CaptureOutput> cameraOutput;
         result = GetJSArgsForCameraOutput(env, argc, argv, cameraOutput);
         int32_t ret = cameraSessionNapi->cameraSession_->RemoveOutput(cameraOutput);
-        CAMERA_NAPI_CHECK_ERROR(env, ret, "removeOutput failed");
+        if (!CameraNapiUtils::CheckError(env, ret)) {
+            return nullptr;
+        }
     }
 
     return result;
@@ -978,7 +988,6 @@ napi_value CameraSessionNapi::IsVideoStabilizationModeSupported(napi_env env, na
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         int32_t value;
         napi_get_value_int32(env, argv[PARAM0], &value);
         VideoStabilizationMode videoStabilizationMode = (VideoStabilizationMode)value;
@@ -1004,7 +1013,6 @@ napi_value CameraSessionNapi::GetActiveVideoStabilizationMode(napi_env env, napi
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         VideoStabilizationMode videoStabilizationMode = cameraSessionNapi->cameraSession_->
                         GetActiveVideoStabilizationMode();
         napi_create_int32(env, videoStabilizationMode, &result);
@@ -1027,7 +1035,6 @@ napi_value CameraSessionNapi::SetVideoStabilizationMode(napi_env env, napi_callb
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         int32_t value;
         napi_get_value_int32(env, argv[PARAM0], &value);
         VideoStabilizationMode videoStabilizationMode = (VideoStabilizationMode)value;
@@ -1057,7 +1064,6 @@ napi_value CameraSessionNapi::HasFlash(napi_env env, napi_callback_info info)
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         std::vector<FlashMode> list = cameraSessionNapi->cameraSession_->GetSupportedFlashModes();
         bool isSupported = !(list.empty());
         napi_get_boolean(env, isSupported, &result);
@@ -1079,7 +1085,6 @@ napi_value CameraSessionNapi::IsFlashModeSupported(napi_env env, napi_callback_i
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         int32_t value;
         napi_get_value_int32(env, argv[PARAM0], &value);
         FlashMode flashMode = (FlashMode)value;
@@ -1105,7 +1110,6 @@ napi_value CameraSessionNapi::SetFlashMode(napi_env env, napi_callback_info info
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         int32_t value;
         napi_get_value_int32(env, argv[PARAM0], &value);
         FlashMode flashMode = (FlashMode)value;
@@ -1134,7 +1138,6 @@ napi_value CameraSessionNapi::GetFlashMode(napi_env env, napi_callback_info info
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         FlashMode flashMode = cameraSessionNapi->cameraSession_->GetFlashMode();
         napi_create_int32(env, flashMode, &result);
     }
@@ -1156,7 +1159,6 @@ napi_value CameraSessionNapi::IsExposureModeSupported(napi_env env, napi_callbac
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         int32_t value;
         napi_get_value_int32(env, argv[PARAM0], &value);
         ExposureMode exposureMode = (ExposureMode)value;
@@ -1181,7 +1183,6 @@ napi_value CameraSessionNapi::GetExposureMode(napi_env env, napi_callback_info i
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         ExposureMode exposureMode = cameraSessionNapi->cameraSession_->GetExposureMode();
         napi_create_int32(env, exposureMode, &result);
     }
@@ -1204,7 +1205,6 @@ napi_value CameraSessionNapi::SetExposureMode(napi_env env, napi_callback_info i
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         int32_t value;
         napi_get_value_int32(env, argv[PARAM0], &value);
         ExposureMode exposureMode = (ExposureMode)value;
@@ -1236,7 +1236,6 @@ napi_value CameraSessionNapi::SetMeteringPoint(napi_env env, napi_callback_info 
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         Point exposurePoint;
         if (GetPointProperties(env, argv[PARAM0], exposurePoint) == 0) {
             cameraSessionNapi->cameraSession_->LockForControl();
@@ -1263,7 +1262,6 @@ napi_value CameraSessionNapi::GetMeteringPoint(napi_env env, napi_callback_info 
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         Point exposurePoint = cameraSessionNapi->cameraSession_->GetMeteringPoint();
         return GetPointNapiValue(env, exposurePoint);
     }
@@ -1285,7 +1283,6 @@ napi_value CameraSessionNapi::GetExposureBiasRange(napi_env env, napi_callback_i
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         std::vector<int32_t> vecExposureBiasList = cameraSessionNapi->cameraSession_->GetExposureBiasRange();
         if (!vecExposureBiasList.empty() && napi_create_array(env, &result) == napi_ok) {
             int32_t j = 0;
@@ -1320,7 +1317,6 @@ napi_value CameraSessionNapi::GetExposureValue(napi_env env, napi_callback_info 
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi!= nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         int32_t exposureValue = cameraSessionNapi->cameraSession_->GetExposureValue();
         napi_create_int32(env, exposureValue, &result);
     }
@@ -1342,7 +1338,6 @@ napi_value CameraSessionNapi::SetExposureBias(napi_env env, napi_callback_info i
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         int32_t exposureValue;
         napi_get_value_int32(env, argv[0], &exposureValue);
         cameraSessionNapi->cameraSession_->LockForControl();
@@ -1368,7 +1363,6 @@ napi_value CameraSessionNapi::IsFocusModeSupported(napi_env env, napi_callback_i
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         int32_t value;
         napi_get_value_int32(env, argv[PARAM0], &value);
         FocusMode focusMode = (FocusMode)value;
@@ -1394,7 +1388,6 @@ napi_value CameraSessionNapi::GetFocalLength(napi_env env, napi_callback_info in
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         float focalLength = cameraSessionNapi->cameraSession_->GetFocalLength();
         napi_create_double(env, focalLength, &result);
     }
@@ -1417,7 +1410,6 @@ napi_value CameraSessionNapi::SetFocusPoint(napi_env env, napi_callback_info inf
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         Point focusPoint;
         if (GetPointProperties(env, argv[PARAM0], focusPoint) == 0) {
             cameraSessionNapi->cameraSession_->LockForControl();
@@ -1445,7 +1437,6 @@ napi_value CameraSessionNapi::GetFocusPoint(napi_env env, napi_callback_info inf
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         Point focusPoint = cameraSessionNapi->cameraSession_->GetFocusPoint();
         return GetPointNapiValue(env, focusPoint);
     }
@@ -1467,7 +1458,6 @@ napi_value CameraSessionNapi::GetFocusMode(napi_env env, napi_callback_info info
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         FocusMode focusMode = cameraSessionNapi->cameraSession_->GetFocusMode();
         napi_create_int32(env, focusMode, &result);
     }
@@ -1490,7 +1480,6 @@ napi_value CameraSessionNapi::SetFocusMode(napi_env env, napi_callback_info info
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         int32_t value;
         napi_get_value_int32(env, argv[PARAM0], &value);
         FocusMode focusMode = (FocusMode)value;
@@ -1522,7 +1511,6 @@ napi_value CameraSessionNapi::GetZoomRatioRange(napi_env env, napi_callback_info
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         std::vector<float> vecZoomRatioList = cameraSessionNapi->cameraSession_->GetZoomRatioRange();
         MEDIA_INFO_LOG("CameraSessionNapi::GetZoomRatioRange len = %{public}zu",
             vecZoomRatioList.size());
@@ -1556,7 +1544,6 @@ napi_value CameraSessionNapi::GetZoomRatio(napi_env env, napi_callback_info info
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         float zoomRatio = cameraSessionNapi->cameraSession_->GetZoomRatio();
         napi_create_double(env, zoomRatio, &result);
     }
@@ -1580,7 +1567,6 @@ napi_value CameraSessionNapi::SetZoomRatio(napi_env env, napi_callback_info info
     CameraSessionNapi* cameraSessionNapi;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        CAMERA_NAPI_CHECK_COMMIT_CONFIG(env, cameraSessionNapi->cameraSession_->IsCommitConfig());
         double zoomRatio;
         napi_get_value_double(env, argv[PARAM0], &zoomRatio);
         cameraSessionNapi->cameraSession_->LockForControl();

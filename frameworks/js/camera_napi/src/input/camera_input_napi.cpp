@@ -224,7 +224,7 @@ void CommonCompleteCallback(napi_env env, napi_status status, void* data)
     }
 
     if (!context->status) {
-        CameraNapiUtils::CreateNapiErrorObject(env, context->errorMsg.c_str(), jsContext);
+        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
     } else {
         napi_get_undefined(env, &jsContext->data);
     }

@@ -320,7 +320,7 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
 
     if (!context->status) {
-        CameraNapiUtils::CreateNapiErrorObject(env, context->errorMsg.c_str(), jsContext);
+        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
     } else {
         jsContext->status = true;
         napi_get_undefined(env, &jsContext->error);
@@ -483,13 +483,15 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
     napi_value resource = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_TWO, "requires 2 parameters maximum");
 
     napi_get_undefined(env, &result);
     unique_ptr<PhotoOutputAsyncContext> asyncContext = make_unique<PhotoOutputAsyncContext>();
+    asyncContext->isInvalidArgument = !CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_TWO, argv, PHOTO_OUT_CAPTURE);
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
     if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
+        if (!asyncContext->isInvalidArgument) {
+            result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
+        }
         CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
         CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
         CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "Capture");
@@ -499,11 +501,17 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
                 // Start async trace
                 context->funcName = "PhotoOutputNapi::Capture";
                 context->taskId = CameraNapiUtils::IncreamentAndGet(photoOutputTaskId);
+                if (context->isInvalidArgument) {
+                    context->status = false;
+                    context->errorCode = INVALID_ARGUMENT;
+                    return;
+                }
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo == nullptr) {
                     context->status = false;
                     return;
                 }
+
                 context->bRetBool = false;
                 context->status = true;
                 sptr<PhotoOutput> photoOutput = ((sptr<PhotoOutput> &)(context->objectInfo->photoOutput_));
@@ -533,7 +541,6 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
                 }
                 if (ret != 0) {
                     context->status = false;
-                    context->errorMsg = "Photo output capture failure";
                 }
             }, CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {

@@ -266,7 +266,7 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
 
     if (!context->status) {
-        CameraNapiUtils::CreateNapiErrorObject(env, context->errorMsg.c_str(), jsContext);
+        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
     } else {
         jsContext->status = true;
         napi_get_undefined(env, &jsContext->error);
@@ -372,7 +372,7 @@ static void GetSupportedMetadataObjectTypesAsyncCallbackComplete(napi_env env, n
     if (context->SupportedMetadataObjectTypes.empty()
         || (napi_create_array(env, &metadataObjectTypes) != napi_ok)) {
         MEDIA_ERR_LOG("No Metadata object Types or create array failed!");
-        CameraNapiUtils::CreateNapiErrorObject(env,
+        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode,
             "No Metadata object Types or create array failed!", jsContext);
     }
 
