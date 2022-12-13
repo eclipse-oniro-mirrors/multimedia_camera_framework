@@ -582,15 +582,15 @@ public:
         return num;
     }
 
-    static bool CheckInvalidArgument(napi_env env, size_t argc, int32_t length, napi_value *argv, NapiCheckInvalidArgumentModes mode)
+    static bool CheckInvalidArgument(napi_env env, size_t argc, int32_t length,
+                                     napi_value *argv, NapiCheckInvalidArgumentModes mode)
     {
         bool isPass = true;
         napi_valuetype valueTypeArray[length];
         for (int32_t i = 0; i < length; i++) {
             napi_typeof(env, argv[i], &valueTypeArray[i]);
         }
-        switch (mode)
-        {
+        switch (mode) {
             case CREATE_CAMERA_INPUT_INSTANCE:
                 if (argc == ARGS_ONE) {
                     isPass = valueTypeArray[0] == napi_object;
@@ -603,7 +603,7 @@ public:
 
             case CREATE_PREVIEW_OUTPUT_INSTANCE:
                 isPass = (argc == ARGS_TWO) &&
-                         (valueTypeArray[0] == napi_object) && (valueTypeArray[1] == napi_string);        
+                         (valueTypeArray[0] == napi_object) && (valueTypeArray[1] == napi_string);
                 break;
 
             case CREATE_PHOTO_OUTPUT_INSTANCE:
@@ -621,7 +621,7 @@ public:
                 if (argc == ARGS_ONE) {
                     napi_is_array(env, argv[0], &isPass);
                 } else {
-                   isPass = false;
+                    isPass = false;
                 }
                 break;
 
@@ -655,12 +655,13 @@ public:
         }
         if (!isPass) {
             std::string errorCode = std::to_string(INVALID_ARGUMENT);
-            napi_throw_type_error(env, errorCode.c_str(), "invalid argument"); 
+            napi_throw_type_error(env, errorCode.c_str(), "invalid argument");
         }
         return isPass;
     }
 
-    static bool CheckError(napi_env env, int32_t retCode) {
+    static bool CheckError(napi_env env, int32_t retCode)
+    {
         if ((retCode != 0)) {
             std::string errorCode = std::to_string(retCode);
             napi_throw_error(env, errorCode.c_str(), "");

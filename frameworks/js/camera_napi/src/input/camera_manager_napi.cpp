@@ -489,22 +489,22 @@ napi_value CameraManagerNapi::CreateVideoOutputInstance(napi_env env, napi_callb
         MEDIA_ERR_LOG("napi_unwrap failure!");
         return nullptr;
     }
-    VideoProfile videoProfile;
-    ParseVideoProfile(env, argv[0], &(videoProfile));
+    VideoProfile vidProfile;
+    ParseVideoProfile(env, argv[0], &(vidProfile));
                 MEDIA_INFO_LOG("ConvertJSArgsToNative ParseVideoProfile "
                     "size.width = %{public}d, size.height = %{public}d, format = %{public}d, "
                     "frameRateRange : min = %{public}d, max = %{public}d",
-                    videoProfile.size_.width,
-                    videoProfile.size_.height,
-                    videoProfile.format_,
-                    videoProfile.framerates_[0],
-                    videoProfile.framerates_[1]);
+                    vidProfile.size_.width,
+                    vidProfile.size_.height,
+                    vidProfile.format_,
+                    vidProfile.framerates_[0],
+                    vidProfile.framerates_[1]);
     char buffer[PATH_MAX];
     size_t length = 0;
     if (napi_get_value_string_utf8(env, argv[PARAM1], buffer, PATH_MAX, &length) == napi_ok) {
         MEDIA_INFO_LOG("surfaceId buffer --1  : %{public}s", buffer);
         std::string surfaceId = std::string(buffer);
-        result = VideoOutputNapi::CreateVideoOutput(env, videoProfile, surfaceId);
+        result = VideoOutputNapi::CreateVideoOutput(env, vidProfile, surfaceId);
         MEDIA_INFO_LOG("surfaceId after convert : %{public}s", surfaceId.c_str());
     } else {
         MEDIA_ERR_LOG("Could not able to read surfaceId argument!");

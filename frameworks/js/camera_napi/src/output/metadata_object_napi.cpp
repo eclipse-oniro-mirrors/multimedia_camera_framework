@@ -167,8 +167,7 @@ napi_value MetadataObjectNapi::GetTimestamp(napi_env env, napi_callback_info inf
     return result;
 }
 
-napi_value MetadataObjectNapi::GetBoundingBox(napi_env env,
-                                              napi_callback_info info)
+napi_value MetadataObjectNapi::GetBoundingBox(napi_env env, napi_callback_info info)
 {
     napi_status status;
     napi_value result = nullptr;
@@ -185,60 +184,20 @@ napi_value MetadataObjectNapi::GetBoundingBox(napi_env env,
         Rect metaFace = metadataObjectNapi->metadataObject_->GetBoundingBox();
 
         napi_value propValue;
-        napi_status retStatVal;
 
-        retStatVal = napi_create_object(env, &result);
-        if (retStatVal != napi_ok) {
-            MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete napi_create_object failed");
-        }
+        napi_create_object(env, &result);
 
-        retStatVal = napi_create_double(env, metaFace.topLeftX, &propValue);
-        if (retStatVal != napi_ok) {
-            MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete napi_create_double "
-                          "failed for topLeftX");
-        }
+        napi_create_double(env, metaFace.topLeftX, &propValue);
+        napi_set_named_property(env, result, "topLeftX", propValue);
 
-        retStatVal = napi_set_named_property(env, result, "topLeftX", propValue);
-        if (retStatVal != napi_ok) {
-            MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
-                          "napi_set_named_property failed for topLeftX");
-        }
+        napi_create_double(env, metaFace.topLeftY, &propValue);
+        napi_set_named_property(env, result, "topLeftY", propValue);
 
-        retStatVal = napi_create_double(env, metaFace.topLeftY, &propValue);
-        if (retStatVal != napi_ok) {
-            MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
-                          "napi_create_double failed for topLeftY");
-        }
+        napi_create_double(env, metaFace.width, &propValue);
+        napi_set_named_property(env, result, "width", propValue);
 
-        retStatVal = napi_set_named_property(env, result, "topLeftY", propValue);
-        if (retStatVal != napi_ok) {
-            MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
-                          "napi_set_named_property failed for topLeftY");
-        }
-
-        retStatVal = napi_create_double(env, metaFace.width, &propValue);
-        if (retStatVal != napi_ok) {
-            MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
-                          "napi_create_double failed for width");
-        }
-
-        retStatVal = napi_set_named_property(env, result, "width", propValue);
-        if (retStatVal != napi_ok) {
-            MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
-                          "napi_set_named_property failed for width");
-        }
-
-        retStatVal = napi_create_double(env, metaFace.height, &propValue);
-        if (retStatVal != napi_ok) {
-            MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
-                          "napi_create_double failed for height");
-        }
-
-        retStatVal = napi_set_named_property(env, result, "height", propValue);
-        if (retStatVal != napi_ok) {
-            MEDIA_ERR_LOG("MetadataObjectNapi::GetBoundingBoxAsyncCallbackComplete "
-                          "napi_set_named_property failed for height");
-        }
+        napi_create_double(env, metaFace.height, &propValue);
+        napi_set_named_property(env, result, "height", propValue);
     }
     return result;
 }

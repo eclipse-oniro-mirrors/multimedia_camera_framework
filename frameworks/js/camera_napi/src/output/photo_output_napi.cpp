@@ -283,15 +283,15 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile &profile, st
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
         MEDIA_INFO_LOG("CreatePhotoOutput surfaceId: %{public}s", surfaceId.c_str());
-        sptr<Surface> surface = Media::ImageReceiver::getSurfaceById(surfaceId);
-        if (surface == nullptr) {
+        sptr<Surface> sface = Media::ImageReceiver::getSurfaceById(surfaceId);
+        if (sface == nullptr) {
             MEDIA_ERR_LOG("failed to get surface from ImageReceiver");
             return result;
         }
-        MEDIA_INFO_LOG("surface width: %{public}d, height: %{public}d", surface->GetDefaultWidth(),
-                       surface->GetDefaultHeight());
-        surface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
-        sPhotoOutput_ = CameraManager::GetInstance()->CreatePhotoOutput(profile, surface);
+        MEDIA_INFO_LOG("surface width: %{public}d, height: %{public}d", sface->GetDefaultWidth(),
+                       sface->GetDefaultHeight());
+        sface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
+        sPhotoOutput_ = CameraManager::GetInstance()->CreatePhotoOutput(profile, sface);
         if (sPhotoOutput_ == nullptr) {
             MEDIA_ERR_LOG("failed to create CreatePhotoOutput");
             return result;
@@ -486,7 +486,8 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
 
     napi_get_undefined(env, &result);
     unique_ptr<PhotoOutputAsyncContext> asyncContext = make_unique<PhotoOutputAsyncContext>();
-    asyncContext->isInvalidArgument = !CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_TWO, argv, PHOTO_OUT_CAPTURE);
+    asyncContext->isInvalidArgument =!CameraNapiUtils::CheckInvalidArgument(env,argc, ARGS_TWO,
+                                                                            argv, PHOTO_OUT_CAPTURE);
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
     if (status == napi_ok && asyncContext->objectInfo != nullptr) {
         if (!asyncContext->isInvalidArgument) {
