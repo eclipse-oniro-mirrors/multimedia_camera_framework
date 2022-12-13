@@ -368,7 +368,10 @@ napi_value CameraSessionNapi::CreateCameraSession(napi_env env)
 
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
-        sCameraSession_ = CameraManager::GetInstance()->CreateCaptureSession();
+        int retCode = CameraManager::GetInstance()->CreateCaptureSession(&sCameraSession_);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
         if (sCameraSession_ == nullptr) {
             MEDIA_ERR_LOG("Failed to create Camera session instance");
             napi_get_undefined(env, &result);

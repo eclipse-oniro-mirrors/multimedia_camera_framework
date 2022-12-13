@@ -271,7 +271,10 @@ napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, Profile &profile
         }
 
         surface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
-        sPreviewOutput_ = CameraManager::GetInstance()->CreatePreviewOutput(profile, surface);
+        int retCode = CameraManager::GetInstance()->CreatePreviewOutput(profile, surface, &sPreviewOutput_);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
         if (sPreviewOutput_ == nullptr) {
             MEDIA_ERR_LOG("failed to create previewOutput");
             return result;

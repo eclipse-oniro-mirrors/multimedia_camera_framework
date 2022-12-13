@@ -291,7 +291,10 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile &profile, st
         MEDIA_INFO_LOG("surface width: %{public}d, height: %{public}d", sface->GetDefaultWidth(),
                        sface->GetDefaultHeight());
         sface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
-        sPhotoOutput_ = CameraManager::GetInstance()->CreatePhotoOutput(profile, sface);
+        int retCode = CameraManager::GetInstance()->CreatePhotoOutput(profile, sface, &sPhotoOutput_);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
         if (sPhotoOutput_ == nullptr) {
             MEDIA_ERR_LOG("failed to create CreatePhotoOutput");
             return result;

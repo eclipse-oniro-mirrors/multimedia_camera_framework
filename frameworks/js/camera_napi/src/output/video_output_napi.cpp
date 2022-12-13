@@ -323,7 +323,10 @@ napi_value VideoOutputNapi::CreateVideoOutput(napi_env env, VideoProfile &profil
             return result;
         }
         surface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
-        sVideoOutput_ = CameraManager::GetInstance()->CreateVideoOutput(profile, surface);
+        int retCode = CameraManager::GetInstance()->CreateVideoOutput(profile, surface, &sVideoOutput_);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
         if (sVideoOutput_ == nullptr) {
             MEDIA_ERR_LOG("failed to create VideoOutput");
             return result;
