@@ -237,7 +237,10 @@ napi_value MetadataOutputNapi::CreateMetadataOutput(napi_env env)
 
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
-        sMetadataOutput_ = CameraManager::GetInstance()->CreateMetadataOutput();
+        int retCode = CameraManager::GetInstance()->CreateMetadataOutput(&sMetadataOutput_);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
         if (sMetadataOutput_ == nullptr) {
             MEDIA_ERR_LOG("failed to create MetadataOutput");
             return result;

@@ -717,14 +717,14 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
                 break;
             }
         }
-    } else {
-        std::string errorCode = std::to_string(INVALID_ARGUMENT);
-        napi_throw_error(env, errorCode.c_str(),
-                         "wrong number of arguments");
     }
     if (cameraInfo != nullptr) {
-        result = CameraInputNapi::CreateCameraInput(env,
-                                                    CameraManager::GetInstance()->CreateCameraInput(cameraInfo));
+        sptr<CameraInput> cameraInput;
+        int retCode = CameraManager::GetInstance()->CreateCameraInput(cameraInfo, &cameraInput);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        result = CameraInputNapi::CreateCameraInput(env, cameraInput);
     }
     return result;
 }
