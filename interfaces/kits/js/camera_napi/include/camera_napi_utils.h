@@ -134,6 +134,7 @@ struct AsyncContext {
     bool status;
     int32_t taskId;
     int32_t errorCode;
+    std::string errorMsg;
     std::string funcName;
     bool isInvalidArgument;
 };
@@ -527,12 +528,15 @@ public:
         napi_get_undefined(env, &jsContext->data);
         napi_value napiErrorCode = nullptr;
         napi_value napiErrorMsg = nullptr;
-    
+ 
         std::string errorCodeStr = std::to_string(errorCode);
         napi_create_string_utf8(env, errorCodeStr.c_str(), NAPI_AUTO_LENGTH, &napiErrorCode);
         napi_create_string_utf8(env, errString, NAPI_AUTO_LENGTH, &napiErrorMsg);
 
-        napi_create_error(env, nullptr, napiErrorMsg, &jsContext->error);
+        napi_create_object(env, &jsContext->error);
+        napi_set_named_property(env, jsContext->error, "code", napiErrorCode);
+        napi_set_named_property(env, jsContext->error, "message", napiErrorMsg);
+        
         jsContext->status = false;
     }
 
