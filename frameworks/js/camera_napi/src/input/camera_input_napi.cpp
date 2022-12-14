@@ -202,14 +202,14 @@ void CommonCompleteCallback(napi_env env, napi_status status, void* data)
         context->funcName.c_str(), context->modeForAsync, context->status);
     switch (context->modeForAsync) {
         case OPEN_ASYNC_CALLBACK:
-            context->objectInfo->GetCameraInput()->Open();
-            jsContext->status = context->status;
+            context->errorCode = context->objectInfo->GetCameraInput()->Open();
+            context->status = context->errorCode == 0;
             MEDIA_INFO_LOG("%{public}s, GetCameraInput()->Open() status = %{public}d",
                 context->funcName.c_str(), context->status);
             break;
         case CLOSE_ASYNC_CALLBACK:
-            context->objectInfo->GetCameraInput()->Close();
-            jsContext->status = context->status;
+            context->errorCode = context->objectInfo->GetCameraInput()->Close();
+            context->status = context->errorCode == 0;
             MEDIA_INFO_LOG("%{public}s, GetCameraInput()->Close() status = %{public}d",
                 context->funcName.c_str(), context->status);
             break;
