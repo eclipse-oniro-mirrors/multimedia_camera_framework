@@ -39,7 +39,7 @@ public:
     /**
      * @brief Releases the instance of CaptureOutput.
      */
-    virtual void Release() = 0;
+    virtual int32_t Release() = 0;
 
     CaptureOutputType GetOutputType();
     const char* GetOutputTypeString();
