@@ -124,7 +124,6 @@ const int32_t ARGS_THREE = 3;
 const int32_t SIZE = 100;
 
 const int32_t INVALID_ARGUMENT = 7400101;
-const int32_t SESSION_NOT_CONFIG = 7400102;
 
 struct AsyncContext {
     napi_env env;

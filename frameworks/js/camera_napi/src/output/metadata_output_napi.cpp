@@ -527,9 +527,9 @@ napi_value MetadataOutputNapi::Start(napi_env env, napi_callback_info info)
                 context->status = false;
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
-                    context->status = true;
                     context->funcName = "MetadataOutputNapi::Start";
-                    context->objectInfo->metadataOutput_->Start();
+                    context->errorCode = context->objectInfo->metadataOutput_->Start();
+                    context->status = context->errorCode == 0;
                 }
             },
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
@@ -576,7 +576,8 @@ napi_value MetadataOutputNapi::Stop(napi_env env, napi_callback_info info)
                     context->bRetBool = false;
                     context->status = true;
                     context->funcName = "MetadataOutputNapi::Stop";
-                    context->objectInfo->metadataOutput_->Stop();
+                    context->errorCode = context->objectInfo->metadataOutput_->Stop();
+                    context->status = context->errorCode == 0;
                 }
             },
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);

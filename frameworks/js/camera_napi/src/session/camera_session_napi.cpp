@@ -398,14 +398,13 @@ napi_value CameraSessionNapi::CreateCameraSession(napi_env env)
 void PopulateRetVal(napi_env env, SessionAsyncCallbackModes mode,
     CameraSessionAsyncContext* context, std::unique_ptr<JSAsyncContextOutput> &jsContext)
 {
-    int32_t ret = 0;
     jsContext->status = true;
     napi_get_undefined(env, &jsContext->error);
     switch (mode) {
         case COMMIT_CONFIG_ASYNC_CALLBACK:
-            ret = context->objectInfo->cameraSession_->CommitConfig();
-            MEDIA_INFO_LOG("commit config return : %{public}d", ret);
-            if (ret != 0) {
+            context->errorCode = context->objectInfo->cameraSession_->CommitConfig();
+            MEDIA_INFO_LOG("commit config return : %{public}d", context->errorCode);
+            if (context->errorCode != 0) {
                 context->errorMsg = "commit config failure";
                 context->status = false;
                 CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
@@ -413,9 +412,9 @@ void PopulateRetVal(napi_env env, SessionAsyncCallbackModes mode,
             napi_get_undefined(env, &jsContext->data);
             break;
         case SESSION_START_ASYNC_CALLBACK:
-            ret = context->objectInfo->cameraSession_->Start();
-            MEDIA_INFO_LOG("Start return : %{public}d", ret);
-            if (ret != 0) {
+            context->errorCode = context->objectInfo->cameraSession_->Start();
+            MEDIA_INFO_LOG("Start return : %{public}d", context->errorCode);
+            if (context->errorCode != 0) {
                 context->errorMsg = "Start( ) failure";
                 context->status = false;
                 CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
@@ -423,9 +422,9 @@ void PopulateRetVal(napi_env env, SessionAsyncCallbackModes mode,
             napi_get_undefined(env, &jsContext->data);
             break;
         case SESSION_STOP_ASYNC_CALLBACK:
-            ret = context->objectInfo->cameraSession_->Stop();
-            MEDIA_INFO_LOG("Stop return : %{public}d", ret);
-            if (ret != 0) {
+            context->errorCode = context->objectInfo->cameraSession_->Stop();
+            MEDIA_INFO_LOG("Stop return : %{public}d", context->errorCode);
+            if (context->errorCode != 0) {
                 context->errorMsg = "Stop( ) failure";
                 context->status = false;
                 CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
