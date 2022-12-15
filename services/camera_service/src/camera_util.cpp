@@ -151,7 +151,7 @@ void ReleaseCaptureId(int32_t captureId)
     return;
 }
 
-bool IsValidTokenId(int32_t tokenId)
+bool IsValidTokenId(uint32_t tokenId)
 {
     return Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(tokenId) ==
         Security::AccessToken::ATokenTypeEnum::TOKEN_HAP;
