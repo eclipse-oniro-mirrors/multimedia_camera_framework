@@ -451,7 +451,8 @@ napi_value PreviewOutputNapi::Start(napi_env env, napi_callback_info info)
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
-                    context->status = true;
+                    context->errorCode = context->objectInfo->previewOutput_->Start();
+                    context->status = context->errorCode == 0;
                 }
             },
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
@@ -501,7 +502,8 @@ napi_value PreviewOutputNapi::Stop(napi_env env, napi_callback_info info)
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
-                    context->status = true;
+                    context->errorCode = context->objectInfo->previewOutput_->Stop();
+                    context->status = context->errorCode == 0;
                 }
             },
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);

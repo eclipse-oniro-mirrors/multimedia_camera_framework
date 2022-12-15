@@ -376,12 +376,8 @@ napi_value VideoOutputNapi::Start(napi_env env, napi_callback_info info)
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
-                    context->status = true;
-                    int32_t ret = ((sptr<VideoOutput> &)(context->objectInfo->videoOutput_))->Start();
-                    if (ret != 0) {
-                        context->status = false;
-                        context->errorMsg = "VideoOutputNapi::Start failure";
-                    }
+                    context->errorCode = ((sptr<VideoOutput> &)(context->objectInfo->videoOutput_))->Start();
+                    context->status = context->errorCode == 0;
                 }
             },
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
@@ -429,12 +425,8 @@ napi_value VideoOutputNapi::Stop(napi_env env, napi_callback_info info)
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
-                    context->status = true;
-                    int32_t ret = ((sptr<VideoOutput> &)(context->objectInfo->videoOutput_))->Stop();
-                    if (ret != 0) {
-                        context->status = false;
-                        context->errorMsg = "VideoOutputNapi::Stop failure";
-                    }
+                    context->errorCode = ((sptr<VideoOutput> &)(context->objectInfo->videoOutput_))->Stop();
+                    context->status = context->errorCode == 0;
                 }
             },
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);

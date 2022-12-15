@@ -519,7 +519,6 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
                 context->bRetBool = false;
                 context->status = true;
                 sptr<PhotoOutput> photoOutput = ((sptr<PhotoOutput> &)(context->objectInfo->photoOutput_));
-                int32_t ret;
                 if ((context->hasPhotoSettings)) {
                     std::shared_ptr<PhotoCaptureSetting> capSettings = make_shared<PhotoCaptureSetting>();
 
@@ -539,13 +538,11 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
                         capSettings->SetLocation(context->location);
                     }
 
-                    ret = photoOutput->Capture(capSettings);
+                    context->errorCode = photoOutput->Capture(capSettings);
                 } else {
-                    ret = photoOutput->Capture();
+                    context->errorCode = photoOutput->Capture();
                 }
-                if (ret != 0) {
-                    context->status = false;
-                }
+                context->status = context->errorCode == 0;
             }, CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for PhotoOutputNapi::Capture");
