@@ -141,7 +141,7 @@ void WrapJsVideoProfile(napi_env env, VideoProfile &profile, napi_value &result)
     napi_set_named_property(env, result, "format", value);
 
     napi_value frameRateRange;
-    napi_create_array(env, &frameRateRange);
+    napi_create_object(env, &frameRateRange);
     std::vector<int32_t> ranges = profile.framerates_;
     napi_create_int32(env, ranges[0], &value);
     napi_set_named_property(env, frameRateRange, "min", value);
