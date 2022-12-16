@@ -212,7 +212,7 @@ napi_value CameraManagerNapi::CreateCameraSessionInstance(napi_env env, napi_cal
 
     napi_get_undefined(env, &result);
 
-    CameraManagerNapi* cameraManagerNapi;
+    CameraManagerNapi* cameraManagerNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
     if (status != napi_ok || cameraManagerNapi == nullptr) {
         MEDIA_ERR_LOG("napi_unwrap failure!");
@@ -360,7 +360,7 @@ napi_value CameraManagerNapi::CreatePreviewOutputInstance(napi_env env, napi_cal
     }
     MEDIA_INFO_LOG("CheckInvalidArgument pass");
     napi_get_undefined(env, &result);
-    CameraManagerNapi* cameraManagerNapi;
+    CameraManagerNapi* cameraManagerNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
     if (status != napi_ok || cameraManagerNapi == nullptr) {
         MEDIA_ERR_LOG("napi_unwrap failure!");
@@ -443,7 +443,7 @@ napi_value CameraManagerNapi::CreatePhotoOutputInstance(napi_env env, napi_callb
     }
 
     napi_get_undefined(env, &result);
-    CameraManagerNapi* cameraManagerNapi;
+    CameraManagerNapi* cameraManagerNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
     if (status != napi_ok || cameraManagerNapi == nullptr) {
         MEDIA_ERR_LOG("napi_unwrap failure!");
@@ -483,7 +483,7 @@ napi_value CameraManagerNapi::CreateVideoOutputInstance(napi_env env, napi_callb
         return result;
     }
 
-    CameraManagerNapi* cameraManagerNapi;
+    CameraManagerNapi* cameraManagerNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
     if (status != napi_ok || cameraManagerNapi == nullptr) {
         MEDIA_ERR_LOG("napi_unwrap failure!");
@@ -549,7 +549,7 @@ napi_value CameraManagerNapi::CreateMetadataOutputInstance(napi_env env, napi_ca
     }
 
     napi_get_undefined(env, &result);
-    CameraManagerNapi* cameraManagerNapi;
+    CameraManagerNapi* cameraManagerNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
     if (status != napi_ok || cameraManagerNapi == nullptr) {
         MEDIA_ERR_LOG("napi_unwrap failure!");
@@ -573,7 +573,7 @@ napi_value CameraManagerNapi::GetSupportedCameras(napi_env env, napi_callback_in
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
-    CameraManagerNapi* cameraManagerNapi;
+    CameraManagerNapi* cameraManagerNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
     if (status == napi_ok && cameraManagerNapi != nullptr) {
         std::vector<sptr<CameraDevice>> cameraObjList = cameraManagerNapi->cameraManager_->GetSupportedCameras();
@@ -591,8 +591,8 @@ napi_value CameraManagerNapi::GetSupportedOutputCapability(napi_env env, napi_ca
     size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
-    CameraDeviceNapi* cameraDeviceNapi;
-    CameraManagerNapi* cameraManagerNapi;
+    CameraDeviceNapi* cameraDeviceNapi = nullptr;
+    CameraManagerNapi* cameraManagerNapi = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
@@ -678,15 +678,15 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
     }
 
     napi_get_undefined(env, &result);
-    CameraManagerNapi* CameraManagerNapi;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&CameraManagerNapi));
-    if (status != napi_ok || CameraManagerNapi == nullptr) {
+    CameraManagerNapi* cameraManagerNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
+    if (status != napi_ok || cameraManagerNapi == nullptr) {
         MEDIA_ERR_LOG("napi_unwrap( ) failure!");
         return result;
     }
     sptr<CameraDevice> cameraInfo = nullptr;
     if (argc == ARGS_ONE) {
-        CameraDeviceNapi *cameraDeviceNapi;
+        CameraDeviceNapi* cameraDeviceNapi = nullptr;
         status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void **>(&cameraDeviceNapi));
         if (status != napi_ok || cameraDeviceNapi == nullptr) {
             MEDIA_ERR_LOG("napi_unwrap( ) failure!");
@@ -702,12 +702,11 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
         napi_get_value_int32(env, argv[PARAM1], &numValue);
         CameraType cameraType = static_cast<CameraType>(numValue);
 
-        std::vector<sptr<CameraDevice>> cameraObjList = CameraManagerNapi->cameraManager_->GetSupportedCameras();
+        std::vector<sptr<CameraDevice>> cameraObjList = cameraManagerNapi->cameraManager_->GetSupportedCameras();
         MEDIA_DEBUG_LOG("cameraInfo is null, cameraManager_->GetSupportedCameras() : %{public}zu",
                         cameraObjList.size());
-        sptr<CameraDevice> cameraDevice;
         for (size_t i = 0; i < cameraObjList.size(); i++) {
-            cameraDevice = cameraObjList[i];
+            sptr<CameraDevice> cameraDevice = cameraObjList[i];
             if (cameraDevice == nullptr) {
                 continue;
             }
@@ -719,7 +718,7 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
         }
     }
     if (cameraInfo != nullptr) {
-        sptr<CameraInput> cameraInput;
+        sptr<CameraInput> cameraInput = nullptr;
         int retCode = CameraManager::GetInstance()->CreateCameraInput(cameraInfo, &cameraInput);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
