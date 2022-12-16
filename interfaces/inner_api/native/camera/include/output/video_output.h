@@ -58,7 +58,7 @@ public:
     /**
      * @brief Releases a instance of the VideoOutput.
      */
-    void Release() override;
+    int32_t Release() override;
 
     /**
      * @brief Set the video callback for the video output.

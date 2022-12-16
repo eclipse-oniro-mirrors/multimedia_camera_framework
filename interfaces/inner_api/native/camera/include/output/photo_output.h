@@ -231,7 +231,7 @@ public:
     /**
      * @brief Releases the instance of PhotoOutput.
      */
-    void Release() override;
+    int32_t Release() override;
 
     /**
      * @brief Get the application callback information.

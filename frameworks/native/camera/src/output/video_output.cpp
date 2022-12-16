@@ -102,7 +102,7 @@ int32_t VideoOutput::Start()
         MEDIA_ERR_LOG("VideoOutput Failed to Start!, session not runing");
         return CameraErrorCode::SESSION_NOT_RUNNING;
     }
-    int32_t errCode = static_cast<IStreamMetadata *>(GetStream().GetRefPtr())->Start();
+    int32_t errCode = static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Start();
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("VideoOutput Failed to Start!, errCode: %{public}d", errCode);
     }
@@ -111,7 +111,7 @@ int32_t VideoOutput::Start()
 
 int32_t VideoOutput::Stop()
 {
-    int32_t errCode = static_cast<IStreamMetadata *>(GetStream().GetRefPtr())->Stop();
+    int32_t errCode = static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Stop();
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("VideoOutput Failed to Stop!, errCode: %{public}d", errCode);
     }

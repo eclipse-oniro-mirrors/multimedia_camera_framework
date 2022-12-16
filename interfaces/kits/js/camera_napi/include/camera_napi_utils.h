@@ -17,6 +17,7 @@
 #define CAMERA_NAPI_UTILS_H_
 
 #include <vector>
+#include "camera_error_code.h"
 #include "camera_device_ability_items.h"
 #include "input/camera_input.h"
 #include "camera_log.h"
@@ -122,8 +123,6 @@ const int32_t ARGS_ONE = 1;
 const int32_t ARGS_TWO = 2;
 const int32_t ARGS_THREE = 3;
 const int32_t SIZE = 100;
-
-const int32_t INVALID_ARGUMENT = 7400101;
 
 struct AsyncContext {
     napi_env env;
@@ -527,7 +526,7 @@ public:
         napi_get_undefined(env, &jsContext->data);
         napi_value napiErrorCode = nullptr;
         napi_value napiErrorMsg = nullptr;
- 
+
         std::string errorCodeStr = std::to_string(errorCode);
         napi_create_string_utf8(env, errorCodeStr.c_str(), NAPI_AUTO_LENGTH, &napiErrorCode);
         napi_create_string_utf8(env, errString, NAPI_AUTO_LENGTH, &napiErrorMsg);
@@ -535,7 +534,7 @@ public:
         napi_create_object(env, &jsContext->error);
         napi_set_named_property(env, jsContext->error, "code", napiErrorCode);
         napi_set_named_property(env, jsContext->error, "message", napiErrorMsg);
-        
+
         jsContext->status = false;
     }
 
@@ -657,7 +656,7 @@ public:
                 break;
         }
         if (!isPass) {
-            std::string errorCode = std::to_string(INVALID_ARGUMENT);
+            std::string errorCode = std::to_string(CameraErrorCode::INVALID_ARGUMENT);
             napi_throw_type_error(env, errorCode.c_str(), "invalid argument");
         }
         return isPass;
