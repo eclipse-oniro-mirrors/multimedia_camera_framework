@@ -1127,7 +1127,7 @@ napi_value CameraSessionNapi::SetFlashMode(napi_env env, napi_callback_info info
         napi_get_value_int32(env, argv[PARAM0], &value);
         FlashMode flashMode = (FlashMode)value;
         bool isSupported = false;
-        int32_t retCode = cameraSessionNapi->cameraSession_->IsFlashModeSupported(flashMode);
+        int32_t retCode = cameraSessionNapi->cameraSession_->IsFlashModeSupported(flashMode, isSupported);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
         }
