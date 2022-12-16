@@ -19,8 +19,10 @@
 #include <iostream>
 #include <set>
 #include <vector>
+#include "camera_error_code.h"
 #include "input/capture_input.h"
 #include "output/capture_output.h"
+#include "icamera_util.h"
 #include "icapture_session.h"
 #include "icapture_session_callback.h"
 
@@ -106,6 +108,7 @@ enum VideoStabilizationMode {
     AUTO
 };
 
+class CaptureOutput;
 class CaptureSession : public RefBase {
 public:
     sptr<CaptureInput> inputDevice_;
@@ -208,6 +211,13 @@ public:
 
     /**
     * @brief Get the supported video sabilization modes.
+    *
+    * @return Returns vector of CameraVideoStabilizationMode supported stabilization modes.
+    */
+    std::vector<VideoStabilizationMode> GetSupportedStabilizationMode();
+
+    /**
+    * @brief Get the supported video sabilization modes.
     * @param vector of CameraVideoStabilizationMode supported stabilization modes.
     * @return Returns errCode.
     */
@@ -217,10 +227,25 @@ public:
     * @brief Query whether given stabilization mode supported.
     *
     * @param VideoStabilizationMode stabilization mode to query.
+    * @return True is supported false otherwise.
+    */
+    bool IsVideoStabilizationModeSupported(VideoStabilizationMode stabilizationMode);
+
+    /**
+    * @brief Query whether given stabilization mode supported.
+    *
+    * @param VideoStabilizationMode stabilization mode to query.
     * @param bool True is supported false otherwise.
     * @return errCode.
     */
     int32_t IsVideoStabilizationModeSupported(VideoStabilizationMode stabilizationMode, bool &isSupported);
+
+    /**
+    * @brief Get the current Video Stabilizaion mode.
+    *
+    * @return Returns current Video Stabilizaion mode.
+    */
+    VideoStabilizationMode GetActiveVideoStabilizationMode();
 
     /**
     * @brief Get the current Video Stabilizaion mode.
@@ -238,10 +263,25 @@ public:
 
     /**
     * @brief Get the supported exposure modes.
+    *
+    * @return Returns vector of ExposureMode supported exposure modes.
+    */
+    std::vector<ExposureMode> GetSupportedExposureModes();
+
+    /**
+    * @brief Get the supported exposure modes.
     * @param vector of ExposureMode supported exposure modes.
     * @return errCode.
     */
     int32_t GetSupportedExposureModes(std::vector<ExposureMode> &exposureModes);
+
+    /**
+    * @brief Query whether given exposure mode supported.
+    *
+    * @param ExposureMode exposure mode to query.
+    * @return True is supported false otherwise.
+    */
+    bool IsExposureModeSupported(ExposureMode exposureMode);
 
     /**
     * @brief Query whether given exposure mode supported.
@@ -261,6 +301,13 @@ public:
 
     /**
     * @brief Get the current exposure mode.
+    *
+    * @return Returns current exposure mode.
+    */
+    ExposureMode GetExposureMode();
+
+    /**
+    * @brief Get the current exposure mode.
     * @param ExposureMode current exposure mode.
     * @return errCode.
     */
@@ -275,10 +322,24 @@ public:
 
     /**
     * @brief Get centre point of exposure area.
+    *
+    * @return Returns current exposure point.
+    */
+    Point GetMeteringPoint();
+
+    /**
+    * @brief Get centre point of exposure area.
     * @param Point current exposure point.
     * @return errCode
     */
     int32_t GetMeteringPoint(Point &exposurePoint);
+
+    /**
+    * @brief Get exposure compensation range.
+    *
+    * @return Returns supported exposure compensation range.
+    */
+    std::vector<int32_t> GetExposureBiasRange();
 
     /**
     * @brief Get exposure compensation range.
@@ -293,6 +354,13 @@ public:
     * @return errCode.
     */
     int32_t SetExposureBias(int32_t exposureBias);
+
+    /**
+    * @brief Get exposure compensation value.
+    *
+    * @return Returns current exposure compensation value.
+    */
+    int32_t GetExposureValue();
 
     /**
     * @brief Get exposure compensation value.
@@ -319,10 +387,25 @@ public:
 
     /**
     * @brief Get the supported Focus modes.
+    *
+    * @return Returns vector of FocusMode supported exposure modes.
+    */
+    std::vector<FocusMode> GetSupportedFocusModes();
+
+    /**
+    * @brief Get the supported Focus modes.
     * @param vector of FocusMode supported.
     * @return Returns errCode.
     */
     int32_t GetSupportedFocusModes(std::vector<FocusMode> &modes);
+
+    /**
+    * @brief Query whether given focus mode supported.
+    *
+    * @param camera_focus_mode_enum_t focus mode to query.
+    * @return True is supported false otherwise.
+    */
+    bool IsFocusModeSupported(FocusMode focusMode);
 
     /**
     * @brief Query whether given focus mode supported.
@@ -340,6 +423,13 @@ public:
     * @return Returns errCode.
     */
     int32_t SetFocusMode(FocusMode focusMode);
+
+    /**
+    * @brief Get the current focus mode.
+    *
+    * @return Returns current focus mode.
+    */
+    FocusMode GetFocusMode();
 
     /**
     * @brief Get the current focus mode.
@@ -374,10 +464,24 @@ public:
 
     /**
     * @brief Get centre point of focus area.
+    *
+    * @return Returns current focus point.
+    */
+    Point GetFocusPoint();
+
+    /**
+    * @brief Get centre point of focus area.
     * @param Point current focus point.
     * @return Returns errCode.
     */
     int32_t GetFocusPoint(Point &focusPoint);
+
+    /**
+    * @brief Get focal length.
+    *
+    * @return Returns focal length value.
+    */
+    float GetFocalLength();
 
     /**
     * @brief Get focal length.
@@ -388,10 +492,22 @@ public:
 
     /**
     * @brief Get the supported Focus modes.
+    *
+    * @return Returns vector of camera_focus_mode_enum_t supported exposure modes.
+    */
+    std::vector<FlashMode> GetSupportedFlashModes();
+
+    /**
+    * @brief Get the supported Focus modes.
     * @param vector of camera_focus_mode_enum_t supported exposure modes.
     * @return Returns errCode.
     */
     int32_t GetSupportedFlashModes(std::vector<FlashMode> &flashModes);
+
+    /**
+    * @brief Check whether camera has flash.
+    */
+    bool HasFlash();
 
     /**
     * @brief Check whether camera has flash.
@@ -404,10 +520,25 @@ public:
     * @brief Query whether given flash mode supported.
     *
     * @param camera_flash_mode_enum_t flash mode to query.
+    * @return True if supported false otherwise.
+    */
+    bool IsFlashModeSupported(FlashMode flashMode);
+
+    /**
+    * @brief Query whether given flash mode supported.
+    *
+    * @param camera_flash_mode_enum_t flash mode to query.
     * @param bool True if supported false otherwise.
     * @return errCode.
     */
     int32_t IsFlashModeSupported(FlashMode flashMode, bool &isSupported);
+
+    /**
+    * @brief Get the current flash mode.
+    *
+    * @return Returns current flash mode.
+    */
+    FlashMode GetFlashMode();
 
     /**
     * @brief Get the current flash mode.
@@ -427,10 +558,24 @@ public:
     /**
     * @brief Get the supported Zoom Ratio range.
     *
+    * @return Returns vector<float> of supported Zoom ratio range.
+    */
+    std::vector<float> GetZoomRatioRange();
+
+    /**
+    * @brief Get the supported Zoom Ratio range.
+    *
     * @param vector<float> of supported Zoom ratio range.
     * @return Returns errCode.
     */
     int32_t GetZoomRatioRange(std::vector<float> &zoomRatioRange);
+
+    /**
+    * @brief Get the current Zoom Ratio.
+    *
+    * @return Returns current Zoom Ratio.
+    */
+    float GetZoomRatio();
 
     /**
     * @brief Get the current Zoom Ratio.

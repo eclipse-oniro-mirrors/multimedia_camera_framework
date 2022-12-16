@@ -326,7 +326,7 @@ int32_t CaptureSession::UpdateSetting(std::shared_ptr<Camera::CameraMetadata> ch
     CAMERA_SYNC_TRACE;
     if (!Camera::GetCameraMetadataItemCount(changedMetadata->get())) {
         MEDIA_INFO_LOG("CaptureSession::UpdateSetting No configuration to update");
-        return return CameraErrorCode::SESSION_NOT_CONFIG;
+        return CameraErrorCode::SESSION_NOT_CONFIG;
     }
 
     if (!IsSessionConfiged()) {
@@ -385,6 +385,26 @@ int32_t CaptureSession::UnlockForControl()
     return CameraErrorCode::SUCCESS;
 }
 
+VideoStabilizationMode CaptureSession::GetActiveVideoStabilizationMode()
+{
+    sptr<CameraDevice> cameraObj_;
+    if (inputDevice_ == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::GetActiveVideoStabilizationMode camera device is null");
+        return OFF;
+    }
+    cameraObj_ = inputDevice_->GetCameraDeviceInfo();
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj_->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        auto itr = metaToFwVideoStabModes_.find(static_cast<CameraVideoStabilizationMode>(item.data.u8[0]));
+        if (itr != metaToFwVideoStabModes_.end()) {
+            return itr->second;
+        }
+    }
+    return OFF;
+}
+
 int32_t CaptureSession::GetActiveVideoStabilizationMode(VideoStabilizationMode &mode)
 {
     if (!IsSessionConfiged()) {
@@ -399,7 +419,7 @@ int32_t CaptureSession::GetActiveVideoStabilizationMode(VideoStabilizationMode &
     if (ret == CAM_META_SUCCESS) {
         auto itr = metaToFwVideoStabModes_.find(static_cast<CameraVideoStabilizationMode>(item.data.u8[0]));
         if (itr != metaToFwVideoStabModes_.end()) {
-            mode = itr->second
+            mode = itr->second;
             return CameraErrorCode::SUCCESS;
         }
     }
@@ -450,10 +470,10 @@ int32_t CaptureSession::IsVideoStabilizationModeSupported(VideoStabilizationMode
     std::vector<VideoStabilizationMode> stabilizationModes = GetSupportedStabilizationMode();
     if (std::find(stabilizationModes.begin(), stabilizationModes.end(), stabilizationMode)
        != stabilizationModes.end()) {
-        isSupport = true;
+        isSupported = true;
         return CameraErrorCode::SUCCESS;
     }
-    isSupport = false;
+    isSupported = false;
     return CameraErrorCode::SUCCESS;
 }
 
@@ -587,44 +607,6 @@ int32_t CaptureSession::GetSupportedExposureModes(std::vector<ExposureMode> &sup
     return CameraErrorCode::SUCCESS;
 }
 
-void CaptureSession::SetExposureMode(ExposureMode exposureMode)
-{
-    CAMERA_SYNC_TRACE;
-    if (!IsSessionConfiged()) {
-        MEDIA_ERR_LOG("CaptureSession::SetExposureMode Session is not Configed");
-        return;
-    }
-
-    if (changedMetadata_ == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::SetExposureMode Need to call LockForControl() "
-            "before setting camera properties");
-        return;
-    }
-
-    auto itr = fwToMetaExposureMode_.find(exposureMode);
-    if (itr == fwToMetaExposureMode_.end()) {
-        MEDIA_ERR_LOG("CaptureSession::SetExposureMode Unknown exposure mode");
-        return;
-    }
-
-    bool status = false;
-    uint32_t count = 1;
-    uint8_t exposure = itr->second;
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_EXPOSURE_MODE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_EXPOSURE_MODE, &exposure, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_EXPOSURE_MODE, &exposure, count);
-    }
-
-    if (!status) {
-        MEDIA_ERR_LOG("CaptureSession::SetExposureMode Failed to set exposure mode");
-    }
-
-    return;
-}
-
 int32_t CaptureSession::SetExposureMode(ExposureMode exposureMode)
 {
     CAMERA_SYNC_TRACE;
@@ -700,41 +682,12 @@ int32_t CaptureSession::GetExposureMode(ExposureMode &exposureMode)
     }
     auto itr = metaToFwExposureMode_.find(static_cast<camera_exposure_mode_enum_t>(item.data.u8[0]));
     if (itr != metaToFwExposureMode_.end()) {
-        exposeMode = itr->second;
+        exposureMode = itr->second;
         return CameraErrorCode::SUCCESS;
     }
     return CameraErrorCode::SUCCESS;;
 }
 
-void CaptureSession::SetMeteringPoint(Point exposurePoint)
-{
-    if (!IsSessionConfiged()) {
-        MEDIA_ERR_LOG("CaptureSession::SetMeteringPoint Session is not Configed");
-        return;
-    }
-
-    if (changedMetadata_ == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::SetExposurePoint Need to call LockForControl() "
-            "before setting camera properties");
-        return;
-    }
-    bool status = false;
-    float exposureArea[2] = {exposurePoint.x, exposurePoint.y};
-    camera_metadata_item_t item;
-
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_AE_REGIONS, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_AE_REGIONS, exposureArea,
-            sizeof(exposureArea) / sizeof(exposureArea[0]));
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_AE_REGIONS, exposureArea,
-            sizeof(exposureArea) / sizeof(exposureArea[0]));
-    }
-
-    if (!status) {
-        MEDIA_ERR_LOG("CaptureSession::SetExposurePoint Failed to set exposure Area");
-    }
-}
 
 int32_t CaptureSession::SetMeteringPoint(Point exposurePoint)
 {
@@ -827,61 +780,6 @@ int32_t CaptureSession::GetExposureBiasRange(std::vector<int32_t> &exposureBiasR
     return CameraErrorCode::SUCCESS;
 }
 
-void CaptureSession::SetExposureBias(int32_t exposureValue)
-{
-    if (!IsSessionConfiged()) {
-        MEDIA_ERR_LOG("CaptureSession::SetExposureBias Session is not Configed");
-        return;
-    }
-    if (changedMetadata_ == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::SetExposureValue Need to call LockForControl() "
-            "before setting camera properties");
-        return;
-    }
-
-    bool status = false;
-    int32_t ret;
-    int32_t minIndex = 0;
-    int32_t maxIndex = 1;
-    int32_t count = 1;
-    camera_metadata_item_t item;
-
-    MEDIA_DEBUG_LOG("CaptureSession::SetExposureValue exposure compensation: %{public}d", exposureValue);
-
-    std::vector<int32_t> biasRange = inputDevice_->GetCameraDeviceInfo()->GetExposureBiasRange();
-    if (biasRange.empty()) {
-        MEDIA_ERR_LOG("CaptureSession::SetExposureValue Bias range is empty");
-        return;
-    }
-    if (exposureValue < biasRange[minIndex]) {
-        MEDIA_DEBUG_LOG("CaptureSession::SetExposureValue bias value:"
-                        "%{public}d is lesser than minimum bias: %{public}d",
-                        exposureValue, biasRange[minIndex]);
-        exposureValue = biasRange[minIndex];
-    } else if (exposureValue > biasRange[maxIndex]) {
-        MEDIA_DEBUG_LOG("CaptureSession::SetExposureValue bias value: "
-            "%{public}d is greater than maximum bias: %{public}d",
-                        exposureValue, biasRange[maxIndex]);
-        exposureValue = biasRange[maxIndex];
-    }
-
-    if (exposureValue == 0) {
-        MEDIA_ERR_LOG("CaptureSession::SetExposureValue Invalid exposure compensation value");
-        return;
-    }
-
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &exposureValue, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &exposureValue, count);
-    }
-
-    if (!status) {
-        MEDIA_ERR_LOG("CaptureSession::SetExposureValue Failed to set exposure compensation");
-    }
-    return;
-}
 
 int32_t CaptureSession::SetExposureBias(int32_t exposureValue)
 {
@@ -1064,7 +962,7 @@ bool CaptureSession::IsFocusModeSupported(FocusMode focusMode)
     return false;
 }
 
-int32_t CaptureSession::IsFocusModeSupported(FocusMode focusMode, bool isSupported)
+int32_t CaptureSession::IsFocusModeSupported(FocusMode focusMode, bool &isSupported)
 {
     if (!IsSessionConfiged()) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureBias Session is not Configed");
@@ -1119,43 +1017,6 @@ int32_t CaptureSession::StartFocus(FocusMode focusMode)
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     return CameraErrorCode::SUCCESS;
-}
-
-void CaptureSession::SetFocusMode(FocusMode focusMode)
-{
-    CAMERA_SYNC_TRACE;
-    if (!IsSessionConfiged()) {
-        MEDIA_ERR_LOG("CaptureSession::SetFocusMode Session is not Configed");
-        return;
-    }
-    if (changedMetadata_ == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::SetFocusMode Need to call LockForControl() before setting camera properties");
-        return;
-    }
-
-    auto itr = fwToMetaFocusMode_.find(focusMode);
-    if (itr == fwToMetaFocusMode_.end()) {
-        MEDIA_ERR_LOG("CaptureSession::SetExposureMode Unknown exposure mode");
-        return;
-    }
-    bool status = false;
-    int32_t ret;
-    uint32_t count = 1;
-    uint8_t focus = itr->second;
-    camera_metadata_item_t item;
-
-    MEDIA_DEBUG_LOG("CaptureSession::SetFocusMode Focus mode: %{public}d", focusMode);
-
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_FOCUS_MODE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_FOCUS_MODE, &focus, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_FOCUS_MODE, &focus, count);
-    }
-
-    if (!status) {
-        MEDIA_ERR_LOG("CaptureSession::SetFocusMode Failed to set focus mode");
-    }
 }
 
 int32_t CaptureSession::SetFocusMode(FocusMode focusMode)
@@ -1236,34 +1097,6 @@ int32_t CaptureSession::GetFocusMode(FocusMode &focusMode)
         return CameraErrorCode::SUCCESS;
     }
     return CameraErrorCode::SUCCESS;
-}
-
-void CaptureSession::SetFocusPoint(Point focusPoint)
-{
-    if (!IsSessionConfiged()) {
-        MEDIA_ERR_LOG("CaptureSession::SetFocusPoint Session is not Configed");
-        return;
-    }
-    if (changedMetadata_ == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::SetFocusPoint Need to call LockForControl() before setting camera properties");
-        return;
-    }
-    bool status = false;
-    float FocusArea[2] = {focusPoint.x, focusPoint.y};
-    camera_metadata_item_t item;
-
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_AF_REGIONS, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_AF_REGIONS, FocusArea,
-            sizeof(FocusArea) / sizeof(FocusArea[0]));
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_AF_REGIONS, FocusArea,
-            sizeof(FocusArea) / sizeof(FocusArea[0]));
-    }
-
-    if (!status) {
-        MEDIA_ERR_LOG("CaptureSession::SetFocusPoint Failed to set Focus Area");
-    }
 }
 
 int32_t CaptureSession::SetFocusPoint(Point focusPoint)
@@ -1413,7 +1246,7 @@ std::vector<FlashMode> CaptureSession::GetSupportedFlashModes()
     return supportedFlashModes;
 }
 
-CaptureSession::GetSupportedFlashModes(std::vector<FlashMode> &supportedFlashModes)
+int32_t CaptureSession::GetSupportedFlashModes(std::vector<FlashMode> &supportedFlashModes)
 {
     supportedFlashModes.clear();
     if (!IsSessionConfiged()) {
@@ -1480,48 +1313,7 @@ int32_t CaptureSession::GetFlashMode(FlashMode &flashMode)
     return CameraErrorCode::SUCCESS;
 }
 
-void CaptureSession::SetFlashMode(FlashMode flashMode)
-{
-    CAMERA_SYNC_TRACE;
-    if (!IsSessionConfiged()) {
-        MEDIA_ERR_LOG("CaptureSession::SetFlashMode Session is not Configed");
-        return;
-    }
-    if (changedMetadata_ == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::SetFlashMode Need to call LockForControl() before setting camera properties");
-        return;
-    }
-
-    auto itr = fwToMetaFlashMode_.find(flashMode);
-    if (itr == fwToMetaFlashMode_.end()) {
-        MEDIA_ERR_LOG("CaptureSession::SetExposureMode Unknown exposure mode");
-        return;
-    }
-
-    bool status = false;
-    uint32_t count = 1;
-    uint8_t flash = itr->second;
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_FLASH_MODE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_FLASH_MODE, &flash, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_FLASH_MODE, &flash, count);
-    }
-
-    if (!status) {
-        MEDIA_ERR_LOG("CaptureSession::SetFlashMode Failed to set flash mode");
-        return;
-    }
-
-    if (flashMode == FLASH_MODE_CLOSE) {
-        POWERMGR_SYSEVENT_FLASH_OFF();
-    } else {
-        POWERMGR_SYSEVENT_FLASH_ON();
-    }
-}
-
-void CaptureSession::SetFlashMode(FlashMode flashMode)
+int32_t CaptureSession::SetFlashMode(FlashMode flashMode)
 {
     CAMERA_SYNC_TRACE;
     if (!IsSessionConfiged()) {
@@ -1730,60 +1522,6 @@ int32_t CaptureSession::SetCropRegion(float zoomRatio)
     return CameraErrorCode::SUCCESS;
 }
 
-void CaptureSession::SetZoomRatio(float zoomRatio)
-{
-    CAMERA_SYNC_TRACE;
-    if (!IsSessionConfiged()) {
-        MEDIA_ERR_LOG("CaptureSession::SetZoomRatio Session is not Configed");
-        return;
-    }
-    if (changedMetadata_ == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::SetZoomRatio Need to call LockForControl() before setting camera properties");
-        return;
-    }
-
-    bool status = false;
-    int32_t ret;
-    int32_t minIndex = 0;
-    int32_t maxIndex = 1;
-    int32_t count = 1;
-    camera_metadata_item_t item;
-
-    MEDIA_DEBUG_LOG("CaptureSession::SetZoomRatio Zoom ratio: %{public}f", zoomRatio);
-
-    std::vector<float> zoomRange = inputDevice_->GetCameraDeviceInfo()->GetZoomRatioRange();
-    if (zoomRange.empty()) {
-        MEDIA_ERR_LOG("CaptureSession::SetZoomRatio Zoom range is empty");
-        return;
-    }
-    if (zoomRatio < zoomRange[minIndex]) {
-        MEDIA_DEBUG_LOG("CaptureSession::SetZoomRatio Zoom ratio: %{public}f is lesser than minimum zoom: %{public}f",
-                        zoomRatio, zoomRange[minIndex]);
-        zoomRatio = zoomRange[minIndex];
-    } else if (zoomRatio > zoomRange[maxIndex]) {
-        MEDIA_DEBUG_LOG("CaptureSession::SetZoomRatio Zoom ratio: %{public}f is greater than maximum zoom: %{public}f",
-                        zoomRatio, zoomRange[maxIndex]);
-        zoomRatio = zoomRange[maxIndex];
-    }
-
-    if (zoomRatio == 0) {
-        MEDIA_ERR_LOG("CaptureSession::SetZoomRatio Invalid zoom ratio");
-        return;
-    }
-
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_ZOOM_RATIO, &zoomRatio, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_ZOOM_RATIO, &zoomRatio, count);
-    }
-
-    if (!status) {
-        MEDIA_ERR_LOG("CaptureSession::SetZoomRatio Failed to set zoom mode");
-    }
-    return;
-}
-
 int32_t CaptureSession::SetZoomRatio(float zoomRatio)
 {
     CAMERA_SYNC_TRACE;
@@ -1875,14 +1613,18 @@ void CaptureSession::SetFrameRateRange(const std::vector<int32_t>& frameRateRang
 bool CaptureSession::IsSessionConfiged()
 {
     bool isSessionConfiged = false;
-    isSessionConfiged = (captureSession_->GetSessionState() == CaptureSessionState::SESSION_CONFIG_INPROGRESS);
+    CaptureSessionState currentState;
+    captureSession_->GetSessionState(currentState);
+    isSessionConfiged = (currentState == CaptureSessionState::SESSION_CONFIG_INPROGRESS);
     return isSessionConfiged;
 }
 
 bool CaptureSession::IsSessionCommited()
 {
     bool isCommitConfig = false;
-    isCommitConfig = (captureSession_->GetSessionState() == CaptureSessionState::SESSION_CONFIG_COMMITTED);
+    CaptureSessionState currentState;
+    captureSession_->GetSessionState(currentState);
+    isCommitConfig = (currentState == CaptureSessionState::SESSION_CONFIG_COMMITTED);
     return isCommitConfig;
 }
 } // CameraStandard

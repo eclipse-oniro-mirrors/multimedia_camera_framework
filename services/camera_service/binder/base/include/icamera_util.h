@@ -18,7 +18,6 @@
 
 #include "display_type.h"
 #include <limits.h>
-#include "v1_0/types.h"
 
 namespace OHOS {
 namespace CameraStandard {

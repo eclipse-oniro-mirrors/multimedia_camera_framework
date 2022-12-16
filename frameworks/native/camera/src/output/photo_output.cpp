@@ -305,7 +305,7 @@ int32_t PhotoOutput::Release()
 {
     int32_t errCode = static_cast<IStreamCapture *>(GetStream().GetRefPtr())->Release();
     if (errCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("PhotoOutput Failed to release!, retCode: %{public}d", retCode);
+        MEDIA_ERR_LOG("PhotoOutput Failed to release!, errCode: %{public}d", errCode);
     }
     return ServiceToCameraError(errCode);
 }
