@@ -668,7 +668,7 @@ napi_value PhotoOutputNapi::IsMirrorSupported(napi_env env, napi_callback_info i
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
-    PhotoOutputNapi* photoOutputNapi;
+    PhotoOutputNapi* photoOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
     if (status == napi_ok && photoOutputNapi != nullptr) {
         bool isSupported = photoOutputNapi->photoOutput_->IsMirrorSupported();

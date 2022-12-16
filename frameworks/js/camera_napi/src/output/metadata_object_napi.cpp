@@ -134,7 +134,7 @@ napi_value MetadataObjectNapi::GetType(napi_env env, napi_callback_info info)
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
-    MetadataObjectNapi* metadataObjectNapi;
+    MetadataObjectNapi* metadataObjectNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&metadataObjectNapi));
     if (status == napi_ok && metadataObjectNapi != nullptr) {
         MetadataObjectType metadataObjType = metadataObjectNapi->metadataObject_->GetType();
@@ -157,7 +157,7 @@ napi_value MetadataObjectNapi::GetTimestamp(napi_env env, napi_callback_info inf
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
-    MetadataObjectNapi* metadataObjectNapi;
+    MetadataObjectNapi* metadataObjectNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&metadataObjectNapi));
     if (status == napi_ok && metadataObjectNapi != nullptr) {
         double metaTimestamp = metadataObjectNapi->metadataObject_->GetTimestamp();
@@ -178,7 +178,7 @@ napi_value MetadataObjectNapi::GetBoundingBox(napi_env env, napi_callback_info i
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
-    MetadataObjectNapi* metadataObjectNapi;
+    MetadataObjectNapi* metadataObjectNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&metadataObjectNapi));
     if (status == napi_ok && metadataObjectNapi != nullptr) {
         Rect metaFace = metadataObjectNapi->metadataObject_->GetBoundingBox();
