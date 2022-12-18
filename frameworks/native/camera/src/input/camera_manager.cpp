@@ -147,7 +147,7 @@ int CameraManager::CreateCaptureSession(sptr<CaptureSession> *pCaptureSession)
             if (captureSession == nullptr) {
                 MEDIA_ERR_LOG("Failed to new CaptureSession");
                 return CameraErrorCode::SERVICE_FATL_ERROR;
-            }      
+            }
         } else {
             MEDIA_ERR_LOG("Failed to CreateCaptureSession with session is null");
             return CameraErrorCode::SERVICE_FATL_ERROR;
@@ -776,7 +776,7 @@ int CameraManager::CreateCameraInput(CameraPosition position, CameraType cameraT
     *pCameraInput = cameraInput;
 
     return CameraErrorCode::SUCCESS;
-}  
+}
 
 sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<CameraDevice>& camera)
 {
@@ -808,9 +808,6 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
         }
         size.width = item.data.i32[i + widthOffset];
         size.height = item.data.i32[i + heightOffset];
-        MEDIA_DEBUG_LOG("CameraManager::GetSupportedOutputCapability "
-            "size.width = %{public}d, size.height = %{public}d, format = %{public}d",
-            size.width, size.height, format);
         Profile profile = Profile(format, size);
         if (format == CAMERA_FORMAT_JPEG) {
             photoProfile.push_back(profile);

@@ -111,12 +111,8 @@ static napi_value CreateProfileJsArray(napi_env env, napi_status status, std::ve
     status = napi_create_array(env, &profileArray);
     if (status == napi_ok) {
         for (uint32_t i = 0; i < profileList.size(); i++) {
-            MEDIA_INFO_LOG("CreateCameraProfileNapi before "
-                "size.width = %{public}d, size.height = %{public}d, format = %{public}d",
-                profileList[i].GetSize().width, profileList[i].GetSize().height, profileList[i].GetCameraFormat());
             napi_value profile = nullptr;
             WrapProfileJs(env, profileList[i], profile);
-            MEDIA_INFO_LOG("CreateCameraProfileNapi success");
             if (profile == nullptr || napi_set_element(env, profileArray, i, profile) != napi_ok) {
                 MEDIA_ERR_LOG("Failed to create profile napi wrapper object");
                 napi_get_undefined(env, &profileArray);
@@ -165,7 +161,6 @@ static napi_value CreateVideoProfileJsArray(napi_env env, napi_status status, st
     if (status == napi_ok) {
         for (size_t i = 0; i < profileList.size(); i++) {
             WrapJsVideoProfile(env, profileList[i], profile);
-            MEDIA_INFO_LOG("WrapJsVideoProfile success");
             if (profile == nullptr || napi_set_element(env, profileArray, i, profile) != napi_ok) {
                 MEDIA_ERR_LOG("Failed to create profile napi wrapper object");
                 napi_get_undefined(env, &profileArray);
@@ -173,6 +168,7 @@ static napi_value CreateVideoProfileJsArray(napi_env env, napi_status status, st
             }
         }
     }
+    MEDIA_INFO_LOG("VideoProfileList is %{public}zu", profileList.size());
     return profileArray;
 }
 
