@@ -625,7 +625,7 @@ int32_t CaptureSession::SetExposureMode(ExposureMode exposureMode)
     auto itr = fwToMetaExposureMode_.find(exposureMode);
     if (itr == fwToMetaExposureMode_.end()) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureMode Unknown exposure mode");
-        return CameraErrorCode::INVALID_ARGUMENT;;
+        return CameraErrorCode::INVALID_ARGUMENT;
     }
 
     bool status = false;
@@ -686,7 +686,7 @@ int32_t CaptureSession::GetExposureMode(ExposureMode &exposureMode)
         exposureMode = itr->second;
         return CameraErrorCode::SUCCESS;
     }
-    return CameraErrorCode::SUCCESS;;
+    return CameraErrorCode::SUCCESS;
 }
 
 

@@ -266,7 +266,6 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
         MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, errCode: %{public}d", errCode);
     }
     return ServiceToCameraError(errCode);
-
 }
 
 int32_t PhotoOutput::Capture()
