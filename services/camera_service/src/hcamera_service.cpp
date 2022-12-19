@@ -326,6 +326,7 @@ int32_t HCameraService::CreateVideoOutput(const sptr<OHOS::IBufferProducer> &pro
 
 void HCameraService::OnCameraStatus(const std::string& cameraId, CameraStatus status)
 {
+    std::lock_guard<std::mutex> lock(cbMutex_);
     MEDIA_INFO_LOG("HCameraService::OnCameraStatus "
                    "callbacks.size = %{public}zu, cameraId = %{public}s, status = %{public}d, pid = %{public}d",
                    cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid());
@@ -341,6 +342,7 @@ void HCameraService::OnCameraStatus(const std::string& cameraId, CameraStatus st
 
 void HCameraService::OnFlashlightStatus(const std::string& cameraId, FlashStatus status)
 {
+    std::lock_guard<std::mutex> lock(cbMutex_);
     MEDIA_INFO_LOG("HCameraService::OnFlashlightStatus "
                    "callbacks.size = %{public}zu, cameraId = %{public}s, status = %{public}d, pid = %{public}d",
                    cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid());
@@ -373,6 +375,7 @@ int32_t HCameraService::SetCallback(sptr<ICameraServiceCallback> &callback)
 
 int32_t HCameraService::UnSetCallback(pid_t pid)
 {
+    std::lock_guard<std::mutex> lock(cbMutex_);
     MEDIA_INFO_LOG("HCameraService::UnSetCallback pid = %{public}d, size = %{public}zu",
                    pid, cameraServiceCallbacks_.size());
     if (!cameraServiceCallbacks_.empty()) {
