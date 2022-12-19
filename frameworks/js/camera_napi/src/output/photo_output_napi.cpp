@@ -489,8 +489,11 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
 
     napi_get_undefined(env, &result);
     unique_ptr<PhotoOutputAsyncContext> asyncContext = make_unique<PhotoOutputAsyncContext>();
-    asyncContext->isInvalidArgument =!CameraNapiUtils::CheckInvalidArgument(env,argc, ARGS_TWO,
-                                                                            argv, PHOTO_OUT_CAPTURE);
+    if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_TWO, argv, PHOTO_OUT_CAPTURE)) {
+        asyncContext->isInvalidArgument = true;
+        asyncContext->status = false;
+        asyncContext->errorCode = INVALID_ARGUMENT;
+    }
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
     if (status == napi_ok && asyncContext->objectInfo != nullptr) {
         if (!asyncContext->isInvalidArgument) {
@@ -506,8 +509,6 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
                 context->funcName = "PhotoOutputNapi::Capture";
                 context->taskId = CameraNapiUtils::IncreamentAndGet(photoOutputTaskId);
                 if (context->isInvalidArgument) {
-                    context->status = false;
-                    context->errorCode = INVALID_ARGUMENT;
                     return;
                 }
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);

@@ -16,14 +16,12 @@
 #ifndef OHOS_CAMERA_ICAMERA_UTIL_H
 #define OHOS_CAMERA_ICAMERA_UTIL_H
 
-#include "display_type.h"
 #include <limits.h>
+#include "display_type.h"
 
 namespace OHOS {
 namespace CameraStandard {
-
 int32_t ServiceToCameraError(int32_t ret);
-
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_ICAMERA_UTIL_H

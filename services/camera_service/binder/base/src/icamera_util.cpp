@@ -20,11 +20,9 @@
 
 namespace OHOS {
 namespace CameraStandard {
-
 int32_t ServiceToCameraError(int32_t ret)
 {
     int32_t err = CameraErrorCode::SERVICE_FATL_ERROR;
-
     switch (ret) {
         case CAMERA_OK:
             err = 0;
@@ -88,6 +86,5 @@ int32_t ServiceToCameraError(int32_t ret)
     }
     return err;
 }
-
 } // namespace CameraStandard
 } // namespace OHOS

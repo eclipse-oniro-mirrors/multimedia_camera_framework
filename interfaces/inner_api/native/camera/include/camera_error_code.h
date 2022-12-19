@@ -36,7 +36,6 @@ enum CameraErrorCode {
     DEVICE_DISABLED = 7400108,
     SERVICE_FATL_ERROR = 7400201
 };
-
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // CAMERA_ERROR_CODE_H

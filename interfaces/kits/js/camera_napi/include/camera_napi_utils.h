@@ -657,7 +657,7 @@ public:
         }
         if (!isPass) {
             std::string errorCode = std::to_string(CameraErrorCode::INVALID_ARGUMENT);
-            napi_throw_type_error(env, errorCode.c_str(), "invalid argument");
+            napi_throw_type_error(env, errorCode.c_str(), "");
         }
         return isPass;
     }
