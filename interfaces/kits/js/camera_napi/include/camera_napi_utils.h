@@ -644,8 +644,10 @@ public:
                 break;
 
             case PHOTO_OUT_CAPTURE:
-                if (argc == ARGS_ONE) {
-                    isPass = valueTypeArray[0] == napi_object;
+                if (argc == ARGS_ZERO) {
+                    isPass = true;
+                } else if (argc == ARGS_ONE) {
+                    isPass = valueTypeArray[0] == napi_object || valueTypeArray[0] == napi_function;
                 } else if (argc == ARGS_TWO) {
                     isPass = (valueTypeArray[0] == napi_object) && (valueTypeArray[1] == napi_function);
                 } else {
