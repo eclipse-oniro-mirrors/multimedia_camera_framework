@@ -52,6 +52,7 @@ private:
                                                  MessageParcel &reply, MessageOption &option);
     void RegisterMethod();
     virtual int32_t UnSetCallback(pid_t pid);
+    virtual int32_t CloseCameraForDestory(pid_t pid);
 
     std::mutex mutex_;
     std::map<pid_t, sptr<CameraDeathRecipient>> deathRecipientMap_;

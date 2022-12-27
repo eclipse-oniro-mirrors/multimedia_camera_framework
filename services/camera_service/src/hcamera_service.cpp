@@ -192,6 +192,9 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice MuteCamera not Supported");
     }
     devices_.insert(std::make_pair(cameraId, cameraDevice));
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    MEDIA_DEBUG_LOG("HCameraService::CreateCameraDevice Calling pid = %{public}d", pid);
+    camerasForPid_[pid].push_back(cameraId);
     device = cameraDevice;
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager_CreateCameraInput CameraId:%s", cameraId.c_str()));
     return CAMERA_OK;
@@ -370,6 +373,29 @@ int32_t HCameraService::SetCallback(sptr<ICameraServiceCallback> &callback)
         MEDIA_INFO_LOG("HCameraService::SetCallback Camera:[%{public}s] SetStatusCallback", it.first.c_str());
         it.second->SetStatusCallback(cameraServiceCallbacks_);
     }
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::CloseCameraForDestory(pid_t pid)
+{
+    std::lock_guard<std::mutex> lock(cbMutex_);
+    MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory pid = %{public}d, Camera created size = %{public}zu",
+                   pid, camerasForPid_[pid].size());
+    auto cameraIds = camerasForPid_[pid];
+    for (size_t i = 0; i < cameraIds.size(); i++) {
+        for (auto it : devices_) {
+            if (it.first != cameraIds[i] || !it.second) {
+                continue;
+            } else if (it.second->IsOpenedCameraDevice()) {
+                MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory pid = %{public}d,Camera:[%{public}s] need close",
+                               pid, it.first.c_str());
+                it.second->Close();
+            }
+        }
+    }
+    cameraIds.clear();
+    int32_t eraseSize = camerasForPid_.erase(pid);
+    MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory remove cameraId size = %{public}d", eraseSize);
     return CAMERA_OK;
 }
 
