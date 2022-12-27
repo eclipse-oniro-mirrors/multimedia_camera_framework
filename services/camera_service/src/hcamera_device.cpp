@@ -22,7 +22,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-static bool isCameraOpened = false;
 HCameraDevice::HCameraDevice(sptr<HCameraHostManager> &cameraHostManager,
                              std::string cameraID,
                              const uint32_t callingTokenId)
@@ -31,6 +30,7 @@ HCameraDevice::HCameraDevice(sptr<HCameraHostManager> &cameraHostManager,
     cameraID_ = cameraID;
     streamOperator_ = nullptr;
     isReleaseCameraDevice_ = false;
+    isOpenedCameraDevice_ = false;
     callerToken_ = callingTokenId;
 }
 
@@ -51,6 +51,11 @@ int32_t HCameraDevice::SetReleaseCameraDevice(bool isRelease)
 bool HCameraDevice::IsReleaseCameraDevice()
 {
     return isReleaseCameraDevice_;
+}
+
+bool HCameraDevice::IsOpenedCameraDevice()
+{
+    return isOpenedCameraDevice_;
 }
 
 std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraDevice::GetSettings()
@@ -86,7 +91,7 @@ int32_t HCameraDevice::Open()
     CAMERA_SYNC_TRACE;
     int32_t errorCode;
     std::lock_guard<std::mutex> lock(deviceLock_);
-    if (isCameraOpened) {
+    if (isOpenedCameraDevice_) {
         MEDIA_ERR_LOG("HCameraDevice::Open failed, camera is busy");
     }
     if (deviceHDICallback_ == nullptr) {
@@ -107,7 +112,7 @@ int32_t HCameraDevice::Open()
     MEDIA_INFO_LOG("HCameraDevice::Open Opening camera device: %{public}s", cameraID_.c_str());
     errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, deviceHDICallback_, hdiCameraDevice_);
     if (errorCode == CAMERA_OK) {
-        isCameraOpened = true;
+        isOpenedCameraDevice_ = true;
         if (updateSettings_ != nullptr) {
             std::vector<uint8_t> setting;
             OHOS::Camera::MetadataUtils::ConvertMetadataToVec(updateSettings_, setting);
@@ -137,7 +142,7 @@ int32_t HCameraDevice::Close()
         hdiCameraDevice_->Close();
         (void)OnCameraStatus(cameraID_, CAMERA_STATUS_AVAILABLE);
     }
-    isCameraOpened = false;
+    isOpenedCameraDevice_ = false;
     hdiCameraDevice_ = nullptr;
     cameraHostManager_->RemoveCameraDevice(cameraID_);
     return CAMERA_OK;
