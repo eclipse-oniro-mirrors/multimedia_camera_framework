@@ -59,6 +59,7 @@ public:
                               sptr<IStreamRepeat> &videoOutput) override;
     int32_t SetCallback(sptr<ICameraServiceCallback> &callback) override;
     int32_t UnSetCallback(pid_t pid) override;
+    int32_t CloseCameraForDestory(pid_t pid) override;
     int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback> &callback) override;
     int32_t MuteCamera(bool muteMode) override;
     int32_t IsCameraMuted(bool &muteMode) override;
@@ -105,6 +106,7 @@ private:
     std::map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
     std::map<int32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
     std::map<std::string, sptr<HCameraDevice>> devices_;
+    std::map<int32_t, std::vector<std::string>> camerasForPid_;
     bool muteMode_;
 };
 } // namespace CameraStandard

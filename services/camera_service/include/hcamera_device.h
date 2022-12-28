@@ -57,6 +57,7 @@ public:
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetSettings();
     std::string GetCameraId();
     bool IsReleaseCameraDevice();
+    bool IsOpenedCameraDevice();
     int32_t SetReleaseCameraDevice(bool isRelease);
 
 private:
@@ -64,6 +65,8 @@ private:
     sptr<HCameraHostManager> cameraHostManager_;
     std::string cameraID_;
     bool isReleaseCameraDevice_;
+    bool isOpenedCameraDevice_;
+
     sptr<ICameraDeviceServiceCallback> deviceSvcCallback_;
     sptr<CameraDeviceCallback> deviceHDICallback_;
     std::map<int32_t, sptr<ICameraServiceCallback>> statusSvcCallbacks_;
