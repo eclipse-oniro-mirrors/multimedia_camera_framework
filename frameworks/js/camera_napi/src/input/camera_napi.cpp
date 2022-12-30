@@ -14,6 +14,8 @@
  */
 
 #include "input/camera_napi.h"
+#include "ipc_skeleton.h"
+#include "tokenid_kit.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -157,6 +159,15 @@ napi_status CameraNapi::AddNamedProperty(napi_env env, napi_value object,
 
 napi_value CameraNapi::CreateCameraManagerInstance(napi_env env, napi_callback_info info)
 {
+    uint64_t tokenId = IPCSkeleton::GetCallingFullTokenID();
+    int32_t errorCode = CameraErrorCode::NO_SYSTEM_APP_PERMISSION;
+    std::string msg = "System api can be invoked only by system applications";
+    if (!Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(tokenId)) {
+        if (napi_throw_error(env, std::to_string(errorCode).c_str(), msg.c_str()) != napi_ok) {
+            MEDIA_ERR_LOG("failed to throw err, code=%{public}d, msg=%{public}s.", errorCode, msg.c_str());
+        }
+        return nullptr;
+    }
     MEDIA_INFO_LOG("CreateCameraManagerInstance called");
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
