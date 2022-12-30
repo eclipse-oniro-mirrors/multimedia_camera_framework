@@ -13,27 +13,29 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_CAMERA_HCAPTURE_SESSION_STUB_H
-#define OHOS_CAMERA_HCAPTURE_SESSION_STUB_H
-
-#include "icapture_session.h"
-#include "iremote_stub.h"
+#ifndef CAMERA_ERROR_CODE_H
+#define CAMERA_ERROR_CODE_H
 
 namespace OHOS {
 namespace CameraStandard {
-class HCaptureSessionStub : public IRemoteStub<ICaptureSession> {
-public:
-    int OnRemoteRequest(uint32_t code, MessageParcel &data,
-                        MessageParcel &reply, MessageOption &option) override;
-
-private:
-    int HandleAddInput(MessageParcel &data);
-    int HandleAddOutput(MessageParcel &data);
-    int HandleRemoveInput(MessageParcel &data);
-    int HandleRemoveOutput(MessageParcel &data);
-    int HandleSetCallback(MessageParcel &data);
-    int HandleGetSesstionState(MessageParcel &reply);
+/**
+ * @brief Camera device remote request code for IPC.
+ *
+ * @since 1.0
+ * @version 1.0
+ */
+enum CameraErrorCode {
+    SUCCESS = 0,
+    INVALID_ARGUMENT = 7400101,
+    OPERATION_NOT_ALLOWED = 7400102,
+    SESSION_NOT_CONFIG = 7400103,
+    SESSION_NOT_RUNNING = 7400104,
+    SESSION_CONFIG_LOCKED = 7400105,
+    DEVICE_SETTING_LOCKED = 7400106,
+    CONFILICT_CAMERA = 7400107,
+    DEVICE_DISABLED = 7400108,
+    SERVICE_FATL_ERROR = 7400201
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_HCAPTURE_SESSION_STUB_H
+#endif // CAMERA_ERROR_CODE_H

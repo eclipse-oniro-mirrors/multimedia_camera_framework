@@ -17,7 +17,10 @@
 #define OHOS_CAMERA_CAPTURE_OUTPUT_H
 
 #include <refbase.h>
+#include "camera_error_code.h"
+#include "icamera_util.h"
 #include "istream_common.h"
+#include "session/capture_session.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -39,7 +42,7 @@ public:
     /**
      * @brief Releases the instance of CaptureOutput.
      */
-    virtual void Release() = 0;
+    virtual int32_t Release() = 0;
 
     CaptureOutputType GetOutputType();
     const char* GetOutputTypeString();

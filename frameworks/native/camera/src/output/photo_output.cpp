@@ -254,32 +254,59 @@ std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
 
 int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSettings)
 {
+    CaptureSession* captureSession = GetSession();
+    if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
+        MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, session not runing");
+        return CameraErrorCode::SESSION_NOT_RUNNING;
+    }
     defaultCaptureSetting_ = photoCaptureSettings;
-    return static_cast<IStreamCapture *>(GetStream().GetRefPtr())->Capture(
+    int32_t errCode = static_cast<IStreamCapture *>(GetStream().GetRefPtr())->Capture(
         photoCaptureSettings->GetCaptureMetadataSetting());
+    if (errCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, errCode: %{public}d", errCode);
+    }
+    return ServiceToCameraError(errCode);
 }
 
 int32_t PhotoOutput::Capture()
 {
+    CaptureSession* captureSession = GetSession();
+    if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
+        MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, session not runing");
+        return CameraErrorCode::SESSION_NOT_RUNNING;
+    }
     int32_t items = 0;
     int32_t dataLength = 0;
     std::shared_ptr<Camera::CameraMetadata> captureMetadataSetting =
         std::make_shared<Camera::CameraMetadata>(items, dataLength);
-    return static_cast<IStreamCapture *>(GetStream().GetRefPtr())->Capture(captureMetadataSetting);
+    int32_t errCode = static_cast<IStreamCapture *>(GetStream().GetRefPtr())->Capture(captureMetadataSetting);
+    if (errCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, errCode: %{public}d", errCode);
+    }
+    return ServiceToCameraError(errCode);
 }
 
 int32_t PhotoOutput::CancelCapture()
 {
-    return static_cast<IStreamCapture *>(GetStream().GetRefPtr())->CancelCapture();
+    CaptureSession* captureSession = GetSession();
+    if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
+        MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, session not runing");
+        return CameraErrorCode::SESSION_NOT_RUNNING;
+    }
+    int32_t errCode = static_cast<IStreamCapture *>(GetStream().GetRefPtr())->CancelCapture();
+    if (errCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("PhotoOutput Failed to CancelCapture!, errCode: %{public}d", errCode);
+    }
+    return ServiceToCameraError(errCode);
 }
 
-void PhotoOutput::Release()
+int32_t PhotoOutput::Release()
 {
-    int32_t retCode = static_cast<IStreamCapture *>(GetStream().GetRefPtr())->Release();
-    if (retCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("Failed to release PhotoOutput!, retCode: %{public}d", retCode);
+    int32_t errCode = static_cast<IStreamCapture *>(GetStream().GetRefPtr())->Release();
+    if (errCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("PhotoOutput Failed to release!, errCode: %{public}d", errCode);
     }
-    return;
+    return ServiceToCameraError(errCode);
 }
 
 bool PhotoOutput::IsMirrorSupported()

@@ -97,12 +97,25 @@ void VideoOutput::SetCallback(std::shared_ptr<VideoStateCallback> callback)
 
 int32_t VideoOutput::Start()
 {
-    return static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Start();
+    CaptureSession* captureSession = GetSession();
+    if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
+        MEDIA_ERR_LOG("VideoOutput Failed to Start!, session not runing");
+        return CameraErrorCode::SESSION_NOT_RUNNING;
+    }
+    int32_t errCode = static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Start();
+    if (errCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("VideoOutput Failed to Start!, errCode: %{public}d", errCode);
+    }
+    return ServiceToCameraError(errCode);
 }
 
 int32_t VideoOutput::Stop()
 {
-    return static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Stop();
+    int32_t errCode = static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Stop();
+    if (errCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("VideoOutput Failed to Stop!, errCode: %{public}d", errCode);
+    }
+    return ServiceToCameraError(errCode);
 }
 
 int32_t VideoOutput::Resume()
@@ -115,13 +128,13 @@ int32_t VideoOutput::Pause()
     return static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Stop();
 }
 
-void VideoOutput::Release()
+int32_t VideoOutput::Release()
 {
     int32_t errCode = static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Release();
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to release VideoOutput!, errCode: %{public}d", errCode);
     }
-    return;
+    return ServiceToCameraError(errCode);
 }
 
 std::shared_ptr<VideoStateCallback> VideoOutput::GetApplicationCallback()

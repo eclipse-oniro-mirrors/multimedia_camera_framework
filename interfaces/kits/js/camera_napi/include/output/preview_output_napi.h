@@ -103,7 +103,6 @@ private:
 
 struct PreviewOutputAsyncContext : public AsyncContext {
     PreviewOutputNapi* objectInfo;
-    std::string errorMsg;
     bool bRetBool;
 };
 } // namespace CameraStandard

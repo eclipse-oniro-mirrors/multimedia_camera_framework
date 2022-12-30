@@ -44,6 +44,7 @@ config("camera_framework_drivers_config") {
 ohos_shared_library("camera_framework") {
   install_enable = true
   sources = [
+    "//foundation/multimedia/camera_framework/services/camera_service/binder/base/src/icamera_util.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hcamera_device_proxy.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hcamera_service_proxy.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hcapture_session_proxy.cpp",

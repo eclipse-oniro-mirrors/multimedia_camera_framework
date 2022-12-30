@@ -120,7 +120,7 @@ public:
     /**
      * @brief Releases a instance of the MetadataOutput.
      */
-    void Release() override;
+    int32_t Release() override;
 
     friend class MetadataObjectListener;
 private:

@@ -260,25 +260,22 @@ int32_t HCaptureSessionProxy::SetCallback(sptr<ICaptureSessionCallback> &callbac
     return error;
 }
 
-int32_t HCaptureSessionProxy::IsCommitConfig(bool &isCommitConfig)
+int32_t HCaptureSessionProxy::GetSessionState(CaptureSessionState &sessionState)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
 
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy IsCommitConfig Write interface token failed");
+        MEDIA_ERR_LOG("HCaptureSessionProxy GetSessionState Write interface token failed");
         return IPC_PROXY_ERR;
     }
-    if (!data.WriteBool(isCommitConfig)) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy IsCommitConfig Write isCommitConfig failed");
-        return IPC_PROXY_ERR;
-    }
-    int error = Remote()->SendRequest(CAMERA_CAPTURE_SESSION_IS_COMMIT_CONFIG, data, reply, option);
+
+    int error = Remote()->SendRequest(CAMERA_CAPTURE_GET_SESSION_STATE, data, reply, option);
     if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy IsCommitConfig failed, error: %{public}d", error);
+        MEDIA_ERR_LOG("HCaptureSessionProxy GetSessionState failed, error: %{public}d", error);
     }
-    isCommitConfig = reply.ReadBool();
+    sessionState = static_cast<CaptureSessionState>(reply.ReadUint32());
     return error;
 }
 } // namespace CameraStandard

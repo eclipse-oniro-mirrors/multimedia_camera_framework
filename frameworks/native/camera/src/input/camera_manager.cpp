@@ -21,6 +21,8 @@
 #include "iservice_registry.h"
 #include "camera_log.h"
 #include "system_ability_definition.h"
+#include "camera_error_code.h"
+#include "icamera_util.h"
 
 using namespace std;
 namespace OHOS {
@@ -115,24 +117,49 @@ public:
 sptr<CaptureSession> CameraManager::CreateCaptureSession()
 {
     CAMERA_SYNC_TRACE;
-    sptr<ICaptureSession> captureSession = nullptr;
-    sptr<CaptureSession> result = nullptr;
+    sptr<CaptureSession> captureSession = nullptr;
+    int ret = CameraErrorCode::SUCCESS;
+    ret = CreateCaptureSession(&captureSession);
+    if (ret != CameraErrorCode::SUCCESS) {
+        MEDIA_ERR_LOG("Failed to CreateCaptureSession with error code:%{public}d", ret);
+        return nullptr;
+    }
+
+    return captureSession;
+}
+
+int CameraManager::CreateCaptureSession(sptr<CaptureSession> *pCaptureSession)
+{
+    CAMERA_SYNC_TRACE;
+    sptr<ICaptureSession> session = nullptr;
+    sptr<CaptureSession> captureSession = nullptr;
     int32_t retCode = CAMERA_OK;
 
     if (serviceProxy_ == nullptr) {
         MEDIA_ERR_LOG("CameraManager::CreateCaptureSession serviceProxy_ is null");
-        return nullptr;
+        return CameraErrorCode::INVALID_ARGUMENT;
     }
-    retCode = serviceProxy_->CreateCaptureSession(captureSession);
-    if (retCode == CAMERA_OK && captureSession != nullptr) {
-        result = new(std::nothrow) CaptureSession(captureSession);
-        if (result == nullptr) {
-            MEDIA_ERR_LOG("Failed to new CaptureSession");
+
+    retCode = serviceProxy_->CreateCaptureSession(session);
+    if (retCode == CAMERA_OK) {
+        if (session != nullptr) {
+            captureSession = new(std::nothrow) CaptureSession(session);
+            if (captureSession == nullptr) {
+                MEDIA_ERR_LOG("Failed to new CaptureSession");
+                return CameraErrorCode::SERVICE_FATL_ERROR;
+            }
+        } else {
+            MEDIA_ERR_LOG("Failed to CreateCaptureSession with session is null");
+            return CameraErrorCode::SERVICE_FATL_ERROR;
         }
     } else {
         MEDIA_ERR_LOG("Failed to get capture session object from hcamera service!, %{public}d", retCode);
+        return ServiceToCameraError(retCode);
     }
-    return result;
+
+    *pCaptureSession = captureSession;
+
+    return CameraErrorCode::SUCCESS;
 }
 
 sptr<PhotoOutput> CameraManager::CreatePhotoOutput(sptr<Surface> &surface)
@@ -145,103 +172,158 @@ sptr<PhotoOutput> CameraManager::CreatePhotoOutput(sptr<Surface> &surface)
 sptr<PhotoOutput> CameraManager::CreatePhotoOutput(Profile &profile, sptr<Surface> &surface)
 {
     CAMERA_SYNC_TRACE;
+    sptr<PhotoOutput> photoOutput = nullptr;
+    int ret = CameraErrorCode::SUCCESS;
+    ret = CreatePhotoOutput(profile, surface, &photoOutput);
+    if (ret != CameraErrorCode::SUCCESS) {
+        MEDIA_ERR_LOG("Failed to CreatePhotoOutput with error code:%{public}d", ret);
+        return nullptr;
+    }
+
+    return photoOutput;
+}
+
+int CameraManager::CreatePhotoOutput(Profile &profile, sptr<Surface> &surface, sptr<PhotoOutput> *pPhotoOutput)
+{
+    CAMERA_SYNC_TRACE;
     sptr<IStreamCapture> streamCapture = nullptr;
-    sptr<PhotoOutput> result = nullptr;
+    sptr<PhotoOutput> photoOutput = nullptr;
     int32_t retCode = CAMERA_OK;
     camera_format_t metaFormat;
 
     if ((serviceProxy_ == nullptr) || (surface == nullptr)) {
         MEDIA_ERR_LOG("CameraManager::CreatePhotoOutput serviceProxy_ is null or surface/profile is null");
-        return result;
+        return CameraErrorCode::INVALID_ARGUMENT;
     }
 
     if ((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) ||
         (profile.GetSize().width == 0) ||
         (profile.GetSize().height == 0)) {
         MEDIA_ERR_LOG("CameraManager::CreatePhotoOutput invalid fomrat or width or height is zero");
-        return result;
+        return CameraErrorCode::INVALID_ARGUMENT;
     }
 
     metaFormat = GetCameraMetadataFormat(profile.GetCameraFormat());
     retCode = serviceProxy_->CreatePhotoOutput(surface->GetProducer(), metaFormat, profile.GetSize().width,
                                                profile.GetSize().height, streamCapture);
     if (retCode == CAMERA_OK) {
-        result = new(std::nothrow) PhotoOutput(streamCapture);
-        if (result == nullptr) {
+        photoOutput = new(std::nothrow) PhotoOutput(streamCapture);
+        if (photoOutput == nullptr) {
             MEDIA_ERR_LOG("Failed to new PhotoOutput ");
+            return CameraErrorCode::SERVICE_FATL_ERROR;
         } else {
             POWERMGR_SYSEVENT_CAMERA_CONFIG(PHOTO, profile.GetSize().width,
                                             profile.GetSize().height);
         }
     } else {
         MEDIA_ERR_LOG("Failed to get stream capture object from hcamera service!, %{public}d", retCode);
+        return ServiceToCameraError(retCode);
     }
-    return result;
+
+    *pPhotoOutput = photoOutput;
+
+    return CameraErrorCode::SUCCESS;
 }
 
 sptr<PreviewOutput> CameraManager::CreatePreviewOutput(Profile &profile, sptr<Surface> surface)
 {
     CAMERA_SYNC_TRACE;
-    sptr<IStreamRepeat> streamRepeat = nullptr;
-    sptr<PreviewOutput> result = nullptr;
-    int32_t retCode = CAMERA_OK;
-    camera_format_t metaFormat;
-    if ((serviceProxy_ == nullptr) || (surface == nullptr)) {
-        MEDIA_ERR_LOG("CameraManager::CreatePhotoOutput serviceProxy_ is null or surface/profile is null");
+    sptr<PreviewOutput> previewOutput = nullptr;
+    int ret = CameraErrorCode::SUCCESS;
+    ret = CreatePreviewOutput(profile, surface, &previewOutput);
+    if (ret != CameraErrorCode::SUCCESS) {
+        MEDIA_ERR_LOG("Failed to CreatePreviewOutput with error code:%{public}d", ret);
         return nullptr;
     }
+
+    return previewOutput;
+}
+
+int CameraManager::CreatePreviewOutput(Profile &profile, sptr<Surface> surface, sptr<PreviewOutput> *pPreviewOutput)
+{
+    CAMERA_SYNC_TRACE;
+    sptr<IStreamRepeat> streamRepeat = nullptr;
+    sptr<PreviewOutput> previewOutput = nullptr;
+    int32_t retCode = CAMERA_OK;
+    camera_format_t metaFormat;
+
+    if ((serviceProxy_ == nullptr) || (surface == nullptr)) {
+        MEDIA_ERR_LOG("CameraManager::CreatePhotoOutput serviceProxy_ is null or surface/profile is null");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+
     if ((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) ||
         (profile.GetSize().width == 0) ||
         (profile.GetSize().height == 0)) {
         MEDIA_ERR_LOG("CameraManager::CreatePhotoOutput width or height is zero");
-        return result;
+        return CameraErrorCode::INVALID_ARGUMENT;
     }
 
     metaFormat = GetCameraMetadataFormat(profile.GetCameraFormat());
     retCode = serviceProxy_->CreatePreviewOutput(surface->GetProducer(), metaFormat,
                                                  profile.GetSize().width, profile.GetSize().height, streamRepeat);
     if (retCode == CAMERA_OK) {
-        result = new(std::nothrow) PreviewOutput(streamRepeat);
-        if (result == nullptr) {
+        previewOutput = new(std::nothrow) PreviewOutput(streamRepeat);
+        if (previewOutput == nullptr) {
             MEDIA_ERR_LOG("Failed to new PreviewOutput");
+            return CameraErrorCode::SERVICE_FATL_ERROR;
         } else {
             POWERMGR_SYSEVENT_CAMERA_CONFIG(PREVIEW,
                                             profile.GetSize().width,
                                             profile.GetSize().height);
         }
     } else {
-        MEDIA_ERR_LOG("PreviewOutput: Failed to get stream repeat object from hcamera service! "
-            "%{public}d", retCode);
+        MEDIA_ERR_LOG("PreviewOutput: Failed to get stream repeat object from hcamera service! %{public}d", retCode);
+        return ServiceToCameraError(retCode);
     }
-    return result;
+
+    *pPreviewOutput = previewOutput;
+
+    return CameraErrorCode::SUCCESS;
 }
 
 sptr<PreviewOutput> CameraManager::CreateDeferredPreviewOutput(Profile &profile)
 {
     CAMERA_SYNC_TRACE;
+    sptr<PreviewOutput> previewOutput = nullptr;
+    int ret = CameraErrorCode::SUCCESS;
+    ret = CreateDeferredPreviewOutput(profile, &previewOutput);
+    if (ret != CameraErrorCode::SUCCESS) {
+        MEDIA_ERR_LOG("Failed to CreateDeferredPreviewOutput with error code:%{public}d", ret);
+        return nullptr;
+    }
+
+    return previewOutput;
+}
+
+int CameraManager::CreateDeferredPreviewOutput(Profile &profile, sptr<PreviewOutput> *pPreviewOutput)
+{
+    CAMERA_SYNC_TRACE;
     sptr<IStreamRepeat> streamRepeat = nullptr;
-    sptr<PreviewOutput> result = nullptr;
+    sptr<PreviewOutput> previewOutput = nullptr;
     int32_t retCode = CAMERA_OK;
     camera_format_t metaFormat;
 
     if ((serviceProxy_ == nullptr)) {
         MEDIA_ERR_LOG("CameraManager::CreatePreviewOutput serviceProxy_ is null or profile is null");
-        return nullptr;
+        return CameraErrorCode::INVALID_ARGUMENT;
     }
+
     if ((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) ||
         (profile.GetSize().width == 0) ||
         (profile.GetSize().height == 0)) {
         MEDIA_ERR_LOG("CameraManager::CreatePhotoOutput width or height is zero");
-        return result;
+        return CameraErrorCode::INVALID_ARGUMENT;
     }
 
     metaFormat = GetCameraMetadataFormat(profile.GetCameraFormat());
     retCode = serviceProxy_->CreateDeferredPreviewOutput(metaFormat, profile.GetSize().width,
                                                          profile.GetSize().height, streamRepeat);
     if (retCode == CAMERA_OK) {
-        result = new(std::nothrow) PreviewOutput(streamRepeat);
-        if (result == nullptr) {
+        previewOutput = new(std::nothrow) PreviewOutput(streamRepeat);
+        if (previewOutput == nullptr) {
             MEDIA_ERR_LOG("Failed to new PreviewOutput");
+            return CameraErrorCode::SERVICE_FATL_ERROR;
         } else {
             POWERMGR_SYSEVENT_CAMERA_CONFIG(PREVIEW,
                                             profile.GetSize().width,
@@ -250,8 +332,12 @@ sptr<PreviewOutput> CameraManager::CreateDeferredPreviewOutput(Profile &profile)
     } else {
         MEDIA_ERR_LOG("CreateDeferredPreviewOutput PreviewOutput: "
             "Failed to get stream repeat object from hcamera service!, %{public}d", retCode);
+        return ServiceToCameraError(retCode);
     }
-    return result;
+
+    *pPreviewOutput = previewOutput;
+
+    return CameraErrorCode::SUCCESS;
 }
 
 sptr<PreviewOutput> CameraManager::CreatePreviewOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format)
@@ -271,19 +357,35 @@ sptr<PreviewOutput> CameraManager::CreateCustomPreviewOutput(sptr<Surface> surfa
 sptr<MetadataOutput> CameraManager::CreateMetadataOutput()
 {
     CAMERA_SYNC_TRACE;
+    sptr<MetadataOutput> metadataOutput = nullptr;
+    int ret = CameraErrorCode::SUCCESS;
+    ret = CreateMetadataOutput(&metadataOutput);
+    if (ret != CameraErrorCode::SUCCESS) {
+        MEDIA_ERR_LOG("Failed to CreateMetadataOutput with error code:%{public}d", ret);
+        return nullptr;
+    }
+
+    return metadataOutput;
+}
+
+int CameraManager::CreateMetadataOutput(sptr<MetadataOutput> *pMetadataOutput)
+{
+    CAMERA_SYNC_TRACE;
     sptr<IStreamMetadata> streamMetadata = nullptr;
-    sptr<MetadataOutput> result = nullptr;
+    sptr<MetadataOutput> metadataOutput = nullptr;
     int32_t retCode = CAMERA_OK;
 
     if (!serviceProxy_) {
         MEDIA_ERR_LOG("CameraManager::CreateMetadataOutput serviceProxy_ is null");
-        return nullptr;
+        return CameraErrorCode::INVALID_ARGUMENT;
     }
+
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     if (!surface) {
         MEDIA_ERR_LOG("CameraManager::CreateMetadataOutput Failed to create surface");
-        return nullptr;
+        return CameraErrorCode::INVALID_ARGUMENT;
     }
+
     // only for face recognize
     int32_t format = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
     int32_t width = 1920;
@@ -293,24 +395,28 @@ sptr<MetadataOutput> CameraManager::CreateMetadataOutput()
     if (retCode) {
         MEDIA_ERR_LOG("CameraManager::CreateMetadataOutput Failed to get stream metadata object from hcamera service! "
                       "%{public}d", retCode);
-        return nullptr;
+        return ServiceToCameraError(retCode);
     }
-    result = new(std::nothrow) MetadataOutput(surface, streamMetadata);
-    if (!result) {
+
+    metadataOutput = new(std::nothrow) MetadataOutput(surface, streamMetadata);
+    if (!metadataOutput) {
         MEDIA_ERR_LOG("CameraManager::CreateMetadataOutput Failed to allocate MetadataOutput");
-        return nullptr;
+        return CameraErrorCode::SERVICE_FATL_ERROR;
     }
-    sptr<IBufferConsumerListener> listener = new(std::nothrow) MetadataObjectListener(result);
+    sptr<IBufferConsumerListener> listener = new(std::nothrow) MetadataObjectListener(metadataOutput);
     if (!listener) {
         MEDIA_ERR_LOG("CameraManager::CreateMetadataOutput Failed to allocate metadata object listener");
-        return nullptr;
+        return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     SurfaceError ret = surface->RegisterConsumerListener(listener);
     if (ret != SURFACE_ERROR_OK) {
         MEDIA_ERR_LOG("CameraManager::CreateMetadataOutput Surface consumer listener registration failed");
-        return nullptr;
+        return CameraErrorCode::SERVICE_FATL_ERROR;
     }
-    return result;
+
+    *pMetadataOutput = metadataOutput;
+
+    return CameraErrorCode::SUCCESS;
 }
 
 sptr<VideoOutput> CameraManager::CreateVideoOutput(sptr<Surface> &surface)
@@ -323,20 +429,35 @@ sptr<VideoOutput> CameraManager::CreateVideoOutput(sptr<Surface> &surface)
 sptr<VideoOutput> CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surface)
 {
     CAMERA_SYNC_TRACE;
+    sptr<VideoOutput> videoOutput = nullptr;
+    int ret = CameraErrorCode::SUCCESS;
+    ret = CreateVideoOutput(profile, surface, &videoOutput);
+    if (ret != CameraErrorCode::SUCCESS) {
+        MEDIA_ERR_LOG("Failed to CreateVideoOutput with error code:%{public}d", ret);
+        return nullptr;
+    }
+
+    return videoOutput;
+}
+
+int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surface, sptr<VideoOutput> *pVideoOutput)
+{
+    CAMERA_SYNC_TRACE;
     sptr<IStreamRepeat> streamRepeat = nullptr;
-    sptr<VideoOutput> result = nullptr;
+    sptr<VideoOutput> videoOutput = nullptr;
     int32_t retCode = CAMERA_OK;
     camera_format_t metaFormat;
 
     if ((serviceProxy_ == nullptr) || (surface == nullptr)) {
         MEDIA_ERR_LOG("CameraManager::CreatePhotoOutput serviceProxy_ is null or surface/profile is null");
-        return nullptr;
+        return CameraErrorCode::INVALID_ARGUMENT;
     }
+
     if ((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) ||
         (profile.GetSize().width == 0) ||
         (profile.GetSize().height == 0)) {
         MEDIA_ERR_LOG("CameraManager::CreatePhotoOutput width or height is zero");
-        return result;
+        return CameraErrorCode::INVALID_ARGUMENT;
     }
 
     // todo: need to set FPS range passed in video profile.
@@ -344,13 +465,14 @@ sptr<VideoOutput> CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<S
     retCode = serviceProxy_->CreateVideoOutput(surface->GetProducer(), metaFormat,
                                                profile.GetSize().width, profile.GetSize().height, streamRepeat);
     if (retCode == CAMERA_OK) {
-        result = new(std::nothrow) VideoOutput(streamRepeat);
-        if (result == nullptr) {
+        videoOutput = new(std::nothrow) VideoOutput(streamRepeat);
+        if (videoOutput == nullptr) {
             MEDIA_ERR_LOG("Failed to new VideoOutput");
+            return CameraErrorCode::SERVICE_FATL_ERROR;
         } else {
             std::vector<int32_t> videoFrameRates = profile.GetFrameRates();
             if (videoFrameRates.size() >= 2) { // vaild frame rate range length is 2
-                result->SetFrameRateRange(videoFrameRates[0], videoFrameRates[1]);
+                videoOutput->SetFrameRateRange(videoFrameRates[0], videoFrameRates[1]);
             }
             POWERMGR_SYSEVENT_CAMERA_CONFIG(VIDEO,
                                             profile.GetSize().width,
@@ -358,8 +480,12 @@ sptr<VideoOutput> CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<S
         }
     } else {
         MEDIA_ERR_LOG("VideoOutpout: Failed to get stream repeat object from hcamera service! %{public}d", retCode);
+        return ServiceToCameraError(retCode);
     }
-    return result;
+
+    *pVideoOutput = videoOutput;
+
+    return CameraErrorCode::SUCCESS;
 }
 
 void CameraManager::Init()
@@ -421,6 +547,7 @@ void CameraManager::CameraServerDied(pid_t pid)
     deathRecipient_ = nullptr;
 }
 
+/*
 sptr<ICameraDeviceService> CameraManager::CreateCameraDevice(std::string cameraId)
 {
     CAMERA_SYNC_TRACE;
@@ -437,6 +564,28 @@ sptr<ICameraDeviceService> CameraManager::CreateCameraDevice(std::string cameraI
         return nullptr;
     }
     return device;
+}
+*/
+
+int CameraManager::CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> *pICameraDeviceService)
+{
+    CAMERA_SYNC_TRACE;
+    sptr<ICameraDeviceService> device = nullptr;
+    int32_t retCode = CAMERA_OK;
+
+    if (serviceProxy_ == nullptr || cameraId.empty()) {
+        MEDIA_ERR_LOG("GetCameaDevice() serviceProxy_ is null or CameraID is empty: %{public}s", cameraId.c_str());
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+    retCode = serviceProxy_->CreateCameraDevice(cameraId, device);
+    if (retCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("ret value from CreateCameraDevice, %{public}d", retCode);
+        return ServiceToCameraError(retCode);
+    }
+
+    *pICameraDeviceService = device;
+
+    return CameraErrorCode::SUCCESS;
 }
 
 void CameraManager::SetCallback(std::shared_ptr<CameraManagerCallback> callback)
@@ -553,26 +702,60 @@ sptr<CameraInput> CameraManager::CreateCameraInput(sptr<CameraDevice> &camera)
 {
     CAMERA_SYNC_TRACE;
     sptr<CameraInput> cameraInput = nullptr;
-    sptr<ICameraDeviceService> deviceObj = nullptr;
-
-    if (camera != nullptr) {
-        deviceObj = CreateCameraDevice(camera->GetID());
-        if (deviceObj != nullptr) {
-            cameraInput = new(std::nothrow) CameraInput(deviceObj, camera);
-            if (cameraInput == nullptr) {
-                MEDIA_ERR_LOG("failed to new CameraInput Returning null in CreateCameraInput");
-                return cameraInput;
-            }
-        } else {
-            MEDIA_ERR_LOG("Returning null in CreateCameraInput");
-        }
-    } else {
-        MEDIA_ERR_LOG("CameraManager::CreateCameraInput: Camera object is null");
+    int ret = CameraErrorCode::SUCCESS;
+    ret = CreateCameraInput(camera, &cameraInput);
+    if (ret != CameraErrorCode::SUCCESS) {
+        MEDIA_ERR_LOG("Failed to CreateCameraInput with error code:%{public}d", ret);
+        return nullptr;
     }
+
     return cameraInput;
 }
 
+int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInput> *pCameraInput)
+{
+    CAMERA_SYNC_TRACE;
+    sptr<CameraInput> cameraInput = nullptr;
+    sptr<ICameraDeviceService> deviceObj = nullptr;
+    int ret = CameraErrorCode::SUCCESS;
+
+    if (camera != nullptr) {
+        ret = CreateCameraDevice(camera->GetID(), &deviceObj);
+        if (ret == CameraErrorCode::SUCCESS) {
+            cameraInput = new(std::nothrow) CameraInput(deviceObj, camera);
+            if (cameraInput == nullptr) {
+                MEDIA_ERR_LOG("failed to new CameraInput Returning null in CreateCameraInput");
+                return CameraErrorCode::SERVICE_FATL_ERROR;
+            }
+        } else {
+            MEDIA_ERR_LOG("Returning null in CreateCameraInput");
+            return ret;
+        }
+    } else {
+        MEDIA_ERR_LOG("CameraManager::CreateCameraInput: Camera object is null");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+
+    *pCameraInput = cameraInput;
+
+    return CameraErrorCode::SUCCESS;
+}
+
 sptr<CameraInput> CameraManager::CreateCameraInput(CameraPosition position, CameraType cameraType)
+{
+    CAMERA_SYNC_TRACE;
+    sptr<CameraInput> cameraInput = nullptr;
+    int ret = CameraErrorCode::SUCCESS;
+    ret = CreateCameraInput(position, cameraType, &cameraInput);
+    if (ret != CameraErrorCode::SUCCESS) {
+        MEDIA_ERR_LOG("Failed to CreateCameraInput with error code:%{public}d", ret);
+        return nullptr;
+    }
+
+    return cameraInput;
+}
+
+int CameraManager::CreateCameraInput(CameraPosition position, CameraType cameraType, sptr<CameraInput> *pCameraInput)
 {
     CAMERA_SYNC_TRACE;
     sptr<CameraInput> cameraInput = nullptr;
@@ -586,10 +769,13 @@ sptr<CameraInput> CameraManager::CreateCameraInput(CameraPosition position, Came
         } else {
             MEDIA_ERR_LOG("No Camera Device for Camera position:%{public}d, Camera Type:%{public}d",
                           position, cameraType);
-            return cameraInput;
+            return CameraErrorCode::SERVICE_FATL_ERROR;
         }
     }
-    return cameraInput;
+
+    *pCameraInput = cameraInput;
+
+    return CameraErrorCode::SUCCESS;
 }
 
 sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<CameraDevice>& camera)
@@ -622,9 +808,6 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
         }
         size.width = item.data.i32[i + widthOffset];
         size.height = item.data.i32[i + heightOffset];
-        MEDIA_DEBUG_LOG("CameraManager::GetSupportedOutputCapability "
-            "size.width = %{public}d, size.height = %{public}d, format = %{public}d",
-            size.width, size.height, format);
         Profile profile = Profile(format, size);
         if (format == CAMERA_FORMAT_JPEG) {
             photoProfile.push_back(profile);
