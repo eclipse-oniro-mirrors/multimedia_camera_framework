@@ -394,7 +394,7 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
         }
     }
     cameraIds.clear();
-    int32_t eraseSize = camerasForPid_.erase(pid);
+    size_t eraseSize = camerasForPid_.erase(pid);
     MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory remove cameraId size = %{public}d", eraseSize);
     return CAMERA_OK;
 }
