@@ -137,7 +137,7 @@ static const std::unordered_map<std::string, int32_t> mapExposureState = {
 };
 
 static const std::unordered_map<std::string, int32_t> mapCameraErrorCode = {
-    {"NO_SYSTEM_APP_PERMISSION", 202}
+    {"NO_SYSTEM_APP_PERMISSION", 202},
     {"INVALID_ARGUMENT", 7400101},
     {"OPERATION_NOT_ALLOWED", 7400102},
     {"SESSION_NOT_CONFIG", 7400103},
