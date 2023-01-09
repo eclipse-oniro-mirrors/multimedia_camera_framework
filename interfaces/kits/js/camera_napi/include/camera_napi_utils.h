@@ -381,11 +381,11 @@ public:
                 break;
             case OHOS_CAMERA_TYPE_LOGICAL:
                 MEDIA_ERR_LOG("Logical camera type is treated as unspecified");
-                jsCameraType = CAMERA_TYPE_UNSPECIFIED;
+                jsCameraType = CAMERA_TYPE_DEFAULT;
                 break;
             case OHOS_CAMERA_TYPE_UNSPECIFIED:
             default:
-                jsCameraType = CAMERA_TYPE_UNSPECIFIED;
+                jsCameraType = CAMERA_TYPE_DEFAULT;
         }
     }
 
@@ -405,7 +405,7 @@ public:
             case CAMERA_TYPE_TRUE_DEPTH:
                 nativeCamType = OHOS_CAMERA_TYPE_TRUE_DEAPTH;
                 break;
-            case CAMERA_TYPE_UNSPECIFIED:
+            case CAMERA_TYPE_DEFAULT:
                 nativeCamType = OHOS_CAMERA_TYPE_UNSPECIFIED;
                 break;
             default:
