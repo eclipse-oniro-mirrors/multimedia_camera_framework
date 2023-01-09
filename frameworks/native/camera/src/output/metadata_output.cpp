@@ -106,8 +106,8 @@ int32_t MetadataOutput::Start()
 {
     CaptureSession* captureSession = GetSession();
     if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
-        MEDIA_ERR_LOG("MetadataOutput Failed to Start!, session not runing");
-        return CameraErrorCode::SESSION_NOT_RUNNING;
+        MEDIA_ERR_LOG("MetadataOutput Failed to Start!, session not config");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
     }
     int32_t errCode = static_cast<IStreamMetadata *>(GetStream().GetRefPtr())->Start();
     if (errCode != CAMERA_OK) {

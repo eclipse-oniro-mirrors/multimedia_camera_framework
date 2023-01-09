@@ -27,7 +27,7 @@ const std::unordered_map<camera_type_enum_t, CameraType> CameraInfo::metaToFwCam
     {OHOS_CAMERA_TYPE_TELTPHOTO, CAMERA_TYPE_TELEPHOTO},
     {OHOS_CAMERA_TYPE_TRUE_DEAPTH, CAMERA_TYPE_TRUE_DEPTH},
     {OHOS_CAMERA_TYPE_LOGICAL, CAMERA_TYPE_UNSUPPORTED},
-    {OHOS_CAMERA_TYPE_UNSPECIFIED, CAMERA_TYPE_UNSPECIFIED}
+    {OHOS_CAMERA_TYPE_UNSPECIFIED, CAMERA_TYPE_DEFAULT}
 };
 
 const std::unordered_map<camera_position_enum_t, CameraPosition> CameraInfo::metaToFwCameraPosition_ = {
