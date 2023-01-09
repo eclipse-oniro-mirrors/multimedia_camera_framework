@@ -1241,9 +1241,14 @@ napi_value CameraSessionNapi::SetExposureMode(napi_env env, napi_callback_info i
         int32_t value;
         napi_get_value_int32(env, argv[PARAM0], &value);
         ExposureMode exposureMode = (ExposureMode)value;
-        if (cameraSessionNapi->cameraSession_->IsExposureModeSupported(exposureMode)) {
+        bool isSupported = false;
+        int32_t retCode = cameraSessionNapi->cameraSession_->IsExposureModeSupported(exposureMode, isSupported);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        if (isSupported) {
             cameraSessionNapi->cameraSession_->LockForControl();
-            int32_t retCode = cameraSessionNapi->cameraSession_->SetExposureMode(exposureMode);
+            retCode = cameraSessionNapi->cameraSession_->SetExposureMode(exposureMode);
             cameraSessionNapi->cameraSession_->UnlockForControl();
             if (!CameraNapiUtils::CheckError(env, retCode)) {
                 return nullptr;
@@ -1556,9 +1561,14 @@ napi_value CameraSessionNapi::SetFocusMode(napi_env env, napi_callback_info info
         int32_t value;
         napi_get_value_int32(env, argv[PARAM0], &value);
         FocusMode focusMode = (FocusMode)value;
-        if (cameraSessionNapi->cameraSession_->IsFocusModeSupported(focusMode)) {
+        bool isSupported = false;
+        int32_t retCode = cameraSessionNapi->cameraSession_->IsFocusModeSupported(focusMode, isSupported);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        if (isSupported) {
             cameraSessionNapi->cameraSession_->LockForControl();
-            int32_t retCode = cameraSessionNapi->cameraSession_->
+            retCode = cameraSessionNapi->cameraSession_->
                     SetFocusMode(static_cast<FocusMode>(focusMode));
             cameraSessionNapi->cameraSession_->UnlockForControl();
             if (!CameraNapiUtils::CheckError(env, retCode)) {
