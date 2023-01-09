@@ -32,7 +32,7 @@ enum CameraPosition {
 
 enum CameraType {
     CAMERA_TYPE_UNSUPPORTED = -1,
-    CAMERA_TYPE_UNSPECIFIED = 0,
+    CAMERA_TYPE_DEFAULT = 0,
     CAMERA_TYPE_WIDE_ANGLE,
     CAMERA_TYPE_ULTRA_WIDE,
     CAMERA_TYPE_TELEPHOTO,
@@ -111,7 +111,7 @@ private:
     std::string cameraID_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata_;
     CameraPosition cameraPosition_ = CAMERA_POSITION_UNSPECIFIED;
-    CameraType cameraType_ = CAMERA_TYPE_UNSPECIFIED;
+    CameraType cameraType_ = CAMERA_TYPE_DEFAULT;
     ConnectionType connectionType_ = CAMERA_CONNECTION_BUILT_IN;
     bool isMirrorSupported_ = false;
     std::vector<float> zoomRatioRange_;
