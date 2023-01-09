@@ -207,28 +207,59 @@ void HStreamRepeat::SetStreamTransform()
     }
     int32_t sensorOrientation = item.data.i32[0];
     MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform sensor orientation %{public}d", sensorOrientation);
+
+    ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform get camera position failed");
+        return;
+    }
+    camera_position_enum_t cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
+    MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform camera position %{public}d", cameraPosition);
+
     auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
     if ((display->GetWidth() < display->GetHeight()) && (producer_ != nullptr)) {
         ret = SurfaceError::SURFACE_ERROR_OK;
-        int32_t streamRotation = STREAM_ROTATE_360 - sensorOrientation;
-        switch (streamRotation) {
-            case STREAM_ROTATE_90: {
-                ret = producer_->SetTransform(GRAPHIC_ROTATE_90);
-                break;
+        int32_t streamRotation = sensorOrientation;
+        if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
+            switch (streamRotation) {
+                case STREAM_ROTATE_90: {
+                    ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT90);
+                    break;
+                }
+                case STREAM_ROTATE_180: {
+                    ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT180);
+                    break;
+                }
+                case STREAM_ROTATE_270: {
+                    ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT270);
+                    break;
+                }
+                default: {
+                    break;
+                }
             }
-            case STREAM_ROTATE_180: {
-                ret = producer_->SetTransform(GRAPHIC_ROTATE_180);
-                break;
+            MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform filp rotate %{public}d", streamRotation);
+        } else {
+            streamRotation = STREAM_ROTATE_360 - sensorOrientation;
+            switch (streamRotation) {
+                case STREAM_ROTATE_90: {
+                    ret = producer_->SetTransform(GRAPHIC_ROTATE_90);
+                    break;
+                }
+                case STREAM_ROTATE_180: {
+                    ret = producer_->SetTransform(GRAPHIC_ROTATE_180);
+                    break;
+                }
+                case STREAM_ROTATE_270: {
+                    ret = producer_->SetTransform(GRAPHIC_ROTATE_270);
+                    break;
+                }
+                default: {
+                    break;
+                }
             }
-            case STREAM_ROTATE_270: {
-                ret = producer_->SetTransform(GRAPHIC_ROTATE_270);
-                break;
-            }
-            default: {
-                break;
-            }
+            MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform not flip rotate %{public}d", streamRotation);
         }
-        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform rotate %{public}d", streamRotation);
         if (ret != SurfaceError::SURFACE_ERROR_OK) {
             MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed %{public}d", ret);
         }
