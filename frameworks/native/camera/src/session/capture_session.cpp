@@ -266,6 +266,10 @@ int32_t CaptureSession::RemoveOutput(sptr<CaptureOutput> &output)
 int32_t CaptureSession::Start()
 {
     CAMERA_SYNC_TRACE;
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::Start Session not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
     int32_t errCode = captureSession_->Start();
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to Start capture session!, %{public}d", errCode);
