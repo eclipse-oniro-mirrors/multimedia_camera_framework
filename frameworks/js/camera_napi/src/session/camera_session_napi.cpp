@@ -1035,23 +1035,11 @@ napi_value CameraSessionNapi::SetVideoStabilizationMode(napi_env env, napi_callb
         int32_t value;
         napi_get_value_int32(env, argv[PARAM0], &value);
         VideoStabilizationMode videoStabilizationMode = (VideoStabilizationMode)value;
-        bool isSupported;
-        int32_t retCode = cameraSessionNapi->cameraSession_->
-                           IsVideoStabilizationModeSupported(videoStabilizationMode, isSupported);
+        int retCode = cameraSessionNapi->cameraSession_->SetVideoStabilizationMode(videoStabilizationMode);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
         }
-        if (isSupported) {
-            retCode = cameraSessionNapi->cameraSession_->SetVideoStabilizationMode(videoStabilizationMode);
-            if (!CameraNapiUtils::CheckError(env, retCode)) {
-                return nullptr;
-            }
-        } else {
-            MEDIA_ERR_LOG("Video Stabilization Mode is not supported");
-            napi_throw_error(env, nullptr, "Video Stabilization Mode is not supported");
-        }
     }
-
     return result;
 }
 
@@ -1126,21 +1114,11 @@ napi_value CameraSessionNapi::SetFlashMode(napi_env env, napi_callback_info info
         int32_t value;
         napi_get_value_int32(env, argv[PARAM0], &value);
         FlashMode flashMode = (FlashMode)value;
-        bool isSupported = false;
-        int32_t retCode = cameraSessionNapi->cameraSession_->IsFlashModeSupported(flashMode, isSupported);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int retCode = cameraSessionNapi->cameraSession_->SetFlashMode(flashMode);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
-        }
-        if (isSupported) {
-            cameraSessionNapi->cameraSession_->LockForControl();
-            retCode = cameraSessionNapi->cameraSession_->SetFlashMode(flashMode);
-            cameraSessionNapi->cameraSession_->UnlockForControl();
-            if (!CameraNapiUtils::CheckError(env, retCode)) {
-                return nullptr;
-            }
-        } else {
-            MEDIA_ERR_LOG("Flash mode is not supported");
-            napi_throw_error(env, nullptr, "Flash mode is not supported");
         }
     }
     return result;
@@ -1241,21 +1219,11 @@ napi_value CameraSessionNapi::SetExposureMode(napi_env env, napi_callback_info i
         int32_t value;
         napi_get_value_int32(env, argv[PARAM0], &value);
         ExposureMode exposureMode = (ExposureMode)value;
-        bool isSupported = false;
-        int32_t retCode = cameraSessionNapi->cameraSession_->IsExposureModeSupported(exposureMode, isSupported);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int retCode = cameraSessionNapi->cameraSession_->SetExposureMode(exposureMode);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
-        }
-        if (isSupported) {
-            cameraSessionNapi->cameraSession_->LockForControl();
-            retCode = cameraSessionNapi->cameraSession_->SetExposureMode(exposureMode);
-            cameraSessionNapi->cameraSession_->UnlockForControl();
-            if (!CameraNapiUtils::CheckError(env, retCode)) {
-                return nullptr;
-            }
-        } else {
-            MEDIA_ERR_LOG("Exposure mode is not supported");
-            napi_throw_error(env, nullptr, "Exposure mode is not supported");
         }
     }
 
@@ -1561,25 +1529,14 @@ napi_value CameraSessionNapi::SetFocusMode(napi_env env, napi_callback_info info
         int32_t value;
         napi_get_value_int32(env, argv[PARAM0], &value);
         FocusMode focusMode = (FocusMode)value;
-        bool isSupported = false;
-        int32_t retCode = cameraSessionNapi->cameraSession_->IsFocusModeSupported(focusMode, isSupported);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int retCode = cameraSessionNapi->cameraSession_->
+                SetFocusMode(static_cast<FocusMode>(focusMode));
+        cameraSessionNapi->cameraSession_->UnlockForControl();
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
         }
-        if (isSupported) {
-            cameraSessionNapi->cameraSession_->LockForControl();
-            retCode = cameraSessionNapi->cameraSession_->
-                    SetFocusMode(static_cast<FocusMode>(focusMode));
-            cameraSessionNapi->cameraSession_->UnlockForControl();
-            if (!CameraNapiUtils::CheckError(env, retCode)) {
-                return nullptr;
-            }
-        } else {
-            MEDIA_ERR_LOG("Focus mode is not supported");
-            napi_throw_error(env, nullptr, "Focus mode is not supported");
-        }
     }
-
     return result;
 }
 
