@@ -213,15 +213,15 @@ void HStreamRepeat::SetStreamTransform()
         int32_t streamRotation = STREAM_ROTATE_360 - sensorOrientation;
         switch (streamRotation) {
             case STREAM_ROTATE_90: {
-                ret = producer_->SetTransform(ROTATE_90);
+                ret = producer_->SetTransform(GRAPHIC_ROTATE_90);
                 break;
             }
             case STREAM_ROTATE_180: {
-                ret = producer_->SetTransform(ROTATE_180);
+                ret = producer_->SetTransform(GRAPHIC_ROTATE_180);
                 break;
             }
             case STREAM_ROTATE_270: {
-                ret = producer_->SetTransform(ROTATE_270);
+                ret = producer_->SetTransform(GRAPHIC_ROTATE_270);
                 break;
             }
             default: {
