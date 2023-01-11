@@ -416,6 +416,8 @@ int32_t CaptureSession::GetActiveVideoStabilizationMode(VideoStabilizationMode &
         MEDIA_ERR_LOG("CaptureSession::GetActiveVideoStabilizationMode Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
+    mode = OFF;
+    bool isSupported = false;
     sptr<CameraDevice> cameraObj_;
     cameraObj_ = inputDevice_->GetCameraDeviceInfo();
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj_->GetMetadata();
@@ -425,10 +427,13 @@ int32_t CaptureSession::GetActiveVideoStabilizationMode(VideoStabilizationMode &
         auto itr = metaToFwVideoStabModes_.find(static_cast<CameraVideoStabilizationMode>(item.data.u8[0]));
         if (itr != metaToFwVideoStabModes_.end()) {
             mode = itr->second;
-            return CameraErrorCode::SUCCESS;
+            isSupported = true;
         }
     }
-    return CameraErrorCode::SERVICE_FATL_ERROR;
+    if (!isSupported || ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("CaptureSession::GetActiveVideoStabilizationMode Failed with return code %{public}d", ret);
+    }
+    return CameraErrorCode::SUCCESS;
 }
 
 int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabilizationMode)
@@ -440,7 +445,7 @@ int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabili
     auto itr = fwToMetaVideoStabModes_.find(stabilizationMode);
     if ((itr == fwToMetaVideoStabModes_.end()) || !IsVideoStabilizationModeSupported(stabilizationMode)) {
         MEDIA_ERR_LOG("CaptureSession::SetVideoStabilizationMode Mode: %{public}d not supported", stabilizationMode);
-        return CameraErrorCode::SUCCESS;
+        stabilizationMode = OFF;
     }
 
     uint32_t count = 1;
@@ -453,7 +458,10 @@ int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabili
     }
 
     int32_t errCode = this->UnlockForControl();
-    return errCode;
+    if (errCode != CameraErrorCode::SUCCESS) {
+        MEDIA_DEBUG_LOG("CaptureSession::SetVideoStabilizingMode Failed to set video stabilization mode");
+    }
+    return CameraErrorCode::SUCCESS;
 }
 
 bool CaptureSession::IsVideoStabilizationModeSupported(VideoStabilizationMode stabilizationMode)
@@ -523,7 +531,7 @@ int32_t CaptureSession::GetSupportedStabilizationMode(std::vector<VideoStabiliza
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_VIDEO_STABILIZATION_MODES, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("CaptureSession::GetSupporteStabilizationModes Failed with return code %{public}d", ret);
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
 
     for (uint32_t i = 0; i < item.count; i++) {
@@ -600,7 +608,7 @@ int32_t CaptureSession::GetSupportedExposureModes(std::vector<ExposureMode> &sup
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_EXPOSURE_MODES, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("CaptureSession::GetSupportedExposureModes Failed with return code %{public}d", ret);
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
 
     for (uint32_t i = 0; i < item.count; i++) {
@@ -623,18 +631,18 @@ int32_t CaptureSession::SetExposureMode(ExposureMode exposureMode)
     if (changedMetadata_ == nullptr) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureMode Need to call LockForControl() "
                       "before setting camera properties");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
-
+    uint8_t exposure = fwToMetaExposureMode_.at(EXPOSURE_MODE_LOCKED);
     auto itr = fwToMetaExposureMode_.find(exposureMode);
     if (itr == fwToMetaExposureMode_.end()) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureMode Unknown exposure mode");
-        return CameraErrorCode::INVALID_ARGUMENT;
+    } else {
+        exposure = itr->second;
     }
 
     bool status = false;
     uint32_t count = 1;
-    uint8_t exposure = itr->second;
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_EXPOSURE_MODE, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
@@ -683,7 +691,7 @@ int32_t CaptureSession::GetExposureMode(ExposureMode &exposureMode)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_EXPOSURE_MODE, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("CaptureSession::GetExposureMode Failed with return code %{public}d", ret);
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
     auto itr = metaToFwExposureMode_.find(static_cast<camera_exposure_mode_enum_t>(item.data.u8[0]));
     if (itr != metaToFwExposureMode_.end()) {
@@ -704,7 +712,7 @@ int32_t CaptureSession::SetMeteringPoint(Point exposurePoint)
     if (changedMetadata_ == nullptr) {
         MEDIA_ERR_LOG("CaptureSession::SetExposurePoint Need to call LockForControl() "
             "before setting camera properties");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
     bool status = false;
     float exposureArea[2] = {exposurePoint.x, exposurePoint.y};
@@ -758,7 +766,7 @@ int32_t CaptureSession::GetMeteringPoint(Point &exposurePoint)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AE_REGIONS, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("CaptureSession::GetExposurePoint Failed with return code %{public}d", ret);
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
     exposurePoint.x = item.data.f[0];
     exposurePoint.y = item.data.f[1];
@@ -795,7 +803,7 @@ int32_t CaptureSession::SetExposureBias(int32_t exposureValue)
     if (changedMetadata_ == nullptr) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureValue Need to call LockForControl() "
             "before setting camera properties");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
 
     bool status = false;
@@ -810,7 +818,7 @@ int32_t CaptureSession::SetExposureBias(int32_t exposureValue)
     std::vector<int32_t> biasRange = inputDevice_->GetCameraDeviceInfo()->GetExposureBiasRange();
     if (biasRange.empty()) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureValue Bias range is empty");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
     if (exposureValue < biasRange[minIndex]) {
         MEDIA_DEBUG_LOG("CaptureSession::SetExposureValue bias value:"
@@ -826,7 +834,7 @@ int32_t CaptureSession::SetExposureBias(int32_t exposureValue)
 
     if (exposureValue == 0) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureValue Invalid exposure compensation value");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
 
     ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &item);
@@ -869,7 +877,7 @@ int32_t CaptureSession::GetExposureValue(int32_t &exposureValue)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("CaptureSession::GetExposureValue Failed with return code %{public}d", ret);
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
     exposureValue = static_cast<int32_t>(item.data.i32[0]);
     return CameraErrorCode::SUCCESS;
@@ -937,7 +945,7 @@ int32_t CaptureSession::GetSupportedFocusModes(std::vector<FocusMode> &supported
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FOCUS_MODES, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("CaptureSession::GetSupportedFocusModes Failed with return code %{public}d", ret);
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = metaToFwFocusMode_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[i]));
@@ -1006,7 +1014,7 @@ int32_t CaptureSession::StartFocus(FocusMode focusMode)
 
     if (!status) {
         MEDIA_ERR_LOG("CaptureSession::StartFocus Failed to set trigger");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
 
     triggerId++;
@@ -1019,7 +1027,7 @@ int32_t CaptureSession::StartFocus(FocusMode focusMode)
 
     if (!status) {
         MEDIA_ERR_LOG("CaptureSession::SetFocusMode Failed to set trigger Id");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -1033,18 +1041,18 @@ int32_t CaptureSession::SetFocusMode(FocusMode focusMode)
     }
     if (changedMetadata_ == nullptr) {
         MEDIA_ERR_LOG("CaptureSession::SetFocusMode Need to call LockForControl() before setting camera properties");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
-
+    uint8_t focus = FOCUS_MODE_LOCKED;
     auto itr = fwToMetaFocusMode_.find(focusMode);
     if (itr == fwToMetaFocusMode_.end()) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureMode Unknown exposure mode");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+    } else {
+        focus = itr->second;
     }
     bool status = false;
     int32_t ret;
     uint32_t count = 1;
-    uint8_t focus = itr->second;
     camera_metadata_item_t item;
 
     MEDIA_DEBUG_LOG("CaptureSession::SetFocusMode Focus mode: %{public}d", focusMode);
@@ -1094,7 +1102,7 @@ int32_t CaptureSession::GetFocusMode(FocusMode &focusMode)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_MODE, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("CaptureSession::GetFocusMode Failed with return code %{public}d", ret);
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
     auto itr = metaToFwFocusMode_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[0]));
     if (itr != metaToFwFocusMode_.end()) {
@@ -1112,7 +1120,7 @@ int32_t CaptureSession::SetFocusPoint(Point focusPoint)
     }
     if (changedMetadata_ == nullptr) {
         MEDIA_ERR_LOG("CaptureSession::SetFocusPoint Need to call LockForControl() before setting camera properties");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
     bool status = false;
     float FocusArea[2] = {focusPoint.x, focusPoint.y};
@@ -1166,7 +1174,7 @@ int32_t CaptureSession::GetFocusPoint(Point &focusPoint)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AF_REGIONS, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("CaptureSession::GetFocusPoint Failed with return code %{public}d", ret);
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
     focusPoint.x = item.data.f[0];
     focusPoint.y = item.data.f[1];
@@ -1202,7 +1210,7 @@ int32_t CaptureSession::GetFocalLength(float &focalLength)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FOCAL_LENGTH, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("CaptureSession::GetFocalLength Failed with return code %{public}d", ret);
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
     focalLength = static_cast<float>(item.data.f[0]);
     return CameraErrorCode::SUCCESS;
@@ -1263,7 +1271,7 @@ int32_t CaptureSession::GetSupportedFlashModes(std::vector<FlashMode> &supported
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_MODES, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("CaptureSession::GetSupportedFlashModes Failed with return code %{public}d", ret);
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = metaToFwFlashMode_.find(static_cast<camera_flash_mode_enum_t>(item.data.u8[i]));
@@ -1307,7 +1315,7 @@ int32_t CaptureSession::GetFlashMode(FlashMode &flashMode)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FLASH_MODE, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("CaptureSession::GetFlashMode Failed with return code %{public}d", ret);
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
     auto itr = metaToFwFlashMode_.find(static_cast<camera_flash_mode_enum_t>(item.data.u8[0]));
     if (itr != metaToFwFlashMode_.end()) {
@@ -1327,18 +1335,18 @@ int32_t CaptureSession::SetFlashMode(FlashMode flashMode)
     }
     if (changedMetadata_ == nullptr) {
         MEDIA_ERR_LOG("CaptureSession::SetFlashMode Need to call LockForControl() before setting camera properties");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
-
+    uint8_t flash = fwToMetaFlashMode_.at(FLASH_MODE_CLOSE);
     auto itr = fwToMetaFlashMode_.find(flashMode);
     if (itr == fwToMetaFlashMode_.end()) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureMode Unknown exposure mode");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+    } else {
+        flash = itr->second;
     }
 
     bool status = false;
     uint32_t count = 1;
-    uint8_t flash = itr->second;
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_FLASH_MODE, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
@@ -1349,7 +1357,7 @@ int32_t CaptureSession::SetFlashMode(FlashMode flashMode)
 
     if (!status) {
         MEDIA_ERR_LOG("CaptureSession::SetFlashMode Failed to set flash mode");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
 
     if (flashMode == FLASH_MODE_CLOSE) {
@@ -1463,7 +1471,7 @@ int32_t CaptureSession::GetZoomRatio(float &zoomRatio)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("CaptureSession::GetZoomRatio Failed with return code %{public}d", ret);
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
     zoomRatio = static_cast<float>(item.data.f[0]);
     return CameraErrorCode::SUCCESS;
@@ -1489,18 +1497,18 @@ int32_t CaptureSession::SetCropRegion(float zoomRatio)
     }
     if (zoomRatio == 0) {
         MEDIA_ERR_LOG("CaptureSession::SetCropRegion Invalid zoom ratio");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
     ret = Camera::FindCameraMetadataItem(
         inputDevice_->GetCameraDeviceInfo()->GetMetadata()->get(), OHOS_SENSOR_INFO_ACTIVE_ARRAY_SIZE, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("CaptureSession::SetCropRegion Failed to get sensor active array size, return code %{public}d",
                       ret);
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
     if (item.count != arrayCount) {
         MEDIA_ERR_LOG("CaptureSession::SetCropRegion Invalid sensor active array size count: %{public}u", item.count);
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
     MEDIA_DEBUG_LOG("CaptureSession::SetCropRegion Sensor active array left: %{public}d, top: %{public}d, "
                     "right: %{public}d, bottom: %{public}d", item.data.i32[leftIndex], item.data.i32[topIndex],
@@ -1522,7 +1530,7 @@ int32_t CaptureSession::SetCropRegion(float zoomRatio)
     }
     if (!status) {
         MEDIA_ERR_LOG("CaptureSession::SetCropRegion Failed to set zoom crop region");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -1536,7 +1544,7 @@ int32_t CaptureSession::SetZoomRatio(float zoomRatio)
     }
     if (changedMetadata_ == nullptr) {
         MEDIA_ERR_LOG("CaptureSession::SetZoomRatio Need to call LockForControl() before setting camera properties");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
 
     bool status = false;
@@ -1551,7 +1559,7 @@ int32_t CaptureSession::SetZoomRatio(float zoomRatio)
     std::vector<float> zoomRange = inputDevice_->GetCameraDeviceInfo()->GetZoomRatioRange();
     if (zoomRange.empty()) {
         MEDIA_ERR_LOG("CaptureSession::SetZoomRatio Zoom range is empty");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
     if (zoomRatio < zoomRange[minIndex]) {
         MEDIA_DEBUG_LOG("CaptureSession::SetZoomRatio Zoom ratio: %{public}f is lesser than minimum zoom: %{public}f",
@@ -1565,7 +1573,7 @@ int32_t CaptureSession::SetZoomRatio(float zoomRatio)
 
     if (zoomRatio == 0) {
         MEDIA_ERR_LOG("CaptureSession::SetZoomRatio Invalid zoom ratio");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
+        return CameraErrorCode::SUCCESS;
     }
 
     ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
