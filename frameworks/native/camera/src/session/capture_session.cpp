@@ -714,8 +714,9 @@ int32_t CaptureSession::SetMeteringPoint(Point exposurePoint)
             "before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
+    Point unifyExposurePoint = CoordinateTransform(exposurePoint);
     bool status = false;
-    float exposureArea[2] = {exposurePoint.x, exposurePoint.y};
+    float exposureArea[2] = {unifyExposurePoint.x, unifyExposurePoint.y};
     camera_metadata_item_t item;
 
     int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_AE_REGIONS, &item);
@@ -1122,8 +1123,9 @@ int32_t CaptureSession::SetFocusPoint(Point focusPoint)
         MEDIA_ERR_LOG("CaptureSession::SetFocusPoint Need to call LockForControl() before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
+    Point unifyFocusPoint = CoordinateTransform(focusPoint);
     bool status = false;
-    float FocusArea[2] = {focusPoint.x, focusPoint.y};
+    float FocusArea[2] = {unifyFocusPoint.x, unifyFocusPoint.y};
     camera_metadata_item_t item;
 
     int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_AF_REGIONS, &item);
@@ -1139,6 +1141,22 @@ int32_t CaptureSession::SetFocusPoint(Point focusPoint)
         MEDIA_ERR_LOG("CaptureSession::SetFocusPoint Failed to set Focus Area");
     }
     return CameraErrorCode::SUCCESS;
+}
+
+Point CaptureSession::CoordinateTransform(Point point)
+{
+    MEDIA_DEBUG_LOG("CaptureSession::CoordinateTransform begin x: %{public}f, y: %{public}f", point.x, point.y);
+    Point unifyPoint = point;
+    if (inputDevice_ == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::CoordinateTransform cameraInput is nullptr");
+        return unifyPoint;
+    }
+    if (inputDevice_->GetCameraDeviceInfo()->GetPosition() == CAMERA_POSITION_FRONT) {
+        unifyPoint.x = 1 - unifyPoint.x; // flip horizontally
+    }
+    MEDIA_DEBUG_LOG("CaptureSession::CoordinateTransform end x: %{public}f, y: %{public}f",
+                    unifyPoint.x, unifyPoint.y);
+    return unifyPoint;
 }
 
 Point CaptureSession::GetFocusPoint()
