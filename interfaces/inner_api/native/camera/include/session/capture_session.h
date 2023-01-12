@@ -635,6 +635,7 @@ private:
     int32_t StartFocus(FocusMode focusMode);
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
     void SetFrameRateRange(const std::vector<int32_t>& frameRateRange);
+    Point CoordinateTransform(Point point);
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -76,6 +76,7 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
 
 int CameraInput::Open()
 {
+    std::lock_guard<std::mutex> lock(interfaceMutex_);
     int32_t retCode = deviceObj_->Open();
     if (retCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to open Camera Input, retCode: %{public}d", retCode);
@@ -86,6 +87,7 @@ int CameraInput::Open()
 
 int CameraInput::Close()
 {
+    std::lock_guard<std::mutex> lock(interfaceMutex_);
     int32_t retCode = deviceObj_->Close();
     if (retCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to close Camera Input, retCode: %{public}d", retCode);

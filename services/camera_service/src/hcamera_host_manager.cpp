@@ -454,10 +454,35 @@ int32_t HCameraHostManager::GetCameraAbility(std::string &cameraId,
     return cameraHostInfo->GetCameraAbility(cameraId, ability);
 }
 
+std::vector<sptr<ICameraDeviceService>> HCameraHostManager::CameraConflictDetection(const std::string& cameraId)
+{
+    std::vector<sptr<ICameraDeviceService>> devicesNeedClose;
+    {
+        std::lock_guard<std::mutex> lock(deviceMutex_);
+        for (auto it = cameraDevices_.begin(); it != cameraDevices_.end(); it++) {
+            if (it->second != nullptr) {
+                if (it->first == cameraId) {
+                    MEDIA_INFO_LOG("HCameraHostManager::CameraConflictDetection current camera [%{public}s] has Opened,"
+                                   "need close", it->first.c_str());
+                } else {
+                    MEDIA_INFO_LOG("HCameraHostManager::CameraConflictDetection other camera [%{public}s] has Opened,"
+                                   "need close", it->first.c_str());
+                }
+                devicesNeedClose.push_back(it->second);
+            } else {
+                MEDIA_ERR_LOG("HCameraHostManager::CameraConflictDetection cameraDevice [%{public}s] is null",
+                              it->first.c_str());
+            }
+        }
+    }
+    return devicesNeedClose;
+}
+
 int32_t HCameraHostManager::OpenCameraDevice(std::string &cameraId,
                                              const sptr<ICameraDeviceCallback> &callback,
                                              sptr<ICameraDevice> &pDevice)
 {
+    MEDIA_INFO_LOG("HCameraHostManager::OpenCameraDevice try to open camera = %{public}s", cameraId.c_str());
     auto cameraHostInfo = FindCameraHostInfo(cameraId);
     if (cameraHostInfo == nullptr) {
         MEDIA_ERR_LOG("HCameraHostManager::OpenCameraDevice failed with invalid device info");
