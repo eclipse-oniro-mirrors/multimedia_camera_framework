@@ -43,12 +43,12 @@ public:
     /**
     * @brief open camera.
     */
-    void Open() override;
+    int Open() override;
 
     /**
     * @brief close camera.
     */
-    void Close() override;
+    int Close() override;
 
     /**
     * @brief create new device control setting.
@@ -222,7 +222,7 @@ public:
     /**
     * @brief Release camera input.
     */
-    void Release() override;
+    int Release() override;
 
     /**
     * @brief Get the camera Id.
@@ -296,6 +296,7 @@ private:
     sptr<ICameraDeviceService> deviceObj_;
     std::shared_ptr<ErrorCallback> errorCallback_;
     sptr<ICameraDeviceServiceCallback> CameraDeviceSvcCallback_;
+    std::mutex interfaceMutex_;
 
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
 };

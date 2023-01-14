@@ -92,7 +92,7 @@ static const std::vector<std::string> vecCameraPositionMode {
 };
 
 static const std::vector<std::string> vecCameraTypeMode {
-    "CAMERA_TYPE_UNSPECIFIED", "CAMERA_TYPE_WIDE_ANGLE", "CAMERA_TYPE_ULTRA_WIDE",
+    "CAMERA_TYPE_DEFAULT", "CAMERA_TYPE_WIDE_ANGLE", "CAMERA_TYPE_ULTRA_WIDE",
     "CAMERA_TYPE_TELEPHOTO", "CAMERA_TYPE_TRUE_DEPTH"
 };
 
@@ -134,6 +134,18 @@ static const std::unordered_map<std::string, int32_t> mapFocusState = {
 static const std::unordered_map<std::string, int32_t> mapExposureState = {
     {"EXPOSURE_STATE_SCAN", 0},
     {"EXPOSURE_STATE_CONVERGED", 1},
+};
+
+static const std::unordered_map<std::string, int32_t> mapCameraErrorCode = {
+    {"INVALID_ARGUMENT", 7400101},
+    {"OPERATION_NOT_ALLOWED", 7400102},
+    {"SESSION_NOT_CONFIG", 7400103},
+    {"SESSION_NOT_RUNNING", 7400104},
+    {"SESSION_CONFIG_LOCKED", 7400105},
+    {"DEVICE_SETTING_LOCKED", 7400106},
+    {"CONFILICT_CAMERA", 7400107},
+    {"DEVICE_DISABLED", 7400108},
+    {"SERVICE_FATAL_ERROR", 7400201}
 };
 
 static const std::unordered_map<std::string, int32_t> mapCameraInputErrorCode = {
@@ -209,6 +221,7 @@ public:
     static napi_value CreateQualityLevelEnum(napi_env env);
     static napi_value CreateVideoStabilizationModeObject(napi_env env);
 
+    static napi_value CreateCameraErrorCode(napi_env env);
     static napi_value CreateCameraInputErrorCode(napi_env env);
     static napi_value CreateCaptureSessionErrorCode(napi_env env);
     static napi_value CreatePreviewOutputErrorCode(napi_env env);
@@ -244,18 +257,6 @@ private:
     napi_env env_;
     napi_ref wrapper_;
     sptr<CameraManager> cameraManager_;
-};
-
-struct CameraNapiAsyncContext : public AsyncContext {
-    CameraNapi* objectInfo;
-    std::string photoSurfaceId;
-    uint64_t surfaceId;
-    sptr<CameraManager> cameraManager;
-    sptr<CaptureSession> cameraSession;
-    sptr<CaptureOutput> previewOutput;
-    sptr<CaptureOutput> photoOutput;
-    sptr<CaptureOutput> videoOutput;
-    CreateAsyncCallbackModes modeForAsync;
 };
 } // namespace CameraStandard
 } // namespace OHOS

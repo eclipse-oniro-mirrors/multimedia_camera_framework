@@ -31,17 +31,17 @@ public:
     /**
     * @brief open camera.
     */
-    virtual void Open() = 0;
+    virtual int Open() = 0;
 
     /**
     * @brief close camera.
     */
-    virtual void Close() = 0;
+    virtual int Close() = 0;
 
     /**
     * @brief Release camera input.
     */
-    virtual void Release() = 0;
+    virtual int Release() = 0;
 
     /**
     * @brief get the camera info associated with the device.

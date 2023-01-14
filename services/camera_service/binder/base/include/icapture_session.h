@@ -23,6 +23,12 @@
 
 namespace OHOS {
 namespace CameraStandard {
+enum class CaptureSessionState {
+    SESSION_INIT = 0,
+    SESSION_CONFIG_INPROGRESS,
+    SESSION_CONFIG_COMMITTED,
+};
+
 class ICaptureSession : public IRemoteBroker {
 public:
     virtual int32_t BeginConfig() = 0;
@@ -45,7 +51,7 @@ public:
 
     virtual int32_t SetCallback(sptr<ICaptureSessionCallback> &callback) = 0;
 
-    virtual int32_t IsCommitConfig(bool &isCommitConfig) = 0;
+    virtual int32_t GetSessionState(CaptureSessionState &sessionState) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ICaptureSession");
 };

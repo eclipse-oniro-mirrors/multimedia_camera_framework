@@ -61,8 +61,8 @@ int HCaptureSessionStub::OnRemoteRequest(
         case CAMERA_CAPTURE_SESSION_SET_CALLBACK:
             errCode = HandleSetCallback(data);
             break;
-        case CAMERA_CAPTURE_SESSION_IS_COMMIT_CONFIG:
-            errCode =  HandleIsCommitConfig(reply);
+        case CAMERA_CAPTURE_GET_SESSION_STATE:
+            errCode =  HandleGetSesstionState(reply);
             break;
         default:
             MEDIA_ERR_LOG("HCaptureSessionStub request code %{public}u not handled", code);
@@ -140,12 +140,12 @@ int HCaptureSessionStub::HandleSetCallback(MessageParcel &data)
     return SetCallback(callback);
 }
 
-int HCaptureSessionStub::HandleIsCommitConfig(MessageParcel &reply)
+int HCaptureSessionStub::HandleGetSesstionState(MessageParcel &reply)
 {
-    bool isCommitConfig = false;
-    int32_t ret = IsCommitConfig(isCommitConfig);
-    if (!reply.WriteBool(isCommitConfig)) {
-        MEDIA_ERR_LOG("HCaptureSessionStub HandleIsCommitConfig Write isCommitConfig failed");
+    CaptureSessionState sessionState;
+    int32_t ret = GetSessionState(sessionState);
+    if (!reply.WriteUint32(static_cast<uint32_t>(sessionState))) {
+        MEDIA_ERR_LOG("HCaptureSessionStub HandleGetSesstionState Write sessionState failed");
         return IPC_STUB_WRITE_PARCEL_ERR;
     }
     return ret;

@@ -100,37 +100,35 @@ void PreviewOutputCallback::SetCallbackRef(const std::string &eventType, const n
 
 void PreviewOutputCallback::UpdateJSCallback(std::string propName, const int32_t value) const
 {
-    napi_value result[ARGS_TWO];
+    napi_value result[ARGS_ONE];
     napi_value callback = nullptr;
     napi_value retVal;
     napi_value propValue;
     int32_t jsErrorCodeUnknown = -1;
 
-    napi_get_undefined(env_, &result[PARAM0]);
-
     if (propName.compare("OnFrameStarted") == 0) {
         CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(frameStartCallbackRef_,
             "OnFrameStart callback is not registered by JS");
-        napi_get_undefined(env_, &result[PARAM1]);
+        napi_get_undefined(env_, &result[PARAM0]);
         napi_get_reference_value(env_, frameStartCallbackRef_, &callback);
     } else if (propName.compare("OnFrameEnded") == 0) {
         CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(frameEndCallbackRef_,
             "OnFrameEnd callback is not registered by JS");
-        napi_get_undefined(env_, &result[PARAM1]);
+        napi_get_undefined(env_, &result[PARAM0]);
         napi_get_reference_value(env_, frameEndCallbackRef_, &callback);
     } else {
         CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(errorCallbackRef_,
             "OnError callback is not registered by JS");
-        napi_create_object(env_, &result[PARAM1]);
+        napi_create_object(env_, &result[PARAM0]);
         napi_create_int32(env_, jsErrorCodeUnknown, &propValue);
-        napi_set_named_property(env_, result[PARAM1], "code", propValue);
+        napi_set_named_property(env_, result[PARAM0], "code", propValue);
         napi_get_reference_value(env_, errorCallbackRef_, &callback); // should errorcode be valued as -1
         if (errorCallbackRef_ != nullptr) {
             napi_delete_reference(env_, errorCallbackRef_);
         }
     }
 
-    napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
+    napi_call_function(env_, nullptr, callback, ARGS_ONE, result, &retVal);
 }
 
 PreviewOutputNapi::PreviewOutputNapi() : env_(nullptr), wrapper_(nullptr)
@@ -227,7 +225,7 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
 
     if (!context->status) {
-        CameraNapiUtils::CreateNapiErrorObject(env, context->errorMsg.c_str(), jsContext);
+        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
     } else {
         jsContext->status = true;
         napi_get_undefined(env, &jsContext->error);
@@ -273,7 +271,10 @@ napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, Profile &profile
         }
 
         surface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
-        sPreviewOutput_ = CameraManager::GetInstance()->CreatePreviewOutput(profile, surface);
+        int retCode = CameraManager::GetInstance()->CreatePreviewOutput(profile, surface, &sPreviewOutput_);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
         if (sPreviewOutput_ == nullptr) {
             MEDIA_ERR_LOG("failed to create previewOutput");
             return result;
@@ -450,7 +451,8 @@ napi_value PreviewOutputNapi::Start(napi_env env, napi_callback_info info)
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
-                    context->status = true;
+                    context->errorCode = context->objectInfo->previewOutput_->Start();
+                    context->status = context->errorCode == 0;
                 }
             },
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
@@ -500,7 +502,8 @@ napi_value PreviewOutputNapi::Stop(napi_env env, napi_callback_info info)
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
-                    context->status = true;
+                    context->errorCode = context->objectInfo->previewOutput_->Stop();
+                    context->status = context->errorCode == 0;
                 }
             },
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);

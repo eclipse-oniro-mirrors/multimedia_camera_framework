@@ -18,8 +18,6 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
-using OHOS::HiviewDFX::HiLog;
-using OHOS::HiviewDFX::HiLogLabel;
 
 thread_local napi_ref CameraNapi::sConstructor_ = nullptr;
 
@@ -44,9 +42,6 @@ thread_local napi_ref CameraNapi::exposureStateRef_ = nullptr;
 thread_local napi_ref CameraNapi::focusStateRef_ = nullptr;
 thread_local napi_ref CameraNapi::qualityLevelRef_ = nullptr;
 thread_local napi_ref CameraNapi::videoStabilizationModeRef_ = nullptr;
-namespace {
-    constexpr HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "CameraNapi"};
-}
 
 CameraNapi::CameraNapi() : env_(nullptr), wrapper_(nullptr)
 {
@@ -119,6 +114,7 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("CameraStatus", CreateCameraStatusObject(env)),
         DECLARE_NAPI_PROPERTY("ImageRotation", CreateImageRotationEnum(env)),
         DECLARE_NAPI_PROPERTY("QualityLevel", CreateQualityLevelEnum(env)),
+        DECLARE_NAPI_PROPERTY("CameraErrorCode", CreateCameraErrorCode(env)),
         DECLARE_NAPI_PROPERTY("CameraInputErrorCode", CreateCameraInputErrorCode(env)),
         DECLARE_NAPI_PROPERTY("CaptureSessionErrorCode", CreateCaptureSessionErrorCode(env)),
         DECLARE_NAPI_PROPERTY("PreviewOutputErrorCode", CreatePreviewOutputErrorCode(env)),
@@ -159,83 +155,18 @@ napi_status CameraNapi::AddNamedProperty(napi_env env, napi_value object,
     return status;
 }
 
-void CommonCompleteCallbackCameraNapi(napi_env env, napi_status status, void* data)
-{
-    auto context = static_cast<CameraNapiAsyncContext*>(data);
-
-    CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(context, "CameraNapiAsyncContext is null");
-
-    std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
-
-    jsContext->status = true;
-    napi_get_undefined(env, &jsContext->error);
-
-    switch (context->modeForAsync) {
-        case CREATE_CAMERA_MANAGER_ASYNC_CALLBACK:
-            MEDIA_INFO_LOG("CreateCameraManagerInstance created");
-            jsContext->data = CameraManagerNapi::CreateCameraManager(env);
-            MEDIA_INFO_LOG("CreateCameraManagerInstance status = %{public}d, js data = %{public}p",
-                jsContext->status, jsContext->data);
-            break;
-        default:
-            break;
-    }
-
-    if (jsContext->data == nullptr) {
-        MEDIA_ERR_LOG("Failed to Create instance");
-        CameraNapiUtils::CreateNapiErrorObject(env,
-            "Failed to Create instance", jsContext);
-    }
-
-    if (!context->funcName.empty()) {
-        // Finish async trace
-        jsContext->funcName = context->funcName;
-    }
-
-    if (context->work != nullptr) {
-        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef,
-                                             context->work, *jsContext);
-    }
-    delete context;
-}
-
 napi_value CameraNapi::CreateCameraManagerInstance(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CreateCameraManagerInstance called");
-    napi_status status;
     napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    MEDIA_INFO_LOG("CreateCameraManagerInstance argc %{public}zu", argc);
 
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraNapiAsyncContext> asyncContext = std::make_unique<CameraNapiAsyncContext>();
-
-    if (argc == ARGS_TWO) {
-        CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM1], refCount, asyncContext->callbackRef);
-    }
-    CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-    CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "CreateCameraManagerInstance");
-    status = napi_create_async_work(env, nullptr, resource,
-        [](napi_env env, void* data) {
-            auto context = static_cast<CameraNapiAsyncContext*>(data);
-            context->funcName = "CameraNapi::CreateCameraManagerInstance";
-            context->modeForAsync = CREATE_CAMERA_MANAGER_ASYNC_CALLBACK;
-        },
-        CommonCompleteCallbackCameraNapi, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-    if (status != napi_ok) {
-        MEDIA_ERR_LOG("Failed to create napi_create_async_work for CreateCameraManagerInstance");
-        napi_get_undefined(env, &result);
-    } else {
-        napi_queue_async_work(env, asyncContext->work);
-        asyncContext.release();
-    }
-    MEDIA_INFO_LOG("CreateCameraManagerInstance return");
+    result = CameraManagerNapi::CreateCameraManager(env);
     return result;
 }
 
@@ -614,7 +545,7 @@ napi_value CameraNapi::CreateCameraInputErrorCode(napi_env env)
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
-        std::string propName;
+        std::string propName = "ERROR_UNKNOWN";
         for (auto itr = mapCameraInputErrorCode.begin(); itr != mapCameraInputErrorCode.end(); ++itr) {
             propName = itr->first;
             status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);
@@ -637,6 +568,36 @@ napi_value CameraNapi::CreateCameraInputErrorCode(napi_env env)
     return result;
 }
 
+napi_value CameraNapi::CreateCameraErrorCode(napi_env env)
+{
+    napi_value result = nullptr;
+    napi_status status;
+
+    status = napi_create_object(env, &result);
+    if (status == napi_ok) {
+        std::string propName = "ERROR_UNKNOWN";
+        for (auto itr = mapCameraErrorCode.begin(); itr != mapCameraErrorCode.end(); ++itr) {
+            propName = itr->first;
+            status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);
+            if (status != napi_ok) {
+                MEDIA_ERR_LOG("Failed to add QualityLevel prop!");
+                break;
+            }
+            propName.clear();
+        }
+    }
+    if (status == napi_ok) {
+        status = napi_create_reference(env, result, 1, &errorCameraInputRef_);
+        if (status == napi_ok) {
+            return result;
+        }
+    }
+    MEDIA_ERR_LOG("CreateCameraErrorCode is Failed!");
+    napi_get_undefined(env, &result);
+
+    return result;
+}
+
 napi_value CameraNapi::CreateCaptureSessionErrorCode(napi_env env)
 {
     napi_value result = nullptr;
@@ -644,7 +605,7 @@ napi_value CameraNapi::CreateCaptureSessionErrorCode(napi_env env)
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
-        std::string propName;
+        std::string propName = "ERROR_UNKNOWN";
         for (auto itr = mapCaptureSessionErrorCode.begin(); itr != mapCaptureSessionErrorCode.end(); ++itr) {
             propName = itr->first;
             status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);
@@ -674,7 +635,7 @@ napi_value CameraNapi::CreatePreviewOutputErrorCode(napi_env env)
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
-        std::string propName;
+        std::string propName = "ERROR_UNKNOWN";
         for (auto itr = mapPreviewOutputErrorCode.begin(); itr != mapPreviewOutputErrorCode.end(); ++itr) {
             propName = itr->first;
             status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);
@@ -704,7 +665,7 @@ napi_value CameraNapi::CreatePhotoOutputErrorCode(napi_env env)
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
-        std::string propName;
+        std::string propName = "ERROR_UNKNOWN";
         for (auto itr = mapPhotoOutputErrorCode.begin(); itr != mapPhotoOutputErrorCode.end(); ++itr) {
             propName = itr->first;
             status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);
@@ -734,7 +695,7 @@ napi_value CameraNapi::CreateVideoOutputErrorCode(napi_env env)
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
-        std::string propName;
+        std::string propName = "ERROR_UNKNOWN";
         for (auto itr = mapVideoOutputErrorCode.begin(); itr != mapVideoOutputErrorCode.end(); ++itr) {
             propName = itr->first;
             status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);
@@ -764,7 +725,7 @@ napi_value CameraNapi::CreateMetadataObjectType(napi_env env)
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
-        std::string propName;
+        std::string propName = "FACE_DETECTION";
         for (auto itr = mapMetadataObjectType.begin(); itr != mapMetadataObjectType.end(); ++itr) {
             propName = itr->first;
             status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);
@@ -793,7 +754,7 @@ napi_value CameraNapi::CreateMetaOutputErrorCode(napi_env env)
 
     status = napi_create_object(env, &result);
     if (status == napi_ok) {
-        std::string propName;
+        std::string propName = "ERROR_UNKNOWN";
         for (auto itr = mapMetaOutputErrorCode.begin(); itr != mapMetaOutputErrorCode.end(); ++itr) {
             propName = itr->first;
             status = CameraNapi::AddNamedProperty(env, result, propName, itr->second);

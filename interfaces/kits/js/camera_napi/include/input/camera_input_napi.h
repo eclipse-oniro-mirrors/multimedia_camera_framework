@@ -117,7 +117,6 @@ struct CameraInputAsyncContext :public AsyncContext {
     InputAsyncCallbackModes modeForAsync;
     std::string cameraId;
     std::string enumType;
-    std::string errorMsg;
     std::vector<CameraFormat> vecList;
 };
 } // namespace CameraStandard

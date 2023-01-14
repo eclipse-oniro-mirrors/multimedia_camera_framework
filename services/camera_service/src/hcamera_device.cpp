@@ -90,7 +90,6 @@ int32_t HCameraDevice::Open()
 {
     CAMERA_SYNC_TRACE;
     int32_t errorCode;
-    std::lock_guard<std::mutex> lock(deviceLock_);
     if (isOpenedCameraDevice_) {
         MEDIA_ERR_LOG("HCameraDevice::Open failed, camera is busy");
     }
@@ -108,6 +107,12 @@ int32_t HCameraDevice::Open()
     if (!isAllowed) {
         MEDIA_ERR_LOG("HCameraDevice::Open IsAllowedUsingPermission failed");
         return CAMERA_ALLOC_ERROR;
+    }
+
+    auto conflictDevices = cameraHostManager_->CameraConflictDetection(cameraID_);
+    // Destory conflict devices
+    for (auto &i : conflictDevices) {
+        i->Close();
     }
     MEDIA_INFO_LOG("HCameraDevice::Open Opening camera device: %{public}s", cameraID_.c_str());
     errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, deviceHDICallback_, hdiCameraDevice_);

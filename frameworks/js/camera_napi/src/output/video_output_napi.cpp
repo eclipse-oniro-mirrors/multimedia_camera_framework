@@ -99,37 +99,35 @@ void VideoCallbackListener::SetCallbackRef(const std::string &eventType, const n
 
 void VideoCallbackListener::UpdateJSCallback(std::string propName, const int32_t value) const
 {
-    napi_value result[ARGS_TWO];
+    napi_value result[ARGS_ONE];
     napi_value callback = nullptr;
     napi_value retVal;
     napi_value propValue;
     int32_t jsErrorCodeUnknown = -1;
 
-    napi_get_undefined(env_, &result[PARAM0]);
-
     if (propName.compare("OnFrameStarted") == 0) {
         CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(frameStartCallbackRef_,
             "OnFrameStart callback is not registered by JS");
-        napi_get_undefined(env_, &result[PARAM1]);
+        napi_get_undefined(env_, &result[PARAM0]);
         napi_get_reference_value(env_, frameStartCallbackRef_, &callback);
     } else if (propName.compare("OnFrameEnded") == 0) {
         CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(frameEndCallbackRef_,
             "OnFrameEnd callback is not registered by JS");
-        napi_get_undefined(env_, &result[PARAM1]);
+        napi_get_undefined(env_, &result[PARAM0]);
         napi_get_reference_value(env_, frameEndCallbackRef_, &callback);
     } else {
         CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(errorCallbackRef_,
             "OnError callback is not registered by JS");
-        napi_create_object(env_, &result[PARAM1]);
+        napi_create_object(env_, &result[PARAM0]);
         napi_create_int32(env_, jsErrorCodeUnknown, &propValue);
-        napi_set_named_property(env_, result[PARAM1], "code", propValue);
+        napi_set_named_property(env_, result[PARAM0], "code", propValue);
         napi_get_reference_value(env_, errorCallbackRef_, &callback); // should errorcode be valued as -1
         if (errorCallbackRef_ != nullptr) {
             napi_delete_reference(env_, errorCallbackRef_);
         }
     }
 
-    napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
+    napi_call_function(env_, nullptr, callback, ARGS_ONE, result, &retVal);
 }
 
 VideoOutputNapi::VideoOutputNapi() : env_(nullptr), wrapper_(nullptr)
@@ -261,7 +259,7 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
 
     if (!context->status) {
-        CameraNapiUtils::CreateNapiErrorObject(env, context->errorMsg.c_str(), jsContext);
+        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
     } else {
         jsContext->status = true;
         napi_get_undefined(env, &jsContext->error);
@@ -325,7 +323,10 @@ napi_value VideoOutputNapi::CreateVideoOutput(napi_env env, VideoProfile &profil
             return result;
         }
         surface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
-        sVideoOutput_ = CameraManager::GetInstance()->CreateVideoOutput(profile, surface);
+        int retCode = CameraManager::GetInstance()->CreateVideoOutput(profile, surface, &sVideoOutput_);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
         if (sVideoOutput_ == nullptr) {
             MEDIA_ERR_LOG("failed to create VideoOutput");
             return result;
@@ -375,12 +376,8 @@ napi_value VideoOutputNapi::Start(napi_env env, napi_callback_info info)
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
-                    context->status = true;
-                    int32_t ret = ((sptr<VideoOutput> &)(context->objectInfo->videoOutput_))->Start();
-                    if (ret != 0) {
-                        context->status = false;
-                        context->errorMsg = "VideoOutputNapi::Start failure";
-                    }
+                    context->errorCode = ((sptr<VideoOutput> &)(context->objectInfo->videoOutput_))->Start();
+                    context->status = context->errorCode == 0;
                 }
             },
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
@@ -428,12 +425,8 @@ napi_value VideoOutputNapi::Stop(napi_env env, napi_callback_info info)
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
-                    context->status = true;
-                    int32_t ret = ((sptr<VideoOutput> &)(context->objectInfo->videoOutput_))->Stop();
-                    if (ret != 0) {
-                        context->status = false;
-                        context->errorMsg = "VideoOutputNapi::Stop failure";
-                    }
+                    context->errorCode = ((sptr<VideoOutput> &)(context->objectInfo->videoOutput_))->Stop();
+                    context->status = context->errorCode == 0;
                 }
             },
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
@@ -472,7 +465,7 @@ void GetFrameRateRangeAsyncCallbackComplete(napi_env env, napi_status status, vo
         jsContext->data = frameRateRange;
     } else {
         MEDIA_ERR_LOG("vecFrameRateRangeList is empty or failed to create array!");
-        CameraNapiUtils::CreateNapiErrorObject(env,
+        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode,
             "vecFrameRateRangeList is empty or failed to create array!", jsContext);
     }
 

@@ -104,15 +104,28 @@ void MetadataOutput::SetCallback(std::shared_ptr<MetadataStateCallback> metadata
 
 int32_t MetadataOutput::Start()
 {
-    return static_cast<IStreamMetadata *>(GetStream().GetRefPtr())->Start();
+    CaptureSession* captureSession = GetSession();
+    if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
+        MEDIA_ERR_LOG("MetadataOutput Failed to Start!, session not config");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    int32_t errCode = static_cast<IStreamMetadata *>(GetStream().GetRefPtr())->Start();
+    if (errCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("Failed to Start MetadataOutput!, errCode: %{public}d", errCode);
+    }
+    return ServiceToCameraError(errCode);
 }
 
 int32_t MetadataOutput::Stop()
 {
-    return static_cast<IStreamMetadata *>(GetStream().GetRefPtr())->Stop();
+    int32_t errCode = static_cast<IStreamMetadata *>(GetStream().GetRefPtr())->Stop();
+    if (errCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("Failed to Stop MetadataOutput!, errCode: %{public}d", errCode);
+    }
+    return ServiceToCameraError(errCode);
 }
 
-void MetadataOutput::Release()
+int32_t MetadataOutput::Release()
 {
     int32_t errCode = static_cast<IStreamMetadata *>(GetStream().GetRefPtr())->Release();
     if (errCode != CAMERA_OK) {
@@ -125,6 +138,7 @@ void MetadataOutput::Release()
         }
         surface_ = nullptr;
     }
+    return ServiceToCameraError(errCode);
 }
 
 MetadataObjectListener::MetadataObjectListener(sptr<MetadataOutput> metadata) : metadata_(metadata)

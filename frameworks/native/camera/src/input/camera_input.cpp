@@ -23,6 +23,7 @@
 #include "camera_log.h"
 #include "metadata_utils.h"
 #include "session/capture_session.h"
+#include "icamera_util.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -73,28 +74,36 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
     deviceObj_->SetCallback(CameraDeviceSvcCallback_);
 }
 
-void CameraInput::Open()
+int CameraInput::Open()
 {
+    std::lock_guard<std::mutex> lock(interfaceMutex_);
     int32_t retCode = deviceObj_->Open();
     if (retCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to open Camera Input, retCode: %{public}d", retCode);
     }
+
+    return ServiceToCameraError(retCode);
 }
 
-void CameraInput::Close()
+int CameraInput::Close()
 {
+    std::lock_guard<std::mutex> lock(interfaceMutex_);
     int32_t retCode = deviceObj_->Close();
     if (retCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to close Camera Input, retCode: %{public}d", retCode);
     }
+
+    return ServiceToCameraError(retCode);
 }
 
-void CameraInput::Release()
+int CameraInput::Release()
 {
     int32_t retCode = deviceObj_->Release();
     if (retCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to release Camera Input, retCode: %{public}d", retCode);
     }
+
+    return ServiceToCameraError(retCode);
 }
 
 void CameraInput::SetErrorCallback(std::shared_ptr<ErrorCallback> errorCallback)

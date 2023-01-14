@@ -24,13 +24,13 @@ PreviewOutput::PreviewOutput(sptr<IStreamRepeat> &streamRepeat)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PREVIEW, StreamType::REPEAT, streamRepeat) {
 }
 
-void PreviewOutput::Release()
+int32_t PreviewOutput::Release()
 {
     int32_t errCode = static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Release();
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to release PreviewOutput!, errCode: %{public}d", errCode);
     }
-    return;
+    return ServiceToCameraError(errCode);
 }
 
 class HStreamRepeatCallbackImpl : public HStreamRepeatCallbackStub {
@@ -91,12 +91,25 @@ void PreviewOutput::AddDeferredSurface(sptr<Surface> surface)
 
 int32_t PreviewOutput::Start()
 {
-    return static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Start();
+    CaptureSession* captureSession = GetSession();
+    if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
+        MEDIA_ERR_LOG("PreviewOutput Failed to Start!, session not config");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    int32_t errCode = static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Start();
+    if (errCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("PreviewOutput Failed to Start!, errCode: %{public}d", errCode);
+    }
+    return ServiceToCameraError(errCode);
 }
 
 int32_t PreviewOutput::Stop()
 {
-    return static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Stop();
+    int32_t errCode = static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Stop();
+    if (errCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("PreviewOutput Failed to Stop!, errCode: %{public}d", errCode);
+    }
+    return ServiceToCameraError(errCode);
 }
 
 void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)

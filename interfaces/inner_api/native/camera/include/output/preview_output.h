@@ -61,7 +61,7 @@ public:
     /**
      * @brief Releases a instance of the preview output.
      */
-    void Release() override;
+    int32_t Release() override;
 
     /**
      * @brief Add delayed preview surface.

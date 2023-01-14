@@ -97,16 +97,14 @@ static napi_value CreateMetadataObjJSArray(napi_env env,
 void MetadataOutputCallback::OnMetadataObjectsAvailableCallback(
     const std::vector<sptr<MetadataObject>> metadataObjList) const
 {
-    napi_value result[ARGS_TWO];
+    napi_value result[ARGS_ONE];
     napi_value callback = nullptr;
     napi_value retVal;
 
-    napi_get_undefined(env_, &result[PARAM0]);
-
     CAMERA_NAPI_CHECK_AND_RETURN_LOG((metadataObjList.size() != 0), "callback metadataObjList is null");
 
-    result[PARAM1] = CreateMetadataObjJSArray(env_, metadataObjList);
-    if (result[PARAM1] == nullptr) {
+    result[PARAM0] = CreateMetadataObjJSArray(env_, metadataObjList);
+    if (result[PARAM0] == nullptr) {
         MEDIA_ERR_LOG("MetadataOutputCallback::OnMetadataObjectsAvailableCallback"
         " invoke CreateMetadataObjJSArray failed");
         return;
@@ -115,7 +113,7 @@ void MetadataOutputCallback::OnMetadataObjectsAvailableCallback(
     CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(metadataObjectsAvailableCallbackRef_,
         "metadataObjectsAvailable callback is not registered by JS");
     napi_get_reference_value(env_, metadataObjectsAvailableCallbackRef_, &callback);
-    napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
+    napi_call_function(env_, nullptr, callback, ARGS_ONE, result, &retVal);
 }
 
 void MetadataOutputCallback::SetCallbackRef(const std::string &eventType, const napi_ref &callbackRef)
@@ -239,7 +237,10 @@ napi_value MetadataOutputNapi::CreateMetadataOutput(napi_env env)
 
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
-        sMetadataOutput_ = CameraManager::GetInstance()->CreateMetadataOutput();
+        int retCode = CameraManager::GetInstance()->CreateMetadataOutput(&sMetadataOutput_);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
         if (sMetadataOutput_ == nullptr) {
             MEDIA_ERR_LOG("failed to create MetadataOutput");
             return result;
@@ -268,7 +269,7 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
     std::unique_ptr<JSAsyncContextOutput> jsContext = std::make_unique<JSAsyncContextOutput>();
 
     if (!context->status) {
-        CameraNapiUtils::CreateNapiErrorObject(env, context->errorMsg.c_str(), jsContext);
+        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
     } else {
         jsContext->status = true;
         napi_get_undefined(env, &jsContext->error);
@@ -374,7 +375,7 @@ static void GetSupportedMetadataObjectTypesAsyncCallbackComplete(napi_env env, n
     if (context->SupportedMetadataObjectTypes.empty()
         || (napi_create_array(env, &metadataObjectTypes) != napi_ok)) {
         MEDIA_ERR_LOG("No Metadata object Types or create array failed!");
-        CameraNapiUtils::CreateNapiErrorObject(env,
+        CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode,
             "No Metadata object Types or create array failed!", jsContext);
     }
 
@@ -526,9 +527,9 @@ napi_value MetadataOutputNapi::Start(napi_env env, napi_callback_info info)
                 context->status = false;
                 if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
-                    context->status = true;
                     context->funcName = "MetadataOutputNapi::Start";
-                    context->objectInfo->metadataOutput_->Start();
+                    context->errorCode = context->objectInfo->metadataOutput_->Start();
+                    context->status = context->errorCode == 0;
                 }
             },
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
@@ -575,7 +576,8 @@ napi_value MetadataOutputNapi::Stop(napi_env env, napi_callback_info info)
                     context->bRetBool = false;
                     context->status = true;
                     context->funcName = "MetadataOutputNapi::Stop";
-                    context->objectInfo->metadataOutput_->Stop();
+                    context->errorCode = context->objectInfo->metadataOutput_->Stop();
+                    context->status = context->errorCode == 0;
                 }
             },
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);

@@ -127,7 +127,6 @@ struct PhotoOutputAsyncContext : public AsyncContext {
     std::unique_ptr<Location> location;
     PhotoOutputNapi* objectInfo;
     std::string surfaceId;
-    std::string errorMsg;
 };
 } // namespace CameraStandard
 } // namespace OHOS
