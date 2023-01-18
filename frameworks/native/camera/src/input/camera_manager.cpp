@@ -118,8 +118,7 @@ sptr<CaptureSession> CameraManager::CreateCaptureSession()
 {
     CAMERA_SYNC_TRACE;
     sptr<CaptureSession> captureSession = nullptr;
-    int ret = CameraErrorCode::SUCCESS;
-    ret = CreateCaptureSession(&captureSession);
+    int ret = CreateCaptureSession(&captureSession);
     if (ret != CameraErrorCode::SUCCESS) {
         MEDIA_ERR_LOG("Failed to CreateCaptureSession with error code:%{public}d", ret);
         return nullptr;
@@ -173,8 +172,7 @@ sptr<PhotoOutput> CameraManager::CreatePhotoOutput(Profile &profile, sptr<Surfac
 {
     CAMERA_SYNC_TRACE;
     sptr<PhotoOutput> photoOutput = nullptr;
-    int ret = CameraErrorCode::SUCCESS;
-    ret = CreatePhotoOutput(profile, surface, &photoOutput);
+    int ret = CreatePhotoOutput(profile, surface, &photoOutput);
     if (ret != CameraErrorCode::SUCCESS) {
         MEDIA_ERR_LOG("Failed to CreatePhotoOutput with error code:%{public}d", ret);
         return nullptr;
@@ -229,8 +227,7 @@ sptr<PreviewOutput> CameraManager::CreatePreviewOutput(Profile &profile, sptr<Su
 {
     CAMERA_SYNC_TRACE;
     sptr<PreviewOutput> previewOutput = nullptr;
-    int ret = CameraErrorCode::SUCCESS;
-    ret = CreatePreviewOutput(profile, surface, &previewOutput);
+    int ret = CreatePreviewOutput(profile, surface, &previewOutput);
     if (ret != CameraErrorCode::SUCCESS) {
         MEDIA_ERR_LOG("Failed to CreatePreviewOutput with error code:%{public}d", ret);
         return nullptr;
@@ -286,8 +283,7 @@ sptr<PreviewOutput> CameraManager::CreateDeferredPreviewOutput(Profile &profile)
 {
     CAMERA_SYNC_TRACE;
     sptr<PreviewOutput> previewOutput = nullptr;
-    int ret = CameraErrorCode::SUCCESS;
-    ret = CreateDeferredPreviewOutput(profile, &previewOutput);
+    int ret = CreateDeferredPreviewOutput(profile, &previewOutput);
     if (ret != CameraErrorCode::SUCCESS) {
         MEDIA_ERR_LOG("Failed to CreateDeferredPreviewOutput with error code:%{public}d", ret);
         return nullptr;
@@ -358,8 +354,7 @@ sptr<MetadataOutput> CameraManager::CreateMetadataOutput()
 {
     CAMERA_SYNC_TRACE;
     sptr<MetadataOutput> metadataOutput = nullptr;
-    int ret = CameraErrorCode::SUCCESS;
-    ret = CreateMetadataOutput(&metadataOutput);
+    int ret = CreateMetadataOutput(&metadataOutput);
     if (ret != CameraErrorCode::SUCCESS) {
         MEDIA_ERR_LOG("Failed to CreateMetadataOutput with error code:%{public}d", ret);
         return nullptr;
@@ -430,8 +425,7 @@ sptr<VideoOutput> CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<S
 {
     CAMERA_SYNC_TRACE;
     sptr<VideoOutput> videoOutput = nullptr;
-    int ret = CameraErrorCode::SUCCESS;
-    ret = CreateVideoOutput(profile, surface, &videoOutput);
+    int ret = CreateVideoOutput(profile, surface, &videoOutput);
     if (ret != CameraErrorCode::SUCCESS) {
         MEDIA_ERR_LOG("Failed to CreateVideoOutput with error code:%{public}d", ret);
         return nullptr;
@@ -702,8 +696,7 @@ sptr<CameraInput> CameraManager::CreateCameraInput(sptr<CameraDevice> &camera)
 {
     CAMERA_SYNC_TRACE;
     sptr<CameraInput> cameraInput = nullptr;
-    int ret = CameraErrorCode::SUCCESS;
-    ret = CreateCameraInput(camera, &cameraInput);
+    int ret = CreateCameraInput(camera, &cameraInput);
     if (ret != CameraErrorCode::SUCCESS) {
         MEDIA_ERR_LOG("Failed to CreateCameraInput with error code:%{public}d", ret);
         return nullptr;
@@ -717,10 +710,9 @@ int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInpu
     CAMERA_SYNC_TRACE;
     sptr<CameraInput> cameraInput = nullptr;
     sptr<ICameraDeviceService> deviceObj = nullptr;
-    int ret = CameraErrorCode::SUCCESS;
 
     if (camera != nullptr) {
-        ret = CreateCameraDevice(camera->GetID(), &deviceObj);
+        int ret = CreateCameraDevice(camera->GetID(), &deviceObj);
         if (ret == CameraErrorCode::SUCCESS) {
             cameraInput = new(std::nothrow) CameraInput(deviceObj, camera);
             if (cameraInput == nullptr) {
@@ -745,8 +737,7 @@ sptr<CameraInput> CameraManager::CreateCameraInput(CameraPosition position, Came
 {
     CAMERA_SYNC_TRACE;
     sptr<CameraInput> cameraInput = nullptr;
-    int ret = CameraErrorCode::SUCCESS;
-    ret = CreateCameraInput(position, cameraType, &cameraInput);
+    int ret = CreateCameraInput(position, cameraType, &cameraInput);
     if (ret != CameraErrorCode::SUCCESS) {
         MEDIA_ERR_LOG("Failed to CreateCameraInput with error code:%{public}d", ret);
         return nullptr;

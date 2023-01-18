@@ -1285,6 +1285,24 @@ napi_value CameraSessionNapi::GetMeteringPoint(napi_env env, napi_callback_info 
     return result;
 }
 
+void CameraInputNapi::ExposureBiasRange(napi_env env, std::vector<int32_t> vecExposureBiasList, napi_value &result)
+{
+    if (!vecExposureBiasList.empty() && napi_create_array(env, &result) == napi_ok) {
+        int32_t j = 0;
+        size_t len = vecExposureBiasList.size();
+        for (size_t i = 0; i < len; i++) {
+            int32_t  exposureBias = vecExposureBiasList[i];
+            MEDIA_DEBUG_LOG("EXPOSURE_BIAS_RANGE : exposureBias = %{public}d", vecExposureBiasList[i]);
+            napi_value value;
+            if (napi_create_int32(env, exposureBias, &value) == napi_ok) {
+                napi_set_element(env, result, j, value);
+                j++;
+            }
+        }
+        MEDIA_DEBUG_LOG("EXPOSURE_BIAS_RANGE ExposureBiasList size : %{public}zu", vecExposureBiasList.size());
+    }
+}
+
 napi_value CameraSessionNapi::GetExposureBiasRange(napi_env env, napi_callback_info info)
 {
     napi_status status;
@@ -1304,20 +1322,7 @@ napi_value CameraSessionNapi::GetExposureBiasRange(napi_env env, napi_callback_i
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
         }
-        if (!vecExposureBiasList.empty() && napi_create_array(env, &result) == napi_ok) {
-            int32_t j = 0;
-            size_t len = vecExposureBiasList.size();
-            for (size_t i = 0; i < len; i++) {
-                int32_t  exposureBias = vecExposureBiasList[i];
-                MEDIA_DEBUG_LOG("EXPOSURE_BIAS_RANGE : exposureBias = %{public}d", vecExposureBiasList[i]);
-                napi_value value;
-                if (napi_create_int32(env, exposureBias, &value) == napi_ok) {
-                    napi_set_element(env, result, j, value);
-                    j++;
-                }
-            }
-            MEDIA_DEBUG_LOG("EXPOSURE_BIAS_RANGE ExposureBiasList size : %{public}zu", vecExposureBiasList.size());
-        }
+        CameraSessionNapi::ExposureBiasRange(env, vecExposureBiasList, result);
     }
 
     return result;
