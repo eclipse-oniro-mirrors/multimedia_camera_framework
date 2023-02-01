@@ -401,6 +401,24 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
     return CAMERA_OK;
 }
 
+int32_t HCameraService::UnSetMuteCallback(pid_t pid)
+{
+    std::lock_guard<std::mutex> lock(muteCbMutex_);
+    MEDIA_INFO_LOG("HCameraService::UnSetMuteCallback pid = %{public}d, size = %{public}zu",
+                   pid, cameraMuteServiceCallbacks_.size());
+    if (!cameraMuteServiceCallbacks_.empty()) {
+        MEDIA_INFO_LOG("HCameraDevice::UnSetMuteCallback cameraMuteServiceCallbacks_ is not empty, reset it");
+        auto it = cameraMuteServiceCallbacks_.find(pid);
+        if ((it != cameraMuteServiceCallbacks_.end()) && (it->second)) {
+            cameraMuteServiceCallbacks_.erase(it);
+        }
+    }
+
+    MEDIA_INFO_LOG("HCameraService::UnSetMuteCallback after erase pid = %{public}d, size = %{public}zu",
+                   pid, cameraMuteServiceCallbacks_.size());
+    return CAMERA_OK;
+}
+
 int32_t HCameraService::UnSetCallback(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(cbMutex_);
@@ -419,17 +437,20 @@ int32_t HCameraService::UnSetCallback(pid_t pid)
         MEDIA_INFO_LOG("HCameraService::UnSetCallback Camera:[%{public}s] SetStatusCallback", it.first.c_str());
         it.second->SetStatusCallback(cameraServiceCallbacks_);
     }
-    return CAMERA_OK;
+    int32_t ret = CAMERA_OK;
+    ret = UnSetMuteCallback(pid);
+    return ret;
 }
 
 int32_t HCameraService::SetMuteCallback(sptr<ICameraMuteServiceCallback> &callback)
 {
-    OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
+    std::lock_guard<std::mutex> lock(muteCbMutex_);
+    pid_t pid = IPCSkeleton::GetCallingPid();
     if (callback == nullptr) {
         MEDIA_ERR_LOG("HCameraService::SetMuteCallback callback is null");
         return CAMERA_INVALID_ARG;
     }
-    cameraMuteServiceCallbacks_.insert(std::make_pair(callerToken, callback));
+    cameraMuteServiceCallbacks_.insert(std::make_pair(pid, callback));
     return CAMERA_OK;
 }
 
