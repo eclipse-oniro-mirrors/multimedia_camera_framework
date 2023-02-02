@@ -99,8 +99,10 @@ private:
         std::string& dumpString);
     bool IsCameraMuteSupported(std::string cameraId);
     int32_t UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool muteMode);
+    int32_t UnSetMuteCallback(pid_t pid);
     std::mutex mutex_;
     std::mutex cbMutex_;
+    std::mutex muteCbMutex_;
     sptr<HCameraHostManager> cameraHostManager_;
     sptr<StreamOperatorCallback> streamOperatorCallback_;
     std::map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
