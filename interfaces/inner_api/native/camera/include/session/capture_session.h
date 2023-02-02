@@ -98,6 +98,7 @@ public:
     FocusCallback() = default;
     virtual ~FocusCallback() = default;
     virtual void OnFocusState(FocusState state) = 0;
+    FocusState currentState;
 };
 
 enum VideoStabilizationMode {

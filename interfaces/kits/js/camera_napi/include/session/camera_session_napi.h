@@ -77,7 +77,10 @@ struct ExposureCallbackInfo {
 
 class FocusCallbackListener : public FocusCallback {
 public:
-    FocusCallbackListener(napi_env env, napi_ref ref) : env_(env), callbackRef_(ref) {}
+    FocusCallbackListener(napi_env env, napi_ref ref) : env_(env), callbackRef_(ref)
+    {
+        currentState = FocusState::UNFOCUSED;
+    }
     ~FocusCallbackListener() = default;
     void OnFocusState(FocusState state) override;
 

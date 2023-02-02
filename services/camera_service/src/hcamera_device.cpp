@@ -455,13 +455,13 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp,
     common_metadata_header_t* metadata = result->get();
     int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FLASH_MODE, &item);
     if (ret == 0) {
-        MEDIA_INFO_LOG("CameraDeviceServiceCallback::OnResult() OHOS_CONTROL_FLASH_MODE is %{public}d",
-                       item.data.u8[0]);
+        MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::OnResult() OHOS_CONTROL_FLASH_MODE is %{public}d",
+                        item.data.u8[0]);
     }
     ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FLASH_STATE, &item);
     if (ret == 0) {
-        MEDIA_INFO_LOG("CameraDeviceServiceCallback::OnResult() OHOS_CONTROL_FLASH_STATE is %{public}d",
-                       item.data.u8[0]);
+        MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::OnResult() OHOS_CONTROL_FLASH_STATE is %{public}d",
+                        item.data.u8[0]);
     }
 
     ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_MODE, &item);
@@ -470,7 +470,7 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp,
     }
     ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_STATE, &item);
     if (ret == CAM_META_SUCCESS) {
-        MEDIA_INFO_LOG("Focus state: %{public}d", item.data.u8[0]);
+        MEDIA_DEBUG_LOG("Focus state: %{public}d", item.data.u8[0]);
     }
     return CAMERA_OK;
 }
