@@ -142,7 +142,6 @@ void CameraInput::ProcessDeviceCallbackUpdates(const std::shared_ptr<Camera::Cam
         return;
     }
 
-    captureSession->ProcessAutoExposureUpdates(result);
     captureSession->ProcessAutoFocusUpdates(result);
 }
 
