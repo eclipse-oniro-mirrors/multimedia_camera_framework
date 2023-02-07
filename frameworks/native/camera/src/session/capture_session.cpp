@@ -1213,9 +1213,11 @@ void CaptureSession::ProcessAutoFocusUpdates(const std::shared_ptr<Camera::Camer
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = result->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_MODE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        MEDIA_INFO_LOG("Focus mode: %{public}d", item.data.u8[0]);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_INFO_LOG("Camera not support Focus mode");
+        return;
     }
+    MEDIA_INFO_LOG("Focus mode: %{public}d", item.data.u8[0]);
     auto it = metaToFwFocusMode_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[0]));
     // continuous focus mode do not callback focusStateChange
     if (it == metaToFwFocusMode_.end() || it->second != FOCUS_MODE_AUTO) {
