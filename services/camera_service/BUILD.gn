@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+# Copyright (c) 2021-2023 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -44,7 +44,6 @@ ohos_shared_library("camera_service") {
   ]
 
   include_dirs = [
-    "//drivers/peripheral/camera/interfaces/metadata/include",
     "//drivers/peripheral/display/interfaces/include",
     "//foundation/graphic/graphic_2d/frameworks/surface/include",
     "//foundation/multimedia/camera_framework/services/camera_service/include",
@@ -62,7 +61,6 @@ ohos_shared_library("camera_service") {
 
   deps = [
     "//drivers/hdf_core/adapter/uhdf2/hdi:libhdi",
-    "//drivers/peripheral/camera/interfaces/metadata:metadata",
     "//foundation/graphic/graphic_2d:libsurface",
     "//foundation/graphic/graphic_2d/rosen/modules/render_service_client:librender_service_client",
     "//foundation/window/window_manager/dm:libdm",
@@ -74,6 +72,7 @@ ohos_shared_library("camera_service") {
     "access_token:libprivacy_sdk",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
+    "drivers_interface_camera:metadata",
     "hicollie_native:libhicollie",
     "hisysevent_native:libhisysevent",
     "hitrace_native:hitrace_meter",
