@@ -107,7 +107,7 @@ private:
 
 class SurfaceListener : public IBufferConsumerListener {
 public:
-    SurfaceListener(const char* testName, SurfaceType surfaceType, int32_t &fd, sptr<Surface> surface);
+    SurfaceListener(const char* testName, SurfaceType surfaceType, int32_t &fd, sptr<IConsumerSurface> surface);
     virtual ~SurfaceListener() = default;
     void OnBufferAvailable() override;
 
@@ -115,7 +115,7 @@ private:
     const char* testName_;
     SurfaceType surfaceType_;
     int32_t &fd_;
-    sptr<Surface> surface_;
+    sptr<IConsumerSurface> surface_;
     int32_t previewIndex_ = 0;
     int32_t secondPreviewIndex_ = 0;
 };

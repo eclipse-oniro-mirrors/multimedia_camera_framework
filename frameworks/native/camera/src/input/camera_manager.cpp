@@ -162,14 +162,14 @@ int CameraManager::CreateCaptureSession(sptr<CaptureSession> *pCaptureSession)
     return CameraErrorCode::SUCCESS;
 }
 
-sptr<PhotoOutput> CameraManager::CreatePhotoOutput(sptr<Surface> &surface)
+sptr<PhotoOutput> CameraManager::CreatePhotoOutput(sptr<IBufferProducer> &surface)
 {
     CAMERA_SYNC_TRACE;
     sptr<PhotoOutput> result = nullptr;
     return result;
 }
 
-sptr<PhotoOutput> CameraManager::CreatePhotoOutput(Profile &profile, sptr<Surface> &surface)
+sptr<PhotoOutput> CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surface)
 {
     CAMERA_SYNC_TRACE;
     sptr<PhotoOutput> photoOutput = nullptr;
@@ -183,7 +183,7 @@ sptr<PhotoOutput> CameraManager::CreatePhotoOutput(Profile &profile, sptr<Surfac
     return photoOutput;
 }
 
-int CameraManager::CreatePhotoOutput(Profile &profile, sptr<Surface> &surface, sptr<PhotoOutput> *pPhotoOutput)
+int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surface, sptr<PhotoOutput> *pPhotoOutput)
 {
     CAMERA_SYNC_TRACE;
     sptr<IStreamCapture> streamCapture = nullptr;
@@ -204,7 +204,7 @@ int CameraManager::CreatePhotoOutput(Profile &profile, sptr<Surface> &surface, s
     }
 
     metaFormat = GetCameraMetadataFormat(profile.GetCameraFormat());
-    retCode = serviceProxy_->CreatePhotoOutput(surface->GetProducer(), metaFormat, profile.GetSize().width,
+    retCode = serviceProxy_->CreatePhotoOutput(surface, metaFormat, profile.GetSize().width,
                                                profile.GetSize().height, streamCapture);
     if (retCode == CAMERA_OK) {
         photoOutput = new(std::nothrow) PhotoOutput(streamCapture);
@@ -380,7 +380,7 @@ int CameraManager::CreateMetadataOutput(sptr<MetadataOutput> *pMetadataOutput)
         return CameraErrorCode::INVALID_ARGUMENT;
     }
 
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     if (!surface) {
         MEDIA_ERR_LOG("CameraManager::CreateMetadataOutput Failed to create surface");
         return CameraErrorCode::INVALID_ARGUMENT;

@@ -173,7 +173,7 @@ public:
 
 sptr<CaptureOutput> CameraFrameworkUnitTest::CreatePhotoOutput(int32_t width, int32_t height)
 {
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     if (surface == nullptr) {
         return nullptr;
     }
@@ -182,12 +182,12 @@ sptr<CaptureOutput> CameraFrameworkUnitTest::CreatePhotoOutput(int32_t width, in
     photoSize.width = width;
     photoSize.height = height;
     Profile photoProfile = Profile(photoFormat, photoSize);
-    return cameraManager->CreatePhotoOutput(photoProfile, surface);
+    return cameraManager->CreatePhotoOutput(photoProfile, surface->GetProducer());
 }
 
 sptr<CaptureOutput> CameraFrameworkUnitTest::CreatePreviewOutput(int32_t width, int32_t height)
 {
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     if (surface == nullptr) {
         return nullptr;
     }
@@ -201,7 +201,7 @@ sptr<CaptureOutput> CameraFrameworkUnitTest::CreatePreviewOutput(int32_t width, 
 
 sptr<CaptureOutput> CameraFrameworkUnitTest::CreateVideoOutput(int32_t width, int32_t height)
 {
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     if (surface == nullptr) {
         return nullptr;
     }
@@ -330,9 +330,9 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_004, TestSize.Level0
     Size previewSize;
     previewSize.width = width;
     previewSize.height = height;
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     Profile previewProfile = Profile(previewFormat, previewSize);
-    sptr<CaptureOutput> preview = cameraManager->CreatePreviewOutput(previewProfile, surface);
+    sptr<CaptureOutput> preview = cameraManager->CreatePreviewOutput(previewProfile, surface->GetProducer());
     ASSERT_NE(preview, nullptr);
     preview->Release();
 }
@@ -372,13 +372,13 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_011, TestSize.Level0
 {
     int32_t width = PHOTO_DEFAULT_WIDTH;
     int32_t height = PHOTO_DEFAULT_HEIGHT;
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     CameraFormat photoFormat = CAMERA_FORMAT_JPEG;
     Size photoSize;
     photoSize.width = width;
     photoSize.height = height;
     Profile photoProfile = Profile(photoFormat, photoSize);
-    sptr<PhotoOutput> photo = cameraManager->CreatePhotoOutput(photoProfile, surface);
+    sptr<PhotoOutput> photo = cameraManager->CreatePhotoOutput(photoProfile, surface->GetProducer());
     ASSERT_NE(photo, nullptr);
     photo->Release();
 }
@@ -401,7 +401,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_012, TestSize.Level0
     photoSize.height = height;
     Profile photoProfile = Profile(photoFormat, photoSize);
     sptr<Surface> surface = nullptr;
-    sptr<PhotoOutput> photo = cameraManager->CreatePhotoOutput(photoProfile, surface);
+    sptr<PhotoOutput> photo = cameraManager->CreatePhotoOutput(photoProfile, surface->GetProducer());
     ASSERT_EQ(photo, nullptr);
 }
 
@@ -417,14 +417,14 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_015, TestSize.Level0
 {
     int32_t width = VIDEO_DEFAULT_WIDTH;
     int32_t height = VIDEO_DEFAULT_HEIGHT;
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
     Size videoSize;
     videoSize.width = width;
     videoSize.height = height;
     std::vector<int32_t> videoFramerates = {30, 30};
     VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
-    sptr<VideoOutput> video = cameraManager->CreateVideoOutput(videoProfile, surface);
+    sptr<VideoOutput> video = cameraManager->CreateVideoOutput(videoProfile, surface->GetProducer());
     ASSERT_NE(video, nullptr);
     video->Release();
 }

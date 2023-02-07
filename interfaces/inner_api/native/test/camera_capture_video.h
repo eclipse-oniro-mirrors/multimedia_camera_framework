@@ -78,22 +78,22 @@ private:
     sptr<CaptureInput> cameraInput_;
     std::shared_ptr<TestDeviceCallback> cameraInputCallback_;
 
-    sptr<Surface> previewSurface_;
+    sptr<IConsumerSurface> previewSurface_;
     sptr<SurfaceListener> previewSurfaceListener_;
     sptr<CaptureOutput> previewOutput_;
     std::shared_ptr<TestPreviewOutputCallback> previewOutputCallback_;
 
-    sptr<Surface> photoSurface_;
+    sptr<IConsumerSurface> photoSurface_;
     sptr<SurfaceListener> photoSurfaceListener_;
     sptr<CaptureOutput> photoOutput_;
     std::shared_ptr<TestPhotoOutputCallback> photoOutputCallback_;
 
-    sptr<Surface> videoSurface_;
+    sptr<IConsumerSurface> videoSurface_;
     sptr<SurfaceListener> videoSurfaceListener_;
     sptr<CaptureOutput> videoOutput_;
     std::shared_ptr<TestVideoOutputCallback> videoOutputCallback_;
 
-    sptr<Surface> secondPreviewSurface_;
+    sptr<IConsumerSurface> secondPreviewSurface_;
     sptr<SurfaceListener> secondPreviewSurfaceListener_;
     sptr<CaptureOutput> secondPreviewOutput_;
     std::shared_ptr<TestPreviewOutputCallback> secondPreviewOutputCallback_;

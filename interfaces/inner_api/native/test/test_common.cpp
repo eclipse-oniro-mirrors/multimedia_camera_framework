@@ -241,7 +241,7 @@ void TestVideoOutputCallback::OnError(const int32_t errorCode) const
                    testName_, errorCode);
 }
 
-SurfaceListener::SurfaceListener(const char* testName, SurfaceType type, int32_t &fd, sptr<Surface> surface)
+SurfaceListener::SurfaceListener(const char* testName, SurfaceType type, int32_t &fd, sptr<IConsumerSurface> surface)
     : testName_(testName), surfaceType_(type), fd_(fd), surface_(surface) {
 }
 

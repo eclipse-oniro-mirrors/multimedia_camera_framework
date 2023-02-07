@@ -224,14 +224,14 @@ namespace {
 
 sptr<CaptureOutput> CameraFrameworkModuleTest::CreatePhotoOutput(int32_t width, int32_t height)
 {
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     CameraFormat photoFormat = CAMERA_FORMAT_JPEG;
     Size photoSize;
     photoSize.width = width;
     photoSize.height = height;
     Profile photoProfile = Profile(photoFormat, photoSize);
     sptr<CaptureOutput> photoOutput = nullptr;
-    photoOutput = manager_->CreatePhotoOutput(photoProfile, surface);
+    photoOutput = manager_->CreatePhotoOutput(photoProfile, surface->GetProducer());
     return photoOutput;
 }
 
@@ -243,14 +243,14 @@ sptr<CaptureOutput> CameraFrameworkModuleTest::CreatePhotoOutput()
 
 sptr<CaptureOutput> CameraFrameworkModuleTest::CreatePreviewOutput(int32_t width, int32_t height)
 {
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
     Size previewSize;
     previewSize.width = width;
     previewSize.height = height;
     Profile previewProfile = Profile(previewFormat, previewSize);
     sptr<CaptureOutput> previewOutput = nullptr;
-    previewOutput = manager_->CreatePreviewOutput(previewProfile, surface);
+    previewOutput = manager_->CreatePreviewOutput(previewProfile, surface->GetProducer());
     return previewOutput;
 }
 
@@ -262,7 +262,7 @@ sptr<CaptureOutput> CameraFrameworkModuleTest::CreatePreviewOutput()
 
 sptr<CaptureOutput> CameraFrameworkModuleTest::CreateVideoOutput(int32_t width, int32_t height)
 {
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
     Size videoSize;
     videoSize.width = width;

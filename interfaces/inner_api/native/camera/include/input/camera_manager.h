@@ -180,7 +180,7 @@ public:
     * @param The surface to be used for photo output.
     * @return Returns pointer to photo output instance.
     */
-    sptr<PhotoOutput> CreatePhotoOutput(Profile &profile, sptr<Surface> &surface);
+    sptr<PhotoOutput> CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surface);
 
     /**
     * @brief Create photo output instance using surface.
@@ -189,7 +189,7 @@ public:
     * @param Returns pointer to photo output instance.
     * @return Returns error code.
     */
-    int CreatePhotoOutput(Profile &profile, sptr<Surface> &surface, sptr<PhotoOutput> *pPhotoOutput);
+    int CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surface, sptr<PhotoOutput> *pPhotoOutput);
 
     /**
     * @brief Create photo output instance using surface.
@@ -197,7 +197,7 @@ public:
     * @param The surface to be used for photo output.
     * @return Returns pointer to photo output instance.
     */
-    [[deprecated]] sptr<PhotoOutput> CreatePhotoOutput(sptr<Surface> &surface);
+    [[deprecated]] sptr<PhotoOutput> CreatePhotoOutput(sptr<IBufferProducer> &surface);
 
     /**
     * @brief Create photo output instance using IBufferProducer.

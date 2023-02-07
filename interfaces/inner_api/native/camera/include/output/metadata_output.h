@@ -21,6 +21,7 @@
 #include "istream_metadata.h"
 
 #include "camera_metadata_operator.h"
+#include "iconsumer_surface.h"
 #include "surface.h"
 
 namespace OHOS {
@@ -77,7 +78,7 @@ public:
 
 class MetadataOutput : public CaptureOutput {
 public:
-    MetadataOutput(sptr<Surface> surface, sptr<IStreamMetadata> &streamMetadata);
+    MetadataOutput(sptr<IConsumerSurface> surface, sptr<IStreamMetadata> &streamMetadata);
 
     /**
      * @brief Get the supported metadata object types.
@@ -124,7 +125,7 @@ public:
 
     friend class MetadataObjectListener;
 private:
-    sptr<Surface> surface_;
+    sptr<IConsumerSurface> surface_;
     std::shared_ptr<MetadataObjectCallback> appObjectCallback_;
     std::shared_ptr<MetadataStateCallback> appStateCallback_;
 };

@@ -332,7 +332,7 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    sptr<Surface> previewSurface = Surface::CreateSurfaceAsConsumer();
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
     previewSurface->SetDefaultWidthAndHeight(previewWidth, previewHeight);
     previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewFormat));
     previewsize.width = previewWidth;
@@ -341,7 +341,9 @@ int main(int argc, char **argv)
     sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, previewFd, previewSurface);
     previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)listener);
 
-    sptr<CaptureOutput> previewOutput = camManagerObj->CreatePreviewOutput(previewprofile, previewSurface);
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    sptr<CaptureOutput> previewOutput = camManagerObj->CreatePreviewOutput(previewprofile, pSurface);
     if (previewOutput == nullptr) {
         MEDIA_DEBUG_LOG("Failed to create preview output");
         return 0;
@@ -376,9 +378,11 @@ int main(int argc, char **argv)
         }
         videoSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(videoFormat));
     } else {
-        videoSurface = Surface::CreateSurfaceAsConsumer();
-        sptr<SurfaceListener> videoListener = new SurfaceListener("Video", SurfaceType::VIDEO, g_videoFd, videoSurface);
-        videoSurface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)videoListener);
+        sptr<IConsumerSurface> cSurface = IConsumerSurface::Create();
+        sptr<SurfaceListener> videoListener = new SurfaceListener("Video", SurfaceType::VIDEO, g_videoFd, cSurface);
+        cSurface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)videoListener);
+        sptr<IBufferProducer> videoProducer = cSurface->GetProducer();
+        videoSurface = Surface::CreateSurfaceAsProducer(videoProducer);
     }
     videosize.width = videoWidth;
     videosize.height = videoHeight;
