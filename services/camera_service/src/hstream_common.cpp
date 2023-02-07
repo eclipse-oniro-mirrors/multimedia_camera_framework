@@ -111,7 +111,13 @@ void HStreamCommon::DumpStreamInfo(std::string& dumpString)
     SetStreamInfo(curStreamInfo);
     dumpString += "release status:[" + std::to_string(isReleaseStream_) + "]:\n";
     dumpString += "stream info: \n";
-    dumpString += "    Buffer producer Id:[" + std::to_string(curStreamInfo.bufferQueue_->producer_->GetUniqueId());
+    std::string bufferProducerId = "    Buffer producer Id:[";
+    if (curStreamInfo.bufferQueue_ && curStreamInfo.bufferQueue_->producer_) {
+        bufferProducerId += std::to_string(curStreamInfo.bufferQueue_->producer_->GetUniqueId());
+    } else {
+        bufferProducerId += "empty";
+    }
+    dumpString += bufferProducerId;
     dumpString += "]    stream Id:[" + std::to_string(curStreamInfo.streamId_);
     std::map<int, std::string>::const_iterator iter =
         g_cameraFormat.find(format_);
