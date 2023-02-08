@@ -187,7 +187,8 @@ int main(int argc, char **argv)
     int32_t videoHeight = 360;
     bool isResolutionConfigured = false;
     bool isRecorder = false;
-    Size previewsize, videosize;
+    Size previewsize;
+    Size videosize;
     std::vector<int32_t> videoframerates;
 
     MEDIA_DEBUG_LOG("Camera new sample begin without recorder");
