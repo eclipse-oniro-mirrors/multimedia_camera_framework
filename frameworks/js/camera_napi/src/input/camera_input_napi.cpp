@@ -98,6 +98,9 @@ void CameraInputNapi::CameraInputNapiDestructor(napi_env env, void* nativeObject
     if (cameraObj != nullptr) {
         cameraObj->~CameraInputNapi();
     }
+    if (cameraInput_) {
+        cameraInput_ = nullptr;
+    }
 }
 
 napi_value CameraInputNapi::Init(napi_env env, napi_value exports)

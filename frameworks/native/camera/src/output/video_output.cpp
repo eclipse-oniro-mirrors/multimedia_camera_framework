@@ -134,6 +134,7 @@ int32_t VideoOutput::Release()
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to release VideoOutput!, errCode: %{public}d", errCode);
     }
+    CaptureOutput::Release();
     return ServiceToCameraError(errCode);
 }
 

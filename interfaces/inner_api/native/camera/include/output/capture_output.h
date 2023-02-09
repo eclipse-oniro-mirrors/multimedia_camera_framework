@@ -37,7 +37,11 @@ class CaptureOutput : public RefBase {
 public:
     explicit CaptureOutput(CaptureOutputType OutputType, StreamType streamType,
                            sptr<IStreamCommon> stream);
-    virtual ~CaptureOutput() {}
+    virtual ~CaptureOutput()
+    {
+        stream_ = nullptr;
+        session_ = nullptr;
+    }
 
     /**
      * @brief Releases the instance of CaptureOutput.

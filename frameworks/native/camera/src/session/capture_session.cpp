@@ -137,6 +137,12 @@ CaptureSession::~CaptureSession()
     if (inputDevice_ != nullptr) {
         inputDevice_ = nullptr;
     }
+    if (captureSession_) {
+        captureSession_ = nullptr;
+    }
+    if (captureSessionCallback_) {
+        captureSessionCallback_ = nullptr;
+    }
 }
 
 int32_t CaptureSession::BeginConfig()
@@ -293,6 +299,12 @@ int32_t CaptureSession::Release()
     int32_t errCode = captureSession_->Release(0);
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to Release capture session!, %{public}d", errCode);
+    }
+    if (captureSession_) {
+        captureSession_ = nullptr;
+    }
+    if (captureSessionCallback_) {
+        captureSessionCallback_ = nullptr;
     }
     return ServiceToCameraError(errCode);
 }

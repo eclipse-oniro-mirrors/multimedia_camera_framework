@@ -685,6 +685,7 @@ int32_t HCaptureSession::Release(pid_t pid)
         return CAMERA_OK;
     }
     ReleaseStreams();
+    tempCameraDevices_.clear();
     if (streamOperatorCallback_ != nullptr) {
         streamOperatorCallback_->SetCaptureSession(nullptr);
         streamOperatorCallback_ = nullptr;
@@ -725,6 +726,10 @@ void HCaptureSession::UnregisterPermissionCallback(const uint32_t callingTokenId
     int32_t res = Security::AccessToken::AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr_);
     if (res != CAMERA_OK) {
         MEDIA_ERR_LOG("UnRegisterPermStateChangeCallback failed.");
+    }
+    if (callbackPtr_) {
+        callbackPtr_->SetCaptureSession(nullptr);
+        callbackPtr_ = nullptr;
     }
     MEDIA_DEBUG_LOG("after tokenId:%{public}d unregister", callingTokenId);
 }
@@ -816,6 +821,10 @@ void HCaptureSession::StopUsingPermissionCallback(const uint32_t callingTokenId,
     int32_t res = Security::AccessToken::PrivacyKit::StopUsingPermission(callingTokenId, permissionName);
     if (res != CAMERA_OK) {
         MEDIA_ERR_LOG("StopUsingPermissionCallback failed.");
+    }
+    if (cameraUseCallbackPtr_) {
+        cameraUseCallbackPtr_->SetCaptureSession(nullptr);
+        cameraUseCallbackPtr_ = nullptr;
     }
 }
 

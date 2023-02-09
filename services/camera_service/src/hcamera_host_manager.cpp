@@ -404,8 +404,7 @@ void HCameraHostManager::DeInit()
 void HCameraHostManager::AddCameraDevice(const std::string& cameraId, sptr<ICameraDeviceService> cameraDevice)
 {
     std::lock_guard<std::mutex> lock(deviceMutex_);
-    cameraDevices_.emplace(cameraId, cameraDevice);
-}
+    cameraDevices_[cameraId] = cameraDevice;
 
 void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId)
 {

@@ -102,7 +102,10 @@ int CameraInput::Release()
     if (retCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to release Camera Input, retCode: %{public}d", retCode);
     }
-
+    cameraObj_ = nullptr;
+    deviceObj_ = nullptr;
+    CameraDeviceSvcCallback_ = nullptr;
+    CaptureInput::Release();
     return ServiceToCameraError(retCode);
 }
 

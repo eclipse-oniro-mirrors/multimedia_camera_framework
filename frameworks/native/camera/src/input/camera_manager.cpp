@@ -53,6 +53,18 @@ CameraManager::CameraManager()
     dcameraObjList = {};
 }
 
+CameraManager::~CameraManager()
+{
+    serviceProxy_ = nullptr;
+    listenerStub_ = nullptr;
+    deathRecipient_ = nullptr;
+    cameraSvcCallback_ = nullptr;
+    cameraMuteSvcCallback_ = nullptr;
+    cameraMuteListenerList.clear();
+    cameraObjList.clear();
+    dcameraObjList.clear();
+}
+
 int32_t CameraManager::CreateListenerObject()
 {
     listenerStub_ = new(std::nothrow) CameraListenerStub();

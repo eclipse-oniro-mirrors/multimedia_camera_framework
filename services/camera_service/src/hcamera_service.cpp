@@ -191,7 +191,7 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
     } else {
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice MuteCamera not Supported");
     }
-    devices_.insert(std::make_pair(cameraId, cameraDevice));
+    devices_[cameraId] = cameraDevice;
     pid_t pid = IPCSkeleton::GetCallingPid();
     MEDIA_DEBUG_LOG("HCameraService::CreateCameraDevice Calling pid = %{public}d", pid);
     camerasForPid_[pid].push_back(cameraId);

@@ -138,6 +138,7 @@ int32_t MetadataOutput::Release()
         }
         surface_ = nullptr;
     }
+    CaptureOutput::Release();
     return ServiceToCameraError(errCode);
 }
 

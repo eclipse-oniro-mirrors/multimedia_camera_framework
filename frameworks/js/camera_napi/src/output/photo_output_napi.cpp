@@ -175,6 +175,9 @@ PhotoOutputNapi::~PhotoOutputNapi()
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
+    if (photoOutput_) {
+        photoOutput_ = nullptr;
+    }
 }
 
 void PhotoOutputNapi::PhotoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)

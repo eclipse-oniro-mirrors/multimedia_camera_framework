@@ -139,6 +139,9 @@ VideoOutputNapi::~VideoOutputNapi()
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
+    if (videoOutput_) {
+        videoOutput_ = nullptr;
+    }
 }
 
 void VideoOutputNapi::VideoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)

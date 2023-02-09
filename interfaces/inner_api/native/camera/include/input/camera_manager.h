@@ -88,6 +88,7 @@ public:
 
 class CameraManager : public RefBase {
 public:
+    ~CameraManager();
     /**
     * @brief Get camera manager instance.
     *
