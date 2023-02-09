@@ -405,6 +405,7 @@ void HCameraHostManager::AddCameraDevice(const std::string& cameraId, sptr<ICame
 {
     std::lock_guard<std::mutex> lock(deviceMutex_);
     cameraDevices_[cameraId] = cameraDevice;
+}
 
 void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId)
 {
