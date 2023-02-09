@@ -66,7 +66,8 @@ int main(int argc, char **argv)
     int32_t photoHeight = 960;
     int32_t photoCaptureCount = 1;
     bool isResolutionConfigured = false;
-    Size previewsize, photosize;
+    Size previewsize;
+    Size photosize;
 
     MEDIA_DEBUG_LOG("Camera new(std::nothrow) sample begin.");
     // Update sizes if enough number of valid arguments are passed
