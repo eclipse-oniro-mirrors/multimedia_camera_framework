@@ -306,6 +306,7 @@ int32_t PhotoOutput::Release()
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("PhotoOutput Failed to release!, errCode: %{public}d", errCode);
     }
+    cameraSvcCallback_ = nullptr;
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);
 }

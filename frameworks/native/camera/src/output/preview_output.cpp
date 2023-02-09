@@ -30,6 +30,7 @@ int32_t PreviewOutput::Release()
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to release PreviewOutput!, errCode: %{public}d", errCode);
     }
+    svcCallback_ = nullptr;
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);
 }

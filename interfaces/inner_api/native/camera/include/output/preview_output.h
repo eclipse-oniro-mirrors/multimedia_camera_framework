@@ -90,7 +90,6 @@ public:
 private:
     std::shared_ptr<PreviewStateCallback> appCallback_;
     sptr<IStreamRepeatCallback> svcCallback_;
-    sptr<Surface> surface_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
