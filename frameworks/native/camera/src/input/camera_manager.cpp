@@ -541,26 +541,6 @@ void CameraManager::CameraServerDied(pid_t pid)
     deathRecipient_ = nullptr;
 }
 
-/*
-sptr<ICameraDeviceService> CameraManager::CreateCameraDevice(std::string cameraId)
-{
-    CAMERA_SYNC_TRACE;
-    sptr<ICameraDeviceService> device = nullptr;
-    int32_t retCode = CAMERA_OK;
-
-    if (serviceProxy_ == nullptr || cameraId.empty()) {
-        MEDIA_ERR_LOG("GetCameaDevice() serviceProxy_ is null or CameraID is empty: %{public}s", cameraId.c_str());
-        return nullptr;
-    }
-    retCode = serviceProxy_->CreateCameraDevice(cameraId, device);
-    if (retCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("ret value from CreateCameraDevice, %{public}d", retCode);
-        return nullptr;
-    }
-    return device;
-}
-*/
-
 int CameraManager::CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> *pICameraDeviceService)
 {
     CAMERA_SYNC_TRACE;
