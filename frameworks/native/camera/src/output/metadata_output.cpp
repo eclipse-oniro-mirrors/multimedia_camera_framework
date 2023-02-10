@@ -51,7 +51,8 @@ MetadataOutput::MetadataOutput(sptr<Surface> surface, sptr<IStreamMetadata> &str
     surface_ = surface;
 }
 
-MetadataOutput::~MetadataOutput() {
+MetadataOutput::~MetadataOutput()
+{
     if (surface_) {
         SurfaceError ret = surface_->UnregisterConsumerListener();
         if (ret != SURFACE_ERROR_OK) {

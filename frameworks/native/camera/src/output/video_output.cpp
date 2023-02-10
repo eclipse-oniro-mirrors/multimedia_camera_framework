@@ -26,7 +26,8 @@ VideoOutput::VideoOutput(sptr<IStreamRepeat> &streamRepeat)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_VIDEO, StreamType::REPEAT, streamRepeat) {
 }
 
-VideoOutput::~VideoOutput() {
+VideoOutput::~VideoOutput()
+{
     svcCallback_ = nullptr;
     appCallback_ = nullptr;
 }

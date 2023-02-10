@@ -224,7 +224,8 @@ PhotoOutput::PhotoOutput(sptr<IStreamCapture> &streamCapture)
     defaultCaptureSetting_ = nullptr;
 }
 
-PhotoOutput::~CaptureOutput() {
+PhotoOutput::~CaptureOutput()
+{
     cameraSvcCallback_ = nullptr;
     appCallback_ = nullptr;
     defaultCaptureSetting_ = nullptr;

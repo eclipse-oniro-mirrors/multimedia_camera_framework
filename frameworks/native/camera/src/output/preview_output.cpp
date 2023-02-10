@@ -24,7 +24,8 @@ PreviewOutput::PreviewOutput(sptr<IStreamRepeat> &streamRepeat)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PREVIEW, StreamType::REPEAT, streamRepeat) {
 }
 
-PreviewOutput::~PreviewOutput() {
+PreviewOutput::~PreviewOutput()
+{
     svcCallback_ = nullptr;
     appCallback_ = nullptr;
 }
