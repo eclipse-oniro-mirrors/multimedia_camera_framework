@@ -60,7 +60,6 @@ struct CameraStatusCallbackInfo {
     ~CameraStatusCallbackInfo()
     {
         listener_ = nullptr;
-        info_ = nullptr;
     }
 };
 } // namespace CameraStandard
