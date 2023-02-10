@@ -53,7 +53,6 @@ struct CameraStatusInfo {
     CameraStatus cameraStatus;
     ~CameraStatusInfo()
     {
-        cameraStatus = nullptr;
         cameraInfo = nullptr;
         cameraDevice = nullptr;
     }
