@@ -51,6 +51,18 @@ MetadataOutput::MetadataOutput(sptr<Surface> surface, sptr<IStreamMetadata> &str
     surface_ = surface;
 }
 
+MetadataOutput::~MetadataOutput() {
+    if (surface_) {
+        SurfaceError ret = surface_->UnregisterConsumerListener();
+        if (ret != SURFACE_ERROR_OK) {
+            MEDIA_ERR_LOG("Failed to unregister surface consumer listener");
+        }
+        surface_ = nullptr;
+    }
+    appObjectCallback_ = nullptr;
+    appStateCallback_ = nullptr;
+}
+
 std::vector<MetadataObjectType> MetadataOutput::GetSupportedMetadataObjectTypes()
 {
     CaptureSession* captureSession = GetSession();
@@ -138,6 +150,8 @@ int32_t MetadataOutput::Release()
         }
         surface_ = nullptr;
     }
+    appObjectCallback_ = nullptr;
+    appStateCallback_ = nullptr;
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);
 }

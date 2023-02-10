@@ -224,6 +224,12 @@ PhotoOutput::PhotoOutput(sptr<IStreamCapture> &streamCapture)
     defaultCaptureSetting_ = nullptr;
 }
 
+PhotoOutput::~CaptureOutput() {
+    cameraSvcCallback_ = nullptr;
+    appCallback_ = nullptr;
+    defaultCaptureSetting_ = nullptr;
+}
+
 void PhotoOutput::SetCallback(std::shared_ptr<PhotoStateCallback> callback)
 {
     int32_t errorCode = CAMERA_OK;
@@ -307,6 +313,8 @@ int32_t PhotoOutput::Release()
         MEDIA_ERR_LOG("PhotoOutput Failed to release!, errCode: %{public}d", errCode);
     }
     cameraSvcCallback_ = nullptr;
+    appCallback_ = nullptr;
+    defaultCaptureSetting_ = nullptr;
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);
 }

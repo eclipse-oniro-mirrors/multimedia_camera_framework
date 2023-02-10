@@ -26,6 +26,11 @@ VideoOutput::VideoOutput(sptr<IStreamRepeat> &streamRepeat)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_VIDEO, StreamType::REPEAT, streamRepeat) {
 }
 
+VideoOutput::~VideoOutput() {
+    svcCallback_ = nullptr;
+    appCallback_ = nullptr;
+}
+
 class HStreamRepeatCallbackImpl : public HStreamRepeatCallbackStub {
 public:
     sptr<VideoOutput> videoOutput_ = nullptr;
@@ -135,6 +140,7 @@ int32_t VideoOutput::Release()
         MEDIA_ERR_LOG("Failed to release VideoOutput!, errCode: %{public}d", errCode);
     }
     svcCallback_ = nullptr;
+    appCallback_ = nullptr;
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);
 }

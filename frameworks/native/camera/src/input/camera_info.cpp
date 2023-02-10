@@ -52,6 +52,7 @@ CameraInfo::CameraInfo(std::string cameraID, std::shared_ptr<Camera::CameraMetad
 CameraInfo::~CameraInfo()
 {
     metadata_.reset();
+    metadata_ = nullptr;
 }
 
 void CameraInfo::init(common_metadata_header_t* metadata)

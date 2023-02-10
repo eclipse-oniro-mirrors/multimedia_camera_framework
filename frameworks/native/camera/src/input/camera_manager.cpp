@@ -60,6 +60,7 @@ CameraManager::~CameraManager()
     deathRecipient_ = nullptr;
     cameraSvcCallback_ = nullptr;
     cameraMuteSvcCallback_ = nullptr;
+    cameraMngrCallback_ = nullptr;
     cameraMuteListenerList.clear();
     cameraObjList.clear();
     dcameraObjList.clear();

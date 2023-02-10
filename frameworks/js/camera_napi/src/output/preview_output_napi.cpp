@@ -143,6 +143,9 @@ PreviewOutputNapi::~PreviewOutputNapi()
     if (previewOutput_) {
         previewOutput_ = nullptr;
     }
+    if (previewCallback_) {
+        previewCallback_ = nullptr;
+    }
 }
 
 void PreviewOutputNapi::PreviewOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)

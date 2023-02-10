@@ -51,6 +51,12 @@ struct CameraStatusInfo {
     sptr<CameraInfo> cameraInfo;
     sptr<CameraDevice> cameraDevice;
     CameraStatus cameraStatus;
+    ~CameraStatusInfo()
+    {
+        cameraStatus = nullptr;
+        cameraInfo = nullptr;
+        cameraDevice = nullptr;
+    }
 };
 
 class CameraManagerCallback {

@@ -134,15 +134,13 @@ CaptureSession::CaptureSession(sptr<ICaptureSession> &captureSession)
 
 CaptureSession::~CaptureSession()
 {
-    if (inputDevice_ != nullptr) {
-        inputDevice_ = nullptr;
-    }
-    if (captureSession_) {
-        captureSession_ = nullptr;
-    }
-    if (captureSessionCallback_) {
-        captureSessionCallback_ = nullptr;
-    }
+    inputDevice_ = nullptr;
+    captureSession_ = nullptr;
+    changedMetadata_ = nullptr;
+    appCallback_ = nullptr;
+    captureSessionCallback_ = nullptr;
+    exposureCallback_ = nullptr;
+    focusCallback_ = nullptr;
 }
 
 int32_t CaptureSession::BeginConfig()
@@ -300,12 +298,13 @@ int32_t CaptureSession::Release()
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to Release capture session!, %{public}d", errCode);
     }
-    if (captureSession_) {
-        captureSession_ = nullptr;
-    }
-    if (captureSessionCallback_) {
-        captureSessionCallback_ = nullptr;
-    }
+    inputDevice_ = nullptr;
+    captureSession_ = nullptr;
+    captureSessionCallback_ = nullptr;
+    changedMetadata_ = nullptr;
+    appCallback_ = nullptr;
+    exposureCallback_ = nullptr;
+    focusCallback_ = nullptr;
     return ServiceToCameraError(errCode);
 }
 

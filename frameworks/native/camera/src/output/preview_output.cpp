@@ -24,6 +24,11 @@ PreviewOutput::PreviewOutput(sptr<IStreamRepeat> &streamRepeat)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PREVIEW, StreamType::REPEAT, streamRepeat) {
 }
 
+PreviewOutput::~PreviewOutput() {
+    svcCallback_ = nullptr;
+    appCallback_ = nullptr;
+}
+
 int32_t PreviewOutput::Release()
 {
     int32_t errCode = static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Release();
@@ -31,6 +36,7 @@ int32_t PreviewOutput::Release()
         MEDIA_ERR_LOG("Failed to release PreviewOutput!, errCode: %{public}d", errCode);
     }
     svcCallback_ = nullptr;
+    appCallback_ = nullptr;
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);
 }

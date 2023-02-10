@@ -118,6 +118,10 @@ struct CameraInputAsyncContext :public AsyncContext {
     std::string cameraId;
     std::string enumType;
     std::vector<CameraFormat> vecList;
+    ~CameraInputAsyncContext()
+    {
+        objectInfo = nullptr;
+    }
 };
 } // namespace CameraStandard
 } // namespace OHOS

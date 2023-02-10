@@ -178,6 +178,9 @@ PhotoOutputNapi::~PhotoOutputNapi()
     if (photoOutput_) {
         photoOutput_ = nullptr;
     }
+    if (photoCallback_) {
+        photoCallback_ = nullptr;
+    }
 }
 
 void PhotoOutputNapi::PhotoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)

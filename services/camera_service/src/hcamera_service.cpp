@@ -75,6 +75,9 @@ void HCameraService::OnStop()
         delete cameraHostManager_;
         cameraHostManager_ = nullptr;
     }
+    if (streamOperatorCallback_) {
+        streamOperatorCallback_ = nullptr;
+    }
 }
 
 int32_t CheckPermission(std::string permissionName, OHOS::Security::AccessToken::AccessTokenID callerToken)

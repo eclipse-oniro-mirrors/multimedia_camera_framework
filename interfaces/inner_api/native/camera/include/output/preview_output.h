@@ -50,6 +50,7 @@ public:
 class PreviewOutput : public CaptureOutput {
 public:
     explicit PreviewOutput(sptr<IStreamRepeat> &streamRepeat);
+    virtual ~PreviewOutput();
 
     /**
      * @brief Set the preview callback for the preview output.
