@@ -352,9 +352,9 @@ napi_value GetPointNapiValue(napi_env env, Point &point)
     napi_value result;
     napi_value propValue;
     napi_create_object(env, &result);
-    napi_create_double(env, point.x, &propValue);
+    napi_create_double(env, CameraNapiUtils::FloatToDouble(point.x), &propValue);
     napi_set_named_property(env, result, "x", propValue);
-    napi_create_double(env, point.y, &propValue);
+    napi_create_double(env, CameraNapiUtils::FloatToDouble(point.y), &propValue);
     napi_set_named_property(env, result, "y", propValue);
     return result;
 }
@@ -1425,7 +1425,7 @@ napi_value CameraSessionNapi::GetFocalLength(napi_env env, napi_callback_info in
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
         }
-        napi_create_double(env, focalLength, &result);
+        napi_create_double(env, CameraNapiUtils::FloatToDouble(focalLength), &result);
     }
 
     return result;
@@ -1567,7 +1567,7 @@ napi_value CameraSessionNapi::GetZoomRatioRange(napi_env env, napi_callback_info
             for (size_t i = 0; i < vecZoomRatioList.size(); i++) {
                 float zoomRatio = vecZoomRatioList[i];
                 napi_value value;
-                napi_create_double(env, zoomRatio, &value);
+                napi_create_double(env, CameraNapiUtils::FloatToDouble(zoomRatio), &value);
                 napi_set_element(env, result, i, value);
             }
         } else {
@@ -1597,7 +1597,7 @@ napi_value CameraSessionNapi::GetZoomRatio(napi_env env, napi_callback_info info
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
         }
-        napi_create_double(env, zoomRatio, &result);
+        napi_create_double(env, CameraNapiUtils::FloatToDouble(zoomRatio), &result);
     }
 
     return result;
