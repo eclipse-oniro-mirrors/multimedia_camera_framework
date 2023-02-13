@@ -673,6 +673,14 @@ public:
         }
         return true;
     }
+
+    static double FloatToDouble(float val)
+    {
+        const double precision = 1000000.0;
+        val *= precision;
+        double result = (double)val / precision;
+        return result;
+    }
 };
 } // namespace CameraStandard
 } // namespace OHOS
