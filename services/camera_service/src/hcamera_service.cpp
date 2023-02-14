@@ -203,6 +203,7 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
 int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession> &session)
 {
     CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(mutex_);
     sptr<HCaptureSession> captureSession;
     if (streamOperatorCallback_ == nullptr) {
         streamOperatorCallback_ = new(std::nothrow) StreamOperatorCallback();
@@ -212,7 +213,6 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession> &session)
         }
     }
 
-    std::lock_guard<std::mutex> lock(mutex_);
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
     captureSession = new(std::nothrow) HCaptureSession(cameraHostManager_, streamOperatorCallback_, callerToken);
     if (captureSession == nullptr) {
