@@ -97,6 +97,12 @@ HCameraHostManager::CameraHostInfo::CameraHostInfo(HCameraHostManager* cameraHos
 HCameraHostManager::CameraHostInfo::~CameraHostInfo()
 {
     MEDIA_INFO_LOG("CameraHostInfo ~CameraHostInfo");
+    cameraHostManager_ = nullptr;
+    cameraHostProxy_ = nullptr;
+    for (unsigned i = 0; i < devices_.size(); i++) {
+        devices_[i] = nullptr;
+    }
+    devices_.clear();
 }
 
 bool HCameraHostManager::CameraHostInfo::Init()
@@ -369,6 +375,8 @@ HCameraHostManager::HCameraHostManager(StatusCallback* statusCallback)
 HCameraHostManager::~HCameraHostManager()
 {
     statusCallback_ = nullptr;
+    cameraDevices_.clear();
+    cameraHostInfos_.clear();
 }
 
 int32_t HCameraHostManager::Init()
@@ -563,6 +571,7 @@ void HCameraHostManager::RemoveCameraHost(const std::string& svcName)
             CloseCameraDevice(cameraId);
         }
     }
+    *it = nullptr;
     cameraHostInfos_.erase(it);
 }
 

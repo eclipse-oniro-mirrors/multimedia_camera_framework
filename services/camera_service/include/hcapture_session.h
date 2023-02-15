@@ -105,7 +105,6 @@ private:
     std::vector<sptr<HStreamCommon>> captureStreams_;
     std::vector<sptr<HStreamCommon>> metadataStreams_;
     std::vector<sptr<HStreamCommon>> streams_;
-    std::vector<sptr<HCameraDevice>> cameraDevices_;
     std::vector<sptr<HStreamCommon>> tempStreams_;
     std::vector<sptr<HCameraDevice>> tempCameraDevices_;
     std::vector<int32_t> deletedStreamIds_;

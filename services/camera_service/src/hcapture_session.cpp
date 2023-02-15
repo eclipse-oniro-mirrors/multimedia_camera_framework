@@ -699,7 +699,11 @@ int32_t HCaptureSession::Release(pid_t pid)
         StopUsingPermissionCallback(callerToken_, ACCESS_CAMERA);
         UnregisterPermissionCallback(callerToken_);
     }
+    tempStreams_.clear();
+    sessionState_.clear();
     ClearCaptureSession(pid);
+    sessionCallback_ = nullptr;
+    cameraHostManager_ = nullptr;
     return CAMERA_OK;
 }
 
