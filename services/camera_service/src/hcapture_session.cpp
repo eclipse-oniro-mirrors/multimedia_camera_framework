@@ -858,7 +858,7 @@ sptr<HStreamCommon> StreamOperatorCallback::GetStreamByStreamID(int32_t streamId
     if (captureSession_ != nullptr) {
         for (auto item = captureSession_->streams_.begin(); item != captureSession_->streams_.end(); ++item) {
             curStream = *item;
-            if (curStream->GetStreamId() == streamId) {
+            if (curStream && curStream->GetStreamId() == streamId) {
                 result = curStream;
                 break;
             }
