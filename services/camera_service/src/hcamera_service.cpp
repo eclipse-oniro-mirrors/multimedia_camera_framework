@@ -402,25 +402,6 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
     return CAMERA_OK;
 }
 
-int32_t HCameraService::UnSetMuteCallback(pid_t pid)
-{
-    std::lock_guard<std::mutex> lock(muteCbMutex_);
-    MEDIA_INFO_LOG("HCameraService::UnSetMuteCallback pid = %{public}d, size = %{public}zu",
-                   pid, cameraMuteServiceCallbacks_.size());
-    if (!cameraMuteServiceCallbacks_.empty()) {
-        MEDIA_INFO_LOG("HCameraDevice::UnSetMuteCallback cameraMuteServiceCallbacks_ is not empty, reset it");
-        auto it = cameraMuteServiceCallbacks_.find(pid);
-        if ((it != cameraMuteServiceCallbacks_.end()) && (it->second)) {
-            it->second = nullptr;
-            cameraMuteServiceCallbacks_.erase(it);
-        }
-    }
-
-    MEDIA_INFO_LOG("HCameraService::UnSetMuteCallback after erase pid = %{public}d, size = %{public}zu",
-                   pid, cameraMuteServiceCallbacks_.size());
-    return CAMERA_OK;
-}
-
 int32_t HCameraService::UnSetCallback(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(cbMutex_);
