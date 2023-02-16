@@ -45,7 +45,7 @@ Rect MetadataObject::GetBoundingBox()
     return box_;
 }
 
-MetadataOutput::MetadataOutput(sptr<Surface> surface, sptr<IStreamMetadata> &streamMetadata)
+MetadataOutput::MetadataOutput(sptr<IConsumerSurface> surface, sptr<IStreamMetadata> &streamMetadata)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_METADATA, StreamType::METADATA, streamMetadata)
 {
     surface_ = surface;
@@ -205,7 +205,7 @@ void MetadataObjectListener::OnBufferAvailable()
         MEDIA_ERR_LOG("Metadata is null");
         return;
     }
-    sptr<Surface> surface = metadata_->surface_;
+    sptr<IConsumerSurface> surface = metadata_->surface_;
     if (!surface) {
         MEDIA_ERR_LOG("Metadata surface is null");
         return;

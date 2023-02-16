@@ -203,7 +203,7 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    sptr<Surface> photoSurface = Surface::CreateSurfaceAsConsumer();
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     if (photoSurface == nullptr) {
         return 0;
     }
@@ -213,7 +213,8 @@ int main(int argc, char **argv)
     sptr<SurfaceListener> captureListener = new(std::nothrow) SurfaceListener("Photo", SurfaceType::PHOTO,
                                                                               photoFd, photoSurface);
     photoSurface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)captureListener);
-    sptr<CaptureOutput> photoOutput = camManagerObj->CreatePhotoOutput(photoprofile, photoSurface);
+    sptr<IBufferProducer> bp = photoSurface->GetProducer();
+    sptr<CaptureOutput> photoOutput = camManagerObj->CreatePhotoOutput(photoprofile, bp);
     if (photoOutput == nullptr) {
         return 0;
     }
@@ -225,7 +226,7 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    sptr<Surface> previewSurface = Surface::CreateSurfaceAsConsumer();
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
     if (previewSurface == nullptr) {
         return 0;
     }
@@ -235,7 +236,9 @@ int main(int argc, char **argv)
     sptr<SurfaceListener> listener = new(std::nothrow) SurfaceListener("Preview", SurfaceType::PREVIEW,
                                                                        previewFd, previewSurface);
     previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)listener);
-    sptr<CaptureOutput> previewOutput = camManagerObj->CreatePreviewOutput(previewprofile, previewSurface);
+    sptr<IBufferProducer> previewProducer = previewSurface->GetProducer();
+    sptr<Surface> previewProducerSurface = Surface::CreateSurfaceAsProducer(previewProducer);
+    sptr<CaptureOutput> previewOutput = camManagerObj->CreatePreviewOutput(previewprofile, previewProducerSurface);
     if (previewOutput == nullptr) {
         return 0;
     }

@@ -448,7 +448,7 @@ int32_t CameraCaptureVideo::InitPreviewOutput()
     }
 
     if (previewOutput_ == nullptr) {
-        previewSurface_ = Surface::CreateSurfaceAsConsumer();
+        previewSurface_ = IConsumerSurface::Create();
         if (previewSurface_ ==  nullptr) {
             MEDIA_ERR_LOG("previewSurface_ is null");
             return result;
@@ -461,7 +461,9 @@ int32_t CameraCaptureVideo::InitPreviewOutput()
         previewSurfaceListener_ = new(std::nothrow) SurfaceListener(testName_, SurfaceType::PREVIEW,
                                                                     fd_, previewSurface_);
         previewSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)previewSurfaceListener_);
-        previewOutput_ = cameraManager_->CreatePreviewOutput(previewprofile_, previewSurface_);
+        sptr<IBufferProducer> bp = previewSurface_->GetProducer();
+        sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+        previewOutput_ = cameraManager_->CreatePreviewOutput(previewprofile_, pSurface);
         if (previewOutput_ == nullptr) {
             MEDIA_ERR_LOG("Failed to create previewOutput");
             return result;
@@ -484,7 +486,7 @@ int32_t CameraCaptureVideo::InitSecondPreviewOutput()
     }
 
     if (secondPreviewOutput_ == nullptr) {
-        secondPreviewSurface_ = Surface::CreateSurfaceAsConsumer();
+        secondPreviewSurface_ = IConsumerSurface::Create();
         if (secondPreviewSurface_ == nullptr) {
             MEDIA_ERR_LOG("secondPreviewSurface_ is null");
             return result;
@@ -496,7 +498,9 @@ int32_t CameraCaptureVideo::InitSecondPreviewOutput()
             SurfaceType::SECOND_PREVIEW, fd_, secondPreviewSurface_);
         secondPreviewSurface_->RegisterConsumerListener(
             (sptr<IBufferConsumerListener> &)secondPreviewSurfaceListener_);
-        secondPreviewOutput_ = cameraManager_->CreatePreviewOutput(previewprofile2_, secondPreviewSurface_);
+        sptr<IBufferProducer> bp = secondPreviewSurface_->GetProducer();
+        sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+        secondPreviewOutput_ = cameraManager_->CreatePreviewOutput(previewprofile2_, pSurface);
         if (secondPreviewSurfaceListener_ ==  nullptr) {
             MEDIA_ERR_LOG("Failed to create new SurfaceListener");
             return result;
@@ -522,7 +526,7 @@ int32_t CameraCaptureVideo::InitPhotoOutput()
     }
 
     if (photoOutput_ == nullptr) {
-        photoSurface_ = Surface::CreateSurfaceAsConsumer();
+        photoSurface_ = IConsumerSurface::Create();
         if (photoSurface_ == nullptr) {
             MEDIA_ERR_LOG("photoSurface_ is null");
             return result;
@@ -536,7 +540,8 @@ int32_t CameraCaptureVideo::InitPhotoOutput()
             return result;
         }
         photoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)photoSurfaceListener_);
-        photoOutput_ = cameraManager_->CreatePhotoOutput(photoprofile_, photoSurface_);
+        sptr<IBufferProducer> bp = photoSurface_->GetProducer();
+        photoOutput_ = cameraManager_->CreatePhotoOutput(photoprofile_, bp);
         if (photoOutput_ == nullptr) {
             MEDIA_ERR_LOG("Failed to create PhotoOutput");
             return result;
@@ -559,7 +564,7 @@ int32_t CameraCaptureVideo::InitVideoOutput()
     }
 
     if (videoOutput_ == nullptr) {
-        videoSurface_ = Surface::CreateSurfaceAsConsumer();
+        videoSurface_ = IConsumerSurface::Create();
         if (videoSurface_ == nullptr) {
             MEDIA_ERR_LOG("videoSurface_ is null");
             return result;
@@ -574,7 +579,9 @@ int32_t CameraCaptureVideo::InitVideoOutput()
             return result;
         }
         videoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)videoSurfaceListener_);
-        videoOutput_ = cameraManager_->CreateVideoOutput(videoprofile_, videoSurface_);
+        sptr<IBufferProducer> bp = videoSurface_->GetProducer();
+        sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+        videoOutput_ = cameraManager_->CreateVideoOutput(videoprofile_, pSurface);
         if (videoOutput_ == nullptr) {
             MEDIA_ERR_LOG("Failed to create VideoOutput");
             return result;

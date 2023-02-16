@@ -17,7 +17,7 @@
 
 #include "camera_util.h"
 #include "camera_log.h"
-#include "surface.h"
+#include "iconsumer_surface.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
 #include "bundle_mgr_interface.h"
@@ -201,7 +201,7 @@ int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> st
         return rc;
     }
     // Temp hack to fix the library linking issue
-    sptr<Surface> captureSurface = Surface::CreateSurfaceAsConsumer();
+    sptr<IConsumerSurface> captureSurface = IConsumerSurface::Create();
 
     if (streamType == StreamType::CAPTURE) {
         rc = AddOutputStream(static_cast<HStreamCapture *>(stream.GetRefPtr()));
