@@ -85,14 +85,12 @@ napi_value CameraProfileNapi::CameraProfileNapiConstructor(napi_env env, napi_ca
         obj->cameraProfile_ = sCameraProfile_;
         MEDIA_INFO_LOG("CameraProfileNapi::CameraProfileNapiConstructor "
             "size.width = %{public}d, size.height = %{public}d, "
-            "format = %{public}d, obj->cameraProfile_ = %{public}p",
+            "format = %{public}d",
             obj->cameraProfile_->GetSize().width,
             obj->cameraProfile_->GetSize().height,
-            obj->cameraProfile_->format_,
-            obj->cameraProfile_);
+            obj->cameraProfile_->format_);
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
                            CameraProfileNapi::CameraProfileNapiDestructor, nullptr, &(obj->wrapper_));
-        MEDIA_INFO_LOG("GetCameraProfileSize cameraProfileSize thisVar = %{public}p", &thisVar);
         if (status == napi_ok) {
             obj.release();
             return thisVar;
@@ -122,7 +120,7 @@ napi_value CameraProfileNapi::CreateCameraProfile(napi_env env, Profile &profile
             sCameraProfile_->GetSize().width, sCameraProfile_->GetSize().height, sCameraProfile_->format_);
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         if (status == napi_ok && result != nullptr) {
-            MEDIA_INFO_LOG("GetCameraProfileSize CreateCameraProfile napi_new_instance = %{public}p", &result);
+            MEDIA_INFO_LOG("GetCameraProfileSize CreateCameraProfile napi_new_instance success");
             return result;
         } else {
             MEDIA_ERR_LOG("Failed to create Camera obj instance");
@@ -145,7 +143,7 @@ napi_value CameraProfileNapi::GetCameraProfileSize(napi_env env, napi_callback_i
     napi_get_undefined(env, &undefinedResult);
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
 
-    MEDIA_INFO_LOG("GetCameraProfileSize cameraProfileSize thisVar = %{public}p", &thisVar);
+    MEDIA_INFO_LOG("GetCameraProfileSize cameraProfileSize thisVar");
     if (status != napi_ok || thisVar == nullptr) {
         MEDIA_ERR_LOG("Invalid arguments!");
         return undefinedResult;
@@ -156,8 +154,8 @@ napi_value CameraProfileNapi::GetCameraProfileSize(napi_env env, napi_callback_i
         cameraProfileSize.height = obj->cameraProfile_->GetSize().height;
         cameraProfileSize.width = obj->cameraProfile_->GetSize().width;
         MEDIA_INFO_LOG("GetCameraProfileSize cameraProfileSize "
-            "size.width = %{public}d, size.height = %{public}d, obj = %{public}p, obj->cameraProfile_ = %{public}p",
-            cameraProfileSize.width, cameraProfileSize.height, obj, obj->cameraProfile_);
+            "size.width = %{public}d, size.height = %{public}d",
+            cameraProfileSize.width, cameraProfileSize.height);
         jsResult = CameraSizeNapi::CreateCameraSize(env, cameraProfileSize);
         return jsResult;
     }
@@ -176,7 +174,7 @@ napi_value CameraProfileNapi::GetCameraProfileFormat(napi_env env, napi_callback
 
     napi_get_undefined(env, &undefinedResult);
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
-    MEDIA_INFO_LOG("GetCameraProfileSize cameraProfileSize thisVar = %{public}p", &thisVar);
+    MEDIA_INFO_LOG("GetCameraProfileSize cameraProfileSize thisVar");
     if (status != napi_ok || thisVar == nullptr) {
         MEDIA_ERR_LOG("Invalid arguments!");
         return undefinedResult;
@@ -186,11 +184,10 @@ napi_value CameraProfileNapi::GetCameraProfileFormat(napi_env env, napi_callback
     if ((status == napi_ok) && (obj != nullptr)) {
         cameraProfileFormat = obj->cameraProfile_->GetCameraFormat();
         MEDIA_INFO_LOG("GetCameraProfileFormat cameraProfileSize "
-            "size.width = %{public}d, size.height = %{public}d, format = %{public}d, obj->cameraProfile_ = %{public}p",
+            "size.width = %{public}d, size.height = %{public}d, format = %{public}d",
             obj->cameraProfile_->size_.width,
             obj->cameraProfile_->size_.height,
-            static_cast<int>(cameraProfileFormat),
-            obj->cameraProfile_);
+            static_cast<int>(cameraProfileFormat));
         status = napi_create_int32(env, static_cast<int>(cameraProfileFormat), &jsResult);
         if (status == napi_ok) {
             return jsResult;
