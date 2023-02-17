@@ -55,7 +55,7 @@ public:
 
     int32_t OnResult(const uint64_t timestamp, const std::shared_ptr<Camera::CameraMetadata> &result) override
     {
-        MEDIA_INFO_LOG("CameraDeviceServiceCallback::OnResult() is called!, cameraId: %{public}s, timestamp: %{public}"
+        MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::OnResult() is called!, cameraId: %{public}s, timestamp: %{public}"
                        PRIu64, camInput_->GetCameraDeviceInfo()->GetID().c_str(), timestamp);
 
         camInput_->ProcessDeviceCallbackUpdates(result);

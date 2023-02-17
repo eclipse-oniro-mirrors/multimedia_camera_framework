@@ -1240,10 +1240,10 @@ void CaptureSession::ProcessAutoFocusUpdates(const std::shared_ptr<Camera::Camer
     common_metadata_header_t* metadata = result->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_MODE, &item);
     if (ret != CAM_META_SUCCESS) {
-        MEDIA_INFO_LOG("Camera not support Focus mode");
+        MEDIA_DEBUG_LOG("Camera not support Focus mode");
         return;
     }
-    MEDIA_INFO_LOG("Focus mode: %{public}d", item.data.u8[0]);
+    MEDIA_DEBUG_LOG("Focus mode: %{public}d", item.data.u8[0]);
     auto it = metaToFwFocusMode_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[0]));
     // continuous focus mode do not callback focusStateChange
     if (it == metaToFwFocusMode_.end() || it->second != FOCUS_MODE_AUTO) {
@@ -1251,7 +1251,7 @@ void CaptureSession::ProcessAutoFocusUpdates(const std::shared_ptr<Camera::Camer
     }
     ret = Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_STATE, &item);
     if (ret == CAM_META_SUCCESS) {
-        MEDIA_INFO_LOG("Focus state: %{public}d", item.data.u8[0]);
+        MEDIA_DEBUG_LOG("Focus state: %{public}d", item.data.u8[0]);
         if (focusCallback_ != nullptr) {
             auto itr = metaToFwFocusState_.find(static_cast<camera_focus_state_t>(item.data.u8[0]));
             if (itr != metaToFwFocusState_.end() && itr->second != focusCallback_->currentState) {
