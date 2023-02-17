@@ -560,10 +560,6 @@ public:
             napi_value result[ARGS_TWO];
             result[PARAM0] = asyncContext.error;
             result[PARAM1] = asyncContext.data;
-
-            MEDIA_INFO_LOG("%{public}s, InvokeJSAsyncMethod asyncContext.error = %{public}p, "
-                "asyncContext.data = %{public}p, result = %{public}p",
-                funcName.c_str(), &asyncContext.error, &asyncContext.data, result);
             napi_get_reference_value(env, callbackRef, &callback);
             MEDIA_INFO_LOG("%{public}s, InvokeJSAsyncMethod napi_call_function start", funcName.c_str());
             napi_call_function(env, nullptr, callback, ARGS_TWO, result, &retVal);

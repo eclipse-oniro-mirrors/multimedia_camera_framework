@@ -86,8 +86,8 @@ napi_value CameraSizeNapi::CameraSizeNapiConstructor(napi_env env, napi_callback
         obj->env_ = env;
         obj->cameraPicSize_= sCameraPicSize_;
         MEDIA_INFO_LOG("CameraSizeNapiConstructor "
-            "size.width = %{public}d, size.height = %{public}d, obj->cameraPicSize_ = %{public}p",
-            obj->cameraPicSize_->width, obj->cameraPicSize_->height, obj->cameraPicSize_);
+            "size.width = %{public}d, size.height = %{public}d",
+            obj->cameraPicSize_->width, obj->cameraPicSize_->height);
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
                            CameraSizeNapi::CameraSizeNapiDestructor, nullptr, &(obj->wrapper_));
         if (status == napi_ok) {
@@ -150,8 +150,8 @@ napi_value CameraSizeNapi::GetCameraSizeWidth(napi_env env, napi_callback_info i
     if ((status == napi_ok) && (obj != nullptr)) {
         cameraSizeWidth = obj->cameraPicSize_->width;
         MEDIA_INFO_LOG("CreateCameraSize GetCameraSizeWidth "
-            "size.width = %{public}d, size.height = %{public}d, obj->cameraPicSize_ = %{public}p",
-            obj->cameraPicSize_->width, obj->cameraPicSize_->height, obj->cameraPicSize_);
+            "size.width = %{public}d, size.height = %{public}d",
+            obj->cameraPicSize_->width, obj->cameraPicSize_->height);
         status = napi_create_uint32(env, cameraSizeWidth, &jsResult);
         if (status == napi_ok) {
             return jsResult;
