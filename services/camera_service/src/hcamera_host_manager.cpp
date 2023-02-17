@@ -375,7 +375,16 @@ HCameraHostManager::HCameraHostManager(StatusCallback* statusCallback)
 HCameraHostManager::~HCameraHostManager()
 {
     statusCallback_ = nullptr;
+    for (auto it = cameraDevices_.begin(); it != cameraDevices_.end(); it++) {
+        if (it->second) {
+            it->second = nullptr;
+        }
+    }
     cameraDevices_.clear();
+
+    for (unsigned i = 0; i < cameraHostInfos_.size(); i++) {
+        cameraHostInfos_[i] = nullptr;
+    }
     cameraHostInfos_.clear();
 }
 
@@ -418,6 +427,11 @@ void HCameraHostManager::AddCameraDevice(const std::string& cameraId, sptr<ICame
 void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId)
 {
     std::lock_guard<std::mutex> lock(deviceMutex_);
+    std::map<std::string, sptr<ICameraDeviceService>>::iterator it;
+    it = cameraDevices_.find(cameraId);
+    if (it != cameraDevices_.end()) {
+        it->second = nullptr;
+    }
     cameraDevices_.erase(cameraId);
 }
 

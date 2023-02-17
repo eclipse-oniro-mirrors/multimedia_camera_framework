@@ -393,6 +393,7 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
                 MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory pid = %{public}d,Camera:[%{public}s] need close",
                                pid, it.first.c_str());
                 it.second->Close();
+                it.second = nullptr;
             }
         }
     }
