@@ -427,8 +427,7 @@ void HCameraHostManager::AddCameraDevice(const std::string& cameraId, sptr<ICame
 void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId)
 {
     std::lock_guard<std::mutex> lock(deviceMutex_);
-    std::map<std::string, sptr<ICameraDeviceService>>::iterator it;
-    it = cameraDevices_.find(cameraId);
+    auto it = cameraDevices_.find(cameraId);
     if (it != cameraDevices_.end()) {
         it->second = nullptr;
     }
