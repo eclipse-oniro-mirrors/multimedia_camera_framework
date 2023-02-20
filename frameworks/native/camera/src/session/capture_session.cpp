@@ -327,7 +327,7 @@ int32_t CaptureSession::Stop()
         }
     } else {
         MEDIA_ERR_LOG("CaptureSession::Stop() captureSession_ is nullptr");
-    } 
+    }
     return ServiceToCameraError(errCode);
 }
 
