@@ -233,8 +233,6 @@ PhotoOutput::~PhotoOutput()
 
 void PhotoOutput::SetCallback(std::shared_ptr<PhotoStateCallback> callback)
 {
-    int32_t errorCode = CAMERA_OK;
-
     appCallback_ = callback;
     if (appCallback_ != nullptr) {
         if (cameraSvcCallback_ == nullptr) {
@@ -245,7 +243,13 @@ void PhotoOutput::SetCallback(std::shared_ptr<PhotoStateCallback> callback)
                 return;
             }
         }
-        errorCode = static_cast<IStreamCapture *>(GetStream().GetRefPtr())->SetCallback(cameraSvcCallback_);
+        auto itemStream = static_cast<IStreamCapture *>(GetStream().GetRefPtr());
+        int32_t errorCode = CAMERA_OK;
+        if (itemStream) {
+            errorCode = itemStream->SetCallback(cameraSvcCallback_);
+        } else {
+            MEDIA_ERR_LOG("PhotoOutput::SetCallback() itemStream is nullptr");
+        }
         if (errorCode != CAMERA_OK) {
             MEDIA_ERR_LOG("PhotoOutput::SetCallback: Failed to register callback, errorCode: %{public}d", errorCode);
             cameraSvcCallback_ = nullptr;
@@ -267,8 +271,13 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
         return CameraErrorCode::SESSION_NOT_RUNNING;
     }
     defaultCaptureSetting_ = photoCaptureSettings;
-    int32_t errCode = static_cast<IStreamCapture *>(GetStream().GetRefPtr())->Capture(
-        photoCaptureSettings->GetCaptureMetadataSetting());
+    auto itemStream = static_cast<IStreamCapture *>(GetStream().GetRefPtr());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (itemStream) {
+        errCode = itemStream->Capture(photoCaptureSettings->GetCaptureMetadataSetting());
+    } else {
+        MEDIA_ERR_LOG("PhotoOutput::Capture() itemStream is nullptr");
+    }
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, errCode: %{public}d", errCode);
     }
@@ -286,7 +295,13 @@ int32_t PhotoOutput::Capture()
     int32_t dataLength = 0;
     std::shared_ptr<Camera::CameraMetadata> captureMetadataSetting =
         std::make_shared<Camera::CameraMetadata>(items, dataLength);
-    int32_t errCode = static_cast<IStreamCapture *>(GetStream().GetRefPtr())->Capture(captureMetadataSetting);
+    auto itemStream = static_cast<IStreamCapture *>(GetStream().GetRefPtr());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (itemStream) {
+        errCode = itemStream->Capture(captureMetadataSetting);
+    } else {
+        MEDIA_ERR_LOG("PhotoOutput::Capture() itemStream is nullptr");
+    }
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, errCode: %{public}d", errCode);
     }
@@ -300,7 +315,13 @@ int32_t PhotoOutput::CancelCapture()
         MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, session not runing");
         return CameraErrorCode::SESSION_NOT_RUNNING;
     }
-    int32_t errCode = static_cast<IStreamCapture *>(GetStream().GetRefPtr())->CancelCapture();
+    auto itemStream = static_cast<IStreamCapture *>(GetStream().GetRefPtr());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (itemStream) {
+        errCode = itemStream->CancelCapture();
+    } else {
+        MEDIA_ERR_LOG("PhotoOutput::CancelCapture() itemStream is nullptr");
+    }
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("PhotoOutput Failed to CancelCapture!, errCode: %{public}d", errCode);
     }
@@ -309,7 +330,13 @@ int32_t PhotoOutput::CancelCapture()
 
 int32_t PhotoOutput::Release()
 {
-    int32_t errCode = static_cast<IStreamCapture *>(GetStream().GetRefPtr())->Release();
+    auto itemStream = static_cast<IStreamCapture *>(GetStream().GetRefPtr());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (itemStream) {
+        errCode = itemStream->Release();
+    } else {
+        MEDIA_ERR_LOG("PhotoOutput::Release() itemStream is nullptr");
+    }
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("PhotoOutput Failed to release!, errCode: %{public}d", errCode);
     }

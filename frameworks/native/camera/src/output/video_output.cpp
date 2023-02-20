@@ -92,7 +92,13 @@ void VideoOutput::SetCallback(std::shared_ptr<VideoStateCallback> callback)
             }
         }
         int32_t errorCode = CAMERA_OK;
-        errorCode = static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->SetCallback(svcCallback_);
+        auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
+        if (itemStream) {
+            errorCode = itemStream->SetCallback(svcCallback_);
+        } else {
+            MEDIA_ERR_LOG("VideoOutput::SetCallback itemStream is nullptr");
+        }
+        
         if (errorCode != CAMERA_OK) {
             MEDIA_ERR_LOG("VideoOutput::SetCallback: Failed to register callback, errorCode: %{public}d", errorCode);
             svcCallback_ = nullptr;
@@ -108,35 +114,67 @@ int32_t VideoOutput::Start()
         MEDIA_ERR_LOG("VideoOutput Failed to Start!, session not config");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    int32_t errCode = static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Start();
-    if (errCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("VideoOutput Failed to Start!, errCode: %{public}d", errCode);
+    auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (itemStream) {
+        errCode = itemStream->Start();
+        if (errCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("VideoOutput Failed to Start!, errCode: %{public}d", errCode);
+        }
+    } else {
+        MEDIA_ERR_LOG("VideoOutput::Start() itemStream is nullptr");
     }
     return ServiceToCameraError(errCode);
 }
 
 int32_t VideoOutput::Stop()
 {
-    int32_t errCode = static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Stop();
-    if (errCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("VideoOutput Failed to Stop!, errCode: %{public}d", errCode);
+    auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (itemStream) {
+        errCode = itemStream->Stop();
+        if (errCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("VideoOutput Failed to Stop!, errCode: %{public}d", errCode);
+        }
+    } else {
+        MEDIA_ERR_LOG("VideoOutput::Stop() itemStream is nullptr");
     }
     return ServiceToCameraError(errCode);
 }
 
 int32_t VideoOutput::Resume()
 {
-    return static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Start();
+    auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (itemStream) {
+        errCode = itemStream->Start();
+    } else {
+        MEDIA_ERR_LOG("VideoOutput::Resume() itemStream is nullptr");
+    }
+    return ServiceToCameraError(errCode);
 }
 
 int32_t VideoOutput::Pause()
 {
-    return static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Stop();
+    auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (itemStream) {
+        errCode = itemStream->Stop();
+    } else {
+        MEDIA_ERR_LOG("VideoOutput::Pause() itemStream is nullptr");
+    }
+    return errCode;
 }
 
 int32_t VideoOutput::Release()
 {
-    int32_t errCode = static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Release();
+    auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (itemStream) {
+        errCode = itemStream->Release();
+    } else {
+        MEDIA_ERR_LOG("VideoOutput::Release() itemStream is nullptr");
+    }
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to release VideoOutput!, errCode: %{public}d", errCode);
     }

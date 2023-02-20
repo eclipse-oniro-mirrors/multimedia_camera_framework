@@ -77,30 +77,43 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
 int CameraInput::Open()
 {
     std::lock_guard<std::mutex> lock(interfaceMutex_);
-    int32_t retCode = deviceObj_->Open();
-    if (retCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("Failed to open Camera Input, retCode: %{public}d", retCode);
+    int32_t retCode = CAMERA_UNKNOWN_ERROR;
+    if (deviceObj_) {
+        retCode = deviceObj_->Open();
+        if (retCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("Failed to open Camera Input, retCode: %{public}d", retCode);
+        }
+    } else {
+        MEDIA_ERR_LOG("CameraInput::Open() deviceObj_ is nullptr");
     }
-
     return ServiceToCameraError(retCode);
 }
 
 int CameraInput::Close()
 {
     std::lock_guard<std::mutex> lock(interfaceMutex_);
-    int32_t retCode = deviceObj_->Close();
-    if (retCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("Failed to close Camera Input, retCode: %{public}d", retCode);
+    int32_t retCode = CAMERA_UNKNOWN_ERROR;
+    if (deviceObj_) {
+        retCode = deviceObj_->Close();
+        if (retCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("Failed to close Camera Input, retCode: %{public}d", retCode);
+        }
+    } else {
+        MEDIA_ERR_LOG("CameraInput::Close() deviceObj_ is nullptr");
     }
-
     return ServiceToCameraError(retCode);
 }
 
 int CameraInput::Release()
 {
-    int32_t retCode = deviceObj_->Release();
-    if (retCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("Failed to release Camera Input, retCode: %{public}d", retCode);
+    int32_t retCode = CAMERA_UNKNOWN_ERROR;
+    if (deviceObj_) {
+        retCode = deviceObj_->Release();
+        if (retCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("Failed to release Camera Input, retCode: %{public}d", retCode);
+        }
+    } else {
+        MEDIA_ERR_LOG("CameraInput::Release() deviceObj_ is nullptr");
     }
     cameraObj_ = nullptr;
     deviceObj_ = nullptr;

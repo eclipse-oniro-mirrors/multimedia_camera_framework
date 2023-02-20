@@ -32,9 +32,15 @@ PreviewOutput::~PreviewOutput()
 
 int32_t PreviewOutput::Release()
 {
-    int32_t errCode = static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Release();
-    if (errCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("Failed to release PreviewOutput!, errCode: %{public}d", errCode);
+    auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (itemStream) {
+        errCode = itemStream->Release();
+        if (errCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("Failed to release PreviewOutput!, errCode: %{public}d", errCode);
+        }
+    } else {
+        MEDIA_ERR_LOG("PreviewOutput::Release() itemStream is nullptr");
     }
     svcCallback_ = nullptr;
     appCallback_ = nullptr;
@@ -95,7 +101,12 @@ void PreviewOutput::AddDeferredSurface(sptr<Surface> surface)
         MEDIA_ERR_LOG("PreviewOutput::AddDeferredSurface surface is null");
         return;
     }
-    static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->AddDeferredSurface(surface->GetProducer());
+    auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
+    if (!itemStream) {
+        MEDIA_ERR_LOG("PreviewOutput::AddDeferredSurface itemStream is nullptr");
+        return;
+    }
+    itemStream->AddDeferredSurface(surface->GetProducer());
 }
 
 int32_t PreviewOutput::Start()
@@ -105,26 +116,36 @@ int32_t PreviewOutput::Start()
         MEDIA_ERR_LOG("PreviewOutput Failed to Start!, session not config");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    int32_t errCode = static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Start();
-    if (errCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("PreviewOutput Failed to Start!, errCode: %{public}d", errCode);
+    auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (itemStream) {
+        errCode = itemStream->Start();
+        if (errCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("PreviewOutput Failed to Start!, errCode: %{public}d", errCode);
+        }
+    } else {
+        MEDIA_ERR_LOG("PreviewOutput::Start itemStream is nullptr");
     }
     return ServiceToCameraError(errCode);
 }
 
 int32_t PreviewOutput::Stop()
 {
-    int32_t errCode = static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Stop();
-    if (errCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("PreviewOutput Failed to Stop!, errCode: %{public}d", errCode);
+    auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (itemStream) {
+        errCode = itemStream->Stop();
+        if (errCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("PreviewOutput Failed to Stop!, errCode: %{public}d", errCode);
+        }
+    } else {
+        MEDIA_ERR_LOG("PreviewOutput::Stop itemStream is nullptr");
     }
     return ServiceToCameraError(errCode);
 }
 
 void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
 {
-    int32_t errorCode = CAMERA_OK;
-
     appCallback_ = callback;
     if (appCallback_ != nullptr) {
         if (svcCallback_ == nullptr) {
@@ -135,7 +156,13 @@ void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
                 return;
             }
         }
-        errorCode = static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->SetCallback(svcCallback_);
+        auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
+        int32_t errorCode = CAMERA_OK;
+        if (itemStream) {
+            errorCode = itemStream->SetCallback(svcCallback_);
+        } else {
+            MEDIA_ERR_LOG("PreviewOutput::SetCallback itemStream is nullptr");
+        }
         if (errorCode != CAMERA_OK) {
             MEDIA_ERR_LOG("PreviewOutput::SetCallback: Failed to register callback, errorCode: %{public}d", errorCode);
             svcCallback_ = nullptr;
