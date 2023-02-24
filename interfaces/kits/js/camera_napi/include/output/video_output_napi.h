@@ -107,6 +107,10 @@ struct VideoOutputAsyncContext : public AsyncContext {
     std::vector<int32_t> vecFrameRateRangeList;
     int32_t minFrameRate;
     int32_t maxFrameRate;
+    ~VideoOutputAsyncContext()
+    {
+        objectInfo = nullptr;
+    }
 };
 } // namespace CameraStandard
 } // namespace OHOS

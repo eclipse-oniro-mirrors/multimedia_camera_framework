@@ -52,6 +52,7 @@ CameraDevice::CameraDevice(std::string cameraID, std::shared_ptr<Camera::CameraM
 CameraDevice::~CameraDevice()
 {
     metadata_.reset();
+    metadata_ = nullptr;
 }
 
 void CameraDevice::init(common_metadata_header_t* metadata)

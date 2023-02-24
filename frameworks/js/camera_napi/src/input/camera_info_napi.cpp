@@ -33,6 +33,9 @@ CameraDeviceNapi::~CameraDeviceNapi()
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
+    if (cameraDevice_) {
+        cameraDevice_ = nullptr;
+    }
 }
 
 void CameraDeviceNapi::CameraDeviceNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)

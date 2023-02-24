@@ -68,7 +68,7 @@ private:
 };
 
 struct ErrorCallbackInfo {
-    int32_t errorType_;;
+    int32_t errorType_;
     int32_t errorMsg_;
     const ErrorCallbackListener* listener_;
     ErrorCallbackInfo(int32_t errorType, int32_t errorMsg, const ErrorCallbackListener* listener)
@@ -118,6 +118,10 @@ struct CameraInputAsyncContext :public AsyncContext {
     std::string cameraId;
     std::string enumType;
     std::vector<CameraFormat> vecList;
+    ~CameraInputAsyncContext()
+    {
+        objectInfo = nullptr;
+    }
 };
 } // namespace CameraStandard
 } // namespace OHOS

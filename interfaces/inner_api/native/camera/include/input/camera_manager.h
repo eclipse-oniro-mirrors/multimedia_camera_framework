@@ -51,6 +51,11 @@ struct CameraStatusInfo {
     sptr<CameraInfo> cameraInfo;
     sptr<CameraDevice> cameraDevice;
     CameraStatus cameraStatus;
+    ~CameraStatusInfo()
+    {
+        cameraInfo = nullptr;
+        cameraDevice = nullptr;
+    }
 };
 
 class CameraManagerCallback {
@@ -88,6 +93,7 @@ public:
 
 class CameraManager : public RefBase {
 public:
+    ~CameraManager();
     /**
     * @brief Get camera manager instance.
     *

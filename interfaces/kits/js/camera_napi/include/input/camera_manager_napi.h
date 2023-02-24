@@ -99,6 +99,10 @@ struct CameraManagerContext : public AsyncContext {
     VideoProfile videoProfile;
     CameraManagerAsyncCallbackModes modeForAsync;
     std::string errString;
+    ~CameraManagerContext()
+    {
+        managerInstance = nullptr;
+    }
 };
 } // namespace CameraStandard
 } // namespace OHOS

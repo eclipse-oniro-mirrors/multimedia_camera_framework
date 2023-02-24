@@ -104,6 +104,10 @@ private:
 struct PreviewOutputAsyncContext : public AsyncContext {
     PreviewOutputNapi* objectInfo;
     bool bRetBool;
+    ~PreviewOutputAsyncContext()
+    {
+        objectInfo = nullptr;
+    }
 };
 } // namespace CameraStandard
 } // namespace OHOS

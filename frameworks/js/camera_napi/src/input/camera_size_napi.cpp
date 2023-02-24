@@ -33,6 +33,9 @@ CameraSizeNapi::~CameraSizeNapi()
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
+    if (cameraPicSize_) {
+        cameraPicSize_ = nullptr;
+    }
 }
 
 void CameraSizeNapi::CameraSizeNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)

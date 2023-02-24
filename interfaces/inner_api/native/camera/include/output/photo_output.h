@@ -195,6 +195,7 @@ private:
 class PhotoOutput : public CaptureOutput {
 public:
     explicit PhotoOutput(sptr<IStreamCapture> &streamCapture);
+    virtual ~PhotoOutput();
 
     /**
      * @brief Set the photo callback.

@@ -26,7 +26,10 @@ class CaptureSession;
 class CaptureInput : public RefBase {
 public:
     CaptureInput();
-    virtual ~CaptureInput() = default;
+    virtual ~CaptureInput()
+    {
+        session_ = nullptr;
+    }
 
     /**
     * @brief open camera.

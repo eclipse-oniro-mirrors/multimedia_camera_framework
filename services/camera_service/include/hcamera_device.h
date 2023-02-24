@@ -84,7 +84,10 @@ private:
 class CameraDeviceCallback : public ICameraDeviceCallback {
 public:
     explicit CameraDeviceCallback(sptr<HCameraDevice> hCameraDevice);
-    virtual ~CameraDeviceCallback() = default;
+    virtual ~CameraDeviceCallback()
+    {
+        hCameraDevice_ = nullptr;
+    }
     int32_t OnError(ErrorType type, int32_t errorCode) override;
     int32_t OnResult(uint64_t timestamp, const std::vector<uint8_t>& result) override;
 
