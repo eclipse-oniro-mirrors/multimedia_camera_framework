@@ -122,6 +122,10 @@ int32_t MetadataOutput::Start()
         MEDIA_ERR_LOG("MetadataOutput Failed to Start!, session not config");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
+    if (GetStream() == nullptr) {
+        MEDIA_ERR_LOG("MetadataOutput Failed to Start!, GetStream is nullptr");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
     int32_t errCode = static_cast<IStreamMetadata *>(GetStream().GetRefPtr())->Start();
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to Start MetadataOutput!, errCode: %{public}d", errCode);
@@ -131,6 +135,10 @@ int32_t MetadataOutput::Start()
 
 int32_t MetadataOutput::Stop()
 {
+    if (GetStream() == nullptr) {
+        MEDIA_ERR_LOG("MetadataOutput Failed to Stop!, GetStream is nullptr");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
     int32_t errCode = static_cast<IStreamMetadata *>(GetStream().GetRefPtr())->Stop();
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to Stop MetadataOutput!, errCode: %{public}d", errCode);
@@ -140,6 +148,10 @@ int32_t MetadataOutput::Stop()
 
 int32_t MetadataOutput::Release()
 {
+    if (GetStream() == nullptr) {
+        MEDIA_ERR_LOG("MetadataOutput Failed to Release!, GetStream is nullptr");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
     int32_t errCode = static_cast<IStreamMetadata *>(GetStream().GetRefPtr())->Release();
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to release MetadataOutput!, errCode: %{public}d", errCode);

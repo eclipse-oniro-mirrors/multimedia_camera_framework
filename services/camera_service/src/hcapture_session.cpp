@@ -672,13 +672,14 @@ void HCaptureSession::ReleaseStreams()
 
 int32_t HCaptureSession::ReleaseInner()
 {
+    MEDIA_INFO_LOG("HCaptureSession::ReleaseInner enter");
     return Release(pid_);
 }
 
 int32_t HCaptureSession::Release(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(sessionLock_);
-    MEDIA_DEBUG_LOG("HCaptureSession::Release pid(%{public}d).", pid);
+    MEDIA_INFO_LOG("HCaptureSession::Release pid(%{public}d).", pid);
     auto it = session_.find(pid);
     if (it == session_.end()) {
         MEDIA_DEBUG_LOG("HCaptureSession::Release session for pid(%{public}d) already released.", pid);
@@ -851,7 +852,9 @@ void CameraUseStateChangeCb::SetCaptureSession(sptr<HCaptureSession> captureSess
 
 void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessTokenID tokenId, bool isShowing)
 {
-    MEDIA_DEBUG_LOG("enter CameraUseStateChangeNotify tokenId:%{public}d", tokenId);
+    const int32_t delayProcessTime = 200000;
+    usleep(delayProcessTime);
+    MEDIA_INFO_LOG("enter CameraUseStateChangeNotify tokenId:%{public}d", tokenId);
     if ((isShowing == false) && (captureSession_ != nullptr)) {
         captureSession_->ReleaseInner();
     }

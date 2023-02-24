@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_CAPTURE_OUTPUT_H
 #define OHOS_CAMERA_CAPTURE_OUTPUT_H
 
+#include <mutex>
 #include <refbase.h>
 #include "camera_error_code.h"
 #include "icamera_util.h"
@@ -54,7 +55,7 @@ public:
     sptr<IStreamCommon> GetStream();
     CaptureSession* GetSession();
     void SetSession(CaptureSession* captureSession);
-
+    std::mutex asyncOpMutex_;
 private:
     CaptureOutputType outputType_;
     StreamType streamType_;

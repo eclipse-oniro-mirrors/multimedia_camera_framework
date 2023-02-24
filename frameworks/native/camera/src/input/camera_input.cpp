@@ -71,7 +71,11 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
         MEDIA_ERR_LOG("CameraInput::CameraInput CameraDeviceServiceCallback alloc failed");
         return;
     }
-    deviceObj_->SetCallback(CameraDeviceSvcCallback_);
+    if (deviceObj_) {
+        deviceObj_->SetCallback(CameraDeviceSvcCallback_);
+    } else {
+        MEDIA_ERR_LOG("CameraInput::CameraInput() deviceObj_ is nullptr");
+    }
 }
 
 int CameraInput::Open()
@@ -165,12 +169,17 @@ void CameraInput::ProcessDeviceCallbackUpdates(const std::shared_ptr<Camera::Cam
 int32_t CameraInput::UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata)
 {
     CAMERA_SYNC_TRACE;
+    int32_t ret = CAMERA_OK;
     if (!OHOS::Camera::GetCameraMetadataItemCount(changedMetadata->get())) {
         MEDIA_INFO_LOG("CameraInput::UpdateSetting No configuration to update");
-        return CAMERA_OK;
+        return ret;
     }
 
-    int32_t ret = deviceObj_->UpdateSetting(changedMetadata);
+    if (deviceObj_) {
+        ret = deviceObj_->UpdateSetting(changedMetadata);
+    } else {
+        MEDIA_ERR_LOG("CameraInput::UpdateSetting() deviceObj_ is nullptr");
+    }
     if (ret != CAMERA_OK) {
         MEDIA_ERR_LOG("CameraInput::UpdateSetting Failed to update settings");
         return ret;

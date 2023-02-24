@@ -365,12 +365,16 @@ void CaptureSession::SetCallback(std::shared_ptr<SessionCallback> callback)
         if (captureSessionCallback_ == nullptr) {
             captureSessionCallback_ = new(std::nothrow) CaptureSessionCallback(this);
         }
-        errorCode = captureSession_->SetCallback(captureSessionCallback_);
-        if (errorCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("CaptureSession::SetCallback: Failed to register callback, errorCode: %{public}d",
-                errorCode);
-            captureSessionCallback_ = nullptr;
-            appCallback_ = nullptr;
+        if (captureSession_) {
+            errorCode = captureSession_->SetCallback(captureSessionCallback_);
+            if (errorCode != CAMERA_OK) {
+                MEDIA_ERR_LOG("CaptureSession::SetCallback: Failed to register callback, errorCode: %{public}d",
+                    errorCode);
+                captureSessionCallback_ = nullptr;
+                appCallback_ = nullptr;
+            }
+        } else {
+            MEDIA_ERR_LOG("CaptureSession::SetCallback() captureSession_ is nullptr");
         }
     }
     return;
@@ -393,7 +397,10 @@ int32_t CaptureSession::UpdateSetting(std::shared_ptr<Camera::CameraMetadata> ch
         MEDIA_ERR_LOG("CaptureSession::UpdateSetting Failed Session Not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-
+    if (!inputDevice_ || !((sptr<CameraInput> &)inputDevice_)->GetCameraDevice()) {
+        MEDIA_ERR_LOG("CaptureSession::UpdateSetting Failed inputDevice_ is nullptr");
+        return CameraErrorCode::SUCCESS;
+    }
     int32_t ret = ((sptr<CameraInput> &)inputDevice_)->GetCameraDevice()->UpdateSetting(changedMetadata);
     if (ret != CAMERA_OK) {
         MEDIA_ERR_LOG("CaptureSession::UpdateSetting Failed to update settings, errCode = %{public}d", ret);
@@ -449,7 +456,7 @@ int32_t CaptureSession::UnlockForControl()
 VideoStabilizationMode CaptureSession::GetActiveVideoStabilizationMode()
 {
     sptr<CameraDevice> cameraObj_;
-    if (inputDevice_ == nullptr) {
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("CaptureSession::GetActiveVideoStabilizationMode camera device is null");
         return OFF;
     }
@@ -471,6 +478,10 @@ int32_t CaptureSession::GetActiveVideoStabilizationMode(VideoStabilizationMode &
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetActiveVideoStabilizationMode Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetActiveVideoStabilizationMode camera device is null");
+        return CameraErrorCode::SUCCESS;
     }
     mode = OFF;
     bool isSupported = false;
@@ -555,6 +566,10 @@ std::vector<VideoStabilizationMode> CaptureSession::GetSupportedStabilizationMod
         MEDIA_ERR_LOG("CaptureSession::GetSupportedStabilizationMode Session is not Commited");
         return stabilizationModes;
     }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedStabilizationMode camera device is null");
+        return stabilizationModes;
+    }
     cameraObj_ = inputDevice_->GetCameraDeviceInfo();
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj_->GetMetadata();
     camera_metadata_item_t item;
@@ -580,6 +595,10 @@ int32_t CaptureSession::GetSupportedStabilizationMode(std::vector<VideoStabiliza
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetSupportedStabilizationMode Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedStabilizationMode camera device is null");
+        return CameraErrorCode::SUCCESS;
     }
     cameraObj_ = inputDevice_->GetCameraDeviceInfo();
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj_->GetMetadata();
@@ -634,6 +653,10 @@ std::vector<ExposureMode> CaptureSession::GetSupportedExposureModes()
         MEDIA_ERR_LOG("CaptureSession::GetSupportedExposureModes Session is not Commited");
         return {};
     }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedExposureModes camera device is null");
+        return {};
+    }
     std::vector<ExposureMode> supportedExposureModes;
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
@@ -658,6 +681,10 @@ int32_t CaptureSession::GetSupportedExposureModes(std::vector<ExposureMode> &sup
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetSupportedExposureModes Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedExposureModes camera device is null");
+        return CameraErrorCode::SUCCESS;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
@@ -720,6 +747,10 @@ ExposureMode CaptureSession::GetExposureMode()
         MEDIA_ERR_LOG("CaptureSession::GetExposureMode Session is not Commited");
         return EXPOSURE_MODE_UNSUPPORTED;
     }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetExposureMode camera device is null");
+        return EXPOSURE_MODE_UNSUPPORTED;
+    }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_EXPOSURE_MODE, &item);
@@ -741,6 +772,10 @@ int32_t CaptureSession::GetExposureMode(ExposureMode &exposureMode)
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetExposureMode Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetExposureMode camera device is null");
+        return CameraErrorCode::SUCCESS;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
@@ -797,6 +832,10 @@ Point CaptureSession::GetMeteringPoint()
         MEDIA_ERR_LOG("CaptureSession::GetMeteringPoint Session is not Commited");
         return exposurePoint;
     }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetMeteringPoint camera device is null");
+        return exposurePoint;
+    }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AE_REGIONS, &item);
@@ -818,6 +857,10 @@ int32_t CaptureSession::GetMeteringPoint(Point &exposurePoint)
         MEDIA_ERR_LOG("CaptureSession::GetMeteringPoint Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetMeteringPoint camera device is null");
+        return CameraErrorCode::SUCCESS;
+    }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AE_REGIONS, &item);
@@ -837,6 +880,10 @@ std::vector<int32_t> CaptureSession::GetExposureBiasRange()
         MEDIA_ERR_LOG("CaptureSession::GetExposureBiasRange Session is not Commited");
         return {};
     }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetExposureBiasRange camera device is null");
+        return {};
+    }
     return inputDevice_->GetCameraDeviceInfo()->GetExposureBiasRange();
 }
 
@@ -845,6 +892,10 @@ int32_t CaptureSession::GetExposureBiasRange(std::vector<int32_t> &exposureBiasR
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetExposureBiasRange Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetExposureBiasRange camera device is null");
+        return CameraErrorCode::SUCCESS;
     }
     exposureBiasRange = inputDevice_->GetCameraDeviceInfo()->GetExposureBiasRange();
     return CameraErrorCode::SUCCESS;
@@ -862,16 +913,17 @@ int32_t CaptureSession::SetExposureBias(int32_t exposureValue)
             "before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
-
     bool status = false;
     int32_t ret;
     int32_t minIndex = 0;
     int32_t maxIndex = 1;
     int32_t count = 1;
     camera_metadata_item_t item;
-
     MEDIA_DEBUG_LOG("CaptureSession::SetExposureValue exposure compensation: %{public}d", exposureValue);
-
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::SetExposureBias camera device is null");
+        return CameraErrorCode::SUCCESS;
+    }
     std::vector<int32_t> biasRange = inputDevice_->GetCameraDeviceInfo()->GetExposureBiasRange();
     if (biasRange.empty()) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureValue Bias range is empty");
@@ -879,28 +931,23 @@ int32_t CaptureSession::SetExposureBias(int32_t exposureValue)
     }
     if (exposureValue < biasRange[minIndex]) {
         MEDIA_DEBUG_LOG("CaptureSession::SetExposureValue bias value:"
-                        "%{public}d is lesser than minimum bias: %{public}d",
-                        exposureValue, biasRange[minIndex]);
+                        "%{public}d is lesser than minimum bias: %{public}d", exposureValue, biasRange[minIndex]);
         exposureValue = biasRange[minIndex];
     } else if (exposureValue > biasRange[maxIndex]) {
         MEDIA_DEBUG_LOG("CaptureSession::SetExposureValue bias value: "
-            "%{public}d is greater than maximum bias: %{public}d",
-                        exposureValue, biasRange[maxIndex]);
+                        "%{public}d is greater than maximum bias: %{public}d", exposureValue, biasRange[maxIndex]);
         exposureValue = biasRange[maxIndex];
     }
-
     if (exposureValue == 0) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureValue Invalid exposure compensation value");
         return CameraErrorCode::SUCCESS;
     }
-
     ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
         status = changedMetadata_->addEntry(OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &exposureValue, count);
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &exposureValue, count);
     }
-
     if (!status) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureValue Failed to set exposure compensation");
     }
@@ -911,6 +958,10 @@ int32_t CaptureSession::GetExposureValue()
 {
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetExposureValue Session is not Commited");
+        return 0;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetExposureValue camera device is null");
         return 0;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
@@ -928,6 +979,10 @@ int32_t CaptureSession::GetExposureValue(int32_t &exposureValue)
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetExposureValue Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetExposureValue camera device is null");
+        return CameraErrorCode::SUCCESS;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
@@ -974,6 +1029,10 @@ std::vector<FocusMode> CaptureSession::GetSupportedFocusModes()
         MEDIA_ERR_LOG("CaptureSession::SetExposureBias Session is not Commited");
         return supportedFocusModes;
     }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedFocusModes camera device is null");
+        return supportedFocusModes;
+    }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FOCUS_MODES, &item);
@@ -996,6 +1055,10 @@ int32_t CaptureSession::GetSupportedFocusModes(std::vector<FocusMode> &supported
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureBias Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedFocusModes camera device is null");
+        return CameraErrorCode::SUCCESS;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
@@ -1133,6 +1196,10 @@ FocusMode CaptureSession::GetFocusMode()
         MEDIA_ERR_LOG("CaptureSession::GetFocusMode Session is not Commited");
         return FOCUS_MODE_MANUAL;
     }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetFocusMode camera device is null");
+        return FOCUS_MODE_MANUAL;
+    }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_MODE, &item);
@@ -1153,6 +1220,10 @@ int32_t CaptureSession::GetFocusMode(FocusMode &focusMode)
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetFocusMode Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetFocusMode camera device is null");
+        return CameraErrorCode::SUCCESS;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
@@ -1203,7 +1274,7 @@ Point CaptureSession::CoordinateTransform(Point point)
 {
     MEDIA_DEBUG_LOG("CaptureSession::CoordinateTransform begin x: %{public}f, y: %{public}f", point.x, point.y);
     Point unifyPoint = point;
-    if (inputDevice_ == nullptr) {
+    if (!inputDevice_ || inputDevice_->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("CaptureSession::CoordinateTransform cameraInput is nullptr");
         return unifyPoint;
     }
@@ -1220,6 +1291,10 @@ Point CaptureSession::GetFocusPoint()
     Point focusPoint = {0, 0};
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetFocusPoint Session is not Commited");
+        return focusPoint;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetFocusPoint camera device is null");
         return focusPoint;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
@@ -1243,6 +1318,10 @@ int32_t CaptureSession::GetFocusPoint(Point &focusPoint)
         MEDIA_ERR_LOG("CaptureSession::GetFocusPoint Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetFocusPoint camera device is null");
+        return CameraErrorCode::SUCCESS;
+    }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AF_REGIONS, &item);
@@ -1262,6 +1341,10 @@ float CaptureSession::GetFocalLength()
         MEDIA_ERR_LOG("CaptureSession::GetFocalLength Session is not Commited");
         return 0;
     }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetFocalLength camera device is null");
+        return 0;
+    }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FOCAL_LENGTH, &item);
@@ -1278,6 +1361,10 @@ int32_t CaptureSession::GetFocalLength(float &focalLength)
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetFocalLength Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetFocalLength camera device is null");
+        return CameraErrorCode::SUCCESS;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
@@ -1317,6 +1404,10 @@ std::vector<FlashMode> CaptureSession::GetSupportedFlashModes()
         MEDIA_ERR_LOG("CaptureSession::GetSupportedFlashModes Session is not Commited");
         return supportedFlashModes;
     }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedFlashModes camera device is null");
+        return supportedFlashModes;
+    }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_MODES, &item);
@@ -1340,6 +1431,10 @@ int32_t CaptureSession::GetSupportedFlashModes(std::vector<FlashMode> &supported
         MEDIA_ERR_LOG("CaptureSession::GetSupportedFlashModes Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedFlashModes camera device is null");
+        return CameraErrorCode::SUCCESS;
+    }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_MODES, &item);
@@ -1360,6 +1455,10 @@ FlashMode CaptureSession::GetFlashMode()
 {
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetFlashMode Session is not Commited");
+        return FLASH_MODE_CLOSE;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetFlashMode camera device is null");
         return FLASH_MODE_CLOSE;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
@@ -1383,6 +1482,10 @@ int32_t CaptureSession::GetFlashMode(FlashMode &flashMode)
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetFlashMode Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetFlashMode camera device is null");
+        return CameraErrorCode::SUCCESS;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
@@ -1503,6 +1606,10 @@ std::vector<float> CaptureSession::GetZoomRatioRange()
         MEDIA_ERR_LOG("CaptureSession::GetZoomRatioRange Session is not Commited");
         return {};
     }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetZoomRatioRange camera device is null");
+        return {};
+    }
     return inputDevice_->GetCameraDeviceInfo()->GetZoomRatioRange();
 }
 
@@ -1513,6 +1620,10 @@ int32_t CaptureSession::GetZoomRatioRange(std::vector<float> &zoomRatioRange)
         MEDIA_ERR_LOG("CaptureSession::GetZoomRatioRange Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetZoomRatioRange camera device is null");
+        return CameraErrorCode::SUCCESS;
+    }
     zoomRatioRange = inputDevice_->GetCameraDeviceInfo()->GetZoomRatioRange();
     return CameraErrorCode::SUCCESS;
 }
@@ -1521,6 +1632,10 @@ float CaptureSession::GetZoomRatio()
 {
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetZoomRatio Session is not Commited");
+        return 0;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetZoomRatio camera device is null");
         return 0;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
@@ -1539,6 +1654,10 @@ int32_t CaptureSession::GetZoomRatio(float &zoomRatio)
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetZoomRatio Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetZoomRatio camera device is null");
+        return CameraErrorCode::SUCCESS;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
@@ -1571,6 +1690,10 @@ int32_t CaptureSession::SetCropRegion(float zoomRatio)
     }
     if (zoomRatio == 0) {
         MEDIA_ERR_LOG("CaptureSession::SetCropRegion Invalid zoom ratio");
+        return CameraErrorCode::SUCCESS;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::SetCropRegion camera device is null");
         return CameraErrorCode::SUCCESS;
     }
     ret = Camera::FindCameraMetadataItem(
@@ -1627,9 +1750,11 @@ int32_t CaptureSession::SetZoomRatio(float zoomRatio)
     int32_t maxIndex = 1;
     int32_t count = 1;
     camera_metadata_item_t item;
-
     MEDIA_DEBUG_LOG("CaptureSession::SetZoomRatio Zoom ratio: %{public}f", zoomRatio);
-
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::SetZoomRatio camera device is null");
+        return CameraErrorCode::SUCCESS;
+    }
     std::vector<float> zoomRange = inputDevice_->GetCameraDeviceInfo()->GetZoomRatioRange();
     if (zoomRange.empty()) {
         MEDIA_ERR_LOG("CaptureSession::SetZoomRatio Zoom range is empty");

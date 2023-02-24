@@ -32,6 +32,11 @@ PreviewOutput::~PreviewOutput()
 
 int32_t PreviewOutput::Release()
 {
+    std::lock_guard<std::mutex> lock(asyncOpMutex_);
+    if (GetStream() == nullptr) {
+        MEDIA_ERR_LOG("PreviewOutput Failed to Release!, GetStream is nullptr");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
     auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
@@ -111,10 +116,15 @@ void PreviewOutput::AddDeferredSurface(sptr<Surface> surface)
 
 int32_t PreviewOutput::Start()
 {
+    std::lock_guard<std::mutex> lock(asyncOpMutex_);
     CaptureSession* captureSession = GetSession();
     if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
         MEDIA_ERR_LOG("PreviewOutput Failed to Start!, session not config");
         return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (GetStream() == nullptr) {
+        MEDIA_ERR_LOG("PreviewOutput Failed to Start!, GetStream is nullptr");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
@@ -131,6 +141,11 @@ int32_t PreviewOutput::Start()
 
 int32_t PreviewOutput::Stop()
 {
+    std::lock_guard<std::mutex> lock(asyncOpMutex_);
+    if (GetStream() == nullptr) {
+        MEDIA_ERR_LOG("PreviewOutput Failed to Stop!, GetStream is nullptr");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
     auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
@@ -155,6 +170,10 @@ void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
                 appCallback_ = nullptr;
                 return;
             }
+        }
+        if (GetStream() == nullptr) {
+            MEDIA_ERR_LOG("PreviewOutput Failed to SetCallback!, GetStream is nullptr");
+            return;
         }
         auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
         int32_t errorCode = CAMERA_OK;

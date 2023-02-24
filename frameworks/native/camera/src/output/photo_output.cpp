@@ -265,10 +265,15 @@ std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
 
 int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSettings)
 {
+    std::lock_guard<std::mutex> lock(asyncOpMutex_);
     CaptureSession* captureSession = GetSession();
     if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
         MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, session not runing");
         return CameraErrorCode::SESSION_NOT_RUNNING;
+    }
+    if (GetStream() == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, GetStream is nullptr");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     defaultCaptureSetting_ = photoCaptureSettings;
     auto itemStream = static_cast<IStreamCapture *>(GetStream().GetRefPtr());
@@ -286,10 +291,15 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
 
 int32_t PhotoOutput::Capture()
 {
+    std::lock_guard<std::mutex> lock(asyncOpMutex_);
     CaptureSession* captureSession = GetSession();
     if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
         MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, session not runing");
         return CameraErrorCode::SESSION_NOT_RUNNING;
+    }
+    if (GetStream() == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, GetStream is nullptr");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     int32_t items = 0;
     int32_t dataLength = 0;
@@ -310,10 +320,15 @@ int32_t PhotoOutput::Capture()
 
 int32_t PhotoOutput::CancelCapture()
 {
+    std::lock_guard<std::mutex> lock(asyncOpMutex_);
     CaptureSession* captureSession = GetSession();
     if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
         MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, session not runing");
         return CameraErrorCode::SESSION_NOT_RUNNING;
+    }
+    if (GetStream() == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput Failed to CancelCapture!, GetStream is nullptr");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     auto itemStream = static_cast<IStreamCapture *>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
@@ -330,6 +345,11 @@ int32_t PhotoOutput::CancelCapture()
 
 int32_t PhotoOutput::Release()
 {
+    std::lock_guard<std::mutex> lock(asyncOpMutex_);
+    if (GetStream() == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput Failed to Release!, GetStream is nullptr");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
     auto itemStream = static_cast<IStreamCapture *>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
@@ -354,9 +374,14 @@ bool PhotoOutput::IsMirrorSupported()
     sptr<CameraDevice> cameraObj_;
     CaptureSession* captureSession = GetSession();
     if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
+        MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, captureSession or inputDevice_ is nullptr");
         return isMirrorEnabled;
     }
     cameraObj_ = captureSession->inputDevice_->GetCameraDeviceInfo();
+    if (cameraObj_ == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, cameraObj is nullptr");
+        return isMirrorEnabled;
+    }
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj_->GetMetadata();
 
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
