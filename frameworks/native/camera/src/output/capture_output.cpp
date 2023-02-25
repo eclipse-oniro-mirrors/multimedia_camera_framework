@@ -48,6 +48,13 @@ CaptureSession* CaptureOutput::GetSession()
     return session_;
 }
 
+int32_t CaptureOutput::Release()
+{
+    stream_ = nullptr;
+    session_ = nullptr;
+    return 0;
+}
+
 void CaptureOutput::SetSession(CaptureSession* captureSession)
 {
     session_ = captureSession;

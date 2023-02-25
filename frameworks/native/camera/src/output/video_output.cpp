@@ -26,6 +26,12 @@ VideoOutput::VideoOutput(sptr<IStreamRepeat> &streamRepeat)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_VIDEO, StreamType::REPEAT, streamRepeat) {
 }
 
+VideoOutput::~VideoOutput()
+{
+    svcCallback_ = nullptr;
+    appCallback_ = nullptr;
+}
+
 class HStreamRepeatCallbackImpl : public HStreamRepeatCallbackStub {
 public:
     sptr<VideoOutput> videoOutput_ = nullptr;
@@ -85,8 +91,18 @@ void VideoOutput::SetCallback(std::shared_ptr<VideoStateCallback> callback)
                 return;
             }
         }
+        if (GetStream() == nullptr) {
+            MEDIA_ERR_LOG("VideoOutput Failed to SetCallback!, GetStream is nullptr");
+            return;
+        }
         int32_t errorCode = CAMERA_OK;
-        errorCode = static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->SetCallback(svcCallback_);
+        auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
+        if (itemStream) {
+            errorCode = itemStream->SetCallback(svcCallback_);
+        } else {
+            MEDIA_ERR_LOG("VideoOutput::SetCallback itemStream is nullptr");
+        }
+
         if (errorCode != CAMERA_OK) {
             MEDIA_ERR_LOG("VideoOutput::SetCallback: Failed to register callback, errorCode: %{public}d", errorCode);
             svcCallback_ = nullptr;
@@ -97,43 +113,103 @@ void VideoOutput::SetCallback(std::shared_ptr<VideoStateCallback> callback)
 
 int32_t VideoOutput::Start()
 {
+    std::lock_guard<std::mutex> lock(asyncOpMutex_);
     CaptureSession* captureSession = GetSession();
     if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
         MEDIA_ERR_LOG("VideoOutput Failed to Start!, session not config");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    int32_t errCode = static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Start();
-    if (errCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("VideoOutput Failed to Start!, errCode: %{public}d", errCode);
+    if (GetStream() == nullptr) {
+        MEDIA_ERR_LOG("VideoOutput Failed to Start!, GetStream is nullptr");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
+    auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (itemStream) {
+        errCode = itemStream->Start();
+        if (errCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("VideoOutput Failed to Start!, errCode: %{public}d", errCode);
+        }
+    } else {
+        MEDIA_ERR_LOG("VideoOutput::Start() itemStream is nullptr");
     }
     return ServiceToCameraError(errCode);
 }
 
 int32_t VideoOutput::Stop()
 {
-    int32_t errCode = static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Stop();
-    if (errCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("VideoOutput Failed to Stop!, errCode: %{public}d", errCode);
+    std::lock_guard<std::mutex> lock(asyncOpMutex_);
+    if (GetStream() == nullptr) {
+        MEDIA_ERR_LOG("VideoOutput Failed to Stop!, GetStream is nullptr");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
+    auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (itemStream) {
+        errCode = itemStream->Stop();
+        if (errCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("VideoOutput Failed to Stop!, errCode: %{public}d", errCode);
+        }
+    } else {
+        MEDIA_ERR_LOG("VideoOutput::Stop() itemStream is nullptr");
     }
     return ServiceToCameraError(errCode);
 }
 
 int32_t VideoOutput::Resume()
 {
-    return static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Start();
+    std::lock_guard<std::mutex> lock(asyncOpMutex_);
+    if (GetStream() == nullptr) {
+        MEDIA_ERR_LOG("VideoOutput Failed to Resume!, GetStream is nullptr");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
+    auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (itemStream) {
+        errCode = itemStream->Start();
+    } else {
+        MEDIA_ERR_LOG("VideoOutput::Resume() itemStream is nullptr");
+    }
+    return ServiceToCameraError(errCode);
 }
 
 int32_t VideoOutput::Pause()
 {
-    return static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Stop();
+    std::lock_guard<std::mutex> lock(asyncOpMutex_);
+    if (GetStream() == nullptr) {
+        MEDIA_ERR_LOG("VideoOutput Failed to Pause!, GetStream is nullptr");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
+    auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (itemStream) {
+        errCode = itemStream->Stop();
+    } else {
+        MEDIA_ERR_LOG("VideoOutput::Pause() itemStream is nullptr");
+    }
+    return errCode;
 }
 
 int32_t VideoOutput::Release()
 {
-    int32_t errCode = static_cast<IStreamRepeat *>(GetStream().GetRefPtr())->Release();
+    std::lock_guard<std::mutex> lock(asyncOpMutex_);
+    if (GetStream() == nullptr) {
+        MEDIA_ERR_LOG("VideoOutput Failed to Release!, GetStream is nullptr");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
+    auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (itemStream) {
+        errCode = itemStream->Release();
+    } else {
+        MEDIA_ERR_LOG("VideoOutput::Release() itemStream is nullptr");
+    }
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to release VideoOutput!, errCode: %{public}d", errCode);
     }
+    svcCallback_ = nullptr;
+    appCallback_ = nullptr;
+    CaptureOutput::Release();
     return ServiceToCameraError(errCode);
 }
 

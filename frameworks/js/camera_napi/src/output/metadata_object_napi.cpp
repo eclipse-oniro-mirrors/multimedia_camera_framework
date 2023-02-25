@@ -53,6 +53,9 @@ MetadataObjectNapi::~MetadataObjectNapi()
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
+    if (metadataObject_) {
+        metadataObject_ = nullptr;
+    }
 }
 
 void MetadataObjectNapi::MetadataObjectNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)

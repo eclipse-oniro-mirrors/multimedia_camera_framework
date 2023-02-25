@@ -134,6 +134,12 @@ MetadataOutputNapi::~MetadataOutputNapi()
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
+    if (metadataOutput_) {
+        metadataOutput_ = nullptr;
+    }
+    if (metadataCallback_) {
+        metadataCallback_ = nullptr;
+    }
 }
 
 void MetadataOutputNapi::MetadataOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)

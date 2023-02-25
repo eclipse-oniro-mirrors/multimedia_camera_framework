@@ -53,6 +53,28 @@ CameraManager::CameraManager()
     dcameraObjList = {};
 }
 
+CameraManager::~CameraManager()
+{
+    serviceProxy_ = nullptr;
+    listenerStub_ = nullptr;
+    deathRecipient_ = nullptr;
+    cameraSvcCallback_ = nullptr;
+    cameraMuteSvcCallback_ = nullptr;
+    cameraMngrCallback_ = nullptr;
+    for (unsigned int i = 0; i < cameraMuteListenerList.size(); i++) {
+        if (cameraMuteListenerList[i]) {
+            cameraMuteListenerList[i] = nullptr;
+        }
+    }
+    cameraMuteListenerList.clear();
+    for (unsigned int i = 0; i < cameraObjList.size(); i++) {
+        cameraObjList[i] = nullptr;
+    }
+    cameraObjList.clear();
+    dcameraObjList.clear();
+    CameraManager::cameraManager_ = nullptr;
+}
+
 int32_t CameraManager::CreateListenerObject()
 {
     listenerStub_ = new(std::nothrow) CameraListenerStub();
@@ -620,9 +642,10 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
     sptr<CameraDevice> cameraObj = nullptr;
     int32_t index = 0;
 
-    if (cameraObjList.size() > 0) {
-        cameraObjList.clear();
+    for (unsigned int i = 0; i < cameraObjList.size(); i++) {
+        cameraObjList[i] = nullptr;
     }
+    cameraObjList.clear();
     if (serviceProxy_ == nullptr) {
         MEDIA_ERR_LOG("CameraManager::GetCameras serviceProxy_ is null, returning empty list!");
         return cameraObjList;

@@ -190,6 +190,9 @@ CameraSessionNapi::~CameraSessionNapi()
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
+    if (cameraSession_) {
+        cameraSession_ = nullptr;
+    }
 }
 
 void CameraSessionNapi::CameraSessionNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)

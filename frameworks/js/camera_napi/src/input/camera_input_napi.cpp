@@ -90,6 +90,9 @@ CameraInputNapi::~CameraInputNapi()
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
+    if (cameraInput_) {
+        cameraInput_ = nullptr;
+    }
 }
 
 void CameraInputNapi::CameraInputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
