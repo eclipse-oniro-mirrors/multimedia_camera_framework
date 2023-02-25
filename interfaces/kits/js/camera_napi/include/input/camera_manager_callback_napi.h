@@ -57,6 +57,10 @@ struct CameraStatusCallbackInfo {
     const CameraManagerCallbackNapi* listener_;
     CameraStatusCallbackInfo(CameraStatusInfo info, const CameraManagerCallbackNapi* listener)
         : info_(info), listener_(listener) {}
+    ~CameraStatusCallbackInfo()
+    {
+        listener_ = nullptr;
+    }
 };
 } // namespace CameraStandard
 } // namespace OHOS

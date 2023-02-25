@@ -29,6 +29,12 @@ void CaptureInput::SetSession(CaptureSession* captureSession)
 {
     session_ = captureSession;
 }
+
+int CaptureInput::Release()
+{
+    session_ = nullptr;
+    return 0;
+}
 } // CameraStandard
 } // OHOS
 

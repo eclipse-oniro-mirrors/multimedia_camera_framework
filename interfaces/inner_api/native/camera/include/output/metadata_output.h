@@ -79,6 +79,7 @@ public:
 class MetadataOutput : public CaptureOutput {
 public:
     MetadataOutput(sptr<IConsumerSurface> surface, sptr<IStreamMetadata> &streamMetadata);
+    ~MetadataOutput();
 
     /**
      * @brief Get the supported metadata object types.
@@ -133,7 +134,10 @@ private:
 class MetadataObjectListener : public IBufferConsumerListener {
 public:
     MetadataObjectListener(sptr<MetadataOutput> metadata);
-    virtual ~MetadataObjectListener() = default;
+    virtual ~MetadataObjectListener()
+    {
+        metadata_ = nullptr;
+    }
     void OnBufferAvailable() override;
 
 private:

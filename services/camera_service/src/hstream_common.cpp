@@ -130,6 +130,9 @@ void HStreamCommon::DumpStreamInfo(std::string& dumpString)
     dumpString += "]    StreamType:[" + std::to_string(curStreamInfo.intent_);
     dumpString += "]    TunnelMode:[" + std::to_string(curStreamInfo.tunneledMode_);
     dumpString += "]    Encoding Type:[" + std::to_string(curStreamInfo.encodeType_) + "]:\n";
+    if (curStreamInfo.bufferQueue_) {
+        delete curStreamInfo.bufferQueue_;
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

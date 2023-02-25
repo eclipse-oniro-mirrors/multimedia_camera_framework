@@ -35,6 +35,9 @@ CameraOutputCapabilityNapi::~CameraOutputCapabilityNapi()
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
+    if (cameraOutputCapability_) {
+        cameraOutputCapability_ = nullptr;
+    }
 }
 
 void CameraOutputCapabilityNapi::CameraOutputCapabilityNapiDestructor(

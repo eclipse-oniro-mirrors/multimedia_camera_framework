@@ -100,6 +100,10 @@ struct MetadataOutputAsyncContext : public AsyncContext {
     std::string errorMsg;
     std::vector<MetadataObjectType> SupportedMetadataObjectTypes;
     std::vector<MetadataObjectType> setSupportedMetadataObjectTypes;
+    ~MetadataOutputAsyncContext()
+    {
+        objectInfo = nullptr;
+    }
 };
 } // namespace CameraStandard
 } // namespace OHOS

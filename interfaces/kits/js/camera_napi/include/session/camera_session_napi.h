@@ -189,6 +189,10 @@ struct CameraSessionAsyncContext : public AsyncContext {
     SessionAsyncCallbackModes modeForAsync;
     std::string errorMsg;
     bool bRetBool;
+    ~CameraSessionAsyncContext()
+    {
+        objectInfo = nullptr;
+    }
 };
 } // namespace CameraStandard
 } // namespace OHOS

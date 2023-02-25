@@ -39,6 +39,9 @@ CameraManagerNapi::~CameraManagerNapi()
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
+    if (cameraManager_) {
+        cameraManager_ = nullptr;
+    }
 }
 
 // Constructor callback

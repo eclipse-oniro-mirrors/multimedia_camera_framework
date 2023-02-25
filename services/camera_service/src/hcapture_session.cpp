@@ -672,19 +672,21 @@ void HCaptureSession::ReleaseStreams()
 
 int32_t HCaptureSession::ReleaseInner()
 {
+    MEDIA_INFO_LOG("HCaptureSession::ReleaseInner enter");
     return Release(pid_);
 }
 
 int32_t HCaptureSession::Release(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(sessionLock_);
-    MEDIA_DEBUG_LOG("HCaptureSession::Release pid(%{public}d).", pid);
+    MEDIA_INFO_LOG("HCaptureSession::Release pid(%{public}d).", pid);
     auto it = session_.find(pid);
     if (it == session_.end()) {
         MEDIA_DEBUG_LOG("HCaptureSession::Release session for pid(%{public}d) already released.", pid);
         return CAMERA_OK;
     }
     ReleaseStreams();
+    tempCameraDevices_.clear();
     if (streamOperatorCallback_ != nullptr) {
         streamOperatorCallback_->SetCaptureSession(nullptr);
         streamOperatorCallback_ = nullptr;
@@ -698,7 +700,11 @@ int32_t HCaptureSession::Release(pid_t pid)
         StopUsingPermissionCallback(callerToken_, ACCESS_CAMERA);
         UnregisterPermissionCallback(callerToken_);
     }
+    tempStreams_.clear();
+    sessionState_.clear();
     ClearCaptureSession(pid);
+    sessionCallback_ = nullptr;
+    cameraHostManager_ = nullptr;
     return CAMERA_OK;
 }
 
@@ -725,6 +731,10 @@ void HCaptureSession::UnregisterPermissionCallback(const uint32_t callingTokenId
     int32_t res = Security::AccessToken::AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr_);
     if (res != CAMERA_OK) {
         MEDIA_ERR_LOG("UnRegisterPermStateChangeCallback failed.");
+    }
+    if (callbackPtr_) {
+        callbackPtr_->SetCaptureSession(nullptr);
+        callbackPtr_ = nullptr;
     }
     MEDIA_DEBUG_LOG("after tokenId:%{public}d unregister", callingTokenId);
 }
@@ -817,6 +827,10 @@ void HCaptureSession::StopUsingPermissionCallback(const uint32_t callingTokenId,
     if (res != CAMERA_OK) {
         MEDIA_ERR_LOG("StopUsingPermissionCallback failed.");
     }
+    if (cameraUseCallbackPtr_) {
+        cameraUseCallbackPtr_->SetCaptureSession(nullptr);
+        cameraUseCallbackPtr_ = nullptr;
+    }
 }
 
 void PermissionStatusChangeCb::SetCaptureSession(sptr<HCaptureSession> captureSession)
@@ -838,7 +852,9 @@ void CameraUseStateChangeCb::SetCaptureSession(sptr<HCaptureSession> captureSess
 
 void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessTokenID tokenId, bool isShowing)
 {
-    MEDIA_DEBUG_LOG("enter CameraUseStateChangeNotify tokenId:%{public}d", tokenId);
+    const int32_t delayProcessTime = 200000;
+    usleep(delayProcessTime);
+    MEDIA_INFO_LOG("enter CameraUseStateChangeNotify tokenId:%{public}d", tokenId);
     if ((isShowing == false) && (captureSession_ != nullptr)) {
         captureSession_->ReleaseInner();
     }

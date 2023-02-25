@@ -54,6 +54,7 @@ public:
 class VideoOutput : public CaptureOutput {
 public:
     explicit VideoOutput(sptr<IStreamRepeat> &streamRepeat);
+    virtual ~VideoOutput();
 
     /**
      * @brief Releases a instance of the VideoOutput.

@@ -33,6 +33,9 @@ CameraProfileNapi::~CameraProfileNapi()
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
+    if (cameraProfile_) {
+        cameraProfile_ = nullptr;
+    }
 }
 
 void CameraProfileNapi::CameraProfileNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)

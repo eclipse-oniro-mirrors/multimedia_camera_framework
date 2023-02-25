@@ -140,6 +140,12 @@ PreviewOutputNapi::~PreviewOutputNapi()
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
+    if (previewOutput_) {
+        previewOutput_ = nullptr;
+    }
+    if (previewCallback_) {
+        previewCallback_ = nullptr;
+    }
 }
 
 void PreviewOutputNapi::PreviewOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)

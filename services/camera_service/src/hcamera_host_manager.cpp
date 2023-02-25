@@ -97,6 +97,12 @@ HCameraHostManager::CameraHostInfo::CameraHostInfo(HCameraHostManager* cameraHos
 HCameraHostManager::CameraHostInfo::~CameraHostInfo()
 {
     MEDIA_INFO_LOG("CameraHostInfo ~CameraHostInfo");
+    cameraHostManager_ = nullptr;
+    cameraHostProxy_ = nullptr;
+    for (unsigned i = 0; i < devices_.size(); i++) {
+        devices_[i] = nullptr;
+    }
+    devices_.clear();
 }
 
 bool HCameraHostManager::CameraHostInfo::Init()
@@ -369,6 +375,17 @@ HCameraHostManager::HCameraHostManager(StatusCallback* statusCallback)
 HCameraHostManager::~HCameraHostManager()
 {
     statusCallback_ = nullptr;
+    for (auto it = cameraDevices_.begin(); it != cameraDevices_.end(); it++) {
+        if (it->second) {
+            it->second = nullptr;
+        }
+    }
+    cameraDevices_.clear();
+
+    for (unsigned i = 0; i < cameraHostInfos_.size(); i++) {
+        cameraHostInfos_[i] = nullptr;
+    }
+    cameraHostInfos_.clear();
 }
 
 int32_t HCameraHostManager::Init()
@@ -404,12 +421,16 @@ void HCameraHostManager::DeInit()
 void HCameraHostManager::AddCameraDevice(const std::string& cameraId, sptr<ICameraDeviceService> cameraDevice)
 {
     std::lock_guard<std::mutex> lock(deviceMutex_);
-    cameraDevices_.emplace(cameraId, cameraDevice);
+    cameraDevices_[cameraId] = cameraDevice;
 }
 
 void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId)
 {
     std::lock_guard<std::mutex> lock(deviceMutex_);
+    auto it = cameraDevices_.find(cameraId);
+    if (it != cameraDevices_.end()) {
+        it->second = nullptr;
+    }
     cameraDevices_.erase(cameraId);
 }
 
@@ -563,6 +584,7 @@ void HCameraHostManager::RemoveCameraHost(const std::string& svcName)
             CloseCameraDevice(cameraId);
         }
     }
+    *it = nullptr;
     cameraHostInfos_.erase(it);
 }
 

@@ -257,7 +257,6 @@ private:
     static thread_local napi_ref errorMetaOutputRef_;
     napi_env env_;
     napi_ref wrapper_;
-    sptr<CameraManager> cameraManager_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
