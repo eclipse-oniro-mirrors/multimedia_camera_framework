@@ -77,6 +77,12 @@ ohos_shared_library("camera_framework") {
   if (target_cpu == "arm") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
   }
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "../../../cfi_blocklist.txt"
+  }
 
   public_configs = [
     ":camera_framework_public_config",

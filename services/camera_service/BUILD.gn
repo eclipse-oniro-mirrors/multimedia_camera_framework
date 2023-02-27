@@ -42,6 +42,12 @@ ohos_shared_library("camera_service") {
     "-fPIC",
     "-Wall",
   ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "../../cfi_blocklist.txt"
+  }
 
   include_dirs = [
     "//drivers/peripheral/display/interfaces/include",

@@ -68,6 +68,12 @@ ohos_shared_library("camera_napi") {
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
   ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "../../../../cfi_blocklist.txt"
+  }
   cflags = [ "-fPIC" ]
   cflags_cc = cflags
   relative_install_dir = "module/multimedia"
