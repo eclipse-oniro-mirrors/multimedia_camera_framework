@@ -799,6 +799,10 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
         auto itr = metaToFwCameraFormat_.find(static_cast<camera_format_t>(item.data.i32[i]));
         if (itr != metaToFwCameraFormat_.end()) {
             format = itr->second;
+        } else {
+            format = CAMERA_FORMAT_INVALID;
+            MEDIA_ERR_LOG("format %{public}d is not supported now", item.data.i32[i]);
+            continue;
         }
         size.width = item.data.i32[i + widthOffset];
         size.height = item.data.i32[i + heightOffset];
