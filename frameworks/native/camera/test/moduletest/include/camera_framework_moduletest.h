@@ -52,6 +52,9 @@ public:
     std::vector<Size> videoSizes_;
     std::vector<int32_t> videoFrameRates_;
 
+    std::vector<Profile> previewProfiles;
+    std::vector<Profile> photoProfiles;
+    std::vector<VideoProfile> videoProfiles;
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
     static void SetUpTestCase(void);
 
@@ -79,6 +82,7 @@ public:
                                  int32_t photoHeight, int32_t videoWidth, int32_t videoHeight);
     void TestUnSupportedResolution(int32_t previewWidth, int32_t previewHeight, int32_t photoWidth,
                                    int32_t photoHeight, int32_t videoWidth, int32_t videoHeight);
+    bool IsSupportNow();
 };
 } // CameraStandard
 } // OHOS

@@ -393,10 +393,6 @@ int32_t CaptureSession::UpdateSetting(std::shared_ptr<Camera::CameraMetadata> ch
         return CameraErrorCode::SUCCESS;
     }
 
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("CaptureSession::UpdateSetting Failed Session Not Commited");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
     if (!inputDevice_ || !((sptr<CameraInput> &)inputDevice_)->GetCameraDevice()) {
         MEDIA_ERR_LOG("CaptureSession::UpdateSetting Failed inputDevice_ is nullptr");
         return CameraErrorCode::SUCCESS;
@@ -1816,11 +1812,6 @@ void CaptureSession::SetCaptureMetadataObjectTypes(std::set<camera_face_detect_m
 
 void CaptureSession::SetFrameRateRange(const std::vector<int32_t>& frameRateRange)
 {
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("UpdateConfigSetting: inputDevice is null");
-        return;
-    }
-
     std::vector<int32_t> videoFrameRateRange = frameRateRange;
     this->LockForControl();
     if (!this->changedMetadata_->addEntry(OHOS_CONTROL_FPS_RANGES,
