@@ -1274,7 +1274,7 @@ Point CaptureSession::CoordinateTransform(Point point)
 {
     MEDIA_DEBUG_LOG("CaptureSession::CoordinateTransform begin x: %{public}f, y: %{public}f", point.x, point.y);
     Point unifyPoint = point;
-    if (!inputDevice_ || inputDevice_->GetCameraDeviceInfo()) {
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("CaptureSession::CoordinateTransform cameraInput is nullptr");
         return unifyPoint;
     }
