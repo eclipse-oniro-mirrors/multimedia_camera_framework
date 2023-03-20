@@ -19,8 +19,8 @@
 #include "camera_metadata_info.h"
 #include "icamera_device_service_callback.h"
 #include "iremote_broker.h"
-#include "v1_0/icamera_device.h"
-#include "v1_0/icamera_host.h"
+#include "icamera_device.h"
+#include "icamera_host.h"
 
 namespace OHOS {
 namespace CameraStandard {
