@@ -53,8 +53,8 @@ static std::string GetClientBundle(int uid)
         return bundleName;
     }
 
-    auto result = bms->GetBundleNameForUid(uid, bundleName);
-    if (!result) {
+    auto result = bms->GetNameForUid(uid, bundleName);
+    if (result != ERR_OK) {
         MEDIA_ERR_LOG("GetBundleNameForUid fail");
         return "";
     }
