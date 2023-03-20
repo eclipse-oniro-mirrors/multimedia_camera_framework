@@ -114,7 +114,7 @@ int32_t HCameraDevice::Open()
     auto conflictDevices = cameraHostManager_->CameraConflictDetection(cameraID_);
     // Destory conflict devices
     for (auto &i : conflictDevices) {
-        i->OnError(DEVICE_PREEMPT, 0);
+        static_cast<HCameraDevice*>(i.GetRefPtr())->OnError(DEVICE_PREEMPT,0);
         i->Close();
     }
     if (deviceHDICallback_ == nullptr) {
