@@ -19,6 +19,8 @@
 #include "camera_metadata_info.h"
 #include "icamera_device_service_callback.h"
 #include "iremote_broker.h"
+#include "v1_0/icamera_device.h"
+#include "v1_0/icamera_host.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -39,6 +41,8 @@ public:
     virtual int32_t EnableResult(std::vector<int32_t> &results) = 0;
 
     virtual int32_t DisableResult(std::vector<int32_t> &results) = 0;
+
+    virtual int32_t OnError(const ErrorType type, const int32_t errorMsg) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ICameraDeviceService");
 };

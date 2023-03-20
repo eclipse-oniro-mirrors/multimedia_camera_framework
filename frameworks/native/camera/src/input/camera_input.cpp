@@ -46,7 +46,8 @@ public:
         MEDIA_ERR_LOG("CameraDeviceServiceCallback::OnError() is called!, errorType: %{public}d, errorMsg: %{public}d",
                       errorType, errorMsg);
         if (camInput_ != nullptr && camInput_->GetErrorCallback() != nullptr) {
-            camInput_->GetErrorCallback()->OnError(errorType, errorMsg);
+            int32_t serviceErrorType = ServiceToCameraError(errorType);
+            camInput_->GetErrorCallback()->OnError(serviceErrorType, errorMsg);
         } else {
             MEDIA_INFO_LOG("CameraDeviceServiceCallback::ErrorCallback not set!, Discarding callback");
         }
