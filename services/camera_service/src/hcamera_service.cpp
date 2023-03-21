@@ -415,6 +415,7 @@ int32_t HCameraService::UnSetMuteCallback(pid_t pid)
         MEDIA_INFO_LOG("HCameraDevice::UnSetMuteCallback cameraMuteServiceCallbacks_ is not empty, reset it");
         auto it = cameraMuteServiceCallbacks_.find(pid);
         if ((it != cameraMuteServiceCallbacks_.end()) && (it->second)) {
+            it->second = nullptr;
             cameraMuteServiceCallbacks_.erase(it);
         }
     }
