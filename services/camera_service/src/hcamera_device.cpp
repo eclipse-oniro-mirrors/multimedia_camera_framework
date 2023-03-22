@@ -102,13 +102,6 @@ int32_t HCameraDevice::Open()
     if (isOpenedCameraDevice_) {
         MEDIA_ERR_LOG("HCameraDevice::Open failed, camera is busy");
     }
-    if (deviceHDICallback_ == nullptr) {
-        deviceHDICallback_ = new(std::nothrow) CameraDeviceCallback(this);
-        if (deviceHDICallback_ == nullptr) {
-            MEDIA_ERR_LOG("HCameraDevice::Open CameraDeviceCallback allocation failed");
-            return CAMERA_ALLOC_ERROR;
-        }
-    }
     bool isAllowed = true;
     if (IsValidTokenId(callerToken_)) {
         isAllowed = Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken_, ACCESS_CAMERA);
@@ -121,7 +114,15 @@ int32_t HCameraDevice::Open()
     auto conflictDevices = cameraHostManager_->CameraConflictDetection(cameraID_);
     // Destory conflict devices
     for (auto &i : conflictDevices) {
+        static_cast<HCameraDevice*>(i.GetRefPtr())->OnError(DEVICE_PREEMPT, 0);
         i->Close();
+    }
+    if (deviceHDICallback_ == nullptr) {
+        deviceHDICallback_ = new(std::nothrow) CameraDeviceCallback(this);
+        if (deviceHDICallback_ == nullptr) {
+            MEDIA_ERR_LOG("HCameraDevice::Open CameraDeviceCallback allocation failed");
+            return CAMERA_ALLOC_ERROR;
+        }
     }
     MEDIA_INFO_LOG("HCameraDevice::Open Opening camera device: %{public}s", cameraID_.c_str());
     errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, deviceHDICallback_, hdiCameraDevice_);
