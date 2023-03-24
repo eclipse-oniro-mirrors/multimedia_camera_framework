@@ -47,6 +47,7 @@ public:
     void DumpStreamInfo(std::string& dumpString) override;
 
 private:
+    void SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_);
     sptr<IStreamCaptureCallback> streamCaptureCallback_;
     std::mutex callbackLock_;
 };
