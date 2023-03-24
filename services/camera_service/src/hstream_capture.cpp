@@ -130,7 +130,7 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
     MEDIA_INFO_LOG("HStreamCapture::Capture Capture set rotation camera position %{public}d", cameraPosition);
 
     // rotation from application
-    int32_t rotationValue = 0
+    int32_t rotationValue = 0;
     result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_ORIENTATION, &item);
     if (result == CAM_META_SUCCESS) {
         rotationValue = item.data.i32[0];
