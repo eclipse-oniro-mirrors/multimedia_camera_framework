@@ -102,7 +102,7 @@ void HStreamCapture::PrintDebugLog(const std::shared_ptr<OHOS::Camera::CameraMet
 
     // debug log for capture mirror
     result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(),
-                                                    OHOS_CONTROL_CAPTURE_MIRROR, &item);
+                                                   OHOS_CONTROL_CAPTURE_MIRROR, &item);
     if (result != CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_CAPTURE_MIRROR tag");
     } else {
@@ -154,7 +154,7 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
     if (result != CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("HStreamCapture::Capture set rotation Failed to find OHOS_JPEG_ORIENTATION tag");
     } else {
-        MEDIA_DEBUG_LOG("HStreamCapture::Capture set rotation find OHOS_JPEG_ORIENTATION value = %{public}d", 
+        MEDIA_DEBUG_LOG("HStreamCapture::Capture set rotation find OHOS_JPEG_ORIENTATION value = %{public}d",
                         item.data.i32[0]);
     }
     if (!status) {
