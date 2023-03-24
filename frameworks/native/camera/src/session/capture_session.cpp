@@ -841,8 +841,8 @@ Point CaptureSession::GetMeteringPoint()
     }
     exposurePoint.x = item.data.f[0];
     exposurePoint.y = item.data.f[1];
-
-    return exposurePoint;
+    Point unifyExposurePoint = CoordinateTransform(exposurePoint);
+    return unifyExposurePoint;
 }
 
 int32_t CaptureSession::GetMeteringPoint(Point &exposurePoint)
@@ -866,7 +866,7 @@ int32_t CaptureSession::GetMeteringPoint(Point &exposurePoint)
     }
     exposurePoint.x = item.data.f[0];
     exposurePoint.y = item.data.f[1];
-
+    exposurePoint = CoordinateTransform(exposurePoint);
     return CameraErrorCode::SUCCESS;
 }
 
@@ -1302,8 +1302,8 @@ Point CaptureSession::GetFocusPoint()
     }
     focusPoint.x = item.data.f[0];
     focusPoint.y = item.data.f[1];
-
-    return focusPoint;
+    Point unifyFocusPoint = CoordinateTransform(focusPoint);
+    return unifyFocusPoint;
 }
 
 int32_t CaptureSession::GetFocusPoint(Point &focusPoint)
@@ -1327,7 +1327,7 @@ int32_t CaptureSession::GetFocusPoint(Point &focusPoint)
     }
     focusPoint.x = item.data.f[0];
     focusPoint.y = item.data.f[1];
-
+    focusPoint = CoordinateTransform(focusPoint);
     return CameraErrorCode::SUCCESS;
 }
 
