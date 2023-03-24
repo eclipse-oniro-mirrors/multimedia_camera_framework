@@ -46,6 +46,7 @@ public:
     int32_t OnFrameShutter(int32_t captureId, uint64_t timestamp);
     void DumpStreamInfo(std::string& dumpString) override;
     void SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_);
+    void PrintDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_);
 
 private:
     sptr<IStreamCaptureCallback> streamCaptureCallback_;

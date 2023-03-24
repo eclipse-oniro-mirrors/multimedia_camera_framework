@@ -69,23 +69,8 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureMetadataSetting_ = nullptr;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(captureInfoPhoto.captureSetting_, captureMetadataSetting_);
     if (captureMetadataSetting_ != nullptr) {
-        camera_metadata_item_t item;
-        int result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_QUALITY, &item);
-        if (result != CAM_META_SUCCESS) {
-            MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_JPEG_QUALITY tag");
-        } else {
-            MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_JPEG_QUALITY value = %{public}d", item.data.u8[0]);
-        }
-
-        // debug log for capture mirror
-        result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(),
-                                                      OHOS_CONTROL_CAPTURE_MIRROR, &item);
-        if (result != CAM_META_SUCCESS) {
-            MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_CAPTURE_MIRROR tag");
-        } else {
-            MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_CAPTURE_MIRROR value = %{public}d", item.data.u8[0]);
-        }
-
+        // print quality, mirror log
+        PrintDebugLog(captureMetadataSetting_);
         // convert rotation with application set rotation
         SetRotation(captureMetadataSetting_);
 
@@ -105,9 +90,31 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     return ret;
 }
 
-void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_) {
+void HStreamCapture::PrintDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_)
+{
+    camera_metadata_item_t item;
+    int result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_QUALITY, &item);
+    if (result != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_JPEG_QUALITY tag");
+    } else {
+        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_JPEG_QUALITY value = %{public}d", item.data.u8[0]);
+    }
+
+    // debug log for capture mirror
+    result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(),
+                                                    OHOS_CONTROL_CAPTURE_MIRROR, &item);
+    if (result != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_CAPTURE_MIRROR tag");
+    } else {
+        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_CAPTURE_MIRROR value = %{public}d", item.data.u8[0]);
+    }
+}
+
+void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_)
+{
     // set orientation for capture
     // sensor orientation, counter-clockwise rotation
+    camera_metadata_item_t item;
     int result = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_SENSOR_ORIENTATION, &item);
     if (result != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("HStreamCapture::Capture set rotation get sensor orientation failed");
@@ -132,6 +139,9 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
 
     // real rotation
     int32_t rotation = sensorOrientation + rotationValue;
+    if (rotation >= CAPTURE_ROTATE_360) {
+        rotation = rotation - CAPTURE_ROTATE_360;
+    }
     MEDIA_INFO_LOG("HStreamCapture::Capture set rotation camera real rotation %{public}d", rotation);
 
     bool status = false;
@@ -144,7 +154,8 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
     if (result != CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("HStreamCapture::Capture set rotation Failed to find OHOS_JPEG_ORIENTATION tag");
     } else {
-        MEDIA_DEBUG_LOG("HStreamCapture::Capture set rotation find OHOS_JPEG_ORIENTATION value = %{public}d", item.data.i32[0]);
+        MEDIA_DEBUG_LOG("HStreamCapture::Capture set rotation find OHOS_JPEG_ORIENTATION value = %{public}d", 
+                        item.data.i32[0]);
     }
     if (!status) {
         MEDIA_ERR_LOG("HStreamCapture::Capture set rotation Failed to set Rotation");
