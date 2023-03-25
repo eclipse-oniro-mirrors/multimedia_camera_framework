@@ -21,6 +21,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+static const int32_t CAPTURE_ROTATE_360 = 360;
 HStreamCapture::HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height)
     : HStreamCommon(StreamType::CAPTURE, producer, format, width, height)
 {}
@@ -44,7 +45,6 @@ void HStreamCapture::SetStreamInfo(StreamInfo &streamInfo)
 int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureSettings)
 {
     CAMERA_SYNC_TRACE;
-
     if (streamOperator_ == nullptr) {
         return CAMERA_INVALID_STATE;
     }
@@ -53,7 +53,6 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         MEDIA_ERR_LOG("HStreamCapture::Capture Failed to allocate a captureId");
         return ret;
     }
-    
     CaptureInfo captureInfoPhoto;
     captureInfoPhoto.streamIds_ = {streamId_};
     std::vector<uint8_t> setting;
@@ -70,24 +69,16 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureMetadataSetting_ = nullptr;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(captureInfoPhoto.captureSetting_, captureMetadataSetting_);
     if (captureMetadataSetting_ != nullptr) {
-        camera_metadata_item_t item;
-        int result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_QUALITY, &item);
-        if (result != CAM_META_SUCCESS) {
-            MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_JPEG_QUALITY tag");
-        } else {
-            MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_JPEG_QUALITY value = %{public}d", item.data.u8[0]);
-        }
+        // print quality, mirror log
+        PrintDebugLog(captureMetadataSetting_);
+        // convert rotation with application set rotation
+        SetRotation(captureMetadataSetting_);
 
-        // debug log for capture mirror
-        result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(),
-                                                      OHOS_CONTROL_CAPTURE_MIRROR, &item);
-        if (result != CAM_META_SUCCESS) {
-            MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_CAPTURE_MIRROR tag");
-        } else {
-            MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_CAPTURE_MIRROR value = %{public}d", item.data.u8[0]);
-        }
+        // update settings
+        std::vector<uint8_t> finalSetting;
+        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(captureMetadataSetting_, finalSetting);
+        captureInfoPhoto.captureSetting_ = finalSetting;
     }
-
     MEDIA_INFO_LOG("HStreamCapture::Capture Starting photo capture with capture ID: %{public}d", curCaptureID_);
     CamRetCode rc = (CamRetCode)(streamOperator_->Capture(curCaptureID_, captureInfoPhoto, false));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
@@ -97,6 +88,78 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     ReleaseCaptureId(curCaptureID_);
     curCaptureID_ = 0;
     return ret;
+}
+
+void HStreamCapture::PrintDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_)
+{
+    camera_metadata_item_t item;
+    int result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_QUALITY, &item);
+    if (result != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_JPEG_QUALITY tag");
+    } else {
+        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_JPEG_QUALITY value = %{public}d", item.data.u8[0]);
+    }
+
+    // debug log for capture mirror
+    result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(),
+                                                   OHOS_CONTROL_CAPTURE_MIRROR, &item);
+    if (result != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_CAPTURE_MIRROR tag");
+    } else {
+        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_CAPTURE_MIRROR value = %{public}d", item.data.u8[0]);
+    }
+}
+
+void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_)
+{
+    // set orientation for capture
+    // sensor orientation, counter-clockwise rotation
+    camera_metadata_item_t item;
+    int result = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_SENSOR_ORIENTATION, &item);
+    if (result != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("HStreamCapture::Capture set rotation get sensor orientation failed");
+    }
+    int32_t sensorOrientation = item.data.i32[0];
+    MEDIA_INFO_LOG("HStreamCapture::Capture Capture set rotation sensor orientation %{public}d", sensorOrientation);
+
+    result = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
+    if (result != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("HStreamCapture::Capture Capture set rotation get camera position failed");
+    }
+    camera_position_enum_t cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
+    MEDIA_INFO_LOG("HStreamCapture::Capture Capture set rotation camera position %{public}d", cameraPosition);
+
+    // rotation from application
+    int32_t rotationValue = 0;
+    result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_ORIENTATION, &item);
+    if (result == CAM_META_SUCCESS) {
+        rotationValue = item.data.i32[0];
+    }
+    MEDIA_INFO_LOG("HStreamCapture::Capture set rotation app rotationValue %{public}d", rotationValue);
+
+    // real rotation
+    int32_t rotation = sensorOrientation + rotationValue;
+    if (rotation >= CAPTURE_ROTATE_360) {
+        rotation = rotation - CAPTURE_ROTATE_360;
+    }
+    MEDIA_INFO_LOG("HStreamCapture::Capture set rotation camera real rotation %{public}d", rotation);
+
+    bool status = false;
+    if (result == CAM_META_ITEM_NOT_FOUND) {
+        status = captureMetadataSetting_->addEntry(OHOS_JPEG_ORIENTATION, &rotation, 1);
+    } else if (result == CAM_META_SUCCESS) {
+        status = captureMetadataSetting_->updateEntry(OHOS_JPEG_ORIENTATION, &rotation, 1);
+    }
+    result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_ORIENTATION, &item);
+    if (result != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HStreamCapture::Capture set rotation Failed to find OHOS_JPEG_ORIENTATION tag");
+    } else {
+        MEDIA_DEBUG_LOG("HStreamCapture::Capture set rotation find OHOS_JPEG_ORIENTATION value = %{public}d",
+                        item.data.i32[0]);
+    }
+    if (!status) {
+        MEDIA_ERR_LOG("HStreamCapture::Capture set rotation Failed to set Rotation");
+    }
 }
 
 int32_t HStreamCapture::CancelCapture()
