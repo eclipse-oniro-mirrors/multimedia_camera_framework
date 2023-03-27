@@ -477,9 +477,12 @@ int32_t HCameraHostManager::GetCameraAbility(std::string &cameraId,
 
 std::vector<sptr<ICameraDeviceService>> HCameraHostManager::CameraConflictDetection(const std::string& cameraId)
 {
+    MEDIA_INFO_LOG("HCameraHostManager::CameraConflictDetection CameraConflictDetection enter");
     std::vector<sptr<ICameraDeviceService>> devicesNeedClose;
     {
         std::lock_guard<std::mutex> lock(deviceMutex_);
+        MEDIA_INFO_LOG("HCameraHostManager::CameraConflictDetection "
+                       "cameraDevices_ size : %{public}zu", cameraDevices_.size());
         for (auto it = cameraDevices_.begin(); it != cameraDevices_.end(); it++) {
             if (it->second != nullptr) {
                 if (it->first == cameraId) {
@@ -496,6 +499,8 @@ std::vector<sptr<ICameraDeviceService>> HCameraHostManager::CameraConflictDetect
             }
         }
     }
+    MEDIA_INFO_LOG("HCameraHostManager::CameraConflictDetection "
+                   "devicesNeedClose size : %{public}zu", devicesNeedClose.size());
     return devicesNeedClose;
 }
 
