@@ -179,6 +179,14 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
         return CAMERA_ALLOC_ERROR;
     }
 
+    MEDIA_INFO_LOG("HCameraService::CreateCameraDevice CameraConflictDetection");
+    auto conflictDevices = cameraHostManager_->CameraConflictDetection(cameraId);
+    // Destory conflict devices
+    for (auto &i : conflictDevices) {
+        static_cast<HCameraDevice*>(i.GetRefPtr())->OnError(DEVICE_PREEMPT, 0);
+        i->Close();
+    }
+
     sptr<HCameraDevice> cameraDevice = new(std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     if (cameraDevice == nullptr) {
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice HCameraDevice allocation failed");
