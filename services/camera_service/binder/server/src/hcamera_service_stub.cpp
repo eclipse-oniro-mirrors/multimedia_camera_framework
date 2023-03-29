@@ -48,6 +48,7 @@ HCameraServiceStub::~HCameraServiceStub()
 int HCameraServiceStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
+    DisableJeMalloc();
     if (data.ReadInterfaceToken() != GetDescriptor()) {
         return -1;
     }

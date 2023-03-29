@@ -20,6 +20,7 @@
 #include <limits.h>
 #include "v1_0/types.h"
 #include "camera_metadata_info.h"
+#include <malloc.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -52,6 +53,8 @@ extern std::map<int, std::string> g_cameraFocusMode;
 extern std::map<int, std::string> g_cameraExposureMode;
 extern std::map<int, std::string> g_cameraFlashMode;
 extern std::map<int, std::string> g_cameraVideoStabilizationMode;
+
+void DisableJeMalloc();
 
 int32_t HdiToServiceError(CamRetCode ret);
 
