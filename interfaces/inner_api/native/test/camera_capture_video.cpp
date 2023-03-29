@@ -690,7 +690,7 @@ int32_t main(int32_t argc, char **argv)
     SetSelfTokenID(tokenId);
     OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 
-    int32_t result = 0; // Default result
+    [[maybe_unused]] int32_t result = 0; // Default result
     std::shared_ptr<CameraCaptureVideo> testObj =
         std::make_shared<CameraCaptureVideo>();
     result = testObj->StartPreview();
