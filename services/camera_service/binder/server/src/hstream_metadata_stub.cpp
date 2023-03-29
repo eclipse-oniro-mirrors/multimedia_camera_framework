@@ -15,6 +15,7 @@
 
 #include "hstream_metadata_stub.h"
 #include "camera_log.h"
+#include "camera_util.h"
 #include "remote_request_code.h"
 
 namespace OHOS {
@@ -22,6 +23,7 @@ namespace CameraStandard {
 int HStreamMetadataStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
+    DisableJeMalloc();
     int errCode = -1;
 
     if (data.ReadInterfaceToken() != GetDescriptor()) {
