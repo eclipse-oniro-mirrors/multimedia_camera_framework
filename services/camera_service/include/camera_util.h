@@ -54,7 +54,14 @@ extern std::map<int, std::string> g_cameraExposureMode;
 extern std::map<int, std::string> g_cameraFlashMode;
 extern std::map<int, std::string> g_cameraVideoStabilizationMode;
 
-void DisableJeMalloc();
+inline void DisableJeMalloc()
+{
+#ifdef CONFIG_USE_JEMALLOC_DFX_INTF
+    mallopt(M_SET_THREAD_CACHE, M_THREAD_CACHE_DISABLE);
+    mallopt(M_DELAYED_FREE, M_DELAYED_FREE_DISABLE);
+    mallopt(M_FLUSH_THREAD_CACHE, 0);
+#endif
+}
 
 int32_t HdiToServiceError(CamRetCode ret);
 

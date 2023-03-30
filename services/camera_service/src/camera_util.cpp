@@ -87,12 +87,6 @@ std::map<int, std::string> g_cameraVideoStabilizationMode = {
 static std::mutex g_captureIdsMutex;
 static std::map<int32_t, bool> g_captureIds;
 
-void DisableJeMalloc()
-{
-    (void)mallopt(M_SET_THREAD_CACHE, M_THREAD_CACHE_DISABLE);
-    (void)mallopt(M_DELAYED_FREE, M_DELAYED_FREE_DISABLE);
-}
-
 int32_t HdiToServiceError(CamRetCode ret)
 {
     enum CamServiceError err = CAMERA_UNKNOWN_ERROR;
