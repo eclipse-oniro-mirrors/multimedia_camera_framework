@@ -131,17 +131,25 @@ int32_t HCameraDevice::Open()
         if (updateSettings_ != nullptr) {
             std::vector<uint8_t> setting;
             OHOS::Camera::MetadataUtils::ConvertMetadataToVec(updateSettings_, setting);
-            CamRetCode rc = (CamRetCode)(hdiCameraDevice_->UpdateSettings(setting));
-            if (rc != HDI::Camera::V1_0::NO_ERROR) {
-                MEDIA_ERR_LOG("HCameraDevice::Open Update setting failed with error Code: %{public}d", rc);
-                return HdiToServiceError(rc);
+            if (hdiCameraDevice_) {
+                 CamRetCode rc = (CamRetCode)(hdiCameraDevice_->UpdateSettings(setting));
+                if (rc != HDI::Camera::V1_0::NO_ERROR) {
+                    MEDIA_ERR_LOG("HCameraDevice::Open Update setting failed with error Code: %{public}d", rc);
+                    return HdiToServiceError(rc);
+                }
+            } else {
+                MEDIA_ERR_LOG("HCameraDevice::Open UpdateSettings hdiCameraDevice_ is nullptr");
             }
             updateSettings_ = nullptr;
             MEDIA_DEBUG_LOG("HCameraDevice::Open Updated device settings");
         }
-        errorCode = HdiToServiceError((CamRetCode)(hdiCameraDevice_->SetResultMode(ON_CHANGED)));
-        cameraHostManager_->AddCameraDevice(cameraID_, this);
-        (void)OnCameraStatus(cameraID_, CAMERA_STATUS_UNAVAILABLE);
+        if (hdiCameraDevice_) {
+            errorCode = HdiToServiceError((CamRetCode)(hdiCameraDevice_->SetResultMode(ON_CHANGED)));
+            cameraHostManager_->AddCameraDevice(cameraID_, this);
+            (void)OnCameraStatus(cameraID_, CAMERA_STATUS_UNAVAILABLE);
+        } else {
+            MEDIA_ERR_LOG("HCameraDevice::Open HdiToServiceError hdiCameraDevice_ is nullptr");
+        }
     } else {
         MEDIA_ERR_LOG("HCameraDevice::Open Failed to open camera");
     }
@@ -178,10 +186,15 @@ int32_t HCameraDevice::Release()
 
 int32_t HCameraDevice::GetEnabledResults(std::vector<int32_t> &results)
 {
-    CamRetCode rc = (CamRetCode)(hdiCameraDevice_->GetEnabledResults(results));
-    if (rc != HDI::Camera::V1_0::NO_ERROR) {
-        MEDIA_ERR_LOG("HCameraDevice::GetEnabledResults failed with error Code:%{public}d", rc);
-        return HdiToServiceError(rc);
+    if (hdiCameraDevice_) {
+        CamRetCode rc = (CamRetCode)(hdiCameraDevice_->GetEnabledResults(results));
+        if (rc != HDI::Camera::V1_0::NO_ERROR) {
+            MEDIA_ERR_LOG("HCameraDevice::GetEnabledResults failed with error Code:%{public}d", rc);
+            return HdiToServiceError(rc);
+        }
+    } else {
+        MEDIA_ERR_LOG("HCameraDevice::GetEnabledResults GetEnabledResults hdiCameraDevice_ is nullptr");
+        return CAMERA_UNKNOWN_ERROR;
     }
     return CAMERA_OK;
 }
