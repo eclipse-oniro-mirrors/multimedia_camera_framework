@@ -346,8 +346,6 @@ void HCameraService::OnCameraStatus(const std::string& cameraId, CameraStatus st
         if (it.second) {
             it.second->OnCameraStatusChanged(cameraId, status);
         }
-        CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d",
-                                           cameraId.c_str(), status));
     }
 }
 
