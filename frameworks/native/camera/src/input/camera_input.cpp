@@ -105,6 +105,10 @@ int CameraInput::Close()
     } else {
         MEDIA_ERR_LOG("CameraInput::Close() deviceObj_ is nullptr");
     }
+    cameraObj_ = nullptr;
+    deviceObj_ = nullptr;
+    CameraDeviceSvcCallback_ = nullptr;
+    CaptureInput::Release();
     return ServiceToCameraError(retCode);
 }
 
