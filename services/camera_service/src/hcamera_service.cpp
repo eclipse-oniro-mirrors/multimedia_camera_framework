@@ -343,7 +343,9 @@ void HCameraService::OnCameraStatus(const std::string& cameraId, CameraStatus st
                           IPCSkeleton::GetCallingPid());
             continue;
         }
-        it.second->OnCameraStatusChanged(cameraId, status);
+        if (it.second) {
+            it.second->OnCameraStatusChanged(cameraId, status);
+        }
     }
 }
 
@@ -359,7 +361,9 @@ void HCameraService::OnFlashlightStatus(const std::string& cameraId, FlashStatus
                           IPCSkeleton::GetCallingPid());
             continue;
         }
-        it.second->OnFlashlightStatusChanged(cameraId, status);
+        if (it.second) {
+            it.second->OnFlashlightStatusChanged(cameraId, status);
+        }
     }
 }
 
