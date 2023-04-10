@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import {ErrorCallback, AsyncCallback} from './basic';
+import {ErrorCallback, AsyncCallback} from './@ohos.base';
 import { Context } from './app/context';
 
 /**
