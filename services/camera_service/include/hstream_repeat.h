@@ -52,6 +52,7 @@ private:
     bool isVideo_;
     sptr<IStreamRepeatCallback> streamRepeatCallback_;
     std::mutex callbackLock_;
+    std::mutex producerLock_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
