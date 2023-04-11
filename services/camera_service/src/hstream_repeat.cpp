@@ -183,6 +183,7 @@ int32_t HStreamRepeat::OnFrameError(int32_t errorType)
 
 int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer> &producer)
 {
+    std::lock_guard<std::mutex> lock(producerLock_);
     if (producer == nullptr) {
         MEDIA_ERR_LOG("HStreamRepeat::AddDeferredSurface producer is null");
         return CAMERA_INVALID_ARG;
@@ -216,8 +217,13 @@ void HStreamRepeat::SetStreamTransform()
     camera_position_enum_t cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
     MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform camera position %{public}d", cameraPosition);
 
+    std::lock_guard<std::mutex> lock(producerLock_);
+    if (producer_ == nullptr) {
+        MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed because producer is null");
+        return;
+    }
     auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
-    if ((display->GetWidth() < display->GetHeight()) && (producer_ != nullptr)) {
+    if (display->GetWidth() < display->GetHeight()) {
         ret = SurfaceError::SURFACE_ERROR_OK;
         int32_t streamRotation = sensorOrientation;
         if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
@@ -262,6 +268,15 @@ void HStreamRepeat::SetStreamTransform()
         }
         if (ret != SurfaceError::SURFACE_ERROR_OK) {
             MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed %{public}d", ret);
+        }
+    } else {
+        ret = SurfaceError::SURFACE_ERROR_OK;
+        if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
+            ret = producer_->SetTransform(GRAPHIC_FLIP_V);
+            MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform filp for wide side devices");
+        } else {
+            ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
+            MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform none rotate");
         }
     }
 }
