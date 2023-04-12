@@ -34,11 +34,11 @@ VideoOutput::~VideoOutput()
 
 class HStreamRepeatCallbackImpl : public HStreamRepeatCallbackStub {
 public:
-    sptr<VideoOutput> videoOutput_ = nullptr;
+    VideoOutput* videoOutput_ = nullptr;
     HStreamRepeatCallbackImpl() : videoOutput_(nullptr) {
     }
 
-    explicit HStreamRepeatCallbackImpl(const sptr<VideoOutput>& videoOutput) : videoOutput_(videoOutput) {
+    explicit HStreamRepeatCallbackImpl(VideoOutput* videoOutput) : videoOutput_(videoOutput) {
     }
 
     ~HStreamRepeatCallbackImpl()

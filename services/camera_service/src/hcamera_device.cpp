@@ -455,17 +455,16 @@ int32_t HCameraDevice::OnCameraStatus(const std::string& cameraId, CameraStatus 
                    statusSvcCallbacks_.size());
     std::string callbackPids = "[";
     for (auto it : statusSvcCallbacks_) {
-        if (it.second) {
+        auto item = it.second.promote();
+        if (item != nullptr) {
             callbackPids += " " + std::to_string((int)it.first);
+            item->OnCameraStatusChanged(cameraId, status);
         }
     }
     callbackPids += " ]";
     MEDIA_INFO_LOG("HCameraDevice::OnCameraStatus OnCameraStatusChanged callbackPids = %{public}s, "
                    "cameraId = %{public}s, cameraStatus = %{public}d",
                    callbackPids.c_str(), cameraId.c_str(), status);
-    for (auto it : statusSvcCallbacks_) {
-        it.second->OnCameraStatusChanged(cameraId, status);
-    }
     return CAMERA_OK;
 }
 
@@ -506,7 +505,10 @@ CameraDeviceCallback::CameraDeviceCallback(sptr<HCameraDevice> hCameraDevice)
 
 int32_t CameraDeviceCallback::OnError(const ErrorType type, const int32_t errorCode)
 {
-    hCameraDevice_->OnError(type, errorCode);
+    auto item = hCameraDevice_.promote();
+    if (item != nullptr) {
+        item->OnError(type, errorCode);
+    }
     return CAMERA_OK;
 }
 
@@ -514,7 +516,10 @@ int32_t CameraDeviceCallback::OnResult(uint64_t timestamp, const std::vector<uin
 {
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
-    hCameraDevice_->OnResult(timestamp, cameraResult);
+    auto item = hCameraDevice_.promote();
+    if (item != nullptr) {
+        item->OnResult(timestamp, cameraResult);
+    }
     return CAMERA_OK;
 }
 } // namespace CameraStandard

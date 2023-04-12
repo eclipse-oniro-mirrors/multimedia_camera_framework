@@ -101,11 +101,11 @@ CameraVideoStabilizationMode> CaptureSession::fwToMetaVideoStabModes_ = {
 
 class CaptureSessionCallback : public HCaptureSessionCallbackStub {
 public:
-    sptr<CaptureSession> captureSession_ = nullptr;
+    CaptureSession* captureSession_ = nullptr;
     CaptureSessionCallback() : captureSession_(nullptr) {
     }
 
-    explicit CaptureSessionCallback(const sptr<CaptureSession> &captureSession) : captureSession_(captureSession) {
+    explicit CaptureSessionCallback(CaptureSession* captureSession) : captureSession_(captureSession) {
     }
 
     ~CaptureSessionCallback()

@@ -337,13 +337,17 @@ void HCameraService::OnCameraStatus(const std::string& cameraId, CameraStatus st
     MEDIA_INFO_LOG("HCameraService::OnCameraStatus "
                    "callbacks.size = %{public}zu, cameraId = %{public}s, status = %{public}d, pid = %{public}d",
                    cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid());
+    if (status == 2) {
+        devices_[cameraId] = nullptr;
+        devices_.erase(cameraId);
+    }
     for (auto it : cameraServiceCallbacks_) {
-        if (!it.second) {
+        if (it.second == nullptr) {
             MEDIA_ERR_LOG("HCameraService::OnCameraStatus cameraServiceCallback is null, pid = %{public}d",
                           IPCSkeleton::GetCallingPid());
             continue;
         }
-        if (it.second) {
+        if (it.second != nullptr) {
             it.second->OnCameraStatusChanged(cameraId, status);
         }
     }
@@ -356,12 +360,12 @@ void HCameraService::OnFlashlightStatus(const std::string& cameraId, FlashStatus
                    "callbacks.size = %{public}zu, cameraId = %{public}s, status = %{public}d, pid = %{public}d",
                    cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid());
     for (auto it : cameraServiceCallbacks_) {
-        if (!it.second) {
+        if (it.second == nullptr) {
             MEDIA_ERR_LOG("HCameraService::OnCameraStatus cameraServiceCallback is null, pid = %{public}d",
                           IPCSkeleton::GetCallingPid());
             continue;
         }
-        if (it.second) {
+        if (it.second != nullptr) {
             it.second->OnFlashlightStatusChanged(cameraId, status);
         }
     }
@@ -376,10 +380,18 @@ int32_t HCameraService::SetCallback(sptr<ICameraServiceCallback> &callback)
         MEDIA_ERR_LOG("HCameraService::SetCallback callback is null");
         return CAMERA_INVALID_ARG;
     }
+    auto callbackItem = cameraServiceCallbacks_.find(pid);
+    if (callbackItem != cameraServiceCallbacks_.end()) {
+        callbackItem->second = nullptr;
+        (void)cameraServiceCallbacks_.erase(callbackItem);
+    }
     cameraServiceCallbacks_.insert(std::make_pair(pid, callback));
     for (auto it : devices_) {
         MEDIA_INFO_LOG("HCameraService::SetCallback Camera:[%{public}s] SetStatusCallback", it.first.c_str());
-        it.second->SetStatusCallback(cameraServiceCallbacks_);
+        auto item = it.second.promote();
+        if (item != nullptr) {
+            item->SetStatusCallback(cameraServiceCallbacks_);
+        }
     }
     return CAMERA_OK;
 }
@@ -392,13 +404,14 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
     auto cameraIds = camerasForPid_[pid];
     for (size_t i = 0; i < cameraIds.size(); i++) {
         for (auto it : devices_) {
-            if (it.first != cameraIds[i] || !it.second) {
+			auto item = it.second.promote();
+            if (it.first != cameraIds[i] || item != nullptr) {
                 continue;
-            } else if (it.second->IsOpenedCameraDevice()) {
+            } else {
                 MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory pid = %{public}d,Camera:[%{public}s] need close",
                                pid, it.first.c_str());
-                it.second->Close();
-                it.second = nullptr;
+                item->Close();
+                item = nullptr;
             }
         }
     }
@@ -416,7 +429,7 @@ int32_t HCameraService::UnSetCallback(pid_t pid)
     if (!cameraServiceCallbacks_.empty()) {
         MEDIA_INFO_LOG("HCameraDevice::SetStatusCallback statusSvcCallbacks_ is not empty, reset it");
         auto it = cameraServiceCallbacks_.find(pid);
-        if ((it != cameraServiceCallbacks_.end()) && (it->second)) {
+        if ((it != cameraServiceCallbacks_.end()) && (it->second != nullptr)) {
             it->second = nullptr;
             cameraServiceCallbacks_.erase(it);
         }
@@ -425,7 +438,10 @@ int32_t HCameraService::UnSetCallback(pid_t pid)
                    pid, cameraServiceCallbacks_.size());
     for (auto it : devices_) {
         MEDIA_INFO_LOG("HCameraService::UnSetCallback Camera:[%{public}s] SetStatusCallback", it.first.c_str());
-        it.second->SetStatusCallback(cameraServiceCallbacks_);
+        auto item = it.second.promote();
+        if (item != nullptr) {
+            item->SetStatusCallback(cameraServiceCallbacks_);
+        }
     }
     return CAMERA_OK;
 }
@@ -463,7 +479,7 @@ bool HCameraService::IsCameraMuteSupported(std::string cameraId)
     return isMuteSupported;
 }
 
-int32_t HCameraService::UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool muteMode)
+int32_t HCameraService::UpdateMuteSetting(wptr<HCameraDevice> cameraDevice, bool muteMode)
 {
     constexpr uint8_t MUTE_ON = 1;
     constexpr uint8_t MUTE_OFF = 0;
@@ -527,7 +543,10 @@ int32_t HCameraService::MuteCamera(bool muteMode)
             MEDIA_ERR_LOG("HCameraService::MuteCamera not Supported Mute,cameraId: %{public}s", it.first.c_str());
             break;
         }
-        ret = UpdateMuteSetting(it.second, muteMode);
+        auto item = it.second.promote();
+        if (item != nullptr) {
+            ret = UpdateMuteSetting(it.second, muteMode);
+        }
         if (ret != CAMERA_OK) {
             MEDIA_ERR_LOG("HCameraService::MuteCamera UpdateMuteSetting Failed, cameraId: %{public}s",
                           it.first.c_str());
@@ -537,7 +556,9 @@ int32_t HCameraService::MuteCamera(bool muteMode)
     }
     if (!cameraMuteServiceCallbacks_.empty() && ret == CAMERA_OK) {
         for (auto cb : cameraMuteServiceCallbacks_) {
-            cb.second->OnCameraMute(muteMode);
+            if (!cb.second) {
+                cb.second->OnCameraMute(muteMode);
+            }
             CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraMute! current Camera muteMode:%d", muteMode));
         }
     }
