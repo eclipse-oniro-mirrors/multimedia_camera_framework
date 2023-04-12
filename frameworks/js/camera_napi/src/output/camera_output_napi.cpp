@@ -43,6 +43,7 @@ CameraOutputCapabilityNapi::~CameraOutputCapabilityNapi()
 void CameraOutputCapabilityNapi::CameraOutputCapabilityNapiDestructor(
     napi_env env, void* nativeObject, void* finalize_hint)
 {
+    MEDIA_DEBUG_LOG("CameraOutputCapabilityNapiDestructor enter");
     CameraOutputCapabilityNapi* cameraOutputCapabilityNapi =
         reinterpret_cast<CameraOutputCapabilityNapi*>(nativeObject);
     if (cameraOutputCapabilityNapi != nullptr) {
@@ -219,7 +220,7 @@ napi_value CameraOutputCapabilityNapi::CameraOutputCapabilityNapiConstructor(nap
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
                            CameraOutputCapabilityNapi::CameraOutputCapabilityNapiDestructor,
                            nullptr,
-                           &(obj->wrapper_));
+                           nullptr);
         if (status == napi_ok) {
             obj.release();
             MEDIA_ERR_LOG("CameraOutputCapabilityNapiConstructor Success wrapping js to native napi");

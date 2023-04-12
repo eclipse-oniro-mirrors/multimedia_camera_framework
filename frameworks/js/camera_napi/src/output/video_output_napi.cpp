@@ -149,6 +149,7 @@ VideoOutputNapi::~VideoOutputNapi()
 
 void VideoOutputNapi::VideoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
+    MEDIA_DEBUG_LOG(" VideoOutputNapiDestructor enter");
     VideoOutputNapi* videoOutput = reinterpret_cast<VideoOutputNapi*>(nativeObject);
     if (videoOutput != nullptr) {
         videoOutput->~VideoOutputNapi();
@@ -209,7 +210,7 @@ napi_value VideoOutputNapi::VideoOutputNapiConstructor(napi_env env, napi_callba
             obj->videoCallback_ = callback;
 
             status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                               VideoOutputNapi::VideoOutputNapiDestructor, nullptr, &(obj->wrapper_));
+                               VideoOutputNapi::VideoOutputNapiDestructor, nullptr, nullptr);
             if (status == napi_ok) {
                 obj.release();
                 return thisVar;

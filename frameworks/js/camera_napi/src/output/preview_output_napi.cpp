@@ -150,6 +150,7 @@ PreviewOutputNapi::~PreviewOutputNapi()
 
 void PreviewOutputNapi::PreviewOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
+    MEDIA_DEBUG_LOG("PreviewOutputNapiDestructor enter");
     PreviewOutputNapi* cameraObj = reinterpret_cast<PreviewOutputNapi*>(nativeObject);
     if (cameraObj != nullptr) {
         cameraObj->~PreviewOutputNapi();
@@ -207,7 +208,7 @@ napi_value PreviewOutputNapi::PreviewOutputNapiConstructor(napi_env env, napi_ca
             obj->previewCallback_ = callback;
 
             status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                               PreviewOutputNapi::PreviewOutputNapiDestructor, nullptr, &(obj->wrapper_));
+                               PreviewOutputNapi::PreviewOutputNapiDestructor, nullptr, nullptr);
             if (status == napi_ok) {
                 obj.release();
                 return thisVar;
