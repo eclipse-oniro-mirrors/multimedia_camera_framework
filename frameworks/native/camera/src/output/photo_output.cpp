@@ -162,11 +162,11 @@ std::shared_ptr<Camera::CameraMetadata> PhotoCaptureSetting::GetCaptureMetadataS
 
 class HStreamCaptureCallbackImpl : public HStreamCaptureCallbackStub {
 public:
-    sptr<PhotoOutput> photoOutput_ = nullptr;
+    PhotoOutput* photoOutput_ = nullptr;
     HStreamCaptureCallbackImpl() : photoOutput_(nullptr) {
     }
 
-    explicit HStreamCaptureCallbackImpl(const sptr<PhotoOutput>& photoOutput) : photoOutput_(photoOutput) {
+    explicit HStreamCaptureCallbackImpl(PhotoOutput* photoOutput) : photoOutput_(photoOutput) {
     }
 
     ~HStreamCaptureCallbackImpl()

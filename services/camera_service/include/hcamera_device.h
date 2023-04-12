@@ -69,7 +69,7 @@ private:
 
     sptr<ICameraDeviceServiceCallback> deviceSvcCallback_;
     sptr<CameraDeviceCallback> deviceHDICallback_;
-    std::map<int32_t, sptr<ICameraServiceCallback>> statusSvcCallbacks_;
+    std::map<int32_t, wptr<ICameraServiceCallback>> statusSvcCallbacks_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> updateSettings_;
     sptr<IStreamOperator> streamOperator_;
     std::mutex deviceLock_;
@@ -83,7 +83,7 @@ private:
 
 class CameraDeviceCallback : public ICameraDeviceCallback {
 public:
-    explicit CameraDeviceCallback(sptr<HCameraDevice> hCameraDevice);
+    explicit CameraDeviceCallback(wptr<HCameraDevice> hCameraDevice);
     virtual ~CameraDeviceCallback()
     {
         hCameraDevice_ = nullptr;
@@ -92,7 +92,7 @@ public:
     int32_t OnResult(uint64_t timestamp, const std::vector<uint8_t>& result) override;
 
 private:
-    sptr<HCameraDevice> hCameraDevice_;
+    wptr<HCameraDevice> hCameraDevice_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
