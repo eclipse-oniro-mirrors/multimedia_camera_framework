@@ -144,6 +144,7 @@ MetadataOutputNapi::~MetadataOutputNapi()
 
 void MetadataOutputNapi::MetadataOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
+    MEDIA_DEBUG_LOG("MetadataOutputNapiDestructor enter");
     MetadataOutputNapi* metadataOutput = reinterpret_cast<MetadataOutputNapi*>(nativeObject);
     if (metadataOutput != nullptr) {
         metadataOutput->~MetadataOutputNapi();
@@ -200,7 +201,7 @@ napi_value MetadataOutputNapi::MetadataOutputNapiConstructor(napi_env env, napi_
         obj->metadataCallback_ = callback;
 
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                           MetadataOutputNapi::MetadataOutputNapiDestructor, nullptr, &(obj->wrapper_));
+                           MetadataOutputNapi::MetadataOutputNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
             obj.release();
             return thisVar;
