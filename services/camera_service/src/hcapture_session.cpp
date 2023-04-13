@@ -513,10 +513,8 @@ int32_t HCaptureSession::HandleCaptureOuputsConfig(wptr<HCameraDevice> &device)
     auto item = device.promote();
     if (item != nullptr) {
         settings = item->GetSettings();
-    } else {
-        return CAMERA_UNKNOWN_ERROR;
     }
-    if (settings == nullptr) {
+    if (item == nullptr || settings == nullptr) {
         return CAMERA_UNKNOWN_ERROR;
     }
 
@@ -562,7 +560,6 @@ int32_t HCaptureSession::HandleCaptureOuputsConfig(wptr<HCameraDevice> &device)
 
 int32_t HCaptureSession::CommitConfig()
 {
-    int32_t rc;
     wptr<HCameraDevice> device = nullptr;
 
     if (curState_ != CaptureSessionState::SESSION_CONFIG_INPROGRESS) {
@@ -570,7 +567,7 @@ int32_t HCaptureSession::CommitConfig()
         return CAMERA_INVALID_STATE;
     }
 
-    rc = ValidateSessionInputs();
+    int32_t rc = ValidateSessionInputs();
     if (rc != CAMERA_OK) {
         return rc;
     }
