@@ -197,6 +197,7 @@ CameraSessionNapi::~CameraSessionNapi()
 
 void CameraSessionNapi::CameraSessionNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
+    MEDIA_DEBUG_LOG("CameraSessionNapiDestructor enter");
     CameraSessionNapi* cameraObj = reinterpret_cast<CameraSessionNapi*>(nativeObject);
     if (cameraObj != nullptr) {
         cameraObj->~CameraSessionNapi();
@@ -299,7 +300,7 @@ napi_value CameraSessionNapi::CameraSessionNapiConstructor(napi_env env, napi_ca
             }
             obj->cameraSession_ = sCameraSession_;
             status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                               CameraSessionNapi::CameraSessionNapiDestructor, nullptr, &(obj->wrapper_));
+                               CameraSessionNapi::CameraSessionNapiDestructor, nullptr, nullptr);
             if (status == napi_ok) {
                 obj.release();
                 return thisVar;

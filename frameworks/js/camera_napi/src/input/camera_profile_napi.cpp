@@ -40,6 +40,7 @@ CameraProfileNapi::~CameraProfileNapi()
 
 void CameraProfileNapi::CameraProfileNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
+    MEDIA_DEBUG_LOG("CameraProfileNapiDestructor enter");
     CameraProfileNapi* cameraProfileNapi = reinterpret_cast<CameraProfileNapi*>(nativeObject);
     if (cameraProfileNapi != nullptr) {
         MEDIA_INFO_LOG("CameraProfileNapi::CameraProfileNapiDestructor ~");
@@ -93,7 +94,7 @@ napi_value CameraProfileNapi::CameraProfileNapiConstructor(napi_env env, napi_ca
             obj->cameraProfile_->GetSize().height,
             obj->cameraProfile_->format_);
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                           CameraProfileNapi::CameraProfileNapiDestructor, nullptr, &(obj->wrapper_));
+                           CameraProfileNapi::CameraProfileNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
             obj.release();
             return thisVar;
