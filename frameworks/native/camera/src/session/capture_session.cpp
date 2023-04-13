@@ -1696,7 +1696,7 @@ int32_t CaptureSession::SetCropRegion(float zoomRatio)
     int32_t ret = Camera::FindCameraMetadataItem(
         inputDevice_->GetCameraDeviceInfo()->GetMetadata()->get(), OHOS_SENSOR_INFO_ACTIVE_ARRAY_SIZE, &item);
     if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("CaptureSession::SetCropRegion Failed get sensor active array, return code %{public}d",ret);
+        MEDIA_ERR_LOG("CaptureSession::SetCropRegion Failed get sensor active array, return code %{public}d", ret);
         return CameraErrorCode::SUCCESS;
     }
     if (item.count != arrayCount) {
