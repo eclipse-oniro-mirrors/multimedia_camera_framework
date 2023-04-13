@@ -224,9 +224,7 @@ void CommonCompleteCallback(napi_env env, napi_status status, void* data)
             break;
         case RELEASE_ASYNC_CALLBACK:
             context->objectInfo->GetCameraInput()->Release();
-            MEDIA_DEBUG_LOG("napi_remove_wrap start");
             status = napi_remove_wrap(env, context->releaseVar, reinterpret_cast<void**>(&context->objectInfo));
-            MEDIA_DEBUG_LOG("napi_remove_wrap end");
             jsContext->status = context->status;
             MEDIA_INFO_LOG("%{public}s, GetCameraInput()->Release() status = %{public}d",
                 context->funcName.c_str(), context->status);
@@ -248,8 +246,7 @@ void CommonCompleteCallback(napi_env env, napi_status status, void* data)
     }
 
     if (context->work != nullptr) {
-        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef,
-                                             context->work, *jsContext);
+        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef, context->work, *jsContext);
     }
     delete context;
 }
