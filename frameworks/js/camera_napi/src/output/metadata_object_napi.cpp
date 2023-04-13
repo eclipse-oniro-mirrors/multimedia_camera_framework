@@ -60,6 +60,7 @@ MetadataObjectNapi::~MetadataObjectNapi()
 
 void MetadataObjectNapi::MetadataObjectNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
+    MEDIA_DEBUG_LOG("MetadataObjectNapiDestructor enter");
     MetadataObjectNapi* metadataObject = reinterpret_cast<MetadataObjectNapi*>(nativeObject);
     if (metadataObject != nullptr) {
         metadataObject->~MetadataObjectNapi();
@@ -109,7 +110,7 @@ napi_value MetadataObjectNapi::MetadataObjectNapiConstructor(napi_env env, napi_
         obj->env_ = env;
         obj->metadataObject_ = g_metadataObject;
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                           MetadataObjectNapi::MetadataObjectNapiDestructor, nullptr, &(obj->wrapper_));
+                           MetadataObjectNapi::MetadataObjectNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
             obj.release();
             return thisVar;

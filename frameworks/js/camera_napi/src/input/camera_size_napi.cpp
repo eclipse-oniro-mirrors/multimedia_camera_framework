@@ -40,6 +40,7 @@ CameraSizeNapi::~CameraSizeNapi()
 
 void CameraSizeNapi::CameraSizeNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
+    MEDIA_DEBUG_LOG("CameraSizeNapiDestructor enter");
     CameraSizeNapi* cameraSizeNapi = reinterpret_cast<CameraSizeNapi*>(nativeObject);
     if (cameraSizeNapi != nullptr) {
         cameraSizeNapi->~CameraSizeNapi();
@@ -92,7 +93,7 @@ napi_value CameraSizeNapi::CameraSizeNapiConstructor(napi_env env, napi_callback
             "size.width = %{public}d, size.height = %{public}d",
             obj->cameraPicSize_->width, obj->cameraPicSize_->height);
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                           CameraSizeNapi::CameraSizeNapiDestructor, nullptr, &(obj->wrapper_));
+                           CameraSizeNapi::CameraSizeNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
             obj.release();
             return thisVar;

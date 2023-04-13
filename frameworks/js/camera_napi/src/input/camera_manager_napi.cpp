@@ -63,7 +63,7 @@ napi_value CameraManagerNapi::CameraManagerNapiConstructor(napi_env env, napi_ca
             return result;
         }
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                           CameraManagerNapi::CameraManagerNapiDestructor, nullptr, &(obj->wrapper_));
+                           CameraManagerNapi::CameraManagerNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
             obj.release();
             return thisVar;
@@ -77,6 +77,7 @@ napi_value CameraManagerNapi::CameraManagerNapiConstructor(napi_env env, napi_ca
 
 void CameraManagerNapi::CameraManagerNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
+    MEDIA_DEBUG_LOG("CameraManagerNapiDestructor enter");
     CameraManagerNapi* camera = reinterpret_cast<CameraManagerNapi*>(nativeObject);
     if (camera != nullptr) {
         camera->~CameraManagerNapi();
