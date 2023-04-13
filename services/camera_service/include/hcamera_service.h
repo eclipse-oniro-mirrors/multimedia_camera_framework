@@ -97,7 +97,7 @@ private:
     void CameraDumpVideoFrameRateRange(common_metadata_header_t* metadataEntry,
         std::string& dumpString);
     bool IsCameraMuteSupported(std::string cameraId);
-    int32_t UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool muteMode);
+    int32_t UpdateMuteSetting(wptr<HCameraDevice> cameraDevice, bool muteMode);
     std::mutex mutex_;
     std::mutex cbMutex_;
     std::mutex hdiCbMutex_;
@@ -105,7 +105,7 @@ private:
     sptr<StreamOperatorCallback> streamOperatorCallback_;
     std::map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
     std::map<int32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
-    std::map<std::string, sptr<HCameraDevice>> devices_;
+    std::map<std::string, wptr<HCameraDevice>> devices_;
     std::map<int32_t, std::set<std::string>> camerasForPid_;
     bool muteMode_;
 };
