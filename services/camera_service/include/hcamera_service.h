@@ -15,7 +15,8 @@
 
 #ifndef OHOS_CAMERA_H_CAMERA_SERVICE_H
 #define OHOS_CAMERA_H_CAMERA_SERVICE_H
-
+#include <set>
+#include <iostream>
 #include "hcamera_device.h"
 #include "hcamera_host_manager.h"
 #include "hcamera_service_stub.h"
@@ -26,9 +27,6 @@
 #include "iremote_stub.h"
 #include "privacy_kit.h"
 #include "system_ability.h"
-#include <set>
-
-#include <iostream>
 
 namespace OHOS {
 namespace CameraStandard {

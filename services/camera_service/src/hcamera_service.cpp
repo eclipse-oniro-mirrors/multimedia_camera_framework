@@ -198,7 +198,7 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
     devices_[cameraId] = cameraDevice;
     pid_t pid = IPCSkeleton::GetCallingPid();
     MEDIA_INFO_LOG("HCameraService::CreateCameraDevice Calling pid = %{public}d, Camera created size = %{public}zu",
-                    pid, camerasForPid_[pid].size());
+                   pid, camerasForPid_[pid].size());
     camerasForPid_[pid].insert(cameraId);
     device = cameraDevice;
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager_CreateCameraInput CameraId:%s", cameraId.c_str()));
