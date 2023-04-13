@@ -55,11 +55,11 @@ int32_t PreviewOutput::Release()
 
 class HStreamRepeatCallbackImpl : public HStreamRepeatCallbackStub {
 public:
-    sptr<PreviewOutput> previewOutput_ = nullptr;
+    PreviewOutput* previewOutput_ = nullptr;
     HStreamRepeatCallbackImpl() : previewOutput_(nullptr) {
     }
 
-    explicit HStreamRepeatCallbackImpl(const sptr<PreviewOutput>& previewOutput) : previewOutput_(previewOutput) {
+    explicit HStreamRepeatCallbackImpl(PreviewOutput* previewOutput) : previewOutput_(previewOutput) {
     }
 
     ~HStreamRepeatCallbackImpl()

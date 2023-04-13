@@ -29,11 +29,11 @@ namespace OHOS {
 namespace CameraStandard {
 class CameraDeviceServiceCallback : public HCameraDeviceCallbackStub {
 public:
-    sptr<CameraInput> camInput_ = nullptr;
+    CameraInput* camInput_ = nullptr;
     CameraDeviceServiceCallback() : camInput_(nullptr) {
     }
 
-    explicit CameraDeviceServiceCallback(const sptr<CameraInput>& camInput) : camInput_(camInput) {
+    explicit CameraDeviceServiceCallback(CameraInput* camInput) : camInput_(camInput) {
     }
 
     ~CameraDeviceServiceCallback()
@@ -77,6 +77,14 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
     } else {
         MEDIA_ERR_LOG("CameraInput::CameraInput() deviceObj_ is nullptr");
     }
+}
+
+CameraInput::~CameraInput()
+{
+    cameraObj_ = nullptr;
+    deviceObj_ = nullptr;
+    CameraDeviceSvcCallback_ = nullptr;
+    CaptureInput::Release();
 }
 
 int CameraInput::Open()
@@ -124,6 +132,10 @@ int CameraInput::Release()
     } else {
         MEDIA_ERR_LOG("CameraInput::Release() deviceObj_ is nullptr");
     }
+    cameraObj_ = nullptr;
+    deviceObj_ = nullptr;
+    CameraDeviceSvcCallback_ = nullptr;
+    CaptureInput::Release();
     return ServiceToCameraError(retCode);
 }
 
