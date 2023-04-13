@@ -97,6 +97,7 @@ CameraInputNapi::~CameraInputNapi()
 
 void CameraInputNapi::CameraInputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
+    MEDIA_DEBUG_LOG("CameraInputNapiDestructor enter");
     CameraInputNapi* cameraObj = reinterpret_cast<CameraInputNapi*>(nativeObject);
     if (cameraObj != nullptr) {
         cameraObj->~CameraInputNapi();
@@ -149,7 +150,7 @@ napi_value CameraInputNapi::CameraInputNapiConstructor(napi_env env, napi_callba
         obj->env_ = env;
         obj->cameraInput_ = sCameraInput_;
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                           CameraInputNapi::CameraInputNapiDestructor, nullptr, &(obj->wrapper_));
+                           CameraInputNapi::CameraInputNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
             obj.release();
             return thisVar;
@@ -172,6 +173,9 @@ napi_value CameraInputNapi::CreateCameraInput(napi_env env, sptr<CameraInput> ca
     }
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
+        if (sCameraInput_) {
+            sCameraInput_ = nullptr;
+        }
         sCameraInput_ = cameraInput;
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         if (status == napi_ok && result != nullptr) {
@@ -220,6 +224,7 @@ void CommonCompleteCallback(napi_env env, napi_status status, void* data)
             break;
         case RELEASE_ASYNC_CALLBACK:
             context->objectInfo->GetCameraInput()->Release();
+            status = napi_remove_wrap(env, context->releaseVar, reinterpret_cast<void**>(&context->objectInfo));
             jsContext->status = context->status;
             MEDIA_INFO_LOG("%{public}s, GetCameraInput()->Release() status = %{public}d",
                 context->funcName.c_str(), context->status);
@@ -241,8 +246,7 @@ void CommonCompleteCallback(napi_env env, napi_status status, void* data)
     }
 
     if (context->work != nullptr) {
-        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef,
-                                             context->work, *jsContext);
+        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef, context->work, *jsContext);
     }
     delete context;
 }
