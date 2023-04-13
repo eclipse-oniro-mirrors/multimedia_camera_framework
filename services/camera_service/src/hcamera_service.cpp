@@ -337,7 +337,7 @@ void HCameraService::OnCameraStatus(const std::string& cameraId, CameraStatus st
     MEDIA_INFO_LOG("HCameraService::OnCameraStatus "
                    "callbacks.size = %{public}zu, cameraId = %{public}s, status = %{public}d, pid = %{public}d",
                    cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid());
-    if (status == 2) {
+    if (status == CAMERA_STATUS_AVAILABLE) {
         devices_[cameraId] = nullptr;
         devices_.erase(cameraId);
     }
@@ -404,7 +404,7 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
     auto cameraIds = camerasForPid_[pid];
     for (size_t i = 0; i < cameraIds.size(); i++) {
         for (auto it : devices_) {
-			auto item = it.second.promote();
+            auto item = it.second.promote();
             if (it.first != cameraIds[i] || item != nullptr) {
                 continue;
             } else {
@@ -522,13 +522,11 @@ int32_t HCameraService::MuteCamera(bool muteMode)
 
     bool oldMuteMode = muteMode_;
     if (muteMode == oldMuteMode) {
-        MEDIA_INFO_LOG("HCameraService::MuteCamera muteMode not changed, muteMode: %{public}d", muteMode);
         return CAMERA_OK;
     } else {
         muteMode_ = muteMode;
     }
     if (devices_.empty()) {
-        MEDIA_INFO_LOG("HCameraService::MuteCamera cameraDevice is empty, muteMode = %{public}d", muteMode);
         if (!cameraMuteServiceCallbacks_.empty()) {
             for (auto cb : cameraMuteServiceCallbacks_) {
                 cb.second->OnCameraMute(muteMode);

@@ -42,8 +42,8 @@ class HCameraHostManager::CameraHostInfo : public ICameraHostCallback {
 public:
     class CameraHostDeathRecipient : public IRemoteObject::DeathRecipient {
     public:
-        explicit CameraHostDeathRecipient(const sptr<HCameraHostManager::CameraHostInfo> &hostInfo) :
-            cameraHostInfo_(hostInfo) {};
+        explicit CameraHostDeathRecipient(const sptr<HCameraHostManager::CameraHostInfo> &hostInfo)
+            : cameraHostInfo_(hostInfo) {};
         virtual ~CameraHostDeathRecipient() = default;
         void OnRemoteDied(const wptr<IRemoteObject> &remote) override
         {
@@ -606,8 +606,8 @@ sptr<HCameraHostManager::CameraHostInfo> HCameraHostManager::FindCameraHostInfo(
 
 bool HCameraHostManager::IsCameraHostInfoAdded(const std::string& svcName)
 {
-    return std::any_of(cameraHostInfos_.begin(), cameraHostInfos_.end(), [&svcName](const auto& camHost) {
-        return camHost->GetName() == svcName; });
+    return std::any_of(cameraHostInfos_.begin(), cameraHostInfos_.end(),
+                       [&svcName](const auto& camHost) {return camHost->GetName() == svcName; });
 }
 } // namespace CameraStandard
 } // namespace OHOS

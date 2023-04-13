@@ -1673,14 +1673,11 @@ int32_t CaptureSession::GetZoomRatio(float &zoomRatio)
 int32_t CaptureSession::SetCropRegion(float zoomRatio)
 {
     bool status = false;
-    int32_t ret;
     int32_t leftIndex = 0;
     int32_t topIndex = 1;
     int32_t rightIndex = 2;
     int32_t bottomIndex = 3;
     int32_t factor = 2;
-    int32_t sensorRight;
-    int32_t sensorBottom;
     const uint32_t arrayCount = 4;
     int32_t cropRegion[arrayCount] = {};
     camera_metadata_item_t item;
@@ -1688,19 +1685,14 @@ int32_t CaptureSession::SetCropRegion(float zoomRatio)
         MEDIA_ERR_LOG("CaptureSession::SetCropRegion Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (zoomRatio == 0) {
-        MEDIA_ERR_LOG("CaptureSession::SetCropRegion Invalid zoom ratio");
+    if (zoomRatio == 0 || !inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::SetCropRegion Invalid zoom ratio or camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
-        MEDIA_ERR_LOG("CaptureSession::SetCropRegion camera device is null");
-        return CameraErrorCode::SUCCESS;
-    }
-    ret = Camera::FindCameraMetadataItem(
+    int32_t ret = Camera::FindCameraMetadataItem(
         inputDevice_->GetCameraDeviceInfo()->GetMetadata()->get(), OHOS_SENSOR_INFO_ACTIVE_ARRAY_SIZE, &item);
     if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("CaptureSession::SetCropRegion Failed to get sensor active array size, return code %{public}d",
-                      ret);
+        MEDIA_ERR_LOG("CaptureSession::SetCropRegion Failed get sensor active array, return code %{public}d",ret);
         return CameraErrorCode::SUCCESS;
     }
     if (item.count != arrayCount) {
@@ -1710,8 +1702,8 @@ int32_t CaptureSession::SetCropRegion(float zoomRatio)
     MEDIA_DEBUG_LOG("CaptureSession::SetCropRegion Sensor active array left: %{public}d, top: %{public}d, "
                     "right: %{public}d, bottom: %{public}d", item.data.i32[leftIndex], item.data.i32[topIndex],
                     item.data.i32[rightIndex], item.data.i32[bottomIndex]);
-    sensorRight = item.data.i32[rightIndex];
-    sensorBottom = item.data.i32[bottomIndex];
+    int32_t sensorRight = item.data.i32[rightIndex];
+    int32_t sensorBottom = item.data.i32[bottomIndex];
     cropRegion[leftIndex] = (sensorRight - (sensorRight / zoomRatio)) / factor;
     cropRegion[topIndex] = (sensorBottom - (sensorBottom / zoomRatio)) / factor;
     cropRegion[rightIndex] = cropRegion[leftIndex] + (sensorRight / zoomRatio);
@@ -1727,7 +1719,6 @@ int32_t CaptureSession::SetCropRegion(float zoomRatio)
     }
     if (!status) {
         MEDIA_ERR_LOG("CaptureSession::SetCropRegion Failed to set zoom crop region");
-        return CameraErrorCode::SUCCESS;
     }
     return CameraErrorCode::SUCCESS;
 }
