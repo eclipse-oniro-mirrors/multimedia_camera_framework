@@ -498,7 +498,7 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp,
     return CAMERA_OK;
 }
 
-CameraDeviceCallback::CameraDeviceCallback(sptr<HCameraDevice> hCameraDevice)
+CameraDeviceCallback::CameraDeviceCallback(wptr<HCameraDevice> hCameraDevice)
 {
     hCameraDevice_ = hCameraDevice;
 }
