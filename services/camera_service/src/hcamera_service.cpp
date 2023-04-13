@@ -197,8 +197,9 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
     cameraDevice->SetStatusCallback(cameraServiceCallbacks_);
     devices_[cameraId] = cameraDevice;
     pid_t pid = IPCSkeleton::GetCallingPid();
-    MEDIA_DEBUG_LOG("HCameraService::CreateCameraDevice Calling pid = %{public}d", pid);
-    camerasForPid_[pid].push_back(cameraId);
+    MEDIA_INFO_LOG("HCameraService::CreateCameraDevice Calling pid = %{public}d, Camera created size = %{public}zu",
+                   pid, camerasForPid_[pid].size());
+    camerasForPid_[pid].insert(cameraId);
     device = cameraDevice;
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager_CreateCameraInput CameraId:%s", cameraId.c_str()));
     return CAMERA_OK;
@@ -402,10 +403,10 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
     MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory pid = %{public}d, Camera created size = %{public}zu",
                    pid, camerasForPid_[pid].size());
     auto cameraIds = camerasForPid_[pid];
-    for (size_t i = 0; i < cameraIds.size(); i++) {
+    for (std::set<std::string>::iterator itIds = cameraIds.begin(); itIds != cameraIds.end(); itIds++) {
         for (auto it : devices_) {
             auto item = it.second.promote();
-            if (it.first != cameraIds[i] || item != nullptr) {
+            if (it.first != *itIds || item == nullptr) {
                 continue;
             } else {
                 MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory pid = %{public}d,Camera:[%{public}s] need close",

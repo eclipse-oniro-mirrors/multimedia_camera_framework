@@ -185,6 +185,7 @@ PhotoOutputNapi::~PhotoOutputNapi()
 
 void PhotoOutputNapi::PhotoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
+    MEDIA_DEBUG_LOG("PhotoOutputNapiDestructor enter");
     PhotoOutputNapi* photoOutput = reinterpret_cast<PhotoOutputNapi*>(nativeObject);
     if (photoOutput != nullptr) {
         photoOutput->~PhotoOutputNapi();
@@ -243,7 +244,7 @@ napi_value PhotoOutputNapi::PhotoOutputNapiConstructor(napi_env env, napi_callba
         obj->photoCallback_ = callback;
 
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                           PhotoOutputNapi::PhotoOutputNapiDestructor, nullptr, &(obj->wrapper_));
+                           PhotoOutputNapi::PhotoOutputNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
             obj.release();
             return thisVar;

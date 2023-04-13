@@ -40,6 +40,7 @@ CameraDeviceNapi::~CameraDeviceNapi()
 
 void CameraDeviceNapi::CameraDeviceNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
+    MEDIA_DEBUG_LOG("CameraDeviceNapiDestructor enter");
     CameraDeviceNapi* cameraObj = reinterpret_cast<CameraDeviceNapi*>(nativeObject);
     if (cameraObj != nullptr) {
         cameraObj->~CameraDeviceNapi();
@@ -91,7 +92,7 @@ napi_value CameraDeviceNapi::CameraDeviceNapiConstructor(napi_env env, napi_call
         obj->env_ = env;
         obj->cameraDevice_ = sCameraDevice_;
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                           CameraDeviceNapi::CameraDeviceNapiDestructor, nullptr, &(obj->wrapper_));
+                           CameraDeviceNapi::CameraDeviceNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
             obj.release();
             return thisVar;
