@@ -15,7 +15,8 @@
 
 #ifndef OHOS_CAMERA_H_CAMERA_SERVICE_H
 #define OHOS_CAMERA_H_CAMERA_SERVICE_H
-
+#include <set>
+#include <iostream>
 #include "hcamera_device.h"
 #include "hcamera_host_manager.h"
 #include "hcamera_service_stub.h"
@@ -26,8 +27,6 @@
 #include "iremote_stub.h"
 #include "privacy_kit.h"
 #include "system_ability.h"
-
-#include <iostream>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -109,7 +108,7 @@ private:
     std::map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
     std::map<int32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
     std::map<std::string, sptr<HCameraDevice>> devices_;
-    std::map<int32_t, std::vector<std::string>> camerasForPid_;
+    std::map<int32_t, std::set<std::string>> camerasForPid_;
     bool muteMode_;
 };
 } // namespace CameraStandard
