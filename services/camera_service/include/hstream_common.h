@@ -50,6 +50,9 @@ public:
     sptr<IStreamOperator> streamOperator_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility_;
 
+protected:
+    std::mutex producerLock_;
+
 private:
     StreamType streamType_;
     bool isReleaseStream_;
