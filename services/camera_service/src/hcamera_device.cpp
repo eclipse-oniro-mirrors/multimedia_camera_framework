@@ -138,8 +138,7 @@ int32_t HCameraDevice::Open()
             }
             updateSettings_ = nullptr;
             MEDIA_DEBUG_LOG("HCameraDevice::Open Updated device settings");
-        }
-        if (hdiCameraDevice_) {
+
             errorCode = HdiToServiceError((CamRetCode)(hdiCameraDevice_->SetResultMode(ON_CHANGED)));
             cameraHostManager_->AddCameraDevice(cameraID_, this);
             (void)OnCameraStatus(cameraID_, CAMERA_STATUS_UNAVAILABLE);

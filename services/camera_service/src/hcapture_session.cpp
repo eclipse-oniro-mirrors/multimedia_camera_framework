@@ -536,16 +536,12 @@ int32_t HCaptureSession::HandleCaptureOuputsConfig(wptr<HCameraDevice> &device)
             MEDIA_ERR_LOG("HCaptureSession::HandleCaptureOuputsConfig() curStream is null");
             return CAMERA_UNKNOWN_ERROR;
         }
-        if (curStream) {
-            rc = curStream->LinkInput(streamOperator, settings, streamId);
-            if (rc != CAMERA_OK) {
-                MEDIA_ERR_LOG("HCaptureSession::HandleCaptureOuputsConfig() Failed to link Output, %{public}d", rc);
-                return rc;
-            }
+        rc = curStream->LinkInput(streamOperator, settings, streamId);
+        if (rc != CAMERA_OK) {
+            MEDIA_ERR_LOG("HCaptureSession::HandleCaptureOuputsConfig() Failed to link Output, %{public}d", rc);
+            return rc;
         }
-        if (curStream) {
-            curStream->SetStreamInfo(curStreamInfo);
-        }
+        curStream->SetStreamInfo(curStreamInfo);
         newStreamInfos.push_back(curStreamInfo);
         allStreamInfos.push_back(curStreamInfo);
         streamId++;
