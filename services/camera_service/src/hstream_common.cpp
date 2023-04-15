@@ -97,6 +97,7 @@ void HStreamCommon::SetStreamInfo(StreamInfo &streamInfo)
 
 int32_t HStreamCommon::Release()
 {
+    std::lock_guard<std::mutex> lock(producerLock_);
     streamId_ = 0;
     curCaptureID_ = 0;
     streamOperator_ = nullptr;
