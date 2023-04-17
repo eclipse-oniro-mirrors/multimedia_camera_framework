@@ -272,7 +272,7 @@ void HStreamRepeat::SetStreamTransform()
     } else {
         ret = SurfaceError::SURFACE_ERROR_OK;
         if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
-            ret = producer_->SetTransform(GRAPHIC_FLIP_V);
+            ret = producer_->SetTransform(GRAPHIC_FLIP_H);
             MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform filp for wide side devices");
         } else {
             ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
