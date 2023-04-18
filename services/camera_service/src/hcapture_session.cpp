@@ -31,7 +31,11 @@ namespace OHOS {
 namespace CameraStandard {
 static std::map<int32_t, wptr<HCaptureSession>> session_;
 static std::mutex sessionLock_;
-
+std::map<CaptureSessionState, std::string> sessionState_ = {
+    {CaptureSessionState::SESSION_INIT, "Init"},
+    {CaptureSessionState::SESSION_CONFIG_INPROGRESS, "Config_In-progress"},
+    {CaptureSessionState::SESSION_CONFIG_COMMITTED, "Committed"}
+};
 static std::string GetClientBundle(int uid)
 {
     std::string bundleName = "";
@@ -71,9 +75,6 @@ HCaptureSession::HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
     std::map<int32_t, wptr<HCaptureSession>>::iterator it;
     pid_ = IPCSkeleton::GetCallingPid();
     uid_ = IPCSkeleton::GetCallingUid();
-    sessionState_.insert(std::make_pair(CaptureSessionState::SESSION_INIT, "Init"));
-    sessionState_.insert(std::make_pair(CaptureSessionState::SESSION_CONFIG_INPROGRESS, "Config_In-progress"));
-    sessionState_.insert(std::make_pair(CaptureSessionState::SESSION_CONFIG_COMMITTED, "Committed"));
 
     MEDIA_DEBUG_LOG("HCaptureSession: camera stub services(%{public}zu) pid(%{public}d).", session_.size(), pid_);
     std::map<int32_t, wptr<HCaptureSession>> oldSessions;
@@ -731,7 +732,6 @@ int32_t HCaptureSession::Release(pid_t pid)
         UnregisterPermissionCallback(callerToken_);
     }
     tempStreams_.clear();
-    sessionState_.clear();
     ClearCaptureSession(pid);
     sessionCallback_ = nullptr;
     cameraHostManager_ = nullptr;
