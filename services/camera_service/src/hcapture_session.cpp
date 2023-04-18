@@ -31,7 +31,7 @@ namespace OHOS {
 namespace CameraStandard {
 static std::map<int32_t, wptr<HCaptureSession>> session_;
 static std::mutex sessionLock_;
-std::map<CaptureSessionState, std::string> sessionState_ = {
+static std::map<CaptureSessionState, std::string> sessionState_ = {
     {CaptureSessionState::SESSION_INIT, "Init"},
     {CaptureSessionState::SESSION_CONFIG_INPROGRESS, "Config_In-progress"},
     {CaptureSessionState::SESSION_CONFIG_COMMITTED, "Committed"}
