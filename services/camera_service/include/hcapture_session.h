@@ -112,7 +112,6 @@ private:
     sptr<StreamOperatorCallback> streamOperatorCallback_;
     sptr<ICaptureSessionCallback> sessionCallback_;
     int32_t streamId_ = STREAMID_BEGIN;
-    std::map<CaptureSessionState, std::string> sessionState_;
     pid_t pid_;
     int32_t uid_;
     uint32_t callerToken_;
