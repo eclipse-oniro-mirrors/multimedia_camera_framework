@@ -52,8 +52,9 @@ int HCameraServiceStub::OnRemoteRequest(
     if (data.ReadInterfaceToken() != GetDescriptor()) {
         return -1;
     }
+    const int TIME_OUT_SECONDS = 10;
     int32_t id = HiviewDFX::XCollie::GetInstance().SetTimer(
-        "CameraServiceStub", 1, nullptr, nullptr, HiviewDFX::XCOLLIE_FLAG_LOG);
+        "CameraServiceStub", TIME_OUT_SECONDS, nullptr, nullptr, HiviewDFX::XCOLLIE_FLAG_LOG);
     int32_t ret = CheckRequestCode(code, data, reply, option);
     HiviewDFX::XCollie::GetInstance().CancelTimer(id);
     return ret;
