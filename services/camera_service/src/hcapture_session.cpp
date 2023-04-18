@@ -912,7 +912,7 @@ sptr<HStreamCommon> StreamOperatorCallback::GetStreamByStreamID(int32_t streamId
 {
     sptr<HStreamCommon> curStream;
     sptr<HStreamCommon> result = nullptr;
-    std::lock_guard<std::mutex> lock(sessionLock_);
+
     if (captureSession_ != nullptr) {
         for (auto item = captureSession_->streams_.begin(); item != captureSession_->streams_.end(); ++item) {
             curStream = *item;
