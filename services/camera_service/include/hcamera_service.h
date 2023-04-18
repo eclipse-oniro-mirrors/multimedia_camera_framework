@@ -100,7 +100,6 @@ private:
     int32_t UpdateMuteSetting(wptr<HCameraDevice> cameraDevice, bool muteMode);
     std::mutex mutex_;
     std::mutex cbMutex_;
-    std::mutex hdiCbMutex_;
     sptr<HCameraHostManager> cameraHostManager_;
     sptr<StreamOperatorCallback> streamOperatorCallback_;
     std::map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
