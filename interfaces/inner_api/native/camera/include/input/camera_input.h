@@ -38,7 +38,12 @@ class CameraInput : public CaptureInput {
 public:
     [[deprecated]] CameraInput(sptr<ICameraDeviceService> &deviceObj, sptr<CameraInfo> &camera);
     CameraInput(sptr<ICameraDeviceService> &deviceObj, sptr<CameraDevice> &camera);
-    virtual ~CameraInput();
+    ~CameraInput()
+    {
+        cameraObj_ = nullptr;
+        deviceObj_ = nullptr;
+        CameraDeviceSvcCallback_ = nullptr;
+    }
 
     /**
     * @brief open camera.

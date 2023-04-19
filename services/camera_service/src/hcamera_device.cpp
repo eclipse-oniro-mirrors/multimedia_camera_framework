@@ -455,16 +455,17 @@ int32_t HCameraDevice::OnCameraStatus(const std::string& cameraId, CameraStatus 
                    statusSvcCallbacks_.size());
     std::string callbackPids = "[";
     for (auto it : statusSvcCallbacks_) {
-        auto item = it.second.promote();
-        if (item != nullptr) {
+        if (it.second) {
             callbackPids += " " + std::to_string((int)it.first);
-            item->OnCameraStatusChanged(cameraId, status);
         }
     }
     callbackPids += " ]";
     MEDIA_INFO_LOG("HCameraDevice::OnCameraStatus OnCameraStatusChanged callbackPids = %{public}s, "
                    "cameraId = %{public}s, cameraStatus = %{public}d",
                    callbackPids.c_str(), cameraId.c_str(), status);
+    for (auto it : statusSvcCallbacks_) {
+        it.second->OnCameraStatusChanged(cameraId, status);
+    }
     return CAMERA_OK;
 }
 
@@ -498,17 +499,14 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp,
     return CAMERA_OK;
 }
 
-CameraDeviceCallback::CameraDeviceCallback(wptr<HCameraDevice> hCameraDevice)
+CameraDeviceCallback::CameraDeviceCallback(sptr<HCameraDevice> hCameraDevice)
 {
     hCameraDevice_ = hCameraDevice;
 }
 
 int32_t CameraDeviceCallback::OnError(const ErrorType type, const int32_t errorCode)
 {
-    auto item = hCameraDevice_.promote();
-    if (item != nullptr) {
-        item->OnError(type, errorCode);
-    }
+    hCameraDevice_->OnError(type, errorCode);
     return CAMERA_OK;
 }
 
@@ -516,10 +514,7 @@ int32_t CameraDeviceCallback::OnResult(uint64_t timestamp, const std::vector<uin
 {
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
-    auto item = hCameraDevice_.promote();
-    if (item != nullptr) {
-        item->OnResult(timestamp, cameraResult);
-    }
+    hCameraDevice_->OnResult(timestamp, cameraResult);
     return CAMERA_OK;
 }
 } // namespace CameraStandard
