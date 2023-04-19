@@ -346,17 +346,13 @@ void HCameraService::OnCameraStatus(const std::string& cameraId, CameraStatus st
     MEDIA_INFO_LOG("HCameraService::OnCameraStatus "
                    "callbacks.size = %{public}zu, cameraId = %{public}s, status = %{public}d, pid = %{public}d",
                    cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid());
-    if (status == CAMERA_STATUS_AVAILABLE) {
-        devices_[cameraId] = nullptr;
-        devices_.erase(cameraId);
-    }
     for (auto it : cameraServiceCallbacks_) {
-        if (it.second == nullptr) {
+        if (!it.second) {
             MEDIA_ERR_LOG("HCameraService::OnCameraStatus cameraServiceCallback is null, pid = %{public}d",
                           IPCSkeleton::GetCallingPid());
             continue;
         }
-        if (it.second != nullptr) {
+        if (it.second) {
             it.second->OnCameraStatusChanged(cameraId, status);
         }
         CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d",
@@ -371,12 +367,12 @@ void HCameraService::OnFlashlightStatus(const std::string& cameraId, FlashStatus
                    "callbacks.size = %{public}zu, cameraId = %{public}s, status = %{public}d, pid = %{public}d",
                    cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid());
     for (auto it : cameraServiceCallbacks_) {
-        if (it.second == nullptr) {
+        if (!it.second) {
             MEDIA_ERR_LOG("HCameraService::OnCameraStatus cameraServiceCallback is null, pid = %{public}d",
                           IPCSkeleton::GetCallingPid());
             continue;
         }
-        if (it.second != nullptr) {
+        if (it.second) {
             it.second->OnFlashlightStatusChanged(cameraId, status);
         }
     }
@@ -391,18 +387,10 @@ int32_t HCameraService::SetCallback(sptr<ICameraServiceCallback> &callback)
         MEDIA_ERR_LOG("HCameraService::SetCallback callback is null");
         return CAMERA_INVALID_ARG;
     }
-    auto callbackItem = cameraServiceCallbacks_.find(pid);
-    if (callbackItem != cameraServiceCallbacks_.end()) {
-        callbackItem->second = nullptr;
-        (void)cameraServiceCallbacks_.erase(callbackItem);
-    }
     cameraServiceCallbacks_.insert(std::make_pair(pid, callback));
     for (auto it : devices_) {
         MEDIA_INFO_LOG("HCameraService::SetCallback Camera:[%{public}s] SetStatusCallback", it.first.c_str());
-        auto item = it.second.promote();
-        if (item != nullptr) {
-            item->SetStatusCallback(cameraServiceCallbacks_);
-        }
+        it.second->SetStatusCallback(cameraServiceCallbacks_);
     }
     return CAMERA_OK;
 }
@@ -415,14 +403,13 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
     auto cameraIds = camerasForPid_[pid];
     for (std::set<std::string>::iterator itIds = cameraIds.begin(); itIds != cameraIds.end(); itIds++) {
         for (auto it : devices_) {
-            auto item = it.second.promote();
-            if (it.first != *itIds || item == nullptr) {
+            if (it.first != *itIds || !it.second) {
                 continue;
-            } else {
+            } else if (it.second->IsOpenedCameraDevice()) {
                 MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory pid = %{public}d,Camera:[%{public}s] need close",
                                pid, it.first.c_str());
-                item->Close();
-                item = nullptr;
+                it.second->Close();
+                it.second = nullptr;
             }
         }
     }
@@ -459,7 +446,7 @@ int32_t HCameraService::UnSetCallback(pid_t pid)
     if (!cameraServiceCallbacks_.empty()) {
         MEDIA_INFO_LOG("HCameraDevice::SetStatusCallback statusSvcCallbacks_ is not empty, reset it");
         auto it = cameraServiceCallbacks_.find(pid);
-        if ((it != cameraServiceCallbacks_.end()) && (it->second != nullptr)) {
+        if ((it != cameraServiceCallbacks_.end()) && (it->second)) {
             it->second = nullptr;
             cameraServiceCallbacks_.erase(it);
         }
@@ -468,10 +455,7 @@ int32_t HCameraService::UnSetCallback(pid_t pid)
                    pid, cameraServiceCallbacks_.size());
     for (auto it : devices_) {
         MEDIA_INFO_LOG("HCameraService::UnSetCallback Camera:[%{public}s] SetStatusCallback", it.first.c_str());
-        auto item = it.second.promote();
-        if (item != nullptr) {
-            item->SetStatusCallback(cameraServiceCallbacks_);
-        }
+        it.second->SetStatusCallback(cameraServiceCallbacks_);
     }
     int32_t ret = CAMERA_OK;
     ret = UnSetMuteCallback(pid);
@@ -512,7 +496,7 @@ bool HCameraService::IsCameraMuteSupported(std::string cameraId)
     return isMuteSupported;
 }
 
-int32_t HCameraService::UpdateMuteSetting(wptr<HCameraDevice> cameraDevice, bool muteMode)
+int32_t HCameraService::UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool muteMode)
 {
     constexpr uint8_t MUTE_ON = 1;
     constexpr uint8_t MUTE_OFF = 0;
@@ -555,11 +539,13 @@ int32_t HCameraService::MuteCamera(bool muteMode)
 
     bool oldMuteMode = muteMode_;
     if (muteMode == oldMuteMode) {
+        MEDIA_INFO_LOG("HCameraService::MuteCamera muteMode not changed, muteMode: %{public}d", muteMode);
         return CAMERA_OK;
     } else {
         muteMode_ = muteMode;
     }
     if (devices_.empty()) {
+        MEDIA_INFO_LOG("HCameraService::MuteCamera cameraDevice is empty, muteMode = %{public}d", muteMode);
         if (!cameraMuteServiceCallbacks_.empty()) {
             for (auto cb : cameraMuteServiceCallbacks_) {
                 cb.second->OnCameraMute(muteMode);
@@ -574,10 +560,7 @@ int32_t HCameraService::MuteCamera(bool muteMode)
             MEDIA_ERR_LOG("HCameraService::MuteCamera not Supported Mute,cameraId: %{public}s", it.first.c_str());
             break;
         }
-        auto item = it.second.promote();
-        if (item != nullptr) {
-            ret = UpdateMuteSetting(it.second, muteMode);
-        }
+        ret = UpdateMuteSetting(it.second, muteMode);
         if (ret != CAMERA_OK) {
             MEDIA_ERR_LOG("HCameraService::MuteCamera UpdateMuteSetting Failed, cameraId: %{public}s",
                           it.first.c_str());
@@ -587,9 +570,7 @@ int32_t HCameraService::MuteCamera(bool muteMode)
     }
     if (!cameraMuteServiceCallbacks_.empty() && ret == CAMERA_OK) {
         for (auto cb : cameraMuteServiceCallbacks_) {
-            if (!cb.second) {
-                cb.second->OnCameraMute(muteMode);
-            }
+            cb.second->OnCameraMute(muteMode);
             CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraMute! current Camera muteMode:%d", muteMode));
         }
     }

@@ -42,8 +42,8 @@ class HCameraHostManager::CameraHostInfo : public ICameraHostCallback {
 public:
     class CameraHostDeathRecipient : public IRemoteObject::DeathRecipient {
     public:
-        explicit CameraHostDeathRecipient(const sptr<HCameraHostManager::CameraHostInfo> &hostInfo)
-            : cameraHostInfo_(hostInfo) {};
+        explicit CameraHostDeathRecipient(const sptr<HCameraHostManager::CameraHostInfo> &hostInfo) :
+            cameraHostInfo_(hostInfo) {};
         virtual ~CameraHostDeathRecipient() = default;
         void OnRemoteDied(const wptr<IRemoteObject> &remote) override
         {
@@ -421,11 +421,6 @@ void HCameraHostManager::DeInit()
 void HCameraHostManager::AddCameraDevice(const std::string& cameraId, sptr<ICameraDeviceService> cameraDevice)
 {
     std::lock_guard<std::mutex> lock(deviceMutex_);
-    auto it = cameraDevices_.find(cameraId);
-    if (it != cameraDevices_.end()) {
-        it->second = nullptr;
-        cameraDevices_.erase(cameraId);
-    }
     cameraDevices_[cameraId] = cameraDevice;
 }
 
@@ -611,8 +606,8 @@ sptr<HCameraHostManager::CameraHostInfo> HCameraHostManager::FindCameraHostInfo(
 
 bool HCameraHostManager::IsCameraHostInfoAdded(const std::string& svcName)
 {
-    return std::any_of(cameraHostInfos_.begin(), cameraHostInfos_.end(),
-                       [&svcName](const auto& camHost) {return camHost->GetName() == svcName; });
+    return std::any_of(cameraHostInfos_.begin(), cameraHostInfos_.end(), [&svcName](const auto& camHost) {
+        return camHost->GetName() == svcName; });
 }
 } // namespace CameraStandard
 } // namespace OHOS

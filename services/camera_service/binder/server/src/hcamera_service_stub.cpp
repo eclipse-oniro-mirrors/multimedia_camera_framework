@@ -354,7 +354,7 @@ int HCameraServiceStub::DestroyStubForPid(pid_t pid)
         if (deathRecipient != nullptr) {
             deathRecipient->SetNotifyCb(nullptr);
         }
-        itDeath->second = nullptr;
+
         (void)deathRecipientMap_.erase(itDeath);
     }
 
@@ -365,7 +365,7 @@ int HCameraServiceStub::DestroyStubForPid(pid_t pid)
         if (cameraListener != nullptr && cameraListener->AsObject() != nullptr && deathRecipient != nullptr) {
             (void)cameraListener->AsObject()->RemoveDeathRecipient(deathRecipient);
         }
-        itListener->second = nullptr;
+
         (void)cameraListenerMap_.erase(itListener);
     }
     HCaptureSession::DestroyStubObjectForPid(pid);
@@ -376,7 +376,6 @@ int HCameraServiceStub::DestroyStubForPid(pid_t pid)
 
 void HCameraServiceStub::ClientDied(pid_t pid)
 {
-    DisableJeMalloc();
     MEDIA_ERR_LOG("client pid is dead, pid:%{public}d", pid);
     (void)DestroyStubForPid(pid);
 }
@@ -384,34 +383,13 @@ void HCameraServiceStub::ClientDied(pid_t pid)
 int HCameraServiceStub::SetListenerObject(const sptr<IRemoteObject> &object)
 {
     int errCode = -1;
-    sptr<CameraDeathRecipient> deathRecipientTmp = nullptr;
-    sptr<IStandardCameraListener> cameraListenerTmp = nullptr;
-
-    pid_t pid = IPCSkeleton::GetCallingPid();
-    
-    auto deathRecipientItem = deathRecipientMap_.find(pid);
-    if (deathRecipientItem != deathRecipientMap_.end()) {
-        deathRecipientTmp = deathRecipientItem->second;
-        deathRecipientItem->second = nullptr;
-        (void)deathRecipientMap_.erase(deathRecipientItem);
-    }
-
-    auto cameraListenerItem = cameraListenerMap_.find(pid);
-    if (cameraListenerItem != cameraListenerMap_.end()) {
-        cameraListenerTmp = cameraListenerItem->second;
-        if (cameraListenerTmp != nullptr && cameraListenerTmp->AsObject() != nullptr && deathRecipientTmp != nullptr) {
-            (void)cameraListenerTmp->AsObject()->RemoveDeathRecipient(deathRecipientTmp);
-        }
-        cameraListenerItem->second = nullptr;
-        (void)cameraListenerMap_.erase(cameraListenerItem);
-    }
-
     CHECK_AND_RETURN_RET_LOG(object != nullptr, CAMERA_ALLOC_ERROR, "set listener object is nullptr");
 
     sptr<IStandardCameraListener> cameraListener = iface_cast<IStandardCameraListener>(object);
     CHECK_AND_RETURN_RET_LOG(cameraListener != nullptr, CAMERA_ALLOC_ERROR,
         "failed to convert IStandardCameraListener");
 
+    pid_t pid = IPCSkeleton::GetCallingPid();
     sptr<CameraDeathRecipient> deathRecipient = new(std::nothrow) CameraDeathRecipient(pid);
     CHECK_AND_RETURN_RET_LOG(deathRecipient != nullptr, CAMERA_ALLOC_ERROR, "failed to new CameraDeathRecipient");
 
