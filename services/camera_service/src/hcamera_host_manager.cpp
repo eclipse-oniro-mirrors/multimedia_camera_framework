@@ -96,12 +96,14 @@ HCameraHostManager::CameraHostInfo::CameraHostInfo(HCameraHostManager* cameraHos
 
 HCameraHostManager::CameraHostInfo::~CameraHostInfo()
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("CameraHostInfo ~CameraHostInfo");
     cameraHostManager_ = nullptr;
     cameraHostProxy_ = nullptr;
     for (unsigned i = 0; i < devices_.size(); i++) {
-        devices_[i] = nullptr;
+        devices_.at(i) = nullptr;
     }
+    cameraIds_.clear();
     devices_.clear();
 }
 
@@ -374,6 +376,7 @@ HCameraHostManager::HCameraHostManager(StatusCallback* statusCallback)
 
 HCameraHostManager::~HCameraHostManager()
 {
+    std::lock_guard<std::mutex> lock(deviceMutex_);
     statusCallback_ = nullptr;
     for (auto it = cameraDevices_.begin(); it != cameraDevices_.end(); it++) {
         if (it->second) {
