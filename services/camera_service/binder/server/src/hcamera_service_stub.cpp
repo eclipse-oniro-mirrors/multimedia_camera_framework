@@ -343,10 +343,9 @@ int32_t HCameraServiceStub::CloseCameraForDestory(pid_t pid)
 
 int HCameraServiceStub::DestroyStubForPid(pid_t pid)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     sptr<CameraDeathRecipient> deathRecipient = nullptr;
     sptr<IStandardCameraListener> cameraListener = nullptr;
-
-    std::lock_guard<std::mutex> lock(mutex_);
     auto itDeath = deathRecipientMap_.find(pid);
     if (itDeath != deathRecipientMap_.end()) {
         deathRecipient = itDeath->second;
@@ -383,6 +382,7 @@ void HCameraServiceStub::ClientDied(pid_t pid)
 
 int HCameraServiceStub::SetListenerObject(const sptr<IRemoteObject> &object)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     int errCode = -1;
     sptr<CameraDeathRecipient> deathRecipientTmp = nullptr;
     sptr<IStandardCameraListener> cameraListenerTmp = nullptr;

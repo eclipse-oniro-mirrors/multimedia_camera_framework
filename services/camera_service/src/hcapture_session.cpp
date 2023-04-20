@@ -72,27 +72,22 @@ HCaptureSession::HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
     : cameraHostManager_(cameraHostManager), streamOperatorCallback_(streamOperatorCb),
     sessionCallback_(nullptr)
 {
-    std::map<int32_t, wptr<HCaptureSession>>::iterator it;
     pid_ = IPCSkeleton::GetCallingPid();
     uid_ = IPCSkeleton::GetCallingUid();
-
     MEDIA_DEBUG_LOG("HCaptureSession: camera stub services(%{public}zu) pid(%{public}d).", session_.size(), pid_);
-    std::map<int32_t, wptr<HCaptureSession>> oldSessions;
     for (auto it = session_.begin(); it != session_.end(); it++) {
-        wptr<HCaptureSession> session = it->second;
-        oldSessions[it->first] = session;
-    }
-    for (auto it = oldSessions.begin(); it != oldSessions.end(); it++) {
-        wptr<HCaptureSession> session = it->second;
-        wptr<HCameraDevice> disconnectDevice;
-        int32_t rc = session->GetCameraDevice(disconnectDevice);
-        if (rc == CAMERA_OK) {
-            disconnectDevice->OnError(DEVICE_PREEMPT, 0);
+        if (it->second != nullptr) {
+            wptr<HCaptureSession> session = it->second;
+            wptr<HCameraDevice> disconnectDevice;
+            int32_t rc = session->GetCameraDevice(disconnectDevice);
+            if (rc == CAMERA_OK) {
+                disconnectDevice->OnError(DEVICE_PREEMPT, 0);
+            }
+            session->Release(it->first);
+            MEDIA_ERR_LOG("currently multi-session not supported, release session for pid(%{public}d)", it->first);
         }
-        session->Release(it->first);
-        MEDIA_ERR_LOG("currently multi-session not supported, release session for pid(%{public}d)", it->first);
     }
-    it = session_.find(pid_);
+    std::map<int32_t, wptr<HCaptureSession>>::iterator it = session_.find(pid_);
     if (it != session_.end()) {
         MEDIA_ERR_LOG("HCaptureSession::HCaptureSession doesn't support multiple sessions per pid");
     } else {
@@ -772,8 +767,10 @@ void HCaptureSession::DestroyStubObjectForPid(pid_t pid)
 
     auto it = session_.find(pid);
     if (it != session_.end()) {
-        session = it->second;
-        session->Release(pid);
+        if (it->second != nullptr) {
+            session = it->second;
+            session->Release(pid);
+        }
     }
     MEDIA_DEBUG_LOG("camera stub services(%{public}zu).", session_.size());
 }
@@ -807,9 +804,11 @@ void HCaptureSession::CameraSessionSummary(std::string& dumpString)
 void HCaptureSession::dumpSessions(std::string& dumpString)
 {
     for (auto it = session_.begin(); it != session_.end(); it++) {
-        wptr<HCaptureSession> session = it->second;
-        dumpString += "No. of sessions for client:[" + std::to_string(1) + "]:\n";
-        session->dumpSessionInfo(dumpString);
+        if (it->second != nullptr) {
+            wptr<HCaptureSession> session = it->second;
+            dumpString += "No. of sessions for client:[" + std::to_string(1) + "]:\n";
+            session->dumpSessionInfo(dumpString);
+        }
     }
 }
 
