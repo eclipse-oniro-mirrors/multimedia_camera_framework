@@ -134,6 +134,7 @@ CaptureSession::CaptureSession(sptr<ICaptureSession> &captureSession)
 
 CaptureSession::~CaptureSession()
 {
+    MEDIA_DEBUG_LOG("Enter Into CaptureSession::~CaptureSession()");
     inputDevice_ = nullptr;
     captureSession_ = nullptr;
     changedMetadata_ = nullptr;
@@ -146,6 +147,7 @@ CaptureSession::~CaptureSession()
 int32_t CaptureSession::BeginConfig()
 {
     CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter Into CaptureSession::BeginConfig");
     if (IsSessionConfiged()) {
         MEDIA_ERR_LOG("CaptureSession::BeginConfig Session is locked");
         return CameraErrorCode::SESSION_CONFIG_LOCKED;
@@ -165,6 +167,7 @@ int32_t CaptureSession::BeginConfig()
 int32_t CaptureSession::CommitConfig()
 {
     CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter Into CaptureSession::CommitConfig");
     if (!IsSessionConfiged()) {
         MEDIA_ERR_LOG("CaptureSession::CommitConfig operation Not allowed!");
         return CameraErrorCode::OPERATION_NOT_ALLOWED;
@@ -191,6 +194,7 @@ int32_t CaptureSession::CanAddInput(sptr<CaptureInput> &input)
 int32_t CaptureSession::AddInput(sptr<CaptureInput> &input)
 {
     CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter Into CaptureSession::AddInput");
     if (!IsSessionConfiged()) {
         MEDIA_ERR_LOG("CaptureSession::AddInput operation Not allowed!");
         return CameraErrorCode::OPERATION_NOT_ALLOWED;
@@ -223,6 +227,7 @@ int32_t CaptureSession::CanAddOutput(sptr<CaptureOutput> &output)
 int32_t CaptureSession::AddOutput(sptr<CaptureOutput> &output)
 {
     CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter Into CaptureSession::AddOutput");
     if (!IsSessionConfiged()) {
         MEDIA_ERR_LOG("CaptureSession::AddOutput operation Not allowed!");
         return CameraErrorCode::OPERATION_NOT_ALLOWED;
@@ -250,6 +255,7 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput> &output)
 int32_t CaptureSession::RemoveInput(sptr<CaptureInput> &input)
 {
     CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter Into CaptureSession::RemoveInput");
     if (!IsSessionConfiged()) {
         MEDIA_ERR_LOG("CaptureSession::RemoveInput operation Not allowed!");
         return CameraErrorCode::OPERATION_NOT_ALLOWED;
@@ -276,6 +282,7 @@ int32_t CaptureSession::RemoveInput(sptr<CaptureInput> &input)
 int32_t CaptureSession::RemoveOutput(sptr<CaptureOutput> &output)
 {
     CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter Into CaptureSession::RemoveOutput");
     if (!IsSessionConfiged()) {
         MEDIA_ERR_LOG("CaptureSession::RemoveOutput operation Not allowed!");
         return CameraErrorCode::OPERATION_NOT_ALLOWED;
@@ -300,6 +307,7 @@ int32_t CaptureSession::RemoveOutput(sptr<CaptureOutput> &output)
 int32_t CaptureSession::Start()
 {
     CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter Into CaptureSession::Start");
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::Start Session not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
@@ -319,6 +327,7 @@ int32_t CaptureSession::Start()
 int32_t CaptureSession::Stop()
 {
     CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter Into CaptureSession::Stop");
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (captureSession_) {
         errCode = captureSession_->Stop();
@@ -334,6 +343,7 @@ int32_t CaptureSession::Stop()
 int32_t CaptureSession::Release()
 {
     CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter Into CaptureSession::Release");
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (captureSession_) {
         errCode = captureSession_->Release(0);

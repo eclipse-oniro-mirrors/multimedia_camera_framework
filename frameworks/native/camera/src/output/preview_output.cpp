@@ -33,6 +33,7 @@ PreviewOutput::~PreviewOutput()
 int32_t PreviewOutput::Release()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
+    MEDIA_DEBUG_LOG("Enter Into PreviewOutput::Release");
     if (GetStream() == nullptr) {
         MEDIA_ERR_LOG("PreviewOutput Failed to Release!, GetStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;
@@ -117,6 +118,7 @@ void PreviewOutput::AddDeferredSurface(sptr<Surface> surface)
 int32_t PreviewOutput::Start()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
+    MEDIA_DEBUG_LOG("Enter Into PreviewOutput::Start");
     CaptureSession* captureSession = GetSession();
     if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
         MEDIA_ERR_LOG("PreviewOutput Failed to Start!, session not config");
@@ -142,6 +144,7 @@ int32_t PreviewOutput::Start()
 int32_t PreviewOutput::Stop()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
+    MEDIA_DEBUG_LOG("Enter Into PreviewOutput::Stop");
     if (GetStream() == nullptr) {
         MEDIA_ERR_LOG("PreviewOutput Failed to Stop!, GetStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;

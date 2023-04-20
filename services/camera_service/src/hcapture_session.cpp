@@ -391,6 +391,12 @@ int32_t HCaptureSession::CreateAndCommitStreams(wptr<HCameraDevice> &device,
                 curStreamInfo = *item;
                 streamIds.emplace_back(curStreamInfo.streamId_);
             }
+            MEDIA_DEBUG_LOG("HCaptureSession::CreateAndCommitStreams() streamIds size() = %{public}zu",
+                            streamIds.size());
+            for (size_t i = 0; i < streamIds.size(); i++) {
+                MEDIA_DEBUG_LOG("HCaptureSession::CreateAndCommitStreams() streamIds[%{public}zu] = %{public}d",
+                                i, streamIds.at(i));
+            }
             if (!streamIds.empty() && streamOperator->ReleaseStreams(streamIds) != HDI::Camera::V1_0::NO_ERROR) {
                 MEDIA_ERR_LOG("HCaptureSession::CreateAndCommitStreams(), Failed to release streams");
             }
@@ -681,6 +687,10 @@ void HCaptureSession::ReleaseStreams()
             curStream->Release();
         }
     }
+    MEDIA_DEBUG_LOG("HCaptureSession::ReleaseStreams() streamIds size() = %{public}zu", streamIds.size());
+    for (size_t i = 0; i < streamIds.size(); i++) {
+        MEDIA_DEBUG_LOG("HCaptureSession::ReleaseStreams() streamIds[%{public}zu] = %{public}d", i, streamIds.at(i));
+    }
     repeatStreams_.clear();
     captureStreams_.clear();
     metadataStreams_.clear();
@@ -927,8 +937,8 @@ sptr<HStreamCommon> StreamOperatorCallback::GetStreamByStreamID(int32_t streamId
 int32_t StreamOperatorCallback::OnCaptureStarted(int32_t captureId,
                                                  const std::vector<int32_t> &streamIds)
 {
+    MEDIA_DEBUG_LOG("StreamOperatorCallback::OnCaptureStarted");
     sptr<HStreamCommon> curStream;
-
     for (auto item = streamIds.begin(); item != streamIds.end(); ++item) {
         curStream = GetStreamByStreamID(*item);
         if (curStream == nullptr) {
@@ -945,9 +955,9 @@ int32_t StreamOperatorCallback::OnCaptureStarted(int32_t captureId,
 
 int32_t StreamOperatorCallback::OnCaptureEnded(int32_t captureId, const std::vector<CaptureEndedInfo>& infos)
 {
+    MEDIA_DEBUG_LOG("StreamOperatorCallback::OnCaptureEnded");
     sptr<HStreamCommon> curStream;
     CaptureEndedInfo captureInfo;
-
     for (auto item = infos.begin(); item != infos.end(); ++item) {
         captureInfo = *item;
         curStream = GetStreamByStreamID(captureInfo.streamId_);
@@ -966,9 +976,9 @@ int32_t StreamOperatorCallback::OnCaptureEnded(int32_t captureId, const std::vec
 
 int32_t StreamOperatorCallback::OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos)
 {
+    MEDIA_DEBUG_LOG("StreamOperatorCallback::OnCaptureError");
     sptr<HStreamCommon> curStream;
     CaptureErrorInfo errInfo;
-
     for (auto item = infos.begin(); item != infos.end(); ++item) {
         errInfo = *item;
         curStream = GetStreamByStreamID(errInfo.streamId_);
@@ -989,8 +999,8 @@ int32_t StreamOperatorCallback::OnFrameShutter(int32_t captureId,
                                                const std::vector<int32_t> &streamIds,
                                                uint64_t timestamp)
 {
+    MEDIA_DEBUG_LOG("StreamOperatorCallback::OnFrameShutter");
     sptr<HStreamCommon> curStream;
-
     for (auto item = streamIds.begin(); item != streamIds.end(); ++item) {
         curStream = GetStreamByStreamID(*item);
         if ((curStream != nullptr) && (curStream->GetStreamType() == StreamType::CAPTURE)) {

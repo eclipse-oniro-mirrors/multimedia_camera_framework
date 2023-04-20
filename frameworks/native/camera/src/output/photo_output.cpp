@@ -226,6 +226,7 @@ PhotoOutput::PhotoOutput(sptr<IStreamCapture> &streamCapture)
 
 PhotoOutput::~PhotoOutput()
 {
+    MEDIA_DEBUG_LOG("Enter Into PhotoOutput::~PhotoOutput()");
     cameraSvcCallback_ = nullptr;
     appCallback_ = nullptr;
     defaultCaptureSetting_ = nullptr;
@@ -346,6 +347,7 @@ int32_t PhotoOutput::CancelCapture()
 int32_t PhotoOutput::Release()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
+    MEDIA_DEBUG_LOG("Enter Into PhotoOutput::Release");
     if (GetStream() == nullptr) {
         MEDIA_ERR_LOG("PhotoOutput Failed to Release!, GetStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;
