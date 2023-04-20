@@ -397,10 +397,10 @@ int32_t HCaptureSession::CreateAndCommitStreams(wptr<HCameraDevice> &device,
                 streamIds.emplace_back(curStreamInfo.streamId_);
             }
             MEDIA_DEBUG_LOG("HCaptureSession::CreateAndCommitStreams() streamIds size() = %{public}zu",
-                           streamIds.size());
+                            streamIds.size());
             for (size_t i = 0; i < streamIds.size(); i++) {
                 MEDIA_DEBUG_LOG("HCaptureSession::CreateAndCommitStreams() streamIds[%{public}zu] = %{public}d",
-                               i, streamIds.at(i));
+                                i, streamIds.at(i));
             }
             if (!streamIds.empty() && streamOperator->ReleaseStreams(streamIds) != HDI::Camera::V1_0::NO_ERROR) {
                 MEDIA_ERR_LOG("HCaptureSession::CreateAndCommitStreams(), Failed to release streams");
