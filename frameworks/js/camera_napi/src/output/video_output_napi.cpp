@@ -136,6 +136,7 @@ VideoOutputNapi::VideoOutputNapi() : env_(nullptr), wrapper_(nullptr)
 
 VideoOutputNapi::~VideoOutputNapi()
 {
+    MEDIA_DEBUG_LOG("Enter Into VideoOutputNapi::~VideoOutputNapi");
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
@@ -353,6 +354,7 @@ napi_value VideoOutputNapi::CreateVideoOutput(napi_env env, VideoProfile &profil
 
 napi_value VideoOutputNapi::Start(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("Enter Into VideoOutputNapi::Start");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -402,6 +404,7 @@ napi_value VideoOutputNapi::Start(napi_env env, napi_callback_info info)
 
 napi_value VideoOutputNapi::Stop(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("Enter Into VideoOutputNapi::Stop");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -619,6 +622,7 @@ napi_value VideoOutputNapi::SetFrameRateRange(napi_env env, napi_callback_info i
 
 napi_value VideoOutputNapi::Release(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("Enter Into VideoOutputNapi::Release");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;

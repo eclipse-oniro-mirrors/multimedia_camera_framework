@@ -114,6 +114,7 @@ void VideoOutput::SetCallback(std::shared_ptr<VideoStateCallback> callback)
 int32_t VideoOutput::Start()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
+    MEDIA_DEBUG_LOG("Enter Into VideoOutput::Start");
     CaptureSession* captureSession = GetSession();
     if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
         MEDIA_ERR_LOG("VideoOutput Failed to Start!, session not config");
@@ -139,6 +140,7 @@ int32_t VideoOutput::Start()
 int32_t VideoOutput::Stop()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
+    MEDIA_DEBUG_LOG("Enter Into VideoOutput::Stop");
     if (GetStream() == nullptr) {
         MEDIA_ERR_LOG("VideoOutput Failed to Stop!, GetStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;
@@ -159,6 +161,7 @@ int32_t VideoOutput::Stop()
 int32_t VideoOutput::Resume()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
+    MEDIA_DEBUG_LOG("Enter Into VideoOutput::Resume");
     if (GetStream() == nullptr) {
         MEDIA_ERR_LOG("VideoOutput Failed to Resume!, GetStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;
@@ -176,6 +179,7 @@ int32_t VideoOutput::Resume()
 int32_t VideoOutput::Pause()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
+    MEDIA_DEBUG_LOG("Enter Into VideoOutput::Pause");
     if (GetStream() == nullptr) {
         MEDIA_ERR_LOG("VideoOutput Failed to Pause!, GetStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;
@@ -193,6 +197,7 @@ int32_t VideoOutput::Pause()
 int32_t VideoOutput::Release()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
+    MEDIA_DEBUG_LOG("Enter Into VideoOutput::Release");
     if (GetStream() == nullptr) {
         MEDIA_ERR_LOG("VideoOutput Failed to Release!, GetStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;

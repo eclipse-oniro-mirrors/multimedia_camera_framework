@@ -90,6 +90,7 @@ CameraInput::~CameraInput()
 int CameraInput::Open()
 {
     std::lock_guard<std::mutex> lock(interfaceMutex_);
+    MEDIA_DEBUG_LOG("Enter Into CameraInput::Open");
     int32_t retCode = CAMERA_UNKNOWN_ERROR;
     if (deviceObj_) {
         retCode = deviceObj_->Open();
@@ -105,6 +106,7 @@ int CameraInput::Open()
 int CameraInput::Close()
 {
     std::lock_guard<std::mutex> lock(interfaceMutex_);
+    MEDIA_DEBUG_LOG("Enter Into CameraInput::Close");
     int32_t retCode = CAMERA_UNKNOWN_ERROR;
     if (deviceObj_) {
         retCode = deviceObj_->Close();
@@ -123,6 +125,7 @@ int CameraInput::Close()
 
 int CameraInput::Release()
 {
+    MEDIA_DEBUG_LOG("Enter Into CameraInput::Release");
     int32_t retCode = CAMERA_UNKNOWN_ERROR;
     if (deviceObj_) {
         retCode = deviceObj_->Release();

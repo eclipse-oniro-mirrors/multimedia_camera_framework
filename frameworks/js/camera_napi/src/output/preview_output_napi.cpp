@@ -137,6 +137,7 @@ PreviewOutputNapi::PreviewOutputNapi() : env_(nullptr), wrapper_(nullptr)
 
 PreviewOutputNapi::~PreviewOutputNapi()
 {
+    MEDIA_DEBUG_LOG("Enter Into PreviewOutputNapi::~PreviewOutputNapi");
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
@@ -324,6 +325,7 @@ bool PreviewOutputNapi::IsPreviewOutput(napi_env env, napi_value obj)
 
 napi_value PreviewOutputNapi::Release(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("Enter Into PreviewOutputNapi::Release");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -426,6 +428,7 @@ napi_value PreviewOutputNapi::AddDeferredSurface(napi_env env, napi_callback_inf
 
 napi_value PreviewOutputNapi::Start(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("Enter Into PreviewOutputNapi::Start");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -477,6 +480,7 @@ napi_value PreviewOutputNapi::Start(napi_env env, napi_callback_info info)
 
 napi_value PreviewOutputNapi::Stop(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("Enter Into PreviewOutputNapi::Stop");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;

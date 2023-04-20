@@ -253,6 +253,7 @@ void CommonCompleteCallback(napi_env env, napi_status status, void* data)
 
 napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("Enter Into CameraInputNapi::Open");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -306,6 +307,7 @@ napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
 
 napi_value CameraInputNapi::Close(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("Enter Into CameraInputNapi::Close");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -359,6 +361,7 @@ napi_value CameraInputNapi::Close(napi_env env, napi_callback_info info)
 
 napi_value CameraInputNapi::Release(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("Enter Into CameraInputNapi::Release");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;

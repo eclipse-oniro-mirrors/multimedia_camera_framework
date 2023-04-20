@@ -23,6 +23,7 @@ namespace CameraStandard {
 HStreamCommon::HStreamCommon(StreamType streamType, sptr<OHOS::IBufferProducer> producer,
                              int32_t format, int32_t width, int32_t height)
 {
+    MEDIA_DEBUG_LOG("Enter Into HStreamCommon::HStreamCommon");
     streamId_ = 0;
     curCaptureID_ = 0;
     isReleaseStream_ = false;
@@ -70,6 +71,7 @@ int32_t HStreamCommon::LinkInput(sptr<IStreamOperator> streamOperator,
         return CAMERA_INVALID_SESSION_CFG;
     }
     streamId_ = streamId;
+    MEDIA_DEBUG_LOG("HStreamCommon::LinkInput streamId_ is %{public}d", streamId_);
     streamOperator_ = streamOperator;
     cameraAbility_ = cameraAbility;
     return CAMERA_OK;
@@ -98,6 +100,7 @@ void HStreamCommon::SetStreamInfo(StreamInfo &streamInfo)
 int32_t HStreamCommon::Release()
 {
     std::lock_guard<std::mutex> lock(producerLock_);
+    MEDIA_DEBUG_LOG("Enter Into HStreamCommon::Release");
     streamId_ = 0;
     curCaptureID_ = 0;
     streamOperator_ = nullptr;

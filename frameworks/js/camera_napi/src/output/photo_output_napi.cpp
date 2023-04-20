@@ -172,6 +172,7 @@ PhotoOutputNapi::PhotoOutputNapi() : env_(nullptr), wrapper_(nullptr)
 
 PhotoOutputNapi::~PhotoOutputNapi()
 {
+    MEDIA_DEBUG_LOG("Enter Into PhotoOutputNapi::~PhotoOutputNapi");
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
@@ -567,6 +568,7 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
 
 napi_value PhotoOutputNapi::Release(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("Enter Into PhotoOutputNapi::Release");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
