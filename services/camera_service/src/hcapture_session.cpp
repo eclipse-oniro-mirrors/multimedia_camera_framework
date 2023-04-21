@@ -87,6 +87,7 @@ HCaptureSession::HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
             MEDIA_ERR_LOG("currently multi-session not supported, release session for pid(%{public}d)", it->first);
         }
     }
+    std::lock_guard<std::mutex> lock(sessionLock_);
     std::map<int32_t, wptr<HCaptureSession>>::iterator it = session_.find(pid_);
     if (it != session_.end()) {
         MEDIA_ERR_LOG("HCaptureSession::HCaptureSession doesn't support multiple sessions per pid");
@@ -129,6 +130,7 @@ int32_t HCaptureSession::AddInput(sptr<ICameraDeviceService> cameraDevice)
         MEDIA_ERR_LOG("HCaptureSession::AddInput cameraDevice is null");
         return CAMERA_INVALID_ARG;
     }
+    std::lock_guard<std::mutex> lock(sessionLock_);
     if (curState_ != CaptureSessionState::SESSION_CONFIG_INPROGRESS) {
         MEDIA_ERR_LOG("HCaptureSession::AddInput Need to call BeginConfig before adding input");
         return CAMERA_INVALID_STATE;
