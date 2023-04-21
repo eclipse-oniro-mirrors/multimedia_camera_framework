@@ -112,7 +112,6 @@ private:
 
 struct CameraInputAsyncContext :public AsyncContext {
     CameraInputNapi* objectInfo;
-    napi_value releaseVar;
     bool bRetBool;
     bool isSupported;
     InputAsyncCallbackModes modeForAsync;
@@ -122,7 +121,6 @@ struct CameraInputAsyncContext :public AsyncContext {
     ~CameraInputAsyncContext()
     {
         objectInfo = nullptr;
-        releaseVar = nullptr;
     }
 };
 } // namespace CameraStandard

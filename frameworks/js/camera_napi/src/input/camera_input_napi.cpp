@@ -173,9 +173,6 @@ napi_value CameraInputNapi::CreateCameraInput(napi_env env, sptr<CameraInput> ca
     }
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
-        if (sCameraInput_) {
-            sCameraInput_ = nullptr;
-        }
         sCameraInput_ = cameraInput;
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         if (status == napi_ok && result != nullptr) {
@@ -225,7 +222,6 @@ void CommonCompleteCallback(napi_env env, napi_status status, void* data)
         case RELEASE_ASYNC_CALLBACK:
             if (context->objectInfo && context->objectInfo->GetCameraInput()) {
                 context->objectInfo->GetCameraInput()->Release();
-                status = napi_remove_wrap(env, context->releaseVar, reinterpret_cast<void**>(&context->objectInfo));
                 jsContext->status = context->status;
             }
             break;
