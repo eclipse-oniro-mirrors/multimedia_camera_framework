@@ -36,8 +36,14 @@ HCameraDevice::HCameraDevice(sptr<HCameraHostManager> &cameraHostManager,
 
 HCameraDevice::~HCameraDevice()
 {
-    this->Close();
-    cameraHostManager_ = nullptr;
+    hdiCameraDevice_ = nullptr;
+    streamOperator_ = nullptr;
+    if (cameraHostManager_) {
+        cameraHostManager_->RemoveCameraDevice(cameraID_);
+        cameraHostManager_ = nullptr;
+    }
+    deviceHDICallback_ = nullptr;
+    deviceSvcCallback_ = nullptr;
 }
 
 std::string HCameraDevice::GetCameraId()
@@ -496,7 +502,7 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp,
     return CAMERA_OK;
 }
 
-CameraDeviceCallback::CameraDeviceCallback(wptr<HCameraDevice> hCameraDevice)
+CameraDeviceCallback::CameraDeviceCallback(sptr<HCameraDevice> hCameraDevice)
 {
     hCameraDevice_ = hCameraDevice;
 }

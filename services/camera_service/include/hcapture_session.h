@@ -74,21 +74,21 @@ private:
     int32_t ValidateSessionOutputs();
     int32_t AddOutputStream(sptr<HStreamCommon> stream);
     int32_t RemoveOutputStream(sptr<HStreamCommon> stream);
-    int32_t GetCameraDevice(wptr<HCameraDevice> &device);
-    int32_t HandleCaptureOuputsConfig(wptr<HCameraDevice> &device);
-    int32_t CreateAndCommitStreams(wptr<HCameraDevice> &device,
+    int32_t GetCameraDevice(sptr<HCameraDevice> &device);
+    int32_t HandleCaptureOuputsConfig(sptr<HCameraDevice> &device);
+    int32_t CreateAndCommitStreams(sptr<HCameraDevice> &device,
 	                               std::shared_ptr<OHOS::Camera::CameraMetadata> &deviceSettings,
                                    std::vector<StreamInfo> &streamInfos);
-    int32_t CheckAndCommitStreams(wptr<HCameraDevice> &device,
+    int32_t CheckAndCommitStreams(sptr<HCameraDevice> &device,
 	                              std::shared_ptr<OHOS::Camera::CameraMetadata> &deviceSettings,
                                   std::vector<StreamInfo> &allStreamInfos,
                                   std::vector<StreamInfo> &newStreamInfos);
-    int32_t GetCurrentStreamInfos(wptr<HCameraDevice> &device,
+    int32_t GetCurrentStreamInfos(sptr<HCameraDevice> &device,
 	                              std::shared_ptr<OHOS::Camera::CameraMetadata> &deviceSettings,
                                   std::vector<StreamInfo> &streamInfos);
-    void UpdateSessionConfig(wptr<HCameraDevice> &device);
+    void UpdateSessionConfig(sptr<HCameraDevice> &device);
     void DeleteReleasedStream();
-    void RestorePreviousState(wptr<HCameraDevice> &device, bool isCreateReleaseStreams);
+    void RestorePreviousState(sptr<HCameraDevice> &device, bool isCreateReleaseStreams);
     void ReleaseStreams();
     void ClearCaptureSession(pid_t pid);
     void RegisterPermissionCallback(const uint32_t callingTokenId, const std::string permissionName);
@@ -100,13 +100,13 @@ private:
 
     CaptureSessionState curState_ = CaptureSessionState::SESSION_INIT;
     CaptureSessionState prevState_ = CaptureSessionState::SESSION_INIT;
-    wptr<HCameraDevice> cameraDevice_;
+    sptr<HCameraDevice> cameraDevice_;
     std::vector<sptr<HStreamCommon>> repeatStreams_;
     std::vector<sptr<HStreamCommon>> captureStreams_;
     std::vector<sptr<HStreamCommon>> metadataStreams_;
     std::vector<sptr<HStreamCommon>> streams_;
     std::vector<sptr<HStreamCommon>> tempStreams_;
-    std::vector<wptr<HCameraDevice>> tempCameraDevices_;
+    std::vector<sptr<HCameraDevice>> tempCameraDevices_;
     std::vector<int32_t> deletedStreamIds_;
     sptr<HCameraHostManager> cameraHostManager_;
     sptr<StreamOperatorCallback> streamOperatorCallback_;
@@ -125,7 +125,7 @@ public:
         : PermStateChangeCallbackCustomize(scopeInfo) {}
     ~PermissionStatusChangeCb();
     void PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result) override;
-    void SetCaptureSession(wptr<HCaptureSession> captureSession);
+    void SetCaptureSession(sptr<HCaptureSession> captureSession);
 
 private:
     wptr<HCaptureSession> captureSession_;
@@ -136,7 +136,7 @@ public:
     CameraUseStateChangeCb() {}
     ~CameraUseStateChangeCb();
     void StateChangeNotify(Security::AccessToken::AccessTokenID tokenId, bool isShowing) override;
-    void SetCaptureSession(wptr<HCaptureSession> captureSession);
+    void SetCaptureSession(sptr<HCaptureSession> captureSession);
 
 private:
     wptr<HCaptureSession> captureSession_;
@@ -152,7 +152,7 @@ public:
     int32_t OnCaptureEnded(int32_t captureId, const std::vector<CaptureEndedInfo>& infos) override;
     int32_t OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos) override;
     int32_t OnFrameShutter(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
-    void SetCaptureSession(wptr<HCaptureSession> captureSession);
+    void SetCaptureSession(sptr<HCaptureSession> captureSession);
 
 private:
     sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId);
