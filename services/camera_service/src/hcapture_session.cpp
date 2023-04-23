@@ -500,7 +500,7 @@ int32_t HCaptureSession::HandleCaptureOuputsConfig(sptr<HCameraDevice> &device)
     sptr<IStreamOperator> streamOperator;
     sptr<HStreamCommon> curStream;
     if (device != nullptr) {
-        settings = item->GetSettings();
+        settings = device->GetSettings();
     }
     if (device == nullptr || settings == nullptr) {
         return CAMERA_UNKNOWN_ERROR;
