@@ -21,11 +21,9 @@ namespace CameraStandard {
 using namespace std;
 using OHOS::HiviewDFX::HiLog;
 using OHOS::HiviewDFX::HiLogLabel;
-
 namespace {
     constexpr HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "PhotoOutputNapi"};
 }
-
 thread_local napi_ref PhotoOutputNapi::sConstructor_ = nullptr;
 thread_local sptr<PhotoOutput> PhotoOutputNapi::sPhotoOutput_ = nullptr;
 thread_local uint32_t PhotoOutputNapi::photoOutputTaskId = CAMERA_PHOTO_OUTPUT_TASKID;
@@ -34,15 +32,16 @@ PhotoOutputCallback::PhotoOutputCallback(napi_env env) : env_(env) {}
 
 void PhotoOutputCallback::UpdateJSCallbackAsync(std::string propName, const CallbackInfo &info) const
 {
+    MEDIA_DEBUG_LOG("UpdateJSCallbackAsync is called");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
     if (!loop) {
-        MEDIA_ERR_LOG("PhotoOutputCallback:UpdateJSCallbackAsync() failed to get event loop");
+        MEDIA_ERR_LOG("failed to get event loop");
         return;
     }
     uv_work_t* work = new(std::nothrow) uv_work_t;
     if (!work) {
-        MEDIA_ERR_LOG("PhotoOutputCallback:UpdateJSCallbackAsync() failed to allocate work");
+        MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
     std::unique_ptr<PhotoOutputCallbackInfo> callbackInfo =
@@ -57,7 +56,7 @@ void PhotoOutputCallback::UpdateJSCallbackAsync(std::string propName, const Call
         delete work;
     });
     if (ret) {
-        MEDIA_ERR_LOG("PhotoOutputCallback:UpdateJSCallbackAsync() failed to execute work");
+        MEDIA_ERR_LOG("failed to execute work");
         delete work;
     } else {
         callbackInfo.release();
@@ -67,7 +66,7 @@ void PhotoOutputCallback::UpdateJSCallbackAsync(std::string propName, const Call
 void PhotoOutputCallback::OnCaptureStarted(const int32_t captureID) const
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("PhotoOutputCallback:OnCaptureStarted() is called!, captureID: %{public}d", captureID);
+    MEDIA_DEBUG_LOG("OnCaptureStarted is called!, captureID: %{public}d", captureID);
     CallbackInfo info;
     info.captureID = captureID;
     UpdateJSCallbackAsync("OnCaptureStarted", info);
@@ -76,8 +75,8 @@ void PhotoOutputCallback::OnCaptureStarted(const int32_t captureID) const
 void PhotoOutputCallback::OnCaptureEnded(const int32_t captureID, const int32_t frameCount) const
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("PhotoOutputCallback:OnCaptureEnded() is called!, captureID: %{public}d, frameCount: %{public}d",
-                   captureID, frameCount);
+    MEDIA_DEBUG_LOG("OnCaptureEnded is called!, captureID: %{public}d, frameCount: %{public}d",
+        captureID, frameCount);
     CallbackInfo info;
     info.captureID = captureID;
     info.frameCount = frameCount;
@@ -87,7 +86,7 @@ void PhotoOutputCallback::OnCaptureEnded(const int32_t captureID, const int32_t 
 void PhotoOutputCallback::OnFrameShutter(const int32_t captureId, const uint64_t timestamp) const
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("PhotoOutputCallback:OnFrameShutter() called, captureID: %{public}d, timestamp: %{public}" PRIu64,
+    MEDIA_DEBUG_LOG("OnFrameShutter is called, captureID: %{public}d, timestamp: %{public}" PRIu64,
         captureId, timestamp);
     CallbackInfo info;
     info.captureID = captureId;
@@ -97,7 +96,7 @@ void PhotoOutputCallback::OnFrameShutter(const int32_t captureId, const uint64_t
 
 void PhotoOutputCallback::OnCaptureError(const int32_t captureId, const int32_t errorCode) const
 {
-    MEDIA_INFO_LOG("PhotoOutputCallback:OnCaptureError() is called!, captureID: %{public}d, errorCode: %{public}d",
+    MEDIA_DEBUG_LOG("OnCaptureError is called!, captureID: %{public}d, errorCode: %{public}d",
         captureId, errorCode);
     CallbackInfo info;
     info.captureID = captureId;
@@ -107,6 +106,7 @@ void PhotoOutputCallback::OnCaptureError(const int32_t captureId, const int32_t 
 
 void PhotoOutputCallback::SetCallbackRef(const std::string &eventType, const napi_ref &callbackRef)
 {
+    MEDIA_DEBUG_LOG("SetCallbackRef is called");
     if (eventType.compare("captureStart") == 0) {
         captureStartCallbackRef_ = callbackRef;
     } else if (eventType.compare("captureEnd") == 0) {
@@ -122,6 +122,7 @@ void PhotoOutputCallback::SetCallbackRef(const std::string &eventType, const nap
 
 void PhotoOutputCallback::UpdateJSCallback(std::string propName, const CallbackInfo &info) const
 {
+    MEDIA_DEBUG_LOG("UpdateJSCallback is called");
     napi_value result[ARGS_ONE];
     napi_value callback = nullptr;
     napi_value retVal;
@@ -172,7 +173,7 @@ PhotoOutputNapi::PhotoOutputNapi() : env_(nullptr), wrapper_(nullptr)
 
 PhotoOutputNapi::~PhotoOutputNapi()
 {
-    MEDIA_DEBUG_LOG("Enter Into PhotoOutputNapi::~PhotoOutputNapi");
+    MEDIA_DEBUG_LOG("~PhotoOutputNapi is called");
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
@@ -186,7 +187,7 @@ PhotoOutputNapi::~PhotoOutputNapi()
 
 void PhotoOutputNapi::PhotoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
-    MEDIA_DEBUG_LOG("PhotoOutputNapiDestructor enter");
+    MEDIA_DEBUG_LOG("PhotoOutputNapiDestructor is called");
     PhotoOutputNapi* photoOutput = reinterpret_cast<PhotoOutputNapi*>(nativeObject);
     if (photoOutput != nullptr) {
         photoOutput->~PhotoOutputNapi();
@@ -195,6 +196,7 @@ void PhotoOutputNapi::PhotoOutputNapiDestructor(napi_env env, void* nativeObject
 
 napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
 {
+    MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
     int32_t refCount = 1;
@@ -221,13 +223,14 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
             }
         }
     }
-
+    MEDIA_ERR_LOG("Init call Failed!");
     return nullptr;
 }
 
 // Constructor callback
 napi_value PhotoOutputNapi::PhotoOutputNapiConstructor(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("PhotoOutputNapiConstructor is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value thisVar = nullptr;
@@ -253,7 +256,7 @@ napi_value PhotoOutputNapi::PhotoOutputNapiConstructor(napi_env env, napi_callba
             MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
-
+    MEDIA_ERR_LOG("PhotoOutputNapiConstructor call Failed!");
     return result;
 }
 
@@ -264,6 +267,7 @@ sptr<PhotoOutput> PhotoOutputNapi::GetPhotoOutput()
 
 bool PhotoOutputNapi::IsPhotoOutput(napi_env env, napi_value obj)
 {
+    MEDIA_DEBUG_LOG("IsPhotoOutput is called");
     bool result = false;
     napi_status status;
     napi_value constructor = nullptr;
@@ -275,18 +279,16 @@ bool PhotoOutputNapi::IsPhotoOutput(napi_env env, napi_value obj)
             result = false;
         }
     }
-
     return result;
 }
 
 napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile &profile, std::string surfaceId)
 {
+    MEDIA_DEBUG_LOG("CreatePhotoOutput is called, profile CameraFormat= %{public}d", profile.GetCameraFormat());
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
     napi_value constructor;
-    MEDIA_INFO_LOG("CreatePhotoOutput start");
-    MEDIA_INFO_LOG("CreatePhotoOutput profile CameraFormat= %{public}d", profile.GetCameraFormat());
     napi_get_undefined(env, &result);
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
@@ -311,18 +313,19 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile &profile, st
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sPhotoOutput_ = nullptr;
         if (status == napi_ok && result != nullptr) {
-            MEDIA_ERR_LOG("Success to create photo output instance");
+            MEDIA_DEBUG_LOG("Success to create photo output instance");
             return result;
         } else {
             MEDIA_ERR_LOG("Failed to create photo output instance");
         }
     }
-    MEDIA_INFO_LOG("CreatePhotoOutput get undefined");
+    MEDIA_ERR_LOG("CreatePhotoOutput call Failed!");
     return result;
 }
 
 static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
 {
+    MEDIA_DEBUG_LOG("CommonCompleteCallback is called");
     auto context = static_cast<PhotoOutputAsyncContext*>(data);
     if (context == nullptr) {
         MEDIA_ERR_LOG("Async context is null");
@@ -358,11 +361,12 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
 
 int32_t QueryAndGetProperty(napi_env env, napi_value arg, const string &propertyName, napi_value &property)
 {
+    MEDIA_DEBUG_LOG("QueryAndGetProperty is called");
     bool present = false;
     int32_t retval = 0;
     if ((napi_has_named_property(env, arg, propertyName.c_str(), &present) != napi_ok)
         || (!present) || (napi_get_named_property(env, arg, propertyName.c_str(), &property) != napi_ok)) {
-            HiLog::Error(LABEL, "Failed to obtain property: %{public}s", propertyName.c_str());
+            MEDIA_ERR_LOG("Failed to obtain property: %{public}s", propertyName.c_str());
             retval = -1;
     }
 
@@ -371,6 +375,7 @@ int32_t QueryAndGetProperty(napi_env env, napi_value arg, const string &property
 
 int32_t GetLocationProperties(napi_env env, napi_value locationObj, const PhotoOutputAsyncContext &context)
 {
+    MEDIA_DEBUG_LOG("GetLocationProperties is called");
     PhotoOutputAsyncContext* asyncContext = const_cast<PhotoOutputAsyncContext *>(&context);
     napi_value latproperty = nullptr;
     napi_value lonproperty = nullptr;
@@ -401,6 +406,7 @@ int32_t GetLocationProperties(napi_env env, napi_value locationObj, const PhotoO
 
 static void GetFetchOptionsParam(napi_env env, napi_value arg, const PhotoOutputAsyncContext &context, bool &err)
 {
+    MEDIA_DEBUG_LOG("GetFetchOptionsParam is called");
     PhotoOutputAsyncContext* asyncContext = const_cast<PhotoOutputAsyncContext *>(&context);
     int32_t intValue;
     std::string strValue;
@@ -449,6 +455,7 @@ static void GetFetchOptionsParam(napi_env env, napi_value arg, const PhotoOutput
 static napi_value ConvertJSArgsToNative(napi_env env, size_t argc, const napi_value argv[],
     PhotoOutputAsyncContext &asyncContext)
 {
+    MEDIA_DEBUG_LOG("ConvertJSArgsToNative is called");
     const int32_t refCount = 1;
     napi_value result = nullptr;
     auto context = &asyncContext;
@@ -462,7 +469,7 @@ static napi_value ConvertJSArgsToNative(napi_env env, size_t argc, const napi_va
         if (i == PARAM0 && valueType == napi_object) {
             GetFetchOptionsParam(env, argv[PARAM0], asyncContext, err);
             if (err) {
-                HiLog::Error(LABEL, "fetch options retrieval failed");
+                MEDIA_ERR_LOG("fetch options retrieval failed");
                 NAPI_ASSERT(env, false, "type mismatch");
             }
             asyncContext.hasPhotoSettings = true;
@@ -487,6 +494,7 @@ static napi_value ConvertJSArgsToNative(napi_env env, size_t argc, const napi_va
 
 napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
 {
+    MEDIA_INFO_LOG("Capture is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_TWO;
@@ -561,14 +569,15 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
             napi_queue_async_work(env, asyncContext->work);
             asyncContext.release();
         }
+    } else {
+        MEDIA_ERR_LOG("Capture call Failed!");
     }
-
     return result;
 }
 
 napi_value PhotoOutputNapi::Release(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("Enter Into PhotoOutputNapi::Release");
+    MEDIA_INFO_LOG("Release is called");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -613,13 +622,15 @@ napi_value PhotoOutputNapi::Release(napi_env env, napi_callback_info info)
             napi_queue_async_work(env, asyncContext->work);
             asyncContext.release();
         }
+    } else {
+        MEDIA_ERR_LOG("Release call Failed!");
     }
-
     return result;
 }
 
 napi_value PhotoOutputNapi::GetDefaultCaptureSetting(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetDefaultCaptureSetting is called");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -663,13 +674,15 @@ napi_value PhotoOutputNapi::GetDefaultCaptureSetting(napi_env env, napi_callback
             napi_queue_async_work(env, asyncContext->work);
             asyncContext.release();
         }
+    } else {
+        MEDIA_ERR_LOG("GetDefaultCaptureSetting call Failed!");
     }
-
     return result;
 }
 
 napi_value PhotoOutputNapi::IsMirrorSupported(napi_env env, napi_callback_info info)
 {
+    MEDIA_INFO_LOG("IsMirrorSupported is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -684,13 +697,15 @@ napi_value PhotoOutputNapi::IsMirrorSupported(napi_env env, napi_callback_info i
     if (status == napi_ok && photoOutputNapi != nullptr) {
         bool isSupported = photoOutputNapi->photoOutput_->IsMirrorSupported();
         napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("IsMirrorSupported call Failed!");
     }
-
     return result;
 }
 
 napi_value PhotoOutputNapi::SetMirror(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("SetMirror is called");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -735,6 +750,8 @@ napi_value PhotoOutputNapi::SetMirror(napi_env env, napi_callback_info info)
             napi_queue_async_work(env, asyncContext->work);
             asyncContext.release();
         }
+    } else {
+        MEDIA_ERR_LOG("SetMirror call Failed!");
     }
 
     return result;
@@ -742,6 +759,7 @@ napi_value PhotoOutputNapi::SetMirror(napi_env env, napi_callback_info info)
 
 napi_value PhotoOutputNapi::On(napi_env env, napi_callback_info info)
 {
+    MEDIA_INFO_LOG("On is called");
     CAMERA_SYNC_TRACE;
     napi_value undefinedResult = nullptr;
     size_t argCount = ARGS_TWO;
@@ -782,6 +800,8 @@ napi_value PhotoOutputNapi::On(napi_env env, napi_callback_info info)
         } else {
             MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
         }
+    } else {
+        MEDIA_ERR_LOG("On call Failed!");
     }
     return undefinedResult;
 }

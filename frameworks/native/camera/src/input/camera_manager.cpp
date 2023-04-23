@@ -77,6 +77,7 @@ CameraManager::~CameraManager()
 
 int32_t CameraManager::CreateListenerObject()
 {
+    MEDIA_DEBUG_LOG("CreateListenerObject entry");
     listenerStub_ = new(std::nothrow) CameraListenerStub();
     CHECK_AND_RETURN_RET_LOG(listenerStub_ != nullptr, CAMERA_ALLOC_ERROR,
         "failed to new CameraListenerStub object");
@@ -86,7 +87,6 @@ int32_t CameraManager::CreateListenerObject()
     sptr<IRemoteObject> object = listenerStub_->AsObject();
     CHECK_AND_RETURN_RET_LOG(object != nullptr, CAMERA_ALLOC_ERROR, "listener object is nullptr..");
 
-    MEDIA_DEBUG_LOG("CreateListenerObject");
     return serviceProxy_->SetListenerObject(object);
 }
 
@@ -106,31 +106,29 @@ public:
 
     int32_t OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status) override
     {
-        MEDIA_INFO_LOG("CameraStatusServiceCallback::OnCameraStatusChanged: cameraId: %{public}s, status: %{public}d",
-                       cameraId.c_str(), status);
+        MEDIA_INFO_LOG("OnCameraStatusChanged entry");
         CameraStatusInfo cameraStatusInfo;
         if (camMngr_ != nullptr && camMngr_->GetApplicationCallback() != nullptr) {
             cameraStatusInfo.cameraDevice = camMngr_->GetCameraDeviceFromId(cameraId);
             cameraStatusInfo.cameraStatus = status;
             if (cameraStatusInfo.cameraDevice) {
-                MEDIA_INFO_LOG("OnCameraStatusChanged: cameraId: %{public}s, status: %{public}d",
+                MEDIA_INFO_LOG("cameraId: %{public}s, status: %{public}d",
                                cameraId.c_str(), status);
                 camMngr_->GetApplicationCallback()->OnCameraStatusChanged(cameraStatusInfo);
             }
         } else {
-            MEDIA_INFO_LOG("CameraManager::Callback not registered!, Ignore the callback");
+            MEDIA_INFO_LOG("Callback not registered!, Ignore the callback");
         }
         return CAMERA_OK;
     }
 
     int32_t OnFlashlightStatusChanged(const std::string& cameraId, const FlashStatus status) override
     {
-        MEDIA_INFO_LOG("OnFlashlightStatusChanged: "
-            "cameraId: %{public}s, status: %{public}d", cameraId.c_str(), status);
+        MEDIA_INFO_LOG("cameraId: %{public}s, status: %{public}d", cameraId.c_str(), status);
         if (camMngr_ != nullptr && camMngr_->GetApplicationCallback() != nullptr) {
             camMngr_->GetApplicationCallback()->OnFlashlightStatusChanged(cameraId, status);
         } else {
-            MEDIA_INFO_LOG("CameraManager::Callback not registered!, Ignore the callback");
+            MEDIA_INFO_LOG("Callback not registered!, Ignore the callback");
         }
         return CAMERA_OK;
     }
@@ -157,7 +155,7 @@ int CameraManager::CreateCaptureSession(sptr<CaptureSession> *pCaptureSession)
     int32_t retCode = CAMERA_OK;
 
     if (serviceProxy_ == nullptr) {
-        MEDIA_ERR_LOG("CameraManager::CreateCaptureSession serviceProxy_ is null");
+        MEDIA_ERR_LOG("serviceProxy_ is null");
         return CameraErrorCode::INVALID_ARGUMENT;
     }
 
@@ -212,14 +210,14 @@ int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &su
     camera_format_t metaFormat;
 
     if ((serviceProxy_ == nullptr) || (surface == nullptr)) {
-        MEDIA_ERR_LOG("CameraManager::CreatePhotoOutput serviceProxy_ is null or surface/profile is null");
+        MEDIA_ERR_LOG("serviceProxy_ is null or PhotoOutputSurface/profile is null");
         return CameraErrorCode::INVALID_ARGUMENT;
     }
 
     if ((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) ||
         (profile.GetSize().width == 0) ||
         (profile.GetSize().height == 0)) {
-        MEDIA_ERR_LOG("CameraManager::CreatePhotoOutput invalid fomrat or width or height is zero");
+        MEDIA_ERR_LOG("invalid fomrat or width or height is zero");
         return CameraErrorCode::INVALID_ARGUMENT;
     }
 
@@ -267,14 +265,14 @@ int CameraManager::CreatePreviewOutput(Profile &profile, sptr<Surface> surface, 
     camera_format_t metaFormat;
 
     if ((serviceProxy_ == nullptr) || (surface == nullptr)) {
-        MEDIA_ERR_LOG("CameraManager::CreatePhotoOutput serviceProxy_ is null or surface/profile is null");
+        MEDIA_ERR_LOG("serviceProxy_ is null or previewOutputSurface/profile is null");
         return CameraErrorCode::INVALID_ARGUMENT;
     }
 
     if ((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) ||
         (profile.GetSize().width == 0) ||
         (profile.GetSize().height == 0)) {
-        MEDIA_ERR_LOG("CameraManager::CreatePhotoOutput width or height is zero");
+        MEDIA_ERR_LOG("width or height is zero");
         return CameraErrorCode::INVALID_ARGUMENT;
     }
 
@@ -292,7 +290,7 @@ int CameraManager::CreatePreviewOutput(Profile &profile, sptr<Surface> surface, 
                                             profile.GetSize().height);
         }
     } else {
-        MEDIA_ERR_LOG("PreviewOutput: Failed to get stream repeat object from hcamera service! %{public}d", retCode);
+        MEDIA_ERR_LOG("Failed to get stream repeat object from hcamera service! %{public}d", retCode);
         return ServiceToCameraError(retCode);
     }
 
@@ -323,14 +321,14 @@ int CameraManager::CreateDeferredPreviewOutput(Profile &profile, sptr<PreviewOut
     camera_format_t metaFormat;
 
     if ((serviceProxy_ == nullptr)) {
-        MEDIA_ERR_LOG("CameraManager::CreatePreviewOutput serviceProxy_ is null or profile is null");
+        MEDIA_ERR_LOG("serviceProxy_ is null or profile is null");
         return CameraErrorCode::INVALID_ARGUMENT;
     }
 
     if ((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) ||
         (profile.GetSize().width == 0) ||
         (profile.GetSize().height == 0)) {
-        MEDIA_ERR_LOG("CameraManager::CreatePhotoOutput width or height is zero");
+        MEDIA_ERR_LOG("width or height is zero");
         return CameraErrorCode::INVALID_ARGUMENT;
     }
 
@@ -348,8 +346,7 @@ int CameraManager::CreateDeferredPreviewOutput(Profile &profile, sptr<PreviewOut
                                             profile.GetSize().height);
         }
     } else {
-        MEDIA_ERR_LOG("CreateDeferredPreviewOutput PreviewOutput: "
-            "Failed to get stream repeat object from hcamera service!, %{public}d", retCode);
+        MEDIA_ERR_LOG("Failed to get stream repeat object from hcamera service!, %{public}d", retCode);
         return ServiceToCameraError(retCode);
     }
 
@@ -393,13 +390,13 @@ int CameraManager::CreateMetadataOutput(sptr<MetadataOutput> *pMetadataOutput)
     int32_t retCode = CAMERA_OK;
 
     if (!serviceProxy_) {
-        MEDIA_ERR_LOG("CameraManager::CreateMetadataOutput serviceProxy_ is null");
+        MEDIA_ERR_LOG("serviceProxy_ is null");
         return CameraErrorCode::INVALID_ARGUMENT;
     }
 
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     if (!surface) {
-        MEDIA_ERR_LOG("CameraManager::CreateMetadataOutput Failed to create surface");
+        MEDIA_ERR_LOG("Failed to create MetadataOutputSurface");
         return CameraErrorCode::INVALID_ARGUMENT;
     }
 
@@ -410,24 +407,23 @@ int CameraManager::CreateMetadataOutput(sptr<MetadataOutput> *pMetadataOutput)
     surface->SetDefaultWidthAndHeight(width, height);
     retCode = serviceProxy_->CreateMetadataOutput(surface->GetProducer(), format, streamMetadata);
     if (retCode) {
-        MEDIA_ERR_LOG("CameraManager::CreateMetadataOutput Failed to get stream metadata object from hcamera service! "
-                      "%{public}d", retCode);
+        MEDIA_ERR_LOG("Failed to get stream metadata object from hcamera service! %{public}d", retCode);
         return ServiceToCameraError(retCode);
     }
 
     metadataOutput = new(std::nothrow) MetadataOutput(surface, streamMetadata);
     if (!metadataOutput) {
-        MEDIA_ERR_LOG("CameraManager::CreateMetadataOutput Failed to allocate MetadataOutput");
+        MEDIA_ERR_LOG("Failed to allocate MetadataOutput");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     sptr<IBufferConsumerListener> listener = new(std::nothrow) MetadataObjectListener(metadataOutput);
     if (!listener) {
-        MEDIA_ERR_LOG("CameraManager::CreateMetadataOutput Failed to allocate metadata object listener");
+        MEDIA_ERR_LOG("Failed to allocate metadata object listener");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     SurfaceError ret = surface->RegisterConsumerListener(listener);
     if (ret != SURFACE_ERROR_OK) {
-        MEDIA_ERR_LOG("CameraManager::CreateMetadataOutput Surface consumer listener registration failed");
+        MEDIA_ERR_LOG("MetadataOutputSurface consumer listener registration failed");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
 
@@ -465,14 +461,14 @@ int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surfa
     camera_format_t metaFormat;
 
     if ((serviceProxy_ == nullptr) || (surface == nullptr)) {
-        MEDIA_ERR_LOG("CameraManager::CreatePhotoOutput serviceProxy_ is null or surface/profile is null");
+        MEDIA_ERR_LOG("serviceProxy_ is null or VideoOutputSurface/profile is null");
         return CameraErrorCode::INVALID_ARGUMENT;
     }
 
     if ((profile.GetCameraFormat() == CAMERA_FORMAT_INVALID) ||
         (profile.GetSize().width == 0) ||
         (profile.GetSize().height == 0)) {
-        MEDIA_ERR_LOG("CameraManager::CreatePhotoOutput width or height is zero");
+        MEDIA_ERR_LOG("width or height is zero");
         return CameraErrorCode::INVALID_ARGUMENT;
     }
 
@@ -495,7 +491,7 @@ int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surfa
                                             profile.GetSize().height);
         }
     } else {
-        MEDIA_ERR_LOG("VideoOutpout: Failed to get stream repeat object from hcamera service! %{public}d", retCode);
+        MEDIA_ERR_LOG("Failed to get stream repeat object from hcamera service! %{public}d", retCode);
         return ServiceToCameraError(retCode);
     }
 
@@ -516,25 +512,25 @@ void CameraManager::Init()
     }
     object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     if (object == nullptr) {
-        MEDIA_ERR_LOG("CameraManager::GetSystemAbility() is failed");
+        MEDIA_ERR_LOG("object is null");
         return;
     }
     serviceProxy_ = iface_cast<ICameraService>(object);
     if (serviceProxy_ == nullptr) {
-        MEDIA_ERR_LOG("CameraManager::init serviceProxy_ is null.");
+        MEDIA_ERR_LOG("serviceProxy_ is null.");
         return;
     } else {
         cameraSvcCallback_ = new(std::nothrow) CameraStatusServiceCallback(this);
         if (cameraSvcCallback_) {
             SetCameraServiceCallback(cameraSvcCallback_);
         } else {
-            MEDIA_ERR_LOG("CameraManager::init Failed to new CameraStatusServiceCallback.");
+            MEDIA_ERR_LOG("Failed to new CameraStatusServiceCallback.");
         }
         cameraMuteSvcCallback_ = new(std::nothrow) CameraMuteServiceCallback(this);
         if (cameraMuteSvcCallback_) {
             SetCameraMuteServiceCallback(cameraMuteSvcCallback_);
         } else {
-            MEDIA_ERR_LOG("CameraManager::init Failed to new CameraMuteServiceCallback.");
+            MEDIA_ERR_LOG("Failed to new CameraMuteServiceCallback.");
         }
     }
     pid_t pid = 0;
@@ -570,7 +566,7 @@ int CameraManager::CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceSe
     int32_t retCode = CAMERA_OK;
 
     if (serviceProxy_ == nullptr || cameraId.empty()) {
-        MEDIA_ERR_LOG("GetCameaDevice() serviceProxy_ is null or CameraID is empty: %{public}s", cameraId.c_str());
+        MEDIA_ERR_LOG("serviceProxy_ is null or CameraID is empty: %{public}s", cameraId.c_str());
         return CameraErrorCode::INVALID_ARGUMENT;
     }
     retCode = serviceProxy_->CreateCameraDevice(cameraId, device);
@@ -587,14 +583,14 @@ int CameraManager::CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceSe
 void CameraManager::SetCallback(std::shared_ptr<CameraManagerCallback> callback)
 {
     if (callback == nullptr) {
-        MEDIA_INFO_LOG("CameraManager::SetCallback(): Application unregistering the callback");
+        MEDIA_INFO_LOG("Application unregistering the callback");
     }
     cameraMngrCallback_ = callback;
 }
 
 std::shared_ptr<CameraManagerCallback> CameraManager::GetApplicationCallback()
 {
-    MEDIA_INFO_LOG("CameraManager::GetApplicationCallback callback! isExist = %{public}d",
+    MEDIA_INFO_LOG("callback! isExist = %{public}d",
                    cameraMngrCallback_ != nullptr);
     return cameraMngrCallback_;
 }
@@ -618,7 +614,7 @@ sptr<CameraManager> &CameraManager::GetInstance()
         MEDIA_INFO_LOG("Initializing camera manager for first time!");
         CameraManager::cameraManager_ = new(std::nothrow) CameraManager();
         if (CameraManager::cameraManager_ == nullptr) {
-            MEDIA_ERR_LOG("CameraManager::GetInstance failed to new CameraManager");
+            MEDIA_ERR_LOG("Failed to new CameraManager");
         }
     }
     return CameraManager::cameraManager_;
@@ -647,7 +643,7 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
     }
     cameraObjList.clear();
     if (serviceProxy_ == nullptr) {
-        MEDIA_ERR_LOG("CameraManager::GetCameras serviceProxy_ is null, returning empty list!");
+        MEDIA_ERR_LOG("serviceProxy_ is null, returning empty list!");
         return cameraObjList;
     }
     std::vector<sptr<CameraDevice>> supportedCameras;
@@ -656,13 +652,13 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
         for (auto& it : cameraIds) {
             cameraObj = new(std::nothrow) CameraDevice(it, cameraAbilityList[index++]);
             if (cameraObj == nullptr) {
-                MEDIA_ERR_LOG("CameraManager::GetCameras new CameraDevice failed for id={public}%s", it.c_str());
+                MEDIA_ERR_LOG("new CameraDevice failed for id={public}%s", it.c_str());
                 continue;
             }
             supportedCameras.emplace_back(cameraObj);
         }
     } else {
-        MEDIA_ERR_LOG("CameraManager::GetCameras failed!, retCode: %{public}d", retCode);
+        MEDIA_ERR_LOG("Get camera device failed!, retCode: %{public}d", retCode);
     }
 
     ChooseDeFaultCameras(supportedCameras);
@@ -677,9 +673,9 @@ void CameraManager::ChooseDeFaultCameras(std::vector<sptr<CameraDevice>>& suppor
             if ((defaultCamera->GetPosition() == camera->GetPosition()) &&
                 (defaultCamera->GetConnectionType() == camera->GetConnectionType())) {
                 hasDefaultCamera = true;
-                MEDIA_INFO_LOG("CameraManager::alreadly has default camera");
+                MEDIA_INFO_LOG("ChooseDeFaultCameras alreadly has default camera");
             } else {
-                MEDIA_INFO_LOG("CameraManager::need add default camera");
+                MEDIA_INFO_LOG("ChooseDeFaultCameras need add default camera");
             }
         }
         if (!hasDefaultCamera) {
@@ -727,7 +723,7 @@ int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInpu
             return ret;
         }
     } else {
-        MEDIA_ERR_LOG("CameraManager::CreateCameraInput: Camera object is null");
+        MEDIA_ERR_LOG("Camera object is null");
         return CameraErrorCode::INVALID_ARGUMENT;
     }
 
@@ -848,12 +844,12 @@ void CameraManager::SetCameraServiceCallback(sptr<ICameraServiceCallback>& callb
     int32_t retCode = CAMERA_OK;
 
     if (serviceProxy_ == nullptr) {
-        MEDIA_ERR_LOG("CameraManager::SetCallback serviceProxy_ is null");
+        MEDIA_ERR_LOG("serviceProxy_ is null");
         return;
     }
     retCode = serviceProxy_->SetCallback(callback);
     if (retCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("CameraManager::Set service Callback failed, retCode: %{public}d", retCode);
+        MEDIA_ERR_LOG("Set service Callback failed, retCode: %{public}d", retCode);
     }
     return;
 }
@@ -872,9 +868,9 @@ camera_format_t CameraManager::GetCameraMetadataFormat(CameraFormat format)
 
 int32_t CameraMuteServiceCallback::OnCameraMute(bool muteMode)
 {
-    MEDIA_DEBUG_LOG("CameraMuteServiceCallback::OnCameraMute call! muteMode is %{public}d", muteMode);
+    MEDIA_DEBUG_LOG("muteMode is %{public}d", muteMode);
     if (camMngr_ == nullptr) {
-        MEDIA_INFO_LOG("CameraMuteServiceCallback::OnCameraMute camMngr_ is nullptr");
+        MEDIA_INFO_LOG("camMngr_ is nullptr");
         return CAMERA_OK;
     }
     std::vector<shared_ptr<CameraMuteListener>> cameraMuteListenerList = camMngr_->GetCameraMuteListener();
@@ -883,7 +879,7 @@ int32_t CameraMuteServiceCallback::OnCameraMute(bool muteMode)
             cameraMuteListenerList[i]->OnCameraMute(muteMode);
         }
     } else {
-        MEDIA_INFO_LOG("CameraManager::CameraMuteListener not registered!, Ignore the callback");
+        MEDIA_INFO_LOG("OnCameraMute not registered!, Ignore the callback");
     }
     return CAMERA_OK;
 }
@@ -891,7 +887,7 @@ int32_t CameraMuteServiceCallback::OnCameraMute(bool muteMode)
 void CameraManager::RegisterCameraMuteListener(std::shared_ptr<CameraMuteListener> listener)
 {
     if (listener == nullptr) {
-        MEDIA_INFO_LOG("CameraManager::RegisterCameraMuteListener(): unregistering the callback");
+        MEDIA_INFO_LOG("unregistering the callback");
     }
     cameraMuteListenerList.push_back(listener);
 }
@@ -901,12 +897,12 @@ void CameraManager::SetCameraMuteServiceCallback(sptr<ICameraMuteServiceCallback
     int32_t retCode = CAMERA_OK;
 
     if (serviceProxy_ == nullptr) {
-        MEDIA_ERR_LOG("CameraManager::SetMuteCameraServiceCallback serviceProxy_ is null");
+        MEDIA_ERR_LOG("serviceProxy_ is null");
         return;
     }
     retCode = serviceProxy_->SetMuteCallback(callback);
     if (retCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("CameraManager::Set Mute service Callback failed, retCode: %{public}d", retCode);
+        MEDIA_ERR_LOG("Set Mute service Callback failed, retCode: %{public}d", retCode);
     }
     return;
 }
@@ -928,8 +924,7 @@ bool CameraManager::IsCameraMuteSupported()
         camera_metadata_item_t item;
         int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_MUTE_MODES, &item);
         if (ret == 0) {
-            MEDIA_INFO_LOG("CameraManager::isCameraMuteSupported() OHOS_ABILITY_MUTE_MODES is %{public}d",
-                           item.data.u8[0]);
+            MEDIA_INFO_LOG("OHOS_ABILITY_MUTE_MODES is %{public}d", item.data.u8[0]);
             result = (item.data.u8[0] == MUTE_ON) ? true : false;
         } else {
             MEDIA_ERR_LOG("Failed to get stream configuration or Invalid stream "
@@ -948,12 +943,12 @@ bool CameraManager::IsCameraMuted()
     bool isMuted = false;
 
     if (serviceProxy_ == nullptr) {
-        MEDIA_ERR_LOG("CameraManager::IsCameraMuted serviceProxy_ is null");
+        MEDIA_ERR_LOG("serviceProxy_ is null");
         return isMuted;
     }
     retCode = serviceProxy_->IsCameraMuted(isMuted);
     if (retCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("CameraManager::IsCameraMuted failed, retCode: %{public}d", retCode);
+        MEDIA_ERR_LOG("IsCameraMuted call failed, retCode: %{public}d", retCode);
     }
     return isMuted;
 }
@@ -964,12 +959,12 @@ void CameraManager::MuteCamera(bool muteMode)
     int32_t retCode = CAMERA_OK;
 
     if (serviceProxy_ == nullptr) {
-        MEDIA_ERR_LOG("CameraManager::MuteCamera serviceProxy_ is null");
+        MEDIA_ERR_LOG("serviceProxy_ is null");
         return;
     }
     retCode = serviceProxy_->MuteCamera(muteMode);
     if (retCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("CameraManager::MuteCamera failed, retCode: %{public}d", retCode);
+        MEDIA_ERR_LOG("MuteCamera call failed, retCode: %{public}d", retCode);
     }
     return;
 }

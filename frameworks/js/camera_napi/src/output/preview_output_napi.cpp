@@ -22,11 +22,9 @@ namespace CameraStandard {
 using namespace std;
 using OHOS::HiviewDFX::HiLog;
 using OHOS::HiviewDFX::HiLogLabel;
-
 namespace {
     constexpr HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "PreviewOutputNapi"};
 }
-
 thread_local napi_ref PreviewOutputNapi::sConstructor_ = nullptr;
 thread_local sptr<PreviewOutput> PreviewOutputNapi::sPreviewOutput_ = nullptr;
 thread_local uint32_t PreviewOutputNapi::previewOutputTaskId = CAMERA_PREVIEW_OUTPUT_TASKID;
@@ -35,15 +33,16 @@ PreviewOutputCallback::PreviewOutputCallback(napi_env env) : env_(env) {}
 
 void PreviewOutputCallback::UpdateJSCallbackAsync(std::string propName, const int32_t value) const
 {
+    MEDIA_DEBUG_LOG("UpdateJSCallbackAsync is called");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
     if (!loop) {
-        MEDIA_ERR_LOG("PreviewOutputCallback:UpdateJSCallbackAsync() failed to get event loop");
+        MEDIA_ERR_LOG("failed to get event loop");
         return;
     }
     uv_work_t* work = new(std::nothrow) uv_work_t;
     if (!work) {
-        MEDIA_ERR_LOG("PreviewOutputCallback:UpdateJSCallbackAsync() failed to allocate work");
+        MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
     std::unique_ptr<PreviewOutputCallbackInfo> callbackInfo =
@@ -58,7 +57,7 @@ void PreviewOutputCallback::UpdateJSCallbackAsync(std::string propName, const in
         delete work;
     });
     if (ret) {
-        MEDIA_ERR_LOG("PreviewOutputCallback:UpdateJSCallbackAsync() failed to execute work");
+        MEDIA_ERR_LOG("failed to execute work");
         delete work;
     } else {
         callbackInfo.release();
@@ -68,25 +67,26 @@ void PreviewOutputCallback::UpdateJSCallbackAsync(std::string propName, const in
 void PreviewOutputCallback::OnFrameStarted() const
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("PreviewOutputCallback:OnFrameStarted() is called!");
+    MEDIA_DEBUG_LOG("OnFrameStarted is called");
     UpdateJSCallbackAsync("OnFrameStarted", -1);
 }
 
 void PreviewOutputCallback::OnFrameEnded(const int32_t frameCount) const
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("PreviewOutputCallback:OnFrameEnded() is called!, frameCount: %{public}d", frameCount);
+    MEDIA_DEBUG_LOG("OnFrameEnded is called, frameCount: %{public}d", frameCount);
     UpdateJSCallbackAsync("OnFrameEnded", frameCount);
 }
 
 void PreviewOutputCallback::OnError(const int32_t errorCode) const
 {
-    MEDIA_INFO_LOG("PreviewOutputCallback:OnError() is called!, errorCode: %{public}d", errorCode);
+    MEDIA_DEBUG_LOG("OnError is called, errorCode: %{public}d", errorCode);
     UpdateJSCallbackAsync("OnError", errorCode);
 }
 
 void PreviewOutputCallback::SetCallbackRef(const std::string &eventType, const napi_ref &callbackRef)
 {
+    MEDIA_DEBUG_LOG("SetCallbackRef is called");
     if (eventType.compare("frameStart") == 0) {
         frameStartCallbackRef_ = callbackRef;
     } else if (eventType.compare("frameEnd") == 0) {
@@ -100,6 +100,7 @@ void PreviewOutputCallback::SetCallbackRef(const std::string &eventType, const n
 
 void PreviewOutputCallback::UpdateJSCallback(std::string propName, const int32_t value) const
 {
+    MEDIA_DEBUG_LOG("UpdateJSCallback is called");
     napi_value result[ARGS_ONE];
     napi_value callback = nullptr;
     napi_value retVal;
@@ -137,7 +138,7 @@ PreviewOutputNapi::PreviewOutputNapi() : env_(nullptr), wrapper_(nullptr)
 
 PreviewOutputNapi::~PreviewOutputNapi()
 {
-    MEDIA_DEBUG_LOG("Enter Into PreviewOutputNapi::~PreviewOutputNapi");
+    MEDIA_DEBUG_LOG("~PreviewOutputNapi is called");
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
@@ -151,7 +152,7 @@ PreviewOutputNapi::~PreviewOutputNapi()
 
 void PreviewOutputNapi::PreviewOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
-    MEDIA_DEBUG_LOG("PreviewOutputNapiDestructor enter");
+    MEDIA_DEBUG_LOG("PreviewOutputNapiDestructor is called");
     PreviewOutputNapi* cameraObj = reinterpret_cast<PreviewOutputNapi*>(nativeObject);
     if (cameraObj != nullptr) {
         cameraObj->~PreviewOutputNapi();
@@ -160,6 +161,7 @@ void PreviewOutputNapi::PreviewOutputNapiDestructor(napi_env env, void* nativeOb
 
 napi_value PreviewOutputNapi::Init(napi_env env, napi_value exports)
 {
+    MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
     int32_t refCount = 1;
@@ -185,11 +187,13 @@ napi_value PreviewOutputNapi::Init(napi_env env, napi_value exports)
             }
         }
     }
+    MEDIA_ERR_LOG("Init call Failed!");
     return nullptr;
 }
 // Constructor callback
 napi_value PreviewOutputNapi::PreviewOutputNapiConstructor(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("PreviewOutputNapiConstructor is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value thisVar = nullptr;
@@ -218,12 +222,13 @@ napi_value PreviewOutputNapi::PreviewOutputNapiConstructor(napi_env env, napi_ca
             }
         }
     }
-
+    MEDIA_ERR_LOG("PreviewOutputNapiConstructor call Failed!");
     return result;
 }
 
 static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
 {
+    MEDIA_DEBUG_LOG("CommonCompleteCallback is called");
     auto context = static_cast<PreviewOutputAsyncContext*>(data);
     if (context == nullptr) {
         MEDIA_ERR_LOG("Async context is null");
@@ -259,6 +264,7 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
 
 napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, Profile &profile, std::string surfaceId)
 {
+    MEDIA_INFO_LOG("CreatePreviewOutput is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -296,7 +302,7 @@ napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, Profile &profile
             MEDIA_ERR_LOG("Failed to create preview output instance");
         }
     }
-
+    MEDIA_ERR_LOG("CreatePreviewOutput call Failed!");
     napi_get_undefined(env, &result);
     return result;
 }
@@ -308,6 +314,7 @@ sptr<PreviewOutput> PreviewOutputNapi::GetPreviewOutput()
 
 bool PreviewOutputNapi::IsPreviewOutput(napi_env env, napi_value obj)
 {
+    MEDIA_DEBUG_LOG("IsPreviewOutput is called");
     bool result = false;
     napi_status status;
     napi_value constructor = nullptr;
@@ -319,13 +326,12 @@ bool PreviewOutputNapi::IsPreviewOutput(napi_env env, napi_value obj)
             result = false;
         }
     }
-
     return result;
 }
 
 napi_value PreviewOutputNapi::Release(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("Enter Into PreviewOutputNapi::Release");
+    MEDIA_DEBUG_LOG("Release is called");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -370,13 +376,15 @@ napi_value PreviewOutputNapi::Release(napi_env env, napi_callback_info info)
             napi_queue_async_work(env, asyncContext->work);
             asyncContext.release();
         }
+    } else {
+        MEDIA_ERR_LOG("Release call Failed!");
     }
-
     return result;
 }
 
 napi_value PreviewOutputNapi::AddDeferredSurface(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("AddDeferredSurface is called");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -421,14 +429,15 @@ napi_value PreviewOutputNapi::AddDeferredSurface(napi_env env, napi_callback_inf
             napi_queue_async_work(env, asyncContext->work);
             asyncContext.release();
         }
+    } else {
+        MEDIA_ERR_LOG("AddDeferredSurface call Failed!");
     }
-
     return result;
 }
 
 napi_value PreviewOutputNapi::Start(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("Enter Into PreviewOutputNapi::Start");
+    MEDIA_INFO_LOG("Start is called");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -473,14 +482,15 @@ napi_value PreviewOutputNapi::Start(napi_env env, napi_callback_info info)
             napi_queue_async_work(env, asyncContext->work);
             asyncContext.release();
         }
+    } else {
+        MEDIA_ERR_LOG("Start call Failed!");
     }
-
     return result;
 }
 
 napi_value PreviewOutputNapi::Stop(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("Enter Into PreviewOutputNapi::Stop");
+    MEDIA_INFO_LOG("Stop is called");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -525,12 +535,15 @@ napi_value PreviewOutputNapi::Stop(napi_env env, napi_callback_info info)
             napi_queue_async_work(env, asyncContext->work);
             asyncContext.release();
         }
+    } else {
+        MEDIA_ERR_LOG("Stop call Failed!");
     }
     return result;
 }
 
 napi_value PreviewOutputNapi::On(napi_env env, napi_callback_info info)
 {
+    MEDIA_INFO_LOG("On is called");
     napi_value undefinedResult = nullptr;
     size_t argCount = ARGS_TWO;
     napi_value argv[ARGS_TWO] = {nullptr};
@@ -571,8 +584,9 @@ napi_value PreviewOutputNapi::On(napi_env env, napi_callback_info info)
         } else {
             MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
         }
+    } else {
+        MEDIA_ERR_LOG("On call Failed!");
     }
-
     return undefinedResult;
 }
 } // namespace CameraStandard

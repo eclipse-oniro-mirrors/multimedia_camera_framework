@@ -22,11 +22,9 @@ namespace OHOS {
 namespace CameraStandard {
 using OHOS::HiviewDFX::HiLog;
 using OHOS::HiviewDFX::HiLogLabel;
-
 namespace {
     constexpr HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "MetadataOutputNapi"};
 }
-
 thread_local napi_ref MetadataOutputNapi::sConstructor_ = nullptr;
 thread_local sptr<MetadataOutput> MetadataOutputNapi::sMetadataOutput_ = nullptr;
 
@@ -34,16 +32,16 @@ MetadataOutputCallback::MetadataOutputCallback(napi_env env) : env_(env) {}
 
 void MetadataOutputCallback::OnMetadataObjectsAvailable(const std::vector<sptr<MetadataObject>> metadataObjList) const
 {
-    MEDIA_INFO_LOG("MetadataOutputCallback::OnMetadataObjectsAvailable");
+    MEDIA_DEBUG_LOG("OnMetadataObjectsAvailable is called");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
     if (!loop) {
-        MEDIA_ERR_LOG("MetadataOutputCallback:OnMetadataObjectsAvailable() failed to get event loop");
+        MEDIA_ERR_LOG("failed to get event loop");
         return;
     }
     uv_work_t* work = new(std::nothrow) uv_work_t;
     if (!work) {
-        MEDIA_ERR_LOG("MetadataOutputCallback:OnMetadataObjectsAvailable() failed to allocate work");
+        MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
     std::unique_ptr<MetadataOutputCallbackInfo> callbackInfo =
@@ -58,7 +56,7 @@ void MetadataOutputCallback::OnMetadataObjectsAvailable(const std::vector<sptr<M
         delete work;
     });
     if (ret) {
-        MEDIA_ERR_LOG("MetadataOutputCallback:OnMetadataObjectsAvailable() failed to execute work");
+        MEDIA_ERR_LOG("failed to execute work");
         delete work;
     }  else {
         callbackInfo.release();
@@ -68,6 +66,7 @@ void MetadataOutputCallback::OnMetadataObjectsAvailable(const std::vector<sptr<M
 static napi_value CreateMetadataObjJSArray(napi_env env,
     const std::vector<sptr<MetadataObject>> metadataObjList)
 {
+    MEDIA_DEBUG_LOG("CreateMetadataObjJSArray is called");
     napi_value metadataObjArray = nullptr;
     napi_value metadataObj = nullptr;
     napi_status status;
@@ -97,6 +96,7 @@ static napi_value CreateMetadataObjJSArray(napi_env env,
 void MetadataOutputCallback::OnMetadataObjectsAvailableCallback(
     const std::vector<sptr<MetadataObject>> metadataObjList) const
 {
+    MEDIA_DEBUG_LOG("OnMetadataObjectsAvailableCallback is called");
     napi_value result[ARGS_ONE];
     napi_value callback = nullptr;
     napi_value retVal;
@@ -105,8 +105,7 @@ void MetadataOutputCallback::OnMetadataObjectsAvailableCallback(
 
     result[PARAM0] = CreateMetadataObjJSArray(env_, metadataObjList);
     if (result[PARAM0] == nullptr) {
-        MEDIA_ERR_LOG("MetadataOutputCallback::OnMetadataObjectsAvailableCallback"
-        " invoke CreateMetadataObjJSArray failed");
+        MEDIA_ERR_LOG("invoke CreateMetadataObjJSArray failed");
         return;
     }
 
@@ -131,6 +130,7 @@ MetadataOutputNapi::MetadataOutputNapi() : env_(nullptr), wrapper_(nullptr)
 
 MetadataOutputNapi::~MetadataOutputNapi()
 {
+    MEDIA_DEBUG_LOG("~MetadataOutputNapi is called");
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
@@ -144,7 +144,7 @@ MetadataOutputNapi::~MetadataOutputNapi()
 
 void MetadataOutputNapi::MetadataOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
-    MEDIA_DEBUG_LOG("MetadataOutputNapiDestructor enter");
+    MEDIA_DEBUG_LOG("MetadataOutputNapiDestructor is called");
     MetadataOutputNapi* metadataOutput = reinterpret_cast<MetadataOutputNapi*>(nativeObject);
     if (metadataOutput != nullptr) {
         metadataOutput->~MetadataOutputNapi();
@@ -153,6 +153,7 @@ void MetadataOutputNapi::MetadataOutputNapiDestructor(napi_env env, void* native
 
 napi_value MetadataOutputNapi::Init(napi_env env, napi_value exports)
 {
+    MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
     int32_t refCount = 1;
@@ -178,12 +179,13 @@ napi_value MetadataOutputNapi::Init(napi_env env, napi_value exports)
             }
         }
     }
-
+    MEDIA_ERR_LOG("Init call Failed!");
     return nullptr;
 }
 
 napi_value MetadataOutputNapi::MetadataOutputNapiConstructor(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("MetadataOutputNapiConstructor is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value thisVar = nullptr;
@@ -209,12 +211,13 @@ napi_value MetadataOutputNapi::MetadataOutputNapiConstructor(napi_env env, napi_
             MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
-
+    MEDIA_ERR_LOG("MetadataOutputNapiConstructor call Failed!");
     return result;
 }
 
 bool MetadataOutputNapi::IsMetadataOutput(napi_env env, napi_value obj)
 {
+    MEDIA_DEBUG_LOG("IsMetadataOutput is called");
     bool result = false;
     napi_status status;
     napi_value constructor = nullptr;
@@ -226,7 +229,7 @@ bool MetadataOutputNapi::IsMetadataOutput(napi_env env, napi_value obj)
             result = false;
         }
     }
-
+    MEDIA_ERR_LOG("IsMetadataOutput call Failed!");
     return result;
 }
 
@@ -237,6 +240,7 @@ sptr<MetadataOutput> MetadataOutputNapi::GetMetadataOutput()
 
 napi_value MetadataOutputNapi::CreateMetadataOutput(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreateMetadataOutput is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -260,13 +264,14 @@ napi_value MetadataOutputNapi::CreateMetadataOutput(napi_env env)
             MEDIA_ERR_LOG("Failed to create metadata output instance");
         }
     }
-
+    MEDIA_ERR_LOG("CreateMetadataOutput call Failed!");
     napi_get_undefined(env, &result);
     return result;
 }
 
 static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
 {
+    MEDIA_DEBUG_LOG("CommonCompleteCallback is called");
     auto context = static_cast<MetadataOutputAsyncContext*>(data);
     if (context == nullptr) {
         MEDIA_ERR_LOG("Async context is null");
@@ -301,6 +306,7 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
 static int32_t ConvertJSArrayToNative(napi_env env, size_t argc, const napi_value argv[], size_t &i,
     MetadataOutputAsyncContext &asyncContext)
 {
+    MEDIA_DEBUG_LOG("ConvertJSArrayToNative is called");
     uint32_t len = 0;
     auto context = &asyncContext;
 
@@ -336,6 +342,7 @@ static int32_t ConvertJSArrayToNative(napi_env env, size_t argc, const napi_valu
 static napi_value ConvertJSArgsToNative(napi_env env, size_t argc, const napi_value argv[],
     MetadataOutputAsyncContext &asyncContext)
 {
+    MEDIA_DEBUG_LOG("ConvertJSArgsToNative is called");
     const int32_t refCount = 1;
     napi_value result;
     auto context = &asyncContext;
@@ -370,6 +377,7 @@ static napi_value ConvertJSArgsToNative(napi_env env, size_t argc, const napi_va
 
 static void GetSupportedMetadataObjectTypesAsyncCallbackComplete(napi_env env, napi_status status, void* data)
 {
+    MEDIA_DEBUG_LOG("GetSupportedMetadataObjectTypesAsyncCallbackComplete is called");
     auto context = static_cast<MetadataOutputAsyncContext*>(data);
     napi_value metadataObjectTypes = nullptr;
     CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(context, "Async context is null");
@@ -412,6 +420,7 @@ static void GetSupportedMetadataObjectTypesAsyncCallbackComplete(napi_env env, n
 
 napi_value MetadataOutputNapi::GetSupportedMetadataObjectTypes(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetSupportedMetadataObjectTypes is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -453,12 +462,15 @@ napi_value MetadataOutputNapi::GetSupportedMetadataObjectTypes(napi_env env, nap
             napi_queue_async_work(env, asyncContext->work);
             asyncContext.release();
         }
+    } else {
+        MEDIA_ERR_LOG("GetSupportedMetadataObjectTypes call Failed!");
     }
     return result;
 }
 
 napi_value MetadataOutputNapi::SetCapturingMetadataObjectTypes(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("SetCapturingMetadataObjectTypes is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_TWO;
@@ -500,12 +512,15 @@ napi_value MetadataOutputNapi::SetCapturingMetadataObjectTypes(napi_env env, nap
             napi_queue_async_work(env, asyncContext->work);
             asyncContext.release();
         }
+    } else {
+        MEDIA_ERR_LOG("SetCapturingMetadataObjectTypes call Failed!");
     }
     return result;
 }
 
 napi_value MetadataOutputNapi::Start(napi_env env, napi_callback_info info)
 {
+    MEDIA_INFO_LOG("Start is called");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -547,12 +562,15 @@ napi_value MetadataOutputNapi::Start(napi_env env, napi_callback_info info)
             napi_queue_async_work(env, asyncContext->work);
             asyncContext.release();
         }
+    } else {
+        MEDIA_ERR_LOG("Start call Failed!");
     }
     return result;
 }
 
 napi_value MetadataOutputNapi::Stop(napi_env env, napi_callback_info info)
 {
+    MEDIA_INFO_LOG("Stop is called");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -595,13 +613,15 @@ napi_value MetadataOutputNapi::Stop(napi_env env, napi_callback_info info)
             napi_queue_async_work(env, asyncContext->work);
             asyncContext.release();
         }
+    } else {
+        MEDIA_ERR_LOG("Stop call Failed!");
     }
-
     return result;
 }
 
 napi_value MetadataOutputNapi::On(napi_env env, napi_callback_info info)
 {
+    MEDIA_INFO_LOG("On is called");
     napi_value undefinedResult = nullptr;
     size_t argCount = ARGS_TWO;
     napi_value argv[ARGS_TWO] = {nullptr};
@@ -641,8 +661,9 @@ napi_value MetadataOutputNapi::On(napi_env env, napi_callback_info info)
         } else {
             MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
         }
+    } else {
+        MEDIA_ERR_LOG("On call Failed!");
     }
-
     return undefinedResult;
 }
 } // namespace CameraStandard

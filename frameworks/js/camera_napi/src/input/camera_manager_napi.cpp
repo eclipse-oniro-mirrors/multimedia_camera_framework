@@ -21,13 +21,11 @@ namespace CameraStandard {
 using namespace std;
 using OHOS::HiviewDFX::HiLog;
 using OHOS::HiviewDFX::HiLogLabel;
-
-thread_local napi_ref CameraManagerNapi::sConstructor_ = nullptr;
-thread_local uint32_t CameraManagerNapi::cameraManagerTaskId = CAMERA_MANAGER_TASKID;
-
 namespace {
     constexpr HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "CameraManager"};
 }
+thread_local napi_ref CameraManagerNapi::sConstructor_ = nullptr;
+thread_local uint32_t CameraManagerNapi::cameraManagerTaskId = CAMERA_MANAGER_TASKID;
 
 CameraManagerNapi::CameraManagerNapi() : env_(nullptr), wrapper_(nullptr)
 {
@@ -36,6 +34,7 @@ CameraManagerNapi::CameraManagerNapi() : env_(nullptr), wrapper_(nullptr)
 
 CameraManagerNapi::~CameraManagerNapi()
 {
+    MEDIA_DEBUG_LOG("~CameraManagerNapi is called");
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
@@ -47,6 +46,7 @@ CameraManagerNapi::~CameraManagerNapi()
 // Constructor callback
 napi_value CameraManagerNapi::CameraManagerNapiConstructor(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("CameraManagerNapiConstructor is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value thisVar = nullptr;
@@ -71,13 +71,13 @@ napi_value CameraManagerNapi::CameraManagerNapiConstructor(napi_env env, napi_ca
             MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
-
+    MEDIA_ERR_LOG("CameraManagerNapiConstructor call Failed!");
     return result;
 }
 
 void CameraManagerNapi::CameraManagerNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
-    MEDIA_DEBUG_LOG("CameraManagerNapiDestructor enter");
+    MEDIA_DEBUG_LOG("CameraManagerNapiDestructor is called");
     CameraManagerNapi* camera = reinterpret_cast<CameraManagerNapi*>(nativeObject);
     if (camera != nullptr) {
         camera->~CameraManagerNapi();
@@ -86,6 +86,7 @@ void CameraManagerNapi::CameraManagerNapiDestructor(napi_env env, void* nativeOb
 
 napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
 {
+    MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
     int32_t refCount = 1;
@@ -119,12 +120,13 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
             }
         }
     }
-
+    MEDIA_ERR_LOG("Init call Failed!");
     return nullptr;
 }
 
 napi_value CameraManagerNapi::CreateCameraManager(napi_env env)
 {
+    MEDIA_INFO_LOG("CreateCameraManager is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value ctor;
@@ -139,12 +141,14 @@ napi_value CameraManagerNapi::CreateCameraManager(napi_env env)
         }
     }
     napi_get_undefined(env, &result);
+    MEDIA_ERR_LOG("CreateCameraManager call Failed!");
     return result;
 }
 
 static napi_value CreateCameraJSArray(napi_env env, napi_status status,
     std::vector<sptr<CameraDevice>> cameraObjList)
 {
+    MEDIA_DEBUG_LOG("CreateCameraJSArray is called");
     napi_value cameraArray = nullptr;
     napi_value camera = nullptr;
 
@@ -157,7 +161,6 @@ static napi_value CreateCameraJSArray(napi_env env, napi_status status,
     if (status == napi_ok) {
         for (size_t i = 0; i < cameraObjList.size(); i++) {
             camera = CameraDeviceNapi::CreateCameraObj(env, cameraObjList[i]);
-            MEDIA_INFO_LOG("GetCameras CreateCameraObj success");
             if (camera == nullptr || napi_set_element(env, cameraArray, i, camera) != napi_ok) {
                 MEDIA_ERR_LOG("Failed to create camera napi wrapper object");
                 return nullptr;
@@ -169,6 +172,7 @@ static napi_value CreateCameraJSArray(napi_env env, napi_status status,
 
 void CameraManagerCommonCompleteCallback(napi_env env, napi_status status, void* data)
 {
+    MEDIA_INFO_LOG("CameraManagerCommonCompleteCallback is called");
     auto context = static_cast<CameraManagerContext*>(data);
 
     CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(context, "Async context is null");
@@ -199,7 +203,6 @@ void CameraManagerCommonCompleteCallback(napi_env env, napi_status status, void*
         CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef,
                                              context->work, *jsContext);
     }
-    MEDIA_INFO_LOG("context->InvokeJSAsyncMethod end");
     delete context;
 }
 
@@ -228,6 +231,7 @@ napi_value CameraManagerNapi::CreateCameraSessionInstance(napi_env env, napi_cal
 
 bool ParseSize(napi_env env, napi_value root, Size* size)
 {
+    MEDIA_DEBUG_LOG("ParseSize is called");
     napi_value tempValue = nullptr;
 
     if (napi_get_named_property(env, root, "width", &tempValue) == napi_ok) {
@@ -243,6 +247,7 @@ bool ParseSize(napi_env env, napi_value root, Size* size)
 
 bool ParseProfile(napi_env env, napi_value root, Profile* profile)
 {
+    MEDIA_DEBUG_LOG("ParseProfile is called");
     napi_value res = nullptr;
 
     if (napi_get_named_property(env, root, "size", &res) == napi_ok) {
@@ -260,6 +265,7 @@ bool ParseProfile(napi_env env, napi_value root, Profile* profile)
 
 bool ParseVideoProfile(napi_env env, napi_value root, VideoProfile* profile)
 {
+    MEDIA_DEBUG_LOG("ParseVideoProfile is called");
     napi_value res = nullptr;
 
     if (napi_get_named_property(env, root, "size", &res) == napi_ok) {
@@ -297,6 +303,7 @@ bool ParseVideoProfile(napi_env env, napi_value root, VideoProfile* profile)
 static napi_value ConvertJSArgsToNative(napi_env env, size_t argc, const napi_value argv[],
     CameraManagerContext &asyncContext)
 {
+    MEDIA_DEBUG_LOG("ConvertJSArgsToNative is called");
     char buffer[PATH_MAX];
     const int32_t refCount = 1;
     napi_value result;
@@ -313,12 +320,12 @@ static napi_value ConvertJSArgsToNative(napi_env env, size_t argc, const napi_va
             (void)napi_has_named_property(env, argv[i], "frameRateRange", &isVideoMode);
             if (!isVideoMode) {
                 ParseProfile(env, argv[i], &(context->profile));
-                MEDIA_INFO_LOG("ConvertJSArgsToNative ParseProfile "
+                MEDIA_INFO_LOG("ParseProfile "
                     "size.width = %{public}d, size.height = %{public}d, format = %{public}d",
                     context->profile.size_.width, context->profile.size_.height, context->profile.format_);
             } else {
                 ParseVideoProfile(env, argv[i], &(context->videoProfile));
-                MEDIA_INFO_LOG("ConvertJSArgsToNative ParseVideoProfile "
+                MEDIA_INFO_LOG("ParseVideoProfile "
                     "size.width = %{public}d, size.height = %{public}d, format = %{public}d, "
                     "frameRateRange : min = %{public}d, max = %{public}d",
                     context->videoProfile.size_.width,
@@ -350,7 +357,7 @@ static napi_value ConvertJSArgsToNative(napi_env env, size_t argc, const napi_va
 
 napi_value CameraManagerNapi::CreatePreviewOutputInstance(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("CreatePreviewOutputInstance called");
+    MEDIA_INFO_LOG("CreatePreviewOutputInstance is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_TWO;
@@ -372,7 +379,7 @@ napi_value CameraManagerNapi::CreatePreviewOutputInstance(napi_env env, napi_cal
     }
     Profile profile;
     ParseProfile(env, argv[PARAM0], &profile);
-    MEDIA_INFO_LOG("ConvertJSArgsToNative ParseProfile "
+    MEDIA_INFO_LOG("ParseProfile "
                    "size.width = %{public}d, size.height = %{public}d, format = %{public}d",
                    profile.size_.width, profile.size_.height, profile.format_);
 
@@ -416,7 +423,6 @@ napi_value CameraManagerNapi::CreateDeferredPreviewOutputInstance(napi_env env, 
             context->funcName = "CameraManagerNapi::CreateDeferredPreviewOutputInstance";
             context->taskId = CameraNapiUtils::IncreamentAndGet(cameraManagerTaskId);
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-            MEDIA_INFO_LOG("cameraManager_->CreateDeferredPreviewOutputInstance()");
             context->status = true;
             context->modeForAsync = CREATE_DEFERRED_PREVIEW_OUTPUT_ASYNC_CALLBACK;
         },
@@ -495,7 +501,7 @@ napi_value CameraManagerNapi::CreateVideoOutputInstance(napi_env env, napi_callb
     }
     VideoProfile vidProfile;
     ParseVideoProfile(env, argv[0], &(vidProfile));
-                MEDIA_INFO_LOG("ConvertJSArgsToNative ParseVideoProfile "
+                MEDIA_INFO_LOG("ParseVideoProfile "
                     "size.width = %{public}d, size.height = %{public}d, format = %{public}d, "
                     "frameRateRange : min = %{public}d, max = %{public}d",
                     vidProfile.size_.width,
@@ -519,6 +525,7 @@ napi_value CameraManagerNapi::CreateVideoOutputInstance(napi_env env, napi_callb
 napi_value ParseMetadataObjectTypes(napi_env env, napi_value arrayParam,
                                     std::vector<MetadataObjectType> &metadataObjectTypes)
 {
+    MEDIA_DEBUG_LOG("ParseMetadataObjectTypes is called");
     napi_value result;
     uint32_t length = 0;
     napi_value value;
@@ -582,6 +589,8 @@ napi_value CameraManagerNapi::GetSupportedCameras(napi_env env, napi_callback_in
     if (status == napi_ok && cameraManagerNapi != nullptr) {
         std::vector<sptr<CameraDevice>> cameraObjList = cameraManagerNapi->cameraManager_->GetSupportedCameras();
         result = CreateCameraJSArray(env, status, cameraObjList);
+    } else {
+        MEDIA_ERR_LOG("GetSupportedCameras call Failed!");
     }
     return result;
 }
@@ -627,7 +636,7 @@ napi_value CameraManagerNapi::IsCameraMuted(napi_env env, napi_callback_info inf
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
     NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameters maximum");
     bool isMuted = CameraManager::GetInstance()->IsCameraMuted();
-    MEDIA_INFO_LOG("CameraManager::GetInstance()->IsCameraMuted : %{public}d", isMuted);
+    MEDIA_DEBUG_LOG("IsCameraMuted : %{public}d", isMuted);
     napi_get_boolean(env, isMuted, &result);
     return result;
 }
@@ -644,7 +653,7 @@ napi_value CameraManagerNapi::IsCameraMuteSupported(napi_env env, napi_callback_
     NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameters maximum");
 
     bool isMuteSupported = CameraManager::GetInstance()->IsCameraMuteSupported();
-    MEDIA_INFO_LOG("CameraManager::GetInstance()->IsCameraMuteSupported : %{public}d", isMuteSupported);
+    MEDIA_DEBUG_LOG("isMuteSupported: %{public}d", isMuteSupported);
     napi_get_boolean(env, isMuteSupported, &result);
     return result;
 }
@@ -662,7 +671,6 @@ napi_value CameraManagerNapi::MuteCamera(napi_env env, napi_callback_info info)
     bool isSupported;
     napi_get_value_bool(env, argv[PARAM0], &isSupported);
     CameraManager::GetInstance()->MuteCamera(isSupported);
-    MEDIA_INFO_LOG("MuteCamera");
     napi_get_undefined(env, &result);
     return result;
 }
@@ -707,7 +715,7 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
         CameraType cameraType = static_cast<CameraType>(numValue);
 
         std::vector<sptr<CameraDevice>> cameraObjList = cameraManagerNapi->cameraManager_->GetSupportedCameras();
-        MEDIA_DEBUG_LOG("cameraInfo is null, cameraManager_->GetSupportedCameras() : %{public}zu",
+        MEDIA_DEBUG_LOG("cameraInfo is null, the cameraObjList size is %{public}zu",
                         cameraObjList.size());
         for (size_t i = 0; i < cameraObjList.size(); i++) {
             sptr<CameraDevice> cameraDevice = cameraObjList[i];
@@ -728,6 +736,8 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
             return nullptr;
         }
         result = CameraInputNapi::CreateCameraInput(env, cameraInput);
+    } else {
+        MEDIA_ERR_LOG("cameraInfo is null");
     }
     return result;
 }
@@ -783,8 +793,9 @@ napi_value CameraManagerNapi::On(napi_env env, napi_callback_info info)
                 napi_delete_reference(env, callbackRef);
             }
         }
+    } else {
+        MEDIA_ERR_LOG("On call Failed!");
     }
-
     return undefinedResult;
 }
 } // namespace CameraStandard

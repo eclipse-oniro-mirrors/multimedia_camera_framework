@@ -18,9 +18,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-using OHOS::HiviewDFX::HiLog;
-using OHOS::HiviewDFX::HiLogLabel;
-
 thread_local napi_ref CameraProfileNapi::sConstructor_ = nullptr;
 thread_local Profile* CameraProfileNapi::sCameraProfile_ = nullptr;
 
@@ -30,6 +27,7 @@ CameraProfileNapi::CameraProfileNapi() : env_(nullptr), wrapper_(nullptr)
 
 CameraProfileNapi::~CameraProfileNapi()
 {
+    MEDIA_DEBUG_LOG("~CameraProfileNapi is called");
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
@@ -40,16 +38,16 @@ CameraProfileNapi::~CameraProfileNapi()
 
 void CameraProfileNapi::CameraProfileNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
-    MEDIA_DEBUG_LOG("CameraProfileNapiDestructor enter");
+    MEDIA_DEBUG_LOG("CameraProfileNapiDestructor is called");
     CameraProfileNapi* cameraProfileNapi = reinterpret_cast<CameraProfileNapi*>(nativeObject);
     if (cameraProfileNapi != nullptr) {
-        MEDIA_INFO_LOG("CameraProfileNapi::CameraProfileNapiDestructor ~");
         cameraProfileNapi->~CameraProfileNapi();
     }
 }
 
 napi_value CameraProfileNapi::Init(napi_env env, napi_value exports)
 {
+    MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
     napi_property_descriptor camera_profile_props[] = {
@@ -70,12 +68,14 @@ napi_value CameraProfileNapi::Init(napi_env env, napi_value exports)
             }
         }
     }
+    MEDIA_ERR_LOG("Init call Failed!");
     return nullptr;
 }
 
 // Constructor callback
 napi_value CameraProfileNapi::CameraProfileNapiConstructor(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("CameraProfileNapiConstructor is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value thisVar = nullptr;
@@ -102,11 +102,13 @@ napi_value CameraProfileNapi::CameraProfileNapiConstructor(napi_env env, napi_ca
             MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
+    MEDIA_ERR_LOG("CameraProfileNapiConstructor call Failed!");
     return result;
 }
 
 napi_value CameraProfileNapi::CreateCameraProfile(napi_env env, Profile &profile)
 {
+    MEDIA_DEBUG_LOG("CreateCameraProfile is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value constructor;
@@ -115,28 +117,29 @@ napi_value CameraProfileNapi::CreateCameraProfile(napi_env env, Profile &profile
     if (status == napi_ok) {
         CameraFormat format = profile.GetCameraFormat();
         Size size = profile.GetSize();
-        MEDIA_INFO_LOG("CameraProfileNapi::CreateCameraProfile size.width = %{public}d, size.height = %{public}d",
+        MEDIA_INFO_LOG("CreateCameraProfile size.width = %{public}d, size.height = %{public}d",
             size.width, size.height);
         std::unique_ptr<Profile> profilePtr = std::make_unique<Profile>(format, size);
         sCameraProfile_ = reinterpret_cast<Profile*>(profilePtr.get());
-        MEDIA_INFO_LOG("CameraProfileNapi::CreateCameraProfile sCameraProfile_ "
+        MEDIA_INFO_LOG("CreateCameraProfile sCameraProfile_ "
             "size.width = %{public}d, size.height = %{public}d, format = %{public}d",
             sCameraProfile_->GetSize().width, sCameraProfile_->GetSize().height, sCameraProfile_->format_);
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         if (status == napi_ok && result != nullptr) {
-            MEDIA_INFO_LOG("GetCameraProfileSize CreateCameraProfile napi_new_instance success");
+            MEDIA_INFO_LOG("CreateCameraProfile napi_new_instance success");
             return result;
         } else {
             MEDIA_ERR_LOG("Failed to create Camera obj instance");
         }
     }
-
+    MEDIA_ERR_LOG("CreateCameraProfile call Failed!");
     napi_get_undefined(env, &result);
     return result;
 }
 
 napi_value CameraProfileNapi::GetCameraProfileSize(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetCameraProfileSize is called");
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
@@ -147,7 +150,6 @@ napi_value CameraProfileNapi::GetCameraProfileSize(napi_env env, napi_callback_i
     napi_get_undefined(env, &undefinedResult);
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
 
-    MEDIA_INFO_LOG("GetCameraProfileSize cameraProfileSize thisVar");
     if (status != napi_ok || thisVar == nullptr) {
         MEDIA_ERR_LOG("Invalid arguments!");
         return undefinedResult;
@@ -163,12 +165,13 @@ napi_value CameraProfileNapi::GetCameraProfileSize(napi_env env, napi_callback_i
         jsResult = CameraSizeNapi::CreateCameraSize(env, cameraProfileSize);
         return jsResult;
     }
-
+    MEDIA_ERR_LOG("GetCameraProfileSize call Failed!");
     return undefinedResult;
 }
 
 napi_value CameraProfileNapi::GetCameraProfileFormat(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetCameraProfileFormat is called");
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
@@ -178,7 +181,6 @@ napi_value CameraProfileNapi::GetCameraProfileFormat(napi_env env, napi_callback
 
     napi_get_undefined(env, &undefinedResult);
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
-    MEDIA_INFO_LOG("GetCameraProfileSize cameraProfileSize thisVar");
     if (status != napi_ok || thisVar == nullptr) {
         MEDIA_ERR_LOG("Invalid arguments!");
         return undefinedResult;
@@ -199,7 +201,7 @@ napi_value CameraProfileNapi::GetCameraProfileFormat(napi_env env, napi_callback
             MEDIA_ERR_LOG("Failed to get CameraProfileFormat!, errorCode : %{public}d", status);
         }
     }
-
+    MEDIA_ERR_LOG("GetCameraProfileFormat call Failed!");
     return undefinedResult;
 }
 
@@ -210,6 +212,7 @@ CameraVideoProfileNapi::CameraVideoProfileNapi() : env_(nullptr), wrapper_(nullp
 
 CameraVideoProfileNapi::~CameraVideoProfileNapi()
 {
+    MEDIA_DEBUG_LOG("~CameraVideoProfileNapi is called");
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
@@ -217,6 +220,7 @@ CameraVideoProfileNapi::~CameraVideoProfileNapi()
 
 void CameraVideoProfileNapi::CameraVideoProfileNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
+    MEDIA_DEBUG_LOG("CameraVideoProfileNapiDestructor is called");
     CameraVideoProfileNapi* cameraVideoProfileNapi = reinterpret_cast<CameraVideoProfileNapi*>(nativeObject);
     if (cameraVideoProfileNapi != nullptr) {
         cameraVideoProfileNapi->~CameraVideoProfileNapi();
@@ -225,6 +229,7 @@ void CameraVideoProfileNapi::CameraVideoProfileNapiDestructor(napi_env env, void
 
 napi_value CameraVideoProfileNapi::Init(napi_env env, napi_value exports)
 {
+    MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
 
@@ -248,13 +253,14 @@ napi_value CameraVideoProfileNapi::Init(napi_env env, napi_value exports)
             }
         }
     }
-
+    MEDIA_ERR_LOG("Init call Failed!");
     return nullptr;
 }
 
 // Constructor callback
 napi_value CameraVideoProfileNapi::CameraVideoProfileNapiConstructor(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("CameraVideoProfileNapiConstructor is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value thisVar = nullptr;
@@ -275,12 +281,13 @@ napi_value CameraVideoProfileNapi::CameraVideoProfileNapiConstructor(napi_env en
             MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
-
+    MEDIA_ERR_LOG("CameraVideoProfileNapiConstructor call Failed!");
     return result;
 }
 
 napi_value CameraVideoProfileNapi::CreateCameraVideoProfile(napi_env env, VideoProfile &profile)
 {
+    MEDIA_DEBUG_LOG("CreateCameraVideoProfile is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value constructor;
@@ -295,13 +302,14 @@ napi_value CameraVideoProfileNapi::CreateCameraVideoProfile(napi_env env, VideoP
             MEDIA_ERR_LOG("Failed to create Camera obj instance");
         }
     }
-
+    MEDIA_ERR_LOG("CreateCameraVideoProfile call Failed!");
     napi_get_undefined(env, &result);
     return result;
 }
 
 napi_value CameraVideoProfileNapi::GetCameraProfileSize(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetCameraProfileSize is called");
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
@@ -324,12 +332,13 @@ napi_value CameraVideoProfileNapi::GetCameraProfileSize(napi_env env, napi_callb
         jsResult = CameraSizeNapi::CreateCameraSize(env, cameraProfileSize);
         return jsResult;
     }
-
+    MEDIA_ERR_LOG("GetCameraProfileSize call Failed!");
     return undefinedResult;
 }
 
 napi_value CameraVideoProfileNapi::GetCameraProfileFormat(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetCameraProfileFormat is called");
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
@@ -355,13 +364,14 @@ napi_value CameraVideoProfileNapi::GetCameraProfileFormat(napi_env env, napi_cal
             MEDIA_ERR_LOG("Failed to get CameraProfileHeight!, errorCode : %{public}d", status);
         }
     }
-
+    MEDIA_ERR_LOG("GetCameraProfileFormat call Failed!");
     return undefinedResult;
 }
 
 static napi_value CreateJSArray(napi_env env, napi_status status,
     std::vector<int32_t> nativeArray)
 {
+    MEDIA_DEBUG_LOG("CreateJSArray is called");
     napi_value jsArray = nullptr;
     napi_value item = nullptr;
 
@@ -374,7 +384,6 @@ static napi_value CreateJSArray(napi_env env, napi_status status,
     if (status == napi_ok) {
         for (size_t i = 0; i < nativeArray.size(); i++) {
             napi_create_int32(env, nativeArray[i], &item);
-            MEDIA_INFO_LOG("CreateJSArray CreateCameraProfile success");
             if (napi_set_element(env, jsArray, i, item) != napi_ok) {
                 MEDIA_ERR_LOG("Failed to create profile napi wrapper object");
                 return nullptr;
@@ -387,6 +396,7 @@ static napi_value CreateJSArray(napi_env env, napi_status status,
 // todo: should to using CreateFrameRateRange in CreateJSArray
 napi_value CameraVideoProfileNapi::GetFrameRateRange(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetFrameRateRange is called");
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
@@ -406,12 +416,12 @@ napi_value CameraVideoProfileNapi::GetFrameRateRange(napi_env env, napi_callback
         std::vector<int32_t> frameRanges = obj->videoProfile_.GetFrameRates();
         jsResult = CreateJSArray(env, status, frameRanges);
         if (status == napi_ok) {
-            MEDIA_ERR_LOG("GetFrameRateRange success ");
             return jsResult;
         } else {
             MEDIA_ERR_LOG("Failed to get FrameRateRanges!, errorCode : %{public}d", status);
         }
     }
+    MEDIA_ERR_LOG("GetFrameRateRange call Failed!");
     return undefinedResult;
 }
 } // namespace CameraStandard

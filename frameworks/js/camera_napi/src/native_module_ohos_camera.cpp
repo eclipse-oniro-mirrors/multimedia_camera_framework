@@ -57,7 +57,7 @@ static napi_module g_module = {
  */
 extern "C" __attribute__((constructor)) void RegisterModule(void)
 {
-    MEDIA_INFO_LOG("RegisterModule called()");
+    MEDIA_DEBUG_LOG("RegisterModule is called");
     napi_module_register(&g_module);
 }
 } // namespace CameraStandard

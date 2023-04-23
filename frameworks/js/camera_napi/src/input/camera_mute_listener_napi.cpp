@@ -18,16 +18,15 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
-using OHOS::HiviewDFX::HiLog;
 
 CameraMuteListenerNapi::CameraMuteListenerNapi(napi_env env, napi_ref ref): env_(env), callbackRef_(ref)
 {
-    MEDIA_INFO_LOG("Enter CameraMuteListenerNapi::CameraMuteListenerNapi");
+    MEDIA_DEBUG_LOG("CameraMuteListenerNapi is called.");
 }
 
 CameraMuteListenerNapi::~CameraMuteListenerNapi()
 {
-    MEDIA_INFO_LOG("Enter CameraMuteListenerNapi::~CameraMuteListenerNapi");
+    MEDIA_DEBUG_LOG("~CameraMuteListenerNapi is called.");
 }
 
 void CameraMuteListenerNapi::OnCameraMuteCallbackAsync(bool muteMode) const
@@ -35,12 +34,12 @@ void CameraMuteListenerNapi::OnCameraMuteCallbackAsync(bool muteMode) const
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
     if (!loop) {
-        MEDIA_ERR_LOG("CameraMuteListenerNapi:OnCameraMuteCallbackAsync() failed to get event loop");
+        MEDIA_ERR_LOG("Failed to get event loop");
         return;
     }
     uv_work_t* work = new(std::nothrow) uv_work_t;
     if (!work) {
-        MEDIA_ERR_LOG("CameraMuteListenerNapi:OnCameraMuteCallbackAsync() failed to allocate work");
+        MEDIA_ERR_LOG("Failed to allocate work");
         return;
     }
     std::unique_ptr<CameraMuteCallbackInfo> callbackInfo =
@@ -55,7 +54,7 @@ void CameraMuteListenerNapi::OnCameraMuteCallbackAsync(bool muteMode) const
         delete work;
     });
     if (ret) {
-        MEDIA_ERR_LOG("CameraMuteListenerNapi:OnCameraMuteCallbackAsync() failed to execute work");
+        MEDIA_ERR_LOG("Failed to execute work");
         delete work;
     } else {
         callbackInfo.release();
@@ -64,19 +63,18 @@ void CameraMuteListenerNapi::OnCameraMuteCallbackAsync(bool muteMode) const
 
 void CameraMuteListenerNapi::OnCameraMuteCallback(bool muteMode) const
 {
-    MEDIA_DEBUG_LOG("CameraMuteListenerNapi::OnCameraMute called, muteMode: %{public}d", muteMode);
+    MEDIA_DEBUG_LOG("OnCameraMuteCallback is called, muteMode: %{public}d", muteMode);
     napi_value result[ARGS_ONE];
     napi_value callback;
     napi_value retVal;
     napi_get_reference_value(env_, callbackRef_, &callback);
     napi_get_boolean(env_, muteMode, &result[PARAM0]);
     napi_call_function(env_, nullptr, callback, ARGS_ONE, result, &retVal);
-    MEDIA_DEBUG_LOG("CameraMuteListenerNapi::OnCameraMute napi_call_function end");
 }
 
 void CameraMuteListenerNapi::OnCameraMute(bool muteMode) const
 {
-    MEDIA_DEBUG_LOG("CameraMuteListenerNapi::OnCameraMute called, muteMode: %{public}d", muteMode);
+    MEDIA_DEBUG_LOG("OnCameraMute is called, muteMode: %{public}d", muteMode);
     OnCameraMuteCallbackAsync(muteMode);
 }
 } // namespace CameraStandard

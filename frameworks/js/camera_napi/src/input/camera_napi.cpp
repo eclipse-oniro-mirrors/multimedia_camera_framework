@@ -59,6 +59,7 @@ CameraNapi::~CameraNapi()
 // Constructor callback
 napi_value CameraNapi::CameraNapiConstructor(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("CameraNapiConstructor is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value thisVar = nullptr;
@@ -80,12 +81,13 @@ napi_value CameraNapi::CameraNapiConstructor(napi_env env, napi_callback_info in
             }
         }
     }
-
+    MEDIA_ERR_LOG("CameraNapiConstructor call Failed!");
     return result;
 }
 
 void CameraNapi::CameraNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
+    MEDIA_DEBUG_LOG("CameraNapiDestructor is called");
     CameraNapi* camera = reinterpret_cast<CameraNapi*>(nativeObject);
     if (camera != nullptr) {
         camera->~CameraNapi();
@@ -94,7 +96,7 @@ void CameraNapi::CameraNapiDestructor(napi_env env, void* nativeObject, void* fi
 
 napi_value CameraNapi::Init(napi_env env, napi_value exports)
 {
-    MEDIA_INFO_LOG("CameraNapi::Init()");
+    MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
     int32_t refCount = 1;
@@ -139,7 +141,7 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
             }
         }
     }
-
+    MEDIA_ERR_LOG("Init call Failed!");
     return nullptr;
 }
 
@@ -159,6 +161,7 @@ napi_status CameraNapi::AddNamedProperty(napi_env env, napi_value object,
 
 napi_value CameraNapi::CreateCameraManagerInstance(napi_env env, napi_callback_info info)
 {
+    MEDIA_INFO_LOG("CreateCameraManagerInstance is called");
     uint64_t tokenId = IPCSkeleton::GetCallingFullTokenID();
     int32_t errorCode = CameraErrorCode::NO_SYSTEM_APP_PERMISSION;
     std::string msg = "System api can be invoked only by system applications";
@@ -168,7 +171,6 @@ napi_value CameraNapi::CreateCameraManagerInstance(napi_env env, napi_callback_i
         }
         return nullptr;
     }
-    MEDIA_INFO_LOG("CreateCameraManagerInstance called");
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE] = {0};
@@ -183,6 +185,7 @@ napi_value CameraNapi::CreateCameraManagerInstance(napi_env env, napi_callback_i
 
 napi_value CameraNapi::CreateFlashModeObject(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreateFlashModeObject is called");
     napi_value result = nullptr;
     napi_status status;
 
@@ -205,7 +208,7 @@ napi_value CameraNapi::CreateFlashModeObject(napi_env env)
             return result;
         }
     }
-    MEDIA_ERR_LOG("CreateFlashModeObject is Failed!");
+    MEDIA_ERR_LOG("CreateFlashModeObject call Failed!");
     napi_get_undefined(env, &result);
 
     return result;
@@ -213,6 +216,7 @@ napi_value CameraNapi::CreateFlashModeObject(napi_env env)
 
 napi_value CameraNapi::CreateExposureModeObject(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreateExposureModeObject is called");
     napi_value result = nullptr;
     napi_status status;
 
@@ -235,7 +239,7 @@ napi_value CameraNapi::CreateExposureModeObject(napi_env env)
             return result;
         }
     }
-    MEDIA_ERR_LOG("CreateExposureModeObject is Failed!");
+    MEDIA_ERR_LOG("CreateExposureModeObject call Failed!");
     napi_get_undefined(env, &result);
 
     return result;
@@ -243,6 +247,7 @@ napi_value CameraNapi::CreateExposureModeObject(napi_env env)
 
 napi_value CameraNapi::CreateExposureStateEnum(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreateExposureStateEnum is called");
     napi_value result = nullptr;
     napi_status status;
 
@@ -265,7 +270,7 @@ napi_value CameraNapi::CreateExposureStateEnum(napi_env env)
             return result;
         }
     }
-    MEDIA_ERR_LOG("CreateExposureStateEnum is Failed!");
+    MEDIA_ERR_LOG("CreateExposureStateEnum call Failed!");
     napi_get_undefined(env, &result);
 
     return result;
@@ -273,6 +278,7 @@ napi_value CameraNapi::CreateExposureStateEnum(napi_env env)
 
 napi_value CameraNapi::CreateFocusModeObject(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreateFocusModeObject is called");
     napi_value result = nullptr;
     napi_status status;
 
@@ -295,7 +301,7 @@ napi_value CameraNapi::CreateFocusModeObject(napi_env env)
             return result;
         }
     }
-    MEDIA_ERR_LOG("CreateFocusModeObject is Failed!");
+    MEDIA_ERR_LOG("CreateFocusModeObject call Failed!");
     napi_get_undefined(env, &result);
 
     return result;
@@ -303,6 +309,7 @@ napi_value CameraNapi::CreateFocusModeObject(napi_env env)
 
 napi_value CameraNapi::CreateFocusStateEnum(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreateFocusStateEnum is called");
     napi_value result = nullptr;
     napi_status status;
 
@@ -325,7 +332,7 @@ napi_value CameraNapi::CreateFocusStateEnum(napi_env env)
             return result;
         }
     }
-    MEDIA_ERR_LOG("CreateFocusStateEnum is Failed!");
+    MEDIA_ERR_LOG("CreateFocusStateEnum call Failed!");
     napi_get_undefined(env, &result);
 
     return result;
@@ -333,6 +340,7 @@ napi_value CameraNapi::CreateFocusStateEnum(napi_env env)
 
 napi_value CameraNapi::CreateCameraPositionEnum(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreateCameraPositionEnum is called");
     napi_value result = nullptr;
     napi_status status;
 
@@ -355,7 +363,7 @@ napi_value CameraNapi::CreateCameraPositionEnum(napi_env env)
             return result;
         }
     }
-    MEDIA_ERR_LOG("CreateCameraPositionEnum is Failed!");
+    MEDIA_ERR_LOG("CreateCameraPositionEnum call Failed!");
     napi_get_undefined(env, &result);
 
     return result;
@@ -363,6 +371,7 @@ napi_value CameraNapi::CreateCameraPositionEnum(napi_env env)
 
 napi_value CameraNapi::CreateCameraTypeEnum(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreateCameraTypeEnum is called");
     napi_value result = nullptr;
     napi_status status;
 
@@ -385,7 +394,7 @@ napi_value CameraNapi::CreateCameraTypeEnum(napi_env env)
             return result;
         }
     }
-    MEDIA_ERR_LOG("CreateCameraTypeEnum is Failed!");
+    MEDIA_ERR_LOG("CreateCameraTypeEnum call Failed!");
     napi_get_undefined(env, &result);
 
     return result;
@@ -393,6 +402,7 @@ napi_value CameraNapi::CreateCameraTypeEnum(napi_env env)
 
 napi_value CameraNapi::CreateConnectionTypeEnum(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreateConnectionTypeEnum is called");
     napi_value result = nullptr;
     napi_status status;
 
@@ -415,7 +425,7 @@ napi_value CameraNapi::CreateConnectionTypeEnum(napi_env env)
             return result;
         }
     }
-    MEDIA_ERR_LOG("CreateConnectionTypeEnum is Failed!");
+    MEDIA_ERR_LOG("CreateConnectionTypeEnum call Failed!");
     napi_get_undefined(env, &result);
 
     return result;
@@ -423,6 +433,7 @@ napi_value CameraNapi::CreateConnectionTypeEnum(napi_env env)
 
 napi_value CameraNapi::CreateCameraFormatObject(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreateCameraFormatObject is called");
     napi_value result = nullptr;
     napi_status status;
 
@@ -453,7 +464,7 @@ napi_value CameraNapi::CreateCameraFormatObject(napi_env env)
             return result;
         }
     }
-    MEDIA_ERR_LOG("CreateCameraFormatObject is Failed!");
+    MEDIA_ERR_LOG("CreateCameraFormatObject call Failed!");
     napi_get_undefined(env, &result);
 
     return result;
@@ -461,6 +472,7 @@ napi_value CameraNapi::CreateCameraFormatObject(napi_env env)
 
 napi_value CameraNapi::CreateCameraStatusObject(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreateCameraStatusObject is called");
     napi_value result = nullptr;
     napi_status status;
 
@@ -483,7 +495,7 @@ napi_value CameraNapi::CreateCameraStatusObject(napi_env env)
             return result;
         }
     }
-    MEDIA_ERR_LOG("CreateCameraStatusObject is Failed!");
+    MEDIA_ERR_LOG("CreateCameraStatusObject call Failed!");
     napi_get_undefined(env, &result);
 
     return result;
@@ -491,6 +503,7 @@ napi_value CameraNapi::CreateCameraStatusObject(napi_env env)
 
 napi_value CameraNapi::CreateImageRotationEnum(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreateImageRotationEnum is called");
     napi_value result = nullptr;
     napi_status status;
 
@@ -513,7 +526,7 @@ napi_value CameraNapi::CreateImageRotationEnum(napi_env env)
             return result;
         }
     }
-    MEDIA_ERR_LOG("CreateImageRotationEnum is Failed!");
+    MEDIA_ERR_LOG("CreateImageRotationEnum call Failed!");
     napi_get_undefined(env, &result);
 
     return result;
@@ -521,6 +534,7 @@ napi_value CameraNapi::CreateImageRotationEnum(napi_env env)
 
 napi_value CameraNapi::CreateQualityLevelEnum(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreateQualityLevelEnum is called");
     napi_value result = nullptr;
     napi_status status;
 
@@ -543,7 +557,7 @@ napi_value CameraNapi::CreateQualityLevelEnum(napi_env env)
             return result;
         }
     }
-    MEDIA_ERR_LOG("CreateQualityLevelEnum is Failed!");
+    MEDIA_ERR_LOG("CreateQualityLevelEnum call Failed!");
     napi_get_undefined(env, &result);
 
     return result;
@@ -551,6 +565,7 @@ napi_value CameraNapi::CreateQualityLevelEnum(napi_env env)
 
 napi_value CameraNapi::CreateCameraInputErrorCode(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreateCameraInputErrorCode is called");
     napi_value result = nullptr;
     napi_status status;
 
@@ -573,7 +588,7 @@ napi_value CameraNapi::CreateCameraInputErrorCode(napi_env env)
             return result;
         }
     }
-    MEDIA_ERR_LOG("CreateCameraInputErrorCode is Failed!");
+    MEDIA_ERR_LOG("CreateCameraInputErrorCode call Failed!");
     napi_get_undefined(env, &result);
 
     return result;
@@ -581,6 +596,7 @@ napi_value CameraNapi::CreateCameraInputErrorCode(napi_env env)
 
 napi_value CameraNapi::CreateCameraErrorCode(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreateCameraErrorCode is called");
     napi_value result = nullptr;
     napi_status status;
 
@@ -603,7 +619,7 @@ napi_value CameraNapi::CreateCameraErrorCode(napi_env env)
             return result;
         }
     }
-    MEDIA_ERR_LOG("CreateCameraErrorCode is Failed!");
+    MEDIA_ERR_LOG("CreateCameraErrorCode call Failed!");
     napi_get_undefined(env, &result);
 
     return result;
@@ -611,6 +627,7 @@ napi_value CameraNapi::CreateCameraErrorCode(napi_env env)
 
 napi_value CameraNapi::CreateCaptureSessionErrorCode(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreateCaptureSessionErrorCode is called");
     napi_value result = nullptr;
     napi_status status;
 
@@ -633,7 +650,7 @@ napi_value CameraNapi::CreateCaptureSessionErrorCode(napi_env env)
             return result;
         }
     }
-    MEDIA_ERR_LOG("CreateCaptureSessionErrorCode is Failed!");
+    MEDIA_ERR_LOG("CreateCaptureSessionErrorCode call Failed!");
     napi_get_undefined(env, &result);
 
     return result;
@@ -641,6 +658,7 @@ napi_value CameraNapi::CreateCaptureSessionErrorCode(napi_env env)
 
 napi_value CameraNapi::CreatePreviewOutputErrorCode(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreatePreviewOutputErrorCode is called");
     napi_value result = nullptr;
     napi_status status;
 
@@ -663,7 +681,7 @@ napi_value CameraNapi::CreatePreviewOutputErrorCode(napi_env env)
             return result;
         }
     }
-    MEDIA_ERR_LOG("CreatePreviewOutputErrorCode is Failed!");
+    MEDIA_ERR_LOG("CreatePreviewOutputErrorCode call Failed!");
     napi_get_undefined(env, &result);
 
     return result;
@@ -671,6 +689,7 @@ napi_value CameraNapi::CreatePreviewOutputErrorCode(napi_env env)
 
 napi_value CameraNapi::CreatePhotoOutputErrorCode(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreatePhotoOutputErrorCode is called");
     napi_value result = nullptr;
     napi_status status;
 
@@ -693,7 +712,7 @@ napi_value CameraNapi::CreatePhotoOutputErrorCode(napi_env env)
             return result;
         }
     }
-    MEDIA_ERR_LOG("CreatePhotoOutputErrorCode is Failed!");
+    MEDIA_ERR_LOG("CreatePhotoOutputErrorCode call Failed!");
     napi_get_undefined(env, &result);
 
     return result;
@@ -701,6 +720,7 @@ napi_value CameraNapi::CreatePhotoOutputErrorCode(napi_env env)
 
 napi_value CameraNapi::CreateVideoOutputErrorCode(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreateVideoOutputErrorCode is called");
     napi_value result = nullptr;
     napi_status status;
 
@@ -723,7 +743,7 @@ napi_value CameraNapi::CreateVideoOutputErrorCode(napi_env env)
             return result;
         }
     }
-    MEDIA_ERR_LOG("CreateCameraInputErrorCode is Failed!");
+    MEDIA_ERR_LOG("CreateCameraInputErrorCode call Failed!");
     napi_get_undefined(env, &result);
 
     return result;
@@ -731,6 +751,7 @@ napi_value CameraNapi::CreateVideoOutputErrorCode(napi_env env)
 
 napi_value CameraNapi::CreateMetadataObjectType(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreateMetadataObjectType is called");
     napi_value result = nullptr;
     napi_status status;
 
@@ -753,13 +774,14 @@ napi_value CameraNapi::CreateMetadataObjectType(napi_env env)
             return result;
         }
     }
-    MEDIA_ERR_LOG("CreateMetadataObjectType is Failed!");
+    MEDIA_ERR_LOG("CreateMetadataObjectType call Failed!");
     napi_get_undefined(env, &result);
     return result;
 }
 
 napi_value CameraNapi::CreateMetaOutputErrorCode(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreateMetaOutputErrorCode is called");
     napi_value result = nullptr;
     napi_status status;
 
@@ -782,7 +804,7 @@ napi_value CameraNapi::CreateMetaOutputErrorCode(napi_env env)
             return result;
         }
     }
-    MEDIA_ERR_LOG("CreateMetaOutputErrorCode is Failed!");
+    MEDIA_ERR_LOG("CreateMetaOutputErrorCode call Failed!");
     napi_get_undefined(env, &result);
 
     return result;
@@ -790,6 +812,7 @@ napi_value CameraNapi::CreateMetaOutputErrorCode(napi_env env)
 
 napi_value CameraNapi::CreateVideoStabilizationModeObject(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreateVideoStabilizationModeObject is called");
     napi_value result = nullptr;
     napi_status status;
 
@@ -812,7 +835,7 @@ napi_value CameraNapi::CreateVideoStabilizationModeObject(napi_env env)
             return result;
         }
     }
-    MEDIA_ERR_LOG("CreateVideoStabilizationModeObject is Failed!");
+    MEDIA_ERR_LOG("CreateVideoStabilizationModeObject call Failed!");
     napi_get_undefined(env, &result);
 
     return result;
