@@ -367,6 +367,7 @@ int HCameraServiceStub::DestroyStubForPid(pid_t pid)
         itListener->second = nullptr;
         (void)cameraListenerMap_.erase(itListener);
     }
+    HCaptureSession::DestroyStubObjectForPid(pid);
     CloseCameraForDestory(pid);
     UnSetCallback(pid);
     return CAMERA_OK;

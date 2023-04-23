@@ -759,6 +759,21 @@ void HCaptureSession::UnregisterPermissionCallback(const uint32_t callingTokenId
     MEDIA_DEBUG_LOG("after tokenId:%{public}d unregister", callingTokenId);
 }
 
+void HCaptureSession::DestroyStubObjectForPid(pid_t pid)
+{
+    MEDIA_DEBUG_LOG("camera stub services(%{public}zu) pid(%{public}d).", session_.size(), pid);
+    sptr<HCaptureSession> session;
+
+    auto it = session_.find(pid);
+    if (it != session_.end()) {
+        if (it->second != nullptr) {
+            session = it->second;
+            session->Release(pid);
+        }
+    }
+    MEDIA_DEBUG_LOG("camera stub services(%{public}zu).", session_.size());
+}
+
 int32_t HCaptureSession::SetCallback(sptr<ICaptureSessionCallback> &callback)
 {
     if (callback == nullptr) {
