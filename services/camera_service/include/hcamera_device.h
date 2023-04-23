@@ -83,7 +83,7 @@ private:
 
 class CameraDeviceCallback : public ICameraDeviceCallback {
 public:
-    explicit CameraDeviceCallback(wptr<HCameraDevice> hCameraDevice);
+    explicit CameraDeviceCallback(sptr<HCameraDevice> hCameraDevice);
     virtual ~CameraDeviceCallback()
     {
         hCameraDevice_ = nullptr;
