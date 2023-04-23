@@ -346,10 +346,6 @@ void HCameraService::OnCameraStatus(const std::string& cameraId, CameraStatus st
     MEDIA_INFO_LOG("HCameraService::OnCameraStatus "
                    "callbacks.size = %{public}zu, cameraId = %{public}s, status = %{public}d, pid = %{public}d",
                    cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid());
-    if (status == CAMERA_STATUS_AVAILABLE) {
-        devices_[cameraId] = nullptr;
-        devices_.erase(cameraId);
-    }
     for (auto it : cameraServiceCallbacks_) {
         if (it.second == nullptr) {
             MEDIA_ERR_LOG("HCameraService::OnCameraStatus cameraServiceCallback is null, pid = %{public}d",
@@ -409,7 +405,6 @@ int32_t HCameraService::SetCallback(sptr<ICameraServiceCallback> &callback)
 
 int32_t HCameraService::CloseCameraForDestory(pid_t pid)
 {
-    std::lock_guard<std::mutex> lock(cbMutex_);
     MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory pid = %{public}d, Camera created size = %{public}zu",
                    pid, camerasForPid_[pid].size());
     auto cameraIds = camerasForPid_[pid];
