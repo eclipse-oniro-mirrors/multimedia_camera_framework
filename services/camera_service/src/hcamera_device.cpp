@@ -36,22 +36,8 @@ HCameraDevice::HCameraDevice(sptr<HCameraHostManager> &cameraHostManager,
 
 HCameraDevice::~HCameraDevice()
 {
-    {
-        std::lock_guard<std::mutex> lock(deviceLock_);
-        if (hdiCameraDevice_ != nullptr) {
-            MEDIA_INFO_LOG("HCameraDevice::~HCameraDevice Closing camera device: %{public}s", cameraID_.c_str());
-            hdiCameraDevice_->Close();
-            (void)OnCameraStatus(cameraID_, CAMERA_STATUS_AVAILABLE);
-        }
-    }
-    hdiCameraDevice_ = nullptr;
-    streamOperator_ = nullptr;
-    if (cameraHostManager_) {
-        cameraHostManager_->RemoveCameraDevice(cameraID_);
-        cameraHostManager_ = nullptr;
-    }
-    deviceHDICallback_ = nullptr;
-    deviceSvcCallback_ = nullptr;
+    this->Close();
+    cameraHostManager_ = nullptr;
 }
 
 std::string HCameraDevice::GetCameraId()
@@ -171,7 +157,9 @@ int32_t HCameraDevice::Close()
     if (streamOperator_) {
         streamOperator_ = nullptr;
     }
-    cameraHostManager_->RemoveCameraDevice(cameraID_);
+    if (cameraHostManager_) {
+        cameraHostManager_->RemoveCameraDevice(cameraID_);
+    }
     deviceHDICallback_ = nullptr;
     deviceSvcCallback_ = nullptr;
     return CAMERA_OK;
