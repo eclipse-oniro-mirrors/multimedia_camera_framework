@@ -59,7 +59,6 @@ public:
     int32_t Stop() override;
     int32_t Release(pid_t pid) override;
     int32_t ReleaseInner();
-    static void DestroyStubObjectForPid(pid_t pid);
     int32_t SetCallback(sptr<ICaptureSessionCallback> &callback) override;
 
     int32_t GetSessionState(CaptureSessionState &sessionState) override;
