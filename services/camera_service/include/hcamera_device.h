@@ -70,6 +70,7 @@ private:
     sptr<ICameraDeviceServiceCallback> deviceSvcCallback_;
     sptr<CameraDeviceCallback> deviceHDICallback_;
     std::map<int32_t, wptr<ICameraServiceCallback>> statusSvcCallbacks_;
+    std::mutex statusCbLock_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> updateSettings_;
     sptr<IStreamOperator> streamOperator_;
     std::mutex deviceLock_;
