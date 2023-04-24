@@ -15,8 +15,8 @@
 
 #include "input/camera_input.h"
 
-#include <cinttypes>
 #include <securec.h>
+#include <cinttypes>
 #include "camera_device_ability_items.h"
 #include "camera_util.h"
 #include "hcamera_device_callback_stub.h"
@@ -58,7 +58,12 @@ public:
     {
         MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::OnResult() is called!, cameraId: %{public}s, timestamp: %{public}"
                        PRIu64, camInput_->GetCameraDeviceInfo()->GetID().c_str(), timestamp);
-
+        if (camInput_ != nullptr && camInput_->GetResultCallback() != nullptr) {
+            MEDIA_DEBUG_LOG("CameraDeviceServiceCallback OnResult");
+            camInput_->GetResultCallback()->OnResult(timestamp, result);
+        } else {
+            MEDIA_INFO_LOG("CameraDeviceServiceCallback::ResultCallback not set!, Discarding callback");
+        }
         camInput_->ProcessDeviceCallbackUpdates(result);
         return CAMERA_OK;
     }
@@ -151,6 +156,15 @@ void CameraInput::SetErrorCallback(std::shared_ptr<ErrorCallback> errorCallback)
     return;
 }
 
+void CameraInput::SetResultCallback(std::shared_ptr<ResultCallback> resultCallback)
+{
+    if (resultCallback == nullptr) {
+        MEDIA_ERR_LOG("SetResultCallback: Unregistering error resultCallback");
+    }
+    MEDIA_DEBUG_LOG("CameraInput::setresult callback");
+    resultCallback_ = resultCallback;
+    return;
+}
 std::string CameraInput::GetCameraId()
 {
     return cameraObj_->GetID();
@@ -165,7 +179,11 @@ std::shared_ptr<ErrorCallback> CameraInput::GetErrorCallback()
 {
     return errorCallback_;
 }
-
+std::shared_ptr<ResultCallback> CameraInput::GetResultCallback()
+{
+    MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::GetResultCallback");
+    return resultCallback_;
+}
 sptr<CameraDevice> CameraInput::GetCameraDeviceInfo()
 {
     return cameraObj_;
@@ -241,5 +259,5 @@ int32_t CameraInput::SetCameraSettings(std::string setting)
     }
     return UpdateSetting(metadata);
 }
-} // CameraStandard
-} // OHOS
+} // namespace CameraStandard
+} // namespace OHOS
