@@ -75,7 +75,12 @@ HCaptureSession::HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
     pid_ = IPCSkeleton::GetCallingPid();
     uid_ = IPCSkeleton::GetCallingUid();
     MEDIA_DEBUG_LOG("HCaptureSession: camera stub services(%{public}zu) pid(%{public}d).", session_.size(), pid_);
+    std::map<int32_t, sptr<HCaptureSession>> oldSessions;
     for (auto it = session_.begin(); it != session_.end(); it++) {
+        sptr<HCaptureSession> session = it->second;
+        oldSessions[it->first] = session;
+    }
+    for (auto it = oldSessions.begin(); it != oldSessions.end(); it++) {
         if (it->second != nullptr) {
             sptr<HCaptureSession> session = it->second;
             sptr<HCameraDevice> disconnectDevice;
@@ -88,12 +93,7 @@ HCaptureSession::HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
         }
     }
     std::lock_guard<std::mutex> lock(sessionLock_);
-    std::map<int32_t, sptr<HCaptureSession>>::iterator it = session_.find(pid_);
-    if (it != session_.end()) {
-        MEDIA_ERR_LOG("HCaptureSession::HCaptureSession doesn't support multiple sessions per pid");
-    } else {
-        session_[pid_] = this;
-    }
+    session_[pid_] = this;
     callerToken_ = callingTokenId;
     if (IsValidTokenId(callerToken_)) {
         StartUsingPermissionCallback(callerToken_, ACCESS_CAMERA);
