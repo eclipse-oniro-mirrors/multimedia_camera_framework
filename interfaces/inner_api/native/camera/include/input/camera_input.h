@@ -34,6 +34,13 @@ public:
     virtual void OnError(const int32_t errorType, const int32_t errorMsg) const;
 };
 
+class ResultCallback {
+public:
+    ResultCallback() = default;
+    virtual ~ResultCallback() = default;
+    virtual void OnResult(const uint64_t timestamp, const std::shared_ptr<Camera::CameraMetadata> &result) const;
+};
+
 class CameraInput : public CaptureInput {
 public:
     [[deprecated]] CameraInput(sptr<ICameraDeviceService> &deviceObj, sptr<CameraInfo> &camera);
@@ -220,6 +227,14 @@ public:
     void SetErrorCallback(std::shared_ptr<ErrorCallback> errorCallback);
 
     /**
+    * @brief Set the result callback.
+    * which will be called when result callback.
+    *
+    * @param The ResultCallback pointer.
+    */
+    void SetResultCallback(std::shared_ptr<ResultCallback> resultCallback);
+
+    /**
     * @brief Release camera input.
     */
     int Release() override;
@@ -244,6 +259,13 @@ public:
     * @return Returns ErrorCallback pointer.
     */
     std::shared_ptr<ErrorCallback> GetErrorCallback();
+
+    /**
+    * @brief Get ResultCallback pointer.
+    *
+    * @return Returns ResultCallback pointer.
+    */
+    std::shared_ptr<ResultCallback>  GetResultCallback();
 
     /**
     * @brief get the camera info associated with the device.
@@ -294,6 +316,7 @@ public:
 private:
     sptr<CameraDevice> cameraObj_;
     sptr<ICameraDeviceService> deviceObj_;
+    std::shared_ptr<ResultCallback> resultCallback_;
     std::shared_ptr<ErrorCallback> errorCallback_;
     sptr<ICameraDeviceServiceCallback> CameraDeviceSvcCallback_;
     std::mutex interfaceMutex_;
