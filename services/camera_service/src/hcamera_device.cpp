@@ -390,6 +390,7 @@ int32_t HCameraDevice::SetCallback(sptr<ICameraDeviceServiceCallback> &callback)
 
 int32_t HCameraDevice::SetStatusCallback(std::map<int32_t, sptr<ICameraServiceCallback>> &callbacks)
 {
+    std::lock_guard<std::mutex> lock(statusCbLock_);
     MEDIA_INFO_LOG("HCameraDevice::SetStatusCallback callbacks size = %{public}zu",
                    callbacks.size());
     if (!statusSvcCallbacks_.empty()) {
@@ -451,6 +452,7 @@ int32_t HCameraDevice::OnError(const ErrorType type, const int32_t errorMsg)
 
 int32_t HCameraDevice::OnCameraStatus(const std::string& cameraId, CameraStatus status)
 {
+    std::lock_guard<std::mutex> lock(statusCbLock_);
     MEDIA_INFO_LOG("HCameraDevice::OnCameraStatus statusSvcCallbacks_ size = %{public}zu",
                    statusSvcCallbacks_.size());
     std::string callbackPids = "[";
