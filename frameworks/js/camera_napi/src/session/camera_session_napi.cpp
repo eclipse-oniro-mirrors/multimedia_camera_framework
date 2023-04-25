@@ -19,12 +19,6 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
-using OHOS::HiviewDFX::HiLog;
-using OHOS::HiviewDFX::HiLogLabel;
-
-namespace {
-    constexpr HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "CameraNapi"};
-}
 
 thread_local napi_ref CameraSessionNapi::sConstructor_ = nullptr;
 thread_local sptr<CaptureSession> CameraSessionNapi::sCameraSession_ = nullptr;
@@ -32,15 +26,16 @@ thread_local uint32_t CameraSessionNapi::cameraSessionTaskId = CAMERA_SESSION_TA
 
 void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state) const
 {
+    MEDIA_DEBUG_LOG("OnExposureStateCallbackAsync is called");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
     if (!loop) {
-        MEDIA_ERR_LOG("ExposureCallbackListener:OnExposureStateCallbackAsync() failed to get event loop");
+        MEDIA_ERR_LOG("failed to get event loop");
         return;
     }
     uv_work_t* work = new(std::nothrow) uv_work_t;
     if (!work) {
-        MEDIA_ERR_LOG("ExposureCallbackListener:OnExposureStateCallbackAsync() failed to allocate work");
+        MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
     std::unique_ptr<ExposureCallbackInfo> callbackInfo = std::make_unique<ExposureCallbackInfo>(state, this);
@@ -54,7 +49,7 @@ void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state)
         delete work;
     });
     if (ret) {
-        MEDIA_ERR_LOG("ExposureCallbackListener:OnExposureStateCallbackAsync() failed to execute work");
+        MEDIA_ERR_LOG("failed to execute work");
         delete work;
     } else {
         callbackInfo.release();
@@ -63,6 +58,7 @@ void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state)
 
 void ExposureCallbackListener::OnExposureStateCallback(ExposureState state) const
 {
+    MEDIA_DEBUG_LOG("OnExposureStateCallback is called");
     napi_value result[ARGS_ONE];
     napi_value callback = nullptr;
     napi_value retVal;
@@ -75,21 +71,22 @@ void ExposureCallbackListener::OnExposureStateCallback(ExposureState state) cons
 
 void ExposureCallbackListener::OnExposureState(const ExposureState state)
 {
-    MEDIA_INFO_LOG("ExposureCallbackListener:OnExposureState() is called!, state: %{public}d", state);
+    MEDIA_DEBUG_LOG("OnExposureState is called, state: %{public}d", state);
     OnExposureStateCallbackAsync(state);
 }
 
 void FocusCallbackListener::OnFocusStateCallbackAsync(FocusState state) const
 {
+    MEDIA_DEBUG_LOG("OnFocusStateCallbackAsync is called");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
     if (!loop) {
-        MEDIA_ERR_LOG("FocusCallbackListener:OnFocusStateCallbackAsync() failed to get event loop");
+        MEDIA_ERR_LOG("failed to get event loop");
         return;
     }
     uv_work_t* work = new(std::nothrow) uv_work_t;
     if (!work) {
-        MEDIA_ERR_LOG("FocusCallbackListener:OnFocusStateCallbackAsync() failed to allocate work");
+        MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
     std::unique_ptr<FocusCallbackInfo> callbackInfo = std::make_unique<FocusCallbackInfo>(state, this);
@@ -103,7 +100,7 @@ void FocusCallbackListener::OnFocusStateCallbackAsync(FocusState state) const
         delete work;
     });
     if (ret) {
-        MEDIA_ERR_LOG("FocusCallbackListener:OnFocusStateCallbackAsync() failed to execute work");
+        MEDIA_ERR_LOG("failed to execute work");
         delete work;
     } else {
         callbackInfo.release();
@@ -112,6 +109,7 @@ void FocusCallbackListener::OnFocusStateCallbackAsync(FocusState state) const
 
 void FocusCallbackListener::OnFocusStateCallback(FocusState state) const
 {
+    MEDIA_DEBUG_LOG("OnFocusStateCallback is called");
     napi_value result[ARGS_ONE];
     napi_value callback = nullptr;
     napi_value retVal;
@@ -124,21 +122,22 @@ void FocusCallbackListener::OnFocusStateCallback(FocusState state) const
 
 void FocusCallbackListener::OnFocusState(FocusState state)
 {
-    MEDIA_INFO_LOG("FocusCallbackListener:OnFocusState() is called!, state: %{public}d", state);
+    MEDIA_DEBUG_LOG("OnFocusState is called, state: %{public}d", state);
     OnFocusStateCallbackAsync(state);
 }
 
 void SessionCallbackListener::OnErrorCallbackAsync(int32_t errorCode) const
 {
+    MEDIA_DEBUG_LOG("OnErrorCallbackAsync is called");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
     if (!loop) {
-        MEDIA_ERR_LOG("SessionCallbackListener:OnErrorCallbackAsync() failed to get event loop");
+        MEDIA_ERR_LOG("failed to get event loop");
         return;
     }
     uv_work_t* work = new(std::nothrow) uv_work_t;
     if (!work) {
-        MEDIA_ERR_LOG("SessionCallbackListener:OnErrorCallbackAsync() failed to allocate work");
+        MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
     std::unique_ptr<SessionCallbackInfo> callbackInfo = std::make_unique<SessionCallbackInfo>(errorCode, this);
@@ -152,7 +151,7 @@ void SessionCallbackListener::OnErrorCallbackAsync(int32_t errorCode) const
         delete work;
     });
     if (ret) {
-        MEDIA_ERR_LOG("SessionCallbackListener:OnErrorCallbackAsync() failed to execute work");
+        MEDIA_ERR_LOG("failed to execute work");
         delete work;
     } else {
         callbackInfo.release();
@@ -161,6 +160,7 @@ void SessionCallbackListener::OnErrorCallbackAsync(int32_t errorCode) const
 
 void SessionCallbackListener::OnErrorCallback(int32_t errorCode) const
 {
+    MEDIA_DEBUG_LOG("OnErrorCallback is called");
     int32_t jsErrorCodeUnknown = -1;
     napi_value result[ARGS_ONE];
     napi_value callback = nullptr;
@@ -177,7 +177,7 @@ void SessionCallbackListener::OnErrorCallback(int32_t errorCode) const
 
 void SessionCallbackListener::OnError(int32_t errorCode)
 {
-    MEDIA_INFO_LOG("SessionCallbackListener:OnError() is called!, errorCode: %{public}d", errorCode);
+    MEDIA_DEBUG_LOG("OnError is called, errorCode: %{public}d", errorCode);
     OnErrorCallbackAsync(errorCode);
 }
 
@@ -187,6 +187,7 @@ CameraSessionNapi::CameraSessionNapi() : env_(nullptr), wrapper_(nullptr)
 
 CameraSessionNapi::~CameraSessionNapi()
 {
+    MEDIA_DEBUG_LOG("~CameraSessionNapi is called");
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
@@ -197,7 +198,7 @@ CameraSessionNapi::~CameraSessionNapi()
 
 void CameraSessionNapi::CameraSessionNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
-    MEDIA_DEBUG_LOG("CameraSessionNapiDestructor enter");
+    MEDIA_DEBUG_LOG("CameraSessionNapiDestructor is called");
     CameraSessionNapi* cameraObj = reinterpret_cast<CameraSessionNapi*>(nativeObject);
     if (cameraObj != nullptr) {
         cameraObj->~CameraSessionNapi();
@@ -206,6 +207,7 @@ void CameraSessionNapi::CameraSessionNapiDestructor(napi_env env, void* nativeOb
 
 napi_value CameraSessionNapi::Init(napi_env env, napi_value exports)
 {
+    MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
     int32_t refCount = 1;
@@ -276,13 +278,14 @@ napi_value CameraSessionNapi::Init(napi_env env, napi_value exports)
             }
         }
     }
-
+    MEDIA_ERR_LOG("Init call Failed!");
     return nullptr;
 }
 
 // Constructor callback
 napi_value CameraSessionNapi::CameraSessionNapiConstructor(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("CameraSessionNapiConstructor is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value thisVar = nullptr;
@@ -309,17 +312,18 @@ napi_value CameraSessionNapi::CameraSessionNapiConstructor(napi_env env, napi_ca
             }
         }
     }
-
+    MEDIA_ERR_LOG("CameraSessionNapiConstructor call Failed!");
     return result;
 }
 
 int32_t QueryAndGetInputProperty(napi_env env, napi_value arg, const string &propertyName, napi_value &property)
 {
+    MEDIA_DEBUG_LOG("QueryAndGetInputProperty is called");
     bool present = false;
     int32_t retval = 0;
     if ((napi_has_named_property(env, arg, propertyName.c_str(), &present) != napi_ok)
         || (!present) || (napi_get_named_property(env, arg, propertyName.c_str(), &property) != napi_ok)) {
-            HiLog::Error(LABEL, "Failed to obtain property: %{public}s", propertyName.c_str());
+            MEDIA_ERR_LOG("Failed to obtain property: %{public}s", propertyName.c_str());
             retval = -1;
     }
 
@@ -328,6 +332,7 @@ int32_t QueryAndGetInputProperty(napi_env env, napi_value arg, const string &pro
 
 int32_t GetPointProperties(napi_env env, napi_value pointObj, Point &point)
 {
+    MEDIA_DEBUG_LOG("GetPointProperties is called");
     napi_value propertyX = nullptr;
     napi_value propertyY = nullptr;
     double pointX = -1.0;
@@ -353,6 +358,7 @@ int32_t GetPointProperties(napi_env env, napi_value pointObj, Point &point)
 
 napi_value GetPointNapiValue(napi_env env, Point &point)
 {
+    MEDIA_DEBUG_LOG("GetPointNapiValue is called");
     napi_value result;
     napi_value propValue;
     napi_create_object(env, &result);
@@ -365,6 +371,7 @@ napi_value GetPointNapiValue(napi_env env, Point &point)
 
 napi_value CameraSessionNapi::CreateCameraSession(napi_env env)
 {
+    MEDIA_DEBUG_LOG("CreateCameraSession is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -380,15 +387,11 @@ napi_value CameraSessionNapi::CreateCameraSession(napi_env env)
             MEDIA_ERR_LOG("Failed to create Camera session instance");
             napi_get_undefined(env, &result);
             return result;
-        } else {
-            MEDIA_INFO_LOG("Camera session instance create success");
         }
-        MEDIA_INFO_LOG("before new Camera session napi instance");
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
-        MEDIA_INFO_LOG("after new Camera session napi instance");
         sCameraSession_ = nullptr;
         if (status == napi_ok && result != nullptr) {
-            MEDIA_INFO_LOG("success to create Camera session napi instance");
+            MEDIA_DEBUG_LOG("success to create Camera session napi instance");
             return result;
         } else {
             MEDIA_ERR_LOG("Failed to create Camera session napi instance");
@@ -402,6 +405,7 @@ napi_value CameraSessionNapi::CreateCameraSession(napi_env env)
 void PopulateRetVal(napi_env env, SessionAsyncCallbackModes mode,
     CameraSessionAsyncContext* context, std::unique_ptr<JSAsyncContextOutput> &jsContext)
 {
+    MEDIA_DEBUG_LOG("PopulateRetVal is called");
     jsContext->status = true;
     napi_get_undefined(env, &jsContext->error);
     switch (mode) {
@@ -434,6 +438,7 @@ void PopulateRetVal(napi_env env, SessionAsyncCallbackModes mode,
 
 static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
 {
+    MEDIA_DEBUG_LOG("CommonCompleteCallback is called");
     auto context = static_cast<CameraSessionAsyncContext*>(data);
     if (context == nullptr) {
         MEDIA_ERR_LOG("Async context is null");
@@ -463,7 +468,7 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
 
 napi_value CameraSessionNapi::BeginConfig(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("BeginConfig called");
+    MEDIA_INFO_LOG("BeginConfig is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -479,13 +484,15 @@ napi_value CameraSessionNapi::BeginConfig(napi_env env, napi_callback_info info)
         if (!CameraNapiUtils::CheckError(env, ret)) {
             return nullptr;
         }
+    } else {
+        MEDIA_ERR_LOG("BeginConfig call Failed!");
     }
     return result;
 }
 
 napi_value CameraSessionNapi::CommitConfig(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("CommitConfig called");
+    MEDIA_INFO_LOG("CommitConfig is called");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -530,14 +537,15 @@ napi_value CameraSessionNapi::CommitConfig(napi_env env, napi_callback_info info
             napi_queue_async_work(env, asyncContext->work);
             asyncContext.release();
         }
+    } else {
+        MEDIA_ERR_LOG("CommitConfig call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::LockForControl(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("BeginConfig called");
+    MEDIA_DEBUG_LOG("LockForControl is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -551,14 +559,15 @@ napi_value CameraSessionNapi::LockForControl(napi_env env, napi_callback_info in
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         cameraSessionNapi->cameraSession_->LockForControl();
+    } else {
+        MEDIA_ERR_LOG("LockForControl call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::UnlockForControl(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("UnlockForControl called");
+    MEDIA_DEBUG_LOG("UnlockForControl is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -572,14 +581,16 @@ napi_value CameraSessionNapi::UnlockForControl(napi_env env, napi_callback_info 
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         cameraSessionNapi->cameraSession_->UnlockForControl();
+    } else {
+        MEDIA_ERR_LOG("UnlockForControl call Failed!");
     }
-
     return result;
 }
 
 napi_value GetJSArgsForCameraInput(napi_env env, size_t argc, const napi_value argv[],
     sptr<CaptureInput> &cameraInput)
 {
+    MEDIA_DEBUG_LOG("GetJSArgsForCameraInput is called");
     napi_value result = nullptr;
     CameraInputNapi* cameraInputNapiObj = nullptr;
 
@@ -591,7 +602,6 @@ napi_value GetJSArgsForCameraInput(napi_env env, size_t argc, const napi_value a
         if (i == PARAM0 && valueType == napi_object) {
             napi_unwrap(env, argv[i], reinterpret_cast<void**>(&cameraInputNapiObj));
             if (cameraInputNapiObj != nullptr) {
-                MEDIA_ERR_LOG("cameraInputNapiObj->GetCameraInput()");
                 cameraInput = cameraInputNapiObj->GetCameraInput();
             } else {
                 NAPI_ASSERT(env, false, "type mismatch");
@@ -606,7 +616,7 @@ napi_value GetJSArgsForCameraInput(napi_env env, size_t argc, const napi_value a
 
 napi_value CameraSessionNapi::AddInput(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("AddInput called");
+    MEDIA_INFO_LOG("AddInput is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -628,13 +638,15 @@ napi_value CameraSessionNapi::AddInput(napi_env env, napi_callback_info info)
         if (!CameraNapiUtils::CheckError(env, ret)) {
             return nullptr;
         }
+    } else {
+        MEDIA_ERR_LOG("AddInput call Failed!");
     }
     return result;
 }
 
 napi_value CameraSessionNapi::CanAddInput(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("CanAddInput called");
+    MEDIA_DEBUG_LOG("CanAddInput is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -651,13 +663,15 @@ napi_value CameraSessionNapi::CanAddInput(napi_env env, napi_callback_info info)
         GetJSArgsForCameraInput(env, argc, argv, cameraInput);
         bool isSupported = cameraSessionNapi->cameraSession_->CanAddInput(cameraInput);
         napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("CanAddInput call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::RemoveInput(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("RemoveInput is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -680,14 +694,16 @@ napi_value CameraSessionNapi::RemoveInput(napi_env env, napi_callback_info info)
             return nullptr;
         }
         return result;
+    } else {
+        MEDIA_ERR_LOG("RemoveInput call Failed!");
     }
-
     return result;
 }
 
 napi_value GetJSArgsForCameraOutput(napi_env env, size_t argc, const napi_value argv[],
     sptr<CaptureOutput> &cameraOutput)
 {
+    MEDIA_DEBUG_LOG("GetJSArgsForCameraOutput is called");
     napi_value result = nullptr;
     PreviewOutputNapi* previewOutputNapiObj = nullptr;
     PhotoOutputNapi* photoOutputNapiObj = nullptr;
@@ -732,7 +748,7 @@ napi_value GetJSArgsForCameraOutput(napi_env env, size_t argc, const napi_value 
 
 napi_value CameraSessionNapi::AddOutput(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("AddOutput called");
+    MEDIA_INFO_LOG("AddOutput is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -754,13 +770,15 @@ napi_value CameraSessionNapi::AddOutput(napi_env env, napi_callback_info info)
         if (!CameraNapiUtils::CheckError(env, ret)) {
             return nullptr;
         }
+    } else {
+        MEDIA_ERR_LOG("AddOutput call Failed!");
     }
     return result;
 }
 
 napi_value CameraSessionNapi::CanAddOutput(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("CanAddOutput called");
+    MEDIA_DEBUG_LOG("CanAddOutput is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -777,14 +795,15 @@ napi_value CameraSessionNapi::CanAddOutput(napi_env env, napi_callback_info info
         result = GetJSArgsForCameraOutput(env, argc, argv, cameraOutput);
         bool isSupported = cameraSessionNapi->cameraSession_->CanAddOutput(cameraOutput);
         napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("CanAddOutput call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::RemoveOutput(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("RemoveOutput called");
+    MEDIA_INFO_LOG("RemoveOutput is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -806,14 +825,15 @@ napi_value CameraSessionNapi::RemoveOutput(napi_env env, napi_callback_info info
         if (!CameraNapiUtils::CheckError(env, ret)) {
             return nullptr;
         }
+    } else {
+        MEDIA_ERR_LOG("RemoveOutput call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::Start(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("start called");
+    MEDIA_INFO_LOG("Start is called");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -859,13 +879,12 @@ napi_value CameraSessionNapi::Start(napi_env env, napi_callback_info info)
             asyncContext.release();
         }
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("Stop called");
+    MEDIA_INFO_LOG("Stop is called");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -910,6 +929,8 @@ napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
             napi_queue_async_work(env, asyncContext->work);
             asyncContext.release();
         }
+    } else {
+        MEDIA_ERR_LOG("Stop call Failed!");
     }
 
     return result;
@@ -917,7 +938,7 @@ napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
 
 napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("Release called");
+    MEDIA_INFO_LOG("Release is called");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -962,13 +983,15 @@ napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
             napi_queue_async_work(env, asyncContext->work);
             asyncContext.release();
         }
+    } else {
+        MEDIA_ERR_LOG("Release call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::IsVideoStabilizationModeSupported(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("IsVideoStabilizationModeSupported is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -991,13 +1014,15 @@ napi_value CameraSessionNapi::IsVideoStabilizationModeSupported(napi_env env, na
             return nullptr;
         }
         napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("IsVideoStabilizationModeSupported call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::GetActiveVideoStabilizationMode(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetActiveVideoStabilizationMode is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -1017,13 +1042,15 @@ napi_value CameraSessionNapi::GetActiveVideoStabilizationMode(napi_env env, napi
             return nullptr;
         }
         napi_create_int32(env, videoStabilizationMode, &result);
+    } else {
+        MEDIA_ERR_LOG("GetActiveVideoStabilizationMode call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::SetVideoStabilizationMode(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("SetVideoStabilizationMode is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -1043,12 +1070,15 @@ napi_value CameraSessionNapi::SetVideoStabilizationMode(napi_env env, napi_callb
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
         }
+    } else {
+        MEDIA_ERR_LOG("SetVideoStabilizationMode call Failed!");
     }
     return result;
 }
 
 napi_value CameraSessionNapi::HasFlash(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("HasFlash is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -1068,12 +1098,15 @@ napi_value CameraSessionNapi::HasFlash(napi_env env, napi_callback_info info)
         }
         bool isSupported = !(flashModes.empty());
         napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("HasFlash call Failed!");
     }
     return result;
 }
 
 napi_value CameraSessionNapi::IsFlashModeSupported(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("IsFlashModeSupported is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -1095,13 +1128,15 @@ napi_value CameraSessionNapi::IsFlashModeSupported(napi_env env, napi_callback_i
             return nullptr;
         }
         napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("IsFlashModeSupported call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::SetFlashMode(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("SetFlashMode is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -1124,12 +1159,15 @@ napi_value CameraSessionNapi::SetFlashMode(napi_env env, napi_callback_info info
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
         }
+    } else {
+        MEDIA_ERR_LOG("SetFlashMode call Failed!");
     }
     return result;
 }
 
 napi_value CameraSessionNapi::GetFlashMode(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetFlashMode is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -1147,13 +1185,15 @@ napi_value CameraSessionNapi::GetFlashMode(napi_env env, napi_callback_info info
             return nullptr;
         }
         napi_create_int32(env, flashMode, &result);
+    } else {
+        MEDIA_ERR_LOG("GetFlashMode call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::IsExposureModeSupported(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("IsExposureModeSupported is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -1176,12 +1216,15 @@ napi_value CameraSessionNapi::IsExposureModeSupported(napi_env env, napi_callbac
             return nullptr;
         }
         napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("IsExposureModeSupported call Failed!");
     }
     return result;
 }
 
 napi_value CameraSessionNapi::GetExposureMode(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetExposureMode is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -1200,13 +1243,15 @@ napi_value CameraSessionNapi::GetExposureMode(napi_env env, napi_callback_info i
             return nullptr;
         }
         napi_create_int32(env, exposureMode, &result);
+    } else {
+        MEDIA_ERR_LOG("GetExposureMode call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::SetExposureMode(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("SetExposureMode is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -1229,13 +1274,15 @@ napi_value CameraSessionNapi::SetExposureMode(napi_env env, napi_callback_info i
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
         }
+    } else {
+        MEDIA_ERR_LOG("SetExposureMode call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::SetMeteringPoint(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("SetMeteringPoint is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -1260,13 +1307,15 @@ napi_value CameraSessionNapi::SetMeteringPoint(napi_env env, napi_callback_info 
         } else {
             MEDIA_ERR_LOG("get point failed");
         }
+    } else {
+        MEDIA_ERR_LOG("SetMeteringPoint call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::GetMeteringPoint(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetMeteringPoint is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -1284,13 +1333,15 @@ napi_value CameraSessionNapi::GetMeteringPoint(napi_env env, napi_callback_info 
             return nullptr;
         }
         return GetPointNapiValue(env, exposurePoint);
+    } else {
+        MEDIA_ERR_LOG("GetMeteringPoint call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::GetExposureBiasRange(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetExposureBiasRange is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -1323,13 +1374,15 @@ napi_value CameraSessionNapi::GetExposureBiasRange(napi_env env, napi_callback_i
             }
         }
         MEDIA_DEBUG_LOG("EXPOSURE_BIAS_RANGE ExposureBiasList size : %{public}zu", vecExposureBiasList.size());
+    } else {
+        MEDIA_ERR_LOG("GetExposureBiasRange call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::GetExposureValue(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetExposureValue is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -1348,12 +1401,15 @@ napi_value CameraSessionNapi::GetExposureValue(napi_env env, napi_callback_info 
             return nullptr;
         }
         napi_create_int32(env, exposureValue, &result);
+    } else {
+        MEDIA_ERR_LOG("GetExposureValue call Failed!");
     }
     return result;
 }
 
 napi_value CameraSessionNapi::SetExposureBias(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("SetExposureBias is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -1375,14 +1431,15 @@ napi_value CameraSessionNapi::SetExposureBias(napi_env env, napi_callback_info i
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
         }
+    } else {
+        MEDIA_ERR_LOG("SetExposureBias call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::IsFocusModeSupported(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("IsFocusModeSupported called");
+    MEDIA_DEBUG_LOG("IsFocusModeSupported is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -1405,13 +1462,15 @@ napi_value CameraSessionNapi::IsFocusModeSupported(napi_env env, napi_callback_i
             return nullptr;
         }
         napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("IsFocusModeSupported call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::GetFocalLength(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetFocalLength is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -1430,13 +1489,15 @@ napi_value CameraSessionNapi::GetFocalLength(napi_env env, napi_callback_info in
             return nullptr;
         }
         napi_create_double(env, CameraNapiUtils::FloatToDouble(focalLength), &result);
+    } else {
+        MEDIA_ERR_LOG("GetFocalLength call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::SetFocusPoint(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("SetFocusPoint is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -1461,13 +1522,15 @@ napi_value CameraSessionNapi::SetFocusPoint(napi_env env, napi_callback_info inf
         } else {
             MEDIA_ERR_LOG("get point failed");
         }
+    } else {
+        MEDIA_ERR_LOG("SetFocusPoint call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::GetFocusPoint(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetFocusPoint is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -1486,13 +1549,15 @@ napi_value CameraSessionNapi::GetFocusPoint(napi_env env, napi_callback_info inf
             return nullptr;
         }
         return GetPointNapiValue(env, focusPoint);
+    } else {
+        MEDIA_ERR_LOG("GetFocusPoint call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::GetFocusMode(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetFocusMode is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -1511,13 +1576,15 @@ napi_value CameraSessionNapi::GetFocusMode(napi_env env, napi_callback_info info
             return nullptr;
         }
         napi_create_int32(env, focusMode, &result);
+    } else {
+        MEDIA_ERR_LOG("GetFocusMode call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::SetFocusMode(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("SetFocusMode is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -1541,12 +1608,15 @@ napi_value CameraSessionNapi::SetFocusMode(napi_env env, napi_callback_info info
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
         }
+    } else {
+        MEDIA_ERR_LOG("SetFocusMode call Failed!");
     }
     return result;
 }
 
 napi_value CameraSessionNapi::GetZoomRatioRange(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetZoomRatioRange is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -1577,13 +1647,15 @@ napi_value CameraSessionNapi::GetZoomRatioRange(napi_env env, napi_callback_info
         } else {
             MEDIA_ERR_LOG("vecSupportedZoomRatioList is empty or failed to create array!");
         }
+    } else {
+        MEDIA_ERR_LOG("GetZoomRatioRange call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::GetZoomRatio(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetZoomRatio is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -1602,13 +1674,15 @@ napi_value CameraSessionNapi::GetZoomRatio(napi_env env, napi_callback_info info
             return nullptr;
         }
         napi_create_double(env, CameraNapiUtils::FloatToDouble(zoomRatio), &result);
+    } else {
+        MEDIA_ERR_LOG("GetZoomRatio call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::SetZoomRatio(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("SetZoomRatio is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -1631,13 +1705,15 @@ napi_value CameraSessionNapi::SetZoomRatio(napi_env env, napi_callback_info info
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
         }
+    } else {
+        MEDIA_ERR_LOG("SetZoomRatio call Failed!");
     }
-
     return result;
 }
 
 napi_value CameraSessionNapi::On(napi_env env, napi_callback_info info)
 {
+    MEDIA_INFO_LOG("On is called");
     CAMERA_SYNC_TRACE;
     napi_value undefinedResult = nullptr;
     size_t argCount = ARGS_TWO;
@@ -1693,8 +1769,9 @@ napi_value CameraSessionNapi::On(napi_env env, napi_callback_info info)
                 napi_delete_reference(env, callbackRef);
             }
         }
+    } else {
+        MEDIA_ERR_LOG("On call Failed!");
     }
-
     return undefinedResult;
 }
 } // namespace CameraStandard

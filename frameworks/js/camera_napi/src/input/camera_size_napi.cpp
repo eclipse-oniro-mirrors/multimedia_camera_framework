@@ -30,6 +30,7 @@ CameraSizeNapi::CameraSizeNapi() : env_(nullptr), wrapper_(nullptr)
 
 CameraSizeNapi::~CameraSizeNapi()
 {
+    MEDIA_DEBUG_LOG("~CameraSizeNapi is called");
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
@@ -40,7 +41,7 @@ CameraSizeNapi::~CameraSizeNapi()
 
 void CameraSizeNapi::CameraSizeNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
-    MEDIA_DEBUG_LOG("CameraSizeNapiDestructor enter");
+    MEDIA_DEBUG_LOG("CameraSizeNapiDestructor is called");
     CameraSizeNapi* cameraSizeNapi = reinterpret_cast<CameraSizeNapi*>(nativeObject);
     if (cameraSizeNapi != nullptr) {
         cameraSizeNapi->~CameraSizeNapi();
@@ -49,6 +50,7 @@ void CameraSizeNapi::CameraSizeNapiDestructor(napi_env env, void* nativeObject, 
 
 napi_value CameraSizeNapi::Init(napi_env env, napi_value exports)
 {
+    MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
     int32_t refCount = 1;
@@ -71,13 +73,14 @@ napi_value CameraSizeNapi::Init(napi_env env, napi_value exports)
             }
         }
     }
-
+    MEDIA_ERR_LOG("Init call Failed!");
     return nullptr;
 }
 
 // Constructor callback
 napi_value CameraSizeNapi::CameraSizeNapiConstructor(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("CameraSizeNapiConstructor is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value thisVar = nullptr;
@@ -101,12 +104,13 @@ napi_value CameraSizeNapi::CameraSizeNapiConstructor(napi_env env, napi_callback
             MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
-
+    MEDIA_ERR_LOG("CameraSizeNapiConstructor call Failed!");
     return result;
 }
 
 napi_value CameraSizeNapi::CreateCameraSize(napi_env env, Size &cameraPicSize)
 {
+    MEDIA_DEBUG_LOG("CreateCameraSize is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value constructor;
@@ -128,13 +132,14 @@ napi_value CameraSizeNapi::CreateCameraSize(napi_env env, Size &cameraPicSize)
             MEDIA_ERR_LOG("Failed to create Camera obj instance");
         }
     }
-
+    MEDIA_ERR_LOG("CreateCameraSize call Failed!");
     napi_get_undefined(env, &result);
     return result;
 }
 
 napi_value CameraSizeNapi::GetCameraSizeWidth(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetCameraSizeWidth is called");
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
@@ -163,12 +168,13 @@ napi_value CameraSizeNapi::GetCameraSizeWidth(napi_env env, napi_callback_info i
             MEDIA_ERR_LOG("Failed to get CameraSizeWidth!, errorCode : %{public}d", status);
         }
     }
-
+    MEDIA_ERR_LOG("GetCameraSizeWidth call Failed!");
     return undefinedResult;
 }
 
 napi_value CameraSizeNapi::GetCameraSizeHeight(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetCameraSizeHeight is called");
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
@@ -187,7 +193,7 @@ napi_value CameraSizeNapi::GetCameraSizeHeight(napi_env env, napi_callback_info 
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
         cameraSizeHeight = obj->cameraPicSize_->height;
-        MEDIA_INFO_LOG("CreateCameraSize GetCameraSizeWidth size.width = %{public}d, size.height = %{public}d",
+        MEDIA_INFO_LOG("GetCameraSizeWidth size.width = %{public}d, size.height = %{public}d",
             obj->cameraPicSize_->width, obj->cameraPicSize_->height);
         status = napi_create_uint32(env, cameraSizeHeight, &jsResult);
         if (status == napi_ok) {
@@ -196,7 +202,7 @@ napi_value CameraSizeNapi::GetCameraSizeHeight(napi_env env, napi_callback_info 
             MEDIA_ERR_LOG("Failed to get CameraSizeHeight!, errorCode : %{public}d", status);
         }
     }
-
+    MEDIA_ERR_LOG("GetCameraSizeHeight call Failed!");
     return undefinedResult;
 }
 } // namespace CameraStandard

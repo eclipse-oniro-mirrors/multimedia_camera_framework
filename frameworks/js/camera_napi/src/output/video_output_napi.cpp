@@ -21,11 +21,9 @@ namespace OHOS {
 namespace CameraStandard {
 using OHOS::HiviewDFX::HiLog;
 using OHOS::HiviewDFX::HiLogLabel;
-
 namespace {
     constexpr HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "VideoOutputNapi"};
 }
-
 thread_local napi_ref VideoOutputNapi::sConstructor_ = nullptr;
 thread_local sptr<VideoOutput> VideoOutputNapi::sVideoOutput_ = nullptr;
 thread_local uint32_t VideoOutputNapi::videoOutputTaskId = CAMERA_VIDEO_OUTPUT_TASKID;
@@ -34,15 +32,16 @@ VideoCallbackListener::VideoCallbackListener(napi_env env) : env_(env) {}
 
 void VideoCallbackListener::UpdateJSCallbackAsync(std::string propName, const int32_t value) const
 {
+    MEDIA_DEBUG_LOG("UpdateJSCallbackAsync is called");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
     if (!loop) {
-        MEDIA_ERR_LOG("VideoCallbackListener:UpdateJSCallbackAsync() failed to get event loop");
+        MEDIA_ERR_LOG("failed to get event loop");
         return;
     }
     uv_work_t* work = new(std::nothrow) uv_work_t;
     if (!work) {
-        MEDIA_ERR_LOG("VideoCallbackListener:UpdateJSCallbackAsync() failed to allocate work");
+        MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
     std::unique_ptr<VideoOutputCallbackInfo> callbackInfo =
@@ -57,7 +56,7 @@ void VideoCallbackListener::UpdateJSCallbackAsync(std::string propName, const in
         delete work;
     });
     if (ret) {
-        MEDIA_ERR_LOG("VideoCallbackListener:UpdateJSCallbackAsync() failed to execute work");
+        MEDIA_ERR_LOG("failed to execute work");
         delete work;
     }  else {
         callbackInfo.release();
@@ -67,25 +66,26 @@ void VideoCallbackListener::UpdateJSCallbackAsync(std::string propName, const in
 void VideoCallbackListener::OnFrameStarted() const
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("VideoCallbackListener::OnFrameStarted");
+    MEDIA_DEBUG_LOG("OnFrameStarted is called");
     UpdateJSCallbackAsync("OnFrameStarted", -1);
 }
 
 void VideoCallbackListener::OnFrameEnded(const int32_t frameCount) const
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("VideoCallbackListener::OnFrameEnded frameCount: %{public}d", frameCount);
+    MEDIA_DEBUG_LOG("OnFrameEnded is called, frameCount: %{public}d", frameCount);
     UpdateJSCallbackAsync("OnFrameEnded", frameCount);
 }
 
 void VideoCallbackListener::OnError(const int32_t errorCode) const
 {
-    MEDIA_INFO_LOG("VideoCallbackListener::OnError errorCode: %{public}d", errorCode);
+    MEDIA_DEBUG_LOG("OnError is called, errorCode: %{public}d", errorCode);
     UpdateJSCallbackAsync("OnError", errorCode);
 }
 
 void VideoCallbackListener::SetCallbackRef(const std::string &eventType, const napi_ref &callbackRef)
 {
+    MEDIA_DEBUG_LOG("SetCallbackRef is called");
     if (eventType.compare("frameStart") == 0) {
         frameStartCallbackRef_ = callbackRef;
     } else if (eventType.compare("frameEnd") == 0) {
@@ -99,6 +99,7 @@ void VideoCallbackListener::SetCallbackRef(const std::string &eventType, const n
 
 void VideoCallbackListener::UpdateJSCallback(std::string propName, const int32_t value) const
 {
+    MEDIA_DEBUG_LOG("UpdateJSCallback is called");
     napi_value result[ARGS_ONE];
     napi_value callback = nullptr;
     napi_value retVal;
@@ -136,7 +137,7 @@ VideoOutputNapi::VideoOutputNapi() : env_(nullptr), wrapper_(nullptr)
 
 VideoOutputNapi::~VideoOutputNapi()
 {
-    MEDIA_DEBUG_LOG("Enter Into VideoOutputNapi::~VideoOutputNapi");
+    MEDIA_DEBUG_LOG("~VideoOutputNapi is called");
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
@@ -150,7 +151,7 @@ VideoOutputNapi::~VideoOutputNapi()
 
 void VideoOutputNapi::VideoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
-    MEDIA_DEBUG_LOG(" VideoOutputNapiDestructor enter");
+    MEDIA_DEBUG_LOG("VideoOutputNapiDestructor is called");
     VideoOutputNapi* videoOutput = reinterpret_cast<VideoOutputNapi*>(nativeObject);
     if (videoOutput != nullptr) {
         videoOutput->~VideoOutputNapi();
@@ -159,6 +160,7 @@ void VideoOutputNapi::VideoOutputNapiDestructor(napi_env env, void* nativeObject
 
 napi_value VideoOutputNapi::Init(napi_env env, napi_value exports)
 {
+    MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
     int32_t refCount = 1;
@@ -185,13 +187,14 @@ napi_value VideoOutputNapi::Init(napi_env env, napi_value exports)
             }
         }
     }
-
+    MEDIA_ERR_LOG("Init call Failed!");
     return nullptr;
 }
 
 // Constructor callback
 napi_value VideoOutputNapi::VideoOutputNapiConstructor(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("VideoOutputNapiConstructor is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value thisVar = nullptr;
@@ -220,13 +223,14 @@ napi_value VideoOutputNapi::VideoOutputNapiConstructor(napi_env env, napi_callba
             }
         }
     }
-
+    MEDIA_ERR_LOG("VideoOutputNapiConstructor call Failed!");
     return result;
 }
 
 static napi_value ConvertJSArgsToNative(napi_env env, size_t argc, const napi_value argv[],
     VideoOutputAsyncContext &asyncContext)
 {
+    MEDIA_DEBUG_LOG("ConvertJSArgsToNative is called");
     std::string str = "";
     std::vector<std::string> strArr;
     std::string order = "";
@@ -257,6 +261,7 @@ static napi_value ConvertJSArgsToNative(napi_env env, size_t argc, const napi_va
 
 static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
 {
+    MEDIA_DEBUG_LOG("CommonCompleteCallback is called");
     auto context = static_cast<VideoOutputAsyncContext*>(data);
 
     if (context == nullptr) {
@@ -298,6 +303,7 @@ sptr<VideoOutput> VideoOutputNapi::GetVideoOutput()
 
 bool VideoOutputNapi::IsVideoOutput(napi_env env, napi_value obj)
 {
+    MEDIA_DEBUG_LOG("IsVideoOutput is called");
     bool result = false;
     napi_status status;
     napi_value constructor = nullptr;
@@ -309,12 +315,12 @@ bool VideoOutputNapi::IsVideoOutput(napi_env env, napi_value obj)
             result = false;
         }
     }
-
     return result;
 }
 
 napi_value VideoOutputNapi::CreateVideoOutput(napi_env env, VideoProfile &profile, std::string surfaceId)
 {
+    MEDIA_DEBUG_LOG("CreateVideoOutput is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -347,14 +353,14 @@ napi_value VideoOutputNapi::CreateVideoOutput(napi_env env, VideoProfile &profil
             MEDIA_ERR_LOG("Failed to create video output instance");
         }
     }
-
     napi_get_undefined(env, &result);
+    MEDIA_ERR_LOG("CreateVideoOutput call Failed!");
     return result;
 }
 
 napi_value VideoOutputNapi::Start(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("Enter Into VideoOutputNapi::Start");
+    MEDIA_INFO_LOG("Start is called");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -397,14 +403,15 @@ napi_value VideoOutputNapi::Start(napi_env env, napi_callback_info info)
             napi_queue_async_work(env, asyncContext->work);
             asyncContext.release();
         }
+    } else {
+        MEDIA_ERR_LOG("Start call Failed!");
     }
-
     return result;
 }
 
 napi_value VideoOutputNapi::Stop(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("Enter Into VideoOutputNapi::Stop");
+    MEDIA_INFO_LOG("Stop is called");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -447,13 +454,15 @@ napi_value VideoOutputNapi::Stop(napi_env env, napi_callback_info info)
             napi_queue_async_work(env, asyncContext->work);
             asyncContext.release();
         }
+    } else {
+        MEDIA_ERR_LOG("Stop call Failed!");
     }
-
     return result;
 }
 
 void GetFrameRateRangeAsyncCallbackComplete(napi_env env, napi_status status, void* data)
 {
+    MEDIA_DEBUG_LOG("GetFrameRateRangeAsyncCallbackComplete is called");
     auto context = static_cast<VideoOutputAsyncContext*>(data);
     napi_value frameRateRange = nullptr;
 
@@ -494,6 +503,7 @@ void GetFrameRateRangeAsyncCallbackComplete(napi_env env, napi_status status, vo
 
 napi_value VideoOutputNapi::GetFrameRateRange(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetFrameRateRange is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -536,13 +546,15 @@ napi_value VideoOutputNapi::GetFrameRateRange(napi_env env, napi_callback_info i
             napi_queue_async_work(env, asyncContext->work);
             asyncContext.release();
         }
+    } else {
+        MEDIA_ERR_LOG("GetFrameRateRange call Failed!");
     }
-
     return result;
 }
 
 bool isFrameRateRangeAvailable(napi_env env, void* data)
 {
+    MEDIA_DEBUG_LOG("isFrameRateRangeAvailable is called");
     bool invalidFrameRate = true;
     const int32_t FRAME_RATE_RANGE_STEP = 2;
     auto context = static_cast<VideoOutputAsyncContext*>(data);
@@ -568,6 +580,7 @@ bool isFrameRateRangeAvailable(napi_env env, void* data)
 
 napi_value VideoOutputNapi::SetFrameRateRange(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("SetFrameRateRange is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
@@ -615,14 +628,15 @@ napi_value VideoOutputNapi::SetFrameRateRange(napi_env env, napi_callback_info i
             napi_queue_async_work(env, asyncContext->work);
             asyncContext.release();
         }
+    } else {
+        MEDIA_ERR_LOG("SetFrameRateRange call Failed!");
     }
-
     return result;
 }
 
 napi_value VideoOutputNapi::Release(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("Enter Into VideoOutputNapi::Release");
+    MEDIA_INFO_LOG("Release is called");
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
@@ -667,13 +681,15 @@ napi_value VideoOutputNapi::Release(napi_env env, napi_callback_info info)
             napi_queue_async_work(env, asyncContext->work);
             asyncContext.release();
         }
+    } else {
+        MEDIA_ERR_LOG("Release call Failed!");
     }
-
     return result;
 }
 
 napi_value VideoOutputNapi::On(napi_env env, napi_callback_info info)
 {
+    MEDIA_INFO_LOG("On is called");
     CAMERA_SYNC_TRACE;
     napi_value undefinedResult = nullptr;
     size_t argCount = ARGS_TWO;
@@ -714,8 +730,9 @@ napi_value VideoOutputNapi::On(napi_env env, napi_callback_info info)
         } else {
             MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
         }
+    } else {
+        MEDIA_ERR_LOG("On call Failed!");
     }
-
     return undefinedResult;
 }
 } // namespace CameraStandard

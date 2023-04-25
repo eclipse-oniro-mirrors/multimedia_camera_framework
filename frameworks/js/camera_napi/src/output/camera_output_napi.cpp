@@ -19,8 +19,6 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
-using OHOS::HiviewDFX::HiLog;
-using OHOS::HiviewDFX::HiLogLabel;
 
 thread_local napi_ref CameraOutputCapabilityNapi::sCapabilityConstructor_ = nullptr;
 thread_local sptr<CameraOutputCapability> CameraOutputCapabilityNapi::sCameraOutputCapability_ = nullptr;
@@ -32,6 +30,7 @@ CameraOutputCapabilityNapi::CameraOutputCapabilityNapi() : env_(nullptr), wrappe
 
 CameraOutputCapabilityNapi::~CameraOutputCapabilityNapi()
 {
+    MEDIA_DEBUG_LOG("~CameraOutputCapabilityNapi is called");
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
@@ -43,7 +42,7 @@ CameraOutputCapabilityNapi::~CameraOutputCapabilityNapi()
 void CameraOutputCapabilityNapi::CameraOutputCapabilityNapiDestructor(
     napi_env env, void* nativeObject, void* finalize_hint)
 {
-    MEDIA_DEBUG_LOG("CameraOutputCapabilityNapiDestructor enter");
+    MEDIA_DEBUG_LOG("CameraOutputCapabilityNapiDestructor is called");
     CameraOutputCapabilityNapi* cameraOutputCapabilityNapi =
         reinterpret_cast<CameraOutputCapabilityNapi*>(nativeObject);
     if (cameraOutputCapabilityNapi != nullptr) {
@@ -53,6 +52,7 @@ void CameraOutputCapabilityNapi::CameraOutputCapabilityNapiDestructor(
 
 napi_value CameraOutputCapabilityNapi::Init(napi_env env, napi_value exports)
 {
+    MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
 
@@ -78,11 +78,13 @@ napi_value CameraOutputCapabilityNapi::Init(napi_env env, napi_value exports)
         }
     }
 
+    MEDIA_ERR_LOG("Init call Failed!");
     return nullptr;
 }
 
 void WrapSizeJs(napi_env env, Size &size, napi_value &result)
 {
+    MEDIA_DEBUG_LOG("WrapSizeJs is called");
     napi_value value = nullptr;
     napi_create_int32(env, size.width, &value);
     napi_set_named_property(env, result, "width", value);
@@ -92,6 +94,7 @@ void WrapSizeJs(napi_env env, Size &size, napi_value &result)
 
 void WrapProfileJs(napi_env env, Profile &profile, napi_value &result)
 {
+    MEDIA_DEBUG_LOG("WrapProfileJs is called");
     napi_value sizeNapi = nullptr;
     napi_create_object(env, &result);
     napi_create_object(env, &sizeNapi);
@@ -104,6 +107,7 @@ void WrapProfileJs(napi_env env, Profile &profile, napi_value &result)
 
 static napi_value CreateProfileJsArray(napi_env env, napi_status status, std::vector<Profile> profileList)
 {
+    MEDIA_DEBUG_LOG("CreateProfileJsArray is called");
     napi_value profileArray = nullptr;
 
     napi_get_undefined(env, &profileArray);
@@ -123,13 +127,15 @@ static napi_value CreateProfileJsArray(napi_env env, napi_status status, std::ve
                 return profileArray;
             }
         }
+    } else {
+        MEDIA_ERR_LOG("CreateProfileJsArray call Failed!");
     }
-    MEDIA_INFO_LOG("profileList is %{public}zu", profileList.size());
     return profileArray;
 }
 
 void WrapJsVideoProfile(napi_env env, VideoProfile &profile, napi_value &result)
 {
+    MEDIA_DEBUG_LOG("WrapJsVideoProfile is called");
     napi_value sizeNapi = nullptr;
     napi_create_object(env, &result);
     napi_create_object(env, &sizeNapi);
@@ -152,6 +158,7 @@ void WrapJsVideoProfile(napi_env env, VideoProfile &profile, napi_value &result)
 
 static napi_value CreateVideoProfileJsArray(napi_env env, napi_status status, std::vector<VideoProfile> profileList)
 {
+    MEDIA_DEBUG_LOG("CreateVideoProfileJsArray is called");
     napi_value profileArray = nullptr;
     napi_value profile = nullptr;
 
@@ -179,6 +186,7 @@ static napi_value CreateVideoProfileJsArray(napi_env env, napi_status status, st
 static napi_value CreateMetadataObjectTypeJsArray(napi_env env, napi_status status,
     std::vector<MetadataObjectType> metadataTypeList)
 {
+    MEDIA_DEBUG_LOG("CreateMetadataObjectTypeJsArray is called");
     napi_value metadataTypeArray = nullptr;
     napi_value metadataType = nullptr;
 
@@ -206,6 +214,7 @@ static napi_value CreateMetadataObjectTypeJsArray(napi_env env, napi_status stat
 // Constructor callback
 napi_value CameraOutputCapabilityNapi::CameraOutputCapabilityNapiConstructor(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("CameraOutputCapabilityNapiConstructor is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value thisVar = nullptr;
@@ -223,25 +232,28 @@ napi_value CameraOutputCapabilityNapi::CameraOutputCapabilityNapiConstructor(nap
                            nullptr);
         if (status == napi_ok) {
             obj.release();
-            MEDIA_ERR_LOG("CameraOutputCapabilityNapiConstructor Success wrapping js to native napi");
+            MEDIA_DEBUG_LOG("CameraOutputCapabilityNapiConstructor Success wrapping js to native napi");
             return thisVar;
         } else {
             MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
-
+    MEDIA_ERR_LOG("CameraOutputCapabilityNapiConstructor call Failed");
     return result;
 }
 
 napi_value CameraOutputCapabilityNapi::CreateCameraOutputCapability(napi_env env, sptr<CameraDevice> camera)
 {
+    MEDIA_INFO_LOG("CreateCameraOutputCapability is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
     napi_value constructor;
     if (camera == nullptr) {
+        MEDIA_ERR_LOG("camera is Null");
         return result;
     }
+
     status = napi_get_reference_value(env, sCapabilityConstructor_, &constructor);
     if (status == napi_ok) {
         sCameraOutputCapability_ = CameraManager::GetInstance()->GetSupportedOutputCapability(camera);
@@ -252,48 +264,48 @@ napi_value CameraOutputCapabilityNapi::CreateCameraOutputCapability(napi_env env
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sCameraOutputCapability_ = nullptr;
         if (status == napi_ok && result != nullptr) {
-            MEDIA_ERR_LOG("success to create CreateCameraOutputCapabilityNapi");
+            MEDIA_INFO_LOG("success to create CreateCameraOutputCapabilityNapi");
             return result;
         } else {
             MEDIA_ERR_LOG("Failed to create photo output instance");
         }
     }
-    MEDIA_ERR_LOG("CreateCameraOutputCapability napi_get_reference_value failed");
+
+    MEDIA_ERR_LOG("CreateCameraOutputCapability call Failed");
     napi_get_undefined(env, &result);
     return result;
 }
 
 napi_value CameraOutputCapabilityNapi::GetPreviewProfiles(napi_env env, napi_callback_info info)
 {
+    MEDIA_INFO_LOG("GetPreviewProfiles is called");
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
     CameraOutputCapabilityNapi* obj = nullptr;
     napi_value thisVar = nullptr;
-    MEDIA_INFO_LOG("GetPreviewProfiles start!");
+
     napi_get_undefined(env, &undefinedResult);
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
-    MEDIA_INFO_LOG("GetPreviewProfiles 1!");
+
     if (status != napi_ok || thisVar == nullptr) {
-        MEDIA_INFO_LOG("Invalid arguments!");
+        MEDIA_ERR_LOG("Invalid arguments!");
         return undefinedResult;
     }
-    MEDIA_INFO_LOG("GetPreviewProfiles 2!");
+
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
-    MEDIA_INFO_LOG("GetPreviewProfiles 3!");
     if ((status == napi_ok) && (obj != nullptr)) {
         std::vector<Profile> profileList = obj->cameraOutputCapability_->GetPreviewProfiles();
-        MEDIA_INFO_LOG("GetPreviewProfiles 4!");
         jsResult = CreateProfileJsArray(env, status, profileList);
-        MEDIA_INFO_LOG("GetPreviewProfiles 5!");
         return jsResult;
     }
-    MEDIA_INFO_LOG("GetPreviewProfiles 6!");
+    MEDIA_ERR_LOG("GetPreviewProfiles call Failed");
     return undefinedResult;
 }
 
 napi_value CameraOutputCapabilityNapi::GetPhotoProfiles(napi_env env, napi_callback_info info)
 {
+    MEDIA_INFO_LOG("GetPhotoProfiles is called");
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
@@ -314,13 +326,14 @@ napi_value CameraOutputCapabilityNapi::GetPhotoProfiles(napi_env env, napi_callb
         jsResult = CreateProfileJsArray(env, status, profileList);
         return jsResult;
     }
-
+    MEDIA_ERR_LOG("GetPhotoProfiles call Failed");
     return undefinedResult;
 }
 
 // todo : should return VideoProfile
 napi_value CameraOutputCapabilityNapi::GetVideoProfiles(napi_env env, napi_callback_info info)
 {
+    MEDIA_INFO_LOG("GetVideoProfiles is called");
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
@@ -341,12 +354,13 @@ napi_value CameraOutputCapabilityNapi::GetVideoProfiles(napi_env env, napi_callb
         jsResult = CreateVideoProfileJsArray(env, status, profileList);
         return jsResult;
     }
-
+    MEDIA_ERR_LOG("GetVideoProfiles call Failed");
     return undefinedResult;
 }
 
 napi_value CameraOutputCapabilityNapi::GetSupportedMetadataObjectTypes(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetSupportedMetadataObjectTypes is called");
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
@@ -368,7 +382,7 @@ napi_value CameraOutputCapabilityNapi::GetSupportedMetadataObjectTypes(napi_env 
         jsResult = CreateMetadataObjectTypeJsArray(env, status, metadataTypeList);
         return jsResult;
     }
-
+    MEDIA_ERR_LOG("GetSupportedMetadataObjectTypes call Failed");
     return undefinedResult;
 }
 } // namespace CameraStandard

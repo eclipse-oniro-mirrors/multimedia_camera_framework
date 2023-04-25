@@ -18,8 +18,6 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
-using OHOS::HiviewDFX::HiLog;
-using OHOS::HiviewDFX::HiLogLabel;
 
 thread_local napi_ref CameraDeviceNapi::sConstructor_ = nullptr;
 thread_local sptr<CameraDevice> CameraDeviceNapi::sCameraDevice_ = nullptr;
@@ -30,6 +28,7 @@ CameraDeviceNapi::CameraDeviceNapi() : env_(nullptr), wrapper_(nullptr)
 
 CameraDeviceNapi::~CameraDeviceNapi()
 {
+    MEDIA_DEBUG_LOG("~CameraDeviceNapi is called");
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
@@ -40,7 +39,7 @@ CameraDeviceNapi::~CameraDeviceNapi()
 
 void CameraDeviceNapi::CameraDeviceNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
-    MEDIA_DEBUG_LOG("CameraDeviceNapiDestructor enter");
+    MEDIA_DEBUG_LOG("CameraDeviceNapiDestructor is called");
     CameraDeviceNapi* cameraObj = reinterpret_cast<CameraDeviceNapi*>(nativeObject);
     if (cameraObj != nullptr) {
         cameraObj->~CameraDeviceNapi();
@@ -49,6 +48,7 @@ void CameraDeviceNapi::CameraDeviceNapiDestructor(napi_env env, void* nativeObje
 
 napi_value CameraDeviceNapi::Init(napi_env env, napi_value exports)
 {
+    MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
     int32_t refCount = 1;
@@ -73,13 +73,14 @@ napi_value CameraDeviceNapi::Init(napi_env env, napi_value exports)
             }
         }
     }
-
+    MEDIA_ERR_LOG("Init call Failed!");
     return nullptr;
 }
 
 // Constructor callback
 napi_value CameraDeviceNapi::CameraDeviceNapiConstructor(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("CameraDeviceNapiConstructor is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value thisVar = nullptr;
@@ -100,12 +101,13 @@ napi_value CameraDeviceNapi::CameraDeviceNapiConstructor(napi_env env, napi_call
             MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
-
+    MEDIA_ERR_LOG("CameraDeviceNapiConstructor call Failed!");
     return result;
 }
 
 napi_value CameraDeviceNapi::CreateCameraObj(napi_env env, sptr<CameraDevice> cameraDevice)
 {
+    MEDIA_INFO_LOG("CreateCameraObj is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value constructor;
@@ -121,14 +123,14 @@ napi_value CameraDeviceNapi::CreateCameraObj(napi_env env, sptr<CameraDevice> ca
             MEDIA_ERR_LOG("Failed to create Camera obj instance");
         }
     }
-
     napi_get_undefined(env, &result);
-
+    MEDIA_ERR_LOG("CreateCameraObj call Failed!");
     return result;
 }
 
 napi_value CameraDeviceNapi::GetCameraId(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetCameraId is called");
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
@@ -153,12 +155,13 @@ napi_value CameraDeviceNapi::GetCameraId(napi_env env, napi_callback_info info)
             MEDIA_ERR_LOG("Failed to get camera id!, errorCode : %{public}d", status);
         }
     }
-
+    MEDIA_ERR_LOG("GetCameraId call Failed!");
     return undefinedResult;
 }
 
 napi_value CameraDeviceNapi::GetCameraPosition(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetCameraPosition is called");
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
@@ -184,12 +187,13 @@ napi_value CameraDeviceNapi::GetCameraPosition(napi_env env, napi_callback_info 
             MEDIA_ERR_LOG("Failed to get cameraPosition!, errorCode : %{public}d", status);
         }
     }
-
+    MEDIA_ERR_LOG("GetCameraPosition call Failed!");
     return undefinedResult;
 }
 
 napi_value CameraDeviceNapi::GetCameraType(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetCameraType is called");
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
@@ -219,12 +223,13 @@ napi_value CameraDeviceNapi::GetCameraType(napi_env env, napi_callback_info info
             MEDIA_ERR_LOG("Failed to get cameraType!, errorCode : %{public}d", status);
         }
     }
-
+    MEDIA_ERR_LOG("GetCameraType call Failed!");
     return undefinedResult;
 }
 
 napi_value CameraDeviceNapi::GetConnectionType(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetConnectionType is called");
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
@@ -251,7 +256,7 @@ napi_value CameraDeviceNapi::GetConnectionType(napi_env env, napi_callback_info 
             MEDIA_ERR_LOG("Failed to get connectionType!, errorCode : %{public}d", status);
         }
     }
-
+    MEDIA_ERR_LOG("GetConnectionType call Failed!");
     return undefinedResult;
 }
 } // namespace CameraStandard

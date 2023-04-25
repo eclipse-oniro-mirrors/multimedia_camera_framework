@@ -24,6 +24,7 @@ thread_local sptr<MetadataObject> g_metadataObject;
 
 napi_value MetadataObjectNapi::CreateMetaFaceObj(napi_env env, sptr<MetadataObject> metaObj)
 {
+    MEDIA_DEBUG_LOG("CreateMetaFaceObj is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value constructor;
@@ -39,7 +40,7 @@ napi_value MetadataObjectNapi::CreateMetaFaceObj(napi_env env, sptr<MetadataObje
             MEDIA_ERR_LOG("Failed to create Camera obj instance");
         }
     }
-
+    MEDIA_ERR_LOG("CreateMetaFaceObj call Failed");
     napi_get_undefined(env, &result);
     return result;
 }
@@ -50,6 +51,7 @@ MetadataObjectNapi::MetadataObjectNapi() : env_(nullptr), wrapper_(nullptr)
 
 MetadataObjectNapi::~MetadataObjectNapi()
 {
+    MEDIA_DEBUG_LOG("~MetadataObjectNapi is called");
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
@@ -60,7 +62,7 @@ MetadataObjectNapi::~MetadataObjectNapi()
 
 void MetadataObjectNapi::MetadataObjectNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
-    MEDIA_DEBUG_LOG("MetadataObjectNapiDestructor enter");
+    MEDIA_DEBUG_LOG("MetadataObjectNapiDestructor is called");
     MetadataObjectNapi* metadataObject = reinterpret_cast<MetadataObjectNapi*>(nativeObject);
     if (metadataObject != nullptr) {
         metadataObject->~MetadataObjectNapi();
@@ -69,6 +71,7 @@ void MetadataObjectNapi::MetadataObjectNapiDestructor(napi_env env, void* native
 
 napi_value MetadataObjectNapi::Init(napi_env env, napi_value exports)
 {
+    MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
     int32_t refCount = 1;
@@ -92,12 +95,13 @@ napi_value MetadataObjectNapi::Init(napi_env env, napi_value exports)
             }
         }
     }
-
+    MEDIA_ERR_LOG("Init call Failed");
     return nullptr;
 }
 
 napi_value MetadataObjectNapi::MetadataObjectNapiConstructor(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("MetadataObjectNapiConstructor is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value thisVar = nullptr;
@@ -118,7 +122,7 @@ napi_value MetadataObjectNapi::MetadataObjectNapiConstructor(napi_env env, napi_
             MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
-
+    MEDIA_ERR_LOG("MetadataObjectNapiConstructor call Failed");
     return result;
 }
 
@@ -129,6 +133,7 @@ sptr<MetadataObject> MetadataObjectNapi::GetMetadataObject()
 
 napi_value MetadataObjectNapi::GetType(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetType is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -146,12 +151,13 @@ napi_value MetadataObjectNapi::GetType(napi_env env, napi_callback_info info)
         CameraNapiUtils::MapMetadataObjSupportedTypesEnum(metadataObjType, iProp);
         napi_create_int32(env, iProp, &result);
     }
-
+    MEDIA_ERR_LOG("GetType call Failed");
     return result;
 }
 
 napi_value MetadataObjectNapi::GetTimestamp(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetTimestamp is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -167,12 +173,13 @@ napi_value MetadataObjectNapi::GetTimestamp(napi_env env, napi_callback_info inf
         double metaTimestamp = metadataObjectNapi->metadataObject_->GetTimestamp();
         napi_create_double(env, metaTimestamp, &result);
     }
-
+    MEDIA_ERR_LOG("GetTimestamp call Failed");
     return result;
 }
 
 napi_value MetadataObjectNapi::GetBoundingBox(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("GetBoundingBox is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -203,6 +210,7 @@ napi_value MetadataObjectNapi::GetBoundingBox(napi_env env, napi_callback_info i
         napi_create_double(env, metaFace.height, &propValue);
         napi_set_named_property(env, result, "height", propValue);
     }
+    MEDIA_ERR_LOG("GetBoundingBox call Failed");
     return result;
 }
 } // namespace CameraStandard
