@@ -528,6 +528,18 @@ declare namespace camera {
      * @syscap SystemCapability.Multimedia.Camera.Core
      */
     readonly connectionType: ConnectionType;
+    /**
+     * DistributedCamera HostName.
+     * @since 9
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     */
+    readonly hostDeviceName: string;
+    /**
+     * DistributedCamera DeviceTypeId.
+     * @since 9
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     */
+    readonly hostDeviceType: uint16_t;
   }
 
   /**

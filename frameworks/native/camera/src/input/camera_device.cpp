@@ -12,10 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "input/camera_device.h"
 #include <securec.h>
 #include "camera_metadata_info.h"
 #include "camera_log.h"
+#include "input/camera_device.h"
+
 
 using namespace std;
 
@@ -48,7 +49,18 @@ CameraDevice::CameraDevice(std::string cameraID, std::shared_ptr<Camera::CameraM
     metadata_ = metadata;
     init(metadata->get());
 }
-
+CameraDevice::CameraDevice(std::string cameraID, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata,
+                           dmDeviceInfo deviceInfo)
+{
+    cameraID_ = cameraID;
+    metadata_ = metadata;
+    dmDeviceInfo_.deviceName = deviceInfo.deviceName;
+    dmDeviceInfo_.deviceTypeId = deviceInfo.deviceTypeId;
+    dmDeviceInfo_.networkId = deviceInfo.networkId;
+    MEDIA_INFO_LOG("camera cameraid = %{public}s, devicename: = %{public}s, networkId = %{public}s",
+                   cameraID_.c_str(), dmDeviceInfo_.deviceName.c_str(), dmDeviceInfo_.networkId.c_str());
+    init(metadata->get());
+}
 CameraDevice::~CameraDevice()
 {
     metadata_.reset();
@@ -115,6 +127,16 @@ CameraType CameraDevice::GetCameraType()
 ConnectionType CameraDevice::GetConnectionType()
 {
     return connectionType_;
+}
+
+std::string CameraDevice::GetHostName()
+{
+    return dmDeviceInfo_.deviceName;
+}
+
+uint16_t CameraDevice::GetDeviceType()
+{
+    return dmDeviceInfo_.deviceTypeId;
 }
 
 bool CameraDevice::IsMirrorSupported()
@@ -240,5 +262,5 @@ std::vector<int32_t> CameraDevice::GetExposureBiasRange()
     exposureBiasRange_ = range;
     return exposureBiasRange_;
 }
-} // CameraStandard
-} // OHOS
+} // namespace CameraStandard
+} // namespace OHOS

@@ -57,7 +57,9 @@ napi_value CameraDeviceNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_GETTER("cameraId", GetCameraId),
         DECLARE_NAPI_GETTER("cameraPosition", GetCameraPosition),
         DECLARE_NAPI_GETTER("cameraType", GetCameraType),
-        DECLARE_NAPI_GETTER("connectionType", GetConnectionType)
+        DECLARE_NAPI_GETTER("connectionType", GetConnectionType),
+        DECLARE_NAPI_GETTER("hostDeviceName", GetHostDeviceName),
+        DECLARE_NAPI_GETTER("hostDeviceType", GetHostDeviceType)
     };
 
     status = napi_define_class(env, CAMERA_OBJECT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -137,6 +139,7 @@ napi_value CameraDeviceNapi::GetCameraId(napi_env env, napi_callback_info info)
     CameraDeviceNapi* obj = nullptr;
     napi_value thisVar = nullptr;
 
+    MEDIA_DEBUG_LOG("For get camera id");
     napi_get_undefined(env, &undefinedResult);
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
 
@@ -144,7 +147,7 @@ napi_value CameraDeviceNapi::GetCameraId(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("Invalid arguments!");
         return undefinedResult;
     }
-
+    MEDIA_DEBUG_LOG("To get camera id");
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status == napi_ok && obj != nullptr) {
         std::string cameraId = obj->cameraDevice_->GetID();
@@ -169,6 +172,7 @@ napi_value CameraDeviceNapi::GetCameraPosition(napi_env env, napi_callback_info 
     CameraPosition jsCameraPosition;
     napi_value thisVar = nullptr;
 
+    MEDIA_DEBUG_LOG("For get camera position");
     napi_get_undefined(env, &undefinedResult);
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
 
@@ -176,7 +180,7 @@ napi_value CameraDeviceNapi::GetCameraPosition(napi_env env, napi_callback_info 
         MEDIA_ERR_LOG("Invalid arguments!");
         return undefinedResult;
     }
-
+    MEDIA_DEBUG_LOG("To get camera position");
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status == napi_ok && obj != nullptr) {
         jsCameraPosition = obj->cameraDevice_->GetPosition();
@@ -201,6 +205,7 @@ napi_value CameraDeviceNapi::GetCameraType(napi_env env, napi_callback_info info
     CameraType jsCameraType;
     napi_value thisVar = nullptr;
 
+    MEDIA_DEBUG_LOG("For get camera type");
     napi_get_undefined(env, &undefinedResult);
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
 
@@ -208,7 +213,7 @@ napi_value CameraDeviceNapi::GetCameraType(napi_env env, napi_callback_info info
         MEDIA_ERR_LOG("Invalid arguments!");
         return undefinedResult;
     }
-
+    MEDIA_DEBUG_LOG("To get camera type");
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status == napi_ok && obj != nullptr) {
         jsCameraType = obj->cameraDevice_->GetCameraType();
@@ -237,6 +242,7 @@ napi_value CameraDeviceNapi::GetConnectionType(napi_env env, napi_callback_info 
     ConnectionType jsConnectionType;
     napi_value thisVar = nullptr;
 
+    MEDIA_DEBUG_LOG("For get connection type");
     napi_get_undefined(env, &undefinedResult);
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
 
@@ -244,7 +250,7 @@ napi_value CameraDeviceNapi::GetConnectionType(napi_env env, napi_callback_info 
         MEDIA_ERR_LOG("Invalid arguments!");
         return undefinedResult;
     }
-
+    MEDIA_DEBUG_LOG("To get connection type");
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status == napi_ok && obj != nullptr) {
         jsConnectionType = obj->cameraDevice_->GetConnectionType();
@@ -257,6 +263,64 @@ napi_value CameraDeviceNapi::GetConnectionType(napi_env env, napi_callback_info 
         }
     }
     MEDIA_ERR_LOG("GetConnectionType call Failed!");
+    return undefinedResult;
+}
+napi_value CameraDeviceNapi::GetHostDeviceName(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+    napi_value jsResult = nullptr;
+    napi_value undefinedResult = nullptr;
+    CameraDeviceNapi* obj = nullptr;
+    napi_value thisVar = nullptr;
+
+    MEDIA_DEBUG_LOG("For get host device name");
+    napi_get_undefined(env, &undefinedResult);
+    CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
+
+    if (status != napi_ok || thisVar == nullptr) {
+        MEDIA_ERR_LOG("Invalid arguments!");
+        return undefinedResult;
+    }
+    MEDIA_DEBUG_LOG("to get host device name");
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    if (status == napi_ok && obj != nullptr) {
+        std::string hostDeviceName = obj->cameraDevice_->GetHostName();
+        status = napi_create_string_utf8(env, hostDeviceName.c_str(), NAPI_AUTO_LENGTH, &jsResult);
+        if (status == napi_ok) {
+            return jsResult;
+        } else {
+            MEDIA_ERR_LOG("Failed to get camera host Device Name!, errorCode : %{public}d", status);
+        }
+    }
+    return undefinedResult;
+}
+napi_value CameraDeviceNapi::GetHostDeviceType(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+    napi_value jsResult = nullptr;
+    napi_value undefinedResult = nullptr;
+    CameraDeviceNapi* obj = nullptr;
+    napi_value thisVar = nullptr;
+
+    MEDIA_DEBUG_LOG("For get host device type");
+    napi_get_undefined(env, &undefinedResult);
+    CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
+
+    if (status != napi_ok || thisVar == nullptr) {
+        MEDIA_ERR_LOG("Invalid arguments!");
+        return undefinedResult;
+    }
+    MEDIA_DEBUG_LOG("To get host device type");
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    if (status == napi_ok && obj != nullptr) {
+        uint32_t hostDeviceType = obj->cameraDevice_->GetDeviceType();
+        status = napi_create_uint32(env, hostDeviceType, &jsResult);
+        if (status == napi_ok) {
+            return jsResult;
+        } else {
+            MEDIA_ERR_LOG("Failed to get camera host Device Type!, errorCode : %{public}d", status);
+        }
+    }
     return undefinedResult;
 }
 } // namespace CameraStandard

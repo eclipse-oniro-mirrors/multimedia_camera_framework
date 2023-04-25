@@ -16,14 +16,14 @@
 #ifndef CAMERA_INFO_NAPI_H_
 #define CAMERA_INFO_NAPI_H_
 
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <vector>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <vector>
 #include "display_type.h"
 #include "camera_log.h"
 #include "camera_napi_utils.h"
@@ -53,6 +53,8 @@ private:
     static napi_value GetCameraPosition(napi_env env, napi_callback_info info);
     static napi_value GetCameraType(napi_env env, napi_callback_info info);
     static napi_value GetConnectionType(napi_env env, napi_callback_info info);
+    static napi_value GetHostDeviceName(napi_env env, napi_callback_info info);
+    static napi_value GetHostDeviceType(napi_env env, napi_callback_info info);
 
     napi_env env_;
     napi_ref wrapper_;
