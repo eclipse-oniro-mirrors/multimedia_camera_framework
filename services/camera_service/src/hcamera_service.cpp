@@ -555,7 +555,7 @@ int32_t HCameraService::MuteCamera(bool muteMode)
     }
     if (!cameraMuteServiceCallbacks_.empty() && ret == CAMERA_OK) {
         for (auto cb : cameraMuteServiceCallbacks_) {
-            if (!cb.second) {
+            if (cb.second) {
                 cb.second->OnCameraMute(muteMode);
             }
             CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraMute! current Camera muteMode:%d", muteMode));
