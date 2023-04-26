@@ -44,44 +44,6 @@ enum ConnectionType {
     CAMERA_CONNECTION_USB_PLUGIN,
     CAMERA_CONNECTION_REMOTE
 };
-typedef enum HostDeviceType {
-    /**
-     * Indicates an unknown device type.
-     */
-    DEVICE_TYPE_UNKNOWN = 0x00,
-    /**
-     * Indicates a smart camera.
-     */
-    DEVICE_TYPE_WIFI_CAMERA = 0x08,
-    /**
-     * Indicates a smart speaker.
-     */
-    DEVICE_TYPE_AUDIO = 0x0A,
-    /**
-     * Indicates a smart pc.
-     */
-    DEVICE_TYPE_PC = 0x0C,
-    /**
-     * Indicates a smart phone.
-     */
-    DEVICE_TYPE_PHONE = 0x0E,
-    /**
-     * Indicates a smart pad.
-     */
-    DEVICE_TYPE_PAD = 0x11,
-    /**
-     * Indicates a smart watch.
-     */
-    DEVICE_TYPE_WATCH = 0x6D,
-    /**
-     * Indicates a car.
-     */
-    DEVICE_TYPE_CAR = 0x83,
-    /**
-     * Indicates a smart TV.
-     */
-    DEVICE_TYPE_TV = 0x9C,
-} HostDeviceType;
 
 typedef struct dmDeviceInfo {
     /**

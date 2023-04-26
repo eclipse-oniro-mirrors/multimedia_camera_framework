@@ -499,6 +499,26 @@ declare namespace camera {
   }
 
   /**
+   * Enum for host device type.
+   * @since 9
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   */
+  enum HostDeviceType {
+    /**
+     * Indicates an unknown device type.
+     */
+    UNKNOWN = 0x00,
+    /**
+     * Indicates a smart phone.
+     */
+    PHONE = 0x0E,
+    /**
+     * Indicates a smart pad.
+     */
+    TABLET = 0x11,
+} HostDeviceType;
+
+  /**
    * Camera device object.
    * @since 9
    * @syscap SystemCapability.Multimedia.Camera.Core
@@ -539,7 +559,7 @@ declare namespace camera {
      * @since 9
      * @syscap SystemCapability.Multimedia.Camera.Core
      */
-    readonly hostDeviceType: uint16_t;
+    readonly hostDeviceType: HostDeviceType;
   }
 
   /**
@@ -1115,7 +1135,7 @@ declare namespace camera {
      * @syscap SystemCapability.Multimedia.Camera.Core
      */
     isExposureModeSupported(aeMode: ExposureMode): Promise<boolean>;
- 
+
     /**
      * Gets current exposure mode.
      * @param callback Callback used to return the current exposure mode.
@@ -1233,7 +1253,7 @@ declare namespace camera {
      * @syscap SystemCapability.Multimedia.Camera.Core
      */
     getExposureValue(): Promise<number>;
-  
+
       /**
      * Checks whether a specified focus mode is supported.
      * @param afMode Focus mode.
@@ -1335,7 +1355,7 @@ declare namespace camera {
      * @syscap SystemCapability.Multimedia.Camera.Core
      */
     getFocalLength(): Promise<number>;
- 
+
     /**
      * Gets all supported zoom ratio range.
      * @param callback Callback used to return the zoom ratio range.
@@ -1419,7 +1439,7 @@ declare namespace camera {
      * @syscap SystemCapability.Multimedia.Camera.Core
      */
     getActiveVideoStabilizationMode(): Promise<VideoStabilizationMode>;
- 
+
     /**
      * Set video stabilization mode.
      * @param mode video stabilization mode to set.

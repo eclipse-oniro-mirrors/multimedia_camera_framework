@@ -44,6 +44,7 @@ thread_local napi_ref CameraNapi::exposureStateRef_ = nullptr;
 thread_local napi_ref CameraNapi::focusStateRef_ = nullptr;
 thread_local napi_ref CameraNapi::qualityLevelRef_ = nullptr;
 thread_local napi_ref CameraNapi::videoStabilizationModeRef_ = nullptr;
+thread_local napi_ref CameraNapi::hostNameTypeRef_ = nullptr;
 
 CameraNapi::CameraNapi() : env_(nullptr), wrapper_(nullptr)
 {
@@ -127,6 +128,7 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("MetadataOutputErrorCode", CreateMetaOutputErrorCode(env)),
         DECLARE_NAPI_PROPERTY("VideoStabilizationMode", CreateVideoStabilizationModeObject(env)),
         DECLARE_NAPI_PROPERTY("MetadataObjectType", CreateMetadataObjectType(env)),
+        DECLARE_NAPI_PROPERTY("HostNameType", CreateHostNameType(env)),
     };
 
     status = napi_define_class(env, CAMERA_LIB_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, CameraNapiConstructor,
@@ -527,6 +529,37 @@ napi_value CameraNapi::CreateImageRotationEnum(napi_env env)
         }
     }
     MEDIA_ERR_LOG("CreateImageRotationEnum call Failed!");
+    napi_get_undefined(env, &result);
+
+    return result;
+}
+
+napi_value CameraNapi::CreateHostNameType(napi_env env)
+{
+    MEDIA_DEBUG_LOG("CreateHostNameType is called");
+    napi_value result = nullptr;
+    napi_status status;
+
+    status = napi_create_object(env, &result);
+    if (status == napi_ok) {
+        std::string propName;
+        for (auto itr = mapHostNameType.begin(); itr != mapHostNameType.end(); ++itr) {
+            propName = itr->first;
+            status = AddNamedProperty(env, result, propName, itr->second);
+            if (status != napi_ok) {
+                MEDIA_ERR_LOG("Failed to add HostNameType prop!");
+                break;
+            }
+            propName.clear();
+        }
+    }
+    if (status == napi_ok) {
+        status = napi_create_reference(env, result, 1, &hostNameTypeRef_);
+        if (status == napi_ok) {
+            return result;
+        }
+    }
+    MEDIA_ERR_LOG("CreateHostNameType call Failed!");
     napi_get_undefined(env, &result);
 
     return result;
