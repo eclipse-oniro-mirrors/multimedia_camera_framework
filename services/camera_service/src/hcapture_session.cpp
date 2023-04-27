@@ -863,8 +863,9 @@ void PermissionStatusChangeCb::SetCaptureSession(sptr<HCaptureSession> captureSe
 
 void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result)
 {
-    if ((result.PermStateChangeType == 0) && (captureSession_ != nullptr)) {
-        captureSession_->ReleaseInner();
+    auto item = captureSession_.promote();
+    if ((result.permStateChangeType == 0) && (item != nullptr)) {
+        item->ReleaseInner();
     }
 };
 
@@ -883,8 +884,9 @@ void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessToke
     const int32_t delayProcessTime = 200000;
     usleep(delayProcessTime);
     MEDIA_INFO_LOG("enter CameraUseStateChangeNotify tokenId:%{public}d", tokenId);
-    if ((isShowing == false) && (captureSession_ != nullptr)) {
-        captureSession_->ReleaseInner();
+    auto item = captureSession_.promote();
+    if ((isShowing == false) && (item != nullptr)) {
+        item->ReleaseInner();
     }
 };
 
