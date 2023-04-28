@@ -163,7 +163,9 @@ int32_t HCameraDevice::Close()
     if (streamOperator_) {
         streamOperator_ = nullptr;
     }
-    cameraHostManager_->RemoveCameraDevice(cameraID_);
+    if (cameraHostManager_) {
+        cameraHostManager_->RemoveCameraDevice(cameraID_);
+    }
     deviceHDICallback_ = nullptr;
     deviceSvcCallback_ = nullptr;
     return CAMERA_OK;
@@ -500,7 +502,7 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp,
     return CAMERA_OK;
 }
 
-CameraDeviceCallback::CameraDeviceCallback(wptr<HCameraDevice> hCameraDevice)
+CameraDeviceCallback::CameraDeviceCallback(sptr<HCameraDevice> hCameraDevice)
 {
     hCameraDevice_ = hCameraDevice;
 }
