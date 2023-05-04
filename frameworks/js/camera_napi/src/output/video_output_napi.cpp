@@ -389,7 +389,7 @@ napi_value VideoOutputNapi::Start(napi_env env, napi_callback_info info)
                 context->funcName = "VideoOutputNapi::Start";
                 context->taskId = CameraNapiUtils::IncreamentAndGet(videoOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
+                if (context->objectInfo != nullptr && context->objectInfo->videoOutput_ != nullptr) {
                     context->bRetBool = false;
                     context->errorCode = ((sptr<VideoOutput> &)(context->objectInfo->videoOutput_))->Start();
                     context->status = context->errorCode == 0;
@@ -440,7 +440,7 @@ napi_value VideoOutputNapi::Stop(napi_env env, napi_callback_info info)
                 context->funcName = "VideoOutputNapi::Stop";
                 context->taskId = CameraNapiUtils::IncreamentAndGet(videoOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
+                if (context->objectInfo != nullptr && context->objectInfo->videoOutput_ != nullptr) {
                     context->bRetBool = false;
                     context->errorCode = ((sptr<VideoOutput> &)(context->objectInfo->videoOutput_))->Stop();
                     context->status = context->errorCode == 0;
@@ -667,7 +667,7 @@ napi_value VideoOutputNapi::Release(napi_env env, napi_callback_info info)
                 context->funcName = "VideoOutputNapi::Release";
                 context->taskId = CameraNapiUtils::IncreamentAndGet(videoOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
+                if (context->objectInfo != nullptr && context->objectInfo->videoOutput_ != nullptr) {
                     context->bRetBool = false;
                     context->status = true;
                     ((sptr<VideoOutput> &)(context->objectInfo->videoOutput_))->Release();
