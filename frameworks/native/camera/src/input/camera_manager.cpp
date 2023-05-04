@@ -13,8 +13,9 @@
  * limitations under the License.
  */
 
-#include "input/camera_manager.h"
 #include <cstring>
+#include "input/camera_manager.h"
+
 
 #include "camera_util.h"
 #include "ipc_skeleton.h"
@@ -23,6 +24,7 @@
 #include "system_ability_definition.h"
 #include "camera_error_code.h"
 #include "icamera_util.h"
+#include "device_manager_impl.h"
 
 using namespace std;
 namespace OHOS {
@@ -30,6 +32,7 @@ namespace CameraStandard {
 namespace {
     constexpr uint32_t UNIT_LENGTH = 3;
 }
+
 sptr<CameraManager> CameraManager::cameraManager_;
 
 const std::string CameraManager::surfaceFormat = "CAMERA_SURFACE_FORMAT";
@@ -74,7 +77,13 @@ CameraManager::~CameraManager()
     dcameraObjList.clear();
     CameraManager::cameraManager_ = nullptr;
 }
-
+class CameraManager::DeviceInitCallBack : public DistributedHardware::DmInitCallback {
+        void OnRemoteDied() override;
+};
+void CameraManager::DeviceInitCallBack::OnRemoteDied()
+{
+    MEDIA_INFO_LOG("CameraManager::DeviceInitCallBack OnRemoteDied");
+}
 int32_t CameraManager::CreateListenerObject()
 {
     MEDIA_DEBUG_LOG("CreateListenerObject entry");
@@ -426,9 +435,7 @@ int CameraManager::CreateMetadataOutput(sptr<MetadataOutput> *pMetadataOutput)
         MEDIA_ERR_LOG("MetadataOutputSurface consumer listener registration failed");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
-
     *pMetadataOutput = metadataOutput;
-
     return CameraErrorCode::SUCCESS;
 }
 
@@ -579,7 +586,6 @@ int CameraManager::CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceSe
 
     return CameraErrorCode::SUCCESS;
 }
-
 void CameraManager::SetCallback(std::shared_ptr<CameraManagerCallback> callback)
 {
     if (callback == nullptr) {
@@ -626,11 +632,49 @@ std::vector<sptr<CameraInfo>> CameraManager::GetCameras()
     dcameraObjList.clear();
     return dcameraObjList;
 }
-
+bool CameraManager::GetDmDeviceInfo()
+{
+    std::vector <DistributedHardware::DmDeviceInfo> deviceInfos;
+    DistributedHardware::DmDeviceInfo deviceInfo;
+    auto &deviceManager = DistributedHardware::DeviceManager::GetInstance();
+    std::shared_ptr<DistributedHardware::DmInitCallback> initCallback = std::make_shared<DeviceInitCallBack>();
+    std::string pkgName = std::to_string(IPCSkeleton::GetCallingPid());
+    deviceManager.InitDeviceManager(pkgName, initCallback);
+    deviceManager.RegisterDevStateCallback(pkgName, "", NULL);
+    deviceManager.GetTrustedDeviceList(pkgName, "", deviceInfos);
+    deviceManager.GetLocalDeviceInfo(pkgName, deviceInfo);
+    deviceManager.UnInitDeviceManager(pkgName);
+    localDeviceInfo_.deviceName = deviceInfo.deviceName;
+    localDeviceInfo_.deviceTypeId = deviceInfo.deviceTypeId;
+    localDeviceInfo_.networkId = deviceInfo.networkId;
+    int size = static_cast<int>(deviceInfos.size());
+    MEDIA_INFO_LOG("CameraManager::size=%{public}d", size);
+    if (size > 0) {
+        distributedCamInfo_.resize(size);
+        for (int i = 0; i < size; i++) {
+            distributedCamInfo_[i].deviceName = deviceInfos[i].deviceName;
+            distributedCamInfo_[i].deviceTypeId = deviceInfos[i].deviceTypeId;
+            distributedCamInfo_[i].networkId = deviceInfos[i].networkId;
+        }
+        return true;
+    } else {
+        return false;
+    }
+}
+bool CameraManager::isDistributeCamera(std::string cameraId, dmDeviceInfo &deviceInfo)
+{
+    MEDIA_INFO_LOG("CameraManager::cameraId = %{public}s", cameraId.c_str());
+    for (auto distributedCamInfo : distributedCamInfo_) {
+        if (cameraId.find(distributedCamInfo.networkId) != std::string::npos) {
+            deviceInfo = distributedCamInfo;
+            return true;
+        }
+    }
+    return false;
+}
 std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
 {
     CAMERA_SYNC_TRACE;
-
     std::lock_guard<std::mutex> lock(mutex_);
     std::vector<std::string> cameraIds;
     std::vector<std::shared_ptr<Camera::CameraMetadata>> cameraAbilityList;
@@ -647,10 +691,17 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
         return cameraObjList;
     }
     std::vector<sptr<CameraDevice>> supportedCameras;
+    GetDmDeviceInfo();
     retCode = serviceProxy_->GetCameras(cameraIds, cameraAbilityList);
     if (retCode == CAMERA_OK) {
         for (auto& it : cameraIds) {
-            cameraObj = new(std::nothrow) CameraDevice(it, cameraAbilityList[index++]);
+            dmDeviceInfo tempDmDeviceInfo;
+            if (isDistributeCamera(it, tempDmDeviceInfo)) {
+                MEDIA_DEBUG_LOG("CameraManager::it is remoted camera");
+            } else {
+                tempDmDeviceInfo = localDeviceInfo_;
+            }
+            cameraObj = new(std::nothrow) CameraDevice(it, cameraAbilityList[index++], tempDmDeviceInfo);
             if (cameraObj == nullptr) {
                 MEDIA_ERR_LOG("new CameraDevice failed for id={public}%s", it.c_str());
                 continue;
@@ -741,7 +792,6 @@ sptr<CameraInput> CameraManager::CreateCameraInput(CameraPosition position, Came
         MEDIA_ERR_LOG("Failed to CreateCameraInput with error code:%{public}d", ret);
         return nullptr;
     }
-
     return cameraInput;
 }
 
@@ -968,5 +1018,5 @@ void CameraManager::MuteCamera(bool muteMode)
     }
     return;
 }
-} // CameraStandard
-} // OHOS
+} // namespace CameraStandard
+} // namespace OHOS

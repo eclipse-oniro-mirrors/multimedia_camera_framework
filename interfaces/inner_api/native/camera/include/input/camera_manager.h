@@ -16,8 +16,8 @@
 #ifndef OHOS_CAMERA_CAMERA_MANAGER_H
 #define OHOS_CAMERA_CAMERA_MANAGER_H
 
-#include <iostream>
 #include <refbase.h>
+#include <iostream>
 #include <vector>
 #include "input/camera_input.h"
 #include "input/camera_info.h"
@@ -424,6 +424,8 @@ private:
     std::mutex mutex_;
     int CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> *pICameraDeviceService);
     camera_format_t GetCameraMetadataFormat(CameraFormat format);
+    bool GetDmDeviceInfo();
+    bool isDistributeCamera(std::string cameraId, dmDeviceInfo& deviceInfo);
     sptr<ICameraService> serviceProxy_;
     sptr<CameraListenerStub> listenerStub_ = nullptr;
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
@@ -435,6 +437,10 @@ private:
     std::vector<std::shared_ptr<CameraMuteListener>> cameraMuteListenerList;
     std::vector<sptr<CameraDevice>> cameraObjList;
     std::vector<sptr<CameraInfo>> dcameraObjList;
+    std::vector<dmDeviceInfo> distributedCamInfo_;
+    dmDeviceInfo localDeviceInfo_;
+    std::map<std::string, dmDeviceInfo> distributedCamInfoAndId_;
+    class DeviceInitCallBack;
 };
 } // namespace CameraStandard
 } // namespace OHOS

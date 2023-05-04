@@ -16,10 +16,10 @@
 #ifndef OHOS_CAMERA_CAMERA_DEVICE_H
 #define OHOS_CAMERA_CAMERA_DEVICE_H
 
+#include <refbase.h>
 #include <iostream>
 #include <unordered_map>
 #include <vector>
-#include <refbase.h>
 #include "camera_metadata_info.h"
 
 namespace OHOS {
@@ -45,10 +45,26 @@ enum ConnectionType {
     CAMERA_CONNECTION_REMOTE
 };
 
+typedef struct dmDeviceInfo {
+    /**
+     * Device name of the device.
+     */
+    std::string deviceName;
+    /**
+     * Device type of the device.
+     */
+    uint16_t deviceTypeId;
+    /**
+     * NetworkId of the device.
+     */
+    std::string networkId;
+} dmDeviceInfo;
+
 class CameraDevice : public RefBase {
 public:
     CameraDevice() = default;
     CameraDevice(std::string cameraID, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
+    CameraDevice(std::string cameraID, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, dmDeviceInfo deviceInfo);
     ~CameraDevice();
     /**
     * @brief Get the camera Id.
@@ -86,6 +102,19 @@ public:
     ConnectionType GetConnectionType();
 
     /**
+    * @brief Get the Distributed Camera Host Name.
+    *
+    * @return Returns the  Host Name of the Distributed camera.
+    */
+    std::string GetHostName();
+
+    /**
+    * @brief Get the Distributed Camera deviceType.
+    *
+    * @return Returns the deviceType of the Distributed camera.
+    */
+    uint16_t GetDeviceType();
+    /**
     * @brief Check if mirror mode supported.
     *
     * @return Returns True is supported.
@@ -114,6 +143,7 @@ private:
     CameraType cameraType_ = CAMERA_TYPE_DEFAULT;
     ConnectionType connectionType_ = CAMERA_CONNECTION_BUILT_IN;
     bool isMirrorSupported_ = false;
+    dmDeviceInfo dmDeviceInfo_ = {};
     std::vector<float> zoomRatioRange_;
     std::vector<int32_t> exposureBiasRange_;
     static const std::unordered_map<camera_type_enum_t, CameraType> metaToFwCameraType_;

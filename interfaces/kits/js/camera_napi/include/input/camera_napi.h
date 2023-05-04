@@ -131,6 +131,12 @@ static const std::unordered_map<std::string, int32_t> mapFocusState = {
     {"FOCUS_STATE_UNFOCUSED", 2},
 };
 
+static const std::unordered_map<std::string, int32_t> mapHostNameType = {
+    {"UNKNOWN", 0x00},
+    {"PHONE", 0x0E},
+    {"TABLE", 0x11},
+};
+
 static const std::unordered_map<std::string, int32_t> mapExposureState = {
     {"EXPOSURE_STATE_SCAN", 0},
     {"EXPOSURE_STATE_CONVERGED", 1},
@@ -221,6 +227,7 @@ public:
     static napi_value CreateFocusStateEnum(napi_env env);
     static napi_value CreateQualityLevelEnum(napi_env env);
     static napi_value CreateVideoStabilizationModeObject(napi_env env);
+    static napi_value CreateHostNameType(napi_env env);
 
     static napi_value CreateCameraErrorCode(napi_env env);
     static napi_value CreateCameraInputErrorCode(napi_env env);
@@ -247,6 +254,7 @@ private:
     static thread_local napi_ref imageRotationRef_;
     static thread_local napi_ref qualityLevelRef_;
     static thread_local napi_ref videoStabilizationModeRef_;
+    static thread_local napi_ref hostNameTypeRef_;
 
     static thread_local napi_ref errorCameraInputRef_;
     static thread_local napi_ref errorCaptureSessionRef_;
