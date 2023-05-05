@@ -180,11 +180,18 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
     }
 
     MEDIA_INFO_LOG("HCameraService::CreateCameraDevice CameraConflictDetection");
-    auto conflictDevices = cameraHostManager_->CameraConflictDetection(cameraId);
+    bool isPermisson = true;
+    auto conflictDevices = CameraConflictDetection(cameraId, isPermisson);
+    if (!isPermisson) {
+        MEDIA_ERR_LOG("HCameraDevice::CreateCameraDevice device busy!");
+        return CAMERA_DEVICE_BUSY;
+    }
     // Destory conflict devices
     for (auto &i : conflictDevices) {
-        static_cast<HCameraDevice*>(i.GetRefPtr())->OnError(DEVICE_PREEMPT, 0);
-        i->Close();
+        if (i.promote() != nullptr) {
+            i->OnError(DEVICE_PREEMPT, 0);
+            DeviceClose(i->GetCameraId());
+        }
     }
 
     sptr<HCameraDevice> cameraDevice = new(std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
@@ -203,6 +210,10 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice MuteCamera not Supported");
     }
     cameraDevice->SetStatusCallback(cameraServiceCallbacks_);
+    cameraDevice->SetDeviceOperatorsCallback(this);
+
+    MEDIA_DEBUG_LOG("HCameraService::CreateCameraDevice Calling pcameraId: %{public}s", cameraId.c_str());
+    std::lock_guard<std::shared_mutex> writeLock(mapOperatorsLock_);
     devices_[cameraId] = cameraDevice;
     pid_t pid = IPCSkeleton::GetCallingPid();
     MEDIA_INFO_LOG("HCameraService::CreateCameraDevice Calling pid = %{public}d, Camera created size = %{public}zu",
@@ -232,6 +243,7 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession> &session)
         MEDIA_ERR_LOG("HCameraService::CreateCaptureSession HCaptureSession allocation failed");
         return CAMERA_ALLOC_ERROR;
     }
+    captureSession->SetDeviceOperatorsCallback(this);
     session = captureSession;
     return CAMERA_OK;
 }
@@ -405,6 +417,7 @@ int32_t HCameraService::SetCallback(sptr<ICameraServiceCallback> &callback)
 
 int32_t HCameraService::CloseCameraForDestory(pid_t pid)
 {
+    std::lock_guard<std::shared_mutex> writeLock(mapOperatorsLock_);
     MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory pid = %{public}d, Camera created size = %{public}zu",
                    pid, camerasForPid_[pid].size());
     auto cameraIds = camerasForPid_[pid];
@@ -416,7 +429,7 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
             } else {
                 MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory pid = %{public}d,Camera:[%{public}s] need close",
                                pid, it.first.c_str());
-                item->Close();
+                DeviceClose(item->GetCameraId());
                 item = nullptr;
             }
         }
@@ -940,6 +953,135 @@ int32_t HCameraService::Dump(int fd, const std::vector<std::u16string>& args)
 
     (void)write(fd, dumpString.c_str(), dumpString.size());
     return CAMERA_OK;
+}
+
+int32_t HCameraService::DeviceOpen(const std::string& cameraId)
+{
+    MEDIA_INFO_LOG("HCameraService::DeviceOpen Enter");
+    std::lock_guard<std::mutex> lock(deviceOperatorsLock_);
+    int32_t ret = CAMERA_OK;
+
+    auto it = devices_.find(cameraId);
+    if (it != devices_.end()) {
+        MEDIA_INFO_LOG("HCameraService::DeviceOpen Camera:[%{public}s] need open",
+            it->first.c_str());
+        auto item = it->second.promote();
+        if (item != nullptr && !item->IsOpenedCameraDevice()) {
+            ret = item->OpenDevice();
+        } else {
+            MEDIA_ERR_LOG("HCameraService::DeviceOpen device is null");
+        }
+    }
+    MEDIA_INFO_LOG("HCameraService::DeviceOpen Exit");
+    return ret;
+}
+
+int32_t HCameraService::DeviceClose(const std::string& cameraId, pid_t pidFromSession)
+{
+    MEDIA_INFO_LOG("HCameraService::DeviceClose Enter");
+    std::lock_guard<std::mutex> lock(deviceOperatorsLock_);
+    int32_t ret = CAMERA_OK;
+
+    pid_t pid = pidFromSession != 0 ? pidFromSession : IPCSkeleton::GetCallingPid();
+    auto it = devices_.find(cameraId);
+    if (it != devices_.end()) {
+        MEDIA_INFO_LOG("HCameraService::DeviceClose pid = %{public}d Camera:[%{public}s] need close",
+            pid, it->first.c_str());
+        auto item = it->second.promote();
+        if (item != nullptr && item->IsOpenedCameraDevice()) {
+            ret = item->CloseDevice();
+            item = nullptr;
+        }
+    }
+
+    for (auto& it : camerasForPid_) {
+        std::set<std::string>& cameraIds = it.second;
+        MEDIA_INFO_LOG("HCameraService::DeviceClose pid = %{public}d size %{public}zu E", it.first, cameraIds.size());
+        if (!cameraIds.empty()) {
+            for (std::set<std::string>::iterator itIds = cameraIds.begin(); itIds != cameraIds.end(); itIds++) {
+                if (*itIds == cameraId && !IsInForeGround(it.first)) {
+                    cameraIds.erase(itIds);
+                    break;
+                }
+            }
+        }
+        MEDIA_INFO_LOG("HCameraService::DeviceClose pid = %{public}d size %{public}zu X", it.first, cameraIds.size());
+    }
+    MEDIA_INFO_LOG("HCameraService::DeviceClose Exit");
+    return  ret;
+}
+
+bool HCameraService::IsDeviceAlreadyOpen(pid_t& tempPid, std::string& tempCameraId, wptr<HCameraDevice> &tempDevice)
+{
+    bool isOpened = false;
+    for (auto it : devices_) {
+        auto item = it.second.promote();
+        if (item != nullptr) {
+            isOpened = item->IsOpenedCameraDevice();
+            MEDIA_INFO_LOG("HCameraService::IsDeviceAlreadyOpen cameraId: %{public}s opened %{public}d",
+                it.first.c_str(), isOpened);
+            tempCameraId = it.first;
+            tempDevice = item;
+            if (isOpened) {
+                break;
+            }
+        }
+    }
+
+    if (isOpened) {
+        for (auto it : camerasForPid_) {
+            std::set<std::string> cameraIds = it.second;
+            if (cameraIds.size() > 0 && cameraIds.find(tempCameraId) != cameraIds.end()) {
+                tempPid = it.first;
+                break;
+            }
+        }
+        MEDIA_INFO_LOG("HCameraService::IsDeviceAlreadyOpen pid: %{public}d cameraId: %{public}s opened %{public}d",
+            tempPid, tempCameraId.c_str(), isOpened);
+    }
+    return isOpened;
+}
+
+std::vector<wptr<HCameraDevice>> HCameraService::CameraConflictDetection(const std::string& cameraId, bool& isPermisson)
+{
+    std::vector<wptr<HCameraDevice>> devicesNeedClose;
+    pid_t tempPid;
+    std::string tempCameraId;
+    wptr<HCameraDevice> tempDevice;
+    std::shared_lock<std::shared_mutex> readLock(mapOperatorsLock_);
+    std::lock_guard<std::mutex> lock(deviceOperatorsLock_);
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    /* 首先判断场景一：是否存在正在被使用得设备,没有则允许当前操作 */
+    if (!IsDeviceAlreadyOpen(tempPid, tempCameraId, tempDevice)) {
+        MEDIA_INFO_LOG("There is no clients use device, allowed!");
+        isPermisson = true;
+        return devicesNeedClose;
+    }
+
+    MEDIA_INFO_LOG("HCameraService::CameraConflictDetection pid: %{public}d cameraId: %{public}s already opened",
+                   tempPid, tempCameraId.c_str());
+    /* 其次判断场景四：正在使用设备的应用与当前操作的应用是否是同一应用,相同则拒绝本次操作 */
+    if (IsSameClient(tempPid, pid)) {
+        MEDIA_INFO_LOG("Same client, reject!");
+        isPermisson = false;
+        return devicesNeedClose;
+    }
+    /*
+    *  最后判断场景二、三: 不同的应用,是否需要关闭当前正在使用的设备
+    *  1. 正在使用设备得应用处于后台,则需要关闭使用得设备并允许本次操作抢占设备
+    *  2. 正在使用设备得应用处于前台,判断优先级;本次操作的应用优先级不高于正在使用得则存在冲突拒绝本次操作;
+    *     反之则允许本次操作抢占设备,需要关闭正在使用的设备
+    */
+    if (tempDevice.promote() != nullptr) {
+        if (IsCameraNeedClose(tempDevice->GetCallerToken(), tempPid, pid)) {
+            isPermisson = true;
+            devicesNeedClose.push_back(tempDevice);
+            MEDIA_INFO_LOG("HCameraService::CameraConflictDetection device can be preempted, allowed!");
+        } else {
+            isPermisson = false;
+        }
+    }
+    return devicesNeedClose;
 }
 } // namespace CameraStandard
 } // namespace OHOS

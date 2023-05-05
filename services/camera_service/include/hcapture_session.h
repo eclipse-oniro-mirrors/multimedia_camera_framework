@@ -16,6 +16,9 @@
 #ifndef OHOS_CAMERA_H_CAPTURE_SESSION_H
 #define OHOS_CAMERA_H_CAPTURE_SESSION_H
 
+#include <refbase.h>
+#include <iostream>
+
 #include "accesstoken_kit.h"
 #include "state_customized_cbk.h"
 #include "hcamera_device.h"
@@ -27,9 +30,6 @@
 #include "privacy_kit.h"
 #include "v1_0/istream_operator_callback.h"
 #include "v1_0/istream_operator.h"
-
-#include <refbase.h>
-#include <iostream>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -68,6 +68,8 @@ public:
     static void dumpSessions(std::string& dumpString);
     void dumpSessionInfo(std::string& dumpString);
     static void CameraSessionSummary(std::string& dumpString);
+    int32_t SetDeviceOperatorsCallback(wptr<IDeviceOperatorsCallback> callback);
+    pid_t GetPid();
 
 private:
     int32_t ValidateSessionInputs();
@@ -95,6 +97,7 @@ private:
     void UnregisterPermissionCallback(const uint32_t callingTokenId);
     void StartUsingPermissionCallback(const uint32_t callingTokenId, const std::string permissionName);
     void StopUsingPermissionCallback(const uint32_t callingTokenId, const std::string permissionName);
+    void CloseDevice(sptr<HCameraDevice> &device);
 
     std::string GetSessionState();
 
@@ -117,6 +120,7 @@ private:
     uint32_t callerToken_;
     std::shared_ptr<PermissionStatusChangeCb> callbackPtr_;
     std::shared_ptr<CameraUseStateChangeCb> cameraUseCallbackPtr_;
+    wptr<IDeviceOperatorsCallback> deviceOperatorsCallback_;
 };
 
 class PermissionStatusChangeCb : public Security::AccessToken::PermStateChangeCallbackCustomize {

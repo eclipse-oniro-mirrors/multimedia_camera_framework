@@ -16,8 +16,8 @@
 #ifndef OHOS_CAMERA_UTIL_H
 #define OHOS_CAMERA_UTIL_H
 
-#include "display_type.h"
 #include <limits.h>
+#include "display_type.h"
 #include "v1_0/types.h"
 #include "camera_metadata_info.h"
 #include <malloc.h>
@@ -26,6 +26,7 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
 static constexpr int32_t CAMERA_COLOR_SPACE = 8;
+const std::string ACCESS_CAMERA = "ohos.permission.CAMERA";
 
 enum CamServiceError {
     CAMERA_OK = 0,
@@ -43,6 +44,13 @@ enum CamServiceError {
     CAMERA_DEVICE_PREEMPTED,
     CAMERA_OPERATION_NOT_ALLOWED
 };
+
+enum ClientPriorityLevels {
+    PRIORITY_LEVEL_SAME = 0,
+    PRIORITY_LEVEL_LOWER,
+    PRIORITY_LEVEL_HIGHER
+};
+
 
 extern std::unordered_map<int32_t, int32_t> g_cameraToPixelFormat;
 extern std::map<int, std::string> g_cameraPos;
@@ -75,6 +83,14 @@ bool IsValidTokenId(uint32_t tokenId);
 
 bool IsValidSize(
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t format, int32_t width, int32_t height);
+
+int32_t JudgmentPriority(const pid_t& pid, const pid_t& pidCompared);
+
+bool IsSameClient(const pid_t& pid, const pid_t& pidCompared);
+
+bool IsInForeGround(const int32_t callerToken);
+
+bool IsCameraNeedClose(const int32_t callerToken, const pid_t& pid, const pid_t& pidCompared);
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_UTIL_H

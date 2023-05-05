@@ -70,7 +70,7 @@ static std::string GetClientBundle(int uid)
 HCaptureSession::HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
     sptr<StreamOperatorCallback> streamOperatorCb, const uint32_t callingTokenId)
     : cameraHostManager_(cameraHostManager), streamOperatorCallback_(streamOperatorCb),
-    sessionCallback_(nullptr)
+    sessionCallback_(nullptr), deviceOperatorsCallback_(nullptr)
 {
     pid_ = IPCSkeleton::GetCallingPid();
     uid_ = IPCSkeleton::GetCallingUid();
@@ -84,12 +84,15 @@ HCaptureSession::HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
         if (it->second != nullptr) {
             sptr<HCaptureSession> session = it->second;
             sptr<HCameraDevice> disconnectDevice;
+            if (pid_ != session->GetPid()) {
+                continue;
+            }
             int32_t rc = session->GetCameraDevice(disconnectDevice);
             if (rc == CAMERA_OK) {
                 disconnectDevice->OnError(DEVICE_PREEMPT, 0);
             }
+            MEDIA_ERR_LOG("HCaptureSession::HCaptureSession doesn't support multiple sessions per pid");
             session->Release(it->first);
-            MEDIA_ERR_LOG("currently multi-session not supported, release session for pid(%{public}d)", it->first);
         }
     }
     std::lock_guard<std::mutex> lock(sessionLock_);
@@ -103,7 +106,21 @@ HCaptureSession::HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
 }
 
 HCaptureSession::~HCaptureSession()
-{}
+{
+    deviceOperatorsCallback_ = nullptr;
+}
+
+pid_t HCaptureSession::GetPid()
+{
+    return pid_;
+}
+
+void HCaptureSession::CloseDevice(sptr<HCameraDevice> &device)
+{
+    if (device != nullptr && deviceOperatorsCallback_.promote() != nullptr) {
+        deviceOperatorsCallback_->DeviceClose(device->GetCameraId(), pid_);
+    }
+}
 
 int32_t HCaptureSession::BeginConfig()
 {
@@ -151,7 +168,7 @@ int32_t HCaptureSession::AddInput(sptr<ICameraDeviceService> cameraDevice)
     int32_t rc = localCameraDevice->GetStreamOperator(streamOperatorCallback_, streamOperator);
     if (rc != CAMERA_OK) {
         MEDIA_ERR_LOG("HCaptureSession::GetCameraDevice GetStreamOperator returned %{public}d", rc);
-        localCameraDevice->Close();
+        CloseDevice(localCameraDevice);
         return rc;
     }
     return CAMERA_OK;
@@ -575,7 +592,7 @@ int32_t HCaptureSession::CommitConfig()
     if (rc != CAMERA_OK) {
         MEDIA_ERR_LOG("HCaptureSession::CommitConfig() Failed to commit config. camera device rc: %{public}d", rc);
         if (device != nullptr && device != cameraDevice_) {
-            device->Close();
+            CloseDevice(device);
         }
         RestorePreviousState(cameraDevice_, false);
         return rc;
@@ -585,7 +602,7 @@ int32_t HCaptureSession::CommitConfig()
     if (rc != CAMERA_OK) {
         MEDIA_ERR_LOG("HCaptureSession::CommitConfig() Failed to commit config. rc: %{public}d", rc);
         if (device != nullptr && device != cameraDevice_) {
-            device->Close();
+            CloseDevice(device);
         }
         RestorePreviousState(cameraDevice_, !deletedStreamIds_.empty());
         return rc;
@@ -598,7 +615,7 @@ int32_t HCaptureSession::CommitConfig()
     }
 
     if (cameraDevice_ != nullptr && device != cameraDevice_) {
-        cameraDevice_->Close();
+        CloseDevice(cameraDevice_);
         cameraDevice_ = nullptr;
     }
     UpdateSessionConfig(device);
@@ -713,7 +730,7 @@ int32_t HCaptureSession::Release(pid_t pid)
         streamOperatorCallback_ = nullptr;
     }
     if (cameraDevice_ != nullptr) {
-        cameraDevice_->Close();
+        CloseDevice(cameraDevice_);
         POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraDevice_->GetCameraId().c_str());
         cameraDevice_ = nullptr;
     }
@@ -855,6 +872,16 @@ void HCaptureSession::StopUsingPermissionCallback(const uint32_t callingTokenId,
         cameraUseCallbackPtr_->SetCaptureSession(nullptr);
         cameraUseCallbackPtr_ = nullptr;
     }
+}
+
+int32_t HCaptureSession::SetDeviceOperatorsCallback(wptr<IDeviceOperatorsCallback> callback)
+{
+    if (callback.promote() == nullptr) {
+        MEDIA_ERR_LOG("HCameraDevice::SetDeviceOperatorsCallback callback is null");
+        return CAMERA_INVALID_ARG;
+    }
+    deviceOperatorsCallback_ = callback;
+    return CAMERA_OK;
 }
 
 PermissionStatusChangeCb::~PermissionStatusChangeCb()

@@ -42,8 +42,10 @@ class HCameraHostManager::CameraHostInfo : public ICameraHostCallback {
 public:
     class CameraHostDeathRecipient : public IRemoteObject::DeathRecipient {
     public:
-        explicit CameraHostDeathRecipient(const sptr<HCameraHostManager::CameraHostInfo> &hostInfo)
-            : cameraHostInfo_(hostInfo) {};
+        explicit CameraHostDeathRecipient(const sptr<HCameraHostManager::CameraHostInfo> &hostInfo) :
+            cameraHostInfo_(hostInfo)
+        {
+        }
         virtual ~CameraHostDeathRecipient() = default;
         void OnRemoteDied(const wptr<IRemoteObject> &remote) override
         {
@@ -582,13 +584,17 @@ void HCameraHostManager::AddCameraHost(const std::string& svcName)
 
 void HCameraHostManager::RemoveCameraHost(const std::string& svcName)
 {
+    std::vector<sptr<CameraHostInfo>>::iterator it;
     MEDIA_INFO_LOG("HCameraHostManager::RemoveCameraHost camera host %{public}s removed", svcName.c_str());
-    std::lock_guard<std::mutex> lock(mutex_);
-    auto it = std::find_if(cameraHostInfos_.begin(), cameraHostInfos_.end(),
-                           [&svcName](const auto& camHost) { return camHost->GetName() == svcName; });
-    if (it == cameraHostInfos_.end()) {
-        MEDIA_WARNING_LOG("HCameraHostManager::RemoveCameraHost camera host %{public}s doesn't exist", svcName.c_str());
-        return;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        it = std::find_if(cameraHostInfos_.begin(), cameraHostInfos_.end(),
+                          [&svcName](const auto& camHost) { return camHost->GetName() == svcName; });
+        if (it == cameraHostInfos_.end()) {
+            MEDIA_WARNING_LOG("HCameraHostManager::RemoveCameraHost camera host %{public}s doesn't exist",
+                svcName.c_str());
+            return;
+        }
     }
     std::vector<std::string> cameraIds;
     if ((*it)->GetCameras(cameraIds) == CAMERA_OK) {

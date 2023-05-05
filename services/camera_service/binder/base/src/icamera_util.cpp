@@ -61,7 +61,7 @@ int32_t ServiceToCameraError(int32_t ret)
             err = CameraErrorCode::SERVICE_FATL_ERROR;
             break;
         case CAMERA_DEVICE_PREEMPTED:
-            err = CameraErrorCode::CONFILICT_CAMERA;
+            err = CameraErrorCode::DEVICE_PREEMPTED;
             break;
         case CAMERA_OPERATION_NOT_ALLOWED:
             err = CameraErrorCode::OPERATION_NOT_ALLOWED;

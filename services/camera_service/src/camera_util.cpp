@@ -12,11 +12,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "camera_util.h"
 #include <securec.h>
 #include "camera_log.h"
+#include "access_token.h"
 #include "accesstoken_kit.h"
+#include "privacy_kit.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -184,6 +185,30 @@ bool IsValidSize(
     MEDIA_ERR_LOG("Format:%{public}d, width:%{public}d, height:%{public}d not found in supported streams",
                   format, width, height);
     return false;
+}
+
+int32_t JudgmentPriority(const pid_t& pid, const pid_t& pidCompared)
+{
+    return PRIORITY_LEVEL_SAME;
+}
+
+bool IsSameClient(const pid_t& pid, const pid_t& pidCompared)
+{
+    return (pid == pidCompared);
+}
+
+bool IsInForeGround(const int32_t callerToken)
+{
+    bool isAllowed = true;
+    if (IsValidTokenId(callerToken)) {
+        isAllowed = Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken, ACCESS_CAMERA);
+    }
+    return isAllowed;
+}
+
+bool IsCameraNeedClose(const int32_t callerToken, const pid_t& pid, const pid_t& pidCompared)
+{
+    return !(IsInForeGround(callerToken) && (JudgmentPriority(pid, pidCompared) != PRIORITY_LEVEL_HIGHER));
 }
 } // namespace CameraStandard
 } // namespace OHOS
