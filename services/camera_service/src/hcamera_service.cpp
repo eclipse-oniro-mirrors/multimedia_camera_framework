@@ -1051,7 +1051,7 @@ std::vector<wptr<HCameraDevice>> HCameraService::CameraConflictDetection(const s
     std::shared_lock<std::shared_mutex> readLock(mapOperatorsLock_);
     std::lock_guard<std::mutex> lock(deviceOperatorsLock_);
     pid_t pid = IPCSkeleton::GetCallingPid();
-    /* 首先判断场景一：是否存在正在被使用得设备,没有则允许当前操作 */
+    /*  whether there is a device being used, if not, the current operation is allowed */
     if (!IsDeviceAlreadyOpen(tempPid, tempCameraId, tempDevice)) {
         MEDIA_INFO_LOG("There is no clients use device, allowed!");
         isPermisson = true;
@@ -1060,18 +1060,23 @@ std::vector<wptr<HCameraDevice>> HCameraService::CameraConflictDetection(const s
 
     MEDIA_INFO_LOG("HCameraService::CameraConflictDetection pid: %{public}d cameraId: %{public}s already opened",
                    tempPid, tempCameraId.c_str());
-    /* 其次判断场景四：正在使用设备的应用与当前操作的应用是否是同一应用,相同则拒绝本次操作 */
+    /*
+     *  whether the application that is using the device is the same application
+     *  as the application currently operating, if they are the same, the operation will be rejected
+     */
     if (IsSameClient(tempPid, pid)) {
         MEDIA_INFO_LOG("Same client, reject!");
         isPermisson = false;
         return devicesNeedClose;
     }
+
     /*
-    *  最后判断场景二、三: 不同的应用,是否需要关闭当前正在使用的设备
-    *  1. 正在使用设备得应用处于后台,则需要关闭使用得设备并允许本次操作抢占设备
-    *  2. 正在使用设备得应用处于前台,判断优先级;本次操作的应用优先级不高于正在使用得则存在冲突拒绝本次操作;
-    *     反之则允许本次操作抢占设备,需要关闭正在使用的设备
-    */
+     *  1. if it is judged that the application that is using the device is in the background,
+     *     it is necessary to close the used device and allow this operation to seize the device.
+     *  2. The application that is using the device is in the foreground, and the priority is judged;
+     *     If there is a conflict, the operation is rejected; otherwise,
+     *     the operation is allowed to preempt the device, and the device in use needs to be close.
+     */
     if (tempDevice.promote() != nullptr) {
         if (IsCameraNeedClose(tempDevice->GetCallerToken(), tempPid, pid)) {
             isPermisson = true;
