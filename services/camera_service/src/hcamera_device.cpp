@@ -15,7 +15,6 @@
 
 #include "hcamera_device.h"
 
-#include "camera_util.h"
 #include "camera_log.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
@@ -32,6 +31,7 @@ HCameraDevice::HCameraDevice(sptr<HCameraHostManager> &cameraHostManager,
     isReleaseCameraDevice_ = false;
     isOpenedCameraDevice_ = false;
     callerToken_ = callingTokenId;
+    deviceOperatorsCallback_ = nullptr;
 }
 
 HCameraDevice::~HCameraDevice()
@@ -44,6 +44,7 @@ HCameraDevice::~HCameraDevice()
     }
     deviceHDICallback_ = nullptr;
     deviceSvcCallback_ = nullptr;
+    deviceOperatorsCallback_ = nullptr;
 }
 
 std::string HCameraDevice::GetCameraId()
@@ -98,7 +99,6 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraDevice::GetSettings()
 int32_t HCameraDevice::Open()
 {
     CAMERA_SYNC_TRACE;
-    int32_t errorCode;
     if (isOpenedCameraDevice_) {
         MEDIA_ERR_LOG("HCameraDevice::Open failed, camera is busy");
     }
@@ -111,20 +111,39 @@ int32_t HCameraDevice::Open()
         return CAMERA_ALLOC_ERROR;
     }
 
-    auto conflictDevices = cameraHostManager_->CameraConflictDetection(cameraID_);
-    // Destory conflict devices
-    for (auto &i : conflictDevices) {
-        static_cast<HCameraDevice*>(i.GetRefPtr())->OnError(DEVICE_PREEMPT, 0);
-        i->Close();
+    if (deviceOperatorsCallback_.promote() == nullptr) {
+        MEDIA_ERR_LOG("HCameraDevice::Close there is no device operator callback");
+        return CAMERA_ALLOC_ERROR;
     }
+
+    MEDIA_INFO_LOG("HCameraDevice::Open Camera:[%{public}s", cameraID_.c_str());
+    return deviceOperatorsCallback_->DeviceOpen(cameraID_);
+}
+
+int32_t HCameraDevice::Close()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("HCameraDevice::Close Closing camera device: %{public}s", cameraID_.c_str());
+    if (deviceOperatorsCallback_.promote() == nullptr) {
+        MEDIA_ERR_LOG("HCameraDevice::Close there is no device operator callback");
+        return CAMERA_OPERATION_NOT_ALLOWED;
+    }
+    return deviceOperatorsCallback_->DeviceClose(cameraID_);
+}
+
+int32_t HCameraDevice::OpenDevice()
+{
+    CAMERA_SYNC_TRACE;
+    int32_t errorCode;
+
     if (deviceHDICallback_ == nullptr) {
         deviceHDICallback_ = new(std::nothrow) CameraDeviceCallback(this);
         if (deviceHDICallback_ == nullptr) {
-            MEDIA_ERR_LOG("HCameraDevice::Open CameraDeviceCallback allocation failed");
+            MEDIA_ERR_LOG("HCameraDevice::OpenDevice CameraDeviceCallback allocation failed");
             return CAMERA_ALLOC_ERROR;
         }
     }
-    MEDIA_INFO_LOG("HCameraDevice::Open Opening camera device: %{public}s", cameraID_.c_str());
+    MEDIA_INFO_LOG("HCameraDevice::OpenDevice Opening camera device: %{public}s", cameraID_.c_str());
     errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, deviceHDICallback_, hdiCameraDevice_);
     if (errorCode == CAMERA_OK) {
         isOpenedCameraDevice_ = true;
@@ -133,7 +152,7 @@ int32_t HCameraDevice::Open()
             OHOS::Camera::MetadataUtils::ConvertMetadataToVec(updateSettings_, setting);
             CamRetCode rc = (CamRetCode)(hdiCameraDevice_->UpdateSettings(setting));
             if (rc != HDI::Camera::V1_0::NO_ERROR) {
-                MEDIA_ERR_LOG("HCameraDevice::Open Update setting failed with error Code: %{public}d", rc);
+                MEDIA_ERR_LOG("HCameraDevice::OpenDevice Update setting failed with error Code: %{public}d", rc);
                 return HdiToServiceError(rc);
             }
             updateSettings_ = nullptr;
@@ -144,17 +163,16 @@ int32_t HCameraDevice::Open()
             (void)OnCameraStatus(cameraID_, CAMERA_STATUS_UNAVAILABLE);
         }
     } else {
-        MEDIA_ERR_LOG("HCameraDevice::Open Failed to open camera");
+        MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");
     }
     return errorCode;
 }
 
-int32_t HCameraDevice::Close()
+int32_t HCameraDevice::CloseDevice()
 {
     CAMERA_SYNC_TRACE;
-    std::lock_guard<std::mutex> lock(deviceLock_);
     if (hdiCameraDevice_ != nullptr) {
-        MEDIA_INFO_LOG("HCameraDevice::Close Closing camera device: %{public}s", cameraID_.c_str());
+        MEDIA_INFO_LOG("HCameraDevice::CloseDevice Closing camera device: %{public}s", cameraID_.c_str());
         hdiCameraDevice_->Close();
         (void)OnCameraStatus(cameraID_, CAMERA_STATUS_AVAILABLE);
     }
@@ -429,6 +447,16 @@ int32_t HCameraDevice::GetStreamOperator(sptr<IStreamOperatorCallback> callback,
     return CAMERA_OK;
 }
 
+int32_t HCameraDevice::SetDeviceOperatorsCallback(wptr<IDeviceOperatorsCallback> callback)
+{
+    if (callback.promote() == nullptr) {
+        MEDIA_ERR_LOG("HCameraDevice::SetDeviceOperatorsCallback callback is null");
+        return CAMERA_INVALID_ARG;
+    }
+    deviceOperatorsCallback_ = callback;
+    return CAMERA_OK;
+}
+
 sptr<IStreamOperator> HCameraDevice::GetStreamOperator()
 {
     return streamOperator_;
@@ -500,6 +528,11 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp,
         MEDIA_DEBUG_LOG("Focus state: %{public}d", item.data.u8[0]);
     }
     return CAMERA_OK;
+}
+
+int32_t HCameraDevice::GetCallerToken()
+{
+    return callerToken_;
 }
 
 CameraDeviceCallback::CameraDeviceCallback(sptr<HCameraDevice> hCameraDevice)

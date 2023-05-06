@@ -16,23 +16,24 @@
 #ifndef OHOS_CAMERA_H_CAMERA_DEVICE_H
 #define OHOS_CAMERA_H_CAMERA_DEVICE_H
 
+#include <iostream>
+
 #include "accesstoken_kit.h"
 #include "privacy_kit.h"
 #include "v1_0/icamera_device_callback.h"
 #include "camera_metadata_info.h"
+#include "camera_util.h"
 #include "hcamera_device_stub.h"
 #include "hcamera_host_manager.h"
 #include "v1_0/icamera_device.h"
 #include "v1_0/icamera_host.h"
 
-#include <iostream>
-
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
 class CameraDeviceCallback;
+class IDeviceOperatorsCallback;
 
-const std::string ACCESS_CAMERA = "ohos.permission.CAMERA";
 
 class HCameraDevice : public HCameraDeviceStub {
 public:
@@ -59,6 +60,10 @@ public:
     bool IsReleaseCameraDevice();
     bool IsOpenedCameraDevice();
     int32_t SetReleaseCameraDevice(bool isRelease);
+    int32_t SetDeviceOperatorsCallback(wptr<IDeviceOperatorsCallback> callback);
+    int32_t OpenDevice();
+    int32_t CloseDevice();
+    int32_t GetCallerToken();
 
 private:
     sptr<ICameraDevice> hdiCameraDevice_;
@@ -73,9 +78,9 @@ private:
     std::mutex statusCbLock_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> updateSettings_;
     sptr<IStreamOperator> streamOperator_;
-    std::mutex deviceLock_;
     uint32_t callerToken_;
     std::vector<int32_t> videoFrameRateRange_;
+    wptr<IDeviceOperatorsCallback> deviceOperatorsCallback_;
 
     void ReportFlashEvent(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
     void ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
@@ -94,6 +99,16 @@ public:
 
 private:
     wptr<HCameraDevice> hCameraDevice_;
+};
+
+class IDeviceOperatorsCallback : public virtual RefBase {
+public:
+    IDeviceOperatorsCallback() = default;
+    virtual ~IDeviceOperatorsCallback() = default;
+    virtual int32_t DeviceOpen(const std::string& cameraId) = 0;
+    virtual int32_t DeviceClose(const std::string& cameraId, pid_t pidFromSession = 0) = 0;
+    virtual std::vector<wptr<HCameraDevice>> CameraConflictDetection(const std::string& cameraId,
+                                                                     bool& isPermisson) = 0;
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -16,7 +16,10 @@
 #ifndef OHOS_CAMERA_H_CAMERA_SERVICE_H
 #define OHOS_CAMERA_H_CAMERA_SERVICE_H
 #include <set>
+#include <shared_mutex>
 #include <iostream>
+
+#include "camera_util.h"
 #include "hcamera_device.h"
 #include "hcamera_host_manager.h"
 #include "hcamera_service_stub.h"
@@ -31,7 +34,8 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
-class HCameraService : public SystemAbility, public HCameraServiceStub, public HCameraHostManager::StatusCallback {
+class HCameraService : public SystemAbility, public HCameraServiceStub, public HCameraHostManager::StatusCallback,
+                       public IDeviceOperatorsCallback {
     DECLARE_SYSTEM_ABILITY(HCameraService);
 
 public:
@@ -70,8 +74,13 @@ public:
     // HCameraHostManager::StatusCallback
     void OnCameraStatus(const std::string& cameraId, CameraStatus status) override;
     void OnFlashlightStatus(const std::string& cameraId, FlashStatus status) override;
+    // IDeviceOperatorsCallback
+    int32_t DeviceOpen(const std::string& cameraId) override;
+    int32_t DeviceClose(const std::string& cameraId, pid_t pidFromSession = 0) override;
+    std::vector<wptr<HCameraDevice>> CameraConflictDetection(const std::string& cameraId, bool& isPermisson) override;
+
 protected:
-    HCameraService(sptr<HCameraHostManager> cameraHostManager) : cameraHostManager_(cameraHostManager),
+    explicit HCameraService(sptr<HCameraHostManager> cameraHostManager) : cameraHostManager_(cameraHostManager),
         streamOperatorCallback_(nullptr),
         muteMode_(false) {}
 
@@ -99,6 +108,7 @@ private:
     bool IsCameraMuteSupported(std::string cameraId);
     int32_t UpdateMuteSetting(wptr<HCameraDevice> cameraDevice, bool muteMode);
     int32_t UnSetMuteCallback(pid_t pid);
+    bool IsDeviceAlreadyOpen(pid_t& tempPid, std::string& tempCameraId, wptr<HCameraDevice> &tempDevice);
     std::mutex mutex_;
     std::mutex cbMutex_;
     std::mutex muteCbMutex_;
@@ -109,6 +119,8 @@ private:
     std::map<std::string, wptr<HCameraDevice>> devices_;
     std::map<int32_t, std::set<std::string>> camerasForPid_;
     bool muteMode_;
+    std::mutex deviceOperatorsLock_;
+    std::shared_mutex mapOperatorsLock_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
