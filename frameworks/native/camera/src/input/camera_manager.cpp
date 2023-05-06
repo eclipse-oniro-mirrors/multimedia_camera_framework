@@ -32,7 +32,6 @@ namespace CameraStandard {
 namespace {
     constexpr uint32_t UNIT_LENGTH = 3;
 }
-
 sptr<CameraManager> CameraManager::cameraManager_;
 
 const std::string CameraManager::surfaceFormat = "CAMERA_SURFACE_FORMAT";
@@ -824,27 +823,28 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     sptr<CameraOutputCapability> cameraOutputCapability = nullptr;
     cameraOutputCapability = new(std::nothrow) CameraOutputCapability();
     std::shared_ptr<Camera::CameraMetadata> metadata = camera->GetMetadata();
+    vector<MetadataObjectType> objectTypes = {};
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS,
                                              &item);
     if (ret != CAM_META_SUCCESS && item.count == 0) {
-        MEDIA_ERR_LOG("Failed to get extend stream configuration info %{public}d %{public}d",
-                      ret, item.count);
+        MEDIA_ERR_LOG("Failed get extend stream info %{public}d %{public}d", ret, item.count);
         return nullptr;
     }
-    // 解析tag中带的数据信息意义
     std::shared_ptr<CameraStreamInfoParse>modeStreamParse = std::make_shared<CameraStreamInfoParse>();
-    modeStreamParse->getModeInfo(item.data.i32, item.count, extendInfo_);
+    modeStreamParse->getModeInfo(item.data.i32, item.count, extendInfo_); // 解析tag中带的数据信息意义
     for (int i = 0; i < extendInfo_.modeCount; i++) {
         if (modeName != 0 && modeName == extendInfo_.modeInfo[i].modeName) {
             for (int j = 0; j < extendInfo_.modeInfo[i].streamTypeCount; j++) {
-                OutputCapStreamType streamType = static_cast<OutputCapStreamType>(extendInfo_.modeInfo[i].stream[j].streamType);
+                OutputCapStreamType streamType =
+                    static_cast<OutputCapStreamType>(extendInfo_.modeInfo[i].streamInfo[j].streamType);
                 CreateProfile4StreamType(streamType, i, j);
             }
             break;
         } else {
             for (int j = 0; j < extendInfo_.modeInfo[i].streamTypeCount; j++) {
-                OutputCapStreamType streamType = static_cast<OutputCapStreamType>(extendInfo_.modeInfo[i].stream[j].streamType);
+                OutputCapStreamType streamType =
+                    static_cast<OutputCapStreamType>(extendInfo_.modeInfo[i].streamInfo[j].streamType);
                 CreateProfile4StreamType(streamType, i, j);
             }
         }
@@ -855,7 +855,6 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     MEDIA_DEBUG_LOG("SetPreviewProfiles size = %{public}zu", previewProfiles_.size());
     cameraOutputCapability->SetVideoProfiles(vidProfiles_);
     MEDIA_DEBUG_LOG("SetVideoProfiles size = %{public}zu", vidProfiles_.size());
-
     camera_metadata_item_t metadataItem;
     ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_STATISTICS_FACE_DETECT_MODE, &metadataItem);
     if (ret == CAM_META_SUCCESS) {
@@ -875,7 +874,7 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
 
 void CameraManager::CreateProfile4StreamType(OutputCapStreamType streamType, int32_t modeIndex, int32_t streamIndex)
 {
-    for (int k = 0; k < extendInfo_.modeInfo[modeIndex].streamInfo[streamIndex].DetailInfocount; k++) {
+    for (int k = 0; k < extendInfo_.modeInfo[modeIndex].streamInfo[streamIndex].detailInfoCount; k++) {
         CameraFormat format;
         auto itr = metaToFwCameraFormat_.find(static_cast<camera_format_t>(
             extendInfo_.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].format));

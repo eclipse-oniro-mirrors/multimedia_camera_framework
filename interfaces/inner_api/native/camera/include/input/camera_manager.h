@@ -124,7 +124,7 @@ public:
     * @param Camera device for which extend capability need to be fetched.
     * @return Returns vector the ability of the mode of cameraDevice of available camera.
     */
-    sptr<CameraOutputCapability> GetSupportedOutputCapability(sptr<CameraDevice>& camera, int32_t modeName);
+    sptr<CameraOutputCapability> GetSupportedOutputCapability(sptr<CameraDevice>& camera, int32_t modeName = 0);
 
     /**
     * @brief Create camera input instance with provided camera position and type.

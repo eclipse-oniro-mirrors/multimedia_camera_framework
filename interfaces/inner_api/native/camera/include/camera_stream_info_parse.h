@@ -33,7 +33,7 @@ typedef struct DetailInfo {
 
 typedef struct StreamInfo {
     int32_t streamType;
-    int32_t detailInfocount;
+    int32_t detailInfoCount;
     DetailInfo detailInfo[MAX_NUM];
 } StreamInfo;
 
@@ -103,9 +103,9 @@ private:
         for (int i = 0; i < modeCount_; i++) {
             for (int j = 0; j < streamTypeCount.front(); j++) {
                 transferedInfo.modeInfo[i].streamInfo[j].streamType = originInfo[tempStreamStartIndex.front()];
-                transferedInfo.modeInfo[i].streamInfo[j].detailInfocount =
+                transferedInfo.modeInfo[i].streamInfo[j].detailInfoCount =
                     (tempStreamEndIndex.front() - tempStreamStartIndex.front()) / STEP;
-                deatiInfoCount_.push(transferedInfo.modeInfo[i].streamInfo[j].detailInfocount);
+                deatiInfoCount_.push(transferedInfo.modeInfo[i].streamInfo[j].detailInfoCount);
                 tempStreamStartIndex.pop();
                 tempStreamEndIndex.pop(); // 使用streamStartIndex 的一个副本
             }
@@ -126,10 +126,14 @@ private:
             int index = 0;
                 for (int k = 0; k <deatiInfoCount.front(); k++) {
                     int indexLoop = tempStreamStartIndex.front();
-                    transferedInfo.modeInfo[i].streamInfo[j].detailInfo[k].format = originInfo[indexLoop + index + formatOffset];
-                    transferedInfo.modeInfo[i].streamInfo[j].detailInfo[k].width = originInfo[indexLoop + index + widthOffset];
-                    transferedInfo.modeInfo[i].streamInfo[j].detailInfo[k].height = originInfo[indexLoop + index + heightOffset];
-                    transferedInfo.modeInfo[i].streamInfo[j].detailInfo[k].fps = originInfo[indexLoop + index + fpsOffset];
+                    transferedInfo.modeInfo[i].streamInfo[j].detailInfo[k].format =
+                        originInfo[indexLoop + index + formatOffset];
+                    transferedInfo.modeInfo[i].streamInfo[j].detailInfo[k].width =
+                        originInfo[indexLoop + index + widthOffset];
+                    transferedInfo.modeInfo[i].streamInfo[j].detailInfo[k].height =
+                        originInfo[indexLoop + index + heightOffset];
+                    transferedInfo.modeInfo[i].streamInfo[j].detailInfo[k].fps =
+                        originInfo[indexLoop + index + fpsOffset];
                     index += STEP;
                 }
                 deatiInfoCount.pop();
