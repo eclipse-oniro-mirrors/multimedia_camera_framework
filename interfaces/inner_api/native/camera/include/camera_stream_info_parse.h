@@ -31,21 +31,21 @@ typedef struct DetailInfo {
     int32_t fps;
 } DetailInfo;
 
-typedef struct streamInfo {
+typedef struct StreamInfo {
     int32_t streamType;
-    int32_t DetailInfocount;
-    DetailInfo Dinfo[MAX_NUM];
-} streamInfo;
+    int32_t detailInfocount;
+    DetailInfo detailInfo[MAX_NUM];
+} StreamInfo;
 
-typedef struct modeInfo {
+typedef struct ModeInfo {
     int32_t modeName;
     int32_t streamTypeCount;
-    streamInfo stream[MAX_NUM];
-} modeInfo;
+    StreamInfo streamInfo[MAX_NUM];
+} ModeInfo;
 
 typedef struct ExtendInfo {
-    int32_t modecount;
-    modeInfo mode[MAX_NUM];
+    int32_t modeCount;
+    ModeInfo modeInfo[MAX_NUM];
 } ExtendInfo;
 
 class CameraStreamInfoParse {
@@ -59,12 +59,12 @@ public:
                     if (i + 1 < count) {
                         modeStartIndex_.push_back(i + 1);
                     }
-                transferedInfo.modecount++;
+                transferedInfo.modeCount++;
             }
         }
-        modeCount_ = transferedInfo.modecount;
-        for (int i = 0; i < transferedInfo.modecount; i++) {
-            transferedInfo.mode[i].modeName = originInfo[modeStartIndex_[i]];
+        modeCount_ = transferedInfo.modeCount;
+        for (int i = 0; i < transferedInfo.modeCount; i++) {
+            transferedInfo.modeInfo[i].modeName = originInfo[modeStartIndex_[i]];
         }
         getStreamCount(originInfo, transferedInfo);
         getStreamInfo(originInfo, transferedInfo);
@@ -83,7 +83,7 @@ private:
                     if (j + 1 < modeEndIndex_[i]) {
                         streamStartIndex_.push(j+1);
                     }
-                    transferedInfo.mode[i].streamTypeCount++;
+                    transferedInfo.modeInfo[i].streamTypeCount++;
                 }
             }
         }
@@ -97,15 +97,15 @@ private:
         std::queue<int> tempStreamEndIndex = streamEndIndex_;
         std::queue<int> streamTypeCount;
         for (int i = 0; i < modeCount_; i++) {
-            streamTypeCount.push(transferedInfo.mode[i].streamTypeCount);
+            streamTypeCount.push(transferedInfo.modeInfo[i].streamTypeCount);
         }
         streamTypeCount_ = streamTypeCount;
         for (int i = 0; i < modeCount_; i++) {
             for (int j = 0; j < streamTypeCount.front(); j++) {
-                transferedInfo.mode[i].stream[j].streamType = originInfo[tempStreamStartIndex.front()];
-                transferedInfo.mode[i].stream[j].DetailInfocount =
+                transferedInfo.modeInfo[i].streamInfo[j].streamType = originInfo[tempStreamStartIndex.front()];
+                transferedInfo.modeInfo[i].streamInfo[j].detailInfocount =
                     (tempStreamEndIndex.front() - tempStreamStartIndex.front()) / STEP;
-                deatiInfoCount_.push(transferedInfo.mode[i].stream[j].DetailInfocount);
+                deatiInfoCount_.push(transferedInfo.modeInfo[i].streamInfo[j].detailInfocount);
                 tempStreamStartIndex.pop();
                 tempStreamEndIndex.pop(); // 使用streamStartIndex 的一个副本
             }
@@ -126,10 +126,10 @@ private:
             int index = 0;
                 for (int k = 0; k <deatiInfoCount.front(); k++) {
                     int indexLoop = tempStreamStartIndex.front();
-                    transferedInfo.mode[i].stream[j].Dinfo[k].format = originInfo[indexLoop + index + formatOffset];
-                    transferedInfo.mode[i].stream[j].Dinfo[k].width = originInfo[indexLoop + index + widthOffset];
-                    transferedInfo.mode[i].stream[j].Dinfo[k].height = originInfo[indexLoop + index + heightOffset];
-                    transferedInfo.mode[i].stream[j].Dinfo[k].fps = originInfo[indexLoop + index + fpsOffset];
+                    transferedInfo.modeInfo[i].streamInfo[j].detailInfo[k].format = originInfo[indexLoop + index + formatOffset];
+                    transferedInfo.modeInfo[i].streamInfo[j].detailInfo[k].width = originInfo[indexLoop + index + widthOffset];
+                    transferedInfo.modeInfo[i].streamInfo[j].detailInfo[k].height = originInfo[indexLoop + index + heightOffset];
+                    transferedInfo.modeInfo[i].streamInfo[j].detailInfo[k].fps = originInfo[indexLoop + index + fpsOffset];
                     index += STEP;
                 }
                 deatiInfoCount.pop();
@@ -146,7 +146,7 @@ private:
     std::vector<int> modeEndIndex_ = {};
     std::queue<int> streamStartIndex_;
     std::queue<int> streamEndIndex_;
-    int modeCount_ = 0;
+    uint32_t modeCount_ = 0;
     std::queue<int> streamTypeCount_;
     std::queue<int> deatiInfoCount_;
 };

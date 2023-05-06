@@ -59,14 +59,14 @@ struct CameraStatusInfo {
     }
 };
 
-typedef enum fwStreamType {
+typedef enum OutputCapStreamType {
     PREVIEW = 0,
     VIDEO = 1,
     STILL_CAPTURE = 2,
     POST_VIEW = 3,
     ANALYZE = 4,
     CUSTOM = 5
-} fwStreamType;
+} OutputCapStreamType;
 
 class CameraManagerCallback {
 public:
@@ -117,14 +117,6 @@ public:
     * @return Returns vector of cameraDevice of available camera.
     */
     std::vector<sptr<CameraDevice>> GetSupportedCameras();
-
-    /**
-    * @brief Get extend output capaility of the given camera.
-    *
-    * @param Camera device for which capability need to be fetched.
-    * @return Returns vector of cameraDevice of available camera.
-    */
-    sptr<CameraOutputCapability> GetSupportedOutputCapability(sptr<CameraDevice>& camera);
 
     /**
     * @brief Get extend output capaility of the mode of the given camera.
@@ -437,7 +429,7 @@ private:
     int32_t CreateListenerObject();
     void CameraServerDied(pid_t pid);
     void ChooseDeFaultCameras(std::vector<sptr<CameraDevice>>& supportedCameras);
-    void CreateProfile4StreamType(fwStreamType streamType, int32_t modeIndex, int32_t streamIndex);
+    void CreateProfile4StreamType(OutputCapStreamType streamType, int32_t modeIndex, int32_t streamIndex);
     static const std::unordered_map<camera_format_t, CameraFormat> metaToFwCameraFormat_;
     static const std::unordered_map<CameraFormat, camera_format_t> fwToMetaCameraFormat_;
 
