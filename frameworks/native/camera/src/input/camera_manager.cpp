@@ -29,9 +29,7 @@
 using namespace std;
 namespace OHOS {
 namespace CameraStandard {
-namespace {
-    constexpr uint32_t UNIT_LENGTH = 3;
-}
+
 sptr<CameraManager> CameraManager::cameraManager_;
 
 const std::string CameraManager::surfaceFormat = "CAMERA_SURFACE_FORMAT";
