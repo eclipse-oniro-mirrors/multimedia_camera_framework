@@ -429,7 +429,7 @@ private:
     int32_t CreateListenerObject();
     void CameraServerDied(pid_t pid);
     void ChooseDeFaultCameras(std::vector<sptr<CameraDevice>>& supportedCameras);
-    void CreateProfile4StreamType(OutputCapStreamType streamType, int32_t modeIndex, int32_t streamIndex);
+    void CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex, uint32_t streamIndex);
     static const std::unordered_map<camera_format_t, CameraFormat> metaToFwCameraFormat_;
     static const std::unordered_map<CameraFormat, camera_format_t> fwToMetaCameraFormat_;
 

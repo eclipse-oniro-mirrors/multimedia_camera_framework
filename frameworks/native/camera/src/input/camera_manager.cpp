@@ -826,7 +826,7 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     vector<MetadataObjectType> objectTypes = {};
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS,
-                                             &item);
+                                                 &item);
     if (ret != CAM_META_SUCCESS && item.count == 0) {
         MEDIA_ERR_LOG("Failed get extend stream info %{public}d %{public}d", ret, item.count);
         return nullptr;

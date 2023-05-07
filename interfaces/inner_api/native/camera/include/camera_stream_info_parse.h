@@ -80,10 +80,10 @@ private:
                 }
                 if (originInfo[j] == -1) {
                     streamEndIndex_.push(j);
-                    if (j + 1 < modeEndIndex_[i]) {
-                        streamStartIndex_.push(j+1);
-                    }
                     transferedInfo.modeInfo[i].streamTypeCount++;
+                }
+                if ((originInfo[j] == -1) && (j + 1 < modeEndIndex_[i])) {
+                    streamStartIndex_.push(j + 1);
                 }
             }
         }
