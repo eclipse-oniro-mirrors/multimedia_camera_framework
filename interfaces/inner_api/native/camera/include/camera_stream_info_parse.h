@@ -33,18 +33,18 @@ typedef struct DetailInfo {
 
 typedef struct StreamInfo {
     int32_t streamType;
-    int32_t detailInfoCount;
+    uint32_t detailInfoCount;
     DetailInfo detailInfo[MAX_NUM];
 } StreamInfo;
 
 typedef struct ModeInfo {
     int32_t modeName;
-    int32_t streamTypeCount;
+    uint32_t streamTypeCount;
     StreamInfo streamInfo[MAX_NUM];
 } ModeInfo;
 
 typedef struct ExtendInfo {
-    int32_t modeCount;
+    uint32_t modeCount;
     ModeInfo modeInfo[MAX_NUM];
 } ExtendInfo;
 
@@ -53,7 +53,7 @@ public:
     void getModeInfo(int32_t* originInfo, uint32_t count, ExtendInfo& transferedInfo)
     {
         modeStartIndex_.push_back(0);
-        for (int i = 1; i < count; i++) {
+        for (uint32_t i = 1; i < count; i++) {
             if (originInfo[i -1] == -1 && originInfo[i] == -1) {
                     modeEndIndex_.push_back(i);
                     if (i + 1 < count) {
@@ -63,7 +63,7 @@ public:
             }
         }
         modeCount_ = transferedInfo.modeCount;
-        for (int i = 0; i < transferedInfo.modeCount; i++) {
+        for (uint32_t i = 0; i < transferedInfo.modeCount; i++) {
             transferedInfo.modeInfo[i].modeName = originInfo[modeStartIndex_[i]];
         }
         getStreamCount(originInfo, transferedInfo);
@@ -73,8 +73,8 @@ public:
 private:
     void getStreamCount(int32_t* originInfo, ExtendInfo& transferedInfo)
     {
-        for (int i = 0; i < modeCount_; i++) {
-            for (int j = modeStartIndex_[i]; j < modeEndIndex_[i]; j++) {
+        for (uint32_t i = 0; i < modeCount_; i++) {
+            for (uint32_t j = modeStartIndex_[i]; j < modeEndIndex_[i]; j++) {
                 if (j == modeStartIndex_[i]) {
                     streamStartIndex_.push(modeStartIndex_[i] + 1);
                 }
@@ -93,15 +93,15 @@ private:
     }
     void getStreamInfo(int32_t* originInfo, ExtendInfo& transferedInfo)
     {
-        std::queue<int> tempStreamStartIndex = streamStartIndex_;
-        std::queue<int> tempStreamEndIndex = streamEndIndex_;
-        std::queue<int> streamTypeCount;
-        for (int i = 0; i < modeCount_; i++) {
+        std::queue<uint32_t> tempStreamStartIndex = streamStartIndex_;
+        std::queue<uint32_t> tempStreamEndIndex = streamEndIndex_;
+        std::queue<uint32_t> streamTypeCount;
+        for (uint32_t i = 0; i < modeCount_; i++) {
             streamTypeCount.push(transferedInfo.modeInfo[i].streamTypeCount);
         }
         streamTypeCount_ = streamTypeCount;
-        for (int i = 0; i < modeCount_; i++) {
-            for (int j = 0; j < streamTypeCount.front(); j++) {
+        for (uint32_t i = 0; i < modeCount_; i++) {
+            for (uint32_t j = 0; j < streamTypeCount.front(); j++) {
                 transferedInfo.modeInfo[i].streamInfo[j].streamType = originInfo[tempStreamStartIndex.front()];
                 transferedInfo.modeInfo[i].streamInfo[j].detailInfoCount =
                     (tempStreamEndIndex.front() - tempStreamStartIndex.front()) / STEP;
@@ -115,16 +115,16 @@ private:
     }
     void getDetailStreamInfo(int32_t* originInfo, ExtendInfo& transferedInfo)
     {
-        std::queue<int> tempStreamStartIndex = streamStartIndex_;
-        std::queue<int> deatiInfoCount = deatiInfoCount_;
+        std::queue<uint32_t> tempStreamStartIndex = streamStartIndex_;
+        std::queue<uint32_t> deatiInfoCount = deatiInfoCount_;
         uint32_t formatOffset = 1;
         uint32_t widthOffset = 2;
         uint32_t heightOffset = 3;
         uint32_t fpsOffset = 4;
-        for (int i = 0; i < modeCount_; i++) {
-            for (int j = 0; j < streamTypeCount_.front(); j++) {
-            int index = 0;
-                for (int k = 0; k <deatiInfoCount.front(); k++) {
+        for (uint32_t i = 0; i < modeCount_; i++) {
+            for (uint32_t j = 0; j < streamTypeCount_.front(); j++) {
+            uint32_t index = 0;
+                for (uint32_t k = 0; k <deatiInfoCount.front(); k++) {
                     int indexLoop = tempStreamStartIndex.front();
                     transferedInfo.modeInfo[i].streamInfo[j].detailInfo[k].format =
                         originInfo[indexLoop + index + formatOffset];
@@ -146,13 +146,13 @@ private:
         }
     }
 private:
-    std::vector<int>  modeStartIndex_ = {};
-    std::vector<int> modeEndIndex_ = {};
-    std::queue<int> streamStartIndex_;
-    std::queue<int> streamEndIndex_;
+    std::vector<uint32_t>  modeStartIndex_ = {};
+    std::vector<uint32_t> modeEndIndex_ = {};
+    std::queue<uint32_t> streamStartIndex_;
+    std::queue<uint32_t> streamEndIndex_;
     uint32_t modeCount_ = 0;
-    std::queue<int> streamTypeCount_;
-    std::queue<int> deatiInfoCount_;
+    std::queue<uint32_t> streamTypeCount_;
+    std::queue<uint32_t> deatiInfoCount_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
