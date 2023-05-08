@@ -179,7 +179,6 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
         return CAMERA_ALLOC_ERROR;
     }
 
-    MEDIA_INFO_LOG("HCameraService::CreateCameraDevice CameraConflictDetection");
     bool isPermisson = true;
     auto conflictDevices = CameraConflictDetection(cameraId, isPermisson);
     if (!isPermisson) {
@@ -203,21 +202,22 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
     // when create camera device, update mute setting truely.
     if (IsCameraMuteSupported(cameraId)) {
         if (UpdateMuteSetting(cameraDevice, muteMode_) != CAMERA_OK) {
-            MEDIA_ERR_LOG("HCameraService::CreateCameraDevice UpdateMuteSetting Failed, cameraId: %{public}s",
-                          cameraId.c_str());
+            MEDIA_ERR_LOG("UpdateMuteSetting Failed, cameraId: %{public}s", cameraId.c_str());
         }
     } else {
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice MuteCamera not Supported");
     }
-    cameraDevice->SetStatusCallback(cameraServiceCallbacks_);
+    {
+        std::lock_guard<std::mutex> lock(cbMutex_);
+        cameraDevice->SetStatusCallback(cameraServiceCallbacks_);
+    }
     cameraDevice->SetDeviceOperatorsCallback(this);
 
-    MEDIA_DEBUG_LOG("HCameraService::CreateCameraDevice Calling pcameraId: %{public}s", cameraId.c_str());
     std::lock_guard<std::shared_mutex> writeLock(mapOperatorsLock_);
     devices_[cameraId] = cameraDevice;
     pid_t pid = IPCSkeleton::GetCallingPid();
-    MEDIA_INFO_LOG("HCameraService::CreateCameraDevice Calling pid = %{public}d, Camera created size = %{public}zu",
-                   pid, camerasForPid_[pid].size());
+    MEDIA_DEBUG_LOG("cameraId: %{public}s, pid = %{public}d, Camera created size = %{public}zu",
+                    cameraId.c_str(), pid, camerasForPid_[pid].size());
     camerasForPid_[pid].insert(cameraId);
     device = cameraDevice;
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager_CreateCameraInput CameraId:%s", cameraId.c_str()));
