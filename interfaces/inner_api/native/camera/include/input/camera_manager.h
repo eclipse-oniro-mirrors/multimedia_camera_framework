@@ -33,6 +33,7 @@
 #include "hcamera_listener_stub.h"
 #include "input/camera_death_recipient.h"
 #include "hcamera_service_callback_stub.h"
+#include "camera_stream_info_parse.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -57,6 +58,15 @@ struct CameraStatusInfo {
         cameraDevice = nullptr;
     }
 };
+
+typedef enum OutputCapStreamType {
+    PREVIEW = 0,
+    VIDEO = 1,
+    STILL_CAPTURE = 2,
+    POST_VIEW = 3,
+    ANALYZE = 4,
+    CUSTOM = 5
+} OutputCapStreamType;
 
 class CameraManagerCallback {
 public:
@@ -109,12 +119,12 @@ public:
     std::vector<sptr<CameraDevice>> GetSupportedCameras();
 
     /**
-    * @brief Get output capaility of the given camera.
+    * @brief Get extend output capaility of the mode of the given camera.
     *
-    * @param Camera device for which capability need to be fetched.
-    * @return Returns vector of cameraDevice of available camera.
+    * @param Camera device for which extend capability need to be fetched.
+    * @return Returns vector the ability of the mode of cameraDevice of available camera.
     */
-    sptr<CameraOutputCapability> GetSupportedOutputCapability(sptr<CameraDevice>& camera);
+    sptr<CameraOutputCapability> GetSupportedOutputCapability(sptr<CameraDevice>& camera, int32_t modeName = 0);
 
     /**
     * @brief Create camera input instance with provided camera position and type.
@@ -122,6 +132,7 @@ public:
     * @param The cameraDevice for which input has to be created.
     * @return Returns pointer to camera input instance.
     */
+
     sptr<CameraInput> CreateCameraInput(CameraPosition position, CameraType cameraType);
 
     /**
@@ -418,6 +429,7 @@ private:
     int32_t CreateListenerObject();
     void CameraServerDied(pid_t pid);
     void ChooseDeFaultCameras(std::vector<sptr<CameraDevice>>& supportedCameras);
+    void CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex, uint32_t streamIndex);
     static const std::unordered_map<camera_format_t, CameraFormat> metaToFwCameraFormat_;
     static const std::unordered_map<CameraFormat, camera_format_t> fwToMetaCameraFormat_;
 
@@ -441,6 +453,10 @@ private:
     dmDeviceInfo localDeviceInfo_;
     std::map<std::string, dmDeviceInfo> distributedCamInfoAndId_;
     class DeviceInitCallBack;
+    ExtendInfo extendInfo_;
+    std::vector<Profile> photoProfiles_ = {};
+    std::vector<Profile> previewProfiles_ = {};
+    std::vector<VideoProfile> vidProfiles_ = {};
 };
 } // namespace CameraStandard
 } // namespace OHOS

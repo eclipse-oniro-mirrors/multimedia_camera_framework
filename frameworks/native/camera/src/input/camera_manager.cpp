@@ -29,10 +29,6 @@
 using namespace std;
 namespace OHOS {
 namespace CameraStandard {
-namespace {
-    constexpr uint32_t UNIT_LENGTH = 3;
-}
-
 sptr<CameraManager> CameraManager::cameraManager_;
 
 const std::string CameraManager::surfaceFormat = "CAMERA_SURFACE_FORMAT";
@@ -818,64 +814,44 @@ int CameraManager::CreateCameraInput(CameraPosition position, CameraType cameraT
     return CameraErrorCode::SUCCESS;
 }
 
-sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<CameraDevice>& camera)
+sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<CameraDevice>& camera,
+    int32_t modeName)
 {
     sptr<CameraOutputCapability> cameraOutputCapability = nullptr;
-    uint32_t widthOffset = 1;
-    uint32_t heightOffset = 2;
-    CameraFormat format = CAMERA_FORMAT_INVALID;
-    Size size;
-    vector<Profile> photoProfile = {};
-    vector<Profile> previewProfile = {};
-    vector<VideoProfile> videoProfiles = {};
-    vector<MetadataObjectType> objectTypes = {};
+    cameraOutputCapability = new(std::nothrow) CameraOutputCapability();
     std::shared_ptr<Camera::CameraMetadata> metadata = camera->GetMetadata();
+    vector<MetadataObjectType> objectTypes = {};
     camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(metadata->get(),
-                                             OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS,
-                                             &item);
-    if ((ret != CAM_META_SUCCESS) || (item.count % UNIT_LENGTH != 0)) {
-        MEDIA_ERR_LOG("Failed to get stream configuration or Invalid stream configuation %{public}d  %{public}d",
-            ret, item.count);
+    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS,
+                                                 &item);
+    if (ret != CAM_META_SUCCESS && item.count == 0) {
+        MEDIA_ERR_LOG("Failed get extend stream info %{public}d %{public}d", ret, item.count);
         return nullptr;
     }
-    cameraOutputCapability = new(std::nothrow) CameraOutputCapability();
-
-    for (uint32_t i = 0; i < item.count; i += UNIT_LENGTH) {
-        auto itr = metaToFwCameraFormat_.find(static_cast<camera_format_t>(item.data.i32[i]));
-        if (itr != metaToFwCameraFormat_.end()) {
-            format = itr->second;
+    std::shared_ptr<CameraStreamInfoParse>modeStreamParse = std::make_shared<CameraStreamInfoParse>();
+    modeStreamParse->getModeInfo(item.data.i32, item.count, extendInfo_); // 解析tag中带的数据信息意义
+    for (uint32_t i = 0; i < extendInfo_.modeCount; i++) {
+        if (modeName != 0 && modeName == extendInfo_.modeInfo[i].modeName) {
+            for (uint32_t j = 0; j < extendInfo_.modeInfo[i].streamTypeCount; j++) {
+                OutputCapStreamType streamType =
+                    static_cast<OutputCapStreamType>(extendInfo_.modeInfo[i].streamInfo[j].streamType);
+                CreateProfile4StreamType(streamType, i, j);
+            }
+            break;
         } else {
-            format = CAMERA_FORMAT_INVALID;
-            MEDIA_ERR_LOG("format %{public}d is not supported now", item.data.i32[i]);
-            continue;
-        }
-        size.width = item.data.i32[i + widthOffset];
-        size.height = item.data.i32[i + heightOffset];
-        Profile profile = Profile(format, size);
-        if (format == CAMERA_FORMAT_JPEG) {
-            photoProfile.push_back(profile);
-        } else {
-            previewProfile.push_back(profile);
-            camera_metadata_item_t fpsItem;
-            int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FPS_RANGES, &fpsItem);
-            if (ret == CAM_META_SUCCESS) {
-                const uint32_t step = 2;
-                for (uint32_t i = 0; i < (fpsItem.count - 1); i += step) {
-                    std::vector<int32_t> fps = {fpsItem.data.i32[i], fpsItem.data.i32[i+1]};
-                    VideoProfile vidProfile = VideoProfile(format, size, fps);
-                    videoProfiles.push_back(vidProfile);
-                }
+            for (uint32_t j = 0; j < extendInfo_.modeInfo[i].streamTypeCount; j++) {
+                OutputCapStreamType streamType =
+                    static_cast<OutputCapStreamType>(extendInfo_.modeInfo[i].streamInfo[j].streamType);
+                CreateProfile4StreamType(streamType, i, j);
             }
         }
     }
-    cameraOutputCapability->SetPhotoProfiles(photoProfile);
-    MEDIA_DEBUG_LOG("SetPhotoProfiles size = %{public}zu", photoProfile.size());
-    cameraOutputCapability->SetPreviewProfiles(previewProfile);
-    MEDIA_DEBUG_LOG("SetPreviewProfiles size = %{public}zu", previewProfile.size());
-    cameraOutputCapability->SetVideoProfiles(videoProfiles);
-    MEDIA_DEBUG_LOG("SetVideoProfiles size = %{public}zu", videoProfiles.size());
-
+    cameraOutputCapability->SetPhotoProfiles(photoProfiles_);
+    MEDIA_DEBUG_LOG("SetPhotoProfiles size = %{public}zu", photoProfiles_.size());
+    cameraOutputCapability->SetPreviewProfiles(previewProfiles_);
+    MEDIA_DEBUG_LOG("SetPreviewProfiles size = %{public}zu", previewProfiles_.size());
+    cameraOutputCapability->SetVideoProfiles(vidProfiles_);
+    MEDIA_DEBUG_LOG("SetVideoProfiles size = %{public}zu", vidProfiles_.size());
     camera_metadata_item_t metadataItem;
     ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_STATISTICS_FACE_DETECT_MODE, &metadataItem);
     if (ret == CAM_META_SUCCESS) {
@@ -886,9 +862,43 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
         }
     }
     cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
-
+    photoProfiles_.clear();
+    previewProfiles_.clear();
+    vidProfiles_.clear();
+    extendInfo_ = {};
     return cameraOutputCapability;
 }
+
+void CameraManager::CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex, uint32_t streamIndex)
+{
+    for (uint32_t k = 0; k < extendInfo_.modeInfo[modeIndex].streamInfo[streamIndex].detailInfoCount; k++) {
+        CameraFormat format;
+        auto itr = metaToFwCameraFormat_.find(static_cast<camera_format_t>(
+            extendInfo_.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].format));
+        if (itr != metaToFwCameraFormat_.end()) {
+            format = itr->second;
+        } else {
+            format = CAMERA_FORMAT_INVALID;
+            continue;
+        }
+        Size size;
+        size.width = extendInfo_.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].width;
+        size.height = extendInfo_.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].height;
+        int32_t fps = extendInfo_.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].fps;
+        if (streamType == OutputCapStreamType::PREVIEW) {
+            Profile previewProfile = Profile(format, size);
+            previewProfiles_.push_back(previewProfile);
+        } else if (streamType == OutputCapStreamType::STILL_CAPTURE) {
+            Profile snapProfile = Profile(format, size);
+            photoProfiles_.push_back(snapProfile);
+        } else if (streamType == OutputCapStreamType::VIDEO) {
+            std::vector<int32_t> frameRates = {fps, fps};
+            VideoProfile vidProfile = VideoProfile(format, size, frameRates);
+            vidProfiles_.push_back(vidProfile);
+        }
+    }
+}
+
 void CameraManager::SetCameraServiceCallback(sptr<ICameraServiceCallback>& callback)
 {
     int32_t retCode = CAMERA_OK;
