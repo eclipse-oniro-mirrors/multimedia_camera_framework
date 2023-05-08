@@ -102,9 +102,15 @@ int32_t HCameraDevice::Open()
     if (isOpenedCameraDevice_) {
         MEDIA_ERR_LOG("HCameraDevice::Open failed, camera is busy");
     }
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    if (callerToken_ != callerToken) {
+        MEDIA_ERR_LOG("Failed to Open camera, createCamera token is : %{public}d, now token is %{public}d",
+            callerToken_, callerToken);
+        return CAMERA_OPERATION_NOT_ALLOWED;
+    }
     bool isAllowed = true;
-    if (IsValidTokenId(callerToken_)) {
-        isAllowed = Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken_, ACCESS_CAMERA);
+    if (IsValidTokenId(callerToken)) {
+        isAllowed = Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken, OHOS_PERMISSION_CAMERA);
     }
     if (!isAllowed) {
         MEDIA_ERR_LOG("HCameraDevice::Open IsAllowedUsingPermission failed");

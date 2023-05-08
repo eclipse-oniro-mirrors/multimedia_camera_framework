@@ -26,8 +26,8 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
 static constexpr int32_t CAMERA_COLOR_SPACE = 8;
-const std::string ACCESS_CAMERA = "ohos.permission.CAMERA";
-
+static const std::string OHOS_PERMISSION_CAMERA = "ohos.permission.CAMERA";
+static const std::string OHOS_PERMISSION_MANAGE_CAMERA_CONFIG = "ohos.permission.MANAGE_CAMERA_CONFIG";
 enum CamServiceError {
     CAMERA_OK = 0,
     CAMERA_ALLOC_ERROR,
@@ -91,6 +91,8 @@ bool IsSameClient(const pid_t& pid, const pid_t& pidCompared);
 bool IsInForeGround(const int32_t callerToken);
 
 bool IsCameraNeedClose(const int32_t callerToken, const pid_t& pid, const pid_t& pidCompared);
+
+int32_t CheckPermission(std::string permissionName, uint32_t callerToken);
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_UTIL_H

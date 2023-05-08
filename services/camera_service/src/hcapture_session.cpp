@@ -98,10 +98,6 @@ HCaptureSession::HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
     std::lock_guard<std::mutex> lock(sessionLock_);
     session_[pid_] = this;
     callerToken_ = callingTokenId;
-    if (IsValidTokenId(callerToken_)) {
-        StartUsingPermissionCallback(callerToken_, ACCESS_CAMERA);
-        RegisterPermissionCallback(callerToken_, ACCESS_CAMERA);
-    }
     MEDIA_DEBUG_LOG("HCaptureSession: camera stub services(%{public}zu).", session_.size());
 }
 
@@ -631,13 +627,27 @@ int32_t HCaptureSession::GetSessionState(CaptureSessionState &sessionState)
 
 int32_t HCaptureSession::Start()
 {
-    int32_t rc = CAMERA_OK;
-    sptr<HStreamRepeat> curStreamRepeat;
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    if (callerToken_ != callerToken) {
+        MEDIA_ERR_LOG("Failed to Start Session, createSession token is : %{public}d, now token is %{public}d",
+            callerToken_, callerToken);
+        return CAMERA_OPERATION_NOT_ALLOWED;
+    }
     if (curState_ != CaptureSessionState::SESSION_CONFIG_COMMITTED) {
-        MEDIA_ERR_LOG("HCaptureSession::Start(), Invalid session state: %{public}d", rc);
+        MEDIA_ERR_LOG("HCaptureSession::Start(), Invalid session state: %{public}d", curState_);
         return CAMERA_INVALID_STATE;
     }
     std::lock_guard<std::mutex> lock(sessionLock_);
+    if (IsValidTokenId(callerToken)) {
+        if (!Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken, OHOS_PERMISSION_CAMERA)) {
+            MEDIA_ERR_LOG("Start session is not allowed!");
+            return CAMERA_ALLOC_ERROR;
+        }
+        StartUsingPermissionCallback(callerToken, OHOS_PERMISSION_CAMERA);
+        RegisterPermissionCallback(callerToken, OHOS_PERMISSION_CAMERA);
+    }
+    sptr<HStreamRepeat> curStreamRepeat;
+    int32_t rc = CAMERA_OK;
     for (auto item = repeatStreams_.begin(); item != repeatStreams_.end(); ++item) {
         curStreamRepeat = static_cast<HStreamRepeat *>((*item).GetRefPtr());
         if (!curStreamRepeat->IsVideo()) {
@@ -718,6 +728,12 @@ int32_t HCaptureSession::Release(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(sessionLock_);
     MEDIA_INFO_LOG("HCaptureSession::Release pid(%{public}d).", pid);
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    if (callerToken_ != callerToken) {
+        MEDIA_ERR_LOG("Failed to Release Session, createSession token is : %{public}d, now token is %{public}d",
+            callerToken_, callerToken);
+        return CAMERA_OPERATION_NOT_ALLOWED;
+    }
     auto it = session_.find(pid);
     if (it == session_.end()) {
         MEDIA_DEBUG_LOG("HCaptureSession::Release session for pid(%{public}d) already released.", pid);
@@ -734,9 +750,9 @@ int32_t HCaptureSession::Release(pid_t pid)
         POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraDevice_->GetCameraId().c_str());
         cameraDevice_ = nullptr;
     }
-    if (IsValidTokenId(callerToken_)) {
-        StopUsingPermissionCallback(callerToken_, ACCESS_CAMERA);
-        UnregisterPermissionCallback(callerToken_);
+    if (IsValidTokenId(callerToken)) {
+        StopUsingPermissionCallback(callerToken, OHOS_PERMISSION_CAMERA);
+        UnregisterPermissionCallback(callerToken);
     }
     tempStreams_.clear();
     ClearCaptureSession(pid);
