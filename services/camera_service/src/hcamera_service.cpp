@@ -209,7 +209,10 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
     } else {
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice MuteCamera not Supported");
     }
-    cameraDevice->SetStatusCallback(cameraServiceCallbacks_);
+    {
+        std::lock_guard<std::mutex> lock(cbMutex_);
+        cameraDevice->SetStatusCallback(cameraServiceCallbacks_);
+    }
     cameraDevice->SetDeviceOperatorsCallback(this);
 
     MEDIA_DEBUG_LOG("HCameraService::CreateCameraDevice Calling pcameraId: %{public}s", cameraId.c_str());
