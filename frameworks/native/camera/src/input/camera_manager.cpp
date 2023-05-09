@@ -631,18 +631,17 @@ std::vector<sptr<CameraInfo>> CameraManager::GetCameras()
 bool CameraManager::GetDmDeviceInfo()
 {
     std::vector <DistributedHardware::DmDeviceInfo> deviceInfos;
-    DistributedHardware::DmDeviceInfo deviceInfo;
     auto &deviceManager = DistributedHardware::DeviceManager::GetInstance();
     std::shared_ptr<DistributedHardware::DmInitCallback> initCallback = std::make_shared<DeviceInitCallBack>();
     std::string pkgName = std::to_string(IPCSkeleton::GetCallingPid());
+    const string extraInfo = "";
     deviceManager.InitDeviceManager(pkgName, initCallback);
-    deviceManager.RegisterDevStateCallback(pkgName, "", NULL);
-    deviceManager.GetTrustedDeviceList(pkgName, "", deviceInfos);
-    deviceManager.GetLocalDeviceInfo(pkgName, deviceInfo);
+    deviceManager.RegisterDevStateCallback(pkgName, extraInfo, NULL);
+    deviceManager.GetTrustedDeviceList(pkgName, extraInfo, deviceInfos);
     deviceManager.UnInitDeviceManager(pkgName);
-    localDeviceInfo_.deviceName = deviceInfo.deviceName;
-    localDeviceInfo_.deviceTypeId = deviceInfo.deviceTypeId;
-    localDeviceInfo_.networkId = deviceInfo.networkId;
+    localDeviceInfo_.deviceName = "";
+    localDeviceInfo_.deviceTypeId = 0;
+    localDeviceInfo_.networkId = "";
     int size = static_cast<int>(deviceInfos.size());
     MEDIA_INFO_LOG("CameraManager::size=%{public}d", size);
     if (size > 0) {
