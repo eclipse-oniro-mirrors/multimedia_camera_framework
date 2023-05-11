@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -180,10 +180,6 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
         }
     } else {
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice MuteCamera not Supported");
-    }
-    {
-        std::lock_guard<std::mutex> lock(cbMutex_);
-        cameraDevice->SetStatusCallback(cameraServiceCallbacks_);
     }
     cameraDevice->SetDeviceOperatorsCallback(this);
 
@@ -379,13 +375,6 @@ int32_t HCameraService::SetCallback(sptr<ICameraServiceCallback> &callback)
         (void)cameraServiceCallbacks_.erase(callbackItem);
     }
     cameraServiceCallbacks_.insert(std::make_pair(pid, callback));
-    for (auto it : devices_) {
-        MEDIA_INFO_LOG("HCameraService::SetCallback Camera:[%{public}s] SetStatusCallback", it.first.c_str());
-        auto item = it.second.promote();
-        if (item != nullptr) {
-            item->SetStatusCallback(cameraServiceCallbacks_);
-        }
-    }
     return CAMERA_OK;
 }
 
@@ -448,13 +437,6 @@ int32_t HCameraService::UnSetCallback(pid_t pid)
     }
     MEDIA_INFO_LOG("HCameraService::UnSetCallback after erase pid = %{public}d, size = %{public}zu",
                    pid, cameraServiceCallbacks_.size());
-    for (auto it : devices_) {
-        MEDIA_INFO_LOG("HCameraService::UnSetCallback Camera:[%{public}s] SetStatusCallback", it.first.c_str());
-        auto item = it.second.promote();
-        if (item != nullptr) {
-            item->SetStatusCallback(cameraServiceCallbacks_);
-        }
-    }
     int32_t ret = CAMERA_OK;
     ret = UnSetMuteCallback(pid);
     return ret;

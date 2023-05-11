@@ -51,10 +51,8 @@ public:
             sptr<IStreamOperator> &streamOperator);
     sptr<IStreamOperator> GetStreamOperator();
     int32_t SetCallback(sptr<ICameraDeviceServiceCallback> &callback) override;
-    int32_t SetStatusCallback(std::map<int32_t, sptr<ICameraServiceCallback>> &callbacks);
     int32_t OnError(const ErrorType type, const int32_t errorMsg);
     int32_t OnResult(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
-    int32_t OnCameraStatus(const std::string& cameraId, CameraStatus status);
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetSettings();
     std::string GetCameraId();
     bool IsReleaseCameraDevice();
@@ -75,7 +73,6 @@ private:
     sptr<ICameraDeviceServiceCallback> deviceSvcCallback_;
     sptr<CameraDeviceCallback> deviceHDICallback_;
     std::map<int32_t, wptr<ICameraServiceCallback>> statusSvcCallbacks_;
-    std::mutex statusCbLock_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> updateSettings_;
     sptr<IStreamOperator> streamOperator_;
     uint32_t callerToken_;
