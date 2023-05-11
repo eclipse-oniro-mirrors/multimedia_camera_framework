@@ -201,7 +201,7 @@ bool IsInForeGround(const int32_t callerToken)
 {
     bool isAllowed = true;
     if (IsValidTokenId(callerToken)) {
-        isAllowed = Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken, ACCESS_CAMERA);
+        isAllowed = Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken, OHOS_PERMISSION_CAMERA);
     }
     return isAllowed;
 }
@@ -209,6 +209,30 @@ bool IsInForeGround(const int32_t callerToken)
 bool IsCameraNeedClose(const int32_t callerToken, const pid_t& pid, const pid_t& pidCompared)
 {
     return !(IsInForeGround(callerToken) && (JudgmentPriority(pid, pidCompared) != PRIORITY_LEVEL_HIGHER));
+}
+
+int32_t CheckPermission(std::string permissionName, uint32_t callerToken)
+{
+    int permissionResult
+        = OHOS::Security::AccessToken::TypePermissionState::PERMISSION_DENIED;
+    Security::AccessToken::ATokenTypeEnum tokenType
+        = OHOS::Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken);
+    if ((tokenType == OHOS::Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE)
+        || (tokenType == OHOS::Security::AccessToken::ATokenTypeEnum::TOKEN_HAP)) {
+        permissionResult = OHOS::Security::AccessToken::AccessTokenKit::VerifyAccessToken(
+            callerToken, permissionName);
+    } else {
+        MEDIA_ERR_LOG("HCameraService::CheckPermission: Unsupported Access Token Type");
+        return CAMERA_INVALID_ARG;
+    }
+
+    if (permissionResult != OHOS::Security::AccessToken::TypePermissionState::PERMISSION_GRANTED) {
+        MEDIA_ERR_LOG("HCameraService::CheckPermission: Permission to Access Camera Denied!!!!");
+        return CAMERA_OPERATION_NOT_ALLOWED;
+    } else {
+        MEDIA_DEBUG_LOG("HCameraService::CheckPermission: Permission to Access Camera Granted!!!!");
+    }
+    return CAMERA_OK;
 }
 } // namespace CameraStandard
 } // namespace OHOS
