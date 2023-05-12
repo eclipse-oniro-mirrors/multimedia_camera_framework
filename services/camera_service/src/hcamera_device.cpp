@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -166,7 +166,6 @@ int32_t HCameraDevice::OpenDevice()
 
             errorCode = HdiToServiceError((CamRetCode)(hdiCameraDevice_->SetResultMode(ON_CHANGED)));
             cameraHostManager_->AddCameraDevice(cameraID_, this);
-            (void)OnCameraStatus(cameraID_, CAMERA_STATUS_UNAVAILABLE);
         }
     } else {
         MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");
@@ -180,10 +179,9 @@ int32_t HCameraDevice::CloseDevice()
     if (hdiCameraDevice_ != nullptr) {
         MEDIA_INFO_LOG("HCameraDevice::CloseDevice Closing camera device: %{public}s", cameraID_.c_str());
         hdiCameraDevice_->Close();
-        (void)OnCameraStatus(cameraID_, CAMERA_STATUS_AVAILABLE);
+        isOpenedCameraDevice_ = false;
+        hdiCameraDevice_ = nullptr;
     }
-    isOpenedCameraDevice_ = false;
-    hdiCameraDevice_ = nullptr;
     if (streamOperator_) {
         streamOperator_ = nullptr;
     }
@@ -414,23 +412,6 @@ int32_t HCameraDevice::SetCallback(sptr<ICameraDeviceServiceCallback> &callback)
     return CAMERA_OK;
 }
 
-int32_t HCameraDevice::SetStatusCallback(std::map<int32_t, sptr<ICameraServiceCallback>> &callbacks)
-{
-    std::lock_guard<std::mutex> lock(statusCbLock_);
-    MEDIA_INFO_LOG("HCameraDevice::SetStatusCallback callbacks size = %{public}zu",
-                   callbacks.size());
-    if (!statusSvcCallbacks_.empty()) {
-        MEDIA_ERR_LOG("HCameraDevice::SetStatusCallback statusSvcCallbacks_ is not empty, reset it");
-        statusSvcCallbacks_.clear();
-    }
-    for (auto it : callbacks) {
-        statusSvcCallbacks_[it.first] = it.second;
-    }
-    MEDIA_INFO_LOG("HCameraDevice::SetStatusCallback statusSvcCallbacks_ size = %{public}zu",
-                   statusSvcCallbacks_.size());
-    return CAMERA_OK;
-}
-
 int32_t HCameraDevice::GetStreamOperator(sptr<IStreamOperatorCallback> callback,
     sptr<IStreamOperator> &streamOperator)
 {
@@ -483,26 +464,6 @@ int32_t HCameraDevice::OnError(const ErrorType type, const int32_t errorMsg)
         CAMERA_SYSEVENT_FAULT(CreateMsg("CameraDeviceServiceCallback::OnError() is called!, errorType: %d,"
                                         "errorMsg: %d", errorType, errorMsg));
     }
-    return CAMERA_OK;
-}
-
-int32_t HCameraDevice::OnCameraStatus(const std::string& cameraId, CameraStatus status)
-{
-    std::lock_guard<std::mutex> lock(statusCbLock_);
-    MEDIA_INFO_LOG("HCameraDevice::OnCameraStatus statusSvcCallbacks_ size = %{public}zu",
-                   statusSvcCallbacks_.size());
-    std::string callbackPids = "[";
-    for (auto it : statusSvcCallbacks_) {
-        auto item = it.second.promote();
-        if (item != nullptr) {
-            callbackPids += " " + std::to_string((int)it.first);
-            item->OnCameraStatusChanged(cameraId, status);
-        }
-    }
-    callbackPids += " ]";
-    MEDIA_INFO_LOG("HCameraDevice::OnCameraStatus OnCameraStatusChanged callbackPids = %{public}s, "
-                   "cameraId = %{public}s, cameraStatus = %{public}d",
-                   callbackPids.c_str(), cameraId.c_str(), status);
     return CAMERA_OK;
 }
 

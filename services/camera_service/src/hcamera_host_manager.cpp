@@ -432,6 +432,9 @@ void HCameraHostManager::AddCameraDevice(const std::string& cameraId, sptr<ICame
         cameraDevices_.erase(cameraId);
     }
     cameraDevices_[cameraId] = cameraDevice;
+    if (statusCallback_) {
+        statusCallback_->OnCameraStatus(cameraId, CAMERA_STATUS_UNAVAILABLE);
+    }
 }
 
 void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId)
@@ -442,6 +445,9 @@ void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId)
         it->second = nullptr;
     }
     cameraDevices_.erase(cameraId);
+    if (statusCallback_) {
+        statusCallback_->OnCameraStatus(cameraId, CAMERA_STATUS_AVAILABLE);
+    }
 }
 
 void HCameraHostManager::CloseCameraDevice(const std::string& cameraId)
