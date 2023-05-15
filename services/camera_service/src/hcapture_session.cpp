@@ -80,6 +80,7 @@ HCaptureSession::HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
         sptr<HCaptureSession> session = it->second;
         oldSessions[it->first] = session;
     }
+    std::lock_guard<std::mutex> lock(sessionLock_);
     for (auto it = oldSessions.begin(); it != oldSessions.end(); it++) {
         if (it->second != nullptr) {
             sptr<HCaptureSession> session = it->second;
@@ -95,7 +96,6 @@ HCaptureSession::HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
             session->Release(it->first);
         }
     }
-    std::lock_guard<std::mutex> lock(sessionLock_);
     session_[pid_] = this;
     callerToken_ = callingTokenId;
     MEDIA_DEBUG_LOG("HCaptureSession: camera stub services(%{public}zu).", session_.size());
@@ -570,6 +570,7 @@ int32_t HCaptureSession::CommitConfig()
         return CAMERA_INVALID_STATE;
     }
 
+    std::lock_guard<std::mutex> lock(sessionLock_);
     int32_t rc = ValidateSessionInputs();
     if (rc != CAMERA_OK) {
         return rc;
@@ -579,7 +580,6 @@ int32_t HCaptureSession::CommitConfig()
         return rc;
     }
 
-    std::lock_guard<std::mutex> lock(sessionLock_);
     rc = GetCameraDevice(device);
     if ((rc == CAMERA_OK) && (device == cameraDevice_) && !deletedStreamIds_.empty()) {
         rc = HdiToServiceError((CamRetCode)(device->GetStreamOperator()->ReleaseStreams(deletedStreamIds_)));
