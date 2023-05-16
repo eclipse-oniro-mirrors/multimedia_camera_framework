@@ -510,7 +510,7 @@ void HCaptureSession::UpdateSessionConfig(sptr<HCameraDevice> &device)
         } else if (curStream && curStream->GetStreamType() == StreamType::METADATA) {
             metadataStreams_.emplace_back(curStream);
         }
-        streams_.Insert(streamId_, curStream);
+        streams_.EnsureInsert(streamId_, curStream);
     }
     tempStreams_.clear();
     if (streamOperatorCallback_ == nullptr) {
