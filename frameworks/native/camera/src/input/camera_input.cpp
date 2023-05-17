@@ -60,8 +60,13 @@ public:
             MEDIA_ERR_LOG("CameraDeviceServiceCallback::OnResult() camInput_ is null!");
             return CAMERA_OK;
         }
-        MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::OnResult() is called!, cameraId: %{public}s, timestamp: %{public}"
-                        PRIu64, camInput_->GetCameraDeviceInfo()->GetID().c_str(), timestamp);
+        if (camInput_->GetCameraDeviceInfo() == nullptr) {
+            MEDIA_ERR_LOG("CameraDeviceServiceCallback::OnResult() camInput_->GetCameraDeviceInfo() is null!");
+        } else {
+            MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::OnResult()"
+                            "is called!, cameraId: %{public}s, timestamp: %{public}"
+                            PRIu64, camInput_->GetCameraDeviceInfo()->GetID().c_str(), timestamp);
+        }
         if (camInput_->GetResultCallback() != nullptr) {
             camInput_->GetResultCallback()->OnResult(timestamp, result);
         } else {
