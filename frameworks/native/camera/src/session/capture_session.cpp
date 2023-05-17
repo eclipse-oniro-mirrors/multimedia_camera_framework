@@ -1297,14 +1297,14 @@ Point CaptureSession::CoordinateTransform(Point point)
 void VerifyCorrection(Point &point)
 {
     MEDIA_DEBUG_LOG("CaptureSession::VerifyCorrection begin x: %{public}f, y: %{public}f", point.x, point.y);
-    float minPoint = 0;
+    float minPoint = 0.000001;
     float maxPoint = 1;
-    if (point.x < minPoint) {
+    if (point.x >= -minPoint && point.x <= minPoint) {
         point.x = minPoint;
     } else if (point.x > maxPoint) {
         point.x = maxPoint;
     }
-    if (point.y < minPoint) {
+    if (point.y >= -minPoint && point.y <= minPoint) {
         point.y = minPoint;
     }else if (point.y > maxPoint) {
         point.y = maxPoint;
