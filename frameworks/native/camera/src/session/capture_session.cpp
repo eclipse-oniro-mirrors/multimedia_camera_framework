@@ -1306,7 +1306,7 @@ void VerifyCorrection(Point &point)
     }
     if (point.y >= -minPoint && point.y <= minPoint) {
         point.y = minPoint;
-    }else if (point.y > maxPoint) {
+    } else if (point.y > maxPoint) {
         point.y = maxPoint;
     }
     MEDIA_DEBUG_LOG("CaptureSession::VerifyCorrection end x: %{public}f, y: %{public}f", point.x, point.y);
