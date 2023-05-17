@@ -811,8 +811,8 @@ int32_t CaptureSession::SetMeteringPoint(Point exposurePoint)
             "before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
-    VerifyCorrection(exposurePoint);
-    Point unifyExposurePoint = CoordinateTransform(exposurePoint);
+    Point exposureVerifyPoint = VerifyFocusCorrectness(exposurePoint);
+    Point unifyExposurePoint = CoordinateTransform(exposureVerifyPoint);
     bool status = false;
     float exposureArea[2] = {unifyExposurePoint.x, unifyExposurePoint.y};
     camera_metadata_item_t item;
@@ -1257,8 +1257,8 @@ int32_t CaptureSession::SetFocusPoint(Point focusPoint)
         MEDIA_ERR_LOG("CaptureSession::SetFocusPoint Need to call LockForControl() before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
-    VerifyCorrection(focusPoint);
-    Point unifyFocusPoint = CoordinateTransform(focusPoint);
+    Point focusVerifyPoint = VerifyFocusCorrectness(focusPoint);
+    Point unifyFocusPoint = CoordinateTransform(focusVerifyPoint);
     bool status = false;
     float FocusArea[2] = {unifyFocusPoint.x, unifyFocusPoint.y};
     camera_metadata_item_t item;
@@ -1294,22 +1294,24 @@ Point CaptureSession::CoordinateTransform(Point point)
     return unifyPoint;
 }
 
-void VerifyCorrection(Point &point)
+void VerifyFocusCorrectness(Point point)
 {
-    MEDIA_DEBUG_LOG("CaptureSession::VerifyCorrection begin x: %{public}f, y: %{public}f", point.x, point.y);
+    MEDIA_DEBUG_LOG("CaptureSession::VerifyFocusCorrectness begin x: %{public}f, y: %{public}f", point.x, point.y);
     float minPoint = 0.000001;
     float maxPoint = 1;
-    if (point.x >= -minPoint && point.x <= minPoint) {
-        point.x = minPoint;
-    } else if (point.x > maxPoint) {
-        point.x = maxPoint;
+    Point VerifyPoint = point;
+    if (VerifyPoint.x >= -minPoint && VerifyPoint.x <= minPoint) {
+        VerifyPoint.x = minPoint;
+    } else if (VerifyPoint.x > maxPoint) {
+        VerifyPoint.x = maxPoint;
     }
-    if (point.y >= -minPoint && point.y <= minPoint) {
-        point.y = minPoint;
-    } else if (point.y > maxPoint) {
-        point.y = maxPoint;
+    if (VerifyPoint.y >= -minPoint && VerifyPoint.y <= minPoint) {
+        VerifyPoint.y = minPoint;
+    } else if (VerifyPoint.y > maxPoint) {
+        VerifyPoint.y = maxPoint;
     }
-    MEDIA_DEBUG_LOG("CaptureSession::VerifyCorrection end x: %{public}f, y: %{public}f", point.x, point.y);
+    MEDIA_DEBUG_LOG("CaptureSession::VerifyFocusCorrectness end x: %{public}f, y: %{public}f", VerifyPoint.x, VerifyPoint.y);
+    return VerifyPoint;
 }
 
 Point CaptureSession::GetFocusPoint()
