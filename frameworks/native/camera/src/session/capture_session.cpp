@@ -1294,7 +1294,7 @@ Point CaptureSession::CoordinateTransform(Point point)
     return unifyPoint;
 }
 
-Point VerifyFocusCorrectness(Point point)
+Point CaptureSession::VerifyFocusCorrectness(Point point)
 {
     MEDIA_DEBUG_LOG("CaptureSession::VerifyFocusCorrectness begin x: %{public}f, y: %{public}f", point.x, point.y);
     float minPoint = 0.000001;
