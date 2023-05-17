@@ -113,6 +113,7 @@ ohos_shared_library("camera_framework") {
 
   cflags_cc = cflags
 
+  innerapi_tags = [ "platformsdk" ]
   part_name = "multimedia_camera_framework"
   subsystem_name = "multimedia"
 }
