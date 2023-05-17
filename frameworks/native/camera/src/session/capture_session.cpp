@@ -1294,7 +1294,7 @@ Point CaptureSession::CoordinateTransform(Point point)
     return unifyPoint;
 }
 
-void VerifyFocusCorrectness(Point point)
+Point VerifyFocusCorrectness(Point point)
 {
     MEDIA_DEBUG_LOG("CaptureSession::VerifyFocusCorrectness begin x: %{public}f, y: %{public}f", point.x, point.y);
     float minPoint = 0.000001;
@@ -1310,7 +1310,8 @@ void VerifyFocusCorrectness(Point point)
     } else if (VerifyPoint.y > maxPoint) {
         VerifyPoint.y = maxPoint;
     }
-    MEDIA_DEBUG_LOG("CaptureSession::VerifyFocusCorrectness end x: %{public}f, y: %{public}f", VerifyPoint.x, VerifyPoint.y);
+    MEDIA_DEBUG_LOG("CaptureSession::VerifyFocusCorrectness end x: %{public}f, y: %{public}f",
+                    VerifyPoint.x, VerifyPoint.y);
     return VerifyPoint;
 }
 
