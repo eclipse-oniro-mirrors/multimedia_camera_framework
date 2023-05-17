@@ -811,6 +811,7 @@ int32_t CaptureSession::SetMeteringPoint(Point exposurePoint)
             "before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
+    VerifyCorrection(exposurePoint);
     Point unifyExposurePoint = CoordinateTransform(exposurePoint);
     bool status = false;
     float exposureArea[2] = {unifyExposurePoint.x, unifyExposurePoint.y};
@@ -1256,6 +1257,7 @@ int32_t CaptureSession::SetFocusPoint(Point focusPoint)
         MEDIA_ERR_LOG("CaptureSession::SetFocusPoint Need to call LockForControl() before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
+    VerifyCorrection(focusPoint);
     Point unifyFocusPoint = CoordinateTransform(focusPoint);
     bool status = false;
     float FocusArea[2] = {unifyFocusPoint.x, unifyFocusPoint.y};
@@ -1290,6 +1292,24 @@ Point CaptureSession::CoordinateTransform(Point point)
     MEDIA_DEBUG_LOG("CaptureSession::CoordinateTransform end x: %{public}f, y: %{public}f",
                     unifyPoint.x, unifyPoint.y);
     return unifyPoint;
+}
+
+void VerifyCorrection(Point &point)
+{
+    MEDIA_DEBUG_LOG("CaptureSession::VerifyCorrection begin x: %{public}f, y: %{public}f", point.x, point.y);
+    float minPoint = 0;
+    float maxPoint = 1;
+    if (point.x < minPoint) {
+        point.x = minPoint;
+    } else if (point.x > maxPoint) {
+        point.x = maxPoint;
+    }
+    if (point.y < minPoint) {
+        point.y = minPoint;
+    }else if (point.y > maxPoint) {
+        point.y = maxPoint;
+    }
+    MEDIA_DEBUG_LOG("CaptureSession::VerifyCorrection end x: %{public}f, y: %{public}f", point.x, point.y);
 }
 
 Point CaptureSession::GetFocusPoint()
