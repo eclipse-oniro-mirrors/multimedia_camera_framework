@@ -39,7 +39,6 @@ HCameraDevice::~HCameraDevice()
     hdiCameraDevice_ = nullptr;
     streamOperator_ = nullptr;
     if (cameraHostManager_) {
-        cameraHostManager_->RemoveCameraDevice(cameraID_);
         cameraHostManager_ = nullptr;
     }
     deviceHDICallback_ = nullptr;
