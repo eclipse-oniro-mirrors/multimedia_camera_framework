@@ -563,7 +563,8 @@ int32_t HCaptureSession::CommitConfig()
         MEDIA_ERR_LOG("HCaptureSession::CommitConfig() Need to call BeginConfig before committing configuration");
         return CAMERA_INVALID_STATE;
     }
-
+    
+    std::lock_guard<std::mutex> lock(sessionLock_);
     int32_t rc = ValidateSessionInputs();
     if (rc != CAMERA_OK) {
         return rc;
@@ -573,7 +574,6 @@ int32_t HCaptureSession::CommitConfig()
         return rc;
     }
 
-    std::lock_guard<std::mutex> lock(sessionLock_);
     rc = GetCameraDevice(device);
     if ((rc == CAMERA_OK) && (device == cameraDevice_) && !deletedStreamIds_.empty()) {
         rc = HdiToServiceError((CamRetCode)(device->GetStreamOperator()->ReleaseStreams(deletedStreamIds_)));
