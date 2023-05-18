@@ -936,7 +936,7 @@ sptr<HStreamCommon> StreamOperatorCallback::GetStreamByStreamID(int32_t streamId
     sptr<HStreamCommon> result = nullptr;
     std::lock_guard<std::mutex> lock(sessionLock_);
     if (captureSession_ != nullptr) {
-       captureSession_->streams_.Iterate([&](int32_t id, sptr<HStreamCommon> streamItem) {
+        captureSession_->streams_.Iterate([&](int32_t id, sptr<HStreamCommon> streamItem) {
             curStream = streamItem;
             if (curStream && curStream->GetStreamId() == streamId) {
                 result = curStream;

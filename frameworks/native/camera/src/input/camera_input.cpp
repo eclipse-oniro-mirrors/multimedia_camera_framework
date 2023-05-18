@@ -62,11 +62,8 @@ public:
         if (camInput_->GetCameraDeviceInfo() != nullptr) {
             MEDIA_INFO_LOG("CameraDeviceServiceCallback::OnResult() is called!,"
                            "cameraId: %{public}s, timestamp: %{public}"
-                           PRIu64, camInput_->GetCameraDeviceInfo()->GetID().c_str(), timestamp);
+                            PRIu64, camInput_->GetCameraDeviceInfo()->GetID().c_str(), timestamp);
         }
-        MEDIA_INFO_LOG("CameraDeviceServiceCallback::OnResult() is called!, cameraId: %{public}s, timestamp: %{public}"
-                       PRIu64, camInput_->GetCameraDeviceInfo()->GetID().c_str(), timestamp);
-
         camInput_->ProcessDeviceCallbackUpdates(result);
         return CAMERA_OK;
     }
