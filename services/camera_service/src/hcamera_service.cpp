@@ -159,6 +159,7 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
         MEDIA_ERR_LOG("HCameraDevice::CreateCameraDevice device busy!");
         return CAMERA_DEVICE_BUSY;
     }
+    std::lock_guard<std::shared_mutex> writeLock(mapOperatorsLock_);
     // Destory conflict devices
     for (auto &i : conflictDevices) {
         if (i.promote() != nullptr) {
@@ -183,7 +184,6 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
     }
     cameraDevice->SetDeviceOperatorsCallback(this);
 
-    std::lock_guard<std::shared_mutex> writeLock(mapOperatorsLock_);
     devices_[cameraId] = cameraDevice;
     pid_t pid = IPCSkeleton::GetCallingPid();
     MEDIA_DEBUG_LOG("cameraId: %{public}s, pid = %{public}d, Camera created size = %{public}zu",
