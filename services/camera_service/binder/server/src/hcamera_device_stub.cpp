@@ -18,6 +18,7 @@
 #include "camera_util.h"
 #include "metadata_utils.h"
 #include "remote_request_code.h"
+#include "ipc_skeleton.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -26,8 +27,12 @@ int HCameraDeviceStub::OnRemoteRequest(
 {
     DisableJeMalloc();
     int errCode = -1;
-
     if (data.ReadInterfaceToken() != GetDescriptor()) {
+        return errCode;
+    }
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
+    if (errCode != CAMERA_OK) {
         return errCode;
     }
     switch (code) {

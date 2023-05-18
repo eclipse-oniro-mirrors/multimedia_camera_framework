@@ -26,6 +26,8 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
 static constexpr int32_t CAMERA_COLOR_SPACE = 8;
+static const std::string OHOS_PERMISSION_CAMERA = "ohos.permission.CAMERA";
+static const std::string OHOS_PERMISSION_MANAGE_CAMERA_CONFIG = "ohos.permission.MANAGE_CAMERA_CONFIG";
 
 enum CamServiceError {
     CAMERA_OK = 0,
@@ -75,6 +77,8 @@ bool IsValidTokenId(uint32_t tokenId);
 
 bool IsValidSize(
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t format, int32_t width, int32_t height);
+
+int32_t CheckPermission(std::string permissionName, uint32_t callerToken);
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_UTIL_H
