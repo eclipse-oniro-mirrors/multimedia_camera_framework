@@ -354,7 +354,7 @@ napi_value PreviewOutputNapi::Release(napi_env env, napi_callback_info info)
                 context->funcName = "PreviewOutputNapi::Release";
                 context->taskId = CameraNapiUtils::IncreamentAndGet(previewOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
+                if (context->objectInfo != nullptr && context->objectInfo->previewOutput_ != nullptr) {
                     context->bRetBool = false;
                     context->status = true;
                     ((sptr<PreviewOutput> &)(context->objectInfo->previewOutput_))->Release();
@@ -405,7 +405,7 @@ napi_value PreviewOutputNapi::AddDeferredSurface(napi_env env, napi_callback_inf
                 context->funcName = "PreviewOutputNapi::AddDeferredSurface";
                 context->taskId = CameraNapiUtils::IncreamentAndGet(previewOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
+                if (context->objectInfo != nullptr && context->objectInfo->previewOutput_ != nullptr) {
                     context->bRetBool = false;
                     context->status = true;
                     ((sptr<PreviewOutput> &)(context->objectInfo->previewOutput_))->Stop();
@@ -456,7 +456,7 @@ napi_value PreviewOutputNapi::Start(napi_env env, napi_callback_info info)
                 context->funcName = "PreviewOutputNapi::Start";
                 context->taskId = CameraNapiUtils::IncreamentAndGet(previewOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
+                if (context->objectInfo != nullptr && context->objectInfo->previewOutput_ != nullptr) {
                     context->bRetBool = false;
                     context->errorCode = context->objectInfo->previewOutput_->Start();
                     context->status = context->errorCode == 0;
@@ -507,7 +507,7 @@ napi_value PreviewOutputNapi::Stop(napi_env env, napi_callback_info info)
                 context->funcName = "PreviewOutputNapi::Stop";
                 context->taskId = CameraNapiUtils::IncreamentAndGet(previewOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
+                if (context->objectInfo != nullptr && context->objectInfo->previewOutput_ != nullptr) {
                     context->bRetBool = false;
                     context->errorCode = context->objectInfo->previewOutput_->Stop();
                     context->status = context->errorCode == 0;

@@ -596,7 +596,7 @@ napi_value PhotoOutputNapi::Release(napi_env env, napi_callback_info info)
                 context->funcName = "PhotoOutputNapi::Release";
                 context->taskId = CameraNapiUtils::IncreamentAndGet(photoOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
+                if (context->objectInfo != nullptr && context->objectInfo->photoOutput_ != nullptr) {
                     context->bRetBool = false;
                     context->status = true;
                     ((sptr<PhotoOutput> &)(context->objectInfo->photoOutput_))->Release();

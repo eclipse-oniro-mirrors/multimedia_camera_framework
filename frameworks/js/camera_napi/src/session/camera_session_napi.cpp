@@ -406,20 +406,28 @@ void PopulateRetVal(napi_env env, SessionAsyncCallbackModes mode,
     napi_get_undefined(env, &jsContext->error);
     switch (mode) {
         case COMMIT_CONFIG_ASYNC_CALLBACK:
-            context->errorCode = context->objectInfo->cameraSession_->CommitConfig();
-            MEDIA_INFO_LOG("commit config return : %{public}d", context->errorCode);
+            if (context->objectInfo->cameraSession_ != nullptr) {
+                context->errorCode = context->objectInfo->cameraSession_->CommitConfig();
+                MEDIA_INFO_LOG("commit config return : %{public}d", context->errorCode);
+            }
             break;
         case SESSION_START_ASYNC_CALLBACK:
-            context->errorCode = context->objectInfo->cameraSession_->Start();
-            MEDIA_INFO_LOG("Start return : %{public}d", context->errorCode);
+            if (context->objectInfo->cameraSession_ != nullptr) {
+                context->errorCode = context->objectInfo->cameraSession_->Start();
+                MEDIA_INFO_LOG("Start return : %{public}d", context->errorCode);
+            }
             break;
         case SESSION_STOP_ASYNC_CALLBACK:
-            context->errorCode = context->objectInfo->cameraSession_->Stop();
-            MEDIA_INFO_LOG("Stop return : %{public}d", context->errorCode);
+            if (context->objectInfo->cameraSession_ != nullptr) {
+                context->errorCode = context->objectInfo->cameraSession_->Stop();
+                MEDIA_INFO_LOG("Stop return : %{public}d", context->errorCode);
+            }
             break;
         case SESSION_RELEASE_ASYNC_CALLBACK:
-            context->errorCode = context->objectInfo->cameraSession_->Release();
-            MEDIA_INFO_LOG("Release return : %{public}d", context->errorCode);
+            if (context->objectInfo->cameraSession_ != nullptr) {
+                context->errorCode = context->objectInfo->cameraSession_->Release();
+                MEDIA_INFO_LOG("Release return : %{public}d", context->errorCode);
+            }
             break;
         default:
             MEDIA_DEBUG_LOG("mode is not support");
