@@ -34,18 +34,18 @@ typedef struct DetailInfo {
 typedef struct StreamInfo {
     int32_t streamType;
     uint32_t detailInfoCount;
-    DetailInfo detailInfo[MAX_NUM];
+    std::vector<DetailInfo> detailInfo;
 } StreamInfo;
 
 typedef struct ModeInfo {
     int32_t modeName;
     uint32_t streamTypeCount;
-    StreamInfo streamInfo[MAX_NUM];
+    std::vector<StreamInfo> streamInfo;
 } ModeInfo;
 
 typedef struct ExtendInfo {
     uint32_t modeCount;
-    ModeInfo modeInfo[MAX_NUM];
+    std::vector<ModeInfo> modeInfo;
 } ExtendInfo;
 
 class CameraStreamInfoParse {
@@ -63,6 +63,7 @@ public:
             }
         }
         modeCount_ = transferedInfo.modeCount;
+        transferedInfo.modeInfo.resize(transferedInfo.modeCount);
         for (uint32_t i = 0; i < transferedInfo.modeCount; i++) {
             transferedInfo.modeInfo[i].modeName = originInfo[modeStartIndex_[i]];
         }
@@ -101,6 +102,7 @@ private:
         }
         streamTypeCount_ = streamTypeCount;
         for (uint32_t i = 0; i < modeCount_; i++) {
+            transferedInfo.modeInfo[i].streamInfo.resize(streamTypeCount.front());
             for (uint32_t j = 0; j < streamTypeCount.front(); j++) {
                 transferedInfo.modeInfo[i].streamInfo[j].streamType = originInfo[tempStreamStartIndex.front()];
                 transferedInfo.modeInfo[i].streamInfo[j].detailInfoCount =
@@ -123,8 +125,9 @@ private:
         uint32_t fpsOffset = 4;
         for (uint32_t i = 0; i < modeCount_; i++) {
             for (uint32_t j = 0; j < streamTypeCount_.front(); j++) {
-            uint32_t index = 0;
-                for (uint32_t k = 0; k <deatiInfoCount.front(); k++) {
+                uint32_t index = 0;
+                transferedInfo.modeInfo[i].streamInfo[j].detailInfo.resize(deatiInfoCount.front());
+                for (uint32_t k = 0; k < deatiInfoCount.front(); k++) {
                     int indexLoop = tempStreamStartIndex.front();
                     transferedInfo.modeInfo[i].streamInfo[j].detailInfo[k].format =
                         originInfo[indexLoop + index + formatOffset];
