@@ -188,6 +188,7 @@ int32_t HCameraDevice::CloseDevice()
         cameraHostManager_->RemoveCameraDevice(cameraID_);
     }
     deviceHDICallback_ = nullptr;
+    std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
     deviceSvcCallback_ = nullptr;
     return CAMERA_OK;
 }
@@ -407,6 +408,7 @@ int32_t HCameraDevice::SetCallback(sptr<ICameraDeviceServiceCallback> &callback)
         MEDIA_ERR_LOG("HCameraDevice::SetCallback callback is null");
         return CAMERA_INVALID_ARG;
     }
+    std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
     deviceSvcCallback_ = callback;
     return CAMERA_OK;
 }
@@ -450,6 +452,7 @@ sptr<IStreamOperator> HCameraDevice::GetStreamOperator()
 
 int32_t HCameraDevice::OnError(const ErrorType type, const int32_t errorMsg)
 {
+    std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
     if (deviceSvcCallback_ != nullptr) {
         int32_t errorType;
         if (type == REQUEST_TIMEOUT) {
@@ -469,6 +472,7 @@ int32_t HCameraDevice::OnError(const ErrorType type, const int32_t errorMsg)
 int32_t HCameraDevice::OnResult(const uint64_t timestamp,
                                 const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
+    std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
     if (deviceSvcCallback_ != nullptr) {
         deviceSvcCallback_->OnResult(timestamp, result);
     }
