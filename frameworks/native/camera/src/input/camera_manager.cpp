@@ -820,28 +820,29 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     cameraOutputCapability = new(std::nothrow) CameraOutputCapability();
     std::shared_ptr<Camera::CameraMetadata> metadata = camera->GetMetadata();
     vector<MetadataObjectType> objectTypes = {};
+    ExtendInfo extendInfo = {};
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS,
                                                  &item);
-    if (ret != CAM_META_SUCCESS && item.count == 0) {
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
         MEDIA_ERR_LOG("Failed get extend stream info %{public}d %{public}d", ret, item.count);
         return nullptr;
     }
     std::shared_ptr<CameraStreamInfoParse>modeStreamParse = std::make_shared<CameraStreamInfoParse>();
-    modeStreamParse->getModeInfo(item.data.i32, item.count, extendInfo_); // 解析tag中带的数据信息意义
-    for (uint32_t i = 0; i < extendInfo_.modeCount; i++) {
-        if (modeName != 0 && modeName == extendInfo_.modeInfo[i].modeName) {
-            for (uint32_t j = 0; j < extendInfo_.modeInfo[i].streamTypeCount; j++) {
+    modeStreamParse->getModeInfo(item.data.i32, item.count, extendInfo); // 解析tag中带的数据信息意义
+    for (uint32_t i = 0; i < extendInfo.modeCount; i++) {
+        if (modeName != 0 && modeName == extendInfo.modeInfo[i].modeName) {
+            for (uint32_t j = 0; j < extendInfo.modeInfo[i].streamTypeCount; j++) {
                 OutputCapStreamType streamType =
-                    static_cast<OutputCapStreamType>(extendInfo_.modeInfo[i].streamInfo[j].streamType);
-                CreateProfile4StreamType(streamType, i, j);
+                    static_cast<OutputCapStreamType>(extendInfo.modeInfo[i].streamInfo[j].streamType);
+                CreateProfile4StreamType(streamType, i, j, extendInfo);
             }
             break;
         } else {
-            for (uint32_t j = 0; j < extendInfo_.modeInfo[i].streamTypeCount; j++) {
+            for (uint32_t j = 0; j < extendInfo.modeInfo[i].streamTypeCount; j++) {
                 OutputCapStreamType streamType =
-                    static_cast<OutputCapStreamType>(extendInfo_.modeInfo[i].streamInfo[j].streamType);
-                CreateProfile4StreamType(streamType, i, j);
+                    static_cast<OutputCapStreamType>(extendInfo.modeInfo[i].streamInfo[j].streamType);
+                CreateProfile4StreamType(streamType, i, j, extendInfo);
             }
         }
     }
@@ -864,16 +865,16 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     photoProfiles_.clear();
     previewProfiles_.clear();
     vidProfiles_.clear();
-    extendInfo_ = {};
     return cameraOutputCapability;
 }
 
-void CameraManager::CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex, uint32_t streamIndex)
+void CameraManager::CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
+    uint32_t streamIndex, ExtendInfo extendInfo)
 {
-    for (uint32_t k = 0; k < extendInfo_.modeInfo[modeIndex].streamInfo[streamIndex].detailInfoCount; k++) {
+    for (uint32_t k = 0; k < extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfoCount; k++) {
         CameraFormat format;
         auto itr = metaToFwCameraFormat_.find(static_cast<camera_format_t>(
-            extendInfo_.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].format));
+            extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].format));
         if (itr != metaToFwCameraFormat_.end()) {
             format = itr->second;
         } else {
@@ -881,9 +882,9 @@ void CameraManager::CreateProfile4StreamType(OutputCapStreamType streamType, uin
             continue;
         }
         Size size;
-        size.width = extendInfo_.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].width;
-        size.height = extendInfo_.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].height;
-        int32_t fps = extendInfo_.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].fps;
+        size.width = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].width;
+        size.height = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].height;
+        int32_t fps = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].fps;
         if (streamType == OutputCapStreamType::PREVIEW) {
             Profile previewProfile = Profile(format, size);
             previewProfiles_.push_back(previewProfile);
