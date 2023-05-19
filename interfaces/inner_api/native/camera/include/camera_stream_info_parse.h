@@ -22,7 +22,6 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
-#define MAX_NUM 100
 #define STEP 4
 typedef struct DetailInfo {
     int32_t format;
@@ -128,7 +127,7 @@ private:
                 uint32_t index = 0;
                 transferedInfo.modeInfo[i].streamInfo[j].detailInfo.resize(deatiInfoCount.front());
                 for (uint32_t k = 0; k < deatiInfoCount.front(); k++) {
-                    int indexLoop = tempStreamStartIndex.front();
+                    uint32_t indexLoop = tempStreamStartIndex.front();
                     transferedInfo.modeInfo[i].streamInfo[j].detailInfo[k].format =
                         originInfo[indexLoop + index + formatOffset];
                     transferedInfo.modeInfo[i].streamInfo[j].detailInfo[k].width =
