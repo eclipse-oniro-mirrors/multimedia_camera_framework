@@ -38,7 +38,7 @@ class ResultCallback {
 public:
     ResultCallback() = default;
     virtual ~ResultCallback() = default;
-    virtual void OnResult(const uint64_t timestamp, const std::shared_ptr<Camera::CameraMetadata> &result) const;
+    virtual void OnResult(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) const;
 };
 
 class CameraInput : public CaptureInput {
