@@ -392,7 +392,7 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
             } else {
                 MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory pid = %{public}d,Camera:[%{public}s] need close",
                                pid, cameraId.c_str());
-                DeviceClose(item->GetCameraId());
+                DeviceClose(item);
                 item = nullptr;
             }
         });
@@ -928,6 +928,38 @@ int32_t HCameraService::DeviceOpen(const std::string& cameraId)
     }
     MEDIA_INFO_LOG("HCameraService::DeviceOpen Exit");
     return ret;
+}
+
+int32_t HCameraService::DeviceClose(wptr<HCameraDevice> cameraDevice)
+{
+    MEDIA_INFO_LOG("HCameraService::DeviceClose Enter");
+    int32_t ret = CAMERA_OK;
+    std::string cameraId;
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    auto device = cameraDevice.promote();
+    if (device != nullptr && device->IsOpenedCameraDevice()) {
+        cameraId = device->GetCameraId();
+        MEDIA_INFO_LOG("HCameraService::DeviceClose pid = %{public}d Camera:[%{public}s] need close",
+            pid, cameraId.c_str());
+        ret = device->CloseDevice();
+        device = nullptr;
+    }
+
+    for (auto& it : camerasForPid_) {
+        std::set<std::string>& cameraIds = it.second;
+        MEDIA_INFO_LOG("HCameraService::DeviceClose pid = %{public}d size %{public}zu E", it.first, cameraIds.size());
+        if (!cameraIds.empty()) {
+            for (std::set<std::string>::iterator itIds = cameraIds.begin(); itIds != cameraIds.end(); itIds++) {
+                if (*itIds == cameraId && !IsInForeGround(it.first)) {
+                    cameraIds.erase(itIds);
+                    break;
+                }
+            }
+        }
+        MEDIA_INFO_LOG("HCameraService::DeviceClose pid = %{public}d size %{public}zu X", it.first, cameraIds.size());
+    }
+    MEDIA_INFO_LOG("HCameraService::DeviceClose Exit");
+    return  ret;
 }
 
 int32_t HCameraService::DeviceClose(const std::string& cameraId, pid_t pidFromSession)

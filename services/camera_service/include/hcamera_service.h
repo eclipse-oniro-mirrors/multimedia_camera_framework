@@ -110,6 +110,7 @@ private:
     int32_t UpdateMuteSetting(wptr<HCameraDevice> cameraDevice, bool muteMode);
     int32_t UnSetMuteCallback(pid_t pid);
     bool IsDeviceAlreadyOpen(pid_t& tempPid, std::string& tempCameraId, wptr<HCameraDevice> &tempDevice);
+    int32_t DeviceClose(wptr<HCameraDevice> cameraDevice);
     std::mutex mutex_;
     std::mutex cbMutex_;
     std::mutex muteCbMutex_;
