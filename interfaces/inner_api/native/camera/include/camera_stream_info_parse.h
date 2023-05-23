@@ -30,16 +30,16 @@ typedef struct DetailInfo {
     int32_t fps;
 } DetailInfo;
 
-typedef struct StreamInfo {
+typedef struct StreamRelatedInfo {
     int32_t streamType;
     uint32_t detailInfoCount;
     std::vector<DetailInfo> detailInfo;
-} StreamInfo;
+} StreamRelatedInfo;
 
 typedef struct ModeInfo {
     int32_t modeName;
     uint32_t streamTypeCount;
-    std::vector<StreamInfo> streamInfo;
+    std::vector<StreamRelatedInfo> streamInfo;
 } ModeInfo;
 
 typedef struct ExtendInfo {
