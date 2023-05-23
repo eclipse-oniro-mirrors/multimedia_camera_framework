@@ -76,17 +76,23 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraDevice::GetSettings()
         MEDIA_ERR_LOG("HCameraDevice::GetSettings Failed to get Camera Ability: %{public}d", errCode);
         return nullptr;
     }
-
-    if (!videoFrameRateRange_.empty() && ability != nullptr) {
+    int32_t* pos = nullptr;
+    int32_t videoFrameRateRangeSize;
+    {
+        std::lock_guard<std::mutex> lock(videoFrameRangeMutex_);
+        videoFrameRateRangeSize = videoFrameRateRange_.size();
+        if (videoFrameRateRangeSize != 0) {
+            pos = videoFrameRateRange_.data();
+        }
+    }
+    if (videoFrameRateRangeSize != 0 && ability != nullptr) {
         bool status = false;
         camera_metadata_item_t item;
         int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_CONTROL_FPS_RANGES, &item);
         if (ret == CAM_META_ITEM_NOT_FOUND) {
-            status = ability->addEntry(OHOS_CONTROL_FPS_RANGES,
-                videoFrameRateRange_.data(), videoFrameRateRange_.size());
+            status = ability->addEntry(OHOS_CONTROL_FPS_RANGES, pos, videoFrameRateRangeSize);
         } else if (ret == CAM_META_SUCCESS) {
-            status = ability->updateEntry(OHOS_CONTROL_FPS_RANGES,
-                videoFrameRateRange_.data(), videoFrameRateRange_.size());
+            status = ability->updateEntry(OHOS_CONTROL_FPS_RANGES, pos, videoFrameRateRangeSize);
         }
         if (!status) {
             MEDIA_ERR_LOG("HCameraDevice::Set fps renges Failed");
@@ -151,6 +157,7 @@ int32_t HCameraDevice::OpenDevice()
     MEDIA_INFO_LOG("HCameraDevice::OpenDevice Opening camera device: %{public}s", cameraID_.c_str());
     errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, deviceHDICallback_, hdiCameraDevice_);
     if (errorCode == CAMERA_OK) {
+        std::lock_guard<std::mutex> lock(settingsMutex_);
         isOpenedCameraDevice_ = true;
         if (updateSettings_ != nullptr && hdiCameraDevice_ != nullptr) {
             std::vector<uint8_t> setting;
@@ -220,21 +227,22 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
 {
     CAMERA_SYNC_TRACE;
     if (settings == nullptr) {
-        MEDIA_ERR_LOG("HCameraDevice::UpdateSetting settings is null");
+        MEDIA_ERR_LOG("settings is null");
         return CAMERA_INVALID_ARG;
     }
 
     uint32_t count = OHOS::Camera::GetCameraMetadataItemCount(settings->get());
     if (!count) {
-        MEDIA_DEBUG_LOG("HCameraDevice::UpdateSetting Nothing to update");
+        MEDIA_DEBUG_LOG("Nothing to update");
         return CAMERA_OK;
     }
+    std::lock_guard<std::mutex> lock(settingsMutex_);
     if (updateSettings_) {
         camera_metadata_item_t metadataItem;
         for (uint32_t index = 0; index < count; index++) {
             int ret = OHOS::Camera::GetCameraMetadataItem(settings->get(), index, &metadataItem);
             if (ret != CAM_META_SUCCESS) {
-                MEDIA_ERR_LOG("HCameraDevice::UpdateSetting Failed to get metadata item at index: %{public}d", index);
+                MEDIA_ERR_LOG("Failed to get metadata item at index: %{public}d", index);
                 return CAMERA_INVALID_ARG;
             }
             bool status = false;
@@ -246,8 +254,7 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
                 status = updateSettings_->updateEntry(metadataItem.item, metadataItem.data.u8, metadataItem.count);
             }
             if (!status) {
-                MEDIA_ERR_LOG("HCameraDevice::UpdateSetting Failed to update metadata item: %{public}d",
-                              metadataItem.item);
+                MEDIA_ERR_LOG("Failed to update metadata item: %{public}d", metadataItem.item);
                 return CAMERA_UNKNOWN_ERROR;
             }
         }
@@ -262,13 +269,13 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
 
         CamRetCode rc = (CamRetCode)(hdiCameraDevice_->UpdateSettings(setting));
         if (rc != HDI::Camera::V1_0::NO_ERROR) {
-            MEDIA_ERR_LOG("HCameraDevice::UpdateSetting failed with error Code: %{public}d", rc);
+            MEDIA_ERR_LOG("Failed with error Code: %{public}d", rc);
             return HdiToServiceError(rc);
         }
         ReportFlashEvent(updateSettings_);
         updateSettings_ = nullptr;
     }
-    MEDIA_DEBUG_LOG("HCameraDevice::UpdateSetting Updated device settings");
+    MEDIA_DEBUG_LOG("Updated device settings");
     return CAMERA_OK;
 }
 
@@ -337,6 +344,7 @@ void HCameraDevice::GetFrameRateSetting(const std::shared_ptr<OHOS::Camera::Came
     if (ret != CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_FPS_RANGES tag");
     } else {
+        std::lock_guard<std::mutex> lock(videoFrameRangeMutex_);
         videoFrameRateRange_ = {item.data.i32[0], item.data.i32[1]};
         MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_FPS_RANGES min = %{public}d, max = %{public}d",
             item.data.i32[0], item.data.i32[1]);
