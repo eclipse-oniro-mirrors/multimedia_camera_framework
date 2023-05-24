@@ -643,7 +643,8 @@ public:
                 if (argc == ARGS_ZERO) {
                     isPass = true;
                 } else if (argc == ARGS_ONE) {
-                    isPass = valueTypeArray[0] == napi_object || valueTypeArray[0] == napi_function;
+                    isPass = (valueTypeArray[0] == napi_object) || (valueTypeArray[0] == napi_function) ||
+                        (valueTypeArray[0] == napi_undefined);
                 } else if (argc == ARGS_TWO) {
                     isPass = (valueTypeArray[0] == napi_object) && (valueTypeArray[1] == napi_function);
                 } else {

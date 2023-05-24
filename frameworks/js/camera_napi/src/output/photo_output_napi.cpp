@@ -473,6 +473,8 @@ static napi_value ConvertJSArgsToNative(napi_env env, size_t argc, const napi_va
         } else if ((i == PARAM0) && (valueType == napi_boolean)) {
             napi_get_value_bool(env, argv[i], &context->isSupported);
             break;
+        } else if ((i == PARAM0) && (valueType == napi_undefined)) {
+            break;
         } else {
             NAPI_ASSERT(env, false, "type mismatch");
         }
@@ -596,7 +598,7 @@ napi_value PhotoOutputNapi::Release(napi_env env, napi_callback_info info)
                 context->funcName = "PhotoOutputNapi::Release";
                 context->taskId = CameraNapiUtils::IncreamentAndGet(photoOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
+                if (context->objectInfo != nullptr && context->objectInfo->photoOutput_ != nullptr) {
                     context->bRetBool = false;
                     context->status = true;
                     ((sptr<PhotoOutput> &)(context->objectInfo->photoOutput_))->Release();

@@ -80,6 +80,7 @@ private:
     void ReportFlashEvent(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
     void ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
     void GetFrameRateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
+    int32_t OpenHdiCamera();
 };
 
 class CameraDeviceCallback : public ICameraDeviceCallback {
