@@ -437,7 +437,7 @@ napi_value MetadataOutputNapi::GetSupportedMetadataObjectTypes(napi_env env, nap
             env, nullptr, resource, [](napi_env env, void* data) {
                 auto context = static_cast<MetadataOutputAsyncContext*>(data);
                 context->status = false;
-                if (context->objectInfo != nullptr) {
+                if (context->objectInfo != nullptr && context->objectInfo->metadataOutput_ != nullptr) {
                     context->funcName = "MetadataOutputNapi::GetSupportedMetadataObjectTypes";
                     context->SupportedMetadataObjectTypes =
                         context->objectInfo->metadataOutput_->GetSupportedMetadataObjectTypes();
@@ -482,7 +482,7 @@ napi_value MetadataOutputNapi::SetCapturingMetadataObjectTypes(napi_env env, nap
             env, nullptr, resource, [](napi_env env, void* data) {
                 auto context = static_cast<MetadataOutputAsyncContext*>(data);
                 context->status = false;
-                if (context->objectInfo != nullptr) {
+                if (context->objectInfo != nullptr && context->objectInfo->metadataOutput_ != nullptr) {
                     context->bRetBool = false;
                     context->status = true;
                     context->funcName = "MetadataOutputNapi::SetCapturingMetadataObjectTypes";
@@ -532,7 +532,7 @@ napi_value MetadataOutputNapi::Start(napi_env env, napi_callback_info info)
             env, nullptr, resource, [](napi_env env, void* data) {
                 auto context = static_cast<MetadataOutputAsyncContext*>(data);
                 context->status = false;
-                if (context->objectInfo != nullptr) {
+                if (context->objectInfo != nullptr && context->objectInfo->metadataOutput_ != nullptr) {
                     context->bRetBool = false;
                     context->funcName = "MetadataOutputNapi::Start";
                     context->errorCode = context->objectInfo->metadataOutput_->Start();
@@ -579,7 +579,7 @@ napi_value MetadataOutputNapi::Stop(napi_env env, napi_callback_info info)
             env, nullptr, resource, [](napi_env env, void* data) {
                 auto context = static_cast<MetadataOutputAsyncContext*>(data);
                 context->status = false;
-                if (context->objectInfo != nullptr) {
+                if (context->objectInfo != nullptr && context->objectInfo->metadataOutput_ != nullptr) {
                     context->bRetBool = false;
                     context->status = true;
                     context->funcName = "MetadataOutputNapi::Stop";
