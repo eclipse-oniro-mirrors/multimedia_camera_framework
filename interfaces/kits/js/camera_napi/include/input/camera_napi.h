@@ -152,6 +152,7 @@ static const std::unordered_map<std::string, int32_t> mapCameraErrorCode = {
     {"DEVICE_SETTING_LOCKED", 7400106},
     {"CONFILICT_CAMERA", 7400107},
     {"DEVICE_DISABLED", 7400108},
+    {"DEVICE_PREEMPTED", 7400109},
     {"SERVICE_FATAL_ERROR", 7400201}
 };
 

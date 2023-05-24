@@ -30,6 +30,7 @@
 #include "privacy_kit.h"
 #include "v1_0/istream_operator_callback.h"
 #include "v1_0/istream_operator.h"
+#include "safe_map.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -107,7 +108,7 @@ private:
     std::vector<sptr<HStreamCommon>> repeatStreams_;
     std::vector<sptr<HStreamCommon>> captureStreams_;
     std::vector<sptr<HStreamCommon>> metadataStreams_;
-    std::vector<sptr<HStreamCommon>> streams_;
+    SafeMap<int32_t, sptr<HStreamCommon>> streams_;
     std::vector<sptr<HStreamCommon>> tempStreams_;
     std::vector<sptr<HCameraDevice>> tempCameraDevices_;
     std::vector<int32_t> deletedStreamIds_;

@@ -69,7 +69,9 @@ private:
     std::string cameraID_;
     bool isReleaseCameraDevice_;
     bool isOpenedCameraDevice_;
-
+    std::mutex deviceSvcCbMutex_;
+    std::mutex videoFrameRangeMutex_;
+    std::mutex settingsMutex_;
     sptr<ICameraDeviceServiceCallback> deviceSvcCallback_;
     sptr<CameraDeviceCallback> deviceHDICallback_;
     std::map<int32_t, wptr<ICameraServiceCallback>> statusSvcCallbacks_;

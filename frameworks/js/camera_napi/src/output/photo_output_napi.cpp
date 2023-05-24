@@ -482,6 +482,8 @@ static napi_value ConvertJSArgsToNative(napi_env env, size_t argc, const napi_va
         } else if ((i == PARAM0) && (valueType == napi_boolean)) {
             napi_get_value_bool(env, argv[i], &context->isSupported);
             break;
+        } else if ((i == PARAM0) && (valueType == napi_undefined)) {
+            break;
         } else {
             NAPI_ASSERT(env, false, "type mismatch");
         }

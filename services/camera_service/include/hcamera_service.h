@@ -30,6 +30,7 @@
 #include "iremote_stub.h"
 #include "privacy_kit.h"
 #include "system_ability.h"
+#include "safe_map.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -109,6 +110,7 @@ private:
     int32_t UpdateMuteSetting(wptr<HCameraDevice> cameraDevice, bool muteMode);
     int32_t UnSetMuteCallback(pid_t pid);
     bool IsDeviceAlreadyOpen(pid_t& tempPid, std::string& tempCameraId, wptr<HCameraDevice> &tempDevice);
+    int32_t DeviceClose(wptr<HCameraDevice> cameraDevice);
     std::mutex mutex_;
     std::mutex cbMutex_;
     std::mutex muteCbMutex_;
@@ -116,10 +118,9 @@ private:
     sptr<StreamOperatorCallback> streamOperatorCallback_;
     std::map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
     std::map<int32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
-    std::map<std::string, wptr<HCameraDevice>> devices_;
+    SafeMap<std::string, wptr<HCameraDevice>> devices_;
     std::map<int32_t, std::set<std::string>> camerasForPid_;
     bool muteMode_;
-    std::mutex deviceOperatorsLock_;
     std::shared_mutex mapOperatorsLock_;
 };
 } // namespace CameraStandard

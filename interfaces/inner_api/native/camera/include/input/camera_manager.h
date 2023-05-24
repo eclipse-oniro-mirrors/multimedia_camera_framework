@@ -429,7 +429,8 @@ private:
     int32_t CreateListenerObject();
     void CameraServerDied(pid_t pid);
     void ChooseDeFaultCameras(std::vector<sptr<CameraDevice>>& supportedCameras);
-    void CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex, uint32_t streamIndex);
+    void CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
+        uint32_t streamIndex, ExtendInfo extendInfo);
     static const std::unordered_map<camera_format_t, CameraFormat> metaToFwCameraFormat_;
     static const std::unordered_map<CameraFormat, camera_format_t> fwToMetaCameraFormat_;
 
@@ -453,7 +454,6 @@ private:
     dmDeviceInfo localDeviceInfo_;
     std::map<std::string, dmDeviceInfo> distributedCamInfoAndId_;
     class DeviceInitCallBack;
-    ExtendInfo extendInfo_;
     std::vector<Profile> photoProfiles_ = {};
     std::vector<Profile> previewProfiles_ = {};
     std::vector<VideoProfile> vidProfiles_ = {};
