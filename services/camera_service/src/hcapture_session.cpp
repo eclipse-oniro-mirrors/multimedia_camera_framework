@@ -742,11 +742,6 @@ int32_t HCaptureSession::Release(pid_t pid)
     std::lock_guard<std::mutex> lock(sessionLock_);
     MEDIA_INFO_LOG("HCaptureSession::Release pid(%{public}d).", pid);
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    if (callerToken_ != callerToken) {
-        MEDIA_ERR_LOG("Failed to Release Session, createSession token is : %{public}d, now token is %{public}d",
-            callerToken_, callerToken);
-        return CAMERA_OPERATION_NOT_ALLOWED;
-    }
     auto it = session_.find(pid);
     if (it == session_.end()) {
         MEDIA_DEBUG_LOG("HCaptureSession::Release session for pid(%{public}d) already released.", pid);
