@@ -385,9 +385,15 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
                    pid, camerasForPid_[pid].size());
     auto cameraIds = camerasForPid_[pid];
     for (std::set<std::string>::iterator itIds = cameraIds.begin(); itIds != cameraIds.end(); itIds++) {
+        MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory cameraId %{public}s in camerasForPid_[%{public}d]",
+                       (*itIds).c_str(), pid);
         devices_.Iterate([&](std::string cameraId, wptr<HCameraDevice> cameraDevice) {
             auto item = cameraDevice.promote();
+            MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory cameraId %{public}s in devices_", cameraId.c_str());
             if (cameraId != *itIds || item == nullptr) {
+                MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory item is null: %{public}d or"
+                               "cameraId not equal: %{public}d {%{public}s, %{public}s}",
+                               item == nullptr, cameraId != *itIds, cameraId.c_str(), (*itIds).c_str());
                 return;
             } else {
                 MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory pid = %{public}d,Camera:[%{public}s] need close",
