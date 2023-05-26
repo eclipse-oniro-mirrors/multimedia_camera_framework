@@ -340,35 +340,35 @@ public:
     *
     * @return Returns supported exposure compensation range.
     */
-    std::vector<int32_t> GetExposureBiasRange();
+    std::vector<float> GetExposureBiasRange();
 
     /**
     * @brief Get exposure compensation range.
     * @param vector of exposure bias range.
     * @return errCode.
     */
-    int32_t GetExposureBiasRange(std::vector<int32_t> &exposureBiasRange);
+    int32_t GetExposureBiasRange(std::vector<float> &exposureBiasRange);
 
     /**
     * @brief Set exposure compensation value.
     * @param exposure compensation value to be set.
     * @return errCode.
     */
-    int32_t SetExposureBias(int32_t exposureBias);
+    int32_t SetExposureBias(float exposureBias);
 
     /**
     * @brief Get exposure compensation value.
     *
     * @return Returns current exposure compensation value.
     */
-    int32_t GetExposureValue();
+    float GetExposureValue();
 
     /**
     * @brief Get exposure compensation value.
     * @param exposure current exposure compensation value .
     * @return Returns errCode.
     */
-    int32_t GetExposureValue(int32_t &exposure);
+    int32_t GetExposureValue(float &exposure);
 
     /**
     * @brief Set the exposure callback.
@@ -637,6 +637,7 @@ private:
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
     void SetFrameRateRange(const std::vector<int32_t>& frameRateRange);
     Point CoordinateTransform(Point point);
+    int32_t CalculateExposureValue(float exposureValue);
     Point VerifyFocusCorrectness(Point point);
 };
 } // namespace CameraStandard

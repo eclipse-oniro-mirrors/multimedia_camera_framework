@@ -89,7 +89,7 @@ public:
     *
     * @return Returns vector<int32_t> of supported exposure compensation range.
     */
-    std::vector<int32_t> GetExposureBiasRange();
+    std::vector<float> GetExposureBiasRange();
 
 private:
     std::string cameraID_;
@@ -99,7 +99,7 @@ private:
     camera_connection_type_t connectionType_ = OHOS_CAMERA_CONNECTION_TYPE_BUILTIN;
     bool isMirrorSupported_ = false;
     std::vector<float> zoomRatioRange_;
-    std::vector<int32_t> exposureBiasRange_;
+    std::vector<float> exposureBiasRange_;
 
     void init(common_metadata_header_t* metadataHeader);
     std::vector<float> CalculateZoomRange();

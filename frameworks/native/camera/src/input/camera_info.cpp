@@ -210,7 +210,7 @@ std::vector<float> CameraInfo::GetZoomRatioRange()
     return zoomRatioRange_;
 }
 
-std::vector<int32_t> CameraInfo::GetExposureBiasRange()
+std::vector<float> CameraInfo::GetExposureBiasRange()
 {
     int32_t minIndex = 0;
     int32_t maxIndex = 1;
@@ -240,9 +240,24 @@ std::vector<int32_t> CameraInfo::GetExposureBiasRange()
                       range[minIndex], range[maxIndex]);
         return {};
     }
-    MEDIA_DEBUG_LOG("Exposure compensation min: %{public}d, max: %{public}d", range[minIndex], range[maxIndex]);
+    MEDIA_DEBUG_LOG("Exposure hdi compensation min: %{public}d, max: %{public}d", range[minIndex], range[maxIndex]);
 
-    exposureBiasRange_ = range;
+    ret = Camera::FindCameraMetadataItem(metadata_->get(), OHOS_CONTROL_AE_COMPENSATION_STEP, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("Failed to get exposure compensation step with return code %{public}d", ret);
+        return {};
+    }
+
+    int32_t stepNumerator = item.data.r->numerator;
+    int32_t stepDenominator = item.data.r->denominator;
+    float step = static_cast<float>(stepNumerator) / static_cast<float>(stepDenominator);
+    MEDIA_DEBUG_LOG("Exposure step numerator: %{public}d, denominatormax: %{public}d, step: %{public}f",
+        stepNumerator, stepDenominator, step);
+
+    exposureBiasRange_ = {step * range[minIndex], step * range[maxIndex]};
+
+    MEDIA_DEBUG_LOG("Exposure compensation min: %{public}f, max: %{public}f",
+        exposureBiasRange_[minIndex], exposureBiasRange_[maxIndex]);
     return exposureBiasRange_;
 }
 } // CameraStandard
