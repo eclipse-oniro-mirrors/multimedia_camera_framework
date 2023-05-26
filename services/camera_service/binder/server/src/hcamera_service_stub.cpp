@@ -342,14 +342,12 @@ int HCameraServiceStub::DestroyStubForPid(pid_t pid)
 {
     sptr<CameraDeathRecipient> deathRecipient = nullptr;
     sptr<IStandardCameraListener> cameraListener = nullptr;
-
     if (deathRecipientMap_.Find(pid, deathRecipient)) {
         if (deathRecipient != nullptr) {
             deathRecipient->SetNotifyCb(nullptr);
         }
         deathRecipientMap_.Erase(pid);
     }
-
     if (cameraListenerMap_.Find(pid, cameraListener)) {
         if (cameraListener != nullptr && cameraListener->AsObject() != nullptr && deathRecipient != nullptr) {
             (void)cameraListener->AsObject()->RemoveDeathRecipient(deathRecipient);
@@ -374,35 +372,26 @@ int HCameraServiceStub::SetListenerObject(const sptr<IRemoteObject> &object)
     int errCode = -1;
     sptr<CameraDeathRecipient> deathRecipientTmp = nullptr;
     sptr<IStandardCameraListener> cameraListenerTmp = nullptr;
-
     pid_t pid = IPCSkeleton::GetCallingPid();
-    
     if (deathRecipientMap_.Find(pid, deathRecipientTmp)) {
         deathRecipientMap_.Erase(pid);
     }
-
     if (cameraListenerMap_.Find(pid, cameraListenerTmp)) {
         if (cameraListenerTmp != nullptr && cameraListenerTmp->AsObject() != nullptr && deathRecipientTmp != nullptr) {
             (void)cameraListenerTmp->AsObject()->RemoveDeathRecipient(deathRecipientTmp);
         }
         cameraListenerMap_.Erase(pid);
     }
-
     CHECK_AND_RETURN_RET_LOG(object != nullptr, CAMERA_ALLOC_ERROR, "set listener object is nullptr");
-
     sptr<IStandardCameraListener> cameraListener = iface_cast<IStandardCameraListener>(object);
     CHECK_AND_RETURN_RET_LOG(cameraListener != nullptr, CAMERA_ALLOC_ERROR,
         "failed to convert IStandardCameraListener");
-
     sptr<CameraDeathRecipient> deathRecipient = new(std::nothrow) CameraDeathRecipient(pid);
     CHECK_AND_RETURN_RET_LOG(deathRecipient != nullptr, CAMERA_ALLOC_ERROR, "failed to new CameraDeathRecipient");
-
     deathRecipient->SetNotifyCb(std::bind(&HCameraServiceStub::ClientDied, this, std::placeholders::_1));
-
     if (cameraListener->AsObject() != nullptr) {
         (void)cameraListener->AsObject()->AddDeathRecipient(deathRecipient);
     }
-
     MEDIA_DEBUG_LOG("client pid pid:%{public}d", pid);
     cameraListenerMap_.EnsureInsert(pid, cameraListener);
     deathRecipientMap_.EnsureInsert(pid, deathRecipient);
