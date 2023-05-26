@@ -1362,7 +1362,7 @@ napi_value CameraSessionNapi::GetExposureBiasRange(napi_env env, napi_callback_i
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        std::vector<int32_t> vecExposureBiasList;
+        std::vector<float> vecExposureBiasList;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetExposureBiasRange(vecExposureBiasList);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
@@ -1370,16 +1370,13 @@ napi_value CameraSessionNapi::GetExposureBiasRange(napi_env env, napi_callback_i
         if (vecExposureBiasList.empty() || napi_create_array(env, &result) != napi_ok) {
             return result;
         }
-        int32_t j = 0;
         size_t len = vecExposureBiasList.size();
         for (size_t i = 0; i < len; i++) {
-            int32_t  exposureBias = vecExposureBiasList[i];
-            MEDIA_DEBUG_LOG("EXPOSURE_BIAS_RANGE : exposureBias = %{public}d", vecExposureBiasList[i]);
+            float exposureBias = vecExposureBiasList[i];
+            MEDIA_DEBUG_LOG("EXPOSURE_BIAS_RANGE : exposureBias = %{public}f", vecExposureBiasList[i]);
             napi_value value;
-            if (napi_create_int32(env, exposureBias, &value) == napi_ok) {
-                napi_set_element(env, result, j, value);
-                j++;
-            }
+            napi_create_double(env, CameraNapiUtils::FloatToDouble(exposureBias), &value);
+            napi_set_element(env, result, i, value);
         }
         MEDIA_DEBUG_LOG("EXPOSURE_BIAS_RANGE ExposureBiasList size : %{public}zu", vecExposureBiasList.size());
     } else {
@@ -1403,12 +1400,12 @@ napi_value CameraSessionNapi::GetExposureValue(napi_env env, napi_callback_info 
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi!= nullptr) {
-        int32_t exposureValue;
+        float exposureValue;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetExposureValue(exposureValue);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
         }
-        napi_create_int32(env, exposureValue, &result);
+        napi_create_double(env, CameraNapiUtils::FloatToDouble(exposureValue), &result);
     } else {
         MEDIA_ERR_LOG("GetExposureValue call Failed!");
     }
@@ -1431,10 +1428,10 @@ napi_value CameraSessionNapi::SetExposureBias(napi_env env, napi_callback_info i
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        int32_t exposureValue;
-        napi_get_value_int32(env, argv[0], &exposureValue);
+        double exposureValue;
+        napi_get_value_double(env, argv[0], &exposureValue);
         cameraSessionNapi->cameraSession_->LockForControl();
-        int32_t retCode = cameraSessionNapi->cameraSession_->SetExposureBias(exposureValue);
+        int32_t retCode = cameraSessionNapi->cameraSession_->SetExposureBias((float)exposureValue);
         cameraSessionNapi->cameraSession_->UnlockForControl();
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
