@@ -30,7 +30,6 @@
 #include "iremote_stub.h"
 #include "privacy_kit.h"
 #include "system_ability.h"
-#include "safe_map.h"
 
 namespace OHOS {
 namespace CameraStandard {

@@ -14,8 +14,6 @@
  */
 
 #include "hcapture_session.h"
-
-#include "camera_util.h"
 #include "camera_log.h"
 #include "iconsumer_surface.h"
 #include "ipc_skeleton.h"

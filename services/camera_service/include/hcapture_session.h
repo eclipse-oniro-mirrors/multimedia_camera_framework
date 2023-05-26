@@ -18,7 +18,7 @@
 
 #include <refbase.h>
 #include <iostream>
-
+#include "camera_util.h"
 #include "accesstoken_kit.h"
 #include "state_customized_cbk.h"
 #include "hcamera_device.h"
@@ -30,7 +30,6 @@
 #include "privacy_kit.h"
 #include "v1_0/istream_operator_callback.h"
 #include "v1_0/istream_operator.h"
-#include "safe_map.h"
 
 namespace OHOS {
 namespace CameraStandard {
