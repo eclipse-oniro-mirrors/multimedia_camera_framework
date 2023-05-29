@@ -42,8 +42,8 @@ class HCameraHostManager::CameraHostInfo : public ICameraHostCallback {
 public:
     class CameraHostDeathRecipient : public IRemoteObject::DeathRecipient {
     public:
-        explicit CameraHostDeathRecipient(const sptr<HCameraHostManager::CameraHostInfo> &hostInfo) :
-            cameraHostInfo_(hostInfo)
+        explicit CameraHostDeathRecipient(const sptr<HCameraHostManager::CameraHostInfo> &hostInfo)
+            : cameraHostInfo_(hostInfo)
         {
         }
         virtual ~CameraHostDeathRecipient() = default;
