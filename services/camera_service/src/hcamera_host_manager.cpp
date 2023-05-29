@@ -317,13 +317,13 @@ int32_t HCameraHostManager::CameraHostInfo::OnCameraEvent(const std::string &cam
     switch (event) {
         case CAMERA_EVENT_DEVICE_RMV: {
             MEDIA_INFO_LOG("CameraHostInfo::OnCameraEvent, camera %{public}s unavailable", cameraId.c_str());
-            svcStatus = CAMERA_STATUS_UNAVAILABLE;
+            svcStatus = CAMERA_STATUS_DISAPPEAR;
             RemoveDevice(cameraId);
             break;
         }
         case CAMERA_EVENT_DEVICE_ADD: {
             MEDIA_INFO_LOG("CameraHostInfo::OnCameraEvent camera %{public}s available", cameraId.c_str());
-            svcStatus = CAMERA_STATUS_AVAILABLE;
+            svcStatus = CAMERA_STATUS_APPEAR;
             AddDevice(cameraId);
             break;
         }
