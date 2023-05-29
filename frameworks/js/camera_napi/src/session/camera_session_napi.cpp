@@ -1728,7 +1728,6 @@ napi_value CameraSessionNapi::On(napi_env env, napi_callback_info info)
     char buffer[SIZE];
     const int32_t refCount = 1;
     CameraSessionNapi* obj = nullptr;
-    napi_status status;
 
     napi_get_undefined(env, &undefinedResult);
 
@@ -1740,7 +1739,7 @@ napi_value CameraSessionNapi::On(napi_env env, napi_callback_info info)
         return undefinedResult;
     }
 
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
+    napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
     if (status == napi_ok && obj != nullptr) {
         napi_valuetype valueType = napi_undefined;
         if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string
