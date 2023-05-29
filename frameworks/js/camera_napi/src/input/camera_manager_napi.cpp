@@ -643,6 +643,10 @@ napi_value CameraManagerNapi::IsCameraMuted(napi_env env, napi_callback_info inf
 
 napi_value CameraManagerNapi::IsCameraMuteSupported(napi_env env, napi_callback_info info)
 {
+    if (!CameraNapiUtils::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsCameraMuteSupported is called!");
+        return nullptr;
+    }
     MEDIA_INFO_LOG("IsCameraMuteSupported is called");
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -660,6 +664,10 @@ napi_value CameraManagerNapi::IsCameraMuteSupported(napi_env env, napi_callback_
 
 napi_value CameraManagerNapi::MuteCamera(napi_env env, napi_callback_info info)
 {
+    if (!CameraNapiUtils::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi MuteCamera is called!");
+        return nullptr;
+    }
     MEDIA_INFO_LOG("MuteCamera is called");
     napi_value result = nullptr;
     size_t argc = ARGS_TWO;
@@ -776,14 +784,17 @@ napi_value CameraManagerNapi::On(napi_env env, napi_callback_info info)
         std::string eventType = std::string(buffer);
 
         napi_ref callbackRef;
-        const int32_t refCount = 1;
-        napi_create_reference(env, argv[PARAM1], refCount, &callbackRef);
+        napi_create_reference(env, argv[PARAM1], 1, &callbackRef);
 
         if (!eventType.empty() && (eventType.compare("cameraStatus")==0)) {
             shared_ptr<CameraManagerCallbackNapi> callback =
                 make_shared<CameraManagerCallbackNapi>(env, callbackRef);
             obj->cameraManager_->SetCallback(callback);
         } else if (!eventType.empty() && (eventType.compare("cameraMute")==0)) {
+            if (!CameraNapiUtils::CheckSystemApp(env)) {
+                MEDIA_ERR_LOG("SystemApi On cameraMute is called!");
+                return undefinedResult;
+            }
             shared_ptr<CameraMuteListenerNapi> listener =
                 make_shared<CameraMuteListenerNapi>(env, callbackRef);
             obj->cameraManager_->RegisterCameraMuteListener(listener);
