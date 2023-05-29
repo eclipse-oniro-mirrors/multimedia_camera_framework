@@ -31,11 +31,10 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
-class CameraDeviceCallback;
 class IDeviceOperatorsCallback;
 
 
-class HCameraDevice : public HCameraDeviceStub {
+class HCameraDevice : public HCameraDeviceStub, public ICameraDeviceCallback {
 public:
     HCameraDevice(sptr<HCameraHostManager> &cameraHostManager, std::string cameraID, const uint32_t callingTokenId);
     ~HCameraDevice();
@@ -51,8 +50,8 @@ public:
             sptr<IStreamOperator> &streamOperator);
     sptr<IStreamOperator> GetStreamOperator();
     int32_t SetCallback(sptr<ICameraDeviceServiceCallback> &callback) override;
-    int32_t OnError(const ErrorType type, const int32_t errorMsg);
-    int32_t OnResult(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
+    int32_t OnError(ErrorType type, int32_t errorCode) override;
+    int32_t OnResult(uint64_t timestamp, const std::vector<uint8_t>& result) override;
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetSettings();
     std::string GetCameraId();
     bool IsReleaseCameraDevice();
@@ -73,7 +72,6 @@ private:
     std::mutex videoFrameRangeMutex_;
     std::mutex settingsMutex_;
     sptr<ICameraDeviceServiceCallback> deviceSvcCallback_;
-    sptr<CameraDeviceCallback> deviceHDICallback_;
     std::map<int32_t, wptr<ICameraServiceCallback>> statusSvcCallbacks_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> updateSettings_;
     sptr<IStreamOperator> streamOperator_;
@@ -84,20 +82,6 @@ private:
     void ReportFlashEvent(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
     void ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
     void GetFrameRateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
-};
-
-class CameraDeviceCallback : public ICameraDeviceCallback {
-public:
-    explicit CameraDeviceCallback(sptr<HCameraDevice> hCameraDevice);
-    virtual ~CameraDeviceCallback()
-    {
-        hCameraDevice_ = nullptr;
-    }
-    int32_t OnError(ErrorType type, int32_t errorCode) override;
-    int32_t OnResult(uint64_t timestamp, const std::vector<uint8_t>& result) override;
-
-private:
-    wptr<HCameraDevice> hCameraDevice_;
 };
 
 class IDeviceOperatorsCallback : public virtual RefBase {

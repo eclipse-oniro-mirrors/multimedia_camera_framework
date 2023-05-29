@@ -41,7 +41,6 @@ HCameraDevice::~HCameraDevice()
     if (cameraHostManager_) {
         cameraHostManager_ = nullptr;
     }
-    deviceHDICallback_ = nullptr;
     deviceSvcCallback_ = nullptr;
     deviceOperatorsCallback_ = nullptr;
 }
@@ -146,16 +145,8 @@ int32_t HCameraDevice::OpenDevice()
 {
     CAMERA_SYNC_TRACE;
     int32_t errorCode;
-
-    if (deviceHDICallback_ == nullptr) {
-        deviceHDICallback_ = new(std::nothrow) CameraDeviceCallback(this);
-        if (deviceHDICallback_ == nullptr) {
-            MEDIA_ERR_LOG("HCameraDevice::OpenDevice CameraDeviceCallback allocation failed");
-            return CAMERA_ALLOC_ERROR;
-        }
-    }
     MEDIA_INFO_LOG("HCameraDevice::OpenDevice Opening camera device: %{public}s", cameraID_.c_str());
-    errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, deviceHDICallback_, hdiCameraDevice_);
+    errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_);
     if (errorCode == CAMERA_OK) {
         std::lock_guard<std::mutex> lock(settingsMutex_);
         isOpenedCameraDevice_ = true;
@@ -194,7 +185,6 @@ int32_t HCameraDevice::CloseDevice()
     if (cameraHostManager_) {
         cameraHostManager_->RemoveCameraDevice(cameraID_);
     }
-    deviceHDICallback_ = nullptr;
     std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
     deviceSvcCallback_ = nullptr;
     return CAMERA_OK;
@@ -477,15 +467,17 @@ int32_t HCameraDevice::OnError(const ErrorType type, const int32_t errorMsg)
     return CAMERA_OK;
 }
 
-int32_t HCameraDevice::OnResult(const uint64_t timestamp,
-                                const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
+int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint8_t>& result)
 {
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult;
+    OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
+
     std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
     if (deviceSvcCallback_ != nullptr) {
-        deviceSvcCallback_->OnResult(timestamp, result);
+        deviceSvcCallback_->OnResult(timestamp, cameraResult);
     }
     camera_metadata_item_t item;
-    common_metadata_header_t* metadata = result->get();
+    common_metadata_header_t* metadata = cameraResult->get();
     int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FLASH_MODE, &item);
     if (ret == 0) {
         MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::OnResult() OHOS_CONTROL_FLASH_MODE is %{public}d",
@@ -511,31 +503,6 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp,
 int32_t HCameraDevice::GetCallerToken()
 {
     return callerToken_;
-}
-
-CameraDeviceCallback::CameraDeviceCallback(sptr<HCameraDevice> hCameraDevice)
-{
-    hCameraDevice_ = hCameraDevice;
-}
-
-int32_t CameraDeviceCallback::OnError(const ErrorType type, const int32_t errorCode)
-{
-    auto item = hCameraDevice_.promote();
-    if (item != nullptr) {
-        item->OnError(type, errorCode);
-    }
-    return CAMERA_OK;
-}
-
-int32_t CameraDeviceCallback::OnResult(uint64_t timestamp, const std::vector<uint8_t>& result)
-{
-    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult;
-    OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
-    auto item = hCameraDevice_.promote();
-    if (item != nullptr) {
-        item->OnResult(timestamp, cameraResult);
-    }
-    return CAMERA_OK;
 }
 } // namespace CameraStandard
 } // namespace OHOS
