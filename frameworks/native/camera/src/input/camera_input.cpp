@@ -82,8 +82,12 @@ public:
 };
 
 CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
-                         sptr<CameraDevice> &cameraObj) : cameraObj_(cameraObj), deviceObj_(deviceObj)
+                         sptr<CameraDevice> &cameraObj) : deviceObj_(deviceObj), cameraObj_(cameraObj)
 {
+    MEDIA_INFO_LOG("CameraInput::CameraInput Contructor!");
+    if (cameraObj_) {
+        MEDIA_INFO_LOG("CameraInput::CameraInput Contructor Camera: %{public}s", cameraObj_->GetID().c_str());
+    }
     CameraDeviceSvcCallback_ = new(std::nothrow) CameraDeviceServiceCallback(this);
     if (CameraDeviceSvcCallback_ == nullptr) {
         MEDIA_ERR_LOG("CameraInput::CameraInput CameraDeviceServiceCallback alloc failed");
@@ -98,6 +102,10 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
 
 CameraInput::~CameraInput()
 {
+    MEDIA_INFO_LOG("CameraInput::CameraInput Destructor!");
+    if (cameraObj_) {
+        MEDIA_INFO_LOG("CameraInput::CameraInput Destructor Camera: %{public}s", cameraObj_->GetID().c_str());
+    }
     cameraObj_ = nullptr;
     deviceObj_ = nullptr;
     CameraDeviceSvcCallback_ = nullptr;

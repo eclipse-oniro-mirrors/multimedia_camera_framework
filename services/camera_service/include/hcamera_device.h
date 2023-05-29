@@ -106,7 +106,7 @@ public:
     virtual ~IDeviceOperatorsCallback() = default;
     virtual int32_t DeviceOpen(const std::string& cameraId) = 0;
     virtual int32_t DeviceClose(const std::string& cameraId, pid_t pidFromSession = 0) = 0;
-    virtual std::vector<wptr<HCameraDevice>> CameraConflictDetection(const std::string& cameraId,
+    virtual std::vector<sptr<HCameraDevice>> CameraConflictDetection(const std::string& cameraId,
                                                                      bool& isPermisson) = 0;
 };
 } // namespace CameraStandard
