@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import {ErrorCallback, AsyncCallback} from './@ohos.base';
+import { ErrorCallback, AsyncCallback } from './@ohos.base';
 import { Context } from './app/context';
 
 /**
@@ -133,7 +133,7 @@ declare namespace camera {
    * @since 9
    * @syscap SystemCapability.Multimedia.Camera.Core
    */
-  interface CameraOutputCapability  {
+  interface CameraOutputCapability {
     /**
      * Preview profiles.
      * @since 9
@@ -165,7 +165,7 @@ declare namespace camera {
    * @since 9
    * @syscap SystemCapability.Multimedia.Camera.Core
    */
-  interface CameraManager  {
+  interface CameraManager {
     /**
      * Gets supported camera descriptions.
      * @param callback Callback used to return the array of supported cameras.
@@ -516,7 +516,7 @@ declare namespace camera {
      * Indicates a smart pad.
      */
     TABLET = 0x11,
-} HostDeviceType;
+  }
 
   /**
    * Camera device object.
@@ -719,13 +719,13 @@ declare namespace camera {
    * @since 9
    * @syscap SystemCapability.Multimedia.Camera.Core
    */
-   enum CameraFormat {
+  enum CameraFormat {
     /**
      * RGBA 8888 Format.
      * @since 9
      * @syscap SystemCapability.Multimedia.Camera.Core
      */
-     CAMERA_FORMAT_RGBA_8888 = 3,
+    CAMERA_FORMAT_RGBA_8888 = 3,
 
     /**
      * YUV 420 Format.
@@ -788,8 +788,8 @@ declare namespace camera {
      * Auto exposure mode.
      * @since 9
      */
-     EXPOSURE_MODE_AUTO = 1,
-     /**
+    EXPOSURE_MODE_AUTO = 1,
+    /**
      * Continuous automatic exposure.
      * @since 9
      */
@@ -859,7 +859,7 @@ declare namespace camera {
    * @since 9
    * @syscap SystemCapability.Multimedia.Camera.Core
    */
-   enum VideoStabilizationMode {
+  enum VideoStabilizationMode {
     /**
      * Turn off video stablization.
      * @since 9
