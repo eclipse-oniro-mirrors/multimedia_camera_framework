@@ -726,7 +726,8 @@ void HCaptureSession::ReleaseStreams()
         }
         MEDIA_DEBUG_LOG("HCaptureSession::ReleaseStreams() streamIds size() = %{public}zu", streamIds.size());
         for (size_t i = 0; i < streamIds.size(); i++) {
-            MEDIA_DEBUG_LOG("HCaptureSession::ReleaseStreams() streamIds[%{public}zu] = %{public}d", i, streamIds.at(i));
+            MEDIA_DEBUG_LOG("HCaptureSession::ReleaseStreams() streamIds[%{public}zu] = %{public}d",
+                            i, streamIds.at(i));
         }
         streams_.clear();
     }
