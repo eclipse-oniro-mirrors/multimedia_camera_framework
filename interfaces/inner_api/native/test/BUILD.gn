@@ -70,7 +70,7 @@ ohos_executable("camera_video") {
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
     "ipc:ipc_single",
-    "player_framework:media_client",
+    "multimedia_player_framework:media_client",
   ]
   part_name = "multimedia_camera_framework"
   subsystem_name = "multimedia"
