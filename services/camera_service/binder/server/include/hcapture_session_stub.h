@@ -18,9 +18,7 @@
 
 #include "icapture_session.h"
 #include "iremote_stub.h"
-#include "istream_capture.h"
-#include "istream_metadata.h"
-#include "istream_repeat.h"
+
 namespace OHOS {
 namespace CameraStandard {
 class HCaptureSessionStub : public IRemoteStub<ICaptureSession> {
