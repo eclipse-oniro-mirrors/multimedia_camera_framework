@@ -30,7 +30,6 @@
 #include "iremote_stub.h"
 #include "privacy_kit.h"
 #include "system_ability.h"
-#include "safe_map.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -78,7 +77,7 @@ public:
     // IDeviceOperatorsCallback
     int32_t DeviceOpen(const std::string& cameraId) override;
     int32_t DeviceClose(const std::string& cameraId, pid_t pidFromSession = 0) override;
-    std::vector<wptr<HCameraDevice>> CameraConflictDetection(const std::string& cameraId, bool& isPermisson) override;
+    std::vector<sptr<HCameraDevice>> CameraConflictDetection(const std::string& cameraId, bool& isPermisson) override;
 
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager) : cameraHostManager_(cameraHostManager),
@@ -107,10 +106,10 @@ private:
     void CameraDumpVideoFrameRateRange(common_metadata_header_t* metadataEntry,
         std::string& dumpString);
     bool IsCameraMuteSupported(std::string cameraId);
-    int32_t UpdateMuteSetting(wptr<HCameraDevice> cameraDevice, bool muteMode);
+    int32_t UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool muteMode);
     int32_t UnSetMuteCallback(pid_t pid);
-    bool IsDeviceAlreadyOpen(pid_t& tempPid, std::string& tempCameraId, wptr<HCameraDevice> &tempDevice);
-    int32_t DeviceClose(wptr<HCameraDevice> cameraDevice);
+    bool IsDeviceAlreadyOpen(pid_t& tempPid, std::string& tempCameraId, sptr<HCameraDevice> &tempDevice);
+    int32_t DeviceClose(sptr<HCameraDevice> cameraDevice);
     std::mutex mutex_;
     std::mutex cbMutex_;
     std::mutex muteCbMutex_;
@@ -118,7 +117,7 @@ private:
     sptr<StreamOperatorCallback> streamOperatorCallback_;
     std::map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
     std::map<int32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
-    SafeMap<std::string, wptr<HCameraDevice>> devices_;
+    SafeMap<std::string, sptr<HCameraDevice>> devicesManager_;
     std::map<int32_t, std::set<std::string>> camerasForPid_;
     bool muteMode_;
     std::shared_mutex mapOperatorsLock_;

@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-service camera_service /system/bin/sa_main /system/profile/camera_service.xml
+service camera_service /system/bin/sa_main /system/profile/camera_service.json
     class z_core
     user cameraserver
     group system shell

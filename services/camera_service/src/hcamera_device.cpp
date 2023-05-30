@@ -25,6 +25,7 @@ HCameraDevice::HCameraDevice(sptr<HCameraHostManager> &cameraHostManager,
                              std::string cameraID,
                              const uint32_t callingTokenId)
 {
+    MEDIA_INFO_LOG("HCameraDevice::HCameraDevice Contructor Camera: %{public}s", cameraID.c_str());
     cameraHostManager_ = cameraHostManager;
     cameraID_ = cameraID;
     streamOperator_ = nullptr;
@@ -36,6 +37,7 @@ HCameraDevice::HCameraDevice(sptr<HCameraHostManager> &cameraHostManager,
 
 HCameraDevice::~HCameraDevice()
 {
+    MEDIA_INFO_LOG("HCameraDevice::~HCameraDevice Destructor Camera: %{public}s", cameraID_.c_str());
     hdiCameraDevice_ = nullptr;
     streamOperator_ = nullptr;
     if (cameraHostManager_) {

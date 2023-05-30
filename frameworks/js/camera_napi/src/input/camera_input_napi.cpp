@@ -89,18 +89,19 @@ CameraInputNapi::CameraInputNapi() : env_(nullptr), wrapper_(nullptr)
 
 CameraInputNapi::~CameraInputNapi()
 {
-    MEDIA_DEBUG_LOG("~CameraInputNapi is called");
+    MEDIA_INFO_LOG("~CameraInputNapi is called");
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
     if (cameraInput_) {
+        MEDIA_INFO_LOG("~CameraInputNapi cameraInput_ is not null");
         cameraInput_ = nullptr;
     }
 }
 
 void CameraInputNapi::CameraInputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
-    MEDIA_DEBUG_LOG("CameraInputNapiDestructor is called");
+    MEDIA_INFO_LOG("CameraInputNapiDestructor is called");
     CameraInputNapi* cameraObj = reinterpret_cast<CameraInputNapi*>(nativeObject);
     if (cameraObj != nullptr) {
         cameraObj->~CameraInputNapi();
@@ -142,7 +143,7 @@ napi_value CameraInputNapi::Init(napi_env env, napi_value exports)
 // Constructor callback
 napi_value CameraInputNapi::CameraInputNapiConstructor(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("CameraInputNapiConstructor is called");
+    MEDIA_INFO_LOG("CameraInputNapiConstructor is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value thisVar = nullptr;
