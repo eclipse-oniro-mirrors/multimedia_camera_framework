@@ -187,7 +187,7 @@ int32_t HCaptureSession::AddOutputStream(sptr<HStreamCommon> stream)
         return CAMERA_INVALID_SESSION_CFG;
     }
     int32_t rc = FindRepeatStream(stream);
-    if (rc != -1) {
+    if (rc != STREAM_NOT_FOUNT) {
         return rc;
     }
     if (stream) {
