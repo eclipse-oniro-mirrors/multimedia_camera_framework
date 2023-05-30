@@ -39,6 +39,7 @@ class PermissionStatusChangeCb;
 class CameraUseStateChangeCb;
 
 static const int32_t STREAMID_BEGIN = 1;
+static const int32_t STREAM_NOT_FOUNT = -1;
 
 class HCaptureSession : public HCaptureSessionStub {
 public:
@@ -75,6 +76,7 @@ private:
     int32_t ValidateSessionInputs();
     int32_t ValidateSessionOutputs();
     int32_t AddOutputStream(sptr<HStreamCommon> stream);
+    int32_t FindRepeatStream(sptr<HStreamCommon> stream);
     int32_t RemoveOutputStream(sptr<HStreamCommon> stream);
     int32_t GetCameraDevice(sptr<HCameraDevice> &device);
     int32_t HandleCaptureOuputsConfig(sptr<HCameraDevice> &device);
@@ -107,7 +109,7 @@ private:
     std::vector<sptr<HStreamCommon>> repeatStreams_;
     std::vector<sptr<HStreamCommon>> captureStreams_;
     std::vector<sptr<HStreamCommon>> metadataStreams_;
-    SafeMap<int32_t, sptr<HStreamCommon>> streams_;
+    std::vector<sptr<HStreamCommon>> streams_;
     std::vector<sptr<HStreamCommon>> tempStreams_;
     std::vector<sptr<HCameraDevice>> tempCameraDevices_;
     std::vector<int32_t> deletedStreamIds_;
@@ -115,6 +117,7 @@ private:
     sptr<StreamOperatorCallback> streamOperatorCallback_;
     sptr<ICaptureSessionCallback> sessionCallback_;
     int32_t streamId_ = STREAMID_BEGIN;
+    std::mutex streamsLock_;
     pid_t pid_;
     int32_t uid_;
     uint32_t callerToken_;
