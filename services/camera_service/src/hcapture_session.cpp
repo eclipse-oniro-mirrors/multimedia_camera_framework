@@ -197,7 +197,8 @@ int32_t HCaptureSession::AddOutputStream(sptr<HStreamCommon> stream)
     return CAMERA_OK;
 }
 
-int32_t HCaptureSession::FindRepeatStream(sptr<HStreamCommon> stream) {
+int32_t HCaptureSession::FindRepeatStream(sptr<HStreamCommon> stream)
+{
     std::lock_guard<std::mutex> lock(streamsLock_);
     auto it = std::find(streams_.begin(), streams_.end(), stream);
     if (it != streams_.end()) {
@@ -213,7 +214,7 @@ int32_t HCaptureSession::FindRepeatStream(sptr<HStreamCommon> stream) {
             return CAMERA_INVALID_SESSION_CFG;
         }
     }
-    return -1;
+    return STREAM_NOT_FOUNT;
 }
 
 int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> stream)

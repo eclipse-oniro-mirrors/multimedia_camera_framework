@@ -39,6 +39,7 @@ class PermissionStatusChangeCb;
 class CameraUseStateChangeCb;
 
 static const int32_t STREAMID_BEGIN = 1;
+static const int32_t STREAM_NOT_FOUNT = -1;
 
 class HCaptureSession : public HCaptureSessionStub {
 public:
