@@ -75,6 +75,7 @@ private:
     int32_t ValidateSessionInputs();
     int32_t ValidateSessionOutputs();
     int32_t AddOutputStream(sptr<HStreamCommon> stream);
+    int32_t FindRepeatStream(sptr<HStreamCommon> stream);
     int32_t RemoveOutputStream(sptr<HStreamCommon> stream);
     int32_t GetCameraDevice(sptr<HCameraDevice> &device);
     int32_t HandleCaptureOuputsConfig(sptr<HCameraDevice> &device);
@@ -115,6 +116,7 @@ private:
     sptr<StreamOperatorCallback> streamOperatorCallback_;
     sptr<ICaptureSessionCallback> sessionCallback_;
     int32_t streamId_ = STREAMID_BEGIN;
+    std::mutex streamsLock_;
     pid_t pid_;
     int32_t uid_;
     uint32_t callerToken_;
