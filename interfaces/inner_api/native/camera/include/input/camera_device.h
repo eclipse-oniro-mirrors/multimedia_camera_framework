@@ -134,7 +134,7 @@ public:
     *
     * @return Returns vector<int32_t> of supported exposure compensation range.
     */
-    std::vector<int32_t> GetExposureBiasRange();
+    std::vector<float> GetExposureBiasRange();
 
 private:
     std::string cameraID_;
@@ -145,7 +145,7 @@ private:
     bool isMirrorSupported_ = false;
     dmDeviceInfo dmDeviceInfo_ = {};
     std::vector<float> zoomRatioRange_;
-    std::vector<int32_t> exposureBiasRange_;
+    std::vector<float> exposureBiasRange_;
     static const std::unordered_map<camera_type_enum_t, CameraType> metaToFwCameraType_;
     static const std::unordered_map<camera_position_enum_t, CameraPosition> metaToFwCameraPosition_;
     static const std::unordered_map<camera_connection_type_t, ConnectionType> metaToFwConnectionType_;

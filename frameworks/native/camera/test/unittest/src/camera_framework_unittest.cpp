@@ -522,7 +522,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_020, TestSize.Level0
         session->SetZoomRatio(zoomRatioRange[0]);
     }
 
-    std::vector<int32_t> exposurebiasRange = session->GetExposureBiasRange();
+    std::vector<float> exposurebiasRange = session->GetExposureBiasRange();
     if (!exposurebiasRange.empty()) {
         session->SetExposureBias(exposurebiasRange[0]);
     }
@@ -1427,10 +1427,10 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_043, TestSize.Level0
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
-    std::vector<int32_t> exposurebiasRange = session->GetExposureBiasRange();
+    std::vector<float> exposurebiasRange = session->GetExposureBiasRange();
     if (!exposurebiasRange.empty()) {
         session->LockForControl();
-        session->SetExposureBias(exposurebiasRange[0]-1);
+        session->SetExposureBias(exposurebiasRange[0]-1.0);
         session->UnlockForControl();
     }
     ASSERT_EQ(session->GetExposureValue(), exposurebiasRange[0]);
@@ -1481,10 +1481,10 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_044, TestSize.Level0
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
-    std::vector<int32_t> exposurebiasRange = session->GetExposureBiasRange();
+    std::vector<float> exposurebiasRange = session->GetExposureBiasRange();
     if (!exposurebiasRange.empty()) {
         session->LockForControl();
-        session->SetExposureBias(exposurebiasRange[0]+1);
+        session->SetExposureBias(exposurebiasRange[0]+1.0);
         session->UnlockForControl();
     }
     EXPECT_TRUE((session->GetExposureValue()>=exposurebiasRange[0] &&
@@ -1537,10 +1537,10 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_045, TestSize.Level0
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
-    std::vector<int32_t> exposurebiasRange = session->GetExposureBiasRange();
+    std::vector<float> exposurebiasRange = session->GetExposureBiasRange();
     if (!exposurebiasRange.empty()) {
         session->LockForControl();
-        session->SetExposureBias(exposurebiasRange[1]+1);
+        session->SetExposureBias(exposurebiasRange[1]+1.0);
         session->UnlockForControl();
     }
     ASSERT_EQ(session->GetExposureValue(), exposurebiasRange[1]);

@@ -131,21 +131,21 @@ public:
     *
     * @return Returns supported exposure compensation range.
     */
-    [[deprecated]] std::vector<int32_t> GetExposureBiasRange();
+    [[deprecated]] std::vector<float> GetExposureBiasRange();
 
     /**
     * @brief Set exposure compensation value.
     *
     * @param exposure compensation value to be set.
     */
-    [[deprecated]] void SetExposureBias(int32_t exposureBias);
+    [[deprecated]] void SetExposureBias(float exposureBias);
 
     /**
     * @brief Get exposure compensation value.
     *
     * @return Returns current exposure compensation value.
     */
-    [[deprecated]] int32_t GetExposureValue();
+    [[deprecated]] float GetExposureValue();
 
     /**
     * @brief Query whether given focus mode supported.

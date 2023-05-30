@@ -302,7 +302,7 @@ void CameraFrameworkModuleTest::SetCameraParameters(sptr<CaptureSession> &sessio
     }
 
     // GetExposureBiasRange
-    std::vector<int32_t> exposureBiasRange = session->GetExposureBiasRange();
+    std::vector<float> exposureBiasRange = session->GetExposureBiasRange();
     if (!exposureBiasRange.empty()) {
         session->SetExposureBias(exposureBiasRange[0]);
     }

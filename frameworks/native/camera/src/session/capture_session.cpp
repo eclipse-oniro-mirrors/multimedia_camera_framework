@@ -881,7 +881,7 @@ int32_t CaptureSession::GetMeteringPoint(Point &exposurePoint)
     return CameraErrorCode::SUCCESS;
 }
 
-std::vector<int32_t> CaptureSession::GetExposureBiasRange()
+std::vector<float> CaptureSession::GetExposureBiasRange()
 {
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetExposureBiasRange Session is not Commited");
@@ -894,7 +894,7 @@ std::vector<int32_t> CaptureSession::GetExposureBiasRange()
     return inputDevice_->GetCameraDeviceInfo()->GetExposureBiasRange();
 }
 
-int32_t CaptureSession::GetExposureBiasRange(std::vector<int32_t> &exposureBiasRange)
+int32_t CaptureSession::GetExposureBiasRange(std::vector<float> &exposureBiasRange)
 {
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetExposureBiasRange Session is not Commited");
@@ -909,7 +909,7 @@ int32_t CaptureSession::GetExposureBiasRange(std::vector<int32_t> &exposureBiasR
 }
 
 
-int32_t CaptureSession::SetExposureBias(int32_t exposureValue)
+int32_t CaptureSession::SetExposureBias(float exposureValue)
 {
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureBias Session is not Commited");
@@ -921,39 +921,41 @@ int32_t CaptureSession::SetExposureBias(int32_t exposureValue)
         return CameraErrorCode::SUCCESS;
     }
     bool status = false;
-    int32_t ret;
     int32_t minIndex = 0;
     int32_t maxIndex = 1;
     int32_t count = 1;
     camera_metadata_item_t item;
-    MEDIA_DEBUG_LOG("CaptureSession::SetExposureValue exposure compensation: %{public}d", exposureValue);
+    MEDIA_DEBUG_LOG("CaptureSession::SetExposureValue exposure compensation: %{public}f", exposureValue);
     if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureBias camera device is null");
-        return CameraErrorCode::SUCCESS;
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
     }
-    std::vector<int32_t> biasRange = inputDevice_->GetCameraDeviceInfo()->GetExposureBiasRange();
+    std::vector<float> biasRange = inputDevice_->GetCameraDeviceInfo()->GetExposureBiasRange();
     if (biasRange.empty()) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureValue Bias range is empty");
-        return CameraErrorCode::SUCCESS;
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
     }
     if (exposureValue < biasRange[minIndex]) {
         MEDIA_DEBUG_LOG("CaptureSession::SetExposureValue bias value:"
-                        "%{public}d is lesser than minimum bias: %{public}d", exposureValue, biasRange[minIndex]);
+                        "%{public}f is lesser than minimum bias: %{public}f", exposureValue, biasRange[minIndex]);
         exposureValue = biasRange[minIndex];
     } else if (exposureValue > biasRange[maxIndex]) {
         MEDIA_DEBUG_LOG("CaptureSession::SetExposureValue bias value: "
-                        "%{public}d is greater than maximum bias: %{public}d", exposureValue, biasRange[maxIndex]);
+                        "%{public}f is greater than maximum bias: %{public}f", exposureValue, biasRange[maxIndex]);
         exposureValue = biasRange[maxIndex];
     }
-    if (exposureValue == 0) {
-        MEDIA_ERR_LOG("CaptureSession::SetExposureValue Invalid exposure compensation value");
+    if (std::abs(exposureValue) <= 1e-6) {
+        MEDIA_ERR_LOG("CaptureSession::SetExposureValue exposure compensation value no need to change");
         return CameraErrorCode::SUCCESS;
     }
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &item);
+
+    int32_t exposureCompensation = CalculateExposureValue(exposureValue);
+
+    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &exposureValue, count);
+        status = changedMetadata_->addEntry(OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &exposureCompensation, count);
     } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &exposureValue, count);
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &exposureCompensation, count);
     }
     if (!status) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureValue Failed to set exposure compensation");
@@ -961,7 +963,7 @@ int32_t CaptureSession::SetExposureBias(int32_t exposureValue)
     return CameraErrorCode::SUCCESS;
 }
 
-int32_t CaptureSession::GetExposureValue()
+float CaptureSession::GetExposureValue()
 {
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetExposureValue Session is not Commited");
@@ -978,10 +980,23 @@ int32_t CaptureSession::GetExposureValue()
         MEDIA_ERR_LOG("CaptureSession::GetExposureValue Failed with return code %{public}d", ret);
         return 0;
     }
-    return static_cast<int32_t>(item.data.i32[0]);
+    int32_t exposureCompensation = item.data.i32[0];
+
+    ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AE_COMPENSATION_STEP, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("CaptureSession::GetExposureValue Failed with return code %{public}d", ret);
+        return 0;
+    }
+    int32_t stepNumerator = item.data.r->numerator;
+    int32_t stepDenominator = item.data.r->denominator;
+    float step = static_cast<float>(stepNumerator) / static_cast<float>(stepDenominator);
+    float exposureValue = step * exposureCompensation;
+    MEDIA_DEBUG_LOG("exposureValue: %{public}f", exposureValue);
+
+    return exposureValue;
 }
 
-int32_t CaptureSession::GetExposureValue(int32_t &exposureValue)
+int32_t CaptureSession::GetExposureValue(float &exposureValue)
 {
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetExposureValue Session is not Commited");
@@ -998,7 +1013,19 @@ int32_t CaptureSession::GetExposureValue(int32_t &exposureValue)
         MEDIA_ERR_LOG("CaptureSession::GetExposureValue Failed with return code %{public}d", ret);
         return CameraErrorCode::SUCCESS;
     }
-    exposureValue = static_cast<int32_t>(item.data.i32[0]);
+    int32_t exposureCompensation = item.data.i32[0];
+
+    ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AE_COMPENSATION_STEP, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("CaptureSession::GetExposureValue Failed with return code %{public}d", ret);
+        return 0;
+    }
+    int32_t stepNumerator = item.data.r->numerator;
+    int32_t stepDenominator = item.data.r->denominator;
+    float step = static_cast<float>(stepNumerator) / static_cast<float>(stepDenominator);
+
+    exposureValue = step * exposureCompensation;
+    MEDIA_DEBUG_LOG("exposureValue: %{public}f", exposureValue);
     return CameraErrorCode::SUCCESS;
 }
 
@@ -1865,6 +1892,27 @@ bool CaptureSession::IsSessionCommited()
         isCommitConfig = (currentState == CaptureSessionState::SESSION_CONFIG_COMMITTED);
     }
     return isCommitConfig;
+}
+
+int32_t CaptureSession::CalculateExposureValue(float exposureValue)
+{
+    camera_metadata_item_t item;
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AE_COMPENSATION_STEP, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("CaptureSession::Get Ae Compensation step Failed with return code %{public}d", ret);
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
+    }
+
+    int32_t stepNumerator = item.data.r->numerator;
+    int32_t stepDenominator = item.data.r->denominator;
+    float stepsPerEv = static_cast<float>(stepDenominator) / static_cast<float>(stepNumerator);
+    MEDIA_DEBUG_LOG("Exposure step numerator: %{public}d, denominatormax: %{public}d, stepsPerEv: %{public}f",
+        stepNumerator, stepDenominator, stepsPerEv);
+
+    int32_t exposureCompensation = static_cast<int32_t>(stepsPerEv * exposureValue);
+    MEDIA_DEBUG_LOG("exposureCompensation: %{public}d", exposureCompensation);
+    return exposureCompensation;
 }
 } // CameraStandard
 } // OHOS
