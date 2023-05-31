@@ -161,25 +161,25 @@ bool IsValidTokenId(uint32_t tokenId)
 bool IsValidSize(
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t format, int32_t width, int32_t height)
 {
-    constexpr uint32_t unitLen = 3;
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(cameraAbility->get(),
-                                             OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
-    if (ret != CAM_META_SUCCESS) {
+                                             OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
         MEDIA_ERR_LOG("Failed to find stream configuration in camera ability with return code %{public}d", ret);
         return false;
     }
-    if (item.count % unitLen != 0) {
-        MEDIA_ERR_LOG("Invalid stream configuration count: %{public}u", item.count);
-        return false;
-    }
-    for (uint32_t index = 0; index < item.count; index += 3) {
+    for (uint32_t index = 0; index < item.count; index++) {
         if (item.data.i32[index] == format) {
-            if (item.data.i32[index + 1] == width && item.data.i32[index + 2] == height) {
+            if (((index + 1) < item.count) && ((index + 2) < item.count) &&
+                item.data.i32[index + 1] == width && item.data.i32[index + 2] == height) {
                 MEDIA_INFO_LOG("Format:%{public}d, width:%{public}d, height:%{public}d found in supported streams",
                                format, width, height);
                 return true;
+            } else {
+                continue;
             }
+        } else {
+            continue;
         }
     }
     MEDIA_ERR_LOG("Format:%{public}d, width:%{public}d, height:%{public}d not found in supported streams",

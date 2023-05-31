@@ -314,8 +314,8 @@ public:
     int32_t SetCameraSettings(std::string setting);
 
 private:
-    sptr<CameraDevice> cameraObj_;
     sptr<ICameraDeviceService> deviceObj_;
+    sptr<CameraDevice> cameraObj_;
     std::shared_ptr<ResultCallback> resultCallback_;
     std::shared_ptr<ErrorCallback> errorCallback_;
     sptr<ICameraDeviceServiceCallback> CameraDeviceSvcCallback_;

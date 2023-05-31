@@ -29,6 +29,7 @@ namespace OHOS {
 namespace CameraStandard {
 class CameraDeviceServiceCallback : public HCameraDeviceCallbackStub {
 public:
+    std::mutex deviceCallbackMutex_;
     CameraInput* camInput_ = nullptr;
     CameraDeviceServiceCallback() : camInput_(nullptr) {
     }
@@ -38,11 +39,13 @@ public:
 
     ~CameraDeviceServiceCallback()
     {
+        std::lock_guard<std::mutex> lock(deviceCallbackMutex_);
         camInput_ = nullptr;
     }
 
     int32_t OnError(const int32_t errorType, const int32_t errorMsg) override
     {
+        std::lock_guard<std::mutex> lock(deviceCallbackMutex_);
         MEDIA_ERR_LOG("CameraDeviceServiceCallback::OnError() is called!, errorType: %{public}d, errorMsg: %{public}d",
                       errorType, errorMsg);
         if (camInput_ != nullptr && camInput_->GetErrorCallback() != nullptr) {
@@ -56,6 +59,7 @@ public:
 
     int32_t OnResult(const uint64_t timestamp, const std::shared_ptr<Camera::CameraMetadata> &result) override
     {
+        std::lock_guard<std::mutex> lock(deviceCallbackMutex_);
         if (camInput_ == nullptr) {
             MEDIA_ERR_LOG("CameraDeviceServiceCallback::OnResult() camInput_ is null!");
             return CAMERA_OK;
@@ -78,8 +82,12 @@ public:
 };
 
 CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
-                         sptr<CameraDevice> &cameraObj) : cameraObj_(cameraObj), deviceObj_(deviceObj)
+                         sptr<CameraDevice> &cameraObj) : deviceObj_(deviceObj), cameraObj_(cameraObj)
 {
+    MEDIA_INFO_LOG("CameraInput::CameraInput Contructor!");
+    if (cameraObj_) {
+        MEDIA_INFO_LOG("CameraInput::CameraInput Contructor Camera: %{public}s", cameraObj_->GetID().c_str());
+    }
     CameraDeviceSvcCallback_ = new(std::nothrow) CameraDeviceServiceCallback(this);
     if (CameraDeviceSvcCallback_ == nullptr) {
         MEDIA_ERR_LOG("CameraInput::CameraInput CameraDeviceServiceCallback alloc failed");
@@ -94,6 +102,10 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
 
 CameraInput::~CameraInput()
 {
+    MEDIA_INFO_LOG("CameraInput::CameraInput Destructor!");
+    if (cameraObj_) {
+        MEDIA_INFO_LOG("CameraInput::CameraInput Destructor Camera: %{public}s", cameraObj_->GetID().c_str());
+    }
     cameraObj_ = nullptr;
     deviceObj_ = nullptr;
     CameraDeviceSvcCallback_ = nullptr;
