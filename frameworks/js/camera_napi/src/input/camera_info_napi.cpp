@@ -14,8 +14,6 @@
  */
 
 #include "input/camera_info_napi.h"
-#include "ipc_skeleton.h"
-#include "tokenid_kit.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -267,18 +265,13 @@ napi_value CameraDeviceNapi::GetConnectionType(napi_env env, napi_callback_info 
     MEDIA_ERR_LOG("GetConnectionType call Failed!");
     return undefinedResult;
 }
+
 napi_value CameraDeviceNapi::GetHostDeviceName(napi_env env, napi_callback_info info)
 {
-    uint64_t tokenId = IPCSkeleton::GetCallingFullTokenID();
-    int32_t errorCode = CameraErrorCode::NO_SYSTEM_APP_PERMISSION;
-    if (!Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(tokenId)) {
-        std::string msg = "System api can be invoked only by system applications";
-        if (napi_throw_error(env, std::to_string(errorCode).c_str(), msg.c_str()) != napi_ok) {
-            MEDIA_ERR_LOG("failed to throw err, code=%{public}d, msg=%{public}s.", errorCode, msg.c_str());
-        }
+    if (!CameraNapiUtils::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi GetHostDeviceName is called!");
         return nullptr;
     }
-
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
@@ -308,16 +301,10 @@ napi_value CameraDeviceNapi::GetHostDeviceName(napi_env env, napi_callback_info 
 }
 napi_value CameraDeviceNapi::GetHostDeviceType(napi_env env, napi_callback_info info)
 {
-    uint64_t tokenId = IPCSkeleton::GetCallingFullTokenID();
-    int32_t errorCode = CameraErrorCode::NO_SYSTEM_APP_PERMISSION;
-    if (!Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(tokenId)) {
-        std::string msg = "System api can be invoked only by system applications";
-        if (napi_throw_error(env, std::to_string(errorCode).c_str(), msg.c_str()) != napi_ok) {
-            MEDIA_ERR_LOG("failed to throw err, code=%{public}d, msg=%{public}s.", errorCode, msg.c_str());
-        }
+    if (!CameraNapiUtils::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi GetHostDeviceType is called!");
         return nullptr;
     }
-
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
