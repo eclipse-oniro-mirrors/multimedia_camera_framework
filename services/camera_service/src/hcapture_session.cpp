@@ -747,7 +747,6 @@ int32_t HCaptureSession::Release(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(sessionLock_);
     MEDIA_INFO_LOG("HCaptureSession::Release pid(%{public}d).", pid);
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     auto it = session_.find(pid);
     if (it == session_.end()) {
         MEDIA_DEBUG_LOG("HCaptureSession::Release session for pid(%{public}d) already released.", pid);
@@ -764,9 +763,9 @@ int32_t HCaptureSession::Release(pid_t pid)
         POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraDevice_->GetCameraId().c_str());
         cameraDevice_ = nullptr;
     }
-    if (IsValidTokenId(callerToken)) {
-        StopUsingPermissionCallback(callerToken, OHOS_PERMISSION_CAMERA);
-        UnregisterPermissionCallback(callerToken);
+    if (IsValidTokenId(callerToken_)) {
+        StopUsingPermissionCallback(callerToken_, OHOS_PERMISSION_CAMERA);
+        UnregisterPermissionCallback(callerToken_);
     }
     tempStreams_.clear();
     ClearCaptureSession(pid);
@@ -881,11 +880,15 @@ void HCaptureSession::dumpSessionInfo(std::string& dumpString)
 
 void HCaptureSession::StartUsingPermissionCallback(const uint32_t callingTokenId, const std::string permissionName)
 {
+    if (cameraUseCallbackPtr_) {
+        MEDIA_ERR_LOG("has StartUsingPermissionCallback!");
+        return;
+    }
     cameraUseCallbackPtr_ = std::make_shared<CameraUseStateChangeCb>();
     cameraUseCallbackPtr_->SetCaptureSession(this);
-    MEDIA_DEBUG_LOG("after StartUsingPermissionCallback tokenId:%{public}d", callingTokenId);
     int32_t res = Security::AccessToken::PrivacyKit::StartUsingPermission(
         callingTokenId, permissionName, cameraUseCallbackPtr_);
+    MEDIA_DEBUG_LOG("after StartUsingPermissionCallback tokenId:%{public}d", callingTokenId);
     if (res != CAMERA_OK) {
         MEDIA_ERR_LOG("StartUsingPermissionCallback failed.");
     }
