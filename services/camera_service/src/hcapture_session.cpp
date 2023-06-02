@@ -947,8 +947,6 @@ void CameraUseStateChangeCb::SetCaptureSession(sptr<HCaptureSession> captureSess
 
 void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessTokenID tokenId, bool isShowing)
 {
-    const int32_t delayProcessTime = 200000;
-    usleep(delayProcessTime);
     MEDIA_INFO_LOG("enter CameraUseStateChangeNotify tokenId:%{public}d", tokenId);
     auto item = captureSession_.promote();
     if ((isShowing == false) && (item != nullptr)) {
