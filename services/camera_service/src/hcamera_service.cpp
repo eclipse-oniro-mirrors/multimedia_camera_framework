@@ -555,10 +555,10 @@ int32_t HCameraService::MuteCamera(bool muteMode)
         }
         if (ret != CAMERA_OK) {
             MEDIA_ERR_LOG("UpdateMuteSetting Failed, cameraId: %{public}s", cameraId.c_str());
+            muteMode_ = oldMuteMode;
             isCameraMuteSuccess = false;
         }
     });
-    !isCameraMuteSuccess && (muteMode_ = oldMuteMode);
     if (!cameraMuteServiceCallbacks_.empty() && ret == CAMERA_OK) {
         for (auto cb : cameraMuteServiceCallbacks_) {
             if (cb.second) {
