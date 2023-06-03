@@ -37,7 +37,7 @@ int32_t ServiceToCameraError(int32_t ret)
             err = CameraErrorCode::DEVICE_DISABLED;
             break;
         case CAMERA_DEVICE_BUSY:
-            err = CameraErrorCode::CONFILICT_CAMERA;
+            err = CameraErrorCode::CONFLICT_CAMERA;
             break;
         case CAMERA_DEVICE_CLOSED:
             err = CameraErrorCode::DEVICE_DISABLED;
