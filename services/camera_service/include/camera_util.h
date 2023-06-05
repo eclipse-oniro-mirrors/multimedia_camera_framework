@@ -21,6 +21,7 @@
 #include "v1_0/types.h"
 #include "camera_metadata_info.h"
 #include <malloc.h>
+#include "safe_map.h"
 
 namespace OHOS {
 namespace CameraStandard {
