@@ -72,7 +72,7 @@ ohos_executable("camera_video") {
     "ipc:ipc_single",
     "player_framework:media_client",
   ]
-  part_name = "multimedia_camera_framework"
+  part_name = "camera_framework"
   subsystem_name = "multimedia"
 }
 
@@ -108,7 +108,7 @@ ohos_executable("camera_capture") {
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
   ]
-  part_name = "multimedia_camera_framework"
+  part_name = "camera_framework"
   subsystem_name = "multimedia"
 }
 
@@ -144,6 +144,6 @@ ohos_executable("camera_capture_video") {
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
   ]
-  part_name = "multimedia_camera_framework"
+  part_name = "camera_framework"
   subsystem_name = "multimedia"
 }

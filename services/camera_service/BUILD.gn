@@ -108,6 +108,6 @@ ohos_shared_library("camera_service") {
 
   cflags_cc = cflags
 
-  part_name = "multimedia_camera_framework"
+  part_name = "camera_framework"
   subsystem_name = "multimedia"
 }
