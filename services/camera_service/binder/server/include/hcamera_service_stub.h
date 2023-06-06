@@ -16,7 +16,7 @@
 #ifndef OHOS_CAMERA_HCAMERA_SERVICE_STUB_H
 #define OHOS_CAMERA_HCAMERA_SERVICE_STUB_H
 
-#include <mutex>
+#include "camera_util.h"
 #include "icamera_service.h"
 #include "iremote_stub.h"
 #include "input/camera_death_recipient.h"
@@ -54,9 +54,8 @@ private:
     virtual int32_t UnSetCallback(pid_t pid);
     virtual int32_t CloseCameraForDestory(pid_t pid);
 
-    std::mutex mutex_;
-    std::map<pid_t, sptr<CameraDeathRecipient>> deathRecipientMap_;
-    std::map<pid_t, sptr<IStandardCameraListener>> cameraListenerMap_;
+    SafeMap<pid_t, sptr<CameraDeathRecipient>> deathRecipientMap_;
+    SafeMap<pid_t, sptr<IStandardCameraListener>> cameraListenerMap_;
 
     typedef int (HCameraServiceStub::* HandleMethod)(MessageParcel &, MessageParcel &);
     std::map<uint32_t, HandleMethod> methodFactory;
