@@ -75,21 +75,23 @@ export struct SlidePage {
           value: this.outSetValueOne,
           min: 1,
           max: 6,
-          step: 1,
+          step: 0.1,
           style: SliderStyle.OutSet
-        }).showSteps(false)
-          .trackColor('rgba(255,255,255,0.6)')
-          .selectedColor($r('app.color.theme_color'))
-          .onChange((value: number) => {
-            let val = Number(value.toFixed(2));
-            this.slideChange(val);
-            this.outSetValueOne = val;
-            Logger.info(TAG, `onChange value: ${val}, sliderTextPos: ${this.sliderTextPos}`);
-          })
-      }.width('100%')
+        })
+        .showSteps(false)
+        .trackColor('rgba(255,255,255,0.6)')
+        .selectedColor($r('app.color.theme_color'))
+        .onChange((value: number) => {
+          let val = Number(value.toFixed(2));
+          this.slideChange(val);
+          this.outSetValueOne = val;
+          Logger.info(TAG, `onChange value: ${val}, sliderTextPos: ${this.sliderTextPos}`);
+        })
+      }
+      .width('100%')
     }
     .height('60')
-    .width('32.5%')
-    .position({ x: '35%', y: '3%' })
+    .width('40%')
+    .position({ x: '30%', y: '65%' })
   }
 }

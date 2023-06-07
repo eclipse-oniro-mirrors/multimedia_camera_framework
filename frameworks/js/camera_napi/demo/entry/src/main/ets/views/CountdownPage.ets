@@ -22,7 +22,7 @@ const TAG: string = 'CountdownPage';
 export struct CountdownPage {
   @Link countdownNum: number; // 倒计时的值
   private countdownListData: Array<string> = ['2', '5', '10']; // 循环渲染
-  @State countdownBol: boolean = true;
+  @StorageLink('countdownBol') countdownBol: boolean = true;
 
   build() {
     Row() {
@@ -30,66 +30,78 @@ export struct CountdownPage {
         Row() {
           Button() {
             Image($r('app.media.icon_camera_setting_timer'))
-              .width('60px').height('60px')
+              .width('35vp')
+              .height('35vp')
           }
-          .width('80px')
-          .height('80px')
+          .width('45vp')
+          .height('45vp')
           .backgroundColor('rgba(255,255,255,0.20)')
-          .borderRadius('40px')
+          .borderRadius('50px')
           .onClick(() => {
             Logger.debug(TAG, 'onClick');
+            AppStorage.SetOrCreate<boolean>('flashingBol', true);
             this.countdownBol = false;
           })
         }
       }
       if (this.countdownNum && this.countdownBol) {
-        Row() {
-          Image($r('app.media.icon_camera_setting_timer_on')).width('60px').height('60px').margin({ left: 5 })
-          Text(this.countdownNum + '').fontSize(21).fontWeight(500).margin({ left: 5 }).fontColor(Color.White)
+        Column() {
+          Image($r('app.media.icon_camera_setting_timer_on'))
+            .width('35vp')
+            .height('35vp')
+            .margin({ top: 5 })
+          Text(this.countdownNum + '')
+            .fontSize(21)
+            .fontWeight(500)
+            .margin({ top: 5 })
+            .fontColor(Color.White)
         }
         .backgroundColor('rgba(255,255,255,0.20)')
-        .borderRadius('40px')
-        .width('140px')
-        .height('80px')
+        .borderRadius('45vp')
+        .width('45vp')
+        .height('80vp')
         .onClick(() => {
           this.countdownBol = false;
         })
       }
       if (!this.countdownBol) {
-        Row() {
-          Image($r('app.media.icon_camera_setting_timer_on_balk')).width('60px').height('60px').margin({ left: 5 })
+        Column() {
+          Image($r('app.media.icon_camera_setting_timer_on_balk'))
+            .width('35vp')
+            .height('35vp')
+            .margin({ top: 10 })
           ForEach(this.countdownListData, (item) => {
             Text(item)
               .fontSize(21)
               .fontWeight(500)
               .margin({
-                left: 10
+                top: 10
               })
               .fontColor(this.countdownNum == item ? $r('app.color.theme_color') : '#182431')
               .onClick(() => {
-                this.countdownNum = item
-                this.countdownBol = true
+                this.countdownNum = item;
+                this.countdownBol = true;
               })
           }, item => item)
           Text('OFF')
-            .fontSize(21)
+            .fontSize(18)
             .fontWeight(500)
             .margin({
-              left: 10
+              top: 10
             })
             .fontColor(this.countdownNum == 0 ? $r('app.color.theme_color') : '#182431')
             .onClick(() => {
-              this.countdownNum = 0
-              this.countdownBol = true
+              this.countdownNum = 0;
+              this.countdownBol = true;
             })
         }
         .backgroundColor('#FFFFFF')
-        .borderRadius('40px')
-        .width('360px')
-        .height('80px')
+        .borderRadius('45vp')
+        .width('45vp')
+        .height('680px')
         .zIndex(999)
       }
     }
-    .position({ x: 30, y: 352 })
+    .position({ x: 130, y: 30 })
   }
 }

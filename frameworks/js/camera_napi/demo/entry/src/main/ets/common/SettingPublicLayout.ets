@@ -14,6 +14,7 @@
  */
 
 import Logger from '../model/Logger';
+import SettingList from '../common/SettingList';
 
 const TAG: string = "SettingPublicLayout";
 
@@ -30,9 +31,16 @@ export struct SettingPublicLayout {
   private backNum: number = 1;
   @State backClBol: boolean = false;
   @Link @Watch('leftSliderChange') leftSliderIndex: number;
+  private settingRightLayoutController: CustomDialogController = new CustomDialogController({
+    builder: SettingList({
+      leftSliderIndex: $leftSliderIndex
+    }),
+    autoCancel: false,
+    customStyle: true
+  });
 
   leftSliderChange(): void {
-    if (this.backNum == this.leftSliderIndex) {
+    if (this.backNum === this.leftSliderIndex) {
       this.backClBol = true;
     } else {
       this.backClBol = false;
@@ -75,8 +83,14 @@ export struct SettingPublicLayout {
     Row() {
       Row() {
         Row() {
-          Image(this.icon).width(20).height(20).margin({ left: '15px' })
-          Text(this.modeMessage).margin({ left: '20px' })
+          Image(this.icon)
+            .width(20)
+            .height(20)
+            .margin({ left: '30px' })
+          Text(this.modeMessage)
+            .fontSize(16)
+            .margin({ left: '35px' })
+            .fontWeight(500)
         }
 
         if (this.iconModeBol) {
@@ -88,22 +102,25 @@ export struct SettingPublicLayout {
               Logger.info(TAG, `Toggleon Change Component status: ${isOn}`);
             })
         } else {
-          Image($r('app.media.ic_camera_set_arrow')).width(20).height(20).margin({ right: 10 })
+          Image($r('app.media.ic_camera_set_arrow'))
+            .width(20)
+            .height(20)
+            .margin({ right: 10 })
         }
       }
       .onClick(() => {
         this.leftSliderIndex = this.backNum;
+        this.settingRightLayoutController.open();
         Logger.info(TAG, `onClick leftSliderIndex status: ${this.leftSliderIndex}, backNum: ${this.backNum}`);
       })
       .justifyContent(FlexAlign.SpaceBetween)
       .width('100%')
       .borderRadius(15)
-      .height('90px')
+      .height('150px')
       .backgroundColor(this.backClBol ? 'rgba(255,0,52,0.10)' : '')
     }
     .padding(2)
-    .width('100%')
-    .height('100px')
+    .size({width: '100%', height: '160px'})
     .borderRadius(this.isBorderFn())
     .backgroundColor(Color.White)
   }

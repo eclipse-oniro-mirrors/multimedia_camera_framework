@@ -36,21 +36,26 @@ export struct FocusAreaPage {
   });
 
   build() {
-    Row() {
-    }
-    .width('82%')
-    .height('79%')
-    .offset({ x: -10, y: -40 })
+    Row() {}
+    .width(370)
+    .height(450)
+    .offset({ x: 0, y: -50 })
     .opacity(1)
-    .onTouch((e) => {
+    .onTouch((e: TouchEvent) => {
       if (e.type === TouchType.Down) {
         this.focusPointBol = true;
         this.focusPointVal[0] = e.touches[0].screenX;
         this.focusPointVal[1] = e.touches[0].screenY;
         // 焦点
-        CameraService.isFocusPoint({ x: e.touches[0].screenX, y: e.touches[0].screenY });
+        CameraService.isFocusPoint({
+          x: e.touches[0].screenX / 370,
+          y: e.touches[0].screenY / 550
+        });
         // 曝光区域
-        CameraService.isMeteringPoint({ x: e.touches[0].screenX, y: e.touches[0].screenY });
+        CameraService.isMeteringPoint({
+          x: e.touches[0].screenX / 370,
+          y: e.touches[0].screenY / 600
+        });
       }
       if (e.type === TouchType.Up) {
         if (this.areaTimer) {
@@ -61,6 +66,10 @@ export struct FocusAreaPage {
         }, 3500);
       }
     })
+    .onClick((event: ClickEvent) => {
+      AppStorage.SetOrCreate<boolean>('flashingBol', true);
+      AppStorage.SetOrCreate<boolean>('countdownBol', true);
+    })
     // 单指竖直方向拖动触发该手势事件
     .gesture(
     PanGesture(this.panOption)
@@ -70,7 +79,6 @@ export struct FocusAreaPage {
       })
       .onActionUpdate((event: GestureEvent) => {
         let offset = -event.offsetY;
-        // 滑到200 = +4 ，滑到 -200 = -4
         if (offset > 200) {
           this.exposureNum = 4;
         }

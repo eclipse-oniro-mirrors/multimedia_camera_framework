@@ -14,7 +14,6 @@
  */
 
 import { SettingPublicLayout } from '../common/SettingPublicLayout';
-import { SettingRightLayout } from '../common/SettingRightLayout';
 import CameraService from '../model/CameraService';
 import Logger from '../model/Logger';
 
@@ -51,14 +50,6 @@ export struct SettingDialog {
     this.referenceLineBol = bol;
   }
 
-  onPageShow(): void {
-    Logger.info(TAG, `onPageShow: ${JSON.stringify(globalThis.settingDataObj)}`);
-  }
-
-  onPageHide(): void {
-    Logger.info(TAG, `onPageHide: ${JSON.stringify(globalThis.settingDataObj)}`);
-  }
-
   async resetSession(): Promise<void> {
     await CameraService.releaseCamera();
     await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
@@ -67,29 +58,47 @@ export struct SettingDialog {
   build() {
     Column() {
       Flex({ justifyContent: FlexAlign.SpaceBetween }) {
-        Column() {
+        Flex({
+          justifyContent: FlexAlign.Start,
+          direction: FlexDirection.Column,
+          alignItems: ItemAlign.Center
+        }) {
           Row() {
+            Image($r('app.media.ic_public_back'))
+              .size({width: 24, height: 24})
+              .position({x: '0', y: '0'})
+              .zIndex(1)
+              .onClick(() => {
+                Logger.info(TAG, 'back onClick');
+                this.controller.close();
+              })
             Text('设置')
-              .fontSize(26)
-              .fontWeight(FontWeight.Bold)
+              .fontSize(24)
+              .fontWeight(700)
               .textAlign(TextAlign.Start)
               .width('96%')
+              .margin({left: 40})
               .onClick(() => {
                 this.controller.close();
               })
-          }.margin({ top: '100px', bottom: '20px' })
+          }
+          .margin({ top: '150px', bottom: '25px', left: '30px' })
 
-          SettingPublicLayout({
-            icon: $r('app.media.ic_camera_set__Mirror'),
-            isModeBol: true,
-            borderBol: false,
-            iconModeBol: true,
-            modeMessage: '自拍镜像',
-            backNum: 1,
-            leftSliderIndex: $leftSliderIndex,
-            setModeBol: globalThis.settingDataObj.mirrorBol,
-            getModeBol: this.getMirrorBol.bind(this)
-          })
+          Column() {
+            SettingPublicLayout({
+              icon: $r('app.media.ic_camera_set__Mirror'),
+              isModeBol: true,
+              borderBol: false,
+              iconModeBol: true,
+              modeMessage: '自拍镜像',
+              backNum: 1,
+              leftSliderIndex: $leftSliderIndex,
+              setModeBol: globalThis.settingDataObj.mirrorBol,
+              getModeBol: this.getMirrorBol.bind(this)
+            })
+          }
+          .width('97%')
+
           Column() {
             SettingPublicLayout({
               icon: $r('app.media.ic_camera_set__Antishake'),
@@ -100,28 +109,40 @@ export struct SettingDialog {
               leftSliderIndex: $leftSliderIndex,
               modeMessage: '视频防抖'
             })
-            Divider().width(420).margin({ left: 20 })
+
+            Divider()
+              .width('94%')
+
             SettingPublicLayout({
               backNum: 3,
               leftSliderIndex: $leftSliderIndex,
               icon: $r('app.media.ic_camera_set_exposure'),
               modeMessage: '曝光模式'
             })
-            Divider().width(420).margin({ left: 20 })
+
+            Divider()
+              .width('94%')
+
             SettingPublicLayout({
               backNum: 4,
               leftSliderIndex: $leftSliderIndex,
               icon: $r('app.media.ic_camera_set_AF'),
               modeMessage: '对焦模式'
             })
-            Divider().width(420).margin({ left: 20 })
+
+            Divider()
+              .width('94%')
+
             SettingPublicLayout({
               backNum: 5,
               leftSliderIndex: $leftSliderIndex,
               icon: $r('app.media.ic_camera_set_Quality'),
               modeMessage: '拍摄质量'
             })
-            Divider().width(420).margin({ left: 20 })
+
+            Divider()
+              .width('94%')
+
             SettingPublicLayout({
               backNum: 6,
               leftSliderIndex: $leftSliderIndex,
@@ -135,6 +156,7 @@ export struct SettingDialog {
               getModeBol: this.getLocationBol.bind(this)
             })
           }
+          .width('97%')
           .backgroundColor(Color.White)
           .borderRadius(16)
           .margin({ top: 15 })
@@ -149,28 +171,40 @@ export struct SettingDialog {
               borderBol: true,
               borderBole: true,
             })
-            Divider().width(420).margin({ left: 20 })
+
+            Divider()
+              .width('94%')
+
             SettingPublicLayout({
               backNum: 8,
               leftSliderIndex: $leftSliderIndex,
               icon: $r('app.media.ic_camera_set_class'),
               modeMessage: '照片方向配置'
             })
-            Divider().width(420).margin({ left: 20 })
+
+            Divider()
+              .width('94%')
+
             SettingPublicLayout({
               backNum: 9,
               leftSliderIndex: $leftSliderIndex,
               icon: $r('app.media.ic_camera_set_pic_Resolution'),
               modeMessage: '照片分辨率'
             })
-            Divider().width(420).margin({ left: 20 })
+
+            Divider()
+              .width('94%')
+
             SettingPublicLayout({
               backNum: 10,
               leftSliderIndex: $leftSliderIndex,
               icon: $r('app.media.ic_camera_set_video_Resolution'),
               modeMessage: '视频分辨率'
             })
-            Divider().width(420).margin({ left: 20 })
+
+            Divider()
+              .width('94%')
+
             SettingPublicLayout({
               backNum: 11,
               leftSliderIndex: $leftSliderIndex,
@@ -181,44 +215,32 @@ export struct SettingDialog {
               borderBole: false,
             })
           }
+          .width('97%')
           .backgroundColor(Color.White)
           .borderRadius(16)
           .margin({ top: 15 })
 
-          SettingPublicLayout({
-            backNum: 12,
-            leftSliderIndex: $leftSliderIndex,
-            icon: $r('app.media.ic_camera_set_line'),
-            modeMessage: '参考线',
-            isModeBol: true,
-            borderBol: false,
-            iconModeBol: true,
-            setModeBol: globalThis.settingDataObj.referenceLineBol,
-            getModeBol: this.getReferenceLineBol.bind(this)
-          })
-            .margin({ top: 15 })
+          Column() {
+            SettingPublicLayout({
+              backNum: 12,
+              leftSliderIndex: $leftSliderIndex,
+              icon: $r('app.media.ic_camera_set_line'),
+              modeMessage: '参考线',
+              isModeBol: true,
+              borderBol: false,
+              iconModeBol: true,
+              setModeBol: globalThis.settingDataObj.referenceLineBol,
+              getModeBol: this.getReferenceLineBol.bind(this)
+            })
+              .margin({ top: 15 })
+          }
+          .width('97%')
         }
-        .width('38%')
-
-        // 设置右侧选择列表
-        Column() {
-          SettingRightLayout({ settingMessageNum: this.leftSliderIndex })
-        }
-        .width('58%')
+        .width('100%')
       }
-      .height('100%')
-      .width('96%')
-
+      .size({width: '96%', height: '100%'})
     }
-    // 页面显示
-    .onAppear(() => {
-    })
-    // 页面消失
-    .onDisAppear(async () => {
-      Logger.info(TAG, `onDisAppear: ${JSON.stringify(globalThis.settingDataObj)}`);
-    })
-    .width('100%')
-    .height('100%')
+    .size({width: '100%', height: '100%'})
     .backgroundColor('#F1F3F5')
   }
 }
