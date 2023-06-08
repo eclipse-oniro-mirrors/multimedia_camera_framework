@@ -115,24 +115,28 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
     // set orientation for capture
     // sensor orientation, counter-clockwise rotation
     camera_metadata_item_t item;
+    int32_t sensorOrientation = 0;
     int result = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_SENSOR_ORIENTATION, &item);
-    if (result != CAM_META_SUCCESS) {
+    if (result != CAM_META_SUCCESS || item.count == 0) {
         MEDIA_ERR_LOG("HStreamCapture::Capture set rotation get sensor orientation failed");
+    } else {
+        sensorOrientation = item.data.i32[0];
+        MEDIA_INFO_LOG("HStreamCapture::Capture Capture set rotation sensor orientation %{public}d", sensorOrientation);
     }
-    int32_t sensorOrientation = item.data.i32[0];
-    MEDIA_INFO_LOG("HStreamCapture::Capture Capture set rotation sensor orientation %{public}d", sensorOrientation);
 
+    camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_BACK;
     result = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
-    if (result != CAM_META_SUCCESS) {
+    if (result != CAM_META_SUCCESS || item.count == 0) {
         MEDIA_ERR_LOG("HStreamCapture::Capture Capture set rotation get camera position failed");
+    } else {
+        cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
+        MEDIA_INFO_LOG("HStreamCapture::Capture Capture set rotation camera position %{public}d", cameraPosition);
     }
-    camera_position_enum_t cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
-    MEDIA_INFO_LOG("HStreamCapture::Capture Capture set rotation camera position %{public}d", cameraPosition);
 
     // rotation from application
     int32_t rotationValue = 0;
     result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_ORIENTATION, &item);
-    if (result == CAM_META_SUCCESS) {
+    if (result == CAM_META_SUCCESS && item.count > 0) {
         rotationValue = item.data.i32[0];
     }
     MEDIA_INFO_LOG("HStreamCapture::Capture set rotation app rotationValue %{public}d", rotationValue);
