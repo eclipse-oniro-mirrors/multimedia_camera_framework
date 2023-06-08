@@ -59,14 +59,14 @@ void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state)
 void ExposureCallbackListener::OnExposureStateCallback(ExposureState state) const
 {
     MEDIA_DEBUG_LOG("OnExposureStateCallback is called");
-    napi_value result[ARGS_ONE];
+    napi_value result[ARGS_TWO];
     napi_value callback = nullptr;
     napi_value retVal;
-
-    napi_create_int32(env_, state, &result[PARAM0]);
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_create_int32(env_, state, &result[PARAM1]);
 
     napi_get_reference_value(env_, callbackRef_, &callback);
-    napi_call_function(env_, nullptr, callback, ARGS_ONE, result, &retVal);
+    napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
 }
 
 void ExposureCallbackListener::OnExposureState(const ExposureState state)
@@ -110,14 +110,14 @@ void FocusCallbackListener::OnFocusStateCallbackAsync(FocusState state) const
 void FocusCallbackListener::OnFocusStateCallback(FocusState state) const
 {
     MEDIA_DEBUG_LOG("OnFocusStateCallback is called");
-    napi_value result[ARGS_ONE];
+    napi_value result[ARGS_TWO];
     napi_value callback = nullptr;
     napi_value retVal;
-
-    napi_create_int32(env_, state, &result[PARAM0]);
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_create_int32(env_, state, &result[PARAM1]);
 
     napi_get_reference_value(env_, callbackRef_, &callback);
-    napi_call_function(env_, nullptr, callback, ARGS_ONE, result, &retVal);
+    napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
 }
 
 void FocusCallbackListener::OnFocusState(FocusState state)
@@ -162,17 +162,18 @@ void SessionCallbackListener::OnErrorCallback(int32_t errorCode) const
 {
     MEDIA_DEBUG_LOG("OnErrorCallback is called");
     int32_t jsErrorCodeUnknown = -1;
-    napi_value result[ARGS_ONE];
+    napi_value result[ARGS_TWO];
     napi_value callback = nullptr;
     napi_value retVal;
     napi_value propValue;
-    napi_create_object(env_, &result[PARAM0]);
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_create_object(env_, &result[PARAM1]);
 
     napi_create_int32(env_, jsErrorCodeUnknown, &propValue);
 
-    napi_set_named_property(env_, result[PARAM0], "code", propValue);
+    napi_set_named_property(env_, result[PARAM1], "code", propValue);
     napi_get_reference_value(env_, callbackRef_, &callback);
-    napi_call_function(env_, nullptr, callback, ARGS_ONE, result, &retVal);
+    napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
 }
 
 void SessionCallbackListener::OnError(int32_t errorCode)
