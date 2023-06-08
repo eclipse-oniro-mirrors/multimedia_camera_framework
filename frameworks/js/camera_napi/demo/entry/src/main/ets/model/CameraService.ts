@@ -46,7 +46,6 @@ class CameraService {
   private videoRecorder: media.VideoRecorder = undefined;
   private videoOutput: camera.VideoOutput = undefined;
   private handleTakePicture: (photoUri: string) => void = undefined;
-  const VIDEO_FRAME_RATE = 15;
   private videoConfig: media.VideoRecorderConfig = {
     audioSourceType: 1,
     videoSourceType: 0,
@@ -88,7 +87,7 @@ class CameraService {
   private previewProfilesObj: camera.Profile = {
     format: 1003,
     size: {
-      'width': 1920,
+      'width': 1440,
       'height': 1080
     }
   };
@@ -350,7 +349,7 @@ class CameraService {
     // 查询是否支持指定的视频防抖模式
     let isVideoStabilizationModeSupported = this.captureSession.isVideoStabilizationModeSupported(videoStabilizationMode);
     prompt.showToast({
-      message: isSupported ? '支持此模式' : '不支持此模式',
+      message: isVideoStabilizationModeSupported ? '支持此模式' : '不支持此模式',
       duration: 2000,
       bottom: '50%'
     });
@@ -742,7 +741,7 @@ class CameraService {
     this.previewOutput.on('frameEnd', () => {
       Logger.debug(TAG, 'Preview frame ended');
     });
-    this.previewOutput.on('error', (previewOutputError: {code: T}) => {
+    this.previewOutput.on('error', (previewOutputError: { code: T }) => {
       Logger.info(TAG, `Preview output err: ${JSON.stringify(previewOutputError)}`);
     });
   }
@@ -757,7 +756,7 @@ class CameraService {
     this.videoOutput.on('frameEnd', () => {
       Logger.error(TAG, 'onVideoOutputChange frame frameEnd');
     });
-    this.videoOutput.on('error', (videoOutputError: {code: T}) => {
+    this.videoOutput.on('error', (videoOutputError: { code: T }) => {
       Logger.info(TAG, `onVideoOutputChange fail: ${JSON.stringify(videoOutputError)}`);
     });
   }
@@ -785,7 +784,7 @@ class CameraService {
    * 监听CameraInput的错误事件
    */
   onCameraInputChange(): void {
-    this.cameraInput.on('error', this.cameras, (cameraInputError: {code: T}) => {
+    this.cameraInput.on('error', this.cameras, (cameraInputError: { code: T }) => {
       Logger.info(TAG, `onCameraInputChange cameraInput error code: ${cameraInputError.code}`);
     });
   }
@@ -803,7 +802,7 @@ class CameraService {
    * 监听拍照会话的错误事件
    */
   onCaptureSessionErrorChange(): void {
-    this.captureSession.on('error', (captureSessionError: {code: T}) => {
+    this.captureSession.on('error', (captureSessionError: { code: T }) => {
       Logger.info(TAG, 'onCaptureSessionErrorChange fail: ' + JSON.stringify(captureSessionError.code));
     });
   }

@@ -20,7 +20,9 @@ const TAG: string = "SettingRightLayout";
 
 @Component
 export struct SettingRightLayout {
-  @Prop @Watch('onSettingMessageFn') settingMessageNum: number; // 传进来的点击设置
+  @Link isIndex: number;
+  private controller: CustomDialogController;
+  @Link settingMessageNum: number; // 传进来的点击设置
   private title: Array<string> = ['', '自拍镜像', '视频防抖', '曝光模式', '对焦模式', '拍摄质量', '拍摄时显示地理位置', '照片格式', '照片方向配置', '照片分辨率', '视频分辨率', '录像帧率', '参考线',];
   private settingItemDataList: Array<Array<string>> = [
     [], [],
@@ -35,41 +37,6 @@ export struct SettingRightLayout {
     ['1920*1080', '1280*720', '640*480'],
     ['15', '30'],
   ];
-  @State isIndex: number = 0;
-  private settingItemNumberArray: number[] = [2, 3, 4, 5, 7, 8, 9, 10, 11];
-
-  onSettingMessageFn(): void {
-    Logger.info(TAG, `onSettingMessageFn settingMessageNum: ${this.settingMessageNum}`);
-    switch (this.settingMessageNum) {
-      case 2:
-        this.isIndex = globalThis.settingDataObj.videoStabilizationMode;
-        break;
-      case 3:
-        this.isIndex = globalThis.settingDataObj.exposureMode;
-        break;
-      case 4:
-        this.isIndex = globalThis.settingDataObj.focusMode;
-        break;
-      case 5:
-        this.isIndex = globalThis.settingDataObj.photoQuality;
-        break;
-      case 7:
-        this.isIndex = globalThis.settingDataObj.photoFormat;
-        break;
-      case 8:
-        this.isIndex = globalThis.settingDataObj.photoOrientation;
-        break;
-      case 9:
-        this.isIndex = globalThis.settingDataObj.photoResolution;
-        break;
-      case 10:
-        this.isIndex = globalThis.settingDataObj.videoResolution;
-        break;
-      case 11:
-        this.isIndex = globalThis.settingDataObj.videoFrame;
-        break;
-    }
-  }
 
   getModeIconObj(): {
     icon: Resource,
@@ -89,19 +56,36 @@ export struct SettingRightLayout {
   build() {
     Column() {
       Row() {
+        Image($r('app.media.ic_public_back'))
+          .size({ width: 24, height: 24 })
+          .position({ x: '0', y: '0' })
+          .zIndex(1)
+          .onClick(() => {
+            Logger.info(TAG, 'back onClick');
+            this.controller.close();
+          })
         Text(this.title[this.settingMessageNum])
           .fontSize(24)
           .fontWeight(700)
           .fontColor('#182431')
           .width('96%')
           .textAlign(TextAlign.Start)
-      }.margin({ top: 20 })
+          .margin({ left: 40 })
+      }
+      .margin({ top: '150px', bottom: '25px', left: '30px' })
 
       if (this.settingMessageNum == 1 || this.settingMessageNum == 6 || this.settingMessageNum == 12) {
         Column() {
-          Image(this.getModeIconObj().icon).width(450).height(350).objectFit(ImageFit.ScaleDown)
-          Text(this.getModeIconObj().message).fontColor('#182431').fontSize(18).fontWeight(400)
-        }.margin({ top: 90 })
+          Image(this.getModeIconObj().icon)
+            .width(450)
+            .height(350)
+            .objectFit(ImageFit.ScaleDown)
+          Text(this.getModeIconObj().message)
+            .fontColor('#182431')
+            .fontSize(18)
+            .fontWeight(400)
+        }
+        .margin({ top: 90 })
       } else {
         Column() {
           ForEach(this.settingItemDataList[this.settingMessageNum], (item, index) => {
@@ -113,9 +97,10 @@ export struct SettingRightLayout {
             })
           })
         }
-        .margin({ top: 20 })
+        .margin({ top: 20, left: 12, right: 12 })
+        .padding({ left: 12, right: 12 })
         .borderRadius(24)
-        .width(720)
+        .width('100%')
         .backgroundColor(Color.White)
       }
     }

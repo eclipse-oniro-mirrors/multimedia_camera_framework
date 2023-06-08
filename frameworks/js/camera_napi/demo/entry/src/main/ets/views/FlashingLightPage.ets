@@ -22,7 +22,7 @@ const TAG: string = 'FlashingLightPage';
 @Component
 export struct FlashingLightPage {
   // 页面判断
-  @State flashingBol: boolean = true;
+  @StorageLink('flashingBol') flashingBol: boolean = true;
   // 闪光灯模式
   @State flashingNum: number = 0;
   // 返回选中图片
@@ -40,6 +40,24 @@ export struct FlashingLightPage {
       return $r('app.media.flash_always_on');
     }
   }
+  private flashLightInfo = [
+    {
+      num: 0,
+      resource: $r('app.media.ic_camera_public_flash_off')
+    },
+    {
+      num: 1,
+      resource: $r('app.media.ic_camera_public_flash_on')
+    },
+    {
+      num: 2,
+      resource: $r('app.media.ic_camera_public_flash_auto')
+    },
+    {
+      num: 3,
+      resource: $r('app.media.flash_always_on')
+    }
+  ]
 
   build() {
     Row() {
@@ -47,64 +65,39 @@ export struct FlashingLightPage {
         Row() {
           Button() {
             Image(this.getImageDefault())
-              .width('60px').height('60px').fillColor('#FFFFFF')
+              .width('35vp').height('35vp').fillColor('#FFFFFF')
           }
-          .width('80px')
-          .height('80px')
+          .width('45vp')
+          .height('45vp')
           .backgroundColor('rgba(255,255,255,0.20)')
-          .borderRadius('40px')
+          .borderRadius('50px')
           .onClick(() => {
+            AppStorage.SetOrCreate<boolean>('countdownBol', true);
             this.flashingBol = false;
           })
         }
       } else {
-        Flex({ justifyContent: FlexAlign.SpaceEvenly, alignItems: ItemAlign.Center }) {
-          Image($r('app.media.ic_camera_public_flash_auto'))
-            .width('60px')
-            .height('60px')
-            .fillColor(this.flashingNum == 2 ? $r('app.color.theme_color') : '')
-            .onClick(() => {
-              Logger.debug(TAG, 'onClick');
-              this.flashingNum = 2;
-              this.flashingBol = true;
-              CameraService.hasFlashFn(this.flashingNum);
-            })
-          Image($r('app.media.ic_camera_public_flash_off'))
-            .width('60px')
-            .height('60px')
-            .fillColor(this.flashingNum == 0 ? $r('app.color.theme_color') : '')
-            .onClick(() => {
-              this.flashingNum = 0;
-              this.flashingBol = true;
-              CameraService.hasFlashFn(this.flashingNum);
-            })
-          Image($r('app.media.ic_camera_public_flash_on'))
-            .width('60px')
-            .height('60px')
-            .fillColor(this.flashingNum == 1 ? $r('app.color.theme_color') : '')
-            .onClick(() => {
-              this.flashingNum = 1;
-              this.flashingBol = true;
-              CameraService.hasFlashFn(this.flashingNum);
-            })
-          Image($r('app.media.flash_always_on'))
-            .width('50px')
-            .height('50px')
-            .fillColor(this.flashingNum == 3 ? $r('app.color.theme_color') : '')
-            .onClick(() => {
-              this.flashingNum = 3;
-              this.flashingBol = true;
-              CameraService.hasFlashFn(this.flashingNum);
-            })
+        Flex({ justifyContent: FlexAlign.SpaceEvenly, alignItems: ItemAlign.Center, direction: FlexDirection.Column }) {
+          ForEach(this.flashLightInfo, (item: {num: number, resource: Resource}) => {
+            Image(item.resource)
+              .width('35vp')
+              .height('35vp')
+              .fillColor(this.flashingNum == item.num ? $r('app.color.theme_color') : '')
+              .onClick(() => {
+                Logger.debug(TAG, 'onClick');
+                this.flashingNum = item.num;
+                this.flashingBol = true;
+                CameraService.hasFlashFn(this.flashingNum);
+              })
+          })
         }
         .backgroundColor('#FFFFFF')
-        .borderRadius('40px')
-        .width('300px')
-        .height('80px')
+        .borderRadius('45vp')
+        .width('45vp')
+        .height('600px')
         .zIndex(999)
       }
-
     }
-    .position({ x: 30, y: 408 })
+    .position({ x: 200, y: 30 })
   }
 }

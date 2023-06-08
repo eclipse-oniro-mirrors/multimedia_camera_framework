@@ -31,86 +31,112 @@ export struct FocusPage {
           Flex({ direction: FlexDirection.Column, justifyContent: FlexAlign.SpaceBetween }) {
             Flex({ justifyContent: FlexAlign.SpaceBetween }) {
               Row() {
-              }.border({
+              }
+              .border({
                 width: { left: 1.6, right: 0, top: 1.6, bottom: 0 },
                 color: Color.White,
                 radius: { topLeft: 10, topRight: 0, bottomLeft: 0, bottomRight: 0 }
-              }).size({ width: 15, height: 15 })
+              })
+              .size({ width: 40, height: 40 })
 
               Row() {
-              }.border({
+              }
+              .border({
                 width: { left: 0, right: 1.6, top: 1.6, bottom: 0 },
                 color: Color.White,
                 radius: { topLeft: 0, topRight: 10, bottomLeft: 0, bottomRight: 0 }
-              }).size({ width: 15, height: 15 })
+              })
+              .size({ width: 40, height: 40 })
             }
 
             Flex({ justifyContent: FlexAlign.SpaceBetween }) {
               Row() {
-              }.border({
+              }
+              .border({
                 width: { left: 1.6, right: 0, top: 0, bottom: 1.6 },
                 color: Color.White,
                 radius: { topLeft: 0, topRight: 0, bottomLeft: 10, bottomRight: 0 }
-              }).size({ width: 15, height: 15 })
+              })
+              .size({ width: 40, height: 40 })
 
               Row() {
-              }.border({
+              }
+              .border({
                 width: { left: 0, right: 1.6, top: 0, bottom: 1.6 },
                 color: Color.White,
                 radius: { topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 10 }
-              }).size({ width: 15, height: 15 })
+              })
+              .size({ width: 40, height: 40 })
             }
           }
-          .width(50)
-          .height(50)
-          .position({ x: this.focusPointVal[0] - 25, y: this.focusPointVal[1] - 25 })
+          .width(120)
+          .height(120)
+          .position({ x: this.focusPointVal[0] - 60, y: this.focusPointVal[1] - 60 })
         } else {
           // 焦距值
-          Text(this.exposureNum + '').fontSize(60).fontColor(Color.White).fontWeight(400).position({
-            x: this.focusPointVal[0] - 58,
-            y: this.focusPointVal[1] - 30
-          })
+          Text(this.exposureNum + '')
+            .fontSize(60)
+            .fontColor(Color.White)
+            .fontWeight(400)
+            .position({
+              x: this.focusPointVal[0] - 58,
+              y: this.focusPointVal[1] - 30
+            })
           // 刻度值
           Flex() {
             Column() {
-              Text('+4').fontColor(Color.White)
-              Text('0').margin({ top: 50, bottom: 50 }).fontColor(Color.White)
-              Text('-4').fontColor(Color.White)
+              Text('+4')
+                .fontColor(Color.White)
+              Text('0')
+                .margin({ top: 50, bottom: 50 })
+                .fontColor(Color.White)
+              Text('-4')
+                .fontColor(Color.White)
             }.margin({ right: 9 })
             // 刻度
             Column() {
-              Text('').height(67).border({
-                width: { left: '0', right: 4, top: '0', bottom: '0' },
-                color: Color.White,
-                radius: 2,
-                style: BorderStyle.Dotted
-              })
-              Text('').height(8).border({
-                width: { left: '0', right: 8, top: '0', bottom: '0' },
-                color: Color.White,
-                radius: 4,
-                style: BorderStyle.Solid
-              }).margin({ top: 4 })
-              Text('').height(67).border({
-                width: { left: '0', right: 4, top: '0', bottom: '0' },
-                color: Color.White,
-                radius: 2,
-                style: BorderStyle.Dotted
-              }).margin({ top: 4 })
+              Text('')
+                .height(67)
+                .border({
+                  width: { left: '0', right: 4, top: '0', bottom: '0' },
+                  color: Color.White,
+                  radius: 2,
+                  style: BorderStyle.Dotted
+                })
+              Text('')
+                .height(8)
+                .border({
+                  width: { left: '0', right: 8, top: '0', bottom: '0' },
+                  color: Color.White,
+                  radius: 4,
+                  style: BorderStyle.Solid
+                })
+                .margin({ top: 4 })
+              Text('')
+                .height(67)
+                .border({
+                  width: { left: '0', right: 4, top: '0', bottom: '0' },
+                  color: Color.White,
+                  radius: 2,
+                  style: BorderStyle.Dotted
+                })
+                .margin({ top: 4 })
             }
-          }.position({
+          }
+          .position({
             x: this.focusPointVal[0] + 56.6,
             y: this.focusPointVal[1] - 73
           })
         }
         // 曝光图标
-        Image($r('app.media.ic_public_brightness')).size({ width: 24, height: 24 })
+        Image($r('app.media.ic_public_brightness'))
+          .size({ width: 24, height: 24 })
           .position({
-            x: this.focusPointVal[0] + 40,
-            y: this.focusPointVal[1] - 10
+            x: this.focusPointVal[0] + 75,
+            y: this.focusPointVal[1] - 10 - (this.exposureNum * 18)
           })
-      }.zIndex(99)
-
+      }
+      .zIndex(99)
     }
   }
 }

@@ -74,6 +74,15 @@ export struct SettingItem {
     }
   }
 
+  async resetSession(): Promise<void> {
+    await CameraService.releaseCamera().then(() => {
+      Logger.debug(TAG, 'releaseCamera success');
+    });
+    await CameraService.initCamera(globalThis.surfaceId, globalThis.cameraDeviceIndex).then(() => {
+      Logger.debug(TAG, 'initCamera success');
+    });
+  }
+
   onChangeFn(): void {
     if (this.index === this.isIndex) {
       this.isBol = true;
@@ -96,19 +105,30 @@ export struct SettingItem {
           .textAlign(TextAlign.Start)
           .width('90%')
         if (this.isBol) {
-          Image($r('app.media.ic_camera_set_Checked')).width(24).height(24)
+          Image($r('app.media.ic_camera_set_Checked'))
+            .width(24)
+            .height(24)
         } else {
-          Image('').width(24).height(24).backgroundColor(Color.White)
+          Image('')
+            .width(24)
+            .height(24)
+            .backgroundColor(Color.White)
         }
       }
       .justifyContent(FlexAlign.SpaceBetween)
       .height(65)
-      .onClick(() => {
+      .onClick(async () => {
+        if (this.isIndex === this.index) {
+          return;
+        }
         this.isIndex = this.index;
         this.selectMode();
+        await this.resetSession();
       })
 
-      Divider().width(680).margin({ left: 10 })
+      Divider()
+        .width('100%')
+        .margin({ left: 10 })
     }
 
   }

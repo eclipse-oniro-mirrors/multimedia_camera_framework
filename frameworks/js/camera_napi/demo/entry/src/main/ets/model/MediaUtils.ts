@@ -20,6 +20,14 @@ import Logger from '../model/Logger';
 
 const TAG: string = 'MediaUtils';
 
+enum PhotoType {
+  PNG = 0,
+  JPG,
+  BMP,
+  WEBP,
+  JPEG
+}
+
 export default class MediaUtils {
   private mediaTest: mediaLibrary.MediaLibrary = mediaLibrary.getMediaLibrary(globalThis.abilityContext);
   private static instance: MediaUtils = new MediaUtils();
@@ -167,22 +175,27 @@ export default class MediaUtils {
   }
 
   /**
-   * 照片格式
+   * 照片格式:
+   * 0代表png图片格式
+   * 1代表jpg图片格式
+   * 2代表bmp图片格式
+   * 3代表webp图片格式
+   * 4代表jpeg图片格式
    */
   onChangePhotoFormat(): string {
-    if (globalThis.settingDataObj.photoFormat === 0) {  // 图片格式: 0代表png图片格式
+    if (globalThis.settingDataObj.photoFormat === PhotoType.PNG) {
       return 'png';
     }
-    if (globalThis.settingDataObj.photoFormat === 1) {  // 图片格式: 1代表jpg图片格式
+    if (globalThis.settingDataObj.photoFormat === PhotoType.JPG) {
       return 'jpg';
     }
-    if (globalThis.settingDataObj.photoFormat === 2) {  // 图片格式: 2代表bmp图片格式
+    if (globalThis.settingDataObj.photoFormat === PhotoType.BMP) {
       return 'bmp';
     }
-    if (globalThis.settingDataObj.photoFormat === 3) {  // 图片格式: 3代表webp图片格式
+    if (globalThis.settingDataObj.photoFormat === PhotoType.WEBP) {
       return 'webp';
     }
-    if (globalThis.settingDataObj.photoFormat === 4) {  // 图片格式: 4代表jpeg图片格式
+    if (globalThis.settingDataObj.photoFormat === PhotoType.JPEG) {
       return 'jpeg';
     }
     return undefined;
