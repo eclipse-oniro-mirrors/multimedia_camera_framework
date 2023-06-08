@@ -15,7 +15,7 @@ import("//build/ohos.gni")
 import("//build/ohos/ace/ace.gni")
 
 js_declaration("camera_js") {
-  part_name = "multimedia_camera_framework"
+  part_name = "camera_framework"
   sources = [ "./@ohos.multimedia.camera.d.ts" ]
 }
 
@@ -77,6 +77,6 @@ ohos_shared_library("camera_napi") {
   cflags = [ "-fPIC" ]
   cflags_cc = cflags
   relative_install_dir = "module/multimedia"
-  part_name = "multimedia_camera_framework"
+  part_name = "camera_framework"
   subsystem_name = "multimedia"
 }

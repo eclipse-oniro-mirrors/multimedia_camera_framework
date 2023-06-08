@@ -10,7 +10,7 @@
     "dirs": {},
     "scripts": {},
     "component": {
-        "name": "multimedia_camera_framework",
+        "name": "camera_framework",
         "subsystem": "multimedia",
         "syscap": ["SystemCapability.Multimedia.Camera.Core"],
         "features": [],
