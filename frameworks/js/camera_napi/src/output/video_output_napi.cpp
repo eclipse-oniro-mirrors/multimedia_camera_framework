@@ -104,7 +104,6 @@ void VideoCallbackListener::UpdateJSCallback(std::string propName, const int32_t
     napi_value callback = nullptr;
     napi_value retVal;
     napi_value propValue;
-    int32_t jsErrorCodeUnknown = -1;
     napi_get_undefined(env_, &result[PARAM0]);
     if (propName.compare("OnFrameStarted") == 0) {
         CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(frameStartCallbackRef_,
@@ -119,13 +118,17 @@ void VideoCallbackListener::UpdateJSCallback(std::string propName, const int32_t
     } else {
         CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(errorCallbackRef_,
             "OnError callback is not registered by JS");
-        napi_create_object(env_, &result[PARAM1]);
+        napi_value errJsResult[ARGS_ONE];
+        int32_t jsErrorCodeUnknown = -1;
+        napi_create_object(env_, &errJsResult[PARAM0]);
         napi_create_int32(env_, jsErrorCodeUnknown, &propValue);
-        napi_set_named_property(env_, result[PARAM1], "code", propValue);
+        napi_set_named_property(env_, errJsResult[PARAM0], "code", propValue);
         napi_get_reference_value(env_, errorCallbackRef_, &callback); // should errorcode be valued as -1
         if (errorCallbackRef_ != nullptr) {
             napi_delete_reference(env_, errorCallbackRef_);
         }
+        napi_call_function(env_, nullptr, callback, ARGS_ONE, errJsResult, &retVal);
+        return;
     }
 
     napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);

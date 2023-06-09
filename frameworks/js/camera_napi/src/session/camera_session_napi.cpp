@@ -162,18 +162,17 @@ void SessionCallbackListener::OnErrorCallback(int32_t errorCode) const
 {
     MEDIA_DEBUG_LOG("OnErrorCallback is called");
     int32_t jsErrorCodeUnknown = -1;
-    napi_value result[ARGS_TWO];
+    napi_value result[ARGS_ONE];
     napi_value callback = nullptr;
     napi_value retVal;
     napi_value propValue;
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_object(env_, &result[PARAM1]);
+    napi_create_object(env_, &result[PARAM0]);
 
     napi_create_int32(env_, jsErrorCodeUnknown, &propValue);
 
-    napi_set_named_property(env_, result[PARAM1], "code", propValue);
+    napi_set_named_property(env_, result[PARAM0], "code", propValue);
     napi_get_reference_value(env_, callbackRef_, &callback);
-    napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
+    napi_call_function(env_, nullptr, callback, ARGS_ONE, result, &retVal);
 }
 
 void SessionCallbackListener::OnError(int32_t errorCode)
