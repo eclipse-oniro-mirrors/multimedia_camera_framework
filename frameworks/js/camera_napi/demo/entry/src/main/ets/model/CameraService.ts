@@ -23,6 +23,7 @@ import mediaLibrary from '@ohos.multimedia.mediaLibrary';
 import Logger from '../model/Logger';
 import MediaUtils from '../model/MediaUtils';
 import prompt from '@ohos.prompt';
+import { Constants } from '../common/Constants';
 
 const cameraSize = {
   width: 1280,
@@ -47,48 +48,50 @@ class CameraService {
   private videoOutput: camera.VideoOutput = undefined;
   private handleTakePicture: (photoUri: string) => void = undefined;
   private videoConfig: media.VideoRecorderConfig = {
-    audioSourceType: 1,
-    videoSourceType: 0,
+    audioSourceType: media.AudioSourceType.AUDIO_SOURCE_TYPE_MIC,
+    videoSourceType: media.VideoSourceType.VIDEO_SOURCE_TYPE_SURFACE_YUV,
     profile: {
       audioBitrate: 48000,
       audioChannels: 2,
-      audioCodec: 'audio/mp4a-latm',
+      audioCodec: media.CodecMimeType.AUDIO_AAC,
       audioSampleRate: 48000,
-      durationTime: 1000,
-      fileFormat: 'mp4',
-      videoBitrate: 48000,
-      videoCodec: 'video/avc',
-      videoFrameWidth: 1920,
-      videoFrameHeight: 1080,
-      videoFrameRate: 15
+      fileFormat: media.ContainerFormatType.CFT_MPEG_4,
+      videoBitrate: 512000,
+      videoCodec: media.CodecMimeType.VIDEO_AVC,
+      videoFrameWidth: 640,
+      videoFrameHeight: 480,
+      videoFrameRate: Constants.VIDEO_FRAME_30
     },
     url: '',
-    rotation: 90,
-    location: { latitude: 30, longitude: 130 }
+    orientationHint: 90,
+    maxSize: 100,
+    maxDuration: 500,
+    rotation: 0
   };
-  private videoProfilesObj: camera.Profile = {
+  private videoProfiles: Array<camera.VideoProfile>;
+  private videoProfilesObj: camera.VideoProfile = {
     format: 1003,
     size: {
-      'width': 1920,
-      'height': 1080
+      width: 1920,
+      height: 1080
     },
     frameRateRange: {
-      'min': 15,
-      'max': 15
+      min: Constants.VIDEO_FRAME_30,
+      max: Constants.VIDEO_FRAME_30
     }
   };
   private photoProfilesObj: camera.Profile = {
     format: 1003,
     size: {
-      'width': 1920,
-      'height': 1080
+      width: 1920,
+      height: 1080
     }
   };
   private previewProfilesObj: camera.Profile = {
     format: 1003,
     size: {
-      'width': 1440,
-      'height': 1080
+      width: 1920,
+      height: 1080
     }
   };
   private photoRotationMap = {
@@ -164,6 +167,9 @@ class CameraService {
     }
   }
 
+  withinErrorMargin(left: number, right: number): boolean {
+    return Math.abs(left - right) < Number.EPSILON * Math.pow(2, 2);
+  }
   /**
    * 初始化
    */
@@ -175,11 +181,6 @@ class CameraService {
       } else {
         this.videoConfig.videoSourceType = 0;
       }
-      // 设置照片分辨率
-      if (globalThis.photoResolutionWidth && globalThis.photoResolutionHeight) {
-        this.photoProfilesObj.size.width = globalThis.photoResolutionWidth;
-        this.photoProfilesObj.size.height = globalThis.photoResolutionHeight;
-      }
       // 获取传入摄像头
       Logger.debug(TAG, `initCamera cameraDeviceIndex: ${cameraDeviceIndex}`);
       await this.releaseCamera();
@@ -188,18 +189,45 @@ class CameraService {
       // 获取支持指定的相机设备对象
       this.getSupportedCamerasFn();
       let profiles = this.cameraManager.getSupportedOutputCapability(this.cameras[cameraDeviceIndex]);
-      let previewProfiles = profiles.previewProfiles;
-      let photoProfiles = profiles.photoProfiles;
-      Logger.info(TAG, `initCamera previewProfiles: ${JSON.stringify(previewProfiles)}, photoProfiles: ${JSON.stringify(photoProfiles)}`);
-      if (photoProfiles.length === 1) {
-        this.photoProfilesObj.size.width = photoProfiles[0].size.width;
-        this.photoProfilesObj.size.height = photoProfiles[0].size.height;
-        this.photoProfilesObj.format = photoProfiles[0].format;
+      this.videoProfiles = profiles.videoProfiles;
+      let defaultAspectRatio = AppStorage.Get<number>('defaultAspectRatio');
+      for (let index = 0; index < profiles.previewProfiles.length; index++) {
+        const previewProfile = profiles.previewProfiles[index];
+        if (this.withinErrorMargin(defaultAspectRatio, previewProfile.size.width / previewProfile.size.height)) {
+          this.previewProfilesObj.size.width = previewProfile.size.width;
+          this.previewProfilesObj.size.height = previewProfile.size.height;
+          this.previewProfilesObj.format = previewProfile.format;
+          Logger.info(TAG, `previewProfilesObj: ${JSON.stringify(this.previewProfilesObj)}`);
+          break;
+        }
       }
-      if (previewProfiles.length === 1) {
-        this.previewProfilesObj.size.width = previewProfiles[0].size.width;
-        this.previewProfilesObj.size.height = previewProfiles[0].size.height;
-        this.previewProfilesObj.format = previewProfiles[0].format;
+      for (let index = 0; index < profiles.photoProfiles.length; index++) {
+        const photoProfile = profiles.photoProfiles[index];
+        if (this.withinErrorMargin(defaultAspectRatio, photoProfile.size.width / photoProfile.size.height)) {
+          this.photoProfilesObj.size.width = photoProfile.size.width;
+          this.photoProfilesObj.size.height = photoProfile.size.height;
+          this.photoProfilesObj.format = photoProfile.format;
+          Logger.info(TAG, `photoProfilesObj: ${JSON.stringify(this.photoProfilesObj)}`);
+          break;
+        }
+      }
+      for (let index = 0; index < this.videoProfiles.length; index++) {
+        const videoProfile = this.videoProfiles[index];
+        Logger.debug(TAG, `videoProfile: ${JSON.stringify(videoProfile)}`);
+        if (this.withinErrorMargin(defaultAspectRatio, videoProfile.size.width / videoProfile.size.height)) {
+          if (videoProfile.size.width < Constants.VIDEO_MAX_WIDTH) {
+            this.videoProfilesObj.size.width = videoProfile.size.width;
+            this.videoProfilesObj.size.height = videoProfile.size.height;
+            this.videoProfilesObj.format = videoProfile.format;
+            if ((globalThis.settingDataObj.videoFrame === 0 ? Constants.VIDEO_FRAME_15 : Constants.VIDEO_FRAME_30)
+            === videoProfile.frameRateRange.min) {
+              this.videoProfilesObj.frameRateRange.min = videoProfile.frameRateRange.min;
+              this.videoProfilesObj.frameRateRange.max = videoProfile.frameRateRange.max;
+              Logger.info(TAG, `videoProfilesObj: ${JSON.stringify(this.videoProfilesObj)}`);
+              break;
+            }
+          }
+        }
       }
       // 创建previewOutput输出对象
       this.createPreviewOutputFn(this.previewProfilesObj, surfaceId);
@@ -225,6 +253,18 @@ class CameraService {
     } catch (err) {
       Logger.error(TAG, `initCamera fail: ${JSON.stringify(err.message)}`);
     }
+  }
+
+  isVideoFrameSupportedFn(videoFrame: number): boolean {
+    return this.videoProfiles.find((videoProfile: camera.VideoProfile) => {
+      if (videoProfile.size.height === this.videoProfilesObj.size.height
+      && videoProfile.size.width === this.videoProfilesObj.size.width
+      && videoProfile.format === this.videoProfilesObj.format
+      && videoProfile.frameRateRange.min === videoFrame
+      && videoProfile.frameRateRange.max === videoFrame) {
+        return true;
+      }
+    })
   }
 
   /**
@@ -438,13 +478,12 @@ class CameraService {
     Logger.info(TAG, 'createVideoOutput start');
     this.fileAsset = await this.mediaUtil.createAndGetUri(mediaLibrary.MediaType.VIDEO);
     this.fd = await this.mediaUtil.getFdPath(this.fileAsset);
-    this.videoRecorder = await media.createVideoRecorder();
     this.videoConfig.url = `fd://${this.fd}`;
     await this.videoRecorder.prepare(this.videoConfig);
     let videoId = await this.videoRecorder.getInputSurface();
     this.videoProfilesObj.frameRateRange = {
-      'min': 15,
-      'max': 15
+      min: Constants.VIDEO_FRAME_30,
+      max: Constants.VIDEO_FRAME_30
     };
     this.videoOutput = this.cameraManager.createVideoOutput(this.videoProfilesObj, videoId);
     Logger.info(TAG, 'createVideoOutput end');
@@ -485,6 +524,22 @@ class CameraService {
     this.videoConfig.url = `fd://${this.fd.toString()}`;
   }
 
+  async initAVRecorder(): Promise<void> {
+    if (this.videoRecorder != undefined) {
+      if (AppStorage.Get<boolean>('isRecorder')) {
+        await this.stopVideo();
+      }
+      await this.videoRecorder.release()
+        .catch((err: { code?: number }) => {
+          Logger.error(TAG, `videoRecorder release failed, ${JSON.stringify(err)}`);
+        });
+      AppStorage.Set<boolean>('isRecorder', false);
+    }
+    this.videoRecorder = await media.createAVRecorder()
+      .catch((err: { code?: number }) => {
+        Logger.error(TAG, `videoRecorder release failed, ${JSON.stringify(err)}`);
+      });
+  }
   /**
    * 开始录制
    */
@@ -493,43 +548,37 @@ class CameraService {
       Logger.info(TAG, 'startVideo begin');
       await this.captureSession.stop();
       this.captureSession.beginConfig();
-      Logger.debug(TAG, `startVideo photoOutPut: ${JSON.stringify(this.photoOutPut)}`);
-      // 设置照片分辨率
-      if (globalThis.videoResolutionWidth && globalThis.videoResolutionHeight) {
-        this.videoProfilesObj.size.width = globalThis.videoResolutionWidth;
-        this.videoProfilesObj.size.height = globalThis.videoResolutionHeight;
-        this.videoConfig.profile.videoFrameWidth = globalThis.videoResolutionWidth;
-        this.videoConfig.profile.videoFrameHeight = globalThis.videoResolutionHeight;
-      }
-      Logger.info(TAG, `startVideo videoConfig profile: ${JSON.stringify(this.videoConfig.profile)}`);
-      this.videoRecorder = await media.createVideoRecorder();
+      await this.initAVRecorder();
       await this.initUrl();
-      this.videoConfig.profile.videoFrameRate = globalThis.videoFrame || this.VIDEO_FRAME_RATE;
+      let deviceType = AppStorage.Get<string>('deviceType');
+      if (deviceType === Constants.DEFAULT) {
+        this.videoConfig.profile.videoSourceType = media.VideoSourceType.VIDEO_SOURCE_TYPE_SURFACE_ES;
+      }
+      if (deviceType === Constants.PHONE) {
+        this.videoConfig.profile.videoSourceType = media.VideoSourceType.VIDEO_SOURCE_TYPE_SURFACE_YUV;
+        this.videoConfig.profile.videoCodec = media.CodecMimeType.VIDEO_MPEG4;
+      }
+      if (deviceType === Constants.TABLET) {
+        this.videoConfig.profile.videoSourceType = media.VideoSourceType.VIDEO_SOURCE_TYPE_SURFACE_YUV;
+      }
+      this.videoConfig.profile.videoFrameWidth = this.videoProfilesObj.size.width;
+      this.videoConfig.profile.videoFrameHeight = this.videoProfilesObj.size.height;
+      this.videoConfig.profile.videoFrameRate = this.videoProfilesObj.frameRateRange.min;
+      Logger.info(TAG, `deviceType: ${deviceType}, videoSourceType: ${JSON.stringify(this.videoConfig)}`);
       await this.videoRecorder.prepare(this.videoConfig).catch((err) => {
-        Logger.info(TAG, `startVideo prepare err code: ${err.code}`);
+        Logger.error(TAG, `startVideo prepare err code: ${err.code}`);
       });
       let videoId = await this.videoRecorder.getInputSurface();
-      this.videoProfilesObj.frameRateRange = {
-        'min': globalThis.videoFrame || this.VIDEO_FRAME_RATE,
-        'max': globalThis.videoFrame || this.VIDEO_FRAME_RATE
-      };
-      Logger.info(TAG, `startVideo videoProfilesObj: ${JSON.stringify(this.videoProfilesObj)}`);
+      Logger.debug(TAG, `startVideo videoProfilesObj: ${JSON.stringify(this.videoProfilesObj)}`);
       this.videoOutput = this.cameraManager.createVideoOutput(this.videoProfilesObj, videoId);
       this.captureSession.addOutput(this.videoOutput);
       await this.captureSession.commitConfig();
       await this.captureSession.start();
       // 监听录像事件
       this.onVideoOutputChange();
-      this.videoOutput.on('frameStart', async () => {
-        Logger.info(TAG, 'frameStart start');
-        try {
-          await this.videoRecorder.start();
-          Logger.info(TAG, 'frameStart end');
-        } catch (err) {
-          Logger.error(TAG, `videoRecorder frameStart err: ${JSON.stringify(err)}`);
-        }
-      });
       await this.videoOutput.start();
+      await this.videoRecorder.start();
+      AppStorage.Set<boolean>('isRecorder', true);
       Logger.info(TAG, 'startVideo end');
     } catch (err) {
       Logger.error(TAG, `startVideo err: ${JSON.stringify(err)}`);
@@ -542,20 +591,21 @@ class CameraService {
   async stopVideo(): Promise<mediaLibrary.FileAsset> {
     try {
       Logger.info(TAG, 'stopVideo start');
+      if (this.videoOutput) {
+        await this.videoOutput.stop();
+      }
       if (this.videoRecorder) {
         await this.videoRecorder.stop();
         await this.videoRecorder.release();
       }
-      if (this.videoOutput) {
-        await this.videoOutput.stop();
-        await this.videoOutput.release();
-      }
+      AppStorage.Set<boolean>('isRecorder', false);
+      await this.videoOutput.release();
+      this.videoOutput = undefined;
+      Logger.info(TAG, 'stopVideo end');
       if (this.fileAsset) {
         await this.fileAsset.close(this.fd);
         return this.fileAsset;
       }
-      Logger.info(TAG, 'stopVideo end');
-      await this.videoOutput.stop();
       return undefined;
     } catch (err) {
       Logger.error(TAG, 'stopVideo err: ' + JSON.stringify(err));
@@ -650,25 +700,15 @@ class CameraService {
   createPhotoOutputFn(photoProfilesObj: camera.Profile, surfaceId: string): void {
     Logger.info(TAG, `createPhotoOutputFn photoProfiles: ${JSON.stringify(photoProfilesObj)}`);
     // 获取image 拍照 的surfaceId
-    try {
-      this.photoOutPut = this.cameraManager.createPhotoOutput(photoProfilesObj, (surfaceId));
-      ;
-      Logger.info(TAG, 'createPhotoOutputFn createPhotoOutput success');
-    } catch (error) {
-      Logger.error(TAG, `createPhotoOutputFn failed: ${JSON.stringify(error)}`);
-    }
+    this.photoOutPut = this.cameraManager.createPhotoOutput(photoProfilesObj, (surfaceId));
   }
 
   /**
    * 创建cameraInput输出对象
    */
   createCameraInputFn(cameraDevice: camera.CameraDevice): void {
-    try {
-      this.cameraInput = this.cameraManager.createCameraInput(cameraDevice);
-      Logger.info(TAG, `createCameraInput success : ${this.cameraInput}`);
-    } catch (error) {
-      Logger.error(TAG, `createCameraInput failed: ${JSON.stringify(error)}`);
-    }
+    Logger.info(TAG, 'createCameraInputFn is called.');
+    this.cameraInput = this.cameraManager.createCameraInput(cameraDevice);
   }
 
   /**
@@ -706,6 +746,7 @@ class CameraService {
       await this.captureSession.commitConfig();
       // 开始会话工作
       await this.captureSession.start();
+      this.isFocusMode(globalThis.settingDataObj.focusMode);
       Logger.info(TAG, 'sessionFlowFn success');
     } catch (err) {
       Logger.error(TAG, `sessionFlowFn fail : ${JSON.stringify(err)}`);
@@ -751,13 +792,13 @@ class CameraService {
    */
   onVideoOutputChange(): void {
     this.videoOutput.on('frameStart', () => {
-      Logger.error(TAG, 'onVideoOutputChange frame started');
+      Logger.info(TAG, 'onVideoOutputChange frame started');
     });
     this.videoOutput.on('frameEnd', () => {
-      Logger.error(TAG, 'onVideoOutputChange frame frameEnd');
+      Logger.info(TAG, 'onVideoOutputChange frame frameEnd');
     });
     this.videoOutput.on('error', (videoOutputError: { code: T }) => {
-      Logger.info(TAG, `onVideoOutputChange fail: ${JSON.stringify(videoOutputError)}`);
+      Logger.error(TAG, `onVideoOutputChange fail: ${JSON.stringify(videoOutputError)}`);
     });
   }
 

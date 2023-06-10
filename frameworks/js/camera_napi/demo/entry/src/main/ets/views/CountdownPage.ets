@@ -99,9 +99,8 @@ export struct CountdownPage {
         .borderRadius('45vp')
         .width('45vp')
         .height('680px')
-        .zIndex(999)
+        .zIndex(1)
       }
     }
-    .position({ x: 130, y: 30 })
   }
 }

@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-import hilog from '@ohos.hilog';
 import Ability from '@ohos.app.ability.UIAbility';
 import Window from '@ohos.window';
 import Logger from '../model/Logger';
@@ -46,7 +45,7 @@ export default class MainAbility extends Ability {
       }).then(() => {
       });
     })
-    this.onLoadContent(windowStage, 'pages/TableIndex');
+    this.onLoadContent(windowStage, 'pages/Index');
   }
 
   onLoadContent(windowStage, page): void {

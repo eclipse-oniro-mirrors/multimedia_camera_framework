@@ -27,6 +27,8 @@ export struct FocusAreaPage {
   @Link exposureBol: boolean;
   // 曝光值
   @Link exposureNum: number;
+  @Prop xComponentWidth: number;
+  @Prop xComponentHeight: number;
   // 对焦区域显示框定时器
   private areaTimer: number = -1;
   // 上下滑动曝光
@@ -37,9 +39,8 @@ export struct FocusAreaPage {
 
   build() {
     Row() {}
-    .width(370)
-    .height(450)
-    .offset({ x: 0, y: -50 })
+    .width(this.xComponentWidth)
+    .height(this.xComponentHeight)
     .opacity(1)
     .onTouch((e: TouchEvent) => {
       if (e.type === TouchType.Down) {
@@ -48,13 +49,13 @@ export struct FocusAreaPage {
         this.focusPointVal[1] = e.touches[0].screenY;
         // 焦点
         CameraService.isFocusPoint({
-          x: e.touches[0].screenX / 370,
-          y: e.touches[0].screenY / 550
+          x: e.touches[0].screenX / this.xComponentWidth,
+          y: e.touches[0].screenY / this.xComponentHeight
         });
         // 曝光区域
         CameraService.isMeteringPoint({
-          x: e.touches[0].screenX / 370,
-          y: e.touches[0].screenY / 600
+          x: e.touches[0].screenX / this.xComponentWidth,
+          y: e.touches[0].screenY / this.xComponentHeight + 50
         });
       }
       if (e.type === TouchType.Up) {

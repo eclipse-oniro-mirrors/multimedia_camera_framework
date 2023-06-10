@@ -1,3 +1,4 @@
+import prompt from '@ohos.prompt';
 /*
  * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,6 +60,7 @@ export struct SettingItem {
         let ind = this.itemData.indexOf('*');
         globalThis.photoResolutionWidth = Number(this.itemData.substring(0, ind));
         globalThis.photoResolutionHeight = Number(this.itemData.substring(ind + 1));
+        AppStorage.Set<number>('defaultAspectRatio', globalThis.photoResolutionWidth/globalThis.photoResolutionHeight);
         break;
       case 10:
       // 视频分辨率
@@ -68,8 +70,16 @@ export struct SettingItem {
         globalThis.videoResolutionHeight = Number(this.itemData.substring(index + 1));
         break;
       case 11:
-        globalThis.settingDataObj.videoFrame = this.index;
-        globalThis.videoFrame = this.itemData;
+        let isSupported = CameraService.isVideoFrameSupportedFn(Number(this.itemData));
+        if (isSupported) {
+          globalThis.settingDataObj.videoFrame = this.index;
+          globalThis.videoFrame = this.itemData;
+        }
+        prompt.showToast({
+          message: isSupported ? '支持此模式' : '不支持此模式',
+          duration: 2000,
+          bottom: '50%'
+        });
         break;
     }
   }

@@ -26,7 +26,7 @@ export struct SettingDialog {
   @Prop cameraDeviceIndex: number;
   @Link referenceLineBol: boolean;
   // 点击的某一个设置的索引
-  @State @Watch('resetSession') leftSliderIndex: number = 1;
+  @State leftSliderIndex: number = 1;
 
   /**
    * 镜像持久化，再次进入，确定开关是否开启
@@ -50,11 +50,6 @@ export struct SettingDialog {
     this.referenceLineBol = bol;
   }
 
-  async resetSession(): Promise<void> {
-    await CameraService.releaseCamera();
-    await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
-  }
-
   build() {
     Column() {
       Flex({ justifyContent: FlexAlign.SpaceBetween }) {
@@ -63,10 +58,9 @@ export struct SettingDialog {
           direction: FlexDirection.Column,
           alignItems: ItemAlign.Center
         }) {
-          Row() {
+          Row({space: 24}) {
             Image($r('app.media.ic_public_back'))
               .size({width: 24, height: 24})
-              .position({x: '0', y: '0'})
               .zIndex(1)
               .onClick(() => {
                 Logger.info(TAG, 'back onClick');
@@ -77,12 +71,11 @@ export struct SettingDialog {
               .fontWeight(700)
               .textAlign(TextAlign.Start)
               .width('96%')
-              .margin({left: 40})
               .onClick(() => {
                 this.controller.close();
               })
           }
-          .margin({ top: '150px', bottom: '25px', left: '30px' })
+          .margin({ top: '24vp', bottom: '24vp', left: '24vp'})
 
           Column() {
             SettingPublicLayout({
