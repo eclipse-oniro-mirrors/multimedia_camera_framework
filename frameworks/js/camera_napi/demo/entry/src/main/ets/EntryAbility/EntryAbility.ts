@@ -13,14 +13,16 @@
  * limitations under the License.
  */
 
-import UIAbility from '@ohos.app.ability.UIAbility';
+import Ability from '@ohos.app.ability.UIAbility';
 import window from '@ohos.window';
+import deviceInfo from '@ohos.deviceInfo';
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 import Logger from '../model/Logger';
+import { Constants } from '../common/Constants';
 
 const TAG: string = 'EntryAbility';
 
-export default class EntryAbility extends UIAbility {
+export default class EntryAbility extends Ability {
 
   onCreate(want, launchParam): void {
     Logger.info(TAG, 'Ability onCreate');
@@ -37,7 +39,22 @@ export default class EntryAbility extends UIAbility {
     // Main window is created, set main page for this ability
     Logger.info(TAG, 'Ability onWindowStageCreate');
     this.requestPermissionsFn();
-    windowStage.loadContent('pages/TableIndex', (err, data) => {
+    AppStorage.SetOrCreate<string>('deviceType', deviceInfo.deviceType);
+    if (deviceInfo.deviceType === Constants.TABLET) {
+      windowStage.getMainWindow().then((win) => {
+        win.setLayoutFullScreen(true).then(() => {
+          win.setSystemBarEnable(['navigation']).then(() => {
+          });
+        });
+        win.setSystemBarProperties({
+          navigationBarColor: '#00000000',
+          navigationBarContentColor: '#B3B3B3'
+        }).then(() => {
+        });
+      })
+    }
+
+    windowStage.loadContent('pages/Index', (err, data) => {
       if (err.code) {
         Logger.error(TAG, `Failed to load the content. Cause: ${JSON.stringify(err)}`);
         return;

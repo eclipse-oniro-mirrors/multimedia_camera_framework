@@ -219,7 +219,7 @@ export default class MediaUtils {
       case mediaLibrary.MediaType.VIDEO:
         result.prefix = 'VID_';
         result.suffix = '.mp4';
-        result.directory = mediaLibrary.DirectoryType.DIR_CAMERA;
+        result.directory = mediaLibrary.DirectoryType.DIR_VIDEO;
         break;
       case mediaLibrary.MediaType.AUDIO:
         result.prefix = 'AUD_';

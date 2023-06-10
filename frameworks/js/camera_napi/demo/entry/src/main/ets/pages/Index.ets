@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+import display from '@ohos.display';
 import Logger from '../model/Logger';
 import { SettingDialog } from '../Dialog/SettingDialog';
 import CameraService from '../model/CameraService';
@@ -23,7 +24,8 @@ import { SlidePage } from '../views/SlidePage';
 import { DividerPage } from '../views/DividerPage';
 import { FocusAreaPage } from '../views/FocusAreaPage';
 import { ModeSwitchPage } from '../views/ModeSwitchPage';
-import display from '@ohos.display';
+import { Constants } from '../common/Constants';
+import DisplayCalculator from '../common/DisplayCalculator';
 
 const TAG: string = 'indexPage';
 
@@ -38,7 +40,7 @@ globalThis.settingDataObj = {
   photoOrientation: 0, // 照片方向 -> 0
   photoResolution: 0, // 照片分辨率 -> 1920 * 1080
   videoResolution: 0, // 照片分辨率 -> 1920 * 1080
-  videoFrame: 0, // 录像帧率 -> 15
+  videoFrame: 1, // 录像帧率 -> 30
   referenceLineBol: false // 分割线 -> 关闭
 };
 
@@ -66,6 +68,7 @@ struct Index {
   @State cameraDeviceIndex: number = 0;
   @State xComponentWidth: number = 384;
   @State xComponentHeight: number = 450;
+  private deviceType: string;
   private screenHeight: number;
   private screenWidth: number;
   // 设置弹框
@@ -80,15 +83,23 @@ struct Index {
   });
   // 参考线
   @State referenceLineBol: boolean = false;
-
-  private defaultAspectRatio = 3/4;
+  @StorageLink('defaultAspectRatio') @Watch('initXComponentSize') defaultAspectRatio: number = Constants.ASPECT_RATIO_4_3;
 
   aboutToAppear(): void {
     let mDisplay = display.getDefaultDisplaySync();
     this.screenWidth = px2vp(mDisplay.width);
-    this.xComponentWidth = this.screenWidth;
     this.screenHeight = px2vp(mDisplay.height);
-    this.xComponentHeight = this.xComponentWidth * (1 / this.defaultAspectRatio);
+    this.deviceType = AppStorage.Get<string>('deviceType');
+    if (this.deviceType === Constants.TABLET) {
+      this.defaultAspectRatio = Constants.ASPECT_RATIO_16_9;
+    }
+    this.initXComponentSize();
+  }
+
+  initXComponentSize(): void {
+    let defaultSize = DisplayCalculator.calcSurfaceDisplaySize(this.screenWidth, this.screenHeight, this.defaultAspectRatio);
+    this.xComponentWidth = defaultSize.width;
+    this.xComponentHeight = defaultSize.height;
   }
 
   async aboutToDisAppear(): Promise<void> {
@@ -128,37 +139,49 @@ struct Index {
           width: this.xComponentWidth.toString(),
           height: this.xComponentHeight.toString()
         })
-        .margin({ top: '-50vp' })
 
       // 参考线
       DividerPage({
         referenceLineBol: this.referenceLineBol
       })
-      // 设置图标
-      Button() {
-        Image($r('app.media.icon_camera_setting'))
-          .size({
-            width: '35vp',
-            height: '35vp'
-          })
+
+      Row({ space: 24 }) {
+        // 设置图标
+        Button() {
+          Image($r('app.media.icon_camera_setting'))
+            .size({
+              width: '35vp',
+              height: '35vp'
+            })
+        }
+        .size({
+          width: '45vp',
+          height: '45vp'
+        })
+        .borderRadius('45vp')
+        .width('45vp')
+        .height('45vp')
+        .backgroundColor('rgba(255,255,255,0.20)')
+        .onClick(() => {
+          AppStorage.SetOrCreate<boolean>('flashingBol', true);
+          AppStorage.SetOrCreate<boolean>('countdownBol', true);
+          this.countdownNum = 0;
+          // 打开设置弹框
+          this.settingDialogController.open();
+        })
+        // 倒计时
+        CountdownPage({
+          countdownNum: $countdownNum
+        })
+        // 闪光灯
+        FlashingLightPage()
       }
-      .size({
-        width: '45vp',
-        height: '45vp'
-      })
-      .backgroundColor('rgba(255,255,255,0.20)')
-      .borderRadius('50px')
-      .position({
-        x: 30,
-        y: 30
-      })
-      .onClick(() => {
-        AppStorage.SetOrCreate<boolean>('flashingBol', true);
-        AppStorage.SetOrCreate<boolean>('countdownBol', true);
-        this.countdownNum = 0;
-        // 打开设置弹框
-        this.settingDialogController.open();
-      })
+      .margin({left: 24})
+      .alignItems(VerticalAlign.Top)
+      .justifyContent(FlexAlign.Start)
+      .width('100%')
+      .height('100%')
+
       // 曝光框和对焦框
       FocusPage({
         focusPointBol: $focusPointBol,
@@ -166,21 +189,20 @@ struct Index {
         exposureBol: $exposureBol,
         exposureNum: $exposureNum
       })
+
       // 曝光对焦手指点击区域
       FocusAreaPage({
         focusPointBol: $focusPointBol,
         focusPointVal: $focusPointVal,
         exposureBol: $exposureBol,
-        exposureNum: $exposureNum
+        exposureNum: $exposureNum,
+        xComponentWidth: this.xComponentWidth,
+        xComponentHeight: this.xComponentHeight
       })
-      // 倒计时
-      CountdownPage({
-        countdownNum: $countdownNum
-      })
-      // 闪光灯
-      FlashingLightPage()
+
       // slide
       SlidePage()
+
       // 反转摄像头_多机位_拍照_摄像
       ModeSwitchPage({
         surfaceId: this.surfaceId,

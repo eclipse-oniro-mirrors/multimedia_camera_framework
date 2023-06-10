@@ -94,10 +94,9 @@ export struct FlashingLightPage {
         .backgroundColor('#FFFFFF')
         .borderRadius('45vp')
         .width('45vp')
-        .height('600px')
-        .zIndex(999)
+        .height('680px')
+        .zIndex(1)
       }
     }
-    .position({ x: 200, y: 30 })
   }
 }
