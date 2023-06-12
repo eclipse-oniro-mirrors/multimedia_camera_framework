@@ -1,7 +1,7 @@
 export class Constants {
-  // aspect ratio: width/geight
-  static readonly ASPECT_RATIO_4_3 = 4/3;
-  static readonly ASPECT_RATIO_16_9 = 16/9;
+  // aspect ratio: width/height
+  static readonly MIN_ASPECT_RATIO = 4 / 3;
+  static readonly MAX_ASPECT_RATIO = 16 / 9;
 
   static readonly VIDEO_MAX_WIDTH = 1920;
 

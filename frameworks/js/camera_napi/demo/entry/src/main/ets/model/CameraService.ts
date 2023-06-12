@@ -270,7 +270,7 @@ class CameraService {
       videoProfile.format === this.videoProfilesObj.format &&
       videoProfile.frameRateRange.min === videoFrame &&
       videoProfile.frameRateRange.max === videoFrame;
-    })
+    });
     if (res === undefined) {
       res = false;
     }
