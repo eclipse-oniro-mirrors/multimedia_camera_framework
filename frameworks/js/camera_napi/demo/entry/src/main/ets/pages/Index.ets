@@ -83,7 +83,7 @@ struct Index {
   });
   // 参考线
   @State referenceLineBol: boolean = false;
-  @StorageLink('defaultAspectRatio') @Watch('initXComponentSize') defaultAspectRatio: number = Constants.ASPECT_RATIO_4_3;
+  @StorageLink('defaultAspectRatio') @Watch('initXComponentSize') defaultAspectRatio: number = Constants.MIN_ASPECT_RATIO;
   @StorageLink('isShow') isShow: boolean = false;
 
   aboutToAppear(): void {
@@ -92,7 +92,7 @@ struct Index {
     this.screenHeight = px2vp(mDisplay.height);
     this.deviceType = AppStorage.Get<string>('deviceType');
     if (this.deviceType === Constants.TABLET) {
-      this.defaultAspectRatio = Constants.ASPECT_RATIO_16_9;
+      this.defaultAspectRatio = Constants.MAX_ASPECT_RATIO;
     }
     this.initXComponentSize();
   }
