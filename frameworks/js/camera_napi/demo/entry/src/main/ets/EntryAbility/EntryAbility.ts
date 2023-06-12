@@ -41,20 +41,20 @@ export default class EntryAbility extends Ability {
     this.requestPermissionsFn();
     AppStorage.SetOrCreate<string>('deviceType', deviceInfo.deviceType);
     if (deviceInfo.deviceType === Constants.TABLET) {
-      windowStage.getMainWindow().then((win) => {
-        win.setLayoutFullScreen(true).then(() => {
-          win.setSystemBarEnable(['navigation']).then(() => {
+      windowStage.getMainWindow().then((win: window.Window): void => {
+        win.setLayoutFullScreen(true).then((): void => {
+          win.setSystemBarEnable(['navigation']).then((): void => {
           });
         });
         win.setSystemBarProperties({
           navigationBarColor: '#00000000',
           navigationBarContentColor: '#B3B3B3'
-        }).then(() => {
+        }).then((): void => {
         });
-      })
+      });
     }
 
-    windowStage.loadContent('pages/Index', (err, data) => {
+    windowStage.loadContent('pages/Index', (err, data): void => {
       if (err.code) {
         Logger.error(TAG, `Failed to load the content. Cause: ${JSON.stringify(err)}`);
         return;
@@ -73,9 +73,10 @@ export default class EntryAbility extends Ability {
       'ohos.permission.MICROPHONE',
       'ohos.permission.READ_MEDIA',
       'ohos.permission.WRITE_MEDIA'
-    ]).then(() => {
+    ]).then((): void => {
+      AppStorage.SetOrCreate('isShow', true);
       Logger.info(TAG, 'request Permissions success!');
-    }).catch((error) => {
+    }).catch((error: {code: number}): void => {
       Logger.info(TAG, `requestPermissionsFromUser call Failed! error: ${error.code}`);
     });
   }

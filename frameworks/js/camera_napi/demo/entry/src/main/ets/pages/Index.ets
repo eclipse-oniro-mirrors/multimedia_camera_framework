@@ -84,6 +84,7 @@ struct Index {
   // 参考线
   @State referenceLineBol: boolean = false;
   @StorageLink('defaultAspectRatio') @Watch('initXComponentSize') defaultAspectRatio: number = Constants.ASPECT_RATIO_4_3;
+  @StorageLink('isShow') isShow: boolean = false;
 
   aboutToAppear(): void {
     let mDisplay = display.getDefaultDisplaySync();
@@ -120,95 +121,97 @@ struct Index {
 
   build() {
     Stack() {
-      // 画面
-      XComponent({
-        id: 'componentId',
-        type: 'surface',
-        controller: this.mXComponentController
-      })
-        .onLoad(async () => {
-          Logger.info(TAG, 'onLoad is called');
-          this.surfaceId = this.mXComponentController.getXComponentSurfaceId();
-          Logger.info(TAG, `onLoad surfaceId: ${this.surfaceId}`);
-          await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
-          globalThis.surfaceId = this.surfaceId;
-          globalThis.cameraDeviceIndex = this.cameraDeviceIndex;
+      if (this.isShow) {
+        // 画面
+        XComponent({
+          id: 'componentId',
+          type: 'surface',
+          controller: this.mXComponentController
         })
-        .backgroundColor(Color.Blue)
-        .size({
-          width: this.xComponentWidth.toString(),
-          height: this.xComponentHeight.toString()
+          .onLoad(async () => {
+            Logger.info(TAG, 'onLoad is called');
+            this.surfaceId = this.mXComponentController.getXComponentSurfaceId();
+            Logger.info(TAG, `onLoad surfaceId: ${this.surfaceId}`);
+            await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
+            globalThis.surfaceId = this.surfaceId;
+            globalThis.cameraDeviceIndex = this.cameraDeviceIndex;
+          })
+          .backgroundColor(Color.Blue)
+          .size({
+            width: this.xComponentWidth.toString(),
+            height: this.xComponentHeight.toString()
+          })
+
+        // 参考线
+        DividerPage({
+          referenceLineBol: this.referenceLineBol
         })
 
-      // 参考线
-      DividerPage({
-        referenceLineBol: this.referenceLineBol
-      })
-
-      Row({ space: 24 }) {
-        // 设置图标
-        Button() {
-          Image($r('app.media.icon_camera_setting'))
-            .size({
-              width: '35vp',
-              height: '35vp'
-            })
+        Row({ space: 24 }) {
+          // 设置图标
+          Button() {
+            Image($r('app.media.icon_camera_setting'))
+              .size({
+                width: '35vp',
+                height: '35vp'
+              })
+          }
+          .size({
+            width: '45vp',
+            height: '45vp'
+          })
+          .borderRadius('45vp')
+          .width('45vp')
+          .height('45vp')
+          .backgroundColor('rgba(255,255,255,0.20)')
+          .onClick(() => {
+            AppStorage.SetOrCreate<boolean>('flashingBol', true);
+            AppStorage.SetOrCreate<boolean>('countdownBol', true);
+            this.countdownNum = 0;
+            // 打开设置弹框
+            this.settingDialogController.open();
+          })
+          // 倒计时
+          CountdownPage({
+            countdownNum: $countdownNum
+          })
+          // 闪光灯
+          FlashingLightPage()
         }
-        .size({
-          width: '45vp',
-          height: '45vp'
+        .margin({left: 24})
+        .alignItems(VerticalAlign.Top)
+        .justifyContent(FlexAlign.Start)
+        .width('100%')
+        .height('100%')
+
+        // 曝光框和对焦框
+        FocusPage({
+          focusPointBol: $focusPointBol,
+          focusPointVal: $focusPointVal,
+          exposureBol: $exposureBol,
+          exposureNum: $exposureNum
         })
-        .borderRadius('45vp')
-        .width('45vp')
-        .height('45vp')
-        .backgroundColor('rgba(255,255,255,0.20)')
-        .onClick(() => {
-          AppStorage.SetOrCreate<boolean>('flashingBol', true);
-          AppStorage.SetOrCreate<boolean>('countdownBol', true);
-          this.countdownNum = 0;
-          // 打开设置弹框
-          this.settingDialogController.open();
+
+        // 曝光对焦手指点击区域
+        FocusAreaPage({
+          focusPointBol: $focusPointBol,
+          focusPointVal: $focusPointVal,
+          exposureBol: $exposureBol,
+          exposureNum: $exposureNum,
+          xComponentWidth: this.xComponentWidth,
+          xComponentHeight: this.xComponentHeight
         })
-        // 倒计时
-        CountdownPage({
+
+        // slide
+        SlidePage()
+
+        // 反转摄像头_多机位_拍照_摄像
+        ModeSwitchPage({
+          surfaceId: this.surfaceId,
+          cameraDeviceIndex: $cameraDeviceIndex,
           countdownNum: $countdownNum
         })
-        // 闪光灯
-        FlashingLightPage()
       }
-      .margin({left: 24})
-      .alignItems(VerticalAlign.Top)
-      .justifyContent(FlexAlign.Start)
-      .width('100%')
-      .height('100%')
-
-      // 曝光框和对焦框
-      FocusPage({
-        focusPointBol: $focusPointBol,
-        focusPointVal: $focusPointVal,
-        exposureBol: $exposureBol,
-        exposureNum: $exposureNum
-      })
-
-      // 曝光对焦手指点击区域
-      FocusAreaPage({
-        focusPointBol: $focusPointBol,
-        focusPointVal: $focusPointVal,
-        exposureBol: $exposureBol,
-        exposureNum: $exposureNum,
-        xComponentWidth: this.xComponentWidth,
-        xComponentHeight: this.xComponentHeight
-      })
-
-      // slide
-      SlidePage()
-
-      // 反转摄像头_多机位_拍照_摄像
-      ModeSwitchPage({
-        surfaceId: this.surfaceId,
-        cameraDeviceIndex: $cameraDeviceIndex,
-        countdownNum: $countdownNum
-      })
     }
     .size({ width: '100%', height: '100%' })
     .backgroundColor(Color.Black)

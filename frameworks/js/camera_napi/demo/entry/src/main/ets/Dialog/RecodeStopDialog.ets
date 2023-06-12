@@ -69,11 +69,11 @@ export struct RecodeStopDialog {
           this.isModeBol = true;
           // 停止录制
           CameraService.stopVideo()
-          .then(() => {
+          .then((): void => {
             Logger.error(TAG, 'stopVideo success');
             this.videoRecodeTime = 0;
           })
-          .catch((err) => {
+          .catch((err): void => {
             Logger.error(TAG, `stopVideo err: ${JSON.stringify(err)}`);
           })
           this.controller.close();
