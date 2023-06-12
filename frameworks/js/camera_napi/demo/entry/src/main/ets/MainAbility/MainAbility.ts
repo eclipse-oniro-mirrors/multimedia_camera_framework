@@ -34,22 +34,22 @@ export default class MainAbility extends Ability {
   onWindowStageCreate(windowStage: Window.WindowStage): void {
     // Main window is created, set main page for this ability
     Logger.info(TAG, 'Ability onWindowStageCreate');
-    windowStage.getMainWindow().then((win) => {
-      win.setLayoutFullScreen(true).then(() => {
-        win.setSystemBarEnable(['navigation']).then(() => {
+    windowStage.getMainWindow().then((win: Window.Window): void => {
+      win.setLayoutFullScreen(true).then((): void => {
+        win.setSystemBarEnable(['navigation']).then((): void => {
         });
       });
       win.setSystemBarProperties({
         navigationBarColor: '#00000000',
         navigationBarContentColor: '#B3B3B3'
-      }).then(() => {
+      }).then((): void => {
       });
     })
     this.onLoadContent(windowStage, 'pages/Index');
   }
 
   onLoadContent(windowStage, page): void {
-    windowStage.loadContent(page, (err) => {
+    windowStage.loadContent(page, (err): void => {
       if (err.code) {
         Logger.error(TAG, 'onLoadContent Failed to load the content. Cause: %{public}s' + JSON.stringify(err) ?? '');
         return;

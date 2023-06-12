@@ -85,10 +85,10 @@ export struct SettingItem {
   }
 
   async resetSession(): Promise<void> {
-    await CameraService.releaseCamera().then(() => {
+    await CameraService.releaseCamera().then((): void => {
       Logger.debug(TAG, 'releaseCamera success');
     });
-    await CameraService.initCamera(globalThis.surfaceId, globalThis.cameraDeviceIndex).then(() => {
+    await CameraService.initCamera(globalThis.surfaceId, globalThis.cameraDeviceIndex).then((): void => {
       Logger.debug(TAG, 'initCamera success');
     });
   }

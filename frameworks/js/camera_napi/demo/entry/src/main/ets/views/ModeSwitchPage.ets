@@ -80,7 +80,7 @@ export struct ModeSwitchPage {
    * 恢复视频录制
    */
   resumeVideo(): void {
-    CameraService.resumeVideo().then(() => {
+    CameraService.resumeVideo().then((): void => {
       this.timer = setInterval(() => {
         this.videoRecodeTime += 1000;
       }, 1000)
@@ -145,7 +145,7 @@ export struct ModeSwitchPage {
         clearInterval(this.timer);
       }
       // 开始录制
-      CameraService.startVideo().then(() => {
+      CameraService.startVideo().then((): void => {
         // 计时器
         this.timer = setInterval(() => {
           this.videoRecodeTime += 1000;
@@ -335,7 +335,7 @@ export struct ModeSwitchPage {
                   // 弹框无法响应
                   // CameraService.pauseVideo();
                   // 停止录制
-                  CameraService.stopVideo().then(async (fileAsset) => {
+                  CameraService.stopVideo().then(async (fileAsset): Promise<void> => {
                     this.videoRecodeTime = 0;
                     this.isModeBol = true;
                     try {

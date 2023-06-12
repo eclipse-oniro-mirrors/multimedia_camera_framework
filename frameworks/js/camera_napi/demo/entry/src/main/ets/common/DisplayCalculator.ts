@@ -16,7 +16,10 @@
 import { Constants } from '../common/Constants';
 
 export default class DisplayCalculator {
-  public static calcSurfaceDisplaySize(screenWidth: number, screenHeight: number, defaultAspectRatio: number) {
+  public static calcSurfaceDisplaySize(screenWidth: number, screenHeight: number, defaultAspectRatio: number): {
+    width: number,
+    height: number
+  } {
     const displaySize = {
       width: 1920, height: 1080
     };
@@ -37,6 +40,6 @@ export default class DisplayCalculator {
         displaySize.height = Math.floor(screenWidth * defaultAspectRatio);
       }
     }
-    return displaySize
+    return displaySize;
   }
 }
