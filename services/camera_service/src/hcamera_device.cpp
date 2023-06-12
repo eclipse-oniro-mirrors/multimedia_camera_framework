@@ -471,7 +471,7 @@ int32_t HCameraDevice::OnError(const ErrorType type, const int32_t errorMsg)
 
 int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint8_t>& result)
 {
-    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = nullptr;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
 
     std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
