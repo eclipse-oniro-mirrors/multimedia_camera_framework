@@ -716,7 +716,8 @@ void CameraManager::ChooseDeFaultCameras(std::vector<sptr<CameraDevice>>& suppor
     for (auto& camera : supportedCameras) {
         bool hasDefaultCamera = false;
         for (auto& defaultCamera : cameraObjList) {
-            if ((defaultCamera->GetPosition() == camera->GetPosition()) &&
+            if ((camera->GetConnectionType() != CAMERA_CONNECTION_USB_PLUGIN) &&
+                (defaultCamera->GetPosition() == camera->GetPosition()) &&
                 (defaultCamera->GetConnectionType() == camera->GetConnectionType())) {
                 hasDefaultCamera = true;
                 MEDIA_INFO_LOG("ChooseDeFaultCameras alreadly has default camera");
