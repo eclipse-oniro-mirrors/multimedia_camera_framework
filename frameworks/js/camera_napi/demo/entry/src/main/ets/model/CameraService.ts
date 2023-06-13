@@ -15,7 +15,6 @@
  */
 
 import camera from '@ohos.multimedia.camera';
-import deviceInfo from '@ohos.deviceInfo';
 import fileio from '@ohos.fileio';
 import image from '@ohos.multimedia.image';
 import media from '@ohos.multimedia.media';
@@ -183,12 +182,6 @@ class CameraService {
    */
   async initCamera(surfaceId: string, cameraDeviceIndex: number): Promise<void> {
     try {
-      // 判断设备类型
-      if (deviceInfo.deviceType === 'default') {
-        this.videoConfig.videoSourceType = 1;
-      } else {
-        this.videoConfig.videoSourceType = 0;
-      }
       // 获取传入摄像头
       Logger.debug(TAG, `initCamera cameraDeviceIndex: ${cameraDeviceIndex}`);
       await this.releaseCamera();

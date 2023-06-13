@@ -14,16 +14,18 @@
  */
 
 import Ability from '@ohos.app.ability.UIAbility';
+import Want from '@ohos.app.ability.Want';
+import AbilityConstant from '@ohos.app.ability.AbilityConstant';
 import Window from '@ohos.window';
 import Logger from '../model/Logger';
 
 const TAG: string = 'MainAbility';
 
 export default class MainAbility extends Ability {
-  onCreate(want, launchParam): void {
+  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     Logger.info(TAG, 'Ability onCreate');
-    Logger.info(TAG, 'want param:' + JSON.stringify(want) ?? '');
-    Logger.info(TAG, 'launchParam:' + JSON.stringify(launchParam) ?? '');
+    Logger.debug(TAG, `want param: ${JSON.stringify(want)}`);
+    Logger.debug(TAG, `launchParam: ${JSON.stringify(launchParam)}`);
     globalThis.abilityContext = this.context;
   }
 
@@ -48,10 +50,10 @@ export default class MainAbility extends Ability {
     this.onLoadContent(windowStage, 'pages/Index');
   }
 
-  onLoadContent(windowStage, page): void {
+  onLoadContent(windowStage: Window.WindowStage, page: string): void {
     windowStage.loadContent(page, (err): void => {
-      if (err.code) {
-        Logger.error(TAG, 'onLoadContent Failed to load the content. Cause: %{public}s' + JSON.stringify(err) ?? '');
+      if (err) {
+        Logger.error(TAG, `onLoadContent Failed to load the content. Cause: ${JSON.stringify(err)}`);
         return;
       }
     });
