@@ -17,6 +17,8 @@ import Ability from '@ohos.app.ability.UIAbility';
 import window from '@ohos.window';
 import deviceInfo from '@ohos.deviceInfo';
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
+import Want from '@ohos.app.ability.Want';
+import AbilityConstant from '@ohos.app.ability.AbilityConstant';
 import Logger from '../model/Logger';
 import { Constants } from '../common/Constants';
 
@@ -24,10 +26,10 @@ const TAG: string = 'EntryAbility';
 
 export default class EntryAbility extends Ability {
 
-  onCreate(want, launchParam): void {
+  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     Logger.info(TAG, 'Ability onCreate');
-    Logger.info(TAG, 'want param:' + JSON.stringify(want) ?? '');
-    Logger.info(TAG, 'launchParam:' + JSON.stringify(launchParam) ?? '');
+    Logger.debug(TAG, `want param: ${JSON.stringify(want)}`);
+    Logger.debug(TAG, `launchParam: ${JSON.stringify(launchParam)}`);
     globalThis.abilityContext = this.context;
   }
 
@@ -55,7 +57,7 @@ export default class EntryAbility extends Ability {
     }
 
     windowStage.loadContent('pages/Index', (err, data): void => {
-      if (err.code) {
+      if (err) {
         Logger.error(TAG, `Failed to load the content. Cause: ${JSON.stringify(err)}`);
         return;
       }
@@ -74,7 +76,7 @@ export default class EntryAbility extends Ability {
       'ohos.permission.READ_MEDIA',
       'ohos.permission.WRITE_MEDIA'
     ]).then((): void => {
-      AppStorage.SetOrCreate('isShow', true);
+      AppStorage.SetOrCreate<boolean>('isShow', true);
       Logger.info(TAG, 'request Permissions success!');
     }).catch((error: {code: number}): void => {
       Logger.info(TAG, `requestPermissionsFromUser call Failed! error: ${error.code}`);
