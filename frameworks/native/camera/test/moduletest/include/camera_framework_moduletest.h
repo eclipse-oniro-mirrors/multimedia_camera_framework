@@ -76,6 +76,7 @@ public:
     sptr<CaptureOutput> CreateVideoOutput();
     sptr<CaptureOutput> CreatePhotoOutput(Profile profile);
     void GetSupportedOutputCapability();
+    void ReleaseInput();
 
     void SetCameraParameters(sptr<CaptureSession> &session, bool video);
     void TestCallbacksSession(sptr<CaptureOutput> photoOutput,

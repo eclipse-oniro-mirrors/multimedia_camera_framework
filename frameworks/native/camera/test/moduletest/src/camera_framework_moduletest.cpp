@@ -59,6 +59,7 @@ namespace {
     const int32_t WAIT_TIME_AFTER_CAPTURE = 1;
     const int32_t WAIT_TIME_AFTER_START = 2;
     const int32_t WAIT_TIME_BEFORE_STOP = 1;
+    const int32_t CAMERA_NUMBER = 2;
 
     bool g_camInputOnError = false;
     bool g_sessionclosed = false;
@@ -308,7 +309,7 @@ void CameraFrameworkModuleTest::GetSupportedOutputCapability()
 {
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     std::vector<sptr<CameraDevice>> cameraObjList = camManagerObj->GetSupportedCameras();
-    ASSERT_GE(cameraObjList.size(), 2);
+    ASSERT_GE(cameraObjList.size(), CAMERA_NUMBER);
     sptr<CameraOutputCapability> outputcapability =  camManagerObj->GetSupportedOutputCapability(cameraObjList[1]);
     previewProfiles = outputcapability->GetPreviewProfiles();
     ASSERT_TRUE(!previewProfiles.empty());
@@ -317,6 +318,15 @@ void CameraFrameworkModuleTest::GetSupportedOutputCapability()
     videoProfiles = outputcapability->GetVideoProfiles();
     ASSERT_TRUE(!videoProfiles.empty());
 }
+
+void CameraFrameworkModuleTest::ReleaseInput()
+{
+    if (input_) {
+        sptr<CameraInput> camInput = (sptr<CameraInput> &)input_;
+        camInput->Close();
+        input_->Release();
+    }
+} 
 
 void CameraFrameworkModuleTest::SetCameraParameters(sptr<CaptureSession> &session, bool video)
 {
@@ -1877,11 +1887,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_039, TestSize.Le
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_040, TestSize.Level0)
 {
-    if (input_) {
-        sptr<CameraInput> camInput = (sptr<CameraInput> &)input_;
-        camInput->Close();
-        input_->Release();
-    }
+    ReleaseInput();
     std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
     photoSetting->SetMirror(true);
 
