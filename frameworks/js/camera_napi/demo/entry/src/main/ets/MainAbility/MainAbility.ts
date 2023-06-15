@@ -14,9 +14,9 @@
  */
 
 import Ability from '@ohos.app.ability.UIAbility';
-import Want from '@ohos.app.ability.Want';
-import AbilityConstant from '@ohos.app.ability.AbilityConstant';
-import Window from '@ohos.window';
+import type Want from '@ohos.app.ability.Want';
+import type AbilityConstant from '@ohos.app.ability.AbilityConstant';
+import type Window from '@ohos.window';
 import Logger from '../model/Logger';
 
 const TAG: string = 'MainAbility';

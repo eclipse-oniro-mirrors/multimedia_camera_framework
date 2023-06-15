@@ -14,11 +14,11 @@
  */
 
 import Ability from '@ohos.app.ability.UIAbility';
-import window from '@ohos.window';
+import type window from '@ohos.window';
 import deviceInfo from '@ohos.deviceInfo';
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
-import Want from '@ohos.app.ability.Want';
-import AbilityConstant from '@ohos.app.ability.AbilityConstant';
+import type Want from '@ohos.app.ability.Want';
+import type AbilityConstant from '@ohos.app.ability.AbilityConstant';
 import Logger from '../model/Logger';
 import { Constants } from '../common/Constants';
 
