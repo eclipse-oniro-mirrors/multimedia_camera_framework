@@ -317,6 +317,7 @@ void CameraFrameworkModuleTest::GetSupportedOutputCapability()
     ASSERT_TRUE(!photoProfiles.empty());
     videoProfiles = outputcapability->GetVideoProfiles();
     ASSERT_TRUE(!videoProfiles.empty());
+    return;
 }
 
 void CameraFrameworkModuleTest::ReleaseInput()
@@ -326,7 +327,8 @@ void CameraFrameworkModuleTest::ReleaseInput()
         camInput->Close();
         input_->Release();
     }
-} 
+    return;
+}
 
 void CameraFrameworkModuleTest::SetCameraParameters(sptr<CaptureSession> &session, bool video)
 {
