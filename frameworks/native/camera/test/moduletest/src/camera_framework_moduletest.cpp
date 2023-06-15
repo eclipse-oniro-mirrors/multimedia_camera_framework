@@ -503,7 +503,8 @@ bool CameraFrameworkModuleTest::IsSupportNow()
 {
     const char *deviveTypeString = GetDeviceType();
     std::string deviveType = std::string(deviveTypeString);
-    if (deviveType.compare("default") == 0) {
+    if (deviveType.compare("default") == 0 ||
+        (cameras_[0] != nullptr && cameras_[0]->GetConnectionType() == CAMERA_CONNECTION_USB_PLUGIN)) {
         return false;
     }
     return true;
