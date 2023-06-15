@@ -59,6 +59,7 @@ namespace {
     const int32_t WAIT_TIME_AFTER_CAPTURE = 1;
     const int32_t WAIT_TIME_AFTER_START = 2;
     const int32_t WAIT_TIME_BEFORE_STOP = 1;
+    const int32_t CAMERA_NUMBER = 2;
 
     bool g_camInputOnError = false;
     bool g_sessionclosed = false;
@@ -292,6 +293,43 @@ sptr<CaptureOutput> CameraFrameworkModuleTest::CreateVideoOutput()
     return videoOutput;
 }
 
+sptr<CaptureOutput> CameraFrameworkModuleTest::CreatePhotoOutput(Profile profile)
+{
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    Size photoSize;
+    photoSize.width = profile.GetSize().width;
+    photoSize.height = profile.GetSize().height;
+    sptr<CaptureOutput> photoOutput = nullptr;
+    sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
+    photoOutput = manager_->CreatePhotoOutput(profile, surfaceProducer);
+    return photoOutput;
+}
+
+void CameraFrameworkModuleTest::GetSupportedOutputCapability()
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    std::vector<sptr<CameraDevice>> cameraObjList = camManagerObj->GetSupportedCameras();
+    ASSERT_GE(cameraObjList.size(), CAMERA_NUMBER);
+    sptr<CameraOutputCapability> outputcapability =  camManagerObj->GetSupportedOutputCapability(cameraObjList[1]);
+    previewProfiles = outputcapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+    photoProfiles = outputcapability->GetPhotoProfiles();
+    ASSERT_TRUE(!photoProfiles.empty());
+    videoProfiles = outputcapability->GetVideoProfiles();
+    ASSERT_TRUE(!videoProfiles.empty());
+    return;
+}
+
+void CameraFrameworkModuleTest::ReleaseInput()
+{
+    if (input_) {
+        sptr<CameraInput> camInput = (sptr<CameraInput> &)input_;
+        camInput->Close();
+        input_->Release();
+    }
+    return;
+}
+
 void CameraFrameworkModuleTest::SetCameraParameters(sptr<CaptureSession> &session, bool video)
 {
     session->LockForControl();
@@ -313,7 +351,7 @@ void CameraFrameworkModuleTest::SetCameraParameters(sptr<CaptureSession> &sessio
 
     // GetFocalLength
     float focalLength = session->GetFocalLength();
-    ASSERT_NE(focalLength, 0);
+    EXPECT_NE(focalLength, 0);
 
     // Get/Set focuspoint
     Point focusPoint = {1, 2};
@@ -465,7 +503,8 @@ bool CameraFrameworkModuleTest::IsSupportNow()
 {
     const char *deviveTypeString = GetDeviceType();
     std::string deviveType = std::string(deviveTypeString);
-    if (deviveType.compare("default") == 0) {
+    if (deviveType.compare("default") == 0 ||
+        (cameras_[0] != nullptr && cameras_[0]->GetConnectionType() == CAMERA_CONNECTION_USB_PLUGIN)) {
         return false;
     }
     return true;
@@ -1851,6 +1890,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_039, TestSize.Le
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_040, TestSize.Level0)
 {
+    ReleaseInput();
     std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
     photoSetting->SetMirror(true);
 
@@ -1870,7 +1910,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_040, TestSize.Le
     intResult = session_->AddInput(input);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    GetSupportedOutputCapability();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput(photoProfiles[0]);
     ASSERT_NE(photoOutput, nullptr);
 
     intResult = session_->AddOutput(photoOutput);
