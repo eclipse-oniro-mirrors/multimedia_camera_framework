@@ -149,7 +149,7 @@ napi_value CameraDeviceNapi::GetCameraId(napi_env env, napi_callback_info info)
     }
     MEDIA_DEBUG_LOG("To get camera id");
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
-    if (status == napi_ok && obj != nullptr) {
+    if (status == napi_ok && obj != nullptr && obj->cameraDevice_ != nullptr) {
         std::string cameraId = obj->cameraDevice_->GetID();
         status = napi_create_string_utf8(env, cameraId.c_str(), NAPI_AUTO_LENGTH, &jsResult);
         if (status == napi_ok) {
@@ -182,7 +182,7 @@ napi_value CameraDeviceNapi::GetCameraPosition(napi_env env, napi_callback_info 
     }
     MEDIA_DEBUG_LOG("To get camera position");
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
-    if (status == napi_ok && obj != nullptr) {
+    if (status == napi_ok && obj != nullptr && obj->cameraDevice_ != nullptr) {
         jsCameraPosition = obj->cameraDevice_->GetPosition();
         status = napi_create_int32(env, jsCameraPosition, &jsResult);
         if (status == napi_ok) {
@@ -215,7 +215,7 @@ napi_value CameraDeviceNapi::GetCameraType(napi_env env, napi_callback_info info
     }
     MEDIA_DEBUG_LOG("To get camera type");
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
-    if (status == napi_ok && obj != nullptr) {
+    if (status == napi_ok && obj != nullptr && obj->cameraDevice_ != nullptr) {
         jsCameraType = obj->cameraDevice_->GetCameraType();
         if (jsCameraType == CAMERA_TYPE_UNSUPPORTED) {
             MEDIA_ERR_LOG("Camera type is not a recognized camera type in JS");
@@ -252,7 +252,7 @@ napi_value CameraDeviceNapi::GetConnectionType(napi_env env, napi_callback_info 
     }
     MEDIA_DEBUG_LOG("To get connection type");
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
-    if (status == napi_ok && obj != nullptr) {
+    if (status == napi_ok && obj != nullptr && obj->cameraDevice_ != nullptr) {
         jsConnectionType = obj->cameraDevice_->GetConnectionType();
 
         status = napi_create_int32(env, jsConnectionType, &jsResult);
@@ -288,7 +288,7 @@ napi_value CameraDeviceNapi::GetHostDeviceName(napi_env env, napi_callback_info 
     }
     MEDIA_DEBUG_LOG("to get host device name");
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
-    if (status == napi_ok && obj != nullptr) {
+    if (status == napi_ok && obj != nullptr && obj->cameraDevice_ != nullptr) {
         std::string hostDeviceName = obj->cameraDevice_->GetHostName();
         status = napi_create_string_utf8(env, hostDeviceName.c_str(), NAPI_AUTO_LENGTH, &jsResult);
         if (status == napi_ok) {
@@ -309,6 +309,7 @@ napi_value CameraDeviceNapi::GetHostDeviceType(napi_env env, napi_callback_info 
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
     CameraDeviceNapi* obj = nullptr;
+    ConnectionType jsConnectionType;
     napi_value thisVar = nullptr;
 
     MEDIA_DEBUG_LOG("For get host device type");
@@ -321,9 +322,15 @@ napi_value CameraDeviceNapi::GetHostDeviceType(napi_env env, napi_callback_info 
     }
     MEDIA_DEBUG_LOG("To get host device type");
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
-    if (status == napi_ok && obj != nullptr) {
-        uint32_t hostDeviceType = obj->cameraDevice_->GetDeviceType();
-        status = napi_create_uint32(env, hostDeviceType, &jsResult);
+    if (status == napi_ok && obj != nullptr && obj->cameraDevice_ != nullptr) {
+        jsConnectionType = obj->cameraDevice_->GetConnectionType();
+        if (jsConnectionType == CAMERA_CONNECTION_BUILT_IN) {
+            MEDIA_DEBUG_LOG("local device cameraHostType is undefine");
+            return undefinedResult;
+        } else {
+            uint32_t hostDeviceType = obj->cameraDevice_->GetDeviceType();
+            status = napi_create_uint32(env, hostDeviceType, &jsResult);
+        }
         if (status == napi_ok) {
             return jsResult;
         } else {
