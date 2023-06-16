@@ -123,48 +123,53 @@ void PhotoOutputCallback::SetCallbackRef(const std::string &eventType, const nap
 void PhotoOutputCallback::UpdateJSCallback(std::string propName, const CallbackInfo &info) const
 {
     MEDIA_DEBUG_LOG("UpdateJSCallback is called");
-    napi_value result[ARGS_ONE];
+    napi_value result[ARGS_TWO];
     napi_value callback = nullptr;
     napi_value retVal;
     napi_value propValue;
-    int32_t jsErrorCodeUnknown = -1;
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_get_undefined(env_, &result[PARAM1]);
 
     if (propName.compare("OnCaptureStarted") == 0) {
         CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(captureStartCallbackRef_,
             "OnCaptureStart callback is not registered by JS");
-        napi_create_int32(env_, info.captureID, &result[PARAM0]);
+        napi_create_int32(env_, info.captureID, &result[PARAM1]);
         napi_get_reference_value(env_, captureStartCallbackRef_, &callback);
     } else if (propName.compare("OnCaptureEnded") == 0) {
         CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(captureEndCallbackRef_,
             "OnCaptureEnd callback is not registered by JS");
-        napi_create_object(env_, &result[PARAM0]);
+        napi_create_object(env_, &result[PARAM1]);
         napi_create_int32(env_, info.captureID, &propValue);
-        napi_set_named_property(env_, result[PARAM0], "captureId", propValue);
+        napi_set_named_property(env_, result[PARAM1], "captureId", propValue);
         napi_create_int32(env_, info.frameCount, &propValue);
-        napi_set_named_property(env_, result[PARAM0], "frameCount", propValue);
+        napi_set_named_property(env_, result[PARAM1], "frameCount", propValue);
         napi_get_reference_value(env_, captureEndCallbackRef_, &callback);
     } else if (propName.compare("OnFrameShutter") == 0) {
         CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(frameShutterCallbackRef_,
             "OnFrameShutter callback is not registered by JS");
-        napi_create_object(env_, &result[PARAM0]);
+        napi_create_object(env_, &result[PARAM1]);
         napi_create_int32(env_, info.captureID, &propValue);
-        napi_set_named_property(env_, result[PARAM0], "captureId", propValue);
+        napi_set_named_property(env_, result[PARAM1], "captureId", propValue);
         napi_create_int64(env_, info.timestamp, &propValue);
-        napi_set_named_property(env_, result[PARAM0], "timestamp", propValue);
+        napi_set_named_property(env_, result[PARAM1], "timestamp", propValue);
         napi_get_reference_value(env_, frameShutterCallbackRef_, &callback);
     } else {
         CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(errorCallbackRef_,
             "OnError callback is not registered by JS");
-        napi_create_object(env_, &result[PARAM0]);
+        napi_value errJsResult[ARGS_ONE];
+        int32_t jsErrorCodeUnknown = -1;
+        napi_create_object(env_, &errJsResult[PARAM0]);
         napi_create_int32(env_, jsErrorCodeUnknown, &propValue);
-        napi_set_named_property(env_, result[PARAM0], "code", propValue);
+        napi_set_named_property(env_, errJsResult[PARAM0], "code", propValue);
         napi_get_reference_value(env_, errorCallbackRef_, &callback);
         if (errorCallbackRef_ != nullptr) {
             napi_delete_reference(env_, errorCallbackRef_);
         }
+        napi_call_function(env_, nullptr, callback, ARGS_ONE, errJsResult, &retVal);
+        return;
     }
 
-    napi_call_function(env_, nullptr, callback, ARGS_ONE, result, &retVal);
+    napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
 }
 
 PhotoOutputNapi::PhotoOutputNapi() : env_(nullptr), wrapper_(nullptr)
