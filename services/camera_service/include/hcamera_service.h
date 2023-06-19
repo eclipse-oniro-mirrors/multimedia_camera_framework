@@ -120,7 +120,7 @@ private:
     SafeMap<std::string, sptr<HCameraDevice>> devicesManager_;
     std::map<int32_t, std::set<std::string>> camerasForPid_;
     bool muteMode_;
-    std::shared_mutex mapOperatorsLock_;
+    std::mutex mapOperatorsLock_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
