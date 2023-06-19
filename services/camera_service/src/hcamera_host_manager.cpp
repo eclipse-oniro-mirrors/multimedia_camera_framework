@@ -352,9 +352,9 @@ std::shared_ptr<HCameraHostManager::CameraDeviceInfo> HCameraHostManager::Camera
 void HCameraHostManager::CameraHostInfo::AddDevice(const std::string& cameraId)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    cameraIds_.push_back(cameraId);
     if (std::none_of(devices_.begin(), devices_.end(),
                      [&cameraId](auto& devInfo) { return devInfo->cameraId == cameraId; })) {
+        cameraIds_.push_back(cameraId);
         devices_.push_back(std::make_shared<HCameraHostManager::CameraDeviceInfo>(cameraId));
         MEDIA_INFO_LOG("CameraHostInfo::AddDevice, camera %{public}s added", cameraId.c_str());
     } else {
