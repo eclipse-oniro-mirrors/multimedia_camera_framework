@@ -159,7 +159,6 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
         MEDIA_ERR_LOG("HCameraDevice::CreateCameraDevice device busy!");
         return CAMERA_DEVICE_BUSY;
     }
-    std::lock_guard<std::shared_mutex> writeLock(mapOperatorsLock_);
     // Destory conflict devices
     for (auto &i : conflictDevices) {
         if (i != nullptr) {
@@ -167,7 +166,7 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
             DeviceClose(i->GetCameraId());
         }
     }
-
+    std::lock_guard<std::mutex> lock(mapOperatorsLock_);
     sptr<HCameraDevice> cameraDevice = new(std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     if (cameraDevice == nullptr) {
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice HCameraDevice allocation failed");
@@ -383,7 +382,7 @@ int32_t HCameraService::SetCallback(sptr<ICameraServiceCallback> &callback)
 
 int32_t HCameraService::CloseCameraForDestory(pid_t pid)
 {
-    std::lock_guard<std::shared_mutex> writeLock(mapOperatorsLock_);
+    std::lock_guard<std::mutex> lock(mapOperatorsLock_);
     MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory pid = %{public}d, Camera created size = %{public}zu",
                    pid, camerasForPid_[pid].size());
     auto cameraIds = camerasForPid_[pid];
@@ -971,6 +970,7 @@ int32_t HCameraService::DeviceClose(sptr<HCameraDevice> cameraDevice)
 
 int32_t HCameraService::DeviceClose(const std::string& cameraId, pid_t pidFromSession)
 {
+    std::lock_guard<std::mutex> lock(mapOperatorsLock_);
     MEDIA_INFO_LOG("HCameraService::DeviceClose Enter");
     int32_t ret = CAMERA_OK;
 
@@ -1038,7 +1038,7 @@ std::vector<sptr<HCameraDevice>> HCameraService::CameraConflictDetection(const s
     pid_t tempPid;
     std::string tempCameraId;
     sptr<HCameraDevice> tempDevice = nullptr;
-    std::shared_lock<std::shared_mutex> readLock(mapOperatorsLock_);
+    std::lock_guard<std::mutex> lock(mapOperatorsLock_);
     pid_t pid = IPCSkeleton::GetCallingPid();
     /*  whether there is a device being used, if not, the current operation is allowed */
     if (!IsDeviceAlreadyOpen(tempPid, tempCameraId, tempDevice)) {
