@@ -19,6 +19,7 @@ config("camera_framework_public_config") {
     "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/input",
     "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/output",
     "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/session",
+    "../interfaces/inner_api/native/camera/include/mode",
   ]
 }
 
@@ -60,6 +61,7 @@ ohos_shared_library("camera_framework") {
     "src/input/camera_input.cpp",
     "src/input/camera_manager.cpp",
     "src/input/capture_input.cpp",
+    "src/mode/mode_manager.cpp",
     "src/output/camera_output_capability.cpp",
     "src/output/capture_output.cpp",
     "src/output/metadata_output.cpp",
@@ -67,6 +69,7 @@ ohos_shared_library("camera_framework") {
     "src/output/preview_output.cpp",
     "src/output/video_output.cpp",
     "src/session/capture_session.cpp",
+    "src/session/portrait_session.cpp",
   ]
 
   cflags = [

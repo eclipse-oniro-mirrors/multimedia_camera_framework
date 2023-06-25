@@ -31,6 +31,7 @@
 
 #include "input/camera_input_napi.h"
 #include "input/camera_manager_napi.h"
+#include "mode/mode_manager_napi.h"
 #include "output/preview_output_napi.h"
 #include "output/photo_output_napi.h"
 #include "output/video_output_napi.h"
@@ -215,6 +216,7 @@ public:
     static napi_value CameraNapiConstructor(napi_env env, napi_callback_info info);
 
     static napi_value CreateCameraManagerInstance(napi_env env, napi_callback_info info);
+    static napi_value CreateModeManagerInstance(napi_env env, napi_callback_info info);
     static napi_value CreateFlashModeObject(napi_env env);
     static napi_value CreateExposureModeObject(napi_env env);
     static napi_value CreateFocusModeObject(napi_env env);

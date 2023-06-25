@@ -114,7 +114,8 @@ class CaptureSession : public RefBase {
 public:
     sptr<CaptureInput> inputDevice_;
     explicit CaptureSession(sptr<ICaptureSession> &captureSession);
-    ~CaptureSession();
+    CaptureSession() {};
+    virtual ~CaptureSession();
 
     /**
      * @brief Begin the capture session config.

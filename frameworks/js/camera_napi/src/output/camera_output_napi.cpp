@@ -276,6 +276,41 @@ napi_value CameraOutputCapabilityNapi::CreateCameraOutputCapability(napi_env env
     return result;
 }
 
+napi_value CameraOutputCapabilityNapi::CreateCameraOutputCapability(napi_env env,
+    sptr<CameraDevice> camera, CameraMode modename)
+{
+    MEDIA_INFO_LOG("CreateCameraOutputCapability is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+    napi_value constructor;
+    if (camera == nullptr) {
+        MEDIA_ERR_LOG("camera is Null");
+        return result;
+    }
+
+    status = napi_get_reference_value(env, sCapabilityConstructor_, &constructor);
+    if (status == napi_ok) {
+        sCameraOutputCapability_ = ModeManager::GetInstance()->GetSupportedOutputCapability(camera, modename);
+        if (sCameraOutputCapability_ == nullptr) {
+            MEDIA_ERR_LOG("failed to create CreateCameraOutputCapability");
+            return result;
+        }
+        status = napi_new_instance(env, constructor, 0, nullptr, &result);
+        sCameraOutputCapability_ = nullptr;
+        if (status == napi_ok && result != nullptr) {
+            MEDIA_INFO_LOG("success to create CreateCameraOutputCapabilityNapi");
+            return result;
+        } else {
+            MEDIA_ERR_LOG("Failed to create photo output instance");
+        }
+    }
+
+    MEDIA_ERR_LOG("CreateCameraOutputCapability call Failed");
+    napi_get_undefined(env, &result);
+    return result;
+}
+
 napi_value CameraOutputCapabilityNapi::GetPreviewProfiles(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("GetPreviewProfiles is called");

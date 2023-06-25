@@ -34,7 +34,23 @@ declare namespace camera {
    * @since 10
    */
   function getCameraManager(context: Context): CameraManager;
+  /**
+   * Creates a ModeManage instance.
+   * @param context Current application context.
+   * @param callback Callback used to return the ModeManage instance.
+   * @since 9
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   */
+   function getModeManager(context: Context, callback: AsyncCallback<ModeManager>): void;
 
+  /**
+   * Creates a ModeManage instance.
+   * @param context Current application context.
+   * @return Promise used to return the ModeManage instance.
+   * @since 9
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   */
+  function getModeManager(context: Context): Promise<ModeManager>;
   /**
    * Enum for camera status.
    *
@@ -72,7 +88,64 @@ declare namespace camera {
      */
     CAMERA_STATUS_UNAVAILABLE = 3
   }
-
+  /**
+   * Enum for camera mode.
+   *
+   * @enum { number }
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 10
+   */
+  enum CameraMode {
+    /**
+     * portrait mode.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    PORTRAIT = 1,
+  }
+  /**
+   * Enum for filter type.
+   *
+   * @enum { number }
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 10
+   */
+  enum FilterType {
+    NONE = 0,
+    CLASSIC = 1,
+    DAWN = 2,
+    PURE = 3,
+    GREY = 4,
+    NATURAL = 5,
+    MORI = 6,
+    FAIR = 7,
+    PINK = 8,
+}
+  /**
+   * Enum for portrait effect.
+   *
+   * @enum { number }
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 10
+   */
+  enum PortraitEffect {
+    OFF_EFFECT = 0,
+    CIRCLES = 1,
+  }
+  /**
+   * Enum for beauty type.
+   *
+   * @enum { number }
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 10
+   */
+  enum BeautyType {
+    AUTO_TYPE = 0,
+    SKIN_SMOOTH = 1,
+    FACE_SLENDER = 2,
+    SKIN_TONE = 3,
+  }
   /**
    * Profile for camera streams.
    *

@@ -36,6 +36,8 @@ static napi_value Export(napi_env env, napi_value exports)
     CameraVideoProfileNapi::Init(env, exports);
     MetadataOutputNapi::Init(env, exports);
     MetadataObjectNapi::Init(env, exports);
+    PortraitSessionNapi::Init(env, exports);
+    ModeManagerNapi::Init(env, exports);
     return exports;
 }
 

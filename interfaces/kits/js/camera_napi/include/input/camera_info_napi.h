@@ -28,6 +28,7 @@
 #include "camera_log.h"
 #include "camera_napi_utils.h"
 #include "input/camera_manager.h"
+#include "mode/mode_manager.h"
 #include "input/camera_device.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
@@ -41,6 +42,7 @@ class CameraDeviceNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateCameraObj(napi_env env, sptr<CameraDevice> cameraInfo);
+    static napi_value CreateModeObj(napi_env env, sptr<CameraMode> modeInfo);
     CameraDeviceNapi();
     ~CameraDeviceNapi();
     sptr<CameraDevice> cameraDevice_;
