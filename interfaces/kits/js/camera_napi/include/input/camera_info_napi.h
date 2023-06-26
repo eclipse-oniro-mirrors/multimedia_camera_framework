@@ -42,7 +42,6 @@ class CameraDeviceNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateCameraObj(napi_env env, sptr<CameraDevice> cameraInfo);
-    static napi_value CreateModeObj(napi_env env, sptr<CameraMode> modeInfo);
     CameraDeviceNapi();
     ~CameraDeviceNapi();
     sptr<CameraDevice> cameraDevice_;

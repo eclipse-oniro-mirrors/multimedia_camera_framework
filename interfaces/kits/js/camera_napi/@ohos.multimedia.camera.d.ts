@@ -41,8 +41,7 @@ declare namespace camera {
    * @since 9
    * @syscap SystemCapability.Multimedia.Camera.Core
    */
-   function getModeManager(context: Context, callback: AsyncCallback<ModeManager>): void;
-
+  function getModeManager(context: Context, callback: AsyncCallback<ModeManager>): void;
   /**
    * Creates a ModeManage instance.
    * @param context Current application context.
@@ -121,7 +120,7 @@ declare namespace camera {
     MORI = 6,
     FAIR = 7,
     PINK = 8,
-}
+  }
   /**
    * Enum for portrait effect.
    *

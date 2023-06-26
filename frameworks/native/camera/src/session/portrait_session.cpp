@@ -58,7 +58,7 @@ void PortraitSession::setFilter(FilterType filter)
 
 std::vector<PortraitEffect> PortraitSession::getSupportedPortraitEffects()
 {
-    std::vector<PortraitEffect> supportedPortraitEffects;
+    std::vector<PortraitEffect> supportedPortraitEffects(PortraitEffect::OFF_EFFECT);
     return supportedPortraitEffects;
 }
 
