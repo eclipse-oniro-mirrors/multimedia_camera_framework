@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("./../../multimedia_camera_framework.gni")
 
 ohos_shared_library("camera_service") {
   install_enable = true
@@ -65,20 +66,17 @@ ohos_shared_library("camera_service") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
   }
 
-  deps = [
-    "//drivers/hdf_core/adapter/uhdf2/hdi:libhdi",
-    "//foundation/graphic/graphic_2d:libsurface",
-    "//foundation/graphic/graphic_2d/rosen/modules/render_service_client:librender_service_client",
-    "//foundation/window/window_manager/dm:libdm",
-  ]
-
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",
     "access_token:libprivacy_sdk",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
+    "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:metadata",
+    "graphic_standard:librender_service_client",
+    "graphic_standard:surface",
+    "hdf_core:libhdi",
     "hicollie:libhicollie",
     "hisysevent_native:libhisysevent",
     "hitrace_native:hitrace_meter",
@@ -87,6 +85,7 @@ ohos_shared_library("camera_service") {
     "ipc:ipc_single",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "window_manager:libdm",
   ]
 
   include_dirs += [
@@ -97,8 +96,6 @@ ohos_shared_library("camera_service") {
     "//drivers/peripheral/camera/interfaces/hdi_ipc/callback/operator/include",
     "//drivers/peripheral/camera/interfaces/hdi_ipc/callback/host/include",
   ]
-
-  deps += [ "//drivers/interface/camera/v1_0:libcamera_proxy_1.0" ]
 
   if (use_musl) {
     if (use_jemalloc && use_jemalloc_dfx_intf) {

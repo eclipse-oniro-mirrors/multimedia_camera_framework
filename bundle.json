@@ -20,13 +20,29 @@
 	"hisysevent_config": [ "//foundation/multimedia/camera_framework/hisysevent.yaml" ],
         "deps": {
           "components": [
-              "libhilog",
+              "ability_base",
+              "access_token",
+              "bundle_framework",
+              "device_manager",
+              "driver_interface_camera",
+              "graphic_standard",
+              "hdf_core",
+              "hicollie_native",
+              "hisysevent_native",
+              "hitrace_native",
+              "hiviewdfx_hilog_native",
+              "ipc",
               "ipc_core",
-              "media_client",
-              "system_ability_fwk",
-              "samgr_proxy",
+              "ipc_single",
               "libaccesstoken_sdk",
-              "ipc_single"
+              "libhilog",
+              "media_client",
+              "multimedia_image_framework",
+              "napi",
+              "safwk",
+              "samgr",
+              "samgr_proxy",
+              "system_ability_fwk"
             ],
             "third_party": [
               ""

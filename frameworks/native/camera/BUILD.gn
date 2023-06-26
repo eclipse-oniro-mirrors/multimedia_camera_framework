@@ -95,14 +95,11 @@ ohos_shared_library("camera_framework") {
     "//utils/system/safwk/native/include",
   ]
 
-  deps = [
-    "//drivers/interface/camera/v1_0:libcamera_proxy_1.0",
-    "//foundation/graphic/graphic_2d:libsurface",
-  ]
-
   external_deps = [
     "device_manager:devicemanagersdk",
+    "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:metadata",
+    "graphic_standard:surface",
     "hisysevent_native:libhisysevent",
     "hitrace_native:hitrace_meter",
     "hiviewdfx_hilog_native:libhilog",
