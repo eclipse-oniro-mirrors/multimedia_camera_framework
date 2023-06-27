@@ -455,6 +455,49 @@ int32_t HCameraServiceProxy::MuteCamera(bool muteMode)
     return error;
 }
 
+int32_t HCameraServiceProxy::PrelaunchCamera()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        MEDIA_ERR_LOG("HCameraServiceProxy::PrelaunchCamera Failed to write descriptor");
+        return IPC_PROXY_ERR;
+    }
+
+    int error = Remote()->SendRequest(CAMERA_SERVICE_PRE_LAUNCH_CAMERA, data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy::PrelaunchCamera failed, error: %{public}d", error);
+        return IPC_PROXY_ERR;
+    }
+    return error;
+}
+
+int32_t HCameraServiceProxy::SetPrelaunchConfig(std::string cameraId)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        MEDIA_ERR_LOG("HCameraServiceProxy::SetPrelaunchConfig Failed to write descriptor");
+        return IPC_PROXY_ERR;
+    }
+
+    if (!data.WriteString(cameraId)) {
+        MEDIA_ERR_LOG("HCameraServiceProxy SetPrelaunchConfig Write CameraId failed");
+        return IPC_PROXY_ERR;
+    }
+
+    int32_t error = Remote()->SendRequest(CAMERA_SERVICE_SET_PRE_LAUNCH_CAMERA, data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy::SetPrelaunchConfig failed, error: %{public}d", error);
+        return IPC_PROXY_ERR;
+    }
+    return error;
+}
+
 int32_t HCameraServiceProxy::IsCameraMuted(bool &muteMode)
 {
     MessageParcel data;

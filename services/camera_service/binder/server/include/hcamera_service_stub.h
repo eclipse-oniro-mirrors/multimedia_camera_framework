@@ -44,6 +44,8 @@ private:
     int HandleCreateVideoOutput(MessageParcel &data, MessageParcel &reply);
     int HandleMuteCamera(MessageParcel &data, MessageParcel &reply);
     int HandleIsCameraMuted(MessageParcel &data, MessageParcel &reply);
+    int HandlePrelaunchCamera(MessageParcel &data, MessageParcel &reply);
+    int HandleSetPrelaunchConfig(MessageParcel &data, MessageParcel &reply);
     int DestroyStubForPid(pid_t pid);
     void ClientDied(pid_t pid);
     int SetListenerObject(const sptr<IRemoteObject> &object) override;

@@ -35,6 +35,8 @@ public:
 
     int32_t SetCallback(sptr<IStreamCaptureCallback> &callback) override;
 
+    int32_t SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer) override;
+
 private:
     static inline BrokerDelegator<HStreamCaptureProxy> delegator_;
 };

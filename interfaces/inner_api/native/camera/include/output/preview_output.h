@@ -18,6 +18,7 @@
 
 #include "capture_output.h"
 #include "istream_repeat.h"
+#include "camera_output_capability.h"
 #include "istream_repeat_callback.h"
 
 namespace OHOS {
@@ -88,6 +89,10 @@ public:
      */
     std::shared_ptr<PreviewStateCallback> GetApplicationCallback();
 
+    /**
+     * @brief Get the application callback information.
+     */
+    CameraFormat format;
 private:
     std::shared_ptr<PreviewStateCallback> appCallback_;
     sptr<IStreamRepeatCallback> svcCallback_;

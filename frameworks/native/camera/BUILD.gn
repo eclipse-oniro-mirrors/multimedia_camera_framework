@@ -61,6 +61,7 @@ ohos_shared_library("camera_framework") {
     "src/input/camera_input.cpp",
     "src/input/camera_manager.cpp",
     "src/input/capture_input.cpp",
+    "src/input/prelaunch_config.cpp",
     "src/mode/mode_manager.cpp",
     "src/output/camera_output_capability.cpp",
     "src/output/capture_output.cpp",
@@ -107,6 +108,7 @@ ohos_shared_library("camera_framework") {
     "hitrace_native:hitrace_meter",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
+    "multimedia_image_framework:image_native",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]

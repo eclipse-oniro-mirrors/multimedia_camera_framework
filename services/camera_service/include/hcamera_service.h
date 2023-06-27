@@ -65,6 +65,8 @@ public:
     int32_t CloseCameraForDestory(pid_t pid) override;
     int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback> &callback) override;
     int32_t MuteCamera(bool muteMode) override;
+    int32_t PrelaunchCamera() override;
+    int32_t SetPrelaunchConfig(std::string cameraId) override;
     int32_t IsCameraMuted(bool &muteMode) override;
     void OnDump() override;
     void OnStart() override;
@@ -106,6 +108,7 @@ private:
     void CameraDumpVideoFrameRateRange(common_metadata_header_t* metadataEntry,
         std::string& dumpString);
     bool IsCameraMuteSupported(std::string cameraId);
+    bool IsPrelaunchSupported(std::string cameraId);
     int32_t UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool muteMode);
     int32_t UnSetMuteCallback(pid_t pid);
     bool IsDeviceAlreadyOpen(pid_t& tempPid, std::string& tempCameraId, sptr<HCameraDevice> &tempDevice);
@@ -121,6 +124,7 @@ private:
     std::map<int32_t, std::set<std::string>> camerasForPid_;
     bool muteMode_;
     std::mutex mapOperatorsLock_;
+    std::string preCameraId_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

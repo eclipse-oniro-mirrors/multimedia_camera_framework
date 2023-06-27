@@ -205,6 +205,20 @@ public:
     void SetCallback(std::shared_ptr<PhotoStateCallback> callback);
 
     /**
+     * @brief Set the thumbnail callback.
+     *
+     * @param listener set IBufferConsumerListener when on interface is called.
+     */
+    void SetThumbnailListener(sptr<IBufferConsumerListener>& listener);
+
+    /**
+    * @brief Set the Thumbnail profile.
+    *
+    * @param isEnabled quickThumbnail is enabled.
+    */
+    int32_t SetThumbnail(bool isEnabled);
+
+    /**
      * @brief Set the photo callback.
      *
      * @param callback Requested for the pointer where photo callback is present.
@@ -249,12 +263,20 @@ public:
     bool IsMirrorSupported();
 
     /**
+     * @brief To check the quick thumbnail is supported or not.
+     *
+     * @return Returns true/false if the quick thumbnail is supported/not-supported respectively.
+     */
+    bool IsQuickThumbnailSupported();
+
+    /**
      * @brief Get default photo capture setting.
      *
      * @return default photo capture setting.
      */
     std::shared_ptr<PhotoCaptureSetting> GetDefaultCaptureSetting();
 
+    sptr<Surface> thumbnailSurface_;
 private:
     std::shared_ptr<PhotoStateCallback> appCallback_;
     sptr<IStreamCaptureCallback> cameraSvcCallback_;

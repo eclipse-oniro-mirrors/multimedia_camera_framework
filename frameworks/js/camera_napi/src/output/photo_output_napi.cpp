@@ -15,6 +15,8 @@
 
 #include "output/photo_output_napi.h"
 #include <uv.h>
+#include "image_napi.h"
+#include "pixel_map_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -172,6 +174,104 @@ void PhotoOutputCallback::UpdateJSCallback(std::string propName, const CallbackI
     napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
 }
 
+ThumbnailListener::ThumbnailListener(napi_env env, const napi_ref &callbackRef, const sptr<PhotoOutput> photoOutput)
+    : env_(env), thumbnailCallbackRef_(callbackRef), photoOutput_(photoOutput) {}
+
+void ThumbnailListener::OnBufferAvailable()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("ThumbnailListener:OnBufferAvailable() called");
+    if (!photoOutput_) {
+        MEDIA_ERR_LOG("photoOutput napi sPhotoOutput_ is null");
+        return;
+    }
+    UpdateJSCallbackAsync(photoOutput_);
+}
+
+void ThumbnailListener::UpdateJSCallback(sptr<PhotoOutput> photoOutput) const
+{
+    CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(thumbnailCallbackRef_,
+                                           "OnThunbnail callback is not registered by JS");
+
+    napi_value valueParam = nullptr;
+    napi_value result[ARGS_TWO] = {0};
+    napi_get_undefined(env_, &result[0]);
+    napi_get_undefined(env_, &result[1]);
+    napi_value callback = nullptr;
+    napi_value retVal;
+    MEDIA_ERR_LOG("enter ImageNapi::Create start");
+    int32_t fence = -1;
+    int64_t timestamp;
+    OHOS::Rect damage;
+    sptr<SurfaceBuffer> thumbnailBuffer = nullptr;
+    SurfaceError surfaceRet = photoOutput_->thumbnailSurface_->AcquireBuffer(thumbnailBuffer, fence, timestamp, damage);
+    if (surfaceRet != SURFACE_ERROR_OK) {
+        MEDIA_ERR_LOG("ThumbnailListener Failed to acquire surface buffer");
+        return;
+    }
+    MEDIA_INFO_LOG("ThumbnailListener start decode surface buffer");
+    int32_t thumbnailWidth;
+    int32_t thumbnailHeight;
+    thumbnailBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataWidth, thumbnailWidth);
+    thumbnailBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataHeight, thumbnailHeight);
+    Media::InitializationOptions opts;
+    opts.pixelFormat = Media::PixelFormat::RGBA_8888;
+    opts.size = {
+            .width = thumbnailWidth,
+            .height = thumbnailHeight
+    };
+    MEDIA_INFO_LOG("thumbnailWidth:%{public}d, thumbnailheight: %{public}d, bufSize: %{public}d",
+        thumbnailWidth, thumbnailHeight, thumbnailBuffer->GetSize());
+    auto pixelMap = Media::PixelMap::Create(opts);
+    pixelMap->SetPixelsAddr(thumbnailBuffer->GetVirAddr(), nullptr, thumbnailBuffer->GetSize(),
+                            Media::AllocatorType::HEAP_ALLOC, nullptr);
+    valueParam = Media::PixelMapNapi::CreatePixelMap(env_, std::move(pixelMap));
+    if (valueParam == nullptr) {
+        MEDIA_ERR_LOG("ImageNapi Create failed");
+        napi_get_undefined(env_, &valueParam);
+    }
+    MEDIA_INFO_LOG("enter ImageNapi::Create end");
+    napi_get_reference_value(env_, thumbnailCallbackRef_, &callback);
+    result[1] = valueParam;
+    napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
+    photoOutput_->thumbnailSurface_->ReleaseBuffer(thumbnailBuffer, -1);
+}
+
+void ThumbnailListener::UpdateJSCallbackAsync(sptr<PhotoOutput> photoOutput) const
+{
+    uv_loop_s* loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (!loop) {
+        MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to get event loop");
+        return;
+    }
+    uv_work_t* work = new(std::nothrow) uv_work_t;
+    if (!work) {
+        MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to allocate work");
+        return;
+    }
+    std::unique_ptr<ThumbnailListenerInfo> callbackInfo =
+            std::make_unique<ThumbnailListenerInfo>(photoOutput, this);
+    work->data = callbackInfo.get();
+    int ret = uv_queue_work(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+        ThumbnailListenerInfo* callbackInfo = reinterpret_cast<ThumbnailListenerInfo *>(work->data);
+        if (callbackInfo) {
+            callbackInfo->listener_->UpdateJSCallback(callbackInfo->photoOutput_);
+            MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() complete");
+            callbackInfo->photoOutput_ =  nullptr;
+            callbackInfo->listener_ = nullptr;
+            delete callbackInfo;
+        }
+        delete work;
+    });
+    if (ret) {
+        MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to execute work");
+        delete work;
+    } else {
+        callbackInfo.release();
+    }
+}
+
 PhotoOutputNapi::PhotoOutputNapi() : env_(nullptr), wrapper_(nullptr)
 {
 }
@@ -212,6 +312,8 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("release", Release),
         DECLARE_NAPI_FUNCTION("isMirrorSupported", IsMirrorSupported),
         DECLARE_NAPI_FUNCTION("setMirror", SetMirror),
+        DECLARE_NAPI_FUNCTION("enableQuickThumbnail", EnableQuickThumbnail),
+        DECLARE_NAPI_FUNCTION("isQuickThumbnailSupported", IsQuickThumbnailSupported),
         DECLARE_NAPI_FUNCTION("on", On)
     };
 
@@ -710,6 +812,27 @@ napi_value PhotoOutputNapi::IsMirrorSupported(napi_env env, napi_callback_info i
     return result;
 }
 
+napi_value PhotoOutputNapi::IsQuickThumbnailSupported(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
+    if (status == napi_ok && photoOutputNapi != nullptr) {
+        bool isSupported = photoOutputNapi->photoOutput_->IsQuickThumbnailSupported();
+        napi_get_boolean(env, isSupported, &result);
+    }
+
+    return result;
+}
+
 napi_value PhotoOutputNapi::SetMirror(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("SetMirror is called");
@@ -764,6 +887,27 @@ napi_value PhotoOutputNapi::SetMirror(napi_env env, napi_callback_info info)
     return result;
 }
 
+napi_value PhotoOutputNapi::EnableQuickThumbnail(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
+    napi_get_undefined(env, &result);
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
+    bool thumbnailSwitch;
+    if (status == napi_ok && photoOutputNapi != nullptr) {
+        napi_get_value_bool(env, argv[PARAM0], &thumbnailSwitch);
+        photoOutputNapi->isQuickThumbnailEnabled_ = thumbnailSwitch;
+        photoOutputNapi->photoOutput_->SetThumbnail(thumbnailSwitch);
+    }
+    return result;
+}
+
 napi_value PhotoOutputNapi::On(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("On is called");
@@ -802,7 +946,15 @@ napi_value PhotoOutputNapi::On(napi_env env, napi_callback_info info)
         napi_ref callbackRef;
         napi_create_reference(env, argv[PARAM1], refCount, &callbackRef);
 
-        if (!eventType.empty()) {
+        if (eventType == OHOS::CameraStandard::thumbnailRegisterName) {
+            // create thumbnail listener when eventType is thumbnail
+            if (!obj->isQuickThumbnailEnabled_) {
+                MEDIA_ERR_LOG("quickThumbnail is not enabled!");
+                return undefinedResult;
+            }
+            sptr<ThumbnailListener> listener = new ThumbnailListener(env, callbackRef, obj->photoOutput_);
+            ((sptr<PhotoOutput> &)(obj->photoOutput_))->SetThumbnailListener((sptr<IBufferConsumerListener>&)listener);
+        } else if (!eventType.empty()) {
             obj->photoCallback_->SetCallbackRef(eventType, callbackRef);
         } else {
             MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");

@@ -73,6 +73,8 @@ void HCameraServiceStub::RegisterMethod()
     methodFactory[CAMERA_SERVICE_CREATE_METADATA_OUTPUT] = &HCameraServiceStub::HandleCreateMetadataOutput;
     methodFactory[CAMERA_SERVICE_CREATE_VIDEO_OUTPUT] = &HCameraServiceStub::HandleCreateVideoOutput;
     methodFactory[CAMERA_SERVICE_SET_LISTENER_OBJ] = &HCameraServiceStub::SetListenerObject;
+    methodFactory[CAMERA_SERVICE_PRE_LAUNCH_CAMERA] = &HCameraServiceStub::HandlePrelaunchCamera;
+    methodFactory[CAMERA_SERVICE_SET_PRE_LAUNCH_CAMERA] = &HCameraServiceStub::HandleSetPrelaunchConfig;
 }
 
 int32_t HCameraServiceStub::CheckRequestCode(
@@ -141,6 +143,23 @@ int HCameraServiceStub::HandleMuteCamera(MessageParcel &data, MessageParcel &rep
 
     int32_t ret = MuteCamera(muteMode);
     MEDIA_INFO_LOG("HCameraServiceStub HandleMuteCamera MuteCamera result: %{public}d", ret);
+    return ret;
+}
+
+int HCameraServiceStub::HandlePrelaunchCamera(MessageParcel &data, MessageParcel &reply)
+{
+    MEDIA_DEBUG_LOG("HCameraServiceStub HandlePrelaunchCamera enter");
+    int32_t ret = PrelaunchCamera();
+    MEDIA_INFO_LOG("HCameraServiceStub HandlePrelaunchCamera result: %{public}d", ret);
+    return ret;
+}
+
+int HCameraServiceStub::HandleSetPrelaunchConfig(MessageParcel &data, MessageParcel &reply)
+{
+    MEDIA_DEBUG_LOG("HCameraServiceStub HandleSetPrelaunchConfig enter");
+    std::string cameraId = data.ReadString();
+    int32_t ret = SetPrelaunchConfig(cameraId);
+    MEDIA_INFO_LOG("HCameraServiceStub HandleSetPrelaunchConfig result: %{public}d", ret);
     return ret;
 }
 

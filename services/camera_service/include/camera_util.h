@@ -82,6 +82,8 @@ void ReleaseCaptureId(int32_t captureId);
 
 bool IsValidTokenId(uint32_t tokenId);
 
+int32_t GetVersionId(uint32_t major, uint32_t minor);
+
 bool IsValidSize(
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t format, int32_t width, int32_t height);
 

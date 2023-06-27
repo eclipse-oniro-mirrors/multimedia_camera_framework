@@ -44,6 +44,9 @@
 
 namespace OHOS {
 namespace CameraStandard {
+const std::string dataWidth = "dataWidth";
+const std::string dataHeight = "dataHeight";
+const std::string thumbnailRegisterName = "quickThumbnail";
 static const char CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME[] = "PhotoOutput";
 
 struct CallbackInfo {
@@ -75,12 +78,33 @@ private:
     napi_ref errorCallbackRef_ = nullptr;
 };
 
+class ThumbnailListener : public IBufferConsumerListener {
+public:
+    explicit ThumbnailListener(napi_env env, const napi_ref &callbackRef, const sptr<PhotoOutput> photoOutput_);
+    ~ThumbnailListener() = default;
+    void OnBufferAvailable() override;
+
+private:
+    napi_env env_;
+    napi_ref thumbnailCallbackRef_ = nullptr;
+    sptr<PhotoOutput> photoOutput_;
+    void UpdateJSCallback(sptr<PhotoOutput> photoOutput) const;
+    void UpdateJSCallbackAsync(sptr<PhotoOutput> photoOutput) const;
+};
+
 struct PhotoOutputCallbackInfo {
     std::string eventName_;
     CallbackInfo info_;
     const PhotoOutputCallback* listener_;
     PhotoOutputCallbackInfo(std::string eventName, CallbackInfo info, const PhotoOutputCallback* listener)
         : eventName_(eventName), info_(info), listener_(listener) {}
+};
+
+struct ThumbnailListenerInfo {
+    sptr<PhotoOutput> photoOutput_;
+    const ThumbnailListener* listener_;
+    ThumbnailListenerInfo(sptr<PhotoOutput> photoOutput, const ThumbnailListener* listener)
+        : photoOutput_(photoOutput), listener_(listener) {}
 };
 
 class PhotoOutputNapi {
@@ -93,6 +117,8 @@ public:
     static napi_value Release(napi_env env, napi_callback_info info);
     static napi_value IsMirrorSupported(napi_env env, napi_callback_info info);
     static napi_value SetMirror(napi_env env, napi_callback_info info);
+    static napi_value EnableQuickThumbnail(napi_env env, napi_callback_info info);
+    static napi_value IsQuickThumbnailSupported(napi_env env, napi_callback_info info);
     static napi_value On(napi_env env, napi_callback_info info);
 
     static bool IsPhotoOutput(napi_env env, napi_value obj);
@@ -111,6 +137,8 @@ private:
     napi_env env_;
     napi_ref wrapper_;
     sptr<PhotoOutput> photoOutput_;
+    Profile profile_;
+    bool isQuickThumbnailEnabled_ = false;
     std::shared_ptr<PhotoOutputCallback> photoCallback_ = nullptr;
     static thread_local uint32_t photoOutputTaskId;
 };

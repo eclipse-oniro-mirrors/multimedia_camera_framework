@@ -29,6 +29,7 @@ public:
 public:
     int HandleCapture(MessageParcel &data);
     int HandleSetCallback(MessageParcel &data);
+    int HandleSetThumbnail(MessageParcel &data);
 };
 } // namespace CameraStandard
 } // namespace OHOS

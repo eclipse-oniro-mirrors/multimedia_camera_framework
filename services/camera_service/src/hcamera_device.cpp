@@ -414,7 +414,7 @@ int32_t HCameraDevice::SetCallback(sptr<ICameraDeviceServiceCallback> &callback)
 }
 
 int32_t HCameraDevice::GetStreamOperator(sptr<IStreamOperatorCallback> callback,
-    sptr<IStreamOperator> &streamOperator)
+    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> &streamOperator)
 {
     if (callback == nullptr) {
         MEDIA_ERR_LOG("HCameraDevice::GetStreamOperator callback is null");
@@ -425,8 +425,16 @@ int32_t HCameraDevice::GetStreamOperator(sptr<IStreamOperatorCallback> callback,
         MEDIA_ERR_LOG("HCameraDevice::hdiCameraDevice_ is null");
         return CAMERA_UNKNOWN_ERROR;
     }
+    CamRetCode rc;
+    if (GetVersionId(1, 1) == cameraHostManager_->GetVersionByCamera(cameraID_)) {
+        rc = (CamRetCode)(hdiCameraDevice_->GetStreamOperator_V1_1(callback, streamOperator));
+    } else {
+        sptr<IStreamOperator> tempStreamOperator;
+        rc = (CamRetCode)(hdiCameraDevice_->GetStreamOperator(callback, tempStreamOperator));
+        // static_cast to V1.1
+        streamOperator = static_cast<OHOS::HDI::Camera::V1_1::IStreamOperator *>(tempStreamOperator.GetRefPtr());
+    }
 
-    CamRetCode rc = (CamRetCode)(hdiCameraDevice_->GetStreamOperator(callback, streamOperator));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         MEDIA_ERR_LOG("HCameraDevice::GetStreamOperator failed with error Code:%{public}d", rc);
         return HdiToServiceError(rc);
@@ -445,7 +453,7 @@ int32_t HCameraDevice::SetDeviceOperatorsCallback(wptr<IDeviceOperatorsCallback>
     return CAMERA_OK;
 }
 
-sptr<IStreamOperator> HCameraDevice::GetStreamOperator()
+sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> HCameraDevice::GetStreamOperator()
 {
     return streamOperator_;
 }

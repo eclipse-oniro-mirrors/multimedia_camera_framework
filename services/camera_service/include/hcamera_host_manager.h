@@ -25,6 +25,8 @@
 #include "camera_metadata_info.h"
 #include "v1_0/icamera_device.h"
 #include "v1_0/icamera_host.h"
+#include "v1_1/icamera_device.h"
+#include "v1_1/icamera_host.h"
 #include "icamera_device_service.h"
 #include "icamera_service_callback.h"
 #include "iservstat_listener_hdi.h"
@@ -48,6 +50,7 @@ public:
     int32_t Init(void);
     void DeInit(void);
     void AddCameraDevice(const std::string& cameraId, sptr<ICameraDeviceService> cameraDevice);
+    int32_t GetVersionByCamera(const std::string& cameraId);
     void RemoveCameraDevice(const std::string& cameraId);
     void CloseCameraDevice(const std::string& cameraId);
 
@@ -55,8 +58,9 @@ public:
     virtual int32_t GetCameraAbility(std::string &cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata> &ability);
     virtual int32_t OpenCameraDevice(std::string &cameraId,
                                      const sptr<ICameraDeviceCallback> &callback,
-                                     sptr<ICameraDevice> &pDevice);
+                                     sptr<OHOS::HDI::Camera::V1_1::ICameraDevice> &pDevice);
     virtual int32_t SetFlashlight(const std::string& cameraId, bool isEnable);
+    virtual int32_t PreLaunch(const std::string& cameraId);
 
     // HDI::ServiceManager::V1_0::IServStatListener
     void OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status) override;
