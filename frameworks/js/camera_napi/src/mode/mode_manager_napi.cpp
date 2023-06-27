@@ -155,15 +155,14 @@ napi_value ModeManagerNapi::CreateCameraSessionInstance(napi_env env, napi_callb
 
     int32_t modeName;
     napi_get_value_int32(env, argv[PARAM0], &modeName);
-    switch (modeName)
-    {
-    case CameraMode::PORTRAIT:
-        result = PortraitSessionNapi::CreateCameraSession(env, info);
-        break;
+    switch (modeName) {
+        case CameraMode::PORTRAIT:
+            result = PortraitSessionNapi::CreateCameraSession(env, info);
+            break;
 
-    default:
-        result = CameraSessionNapi::CreateCameraSession(env);
-        break;
+        default:
+            result = CameraSessionNapi::CreateCameraSession(env);
+            break;
     }
 
     return result;
