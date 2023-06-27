@@ -57,11 +57,13 @@ void ModeManager::Init()
 {
     CAMERA_SYNC_TRACE;
     sptr<IRemoteObject> object = nullptr;
+    MEDIA_DEBUG_LOG("ModeManager:init srart");
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (samgr == nullptr) {
-        MEDIA_ERR_LOG("Failed to get System ability manager");
+        MEDIA_ERR_LOG("ModeManager get System ability manager failed");
         return;
     }
+    MEDIA_DEBUG_LOG("ModeManager:GetSystemAbility srart");
     object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     if (object == nullptr) {
         MEDIA_ERR_LOG("object is null");
