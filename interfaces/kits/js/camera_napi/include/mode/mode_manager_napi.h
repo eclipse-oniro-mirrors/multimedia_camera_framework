@@ -35,6 +35,7 @@
 #include "output/preview_output_napi.h"
 #include "output/photo_output_napi.h"
 #include "output/video_output_napi.h"
+#include "portrait_session_napi.h"
 #include "session/camera_session_napi.h"
 #include "camera_napi_utils.h"
 
