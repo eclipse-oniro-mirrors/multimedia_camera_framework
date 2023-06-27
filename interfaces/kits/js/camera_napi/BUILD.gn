@@ -57,18 +57,17 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/video_output_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/session/camera_session_napi.cpp",
   ]
-  deps = [
-    "//foundation/arkui/napi:ace_napi",
-    "//foundation/graphic/graphic_2d/frameworks/surface:surface",
-    "//foundation/multimedia/camera_framework/frameworks/native/camera:camera_framework",
-    "//foundation/multimedia/image_framework/interfaces/innerkits:image_native",
-  ]
+  deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
   external_deps = [
     "access_token:libtokenid_sdk",
+    "graphic_standard:surface",
     "hisysevent_native:libhisysevent",
     "hitrace_native:hitrace_meter",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
+    "multimedia_image_framework:image",
+    "multimedia_image_framework:image_native",
+    "napi:ace_napi",
   ]
   sanitize = {
     cfi = true
