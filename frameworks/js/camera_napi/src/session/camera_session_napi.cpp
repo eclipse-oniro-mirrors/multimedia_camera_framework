@@ -401,6 +401,7 @@ napi_value CameraSessionNapi::CreateCameraSession(napi_env env)
     napi_get_undefined(env, &result);
     return result;
 }
+
 napi_value CameraSessionNapi::CreateCameraSession(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("CreateCameraSession is called");
@@ -436,6 +437,7 @@ napi_value CameraSessionNapi::CreateCameraSession(napi_env env, napi_callback_in
     napi_get_undefined(env, &result);
     return result;
 }
+
 void PopulateRetVal(napi_env env, SessionAsyncCallbackModes mode,
     CameraSessionAsyncContext* context, std::unique_ptr<JSAsyncContextOutput> &jsContext)
 {

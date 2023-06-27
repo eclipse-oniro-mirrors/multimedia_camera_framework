@@ -27,6 +27,7 @@ static const char PORTRAIT_SESSION_NAPI_CLASS_NAME[] = "PortraitSession";
 class PortraitSessionNapi : public CameraSessionNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
+    static napi_value CreateCameraSession(napi_env env, napi_callback_info info);
     PortraitSessionNapi();
     ~PortraitSessionNapi();
 
@@ -47,6 +48,8 @@ public:
     napi_env env_;
     napi_ref wrapper_;
     sptr<PortraitSession> portraitSession_;
+
+    static thread_local napi_ref sConstructor_;
 };
 }
 }
