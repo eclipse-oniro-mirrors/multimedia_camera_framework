@@ -138,8 +138,8 @@ napi_value ModeManagerNapi::CreateCameraSessionInstance(napi_env env, napi_callb
     MEDIA_INFO_LOG("CreateCameraSessionInstance is called");
     napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE];
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
@@ -198,8 +198,8 @@ napi_value ModeManagerNapi::GetSupportedModes(napi_env env, napi_callback_info i
     MEDIA_INFO_LOG("GetSupportedModes is called");
     napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE];
     napi_value thisVar = nullptr;
     napi_value jsResult = nullptr;
     CameraDeviceNapi* cameraDeviceNapi = nullptr;
