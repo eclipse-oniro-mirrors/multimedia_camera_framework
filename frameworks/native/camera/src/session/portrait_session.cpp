@@ -33,29 +33,6 @@ PortraitSession::~PortraitSession()
 {
 }
 
-std::vector<FilterType> PortraitSession::getSupportedFilters()
-{
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("PortraitSession::getSupportedFilters Session is not Commited");
-        return {};
-    }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
-        MEDIA_ERR_LOG("PortraitSession::getSupportedFilters camera device is null");
-        return {};
-    }
-    std::vector<FilterType> supportedFilters;
-    return supportedFilters;
-}
-
-FilterType PortraitSession::getFilter()
-{
-    return FilterType::NONE;
-}
-
-void PortraitSession::setFilter(FilterType filter)
-{
-}
-
 std::vector<PortraitEffect> PortraitSession::getSupportedPortraitEffects()
 {
     std::vector<PortraitEffect> supportedPortraitEffects(PortraitEffect::OFF_EFFECT);
@@ -69,26 +46,7 @@ PortraitEffect PortraitSession::getPortraitEffect()
 
 void PortraitSession::setPortraitEffect(PortraitEffect effect)
 {
-}
-
-std::vector<BeautyType> PortraitSession::getSupportedBeautyTypes()
-{
-    std::vector<BeautyType> supportedBeautyTypes;
-    return supportedBeautyTypes;
-}
-
-std::vector<int32_t> PortraitSession::getSupportedBeautyRange(BeautyType type)
-{
-    std::vector<int32_t> supportedBeautyRange;
-    return supportedBeautyRange;
-}
-
-void PortraitSession::setBeauty(BeautyType type, int value)
-{
-}
-int32_t PortraitSession::getBeauty(BeautyType type)
-{
-    return 0;
+    return;
 }
 } // CameraStandard
 } // OHOS

@@ -1768,6 +1768,52 @@ void CaptureSession::SetCaptureMetadataObjectTypes(std::set<camera_face_detect_m
     this->UnlockForControl();
 }
 
+std::vector<FilterType> CaptureSession::getSupportedFilters()
+{
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::getSupportedFilters Session is not Commited");
+        return {};
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::getSupportedFilters camera device is null");
+        return {};
+    }
+    std::vector<FilterType> supportedFilters;
+    return supportedFilters;
+}
+
+FilterType CaptureSession::getFilter()
+{
+    return FilterType::NONE;
+}
+
+void CaptureSession::setFilter(FilterType filter)
+{
+    return;
+}
+
+std::vector<BeautyType> CaptureSession::getSupportedBeautyTypes()
+{
+    std::vector<BeautyType> supportedBeautyTypes;
+    return supportedBeautyTypes;
+}
+
+std::vector<int32_t> CaptureSession::getSupportedBeautyRange(BeautyType type)
+{
+    std::vector<int32_t> supportedBeautyRange;
+    return supportedBeautyRange;
+}
+
+void CaptureSession::setBeauty(BeautyType type, int value)
+{
+    return;
+}
+
+int32_t CaptureSession::getBeauty(BeautyType type)
+{
+    return 0;
+}
+
 void CaptureSession::SetFrameRateRange(const std::vector<int32_t>& frameRateRange)
 {
     std::vector<int32_t> videoFrameRateRange = frameRateRange;

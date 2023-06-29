@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 #ifndef PORTRAIT_SESSION_NAPI_H_
 #define PORTRAIT_SESSION_NAPI_H_
 
@@ -37,13 +37,6 @@ public:
     static napi_value GetSupportedPortraitEffects(napi_env env, napi_callback_info info);
     static napi_value GetPortraitEffect(napi_env env, napi_callback_info info);
     static napi_value SetPortraitEffect(napi_env env, napi_callback_info info);
-    static napi_value GetSupportedFilters(napi_env env, napi_callback_info info);
-    static napi_value GetFilter(napi_env env, napi_callback_info info);
-    static napi_value SetFilter(napi_env env, napi_callback_info info);
-    static napi_value GetSupportedBeautyTypes(napi_env env, napi_callback_info info);
-    static napi_value GetSupportedBeautyRanges(napi_env env, napi_callback_info info);
-    static napi_value GetBeauty(napi_env env, napi_callback_info info);
-    static napi_value SetBeauty(napi_env env, napi_callback_info info);
 
     napi_env env_;
     napi_ref wrapper_;

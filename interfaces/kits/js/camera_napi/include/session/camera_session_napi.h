@@ -151,6 +151,13 @@ public:
     static napi_value GetZoomRatioRange(napi_env env, napi_callback_info info);
     static napi_value GetZoomRatio(napi_env env, napi_callback_info info);
     static napi_value SetZoomRatio(napi_env env, napi_callback_info info);
+    static napi_value GetSupportedFilters(napi_env env, napi_callback_info info);
+    static napi_value GetFilter(napi_env env, napi_callback_info info);
+    static napi_value SetFilter(napi_env env, napi_callback_info info);
+    static napi_value GetSupportedBeautyTypes(napi_env env, napi_callback_info info);
+    static napi_value GetSupportedBeautyRanges(napi_env env, napi_callback_info info);
+    static napi_value GetBeauty(napi_env env, napi_callback_info info);
+    static napi_value SetBeauty(napi_env env, napi_callback_info info);
 
     static napi_value BeginConfig(napi_env env, napi_callback_info info);
     static napi_value CommitConfig(napi_env env, napi_callback_info info);

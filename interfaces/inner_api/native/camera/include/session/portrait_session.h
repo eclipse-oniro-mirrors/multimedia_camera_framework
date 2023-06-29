@@ -29,30 +29,10 @@
 
 namespace OHOS {
 namespace CameraStandard {
-enum FilterType {
-    NONE = 0,
-    CLASSIC = 1,
-    DAWN = 2,
-    PURE = 3,
-    GREY = 4,
-    NATURAL = 5,
-    MORI = 6,
-    FAIR = 7,
-    PINK = 8,
-};
-
 enum PortraitEffect {
     OFF_EFFECT = 0,
     CIRCLES = 1,
 };
-
-enum BeautyType {
-    AUTO_TYPE = 0,
-    SKIN_SMOOTH = 1,
-    FACE_SLENDER = 2,
-    SKIN_TONE = 3,
-};
-
 
 class CaptureOutput;
 class PortraitSession : public CaptureSession {
@@ -60,25 +40,6 @@ public:
     explicit PortraitSession(sptr<ICaptureSession> &PortraitSession);
     PortraitSession() {};
     ~PortraitSession();
-
-    /**
-     * @brief Get the supported filters.
-     *
-     * @return Returns the array of filter.
-     */
-    std::vector<FilterType> getSupportedFilters();
-
-    /**
-     * @brief Get the current filter.
-     *
-     * @return Returns the array of filter.
-     */
-    FilterType getFilter();
-
-    /**
-     * @brief Set the filter.
-     */
-    void setFilter(FilterType filter);
 
     /**
      * @brief Get the supported portrait effects.
@@ -99,29 +60,6 @@ public:
      */
     void setPortraitEffect(PortraitEffect effect);
 
-    /**
-     * @brief Get the supported beauty type.
-     *
-     * @return Returns the array of beautytype.
-     */
-    std::vector<BeautyType> getSupportedBeautyTypes();
-    
-    /**
-     * @brief Get the supported beauty range.
-     *
-     * @return Returns the array of beauty range.
-     */
-    std::vector<int32_t> getSupportedBeautyRange(BeautyType type);
-    
-    /**
-     * @brief Set the beauty.
-     */
-    void setBeauty(BeautyType type, int value);
-    /**
-     * @brief according type to get the strength.
-     */
-    int32_t getBeauty(BeautyType type);
-    
 private:
     sptr<ICaptureSession> portraitSession_;
 };
