@@ -25,6 +25,7 @@
 #include "napi/native_node_api.h"
 #include "output/photo_output.h"
 #include "input/camera_manager.h"
+#include "mode/mode_manager.h"
 #include "ipc_skeleton.h"
 #include "tokenid_kit.h"
 
@@ -173,7 +174,8 @@ enum CameraTaskId {
     CAMERA_PHOTO_OUTPUT_TASKID = 0x03000000,
     CAMERA_PREVIEW_OUTPUT_TASKID = 0x04000000,
     CAMERA_VIDEO_OUTPUT_TASKID = 0x05000000,
-    CAMERA_SESSION_TASKID = 0x06000000
+    CAMERA_SESSION_TASKID = 0x06000000,
+    MODE_MANAGER_TASKID = 0x07000000,
 };
 
 enum JSMetadataObjectType {

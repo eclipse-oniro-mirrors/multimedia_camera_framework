@@ -24,6 +24,7 @@
 #include "napi/native_node_api.h"
 
 #include "input/camera_manager.h"
+#include "mode/mode_manager.h"
 #include "input/camera_device.h"
 #include "input/camera_profile_napi.h"
 #include "output/camera_output_capability.h"
@@ -60,6 +61,7 @@ class CameraOutputCapabilityNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateCameraOutputCapability(napi_env env, sptr<CameraDevice> camera);
+    static napi_value CreateCameraOutputCapability(napi_env env, sptr<CameraDevice> camera, CameraMode mode);
 
     CameraOutputCapabilityNapi();
     ~CameraOutputCapabilityNapi();
