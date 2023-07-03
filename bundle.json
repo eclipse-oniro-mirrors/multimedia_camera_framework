@@ -24,9 +24,10 @@
               "access_token",
               "bundle_framework",
               "device_manager",
-              "driver_interface_camera",
+              "drivers_interface_camera",
               "graphic_standard",
               "hdf_core",
+              "hicollie",
               "hicollie_native",
               "hisysevent_native",
               "hitrace_native",
@@ -42,7 +43,8 @@
               "safwk",
               "samgr",
               "samgr_proxy",
-              "system_ability_fwk"
+              "system_ability_fwk",
+              "window_manager"
             ],
             "third_party": [
               ""
