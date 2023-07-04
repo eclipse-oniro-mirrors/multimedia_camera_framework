@@ -66,11 +66,13 @@ public:
     void CameraHostDied();
     bool IsCameraSupported(const std::string& cameraId);
     const std::string& GetName();
+    int32_t GetCameraHostVersion();
     int32_t GetCameras(std::vector<std::string>& cameraIds);
     int32_t GetCameraAbility(std::string& cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata>& ability);
     int32_t OpenCamera(std::string& cameraId, const sptr<ICameraDeviceCallback>& callback,
-                       sptr<ICameraDevice>& pDevice);
+                       sptr<OHOS::HDI::Camera::V1_1::ICameraDevice>& pDevice);
     int32_t SetFlashlight(const std::string& cameraId, bool isEnable);
+    int32_t PreLaunch(const std::string& cameraId);
 
     // CameraHostCallbackStub
     int32_t OnCameraStatus(const std::string& cameraId, HDI::Camera::V1_0::CameraStatus status) override;
@@ -84,7 +86,9 @@ private:
 
     HCameraHostManager* cameraHostManager_;
     std::string name_;
-    sptr<ICameraHost> cameraHostProxy_;
+    uint32_t majorVer_;
+    uint32_t minorVer_;
+    sptr<OHOS::HDI::Camera::V1_1::ICameraHost> cameraHostProxy_;
 
     std::mutex mutex_;
     std::vector<std::string> cameraIds_;
@@ -115,11 +119,13 @@ bool HCameraHostManager::CameraHostInfo::Init()
         MEDIA_ERR_LOG("CameraHostInfo::Init, no camera host proxy");
         return true;
     }
-    cameraHostProxy_ = ICameraHost::Get(name_.c_str(), false);
+    cameraHostProxy_ = OHOS::HDI::Camera::V1_1::ICameraHost::Get(name_.c_str(), false);
     if (cameraHostProxy_ == nullptr) {
         MEDIA_ERR_LOG("Failed to get ICameraHost");
         return false;
     }
+    // Get cameraHost veresion
+    cameraHostProxy_->GetVersion(majorVer_, minorVer_);
     cameraHostProxy_->SetCallback(this);
     sptr<CameraHostDeathRecipient> cameraHostDeathRecipient = new CameraHostDeathRecipient(this);
     const sptr<IRemoteObject> &remote = OHOS::HDI::hdi_objcast<ICameraHost>(cameraHostProxy_);
@@ -159,6 +165,12 @@ bool HCameraHostManager::CameraHostInfo::IsCameraSupported(const std::string& ca
 const std::string& HCameraHostManager::CameraHostInfo::GetName()
 {
     return name_;
+}
+
+int32_t HCameraHostManager::CameraHostInfo::GetCameraHostVersion()
+{
+    MEDIA_INFO_LOG("cameraHostProxy_ GetVersion majorVer_: %u, minorVers_: %u", majorVer_, minorVer_);
+    return GetVersionId(majorVer_, minorVer_);
 }
 
 int32_t HCameraHostManager::CameraHostInfo::GetCameras(std::vector<std::string>& cameraIds)
@@ -201,7 +213,7 @@ int32_t HCameraHostManager::CameraHostInfo::GetCameraAbility(std::string& camera
 
 int32_t HCameraHostManager::CameraHostInfo::OpenCamera(std::string& cameraId,
     const sptr<ICameraDeviceCallback>& callback,
-    sptr<ICameraDevice>& pDevice)
+    sptr<OHOS::HDI::Camera::V1_1::ICameraDevice>& pDevice)
 {
     MEDIA_INFO_LOG("CameraHostInfo::OpenCamera %{public}s", cameraId.c_str());
     auto deviceInfo = FindCameraDeviceInfo(cameraId);
@@ -215,7 +227,16 @@ int32_t HCameraHostManager::CameraHostInfo::OpenCamera(std::string& cameraId,
         MEDIA_ERR_LOG("CameraHostInfo::OpenCamera cameraHostProxy_ is null");
         return CAMERA_UNKNOWN_ERROR;
     }
-    CamRetCode rc = (CamRetCode)(cameraHostProxy_->OpenCamera(cameraId, callback, pDevice));
+    CamRetCode rc;
+    // try to get higher version
+    if (GetVersionId(1, 1) == GetCameraHostVersion()) {
+        rc = (CamRetCode)(cameraHostProxy_->OpenCamera_V1_1(cameraId, callback, pDevice));
+    } else {
+        sptr<ICameraDevice> tempDevice;
+        rc = (CamRetCode)(cameraHostProxy_->OpenCamera(cameraId, callback, tempDevice));
+        // static_cast to V1.1
+        pDevice = static_cast<OHOS::HDI::Camera::V1_1::ICameraDevice *>(tempDevice.GetRefPtr());
+    }
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         MEDIA_ERR_LOG("CameraHostInfo::OpenCamera failed with error Code:%{public}d", rc);
         return HdiToServiceError(rc);
@@ -233,6 +254,27 @@ int32_t HCameraHostManager::CameraHostInfo::SetFlashlight(const std::string& cam
     CamRetCode rc = (CamRetCode)(cameraHostProxy_->SetFlashlight(cameraId, isEnable));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         MEDIA_ERR_LOG("CameraHostInfo::SetFlashlight failed with error Code:%{public}d", rc);
+        return HdiToServiceError(rc);
+    }
+    return CAMERA_OK;
+}
+
+int32_t HCameraHostManager::CameraHostInfo::PreLaunch(const std::string& cameraId)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (cameraHostProxy_ == nullptr) {
+        MEDIA_ERR_LOG("CameraHostInfo::PreLaunch cameraHostProxy_ is null");
+        return CAMERA_UNKNOWN_ERROR;
+    }
+    MEDIA_INFO_LOG("CameraHostInfo::preLaunch for cameraId %{public}s", cameraId.c_str());
+    OHOS::HDI::Camera::V1_1::PrelaunchConfig prelaunchConfig;
+    std::vector<uint8_t> settings;
+    prelaunchConfig.cameraId = cameraId;
+    prelaunchConfig.streamInfos_V1_1 = {};
+    prelaunchConfig.setting = settings;
+    CamRetCode rc = (CamRetCode)(cameraHostProxy_->Prelaunch(prelaunchConfig));
+    if (rc != HDI::Camera::V1_0::NO_ERROR) {
+        MEDIA_ERR_LOG("CameraHostInfo::PreLaunch failed with error Code:%{public}d", rc);
         return HdiToServiceError(rc);
     }
     return CAMERA_OK;
@@ -520,9 +562,20 @@ std::vector<sptr<ICameraDeviceService>> HCameraHostManager::CameraConflictDetect
     return devicesNeedClose;
 }
 
+int32_t HCameraHostManager::GetVersionByCamera(const std::string& cameraId)
+{
+    MEDIA_INFO_LOG("GetVersionByCamera camera = %{public}s", cameraId.c_str());
+    auto cameraHostInfo = FindCameraHostInfo(cameraId);
+    if (cameraHostInfo == nullptr) {
+        MEDIA_ERR_LOG("GetVersionByCamera failed with invalid device info");
+        return 0;
+    }
+    return cameraHostInfo->GetCameraHostVersion();
+}
+
 int32_t HCameraHostManager::OpenCameraDevice(std::string &cameraId,
                                              const sptr<ICameraDeviceCallback> &callback,
-                                             sptr<ICameraDevice> &pDevice)
+                                             sptr<OHOS::HDI::Camera::V1_1::ICameraDevice> &pDevice)
 {
     MEDIA_INFO_LOG("HCameraHostManager::OpenCameraDevice try to open camera = %{public}s", cameraId.c_str());
     auto cameraHostInfo = FindCameraHostInfo(cameraId);
@@ -541,6 +594,16 @@ int32_t HCameraHostManager::SetFlashlight(const std::string& cameraId, bool isEn
         return CAMERA_INVALID_ARG;
     }
     return cameraHostInfo->SetFlashlight(cameraId, isEnable);
+}
+
+int32_t HCameraHostManager::PreLaunch(const std::string& cameraId)
+{
+    auto cameraHostInfo = FindCameraHostInfo(cameraId);
+    if (cameraHostInfo == nullptr) {
+        MEDIA_ERR_LOG("HCameraHostManager::OpenCameraDevice failed with invalid device info");
+        return CAMERA_INVALID_ARG;
+    }
+    return cameraHostInfo->PreLaunch(cameraId);
 }
 
 void HCameraHostManager::OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status)

@@ -30,6 +30,7 @@
 #include "privacy_kit.h"
 #include "v1_0/istream_operator_callback.h"
 #include "v1_0/istream_operator.h"
+#include "v1_1/istream_operator.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -82,14 +83,14 @@ private:
     int32_t HandleCaptureOuputsConfig(sptr<HCameraDevice> &device);
     int32_t CreateAndCommitStreams(sptr<HCameraDevice> &device,
 	                               std::shared_ptr<OHOS::Camera::CameraMetadata> &deviceSettings,
-                                   std::vector<StreamInfo> &streamInfos);
+                                   std::vector<StreamInfo_V1_1> &streamInfos);
     int32_t CheckAndCommitStreams(sptr<HCameraDevice> &device,
 	                              std::shared_ptr<OHOS::Camera::CameraMetadata> &deviceSettings,
-                                  std::vector<StreamInfo> &allStreamInfos,
-                                  std::vector<StreamInfo> &newStreamInfos);
+                                  std::vector<StreamInfo_V1_1> &allStreamInfos,
+                                  std::vector<StreamInfo_V1_1> &newStreamInfos);
     int32_t GetCurrentStreamInfos(sptr<HCameraDevice> &device,
 	                              std::shared_ptr<OHOS::Camera::CameraMetadata> &deviceSettings,
-                                  std::vector<StreamInfo> &streamInfos);
+                                  std::vector<StreamInfo_V1_1> &streamInfos);
     void UpdateSessionConfig(sptr<HCameraDevice> &device);
     void DeleteReleasedStream();
     void RestorePreviousState(sptr<HCameraDevice> &device, bool isCreateReleaseStreams);

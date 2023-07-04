@@ -43,6 +43,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+struct PreviewOutputAsyncContext;
 static const char CAMERA_PREVIEW_OUTPUT_NAPI_CLASS_NAME[] = "PreviewOutput";
 
 class PreviewOutputCallback : public PreviewStateCallback {
@@ -77,6 +78,7 @@ class PreviewOutputNapi : public CameraOutputNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreatePreviewOutput(napi_env env, Profile &profile, std::string surfaceId);
+    static napi_value CreateDeferredPreviewOutput(napi_env env, Profile &profile);
     static bool IsPreviewOutput(napi_env env, napi_value obj);
     static napi_value AddDeferredSurface(napi_env env, napi_callback_info info);
     static napi_value Start(napi_env env, napi_callback_info info);
@@ -90,6 +92,8 @@ public:
 private:
     static void PreviewOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value PreviewOutputNapiConstructor(napi_env env, napi_callback_info info);
+    static napi_status CreateAsyncTask(napi_env env, napi_value resource,
+        std::unique_ptr<OHOS::CameraStandard::PreviewOutputAsyncContext> &asyncContext);
 
     napi_env env_;
     napi_ref wrapper_;
@@ -104,6 +108,7 @@ private:
 struct PreviewOutputAsyncContext : public AsyncContext {
     PreviewOutputNapi* objectInfo;
     bool bRetBool;
+    std::string surfaceId;
     ~PreviewOutputAsyncContext()
     {
         objectInfo = nullptr;

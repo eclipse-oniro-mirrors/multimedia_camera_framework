@@ -73,6 +73,7 @@ ohos_shared_library("camera_service") {
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:metadata",
     "graphic_standard:librender_service_client",
     "graphic_standard:surface",

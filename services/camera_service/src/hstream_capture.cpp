@@ -29,17 +29,38 @@ HStreamCapture::HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t for
 HStreamCapture::~HStreamCapture()
 {}
 
-int32_t HStreamCapture::LinkInput(sptr<IStreamOperator> streamOperator,
+int32_t HStreamCapture::LinkInput(sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator,
                                   std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t streamId)
 {
     return HStreamCommon::LinkInput(streamOperator, cameraAbility, streamId);
 }
 
-void HStreamCapture::SetStreamInfo(StreamInfo &streamInfo)
+void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
 {
     HStreamCommon::SetStreamInfo(streamInfo);
-    streamInfo.intent_ = STILL_CAPTURE;
-    streamInfo.encodeType_ = ENCODE_TYPE_JPEG;
+    streamInfo.v1_0.intent_ = STILL_CAPTURE;
+    streamInfo.v1_0.encodeType_ = ENCODE_TYPE_JPEG;
+    HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo;
+    extendedStreamInfo.type = HDI::Camera::V1_1::EXTENDED_STREAM_INFO_QUICK_THUMBNAIL;
+    extendedStreamInfo.bufferQueue = thumbnailBufferQueue_;
+    // quickThumbnial do not need these param
+    extendedStreamInfo.width = 0;
+    extendedStreamInfo.height = 0;
+    extendedStreamInfo.format = 0;
+    extendedStreamInfo.dataspace = 0;
+    streamInfo.extendedStreamInfos = {extendedStreamInfo};
+}
+
+int32_t HStreamCapture::SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer)
+{
+    if (isEnabled && producer != nullptr) {
+        thumbnailSwitch_ = 1;
+        thumbnailBufferQueue_ = new BufferProducerSequenceable(producer);
+    } else {
+        thumbnailSwitch_ = 0;
+        thumbnailBufferQueue_ = nullptr;
+    }
+    return CAMERA_OK;
 }
 
 int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureSettings)
@@ -243,6 +264,12 @@ int32_t HStreamCapture::OnFrameShutter(int32_t captureId, uint64_t timestamp)
 void HStreamCapture::DumpStreamInfo(std::string& dumpString)
 {
     dumpString += "capture stream:\n";
+    dumpString += "ThumbnailSwitch:[" + std::to_string(thumbnailSwitch_);
+    if (thumbnailBufferQueue_) {
+        dumpString += "] ThumbnailBuffer producer Id:["
+            + std::to_string(thumbnailBufferQueue_->producer_->GetUniqueId());
+    }
+    dumpString += "]\n";
     HStreamCommon::DumpStreamInfo(dumpString);
 }
 } // namespace CameraStandard

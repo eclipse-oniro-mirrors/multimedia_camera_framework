@@ -13,8 +13,9 @@
  * limitations under the License.
  */
 
-#include "input/camera_napi.h"
 #include "input/camera_manager_napi.h"
+#include "input/camera_napi.h"
+#include "input/camera_pre_launch_config_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -98,6 +99,9 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isCameraMuted", IsCameraMuted),
         DECLARE_NAPI_FUNCTION("isCameraMuteSupported", IsCameraMuteSupported),
         DECLARE_NAPI_FUNCTION("muteCamera", MuteCamera),
+        DECLARE_NAPI_FUNCTION("preLaunch", PrelaunchCamera),
+        DECLARE_NAPI_FUNCTION("isPreLaunchSupported", IsPreLaunchSupported),
+        DECLARE_NAPI_FUNCTION("setPreLaunchConfig", SetPreLaunchConfig),
         DECLARE_NAPI_FUNCTION("createCameraInput", CreateCameraInputInstance),
         DECLARE_NAPI_FUNCTION("createCaptureSession", CreateCameraSessionInstance),
         DECLARE_NAPI_FUNCTION("createPreviewOutput", CreatePreviewOutputInstance),
@@ -180,8 +184,8 @@ void CameraManagerCommonCompleteCallback(napi_env env, napi_status status, void*
     MEDIA_INFO_LOG("modeForAsync = %{public}d", context->modeForAsync);
     napi_get_undefined(env, &jsContext->error);
     if (context->modeForAsync == CREATE_DEFERRED_PREVIEW_OUTPUT_ASYNC_CALLBACK) {
-        jsContext->data = PhotoOutputNapi::CreatePhotoOutput(env, context->profile, context->surfaceId);
-        MEDIA_INFO_LOG("CreatePhotoOutput context->photoSurfaceId : %{public}s", context->surfaceId.c_str());
+        MEDIA_INFO_LOG("createDeferredPreviewOutput");
+        jsContext->data = PreviewOutputNapi::CreateDeferredPreviewOutput(env, context->profile);
     }
 
     if (jsContext->data == nullptr) {
@@ -309,9 +313,7 @@ static napi_value ConvertJSArgsToNative(napi_env env, size_t argc, const napi_va
     napi_value result;
     size_t length = 0;
     auto context = &asyncContext;
-
     NAPI_ASSERT(env, argv != nullptr, "Argument list is empty");
-
     for (size_t i = PARAM0; i < argc; i++) {
         napi_valuetype valueType = napi_undefined;
         napi_typeof(env, argv[i], &valueType);
@@ -334,9 +336,11 @@ static napi_value ConvertJSArgsToNative(napi_env env, size_t argc, const napi_va
                     context->videoProfile.framerates_[0],
                     context->videoProfile.framerates_[1]);
             }
+        } else if (i == PARAM1 && valueType == napi_function) {
+            napi_create_reference(env, argv[i], refCount, &context->callbackRef);
+            break;
         } else if (i == PARAM1 && valueType == napi_string) {
             if (napi_get_value_string_utf8(env, argv[i], buffer, PATH_MAX, &length) == napi_ok) {
-                MEDIA_INFO_LOG("surfaceId buffer --1  : %{public}s", buffer);
                 context->surfaceId = std::string(buffer);
                 MEDIA_INFO_LOG("context->surfaceId after convert : %{public}s", context->surfaceId.c_str());
             } else {
@@ -349,7 +353,6 @@ static napi_value ConvertJSArgsToNative(napi_env env, size_t argc, const napi_va
             NAPI_ASSERT(env, false, "type mismatch");
         }
     }
-
     // Return true napi_value if params are successfully obtained
     napi_get_boolean(env, true, &result);
     return result;
@@ -808,6 +811,76 @@ napi_value CameraManagerNapi::On(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("On call Failed!");
     }
     return undefinedResult;
+}
+
+napi_value CameraManagerNapi::IsPreLaunchSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("IsPreLaunchSupported is called");
+    napi_status status;
+
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+    CameraDeviceNapi* cameraDeviceNapi = nullptr;
+    CameraManagerNapi* cameraManagerNapi = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
+    if (status != napi_ok || cameraManagerNapi == nullptr) {
+        MEDIA_ERR_LOG("napi_unwrap( ) failure!");
+        return result;
+    }
+    status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void **>(&cameraDeviceNapi));
+    if (status != napi_ok || cameraDeviceNapi == nullptr) {
+        MEDIA_ERR_LOG("Could not able to read cameraDevice argument!");
+        return result;
+    }
+    sptr<CameraDevice> cameraInfo = cameraDeviceNapi->cameraDevice_;
+    bool isPreLaunchSupported = CameraManager::GetInstance()->IsPreLaunchSupported(cameraInfo);
+    MEDIA_DEBUG_LOG("isPreLaunchSupported: %{public}d", isPreLaunchSupported);
+    napi_get_boolean(env, isPreLaunchSupported, &result);
+    return result;
+}
+
+napi_value CameraManagerNapi::PrelaunchCamera(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("PrelaunchCamera is called");
+    napi_value result = nullptr;
+    CameraManager::GetInstance()->PrelaunchCamera();
+    MEDIA_INFO_LOG("PrelaunchCamera");
+    napi_get_undefined(env, &result);
+    return result;
+}
+
+napi_value CameraManagerNapi::SetPreLaunchConfig(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("SetPrelaunchConfig is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc < ARGS_TWO, "requires 1 parameters maximum");
+    napi_value res = nullptr;
+    PreLaunchConfig prelaunchConfig;
+    CameraDeviceNapi* cameraDeviceNapi = nullptr;
+    if (napi_get_named_property(env, argv[PARAM0], "cameraDevice", &res) == napi_ok) {
+        status = napi_unwrap(env, res, reinterpret_cast<void **>(&cameraDeviceNapi));
+        prelaunchConfig.cameraDevice_ = cameraDeviceNapi->cameraDevice_;
+        if (status != napi_ok || prelaunchConfig.cameraDevice_ == nullptr) {
+            MEDIA_ERR_LOG("napi_unwrap( ) failure!");
+            return result;
+        }
+    }
+    std::string cameraId = prelaunchConfig.GetCameraDevice()->GetID();
+    MEDIA_INFO_LOG("SetPreLaunchConfig cameraId = %{public}s", cameraId.c_str());
+    CameraManager::GetInstance()->SetPreLaunchConfig(cameraId);
+    napi_get_undefined(env, &result);
+    return result;
 }
 } // namespace CameraStandard
 } // namespace OHOS

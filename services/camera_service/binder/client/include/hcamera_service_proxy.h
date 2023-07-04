@@ -58,6 +58,10 @@ public:
 
     int32_t MuteCamera(bool muteMode) override;
 
+    int32_t PrelaunchCamera() override;
+
+    int32_t SetPrelaunchConfig(std::string cameraId) override;
+
     int32_t IsCameraMuted(bool &muteMode) override;
 
 private:

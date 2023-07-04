@@ -103,6 +103,7 @@ public:
 
 void PreviewOutput::AddDeferredSurface(sptr<Surface> surface)
 {
+    MEDIA_INFO_LOG("PreviewOutput::AddDeferredSurface called");
     if (surface == nullptr) {
         MEDIA_ERR_LOG("PreviewOutput::AddDeferredSurface surface is null");
         return;

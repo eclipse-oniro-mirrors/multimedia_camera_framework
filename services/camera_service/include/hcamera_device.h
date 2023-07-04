@@ -47,8 +47,8 @@ public:
     int32_t EnableResult(std::vector<int32_t> &results) override;
     int32_t DisableResult(std::vector<int32_t> &results) override;
     int32_t GetStreamOperator(sptr<IStreamOperatorCallback> callback,
-            sptr<IStreamOperator> &streamOperator);
-    sptr<IStreamOperator> GetStreamOperator();
+            sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> &streamOperator);
+    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> GetStreamOperator();
     int32_t SetCallback(sptr<ICameraDeviceServiceCallback> &callback) override;
     int32_t OnError(ErrorType type, int32_t errorCode) override;
     int32_t OnResult(uint64_t timestamp, const std::vector<uint8_t>& result) override;
@@ -63,7 +63,7 @@ public:
     int32_t GetCallerToken();
 
 private:
-    sptr<ICameraDevice> hdiCameraDevice_;
+    sptr<OHOS::HDI::Camera::V1_1::ICameraDevice> hdiCameraDevice_;
     sptr<HCameraHostManager> cameraHostManager_;
     std::string cameraID_;
     bool isReleaseCameraDevice_;
@@ -74,7 +74,7 @@ private:
     sptr<ICameraDeviceServiceCallback> deviceSvcCallback_;
     std::map<int32_t, wptr<ICameraServiceCallback>> statusSvcCallbacks_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> updateSettings_;
-    sptr<IStreamOperator> streamOperator_;
+    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator_;
     uint32_t callerToken_;
     std::vector<int32_t> videoFrameRateRange_;
     wptr<IDeviceOperatorsCallback> deviceOperatorsCallback_;

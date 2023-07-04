@@ -265,6 +265,34 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
     delete context;
 }
 
+napi_value PreviewOutputNapi::CreateDeferredPreviewOutput(napi_env env, Profile &profile)
+{
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+    napi_value constructor;
+
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (status == napi_ok) {
+        sPreviewOutput_ = CameraManager::GetInstance()->CreateDeferredPreviewOutput(profile);
+        if (sPreviewOutput_ == nullptr) {
+            MEDIA_ERR_LOG("failed to create previewOutput");
+            return result;
+        }
+        status = napi_new_instance(env, constructor, 0, nullptr, &result);
+        sPreviewOutput_ = nullptr;
+
+        if (status == napi_ok && result != nullptr) {
+            return result;
+        } else {
+            MEDIA_ERR_LOG("Failed to create preview output instance");
+        }
+    }
+
+    napi_get_undefined(env, &result);
+    return result;
+}
+
 napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, Profile &profile, std::string surfaceId)
 {
     MEDIA_INFO_LOG("CreatePreviewOutput is called");
@@ -385,6 +413,74 @@ napi_value PreviewOutputNapi::Release(napi_env env, napi_callback_info info)
     return result;
 }
 
+static napi_value ConvertJSArgsToNative(napi_env env, size_t argc, const napi_value argv[],
+    PreviewOutputAsyncContext &asyncContext)
+{
+    char buffer[PATH_MAX];
+    const int32_t refCount = 1;
+    napi_value result;
+    size_t length = 0;
+    auto context = &asyncContext;
+
+    NAPI_ASSERT(env, argv != nullptr, "Argument list is empty");
+
+    for (size_t i = PARAM0; i < argc; i++) {
+        napi_valuetype valueType = napi_undefined;
+        napi_typeof(env, argv[i], &valueType);
+        if (i == PARAM0 && valueType == napi_string) {
+            if (napi_get_value_string_utf8(env, argv[i], buffer, PATH_MAX, &length) == napi_ok) {
+                MEDIA_DEBUG_LOG("surfaceId buffer: %{public}s", buffer);
+                context->surfaceId = std::string(buffer);
+                MEDIA_DEBUG_LOG("context->surfaceId after convert : %{public}s", context->surfaceId.c_str());
+            } else {
+                MEDIA_ERR_LOG("Could not able to read surfaceId argument!");
+            }
+        } else if (i == PARAM1 && valueType == napi_function) {
+            napi_create_reference(env, argv[i], refCount, &context->callbackRef);
+            break;
+        } else {
+            NAPI_ASSERT(env, false, "type mismatch");
+        }
+    }
+
+    // Return true napi_value if params are successfully obtained
+    napi_get_boolean(env, true, &result);
+    return result;
+}
+
+napi_status PreviewOutputNapi::CreateAsyncTask(napi_env env, napi_value resource,
+    std::unique_ptr<PreviewOutputAsyncContext> &asyncContext)
+{
+    napi_status status = napi_create_async_work(env, nullptr, resource, [](napi_env env, void* data) {
+        auto context = static_cast<PreviewOutputAsyncContext*>(data);
+        context->status = false;
+        // Start async trace
+        context->funcName = "PreviewOutputNapi::AddDeferredSurface";
+        context->taskId = CameraNapiUtils::IncreamentAndGet(previewOutputTaskId);
+        CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
+        if (context->objectInfo != nullptr && context->objectInfo->previewOutput_ != nullptr) {
+            context->bRetBool = false;
+            context->status = true;
+            uint64_t iSurfaceId;
+            std::istringstream iss(context->surfaceId);
+            iss >> iSurfaceId;
+            sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
+            if (!surface) {
+                surface = Media::ImageReceiver::getSurfaceById(context->surfaceId);
+            }
+            if (surface == nullptr) {
+                MEDIA_ERR_LOG("failed to get surface");
+                return;
+            }
+            CameraFormat format = ((sptr<PreviewOutput> &)(context->objectInfo->previewOutput_))->format;
+            surface->SetUserData(CameraManager::surfaceFormat, std::to_string(format));
+            ((sptr<PreviewOutput> &)(context->objectInfo->previewOutput_))->AddDeferredSurface(surface);
+        }
+    },
+    CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+    return status;
+}
+
 napi_value PreviewOutputNapi::AddDeferredSurface(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("AddDeferredSurface is called");
@@ -395,38 +491,22 @@ napi_value PreviewOutputNapi::AddDeferredSurface(napi_env env, napi_callback_inf
     size_t argc = ARGS_TWO;
     napi_value argv[ARGS_TWO] = {0};
     napi_value thisVar = nullptr;
-
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_TWO, "requires 1 parameter maximum");
-
+    NAPI_ASSERT(env, argc <= ARGS_TWO, "requires 2 parameter maximum");
     napi_get_undefined(env, &result);
     std::unique_ptr<PreviewOutputAsyncContext> asyncContext = std::make_unique<PreviewOutputAsyncContext>();
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
+    result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
+    CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
     if (status == napi_ok && asyncContext->objectInfo != nullptr) {
         if (argc == ARGS_TWO) {
             CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM1], refCount, asyncContext->callbackRef);
         }
-
         CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
         CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "AddDeferredSurface");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<PreviewOutputAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "PreviewOutputNapi::AddDeferredSurface";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(previewOutputTaskId);
-                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr && context->objectInfo->previewOutput_ != nullptr) {
-                    context->bRetBool = false;
-                    context->status = true;
-                    ((sptr<PreviewOutput> &)(context->objectInfo->previewOutput_))->Stop();
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+        status = CreateAsyncTask(env, resource, asyncContext);
         if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for PreviewOutputNapi::Release");
+            MEDIA_ERR_LOG("Failed to create napi_create_async_work!");
             napi_get_undefined(env, &result);
         } else {
             napi_queue_async_work(env, asyncContext->work);

@@ -159,7 +159,7 @@ int32_t HCaptureSession::AddInput(sptr<ICameraDeviceService> cameraDevice)
         CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::AddInput"));
     }
 
-    sptr<IStreamOperator> streamOperator;
+    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator;
     int32_t rc = localCameraDevice->GetStreamOperator(streamOperatorCallback_, streamOperator);
     if (rc != CAMERA_OK) {
         MEDIA_ERR_LOG("HCaptureSession::GetCameraDevice GetStreamOperator returned %{public}d", rc);
@@ -346,13 +346,13 @@ int32_t HCaptureSession::GetCameraDevice(sptr<HCameraDevice> &device)
 
 int32_t HCaptureSession::GetCurrentStreamInfos(sptr<HCameraDevice> &device,
                                                std::shared_ptr<OHOS::Camera::CameraMetadata> &deviceSettings,
-                                               std::vector<StreamInfo> &streamInfos)
+                                               std::vector<StreamInfo_V1_1> &streamInfos)
 {
     int32_t rc;
     int32_t streamId = streamId_;
     bool isNeedLink;
-    StreamInfo curStreamInfo;
-    sptr<IStreamOperator> streamOperator;
+    StreamInfo_V1_1 curStreamInfo;
+    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator;
     if (device != nullptr) {
         streamOperator = device->GetStreamOperator();
     }
@@ -385,16 +385,28 @@ int32_t HCaptureSession::GetCurrentStreamInfos(sptr<HCameraDevice> &device,
 
 int32_t HCaptureSession::CreateAndCommitStreams(sptr<HCameraDevice> &device,
                                                 std::shared_ptr<OHOS::Camera::CameraMetadata> &deviceSettings,
-                                                std::vector<StreamInfo> &streamInfos)
+                                                std::vector<StreamInfo_V1_1> &streamInfos)
 {
     CamRetCode hdiRc = HDI::Camera::V1_0::NO_ERROR;
-    StreamInfo curStreamInfo;
-    sptr<IStreamOperator> streamOperator;
+    StreamInfo_V1_1 curStreamInfo;
+    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator;
     if (device != nullptr) {
         streamOperator = device->GetStreamOperator();
     }
     if (streamOperator != nullptr && !streamInfos.empty()) {
-        hdiRc = (CamRetCode)(streamOperator->CreateStreams(streamInfos));
+        uint32_t major;
+        uint32_t minor;
+        streamOperator->GetVersion(major, minor);
+        MEDIA_INFO_LOG("streamOperator GetVersion major:%d, minor:%d", major, minor);
+        if (major == 1 && minor == 1) {
+            hdiRc = (CamRetCode)(streamOperator->CreateStreams_V1_1(streamInfos));
+        } else {
+            std::vector<StreamInfo> streamInfos_V1_0;
+            for (auto streamInfo : streamInfos) {
+                streamInfos_V1_0.emplace_back(streamInfo.v1_0);
+            }
+            hdiRc = (CamRetCode)(streamOperator->CreateStreams(streamInfos_V1_0));
+        }
     } else {
         MEDIA_INFO_LOG("HCaptureSession::CreateAndCommitStreams(), No new streams to create");
     }
@@ -407,7 +419,7 @@ int32_t HCaptureSession::CreateAndCommitStreams(sptr<HCameraDevice> &device,
             std::vector<int32_t> streamIds;
             for (auto item = streamInfos.begin(); item != streamInfos.end(); ++item) {
                 curStreamInfo = *item;
-                streamIds.emplace_back(curStreamInfo.streamId_);
+                streamIds.emplace_back(curStreamInfo.v1_0.streamId_);
             }
             MEDIA_DEBUG_LOG("HCaptureSession::CreateAndCommitStreams() streamIds size() = %{public}zu",
                             streamIds.size());
@@ -425,8 +437,8 @@ int32_t HCaptureSession::CreateAndCommitStreams(sptr<HCameraDevice> &device,
 
 int32_t HCaptureSession::CheckAndCommitStreams(sptr<HCameraDevice> &device,
                                                std::shared_ptr<OHOS::Camera::CameraMetadata> &deviceSettings,
-                                               std::vector<StreamInfo> &allStreamInfos,
-                                               std::vector<StreamInfo> &newStreamInfos)
+                                               std::vector<StreamInfo_V1_1> &allStreamInfos,
+                                               std::vector<StreamInfo_V1_1> &newStreamInfos)
 {
     return CreateAndCommitStreams(device, deviceSettings, newStreamInfos);
 }
@@ -455,8 +467,8 @@ void HCaptureSession::DeleteReleasedStream()
 
 void HCaptureSession::RestorePreviousState(sptr<HCameraDevice> &device, bool isCreateReleaseStreams)
 {
-    std::vector<StreamInfo> streamInfos;
-    StreamInfo streamInfo;
+    std::vector<StreamInfo_V1_1> streamInfos;
+    StreamInfo_V1_1 streamInfo;
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings;
     sptr<HStreamCommon> curStream;
 
@@ -528,11 +540,11 @@ int32_t HCaptureSession::HandleCaptureOuputsConfig(sptr<HCameraDevice> &device)
 {
     int32_t rc;
     int32_t streamId;
-    std::vector<StreamInfo> newStreamInfos;
-    std::vector<StreamInfo> allStreamInfos;
-    StreamInfo curStreamInfo;
+    std::vector<StreamInfo_V1_1> newStreamInfos;
+    std::vector<StreamInfo_V1_1> allStreamInfos;
+    StreamInfo_V1_1 curStreamInfo;
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings;
-    sptr<IStreamOperator> streamOperator;
+    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator;
     sptr<HStreamCommon> curStream;
     if (device != nullptr) {
         settings = device->GetSettings();
@@ -559,6 +571,7 @@ int32_t HCaptureSession::HandleCaptureOuputsConfig(sptr<HCameraDevice> &device)
             MEDIA_ERR_LOG("HCaptureSession::HandleCaptureOuputsConfig() curStream is null");
             return CAMERA_UNKNOWN_ERROR;
         }
+        MEDIA_INFO_LOG("HandleCaptureOuputsConfig link Output with streamId %{public}d", streamId);
         rc = curStream->LinkInput(streamOperator, settings, streamId);
         if (rc != CAMERA_OK) {
             MEDIA_ERR_LOG("HCaptureSession::HandleCaptureOuputsConfig() Failed to link Output, %{public}d", rc);

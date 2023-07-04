@@ -569,6 +569,77 @@ int32_t HCameraService::MuteCamera(bool muteMode)
     return ret;
 }
 
+int32_t HCameraService::PrelaunchCamera()
+{
+    CAMERA_SYNC_TRACE;
+    OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
+    std::string permissionName = OHOS_PERMISSION_CAMERA;
+    int32_t ret = CheckPermission(permissionName, callerToken);
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCameraService::PrelaunchCamera failed permission is : %{public}s", permissionName.c_str());
+        return ret;
+    }
+
+    MEDIA_INFO_LOG("HCameraService::PrelaunchCamera");
+    if (preCameraId_.empty()) {
+        std::vector<std::string> cameraIds_;
+        cameraHostManager_->GetCameras(cameraIds_);
+        preCameraId_= cameraIds_.front();
+    }
+    MEDIA_INFO_LOG("HCameraService::PrelaunchCamera preCameraId_ is: %{public}s", preCameraId_.c_str());
+    ret = cameraHostManager_->PreLaunch(preCameraId_);
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCameraService::PreLaunch failed");
+    }
+    return ret;
+}
+
+
+int32_t HCameraService::SetPrelaunchConfig(std::string cameraId)
+{
+    CAMERA_SYNC_TRACE;
+    OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
+    std::string permissionName = OHOS_PERMISSION_CAMERA;
+    int32_t ret = CheckPermission(permissionName, callerToken);
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCameraService::SetPrelaunchConfig failed permission is: %{public}s", permissionName.c_str());
+        return ret;
+    }
+
+    MEDIA_INFO_LOG("HCameraService::SetPrelaunchConfig");
+    std::vector<std::string> cameraIds_;
+    cameraHostManager_->GetCameras(cameraIds_);
+    if ((find(cameraIds_.begin(), cameraIds_.end(), cameraId) != cameraIds_.end()) && IsPrelaunchSupported(cameraId)) {
+        preCameraId_ = cameraId;
+    } else {
+        MEDIA_ERR_LOG("HCameraService::SetPrelaunchConfig illegal");
+        ret = CAMERA_INVALID_ARG;
+    }
+    return ret;
+}
+
+bool HCameraService::IsPrelaunchSupported(std::string cameraId)
+{
+    bool isPreLaunchSupported = false;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
+    int32_t ret = cameraHostManager_->GetCameraAbility(cameraId, cameraAbility);
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCameraService::IsCameraMuted GetCameraAbility failed");
+        return isPreLaunchSupported;
+    }
+    camera_metadata_item_t item;
+    common_metadata_header_t* metadata = cameraAbility->get();
+    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_PRELAUNCH_AVAILABLE, &item);
+    if (ret == 0) {
+        MEDIA_INFO_LOG("CameraManager::IsPrelaunchSupported() OHOS_ABILITY_PRELAUNCH_AVAILABLE is %{public}d",
+                       item.data.u8[0]);
+        isPreLaunchSupported = (item.data.u8[0] == 1);
+    } else {
+        MEDIA_ERR_LOG("Failed to get OHOS_ABILITY_PRELAUNCH_AVAILABLE ret = %{public}d", ret);
+    }
+    return isPreLaunchSupported;
+}
+
 int32_t HCameraService::IsCameraMuted(bool &muteMode)
 {
     muteMode = muteMode_;

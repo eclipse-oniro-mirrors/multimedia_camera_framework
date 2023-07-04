@@ -416,6 +416,27 @@ public:
     */
     std::vector<std::shared_ptr<CameraMuteListener>> GetCameraMuteListener();
 
+    /**
+       * @brief prelaunch the camera
+       *
+       * @return.
+       */
+    void PrelaunchCamera();
+
+    /**
+    * @brief set prelaunch config
+    *
+    * @return.
+    */
+    void SetPreLaunchConfig(std::string cameraId);
+
+    /**
+    * @brief Get the support of camera pre launch mode.
+    *
+    * @return Returns true is supported, false is not supported.
+    */
+    bool IsPreLaunchSupported(sptr<CameraDevice> camera);
+
     static const std::string surfaceFormat;
 
 protected:

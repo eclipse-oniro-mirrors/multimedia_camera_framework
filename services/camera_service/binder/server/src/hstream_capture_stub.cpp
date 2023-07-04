@@ -43,6 +43,9 @@ int HStreamCaptureStub::OnRemoteRequest(
         case CAMERA_STREAM_CAPTURE_RELEASE:
             errCode = Release();
             break;
+        case CAMERA_SERVICE_SET_THUMBNAIL:
+            errCode = HandleSetThumbnail(data);
+            break;
         default:
             MEDIA_ERR_LOG("HStreamCaptureStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -58,6 +61,20 @@ int HStreamCaptureStub::HandleCapture(MessageParcel &data)
     OHOS::Camera::MetadataUtils::DecodeCameraMetadata(data, metadata);
 
     return Capture(metadata);
+}
+
+int HStreamCaptureStub::HandleSetThumbnail(MessageParcel &data)
+{
+    sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
+    if (remoteObj == nullptr) {
+        MEDIA_ERR_LOG("HCameraServiceStub HandleCreatePhotoOutput BufferProducer is null");
+        return IPC_STUB_INVALID_DATA_ERR;
+    }
+    sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
+    bool isEnabled = data.ReadBool();
+    int32_t ret = SetThumbnail(isEnabled, producer);
+    MEDIA_DEBUG_LOG("HCameraServiceStub HandleSetThumbnail result: %{public}d", ret);
+    return ret;
 }
 
 int HStreamCaptureStub::HandleSetCallback(MessageParcel &data)

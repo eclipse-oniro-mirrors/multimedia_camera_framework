@@ -33,9 +33,10 @@ public:
     HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height);
     ~HStreamCapture();
 
-    int32_t LinkInput(sptr<IStreamOperator> streamOperator,
+    int32_t LinkInput(sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator,
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t streamId) override;
-    void SetStreamInfo(StreamInfo &streamInfo) override;
+    void SetStreamInfo(StreamInfo_V1_1 &streamInfo) override;
+    int32_t SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer) override;
     int32_t Capture(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureSettings) override;
     int32_t CancelCapture() override;
     int32_t Release() override;
@@ -51,6 +52,8 @@ public:
 private:
     sptr<IStreamCaptureCallback> streamCaptureCallback_;
     std::mutex callbackLock_;
+    int32_t thumbnailSwitch_ = 0;
+    sptr<BufferProducerSequenceable> thumbnailBufferQueue_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -38,7 +38,7 @@ HStreamRepeat::HStreamRepeat(
 HStreamRepeat::~HStreamRepeat()
 {}
 
-int32_t HStreamRepeat::LinkInput(sptr<IStreamOperator> streamOperator,
+int32_t HStreamRepeat::LinkInput(sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator,
                                  std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t streamId)
 {
     int32_t ret = HStreamCommon::LinkInput(streamOperator, cameraAbility, streamId);
@@ -51,15 +51,15 @@ int32_t HStreamRepeat::LinkInput(sptr<IStreamOperator> streamOperator,
     return CAMERA_OK;
 }
 
-void HStreamRepeat::SetStreamInfo(StreamInfo &streamInfo)
+void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
 {
     HStreamCommon::SetStreamInfo(streamInfo);
     if (isVideo_) {
-        streamInfo.intent_ = VIDEO;
-        streamInfo.encodeType_ = ENCODE_TYPE_H264;
+        streamInfo.v1_0.intent_ = VIDEO;
+        streamInfo.v1_0.encodeType_ = ENCODE_TYPE_H264;
     } else {
-        streamInfo.intent_ = PREVIEW;
-        streamInfo.encodeType_ = ENCODE_TYPE_NULL;
+        streamInfo.v1_0.intent_ = PREVIEW;
+        streamInfo.v1_0.encodeType_ = ENCODE_TYPE_NULL;
     }
 }
 
@@ -183,12 +183,28 @@ int32_t HStreamRepeat::OnFrameError(int32_t errorType)
 
 int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer> &producer)
 {
-    std::lock_guard<std::mutex> lock(producerLock_);
-    if (producer == nullptr) {
-        MEDIA_ERR_LOG("HStreamRepeat::AddDeferredSurface producer is null");
-        return CAMERA_INVALID_ARG;
+    MEDIA_INFO_LOG("HStreamRepeat::AddDeferredSurface called");
+    {
+        std::lock_guard<std::mutex> lock(producerLock_);
+        if (producer == nullptr) {
+            MEDIA_ERR_LOG("HStreamRepeat::AddDeferredSurface producer is null");
+            return CAMERA_INVALID_ARG;
+        }
+        producer_ = producer;
     }
-    producer_ = producer;
+    SetStreamTransform();
+    if (streamOperator_ == nullptr) {
+        MEDIA_ERR_LOG("HStreamRepeat::CreateAndHandleDeferredStreams(), streamOperator_ == null");
+        return CAMERA_INVALID_STATE;
+    }
+    MEDIA_INFO_LOG("HStreamRepeat::AttachBufferQueue start");
+    std::lock_guard<std::mutex> lock(producerLock_);
+    CamRetCode rc = (CamRetCode)(streamOperator_
+        ->AttachBufferQueue(streamId_, new BufferProducerSequenceable(producer_)));
+    if (rc != HDI::Camera::V1_0::NO_ERROR) {
+        MEDIA_ERR_LOG("HStreamRepeat::AttachBufferQueue(), Failed to AttachBufferQueue %{public}d", rc);
+    }
+    MEDIA_INFO_LOG("HStreamRepeat::AddDeferredSurface end %{public}d", rc);
     return CAMERA_OK;
 }
 

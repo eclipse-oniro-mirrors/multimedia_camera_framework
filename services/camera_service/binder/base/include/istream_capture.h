@@ -19,6 +19,7 @@
 #include "camera_metadata_info.h"
 #include "istream_capture_callback.h"
 #include "istream_common.h"
+#include "surface.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -31,6 +32,8 @@ public:
     virtual int32_t SetCallback(sptr<IStreamCaptureCallback> &callback) = 0;
 
     virtual int32_t Release() = 0;
+
+    virtual int32_t SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamCapture");
 };

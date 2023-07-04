@@ -307,6 +307,7 @@ int CameraManager::CreatePreviewOutput(Profile &profile, sptr<Surface> surface, 
 sptr<PreviewOutput> CameraManager::CreateDeferredPreviewOutput(Profile &profile)
 {
     CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("CameraManager::CreateDeferredPreviewOutput called");
     sptr<PreviewOutput> previewOutput = nullptr;
     int ret = CreateDeferredPreviewOutput(profile, &previewOutput);
     if (ret != CameraErrorCode::SUCCESS) {
@@ -346,6 +347,7 @@ int CameraManager::CreateDeferredPreviewOutput(Profile &profile, sptr<PreviewOut
             MEDIA_ERR_LOG("Failed to new PreviewOutput");
             return CameraErrorCode::SERVICE_FATL_ERROR;
         } else {
+            previewOutput->format = profile.GetCameraFormat();
             POWERMGR_SYSEVENT_CAMERA_CONFIG(PREVIEW,
                                             profile.GetSize().width,
                                             profile.GetSize().height);
@@ -1027,6 +1029,48 @@ void CameraManager::MuteCamera(bool muteMode)
         MEDIA_ERR_LOG("MuteCamera call failed, retCode: %{public}d", retCode);
     }
     return;
+}
+
+void CameraManager::PrelaunchCamera()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (serviceProxy_ == nullptr) {
+        MEDIA_ERR_LOG("CameraManager::PrelaunchCamera serviceProxy_ is null");
+        return;
+    }
+    int32_t retCode = serviceProxy_->PrelaunchCamera();
+    if (retCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("CameraManager::PrelaunchCamera failed, retCode: %{public}d", retCode);
+    }
+}
+
+bool CameraManager::IsPreLaunchSupported(sptr<CameraDevice> camera)
+{
+    bool isPreLaunch = false;
+    std::shared_ptr<Camera::CameraMetadata> metadata = camera->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_PRELAUNCH_AVAILABLE, &item);
+    if (ret == 0) {
+        MEDIA_INFO_LOG("CameraManager::IsPreLaunchSupported() OHOS_ABILITY_PRELAUNCH_AVAILABLE is %{public}d",
+                       item.data.u8[0]);
+        isPreLaunch = (item.data.u8[0] == 1);
+    } else {
+        MEDIA_ERR_LOG("Failed to get OHOS_ABILITY_PRELAUNCH_AVAILABLE ret = %{public}d", ret);
+    }
+    return isPreLaunch;
+}
+
+void CameraManager::SetPreLaunchConfig(std::string cameraId)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (serviceProxy_ == nullptr) {
+        MEDIA_ERR_LOG("CameraManager::SetPrelaunchConfig serviceProxy_ is null");
+        return;
+    }
+    int32_t retCode = serviceProxy_->SetPrelaunchConfig(cameraId);
+    if (retCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("CameraManager::SetPrelaunchConfig failed, retCode: %{public}d", retCode);
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

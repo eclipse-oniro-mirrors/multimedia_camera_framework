@@ -28,7 +28,7 @@ HStreamMetadata::HStreamMetadata(sptr<OHOS::IBufferProducer> producer, int32_t f
 HStreamMetadata::~HStreamMetadata()
 {}
 
-int32_t HStreamMetadata::LinkInput(sptr<IStreamOperator> streamOperator,
+int32_t HStreamMetadata::LinkInput(sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator,
                                    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t streamId)
 {
     if (streamOperator == nullptr || cameraAbility == nullptr) {
@@ -41,10 +41,10 @@ int32_t HStreamMetadata::LinkInput(sptr<IStreamOperator> streamOperator,
     return CAMERA_OK;
 }
 
-void HStreamMetadata::SetStreamInfo(StreamInfo &streamInfo)
+void HStreamMetadata::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
 {
     HStreamCommon::SetStreamInfo(streamInfo);
-    streamInfo.intent_ = ANALYZE;
+    streamInfo.v1_0.intent_ = ANALYZE;
 }
 
 int32_t HStreamMetadata::Start()
