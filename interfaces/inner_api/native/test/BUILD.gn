@@ -65,9 +65,9 @@ ohos_executable("camera_video") {
     "access_token:libtoken_setproc",
     "c_utils:utils",
     "drivers_interface_camera:metadata",
-    "hisysevent_native:libhisysevent",
-    "hitrace_native:hitrace_meter",
-    "hiviewdfx_hilog_native:libhilog",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
     "ipc:ipc_core",
     "ipc:ipc_single",
     "player_framework:media_client",
@@ -103,9 +103,9 @@ ohos_executable("camera_capture") {
     "access_token:libtoken_setproc",
     "c_utils:utils",
     "drivers_interface_camera:metadata",
-    "hisysevent_native:libhisysevent",
-    "hitrace_native:hitrace_meter",
-    "hiviewdfx_hilog_native:libhilog",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
     "ipc:ipc_core",
   ]
   part_name = "camera_framework"
@@ -139,9 +139,9 @@ ohos_executable("camera_capture_video") {
     "access_token:libtoken_setproc",
     "c_utils:utils",
     "drivers_interface_camera:metadata",
-    "hisysevent_native:libhisysevent",
-    "hitrace_native:hitrace_meter",
-    "hiviewdfx_hilog_native:libhilog",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
     "ipc:ipc_core",
   ]
   part_name = "camera_framework"

@@ -50,9 +50,9 @@ ohos_unittest("camera_framework_unittest") {
     "access_token:libprivacy_sdk",
     "access_token:libtoken_setproc",
     "drivers_interface_camera:metadata",
-    "hisysevent_native:libhisysevent",
-    "hitrace_native:hitrace_meter",
-    "hiviewdfx_hilog_native:libhilog",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
   ]
