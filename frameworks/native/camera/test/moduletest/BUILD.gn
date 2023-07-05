@@ -48,8 +48,8 @@ ohos_moduletest("camera_framework_moduletest") {
     "access_token:libtoken_setproc",
     "drivers_interface_camera:metadata",
     "hilog:libhilog",
-    "hitrace:hitrace_meter",
     "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
     "init:libbegetutil",
     "ipc:ipc_core",
   ]
