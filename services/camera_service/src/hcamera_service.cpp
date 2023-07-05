@@ -587,6 +587,7 @@ int32_t HCameraService::PrelaunchCamera()
         preCameraId_= cameraIds_.front();
     }
     MEDIA_INFO_LOG("HCameraService::PrelaunchCamera preCameraId_ is: %{public}s", preCameraId_.c_str());
+    CAMERA_SYSEVENT_STATISTIC(CreateMsg("Camera Prelaunch CameraId:%s", preCameraId_.c_str()));
     ret = cameraHostManager_->PreLaunch(preCameraId_);
     if (ret != CAMERA_OK) {
         MEDIA_ERR_LOG("HCameraService::PreLaunch failed");
@@ -655,8 +656,7 @@ void HCameraService::CameraSummary(std::vector<std::string> cameraIds,
     HCaptureSession::CameraSessionSummary(dumpString);
 }
 
-void HCameraService::CameraDumpAbility(common_metadata_header_t* metadataEntry,
-    std::string& dumpString)
+void HCameraService::CameraDumpAbility(common_metadata_header_t* metadataEntry, std::string& dumpString)
 {
     camera_metadata_item_t item;
     int ret;
@@ -696,8 +696,7 @@ void HCameraService::CameraDumpAbility(common_metadata_header_t* metadataEntry,
     }
 }
 
-void HCameraService::CameraDumpStreaminfo(common_metadata_header_t* metadataEntry,
-    std::string& dumpString)
+void HCameraService::CameraDumpStreaminfo(common_metadata_header_t* metadataEntry, std::string& dumpString)
 {
     camera_metadata_item_t item;
     int ret;
@@ -727,8 +726,7 @@ void HCameraService::CameraDumpStreaminfo(common_metadata_header_t* metadataEntr
     }
 }
 
-void HCameraService::CameraDumpZoom(common_metadata_header_t* metadataEntry,
-    std::string& dumpString)
+void HCameraService::CameraDumpZoom(common_metadata_header_t* metadataEntry, std::string& dumpString)
 {
     dumpString += "    ## Zoom Related Info: \n";
     camera_metadata_item_t item;
@@ -768,8 +766,7 @@ void HCameraService::CameraDumpZoom(common_metadata_header_t* metadataEntry,
     }
 }
 
-void HCameraService::CameraDumpFlash(common_metadata_header_t* metadataEntry,
-    std::string& dumpString)
+void HCameraService::CameraDumpFlash(common_metadata_header_t* metadataEntry, std::string& dumpString)
 {
     camera_metadata_item_t item;
     int ret;
@@ -799,8 +796,7 @@ void HCameraService::CameraDumpFlash(common_metadata_header_t* metadataEntry,
     }
 }
 
-void HCameraService::CameraDumpAF(common_metadata_header_t* metadataEntry,
-    std::string& dumpString)
+void HCameraService::CameraDumpAF(common_metadata_header_t* metadataEntry, std::string& dumpString)
 {
     camera_metadata_item_t item;
     int ret;
@@ -831,8 +827,7 @@ void HCameraService::CameraDumpAF(common_metadata_header_t* metadataEntry,
     }
 }
 
-void HCameraService::CameraDumpAE(common_metadata_header_t* metadataEntry,
-    std::string& dumpString)
+void HCameraService::CameraDumpAE(common_metadata_header_t* metadataEntry, std::string& dumpString)
 {
     camera_metadata_item_t item;
     int ret;
@@ -863,8 +858,7 @@ void HCameraService::CameraDumpAE(common_metadata_header_t* metadataEntry,
     }
 }
 
-void HCameraService::CameraDumpSensorInfo(common_metadata_header_t* metadataEntry,
-    std::string& dumpString)
+void HCameraService::CameraDumpSensorInfo(common_metadata_header_t* metadataEntry, std::string& dumpString)
 {
     camera_metadata_item_t item;
     int ret;
@@ -884,8 +878,7 @@ void HCameraService::CameraDumpSensorInfo(common_metadata_header_t* metadataEntr
     }
 }
 
-void HCameraService::CameraDumpVideoStabilization(common_metadata_header_t* metadataEntry,
-    std::string& dumpString)
+void HCameraService::CameraDumpVideoStabilization(common_metadata_header_t* metadataEntry, std::string& dumpString)
 {
     camera_metadata_item_t item;
     int ret;
@@ -916,8 +909,7 @@ void HCameraService::CameraDumpVideoStabilization(common_metadata_header_t* meta
     }
 }
 
-void HCameraService::CameraDumpVideoFrameRateRange(common_metadata_header_t* metadataEntry,
-    std::string& dumpString)
+void HCameraService::CameraDumpVideoFrameRateRange(common_metadata_header_t* metadataEntry, std::string& dumpString)
 {
     camera_metadata_item_t item;
     const int32_t FRAME_RATE_RANGE_STEP = 2;
@@ -932,6 +924,40 @@ void HCameraService::CameraDumpVideoFrameRateRange(common_metadata_header_t* met
                           std::to_string(item.data.i32[i+1]) + " ]\n";
         }
         dumpString += "\n";
+    }
+}
+
+void HCameraService::CameraDumpPreLaunch(common_metadata_header_t* metadataEntry, std::string& dumpString)
+{
+    camera_metadata_item_t item;
+    int ret;
+    dumpString += "    ## Camera Prelaunch Related Info: \n";
+    ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_PRELAUNCH_AVAILABLE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        std::map<int, std::string>::const_iterator iter =
+            g_cameraPrelaunchAvailable.find(item.data.u8[0]);
+        if (iter != g_cameraPrelaunchAvailable.end()) {
+            dumpString += "        Available Prelaunch Info:["
+                + iter->second
+                + "]:\n";
+        }
+    }
+}
+
+void HCameraService::CameraDumpThumbnail(common_metadata_header_t* metadataEntry, std::string& dumpString)
+{
+    camera_metadata_item_t item;
+    int ret;
+    dumpString += "    ## Camera Thumbnail Related Info: \n";
+    ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_STREAM_QUICK_THUMBNAIL_AVAILABLE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        std::map<int, std::string>::const_iterator iter =
+            g_cameraQuickThumbnailAvailable.find(item.data.u8[0]);
+        if (iter != g_cameraQuickThumbnailAvailable.end()) {
+            dumpString += "        Available Thumbnail Info:["
+                + iter->second
+                + "]:\n";
+        }
     }
 }
 
@@ -952,8 +978,7 @@ int32_t HCameraService::Dump(int fd, const std::vector<std::u16string>& args)
     int ret;
 
     ret = GetCameras(cameraIds, cameraAbilityList);
-    if ((ret != CAMERA_OK) || cameraIds.empty()
-        || (cameraAbilityList.empty())) {
+    if ((ret != CAMERA_OK) || cameraIds.empty() || (cameraAbilityList.empty())) {
         return CAMERA_INVALID_STATE;
     }
     if (args.size() == 0 || argSets.count(arg1) != 0) {
@@ -975,6 +1000,8 @@ int32_t HCameraService::Dump(int fd, const std::vector<std::u16string>& args)
             CameraDumpSensorInfo(metadataEntry, dumpString);
             CameraDumpVideoStabilization(metadataEntry, dumpString);
             CameraDumpVideoFrameRateRange(metadataEntry, dumpString);
+            CameraDumpPreLaunch(metadataEntry, dumpString);
+            CameraDumpThumbnail(metadataEntry, dumpString);
         }
     }
     if (args.size() == 0 || argSets.count(arg3) != 0) {

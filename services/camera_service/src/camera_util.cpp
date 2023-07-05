@@ -85,6 +85,16 @@ std::map<int, std::string> g_cameraVideoStabilizationMode = {
     {4, "Auto"},
 };
 
+std::map<int, std::string> g_cameraPrelaunchAvailable = {
+    {0, "False"},
+    {1, "True"},
+};
+
+std::map<int, std::string> g_cameraQuickThumbnailAvailable = {
+    {0, "False"},
+    {1, "True"},
+};
+
 static std::mutex g_captureIdsMutex;
 static std::map<int32_t, bool> g_captureIds;
 
