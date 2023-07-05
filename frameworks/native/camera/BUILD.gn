@@ -103,7 +103,7 @@ ohos_shared_library("camera_framework") {
     "device_manager:devicemanagersdk",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:metadata",
-    "graphic_standard:surface",   
+    "graphic_standard:surface",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
