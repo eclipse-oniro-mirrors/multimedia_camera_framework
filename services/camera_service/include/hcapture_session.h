@@ -165,6 +165,7 @@ public:
 private:
     sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId);
     sptr<HCaptureSession> captureSession_;
+    std::mutex cbMutex_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

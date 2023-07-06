@@ -998,6 +998,7 @@ int32_t StreamOperatorCallback::OnCaptureStarted(int32_t captureId,
 {
     MEDIA_DEBUG_LOG("StreamOperatorCallback::OnCaptureStarted");
     sptr<HStreamCommon> curStream;
+    std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto item = streamIds.begin(); item != streamIds.end(); ++item) {
         curStream = GetStreamByStreamID(*item);
         if (curStream == nullptr) {
@@ -1017,6 +1018,7 @@ int32_t StreamOperatorCallback::OnCaptureEnded(int32_t captureId, const std::vec
     MEDIA_DEBUG_LOG("StreamOperatorCallback::OnCaptureEnded");
     sptr<HStreamCommon> curStream;
     CaptureEndedInfo captureInfo;
+    std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto item = infos.begin(); item != infos.end(); ++item) {
         captureInfo = *item;
         curStream = GetStreamByStreamID(captureInfo.streamId_);
@@ -1038,6 +1040,7 @@ int32_t StreamOperatorCallback::OnCaptureError(int32_t captureId, const std::vec
     MEDIA_DEBUG_LOG("StreamOperatorCallback::OnCaptureError");
     sptr<HStreamCommon> curStream;
     CaptureErrorInfo errInfo;
+    std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto item = infos.begin(); item != infos.end(); ++item) {
         errInfo = *item;
         curStream = GetStreamByStreamID(errInfo.streamId_);
@@ -1060,6 +1063,7 @@ int32_t StreamOperatorCallback::OnFrameShutter(int32_t captureId,
 {
     MEDIA_DEBUG_LOG("StreamOperatorCallback::OnFrameShutter");
     sptr<HStreamCommon> curStream;
+    std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto item = streamIds.begin(); item != streamIds.end(); ++item) {
         curStream = GetStreamByStreamID(*item);
         if ((curStream != nullptr) && (curStream->GetStreamType() == StreamType::CAPTURE)) {
@@ -1074,6 +1078,7 @@ int32_t StreamOperatorCallback::OnFrameShutter(int32_t captureId,
 
 void StreamOperatorCallback::SetCaptureSession(sptr<HCaptureSession> captureSession)
 {
+    std::lock_guard<std::mutex> lock(cbMutex_);
     captureSession_ = captureSession;
 }
 } // namespace CameraStandard
