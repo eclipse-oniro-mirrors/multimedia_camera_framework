@@ -87,26 +87,18 @@ protected:
         muteMode_(false) {}
 
 private:
-    void CameraSummary(std::vector<std::string> cameraIds,
-        std::string& dumpString);
-    void CameraDumpAbility(common_metadata_header_t* metadataEntry,
-    std::string& dumpString);
-    void CameraDumpStreaminfo(common_metadata_header_t* metadataEntry,
-    std::string& dumpString);
-    void CameraDumpZoom(common_metadata_header_t* metadataEntry,
-    std::string& dumpString);
-    void CameraDumpFlash(common_metadata_header_t* metadataEntry,
-    std::string& dumpString);
-    void CameraDumpAF(common_metadata_header_t* metadataEntry,
-    std::string& dumpString);
-    void CameraDumpAE(common_metadata_header_t* metadataEntry,
-    std::string& dumpString);
-    void CameraDumpSensorInfo(common_metadata_header_t* metadataEntry,
-    std::string& dumpString);
-    void CameraDumpVideoStabilization(common_metadata_header_t* metadataEntry,
-        std::string& dumpString);
-    void CameraDumpVideoFrameRateRange(common_metadata_header_t* metadataEntry,
-        std::string& dumpString);
+    void CameraSummary(std::vector<std::string> cameraIds, std::string& dumpString);
+    void CameraDumpAbility(common_metadata_header_t* metadataEntry, std::string& dumpString);
+    void CameraDumpStreaminfo(common_metadata_header_t* metadataEntry, std::string& dumpString);
+    void CameraDumpZoom(common_metadata_header_t* metadataEntry, std::string& dumpString);
+    void CameraDumpFlash(common_metadata_header_t* metadataEntry, std::string& dumpString);
+    void CameraDumpAF(common_metadata_header_t* metadataEntry, std::string& dumpString);
+    void CameraDumpAE(common_metadata_header_t* metadataEntry, std::string& dumpString);
+    void CameraDumpSensorInfo(common_metadata_header_t* metadataEntry, std::string& dumpString);
+    void CameraDumpVideoStabilization(common_metadata_header_t* metadataEntry, std::string& dumpString);
+    void CameraDumpVideoFrameRateRange(common_metadata_header_t* metadataEntry, std::string& dumpString);
+    void CameraDumpPreLaunch(common_metadata_header_t* metadataEntry, std::string& dumpString);
+    void CameraDumpThumbnail(common_metadata_header_t* metadataEntry, std::string& dumpString);
     bool IsCameraMuteSupported(std::string cameraId);
     bool IsPrelaunchSupported(std::string cameraId);
     int32_t UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool muteMode);
