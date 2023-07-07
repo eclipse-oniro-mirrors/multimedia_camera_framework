@@ -402,6 +402,10 @@ napi_value CameraManagerNapi::CreatePreviewOutputInstance(napi_env env, napi_cal
 napi_value CameraManagerNapi::CreateDeferredPreviewOutputInstance(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CreateDeferredPreviewOutputInstance is called");
+    if (!CameraNapiUtils::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi CreateDeferredPreviewOutputInstance is called!");
+        return nullptr;
+    }
     napi_status status;
     napi_value result = nullptr;
     napi_value resource = nullptr;
@@ -816,6 +820,10 @@ napi_value CameraManagerNapi::On(napi_env env, napi_callback_info info)
 napi_value CameraManagerNapi::IsPreLaunchSupported(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("IsPreLaunchSupported is called");
+    if (!CameraNapiUtils::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsPreLaunchSupported is called!");
+        return nullptr;
+    }
     napi_status status;
 
     napi_value result = nullptr;
@@ -848,6 +856,10 @@ napi_value CameraManagerNapi::IsPreLaunchSupported(napi_env env, napi_callback_i
 napi_value CameraManagerNapi::PrelaunchCamera(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("PrelaunchCamera is called");
+    if (!CameraNapiUtils::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi PrelaunchCamera is called!");
+        return nullptr;
+    }
     napi_value result = nullptr;
     CameraManager::GetInstance()->PrelaunchCamera();
     MEDIA_INFO_LOG("PrelaunchCamera");
@@ -858,6 +870,10 @@ napi_value CameraManagerNapi::PrelaunchCamera(napi_env env, napi_callback_info i
 napi_value CameraManagerNapi::SetPreLaunchConfig(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("SetPrelaunchConfig is called");
+    if (!CameraNapiUtils::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi SetPreLaunchConfig is called!");
+        return nullptr;
+    }
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;

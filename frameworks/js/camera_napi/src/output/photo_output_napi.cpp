@@ -814,6 +814,10 @@ napi_value PhotoOutputNapi::IsMirrorSupported(napi_env env, napi_callback_info i
 
 napi_value PhotoOutputNapi::IsQuickThumbnailSupported(napi_env env, napi_callback_info info)
 {
+    if (!CameraNapiUtils::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsQuickThumbnailSupported is called!");
+        return nullptr;
+    }
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -889,6 +893,10 @@ napi_value PhotoOutputNapi::SetMirror(napi_env env, napi_callback_info info)
 
 napi_value PhotoOutputNapi::EnableQuickThumbnail(napi_env env, napi_callback_info info)
 {
+    if (!CameraNapiUtils::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi EnableQuickThumbnail is called!");
+        return nullptr;
+    }
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -948,6 +956,10 @@ napi_value PhotoOutputNapi::On(napi_env env, napi_callback_info info)
 
         if (eventType == OHOS::CameraStandard::thumbnailRegisterName) {
             // create thumbnail listener when eventType is thumbnail
+            if (!CameraNapiUtils::CheckSystemApp(env)) {
+                MEDIA_ERR_LOG("SystemApi quickThumbnail on is called!");
+                return nullptr;
+            }
             if (!obj->isQuickThumbnailEnabled_) {
                 MEDIA_ERR_LOG("quickThumbnail is not enabled!");
                 return undefinedResult;

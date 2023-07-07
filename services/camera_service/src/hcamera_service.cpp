@@ -572,14 +572,6 @@ int32_t HCameraService::MuteCamera(bool muteMode)
 int32_t HCameraService::PrelaunchCamera()
 {
     CAMERA_SYNC_TRACE;
-    OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
-    std::string permissionName = OHOS_PERMISSION_CAMERA;
-    int32_t ret = CheckPermission(permissionName, callerToken);
-    if (ret != CAMERA_OK) {
-        MEDIA_ERR_LOG("HCameraService::PrelaunchCamera failed permission is : %{public}s", permissionName.c_str());
-        return ret;
-    }
-
     MEDIA_INFO_LOG("HCameraService::PrelaunchCamera");
     if (preCameraId_.empty()) {
         std::vector<std::string> cameraIds_;
@@ -588,7 +580,7 @@ int32_t HCameraService::PrelaunchCamera()
     }
     MEDIA_INFO_LOG("HCameraService::PrelaunchCamera preCameraId_ is: %{public}s", preCameraId_.c_str());
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("Camera Prelaunch CameraId:%s", preCameraId_.c_str()));
-    ret = cameraHostManager_->PreLaunch(preCameraId_);
+    int32_t ret = cameraHostManager_->PreLaunch(preCameraId_);
     if (ret != CAMERA_OK) {
         MEDIA_ERR_LOG("HCameraService::PreLaunch failed");
     }
