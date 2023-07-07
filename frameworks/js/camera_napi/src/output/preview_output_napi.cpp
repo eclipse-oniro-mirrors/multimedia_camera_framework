@@ -484,6 +484,10 @@ napi_status PreviewOutputNapi::CreateAsyncTask(napi_env env, napi_value resource
 napi_value PreviewOutputNapi::AddDeferredSurface(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("AddDeferredSurface is called");
+    if (!CameraNapiUtils::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi AddDeferredSurface is called!");
+        return nullptr;
+    }
     napi_status status;
     napi_value result = nullptr;
     const int32_t refCount = 1;
