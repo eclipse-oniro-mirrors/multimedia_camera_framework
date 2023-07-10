@@ -16,7 +16,7 @@
 #include "hstream_repeat_stub.h"
 #include "camera_log.h"
 #include "camera_util.h"
-#include "remote_request_code.h"
+#include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -30,19 +30,19 @@ int HStreamRepeatStub::OnRemoteRequest(
         return errCode;
     }
     switch (code) {
-        case CAMERA_START_VIDEO_RECORDING:
+        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_START_VIDEO_RECORDING):
             errCode = Start();
             break;
-        case CAMERA_STOP_VIDEO_RECORDING:
+        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_STOP_VIDEO_RECORDING):
             errCode = Stop();
             break;
-        case CAMERA_STREAM_REPEAT_SET_CALLBACK:
+        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_STREAM_REPEAT_SET_CALLBACK):
             errCode = HStreamRepeatStub::HandleSetCallback(data);
             break;
-        case CAMERA_STREAM_REPEAT_RELEASE:
+        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_STREAM_REPEAT_RELEASE):
             errCode = Release();
             break;
-        case CAMERA_ADD_DEFERRED_SURFACE:
+        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ADD_DEFERRED_SURFACE):
             errCode = HStreamRepeatStub::HandleAddDeferredSurface(data);
             break;
         default:

@@ -16,7 +16,7 @@
 #include "hcamera_device_callback_stub.h"
 #include "camera_log.h"
 #include "metadata_utils.h"
-#include "remote_request_code.h"
+#include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -29,10 +29,10 @@ int HCameraDeviceCallbackStub::OnRemoteRequest(
         return errCode;
     }
     switch (code) {
-        case CAMERA_DEVICE_ON_ERROR:
+        case static_cast<uint32_t>(CameraDeviceCallbackInterfaceCode::CAMERA_DEVICE_ON_ERROR):
             errCode = HCameraDeviceCallbackStub::HandleDeviceOnError(data);
             break;
-        case CAMERA_DEVICE_ON_RESULT:
+        case static_cast<uint32_t>(CameraDeviceCallbackInterfaceCode::CAMERA_DEVICE_ON_RESULT):
             errCode = HCameraDeviceCallbackStub::HandleDeviceOnResult(data);
             break;
         default:

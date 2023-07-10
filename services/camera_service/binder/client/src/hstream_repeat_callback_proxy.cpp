@@ -15,7 +15,7 @@
 
 #include "hstream_repeat_callback_proxy.h"
 #include "camera_log.h"
-#include "remote_request_code.h"
+#include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -32,7 +32,9 @@ int32_t HStreamRepeatCallbackProxy::OnFrameStarted()
         MEDIA_ERR_LOG("HStreamRepeatCallbackProxy OnFrameStarted Write interface token failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_STREAM_REPEAT_ON_FRAME_STARTED, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamRepeatCallbackInterfaceCode::CAMERA_STREAM_REPEAT_ON_FRAME_STARTED),
+        data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamRepeatCallbackProxy OnFrameStarted failed, error: %{public}d", error);
     }
@@ -55,7 +57,9 @@ int32_t HStreamRepeatCallbackProxy::OnFrameEnded(int32_t frameCount)
         return IPC_PROXY_ERR;
     }
 
-    int error = Remote()->SendRequest(CAMERA_STREAM_REPEAT_ON_FRAME_ENDED, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamRepeatCallbackInterfaceCode::CAMERA_STREAM_REPEAT_ON_FRAME_ENDED),
+        data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamRepeatCallbackProxy OnFrameEnded failed, error: %{public}d", error);
     }
@@ -78,7 +82,8 @@ int32_t HStreamRepeatCallbackProxy::OnFrameError(int32_t errorCode)
         return IPC_PROXY_ERR;
     }
 
-    int error = Remote()->SendRequest(CAMERA_STREAM_REPEAT_ON_ERROR, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamRepeatCallbackInterfaceCode::CAMERA_STREAM_REPEAT_ON_ERROR), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamRepeatCallbackProxy OnFrameError failed, error: %{public}d", error);
     }

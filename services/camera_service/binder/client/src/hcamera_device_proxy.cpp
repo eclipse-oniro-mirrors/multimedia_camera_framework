@@ -16,7 +16,7 @@
 #include "hcamera_device_proxy.h"
 #include "camera_log.h"
 #include "metadata_utils.h"
-#include "remote_request_code.h"
+#include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -33,7 +33,8 @@ int32_t HCameraDeviceProxy::Open()
         MEDIA_ERR_LOG("HCameraDeviceProxy Open Write interface token failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_DEVICE_OPEN, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_OPEN), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraDeviceProxy Open failed, error: %{public}d", error);
     }
@@ -50,7 +51,8 @@ int32_t HCameraDeviceProxy::Close()
         MEDIA_ERR_LOG("HCameraDeviceProxy Close Write interface token failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_DEVICE_CLOSE, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_CLOSE), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraDeviceProxy Close failed, error: %{public}d", error);
     }
@@ -68,7 +70,8 @@ int32_t HCameraDeviceProxy::Release()
         MEDIA_ERR_LOG("HCameraDeviceProxy Release Write interface token failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_DEVICE_RELEASE, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_RELEASE), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraDeviceProxy Release failed, error: %{public}d", error);
     }
@@ -96,7 +99,8 @@ int32_t HCameraDeviceProxy::SetCallback(sptr<ICameraDeviceServiceCallback>& call
         return IPC_PROXY_ERR;
     }
 
-    int error = Remote()->SendRequest(CAMERA_DEVICE_SET_CALLBACK, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_SET_CALLBACK), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraDeviceProxy SetCallback failed, error: %{public}d", error);
     }
@@ -119,7 +123,8 @@ int32_t HCameraDeviceProxy::UpdateSetting(const std::shared_ptr<Camera::CameraMe
         return IPC_PROXY_ERR;
     }
 
-    int error = Remote()->SendRequest(CAMERA_DEVICE_UPDATE_SETTNGS, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_UPDATE_SETTNGS), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraDeviceProxy UpdateSetting failed, error: %{public}d", error);
     }
@@ -137,7 +142,8 @@ int32_t HCameraDeviceProxy::GetEnabledResults(std::vector<int32_t> &results)
         MEDIA_ERR_LOG("HCameraDeviceProxy GetEnabledResults Write interface token failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_DEVICE_GET_ENABLED_RESULT, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_GET_ENABLED_RESULT), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraDeviceProxy GetEnabledResults failed, error: %{public}d", error);
         return IPC_PROXY_ERR;
@@ -166,7 +172,8 @@ int32_t HCameraDeviceProxy::EnableResult(std::vector<int32_t> &results)
         return IPC_PROXY_ERR;
     }
 
-    int error = Remote()->SendRequest(CAMERA_DEVICE_ENABLED_RESULT, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_ENABLED_RESULT), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraDeviceProxy EnableResult failed, error: %{public}d", error);
     }
@@ -189,7 +196,8 @@ int32_t HCameraDeviceProxy::DisableResult(std::vector<int32_t> &results)
         return IPC_PROXY_ERR;
     }
 
-    int error = Remote()->SendRequest(CAMERA_DEVICE_DISABLED_RESULT, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_DISABLED_RESULT), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraDeviceProxy DisableResult failed, error: %{public}d", error);
     }

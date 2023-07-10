@@ -15,7 +15,7 @@
 
 #include "hcamera_service_callback_proxy.h"
 #include "camera_log.h"
-#include "remote_request_code.h"
+#include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -40,7 +40,9 @@ int32_t HCameraServiceCallbackProxy::OnCameraStatusChanged(const std::string& ca
         MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnCameraStatusChanged Write status failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_CALLBACK_STATUS_CHANGED, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceCallbackInterfaceCode::CAMERA_CALLBACK_STATUS_CHANGED),
+        data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnCameraStatusChanged failed, error: %{public}d", error);
     }
@@ -66,7 +68,9 @@ int32_t HCameraServiceCallbackProxy::OnFlashlightStatusChanged(const std::string
         MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnFlashlightStatus Write status failed");
         return IPC_PROXY_ERR;
     }
-    error = Remote()->SendRequest(CAMERA_CALLBACK_FLASHLIGHT_STATUS_CHANGED, data, reply, option);
+    error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceCallbackInterfaceCode::CAMERA_CALLBACK_FLASHLIGHT_STATUS_CHANGED),
+        data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnFlashlightStatus failed, error: %{public}d", error);
     }
@@ -91,7 +95,9 @@ int32_t HCameraMuteServiceCallbackProxy::OnCameraMute(bool muteMode)
         return IPC_PROXY_ERR;
     }
 
-    int error = Remote()->SendRequest(CAMERA_CALLBACK_MUTE_MODE, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraMuteServiceCallbackInterfaceCode::CAMERA_CALLBACK_MUTE_MODE),
+        data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnCameraMute failed, error: %{public}d", error);
     }

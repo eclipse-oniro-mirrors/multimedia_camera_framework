@@ -15,7 +15,7 @@
 
 #include "hstream_capture_callback_proxy.h"
 #include "camera_log.h"
-#include "remote_request_code.h"
+#include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -36,7 +36,8 @@ int32_t HStreamCaptureCallbackProxy::OnCaptureStarted(int32_t captureId)
         MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureStarted Write captureId failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureStarted failed, error: %{public}d", error);
     }
@@ -62,7 +63,9 @@ int32_t HStreamCaptureCallbackProxy::OnCaptureEnded(int32_t captureId, int32_t f
         MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureEnded Write frameCount failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_STREAM_CAPTURE_ON_CAPTURE_ENDED, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_ENDED),
+        data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureEnded failed, error: %{public}d", error);
     }
@@ -89,7 +92,9 @@ int32_t HStreamCaptureCallbackProxy::OnCaptureError(int32_t captureId, int32_t e
         return IPC_PROXY_ERR;
     }
 
-    int error = Remote()->SendRequest(CAMERA_STREAM_CAPTURE_ON_CAPTURE_ERROR, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_ERROR),
+        data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureError failed, error: %{public}d", error);
     }
@@ -116,7 +121,9 @@ int32_t HStreamCaptureCallbackProxy::OnFrameShutter(int32_t captureId, uint64_t 
         return IPC_PROXY_ERR;
     }
 
-    int error = Remote()->SendRequest(CAMERA_STREAM_CAPTURE_ON_FRAME_SHUTTER, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_FRAME_SHUTTER),
+        data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnFrameShutter failed, error: %{public}d", error);
     }

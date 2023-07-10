@@ -16,7 +16,7 @@
 #include "hstream_capture_proxy.h"
 #include "camera_log.h"
 #include "metadata_utils.h"
-#include "remote_request_code.h"
+#include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -38,7 +38,8 @@ int32_t HStreamCaptureProxy::Capture(const std::shared_ptr<Camera::CameraMetadat
         return IPC_PROXY_ERR;
     }
 
-    int error = Remote()->SendRequest(CAMERA_STREAM_CAPTURE_START, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_START), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamCaptureProxy Capture failed, error: %{public}d", error);
     }
@@ -56,7 +57,8 @@ int32_t HStreamCaptureProxy::CancelCapture()
         MEDIA_ERR_LOG("HStreamCaptureProxy CancelCapture Write interface token failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_STREAM_CAPTURE_CANCEL, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_CANCEL), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamCaptureProxy CancelCapture failed, error: %{public}d", error);
     }
@@ -74,7 +76,8 @@ int32_t HStreamCaptureProxy::Release()
         MEDIA_ERR_LOG("HStreamCaptureProxy Release Write interface token failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_STREAM_CAPTURE_RELEASE, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_RELEASE), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamCaptureProxy Release failed, error: %{public}d", error);
     }
@@ -102,7 +105,8 @@ int32_t HStreamCaptureProxy::SetCallback(sptr<IStreamCaptureCallback> &callback)
         return IPC_PROXY_ERR;
     }
 
-    int error = Remote()->SendRequest(CAMERA_STREAM_CAPTURE_SET_CALLBACK, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_SET_CALLBACK), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamCaptureProxy SetCallback failed, error: %{public}d", error);
     }
@@ -135,7 +139,8 @@ int32_t HStreamCaptureProxy::SetThumbnail(bool isEnabled, const sptr<OHOS::IBuff
         return IPC_PROXY_ERR;
     }
 
-    int error = Remote()->SendRequest(CAMERA_SERVICE_SET_THUMBNAIL, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_SERVICE_SET_THUMBNAIL), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceProxy SetThumbnail failed, error: %{public}d", error);
     }

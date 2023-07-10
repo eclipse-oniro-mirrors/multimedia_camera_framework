@@ -16,7 +16,7 @@
 #include "hcapture_session_callback_proxy.h"
 #include "camera_log.h"
 #include "metadata_utils.h"
-#include "remote_request_code.h"
+#include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -37,7 +37,8 @@ int32_t HCaptureSessionCallbackProxy::OnError(int32_t errorCode)
         MEDIA_ERR_LOG("HCaptureSessionCallbackProxy OnError Write errorCode failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_CAPTURE_SESSION_ON_ERROR, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionCallbackInterfaceCode::CAMERA_CAPTURE_SESSION_ON_ERROR), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCaptureSessionCallbackProxy OnError failed, error: %{public}d", error);
     }

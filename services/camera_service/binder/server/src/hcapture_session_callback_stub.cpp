@@ -16,7 +16,7 @@
 #include "hcapture_session_callback_stub.h"
 #include "camera_log.h"
 #include "metadata_utils.h"
-#include "remote_request_code.h"
+#include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -29,7 +29,7 @@ int HCaptureSessionCallbackStub::OnRemoteRequest(
         return errCode;
     }
     switch (code) {
-        case CAMERA_CAPTURE_SESSION_ON_ERROR:
+        case static_cast<uint32_t>(CaptureSessionCallbackInterfaceCode::CAMERA_CAPTURE_SESSION_ON_ERROR):
             errCode = HCaptureSessionCallbackStub::HandleSessionOnError(data);
             break;
         default:
