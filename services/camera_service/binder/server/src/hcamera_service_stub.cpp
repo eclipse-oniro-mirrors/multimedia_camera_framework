@@ -29,7 +29,6 @@ namespace OHOS {
 namespace CameraStandard {
 HCameraServiceStub::HCameraServiceStub()
 {
-    RegisterMethod();
     deathRecipientMap_.Clear();
     cameraListenerMap_.Clear();
     MEDIA_DEBUG_LOG("0x%{public}06" PRIXPTR " Instances create",
@@ -46,6 +45,7 @@ int HCameraServiceStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
     DisableJeMalloc();
+    int errCode = -1;
     if (data.ReadInterfaceToken() != GetDescriptor()) {
         return -1;
     }
@@ -112,7 +112,7 @@ int HCameraServiceStub::OnRemoteRequest(
     }
     HiviewDFX::XCollie::GetInstance().CancelTimer(id);
 
-    return ret;
+    return errCode;
 }
 
 int HCameraServiceStub::HandleGetCameras(MessageParcel &data, MessageParcel &reply)
