@@ -37,7 +37,8 @@ int32_t HStreamCaptureCallbackProxy::OnCaptureStarted(int32_t captureId)
         return IPC_PROXY_ERR;
     }
     int error = Remote()->SendRequest(
-        static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED), data, reply, option);
+        static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED),
+        data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureStarted failed, error: %{public}d", error);
     }
