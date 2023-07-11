@@ -16,7 +16,7 @@
 #include "hcamera_device_callback_proxy.h"
 #include "camera_log.h"
 #include "metadata_utils.h"
-#include "remote_request_code.h"
+#include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -41,7 +41,8 @@ int32_t HCameraDeviceCallbackProxy::OnError(const int32_t errorType, const int32
         MEDIA_ERR_LOG("HCameraDeviceCallbackProxy OnError Write errorMsg failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_DEVICE_ON_ERROR, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraDeviceCallbackInterfaceCode::CAMERA_DEVICE_ON_ERROR), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraDeviceCallbackProxy OnError failed, error: %{public}d", error);
     }
@@ -67,7 +68,8 @@ int32_t HCameraDeviceCallbackProxy::OnResult(const uint64_t timestamp,
         MEDIA_ERR_LOG("HCameraDeviceCallbackProxy OnResult EncodeCameraMetadata failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_DEVICE_ON_RESULT, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraDeviceCallbackInterfaceCode::CAMERA_DEVICE_ON_RESULT), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraDeviceCallbackProxy OnResult failed, error: %{public}d", error);
     }

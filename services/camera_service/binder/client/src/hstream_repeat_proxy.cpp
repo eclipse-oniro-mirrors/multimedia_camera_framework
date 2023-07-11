@@ -15,7 +15,7 @@
 
 #include "hstream_repeat_proxy.h"
 #include "camera_log.h"
-#include "remote_request_code.h"
+#include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -32,7 +32,8 @@ int32_t HStreamRepeatProxy::Start()
         MEDIA_ERR_LOG("HStreamRepeatProxy Start Write interface token failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_START_VIDEO_RECORDING, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_START_VIDEO_RECORDING), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamRepeatProxy Start failed, error: %{public}d", error);
     }
@@ -50,7 +51,8 @@ int32_t HStreamRepeatProxy::Stop()
         MEDIA_ERR_LOG("HStreamRepeatProxy Stop Write interface token failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_STOP_VIDEO_RECORDING, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_STOP_VIDEO_RECORDING), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamRepeatProxy Stop failed, error: %{public}d", error);
     }
@@ -68,7 +70,8 @@ int32_t HStreamRepeatProxy::Release()
         MEDIA_ERR_LOG("HStreamRepeatProxy Release Write interface token failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_STREAM_REPEAT_RELEASE, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_STREAM_REPEAT_RELEASE), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamRepeatProxy Stop failed, error: %{public}d", error);
     }
@@ -95,7 +98,8 @@ int32_t HStreamRepeatProxy::SetCallback(sptr<IStreamRepeatCallback> &callback)
         return IPC_PROXY_ERR;
     }
 
-    int error = Remote()->SendRequest(CAMERA_STREAM_REPEAT_SET_CALLBACK, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_STREAM_REPEAT_SET_CALLBACK), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamRepeatProxy SetCallback failed, error: %{public}d", error);
     }
@@ -122,7 +126,8 @@ int32_t HStreamRepeatProxy::AddDeferredSurface(const sptr<OHOS::IBufferProducer>
         MEDIA_ERR_LOG("HStreamRepeatProxy AddDeferredSurface write producer obj failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_ADD_DEFERRED_SURFACE, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ADD_DEFERRED_SURFACE), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamRepeatProxy::AddDeferredSurface failed, error: %{public}d", error);
         return error;

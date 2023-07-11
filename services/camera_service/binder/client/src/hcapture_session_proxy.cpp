@@ -15,7 +15,7 @@
 
 #include "hcapture_session_proxy.h"
 #include "camera_log.h"
-#include "remote_request_code.h"
+#include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -32,7 +32,8 @@ int32_t HCaptureSessionProxy::BeginConfig()
         MEDIA_ERR_LOG("HCaptureSessionProxy BeginConfig Write interface token failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_CAPTURE_SESSION_BEGIN_CONFIG, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_BEGIN_CONFIG), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCaptureSessionProxy BeginConfig failed, error: %{public}d", error);
     }
@@ -60,7 +61,8 @@ int32_t HCaptureSessionProxy::AddInput(sptr<ICameraDeviceService> cameraDevice)
         return IPC_PROXY_ERR;
     }
 
-    int error = Remote()->SendRequest(CAMERA_CAPTURE_SESSION_ADD_INPUT, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_ADD_INPUT), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCaptureSessionProxy AddInput failed, error: %{public}d", error);
     }
@@ -92,7 +94,8 @@ int32_t HCaptureSessionProxy::AddOutput(StreamType streamType, sptr<IStreamCommo
         return IPC_PROXY_ERR;
     }
 
-    int error = Remote()->SendRequest(CAMERA_CAPTURE_SESSION_ADD_OUTPUT, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_ADD_OUTPUT), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCaptureSessionProxy AddOutput failed, error: %{public}d", error);
     }
@@ -120,7 +123,8 @@ int32_t HCaptureSessionProxy::RemoveInput(sptr<ICameraDeviceService> cameraDevic
         return IPC_PROXY_ERR;
     }
 
-    int error = Remote()->SendRequest(CAMERA_CAPTURE_SESSION_REMOVE_INPUT, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_REMOVE_INPUT), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCaptureSessionProxy RemoveInput failed, error: %{public}d", error);
     }
@@ -152,7 +156,8 @@ int32_t HCaptureSessionProxy::RemoveOutput(StreamType streamType, sptr<IStreamCo
         return IPC_PROXY_ERR;
     }
 
-    int error = Remote()->SendRequest(CAMERA_CAPTURE_SESSION_REMOVE_OUTPUT, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_REMOVE_OUTPUT), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCaptureSessionProxy RemoveOutput failed, error: %{public}d", error);
     }
@@ -170,7 +175,8 @@ int32_t HCaptureSessionProxy::CommitConfig()
         MEDIA_ERR_LOG("HCaptureSessionProxy CommitConfig Write interface token failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_CAPTURE_SESSION_COMMIT_CONFIG, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_COMMIT_CONFIG), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCaptureSessionProxy CommitConfig failed, error: %{public}d", error);
     }
@@ -188,7 +194,8 @@ int32_t HCaptureSessionProxy::Start()
         MEDIA_ERR_LOG("HCaptureSessionProxy Start Write interface token failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_CAPTURE_SESSION_START, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_START), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCaptureSessionProxy Start failed, error: %{public}d", error);
     }
@@ -206,7 +213,8 @@ int32_t HCaptureSessionProxy::Stop()
         MEDIA_ERR_LOG("HCaptureSessionProxy Stop Write interface token failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_CAPTURE_SESSION_STOP, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_STOP), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCaptureSessionProxy Stop failed, error: %{public}d", error);
     }
@@ -224,7 +232,8 @@ int32_t HCaptureSessionProxy::Release(pid_t pid)
         MEDIA_ERR_LOG("HCaptureSessionProxy Release Write interface token failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(CAMERA_CAPTURE_SESSION_RELEASE, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_RELEASE), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCaptureSessionProxy Release failed, error: %{public}d", error);
     }
@@ -252,7 +261,8 @@ int32_t HCaptureSessionProxy::SetCallback(sptr<ICaptureSessionCallback> &callbac
         return IPC_PROXY_ERR;
     }
 
-    int error = Remote()->SendRequest(CAMERA_CAPTURE_SESSION_SET_CALLBACK, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_CALLBACK), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCaptureSessionProxy SetCallback failed, error: %{public}d", error);
     }
@@ -271,7 +281,8 @@ int32_t HCaptureSessionProxy::GetSessionState(CaptureSessionState &sessionState)
         return IPC_PROXY_ERR;
     }
 
-    int error = Remote()->SendRequest(CAMERA_CAPTURE_GET_SESSION_STATE, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_GET_SESSION_STATE), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCaptureSessionProxy GetSessionState failed, error: %{public}d", error);
     }

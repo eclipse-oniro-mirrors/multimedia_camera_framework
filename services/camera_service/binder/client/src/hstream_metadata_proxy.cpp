@@ -21,37 +21,61 @@ namespace CameraStandard {
 HStreamMetadataProxy::HStreamMetadataProxy(const sptr<IRemoteObject> &impl)
     : IRemoteProxy<IStreamMetadata>(impl) { }
 
-int32_t HStreamMetadataProxy::SendNoArgumentRequestWithOutReply(StreamMetadataRequestCode requestCode)
+int32_t HStreamMetadataProxy::Start()
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
 
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamMetadataProxy Start Write interface token failed");
+        MEDIA_ERR_LOG("HStreamCaptureProxy CancelCapture Write interface token failed");
         return IPC_PROXY_ERR;
     }
-    int error = Remote()->SendRequest(requestCode, data, reply, option);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_START), data, reply, option);
     if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamMetadataProxy Send request: %{public}d failed, error: %{public}d", requestCode, error);
+        MEDIA_ERR_LOG("HStreamCaptureProxy CancelCapture failed, error: %{public}d", error);
     }
 
     return error;
 }
 
-int32_t HStreamMetadataProxy::Start()
-{
-    return SendNoArgumentRequestWithOutReply(CAMERA_STREAM_META_START);
-}
-
 int32_t HStreamMetadataProxy::Stop()
 {
-    return SendNoArgumentRequestWithOutReply(CAMERA_STREAM_META_STOP);
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        MEDIA_ERR_LOG("HStreamCaptureProxy CancelCapture Write interface token failed");
+        return IPC_PROXY_ERR;
+    }
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_STOP), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamCaptureProxy CancelCapture failed, error: %{public}d", error);
+    }
+
+    return error;
 }
 
 int32_t HStreamMetadataProxy::Release()
 {
-    return SendNoArgumentRequestWithOutReply(CAMERA_STREAM_META_RELEASE);
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        MEDIA_ERR_LOG("HStreamCaptureProxy CancelCapture Write interface token failed");
+        return IPC_PROXY_ERR;
+    }
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_RELEASE), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamCaptureProxy CancelCapture failed, error: %{public}d", error);
+    }
+
+    return error;
 }
 } // namespace CameraStandard
 } // namespace OHOS

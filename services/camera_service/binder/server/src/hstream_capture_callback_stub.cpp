@@ -15,7 +15,7 @@
 
 #include "hstream_capture_callback_stub.h"
 #include "camera_log.h"
-#include "remote_request_code.h"
+#include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -28,16 +28,16 @@ int HStreamCaptureCallbackStub::OnRemoteRequest(
         return errCode;
     }
     switch (code) {
-        case CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED:
+        case static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED):
             errCode = HandleOnCaptureStarted(data);
             break;
-        case CAMERA_STREAM_CAPTURE_ON_CAPTURE_ENDED:
+        case static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_ENDED):
             errCode = HandleOnCaptureEnded(data);
             break;
-        case CAMERA_STREAM_CAPTURE_ON_CAPTURE_ERROR:
+        case static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_ERROR):
             errCode = HandleOnCaptureError(data);
             break;
-        case CAMERA_STREAM_CAPTURE_ON_FRAME_SHUTTER:
+        case static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_FRAME_SHUTTER):
             errCode = HandleOnFrameShutter(data);
             break;
         default:

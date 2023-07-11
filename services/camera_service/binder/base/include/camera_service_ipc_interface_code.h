@@ -13,9 +13,10 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_CAMERA_REMOTE_REQUEST_CODE_H
-#define OHOS_CAMERA_REMOTE_REQUEST_CODE_H
+#ifndef OHOS_CAMERA_SERVICE_IPC_INTERFACE_CODE_H
+#define OHOS_CAMERA_SERVICE_IPC_INTERFACE_CODE_H
 
+/* SAID: 3008 */
 namespace OHOS {
 namespace CameraStandard {
 /**
@@ -24,7 +25,7 @@ namespace CameraStandard {
  * @since 1.0
  * @version 1.0
  */
-enum CameraDeviceRequestCode {
+enum class CameraDeviceInterfaceCode {
     CAMERA_DEVICE_OPEN = 0,
     CAMERA_DEVICE_CLOSE,
     CAMERA_DEVICE_RELEASE,
@@ -41,7 +42,7 @@ enum CameraDeviceRequestCode {
  * @since 1.0
  * @version 1.0
  */
-enum CameraServiceCallbackRequestCode {
+enum CameraServiceCallbackInterfaceCode {
     CAMERA_CALLBACK_STATUS_CHANGED = 0,
     CAMERA_CALLBACK_FLASHLIGHT_STATUS_CHANGED
 };
@@ -52,7 +53,7 @@ enum CameraServiceCallbackRequestCode {
  * @since 1.0
  * @version 1.0
  */
-enum CameraMuteServiceCallbackRequestCode {
+enum CameraMuteServiceCallbackInterfaceCode {
     CAMERA_CALLBACK_MUTE_MODE = 0
 };
 
@@ -62,7 +63,7 @@ enum CameraMuteServiceCallbackRequestCode {
  * @since 1.0
  * @version 1.0
  */
-enum CameraServiceRequestCode {
+enum CameraServiceInterfaceCode {
     CAMERA_SERVICE_CREATE_DEVICE = 0,
     CAMERA_SERVICE_SET_CALLBACK,
     CAMERA_SERVICE_SET_MUTE_CALLBACK,
@@ -86,7 +87,7 @@ enum CameraServiceRequestCode {
  * @since 1.0
  * @version 1.0
  */
-enum CaptureSessionRequestCode {
+enum CaptureSessionInterfaceCode {
     CAMERA_CAPTURE_SESSION_BEGIN_CONFIG = 0,
     CAMERA_CAPTURE_SESSION_ADD_INPUT,
     CAMERA_CAPTURE_SESSION_ADD_OUTPUT,
@@ -106,7 +107,7 @@ enum CaptureSessionRequestCode {
  * @since 1.0
  * @version 1.0
  */
-enum StreamCaptureRequestCode {
+enum StreamCaptureInterfaceCode {
     CAMERA_STREAM_CAPTURE_START = 0,
     CAMERA_STREAM_CAPTURE_CANCEL,
     CAMERA_STREAM_CAPTURE_SET_CALLBACK,
@@ -120,7 +121,7 @@ enum StreamCaptureRequestCode {
  * @since 1.0
  * @version 1.0
  */
-enum StreamRepeatRequestCode {
+enum StreamRepeatInterfaceCode {
     CAMERA_START_VIDEO_RECORDING = 0,
     CAMERA_STOP_VIDEO_RECORDING,
     CAMERA_STREAM_REPEAT_SET_CALLBACK,
@@ -134,7 +135,7 @@ enum StreamRepeatRequestCode {
  * @since 1.0
  * @version 1.0
  */
-enum StreamMetadataRequestCode {
+enum StreamMetadataInterfaceCode {
     CAMERA_STREAM_META_START = 0,
     CAMERA_STREAM_META_STOP,
     CAMERA_STREAM_META_RELEASE
@@ -146,7 +147,7 @@ enum StreamMetadataRequestCode {
  * @since 1.0
  * @version 1.0
  */
-enum CameraDeviceCallbackRequestCode {
+enum CameraDeviceCallbackInterfaceCode {
     CAMERA_DEVICE_ON_ERROR = 0,
     CAMERA_DEVICE_ON_RESULT
 };
@@ -157,7 +158,7 @@ enum CameraDeviceCallbackRequestCode {
  * @since 1.0
  * @version 1.0
  */
-enum StreamRepeatCallbackRequestCode {
+enum StreamRepeatCallbackInterfaceCode {
     CAMERA_STREAM_REPEAT_ON_FRAME_STARTED = 0,
     CAMERA_STREAM_REPEAT_ON_FRAME_ENDED,
     CAMERA_STREAM_REPEAT_ON_ERROR
@@ -169,7 +170,7 @@ enum StreamRepeatCallbackRequestCode {
  * @since 1.0
  * @version 1.0
  */
-enum StreamCaptureCallbackRequestCode {
+enum StreamCaptureCallbackInterfaceCode {
     CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED = 0,
     CAMERA_STREAM_CAPTURE_ON_CAPTURE_ENDED,
     CAMERA_STREAM_CAPTURE_ON_CAPTURE_ERROR,
@@ -182,9 +183,9 @@ enum StreamCaptureCallbackRequestCode {
 * @since 1.0
 * @version 1.0
 */
-enum CaptureSessionCallbackRequestCode {
+enum CaptureSessionCallbackInterfaceCode {
     CAMERA_CAPTURE_SESSION_ON_ERROR = 0
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_REMOTE_REQUEST_CODE_H
+#endif // OHOS_CAMERA_SERVICE_IPC_INTERFACE_CODE_H

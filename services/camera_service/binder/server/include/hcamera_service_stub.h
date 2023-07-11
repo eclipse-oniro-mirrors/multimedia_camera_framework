@@ -50,9 +50,6 @@ private:
     void ClientDied(pid_t pid);
     int SetListenerObject(const sptr<IRemoteObject> &object) override;
     int SetListenerObject(MessageParcel &data, MessageParcel &reply);
-    int32_t CheckRequestCode(const uint32_t code, MessageParcel &data,
-                                                 MessageParcel &reply, MessageOption &option);
-    void RegisterMethod();
     virtual int32_t UnSetCallback(pid_t pid);
     virtual int32_t CloseCameraForDestory(pid_t pid);
 

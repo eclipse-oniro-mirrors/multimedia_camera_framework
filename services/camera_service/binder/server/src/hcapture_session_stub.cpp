@@ -17,7 +17,7 @@
 #include "camera_log.h"
 #include "camera_util.h"
 #include "ipc_skeleton.h"
-#include "remote_request_code.h"
+#include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -31,39 +31,39 @@ int HCaptureSessionStub::OnRemoteRequest(
         return errCode;
     }
     switch (code) {
-        case CAMERA_CAPTURE_SESSION_BEGIN_CONFIG:
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_BEGIN_CONFIG):
             errCode = BeginConfig();
             break;
-        case CAMERA_CAPTURE_SESSION_ADD_INPUT:
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_ADD_INPUT):
             errCode = HCaptureSessionStub::HandleAddInput(data);
             break;
-        case CAMERA_CAPTURE_SESSION_ADD_OUTPUT:
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_ADD_OUTPUT):
             errCode = HCaptureSessionStub::HandleAddOutput(data);
             break;
-        case CAMERA_CAPTURE_SESSION_REMOVE_INPUT:
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_REMOVE_INPUT):
             errCode = HCaptureSessionStub::HandleRemoveInput(data);
             break;
-        case CAMERA_CAPTURE_SESSION_REMOVE_OUTPUT:
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_REMOVE_OUTPUT):
             errCode = HCaptureSessionStub::HandleRemoveOutput(data);
             break;
-        case CAMERA_CAPTURE_SESSION_COMMIT_CONFIG:
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_COMMIT_CONFIG):
             errCode = CommitConfig();
             break;
-        case CAMERA_CAPTURE_SESSION_START:
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_START):
             errCode = Start();
             break;
-        case CAMERA_CAPTURE_SESSION_STOP:
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_STOP):
             errCode = Stop();
             break;
-        case CAMERA_CAPTURE_SESSION_RELEASE: {
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_RELEASE): {
                 pid_t pid = IPCSkeleton::GetCallingPid();
                 errCode = Release(pid);
             }
             break;
-        case CAMERA_CAPTURE_SESSION_SET_CALLBACK:
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_CALLBACK):
             errCode = HandleSetCallback(data);
             break;
-        case CAMERA_CAPTURE_GET_SESSION_STATE:
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_GET_SESSION_STATE):
             errCode =  HandleGetSesstionState(reply);
             break;
         default:

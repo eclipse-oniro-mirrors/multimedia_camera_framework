@@ -17,7 +17,7 @@
 #include "camera_log.h"
 #include "camera_util.h"
 #include "metadata_utils.h"
-#include "remote_request_code.h"
+#include "camera_service_ipc_interface_code.h"
 #include "ipc_skeleton.h"
 
 namespace OHOS {
@@ -36,29 +36,29 @@ int HCameraDeviceStub::OnRemoteRequest(
         return errCode;
     }
     switch (code) {
-        case CAMERA_DEVICE_OPEN: {
+        case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_OPEN): {
             errCode = Open();
             break;
         }
-        case CAMERA_DEVICE_CLOSE:
+        case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_CLOSE):
             errCode = Close();
             break;
-        case CAMERA_DEVICE_RELEASE:
+        case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_RELEASE):
             errCode = Release();
             break;
-        case CAMERA_DEVICE_SET_CALLBACK:
+        case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_SET_CALLBACK):
             errCode = HCameraDeviceStub::HandleSetCallback(data);
             break;
-        case CAMERA_DEVICE_UPDATE_SETTNGS:
+        case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_UPDATE_SETTNGS):
             errCode = HCameraDeviceStub::HandleUpdateSetting(data);
             break;
-        case CAMERA_DEVICE_ENABLED_RESULT:
+        case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_ENABLED_RESULT):
             errCode = HCameraDeviceStub::HandleEnableResult(data);
             break;
-        case CAMERA_DEVICE_GET_ENABLED_RESULT:
+        case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_GET_ENABLED_RESULT):
             errCode = HCameraDeviceStub::HandleGetEnabledResults(reply);
             break;
-        case CAMERA_DEVICE_DISABLED_RESULT:
+        case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_DISABLED_RESULT):
             errCode = HCameraDeviceStub::HandleDisableResult(data);
             break;
         default:

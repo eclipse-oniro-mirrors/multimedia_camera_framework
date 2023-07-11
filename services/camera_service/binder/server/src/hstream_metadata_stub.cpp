@@ -16,7 +16,7 @@
 #include "hstream_metadata_stub.h"
 #include "camera_log.h"
 #include "camera_util.h"
-#include "remote_request_code.h"
+#include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -30,13 +30,13 @@ int HStreamMetadataStub::OnRemoteRequest(
         return errCode;
     }
     switch (code) {
-        case CAMERA_STREAM_META_START:
+        case static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_START):
             errCode = Start();
             break;
-        case CAMERA_STREAM_META_STOP:
+        case static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_STOP):
             errCode = Stop();
             break;
-        case CAMERA_STREAM_META_RELEASE:
+        case static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_RELEASE):
             errCode = Release();
             break;
         default:

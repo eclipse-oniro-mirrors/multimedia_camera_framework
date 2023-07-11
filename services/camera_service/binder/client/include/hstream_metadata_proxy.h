@@ -18,7 +18,7 @@
 
 #include "iremote_proxy.h"
 #include "istream_metadata.h"
-#include "remote_request_code.h"
+#include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -35,7 +35,6 @@ public:
 
 private:
     static inline BrokerDelegator<HStreamMetadataProxy> delegator_;
-    int32_t SendNoArgumentRequestWithOutReply(StreamMetadataRequestCode requestCode);
 };
 } // namespace CameraStandard
 } // namespace OHOS

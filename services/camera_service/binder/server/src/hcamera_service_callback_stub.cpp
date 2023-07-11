@@ -15,7 +15,7 @@
 
 #include "hcamera_service_callback_stub.h"
 #include "camera_log.h"
-#include "remote_request_code.h"
+#include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -71,7 +71,7 @@ int HCameraMuteServiceCallbackStub::OnRemoteRequest(
         return errCode;
     }
     switch (code) {
-        case CAMERA_CALLBACK_MUTE_MODE:
+        case static_cast<uint32_t>(CameraMuteServiceCallbackInterfaceCode::CAMERA_CALLBACK_MUTE_MODE):
             errCode = HCameraMuteServiceCallbackStub::HandleOnCameraMute(data);
             break;
         default:
