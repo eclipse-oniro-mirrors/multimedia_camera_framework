@@ -121,28 +121,28 @@ int32_t HStreamCaptureProxy::SetThumbnail(bool isEnabled, const sptr<OHOS::IBuff
     MessageOption option;
 
     if (producer == nullptr) {
-        MEDIA_ERR_LOG("HCameraServiceProxy CreatePhotoOutput producer is null");
+        MEDIA_ERR_LOG("HStreamCaptureProxy CreatePhotoOutput producer is null");
         return IPC_PROXY_ERR;
     }
 
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HCameraServiceProxy SetThumbnail Write interface token failed");
+        MEDIA_ERR_LOG("HStreamCaptureProxy SetThumbnail Write interface token failed");
         return IPC_PROXY_ERR;
     }
     if (!data.WriteRemoteObject(producer->AsObject())) {
-        MEDIA_ERR_LOG("HCameraServiceProxy SetThumbnail write producer obj failed");
+        MEDIA_ERR_LOG("HStreamCaptureProxy SetThumbnail write producer obj failed");
         return IPC_PROXY_ERR;
     }
 
     if (!data.WriteBool(isEnabled)) {
-        MEDIA_ERR_LOG("HCameraServiceProxy SetThumbnail write isEnabled failed");
+        MEDIA_ERR_LOG("HStreamCaptureProxy SetThumbnail write isEnabled failed");
         return IPC_PROXY_ERR;
     }
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_SERVICE_SET_THUMBNAIL), data, reply, option);
     if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy SetThumbnail failed, error: %{public}d", error);
+        MEDIA_ERR_LOG("HStreamCaptureProxy SetThumbnail failed, error: %{public}d", error);
     }
     return error;
 }
