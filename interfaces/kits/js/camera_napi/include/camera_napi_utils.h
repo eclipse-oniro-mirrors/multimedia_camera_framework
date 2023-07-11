@@ -193,6 +193,8 @@ enum CameraSteps {
     ADD_OUTPUT,
     REMOVE_OUTPUT,
     PHOTO_OUT_CAPTURE,
+    ADD_DEFERRED_SURFACE,
+    CREATE_DEFERRED_PREVIEW_OUTPUT
 };
 
 /* Util class used by napi asynchronous methods for making call to js callback function */

@@ -409,13 +409,13 @@ napi_value CameraManagerNapi::CreateDeferredPreviewOutputInstance(napi_env env, 
     napi_status status;
     napi_value result = nullptr;
     napi_value resource = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
-
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_TWO, "requires 2 parameters maximum");
-
+    if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, CREATE_DEFERRED_PREVIEW_OUTPUT)) {
+        return result;
+    }
     napi_get_undefined(env, &result);
     std::unique_ptr<CameraManagerContext> asyncContext = std::make_unique<CameraManagerContext>();
     result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
@@ -861,7 +861,10 @@ napi_value CameraManagerNapi::PrelaunchCamera(napi_env env, napi_callback_info i
         return nullptr;
     }
     napi_value result = nullptr;
-    CameraManager::GetInstance()->PrelaunchCamera();
+    int32_t retCode = CameraManager::GetInstance()->PrelaunchCamera();
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
+        return result;
+    }
     MEDIA_INFO_LOG("PrelaunchCamera");
     napi_get_undefined(env, &result);
     return result;
@@ -891,10 +894,17 @@ napi_value CameraManagerNapi::SetPreLaunchConfig(napi_env env, napi_callback_inf
             MEDIA_ERR_LOG("napi_unwrap( ) failure!");
             return result;
         }
+    } else {
+        if (!CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
+            return result;
+        }
     }
     std::string cameraId = prelaunchConfig.GetCameraDevice()->GetID();
     MEDIA_INFO_LOG("SetPreLaunchConfig cameraId = %{public}s", cameraId.c_str());
-    CameraManager::GetInstance()->SetPreLaunchConfig(cameraId);
+    int32_t retCode = CameraManager::GetInstance()->SetPreLaunchConfig(cameraId);
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
+        return result;
+    }
     napi_get_undefined(env, &result);
     return result;
 }

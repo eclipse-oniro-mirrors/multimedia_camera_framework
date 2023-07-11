@@ -496,7 +496,9 @@ napi_value PreviewOutputNapi::AddDeferredSurface(napi_env env, napi_callback_inf
     napi_value argv[ARGS_TWO] = {0};
     napi_value thisVar = nullptr;
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_TWO, "requires 2 parameter maximum");
+    if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_TWO, argv, ADD_DEFERRED_SURFACE)) {
+        return result;
+    }
     napi_get_undefined(env, &result);
     std::unique_ptr<PreviewOutputAsyncContext> asyncContext = std::make_unique<PreviewOutputAsyncContext>();
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
