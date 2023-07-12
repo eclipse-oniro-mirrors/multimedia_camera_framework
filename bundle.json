@@ -25,7 +25,7 @@
               "bundle_framework",
               "device_manager",
               "drivers_interface_camera",
-              "graphic_standard",
+              "graphic_2d",
               "hdf_core",
               "hicollie",
               "hicollie_native",
