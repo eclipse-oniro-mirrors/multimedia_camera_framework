@@ -830,10 +830,13 @@ napi_value PhotoOutputNapi::IsQuickThumbnailSupported(napi_env env, napi_callbac
     PhotoOutputNapi* photoOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
     if (status == napi_ok && photoOutputNapi != nullptr) {
-        bool isSupported = photoOutputNapi->photoOutput_->IsQuickThumbnailSupported();
+        int32_t retCode = photoOutputNapi->photoOutput_->IsQuickThumbnailSupported();
+        bool isSupported = (retCode == 0);
+        if (retCode > 0 && !CameraNapiUtils::CheckError(env, retCode)) {
+            return result;
+        }
         napi_get_boolean(env, isSupported, &result);
     }
-
     return result;
 }
 
@@ -904,6 +907,11 @@ napi_value PhotoOutputNapi::EnableQuickThumbnail(napi_env env, napi_callback_inf
     napi_value thisVar = nullptr;
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
     NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[0], &valueType);
+    if (valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
+        return result;
+    }
     napi_get_undefined(env, &result);
     PhotoOutputNapi* photoOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
@@ -911,7 +919,10 @@ napi_value PhotoOutputNapi::EnableQuickThumbnail(napi_env env, napi_callback_inf
     if (status == napi_ok && photoOutputNapi != nullptr) {
         napi_get_value_bool(env, argv[PARAM0], &thumbnailSwitch);
         photoOutputNapi->isQuickThumbnailEnabled_ = thumbnailSwitch;
-        photoOutputNapi->photoOutput_->SetThumbnail(thumbnailSwitch);
+        int32_t retCode = photoOutputNapi->photoOutput_->SetThumbnail(thumbnailSwitch);
+        if (retCode != 0 && !CameraNapiUtils::CheckError(env, retCode)) {
+            return result;
+        }
     }
     return result;
 }
@@ -962,6 +973,7 @@ napi_value PhotoOutputNapi::On(napi_env env, napi_callback_info info)
             }
             if (!obj->isQuickThumbnailEnabled_) {
                 MEDIA_ERR_LOG("quickThumbnail is not enabled!");
+                napi_throw_error(env, std::to_string(SESSION_NOT_RUNNING).c_str(), "");
                 return undefinedResult;
             }
             sptr<ThumbnailListener> listener = new ThumbnailListener(env, callbackRef, obj->photoOutput_);

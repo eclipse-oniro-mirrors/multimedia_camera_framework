@@ -274,12 +274,24 @@ void PhotoOutput::SetThumbnailListener(sptr<IBufferConsumerListener>& listener)
 int32_t PhotoOutput::SetThumbnail(bool isEnabled)
 {
     CAMERA_SYNC_TRACE;
+    int32_t retCode = 0;
+    sptr<CameraDevice> cameraObj;
+    CaptureSession* captureSession = GetSession();
+    if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
+        MEDIA_ERR_LOG("PhotoOutput isQuickThumbnailEnabled error!, captureSession or inputDevice_ is nullptr");
+        return SESSION_NOT_RUNNING;
+    }
+    cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
+    if (cameraObj == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput SetThumbnail error!, cameraObj is nullptr");
+        return SESSION_NOT_RUNNING;
+    }
     !thumbnailSurface_ && (thumbnailSurface_ = Surface::CreateSurfaceAsConsumer("quickThumbnail"));
     if (thumbnailSurface_ == nullptr) {
         MEDIA_ERR_LOG("PhotoOutput::SetThumbnail Failed to create surface");
-        return CAMERA_STREAM_BUFFER_LOST;
+        return SERVICE_FATL_ERROR;
     }
-    int32_t retCode = static_cast<IStreamCapture *>(
+    retCode = static_cast<IStreamCapture *>(
                 GetStream().GetRefPtr())->SetThumbnail(isEnabled, thumbnailSurface_->GetProducer());
     return retCode;
 }
@@ -398,18 +410,18 @@ bool PhotoOutput::IsMirrorSupported()
 {
     bool isMirrorEnabled = false;
     camera_metadata_item_t item;
-    sptr<CameraDevice> cameraObj_;
+    sptr<CameraDevice> cameraObj;
     CaptureSession* captureSession = GetSession();
     if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
         MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, captureSession or inputDevice_ is nullptr");
         return isMirrorEnabled;
     }
-    cameraObj_ = captureSession->inputDevice_->GetCameraDeviceInfo();
-    if (cameraObj_ == nullptr) {
+    cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
+    if (cameraObj == nullptr) {
         MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, cameraObj is nullptr");
         return isMirrorEnabled;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj_->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
 
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
     if (ret == CAM_META_SUCCESS) {
@@ -418,25 +430,25 @@ bool PhotoOutput::IsMirrorSupported()
     return isMirrorEnabled;
 }
 
-bool PhotoOutput::IsQuickThumbnailSupported()
+int32_t PhotoOutput::IsQuickThumbnailSupported()
 {
-    bool isQuickThumbnailEnabled = false;
+    int32_t isQuickThumbnailEnabled = -1;
     camera_metadata_item_t item;
-    sptr<CameraDevice> cameraObj_;
+    sptr<CameraDevice> cameraObj;
     CaptureSession* captureSession = GetSession();
     if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
         MEDIA_ERR_LOG("PhotoOutput isQuickThumbnailEnabled error!, captureSession or inputDevice_ is nullptr");
-        return isQuickThumbnailEnabled;
+        return SESSION_NOT_RUNNING;
     }
-    cameraObj_ = captureSession->inputDevice_->GetCameraDeviceInfo();
-    if (cameraObj_ == nullptr) {
+    cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
+    if (cameraObj == nullptr) {
         MEDIA_ERR_LOG("PhotoOutput isQuickThumbnailEnabled error!, cameraObj is nullptr");
-        return isQuickThumbnailEnabled;
+        return SESSION_NOT_RUNNING;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj_->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_QUICK_THUMBNAIL_AVAILABLE, &item);
     if (ret == CAM_META_SUCCESS) {
-        isQuickThumbnailEnabled = (item.data.u8[0] == 1);
+        isQuickThumbnailEnabled = (item.data.u8[0] == 1) ? 0 : -1;
     }
     return isQuickThumbnailEnabled;
 }

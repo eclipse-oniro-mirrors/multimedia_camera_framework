@@ -58,12 +58,12 @@ if(this.cameraManager.isPreLaunchSupported(cameras[0])) {
 
 ### setPreLaunchConfig
 
-setPreLaunchConfig(camera: CameraDevice) : boolean
+setPreLaunchConfig(camera: CameraDevice) : void
 
 配置相机预热参数，指定相机设备（待扩展流参数信息等）。
 用户操作会产生下一次进入相机的预热配置变化，或是退出相机时，向相机服务发送预热配置参数。
 
-**需要权限：** ohos.permission.MANAGE_CAMERA_CONFIG
+**需要权限：** ohos.permission.CAMERA
 
 **系统能力：** SystemCapability.Multimedia.Camera.Core
 
@@ -75,9 +75,7 @@ setPreLaunchConfig(camera: CameraDevice) : boolean
 
 **返回值：**
 
-| 类型    | 说明                                 |
-| ------- | ------------------------------------ |
-| boolean | 返回设置预热配置参数是否成功 |
+无
 
 **错误码：**
 
@@ -113,7 +111,7 @@ preLaunch() : void
 
 用户点击系统相机图标，拉起相机应用同时调用，下发预热请求，使能相机预热启动。
 
-**需要权限：** ohos.permission.MANAGE_CAMERA_CONFIG
+**需要权限：** ohos.permission.CAMERA
 
 **系统能力：** SystemCapability.Multimedia.Camera.Core
 

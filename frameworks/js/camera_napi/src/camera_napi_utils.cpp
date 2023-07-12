@@ -478,6 +478,25 @@ bool CameraNapiUtils::CheckInvalidArgument(napi_env env, size_t argc, int32_t le
                 isPass = false;
             }
             break;
+
+        case ADD_DEFERRED_SURFACE:
+            if (argc == ARGS_ONE) {
+                isPass = valueTypeArray[0] == napi_string;
+            } else if (argc == ARGS_TWO) {
+                isPass = (valueTypeArray[0] == napi_string) && (valueTypeArray[1] == napi_function);
+            } else {
+                isPass = false;
+            }
+            break;
+
+        case CREATE_DEFERRED_PREVIEW_OUTPUT:
+            if (argc == ARGS_ONE) {
+                isPass = valueTypeArray[0] == napi_object;
+            }  else {
+                isPass = false;
+            }
+            break;
+
         default:
             break;
     }

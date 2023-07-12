@@ -267,7 +267,7 @@ public:
      *
      * @return Returns true/false if the quick thumbnail is supported/not-supported respectively.
      */
-    bool IsQuickThumbnailSupported();
+    int32_t IsQuickThumbnailSupported();
 
     /**
      * @brief Get default photo capture setting.

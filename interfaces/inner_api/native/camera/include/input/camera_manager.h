@@ -421,14 +421,14 @@ public:
        *
        * @return.
        */
-    void PrelaunchCamera();
+    int32_t PrelaunchCamera();
 
     /**
     * @brief set prelaunch config
     *
     * @return.
     */
-    void SetPreLaunchConfig(std::string cameraId);
+    int32_t SetPreLaunchConfig(std::string cameraId);
 
     /**
     * @brief Get the support of camera pre launch mode.

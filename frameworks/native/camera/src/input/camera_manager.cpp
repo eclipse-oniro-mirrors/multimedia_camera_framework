@@ -1028,20 +1028,20 @@ void CameraManager::MuteCamera(bool muteMode)
     if (retCode != CAMERA_OK) {
         MEDIA_ERR_LOG("MuteCamera call failed, retCode: %{public}d", retCode);
     }
-    return;
 }
 
-void CameraManager::PrelaunchCamera()
+int32_t CameraManager::PrelaunchCamera()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (serviceProxy_ == nullptr) {
         MEDIA_ERR_LOG("CameraManager::PrelaunchCamera serviceProxy_ is null");
-        return;
+        return SERVICE_FATL_ERROR;
     }
     int32_t retCode = serviceProxy_->PrelaunchCamera();
     if (retCode != CAMERA_OK) {
         MEDIA_ERR_LOG("CameraManager::PrelaunchCamera failed, retCode: %{public}d", retCode);
     }
+    return ServiceToCameraError(retCode);
 }
 
 bool CameraManager::IsPreLaunchSupported(sptr<CameraDevice> camera)
@@ -1060,17 +1060,18 @@ bool CameraManager::IsPreLaunchSupported(sptr<CameraDevice> camera)
     return isPreLaunch;
 }
 
-void CameraManager::SetPreLaunchConfig(std::string cameraId)
+int32_t CameraManager::SetPreLaunchConfig(std::string cameraId)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (serviceProxy_ == nullptr) {
         MEDIA_ERR_LOG("CameraManager::SetPrelaunchConfig serviceProxy_ is null");
-        return;
+        return SERVICE_FATL_ERROR;
     }
     int32_t retCode = serviceProxy_->SetPrelaunchConfig(cameraId);
     if (retCode != CAMERA_OK) {
         MEDIA_ERR_LOG("CameraManager::SetPrelaunchConfig failed, retCode: %{public}d", retCode);
     }
+    return ServiceToCameraError(retCode);
 }
 } // namespace CameraStandard
 } // namespace OHOS
