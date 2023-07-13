@@ -21,6 +21,7 @@ import DateTimeUtil from '../model/DateTimeUtil';
 import Logger from '../model/Logger';
 import CameraService from '../model/CameraService';
 import image from '@ohos.multimedia.image';
+import mediaLibrary from '@ohos.multimedia.mediaLibrary';
 
 const TAG: string = 'ModeSwitchPage';
 
@@ -48,16 +49,16 @@ export struct ModeSwitchPage {
   // 选择相机或者拍照
   @State @Watch('onChangeIsModeBol') isModeBol: boolean = true;
   // 录像开始暂停
-  @State @Watch('onChangeRecord') isRecording: boolean = true;
+  @State isRecording: boolean = false;
   // 视频缩略图
   @State videoThumbnail: image.PixelMap = undefined;
+  private videoUri: string;
   // 确定是否停止录制的弹框
   private recodeStopDialogController: CustomDialogController = new CustomDialogController({
     builder: RecodeStopDialog({
       isModeBol: $isModeBol,
       videoRecodeTime: $videoRecodeTime,
-      isRecording: $isRecording,
-      timer: this.timer
+      isRecording: $isRecording
     }),
     autoCancel: false,
     customStyle: true
@@ -73,35 +74,36 @@ export struct ModeSwitchPage {
    * 暂停后点击停止 需要将暂停回复默认
    */
   onChangeIsModeBol(): void {
-    this.isRecording = true;
+    this.isRecording = false;
   }
 
   /**
    * 恢复视频录制
    */
-  resumeVideo(): void {
-    CameraService.resumeVideo().then((): void => {
-      this.timer = setInterval(() => {
-        this.videoRecodeTime += 1000;
-      }, 1000)
-    })
+  async resumeVideo(): Promise<void> {
+    await CameraService.resumeVideo();
+    this.timer = setInterval(() => {
+      this.videoRecodeTime += 1000;
+    }, 1000);
   }
 
   /**
    * 录制 暂停/开始
    */
-  onChangeRecord(): void {
+  async onChangeRecord(): Promise<void> {
     Logger.info(TAG, `onChangeRecord isRecording: ${this.isRecording}`);
     if (this.isRecording) {
       // 开始
-      this.resumeVideo();
+      await this.resumeVideo();
     } else {
       // 暂停
-      if (this.timer) {
+      if (this.timer !== undefined) {
         clearInterval(this.timer);
+        Logger.debug(TAG, `onChangeRecord clear timer success`);
       }
-      CameraService.pauseVideo();
+      await CameraService.pauseVideo();
     }
+    this.isRecording = !this.isRecording;
   }
 
   /**
@@ -141,7 +143,7 @@ export struct ModeSwitchPage {
       CameraService.takePicture();
     } else if (this.modelBagCol == 'video') {
       this.isModeBol = false;
-      if (this.timer) {
+      if (this.timer !== undefined) {
         clearInterval(this.timer);
       }
       // 开始录制
@@ -166,7 +168,7 @@ export struct ModeSwitchPage {
   build() {
     if (this.isModeBol) {
       Stack({ alignContent: Alignment.Bottom }) {
-        Column({space: 24}) {
+        Column({ space: 24 }) {
           Row() {
             // 拍照
             Column() {
@@ -209,6 +211,7 @@ export struct ModeSwitchPage {
           .width('50%')
           .justifyContent(FlexAlign.SpaceBetween)
           .alignItems(VerticalAlign.Center)
+
           Row() {
             // 图库
             Column() {
@@ -229,9 +232,17 @@ export struct ModeSwitchPage {
                     .height('200px')
                 }
               }.onClick(() => {
+                let uri: string;
+                if (this.modelBagCol === 'photo') {
+                  uri = this.imgThumbnail;
+                } else {
+                  uri = this.videoUri;
+                }
                 globalThis.abilityContext.startAbility({
-                  bundleName: 'com.ohos.photos',
-                  abilityName: 'com.ohos.photos.MainAbility'
+                  parameters: { uri: uri },
+                  action: 'ohos.want.action.viewData',
+                  bundleName: 'com.huawei.hmos.photos',
+                  abilityName: 'com.huawei.hmos.photos.MainAbility'
                 });
               })
             }
@@ -255,7 +266,6 @@ export struct ModeSwitchPage {
                   this.countTakeVideoFn();
                 })
               }
-              //.margin({ top: 32 })
             }
 
             // 前后置摄像头切换
@@ -287,7 +297,7 @@ export struct ModeSwitchPage {
 
         }
         .padding({ left: 24, right: 24 })
-        .margin({bottom: 24})
+        .margin({ bottom: 24 })
       }
       .width('100%')
       .height('100%')
@@ -302,7 +312,8 @@ export struct ModeSwitchPage {
               .margin({ left: 8 })
           }
         }
-        .margin({bottom: 200})
+        .margin({ bottom: 200 })
+
         Row() {
           Column() {
             // 录像抓拍键
@@ -329,18 +340,16 @@ export struct ModeSwitchPage {
                 .height('120px')
                 .backgroundColor($r('app.color.theme_color'))
                 .onClick(() => {
-                  if (this.timer) {
+                  if (this.timer !== undefined) {
                     clearInterval(this.timer);
+                    Logger.debug(TAG, `onChangeRecord clear timer success`);
                   }
-                  // 弹框无法响应
-                  // CameraService.pauseVideo();
-                  // 停止录制
-                  CameraService.stopVideo().then(async (fileAsset): Promise<void> => {
-                    this.videoRecodeTime = 0;
-                    this.isModeBol = true;
+                  this.isRecording = !this.isRecording;
+                  CameraService.stopVideo().then(async (fileAsset: mediaLibrary.FileAsset): Promise<void> => {
                     try {
                       // 获取录制缩略图
                       this.videoThumbnail = await fileAsset.getThumbnail();
+                      this.videoUri = fileAsset.uri;
                     } catch (err) {
                       Logger.error(TAG, 'videoThumbnail err:' + JSON.stringify(err.message));
                     }
@@ -367,7 +376,7 @@ export struct ModeSwitchPage {
               Column() {
                 // 录像暂停-播放键
                 Button() {
-                  Image(this.isRecording ? $r('app.media.ic_camera_video_on') : $r('app.media.ic_camera_video_off'))
+                  Image(!this.isRecording ? $r('app.media.ic_camera_video_on') : $r('app.media.ic_camera_video_off'))
                     .size({
                       width: 25,
                       height: 25
@@ -376,8 +385,8 @@ export struct ModeSwitchPage {
                 .width('120px')
                 .height('120px')
                 .backgroundColor($r('app.color.theme_color'))
-                .onClick(() => {
-                  this.isRecording = !this.isRecording;
+                .onClick(async () => {
+                  await this.onChangeRecord();
                 })
               }
               .width('180px')

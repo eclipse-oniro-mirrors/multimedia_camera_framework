@@ -50,7 +50,7 @@ class CameraService {
   private mReceiver: image.ImageReceiver = undefined;
   private fileAsset: mediaLibrary.FileAsset = undefined;
   private fd: number = -1;
-  private videoRecorder: media.VideoRecorder = undefined;
+  private videoRecorder: media.AVRecorder = undefined;
   private videoOutput: camera.VideoOutput = undefined;
   private handleTakePicture: (photoUri: string) => void = undefined;
   private videoConfig: media.VideoRecorderConfig = {
@@ -69,9 +69,6 @@ class CameraService {
       videoFrameRate: Constants.VIDEO_FRAME_30
     },
     url: '',
-    orientationHint: 90,
-    maxSize: 100,
-    maxDuration: 500,
     rotation: 0
   };
   private videoProfiles: Array<camera.VideoProfile>;
@@ -106,6 +103,7 @@ class CameraService {
     rotation180: 180,
     rotation270: 270,
   };
+  private videoOutputStatus: boolean = false;
 
   constructor() {
     // image capacity
@@ -195,37 +193,43 @@ class CameraService {
       for (let index = 0; index < profiles.previewProfiles.length; index++) {
         const previewProfile = profiles.previewProfiles[index];
         if (this.withinErrorMargin(defaultAspectRatio, previewProfile.size.width / previewProfile.size.height)) {
-          this.previewProfilesObj.size.width = previewProfile.size.width;
-          this.previewProfilesObj.size.height = previewProfile.size.height;
-          this.previewProfilesObj.format = previewProfile.format;
-          Logger.debug(TAG, `previewProfilesObj: ${JSON.stringify(this.previewProfilesObj)}`);
-          break;
+          if (previewProfile.size.width < Constants.PHOTO_MAX_WIDTH) {
+            this.previewProfilesObj.size.width = previewProfile.size.width;
+            this.previewProfilesObj.size.height = previewProfile.size.height;
+            this.previewProfilesObj.format = previewProfile.format;
+            Logger.debug(TAG, `previewProfilesObj: ${JSON.stringify(this.previewProfilesObj)}`);
+            break;
+          }
         }
       }
       for (let index = 0; index < profiles.photoProfiles.length; index++) {
         const photoProfile = profiles.photoProfiles[index];
         if (this.withinErrorMargin(defaultAspectRatio, photoProfile.size.width / photoProfile.size.height)) {
-          this.photoProfilesObj.size.width = photoProfile.size.width;
-          this.photoProfilesObj.size.height = photoProfile.size.height;
-          this.photoProfilesObj.format = photoProfile.format;
-          Logger.debug(TAG, `photoProfilesObj: ${JSON.stringify(this.photoProfilesObj)}`);
-          break;
+          if (photoProfile.size.width < Constants.PHOTO_MAX_WIDTH) {
+            this.photoProfilesObj.size.width = photoProfile.size.width;
+            this.photoProfilesObj.size.height = photoProfile.size.height;
+            this.photoProfilesObj.format = photoProfile.format;
+            Logger.debug(TAG, `photoProfilesObj: ${JSON.stringify(this.photoProfilesObj)}`);
+            break;
+          }
         }
       }
-      for (let index = 0; index < this.videoProfiles.length; index++) {
-        const videoProfile = this.videoProfiles[index];
-        Logger.debug(TAG, `videoProfile: ${JSON.stringify(videoProfile)}`);
-        if (this.withinErrorMargin(defaultAspectRatio, videoProfile.size.width / videoProfile.size.height)) {
-          if (videoProfile.size.width < Constants.VIDEO_MAX_WIDTH) {
-            this.videoProfilesObj.size.width = videoProfile.size.width;
-            this.videoProfilesObj.size.height = videoProfile.size.height;
-            this.videoProfilesObj.format = videoProfile.format;
-            if ((globalThis.settingDataObj.videoFrame === 0 ? Constants.VIDEO_FRAME_15 : Constants.VIDEO_FRAME_30) ===
-            videoProfile.frameRateRange.min) {
-              this.videoProfilesObj.frameRateRange.min = videoProfile.frameRateRange.min;
-              this.videoProfilesObj.frameRateRange.max = videoProfile.frameRateRange.max;
-              Logger.debug(TAG, `videoProfilesObj: ${JSON.stringify(this.videoProfilesObj)}`);
-              break;
+      if (AppStorage.Get<string>('deviceType') === Constants.DEFAULT) {
+        for (let index = 0; index < this.videoProfiles.length; index++) {
+          const videoProfile = this.videoProfiles[index];
+          Logger.debug(TAG, `videoProfile: ${JSON.stringify(videoProfile)}`);
+          if (this.withinErrorMargin(defaultAspectRatio, videoProfile.size.width / videoProfile.size.height)) {
+            if (videoProfile.size.width < Constants.VIDEO_MAX_WIDTH) {
+              this.videoProfilesObj.size.width = videoProfile.size.width;
+              this.videoProfilesObj.size.height = videoProfile.size.height;
+              this.videoProfilesObj.format = videoProfile.format;
+              if ((globalThis.settingDataObj.videoFrame === 0 ? Constants.VIDEO_FRAME_15 : Constants.VIDEO_FRAME_30) ===
+              videoProfile.frameRateRange.min) {
+                this.videoProfilesObj.frameRateRange.min = videoProfile.frameRateRange.min;
+                this.videoProfilesObj.frameRateRange.max = videoProfile.frameRateRange.max;
+                Logger.debug(TAG, `videoProfilesObj: ${JSON.stringify(this.videoProfilesObj)}`);
+                break;
+              }
             }
           }
         }
@@ -496,6 +500,7 @@ class CameraService {
   async pauseVideo(): Promise<void> {
     await this.videoRecorder.pause().then((): void => {
       this.videoOutput.stop();
+      this.videoOutputStatus = false;
       Logger.info(TAG, 'pauseVideo success');
     }).catch((err: { code?: number }): void => {
       Logger.error(TAG, `pauseVideo failed: ${JSON.stringify(err)}`);
@@ -507,6 +512,7 @@ class CameraService {
    */
   async resumeVideo(): Promise<void> {
     this.videoOutput.start().then((): void => {
+      this.videoOutputStatus = true;
       Logger.info(TAG, 'resumeVideo start');
       this.videoRecorder.resume().then((): void => {
         Logger.info(TAG, 'resumeVideo success');
@@ -536,10 +542,7 @@ class CameraService {
         });
       AppStorage.Set<boolean>('isRecorder', false);
     }
-    this.videoRecorder = await media.createAVRecorder()
-      .catch((err: { code?: number }): void => {
-        Logger.error(TAG, `videoRecorder release failed, ${JSON.stringify(err)}`);
-      });
+    this.videoRecorder = await media.createAVRecorder();
   }
   /**
    * 开始录制
@@ -558,6 +561,7 @@ class CameraService {
       if (deviceType === Constants.PHONE) {
         this.videoConfig.profile.videoSourceType = media.VideoSourceType.VIDEO_SOURCE_TYPE_SURFACE_YUV;
         this.videoConfig.profile.videoCodec = media.CodecMimeType.VIDEO_MPEG4;
+        this.videoConfig.rotation = this.photoRotationMap.rotation90;
       }
       if (deviceType === Constants.TABLET) {
         this.videoConfig.profile.videoSourceType = media.VideoSourceType.VIDEO_SOURCE_TYPE_SURFACE_YUV;
@@ -578,6 +582,7 @@ class CameraService {
       // 监听录像事件
       this.onVideoOutputChange();
       await this.videoOutput.start();
+      this.videoOutputStatus = true;
       await this.videoRecorder.start();
       AppStorage.Set<boolean>('isRecorder', true);
       Logger.info(TAG, 'startVideo end');
@@ -592,17 +597,17 @@ class CameraService {
   async stopVideo(): Promise<mediaLibrary.FileAsset> {
     try {
       Logger.info(TAG, 'stopVideo start');
-      if (this.videoOutput) {
-        await this.videoOutput.stop();
-      }
       if (this.videoRecorder) {
         await this.videoRecorder.stop();
         await this.videoRecorder.release();
       }
+      if (this.videoOutputStatus) {
+        await this.videoOutput.stop();
+        this.videoOutputStatus = false;
+      }
       AppStorage.Set<boolean>('isRecorder', false);
       await this.videoOutput.release();
       this.videoOutput = undefined;
-      Logger.info(TAG, 'stopVideo end');
       if (this.fileAsset) {
         await this.fileAsset.close(this.fd);
         return this.fileAsset;
@@ -633,7 +638,7 @@ class CameraService {
         await this.captureSession.release();
       }
       if (this.cameraInput) {
-        await this.cameraInput.release();
+        await this.cameraInput.close();
       }
       Logger.info(TAG, 'releaseCamera success');
     } catch {
@@ -759,16 +764,16 @@ class CameraService {
    */
   photoOutPutCallBack(): void {
     // 监听拍照开始
-    this.photoOutPut.on('captureStart', (captureId: number): void => {
+    this.photoOutPut.on('captureStart', (err: { code?: number }, captureId: number): void => {
       Logger.info(TAG, `photoOutPutCallBack captureStart captureId success: ${captureId}`);
     });
     // 监听拍照帧输出捕获
     // 获取时间戳转化异常
-    this.photoOutPut.on('frameShutter', (frameShutterInfo: camera.FrameShutterInfo): void => {
+    this.photoOutPut.on('frameShutter', (err: { code?: number }, frameShutterInfo: camera.FrameShutterInfo): void => {
       Logger.info(TAG, `photoOutPutCallBack frameShutter captureId: ${frameShutterInfo.captureId}, timestamp: ${frameShutterInfo.timestamp}`);
     });
     // 监听拍照结束
-    this.photoOutPut.on('captureEnd', (captureEndInfo: camera.CaptureEndInfo): void => {
+    this.photoOutPut.on('captureEnd', (err: { code?: number }, captureEndInfo: camera.CaptureEndInfo): void => {
       Logger.info(TAG, `photoOutPutCallBack captureEnd captureId: ${captureEndInfo.captureId}, frameCount: ${captureEndInfo.frameCount}`);
     });
   }
@@ -807,7 +812,7 @@ class CameraService {
    * 镜头状态回调
    */
   onCameraStatusChange(): void {
-    this.cameraManager.on('cameraStatus', (cameraStatusInfo): void => {
+    this.cameraManager.on('cameraStatus', (err: { code?: number }, cameraStatusInfo): void => {
       Logger.info(TAG, `onCameraStatusChange cameraStatus success, cameraId: ${cameraStatusInfo.camera.cameraId},
       status: ${cameraStatusInfo.status}`);
     });
@@ -826,7 +831,7 @@ class CameraService {
    * 监听CameraInput的错误事件
    */
   onCameraInputChange(): void {
-    this.cameraInput.on('error', this.cameras, (cameraInputError: { code?: number }): void => {
+    this.cameraInput.on('error', this.cameras[globalThis.cameraDeviceIndex], (cameraInputError: { code?: number }): void => {
       Logger.info(TAG, `onCameraInputChange cameraInput error code: ${cameraInputError.code}`);
     });
   }
