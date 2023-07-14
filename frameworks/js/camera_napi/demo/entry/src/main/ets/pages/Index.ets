@@ -136,11 +136,11 @@ struct Index {
             globalThis.surfaceId = this.surfaceId;
             globalThis.cameraDeviceIndex = this.cameraDeviceIndex;
           })
-          .backgroundColor(Color.Blue)
           .size({
             width: this.xComponentWidth.toString(),
             height: this.xComponentHeight.toString()
           })
+          .margin({ bottom: Constants.SURFACE_BOTTOM_MARGIN })
 
         // 参考线
         DividerPage({
@@ -178,7 +178,7 @@ struct Index {
           // 闪光灯
           FlashingLightPage()
         }
-        .margin({left: 24})
+        .margin({ left: 24 })
         .alignItems(VerticalAlign.Top)
         .justifyContent(FlexAlign.Start)
         .width('100%')

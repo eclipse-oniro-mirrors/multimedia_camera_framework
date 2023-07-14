@@ -31,31 +31,13 @@ export struct RecodeStopDialog {
 
   build() {
     Column() {
-      Text(`当前视频时长${this.dateTimeUtil.getVideoTime(this.videoRecodeTime)}分钟，是否停止录像？`)
+      Text(`当前视频时长${this.dateTimeUtil.getVideoTime(this.videoRecodeTime)}分钟`)
         .fontSize(18)
         .fontWeight(500)
         .fontColor('#182431')
         .margin({ top: 10 })
         .width('99%')
       Row() {
-        Button() {
-          Text('取消')
-            .fontColor('#007DFF')
-            .fontSize(17)
-            .fontWeight(500)
-        }
-        .layoutWeight(5)
-        .height(50)
-        .backgroundColor('#FFFFFF')
-        .onClick(() => {
-          // 取消定时器继续走
-          this.controller.close();
-        })
-
-        Text()
-          .width(1).height(28)
-          .backgroundColor('#8F8F8F')
-
         Button() {
           Text('停止')
             .fontColor($r('app.color.theme_color'))
@@ -67,15 +49,7 @@ export struct RecodeStopDialog {
         .backgroundColor('#FFFFFF')
         .onClick(() => {
           this.isModeBol = true;
-          // 停止录制
-          CameraService.stopVideo()
-          .then((): void => {
-            Logger.error(TAG, 'stopVideo success');
-            this.videoRecodeTime = 0;
-          })
-          .catch((err): void => {
-            Logger.error(TAG, `stopVideo err: ${JSON.stringify(err)}`);
-          })
+          this.videoRecodeTime = 0;
           this.controller.close();
         })
       }
