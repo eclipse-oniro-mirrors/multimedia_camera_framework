@@ -450,7 +450,6 @@ int32_t HCameraServiceProxy::MuteCamera(bool muteMode)
     int error = Remote()->SendRequest(CAMERA_SERVICE_MUTE_CAMERA, data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceProxy::MuteCamera failed, error: %{public}d", error);
-        return IPC_PROXY_ERR;
     }
     return error;
 }
@@ -469,7 +468,6 @@ int32_t HCameraServiceProxy::PrelaunchCamera()
     int error = Remote()->SendRequest(CAMERA_SERVICE_PRE_LAUNCH_CAMERA, data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceProxy::PrelaunchCamera failed, error: %{public}d", error);
-        return IPC_PROXY_ERR;
     }
     return error;
 }
@@ -493,7 +491,6 @@ int32_t HCameraServiceProxy::SetPrelaunchConfig(std::string cameraId)
     int32_t error = Remote()->SendRequest(CAMERA_SERVICE_SET_PRE_LAUNCH_CAMERA, data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceProxy::SetPrelaunchConfig failed, error: %{public}d", error);
-        return IPC_PROXY_ERR;
     }
     return error;
 }
@@ -513,7 +510,7 @@ int32_t HCameraServiceProxy::IsCameraMuted(bool &muteMode)
     int error = Remote()->SendRequest(CAMERA_SERVICE_IS_CAMERA_MUTED, data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceProxy::IsCameraMuted Set listener obj failed, error: %{public}d", error);
-        return IPC_PROXY_ERR;
+        return error;
     }
 
     muteMode = reply.ReadBool();

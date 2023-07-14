@@ -844,7 +844,9 @@ napi_value CameraManagerNapi::IsPreLaunchSupported(napi_env env, napi_callback_i
     status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void **>(&cameraDeviceNapi));
     if (status != napi_ok || cameraDeviceNapi == nullptr) {
         MEDIA_ERR_LOG("Could not able to read cameraDevice argument!");
-        return result;
+        if (!CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
+            return result;
+        }
     }
     sptr<CameraDevice> cameraInfo = cameraDeviceNapi->cameraDevice_;
     bool isPreLaunchSupported = CameraManager::GetInstance()->IsPreLaunchSupported(cameraInfo);
