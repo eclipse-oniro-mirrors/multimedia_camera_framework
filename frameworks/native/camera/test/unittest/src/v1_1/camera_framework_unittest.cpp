@@ -153,13 +153,16 @@ public:
             int32_t dataSize = 100;
             ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
             int32_t streams[20] = {
-                CameraFrameworkUnitTest::DEFAULT_MODE, CameraFrameworkUnitTest::PREVIEW_STREAM, OHOS_CAMERA_FORMAT_YCRCB_420_SP,
-                CameraFrameworkUnitTest::PREVIEW_DEFAULT_WIDTH, CameraFrameworkUnitTest::PREVIEW_DEFAULT_HEIGHT,
-                CameraFrameworkUnitTest::PREVIEW_FRAMERATE, CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::VIDEO_STREAM,
-                OHOS_CAMERA_FORMAT_YCRCB_420_SP, CameraFrameworkUnitTest::VIDEO_DEFAULT_WIDTH, CameraFrameworkUnitTest::VIDEO_DEFAULT_HEIGHT,
-                CameraFrameworkUnitTest::VIDEO_FRAMERATE, CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::PHOTO_STREAM,
-                OHOS_CAMERA_FORMAT_JPEG, CameraFrameworkUnitTest::PHOTO_DEFAULT_WIDTH, CameraFrameworkUnitTest::PHOTO_DEFAULT_HEIGHT,
-                CameraFrameworkUnitTest::PHOTO_FRAMERATE, CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::MODE_FINISH
+                CameraFrameworkUnitTest::DEFAULT_MODE, CameraFrameworkUnitTest::PREVIEW_STREAM,
+                OHOS_CAMERA_FORMAT_YCRCB_420_SP, CameraFrameworkUnitTest::PREVIEW_DEFAULT_WIDTH,
+                CameraFrameworkUnitTest::PREVIEW_DEFAULT_HEIGHT, CameraFrameworkUnitTest::PREVIEW_FRAMERATE,
+                CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::VIDEO_STREAM,
+                OHOS_CAMERA_FORMAT_YCRCB_420_SP, CameraFrameworkUnitTest::VIDEO_DEFAULT_WIDTH,
+                CameraFrameworkUnitTest::VIDEO_DEFAULT_HEIGHT, CameraFrameworkUnitTest::VIDEO_FRAMERATE,
+                CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::PHOTO_STREAM,
+                OHOS_CAMERA_FORMAT_JPEG, CameraFrameworkUnitTest::PHOTO_DEFAULT_WIDTH,
+                CameraFrameworkUnitTest::PHOTO_DEFAULT_HEIGHT, CameraFrameworkUnitTest::PHOTO_FRAMERATE,
+                CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::MODE_FINISH
             };
             ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams,
                               sizeof(streams) / sizeof(streams[0]));
@@ -176,7 +179,8 @@ public:
             ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, sizeof(int32_t));
 
             const camera_rational_t aeCompensationStep[] = {{0, 1}};
-            ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep, sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
+            ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
+                              sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
             return CAMERA_OK;
         });
         ON_CALL(*this, OpenCameraDevice).WillByDefault([this](std::string &cameraId,
@@ -1139,7 +1143,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_033, TestSize.Level0
     EXPECT_CALL(*mockCameraDevice, Close());
     session->Release();
     input->Release();
-
 }
 
 /*
