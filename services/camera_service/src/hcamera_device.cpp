@@ -486,26 +486,30 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint
     if (deviceSvcCallback_ != nullptr) {
         deviceSvcCallback_->OnResult(timestamp, cameraResult);
     }
-    camera_metadata_item_t item;
-    common_metadata_header_t* metadata = cameraResult->get();
-    int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FLASH_MODE, &item);
-    if (ret == 0) {
-        MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::OnResult() OHOS_CONTROL_FLASH_MODE is %{public}d",
-                        item.data.u8[0]);
-    }
-    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FLASH_STATE, &item);
-    if (ret == 0) {
-        MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::OnResult() OHOS_CONTROL_FLASH_STATE is %{public}d",
-                        item.data.u8[0]);
-    }
+    if (cameraResult != nullptr) {
+        camera_metadata_item_t item;
+        common_metadata_header_t* metadata = cameraResult->get();
+        int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FLASH_MODE, &item);
+        if (ret == 0) {
+            MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::OnResult() OHOS_CONTROL_FLASH_MODE is %{public}d",
+                            item.data.u8[0]);
+        }
+        ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FLASH_STATE, &item);
+        if (ret == 0) {
+            MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::OnResult() OHOS_CONTROL_FLASH_STATE is %{public}d",
+                            item.data.u8[0]);
+        }
 
-    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_MODE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("Focus mode: %{public}d", item.data.u8[0]);
-    }
-    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_STATE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("Focus state: %{public}d", item.data.u8[0]);
+        ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_MODE, &item);
+        if (ret == CAM_META_SUCCESS) {
+            MEDIA_DEBUG_LOG("Focus mode: %{public}d", item.data.u8[0]);
+        }
+        ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_STATE, &item);
+        if (ret == CAM_META_SUCCESS) {
+            MEDIA_DEBUG_LOG("Focus state: %{public}d", item.data.u8[0]);
+        }
+    } else {
+        MEDIA_ERR_LOG("HCameraDevice::OnResult cameraResult is nullptr");
     }
     return CAMERA_OK;
 }
