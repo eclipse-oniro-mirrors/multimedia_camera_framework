@@ -264,8 +264,8 @@ void CameraFrameworkUnitTest::SessionCommit(sptr<CaptureSession> session)
 {
     int32_t ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
-
-    EXPECT_CALL(*mockStreamOperator, Capture(3, _, true));
+    int32_t captureId = 3;
+    EXPECT_CALL(*mockStreamOperator, Capture(captureId, _, true));
     ret = session->Start();
     EXPECT_EQ(ret, 0);
 }

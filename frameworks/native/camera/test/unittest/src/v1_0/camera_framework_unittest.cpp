@@ -114,11 +114,11 @@ public:
     explicit MockHCameraHostManager(StatusCallback* statusCallback) : HCameraHostManager(statusCallback)
     {
         cameraDevice = new MockCameraDevice();
-        ON_CALL(*this, GetCameras).WillByDefault([this](std::vector<std::string> &cameraIds) {
+        ON_CALL(*this, GetCameras).WillByDefault([](std::vector<std::string> &cameraIds) {
             cameraIds.emplace_back("cam0");
             return CAMERA_OK;
         });
-        ON_CALL(*this, GetCameraAbility).WillByDefault([this](std::string &cameraId,
+        ON_CALL(*this, GetCameraAbility).WillByDefault([](std::string &cameraId,
                                                             std::shared_ptr<OHOS::Camera::CameraMetadata> &ability) {
             int32_t itemCount = 10;
             int32_t dataSize = 100;
@@ -237,8 +237,8 @@ void CameraFrameworkUnitTest::SessionCommit(sptr<CaptureSession> session)
 {
     int32_t ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
-
-    EXPECT_CALL(*mockStreamOperator, Capture(3, _, true));
+    int32_t captureId = 3;
+    EXPECT_CALL(*mockStreamOperator, Capture(captureId, _, true));
     ret = session->Start();
     EXPECT_EQ(ret, 0);
 }

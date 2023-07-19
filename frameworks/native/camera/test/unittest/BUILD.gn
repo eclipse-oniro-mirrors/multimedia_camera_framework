@@ -37,7 +37,6 @@ ohos_unittest("camera_framework_unittest_v1_0") {
 
   deps = [
     "//drivers/hdf_core/adapter/uhdf2/hdi:libhdi",
-    "//drivers/interface/camera/v1_0:libcamera_proxy_1.0",
     "//foundation/graphic/graphic_2d:libsurface",
     "//foundation/multimedia/camera_framework/frameworks/native/camera:camera_framework",
     "//foundation/multimedia/camera_framework/services/camera_service:camera_service",
@@ -49,6 +48,8 @@ ohos_unittest("camera_framework_unittest_v1_0") {
     "access_token:libnativetoken",
     "access_token:libprivacy_sdk",
     "access_token:libtoken_setproc",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:metadata",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
@@ -57,7 +58,10 @@ ohos_unittest("camera_framework_unittest_v1_0") {
     "safwk:system_ability_fwk",
   ]
 
-  cflags = [ "-fPIC" ]
+  cflags = [
+    "-fPIC",
+    "-Werror=unused",
+  ]
 
   include_dirs += [
     "//drivers/peripheral/camera/interfaces/include",
@@ -89,12 +93,10 @@ ohos_unittest("camera_framework_unittest_v1_1") {
   sources = [
     "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test/test_common.cpp",
     "src/v1_1/camera_framework_unittest.cpp",
-
   ]
 
   deps = [
     "//drivers/hdf_core/adapter/uhdf2/hdi:libhdi",
-    "//drivers/interface/camera/v1_0:libcamera_proxy_1.0",
     "//foundation/graphic/graphic_2d:libsurface",
     "//foundation/multimedia/camera_framework/frameworks/native/camera:camera_framework",
     "//foundation/multimedia/camera_framework/services/camera_service:camera_service",
@@ -106,6 +108,8 @@ ohos_unittest("camera_framework_unittest_v1_1") {
     "access_token:libnativetoken",
     "access_token:libprivacy_sdk",
     "access_token:libtoken_setproc",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:metadata",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
@@ -114,7 +118,10 @@ ohos_unittest("camera_framework_unittest_v1_1") {
     "safwk:system_ability_fwk",
   ]
 
-  cflags = [ "-fPIC", "-Werror=unused"]
+  cflags = [
+    "-fPIC",
+    "-Werror=unused",
+  ]
 
   include_dirs += [
     "//drivers/peripheral/camera/interfaces/include",
