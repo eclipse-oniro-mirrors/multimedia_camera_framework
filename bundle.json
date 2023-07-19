@@ -38,7 +38,7 @@
               "libaccesstoken_sdk",
               "libhilog",
               "media_client",
-              "multimedia_image_framework",
+              "image_framework",
               "napi",
               "safwk",
               "samgr",
