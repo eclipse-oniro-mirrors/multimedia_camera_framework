@@ -114,7 +114,7 @@ ohos_unittest("camera_framework_unittest_v1_1") {
     "safwk:system_ability_fwk",
   ]
 
-  cflags = [ "-fPIC" ]
+  cflags = [ "-fPIC", "-Werror=unused"]
 
   include_dirs += [
     "//drivers/peripheral/camera/interfaces/include",

@@ -233,6 +233,54 @@ sptr<CaptureOutput> CameraFrameworkUnitTest::CreateVideoOutput(int32_t width, in
     return cameraManager->CreateVideoOutput(videoProfile, surface);
 }
 
+void CameraFrameworkUnitTest::SessionCommit(sptr<CaptureSession> session)
+{
+    int32_t ret = session->CommitConfig();
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockStreamOperator, Capture(3, _, true));
+    ret = session->Start();
+    EXPECT_EQ(ret, 0);
+}
+
+void CameraFrameworkUnitTest::SessionControlParams(sptr<CaptureSession> session)
+{
+    session->LockForControl();
+
+    std::vector<float> zoomRatioRange = session->GetZoomRatioRange();
+    if (!zoomRatioRange.empty()) {
+        session->SetZoomRatio(zoomRatioRange[0]);
+    }
+
+    std::vector<float> exposurebiasRange = session->GetExposureBiasRange();
+    if (!exposurebiasRange.empty()) {
+        session->SetExposureBias(exposurebiasRange[0]);
+    }
+
+    FlashMode flash = FLASH_MODE_ALWAYS_OPEN;
+    session->SetFlashMode(flash);
+
+    FocusMode focus = FOCUS_MODE_AUTO;
+    session->SetFocusMode(focus);
+
+    ExposureMode exposure = EXPOSURE_MODE_AUTO;
+    session->SetExposureMode(exposure);
+
+    session->UnlockForControl();
+
+    if (!zoomRatioRange.empty()) {
+        EXPECT_EQ(session->GetZoomRatio(), zoomRatioRange[0]);
+    }
+
+    if (!exposurebiasRange.empty()) {
+        EXPECT_EQ(session->GetExposureValue(), exposurebiasRange[0]);
+    }
+
+    EXPECT_EQ(session->GetFlashMode(), flash);
+    EXPECT_EQ(session->GetFocusMode(), focus);
+    EXPECT_EQ(session->GetExposureMode(), exposure);
+}
+
 void CameraFrameworkUnitTest::SetUpTestCase(void) {}
 
 void CameraFrameworkUnitTest::TearDownTestCase(void) {}
@@ -535,40 +583,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_020, TestSize.Level0
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
-    session->LockForControl();
+    SessionControlParams(session);
 
-    std::vector<float> zoomRatioRange = session->GetZoomRatioRange();
-    if (!zoomRatioRange.empty()) {
-        session->SetZoomRatio(zoomRatioRange[0]);
-    }
-
-    std::vector<float> exposurebiasRange = session->GetExposureBiasRange();
-    if (!exposurebiasRange.empty()) {
-        session->SetExposureBias(exposurebiasRange[0]);
-    }
-
-    FlashMode flash = FLASH_MODE_ALWAYS_OPEN;
-    session->SetFlashMode(flash);
-
-    FocusMode focus = FOCUS_MODE_AUTO;
-    session->SetFocusMode(focus);
-
-    ExposureMode exposure = EXPOSURE_MODE_AUTO;
-    session->SetExposureMode(exposure);
-
-    session->UnlockForControl();
-
-    if (!zoomRatioRange.empty()) {
-        EXPECT_EQ(session->GetZoomRatio(), zoomRatioRange[0]);
-    }
-
-    if (!exposurebiasRange.empty()) {
-        EXPECT_EQ(session->GetExposureValue(), exposurebiasRange[0]);
-    }
-
-    EXPECT_EQ(session->GetFlashMode(), flash);
-    EXPECT_EQ(session->GetFocusMode(), focus);
-    EXPECT_EQ(session->GetExposureMode(), exposure);
     session->RemoveOutput(photo);
     session->RemoveInput(input);
     photo->Release();
@@ -1047,7 +1063,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_032, TestSize.Level0
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_033, TestSize.Level0)
 {
-    InSequence s;
     EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
@@ -1087,12 +1102,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_033, TestSize.Level0
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams(_));
     EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
-    ret = session->CommitConfig();
-    EXPECT_EQ(ret, 0);
 
-    EXPECT_CALL(*mockStreamOperator, Capture(3, _, true));
-    ret = session->Start();
-    EXPECT_EQ(ret, 0);
+    SessionCommit(session);
 
     EXPECT_CALL(*mockStreamOperator, Capture(4, _, true));
     ret = ((sptr<VideoOutput> &)video)->Start();

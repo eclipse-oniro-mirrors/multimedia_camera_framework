@@ -134,14 +134,26 @@ public:
 
 class MockHCameraHostManager : public HCameraHostManager {
 public:
+    int32_t streams[20] = {
+        CameraFrameworkUnitTest::DEFAULT_MODE, CameraFrameworkUnitTest::PREVIEW_STREAM,
+        OHOS_CAMERA_FORMAT_YCRCB_420_SP, CameraFrameworkUnitTest::PREVIEW_DEFAULT_WIDTH,
+        CameraFrameworkUnitTest::PREVIEW_DEFAULT_HEIGHT, CameraFrameworkUnitTest::PREVIEW_FRAMERATE,
+        CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::VIDEO_STREAM,
+        OHOS_CAMERA_FORMAT_YCRCB_420_SP, CameraFrameworkUnitTest::VIDEO_DEFAULT_WIDTH,
+        CameraFrameworkUnitTest::VIDEO_DEFAULT_HEIGHT, CameraFrameworkUnitTest::VIDEO_FRAMERATE,
+        CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::PHOTO_STREAM,
+        OHOS_CAMERA_FORMAT_JPEG, CameraFrameworkUnitTest::PHOTO_DEFAULT_WIDTH,
+        CameraFrameworkUnitTest::PHOTO_DEFAULT_HEIGHT, CameraFrameworkUnitTest::PHOTO_FRAMERATE,
+        CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::MODE_FINISH
+    };
     explicit MockHCameraHostManager(StatusCallback* statusCallback) : HCameraHostManager(statusCallback)
     {
         cameraDevice = new MockCameraDevice();
-        ON_CALL(*this, GetCameras).WillByDefault([this](std::vector<std::string> &cameraIds) {
+        ON_CALL(*this, GetCameras).WillByDefault([](std::vector<std::string> &cameraIds) {
             cameraIds.emplace_back("cam0");
             return CAMERA_OK;
         });
-        ON_CALL(*this, GetVersionByCamera).WillByDefault([this](const std::string& cameraId) {
+        ON_CALL(*this, GetVersionByCamera).WillByDefault([](const std::string& cameraId) {
             const uint32_t offset = 8;
             uint32_t major = 1;
             uint32_t minor = 1;
@@ -152,18 +164,6 @@ public:
             int32_t itemCount = 10;
             int32_t dataSize = 100;
             ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
-            int32_t streams[20] = {
-                CameraFrameworkUnitTest::DEFAULT_MODE, CameraFrameworkUnitTest::PREVIEW_STREAM,
-                OHOS_CAMERA_FORMAT_YCRCB_420_SP, CameraFrameworkUnitTest::PREVIEW_DEFAULT_WIDTH,
-                CameraFrameworkUnitTest::PREVIEW_DEFAULT_HEIGHT, CameraFrameworkUnitTest::PREVIEW_FRAMERATE,
-                CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::VIDEO_STREAM,
-                OHOS_CAMERA_FORMAT_YCRCB_420_SP, CameraFrameworkUnitTest::VIDEO_DEFAULT_WIDTH,
-                CameraFrameworkUnitTest::VIDEO_DEFAULT_HEIGHT, CameraFrameworkUnitTest::VIDEO_FRAMERATE,
-                CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::PHOTO_STREAM,
-                OHOS_CAMERA_FORMAT_JPEG, CameraFrameworkUnitTest::PHOTO_DEFAULT_WIDTH,
-                CameraFrameworkUnitTest::PHOTO_DEFAULT_HEIGHT, CameraFrameworkUnitTest::PHOTO_FRAMERATE,
-                CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::MODE_FINISH
-            };
             ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams,
                               sizeof(streams) / sizeof(streams[0]));
             int32_t compensationRange[2] = {-2, 3};
@@ -258,6 +258,54 @@ sptr<CaptureOutput> CameraFrameworkUnitTest::CreateVideoOutput(int32_t width, in
     std::vector<int32_t> videoFramerates = {30, 30};
     VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
     return cameraManager->CreateVideoOutput(videoProfile, surface);
+}
+
+void CameraFrameworkUnitTest::SessionCommit(sptr<CaptureSession> session)
+{
+    int32_t ret = session->CommitConfig();
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockStreamOperator, Capture(3, _, true));
+    ret = session->Start();
+    EXPECT_EQ(ret, 0);
+}
+
+void CameraFrameworkUnitTest::SessionControlParams(sptr<CaptureSession> session)
+{
+    session->LockForControl();
+
+    std::vector<float> zoomRatioRange = session->GetZoomRatioRange();
+    if (!zoomRatioRange.empty()) {
+        session->SetZoomRatio(zoomRatioRange[0]);
+    }
+
+    std::vector<float> exposurebiasRange = session->GetExposureBiasRange();
+    if (!exposurebiasRange.empty()) {
+        session->SetExposureBias(exposurebiasRange[0]);
+    }
+
+    FlashMode flash = FLASH_MODE_ALWAYS_OPEN;
+    session->SetFlashMode(flash);
+
+    FocusMode focus = FOCUS_MODE_AUTO;
+    session->SetFocusMode(focus);
+
+    ExposureMode exposure = EXPOSURE_MODE_AUTO;
+    session->SetExposureMode(exposure);
+
+    session->UnlockForControl();
+
+    if (!zoomRatioRange.empty()) {
+        EXPECT_EQ(session->GetZoomRatio(), zoomRatioRange[0]);
+    }
+
+    if (!exposurebiasRange.empty()) {
+        EXPECT_EQ(session->GetExposureValue(), exposurebiasRange[0]);
+    }
+
+    EXPECT_EQ(session->GetFlashMode(), flash);
+    EXPECT_EQ(session->GetFocusMode(), focus);
+    EXPECT_EQ(session->GetExposureMode(), exposure);
 }
 
 void CameraFrameworkUnitTest::SetUpTestCase(void) {}
@@ -562,40 +610,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_020, TestSize.Level0
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
-    session->LockForControl();
+    SessionControlParams(session);
 
-    std::vector<float> zoomRatioRange = session->GetZoomRatioRange();
-    if (!zoomRatioRange.empty()) {
-        session->SetZoomRatio(zoomRatioRange[0]);
-    }
-
-    std::vector<float> exposurebiasRange = session->GetExposureBiasRange();
-    if (!exposurebiasRange.empty()) {
-        session->SetExposureBias(exposurebiasRange[0]);
-    }
-
-    FlashMode flash = FLASH_MODE_ALWAYS_OPEN;
-    session->SetFlashMode(flash);
-
-    FocusMode focus = FOCUS_MODE_AUTO;
-    session->SetFocusMode(focus);
-
-    ExposureMode exposure = EXPOSURE_MODE_AUTO;
-    session->SetExposureMode(exposure);
-
-    session->UnlockForControl();
-
-    if (!zoomRatioRange.empty()) {
-        EXPECT_EQ(session->GetZoomRatio(), zoomRatioRange[0]);
-    }
-
-    if (!exposurebiasRange.empty()) {
-        EXPECT_EQ(session->GetExposureValue(), exposurebiasRange[0]);
-    }
-
-    EXPECT_EQ(session->GetFlashMode(), flash);
-    EXPECT_EQ(session->GetFocusMode(), focus);
-    EXPECT_EQ(session->GetExposureMode(), exposure);
     session->RemoveOutput(photo);
     session->RemoveInput(input);
     photo->Release();
@@ -1078,7 +1094,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_032, TestSize.Level0
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_033, TestSize.Level0)
 {
-    InSequence s;
     EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
@@ -1119,12 +1134,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_033, TestSize.Level0
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
     EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
-    ret = session->CommitConfig();
-    EXPECT_EQ(ret, 0);
 
-    EXPECT_CALL(*mockStreamOperator, Capture(3, _, true));
-    ret = session->Start();
-    EXPECT_EQ(ret, 0);
+    SessionCommit(session);
 
     EXPECT_CALL(*mockStreamOperator, Capture(4, _, true));
     ret = ((sptr<VideoOutput> &)video)->Start();

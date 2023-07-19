@@ -57,7 +57,8 @@ public:
 
     /* TearDown:Execute after each test case */
     void TearDown();
-
+    void SessionCommit(sptr<CaptureSession> session);
+    void SessionControlParams(sptr<CaptureSession> session);
     sptr<CaptureOutput> CreatePhotoOutput(int32_t width = PHOTO_DEFAULT_WIDTH, int32_t height = PHOTO_DEFAULT_HEIGHT);
     sptr<CaptureOutput> CreatePreviewOutput(int32_t width = PREVIEW_DEFAULT_WIDTH,
                                             int32_t height = PREVIEW_DEFAULT_HEIGHT);
