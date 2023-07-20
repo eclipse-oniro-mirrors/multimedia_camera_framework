@@ -13,3 +13,6 @@
 graphic_2d_path = "//foundation/graphic/graphic_2d"
 multimedia_camera_framework_path = "//foundation/multimedia/camera_framework"
 driver_camera_path = "//drivers/interface/camera"
+third_party_path = "//third_party/googletest"
+driver_peripheral_path = "//drivers/peripheral/camera"
+base_security_path= "//base/security/access_token"
