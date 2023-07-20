@@ -25,6 +25,7 @@
 #include "icamera_util.h"
 #include "icapture_session.h"
 #include "icapture_session_callback.h"
+#include "hcapture_session_callback_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -118,6 +119,23 @@ public:
     virtual ~FocusCallback() = default;
     virtual void OnFocusState(FocusState state) = 0;
     FocusState currentState;
+};
+
+class CaptureSessionCallback : public HCaptureSessionCallbackStub {
+public:
+    CaptureSession* captureSession_ = nullptr;
+    CaptureSessionCallback() : captureSession_(nullptr) {
+    }
+
+    explicit CaptureSessionCallback(CaptureSession* captureSession) : captureSession_(captureSession) {
+    }
+
+    ~CaptureSessionCallback()
+    {
+        captureSession_ = nullptr;
+    }
+
+    int32_t OnError(int32_t errorCode) override;
 };
 
 enum VideoStabilizationMode {

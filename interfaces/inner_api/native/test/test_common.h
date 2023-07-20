@@ -33,6 +33,22 @@ enum class SurfaceType {
     VIDEO
 };
 
+enum HostDeviceType {
+    /**
+     * Indicates an unknown device type.
+     */
+    UNKNOWN = 0x00,
+    /**
+     * Indicates a smart phone.
+     */
+    PHONE = 0x0E,
+    /**
+     * Indicates a smart pad.
+     */
+    TABLET = 0x11,
+};
+
+
 class TestUtils {
 public:
     static const std::int32_t FILE_PERMISSIONS_FLAG = 00766;
@@ -63,6 +79,16 @@ public:
     explicit TestDeviceCallback(const char* testName);
     virtual ~TestDeviceCallback() = default;
     void OnError(const int32_t errorType, const int32_t errorMsg) const override;
+
+private:
+    const char* testName_;
+};
+
+class TestOnResultCallback : public ResultCallback {
+public:
+    explicit TestOnResultCallback(const char* testName);
+    virtual ~TestOnResultCallback() = default;
+    void OnResult(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) const;
 
 private:
     const char* testName_;

@@ -99,32 +99,17 @@ CameraVideoStabilizationMode> CaptureSession::fwToMetaVideoStabModes_ = {
     {AUTO, OHOS_CAMERA_VIDEO_STABILIZATION_AUTO}
 };
 
-class CaptureSessionCallback : public HCaptureSessionCallbackStub {
-public:
-    CaptureSession* captureSession_ = nullptr;
-    CaptureSessionCallback() : captureSession_(nullptr) {
+int32_t CaptureSessionCallback::OnError(int32_t errorCode)
+{
+    MEDIA_INFO_LOG("CaptureSessionCallback::OnError() is called!, errorCode: %{public}d",
+                   errorCode);
+    if (captureSession_ != nullptr && captureSession_->GetApplicationCallback() != nullptr) {
+        captureSession_->GetApplicationCallback()->OnError(errorCode);
+    } else {
+        MEDIA_INFO_LOG("CaptureSessionCallback::ApplicationCallback not set!, Discarding callback");
     }
-
-    explicit CaptureSessionCallback(CaptureSession* captureSession) : captureSession_(captureSession) {
-    }
-
-    ~CaptureSessionCallback()
-    {
-        captureSession_ = nullptr;
-    }
-
-    int32_t OnError(int32_t errorCode) override
-    {
-        MEDIA_INFO_LOG("CaptureSessionCallback::OnError() is called!, errorCode: %{public}d",
-                       errorCode);
-        if (captureSession_ != nullptr && captureSession_->GetApplicationCallback() != nullptr) {
-            captureSession_->GetApplicationCallback()->OnError(errorCode);
-        } else {
-            MEDIA_INFO_LOG("CaptureSessionCallback::ApplicationCallback not set!, Discarding callback");
-        }
-        return CameraErrorCode::SUCCESS;
-    }
-};
+    return CameraErrorCode::SUCCESS;
+}
 
 CaptureSession::CaptureSession(sptr<ICaptureSession> &captureSession)
 {
@@ -347,9 +332,7 @@ int32_t CaptureSession::Release()
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (captureSession_) {
         errCode = captureSession_->Release(0);
-        if (errCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("Failed to Release capture session!, %{public}d", errCode);
-        }
+        MEDIA_DEBUG_LOG("Release capture session, %{public}d", errCode);
     } else {
         MEDIA_ERR_LOG("CaptureSession::Release() captureSession_ is nullptr");
     }
@@ -383,8 +366,6 @@ void CaptureSession::SetCallback(std::shared_ptr<SessionCallback> callback)
                 captureSessionCallback_ = nullptr;
                 appCallback_ = nullptr;
             }
-        } else {
-            MEDIA_ERR_LOG("CaptureSession::SetCallback() captureSession_ is nullptr");
         }
     }
     return;

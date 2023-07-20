@@ -177,6 +177,18 @@ void TestDeviceCallback::OnError(const int32_t errorType, const int32_t errorMsg
     return;
 }
 
+TestOnResultCallback::TestOnResultCallback(const char* testName) : testName_(testName) {
+}
+
+void TestOnResultCallback::OnResult(const uint64_t timestamp,
+                                    const std::shared_ptr<Camera::CameraMetadata> &result) const
+{
+    MEDIA_DEBUG_LOG("TestOnResultCallback::OnResult(), testName_: %{public}s",
+                    testName_);
+    return;
+}
+
+
 TestPhotoOutputCallback::TestPhotoOutputCallback(const char* testName) : testName_(testName) {
 }
 

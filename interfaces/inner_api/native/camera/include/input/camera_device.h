@@ -114,6 +114,13 @@ public:
     * @return Returns the deviceType of the Distributed camera.
     */
     uint16_t GetDeviceType();
+    
+    /**
+    * @brief Get the Distributed Camera networkId.
+    *
+    * @return Returns the networkId of the Distributed camera.
+    */
+    std::string GetNetWorkId();
     /**
     * @brief Check if mirror mode supported.
     *
