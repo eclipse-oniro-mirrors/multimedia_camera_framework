@@ -46,7 +46,7 @@ enum HostDeviceType {
      * Indicates a smart pad.
      */
     TABLET = 0x11,
-} HostDeviceType;
+};
 
 
 class TestUtils {
