@@ -33,7 +33,7 @@ enum class SurfaceType {
     VIDEO
 };
 
-typedef enum {
+enum HostDeviceType {
     /**
      * Indicates an unknown device type.
      */
