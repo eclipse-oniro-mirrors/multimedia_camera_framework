@@ -12,7 +12,8 @@
 # limitations under the License.
 
 import("//build/test.gni")
-import("//foundation/multimedia/camera_framework/multimedia_camera_framework.gni")
+import(
+    "//foundation/multimedia/camera_framework/multimedia_camera_framework.gni")
 
 module_output_path = "camera_framework/camera_framework_unittest"
 
@@ -38,9 +39,9 @@ ohos_unittest("camera_framework_unittest_v1_0") {
 
   deps = [
     "${graphic_2d_path}:libsurface",
-    "${third_party_path}:gmock_main",
     "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${third_party_path}:gmock_main",
   ]
 
   external_deps = [
@@ -98,9 +99,9 @@ ohos_unittest("camera_framework_unittest_v1_1") {
 
   deps = [
     "${graphic_2d_path}:libsurface",
-    "${third_party_path}:gmock_main",
     "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${third_party_path}:gmock_main",
   ]
 
   external_deps = [
