@@ -130,7 +130,7 @@ napi_value PortraitSessionNapi::PortraitSessionNapiConstructor(napi_env env, nap
             return result;
         }
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                            PortraitSessionNapi::PortraitSessionNapiDestructor, nullptr, nullptr);
+            PortraitSessionNapi::PortraitSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
             obj.release();
             return thisVar;

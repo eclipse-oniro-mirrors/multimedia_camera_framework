@@ -984,9 +984,8 @@ sptr<HStreamCommon> StreamOperatorCallback::GetStreamByStreamID(int32_t streamId
     if (captureSession_ != nullptr) {
         std::lock_guard<std::mutex> lock(captureSession_->streamsLock_);
 
-        std::vector<sptr<HStreamCommon>>::iterator it;
-        it = std::find_if(captureSession_->streams_.begin(), captureSession_->streams_.end(),
-                        [&streamId](const auto& item) { return item->GetStreamId() == streamId; });
+        std::vector<sptr<HStreamCommon>>::iterator it = std::find_if(captureSession_->streams_.begin(),
+            captureSession_->streams_.end(),[&streamId](const auto& item) { return item->GetStreamId() == streamId; });
         if (it == captureSession_->streams_.end()) {
             return result;
         }

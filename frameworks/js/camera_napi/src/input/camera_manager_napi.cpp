@@ -849,8 +849,8 @@ napi_value CameraManagerNapi::IsPreLaunchSupported(napi_env env, napi_callback_i
         napi_get_boolean(env, isPreLaunchSupported, &result);
     } else {
         MEDIA_ERR_LOG("Could not able to read cameraDevice argument!");
-        if (!CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)){
-
+        if (!CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
+            MEDIA_DEBUG_LOG("Could not able to read cameraDevice argument throw error");
         }
     }
     return result;
