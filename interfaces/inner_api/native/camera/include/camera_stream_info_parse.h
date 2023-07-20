@@ -148,11 +148,11 @@ private:
         }
     }
 private:
-    std::vector<uint32_t>  modeStartIndex_ = {};
+    uint32_t modeCount_ = 0;
+    std::vector<uint32_t> modeStartIndex_ = {};
     std::vector<uint32_t> modeEndIndex_ = {};
     std::queue<uint32_t> streamStartIndex_;
     std::queue<uint32_t> streamEndIndex_;
-    uint32_t modeCount_ = 0;
     std::queue<uint32_t> streamTypeCount_;
     std::queue<uint32_t> deatiInfoCount_;
 };
