@@ -101,6 +101,25 @@ public:
     int32_t OnCameraMute(bool muteMode) override;
 };
 
+class CameraStatusServiceCallback : public HCameraServiceCallbackStub {
+public:
+    sptr<CameraManager> camMngr_ = nullptr;
+    CameraStatusServiceCallback() : camMngr_(nullptr) {
+    }
+
+    explicit CameraStatusServiceCallback(const sptr<CameraManager>& cameraManager) : camMngr_(cameraManager) {
+    }
+
+    ~CameraStatusServiceCallback()
+    {
+        camMngr_ = nullptr;
+    }
+
+    int32_t OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status) override;
+
+    int32_t OnFlashlightStatusChanged(const std::string& cameraId, const FlashStatus status) override;
+};
+
 class CameraManager : public RefBase {
 public:
     ~CameraManager();

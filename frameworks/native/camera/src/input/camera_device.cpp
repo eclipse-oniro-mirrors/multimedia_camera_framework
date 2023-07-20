@@ -139,6 +139,11 @@ uint16_t CameraDevice::GetDeviceType()
     return dmDeviceInfo_.deviceTypeId;
 }
 
+std::string CameraDevice::GetNetWorkId()
+{
+    return dmDeviceInfo_.networkId;
+}
+
 bool CameraDevice::IsMirrorSupported()
 {
     return isMirrorSupported_;

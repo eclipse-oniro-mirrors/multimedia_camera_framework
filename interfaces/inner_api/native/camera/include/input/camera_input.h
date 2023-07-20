@@ -25,6 +25,7 @@
 #include "capture_input.h"
 #include "icamera_device_service.h"
 #include "icamera_device_service_callback.h"
+#include "hcamera_device_callback_stub.h"
 namespace OHOS {
 namespace CameraStandard {
 class ErrorCallback {
@@ -40,6 +41,7 @@ public:
     virtual ~ResultCallback() = default;
     virtual void OnResult(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) const;
 };
+
 
 class CameraInput : public CaptureInput {
 public:
@@ -322,6 +324,27 @@ private:
     std::mutex interfaceMutex_;
 
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
+};
+
+class CameraDeviceServiceCallback : public HCameraDeviceCallbackStub {
+public:
+    std::mutex deviceCallbackMutex_;
+    CameraInput* camInput_ = nullptr;
+    CameraDeviceServiceCallback() : camInput_(nullptr) {
+    }
+
+    explicit CameraDeviceServiceCallback(CameraInput* camInput) : camInput_(camInput) {
+    }
+
+    ~CameraDeviceServiceCallback()
+    {
+        std::lock_guard<std::mutex> lock(deviceCallbackMutex_);
+        camInput_ = nullptr;
+    }
+
+    int32_t OnError(const int32_t errorType, const int32_t errorMsg) override;
+
+    int32_t OnResult(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

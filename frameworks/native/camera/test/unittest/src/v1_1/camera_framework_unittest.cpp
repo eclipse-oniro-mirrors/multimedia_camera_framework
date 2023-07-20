@@ -355,6 +355,84 @@ MATCHER_P(matchCaptureSetting, captureSetting, "Match Capture Setting")
 
 /*
  * Feature: Framework
+ * Function: Test get HostName
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test get HostName
+ */
+HWTEST_F(CameraFrameworkUnitTest, Camera_fwInfoManager_unittest_001, TestSize.Level0)
+{
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    std::string hostName = cameras[0]->GetHostName();
+    ASSERT_EQ(hostName, "");
+}
+
+/*
+ * Feature: Framework
+ * Function: Test get DeviceType
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test get DeviceType
+ */
+HWTEST_F(CameraFrameworkUnitTest, Camera_fwInfoManager_unittest_002, TestSize.Level0)
+{
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    auto judgeDeviceType = [&cameras] () -> bool {
+        bool isOk = false;
+        uint16_t deviceType = cameras[0]->GetDeviceType();
+        switch (deviceType) {
+            case UNKNOWN:
+            case PHONE:
+            case TABLET:
+                isOk = true;
+                break;
+            default:
+                isOk = false;
+                break;
+        }
+        return isOk;
+    };
+    ASSERT_NE(judgeDeviceType(), false);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test result callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test result callback
+ */
+HWTEST_F(CameraFrameworkUnitTest, Camera_ResultCallback_unittest, TestSize.Level0)
+{
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CameraInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    std::shared_ptr<TestOnResultCallback> setResultCallback =
+    std::make_shared<TestOnResultCallback>("OnResultCallback");
+
+    input->SetResultCallback(setResultCallback);
+    std::shared_ptr<ResultCallback> getResultCallback = input->GetResultCallback();
+    ASSERT_EQ(getResultCallback, setResultCallback);
+}
+
+/*
+ * Feature: Framework
  * Function: Test get cameras
  * SubFunction: NA
  * FunctionPoints: NA
