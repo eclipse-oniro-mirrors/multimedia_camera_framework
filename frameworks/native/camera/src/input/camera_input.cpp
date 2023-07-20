@@ -41,7 +41,7 @@ int32_t CameraDeviceServiceCallback::OnError(const int32_t errorType, const int3
     return CAMERA_OK;
 }
 
-int32_t CameraDeviceServiceCallback::OnResult(const uint64_t timestamp, 
+int32_t CameraDeviceServiceCallback::OnResult(const uint64_t timestamp,
                                               const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
     std::lock_guard<std::mutex> lock(deviceCallbackMutex_);

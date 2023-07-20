@@ -3675,18 +3675,18 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_072, TestSize.Le
     EXPECT_EQ(camInput, nullptr);
 
     sptr<ICameraDeviceService> deviceObj_1 = nullptr;
-    sptr<CameraInput> input =  new(std::nothrow) CameraInput(deviceObj_1, cameras_[0]);
-    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> input_1 =  new(std::nothrow) CameraInput(deviceObj_1, cameras_[0]);
+    ASSERT_NE(input_1, nullptr);
 
-    sptr<CameraInput> input = (sptr<CameraInput> &)input_;
-    sptr<ICameraDeviceService> deviceObj_2 = input->GetCameraDevice();
+    sptr<CameraInput> input_2 = (sptr<CameraInput> &)input_;
+    sptr<ICameraDeviceService> deviceObj_2 = input_2->GetCameraDevice();
     ASSERT_NE(deviceObj_2, nullptr);
 
-    input = new(std::nothrow) CameraInput(deviceObj_2, camdeviceObj_3);
-    ASSERT_NE(input, nullptr);
+    input_2 = new(std::nothrow) CameraInput(deviceObj_2, camdeviceObj_3);
+    ASSERT_NE(input_2, nullptr);
 
-    input =  new(std::nothrow) CameraInput(deviceObj_1, cameras_[0]);
-    ASSERT_NE(input, nullptr);
+    input_2 = new(std::nothrow) CameraInput(deviceObj_1, cameras_[0]);
+    ASSERT_NE(input_2, nullptr);
 }
 } // CameraStandard
 } // OHOS
