@@ -33,7 +33,15 @@ public:
     static const int32_t PREVIEW_DEFAULT_HEIGHT = 480;
     static const int32_t VIDEO_DEFAULT_WIDTH = 640;
     static const int32_t VIDEO_DEFAULT_HEIGHT = 360;
-
+    static const int32_t DEFAULT_MODE = 0;
+    static const int32_t MODE_FINISH = -1;
+    static const int32_t STREAM_FINISH = -1;
+    static const int32_t PREVIEW_STREAM = 0;
+    static const int32_t VIDEO_STREAM = 1;
+    static const int32_t PHOTO_STREAM = 2;
+    static const int32_t PREVIEW_FRAMERATE = 0;
+    static const int32_t VIDEO_FRAMERATE = 30;
+    static const int32_t PHOTO_FRAMERATE = 0;
     sptr<MockStreamOperator> mockStreamOperator;
     sptr<MockCameraDevice> mockCameraDevice;
     sptr<MockHCameraHostManager> mockCameraHostManager;
@@ -49,7 +57,8 @@ public:
 
     /* TearDown:Execute after each test case */
     void TearDown();
-
+    void SessionCommit(sptr<CaptureSession> session);
+    void SessionControlParams(sptr<CaptureSession> session);
     sptr<CaptureOutput> CreatePhotoOutput(int32_t width = PHOTO_DEFAULT_WIDTH, int32_t height = PHOTO_DEFAULT_HEIGHT);
     sptr<CaptureOutput> CreatePreviewOutput(int32_t width = PREVIEW_DEFAULT_WIDTH,
                                             int32_t height = PREVIEW_DEFAULT_HEIGHT);

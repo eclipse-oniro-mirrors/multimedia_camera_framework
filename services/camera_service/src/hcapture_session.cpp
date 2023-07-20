@@ -759,6 +759,7 @@ int32_t HCaptureSession::ReleaseInner()
 int32_t HCaptureSession::Release(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(sessionLock_);
+    pid = pid != 0 ? pid : IPCSkeleton::GetCallingPid();
     MEDIA_INFO_LOG("HCaptureSession::Release pid(%{public}d).", pid);
     auto it = session_.find(pid);
     if (it == session_.end()) {

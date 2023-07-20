@@ -50,7 +50,7 @@ public:
     int32_t Init(void);
     void DeInit(void);
     void AddCameraDevice(const std::string& cameraId, sptr<ICameraDeviceService> cameraDevice);
-    int32_t GetVersionByCamera(const std::string& cameraId);
+    virtual int32_t GetVersionByCamera(const std::string& cameraId);
     void RemoveCameraDevice(const std::string& cameraId);
     void CloseCameraDevice(const std::string& cameraId);
 

@@ -12,36 +12,35 @@
 # limitations under the License.
 
 import("//build/test.gni")
+import("./../../../../../multimedia_camera_framework.gni")
 
 module_output_path = "camera_framework/camera_framework_unittest"
 
-ohos_unittest("camera_framework_unittest") {
+ohos_unittest("camera_framework_unittest_v1_0") {
   module_out_path = module_output_path
   include_dirs = [
     "./include",
-    "//foundation/graphic/graphic_2d/frameworks/surface/include",
-    "//foundation/multimedia/camera_framework/services/camera_service/include",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/base/include",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/client/include",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/server/include",
-    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include",
-    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test",
-    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
-    "//base/security/access_token/interfaces/innerkits/token_setproc/include",
+    "${graphic_2d_path}/frameworks/surface/include",
+    "${multimedia_camera_framework_path}/services/camera_service/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
+    "${base_security_path}/interfaces/innerkits/accesstoken/include",
+    "${base_security_path}/interfaces/innerkits/token_setproc/include",
   ]
 
   sources = [
-    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test/test_common.cpp",
-    "src/camera_framework_unittest.cpp",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
+    "src/v1_0/camera_framework_unittest.cpp",
   ]
 
   deps = [
-    "//drivers/hdf_core/adapter/uhdf2/hdi:libhdi",
-    "//drivers/interface/camera/v1_0:libcamera_proxy_1.0",
-    "//foundation/graphic/graphic_2d:libsurface",
-    "//foundation/multimedia/camera_framework/frameworks/native/camera:camera_framework",
-    "//foundation/multimedia/camera_framework/services/camera_service:camera_service",
-    "//third_party/googletest:gmock_main",
+    "${graphic_2d_path}:libsurface",
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${third_party_path}:gmock_main",
   ]
 
   external_deps = [
@@ -49,7 +48,10 @@ ohos_unittest("camera_framework_unittest") {
     "access_token:libnativetoken",
     "access_token:libprivacy_sdk",
     "access_token:libtoken_setproc",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:metadata",
+    "hdf_core:libhdi",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
@@ -57,16 +59,79 @@ ohos_unittest("camera_framework_unittest") {
     "safwk:system_ability_fwk",
   ]
 
-  cflags = [ "-fPIC" ]
+  cflags = [
+    "-fPIC",
+    "-Werror=unused",
+  ]
 
   include_dirs += [
-    "//drivers/peripheral/camera/interfaces/include",
-    "//drivers/peripheral/camera/interfaces/hdi_ipc",
-    "//drivers/peripheral/camera/interfaces/hdi_ipc/utils/include",
-    "//drivers/peripheral/camera/interfaces/hdi_ipc/server/include",
-    "//drivers/peripheral/camera/interfaces/hdi_ipc/callback/device/include",
-    "//drivers/peripheral/camera/interfaces/hdi_ipc/callback/operator/include",
-    "//drivers/peripheral/camera/interfaces/hdi_ipc/callback/host/include",
+    "${driver_peripheral_path}/interfaces/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/utils/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/server/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/device/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/operator/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/host/include",
+  ]
+
+  cflags_cc = cflags
+}
+ohos_unittest("camera_framework_unittest_v1_1") {
+  module_out_path = module_output_path
+  include_dirs = [
+    "./include",
+    "${graphic_2d_path}/frameworks/surface/include",
+    "${multimedia_camera_framework_path}/services/camera_service/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
+    "${base_security_path}/interfaces/innerkits/accesstoken/include",
+    "${base_security_path}/interfaces/innerkits/token_setproc/include",
+  ]
+
+  sources = [
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
+    "src/v1_1/camera_framework_unittest.cpp",
+  ]
+
+  deps = [
+    "${graphic_2d_path}:libsurface",
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${third_party_path}:gmock_main",
+  ]
+
+  external_deps = [
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libprivacy_sdk",
+    "access_token:libtoken_setproc",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:metadata",
+    "hdf_core:libhdi",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
+  ]
+
+  cflags = [
+    "-fPIC",
+    "-Werror=unused",
+  ]
+
+  include_dirs += [
+    "${driver_peripheral_path}/interfaces/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/utils/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/server/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/device/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/operator/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/host/include",
   ]
 
   cflags_cc = cflags
