@@ -947,7 +947,7 @@ void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::Pe
     if ((result.permStateChangeType == 0) && (item != nullptr)) {
         item->ReleaseInner();
     }
-};
+}
 
 CameraUseStateChangeCb::~CameraUseStateChangeCb()
 {
@@ -966,7 +966,7 @@ void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessToke
     if ((isShowing == false) && (item != nullptr)) {
         item->ReleaseInner();
     }
-};
+}
 
 
 StreamOperatorCallback::StreamOperatorCallback(sptr<HCaptureSession> session)

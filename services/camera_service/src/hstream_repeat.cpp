@@ -80,7 +80,10 @@ int32_t HStreamRepeat::Start()
         return ret;
     }
     std::vector<uint8_t> ability;
-    OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
+    {
+        std::lock_guard<std::mutex> lock(cameraAbilityLock_);
+        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
+    }
     CaptureInfo captureInfo;
     captureInfo.streamIds_ = {streamId_};
     captureInfo.captureSetting_ = ability;
@@ -124,8 +127,10 @@ int32_t HStreamRepeat::Release()
     if (curCaptureID_) {
         ReleaseCaptureId(curCaptureID_);
     }
-    std::lock_guard<std::mutex> lock(callbackLock_);
-    streamRepeatCallback_ = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(callbackLock_);
+        streamRepeatCallback_ = nullptr;
+    }
     return HStreamCommon::Release();
 }
 
@@ -217,7 +222,11 @@ void HStreamRepeat::DumpStreamInfo(std::string& dumpString)
 void HStreamRepeat::SetStreamTransform()
 {
     camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_SENSOR_ORIENTATION, &item);
+    int ret;
+    {
+        std::lock_guard<std::mutex> lock(cameraAbilityLock_);
+        ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_SENSOR_ORIENTATION, &item);
+    }
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform get sensor orientation failed");
         return;
@@ -225,7 +234,11 @@ void HStreamRepeat::SetStreamTransform()
     int32_t sensorOrientation = item.data.i32[0];
     MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform sensor orientation %{public}d", sensorOrientation);
 
-    ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
+    {
+        std::lock_guard<std::mutex> lock(cameraAbilityLock_);
+        ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
+    }
+
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform get camera position failed");
         return;

@@ -37,6 +37,7 @@ int32_t HStreamMetadata::LinkInput(sptr<OHOS::HDI::Camera::V1_1::IStreamOperator
     }
     streamId_ = streamId;
     streamOperator_ = streamOperator;
+    std::lock_guard<std::mutex> lock(cameraAbilityLock_);
     cameraAbility_ = cameraAbility;
     return CAMERA_OK;
 }
@@ -64,7 +65,10 @@ int32_t HStreamMetadata::Start()
         return ret;
     }
     std::vector<uint8_t> ability;
-    OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
+    {
+        std::lock_guard<std::mutex> lock(cameraAbilityLock_);
+        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
+    }
     CaptureInfo captureInfo;
     captureInfo.streamIds_ = {streamId_};
     captureInfo.captureSetting_ = ability;
