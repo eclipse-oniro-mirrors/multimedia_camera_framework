@@ -576,6 +576,9 @@ int32_t HCameraService::PrelaunchCamera()
     if (preCameraId_.empty()) {
         std::vector<std::string> cameraIds_;
         cameraHostManager_->GetCameras(cameraIds_);
+        if (cameraIds_.empty()) {
+            return CAMERA_OK;
+        }
         preCameraId_= cameraIds_.front();
     }
     MEDIA_INFO_LOG("HCameraService::PrelaunchCamera preCameraId_ is: %{public}s", preCameraId_.c_str());
