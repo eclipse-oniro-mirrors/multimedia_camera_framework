@@ -529,8 +529,8 @@ bool CameraNapiUtils::CheckSystemApp(napi_env env)
 {
     uint64_t tokenId = IPCSkeleton::GetSelfTokenID();
     int32_t errorCode = CameraErrorCode::NO_SYSTEM_APP_PERMISSION;
-    std::string errorMessage = "System api can be invoked only by system applications";
     if (!Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(tokenId)) {
+        std::string errorMessage = "System api can be invoked only by system applications";
         if (napi_throw_error(env, std::to_string(errorCode).c_str(), errorMessage.c_str()) != napi_ok) {
             MEDIA_ERR_LOG("failed to throw err, code=%{public}d, msg=%{public}s.", errorCode, errorMessage.c_str());
         }

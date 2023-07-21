@@ -47,7 +47,6 @@ napi_value PortraitSessionNapi::Init(napi_env env, napi_value exports)
     MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
-    int32_t refCount = 1;
     napi_property_descriptor portrait_session_props[] = {
         DECLARE_NAPI_FUNCTION("getSupportedPortraitEffects", GetSupportedPortraitEffects),
         DECLARE_NAPI_FUNCTION("getPortraitEffect", GetPortraitEffect),
@@ -59,6 +58,7 @@ napi_value PortraitSessionNapi::Init(napi_env env, napi_value exports)
                                sizeof(portrait_session_props) / sizeof(portrait_session_props[PARAM0]),
                                portrait_session_props, &ctorObj);
     if (status == napi_ok) {
+        int32_t refCount = 1;
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, PORTRAIT_SESSION_NAPI_CLASS_NAME, ctorObj);
@@ -119,25 +119,23 @@ napi_value PortraitSessionNapi::PortraitSessionNapiConstructor(napi_env env, nap
 
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<PortraitSessionNapi> obj = std::make_unique<PortraitSessionNapi>();
-        if (obj != nullptr) {
-            obj->env_ = env;
-            if (sCameraSession_ == nullptr) {
-                MEDIA_ERR_LOG("sCameraSession_ is null");
-                return result;
-            }
-            obj->portraitSession_ = static_cast<PortraitSession*>(sCameraSession_.GetRefPtr());
-            if (obj->portraitSession_ == nullptr) {
-                MEDIA_ERR_LOG("portraitSession_ is null");
-                return result;
-            }
-            status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                               PortraitSessionNapi::PortraitSessionNapiDestructor, nullptr, nullptr);
-            if (status == napi_ok) {
-                obj.release();
-                return thisVar;
-            } else {
-                MEDIA_ERR_LOG("PortraitSessionNapi Failure wrapping js to native napi");
-            }
+        obj->env_ = env;
+        if (sCameraSession_ == nullptr) {
+            MEDIA_ERR_LOG("sCameraSession_ is null");
+            return result;
+        }
+        obj->portraitSession_ = static_cast<PortraitSession*>(sCameraSession_.GetRefPtr());
+        if (obj->portraitSession_ == nullptr) {
+            MEDIA_ERR_LOG("portraitSession_ is null");
+            return result;
+        }
+        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
+            PortraitSessionNapi::PortraitSessionNapiDestructor, nullptr, nullptr);
+        if (status == napi_ok) {
+            obj.release();
+            return thisVar;
+        } else {
+            MEDIA_ERR_LOG("PortraitSessionNapi Failure wrapping js to native napi");
         }
     }
     MEDIA_ERR_LOG("PortraitSessionNapi call Failed!");

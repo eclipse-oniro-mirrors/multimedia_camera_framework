@@ -87,8 +87,6 @@ napi_value ModeManagerNapi::Init(napi_env env, napi_value exports)
     MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
-    int32_t refCount = 1;
-
     napi_property_descriptor mode_mgr_properties[] = {
         // ModeManager
         DECLARE_NAPI_FUNCTION("getSupportedModes", GetSupportedModes),
@@ -101,6 +99,7 @@ napi_value ModeManagerNapi::Init(napi_env env, napi_value exports)
                                sizeof(mode_mgr_properties) / sizeof(mode_mgr_properties[PARAM0]),
                                mode_mgr_properties, &ctorObj);
     if (status == napi_ok) {
+        int32_t refCount = 1;
         if (napi_create_reference(env, ctorObj, refCount, &sConstructor_) == napi_ok) {
             status = napi_set_named_property(env, exports, MODE_MANAGER_NAPI_CLASS_NAME, ctorObj);
             if (status == napi_ok) {

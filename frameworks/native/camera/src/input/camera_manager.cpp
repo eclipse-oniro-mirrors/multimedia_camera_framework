@@ -581,9 +581,6 @@ bool CameraManager::GetDmDeviceInfo()
     deviceManager.RegisterDevStateCallback(pkgName, extraInfo, NULL);
     deviceManager.GetTrustedDeviceList(pkgName, extraInfo, deviceInfos);
     deviceManager.UnInitDeviceManager(pkgName);
-    localDeviceInfo_.deviceName = "";
-    localDeviceInfo_.deviceTypeId = 0;
-    localDeviceInfo_.networkId = "";
     int size = static_cast<int>(deviceInfos.size());
     MEDIA_INFO_LOG("CameraManager::size=%{public}d", size);
     if (size > 0) {
@@ -636,7 +633,9 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
             if (isDistributeCamera(it, tempDmDeviceInfo)) {
                 MEDIA_DEBUG_LOG("CameraManager::it is remoted camera");
             } else {
-                tempDmDeviceInfo = localDeviceInfo_;
+                tempDmDeviceInfo.deviceName = "";
+                tempDmDeviceInfo.deviceTypeId = 0;
+                tempDmDeviceInfo.networkId = "";
             }
             cameraObj = new(std::nothrow) CameraDevice(it, cameraAbilityList[index++], tempDmDeviceInfo);
             supportedCameras.emplace_back(cameraObj);
