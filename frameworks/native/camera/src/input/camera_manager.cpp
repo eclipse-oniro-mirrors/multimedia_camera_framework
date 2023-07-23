@@ -673,7 +673,7 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(mutex_);
     std::vector<std::string> cameraIds;
-    std::vector<std::shared_ptr<Camera::CameraMetadata>> cameraAbilityList;
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
     int32_t retCode = -1;
     sptr<CameraDevice> cameraObj = nullptr;
     int32_t index = 0;
@@ -815,7 +815,7 @@ int CameraManager::CreateCameraInput(CameraPosition position, CameraType cameraT
     return CameraErrorCode::SUCCESS;
 }
 
-bool g_IsCapabilitySupported(std::shared_ptr<Camera::CameraMetadata> metadata,
+bool g_IsCapabilitySupported(std::shared_ptr<OHOS::Camera::CameraMetadata> metadata,
     camera_metadata_item_t &item, uint32_t metadataTag)
 {
     bool isSupport = true;
@@ -829,7 +829,7 @@ bool g_IsCapabilitySupported(std::shared_ptr<Camera::CameraMetadata> metadata,
 }
 
 void CameraManager::ParseBasicCapability(sptr<CameraOutputCapability> cameraOutputCapability,
-    std::shared_ptr<Camera::CameraMetadata> metadata, const camera_metadata_item_t &item)
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, const camera_metadata_item_t &item)
 {
     uint32_t widthOffset = 1;
     uint32_t heightOffset = 2;
@@ -900,7 +900,7 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
 {
     sptr<CameraOutputCapability> cameraOutputCapability = nullptr;
     cameraOutputCapability = new(std::nothrow) CameraOutputCapability();
-    std::shared_ptr<Camera::CameraMetadata> metadata = camera->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = camera->GetMetadata();
     camera_metadata_item_t item;
 
     if (g_IsCapabilitySupported(metadata, item, OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS)) {
@@ -1047,7 +1047,7 @@ bool CameraManager::IsCameraMuteSupported()
         this->GetSupportedCameras();
     }
     for (size_t i = 0; i < cameraObjList.size(); i++) {
-        std::shared_ptr<Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
+        std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
         camera_metadata_item_t item;
         int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_MUTE_MODES, &item);
         if (ret == 0) {
@@ -1112,7 +1112,7 @@ int32_t CameraManager::PrelaunchCamera()
 bool CameraManager::IsPreLaunchSupported(sptr<CameraDevice> camera)
 {
     bool isPreLaunch = false;
-    std::shared_ptr<Camera::CameraMetadata> metadata = camera->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = camera->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_PRELAUNCH_AVAILABLE, &item);
     if (ret == 0) {

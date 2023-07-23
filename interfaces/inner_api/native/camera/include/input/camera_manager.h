@@ -458,7 +458,7 @@ private:
     void ParseExtendCapability(sptr<CameraOutputCapability> cameraOutputCapability,
         const int32_t modeName, const camera_metadata_item_t &item);
     void ParseBasicCapability(sptr<CameraOutputCapability> cameraOutputCapability,
-        std::shared_ptr<Camera::CameraMetadata> metadata, const camera_metadata_item_t &item);
+        std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, const camera_metadata_item_t &item);
 
     std::mutex mutex_;
     int CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> *pICameraDeviceService);
