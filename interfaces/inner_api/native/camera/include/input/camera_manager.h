@@ -469,10 +469,15 @@ private:
     int32_t CreateListenerObject();
     void CameraServerDied(pid_t pid);
     void ChooseDeFaultCameras(std::vector<sptr<CameraDevice>>& supportedCameras);
+
     void CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
         uint32_t streamIndex, ExtendInfo extendInfo);
     static const std::unordered_map<camera_format_t, CameraFormat> metaToFwCameraFormat_;
     static const std::unordered_map<CameraFormat, camera_format_t> fwToMetaCameraFormat_;
+    void ParseExtendCapability(sptr<CameraOutputCapability> cameraOutputCapability,
+        const int32_t modeName, const camera_metadata_item_t &item);
+    void ParseBasicCapability(sptr<CameraOutputCapability> cameraOutputCapability,
+        std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, const camera_metadata_item_t &item);
 
     std::mutex mutex_;
     int CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> *pICameraDeviceService);
