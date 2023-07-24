@@ -223,28 +223,29 @@ void HStreamRepeat::SetStreamTransform()
 {
     camera_metadata_item_t item;
     int ret;
+    int32_t sensorOrientation;
+    camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_BACK;
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
+        if (cameraAbility_ == nullptr) {
+            return;
+        }
         ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_SENSOR_ORIENTATION, &item);
-    }
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform get sensor orientation failed");
-        return;
-    }
-    int32_t sensorOrientation = item.data.i32[0];
-    MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform sensor orientation %{public}d", sensorOrientation);
+        if (ret != CAM_META_SUCCESS) {
+            MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform get sensor orientation failed");
+            return;
+        }
+        sensorOrientation = item.data.i32[0];
+        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform sensor orientation %{public}d", sensorOrientation);
 
-    {
-        std::lock_guard<std::mutex> lock(cameraAbilityLock_);
         ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
+        if (ret != CAM_META_SUCCESS) {
+            MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform get camera position failed");
+            return;
+        }
+        cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
+        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform camera position %{public}d", cameraPosition);
     }
-
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform get camera position failed");
-        return;
-    }
-    camera_position_enum_t cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
-    MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform camera position %{public}d", cameraPosition);
 
     std::lock_guard<std::mutex> lock(producerLock_);
     if (producer_ == nullptr) {
