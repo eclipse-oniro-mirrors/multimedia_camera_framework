@@ -54,16 +54,16 @@ int32_t PreviewOutput::Release()
     return ServiceToCameraError(errCode);
 }
 
-class HStreamRepeatCallbackImpl : public HStreamRepeatCallbackStub {
+class PreviewOutputCallbackImpl : public HStreamRepeatCallbackStub {
 public:
     PreviewOutput* previewOutput_ = nullptr;
-    HStreamRepeatCallbackImpl() : previewOutput_(nullptr) {
+    PreviewOutputCallbackImpl() : previewOutput_(nullptr) {
     }
 
-    explicit HStreamRepeatCallbackImpl(PreviewOutput* previewOutput) : previewOutput_(previewOutput) {
+    explicit PreviewOutputCallbackImpl(PreviewOutput* previewOutput) : previewOutput_(previewOutput) {
     }
 
-    ~HStreamRepeatCallbackImpl()
+    ~PreviewOutputCallbackImpl()
     {
         previewOutput_ = nullptr;
     }
@@ -74,7 +74,7 @@ public:
         if (previewOutput_ != nullptr && previewOutput_->GetApplicationCallback() != nullptr) {
             previewOutput_->GetApplicationCallback()->OnFrameStarted();
         } else {
-            MEDIA_INFO_LOG("Discarding HStreamRepeatCallbackImpl::OnFrameStarted callback in preview");
+            MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameStarted callback in preview");
         }
         return CAMERA_OK;
     }
@@ -85,7 +85,7 @@ public:
         if (previewOutput_ != nullptr && previewOutput_->GetApplicationCallback() != nullptr) {
             previewOutput_->GetApplicationCallback()->OnFrameEnded(frameCount);
         } else {
-            MEDIA_INFO_LOG("Discarding HStreamRepeatCallbackImpl::OnFrameEnded callback in preview");
+            MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameEnded callback in preview");
         }
         return CAMERA_OK;
     }
@@ -95,7 +95,7 @@ public:
         if (previewOutput_ != nullptr && previewOutput_->GetApplicationCallback() != nullptr) {
             previewOutput_->GetApplicationCallback()->OnError(errorCode);
         } else {
-            MEDIA_INFO_LOG("Discarding HStreamRepeatCallbackImpl::OnFrameError callback in preview");
+            MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameError callback in preview");
         }
         return CAMERA_OK;
     }
@@ -167,9 +167,9 @@ void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
     appCallback_ = callback;
     if (appCallback_ != nullptr) {
         if (svcCallback_ == nullptr) {
-            svcCallback_ = new(std::nothrow) HStreamRepeatCallbackImpl(this);
+            svcCallback_ = new(std::nothrow) PreviewOutputCallbackImpl(this);
             if (svcCallback_ == nullptr) {
-                MEDIA_ERR_LOG("PreviewOutput::SetCallback: new HStreamRepeatCallbackImpl Failed to register callback");
+                MEDIA_ERR_LOG("new PreviewOutputCallbackImpl Failed to register callback");
                 appCallback_ = nullptr;
                 return;
             }
