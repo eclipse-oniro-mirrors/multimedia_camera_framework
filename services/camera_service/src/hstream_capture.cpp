@@ -141,24 +141,20 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
     camera_metadata_item_t item;
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
+        if (cameraAbility_ == nullptr) {
+            return;
+        }
         result = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_SENSOR_ORIENTATION, &item);
-    }
-    if (result != CAM_META_SUCCESS || item.count == 0) {
-        MEDIA_ERR_LOG("set rotation get sensor orientation failed");
-    } else {
-        sensorOrientation = item.data.i32[0];
+        if (result == CAM_META_SUCCESS && item.count > 0) {
+            sensorOrientation = item.data.i32[0];
+        }
         MEDIA_INFO_LOG("set rotation sensor orientation %{public}d", sensorOrientation);
-    }
 
-    camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_BACK;
-    {
-        std::lock_guard<std::mutex> lock(cameraAbilityLock_);
+        camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_BACK;
         result = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
-    }
-    if (result != CAM_META_SUCCESS || item.count == 0) {
-        MEDIA_ERR_LOG("set rotation get camera position failed");
-    } else {
-        cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
+        if (result == CAM_META_SUCCESS && item.count > 0) {
+            cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
+        }
         MEDIA_INFO_LOG("set rotation camera position %{public}d", cameraPosition);
     }
 
@@ -185,9 +181,7 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
     }
     result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_ORIENTATION, &item);
     if (result != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("set rotation Failed to find OHOS_JPEG_ORIENTATION tag");
-    } else {
-        MEDIA_DEBUG_LOG("set rotation find OHOS_JPEG_ORIENTATION value = %{public}d", item.data.i32[0]);
+        MEDIA_ERR_LOG("set rotation Failed to find OHOS_JPEG_ORIENTATION tag");
     }
     if (!status) {
         MEDIA_ERR_LOG("set rotation Failed to set Rotation");
