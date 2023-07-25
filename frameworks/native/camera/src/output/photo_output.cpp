@@ -160,63 +160,48 @@ std::shared_ptr<Camera::CameraMetadata> PhotoCaptureSetting::GetCaptureMetadataS
     return captureMetadataSetting_;
 }
 
-class HStreamCaptureCallbackImpl : public HStreamCaptureCallbackStub {
-public:
-    PhotoOutput* photoOutput_ = nullptr;
-    HStreamCaptureCallbackImpl() : photoOutput_(nullptr) {
+int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId)
+{
+    CAMERA_SYNC_TRACE;
+    if (photoOutput_ != nullptr && photoOutput_->GetApplicationCallback() != nullptr) {
+        photoOutput_->GetApplicationCallback()->OnCaptureStarted(captureId);
+    } else {
+        MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnCaptureStarted callback");
     }
+    return CAMERA_OK;
+}
 
-    explicit HStreamCaptureCallbackImpl(PhotoOutput* photoOutput) : photoOutput_(photoOutput) {
+int32_t HStreamCaptureCallbackImpl::OnCaptureEnded(const int32_t captureId, const int32_t frameCount)
+{
+    CAMERA_SYNC_TRACE;
+    if (photoOutput_ != nullptr && photoOutput_->GetApplicationCallback() != nullptr) {
+        photoOutput_->GetApplicationCallback()->OnCaptureEnded(captureId, frameCount);
+    } else {
+        MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnCaptureEnded callback");
     }
+    return CAMERA_OK;
+}
 
-    ~HStreamCaptureCallbackImpl()
-    {
-        photoOutput_ = nullptr;
+int32_t HStreamCaptureCallbackImpl::OnCaptureError(const int32_t captureId, const int32_t errorCode)
+{
+    if (photoOutput_ != nullptr && photoOutput_->GetApplicationCallback() != nullptr) {
+        photoOutput_->GetApplicationCallback()->OnCaptureError(captureId, errorCode);
+    } else {
+        MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnCaptureError callback");
     }
+    return CAMERA_OK;
+}
 
-    int32_t OnCaptureStarted(const int32_t captureId) override
-    {
-        CAMERA_SYNC_TRACE;
-        if (photoOutput_ != nullptr && photoOutput_->GetApplicationCallback() != nullptr) {
-            photoOutput_->GetApplicationCallback()->OnCaptureStarted(captureId);
-        } else {
-            MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnCaptureStarted callback");
-        }
-        return CAMERA_OK;
+int32_t HStreamCaptureCallbackImpl::OnFrameShutter(const int32_t captureId, const uint64_t timestamp)
+{
+    CAMERA_SYNC_TRACE;
+    if (photoOutput_ != nullptr && photoOutput_->GetApplicationCallback() != nullptr) {
+        photoOutput_->GetApplicationCallback()->OnFrameShutter(captureId, timestamp);
+    } else {
+        MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnFrameShutter callback");
     }
-
-    int32_t OnCaptureEnded(const int32_t captureId, const int32_t frameCount) override
-    {
-        CAMERA_SYNC_TRACE;
-        if (photoOutput_ != nullptr && photoOutput_->GetApplicationCallback() != nullptr) {
-            photoOutput_->GetApplicationCallback()->OnCaptureEnded(captureId, frameCount);
-        } else {
-            MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnCaptureEnded callback");
-        }
-        return CAMERA_OK;
-    }
-
-    int32_t OnCaptureError(const int32_t captureId, const int32_t errorCode) override
-    {
-        if (photoOutput_ != nullptr && photoOutput_->GetApplicationCallback() != nullptr) {
-            photoOutput_->GetApplicationCallback()->OnCaptureError(captureId, errorCode);
-        } else {
-            MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnCaptureError callback");
-        }
-        return CAMERA_OK;
-    }
-
-    int32_t OnFrameShutter(const int32_t captureId, const uint64_t timestamp) override
-    {
-        CAMERA_SYNC_TRACE;
-        if (photoOutput_ != nullptr && photoOutput_->GetApplicationCallback() != nullptr) {
-            photoOutput_->GetApplicationCallback()->OnFrameShutter(captureId, timestamp);
-        } else {
-            MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnFrameShutter callback");
-        }
-        return CAMERA_OK;
-    }
-};
+    return CAMERA_OK;
+}
 
 PhotoOutput::PhotoOutput(sptr<IStreamCapture> &streamCapture)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PHOTO, StreamType::CAPTURE, streamCapture)

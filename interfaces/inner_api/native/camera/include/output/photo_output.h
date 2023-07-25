@@ -20,6 +20,7 @@
 #include "camera_metadata_info.h"
 #include "capture_output.h"
 #include "istream_capture.h"
+#include "hstream_capture_callback_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -281,6 +282,51 @@ private:
     std::shared_ptr<PhotoStateCallback> appCallback_;
     sptr<IStreamCaptureCallback> cameraSvcCallback_;
     std::shared_ptr<PhotoCaptureSetting> defaultCaptureSetting_;
+};
+class HStreamCaptureCallbackImpl : public HStreamCaptureCallbackStub {
+public:
+    PhotoOutput* photoOutput_ = nullptr;
+    HStreamCaptureCallbackImpl() : photoOutput_(nullptr) {
+    }
+
+    explicit HStreamCaptureCallbackImpl(PhotoOutput* photoOutput) : photoOutput_(photoOutput) {
+    }
+
+    ~HStreamCaptureCallbackImpl()
+    {
+        photoOutput_ = nullptr;
+    }
+
+    /**
+     * @brief Called when camera capture started.
+     *
+     * @param captureID Obtain the constant capture id for the photo capture callback.
+     */
+    int32_t OnCaptureStarted(const int32_t captureId) override;
+
+    /**
+     * @brief Called when camera capture ended.
+     *
+     * @param captureID Obtain the constant capture id for the photo capture callback.
+     * @param frameCount Obtain the constant number of frames for the photo capture callback.
+     */
+    int32_t OnCaptureEnded(const int32_t captureId, const int32_t frameCount) override;
+
+    /**
+     * @brief Called when error occured during camera capture.
+     *
+     * @param captureId Indicates the pointer in which captureId will be requested.
+     * @param errorCode Indicates a {@link ErrorCode} which will give information for photo capture callback error
+     */
+    int32_t OnCaptureError(const int32_t captureId, const int32_t errorCode) override;
+
+    /**
+     * @brief Called when camera capture ended.
+     *
+     * @param captureId Obtain the constant capture id for the photo capture callback.
+     * @param timestamp Represents timestamp information for the photo capture callback
+     */
+    int32_t OnFrameShutter(const int32_t captureId, const uint64_t timestamp) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS
