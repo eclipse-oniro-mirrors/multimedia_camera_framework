@@ -3435,7 +3435,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_062, TestSize.Le
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_063, TestSize.Level0)
 {
-    std::shared_ptr<HStreamRepeatCallbackImpl> repeatCallback = std::make_shared<HStreamRepeatCallbackImpl>();
+    std::shared_ptr<PreviewOutputCallbackImpl> repeatCallback = std::make_shared<PreviewOutputCallbackImpl>();
 
     int32_t intResult = repeatCallback->OnFrameStarted();
     EXPECT_EQ(intResult, 0);
@@ -3474,7 +3474,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_063, TestSize.Le
     std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
     previewOutput_1->SetCallback(callback);
 
-    sptr<HStreamRepeatCallbackImpl> repeatCallback_2 = new(std::nothrow) HStreamRepeatCallbackImpl(previewOutput_1);
+    sptr<PreviewOutputCallbackImpl> repeatCallback_2 = new(std::nothrow) PreviewOutputCallbackImpl(previewOutput_1);
 
     intResult = repeatCallback_2->OnFrameError(errorCode);
     EXPECT_EQ(intResult, 0);
@@ -3630,7 +3630,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_065, TestSize.Le
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_066, TestSize.Level0)
 {
-    std::shared_ptr<HStreamVideoCallbackImpl> repeatCallback = std::make_shared<HStreamVideoCallbackImpl>();
+    std::shared_ptr<VideoOutputCallbackImpl> repeatCallback = std::make_shared<VideoOutputCallbackImpl>();
 
     int32_t intResult = repeatCallback->OnFrameStarted();
     EXPECT_EQ(intResult, 0);
@@ -3675,7 +3675,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_066, TestSize.Le
     std::shared_ptr<AppVideoCallback> callback = std::make_shared<AppVideoCallback>();
     videoOutput_1->SetCallback(callback);
 
-    sptr<HStreamVideoCallbackImpl> repeatCallback_2 = new(std::nothrow) HStreamVideoCallbackImpl(videoOutput_1);
+    sptr<VideoOutputCallbackImpl> repeatCallback_2 = new(std::nothrow) VideoOutputCallbackImpl(videoOutput_1);
 
     intResult = repeatCallback->OnFrameStarted();
     EXPECT_EQ(intResult, 0);
