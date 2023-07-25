@@ -20,6 +20,7 @@
 #include "istream_repeat.h"
 #include "camera_output_capability.h"
 #include "istream_repeat_callback.h"
+#include "hstream_repeat_callback_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {

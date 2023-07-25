@@ -23,6 +23,7 @@
 #include "istream_repeat.h"
 #include "istream_repeat_callback.h"
 #include "session/capture_session.h"
+#include "hstream_repeat_callback_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
