@@ -23,6 +23,7 @@
 #include "istream_repeat.h"
 #include "istream_repeat_callback.h"
 #include "session/capture_session.h"
+#include "hstream_repeat_callback_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -115,6 +116,40 @@ private:
     std::shared_ptr<VideoStateCallback> appCallback_;
     sptr<IStreamRepeatCallback> svcCallback_;
     std::vector<int32_t> videoFrameRateRange_;
+};
+
+class VideoOutputCallbackImpl : public HStreamRepeatCallbackStub {
+public:
+    VideoOutput* videoOutput_ = nullptr;
+    VideoOutputCallbackImpl() : videoOutput_(nullptr) {
+    }
+
+    explicit VideoOutputCallbackImpl(VideoOutput* videoOutput) : videoOutput_(videoOutput) {
+    }
+
+    ~VideoOutputCallbackImpl()
+    {
+        videoOutput_ = nullptr;
+    }
+    
+    /**
+     * @brief Called when video frame is started rendering.
+     */
+    int32_t OnFrameStarted() override;
+    
+    /**
+     * @brief Called when video frame is ended.
+     *
+     * @param frameCount Indicates number of frames captured.
+     */
+    int32_t OnFrameEnded(const int32_t frameCount) override;
+    
+    /**
+     * @brief Called when error occured during video rendering.
+     *
+     * @param errorCode Indicates a {@link ErrorCode} which will give information for video callback error.
+     */
+    int32_t OnFrameError(const int32_t errorCode) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

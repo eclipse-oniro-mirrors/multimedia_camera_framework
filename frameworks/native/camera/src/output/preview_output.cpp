@@ -54,52 +54,37 @@ int32_t PreviewOutput::Release()
     return ServiceToCameraError(errCode);
 }
 
-class PreviewOutputCallbackImpl : public HStreamRepeatCallbackStub {
-public:
-    PreviewOutput* previewOutput_ = nullptr;
-    PreviewOutputCallbackImpl() : previewOutput_(nullptr) {
+int32_t PreviewOutputCallbackImpl::OnFrameStarted()
+{
+    CAMERA_SYNC_TRACE;
+    if (previewOutput_ != nullptr && previewOutput_->GetApplicationCallback() != nullptr) {
+        previewOutput_->GetApplicationCallback()->OnFrameStarted();
+    } else {
+        MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameStarted callback in preview");
     }
+    return CAMERA_OK;
+}
 
-    explicit PreviewOutputCallbackImpl(PreviewOutput* previewOutput) : previewOutput_(previewOutput) {
+int32_t PreviewOutputCallbackImpl::OnFrameEnded(int32_t frameCount)
+{
+    CAMERA_SYNC_TRACE;
+    if (previewOutput_ != nullptr && previewOutput_->GetApplicationCallback() != nullptr) {
+        previewOutput_->GetApplicationCallback()->OnFrameEnded(frameCount);
+    } else {
+        MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameEnded callback in preview");
     }
+    return CAMERA_OK;
+}
 
-    ~PreviewOutputCallbackImpl()
-    {
-        previewOutput_ = nullptr;
+int32_t PreviewOutputCallbackImpl::OnFrameError(int32_t errorCode)
+{
+    if (previewOutput_ != nullptr && previewOutput_->GetApplicationCallback() != nullptr) {
+        previewOutput_->GetApplicationCallback()->OnError(errorCode);
+    } else {
+        MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameError callback in preview");
     }
-
-    int32_t OnFrameStarted() override
-    {
-        CAMERA_SYNC_TRACE;
-        if (previewOutput_ != nullptr && previewOutput_->GetApplicationCallback() != nullptr) {
-            previewOutput_->GetApplicationCallback()->OnFrameStarted();
-        } else {
-            MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameStarted callback in preview");
-        }
-        return CAMERA_OK;
-    }
-
-    int32_t OnFrameEnded(int32_t frameCount) override
-    {
-        CAMERA_SYNC_TRACE;
-        if (previewOutput_ != nullptr && previewOutput_->GetApplicationCallback() != nullptr) {
-            previewOutput_->GetApplicationCallback()->OnFrameEnded(frameCount);
-        } else {
-            MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameEnded callback in preview");
-        }
-        return CAMERA_OK;
-    }
-
-    int32_t OnFrameError(int32_t errorCode) override
-    {
-        if (previewOutput_ != nullptr && previewOutput_->GetApplicationCallback() != nullptr) {
-            previewOutput_->GetApplicationCallback()->OnError(errorCode);
-        } else {
-            MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameError callback in preview");
-        }
-        return CAMERA_OK;
-    }
-};
+    return CAMERA_OK;
+}
 
 void PreviewOutput::AddDeferredSurface(sptr<Surface> surface)
 {

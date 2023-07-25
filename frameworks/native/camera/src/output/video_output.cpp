@@ -32,52 +32,37 @@ VideoOutput::~VideoOutput()
     appCallback_ = nullptr;
 }
 
-class VideoOutputCallbackImpl : public HStreamRepeatCallbackStub {
-public:
-    VideoOutput* videoOutput_ = nullptr;
-    VideoOutputCallbackImpl() : videoOutput_(nullptr) {
+int32_t VideoOutputCallbackImpl::OnFrameStarted()
+{
+    CAMERA_SYNC_TRACE;
+    if (videoOutput_ != nullptr && videoOutput_->GetApplicationCallback() != nullptr) {
+        videoOutput_->GetApplicationCallback()->OnFrameStarted();
+    } else {
+        MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameStarted callback in video");
     }
+    return CAMERA_OK;
+}
 
-    explicit VideoOutputCallbackImpl(VideoOutput* videoOutput) : videoOutput_(videoOutput) {
+int32_t VideoOutputCallbackImpl::OnFrameEnded(const int32_t frameCount)
+{
+    CAMERA_SYNC_TRACE;
+    if (videoOutput_ != nullptr && videoOutput_->GetApplicationCallback() != nullptr) {
+        videoOutput_->GetApplicationCallback()->OnFrameEnded(frameCount);
+    } else {
+        MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameEnded callback in video");
     }
+    return CAMERA_OK;
+}
 
-    ~VideoOutputCallbackImpl()
-    {
-        videoOutput_ = nullptr;
+int32_t VideoOutputCallbackImpl::OnFrameError(const int32_t errorCode)
+{
+    if (videoOutput_ != nullptr && videoOutput_->GetApplicationCallback() != nullptr) {
+        videoOutput_->GetApplicationCallback()->OnError(errorCode);
+    } else {
+        MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameError callback in video");
     }
-
-    int32_t OnFrameStarted() override
-    {
-        CAMERA_SYNC_TRACE;
-        if (videoOutput_ != nullptr && videoOutput_->GetApplicationCallback() != nullptr) {
-            videoOutput_->GetApplicationCallback()->OnFrameStarted();
-        } else {
-            MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameStarted callback in video");
-        }
-        return CAMERA_OK;
-    }
-
-    int32_t OnFrameEnded(const int32_t frameCount) override
-    {
-        CAMERA_SYNC_TRACE;
-        if (videoOutput_ != nullptr && videoOutput_->GetApplicationCallback() != nullptr) {
-            videoOutput_->GetApplicationCallback()->OnFrameEnded(frameCount);
-        } else {
-            MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameEnded callback in video");
-        }
-        return CAMERA_OK;
-    }
-
-    int32_t OnFrameError(const int32_t errorCode) override
-    {
-        if (videoOutput_ != nullptr && videoOutput_->GetApplicationCallback() != nullptr) {
-            videoOutput_->GetApplicationCallback()->OnError(errorCode);
-        } else {
-            MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameError callback in video");
-        }
-        return CAMERA_OK;
-    }
-};
+    return CAMERA_OK;
+}
 
 void VideoOutput::SetCallback(std::shared_ptr<VideoStateCallback> callback)
 {

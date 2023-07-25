@@ -20,6 +20,7 @@
 #include "istream_repeat.h"
 #include "camera_output_capability.h"
 #include "istream_repeat_callback.h"
+#include "hstream_repeat_callback_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -96,6 +97,40 @@ public:
 private:
     std::shared_ptr<PreviewStateCallback> appCallback_;
     sptr<IStreamRepeatCallback> svcCallback_;
+};
+
+class PreviewOutputCallbackImpl : public HStreamRepeatCallbackStub {
+public:
+    PreviewOutput* previewOutput_ = nullptr;
+    PreviewOutputCallbackImpl() : previewOutput_(nullptr) {
+    }
+
+    explicit PreviewOutputCallbackImpl(PreviewOutput* previewOutput) : previewOutput_(previewOutput) {
+    }
+
+    ~PreviewOutputCallbackImpl()
+    {
+        previewOutput_ = nullptr;
+    }
+
+    /**
+     * @brief Called when preview frame is started rendering.
+     */
+    int32_t OnFrameStarted() override;
+    
+    /**
+     * @brief Called when preview frame is ended.
+     *
+     * @param frameCount Indicates number of frames captured.
+     */
+    int32_t OnFrameEnded(int32_t frameCount) override;
+    
+    /**
+     * @brief Called when error occured during preview rendering.
+     *
+     * @param errorCode Indicates a {@link ErrorCode} which will give information for preview callback error.
+     */
+    int32_t OnFrameError(int32_t errorCode) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS
