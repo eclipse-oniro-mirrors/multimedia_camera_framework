@@ -207,7 +207,7 @@ bool IsSameClient(const pid_t& pid, const pid_t& pidCompared)
     return (pid == pidCompared);
 }
 
-bool IsInForeGround(const int32_t callerToken)
+bool IsInForeGround(const uint32_t callerToken)
 {
     bool isAllowed = true;
     if (IsValidTokenId(callerToken)) {
@@ -216,9 +216,18 @@ bool IsInForeGround(const int32_t callerToken)
     return isAllowed;
 }
 
-bool IsCameraNeedClose(const int32_t callerToken, const pid_t& pid, const pid_t& pidCompared)
+bool IsCameraNeedClose(const uint32_t callerToken, const pid_t& pid, const pid_t& pidCompared)
 {
-    return !(IsInForeGround(callerToken) && (JudgmentPriority(pid, pidCompared) != PRIORITY_LEVEL_HIGHER));
+    bool needClose = !(IsInForeGround(callerToken) && (JudgmentPriority(pid, pidCompared) != PRIORITY_LEVEL_HIGHER));
+    if (Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken) ==
+        Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE) {
+        needClose = true;
+    }
+    MEDIA_INFO_LOG("IsCameraNeedClose pid = %{public}d, IsInForeGround = %{public}d, TokenType = %{public}d, "
+                   "needClose = %{public}d",
+                   pid, IsInForeGround(callerToken),
+                   Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken), needClose);
+    return needClose;
 }
 
 int32_t CheckPermission(std::string permissionName, uint32_t callerToken)

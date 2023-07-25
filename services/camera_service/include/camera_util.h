@@ -93,9 +93,9 @@ int32_t JudgmentPriority(const pid_t& pid, const pid_t& pidCompared);
 
 bool IsSameClient(const pid_t& pid, const pid_t& pidCompared);
 
-bool IsInForeGround(const int32_t callerToken);
+bool IsInForeGround(const uint32_t callerToken);
 
-bool IsCameraNeedClose(const int32_t callerToken, const pid_t& pid, const pid_t& pidCompared);
+bool IsCameraNeedClose(const uint32_t callerToken, const pid_t& pid, const pid_t& pidCompared);
 
 int32_t CheckPermission(std::string permissionName, uint32_t callerToken);
 } // namespace CameraStandard

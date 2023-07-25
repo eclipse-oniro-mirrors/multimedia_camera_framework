@@ -111,9 +111,9 @@ private:
     sptr<HCameraHostManager> cameraHostManager_;
     sptr<StreamOperatorCallback> streamOperatorCallback_;
     std::map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
-    std::map<int32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
+    std::map<uint32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
     SafeMap<std::string, sptr<HCameraDevice>> devicesManager_;
-    std::map<int32_t, std::set<std::string>> camerasForPid_;
+    std::map<uint32_t, std::set<std::string>> camerasForPid_;
     bool muteMode_;
     std::mutex mapOperatorsLock_;
     std::string preCameraId_;
