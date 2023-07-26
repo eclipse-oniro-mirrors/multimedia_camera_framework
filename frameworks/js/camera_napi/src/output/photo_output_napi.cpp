@@ -295,7 +295,7 @@ void PhotoOutputNapi::PhotoOutputNapiDestructor(napi_env env, void* nativeObject
     MEDIA_DEBUG_LOG("PhotoOutputNapiDestructor is called");
     PhotoOutputNapi* photoOutput = reinterpret_cast<PhotoOutputNapi*>(nativeObject);
     if (photoOutput != nullptr) {
-        photoOutput->~PhotoOutputNapi();
+        delete photoOutput;
     }
 }
 

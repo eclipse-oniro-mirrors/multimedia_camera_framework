@@ -39,7 +39,7 @@ void PortraitSessionNapi::PortraitSessionNapiDestructor(napi_env env, void* nati
     MEDIA_DEBUG_LOG("PortraitSessionNapiDestructor is called");
     PortraitSessionNapi* cameraObj = reinterpret_cast<PortraitSessionNapi*>(nativeObject);
     if (cameraObj != nullptr) {
-        cameraObj->~PortraitSessionNapi();
+        delete cameraObj;
     }
 }
 napi_value PortraitSessionNapi::Init(napi_env env, napi_value exports)

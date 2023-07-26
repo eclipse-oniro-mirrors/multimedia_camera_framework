@@ -157,7 +157,7 @@ void VideoOutputNapi::VideoOutputNapiDestructor(napi_env env, void* nativeObject
     MEDIA_DEBUG_LOG("VideoOutputNapiDestructor is called");
     VideoOutputNapi* videoOutput = reinterpret_cast<VideoOutputNapi*>(nativeObject);
     if (videoOutput != nullptr) {
-        videoOutput->~VideoOutputNapi();
+        delete videoOutput;
     }
 }
 

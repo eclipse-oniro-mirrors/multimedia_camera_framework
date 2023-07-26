@@ -3192,7 +3192,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_059, TestSize.Le
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
-    camSession->~CaptureSession();
+    delete camSession;
 
     int32_t intResult = camSession->Stop();
     EXPECT_EQ(intResult, 7400201);
@@ -3248,7 +3248,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_060, TestSize.Le
 
     sptr<MetadataOutput> metaOutput_2 = (sptr<MetadataOutput> &)metadatOutput_2;
 
-    metaOutput_2->~MetadataOutput();
+    delete metaOutput_2;
 
     metadataObjectTypes = metaOutput_2->GetSupportedMetadataObjectTypes();
     EXPECT_EQ(metadataObjectTypes.empty(), true);
@@ -3344,7 +3344,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_061, TestSize.Le
     intResult = photoOutput_1->Release();
     EXPECT_EQ(intResult, 7400201);
 
-    photoOutput_1->~PhotoOutput();
+    delete photoOutput_1;
 
     cancelCapture = photoOutput_1->CancelCapture();
     EXPECT_EQ(cancelCapture, 7400104);
@@ -3851,7 +3851,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_080, TestSize.Le
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
-    camSession->~CaptureSession();
+    delete camSession;
 
     int32_t intResult = camSession->UnlockForControl();
     EXPECT_EQ(intResult, 7400201);
@@ -4018,7 +4018,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_085, TestSize.Le
 
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
-    camSession->~CaptureSession();
+    delete camSession;
 
     intResult = camSession->BeginConfig();
     EXPECT_EQ(intResult, 7400201);
@@ -4245,7 +4245,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_090, TestSize.Le
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     ASSERT_NE(camManagerObj, nullptr);
 
-    camManagerObj->~CameraManager();
+    delete camManagerObj;
 
     std::vector<sptr<CameraDevice>> camdeviceObj_1 = camManagerObj->GetSupportedCameras();
     ASSERT_TRUE(camdeviceObj_1.size() == 0);
@@ -4282,7 +4282,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_091, TestSize.Le
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     ASSERT_NE(camManagerObj, nullptr);
 
-    camManagerObj->~CameraManager();
+    delete camManagerObj;
 
     bool cameraMuted = camManagerObj->IsCameraMuted();
     EXPECT_EQ(cameraMuted, false);
@@ -4306,7 +4306,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_092, TestSize.Le
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     ASSERT_NE(camManagerObj, nullptr);
 
-    camManagerObj->~CameraManager();
+    delete camManagerObj;
 
     std::string cameraId = "";
     dmDeviceInfo deviceInfo = {};

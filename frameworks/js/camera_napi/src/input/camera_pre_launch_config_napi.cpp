@@ -43,7 +43,7 @@ void CameraPreLaunchConfigNapi::CameraPreLaunchConfigNapiDestructor(
     CameraPreLaunchConfigNapi* cameraPreLaunchConfigNapi = reinterpret_cast<CameraPreLaunchConfigNapi*>(nativeObject);
     if (cameraPreLaunchConfigNapi != nullptr) {
         MEDIA_INFO_LOG("CameraPreLaunchConfigNapiDestructor ~");
-        cameraPreLaunchConfigNapi->~CameraPreLaunchConfigNapi();
+        delete cameraPreLaunchConfigNapi;
     }
 }
 

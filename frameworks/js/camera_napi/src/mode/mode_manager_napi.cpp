@@ -78,7 +78,7 @@ void ModeManagerNapi::ModeManagerNapiDestructor(napi_env env, void* nativeObject
     MEDIA_DEBUG_LOG("ModeManagerNapiDestructor is called");
     ModeManagerNapi* camera = reinterpret_cast<ModeManagerNapi*>(nativeObject);
     if (camera != nullptr) {
-        camera->~ModeManagerNapi();
+        delete camera;
     }
 }
 
