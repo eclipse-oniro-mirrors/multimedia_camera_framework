@@ -791,8 +791,8 @@ void CameraManager::ParseBasicCapability(sptr<CameraOutputCapability> cameraOutp
             if (ret != CAM_META_SUCCESS) {
                 continue;
             }
-            for (uint32_t i = 0; i < (fpsItem.count - 1); i += FPS_STEP) {
-                std::vector<int32_t> fps = {fpsItem.data.i32[i], fpsItem.data.i32[i+1]};
+            for (uint32_t j = 0; j < (fpsItem.count - 1); j += FPS_STEP) {
+                std::vector<int32_t> fps = {fpsItem.data.i32[j], fpsItem.data.i32[j+1]};
                 VideoProfile vidProfile = VideoProfile(format, size, fps);
                 vidProfiles_.push_back(vidProfile);
             }
@@ -803,9 +803,6 @@ void CameraManager::ParseBasicCapability(sptr<CameraOutputCapability> cameraOutp
 void CameraManager::ParseExtendCapability(sptr<CameraOutputCapability> cameraOutputCapability,
     const int32_t modeName, const camera_metadata_item_t &item)
 {
-    vector<Profile> photoProfile = {};
-    vector<Profile> previewProfile = {};
-    vector<VideoProfile> videoProfiles = {};
     ExtendInfo extendInfo = {};
     std::shared_ptr<CameraStreamInfoParse>modeStreamParse = std::make_shared<CameraStreamInfoParse>();
     modeStreamParse->getModeInfo(item.data.i32, item.count, extendInfo); // 解析tag中带的数据信息意义
