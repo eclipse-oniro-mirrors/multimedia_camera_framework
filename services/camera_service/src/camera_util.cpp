@@ -171,13 +171,22 @@ bool IsValidTokenId(uint32_t tokenId)
 bool IsValidSize(
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t format, int32_t width, int32_t height)
 {
+    bool isExtendConfig = false;
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(cameraAbility->get(),
                                              OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, &item);
-    if (ret != CAM_META_SUCCESS || item.count == 0) {
-        MEDIA_ERR_LOG("Failed to find stream configuration in camera ability with return code %{public}d", ret);
-        return false;
+    if (ret == CAM_META_SUCCESS && item.count != 0) {
+        isExtendConfig = true;
+    } else {
+        ret = Camera::FindCameraMetadataItem(cameraAbility->get(),
+                                             OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
+        if (ret != CAM_META_SUCCESS || item.count == 0) {
+            MEDIA_ERR_LOG("Failed to find stream basic configuration in camera ability with return code %{public}d",
+                          ret);
+            return false;
+        }
     }
+    MEDIA_INFO_LOG("Success to find stream configuration isExtendConfig = %{public}d", isExtendConfig);
     for (uint32_t index = 0; index < item.count; index++) {
         if (item.data.i32[index] == format) {
             if (((index + 1) < item.count) && ((index + 2) < item.count) &&
