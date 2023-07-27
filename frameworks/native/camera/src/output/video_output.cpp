@@ -32,16 +32,16 @@ VideoOutput::~VideoOutput()
     appCallback_ = nullptr;
 }
 
-class HStreamRepeatCallbackImpl : public HStreamRepeatCallbackStub {
+class VideoOutputCallbackImpl : public HStreamRepeatCallbackStub {
 public:
     VideoOutput* videoOutput_ = nullptr;
-    HStreamRepeatCallbackImpl() : videoOutput_(nullptr) {
+    VideoOutputCallbackImpl() : videoOutput_(nullptr) {
     }
 
-    explicit HStreamRepeatCallbackImpl(VideoOutput* videoOutput) : videoOutput_(videoOutput) {
+    explicit VideoOutputCallbackImpl(VideoOutput* videoOutput) : videoOutput_(videoOutput) {
     }
 
-    ~HStreamRepeatCallbackImpl()
+    ~VideoOutputCallbackImpl()
     {
         videoOutput_ = nullptr;
     }
@@ -52,7 +52,7 @@ public:
         if (videoOutput_ != nullptr && videoOutput_->GetApplicationCallback() != nullptr) {
             videoOutput_->GetApplicationCallback()->OnFrameStarted();
         } else {
-            MEDIA_INFO_LOG("Discarding HStreamRepeatCallbackImpl::OnFrameStarted callback in video");
+            MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameStarted callback in video");
         }
         return CAMERA_OK;
     }
@@ -63,7 +63,7 @@ public:
         if (videoOutput_ != nullptr && videoOutput_->GetApplicationCallback() != nullptr) {
             videoOutput_->GetApplicationCallback()->OnFrameEnded(frameCount);
         } else {
-            MEDIA_INFO_LOG("Discarding HStreamRepeatCallbackImpl::OnFrameEnded callback in video");
+            MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameEnded callback in video");
         }
         return CAMERA_OK;
     }
@@ -73,7 +73,7 @@ public:
         if (videoOutput_ != nullptr && videoOutput_->GetApplicationCallback() != nullptr) {
             videoOutput_->GetApplicationCallback()->OnError(errorCode);
         } else {
-            MEDIA_INFO_LOG("Discarding HStreamRepeatCallbackImpl::OnFrameError callback in video");
+            MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameError callback in video");
         }
         return CAMERA_OK;
     }
@@ -84,9 +84,9 @@ void VideoOutput::SetCallback(std::shared_ptr<VideoStateCallback> callback)
     appCallback_ = callback;
     if (appCallback_ != nullptr) {
         if (svcCallback_ == nullptr) {
-            svcCallback_ = new(std::nothrow) HStreamRepeatCallbackImpl(this);
+            svcCallback_ = new(std::nothrow) VideoOutputCallbackImpl(this);
             if (svcCallback_ == nullptr) {
-                MEDIA_ERR_LOG("VideoOutput::SetCallback: new HStreamRepeatCallbackImpl Failed to register callback");
+                MEDIA_ERR_LOG("new VideoOutputCallbackImpl Failed to register callback");
                 appCallback_ = nullptr;
                 return;
             }
