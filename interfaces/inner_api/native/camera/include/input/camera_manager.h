@@ -447,14 +447,14 @@ public:
     *
     * @return.
     */
-    int32_t SetPreLaunchConfig(std::string cameraId);
+    int32_t SetPrelaunchConfig(std::string cameraId);
 
     /**
     * @brief Get the support of camera pre launch mode.
     *
     * @return Returns true is supported, false is not supported.
     */
-    bool IsPreLaunchSupported(sptr<CameraDevice> camera);
+    bool IsPrelaunchSupported(sptr<CameraDevice> camera);
 
     static const std::string surfaceFormat;
 

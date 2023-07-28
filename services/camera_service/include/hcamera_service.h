@@ -97,7 +97,7 @@ private:
     void CameraDumpSensorInfo(common_metadata_header_t* metadataEntry, std::string& dumpString);
     void CameraDumpVideoStabilization(common_metadata_header_t* metadataEntry, std::string& dumpString);
     void CameraDumpVideoFrameRateRange(common_metadata_header_t* metadataEntry, std::string& dumpString);
-    void CameraDumpPreLaunch(common_metadata_header_t* metadataEntry, std::string& dumpString);
+    void CameraDumpPrelaunch(common_metadata_header_t* metadataEntry, std::string& dumpString);
     void CameraDumpThumbnail(common_metadata_header_t* metadataEntry, std::string& dumpString);
     bool IsCameraMuteSupported(std::string cameraId);
     bool IsPrelaunchSupported(std::string cameraId);

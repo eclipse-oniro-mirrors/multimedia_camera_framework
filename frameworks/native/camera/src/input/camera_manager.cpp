@@ -1038,23 +1038,23 @@ int32_t CameraManager::PrelaunchCamera()
     return ServiceToCameraError(retCode);
 }
 
-bool CameraManager::IsPreLaunchSupported(sptr<CameraDevice> camera)
+bool CameraManager::IsPrelaunchSupported(sptr<CameraDevice> camera)
 {
-    bool isPreLaunch = false;
+    bool isPrelaunch = false;
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = camera->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_PRELAUNCH_AVAILABLE, &item);
     if (ret == 0) {
-        MEDIA_INFO_LOG("CameraManager::IsPreLaunchSupported() OHOS_ABILITY_PRELAUNCH_AVAILABLE is %{public}d",
+        MEDIA_INFO_LOG("CameraManager::IsPrelaunchSupported() OHOS_ABILITY_PRELAUNCH_AVAILABLE is %{public}d",
                        item.data.u8[0]);
-        isPreLaunch = (item.data.u8[0] == 1);
+        isPrelaunch = (item.data.u8[0] == 1);
     } else {
         MEDIA_ERR_LOG("Failed to get OHOS_ABILITY_PRELAUNCH_AVAILABLE ret = %{public}d", ret);
     }
-    return isPreLaunch;
+    return isPrelaunch;
 }
 
-int32_t CameraManager::SetPreLaunchConfig(std::string cameraId)
+int32_t CameraManager::SetPrelaunchConfig(std::string cameraId)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (serviceProxy_ == nullptr) {

@@ -583,9 +583,9 @@ int32_t HCameraService::PrelaunchCamera()
     }
     MEDIA_INFO_LOG("HCameraService::PrelaunchCamera preCameraId_ is: %{public}s", preCameraId_.c_str());
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("Camera Prelaunch CameraId:%s", preCameraId_.c_str()));
-    int32_t ret = cameraHostManager_->PreLaunch(preCameraId_);
+    int32_t ret = cameraHostManager_->Prelaunch(preCameraId_);
     if (ret != CAMERA_OK) {
-        MEDIA_ERR_LOG("HCameraService::PreLaunch failed");
+        MEDIA_ERR_LOG("HCameraService::Prelaunch failed");
     }
     return ret;
 }
@@ -616,12 +616,12 @@ int32_t HCameraService::SetPrelaunchConfig(std::string cameraId)
 
 bool HCameraService::IsPrelaunchSupported(std::string cameraId)
 {
-    bool isPreLaunchSupported = false;
+    bool isPrelaunchSupported = false;
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
     int32_t ret = cameraHostManager_->GetCameraAbility(cameraId, cameraAbility);
     if (ret != CAMERA_OK) {
         MEDIA_ERR_LOG("HCameraService::IsCameraMuted GetCameraAbility failed");
-        return isPreLaunchSupported;
+        return isPrelaunchSupported;
     }
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = cameraAbility->get();
@@ -629,11 +629,11 @@ bool HCameraService::IsPrelaunchSupported(std::string cameraId)
     if (ret == 0) {
         MEDIA_INFO_LOG("CameraManager::IsPrelaunchSupported() OHOS_ABILITY_PRELAUNCH_AVAILABLE is %{public}d",
                        item.data.u8[0]);
-        isPreLaunchSupported = (item.data.u8[0] == 1);
+        isPrelaunchSupported = (item.data.u8[0] == 1);
     } else {
         MEDIA_ERR_LOG("Failed to get OHOS_ABILITY_PRELAUNCH_AVAILABLE ret = %{public}d", ret);
     }
-    return isPreLaunchSupported;
+    return isPrelaunchSupported;
 }
 
 int32_t HCameraService::IsCameraMuted(bool &muteMode)
@@ -922,7 +922,7 @@ void HCameraService::CameraDumpVideoFrameRateRange(common_metadata_header_t* met
     }
 }
 
-void HCameraService::CameraDumpPreLaunch(common_metadata_header_t* metadataEntry, std::string& dumpString)
+void HCameraService::CameraDumpPrelaunch(common_metadata_header_t* metadataEntry, std::string& dumpString)
 {
     camera_metadata_item_t item;
     int ret;
@@ -995,7 +995,7 @@ int32_t HCameraService::Dump(int fd, const std::vector<std::u16string>& args)
             CameraDumpSensorInfo(metadataEntry, dumpString);
             CameraDumpVideoStabilization(metadataEntry, dumpString);
             CameraDumpVideoFrameRateRange(metadataEntry, dumpString);
-            CameraDumpPreLaunch(metadataEntry, dumpString);
+            CameraDumpPrelaunch(metadataEntry, dumpString);
             CameraDumpThumbnail(metadataEntry, dumpString);
         }
     }

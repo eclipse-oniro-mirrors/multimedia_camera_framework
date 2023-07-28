@@ -99,9 +99,9 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isCameraMuted", IsCameraMuted),
         DECLARE_NAPI_FUNCTION("isCameraMuteSupported", IsCameraMuteSupported),
         DECLARE_NAPI_FUNCTION("muteCamera", MuteCamera),
-        DECLARE_NAPI_FUNCTION("preLaunch", PrelaunchCamera),
-        DECLARE_NAPI_FUNCTION("isPreLaunchSupported", IsPreLaunchSupported),
-        DECLARE_NAPI_FUNCTION("setPreLaunchConfig", SetPreLaunchConfig),
+        DECLARE_NAPI_FUNCTION("prelaunch", PrelaunchCamera),
+        DECLARE_NAPI_FUNCTION("isPrelaunchSupported", IsPrelaunchSupported),
+        DECLARE_NAPI_FUNCTION("setPrelaunchConfig", SetPrelaunchConfig),
         DECLARE_NAPI_FUNCTION("createCameraInput", CreateCameraInputInstance),
         DECLARE_NAPI_FUNCTION("createCaptureSession", CreateCameraSessionInstance),
         DECLARE_NAPI_FUNCTION("createPreviewOutput", CreatePreviewOutputInstance),
@@ -817,11 +817,11 @@ napi_value CameraManagerNapi::On(napi_env env, napi_callback_info info)
     return undefinedResult;
 }
 
-napi_value CameraManagerNapi::IsPreLaunchSupported(napi_env env, napi_callback_info info)
+napi_value CameraManagerNapi::IsPrelaunchSupported(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("IsPreLaunchSupported is called");
+    MEDIA_INFO_LOG("IsPrelaunchSupported is called");
     if (!CameraNapiUtils::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi IsPreLaunchSupported is called!");
+        MEDIA_ERR_LOG("SystemApi IsPrelaunchSupported is called!");
         return nullptr;
     }
     napi_status status;
@@ -844,9 +844,9 @@ napi_value CameraManagerNapi::IsPreLaunchSupported(napi_env env, napi_callback_i
     status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void **>(&cameraDeviceNapi));
     if (status == napi_ok && cameraDeviceNapi != nullptr) {
         sptr<CameraDevice> cameraInfo = cameraDeviceNapi->cameraDevice_;
-        bool isPreLaunchSupported = CameraManager::GetInstance()->IsPreLaunchSupported(cameraInfo);
-        MEDIA_DEBUG_LOG("isPreLaunchSupported: %{public}d", isPreLaunchSupported);
-        napi_get_boolean(env, isPreLaunchSupported, &result);
+        bool isPrelaunchSupported = CameraManager::GetInstance()->IsPrelaunchSupported(cameraInfo);
+        MEDIA_DEBUG_LOG("isPrelaunchSupported: %{public}d", isPrelaunchSupported);
+        napi_get_boolean(env, isPrelaunchSupported, &result);
     } else {
         MEDIA_ERR_LOG("Could not able to read cameraDevice argument!");
         if (!CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
@@ -873,11 +873,11 @@ napi_value CameraManagerNapi::PrelaunchCamera(napi_env env, napi_callback_info i
     return result;
 }
 
-napi_value CameraManagerNapi::SetPreLaunchConfig(napi_env env, napi_callback_info info)
+napi_value CameraManagerNapi::SetPrelaunchConfig(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("SetPrelaunchConfig is called");
     if (!CameraNapiUtils::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi SetPreLaunchConfig is called!");
+        MEDIA_ERR_LOG("SystemApi SetPrelaunchConfig is called!");
         return nullptr;
     }
     napi_status status;
@@ -888,7 +888,7 @@ napi_value CameraManagerNapi::SetPreLaunchConfig(napi_env env, napi_callback_inf
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
     NAPI_ASSERT(env, argc < ARGS_TWO, "requires 1 parameters maximum");
     napi_value res = nullptr;
-    PreLaunchConfig prelaunchConfig;
+    PrelaunchConfig prelaunchConfig;
     CameraDeviceNapi* cameraDeviceNapi = nullptr;
     if (napi_get_named_property(env, argv[PARAM0], "cameraDevice", &res) == napi_ok) {
         status = napi_unwrap(env, res, reinterpret_cast<void **>(&cameraDeviceNapi));
@@ -903,8 +903,8 @@ napi_value CameraManagerNapi::SetPreLaunchConfig(napi_env env, napi_callback_inf
         }
     }
     std::string cameraId = prelaunchConfig.GetCameraDevice()->GetID();
-    MEDIA_INFO_LOG("SetPreLaunchConfig cameraId = %{public}s", cameraId.c_str());
-    int32_t retCode = CameraManager::GetInstance()->SetPreLaunchConfig(cameraId);
+    MEDIA_INFO_LOG("SetPrelaunchConfig cameraId = %{public}s", cameraId.c_str());
+    int32_t retCode = CameraManager::GetInstance()->SetPrelaunchConfig(cameraId);
     if (!CameraNapiUtils::CheckError(env, retCode)) {
         return result;
     }

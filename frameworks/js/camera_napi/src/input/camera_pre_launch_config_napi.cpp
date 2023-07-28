@@ -18,45 +18,45 @@
 
 namespace OHOS {
 namespace CameraStandard {
-thread_local napi_ref CameraPreLaunchConfigNapi::sConstructor_ = nullptr;
-thread_local PreLaunchConfig* CameraPreLaunchConfigNapi::sPreLaunchConfig_ = nullptr;
+thread_local napi_ref CameraPrelaunchConfigNapi::sConstructor_ = nullptr;
+thread_local PrelaunchConfig* CameraPrelaunchConfigNapi::sPrelaunchConfig_ = nullptr;
 
-CameraPreLaunchConfigNapi::CameraPreLaunchConfigNapi() : env_(nullptr), wrapper_(nullptr)
+CameraPrelaunchConfigNapi::CameraPrelaunchConfigNapi() : env_(nullptr), wrapper_(nullptr)
 {
 }
 
-CameraPreLaunchConfigNapi::~CameraPreLaunchConfigNapi()
+CameraPrelaunchConfigNapi::~CameraPrelaunchConfigNapi()
 {
-    MEDIA_DEBUG_LOG("~CameraPreLaunchConfigNapi is called");
+    MEDIA_DEBUG_LOG("~CameraPrelaunchConfigNapi is called");
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
-    if (sPreLaunchConfig_) {
-        sPreLaunchConfig_ = nullptr;
+    if (sPrelaunchConfig_) {
+        sPrelaunchConfig_ = nullptr;
     }
 }
 
-void CameraPreLaunchConfigNapi::CameraPreLaunchConfigNapiDestructor(
+void CameraPrelaunchConfigNapi::CameraPrelaunchConfigNapiDestructor(
     napi_env env, void* nativeObject, void* finalize_hint)
 {
-    MEDIA_DEBUG_LOG("CameraPreLaunchConfigNapiDestructor is called");
-    CameraPreLaunchConfigNapi* cameraPreLaunchConfigNapi = reinterpret_cast<CameraPreLaunchConfigNapi*>(nativeObject);
-    if (cameraPreLaunchConfigNapi != nullptr) {
-        MEDIA_INFO_LOG("CameraPreLaunchConfigNapiDestructor ~");
-        delete cameraPreLaunchConfigNapi;
+    MEDIA_DEBUG_LOG("CameraPrelaunchConfigNapiDestructor is called");
+    CameraPrelaunchConfigNapi* cameraPrelaunchConfigNapi = reinterpret_cast<CameraPrelaunchConfigNapi*>(nativeObject);
+    if (cameraPrelaunchConfigNapi != nullptr) {
+        MEDIA_INFO_LOG("CameraPrelaunchConfigNapiDestructor ~");
+        delete cameraPrelaunchConfigNapi;
     }
 }
 
-napi_value CameraPreLaunchConfigNapi::Init(napi_env env, napi_value exports)
+napi_value CameraPrelaunchConfigNapi::Init(napi_env env, napi_value exports)
 {
     MEDIA_INFO_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
     napi_property_descriptor prelaunch_config_props[] = {
-        DECLARE_NAPI_GETTER("cameraDevice", GetPreLaunchCameraDevice)
+        DECLARE_NAPI_GETTER("cameraDevice", GetPrelaunchCameraDevice)
     };
     status = napi_define_class(env, CAMERA_PRELAUNCH_CONFIG_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
-        CameraPreLaunchConfigNapiConstructor, nullptr,
+        CameraPrelaunchConfigNapiConstructor, nullptr,
         sizeof(prelaunch_config_props) / sizeof(prelaunch_config_props[PARAM0]),
         prelaunch_config_props, &ctorObj);
     if (status == napi_ok) {
@@ -74,7 +74,7 @@ napi_value CameraPreLaunchConfigNapi::Init(napi_env env, napi_value exports)
 }
 
 // Constructor callback
-napi_value CameraPreLaunchConfigNapi::CameraPreLaunchConfigNapiConstructor(napi_env env, napi_callback_info info)
+napi_value CameraPrelaunchConfigNapi::CameraPrelaunchConfigNapiConstructor(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("CameraProfileNapiConstructor is called");
     napi_status status;
@@ -85,13 +85,13 @@ napi_value CameraPreLaunchConfigNapi::CameraPreLaunchConfigNapiConstructor(napi_
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
 
     if (status == napi_ok && thisVar != nullptr) {
-        std::unique_ptr<CameraPreLaunchConfigNapi> obj = std::make_unique<CameraPreLaunchConfigNapi>();
+        std::unique_ptr<CameraPrelaunchConfigNapi> obj = std::make_unique<CameraPrelaunchConfigNapi>();
         obj->env_ = env;
-        obj->preLaunchConfig_ = sPreLaunchConfig_;
-        MEDIA_INFO_LOG("CameraPreLaunchConfigNapiConstructor cameraId = %{public}s",
-            obj->preLaunchConfig_->GetCameraDevice()->GetID().c_str());
+        obj->prelaunchConfig_ = sPrelaunchConfig_;
+        MEDIA_INFO_LOG("CameraPrelaunchConfigNapiConstructor cameraId = %{public}s",
+            obj->prelaunchConfig_->GetCameraDevice()->GetID().c_str());
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-            CameraPreLaunchConfigNapi::CameraPreLaunchConfigNapiDestructor, nullptr, nullptr);
+            CameraPrelaunchConfigNapi::CameraPrelaunchConfigNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
             obj.release();
             return thisVar;
@@ -99,17 +99,17 @@ napi_value CameraPreLaunchConfigNapi::CameraPreLaunchConfigNapiConstructor(napi_
             MEDIA_ERR_LOG("Failure wrapping js to native napi");
         }
     }
-    MEDIA_ERR_LOG("CameraPreLaunchConfigNapiConstructor call Failed!");
+    MEDIA_ERR_LOG("CameraPrelaunchConfigNapiConstructor call Failed!");
     return result;
 }
 
-napi_value CameraPreLaunchConfigNapi::GetPreLaunchCameraDevice(napi_env env, napi_callback_info info)
+napi_value CameraPrelaunchConfigNapi::GetPrelaunchCameraDevice(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("GetCameraProfileSize is called");
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
-    CameraPreLaunchConfigNapi* obj = nullptr;
+    CameraPrelaunchConfigNapi* obj = nullptr;
     sptr<CameraDevice> cameraDevice;
     napi_value thisVar = nullptr;
 
@@ -123,9 +123,9 @@ napi_value CameraPreLaunchConfigNapi::GetPreLaunchCameraDevice(napi_env env, nap
 
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
-        cameraDevice = obj->preLaunchConfig_->GetCameraDevice();
-        MEDIA_INFO_LOG("GetPreLaunchCameraDevice cameraId = %{public}s",
-            obj->preLaunchConfig_->GetCameraDevice()->GetID().c_str());
+        cameraDevice = obj->prelaunchConfig_->GetCameraDevice();
+        MEDIA_INFO_LOG("GetPrelaunchCameraDevice cameraId = %{public}s",
+            obj->prelaunchConfig_->GetCameraDevice()->GetID().c_str());
         jsResult = CameraDeviceNapi::CreateCameraObj(env, cameraDevice);
         return jsResult;
     }
