@@ -44,7 +44,7 @@ void CameraSizeNapi::CameraSizeNapiDestructor(napi_env env, void* nativeObject, 
     MEDIA_DEBUG_LOG("CameraSizeNapiDestructor is called");
     CameraSizeNapi* cameraSizeNapi = reinterpret_cast<CameraSizeNapi*>(nativeObject);
     if (cameraSizeNapi != nullptr) {
-        cameraSizeNapi->~CameraSizeNapi();
+        delete cameraSizeNapi;
     }
 }
 

@@ -65,7 +65,7 @@ void MetadataObjectNapi::MetadataObjectNapiDestructor(napi_env env, void* native
     MEDIA_DEBUG_LOG("MetadataObjectNapiDestructor is called");
     MetadataObjectNapi* metadataObject = reinterpret_cast<MetadataObjectNapi*>(nativeObject);
     if (metadataObject != nullptr) {
-        metadataObject->~MetadataObjectNapi();
+        delete metadataObject;
     }
 }
 

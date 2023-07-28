@@ -81,7 +81,7 @@ void CameraManagerNapi::CameraManagerNapiDestructor(napi_env env, void* nativeOb
     MEDIA_DEBUG_LOG("CameraManagerNapiDestructor is called");
     CameraManagerNapi* camera = reinterpret_cast<CameraManagerNapi*>(nativeObject);
     if (camera != nullptr) {
-        camera->~CameraManagerNapi();
+        delete camera;
     }
 }
 

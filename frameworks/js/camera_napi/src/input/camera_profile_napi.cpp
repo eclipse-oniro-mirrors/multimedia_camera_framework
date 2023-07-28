@@ -41,7 +41,7 @@ void CameraProfileNapi::CameraProfileNapiDestructor(napi_env env, void* nativeOb
     MEDIA_DEBUG_LOG("CameraProfileNapiDestructor is called");
     CameraProfileNapi* cameraProfileNapi = reinterpret_cast<CameraProfileNapi*>(nativeObject);
     if (cameraProfileNapi != nullptr) {
-        cameraProfileNapi->~CameraProfileNapi();
+        delete cameraProfileNapi;
     }
 }
 
@@ -223,7 +223,7 @@ void CameraVideoProfileNapi::CameraVideoProfileNapiDestructor(napi_env env, void
     MEDIA_DEBUG_LOG("CameraVideoProfileNapiDestructor is called");
     CameraVideoProfileNapi* cameraVideoProfileNapi = reinterpret_cast<CameraVideoProfileNapi*>(nativeObject);
     if (cameraVideoProfileNapi != nullptr) {
-        cameraVideoProfileNapi->~CameraVideoProfileNapi();
+        delete cameraVideoProfileNapi;
     }
 }
 

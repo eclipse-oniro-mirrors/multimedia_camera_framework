@@ -104,7 +104,7 @@ void CameraInputNapi::CameraInputNapiDestructor(napi_env env, void* nativeObject
     MEDIA_INFO_LOG("CameraInputNapiDestructor is called");
     CameraInputNapi* cameraObj = reinterpret_cast<CameraInputNapi*>(nativeObject);
     if (cameraObj != nullptr) {
-        cameraObj->~CameraInputNapi();
+        delete cameraObj;
     }
 }
 
