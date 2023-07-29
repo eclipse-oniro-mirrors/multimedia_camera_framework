@@ -338,14 +338,14 @@ declare namespace camera {
   }
 
   /**
-   * PreLaunch config object.
+   * Prelaunch config object.
    *
-   * @typedef PreLaunchConfig
+   * @typedef PrelaunchConfig
    * @syscap SystemCapability.Multimedia.Camera.Core
    * @systemapi
    * @since 10
    */
-  interface PreLaunchConfig {
+  interface PrelaunchConfig {
     /**
      * Camera instance.
      *
@@ -518,28 +518,28 @@ declare namespace camera {
 
     /**
      * Determine whether the camera device supports prelaunch startup.
-     * Called before the setPreLaunchConfig and preLaunch function.
+     * Called before the setPrelaunchConfig and prelaunch function.
      *
      * @param { CameraDevice } camera Camera device.
-     * @returns { boolean } Is preLaunch is supported.
+     * @returns { boolean } Is prelaunch is supported.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 10
      */
-    isPreLaunchSupported(camera: CameraDevice): boolean;
+    isPrelaunchSupported(camera: CameraDevice): boolean;
 
     /**
      * Configure camera preheating parameters, specify camera device.
      * Send prelaunch configuration parameters to the camera service when exit camera or change configuration for the next time.
      *
-     * @param { PreLaunchConfig } preLaunchConfig Prelaunch configuration info.
+     * @param { PrelaunchConfig } prelaunchConfig Prelaunch configuration info.
      * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect
      * @throws { BusinessError } 7400102 - Operation not allow.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 10
      */
-    setPreLaunchConfig(preLaunchConfig: PreLaunchConfig): void;
+    setPrelaunchConfig(prelaunchConfig: PrelaunchConfig): void;
 
     /**
      * Enable the camera to prelaunch and start.
@@ -550,7 +550,7 @@ declare namespace camera {
      * @systemapi
      * @since 10
      */
-    preLaunch(): void;
+    prelaunch(): void;
 
     /**
      * Creates a deferred PreviewOutput instance.

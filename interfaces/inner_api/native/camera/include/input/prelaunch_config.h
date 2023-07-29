@@ -20,16 +20,16 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class PreLaunchConfig {
+class PrelaunchConfig {
 public:
-    PreLaunchConfig(sptr<CameraDevice> cameraDevice);
+    PrelaunchConfig(sptr<CameraDevice> cameraDevice);
 
-    PreLaunchConfig() = default;
+    PrelaunchConfig() = default;
 
-    virtual ~PreLaunchConfig() = default;
+    virtual ~PrelaunchConfig() = default;
 
     /**
-     * @brief Get CameraDevice of the PreLaunchConfig.
+     * @brief Get CameraDevice of the PrelaunchConfig.
      *
      * @return cameraDevice.
      */

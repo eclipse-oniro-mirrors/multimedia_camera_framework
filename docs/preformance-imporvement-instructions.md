@@ -20,11 +20,11 @@
 
 ## 接口描述
 
-### isPreLaunchSupported
+### isPrelaunchSupported
 
-isPreLaunchSupported(camera: CameraDevice) : boolean
+isPrelaunchSupported(camera: CameraDevice) : boolean
 
-在setPreLaunchConfig接口使用前调用，用于判断指定cameraDevice是否支持预热启动。
+在setPrelaunchConfig接口使用前调用，用于判断指定cameraDevice是否支持预热启动。
 
 **系统能力：** SystemCapability.Multimedia.Camera.Core
 
@@ -51,14 +51,14 @@ import camera from '@ohos.multimedia.camera'
 
 this.cameraManager = camera.getCameraManager(globalThis.abilityContext);
 let cameras = this.cameraManager.getSupportedCameras()
-if(this.cameraManager.isPreLaunchSupported(cameras[0])) {
-     this.cameraManager.setPreLaunchConfig({cameraDevice: cameras[0]});
+if(this.cameraManager.isPrelaunchSupported(cameras[0])) {
+     this.cameraManager.setPrelaunchConfig({cameraDevice: cameras[0]});
 }
 ```
 
-### setPreLaunchConfig
+### setPrelaunchConfig
 
-setPreLaunchConfig(camera: CameraDevice) : void
+setPrelaunchConfig(camera: CameraDevice) : void
 
 配置相机预热参数，指定相机设备（待扩展流参数信息等）。
 用户操作会产生下一次进入相机的预热配置变化，或是退出相机时，向相机服务发送预热配置参数。
@@ -90,9 +90,9 @@ import camera from '@ohos.multimedia.camera'
 
 this.cameraManager = camera.getCameraManager(globalThis.abilityContext);
 let cameras = this.cameraManager.getSupportedCameras()
-if(this.cameraManager.isPreLaunchSupported(cameras[0])) {
+if(this.cameraManager.isPrelaunchSupported(cameras[0])) {
     try {
-    	this.cameraManager.setPreLaunchConfig({cameraDevice: cameras[0]});
+    	this.cameraManager.setPrelaunchConfig({cameraDevice: cameras[0]});
     } catch (error) {
         HiLog.e(TAG, `catch error: ${JSON.stringify(error)}`)
     }
@@ -106,8 +106,8 @@ if(this.cameraManager.isPreLaunchSupported(cameras[0])) {
 ]
 ```
 
-### preLaunch
-preLaunch() : void
+### prelaunch
+prelaunch() : void
 
 用户点击系统相机图标，拉起相机应用同时调用，下发预热请求，使能相机预热启动。
 
@@ -136,7 +136,7 @@ import camera from '@ohos.multimedia.camera'
 
 this.cameraManager = camera.getCameraManager(globalThis.abilityContext);
 try {
-   this.cameraManager.preLaunch(); 
+   this.cameraManager.prelaunch(); 
 } catch (error) {
     HiLog.e(TAG, `catch error: ${JSON.stringify(error)}`)
 }
@@ -149,7 +149,7 @@ try {
 ]
 ```
 
-### PreLaunchConfig
+### PrelaunchConfig
 新增参数类型，预热配置参数，当前sensor级别预热，待扩展流预热参数
 
 **示例：**
@@ -157,11 +157,11 @@ try {
 ```js
 this.cameraManager = camera.getCameraManager(globalThis.abilityContext);
 let cameras = this.cameraManager.getSupportedCameras()
-this.preLaunchConfig: PreLaunchConfig = {
+this.prelaunchConfig: PrelaunchConfig = {
     cameraDevice: cameras[0]
 }
-if(this.cameraManager.isPreLaunchSupported(cameras[0])) {
-     this.cameraManager.setPreLaunchConfig(this.preLaunchConfig);
+if(this.cameraManager.isPrelaunchSupported(cameras[0])) {
+     this.cameraManager.setPrelaunchConfig(this.prelaunchConfig);
 }
 ```
 

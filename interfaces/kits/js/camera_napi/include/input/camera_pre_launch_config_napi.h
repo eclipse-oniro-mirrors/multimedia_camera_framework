@@ -36,20 +36,20 @@
 
 namespace OHOS {
 namespace CameraStandard {
-static const char CAMERA_PRELAUNCH_CONFIG_NAPI_CLASS_NAME[] = "PreLauncherConfig";
+static const char CAMERA_PRELAUNCH_CONFIG_NAPI_CLASS_NAME[] = "PrelauncherConfig";
 
-class CameraPreLaunchConfigNapi {
+class CameraPrelaunchConfigNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
-    static napi_value GetPreLaunchCameraDevice(napi_env env, napi_callback_info info);
-    CameraPreLaunchConfigNapi();
-    ~CameraPreLaunchConfigNapi();
-    PreLaunchConfig* preLaunchConfig_;
-    static thread_local PreLaunchConfig* sPreLaunchConfig_;
+    static napi_value GetPrelaunchCameraDevice(napi_env env, napi_callback_info info);
+    CameraPrelaunchConfigNapi();
+    ~CameraPrelaunchConfigNapi();
+    PrelaunchConfig* prelaunchConfig_;
+    static thread_local PrelaunchConfig* sPrelaunchConfig_;
 
 private:
-    static void CameraPreLaunchConfigNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
-    static napi_value CameraPreLaunchConfigNapiConstructor(napi_env env, napi_callback_info info);
+    static void CameraPrelaunchConfigNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
+    static napi_value CameraPrelaunchConfigNapiConstructor(napi_env env, napi_callback_info info);
     napi_env env_;
     napi_ref wrapper_;
 

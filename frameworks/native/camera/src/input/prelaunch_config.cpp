@@ -19,9 +19,9 @@ using namespace std;
 
 namespace OHOS {
 namespace CameraStandard {
-PreLaunchConfig::PreLaunchConfig(sptr<CameraDevice> cameraDevice): cameraDevice_(cameraDevice) {}
+PrelaunchConfig::PrelaunchConfig(sptr<CameraDevice> cameraDevice): cameraDevice_(cameraDevice) {}
 
-sptr<CameraDevice> PreLaunchConfig::GetCameraDevice()
+sptr<CameraDevice> PrelaunchConfig::GetCameraDevice()
 {
     return cameraDevice_;
 }
