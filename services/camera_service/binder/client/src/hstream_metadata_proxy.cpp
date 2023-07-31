@@ -27,10 +27,7 @@ int32_t HStreamMetadataProxy::Start()
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy CancelCapture Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_START), data, reply, option);
     if (error != ERR_NONE) {
@@ -46,10 +43,7 @@ int32_t HStreamMetadataProxy::Stop()
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy CancelCapture Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_STOP), data, reply, option);
     if (error != ERR_NONE) {
@@ -65,10 +59,7 @@ int32_t HStreamMetadataProxy::Release()
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy CancelCapture Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_RELEASE), data, reply, option);
     if (error != ERR_NONE) {

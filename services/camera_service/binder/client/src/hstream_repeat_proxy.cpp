@@ -28,10 +28,7 @@ int32_t HStreamRepeatProxy::Start()
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamRepeatProxy Start Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_START_VIDEO_RECORDING), data, reply, option);
     if (error != ERR_NONE) {
@@ -47,10 +44,7 @@ int32_t HStreamRepeatProxy::Stop()
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamRepeatProxy Stop Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_STOP_VIDEO_RECORDING), data, reply, option);
     if (error != ERR_NONE) {
@@ -66,10 +60,7 @@ int32_t HStreamRepeatProxy::Release()
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamRepeatProxy Release Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_STREAM_REPEAT_RELEASE), data, reply, option);
     if (error != ERR_NONE) {
@@ -89,14 +80,8 @@ int32_t HStreamRepeatProxy::SetCallback(sptr<IStreamRepeatCallback> &callback)
         return IPC_PROXY_ERR;
     }
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamRepeatProxy SetCallback Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteRemoteObject(callback->AsObject())) {
-        MEDIA_ERR_LOG("HStreamRepeatProxy SetCallback write StreamRepeatCallback obj failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteRemoteObject(callback->AsObject());
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_STREAM_REPEAT_SET_CALLBACK), data, reply, option);
@@ -118,14 +103,8 @@ int32_t HStreamRepeatProxy::AddDeferredSurface(const sptr<OHOS::IBufferProducer>
         return IPC_PROXY_ERR;
     }
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamRepeatProxy AddDeferredSurface Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteRemoteObject(producer->AsObject())) {
-        MEDIA_ERR_LOG("HStreamRepeatProxy AddDeferredSurface write producer obj failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteRemoteObject(producer->AsObject());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ADD_DEFERRED_SURFACE), data, reply, option);
     if (error != ERR_NONE) {
