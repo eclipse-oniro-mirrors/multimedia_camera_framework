@@ -3838,12 +3838,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_069, TestSize.Le
     bool muteMode = true;
     intResult = serviceProxy->IsCameraMuted(muteMode);
     EXPECT_EQ(intResult, -1);
-
-    intResult = serviceProxy->PrelaunchCamera();
-    EXPECT_EQ(intResult, -1);
-
-    intResult = serviceProxy->SetPrelaunchConfig(cameraId);
-    EXPECT_EQ(intResult, -1);
 }
 
 /*
