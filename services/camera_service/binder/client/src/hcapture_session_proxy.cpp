@@ -28,10 +28,7 @@ int32_t HCaptureSessionProxy::BeginConfig()
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy BeginConfig Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_BEGIN_CONFIG), data, reply, option);
     if (error != ERR_NONE) {
@@ -52,14 +49,8 @@ int32_t HCaptureSessionProxy::AddInput(sptr<ICameraDeviceService> cameraDevice)
         return IPC_PROXY_ERR;
     }
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy AddInput Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteRemoteObject(cameraDevice->AsObject())) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy AddInput write cameraDevice obj failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteRemoteObject(cameraDevice->AsObject());
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_ADD_INPUT), data, reply, option);
@@ -81,18 +72,9 @@ int32_t HCaptureSessionProxy::AddOutput(StreamType streamType, sptr<IStreamCommo
         return IPC_PROXY_ERR;
     }
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy AddOutput Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteUint32(static_cast<uint32_t>(streamType))) {
-        MEDIA_ERR_LOG("HCameraServiceProxy AddOutput Write stream type failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteRemoteObject(stream->AsObject())) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy AddOutput write stream obj failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteUint32(static_cast<uint32_t>(streamType));
+    data.WriteRemoteObject(stream->AsObject());
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_ADD_OUTPUT), data, reply, option);
@@ -114,14 +96,8 @@ int32_t HCaptureSessionProxy::RemoveInput(sptr<ICameraDeviceService> cameraDevic
         return IPC_PROXY_ERR;
     }
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy RemoveInput Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteRemoteObject(cameraDevice->AsObject())) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy RemoveInput write cameraDevice obj failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteRemoteObject(cameraDevice->AsObject());
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_REMOVE_INPUT), data, reply, option);
@@ -143,18 +119,9 @@ int32_t HCaptureSessionProxy::RemoveOutput(StreamType streamType, sptr<IStreamCo
         return IPC_PROXY_ERR;
     }
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy RemoveOutput Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteUint32(static_cast<uint32_t>(streamType))) {
-        MEDIA_ERR_LOG("HCameraServiceProxy RemoveOutput Write stream type failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteRemoteObject(stream->AsObject())) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy RemoveOutput write stream obj failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteUint32(static_cast<uint32_t>(streamType));
+    data.WriteRemoteObject(stream->AsObject());
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_REMOVE_OUTPUT), data, reply, option);
@@ -171,10 +138,7 @@ int32_t HCaptureSessionProxy::CommitConfig()
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy CommitConfig Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_COMMIT_CONFIG), data, reply, option);
     if (error != ERR_NONE) {
@@ -190,10 +154,7 @@ int32_t HCaptureSessionProxy::Start()
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy Start Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_START), data, reply, option);
     if (error != ERR_NONE) {
@@ -209,10 +170,7 @@ int32_t HCaptureSessionProxy::Stop()
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy Stop Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_STOP), data, reply, option);
     if (error != ERR_NONE) {
@@ -228,10 +186,7 @@ int32_t HCaptureSessionProxy::Release(pid_t pid)
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy Release Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_RELEASE), data, reply, option);
     if (error != ERR_NONE) {
@@ -252,14 +207,8 @@ int32_t HCaptureSessionProxy::SetCallback(sptr<ICaptureSessionCallback> &callbac
         return IPC_PROXY_ERR;
     }
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy SetCallback Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteRemoteObject(callback->AsObject())) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy SetCallback write CaptureSessionCallback obj failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteRemoteObject(callback->AsObject());
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_CALLBACK), data, reply, option);
@@ -276,11 +225,7 @@ int32_t HCaptureSessionProxy::GetSessionState(CaptureSessionState &sessionState)
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy GetSessionState Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-
+    data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_GET_SESSION_STATE), data, reply, option);
     if (error != ERR_NONE) {

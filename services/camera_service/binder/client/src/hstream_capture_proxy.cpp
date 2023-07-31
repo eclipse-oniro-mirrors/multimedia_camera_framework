@@ -29,10 +29,7 @@ int32_t HStreamCaptureProxy::Capture(const std::shared_ptr<Camera::CameraMetadat
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy Capture Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
     if (!(Camera::MetadataUtils::EncodeCameraMetadata(captureSettings, data))) {
         MEDIA_ERR_LOG("HStreamCaptureProxy Capture EncodeCameraMetadata failed");
         return IPC_PROXY_ERR;
@@ -53,10 +50,7 @@ int32_t HStreamCaptureProxy::CancelCapture()
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy CancelCapture Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_CANCEL), data, reply, option);
     if (error != ERR_NONE) {
@@ -72,10 +66,7 @@ int32_t HStreamCaptureProxy::Release()
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy Release Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_RELEASE), data, reply, option);
     if (error != ERR_NONE) {
@@ -96,14 +87,8 @@ int32_t HStreamCaptureProxy::SetCallback(sptr<IStreamCaptureCallback> &callback)
         return IPC_PROXY_ERR;
     }
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy SetCallback Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteRemoteObject(callback->AsObject())) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy SetCallback write StreamCaptureCallback obj failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteRemoteObject(callback->AsObject());
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_SET_CALLBACK), data, reply, option);
@@ -125,19 +110,9 @@ int32_t HStreamCaptureProxy::SetThumbnail(bool isEnabled, const sptr<OHOS::IBuff
         return IPC_PROXY_ERR;
     }
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy SetThumbnail Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteRemoteObject(producer->AsObject())) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy SetThumbnail write producer obj failed");
-        return IPC_PROXY_ERR;
-    }
-
-    if (!data.WriteBool(isEnabled)) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy SetThumbnail write isEnabled failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteRemoteObject(producer->AsObject());
+    data.WriteBool(isEnabled);
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_SERVICE_SET_THUMBNAIL), data, reply, option);
