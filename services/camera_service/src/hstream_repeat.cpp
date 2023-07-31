@@ -253,6 +253,10 @@ void HStreamRepeat::SetStreamTransform()
         return;
     }
     auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
+    if (display == nullptr) {
+        MEDIA_INFO_LOG("GetDefaultDisplay failed");
+        return;
+    }
     if (display->GetWidth() < display->GetHeight()) {
         ret = SurfaceError::SURFACE_ERROR_OK;
         int32_t streamRotation = sensorOrientation;
