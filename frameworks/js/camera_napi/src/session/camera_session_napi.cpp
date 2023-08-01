@@ -200,7 +200,7 @@ void CameraSessionNapi::CameraSessionNapiDestructor(napi_env env, void* nativeOb
     MEDIA_DEBUG_LOG("CameraSessionNapiDestructor enter");
     CameraSessionNapi* cameraObj = reinterpret_cast<CameraSessionNapi*>(nativeObject);
     if (cameraObj != nullptr) {
-        cameraObj->~CameraSessionNapi();
+        delete cameraObj;
     }
 }
 

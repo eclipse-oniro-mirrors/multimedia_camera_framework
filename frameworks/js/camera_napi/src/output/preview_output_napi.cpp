@@ -153,7 +153,7 @@ void PreviewOutputNapi::PreviewOutputNapiDestructor(napi_env env, void* nativeOb
     MEDIA_DEBUG_LOG("PreviewOutputNapiDestructor enter");
     PreviewOutputNapi* cameraObj = reinterpret_cast<PreviewOutputNapi*>(nativeObject);
     if (cameraObj != nullptr) {
-        cameraObj->~PreviewOutputNapi();
+        delete cameraObj;
     }
 }
 

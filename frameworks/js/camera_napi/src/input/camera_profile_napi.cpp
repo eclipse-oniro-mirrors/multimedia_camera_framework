@@ -44,7 +44,7 @@ void CameraProfileNapi::CameraProfileNapiDestructor(napi_env env, void* nativeOb
     CameraProfileNapi* cameraProfileNapi = reinterpret_cast<CameraProfileNapi*>(nativeObject);
     if (cameraProfileNapi != nullptr) {
         MEDIA_INFO_LOG("CameraProfileNapi::CameraProfileNapiDestructor ~");
-        cameraProfileNapi->~CameraProfileNapi();
+        delete cameraProfileNapi;
     }
 }
 
@@ -219,7 +219,7 @@ void CameraVideoProfileNapi::CameraVideoProfileNapiDestructor(napi_env env, void
 {
     CameraVideoProfileNapi* cameraVideoProfileNapi = reinterpret_cast<CameraVideoProfileNapi*>(nativeObject);
     if (cameraVideoProfileNapi != nullptr) {
-        cameraVideoProfileNapi->~CameraVideoProfileNapi();
+        delete cameraVideoProfileNapi;
     }
 }
 
