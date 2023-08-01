@@ -86,7 +86,7 @@ void CameraNapi::CameraNapiDestructor(napi_env env, void* nativeObject, void* fi
 {
     CameraNapi* camera = reinterpret_cast<CameraNapi*>(nativeObject);
     if (camera != nullptr) {
-        camera->~CameraNapi();
+        delete camera;
     }
 }
 

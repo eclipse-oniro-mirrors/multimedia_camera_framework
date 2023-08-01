@@ -147,7 +147,7 @@ void MetadataOutputNapi::MetadataOutputNapiDestructor(napi_env env, void* native
     MEDIA_DEBUG_LOG("MetadataOutputNapiDestructor enter");
     MetadataOutputNapi* metadataOutput = reinterpret_cast<MetadataOutputNapi*>(nativeObject);
     if (metadataOutput != nullptr) {
-        metadataOutput->~MetadataOutputNapi();
+        delete metadataOutput;
     }
 }
 

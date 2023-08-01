@@ -47,7 +47,7 @@ void CameraOutputCapabilityNapi::CameraOutputCapabilityNapiDestructor(
     CameraOutputCapabilityNapi* cameraOutputCapabilityNapi =
         reinterpret_cast<CameraOutputCapabilityNapi*>(nativeObject);
     if (cameraOutputCapabilityNapi != nullptr) {
-        cameraOutputCapabilityNapi->~CameraOutputCapabilityNapi();
+        delete cameraOutputCapabilityNapi;
     }
 }
 
