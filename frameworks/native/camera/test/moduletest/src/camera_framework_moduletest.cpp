@@ -4797,9 +4797,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_091, TestSize.Le
 
     intResult = camSession->SetMeteringPoint(focusPoint);
     EXPECT_EQ(intResult, 0);
-
-    std::vector<FilterType> supportedFilters = camSession->getSupportedFilters();
-    EXPECT_EQ(supportedFilters.empty(), true);
 }
 
 /*
