@@ -17,8 +17,10 @@
 #define CAMERA_FRAMEWORK_MODULETEST_H
 
 #include "gtest/gtest.h"
+#include "input/camera_device.h"
 #include "input/camera_input.h"
 #include "input/camera_manager.h"
+#include "mode/mode_manager.h"
 #include "session/capture_session.h"
 
 namespace OHOS {
