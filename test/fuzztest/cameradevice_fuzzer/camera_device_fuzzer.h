@@ -21,7 +21,7 @@
 #include "hcamera_device.h"
 namespace OHOS {
 namespace CameraStandard {
-void CameraDeviceFuzzTest(uint8_t *data, size_t size);
+void CameraDeviceFuzzTest(uint8_t *rawData, size_t size);
 }
 }
 #endif

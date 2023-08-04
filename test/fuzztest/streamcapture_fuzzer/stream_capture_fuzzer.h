@@ -22,7 +22,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-void StreamCaptureFuzzTest(uint8_t *data, size_t size);
+void StreamCaptureFuzzTest(uint8_t *rawData, size_t size);
 }
 }
 #endif
