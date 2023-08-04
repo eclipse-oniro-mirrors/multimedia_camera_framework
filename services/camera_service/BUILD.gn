@@ -14,48 +14,6 @@
 import("//build/ohos.gni")
 import("./../../multimedia_camera_framework.gni")
 
-config("camera_service_config") {
-  visibility = [ ":*" ]
-  visibility += [ "../../test/fuzztest/*" ]
-  include_dirs = [
-    "//drivers/peripheral/display/interfaces/include",
-    "//foundation/graphic/graphic_2d/frameworks/surface/include",
-    "//foundation/multimedia/camera_framework/services/camera_service/include",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/base/include",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/client/include",
-    "//foundation/multimedia/camera_framework/services/camera_service/binder/server/include",
-    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include",
-    "//foundation/window/window_manager/interfaces/innerkits/dm",
-    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
-  ]
-
-  cflags = [
-    "-fPIC",
-    "-Wall",
-  ]
-
-  if (target_cpu == "arm") {
-    cflags += [ "-DBINDER_IPC_32BIT" ]
-  }
-
-  include_dirs += [
-    "//drivers/peripheral/camera/interfaces/include",
-    "//drivers/peripheral/camera/interfaces/hdi_ipc",
-    "//drivers/peripheral/camera/interfaces/hdi_ipc/utils/include",
-    "//drivers/peripheral/camera/interfaces/hdi_ipc/callback/device/include",
-    "//drivers/peripheral/camera/interfaces/hdi_ipc/callback/operator/include",
-    "//drivers/peripheral/camera/interfaces/hdi_ipc/callback/host/include",
-  ]
-
-  if (use_musl) {
-    if (use_jemalloc && use_jemalloc_dfx_intf) {
-      cflags += [ "-DCONFIG_USE_JEMALLOC_DFX_INTF" ]
-    }
-  }
-
-  cflags_cc = cflags
-}
-
 ohos_shared_library("camera_service") {
   install_enable = true
   sources = [
@@ -81,14 +39,31 @@ ohos_shared_library("camera_service") {
     "src/hstream_metadata.cpp",
     "src/hstream_repeat.cpp",
   ]
-
-  configs = [ ":camera_service_config" ]
-
+  cflags = [
+    "-fPIC",
+    "-Wall",
+  ]
   sanitize = {
     cfi = true
     cfi_cross_dso = true
     debug = false
     blocklist = "../../cfi_blocklist.txt"
+  }
+
+  include_dirs = [
+    "//drivers/peripheral/display/interfaces/include",
+    "//foundation/graphic/graphic_2d/frameworks/surface/include",
+    "//foundation/multimedia/camera_framework/services/camera_service/include",
+    "//foundation/multimedia/camera_framework/services/camera_service/binder/base/include",
+    "//foundation/multimedia/camera_framework/services/camera_service/binder/client/include",
+    "//foundation/multimedia/camera_framework/services/camera_service/binder/server/include",
+    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include",
+    "//foundation/window/window_manager/interfaces/innerkits/dm",
+    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
+  ]
+
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
   }
 
   external_deps = [
@@ -100,8 +75,8 @@ ohos_shared_library("camera_service") {
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:metadata",
-    "graphic_standard:librender_service_client",
-    "graphic_standard:surface",
+    "graphic_2d:librender_service_client",
+    "graphic_2d:surface",
     "hdf_core:libhdi",
     "hicollie:libhicollie",
     "hilog:libhilog",
@@ -113,6 +88,23 @@ ohos_shared_library("camera_service") {
     "samgr:samgr_proxy",
     "window_manager:libdm",
   ]
+
+  include_dirs += [
+    "//drivers/peripheral/camera/interfaces/include",
+    "//drivers/peripheral/camera/interfaces/hdi_ipc",
+    "//drivers/peripheral/camera/interfaces/hdi_ipc/utils/include",
+    "//drivers/peripheral/camera/interfaces/hdi_ipc/callback/device/include",
+    "//drivers/peripheral/camera/interfaces/hdi_ipc/callback/operator/include",
+    "//drivers/peripheral/camera/interfaces/hdi_ipc/callback/host/include",
+  ]
+
+  if (use_musl) {
+    if (use_jemalloc && use_jemalloc_dfx_intf) {
+      cflags += [ "-DCONFIG_USE_JEMALLOC_DFX_INTF" ]
+    }
+  }
+
+  cflags_cc = cflags
 
   part_name = "camera_framework"
   subsystem_name = "multimedia"
