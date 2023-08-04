@@ -16,9 +16,10 @@
 #ifndef CAMERADEVICE_FUZZER_H
 #define CAMERADEVICE_FUZZER_H
 #define FUZZ_PROJECT_NAME "streamcapture_fuzzer"
-#include "hstream_capture.h"
-#include "surface.h"
 #include <iostream>
+#include "surface.h"
+#include "hstream_capture.h"
+
 namespace OHOS {
 namespace CameraStandard {
 void StreamCaptureFuzzTest(uint8_t *data, size_t size);

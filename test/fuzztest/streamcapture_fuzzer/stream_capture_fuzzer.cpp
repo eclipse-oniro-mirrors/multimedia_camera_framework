@@ -24,10 +24,10 @@ const int32_t LIMITSIZE = 4;
 const int32_t SHIFT_LEFT_8 = 8;
 const int32_t SHIFT_LEFT_16 = 16;
 const int32_t SHIFT_LEFT_24 = 24;
-static int32_t cnt = 0;
-const int32_t photoWidth = 1280;
-const int32_t photoHeight = 960;
-const int32_t photoFormat = CAMERA_FORMAT_JPEG;
+static int32_t g_cnt = 0;
+const int32_t PHOTO_WIDTH = 1280;
+const int32_t PHOTO_HEIGHT = 960;
+const int32_t PHOTO_FORMAT = CAMERA_FORMAT_JPEG;
 
 uint32_t Convert2Uint32(const uint8_t *ptr)
 {
@@ -43,7 +43,7 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
     if (rawData == nullptr || size < LIMITSIZE) {
         return;
     }
-    cout<<"StreamCaptureFuzzTest begin--------------------------------------- cnt = "<<++cnt<<endl;
+    cout<<"StreamCaptureFuzzTest begin--------------------------------------- g_cnt = "<<++g_cnt<<endl;
     uint32_t code = Convert2Uint32(rawData);
     rawData = rawData + OFFSET;
     size = size - OFFSET;
@@ -61,9 +61,9 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
     }
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
     std::shared_ptr<HStreamCapture> streamcapture =
-        std::make_shared<HStreamCapture>(producer, photoFormat, photoWidth, photoHeight);
+        std::make_shared<HStreamCapture>(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
     streamcapture->OnRemoteRequest(code, data, reply, option);
-    cout<<"StreamCaptureFuzzTest begin--------------------------------------- cnt = "<<++cnt<<endl;
+    cout<<"StreamCaptureFuzzTest begin--------------------------------------- g_cnt = "<<++g_cnt<<endl;
 }
 } // namespace CameraStandard
 } // namespace OHOS

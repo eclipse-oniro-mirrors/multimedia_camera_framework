@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//foundation/multimedia/camera_framework/multimedia_camera_framework.gni")
-group("audio_fuzz_test") {
+import("./../multimedia_camera_framework.gni")
+group("camera_fuzz_test") {
   testonly = true
   deps = [
     "fuzztest/cameradevice_fuzzer:fuzztest",

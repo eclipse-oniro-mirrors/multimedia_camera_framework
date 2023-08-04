@@ -16,9 +16,9 @@
 #ifndef CAMERADEVICE_FUZZER_H
 #define CAMERADEVICE_FUZZER_H
 #define FUZZ_PROJECT_NAME "cameradevice_fuzzer"
-#include "hcamera_device.h"
-#include "hcamera_host_manager.h"
 #include <iostream>
+#include "hcamera_host_manager.h"
+#include "hcamera_device.h"
 namespace OHOS {
 namespace CameraStandard {
 void CameraDeviceFuzzTest(uint8_t *data, size_t size);

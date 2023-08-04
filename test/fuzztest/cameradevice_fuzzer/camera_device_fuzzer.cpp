@@ -24,7 +24,7 @@ const int32_t LIMITSIZE = 4;
 const int32_t SHIFT_LEFT_8 = 8;
 const int32_t SHIFT_LEFT_16 = 16;
 const int32_t SHIFT_LEFT_24 = 24;
-static int32_t cnt = 0;
+static int32_t g_cnt = 0;
 
 uint32_t Convert2Uint32(const uint8_t *ptr)
 {
@@ -40,7 +40,7 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     if (rawData == nullptr || size < LIMITSIZE) {
         return;
     }
-    cout<<"CameraDeviceFuzzTest begin--------------------------------------- cnt = "<<++cnt<<endl;
+    cout<<"CameraDeviceFuzzTest begin--------------------------------------- g_cnt = "<<++g_cnt<<endl;
     uint32_t code = Convert2Uint32(rawData);
     rawData = rawData + OFFSET;
     size = size - OFFSET;
@@ -55,7 +55,7 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     std::shared_ptr<HCameraDevice> cameraDevice =
         std::make_shared<HCameraDevice>(cameraHostManager, "", 0);
     cameraDevice->OnRemoteRequest(code, data, reply, option);
-    cout<<"CameraDeviceFuzzTest begin--------------------------------------- cnt = "<<++cnt<<endl;
+    cout<<"CameraDeviceFuzzTest begin--------------------------------------- g_cnt = "<<++g_cnt<<endl;
 }
 } // namespace CameraStandard
 } // namespace OHOS
