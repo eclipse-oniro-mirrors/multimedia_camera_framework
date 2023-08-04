@@ -840,7 +840,7 @@ int32_t HCaptureSession::SetCallback(sptr<ICaptureSessionCallback> &callback)
         MEDIA_ERR_LOG("HCaptureSession::SetCallback callback is null");
         return CAMERA_INVALID_ARG;
     }
-
+    std::lock_guard<std::mutex> lock(sessionCallbackLock_);
     sessionCallback_ = callback;
     return CAMERA_OK;
 }
