@@ -51,15 +51,8 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     uint64_t tokenId;
     const char *perms[0];
     perms[0] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 1,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "camera_capture",
-        .aplStr = "system_basic",
+    NativeTokenInfoParams infoInstance = { .dcapsNum = 0, .permsNum = 1, .aclsNum = 0, .dcaps = NULL,
+        .perms = perms, .acls = NULL, .processName = "camera_capture", .aplStr = "system_basic",
     };
     tokenId = GetAccessTokenId(&infoInstance);
     SetSelfTokenID(tokenId);
@@ -70,14 +63,12 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     rawData = rawData + OFFSET;
     size = size - OFFSET;
 
-    // 开始构造std::shared_ptr<OHOS::Camera::CameraMetadata> &settings数据
     int32_t itemCount = 10;
     int32_t dataSize = 100;
     uint8_t *streams = rawData;
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
     ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
-    ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams,
-                      size);
+    ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams, size);
     int32_t compensationRange[2] = {-2, 3};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
                       sizeof(compensationRange) / sizeof(compensationRange[0]));
@@ -93,7 +84,6 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     const camera_rational_t aeCompensationStep[] = {{0, 1}};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
                       sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
-    // 结束构造std::shared_ptr<OHOS::Camera::CameraMetadata> &settings数据
 
     MessageParcel data;
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
