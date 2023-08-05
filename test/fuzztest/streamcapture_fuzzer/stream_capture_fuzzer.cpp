@@ -21,7 +21,7 @@ using namespace std;
 namespace OHOS {
 namespace CameraStandard {
 constexpr int32_t OFFSET = 4;
-const std::u16string FORMMGR_INTERFACE_TOKEN = u"ICameraDeviceService";
+const std::u16string FORMMGR_INTERFACE_TOKEN = u"IStreamCapture";
 const int32_t LIMITSIZE = 4;
 const int32_t SHIFT_LEFT_8 = 8;
 const int32_t SHIFT_LEFT_16 = 16;

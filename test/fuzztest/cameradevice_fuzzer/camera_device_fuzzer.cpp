@@ -15,6 +15,12 @@
 
 #include "camera_device_fuzzer.h"
 #include "metadata_utils.h"
+#include "ipc_skeleton.h"
+#include "access_token.h"
+#include "hap_token_info.h"
+#include "accesstoken_kit.h"
+#include "nativetoken_kit.h"
+#include "token_setproc.h"
 using namespace std;
 
 namespace OHOS {
@@ -41,6 +47,24 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     if (rawData == nullptr || size < LIMITSIZE) {
         return;
     }
+
+    uint64_t tokenId;
+    const char *perms[0];
+    perms[0] = "ohos.permission.CAMERA";
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 1,
+        .aclsNum = 0,
+        .dcaps = NULL,
+        .perms = perms,
+        .acls = NULL,
+        .processName = "camera_capture",
+        .aplStr = "system_basic",
+    };
+    tokenId = GetAccessTokenId(&infoInstance);
+    SetSelfTokenID(tokenId);
+    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
+
     cout<<"CameraDeviceFuzzTest begin--------------------------------------- g_cnt = "<<++g_cnt<<endl;
     uint32_t code = 4;
     rawData = rawData + OFFSET;
