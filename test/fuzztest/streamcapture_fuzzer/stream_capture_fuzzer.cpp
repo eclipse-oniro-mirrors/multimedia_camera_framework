@@ -45,22 +45,22 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
         return;
     }
     cout<<"StreamCaptureFuzzTest begin--------------------------------------- g_cnt = "<<++g_cnt<<endl;
-    uint32_t code = StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_START;
+    uint32_t code = 0;
     rawData = rawData + OFFSET;
     size = size - OFFSET;
 
     // 开始构造std::shared_ptr<OHOS::Camera::CameraMetadata> &captureSettings数据
     int32_t itemCount = 0;
     int32_t dataSize = 0;
-    uint8_t streams = rawData;
+    uint8_t *streams = rawData;
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
     ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
     ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams,
-                      sizeof(streams) / sizeof(streams[0]));
-    int32_t compensationRange[2] = {rawData, rawData};
+                      size);
+    int32_t compensationRange[2] = {-2, 3};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
                       sizeof(compensationRange) / sizeof(compensationRange[0]));
-    float focalLength = rawData;
+    float focalLength = 1.5;
     ability->addEntry(OHOS_ABILITY_FOCAL_LENGTH, &focalLength, sizeof(float));
 
     int32_t sensorOrientation = 0;
