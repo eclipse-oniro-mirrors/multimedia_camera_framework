@@ -46,7 +46,7 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     rawData = rawData + OFFSET;
     size = size - OFFSET;
 
-    //开始构造std::shared_ptr<OHOS::Camera::CameraMetadata> &settings数据
+    // 开始构造std::shared_ptr<OHOS::Camera::CameraMetadata> &settings数据
     int32_t itemCount = 10;
     int32_t dataSize = 100;
     uint8_t streams = rawData;
@@ -69,7 +69,7 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     const camera_rational_t aeCompensationStep[] = {{0, 1}};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
                       sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
-    //结束构造std::shared_ptr<OHOS::Camera::CameraMetadata> &settings数据
+    // 结束构造std::shared_ptr<OHOS::Camera::CameraMetadata> &settings数据
 
     MessageParcel data;
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
