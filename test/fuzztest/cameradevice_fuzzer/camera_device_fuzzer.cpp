@@ -14,6 +14,7 @@
  */
 
 #include "camera_device_fuzzer.h"
+#include "metadata_utils.h"
 using namespace std;
 
 namespace OHOS {
@@ -41,9 +42,34 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
         return;
     }
     cout<<"CameraDeviceFuzzTest begin--------------------------------------- g_cnt = "<<++g_cnt<<endl;
-    uint32_t code = Convert2Uint32(rawData);
+    uint32_t code = CameraDeviceInterfaceCode::CAMERA_DEVICE_UPDATE_SETTNGS;
     rawData = rawData + OFFSET;
     size = size - OFFSET;
+
+    //开始构造std::shared_ptr<OHOS::Camera::CameraMetadata> &settings数据
+    int32_t itemCount = 10;
+    int32_t dataSize = 100;
+    uint8_t streams = rawData;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> ability
+    ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
+    ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams,
+                        sizeof(streams) / sizeof(streams[0]));
+    int32_t compensationRange[2] = {rawData, rawData};
+    ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
+                        sizeof(compensationRange) / sizeof(compensationRange[0]));
+    float focalLength = rawData;
+    ability->addEntry(OHOS_ABILITY_FOCAL_LENGTH, &focalLength, sizeof(float));
+
+    int32_t sensorOrientation = 0;
+    ability->addEntry(OHOS_SENSOR_ORIENTATION, &sensorOrientation, sizeof(int32_t));
+
+    int32_t cameraPosition = 0;
+    ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, sizeof(int32_t));
+
+    const camera_rational_t aeCompensationStep[] = {{0, 1}};
+    ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
+                        sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
+    //结束构造std::shared_ptr<OHOS::Camera::CameraMetadata> &settings数据
 
     MessageParcel data;
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
