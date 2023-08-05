@@ -15,6 +15,7 @@
 
 #include "stream_capture_fuzzer.h"
 #include "metadata_utils.h"
+#include "iconsumer_surface.h"
 using namespace std;
 
 namespace OHOS {
@@ -28,7 +29,7 @@ const int32_t SHIFT_LEFT_24 = 24;
 static int32_t g_cnt = 0;
 const int32_t PHOTO_WIDTH = 1280;
 const int32_t PHOTO_HEIGHT = 960;
-const int32_t PHOTO_FORMAT = CAMERA_FORMAT_JPEG;
+const int32_t PHOTO_FORMAT = 2000;
 
 uint32_t Convert2Uint32(const uint8_t *ptr)
 {
@@ -83,7 +84,7 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
 
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     if (photoSurface == nullptr) {
-        return 0;
+        return;
     }
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
     std::shared_ptr<HStreamCapture> streamcapture =
