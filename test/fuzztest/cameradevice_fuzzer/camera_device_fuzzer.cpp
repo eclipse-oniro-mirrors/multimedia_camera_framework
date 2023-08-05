@@ -50,13 +50,13 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     int32_t itemCount = 10;
     int32_t dataSize = 100;
     uint8_t streams = rawData;
-    std::shared_ptr<OHOS::Camera::CameraMetadata> ability
+    std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
     ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
     ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams,
-                        sizeof(streams) / sizeof(streams[0]));
+                      sizeof(streams) / sizeof(streams[0]));
     int32_t compensationRange[2] = {rawData, rawData};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
-                        sizeof(compensationRange) / sizeof(compensationRange[0]));
+                      sizeof(compensationRange) / sizeof(compensationRange[0]));
     float focalLength = rawData;
     ability->addEntry(OHOS_ABILITY_FOCAL_LENGTH, &focalLength, sizeof(float));
 
@@ -68,7 +68,7 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
 
     const camera_rational_t aeCompensationStep[] = {{0, 1}};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
-                        sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
+                      sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
     //结束构造std::shared_ptr<OHOS::Camera::CameraMetadata> &settings数据
 
     MessageParcel data;
