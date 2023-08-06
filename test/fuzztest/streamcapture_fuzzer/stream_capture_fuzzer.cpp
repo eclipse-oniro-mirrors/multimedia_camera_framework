@@ -14,12 +14,14 @@
  */
 
 #include "stream_capture_fuzzer.h"
+#include "metadata_utils.h"
+#include "iconsumer_surface.h"
 using namespace std;
 
 namespace OHOS {
 namespace CameraStandard {
 constexpr int32_t OFFSET = 4;
-const std::u16string FORMMGR_INTERFACE_TOKEN = u"ICameraDeviceService";
+const std::u16string FORMMGR_INTERFACE_TOKEN = u"IStreamCapture";
 const int32_t LIMITSIZE = 4;
 const int32_t SHIFT_LEFT_8 = 8;
 const int32_t SHIFT_LEFT_16 = 16;
@@ -27,7 +29,7 @@ const int32_t SHIFT_LEFT_24 = 24;
 static int32_t g_cnt = 0;
 const int32_t PHOTO_WIDTH = 1280;
 const int32_t PHOTO_HEIGHT = 960;
-const int32_t PHOTO_FORMAT = CAMERA_FORMAT_JPEG;
+const int32_t PHOTO_FORMAT = 2000;
 
 uint32_t Convert2Uint32(const uint8_t *ptr)
 {
@@ -44,9 +46,31 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
         return;
     }
     cout<<"StreamCaptureFuzzTest begin--------------------------------------- g_cnt = "<<++g_cnt<<endl;
-    uint32_t code = Convert2Uint32(rawData);
+    uint32_t code = 0;
     rawData = rawData + OFFSET;
     size = size - OFFSET;
+
+    int32_t itemCount = 0;
+    int32_t dataSize = 0;
+    uint8_t *streams = rawData;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
+    ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
+    ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams, size);
+    int32_t compensationRange[2] = {-2, 3};
+    ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
+                      sizeof(compensationRange) / sizeof(compensationRange[0]));
+    float focalLength = 1.5;
+    ability->addEntry(OHOS_ABILITY_FOCAL_LENGTH, &focalLength, sizeof(float));
+
+    int32_t sensorOrientation = 0;
+    ability->addEntry(OHOS_SENSOR_ORIENTATION, &sensorOrientation, sizeof(int32_t));
+
+    int32_t cameraPosition = 0;
+    ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, sizeof(int32_t));
+
+    const camera_rational_t aeCompensationStep[] = {{0, 1}};
+    ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
+                      sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
 
     MessageParcel data;
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
@@ -57,7 +81,7 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
 
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     if (photoSurface == nullptr) {
-        return 0;
+        return;
     }
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
     std::shared_ptr<HStreamCapture> streamcapture =
