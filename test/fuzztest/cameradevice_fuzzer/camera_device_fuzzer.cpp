@@ -25,23 +25,9 @@ using namespace std;
 
 namespace OHOS {
 namespace CameraStandard {
-constexpr int32_t OFFSET = 4;
 const std::u16string FORMMGR_INTERFACE_TOKEN = u"ICameraDeviceService";
-const int32_t LIMITSIZE = 4;
-const int32_t SHIFT_LEFT_8 = 8;
-const int32_t SHIFT_LEFT_16 = 16;
-const int32_t SHIFT_LEFT_24 = 24;
-static int32_t g_cnt = 0;
+const int32_t LIMITSIZE = 2;
 
-uint32_t Convert2Uint32(const uint8_t *ptr)
-{
-    if (ptr == nullptr) {
-        return 0;
-    }
-    /* Move the 0th digit to the left by 24 bits, the 1st digit to the left by 16 bits,
-       the 2nd digit to the left by 8 bits, and the 3rd digit not to the left */
-    return (ptr[0] << SHIFT_LEFT_24) | (ptr[1] << SHIFT_LEFT_16) | (ptr[2] << SHIFT_LEFT_8) | (ptr[3]);
-}
 void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
 {
     if (rawData == nullptr || size < LIMITSIZE) {
@@ -58,36 +44,34 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     SetSelfTokenID(tokenId);
     OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 
-    cout<<"CameraDeviceFuzzTest begin--------------------------------------- g_cnt = "<<++g_cnt<<endl;
     uint32_t code = 4;
-    rawData = rawData + OFFSET;
-    size = size - OFFSET;
-
     int32_t itemCount = 10;
     int32_t dataSize = 100;
     uint8_t *streams = rawData;
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
     ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
     ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams, size);
-    int32_t compensationRange[2] = {-2, 3};
+    int32_t compensationRange[2] = {rawData[0], rawData[1]};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
                       sizeof(compensationRange) / sizeof(compensationRange[0]));
-    float focalLength = 1.5;
+    float focalLength = rawData[0];
     ability->addEntry(OHOS_ABILITY_FOCAL_LENGTH, &focalLength, sizeof(float));
 
-    int32_t sensorOrientation = 0;
+    int32_t sensorOrientation = rawData[0];
     ability->addEntry(OHOS_SENSOR_ORIENTATION, &sensorOrientation, sizeof(int32_t));
 
-    int32_t cameraPosition = 0;
+    int32_t cameraPosition = rawData[0];
     ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, sizeof(int32_t));
 
-    const camera_rational_t aeCompensationStep[] = {{0, 1}};
+    const camera_rational_t aeCompensationStep[] = {{rawData[0], rawData[1]}};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
                       sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
 
     MessageParcel data;
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
-    data.WriteBuffer(rawData, size);
+    if (!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data))) {
+        return;
+    }
     data.RewindRead(0);
     MessageParcel reply;
     MessageOption option;
@@ -95,7 +79,6 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     std::shared_ptr<HCameraDevice> cameraDevice =
         std::make_shared<HCameraDevice>(cameraHostManager, "", 0);
     cameraDevice->OnRemoteRequest(code, data, reply, option);
-    cout<<"CameraDeviceFuzzTest begin--------------------------------------- g_cnt = "<<++g_cnt<<endl;
 }
 } // namespace CameraStandard
 } // namespace OHOS
@@ -104,9 +87,7 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
 extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
 {
     /* Run your code on data */
-    cout<<"CameraDeviceFuzzTest begin+++++++++++++++++++++++++++++++++"<<endl;
     OHOS::CameraStandard::CameraDeviceFuzzTest(data, size);
-    cout<<"CameraDeviceFuzzTest end+++++++++++++++++++++++++++++++++++"<<endl;
     return 0;
 }
 
