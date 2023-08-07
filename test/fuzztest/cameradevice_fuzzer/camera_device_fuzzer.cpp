@@ -27,7 +27,6 @@ namespace OHOS {
 namespace CameraStandard {
 const std::u16string FORMMGR_INTERFACE_TOKEN = u"ICameraDeviceService";
 const int32_t LIMITSIZE = 2;
-static int32_t g_cnt = 0;
 
 void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
 {
@@ -45,7 +44,6 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     SetSelfTokenID(tokenId);
     OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 
-    cout<<"CameraDeviceFuzzTest begin--------------------------------------- g_cnt = "<<++g_cnt<<endl;
     uint32_t code = 4;
     int32_t itemCount = 10;
     int32_t dataSize = 100;
@@ -72,7 +70,6 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     MessageParcel data;
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
     if (!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data))) {
-        cout << "EncodeCameraMetadata failed" << endl;
         return;
     }
     data.RewindRead(0);
@@ -82,7 +79,6 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     std::shared_ptr<HCameraDevice> cameraDevice =
         std::make_shared<HCameraDevice>(cameraHostManager, "", 0);
     cameraDevice->OnRemoteRequest(code, data, reply, option);
-    cout<<"CameraDeviceFuzzTest begin--------------------------------------- g_cnt = "<<++g_cnt<<endl;
 }
 } // namespace CameraStandard
 } // namespace OHOS
@@ -91,9 +87,7 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
 extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
 {
     /* Run your code on data */
-    cout<<"CameraDeviceFuzzTest begin+++++++++++++++++++++++++++++++++"<<endl;
     OHOS::CameraStandard::CameraDeviceFuzzTest(data, size);
-    cout<<"CameraDeviceFuzzTest end+++++++++++++++++++++++++++++++++++"<<endl;
     return 0;
 }
 

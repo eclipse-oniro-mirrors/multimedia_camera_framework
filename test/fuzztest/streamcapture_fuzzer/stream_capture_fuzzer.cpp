@@ -22,7 +22,6 @@ namespace OHOS {
 namespace CameraStandard {
 const std::u16string FORMMGR_INTERFACE_TOKEN = u"IStreamCapture";
 const int32_t LIMITSIZE = 2;
-static int32_t g_cnt = 0;
 const int32_t PHOTO_WIDTH = 1280;
 const int32_t PHOTO_HEIGHT = 960;
 const int32_t PHOTO_FORMAT = 2000;
@@ -32,9 +31,7 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
     if (rawData == nullptr || size < LIMITSIZE) {
         return;
     }
-    cout<<"StreamCaptureFuzzTest begin--------------------------------------- g_cnt = "<<++g_cnt<<endl;
     uint32_t code = 0;
-
     int32_t itemCount = 0;
     int32_t dataSize = 0;
     uint8_t *streams = rawData;
@@ -60,7 +57,6 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
     MessageParcel data;
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
     if (!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data))) {
-        cout << "EncodeCameraMetadata failed" << endl;
         return;
     }
     data.RewindRead(0);
@@ -75,7 +71,6 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
     std::shared_ptr<HStreamCapture> streamcapture =
         std::make_shared<HStreamCapture>(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
     streamcapture->OnRemoteRequest(code, data, reply, option);
-    cout<<"StreamCaptureFuzzTest begin--------------------------------------- g_cnt = "<<++g_cnt<<endl;
 }
 } // namespace CameraStandard
 } // namespace OHOS
@@ -84,9 +79,7 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
 extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
 {
     /* Run your code on data */
-    cout<<"StreamCaptureFuzzTest begin+++++++++++++++++++++++++++++++++"<<endl;
     OHOS::CameraStandard::StreamCaptureFuzzTest(data, size);
-    cout<<"StreamCaptureFuzzTest end+++++++++++++++++++++++++++++++++++"<<endl;
     return 0;
 }
 
