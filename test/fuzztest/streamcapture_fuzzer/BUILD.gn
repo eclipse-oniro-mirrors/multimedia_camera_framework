@@ -30,7 +30,26 @@ ohos_fuzztest("StreamCaptureFuzzTest") {
 
   sources = [ "stream_capture_fuzzer.cpp" ]
 
-  configs = [ "../../../services/camera_service:camera_service_config" ]
+  include_dirs = [
+    "//drivers/peripheral/display/interfaces/include",
+    "//foundation/graphic/graphic_2d/frameworks/surface/include",
+    "//foundation/multimedia/camera_framework/services/camera_service/include",
+    "//foundation/multimedia/camera_framework/services/camera_service/binder/base/include",
+    "//foundation/multimedia/camera_framework/services/camera_service/binder/client/include",
+    "//foundation/multimedia/camera_framework/services/camera_service/binder/server/include",
+    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include",
+    "//foundation/window/window_manager/interfaces/innerkits/dm",
+    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
+    "//drivers/peripheral/camera/interfaces/include",
+    "//drivers/peripheral/camera/interfaces/hdi_ipc",
+    "//drivers/peripheral/camera/interfaces/hdi_ipc/utils/include",
+    "//drivers/peripheral/camera/interfaces/hdi_ipc/callback/device/include",
+    "//drivers/peripheral/camera/interfaces/hdi_ipc/callback/operator/include",
+    "//drivers/peripheral/camera/interfaces/hdi_ipc/callback/host/include",
+    "//base/security/access_token/interfaces/innerkits/token_setproc/include",
+    "//utils/system/safwk/native/include",
+    "//drivers/peripheral/display/interfaces/include",
+  ]
 
   deps = [ "../../../services/camera_service:camera_service" ]
   external_deps = [
