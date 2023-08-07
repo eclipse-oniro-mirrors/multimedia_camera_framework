@@ -19,15 +19,6 @@ ohos_fuzztest("StreamCaptureFuzzTest") {
   module_out_path = "camera_framework/cameradevice"
   fuzz_config_file = "../streamcapture_fuzzer"
 
-  cflags = [
-    "-g",
-    "-O0",
-    "-Wno-unused-variable",
-    "-fno-omit-frame-pointer",
-  ]
-
-  sources = [ "stream_capture_fuzzer.cpp" ]
-
   include_dirs = [
     "${driver_disply_path}/interfaces/include",
     "${graphic_2d_path}/frameworks/surface/include",
@@ -48,6 +39,15 @@ ohos_fuzztest("StreamCaptureFuzzTest") {
     "${system_safwk_path}/native/include",
     "${driver_disply_path}/interfaces/include",
   ]
+
+  cflags = [
+    "-g",
+    "-O0",
+    "-Wno-unused-variable",
+    "-fno-omit-frame-pointer",
+  ]
+
+  sources = [ "stream_capture_fuzzer.cpp" ]
 
   deps = [ "../../../services/camera_service:camera_service" ]
   external_deps = [
