@@ -23,6 +23,7 @@
               "ability_base",
               "access_token",
               "bundle_framework",
+              "c_utils",
               "device_manager",
               "drivers_interface_camera",
               "graphic_2d",

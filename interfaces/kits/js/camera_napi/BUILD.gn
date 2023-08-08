@@ -63,6 +63,7 @@ ohos_shared_library("camera_napi") {
   deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
   external_deps = [
     "access_token:libtokenid_sdk",
+    "c_utils:utils",
     "graphic_2d:surface",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
