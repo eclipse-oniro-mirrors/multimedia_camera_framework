@@ -47,6 +47,7 @@ public:
         ON_CALL(*this, CreateStreams_V1_1(_)).WillByDefault(Return(HDI::Camera::V1_0::NO_ERROR));
         ON_CALL(*this, ReleaseStreams(_)).WillByDefault(Return(HDI::Camera::V1_0::NO_ERROR));
         ON_CALL(*this, CommitStreams(_, _)).WillByDefault(Return(HDI::Camera::V1_0::NO_ERROR));
+        ON_CALL(*this, CommitStreams_V1_1(_, _)).WillByDefault(Return(HDI::Camera::V1_0::NO_ERROR));
         ON_CALL(*this, Capture(_, _, _)).WillByDefault(Return(HDI::Camera::V1_0::NO_ERROR));
         ON_CALL(*this, CancelCapture(_)).WillByDefault(Return(HDI::Camera::V1_0::NO_ERROR));
         ON_CALL(*this, IsStreamsSupported(_, _, A<const std::shared_ptr<StreamInfo> &>(), _))
@@ -73,6 +74,8 @@ public:
         std::vector<StreamAttribute>& attributes));
     MOCK_METHOD1(DetachBufferQueue, int32_t(int32_t streamId));
     MOCK_METHOD2(CommitStreams, int32_t(OperationMode mode, const std::vector<uint8_t>& modeSetting));
+    MOCK_METHOD2(CommitStreams_V1_1, int32_t(OHOS::HDI::Camera::V1_1::OperationMode_V1_1 mode,
+        const std::vector<uint8_t>& modeSetting));
     MOCK_METHOD2(AttachBufferQueue, int32_t(int32_t streamId,
         const sptr<BufferProducerSequenceable>& bufferProducer));
     MOCK_METHOD3(Capture, int32_t(int32_t captureId, const CaptureInfo& info, bool isStreaming));
@@ -83,10 +86,11 @@ public:
         const std::shared_ptr<StreamInfo> &info, StreamSupportType &type));
     MOCK_METHOD4(IsStreamsSupported, int32_t(OperationMode mode, const std::vector<uint8_t>& modeSetting,
         const std::vector<StreamInfo>& infos, StreamSupportType& type));
-    MOCK_METHOD4(IsStreamsSupported_V1_1, int32_t(OperationMode mode,
+    MOCK_METHOD4(IsStreamsSupported_V1_1, int32_t(OHOS::HDI::Camera::V1_1::OperationMode_V1_1 mode,
         const std::shared_ptr<OHOS::Camera::CameraMetadata> &modeSetting,
         const std::shared_ptr<StreamInfo> &info, StreamSupportType &type));
-    MOCK_METHOD4(IsStreamsSupported_V1_1, int32_t(OperationMode mode, const std::vector<uint8_t>& modeSetting,
+    MOCK_METHOD4(IsStreamsSupported_V1_1, int32_t(OHOS::HDI::Camera::V1_1::OperationMode_V1_1 mode,
+        const std::vector<uint8_t>& modeSetting,
         const std::vector<StreamInfo_V1_1>& infos, StreamSupportType& type));
 };
 
