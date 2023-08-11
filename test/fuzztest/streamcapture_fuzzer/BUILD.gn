@@ -56,6 +56,7 @@ ohos_fuzztest("StreamCaptureFuzzTest") {
     "access_token:libprivacy_sdk",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
+    "c_utils:utils",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:metadata",
