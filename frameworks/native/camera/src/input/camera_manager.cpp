@@ -804,22 +804,16 @@ void CameraManager::ParseExtendCapability(sptr<CameraOutputCapability> cameraOut
     const int32_t modeName, const camera_metadata_item_t &item)
 {
     ExtendInfo extendInfo = {};
-    std::shared_ptr<CameraStreamInfoParse>modeStreamParse = std::make_shared<CameraStreamInfoParse>();
+    std::shared_ptr<CameraStreamInfoParse> modeStreamParse = std::make_shared<CameraStreamInfoParse>();
     modeStreamParse->getModeInfo(item.data.i32, item.count, extendInfo); // 解析tag中带的数据信息意义
     for (uint32_t i = 0; i < extendInfo.modeCount; i++) {
-        if (modeName != 0 && modeName == extendInfo.modeInfo[i].modeName) {
+        if (modeName == extendInfo.modeInfo[i].modeName) {
             for (uint32_t j = 0; j < extendInfo.modeInfo[i].streamTypeCount; j++) {
                 OutputCapStreamType streamType =
                     static_cast<OutputCapStreamType>(extendInfo.modeInfo[i].streamInfo[j].streamType);
                 CreateProfile4StreamType(streamType, i, j, extendInfo);
             }
             break;
-        } else {
-            for (uint32_t j = 0; j < extendInfo.modeInfo[i].streamTypeCount; j++) {
-                OutputCapStreamType streamType =
-                    static_cast<OutputCapStreamType>(extendInfo.modeInfo[i].streamInfo[j].streamType);
-                CreateProfile4StreamType(streamType, i, j, extendInfo);
-            }
         }
     }
 }
@@ -880,15 +874,21 @@ void CameraManager::CreateProfile4StreamType(OutputCapStreamType streamType, uin
         Size size;
         size.width = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].width;
         size.height = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].height;
-        int32_t fps = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].fps;
+        Fps fps;
+        fps.fixedFps = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].fixedFps;
+        fps.minFps = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].minFps;
+        fps.maxFps = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].maxFps;
+        std::vector<uint32_t> abilityId;
+        abilityId = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].abilityId;
+
         if (streamType == OutputCapStreamType::PREVIEW) {
-            Profile previewProfile = Profile(format, size);
+            Profile previewProfile = Profile(format, size, fps, abilityId);
             previewProfiles_.push_back(previewProfile);
         } else if (streamType == OutputCapStreamType::STILL_CAPTURE) {
-            Profile snapProfile = Profile(format, size);
+            Profile snapProfile = Profile(format, size, fps, abilityId);
             photoProfiles_.push_back(snapProfile);
         } else if (streamType == OutputCapStreamType::VIDEO) {
-            std::vector<int32_t> frameRates = {fps, fps};
+            std::vector<int32_t> frameRates = {fps.fixedFps, fps.fixedFps};
             VideoProfile vidProfile = VideoProfile(format, size, frameRates);
             vidProfiles_.push_back(vidProfile);
         }

@@ -29,6 +29,12 @@ typedef struct {
     uint32_t height;
 } Size;
 
+typedef struct {
+    uint32_t fixedFps;
+    uint32_t minFps;
+    uint32_t maxFps;
+} Fps;
+
 enum CameraFormat {
     CAMERA_FORMAT_INVALID = -1,
     CAMERA_FORMAT_YCBCR_420_888 = 2,
@@ -40,7 +46,18 @@ enum CameraFormat {
 class Profile {
 public:
     Profile(CameraFormat format, Size size);
+    Profile(CameraFormat format, Size size, Fps fps, std::vector<uint32_t> abilityId);
     Profile() = default;
+    Profile& operator=(const Profile& profile)
+    {
+        if (this != &profile) {
+            this->format_ = profile.format_;
+            this->size_ = profile.size_;
+            this->fps_ = profile.fps_;
+            this->abilityId_ = profile.abilityId_;
+        }
+        return *this;
+    }
     virtual ~Profile() = default;
 
     /**
@@ -56,9 +73,12 @@ public:
      * @return resolution of the profile.
      */
     Size GetSize();
+    std::vector<uint32_t> GetAbilityId();
 
     CameraFormat format_ = CAMERA_FORMAT_INVALID;
     Size size_ = {0, 0};
+    Fps fps_ = {0, 0, 0};
+    std::vector<uint32_t> abilityId_ = {};
 };
 
 class VideoProfile : public Profile {
