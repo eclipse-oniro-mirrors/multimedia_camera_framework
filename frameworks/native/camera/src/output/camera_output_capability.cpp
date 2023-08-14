@@ -16,11 +16,17 @@
 
 namespace OHOS {
 namespace CameraStandard {
-Profile::Profile(CameraFormat format, Size size): format_(format), size_(size) {}
-
+Profile::Profile(CameraFormat format, Size size) : format_(format), size_(size) {}
+Profile::Profile(CameraFormat format, Size size, Fps fps, std::vector<uint32_t> abilityId)
+    : format_(format), size_(size), fps_(fps), abilityId_(abilityId) {}
 CameraFormat Profile::GetCameraFormat()
 {
     return format_;
+}
+
+std::vector<uint32_t> Profile::GetAbilityId()
+{
+    return abilityId_;
 }
 
 Size Profile::GetSize()
