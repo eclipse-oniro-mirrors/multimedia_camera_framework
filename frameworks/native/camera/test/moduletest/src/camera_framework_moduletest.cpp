@@ -34,6 +34,13 @@
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 
+#include "hcamera_device_callback_proxy.h"
+#include "hcamera_service_stub.h"
+#include "hcamera_device_proxy.h"
+#include "hcamera_service.h"
+#include "hcamera_device.h"
+#include <vector>
+
 using namespace testing::ext;
 
 namespace OHOS {
@@ -69,7 +76,7 @@ namespace {
 
     bool g_camInputOnError = false;
     bool g_sessionclosed = false;
-    std::shared_ptr<Camera::CameraMetadata> g_metaResult = nullptr;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> g_metaResult = nullptr;
     int32_t g_videoFd = -1;
     int32_t g_previewFd = -1;
     std::bitset<static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_MAX_EVENT)> g_photoEvents;
@@ -147,7 +154,7 @@ namespace {
             return;
         }
 
-        void OnResult(const uint64_t timestamp, const std::shared_ptr<Camera::CameraMetadata> &result) const override
+        void OnResult(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) const override
         {
             MEDIA_INFO_LOG("CameraDeviceServiceCallback::OnResult() is called!");
 
@@ -2326,7 +2333,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_044, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test capture session video stabilization mode with anomalous branch.
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_045, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_001, TestSize.Level0)
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
@@ -2407,7 +2414,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_045, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test capture session exposure mode with anomalous branch.
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_046, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_002, TestSize.Level0)
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
@@ -2491,7 +2498,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_046, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test capture session metering point with anomalous branch.
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_047, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_003, TestSize.Level0)
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
@@ -2553,12 +2560,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_047, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test capture session exposure value and range with anomalous branch.
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_048, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_004, TestSize.Level0)
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
 
-    std::shared_ptr<Camera::CameraMetadata> metadata = cameras_[0]->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras_[0]->GetMetadata();
     ASSERT_NE(metadata, nullptr);
 
     camSession->ProcessAutoExposureUpdates(metadata);
@@ -2633,7 +2640,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_048, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test capture session focus mode with anomalous branch.
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_049, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_005, TestSize.Level0)
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
@@ -2717,7 +2724,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_049, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test capture session focus point with anomalous branch.
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_050, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_006, TestSize.Level0)
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
@@ -2797,7 +2804,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_050, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test capture session flash mode with anomalous branch.
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_051, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_007, TestSize.Level0)
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
@@ -2880,7 +2887,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_051, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test flash mode with release input.
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_052, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_008, TestSize.Level0)
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
@@ -2926,7 +2933,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_052, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test capture session zoom ratio with anomalous branch.
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_053, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_009, TestSize.Level0)
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
@@ -3004,7 +3011,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_053, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test capture session with set metadata Object type anomalous branch.
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_054, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_010, TestSize.Level0)
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
@@ -3021,7 +3028,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_054, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test metadataOutput with anomalous branch.
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_055, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_011, TestSize.Level0)
 {
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
@@ -3097,7 +3104,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_055, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test capture session callback error with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_056, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_012, TestSize.Level0)
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
@@ -3128,7 +3135,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_056, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test remove input with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_057, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_013, TestSize.Level0)
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
@@ -3161,7 +3168,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_057, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test remove output with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_058, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_014, TestSize.Level0)
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
@@ -3188,7 +3195,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_058, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test stop/release session and preview with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_059, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_015, TestSize.Level0)
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
@@ -3209,7 +3216,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_059, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test metadataOutput with anomalous branch.
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_060, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_016, TestSize.Level0)
 {
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
@@ -3277,7 +3284,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_060, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test photoOutput with anomalous branch.
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_061, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_017, TestSize.Level0)
 {
     std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
     PhotoCaptureSetting::QualityLevel quality = photoSetting->GetQuality();
@@ -3361,7 +3368,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_061, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test captureCallback with anomalous branch.
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_062, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_018, TestSize.Level0)
 {
     std::shared_ptr<HStreamCaptureCallbackImpl> captureCallback = std::make_shared<HStreamCaptureCallbackImpl>();
 
@@ -3433,7 +3440,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_062, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test preview output repeat callback with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_063, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_019, TestSize.Level0)
 {
     std::shared_ptr<PreviewOutputCallbackImpl> repeatCallback = std::make_shared<PreviewOutputCallbackImpl>();
 
@@ -3476,6 +3483,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_063, TestSize.Le
 
     sptr<PreviewOutputCallbackImpl> repeatCallback_2 = new(std::nothrow) PreviewOutputCallbackImpl(previewOutput_1);
 
+    intResult = repeatCallback_2->OnFrameEnded(frameCount);
+    EXPECT_EQ(intResult, 0);
+
     intResult = repeatCallback_2->OnFrameError(errorCode);
     EXPECT_EQ(intResult, 0);
 }
@@ -3488,7 +3498,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_063, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test preview output with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_064, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_020, TestSize.Level0)
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
@@ -3546,7 +3556,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_064, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test video output with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_065, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_021, TestSize.Level0)
 {
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
@@ -3628,7 +3638,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_065, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test video output repeat callback with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_066, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_022, TestSize.Level0)
 {
     std::shared_ptr<VideoOutputCallbackImpl> repeatCallback = std::make_shared<VideoOutputCallbackImpl>();
 
@@ -3695,7 +3705,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_066, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test HCameraDeviceProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_067, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_023, TestSize.Level0)
 {
     sptr<CameraInput> input_1 = (sptr<CameraInput> &)input_;
     sptr<ICameraDeviceService> deviceObj = input_1->GetCameraDevice();
@@ -3705,7 +3715,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_067, TestSize.Le
     int32_t intResult = deviceObj->SetCallback(callback);
     EXPECT_EQ(intResult, 200);
 
-    std::shared_ptr<Camera::CameraMetadata> settings = nullptr;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = nullptr;
     intResult = deviceObj->UpdateSetting(settings);
     EXPECT_EQ(intResult, 200);
 
@@ -3728,7 +3738,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_067, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test HCameraServiceProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_068, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_024, TestSize.Level0)
 {
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -3777,14 +3787,14 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_068, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test HCameraServiceProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_069, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_025, TestSize.Level0)
 {
     int32_t format = 0;
     int32_t width = 0;
     int32_t height = 0;
     std::string cameraId = "";
     std::vector<std::string> cameraIds = {};
-    std::vector<std::shared_ptr<Camera::CameraMetadata>> cameraAbilityList = {};
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList = {};
 
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> Producer = Surface->GetProducer();
@@ -3848,7 +3858,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_069, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test HCameraDeviceProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_070, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_026, TestSize.Level0)
 {
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -3875,7 +3885,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_070, TestSize.Le
     intResult = deviceObj->SetCallback(callback);
     EXPECT_EQ(intResult, -1);
 
-    std::shared_ptr<Camera::CameraMetadata> settings = cameras_[0]->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = cameras_[0]->GetMetadata();
     ASSERT_NE(settings, nullptr);
 
     intResult = deviceObj->UpdateSetting(settings);
@@ -3894,7 +3904,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_070, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test HCaptureSessionProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_071, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_027, TestSize.Level0)
 {
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -3932,7 +3942,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_071, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test HCaptureSessionProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_072, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_028, TestSize.Level0)
 {
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -3985,7 +3995,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_072, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test HStreamCaptureProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_073, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_029, TestSize.Level0)
 {
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -4011,7 +4021,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_073, TestSize.Le
     intResult = capture->SetThumbnail(isEnabled, producer);
     EXPECT_EQ(intResult, -1);
 
-    std::shared_ptr<Camera::CameraMetadata> captureSettings = nullptr;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> captureSettings = nullptr;
     intResult = capture->Capture(captureSettings);
     EXPECT_EQ(intResult, 200);
 }
@@ -4024,7 +4034,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_073, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test HStreamCaptureProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_074, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_030, TestSize.Level0)
 {
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -4035,7 +4045,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_074, TestSize.Le
     sptr<IStreamCapture> capture = iface_cast<IStreamCapture>(object);
     ASSERT_NE(capture, nullptr);
 
-    std::shared_ptr<Camera::CameraMetadata> captureSettings = cameras_[0]->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> captureSettings = cameras_[0]->GetMetadata();
     int32_t intResult = capture->Capture(captureSettings);
     EXPECT_EQ(intResult, -1);
 
@@ -4064,7 +4074,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_074, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test HStreamMetadataProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_075, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_031, TestSize.Level0)
 {
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -4090,7 +4100,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_075, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test HStreamRepeatProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_076, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_032, TestSize.Level0)
 {
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -4139,7 +4149,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_076, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test set the Thumbnail with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_077, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_033, TestSize.Level0)
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
@@ -4205,7 +4215,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_077, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test submit device control setting with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_079, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_034, TestSize.Level0)
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
@@ -4223,7 +4233,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_079, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test MuteCamera with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_080, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_035, TestSize.Level0)
 {
     bool cameraMuted = manager_->IsCameraMuted();
     EXPECT_EQ(cameraMuted, false);
@@ -4257,7 +4267,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_080, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test service callback with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_081, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_036, TestSize.Level0)
 {
     std::string cameraIdtest = "";
     FlashStatus status = FLASH_STATUS_OFF;
@@ -4311,7 +4321,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_081, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test create camera input instance with provided camera position and type anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_082, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_037, TestSize.Level0)
 {
     CameraPosition cameraPosition = cameras_[0]->GetPosition();
     CameraType cameraType = cameras_[0]->GetCameraType();
@@ -4337,7 +4347,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_082, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test the supported exposure compensation range and Zoom Ratio range with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_083, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_038, TestSize.Level0)
 {
     std::string cameraId = "";
     dmDeviceInfo deviceInfo = {};
@@ -4359,7 +4369,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_083, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test session with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_084, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_039, TestSize.Level0)
 {
     sptr<ICameraDeviceService> deviceObj = nullptr;
     sptr<CaptureInput> camInput = new(std::nothrow) CameraInput(deviceObj, cameras_[0]);
@@ -4390,7 +4400,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_084, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test create preview output with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_085, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_040, TestSize.Level0)
 {
     sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
     sptr<IBufferProducer> previewProducer = previewSurface->GetProducer();
@@ -4455,7 +4465,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_085, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test create photo output with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_086, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_041, TestSize.Level0)
 {
     sptr<IConsumerSurface> photosurface = IConsumerSurface::Create();
     sptr<IBufferProducer> surfaceProducer_1 = photosurface->GetProducer();
@@ -4500,7 +4510,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_086, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test create video output with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_087, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_042, TestSize.Level0)
 {
     sptr<IConsumerSurface> videoSurface = IConsumerSurface::Create();
     sptr<IBufferProducer> videoProducer = videoSurface->GetProducer();
@@ -4550,7 +4560,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_087, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test camera settings with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_088, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_043, TestSize.Level0)
 {
     sptr<ICameraDeviceService> deviceObj_1 = nullptr;
     sptr<CameraInput> camInput_1 =  new(std::nothrow) CameraInput(deviceObj_1, cameras_[0]);
@@ -4595,7 +4605,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_088, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test submit device control setting with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_089, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_044, TestSize.Level0)
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
@@ -4642,7 +4652,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_089, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test abnormal branches with empty inputDevice_
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_090, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_045, TestSize.Level0)
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
@@ -4725,7 +4735,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_090, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test abnormal branches with empty inputDevice_
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_091, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_046, TestSize.Level0)
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
@@ -4807,7 +4817,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_091, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test submit device control setting with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_092, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_047, TestSize.Level0)
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
@@ -4846,9 +4856,556 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_092, TestSize.Le
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
+ * CaseDescription: test stream_ null with anomalous branch
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_048, TestSize.Level0)
+{
+    std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
+    
+    sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
+    ASSERT_NE(camSession, nullptr);
+
+    int32_t intResult = camSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = camSession->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = camSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = camSession->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+
+    intResult = camSession->AddOutput(videoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = camSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    previewOutput->Release();
+    previewOutput->SetSession(camSession);
+
+    photoOutput->Release();
+    photoOutput->SetSession(camSession);
+
+    videoOutput->Release();
+    videoOutput->SetSession(camSession);
+
+    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput> &)photoOutput;
+    sptr<PreviewOutput> previewOutput_1 = (sptr<PreviewOutput> &)previewOutput;
+    sptr<VideoOutput> videoOutput_1 = (sptr<VideoOutput> &)videoOutput;
+
+    intResult = previewOutput_1->Start();
+    EXPECT_EQ(intResult, 7400201);
+
+    intResult = photoOutput_1->Capture(photoSetting);
+    EXPECT_EQ(intResult, 7400201);
+
+    intResult = photoOutput_1->Capture();
+    EXPECT_EQ(intResult, 7400201);
+
+    intResult = photoOutput_1->CancelCapture();
+    EXPECT_EQ(intResult, 7400201);
+
+    intResult = videoOutput_1->Start();
+    EXPECT_EQ(intResult, 7400201);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test stream_ null with anomalous branch
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_049, TestSize.Level0)
+{
+    std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
+    
+    sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
+    ASSERT_NE(camSession, nullptr);
+
+    int32_t intResult = camSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = camSession->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = camSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> metadatOutput = manager_->CreateMetadataOutput();
+    ASSERT_NE(metadatOutput, nullptr);
+
+    intResult = camSession->AddOutput(metadatOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = camSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    metadatOutput->Release();
+    metadatOutput->SetSession(camSession);
+
+    sptr<MetadataOutput> metadatOutput_1 = (sptr<MetadataOutput> &)metadatOutput;
+
+    intResult = metadatOutput_1->Start();
+    EXPECT_EQ(intResult, 7400201);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test cameraObj null with anomalous branch
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_050, TestSize.Level0)
+{
+    std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
+    
+    sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
+    ASSERT_NE(camSession, nullptr);
+
+    int32_t intResult = camSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = camSession->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = camSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = camSession->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = camSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    ReleaseInput();
+    photoOutput->SetSession(camSession);
+
+    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput> &)photoOutput;
+
+    bool isMirrorSupported = photoOutput_1->IsMirrorSupported();
+    EXPECT_EQ(isMirrorSupported, false);
+
+    intResult = photoOutput_1->IsQuickThumbnailSupported();
+    EXPECT_EQ(intResult, 7400104);
+
+    bool isEnabled = false;
+    intResult = photoOutput_1->SetThumbnail(isEnabled);
+    EXPECT_EQ(intResult, 7400104);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test CallbackProxy_cpp with anomalous branch
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_051, TestSize.Level0)
+{
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    ASSERT_NE(samgr, nullptr);
+
+    object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
+
+    sptr<CameraInput> input = (sptr<CameraInput> &)input_;
+    sptr<ICameraDeviceServiceCallback> callback = new(std::nothrow) CameraDeviceServiceCallback(input);
+    ASSERT_NE(callback, nullptr);
+
+    sptr<HCameraDeviceCallbackProxy> deviceCallback = (sptr<HCameraDeviceCallbackProxy> &)callback;
+    deviceCallback = new(std::nothrow) HCameraDeviceCallbackProxy(object);
+
+    int32_t intResult = deviceCallback->OnError(CAMERA_DEVICE_PREEMPTED, 0);
+    EXPECT_EQ(intResult, -1);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> result = cameras_[0]->GetMetadata();
+    intResult = deviceCallback->OnResult(10, result);
+    EXPECT_EQ(intResult, -1);
+
+    sptr<ICameraServiceCallback> svcCallback = iface_cast<ICameraServiceCallback>(object);
+    ASSERT_NE(svcCallback, nullptr);
+
+    std::string cameraId = cameras_[0]->GetID();
+    intResult = svcCallback->OnCameraStatusChanged(cameraId, CAMERA_STATUS_APPEAR);
+    EXPECT_EQ(intResult, -1);
+
+    intResult = svcCallback->OnFlashlightStatusChanged(cameraId, FLASH_STATUS_OFF);
+    EXPECT_EQ(intResult, -1);
+
+    sptr<ICameraMuteServiceCallback> muteSvcCallback = iface_cast<ICameraMuteServiceCallback>(object);
+    ASSERT_NE(muteSvcCallback, nullptr);
+
+    intResult = muteSvcCallback->OnCameraMute(true);
+    EXPECT_EQ(intResult, -1);
+
+    sptr<ICaptureSessionCallback> sessionCallback = iface_cast<ICaptureSessionCallback>(object);
+    ASSERT_NE(sessionCallback, nullptr);
+
+    intResult = sessionCallback->OnError(0);
+    EXPECT_EQ(intResult, -1);
+
+    sptr<IStreamCaptureCallback> captureCallback = iface_cast<IStreamCaptureCallback>(object);
+    ASSERT_NE(captureCallback, nullptr);
+
+    int32_t captureId = 2001;
+    intResult = captureCallback->OnCaptureStarted(captureId);
+    EXPECT_EQ(intResult, -1);
+
+    intResult = captureCallback->OnCaptureEnded(captureId, 0);
+    EXPECT_EQ(intResult, -1);
+
+    intResult = captureCallback->OnCaptureError(captureId, 0);
+    EXPECT_EQ(intResult, -1);
+
+    intResult = captureCallback->OnFrameShutter(captureId, 10);
+    EXPECT_EQ(intResult, -1);
+
+    sptr<IStreamRepeatCallback> repeatCallback = iface_cast<IStreamRepeatCallback>(object);
+    ASSERT_NE(repeatCallback, nullptr);
+
+    intResult = repeatCallback->OnFrameStarted();
+    EXPECT_EQ(intResult, -1);
+
+    intResult = repeatCallback->OnFrameEnded(0);
+    EXPECT_EQ(intResult, -1);
+
+    intResult = repeatCallback->OnFrameError(0);
+    EXPECT_EQ(intResult, -1);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test CallbackProxy_cpp with anomalous branch
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_052, TestSize.Level0)
+{
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    ASSERT_NE(samgr, nullptr);
+
+    object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+
+    sptr<CameraInput> input = (sptr<CameraInput> &)input_;
+    sptr<ICameraDeviceServiceCallback> callback = new(std::nothrow) CameraDeviceServiceCallback(input);
+    ASSERT_NE(callback, nullptr);
+
+    sptr<HCameraDeviceCallbackProxy> deviceCallback = (sptr<HCameraDeviceCallbackProxy> &)callback;
+    deviceCallback = new(std::nothrow) HCameraDeviceCallbackProxy(object);
+
+    uint64_t timestamp = 10;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> result = nullptr;
+    int32_t intResult = deviceCallback->OnResult(timestamp, result);
+    EXPECT_EQ(intResult, 200);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test HCameraService_cpp with anomalous branch
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_053, TestSize.Level0)
+{
+    int32_t format = 0;
+    int32_t width = 0;
+    int32_t height = 0;
+    
+    sptr<HCameraService> cameraService = new(std::nothrow) HCameraService(CAMERA_SERVICE_ID, true);
+    ASSERT_NE(cameraService, nullptr);
+
+    cameraService->OnStop();
+    cameraService->OnStart();
+
+    std::vector<std::string> cameraIds = {};
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList = {};
+    cameraService->GetCameras(cameraIds, cameraAbilityList);
+
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> Producer = Surface->GetProducer();
+
+    width = PHOTO_DEFAULT_WIDTH;
+    sptr<IStreamRepeat> output = nullptr;
+    int32_t intResult = cameraService->CreateDeferredPreviewOutput(format, width, height, output);
+    EXPECT_EQ(intResult, 2);
+
+    width = 0;
+    intResult = cameraService->CreateDeferredPreviewOutput(format, width, height, output);
+    EXPECT_EQ(intResult, 2);
+
+    Producer = nullptr;
+    intResult = cameraService->CreatePreviewOutput(Producer, format, width, height, output);
+    EXPECT_EQ(intResult, 2);
+
+    Producer = Surface->GetProducer();
+    intResult = cameraService->CreatePreviewOutput(Producer, format, width, height, output);
+    EXPECT_EQ(intResult, 2);
+
+    width = PREVIEW_DEFAULT_WIDTH;
+    intResult = cameraService->CreatePreviewOutput(Producer, format, width, height, output);
+    EXPECT_EQ(intResult, 2);
+
+    intResult = cameraService->CreateVideoOutput(Producer, format, width, height, output);
+    EXPECT_EQ(intResult, 2);
+
+    width = 0;
+    intResult = cameraService->CreateVideoOutput(Producer, format, width, height, output);
+    EXPECT_EQ(intResult, 2);
+
+    Producer = nullptr;
+    intResult = cameraService->CreateVideoOutput(Producer, format, width, height, output);
+    EXPECT_EQ(intResult, 2);
+    
+    cameraService->OnStart();
+    cameraService->OnStop();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test HCameraService_cpp with anomalous branch
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_054, TestSize.Level0)
+{
+    int32_t format = 0;
+    int32_t width = 0;
+    int32_t height = 0;
+    
+    sptr<HCameraService> cameraService = new(std::nothrow) HCameraService(CAMERA_SERVICE_ID, true);
+    ASSERT_NE(cameraService, nullptr);
+
+    cameraService->OnStop();
+    cameraService->OnStart();
+
+    std::vector<std::string> cameraIds = {};
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList = {};
+    cameraService->GetCameras(cameraIds, cameraAbilityList);
+
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> Producer = Surface->GetProducer();
+
+    sptr<IStreamCapture> output_1 = nullptr;
+    int32_t intResult = cameraService->CreatePhotoOutput(Producer, format, width, height, output_1);
+    EXPECT_EQ(intResult, 2);
+
+    width = PHOTO_DEFAULT_WIDTH;
+    intResult = cameraService->CreatePhotoOutput(Producer, format, width, height, output_1);
+    EXPECT_EQ(intResult, 2);
+
+    Producer = nullptr;
+    intResult = cameraService->CreatePhotoOutput(Producer, format, width, height, output_1);
+    EXPECT_EQ(intResult, 2);
+
+    sptr<IStreamMetadata> output_2 = nullptr;
+    intResult = cameraService->CreateMetadataOutput(Producer, format, output_2);
+    EXPECT_EQ(intResult, 2);
+    
+    cameraService->OnStart();
+    cameraService->OnStop();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test HCameraService with anomalous branch
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_055, TestSize.Level0)
+{
+    sptr<HCameraService> cameraService = new(std::nothrow) HCameraService(CAMERA_SERVICE_ID, true);
+    ASSERT_NE(cameraService, nullptr);
+
+    cameraService->OnStop();
+    cameraService->OnStart();
+    
+    sptr<ICameraServiceCallback> callback = nullptr;
+    int32_t intResult = cameraService->SetCallback(callback);
+    EXPECT_EQ(intResult, 2);
+
+    callback = new(std::nothrow) CameraStatusServiceCallback(manager_);
+    intResult = cameraService->SetCallback(callback);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CameraInput> input = (sptr<CameraInput> &)input_;
+    sptr<ICameraDeviceService> deviceObj = input->GetCameraDevice();
+    ASSERT_NE(deviceObj, nullptr);
+
+    sptr<ICameraMuteServiceCallback> callback_2 = nullptr;
+    intResult = cameraService->SetMuteCallback(callback_2);
+    EXPECT_EQ(intResult, 2);
+
+    callback_2 = new(std::nothrow) CameraMuteServiceCallback(manager_);
+    intResult = cameraService->SetMuteCallback(callback_2);
+    EXPECT_EQ(intResult, 0);
+
+    std::string cameraId = input->GetCameraId();
+    intResult = cameraService->SetPrelaunchConfig(cameraId);
+    EXPECT_EQ(intResult, 2);
+
+    cameraId = "";
+    intResult = cameraService->SetPrelaunchConfig(cameraId);
+    EXPECT_EQ(intResult, 2);
+
+    cameraService->OnStop();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test dump with anomalous branch
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_056, TestSize.Level0)
+{
+    sptr<HCameraService> cameraService = new(std::nothrow) HCameraService(CAMERA_SERVICE_ID, true);
+    ASSERT_NE(cameraService, nullptr);
+
+    cameraService->OnStop();
+    cameraService->OnStart();
+    
+    int fd = 0;
+    std::vector<std::u16string> args = {};
+    int32_t intResult = cameraService->Dump(fd, args);
+    EXPECT_EQ(intResult, 0);
+
+    std::u16string cameraServiceInfo = u"";
+    args.push_back(cameraServiceInfo);
+    intResult = cameraService->Dump(fd, args);
+    EXPECT_EQ(intResult, 10);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test HCameraDevice with anomalous branch
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_057, TestSize.Level0)
+{  
+    sptr<HCameraHostManager> cameraHostManager = nullptr;
+    std::string cameraId = cameras_[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> cameraDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
+    ASSERT_NE(cameraDevice, nullptr);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> results = cameras_[0]->GetMetadata();
+    int32_t intResult = cameraDevice->UpdateSetting(results);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = cameraDevice->UpdateSetting(results);
+    EXPECT_EQ(intResult, 0);
+
+    std::vector<int32_t> result;
+    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
+    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
+
+    intResult = cameraDevice->GetEnabledResults(result);
+    EXPECT_EQ(intResult, 11);
+
+    intResult = cameraDevice->EnableResult(result);
+    EXPECT_EQ(intResult, 11);
+
+    intResult = cameraDevice->DisableResult(result);
+    EXPECT_EQ(intResult, 11);
+
+    intResult = cameraDevice->CloseDevice();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = cameraDevice->Release();
+    EXPECT_EQ(intResult, 0);
+
+    results = nullptr;
+    intResult = cameraDevice->UpdateSetting(results);
+    EXPECT_EQ(intResult, 2);
+
+    sptr<ICameraDeviceServiceCallback> callback = nullptr;
+    intResult = cameraDevice->SetCallback(callback);
+    EXPECT_EQ(intResult, 2);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test prelaunch the camera with serviceProxy_ null anomalous branch
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_058, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input_;
+    std::string cameraId = camInput->GetCameraId();
+
+    int32_t intResult = camManagerObj->SetPrelaunchConfig(cameraId);
+    EXPECT_EQ(intResult, 7400201);
+
+    intResult = camManagerObj->PrelaunchCamera();
+    EXPECT_EQ(intResult, 7400201);
+
+    camManagerObj->~CameraManager();
+
+    intResult = camManagerObj->PrelaunchCamera();
+    EXPECT_EQ(intResult, 7400201);
+
+    bool isPreLaunchSupported = camManagerObj->IsPrelaunchSupported(cameras_[0]);
+    EXPECT_EQ(isPreLaunchSupported, false);
+
+    intResult = camManagerObj->SetPrelaunchConfig(cameraId);
+    EXPECT_EQ(intResult, 7400201);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
  * CaseDescription: test serviceProxy_ null with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_093, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_059, TestSize.Level0)
 {
     sptr<Surface> pSurface = nullptr;
     sptr<IBufferProducer> surfaceProducer = nullptr;
@@ -4856,7 +5413,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_093, TestSize.Le
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     ASSERT_NE(camManagerObj, nullptr);
 
-    delete camManagerObj;
+    camManagerObj->~CameraManager();
 
     std::vector<sptr<CameraDevice>> camdeviceObj_1 = camManagerObj->GetSupportedCameras();
     ASSERT_TRUE(camdeviceObj_1.size() == 0);
@@ -4888,12 +5445,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_093, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test serviceProxy_ null with muteCamera anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_094, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_060, TestSize.Level0)
 {
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     ASSERT_NE(camManagerObj, nullptr);
 
-    delete camManagerObj;
+    camManagerObj->~CameraManager();
 
     bool cameraMuted = camManagerObj->IsCameraMuted();
     EXPECT_EQ(cameraMuted, false);
@@ -4912,12 +5469,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_094, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: test create camera input and construct device object with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_095, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_061, TestSize.Level0)
 {
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     ASSERT_NE(camManagerObj, nullptr);
 
-    delete camManagerObj;
+    camManagerObj->~CameraManager();
 
     std::string cameraId = "";
     dmDeviceInfo deviceInfo = {};
