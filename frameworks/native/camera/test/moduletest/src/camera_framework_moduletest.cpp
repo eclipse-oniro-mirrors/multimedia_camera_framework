@@ -15,6 +15,7 @@
 
 #include "camera_framework_moduletest.h"
 #include <cinttypes>
+#include <vector>
 #include "input/camera_input.h"
 #include "input/camera_manager.h"
 #include "camera_error_code.h"
@@ -39,7 +40,7 @@
 #include "hcamera_device_proxy.h"
 #include "hcamera_service.h"
 #include "hcamera_device.h"
-#include <vector>
+
 
 using namespace testing::ext;
 
@@ -154,7 +155,8 @@ namespace {
             return;
         }
 
-        void OnResult(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) const override
+        void OnResult(const uint64_t timestamp,
+                      const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) const override
         {
             MEDIA_INFO_LOG("CameraDeviceServiceCallback::OnResult() is called!");
 
@@ -5321,7 +5323,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_056, TestSize.L
  * CaseDescription: test HCameraDevice with anomalous branch
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_057, TestSize.Level0)
-{  
+{
     sptr<HCameraHostManager> cameraHostManager = nullptr;
     std::string cameraId = cameras_[0]->GetID();
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
