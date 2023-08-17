@@ -55,8 +55,6 @@ ohos_moduletest("camera_framework_moduletest") {
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "access_token:libprivacy_sdk",
-    "hdf_core:libhdi",
   ]
 
   include_dirs += [
