@@ -148,6 +148,21 @@ struct JSAsyncContextOutput {
     std::string funcName;
 };
 
+struct AutoRef {
+    AutoRef(napi_env env, napi_ref cb, bool isOnce) : isOnce_(isOnce), env_(env), cb_(cb)
+    {
+    }
+    ~AutoRef()
+    {
+        if (env_ != nullptr && cb_ != nullptr) {
+            (void)napi_delete_reference(env_, cb_);
+        }
+    }
+    bool isOnce_ = false;
+    napi_env env_;
+    napi_ref cb_;
+};
+
 enum JSQualityLevel {
     QUALITY_LEVEL_HIGH = 0,
     QUALITY_LEVEL_MEDIUM,
@@ -252,6 +267,45 @@ public:
     static double FloatToDouble(float val);
 
     static bool CheckSystemApp(napi_env env);
+
+    static std::string GetStringArgument(napi_env env, napi_value value);
+
+    static void ThrowError(napi_env env, int32_t code);
+
+    static bool IsSameCallback(napi_env env, napi_value callback, napi_ref refCallback);
+};
+
+template <typename T>
+class EnumHelper {
+public:
+    EnumHelper(const std::map<T, std::string>&& origin, const T defaultValue)
+    {
+        _mapEnum2String = std::move(origin);
+        _mapString2Enum = GenString2EnumMap(_mapEnum2String);
+        _defaultValue = defaultValue;
+    }
+
+    T ToEnum(const std::string& str)
+    {
+        auto item = _mapString2Enum.find(str);
+        if (item != _mapString2Enum.end()) {
+            return item->second;
+        }
+        return _defaultValue;
+    }
+private:
+    std::map<T, std::string> _mapEnum2String;
+    std::map<std::string, T> _mapString2Enum;
+    T _defaultValue;
+
+    static std::map<std::string, T> GenString2EnumMap(std::map<T, std::string> enum2StringMap)
+    {
+        std::map<std::string, T> result;
+        for (const auto& item : enum2StringMap) {
+            result.emplace(std::make_pair(item.second, item.first));
+        }
+        return result;
+    };
 };
 } // namespace CameraStandard
 } // namespace OHOS

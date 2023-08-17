@@ -46,6 +46,21 @@ namespace CameraStandard {
 struct PreviewOutputAsyncContext;
 static const char CAMERA_PREVIEW_OUTPUT_NAPI_CLASS_NAME[] = "PreviewOutput";
 
+enum PreviewOutputEventType {
+    PREVIEW_FRAME_START,
+    PREVIEW_FRAME_END,
+    PREVIEW_FRAME_ERROR,
+    PREVIEW_INVALID_TYPE
+};
+
+static EnumHelper<PreviewOutputEventType> PreviewOutputEventTypeHelper({
+        {PREVIEW_FRAME_START, "frameStart"},
+        {PREVIEW_FRAME_END, "frameEnd"},
+        {PREVIEW_FRAME_ERROR, "error"}
+    },
+    PreviewOutputEventType::PREVIEW_INVALID_TYPE
+);
+
 class PreviewOutputCallback : public PreviewStateCallback {
 public:
     explicit PreviewOutputCallback(napi_env env);
@@ -54,24 +69,26 @@ public:
     void OnFrameStarted() const override;
     void OnFrameEnded(const int32_t frameCount) const override;
     void OnError(const int32_t errorCode) const override;
-    void SetCallbackRef(const std::string &eventType, const napi_ref &callbackRef);
+    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
+    void RemoveCallbackRef(napi_env env, napi_value callback, const std::string &eventType);
+    void RemoveAllCallbacks(const std::string &eventType);
 
 private:
-    void UpdateJSCallback(std::string propName, const int32_t value) const;
-    void UpdateJSCallbackAsync(std::string propName, const int32_t value) const;
-
+    void UpdateJSCallback(PreviewOutputEventType eventType, const int32_t value) const;
+    void UpdateJSCallbackAsync(PreviewOutputEventType eventType, const int32_t value) const;
+    std::mutex previewOutputCbMutex_;
     napi_env env_;
-    napi_ref frameStartCallbackRef_ = nullptr;
-    napi_ref frameEndCallbackRef_ = nullptr;
-    napi_ref errorCallbackRef_ = nullptr;
+    mutable std::vector<std::shared_ptr<AutoRef>> frameStartCbList_;
+    mutable std::vector<std::shared_ptr<AutoRef>> frameEndCbList_;
+    mutable std::vector<std::shared_ptr<AutoRef>> errorCbList_;
 };
 
 struct PreviewOutputCallbackInfo {
-    std::string eventName_;
+    PreviewOutputEventType eventType_;
     int32_t value_;
     const PreviewOutputCallback* listener_;
-    PreviewOutputCallbackInfo(std::string eventName, int32_t value, const PreviewOutputCallback* listener)
-        : eventName_(eventName), value_(value), listener_(listener) {}
+    PreviewOutputCallbackInfo(PreviewOutputEventType eventType, int32_t value, const PreviewOutputCallback* listener)
+        : eventType_(eventType), value_(value), listener_(listener) {}
 };
 
 class PreviewOutputNapi : public CameraOutputNapi {
@@ -85,6 +102,8 @@ public:
     static napi_value Stop(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
     static napi_value On(napi_env env, napi_callback_info info);
+    static napi_value Once(napi_env env, napi_callback_info info);
+    static napi_value Off(napi_env env, napi_callback_info info);
     sptr<PreviewOutput> GetPreviewOutput();
 
     PreviewOutputNapi();
@@ -94,7 +113,10 @@ private:
     static napi_value PreviewOutputNapiConstructor(napi_env env, napi_callback_info info);
     static napi_status CreateAsyncTask(napi_env env, napi_value resource,
         std::unique_ptr<OHOS::CameraStandard::PreviewOutputAsyncContext> &asyncContext);
-
+    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
+        const string &eventType, napi_value callback, bool isOnce);
+    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
+        const string &eventType, napi_value callback);
     napi_env env_;
     napi_ref wrapper_;
     sptr<PreviewOutput> previewOutput_;

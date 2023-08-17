@@ -433,7 +433,7 @@ public:
     *
     * @return CameraMuteListener point..
     */
-    std::vector<std::shared_ptr<CameraMuteListener>> GetCameraMuteListener();
+    std::shared_ptr<CameraMuteListener> GetCameraMuteListener();
 
     /**
        * @brief prelaunch the camera
@@ -492,7 +492,7 @@ private:
     std::shared_ptr<CameraManagerCallback> cameraMngrCallback_;
 
     sptr<ICameraMuteServiceCallback> cameraMuteSvcCallback_;
-    std::vector<std::shared_ptr<CameraMuteListener>> cameraMuteListenerList;
+    std::shared_ptr<CameraMuteListener> cameraMuteListener;
     std::vector<sptr<CameraDevice>> cameraObjList;
     std::vector<sptr<CameraInfo>> dcameraObjList;
     std::vector<dmDeviceInfo> distributedCamInfo_;

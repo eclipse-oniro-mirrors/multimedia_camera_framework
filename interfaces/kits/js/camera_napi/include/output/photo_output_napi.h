@@ -56,6 +56,23 @@ struct CallbackInfo {
     int32_t errorCode;
 };
 
+enum PhotoOutputEventType {
+    CAPTURE_START,
+    CAPTURE_END,
+    CAPTURE_FRAME_SHUTTER,
+    CAPTURE_ERROR,
+    CAPTURE_INVALID_TYPE
+};
+
+static EnumHelper<PhotoOutputEventType> PhotoOutputEventTypeHelper({
+        {CAPTURE_START, "captureStart"},
+        {CAPTURE_END, "captureEnd"},
+        {CAPTURE_FRAME_SHUTTER, "frameShutter"},
+        {CAPTURE_ERROR, "error"}
+    },
+    PhotoOutputEventType::CAPTURE_INVALID_TYPE
+);
+
 class PhotoOutputCallback : public PhotoStateCallback {
 public:
     explicit PhotoOutputCallback(napi_env env);
@@ -65,39 +82,49 @@ public:
     void OnCaptureEnded(const int32_t captureID, const int32_t frameCount) const override;
     void OnFrameShutter(const int32_t captureId, const uint64_t timestamp) const override;
     void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override;
-    void SetCallbackRef(const std::string &eventType, const napi_ref &callbackRef);
+    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
+    void RemoveCallbackRef(napi_env env, napi_value callback, const std::string &eventType);
+    void RemoveAllCallbacks(const std::string &eventType);
 
 private:
-    void UpdateJSCallback(std::string propName, const CallbackInfo &info) const;
-    void UpdateJSCallbackAsync(std::string propName, const CallbackInfo &info) const;
-
+    void UpdateJSCallback(PhotoOutputEventType eventType, const CallbackInfo &info) const;
+    void UpdateJSCallbackAsync(PhotoOutputEventType eventType, const CallbackInfo &info) const;
+    void ExecuteCaptureStartCb(const CallbackInfo &info) const;
+    void ExecuteCaptureEndCb(const CallbackInfo &info) const;
+    void ExecuteFrameShutterCb(const CallbackInfo &info) const;
+    void ExecuteCaptureErrorCb(const CallbackInfo &info) const;
+    std::mutex mutex_;
     napi_env env_;
-    napi_ref captureStartCallbackRef_ = nullptr;
-    napi_ref captureEndCallbackRef_ = nullptr;
-    napi_ref frameShutterCallbackRef_ = nullptr;
-    napi_ref errorCallbackRef_ = nullptr;
+    mutable std::vector<std::shared_ptr<AutoRef>> captureStartCbList_;
+    mutable std::vector<std::shared_ptr<AutoRef>> captureEndCbList_;
+    mutable std::vector<std::shared_ptr<AutoRef>> frameShutterCbList_;
+    mutable std::vector<std::shared_ptr<AutoRef>> errorCbList_;
 };
 
 class ThumbnailListener : public IBufferConsumerListener {
 public:
-    explicit ThumbnailListener(napi_env env, const napi_ref &callbackRef, const sptr<PhotoOutput> photoOutput_);
+    explicit ThumbnailListener(napi_env env, const sptr<PhotoOutput> photoOutput_);
     ~ThumbnailListener() = default;
     void OnBufferAvailable() override;
+    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
+    void RemoveCallbackRef(napi_env env, napi_value callback);
+    void RemoveAllCallbacks();
 
 private:
+    std::mutex mutex_;
     napi_env env_;
-    napi_ref thumbnailCallbackRef_ = nullptr;
     sptr<PhotoOutput> photoOutput_;
+    mutable std::vector<std::shared_ptr<AutoRef>> thumbnailListenerList_;
     void UpdateJSCallback(sptr<PhotoOutput> photoOutput) const;
     void UpdateJSCallbackAsync(sptr<PhotoOutput> photoOutput) const;
 };
 
 struct PhotoOutputCallbackInfo {
-    std::string eventName_;
+    PhotoOutputEventType eventType_;
     CallbackInfo info_;
     const PhotoOutputCallback* listener_;
-    PhotoOutputCallbackInfo(std::string eventName, CallbackInfo info, const PhotoOutputCallback* listener)
-        : eventName_(eventName), info_(info), listener_(listener) {}
+    PhotoOutputCallbackInfo(PhotoOutputEventType eventType, CallbackInfo info, const PhotoOutputCallback* listener)
+        : eventType_(eventType), info_(info), listener_(listener) {}
 };
 
 struct ThumbnailListenerInfo {
@@ -120,7 +147,8 @@ public:
     static napi_value EnableQuickThumbnail(napi_env env, napi_callback_info info);
     static napi_value IsQuickThumbnailSupported(napi_env env, napi_callback_info info);
     static napi_value On(napi_env env, napi_callback_info info);
-
+    static napi_value Off(napi_env env, napi_callback_info info);
+    static napi_value Once(napi_env env, napi_callback_info info);
     static bool IsPhotoOutput(napi_env env, napi_value obj);
     PhotoOutputNapi();
     ~PhotoOutputNapi();
@@ -130,6 +158,10 @@ public:
 private:
     static void PhotoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value PhotoOutputNapiConstructor(napi_env env, napi_callback_info info);
+    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
+        const std::string& callbackName, napi_value callback);
+    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
+        const std::string& callbackName, napi_value callback, bool isOnce);
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<PhotoOutput> sPhotoOutput_;
@@ -140,6 +172,7 @@ private:
     Profile profile_;
     bool isQuickThumbnailEnabled_ = false;
     std::shared_ptr<PhotoOutputCallback> photoCallback_ = nullptr;
+    sptr<ThumbnailListener> thumbnailListener_;
     static thread_local uint32_t photoOutputTaskId;
 };
 

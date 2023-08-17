@@ -538,5 +538,38 @@ bool CameraNapiUtils::CheckSystemApp(napi_env env)
     }
     return true;
 }
+
+std::string CameraNapiUtils::GetStringArgument(napi_env env, napi_value value)
+{
+    std::string strValue = "";
+    size_t bufLength = 0;
+    napi_status status = napi_get_value_string_utf8(env, value, nullptr, 0, &bufLength);
+    if (status == napi_ok && bufLength > 0 && bufLength < PATH_MAX) {
+        char *buffer = (char *)malloc((bufLength + 1) * sizeof(char));
+        CHECK_AND_RETURN_RET_LOG(buffer != nullptr, strValue, "no memory");
+        status = napi_get_value_string_utf8(env, value, buffer, bufLength + 1, &bufLength);
+        if (status == napi_ok) {
+            MEDIA_DEBUG_LOG("argument = %{public}s", buffer);
+            strValue = buffer;
+        }
+        free(buffer);
+        buffer = nullptr;
+    }
+    return strValue;
+}
+
+bool CameraNapiUtils::IsSameCallback(napi_env env, napi_value callback, napi_ref refCallback)
+{
+    bool isEquals = false;
+    napi_value copyValue = nullptr;
+
+    napi_get_reference_value(env, refCallback, &copyValue);
+    if (napi_strict_equals(env, copyValue, callback, &isEquals) != napi_ok) {
+        MEDIA_ERR_LOG("get napi_strict_equals failed");
+        return false;
+    }
+
+    return isEquals;
+}
 } // namespace CameraStandard
 } // namespace OHOS

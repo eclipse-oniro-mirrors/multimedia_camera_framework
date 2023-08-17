@@ -39,17 +39,20 @@ namespace OHOS {
 namespace CameraStandard {
 class CameraManagerCallbackNapi : public  CameraManagerCallback {
 public:
-    explicit CameraManagerCallbackNapi(napi_env env, napi_ref callbackRef_);
+    explicit CameraManagerCallbackNapi(napi_env env);
     virtual ~CameraManagerCallbackNapi();
     void OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const override;
     void OnFlashlightStatusChanged(const std::string &cameraID, const FlashStatus flashStatus) const override;
+    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
+    void RemoveCallbackRef(napi_env env, napi_value callback);
+    void RemoveAllCallbacks();
 
 private:
     void OnCameraStatusCallback(const CameraStatusInfo &cameraStatusInfo) const;
     void OnCameraStatusCallbackAsync(const CameraStatusInfo &cameraStatusInfo) const;
-
+    std::mutex mutex_;
     napi_env env_ = nullptr;
-    napi_ref callbackRef_;
+    mutable std::vector<std::shared_ptr<AutoRef>> cameraManagerCbList_;
 };
 
 struct CameraStatusCallbackInfo {

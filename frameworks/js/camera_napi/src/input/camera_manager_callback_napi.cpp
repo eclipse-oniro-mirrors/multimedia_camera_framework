@@ -27,7 +27,7 @@ namespace {
     constexpr HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "CameraManagerCallbackNapi"};
 }
 
-CameraManagerCallbackNapi::CameraManagerCallbackNapi(napi_env env, napi_ref ref): env_(env), callbackRef_(ref)
+CameraManagerCallbackNapi::CameraManagerCallbackNapi(napi_env env): env_(env)
 {}
 
 CameraManagerCallbackNapi::~CameraManagerCallbackNapi()
@@ -75,32 +75,42 @@ void CameraManagerCallbackNapi::OnCameraStatusCallback(const CameraStatusInfo &c
     napi_value retVal;
     napi_value propValue;
     napi_value undefinedResult;
+    for (auto it = cameraManagerCbList_.begin(); it != cameraManagerCbList_.end();) {
+        napi_env env = (*it)->env_;
+        napi_get_undefined(env, &result[PARAM0]);
+        napi_get_undefined(env, &result[PARAM1]);
+        napi_get_undefined(env, &undefinedResult);
 
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_get_undefined(env_, &result[PARAM1]);
-    napi_get_undefined(env_, &undefinedResult);
+        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(cameraStatusInfo.cameraDevice, "callback cameraDevice is null");
 
-    CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(cameraStatusInfo.cameraDevice, "callback cameraDevice is null");
+        napi_create_object(env, &result[PARAM1]);
 
-    napi_create_object(env_, &result[PARAM1]);
+        if (cameraStatusInfo.cameraDevice != nullptr) {
+            napi_value cameraDeviceNapi = CameraDeviceNapi::CreateCameraObj(env, cameraStatusInfo.cameraDevice);
+            napi_set_named_property(env, result[PARAM1], "camera", cameraDeviceNapi);
+        } else {
+            MEDIA_ERR_LOG("Camera info is null");
+            napi_set_named_property(env, result[PARAM1], "camera", undefinedResult);
+        }
 
-    if (cameraStatusInfo.cameraDevice != nullptr) {
-        napi_value cameraDeviceNapi = CameraDeviceNapi::CreateCameraObj(env_, cameraStatusInfo.cameraDevice);
-        napi_set_named_property(env_, result[PARAM1], "camera", cameraDeviceNapi);
-    } else {
-        MEDIA_ERR_LOG("Camera info is null");
-        napi_set_named_property(env_, result[PARAM1], "camera", undefinedResult);
+        int32_t jsCameraStatus = -1;
+        jsCameraStatus = cameraStatusInfo.cameraStatus;
+        napi_create_int64(env, jsCameraStatus, &propValue);
+        napi_set_named_property(env, result[PARAM1], "status", propValue);
+
+        napi_get_reference_value(env, (*it)->cb_, &callback);
+        MEDIA_INFO_LOG("CameraId: %{public}s, CameraStatus: %{public}d",
+                       cameraStatusInfo.cameraDevice->GetID().c_str(), cameraStatusInfo.cameraStatus);
+        napi_call_function(env, nullptr, callback, ARGS_TWO, result, &retVal);
+        if ((*it)->isOnce_) {
+            napi_status status = napi_delete_reference((*it)->env_, (*it)->cb_);
+            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
+            (*it)->cb_ = nullptr;
+            cameraManagerCbList_.erase(it);
+        } else {
+            it++;
+        }
     }
-
-    int32_t jsCameraStatus = -1;
-    jsCameraStatus = cameraStatusInfo.cameraStatus;
-    napi_create_int64(env_, jsCameraStatus, &propValue);
-    napi_set_named_property(env_, result[PARAM1], "status", propValue);
-
-    napi_get_reference_value(env_, callbackRef_, &callback);
-    MEDIA_INFO_LOG("CameraId: %{public}s, CameraStatus: %{public}d",
-                   cameraStatusInfo.cameraDevice->GetID().c_str(), cameraStatusInfo.cameraStatus);
-    napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
 }
 
 void CameraManagerCallbackNapi::OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const
@@ -114,6 +124,59 @@ void CameraManagerCallbackNapi::OnFlashlightStatusChanged(const std::string &cam
 {
     (void)cameraID;
     (void)flashStatus;
+}
+
+void CameraManagerCallbackNapi::SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    napi_ref callbackRef = nullptr;
+    const int32_t refCount = 1;
+
+    bool isSameCallback = true;
+    for (auto it = cameraManagerCbList_.begin(); it != cameraManagerCbList_.end(); ++it) {
+        isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
+    }
+    napi_status status = napi_create_reference(env_, callback, refCount, &callbackRef);
+    CHECK_AND_RETURN_LOG(status == napi_ok && callbackRef != nullptr,
+                         "ErrorCallbackListener: creating reference for callback fail");
+    std::shared_ptr<AutoRef> cb = std::make_shared<AutoRef>(env_, callbackRef, isOnce);
+    cameraManagerCbList_.push_back(cb);
+    MEDIA_INFO_LOG("Save callback reference success, cameraManager callback list size [%{public}zu]",
+                   cameraManagerCbList_.size());
+}
+
+void CameraManagerCallbackNapi::RemoveCallbackRef(napi_env env, napi_value callback)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    if (callback == nullptr) {
+        MEDIA_INFO_LOG("RemoveCallbackReference: js callback is nullptr, remove all callback reference");
+        RemoveAllCallbacks();
+        return;
+    }
+    for (auto it = cameraManagerCbList_.begin(); it != cameraManagerCbList_.end(); ++it) {
+        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        if (isSameCallback) {
+            MEDIA_INFO_LOG("RemoveCallbackReference: find js callback, delete it");
+            napi_status status = napi_delete_reference(env, (*it)->cb_);
+            (*it)->cb_ = nullptr;
+            CHECK_AND_RETURN_LOG(status == napi_ok, "RemoveCallbackReference: delete reference for callback fail");
+            cameraManagerCbList_.erase(it);
+            return;
+        }
+    }
+    MEDIA_INFO_LOG("RemoveCallbackReference: js callback no find");
+}
+
+void CameraManagerCallbackNapi::RemoveAllCallbacks()
+{
+    for (auto it = cameraManagerCbList_.begin(); it != cameraManagerCbList_.end(); ++it) {
+        napi_delete_reference(env_, (*it)->cb_);
+        (*it)->cb_ = nullptr;
+    }
+    cameraManagerCbList_.clear();
+    MEDIA_INFO_LOG("RemoveAllCallbacks: remove all js callbacks success");
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -328,7 +328,7 @@ napi_value CameraOutputCapabilityNapi::GetPreviewProfiles(napi_env env, napi_cal
         return undefinedResult;
     }
 
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
         std::vector<Profile> profileList = obj->cameraOutputCapability_->GetPreviewProfiles();
         jsResult = CreateProfileJsArray(env, status, profileList);
@@ -355,7 +355,7 @@ napi_value CameraOutputCapabilityNapi::GetPhotoProfiles(napi_env env, napi_callb
         return undefinedResult;
     }
 
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
         std::vector<Profile> profileList = obj->cameraOutputCapability_->GetPhotoProfiles();
         jsResult = CreateProfileJsArray(env, status, profileList);
@@ -383,7 +383,7 @@ napi_value CameraOutputCapabilityNapi::GetVideoProfiles(napi_env env, napi_callb
         return undefinedResult;
     }
 
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
         std::vector<VideoProfile> profileList = obj->cameraOutputCapability_->GetVideoProfiles();
         jsResult = CreateVideoProfileJsArray(env, status, profileList);
@@ -410,7 +410,7 @@ napi_value CameraOutputCapabilityNapi::GetSupportedMetadataObjectTypes(napi_env 
         return undefinedResult;
     }
 
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
         std::vector<MetadataObjectType> metadataTypeList;
         metadataTypeList = obj->cameraOutputCapability_->GetSupportedMetadataObjectType();

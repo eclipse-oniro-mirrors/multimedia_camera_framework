@@ -78,20 +78,25 @@ public:
     static napi_value CreateVideoOutputInstance(napi_env env, napi_callback_info info);
     static napi_value CreateMetadataOutputInstance(napi_env env, napi_callback_info info);
     static napi_value On(napi_env env, napi_callback_info info);
-
+    static napi_value Off(napi_env env, napi_callback_info info);
+    static napi_value Once(napi_env env, napi_callback_info info);
     CameraManagerNapi();
     ~CameraManagerNapi();
 
 private:
     static void CameraManagerNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value CameraManagerNapiConstructor(napi_env env, napi_callback_info info);
-
+    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
+        const std::string &eventType, napi_value callback, bool isOnce);
+    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
+        const std::string &eventType, napi_value callback);
     static thread_local napi_ref sConstructor_;
 
     napi_env env_;
     napi_ref wrapper_;
     sptr<CameraManager> cameraManager_;
-
+    std::shared_ptr<CameraManagerCallbackNapi> cameraManagerCallback_;
+    std::shared_ptr<CameraMuteListenerNapi> cameraMuteListener_;
     static thread_local uint32_t cameraManagerTaskId;
 };
 

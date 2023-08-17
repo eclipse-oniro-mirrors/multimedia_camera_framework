@@ -155,7 +155,7 @@ napi_value CameraSizeNapi::GetCameraSizeWidth(napi_env env, napi_callback_info i
         return undefinedResult;
     }
 
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
         cameraSizeWidth = obj->cameraPicSize_->width;
         MEDIA_INFO_LOG("CreateCameraSize GetCameraSizeWidth "
@@ -190,7 +190,7 @@ napi_value CameraSizeNapi::GetCameraSizeHeight(napi_env env, napi_callback_info 
         return undefinedResult;
     }
 
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
         cameraSizeHeight = obj->cameraPicSize_->height;
         MEDIA_INFO_LOG("GetCameraSizeWidth size.width = %{public}d, size.height = %{public}d",

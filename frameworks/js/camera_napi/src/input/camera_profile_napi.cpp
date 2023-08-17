@@ -155,7 +155,7 @@ napi_value CameraProfileNapi::GetCameraProfileSize(napi_env env, napi_callback_i
         return undefinedResult;
     }
 
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
         cameraProfileSize.height = obj->cameraProfile_->GetSize().height;
         cameraProfileSize.width = obj->cameraProfile_->GetSize().width;
@@ -186,7 +186,7 @@ napi_value CameraProfileNapi::GetCameraProfileFormat(napi_env env, napi_callback
         return undefinedResult;
     }
 
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
         cameraProfileFormat = obj->cameraProfile_->GetCameraFormat();
         MEDIA_INFO_LOG("GetCameraProfileFormat cameraProfileSize "
@@ -325,7 +325,7 @@ napi_value CameraVideoProfileNapi::GetCameraProfileSize(napi_env env, napi_callb
         return undefinedResult;
     }
 
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
         cameraProfileSize.width = obj->videoProfile_.GetSize().width;
         cameraProfileSize.height = obj->videoProfile_.GetSize().height;
@@ -354,7 +354,7 @@ napi_value CameraVideoProfileNapi::GetCameraProfileFormat(napi_env env, napi_cal
         return undefinedResult;
     }
 
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
         CameraProfileFormat = obj->videoProfile_.GetCameraFormat();
         status = napi_create_int32(env, CameraProfileFormat, &jsResult);
@@ -411,7 +411,7 @@ napi_value CameraVideoProfileNapi::GetFrameRateRange(napi_env env, napi_callback
         return undefinedResult;
     }
 
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
         std::vector<int32_t> frameRanges = obj->videoProfile_.GetFrameRates();
         jsResult = CreateJSArray(env, status, frameRanges);
