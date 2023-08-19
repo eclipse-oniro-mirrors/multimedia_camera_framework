@@ -27,9 +27,7 @@ int HCameraDeviceStub::OnRemoteRequest(
 {
     DisableJeMalloc();
     int errCode = -1;
-    if (data.ReadInterfaceToken() != GetDescriptor()) {
-        return errCode;
-    }
+    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
     if (errCode != CAMERA_OK) {
@@ -73,10 +71,8 @@ int HCameraDeviceStub::OnRemoteRequest(
 int HCameraDeviceStub::HandleSetCallback(MessageParcel &data)
 {
     auto remoteObject = data.ReadRemoteObject();
-    if (remoteObject == nullptr) {
-        MEDIA_ERR_LOG("HCameraDeviceStub HandleSetCallback CameraDeviceServiceCallback is null");
-        return IPC_STUB_INVALID_DATA_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCameraDeviceStub HandleSetCallback CameraDeviceServiceCallback is null");
 
     auto callback = iface_cast<ICameraDeviceServiceCallback>(remoteObject);
 
@@ -100,10 +96,8 @@ int HCameraDeviceStub::HandleGetEnabledResults(MessageParcel &reply)
         return ret;
     }
 
-    if (!reply.WriteInt32Vector(results)) {
-        MEDIA_ERR_LOG("HCameraDeviceStub::HandleGetEnabledResults write results failed");
-        return IPC_STUB_WRITE_PARCEL_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(reply.WriteInt32Vector(results), IPC_STUB_WRITE_PARCEL_ERR,
+                             "HCameraDeviceStub::HandleGetEnabledResults write results failed");
 
     return ret;
 }
@@ -111,10 +105,8 @@ int HCameraDeviceStub::HandleGetEnabledResults(MessageParcel &reply)
 int HCameraDeviceStub::HandleEnableResult(MessageParcel &data)
 {
     std::vector<int32_t> results;
-    if (!data.ReadInt32Vector(&results)) {
-        MEDIA_ERR_LOG("CameraDeviceStub::HandleEnableResult read results failed");
-        return IPC_STUB_INVALID_DATA_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(data.ReadInt32Vector(&results), IPC_STUB_INVALID_DATA_ERR,
+                             "CameraDeviceStub::HandleEnableResult read results failed");
 
     int ret = EnableResult(results);
     if (ret != ERR_NONE) {
@@ -127,10 +119,8 @@ int HCameraDeviceStub::HandleEnableResult(MessageParcel &data)
 int HCameraDeviceStub::HandleDisableResult(MessageParcel &data)
 {
     std::vector<int32_t> results;
-    if (!data.ReadInt32Vector(&results)) {
-        MEDIA_ERR_LOG("CameraDeviceStub::HandleDisableResult read results failed");
-        return IPC_STUB_INVALID_DATA_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(data.ReadInt32Vector(&results), IPC_STUB_INVALID_DATA_ERR,
+                             "CameraDeviceStub::HandleDisableResult read results failed");
 
     int ret = DisableResult(results);
     if (ret != ERR_NONE) {

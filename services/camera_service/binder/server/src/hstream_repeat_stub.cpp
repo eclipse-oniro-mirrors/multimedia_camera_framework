@@ -26,9 +26,7 @@ int HStreamRepeatStub::OnRemoteRequest(
     DisableJeMalloc();
     int errCode = -1;
 
-    if (data.ReadInterfaceToken() != GetDescriptor()) {
-        return errCode;
-    }
+    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
     switch (code) {
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_START_VIDEO_RECORDING):
             errCode = Start();
@@ -57,10 +55,8 @@ int HStreamRepeatStub::OnRemoteRequest(
 int HStreamRepeatStub::HandleSetCallback(MessageParcel &data)
 {
     auto remoteObject = data.ReadRemoteObject();
-    if (remoteObject == nullptr) {
-        MEDIA_ERR_LOG("HStreamRepeatStub HandleSetCallback StreamRepeatCallback is null");
-        return IPC_STUB_INVALID_DATA_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HStreamRepeatStub HandleSetCallback StreamRepeatCallback is null");
 
     auto callback = iface_cast<IStreamRepeatCallback>(remoteObject);
 
@@ -71,10 +67,8 @@ int HStreamRepeatStub::HandleAddDeferredSurface(MessageParcel &data)
 {
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
 
-    if (remoteObj == nullptr) {
-        MEDIA_ERR_LOG("HStreamRepeatStub HandleAddDeferredSurface BufferProducer is null");
-        return IPC_STUB_INVALID_DATA_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HStreamRepeatStub HandleAddDeferredSurface BufferProducer is null");
 
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
     int errCode = AddDeferredSurface(producer);

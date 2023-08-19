@@ -28,18 +28,11 @@ int32_t HCameraServiceCallbackProxy::OnCameraStatusChanged(const std::string& ca
     MessageParcel reply;
     MessageOption option;
     MEDIA_INFO_LOG("HCameraServiceCallbackProxy OnCameraStatusChanged called");
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnCameraStatusChanged Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteString(cameraId)) {
-        MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnCameraStatusChanged Write CameraId failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteInt32(status)) {
-        MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnCameraStatusChanged Write status failed");
-        return IPC_PROXY_ERR;
-    }
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteString(cameraId);
+    data.WriteInt32(status);
+
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceCallbackInterfaceCode::CAMERA_CALLBACK_STATUS_CHANGED),
         data, reply, option);
@@ -56,18 +49,9 @@ int32_t HCameraServiceCallbackProxy::OnFlashlightStatusChanged(const std::string
     MessageOption option;
     int error = ERR_NONE;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnFlashlightStatus Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteString(cameraId)) {
-        MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnFlashlightStatus Write CameraId failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteInt32(status)) {
-        MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnFlashlightStatus Write status failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteString(cameraId);
+    data.WriteInt32(status);
     error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceCallbackInterfaceCode::CAMERA_CALLBACK_FLASHLIGHT_STATUS_CHANGED),
         data, reply, option);
@@ -86,14 +70,8 @@ int32_t HCameraMuteServiceCallbackProxy::OnCameraMute(bool muteMode)
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HCameraMuteServiceCallbackProxy OnCameraMute Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteBool(muteMode)) {
-        MEDIA_ERR_LOG("HCameraMuteServiceCallbackProxy OnCameraMute Write muteMode failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteBool(muteMode);
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraMuteServiceCallbackInterfaceCode::CAMERA_CALLBACK_MUTE_MODE),

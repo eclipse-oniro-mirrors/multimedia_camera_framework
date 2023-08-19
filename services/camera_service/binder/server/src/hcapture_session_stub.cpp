@@ -27,9 +27,7 @@ int HCaptureSessionStub::OnRemoteRequest(
     DisableJeMalloc();
     int errCode = -1;
 
-    if (data.ReadInterfaceToken() != GetDescriptor()) {
-        return errCode;
-    }
+    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
     switch (code) {
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_BEGIN_CONFIG):
             errCode = BeginConfig();
@@ -78,10 +76,8 @@ int HCaptureSessionStub::OnRemoteRequest(
 int HCaptureSessionStub::HandleAddInput(MessageParcel &data)
 {
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
-    if (remoteObj == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSessionStub HandleAddInput CameraDevice is null");
-        return IPC_STUB_INVALID_DATA_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCaptureSessionStub HandleAddInput CameraDevice is null");
 
     sptr<ICameraDeviceService> cameraDevice = iface_cast<ICameraDeviceService>(remoteObj);
 
@@ -91,10 +87,8 @@ int HCaptureSessionStub::HandleAddInput(MessageParcel &data)
 int HCaptureSessionStub::HandleRemoveInput(MessageParcel &data)
 {
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
-    if (remoteObj == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSessionStub HandleRemoveInput CameraDevice is null");
-        return IPC_STUB_INVALID_DATA_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCaptureSessionStub HandleRemoveInput CameraDevice is null");
 
     sptr<ICameraDeviceService> cameraDevice = iface_cast<ICameraDeviceService>(remoteObj);
 
@@ -105,10 +99,8 @@ int HCaptureSessionStub::HandleAddOutput(MessageParcel &data)
 {
     StreamType streamType = static_cast<StreamType>(data.ReadUint32());
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
-    if (remoteObj == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSessionStub HandleAddOutput remoteObj is null");
-        return IPC_STUB_INVALID_DATA_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCaptureSessionStub HandleAddOutput remoteObj is null");
     sptr<IStreamCommon> stream = nullptr;
     if (streamType == StreamType::CAPTURE) {
         stream = iface_cast<IStreamCapture>(remoteObj);
@@ -125,10 +117,8 @@ int HCaptureSessionStub::HandleRemoveOutput(MessageParcel &data)
 {
     StreamType streamType = static_cast<StreamType>(data.ReadUint32());
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
-    if (remoteObj == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSessionStub HandleRemoveOutput remoteObj is null");
-        return IPC_STUB_INVALID_DATA_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCaptureSessionStub HandleRemoveOutput remoteObj is null");
     sptr<IStreamCommon> stream = nullptr;
     if (streamType == StreamType::CAPTURE) {
         stream = iface_cast<IStreamCapture>(remoteObj);
@@ -143,10 +133,8 @@ int HCaptureSessionStub::HandleRemoveOutput(MessageParcel &data)
 int HCaptureSessionStub::HandleSetCallback(MessageParcel &data)
 {
     auto remoteObject = data.ReadRemoteObject();
-    if (remoteObject == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSessionStub HandleSetCallback CaptureSessionCallback is null");
-        return IPC_STUB_INVALID_DATA_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCaptureSessionStub HandleSetCallback CaptureSessionCallback is null");
 
     auto callback = iface_cast<ICaptureSessionCallback>(remoteObject);
 
@@ -157,10 +145,8 @@ int HCaptureSessionStub::HandleGetSesstionState(MessageParcel &reply)
 {
     CaptureSessionState sessionState;
     int32_t ret = GetSessionState(sessionState);
-    if (!reply.WriteUint32(static_cast<uint32_t>(sessionState))) {
-        MEDIA_ERR_LOG("HCaptureSessionStub HandleGetSesstionState Write sessionState failed");
-        return IPC_STUB_WRITE_PARCEL_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(reply.WriteUint32(static_cast<uint32_t>(sessionState)), IPC_STUB_WRITE_PARCEL_ERR,
+                             "HCaptureSessionStub HandleGetSesstionState Write sessionState failed");
     return ret;
 }
 } // namespace CameraStandard

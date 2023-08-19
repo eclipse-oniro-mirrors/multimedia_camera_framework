@@ -28,14 +28,8 @@ int32_t HStreamCaptureCallbackProxy::OnCaptureStarted(int32_t captureId)
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureStarted Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteInt32(captureId)) {
-        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureStarted Write captureId failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(captureId);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED),
         data, reply, option);
@@ -52,18 +46,9 @@ int32_t HStreamCaptureCallbackProxy::OnCaptureEnded(int32_t captureId, int32_t f
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureEnded Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteInt32(captureId)) {
-        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureEnded Write captureId failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteInt32(frameCount)) {
-        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureEnded Write frameCount failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(captureId);
+    data.WriteInt32(frameCount);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_ENDED),
         data, reply, option);
@@ -80,18 +65,9 @@ int32_t HStreamCaptureCallbackProxy::OnCaptureError(int32_t captureId, int32_t e
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureError Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteInt32(captureId)) {
-        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureError Write captureId failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteInt32(errorCode)) {
-        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureError Write errorType failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(captureId);
+    data.WriteInt32(errorCode);
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_ERROR),
@@ -109,18 +85,9 @@ int32_t HStreamCaptureCallbackProxy::OnFrameShutter(int32_t captureId, uint64_t 
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnFrameShutter Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteInt32(captureId)) {
-        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnFrameShutter Write captureId failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteUint64(timestamp)) {
-        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnFrameShutter Write errorType failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(captureId);
+    data.WriteUint64(timestamp);
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_FRAME_SHUTTER),

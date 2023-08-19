@@ -46,9 +46,7 @@ int HCameraServiceStub::OnRemoteRequest(
 {
     DisableJeMalloc();
     int errCode = -1;
-    if (data.ReadInterfaceToken() != GetDescriptor()) {
-        return -1;
-    }
+    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
     const int TIME_OUT_SECONDS = 10;
     int32_t id = HiviewDFX::XCollie::GetInstance().SetTimer(
         "CameraServiceStub", TIME_OUT_SECONDS, nullptr, nullptr, HiviewDFX::XCOLLIE_FLAG_LOG);

@@ -29,14 +29,8 @@ int32_t HCaptureSessionCallbackProxy::OnError(int32_t errorCode)
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HCaptureSessionCallbackProxy OnError Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteInt32(errorCode)) {
-        MEDIA_ERR_LOG("HCaptureSessionCallbackProxy OnError Write errorCode failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(errorCode);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionCallbackInterfaceCode::CAMERA_CAPTURE_SESSION_ON_ERROR),
         data, reply, option);

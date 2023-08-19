@@ -45,10 +45,7 @@ void HCameraService::OnStart()
 {
     if (cameraHostManager_ == nullptr) {
         cameraHostManager_ = new(std::nothrow) HCameraHostManager(this);
-        if (cameraHostManager_ == nullptr) {
-            MEDIA_ERR_LOG("HCameraService OnStart failed to create HCameraHostManager obj");
-            return;
-        }
+        CHECK_AND_RETURN_LOG(cameraHostManager_ != nullptr, "HCameraService OnStart failed to create HCameraHostManager obj");
     }
     if (cameraHostManager_->Init() != CAMERA_OK) {
         MEDIA_ERR_LOG("HCameraService OnStart failed to init camera host manager.");
@@ -168,10 +165,8 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
     }
     std::lock_guard<std::mutex> lock(mapOperatorsLock_);
     sptr<HCameraDevice> cameraDevice = new(std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
-    if (cameraDevice == nullptr) {
-        MEDIA_ERR_LOG("HCameraService::CreateCameraDevice HCameraDevice allocation failed");
-        return CAMERA_ALLOC_ERROR;
-    }
+    CHECK_AND_RETURN_RET_LOG(cameraDevice != nullptr, CAMERA_ALLOC_ERROR,
+                             "HCameraService::CreateCameraDevice HCameraDevice allocation failed");
 
     // when create camera device, update mute setting truely.
     if (IsCameraMuteSupported(cameraId)) {
@@ -203,18 +198,14 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession> &session)
     sptr<HCaptureSession> captureSession;
     if (streamOperatorCallback_ == nullptr) {
         streamOperatorCallback_ = new(std::nothrow) StreamOperatorCallback();
-        if (streamOperatorCallback_ == nullptr) {
-            MEDIA_ERR_LOG("HCameraService::CreateCaptureSession streamOperatorCallback_ allocation failed");
-            return CAMERA_ALLOC_ERROR;
-        }
+        CHECK_AND_RETURN_RET_LOG(streamOperatorCallback_ != nullptr, CAMERA_ALLOC_ERROR,
+                                 "HCameraService::CreateCaptureSession streamOperatorCallback_ allocation failed");
     }
 
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
     captureSession = new(std::nothrow) HCaptureSession(cameraHostManager_, streamOperatorCallback_, callerToken);
-    if (captureSession == nullptr) {
-        MEDIA_ERR_LOG("HCameraService::CreateCaptureSession HCaptureSession allocation failed");
-        return CAMERA_ALLOC_ERROR;
-    }
+    CHECK_AND_RETURN_RET_LOG(captureSession != nullptr, CAMERA_ALLOC_ERROR,
+                             "HCameraService::CreateCaptureSession HCaptureSession allocation failed");
     captureSession->SetDeviceOperatorsCallback(this);
     session = captureSession;
     return CAMERA_OK;
@@ -230,10 +221,8 @@ int32_t HCameraService::CreatePhotoOutput(const sptr<OHOS::IBufferProducer> &pro
         return CAMERA_INVALID_ARG;
     }
     sptr<HStreamCapture> streamCapture = new(std::nothrow) HStreamCapture(producer, format, width, height);
-    if (streamCapture == nullptr) {
-        MEDIA_ERR_LOG("HCameraService::CreatePhotoOutput HStreamCapture allocation failed");
-        return CAMERA_ALLOC_ERROR;
-    }
+    CHECK_AND_RETURN_RET_LOG(streamCapture != nullptr, CAMERA_ALLOC_ERROR,
+                             "HCameraService::CreatePhotoOutput HStreamCapture allocation failed");
     POWERMGR_SYSEVENT_CAMERA_CONFIG(PHOTO, producer->GetDefaultWidth(),
                                     producer->GetDefaultHeight());
     photoOutput = streamCapture;
@@ -252,10 +241,8 @@ int32_t HCameraService::CreateDeferredPreviewOutput(int32_t format,
         return CAMERA_INVALID_ARG;
     }
     streamDeferredPreview = new(std::nothrow) HStreamRepeat(nullptr, format, width, height, false);
-    if (streamDeferredPreview == nullptr) {
-        MEDIA_ERR_LOG("HCameraService::CreateDeferredPreviewOutput HStreamRepeat allocation failed");
-        return CAMERA_ALLOC_ERROR;
-    }
+    CHECK_AND_RETURN_RET_LOG(streamDeferredPreview != nullptr, CAMERA_ALLOC_ERROR,
+                             "HCameraService::CreateDeferredPreviewOutput HStreamRepeat allocation failed");
     previewOutput = streamDeferredPreview;
     return CAMERA_OK;
 }
@@ -272,10 +259,8 @@ int32_t HCameraService::CreatePreviewOutput(const sptr<OHOS::IBufferProducer> &p
         return CAMERA_INVALID_ARG;
     }
     streamRepeatPreview = new(std::nothrow) HStreamRepeat(producer, format, width, height, false);
-    if (streamRepeatPreview == nullptr) {
-        MEDIA_ERR_LOG("HCameraService::CreatePreviewOutput HStreamRepeat allocation failed");
-        return CAMERA_ALLOC_ERROR;
-    }
+    CHECK_AND_RETURN_RET_LOG(streamRepeatPreview != nullptr, CAMERA_ALLOC_ERROR,
+                             "HCameraService::CreatePreviewOutput HStreamRepeat allocation failed");
     POWERMGR_SYSEVENT_CAMERA_CONFIG(PREVIEW, width, height);
     previewOutput = streamRepeatPreview;
     return CAMERA_OK;
@@ -292,10 +277,9 @@ int32_t HCameraService::CreateMetadataOutput(const sptr<OHOS::IBufferProducer> &
         return CAMERA_INVALID_ARG;
     }
     streamMetadata = new(std::nothrow) HStreamMetadata(producer, format);
-    if (streamMetadata == nullptr) {
-        MEDIA_ERR_LOG("HCameraService::CreateMetadataOutput HStreamMetadata allocation failed");
-        return CAMERA_ALLOC_ERROR;
-    }
+    CHECK_AND_RETURN_RET_LOG(streamMetadata != nullptr, CAMERA_ALLOC_ERROR,
+                             "HCameraService::CreateMetadataOutput HStreamMetadata allocation failed");
+
     POWERMGR_SYSEVENT_CAMERA_CONFIG(METADATA, producer->GetDefaultWidth(),
                                     producer->GetDefaultHeight());
     metadataOutput = streamMetadata;
@@ -314,10 +298,9 @@ int32_t HCameraService::CreateVideoOutput(const sptr<OHOS::IBufferProducer> &pro
         return CAMERA_INVALID_ARG;
     }
     streamRepeatVideo = new(std::nothrow) HStreamRepeat(producer, format, width, height, true);
-    if (streamRepeatVideo == nullptr) {
-        MEDIA_ERR_LOG("HCameraService::CreateVideoOutput HStreamRepeat allocation failed");
-        return CAMERA_ALLOC_ERROR;
-    }
+    CHECK_AND_RETURN_RET_LOG(streamRepeatVideo != nullptr, CAMERA_ALLOC_ERROR,
+                             "HCameraService::CreateVideoOutput HStreamRepeat allocation failed");
+
     POWERMGR_SYSEVENT_CAMERA_CONFIG(VIDEO, producer->GetDefaultWidth(),
                                     producer->GetDefaultHeight());
     videoOutput = streamRepeatVideo;
