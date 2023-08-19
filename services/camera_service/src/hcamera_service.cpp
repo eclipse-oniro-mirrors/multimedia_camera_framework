@@ -45,7 +45,8 @@ void HCameraService::OnStart()
 {
     if (cameraHostManager_ == nullptr) {
         cameraHostManager_ = new(std::nothrow) HCameraHostManager(this);
-        CHECK_AND_RETURN_LOG(cameraHostManager_ != nullptr, "HCameraService OnStart failed to create HCameraHostManager obj");
+        CHECK_AND_RETURN_LOG(cameraHostManager_ != nullptr,
+                             "HCameraService OnStart failed to create HCameraHostManager obj");
     }
     if (cameraHostManager_->Init() != CAMERA_OK) {
         MEDIA_ERR_LOG("HCameraService OnStart failed to init camera host manager.");
