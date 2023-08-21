@@ -22,6 +22,7 @@
 namespace OHOS {
 namespace CameraStandard {
 void CameraDeviceFuzzTest(uint8_t *rawData, size_t size);
+void CameraDeviceFuzzTestGetPermission();
 }
 }
 #endif
