@@ -85,7 +85,7 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
 
     const camera_rational_t aeCompensationStep[] = {{nums[0], nums[1]}};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
-                      sizeof(aeCompensationStep) / sizeof(camera_rational_t));
+                      sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
 
     MessageParcel data;
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
