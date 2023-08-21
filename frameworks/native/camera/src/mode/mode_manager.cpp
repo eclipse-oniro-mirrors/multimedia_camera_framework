@@ -46,7 +46,7 @@ sptr<ModeManager> &ModeManager::GetInstance()
     if (ModeManager::modeManager_ == nullptr) {
         MEDIA_INFO_LOG("Initializing mode manager for first time!");
         ModeManager::modeManager_ = new(std::nothrow) ModeManager();
-        CHECK_AND_PRINT_LOG(!ModeManager::modeManager_, "Failed to new ModeManager");
+        CHECK_AND_PRINT_LOG(ModeManager::modeManager_ != nullptr, "Failed to new ModeManager");
     }
     return ModeManager::modeManager_;
 }
