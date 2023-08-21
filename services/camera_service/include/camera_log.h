@@ -70,6 +70,13 @@
         }                                              \
     } while (0)
 
+#define CHECK_AND_RETURN_RET(cond, ret)                \
+    do {                                               \
+        if (!(cond)) {                                 \
+            return ret;                                \
+        }                                              \
+    } while (0)
+
 #define POINTER_MASK 0x00FFFFFF
 
 #define CAMERA_SYNC_TRACE HITRACE_METER_NAME(HITRACE_TAG_ZCAMERA, __PRETTY_FUNCTION__)
