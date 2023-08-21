@@ -97,7 +97,7 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     MessageOption option;
     if (fuzzCameraDevice == nullptr || fuzzCameraHostManager == nullptr) {
         fuzzCameraHostManager = new(std::nothrow) HCameraHostManager(nullptr);
-        fuzzCameraDevice = new(std::nothrow) HCameraDevice(cameraHostManager, "", 0);
+        fuzzCameraDevice = new(std::nothrow) HCameraDevice(fuzzCameraHostManager, "", 0);
     }
     if (fuzzCameraDevice) {
         fuzzCameraDevice->OnRemoteRequest(code, data, reply, option);
