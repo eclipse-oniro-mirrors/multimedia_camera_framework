@@ -63,6 +63,13 @@
         }                                              \
     } while (0)
 
+#define CHECK_AND_PRINT_LOG(cond, fmt, ...)            \
+    do {                                               \
+        if (!(cond)) {                                 \
+            MEDIA_ERR_LOG(fmt, ##__VA_ARGS__);         \
+        }                                              \
+    } while (0)
+
 #define POINTER_MASK 0x00FFFFFF
 
 #define CAMERA_SYNC_TRACE HITRACE_METER_NAME(HITRACE_TAG_ZCAMERA, __PRETTY_FUNCTION__)
