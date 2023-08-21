@@ -26,6 +26,7 @@ using namespace std;
 namespace OHOS {
 namespace CameraStandard {
 const std::u16string FORMMGR_INTERFACE_TOKEN = u"ICameraDeviceService";
+const size_t LIMITCOUNT = 4;
 const int32_t LIMITSIZE = 2;
 bool isCameraDevicePermission = false;
 sptr<HCameraHostManager> fuzzCameraHostManager = nullptr;
@@ -68,7 +69,7 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     int32_t *streams = reinterpret_cast<int32_t *>(rawData);
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
     ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
-    ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams, size / 4);
+    ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams, size / LIMITCOUNT);
     int32_t compensationRange[2] = {nums[0], nums[1]};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
                       sizeof(compensationRange) / sizeof(compensationRange[0]));
