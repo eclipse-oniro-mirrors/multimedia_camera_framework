@@ -27,9 +27,7 @@ int HStreamCaptureStub::OnRemoteRequest(
     DisableJeMalloc();
     int errCode = -1;
 
-    if (data.ReadInterfaceToken() != GetDescriptor()) {
-        return errCode;
-    }
+    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
     switch (code) {
         case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_START):
             errCode = HStreamCaptureStub::HandleCapture(data);
@@ -66,10 +64,8 @@ int HStreamCaptureStub::HandleCapture(MessageParcel &data)
 int HStreamCaptureStub::HandleSetThumbnail(MessageParcel &data)
 {
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
-    if (remoteObj == nullptr) {
-        MEDIA_ERR_LOG("HCameraServiceStub HandleCreatePhotoOutput BufferProducer is null");
-        return IPC_STUB_INVALID_DATA_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCameraServiceStub HandleCreatePhotoOutput BufferProducer is null");
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
     bool isEnabled = data.ReadBool();
     int32_t ret = SetThumbnail(isEnabled, producer);
@@ -80,10 +76,8 @@ int HStreamCaptureStub::HandleSetThumbnail(MessageParcel &data)
 int HStreamCaptureStub::HandleSetCallback(MessageParcel &data)
 {
     auto remoteObject = data.ReadRemoteObject();
-    if (remoteObject == nullptr) {
-        MEDIA_ERR_LOG("HStreamCaptureStub HandleSetCallback StreamCaptureCallback is null");
-        return IPC_STUB_INVALID_DATA_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HStreamCaptureStub HandleSetCallback StreamCaptureCallback is null");
 
     auto callback = iface_cast<IStreamCaptureCallback>(remoteObject);
 

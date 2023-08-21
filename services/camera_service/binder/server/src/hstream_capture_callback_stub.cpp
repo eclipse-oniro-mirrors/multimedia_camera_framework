@@ -24,9 +24,7 @@ int HStreamCaptureCallbackStub::OnRemoteRequest(
 {
     int errCode = -1;
 
-    if (data.ReadInterfaceToken() != GetDescriptor()) {
-        return errCode;
-    }
+    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
     switch (code) {
         case static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED):
             errCode = HandleOnCaptureStarted(data);

@@ -25,9 +25,7 @@ int HCaptureSessionCallbackStub::OnRemoteRequest(
 {
     int errCode = -1;
 
-    if (data.ReadInterfaceToken() != GetDescriptor()) {
-        return errCode;
-    }
+    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
     switch (code) {
         case static_cast<uint32_t>(CaptureSessionCallbackInterfaceCode::CAMERA_CAPTURE_SESSION_ON_ERROR):
             errCode = HCaptureSessionCallbackStub::HandleSessionOnError(data);
