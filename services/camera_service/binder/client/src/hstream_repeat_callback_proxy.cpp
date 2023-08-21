@@ -28,10 +28,7 @@ int32_t HStreamRepeatCallbackProxy::OnFrameStarted()
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamRepeatCallbackProxy OnFrameStarted Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatCallbackInterfaceCode::CAMERA_STREAM_REPEAT_ON_FRAME_STARTED),
         data, reply, option);
@@ -48,14 +45,8 @@ int32_t HStreamRepeatCallbackProxy::OnFrameEnded(int32_t frameCount)
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamRepeatCallbackProxy OnFrameEnded Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteInt32(frameCount)) {
-        MEDIA_ERR_LOG("HStreamRepeatCallbackProxy OnFrameEnded Write frameCount failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(frameCount);
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatCallbackInterfaceCode::CAMERA_STREAM_REPEAT_ON_FRAME_ENDED),
@@ -73,14 +64,8 @@ int32_t HStreamRepeatCallbackProxy::OnFrameError(int32_t errorCode)
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HStreamRepeatCallbackProxy OnFrameError Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteInt32(errorCode)) {
-        MEDIA_ERR_LOG("HStreamRepeatCallbackProxy OnFrameError Write errorType failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(errorCode);
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatCallbackInterfaceCode::CAMERA_STREAM_REPEAT_ON_ERROR), data, reply, option);

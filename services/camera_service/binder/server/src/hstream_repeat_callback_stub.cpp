@@ -24,9 +24,7 @@ int HStreamRepeatCallbackStub::OnRemoteRequest(
 {
     int errCode = -1;
 
-    if (data.ReadInterfaceToken() != GetDescriptor()) {
-        return errCode;
-    }
+    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
     switch (code) {
         case static_cast<uint32_t>(StreamRepeatCallbackInterfaceCode::CAMERA_STREAM_REPEAT_ON_FRAME_STARTED):
             errCode = OnFrameStarted();

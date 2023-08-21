@@ -46,7 +46,7 @@ int HCameraServiceStub::OnRemoteRequest(
 {
     DisableJeMalloc();
     int errCode = -1;
-    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), errCode);
+    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
     const int TIME_OUT_SECONDS = 10;
     int32_t id = HiviewDFX::XCollie::GetInstance().SetTimer(
         "CameraServiceStub", TIME_OUT_SECONDS, nullptr, nullptr, HiviewDFX::XCOLLIE_FLAG_LOG);
@@ -119,16 +119,12 @@ int HCameraServiceStub::HandleGetCameras(MessageParcel &data, MessageParcel &rep
     std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
 
     int errCode = GetCameras(cameraIds, cameraAbilityList);
-    if (!reply.WriteStringVector(cameraIds)) {
-        MEDIA_ERR_LOG("HCameraServiceStub HandleGetCameras WriteStringVector failed");
-        return IPC_STUB_WRITE_PARCEL_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(reply.WriteStringVector(cameraIds), IPC_STUB_WRITE_PARCEL_ERR,
+                             "HCameraServiceStub HandleGetCameras WriteStringVector failed");
 
     int count = static_cast<int>(cameraAbilityList.size());
-    if (!reply.WriteInt32(count)) {
-        MEDIA_ERR_LOG("HCameraServiceStub HandleGetCameras Write vector size failed");
-        return IPC_STUB_WRITE_PARCEL_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(reply.WriteInt32(count), IPC_STUB_WRITE_PARCEL_ERR,
+                             "HCameraServiceStub HandleGetCameras Write vector size failed");
 
     for (auto cameraAbility : cameraAbilityList) {
         if (!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(cameraAbility, reply))) {
@@ -151,10 +147,8 @@ int HCameraServiceStub::HandleCreateCameraDevice(MessageParcel &data, MessagePar
         return errCode;
     }
 
-    if (!reply.WriteRemoteObject(device->AsObject())) {
-        MEDIA_ERR_LOG("HCameraServiceStub HandleCreateCameraDevice Write CameraDevice obj failed");
-        return IPC_STUB_WRITE_PARCEL_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(reply.WriteRemoteObject(device->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
+                             "HCameraServiceStub HandleCreateCameraDevice Write CameraDevice obj failed");
 
     return errCode;
 }
@@ -191,20 +185,16 @@ int HCameraServiceStub::HandleIsCameraMuted(MessageParcel &data, MessageParcel &
     bool isMuted = false;
     int32_t ret = IsCameraMuted(isMuted);
     MEDIA_INFO_LOG("HCameraServiceStub HandleIsCameraMuted result: %{public}d, isMuted: %{public}d", ret, isMuted);
-    if (!reply.WriteBool(isMuted)) {
-        MEDIA_ERR_LOG("HCameraServiceStub HandleIsCameraMuted Write isMuted failed");
-        return IPC_STUB_WRITE_PARCEL_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(reply.WriteBool(isMuted), IPC_STUB_WRITE_PARCEL_ERR,
+                             "HCameraServiceStub HandleIsCameraMuted Write isMuted failed");
     return ret;
 }
 
 int HCameraServiceStub::HandleSetCallback(MessageParcel &data, MessageParcel &reply)
 {
     auto remoteObject = data.ReadRemoteObject();
-    if (remoteObject == nullptr) {
-        MEDIA_ERR_LOG("HCameraServiceStub HandleSetCallback CameraServiceCallback is null");
-        return IPC_STUB_INVALID_DATA_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCameraServiceStub HandleSetCallback CameraServiceCallback is null");
 
     auto callback = iface_cast<ICameraServiceCallback>(remoteObject);
 
@@ -214,10 +204,8 @@ int HCameraServiceStub::HandleSetCallback(MessageParcel &data, MessageParcel &re
 int HCameraServiceStub::HandleSetMuteCallback(MessageParcel &data, MessageParcel &reply)
 {
     auto remoteObject = data.ReadRemoteObject();
-    if (remoteObject == nullptr) {
-        MEDIA_ERR_LOG("HCameraServiceStub HandleSetMuteCallback CameraMuteServiceCallback is null");
-        return IPC_STUB_INVALID_DATA_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCameraServiceStub HandleSetMuteCallback CameraMuteServiceCallback is null");
 
     auto callback = iface_cast<ICameraMuteServiceCallback>(remoteObject);
 
@@ -234,10 +222,8 @@ int HCameraServiceStub::HandleCreateCaptureSession(MessageParcel &data, MessageP
         return errCode;
     }
 
-    if (!reply.WriteRemoteObject(session->AsObject())) {
-        MEDIA_ERR_LOG("HCameraServiceStub HandleCreateCaptureSession Write CaptureSession obj failed");
-        return IPC_STUB_WRITE_PARCEL_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(reply.WriteRemoteObject(session->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
+                             "HCameraServiceStub HandleCreateCaptureSession Write CaptureSession obj failed");
 
     return errCode;
 }
@@ -247,10 +233,8 @@ int HCameraServiceStub::HandleCreatePhotoOutput(MessageParcel &data, MessageParc
     sptr<IStreamCapture> photoOutput = nullptr;
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
 
-    if (remoteObj == nullptr) {
-        MEDIA_ERR_LOG("HCameraServiceStub HandleCreatePhotoOutput BufferProducer is null");
-        return IPC_STUB_INVALID_DATA_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCameraServiceStub HandleCreatePhotoOutput BufferProducer is null");
 
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
     int32_t format = data.ReadInt32();
@@ -262,10 +246,8 @@ int HCameraServiceStub::HandleCreatePhotoOutput(MessageParcel &data, MessageParc
         return errCode;
     }
 
-    if (!reply.WriteRemoteObject(photoOutput->AsObject())) {
-        MEDIA_ERR_LOG("HCameraServiceStub HandleCreateCameraDevice Write photoOutput obj failed");
-        return IPC_STUB_WRITE_PARCEL_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(reply.WriteRemoteObject(photoOutput->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
+                             "HCameraServiceStub HandleCreateCameraDevice Write photoOutput obj failed");
 
     return errCode;
 }
@@ -275,10 +257,8 @@ int HCameraServiceStub::HandleCreatePreviewOutput(MessageParcel &data, MessagePa
     sptr<IStreamRepeat> previewOutput = nullptr;
 
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
-    if (remoteObj == nullptr) {
-        MEDIA_ERR_LOG("HCameraServiceStub HandleCreatePreviewOutput BufferProducer is null");
-        return IPC_STUB_INVALID_DATA_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCameraServiceStub HandleCreatePreviewOutput BufferProducer is null");
     int32_t format = data.ReadInt32();
     int32_t width = data.ReadInt32();
     int32_t height = data.ReadInt32();
@@ -290,10 +270,8 @@ int HCameraServiceStub::HandleCreatePreviewOutput(MessageParcel &data, MessagePa
         MEDIA_ERR_LOG("HandleCreatePreviewOutput CreatePreviewOutput failed : %{public}d", errCode);
         return errCode;
     }
-    if (!reply.WriteRemoteObject(previewOutput->AsObject())) {
-        MEDIA_ERR_LOG("HCameraServiceStub HandleCreatePreviewOutput Write previewOutput obj failed");
-        return IPC_STUB_WRITE_PARCEL_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(reply.WriteRemoteObject(previewOutput->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
+                             "HCameraServiceStub HandleCreatePreviewOutput Write previewOutput obj failed");
     return errCode;
 }
 
@@ -312,10 +290,8 @@ int HCameraServiceStub::HandleCreateDeferredPreviewOutput(MessageParcel &data, M
         MEDIA_ERR_LOG("HandleCreatePreviewOutput CreatePreviewOutput failed : %{public}d", errCode);
         return errCode;
     }
-    if (!reply.WriteRemoteObject(previewOutput->AsObject())) {
-        MEDIA_ERR_LOG("HCameraServiceStub HandleCreatePreviewOutput Write previewOutput obj failed");
-        return IPC_STUB_WRITE_PARCEL_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(reply.WriteRemoteObject(previewOutput->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
+                             "HCameraServiceStub HandleCreatePreviewOutput Write previewOutput obj failed");
     return errCode;
 }
 
@@ -324,10 +300,8 @@ int HCameraServiceStub::HandleCreateMetadataOutput(MessageParcel &data, MessageP
     sptr<IStreamMetadata> metadataOutput = nullptr;
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
 
-    if (remoteObj == nullptr) {
-        MEDIA_ERR_LOG("HCameraServiceStub HandleCreateMetadataOutput BufferProducer is null");
-        return IPC_STUB_INVALID_DATA_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCameraServiceStub HandleCreateMetadataOutput BufferProducer is null");
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
     int32_t format = data.ReadInt32();
     int errCode = CreateMetadataOutput(producer, format, metadataOutput);
@@ -336,10 +310,8 @@ int HCameraServiceStub::HandleCreateMetadataOutput(MessageParcel &data, MessageP
                       errCode);
         return errCode;
     }
-    if (!reply.WriteRemoteObject(metadataOutput->AsObject())) {
-        MEDIA_ERR_LOG("HCameraServiceStub HandleCreateMetadataOutput Write metadataOutput obj failed");
-        return IPC_STUB_WRITE_PARCEL_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(reply.WriteRemoteObject(metadataOutput->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
+                             "HCameraServiceStub HandleCreateMetadataOutput Write metadataOutput obj failed");
     return errCode;
 }
 
@@ -348,10 +320,8 @@ int HCameraServiceStub::HandleCreateVideoOutput(MessageParcel &data, MessageParc
     sptr<IStreamRepeat> videoOutput = nullptr;
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
 
-    if (remoteObj == nullptr) {
-        MEDIA_ERR_LOG("HCameraServiceStub HandleCreateVideoOutput BufferProducer is null");
-        return IPC_STUB_INVALID_DATA_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCameraServiceStub HandleCreateVideoOutput BufferProducer is null");
 
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
     int32_t format = data.ReadInt32();
@@ -362,10 +332,8 @@ int HCameraServiceStub::HandleCreateVideoOutput(MessageParcel &data, MessageParc
         MEDIA_ERR_LOG("HCameraServiceStub HandleCreateVideoOutput CreateVideoOutput failed : %{public}d", errCode);
         return errCode;
     }
-    if (!reply.WriteRemoteObject(videoOutput->AsObject())) {
-        MEDIA_ERR_LOG("HCameraServiceStub HandleCreateVideoOutput Write videoOutput obj failed");
-        return IPC_STUB_WRITE_PARCEL_ERR;
-    }
+    CHECK_AND_RETURN_RET_LOG(reply.WriteRemoteObject(videoOutput->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
+                             "HCameraServiceStub HandleCreateVideoOutput Write videoOutput obj failed");
 
     return errCode;
 }
