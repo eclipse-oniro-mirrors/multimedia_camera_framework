@@ -28,6 +28,7 @@ namespace CameraStandard {
 const std::u16string FORMMGR_INTERFACE_TOKEN = u"ICameraDeviceService";
 const size_t LIMITCOUNT = 4;
 const int32_t LIMITSIZE = 2;
+const size_t LIMITNUMCOUNT = 2;
 bool isCameraDevicePermission = false;
 sptr<HCameraHostManager> fuzzCameraHostManager = nullptr;
 HCameraDevice *fuzzCameraDevice = nullptr;
@@ -55,7 +56,7 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     }
     CameraDeviceFuzzTestGetPermission();
 
-    int32_t nums[2] = {0, 0};
+    int32_t nums[LIMITNUMCOUNT] = {0, 0};
     if (size == 1) {
         nums[0] = nums[1] = rawData[0];
     } else if (size > 1) {

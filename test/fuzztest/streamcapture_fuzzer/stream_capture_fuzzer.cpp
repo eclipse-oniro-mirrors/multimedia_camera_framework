@@ -29,6 +29,7 @@ namespace CameraStandard {
 const std::u16string FORMMGR_INTERFACE_TOKEN = u"IStreamCapture";
 const size_t LIMITCOUNT = 4;
 const int32_t LIMITSIZE = 2;
+const size_t LIMITNUMCOUNT = 2;
 const int32_t PHOTO_WIDTH = 1280;
 const int32_t PHOTO_HEIGHT = 960;
 const int32_t PHOTO_FORMAT = 2000;
@@ -56,7 +57,7 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
         return;
     }
     StreamCaptureFuzzTestGetPermission();
-    int32_t nums[2] = {0, 0};
+    int32_t nums[LIMITNUMCOUNT] = {0, 0};
     if (size == 1) {
         nums[0] = nums[1] = rawData[0];
     } else if (size > 1) {
