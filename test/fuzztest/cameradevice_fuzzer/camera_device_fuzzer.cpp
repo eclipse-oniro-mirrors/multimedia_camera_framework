@@ -27,43 +27,61 @@ namespace OHOS {
 namespace CameraStandard {
 const std::u16string FORMMGR_INTERFACE_TOKEN = u"ICameraDeviceService";
 const int32_t LIMITSIZE = 2;
+bool isCameraDevicePermission = false;
+sptr<HCameraHostManager> fuzzCameraHostManager = nullptr;
+HCameraDevice *fuzzCameraDevice = nullptr;
+
+void CameraDeviceFuzzTestGetPermission()
+{
+    if (!isCameraDevicePermission) {
+        uint64_t tokenId;
+        const char *perms[0];
+        perms[0] = "ohos.permission.CAMERA";
+        NativeTokenInfoParams infoInstance = { .dcapsNum = 0, .permsNum = 1, .aclsNum = 0, .dcaps = NULL,
+            .perms = perms, .acls = NULL, .processName = "camera_capture", .aplStr = "system_basic",
+        };
+        tokenId = GetAccessTokenId(&infoInstance);
+        SetSelfTokenID(tokenId);
+        OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
+        isCameraDevicePermission = true;
+    }
+}
 
 void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
 {
     if (rawData == nullptr || size < LIMITSIZE) {
         return;
     }
+    CameraDeviceFuzzTestGetPermission();
 
-    uint64_t tokenId;
-    const char *perms[0];
-    perms[0] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = { .dcapsNum = 0, .permsNum = 1, .aclsNum = 0, .dcaps = NULL,
-        .perms = perms, .acls = NULL, .processName = "camera_capture", .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
+    int32_t nums[2] = {0, 0};
+    if (size == 1) {
+        nums[0] = nums[1] = rawData[0];
+    } else if (size > 1) {
+        nums[0] = rawData[0];
+        nums[1] = rawData[1];
+    }
 
     uint32_t code = 4;
     int32_t itemCount = 10;
     int32_t dataSize = 100;
-    uint8_t *streams = rawData;
+    int32_t *streams = reinterpret_cast<int32_t *>(rawData);
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
     ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
-    ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams, size);
-    int32_t compensationRange[2] = {rawData[0], rawData[1]};
+    ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams, size / 4);
+    int32_t compensationRange[2] = {nums[0], nums[1]};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
                       sizeof(compensationRange) / sizeof(compensationRange[0]));
-    float focalLength = rawData[0];
-    ability->addEntry(OHOS_ABILITY_FOCAL_LENGTH, &focalLength, sizeof(float));
+    float focalLength = nums[0];
+    ability->addEntry(OHOS_ABILITY_FOCAL_LENGTH, &focalLength, 1);
 
-    int32_t sensorOrientation = rawData[0];
-    ability->addEntry(OHOS_SENSOR_ORIENTATION, &sensorOrientation, sizeof(int32_t));
+    int32_t sensorOrientation = nums[0];
+    ability->addEntry(OHOS_SENSOR_ORIENTATION, &sensorOrientation, 1);
 
-    int32_t cameraPosition = rawData[0];
-    ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, sizeof(int32_t));
+    int32_t cameraPosition = nums[0];
+    ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
 
-    const camera_rational_t aeCompensationStep[] = {{rawData[0], rawData[1]}};
+    const camera_rational_t aeCompensationStep[] = {{nums[0], nums[1]}};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
                       sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
 
@@ -75,10 +93,13 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     data.RewindRead(0);
     MessageParcel reply;
     MessageOption option;
-    sptr<HCameraHostManager> cameraHostManager = new(std::nothrow) HCameraHostManager(nullptr);
-    std::shared_ptr<HCameraDevice> cameraDevice =
-        std::make_shared<HCameraDevice>(cameraHostManager, "", 0);
-    cameraDevice->OnRemoteRequest(code, data, reply, option);
+    if (fuzzCameraDevice == nullptr || fuzzCameraHostManager == nullptr) {
+        fuzzCameraHostManager = new(std::nothrow) HCameraHostManager(nullptr);
+        fuzzCameraDevice = new(std::nothrow) HCameraDevice(cameraHostManager, "", 0);
+    }
+    if (fuzzCameraDevice) {
+        fuzzCameraDevice->OnRemoteRequest(code, data, reply, option);
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS
