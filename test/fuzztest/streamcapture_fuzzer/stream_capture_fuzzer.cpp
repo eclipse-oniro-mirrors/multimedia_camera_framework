@@ -33,11 +33,11 @@ const size_t LIMITNUMCOUNT = 2;
 const int32_t PHOTO_WIDTH = 1280;
 const int32_t PHOTO_HEIGHT = 960;
 const int32_t PHOTO_FORMAT = 2000;
-bool isStreamCapturePermission = false;
+bool g_isStreamCapturePermission = false;
 HStreamCapture *fuzzStreamcapture = nullptr;
 void StreamCaptureFuzzTestGetPermission()
 {
-    if (!isStreamCapturePermission) {
+    if (!g_isStreamCapturePermission) {
         uint64_t tokenId;
         const char *perms[0];
         perms[0] = "ohos.permission.CAMERA";
@@ -47,7 +47,7 @@ void StreamCaptureFuzzTestGetPermission()
         tokenId = GetAccessTokenId(&infoInstance);
         SetSelfTokenID(tokenId);
         OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-        isStreamCapturePermission = true;
+        g_isStreamCapturePermission = true;
     }
 }
 
@@ -85,7 +85,7 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
 
     const camera_rational_t aeCompensationStep[] = {{nums[0], nums[1]}};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
-                      sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
+                      sizeof(aeCompensationStep) / sizeof(camera_rational_t));
 
     MessageParcel data;
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
@@ -104,9 +104,7 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
     if (fuzzStreamcapture == nullptr) {
         fuzzStreamcapture = new(std::nothrow) HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
     }
-    if (fuzzStreamcapture) {
-        fuzzStreamcapture->OnRemoteRequest(code, data, reply, option);
-    }
+    fuzzStreamcapture->OnRemoteRequest(code, data, reply, option);
 }
 } // namespace CameraStandard
 } // namespace OHOS

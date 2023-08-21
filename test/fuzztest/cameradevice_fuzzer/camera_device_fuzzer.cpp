@@ -29,13 +29,13 @@ const std::u16string FORMMGR_INTERFACE_TOKEN = u"ICameraDeviceService";
 const size_t LIMITCOUNT = 4;
 const int32_t LIMITSIZE = 2;
 const size_t LIMITNUMCOUNT = 2;
-bool isCameraDevicePermission = false;
+bool g_isCameraDevicePermission = false;
 sptr<HCameraHostManager> fuzzCameraHostManager = nullptr;
 HCameraDevice *fuzzCameraDevice = nullptr;
 
 void CameraDeviceFuzzTestGetPermission()
 {
-    if (!isCameraDevicePermission) {
+    if (!g_isCameraDevicePermission) {
         uint64_t tokenId;
         const char *perms[0];
         perms[0] = "ohos.permission.CAMERA";
@@ -45,7 +45,7 @@ void CameraDeviceFuzzTestGetPermission()
         tokenId = GetAccessTokenId(&infoInstance);
         SetSelfTokenID(tokenId);
         OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-        isCameraDevicePermission = true;
+        g_isCameraDevicePermission = true;
     }
 }
 
@@ -85,7 +85,7 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
 
     const camera_rational_t aeCompensationStep[] = {{nums[0], nums[1]}};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
-                      sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
+                      sizeof(aeCompensationStep) / sizeof(camera_rational_t));
 
     MessageParcel data;
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
