@@ -313,6 +313,7 @@ int32_t HCaptureSession::RemoveOutput(StreamType streamType, sptr<IStreamCommon>
 
 int32_t HCaptureSession::ValidateSessionInputs()
 {
+    std::lock_guard<std::mutex> lock(sessionLock_);
     if (tempCameraDevices_.empty() && (cameraDevice_ == nullptr || cameraDevice_->IsReleaseCameraDevice())) {
         MEDIA_ERR_LOG("HCaptureSession::ValidateSessionInputs No inputs present");
         return CAMERA_INVALID_SESSION_CFG;
@@ -322,6 +323,7 @@ int32_t HCaptureSession::ValidateSessionInputs()
 
 int32_t HCaptureSession::ValidateSessionOutputs()
 {
+    std::lock_guard<std::mutex> lock(sessionLock_);
     if (tempStreams_.size() + streams_.size() - deletedStreamIds_.size() == 0) {
         MEDIA_ERR_LOG("HCaptureSession::ValidateSessionOutputs No outputs present");
         return CAMERA_INVALID_SESSION_CFG;
@@ -331,6 +333,7 @@ int32_t HCaptureSession::ValidateSessionOutputs()
 
 int32_t HCaptureSession::GetCameraDevice(sptr<HCameraDevice> &device)
 {
+    std::lock_guard<std::mutex> lock(sessionLock_);
     if (cameraDevice_ != nullptr && !cameraDevice_->IsReleaseCameraDevice()) {
         MEDIA_DEBUG_LOG("HCaptureSession::GetCameraDevice Camera device has not changed");
         device = cameraDevice_;
@@ -599,7 +602,6 @@ int32_t HCaptureSession::CommitConfig()
         return CAMERA_INVALID_STATE;
     }
 
-    std::lock_guard<std::mutex> lock(sessionLock_);
     int32_t rc = ValidateSessionInputs();
     if (rc != CAMERA_OK) {
         return rc;
@@ -610,6 +612,7 @@ int32_t HCaptureSession::CommitConfig()
     }
 
     rc = GetCameraDevice(device);
+    std::lock_guard<std::mutex> lock(sessionLock_);
     if ((rc == CAMERA_OK) && (device == cameraDevice_) && !deletedStreamIds_.empty()) {
         rc = HdiToServiceError((CamRetCode)(device->GetStreamOperator()->ReleaseStreams(deletedStreamIds_)));
     }
