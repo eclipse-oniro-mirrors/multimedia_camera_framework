@@ -29,18 +29,10 @@ int32_t HCameraDeviceCallbackProxy::OnError(const int32_t errorType, const int32
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HCameraDeviceCallbackProxy OnError Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteInt32(errorType)) {
-        MEDIA_ERR_LOG("HCameraDeviceCallbackProxy OnError Write errorType failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteInt32(errorMsg)) {
-        MEDIA_ERR_LOG("HCameraDeviceCallbackProxy OnError Write errorMsg failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(errorType);
+    data.WriteInt32(errorMsg);
+
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraDeviceCallbackInterfaceCode::CAMERA_DEVICE_ON_ERROR), data, reply, option);
     if (error != ERR_NONE) {
@@ -56,14 +48,9 @@ int32_t HCameraDeviceCallbackProxy::OnResult(const uint64_t timestamp,
     MessageParcel reply;
     MessageOption option;
 
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        MEDIA_ERR_LOG("HCameraDeviceCallbackProxy OnResult Write interface token failed");
-        return IPC_PROXY_ERR;
-    }
-    if (!data.WriteUint64(timestamp)) {
-        MEDIA_ERR_LOG("HCameraDeviceCallbackProxy OnResult Write timestamp failed");
-        return IPC_PROXY_ERR;
-    }
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteUint64(timestamp);
+
     if (!(Camera::MetadataUtils::EncodeCameraMetadata(result, data))) {
         MEDIA_ERR_LOG("HCameraDeviceCallbackProxy OnResult EncodeCameraMetadata failed");
         return IPC_PROXY_ERR;

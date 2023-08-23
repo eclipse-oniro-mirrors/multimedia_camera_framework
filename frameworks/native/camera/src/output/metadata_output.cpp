@@ -187,10 +187,8 @@ int32_t MetadataObjectListener::ProcessFaceRectangles(int64_t timestamp, const c
     for (; start < end; start += rectangleUnitLen) {
         sptr<MetadataObject> metadataObject = new(std::nothrow) MetadataFaceObject(timestamp,
             (Rect) {start[0], start[1], start[2], start[3]});
-        if (!metadataObject) {
-            MEDIA_ERR_LOG("Failed to allocate MetadataFaceObject");
-            return ERROR_INSUFFICIENT_RESOURCES;
-        }
+        CHECK_AND_RETURN_RET_LOG(metadataObject != nullptr, ERROR_INSUFFICIENT_RESOURCES,
+                                 "Failed to allocate MetadataFaceObject");
         metaObjects.emplace_back(metadataObject);
     }
     return CAMERA_OK;

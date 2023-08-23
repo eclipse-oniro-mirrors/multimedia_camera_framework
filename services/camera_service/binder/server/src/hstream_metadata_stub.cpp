@@ -26,9 +26,7 @@ int HStreamMetadataStub::OnRemoteRequest(
     DisableJeMalloc();
     int errCode = -1;
 
-    if (data.ReadInterfaceToken() != GetDescriptor()) {
-        return errCode;
-    }
+    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
     switch (code) {
         case static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_START):
             errCode = Start();
