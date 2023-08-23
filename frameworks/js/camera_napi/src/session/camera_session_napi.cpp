@@ -198,10 +198,6 @@ CameraSessionNapi::~CameraSessionNapi()
 void CameraSessionNapi::CameraSessionNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
     MEDIA_DEBUG_LOG("CameraSessionNapiDestructor enter");
-    CameraSessionNapi* cameraObj = reinterpret_cast<CameraSessionNapi*>(nativeObject);
-    if (cameraObj != nullptr) {
-        delete cameraObj;
-    }
 }
 
 napi_value CameraSessionNapi::Init(napi_env env, napi_value exports)
