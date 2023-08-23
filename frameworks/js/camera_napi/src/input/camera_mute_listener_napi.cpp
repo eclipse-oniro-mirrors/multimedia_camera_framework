@@ -45,14 +45,14 @@ void CameraMuteListenerNapi::OnCameraMuteCallbackAsync(bool muteMode) const
     std::unique_ptr<CameraMuteCallbackInfo> callbackInfo =
         std::make_unique<CameraMuteCallbackInfo>(muteMode, this);
     work->data = callbackInfo.get();
-    int ret = uv_queue_work(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         CameraMuteCallbackInfo* callbackInfo = reinterpret_cast<CameraMuteCallbackInfo *>(work->data);
         if (callbackInfo) {
             callbackInfo->listener_->OnCameraMuteCallback(callbackInfo->muteMode_);
             delete callbackInfo;
         }
         delete work;
-    });
+    }, uv_qos_user_initiated);
     if (ret) {
         MEDIA_ERR_LOG("Failed to execute work");
         delete work;

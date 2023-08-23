@@ -47,14 +47,14 @@ void ErrorCallbackListener::OnErrorCallbackAsync(const int32_t errorType, const 
     }
     std::unique_ptr<ErrorCallbackInfo> callbackInfo = std::make_unique<ErrorCallbackInfo>(errorType, errorMsg, this);
     work->data = callbackInfo.get();
-    int ret = uv_queue_work(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         ErrorCallbackInfo* callbackInfo = reinterpret_cast<ErrorCallbackInfo *>(work->data);
         if (callbackInfo) {
             callbackInfo->listener_->OnErrorCallback(callbackInfo->errorType_, callbackInfo->errorMsg_);
             delete callbackInfo;
         }
         delete work;
-    });
+    }, uv_qos_user_initiated);
     if (ret) {
         MEDIA_ERR_LOG("failed to execute work");
         delete work;
@@ -367,7 +367,7 @@ napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
             }
             napi_get_undefined(env, &result);
         } else {
-            napi_queue_async_work(env, asyncContext->work);
+            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
             asyncContext.release();
         }
     } else {
@@ -422,7 +422,7 @@ napi_value CameraInputNapi::Close(napi_env env, napi_callback_info info)
             }
             napi_get_undefined(env, &result);
         } else {
-            napi_queue_async_work(env, asyncContext->work);
+            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
             asyncContext.release();
         }
     } else {
@@ -477,7 +477,7 @@ napi_value CameraInputNapi::Release(napi_env env, napi_callback_info info)
             }
             napi_get_undefined(env, &result);
         } else {
-            napi_queue_async_work(env, asyncContext->work);
+            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
             asyncContext.release();
         }
     } else {

@@ -40,14 +40,14 @@ void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state)
     }
     std::unique_ptr<ExposureCallbackInfo> callbackInfo = std::make_unique<ExposureCallbackInfo>(state, this);
     work->data = callbackInfo.get();
-    int ret = uv_queue_work(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         ExposureCallbackInfo* callbackInfo = reinterpret_cast<ExposureCallbackInfo *>(work->data);
         if (callbackInfo) {
             callbackInfo->listener_->OnExposureStateCallback(callbackInfo->state_);
             delete callbackInfo;
         }
         delete work;
-    });
+    }, uv_qos_user_initiated);
     if (ret) {
         MEDIA_ERR_LOG("failed to execute work");
         delete work;
@@ -154,14 +154,14 @@ void FocusCallbackListener::OnFocusStateCallbackAsync(FocusState state) const
     }
     std::unique_ptr<FocusCallbackInfo> callbackInfo = std::make_unique<FocusCallbackInfo>(state, this);
     work->data = callbackInfo.get();
-    int ret = uv_queue_work(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         FocusCallbackInfo* callbackInfo = reinterpret_cast<FocusCallbackInfo *>(work->data);
         if (callbackInfo) {
             callbackInfo->listener_->OnFocusStateCallback(callbackInfo->state_);
             delete callbackInfo;
         }
         delete work;
-    });
+    }, uv_qos_user_initiated);
     if (ret) {
         MEDIA_ERR_LOG("failed to execute work");
         delete work;
@@ -270,14 +270,14 @@ void SessionCallbackListener::OnErrorCallbackAsync(int32_t errorCode) const
     }
     std::unique_ptr<SessionCallbackInfo> callbackInfo = std::make_unique<SessionCallbackInfo>(errorCode, this);
     work->data = callbackInfo.get();
-    int ret = uv_queue_work(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         SessionCallbackInfo* callbackInfo = reinterpret_cast<SessionCallbackInfo *>(work->data);
         if (callbackInfo) {
             callbackInfo->listener_->OnErrorCallback(callbackInfo->errorCode_);
             delete callbackInfo;
         }
         delete work;
-    });
+    }, uv_qos_user_initiated);
     if (ret) {
         MEDIA_ERR_LOG("failed to execute work");
         delete work;
@@ -740,7 +740,7 @@ napi_value CameraSessionNapi::CommitConfig(napi_env env, napi_callback_info info
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for CommitConfig");
             napi_get_undefined(env, &result);
         } else {
-            napi_queue_async_work(env, asyncContext->work);
+            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
             asyncContext.release();
         }
     } else {
@@ -1081,7 +1081,7 @@ napi_value CameraSessionNapi::Start(napi_env env, napi_callback_info info)
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::Start");
             napi_get_undefined(env, &result);
         } else {
-            napi_queue_async_work(env, asyncContext->work);
+            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
             asyncContext.release();
         }
     }
@@ -1132,7 +1132,7 @@ napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::Stop");
             napi_get_undefined(env, &result);
         } else {
-            napi_queue_async_work(env, asyncContext->work);
+            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
             asyncContext.release();
         }
     } else {
@@ -1186,7 +1186,7 @@ napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::Release");
             napi_get_undefined(env, &result);
         } else {
-            napi_queue_async_work(env, asyncContext->work);
+            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
             asyncContext.release();
         }
     } else {

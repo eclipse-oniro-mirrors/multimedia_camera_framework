@@ -440,7 +440,7 @@ napi_value CameraManagerNapi::CreateDeferredPreviewOutputInstance(napi_env env, 
         MEDIA_ERR_LOG("Failed to create napi_create_async_work for CreatePhotoOutputInstance");
         napi_get_undefined(env, &result);
     } else {
-        napi_queue_async_work(env, asyncContext->work);
+        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
 

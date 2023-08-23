@@ -48,14 +48,14 @@ void PreviewOutputCallback::UpdateJSCallbackAsync(PreviewOutputEventType eventTy
     std::unique_ptr<PreviewOutputCallbackInfo> callbackInfo =
         std::make_unique<PreviewOutputCallbackInfo>(eventType, value, this);
     work->data = callbackInfo.get();
-    int ret = uv_queue_work(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         PreviewOutputCallbackInfo* callbackInfo = reinterpret_cast<PreviewOutputCallbackInfo *>(work->data);
         if (callbackInfo) {
             callbackInfo->listener_->UpdateJSCallback(callbackInfo->eventType_, callbackInfo->value_);
             delete callbackInfo;
         }
         delete work;
-    });
+    }, uv_qos_user_initiated);
     if (ret) {
         MEDIA_ERR_LOG("failed to execute work");
         delete work;
@@ -505,7 +505,7 @@ napi_value PreviewOutputNapi::Release(napi_env env, napi_callback_info info)
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for PreviewOutputNapi::Release");
             napi_get_undefined(env, &result);
         } else {
-            napi_queue_async_work(env, asyncContext->work);
+            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
             asyncContext.release();
         }
     } else {
@@ -616,7 +616,7 @@ napi_value PreviewOutputNapi::AddDeferredSurface(napi_env env, napi_callback_inf
             MEDIA_ERR_LOG("Failed to create napi_create_async_work!");
             napi_get_undefined(env, &result);
         } else {
-            napi_queue_async_work(env, asyncContext->work);
+            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
             asyncContext.release();
         }
     } else {
@@ -669,7 +669,7 @@ napi_value PreviewOutputNapi::Start(napi_env env, napi_callback_info info)
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for PreviewOutputNapi::Release");
             napi_get_undefined(env, &result);
         } else {
-            napi_queue_async_work(env, asyncContext->work);
+            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
             asyncContext.release();
         }
     } else {
@@ -722,7 +722,7 @@ napi_value PreviewOutputNapi::Stop(napi_env env, napi_callback_info info)
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for PreviewOutputNapi::Release");
             napi_get_undefined(env, &result);
         } else {
-            napi_queue_async_work(env, asyncContext->work);
+            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
             asyncContext.release();
         }
     } else {

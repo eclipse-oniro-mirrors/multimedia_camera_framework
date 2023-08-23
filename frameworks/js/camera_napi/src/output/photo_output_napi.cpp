@@ -49,14 +49,14 @@ void PhotoOutputCallback::UpdateJSCallbackAsync(PhotoOutputEventType eventType, 
     std::unique_ptr<PhotoOutputCallbackInfo> callbackInfo =
         std::make_unique<PhotoOutputCallbackInfo>(eventType, info, this);
     work->data = callbackInfo.get();
-    int ret = uv_queue_work(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         PhotoOutputCallbackInfo* callbackInfo = reinterpret_cast<PhotoOutputCallbackInfo *>(work->data);
         if (callbackInfo) {
             callbackInfo->listener_->UpdateJSCallback(callbackInfo->eventType_, callbackInfo->info_);
             delete callbackInfo;
         }
         delete work;
-    });
+    }, uv_qos_user_initiated);
     if (ret) {
         MEDIA_ERR_LOG("failed to execute work");
         delete work;
@@ -430,7 +430,7 @@ void ThumbnailListener::UpdateJSCallbackAsync(sptr<PhotoOutput> photoOutput) con
     std::unique_ptr<ThumbnailListenerInfo> callbackInfo =
             std::make_unique<ThumbnailListenerInfo>(photoOutput, this);
     work->data = callbackInfo.get();
-    int ret = uv_queue_work(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         ThumbnailListenerInfo* callbackInfo = reinterpret_cast<ThumbnailListenerInfo *>(work->data);
         if (callbackInfo) {
             callbackInfo->listener_->UpdateJSCallback(callbackInfo->photoOutput_);
@@ -440,7 +440,7 @@ void ThumbnailListener::UpdateJSCallbackAsync(sptr<PhotoOutput> photoOutput) con
             delete callbackInfo;
         }
         delete work;
-    });
+    }, uv_qos_user_initiated);
     if (ret) {
         MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to execute work");
         delete work;
@@ -902,7 +902,7 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for PhotoOutputNapi::Capture");
             napi_get_undefined(env, &result);
         } else {
-            napi_queue_async_work(env, asyncContext->work);
+            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
             asyncContext.release();
         }
     } else {
@@ -955,7 +955,7 @@ napi_value PhotoOutputNapi::Release(napi_env env, napi_callback_info info)
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for PhotoOutputNapi::Release");
             napi_get_undefined(env, &result);
         } else {
-            napi_queue_async_work(env, asyncContext->work);
+            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
             asyncContext.release();
         }
     } else {
@@ -1007,7 +1007,7 @@ napi_value PhotoOutputNapi::GetDefaultCaptureSetting(napi_env env, napi_callback
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for PhotoOutputNapi::GetDefaultCaptureSetting");
             napi_get_undefined(env, &result);
         } else {
-            napi_queue_async_work(env, asyncContext->work);
+            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
             asyncContext.release();
         }
     } else {
@@ -1111,7 +1111,7 @@ napi_value PhotoOutputNapi::SetMirror(napi_env env, napi_callback_info info)
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for SetMirror");
             napi_get_undefined(env, &result);
         } else {
-            napi_queue_async_work(env, asyncContext->work);
+            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
             asyncContext.release();
         }
     } else {
