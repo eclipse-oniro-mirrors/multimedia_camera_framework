@@ -28,7 +28,7 @@ namespace CameraStandard {
 class CameraFrameworkModuleTest : public testing::Test {
 public:
     static const int32_t PHOTO_DEFAULT_WIDTH = 1280;
-    static const int32_t PHOTO_DEFAULT_HEIGHT = 960;
+    static const int32_t PHOTO_DEFAULT_HEIGHT = 720;
     static const int32_t PREVIEW_DEFAULT_WIDTH = 640;
     static const int32_t PREVIEW_DEFAULT_HEIGHT = 480;
     static const int32_t VIDEO_DEFAULT_WIDTH = 640;
