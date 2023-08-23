@@ -747,7 +747,7 @@ int CameraManager::CreateCameraInput(CameraPosition position, CameraType cameraT
     return CameraErrorCode::SUCCESS;
 }
 
-bool g_IsCapabilitySupported(std::shared_ptr<OHOS::Camera::CameraMetadata> metadata,
+bool IsCapabilitySupported(std::shared_ptr<OHOS::Camera::CameraMetadata> metadata,
     camera_metadata_item_t &item, uint32_t metadataTag)
 {
     bool isSupport = true;
@@ -826,9 +826,9 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = camera->GetMetadata();
     camera_metadata_item_t item;
 
-    if (g_IsCapabilitySupported(metadata, item, OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS)) {
+    if (IsCapabilitySupported(metadata, item, OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS)) {
         ParseExtendCapability(cameraOutputCapability, modeName, item);
-    } else if (g_IsCapabilitySupported(metadata, item, OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS)) {
+    } else if (IsCapabilitySupported(metadata, item, OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS)) {
         ParseBasicCapability(cameraOutputCapability, metadata, item);
     } else {
         MEDIA_ERR_LOG("Failed get stream info");
