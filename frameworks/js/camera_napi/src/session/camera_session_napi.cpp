@@ -40,14 +40,14 @@ void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state)
     }
     std::unique_ptr<ExposureCallbackInfo> callbackInfo = std::make_unique<ExposureCallbackInfo>(state, this);
     work->data = callbackInfo.get();
-    int ret = uv_queue_work(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         ExposureCallbackInfo* callbackInfo = reinterpret_cast<ExposureCallbackInfo *>(work->data);
         if (callbackInfo) {
             callbackInfo->listener_->OnExposureStateCallback(callbackInfo->state_);
             delete callbackInfo;
         }
         delete work;
-    });
+    }, uv_qos_user_initiated);
     if (ret) {
         MEDIA_ERR_LOG("failed to execute work");
         delete work;
@@ -59,20 +59,83 @@ void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state)
 void ExposureCallbackListener::OnExposureStateCallback(ExposureState state) const
 {
     MEDIA_DEBUG_LOG("OnExposureStateCallback is called");
-    napi_value result[ARGS_TWO];
+    napi_value result[ARGS_TWO] = {nullptr, nullptr};
     napi_value callback = nullptr;
     napi_value retVal;
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_int32(env_, state, &result[PARAM1]);
-
-    napi_get_reference_value(env_, callbackRef_, &callback);
-    napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
+    for (auto it = exposureCbList_.begin(); it != exposureCbList_.end();) {
+        napi_env env = (*it)->env_;
+        napi_get_undefined(env, &result[PARAM0]);
+        napi_create_int32(env, state, &result[PARAM1]);
+        napi_get_reference_value(env, (*it)->cb_, &callback);
+        napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
+        if ((*it)->isOnce_) {
+            napi_status status = napi_delete_reference(env, (*it)->cb_);
+            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
+            (*it)->cb_ = nullptr;
+            exposureCbList_.erase(it);
+        } else {
+            it++;
+        }
+    }
 }
 
 void ExposureCallbackListener::OnExposureState(const ExposureState state)
 {
     MEDIA_DEBUG_LOG("OnExposureState is called, state: %{public}d", state);
     OnExposureStateCallbackAsync(state);
+}
+void ExposureCallbackListener::SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    bool isSameCallback = true;
+    for (auto it = exposureCbList_.begin(); it != exposureCbList_.end(); ++it) {
+        isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
+    }
+    napi_ref callbackRef = nullptr;
+    const int32_t refCount = 1;
+    napi_status status = napi_create_reference(env_, callback, refCount, &callbackRef);
+    CHECK_AND_RETURN_LOG(status == napi_ok && callbackRef != nullptr,
+                         "PreviewOutputCallback: creating reference for callback fail");
+    std::shared_ptr<AutoRef> cb = std::make_shared<AutoRef>(env_, callbackRef, isOnce);
+    exposureCbList_.push_back(cb);
+    MEDIA_INFO_LOG("Save callback reference success, callback list size [%{public}zu]",
+                   exposureCbList_.size());
+}
+
+void ExposureCallbackListener::RemoveCallbackRef(napi_env env, napi_value callback)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (callback == nullptr) {
+        MEDIA_INFO_LOG("RemoveCallbackRef: js callback is nullptr, remove all callback reference");
+        RemoveAllCallbacks();
+        return;
+    }
+    for (auto it = exposureCbList_.begin(); it != exposureCbList_.end(); ++it) {
+        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        if (isSameCallback) {
+            MEDIA_INFO_LOG("RemoveCallbackRef: find js callback, delete it");
+            napi_status status = napi_delete_reference(env, (*it)->cb_);
+            (*it)->cb_ = nullptr;
+            CHECK_AND_RETURN_LOG(status == napi_ok, "RemoveCallbackRef: delete reference for callback fail");
+            exposureCbList_.erase(it);
+            return;
+        }
+    }
+    MEDIA_INFO_LOG("RemoveCallbackRef: js callback no find");
+}
+
+void ExposureCallbackListener::RemoveAllCallbacks()
+{
+    for (auto it = exposureCbList_.begin(); it != exposureCbList_.end(); ++it) {
+        napi_status ret = napi_delete_reference(env_, (*it)->cb_);
+        if (ret != napi_ok) {
+            MEDIA_ERR_LOG("RemoveAllCallbackReferences: napi_delete_reference err.");
+        }
+        (*it)->cb_ = nullptr;
+    }
+    exposureCbList_.clear();
+    MEDIA_INFO_LOG("RemoveAllCallbacks: remove all js callbacks success");
 }
 
 void FocusCallbackListener::OnFocusStateCallbackAsync(FocusState state) const
@@ -91,14 +154,14 @@ void FocusCallbackListener::OnFocusStateCallbackAsync(FocusState state) const
     }
     std::unique_ptr<FocusCallbackInfo> callbackInfo = std::make_unique<FocusCallbackInfo>(state, this);
     work->data = callbackInfo.get();
-    int ret = uv_queue_work(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         FocusCallbackInfo* callbackInfo = reinterpret_cast<FocusCallbackInfo *>(work->data);
         if (callbackInfo) {
             callbackInfo->listener_->OnFocusStateCallback(callbackInfo->state_);
             delete callbackInfo;
         }
         delete work;
-    });
+    }, uv_qos_user_initiated);
     if (ret) {
         MEDIA_ERR_LOG("failed to execute work");
         delete work;
@@ -110,20 +173,85 @@ void FocusCallbackListener::OnFocusStateCallbackAsync(FocusState state) const
 void FocusCallbackListener::OnFocusStateCallback(FocusState state) const
 {
     MEDIA_DEBUG_LOG("OnFocusStateCallback is called");
-    napi_value result[ARGS_TWO];
+    napi_value result[ARGS_TWO] = {nullptr, nullptr};
     napi_value callback = nullptr;
     napi_value retVal;
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_int32(env_, state, &result[PARAM1]);
-
-    napi_get_reference_value(env_, callbackRef_, &callback);
-    napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
+    for (auto it = focusCbList_.begin(); it != focusCbList_.end();) {
+        napi_env env = (*it)->env_;
+        napi_get_undefined(env, &result[PARAM0]);
+        napi_create_int32(env, state, &result[PARAM1]);
+        napi_get_reference_value(env, (*it)->cb_, &callback);
+        napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
+        if ((*it)->isOnce_) {
+            napi_status status = napi_delete_reference(env, (*it)->cb_);
+            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
+            (*it)->cb_ = nullptr;
+            focusCbList_.erase(it);
+        } else {
+            it++;
+        }
+    }
+    MEDIA_DEBUG_LOG("FocusCallbackListener list size [%{public}zu]", focusCbList_.size());
 }
 
 void FocusCallbackListener::OnFocusState(FocusState state)
 {
     MEDIA_DEBUG_LOG("OnFocusState is called, state: %{public}d", state);
     OnFocusStateCallbackAsync(state);
+}
+
+void FocusCallbackListener::SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    bool isSameCallback = true;
+    for (auto it = focusCbList_.begin(); it != focusCbList_.end(); ++it) {
+        isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
+    }
+    napi_ref callbackRef = nullptr;
+    const int32_t refCount = 1;
+    napi_status status = napi_create_reference(env_, callback, refCount, &callbackRef);
+    CHECK_AND_RETURN_LOG(status == napi_ok && callbackRef != nullptr,
+                         "FocusCallbackListener: creating reference for callback fail");
+    std::shared_ptr<AutoRef> cb = std::make_shared<AutoRef>(env_, callbackRef, isOnce);
+    focusCbList_.push_back(cb);
+    MEDIA_DEBUG_LOG("Save callback reference success, callback list size [%{public}zu]",
+        focusCbList_.size());
+}
+
+void FocusCallbackListener::RemoveCallbackRef(napi_env env, napi_value callback)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (callback == nullptr) {
+        MEDIA_INFO_LOG("RemoveCallbackRef: js callback is nullptr, remove all callback reference");
+        RemoveAllCallbacks();
+        return;
+    }
+    for (auto it = focusCbList_.begin(); it != focusCbList_.end(); ++it) {
+        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        if (isSameCallback) {
+            MEDIA_INFO_LOG("RemoveCallbackRef: find js callback, delete it");
+            napi_status status = napi_delete_reference(env, (*it)->cb_);
+            (*it)->cb_ = nullptr;
+            CHECK_AND_RETURN_LOG(status == napi_ok, "RemoveCallbackRef: delete reference for callback fail");
+            focusCbList_.erase(it);
+            return;
+        }
+    }
+    MEDIA_INFO_LOG("RemoveCallbackRef: js callback no find");
+}
+
+void FocusCallbackListener::RemoveAllCallbacks()
+{
+    for (auto it = focusCbList_.begin(); it != focusCbList_.end(); ++it) {
+        napi_status ret = napi_delete_reference(env_, (*it)->cb_);
+        if (ret != napi_ok) {
+            MEDIA_ERR_LOG("RemoveAllCallbackReferences: napi_delete_reference err.");
+        }
+        (*it)->cb_ = nullptr;
+    }
+    focusCbList_.clear();
+    MEDIA_INFO_LOG("RemoveAllCallbacks: remove all js callbacks success");
 }
 
 void SessionCallbackListener::OnErrorCallbackAsync(int32_t errorCode) const
@@ -142,14 +270,14 @@ void SessionCallbackListener::OnErrorCallbackAsync(int32_t errorCode) const
     }
     std::unique_ptr<SessionCallbackInfo> callbackInfo = std::make_unique<SessionCallbackInfo>(errorCode, this);
     work->data = callbackInfo.get();
-    int ret = uv_queue_work(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         SessionCallbackInfo* callbackInfo = reinterpret_cast<SessionCallbackInfo *>(work->data);
         if (callbackInfo) {
             callbackInfo->listener_->OnErrorCallback(callbackInfo->errorCode_);
             delete callbackInfo;
         }
         delete work;
-    });
+    }, uv_qos_user_initiated);
     if (ret) {
         MEDIA_ERR_LOG("failed to execute work");
         delete work;
@@ -162,23 +290,87 @@ void SessionCallbackListener::OnErrorCallback(int32_t errorCode) const
 {
     MEDIA_DEBUG_LOG("OnErrorCallback is called");
     int32_t jsErrorCodeUnknown = -1;
-    napi_value result[ARGS_ONE];
+    napi_value result[ARGS_ONE] = {nullptr};
     napi_value callback = nullptr;
     napi_value retVal;
     napi_value propValue;
-    napi_create_object(env_, &result[PARAM0]);
-
-    napi_create_int32(env_, jsErrorCodeUnknown, &propValue);
-
-    napi_set_named_property(env_, result[PARAM0], "code", propValue);
-    napi_get_reference_value(env_, callbackRef_, &callback);
-    napi_call_function(env_, nullptr, callback, ARGS_ONE, result, &retVal);
+    for (auto it = sessionCbList_.begin(); it != sessionCbList_.end();) {
+        napi_env env = (*it)->env_;
+        napi_create_object(env, &result[PARAM0]);
+        napi_create_int32(env, jsErrorCodeUnknown, &propValue);
+        napi_set_named_property(env, result[PARAM0], "code", propValue);
+        napi_get_reference_value(env, (*it)->cb_, &callback);
+        napi_call_function(env_, nullptr, callback, ARGS_ONE, result, &retVal);
+        if ((*it)->isOnce_) {
+            napi_status status = napi_delete_reference(env, (*it)->cb_);
+            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
+            (*it)->cb_ = nullptr;
+            sessionCbList_.erase(it);
+        } else {
+            it++;
+        }
+    }
+    MEDIA_DEBUG_LOG("OnErrorCallback list size [%{public}zu]", sessionCbList_.size());
 }
 
 void SessionCallbackListener::OnError(int32_t errorCode)
 {
     MEDIA_DEBUG_LOG("OnError is called, errorCode: %{public}d", errorCode);
     OnErrorCallbackAsync(errorCode);
+}
+
+void SessionCallbackListener::SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    bool isSameCallback = true;
+    for (auto it = sessionCbList_.begin(); it != sessionCbList_.end(); ++it) {
+        isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
+    }
+    napi_ref callbackRef = nullptr;
+    const int32_t refCount = 1;
+    napi_status status = napi_create_reference(env_, callback, refCount, &callbackRef);
+    CHECK_AND_RETURN_LOG(status == napi_ok && callbackRef != nullptr,
+                         "PreviewOutputCallback: creating reference for callback fail");
+    std::shared_ptr<AutoRef> cb = std::make_shared<AutoRef>(env_, callbackRef, isOnce);
+    sessionCbList_.push_back(cb);
+    MEDIA_DEBUG_LOG("Save callback reference success, callback list size [%{public}zu]",
+        sessionCbList_.size());
+}
+
+void SessionCallbackListener::RemoveCallbackRef(napi_env env, napi_value callback)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (callback == nullptr) {
+        MEDIA_INFO_LOG("RemoveCallbackRef: js callback is nullptr, remove all callback reference");
+        RemoveAllCallbacks();
+        return;
+    }
+    for (auto it = sessionCbList_.begin(); it != sessionCbList_.end(); ++it) {
+        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        if (isSameCallback) {
+            MEDIA_INFO_LOG("RemoveCallbackRef: find js callback, delete it");
+            napi_status status = napi_delete_reference(env, (*it)->cb_);
+            (*it)->cb_ = nullptr;
+            CHECK_AND_RETURN_LOG(status == napi_ok, "RemoveCallbackRef: delete reference for callback fail");
+            sessionCbList_.erase(it);
+            return;
+        }
+    }
+    MEDIA_INFO_LOG("RemoveCallbackRef: js callback no find");
+}
+
+void SessionCallbackListener::RemoveAllCallbacks()
+{
+    for (auto it = sessionCbList_.begin(); it != sessionCbList_.end(); ++it) {
+        napi_status ret = napi_delete_reference(env_, (*it)->cb_);
+        if (ret != napi_ok) {
+            MEDIA_ERR_LOG("RemoveAllCallbackReferences: napi_delete_reference err.");
+        }
+        (*it)->cb_ = nullptr;
+    }
+    sessionCbList_.clear();
+    MEDIA_INFO_LOG("RemoveAllCallbacks: remove all js callbacks success");
 }
 
 CameraSessionNapi::CameraSessionNapi() : env_(nullptr), wrapper_(nullptr)
@@ -266,8 +458,9 @@ napi_value CameraSessionNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getSupportedBeautyRanges", GetSupportedBeautyRanges),
         DECLARE_NAPI_FUNCTION("getBeauty", GetBeauty),
         DECLARE_NAPI_FUNCTION("setBeauty", SetBeauty),
-
-        DECLARE_NAPI_FUNCTION("on", On)
+        DECLARE_NAPI_FUNCTION("on", On),
+        DECLARE_NAPI_FUNCTION("once", Once),
+        DECLARE_NAPI_FUNCTION("off", Off)
     };
 
     status = napi_define_class(env, CAMERA_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -547,7 +740,7 @@ napi_value CameraSessionNapi::CommitConfig(napi_env env, napi_callback_info info
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for CommitConfig");
             napi_get_undefined(env, &result);
         } else {
-            napi_queue_async_work(env, asyncContext->work);
+            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
             asyncContext.release();
         }
     } else {
@@ -888,7 +1081,7 @@ napi_value CameraSessionNapi::Start(napi_env env, napi_callback_info info)
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::Start");
             napi_get_undefined(env, &result);
         } else {
-            napi_queue_async_work(env, asyncContext->work);
+            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
             asyncContext.release();
         }
     }
@@ -939,7 +1132,7 @@ napi_value CameraSessionNapi::Stop(napi_env env, napi_callback_info info)
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::Stop");
             napi_get_undefined(env, &result);
         } else {
-            napi_queue_async_work(env, asyncContext->work);
+            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
             asyncContext.release();
         }
     } else {
@@ -993,7 +1186,7 @@ napi_value CameraSessionNapi::Release(napi_env env, napi_callback_info info)
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraSessionNapi::Release");
             napi_get_undefined(env, &result);
         } else {
-            napi_queue_async_work(env, asyncContext->work);
+            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
             asyncContext.release();
         }
     } else {
@@ -1923,18 +2116,58 @@ napi_value CameraSessionNapi::SetBeauty(napi_env env, napi_callback_info info)
     return result;
 }
 
+napi_value CameraSessionNapi::RegisterCallback(napi_env env, napi_value jsThis,
+    const string &eventType, napi_value callback, bool isOnce)
+{
+    MEDIA_DEBUG_LOG("RegisterCallback is called");
+    napi_value undefinedResult = nullptr;
+    napi_get_undefined(env, &undefinedResult);
+    napi_status status;
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&cameraSessionNapi));
+    NAPI_ASSERT(env, status == napi_ok && cameraSessionNapi != nullptr,
+                "Failed to retrieve cameraSessionNapi instance.");
+    NAPI_ASSERT(env, cameraSessionNapi->cameraSession_ != nullptr, "cameraSession is null.");
+    if (eventType.compare("exposureStateChange") == 0) {
+        // Set callback for exposureStateChange
+        if (cameraSessionNapi->exposureCallback_ == nullptr) {
+            std::shared_ptr<ExposureCallbackListener> exposureCallback =
+                    make_shared<ExposureCallbackListener>(env);
+            cameraSessionNapi->exposureCallback_ = exposureCallback;
+            cameraSessionNapi->cameraSession_->SetExposureCallback(exposureCallback);
+        }
+        cameraSessionNapi->exposureCallback_->SaveCallbackReference(eventType, callback, isOnce);
+    } else if (eventType.compare("focusStateChange") == 0) {
+        // Set callback for focusStateChange
+        if (cameraSessionNapi->focusCallback_ == nullptr) {
+            std::shared_ptr<FocusCallbackListener> focusCallback =
+                    make_shared<FocusCallbackListener>(env);
+            cameraSessionNapi->focusCallback_ = focusCallback;
+            cameraSessionNapi->cameraSession_->SetFocusCallback(focusCallback);
+        }
+        cameraSessionNapi->focusCallback_->SaveCallbackReference(eventType, callback, isOnce);
+    } else if (eventType.compare("error") == 0) {
+        if (cameraSessionNapi->sessionCallback_ == nullptr) {
+            std::shared_ptr<SessionCallbackListener> sessionCallback =
+                    std::make_shared<SessionCallbackListener>(env);
+            cameraSessionNapi->sessionCallback_ = sessionCallback;
+            cameraSessionNapi->cameraSession_->SetCallback(sessionCallback);
+        }
+        cameraSessionNapi->sessionCallback_->SaveCallbackReference(eventType, callback, isOnce);
+    } else  {
+        MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
+    }
+    return undefinedResult;
+}
+
 napi_value CameraSessionNapi::On(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("On is called");
     CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("On is called");
     napi_value undefinedResult = nullptr;
     size_t argCount = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {nullptr};
+    napi_value argv[ARGS_TWO] = {nullptr, nullptr};
     napi_value thisVar = nullptr;
-    size_t res = 0;
-    char buffer[SIZE];
-    const int32_t refCount = 1;
-    CameraSessionNapi* obj = nullptr;
 
     napi_get_undefined(env, &undefinedResult);
 
@@ -1945,45 +2178,108 @@ napi_value CameraSessionNapi::On(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("Failed to retrieve details about the callback");
         return undefinedResult;
     }
+    napi_valuetype valueType = napi_undefined;
+    if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string
+        || napi_typeof(env, argv[PARAM1], &valueType) != napi_ok || valueType != napi_function) {
+        return undefinedResult;
+    }
+    std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[PARAM0]);
+    MEDIA_INFO_LOG("On eventType: %{public}s", eventType.c_str());
+    return RegisterCallback(env, thisVar, eventType, argv[PARAM1], false);
+}
 
-    napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
-    if (status == napi_ok && obj != nullptr) {
-        napi_valuetype valueType = napi_undefined;
-        if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string
-            || napi_typeof(env, argv[PARAM1], &valueType) != napi_ok || valueType != napi_function) {
-            return undefinedResult;
+napi_value CameraSessionNapi::Once(napi_env env, napi_callback_info info)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("Once is called");
+    napi_value undefinedResult = nullptr;
+    size_t argCount = ARGS_TWO;
+    napi_value argv[ARGS_TWO] = {nullptr, nullptr};
+    napi_value thisVar = nullptr;
+
+    napi_get_undefined(env, &undefinedResult);
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argCount, argv, thisVar);
+    NAPI_ASSERT(env, argCount == ARGS_TWO, "requires 2 parameters");
+
+    if (thisVar == nullptr || argv[PARAM0] == nullptr || argv[PARAM1] == nullptr) {
+        MEDIA_ERR_LOG("Failed to retrieve details about the callback");
+        return undefinedResult;
+    }
+    napi_valuetype valueType = napi_undefined;
+    if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string
+        || napi_typeof(env, argv[PARAM1], &valueType) != napi_ok || valueType != napi_function) {
+        return undefinedResult;
+    }
+    std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[PARAM0]);
+    MEDIA_INFO_LOG("Once eventType: %{public}s", eventType.c_str());
+    return RegisterCallback(env, thisVar, eventType, argv[PARAM1], true);
+}
+
+napi_value CameraSessionNapi::UnregisterCallback(napi_env env, napi_value jsThis,
+    const std::string &eventType, napi_value callback)
+{
+    MEDIA_DEBUG_LOG("UnregisterCallback is called");
+    napi_value undefinedResult = nullptr;
+    napi_get_undefined(env, &undefinedResult);
+    napi_status status;
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&cameraSessionNapi));
+    NAPI_ASSERT(env, status == napi_ok && cameraSessionNapi != nullptr,
+                "Failed to retrieve cameraSessionNapi instance.");
+    if (eventType.compare("exposureStateChange") == 0) {
+        // Set callback for exposureStateChange
+        if (cameraSessionNapi->exposureCallback_ == nullptr) {
+            MEDIA_ERR_LOG("exposureCallback is null");
+        } else {
+            cameraSessionNapi->exposureCallback_->RemoveCallbackRef(env, callback);
         }
-
-        napi_get_value_string_utf8(env, argv[PARAM0], buffer, SIZE, &res);
-        std::string eventType = std::string(buffer);
-
-        napi_ref callbackRef;
-        napi_create_reference(env, argv[PARAM1], refCount, &callbackRef);
-
-        if (!eventType.empty() && eventType.compare("exposureStateChange") == 0) {
-            // Set callback for exposureStateChange
-            std::shared_ptr<ExposureCallbackListener> exposureCallback =
-                make_shared<ExposureCallbackListener>(env, callbackRef);
-            obj->cameraSession_->SetExposureCallback(exposureCallback);
-        } else if (!eventType.empty() && eventType.compare("focusStateChange") == 0) {
-            // Set callback for focusStateChange
-            std::shared_ptr<FocusCallbackListener> focusCallback =
-                make_shared<FocusCallbackListener>(env, callbackRef);
-            obj->cameraSession_->SetFocusCallback(focusCallback);
-        } else if (!eventType.empty() && eventType.compare("error") == 0) {
-            std::shared_ptr<SessionCallbackListener> errorCallback =
-                std::make_shared<SessionCallbackListener>(SessionCallbackListener(env, callbackRef));
-            obj->cameraSession_->SetCallback(errorCallback);
-        } else  {
-            MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
-            if (callbackRef != nullptr) {
-                napi_delete_reference(env, callbackRef);
-            }
+    } else if (eventType.compare("focusStateChange") == 0) {
+        // Set callback for focusStateChange
+        if (cameraSessionNapi->focusCallback_ == nullptr) {
+            MEDIA_ERR_LOG("focusCallback is null");
+        } else {
+            cameraSessionNapi->focusCallback_->RemoveCallbackRef(env, callback);
         }
-    } else {
-        MEDIA_ERR_LOG("On call Failed!");
+    } else if (eventType.compare("error") == 0) {
+        if (cameraSessionNapi->sessionCallback_ == nullptr) {
+            MEDIA_ERR_LOG("sessionCallback is null");
+        } else {
+            cameraSessionNapi->sessionCallback_->RemoveCallbackRef(env, callback);
+        }
+    } else  {
+        MEDIA_ERR_LOG("Failed to Unregister Callback");
     }
     return undefinedResult;
+}
+
+napi_value CameraSessionNapi::Off(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("Off is called");
+    napi_value undefinedResult = nullptr;
+    napi_get_undefined(env, &undefinedResult);
+    const size_t minArgCount = 1;
+    size_t argc = ARGS_TWO;
+    napi_value argv[ARGS_TWO] = {nullptr, nullptr};
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    if (argc < minArgCount) {
+        return undefinedResult;
+    }
+
+    napi_valuetype valueType = napi_undefined;
+    if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string) {
+        return undefinedResult;
+    }
+
+    napi_valuetype secondArgsType = napi_undefined;
+    if (argc > minArgCount &&
+        (napi_typeof(env, argv[PARAM1], &secondArgsType) != napi_ok || secondArgsType != napi_function)) {
+        return undefinedResult;
+    }
+    std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[PARAM0]);
+    MEDIA_INFO_LOG("Off eventType: %{public}s", eventType.c_str());
+    return UnregisterCallback(env, thisVar, eventType, argv[PARAM1]);
 }
 } // namespace CameraStandard
 } // namespace OHOS

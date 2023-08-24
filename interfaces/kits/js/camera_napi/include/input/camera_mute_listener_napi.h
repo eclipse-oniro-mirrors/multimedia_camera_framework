@@ -39,15 +39,19 @@ namespace OHOS {
 namespace CameraStandard {
 class CameraMuteListenerNapi : public CameraMuteListener {
 public:
-    explicit CameraMuteListenerNapi(napi_env env, napi_ref callbackRef_);
+    explicit CameraMuteListenerNapi(napi_env env);
     virtual ~CameraMuteListenerNapi();
     void OnCameraMute(bool muteMode) const override;
+    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
+    void RemoveCallbackRef(napi_env env, napi_value callback);
+    void RemoveAllCallbacks();
 private:
     void OnCameraMuteCallback(bool muteMode) const;
     void OnCameraMuteCallbackAsync(bool muteMode) const;
 
+    std::mutex mutex_;
     napi_env env_ = nullptr;
-    napi_ref callbackRef_;
+    mutable std::vector<std::shared_ptr<AutoRef>> cameraMuteCbList_;
 };
 
 struct CameraMuteCallbackInfo {

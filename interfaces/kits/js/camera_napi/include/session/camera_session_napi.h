@@ -56,16 +56,20 @@ enum SessionAsyncCallbackModes {
 
 class ExposureCallbackListener : public ExposureCallback {
 public:
-    ExposureCallbackListener(napi_env env, napi_ref ref) : env_(env), callbackRef_(ref) {}
+    ExposureCallbackListener(napi_env env) : env_(env) {}
     ~ExposureCallbackListener() = default;
     void OnExposureState(const ExposureState state) override;
+    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
+    void RemoveCallbackRef(napi_env env, napi_value callback);
+    void RemoveAllCallbacks();
 
 private:
     void OnExposureStateCallback(ExposureState state) const;
     void OnExposureStateCallbackAsync(ExposureState state) const;
 
+    std::mutex mutex_;
     napi_env env_;
-    napi_ref callbackRef_ = nullptr;
+    mutable std::vector<std::shared_ptr<AutoRef>> exposureCbList_;
 };
 
 struct ExposureCallbackInfo {
@@ -77,19 +81,23 @@ struct ExposureCallbackInfo {
 
 class FocusCallbackListener : public FocusCallback {
 public:
-    FocusCallbackListener(napi_env env, napi_ref ref) : env_(env), callbackRef_(ref)
+    FocusCallbackListener(napi_env env) : env_(env)
     {
         currentState = FocusState::UNFOCUSED;
     }
     ~FocusCallbackListener() = default;
     void OnFocusState(FocusState state) override;
+    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
+    void RemoveCallbackRef(napi_env env, napi_value args);
+    void RemoveAllCallbacks();
 
 private:
     void OnFocusStateCallback(FocusState state) const;
     void OnFocusStateCallbackAsync(FocusState state) const;
 
+    std::mutex mutex_;
     napi_env env_;
-    napi_ref callbackRef_ = nullptr;
+    mutable std::vector<std::shared_ptr<AutoRef>> focusCbList_;
 };
 
 struct FocusCallbackInfo {
@@ -101,16 +109,20 @@ struct FocusCallbackInfo {
 
 class SessionCallbackListener : public SessionCallback {
 public:
-    SessionCallbackListener(napi_env env, napi_ref ref) : env_(env), callbackRef_(ref) {}
+    SessionCallbackListener(napi_env env) : env_(env) {}
     ~SessionCallbackListener() = default;
     void OnError(int32_t errorCode) override;
+    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
+    void RemoveCallbackRef(napi_env env, napi_value args);
+    void RemoveAllCallbacks();
 
 private:
     void OnErrorCallback(int32_t errorCode) const;
     void OnErrorCallbackAsync(int32_t errorCode) const;
 
+    std::mutex mutex_;
     napi_env env_;
-    napi_ref callbackRef_ = nullptr;
+    mutable std::vector<std::shared_ptr<AutoRef>> sessionCbList_;
 };
 
 struct SessionCallbackInfo {
@@ -177,6 +189,12 @@ public:
     static napi_value GetActiveVideoStabilizationMode(napi_env env, napi_callback_info info);
     static napi_value SetVideoStabilizationMode(napi_env env, napi_callback_info info);
     static napi_value On(napi_env env, napi_callback_info info);
+    static napi_value Off(napi_env env, napi_callback_info info);
+    static napi_value Once(napi_env env, napi_callback_info info);
+    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
+        const std::string& eventType, napi_value callback, bool isOnce);
+    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
+        const std::string& eventType, napi_value callback);
 
     static napi_value LockForControl(napi_env env, napi_callback_info info);
     static napi_value UnlockForControl(napi_env env, napi_callback_info info);
@@ -184,6 +202,9 @@ public:
     napi_env env_;
     napi_ref wrapper_;
     sptr<CaptureSession> cameraSession_;
+    std::shared_ptr<FocusCallbackListener> focusCallback_;
+    std::shared_ptr<SessionCallbackListener> sessionCallback_;
+    std::shared_ptr<ExposureCallbackListener> exposureCallback_;
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<CaptureSession> sCameraSession_;

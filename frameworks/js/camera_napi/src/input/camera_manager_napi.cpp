@@ -109,7 +109,9 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("createPhotoOutput", CreatePhotoOutputInstance),
         DECLARE_NAPI_FUNCTION("createVideoOutput", CreateVideoOutputInstance),
         DECLARE_NAPI_FUNCTION("createMetadataOutput", CreateMetadataOutputInstance),
-        DECLARE_NAPI_FUNCTION("on", On)
+        DECLARE_NAPI_FUNCTION("on", On),
+        DECLARE_NAPI_FUNCTION("once", Once),
+        DECLARE_NAPI_FUNCTION("off", Off)
     };
 
     status = napi_define_class(env, CAMERA_MANAGER_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -438,7 +440,7 @@ napi_value CameraManagerNapi::CreateDeferredPreviewOutputInstance(napi_env env, 
         MEDIA_ERR_LOG("Failed to create napi_create_async_work for CreatePhotoOutputInstance");
         napi_get_undefined(env, &result);
     } else {
-        napi_queue_async_work(env, asyncContext->work);
+        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
 
@@ -622,7 +624,7 @@ napi_value CameraManagerNapi::GetSupportedOutputCapability(napi_env env, napi_ca
         MEDIA_ERR_LOG("napi_unwrap( ) failure!");
         return result;
     }
-    status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void **>(&cameraDeviceNapi));
+    status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void**>(&cameraDeviceNapi));
     if (status != napi_ok || cameraDeviceNapi == nullptr) {
         MEDIA_ERR_LOG("Could not able to read cameraId argument!");
         return result;
@@ -714,7 +716,7 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
     sptr<CameraDevice> cameraInfo = nullptr;
     if (argc == ARGS_ONE) {
         CameraDeviceNapi* cameraDeviceNapi = nullptr;
-        status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void **>(&cameraDeviceNapi));
+        status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void**>(&cameraDeviceNapi));
         if (status != napi_ok || cameraDeviceNapi == nullptr) {
             MEDIA_ERR_LOG("napi_unwrap( ) failure!");
             return result;
@@ -757,17 +759,88 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
     return result;
 }
 
+napi_value CameraManagerNapi::RegisterCallback(napi_env env, napi_value jsThis,
+    const string &eventType, napi_value callback, bool isOnce)
+{
+    const int32_t refCount = 1;
+    napi_value undefinedResult = nullptr;
+    napi_status status;
+    napi_get_undefined(env, &undefinedResult);
+    CameraManagerNapi* cameraManagerNapi = nullptr;
+    napi_ref callbackRef;
+    status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&cameraManagerNapi));
+    NAPI_ASSERT(env, status == napi_ok && cameraManagerNapi != nullptr,
+        "Failed to retrieve cameraManager napi instance.");
+    NAPI_ASSERT(env, cameraManagerNapi->cameraManager_ != nullptr, "cameraManager instance is null.");
+    napi_create_reference(env, callback, refCount, &callbackRef);
+    if ((eventType.compare("cameraStatus")==0)) {
+        if (cameraManagerNapi->cameraManagerCallback_ == nullptr) {
+            shared_ptr<CameraManagerCallbackNapi> cameraManagerCallback =
+                    make_shared<CameraManagerCallbackNapi>(env);
+            cameraManagerNapi->cameraManagerCallback_ = cameraManagerCallback;
+            cameraManagerNapi->cameraManager_->SetCallback(cameraManagerCallback);
+        }
+        cameraManagerNapi->cameraManagerCallback_->SaveCallbackReference(eventType, callback, isOnce);
+    } else if ((eventType.compare("cameraMute")==0)) {
+        if (!CameraNapiUtils::CheckSystemApp(env)) {
+            MEDIA_ERR_LOG("SystemApi On cameraMute is called!");
+            return undefinedResult;
+        }
+        if (cameraManagerNapi->cameraMuteListener_ == nullptr) {
+            shared_ptr<CameraMuteListenerNapi> cameraMuteListener =
+                    make_shared<CameraMuteListenerNapi>(env);
+            cameraManagerNapi->cameraMuteListener_ = cameraMuteListener;
+            cameraManagerNapi->cameraManager_->RegisterCameraMuteListener(cameraMuteListener);
+        }
+        cameraManagerNapi->cameraMuteListener_->SaveCallbackReference(eventType, callback, isOnce);
+    } else {
+        MEDIA_ERR_LOG("Incorrect callback event type provided for camera manager!");
+        if (callbackRef != nullptr) {
+            napi_delete_reference(env, callbackRef);
+        }
+    }
+    return undefinedResult;
+}
+
+napi_value CameraManagerNapi::UnregisterCallback(napi_env env, napi_value jsThis,
+    const std::string& eventType, napi_value callback)
+{
+    napi_value undefinedResult = nullptr;
+    napi_get_undefined(env, &undefinedResult);
+    CameraManagerNapi *cameraManagerNapi = nullptr;
+    napi_status status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&cameraManagerNapi));
+    NAPI_ASSERT(env, status == napi_ok && cameraManagerNapi != nullptr, "Failed to retrieve audio mgr napi instance.");
+    NAPI_ASSERT(env, cameraManagerNapi->cameraManager_ != nullptr, "audio system mgr instance is null.");
+
+    if (eventType.compare("cameraStatus") == 0) {
+        if (cameraManagerNapi->cameraManagerCallback_ == nullptr) {
+            MEDIA_ERR_LOG("cameraManagerCallback is null");
+        } else {
+            cameraManagerNapi->cameraManagerCallback_->RemoveCallbackRef(env, callback);
+        }
+    } else if (eventType.compare("cameraMute") == 0) {
+        if (!CameraNapiUtils::CheckSystemApp(env)) {
+            MEDIA_ERR_LOG("SystemApi On cameraMute is called!");
+            return undefinedResult;
+        }
+        if (cameraManagerNapi->cameraMuteListener_ == nullptr) {
+            MEDIA_ERR_LOG("cameraMuteListener is null");
+        } else {
+            cameraManagerNapi->cameraMuteListener_->RemoveCallbackRef(env, callback);
+        }
+    } else {
+        MEDIA_ERR_LOG("off no such supported!");
+    }
+    return undefinedResult;
+}
+
 napi_value CameraManagerNapi::On(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("On is called");
     napi_value undefinedResult = nullptr;
     size_t argCount = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {nullptr};
+    napi_value argv[ARGS_TWO] = {nullptr, nullptr};
     napi_value thisVar = nullptr;
-    size_t res = 0;
-    char buffer[SIZE];
-    CameraManagerNapi* obj = nullptr;
-    napi_status status;
 
     napi_get_undefined(env, &undefinedResult);
 
@@ -778,43 +851,69 @@ napi_value CameraManagerNapi::On(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("Failed to retrieve details about the callback");
         return undefinedResult;
     }
-
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
-    if (status == napi_ok && obj != nullptr) {
-        napi_valuetype valueType = napi_undefined;
-        if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string
-            || napi_typeof(env, argv[PARAM1], &valueType) != napi_ok || valueType != napi_function) {
-            return undefinedResult;
-        }
-
-        napi_get_value_string_utf8(env, argv[PARAM0], buffer, SIZE, &res);
-        std::string eventType = std::string(buffer);
-
-        napi_ref callbackRef;
-        napi_create_reference(env, argv[PARAM1], 1, &callbackRef);
-
-        if (!eventType.empty() && (eventType.compare("cameraStatus")==0)) {
-            shared_ptr<CameraManagerCallbackNapi> callback =
-                make_shared<CameraManagerCallbackNapi>(env, callbackRef);
-            obj->cameraManager_->SetCallback(callback);
-        } else if (!eventType.empty() && (eventType.compare("cameraMute")==0)) {
-            if (!CameraNapiUtils::CheckSystemApp(env)) {
-                MEDIA_ERR_LOG("SystemApi On cameraMute is called!");
-                return undefinedResult;
-            }
-            shared_ptr<CameraMuteListenerNapi> listener =
-                make_shared<CameraMuteListenerNapi>(env, callbackRef);
-            obj->cameraManager_->RegisterCameraMuteListener(listener);
-        } else {
-            MEDIA_ERR_LOG("Incorrect callback event type provided for camera manager!");
-            if (callbackRef != nullptr) {
-                napi_delete_reference(env, callbackRef);
-            }
-        }
-    } else {
-        MEDIA_ERR_LOG("On call Failed!");
+    napi_valuetype valueType = napi_undefined;
+    if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string
+        || napi_typeof(env, argv[PARAM1], &valueType) != napi_ok || valueType != napi_function) {
+        return undefinedResult;
     }
-    return undefinedResult;
+    std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[PARAM0]);
+    MEDIA_INFO_LOG("On eventType: %{public}s", eventType.c_str());
+    return RegisterCallback(env, thisVar, eventType, argv[PARAM1], false);
+}
+
+napi_value CameraManagerNapi::Once(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("Once is called");
+    napi_value undefinedResult = nullptr;
+    size_t argCount = ARGS_TWO;
+    napi_value argv[ARGS_TWO] = {nullptr, nullptr};
+    napi_value thisVar = nullptr;
+
+    napi_get_undefined(env, &undefinedResult);
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argCount, argv, thisVar);
+    NAPI_ASSERT(env, argCount == ARGS_TWO, "requires 2 parameters");
+
+    if (thisVar == nullptr || argv[PARAM0] == nullptr || argv[PARAM1] == nullptr) {
+        MEDIA_ERR_LOG("Failed to retrieve details about the callback");
+        return undefinedResult;
+    }
+    napi_valuetype valueType = napi_undefined;
+    if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string
+        || napi_typeof(env, argv[PARAM1], &valueType) != napi_ok || valueType != napi_function) {
+        return undefinedResult;
+    }
+    std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[PARAM0]);
+    MEDIA_INFO_LOG("Once eventType: %{public}s", eventType.c_str());
+    return RegisterCallback(env, thisVar, eventType, argv[PARAM1], true);
+}
+
+napi_value CameraManagerNapi::Off(napi_env env, napi_callback_info info)
+{
+    napi_value undefinedResult = nullptr;
+    napi_get_undefined(env, &undefinedResult);
+    const size_t minArgCount = 1;
+    size_t argc = ARGS_TWO;
+    napi_value argv[ARGS_TWO] = {nullptr, nullptr};
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    if (argc < minArgCount) {
+        return undefinedResult;
+    }
+
+    napi_valuetype valueType = napi_undefined;
+    if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string) {
+        return undefinedResult;
+    }
+
+    napi_valuetype secondArgsType = napi_undefined;
+    if (argc > minArgCount &&
+        (napi_typeof(env, argv[PARAM1], &secondArgsType) != napi_ok || secondArgsType != napi_function)) {
+        return undefinedResult;
+    }
+    std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[0]);
+    MEDIA_INFO_LOG("Off eventType: %{public}s", eventType.c_str());
+    return UnregisterCallback(env, thisVar, eventType, argv[PARAM1]);
 }
 
 napi_value CameraManagerNapi::IsPrelaunchSupported(napi_env env, napi_callback_info info)
@@ -841,7 +940,7 @@ napi_value CameraManagerNapi::IsPrelaunchSupported(napi_env env, napi_callback_i
         MEDIA_ERR_LOG("napi_unwrap( ) failure!");
         return result;
     }
-    status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void **>(&cameraDeviceNapi));
+    status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void**>(&cameraDeviceNapi));
     if (status == napi_ok && cameraDeviceNapi != nullptr) {
         sptr<CameraDevice> cameraInfo = cameraDeviceNapi->cameraDevice_;
         bool isPrelaunchSupported = CameraManager::GetInstance()->IsPrelaunchSupported(cameraInfo);
@@ -891,7 +990,7 @@ napi_value CameraManagerNapi::SetPrelaunchConfig(napi_env env, napi_callback_inf
     PrelaunchConfig prelaunchConfig;
     CameraDeviceNapi* cameraDeviceNapi = nullptr;
     if (napi_get_named_property(env, argv[PARAM0], "cameraDevice", &res) == napi_ok) {
-        status = napi_unwrap(env, res, reinterpret_cast<void **>(&cameraDeviceNapi));
+        status = napi_unwrap(env, res, reinterpret_cast<void**>(&cameraDeviceNapi));
         prelaunchConfig.cameraDevice_ = cameraDeviceNapi->cameraDevice_;
         if (status != napi_ok || prelaunchConfig.cameraDevice_ == nullptr) {
             MEDIA_ERR_LOG("napi_unwrap( ) failure!");

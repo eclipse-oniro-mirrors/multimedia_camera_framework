@@ -121,7 +121,7 @@ napi_value CameraPrelaunchConfigNapi::GetPrelaunchCameraDevice(napi_env env, nap
         return undefinedResult;
     }
 
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
         cameraDevice = obj->prelaunchConfig_->GetCameraDevice();
         MEDIA_INFO_LOG("GetPrelaunchCameraDevice cameraId = %{public}s",

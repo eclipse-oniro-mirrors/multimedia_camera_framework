@@ -60,12 +60,7 @@ CameraManager::~CameraManager()
     cameraSvcCallback_ = nullptr;
     cameraMuteSvcCallback_ = nullptr;
     cameraMngrCallback_ = nullptr;
-    for (unsigned int i = 0; i < cameraMuteListenerList.size(); i++) {
-        if (cameraMuteListenerList[i]) {
-            cameraMuteListenerList[i] = nullptr;
-        }
-    }
-    cameraMuteListenerList.clear();
+    cameraMuteListener = nullptr;
     for (unsigned int i = 0; i < cameraObjList.size(); i++) {
         cameraObjList[i] = nullptr;
     }
@@ -528,6 +523,7 @@ int CameraManager::CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceSe
 
     return CameraErrorCode::SUCCESS;
 }
+
 void CameraManager::SetCallback(std::shared_ptr<CameraManagerCallback> callback)
 {
     if (callback == nullptr) {
@@ -929,11 +925,9 @@ int32_t CameraMuteServiceCallback::OnCameraMute(bool muteMode)
         MEDIA_INFO_LOG("camMngr_ is nullptr");
         return CAMERA_OK;
     }
-    std::vector<shared_ptr<CameraMuteListener>> cameraMuteListenerList = camMngr_->GetCameraMuteListener();
-    if (cameraMuteListenerList.size() > 0) {
-        for (uint32_t i = 0; i < cameraMuteListenerList.size(); ++i) {
-            cameraMuteListenerList[i]->OnCameraMute(muteMode);
-        }
+    shared_ptr<CameraMuteListener> cameraMuteListener = camMngr_->GetCameraMuteListener();
+    if (cameraMuteListener != nullptr) {
+        cameraMuteListener->OnCameraMute(muteMode);
     } else {
         MEDIA_INFO_LOG("OnCameraMute not registered!, Ignore the callback");
     }
@@ -942,10 +936,7 @@ int32_t CameraMuteServiceCallback::OnCameraMute(bool muteMode)
 
 void CameraManager::RegisterCameraMuteListener(std::shared_ptr<CameraMuteListener> listener)
 {
-    if (listener == nullptr) {
-        MEDIA_INFO_LOG("unregistering the callback");
-    }
-    cameraMuteListenerList.push_back(listener);
+    cameraMuteListener = listener;
 }
 
 void CameraManager::SetCameraMuteServiceCallback(sptr<ICameraMuteServiceCallback>& callback)
@@ -963,9 +954,9 @@ void CameraManager::SetCameraMuteServiceCallback(sptr<ICameraMuteServiceCallback
     return;
 }
 
-std::vector<shared_ptr<CameraMuteListener>> CameraManager::GetCameraMuteListener()
+shared_ptr<CameraMuteListener> CameraManager::GetCameraMuteListener()
 {
-    return cameraMuteListenerList;
+    return cameraMuteListener;
 }
 
 bool CameraManager::IsCameraMuteSupported()

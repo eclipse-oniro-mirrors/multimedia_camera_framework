@@ -206,7 +206,7 @@ napi_value ModeManagerNapi::GetSupportedModes(napi_env env, napi_callback_info i
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
-    status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void **>(&cameraDeviceNapi));
+    status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void**>(&cameraDeviceNapi));
     if (status != napi_ok || cameraDeviceNapi == nullptr) {
         MEDIA_ERR_LOG("Could not able to read cameraId argument!");
         return result;
@@ -247,7 +247,7 @@ napi_value ModeManagerNapi::GetSupportedOutputCapability(napi_env env, napi_call
         MEDIA_ERR_LOG("napi_unwrap() failure!");
         return result;
     }
-    status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void **>(&cameraDeviceNapi));
+    status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void**>(&cameraDeviceNapi));
     if (status != napi_ok || cameraDeviceNapi == nullptr) {
         MEDIA_ERR_LOG("Could not able to read cameraId argument!");
         return result;
