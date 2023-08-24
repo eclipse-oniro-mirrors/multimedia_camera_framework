@@ -98,10 +98,6 @@ CameraInputNapi::~CameraInputNapi()
 void CameraInputNapi::CameraInputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {
     MEDIA_DEBUG_LOG("CameraInputNapiDestructor enter");
-    CameraInputNapi* cameraObj = reinterpret_cast<CameraInputNapi*>(nativeObject);
-    if (cameraObj != nullptr) {
-        delete cameraObj;
-    }
 }
 
 napi_value CameraInputNapi::Init(napi_env env, napi_value exports)
