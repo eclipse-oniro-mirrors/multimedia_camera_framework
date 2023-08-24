@@ -65,6 +65,7 @@ ohos_executable("camera_video") {
     "access_token:libtoken_setproc",
     "c_utils:utils",
     "drivers_interface_camera:metadata",
+    "drivers_peripheral_display:hdi_gralloc_client",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
