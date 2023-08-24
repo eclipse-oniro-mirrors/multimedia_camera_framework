@@ -113,6 +113,7 @@ ohos_unittest("camera_framework_unittest_v1_1") {
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:metadata",
+    "drivers_peripheral_display:hdi_gralloc_client",
     "hdf_core:libhdi",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
