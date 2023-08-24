@@ -29,7 +29,6 @@ namespace CameraStandard {
 const std::u16string FORMMGR_INTERFACE_TOKEN = u"IStreamCapture";
 const size_t LIMITCOUNT = 4;
 const int32_t LIMITSIZE = 2;
-const size_t LIMITNUMCOUNT = 2;
 const int32_t PHOTO_WIDTH = 1280;
 const int32_t PHOTO_HEIGHT = 960;
 const int32_t PHOTO_FORMAT = 2000;
@@ -57,33 +56,26 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
         return;
     }
     StreamCaptureFuzzTestGetPermission();
-    int32_t nums[LIMITNUMCOUNT] = {0, 0};
-    if (size == 1) {
-        nums[0] = nums[1] = rawData[0];
-    } else if (size > 1) {
-        nums[0] = rawData[0];
-        nums[1] = rawData[1];
-    }
-    uint32_t code = 0;
+    
     int32_t itemCount = 0;
     int32_t dataSize = 0;
     int32_t *streams = reinterpret_cast<int32_t *>(rawData);
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
     ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
     ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams, size / LIMITCOUNT);
-    int32_t compensationRange[2] = {nums[0], nums[1]};
+    int32_t compensationRange[2] = {rawData[0], rawData[1]};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
                       sizeof(compensationRange) / sizeof(compensationRange[0]));
-    float focalLength = nums[0];
+    float focalLength = rawData[0];
     ability->addEntry(OHOS_ABILITY_FOCAL_LENGTH, &focalLength, 1);
 
-    int32_t sensorOrientation = nums[0];
+    int32_t sensorOrientation = rawData[0];
     ability->addEntry(OHOS_SENSOR_ORIENTATION, &sensorOrientation, 1);
 
-    int32_t cameraPosition = nums[0];
+    int32_t cameraPosition = rawData[0];
     ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
 
-    const camera_rational_t aeCompensationStep[] = {{nums[0], nums[1]}};
+    const camera_rational_t aeCompensationStep[] = {{rawData[0], rawData[1]}};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
                       sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
 
@@ -104,6 +96,7 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
     if (fuzzStreamcapture == nullptr) {
         fuzzStreamcapture = new(std::nothrow) HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
     }
+    uint32_t code = 0;
     fuzzStreamcapture->OnRemoteRequest(code, data, reply, option);
 }
 } // namespace CameraStandard
