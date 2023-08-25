@@ -961,7 +961,6 @@ shared_ptr<CameraMuteListener> CameraManager::GetCameraMuteListener()
 
 bool CameraManager::IsCameraMuteSupported()
 {
-    const uint8_t MUTE_ON = 1;
     bool result = false;
     if (cameraObjList.empty()) {
         this->GetSupportedCameras();
@@ -970,12 +969,17 @@ bool CameraManager::IsCameraMuteSupported()
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
         camera_metadata_item_t item;
         int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_MUTE_MODES, &item);
-        if (ret == 0) {
-            MEDIA_INFO_LOG("OHOS_ABILITY_MUTE_MODES is %{public}d", item.data.u8[0]);
-            result = (item.data.u8[0] == MUTE_ON) ? true : false;
-        } else {
+        if (ret != 0) {
             MEDIA_ERR_LOG("Failed to get stream configuration or Invalid stream "
                           "configuation OHOS_ABILITY_MUTE_MODES ret = %{public}d", ret);
+            return result;
+        }
+        for (uint32_t j = 0; j < item.count; j++) {
+            MEDIA_INFO_LOG("OHOS_ABILITY_MUTE_MODES %{public}d th is %{public}d", j, item.data.u8[j]);
+            if (item.data.u8[j] == OHOS_CAMERA_MUTE_MODE_SOLID_COLOR_BLACK) {
+                result = true;
+                break;
+            }
         }
         if (result == true) {
             break;
