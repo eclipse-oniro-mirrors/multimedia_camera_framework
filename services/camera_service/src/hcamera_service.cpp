@@ -460,7 +460,13 @@ bool HCameraService::IsCameraMuteSupported(std::string cameraId)
     common_metadata_header_t* metadata = cameraAbility->get();
     ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_MUTE_MODES, &item);
     if (ret == CAM_META_SUCCESS) {
-        isMuteSupported = true;
+        for (uint32_t i = 0; i < item.count; i++) {
+            MEDIA_INFO_LOG("OHOS_ABILITY_MUTE_MODES %{public}d th is %{public}d", i, item.data.u8[i]);
+            if (item.data.u8[i] == OHOS_CAMERA_MUTE_MODE_SOLID_COLOR_BLACK) {
+                isMuteSupported = true;
+                break;
+            }
+        }
     } else {
         isMuteSupported = false;
         MEDIA_ERR_LOG("HCameraService::IsCameraMuted not find MUTE ability");
@@ -471,8 +477,6 @@ bool HCameraService::IsCameraMuteSupported(std::string cameraId)
 
 int32_t HCameraService::UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool muteMode)
 {
-    constexpr uint8_t MUTE_ON = 1;
-    constexpr uint8_t MUTE_OFF = 0;
     constexpr int32_t DEFAULT_ITEMS = 1;
     constexpr int32_t DEFAULT_DATA_LENGTH = 1;
     std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
@@ -480,7 +484,7 @@ int32_t HCameraService::UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool
     bool status = false;
     int32_t ret;
     int32_t count = 1;
-    uint8_t mode = muteMode ? MUTE_ON : MUTE_OFF;
+    uint8_t mode = muteMode ? OHOS_CAMERA_MUTE_MODE_SOLID_COLOR_BLACK : OHOS_CAMERA_MUTE_MODE_OFF;
     camera_metadata_item_t item;
 
     MEDIA_DEBUG_LOG("UpdateMuteSetting muteMode: %{public}d", muteMode);
