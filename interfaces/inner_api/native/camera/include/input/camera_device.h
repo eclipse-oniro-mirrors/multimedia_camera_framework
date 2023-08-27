@@ -114,7 +114,7 @@ public:
     * @return Returns the deviceType of the Distributed camera.
     */
     uint16_t GetDeviceType();
-    
+
     /**
     * @brief Get the Distributed Camera networkId.
     *
@@ -158,7 +158,6 @@ private:
     static const std::unordered_map<camera_connection_type_t, ConnectionType> metaToFwConnectionType_;
 
     void init(common_metadata_header_t* metadataHeader);
-    std::vector<float> CalculateZoomRange();
 };
 } // namespace CameraStandard
 } // namespace OHOS
