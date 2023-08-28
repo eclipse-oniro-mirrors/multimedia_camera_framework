@@ -132,9 +132,8 @@ void CameraManagerCallbackNapi::SaveCallbackReference(const std::string &eventTy
     napi_ref callbackRef = nullptr;
     const int32_t refCount = 1;
 
-    bool isSameCallback = true;
     for (auto it = cameraManagerCbList_.begin(); it != cameraManagerCbList_.end(); ++it) {
-        isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
         CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
     }
     napi_status status = napi_create_reference(env_, callback, refCount, &callbackRef);

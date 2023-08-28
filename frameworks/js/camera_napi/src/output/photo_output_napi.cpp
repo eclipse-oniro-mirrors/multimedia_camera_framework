@@ -129,9 +129,8 @@ void PhotoOutputCallback::SaveCallbackReference(const std::string &eventType, na
             MEDIA_ERR_LOG("Incorrect photo callback event type received from JS");
             return;
     }
-    bool isSameCallback = true;
     for (auto it = callbackList->begin(); it != callbackList->end(); ++it) {
-        isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
         CHECK_AND_RETURN_LOG(!isSameCallback, "UpdateList: has same callback, nothing to do");
     }
     napi_ref callbackRef = nullptr;
@@ -455,9 +454,8 @@ void ThumbnailListener::SaveCallbackReference(const std::string &eventType, napi
     napi_ref callbackRef = nullptr;
     const int32_t refCount = 1;
 
-    bool isSameCallback = true;
     for (auto it = thumbnailListenerList_.begin(); it != thumbnailListenerList_.end(); ++it) {
-        isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
         CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
     }
     napi_status status = napi_create_reference(env_, callback, refCount, &callbackRef);

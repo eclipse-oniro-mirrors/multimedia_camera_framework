@@ -129,9 +129,8 @@ void MetadataOutputCallback::OnMetadataObjectsAvailableCallback(
 void MetadataOutputCallback::SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce)
 {
     std::lock_guard<std::mutex> lock(metadataOutputCbMutex_);
-    bool isSameCallback = true;
     for (auto it = metadataOutputCbList_.begin(); it != metadataOutputCbList_.end(); ++it) {
-        isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
         CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
     }
     napi_ref callbackRef = nullptr;
@@ -253,9 +252,8 @@ void MetadataStateCallbackNapi::SaveCallbackReference(const std::string &eventTy
     napi_ref callbackRef = nullptr;
     const int32_t refCount = 1;
 
-    bool isSameCallback = true;
     for (auto it = metadataStateCbList_.begin(); it != metadataStateCbList_.end(); ++it) {
-        isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
         CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
     }
     napi_status status = napi_create_reference(env_, callback, refCount, &callbackRef);
