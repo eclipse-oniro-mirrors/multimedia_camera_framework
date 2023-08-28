@@ -38,7 +38,8 @@
 #include "hcamera_device_callback_proxy.h"
 #include "hcamera_service_stub.h"
 #include "hcamera_device_proxy.h"
-
+#include "hcamera_service.h"
+#include "hcamera_device.h"
 
 using namespace testing::ext;
 
@@ -1809,6 +1810,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_035, TestSize.Le
     location->altitude = 1;
 
     photoSetting->SetLocation(location);
+    photoSetting->SetLocation(location);
 
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
@@ -2080,6 +2082,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_040, TestSize.Le
 {
     ReleaseInput();
     std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
+    photoSetting->SetMirror(true);
     photoSetting->SetMirror(true);
 
     int32_t intResult = session_->BeginConfig();
@@ -3244,6 +3247,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_017, TestSize.L
     EXPECT_EQ(rotation, PhotoCaptureSetting::RotationConfig::Rotation_0);
 
     photoSetting->SetRotation(rotation);
+    photoSetting->SetRotation(rotation);
 
     std::unique_ptr<Location> location = std::make_unique<Location>();
     location->latitude = 12.972442;
@@ -3361,7 +3365,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_018, TestSize.L
     intResult = camSession->CommitConfig();
     EXPECT_EQ(intResult, 0);
 
-    std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
+    std::shared_ptr<AppCallback> callback = nullptr;
+    photoOutput_1->SetCallback(callback);
+
+    callback = std::make_shared<AppCallback>();
+    photoOutput_1->SetCallback(callback);
     photoOutput_1->SetCallback(callback);
 
     sptr<HStreamCaptureCallbackImpl> captureCallback_2 = new(std::nothrow) HStreamCaptureCallbackImpl(photoOutput_1);
@@ -3422,7 +3430,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_019, TestSize.L
     intResult = camSession->CommitConfig();
     EXPECT_EQ(intResult, 0);
 
-    std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
+    std::shared_ptr<AppCallback> callback = nullptr;
+    previewOutput_1->SetCallback(callback);
+
+    callback = std::make_shared<AppCallback>();
+    previewOutput_1->SetCallback(callback);
     previewOutput_1->SetCallback(callback);
 
     sptr<PreviewOutputCallbackImpl> repeatCallback_2 = new(std::nothrow) PreviewOutputCallbackImpl(previewOutput_1);
@@ -3463,6 +3475,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_020, TestSize.L
     EXPECT_EQ(intResult, 0);
 
     sptr<PreviewOutput> previewOutput_1 = (sptr<PreviewOutput> &)previewOutput;
+
+    EXPECT_EQ(previewOutput_1->Start(), 7400103);
 
     intResult = camSession->CommitConfig();
     EXPECT_EQ(intResult, 0);
@@ -3572,6 +3586,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_021, TestSize.L
 
     intResult = videoOutput_1->Release();
     EXPECT_EQ(intResult, 7400201);
+
+    session_->Release();
+    EXPECT_EQ(videoOutput_1->Start(), 7400103);
 }
 
 /*
@@ -3626,7 +3643,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_022, TestSize.L
     intResult = camSession->CommitConfig();
     EXPECT_EQ(intResult, 0);
 
-    std::shared_ptr<AppVideoCallback> callback = std::make_shared<AppVideoCallback>();
+    std::shared_ptr<AppVideoCallback> callback = nullptr;
+    videoOutput_1->SetCallback(callback);
+
+    callback = std::make_shared<AppVideoCallback>();
+    videoOutput_1->SetCallback(callback);
     videoOutput_1->SetCallback(callback);
 
     sptr<VideoOutputCallbackImpl> repeatCallback_2 = new(std::nothrow) VideoOutputCallbackImpl(videoOutput_1);
@@ -4553,7 +4574,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_044, TestSize.L
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
-    
+
     int32_t intResult = camSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
@@ -4600,7 +4621,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_045, TestSize.L
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
-    
+
     int32_t intResult = camSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
@@ -4683,7 +4704,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_046, TestSize.L
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
-    
+
     int32_t intResult = camSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
@@ -4745,7 +4766,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_046, TestSize.L
     EXPECT_EQ(intResult, 0);
 
     camSession->LockForControl();
-    
+
     intResult = camSession->SetZoomRatio(zoomRatio);
     EXPECT_EQ(intResult, 0);
 
@@ -4805,7 +4826,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_047, TestSize.L
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_048, TestSize.Level0)
 {
     std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
-    
+
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
 
@@ -4849,6 +4870,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_048, TestSize.L
     sptr<PreviewOutput> previewOutput_1 = (sptr<PreviewOutput> &)previewOutput;
     sptr<VideoOutput> videoOutput_1 = (sptr<VideoOutput> &)videoOutput;
 
+    std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
+    photoOutput_1->SetCallback(callback);
+
     intResult = previewOutput_1->Start();
     EXPECT_EQ(intResult, 7400201);
 
@@ -4876,7 +4900,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_048, TestSize.L
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_049, TestSize.Level0)
 {
     std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
-    
+
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
 
@@ -4921,7 +4945,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_049, TestSize.L
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_050, TestSize.Level0)
 {
     std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
-    
+
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
 
@@ -5223,6 +5247,436 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_061, TestSize.L
 
     input_2 = new(std::nothrow) CameraInput(deviceObj_1, cameras_[0]);
     ASSERT_NE(input_2, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test abnormal branches with get device from empty id
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_062, TestSize.Level0)
+{
+    std::string cameraId = "";
+
+    sptr<CameraDevice> camDevice = manager_->GetCameraDeviceFromId(cameraId);
+    EXPECT_EQ(camDevice, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsSessionCommited with CaptureSession null
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_063, TestSize.Level0)
+{
+    sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
+    ASSERT_NE(camSession, nullptr);
+
+    std::shared_ptr<CameraManagerCallback> camMnagerCallback = std::make_shared<AppCallback>();
+    camMnagerCallback = nullptr;
+    manager_->SetCallback(camMnagerCallback);
+
+    int32_t intResult = camSession->Release();
+    EXPECT_EQ(intResult, 0);
+
+    bool isSessionCommited = camSession->IsSessionCommited();
+    EXPECT_EQ(isSessionCommited, false);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test metadataOutput with anomalous branch.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_064, TestSize.Level0)
+{
+    EXPECT_EQ(session_->BeginConfig(), 0);
+    EXPECT_EQ(session_->AddInput(input_), 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    EXPECT_EQ(session_->AddOutput(previewOutput), 0);
+
+    sptr<CaptureOutput> metadatOutput = manager_->CreateMetadataOutput();
+    ASSERT_NE(metadatOutput, nullptr);
+
+    EXPECT_EQ(session_->AddOutput(metadatOutput), 0);
+
+    sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput> &)metadatOutput;
+
+    EXPECT_EQ(session_->CommitConfig(), 0);
+    EXPECT_EQ(session_->Start(), 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    EXPECT_EQ(metaOutput->Start(), 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    EXPECT_EQ(metaOutput->Stop(), 0);
+
+    session_->inputDevice_ = nullptr;
+    std::vector<MetadataObjectType> metadataObjectTypes = metaOutput->GetSupportedMetadataObjectTypes();
+    metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> {MetadataObjectType::FACE});
+
+    session_->Release();
+
+    metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> {MetadataObjectType::FACE});
+
+    metaOutput->~MetadataOutput();
+    metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> {MetadataObjectType::FACE});
+    EXPECT_EQ(metaOutput->Start(), 7400103);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoOutput with anomalous branch.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_065, TestSize.Level0)
+{
+    std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
+    EXPECT_EQ(session_->BeginConfig(), 0);
+    EXPECT_EQ(session_->AddInput(input_), 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    EXPECT_EQ(session_->AddOutput(previewOutput), 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    EXPECT_EQ(session_->AddOutput(photoOutput), 0);
+
+    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput> &)photoOutput;
+
+    EXPECT_EQ(photoOutput_1->Capture(), 7400104);
+    EXPECT_EQ(photoOutput_1->CancelCapture(), 7400104);
+
+    EXPECT_EQ(session_->CommitConfig(), 0);
+    EXPECT_EQ(session_->Start(), 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    EXPECT_EQ(((sptr<PhotoOutput> &)photoOutput)->Capture(), 0);
+    sleep(WAIT_TIME_AFTER_CAPTURE);
+
+    session_->inputDevice_ = nullptr;
+    EXPECT_EQ(photoOutput_1->IsQuickThumbnailSupported(), 7400104);
+    EXPECT_EQ(photoOutput_1->IsMirrorSupported(), false);
+    EXPECT_EQ(photoOutput_1->SetThumbnail(false), 7400104);
+
+    photoOutput_1->~PhotoOutput();
+    session_->Release();
+    EXPECT_EQ(photoOutput_1->Capture(photoSetting), 7400104);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test metadataOutput Getstream branch with CaptureOutput nullptr.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_066, TestSize.Level0)
+{
+    EXPECT_EQ(session_->BeginConfig(), 0);
+    EXPECT_EQ(session_->AddInput(input_), 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    EXPECT_EQ(session_->AddOutput(previewOutput), 0);
+
+    sptr<CaptureOutput> metadatOutput = manager_->CreateMetadataOutput();
+    ASSERT_NE(metadatOutput, nullptr);
+
+    EXPECT_EQ(session_->AddOutput(metadatOutput), 0);
+
+    sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput> &)metadatOutput;
+
+    EXPECT_EQ(session_->CommitConfig(), 0);
+    EXPECT_EQ(session_->Start(), 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    EXPECT_EQ(metaOutput->Start(), 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    EXPECT_EQ(metaOutput->Stop(), 0);
+
+    metadatOutput->~CaptureOutput();
+    metaOutput->SetSession(session_);
+    EXPECT_EQ(metaOutput->Start(), 7400201);
+    EXPECT_EQ(metaOutput->Stop(), 7400201);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PreviewOutput/PhotoOutput/VideoOutput Getstream branch with CaptureOutput nullptr.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_067, TestSize.Level0)
+{
+    std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
+    std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
+    std::shared_ptr<AppVideoCallback> callback_2 = std::make_shared<AppVideoCallback>();
+
+    EXPECT_EQ(session_->BeginConfig(), 0);
+    EXPECT_EQ(session_->AddInput(input_), 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    EXPECT_EQ(session_->AddOutput(previewOutput), 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    EXPECT_EQ(session_->AddOutput(photoOutput), 0);
+
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+
+    EXPECT_EQ(session_->AddOutput(videoOutput), 0);
+
+    sptr<VideoOutput> videoOutput_1 = (sptr<VideoOutput> &)videoOutput;
+    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput> &)photoOutput;
+    sptr<PreviewOutput> previewOutput_1 = (sptr<PreviewOutput> &)previewOutput;
+
+    EXPECT_EQ(session_->CommitConfig(), 0);
+    EXPECT_EQ(session_->Start(), 0);
+
+    photoOutput->~CaptureOutput();
+    photoOutput_1->SetSession(session_);
+    EXPECT_EQ(photoOutput_1->Capture(photoSetting), 7400201);
+    EXPECT_EQ(photoOutput_1->Capture(), 7400201);
+    EXPECT_EQ(photoOutput_1->CancelCapture(), 7400201);
+
+    previewOutput->~CaptureOutput();
+    previewOutput_1->SetSession(session_);
+    EXPECT_EQ(previewOutput_1->Start(), 7400201);
+    EXPECT_EQ(previewOutput_1->Stop(), 7400201);
+    previewOutput_1->SetCallback(callback);
+
+    videoOutput->~CaptureOutput();
+    videoOutput_1->SetSession(session_);
+    EXPECT_EQ(videoOutput_1->Start(), 7400201);
+    EXPECT_EQ(videoOutput_1->Stop(), 7400201);
+    EXPECT_EQ(videoOutput_1->Resume(), 7400201);
+    EXPECT_EQ(videoOutput_1->Pause(), 7400201);
+    videoOutput_1->SetCallback(callback_2);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsSessionCommited branch with capturesession object null.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_068, TestSize.Level0)
+{
+    session_->~CaptureSession();
+    EXPECT_EQ(session_->Start(), 7400103);
+
+    VideoStabilizationMode mode;
+    EXPECT_EQ(session_->GetActiveVideoStabilizationMode(mode), 7400103);
+    EXPECT_EQ(session_->SetVideoStabilizationMode(OFF), 7400103);
+
+    bool isSupported;
+    EXPECT_EQ(session_->IsVideoStabilizationModeSupported(OFF, isSupported), 7400103);
+    EXPECT_EQ((session_->GetSupportedStabilizationMode()).empty(), true);
+
+    std::vector<VideoStabilizationMode> stabilizationModes = {};
+    EXPECT_EQ(session_->GetSupportedStabilizationMode(stabilizationModes), 7400103);
+    EXPECT_EQ(session_->IsExposureModeSupported(EXPOSURE_MODE_AUTO, isSupported), 7400103);
+    EXPECT_EQ((session_->GetSupportedExposureModes()).empty(), true);
+
+    std::vector<ExposureMode> supportedExposureModes = {};
+    EXPECT_EQ(session_->GetSupportedExposureModes(supportedExposureModes), 7400103);
+    EXPECT_EQ(session_->SetExposureMode(EXPOSURE_MODE_AUTO), 7400103);
+    EXPECT_EQ(session_->GetExposureMode(), EXPOSURE_MODE_UNSUPPORTED);
+
+    ExposureMode exposureMode;
+    EXPECT_EQ(session_->GetExposureMode(exposureMode), 7400103);
+
+    Point exposurePointGet = session_->GetMeteringPoint();
+    EXPECT_EQ(session_->SetMeteringPoint(exposurePointGet), 7400103);
+
+    EXPECT_EQ((session_->GetMeteringPoint()).x, 0);
+    EXPECT_EQ((session_->GetMeteringPoint()).y, 0);
+
+    EXPECT_EQ(session_->GetMeteringPoint(exposurePointGet), 7400103);
+    EXPECT_EQ((session_->GetExposureBiasRange()).empty(), true);
+
+    std::vector<float> exposureBiasRange = {};
+    EXPECT_EQ(session_->GetExposureBiasRange(exposureBiasRange), 7400103);
+    EXPECT_EQ(session_->SetExposureBias(0), 7400103);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsSessionCommited branch with capturesession object null.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_069, TestSize.Level0)
+{
+    session_->~CaptureSession();
+
+    float exposureValue;
+    EXPECT_EQ(session_->GetExposureValue(), 0);
+    EXPECT_EQ(session_->GetExposureValue(exposureValue), 7400103);
+    EXPECT_EQ((session_->GetSupportedFocusModes()).empty(), true);
+
+    std::vector<FocusMode> supportedFocusModes;
+    EXPECT_EQ(session_->GetSupportedFocusModes(supportedFocusModes), 7400103);
+
+    bool isSupported;
+    EXPECT_EQ(session_->IsFocusModeSupported(FOCUS_MODE_AUTO, isSupported), 7400103);
+    EXPECT_EQ(session_->SetFocusMode(FOCUS_MODE_AUTO), 7400103);
+    EXPECT_EQ(session_->GetFocusMode(), FOCUS_MODE_MANUAL);
+
+    FocusMode focusMode;
+    EXPECT_EQ(session_->GetFocusMode(focusMode), 7400103);
+
+    Point exposurePointGet = session_->GetMeteringPoint();
+    EXPECT_EQ(session_->SetFocusPoint(exposurePointGet), 7400103);
+
+    EXPECT_EQ((session_->GetFocusPoint()).x, 0);
+    EXPECT_EQ((session_->GetFocusPoint()).y, 0);
+
+    Point focusPoint;
+    EXPECT_EQ(session_->GetFocusPoint(focusPoint), 7400103);
+    EXPECT_EQ(session_->GetFocalLength(), 0);
+
+    float focalLength;
+    EXPECT_EQ(session_->GetFocalLength(focalLength), 7400103);
+    EXPECT_EQ((session_->GetSupportedFlashModes()).empty(), true);
+
+    std::vector<FlashMode> supportedFlashModes;
+    EXPECT_EQ(session_->GetSupportedFlashModes(supportedFlashModes), 7400103);
+    EXPECT_EQ(session_->GetFlashMode(), FLASH_MODE_CLOSE);
+
+    FlashMode flashMode;
+    EXPECT_EQ(session_->GetFlashMode(flashMode), 7400103);
+    EXPECT_EQ(session_->SetFlashMode(FLASH_MODE_CLOSE), 7400103);
+    EXPECT_EQ(session_->IsFlashModeSupported(FLASH_MODE_CLOSE, isSupported), 7400103);
+    EXPECT_EQ(session_->HasFlash(isSupported), 7400103);
+    EXPECT_EQ((session_->GetZoomRatioRange()).empty(), true);
+
+    std::vector<float> exposureBiasRange = {};
+    EXPECT_EQ(session_->GetZoomRatioRange(exposureBiasRange), 7400103);
+    EXPECT_EQ(session_->GetZoomRatio(), 0);
+
+    float zoomRatio;
+    EXPECT_EQ(session_->GetZoomRatio(zoomRatio), 7400103);
+    EXPECT_EQ(session_->SetZoomRatio(0), 7400103);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsSessionConfiged branch with capturesession object null.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_070, TestSize.Level0)
+{
+    session_->~CaptureSession();
+
+    EXPECT_EQ(session_->CommitConfig(), 7400102);
+
+    sptr<CaptureInput> input;
+    EXPECT_EQ(session_->AddInput(input), 7400102);
+
+    sptr<CaptureOutput> output;
+    EXPECT_EQ(session_->AddOutput(output), 7400102);
+    EXPECT_EQ(session_->RemoveInput(input), 7400102);
+    EXPECT_EQ(session_->RemoveOutput(output), 7400102);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamRepeat
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test HStreamRepeat with producer is null
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_071, TestSize.Level0)
+{
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
+
+    sptr<IStreamRepeatCallback> repeatCallback = iface_cast<IStreamRepeatCallback>(object);
+    ASSERT_NE(repeatCallback, nullptr);
+
+    int32_t format = 0;
+    int32_t width = 0;
+    int32_t height = 0;
+    sptr<HStreamRepeat> streamRepeat= new(std::nothrow) HStreamRepeat(nullptr, format, width, height, false);
+    EXPECT_EQ(streamRepeat->SetCallback(repeatCallback), CAMERA_OK);
+    EXPECT_EQ(streamRepeat->OnFrameError(BUFFER_LOST), CAMERA_OK);
+    EXPECT_EQ(streamRepeat->OnFrameError(0), CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamCapture
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test HStreamCapture with abnormal branches
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_072, TestSize.Level0)
+{
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
+
+    sptr<IStreamCaptureCallback> captureCallback = iface_cast<IStreamCaptureCallback>(object);
+    ASSERT_NE(captureCallback, nullptr);
+
+    int32_t format = 0;
+    int32_t width = 0;
+    int32_t height = 0;
+    int32_t captureId = 0;
+    int32_t frameCount = 0;
+    uint64_t timestamp = 0;
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+    sptr<HStreamCapture> streamCapture= new(std::nothrow) HStreamCapture(producer, format, width, height);
+    EXPECT_EQ(streamCapture->SetCallback(captureCallback), CAMERA_OK);
+    EXPECT_EQ(streamCapture->OnCaptureEnded(captureId, frameCount), CAMERA_OK);
+    EXPECT_EQ(streamCapture->OnCaptureError(captureId, frameCount), CAMERA_OK);
+    EXPECT_EQ(streamCapture->OnCaptureError(captureId, BUFFER_LOST), CAMERA_OK);
+    EXPECT_EQ(streamCapture->OnFrameShutter(captureId, timestamp), CAMERA_OK);
 }
 
 /*
