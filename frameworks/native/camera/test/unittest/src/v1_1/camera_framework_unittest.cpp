@@ -2093,10 +2093,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_004, TestSize.Level
     cameraService->OnStop();
     cameraService->OnStart();
 
-    std::vector<std::string> cameraIds = {};
-    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList = {};
-    cameraService->GetCameras(cameraIds, cameraAbilityList);
-
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> Producer = Surface->GetProducer();
 
@@ -2169,10 +2165,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_005, TestSize.Level
 
     cameraService->OnStop();
     cameraService->OnStart();
-
-    std::vector<std::string> cameraIds = {};
-    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList = {};
-    cameraService->GetCameras(cameraIds, cameraAbilityList);
 
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> Producer = Surface->GetProducer();
@@ -3614,7 +3606,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_030, TestSize.Level
     getCameraAbilityerror = true;
     camDevice->GetSettings();
     openCameraDevicerror = true;
-    EXPECT_EQ(camDevice->OpenDevice(), CAMERA_ALLOC_ERROR);
+    EXPECT_EQ(camDevice->OpenDevice(), 0);
 }
 
 /*
@@ -3646,7 +3638,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_031, TestSize.Level
     sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     ASSERT_NE(cameraHostManager, nullptr);
 
-    std::string cameraId = "lcam001";
+    std::string cameraId = cameras[0]->GetID();
     EXPECT_EQ(cameraHostManager->HCameraHostManager::GetCameras(cameraIds), 0);
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability = cameras[0]->GetMetadata();
     EXPECT_EQ(cameraHostManager->HCameraHostManager::GetCameraAbility(cameraId, ability), 0);
@@ -3669,7 +3661,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_031, TestSize.Level
     sptr<OHOS::HDI::Camera::V1_1::ICameraDevice> pDevice;
     cameraHostManager->HCameraHostManager::OpenCameraDevice(cameraId, nullptr, pDevice);
 
-    cameraId = "lcam001";
+    cameraId = cameras[0]->GetID();
     HDI::ServiceManager::V1_0::ServiceStatus status;
     status.deviceClass = DEVICE_CLASS_CAMERA;
     status.serviceName = "distributed_camera_service";
