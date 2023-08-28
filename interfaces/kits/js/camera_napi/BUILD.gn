@@ -64,6 +64,8 @@ ohos_shared_library("camera_napi") {
   external_deps = [
     "access_token:libtokenid_sdk",
     "c_utils:utils",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
     "graphic_2d:surface",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
