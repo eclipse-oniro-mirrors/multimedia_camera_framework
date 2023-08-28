@@ -87,9 +87,8 @@ void ExposureCallbackListener::OnExposureState(const ExposureState state)
 void ExposureCallbackListener::SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    bool isSameCallback = true;
     for (auto it = exposureCbList_.begin(); it != exposureCbList_.end(); ++it) {
-        isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
         CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
     }
     napi_ref callbackRef = nullptr;
@@ -203,9 +202,8 @@ void FocusCallbackListener::OnFocusState(FocusState state)
 void FocusCallbackListener::SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    bool isSameCallback = true;
     for (auto it = focusCbList_.begin(); it != focusCbList_.end(); ++it) {
-        isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
         CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
     }
     napi_ref callbackRef = nullptr;
@@ -322,9 +320,8 @@ void SessionCallbackListener::OnError(int32_t errorCode)
 void SessionCallbackListener::SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    bool isSameCallback = true;
     for (auto it = sessionCbList_.begin(); it != sessionCbList_.end(); ++it) {
-        isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
         CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
     }
     napi_ref callbackRef = nullptr;

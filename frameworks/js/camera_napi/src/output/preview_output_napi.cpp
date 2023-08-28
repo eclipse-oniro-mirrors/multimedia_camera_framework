@@ -152,9 +152,8 @@ void PreviewOutputCallback::SaveCallbackReference(const std::string &eventType, 
             MEDIA_ERR_LOG("Incorrect preview callback event type received from JS");
             return;
     }
-    bool isSameCallback = true;
     for (auto it = callbackList->begin(); it != callbackList->end(); ++it) {
-        isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
         CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
     }
     napi_ref callbackRef = nullptr;
