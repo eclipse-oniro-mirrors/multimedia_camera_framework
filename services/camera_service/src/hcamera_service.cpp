@@ -319,8 +319,7 @@ void HCameraService::OnCameraStatus(const std::string& cameraId, CameraStatus st
             MEDIA_ERR_LOG("HCameraService::OnCameraStatus cameraServiceCallback is null, pid = %{public}d",
                           IPCSkeleton::GetCallingPid());
             continue;
-        }
-        if (it.second != nullptr) {
+        } else {
             it.second->OnCameraStatusChanged(cameraId, status);
         }
         CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d",
@@ -339,8 +338,7 @@ void HCameraService::OnFlashlightStatus(const std::string& cameraId, FlashStatus
             MEDIA_ERR_LOG("HCameraService::OnCameraStatus cameraServiceCallback is null, pid = %{public}d",
                           IPCSkeleton::GetCallingPid());
             continue;
-        }
-        if (it.second != nullptr) {
+        } else {
             it.second->OnFlashlightStatusChanged(cameraId, status);
         }
     }

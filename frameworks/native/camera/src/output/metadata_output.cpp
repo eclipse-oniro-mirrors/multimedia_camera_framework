@@ -175,53 +175,11 @@ MetadataObjectListener::MetadataObjectListener(sptr<MetadataOutput> metadata) : 
 int32_t MetadataObjectListener::ProcessFaceRectangles(int64_t timestamp, const camera_metadata_item_t &metadataItem,
                                                       std::vector<sptr<MetadataObject>> &metaObjects)
 {
-    constexpr int32_t rectangleUnitLen = 4;
-
-    if (metadataItem.count % rectangleUnitLen) {
-        MEDIA_ERR_LOG("Metadata item: %{public}d count: %{public}d is invalid", metadataItem.item, metadataItem.count);
-        return ERROR_UNKNOWN;
-    }
-    metaObjects.reserve(metadataItem.count / rectangleUnitLen);
-    float* start = metadataItem.data.f;
-    float* end = metadataItem.data.f + metadataItem.count;
-    for (; start < end; start += rectangleUnitLen) {
-        sptr<MetadataObject> metadataObject = new(std::nothrow) MetadataFaceObject(timestamp,
-            (Rect) {start[0], start[1], start[2], start[3]});
-        CHECK_AND_RETURN_RET_LOG(metadataObject != nullptr, ERROR_INSUFFICIENT_RESOURCES,
-                                 "Failed to allocate MetadataFaceObject");
-        metaObjects.emplace_back(metadataObject);
-    }
     return CAMERA_OK;
 }
 
 int32_t MetadataObjectListener::ProcessMetadataBuffer(void* buffer, int64_t timestamp)
 {
-    if (!buffer) {
-        MEDIA_ERR_LOG("Buffer is null");
-        return ERROR_UNKNOWN;
-    }
-    common_metadata_header_t* metadata = (common_metadata_header_t *)buffer;
-    uint32_t itemCount = Camera::GetCameraMetadataItemCount(metadata);
-    camera_metadata_item_t metadataItem;
-    std::vector<sptr<MetadataObject>> metaObjects;
-    for (uint32_t i = 0; i < itemCount; i++) {
-        int32_t ret = Camera::GetCameraMetadataItem(metadata, i, &metadataItem);
-        if (ret) {
-            MEDIA_ERR_LOG("Failed to get metadata item at index: %{public}d, with return code: %{public}d", i, ret);
-            return ERROR_UNKNOWN;
-        }
-        if (metadataItem.item == OHOS_STATISTICS_FACE_RECTANGLES) {
-            ret = ProcessFaceRectangles(timestamp, metadataItem, metaObjects);
-            if (ret) {
-                MEDIA_ERR_LOG("Failed to process face rectangles");
-                return ret;
-            }
-        }
-    }
-    std::shared_ptr<MetadataObjectCallback> appObjectCallback = metadata_->appObjectCallback_;
-    if (!metaObjects.empty() && appObjectCallback) {
-        appObjectCallback->OnMetadataObjectsAvailable(metaObjects);
-    }
     return CAMERA_OK;
 }
 

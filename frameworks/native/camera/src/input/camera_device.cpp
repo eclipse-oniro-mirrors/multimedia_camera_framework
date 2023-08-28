@@ -149,54 +149,6 @@ bool CameraDevice::IsMirrorSupported()
     return isMirrorSupported_;
 }
 
-std::vector<float> CameraDevice::CalculateZoomRange()
-{
-    int32_t ret;
-    int32_t minIndex = 0;
-    int32_t maxIndex = 1;
-    uint32_t zoomRangeCount = 2;
-    constexpr float factor = 100.0;
-    float minZoom;
-    float maxZoom;
-    float tempZoom;
-    camera_metadata_item_t item;
-
-    ret = Camera::FindCameraMetadataItem(metadata_->get(), OHOS_ABILITY_ZOOM_CAP, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("Failed to get zoom cap with return code %{public}d", ret);
-        return {};
-    }
-    if (item.count != zoomRangeCount) {
-        MEDIA_ERR_LOG("Invalid zoom cap count: %{public}d", item.count);
-        return {};
-    }
-    MEDIA_DEBUG_LOG("Zoom cap min: %{public}d, max: %{public}d",
-                    item.data.i32[minIndex], item.data.i32[maxIndex]);
-    minZoom = item.data.i32[minIndex] / factor;
-    maxZoom = item.data.i32[maxIndex] / factor;
-
-    ret = Camera::FindCameraMetadataItem(metadata_->get(), OHOS_ABILITY_SCENE_ZOOM_CAP, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("Failed to get scene zoom cap with return code %{public}d", ret);
-        return {};
-    }
-    if (item.count != zoomRangeCount) {
-        MEDIA_ERR_LOG("Invalid zoom cap count: %{public}d", item.count);
-        return {};
-    }
-    MEDIA_DEBUG_LOG("Scene zoom cap min: %{public}d, max: %{public}d",
-                    item.data.i32[minIndex], item.data.i32[maxIndex]);
-    tempZoom = item.data.i32[minIndex] / factor;
-    if (minZoom < tempZoom) {
-        minZoom = tempZoom;
-    }
-    tempZoom = item.data.i32[maxIndex] / factor;
-    if (maxZoom > tempZoom) {
-        maxZoom = tempZoom;
-    }
-    return {minZoom, maxZoom};
-}
-
 std::vector<float> CameraDevice::GetZoomRatioRange()
 {
     int32_t minIndex = 0;
