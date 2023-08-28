@@ -36,6 +36,10 @@ using ::testing::Mock;
 using ::testing::Return;
 using ::testing::_;
 
+bool mockFlagWithoutAbt = false;
+bool getCameraAbilityerror = false;
+bool openCameraDevicerror = false;
+
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_1;
@@ -150,6 +154,20 @@ public:
         CameraFrameworkUnitTest::PHOTO_DEFAULT_HEIGHT, CameraFrameworkUnitTest::PHOTO_FRAMERATE,
         CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::MODE_FINISH
     };
+    class MockStatusCallback : public StatusCallback {
+    public:
+        void OnCameraStatus(const std::string& cameraId, CameraStatus status) override
+        {
+            MEDIA_DEBUG_LOG("MockStatusCallback::OnCameraStatus");
+            return;
+        }
+        void OnFlashlightStatus(const std::string& cameraId, FlashStatus status) override
+        {
+            MEDIA_DEBUG_LOG("MockStatusCallback::OnFlashlightStatus");
+            return;
+        }
+    };
+
     explicit MockHCameraHostManager(StatusCallback* statusCallback) : HCameraHostManager(statusCallback)
     {
         cameraDevice = new MockCameraDevice();
@@ -168,6 +186,17 @@ public:
             int32_t itemCount = 10;
             int32_t dataSize = 100;
             ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
+            ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, streams,
+                              sizeof(streams) / sizeof(streams[0]));
+
+            if (mockFlagWithoutAbt) {
+                return CAMERA_OK;
+            }
+            if (getCameraAbilityerror) {
+                getCameraAbilityerror = false;
+                return CAMERA_ALLOC_ERROR;
+            }
+
             ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams,
                               sizeof(streams) / sizeof(streams[0]));
             int32_t compensationRange[2] = {-2, 3};
@@ -185,6 +214,78 @@ public:
             const camera_rational_t aeCompensationStep[] = {{0, 1}};
             ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
                               sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
+
+            int32_t zoomCap[2] = {0, 10};
+            ability->addEntry(OHOS_ABILITY_ZOOM_CAP, &zoomCap,
+                              sizeof(zoomCap) / sizeof(zoomCap[0]));
+
+            int32_t sceneZoomCap[2] = {0, 10};
+            ability->addEntry(OHOS_ABILITY_SCENE_ZOOM_CAP, &sceneZoomCap,
+                              sizeof(zoomCap) / sizeof(zoomCap[0]));
+
+            float zoomRatio = 1.0;
+            ability->addEntry(OHOS_CONTROL_ZOOM_RATIO, &zoomRatio, sizeof(float));
+
+            uint8_t flaMode = OHOS_CAMERA_FLASH_MODE_ALWAYS_OPEN;
+            ability->addEntry(OHOS_CONTROL_FLASH_MODE, &flaMode, sizeof(uint8_t));
+
+            uint8_t flashstate = OHOS_CAMERA_FLASH_STATE_READY;
+            ability->addEntry(OHOS_CONTROL_FLASH_STATE, &flashstate, sizeof(uint8_t));
+
+            uint8_t fMode = FOCUS_MODE_AUTO;
+            ability->addEntry(OHOS_CONTROL_FOCUS_MODE, &fMode, sizeof(uint8_t));
+
+            uint8_t focusState = OHOS_CAMERA_FOCUS_STATE_SCAN;
+            ability->addEntry(OHOS_CONTROL_FOCUS_STATE, &focusState, sizeof(uint8_t));
+
+            uint8_t exMode = 0;
+            ability->addEntry(OHOS_CONTROL_EXPOSURE_MODE, &exMode, sizeof(uint8_t));
+
+            uint8_t muteMode = OHOS_CAMERA_MUTE_MODE_OFF;
+            ability->addEntry(OHOS_CONTROL_MUTE_MODE, &muteMode, sizeof(uint8_t));
+
+            int32_t activeArraySize[] = {
+                0, 0, CameraFrameworkUnitTest::PREVIEW_DEFAULT_WIDTH, CameraFrameworkUnitTest::PREVIEW_DEFAULT_HEIGHT
+            };
+            ability->addEntry(OHOS_SENSOR_INFO_ACTIVE_ARRAY_SIZE, &activeArraySize, sizeof(int32_t));
+
+            uint8_t videoStabilizationMode = OHOS_CAMERA_VIDEO_STABILIZATION_OFF;
+            ability->addEntry(OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &videoStabilizationMode, sizeof(uint8_t));
+
+            uint8_t faceDetectMode = OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE;
+            ability->addEntry(OHOS_STATISTICS_FACE_DETECT_MODE, &faceDetectMode, sizeof(uint8_t));
+
+            uint8_t value_u8 = 0;
+            ability->addEntry(OHOS_ABILITY_CAMERA_TYPE, &value_u8, sizeof(uint8_t));
+            ability->addEntry(OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &value_u8, sizeof(uint8_t));
+            ability->addEntry(OHOS_ABILITY_FLASH_MODES, &value_u8, sizeof(uint8_t));
+            ability->addEntry(OHOS_ABILITY_FOCUS_MODES, &value_u8, sizeof(uint8_t));
+            ability->addEntry(OHOS_ABILITY_EXPOSURE_MODES, &value_u8, sizeof(uint8_t));
+            ability->addEntry(OHOS_ABILITY_VIDEO_STABILIZATION_MODES, &value_u8, sizeof(uint8_t));
+            ability->addEntry(OHOS_ABILITY_PRELAUNCH_AVAILABLE, &value_u8, sizeof(uint8_t));
+            ability->addEntry(OHOS_ABILITY_STREAM_QUICK_THUMBNAIL_AVAILABLE, &value_u8, sizeof(uint8_t));
+            ability->addEntry(OHOS_ABILITY_MUTE_MODES, &value_u8, sizeof(uint8_t));
+
+            uint32_t value_u32[2] = {0, 10};
+            ability->addEntry(OHOS_ABILITY_FPS_RANGES, &value_u32, sizeof(value_u32) / sizeof(value_u32[0]));
+
+            float value_f[1] = {1.0};
+            ability->addEntry(OHOS_ABILITY_ZOOM_RATIO_RANGE, &value_f, sizeof(value_f) / sizeof(value_f[0]));
+
+            int32_t aeRegions = 0;
+            ability->addEntry(OHOS_CONTROL_AE_REGIONS, &aeRegions, sizeof(int32_t));
+
+            int32_t aeExposureCompensation = 0;
+            ability->addEntry(OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &aeExposureCompensation, sizeof(int32_t));
+
+            uint8_t exposureState = 0;
+            ability->addEntry(OHOS_CONTROL_EXPOSURE_STATE, &exposureState, sizeof(uint8_t));
+
+            uint8_t mirror = OHOS_CAMERA_MIRROR_OFF;
+            ability->addEntry(OHOS_CONTROL_CAPTURE_MIRROR, &mirror, sizeof(uint8_t));
+
+            int32_t orientation = OHOS_CAMERA_JPEG_ROTATION_0;
+            ability->addEntry(OHOS_JPEG_ORIENTATION, &orientation, sizeof(int32_t));
             return CAMERA_OK;
         });
         ON_CALL(*this, OpenCameraDevice).WillByDefault([this](std::string &cameraId,
@@ -218,6 +319,21 @@ class FakeCameraManager : public CameraManager {
 public:
     explicit FakeCameraManager(sptr<HCameraService> service) : CameraManager(service) {}
     ~FakeCameraManager() {}
+};
+
+class CallbackListener : public FocusCallback, public ExposureCallback {
+public:
+    void OnFocusState(FocusState state) override
+    {
+        MEDIA_DEBUG_LOG("CallbackListener::OnFocusState ");
+        return;
+    }
+
+    void OnExposureState(ExposureState state) override
+    {
+        MEDIA_DEBUG_LOG("CallbackListener::OnExposureState ");
+        return;
+    }
 };
 
 sptr<CaptureOutput> CameraFrameworkUnitTest::CreatePhotoOutput(int32_t width, int32_t height)
@@ -337,6 +453,7 @@ void CameraFrameworkUnitTest::SetUp()
     SetSelfTokenID(tokenId);
     OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 
+    mockFlagWithoutAbt = false;
     mockCameraHostManager = new MockHCameraHostManager(nullptr);
     mockCameraDevice = mockCameraHostManager->cameraDevice;
     mockStreamOperator = mockCameraDevice->streamOperator;
@@ -1784,6 +1901,1791 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_045, TestSize.Level0
     }
     ASSERT_EQ(session->GetExposureValue(), exposurebiasRange[1]);
     session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCameraDevice with anomalous branch
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_001, TestSize.Level0)
+{
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+
+    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    int32_t ret = camDevice->HCameraDevice::OpenDevice();
+    EXPECT_EQ(ret, 0);
+
+    std::vector<int32_t> result;
+    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
+
+    ret = camDevice->HCameraDevice::EnableResult(result);
+    EXPECT_EQ(ret, 0);
+
+    ret = camDevice->HCameraDevice::DisableResult(result);
+    EXPECT_EQ(ret, 0);
+
+    sptr<IStreamOperatorCallback> callback = nullptr;
+    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator = nullptr;
+    ret = camDevice->HCameraDevice::GetStreamOperator(callback, streamOperator);
+    EXPECT_EQ(ret, 2);
+
+    wptr<IDeviceOperatorsCallback> callback_2 = nullptr;
+    ret = camDevice->HCameraDevice::SetDeviceOperatorsCallback(callback_2);
+    EXPECT_EQ(ret, 2);
+
+    ret = camDevice->HCameraDevice::OnError(REQUEST_TIMEOUT, 0);
+    EXPECT_EQ(ret, 0);
+
+    ret = camDevice->HCameraDevice::CloseDevice();
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test dump with args empty
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_002, TestSize.Level0)
+{
+    InSequence s;
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<FakeHCameraService> mockHCameraService = new FakeHCameraService(mockCameraHostManager);
+    sptr<HCameraService> camService = (sptr<HCameraService> &)mockHCameraService;
+    ASSERT_NE(camService, nullptr);
+
+    camService->OnStart();
+
+    std::vector<std::string> cameraIds = {};
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList = {};
+    int32_t ret = camService->GetCameras(cameraIds, cameraAbilityList);
+
+    int fd = 0;
+    std::vector<std::u16string> args = {};
+    ret = camService->Dump(fd, args);
+    EXPECT_EQ(ret, 0);
+
+    camService->OnStop();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession with anomalous branch
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_003, TestSize.Level0)
+{
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    sptr<StreamOperatorCallback> streamOperatorCb = nullptr;
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
+                                                                         streamOperatorCb, callerToken);
+    ASSERT_NE(camSession, nullptr);
+
+    sptr<ICameraDeviceService> cameraDevice = camInput->GetCameraDevice();
+    int32_t ret = camSession->AddInput(cameraDevice);
+    EXPECT_EQ(ret, 10);
+
+    ret = camSession->RemoveInput(cameraDevice);
+    EXPECT_EQ(ret, 10);
+
+    ret = camSession->BeginConfig();
+    EXPECT_EQ(ret, 0);
+
+    ret = camSession->BeginConfig();
+    EXPECT_EQ(ret, 10);
+
+    cameraDevice = nullptr;
+    ret = camSession->AddInput(cameraDevice);
+    EXPECT_EQ(ret, 2);
+
+    ret = camSession->RemoveInput(cameraDevice);
+    EXPECT_EQ(ret, 2);
+
+    sptr<IStreamCommon> stream_2 = nullptr;
+    ret = camSession->AddOutput(StreamType::CAPTURE, stream_2);
+    EXPECT_EQ(ret, 2);
+
+    ret = camSession->RemoveOutput(StreamType::CAPTURE, stream_2);
+    EXPECT_EQ(ret, 2);
+
+    camSession->Release(0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCameraService with anomalous branch
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_004, TestSize.Level0)
+{
+    InSequence s;
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<FakeHCameraService> mockHCameraService = new FakeHCameraService(mockCameraHostManager);
+    sptr<HCameraService> cameraService = (sptr<HCameraService> &)mockHCameraService;
+    ASSERT_NE(cameraService, nullptr);
+
+    cameraService->OnStop();
+    cameraService->OnStart();
+
+    std::vector<std::string> cameraIds = {};
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList = {};
+    cameraService->GetCameras(cameraIds, cameraAbilityList);
+
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> Producer = Surface->GetProducer();
+
+    int32_t height = 0;
+    int32_t width = PHOTO_DEFAULT_WIDTH;
+    sptr<IStreamRepeat> output = nullptr;
+    int32_t intResult = cameraService->CreateDeferredPreviewOutput(0, width, height, output);
+    EXPECT_EQ(intResult, 2);
+
+    width = 0;
+    intResult = cameraService->CreateDeferredPreviewOutput(0, width, height, output);
+    EXPECT_EQ(intResult, 2);
+
+    Producer = nullptr;
+    intResult = cameraService->CreatePreviewOutput(Producer, 0, width, height, output);
+    EXPECT_EQ(intResult, 2);
+
+    Producer = Surface->GetProducer();
+    intResult = cameraService->CreatePreviewOutput(Producer, 0, width, height, output);
+    EXPECT_EQ(intResult, 2);
+
+    width = PREVIEW_DEFAULT_WIDTH;
+    intResult = cameraService->CreatePreviewOutput(Producer, 0, width, height, output);
+    EXPECT_EQ(intResult, 2);
+
+    intResult = cameraService->CreateVideoOutput(Producer, 0, width, height, output);
+    EXPECT_EQ(intResult, 2);
+
+    width = 0;
+    intResult = cameraService->CreateVideoOutput(Producer, 0, width, height, output);
+    EXPECT_EQ(intResult, 2);
+
+    Producer = nullptr;
+    intResult = cameraService->CreateVideoOutput(Producer, 0, width, height, output);
+    EXPECT_EQ(intResult, 2);
+
+    cameraService->OnStart();
+    cameraService->OnStop();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCameraService with anomalous branch
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_005, TestSize.Level0)
+{
+    InSequence s;
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<FakeHCameraService> mockHCameraService = new FakeHCameraService(mockCameraHostManager);
+    sptr<HCameraService> cameraService = (sptr<HCameraService> &)mockHCameraService;
+    ASSERT_NE(cameraService, nullptr);
+
+    int32_t width = 0;
+    int32_t height = 0;
+
+    cameraService->OnStop();
+    cameraService->OnStart();
+
+    std::vector<std::string> cameraIds = {};
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList = {};
+    cameraService->GetCameras(cameraIds, cameraAbilityList);
+
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> Producer = Surface->GetProducer();
+
+    sptr<IStreamCapture> output_1 = nullptr;
+    int32_t intResult = cameraService->CreatePhotoOutput(Producer, 0, width, height, output_1);
+    EXPECT_EQ(intResult, 2);
+
+    width = PHOTO_DEFAULT_WIDTH;
+    intResult = cameraService->CreatePhotoOutput(Producer, 0, width, height, output_1);
+    EXPECT_EQ(intResult, 2);
+
+    Producer = nullptr;
+    intResult = cameraService->CreatePhotoOutput(Producer, 0, width, height, output_1);
+    EXPECT_EQ(intResult, 2);
+
+    sptr<IStreamMetadata> output_2 = nullptr;
+    intResult = cameraService->CreateMetadataOutput(Producer, 0, output_2);
+    EXPECT_EQ(intResult, 2);
+
+    cameraService->OnStart();
+    cameraService->OnStop();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCameraService with anomalous branch
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_006, TestSize.Level0)
+{
+    InSequence s;
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<FakeHCameraService> mockHCameraService = new FakeHCameraService(mockCameraHostManager);
+    sptr<HCameraService> cameraService = (sptr<HCameraService> &)mockHCameraService;
+    ASSERT_NE(cameraService, nullptr);
+
+    cameraService->OnStop();
+    cameraService->OnStart();
+
+    sptr<ICameraServiceCallback> callback = nullptr;
+    int32_t intResult = cameraService->SetCallback(callback);
+    EXPECT_EQ(intResult, 2);
+
+    callback = new(std::nothrow) CameraStatusServiceCallback(cameraManager);
+    intResult = cameraService->SetCallback(callback);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
+    ASSERT_NE(deviceObj, nullptr);
+
+    sptr<ICameraMuteServiceCallback> callback_2 = nullptr;
+    intResult = cameraService->SetMuteCallback(callback_2);
+    EXPECT_EQ(intResult, 2);
+
+    callback_2 = new(std::nothrow) CameraMuteServiceCallback(cameraManager);
+    intResult = cameraService->SetMuteCallback(callback_2);
+    EXPECT_EQ(intResult, 0);
+
+    std::string cameraId = camInput->GetCameraId();
+    intResult = cameraService->SetPrelaunchConfig(cameraId);
+    EXPECT_EQ(intResult, 2);
+
+    cameraId = "";
+    intResult = cameraService->SetPrelaunchConfig(cameraId);
+    EXPECT_EQ(intResult, 2);
+
+    cameraService->OnStop();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test different status with OnReceive
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_007, TestSize.Level0)
+{
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    HDI::ServiceManager::V1_0::ServiceStatus status;
+
+    status.serviceName = "1";
+    cameraHostManager->OnReceive(status);
+
+    status.deviceClass = DEVICE_CLASS_CAMERA;
+    status.serviceName = "distributed_camera_service";
+    status.status = HDI::ServiceManager::V1_0::SERVIE_STATUS_START;
+    cameraHostManager->OnReceive(status);
+    cameraHostManager->OnReceive(status);
+
+    status.status = HDI::ServiceManager::V1_0::SERVIE_STATUS_STOP;
+    cameraHostManager->OnReceive(status);
+
+    status.status = 4;
+    cameraHostManager->OnReceive(status);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CaptureSession with no static capability.
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_008, TestSize.Level0)
+{
+    mockFlagWithoutAbt = true;
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
+    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photo), 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+    EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    sptr<CameraOutputCapability> cameraOutputCapability = cameraManager->GetSupportedOutputCapability(cameras[0]);
+
+    std::vector<VideoStabilizationMode> videoStabilizationMode = session->GetSupportedStabilizationMode();
+    EXPECT_EQ(videoStabilizationMode.empty(), true);
+
+    int32_t intResult = session->GetSupportedStabilizationMode(videoStabilizationMode);
+    EXPECT_EQ(intResult, 0);
+
+    std::vector<ExposureMode> getSupportedExpModes = session->GetSupportedExposureModes();
+    EXPECT_EQ(getSupportedExpModes.empty(), true);
+
+    EXPECT_EQ(session->GetSupportedExposureModes(getSupportedExpModes), 0);
+
+    EXPECT_EQ(session->GetExposureMode(), -1);
+    EXPECT_EQ((session->GetMeteringPoint().x), 0);
+    EXPECT_EQ((session->GetMeteringPoint().y), 0);
+
+    float exposureValue = session->GetExposureValue();
+    EXPECT_EQ(exposureValue, 0);
+    int32_t exposureValueGet = session->GetExposureValue(exposureValue);
+    EXPECT_EQ(exposureValueGet, 0);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CaptureSession with no static capability.
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_009, TestSize.Level0)
+{
+    mockFlagWithoutAbt = true;
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
+    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photo), 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+    EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    sptr<CameraOutputCapability> cameraOutputCapability = cameraManager->GetSupportedOutputCapability(cameras[0]);
+
+    std::vector<FocusMode> supportedFocusModes = session->GetSupportedFocusModes();
+    EXPECT_EQ(supportedFocusModes.empty(), true);
+    EXPECT_EQ(session->GetSupportedFocusModes(supportedFocusModes), 0);
+
+    EXPECT_EQ(session->GetFocusMode(), 0);
+
+    float focalLength = session->GetFocalLength();
+    EXPECT_EQ(focalLength, 0);
+    EXPECT_EQ(session->GetFocalLength(focalLength), 0);
+
+    std::vector<FlashMode> supportedFlashModes = session->GetSupportedFlashModes();
+    EXPECT_EQ(supportedFlashModes.empty(), true);
+    EXPECT_EQ(session->GetSupportedFlashModes(supportedFlashModes), 0);
+    EXPECT_EQ(session->GetFlashMode(), 0);
+    EXPECT_EQ(session->GetZoomRatio(), 0);
+
+    bool isSupported;
+    VideoStabilizationMode stabilizationMode = MIDDLE;
+    EXPECT_EQ(session->IsVideoStabilizationModeSupported(MIDDLE, isSupported), 0);
+    EXPECT_EQ(session->SetVideoStabilizationMode(stabilizationMode), 0);
+    EXPECT_EQ(session->IsFlashModeSupported(FLASH_MODE_AUTO), false);
+    EXPECT_EQ(session->IsFlashModeSupported(FLASH_MODE_AUTO, isSupported), 0);
+
+    sptr<PhotoOutput> photoOutput = (sptr<PhotoOutput> &)photo;
+    EXPECT_EQ(photoOutput->IsMirrorSupported(), false);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test dump with no static capability.
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_010, TestSize.Level0)
+{
+    mockFlagWithoutAbt = true;
+    InSequence s;
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<FakeHCameraService> mockHCameraService = new FakeHCameraService(mockCameraHostManager);
+    sptr<HCameraService> camService = (sptr<HCameraService> &)mockHCameraService;
+    ASSERT_NE(camService, nullptr);
+
+    camService->OnStart();
+
+    std::vector<std::string> cameraIds = {};
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList = {};
+    int32_t ret = camService->GetCameras(cameraIds, cameraAbilityList);
+
+    int fd = 0;
+    std::vector<std::u16string> args = {};
+    ret = camService->Dump(fd, args);
+    EXPECT_EQ(ret, 0);
+
+    std::u16string cameraServiceInfo = u"";
+    args.push_back(cameraServiceInfo);
+    ret = camService->Dump(fd, args);
+    EXPECT_EQ(ret, 10);
+
+    camService->OnStop();
+}
+
+/*
+ * Feature: coverage
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HStreamCapture SetRotation with no static capability.
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_011, TestSize.Level0)
+{
+    mockFlagWithoutAbt = true;
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    int32_t ret = session->BeginConfig();
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
+    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
+    ret = session->AddInput(input);
+    EXPECT_EQ(ret, 0);
+
+    ret = session->AddOutput(photo);
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+    EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    ret = session->CommitConfig();
+    EXPECT_EQ(ret, 0);
+
+    std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
+    photoSetting->SetRotation(PhotoCaptureSetting::Rotation_90);
+    photoSetting->SetQuality(PhotoCaptureSetting::QUALITY_LEVEL_MEDIUM);
+    EXPECT_EQ(photoSetting->GetRotation(), PhotoCaptureSetting::Rotation_90);
+    EXPECT_EQ(photoSetting->GetQuality(), PhotoCaptureSetting::QUALITY_LEVEL_MEDIUM);
+
+    EXPECT_CALL(*mockStreamOperator, Capture(_,
+        matchCaptureSetting(photoSetting->GetCaptureMetadataSetting()), false));
+    ret = ((sptr<PhotoOutput> &)photo)->Capture(photoSetting);
+    EXPECT_EQ(ret, 0);
+
+    session->Release();
+    input->Release();
+}
+
+/*
+ * Feature: coverage
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HStreamRepeat with no static capability.
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_012, TestSize.Level0)
+{
+    mockFlagWithoutAbt = true;
+    int32_t format = CAMERA_FORMAT_YUV_420_SP;
+    int32_t width = PHOTO_DEFAULT_WIDTH;
+    int32_t height = PHOTO_DEFAULT_HEIGHT;
+
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureOutput> metadatOutput = cameraManager->CreateMetadataOutput();
+    ASSERT_NE(metadatOutput, nullptr);
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    int32_t ret = session->BeginConfig();
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
+    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photo), 0);
+    EXPECT_EQ(session->AddOutput(metadatOutput), 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+    EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer1 = Surface->GetProducer();
+    sptr<HStreamRepeat> streamRepeat= new(std::nothrow) HStreamRepeat(producer1, format, width, height, false);
+
+    std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
+    photoSetting->SetRotation(PhotoCaptureSetting::Rotation_90);
+    photoSetting->SetQuality(PhotoCaptureSetting::QUALITY_LEVEL_MEDIUM);
+    EXPECT_EQ(photoSetting->GetRotation(), PhotoCaptureSetting::Rotation_90);
+    EXPECT_EQ(photoSetting->GetQuality(), PhotoCaptureSetting::QUALITY_LEVEL_MEDIUM);
+
+    EXPECT_EQ(streamRepeat->LinkInput(mockStreamOperator, photoSetting->GetCaptureMetadataSetting(), 0), 8);
+
+    EXPECT_EQ(streamRepeat->Stop(), CAMERA_INVALID_STATE);
+    EXPECT_EQ(streamRepeat->Start(), CAMERA_INVALID_STATE);
+
+    EXPECT_EQ(streamRepeat->AddDeferredSurface(producer1), CAMERA_INVALID_STATE);
+
+    EXPECT_EQ(streamRepeat->Start(), CAMERA_INVALID_STATE);
+    EXPECT_EQ(streamRepeat->Stop(), CAMERA_INVALID_STATE);
+    session->Release();
+}
+
+/*
+ * Feature: coverage
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession with anomalous branch.
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_013, TestSize.Level0)
+{
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    sptr<StreamOperatorCallback> streamOperatorCb = nullptr;
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
+                                                                         streamOperatorCb, callerToken);
+    ASSERT_NE(camSession, nullptr);
+
+    std::string permissionName = "permissionName";
+    uint32_t callingTokenId = 0;
+    Security::AccessToken::PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {permissionName};
+    scopeInfo.tokenIDs = {callingTokenId};
+
+    int32_t permStateChangeType = 0;
+    Security::AccessToken::PermStateChangeInfo info;
+    info.permStateChangeType = permStateChangeType;
+    info.tokenID = Security::AccessToken::INVALID_TOKENID;
+    info.permissionName = permissionName;
+
+    int32_t permStateChangeType1 = 1;
+    Security::AccessToken::PermStateChangeInfo info1;
+    info1.permStateChangeType = permStateChangeType1;
+    info1.tokenID = Security::AccessToken::INVALID_TOKENID;
+    info1.permissionName = permissionName;
+
+    std::shared_ptr<PermissionStatusChangeCb> permissionStatusChangeCb =
+                                              std::make_shared<PermissionStatusChangeCb>(scopeInfo);
+    permissionStatusChangeCb->PermStateChangeCallback(info);
+    permissionStatusChangeCb->SetCaptureSession(camSession);
+    permissionStatusChangeCb->PermStateChangeCallback(info);
+    permissionStatusChangeCb->PermStateChangeCallback(info1);
+
+    std::shared_ptr<CameraUseStateChangeCb> cameraUseStateChangeCb = std::make_shared<CameraUseStateChangeCb>();
+    cameraUseStateChangeCb->StateChangeNotify(Security::AccessToken::INVALID_TOKENID, false);
+    cameraUseStateChangeCb->SetCaptureSession(camSession);
+    cameraUseStateChangeCb->StateChangeNotify(Security::AccessToken::INVALID_TOKENID, true);
+    cameraUseStateChangeCb->StateChangeNotify(Security::AccessToken::INVALID_TOKENID, false);
+
+    camSession->Release(0);
+}
+
+/*
+ * Feature: coverage
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession with anomalous branch.
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_014, TestSize.Level0)
+{
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    sptr<StreamOperatorCallback> streamOperatorCb = new StreamOperatorCallback();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
+                                                                         streamOperatorCb, callerToken);
+    ASSERT_NE(camSession, nullptr);
+
+    camSession->BeginConfig();
+    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
+    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
+    camSession->Start();
+
+    sptr<ICameraDeviceService> cameraDevice = camInput->GetCameraDevice();
+    EXPECT_EQ(camSession->AddInput(cameraDevice), 0);
+
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+
+    sptr<HStreamRepeat> streamRepeat = new(std::nothrow) HStreamRepeat(producer, 4, 1280, 960, false);
+    sptr<HStreamRepeat> streamRepeat1 = new(std::nothrow) HStreamRepeat(producer, 3, 640, 480, false);
+    sptr<HStreamCapture> streamCapture = new(std::nothrow) HStreamCapture(producer, 4, 1280, 960);
+
+    EXPECT_EQ(camSession->AddOutput(StreamType::REPEAT, streamRepeat), 0);
+    EXPECT_EQ(camSession->AddOutput(StreamType::REPEAT, streamRepeat1), 0);
+    EXPECT_EQ(camSession->AddOutput(StreamType::CAPTURE, streamCapture), 0);
+
+    sptr<StreamOperatorCallback> streamOperatorCallback = new StreamOperatorCallback(camSession);
+
+    CaptureErrorInfo it1;
+    it1.streamId_ = 2;
+    it1.error_ = BUFFER_LOST;
+    CaptureErrorInfo it2;
+    it2.streamId_ = 1;
+    it2.error_ =  BUFFER_LOST;
+    std::vector<CaptureErrorInfo> info = {};
+    info.push_back(it1);
+    info.push_back(it2);
+    streamOperatorCallback->OnCaptureError(0, info);
+
+    std::vector<int32_t> streamIds = {1, 2};
+    streamOperatorCallback->OnFrameShutter(0, streamIds, 0);
+
+    camSession->Release(0);
+}
+
+/*
+ * Feature: coverage
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession with anomalous branch.
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_015, TestSize.Level0)
+{
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    sptr<StreamOperatorCallback> streamOperatorCb = new StreamOperatorCallback();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
+                                                                         streamOperatorCb, callerToken);
+    ASSERT_NE(camSession, nullptr);
+
+    camSession->BeginConfig();
+    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
+    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
+    camSession->Start();
+
+    sptr<ICameraDeviceService> cameraDevice = camInput->GetCameraDevice();
+    EXPECT_EQ(camSession->AddInput(cameraDevice), 0);
+
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+    sptr<HStreamCapture> streamCapture= new(std::nothrow) HStreamCapture(producer, 4, 1280, 960);
+    sptr<HStreamCapture> streamCapture1= new(std::nothrow) HStreamCapture(producer, 3, 640, 480);
+    sptr<HStreamRepeat> streamRepeat= new(std::nothrow) HStreamRepeat(producer, 4, 1280, 960, false);
+
+    EXPECT_EQ(camSession->AddOutput(StreamType::CAPTURE, streamCapture), 0);
+    EXPECT_EQ(camSession->AddOutput(StreamType::CAPTURE, streamCapture1), 0);
+    EXPECT_EQ(camSession->AddOutput(StreamType::REPEAT, streamRepeat), 0);
+
+    sptr<StreamOperatorCallback> streamOperatorCallback = new StreamOperatorCallback(camSession);
+
+    CaptureErrorInfo it1;
+    it1.streamId_ = 2;
+    it1.error_ = BUFFER_LOST;
+    CaptureErrorInfo it2;
+    it2.streamId_ = 1;
+    it2.error_ =  BUFFER_LOST;
+    std::vector<CaptureErrorInfo> info = {};
+    info.push_back(it1);
+    info.push_back(it2);
+    streamOperatorCallback->OnCaptureError(0, info);
+
+    std::vector<int32_t> streamIds = {1, 2};
+    streamOperatorCallback->OnFrameShutter(0, streamIds, 0);
+
+    camSession->Release(0);
+}
+
+/*
+ * Feature: coverage
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession with anomalous branch.
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_016, TestSize.Level0)
+{
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    sptr<StreamOperatorCallback> streamOperatorCb = new StreamOperatorCallback();;
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
+                                                                         streamOperatorCb, callerToken);
+
+    EXPECT_EQ(camSession->CommitConfig(), CAMERA_INVALID_STATE);
+    camSession->BeginConfig();
+    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
+    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
+    camSession->Start();
+
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+    sptr<HStreamCapture> streamCapture= new(std::nothrow) HStreamCapture(producer, 0, 0, 0);
+
+    sptr<ICameraDeviceService> cameraDevice = camInput->GetCameraDevice();
+    EXPECT_EQ(camSession->AddInput(cameraDevice), 0);
+    EXPECT_EQ(camSession->AddOutput(StreamType::CAPTURE, streamCapture), 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+    EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_EQ(camSession->CommitConfig(), 8);
+
+    sptr<StreamOperatorCallback> streamOperatorCallback = new StreamOperatorCallback(camSession);
+
+    CaptureErrorInfo it1;
+    it1.streamId_ = 0;
+    it1.error_ = BUFFER_LOST;
+    CaptureErrorInfo it2;
+    it2.streamId_ = 1;
+    it2.error_ =  BUFFER_LOST;
+    std::vector<CaptureErrorInfo> info = {};
+    info.push_back(it1);
+    info.push_back(it2);
+    streamOperatorCallback->OnCaptureError(0, info);
+
+    std::vector<int32_t> streamIds = {0, 1, 2};
+    streamOperatorCallback->OnFrameShutter(0, streamIds, 0);
+    camSession->BeginConfig();
+
+    camSession->Release(0);
+}
+
+/*
+ * Feature: coverage
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession with anomalous branch.
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_017, TestSize.Level0)
+{
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    sptr<StreamOperatorCallback> streamOperatorCb = nullptr;
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
+                                                                         streamOperatorCb, callerToken);
+    sptr<HCaptureSession> camSession1 = new(std::nothrow) HCaptureSession(cameraHostManager, streamOperatorCb, 12);
+    ASSERT_NE(camSession, nullptr);
+    EXPECT_EQ(camSession->Start(), CAMERA_INVALID_STATE);
+    EXPECT_EQ(camSession1->Start(), CAMERA_OPERATION_NOT_ALLOWED);
+
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+    sptr<HStreamRepeat> streamRepeat= new(std::nothrow) HStreamRepeat(producer, 0, 0, 0, false);
+    sptr<HStreamMetadata> streamMetadata= new(std::nothrow) HStreamMetadata(producer, 0);
+    EXPECT_EQ(camSession->AddOutput(StreamType::REPEAT, streamRepeat), CAMERA_INVALID_STATE);
+    EXPECT_EQ(camSession->RemoveOutput(StreamType::REPEAT, streamRepeat), CAMERA_INVALID_STATE);
+
+    sptr<ICameraDeviceService> cameraDevice = camInput->GetCameraDevice();
+    camSession->BeginConfig();
+    camSession->Start();
+    EXPECT_EQ(camSession->AddOutput(StreamType::METADATA, streamMetadata), 0);
+    EXPECT_EQ(camSession->AddOutput(StreamType::METADATA, streamMetadata), CAMERA_INVALID_SESSION_CFG);
+    EXPECT_EQ(camSession->RemoveOutput(StreamType::METADATA, streamMetadata), 0);
+    int32_t ret = camSession->AddInput(cameraDevice);
+    EXPECT_EQ(ret, 2);
+
+    ret = camSession->AddInput(cameraDevice);
+    EXPECT_EQ(ret, 8);
+
+    wptr<IDeviceOperatorsCallback> callback = nullptr;
+    ret = camSession->SetDeviceOperatorsCallback(callback);
+    EXPECT_EQ(ret, 2);
+
+    sptr<ICaptureSessionCallback> callback1 = nullptr;
+    EXPECT_EQ(camSession->SetCallback(callback1), CAMERA_INVALID_ARG);
+
+    std::string dumpString = "HCaptureSession";
+    camSession->dumpSessionInfo(dumpString);
+    camSession->dumpSessions(dumpString);
+    camSession->Release(0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetExposureValue and SetExposureBias with anomalous branch.
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_018, TestSize.Level0)
+{
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    int32_t ret = session->BeginConfig();
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
+    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
+    ret = session->AddInput(input);
+    EXPECT_EQ(ret, 0);
+
+    ret = session->AddOutput(photo);
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+    EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    ret = session->CommitConfig();
+    EXPECT_EQ(ret, 0);
+
+    session->LockForControl();
+
+    Point exposurePoint = {1.0, 2.0};
+    session->SetMeteringPoint(exposurePoint);
+    session->SetMeteringPoint(exposurePoint);
+
+    ExposureMode exposure = EXPOSURE_MODE_AUTO;
+    session->SetExposureMode(exposure);
+
+    ret = session->GetExposureMode(exposure);
+    EXPECT_EQ(ret, 0);
+
+    ExposureMode exposureMode = session->GetExposureMode();
+    int32_t setExposureMode = session->SetExposureMode(exposureMode);
+    EXPECT_EQ(setExposureMode, 0);
+
+    session->UnlockForControl();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetMeteringPoint and GetMeteringPoint with anomalous branch.
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_019, TestSize.Level0)
+{
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    int32_t ret = session->BeginConfig();
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
+    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
+    ret = session->AddInput(input);
+    EXPECT_EQ(ret, 0);
+
+    ret = session->AddOutput(photo);
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+    EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    ret = session->CommitConfig();
+    EXPECT_EQ(ret, 0);
+
+    session->LockForControl();
+
+    Point exposurePointGet = session->GetMeteringPoint();
+    int32_t getMeteringPoint = session->GetMeteringPoint(exposurePointGet);
+    EXPECT_EQ(getMeteringPoint, 0);
+
+    float exposureValue = session->GetExposureValue();
+    int32_t exposureValueGet = session->GetExposureValue(exposureValue);
+    EXPECT_EQ(exposureValueGet, 0);
+
+    int32_t setExposureBias = session->SetExposureBias(exposureValue);
+    EXPECT_EQ(setExposureBias, 0);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CaptureSession with anomalous branch
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_020, TestSize.Level0)
+{
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    int32_t ret = session->BeginConfig();
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
+    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
+    ret = session->AddInput(input);
+    EXPECT_EQ(ret, 0);
+
+    ret = session->AddOutput(photo);
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+    EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    ret = session->CommitConfig();
+    EXPECT_EQ(ret, 0);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
+    std::shared_ptr<ExposureCallback> exposureCallback = std::make_shared<CallbackListener>();
+    session->SetExposureCallback(exposureCallback);
+    session->ProcessAutoExposureUpdates(metadata);
+
+    std::shared_ptr<FocusCallback> focusCallback = std::make_shared<CallbackListener>();
+    session->SetFocusCallback(focusCallback);
+    session->ProcessAutoFocusUpdates(metadata);
+
+    std::vector<FocusMode> getSupportedFocusModes = session->GetSupportedFocusModes();
+    EXPECT_EQ(getSupportedFocusModes.empty(), false);
+    int32_t supportedFocusModesGet = session->GetSupportedFocusModes(getSupportedFocusModes);
+    EXPECT_EQ(supportedFocusModesGet, 0);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CaptureSession with anomalous branch.
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_021, TestSize.Level0)
+{
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    int32_t ret = session->BeginConfig();
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
+    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
+    ret = session->AddInput(input);
+    EXPECT_EQ(ret, 0);
+
+    ret = session->AddOutput(photo);
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+    EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    ret = session->CommitConfig();
+    EXPECT_EQ(ret, 0);
+
+    std::vector<FlashMode> getSupportedFlashModes = session->GetSupportedFlashModes();
+    EXPECT_EQ(getSupportedFlashModes.empty(), false);
+    int32_t getSupportedFlashMode = session->GetSupportedFlashModes(getSupportedFlashModes);
+    EXPECT_EQ(getSupportedFlashMode, 0);
+
+    FlashMode flashMode = session->GetFlashMode();
+    int32_t flashModeGet = session->GetFlashMode(flashMode);
+    EXPECT_EQ(flashModeGet, 0);
+    int32_t setFlashMode = session->SetFlashMode(flashMode);
+    EXPECT_EQ(setFlashMode, 0);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetFocusPoint & GetFousPoint with anomalous branch.
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_022, TestSize.Level0)
+{
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    int32_t ret = session->BeginConfig();
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
+    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
+    ret = session->AddInput(input);
+    EXPECT_EQ(ret, 0);
+
+    ret = session->AddOutput(photo);
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+    EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    ret = session->CommitConfig();
+    EXPECT_EQ(ret, 0);
+
+    Point FocusPoint = {1.0, 2.0};
+    session->LockForControl();
+    session->SetFocusPoint(FocusPoint);
+    session->UnlockForControl();
+
+    session->GetFocusPoint(FocusPoint);
+
+    session->RemoveInput(input);
+    session->RemoveOutput(photo);
+    photo->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CaptureSession with anomalous branch.
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_023, TestSize.Level0)
+{
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
+    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photo), 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+    EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    EXPECT_EQ(session->GetFocusMode(), 2);
+
+    session->LockForControl();
+
+    FlashMode flash = FLASH_MODE_ALWAYS_OPEN;
+    session->SetFlashMode(flash);
+    session->SetFlashMode(flash);
+
+    FocusMode focus = FOCUS_MODE_CONTINUOUS_AUTO;
+    session->SetFocusMode(focus);
+    session->SetFocusMode(focus);
+
+    ExposureMode exposure = EXPOSURE_MODE_AUTO;
+    session->SetExposureMode(exposure);
+
+    float zoomRatioRange = session->GetZoomRatio();
+    session->SetZoomRatio(zoomRatioRange);
+    session->SetZoomRatio(zoomRatioRange);
+
+    session->UnlockForControl();
+
+    EXPECT_EQ(session->GetFocusMode(focus), 0);
+
+    cameraManager->GetSupportedOutputCapability(cameras[0], 0);
+
+    VideoStabilizationMode stabilizationMode = MIDDLE;
+    session->GetActiveVideoStabilizationMode();
+    session->GetActiveVideoStabilizationMode(stabilizationMode);
+    session->SetVideoStabilizationMode(stabilizationMode);
+
+    photo->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsCameraNeedClose & CheckPermission
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsCameraNeedClose & CheckPermission
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_024, TestSize.Level0)
+{
+    CamRetCode rc1 = HDI::Camera::V1_0::CAMERA_BUSY;
+    HdiToServiceError(rc1);
+    CamRetCode rc2 = HDI::Camera::V1_0::INVALID_ARGUMENT;
+    HdiToServiceError(rc2);
+    CamRetCode rc3 = HDI::Camera::V1_0::CAMERA_CLOSED;
+    HdiToServiceError(rc3);
+    CreateMsg(NULL);
+
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    IsCameraNeedClose(callerToken, pid, pid);
+    IsCameraNeedClose(123, pid, pid);
+    CheckPermission("unittest", 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCameraDevice with anomalous branch.
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_025, TestSize.Level0)
+{
+    std::vector<int32_t> result;
+    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
+    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
+
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
+
+    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator = nullptr;
+    sptr<CameraInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    sptr<ICameraDeviceServiceCallback> callback1 = new(std::nothrow) CameraDeviceServiceCallback(input);
+    sptr<StreamOperatorCallback> streamOperatorCallback_ = new StreamOperatorCallback();
+    camDevice->EnableResult(result);
+    camDevice->DisableResult(result);
+    camDevice->GetStreamOperator(streamOperatorCallback_, streamOperator);
+
+    int32_t ret = camDevice->OpenDevice();
+    EXPECT_EQ(ret, 0);
+    camDevice->UpdateSetting(nullptr);
+    sptr<ICameraDeviceServiceCallback> callback = nullptr;
+    camDevice->SetCallback(callback);
+    camDevice->SetReleaseCameraDevice(false);
+    camDevice->GetSettings();
+    camDevice->SetCallback(callback1);
+    camDevice->OnError(REQUEST_TIMEOUT, 0) ;
+    camDevice->OnError(DEVICE_PREEMPT, 0) ;
+    camDevice->OnError(DRIVER_ERROR, 0) ;
+
+    EXPECT_EQ(camDevice->CloseDevice(), 0);
+    EXPECT_EQ(camDevice->GetStreamOperator(streamOperatorCallback_, streamOperator), 11);
+    EXPECT_EQ(camDevice->GetEnabledResults(result), 11);
+    EXPECT_EQ(camDevice->CloseDevice(), 0);
+    camDevice->~HCameraDevice();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamRepeat & HStreamCommon
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HStreamRepeat & HStreamCommon
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_026, TestSize.Level0)
+{
+    int32_t format = 0;
+    int32_t width = 0;
+    int32_t height = 0;
+    std::string  dumpString ="HStreamRepeat";
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<IStreamRepeatCallback> callback = nullptr;
+    sptr<OHOS::IBufferProducer> producer = nullptr;
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer1 = Surface->GetProducer();
+    sptr<HStreamRepeat> streamRepeat= new(std::nothrow) HStreamRepeat(nullptr, format, width, height, false);
+
+    EXPECT_EQ(streamRepeat->Start(), CAMERA_INVALID_STATE);
+    EXPECT_EQ(streamRepeat->SetCallback(callback), CAMERA_INVALID_ARG);
+    EXPECT_EQ(streamRepeat->OnFrameError(BUFFER_LOST), 0);
+    EXPECT_EQ(streamRepeat->AddDeferredSurface(producer), CAMERA_INVALID_ARG);
+    streamRepeat->DumpStreamInfo(dumpString);
+    EXPECT_EQ(streamRepeat->AddDeferredSurface(producer1), CAMERA_INVALID_STATE);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata1 = nullptr;
+    EXPECT_EQ(streamRepeat->LinkInput(mockStreamOperator, metadata, 0), CAMERA_INVALID_SESSION_CFG);
+    streamRepeat->LinkInput(mockStreamOperator, metadata1, 0);
+    mockStreamOperator = nullptr;
+    streamRepeat->LinkInput(mockStreamOperator, metadata, 0);
+    streamRepeat->DumpStreamInfo(dumpString);
+    EXPECT_EQ(streamRepeat->Stop(), CAMERA_INVALID_STATE);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamMetadata & HStreamCommon
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HStreamMetadata & HStreamCommon
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_027, TestSize.Level0)
+{
+    int32_t format = 0;
+    std::string  dumpString ="HStreamMetadata";
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+    sptr<HStreamMetadata> streamMetadata= new(std::nothrow) HStreamMetadata(producer, format);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata1 = nullptr;
+    streamMetadata->LinkInput(mockStreamOperator, metadata, 0);
+    streamMetadata->LinkInput(mockStreamOperator, metadata1, 0);
+    mockStreamOperator = nullptr;
+    streamMetadata->LinkInput(mockStreamOperator, metadata, 0);
+    streamMetadata->Stop();
+    streamMetadata->Start();
+    streamMetadata->DumpStreamInfo(dumpString);
+    streamMetadata->Start();
+    streamMetadata->Stop();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamMetadata & HStreamCommon
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HStreamMetadata & HStreamCommon
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_028, TestSize.Level0)
+{
+    int32_t format = 0;
+    std::string  dumpString ="HStreamMetadata";
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+    sptr<HStreamMetadata> streamMetadata= new(std::nothrow) HStreamMetadata(producer, format);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
+    streamMetadata->Start();
+    streamMetadata->LinkInput(mockStreamOperator, metadata, 0);
+    streamMetadata->Stop();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamCapture & HStreamCommon
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HStreamCapture & HStreamCommon
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_029, TestSize.Level0)
+{
+    int32_t format = 0;
+    int32_t width = 0;
+    int32_t height = 0;
+    int32_t captureId = 0;
+    int32_t frameCount = 0;
+    uint64_t timestamp = 0;
+    std::string  dumpString ="hstream_capture";
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<IStreamCaptureCallback> callback = nullptr;
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+    sptr<OHOS::IBufferProducer> producer1 = nullptr;
+    sptr<HStreamCapture> streamCapture= new(std::nothrow) HStreamCapture(producer, format, width, height);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
+    EXPECT_EQ(streamCapture->SetThumbnail(false, producer1), CAMERA_OK);
+    EXPECT_EQ(streamCapture->SetThumbnail(false, producer), CAMERA_OK);
+    EXPECT_EQ(streamCapture->SetThumbnail(true, producer1), CAMERA_OK);
+    streamCapture->DumpStreamInfo(dumpString);
+    EXPECT_EQ(streamCapture->SetThumbnail(true, producer), CAMERA_OK);
+    streamCapture->SetRotation(metadata);
+    mockStreamOperator = nullptr;
+    streamCapture->LinkInput(mockStreamOperator, metadata, 0);
+    EXPECT_EQ(streamCapture->Capture(metadata),  CAMERA_INVALID_STATE);
+    streamCapture->PrintDebugLog(metadata);
+    EXPECT_EQ(streamCapture->SetCallback(callback), CAMERA_INVALID_ARG);
+    EXPECT_EQ(streamCapture->OnCaptureEnded(captureId, frameCount), CAMERA_OK);
+    EXPECT_EQ(streamCapture->OnCaptureError(captureId, frameCount), CAMERA_OK);
+    EXPECT_EQ(streamCapture->OnCaptureError(captureId, BUFFER_LOST), CAMERA_OK);
+    EXPECT_EQ(streamCapture->OnFrameShutter(captureId, timestamp), CAMERA_OK);
+    streamCapture->DumpStreamInfo(dumpString);
+
+    EXPECT_EQ(streamCapture->Release(),  0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HCameraDevice
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCameraDevice
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_030, TestSize.Level0)
+{
+    std::vector<int32_t> result;
+    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
+    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
+
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    uint32_t callerToken1 = 3;
+    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
+    sptr<HCameraDevice> camDevice1 = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken1);
+
+    EXPECT_EQ(camDevice1->Open(), CAMERA_OPERATION_NOT_ALLOWED);
+
+    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator = nullptr;
+    sptr<CameraInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    sptr<ICameraDeviceServiceCallback> callback1 = new(std::nothrow) CameraDeviceServiceCallback(input);
+    sptr<StreamOperatorCallback> streamOperatorCallback_= new StreamOperatorCallback();
+    camDevice->EnableResult(result);
+    camDevice->DisableResult(result);
+    camDevice->GetStreamOperator(streamOperatorCallback_, streamOperator);
+
+    int32_t ret = camDevice->OpenDevice();
+    EXPECT_EQ(ret, 0);
+    camDevice->Open();
+    getCameraAbilityerror = true;
+    camDevice->GetSettings();
+    openCameraDevicerror = true;
+    EXPECT_EQ(camDevice->OpenDevice(), CAMERA_ALLOC_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCameraHostManager with anomalous branch.
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_031, TestSize.Level0)
+{
+    InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    std::vector<std::string> cameraIds = {};
+    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    ASSERT_NE(cameraHostManager, nullptr);
+
+    std::string cameraId = "lcam001";
+    EXPECT_EQ(cameraHostManager->HCameraHostManager::GetCameras(cameraIds), 0);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> ability = cameras[0]->GetMetadata();
+    EXPECT_EQ(cameraHostManager->HCameraHostManager::GetCameraAbility(cameraId, ability), 0);
+    EXPECT_EQ(cameraHostManager->HCameraHostManager::SetFlashlight(cameraId, false), 0);
+
+    cameraId = "HCameraHostManager";
+
+    cameraHostManager->AddCameraDevice(cameraId, nullptr);
+    EXPECT_EQ(cameraHostManager->HCameraHostManager::SetFlashlight(cameraId, true), 2);
+    std::vector<sptr<ICameraDeviceService>> devicesNeedClose = cameraHostManager->CameraConflictDetection(cameraId);
+    EXPECT_EQ(devicesNeedClose.empty(), false);
+
+    cameraHostManager->CloseCameraDevice(cameraId);
+
+    ability = cameras[0]->GetMetadata();
+    EXPECT_EQ(cameraHostManager->HCameraHostManager::GetCameraAbility(cameraId, ability), 2);
+
+    EXPECT_EQ(cameraHostManager->HCameraHostManager::GetVersionByCamera(cameraId), 0);
+
+    sptr<OHOS::HDI::Camera::V1_1::ICameraDevice> pDevice;
+    cameraHostManager->HCameraHostManager::OpenCameraDevice(cameraId, nullptr, pDevice);
+
+    cameraId = "lcam001";
+    HDI::ServiceManager::V1_0::ServiceStatus status;
+    status.deviceClass = DEVICE_CLASS_CAMERA;
+    status.serviceName = "distributed_camera_service";
+    status.status = HDI::ServiceManager::V1_0::SERVIE_STATUS_START;
+    cameraHostManager->HCameraHostManager::OnReceive(status);
+
+    EXPECT_EQ(cameraHostManager->HCameraHostManager::SetFlashlight(cameraId, false), 0);
+
+    std::shared_ptr<MockHCameraHostManager::MockStatusCallback> mockStatusCallback =
+    std::make_shared<MockHCameraHostManager::MockStatusCallback>();
+    HCameraHostManager::StatusCallback * statusCallback =
+    static_cast<HCameraHostManager::StatusCallback*>(mockStatusCallback.get());
+    sptr<MockHCameraHostManager> mockCameraHostManager_2 = new(std::nothrow)MockHCameraHostManager(statusCallback);
+    sptr<HCameraHostManager> cameraHostManager_2 = (sptr<HCameraHostManager> &)mockCameraHostManager_2;
+
+    cameraHostManager_2->AddCameraDevice(cameraId, nullptr);
 }
 } // CameraStandard
 } // OHOS
