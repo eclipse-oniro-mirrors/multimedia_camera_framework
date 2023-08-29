@@ -797,7 +797,7 @@ void CameraManager::ParseBasicCapability(sptr<CameraOutputCapability> cameraOutp
 }
 
 void CameraManager::ParseExtendCapability(sptr<CameraOutputCapability> cameraOutputCapability,
-    const int32_t modeName, const camera_metadata_item_t &item)
+    const int32_t modeName, const camera_metadata_item_t &item) __attribute__((no_sanitize("cfi")))
 {
     ExtendInfo extendInfo = {};
     std::shared_ptr<CameraStreamInfoParse> modeStreamParse = std::make_shared<CameraStreamInfoParse>();
@@ -855,7 +855,7 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
 }
 
 void CameraManager::CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
-    uint32_t streamIndex, ExtendInfo extendInfo)
+    uint32_t streamIndex, ExtendInfo extendInfo) __attribute__((no_sanitize("cfi")))
 {
     for (uint32_t k = 0; k < extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfoCount; k++) {
         CameraFormat format;
