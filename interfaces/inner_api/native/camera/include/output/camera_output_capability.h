@@ -20,7 +20,7 @@
 #include <vector>
 #include <refbase.h>
 
-#include "output/metadata_output.h"
+#include "metadata_type.h"
 
 namespace OHOS {
 namespace CameraStandard {

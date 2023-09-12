@@ -131,6 +131,15 @@ private:
     const char* testName_;
 };
 
+class TestMetadataOutputObjectCallback : public MetadataObjectCallback {
+public:
+    explicit TestMetadataOutputObjectCallback(const char* testName);
+    virtual ~TestMetadataOutputObjectCallback() = default;
+    void OnMetadataObjectsAvailable(std::vector<sptr<MetadataObject>> metaObjects) const override;
+private:
+    const char* testName_;
+};
+
 class SurfaceListener : public IBufferConsumerListener {
 public:
     SurfaceListener(const char* testName, SurfaceType surfaceType, int32_t &fd, sptr<IConsumerSurface> surface);

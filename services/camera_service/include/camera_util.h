@@ -19,6 +19,7 @@
 #include <limits.h>
 #include "display_type.h"
 #include "v1_0/types.h"
+#include "v1_1/types.h"
 #include "camera_metadata_info.h"
 #include <malloc.h>
 #include "safe_map.h"
@@ -74,6 +75,8 @@ inline void DisableJeMalloc()
 #endif
 }
 
+int32_t SetOpMode(int32_t opMode);
+
 int32_t HdiToServiceError(CamRetCode ret);
 
 std::string CreateMsg(const char* format, ...);
@@ -85,6 +88,9 @@ void ReleaseCaptureId(int32_t captureId);
 bool IsValidTokenId(uint32_t tokenId);
 
 int32_t GetVersionId(uint32_t major, uint32_t minor);
+
+bool IsValidMode(
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility);
 
 bool IsValidSize(
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t format, int32_t width, int32_t height);

@@ -253,6 +253,23 @@ void TestVideoOutputCallback::OnError(const int32_t errorCode) const
                    testName_, errorCode);
 }
 
+TestMetadataOutputObjectCallback::TestMetadataOutputObjectCallback(const char* testName) : testName_(testName) {
+}
+
+void TestMetadataOutputObjectCallback::OnMetadataObjectsAvailable(std::vector<sptr<MetadataObject>> metaObjects) const
+{
+    MEDIA_INFO_LOG("TestMetadataOutputObjectCallback:OnMetadataObjectsAvailable(), testName_: %{public}s, "
+                   "metaObjects size: %{public}zu", testName_, metaObjects.size());
+    for (size_t i = 0; i < metaObjects.size(); i++) {
+        MEDIA_INFO_LOG("TestMetadataOutputObjectCallback::OnMetadataObjectsAvailable "
+                       "metaObjInfo: Timestamp(%{public}lld), Type(%{public}d), "
+                       "Rect{x(%{pulic}f),y(%{pulic}f),w(%{pulic}f),d(%{pulic}f)}",
+                       static_cast<int64_t>(metaObjects[i]->GetTimestamp()), metaObjects[i]->GetType(),
+                       metaObjects[i]->GetBoundingBox().topLeftX, metaObjects[i]->GetBoundingBox().topLeftY,
+                       metaObjects[i]->GetBoundingBox().width, metaObjects[i]->GetBoundingBox().height);
+    }
+}
+
 SurfaceListener::SurfaceListener(const char* testName, SurfaceType type, int32_t &fd, sptr<IConsumerSurface> surface)
     : testName_(testName), surfaceType_(type), fd_(fd), surface_(surface) {
 }

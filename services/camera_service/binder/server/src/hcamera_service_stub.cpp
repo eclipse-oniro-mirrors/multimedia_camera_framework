@@ -216,7 +216,8 @@ int HCameraServiceStub::HandleCreateCaptureSession(MessageParcel &data, MessageP
 {
     sptr<ICaptureSession> session = nullptr;
 
-    int errCode = CreateCaptureSession(session);
+    int32_t operationMode = data.ReadInt32();
+    int errCode = CreateCaptureSession(session, operationMode);
     if (errCode != ERR_NONE) {
         MEDIA_ERR_LOG("HandleCreateCaptureSession CreateCaptureSession failed : %{public}d", errCode);
         return errCode;

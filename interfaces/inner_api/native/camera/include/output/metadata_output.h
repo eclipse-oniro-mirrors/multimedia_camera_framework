@@ -23,13 +23,10 @@
 #include "camera_metadata_operator.h"
 #include "iconsumer_surface.h"
 #include "surface.h"
+#include "metadata_type.h"
 
 namespace OHOS {
 namespace CameraStandard {
-enum class MetadataObjectType : int32_t {
-    FACE = 0,
-};
-
 enum MetadataOutputErrorCode : int32_t {
     ERROR_UNKNOWN = 1,
     ERROR_INSUFFICIENT_RESOURCES,
@@ -123,7 +120,9 @@ public:
      * @brief Releases a instance of the MetadataOutput.
      */
     int32_t Release() override;
-
+    void ProcessFaceRectangles(int64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata> &result,
+                               std::vector<sptr<MetadataObject>> &metaObjects, bool isNeedMirror);
+    std::shared_ptr<MetadataObjectCallback> GetAppObjectCallback();
     friend class MetadataObjectListener;
 private:
     sptr<IConsumerSurface> surface_;

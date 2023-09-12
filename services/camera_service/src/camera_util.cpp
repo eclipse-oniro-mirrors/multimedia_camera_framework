@@ -95,6 +95,7 @@ std::map<int, std::string> g_cameraQuickThumbnailAvailable = {
     {1, "True"},
 };
 
+int32_t g_operationMode;
 static std::mutex g_captureIdsMutex;
 static std::map<int32_t, bool> g_captureIds;
 
@@ -166,6 +167,50 @@ bool IsValidTokenId(uint32_t tokenId)
 {
     return Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(tokenId) ==
         Security::AccessToken::ATokenTypeEnum::TOKEN_HAP;
+}
+
+int32_t SetOpMode(int32_t opMode)
+{
+    g_operationMode = opMode;
+    return 0;
+}
+
+bool IsValidMode(
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
+{
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(cameraAbility->get(),
+                                             OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("Failed to find stream extend configuration in camera ability with return code %{public}d", ret);
+        ret = Camera::FindCameraMetadataItem(cameraAbility->get(),
+                                             OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
+        if (ret == CAM_META_SUCCESS && item.count != 0) {
+            MEDIA_INFO_LOG("basic config no need valid mode");
+            return true;
+        }
+        return false;
+    }
+
+    if (g_operationMode == item.data.i32[0]) {
+        MEDIA_INFO_LOG("operationMode:%{public}d first found in supported streams", g_operationMode);
+        return true;
+    }
+
+    const uint32_t twoStep = 2;
+    const int32_t finish = -1;
+    for (uint32_t index = twoStep; index < item.count; index++) {
+        if (item.data.i32[index - twoStep] == finish && item.data.i32[index - 1] == finish &&
+            item.data.i32[index] == finish && (g_operationMode == item.data.i32[index + 1]) &&
+            ((index + 1) < item.count)) {
+            MEDIA_INFO_LOG("operationMode:%{public}d found in supported streams", g_operationMode);
+            return true;
+        } else {
+            continue;
+        }
+    }
+
+    return false;
 }
 
 bool IsValidSize(

@@ -22,6 +22,7 @@
 #include "icamera_util.h"
 #include "istream_common.h"
 #include "session/capture_session.h"
+#include "camera_output_capability.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -56,11 +57,17 @@ public:
     CaptureSession* GetSession();
     void SetSession(CaptureSession* captureSession);
     std::mutex asyncOpMutex_;
+    int32_t SetPhotoProfile(Profile &profile);
+    Profile GetPhotoProfile();
+    int32_t SetPreviewProfile(Profile &profile);
+    Profile GetPreviewProfile();
 private:
     CaptureOutputType outputType_;
     StreamType streamType_;
     sptr<IStreamCommon> stream_;
     CaptureSession* session_;
+    Profile photoProfile_;
+    Profile previewProfile_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

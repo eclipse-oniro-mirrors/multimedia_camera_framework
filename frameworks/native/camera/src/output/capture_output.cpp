@@ -59,6 +59,26 @@ void CaptureOutput::SetSession(CaptureSession* captureSession)
 {
     session_ = captureSession;
 }
+
+int32_t CaptureOutput::SetPhotoProfile(Profile &profile)
+{
+    photoProfile_ = profile;
+    return 0;
+}
+
+Profile CaptureOutput::GetPhotoProfile()
+{
+    return photoProfile_;
+}
+int32_t CaptureOutput::SetPreviewProfile(Profile &profile)
+{
+    previewProfile_ = profile;
+    return 0;
+}
+
+Profile CaptureOutput::GetPreviewProfile()
+{
+    return previewProfile_;
+}
 } // CameraStandard
 } // OHOS
-

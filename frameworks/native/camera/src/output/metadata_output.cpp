@@ -64,6 +64,12 @@ MetadataOutput::~MetadataOutput()
     appStateCallback_ = nullptr;
 }
 
+std::shared_ptr<MetadataObjectCallback> MetadataOutput::GetAppObjectCallback()
+{
+    MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::GetResultCallback");
+    return appObjectCallback_;
+}
+
 std::vector<MetadataObjectType> MetadataOutput::GetSupportedMetadataObjectTypes()
 {
     CaptureSession* captureSession = GetSession();
@@ -169,6 +175,72 @@ int32_t MetadataOutput::Release()
     return ServiceToCameraError(errCode);
 }
 
+void MetadataOutput::ProcessFaceRectangles(int64_t timestamp,
+                                           const std::shared_ptr<OHOS::Camera::CameraMetadata> &result,
+                                           std::vector<sptr<MetadataObject>> &metaObjects, bool isNeedMirror)
+{
+    camera_metadata_item_t metadataItem;
+    common_metadata_header_t* metadata = result->get();
+    int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATISTICS_FACE_RECTANGLES, &metadataItem);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("Camera not ProcessFaceRectangles");
+        return;
+    }
+    MEDIA_INFO_LOG("ProcessFaceRectangles: %{public}d count: %{public}d", metadataItem.item, metadataItem.count);
+    constexpr int32_t rectangleUnitLen = 4;
+    if (metadataItem.count % rectangleUnitLen) {
+        MEDIA_ERR_LOG("Metadata item: %{public}d count: %{public}d is invalid", metadataItem.item, metadataItem.count);
+        return;
+    }
+    metaObjects.reserve(metadataItem.count / rectangleUnitLen);
+    float* start = metadataItem.data.f;
+    float* end = metadataItem.data.f + metadataItem.count;
+    const int32_t offsetTopLeftX = 0;
+    const int32_t offsetTopLeftY = 1;
+    const int32_t offsetBottomRightX = 2;
+    const int32_t offsetBottomRightY = 3;
+    int64_t timeUnit = 1000000; // timestamp from nanoseconds to milliseconds
+    int64_t formatTimestamp = timestamp / timeUnit;
+    float topLeftX = 0;
+    float topLeftY = 0;
+    float width = 0;
+    float height = 0;
+    std::string positionStr = isNeedMirror ? "FrontCamera" : "BackCamera";
+    for (; start < end; start += rectangleUnitLen) {
+        if (isNeedMirror) {
+            topLeftX = 1 - start[offsetBottomRightY];
+            topLeftY = 1- start[offsetBottomRightX];
+            width = start[offsetBottomRightY] - start[offsetTopLeftY];
+            height = start[offsetBottomRightX] - start[offsetTopLeftX];
+        } else {
+            topLeftX = 1 - start[offsetBottomRightY];
+            topLeftY = start[offsetTopLeftX];
+            width = start[offsetBottomRightY] - start[offsetTopLeftY];
+            height = start[offsetBottomRightX] - start[offsetTopLeftX];
+        }
+        topLeftX = topLeftX < 0 ? 0 : topLeftX;
+        topLeftX = topLeftX > 1 ? 1 : topLeftX;
+        topLeftY = topLeftY < 0 ? 0 : topLeftY;
+        topLeftY = topLeftY > 1 ? 1 : topLeftY;
+        sptr<MetadataObject> metadataObject = new(std::nothrow) MetadataFaceObject(formatTimestamp,
+            (Rect) {topLeftX, topLeftY, width, height});
+            MEDIA_INFO_LOG("ProcessFaceRectangles Metadata coordination: topleftX(%{public}f),topleftY(%{public}f),"
+                           "BottomRightX(%{public}f),BottomRightY(%{public}f), timestamp(%{public}lld)",
+                           start[offsetTopLeftX], start[offsetTopLeftY],
+                           start[offsetBottomRightX], start[offsetBottomRightY], formatTimestamp);
+            MEDIA_INFO_LOG("ProcessFaceRectangles Postion: %{public}s App coordination: "
+                           "topleftX(%{public}f),topleftY(%{public}f),width(%{public}f),height(%{public}f)",
+                           positionStr.c_str(), topLeftX, topLeftY, width, height);
+        if (!metadataObject) {
+            MEDIA_ERR_LOG("Failed to allocate MetadataFaceObject");
+            return;
+        }
+        metaObjects.emplace_back(metadataObject);
+    }
+    MEDIA_INFO_LOG("ProcessFaceRectangles: metaObjects size: %{public}zu", metaObjects.size());
+    return;
+}
+
 MetadataObjectListener::MetadataObjectListener(sptr<MetadataOutput> metadata) : metadata_(metadata)
 {}
 
@@ -185,6 +257,12 @@ int32_t MetadataObjectListener::ProcessMetadataBuffer(void* buffer, int64_t time
 
 void MetadataObjectListener::OnBufferAvailable()
 {
+    MEDIA_INFO_LOG("MetadataObjectListener::OnBufferAvailable() is Called");
+    // metaoutput adapte later
+    bool adapterLater = true;
+    if (adapterLater) {
+        return;
+    }
     if (!metadata_) {
         MEDIA_ERR_LOG("Metadata is null");
         return;

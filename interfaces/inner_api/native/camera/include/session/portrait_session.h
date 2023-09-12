@@ -37,7 +37,7 @@ enum PortraitEffect {
 class CaptureOutput;
 class PortraitSession : public CaptureSession {
 public:
-    explicit PortraitSession(sptr<ICaptureSession> &PortraitSession);
+    explicit PortraitSession(sptr<ICaptureSession> &PortraitSession): CaptureSession(PortraitSession) {}
     PortraitSession() {};
     ~PortraitSession();
 
@@ -46,22 +46,23 @@ public:
      *
      * @return Returns the array of portraiteffect.
      */
-    std::vector<PortraitEffect> getSupportedPortraitEffects();
+    std::vector<PortraitEffect> GetSupportedPortraitEffects();
 
     /**
      * @brief Get the portrait effects.
      *
      * @return Returns the array of portraiteffect.
      */
-    PortraitEffect getPortraitEffect();
+    PortraitEffect GetPortraitEffect();
 
     /**
      * @brief Set the portrait effects.
      */
-    void setPortraitEffect(PortraitEffect effect);
+    void SetPortraitEffect(PortraitEffect effect);
 
 private:
-    sptr<ICaptureSession> portraitSession_;
+    static const std::unordered_map<camera_portrait_effect_type_t, PortraitEffect> metaToFwPortraitEffect_;
+    static const std::unordered_map<PortraitEffect, camera_portrait_effect_type_t> fwToMetaPortraitEffect_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

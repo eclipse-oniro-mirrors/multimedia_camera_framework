@@ -28,7 +28,11 @@ napi_value MetadataObjectNapi::CreateMetaFaceObj(napi_env env, sptr<MetadataObje
     napi_status status;
     napi_value result = nullptr;
     napi_value constructor;
-
+    MEDIA_INFO_LOG("MetadataObjectNapi::CreateMetaFaceObj metaObjInfo: Timestamp(%{public}f), Type(%{public}d), "
+                   "Rect{x(%{pulic}f),y(%{pulic}f),w(%{pulic}f),d(%{pulic}f)}",
+                   metaObj->GetTimestamp(), metaObj->GetType(),
+                   metaObj->GetBoundingBox().topLeftX, metaObj->GetBoundingBox().topLeftY,
+                   metaObj->GetBoundingBox().width, metaObj->GetBoundingBox().height);
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
         g_metadataObject = metaObj;
@@ -77,9 +81,9 @@ napi_value MetadataObjectNapi::Init(napi_env env, napi_value exports)
     int32_t refCount = 1;
 
     napi_property_descriptor metadata_object_props[] = {
-        DECLARE_NAPI_FUNCTION("getType", GetType),
-        DECLARE_NAPI_FUNCTION("getTimestamp", GetTimestamp),
-        DECLARE_NAPI_FUNCTION("getBoundingBox", GetBoundingBox),
+        DECLARE_NAPI_GETTER("type", GetType),
+        DECLARE_NAPI_GETTER("timestamp", GetTimestamp),
+        DECLARE_NAPI_GETTER("boundingBox", GetBoundingBox),
     };
 
     status = napi_define_class(env, CAMERA_METADATA_OBJECT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -171,7 +175,7 @@ napi_value MetadataObjectNapi::GetTimestamp(napi_env env, napi_callback_info inf
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&metadataObjectNapi));
     if (status == napi_ok && metadataObjectNapi != nullptr) {
         double metaTimestamp = metadataObjectNapi->metadataObject_->GetTimestamp();
-        napi_create_double(env, metaTimestamp, &result);
+        napi_create_double(env, CameraNapiUtils::FloatToDouble(metaTimestamp), &result);
     }
     MEDIA_ERR_LOG("GetTimestamp call Failed");
     return result;
@@ -198,16 +202,16 @@ napi_value MetadataObjectNapi::GetBoundingBox(napi_env env, napi_callback_info i
 
         napi_create_object(env, &result);
 
-        napi_create_double(env, metaFace.topLeftX, &propValue);
+        napi_create_double(env, CameraNapiUtils::FloatToDouble(metaFace.topLeftX), &propValue);
         napi_set_named_property(env, result, "topLeftX", propValue);
 
-        napi_create_double(env, metaFace.topLeftY, &propValue);
+        napi_create_double(env, CameraNapiUtils::FloatToDouble(metaFace.topLeftY), &propValue);
         napi_set_named_property(env, result, "topLeftY", propValue);
 
-        napi_create_double(env, metaFace.width, &propValue);
+        napi_create_double(env, CameraNapiUtils::FloatToDouble(metaFace.width), &propValue);
         napi_set_named_property(env, result, "width", propValue);
 
-        napi_create_double(env, metaFace.height, &propValue);
+        napi_create_double(env, CameraNapiUtils::FloatToDouble(metaFace.height), &propValue);
         napi_set_named_property(env, result, "height", propValue);
     }
     MEDIA_ERR_LOG("GetBoundingBox call Failed");

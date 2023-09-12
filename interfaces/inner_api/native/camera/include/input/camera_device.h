@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <vector>
 #include "camera_metadata_info.h"
+#include "output/camera_output_capability.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -142,7 +143,9 @@ public:
     * @return Returns vector<int32_t> of supported exposure compensation range.
     */
     std::vector<float> GetExposureBiasRange();
-
+    std::unordered_map<int32_t, std::vector<Profile>> modePreviewProfiles_ = {};
+    std::unordered_map<int32_t, std::vector<Profile>> modePhotoProfiles_ = {};
+    std::unordered_map<int32_t, std::vector<VideoProfile>> modeVideoProfiles_ = {};
 private:
     std::string cameraID_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata_;
@@ -156,7 +159,6 @@ private:
     static const std::unordered_map<camera_type_enum_t, CameraType> metaToFwCameraType_;
     static const std::unordered_map<camera_position_enum_t, CameraPosition> metaToFwCameraPosition_;
     static const std::unordered_map<camera_connection_type_t, ConnectionType> metaToFwConnectionType_;
-
     void init(common_metadata_header_t* metadataHeader);
 };
 } // namespace CameraStandard

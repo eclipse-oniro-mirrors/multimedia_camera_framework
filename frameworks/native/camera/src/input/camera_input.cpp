@@ -15,15 +15,16 @@
 
 #include "input/camera_input.h"
 
-#include <securec.h>
 #include <cinttypes>
+#include <securec.h>
 #include "camera_device_ability_items.h"
+#include "camera_log.h"
 #include "camera_util.h"
 #include "hcamera_device_callback_stub.h"
-#include "camera_log.h"
-#include "metadata_utils.h"
-#include "session/capture_session.h"
 #include "icamera_util.h"
+#include "metadata_utils.h"
+#include "output/metadata_output.h"
+#include "session/capture_session.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -62,6 +63,7 @@ int32_t CameraDeviceServiceCallback::OnResult(const uint64_t timestamp,
         MEDIA_INFO_LOG("CameraDeviceServiceCallback::ResultCallback not set!, Discarding callback");
     }
     camInput_->ProcessDeviceCallbackUpdates(result);
+    camInput_->ProcessFaceRecUpdates(timestamp, result);
     return CAMERA_OK;
 }
 
@@ -188,6 +190,34 @@ std::shared_ptr<ResultCallback> CameraInput::GetResultCallback()
 sptr<CameraDevice> CameraInput::GetCameraDeviceInfo()
 {
     return cameraObj_;
+}
+
+void CameraInput::ProcessFaceRecUpdates(const uint64_t timestamp,
+                                        const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
+{
+    CaptureSession* captureSession = GetSession();
+    if (captureSession == nullptr) {
+        return;
+    }
+
+    if (captureSession->GetMetaOutput()) {
+        sptr<MetadataOutput> metaOutput = static_cast<MetadataOutput *>(captureSession->GetMetaOutput().GetRefPtr());
+        if (!metaOutput) {
+            MEDIA_DEBUG_LOG("CameraInput::metaOutput is null");
+            return;
+        }
+        bool isNeedMirror = false;
+        if (GetCameraDeviceInfo()) {
+            isNeedMirror = GetCameraDeviceInfo()->GetPosition() == CAMERA_POSITION_FRONT;
+        }
+        std::vector<sptr<MetadataObject>> metaObjects;
+        metaOutput->ProcessFaceRectangles(timestamp, result, metaObjects, isNeedMirror);
+        std::shared_ptr<MetadataObjectCallback> appObjectCallback = metaOutput->GetAppObjectCallback();
+        if (!metaObjects.empty() && appObjectCallback) {
+            MEDIA_DEBUG_LOG("CameraInput::OnMetadataObjectsAvailable");
+            appObjectCallback->OnMetadataObjectsAvailable(metaObjects);
+        }
+    }
 }
 
 void CameraInput::ProcessDeviceCallbackUpdates(const std::shared_ptr<Camera::CameraMetadata> &result)

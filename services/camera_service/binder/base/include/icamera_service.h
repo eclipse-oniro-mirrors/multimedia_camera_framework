@@ -39,7 +39,7 @@ public:
     virtual int32_t GetCameras(std::vector<std::string> &cameraIds,
         std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> &cameraAbilityList) = 0;
 
-    virtual int32_t CreateCaptureSession(sptr<ICaptureSession> &session) = 0;
+    virtual int32_t CreateCaptureSession(sptr<ICaptureSession> &session, int32_t operationMode = 0) = 0;
 
     virtual int32_t CreatePhotoOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
                                       int32_t width, int32_t height, sptr<IStreamCapture> &photoOutput) = 0;

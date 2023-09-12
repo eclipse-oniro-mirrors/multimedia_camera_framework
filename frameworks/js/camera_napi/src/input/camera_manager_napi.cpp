@@ -160,7 +160,6 @@ static napi_value CreateCameraJSArray(napi_env env, napi_status status,
 
     if (cameraObjList.empty()) {
         MEDIA_ERR_LOG("cameraObjList is empty");
-        return cameraArray;
     }
 
     status = napi_create_array(env, &cameraArray);
@@ -306,60 +305,6 @@ bool ParseVideoProfile(napi_env env, napi_value root, VideoProfile* profile)
     return true;
 }
 
-static napi_value ConvertJSArgsToNative(napi_env env, size_t argc, const napi_value argv[],
-    CameraManagerContext &asyncContext)
-{
-    MEDIA_DEBUG_LOG("ConvertJSArgsToNative is called");
-    char buffer[PATH_MAX];
-    const int32_t refCount = 1;
-    napi_value result;
-    size_t length = 0;
-    auto context = &asyncContext;
-    NAPI_ASSERT(env, argv != nullptr, "Argument list is empty");
-    for (size_t i = PARAM0; i < argc; i++) {
-        napi_valuetype valueType = napi_undefined;
-        napi_typeof(env, argv[i], &valueType);
-        if (i == PARAM0 && valueType == napi_object) {
-            bool isVideoMode = false;
-            (void)napi_has_named_property(env, argv[i], "frameRateRange", &isVideoMode);
-            if (!isVideoMode) {
-                ParseProfile(env, argv[i], &(context->profile));
-                MEDIA_INFO_LOG("ParseProfile "
-                    "size.width = %{public}d, size.height = %{public}d, format = %{public}d",
-                    context->profile.size_.width, context->profile.size_.height, context->profile.format_);
-            } else {
-                ParseVideoProfile(env, argv[i], &(context->videoProfile));
-                MEDIA_INFO_LOG("ParseVideoProfile "
-                    "size.width = %{public}d, size.height = %{public}d, format = %{public}d, "
-                    "frameRateRange : min = %{public}d, max = %{public}d",
-                    context->videoProfile.size_.width,
-                    context->videoProfile.size_.height,
-                    context->videoProfile.format_,
-                    context->videoProfile.framerates_[0],
-                    context->videoProfile.framerates_[1]);
-            }
-        } else if (i == PARAM1 && valueType == napi_function) {
-            napi_create_reference(env, argv[i], refCount, &context->callbackRef);
-            break;
-        } else if (i == PARAM1 && valueType == napi_string) {
-            if (napi_get_value_string_utf8(env, argv[i], buffer, PATH_MAX, &length) == napi_ok) {
-                context->surfaceId = std::string(buffer);
-                MEDIA_INFO_LOG("context->surfaceId after convert : %{public}s", context->surfaceId.c_str());
-            } else {
-                MEDIA_ERR_LOG("Could not able to read surfaceId argument!");
-            }
-        } else if (i == PARAM2 && valueType == napi_function) {
-            napi_create_reference(env, argv[i], refCount, &context->callbackRef);
-            break;
-        } else {
-            NAPI_ASSERT(env, false, "type mismatch");
-        }
-    }
-    // Return true napi_value if params are successfully obtained
-    napi_get_boolean(env, true, &result);
-    return result;
-}
-
 napi_value CameraManagerNapi::CreatePreviewOutputInstance(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CreatePreviewOutputInstance is called");
@@ -410,7 +355,6 @@ napi_value CameraManagerNapi::CreateDeferredPreviewOutputInstance(napi_env env, 
     }
     napi_status status;
     napi_value result = nullptr;
-    napi_value resource = nullptr;
     size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
@@ -418,32 +362,20 @@ napi_value CameraManagerNapi::CreateDeferredPreviewOutputInstance(napi_env env, 
     if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, CREATE_DEFERRED_PREVIEW_OUTPUT)) {
         return result;
     }
+    MEDIA_INFO_LOG("CheckInvalidArgument pass");
     napi_get_undefined(env, &result);
-    std::unique_ptr<CameraManagerContext> asyncContext = std::make_unique<CameraManagerContext>();
-    result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
-    CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
-    CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-    CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "CreateDeferredPreviewOutput");
-    status = napi_create_async_work(
-        env, nullptr, resource,
-        [](napi_env env, void* data) {
-            auto context = static_cast<CameraManagerContext*>(data);
-            // Start async trace
-            context->funcName = "CameraManagerNapi::CreateDeferredPreviewOutputInstance";
-            context->taskId = CameraNapiUtils::IncreamentAndGet(cameraManagerTaskId);
-            CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-            context->status = true;
-            context->modeForAsync = CREATE_DEFERRED_PREVIEW_OUTPUT_ASYNC_CALLBACK;
-        },
-        CameraManagerCommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-    if (status != napi_ok) {
-        MEDIA_ERR_LOG("Failed to create napi_create_async_work for CreatePhotoOutputInstance");
-        napi_get_undefined(env, &result);
-    } else {
-        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
-        asyncContext.release();
+    CameraManagerNapi* cameraManagerNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
+    if (status != napi_ok || cameraManagerNapi == nullptr) {
+        MEDIA_ERR_LOG("napi_unwrap failure!");
+        return nullptr;
     }
-
+    Profile profile;
+    ParseProfile(env, argv[PARAM0], &profile);
+    MEDIA_INFO_LOG("ParseProfile "
+                   "size.width = %{public}d, size.height = %{public}d, format = %{public}d",
+                   profile.size_.width, profile.size_.height, profile.format_);
+    result = PreviewOutputNapi::CreateDeferredPreviewOutput(env, profile);
     return result;
 }
 

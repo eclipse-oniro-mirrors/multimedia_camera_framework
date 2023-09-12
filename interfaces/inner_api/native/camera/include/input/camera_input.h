@@ -26,6 +26,7 @@
 #include "icamera_device_service.h"
 #include "icamera_device_service_callback.h"
 #include "hcamera_device_callback_stub.h"
+#include "output/camera_output_capability.h"
 namespace OHOS {
 namespace CameraStandard {
 class ErrorCallback {
@@ -315,6 +316,7 @@ public:
     */
     int32_t SetCameraSettings(std::string setting);
 
+    void ProcessFaceRecUpdates(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
 private:
     sptr<ICameraDeviceService> deviceObj_;
     sptr<CameraDevice> cameraObj_;

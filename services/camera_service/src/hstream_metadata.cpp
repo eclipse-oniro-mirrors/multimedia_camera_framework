@@ -22,7 +22,7 @@
 namespace OHOS {
 namespace CameraStandard {
 HStreamMetadata::HStreamMetadata(sptr<OHOS::IBufferProducer> producer, int32_t format)
-    : HStreamCommon(StreamType::METADATA, producer, format, 0, 0)
+    : HStreamCommon(StreamType::METADATA, producer, format, producer->GetDefaultWidth(), producer->GetDefaultHeight())
 {}
 
 HStreamMetadata::~HStreamMetadata()

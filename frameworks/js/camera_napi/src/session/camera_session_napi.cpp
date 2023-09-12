@@ -452,7 +452,7 @@ napi_value CameraSessionNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("setFilter", SetFilter),
 
         DECLARE_NAPI_FUNCTION("getSupportedBeautyTypes", GetSupportedBeautyTypes),
-        DECLARE_NAPI_FUNCTION("getSupportedBeautyRanges", GetSupportedBeautyRanges),
+        DECLARE_NAPI_FUNCTION("getSupportedBeautyRange", GetSupportedBeautyRange),
         DECLARE_NAPI_FUNCTION("getBeauty", GetBeauty),
         DECLARE_NAPI_FUNCTION("setBeauty", SetBeauty),
         DECLARE_NAPI_FUNCTION("on", On),
@@ -1826,6 +1826,7 @@ napi_value CameraSessionNapi::GetZoomRatioRange(napi_env env, napi_callback_info
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
+
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
@@ -1923,13 +1924,18 @@ napi_value CameraSessionNapi::GetSupportedFilters(napi_env env, napi_callback_in
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
+    status = napi_create_array(env, &result);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("napi_create_array call Failed!");
+        return result;
+    }
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
-        std::vector<FilterType> filterTypes = cameraSessionNapi->cameraSession_->getSupportedFilters();
-        MEDIA_INFO_LOG("CameraSessionNapi::GetSupportedPortraitEffect len = %{public}zu",
+        std::vector<FilterType> filterTypes = cameraSessionNapi->cameraSession_->GetSupportedFilters();
+        MEDIA_INFO_LOG("CameraSessionNapi::GetSupportedFilters len = %{public}zu",
             filterTypes.size());
-        if (!filterTypes.empty() && napi_create_array(env, &result) == napi_ok) {
+        if (!filterTypes.empty()) {
             for (size_t i = 0; i < filterTypes.size(); i++) {
                 FilterType filterType = filterTypes[i];
                 napi_value value;
@@ -1938,7 +1944,7 @@ napi_value CameraSessionNapi::GetSupportedFilters(napi_env env, napi_callback_in
             }
         }
     } else {
-        MEDIA_ERR_LOG("GetSupportedPortraitEffect call Failed!");
+        MEDIA_ERR_LOG("GetSupportedFilters call Failed!");
     }
     return result;
 }
@@ -1957,7 +1963,7 @@ napi_value CameraSessionNapi::GetFilter(napi_env env, napi_callback_info info)
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
-        FilterType filterType = cameraSessionNapi->cameraSession_->getFilter();
+        FilterType filterType = cameraSessionNapi->cameraSession_->GetFilter();
         napi_create_int32(env, filterType, &result);
     } else {
         MEDIA_ERR_LOG("GetPortraitEffect call Failed!");
@@ -1985,7 +1991,7 @@ napi_value CameraSessionNapi::SetFilter(napi_env env, napi_callback_info info)
         FilterType filterType = (FilterType)value;
         cameraSessionNapi->cameraSession_->LockForControl();
         cameraSessionNapi->cameraSession_->
-                setFilter(static_cast<FilterType>(filterType));
+                SetFilter(static_cast<FilterType>(filterType));
         cameraSessionNapi->cameraSession_->UnlockForControl();
     } else {
         MEDIA_ERR_LOG("SetFocusMode call Failed!");
@@ -2005,13 +2011,18 @@ napi_value CameraSessionNapi::GetSupportedBeautyTypes(napi_env env, napi_callbac
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
+    status = napi_create_array(env, &result);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("napi_create_array call Failed!");
+        return result;
+    }
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
-        std::vector<BeautyType> beautyTypes = cameraSessionNapi->cameraSession_->getSupportedBeautyTypes();
-        MEDIA_INFO_LOG("CameraSessionNapi::GetSupportedPortraitEffect len = %{public}zu",
+        std::vector<BeautyType> beautyTypes = cameraSessionNapi->cameraSession_->GetSupportedBeautyTypes();
+        MEDIA_INFO_LOG("CameraSessionNapi::GetSupportedBeautyTypes len = %{public}zu",
             beautyTypes.size());
-        if (!beautyTypes.empty() && napi_create_array(env, &result) == napi_ok) {
+        if (!beautyTypes.empty() && status == napi_ok) {
             for (size_t i = 0; i < beautyTypes.size(); i++) {
                 BeautyType beautyType = beautyTypes[i];
                 napi_value value;
@@ -2020,14 +2031,14 @@ napi_value CameraSessionNapi::GetSupportedBeautyTypes(napi_env env, napi_callbac
             }
         }
     } else {
-        MEDIA_ERR_LOG("GetSupportedPortraitEffect call Failed!");
+        MEDIA_ERR_LOG("GetSupportedBeautyTypes call Failed!");
     }
     return result;
 }
 
-napi_value CameraSessionNapi::GetSupportedBeautyRanges(napi_env env, napi_callback_info info)
+napi_value CameraSessionNapi::GetSupportedBeautyRange(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("GetSupportedBeautyRanges is called");
+    MEDIA_DEBUG_LOG("GetSupportedBeautyRange is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -2037,16 +2048,21 @@ napi_value CameraSessionNapi::GetSupportedBeautyRanges(napi_env env, napi_callba
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
+    status = napi_create_array(env, &result);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("napi_create_array call Failed!");
+        return result;
+    }
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         int32_t beautyType;
         napi_get_value_int32(env, argv[PARAM0], &beautyType);
         std::vector<int32_t> beautyRanges =
-            cameraSessionNapi->cameraSession_->getSupportedBeautyRange(static_cast<BeautyType>(beautyType));
-        MEDIA_INFO_LOG("CameraSessionNapi::GetSupportedPortraitEffect len = %{public}zu",
-            beautyRanges.size());
-        if (!beautyRanges.empty() && napi_create_array(env, &result) == napi_ok) {
+            cameraSessionNapi->cameraSession_->GetSupportedBeautyRange(static_cast<BeautyType>(beautyType));
+        MEDIA_INFO_LOG("CameraSessionNapi::GetSupportedBeautyRange beautyType = %{public}d, len = %{public}zu",
+                       beautyType, beautyRanges.size());
+        if (!beautyRanges.empty()) {
             for (size_t i = 0; i < beautyRanges.size(); i++) {
                 int beautyRange = beautyRanges[i];
                 napi_value value;
@@ -2062,7 +2078,7 @@ napi_value CameraSessionNapi::GetSupportedBeautyRanges(napi_env env, napi_callba
 
 napi_value CameraSessionNapi::GetBeauty(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("GetPortraitEffect is called");
+    MEDIA_DEBUG_LOG("GetBeauty is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
@@ -2077,17 +2093,17 @@ napi_value CameraSessionNapi::GetBeauty(napi_env env, napi_callback_info info)
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         int32_t beautyType;
         napi_get_value_int32(env, argv[PARAM0], &beautyType);
-        int32_t beautyStrength = cameraSessionNapi->cameraSession_->getBeauty(static_cast<BeautyType>(beautyType));
+        int32_t beautyStrength = cameraSessionNapi->cameraSession_->GetBeauty(static_cast<BeautyType>(beautyType));
         napi_create_int32(env, beautyStrength, &result);
     } else {
-        MEDIA_ERR_LOG("GetPortraitEffect call Failed!");
+        MEDIA_ERR_LOG("GetBeauty call Failed!");
     }
     return result;
 }
 
 napi_value CameraSessionNapi::SetBeauty(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("GetPortraitEffect is called");
+    MEDIA_DEBUG_LOG("SetBeauty is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_TWO;
@@ -2105,10 +2121,10 @@ napi_value CameraSessionNapi::SetBeauty(napi_env env, napi_callback_info info)
         int32_t beautyStrength;
         napi_get_value_int32(env, argv[PARAM1], &beautyStrength);
         cameraSessionNapi->cameraSession_->LockForControl();
-        cameraSessionNapi->cameraSession_->setBeauty(static_cast<BeautyType>(beautyType), beautyStrength);
+        cameraSessionNapi->cameraSession_->SetBeauty(static_cast<BeautyType>(beautyType), beautyStrength);
         cameraSessionNapi->cameraSession_->UnlockForControl();
     } else {
-        MEDIA_ERR_LOG("GetPortraitEffect call Failed!");
+        MEDIA_ERR_LOG("SetBeauty call Failed!");
     }
     return result;
 }

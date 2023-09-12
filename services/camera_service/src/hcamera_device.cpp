@@ -253,6 +253,7 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
     } else {
         updateSettings_ = settings;
     }
+    MEDIA_DEBUG_LOG("Updated device settings  hdiCameraDevice_(%{public}d)", hdiCameraDevice_ != nullptr);
     if (hdiCameraDevice_ != nullptr) {
         std::vector<uint8_t> setting;
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(updateSettings_, setting);
@@ -326,6 +327,66 @@ void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::C
     } else {
         MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_AE_EXPOSURE_COMPENSATION value = %{public}d",
             item.data.u8[0]);
+    }
+
+    // debug log for portrait Effect
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(),
+        OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_PORTRAIT_EFFECT_TYPE portraitEffect tag");
+    } else {
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_PORTRAIT_EFFECT_TYPE value = %{public}d portraitEffect",
+            item.data.u8[0]);
+    }
+
+    // debug log for filter type
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(),
+        OHOS_CONTROL_FILTER_TYPE, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_FILTER_TYPE portraitEffect tag");
+    } else {
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_FILTER_TYPE value = %{public}d portraitEffect",
+            item.data.u8[0]);
+    }
+
+    // debug log for beauty auto value
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(),
+        OHOS_CONTROL_BEAUTY_AUTO_VALUE, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_BEAUTY_AUTO_VALUE portraitEffect tag");
+    } else {
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_AUTO_VALUE value = %{public}d portraitEffect",
+            item.data.u8[0]);
+    }
+
+    // debug log for beauty skin smooth value
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(),
+        OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE portraitEffect tag");
+    } else {
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE value = %{public}d portraitEffect",
+            item.data.u8[0]);
+    }
+
+    // debug log for beauty face slender value
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(),
+        OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE portraitEffect tag");
+    } else {
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE value = %{public}d portraitEffect",
+            item.data.u8[0]);
+    }
+
+    // debug log for beauty skin tone value
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(),
+        OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE portraitEffect tag");
+    } else {
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE value = %{public}d portraitEffect",
+            item.data.i32[0]);
     }
 }
 
@@ -507,6 +568,28 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint
         ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_STATE, &item);
         if (ret == CAM_META_SUCCESS) {
             MEDIA_DEBUG_LOG("Focus state: %{public}d", item.data.u8[0]);
+        }
+        ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_STATISTICS_FACE_RECTANGLES, &item);
+        if (ret != CAM_META_SUCCESS) {
+            MEDIA_ERR_LOG("cannot find OHOS_STATISTICS_FACE_RECTANGLES: %{public}d", ret);
+            return 0;
+        }
+        MEDIA_INFO_LOG("ProcessFaceRectangles: %{public}d count: %{public}d", item.item, item.count);
+        constexpr int32_t rectangleUnitLen = 4;
+
+        if (item.count % rectangleUnitLen) {
+            MEDIA_ERR_LOG("Metadata item: %{public}d count: %{public}d is invalid", item.item, item.count);
+            return CAM_META_SUCCESS;
+        }
+        const int32_t offsetX = 0;
+        const int32_t offsetY = 1;
+        const int32_t offsetW = 2;
+        const int32_t offsetH = 3;
+        float* start = item.data.f;
+        float* end = item.data.f + item.count;
+        for (; start < end; start += rectangleUnitLen) {
+            MEDIA_INFO_LOG("Metadata item: %{public}f,%{public}f,%{public}f,%{public}f",
+                           start[offsetX], start[offsetY], start[offsetW], start[offsetH]);
         }
     } else {
         MEDIA_ERR_LOG("HCameraDevice::OnResult cameraResult is nullptr");

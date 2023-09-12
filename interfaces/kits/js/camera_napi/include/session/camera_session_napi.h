@@ -167,7 +167,7 @@ public:
     static napi_value GetFilter(napi_env env, napi_callback_info info);
     static napi_value SetFilter(napi_env env, napi_callback_info info);
     static napi_value GetSupportedBeautyTypes(napi_env env, napi_callback_info info);
-    static napi_value GetSupportedBeautyRanges(napi_env env, napi_callback_info info);
+    static napi_value GetSupportedBeautyRange(napi_env env, napi_callback_info info);
     static napi_value GetBeauty(napi_env env, napi_callback_info info);
     static napi_value SetBeauty(napi_env env, napi_callback_info info);
 

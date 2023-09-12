@@ -48,6 +48,67 @@ napi_value PortraitSessionNapi::Init(napi_env env, napi_value exports)
     napi_status status;
     napi_value ctorObj;
     napi_property_descriptor portrait_session_props[] = {
+        DECLARE_NAPI_FUNCTION("beginConfig", CameraSessionNapi::BeginConfig),
+        DECLARE_NAPI_FUNCTION("commitConfig", CameraSessionNapi::CommitConfig),
+
+        DECLARE_NAPI_FUNCTION("canAddInput", CameraSessionNapi::CanAddInput),
+        DECLARE_NAPI_FUNCTION("addInput", CameraSessionNapi::AddInput),
+        DECLARE_NAPI_FUNCTION("removeInput", CameraSessionNapi::RemoveInput),
+
+        DECLARE_NAPI_FUNCTION("canAddOutput", CameraSessionNapi::CanAddOutput),
+        DECLARE_NAPI_FUNCTION("addOutput", CameraSessionNapi::AddOutput),
+        DECLARE_NAPI_FUNCTION("removeOutput", CameraSessionNapi::RemoveOutput),
+
+        DECLARE_NAPI_FUNCTION("start", CameraSessionNapi::Start),
+        DECLARE_NAPI_FUNCTION("stop", CameraSessionNapi::Stop),
+        DECLARE_NAPI_FUNCTION("release", CameraSessionNapi::Release),
+
+        DECLARE_NAPI_FUNCTION("lockForControl", CameraSessionNapi::LockForControl),
+        DECLARE_NAPI_FUNCTION("unlockForControl", CameraSessionNapi::UnlockForControl),
+
+        DECLARE_NAPI_FUNCTION("isVideoStabilizationModeSupported",
+                              CameraSessionNapi::IsVideoStabilizationModeSupported),
+        DECLARE_NAPI_FUNCTION("getActiveVideoStabilizationMode", CameraSessionNapi::GetActiveVideoStabilizationMode),
+        DECLARE_NAPI_FUNCTION("setVideoStabilizationMode", CameraSessionNapi::SetVideoStabilizationMode),
+
+        DECLARE_NAPI_FUNCTION("hasFlash", CameraSessionNapi::HasFlash),
+        DECLARE_NAPI_FUNCTION("isFlashModeSupported", CameraSessionNapi::IsFlashModeSupported),
+        DECLARE_NAPI_FUNCTION("getFlashMode", CameraSessionNapi::GetFlashMode),
+        DECLARE_NAPI_FUNCTION("setFlashMode", CameraSessionNapi::SetFlashMode),
+
+        DECLARE_NAPI_FUNCTION("isExposureModeSupported", CameraSessionNapi::IsExposureModeSupported),
+        DECLARE_NAPI_FUNCTION("getExposureMode", CameraSessionNapi::GetExposureMode),
+        DECLARE_NAPI_FUNCTION("setExposureMode", CameraSessionNapi::SetExposureMode),
+        DECLARE_NAPI_FUNCTION("getExposureBiasRange", CameraSessionNapi::GetExposureBiasRange),
+        DECLARE_NAPI_FUNCTION("setExposureBias", CameraSessionNapi::SetExposureBias),
+        DECLARE_NAPI_FUNCTION("getExposureValue", CameraSessionNapi::GetExposureValue),
+
+        DECLARE_NAPI_FUNCTION("getMeteringPoint", CameraSessionNapi::GetMeteringPoint),
+        DECLARE_NAPI_FUNCTION("setMeteringPoint", CameraSessionNapi::SetMeteringPoint),
+
+        DECLARE_NAPI_FUNCTION("isFocusModeSupported", CameraSessionNapi::IsFocusModeSupported),
+        DECLARE_NAPI_FUNCTION("getFocusMode", CameraSessionNapi::GetFocusMode),
+        DECLARE_NAPI_FUNCTION("setFocusMode", CameraSessionNapi::SetFocusMode),
+
+        DECLARE_NAPI_FUNCTION("getFocusPoint", CameraSessionNapi::GetFocusPoint),
+        DECLARE_NAPI_FUNCTION("setFocusPoint", CameraSessionNapi::SetFocusPoint),
+        DECLARE_NAPI_FUNCTION("getFocalLength", CameraSessionNapi::GetFocalLength),
+
+        DECLARE_NAPI_FUNCTION("getZoomRatioRange", CameraSessionNapi::GetZoomRatioRange),
+        DECLARE_NAPI_FUNCTION("getZoomRatio", CameraSessionNapi::GetZoomRatio),
+        DECLARE_NAPI_FUNCTION("setZoomRatio", CameraSessionNapi::SetZoomRatio),
+
+        DECLARE_NAPI_FUNCTION("getSupportedFilters", CameraSessionNapi::GetSupportedFilters),
+        DECLARE_NAPI_FUNCTION("getFilter", CameraSessionNapi::GetFilter),
+        DECLARE_NAPI_FUNCTION("setFilter", CameraSessionNapi::SetFilter),
+
+        DECLARE_NAPI_FUNCTION("getSupportedBeautyTypes", CameraSessionNapi::GetSupportedBeautyTypes),
+        DECLARE_NAPI_FUNCTION("getSupportedBeautyRange", CameraSessionNapi::GetSupportedBeautyRange),
+        DECLARE_NAPI_FUNCTION("getBeauty", CameraSessionNapi::GetBeauty),
+        DECLARE_NAPI_FUNCTION("setBeauty", CameraSessionNapi::SetBeauty),
+
+        DECLARE_NAPI_FUNCTION("on", CameraSessionNapi::On),
+
         DECLARE_NAPI_FUNCTION("getSupportedPortraitEffects", GetSupportedPortraitEffects),
         DECLARE_NAPI_FUNCTION("getPortraitEffect", GetPortraitEffect),
         DECLARE_NAPI_FUNCTION("setPortraitEffect", SetPortraitEffect),
@@ -87,6 +148,12 @@ napi_value PortraitSessionNapi::CreateCameraSession(napi_env env, napi_callback_
     if (status == napi_ok) {
         int32_t modeName;
         napi_get_value_int32(env, argv[PARAM0], &modeName);
+        MEDIA_INFO_LOG("PortraitSessionNapi::CreateCameraSession mode = %{public}d", modeName);
+        if (modeName == 1) { // trans js portrait to fwk portrait
+            modeName = CameraMode::PORTRAIT;
+        } else {
+            modeName = CameraMode::NORMAL;
+        }
         sCameraSession_ = ModeManager::GetInstance()->CreateCaptureSession(static_cast<CameraMode>(modeName));
         if (sCameraSession_ == nullptr) {
             MEDIA_ERR_LOG("Failed to create Camera session instance");
@@ -125,6 +192,7 @@ napi_value PortraitSessionNapi::PortraitSessionNapiConstructor(napi_env env, nap
             return result;
         }
         obj->portraitSession_ = static_cast<PortraitSession*>(sCameraSession_.GetRefPtr());
+        obj->cameraSession_ = obj->portraitSession_;
         if (obj->portraitSession_ == nullptr) {
             MEDIA_ERR_LOG("portraitSession_ is null");
             return result;
@@ -155,14 +223,19 @@ napi_value PortraitSessionNapi::GetSupportedPortraitEffects(napi_env env, napi_c
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
+    status = napi_create_array(env, &result);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("napi_create_array call Failed!");
+        return result;
+    }
     PortraitSessionNapi* portraitSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&portraitSessionNapi));
     if (status == napi_ok && portraitSessionNapi != nullptr && portraitSessionNapi->portraitSession_ != nullptr) {
         std::vector<PortraitEffect> PortraitEffects =
-            portraitSessionNapi->portraitSession_->getSupportedPortraitEffects();
+            portraitSessionNapi->portraitSession_->GetSupportedPortraitEffects();
         MEDIA_INFO_LOG("PortraitSessionNapi::GetSupportedPortraitEffect len = %{public}zu",
             PortraitEffects.size());
-        if (!PortraitEffects.empty() && napi_create_array(env, &result) == napi_ok) {
+        if (!PortraitEffects.empty()) {
             for (size_t i = 0; i < PortraitEffects.size(); i++) {
                 PortraitEffect portaitEffect = PortraitEffects[i];
                 napi_value value;
@@ -191,7 +264,7 @@ napi_value PortraitSessionNapi::GetPortraitEffect(napi_env env, napi_callback_in
     PortraitSessionNapi* portraitSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&portraitSessionNapi));
     if (status == napi_ok && portraitSessionNapi != nullptr && portraitSessionNapi->portraitSession_ != nullptr) {
-        PortraitEffect portaitEffect = portraitSessionNapi->portraitSession_->getPortraitEffect();
+        PortraitEffect portaitEffect = portraitSessionNapi->portraitSession_->GetPortraitEffect();
         napi_create_int32(env, portaitEffect, &result);
     } else {
         MEDIA_ERR_LOG("GetPortraitEffect call Failed!");
@@ -218,10 +291,11 @@ napi_value PortraitSessionNapi::SetPortraitEffect(napi_env env, napi_callback_in
         int32_t value;
         napi_get_value_int32(env, argv[PARAM0], &value);
         PortraitEffect portaitEffect = static_cast<PortraitEffect>(value);
-        portraitSessionNapi->cameraSession_->LockForControl();
+        portraitSessionNapi->portraitSession_->LockForControl();
         portraitSessionNapi->portraitSession_->
-                setPortraitEffect(static_cast<PortraitEffect>(portaitEffect));
-        portraitSessionNapi->cameraSession_->UnlockForControl();
+                SetPortraitEffect(static_cast<PortraitEffect>(portaitEffect));
+        MEDIA_INFO_LOG("PortraitSessionNapi setPortraitEffect set portaitEffect %{public}d!", portaitEffect);
+        portraitSessionNapi->portraitSession_->UnlockForControl();
     } else {
         MEDIA_ERR_LOG("setPortraitEffect call Failed!");
     }

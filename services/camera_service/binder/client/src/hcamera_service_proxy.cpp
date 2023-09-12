@@ -128,13 +128,13 @@ int32_t HCameraServiceProxy::SetMuteCallback(sptr<ICameraMuteServiceCallback>& c
     return error;
 }
 
-int32_t HCameraServiceProxy::CreateCaptureSession(sptr<ICaptureSession>& session)
+int32_t HCameraServiceProxy::CreateCaptureSession(sptr<ICaptureSession>& session, int32_t operationMode)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
-
     data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(operationMode);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_CAPTURE_SESSION), data, reply, option);
     if (error != ERR_NONE) {

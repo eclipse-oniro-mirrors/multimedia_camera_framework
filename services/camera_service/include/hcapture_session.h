@@ -45,7 +45,7 @@ static const int32_t STREAM_NOT_FOUNT = -1;
 class HCaptureSession : public HCaptureSessionStub {
 public:
     HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
-        sptr<StreamOperatorCallback> streamOperatorCb, const uint32_t callingTokenId);
+        sptr<StreamOperatorCallback> streamOperatorCb, const uint32_t callingTokenId, int32_t opMode);
     ~HCaptureSession();
 
     int32_t BeginConfig() override;
@@ -126,6 +126,7 @@ private:
     std::shared_ptr<PermissionStatusChangeCb> callbackPtr_;
     std::shared_ptr<CameraUseStateChangeCb> cameraUseCallbackPtr_;
     wptr<IDeviceOperatorsCallback> deviceOperatorsCallback_;
+    int32_t opMode_;
 };
 
 class PermissionStatusChangeCb : public Security::AccessToken::PermStateChangeCallbackCustomize {
