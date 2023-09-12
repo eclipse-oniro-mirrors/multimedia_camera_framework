@@ -28,6 +28,7 @@ int32_t HCaptureSessionCallbackProxy::OnError(int32_t errorCode)
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
+    option.SetFlags(option.TF_ASYNC);
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteInt32(errorCode);

@@ -27,6 +27,7 @@ int32_t HCameraServiceCallbackProxy::OnCameraStatusChanged(const std::string& ca
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
+    option.SetFlags(option.TF_ASYNC);
     MEDIA_INFO_LOG("HCameraServiceCallbackProxy OnCameraStatusChanged called");
 
     data.WriteInterfaceToken(GetDescriptor());
@@ -47,6 +48,7 @@ int32_t HCameraServiceCallbackProxy::OnFlashlightStatusChanged(const std::string
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
+    option.SetFlags(option.TF_ASYNC);
     int error = ERR_NONE;
 
     data.WriteInterfaceToken(GetDescriptor());
@@ -69,6 +71,7 @@ int32_t HCameraMuteServiceCallbackProxy::OnCameraMute(bool muteMode)
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
+    option.SetFlags(option.TF_ASYNC);
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteBool(muteMode);

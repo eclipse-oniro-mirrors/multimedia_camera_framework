@@ -27,6 +27,7 @@ int32_t HStreamRepeatCallbackProxy::OnFrameStarted()
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
+    option.SetFlags(option.TF_ASYNC);
 
     data.WriteInterfaceToken(GetDescriptor());
     int error = Remote()->SendRequest(
@@ -44,6 +45,7 @@ int32_t HStreamRepeatCallbackProxy::OnFrameEnded(int32_t frameCount)
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
+    option.SetFlags(option.TF_ASYNC);
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteInt32(frameCount);
@@ -63,6 +65,7 @@ int32_t HStreamRepeatCallbackProxy::OnFrameError(int32_t errorCode)
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
+    option.SetFlags(option.TF_ASYNC);
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteInt32(errorCode);
