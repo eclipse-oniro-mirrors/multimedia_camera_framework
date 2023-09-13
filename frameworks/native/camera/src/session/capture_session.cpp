@@ -21,6 +21,7 @@
 #include "output/photo_output.h"
 #include "output/preview_output.h"
 #include "output/video_output.h"
+#include "output/metadata_output.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -81,6 +82,64 @@ const std::unordered_map<FlashMode, camera_flash_mode_enum_t> CaptureSession::fw
     {FLASH_MODE_ALWAYS_OPEN, OHOS_CAMERA_FLASH_MODE_ALWAYS_OPEN}
 };
 
+const std::unordered_map<camera_filter_type_t, FilterType> CaptureSession::metaToFwFilterType_ = {
+    {OHOS_CAMERA_FILTER_TYPE_NONE, NONE},
+    {OHOS_CAMERA_FILTER_TYPE_CLASSIC, CLASSIC},
+    {OHOS_CAMERA_FILTER_TYPE_DAWN, DAWN},
+    {OHOS_CAMERA_FILTER_TYPE_PURE, PURE},
+    {OHOS_CAMERA_FILTER_TYPE_GREY, GREY},
+    {OHOS_CAMERA_FILTER_TYPE_NATURAL, NATURAL},
+    {OHOS_CAMERA_FILTER_TYPE_MORI, MORI},
+    {OHOS_CAMERA_FILTER_TYPE_FAIR, FAIR},
+    {OHOS_CAMERA_FILTER_TYPE_PINK, PINK}
+};
+
+const std::unordered_map<FilterType, camera_filter_type_t> CaptureSession::fwToMetaFilterType_ = {
+    {NONE, OHOS_CAMERA_FILTER_TYPE_NONE},
+    {CLASSIC, OHOS_CAMERA_FILTER_TYPE_CLASSIC},
+    {DAWN, OHOS_CAMERA_FILTER_TYPE_DAWN},
+    {PURE, OHOS_CAMERA_FILTER_TYPE_PURE},
+    {GREY, OHOS_CAMERA_FILTER_TYPE_GREY},
+    {NATURAL, OHOS_CAMERA_FILTER_TYPE_NATURAL},
+    {MORI, OHOS_CAMERA_FILTER_TYPE_MORI},
+    {FAIR, OHOS_CAMERA_FILTER_TYPE_FAIR},
+    {PINK, OHOS_CAMERA_FILTER_TYPE_PINK}
+};
+
+const std::unordered_map<camera_beauty_type_t, BeautyType> CaptureSession::metaToFwBeautyType_ = {
+    {OHOS_CAMERA_BEAUTY_TYPE_AUTO, AUTO_TYPE},
+    {OHOS_CAMERA_BEAUTY_TYPE_SKIN_SMOOTH, SKIN_SMOOTH},
+    {OHOS_CAMERA_BEAUTY_TYPE_FACE_SLENDER, FACE_SLENDER},
+    {OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONE, SKIN_TONE}
+};
+
+const std::unordered_map<BeautyType, camera_beauty_type_t> CaptureSession::fwToMetaBeautyType_ = {
+    {AUTO_TYPE, OHOS_CAMERA_BEAUTY_TYPE_AUTO},
+    {SKIN_SMOOTH, OHOS_CAMERA_BEAUTY_TYPE_SKIN_SMOOTH},
+    {FACE_SLENDER, OHOS_CAMERA_BEAUTY_TYPE_FACE_SLENDER},
+    {SKIN_TONE, OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONE}
+};
+
+const std::unordered_map<BeautyType, camera_device_metadata_tag_t> CaptureSession::fwToMetaBeautyAbility_ = {
+    {AUTO_TYPE, OHOS_ABILITY_BEAUTY_AUTO_VALUES},
+    {SKIN_SMOOTH, OHOS_ABILITY_BEAUTY_SKIN_SMOOTH_VALUES},
+    {FACE_SLENDER, OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES},
+    {SKIN_TONE, OHOS_ABILITY_BEAUTY_SKIN_TONE_VALUES}
+};
+
+const std::unordered_map<BeautyType, camera_device_metadata_tag_t> CaptureSession::fwToMetaBeautyControl_ = {
+    {AUTO_TYPE, OHOS_CONTROL_BEAUTY_AUTO_VALUE},
+    {SKIN_SMOOTH, OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE},
+    {FACE_SLENDER, OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE},
+    {SKIN_TONE, OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE}
+};
+
+const std::unordered_map<camera_device_metadata_tag_t, BeautyType> CaptureSession::metaToFwBeautyControl_ = {
+    {OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE, SKIN_SMOOTH},
+    {OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE, FACE_SLENDER},
+    {OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE, SKIN_TONE}
+};
+
 const std::unordered_map<CameraVideoStabilizationMode,
 VideoStabilizationMode> CaptureSession::metaToFwVideoStabModes_ = {
     {OHOS_CAMERA_VIDEO_STABILIZATION_OFF, OFF},
@@ -115,6 +174,8 @@ CaptureSession::CaptureSession(sptr<ICaptureSession> &captureSession)
 {
     captureSession_ = captureSession;
     inputDevice_ = nullptr;
+    modeName_ = 0;
+    metaOutput_ = nullptr;
 }
 
 CaptureSession::~CaptureSession()
@@ -160,6 +221,7 @@ int32_t CaptureSession::CommitConfig()
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (captureSession_) {
         errCode = captureSession_->CommitConfig();
+        MEDIA_INFO_LOG("CaptureSession::CommitConfig commit mode = %{public}d", GetMode());
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to CommitConfig!, %{public}d", errCode);
         }
@@ -209,6 +271,42 @@ int32_t CaptureSession::CanAddOutput(sptr<CaptureOutput> &output)
     return CameraErrorCode::SUCCESS;
 }
 
+sptr<CaptureOutput> CaptureSession::GetMetaOutput()
+{
+    MEDIA_DEBUG_LOG("CaptureSession::GetMetadataOutput metaOuput(%{public}d)", metaOutput_ != nullptr);
+    return metaOutput_;
+}
+
+void CaptureSession::ConfigureOutput(sptr<CaptureOutput> &output)
+{
+    const int32_t normalMode = 0;
+    const int32_t captureMode = 1;
+    const int32_t videoMode = 2;
+    MEDIA_DEBUG_LOG("Enter Into CaptureSession::AddOutput");
+    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW) {
+        MEDIA_INFO_LOG("CaptureSession::AddOutput PreviewOutput");
+        previewProfile_ = output->GetPreviewProfile();
+        if (GetMode() == normalMode) {
+            SetMode(videoMode);
+        }
+    }
+    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO) {
+        MEDIA_INFO_LOG("CaptureSession::AddOutput PhotoOutput");
+        photoProfile_ = output->GetPhotoProfile();
+        if (GetMode() == normalMode) {
+            SetMode(captureMode);
+        }
+    }
+    output->SetSession(this);
+    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_VIDEO) {
+        MEDIA_INFO_LOG("CaptureSession::AddOutput VideoOutput");
+        SetFrameRateRange(static_cast<VideoOutput *>(output.GetRefPtr())->GetFrameRateRange());
+        if (GetMode() == normalMode) {
+            SetMode(videoMode);
+        }
+    }
+}
+
 int32_t CaptureSession::AddOutput(sptr<CaptureOutput> &output)
 {
     CAMERA_SYNC_TRACE;
@@ -221,13 +319,19 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput> &output)
         MEDIA_ERR_LOG("CaptureSession::AddOutput output is null");
         return ServiceToCameraError(CAMERA_INVALID_ARG);
     }
-    output->SetSession(this);
-    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_VIDEO) {
-        SetFrameRateRange(static_cast<VideoOutput *>(output.GetRefPtr())->GetFrameRateRange());
+    ConfigureOutput(output);
+    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_METADATA) {
+        MEDIA_INFO_LOG("CaptureSession::AddOutput MetadataOutput");
+        const int32_t portraitMode = 3;
+        if (GetMode() == portraitMode) {
+            metaOutput_ = output;
+            return ServiceToCameraError(CAMERA_OK);
+        }
     }
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (captureSession_) {
         errCode = captureSession_->AddOutput(output->GetStreamType(), output->GetStream());
+        MEDIA_INFO_LOG("CaptureSession::AddOutput StreamType = %{public}d", output->GetStreamType());
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to AddOutput!, %{public}d", errCode);
         }
@@ -305,6 +409,17 @@ int32_t CaptureSession::Start()
         }
     } else {
         MEDIA_ERR_LOG("CaptureSession::Start() captureSession_ is nullptr");
+    }
+    if (GetMetaOutput()) {
+        sptr<MetadataOutput> metaOutput = static_cast<MetadataOutput *>(GetMetaOutput().GetRefPtr());
+        if (!metaOutput) {
+            MEDIA_INFO_LOG("CaptureSession::metaOutput is null");
+            return ServiceToCameraError(errCode);
+        }
+        std::vector<MetadataObjectType> metadataObjectTypes = metaOutput->GetSupportedMetadataObjectTypes();
+        MEDIA_INFO_LOG("CaptureSession::Start SetCapturingMetadataObjectTypes objectTypes size = %{public}zu",
+                       metadataObjectTypes.size());
+        metaOutput->SetCapturingMetadataObjectTypes(metadataObjectTypes);
     }
     return ServiceToCameraError(errCode);
 }
@@ -1615,11 +1730,35 @@ std::vector<float> CaptureSession::GetZoomRatioRange()
         MEDIA_ERR_LOG("CaptureSession::GetZoomRatioRange camera device is null");
         return {};
     }
-    return inputDevice_->GetCameraDeviceInfo()->GetZoomRatioRange();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SCENE_ZOOM_CAP, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("CaptureSession::GetZoomRatio Failed with return code %{public}d,item.count = %{public}d",
+                      ret, item.count);
+        return {};
+    }
+    const uint32_t step = 3;
+    int32_t minIndex = 1;
+    int32_t maxIndex = 2;
+    constexpr float factor = 100.0;
+    float minZoom = 0.0;
+    float maxZoom = 0.0;
+    for (uint32_t i = 0; i < item.count; i += step) {
+        MEDIA_INFO_LOG("Scene zoom cap mode: %{public}d, min: %{public}d, max: %{public}d",
+                       item.data.i32[i], item.data.i32[i + minIndex], item.data.i32[i + maxIndex]);
+        if (GetMode() == item.data.i32[i]) {
+            minZoom = item.data.i32[i + minIndex] / factor;
+            maxZoom = item.data.i32[i + maxIndex] / factor;
+            break;
+        }
+    }
+    return {minZoom, maxZoom};
 }
 
 int32_t CaptureSession::GetZoomRatioRange(std::vector<float> &zoomRatioRange)
 {
+    MEDIA_INFO_LOG("CaptureSession::GetZoomRatioRange is Called");
     zoomRatioRange.clear();
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetZoomRatioRange Session is not Commited");
@@ -1629,7 +1768,31 @@ int32_t CaptureSession::GetZoomRatioRange(std::vector<float> &zoomRatioRange)
         MEDIA_ERR_LOG("CaptureSession::GetZoomRatioRange camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    zoomRatioRange = inputDevice_->GetCameraDeviceInfo()->GetZoomRatioRange();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SCENE_ZOOM_CAP, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("CaptureSession::GetZoomRatio Failed with return code %{public}d,item.count = %{public}d",
+                      ret, item.count);
+        return 0;
+    }
+    const uint32_t step = 3;
+    int32_t minIndex = 1;
+    int32_t maxIndex = 2;
+    constexpr float factor = 100.0;
+    float minZoom = 0.0;
+    float maxZoom = 0.0;
+    for (uint32_t i = 0; i < item.count; i += step) {
+        MEDIA_INFO_LOG("Scene zoom cap mode: %{public}d, min: %{public}d, max: %{public}d",
+                       item.data.i32[i], item.data.i32[i + minIndex], item.data.i32[i + maxIndex]);
+        if (GetMode() == item.data.i32[i]) {
+            minZoom = item.data.i32[i + minIndex] / factor;
+            maxZoom = item.data.i32[i + maxIndex] / factor;
+            break;
+        }
+    }
+    std::vector<float> range = {minZoom, maxZoom};
+    zoomRatioRange = range;
     return CameraErrorCode::SUCCESS;
 }
 
@@ -1694,11 +1857,7 @@ int32_t CaptureSession::SetZoomRatio(float zoomRatio)
     int32_t count = 1;
     camera_metadata_item_t item;
     MEDIA_DEBUG_LOG("CaptureSession::SetZoomRatio Zoom ratio: %{public}f", zoomRatio);
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
-        MEDIA_ERR_LOG("CaptureSession::SetZoomRatio camera device is null");
-        return CameraErrorCode::SUCCESS;
-    }
-    std::vector<float> zoomRange = inputDevice_->GetCameraDeviceInfo()->GetZoomRatioRange();
+    std::vector<float> zoomRange = GetZoomRatioRange();
     if (zoomRange.empty()) {
         MEDIA_ERR_LOG("CaptureSession::SetZoomRatio Zoom range is empty");
         return CameraErrorCode::SUCCESS;
@@ -1733,66 +1892,422 @@ int32_t CaptureSession::SetZoomRatio(float zoomRatio)
 
 void CaptureSession::SetCaptureMetadataObjectTypes(std::set<camera_face_detect_mode_t> metadataObjectTypes)
 {
+    MEDIA_INFO_LOG("CaptureSession SetCaptureMetadataObjectTypes Enter");
     if (inputDevice_ == nullptr) {
         MEDIA_ERR_LOG("SetCaptureMetadataObjectTypes: inputDevice is null");
         return;
     }
-    uint32_t count = 0;
-    uint8_t objectTypes[metadataObjectTypes.size()];
-    for (const auto &type : metadataObjectTypes) {
-        objectTypes[count++] = type;
+    uint32_t count = 1;
+    uint8_t objectType = OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE;
+    if (!metadataObjectTypes.count(OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE)) {
+        objectType = OHOS_CAMERA_FACE_DETECT_MODE_OFF;
+        MEDIA_ERR_LOG("CaptureSession SetCaptureMetadataObjectTypes Can not set face detect mode!");
     }
     this->LockForControl();
-    if (!this->changedMetadata_->addEntry(OHOS_STATISTICS_FACE_DETECT_SWITCH, objectTypes, count)) {
-        MEDIA_ERR_LOG("SetCaptureMetadataObjectTypes: Failed to add detect object types to changed metadata");
+    if (!this->changedMetadata_->addEntry(OHOS_STATISTICS_FACE_DETECT_SWITCH, &objectType, count)) {
+        MEDIA_ERR_LOG("lvxq SetCaptureMetadataObjectTypes: Failed to add detect object types to changed metadata");
     }
     this->UnlockForControl();
 }
 
-std::vector<FilterType> CaptureSession::getSupportedFilters()
+void CaptureSession::SetMode(int32_t modeName)
 {
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("CaptureSession::getSupportedFilters Session is not Commited");
-        return {};
-    }
+    modeName_ = modeName;
+    MEDIA_INFO_LOG("CaptureSession SetMode modeName = %{public}d", modeName);
+}
+
+int32_t CaptureSession::GetMode()
+{
+    MEDIA_INFO_LOG("CaptureSession GetMode modeName = %{public}d", modeName_);
+    return modeName_;
+}
+
+int32_t CaptureSession::VerifyAbility(uint32_t ability)
+{
+    int32_t portraitMode = 3;
+    if (GetMode() != portraitMode) {
+        MEDIA_ERR_LOG("CaptureSession::VerifyAbility need PortraitMode");
+        return CAMERA_INVALID_ARG;
+    };
     if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
-        MEDIA_ERR_LOG("CaptureSession::getSupportedFilters camera device is null");
-        return {};
+        MEDIA_ERR_LOG("CaptureSession::VerifyAbility camera device is null");
+        return CAMERA_INVALID_ARG;
     }
-    std::vector<FilterType> supportedFilters;
+
+    std::vector<Profile> photoProfiles = inputDevice_->GetCameraDeviceInfo()->modePhotoProfiles_[portraitMode];
+    std::vector<Profile> previewProfiles = inputDevice_->GetCameraDeviceInfo()->modePreviewProfiles_[portraitMode];
+    for (auto i : photoProfiles) {
+        std::string abilityIds = "";
+        for (auto id : i.GetAbilityId()) {
+            abilityIds += std::to_string(id) + ",";
+        }
+        MEDIA_INFO_LOG("photoProfiles f(%{public}d), w(%{public}d), h(%{public}d), ability:(%{public}s)",
+                       i.GetCameraFormat(), i.GetSize().width, i.GetSize().height, abilityIds.c_str());
+        if (i.GetCameraFormat() == photoProfile_.GetCameraFormat() &&
+            i.GetSize().width == photoProfile_.GetSize().width &&
+            i.GetSize().height == photoProfile_.GetSize().height) {
+                if (i.GetAbilityId().empty()) {
+                    MEDIA_INFO_LOG("VerifyAbility::CreatePhotoOutput:: this size'abilityId is not exist");
+                }
+                photoProfile_.abilityId_ = i.GetAbilityId();
+                break;
+            }
+    }
+    for (auto i : previewProfiles) {
+        std::string abilityIds = "";
+        for (auto id : i.GetAbilityId()) {
+            abilityIds += std::to_string(id) + ",";
+        }
+        MEDIA_INFO_LOG("previewProfiles f(%{public}d), w(%{public}d), h(%{public}d), ability:(%{public}s)",
+                       i.GetCameraFormat(), i.GetSize().width, i.GetSize().height, abilityIds.c_str());
+        if (i.GetCameraFormat() == previewProfile_.GetCameraFormat() &&
+            i.GetSize().width == previewProfile_.GetSize().width &&
+            i.GetSize().height == previewProfile_.GetSize().height) {
+                if (i.GetAbilityId().empty()) {
+                    MEDIA_INFO_LOG("VerifyAbility::CreatePreviewOutput:: this size'abilityId is not exist");
+                }
+                previewProfile_.abilityId_ = i.GetAbilityId();
+                break;
+            }
+    }
+    std::vector<uint32_t> photoAbilityId = previewProfile_.GetAbilityId();
+    std::vector<uint32_t> previewAbilityId = previewProfile_.GetAbilityId();
+
+    auto itrPhoto = std::find(photoAbilityId.begin(), photoAbilityId.end(), ability);
+    auto itrPreview = std::find(previewAbilityId.begin(), previewAbilityId.end(), ability);
+    if (itrPhoto == photoAbilityId.end() || itrPreview == previewAbilityId.end()) {
+        MEDIA_ERR_LOG("CaptureSession::VerifyAbility abilityId is NULL");
+        return CAMERA_INVALID_ARG;
+    }
+    return CAMERA_OK;
+}
+
+std::vector<FilterType> CaptureSession::GetSupportedFilters()
+{
+    std::vector<FilterType> supportedFilters = {};
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedFilters Session is not Commited");
+        return supportedFilters;
+    }
+
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedFilters camera device is null");
+        return supportedFilters;
+    }
+
+    int ret = VerifyAbility(static_cast<uint32_t>(OHOS_ABILITY_SCENE_FILTER_TYPES));
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedFilters abilityId is NULL");
+        return supportedFilters;
+    }
+
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+    ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SCENE_FILTER_TYPES, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedFilters Failed with return code %{public}d", ret);
+        return supportedFilters;
+    }
+    for (uint32_t i = 0; i < item.count; i++) {
+        auto itr = metaToFwFilterType_.find(static_cast<camera_filter_type_t>(item.data.u8[i]));
+        if (itr != metaToFwFilterType_.end()) {
+            supportedFilters.emplace_back(itr->second);
+        }
+    }
     return supportedFilters;
 }
 
-FilterType CaptureSession::getFilter()
+FilterType CaptureSession::GetFilter()
 {
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::GetFilter Session is not Commited");
+        return FilterType::NONE;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetFilter camera device is null");
+        return FilterType::NONE;
+    }
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FILTER_TYPE, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("CaptureSession::GetFilter Failed with return code %{public}d", ret);
+        return FilterType::NONE;
+    }
+    auto itr = metaToFwFilterType_.find(static_cast<camera_filter_type_t>(item.data.u8[0]));
+    if (itr != metaToFwFilterType_.end()) {
+        return itr->second;
+    }
     return FilterType::NONE;
 }
 
-void CaptureSession::setFilter(FilterType filter)
+void CaptureSession::SetFilter(FilterType filterType)
 {
+    CAMERA_SYNC_TRACE;
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::SetFilter Session is not Commited");
+        return;
+    }
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::SetFilter Need to call LockForControl() before setting camera properties");
+        return;
+    }
+
+    std::vector<FilterType> supportedFilters = GetSupportedFilters();
+    auto itr = std::find(supportedFilters.begin(), supportedFilters.end(), filterType);
+    if (itr == supportedFilters.end()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedFilters abilityId is NULL");
+        return;
+    }
+    uint8_t filter = 0;
+    for (auto itr2 = fwToMetaFilterType_.cbegin(); itr2 != fwToMetaFilterType_.cend(); itr2++) {
+        if (filterType == itr2->first) {
+            filter = static_cast<uint8_t>(itr2->second);
+            break;
+        }
+    }
+    bool status = false;
+    int32_t ret;
+    uint32_t count = 1;
+    camera_metadata_item_t item;
+
+    MEDIA_DEBUG_LOG("CaptureSession::setFilter: %{public}d", filterType);
+
+    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_FILTER_TYPE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_FILTER_TYPE, &filter, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_FILTER_TYPE, &filter, count);
+    }
+
+    if (!status) {
+        MEDIA_ERR_LOG("CaptureSession::setFilter Failed to set filter");
+    }
     return;
 }
 
-std::vector<BeautyType> CaptureSession::getSupportedBeautyTypes()
+std::vector<BeautyType> CaptureSession::GetSupportedBeautyTypes()
 {
-    std::vector<BeautyType> supportedBeautyTypes;
+    std::vector<BeautyType> supportedBeautyTypes = {};
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedBeautyTypes Session is not Commited");
+        return supportedBeautyTypes;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedBeautyTypes camera device is null");
+        return supportedBeautyTypes;
+    }
+
+    int ret = VerifyAbility(static_cast<uint32_t>(OHOS_ABILITY_SCENE_BEAUTY_TYPES));
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedBeautyTypes abilityId is NULL");
+        return supportedBeautyTypes;
+    }
+
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+    ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SCENE_BEAUTY_TYPES, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedBeautyTypes Failed with return code %{public}d", ret);
+        return supportedBeautyTypes;
+    }
+    for (uint32_t i = 0; i < item.count; i++) {
+        auto itr = metaToFwBeautyType_.find(static_cast<camera_beauty_type_t>(item.data.u8[i]));
+        if (itr != metaToFwBeautyType_.end()) {
+            supportedBeautyTypes.emplace_back(itr->second);
+        }
+    }
     return supportedBeautyTypes;
 }
 
-std::vector<int32_t> CaptureSession::getSupportedBeautyRange(BeautyType type)
+std::vector<int32_t> CaptureSession::GetSupportedBeautyRange(BeautyType beautyType)
 {
+    int ret  = 0;
     std::vector<int32_t> supportedBeautyRange;
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedBeautyRange Session is not Commited");
+        return supportedBeautyRange;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedBeautyRange camera device is null");
+        return supportedBeautyRange;
+    }
+
+    std::vector<BeautyType> supportedBeautyTypes = GetSupportedBeautyTypes();
+    if (std::find(supportedBeautyTypes.begin(), supportedBeautyTypes.end(), beautyType) == supportedBeautyTypes.end()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedBeautyRange beautyType is NULL");
+        return supportedBeautyRange;
+    }
+
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+
+    MEDIA_ERR_LOG("CaptureSession::GetSupportedBeautyRange: %{public}d", beautyType);
+
+    int32_t beautyTypeAbility;
+    auto itr = fwToMetaBeautyAbility_.find(beautyType);
+    if (itr == fwToMetaBeautyAbility_.end()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedBeautyRange Unknown beauty Type");
+        return supportedBeautyRange;
+    } else {
+        beautyTypeAbility = itr->second;
+        Camera::FindCameraMetadataItem(metadata->get(), beautyTypeAbility, &item);
+    }
+
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedBeautyRange Failed with return code %{public}d", ret);
+        return supportedBeautyRange;
+    }
+    int32_t skinToneOff = -1;
+    if (beautyType == SKIN_TONE) {
+        supportedBeautyRange.push_back(skinToneOff);
+    }
+    for (uint32_t i = 0; i < item.count; i++) {
+        if (beautyTypeAbility == OHOS_ABILITY_BEAUTY_SKIN_TONE_VALUES) {
+            supportedBeautyRange.emplace_back(item.data.i32[i]);
+        } else {
+            supportedBeautyRange.emplace_back(item.data.u8[i]);
+        }
+    }
+    beautyTypeAndRanges_[beautyType] = supportedBeautyRange;
     return supportedBeautyRange;
 }
 
-void CaptureSession::setBeauty(BeautyType type, int value)
+bool CaptureSession::SetBeautyValue(BeautyType beautyType, int32_t beautyLevel)
 {
+    bool status = false;
+    int32_t ret;
+    uint32_t count = 1;
+    camera_metadata_item_t item;
+    camera_device_metadata_tag_t metadata;
+
+    for (auto metaItr = fwToMetaBeautyControl_.cbegin(); metaItr != fwToMetaBeautyControl_.cend(); metaItr++) {
+        if (beautyType  == metaItr->first) {
+            metadata = metaItr->second;
+            break;
+        }
+    }
+
+    std::vector<int32_t> levelVec = {};
+    if (beautyTypeAndRanges_.count(beautyType)) {
+        levelVec = beautyTypeAndRanges_[beautyType];
+    } else {
+        levelVec = GetSupportedBeautyRange(beautyType);
+    }
+
+    auto itrType = std::find(levelVec.cbegin(), levelVec.cend(), beautyLevel);
+    if (itrType == levelVec.end()) {
+        MEDIA_ERR_LOG("CaptureSession::SetBeautyValue: %{public}d not in beautyRanges", beautyLevel);
+        return status;
+    }
+    if (beautyType == BeautyType::SKIN_TONE) {
+        int32_t skinToneVal = beautyLevel;
+        ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), metadata, &item);
+        if (ret == CAM_META_ITEM_NOT_FOUND) {
+            status = changedMetadata_->addEntry(metadata, &skinToneVal, count);
+        } else if (ret == CAM_META_SUCCESS) {
+            status = changedMetadata_->updateEntry(metadata, &skinToneVal, count);
+        }
+    } else {
+        uint8_t beautyVal = static_cast<uint8_t>(beautyLevel);
+        ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), metadata, &item);
+        if (ret == CAM_META_ITEM_NOT_FOUND) {
+            status = changedMetadata_->addEntry(metadata, &beautyVal, count);
+        } else if (ret == CAM_META_SUCCESS) {
+            status = changedMetadata_->updateEntry(metadata, &beautyVal, count);
+        }
+    }
+    if (!status) {
+        MEDIA_ERR_LOG("CaptureSession::SetBeautyValue Failed to set beauty");
+        return status;
+    }
+    beautyTypeAndLevels_[beautyType] = beautyLevel;
+    return status;
+}
+
+void CaptureSession::SetBeauty(BeautyType beautyType, int value)
+{
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::SetBeauty Session is not Commited");
+        return;
+    }
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::SetBeauty changedMetadata_ is NULL");
+        return;
+    }
+
+    std::vector<BeautyType> supportedBeautyTypes = GetSupportedBeautyTypes();
+    auto itr = std::find(supportedBeautyTypes.begin(), supportedBeautyTypes.end(), beautyType);
+    if (itr == supportedBeautyTypes.end()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedBeautyTypes abilityId is NULL");
+        return;
+    }
+    MEDIA_ERR_LOG("SetBeauty beautyType %{public}d", beautyType);
+    bool status = false;
+    int32_t ret;
+    uint32_t count = 1;
+    camera_metadata_item_t item;
+    uint8_t beauty = OHOS_CAMERA_BEAUTY_TYPE_OFF;
+    if ((beautyType == AUTO_TYPE) && (value == 0)) {
+        ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_BEAUTY_TYPE, &item);
+        if (ret == CAM_META_ITEM_NOT_FOUND) {
+            status = changedMetadata_->addEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, count);
+        } else if (ret == CAM_META_SUCCESS) {
+            status = changedMetadata_->updateEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, count);
+        }
+        MEDIA_INFO_LOG("CaptureSession::SetBeauty Failed, beautyType is AUTO and level is zero");
+        return;
+    }
+
+    for (auto itrType = fwToMetaBeautyType_.cbegin(); itrType != fwToMetaBeautyType_.cend(); itrType++) {
+        if (beautyType == itrType->first) {
+            beauty = static_cast<uint8_t>(itrType->second);
+            break;
+        }
+    }
+
+    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_BEAUTY_TYPE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, count);
+    }
+    if (!status) {
+        MEDIA_ERR_LOG("CaptureSession::SetBeauty Failed to set beautyType control");
+    }
+
+    status = SetBeautyValue(beautyType, value);
+    if (!status) {
+        MEDIA_ERR_LOG("CaptureSession::SetBeauty Failed to set beauty value");
+    }
     return;
 }
 
-int32_t CaptureSession::getBeauty(BeautyType type)
+int32_t CaptureSession::GetBeauty(BeautyType beautyType)
 {
-    return 0;
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::GetBeauty Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetBeauty camera device is null");
+        return -1;
+    }
+    int32_t beautyLevel = 0;
+    std::vector<BeautyType> supportedBeautyTypes = GetSupportedBeautyTypes();
+    auto itr = std::find(supportedBeautyTypes.begin(), supportedBeautyTypes.end(), beautyType);
+    if (itr == supportedBeautyTypes.end()) {
+        MEDIA_ERR_LOG("CaptureSession::GetBeauty beautyType is NULL");
+        return -1;
+    }
+
+    for (auto itrLevel = beautyTypeAndLevels_.cbegin(); itrLevel != beautyTypeAndLevels_.cend(); itrLevel++) {
+        if (beautyType == itrLevel->first) {
+            beautyLevel = itrLevel->second;
+            break;
+        }
+    }
+    return beautyLevel;
 }
 
 void CaptureSession::SetFrameRateRange(const std::vector<int32_t>& frameRateRange)

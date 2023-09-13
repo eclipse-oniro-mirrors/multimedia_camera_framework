@@ -36,9 +36,9 @@ using ::testing::Mock;
 using ::testing::Return;
 using ::testing::_;
 
-bool mockFlagWithoutAbt = false;
-bool getCameraAbilityerror = false;
-bool openCameraDevicerror = false;
+bool g_mockFlagWithoutAbt = false;
+bool g_getCameraAbilityerror = false;
+bool g_openCameraDevicerror = false;
 
 namespace OHOS {
 namespace CameraStandard {
@@ -189,11 +189,11 @@ public:
             ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, streams,
                               sizeof(streams) / sizeof(streams[0]));
 
-            if (mockFlagWithoutAbt) {
+            if (g_mockFlagWithoutAbt) {
                 return CAMERA_OK;
             }
-            if (getCameraAbilityerror) {
-                getCameraAbilityerror = false;
+            if (g_getCameraAbilityerror) {
+                g_getCameraAbilityerror = false;
                 return CAMERA_ALLOC_ERROR;
             }
 
@@ -453,7 +453,7 @@ void CameraFrameworkUnitTest::SetUp()
     SetSelfTokenID(tokenId);
     OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 
-    mockFlagWithoutAbt = false;
+    g_mockFlagWithoutAbt = false;
     mockCameraHostManager = new MockHCameraHostManager(nullptr);
     mockCameraDevice = mockCameraHostManager->cameraDevice;
     mockStreamOperator = mockCameraDevice->streamOperator;
@@ -2029,8 +2029,9 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_003, TestSize.Level
     sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     sptr<StreamOperatorCallback> streamOperatorCb = nullptr;
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    CameraMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
-                                                                         streamOperatorCb, callerToken);
+                                                                         streamOperatorCb, callerToken, mode);
     ASSERT_NE(camSession, nullptr);
 
     sptr<ICameraDeviceService> cameraDevice = camInput->GetCameraDevice();
@@ -2303,7 +2304,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_007, TestSize.Level
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_008, TestSize.Level0)
 {
-    mockFlagWithoutAbt = true;
+    g_mockFlagWithoutAbt = true;
     InSequence s;
     EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
@@ -2372,7 +2373,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_008, TestSize.Level
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_009, TestSize.Level0)
 {
-    mockFlagWithoutAbt = true;
+    g_mockFlagWithoutAbt = true;
     InSequence s;
     EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
@@ -2447,7 +2448,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_009, TestSize.Level
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_010, TestSize.Level0)
 {
-    mockFlagWithoutAbt = true;
+    g_mockFlagWithoutAbt = true;
     InSequence s;
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
 
@@ -2494,7 +2495,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_010, TestSize.Level
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_011, TestSize.Level0)
 {
-    mockFlagWithoutAbt = true;
+    g_mockFlagWithoutAbt = true;
     InSequence s;
     EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
@@ -2558,7 +2559,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_011, TestSize.Level
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_012, TestSize.Level0)
 {
-    mockFlagWithoutAbt = true;
+    g_mockFlagWithoutAbt = true;
     int32_t format = CAMERA_FORMAT_YUV_420_SP;
     int32_t width = PHOTO_DEFAULT_WIDTH;
     int32_t height = PHOTO_DEFAULT_HEIGHT;
@@ -2651,8 +2652,9 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_013, TestSize.Level
     sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     sptr<StreamOperatorCallback> streamOperatorCb = nullptr;
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    CameraMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
-                                                                         streamOperatorCb, callerToken);
+                                                                         streamOperatorCb, callerToken, mode);
     ASSERT_NE(camSession, nullptr);
 
     std::string permissionName = "permissionName";
@@ -2716,8 +2718,9 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_014, TestSize.Level
     sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     sptr<StreamOperatorCallback> streamOperatorCb = new StreamOperatorCallback();
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    CameraMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
-                                                                         streamOperatorCb, callerToken);
+                                                                         streamOperatorCb, callerToken, mode);
     ASSERT_NE(camSession, nullptr);
 
     camSession->BeginConfig();
@@ -2785,8 +2788,9 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_015, TestSize.Level
     sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     sptr<StreamOperatorCallback> streamOperatorCb = new StreamOperatorCallback();
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    CameraMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
-                                                                         streamOperatorCb, callerToken);
+                                                                         streamOperatorCb, callerToken, mode);
     ASSERT_NE(camSession, nullptr);
 
     camSession->BeginConfig();
@@ -2854,8 +2858,9 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_016, TestSize.Level
     sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     sptr<StreamOperatorCallback> streamOperatorCb = new StreamOperatorCallback();;
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    CameraMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
-                                                                         streamOperatorCb, callerToken);
+                                                                         streamOperatorCb, callerToken, mode);
 
     EXPECT_EQ(camSession->CommitConfig(), CAMERA_INVALID_STATE);
     camSession->BeginConfig();
@@ -2924,9 +2929,11 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_017, TestSize.Level
     sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     sptr<StreamOperatorCallback> streamOperatorCb = nullptr;
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    CameraMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
-                                                                         streamOperatorCb, callerToken);
-    sptr<HCaptureSession> camSession1 = new(std::nothrow) HCaptureSession(cameraHostManager, streamOperatorCb, 12);
+                                                                         streamOperatorCb, callerToken, mode);
+    sptr<HCaptureSession> camSession1 = new(std::nothrow) HCaptureSession(cameraHostManager,
+                                                                          streamOperatorCb, 12, mode);
     ASSERT_NE(camSession, nullptr);
     EXPECT_EQ(camSession->Start(), CAMERA_INVALID_STATE);
     EXPECT_EQ(camSession1->Start(), CAMERA_OPERATION_NOT_ALLOWED);
@@ -3603,9 +3610,9 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_030, TestSize.Level
     int32_t ret = camDevice->OpenDevice();
     EXPECT_EQ(ret, 0);
     camDevice->Open();
-    getCameraAbilityerror = true;
+    g_getCameraAbilityerror = true;
     camDevice->GetSettings();
-    openCameraDevicerror = true;
+    g_openCameraDevicerror = true;
     EXPECT_EQ(camDevice->OpenDevice(), 0);
 }
 

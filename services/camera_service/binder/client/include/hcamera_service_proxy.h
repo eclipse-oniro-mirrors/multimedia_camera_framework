@@ -37,7 +37,7 @@ public:
     int32_t GetCameras(std::vector<std::string> &cameraIds,
         std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> &cameraAbilityList) override;
 
-    int32_t CreateCaptureSession(sptr<ICaptureSession>& session) override;
+    int32_t CreateCaptureSession(sptr<ICaptureSession>& session, int32_t operationMode = 0) override;
 
     int32_t CreatePhotoOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
                               int32_t width, int32_t height, sptr<IStreamCapture> &photoOutput) override;

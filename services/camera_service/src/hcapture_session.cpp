@@ -66,7 +66,7 @@ static std::string GetClientBundle(int uid)
 }
 
 HCaptureSession::HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
-    sptr<StreamOperatorCallback> streamOperatorCb, const uint32_t callingTokenId)
+    sptr<StreamOperatorCallback> streamOperatorCb, const uint32_t callingTokenId, int32_t opMode)
     : cameraHostManager_(cameraHostManager), streamOperatorCallback_(streamOperatorCb),
     sessionCallback_(nullptr), deviceOperatorsCallback_(nullptr)
 {
@@ -97,6 +97,8 @@ HCaptureSession::HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
     std::lock_guard<std::mutex> lock(sessionLock_);
     session_[pid_] = this;
     callerToken_ = callingTokenId;
+    opMode_ = opMode;
+    SetOpMode(opMode_);
     MEDIA_DEBUG_LOG("HCaptureSession: camera stub services(%{public}zu).", session_.size());
 }
 
@@ -392,13 +394,13 @@ int32_t HCaptureSession::CreateAndCommitStreams(sptr<HCameraDevice> &device,
 {
     CamRetCode hdiRc = HDI::Camera::V1_0::NO_ERROR;
     StreamInfo_V1_1 curStreamInfo;
+    uint32_t major;
+    uint32_t minor;
     sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator;
     if (device != nullptr) {
         streamOperator = device->GetStreamOperator();
     }
     if (streamOperator != nullptr && !streamInfos.empty()) {
-        uint32_t major;
-        uint32_t minor;
         streamOperator->GetVersion(major, minor);
         MEDIA_INFO_LOG("streamOperator GetVersion major:%d, minor:%d", major, minor);
         if (major == 1 && minor == 1) {
@@ -416,7 +418,14 @@ int32_t HCaptureSession::CreateAndCommitStreams(sptr<HCameraDevice> &device,
     if (streamOperator != nullptr && hdiRc == HDI::Camera::V1_0::NO_ERROR) {
         std::vector<uint8_t> setting;
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(deviceSettings, setting);
-        hdiRc = (CamRetCode)(streamOperator->CommitStreams(NORMAL, setting));
+        MEDIA_INFO_LOG("HCaptureSession::CommitStreams, commit mode %{public}d", opMode_);
+        if (major == 1 && minor == 1) {
+            hdiRc = (CamRetCode)(streamOperator->CommitStreams_V1_1(
+                static_cast<OHOS::HDI::Camera::V1_1::OperationMode_V1_1> (opMode_), setting));
+        } else {
+            OperationMode  opMode = static_cast<OperationMode> (opMode_);
+            hdiRc = (CamRetCode)(streamOperator->CommitStreams(opMode, setting));
+        }
         if (hdiRc != HDI::Camera::V1_0::NO_ERROR) {
             MEDIA_ERR_LOG("HCaptureSession::CreateAndCommitStreams(), Failed to commit %{public}d", hdiRc);
             std::vector<int32_t> streamIds;
@@ -424,8 +433,6 @@ int32_t HCaptureSession::CreateAndCommitStreams(sptr<HCameraDevice> &device,
                 curStreamInfo = *item;
                 streamIds.emplace_back(curStreamInfo.v1_0.streamId_);
             }
-            MEDIA_DEBUG_LOG("HCaptureSession::CreateAndCommitStreams() streamIds size() = %{public}zu",
-                            streamIds.size());
             for (size_t i = 0; i < streamIds.size(); i++) {
                 MEDIA_DEBUG_LOG("HCaptureSession::CreateAndCommitStreams() streamIds[%{public}zu] = %{public}d",
                                 i, streamIds.at(i));

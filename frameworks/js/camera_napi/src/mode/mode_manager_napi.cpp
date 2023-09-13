@@ -154,6 +154,12 @@ napi_value ModeManagerNapi::CreateCameraSessionInstance(napi_env env, napi_callb
 
     int32_t modeName;
     napi_get_value_int32(env, argv[PARAM0], &modeName);
+    MEDIA_INFO_LOG("ModeManagerNapi::CreateCameraSessionInstance mode = %{public}d", modeName);
+    if (modeName == 1) { // trans js portrait to fwk portrait
+        modeName = CameraMode::PORTRAIT;
+    } else {
+        modeName = CameraMode::NORMAL;
+    }
     switch (modeName) {
         case CameraMode::PORTRAIT:
             result = PortraitSessionNapi::CreateCameraSession(env, info);
@@ -176,7 +182,6 @@ static napi_value CreateJSArray(napi_env env, napi_status status,
 
     if (nativeArray.empty()) {
         MEDIA_ERR_LOG("nativeArray is empty");
-        return jsArray;
     }
 
     status = napi_create_array(env, &jsArray);
@@ -215,7 +220,14 @@ napi_value ModeManagerNapi::GetSupportedModes(napi_env env, napi_callback_info i
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&modeManagerNapi));
     if (status == napi_ok && modeManagerNapi != nullptr) {
         std::vector<CameraMode> modeObjList = modeManagerNapi->modeManager_->GetSupportedModes(cameraInfo);
-        jsResult = CreateJSArray(env, status, modeObjList);
+        std::vector<CameraMode> modeObjListJs = {};
+        if (std::find(modeObjList.begin(), modeObjList.end(), CameraMode::PORTRAIT) != modeObjList.end()) {
+            CameraMode modeJs = CameraMode::CAPTURE;
+            modeObjListJs.push_back(modeJs);
+            MEDIA_INFO_LOG("ModeManagerNapi::GetSupportedModes mode=[%{public}d]", modeJs);
+        }
+        MEDIA_INFO_LOG("ModeManagerNapi::GetSupportedModes size=[%{public}zu]", modeObjListJs.size());
+        jsResult = CreateJSArray(env, status, modeObjListJs);
         if (status == napi_ok) {
             return jsResult;
         } else {
@@ -255,6 +267,12 @@ napi_value ModeManagerNapi::GetSupportedOutputCapability(napi_env env, napi_call
     sptr<CameraDevice> cameraInfo = cameraDeviceNapi->cameraDevice_;
     int32_t cameraMode;
     napi_get_value_int32(env, argv[PARAM1], &cameraMode);
+    MEDIA_INFO_LOG("ModeManagerNapi::GetSupportedOutputCapability mode = %{public}d", cameraMode);
+    if (cameraMode == 1) { // trans js portrait to fwk portrait
+        cameraMode = CameraMode::PORTRAIT;
+    } else {
+        cameraMode = CameraMode::NORMAL;
+    }
     result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo,
         static_cast<CameraMode>(cameraMode));
     return result;

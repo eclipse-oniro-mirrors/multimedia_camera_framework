@@ -73,7 +73,6 @@ static napi_value CreateMetadataObjJSArray(napi_env env,
 
     if (metadataObjList.empty()) {
         MEDIA_ERR_LOG("CreateMetadataObjJSArray: metadataObjList is empty");
-        return metadataObjArray;
     }
 
     status = napi_create_array(env, &metadataObjArray);
@@ -82,14 +81,15 @@ static napi_value CreateMetadataObjJSArray(napi_env env,
         return metadataObjArray;
     }
 
+    size_t j = 0;
     for (size_t i = 0; i < metadataObjList.size(); i++) {
-        size_t j = 0;
         metadataObj = MetadataObjectNapi::CreateMetaFaceObj(env, metadataObjList[i]);
         if ((metadataObj == nullptr) || napi_set_element(env, metadataObjArray, j++, metadataObj) != napi_ok) {
             MEDIA_ERR_LOG("CreateMetadataObjJSArray: Failed to create metadata face object napi wrapper object");
             return nullptr;
         }
     }
+    MEDIA_INFO_LOG("CreateMetadataObjJSArray: count = %{public}zu", j);
     return metadataObjArray;
 }
 
@@ -106,6 +106,7 @@ void MetadataOutputCallback::OnMetadataObjectsAvailableCallback(
         napi_get_undefined(env, &result[PARAM0]);
         napi_get_undefined(env, &result[PARAM1]);
         result[PARAM1] = CreateMetadataObjJSArray(env, metadataObjList);
+        MEDIA_INFO_LOG("OnMetadataObjectsAvailableCallback metadataObjList size = %{public}zu", metadataObjList.size());
         if (result[PARAM1] == nullptr) {
             MEDIA_ERR_LOG("invoke CreateMetadataObjJSArray failed");
             return;
@@ -414,7 +415,7 @@ bool MetadataOutputNapi::IsMetadataOutput(napi_env env, napi_value obj)
             result = false;
         }
     }
-    MEDIA_ERR_LOG("IsMetadataOutput call Failed!");
+    MEDIA_INFO_LOG("IsMetadataOutput(%{public}d)", result);
     return result;
 }
 

@@ -96,12 +96,54 @@ declare namespace camera {
    */
   enum CameraMode {
     /**
+    * normal mode.
+    *
+    * @syscap SystemCapability.Multimedia.Camera.Core
+    * @since 10
+    */
+    NORMAL = 0,
+    /**
+     * capture mode.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    CAPTURE = 1,
+    /**
+     * video mode.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    VIDEO = 2,
+    /**
      * portrait mode.
      *
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 10
      */
-    PORTRAIT = 1,
+    PORTRAIT = 3,
+    /**
+     * night mode.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    NIGHT = 4,
+    /**
+     * pro mode.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    PROFESSIONAL = 5,
+    /**
+     * slow motion mode.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    SLOW_MOTION = 6,
   }
   /**
    * Enum for filter type.
@@ -111,15 +153,86 @@ declare namespace camera {
    * @since 10
    */
   enum FilterType {
+    /**
+     * Filter disabled. No filter effect is provided.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 10
+     */
     NONE = 0,
+
+    /**
+     * Classic filter effect.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 10
+     */
     CLASSIC = 1,
+
+    /**
+     * Dawn filter effect.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 10
+     */
     DAWN = 2,
+
+    /**
+     * Pure filter effect.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 10
+     */
     PURE = 3,
+
+    /**
+     * Grey filter effect.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 10
+     */
     GREY = 4,
+
+    /**
+     * Natural filter effect.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 10
+     */
     NATURAL = 5,
+
+    /**
+     * Mori filter effect.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 10
+     */
     MORI = 6,
+
+    /**
+     * Fair filter effect.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 10
+     */
     FAIR = 7,
-    PINK = 8,
+
+    /**
+     * Pink filter effect.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 10
+     */
+    PINK = 8
   }
   /**
    * Enum for portrait effect.
@@ -129,8 +242,23 @@ declare namespace camera {
    * @since 10
    */
   enum PortraitEffect {
-    OFF_EFFECT = 0,
-    CIRCLES = 1,
+    /**
+     * portrait effect off.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 10
+     */
+    OFF = 0,
+
+    /**
+     * circular blurring for portrait.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 10
+     */
+    CIRCLES = 1
   }
   /**
    * Enum for beauty type.
@@ -140,10 +268,41 @@ declare namespace camera {
    * @since 10
    */
   enum BeautyType {
-    AUTO_TYPE = 0,
+    /**
+     * Auto beauty type.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 10
+     */
+    AUTO = 0,
+
+    /**
+     * Skin smooth beauty type.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 10
+     */
     SKIN_SMOOTH = 1,
+
+    /**
+     * Face slender beauty type.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 10
+     */
     FACE_SLENDER = 2,
-    SKIN_TONE = 3,
+
+    /**
+     * Skin tone beauty type.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 10
+     */
+    SKIN_TONE = 3
   }
   /**
    * Profile for camera streams.

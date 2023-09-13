@@ -143,6 +143,34 @@ static const std::unordered_map<std::string, int32_t> mapExposureState = {
     {"EXPOSURE_STATE_CONVERGED", 1},
 };
 
+static const std::unordered_map<std::string, int32_t> mapCameraMode = {
+    {"PORTRAIT", 1},
+};
+
+static const std::unordered_map<std::string, int32_t> mapFilterType = {
+    {"NONE", 0},
+    {"CLASSIC", 1},
+    {"DAWN", 2},
+    {"PURE", 3},
+    {"GREY", 4},
+    {"NATURAL", 5},
+    {"MORI", 6},
+    {"FAIR", 7},
+    {"PINK", 8},
+};
+
+static const std::unordered_map<std::string, int32_t> mapBeautyType = {
+    {"AUTO", 0},
+    {"SKIN_SMOOTH", 1},
+    {"FACE_SLENDER", 2},
+    {"SKIN_TONE", 3},
+};
+
+static const std::unordered_map<std::string, int32_t> mapPortraitEffect = {
+    {"OFF", 0},
+    {"CIRCLES", 1},
+};
+
 static const std::unordered_map<std::string, int32_t> mapCameraErrorCode = {
     {"NO_SYSTEM_APP_PERMISSION", 202},
     {"INVALID_ARGUMENT", 7400101},
@@ -231,6 +259,10 @@ public:
     static napi_value CreateQualityLevelEnum(napi_env env);
     static napi_value CreateVideoStabilizationModeObject(napi_env env);
     static napi_value CreateHostNameType(napi_env env);
+    static napi_value CreateCameraMode(napi_env env);
+    static napi_value CreateFilterType(napi_env env);
+    static napi_value CreateBeautyType(napi_env env);
+    static napi_value CreatePortraitEffect(napi_env env);
 
     static napi_value CreateCameraErrorCode(napi_env env);
     static napi_value CreateCameraInputErrorCode(napi_env env);
@@ -258,6 +290,10 @@ private:
     static thread_local napi_ref qualityLevelRef_;
     static thread_local napi_ref videoStabilizationModeRef_;
     static thread_local napi_ref hostNameTypeRef_;
+    static thread_local napi_ref cameraModeRef_;
+    static thread_local napi_ref filterTypeRef_;
+    static thread_local napi_ref beautyTypeRef_;
+    static thread_local napi_ref portraitEffectRef_;
 
     static thread_local napi_ref errorCameraInputRef_;
     static thread_local napi_ref errorCaptureSessionRef_;

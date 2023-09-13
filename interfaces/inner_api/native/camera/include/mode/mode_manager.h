@@ -40,7 +40,13 @@
 namespace OHOS {
 namespace CameraStandard {
 enum CameraMode {
-    PORTRAIT = 1
+    NORMAL = 0,
+    CAPTURE = 1,
+    VIDEO = 2,
+    PORTRAIT = 3,
+    NIGHT = 4,
+    PROFESSIONAL = 5,
+    SLOW_MOTION = 6,
 };
 
 class ModeManager : public RefBase {
@@ -74,7 +80,8 @@ public:
     * @return Returns vector the ability of the mode of cameraDevice of available camera.
     */
     sptr<CameraOutputCapability> GetSupportedOutputCapability(sptr<CameraDevice>& camera, CameraMode mode);
-
+    void CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
+        uint32_t streamIndex, ExtendInfo extendInfo);
 protected:
     explicit ModeManager(sptr<ICameraService> serviceProxy) : serviceProxy_(serviceProxy) {}
 
@@ -83,6 +90,11 @@ private:
     void Init();
     static sptr<ModeManager> modeManager_;
     sptr<ICameraService> serviceProxy_;
+    static const std::unordered_map<camera_format_t, CameraFormat> metaToFwFormat_;
+    static const std::unordered_map<CameraFormat, camera_format_t> fwToMetaFormat_;
+    std::vector<Profile> photoProfiles_ = {};
+    std::vector<Profile> previewProfiles_ = {};
+    std::vector<VideoProfile> vidProfiles_ = {};
 };
 } // namespace CameraStandard
 } // namespace OHOS

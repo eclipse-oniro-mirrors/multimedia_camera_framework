@@ -377,7 +377,6 @@ static napi_value CreateJSArray(napi_env env, napi_status status,
 
     if (nativeArray.empty()) {
         MEDIA_ERR_LOG("nativeArray is empty");
-        return jsArray;
     }
 
     status = napi_create_array(env, &jsArray);

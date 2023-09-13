@@ -19,9 +19,11 @@
 #include <iostream>
 #include <set>
 #include <vector>
+#include <map>
 #include "camera_error_code.h"
 #include "input/capture_input.h"
 #include "output/capture_output.h"
+#include "output/camera_output_capability.h"
 #include "icamera_util.h"
 #include "icapture_session.h"
 #include "icapture_session_callback.h"
@@ -643,42 +645,49 @@ public:
      *
      * @return Returns the array of filter.
      */
-    std::vector<FilterType> getSupportedFilters();
+    std::vector<FilterType> GetSupportedFilters();
+
+    /**
+     * @brief Verify ability for supported meta.
+     *
+     * @return Returns errorcode.
+     */
+    int32_t VerifyAbility(uint32_t ability);
 
     /**
      * @brief Get the current filter.
      *
      * @return Returns the array of filter.
      */
-    FilterType getFilter();
+    FilterType GetFilter();
 
     /**
      * @brief Set the filter.
      */
-    void setFilter(FilterType filter);
+    void SetFilter(FilterType filter);
 
     /**
      * @brief Get the supported beauty type.
      *
      * @return Returns the array of beautytype.
      */
-    std::vector<BeautyType> getSupportedBeautyTypes();
+    std::vector<BeautyType> GetSupportedBeautyTypes();
 
     /**
      * @brief Get the supported beauty range.
      *
      * @return Returns the array of beauty range.
      */
-    std::vector<int32_t> getSupportedBeautyRange(BeautyType type);
+    std::vector<int32_t> GetSupportedBeautyRange(BeautyType type);
 
     /**
      * @brief Set the beauty.
      */
-    void setBeauty(BeautyType type, int value);
+    void SetBeauty(BeautyType type, int value);
     /**
      * @brief according type to get the strength.
      */
-    int32_t getBeauty(BeautyType type);
+    int32_t GetBeauty(BeautyType type);
 
     /**
     * @brief Get whether or not commit config.
@@ -686,21 +695,33 @@ public:
     * @return Returns whether or not commit config.
     */
     bool IsSessionCommited();
-
+    bool SetBeautyValue(BeautyType beautyType, int32_t value);
     /**
     * @brief Get whether or not commit config.
     *
     * @return Returns whether or not commit config.
     */
     bool IsSessionConfiged();
+    void SetMode(int32_t modeName);
+    int32_t GetMode();
+    sptr<CaptureOutput> GetMetaOutput();
+protected:
+    std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
+    Profile photoProfile_;
+    Profile previewProfile_;
+    std::map<BeautyType, std::vector<int32_t>> beautyTypeAndRanges_;
+    std::map<BeautyType, int32_t> beautyTypeAndLevels_;
+    int32_t modeName_;
 private:
     std::mutex changeMetaMutex_;
-    std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
     sptr<ICaptureSession> captureSession_;
     std::shared_ptr<SessionCallback> appCallback_;
     sptr<ICaptureSessionCallback> captureSessionCallback_;
     std::shared_ptr<ExposureCallback> exposureCallback_;
     std::shared_ptr<FocusCallback> focusCallback_;
+    std::vector<int32_t> skinSmoothBeautyRange_;
+    std::vector<int32_t> faceSlendorBeautyRange_;
+    std::vector<int32_t> skinToneBeautyRange_;
     static const std::unordered_map<camera_focus_state_t, FocusCallback::FocusState> metaToFwFocusState_;
     static const std::unordered_map<camera_exposure_state_t, ExposureCallback::ExposureState> metaToFwExposureState_;
     static const std::unordered_map<camera_exposure_mode_enum_t, ExposureMode> metaToFwExposureMode_;
@@ -709,14 +730,22 @@ private:
     static const std::unordered_map<FocusMode, camera_focus_mode_enum_t> fwToMetaFocusMode_;
     static const std::unordered_map<camera_flash_mode_enum_t, FlashMode> metaToFwFlashMode_;
     static const std::unordered_map<FlashMode, camera_flash_mode_enum_t> fwToMetaFlashMode_;
+    static const std::unordered_map<camera_filter_type_t, FilterType> metaToFwFilterType_;
+    static const std::unordered_map<FilterType, camera_filter_type_t> fwToMetaFilterType_;
+    static const std::unordered_map<camera_beauty_type_t, BeautyType> metaToFwBeautyType_;
+    static const std::unordered_map<BeautyType, camera_beauty_type_t> fwToMetaBeautyType_;
+    static const std::unordered_map<BeautyType, camera_device_metadata_tag_t> fwToMetaBeautyAbility_;
+    static const std::unordered_map<BeautyType, camera_device_metadata_tag_t> fwToMetaBeautyControl_;
+    static const std::unordered_map<camera_device_metadata_tag_t, BeautyType> metaToFwBeautyControl_;
     static const std::unordered_map<CameraVideoStabilizationMode, VideoStabilizationMode> metaToFwVideoStabModes_;
     static const std::unordered_map<VideoStabilizationMode, CameraVideoStabilizationMode> fwToMetaVideoStabModes_;
-
+    sptr<CaptureOutput> metaOutput_;
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
     void SetFrameRateRange(const std::vector<int32_t>& frameRateRange);
     Point CoordinateTransform(Point point);
     int32_t CalculateExposureValue(float exposureValue);
     Point VerifyFocusCorrectness(Point point);
+    void ConfigureOutput(sptr<CaptureOutput> &output);
 };
 } // namespace CameraStandard
 } // namespace OHOS

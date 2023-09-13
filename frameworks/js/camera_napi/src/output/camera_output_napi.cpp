@@ -84,7 +84,6 @@ napi_value CameraOutputCapabilityNapi::Init(napi_env env, napi_value exports)
 
 void WrapSizeJs(napi_env env, Size &size, napi_value &result)
 {
-    MEDIA_DEBUG_LOG("WrapSizeJs is called");
     napi_value value = nullptr;
     napi_create_int32(env, size.width, &value);
     napi_set_named_property(env, result, "width", value);
@@ -94,7 +93,6 @@ void WrapSizeJs(napi_env env, Size &size, napi_value &result)
 
 void WrapProfileJs(napi_env env, Profile &profile, napi_value &result)
 {
-    MEDIA_DEBUG_LOG("WrapProfileJs is called");
     napi_value sizeNapi = nullptr;
     napi_create_object(env, &result);
     napi_create_object(env, &sizeNapi);
@@ -107,13 +105,11 @@ void WrapProfileJs(napi_env env, Profile &profile, napi_value &result)
 
 static napi_value CreateProfileJsArray(napi_env env, napi_status status, std::vector<Profile> profileList)
 {
-    MEDIA_DEBUG_LOG("CreateProfileJsArray is called");
     napi_value profileArray = nullptr;
 
     napi_get_undefined(env, &profileArray);
     if (profileList.empty()) {
         MEDIA_ERR_LOG("profileList is empty");
-        return profileArray;
     }
 
     status = napi_create_array(env, &profileArray);
@@ -135,7 +131,6 @@ static napi_value CreateProfileJsArray(napi_env env, napi_status status, std::ve
 
 void WrapJsVideoProfile(napi_env env, VideoProfile &profile, napi_value &result)
 {
-    MEDIA_DEBUG_LOG("WrapJsVideoProfile is called");
     napi_value sizeNapi = nullptr;
     napi_create_object(env, &result);
     napi_create_object(env, &sizeNapi);
@@ -158,14 +153,12 @@ void WrapJsVideoProfile(napi_env env, VideoProfile &profile, napi_value &result)
 
 static napi_value CreateVideoProfileJsArray(napi_env env, napi_status status, std::vector<VideoProfile> profileList)
 {
-    MEDIA_DEBUG_LOG("CreateVideoProfileJsArray is called");
     napi_value profileArray = nullptr;
     napi_value profile = nullptr;
 
     napi_get_undefined(env, &profileArray);
     if (profileList.empty()) {
         MEDIA_ERR_LOG("profileList is empty");
-        return profileArray;
     }
 
     status = napi_create_array(env, &profileArray);
@@ -186,14 +179,12 @@ static napi_value CreateVideoProfileJsArray(napi_env env, napi_status status, st
 static napi_value CreateMetadataObjectTypeJsArray(napi_env env, napi_status status,
     std::vector<MetadataObjectType> metadataTypeList)
 {
-    MEDIA_DEBUG_LOG("CreateMetadataObjectTypeJsArray is called");
     napi_value metadataTypeArray = nullptr;
     napi_value metadataType = nullptr;
 
     napi_get_undefined(env, &metadataTypeArray);
     if (metadataTypeList.empty()) {
         MEDIA_ERR_LOG("metadataTypeList is empty");
-        return metadataTypeArray;
     }
 
     status = napi_create_array(env, &metadataTypeArray);
@@ -257,6 +248,15 @@ napi_value CameraOutputCapabilityNapi::CreateCameraOutputCapability(napi_env env
     status = napi_get_reference_value(env, sCapabilityConstructor_, &constructor);
     if (status == napi_ok) {
         sCameraOutputCapability_ = CameraManager::GetInstance()->GetSupportedOutputCapability(camera);
+        uint32_t normalMode = 0;
+        if (camera && camera->GetPosition() == CAMERA_POSITION_FRONT) {
+            if (camera->modeVideoProfiles_[normalMode].size()) {
+                MEDIA_INFO_LOG("return align videoProfile size = %{public}zu",
+                               camera->modeVideoProfiles_[normalMode].size());
+                sCameraOutputCapability_->SetVideoProfiles(camera->modeVideoProfiles_[normalMode]);
+            }
+        }
+
         if (sCameraOutputCapability_ == nullptr) {
             MEDIA_ERR_LOG("failed to create CreateCameraOutputCapability");
             return result;

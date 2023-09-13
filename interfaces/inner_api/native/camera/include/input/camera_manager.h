@@ -19,6 +19,7 @@
 #include <refbase.h>
 #include <iostream>
 #include <vector>
+#include <mutex>
 #include "input/camera_input.h"
 #include "input/camera_info.h"
 #include "input/camera_device.h"
@@ -61,7 +62,7 @@ struct CameraStatusInfo {
 
 typedef enum OutputCapStreamType {
     PREVIEW = 0,
-    VIDEO = 1,
+    VIDEO_STREAM = 1,
     STILL_CAPTURE = 2,
     POST_VIEW = 3,
     ANALYZE = 4,
@@ -478,6 +479,7 @@ private:
         const int32_t modeName, const camera_metadata_item_t &item);
     void ParseBasicCapability(sptr<CameraOutputCapability> cameraOutputCapability,
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, const camera_metadata_item_t &item);
+    void AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& cameraObjList);
 
     std::mutex mutex_;
     int CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> *pICameraDeviceService);
@@ -488,6 +490,7 @@ private:
     sptr<CameraListenerStub> listenerStub_ = nullptr;
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
     static sptr<CameraManager> cameraManager_;
+    static std::mutex instanceMutex_;
     sptr<ICameraServiceCallback> cameraSvcCallback_;
     std::shared_ptr<CameraManagerCallback> cameraMngrCallback_;
 
@@ -498,9 +501,13 @@ private:
     std::vector<dmDeviceInfo> distributedCamInfo_;
     std::map<std::string, dmDeviceInfo> distributedCamInfoAndId_;
     class DeviceInitCallBack;
+
+    std::map<std::string, std::vector<Profile>> modePhotoProfiles_ = {};
+    std::map<std::string, std::vector<Profile>> modePreviewProfiles_ = {};
     std::vector<Profile> photoProfiles_ = {};
     std::vector<Profile> previewProfiles_ = {};
     std::vector<VideoProfile> vidProfiles_ = {};
+    sptr<CameraInput> cameraInput_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

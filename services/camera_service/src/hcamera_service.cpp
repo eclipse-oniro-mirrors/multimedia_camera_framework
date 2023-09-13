@@ -192,7 +192,7 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
     return CAMERA_OK;
 }
 
-int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession> &session)
+int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession> &session, int32_t opMode)
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(mutex_);
@@ -204,7 +204,8 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession> &session)
     }
 
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
-    captureSession = new(std::nothrow) HCaptureSession(cameraHostManager_, streamOperatorCallback_, callerToken);
+    captureSession = new(std::nothrow) HCaptureSession(cameraHostManager_, streamOperatorCallback_,
+                                                       callerToken, opMode);
     CHECK_AND_RETURN_RET_LOG(captureSession != nullptr, CAMERA_ALLOC_ERROR,
                              "HCameraService::CreateCaptureSession HCaptureSession allocation failed");
     captureSession->SetDeviceOperatorsCallback(this);
