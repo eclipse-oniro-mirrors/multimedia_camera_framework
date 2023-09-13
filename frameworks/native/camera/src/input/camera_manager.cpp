@@ -815,7 +815,7 @@ void CameraManager::ParseExtendCapability(sptr<CameraOutputCapability> cameraOut
 }
 
 sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<CameraDevice>& camera,
-    int32_t modeName)
+    int32_t modeName) __attribute__((no_sanitize("cfi")))
 {
     sptr<CameraOutputCapability> cameraOutputCapability = nullptr;
     cameraOutputCapability = new(std::nothrow) CameraOutputCapability();
