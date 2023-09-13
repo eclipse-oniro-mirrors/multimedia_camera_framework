@@ -32,6 +32,7 @@ int32_t HCameraDeviceCallbackProxy::OnError(const int32_t errorType, const int32
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteInt32(errorType);
     data.WriteInt32(errorMsg);
+    option.SetFlags(option.TF_ASYNC);
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraDeviceCallbackInterfaceCode::CAMERA_DEVICE_ON_ERROR), data, reply, option);
@@ -47,6 +48,7 @@ int32_t HCameraDeviceCallbackProxy::OnResult(const uint64_t timestamp,
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
+    option.SetFlags(option.TF_ASYNC);
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteUint64(timestamp);

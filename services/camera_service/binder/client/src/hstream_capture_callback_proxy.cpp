@@ -27,6 +27,7 @@ int32_t HStreamCaptureCallbackProxy::OnCaptureStarted(int32_t captureId)
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
+    option.SetFlags(option.TF_ASYNC);
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteInt32(captureId);
@@ -45,6 +46,7 @@ int32_t HStreamCaptureCallbackProxy::OnCaptureEnded(int32_t captureId, int32_t f
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
+    option.SetFlags(option.TF_ASYNC);
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteInt32(captureId);
@@ -64,6 +66,7 @@ int32_t HStreamCaptureCallbackProxy::OnCaptureError(int32_t captureId, int32_t e
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
+    option.SetFlags(option.TF_ASYNC);
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteInt32(captureId);
@@ -84,6 +87,7 @@ int32_t HStreamCaptureCallbackProxy::OnFrameShutter(int32_t captureId, uint64_t 
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
+    option.SetFlags(option.TF_ASYNC);
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteInt32(captureId);
