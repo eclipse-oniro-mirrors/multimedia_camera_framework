@@ -14,6 +14,7 @@
  */
 
 #include "test_common.h"
+#include <cinttypes>
 #include <cstdio>
 #include <fcntl.h>
 #include <securec.h>
@@ -262,11 +263,12 @@ void TestMetadataOutputObjectCallback::OnMetadataObjectsAvailable(std::vector<sp
                    "metaObjects size: %{public}zu", testName_, metaObjects.size());
     for (size_t i = 0; i < metaObjects.size(); i++) {
         MEDIA_INFO_LOG("TestMetadataOutputObjectCallback::OnMetadataObjectsAvailable "
-                       "metaObjInfo: Timestamp(%{public}lld), Type(%{public}d), "
-                       "Rect{x(%{pulic}f),y(%{pulic}f),w(%{pulic}f),d(%{pulic}f)}",
-                       static_cast<int64_t>(metaObjects[i]->GetTimestamp()), metaObjects[i]->GetType(),
+                       "metaObjInfo: Type(%{public}d), Rect{x(%{pulic}f),y(%{pulic}f),w(%{pulic}f),d(%{pulic}f)} "
+                       "Timestamp: %{public}" PRId64,
+                       metaObjects[i]->GetType(),
                        metaObjects[i]->GetBoundingBox().topLeftX, metaObjects[i]->GetBoundingBox().topLeftY,
-                       metaObjects[i]->GetBoundingBox().width, metaObjects[i]->GetBoundingBox().height);
+                       metaObjects[i]->GetBoundingBox().width, metaObjects[i]->GetBoundingBox().height,
+                       static_cast<int64_t>(metaObjects[i]->GetTimestamp()));
     }
 }
 

@@ -1064,7 +1064,7 @@ int32_t HCameraService::DeviceClose(const std::string& cameraId, pid_t pidFromSe
             cameraDevice = nullptr;
         }
     }
-
+    devicesManager_.Erase(cameraId);
     for (auto& it : camerasForPid_) {
         std::set<std::string>& cameraIds = it.second;
         MEDIA_INFO_LOG("HCameraService::DeviceClose pid = %{public}d size %{public}zu E", it.first, cameraIds.size());
