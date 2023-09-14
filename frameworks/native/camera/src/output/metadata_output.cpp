@@ -15,6 +15,7 @@
 
 #include "output/metadata_output.h"
 
+#include <cinttypes>
 #include <set>
 
 #include "camera_util.h"
@@ -225,7 +226,7 @@ void MetadataOutput::ProcessFaceRectangles(int64_t timestamp,
         sptr<MetadataObject> metadataObject = new(std::nothrow) MetadataFaceObject(formatTimestamp,
             (Rect) {topLeftX, topLeftY, width, height});
             MEDIA_INFO_LOG("ProcessFaceRectangles Metadata coordination: topleftX(%{public}f),topleftY(%{public}f),"
-                           "BottomRightX(%{public}f),BottomRightY(%{public}f), timestamp(%{public}lld)",
+                           "BottomRightX(%{public}f),BottomRightY(%{public}f), timestamp: %{public}" PRId64,
                            start[offsetTopLeftX], start[offsetTopLeftY],
                            start[offsetBottomRightX], start[offsetBottomRightY], formatTimestamp);
             MEDIA_INFO_LOG("ProcessFaceRectangles Postion: %{public}s App coordination: "
