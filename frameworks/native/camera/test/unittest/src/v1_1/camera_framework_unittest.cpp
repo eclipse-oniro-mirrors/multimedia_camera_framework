@@ -3380,11 +3380,11 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_023, TestSize.Level
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_024, TestSize.Level0)
 {
     CamRetCode rc1 = HDI::Camera::V1_0::CAMERA_BUSY;
-    HdiToServiceError(rc1);
+    EXPECT_EQ(HdiToServiceError(rc1), CAMERA_DEVICE_BUSY);
     CamRetCode rc2 = HDI::Camera::V1_0::INVALID_ARGUMENT;
-    HdiToServiceError(rc2);
+    EXPECT_EQ(HdiToServiceError(rc2), CAMERA_INVALID_ARG);
     CamRetCode rc3 = HDI::Camera::V1_0::CAMERA_CLOSED;
-    HdiToServiceError(rc3);
+    EXPECT_EQ(HdiToServiceError(rc3), CAMERA_DEVICE_CLOSED);
     CreateMsg(NULL);
 
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
