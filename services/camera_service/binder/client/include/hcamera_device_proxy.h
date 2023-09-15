@@ -25,7 +25,7 @@ class HCameraDeviceProxy : public IRemoteProxy<ICameraDeviceService> {
 public:
     explicit HCameraDeviceProxy(const sptr<IRemoteObject> &impl);
 
-    virtual ~HCameraDeviceProxy() = default;
+    virtual ~HCameraDeviceProxy();
 
     int32_t Open() override;
 
