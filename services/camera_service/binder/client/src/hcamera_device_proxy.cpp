@@ -23,6 +23,11 @@ namespace CameraStandard {
 HCameraDeviceProxy::HCameraDeviceProxy(const sptr<IRemoteObject> &impl)
     : IRemoteProxy<ICameraDeviceService>(impl) { }
 
+HCameraDeviceProxy::~HCameraDeviceProxy()
+{
+    MEDIA_INFO_LOG("~HCameraDeviceProxy is called");
+}
+
 int32_t HCameraDeviceProxy::Open()
 {
     MessageParcel data;
