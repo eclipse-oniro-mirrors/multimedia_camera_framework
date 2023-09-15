@@ -24,7 +24,7 @@ namespace CameraStandard {
 class HStreamRepeatProxy : public IRemoteProxy<IStreamRepeat> {
 public:
     explicit HStreamRepeatProxy(const sptr<IRemoteObject> &impl);
-    virtual ~HStreamRepeatProxy() = default;
+    virtual ~HStreamRepeatProxy();
 
     int32_t Start() override;
 

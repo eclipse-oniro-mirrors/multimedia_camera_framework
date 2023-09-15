@@ -22,6 +22,11 @@ namespace CameraStandard {
 HStreamRepeatProxy::HStreamRepeatProxy(const sptr<IRemoteObject> &impl)
     : IRemoteProxy<IStreamRepeat>(impl) { }
 
+HStreamRepeatProxy::~HStreamRepeatProxy()
+{
+    MEDIA_INFO_LOG("~HStreamRepeatProxy is called");
+}
+
 int32_t HStreamRepeatProxy::Start()
 {
     MessageParcel data;
