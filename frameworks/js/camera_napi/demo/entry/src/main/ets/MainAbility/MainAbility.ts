@@ -37,11 +37,11 @@ export default class MainAbility extends Ability {
     // Main window is created, set main page for this ability
     Logger.info(TAG, 'Ability onWindowStageCreate');
     windowStage.getMainWindow().then((win: Window.Window): void => {
-      win.setLayoutFullScreen(true).then((): void => {
-        win.setSystemBarEnable(['navigation']).then((): void => {
+      win.setWindowLayoutFullScreen(true).then((): void => {
+        win.setWindowSystemBarEnable(['navigation']).then((): void => {
         });
       });
-      win.setSystemBarProperties({
+      win.setWindowSystemBarProperties({
         navigationBarColor: '#00000000',
         navigationBarContentColor: '#B3B3B3'
       }).then((): void => {
@@ -51,11 +51,7 @@ export default class MainAbility extends Ability {
   }
 
   onLoadContent(windowStage: Window.WindowStage, page: string): void {
-    windowStage.loadContent(page, (err): void => {
-      if (err) {
-        Logger.error(TAG, `onLoadContent Failed to load the content. Cause: ${JSON.stringify(err)}`);
-        return;
-      }
+    windowStage.loadContent(page, (): void => {
     });
 
   }

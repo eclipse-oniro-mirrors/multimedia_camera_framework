@@ -13,18 +13,19 @@
  * limitations under the License.
  */
 
-import Ability from '@ohos.app.ability.UIAbility';
 import type window from '@ohos.window';
 import deviceInfo from '@ohos.deviceInfo';
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 import type Want from '@ohos.app.ability.Want';
 import type AbilityConstant from '@ohos.app.ability.AbilityConstant';
+import { BusinessError } from '@ohos.base';
 import Logger from '../model/Logger';
 import { Constants } from '../common/Constants';
+import UIAbility from '@ohos.app.ability.UIAbility';
 
 const TAG: string = 'EntryAbility';
 
-export default class EntryAbility extends Ability {
+export default class EntryAbility extends UIAbility {
 
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     Logger.info(TAG, 'Ability onCreate');
@@ -40,28 +41,26 @@ export default class EntryAbility extends Ability {
   onWindowStageCreate(windowStage: window.WindowStage): void {
     // Main window is created, set main page for this ability
     Logger.info(TAG, 'Ability onWindowStageCreate');
+    windowStage.loadContent('pages/Index', (): void => {
+      Logger.info(TAG, 'Succeeded in loading the content.');
+    });
     this.requestPermissionsFn();
-    AppStorage.SetOrCreate<string>('deviceType', deviceInfo.deviceType);
-    if (deviceInfo.deviceType === Constants.TABLET) {
-      windowStage.getMainWindow().then((win: window.Window): void => {
-        win.setLayoutFullScreen(true).then((): void => {
-          win.setSystemBarEnable(['navigation']).then((): void => {
+    AppStorage.setOrCreate<string>('deviceType', deviceInfo.deviceType);
+    windowStage.getMainWindow().then((win: window.Window): void => {
+      globalThis.promptAction = win.getUIContext().getPromptAction();
+      Logger.debug(TAG, 'Succeeded get promptAction.');
+      if (deviceInfo.deviceType === Constants.TABLET) {
+        win.setWindowLayoutFullScreen(true).then((): void => {
+          win.setWindowSystemBarEnable(['navigation']).then((): void => {
           });
         });
-        win.setSystemBarProperties({
+        win.setWindowSystemBarProperties({
           navigationBarColor: '#00000000',
           navigationBarContentColor: '#B3B3B3'
-        }).then((): void => {
-        });
-      });
-    }
-
-    windowStage.loadContent('pages/Index', (err, data): void => {
-      if (err) {
-        Logger.error(TAG, `Failed to load the content. Cause: ${JSON.stringify(err)}`);
-        return;
+        })
+          .then((): void => {
+          });
       }
-      Logger.info(TAG, `Succeeded in loading the content. Data: ${JSON.stringify(data)}`);
     });
   }
 
@@ -76,9 +75,9 @@ export default class EntryAbility extends Ability {
       'ohos.permission.READ_MEDIA',
       'ohos.permission.WRITE_MEDIA'
     ]).then((): void => {
-      AppStorage.SetOrCreate<boolean>('isShow', true);
+      AppStorage.setOrCreate<boolean>('isShow', true);
       Logger.info(TAG, 'request Permissions success!');
-    }).catch((error: {code: number}): void => {
+    }).catch((error: BusinessError): void => {
       Logger.info(TAG, `requestPermissionsFromUser call Failed! error: ${error.code}`);
     });
   }

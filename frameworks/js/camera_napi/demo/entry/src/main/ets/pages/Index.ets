@@ -51,7 +51,6 @@ struct Index {
   private mXComponentController: XComponentController = new XComponentController();
   // surfaceID值
   @State surfaceId: string = '';
-
   // 选择模式
   @State modelBagCol: string = 'photo';
   // 曝光区域
@@ -90,7 +89,7 @@ struct Index {
     let mDisplay = display.getDefaultDisplaySync();
     this.screenWidth = px2vp(mDisplay.width);
     this.screenHeight = px2vp(mDisplay.height);
-    this.deviceType = AppStorage.Get<string>('deviceType');
+    this.deviceType = AppStorage.get<string>('deviceType');
     if (this.deviceType === Constants.TABLET) {
       this.defaultAspectRatio = Constants.MAX_ASPECT_RATIO;
     }
@@ -114,104 +113,109 @@ struct Index {
     }
   }
 
-  onPageHide(): void {
+  async onPageHide(): Promise<void> {
     Logger.info(TAG, 'onPageHide');
-    CameraService.releaseCamera();
+    let isRecorder: boolean = AppStorage.get<boolean>('isRecorder');
+    if (isRecorder) {
+      await CameraService.stopVideo();
+    }
+    await CameraService.releaseCamera();
   }
 
   build() {
     Stack() {
-      if (this.isShow) {
-        // 画面
-        XComponent({
-          id: 'componentId',
-          type: 'surface',
-          controller: this.mXComponentController
-        })
-          .onLoad(async () => {
-            Logger.info(TAG, 'onLoad is called');
-            this.surfaceId = this.mXComponentController.getXComponentSurfaceId();
-            Logger.info(TAG, `onLoad surfaceId: ${this.surfaceId}`);
-            await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
-            globalThis.surfaceId = this.surfaceId;
-            globalThis.cameraDeviceIndex = this.cameraDeviceIndex;
+      Stack() {
+        if (this.isShow) {
+          // 画面
+          XComponent({
+            id: 'componentId',
+            type: 'surface',
+            controller: this.mXComponentController
           })
-          .size({
-            width: this.xComponentWidth.toString(),
-            height: this.xComponentHeight.toString()
-          })
-          .margin({ bottom: Constants.SURFACE_BOTTOM_MARGIN })
+            .onLoad(async () => {
+              Logger.info(TAG, 'onLoad is called');
+              this.surfaceId = this.mXComponentController.getXComponentSurfaceId();
+              Logger.info(TAG, `onLoad surfaceId: ${this.surfaceId}`);
+              await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
+              globalThis.surfaceId = this.surfaceId;
+              globalThis.cameraDeviceIndex = this.cameraDeviceIndex;
+            })
+            .size({
+              width: this.xComponentWidth.toString(),
+              height: this.xComponentHeight.toString()
+            })
+            .margin({ bottom: Constants.SURFACE_BOTTOM_MARGIN })
 
-        // 参考线
-        DividerPage({
-          referenceLineBol: this.referenceLineBol
-        })
+          // 参考线
+          DividerPage({
+            referenceLineBol: this.referenceLineBol
+          })
 
-        Row({ space: 24 }) {
-          // 设置图标
-          Button() {
-            Image($r('app.media.icon_camera_setting'))
-              .size({
-                width: '35vp',
-                height: '35vp'
-              })
-          }
-          .size({
-            width: '45vp',
-            height: '45vp'
+          // 曝光框和对焦框
+          FocusPage({
+            focusPointBol: $focusPointBol,
+            focusPointVal: $focusPointVal,
+            exposureBol: $exposureBol,
+            exposureNum: $exposureNum
           })
-          .borderRadius('45vp')
-          .width('45vp')
-          .height('45vp')
-          .backgroundColor('rgba(255,255,255,0.20)')
-          .onClick(() => {
-            AppStorage.SetOrCreate<boolean>('flashingBol', true);
-            AppStorage.SetOrCreate<boolean>('countdownBol', true);
-            this.countdownNum = 0;
-            // 打开设置弹框
-            this.settingDialogController.open();
+
+          // 曝光对焦手指点击区域
+          FocusAreaPage({
+            focusPointBol: $focusPointBol,
+            focusPointVal: $focusPointVal,
+            exposureBol: $exposureBol,
+            exposureNum: $exposureNum,
+            xComponentWidth: this.xComponentWidth,
+            xComponentHeight: this.xComponentHeight
           })
-          // 倒计时
-          CountdownPage({
+
+          // slide
+          SlidePage()
+
+          // 反转摄像头_多机位_拍照_摄像
+          ModeSwitchPage({
+            surfaceId: this.surfaceId,
+            cameraDeviceIndex: $cameraDeviceIndex,
             countdownNum: $countdownNum
           })
-          // 闪光灯
-          FlashingLightPage()
         }
-        .margin({ left: 24 })
-        .alignItems(VerticalAlign.Top)
-        .justifyContent(FlexAlign.Start)
-        .width('100%')
-        .height('100%')
+      }
+      .size({ width: '100%', height: '100%' })
 
-        // 曝光框和对焦框
-        FocusPage({
-          focusPointBol: $focusPointBol,
-          focusPointVal: $focusPointVal,
-          exposureBol: $exposureBol,
-          exposureNum: $exposureNum
+      Row({ space: 24 }) {
+        // 设置图标
+        Button() {
+          Image($r('app.media.icon_camera_setting'))
+            .size({
+              width: '35vp',
+              height: '35vp'
+            })
+        }
+        .borderRadius('45vp')
+        .width('45vp')
+        .height('45vp')
+        .backgroundColor('rgba(255,255,255,0.20)')
+        .onClick(() => {
+          Logger.info(TAG, 'icon_camera_setting onClick is called');
+          AppStorage.setOrCreate<boolean>('flashingBol', true);
+          AppStorage.setOrCreate<boolean>('countdownBol', true);
+          this.countdownNum = 0;
+          // 打开设置弹框
+          this.settingDialogController.open();
         })
 
-        // 曝光对焦手指点击区域
-        FocusAreaPage({
-          focusPointBol: $focusPointBol,
-          focusPointVal: $focusPointVal,
-          exposureBol: $exposureBol,
-          exposureNum: $exposureNum,
-          xComponentWidth: this.xComponentWidth,
-          xComponentHeight: this.xComponentHeight
-        })
-
-        // slide
-        SlidePage()
-
-        // 反转摄像头_多机位_拍照_摄像
-        ModeSwitchPage({
-          surfaceId: this.surfaceId,
-          cameraDeviceIndex: $cameraDeviceIndex,
+        // 倒计时
+        CountdownPage({
           countdownNum: $countdownNum
         })
+        // 闪光灯
+        FlashingLightPage()
       }
+      .margin({ left: 24 })
+      .alignItems(VerticalAlign.Top)
+      .justifyContent(FlexAlign.Start)
+      .position({ x: 0, y: 0 })
+      .width('100%')
     }
     .size({ width: '100%', height: '100%' })
     .backgroundColor(Color.Black)

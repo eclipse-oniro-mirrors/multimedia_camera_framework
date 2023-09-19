@@ -1,4 +1,3 @@
-import prompt from '@ohos.prompt';
 /*
  * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +15,7 @@ import prompt from '@ohos.prompt';
 
 import CameraService from '../model/CameraService';
 import Logger from '../model/Logger';
+import { BusinessError } from '@ohos.base';
 
 const TAG: string = "SettingItem";
 
@@ -43,7 +43,17 @@ export struct SettingItem {
         break;
       case 4:
         globalThis.settingDataObj.focusMode = this.index;
-        CameraService.isFocusMode(globalThis.settingDataObj.focusMode);
+        let isFocusModeSupported = CameraService.isFocusModeSupported(globalThis.settingDataObj.focusMode);
+        try {
+          globalThis.promptAction.showToast({
+            message: isFocusModeSupported ? '支持此模式' : '不支持此模式',
+            duration: 2000,
+            bottom: '50%'
+          });
+        } catch (error) {
+          let err = error as BusinessError;
+          Logger.error(TAG, `showToast err: ${JSON.stringify(err)}`);
+        }
         break;
       case 5:
         globalThis.settingDataObj.photoQuality = this.index;
@@ -60,7 +70,7 @@ export struct SettingItem {
         let ind = this.itemData.indexOf('*');
         globalThis.photoResolutionWidth = Number(this.itemData.substring(0, ind));
         globalThis.photoResolutionHeight = Number(this.itemData.substring(ind + 1));
-        AppStorage.Set<number>('defaultAspectRatio', globalThis.photoResolutionWidth/globalThis.photoResolutionHeight);
+        AppStorage.set<number>('defaultAspectRatio', globalThis.photoResolutionWidth/globalThis.photoResolutionHeight);
         break;
       case 10:
       // 视频分辨率
@@ -75,11 +85,16 @@ export struct SettingItem {
           globalThis.settingDataObj.videoFrame = this.index;
           globalThis.videoFrame = this.itemData;
         }
-        prompt.showToast({
-          message: isSupported ? '支持此模式' : '不支持此模式',
-          duration: 2000,
-          bottom: '50%'
-        });
+        try {
+          globalThis.promptAction.showToast({
+            message: isSupported ? '支持此模式' : '不支持此模式',
+            duration: 2000,
+            bottom: '50%'
+          });
+        } catch (error) {
+          let err = error as BusinessError;
+          Logger.error(TAG, `showToast err: ${JSON.stringify(err)}`);
+        }
         break;
     }
   }
