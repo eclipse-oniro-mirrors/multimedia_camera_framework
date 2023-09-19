@@ -43,6 +43,7 @@ bool g_openCameraDevicerror = false;
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_1;
+constexpr static int32_t ARRAY_IDX = 2;
 class MockStreamOperator : public OHOS::HDI::Camera::V1_1::IStreamOperator {
 public:
     MockStreamOperator()
@@ -142,18 +143,53 @@ public:
 
 class MockHCameraHostManager : public HCameraHostManager {
 public:
-    int32_t streams[20] = {
+    int32_t streams[82] = {
         CameraFrameworkUnitTest::DEFAULT_MODE, CameraFrameworkUnitTest::PREVIEW_STREAM,
         OHOS_CAMERA_FORMAT_YCRCB_420_SP, CameraFrameworkUnitTest::PREVIEW_DEFAULT_WIDTH,
         CameraFrameworkUnitTest::PREVIEW_DEFAULT_HEIGHT, CameraFrameworkUnitTest::PREVIEW_FRAMERATE,
-        CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::VIDEO_STREAM,
-        OHOS_CAMERA_FORMAT_YCRCB_420_SP, CameraFrameworkUnitTest::VIDEO_DEFAULT_WIDTH,
-        CameraFrameworkUnitTest::VIDEO_DEFAULT_HEIGHT, CameraFrameworkUnitTest::VIDEO_FRAMERATE,
+        CameraFrameworkUnitTest::MIN_FRAMERATE, CameraFrameworkUnitTest::MAX_FRAMERATE,
+        CameraFrameworkUnitTest::ABILITY_FINISH, CameraFrameworkUnitTest::STREAM_FINISH,
+        CameraFrameworkUnitTest::VIDEO_STREAM, OHOS_CAMERA_FORMAT_YCRCB_420_SP,
+        CameraFrameworkUnitTest::VIDEO_DEFAULT_WIDTH, CameraFrameworkUnitTest::VIDEO_DEFAULT_HEIGHT,
+        CameraFrameworkUnitTest::VIDEO_FRAMERATE, CameraFrameworkUnitTest::MIN_FRAMERATE,
+        CameraFrameworkUnitTest::MAX_FRAMERATE, CameraFrameworkUnitTest::ABILITY_FINISH,
         CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::PHOTO_STREAM,
         OHOS_CAMERA_FORMAT_JPEG, CameraFrameworkUnitTest::PHOTO_DEFAULT_WIDTH,
         CameraFrameworkUnitTest::PHOTO_DEFAULT_HEIGHT, CameraFrameworkUnitTest::PHOTO_FRAMERATE,
-        CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::MODE_FINISH
+        CameraFrameworkUnitTest::MIN_FRAMERATE, CameraFrameworkUnitTest::MAX_FRAMERATE,
+        CameraFrameworkUnitTest::ABILITY_FINISH, CameraFrameworkUnitTest::STREAM_FINISH,
+        CameraFrameworkUnitTest::MODE_FINISH, CameraFrameworkUnitTest::PORTRAIT_MODE,
+        CameraFrameworkUnitTest::PREVIEW_STREAM, OHOS_CAMERA_FORMAT_YCRCB_420_SP,
+        CameraFrameworkUnitTest::PREVIEW_DEFAULT_WIDTH, CameraFrameworkUnitTest::PREVIEW_DEFAULT_HEIGHT,
+        CameraFrameworkUnitTest::PREVIEW_FRAMERATE, CameraFrameworkUnitTest::MIN_FRAMERATE,
+        CameraFrameworkUnitTest::MAX_FRAMERATE, CameraFrameworkUnitTest::ABILITY_ID_ONE,
+        CameraFrameworkUnitTest::ABILITY_ID_TWO, CameraFrameworkUnitTest::ABILITY_ID_THREE,
+        CameraFrameworkUnitTest::ABILITY_ID_FOUR, CameraFrameworkUnitTest::ABILITY_FINISH,
+        CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::VIDEO_STREAM, OHOS_CAMERA_FORMAT_YCRCB_420_SP,
+        CameraFrameworkUnitTest::VIDEO_DEFAULT_WIDTH, CameraFrameworkUnitTest::VIDEO_DEFAULT_HEIGHT,
+        CameraFrameworkUnitTest::VIDEO_FRAMERATE, CameraFrameworkUnitTest::MIN_FRAMERATE,
+        CameraFrameworkUnitTest::MAX_FRAMERATE, CameraFrameworkUnitTest::ABILITY_ID_ONE,
+        CameraFrameworkUnitTest::ABILITY_ID_TWO, CameraFrameworkUnitTest::ABILITY_ID_THREE,
+        CameraFrameworkUnitTest::ABILITY_ID_FOUR, CameraFrameworkUnitTest::ABILITY_FINISH,
+        CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::PHOTO_STREAM,
+        OHOS_CAMERA_FORMAT_JPEG, CameraFrameworkUnitTest::PHOTO_DEFAULT_WIDTH,
+        CameraFrameworkUnitTest::PHOTO_DEFAULT_HEIGHT, CameraFrameworkUnitTest::PHOTO_FRAMERATE,
+        CameraFrameworkUnitTest::MIN_FRAMERATE, CameraFrameworkUnitTest::MAX_FRAMERATE,
+        CameraFrameworkUnitTest::ABILITY_ID_ONE, CameraFrameworkUnitTest::ABILITY_ID_TWO,
+        CameraFrameworkUnitTest::ABILITY_ID_THREE, CameraFrameworkUnitTest::ABILITY_ID_FOUR,
+        CameraFrameworkUnitTest::ABILITY_FINISH, CameraFrameworkUnitTest::STREAM_FINISH,
+        CameraFrameworkUnitTest::MODE_FINISH
     };
+    int32_t modes[2] = {0, 1};
+    uint8_t filterAbility[2] = {0, 1};
+    int32_t filterControl[2] = {0, 1};
+    uint8_t beautyAbility[5] = {OHOS_CAMERA_BEAUTY_TYPE_OFF, OHOS_CAMERA_BEAUTY_TYPE_AUTO,
+                                OHOS_CAMERA_BEAUTY_TYPE_SKIN_SMOOTH, OHOS_CAMERA_BEAUTY_TYPE_FACE_SLENDER,
+                                OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONE};
+    uint8_t faceSlenderBeautyRange[2] = {2, 3};
+    int32_t faceSlenderBeautyControl[2] = {2, 3};
+    int32_t effectAbility[2] = {0, 1};
+    int32_t effectControl[2] = {0, 1};
     class MockStatusCallback : public StatusCallback {
     public:
         void OnCameraStatus(const std::string& cameraId, CameraStatus status) override
@@ -189,6 +225,9 @@ public:
             ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, streams,
                               sizeof(streams) / sizeof(streams[0]));
 
+            ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams,
+                              sizeof(streams) / sizeof(streams[0]));
+
             if (g_mockFlagWithoutAbt) {
                 return CAMERA_OK;
             }
@@ -197,9 +236,7 @@ public:
                 return CAMERA_ALLOC_ERROR;
             }
 
-            ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams,
-                              sizeof(streams) / sizeof(streams[0]));
-            int32_t compensationRange[2] = {-2, 3};
+            int32_t compensationRange[2] = {0, 0};
             ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
                               sizeof(compensationRange) / sizeof(compensationRange[0]));
             float focalLength = 1.5;
@@ -219,7 +256,7 @@ public:
             ability->addEntry(OHOS_ABILITY_ZOOM_CAP, &zoomCap,
                               sizeof(zoomCap) / sizeof(zoomCap[0]));
 
-            int32_t sceneZoomCap[2] = {0, 10};
+            int32_t sceneZoomCap[2] = {1, 10};
             ability->addEntry(OHOS_ABILITY_SCENE_ZOOM_CAP, &sceneZoomCap,
                               sizeof(zoomCap) / sizeof(zoomCap[0]));
 
@@ -286,6 +323,29 @@ public:
 
             int32_t orientation = OHOS_CAMERA_JPEG_ROTATION_0;
             ability->addEntry(OHOS_JPEG_ORIENTATION, &orientation, sizeof(int32_t));
+
+            ability->addEntry(OHOS_ABILITY_CAMERA_MODES, &modes, sizeof(modes) / sizeof(modes[0]));
+
+            ability->addEntry(OHOS_ABILITY_SCENE_FILTER_TYPES, &filterAbility,
+                              sizeof(filterAbility) / sizeof(filterAbility[0]));
+
+            ability->addEntry(OHOS_CONTROL_FILTER_TYPE, &filterControl,
+                              sizeof(filterControl) / sizeof(filterControl[0]));
+
+            ability->addEntry(OHOS_ABILITY_SCENE_BEAUTY_TYPES, beautyAbility,
+                              sizeof(beautyAbility) / sizeof(beautyAbility[0]));
+
+            ability->addEntry(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, &faceSlenderBeautyRange,
+                              sizeof(faceSlenderBeautyRange) / sizeof(faceSlenderBeautyRange[0]));
+
+            ability->addEntry(OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE, &faceSlenderBeautyControl,
+                              sizeof(faceSlenderBeautyControl) / sizeof(faceSlenderBeautyControl[0]));
+
+            ability->addEntry(OHOS_ABILITY_SCENE_PORTRAIT_EFFECT_TYPES, &effectAbility,
+                              sizeof(effectAbility) / sizeof(effectAbility[0]));
+
+            ability->addEntry(OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &effectControl,
+                              sizeof(effectControl) / sizeof(effectControl[0]));
             return CAMERA_OK;
         });
         ON_CALL(*this, OpenCameraDevice).WillByDefault([this](std::string &cameraId,
@@ -319,6 +379,12 @@ class FakeCameraManager : public CameraManager {
 public:
     explicit FakeCameraManager(sptr<HCameraService> service) : CameraManager(service) {}
     ~FakeCameraManager() {}
+};
+
+class FakeModeManager : public ModeManager {
+public:
+    explicit FakeModeManager(sptr<HCameraService> service) : ModeManager(service) {}
+    ~FakeModeManager() {}
 };
 
 class CallbackListener : public FocusCallback, public ExposureCallback {
@@ -428,6 +494,82 @@ void CameraFrameworkUnitTest::SessionControlParams(sptr<CaptureSession> session)
     EXPECT_EQ(session->GetExposureMode(), exposure);
 }
 
+void CameraFrameworkUnitTest::PortraitSessionControlParams(sptr<PortraitSession> portraitSession)
+{
+    portraitSession->LockForControl();
+
+    std::vector<PortraitEffect> effects= portraitSession->GetSupportedPortraitEffects();
+    ASSERT_TRUE(effects.size() != 0);
+
+    if (!effects.empty()) {
+        portraitSession->SetPortraitEffect(effects[0]);
+    }
+
+    std::vector<FilterType> filterLists= portraitSession->GetSupportedFilters();
+    ASSERT_TRUE(filterLists.size() != 0);
+
+    if (!filterLists.empty()) {
+        portraitSession->SetFilter(filterLists[0]);
+    }
+
+    std::vector<BeautyType> beautyLists= portraitSession->GetSupportedBeautyTypes();
+    ASSERT_TRUE(beautyLists.size() != 0);
+
+    std::vector<int32_t> rangeLists= portraitSession->GetSupportedBeautyRange(beautyLists[ARRAY_IDX]);
+    ASSERT_TRUE(rangeLists.size() != 0);
+
+    if (!beautyLists.empty()) {
+        portraitSession->SetBeauty(beautyLists[ARRAY_IDX], rangeLists[0]);
+    }
+
+    portraitSession->UnlockForControl();
+    ASSERT_EQ(portraitSession->GetPortraitEffect(), effects[0]);
+    ASSERT_EQ(portraitSession->GetFilter(), filterLists[0]);
+    ASSERT_EQ(portraitSession->GetBeauty(beautyLists[ARRAY_IDX]), rangeLists[0]);
+}
+
+void CameraFrameworkUnitTest::PortraitSessionEffectParams(sptr<PortraitSession> portraitSession)
+{
+    std::vector<PortraitEffect> effects= portraitSession->GetSupportedPortraitEffects();
+    ASSERT_TRUE(effects.size() != 0);
+
+    if (!effects.empty()) {
+        portraitSession->LockForControl();
+        portraitSession->SetPortraitEffect(effects[0]);
+        portraitSession->UnlockForControl();
+    }
+    ASSERT_EQ(portraitSession->GetPortraitEffect(), effects[0]);
+}
+
+void CameraFrameworkUnitTest::PortraitSessionFilterParams(sptr<PortraitSession> portraitSession)
+{
+    std::vector<FilterType> filterLists= portraitSession->GetSupportedFilters();
+    ASSERT_TRUE(filterLists.size() != 0);
+
+    if (!filterLists.empty()) {
+        portraitSession->LockForControl();
+        portraitSession->SetFilter(filterLists[0]);
+        portraitSession->UnlockForControl();
+    }
+    ASSERT_EQ(portraitSession->GetFilter(), filterLists[0]);
+}
+
+void CameraFrameworkUnitTest::PortraitSessionBeautyParams(sptr<PortraitSession> portraitSession)
+{
+    std::vector<BeautyType> beautyLists= portraitSession->GetSupportedBeautyTypes();
+    ASSERT_TRUE(beautyLists.size() != 0);
+
+    std::vector<int32_t> rangeLists= portraitSession->GetSupportedBeautyRange(beautyLists[ARRAY_IDX]);
+    ASSERT_TRUE(rangeLists.size() != 0);
+
+    if (!beautyLists.empty()) {
+        portraitSession->LockForControl();
+        portraitSession->SetBeauty(beautyLists[ARRAY_IDX], rangeLists[0]);
+        portraitSession->UnlockForControl();
+    }
+    ASSERT_EQ(portraitSession->GetBeauty(beautyLists[ARRAY_IDX]), rangeLists[0]);
+}
+
 void CameraFrameworkUnitTest::SetUpTestCase(void) {}
 
 void CameraFrameworkUnitTest::TearDownTestCase(void) {}
@@ -458,6 +600,7 @@ void CameraFrameworkUnitTest::SetUp()
     mockCameraDevice = mockCameraHostManager->cameraDevice;
     mockStreamOperator = mockCameraDevice->streamOperator;
     cameraManager = new FakeCameraManager(new FakeHCameraService(mockCameraHostManager));
+    modeManager = new FakeModeManager(new FakeHCameraService(mockCameraHostManager));
 }
 
 void CameraFrameworkUnitTest::TearDown()
@@ -805,7 +948,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_020, TestSize.Level0
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
@@ -1122,7 +1265,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_030, TestSize.Level0
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
@@ -1191,7 +1334,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_031, TestSize.Level0
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
@@ -1273,7 +1416,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_032, TestSize.Level0
     }
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
@@ -1332,7 +1475,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_033, TestSize.Level0
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
 
     SessionCommit(session);
 
@@ -1513,7 +1656,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_038, TestSize.Level0
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
@@ -1578,7 +1721,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_040, TestSize.Level0
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
@@ -1637,7 +1780,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_041, TestSize.Level0
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
@@ -1700,7 +1843,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_042, TestSize.Level0
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
@@ -1762,7 +1905,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_043, TestSize.Level0
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
@@ -1825,7 +1968,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_044, TestSize.Level0
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
@@ -1889,7 +2032,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_045, TestSize.Level0
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
@@ -1901,6 +2044,388 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_045, TestSize.Level0
     }
     ASSERT_EQ(session->GetExposureValue(), exposurebiasRange[1]);
     session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test modeManager and portrait session with beauty/filter/portrait effects
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test modeManager and portrait session with beauty/filter/portrait effects
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_046, TestSize.Level0)
+{
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    CameraMode mode = PORTRAIT;
+    std::vector<CameraMode> modes = modeManager->GetSupportedModes(cameras[0]);
+    ASSERT_TRUE(modes.size() != 0);
+
+    sptr<CameraOutputCapability> ability = modeManager->GetSupportedOutputCapability(cameras[0], mode);
+    ASSERT_NE(ability, nullptr);
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+    sptr<CaptureSession> captureSession = modeManager->CreateCaptureSession(mode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<PortraitSession> portraitSession = nullptr;
+    portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
+    ASSERT_NE(portraitSession, nullptr);
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+
+    int32_t ret = portraitSession->BeginConfig();
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
+    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
+    ret = portraitSession->AddInput(input);
+    EXPECT_EQ(ret, 0);
+
+    ret = portraitSession->AddOutput(preview);
+    EXPECT_EQ(ret, 0);
+
+    ret = portraitSession->AddOutput(photo);
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+    EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
+    ret = portraitSession->CommitConfig();
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+
+    PortraitSessionControlParams(portraitSession);
+
+    portraitSession->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test modeManager with GetSupportedModes
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedModes to get modes
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_047, TestSize.Level0)
+{
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    std::vector<CameraMode> modes = modeManager->GetSupportedModes(cameras[0]);
+    ASSERT_TRUE(modes.size() != 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test modeManager with GetSupportedOutputCapability
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedOutputCapability to get capability
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_048, TestSize.Level0)
+{
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    CameraMode mode = PORTRAIT;
+    std::vector<CameraMode> modes = modeManager->GetSupportedModes(cameras[0]);
+    ASSERT_TRUE(modes.size() != 0);
+
+    sptr<CameraOutputCapability> ability = modeManager->GetSupportedOutputCapability(cameras[0], mode);
+    ASSERT_NE(ability, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test modeManager with CreateCaptureSession and CommitConfig
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test modeManager to CreateCaptureSession
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_049, TestSize.Level0)
+{
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    CameraMode mode = PORTRAIT;
+    std::vector<CameraMode> modes = modeManager->GetSupportedModes(cameras[0]);
+    ASSERT_TRUE(modes.size() != 0);
+
+    sptr<CameraOutputCapability> ability = modeManager->GetSupportedOutputCapability(cameras[0], mode);
+    ASSERT_NE(ability, nullptr);
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+
+
+    sptr<CaptureSession> captureSession = modeManager->CreateCaptureSession(mode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<PortraitSession> portraitSession = nullptr;
+    portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
+    ASSERT_NE(portraitSession, nullptr);
+
+
+    int32_t ret = portraitSession->BeginConfig();
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
+    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
+    ret = portraitSession->AddInput(input);
+    EXPECT_EQ(ret, 0);
+
+    ret = portraitSession->AddOutput(preview);
+    EXPECT_EQ(ret, 0);
+
+    ret = portraitSession->AddOutput(photo);
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+    EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
+    ret = portraitSession->CommitConfig();
+    EXPECT_EQ(ret, 0);
+    portraitSession->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetSupportedPortraitEffects / GetPortraitEffect / SetPortraitEffect
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetPortraitEffect and SetPortraitEffect with value
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_050, TestSize.Level0)
+{
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    CameraMode mode = PORTRAIT;
+    std::vector<CameraMode> modes = modeManager->GetSupportedModes(cameras[0]);
+    ASSERT_TRUE(modes.size() != 0);
+
+    sptr<CameraOutputCapability> ability = modeManager->GetSupportedOutputCapability(cameras[0], mode);
+    ASSERT_NE(ability, nullptr);
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSession> captureSession = modeManager->CreateCaptureSession(mode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<PortraitSession> portraitSession = nullptr;
+    portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
+    ASSERT_NE(portraitSession, nullptr);
+
+    int32_t ret = portraitSession->BeginConfig();
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
+    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
+    ret = portraitSession->AddInput(input);
+    EXPECT_EQ(ret, 0);
+
+    ret = portraitSession->AddOutput(preview);
+    EXPECT_EQ(ret, 0);
+
+    ret = portraitSession->AddOutput(photo);
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+    EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
+    ret = portraitSession->CommitConfig();
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+
+    PortraitSessionEffectParams(portraitSession);
+
+    portraitSession->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetSupportedFilters / GetFilter / SetFilter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetFilter and SetFilter with value
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_051, TestSize.Level0)
+{
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    CameraMode mode = PORTRAIT;
+    std::vector<CameraMode> modes = modeManager->GetSupportedModes(cameras[0]);
+    ASSERT_TRUE(modes.size() != 0);
+
+    sptr<CameraOutputCapability> ability = modeManager->GetSupportedOutputCapability(cameras[0], mode);
+    ASSERT_NE(ability, nullptr);
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSession> captureSession = modeManager->CreateCaptureSession(mode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<PortraitSession> portraitSession = nullptr;
+    portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
+    ASSERT_NE(portraitSession, nullptr);
+
+    int32_t ret = portraitSession->BeginConfig();
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
+    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
+    ret = portraitSession->AddInput(input);
+    EXPECT_EQ(ret, 0);
+
+    ret = portraitSession->AddOutput(preview);
+    EXPECT_EQ(ret, 0);
+
+    ret = portraitSession->AddOutput(photo);
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+    EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
+    ret = portraitSession->CommitConfig();
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+
+    PortraitSessionFilterParams(portraitSession);
+
+    portraitSession->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetSupportedBeautyTypes / GetSupportedBeautyRange / GetBeauty / SetBeauty
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetBeauty and SetBeauty with value
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_052, TestSize.Level0)
+{
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    CameraMode mode = PORTRAIT;
+    std::vector<CameraMode> modes = modeManager->GetSupportedModes(cameras[0]);
+    ASSERT_TRUE(modes.size() != 0);
+
+    sptr<CameraOutputCapability> ability = modeManager->GetSupportedOutputCapability(cameras[0], mode);
+    ASSERT_NE(ability, nullptr);
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSession> captureSession = modeManager->CreateCaptureSession(mode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<PortraitSession> portraitSession = nullptr;
+    portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
+    ASSERT_NE(portraitSession, nullptr);
+
+    int32_t ret = portraitSession->BeginConfig();
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
+    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
+    ret = portraitSession->AddInput(input);
+    EXPECT_EQ(ret, 0);
+
+    ret = portraitSession->AddOutput(preview);
+    EXPECT_EQ(ret, 0);
+
+    ret = portraitSession->AddOutput(photo);
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+    EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
+    ret = portraitSession->CommitConfig();
+    EXPECT_EQ(ret, 0);
+
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
+
+    PortraitSessionBeautyParams(portraitSession);
+
+    portraitSession->Release();
 }
 
 /*
@@ -1987,8 +2512,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_002, TestSize.Level
     sptr<HCameraService> camService = (sptr<HCameraService> &)mockHCameraService;
     ASSERT_NE(camService, nullptr);
 
-    camService->OnStart();
-
     std::vector<std::string> cameraIds = {};
     std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList = {};
     int32_t ret = camService->GetCameras(cameraIds, cameraAbilityList);
@@ -1997,8 +2520,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_002, TestSize.Level
     std::vector<std::u16string> args = {};
     ret = camService->Dump(fd, args);
     EXPECT_EQ(ret, 0);
-
-    camService->OnStop();
 }
 
 /*
@@ -2335,7 +2856,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_008, TestSize.Level
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     EXPECT_EQ(session->CommitConfig(), 0);
 
     sptr<CameraOutputCapability> cameraOutputCapability = cameraManager->GetSupportedOutputCapability(cameras[0]);
@@ -2404,7 +2925,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_009, TestSize.Level
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     EXPECT_EQ(session->CommitConfig(), 0);
 
     sptr<CameraOutputCapability> cameraOutputCapability = cameraManager->GetSupportedOutputCapability(cameras[0]);
@@ -2530,7 +3051,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_011, TestSize.Level
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
@@ -2599,7 +3120,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_012, TestSize.Level
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     EXPECT_EQ(session->CommitConfig(), 0);
 
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
@@ -2878,8 +3399,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_016, TestSize.Level
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
-    EXPECT_EQ(camSession->CommitConfig(), 8);
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
+    camSession->CommitConfig();
 
     sptr<StreamOperatorCallback> streamOperatorCallback = new StreamOperatorCallback(camSession);
 
@@ -3014,7 +3535,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_018, TestSize.Level
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
@@ -3082,7 +3603,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_019, TestSize.Level
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
@@ -3146,7 +3667,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_020, TestSize.Level
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
@@ -3211,7 +3732,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_021, TestSize.Level
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
@@ -3273,7 +3794,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_022, TestSize.Level
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     ret = session->CommitConfig();
     EXPECT_EQ(ret, 0);
 
@@ -3331,7 +3852,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_023, TestSize.Level
 
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
     EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams(_, _));
+    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     EXPECT_EQ(session->CommitConfig(), 0);
 
     EXPECT_EQ(session->GetFocusMode(), 2);
@@ -3471,7 +3992,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_026, TestSize.Level
     EXPECT_EQ(streamRepeat->AddDeferredSurface(producer1), CAMERA_INVALID_STATE);
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata1 = nullptr;
-    EXPECT_EQ(streamRepeat->LinkInput(mockStreamOperator, metadata, 0), CAMERA_INVALID_SESSION_CFG);
+    EXPECT_EQ(streamRepeat->LinkInput(mockStreamOperator, metadata, 0), CAMERA_OK);
     streamRepeat->LinkInput(mockStreamOperator, metadata1, 0);
     mockStreamOperator = nullptr;
     streamRepeat->LinkInput(mockStreamOperator, metadata, 0);
@@ -3648,8 +4169,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_031, TestSize.Level
     std::string cameraId = cameras[0]->GetID();
     EXPECT_EQ(cameraHostManager->HCameraHostManager::GetCameras(cameraIds), 0);
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability = cameras[0]->GetMetadata();
-    EXPECT_EQ(cameraHostManager->HCameraHostManager::GetCameraAbility(cameraId, ability), 0);
-    EXPECT_EQ(cameraHostManager->HCameraHostManager::SetFlashlight(cameraId, false), 0);
+    EXPECT_EQ(cameraHostManager->HCameraHostManager::GetCameraAbility(cameraId, ability), 2);
+    EXPECT_EQ(cameraHostManager->HCameraHostManager::SetFlashlight(cameraId, false), 2);
 
     cameraId = "HCameraHostManager";
 
@@ -3675,7 +4196,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_031, TestSize.Level
     status.status = HDI::ServiceManager::V1_0::SERVIE_STATUS_START;
     cameraHostManager->HCameraHostManager::OnReceive(status);
 
-    EXPECT_EQ(cameraHostManager->HCameraHostManager::SetFlashlight(cameraId, false), 0);
+    EXPECT_EQ(cameraHostManager->HCameraHostManager::SetFlashlight(cameraId, false), 2);
 
     std::shared_ptr<MockHCameraHostManager::MockStatusCallback> mockStatusCallback =
     std::make_shared<MockHCameraHostManager::MockStatusCallback>();

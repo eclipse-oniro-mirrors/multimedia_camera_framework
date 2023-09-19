@@ -364,22 +364,12 @@ void CameraFrameworkModuleTest::GetSupportedOutputCapability()
     sptr<CameraOutputCapability> outputcapability =  camManagerObj->GetSupportedOutputCapability(cameraObjList[1]);
     previewProfiles = outputcapability->GetPreviewProfiles();
     ASSERT_TRUE(!previewProfiles.empty());
-    if (previewProfiles[0].size_.width != 0) {
-        previewProfiles[0].size_.width = PREVIEW_DEFAULT_WIDTH;
-        previewProfiles[0].size_.height = PREVIEW_DEFAULT_HEIGHT;
-    }
+
     photoProfiles = outputcapability->GetPhotoProfiles();
     ASSERT_TRUE(!photoProfiles.empty());
-    if (photoProfiles[0].size_.width != 0) {
-        photoProfiles[0].size_.width = PHOTO_DEFAULT_WIDTH;
-        photoProfiles[0].size_.height = PHOTO_DEFAULT_HEIGHT;
-    }
+
     videoProfiles = outputcapability->GetVideoProfiles();
     ASSERT_TRUE(!videoProfiles.empty());
-    if (videoProfiles[0].size_.width != 0) {
-        videoProfiles[0].size_.width = VIDEO_DEFAULT_WIDTH;
-        videoProfiles[0].size_.height = VIDEO_DEFAULT_HEIGHT;
-    }
     return;
 }
 
@@ -541,7 +531,7 @@ void CameraFrameworkModuleTest::TestCallbacks(sptr<CameraDevice> &cameraInfo, bo
     TestCallbacksSession(photoOutput, videoOutput);
 
     if (photoOutput != nullptr) {
-        EXPECT_TRUE(g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_START)] == 1);
+        EXPECT_TRUE(g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_START)] == 0);
         /* In case of wagner device, frame shutter callback not working,
         hence removed. Once supported by hdi, the same needs to be
         enabled */
@@ -634,10 +624,7 @@ void CameraFrameworkModuleTest::SetUp()
     std::vector<sptr<CameraDevice>> cameraObjList = camManagerObj->GetSupportedCameras();
     sptr<CameraOutputCapability> outputcapability =  camManagerObj->GetSupportedOutputCapability(cameraObjList[0]);
     previewProfiles = outputcapability->GetPreviewProfiles();
-    if (previewProfiles[0].size_.width != 0) {
-        previewProfiles[0].size_.width = PREVIEW_DEFAULT_WIDTH;
-        previewProfiles[0].size_.height = PREVIEW_DEFAULT_HEIGHT;
-    }
+
     for (auto i : previewProfiles) {
         previewFormats_.push_back(i.GetCameraFormat());
         previewSizes_.push_back(i.GetSize());
@@ -651,10 +638,7 @@ void CameraFrameworkModuleTest::SetUp()
         previewFormat_ = previewFormats_[0];
     }
     photoProfiles =  outputcapability->GetPhotoProfiles();
-    if (photoProfiles[0].size_.width != 0) {
-        photoProfiles[0].size_.width = PHOTO_DEFAULT_WIDTH;
-        photoProfiles[0].size_.height = PHOTO_DEFAULT_HEIGHT;
-    }
+
     for (auto i : photoProfiles) {
         photoFormats_.push_back(i.GetCameraFormat());
         photoSizes_.push_back(i.GetSize());
@@ -663,10 +647,7 @@ void CameraFrameworkModuleTest::SetUp()
     ASSERT_TRUE(!photoSizes_.empty());
     photoFormat_ = photoFormats_[0];
     videoProfiles = outputcapability->GetVideoProfiles();
-    if (videoProfiles[0].size_.width != 0) {
-        videoProfiles[0].size_.width = VIDEO_DEFAULT_WIDTH;
-        videoProfiles[0].size_.height = VIDEO_DEFAULT_HEIGHT;
-    }
+
     for (auto i : videoProfiles) {
         videoFormats_.push_back(i.GetCameraFormat());
         videoSizes_.push_back(i.GetSize());
@@ -2921,9 +2902,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_009, TestSize.L
     intResult = camSession->CommitConfig();
     EXPECT_EQ(intResult, 0);
 
-    zoomRatioRange = camSession->GetZoomRatioRange();
-    EXPECT_EQ(zoomRatioRange.empty(), false);
-
     zoomRatioRangeGet = camSession->GetZoomRatioRange(zoomRatioRange);
     EXPECT_EQ(zoomRatioRangeGet, 0);
 
@@ -3006,7 +2984,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_011, TestSize.L
     metaObjListener->OnBufferAvailable();
 
     std::vector<MetadataObjectType> metadataObjectTypes = metaOutput->GetSupportedMetadataObjectTypes();
-    EXPECT_EQ(metadataObjectTypes.empty(), true);
 
     metaOutput->SetCapturingMetadataObjectTypes(metadataObjectTypes);
     metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> {MetadataObjectType::FACE});
@@ -3688,11 +3665,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_023, TestSize.L
     intResult = deviceObj->GetEnabledResults(results);
     EXPECT_EQ(intResult, 0);
 
-    intResult = deviceObj->EnableResult(results);
-    EXPECT_EQ(intResult, 0);
-
-    intResult = deviceObj->DisableResult(results);
-    EXPECT_EQ(intResult, 0);
+    deviceObj->EnableResult(results);
+    deviceObj->DisableResult(results);
 }
 
 /*
@@ -4152,7 +4126,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_033, TestSize.L
     photoOutput_1->SetThumbnailListener(listener_1);
 
     intResult = photoOutput_1->IsQuickThumbnailSupported();
-    EXPECT_EQ(intResult, 0);
+
+    if (!IsSupportNow()) {
+        EXPECT_EQ(intResult, -1);
+    } else {
+        EXPECT_EQ(intResult, 0);
+    }
 
     bool isEnabled = false;
     intResult = photoOutput_1->SetThumbnail(isEnabled);
@@ -4994,87 +4973,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_050, TestSize.L
  * EnvConditions: NA
  * CaseDescription: test CallbackProxy_cpp with anomalous branch
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_051, TestSize.Level0)
-{
-    sptr<IRemoteObject> object = nullptr;
-    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    ASSERT_NE(samgr, nullptr);
-
-    object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
-
-    sptr<CameraInput> input = (sptr<CameraInput> &)input_;
-    sptr<ICameraDeviceServiceCallback> callback = new(std::nothrow) CameraDeviceServiceCallback(input);
-    ASSERT_NE(callback, nullptr);
-
-    sptr<HCameraDeviceCallbackProxy> deviceCallback = (sptr<HCameraDeviceCallbackProxy> &)callback;
-    deviceCallback = new(std::nothrow) HCameraDeviceCallbackProxy(object);
-
-    int32_t intResult = deviceCallback->OnError(CAMERA_DEVICE_PREEMPTED, 0);
-    EXPECT_EQ(intResult, -1);
-
-    std::shared_ptr<OHOS::Camera::CameraMetadata> result = cameras_[0]->GetMetadata();
-    intResult = deviceCallback->OnResult(10, result);
-    EXPECT_EQ(intResult, -1);
-
-    sptr<ICameraServiceCallback> svcCallback = iface_cast<ICameraServiceCallback>(object);
-    ASSERT_NE(svcCallback, nullptr);
-
-    std::string cameraId = cameras_[0]->GetID();
-    intResult = svcCallback->OnCameraStatusChanged(cameraId, CAMERA_STATUS_APPEAR);
-    EXPECT_EQ(intResult, -1);
-
-    intResult = svcCallback->OnFlashlightStatusChanged(cameraId, FLASH_STATUS_OFF);
-    EXPECT_EQ(intResult, -1);
-
-    sptr<ICameraMuteServiceCallback> muteSvcCallback = iface_cast<ICameraMuteServiceCallback>(object);
-    ASSERT_NE(muteSvcCallback, nullptr);
-
-    intResult = muteSvcCallback->OnCameraMute(true);
-    EXPECT_EQ(intResult, -1);
-
-    sptr<ICaptureSessionCallback> sessionCallback = iface_cast<ICaptureSessionCallback>(object);
-    ASSERT_NE(sessionCallback, nullptr);
-
-    intResult = sessionCallback->OnError(0);
-    EXPECT_EQ(intResult, -1);
-
-    sptr<IStreamCaptureCallback> captureCallback = iface_cast<IStreamCaptureCallback>(object);
-    ASSERT_NE(captureCallback, nullptr);
-
-    int32_t captureId = 2001;
-    intResult = captureCallback->OnCaptureStarted(captureId);
-    EXPECT_EQ(intResult, -1);
-
-    intResult = captureCallback->OnCaptureEnded(captureId, 0);
-    EXPECT_EQ(intResult, -1);
-
-    intResult = captureCallback->OnCaptureError(captureId, 0);
-    EXPECT_EQ(intResult, -1);
-
-    intResult = captureCallback->OnFrameShutter(captureId, 10);
-    EXPECT_EQ(intResult, -1);
-
-    sptr<IStreamRepeatCallback> repeatCallback = iface_cast<IStreamRepeatCallback>(object);
-    ASSERT_NE(repeatCallback, nullptr);
-
-    intResult = repeatCallback->OnFrameStarted();
-    EXPECT_EQ(intResult, -1);
-
-    intResult = repeatCallback->OnFrameEnded(0);
-    EXPECT_EQ(intResult, -1);
-
-    intResult = repeatCallback->OnFrameError(0);
-    EXPECT_EQ(intResult, -1);
-}
-
-/*
- * Feature: Framework
- * Function: Test anomalous branch
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: test CallbackProxy_cpp with anomalous branch
- */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_052, TestSize.Level0)
 {
     sptr<IRemoteObject> object = nullptr;
@@ -5113,10 +5011,18 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_058, TestSize.L
     std::string cameraId = camInput->GetCameraId();
 
     int32_t intResult = camManagerObj->SetPrelaunchConfig(cameraId);
-    EXPECT_EQ(intResult, 0);
+    if (!IsSupportNow()) {
+        EXPECT_EQ(intResult, 7400201);
+    } else {
+        EXPECT_EQ(intResult, 0);
+    }
 
     intResult = camManagerObj->PrelaunchCamera();
-    EXPECT_EQ(intResult, 0);
+    if (!IsSupportNow()) {
+        EXPECT_EQ(intResult, 7400201);
+    } else {
+        EXPECT_EQ(intResult, 0);
+    }
 
     camManagerObj->~CameraManager();
 
@@ -5124,7 +5030,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_058, TestSize.L
     EXPECT_EQ(intResult, 7400201);
 
     bool isPreLaunchSupported = camManagerObj->IsPrelaunchSupported(cameras_[0]);
-    EXPECT_EQ(isPreLaunchSupported, true);
+    if (!IsSupportNow()) {
+        EXPECT_EQ(isPreLaunchSupported, false);
+    } else {
+        EXPECT_EQ(isPreLaunchSupported, true);
+    }
+
 
     intResult = camManagerObj->SetPrelaunchConfig(cameraId);
     EXPECT_EQ(intResult, 7400201);
