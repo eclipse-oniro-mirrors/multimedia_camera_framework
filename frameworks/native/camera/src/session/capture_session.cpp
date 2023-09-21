@@ -1085,8 +1085,15 @@ float CaptureSession::GetExposureValue()
     }
     int32_t stepNumerator = item.data.r->numerator;
     int32_t stepDenominator = item.data.r->denominator;
-    float step = static_cast<float>(stepNumerator) / static_cast<float>(stepDenominator);
-    float exposureValue = step * exposureCompensation;
+    float exposureValue = 0;
+    if (stepDenominator != 0) {
+        float step = static_cast<float>(stepNumerator) / static_cast<float>(stepDenominator);
+        exposureValue = step * exposureCompensation;
+    } else {
+        MEDIA_ERR_LOG("stepDenominator: %{public}d", stepDenominator);
+    }
+    // float step = static_cast<float>(stepNumerator) / static_cast<float>(stepDenominator);
+    // float exposureValue = step * exposureCompensation;
     MEDIA_DEBUG_LOG("exposureValue: %{public}f", exposureValue);
 
     return exposureValue;
