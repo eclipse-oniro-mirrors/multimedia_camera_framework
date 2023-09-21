@@ -22,6 +22,7 @@
 #include "input/camera_manager.h"
 #include "mode/mode_manager.h"
 #include "session/capture_session.h"
+#include "session/portrait_session.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -43,6 +44,8 @@ public:
     int32_t videoWidth_;
     int32_t videoHeight_;
     sptr<CameraManager> manager_;
+    sptr<ModeManager> modeManager_;
+    sptr<PortraitSession> portraitSession_;
     sptr<CaptureSession> session_;
     sptr<CaptureInput> input_;
     std::vector<sptr<CameraDevice>> cameras_;
@@ -89,6 +92,7 @@ public:
     void TestUnSupportedResolution(int32_t previewWidth, int32_t previewHeight, int32_t photoWidth,
                                    int32_t photoHeight, int32_t videoWidth, int32_t videoHeight);
     bool IsSupportNow();
+    bool IsSupportMode();
 };
 } // CameraStandard
 } // OHOS
