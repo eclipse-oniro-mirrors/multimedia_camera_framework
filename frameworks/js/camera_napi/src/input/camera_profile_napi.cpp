@@ -273,7 +273,7 @@ napi_value CameraVideoProfileNapi::CameraVideoProfileNapiConstructor(napi_env en
         obj->env_ = env;
         obj->videoProfile_ = sVideoProfile_;
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                           CameraVideoProfileNapi::CameraVideoProfileNapiDestructor, nullptr, &(obj->wrapper_));
+                           CameraVideoProfileNapi::CameraVideoProfileNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
             obj.release();
             return thisVar;
