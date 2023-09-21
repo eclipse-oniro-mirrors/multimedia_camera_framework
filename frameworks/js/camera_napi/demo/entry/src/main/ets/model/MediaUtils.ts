@@ -1,4 +1,3 @@
-// @ts-nocheck
 /*
  * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -67,7 +66,7 @@ export default class MediaUtils {
       };
       const fetchFileResult: mediaLibrary.FetchFileResult = await this.mediaTest.getFileAssets(fetchOp);
       Logger.info(TAG, `fetchFileResult.getCount() = ${fetchFileResult.getCount()}`);
-      const fileAssets: Array<FileAsset> = await fetchFileResult.getAllObject();
+      const fileAssets: Array<mediaLibrary.FileAsset> = await fetchFileResult.getAllObject();
       if (fileAssets.length) {
         return fileAssets[0];
       }
@@ -91,56 +90,6 @@ export default class MediaUtils {
       }
     }
     return undefined;
-  }
-
-  async getFileAssetsFromType(mediaType: number): Promise<mediaLibrary.FileAsset> {
-    Logger.info(TAG, `getFileAssetsFromType,mediaType = ${mediaType}`);
-    let fileKeyObj = mediaLibrary.FileKey;
-    let fetchOp = {
-      selections: `${fileKeyObj.MEDIA_TYPE}=?`,
-      selectionArgs: [`${mediaType}`],
-    };
-    const fetchFileResult = await this.mediaTest.getFileAssets(fetchOp);
-    Logger.info(TAG, `getFileAssetsFromType,fetchFileResult.count = ${fetchFileResult.getCount()}`);
-    let fileAssets = [];
-    if (fetchFileResult.getCount() > 0) {
-      fileAssets = await fetchFileResult.getAllObject();
-    }
-    return fileAssets;
-  }
-
-  async getAlbums(): Promise<Array<{
-    albumName: string,
-    count: number,
-    mediaType: mediaLibrary.MediaType
-  }>> {
-    Logger.info(TAG, 'getAlbums begin');
-    let albums = [];
-    const [files, images, videos, audios] = await Promise.all([
-      this.getFileAssetsFromType(mediaLibrary.MediaType.FILE),
-      this.getFileAssetsFromType(mediaLibrary.MediaType.IMAGE),
-      this.getFileAssetsFromType(mediaLibrary.MediaType.VIDEO),
-      this.getFileAssetsFromType(mediaLibrary.MediaType.AUDIO)
-    ]);
-    albums.push({
-      albumName: 'Documents', count: files.length, mediaType: mediaLibrary.MediaType.FILE
-    });
-    albums.push({
-      albumName: 'Pictures', count: images.length, mediaType: mediaLibrary.MediaType.IMAGE
-    });
-    albums.push({
-      albumName: 'Camera', count: videos.length, mediaType: mediaLibrary.MediaType.VIDEO
-    });
-    albums.push({
-      albumName: 'Audios', count: audios.length, mediaType: mediaLibrary.MediaType.AUDIO
-    });
-    return albums;
-  }
-
-  deleteFile(media: mediaLibrary.FileAsset): void {
-    let uri = media.uri;
-    Logger.info(TAG, `deleteFile,uri = ${uri}`);
-    return this.mediaTest.deleteAsset(uri);
   }
 
   onDateChange(callback: () => void): void {
@@ -201,9 +150,15 @@ export default class MediaUtils {
     return undefined;
   }
 
-  getInfoFromType(mediaType: number): void {
+  getInfoFromType(mediaType: number): {
+    prefix: string,
+    suffix: string,
+    directory: number
+  } {
     let result = {
-      prefix: '', suffix: '', directory: 0
+      prefix: '',
+      suffix: '',
+      directory: 0
     };
     switch (mediaType) {
       case mediaLibrary.MediaType.FILE:

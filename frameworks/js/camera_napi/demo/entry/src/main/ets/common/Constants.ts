@@ -3,8 +3,8 @@ export class Constants {
   static readonly MIN_ASPECT_RATIO = 4 / 3;
   static readonly MAX_ASPECT_RATIO = 16 / 9;
 
-  static readonly VIDEO_MAX_WIDTH = 1920;
-  static readonly PHOTO_MAX_WIDTH = 1920;
+  static readonly VIDEO_MAX_WIDTH = 2048;
+  static readonly PHOTO_MAX_WIDTH = 2048;
   static readonly SURFACE_BOTTOM_MARGIN = 50;
 
   // device type

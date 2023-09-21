@@ -1,4 +1,3 @@
-// @ts-nocheck
 /*
  * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the 'License');
@@ -19,9 +18,9 @@ import fileio from '@ohos.fileio';
 import image from '@ohos.multimedia.image';
 import media from '@ohos.multimedia.media';
 import mediaLibrary from '@ohos.multimedia.mediaLibrary';
+import { BusinessError } from '@ohos.base';
 import Logger from '../model/Logger';
 import MediaUtils from '../model/MediaUtils';
-import prompt from '@ohos.prompt';
 import { Constants } from '../common/Constants';
 
 const cameraSize = {
@@ -53,7 +52,7 @@ class CameraService {
   private videoRecorder: media.AVRecorder = undefined;
   private videoOutput: camera.VideoOutput = undefined;
   private handleTakePicture: (photoUri: string) => void = undefined;
-  private videoConfig: media.VideoRecorderConfig = {
+  private videoConfig: media.AVRecorderConfig = {
     audioSourceType: media.AudioSourceType.AUDIO_SOURCE_TYPE_MIC,
     videoSourceType: media.VideoSourceType.VIDEO_SOURCE_TYPE_SURFACE_YUV,
     profile: {
@@ -113,14 +112,14 @@ class CameraService {
       Logger.debug(TAG, `createImageReceiver value: ${this.mReceiver}`);
       this.mReceiver.on('imageArrival', (): void => {
         Logger.debug(TAG, 'imageArrival start');
-        this.mReceiver.readNextImage((errCode: number, imageObj: image.Image): void => {
+        this.mReceiver.readNextImage((errCode: BusinessError, imageObj: image.Image): void => {
           Logger.info(TAG, 'readNextImage start');
           Logger.info(TAG, `err: ${JSON.stringify(errCode)}`);
           if (errCode || imageObj === undefined) {
             Logger.error(TAG, 'readNextImage failed');
             return;
           }
-          imageObj.getComponent(image.ComponentType.JPEG, (errCode: number, component: image.Component): void => {
+          imageObj.getComponent(image.ComponentType.JPEG, (errCode: BusinessError, component: image.Component): void => {
             Logger.debug(TAG, 'getComponent start');
             Logger.info(TAG, `err: ${JSON.stringify(errCode)}`);
             if (errCode || component === undefined) {
@@ -138,7 +137,8 @@ class CameraService {
         });
       });
     } catch (error) {
-      Logger.error(TAG, `savePicture err: ${JSON.stringify(error)}`);
+      let err = error as BusinessError;
+      Logger.error(TAG, `savePicture err: ${JSON.stringify(err)}`);
     }
   }
 
@@ -160,7 +160,8 @@ class CameraService {
       if (this.handleTakePicture) {
         this.handleTakePicture(imgPhotoUri);
       }
-    } catch (err) {
+    } catch (error) {
+      let err = error as BusinessError;
       Logger.error(TAG, `savePicture err: ${JSON.stringify(err)}`);
     }
   }
@@ -175,6 +176,7 @@ class CameraService {
     let indexNumber = 2;
     return Math.abs(left - right) < Number.EPSILON * Math.pow(baseNumber, indexNumber);
   }
+
   /**
    * 初始化
    */
@@ -187,49 +189,71 @@ class CameraService {
       this.getCameraManagerFn();
       // 获取支持指定的相机设备对象
       this.getSupportedCamerasFn();
+      const deviceType = AppStorage.get<string>('deviceType');
       let profiles = this.cameraManager.getSupportedOutputCapability(this.cameras[cameraDeviceIndex]);
       this.videoProfiles = profiles.videoProfiles;
-      let defaultAspectRatio: number = AppStorage.Get<number>('defaultAspectRatio');
-      for (let index = 0; index < profiles.previewProfiles.length; index++) {
+      let defaultAspectRatio: number = AppStorage.get<number>('defaultAspectRatio');
+      for (let index = profiles.previewProfiles.length - 1; index >= 0; index--) {
         const previewProfile = profiles.previewProfiles[index];
         if (this.withinErrorMargin(defaultAspectRatio, previewProfile.size.width / previewProfile.size.height)) {
-          if (previewProfile.size.width < Constants.PHOTO_MAX_WIDTH) {
-            this.previewProfilesObj.size.width = previewProfile.size.width;
-            this.previewProfilesObj.size.height = previewProfile.size.height;
-            this.previewProfilesObj.format = previewProfile.format;
+          if (previewProfile.size.width <= Constants.PHOTO_MAX_WIDTH &&
+            previewProfile.size.height <= Constants.PHOTO_MAX_WIDTH) {
+            let previewProfileTemp = {
+              format: previewProfile.format,
+              size: {
+                width: previewProfile.size.width,
+                height: previewProfile.size.height
+              }
+            };
+            this.previewProfilesObj = previewProfileTemp;
             Logger.debug(TAG, `previewProfilesObj: ${JSON.stringify(this.previewProfilesObj)}`);
             break;
           }
         }
       }
-      for (let index = 0; index < profiles.photoProfiles.length; index++) {
+      for (let index = profiles.photoProfiles.length - 1; index >= 0; index--) {
         const photoProfile = profiles.photoProfiles[index];
         if (this.withinErrorMargin(defaultAspectRatio, photoProfile.size.width / photoProfile.size.height)) {
-          if (photoProfile.size.width < Constants.PHOTO_MAX_WIDTH) {
-            this.photoProfilesObj.size.width = photoProfile.size.width;
-            this.photoProfilesObj.size.height = photoProfile.size.height;
-            this.photoProfilesObj.format = photoProfile.format;
+          if (photoProfile.size.width <= Constants.PHOTO_MAX_WIDTH &&
+            photoProfile.size.height <= Constants.PHOTO_MAX_WIDTH) {
+            let photoProfileTemp = {
+              format: photoProfile.format,
+              size: {
+                width: photoProfile.size.width,
+                height: photoProfile.size.height
+              }
+            };
+            this.photoProfilesObj = photoProfileTemp;
             Logger.debug(TAG, `photoProfilesObj: ${JSON.stringify(this.photoProfilesObj)}`);
             break;
           }
         }
       }
-      if (AppStorage.Get<string>('deviceType') === Constants.DEFAULT) {
-        for (let index = 0; index < this.videoProfiles.length; index++) {
+      if (deviceType === Constants.DEFAULT) {
+        for (let index = this.videoProfiles.length - 1; index >= 0; index--) {
           const videoProfile = this.videoProfiles[index];
-          Logger.debug(TAG, `videoProfile: ${JSON.stringify(videoProfile)}`);
           if (this.withinErrorMargin(defaultAspectRatio, videoProfile.size.width / videoProfile.size.height)) {
-            if (videoProfile.size.width < Constants.VIDEO_MAX_WIDTH) {
-              this.videoProfilesObj.size.width = videoProfile.size.width;
-              this.videoProfilesObj.size.height = videoProfile.size.height;
-              this.videoProfilesObj.format = videoProfile.format;
+            if (videoProfile.size.width <= Constants.VIDEO_MAX_WIDTH &&
+              videoProfile.size.height <= Constants.VIDEO_MAX_WIDTH) {
+              let videoProfileTemp = {
+                format: videoProfile.format,
+                size: {
+                  width: videoProfile.size.width,
+                  height: videoProfile.size.height
+                },
+                frameRateRange: {
+                  min: Constants.VIDEO_FRAME_30,
+                  max: Constants.VIDEO_FRAME_30
+                }
+              };
               if ((globalThis.settingDataObj.videoFrame === 0 ? Constants.VIDEO_FRAME_15 : Constants.VIDEO_FRAME_30) ===
               videoProfile.frameRateRange.min) {
-                this.videoProfilesObj.frameRateRange.min = videoProfile.frameRateRange.min;
-                this.videoProfilesObj.frameRateRange.max = videoProfile.frameRateRange.max;
+                videoProfileTemp.frameRateRange.min = videoProfile.frameRateRange.min;
+                videoProfileTemp.frameRateRange.max = videoProfile.frameRateRange.max;
                 Logger.debug(TAG, `videoProfilesObj: ${JSON.stringify(this.videoProfilesObj)}`);
                 break;
               }
+              this.videoProfilesObj = videoProfileTemp;
             }
           }
         }
@@ -249,29 +273,25 @@ class CameraService {
       this.photoOutPutCallBack();
       // 镜头状态回调
       this.onCameraStatusChange();
-      // 相机禁用回调
-      this.onCameraMuteChange();
       // 监听CameraInput的错误事件
       this.onCameraInputChange();
       // 会话流程
       await this.sessionFlowFn();
-    } catch (err) {
+    } catch (error) {
+      let err = error as BusinessError;
       Logger.error(TAG, `initCamera fail: ${JSON.stringify(err)}`);
     }
   }
 
   isVideoFrameSupportedFn(videoFrame: number): boolean {
-    let res: boolean | undefined = this.videoProfiles.find((videoProfile: camera.VideoProfile) => {
+    let videoProfile: camera.VideoProfile | undefined = this.videoProfiles.find((videoProfile: camera.VideoProfile) => {
       return videoProfile.size.height === this.videoProfilesObj.size.height &&
-      videoProfile.size.width === this.videoProfilesObj.size.width &&
-      videoProfile.format === this.videoProfilesObj.format &&
-      videoProfile.frameRateRange.min === videoFrame &&
-      videoProfile.frameRateRange.max === videoFrame;
+        videoProfile.size.width === this.videoProfilesObj.size.width &&
+        videoProfile.format === this.videoProfilesObj.format &&
+        videoProfile.frameRateRange.min === videoFrame &&
+        videoProfile.frameRateRange.max === videoFrame;
     });
-    if (res === undefined) {
-      res = false;
-    }
-    return res;
+    return videoProfile === undefined ? false : true;
   }
 
   /**
@@ -281,11 +301,16 @@ class CameraService {
     // 检测曝光模式是否支持
     let isSupported = this.captureSession.isExposureModeSupported(aeMode);
     Logger.info(TAG, `isExposureModeSupported success, isSupported: ${isSupported}`);
-    prompt.showToast({
-      message: isSupported ? '支持此模式' : '不支持此模式',
-      duration: 2000,
-      bottom: '50%'
-    });
+    try {
+      globalThis.promptAction.showToast({
+        message: isSupported ? '支持此模式' : '不支持此模式',
+        duration: 2000,
+        bottom: '50%'
+      });
+    } catch (error) {
+      let err = error as BusinessError;
+      Logger.error(TAG, `showToast err: ${JSON.stringify(err)}`);
+    }
     this.captureSession.setExposureMode(aeMode);
     let exposureMode = this.captureSession.getExposureMode();
     Logger.info(TAG, `getExposureMode success, exposureMode: ${exposureMode}`);
@@ -319,11 +344,18 @@ class CameraService {
   }
 
   /**
+   * 是否支持对应对焦模式
+   */
+  isFocusModeSupported(focusMode: camera.FocusMode): boolean {
+    return this.captureSession.isFocusModeSupported(focusMode);
+  }
+
+  /**
    * 对焦模式
    */
   isFocusMode(focusMode: camera.FocusMode): void {
     // 检测对焦模式是否支持
-    let isSupported = this.captureSession.isFocusModeSupported(focusMode);
+    let isSupported = this.isFocusModeSupported(focusMode);
     Logger.info(TAG, `isFocusModeSupported isSupported: ${JSON.stringify(isSupported)}`);
     // 设置对焦模式
     this.captureSession.setFocusMode(focusMode);
@@ -371,21 +403,24 @@ class CameraService {
       let zoomRatioRange = this.captureSession.getZoomRatioRange();
       Logger.info(TAG, `getZoomRatioRange success: ${JSON.stringify(zoomRatioRange)}`);
     } catch (error) {
-      Logger.error(TAG, `getZoomRatioRange fail: ${JSON.stringify(error)}`);
+      let err = error as BusinessError;
+      Logger.error(TAG, `getZoomRatioRange fail: ${JSON.stringify(err)}`);
     }
 
     try {
       this.captureSession.setZoomRatio(zoomRatio);
       Logger.info(TAG, 'setZoomRatioFn success');
     } catch (error) {
-      Logger.error(TAG, `setZoomRatioFn fail: ${JSON.stringify(error)}`);
+      let err = error as BusinessError;
+      Logger.error(TAG, `setZoomRatioFn fail: ${JSON.stringify(err)}`);
     }
 
     try {
       let nowZoomRatio = this.captureSession.getZoomRatio();
       Logger.info(TAG, `getZoomRatio nowZoomRatio: ${JSON.stringify(nowZoomRatio)}`);
     } catch (error) {
-      Logger.error(TAG, `getZoomRatio fail: ${JSON.stringify(error)}`);
+      let err = error as BusinessError;
+      Logger.error(TAG, `getZoomRatio fail: ${JSON.stringify(err)}`);
     }
   }
 
@@ -395,11 +430,16 @@ class CameraService {
   isVideoStabilizationModeSupportedFn(videoStabilizationMode: camera.VideoStabilizationMode): void {
     // 查询是否支持指定的视频防抖模式
     let isVideoStabilizationModeSupported: boolean = this.captureSession.isVideoStabilizationModeSupported(videoStabilizationMode);
-    prompt.showToast({
-      message: isVideoStabilizationModeSupported ? '支持此模式' : '不支持此模式',
-      duration: 2000,
-      bottom: '50%'
-    });
+    try {
+      globalThis.promptAction.showToast({
+        message: isVideoStabilizationModeSupported ? '支持此模式' : '不支持此模式',
+        duration: 2000,
+        bottom: '50%'
+      });
+    } catch (error) {
+      let err = error as BusinessError;
+      Logger.error(TAG, `showToast err: ${JSON.stringify(err)}`);
+    }
     Logger.info(TAG, `isVideoStabilizationModeSupported success: ${JSON.stringify(isVideoStabilizationModeSupported)}`);
     // 设置视频防抖
     this.captureSession.setVideoStabilizationMode(videoStabilizationMode);
@@ -486,10 +526,6 @@ class CameraService {
     this.videoConfig.url = `fd://${this.fd}`;
     await this.videoRecorder.prepare(this.videoConfig);
     let videoId = await this.videoRecorder.getInputSurface();
-    this.videoProfilesObj.frameRateRange = {
-      min: Constants.VIDEO_FRAME_30,
-      max: Constants.VIDEO_FRAME_30
-    };
     this.videoOutput = this.cameraManager.createVideoOutput(this.videoProfilesObj, videoId);
     Logger.info(TAG, 'createVideoOutput end');
   }
@@ -502,7 +538,7 @@ class CameraService {
       this.videoOutput.stop();
       this.videoOutputStatus = false;
       Logger.info(TAG, 'pauseVideo success');
-    }).catch((err: { code?: number }): void => {
+    }).catch((err: BusinessError): void => {
       Logger.error(TAG, `pauseVideo failed: ${JSON.stringify(err)}`);
     });
   }
@@ -533,17 +569,18 @@ class CameraService {
 
   async initAVRecorder(): Promise<void> {
     if (this.videoRecorder !== undefined) {
-      if (AppStorage.Get<boolean>('isRecorder')) {
+      if (AppStorage.get<boolean>('isRecorder')) {
         await this.stopVideo();
       }
       await this.videoRecorder.release()
         .catch((err: { code?: number }): void => {
           Logger.error(TAG, `videoRecorder release failed, ${JSON.stringify(err)}`);
         });
-      AppStorage.Set<boolean>('isRecorder', false);
+      AppStorage.set<boolean>('isRecorder', false);
     }
     this.videoRecorder = await media.createAVRecorder();
   }
+
   /**
    * 开始录制
    */
@@ -554,17 +591,17 @@ class CameraService {
       this.captureSession.beginConfig();
       await this.initAVRecorder();
       await this.initUrl();
-      let deviceType = AppStorage.Get<string>('deviceType');
+      let deviceType = AppStorage.get<string>('deviceType');
       if (deviceType === Constants.DEFAULT) {
-        this.videoConfig.profile.videoSourceType = media.VideoSourceType.VIDEO_SOURCE_TYPE_SURFACE_ES;
+        this.videoConfig.videoSourceType = media.VideoSourceType.VIDEO_SOURCE_TYPE_SURFACE_ES;
       }
       if (deviceType === Constants.PHONE) {
-        this.videoConfig.profile.videoSourceType = media.VideoSourceType.VIDEO_SOURCE_TYPE_SURFACE_YUV;
+        this.videoConfig.videoSourceType = media.VideoSourceType.VIDEO_SOURCE_TYPE_SURFACE_YUV;
         this.videoConfig.profile.videoCodec = media.CodecMimeType.VIDEO_MPEG4;
         this.videoConfig.rotation = this.photoRotationMap.rotation90;
       }
       if (deviceType === Constants.TABLET) {
-        this.videoConfig.profile.videoSourceType = media.VideoSourceType.VIDEO_SOURCE_TYPE_SURFACE_YUV;
+        this.videoConfig.videoSourceType = media.VideoSourceType.VIDEO_SOURCE_TYPE_SURFACE_YUV;
       }
       this.videoConfig.profile.videoFrameWidth = this.videoProfilesObj.size.width;
       this.videoConfig.profile.videoFrameHeight = this.videoProfilesObj.size.height;
@@ -584,9 +621,10 @@ class CameraService {
       await this.videoOutput.start();
       this.videoOutputStatus = true;
       await this.videoRecorder.start();
-      AppStorage.Set<boolean>('isRecorder', true);
+      AppStorage.set<boolean>('isRecorder', true);
       Logger.info(TAG, 'startVideo end');
-    } catch (err) {
+    } catch (error) {
+      let err = error as BusinessError;
       Logger.error(TAG, `startVideo err: ${JSON.stringify(err)}`);
     }
   }
@@ -605,7 +643,7 @@ class CameraService {
         await this.videoOutput.stop();
         this.videoOutputStatus = false;
       }
-      AppStorage.Set<boolean>('isRecorder', false);
+      AppStorage.set<boolean>('isRecorder', false);
       await this.videoOutput.release();
       this.videoOutput = undefined;
       if (this.fileAsset) {
@@ -613,7 +651,8 @@ class CameraService {
         return this.fileAsset;
       }
       return undefined;
-    } catch (err) {
+    } catch (error) {
+      let err = error as BusinessError;
       Logger.error(TAG, 'stopVideo err: ' + JSON.stringify(err));
       return undefined;
     }
@@ -627,22 +666,28 @@ class CameraService {
       if (this.previewOutput) {
         await this.previewOutput.stop();
         await this.previewOutput.release();
+        this.previewOutput = null;
       }
       if (this.photoOutPut) {
         await this.photoOutPut.release();
+        this.photoOutPut = null;
       }
       if (this.videoOutput) {
         await this.videoOutput.release();
+        this.videoOutput = null;
       }
       if (this.captureSession) {
         await this.captureSession.release();
+        this.captureSession = null;
       }
       if (this.cameraInput) {
         await this.cameraInput.close();
+        this.cameraInput = null;
       }
       Logger.info(TAG, 'releaseCamera success');
-    } catch {
-      Logger.error(TAG, 'releaseCamera fail');
+    } catch (error) {
+      let err = error as BusinessError;
+      Logger.error(TAG, `releaseCamera fail: error: ${JSON.stringify(err)}`);
     }
   }
 
@@ -664,7 +709,8 @@ class CameraService {
       this.cameraManager = camera.getCameraManager(globalThis.abilityContext);
       Logger.info(TAG, `getCameraManager success: ${this.cameraManager}`);
     } catch (error) {
-      Logger.error(TAG, `getCameraManager failed: ${JSON.stringify(error)}`);
+      let err = error as BusinessError;
+      Logger.error(TAG, `getCameraManager failed: ${JSON.stringify(err)}`);
     }
   }
 
@@ -676,7 +722,8 @@ class CameraService {
       this.cameras = this.cameraManager.getSupportedCameras();
       Logger.info(TAG, `getSupportedCameras success: ${this.cameras}, length: ${this.cameras.length}`);
     } catch (error) {
-      Logger.error(TAG, `getSupportedCameras failed: ${JSON.stringify(error)}`);
+      let err = error as BusinessError;
+      Logger.error(TAG, `getSupportedCameras failed: ${JSON.stringify(err)}`);
     }
   }
 
@@ -685,7 +732,6 @@ class CameraService {
    */
   async getSupportedOutputCapabilityFn(cameraDeviceIndex: number): Promise<void> {
     this.cameraOutputCapability = this.cameraManager.getSupportedOutputCapability(this.cameras[cameraDeviceIndex]);
-    Logger.info(TAG, `getSupportedOutputCapabilityFn supportedMetadataObjectTypes: ${JSON.stringify(this.cameraOutputCapability.supportedMetadataObjectTypes)}`);
   }
 
   /**
@@ -696,7 +742,8 @@ class CameraService {
       this.previewOutput = this.cameraManager.createPreviewOutput(photoProfilesObj, surfaceId);
       Logger.info(TAG, `createPreviewOutput success: ${this.previewOutput}`);
     } catch (error) {
-      Logger.error(TAG, `createPreviewOutput failed: ${JSON.stringify(error)}`);
+      let err = error as BusinessError;
+      Logger.error(TAG, `createPreviewOutput failed: ${JSON.stringify(err)}`);
     }
   }
 
@@ -725,7 +772,8 @@ class CameraService {
       await this.cameraInput.open();
       Logger.info(TAG, 'cameraInput open success');
     } catch (error) {
-      Logger.error(TAG, `createCameraInput failed : ${JSON.stringify(error)}`);
+      let err = error as BusinessError;
+      Logger.error(TAG, `createCameraInput failed : ${JSON.stringify(err)}`);
     }
   }
 
@@ -754,7 +802,8 @@ class CameraService {
       await this.captureSession.start();
       this.isFocusMode(globalThis.settingDataObj.focusMode);
       Logger.info(TAG, 'sessionFlowFn success');
-    } catch (err) {
+    } catch (error) {
+      let err = error as BusinessError;
       Logger.error(TAG, `sessionFlowFn fail : ${JSON.stringify(err)}`);
     }
   }
@@ -764,16 +813,16 @@ class CameraService {
    */
   photoOutPutCallBack(): void {
     // 监听拍照开始
-    this.photoOutPut.on('captureStart', (err: { code?: number }, captureId: number): void => {
+    this.photoOutPut.on('captureStart', (err: BusinessError, captureId: number): void => {
       Logger.info(TAG, `photoOutPutCallBack captureStart captureId success: ${captureId}`);
     });
     // 监听拍照帧输出捕获
     // 获取时间戳转化异常
-    this.photoOutPut.on('frameShutter', (err: { code?: number }, frameShutterInfo: camera.FrameShutterInfo): void => {
+    this.photoOutPut.on('frameShutter', (err: BusinessError, frameShutterInfo: camera.FrameShutterInfo): void => {
       Logger.info(TAG, `photoOutPutCallBack frameShutter captureId: ${frameShutterInfo.captureId}, timestamp: ${frameShutterInfo.timestamp}`);
     });
     // 监听拍照结束
-    this.photoOutPut.on('captureEnd', (err: { code?: number }, captureEndInfo: camera.CaptureEndInfo): void => {
+    this.photoOutPut.on('captureEnd', (err: BusinessError, captureEndInfo: camera.CaptureEndInfo): void => {
       Logger.info(TAG, `photoOutPutCallBack captureEnd captureId: ${captureEndInfo.captureId}, frameCount: ${captureEndInfo.frameCount}`);
     });
   }
@@ -782,13 +831,14 @@ class CameraService {
    * 监听预览事件
    */
   previewOutputCallBack(): void {
+    Logger.info(TAG, 'previewOutputCallBack is called');
     this.previewOutput.on('frameStart', (): void => {
       Logger.debug(TAG, 'Preview frame started');
     });
     this.previewOutput.on('frameEnd', (): void => {
       Logger.debug(TAG, 'Preview frame ended');
     });
-    this.previewOutput.on('error', (previewOutputError: { code?: number }): void => {
+    this.previewOutput.on('error', (previewOutputError: BusinessError): void => {
       Logger.info(TAG, `Preview output err: ${JSON.stringify(previewOutputError)}`);
     });
   }
@@ -803,7 +853,7 @@ class CameraService {
     this.videoOutput.on('frameEnd', (): void => {
       Logger.info(TAG, 'onVideoOutputChange frame frameEnd');
     });
-    this.videoOutput.on('error', (videoOutputError: { code?: number }) => {
+    this.videoOutput.on('error', (videoOutputError: BusinessError) => {
       Logger.error(TAG, `onVideoOutputChange fail: ${JSON.stringify(videoOutputError)}`);
     });
   }
@@ -812,18 +862,9 @@ class CameraService {
    * 镜头状态回调
    */
   onCameraStatusChange(): void {
-    this.cameraManager.on('cameraStatus', (err: { code?: number }, cameraStatusInfo): void => {
+    this.cameraManager.on('cameraStatus', (err: BusinessError, cameraStatusInfo: camera.CameraStatusInfo): void => {
       Logger.info(TAG, `onCameraStatusChange cameraStatus success, cameraId: ${cameraStatusInfo.camera.cameraId},
       status: ${cameraStatusInfo.status}`);
-    });
-  }
-
-  /**
-   * 相机禁用回调
-   */
-  onCameraMuteChange(): void {
-    this.cameraManager.on('cameraMute', (cameraMuteStatus: boolean): void => {
-      Logger.info(TAG, `onCameraMuteChange cameraMute success bol: ${cameraMuteStatus}`);
     });
   }
 
@@ -831,7 +872,7 @@ class CameraService {
    * 监听CameraInput的错误事件
    */
   onCameraInputChange(): void {
-    this.cameraInput.on('error', this.cameras[globalThis.cameraDeviceIndex], (cameraInputError: { code?: number }): void => {
+    this.cameraInput.on('error', this.cameras[globalThis.cameraDeviceIndex], (cameraInputError: BusinessError): void => {
       Logger.info(TAG, `onCameraInputChange cameraInput error code: ${cameraInputError.code}`);
     });
   }
@@ -840,7 +881,7 @@ class CameraService {
    * 监听焦距的状态变化
    */
   onFocusStateChange(): void {
-    this.captureSession.on('focusStateChange', (focusState: camera.FocusState): void => {
+    this.captureSession.on('focusStateChange', (err: BusinessError, focusState: camera.FocusState): void => {
       Logger.info(TAG, `onFocusStateChange focusStateChange success : ${focusState}`);
     });
   }
@@ -849,7 +890,7 @@ class CameraService {
    * 监听拍照会话的错误事件
    */
   onCaptureSessionErrorChange(): void {
-    this.captureSession.on('error', (captureSessionError: { code: number }): void => {
+    this.captureSession.on('error', (captureSessionError: BusinessError): void => {
       Logger.info(TAG, 'onCaptureSessionErrorChange fail: ' + JSON.stringify(captureSessionError.code));
     });
   }

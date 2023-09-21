@@ -68,8 +68,8 @@ export struct FocusAreaPage {
       }
     })
     .onClick((event: ClickEvent) => {
-      AppStorage.SetOrCreate<boolean>('flashingBol', true);
-      AppStorage.SetOrCreate<boolean>('countdownBol', true);
+      AppStorage.setOrCreate<boolean>('flashingBol', true);
+      AppStorage.setOrCreate<boolean>('countdownBol', true);
     })
     // 单指竖直方向拖动触发该手势事件
     .gesture(

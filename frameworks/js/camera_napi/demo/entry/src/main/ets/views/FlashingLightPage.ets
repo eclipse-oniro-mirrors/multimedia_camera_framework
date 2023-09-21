@@ -72,7 +72,7 @@ export struct FlashingLightPage {
           .backgroundColor('rgba(255,255,255,0.20)')
           .borderRadius('50px')
           .onClick(() => {
-            AppStorage.SetOrCreate<boolean>('countdownBol', true);
+            AppStorage.setOrCreate<boolean>('countdownBol', true);
             this.flashingBol = false;
           })
         }

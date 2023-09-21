@@ -63,10 +63,22 @@ Note: If the text contains special characters, please escape them according to t
                 <filteritem type="filename" name="*.png" desc="Camera framework png files."/>
             </filefilter>
 			<filefilter name="defaultFilter" desc="Files not to check">
-				<filteritem type="filename" name="frameworks/js/camera_napi/camerademo/**/*.ets" desc="Camera framework ets files."/>
-				<filteritem type="filepath" name="frameworks/js/camera_napi/camerademo/.*.json5" desc="build config file"/>
-				<filteritem type="filepath" name="frameworks/js/camera_napi/camerademo/**/.*.json5" desc="build config file"/>
+				<filteritem type="filename" name="frameworks/js/camera_napi/demo/**/*.ets" desc="Camera framework ets files."/>
+				<filteritem type="filepath" name="frameworks/js/camera_napi/demo/.*.json5" desc="build config file"/>
+				<filteritem type="filepath" name="frameworks/js/camera_napi/demo/**/.*.json5" desc="build config file"/>
+                <filteritem type="filename" name="frameworks/js/camera_napi/demo/hvigor/*.js|*.json5" desc="build config file"/>
+                <filteritem type="filename" name="frameworks/js/camera_napi/demo/hvigorw" desc="Build Files"/>
+                <filteritem type="filename" name="frameworks/js/camera_napi/demo/hvigorw.bat" desc="Build Files"/>
 			</filefilter>
+            <filefilter name="copyrightPolicyFilter" desc="Filters for copyright header policies">
+                <filteritem type="filename" name="hvigorw" desc="Build Files"/>
+                <filteritem type="filename" name="hvigorw.bat" desc="Build Files"/>
+            </filefilter>
+
+            <filefilter name="defaultPolicyFilter" desc="Filters for LICENSE file policies">
+                <filteritem type="filename" name="hvigorw" desc="Build Files"/>
+                <filteritem type="filename" name="hvigorw.bat" desc="Build Files"/>
+            </filefilter>
         </filefilterlist>
     </oatconfig>
 </configuration>

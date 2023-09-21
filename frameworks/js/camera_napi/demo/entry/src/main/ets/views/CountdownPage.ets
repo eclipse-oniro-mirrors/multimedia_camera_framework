@@ -39,7 +39,7 @@ export struct CountdownPage {
           .borderRadius('50px')
           .onClick(() => {
             Logger.debug(TAG, 'onClick');
-            AppStorage.SetOrCreate<boolean>('flashingBol', true);
+            AppStorage.setOrCreate<boolean>('flashingBol', true);
             this.countdownBol = false;
           })
         }
@@ -62,6 +62,7 @@ export struct CountdownPage {
         .height('80vp')
         .onClick(() => {
           this.countdownBol = false;
+          AppStorage.setOrCreate<boolean>('flashingBol', true);
         })
       }
       if (!this.countdownBol) {
@@ -70,6 +71,10 @@ export struct CountdownPage {
             .width('35vp')
             .height('35vp')
             .margin({ top: 10 })
+            .onClick(() => {
+              this.countdownBol = true;
+              AppStorage.setOrCreate<boolean>('flashingBol', true);
+            })
           ForEach(this.countdownListData, (item) => {
             Text(item)
               .fontSize(21)
