@@ -1092,8 +1092,6 @@ float CaptureSession::GetExposureValue()
     } else {
         MEDIA_ERR_LOG("stepDenominator: %{public}d", stepDenominator);
     }
-    // float step = static_cast<float>(stepNumerator) / static_cast<float>(stepDenominator);
-    // float exposureValue = step * exposureCompensation;
     MEDIA_DEBUG_LOG("exposureValue: %{public}f", exposureValue);
 
     return exposureValue;
