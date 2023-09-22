@@ -2481,7 +2481,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_047, TestSize.Le
 
     portraitSession->UnlockForControl();
 
-    EXPECT_EQ(portraitSession->GetBeauty(beautyLists[3]),rangeLists[0]);
+    EXPECT_EQ(portraitSession->GetBeauty(beautyLists[3]), rangeLists[0]);
 
     intResult = portraitSession->Start();
     EXPECT_EQ(intResult, 0);
