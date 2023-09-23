@@ -264,22 +264,7 @@ std::vector<float> CameraDevice::GetExposureBiasRange()
     }
     MEDIA_DEBUG_LOG("Exposure hdi compensation min: %{public}d, max: %{public}d", range[minIndex], range[maxIndex]);
 
-    ret = Camera::FindCameraMetadataItem(metadata_->get(), OHOS_CONTROL_AE_COMPENSATION_STEP, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("Failed to get exposure compensation step with return code %{public}d", ret);
-        return {};
-    }
-
-    int32_t stepNumerator = item.data.r->numerator;
-    int32_t stepDenominator = item.data.r->denominator;
-    float step = static_cast<float>(stepNumerator) / static_cast<float>(stepDenominator);
-    MEDIA_DEBUG_LOG("Exposure step numerator: %{public}d, denominatormax: %{public}d, step: %{public}f",
-        stepNumerator, stepDenominator, step);
-
-    exposureBiasRange_ = {step * range[minIndex], step * range[maxIndex]};
-
-    MEDIA_DEBUG_LOG("Exposure compensation min: %{public}f, max: %{public}f",
-        exposureBiasRange_[minIndex], exposureBiasRange_[maxIndex]);
+    exposureBiasRange_ = {range[minIndex], range[maxIndex]};
     return exposureBiasRange_;
 }
 } // namespace CameraStandard
