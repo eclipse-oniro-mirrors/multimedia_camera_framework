@@ -563,6 +563,16 @@ bool CameraFrameworkModuleTest::IsSupportNow()
     return true;
 }
 
+bool CameraFrameworkModuleTest::IsSupportMode()
+{
+    std::vector<CameraMode> modes = modeManager_->GetSupportedModes(cameras_[0]);
+    if (modes.size() == 0) {
+        MEDIA_ERR_LOG("IsSupportMode: modes.size is null");
+        return false;
+    }
+    return true;
+}
+
 void CameraFrameworkModuleTest::SetUpTestCase(void) {}
 void CameraFrameworkModuleTest::TearDownTestCase(void) {}
 
@@ -619,6 +629,9 @@ void CameraFrameworkModuleTest::SetUp()
 
     input_ = manager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input_, nullptr);
+
+    modeManager_ = ModeManager::GetInstance();
+    ASSERT_NE(modeManager_, nullptr);
 
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     std::vector<sptr<CameraDevice>> cameraObjList = camManagerObj->GetSupportedCameras();
@@ -2254,6 +2267,300 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_043, TestSize.Le
 
     session_->Stop();
     metaOutput->Release();
+}
+
+/* Feature: Framework
+ * Function: Test preview/capture with portrait session's portraitEffect
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test preview/capture with portrait session's portraitEffect
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_045, TestSize.Level0)
+{
+    if (!IsSupportMode()) {
+        return;
+    }
+    sptr<ModeManager> modeManagerObj = ModeManager::GetInstance();
+    ASSERT_NE(modeManagerObj, nullptr);
+
+    std::vector<CameraMode> modes = modeManagerObj->GetSupportedModes(cameras_[0]);
+    ASSERT_TRUE(modes.size() != 0);
+
+    sptr<CameraOutputCapability> modeAbility = modeManagerObj->GetSupportedOutputCapability(cameras_[0], modes[3]);
+    ASSERT_NE(modeAbility, nullptr);
+
+
+    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(modes[3]);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<PortraitSession> portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
+    ASSERT_NE(portraitSession, nullptr);
+
+    int32_t intResult = portraitSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = portraitSession->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = portraitSession->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = portraitSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = portraitSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    portraitSession->LockForControl();
+
+    std::vector<PortraitEffect> effects= portraitSession->GetSupportedPortraitEffects();
+    if (!effects.empty()) {
+        portraitSession->SetPortraitEffect(effects[0]);
+    }
+
+    portraitSession->UnlockForControl();
+
+    EXPECT_EQ(portraitSession->GetPortraitEffect(), effects[0]);
+
+    intResult = portraitSession->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_CAPTURE);
+
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
+    portraitSession->Stop();
+}
+
+/* Feature: Framework
+ * Function: Test preview/capture with portrait session's filter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test preview/capture with portrait session's filter
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_046, TestSize.Level0)
+{
+    if (!IsSupportMode()) {
+        return;
+    }
+    sptr<ModeManager> modeManagerObj = ModeManager::GetInstance();
+    ASSERT_NE(modeManagerObj, nullptr);
+
+    std::vector<CameraMode> modes = modeManagerObj->GetSupportedModes(cameras_[0]);
+    ASSERT_TRUE(modes.size() != 0);
+
+    sptr<CameraOutputCapability> modeAbility = modeManagerObj->GetSupportedOutputCapability(cameras_[0], modes[3]);
+    ASSERT_NE(modeAbility, nullptr);
+
+
+    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(modes[3]);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<PortraitSession> portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
+    ASSERT_NE(portraitSession, nullptr);
+
+    int32_t intResult = portraitSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = portraitSession->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = portraitSession->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = portraitSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = portraitSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    portraitSession->LockForControl();
+
+    std::vector<FilterType> filterLists= portraitSession->GetSupportedFilters();
+    if (!filterLists.empty()) {
+        portraitSession->SetFilter(filterLists[0]);
+    }
+
+    portraitSession->UnlockForControl();
+
+    EXPECT_EQ(portraitSession->GetFilter(), filterLists[0]);
+
+    intResult = portraitSession->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_CAPTURE);
+
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
+    portraitSession->Stop();
+}
+
+/* Feature: Framework
+ * Function: Test preview/capture with portrait session's beauty
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test preview/capture with portrait session's beauty
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_047, TestSize.Level0)
+{
+    if (!IsSupportMode()) {
+        return;
+    }
+    sptr<ModeManager> modeManagerObj = ModeManager::GetInstance();
+    ASSERT_NE(modeManagerObj, nullptr);
+
+    std::vector<CameraMode> modes = modeManagerObj->GetSupportedModes(cameras_[0]);
+    ASSERT_TRUE(modes.size() != 0);
+
+    sptr<CameraOutputCapability> modeAbility = modeManagerObj->GetSupportedOutputCapability(cameras_[0], modes[3]);
+    ASSERT_NE(modeAbility, nullptr);
+
+
+    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(modes[3]);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<PortraitSession> portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
+    ASSERT_NE(portraitSession, nullptr);
+
+    int32_t intResult = portraitSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = portraitSession->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = portraitSession->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = portraitSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = portraitSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    portraitSession->LockForControl();
+
+    std::vector<BeautyType> beautyLists= portraitSession->GetSupportedBeautyTypes();
+    EXPECT_NE(beautyLists.size(), 0);
+
+    std::vector<int32_t> rangeLists= portraitSession->GetSupportedBeautyRange(beautyLists[3]);
+    EXPECT_NE(rangeLists.size(), 0);
+
+    if (!beautyLists.empty()) {
+        portraitSession->SetBeauty(beautyLists[3], rangeLists[0]);
+    }
+
+    portraitSession->UnlockForControl();
+
+    EXPECT_EQ(portraitSession->GetBeauty(beautyLists[3]), rangeLists[0]);
+
+    intResult = portraitSession->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_CAPTURE);
+
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
+    portraitSession->Stop();
+}
+
+/* Feature: Framework
+ * Function: Test preview/capture with portrait session
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test preview/capture with portrait session
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_048, TestSize.Level0)
+{
+    if (!IsSupportMode()) {
+        return;
+    }
+    sptr<ModeManager> modeManagerObj = ModeManager::GetInstance();
+    ASSERT_NE(modeManagerObj, nullptr);
+
+    std::vector<CameraMode> modes = modeManagerObj->GetSupportedModes(cameras_[0]);
+    ASSERT_TRUE(modes.size() != 0);
+
+    sptr<CameraOutputCapability> modeAbility = modeManagerObj->GetSupportedOutputCapability(cameras_[0], modes[3]);
+    ASSERT_NE(modeAbility, nullptr);
+
+
+    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(modes[3]);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<PortraitSession> portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
+    ASSERT_NE(portraitSession, nullptr);
+
+    int32_t intResult = portraitSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = portraitSession->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = portraitSession->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = portraitSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = portraitSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = portraitSession->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_CAPTURE);
+
+    ((sptr<PreviewOutput> &)previewOutput)->Stop();
+    portraitSession->Stop();
 }
 
 /*
