@@ -182,7 +182,7 @@ public:
             int32_t cameraPosition = 0;
             ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, sizeof(int32_t));
 
-            const camera_rational_t aeCompensationStep[] = {{0, 1}};
+            const camera_rational_t aeCompensationStep[] = {{1, 2}};
             ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
                               sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
             return CAMERA_OK;
