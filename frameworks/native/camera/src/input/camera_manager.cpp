@@ -494,6 +494,12 @@ void CameraManager::Init()
 void CameraManager::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
+    if (cameraSvcCallback_ != nullptr) {
+        MEDIA_DEBUG_LOG("cameraSvcCallback_ not nullptr");
+        for (size_t i = 0; i < cameraObjList.size(); i++) {
+            cameraSvcCallback_->OnCameraStatusChanged(cameraObjList[i]->GetID(), CAMERA_STATUS_UNAVAILABLE);
+        }
+    }
     if (serviceProxy_ != nullptr) {
         (void)serviceProxy_->AsObject()->RemoveDeathRecipient(deathRecipient_);
         serviceProxy_ = nullptr;
