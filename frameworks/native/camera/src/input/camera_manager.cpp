@@ -97,7 +97,13 @@ int32_t CameraStatusServiceCallback::OnCameraStatusChanged(const std::string& ca
     MEDIA_INFO_LOG("OnCameraStatusChanged entry");
     CameraStatusInfo cameraStatusInfo;
     if (camMngr_ != nullptr && camMngr_->GetApplicationCallback() != nullptr) {
+        if (status == CAMERA_STATUS_APPEAR) {
+            camMngr_->GetSupportedCameras();
+        }
         cameraStatusInfo.cameraDevice = camMngr_->GetCameraDeviceFromId(cameraId);
+        if (status == CAMERA_STATUS_DISAPPEAR) {
+            camMngr_->GetSupportedCameras();
+        }
         cameraStatusInfo.cameraStatus = status;
         if (cameraStatusInfo.cameraDevice) {
             MEDIA_INFO_LOG("cameraId: %{public}s, status: %{public}d",
