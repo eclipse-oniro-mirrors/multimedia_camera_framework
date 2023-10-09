@@ -43,7 +43,7 @@ PortraitSession::~PortraitSession()
 std::vector<PortraitEffect> PortraitSession::GetSupportedPortraitEffects()
 {
     std::vector<PortraitEffect> supportedPortraitEffects = {};
-    if (!IsSessionCommited()) {
+    if (!(IsSessionCommited() || IsSessionConfiged())) {
         MEDIA_ERR_LOG("PortraitSession::GetSupportedPortraitEffects Session is not Commited");
         return supportedPortraitEffects;
     }
@@ -75,7 +75,7 @@ std::vector<PortraitEffect> PortraitSession::GetSupportedPortraitEffects()
 
 PortraitEffect PortraitSession::GetPortraitEffect()
 {
-    if (!IsSessionCommited()) {
+    if (!(IsSessionCommited() || IsSessionConfiged())) {
         MEDIA_ERR_LOG("CaptureSession::GetPortraitEffect Session is not Commited");
         return PortraitEffect::OFF_EFFECT;
     }
@@ -100,7 +100,7 @@ PortraitEffect PortraitSession::GetPortraitEffect()
 void PortraitSession::SetPortraitEffect(PortraitEffect portraitEffect)
 {
     CAMERA_SYNC_TRACE;
-    if (!IsSessionCommited()) {
+    if (!(IsSessionCommited() || IsSessionConfiged())) {
         MEDIA_ERR_LOG("CaptureSession::SetPortraitEffect Session is not Commited");
         return;
     }
