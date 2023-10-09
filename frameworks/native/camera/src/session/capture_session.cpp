@@ -68,6 +68,18 @@ const std::unordered_map<FocusMode, camera_focus_mode_enum_t> CaptureSession::fw
     {FOCUS_MODE_LOCKED, OHOS_CAMERA_FOCUS_MODE_LOCKED}
 };
 
+const std::unordered_map<camera_xmage_color_type_t, ColorEffect> CaptureSession::metaToFwColorEffect_ = {
+    {CAMERA_CUSTOM_COLOR_NORMAL, COLOR_EFFECT_NORMAL},
+    {CAMERA_CUSTOM_COLOR_BRIGHT, COLOR_EFFECT_BRIGHT},
+    {CAMERA_CUSTOM_COLOR_SOFT, COLOR_EFFECT_SOFT}
+};
+
+const std::unordered_map<ColorEffect, camera_xmage_color_type_t> CaptureSession::fwToMetaColorEffect_ = {
+    {COLOR_EFFECT_NORMAL, CAMERA_CUSTOM_COLOR_NORMAL},
+    {COLOR_EFFECT_BRIGHT, CAMERA_CUSTOM_COLOR_BRIGHT},
+    {COLOR_EFFECT_SOFT, CAMERA_CUSTOM_COLOR_SOFT}
+};
+
 const std::unordered_map<camera_flash_mode_enum_t, FlashMode> CaptureSession::metaToFwFlashMode_ = {
     {OHOS_CAMERA_FLASH_MODE_CLOSE, FLASH_MODE_CLOSE},
     {OHOS_CAMERA_FLASH_MODE_OPEN, FLASH_MODE_OPEN},
@@ -2367,6 +2379,98 @@ int32_t CaptureSession::CalculateExposureValue(float exposureValue)
     int32_t exposureCompensation = static_cast<int32_t>(stepsPerEv * exposureValue);
     MEDIA_DEBUG_LOG("exposureCompensation: %{public}d", exposureCompensation);
     return exposureCompensation;
+}
+
+std::vector<ColorEffect> CaptureSession::GetSupportedColorEffects()
+{
+    std::vector<ColorEffect> supportedColorEffects = {};
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedColorEffects Session is not Commited");
+        return supportedColorEffects;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedColorEffects camera device is null");
+        return supportedColorEffects;
+    }
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SUPPORTED_COLOR_MODES, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedColorEffects Failed with return code %{public}d", ret);
+        return supportedColorEffects;
+    }
+    for (uint32_t i = 0; i < item.count; i++) {
+        auto itr = metaToFwColorEffect_.find(static_cast<camera_xmage_color_type_t>(item.data.u8[i]));
+        if (itr != metaToFwColorEffect_.end()) {
+            supportedColorEffects.emplace_back(itr->second);
+        }
+    }
+    return supportedColorEffects;
+}
+
+ColorEffect CaptureSession::GetColorEffect()
+{
+    ColorEffect colorEffect = ColorEffect::COLOR_EFFECT_NORMAL;
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::GetColorEffect Session is not Commited");
+        return colorEffect;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetColorEffect camera device is null");
+        return colorEffect;
+    }
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_SUPPORTED_COLOR_MODES, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("CaptureSession::GetColorEffect Failed with return code %{public}d", ret);
+        return colorEffect;
+    }
+    auto itr = metaToFwColorEffect_.find(static_cast<camera_xmage_color_type_t>(item.data.u8[0]));
+    if (itr != metaToFwColorEffect_.end()) {
+        colorEffect = itr->second;
+    }
+    return colorEffect;
+}
+
+void CaptureSession::SetColorEffect(ColorEffect colorEffect)
+{
+    CAMERA_SYNC_TRACE;
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::SetColorEffect Session is not Commited");
+        return;
+    }
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::SetColorEffect Need to call LockForControl() before setting camera properties");
+        return;
+    }
+    uint8_t colorEffectTemp = ColorEffect::COLOR_EFFECT_NORMAL;
+    auto itr = fwToMetaColorEffect_.find(colorEffect);
+    if (itr == fwToMetaColorEffect_.end()) {
+        MEDIA_ERR_LOG("CaptureSession::SetColorEffect unknown is color effect");
+        return;
+    } else {
+        colorEffectTemp = itr->second;
+    }
+
+    bool status = false;
+    int32_t ret;
+    uint32_t count = 1;
+    camera_metadata_item_t item;
+
+    MEDIA_DEBUG_LOG("CaptureSession::SetColorEffect: %{public}d", colorEffect);
+
+    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_SUPPORTED_COLOR_MODES, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_SUPPORTED_COLOR_MODES, &colorEffectTemp, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_SUPPORTED_COLOR_MODES, &colorEffectTemp, count);
+    }
+
+    if (!status) {
+        MEDIA_ERR_LOG("CaptureSession::SetColorEffect Failed to set color effect");
+    }
+    return;
 }
 } // CameraStandard
 } // OHOS

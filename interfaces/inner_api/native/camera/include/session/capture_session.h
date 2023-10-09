@@ -82,6 +82,12 @@ enum BeautyType {
     SKIN_TONE = 3,
 };
 
+enum ColorEffect {
+    COLOR_EFFECT_NORMAL = 0,
+    COLOR_EFFECT_BRIGHT,
+    COLOR_EFFECT_SOFT
+};
+
 typedef struct {
     float x;
     float y;
@@ -690,6 +696,25 @@ public:
     int32_t GetBeauty(BeautyType type);
 
     /**
+     * @brief Get the supported color effect.
+     *
+     * @return Returns supported color effects.
+     */
+    std::vector<ColorEffect> GetSupportedColorEffects();
+
+    /**
+     * @brief Get the current color effect.
+     *
+     * @return Returns current color effect.
+     */
+    ColorEffect GetColorEffect();
+
+    /**
+     * @brief Set the color effect.
+     */
+    void SetColorEffect(ColorEffect colorEffect);
+
+    /**
     * @brief Get whether or not commit config.
     *
     * @return Returns whether or not commit config.
@@ -739,6 +764,8 @@ private:
     static const std::unordered_map<camera_device_metadata_tag_t, BeautyType> metaToFwBeautyControl_;
     static const std::unordered_map<CameraVideoStabilizationMode, VideoStabilizationMode> metaToFwVideoStabModes_;
     static const std::unordered_map<VideoStabilizationMode, CameraVideoStabilizationMode> fwToMetaVideoStabModes_;
+    static const std::unordered_map<camera_xmage_color_type_t, ColorEffect> metaToFwColorEffect_;
+    static const std::unordered_map<ColorEffect, camera_xmage_color_type_t> fwToMetaColorEffect_;
     sptr<CaptureOutput> metaOutput_;
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
     void SetFrameRateRange(const std::vector<int32_t>& frameRateRange);
