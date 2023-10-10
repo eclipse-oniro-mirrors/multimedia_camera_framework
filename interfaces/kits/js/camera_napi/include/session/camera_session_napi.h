@@ -170,6 +170,9 @@ public:
     static napi_value GetSupportedBeautyRange(napi_env env, napi_callback_info info);
     static napi_value GetBeauty(napi_env env, napi_callback_info info);
     static napi_value SetBeauty(napi_env env, napi_callback_info info);
+    static napi_value GetSupportedColorEffects(napi_env env, napi_callback_info info);
+    static napi_value GetColorEffect(napi_env env, napi_callback_info info);
+    static napi_value SetColorEffect(napi_env env, napi_callback_info info);
 
     static napi_value BeginConfig(napi_env env, napi_callback_info info);
     static napi_value CommitConfig(napi_env env, napi_callback_info info);

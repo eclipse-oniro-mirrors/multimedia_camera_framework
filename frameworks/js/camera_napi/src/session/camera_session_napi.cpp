@@ -457,7 +457,11 @@ napi_value CameraSessionNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("setBeauty", SetBeauty),
         DECLARE_NAPI_FUNCTION("on", On),
         DECLARE_NAPI_FUNCTION("once", Once),
-        DECLARE_NAPI_FUNCTION("off", Off)
+        DECLARE_NAPI_FUNCTION("off", Off),
+
+        DECLARE_NAPI_FUNCTION("getSupportedColorEffects", GetSupportedColorEffects),
+        DECLARE_NAPI_FUNCTION("getColorEffect", GetColorEffect),
+        DECLARE_NAPI_FUNCTION("setColorEffect", SetColorEffect)
     };
 
     status = napi_define_class(env, CAMERA_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -2125,6 +2129,92 @@ napi_value CameraSessionNapi::SetBeauty(napi_env env, napi_callback_info info)
         cameraSessionNapi->cameraSession_->UnlockForControl();
     } else {
         MEDIA_ERR_LOG("SetBeauty call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetSupportedColorEffects(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetSupportedColorEffects is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    status = napi_create_array(env, &result);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("napi_create_array call Failed!");
+        return result;
+    }
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        std::vector<ColorEffect> colorEffects = cameraSessionNapi->cameraSession_->GetSupportedColorEffects();
+        if (!colorEffects.empty()) {
+            for (size_t i = 0; i < colorEffects.size(); i++) {
+                int colorEffect = colorEffects[i];
+                napi_value value;
+                napi_create_int32(env, colorEffect, &value);
+                napi_set_element(env, result, i, value);
+            }
+        }
+    } else {
+        MEDIA_ERR_LOG("GetSupportedColorEffects call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetColorEffect(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetColorEffect is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        ColorEffect colorEffect = cameraSessionNapi->cameraSession_->GetColorEffect();
+        napi_create_int32(env, colorEffect, &result);
+    } else {
+        MEDIA_ERR_LOG("GetColorEffect call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::SetColorEffect(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetColorEffect is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        int32_t colorEffectNumber;
+        napi_get_value_int32(env, argv[PARAM0], &colorEffectNumber);
+        ColorEffect colorEffect = (ColorEffect)colorEffectNumber;
+        cameraSessionNapi->cameraSession_->LockForControl();
+        cameraSessionNapi->cameraSession_->SetColorEffect(static_cast<ColorEffect>(colorEffect));
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+    } else {
+        MEDIA_ERR_LOG("SetColorEffect call Failed!");
     }
     return result;
 }
