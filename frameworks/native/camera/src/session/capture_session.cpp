@@ -30,71 +30,71 @@ namespace {
     constexpr int32_t DEFAULT_DATA_LENGTH = 100;
 }
 
-const std::unordered_map<camera_focus_state_t, FocusCallback::FocusState> CaptureSession::metaToFwFocusState_ = {
+const std::unordered_map<camera_focus_state_t, FocusCallback::FocusState> CaptureSession::metaFocusStateMap_ = {
     {OHOS_CAMERA_FOCUS_STATE_SCAN, FocusCallback::SCAN},
     {OHOS_CAMERA_FOCUS_STATE_FOCUSED, FocusCallback::FOCUSED},
     {OHOS_CAMERA_FOCUS_STATE_UNFOCUSED, FocusCallback::UNFOCUSED}
 };
 
 const std::unordered_map<camera_exposure_state_t,
-        ExposureCallback::ExposureState> CaptureSession::metaToFwExposureState_ = {
+        ExposureCallback::ExposureState> CaptureSession::metaExposureStateMap_ = {
     {OHOS_CAMERA_EXPOSURE_STATE_SCAN, ExposureCallback::SCAN},
     {OHOS_CAMERA_EXPOSURE_STATE_CONVERGED, ExposureCallback::CONVERGED}
 };
 
-const std::unordered_map<camera_exposure_mode_enum_t, ExposureMode> CaptureSession::metaToFwExposureMode_ = {
+const std::unordered_map<camera_exposure_mode_enum_t, ExposureMode> CaptureSession::metaExposureModeMap_ = {
     {OHOS_CAMERA_EXPOSURE_MODE_LOCKED, EXPOSURE_MODE_LOCKED},
     {OHOS_CAMERA_EXPOSURE_MODE_AUTO, EXPOSURE_MODE_AUTO},
     {OHOS_CAMERA_EXPOSURE_MODE_CONTINUOUS_AUTO, EXPOSURE_MODE_CONTINUOUS_AUTO}
 };
 
-const std::unordered_map<ExposureMode, camera_exposure_mode_enum_t> CaptureSession::fwToMetaExposureMode_ = {
+const std::unordered_map<ExposureMode, camera_exposure_mode_enum_t> CaptureSession::fwkExposureModeMap_ = {
     {EXPOSURE_MODE_LOCKED, OHOS_CAMERA_EXPOSURE_MODE_LOCKED},
     {EXPOSURE_MODE_AUTO, OHOS_CAMERA_EXPOSURE_MODE_AUTO},
     {EXPOSURE_MODE_CONTINUOUS_AUTO, OHOS_CAMERA_EXPOSURE_MODE_CONTINUOUS_AUTO}
 };
 
-const std::unordered_map<camera_focus_mode_enum_t, FocusMode> CaptureSession::metaToFwFocusMode_ = {
+const std::unordered_map<camera_focus_mode_enum_t, FocusMode> CaptureSession::metaFocusModeMap_ = {
     {OHOS_CAMERA_FOCUS_MODE_MANUAL, FOCUS_MODE_MANUAL},
     {OHOS_CAMERA_FOCUS_MODE_CONTINUOUS_AUTO, FOCUS_MODE_CONTINUOUS_AUTO},
     {OHOS_CAMERA_FOCUS_MODE_AUTO, FOCUS_MODE_AUTO},
     {OHOS_CAMERA_FOCUS_MODE_LOCKED, FOCUS_MODE_LOCKED}
 };
 
-const std::unordered_map<FocusMode, camera_focus_mode_enum_t> CaptureSession::fwToMetaFocusMode_ = {
+const std::unordered_map<FocusMode, camera_focus_mode_enum_t> CaptureSession::fwkFocusModeMap_ = {
     {FOCUS_MODE_MANUAL, OHOS_CAMERA_FOCUS_MODE_MANUAL},
     {FOCUS_MODE_CONTINUOUS_AUTO, OHOS_CAMERA_FOCUS_MODE_CONTINUOUS_AUTO},
     {FOCUS_MODE_AUTO, OHOS_CAMERA_FOCUS_MODE_AUTO},
     {FOCUS_MODE_LOCKED, OHOS_CAMERA_FOCUS_MODE_LOCKED}
 };
 
-const std::unordered_map<camera_xmage_color_type_t, ColorEffect> CaptureSession::metaToFwColorEffect_ = {
+const std::unordered_map<camera_xmage_color_type_t, ColorEffect> CaptureSession::metaColorEffectMap_ = {
     {CAMERA_CUSTOM_COLOR_NORMAL, COLOR_EFFECT_NORMAL},
     {CAMERA_CUSTOM_COLOR_BRIGHT, COLOR_EFFECT_BRIGHT},
     {CAMERA_CUSTOM_COLOR_SOFT, COLOR_EFFECT_SOFT}
 };
 
-const std::unordered_map<ColorEffect, camera_xmage_color_type_t> CaptureSession::fwToMetaColorEffect_ = {
+const std::unordered_map<ColorEffect, camera_xmage_color_type_t> CaptureSession::fwkColorEffectMap_ = {
     {COLOR_EFFECT_NORMAL, CAMERA_CUSTOM_COLOR_NORMAL},
     {COLOR_EFFECT_BRIGHT, CAMERA_CUSTOM_COLOR_BRIGHT},
     {COLOR_EFFECT_SOFT, CAMERA_CUSTOM_COLOR_SOFT}
 };
 
-const std::unordered_map<camera_flash_mode_enum_t, FlashMode> CaptureSession::metaToFwFlashMode_ = {
+const std::unordered_map<camera_flash_mode_enum_t, FlashMode> CaptureSession::metaFlashModeMap_ = {
     {OHOS_CAMERA_FLASH_MODE_CLOSE, FLASH_MODE_CLOSE},
     {OHOS_CAMERA_FLASH_MODE_OPEN, FLASH_MODE_OPEN},
     {OHOS_CAMERA_FLASH_MODE_AUTO, FLASH_MODE_AUTO},
     {OHOS_CAMERA_FLASH_MODE_ALWAYS_OPEN, FLASH_MODE_ALWAYS_OPEN}
 };
 
-const std::unordered_map<FlashMode, camera_flash_mode_enum_t> CaptureSession::fwToMetaFlashMode_ = {
+const std::unordered_map<FlashMode, camera_flash_mode_enum_t> CaptureSession::fwkFlashModeMap_ = {
     {FLASH_MODE_CLOSE, OHOS_CAMERA_FLASH_MODE_CLOSE},
     {FLASH_MODE_OPEN, OHOS_CAMERA_FLASH_MODE_OPEN},
     {FLASH_MODE_AUTO, OHOS_CAMERA_FLASH_MODE_AUTO},
     {FLASH_MODE_ALWAYS_OPEN, OHOS_CAMERA_FLASH_MODE_ALWAYS_OPEN}
 };
 
-const std::unordered_map<camera_filter_type_t, FilterType> CaptureSession::metaToFwFilterType_ = {
+const std::unordered_map<camera_filter_type_t, FilterType> CaptureSession::metaFilterTypeMap_ = {
     {OHOS_CAMERA_FILTER_TYPE_NONE, NONE},
     {OHOS_CAMERA_FILTER_TYPE_CLASSIC, CLASSIC},
     {OHOS_CAMERA_FILTER_TYPE_DAWN, DAWN},
@@ -106,7 +106,7 @@ const std::unordered_map<camera_filter_type_t, FilterType> CaptureSession::metaT
     {OHOS_CAMERA_FILTER_TYPE_PINK, PINK}
 };
 
-const std::unordered_map<FilterType, camera_filter_type_t> CaptureSession::fwToMetaFilterType_ = {
+const std::unordered_map<FilterType, camera_filter_type_t> CaptureSession::fwkFilterTypeMap_ = {
     {NONE, OHOS_CAMERA_FILTER_TYPE_NONE},
     {CLASSIC, OHOS_CAMERA_FILTER_TYPE_CLASSIC},
     {DAWN, OHOS_CAMERA_FILTER_TYPE_DAWN},
@@ -118,42 +118,42 @@ const std::unordered_map<FilterType, camera_filter_type_t> CaptureSession::fwToM
     {PINK, OHOS_CAMERA_FILTER_TYPE_PINK}
 };
 
-const std::unordered_map<camera_beauty_type_t, BeautyType> CaptureSession::metaToFwBeautyType_ = {
+const std::unordered_map<camera_beauty_type_t, BeautyType> CaptureSession::metaBeautyTypeMap_ = {
     {OHOS_CAMERA_BEAUTY_TYPE_AUTO, AUTO_TYPE},
     {OHOS_CAMERA_BEAUTY_TYPE_SKIN_SMOOTH, SKIN_SMOOTH},
     {OHOS_CAMERA_BEAUTY_TYPE_FACE_SLENDER, FACE_SLENDER},
     {OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONE, SKIN_TONE}
 };
 
-const std::unordered_map<BeautyType, camera_beauty_type_t> CaptureSession::fwToMetaBeautyType_ = {
+const std::unordered_map<BeautyType, camera_beauty_type_t> CaptureSession::fwkBeautyTypeMap_ = {
     {AUTO_TYPE, OHOS_CAMERA_BEAUTY_TYPE_AUTO},
     {SKIN_SMOOTH, OHOS_CAMERA_BEAUTY_TYPE_SKIN_SMOOTH},
     {FACE_SLENDER, OHOS_CAMERA_BEAUTY_TYPE_FACE_SLENDER},
     {SKIN_TONE, OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONE}
 };
 
-const std::unordered_map<BeautyType, camera_device_metadata_tag_t> CaptureSession::fwToMetaBeautyAbility_ = {
+const std::unordered_map<BeautyType, camera_device_metadata_tag_t> CaptureSession::fwkBeautyAbilityMap_ = {
     {AUTO_TYPE, OHOS_ABILITY_BEAUTY_AUTO_VALUES},
     {SKIN_SMOOTH, OHOS_ABILITY_BEAUTY_SKIN_SMOOTH_VALUES},
     {FACE_SLENDER, OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES},
     {SKIN_TONE, OHOS_ABILITY_BEAUTY_SKIN_TONE_VALUES}
 };
 
-const std::unordered_map<BeautyType, camera_device_metadata_tag_t> CaptureSession::fwToMetaBeautyControl_ = {
+const std::unordered_map<BeautyType, camera_device_metadata_tag_t> CaptureSession::fwkBeautyControlMap_ = {
     {AUTO_TYPE, OHOS_CONTROL_BEAUTY_AUTO_VALUE},
     {SKIN_SMOOTH, OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE},
     {FACE_SLENDER, OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE},
     {SKIN_TONE, OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE}
 };
 
-const std::unordered_map<camera_device_metadata_tag_t, BeautyType> CaptureSession::metaToFwBeautyControl_ = {
+const std::unordered_map<camera_device_metadata_tag_t, BeautyType> CaptureSession::metaBeautyControlMap_ = {
     {OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE, SKIN_SMOOTH},
     {OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE, FACE_SLENDER},
     {OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE, SKIN_TONE}
 };
 
 const std::unordered_map<CameraVideoStabilizationMode,
-VideoStabilizationMode> CaptureSession::metaToFwVideoStabModes_ = {
+VideoStabilizationMode> CaptureSession::metaVideoStabModesMap_ = {
     {OHOS_CAMERA_VIDEO_STABILIZATION_OFF, OFF},
     {OHOS_CAMERA_VIDEO_STABILIZATION_LOW, LOW},
     {OHOS_CAMERA_VIDEO_STABILIZATION_MIDDLE, MIDDLE},
@@ -162,7 +162,7 @@ VideoStabilizationMode> CaptureSession::metaToFwVideoStabModes_ = {
 };
 
 const std::unordered_map<VideoStabilizationMode,
-CameraVideoStabilizationMode> CaptureSession::fwToMetaVideoStabModes_ = {
+CameraVideoStabilizationMode> CaptureSession::fwkVideoStabModesMap_ = {
     {OFF, OHOS_CAMERA_VIDEO_STABILIZATION_OFF},
     {LOW, OHOS_CAMERA_VIDEO_STABILIZATION_LOW},
     {MIDDLE, OHOS_CAMERA_VIDEO_STABILIZATION_MIDDLE},
@@ -579,8 +579,8 @@ VideoStabilizationMode CaptureSession::GetActiveVideoStabilizationMode()
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &item);
     if (ret == CAM_META_SUCCESS) {
-        auto itr = metaToFwVideoStabModes_.find(static_cast<CameraVideoStabilizationMode>(item.data.u8[0]));
-        if (itr != metaToFwVideoStabModes_.end()) {
+        auto itr = metaVideoStabModesMap_.find(static_cast<CameraVideoStabilizationMode>(item.data.u8[0]));
+        if (itr != metaVideoStabModesMap_.end()) {
             return itr->second;
         }
     }
@@ -605,8 +605,8 @@ int32_t CaptureSession::GetActiveVideoStabilizationMode(VideoStabilizationMode &
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &item);
     if (ret == CAM_META_SUCCESS) {
-        auto itr = metaToFwVideoStabModes_.find(static_cast<CameraVideoStabilizationMode>(item.data.u8[0]));
-        if (itr != metaToFwVideoStabModes_.end()) {
+        auto itr = metaVideoStabModesMap_.find(static_cast<CameraVideoStabilizationMode>(item.data.u8[0]));
+        if (itr != metaVideoStabModesMap_.end()) {
             mode = itr->second;
             isSupported = true;
         }
@@ -623,8 +623,8 @@ int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabili
         MEDIA_ERR_LOG("CaptureSession::SetVideoStabilizationMode Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    auto itr = fwToMetaVideoStabModes_.find(stabilizationMode);
-    if ((itr == fwToMetaVideoStabModes_.end()) || !IsVideoStabilizationModeSupported(stabilizationMode)) {
+    auto itr = fwkVideoStabModesMap_.find(stabilizationMode);
+    if ((itr == fwkVideoStabModesMap_.end()) || !IsVideoStabilizationModeSupported(stabilizationMode)) {
         MEDIA_ERR_LOG("CaptureSession::SetVideoStabilizationMode Mode: %{public}d not supported", stabilizationMode);
         stabilizationMode = OFF;
     }
@@ -694,8 +694,8 @@ std::vector<VideoStabilizationMode> CaptureSession::GetSupportedStabilizationMod
     }
 
     for (uint32_t i = 0; i < item.count; i++) {
-        auto itr = metaToFwVideoStabModes_.find(static_cast<CameraVideoStabilizationMode>(item.data.u8[i]));
-        if (itr != metaToFwVideoStabModes_.end()) {
+        auto itr = metaVideoStabModesMap_.find(static_cast<CameraVideoStabilizationMode>(item.data.u8[i]));
+        if (itr != metaVideoStabModesMap_.end()) {
             stabilizationModes.emplace_back(itr->second);
         }
     }
@@ -724,8 +724,8 @@ int32_t CaptureSession::GetSupportedStabilizationMode(std::vector<VideoStabiliza
     }
 
     for (uint32_t i = 0; i < item.count; i++) {
-        auto itr = metaToFwVideoStabModes_.find(static_cast<CameraVideoStabilizationMode>(item.data.u8[i]));
-        if (itr != metaToFwVideoStabModes_.end()) {
+        auto itr = metaVideoStabModesMap_.find(static_cast<CameraVideoStabilizationMode>(item.data.u8[i]));
+        if (itr != metaVideoStabModesMap_.end()) {
             stabilizationModes.emplace_back(itr->second);
         }
     }
@@ -781,8 +781,8 @@ std::vector<ExposureMode> CaptureSession::GetSupportedExposureModes()
     }
 
     for (uint32_t i = 0; i < item.count; i++) {
-        auto itr = metaToFwExposureMode_.find(static_cast<camera_exposure_mode_enum_t>(item.data.u8[i]));
-        if (itr != metaToFwExposureMode_.end()) {
+        auto itr = metaExposureModeMap_.find(static_cast<camera_exposure_mode_enum_t>(item.data.u8[i]));
+        if (itr != metaExposureModeMap_.end()) {
             supportedExposureModes.emplace_back(itr->second);
         }
     }
@@ -809,8 +809,8 @@ int32_t CaptureSession::GetSupportedExposureModes(std::vector<ExposureMode> &sup
     }
 
     for (uint32_t i = 0; i < item.count; i++) {
-        auto itr = metaToFwExposureMode_.find(static_cast<camera_exposure_mode_enum_t>(item.data.u8[i]));
-        if (itr != metaToFwExposureMode_.end()) {
+        auto itr = metaExposureModeMap_.find(static_cast<camera_exposure_mode_enum_t>(item.data.u8[i]));
+        if (itr != metaExposureModeMap_.end()) {
             supportedExposureModes.emplace_back(itr->second);
         }
     }
@@ -830,9 +830,9 @@ int32_t CaptureSession::SetExposureMode(ExposureMode exposureMode)
                       "before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
-    uint8_t exposure = fwToMetaExposureMode_.at(EXPOSURE_MODE_LOCKED);
-    auto itr = fwToMetaExposureMode_.find(exposureMode);
-    if (itr == fwToMetaExposureMode_.end()) {
+    uint8_t exposure = fwkExposureModeMap_.at(EXPOSURE_MODE_LOCKED);
+    auto itr = fwkExposureModeMap_.find(exposureMode);
+    if (itr == fwkExposureModeMap_.end()) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureMode Unknown exposure mode");
     } else {
         exposure = itr->second;
@@ -872,8 +872,8 @@ ExposureMode CaptureSession::GetExposureMode()
         MEDIA_ERR_LOG("CaptureSession::GetExposureMode Failed with return code %{public}d", ret);
         return EXPOSURE_MODE_UNSUPPORTED;
     }
-    auto itr = metaToFwExposureMode_.find(static_cast<camera_exposure_mode_enum_t>(item.data.u8[0]));
-    if (itr != metaToFwExposureMode_.end()) {
+    auto itr = metaExposureModeMap_.find(static_cast<camera_exposure_mode_enum_t>(item.data.u8[0]));
+    if (itr != metaExposureModeMap_.end()) {
         return itr->second;
     }
 
@@ -898,8 +898,8 @@ int32_t CaptureSession::GetExposureMode(ExposureMode &exposureMode)
         MEDIA_ERR_LOG("CaptureSession::GetExposureMode Failed with return code %{public}d", ret);
         return CameraErrorCode::SUCCESS;
     }
-    auto itr = metaToFwExposureMode_.find(static_cast<camera_exposure_mode_enum_t>(item.data.u8[0]));
-    if (itr != metaToFwExposureMode_.end()) {
+    auto itr = metaExposureModeMap_.find(static_cast<camera_exposure_mode_enum_t>(item.data.u8[0]));
+    if (itr != metaExposureModeMap_.end()) {
         exposureMode = itr->second;
         return CameraErrorCode::SUCCESS;
     }
@@ -1161,8 +1161,8 @@ void CaptureSession::ProcessAutoExposureUpdates(const std::shared_ptr<Camera::Ca
     if (ret == CAM_META_SUCCESS) {
         MEDIA_INFO_LOG("Exposure state: %{public}d", item.data.u8[0]);
         if (exposureCallback_ != nullptr) {
-            auto itr = metaToFwExposureState_.find(static_cast<camera_exposure_state_t>(item.data.u8[0]));
-            if (itr != metaToFwExposureState_.end()) {
+            auto itr = metaExposureStateMap_.find(static_cast<camera_exposure_state_t>(item.data.u8[0]));
+            if (itr != metaExposureStateMap_.end()) {
                 exposureCallback_->OnExposureState(itr->second);
             }
         }
@@ -1188,8 +1188,8 @@ std::vector<FocusMode> CaptureSession::GetSupportedFocusModes()
         return supportedFocusModes;
     }
     for (uint32_t i = 0; i < item.count; i++) {
-        auto itr = metaToFwFocusMode_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[i]));
-        if (itr != metaToFwFocusMode_.end()) {
+        auto itr = metaFocusModeMap_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[i]));
+        if (itr != metaFocusModeMap_.end()) {
             supportedFocusModes.emplace_back(itr->second);
         }
     }
@@ -1215,8 +1215,8 @@ int32_t CaptureSession::GetSupportedFocusModes(std::vector<FocusMode> &supported
         return CameraErrorCode::SUCCESS;
     }
     for (uint32_t i = 0; i < item.count; i++) {
-        auto itr = metaToFwFocusMode_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[i]));
-        if (itr != metaToFwFocusMode_.end()) {
+        auto itr = metaFocusModeMap_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[i]));
+        if (itr != metaFocusModeMap_.end()) {
             supportedFocusModes.emplace_back(itr->second);
             return CameraErrorCode::SUCCESS;
         }
@@ -1271,8 +1271,8 @@ int32_t CaptureSession::SetFocusMode(FocusMode focusMode)
         return CameraErrorCode::SUCCESS;
     }
     uint8_t focus = FOCUS_MODE_LOCKED;
-    auto itr = fwToMetaFocusMode_.find(focusMode);
-    if (itr == fwToMetaFocusMode_.end()) {
+    auto itr = fwkFocusModeMap_.find(focusMode);
+    if (itr == fwkFocusModeMap_.end()) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureMode Unknown exposure mode");
     } else {
         focus = itr->second;
@@ -1314,8 +1314,8 @@ FocusMode CaptureSession::GetFocusMode()
         MEDIA_ERR_LOG("CaptureSession::GetFocusMode Failed with return code %{public}d", ret);
         return FOCUS_MODE_MANUAL;
     }
-    auto itr = metaToFwFocusMode_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[0]));
-    if (itr != metaToFwFocusMode_.end()) {
+    auto itr = metaFocusModeMap_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[0]));
+    if (itr != metaFocusModeMap_.end()) {
         return itr->second;
     }
     return FOCUS_MODE_MANUAL;
@@ -1339,8 +1339,8 @@ int32_t CaptureSession::GetFocusMode(FocusMode &focusMode)
         MEDIA_ERR_LOG("CaptureSession::GetFocusMode Failed with return code %{public}d", ret);
         return CameraErrorCode::SUCCESS;
     }
-    auto itr = metaToFwFocusMode_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[0]));
-    if (itr != metaToFwFocusMode_.end()) {
+    auto itr = metaFocusModeMap_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[0]));
+    if (itr != metaFocusModeMap_.end()) {
         focusMode = itr->second;
         return CameraErrorCode::SUCCESS;
     }
@@ -1516,17 +1516,17 @@ void CaptureSession::ProcessAutoFocusUpdates(const std::shared_ptr<Camera::Camer
         return;
     }
     MEDIA_DEBUG_LOG("Focus mode: %{public}d", item.data.u8[0]);
-    auto it = metaToFwFocusMode_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[0]));
+    auto it = metaFocusModeMap_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[0]));
     // continuous focus mode do not callback focusStateChange
-    if (it == metaToFwFocusMode_.end() || it->second != FOCUS_MODE_AUTO) {
+    if (it == metaFocusModeMap_.end() || it->second != FOCUS_MODE_AUTO) {
         return;
     }
     ret = Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_STATE, &item);
     if (ret == CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("Focus state: %{public}d", item.data.u8[0]);
         if (focusCallback_ != nullptr) {
-            auto itr = metaToFwFocusState_.find(static_cast<camera_focus_state_t>(item.data.u8[0]));
-            if (itr != metaToFwFocusState_.end() && itr->second != focusCallback_->currentState) {
+            auto itr = metaFocusStateMap_.find(static_cast<camera_focus_state_t>(item.data.u8[0]));
+            if (itr != metaFocusStateMap_.end() && itr->second != focusCallback_->currentState) {
                 focusCallback_->OnFocusState(itr->second);
                 focusCallback_->currentState = itr->second;
             }
@@ -1553,8 +1553,8 @@ std::vector<FlashMode> CaptureSession::GetSupportedFlashModes()
         return supportedFlashModes;
     }
     for (uint32_t i = 0; i < item.count; i++) {
-        auto itr = metaToFwFlashMode_.find(static_cast<camera_flash_mode_enum_t>(item.data.u8[i]));
-        if (itr != metaToFwFlashMode_.end()) {
+        auto itr = metaFlashModeMap_.find(static_cast<camera_flash_mode_enum_t>(item.data.u8[i]));
+        if (itr != metaFlashModeMap_.end()) {
             supportedFlashModes.emplace_back(itr->second);
         }
     }
@@ -1580,8 +1580,8 @@ int32_t CaptureSession::GetSupportedFlashModes(std::vector<FlashMode> &supported
         return CameraErrorCode::SUCCESS;
     }
     for (uint32_t i = 0; i < item.count; i++) {
-        auto itr = metaToFwFlashMode_.find(static_cast<camera_flash_mode_enum_t>(item.data.u8[i]));
-        if (itr != metaToFwFlashMode_.end()) {
+        auto itr = metaFlashModeMap_.find(static_cast<camera_flash_mode_enum_t>(item.data.u8[i]));
+        if (itr != metaFlashModeMap_.end()) {
             supportedFlashModes.emplace_back(itr->second);
         }
     }
@@ -1605,8 +1605,8 @@ FlashMode CaptureSession::GetFlashMode()
         MEDIA_ERR_LOG("CaptureSession::GetFlashMode Failed with return code %{public}d", ret);
         return FLASH_MODE_CLOSE;
     }
-    auto itr = metaToFwFlashMode_.find(static_cast<camera_flash_mode_enum_t>(item.data.u8[0]));
-    if (itr != metaToFwFlashMode_.end()) {
+    auto itr = metaFlashModeMap_.find(static_cast<camera_flash_mode_enum_t>(item.data.u8[0]));
+    if (itr != metaFlashModeMap_.end()) {
         return itr->second;
     }
 
@@ -1631,8 +1631,8 @@ int32_t CaptureSession::GetFlashMode(FlashMode &flashMode)
         MEDIA_ERR_LOG("CaptureSession::GetFlashMode Failed with return code %{public}d", ret);
         return CameraErrorCode::SUCCESS;
     }
-    auto itr = metaToFwFlashMode_.find(static_cast<camera_flash_mode_enum_t>(item.data.u8[0]));
-    if (itr != metaToFwFlashMode_.end()) {
+    auto itr = metaFlashModeMap_.find(static_cast<camera_flash_mode_enum_t>(item.data.u8[0]));
+    if (itr != metaFlashModeMap_.end()) {
         flashMode = itr->second;
         return CameraErrorCode::SUCCESS;
     }
@@ -1651,9 +1651,9 @@ int32_t CaptureSession::SetFlashMode(FlashMode flashMode)
         MEDIA_ERR_LOG("CaptureSession::SetFlashMode Need to call LockForControl() before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
-    uint8_t flash = fwToMetaFlashMode_.at(FLASH_MODE_CLOSE);
-    auto itr = fwToMetaFlashMode_.find(flashMode);
-    if (itr == fwToMetaFlashMode_.end()) {
+    uint8_t flash = fwkFlashModeMap_.at(FLASH_MODE_CLOSE);
+    auto itr = fwkFlashModeMap_.find(flashMode);
+    if (itr == fwkFlashModeMap_.end()) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureMode Unknown exposure mode");
     } else {
         flash = itr->second;
@@ -2026,8 +2026,8 @@ std::vector<FilterType> CaptureSession::GetSupportedFilters()
         return supportedFilters;
     }
     for (uint32_t i = 0; i < item.count; i++) {
-        auto itr = metaToFwFilterType_.find(static_cast<camera_filter_type_t>(item.data.u8[i]));
-        if (itr != metaToFwFilterType_.end()) {
+        auto itr = metaFilterTypeMap_.find(static_cast<camera_filter_type_t>(item.data.u8[i]));
+        if (itr != metaFilterTypeMap_.end()) {
             supportedFilters.emplace_back(itr->second);
         }
     }
@@ -2051,8 +2051,8 @@ FilterType CaptureSession::GetFilter()
         MEDIA_ERR_LOG("CaptureSession::GetFilter Failed with return code %{public}d", ret);
         return FilterType::NONE;
     }
-    auto itr = metaToFwFilterType_.find(static_cast<camera_filter_type_t>(item.data.u8[0]));
-    if (itr != metaToFwFilterType_.end()) {
+    auto itr = metaFilterTypeMap_.find(static_cast<camera_filter_type_t>(item.data.u8[0]));
+    if (itr != metaFilterTypeMap_.end()) {
         return itr->second;
     }
     return FilterType::NONE;
@@ -2077,7 +2077,7 @@ void CaptureSession::SetFilter(FilterType filterType)
         return;
     }
     uint8_t filter = 0;
-    for (auto itr2 = fwToMetaFilterType_.cbegin(); itr2 != fwToMetaFilterType_.cend(); itr2++) {
+    for (auto itr2 = fwkFilterTypeMap_.cbegin(); itr2 != fwkFilterTypeMap_.cend(); itr2++) {
         if (filterType == itr2->first) {
             filter = static_cast<uint8_t>(itr2->second);
             break;
@@ -2129,8 +2129,8 @@ std::vector<BeautyType> CaptureSession::GetSupportedBeautyTypes()
         return supportedBeautyTypes;
     }
     for (uint32_t i = 0; i < item.count; i++) {
-        auto itr = metaToFwBeautyType_.find(static_cast<camera_beauty_type_t>(item.data.u8[i]));
-        if (itr != metaToFwBeautyType_.end()) {
+        auto itr = metaBeautyTypeMap_.find(static_cast<camera_beauty_type_t>(item.data.u8[i]));
+        if (itr != metaBeautyTypeMap_.end()) {
             supportedBeautyTypes.emplace_back(itr->second);
         }
     }
@@ -2162,8 +2162,8 @@ std::vector<int32_t> CaptureSession::GetSupportedBeautyRange(BeautyType beautyTy
     MEDIA_ERR_LOG("CaptureSession::GetSupportedBeautyRange: %{public}d", beautyType);
 
     int32_t beautyTypeAbility;
-    auto itr = fwToMetaBeautyAbility_.find(beautyType);
-    if (itr == fwToMetaBeautyAbility_.end()) {
+    auto itr = fwkBeautyAbilityMap_.find(beautyType);
+    if (itr == fwkBeautyAbilityMap_.end()) {
         MEDIA_ERR_LOG("CaptureSession::GetSupportedBeautyRange Unknown beauty Type");
         return supportedBeautyRange;
     } else {
@@ -2198,7 +2198,7 @@ bool CaptureSession::SetBeautyValue(BeautyType beautyType, int32_t beautyLevel)
     camera_metadata_item_t item;
     camera_device_metadata_tag_t metadata;
 
-    for (auto metaItr = fwToMetaBeautyControl_.cbegin(); metaItr != fwToMetaBeautyControl_.cend(); metaItr++) {
+    for (auto metaItr = fwkBeautyControlMap_.cbegin(); metaItr != fwkBeautyControlMap_.cend(); metaItr++) {
         if (beautyType  == metaItr->first) {
             metadata = metaItr->second;
             break;
@@ -2276,7 +2276,7 @@ void CaptureSession::SetBeauty(BeautyType beautyType, int value)
         return;
     }
 
-    for (auto itrType = fwToMetaBeautyType_.cbegin(); itrType != fwToMetaBeautyType_.cend(); itrType++) {
+    for (auto itrType = fwkBeautyTypeMap_.cbegin(); itrType != fwkBeautyTypeMap_.cend(); itrType++) {
         if (beautyType == itrType->first) {
             beauty = static_cast<uint8_t>(itrType->second);
             break;
@@ -2400,8 +2400,8 @@ std::vector<ColorEffect> CaptureSession::GetSupportedColorEffects()
         return supportedColorEffects;
     }
     for (uint32_t i = 0; i < item.count; i++) {
-        auto itr = metaToFwColorEffect_.find(static_cast<camera_xmage_color_type_t>(item.data.u8[i]));
-        if (itr != metaToFwColorEffect_.end()) {
+        auto itr = metaColorEffectMap_.find(static_cast<camera_xmage_color_type_t>(item.data.u8[i]));
+        if (itr != metaColorEffectMap_.end()) {
             supportedColorEffects.emplace_back(itr->second);
         }
     }
@@ -2426,8 +2426,8 @@ ColorEffect CaptureSession::GetColorEffect()
         MEDIA_ERR_LOG("CaptureSession::GetColorEffect Failed with return code %{public}d", ret);
         return colorEffect;
     }
-    auto itr = metaToFwColorEffect_.find(static_cast<camera_xmage_color_type_t>(item.data.u8[0]));
-    if (itr != metaToFwColorEffect_.end()) {
+    auto itr = metaColorEffectMap_.find(static_cast<camera_xmage_color_type_t>(item.data.u8[0]));
+    if (itr != metaColorEffectMap_.end()) {
         colorEffect = itr->second;
     }
     return colorEffect;
@@ -2445,8 +2445,8 @@ void CaptureSession::SetColorEffect(ColorEffect colorEffect)
         return;
     }
     uint8_t colorEffectTemp = ColorEffect::COLOR_EFFECT_NORMAL;
-    auto itr = fwToMetaColorEffect_.find(colorEffect);
-    if (itr == fwToMetaColorEffect_.end()) {
+    auto itr = fwkColorEffectMap_.find(colorEffect);
+    if (itr == fwkColorEffectMap_.end()) {
         MEDIA_ERR_LOG("CaptureSession::SetColorEffect unknown is color effect");
         return;
     } else {
