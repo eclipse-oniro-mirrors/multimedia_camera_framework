@@ -1990,7 +1990,7 @@ int32_t CaptureSession::VerifyAbility(uint32_t ability)
 std::vector<FilterType> CaptureSession::GetSupportedFilters()
 {
     std::vector<FilterType> supportedFilters = {};
-    if (!IsSessionCommited()) {
+    if (!(IsSessionCommited() || IsSessionConfiged())) {
         MEDIA_ERR_LOG("CaptureSession::GetSupportedFilters Session is not Commited");
         return supportedFilters;
     }
@@ -2024,7 +2024,7 @@ std::vector<FilterType> CaptureSession::GetSupportedFilters()
 
 FilterType CaptureSession::GetFilter()
 {
-    if (!IsSessionCommited()) {
+    if (!(IsSessionCommited() || IsSessionConfiged())) {
         MEDIA_ERR_LOG("CaptureSession::GetFilter Session is not Commited");
         return FilterType::NONE;
     }
@@ -2049,7 +2049,7 @@ FilterType CaptureSession::GetFilter()
 void CaptureSession::SetFilter(FilterType filterType)
 {
     CAMERA_SYNC_TRACE;
-    if (!IsSessionCommited()) {
+    if (!(IsSessionCommited() || IsSessionConfiged())) {
         MEDIA_ERR_LOG("CaptureSession::SetFilter Session is not Commited");
         return;
     }
@@ -2094,7 +2094,7 @@ void CaptureSession::SetFilter(FilterType filterType)
 std::vector<BeautyType> CaptureSession::GetSupportedBeautyTypes()
 {
     std::vector<BeautyType> supportedBeautyTypes = {};
-    if (!IsSessionCommited()) {
+    if (!(IsSessionCommited() || IsSessionConfiged())) {
         MEDIA_ERR_LOG("CaptureSession::GetSupportedBeautyTypes Session is not Commited");
         return supportedBeautyTypes;
     }
@@ -2129,7 +2129,7 @@ std::vector<int32_t> CaptureSession::GetSupportedBeautyRange(BeautyType beautyTy
 {
     int ret  = 0;
     std::vector<int32_t> supportedBeautyRange;
-    if (!IsSessionCommited()) {
+    if (!(IsSessionCommited() || IsSessionConfiged())) {
         MEDIA_ERR_LOG("CaptureSession::GetSupportedBeautyRange Session is not Commited");
         return supportedBeautyRange;
     }
@@ -2232,7 +2232,7 @@ bool CaptureSession::SetBeautyValue(BeautyType beautyType, int32_t beautyLevel)
 
 void CaptureSession::SetBeauty(BeautyType beautyType, int value)
 {
-    if (!IsSessionCommited()) {
+    if (!(IsSessionCommited() || IsSessionConfiged())) {
         MEDIA_ERR_LOG("CaptureSession::SetBeauty Session is not Commited");
         return;
     }
@@ -2290,7 +2290,7 @@ void CaptureSession::SetBeauty(BeautyType beautyType, int value)
 
 int32_t CaptureSession::GetBeauty(BeautyType beautyType)
 {
-    if (!IsSessionCommited()) {
+    if (!(IsSessionCommited() || IsSessionConfiged())) {
         MEDIA_ERR_LOG("CaptureSession::GetBeauty Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
