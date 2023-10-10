@@ -25,15 +25,21 @@
 namespace OHOS {
 namespace CameraStandard {
 const std::unordered_map<camera_portrait_effect_type_t, PortraitEffect> PortraitSession::metaToFwPortraitEffect_ = {
-{
     {OHOS_CAMERA_PORTRAIT_EFFECT_OFF, OFF_EFFECT},
-    {OHOS_CAMERA_PORTRAIT_CIRCLES, CIRCLES}
-}
+    {OHOS_CAMERA_PORTRAIT_CIRCLES, CIRCLES},
+    {OHOS_CAMERA_PORTRAIT_HEART, HEART},
+    {OHOS_CAMERA_PORTRAIT_ROTATED, ROTATED},
+    {OHOS_CAMERA_PORTRAIT_STUDIO, STUDIO},
+    {OHOS_CAMERA_PORTRAIT_THEATOR, THEATOR},
 };
 
 const std::unordered_map<PortraitEffect, camera_portrait_effect_type_t> PortraitSession::fwToMetaPortraitEffect_ = {
     {OFF_EFFECT, OHOS_CAMERA_PORTRAIT_EFFECT_OFF},
-    {CIRCLES, OHOS_CAMERA_PORTRAIT_CIRCLES}
+    {CIRCLES, OHOS_CAMERA_PORTRAIT_CIRCLES},
+    {HEART, OHOS_CAMERA_PORTRAIT_HEART},
+    {ROTATED, OHOS_CAMERA_PORTRAIT_ROTATED},
+    {STUDIO, OHOS_CAMERA_PORTRAIT_STUDIO},
+    {THEATOR, OHOS_CAMERA_PORTRAIT_THEATOR},
 };
 
 PortraitSession::~PortraitSession()
