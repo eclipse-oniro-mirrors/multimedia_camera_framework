@@ -14,13 +14,13 @@
  */
 
 #include "hstream_repeat_proxy.h"
+
 #include "camera_log.h"
 #include "camera_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
-HStreamRepeatProxy::HStreamRepeatProxy(const sptr<IRemoteObject> &impl)
-    : IRemoteProxy<IStreamRepeat>(impl) { }
+HStreamRepeatProxy::HStreamRepeatProxy(const sptr<IRemoteObject>& impl) : IRemoteProxy<IStreamRepeat>(impl) {}
 
 HStreamRepeatProxy::~HStreamRepeatProxy()
 {
@@ -74,7 +74,7 @@ int32_t HStreamRepeatProxy::Release()
     return error;
 }
 
-int32_t HStreamRepeatProxy::SetCallback(sptr<IStreamRepeatCallback> &callback)
+int32_t HStreamRepeatProxy::SetCallback(sptr<IStreamRepeatCallback>& callback)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -97,7 +97,7 @@ int32_t HStreamRepeatProxy::SetCallback(sptr<IStreamRepeatCallback> &callback)
     return error;
 }
 
-int32_t HStreamRepeatProxy::AddDeferredSurface(const sptr<OHOS::IBufferProducer> &producer)
+int32_t HStreamRepeatProxy::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& producer)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -117,6 +117,50 @@ int32_t HStreamRepeatProxy::AddDeferredSurface(const sptr<OHOS::IBufferProducer>
         return error;
     }
 
+    return error;
+}
+
+int32_t HStreamRepeatProxy::ForkSketchStreamRepeat(
+    const sptr<OHOS::IBufferProducer>& producer, int32_t width, int32_t height, sptr<IStreamRepeat>& sketchStream)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    if ((producer == nullptr) || (width == 0) || (height == 0)) {
+        MEDIA_ERR_LOG("HStreamRepeatProxy ForkSketchStreamRepeat producer is null or invalid size is set");
+        return IPC_PROXY_ERR;
+    }
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteRemoteObject(producer->AsObject());
+    data.WriteInt32(width);
+    data.WriteInt32(height);
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_FORK_SKETCH_STREAM_REPEAT), data, reply, option);
+    auto remoteObject = reply.ReadRemoteObject();
+    if (remoteObject != nullptr) {
+        sketchStream = iface_cast<IStreamRepeat>(remoteObject);
+    } else {
+        MEDIA_ERR_LOG("HCameraServiceProxy ForkSketchStreamRepeat sketchStream is null");
+        error = IPC_PROXY_ERR;
+    }
+    return error;
+}
+
+int32_t HStreamRepeatProxy::RemoveSketchStreamRepeat()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_REMOVE_SKETCH_STREAM_REPEAT), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamRepeatProxy Stop failed, error: %{public}d", error);
+    }
     return error;
 }
 } // namespace CameraStandard

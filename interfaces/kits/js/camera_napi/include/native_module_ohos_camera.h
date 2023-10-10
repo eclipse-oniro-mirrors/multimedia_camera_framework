@@ -16,17 +16,18 @@
 #ifndef NATIVE_MODULE_OHOS_CAMERA_H_
 #define NATIVE_MODULE_OHOS_CAMERA_H_
 
-#include "output/preview_output_napi.h"
-#include "output/photo_output_napi.h"
-#include "output/video_output_napi.h"
-#include "input/camera_input_napi.h"
 #include "input/camera_info_napi.h"
-#include "session/camera_session_napi.h"
+#include "input/camera_input_napi.h"
 #include "input/camera_manager_napi.h"
 #include "input/camera_napi.h"
 #include "input/camera_pre_launch_config_napi.h"
-#include "output/metadata_object_napi.h"
 #include "mode/mode_manager_napi.h"
 #include "mode/portrait_session_napi.h"
+#include "output/camera_sketch_data_napi.h"
+#include "output/metadata_object_napi.h"
+#include "output/photo_output_napi.h"
+#include "output/preview_output_napi.h"
+#include "output/video_output_napi.h"
+#include "session/camera_session_napi.h"
 
 #endif /* NATIVE_MODULE_OHOS_CAMERA_H_ */

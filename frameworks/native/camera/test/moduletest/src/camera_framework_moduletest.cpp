@@ -58,6 +58,7 @@ namespace {
         CAM_PREVIEW_FRAME_START = 0,
         CAM_PREVIEW_FRAME_END,
         CAM_PREVIEW_FRAME_ERR,
+        CAM_PREVIEW_FRAME_SKETCH_AVAILABLE,
         CAM_PREVIEW_MAX_EVENT
     };
 
@@ -227,6 +228,12 @@ namespace {
         {
             MEDIA_DEBUG_LOG("AppCallback::OnError errorCode: %{public}d", errorCode);
             g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_ERR)] = 1;
+            return;
+        }
+        void OnSketchAvailable(SketchData& SketchData) const override
+        {
+            MEDIA_DEBUG_LOG("AppCallback::OnSketchAvailable");
+            g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_SKETCH_AVAILABLE)] = 1;
             return;
         }
     };
@@ -5858,7 +5865,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_071, TestSize.L
     int32_t format = 0;
     int32_t width = 0;
     int32_t height = 0;
-    sptr<HStreamRepeat> streamRepeat= new(std::nothrow) HStreamRepeat(nullptr, format, width, height, false);
+    sptr<HStreamRepeat> streamRepeat =
+        new (std::nothrow) HStreamRepeat(nullptr, format, width, height, RepeatStreamType::PREVIEW);
     EXPECT_EQ(streamRepeat->SetCallback(repeatCallback), CAMERA_OK);
     EXPECT_EQ(streamRepeat->OnFrameError(BUFFER_LOST), CAMERA_OK);
     EXPECT_EQ(streamRepeat->OnFrameError(0), CAMERA_OK);

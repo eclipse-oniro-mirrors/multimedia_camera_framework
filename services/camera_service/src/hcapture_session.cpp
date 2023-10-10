@@ -14,12 +14,13 @@
  */
 
 #include "hcapture_session.h"
+
+#include "bundle_mgr_interface.h"
 #include "camera_log.h"
 #include "iconsumer_surface.h"
 #include "ipc_skeleton.h"
-#include "metadata_utils.h"
-#include "bundle_mgr_interface.h"
 #include "iservice_registry.h"
+#include "metadata_utils.h"
 #include "system_ability_definition.h"
 
 using namespace OHOS::AppExecFwk;
@@ -67,8 +68,8 @@ static std::string GetClientBundle(int uid)
 
 HCaptureSession::HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
     sptr<StreamOperatorCallback> streamOperatorCb, const uint32_t callingTokenId, int32_t opMode)
-    : cameraHostManager_(cameraHostManager), streamOperatorCallback_(streamOperatorCb),
-    sessionCallback_(nullptr), deviceOperatorsCallback_(nullptr)
+    : cameraHostManager_(cameraHostManager), streamOperatorCallback_(streamOperatorCb), sessionCallback_(nullptr),
+      deviceOperatorsCallback_(nullptr)
 {
     pid_ = IPCSkeleton::GetCallingPid();
     uid_ = IPCSkeleton::GetCallingUid();
@@ -112,7 +113,7 @@ pid_t HCaptureSession::GetPid()
     return pid_;
 }
 
-void HCaptureSession::CloseDevice(sptr<HCameraDevice> &device)
+void HCaptureSession::CloseDevice(sptr<HCameraDevice>& device)
 {
     if (device != nullptr && deviceOperatorsCallback_.promote() != nullptr) {
         deviceOperatorsCallback_->DeviceClose(device->GetCameraId(), pid_);
@@ -228,11 +229,11 @@ int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> st
     sptr<IConsumerSurface> captureSurface = IConsumerSurface::Create();
 
     if (streamType == StreamType::CAPTURE) {
-        rc = AddOutputStream(static_cast<HStreamCapture *>(stream.GetRefPtr()));
+        rc = AddOutputStream(static_cast<HStreamCapture*>(stream.GetRefPtr()));
     } else if (streamType == StreamType::REPEAT) {
-        rc = AddOutputStream(static_cast<HStreamRepeat *>(stream.GetRefPtr()));
-    }  else if (streamType == StreamType::METADATA) {
-        rc = AddOutputStream(static_cast<HStreamMetadata *>(stream.GetRefPtr()));
+        rc = AddOutputStream(static_cast<HStreamRepeat*>(stream.GetRefPtr()));
+    } else if (streamType == StreamType::METADATA) {
+        rc = AddOutputStream(static_cast<HStreamMetadata*>(stream.GetRefPtr()));
     }
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::AddOutput with %d", streamType));
     MEDIA_INFO_LOG("CaptureSession::AddOutput with with %{public}d, rc = %{public}d", streamType, rc);
@@ -303,11 +304,11 @@ int32_t HCaptureSession::RemoveOutput(StreamType streamType, sptr<IStreamCommon>
     }
     std::lock_guard<std::mutex> lock(sessionLock_);
     if (streamType == StreamType::CAPTURE) {
-        rc = RemoveOutputStream(static_cast<HStreamCapture *>(stream.GetRefPtr()));
+        rc = RemoveOutputStream(static_cast<HStreamCapture*>(stream.GetRefPtr()));
     } else if (streamType == StreamType::REPEAT) {
-        rc = RemoveOutputStream(static_cast<HStreamRepeat *>(stream.GetRefPtr()));
+        rc = RemoveOutputStream(static_cast<HStreamRepeat*>(stream.GetRefPtr()));
     } else if (streamType == StreamType::METADATA) {
-        rc = RemoveOutputStream(static_cast<HStreamMetadata *>(stream.GetRefPtr()));
+        rc = RemoveOutputStream(static_cast<HStreamMetadata*>(stream.GetRefPtr()));
     }
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::RemoveOutput with %d", streamType));
     return rc;
@@ -333,7 +334,7 @@ int32_t HCaptureSession::ValidateSessionOutputs()
     return CAMERA_OK;
 }
 
-int32_t HCaptureSession::GetCameraDevice(sptr<HCameraDevice> &device)
+int32_t HCaptureSession::GetCameraDevice(sptr<HCameraDevice>& device)
 {
     std::lock_guard<std::mutex> lock(sessionLock_);
     if (cameraDevice_ != nullptr && !cameraDevice_->IsReleaseCameraDevice()) {
@@ -349,9 +350,8 @@ int32_t HCaptureSession::GetCameraDevice(sptr<HCameraDevice> &device)
     return CAMERA_INVALID_STATE;
 }
 
-int32_t HCaptureSession::GetCurrentStreamInfos(sptr<HCameraDevice> &device,
-                                               std::shared_ptr<OHOS::Camera::CameraMetadata> &deviceSettings,
-                                               std::vector<StreamInfo_V1_1> &streamInfos)
+int32_t HCaptureSession::GetCurrentStreamInfos(sptr<HCameraDevice>& device,
+    std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, std::vector<StreamInfo_V1_1>& streamInfos)
 {
     int32_t rc;
     int32_t streamId = streamId_;
@@ -388,9 +388,8 @@ int32_t HCaptureSession::GetCurrentStreamInfos(sptr<HCameraDevice> &device,
     return CAMERA_OK;
 }
 
-int32_t HCaptureSession::CreateAndCommitStreams(sptr<HCameraDevice> &device,
-                                                std::shared_ptr<OHOS::Camera::CameraMetadata> &deviceSettings,
-                                                std::vector<StreamInfo_V1_1> &streamInfos)
+int32_t HCaptureSession::CreateAndCommitStreams(sptr<HCameraDevice>& device,
+    std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, std::vector<StreamInfo_V1_1>& streamInfos)
 {
     CamRetCode hdiRc = HDI::Camera::V1_0::NO_ERROR;
     StreamInfo_V1_1 curStreamInfo;
@@ -421,9 +420,9 @@ int32_t HCaptureSession::CreateAndCommitStreams(sptr<HCameraDevice> &device,
         MEDIA_INFO_LOG("HCaptureSession::CommitStreams, commit mode %{public}d", opMode_);
         if (major == 1 && minor == 1) {
             hdiRc = (CamRetCode)(streamOperator->CommitStreams_V1_1(
-                static_cast<OHOS::HDI::Camera::V1_1::OperationMode_V1_1> (opMode_), setting));
+                static_cast<OHOS::HDI::Camera::V1_1::OperationMode_V1_1>(opMode_), setting));
         } else {
-            OperationMode  opMode = static_cast<OperationMode> (opMode_);
+            OperationMode opMode = static_cast<OperationMode>(opMode_);
             hdiRc = (CamRetCode)(streamOperator->CommitStreams(opMode, setting));
         }
         if (hdiRc != HDI::Camera::V1_0::NO_ERROR) {
@@ -434,8 +433,8 @@ int32_t HCaptureSession::CreateAndCommitStreams(sptr<HCameraDevice> &device,
                 streamIds.emplace_back(curStreamInfo.v1_0.streamId_);
             }
             for (size_t i = 0; i < streamIds.size(); i++) {
-                MEDIA_DEBUG_LOG("HCaptureSession::CreateAndCommitStreams() streamIds[%{public}zu] = %{public}d",
-                                i, streamIds.at(i));
+                MEDIA_DEBUG_LOG("HCaptureSession::CreateAndCommitStreams() streamIds[%{public}zu] = %{public}d", i,
+                    streamIds.at(i));
             }
             if (!streamIds.empty() && streamOperator->ReleaseStreams(streamIds) != HDI::Camera::V1_0::NO_ERROR) {
                 MEDIA_ERR_LOG("HCaptureSession::CreateAndCommitStreams(), Failed to release streams");
@@ -445,23 +444,22 @@ int32_t HCaptureSession::CreateAndCommitStreams(sptr<HCameraDevice> &device,
     return HdiToServiceError(hdiRc);
 }
 
-int32_t HCaptureSession::CheckAndCommitStreams(sptr<HCameraDevice> &device,
-                                               std::shared_ptr<OHOS::Camera::CameraMetadata> &deviceSettings,
-                                               std::vector<StreamInfo_V1_1> &allStreamInfos,
-                                               std::vector<StreamInfo_V1_1> &newStreamInfos)
+int32_t HCaptureSession::CheckAndCommitStreams(sptr<HCameraDevice>& device,
+    std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, std::vector<StreamInfo_V1_1>& allStreamInfos,
+    std::vector<StreamInfo_V1_1>& newStreamInfos)
 {
     return CreateAndCommitStreams(device, deviceSettings, newStreamInfos);
 }
 
 void HCaptureSession::DeleteReleasedStream()
 {
-    auto matchFunction = [](const auto& curStream) { return curStream->IsReleaseStream();};
-    captureStreams_.erase(std::remove_if(captureStreams_.begin(), captureStreams_.end(), matchFunction),
-        captureStreams_.end());
-    repeatStreams_.erase(std::remove_if(repeatStreams_.begin(), repeatStreams_.end(), matchFunction),
-        repeatStreams_.end());
-    metadataStreams_.erase(std::remove_if(metadataStreams_.begin(), metadataStreams_.end(), matchFunction),
-        metadataStreams_.end());
+    auto matchFunction = [](const auto& curStream) { return curStream->IsReleaseStream(); };
+    captureStreams_.erase(
+        std::remove_if(captureStreams_.begin(), captureStreams_.end(), matchFunction), captureStreams_.end());
+    repeatStreams_.erase(
+        std::remove_if(repeatStreams_.begin(), repeatStreams_.end(), matchFunction), repeatStreams_.end());
+    metadataStreams_.erase(
+        std::remove_if(metadataStreams_.begin(), metadataStreams_.end(), matchFunction), metadataStreams_.end());
     {
         std::lock_guard<std::mutex> lock(streamsLock_);
         sptr<HStreamCommon> curStream;
@@ -475,7 +473,7 @@ void HCaptureSession::DeleteReleasedStream()
     }
 }
 
-void HCaptureSession::RestorePreviousState(sptr<HCameraDevice> &device, bool isCreateReleaseStreams)
+void HCaptureSession::RestorePreviousState(sptr<HCameraDevice>& device, bool isCreateReleaseStreams)
 {
     std::vector<StreamInfo_V1_1> streamInfos;
     StreamInfo_V1_1 streamInfo;
@@ -517,7 +515,7 @@ void HCaptureSession::RestorePreviousState(sptr<HCameraDevice> &device, bool isC
     curState_ = prevState_;
 }
 
-void HCaptureSession::UpdateSessionConfig(sptr<HCameraDevice> &device)
+void HCaptureSession::UpdateSessionConfig(sptr<HCameraDevice>& device)
 {
     DeleteReleasedStream();
     deletedStreamIds_.clear();
@@ -546,7 +544,7 @@ void HCaptureSession::UpdateSessionConfig(sptr<HCameraDevice> &device)
     curState_ = CaptureSessionState::SESSION_CONFIG_COMMITTED;
 }
 
-int32_t HCaptureSession::HandleCaptureOuputsConfig(sptr<HCameraDevice> &device)
+int32_t HCaptureSession::HandleCaptureOuputsConfig(sptr<HCameraDevice>& device)
 {
     int32_t rc;
     int32_t streamId;
@@ -600,10 +598,33 @@ int32_t HCaptureSession::HandleCaptureOuputsConfig(sptr<HCameraDevice> &device)
     return rc;
 }
 
+void HCaptureSession::ExpandSketchRepeatStream()
+{
+    std::vector<sptr<HStreamCommon>> sketchStreams;
+    {
+        std::lock_guard<std::mutex> lock(sessionLock_);
+        for (auto item = tempStreams_.begin(); item != tempStreams_.end(); item++) {
+            sptr<HStreamCommon> stream = *item;
+            if (stream == nullptr || stream->IsReleaseStream() || stream->GetStreamType() != StreamType::REPEAT) {
+                continue;
+            }
+            HStreamRepeat* streamRepeat = static_cast<HStreamRepeat*>(stream.GetRefPtr());
+            sptr<HStreamRepeat> sketchStream = streamRepeat->GetSketchStream();
+            if (sketchStream == nullptr || sketchStream->IsReleaseStream()) {
+                continue;
+            }
+            sketchStreams.emplace_back(sketchStream);
+        }
+    }
+    for (auto item = sketchStreams.begin(); item != sketchStreams.end(); item++) {
+        AddOutputStream(*item);
+    }
+}
+
 int32_t HCaptureSession::CommitConfig()
 {
+    ExpandSketchRepeatStream();
     sptr<HCameraDevice> device = nullptr;
-
     if (curState_ != CaptureSessionState::SESSION_CONFIG_INPROGRESS) {
         MEDIA_ERR_LOG("HCaptureSession::CommitConfig() Need to call BeginConfig before committing configuration");
         return CAMERA_INVALID_STATE;
@@ -645,8 +666,7 @@ int32_t HCaptureSession::CommitConfig()
     if (device != nullptr) {
         int32_t pid = IPCSkeleton::GetCallingPid();
         int32_t uid = IPCSkeleton::GetCallingUid();
-        POWERMGR_SYSEVENT_CAMERA_CONNECT(pid, uid, device->GetCameraId().c_str(),
-                                         GetClientBundle(uid));
+        POWERMGR_SYSEVENT_CAMERA_CONNECT(pid, uid, device->GetCameraId().c_str(), GetClientBundle(uid));
     }
 
     if (cameraDevice_ != nullptr && device != cameraDevice_) {
@@ -657,7 +677,7 @@ int32_t HCaptureSession::CommitConfig()
     return rc;
 }
 
-int32_t HCaptureSession::GetSessionState(CaptureSessionState &sessionState)
+int32_t HCaptureSession::GetSessionState(CaptureSessionState& sessionState)
 {
     int32_t rc = CAMERA_OK;
     sessionState = curState_;
@@ -688,8 +708,8 @@ int32_t HCaptureSession::Start()
     sptr<HStreamRepeat> curStreamRepeat;
     int32_t rc = CAMERA_OK;
     for (auto item = repeatStreams_.begin(); item != repeatStreams_.end(); ++item) {
-        curStreamRepeat = static_cast<HStreamRepeat *>((*item).GetRefPtr());
-        if (!curStreamRepeat->IsVideo()) {
+        curStreamRepeat = static_cast<HStreamRepeat*>((*item).GetRefPtr());
+        if (curStreamRepeat->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
             rc = curStreamRepeat->Start();
             if (rc != CAMERA_OK) {
                 MEDIA_ERR_LOG("HCaptureSession::Start(), Failed to start preview, rc: %{public}d", rc);
@@ -709,7 +729,7 @@ int32_t HCaptureSession::Stop()
     }
     std::lock_guard<std::mutex> lock(sessionLock_);
     for (auto item = repeatStreams_.begin(); item != repeatStreams_.end(); ++item) {
-        curStreamRepeat = static_cast<HStreamRepeat *>((*item).GetRefPtr());
+        curStreamRepeat = static_cast<HStreamRepeat*>((*item).GetRefPtr());
         if (!curStreamRepeat->IsVideo()) {
             rc = curStreamRepeat->Stop();
             if (rc != CAMERA_OK) {
@@ -747,8 +767,8 @@ void HCaptureSession::ReleaseStreams()
         }
         MEDIA_DEBUG_LOG("HCaptureSession::ReleaseStreams() streamIds size() = %{public}zu", streamIds.size());
         for (size_t i = 0; i < streamIds.size(); i++) {
-            MEDIA_DEBUG_LOG("HCaptureSession::ReleaseStreams() streamIds[%{public}zu] = %{public}d",
-                            i, streamIds.at(i));
+            MEDIA_DEBUG_LOG(
+                "HCaptureSession::ReleaseStreams() streamIds[%{public}zu] = %{public}d", i, streamIds.at(i));
         }
         streams_.clear();
     }
@@ -844,7 +864,7 @@ void HCaptureSession::DestroyStubObjectForPid(pid_t pid)
     MEDIA_DEBUG_LOG("camera stub services(%{public}zu).", session_.size());
 }
 
-int32_t HCaptureSession::SetCallback(sptr<ICaptureSessionCallback> &callback)
+int32_t HCaptureSession::SetCallback(sptr<ICaptureSessionCallback>& callback)
 {
     if (callback == nullptr) {
         MEDIA_ERR_LOG("HCaptureSession::SetCallback callback is null");
@@ -857,8 +877,7 @@ int32_t HCaptureSession::SetCallback(sptr<ICaptureSessionCallback> &callback)
 
 std::string HCaptureSession::GetSessionState()
 {
-    std::map<CaptureSessionState, std::string>::const_iterator iter =
-        sessionState_.find(curState_);
+    std::map<CaptureSessionState, std::string>::const_iterator iter = sessionState_.find(curState_);
     if (iter != sessionState_.end()) {
         return iter->second;
     }
@@ -910,8 +929,8 @@ void HCaptureSession::StartUsingPermissionCallback(const uint32_t callingTokenId
     }
     cameraUseCallbackPtr_ = std::make_shared<CameraUseStateChangeCb>();
     cameraUseCallbackPtr_->SetCaptureSession(this);
-    int32_t res = Security::AccessToken::PrivacyKit::StartUsingPermission(
-        callingTokenId, permissionName, cameraUseCallbackPtr_);
+    int32_t res =
+        Security::AccessToken::PrivacyKit::StartUsingPermission(callingTokenId, permissionName, cameraUseCallbackPtr_);
     MEDIA_DEBUG_LOG("after StartUsingPermissionCallback tokenId:%{public}d", callingTokenId);
     if (res != CAMERA_OK) {
         MEDIA_ERR_LOG("StartUsingPermissionCallback failed.");
@@ -978,7 +997,6 @@ void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessToke
     }
 }
 
-
 StreamOperatorCallback::StreamOperatorCallback(sptr<HCaptureSession> session)
 {
     captureSession_ = session;
@@ -996,8 +1014,7 @@ sptr<HStreamCommon> StreamOperatorCallback::GetStreamByStreamID(int32_t streamId
         std::lock_guard<std::mutex> lock(captureSession_->streamsLock_);
 
         std::vector<sptr<HStreamCommon>>::iterator it = std::find_if(captureSession_->streams_.begin(),
-            captureSession_->streams_.end(),
-            [&streamId](const auto& item) { return item->GetStreamId() == streamId; });
+            captureSession_->streams_.end(), [&streamId](const auto& item) { return item->GetStreamId() == streamId; });
         if (it == captureSession_->streams_.end()) {
             return result;
         }
@@ -1006,8 +1023,7 @@ sptr<HStreamCommon> StreamOperatorCallback::GetStreamByStreamID(int32_t streamId
     return result;
 }
 
-int32_t StreamOperatorCallback::OnCaptureStarted(int32_t captureId,
-                                                 const std::vector<int32_t> &streamIds)
+int32_t StreamOperatorCallback::OnCaptureStarted(int32_t captureId, const std::vector<int32_t>& streamIds)
 {
     MEDIA_DEBUG_LOG("StreamOperatorCallback::OnCaptureStarted");
     sptr<HStreamCommon> curStream;
@@ -1018,9 +1034,9 @@ int32_t StreamOperatorCallback::OnCaptureStarted(int32_t captureId,
             MEDIA_ERR_LOG("StreamOperatorCallback::OnCaptureStarted StreamId: %{public}d not found", *item);
             return CAMERA_INVALID_ARG;
         } else if (curStream->GetStreamType() == StreamType::REPEAT) {
-            static_cast<HStreamRepeat *>(curStream.GetRefPtr())->OnFrameStarted();
+            static_cast<HStreamRepeat*>(curStream.GetRefPtr())->OnFrameStarted();
         } else if (curStream->GetStreamType() == StreamType::CAPTURE) {
-            static_cast<HStreamCapture *>(curStream.GetRefPtr())->OnCaptureStarted(captureId);
+            static_cast<HStreamCapture*>(curStream.GetRefPtr())->OnCaptureStarted(captureId);
         }
     }
     return CAMERA_OK;
@@ -1037,12 +1053,13 @@ int32_t StreamOperatorCallback::OnCaptureEnded(int32_t captureId, const std::vec
         curStream = GetStreamByStreamID(captureInfo.streamId_);
         if (curStream == nullptr) {
             MEDIA_ERR_LOG("StreamOperatorCallback::OnCaptureEnded StreamId: %{public}d not found."
-                          " Framecount: %{public}d", captureInfo.streamId_, captureInfo.frameCount_);
+                          " Framecount: %{public}d",
+                captureInfo.streamId_, captureInfo.frameCount_);
             return CAMERA_INVALID_ARG;
         } else if (curStream->GetStreamType() == StreamType::REPEAT) {
-            static_cast<HStreamRepeat *>(curStream.GetRefPtr())->OnFrameEnded(captureInfo.frameCount_);
+            static_cast<HStreamRepeat*>(curStream.GetRefPtr())->OnFrameEnded(captureInfo.frameCount_);
         } else if (curStream->GetStreamType() == StreamType::CAPTURE) {
-            static_cast<HStreamCapture *>(curStream.GetRefPtr())->OnCaptureEnded(captureId, captureInfo.frameCount_);
+            static_cast<HStreamCapture*>(curStream.GetRefPtr())->OnCaptureEnded(captureId, captureInfo.frameCount_);
         }
     }
     return CAMERA_OK;
@@ -1059,20 +1076,20 @@ int32_t StreamOperatorCallback::OnCaptureError(int32_t captureId, const std::vec
         curStream = GetStreamByStreamID(errInfo.streamId_);
         if (curStream == nullptr) {
             MEDIA_ERR_LOG("StreamOperatorCallback::OnCaptureError StreamId: %{public}d not found."
-                          " Error: %{public}d", errInfo.streamId_, errInfo.error_);
+                          " Error: %{public}d",
+                errInfo.streamId_, errInfo.error_);
             return CAMERA_INVALID_ARG;
         } else if (curStream->GetStreamType() == StreamType::REPEAT) {
-            static_cast<HStreamRepeat *>(curStream.GetRefPtr())->OnFrameError(errInfo.error_);
+            static_cast<HStreamRepeat*>(curStream.GetRefPtr())->OnFrameError(errInfo.error_);
         } else if (curStream->GetStreamType() == StreamType::CAPTURE) {
-            static_cast<HStreamCapture *>(curStream.GetRefPtr())->OnCaptureError(captureId, errInfo.error_);
+            static_cast<HStreamCapture*>(curStream.GetRefPtr())->OnCaptureError(captureId, errInfo.error_);
         }
     }
     return CAMERA_OK;
 }
 
-int32_t StreamOperatorCallback::OnFrameShutter(int32_t captureId,
-                                               const std::vector<int32_t> &streamIds,
-                                               uint64_t timestamp)
+int32_t StreamOperatorCallback::OnFrameShutter(
+    int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
 {
     MEDIA_DEBUG_LOG("StreamOperatorCallback::OnFrameShutter");
     sptr<HStreamCommon> curStream;
@@ -1080,7 +1097,7 @@ int32_t StreamOperatorCallback::OnFrameShutter(int32_t captureId,
     for (auto item = streamIds.begin(); item != streamIds.end(); ++item) {
         curStream = GetStreamByStreamID(*item);
         if ((curStream != nullptr) && (curStream->GetStreamType() == StreamType::CAPTURE)) {
-            static_cast<HStreamCapture *>(curStream.GetRefPtr())->OnFrameShutter(captureId, timestamp);
+            static_cast<HStreamCapture*>(curStream.GetRefPtr())->OnFrameShutter(captureId, timestamp);
         } else {
             MEDIA_ERR_LOG("StreamOperatorCallback::OnFrameShutter StreamId: %{public}d not found", *item);
             return CAMERA_INVALID_ARG;

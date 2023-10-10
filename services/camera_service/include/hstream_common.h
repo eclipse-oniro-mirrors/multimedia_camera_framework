@@ -16,13 +16,14 @@
 #ifndef OHOS_CAMERA_H_STREAM_COMMON_H
 #define OHOS_CAMERA_H_STREAM_COMMON_H
 
+#include <iostream>
+#include <refbase.h>
+
+#include "camera/v1_2/types.h"
 #include "camera_metadata_info.h"
 #include "istream_common.h"
 #include "v1_0/istream_operator.h"
 #include "v1_1/istream_operator.h"
-
-#include <refbase.h>
-#include <iostream>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -30,12 +31,12 @@ using namespace OHOS::HDI::Camera::V1_0;
 using OHOS::HDI::Camera::V1_1::StreamInfo_V1_1;
 class HStreamCommon : virtual public RefBase {
 public:
-    HStreamCommon(StreamType streamType, sptr<OHOS::IBufferProducer> producer,
-                  int32_t format, int32_t width, int32_t height);
+    HStreamCommon(
+        StreamType streamType, sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height);
     virtual ~HStreamCommon();
     virtual int32_t LinkInput(sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator,
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t streamId) = 0;
-    virtual void SetStreamInfo(StreamInfo_V1_1 &streamInfo) = 0;
+    virtual void SetStreamInfo(StreamInfo_V1_1& streamInfo) = 0;
     virtual int32_t Release() = 0;
     virtual void DumpStreamInfo(std::string& dumpString) = 0;
     virtual bool IsReleaseStream() final;

@@ -35,6 +35,11 @@ typedef struct {
     uint32_t maxFps;
 } Fps;
 
+typedef struct {
+    float ratio;
+    std::shared_ptr<void> pixelMap;
+} SketchData;
+
 enum CameraFormat {
     CAMERA_FORMAT_INVALID = -1,
     CAMERA_FORMAT_YCBCR_420_888 = 2,

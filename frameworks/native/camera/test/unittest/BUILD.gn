@@ -57,6 +57,7 @@ ohos_unittest("camera_framework_unittest_v1_0") {
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
+    "image_framework:image_native",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
   ]
@@ -119,6 +120,7 @@ ohos_unittest("camera_framework_unittest_v1_1") {
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
+    "image_framework:image_native",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
   ]

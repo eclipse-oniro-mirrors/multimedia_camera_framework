@@ -223,15 +223,23 @@ void TestPreviewOutputCallback::OnFrameStarted() const
 {
     MEDIA_INFO_LOG("TestPreviewOutputCallback:OnFrameStarted(), testName_: %{public}s", testName_);
 }
+
 void TestPreviewOutputCallback::OnFrameEnded(const int32_t frameCount) const
 {
     MEDIA_INFO_LOG("TestPreviewOutputCallback:OnFrameEnded(), testName_: %{public}s, frameCount: %{public}d",
                    testName_, frameCount);
 }
+
 void TestPreviewOutputCallback::OnError(const int32_t errorCode) const
 {
     MEDIA_INFO_LOG("TestPreviewOutputCallback:OnError(), testName_: %{public}s, errorCode: %{public}d",
                    testName_, errorCode);
+}
+
+void TestPreviewOutputCallback::OnSketchAvailable(SketchData& sketchData) const
+{
+    MEDIA_DEBUG_LOG("TestPreviewOutputCallback::OnSketchAvailable(), testName_: %{public}s", testName_);
+    return;
 }
 
 TestVideoOutputCallback::TestVideoOutputCallback(const char* testName) : testName_(testName) {

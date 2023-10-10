@@ -114,6 +114,7 @@ public:
     void OnFrameStarted() const override;
     void OnFrameEnded(const int32_t frameCount) const override;
     void OnError(const int32_t errorCode) const override;
+    void OnSketchAvailable(SketchData& sketchData) const override;
 
 private:
     const char* testName_;
