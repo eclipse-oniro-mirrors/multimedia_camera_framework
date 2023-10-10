@@ -32,6 +32,10 @@ namespace CameraStandard {
 enum PortraitEffect {
     OFF_EFFECT = 0,
     CIRCLES = 1,
+    HEART = 2,
+    ROTATED = 3,
+    STUDIO = 4,
+    THEATOR = 5,
 };
 
 class CaptureOutput;

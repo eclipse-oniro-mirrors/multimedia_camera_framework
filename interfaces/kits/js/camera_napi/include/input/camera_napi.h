@@ -169,6 +169,10 @@ static const std::unordered_map<std::string, int32_t> mapBeautyType = {
 static const std::unordered_map<std::string, int32_t> mapPortraitEffect = {
     {"OFF", 0},
     {"CIRCLES", 1},
+    {"HEART", 2},
+    {"ROTATED", 3},
+    {"STUDIO", 4},
+    {"THEATOR", 5},
 };
 
 static const std::unordered_map<std::string, int32_t> mapCameraErrorCode = {
