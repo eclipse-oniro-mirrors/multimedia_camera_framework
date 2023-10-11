@@ -334,11 +334,8 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput> &output)
     ConfigureOutput(output);
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_METADATA) {
         MEDIA_INFO_LOG("CaptureSession::AddOutput MetadataOutput");
-        const int32_t portraitMode = 3;
-        if (GetMode() == portraitMode) {
-            metaOutput_ = output;
-            return ServiceToCameraError(CAMERA_OK);
-        }
+        metaOutput_ = output;
+        return ServiceToCameraError(CAMERA_OK);
     }
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (captureSession_) {
