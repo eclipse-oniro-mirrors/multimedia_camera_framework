@@ -94,7 +94,7 @@ int32_t CameraManager::CreateListenerObject()
 
 int32_t CameraStatusServiceCallback::OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status)
 {
-    MEDIA_INFO_LOG("OnCameraStatusChanged entry");
+    MEDIA_INFO_LOG("cameraId: %{public}s, status: %{public}d", cameraId.c_str(), status);
     CameraStatusInfo cameraStatusInfo;
     if (camMngr_ != nullptr && camMngr_->GetApplicationCallback() != nullptr) {
         if (status == CAMERA_STATUS_APPEAR) {
@@ -106,8 +106,7 @@ int32_t CameraStatusServiceCallback::OnCameraStatusChanged(const std::string& ca
         }
         cameraStatusInfo.cameraStatus = status;
         if (cameraStatusInfo.cameraDevice) {
-            MEDIA_INFO_LOG("cameraId: %{public}s, status: %{public}d",
-                           cameraId.c_str(), status);
+            MEDIA_INFO_LOG("Callback cameraStatus");
             camMngr_->GetApplicationCallback()->OnCameraStatusChanged(cameraStatusInfo);
         }
     } else {
@@ -553,6 +552,9 @@ std::shared_ptr<CameraManagerCallback> CameraManager::GetApplicationCallback()
 sptr<CameraDevice> CameraManager::GetCameraDeviceFromId(std::string cameraId)
 {
     sptr<CameraDevice> cameraObj = nullptr;
+    if (cameraObjList.empty()) {
+        this->GetSupportedCameras();
+    }
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         if (cameraObjList[i]->GetID() == cameraId) {
             cameraObj = cameraObjList[i];
