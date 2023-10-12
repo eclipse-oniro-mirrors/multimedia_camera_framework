@@ -149,10 +149,14 @@ int32_t HCameraDevice::OpenDevice()
     int32_t errorCode;
     MEDIA_INFO_LOG("HCameraDevice::OpenDevice Opening camera device: %{public}s", cameraID_.c_str());
     errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_);
-    if (errorCode == CAMERA_OK) {
-        std::lock_guard<std::mutex> lock(settingsMutex_);
-        isOpenedCameraDevice_ = true;
-        if (updateSettings_ != nullptr && hdiCameraDevice_ != nullptr) {
+    if (errorCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");
+    }
+    std::lock_guard<std::mutex> lock(settingsMutex_);
+    isOpenedCameraDevice_ = true;
+    if (hdiCameraDevice_ != nullptr) {
+        cameraHostManager_->AddCameraDevice(cameraID_, this);
+        if (updateSettings_ != nullptr) {
             std::vector<uint8_t> setting;
             OHOS::Camera::MetadataUtils::ConvertMetadataToVec(updateSettings_, setting);
             CamRetCode rc = (CamRetCode)(hdiCameraDevice_->UpdateSettings(setting));
@@ -162,12 +166,8 @@ int32_t HCameraDevice::OpenDevice()
             }
             updateSettings_ = nullptr;
             MEDIA_DEBUG_LOG("HCameraDevice::Open Updated device settings");
-
             errorCode = HdiToServiceError((CamRetCode)(hdiCameraDevice_->SetResultMode(ON_CHANGED)));
-            cameraHostManager_->AddCameraDevice(cameraID_, this);
         }
-    } else {
-        MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");
     }
     return errorCode;
 }
