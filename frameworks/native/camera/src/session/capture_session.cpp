@@ -2175,8 +2175,8 @@ std::vector<int32_t> CaptureSession::GetSupportedBeautyRange(BeautyType beautyTy
         MEDIA_ERR_LOG("CaptureSession::GetSupportedBeautyRange Failed with return code %{public}d", ret);
         return supportedBeautyRange;
     }
-    int32_t skinToneOff = -1;
     if (beautyType == SKIN_TONE) {
+        int32_t skinToneOff = -1;
         supportedBeautyRange.push_back(skinToneOff);
     }
     for (uint32_t i = 0; i < item.count; i++) {
@@ -2205,7 +2205,7 @@ bool CaptureSession::SetBeautyValue(BeautyType beautyType, int32_t beautyLevel)
         }
     }
 
-    std::vector<int32_t> levelVec = {};
+    std::vector<int32_t> levelVec;
     if (beautyTypeAndRanges_.count(beautyType)) {
         levelVec = beautyTypeAndRanges_[beautyType];
     } else {
@@ -2261,18 +2261,19 @@ void CaptureSession::SetBeauty(BeautyType beautyType, int value)
     }
     MEDIA_ERR_LOG("SetBeauty beautyType %{public}d", beautyType);
     bool status = false;
-    int32_t ret;
     uint32_t count = 1;
     camera_metadata_item_t item;
     uint8_t beauty = OHOS_CAMERA_BEAUTY_TYPE_OFF;
+    int32_t ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_BEAUTY_TYPE, &item);
     if ((beautyType == AUTO_TYPE) && (value == 0)) {
-        ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_BEAUTY_TYPE, &item);
         if (ret == CAM_META_ITEM_NOT_FOUND) {
             status = changedMetadata_->addEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, count);
         } else if (ret == CAM_META_SUCCESS) {
             status = changedMetadata_->updateEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, count);
         }
-        MEDIA_INFO_LOG("CaptureSession::SetBeauty Failed, beautyType is AUTO and level is zero");
+        if (!status) {
+            MEDIA_ERR_LOG("Failed to set beautyType control");
+        }
         return;
     }
 
@@ -2282,8 +2283,6 @@ void CaptureSession::SetBeauty(BeautyType beautyType, int value)
             break;
         }
     }
-
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_BEAUTY_TYPE, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
         status = changedMetadata_->addEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, count);
     } else if (ret == CAM_META_SUCCESS) {
