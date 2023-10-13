@@ -357,7 +357,6 @@ int main(int argc, char **argv)
     std::vector<Profile> photoProfiles = {};
     std::vector<Profile> previewProfiles = {};
     std::string abilityIds = "";
-    uint32_t profileIndex = 0;
     if (isResolutionConfigured) {
         std::vector<CameraFormat> previewFormats;
         std::vector<CameraFormat> photoFormats;
@@ -366,7 +365,7 @@ int main(int argc, char **argv)
         sptr<CameraOutputCapability> outputcapability =
             modeManagerObj->GetSupportedOutputCapability(device, CameraMode::PORTRAIT);
         previewProfiles = outputcapability->GetPreviewProfiles();
-        profileIndex = 0;
+        uint32_t profileIndex = 0;
         for (auto i : previewProfiles) {
             previewFormats.push_back(i.GetCameraFormat());
             previewSizes.push_back(i.GetSize());

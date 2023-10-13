@@ -194,7 +194,6 @@ int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &su
     sptr<PhotoOutput> photoOutput = nullptr;
     int32_t retCode = CAMERA_OK;
     camera_format_t metaFormat;
-    std::vector<uint32_t> photoAbilityId;
 
     if ((serviceProxy_ == nullptr) || (surface == nullptr)) {
         MEDIA_ERR_LOG("serviceProxy_ is null or PhotoOutputSurface/profile is null");
@@ -244,7 +243,6 @@ int CameraManager::CreatePreviewOutput(Profile &profile, sptr<Surface> surface, 
     sptr<PreviewOutput> previewOutput = nullptr;
     int32_t retCode = CAMERA_OK;
     camera_format_t metaFormat;
-    std::vector<uint32_t> previewAbilityId;
 
     if ((serviceProxy_ == nullptr) || (surface == nullptr)) {
         MEDIA_ERR_LOG("serviceProxy_ is null or previewOutputSurface/profile is null");

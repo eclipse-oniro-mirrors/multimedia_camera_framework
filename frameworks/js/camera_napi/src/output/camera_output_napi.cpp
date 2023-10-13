@@ -248,8 +248,8 @@ napi_value CameraOutputCapabilityNapi::CreateCameraOutputCapability(napi_env env
     status = napi_get_reference_value(env, sCapabilityConstructor_, &constructor);
     if (status == napi_ok) {
         sCameraOutputCapability_ = CameraManager::GetInstance()->GetSupportedOutputCapability(camera);
-        uint32_t normalMode = 0;
         if (camera && camera->GetPosition() == CAMERA_POSITION_FRONT) {
+            uint32_t normalMode = 0;
             if (camera->modeVideoProfiles_[normalMode].size()) {
                 MEDIA_INFO_LOG("return align videoProfile size = %{public}zu",
                                camera->modeVideoProfiles_[normalMode].size());
