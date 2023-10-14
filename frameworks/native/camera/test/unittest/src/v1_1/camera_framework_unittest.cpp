@@ -3125,7 +3125,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_012, TestSize.Level
 
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer1 = Surface->GetProducer();
-    sptr<HStreamRepeat> streamRepeat= new(std::nothrow) HStreamRepeat(producer1, format, width, height, false);
+    auto streamRepeat = new (std::nothrow) HStreamRepeat(producer1, format, width, height, RepeatStreamType::PREVIEW);
 
     std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
     photoSetting->SetRotation(PhotoCaptureSetting::Rotation_90);
@@ -3255,9 +3255,9 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_014, TestSize.Level
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer = Surface->GetProducer();
 
-    sptr<HStreamRepeat> streamRepeat = new(std::nothrow) HStreamRepeat(producer, 4, 1280, 960, false);
-    sptr<HStreamRepeat> streamRepeat1 = new(std::nothrow) HStreamRepeat(producer, 3, 640, 480, false);
-    sptr<HStreamCapture> streamCapture = new(std::nothrow) HStreamCapture(producer, 4, 1280, 960);
+    auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, 4, 1280, 960, RepeatStreamType::PREVIEW);
+    auto streamRepeat1 = new (std::nothrow) HStreamRepeat(producer, 3, 640, 480, RepeatStreamType::PREVIEW);
+    sptr<HStreamCapture> streamCapture = new (std::nothrow) HStreamCapture(producer, 4, 1280, 960);
 
     EXPECT_EQ(camSession->AddOutput(StreamType::REPEAT, streamRepeat), 0);
     EXPECT_EQ(camSession->AddOutput(StreamType::REPEAT, streamRepeat1), 0);
@@ -3324,9 +3324,10 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_015, TestSize.Level
 
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer = Surface->GetProducer();
-    sptr<HStreamCapture> streamCapture= new(std::nothrow) HStreamCapture(producer, 4, 1280, 960);
-    sptr<HStreamCapture> streamCapture1= new(std::nothrow) HStreamCapture(producer, 3, 640, 480);
-    sptr<HStreamRepeat> streamRepeat= new(std::nothrow) HStreamRepeat(producer, 4, 1280, 960, false);
+    sptr<HStreamCapture> streamCapture = new (std::nothrow) HStreamCapture(producer, 4, 1280, 960);
+    sptr<HStreamCapture> streamCapture1 = new (std::nothrow) HStreamCapture(producer, 3, 640, 480);
+    sptr<HStreamRepeat> streamRepeat =
+        new (std::nothrow) HStreamRepeat(producer, 4, 1280, 960, RepeatStreamType::PREVIEW);
 
     EXPECT_EQ(camSession->AddOutput(StreamType::CAPTURE, streamCapture), 0);
     EXPECT_EQ(camSession->AddOutput(StreamType::CAPTURE, streamCapture1), 0);
@@ -3461,7 +3462,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_017, TestSize.Level
 
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer = Surface->GetProducer();
-    sptr<HStreamRepeat> streamRepeat= new(std::nothrow) HStreamRepeat(producer, 0, 0, 0, false);
+    sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, 0, 0, 0, RepeatStreamType::PREVIEW);
     sptr<HStreamMetadata> streamMetadata= new(std::nothrow) HStreamMetadata(producer, 0);
     EXPECT_EQ(camSession->AddOutput(StreamType::REPEAT, streamRepeat), CAMERA_INVALID_STATE);
     EXPECT_EQ(camSession->RemoveOutput(StreamType::REPEAT, streamRepeat), CAMERA_INVALID_STATE);
@@ -3982,7 +3983,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_026, TestSize.Level
     sptr<OHOS::IBufferProducer> producer = nullptr;
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer1 = Surface->GetProducer();
-    sptr<HStreamRepeat> streamRepeat= new(std::nothrow) HStreamRepeat(nullptr, format, width, height, false);
+    sptr<HStreamRepeat> streamRepeat =
+        new (std::nothrow) HStreamRepeat(nullptr, format, width, height, RepeatStreamType::PREVIEW);
 
     EXPECT_EQ(streamRepeat->Start(), CAMERA_INVALID_STATE);
     EXPECT_EQ(streamRepeat->SetCallback(callback), CAMERA_INVALID_ARG);

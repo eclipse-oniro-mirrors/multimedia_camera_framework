@@ -15,11 +15,11 @@
 
 #include "hstream_repeat.h"
 
+#include "camera_log.h"
 #include "camera_util.h"
-#include "metadata_utils.h"
 #include "display.h"
 #include "display_manager.h"
-#include "camera_log.h"
+#include "metadata_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -29,44 +29,58 @@ static const int32_t STREAM_ROTATE_270 = 270;
 static const int32_t STREAM_ROTATE_360 = 360;
 
 HStreamRepeat::HStreamRepeat(
-    sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height, bool isVideo)
+    sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height, RepeatStreamType type)
     : HStreamCommon(StreamType::REPEAT, producer, format, width, height)
 {
-    isVideo_ = isVideo;
+    repeatStreamType_ = type;
 }
 
-HStreamRepeat::~HStreamRepeat()
-{}
+HStreamRepeat::~HStreamRepeat() {}
 
 int32_t HStreamRepeat::LinkInput(sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator,
-                                 std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t streamId)
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t streamId)
 {
     int32_t ret = HStreamCommon::LinkInput(streamOperator, cameraAbility, streamId);
     if (ret != CAMERA_OK) {
         return ret;
     }
-    if (!isVideo_) {
+    if (repeatStreamType_ != RepeatStreamType::VIDEO) {
         SetStreamTransform();
     }
     return CAMERA_OK;
 }
 
-void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
+void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
 {
     HStreamCommon::SetStreamInfo(streamInfo);
-    if (isVideo_) {
-        streamInfo.v1_0.intent_ = VIDEO;
-        streamInfo.v1_0.encodeType_ = ENCODE_TYPE_H264;
-    } else {
-        streamInfo.v1_0.intent_ = PREVIEW;
-        streamInfo.v1_0.encodeType_ = ENCODE_TYPE_NULL;
+    switch (repeatStreamType_) {
+        case RepeatStreamType::VIDEO:
+            streamInfo.v1_0.intent_ = StreamIntent::VIDEO;
+            streamInfo.v1_0.encodeType_ = ENCODE_TYPE_H264;
+            break;
+        case RepeatStreamType::PREVIEW:
+            streamInfo.v1_0.intent_ = StreamIntent::PREVIEW;
+            streamInfo.v1_0.encodeType_ = ENCODE_TYPE_NULL;
+            break;
+        case RepeatStreamType::SKETCH:
+            streamInfo.v1_0.intent_ = StreamIntent::PREVIEW;
+            streamInfo.v1_0.encodeType_ = ENCODE_TYPE_NULL;
+            HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo {
+                .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(
+                    HDI::Camera::V1_2::EXTENDED_STREAM_INFO_SKETCH),
+                .width = 0,
+                .height = 0,
+                .format = 0,
+                .dataspace = 0,
+                .bufferQueue = nullptr
+            };
+            streamInfo.extendedStreamInfos = {extendedStreamInfo};
     }
 }
 
 int32_t HStreamRepeat::Start()
 {
     CAMERA_SYNC_TRACE;
-
     if (streamOperator_ == nullptr) {
         return CAMERA_INVALID_STATE;
     }
@@ -102,7 +116,6 @@ int32_t HStreamRepeat::Start()
 int32_t HStreamRepeat::Stop()
 {
     CAMERA_SYNC_TRACE;
-
     if (streamOperator_ == nullptr) {
         return CAMERA_INVALID_STATE;
     }
@@ -113,8 +126,8 @@ int32_t HStreamRepeat::Stop()
     int32_t ret = CAMERA_OK;
     CamRetCode rc = (CamRetCode)(streamOperator_->CancelCapture(curCaptureID_));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
-        MEDIA_ERR_LOG("HStreamRepeat::Stop Failed with errorCode:%{public}d, curCaptureID_: %{public}d",
-                      rc, curCaptureID_);
+        MEDIA_ERR_LOG(
+            "HStreamRepeat::Stop Failed with errorCode:%{public}d, curCaptureID_: %{public}d", rc, curCaptureID_);
         ret = HdiToServiceError(rc);
     }
     ReleaseCaptureId(curCaptureID_);
@@ -124,6 +137,7 @@ int32_t HStreamRepeat::Stop()
 
 int32_t HStreamRepeat::Release()
 {
+    RemoveSketchStreamRepeat();
     if (curCaptureID_) {
         ReleaseCaptureId(curCaptureID_);
     }
@@ -136,10 +150,10 @@ int32_t HStreamRepeat::Release()
 
 bool HStreamRepeat::IsVideo()
 {
-    return isVideo_;
+    return repeatStreamType_ == RepeatStreamType::VIDEO;
 }
 
-int32_t HStreamRepeat::SetCallback(sptr<IStreamRepeatCallback> &callback)
+int32_t HStreamRepeat::SetCallback(sptr<IStreamRepeatCallback>& callback)
 {
     if (callback == nullptr) {
         MEDIA_ERR_LOG("HStreamRepeat::SetCallback callback is null");
@@ -186,7 +200,7 @@ int32_t HStreamRepeat::OnFrameError(int32_t errorType)
     return CAMERA_OK;
 }
 
-int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer> &producer)
+int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& producer)
 {
     MEDIA_INFO_LOG("HStreamRepeat::AddDeferredSurface called");
     {
@@ -204,13 +218,60 @@ int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer> &pro
     }
     MEDIA_INFO_LOG("HStreamRepeat::AttachBufferQueue start");
     std::lock_guard<std::mutex> lock(producerLock_);
-    CamRetCode rc = (CamRetCode)(streamOperator_
-        ->AttachBufferQueue(streamId_, new BufferProducerSequenceable(producer_)));
+    CamRetCode rc =
+        (CamRetCode)(streamOperator_->AttachBufferQueue(streamId_, new BufferProducerSequenceable(producer_)));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         MEDIA_ERR_LOG("HStreamRepeat::AttachBufferQueue(), Failed to AttachBufferQueue %{public}d", rc);
     }
     MEDIA_INFO_LOG("HStreamRepeat::AddDeferredSurface end %{public}d", rc);
     return CAMERA_OK;
+}
+
+int32_t HStreamRepeat::ForkSketchStreamRepeat(
+    const sptr<OHOS::IBufferProducer>& producer, int32_t width, int32_t height, sptr<IStreamRepeat>& sketchStream)
+{
+    CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(sketchStreamLock_);
+    if ((producer == nullptr) || (width <= 0) || (height <= 0)) {
+        MEDIA_ERR_LOG("HCameraService::ForkSketchStreamRepeat producer is null");
+        return CAMERA_INVALID_ARG;
+    }
+    auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, format_, width, height, RepeatStreamType::SKETCH);
+    CHECK_AND_RETURN_RET_LOG(streamRepeat != nullptr, CAMERA_ALLOC_ERROR,
+        "HStreamRepeat::ForkSketchStreamRepeat HStreamRepeat allocation failed");
+    POWERMGR_SYSEVENT_CAMERA_CONFIG(SKETCH, width, height);
+    sketchStream = streamRepeat;
+
+    if (sketchStreamRepeat_ != nullptr && !sketchStreamRepeat_->IsReleaseStream()) {
+        sketchStreamRepeat_->Release();
+    }
+    sketchStreamRepeat_ = streamRepeat;
+    MEDIA_INFO_LOG("HCameraService::ForkSketchStreamRepeat end");
+    return CAMERA_OK;
+}
+
+int32_t HStreamRepeat::RemoveSketchStreamRepeat()
+{
+    CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(sketchStreamLock_);
+    if (sketchStreamRepeat_ == nullptr || sketchStreamRepeat_->IsReleaseStream()) {
+        return CAMERA_OK;
+    }
+    sketchStreamRepeat_->Release();
+    sketchStreamRepeat_ = nullptr;
+
+    return CAMERA_OK;
+}
+
+sptr<HStreamRepeat> HStreamRepeat::GetSketchStream()
+{
+    std::lock_guard<std::mutex> lock(sketchStreamLock_);
+    return sketchStreamRepeat_;
+}
+
+RepeatStreamType HStreamRepeat::GetRepeatStreamType()
+{
+    return repeatStreamType_;
 }
 
 void HStreamRepeat::DumpStreamInfo(std::string& dumpString)
@@ -314,5 +375,5 @@ void HStreamRepeat::SetStreamTransform()
         }
     }
 }
-} // namespace Standard
+} // namespace CameraStandard
 } // namespace OHOS

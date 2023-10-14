@@ -14,14 +14,14 @@
  */
 
 #include "hstream_repeat_stub.h"
+
 #include "camera_log.h"
-#include "camera_util.h"
 #include "camera_service_ipc_interface_code.h"
+#include "camera_util.h"
 
 namespace OHOS {
 namespace CameraStandard {
-int HStreamRepeatStub::OnRemoteRequest(
-    uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
+int HStreamRepeatStub::OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
     DisableJeMalloc();
     int errCode = -1;
@@ -43,6 +43,12 @@ int HStreamRepeatStub::OnRemoteRequest(
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ADD_DEFERRED_SURFACE):
             errCode = HStreamRepeatStub::HandleAddDeferredSurface(data);
             break;
+        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_FORK_SKETCH_STREAM_REPEAT):
+            errCode = HStreamRepeatStub::HandleForkSketchStreamRepeat(data, reply);
+            break;
+        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_REMOVE_SKETCH_STREAM_REPEAT):
+            errCode = RemoveSketchStreamRepeat();
+            break;
         default:
             MEDIA_ERR_LOG("HStreamRepeatStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -52,23 +58,23 @@ int HStreamRepeatStub::OnRemoteRequest(
     return errCode;
 }
 
-int HStreamRepeatStub::HandleSetCallback(MessageParcel &data)
+int HStreamRepeatStub::HandleSetCallback(MessageParcel& data)
 {
     auto remoteObject = data.ReadRemoteObject();
     CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HStreamRepeatStub HandleSetCallback StreamRepeatCallback is null");
+        "HStreamRepeatStub HandleSetCallback StreamRepeatCallback is null");
 
     auto callback = iface_cast<IStreamRepeatCallback>(remoteObject);
 
     return SetCallback(callback);
 }
 
-int HStreamRepeatStub::HandleAddDeferredSurface(MessageParcel &data)
+int HStreamRepeatStub::HandleAddDeferredSurface(MessageParcel& data)
 {
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
 
     CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HStreamRepeatStub HandleAddDeferredSurface BufferProducer is null");
+        "HStreamRepeatStub HandleAddDeferredSurface BufferProducer is null");
 
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
     int errCode = AddDeferredSurface(producer);
@@ -77,6 +83,25 @@ int HStreamRepeatStub::HandleAddDeferredSurface(MessageParcel &data)
         return errCode;
     }
 
+    return errCode;
+}
+
+int HStreamRepeatStub::HandleForkSketchStreamRepeat(MessageParcel& data, MessageParcel& reply)
+{
+    sptr<IStreamRepeat> sketchStream = nullptr;
+    sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
+    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HStreamRepeatStub HandleForkSketchStreamRepeat BufferProducer is null");
+    int32_t width = data.ReadInt32();
+    int32_t height = data.ReadInt32();
+    sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
+    int errCode = ForkSketchStreamRepeat(producer, width, height, sketchStream);
+    if (errCode != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamRepeatStub::HandleForkSketchStreamRepeat failed : %{public}d", errCode);
+        return errCode;
+    }
+    CHECK_AND_RETURN_RET_LOG(reply.WriteRemoteObject(sketchStream->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
+        "HStreamRepeatStub HandleForkSketchStreamRepeat Write sketchStream obj failed");
     return errCode;
 }
 } // namespace CameraStandard

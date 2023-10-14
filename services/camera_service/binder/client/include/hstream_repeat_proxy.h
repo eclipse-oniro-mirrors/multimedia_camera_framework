@@ -23,18 +23,23 @@ namespace OHOS {
 namespace CameraStandard {
 class HStreamRepeatProxy : public IRemoteProxy<IStreamRepeat> {
 public:
-    explicit HStreamRepeatProxy(const sptr<IRemoteObject> &impl);
+    explicit HStreamRepeatProxy(const sptr<IRemoteObject>& impl);
     virtual ~HStreamRepeatProxy();
 
     int32_t Start() override;
 
     int32_t Stop() override;
 
-    int32_t SetCallback(sptr<IStreamRepeatCallback> &callback) override;
+    int32_t SetCallback(sptr<IStreamRepeatCallback>& callback) override;
 
     int32_t Release() override;
 
-    int32_t AddDeferredSurface(const sptr<OHOS::IBufferProducer> &producer) override;
+    int32_t AddDeferredSurface(const sptr<OHOS::IBufferProducer>& producer) override;
+
+    int32_t ForkSketchStreamRepeat(const sptr<OHOS::IBufferProducer>& producer, int32_t width, int32_t height,
+        sptr<IStreamRepeat>& sketchStream) override;
+
+    int32_t RemoveSketchStreamRepeat() override;
 
 private:
     static inline BrokerDelegator<HStreamRepeatProxy> delegator_;

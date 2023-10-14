@@ -23,12 +23,12 @@ namespace OHOS {
 namespace CameraStandard {
 class HStreamRepeatStub : public IRemoteStub<IStreamRepeat> {
 public:
-    int OnRemoteRequest(uint32_t code, MessageParcel &data,
-                        MessageParcel &reply, MessageOption &option) override;
+    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;
 
 private:
-    int HandleSetCallback(MessageParcel &data);
-    int HandleAddDeferredSurface(MessageParcel &data);
+    int HandleSetCallback(MessageParcel& data);
+    int HandleAddDeferredSurface(MessageParcel& data);
+    int HandleForkSketchStreamRepeat(MessageParcel& data, MessageParcel& reply);
 };
 } // namespace CameraStandard
 } // namespace OHOS

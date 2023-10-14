@@ -33,6 +33,7 @@ static napi_value Export(napi_env env, napi_value exports)
     CameraNapi::Init(env, exports);
     CameraOutputCapabilityNapi::Init(env, exports);
     CameraSizeNapi::Init(env, exports);
+    CameraSketchDataNapi::Init(env, exports);
     CameraVideoProfileNapi::Init(env, exports);
     CameraPrelaunchConfigNapi::Init(env, exports);
     MetadataOutputNapi::Init(env, exports);

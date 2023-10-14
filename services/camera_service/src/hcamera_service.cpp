@@ -20,33 +20,28 @@
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
-#include "camera_util.h"
-#include "iservice_registry.h"
 #include "camera_log.h"
-#include "system_ability_definition.h"
+#include "camera_util.h"
 #include "ipc_skeleton.h"
+#include "iservice_registry.h"
+#include "system_ability_definition.h"
 
 namespace OHOS {
 namespace CameraStandard {
 REGISTER_SYSTEM_ABILITY_BY_ID(HCameraService, CAMERA_SERVICE_ID, true)
 HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
-    : SystemAbility(systemAbilityId, runOnCreate),
-      cameraHostManager_(nullptr),
-      streamOperatorCallback_(nullptr),
+    : SystemAbility(systemAbilityId, runOnCreate), cameraHostManager_(nullptr), streamOperatorCallback_(nullptr),
       muteMode_(false)
-{
-}
+{}
 
-HCameraService::~HCameraService()
-{
-}
+HCameraService::~HCameraService() {}
 
 void HCameraService::OnStart()
 {
     if (cameraHostManager_ == nullptr) {
-        cameraHostManager_ = new(std::nothrow) HCameraHostManager(this);
-        CHECK_AND_RETURN_LOG(cameraHostManager_ != nullptr,
-                             "HCameraService OnStart failed to create HCameraHostManager obj");
+        cameraHostManager_ = new (std::nothrow) HCameraHostManager(this);
+        CHECK_AND_RETURN_LOG(
+            cameraHostManager_ != nullptr, "HCameraService OnStart failed to create HCameraHostManager obj");
     }
     if (cameraHostManager_->Init() != CAMERA_OK) {
         MEDIA_ERR_LOG("HCameraService OnStart failed to init camera host manager.");
@@ -76,8 +71,8 @@ void HCameraService::OnStop()
     }
 }
 
-int32_t HCameraService::GetCameras(std::vector<std::string> &cameraIds,
-    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> &cameraAbilityList)
+int32_t HCameraService::GetCameras(
+    std::vector<std::string>& cameraIds, std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList)
 {
     CAMERA_SYNC_TRACE;
     int32_t ret = cameraHostManager_->GetCameras(cameraIds);
@@ -126,15 +121,15 @@ int32_t HCameraService::GetCameras(std::vector<std::string> &cameraIds,
         }
 
         CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager GetCameras camera ID:%s, Camera position:%d,"
-                                            " Camera Type:%d, Connection Type:%d, Mirror support:%d", id.c_str(),
-                                            cameraPosition, cameraType, connectionType, isMirrorSupported));
+                                            " Camera Type:%d, Connection Type:%d, Mirror support:%d",
+            id.c_str(), cameraPosition, cameraType, connectionType, isMirrorSupported));
         cameraAbilityList.emplace_back(cameraAbility);
     }
 
     return ret;
 }
 
-int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> &device)
+int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService>& device)
 {
     CAMERA_SYNC_TRACE;
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
@@ -158,16 +153,16 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
         return CAMERA_DEVICE_BUSY;
     }
     // Destory conflict devices
-    for (auto &i : conflictDevices) {
+    for (auto& i : conflictDevices) {
         if (i != nullptr) {
             i->OnError(DEVICE_PREEMPT, 0);
             DeviceClose(i->GetCameraId());
         }
     }
     std::lock_guard<std::mutex> lock(mapOperatorsLock_);
-    sptr<HCameraDevice> cameraDevice = new(std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    sptr<HCameraDevice> cameraDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     CHECK_AND_RETURN_RET_LOG(cameraDevice != nullptr, CAMERA_ALLOC_ERROR,
-                             "HCameraService::CreateCameraDevice HCameraDevice allocation failed");
+        "HCameraService::CreateCameraDevice HCameraDevice allocation failed");
 
     // when create camera device, update mute setting truely.
     if (IsCameraMuteSupported(cameraId)) {
@@ -181,59 +176,56 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
     pid_t pid = IPCSkeleton::GetCallingPid();
     MEDIA_INFO_LOG("HCameraService::CreateCameraDevice before insert! cameraId: %{public}s, pid = %{public}d, "
                    "devices size = %{public}d, cameraIds size = %{public}zu",
-                   cameraId.c_str(), pid, devicesManager_.Size(), camerasForPid_[pid].size());
+        cameraId.c_str(), pid, devicesManager_.Size(), camerasForPid_[pid].size());
     devicesManager_.EnsureInsert(cameraId, cameraDevice);
     camerasForPid_[pid].insert(cameraId);
     MEDIA_INFO_LOG("HCameraService::CreateCameraDevice after insert! cameraId: %{public}s, pid = %{public}d, "
                    "devices size = %{public}d, cameraIds size = %{public}zu",
-                   cameraId.c_str(), pid, devicesManager_.Size(), camerasForPid_[pid].size());
+        cameraId.c_str(), pid, devicesManager_.Size(), camerasForPid_[pid].size());
     device = cameraDevice;
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager_CreateCameraInput CameraId:%s", cameraId.c_str()));
     return CAMERA_OK;
 }
 
-int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession> &session, int32_t opMode)
+int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int32_t opMode)
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(mutex_);
     sptr<HCaptureSession> captureSession;
     if (streamOperatorCallback_ == nullptr) {
-        streamOperatorCallback_ = new(std::nothrow) StreamOperatorCallback();
+        streamOperatorCallback_ = new (std::nothrow) StreamOperatorCallback();
         CHECK_AND_RETURN_RET_LOG(streamOperatorCallback_ != nullptr, CAMERA_ALLOC_ERROR,
-                                 "HCameraService::CreateCaptureSession streamOperatorCallback_ allocation failed");
+            "HCameraService::CreateCaptureSession streamOperatorCallback_ allocation failed");
     }
 
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
-    captureSession = new(std::nothrow) HCaptureSession(cameraHostManager_, streamOperatorCallback_,
-                                                       callerToken, opMode);
+    captureSession =
+        new (std::nothrow) HCaptureSession(cameraHostManager_, streamOperatorCallback_, callerToken, opMode);
     CHECK_AND_RETURN_RET_LOG(captureSession != nullptr, CAMERA_ALLOC_ERROR,
-                             "HCameraService::CreateCaptureSession HCaptureSession allocation failed");
+        "HCameraService::CreateCaptureSession HCaptureSession allocation failed");
     captureSession->SetDeviceOperatorsCallback(this);
     session = captureSession;
     return CAMERA_OK;
 }
 
-int32_t HCameraService::CreatePhotoOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
-                                          int32_t width, int32_t height,
-                                          sptr<IStreamCapture> &photoOutput)
+int32_t HCameraService::CreatePhotoOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
+    int32_t height, sptr<IStreamCapture>& photoOutput)
 {
     CAMERA_SYNC_TRACE;
     if ((producer == nullptr) || (width == 0) || (height == 0)) {
         MEDIA_ERR_LOG("HCameraService::CreatePhotoOutput producer is null");
         return CAMERA_INVALID_ARG;
     }
-    sptr<HStreamCapture> streamCapture = new(std::nothrow) HStreamCapture(producer, format, width, height);
+    sptr<HStreamCapture> streamCapture = new (std::nothrow) HStreamCapture(producer, format, width, height);
     CHECK_AND_RETURN_RET_LOG(streamCapture != nullptr, CAMERA_ALLOC_ERROR,
-                             "HCameraService::CreatePhotoOutput HStreamCapture allocation failed");
-    POWERMGR_SYSEVENT_CAMERA_CONFIG(PHOTO, producer->GetDefaultWidth(),
-                                    producer->GetDefaultHeight());
+        "HCameraService::CreatePhotoOutput HStreamCapture allocation failed");
+    POWERMGR_SYSEVENT_CAMERA_CONFIG(PHOTO, producer->GetDefaultWidth(), producer->GetDefaultHeight());
     photoOutput = streamCapture;
     return CAMERA_OK;
 }
 
-int32_t HCameraService::CreateDeferredPreviewOutput(int32_t format,
-                                                    int32_t width, int32_t height,
-                                                    sptr<IStreamRepeat> &previewOutput)
+int32_t HCameraService::CreateDeferredPreviewOutput(
+    int32_t format, int32_t width, int32_t height, sptr<IStreamRepeat>& previewOutput)
 {
     CAMERA_SYNC_TRACE;
     sptr<HStreamRepeat> streamDeferredPreview;
@@ -242,16 +234,15 @@ int32_t HCameraService::CreateDeferredPreviewOutput(int32_t format,
         MEDIA_ERR_LOG("HCameraService::CreateDeferredPreviewOutput producer is null");
         return CAMERA_INVALID_ARG;
     }
-    streamDeferredPreview = new(std::nothrow) HStreamRepeat(nullptr, format, width, height, false);
+    streamDeferredPreview = new (std::nothrow) HStreamRepeat(nullptr, format, width, height, RepeatStreamType::PREVIEW);
     CHECK_AND_RETURN_RET_LOG(streamDeferredPreview != nullptr, CAMERA_ALLOC_ERROR,
-                             "HCameraService::CreateDeferredPreviewOutput HStreamRepeat allocation failed");
+        "HCameraService::CreateDeferredPreviewOutput HStreamRepeat allocation failed");
     previewOutput = streamDeferredPreview;
     return CAMERA_OK;
 }
 
-int32_t HCameraService::CreatePreviewOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
-                                            int32_t width, int32_t height,
-                                            sptr<IStreamRepeat> &previewOutput)
+int32_t HCameraService::CreatePreviewOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
+    int32_t height, sptr<IStreamRepeat>& previewOutput)
 {
     CAMERA_SYNC_TRACE;
     sptr<HStreamRepeat> streamRepeatPreview;
@@ -260,16 +251,16 @@ int32_t HCameraService::CreatePreviewOutput(const sptr<OHOS::IBufferProducer> &p
         MEDIA_ERR_LOG("HCameraService::CreatePreviewOutput producer is null");
         return CAMERA_INVALID_ARG;
     }
-    streamRepeatPreview = new(std::nothrow) HStreamRepeat(producer, format, width, height, false);
+    streamRepeatPreview = new (std::nothrow) HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
     CHECK_AND_RETURN_RET_LOG(streamRepeatPreview != nullptr, CAMERA_ALLOC_ERROR,
-                             "HCameraService::CreatePreviewOutput HStreamRepeat allocation failed");
+        "HCameraService::CreatePreviewOutput HStreamRepeat allocation failed");
     POWERMGR_SYSEVENT_CAMERA_CONFIG(PREVIEW, width, height);
     previewOutput = streamRepeatPreview;
     return CAMERA_OK;
 }
 
-int32_t HCameraService::CreateMetadataOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
-                                             sptr<IStreamMetadata> &metadataOutput)
+int32_t HCameraService::CreateMetadataOutput(
+    const sptr<OHOS::IBufferProducer>& producer, int32_t format, sptr<IStreamMetadata>& metadataOutput)
 {
     CAMERA_SYNC_TRACE;
     sptr<HStreamMetadata> streamMetadata;
@@ -278,19 +269,17 @@ int32_t HCameraService::CreateMetadataOutput(const sptr<OHOS::IBufferProducer> &
         MEDIA_ERR_LOG("HCameraService::CreateMetadataOutput producer is null");
         return CAMERA_INVALID_ARG;
     }
-    streamMetadata = new(std::nothrow) HStreamMetadata(producer, format);
+    streamMetadata = new (std::nothrow) HStreamMetadata(producer, format);
     CHECK_AND_RETURN_RET_LOG(streamMetadata != nullptr, CAMERA_ALLOC_ERROR,
-                             "HCameraService::CreateMetadataOutput HStreamMetadata allocation failed");
+        "HCameraService::CreateMetadataOutput HStreamMetadata allocation failed");
 
-    POWERMGR_SYSEVENT_CAMERA_CONFIG(METADATA, producer->GetDefaultWidth(),
-                                    producer->GetDefaultHeight());
+    POWERMGR_SYSEVENT_CAMERA_CONFIG(METADATA, producer->GetDefaultWidth(), producer->GetDefaultHeight());
     metadataOutput = streamMetadata;
     return CAMERA_OK;
 }
 
-int32_t HCameraService::CreateVideoOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
-                                          int32_t width, int32_t height,
-                                          sptr<IStreamRepeat> &videoOutput)
+int32_t HCameraService::CreateVideoOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
+    int32_t height, sptr<IStreamRepeat>& videoOutput)
 {
     CAMERA_SYNC_TRACE;
     sptr<HStreamRepeat> streamRepeatVideo;
@@ -299,12 +288,11 @@ int32_t HCameraService::CreateVideoOutput(const sptr<OHOS::IBufferProducer> &pro
         MEDIA_ERR_LOG("HCameraService::CreateVideoOutput producer is null");
         return CAMERA_INVALID_ARG;
     }
-    streamRepeatVideo = new(std::nothrow) HStreamRepeat(producer, format, width, height, true);
+    streamRepeatVideo = new (std::nothrow) HStreamRepeat(producer, format, width, height, RepeatStreamType::VIDEO);
     CHECK_AND_RETURN_RET_LOG(streamRepeatVideo != nullptr, CAMERA_ALLOC_ERROR,
-                             "HCameraService::CreateVideoOutput HStreamRepeat allocation failed");
+        "HCameraService::CreateVideoOutput HStreamRepeat allocation failed");
 
-    POWERMGR_SYSEVENT_CAMERA_CONFIG(VIDEO, producer->GetDefaultWidth(),
-                                    producer->GetDefaultHeight());
+    POWERMGR_SYSEVENT_CAMERA_CONFIG(VIDEO, producer->GetDefaultWidth(), producer->GetDefaultHeight());
     videoOutput = streamRepeatVideo;
     return CAMERA_OK;
 }
@@ -314,17 +302,17 @@ void HCameraService::OnCameraStatus(const std::string& cameraId, CameraStatus st
     std::lock_guard<std::mutex> lock(cbMutex_);
     MEDIA_INFO_LOG("HCameraService::OnCameraStatus "
                    "callbacks.size = %{public}zu, cameraId = %{public}s, status = %{public}d, pid = %{public}d",
-                   cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid());
+        cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid());
     for (auto it : cameraServiceCallbacks_) {
         if (it.second == nullptr) {
             MEDIA_ERR_LOG("HCameraService::OnCameraStatus cameraServiceCallback is null, pid = %{public}d",
-                          IPCSkeleton::GetCallingPid());
+                IPCSkeleton::GetCallingPid());
             continue;
         } else {
             it.second->OnCameraStatusChanged(cameraId, status);
         }
-        CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d",
-                                           cameraId.c_str(), status));
+        CAMERA_SYSEVENT_BEHAVIOR(
+            CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d", cameraId.c_str(), status));
     }
 }
 
@@ -333,11 +321,11 @@ void HCameraService::OnFlashlightStatus(const std::string& cameraId, FlashStatus
     std::lock_guard<std::mutex> lock(cbMutex_);
     MEDIA_INFO_LOG("HCameraService::OnFlashlightStatus "
                    "callbacks.size = %{public}zu, cameraId = %{public}s, status = %{public}d, pid = %{public}d",
-                   cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid());
+        cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid());
     for (auto it : cameraServiceCallbacks_) {
         if (it.second == nullptr) {
             MEDIA_ERR_LOG("HCameraService::OnCameraStatus cameraServiceCallback is null, pid = %{public}d",
-                          IPCSkeleton::GetCallingPid());
+                IPCSkeleton::GetCallingPid());
             continue;
         } else {
             it.second->OnFlashlightStatusChanged(cameraId, status);
@@ -345,7 +333,7 @@ void HCameraService::OnFlashlightStatus(const std::string& cameraId, FlashStatus
     }
 }
 
-int32_t HCameraService::SetCallback(sptr<ICameraServiceCallback> &callback)
+int32_t HCameraService::SetCallback(sptr<ICameraServiceCallback>& callback)
 {
     std::lock_guard<std::mutex> lock(cbMutex_);
     pid_t pid = IPCSkeleton::GetCallingPid();
@@ -366,23 +354,23 @@ int32_t HCameraService::SetCallback(sptr<ICameraServiceCallback> &callback)
 int32_t HCameraService::CloseCameraForDestory(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(mapOperatorsLock_);
-    MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory pid = %{public}d, Camera created size = %{public}zu",
-                   pid, camerasForPid_[pid].size());
+    MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory pid = %{public}d, Camera created size = %{public}zu", pid,
+        camerasForPid_[pid].size());
     auto cameraIds = camerasForPid_[pid];
     for (std::set<std::string>::iterator itIds = cameraIds.begin(); itIds != cameraIds.end(); itIds++) {
         MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory cameraId %{public}s in camerasForPid_[%{public}d]",
-                       (*itIds).c_str(), pid);
+            (*itIds).c_str(), pid);
         devicesManager_.Iterate([&](std::string cameraId, sptr<HCameraDevice> cameraDevice) {
-            MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory cameraId %{public}s in devicesManager_",
-                           cameraId.c_str());
+            MEDIA_INFO_LOG(
+                "HCameraService::CloseCameraForDestory cameraId %{public}s in devicesManager_", cameraId.c_str());
             if (cameraId != *itIds || cameraDevice == nullptr) {
                 MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory item is null: %{public}d or"
                                "cameraId not equal: %{public}d {%{public}s, %{public}s}",
-                               cameraDevice == nullptr, cameraId != *itIds, cameraId.c_str(), (*itIds).c_str());
+                    cameraDevice == nullptr, cameraId != *itIds, cameraId.c_str(), (*itIds).c_str());
                 return;
             } else {
                 MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory pid = %{public}d,Camera:[%{public}s] need close",
-                               pid, cameraId.c_str());
+                    pid, cameraId.c_str());
                 DeviceClose(cameraDevice);
                 cameraDevice = nullptr;
             }
@@ -390,16 +378,16 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
     }
     cameraIds.clear();
     size_t eraseSize = camerasForPid_.erase(pid);
-    MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory pid: %{public}d cameraIds have removed: %{public}zu",
-                   pid, eraseSize);
+    MEDIA_INFO_LOG(
+        "HCameraService::CloseCameraForDestory pid: %{public}d cameraIds have removed: %{public}zu", pid, eraseSize);
     return CAMERA_OK;
 }
 
 int32_t HCameraService::UnSetMuteCallback(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(muteCbMutex_);
-    MEDIA_INFO_LOG("HCameraService::UnSetMuteCallback pid = %{public}d, size = %{public}zu",
-                   pid, cameraMuteServiceCallbacks_.size());
+    MEDIA_INFO_LOG("HCameraService::UnSetMuteCallback pid = %{public}d, size = %{public}zu", pid,
+        cameraMuteServiceCallbacks_.size());
     if (!cameraMuteServiceCallbacks_.empty()) {
         MEDIA_INFO_LOG("HCameraDevice::UnSetMuteCallback cameraMuteServiceCallbacks_ is not empty, reset it");
         auto it = cameraMuteServiceCallbacks_.find(pid);
@@ -409,16 +397,16 @@ int32_t HCameraService::UnSetMuteCallback(pid_t pid)
         }
     }
 
-    MEDIA_INFO_LOG("HCameraService::UnSetMuteCallback after erase pid = %{public}d, size = %{public}zu",
-                   pid, cameraMuteServiceCallbacks_.size());
+    MEDIA_INFO_LOG("HCameraService::UnSetMuteCallback after erase pid = %{public}d, size = %{public}zu", pid,
+        cameraMuteServiceCallbacks_.size());
     return CAMERA_OK;
 }
 
 int32_t HCameraService::UnSetCallback(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(cbMutex_);
-    MEDIA_INFO_LOG("HCameraService::UnSetCallback pid = %{public}d, size = %{public}zu",
-                   pid, cameraServiceCallbacks_.size());
+    MEDIA_INFO_LOG(
+        "HCameraService::UnSetCallback pid = %{public}d, size = %{public}zu", pid, cameraServiceCallbacks_.size());
     if (!cameraServiceCallbacks_.empty()) {
         MEDIA_INFO_LOG("HCameraDevice::SetStatusCallback statusSvcCallbacks_ is not empty, reset it");
         auto it = cameraServiceCallbacks_.find(pid);
@@ -427,14 +415,14 @@ int32_t HCameraService::UnSetCallback(pid_t pid)
             cameraServiceCallbacks_.erase(it);
         }
     }
-    MEDIA_INFO_LOG("HCameraService::UnSetCallback after erase pid = %{public}d, size = %{public}zu",
-                   pid, cameraServiceCallbacks_.size());
+    MEDIA_INFO_LOG("HCameraService::UnSetCallback after erase pid = %{public}d, size = %{public}zu", pid,
+        cameraServiceCallbacks_.size());
     int32_t ret = CAMERA_OK;
     ret = UnSetMuteCallback(pid);
     return ret;
 }
 
-int32_t HCameraService::SetMuteCallback(sptr<ICameraMuteServiceCallback> &callback)
+int32_t HCameraService::SetMuteCallback(sptr<ICameraMuteServiceCallback>& callback)
 {
     std::lock_guard<std::mutex> lock(muteCbMutex_);
     pid_t pid = IPCSkeleton::GetCallingPid();
@@ -566,7 +554,7 @@ int32_t HCameraService::PrelaunchCamera()
         if (cameraIds_.empty()) {
             return CAMERA_OK;
         }
-        preCameraId_= cameraIds_.front();
+        preCameraId_ = cameraIds_.front();
     }
     MEDIA_INFO_LOG("HCameraService::PrelaunchCamera preCameraId_ is: %{public}s", preCameraId_.c_str());
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("Camera Prelaunch CameraId:%s", preCameraId_.c_str()));
@@ -576,7 +564,6 @@ int32_t HCameraService::PrelaunchCamera()
     }
     return ret;
 }
-
 
 int32_t HCameraService::SetPrelaunchConfig(std::string cameraId)
 {
@@ -614,8 +601,8 @@ bool HCameraService::IsPrelaunchSupported(std::string cameraId)
     common_metadata_header_t* metadata = cameraAbility->get();
     ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_PRELAUNCH_AVAILABLE, &item);
     if (ret == 0) {
-        MEDIA_INFO_LOG("CameraManager::IsPrelaunchSupported() OHOS_ABILITY_PRELAUNCH_AVAILABLE is %{public}d",
-                       item.data.u8[0]);
+        MEDIA_INFO_LOG(
+            "CameraManager::IsPrelaunchSupported() OHOS_ABILITY_PRELAUNCH_AVAILABLE is %{public}d", item.data.u8[0]);
         isPrelaunchSupported = (item.data.u8[0] == 1);
     } else {
         MEDIA_ERR_LOG("Failed to get OHOS_ABILITY_PRELAUNCH_AVAILABLE ret = %{public}d", ret);
@@ -623,15 +610,14 @@ bool HCameraService::IsPrelaunchSupported(std::string cameraId)
     return isPrelaunchSupported;
 }
 
-int32_t HCameraService::IsCameraMuted(bool &muteMode)
+int32_t HCameraService::IsCameraMuted(bool& muteMode)
 {
     muteMode = muteMode_;
     MEDIA_DEBUG_LOG("HCameraService::IsCameraMuted success. isMuted: %{public}d", muteMode);
     return CAMERA_OK;
 }
 
-void HCameraService::CameraSummary(std::vector<std::string> cameraIds,
-    std::string& dumpString)
+void HCameraService::CameraSummary(std::vector<std::string> cameraIds, std::string& dumpString)
 {
     dumpString += "# Number of Cameras:[" + std::to_string(cameraIds.size()) + "]:\n";
     dumpString += "# Number of Active Cameras:[" + std::to_string(devicesManager_.Size()) + "]:\n";
@@ -1025,8 +1011,8 @@ int32_t HCameraService::DeviceClose(sptr<HCameraDevice> cameraDevice)
     pid_t pid = IPCSkeleton::GetCallingPid();
     if (cameraDevice != nullptr && cameraDevice->IsOpenedCameraDevice()) {
         cameraId = cameraDevice->GetCameraId();
-        MEDIA_INFO_LOG("HCameraService::DeviceClose pid = %{public}d Camera:[%{public}s] need close",
-            pid, cameraId.c_str());
+        MEDIA_INFO_LOG(
+            "HCameraService::DeviceClose pid = %{public}d Camera:[%{public}s] need close", pid, cameraId.c_str());
         ret = cameraDevice->CloseDevice();
         cameraDevice = nullptr;
     }
@@ -1045,7 +1031,7 @@ int32_t HCameraService::DeviceClose(sptr<HCameraDevice> cameraDevice)
         MEDIA_INFO_LOG("HCameraService::DeviceClose pid = %{public}d size %{public}zu X", it.first, cameraIds.size());
     }
     MEDIA_INFO_LOG("HCameraService::DeviceClose Exit");
-    return  ret;
+    return ret;
 }
 
 int32_t HCameraService::DeviceClose(const std::string& cameraId, pid_t pidFromSession)
@@ -1057,8 +1043,8 @@ int32_t HCameraService::DeviceClose(const std::string& cameraId, pid_t pidFromSe
     pid_t pid = pidFromSession != 0 ? pidFromSession : IPCSkeleton::GetCallingPid();
     sptr<HCameraDevice> cameraDevice = nullptr;
     if (devicesManager_.Find(cameraId, cameraDevice)) {
-        MEDIA_INFO_LOG("HCameraService::DeviceClose pid = %{public}d Camera:[%{public}s] need close",
-            pid, cameraId.c_str());
+        MEDIA_INFO_LOG(
+            "HCameraService::DeviceClose pid = %{public}d Camera:[%{public}s] need close", pid, cameraId.c_str());
         if (cameraDevice != nullptr && cameraDevice->IsOpenedCameraDevice()) {
             ret = cameraDevice->CloseDevice();
             cameraDevice = nullptr;
@@ -1079,10 +1065,10 @@ int32_t HCameraService::DeviceClose(const std::string& cameraId, pid_t pidFromSe
         MEDIA_INFO_LOG("HCameraService::DeviceClose pid = %{public}d size %{public}zu X", it.first, cameraIds.size());
     }
     MEDIA_INFO_LOG("HCameraService::DeviceClose Exit");
-    return  ret;
+    return ret;
 }
 
-bool HCameraService::IsDeviceAlreadyOpen(pid_t& tempPid, std::string& tempCameraId, sptr<HCameraDevice> &tempDevice)
+bool HCameraService::IsDeviceAlreadyOpen(pid_t& tempPid, std::string& tempCameraId, sptr<HCameraDevice>& tempDevice)
 {
     bool isOpened = false;
     devicesManager_.Iterate([&](std::string cameraId, sptr<HCameraDevice> cameraDevice) {
@@ -1128,7 +1114,7 @@ std::vector<sptr<HCameraDevice>> HCameraService::CameraConflictDetection(const s
     }
 
     MEDIA_INFO_LOG("HCameraService::CameraConflictDetection pid: %{public}d cameraId: %{public}s already opened",
-                   tempPid, tempCameraId.c_str());
+        tempPid, tempCameraId.c_str());
     /*
      *  whether the application that is using the device is the same application
      *  as the application currently operating, if they are the same, the operation will be rejected

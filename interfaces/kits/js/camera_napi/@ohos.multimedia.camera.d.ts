@@ -999,6 +999,35 @@ declare namespace camera {
   }
 
   /**
+   * SketchData parameter.
+   *
+   * @typedef SketchData
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 11
+   */
+  interface SketchData {
+    /**
+     * Sketch scale ratio.
+     *
+     * @type { number }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 11
+     */
+    ratio: number;
+    /**
+     * Sketch image data.
+     *
+     * @type { image.PixelMap }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 11
+     */
+    pixelMap: image.PixelMap;
+  }
+
+  /**
    * Size parameter.
    *
    * @typedef Size
@@ -1962,6 +1991,33 @@ declare namespace camera {
      * @since 10
      */
     addDeferredSurface(surfaceId: string): void;
+
+    /**
+     * Check whether sketch is currently supported
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 11
+     */
+    isSketchSupported(): void;
+
+    /**
+     * Get current sketch threshold of zoom ratio 
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 11
+     */
+    getSketchRatio(): number;
+
+    /**
+     * Enable sketch feature or not, defalut is false
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 11
+     */
+    enableSketch(isEnable: boolean):void;
   }
 
   /**

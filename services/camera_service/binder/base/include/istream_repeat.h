@@ -28,11 +28,16 @@ public:
 
     virtual int32_t Stop() = 0;
 
-    virtual int32_t SetCallback(sptr<IStreamRepeatCallback> &callback) = 0;
+    virtual int32_t SetCallback(sptr<IStreamRepeatCallback>& callback) = 0;
 
     virtual int32_t Release() = 0;
 
-    virtual int32_t AddDeferredSurface(const sptr<OHOS::IBufferProducer> &producer) = 0;
+    virtual int32_t AddDeferredSurface(const sptr<OHOS::IBufferProducer>& producer) = 0;
+
+    virtual int32_t ForkSketchStreamRepeat(const sptr<OHOS::IBufferProducer>& producer, int32_t width, int32_t height,
+        sptr<IStreamRepeat>& sketchStream) = 0;
+
+    virtual int32_t RemoveSketchStreamRepeat() = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamRepeat");
 };

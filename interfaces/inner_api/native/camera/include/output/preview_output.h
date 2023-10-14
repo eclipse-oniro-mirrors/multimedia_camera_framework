@@ -16,11 +16,12 @@
 #ifndef OHOS_CAMERA_PREVIEW_OUTPUT_H
 #define OHOS_CAMERA_PREVIEW_OUTPUT_H
 
-#include "capture_output.h"
-#include "istream_repeat.h"
 #include "camera_output_capability.h"
-#include "istream_repeat_callback.h"
+#include "capture_output.h"
 #include "hstream_repeat_callback_stub.h"
+#include "icamera_service.h"
+#include "istream_repeat.h"
+#include "istream_repeat_callback.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -47,11 +48,18 @@ public:
      * @param errorCode Indicates a {@link ErrorCode} which will give information for preview callback error.
      */
     virtual void OnError(const int32_t errorCode) const = 0;
+
+    /**
+     * @brief Called when sketch data available.
+     *
+     * @param SketchData Indicates a {@link SketchData}.
+     */
+    virtual void OnSketchAvailable(SketchData& SketchData) const = 0;
 };
 
 class PreviewOutput : public CaptureOutput {
 public:
-    explicit PreviewOutput(sptr<IStreamRepeat> &streamRepeat);
+    explicit PreviewOutput(sptr<IStreamRepeat>& streamRepeat);
     virtual ~PreviewOutput();
 
     /**
@@ -84,6 +92,38 @@ public:
     int32_t Stop();
 
     /**
+     * @brief Check whether the current preview mode supports sketch.
+     *
+     * @return Return the supported result.
+     */
+    bool IsSketchSupported();
+
+    /**
+     * @brief Get the scaling ratio threshold for sketch callback data.
+     *
+     * @return Return the threshold value.
+     */
+    float GetSketchRatio();
+
+    /**
+     * @brief Enable sketch
+     *
+     * @param isEnable True for enable, false otherwise.
+     *
+     */
+    int32_t EnableSketch(bool isEnable);
+
+    /**
+     * @brief Start sketch.
+     */
+    int32_t StartSketch();
+
+    /**
+     * @brief Stop sketch.
+     */
+    int32_t StopSketch();
+
+    /**
      * @brief Get the application callback information.
      *
      * @return Returns the pointer application callback.
@@ -94,19 +134,31 @@ public:
      * @brief Get the application callback information.
      */
     CameraFormat format;
+
+    void UpdateSketchStaticInfo();
+    float GetSketchReferenceFovRatio(int32_t modeName);
+    float GetSketchEnableRatio(int32_t modeName);
+
 private:
     std::shared_ptr<PreviewStateCallback> appCallback_;
     sptr<IStreamRepeatCallback> svcCallback_;
+    std::shared_ptr<void> sketchWrapper_;
+    std::mutex sketchReferenceFovRatioMutex_;
+    std::map<int32_t, float> sketchReferenceFovRatioMap_;
+    std::mutex sketchEnableRatioMutex_;
+    std::map<int32_t, float> sketchEnableRatioMap_;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> GetDeviceMetadata();
+    void UpdateSketchEnableRatio(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata);
+    void UpdateSketchRefferenceFovRatio(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata);
+    std::shared_ptr<Size> FindSketchSize();
 };
 
 class PreviewOutputCallbackImpl : public HStreamRepeatCallbackStub {
 public:
     PreviewOutput* previewOutput_ = nullptr;
-    PreviewOutputCallbackImpl() : previewOutput_(nullptr) {
-    }
+    PreviewOutputCallbackImpl() : previewOutput_(nullptr) {}
 
-    explicit PreviewOutputCallbackImpl(PreviewOutput* previewOutput) : previewOutput_(previewOutput) {
-    }
+    explicit PreviewOutputCallbackImpl(PreviewOutput* previewOutput) : previewOutput_(previewOutput) {}
 
     ~PreviewOutputCallbackImpl()
     {
@@ -117,14 +169,14 @@ public:
      * @brief Called when preview frame is started rendering.
      */
     int32_t OnFrameStarted() override;
-    
+
     /**
      * @brief Called when preview frame is ended.
      *
      * @param frameCount Indicates number of frames captured.
      */
     int32_t OnFrameEnded(int32_t frameCount) override;
-    
+
     /**
      * @brief Called when error occured during preview rendering.
      *
@@ -135,4 +187,3 @@ public:
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_PREVIEW_OUTPUT_H
-
