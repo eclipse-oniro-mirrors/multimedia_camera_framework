@@ -15,8 +15,8 @@
 #include <securec.h>
 #include "camera_metadata_info.h"
 #include "camera_log.h"
+#include "display_manager.h"
 #include "input/camera_device.h"
-
 
 using namespace std;
 
@@ -41,6 +41,12 @@ const std::unordered_map<camera_connection_type_t, ConnectionType> CameraDevice:
     {OHOS_CAMERA_CONNECTION_TYPE_REMOTE, CAMERA_CONNECTION_REMOTE},
     {OHOS_CAMERA_CONNECTION_TYPE_USB_PLUGIN, CAMERA_CONNECTION_USB_PLUGIN},
     {OHOS_CAMERA_CONNECTION_TYPE_BUILTIN, CAMERA_CONNECTION_BUILT_IN}
+};
+
+const std::unordered_map<camera_foldscreen_enum_t, CameraFoldScreenType> CameraDevice::metaToFwCameraFoldScreenType_ = {
+    {OHOS_CAMERA_FOLDSCREEN_INNER, CAMERA_FOLDSCREEN_INNER},
+    {OHOS_CAMERA_FOLDSCREEN_OUTER, CAMERA_FOLDSCREEN_OUTER},
+    {OHOS_CAMERA_FOLDSCREEN_OTHER, CAMERA_FOLDSCREEN_UNSPECIFIED}
 };
 
 CameraDevice::CameraDevice(std::string cameraID, std::shared_ptr<Camera::CameraMetadata> metadata)
@@ -99,9 +105,18 @@ void CameraDevice::init(common_metadata_header_t* metadata)
     if (ret == CAM_META_SUCCESS) {
         isMirrorSupported_ = ((item.data.u8[0] == 1) || (item.data.u8[0] == 0));
     }
+
+    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLDSCREEN_TYPE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        auto itr = metaToFwCameraFoldScreenType_.find(static_cast<camera_foldscreen_enum_t>(item.data.u8[0]));
+        if (itr != metaToFwCameraFoldScreenType_.end()) {
+            foldScreenType_ = itr->second;
+        }
+    }
+
     MEDIA_INFO_LOG("camera position: %{public}d, camera type: %{public}d, camera connection type: %{public}d, "
-                    "Mirror Supported: %{public}d ",
-                   cameraPosition_, cameraType_, connectionType_, isMirrorSupported_);
+                    "Mirror Supported: %{public}d , camera foldScreen type: %{public}d",
+                   cameraPosition_, cameraType_, connectionType_, isMirrorSupported_, foldScreenType_);
 }
 
 std::string CameraDevice::GetID()
@@ -116,6 +131,11 @@ std::shared_ptr<Camera::CameraMetadata> CameraDevice::GetMetadata()
 
 CameraPosition CameraDevice::GetPosition()
 {
+    bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
+    if (isFoldable && cameraPosition_ == CAMERA_POSITION_FRONT) {
+        cameraPosition_ = (foldScreenType_ == CAMERA_FOLDSCREEN_UNSPECIFIED) ? CAMERA_POSITION_UNSPECIFIED :
+            (foldScreenType_ == CAMERA_FOLDSCREEN_INNER) ? CAMERA_POSITION_FOLD_INNER : CAMERA_POSITION_FRONT;
+    }
     return cameraPosition_;
 }
 
@@ -127,6 +147,11 @@ CameraType CameraDevice::GetCameraType()
 ConnectionType CameraDevice::GetConnectionType()
 {
     return connectionType_;
+}
+
+CameraFoldScreenType CameraDevice::GetCameraFoldScreenType()
+{
+    return foldScreenType_;
 }
 
 std::string CameraDevice::GetHostName()

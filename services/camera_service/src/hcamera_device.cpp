@@ -18,9 +18,39 @@
 #include "camera_log.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
+#include "display_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
+sptr<OHOS::Rosen::DisplayManager::IFoldStatusListener> listener;
+class HCameraDevice::FoldScreenListener : public OHOS::Rosen::DisplayManager::IFoldStatusListener {
+public:
+    explicit FoldScreenListener(sptr<HCameraHostManager> &cameraHostManager, std::string cameraId)
+        : cameraHostManager_(cameraHostManager), cameraId_(cameraId)
+    {
+        MEDIA_DEBUG_LOG("FoldScreenListener enter");
+    }
+
+    virtual ~FoldScreenListener() = default;
+    void OnFoldStatusChanged(OHOS::Rosen::FoldStatus foldStatus) override
+    {
+        FoldStatus currentFoldStatus = FoldStatus::UNKNOWN_FOLD;
+        if (foldStatus == OHOS::Rosen::FoldStatus::HALF_FOLD) {
+            currentFoldStatus = FoldStatus::EXPAND;
+        }
+        if (cameraHostManager_ == nullptr || mLastFoldStatus == currentFoldStatus) {
+            MEDIA_DEBUG_LOG("no need set fold status");
+            return;
+        }
+        mLastFoldStatus = currentFoldStatus;
+        cameraHostManager_->NotifyDeviceStateChangeInfo(cameraId_, DeviceType::FOLD_TYPE, (int)currentFoldStatus);
+    }
+private:
+    sptr<HCameraHostManager> cameraHostManager_;
+    std::string cameraId_;
+    FoldStatus mLastFoldStatus = FoldStatus::UNKNOWN_FOLD;
+};
+
 HCameraDevice::HCameraDevice(sptr<HCameraHostManager> &cameraHostManager,
                              std::string cameraID,
                              const uint32_t callingTokenId)
@@ -169,12 +199,21 @@ int32_t HCameraDevice::OpenDevice()
             errorCode = HdiToServiceError((CamRetCode)(hdiCameraDevice_->SetResultMode(ON_CHANGED)));
         }
     }
+    bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
+    MEDIA_DEBUG_LOG("HCameraDevice::OpenDevice isFoldable is %d", isFoldable);
+    if (isFoldable) {
+        RegisterFoldStatusListener();
+    }
     return errorCode;
 }
 
 int32_t HCameraDevice::CloseDevice()
 {
     CAMERA_SYNC_TRACE;
+    bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
+    if (isFoldable) {
+        UnRegisterFoldStatusListener();
+    }
     if (hdiCameraDevice_ != nullptr) {
         MEDIA_INFO_LOG("HCameraDevice::CloseDevice Closing camera device: %{public}s", cameraID_.c_str());
         hdiCameraDevice_->Close();
@@ -404,6 +443,34 @@ void HCameraDevice::GetFrameRateSetting(const std::shared_ptr<OHOS::Camera::Came
     }
 }
 
+void HCameraDevice::RegisterFoldStatusListener()
+{
+    listener = new FoldScreenListener(cameraHostManager_, cameraID_);
+    if (cameraHostManager_) {
+        int foldStatus = (int)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
+        cameraHostManager_->NotifyDeviceStateChangeInfo(cameraID_, DeviceType::FOLD_TYPE, foldStatus);
+    }
+    auto ret = OHOS::Rosen::DisplayManager::GetInstance().RegisterFoldStatusListener(listener);
+    if (ret != OHOS::Rosen::DMError::DM_OK) {
+        MEDIA_DEBUG_LOG("HCameraDevice::RegisterFoldStatusListener failed");
+        listener = nullptr;
+    } else {
+        MEDIA_DEBUG_LOG("HCameraDevice::RegisterFoldStatusListener success");
+    }
+}
+
+void HCameraDevice::UnRegisterFoldStatusListener()
+{
+    if (listener == nullptr) {
+        MEDIA_ERR_LOG("HCameraDevice::unRegisterFoldStatusListener  listener is null");
+        return;
+    }
+    auto ret = OHOS::Rosen::DisplayManager::GetInstance().UnregisterFoldStatusListener(listener);
+    if (ret != OHOS::Rosen::DMError::DM_OK) {
+        MEDIA_DEBUG_LOG("HCameraDevice::UnRegisterFoldStatusListener failed");
+    }
+}
+
 void HCameraDevice::ReportFlashEvent(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings)
 {
     camera_metadata_item_t item;
@@ -487,7 +554,7 @@ int32_t HCameraDevice::GetStreamOperator(sptr<IStreamOperatorCallback> callback,
         return CAMERA_UNKNOWN_ERROR;
     }
     CamRetCode rc;
-    if (GetVersionId(1, 1) == cameraHostManager_->GetVersionByCamera(cameraID_)) {
+    if (cameraHostManager_->GetVersionByCamera(cameraID_) >= GetVersionId(1, 1)) {
         rc = (CamRetCode)(hdiCameraDevice_->GetStreamOperator_V1_1(callback, streamOperator));
     } else {
         sptr<IStreamOperator> tempStreamOperator;

@@ -818,7 +818,14 @@ declare namespace camera {
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 10
      */
-    CAMERA_POSITION_FRONT = 2
+    CAMERA_POSITION_FRONT = 2,
+    /**
+     * camera that is inner when the device is folded.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    CAMERA_POSITION_FOLD_INNER = 3
   }
 
   /**

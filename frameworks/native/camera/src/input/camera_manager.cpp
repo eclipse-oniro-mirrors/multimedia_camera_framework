@@ -738,7 +738,7 @@ void CameraManager::ChooseDeFaultCameras(std::vector<sptr<CameraDevice>>& suppor
                 MEDIA_INFO_LOG("ChooseDeFaultCameras need add default camera");
             }
         }
-        if (!hasDefaultCamera) {
+        if (!hasDefaultCamera && (camera->GetPosition() != CAMERA_POSITION_UNSPECIFIED)) {
             cameraObjList.emplace_back(camera);
         }
     }

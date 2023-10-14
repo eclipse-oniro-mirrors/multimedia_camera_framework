@@ -75,6 +75,7 @@ ohos_shared_library("camera_service") {
     "c_utils:utils",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libcamera_proxy_1.2",
     "drivers_interface_camera:metadata",
     "graphic_2d:librender_service_client",
     "graphic_2d:surface",
