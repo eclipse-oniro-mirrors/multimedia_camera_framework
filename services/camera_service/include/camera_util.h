@@ -53,6 +53,21 @@ enum ClientPriorityLevels {
     PRIORITY_LEVEL_HIGHER
 };
 
+enum DeviceType {
+    FALLING_TYPE = 1,
+    FOLD_TYPE
+};
+
+enum FoldStatus {
+    UNKNOWN_FOLD = 0,
+    EXPAND,
+    FOLDED,
+    HALF_FOLD
+};
+
+enum FallingState {
+    FALLING_STATE = 1008,
+};
 
 extern std::unordered_map<int32_t, int32_t> g_cameraToPixelFormat;
 extern std::map<int, std::string> g_cameraPos;

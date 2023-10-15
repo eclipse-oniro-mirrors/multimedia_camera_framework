@@ -63,6 +63,7 @@ public:
     int32_t GetCallerToken();
 
 private:
+    class FoldScreenListener;
     sptr<OHOS::HDI::Camera::V1_1::ICameraDevice> hdiCameraDevice_;
     sptr<HCameraHostManager> cameraHostManager_;
     std::string cameraID_;
@@ -82,6 +83,8 @@ private:
     void ReportFlashEvent(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
     void ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
     void GetFrameRateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
+    void RegisterFoldStatusListener();
+    void UnRegisterFoldStatusListener();
 };
 
 class IDeviceOperatorsCallback : public virtual RefBase {

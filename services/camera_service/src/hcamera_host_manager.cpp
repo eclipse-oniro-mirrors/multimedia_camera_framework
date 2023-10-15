@@ -73,6 +73,7 @@ public:
                        sptr<OHOS::HDI::Camera::V1_1::ICameraDevice>& pDevice);
     int32_t SetFlashlight(const std::string& cameraId, bool isEnable);
     int32_t Prelaunch(const std::string& cameraId);
+    void NotifyDeviceStateChangeInfo(int notifyType, int deviceState);
 
     // CameraHostCallbackStub
     int32_t OnCameraStatus(const std::string& cameraId, HDI::Camera::V1_0::CameraStatus status) override;
@@ -88,7 +89,7 @@ private:
     std::string name_;
     uint32_t majorVer_;
     uint32_t minorVer_;
-    sptr<OHOS::HDI::Camera::V1_1::ICameraHost> cameraHostProxy_;
+    sptr<OHOS::HDI::Camera::V1_2::ICameraHost> cameraHostProxy_;
 
     std::mutex mutex_;
     std::vector<std::string> cameraIds_;
@@ -119,7 +120,7 @@ bool HCameraHostManager::CameraHostInfo::Init()
         MEDIA_ERR_LOG("CameraHostInfo::Init, no camera host proxy");
         return true;
     }
-    cameraHostProxy_ = OHOS::HDI::Camera::V1_1::ICameraHost::Get(name_.c_str(), false);
+    cameraHostProxy_ = OHOS::HDI::Camera::V1_2::ICameraHost::Get(name_.c_str(), false);
     if (cameraHostProxy_ == nullptr) {
         MEDIA_ERR_LOG("Failed to get ICameraHost");
         return false;
@@ -229,7 +230,7 @@ int32_t HCameraHostManager::CameraHostInfo::OpenCamera(std::string& cameraId,
     }
     CamRetCode rc;
     // try to get higher version
-    if (GetVersionId(1, 1) == GetCameraHostVersion()) {
+    if (GetCameraHostVersion() >= GetVersionId(1, 1)) {
         rc = (CamRetCode)(cameraHostProxy_->OpenCamera_V1_1(cameraId, callback, pDevice));
     } else {
         sptr<ICameraDevice> tempDevice;
@@ -278,6 +279,18 @@ int32_t HCameraHostManager::CameraHostInfo::Prelaunch(const std::string& cameraI
         return HdiToServiceError(rc);
     }
     return CAMERA_OK;
+}
+
+void HCameraHostManager::CameraHostInfo::NotifyDeviceStateChangeInfo(int notifyType, int deviceState)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (cameraHostProxy_ == nullptr) {
+        MEDIA_ERR_LOG("CameraHostInfo::Prelaunch cameraHostProxy_ is null");
+        return;
+    }
+    MEDIA_DEBUG_LOG("CameraHostInfo::NotifyDeviceStateChangeInfo notifyType = %{public}d, deviceState = %{public}d",
+        notifyType, deviceState);
+    cameraHostProxy_->NotifyDeviceStateChangeInfo(notifyType, deviceState);
 }
 
 int32_t HCameraHostManager::CameraHostInfo::OnCameraStatus(const std::string& cameraId,
@@ -604,6 +617,16 @@ int32_t HCameraHostManager::Prelaunch(const std::string& cameraId)
         return CAMERA_INVALID_ARG;
     }
     return cameraHostInfo->Prelaunch(cameraId);
+}
+
+void HCameraHostManager::NotifyDeviceStateChangeInfo(const std::string& cameraId, int notifyType, int deviceState)
+{
+    auto cameraHostInfo = FindCameraHostInfo(cameraId);
+    if (cameraHostInfo == nullptr) {
+        MEDIA_ERR_LOG("HCameraHostManager::NotifyDeviceStateChangeInfo failed with invalid device info");
+        return;
+    }
+    cameraHostInfo->NotifyDeviceStateChangeInfo(notifyType, deviceState);
 }
 
 void HCameraHostManager::OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status)

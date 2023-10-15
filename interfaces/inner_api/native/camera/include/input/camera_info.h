@@ -71,6 +71,13 @@ public:
     camera_connection_type_t GetConnectionType();
 
     /**
+    * @brief Get the facing for foldScreen device.
+    *
+    * @return Returns the Camera type of the camera.
+    */
+    camera_foldscreen_enum_t GetCameraFoldScreenType();
+
+    /**
     * @brief Check if mirror mode supported.
     *
     * @return Returns True is supported.
@@ -97,6 +104,7 @@ private:
     camera_position_enum_t cameraPosition_ = OHOS_CAMERA_POSITION_OTHER;
     camera_type_enum_t cameraType_ = OHOS_CAMERA_TYPE_UNSPECIFIED;
     camera_connection_type_t connectionType_ = OHOS_CAMERA_CONNECTION_TYPE_BUILTIN;
+    camera_foldscreen_enum_t foldScreenType_ = OHOS_CAMERA_FOLDSCREEN_OTHER;
     bool isMirrorSupported_ = false;
     std::vector<float> zoomRatioRange_;
     std::vector<float> exposureBiasRange_;

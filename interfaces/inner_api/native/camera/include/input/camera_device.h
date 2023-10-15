@@ -28,7 +28,8 @@ namespace CameraStandard {
 enum CameraPosition {
     CAMERA_POSITION_UNSPECIFIED = 0,
     CAMERA_POSITION_BACK,
-    CAMERA_POSITION_FRONT
+    CAMERA_POSITION_FRONT,
+    CAMERA_POSITION_FOLD_INNER
 };
 
 enum CameraType {
@@ -44,6 +45,12 @@ enum ConnectionType {
     CAMERA_CONNECTION_BUILT_IN = 0,
     CAMERA_CONNECTION_USB_PLUGIN,
     CAMERA_CONNECTION_REMOTE
+};
+
+enum CameraFoldScreenType {
+    CAMERA_FOLDSCREEN_UNSPECIFIED = 0,
+    CAMERA_FOLDSCREEN_INNER,
+    CAMERA_FOLDSCREEN_OUTER
 };
 
 typedef struct dmDeviceInfo {
@@ -103,6 +110,13 @@ public:
     ConnectionType GetConnectionType();
 
     /**
+    * @brief Get the facing for foldScreen device.
+    *
+    * @return Returns the Camera type of the camera.
+    */
+    CameraFoldScreenType GetCameraFoldScreenType();
+
+    /**
     * @brief Get the Distributed Camera Host Name.
     *
     * @return Returns the  Host Name of the Distributed camera.
@@ -152,6 +166,7 @@ private:
     CameraPosition cameraPosition_ = CAMERA_POSITION_UNSPECIFIED;
     CameraType cameraType_ = CAMERA_TYPE_DEFAULT;
     ConnectionType connectionType_ = CAMERA_CONNECTION_BUILT_IN;
+    CameraFoldScreenType foldScreenType_ = CAMERA_FOLDSCREEN_UNSPECIFIED;
     bool isMirrorSupported_ = false;
     dmDeviceInfo dmDeviceInfo_ = {};
     std::vector<float> zoomRatioRange_;
@@ -159,6 +174,7 @@ private:
     static const std::unordered_map<camera_type_enum_t, CameraType> metaToFwCameraType_;
     static const std::unordered_map<camera_position_enum_t, CameraPosition> metaToFwCameraPosition_;
     static const std::unordered_map<camera_connection_type_t, ConnectionType> metaToFwConnectionType_;
+    static const std::unordered_map<camera_foldscreen_enum_t, CameraFoldScreenType> metaToFwCameraFoldScreenType_;
     void init(common_metadata_header_t* metadataHeader);
 };
 } // namespace CameraStandard

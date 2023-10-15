@@ -27,6 +27,7 @@
 #include "v1_0/icamera_host.h"
 #include "v1_1/icamera_device.h"
 #include "v1_1/icamera_host.h"
+#include "v1_2/icamera_host.h"
 #include "icamera_device_service.h"
 #include "icamera_service_callback.h"
 #include "iservstat_listener_hdi.h"
@@ -61,6 +62,7 @@ public:
                                      sptr<OHOS::HDI::Camera::V1_1::ICameraDevice> &pDevice);
     virtual int32_t SetFlashlight(const std::string& cameraId, bool isEnable);
     virtual int32_t Prelaunch(const std::string& cameraId);
+    void NotifyDeviceStateChangeInfo(const std::string& cameraId, int notifyType, int deviceState);
 
     // HDI::ServiceManager::V1_0::IServStatListener
     void OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status) override;

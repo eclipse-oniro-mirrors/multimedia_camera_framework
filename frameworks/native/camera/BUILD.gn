@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("./../../../multimedia_camera_framework.gni")
 
 config("camera_framework_public_config") {
   include_dirs = [
@@ -100,6 +101,7 @@ ohos_shared_library("camera_framework") {
   include_dirs = [
     "//foundation/graphic/graphic_2d/frameworks/surface/include",
     "//utils/system/safwk/native/include",
+    "${window_manager_path}/interfaces/innerkits/dm",
   ]
 
   external_deps = [
@@ -117,6 +119,7 @@ ohos_shared_library("camera_framework") {
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "window_manager:libdm",
   ]
 
   cflags_cc = cflags
