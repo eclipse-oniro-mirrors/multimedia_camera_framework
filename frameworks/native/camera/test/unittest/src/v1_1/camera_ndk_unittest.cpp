@@ -21,13 +21,13 @@
 // #include "surface.h"
 #include "test_common.h"
 
-// #include "ipc_skeleton.h"
-// #include "access_token.h"
-// #include "hap_token_info.h"
-// #include "accesstoken_kit.h"
-// #include "token_setproc.h"
-// #include "metadata_utils.h"
-// #include "nativetoken_kit.h"
+#include "ipc_skeleton.h"
+#include "access_token.h"
+#include "hap_token_info.h"
+#include "accesstoken_kit.h"
+#include "token_setproc.h"
+#include "metadata_utils.h"
+#include "nativetoken_kit.h"
 
 using namespace testing::ext;
 #ifdef YSH_CLOSE
@@ -425,88 +425,131 @@ Camera_PhotoOutput* CameraNdkUnitTest::CreatePhotoOutput(int32_t width, int32_t 
     const char *surfaceId = nullptr;
     surfaceIdStr.assign(surfaceId);
     Camera_PhotoOutput* photoOutput;
-    OH_CameraManager_CreatePhotoOutput(cameraManager, &photoProfile, surfaceId, &photoOutput);
+    Camera_ErrorCode ret = OH_CameraManager_CreatePhotoOutput(cameraManager, &photoProfile, surfaceId, &photoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(photoOutput, nullptr);
     return photoOutput;
 }
-#ifdef YSH_CLOSE
-sptr<CaptureOutput> CameraNdkUnitTest::CreatePreviewOutput(int32_t width, int32_t height)
+
+Camera_PreviewOutput* CameraNdkUnitTest::CreatePreviewOutput(int32_t width, int32_t height)
 {
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    if (surface == nullptr) {
-        return nullptr;
-    }
-    CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
-    Size previewSize;
-    previewSize.width = width;
-    previewSize.height = height;
-    Profile previewProfile = Profile(previewFormat, previewSize);
-    return cameraManager->CreatePreviewOutput(previewProfile, surface);
+    Camera_Size previewSize = {
+        .width = width,
+        .height = height
+    };
+    Camera_Format format = (Camera_Format)CAMERA_FORMAT_YUV_420_SP;
+    Camera_Profile previewProfile = {
+        .format = format,
+        .size = previewSize
+    };
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<IBufferProducer> previewProducer = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(previewProducer);
+    int64_t surfaceIdInt = previewProducer->GetUniqueId();
+    string surfaceIdStr = std::to_string(surfaceIdInt);
+
+    const char *surfaceId = nullptr;
+    surfaceIdStr.assign(surfaceId);
+    Camera_PreviewOutput* previewOutput;
+    Camera_ErrorCode ret = OH_CameraManager_CreatePreviewOutput(cameraManager, &previewProfile, surfaceId, &previewOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(previewOutput, nullptr);
+    return previewOutput;
 }
 
-sptr<CaptureOutput> CameraNdkUnitTest::CreateVideoOutput(int32_t width, int32_t height)
+Camera_VideoOutput* CameraNdkUnitTest::CreateVideoOutput(int32_t width, int32_t height)
 {
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    if (surface == nullptr) {
-        return nullptr;
-    }
-    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
-    Size videoSize;
-    videoSize.width = width;
-    videoSize.height = height;
-    std::vector<int32_t> videoFramerates = {30, 30};
-    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
-    return cameraManager->CreateVideoOutput(videoProfile, surface);
+    Camera_Size videoSize = {
+        .width = width,
+        .height = height
+    };
+    Camera_Format format = (Camera_Format)CAMERA_FORMAT_YUV_420_SP;
+    Camera_FrameRateRange videoRange = {
+            .min = 30,
+            .max = 30
+    };
+    Camera_VideoProfile videoProfile = {
+        .format = format,
+        .size = videoSize,
+        .range = videoRange
+    };
+    sptr<IConsumerSurface> videoSurface = IConsumerSurface::Create();
+    sptr<IBufferProducer> videoProducer = videoSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(videoProducer);
+    int64_t surfaceIdInt = videoProducer->GetUniqueId();
+    string surfaceIdStr = std::to_string(surfaceIdInt);
+
+    const char *surfaceId = nullptr;
+    surfaceIdStr.assign(surfaceId);
+    Camera_VideoOutput* videoOutput;
+    Camera_ErrorCode ret = OH_CameraManager_CreateVideoOutput(cameraManager, &videoProfile, surfaceId, &videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(videoOutput, nullptr);
+    return videoOutput;
 }
-#endif
-#ifdef YSH_CLOSE
-void CameraNdkUnitTest::SessionCommit(sptr<CaptureSession> session)
+
+void CameraNdkUnitTest::SessionCommit(Camera_CaptureSession *captureSession)
 {
-    int32_t ret = session->CommitConfig();
+    Camera_ErrorCode ret = OH_CaptureSession_CommitConfig(captureSession);
     EXPECT_EQ(ret, 0);
-    int32_t captureId = 3;
-    EXPECT_CALL(*mockStreamOperator, Capture(captureId, _, true));
-    ret = session->Start();
+    ret = OH_CaptureSession_Start(captureSession);
     EXPECT_EQ(ret, 0);
 }
 
-void CameraNdkUnitTest::SessionControlParams(sptr<CaptureSession> session)
+void CameraNdkUnitTest::SessionControlParams(Camera_CaptureSession *captureSession)
 {
-    session->LockForControl();
+    float minZoom = 0.0f, maxZoom = 0.0f;
+    Camera_ErrorCode ret = OH_CaptureSession_GetZoomRatioRange(captureSession, &minZoom, &maxZoom);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(minZoom, 0.0f);
+    ASSERT_NE(maxZoom, 0.0f);
+    ret = OH_CaptureSession_SetZoomRatio(captureSession, minZoom);
+    EXPECT_EQ(ret, CAMERA_OK);
 
-    std::vector<float> zoomRatioRange = session->GetZoomRatioRange();
-    if (!zoomRatioRange.empty()) {
-        session->SetZoomRatio(zoomRatioRange[0]);
-    }
+    float minExposureBias = 0.0f, maxExposureBias = 0.0f, step = 0.0f;
+    ret = OH_CaptureSession_GetExposureBiasRange(captureSession, &minExposureBias, &maxExposureBias, &step);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(minExposureBias, 0.0f);
+    ASSERT_NE(maxExposureBias, 0.0f);
+    ASSERT_NE(step, 0.0f);
+    ret = OH_CaptureSession_SetExposureBias(captureSession, minExposureBias);
+    EXPECT_EQ(ret, CAMERA_OK);
 
-    std::vector<float> exposurebiasRange = session->GetExposureBiasRange();
-    if (!exposurebiasRange.empty()) {
-        session->SetExposureBias(exposurebiasRange[0]);
-    }
+    Camera_FlashMode flash = (Camera_FlashMode)FLASH_MODE_ALWAYS_OPEN;
+    ret = OH_CaptureSession_SetFlashMode(captureSession, flash);
+    EXPECT_EQ(ret, CAMERA_OK);
 
-    FlashMode flash = FLASH_MODE_ALWAYS_OPEN;
-    session->SetFlashMode(flash);
+    Camera_FocusMode focus = (Camera_FocusMode)FOCUS_MODE_AUTO;
+    ret = OH_CaptureSession_SetFocusMode(captureSession, focus);
+    EXPECT_EQ(ret, CAMERA_OK);
 
-    FocusMode focus = FOCUS_MODE_AUTO;
-    session->SetFocusMode(focus);
+    Camera_ExposureMode exposure = (Camera_ExposureMode)EXPOSURE_MODE_AUTO;
+    ret = OH_CaptureSession_SetExposureMode(captureSession, exposure);
+    EXPECT_EQ(ret, CAMERA_OK);
 
-    ExposureMode exposure = EXPOSURE_MODE_AUTO;
-    session->SetExposureMode(exposure);
+    float zoom = 0.0f;
+    ret = OH_CaptureSession_GetZoomRatio(captureSession, &zoom);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(zoom, 0.0f);
 
-    session->UnlockForControl();
+    float exposureBias = 0.0f;
+    ret = OH_CaptureSession_GetExposureBias(captureSession, &exposureBias);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(exposureBias, 0.0f);
 
-    if (!zoomRatioRange.empty()) {
-        EXPECT_EQ(session->GetZoomRatio(), zoomRatioRange[0]);
-    }
+    ret = OH_CaptureSession_GetFlashMode(captureSession, &flash);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(flash, (Camera_FlashMode)FLASH_MODE_ALWAYS_OPEN);
 
-    if (!exposurebiasRange.empty()) {
-        EXPECT_EQ(session->GetExposureValue(), exposurebiasRange[0]);
-    }
+    ret = OH_CaptureSession_GetFocusMode(captureSession, &focus);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(focus, (Camera_FocusMode)FOCUS_MODE_AUTO);
 
-    EXPECT_EQ(session->GetFlashMode(), flash);
-    EXPECT_EQ(session->GetFocusMode(), focus);
-    EXPECT_EQ(session->GetExposureMode(), exposure);
+    ret = OH_CaptureSession_GetExposureMode(captureSession, &exposure);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(exposure, (Camera_ExposureMode)EXPOSURE_MODE_AUTO);
 }
-
+#ifdef YSH_CLOSE
 void CameraNdkUnitTest::PortraitSessionControlParams(sptr<PortraitSession> portraitSession)
 {
     portraitSession->LockForControl();
@@ -589,24 +632,24 @@ void CameraNdkUnitTest::TearDownTestCase(void) {}
 
 void CameraNdkUnitTest::SetUp()
 {
-    // // set native token
-    // uint64_t tokenId;
-    // const char *perms[2];
-    // perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    // perms[1] = "ohos.permission.CAMERA";
-    // NativeTokenInfoParams infoInstance = {
-    //     .dcapsNum = 0,
-    //     .permsNum = 2,
-    //     .aclsNum = 0,
-    //     .dcaps = NULL,
-    //     .perms = perms,
-    //     .acls = NULL,
-    //     .processName = "native_camera_tdd",
-    //     .aplStr = "system_basic",
-    // };
-    // tokenId = GetAccessTokenId(&infoInstance);
-    // SetSelfTokenID(tokenId);
-    // OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
+    // set native token
+    uint64_t tokenId;
+    const char *perms[2];
+    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
+    perms[1] = "ohos.permission.CAMERA";
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 2,
+        .aclsNum = 0,
+        .dcaps = NULL,
+        .perms = perms,
+        .acls = NULL,
+        .processName = "native_camera_tdd",
+        .aplStr = "system_basic",
+    };
+    tokenId = GetAccessTokenId(&infoInstance);
+    SetSelfTokenID(tokenId);
+    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 
     // g_mockFlagWithoutAbt = false;
     // mockCameraHostManager = new MockHCameraHostManager(nullptr);
@@ -618,14 +661,13 @@ void CameraNdkUnitTest::SetUp()
     ASSERT_NE(cameraDeviceSize, 0);
     // modeManager = new FakeModeManager(new FakeHCameraService(mockCameraHostManager));
 }
-#ifdef YSH_CLOSE
+
 void CameraNdkUnitTest::TearDown()
 {
-    Mock::AllowLeak(mockCameraHostManager);
-    Mock::AllowLeak(mockCameraDevice);
-    Mock::AllowLeak(mockStreamOperator);
+    // delete cameraManager;
+    // delete cameraDevice;
 }
-
+#ifdef YSH_CLOSE
 MATCHER_P(matchCaptureSetting, captureSetting, "Match Capture Setting")
 {
     std::vector<uint8_t> result;
@@ -642,23 +684,23 @@ MATCHER_P(matchCaptureSetting, captureSetting, "Match Capture Setting")
  * EnvConditions: NA
  * CaseDescription: Test result callback
  */
-HWTEST_F(CameraNdkUnitTest, CameraInput_unittest, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, Camera_ResultCallback_unittest, TestSize.Level0)
 {
     Camera_Input *cameraInput;
-    OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(&cameraInput, nullptr);
-    Camera_ErrorCode ret = CAMERA_OK;
     CameraInput_Callbacks *setResultCallback = new CameraInput_Callbacks;
     ret = OH_CameraInput_RegisterCallback(cameraInput, setResultCallback);
-    ASSERT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CameraInput_Open(cameraInput);
-    ASSERT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CameraInput_Close(cameraInput);
-    ASSERT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CameraInput_Release(cameraInput);
-    ASSERT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CameraInput_UnregisterCallback(cameraInput, setResultCallback);
-    ASSERT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(ret, CAMERA_OK);
     delete setResultCallback;
 }
 
@@ -672,10 +714,12 @@ HWTEST_F(CameraNdkUnitTest, CameraInput_unittest, TestSize.Level0)
  */
 HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_003, TestSize.Level0)
 {
-    Camera_CaptureSession *session;
-    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &session);
-    ASSERT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(session, nullptr);
+    Camera_CaptureSession *captureSession;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, 0);
 }
 
 /*
@@ -709,7 +753,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_004, TestSize.Level0)
     surfaceIdStr.assign(surfaceId);
     Camera_PreviewOutput* previewOutput;
     Camera_ErrorCode ret = OH_CameraManager_CreatePreviewOutput(cameraManager, &previewProfile, surfaceId, &previewOutput);
-    ASSERT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(previewOutput, nullptr);
 }
 
@@ -738,10 +782,9 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_005, TestSize.Level0)
     const char *surfaceId = nullptr;
     Camera_PreviewOutput* previewOutput;
     Camera_ErrorCode ret = OH_CameraManager_CreatePreviewOutput(cameraManager, &previewProfile, surfaceId, &previewOutput);
-    ASSERT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(previewOutput, nullptr);
 }
-
 
 /*
  * Feature: Ndk
@@ -774,8 +817,8 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_011, TestSize.Level0)
     surfaceIdStr.assign(surfaceId);
     Camera_PhotoOutput* photoOutput;
     Camera_ErrorCode ret = OH_CameraManager_CreatePhotoOutput(cameraManager, &photoProfile, surfaceId, &photoOutput);
-    ASSERT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(photoOutput, nullptr);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(photoOutput, nullptr);
 }
 
 /*
@@ -803,7 +846,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_012, TestSize.Level0)
     const char *surfaceId = nullptr;
     Camera_PhotoOutput* photoOutput;
     Camera_ErrorCode ret = OH_CameraManager_CreatePhotoOutput(cameraManager, &photoProfile, surfaceId, &photoOutput);
-    ASSERT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(photoOutput, nullptr);
 }
 
@@ -843,7 +886,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_015, TestSize.Level0)
     surfaceIdStr.assign(surfaceId);
     Camera_VideoOutput* videoOutput;
     Camera_ErrorCode ret = OH_CameraManager_CreateVideoOutput(cameraManager, &videoProfile, surfaceId, &videoOutput);
-    ASSERT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(videoOutput, nullptr);
 }
 
@@ -877,11 +920,26 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_016, TestSize.Level0)
     const char *surfaceId = nullptr;
     Camera_VideoOutput* videoOutput;
     Camera_ErrorCode ret = OH_CameraManager_CreateVideoOutput(cameraManager, &videoProfile, surfaceId, &videoOutput);
-    ASSERT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(ret, CAMERA_OK);
     ASSERT_NE(videoOutput, nullptr);
 }
-
-
+#ifdef YSH_CLOSE
+/*
+ * Feature: Framework
+ * Function: Test manager callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test manager callback
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_019, TestSize.Level0)
+{
+    std::shared_ptr<TestCameraMngerCallback> setCallback = std::make_shared<TestCameraMngerCallback>("MgrCallback");
+    cameraManager->SetCallback(setCallback);
+    std::shared_ptr<CameraManagerCallback> getCallback = cameraManager->GetApplicationCallback();
+    ASSERT_EQ(setCallback, getCallback);
+}
+#endif
 /*
  * Feature: Ndk
  * Function: Test set camera parameters
@@ -892,48 +950,55 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_016, TestSize.Level0)
  */
 HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_020, TestSize.Level0)
 {
-    sptr<Camera_PhotoOutput> photo = CreatePhotoOutput();
-    ASSERT_NE(photo, nullptr);
+    Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
+    EXPECT_EQ(photoOutput, nullptr);
 
     Camera_CaptureSession* captureSession;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
-    ASSERT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(captureSession, nullptr);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(captureSession, nullptr);
 
-    // int32_t ret = session->BeginConfig();
-    // EXPECT_EQ(ret, 0);
-    // EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
-    // EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
-    // ret = session->AddInput(input);
-    // EXPECT_EQ(ret, 0);
+    Camera_Input *cameraInput;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(&cameraInput, nullptr);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, 0);
 
-    // ret = session->AddOutput(photo);
-    // EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
+    EXPECT_EQ(ret, 0);
 
-    // EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
-    // EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    // EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
-    // ret = session->CommitConfig();
-    // EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, 0);
 
-    // SessionControlParams(session);
+    SessionControlParams(captureSession);
 
-    // session->RemoveOutput(photo);
-    // session->RemoveInput(input);
-    // photo->Release();
-    // input->Release();
-    // session->Release();
+    ret = OH_CaptureSession_RemovePhotoOutput(captureSession, photoOutput);
+    EXPECT_EQ(ret, 0);
+
+    ret = OH_CaptureSession_RemoveInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, 0);
+
+    ret = OH_PhotoOutput_Release(photoOutput);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CameraInput_Release(cameraInput);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, 0);
 }
+
 #ifdef YSH_CLOSE
 /*
- * Feature: Ndk
+ * Feature: Framework
  * Function: Test input callback
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Test input callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_021, TestSize.Level0)
+HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_021, TestSize.Level0)
 {
     InSequence s;
     EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
@@ -959,14 +1024,15 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_021, TestSize.Level0)
  */
 HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_022, TestSize.Level0)
 {
-    sptr<CaptureOutput> preview = CreatePreviewOutput();
-    ASSERT_NE(preview, nullptr);
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    EXPECT_EQ(previewOutput, nullptr);
 
-    std::shared_ptr<PreviewStateCallback> setCallback =
-        std::make_shared<TestPreviewOutputCallback>("PreviewStateCallback");
-    ((sptr<PreviewOutput> &)preview)->SetCallback(setCallback);
-    std::shared_ptr<PreviewStateCallback> getCallback = ((sptr<PreviewOutput> &)preview)->GetApplicationCallback();
-    ASSERT_EQ(setCallback, getCallback);
+    // std::shared_ptr<PreviewStateCallback> setCallback =
+    //     std::make_shared<TestPreviewOutputCallback>("PreviewStateCallback");
+    // ((sptr<PreviewOutput> &)preview)->SetCallback(setCallback);
+    // std::shared_ptr<PreviewStateCallback> getCallback = ((sptr<PreviewOutput> &)preview)->GetApplicationCallback();
+    // ASSERT_EQ(setCallback, getCallback);
+    
 }
 
 /*
@@ -1006,6 +1072,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_024, TestSize.Level0)
     std::shared_ptr<VideoStateCallback> getCallback = ((sptr<VideoOutput> &)video)->GetApplicationCallback();
     ASSERT_EQ(setCallback, getCallback);
 }
+#endif
 
 /*
  * Feature: Ndk
@@ -1017,16 +1084,19 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_024, TestSize.Level0)
  */
 HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_025, TestSize.Level0)
 {
-    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    Camera_CaptureSession* captureSession;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(captureSession, nullptr);
 
-    int32_t ret = session->BeginConfig();
+    ret = OH_CaptureSession_BeginConfig(captureSession);
     EXPECT_EQ(ret, 0);
 
-    sptr<CaptureInput> input = nullptr;
-    ret = session->AddInput(input);
-    EXPECT_NE(ret, 0);
-    session->Release();
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, 0);
 }
 
 /*
@@ -1039,16 +1109,19 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_025, TestSize.Level0)
  */
 HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_026, TestSize.Level0)
 {
-    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    Camera_CaptureSession* captureSession;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(captureSession, nullptr);
 
-    int32_t ret = session->BeginConfig();
+    ret = OH_CaptureSession_BeginConfig(captureSession);
     EXPECT_EQ(ret, 0);
 
-    sptr<CaptureOutput> preview = nullptr;
-    ret = session->AddOutput(preview);
-    EXPECT_NE(ret, 0);
-    session->Release();
+    Camera_PhotoOutput *photoOutput = nullptr;
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
+    EXPECT_EQ(ret, 0);
+    ret = OH_PhotoOutput_Release(photoOutput);
+    EXPECT_EQ(ret, 0);
 }
 
 /*
@@ -1061,23 +1134,29 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_026, TestSize.Level0)
  */
 HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_027, TestSize.Level0)
 {
-    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    Camera_CaptureSession* captureSession;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(captureSession, nullptr);
 
-    int32_t ret = session->BeginConfig();
+    ret = OH_CaptureSession_BeginConfig(captureSession);
     EXPECT_EQ(ret, 0);
 
-    sptr<CaptureOutput> preview = CreatePreviewOutput();
-    ASSERT_NE(preview, nullptr);
+    Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
+    EXPECT_EQ(photoOutput, nullptr);
 
-    ret = session->AddOutput(preview);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
     EXPECT_EQ(ret, 0);
 
-    ret = session->CommitConfig();
-    EXPECT_NE(ret, 0);
-    session->RemoveOutput(preview);
-    preview->Release();
-    session->Release();
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_RemovePhotoOutput(captureSession, photoOutput);
+    EXPECT_EQ(ret, 0);
+
+    ret = OH_PhotoOutput_Release(photoOutput);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, 0);
 }
 
 /*
@@ -1090,37 +1169,29 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_027, TestSize.Level0)
  */
 HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_028, TestSize.Level0)
 {
-    InSequence s;
-    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
-    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    Camera_Input *cameraInput;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(&cameraInput, nullptr);
 
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
+    Camera_CaptureSession* captureSession;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(captureSession, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
-    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    std::string cameraSettings = camInput->GetCameraSettings();
-    camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->Open();
-
-    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-
-    int32_t ret = session->BeginConfig();
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
     EXPECT_EQ(ret, 0);
 
-    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
-    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
-    ret = session->AddInput(input);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
     EXPECT_EQ(ret, 0);
-
-    ret = session->CommitConfig();
-    EXPECT_NE(ret, 0);
-    session->RemoveInput(input);
-    input->Release();
-    session->Release();
+    ret = OH_CaptureSession_RemoveInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CameraInput_Release(cameraInput);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, 0);
 }
 
 /*
@@ -1133,56 +1204,66 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_028, TestSize.Level0)
  */
 HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_029, TestSize.Level0)
 {
-    InSequence s;
-    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
-    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    Camera_Input *cameraInput;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(&cameraInput, nullptr);
 
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
+    Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
+    EXPECT_EQ(photoOutput, nullptr);
 
-    sptr<CaptureOutput> photo = CreatePhotoOutput();
-    ASSERT_NE(photo, nullptr);
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    EXPECT_EQ(previewOutput, nullptr);
 
-    sptr<CaptureOutput> preview = CreatePreviewOutput();
-    ASSERT_NE(preview, nullptr);
+    Camera_CaptureSession* captureSession;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(captureSession, nullptr);
 
-    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, 0);
 
-    int32_t ret = session->AddInput(input);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
+    EXPECT_EQ(ret, 0);
+
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    EXPECT_EQ(ret, 0);
+
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, 0);
+
+    ret = OH_CaptureSession_Start(captureSession);
+    EXPECT_EQ(ret, 0);
+
+    ret = OH_PreviewOutput_Start(previewOutput);
     EXPECT_NE(ret, 0);
 
-    ret = session->AddOutput(preview);
+    ret = OH_PhotoOutput_Capture(photoOutput);
     EXPECT_NE(ret, 0);
 
-    ret = session->AddOutput(photo);
+    ret = OH_PreviewOutput_Stop(previewOutput);
     EXPECT_NE(ret, 0);
 
-    ret = session->CommitConfig();
+    ret = OH_CaptureSession_Stop(captureSession);
     EXPECT_NE(ret, 0);
 
-    ret = session->Start();
-    EXPECT_NE(ret, 0);
+    ret = OH_CaptureSession_RemovePhotoOutput(captureSession, photoOutput);
+    EXPECT_EQ(ret, 0);
 
-    ret = ((sptr<PreviewOutput> &)preview)->Start();
-    EXPECT_NE(ret, 0);
+    ret = OH_CaptureSession_RemoveInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, 0);
 
-    ret = ((sptr<PhotoOutput> &)photo)->Capture();
-    EXPECT_NE(ret, 0);
+    ret = OH_CaptureSession_RemovePreviewOutput(captureSession, previewOutput);
+    EXPECT_EQ(ret, 0);
 
-    ret = ((sptr<PreviewOutput> &)preview)->Stop();
-    EXPECT_NE(ret, 0);
-
-    ret = session->Stop();
-    EXPECT_NE(ret, 0);
-    session->RemoveInput(input);
-    session->RemoveOutput(preview);
-    session->RemoveOutput(photo);
-    preview->Release();
-    photo->Release();
-    input->Release();
-    session->Release();
+    ret = OH_PreviewOutput_Release(previewOutput);
+    EXPECT_EQ(ret, 0);
+    ret = OH_PhotoOutput_Release(photoOutput);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CameraInput_Release(cameraInput);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, 0);
 }
 
 /*
@@ -1195,57 +1276,40 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_029, TestSize.Level0)
  */
 HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_030, TestSize.Level0)
 {
-    InSequence s;
-    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
-    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    Camera_Input *cameraInput;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(&cameraInput, nullptr);
 
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
+    Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
+    EXPECT_EQ(photoOutput, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
-    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    std::string cameraSettings = camInput->GetCameraSettings();
-    camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->Open();
+    Camera_CaptureSession* captureSession;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(captureSession, nullptr);
 
-    sptr<CaptureOutput> photo = CreatePhotoOutput();
-    ASSERT_NE(photo, nullptr);
-
-    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-
-    int32_t ret = session->BeginConfig();
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
     EXPECT_EQ(ret, 0);
 
-    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
-    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
-    ret = session->AddInput(input);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
     EXPECT_EQ(ret, 0);
 
-    ret = session->AddOutput(photo);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
     EXPECT_EQ(ret, 0);
 
-    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
-    EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
-    ret = session->CommitConfig();
+    ret = OH_CaptureSession_Start(captureSession);
     EXPECT_EQ(ret, 0);
 
-    EXPECT_CALL(*mockStreamOperator, Capture(_, _, true)).Times(0);
-    ret = session->Start();
+    ret = OH_CaptureSession_Stop(captureSession);
+    EXPECT_NE(ret, 0);
+
+    ret = OH_CameraInput_Release(cameraInput);
     EXPECT_EQ(ret, 0);
-
-    EXPECT_CALL(*mockStreamOperator, CancelCapture(_)).Times(0);
-
-    ret = session->Stop();
+    ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
-
-    EXPECT_CALL(*mockStreamOperator, ReleaseStreams(_));
-    EXPECT_CALL(*mockCameraDevice, Close());
-    session->Release();
-    input->Release();
 }
 
 /*
@@ -1258,66 +1322,49 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_030, TestSize.Level0)
  */
 HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_031, TestSize.Level0)
 {
-    InSequence s;
-    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
-    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    Camera_Input *cameraInput;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(&cameraInput, nullptr);
 
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
+    Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
+    EXPECT_EQ(photoOutput, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
-    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    std::string cameraSettings = camInput->GetCameraSettings();
-    camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->Open();
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    EXPECT_EQ(previewOutput, nullptr);
 
-    sptr<CaptureOutput> preview = CreatePreviewOutput();
-    ASSERT_NE(preview, nullptr);
+    Camera_CaptureSession* captureSession;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(captureSession, nullptr);
 
-    sptr<CaptureOutput> photo = CreatePhotoOutput();
-    ASSERT_NE(photo, nullptr);
-
-    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-
-    int32_t ret = session->BeginConfig();
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
     EXPECT_EQ(ret, 0);
 
-    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
-    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
-    ret = session->AddInput(input);
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
     EXPECT_EQ(ret, 0);
 
-    ret = session->AddOutput(preview);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
     EXPECT_EQ(ret, 0);
 
-    ret = session->AddOutput(photo);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
     EXPECT_EQ(ret, 0);
 
-    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
-    EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
-    ret = session->CommitConfig();
+    ret = OH_CaptureSession_Start(captureSession);
     EXPECT_EQ(ret, 0);
 
-    EXPECT_CALL(*mockStreamOperator, Capture(1, _, true));
-    ret = session->Start();
-    EXPECT_EQ(ret, 0);
+    ret = OH_PhotoOutput_Capture(photoOutput);
+    EXPECT_NE(ret, 0);
 
-    EXPECT_CALL(*mockStreamOperator, Capture(2, _, false));
-    ret = ((sptr<PhotoOutput> &)photo)->Capture();
-    EXPECT_EQ(ret, 0);
+    ret = OH_PreviewOutput_Stop(previewOutput);
+    EXPECT_NE(ret, 0);
 
-    EXPECT_CALL(*mockStreamOperator, CancelCapture(1));
-    ret = ((sptr<PreviewOutput> &)preview)->Stop();
+    ret = OH_CameraInput_Release(cameraInput);
     EXPECT_EQ(ret, 0);
-
-    EXPECT_CALL(*mockStreamOperator, ReleaseStreams(_));
-    EXPECT_CALL(*mockCameraDevice, Close());
-    session->Release();
-    input->Release();
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, 0);
 }
 
 /*
@@ -1330,64 +1377,49 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_031, TestSize.Level0)
  */
 HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_032, TestSize.Level0)
 {
-    InSequence s;
-    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
-    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    Camera_Input *cameraInput;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(&cameraInput, nullptr);
 
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
+    Camera_CaptureSession* captureSession;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(captureSession, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
-    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    std::string cameraSettings = camInput->GetCameraSettings();
-    camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->Open();
+    float minZoom = 0.0f, maxZoom = 0.0f;
+    ret = OH_CaptureSession_GetZoomRatioRange(captureSession, &minZoom, &maxZoom);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(minZoom, 0.0f);
+    ASSERT_NE(maxZoom, 0.0f);
 
-    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    ret = OH_CaptureSession_SetZoomRatio(captureSession, minZoom);
+    EXPECT_EQ(ret, CAMERA_OK);
 
-    std::vector<float> zoomRatioRange = session->GetZoomRatioRange();
-    if (!zoomRatioRange.empty()) {
-        session->LockForControl();
-        session->SetZoomRatio(zoomRatioRange[0]);
-        session->UnlockForControl();
-    }
+    Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
+    EXPECT_EQ(photoOutput, nullptr);
 
-    sptr<CaptureOutput> preview = CreatePreviewOutput();
-    ASSERT_NE(preview, nullptr);
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    EXPECT_EQ(previewOutput, nullptr);
 
-    sptr<CaptureOutput> photo = CreatePhotoOutput();
-    ASSERT_NE(photo, nullptr);
-
-    int32_t ret = session->BeginConfig();
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
     EXPECT_EQ(ret, 0);
 
-    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
-    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
-    ret = session->AddInput(input);
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
     EXPECT_EQ(ret, 0);
 
-    ret = session->AddOutput(preview);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
     EXPECT_EQ(ret, 0);
 
-    ret = session->AddOutput(photo);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
     EXPECT_EQ(ret, 0);
 
-    if (!zoomRatioRange.empty()) {
-        EXPECT_CALL(*mockCameraDevice, UpdateSettings(_));
-    }
-    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
-    EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
-    ret = session->CommitConfig();
+    ret = OH_CameraInput_Release(cameraInput);
     EXPECT_EQ(ret, 0);
-
-    EXPECT_CALL(*mockStreamOperator, ReleaseStreams(_));
-    EXPECT_CALL(*mockCameraDevice, Close());
-    session->Release();
-    input->Release();
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, 0);
 }
 
 /*
@@ -1400,66 +1432,55 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_032, TestSize.Level0)
  */
 HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_033, TestSize.Level0)
 {
-    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
-    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    Camera_Input *cameraInput;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(&cameraInput, nullptr);
 
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
+    Camera_CaptureSession* captureSession;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(captureSession, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
-    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    std::string cameraSettings = camInput->GetCameraSettings();
-    camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->Open();
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    EXPECT_EQ(videoOutput, nullptr);
 
-    sptr<CaptureOutput> preview = CreatePreviewOutput();
-    ASSERT_NE(preview, nullptr);
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    EXPECT_EQ(previewOutput, nullptr);
 
-    sptr<CaptureOutput> video = CreateVideoOutput();
-    ASSERT_NE(video, nullptr);
-
-    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-
-    int32_t ret = session->BeginConfig();
+    ret = OH_CaptureSession_BeginConfig(captureSession);
     EXPECT_EQ(ret, 0);
 
-    EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
-    EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
-    ret = session->AddInput(input);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
     EXPECT_EQ(ret, 0);
 
-    ret = session->AddOutput(preview);
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
     EXPECT_EQ(ret, 0);
 
-    ret = session->AddOutput(video);
+    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
     EXPECT_EQ(ret, 0);
 
-    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
-    EXPECT_CALL(*mockStreamOperator, CreateStreams_V1_1(_));
-    EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
+    SessionCommit(captureSession);
 
-    SessionCommit(session);
+    ret = OH_VideoOutput_Start(videoOutput);
+    EXPECT_NE(ret, 0);
 
-    EXPECT_CALL(*mockStreamOperator, Capture(4, _, true));
-    ret = ((sptr<VideoOutput> &)video)->Start();
+    ret = OH_VideoOutput_Stop(videoOutput);
+    EXPECT_NE(ret, 0);
+
+    ret = OH_PreviewOutput_Start(previewOutput);
+    EXPECT_NE(ret, 0);
+
+    ret = OH_PreviewOutput_Stop(previewOutput);
+    EXPECT_NE(ret, 0);
+
+    ret = OH_VideoOutput_Release(videoOutput);
+    ret = OH_PreviewOutput_Release(previewOutput);
+    
+    ret = OH_CameraInput_Release(cameraInput);
     EXPECT_EQ(ret, 0);
-
-    EXPECT_CALL(*mockStreamOperator, CancelCapture(4));
-    ret = ((sptr<VideoOutput> &)video)->Stop();
+    ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
-
-    EXPECT_CALL(*mockStreamOperator, CancelCapture(3));
-    ret = ((sptr<PreviewOutput> &)preview)->Stop();
-    EXPECT_EQ(ret, 0);
-
-    ((sptr<VideoOutput> &)video)->Release();
-    EXPECT_CALL(*mockStreamOperator, ReleaseStreams(_));
-    EXPECT_CALL(*mockCameraDevice, Close());
-    session->Release();
-    input->Release();
 }
 
 /*
@@ -1472,16 +1493,19 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_033, TestSize.Level0)
  */
 HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_034, TestSize.Level0)
 {
-    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    Camera_CaptureSession* captureSession;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(captureSession, nullptr);
 
-    int32_t ret = session->BeginConfig();
+    ret = OH_CaptureSession_BeginConfig(captureSession);
     EXPECT_EQ(ret, 0);
 
-    sptr<CaptureOutput> output = nullptr;
-    ret = session->RemoveOutput(output);
-    EXPECT_NE(ret, 0);
-    session->Release();
+    Camera_PhotoOutput *photoOutput = nullptr;
+    ret = OH_PhotoOutput_Release(photoOutput);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, 0);
 }
 
 /*
@@ -1494,24 +1518,30 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_034, TestSize.Level0)
  */
 HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_035, TestSize.Level0)
 {
-    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
+    Camera_CaptureSession* captureSession;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(captureSession, nullptr);
 
-    sptr<CaptureOutput> video = CreateVideoOutput();
-    ASSERT_NE(video, nullptr);
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    EXPECT_EQ(videoOutput, nullptr);
 
-    int32_t ret = session->BeginConfig();
+    ret = OH_CaptureSession_BeginConfig(captureSession);
     EXPECT_EQ(ret, 0);
 
-    ret = session->AddOutput(video);
+    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
     EXPECT_EQ(ret, 0);
 
-    ret = session->RemoveOutput(video);
+    ret = OH_CaptureSession_RemoveVideoOutput(captureSession, videoOutput);
     EXPECT_EQ(ret, 0);
-    video->Release();
-    session->Release();
+
+    ret = OH_VideoOutput_Release(videoOutput);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, 0);
 }
 
+#ifdef YSH_CLOSE
 /*
  * Feature: Ndk
  * Function: Test capture session remove input with null

@@ -20,7 +20,7 @@
 // #include "hcamera_service.h"
 #include "camera/camera_manager.h"
 // #include "mode/mode_manager.h"
-// #include <refbase.h>
+#include <refbase.h>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -72,18 +72,17 @@ public:
     void SetUp();
 
     /* TearDown:Execute after each test case */
-    // void TearDown();
-    // void SessionCommit(sptr<CaptureSession> session);
-    // void SessionControlParams(sptr<CaptureSession> session);
+    void TearDown();
+    void SessionCommit(Camera_CaptureSession *captureSession);
+    void SessionControlParams(Camera_CaptureSession *captureSession);
     // void PortraitSessionControlParams(sptr<PortraitSession> portraitSession);
     // void PortraitSessionEffectParams(sptr<PortraitSession> portraitSession);
     // void PortraitSessionFilterParams(sptr<PortraitSession> portraitSession);
     // void PortraitSessionBeautyParams(sptr<PortraitSession> portraitSession);
 
     Camera_PhotoOutput* CreatePhotoOutput(int32_t width = PHOTO_DEFAULT_WIDTH, int32_t height = PHOTO_DEFAULT_HEIGHT);
-    // sptr<CaptureOutput> CreatePreviewOutput(int32_t width = PREVIEW_DEFAULT_WIDTH,
-    //                                         int32_t height = PREVIEW_DEFAULT_HEIGHT);
-    // sptr<CaptureOutput> CreateVideoOutput(int32_t width = VIDEO_DEFAULT_WIDTH, int32_t height = VIDEO_DEFAULT_HEIGHT);
+    Camera_PreviewOutput* CreatePreviewOutput(int32_t width = PREVIEW_DEFAULT_WIDTH, int32_t height = PREVIEW_DEFAULT_HEIGHT);
+    Camera_VideoOutput* CreateVideoOutput(int32_t width = VIDEO_DEFAULT_WIDTH, int32_t height = VIDEO_DEFAULT_HEIGHT);
 };
 } // CameraStandard
 } // OHOS
