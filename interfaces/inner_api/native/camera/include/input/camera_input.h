@@ -26,6 +26,7 @@
 #include "icamera_device_service.h"
 #include "icamera_device_service_callback.h"
 #include "hcamera_device_callback_stub.h"
+#include "camera_death_recipient.h"
 #include "output/camera_output_capability.h"
 namespace OHOS {
 namespace CameraStandard {
@@ -324,7 +325,8 @@ private:
     std::shared_ptr<ErrorCallback> errorCallback_;
     sptr<ICameraDeviceServiceCallback> CameraDeviceSvcCallback_;
     std::mutex interfaceMutex_;
-
+    sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
+    void CameraServerDied(pid_t pid);
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
 };
 

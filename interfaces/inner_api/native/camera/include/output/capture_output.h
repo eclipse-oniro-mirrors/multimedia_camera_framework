@@ -20,6 +20,7 @@
 #include <refbase.h>
 #include "camera_error_code.h"
 #include "icamera_util.h"
+#include "input/camera_death_recipient.h"
 #include "istream_common.h"
 #include "session/capture_session.h"
 #include "camera_output_capability.h"
@@ -61,6 +62,9 @@ public:
     Profile GetPhotoProfile();
     int32_t SetPreviewProfile(Profile &profile);
     Profile GetPreviewProfile();
+    virtual void CameraServerDied(pid_t pid) = 0;
+protected:
+    sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
 private:
     CaptureOutputType outputType_;
     StreamType streamType_;

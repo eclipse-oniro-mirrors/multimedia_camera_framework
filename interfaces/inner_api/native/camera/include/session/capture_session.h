@@ -22,6 +22,7 @@
 #include <map>
 #include "camera_error_code.h"
 #include "input/capture_input.h"
+#include "input/camera_death_recipient.h"
 #include "output/capture_output.h"
 #include "output/camera_output_capability.h"
 #include "icamera_util.h"
@@ -767,12 +768,14 @@ private:
     static const std::unordered_map<camera_xmage_color_type_t, ColorEffect> metaColorEffectMap_;
     static const std::unordered_map<ColorEffect, camera_xmage_color_type_t> fwkColorEffectMap_;
     sptr<CaptureOutput> metaOutput_;
+    sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
     void SetFrameRateRange(const std::vector<int32_t>& frameRateRange);
     Point CoordinateTransform(Point point);
     int32_t CalculateExposureValue(float exposureValue);
     Point VerifyFocusCorrectness(Point point);
     void ConfigureOutput(sptr<CaptureOutput> &output);
+    void CameraServerDied(pid_t pid);
 };
 } // namespace CameraStandard
 } // namespace OHOS

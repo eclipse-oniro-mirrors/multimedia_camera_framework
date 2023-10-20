@@ -500,7 +500,7 @@ void CameraManager::CameraServerDied(pid_t pid)
     if (cameraSvcCallback_ != nullptr) {
         MEDIA_DEBUG_LOG("cameraSvcCallback_ not nullptr");
         for (size_t i = 0; i < cameraObjList.size(); i++) {
-            cameraSvcCallback_->OnCameraStatusChanged(cameraObjList[i]->GetID(), CAMERA_STATUS_UNAVAILABLE);
+            cameraSvcCallback_->OnCameraStatusChanged(cameraObjList[i]->GetID(), CAMERA_STATUS_DISAPPEAR);
         }
     }
     if (serviceProxy_ != nullptr) {
