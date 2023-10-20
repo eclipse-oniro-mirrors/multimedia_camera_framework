@@ -2596,6 +2596,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_003, TestSize.Level
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_004, TestSize.Level0)
 {
     InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
 
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
@@ -2666,6 +2668,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_004, TestSize.Level
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_005, TestSize.Level0)
 {
     InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
 
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
@@ -2722,6 +2726,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_005, TestSize.Level
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_006, TestSize.Level0)
 {
     InSequence s;
+    EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
+    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
 
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
