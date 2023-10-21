@@ -13,19 +13,19 @@
 
 import("//build/ohos.gni")
 import("//build/ohos/ndk/ndk.gni")
-import("//foundation/multimedia/camera_framework/multimedia_camera_framework.gni")
+import("./../../../../../multimedia_camera_framework.gni")
 
 ohos_ndk_headers("camera_ndk_header") {
   dest_dir = "$ndk_headers_out_dir/camera_ndk"
   sources = [
     "./camera.h",
     "./camera_manager.h",
-    "./capture_session.h",
     "./camera_input.h",
+    "./capture_session.h",
+    "./metadata_output.h",
+    "./photo_output.h",
     "./preview_output.h",
     "./video_output.h",
-    "./photo_output.h",
-    "./metadata_output.h",
   ]
 }
 
@@ -37,11 +37,11 @@ ohos_ndk_library("libcamera_ndk") {
   system_capability_headers = [
     "multimedia/camera_framework/camera.h",
     "multimedia/camera_framework/camera_manager.h",
-    "multimedia/camera_framework/capture_session.h",
     "multimedia/camera_framework/camera_input.h",
+    "multimedia/camera_framework/capture_session.h",
+    "multimedia/camera_framework/metadata_output.h",
+    "multimedia/camera_framework/photo_output.h",
     "multimedia/camera_framework/preview_output.h",
     "multimedia/camera_framework/video_output.h",
-    "multimedia/camera_framework/photo_output.h",
-    "multimedia/camera_framework/metadata_output.h",
   ]
 }
