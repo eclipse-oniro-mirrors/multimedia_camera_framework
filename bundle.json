@@ -58,6 +58,7 @@
             ],
             "fwk_group": [
               "//foundation/multimedia/camera_framework/frameworks/native/camera:camera_framework",
+              "//foundation/multimedia/camera_framework/frameworks/native/ndk:camera_ndk",
               "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camera_napi",
               "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camera_js"
             ],
