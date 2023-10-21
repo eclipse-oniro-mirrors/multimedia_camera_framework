@@ -14,271 +14,269 @@
  */
 
 #include "camera_framework_moduletest.h"
+
 #include <cinttypes>
 #include <vector>
-#include "input/camera_input.h"
-#include "input/camera_manager.h"
+
+#include "access_token.h"
+#include "accesstoken_kit.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
-#include "surface.h"
-#include "test_common.h"
-
-#include "parameter.h"
-#include "ipc_skeleton.h"
-#include "access_token.h"
-#include "hap_token_info.h"
-#include "accesstoken_kit.h"
-#include "token_setproc.h"
 #include "camera_util.h"
-#include "nativetoken_kit.h"
-
-#include "iservice_registry.h"
-#include "system_ability_definition.h"
-
+#include "hap_token_info.h"
+#include "hcamera_device.h"
 #include "hcamera_device_callback_proxy.h"
-#include "hcamera_service_stub.h"
 #include "hcamera_device_proxy.h"
 #include "hcamera_service.h"
-#include "hcamera_device.h"
+#include "hcamera_service_stub.h"
+#include "input/camera_input.h"
+#include "input/camera_manager.h"
+#include "ipc_skeleton.h"
+#include "iservice_registry.h"
+#include "nativetoken_kit.h"
+#include "parameter.h"
+#include "surface.h"
+#include "system_ability_definition.h"
+#include "test_common.h"
+#include "token_setproc.h"
 
 using namespace testing::ext;
 
 namespace OHOS {
 namespace CameraStandard {
 namespace {
-    enum class CAM_PHOTO_EVENTS {
-        CAM_PHOTO_CAPTURE_START = 0,
-        CAM_PHOTO_CAPTURE_END,
-        CAM_PHOTO_CAPTURE_ERR,
-        CAM_PHOTO_FRAME_SHUTTER,
-        CAM_PHOTO_MAX_EVENT
-    };
+enum class CAM_PHOTO_EVENTS {
+    CAM_PHOTO_CAPTURE_START = 0,
+    CAM_PHOTO_CAPTURE_END,
+    CAM_PHOTO_CAPTURE_ERR,
+    CAM_PHOTO_FRAME_SHUTTER,
+    CAM_PHOTO_MAX_EVENT
+};
 
-    enum class CAM_PREVIEW_EVENTS {
-        CAM_PREVIEW_FRAME_START = 0,
-        CAM_PREVIEW_FRAME_END,
-        CAM_PREVIEW_FRAME_ERR,
-        CAM_PREVIEW_FRAME_SKETCH_AVAILABLE,
-        CAM_PREVIEW_MAX_EVENT
-    };
+enum class CAM_PREVIEW_EVENTS {
+    CAM_PREVIEW_FRAME_START = 0,
+    CAM_PREVIEW_FRAME_END,
+    CAM_PREVIEW_FRAME_ERR,
+    CAM_PREVIEW_FRAME_SKETCH_AVAILABLE,
+    CAM_PREVIEW_MAX_EVENT
+};
 
-    enum class CAM_VIDEO_EVENTS {
-        CAM_VIDEO_FRAME_START = 0,
-        CAM_VIDEO_FRAME_END,
-        CAM_VIDEO_FRAME_ERR,
-        CAM_VIDEO_MAX_EVENT
-    };
+enum class CAM_VIDEO_EVENTS {
+    CAM_VIDEO_FRAME_START = 0,
+    CAM_VIDEO_FRAME_END,
+    CAM_VIDEO_FRAME_ERR,
+    CAM_VIDEO_MAX_EVENT
+};
 
+const int32_t WAIT_TIME_AFTER_CAPTURE = 1;
+const int32_t WAIT_TIME_AFTER_START = 2;
+const int32_t WAIT_TIME_BEFORE_STOP = 1;
+const int32_t CAMERA_NUMBER = 2;
 
-    const int32_t WAIT_TIME_AFTER_CAPTURE = 1;
-    const int32_t WAIT_TIME_AFTER_START = 2;
-    const int32_t WAIT_TIME_BEFORE_STOP = 1;
-    const int32_t CAMERA_NUMBER = 2;
+bool g_camInputOnError = false;
+bool g_sessionclosed = false;
+std::shared_ptr<OHOS::Camera::CameraMetadata> g_metaResult = nullptr;
+int32_t g_videoFd = -1;
+int32_t g_previewFd = -1;
+std::bitset<static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_MAX_EVENT)> g_photoEvents;
+std::bitset<static_cast<unsigned int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_MAX_EVENT)> g_previewEvents;
+std::bitset<static_cast<unsigned int>(CAM_VIDEO_EVENTS::CAM_VIDEO_MAX_EVENT)> g_videoEvents;
+std::unordered_map<std::string, int> g_camStatusMap;
+std::unordered_map<std::string, bool> g_camFlashMap;
 
-    bool g_camInputOnError = false;
-    bool g_sessionclosed = false;
-    std::shared_ptr<OHOS::Camera::CameraMetadata> g_metaResult = nullptr;
-    int32_t g_videoFd = -1;
-    int32_t g_previewFd = -1;
-    std::bitset<static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_MAX_EVENT)> g_photoEvents;
-    std::bitset<static_cast<unsigned int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_MAX_EVENT)> g_previewEvents;
-    std::bitset<static_cast<unsigned int>(CAM_VIDEO_EVENTS::CAM_VIDEO_MAX_EVENT)> g_videoEvents;
-    std::unordered_map<std::string, int> g_camStatusMap;
-    std::unordered_map<std::string, bool> g_camFlashMap;
+class AppCallback : public CameraManagerCallback,
+                    public ErrorCallback,
+                    public PhotoStateCallback,
+                    public PreviewStateCallback,
+                    public ResultCallback {
+public:
+    void OnCameraStatusChanged(const CameraStatusInfo& cameraDeviceInfo) const override
+    {
+        const std::string cameraID = cameraDeviceInfo.cameraDevice->GetID();
+        const CameraStatus cameraStatus = cameraDeviceInfo.cameraStatus;
 
-
-    class AppCallback : public CameraManagerCallback, public ErrorCallback, public PhotoStateCallback,
-                        public PreviewStateCallback, public ResultCallback {
-    public:
-        void OnCameraStatusChanged(const CameraStatusInfo &cameraDeviceInfo) const override
-        {
-            const std::string cameraID = cameraDeviceInfo.cameraDevice->GetID();
-            const CameraStatus cameraStatus = cameraDeviceInfo.cameraStatus;
-
-            switch (cameraStatus) {
-                case CAMERA_STATUS_UNAVAILABLE: {
-                    MEDIA_DEBUG_LOG("AppCallback::OnCameraStatusChanged %{public}s: CAMERA_STATUS_UNAVAILABLE",
-                                    cameraID.c_str());
-                    g_camStatusMap[cameraID] = CAMERA_STATUS_UNAVAILABLE;
-                    break;
-                }
-                case CAMERA_STATUS_AVAILABLE: {
-                    MEDIA_DEBUG_LOG("AppCallback::OnCameraStatusChanged %{public}s: CAMERA_STATUS_AVAILABLE",
-                                    cameraID.c_str());
-                    g_camStatusMap[cameraID] = CAMERA_STATUS_AVAILABLE;
-                    break;
-                }
-                default: {
-                    MEDIA_DEBUG_LOG("AppCallback::OnCameraStatusChanged %{public}s: unknown", cameraID.c_str());
-                    EXPECT_TRUE(false);
-                }
+        switch (cameraStatus) {
+            case CAMERA_STATUS_UNAVAILABLE: {
+                MEDIA_DEBUG_LOG(
+                    "AppCallback::OnCameraStatusChanged %{public}s: CAMERA_STATUS_UNAVAILABLE", cameraID.c_str());
+                g_camStatusMap[cameraID] = CAMERA_STATUS_UNAVAILABLE;
+                break;
             }
-            return;
-        }
-
-        void OnFlashlightStatusChanged(const std::string &cameraID, const FlashStatus flashStatus) const override
-        {
-            switch (flashStatus) {
-                case FLASH_STATUS_OFF: {
-                    MEDIA_DEBUG_LOG("AppCallback::OnFlashlightStatusChanged %{public}s: FLASH_STATUS_OFF",
-                                    cameraID.c_str());
-                    g_camFlashMap[cameraID] = false;
-                    break;
-                }
-                case FLASH_STATUS_ON: {
-                    MEDIA_DEBUG_LOG("AppCallback::OnFlashlightStatusChanged %{public}s: FLASH_STATUS_ON",
-                                    cameraID.c_str());
-                    g_camFlashMap[cameraID] = true;
-                    break;
-                }
-                case FLASH_STATUS_UNAVAILABLE: {
-                    MEDIA_DEBUG_LOG("AppCallback::OnFlashlightStatusChanged %{public}s: FLASH_STATUS_UNAVAILABLE",
-                                    cameraID.c_str());
-                    g_camFlashMap.erase(cameraID);
-                    break;
-                }
-                default: {
-                    MEDIA_DEBUG_LOG("AppCallback::OnFlashlightStatusChanged %{public}s: unknown", cameraID.c_str());
-                    EXPECT_TRUE(false);
-                }
+            case CAMERA_STATUS_AVAILABLE: {
+                MEDIA_DEBUG_LOG(
+                    "AppCallback::OnCameraStatusChanged %{public}s: CAMERA_STATUS_AVAILABLE", cameraID.c_str());
+                g_camStatusMap[cameraID] = CAMERA_STATUS_AVAILABLE;
+                break;
             }
-            return;
-        }
-
-        void OnError(const int32_t errorType, const int32_t errorMsg) const override
-        {
-            MEDIA_DEBUG_LOG("AppCallback::OnError errorType: %{public}d, errorMsg: %{public}d", errorType, errorMsg);
-            g_camInputOnError = true;
-            if (errorType == CAMERA_DEVICE_PREEMPTED) {
-                g_sessionclosed = true;
-            }
-            return;
-        }
-
-        void OnResult(const uint64_t timestamp,
-                      const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) const override
-        {
-            MEDIA_INFO_LOG("CameraDeviceServiceCallback::OnResult() is called!");
-
-            if (result != nullptr) {
-                g_metaResult = result;
-                common_metadata_header_t* data = result->get();
-                std::vector<int32_t>  fpsRange;
-                camera_metadata_item_t entry;
-                int ret = OHOS::Camera::FindCameraMetadataItem(data, OHOS_ABILITY_FPS_RANGES, &entry);
-                MEDIA_INFO_LOG("CameraDeviceServiceCallback::FindCameraMetadataItem() %{public}d", ret);
-                if (ret != 0) {
-                    MEDIA_INFO_LOG("demo test: get OHOS_ABILITY_FPS_RANGES error");
-                }
-                uint32_t count = entry.count;
-                MEDIA_INFO_LOG("demo test: fpsRange count  %{public}d",  count);
-                for (uint32_t i = 0 ; i < count; i++) {
-                    fpsRange.push_back(*(entry.data.i32 + i));
-                }
-                for (auto it = fpsRange.begin(); it != fpsRange.end(); it++) {
-                    MEDIA_INFO_LOG("demo test: fpsRange %{public}d ", *it);
-                }
+            default: {
+                MEDIA_DEBUG_LOG("AppCallback::OnCameraStatusChanged %{public}s: unknown", cameraID.c_str());
+                EXPECT_TRUE(false);
             }
         }
+        return;
+    }
 
-        void OnCaptureStarted(const int32_t captureId) const override
-        {
-            MEDIA_DEBUG_LOG("AppCallback::OnCaptureStarted captureId: %{public}d", captureId);
-            g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_START)] = 1;
-            return;
+    void OnFlashlightStatusChanged(const std::string& cameraID, const FlashStatus flashStatus) const override
+    {
+        switch (flashStatus) {
+            case FLASH_STATUS_OFF: {
+                MEDIA_DEBUG_LOG(
+                    "AppCallback::OnFlashlightStatusChanged %{public}s: FLASH_STATUS_OFF", cameraID.c_str());
+                g_camFlashMap[cameraID] = false;
+                break;
+            }
+            case FLASH_STATUS_ON: {
+                MEDIA_DEBUG_LOG("AppCallback::OnFlashlightStatusChanged %{public}s: FLASH_STATUS_ON", cameraID.c_str());
+                g_camFlashMap[cameraID] = true;
+                break;
+            }
+            case FLASH_STATUS_UNAVAILABLE: {
+                MEDIA_DEBUG_LOG(
+                    "AppCallback::OnFlashlightStatusChanged %{public}s: FLASH_STATUS_UNAVAILABLE", cameraID.c_str());
+                g_camFlashMap.erase(cameraID);
+                break;
+            }
+            default: {
+                MEDIA_DEBUG_LOG("AppCallback::OnFlashlightStatusChanged %{public}s: unknown", cameraID.c_str());
+                EXPECT_TRUE(false);
+            }
         }
+        return;
+    }
 
-        void OnCaptureEnded(const int32_t captureId, const int32_t frameCount) const override
-        {
-            MEDIA_DEBUG_LOG("AppCallback::OnCaptureEnded captureId: %{public}d, frameCount: %{public}d",
-                            captureId, frameCount);
-            g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_END)] = 1;
-            return;
+    void OnError(const int32_t errorType, const int32_t errorMsg) const override
+    {
+        MEDIA_DEBUG_LOG("AppCallback::OnError errorType: %{public}d, errorMsg: %{public}d", errorType, errorMsg);
+        g_camInputOnError = true;
+        if (errorType == CAMERA_DEVICE_PREEMPTED) {
+            g_sessionclosed = true;
         }
+        return;
+    }
 
-        void OnFrameShutter(const int32_t captureId, const uint64_t timestamp) const override
-        {
-            MEDIA_DEBUG_LOG("AppCallback::OnFrameShutter captureId: %{public}d, timestamp: %{public}"
-                            PRIu64, captureId, timestamp);
-            g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_FRAME_SHUTTER)] = 1;
-            return;
-        }
+    void OnResult(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result) const override
+    {
+        MEDIA_INFO_LOG("CameraDeviceServiceCallback::OnResult() is called!");
 
-        void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override
-        {
-            MEDIA_DEBUG_LOG("AppCallback::OnCaptureError captureId: %{public}d, errorCode: %{public}d",
-                            captureId, errorCode);
-            g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_ERR)] = 1;
-            return;
+        if (result != nullptr) {
+            g_metaResult = result;
+            common_metadata_header_t* data = result->get();
+            std::vector<int32_t> fpsRange;
+            camera_metadata_item_t entry;
+            int ret = OHOS::Camera::FindCameraMetadataItem(data, OHOS_ABILITY_FPS_RANGES, &entry);
+            MEDIA_INFO_LOG("CameraDeviceServiceCallback::FindCameraMetadataItem() %{public}d", ret);
+            if (ret != 0) {
+                MEDIA_INFO_LOG("demo test: get OHOS_ABILITY_FPS_RANGES error");
+            }
+            uint32_t count = entry.count;
+            MEDIA_INFO_LOG("demo test: fpsRange count  %{public}d", count);
+            for (uint32_t i = 0; i < count; i++) {
+                fpsRange.push_back(*(entry.data.i32 + i));
+            }
+            for (auto it = fpsRange.begin(); it != fpsRange.end(); it++) {
+                MEDIA_INFO_LOG("demo test: fpsRange %{public}d ", *it);
+            }
         }
+    }
 
-        void OnFrameStarted() const override
-        {
-            MEDIA_DEBUG_LOG("AppCallback::OnFrameStarted");
-            g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_START)] = 1;
-            return;
-        }
-        void OnFrameEnded(const int32_t frameCount) const override
-        {
-            MEDIA_DEBUG_LOG("AppCallback::OnFrameEnded frameCount: %{public}d", frameCount);
-            g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_END)] = 1;
-            return;
-        }
-        void OnError(const int32_t errorCode) const override
-        {
-            MEDIA_DEBUG_LOG("AppCallback::OnError errorCode: %{public}d", errorCode);
-            g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_ERR)] = 1;
-            return;
-        }
-        void OnSketchAvailable(SketchData& SketchData) const override
-        {
-            MEDIA_DEBUG_LOG("AppCallback::OnSketchAvailable");
-            g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_SKETCH_AVAILABLE)] = 1;
-            return;
-        }
-    };
+    void OnCaptureStarted(const int32_t captureId) const override
+    {
+        MEDIA_DEBUG_LOG("AppCallback::OnCaptureStarted captureId: %{public}d", captureId);
+        g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_START)] = 1;
+        return;
+    }
 
-    class AppVideoCallback : public VideoStateCallback {
-        void OnFrameStarted() const override
-        {
-            MEDIA_DEBUG_LOG("AppVideoCallback::OnFrameStarted");
-            g_videoEvents[static_cast<int>(CAM_VIDEO_EVENTS::CAM_VIDEO_FRAME_START)] = 1;
-            return;
-        }
-        void OnFrameEnded(const int32_t frameCount) const override
-        {
-            MEDIA_DEBUG_LOG("AppVideoCallback::OnFrameEnded frameCount: %{public}d", frameCount);
-            g_videoEvents[static_cast<int>(CAM_VIDEO_EVENTS::CAM_VIDEO_FRAME_END)] = 1;
-            return;
-        }
-        void OnError(const int32_t errorCode) const override
-        {
-            MEDIA_DEBUG_LOG("AppVideoCallback::OnError errorCode: %{public}d", errorCode);
-            g_videoEvents[static_cast<int>(CAM_VIDEO_EVENTS::CAM_VIDEO_FRAME_ERR)] = 1;
-            return;
-        }
-    };
+    void OnCaptureEnded(const int32_t captureId, const int32_t frameCount) const override
+    {
+        MEDIA_DEBUG_LOG(
+            "AppCallback::OnCaptureEnded captureId: %{public}d, frameCount: %{public}d", captureId, frameCount);
+        g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_END)] = 1;
+        return;
+    }
 
-    class AppMetadataCallback : public MetadataObjectCallback, public MetadataStateCallback {
-    public:
-        void OnMetadataObjectsAvailable(std::vector<sptr<MetadataObject>> metaObjects) const
-        {
-            MEDIA_DEBUG_LOG("AppMetadataCallback::OnMetadataObjectsAvailable received");
-        }
-        void OnError(int32_t errorCode) const
-        {
-            MEDIA_DEBUG_LOG("AppMetadataCallback::OnError %{public}d", errorCode);
-        }
-    };
+    void OnFrameShutter(const int32_t captureId, const uint64_t timestamp) const override
+    {
+        MEDIA_DEBUG_LOG(
+            "AppCallback::OnFrameShutter captureId: %{public}d, timestamp: %{public}" PRIu64, captureId, timestamp);
+        g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_FRAME_SHUTTER)] = 1;
+        return;
+    }
 
-    class AppSessionCallback : public SessionCallback {
-    public:
-        void OnError(int32_t errorCode)
-        {
-            MEDIA_DEBUG_LOG("AppMetadataCallback::OnError %{public}d", errorCode);
-            return;
-        }
-    };
+    void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override
+    {
+        MEDIA_DEBUG_LOG(
+            "AppCallback::OnCaptureError captureId: %{public}d, errorCode: %{public}d", captureId, errorCode);
+        g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_ERR)] = 1;
+        return;
+    }
+
+    void OnFrameStarted() const override
+    {
+        MEDIA_DEBUG_LOG("AppCallback::OnFrameStarted");
+        g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_START)] = 1;
+        return;
+    }
+    void OnFrameEnded(const int32_t frameCount) const override
+    {
+        MEDIA_DEBUG_LOG("AppCallback::OnFrameEnded frameCount: %{public}d", frameCount);
+        g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_END)] = 1;
+        return;
+    }
+    void OnError(const int32_t errorCode) const override
+    {
+        MEDIA_DEBUG_LOG("AppCallback::OnError errorCode: %{public}d", errorCode);
+        g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_ERR)] = 1;
+        return;
+    }
+    void OnSketchAvailable(SketchData& SketchData) const override
+    {
+        MEDIA_DEBUG_LOG("AppCallback::OnSketchAvailable");
+        g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_SKETCH_AVAILABLE)] = 1;
+        return;
+    }
+};
+
+class AppVideoCallback : public VideoStateCallback {
+    void OnFrameStarted() const override
+    {
+        MEDIA_DEBUG_LOG("AppVideoCallback::OnFrameStarted");
+        g_videoEvents[static_cast<int>(CAM_VIDEO_EVENTS::CAM_VIDEO_FRAME_START)] = 1;
+        return;
+    }
+    void OnFrameEnded(const int32_t frameCount) const override
+    {
+        MEDIA_DEBUG_LOG("AppVideoCallback::OnFrameEnded frameCount: %{public}d", frameCount);
+        g_videoEvents[static_cast<int>(CAM_VIDEO_EVENTS::CAM_VIDEO_FRAME_END)] = 1;
+        return;
+    }
+    void OnError(const int32_t errorCode) const override
+    {
+        MEDIA_DEBUG_LOG("AppVideoCallback::OnError errorCode: %{public}d", errorCode);
+        g_videoEvents[static_cast<int>(CAM_VIDEO_EVENTS::CAM_VIDEO_FRAME_ERR)] = 1;
+        return;
+    }
+};
+
+class AppMetadataCallback : public MetadataObjectCallback, public MetadataStateCallback {
+public:
+    void OnMetadataObjectsAvailable(std::vector<sptr<MetadataObject>> metaObjects) const
+    {
+        MEDIA_DEBUG_LOG("AppMetadataCallback::OnMetadataObjectsAvailable received");
+    }
+    void OnError(int32_t errorCode) const
+    {
+        MEDIA_DEBUG_LOG("AppMetadataCallback::OnError %{public}d", errorCode);
+    }
+};
+
+class AppSessionCallback : public SessionCallback {
+public:
+    void OnError(int32_t errorCode)
+    {
+        MEDIA_DEBUG_LOG("AppMetadataCallback::OnError %{public}d", errorCode);
+        return;
+    }
+};
 } // namespace
 
 sptr<CaptureOutput> CameraFrameworkModuleTest::CreatePhotoOutput(int32_t width, int32_t height)
@@ -306,7 +304,7 @@ sptr<CaptureOutput> CameraFrameworkModuleTest::CreatePreviewOutput(int32_t width
 {
     sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
     sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, g_previewFd, previewSurface);
-    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)listener);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
     Size previewSize;
     previewSize.width = previewProfiles[0].GetSize().width;
     previewSize.height = previewProfiles[0].GetSize().height;
@@ -331,8 +329,8 @@ sptr<CaptureOutput> CameraFrameworkModuleTest::CreateVideoOutput(int32_t width, 
 {
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     sptr<SurfaceListener> videoSurfaceListener =
-        new(std::nothrow) SurfaceListener("Video", SurfaceType::VIDEO, g_videoFd, surface);
-    surface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)videoSurfaceListener);
+        new (std::nothrow) SurfaceListener("Video", SurfaceType::VIDEO, g_videoFd, surface);
+    surface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)videoSurfaceListener);
     if (videoSurfaceListener == nullptr) {
         MEDIA_ERR_LOG("Failed to create new SurfaceListener");
         return nullptr;
@@ -368,7 +366,7 @@ void CameraFrameworkModuleTest::GetSupportedOutputCapability()
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     std::vector<sptr<CameraDevice>> cameraObjList = camManagerObj->GetSupportedCameras();
     ASSERT_GE(cameraObjList.size(), CAMERA_NUMBER);
-    sptr<CameraOutputCapability> outputcapability =  camManagerObj->GetSupportedOutputCapability(cameraObjList[1]);
+    sptr<CameraOutputCapability> outputcapability = camManagerObj->GetSupportedOutputCapability(cameraObjList[1]);
     previewProfiles = outputcapability->GetPreviewProfiles();
     ASSERT_TRUE(!previewProfiles.empty());
 
@@ -383,14 +381,14 @@ void CameraFrameworkModuleTest::GetSupportedOutputCapability()
 void CameraFrameworkModuleTest::ReleaseInput()
 {
     if (input_) {
-        sptr<CameraInput> camInput = (sptr<CameraInput> &)input_;
+        sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
         camInput->Close();
         input_->Release();
     }
     return;
 }
 
-void CameraFrameworkModuleTest::SetCameraParameters(sptr<CaptureSession> &session, bool video)
+void CameraFrameworkModuleTest::SetCameraParameters(sptr<CaptureSession>& session, bool video)
 {
     session->LockForControl();
 
@@ -406,7 +404,7 @@ void CameraFrameworkModuleTest::SetCameraParameters(sptr<CaptureSession> &sessio
     }
 
     // Get/Set Exposurepoint
-    Point exposurePoint = {1, 2};
+    Point exposurePoint = { 1, 2 };
     session->SetMeteringPoint(exposurePoint);
 
     // GetFocalLength
@@ -414,7 +412,7 @@ void CameraFrameworkModuleTest::SetCameraParameters(sptr<CaptureSession> &sessio
     EXPECT_NE(focalLength, 0);
 
     // Get/Set focuspoint
-    Point focusPoint = {1, 2};
+    Point focusPoint = { 1, 2 };
     session->SetFocusPoint(focusPoint);
 
     FlashMode flash = FLASH_MODE_OPEN;
@@ -453,8 +451,7 @@ void CameraFrameworkModuleTest::SetCameraParameters(sptr<CaptureSession> &sessio
     EXPECT_EQ(session->GetExposureMode(), exposure);
 }
 
-void CameraFrameworkModuleTest::TestCallbacksSession(sptr<CaptureOutput> photoOutput,
-    sptr<CaptureOutput> videoOutput)
+void CameraFrameworkModuleTest::TestCallbacksSession(sptr<CaptureOutput> photoOutput, sptr<CaptureOutput> videoOutput)
 {
     int32_t intResult;
 
@@ -462,18 +459,18 @@ void CameraFrameworkModuleTest::TestCallbacksSession(sptr<CaptureOutput> photoOu
         intResult = session_->Start();
         EXPECT_EQ(intResult, 0);
 
-        intResult = ((sptr<VideoOutput> &)videoOutput)->Start();
+        intResult = ((sptr<VideoOutput>&)videoOutput)->Start();
         EXPECT_EQ(intResult, 0);
         sleep(WAIT_TIME_AFTER_START);
     }
 
     if (photoOutput != nullptr) {
-        intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture();
+        intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
         EXPECT_EQ(intResult, 0);
     }
 
     if (videoOutput != nullptr) {
-        intResult = ((sptr<VideoOutput> &)videoOutput)->Stop();
+        intResult = ((sptr<VideoOutput>&)videoOutput)->Stop();
         EXPECT_EQ(intResult, 0);
     }
 
@@ -481,14 +478,14 @@ void CameraFrameworkModuleTest::TestCallbacksSession(sptr<CaptureOutput> photoOu
     session_->Stop();
 }
 
-void CameraFrameworkModuleTest::TestCallbacks(sptr<CameraDevice> &cameraInfo, bool video)
+void CameraFrameworkModuleTest::TestCallbacks(sptr<CameraDevice>& cameraInfo, bool video)
 {
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
     // Register error callback
     std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input_;
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     camInput->SetErrorCallback(callback);
 
     EXPECT_EQ(g_camInputOnError, false);
@@ -503,14 +500,14 @@ void CameraFrameworkModuleTest::TestCallbacks(sptr<CameraDevice> &cameraInfo, bo
         ASSERT_NE(photoOutput, nullptr);
 
         // Register photo callback
-        ((sptr<PhotoOutput> &)photoOutput)->SetCallback(std::make_shared<AppCallback>());
+        ((sptr<PhotoOutput>&)photoOutput)->SetCallback(std::make_shared<AppCallback>());
         intResult = session_->AddOutput(photoOutput);
     } else {
         videoOutput = CreateVideoOutput();
         ASSERT_NE(videoOutput, nullptr);
 
         // Register video callback
-        ((sptr<VideoOutput> &)videoOutput)->SetCallback(std::make_shared<AppVideoCallback>());
+        ((sptr<VideoOutput>&)videoOutput)->SetCallback(std::make_shared<AppVideoCallback>());
         intResult = session_->AddOutput(videoOutput);
     }
 
@@ -520,7 +517,7 @@ void CameraFrameworkModuleTest::TestCallbacks(sptr<CameraDevice> &cameraInfo, bo
     ASSERT_NE(previewOutput, nullptr);
 
     // Register preview callback
-    ((sptr<PreviewOutput> &)previewOutput)->SetCallback(std::make_shared<AppCallback>());
+    ((sptr<PreviewOutput>&)previewOutput)->SetCallback(std::make_shared<AppCallback>());
     intResult = session_->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
 
@@ -542,7 +539,7 @@ void CameraFrameworkModuleTest::TestCallbacks(sptr<CameraDevice> &cameraInfo, bo
         /* In case of wagner device, frame shutter callback not working,
         hence removed. Once supported by hdi, the same needs to be
         enabled */
-        ((sptr<PhotoOutput> &)photoOutput)->Release();
+        ((sptr<PhotoOutput>&)photoOutput)->Release();
     }
 
     if (videoOutput != nullptr) {
@@ -553,15 +550,15 @@ void CameraFrameworkModuleTest::TestCallbacks(sptr<CameraDevice> &cameraInfo, bo
         EXPECT_EQ(g_videoEvents[static_cast<int>(CAM_VIDEO_EVENTS::CAM_VIDEO_FRAME_START)], 1);
         EXPECT_EQ(g_videoEvents[static_cast<int>(CAM_VIDEO_EVENTS::CAM_VIDEO_FRAME_END)], 1);
 
-        ((sptr<VideoOutput> &)videoOutput)->Release();
+        ((sptr<VideoOutput>&)videoOutput)->Release();
     }
 
-    ((sptr<PreviewOutput> &)previewOutput)->Release();
+    ((sptr<PreviewOutput>&)previewOutput)->Release();
 }
 
 bool CameraFrameworkModuleTest::IsSupportNow()
 {
-    const char *deviveTypeString = GetDeviceType();
+    const char* deviveTypeString = GetDeviceType();
     std::string deviveType = std::string(deviveTypeString);
     if (deviveType.compare("default") == 0 ||
         (cameras_[0] != nullptr && cameras_[0]->GetConnectionType() == CAMERA_CONNECTION_USB_PLUGIN)) {
@@ -610,7 +607,7 @@ void CameraFrameworkModuleTest::SetUp()
     SetUpInit();
     // set native token
     uint64_t tokenId;
-    const char *perms[2];
+    const char* perms[2];
     perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
     perms[1] = "ohos.permission.CAMERA";
     NativeTokenInfoParams infoInstance = {
@@ -642,7 +639,7 @@ void CameraFrameworkModuleTest::SetUp()
 
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     std::vector<sptr<CameraDevice>> cameraObjList = camManagerObj->GetSupportedCameras();
-    sptr<CameraOutputCapability> outputcapability =  camManagerObj->GetSupportedOutputCapability(cameraObjList[0]);
+    sptr<CameraOutputCapability> outputcapability = camManagerObj->GetSupportedOutputCapability(cameraObjList[0]);
     previewProfiles = outputcapability->GetPreviewProfiles();
 
     for (auto i : previewProfiles) {
@@ -651,13 +648,12 @@ void CameraFrameworkModuleTest::SetUp()
     }
     ASSERT_TRUE(!previewFormats_.empty());
     ASSERT_TRUE(!previewSizes_.empty());
-    if (std::find(previewFormats_.begin(), previewFormats_.end(), CAMERA_FORMAT_YUV_420_SP)
-        != previewFormats_.end()) {
+    if (std::find(previewFormats_.begin(), previewFormats_.end(), CAMERA_FORMAT_YUV_420_SP) != previewFormats_.end()) {
         previewFormat_ = CAMERA_FORMAT_YUV_420_SP;
     } else {
         previewFormat_ = previewFormats_[0];
     }
-    photoProfiles =  outputcapability->GetPhotoProfiles();
+    photoProfiles = outputcapability->GetPhotoProfiles();
 
     for (auto i : photoProfiles) {
         photoFormats_.push_back(i.GetCameraFormat());
@@ -676,8 +672,7 @@ void CameraFrameworkModuleTest::SetUp()
     ASSERT_TRUE(!videoFormats_.empty());
     ASSERT_TRUE(!videoSizes_.empty());
     ASSERT_TRUE(!videoFrameRates_.empty());
-    if (std::find(videoFormats_.begin(), videoFormats_.end(), CAMERA_FORMAT_YUV_420_SP)
-        != videoFormats_.end()) {
+    if (std::find(videoFormats_.begin(), videoFormats_.end(), CAMERA_FORMAT_YUV_420_SP) != videoFormats_.end()) {
         videoFormat_ = CAMERA_FORMAT_YUV_420_SP;
     } else {
         videoFormat_ = videoFormats_[0];
@@ -692,7 +687,7 @@ void CameraFrameworkModuleTest::SetUp()
     videoWidth_ = size.width;
     videoHeight_ = size.height;
 
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input_;
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     camInput->Open();
 
     session_ = manager_->CreateCaptureSession();
@@ -705,7 +700,7 @@ void CameraFrameworkModuleTest::TearDown()
         session_->Release();
     }
     if (input_) {
-        sptr<CameraInput> camInput = (sptr<CameraInput> &)input_;
+        sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
         camInput->Close();
         input_->Release();
     }
@@ -745,7 +740,7 @@ HWTEST_F(CameraFrameworkModuleTest, Camera_fwInfoManager_moduletest_001, TestSiz
 HWTEST_F(CameraFrameworkModuleTest, Camera_fwInfoManager_moduletest_002, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = manager_->GetSupportedCameras();
-    auto judgeDeviceType = [&cameras] () -> bool {
+    auto judgeDeviceType = [&cameras]() -> bool {
         bool isOk = false;
         for (int i = 0; i < cameras.size(); i++) {
             uint16_t deviceType = cameras[i]->GetDeviceType();
@@ -786,7 +781,7 @@ HWTEST_F(CameraFrameworkModuleTest, Camera_ResultCallback_moduletest, TestSize.L
 
     // Register error callback
     std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input_;
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     camInput->SetResultCallback(callback);
     EXPECT_EQ(g_camInputOnError, false);
 
@@ -806,24 +801,24 @@ HWTEST_F(CameraFrameworkModuleTest, Camera_ResultCallback_moduletest, TestSize.L
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    intResult = ((sptr<PreviewOutput>&)previewOutput)->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<VideoOutput> &)videoOutput)->Start();
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
     EXPECT_NE(g_metaResult, nullptr);
 
-    intResult = ((sptr<VideoOutput> &)videoOutput)->Stop();
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Stop();
     EXPECT_EQ(intResult, 0);
 
     TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
 
     sleep(WAIT_TIME_BEFORE_STOP);
-    ((sptr<PreviewOutput> &)previewOutput)->Stop();
+    ((sptr<PreviewOutput>&)previewOutput)->Stop();
     session_->Stop();
 }
 
@@ -852,11 +847,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_001, TestSize.Le
     intResult = session_->CommitConfig();
     EXPECT_EQ(intResult, 0);
 
-    intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture();
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
-    ((sptr<PhotoOutput> &)photoOutput)->Release();
+    ((sptr<PhotoOutput>&)photoOutput)->Release();
 }
 /*
  * Feature: Framework
@@ -890,15 +885,15 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_002, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    intResult = ((sptr<PreviewOutput>&)previewOutput)->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture();
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
-    ((sptr<PreviewOutput> &)previewOutput)->Stop();
+    ((sptr<PreviewOutput>&)previewOutput)->Stop();
     session_->Stop();
 }
 
@@ -934,23 +929,23 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_003, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    intResult = ((sptr<PreviewOutput>&)previewOutput)->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<VideoOutput> &)videoOutput)->Start();
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<VideoOutput> &)videoOutput)->Stop();
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Stop();
     EXPECT_EQ(intResult, 0);
 
     TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
 
     sleep(WAIT_TIME_BEFORE_STOP);
-    ((sptr<PreviewOutput> &)previewOutput)->Stop();
+    ((sptr<PreviewOutput>&)previewOutput)->Stop();
     session_->Stop();
 }
 
@@ -1006,12 +1001,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_006, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    intResult = ((sptr<PreviewOutput>&)previewOutput)->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
 
-    ((sptr<PreviewOutput> &)previewOutput)->Stop();
+    ((sptr<PreviewOutput>&)previewOutput)->Stop();
     session_->Stop();
 }
 
@@ -1244,15 +1239,15 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_023, TestSize.Le
     EXPECT_NE(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    intResult = ((sptr<PreviewOutput>&)previewOutput)->Start();
     EXPECT_NE(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture();
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
     EXPECT_NE(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
-    ((sptr<PreviewOutput> &)previewOutput)->Stop();
+    ((sptr<PreviewOutput>&)previewOutput)->Stop();
     session_->Stop();
 }
 
@@ -1300,19 +1295,19 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_024, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<PhotoOutput> &)photoOutput1)->Capture();
+    intResult = ((sptr<PhotoOutput>&)photoOutput1)->Capture();
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
-    intResult = ((sptr<PhotoOutput> &)photoOutput2)->Capture();
+    intResult = ((sptr<PhotoOutput>&)photoOutput2)->Capture();
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
-    ((sptr<PreviewOutput> &)previewOutput)->Stop();
+    ((sptr<PreviewOutput>&)previewOutput)->Stop();
     session_->Stop();
 
-    ((sptr<PhotoOutput> &)photoOutput1)->Release();
-    ((sptr<PhotoOutput> &)photoOutput2)->Release();
+    ((sptr<PhotoOutput>&)photoOutput1)->Release();
+    ((sptr<PhotoOutput>&)photoOutput2)->Release();
 }
 
 /*
@@ -1347,17 +1342,17 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_025, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<PreviewOutput> &)previewOutput1)->Start();
+    intResult = ((sptr<PreviewOutput>&)previewOutput1)->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<PreviewOutput> &)previewOutput2)->Start();
+    intResult = ((sptr<PreviewOutput>&)previewOutput2)->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
 
-    ((sptr<PhotoOutput> &)previewOutput1)->Release();
-    ((sptr<PhotoOutput> &)previewOutput2)->Release();
+    ((sptr<PhotoOutput>&)previewOutput1)->Release();
+    ((sptr<PhotoOutput>&)previewOutput2)->Release();
 }
 
 /*
@@ -1403,27 +1398,27 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_026, TestSize.Le
     intResult = session_->Start();
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<VideoOutput> &)videoOutput1)->Start();
+    intResult = ((sptr<VideoOutput>&)videoOutput1)->Start();
     EXPECT_EQ(intResult, 0);
 
-    intResult = ((sptr<VideoOutput> &)videoOutput2)->Start();
+    intResult = ((sptr<VideoOutput>&)videoOutput2)->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<VideoOutput> &)videoOutput1)->Stop();
+    intResult = ((sptr<VideoOutput>&)videoOutput1)->Stop();
     EXPECT_EQ(intResult, 0);
 
-    intResult = ((sptr<VideoOutput> &)videoOutput2)->Stop();
+    intResult = ((sptr<VideoOutput>&)videoOutput2)->Stop();
     EXPECT_EQ(intResult, 0);
 
     TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
 
-    ((sptr<PreviewOutput> &)previewOutput)->Stop();
+    ((sptr<PreviewOutput>&)previewOutput)->Stop();
     session_->Stop();
 
-    ((sptr<PhotoOutput> &)videoOutput1)->Release();
-    ((sptr<PhotoOutput> &)videoOutput2)->Release();
+    ((sptr<PhotoOutput>&)videoOutput1)->Release();
+    ((sptr<PhotoOutput>&)videoOutput2)->Release();
 }
 
 /*
@@ -1452,22 +1447,22 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_027, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    intResult = ((sptr<PreviewOutput>&)previewOutput)->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
 
-    ((sptr<PreviewOutput> &)previewOutput)->Stop();
+    ((sptr<PreviewOutput>&)previewOutput)->Stop();
 
     sleep(WAIT_TIME_AFTER_START);
 
     sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    intResult = ((sptr<PreviewOutput>&)previewOutput)->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
 
-    ((sptr<PreviewOutput> &)previewOutput)->Stop();
+    ((sptr<PreviewOutput>&)previewOutput)->Stop();
 }
 
 /*
@@ -1508,29 +1503,29 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_028, TestSize.Le
 
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<VideoOutput> &)videoOutput)->Start();
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<VideoOutput> &)videoOutput)->Stop();
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Stop();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<VideoOutput> &)videoOutput)->Start();
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<VideoOutput> &)videoOutput)->Stop();
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Stop();
     EXPECT_EQ(intResult, 0);
 
     TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
 
     sleep(WAIT_TIME_BEFORE_STOP);
 
-    ((sptr<PreviewOutput> &)previewOutput)->Stop();
+    ((sptr<PreviewOutput>&)previewOutput)->Stop();
     session_->Stop();
 }
 
@@ -1634,7 +1629,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_030, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture();
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
@@ -1743,12 +1738,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_032, TestSize.Le
 
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<VideoOutput> &)videoOutput)->Start();
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<VideoOutput> &)videoOutput)->Stop();
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Stop();
     EXPECT_EQ(intResult, 0);
 
     TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
@@ -1838,7 +1833,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_035, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture(photoSetting);
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture(photoSetting);
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
@@ -1888,7 +1883,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_036, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture(photoSetting);
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture(photoSetting);
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
@@ -1938,7 +1933,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_037, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture(photoSetting);
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture(photoSetting);
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
@@ -1987,15 +1982,15 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_038, TestSize.Le
 
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<VideoOutput> &)videoOutput)->Start();
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture();
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
-    intResult = ((sptr<VideoOutput> &)videoOutput)->Stop();
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Stop();
     EXPECT_EQ(intResult, 0);
 
     TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
@@ -2053,15 +2048,15 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_039, TestSize.Le
 
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<VideoOutput> &)videoOutput)->Start();
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture(photoSetting);
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture(photoSetting);
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
-    intResult = ((sptr<VideoOutput> &)videoOutput)->Stop();
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Stop();
     EXPECT_EQ(intResult, 0);
 
     TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
@@ -2096,7 +2091,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_040, TestSize.Le
     sptr<CaptureInput> input = manager_->CreateCameraInput(cameras_[1]);
     ASSERT_NE(input, nullptr);
 
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
     camInput->Open();
 
     intResult = session_->AddInput(input);
@@ -2110,7 +2105,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_040, TestSize.Le
     intResult = session_->AddOutput(photoOutput);
     EXPECT_EQ(intResult, 0);
 
-    if (!(((sptr<PhotoOutput> &)photoOutput)->IsMirrorSupported())) {
+    if (!(((sptr<PhotoOutput>&)photoOutput)->IsMirrorSupported())) {
         return;
     }
 
@@ -2134,15 +2129,15 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_040, TestSize.Le
 
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<VideoOutput> &)videoOutput)->Start();
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture(photoSetting);
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture(photoSetting);
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
-    intResult = ((sptr<VideoOutput> &)videoOutput)->Stop();
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Stop();
     EXPECT_EQ(intResult, 0);
 
     TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
@@ -2200,12 +2195,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_042, TestSize.Le
 
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<VideoOutput> &)videoOutput)->Start();
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<VideoOutput> &)videoOutput)->Stop();
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Stop();
     EXPECT_EQ(intResult, 0);
 
     TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
@@ -2243,13 +2238,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_043, TestSize.Le
     intResult = session_->AddOutput(metadatOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput> &)metadatOutput;
+    sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadatOutput;
     std::vector<MetadataObjectType> metadataObjectTypes = metaOutput->GetSupportedMetadataObjectTypes();
     if (metadataObjectTypes.size() == 0) {
         return;
     }
 
-    metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> {MetadataObjectType::FACE});
+    metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> { MetadataObjectType::FACE });
 
     std::shared_ptr<MetadataObjectCallback> metadataObjectCallback = std::make_shared<AppMetadataCallback>();
     metaOutput->SetCallback(metadataObjectCallback);
@@ -2297,10 +2292,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_045, TestSize.Le
     sptr<CameraOutputCapability> modeAbility = modeManagerObj->GetSupportedOutputCapability(cameras_[0], modes[3]);
     ASSERT_NE(modeAbility, nullptr);
 
-
     sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(modes[3]);
     ASSERT_NE(captureSession, nullptr);
-    sptr<PortraitSession> portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
+    sptr<PortraitSession> portraitSession = static_cast<PortraitSession*>(captureSession.GetRefPtr());
     ASSERT_NE(portraitSession, nullptr);
 
     int32_t intResult = portraitSession->BeginConfig();
@@ -2326,7 +2320,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_045, TestSize.Le
 
     portraitSession->LockForControl();
 
-    std::vector<PortraitEffect> effects= portraitSession->GetSupportedPortraitEffects();
+    std::vector<PortraitEffect> effects = portraitSession->GetSupportedPortraitEffects();
     if (!effects.empty()) {
         portraitSession->SetPortraitEffect(effects[0]);
     }
@@ -2339,15 +2333,15 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_045, TestSize.Le
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    intResult = ((sptr<PreviewOutput>&)previewOutput)->Start();
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture();
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
-    ((sptr<PreviewOutput> &)previewOutput)->Stop();
+    ((sptr<PreviewOutput>&)previewOutput)->Stop();
     portraitSession->Stop();
 }
 
@@ -2372,10 +2366,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_046, TestSize.Le
     sptr<CameraOutputCapability> modeAbility = modeManagerObj->GetSupportedOutputCapability(cameras_[0], modes[3]);
     ASSERT_NE(modeAbility, nullptr);
 
-
     sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(modes[3]);
     ASSERT_NE(captureSession, nullptr);
-    sptr<PortraitSession> portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
+    sptr<PortraitSession> portraitSession = static_cast<PortraitSession*>(captureSession.GetRefPtr());
     ASSERT_NE(portraitSession, nullptr);
 
     int32_t intResult = portraitSession->BeginConfig();
@@ -2401,7 +2394,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_046, TestSize.Le
 
     portraitSession->LockForControl();
 
-    std::vector<FilterType> filterLists= portraitSession->GetSupportedFilters();
+    std::vector<FilterType> filterLists = portraitSession->GetSupportedFilters();
     if (!filterLists.empty()) {
         portraitSession->SetFilter(filterLists[0]);
     }
@@ -2414,15 +2407,15 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_046, TestSize.Le
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    intResult = ((sptr<PreviewOutput>&)previewOutput)->Start();
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture();
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
-    ((sptr<PreviewOutput> &)previewOutput)->Stop();
+    ((sptr<PreviewOutput>&)previewOutput)->Stop();
     portraitSession->Stop();
 }
 
@@ -2447,10 +2440,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_047, TestSize.Le
     sptr<CameraOutputCapability> modeAbility = modeManagerObj->GetSupportedOutputCapability(cameras_[0], modes[3]);
     ASSERT_NE(modeAbility, nullptr);
 
-
     sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(modes[3]);
     ASSERT_NE(captureSession, nullptr);
-    sptr<PortraitSession> portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
+    sptr<PortraitSession> portraitSession = static_cast<PortraitSession*>(captureSession.GetRefPtr());
     ASSERT_NE(portraitSession, nullptr);
 
     int32_t intResult = portraitSession->BeginConfig();
@@ -2476,10 +2468,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_047, TestSize.Le
 
     portraitSession->LockForControl();
 
-    std::vector<BeautyType> beautyLists= portraitSession->GetSupportedBeautyTypes();
+    std::vector<BeautyType> beautyLists = portraitSession->GetSupportedBeautyTypes();
     EXPECT_NE(beautyLists.size(), 0);
 
-    std::vector<int32_t> rangeLists= portraitSession->GetSupportedBeautyRange(beautyLists[3]);
+    std::vector<int32_t> rangeLists = portraitSession->GetSupportedBeautyRange(beautyLists[3]);
     EXPECT_NE(rangeLists.size(), 0);
 
     if (!beautyLists.empty()) {
@@ -2494,15 +2486,15 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_047, TestSize.Le
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    intResult = ((sptr<PreviewOutput>&)previewOutput)->Start();
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture();
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
-    ((sptr<PreviewOutput> &)previewOutput)->Stop();
+    ((sptr<PreviewOutput>&)previewOutput)->Stop();
     portraitSession->Stop();
 }
 
@@ -2527,10 +2519,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_048, TestSize.Le
     sptr<CameraOutputCapability> modeAbility = modeManagerObj->GetSupportedOutputCapability(cameras_[0], modes[3]);
     ASSERT_NE(modeAbility, nullptr);
 
-
     sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(modes[3]);
     ASSERT_NE(captureSession, nullptr);
-    sptr<PortraitSession> portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
+    sptr<PortraitSession> portraitSession = static_cast<PortraitSession*>(captureSession.GetRefPtr());
     ASSERT_NE(portraitSession, nullptr);
 
     int32_t intResult = portraitSession->BeginConfig();
@@ -2558,15 +2549,15 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_048, TestSize.Le
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<PreviewOutput> &)previewOutput)->Start();
+    intResult = ((sptr<PreviewOutput>&)previewOutput)->Start();
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = ((sptr<PhotoOutput> &)photoOutput)->Capture();
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
-    ((sptr<PreviewOutput> &)previewOutput)->Stop();
+    ((sptr<PreviewOutput>&)previewOutput)->Stop();
     portraitSession->Stop();
 }
 
@@ -2606,7 +2597,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_001, TestSize.L
     int32_t intResult = camSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureInput> input = (sptr<CaptureInput> &)input_;
+    sptr<CaptureInput> input = (sptr<CaptureInput>&)input_;
     ASSERT_NE(input, nullptr);
 
     intResult = camSession->AddInput(input);
@@ -2690,7 +2681,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_002, TestSize.L
     int32_t intResult = camSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureInput> input = (sptr<CaptureInput> &)input_;
+    sptr<CaptureInput> input = (sptr<CaptureInput>&)input_;
     ASSERT_NE(input, nullptr);
 
     intResult = camSession->AddInput(input);
@@ -2761,7 +2752,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_003, TestSize.L
     int32_t intResult = camSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureInput> input = (sptr<CaptureInput> &)input_;
+    sptr<CaptureInput> input = (sptr<CaptureInput>&)input_;
     ASSERT_NE(input, nullptr);
 
     intResult = camSession->AddInput(input);
@@ -2833,7 +2824,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_004, TestSize.L
     int32_t intResult = camSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureInput> input = (sptr<CaptureInput> &)input_;
+    sptr<CaptureInput> input = (sptr<CaptureInput>&)input_;
     ASSERT_NE(input, nullptr);
 
     intResult = camSession->AddInput(input);
@@ -2916,7 +2907,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_005, TestSize.L
     int32_t intResult = camSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureInput> input = (sptr<CaptureInput> &)input_;
+    sptr<CaptureInput> input = (sptr<CaptureInput>&)input_;
     ASSERT_NE(input, nullptr);
 
     intResult = camSession->AddInput(input);
@@ -2993,7 +2984,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_006, TestSize.L
     int32_t intResult = camSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureInput> input = (sptr<CaptureInput> &)input_;
+    sptr<CaptureInput> input = (sptr<CaptureInput>&)input_;
     intResult = camSession->AddInput(input);
     EXPECT_EQ(intResult, 0);
 
@@ -3011,7 +3002,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_006, TestSize.L
 
     camSession->LockForControl();
 
-    Point point = {0, 0};
+    Point point = { 0, 0 };
     setFocusPoint = camSession->SetFocusPoint(point);
     EXPECT_EQ(setFocusPoint, 0);
 
@@ -3086,7 +3077,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_007, TestSize.L
     int32_t intResult = camSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureInput> input = (sptr<CaptureInput> &)input_;
+    sptr<CaptureInput> input = (sptr<CaptureInput>&)input_;
     ASSERT_NE(input, nullptr);
 
     intResult = camSession->AddInput(input);
@@ -3140,7 +3131,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_008, TestSize.L
     int32_t intResult = camSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureInput> input = (sptr<CaptureInput> &)input_;
+    sptr<CaptureInput> input = (sptr<CaptureInput>&)input_;
     ASSERT_NE(input, nullptr);
 
     intResult = camSession->AddInput(input);
@@ -3201,7 +3192,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_009, TestSize.L
     int32_t intResult = camSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureInput> input = (sptr<CaptureInput> &)input_;
+    sptr<CaptureInput> input = (sptr<CaptureInput>&)input_;
     ASSERT_NE(input, nullptr);
 
     intResult = camSession->AddInput(input);
@@ -3290,9 +3281,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_011, TestSize.L
     intResult = session_->AddOutput(metadatOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput> &)metadatOutput;
+    sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadatOutput;
 
-    sptr<MetadataObjectListener> metaObjListener = new(std::nothrow) MetadataObjectListener(metaOutput);
+    sptr<MetadataObjectListener> metaObjListener = new (std::nothrow) MetadataObjectListener(metaOutput);
     ASSERT_NE(metaObjListener, nullptr);
 
     metaObjListener->OnBufferAvailable();
@@ -3300,7 +3291,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_011, TestSize.L
     std::vector<MetadataObjectType> metadataObjectTypes = metaOutput->GetSupportedMetadataObjectTypes();
 
     metaOutput->SetCapturingMetadataObjectTypes(metadataObjectTypes);
-    metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> {MetadataObjectType::FACE});
+    metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> { MetadataObjectType::FACE });
 
     metadataObjectTypes = metaOutput->GetSupportedMetadataObjectTypes();
 
@@ -3350,11 +3341,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_012, TestSize.L
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
 
-    sptr<CaptureSessionCallback> capSessionCallback = new(std::nothrow) CaptureSessionCallback();
+    sptr<CaptureSessionCallback> capSessionCallback = new (std::nothrow) CaptureSessionCallback();
     int32_t onError = capSessionCallback->OnError(CAMERA_DEVICE_PREEMPTED);
     EXPECT_EQ(onError, 0);
 
-    capSessionCallback = new(std::nothrow) CaptureSessionCallback(camSession);
+    capSessionCallback = new (std::nothrow) CaptureSessionCallback(camSession);
     onError = capSessionCallback->OnError(CAMERA_DEVICE_PREEMPTED);
     EXPECT_EQ(onError, 0);
 
@@ -3363,7 +3354,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_012, TestSize.L
 
     callback = std::make_shared<AppSessionCallback>();
     camSession->SetCallback(callback);
-    capSessionCallback = new(std::nothrow) CaptureSessionCallback(camSession);
+    capSessionCallback = new (std::nothrow) CaptureSessionCallback(camSession);
     onError = capSessionCallback->OnError(CAMERA_DEVICE_PREEMPTED);
     EXPECT_EQ(onError, 0);
 }
@@ -3388,7 +3379,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_013, TestSize.L
     intResult = camSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
-    input = (sptr<CaptureInput> &)input_;
+    input = (sptr<CaptureInput>&)input_;
     ASSERT_NE(input, nullptr);
 
     intResult = camSession->RemoveInput(input);
@@ -3477,14 +3468,14 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_016, TestSize.L
     intResult = session_->AddOutput(metadatOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput> &)metadatOutput;
+    sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadatOutput;
 
-    sptr<MetadataObjectListener> metaObjListener = new(std::nothrow) MetadataObjectListener(metaOutput);
+    sptr<MetadataObjectListener> metaObjListener = new (std::nothrow) MetadataObjectListener(metaOutput);
     ASSERT_NE(metaObjListener, nullptr);
 
     metaObjListener->OnBufferAvailable();
 
-    metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> {MetadataObjectType::FACE});
+    metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> { MetadataObjectType::FACE });
 
     std::vector<MetadataObjectType> metadataObjectTypes = metaOutput->GetSupportedMetadataObjectTypes();
 
@@ -3494,7 +3485,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_016, TestSize.L
     intResult = metaOutput->Release();
     EXPECT_EQ(intResult, 0);
 
-    sptr<MetadataOutput> metaOutput_2 = (sptr<MetadataOutput> &)metadatOutput_2;
+    sptr<MetadataOutput> metaOutput_2 = (sptr<MetadataOutput>&)metadatOutput_2;
 
     delete metaOutput_2;
 
@@ -3511,7 +3502,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_016, TestSize.L
 
     sptr<MetadataOutput> metaOutput_3 = nullptr;
 
-    sptr<MetadataObjectListener> metaObjListener_2 = new(std::nothrow) MetadataObjectListener(metaOutput_3);
+    sptr<MetadataObjectListener> metaObjListener_2 = new (std::nothrow) MetadataObjectListener(metaOutput_3);
     ASSERT_NE(metaObjListener_2, nullptr);
 
     metaObjListener_2->OnBufferAvailable();
@@ -3552,7 +3543,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_017, TestSize.L
     int32_t intResult = camSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureInput> input = (sptr<CaptureInput> &)input_;
+    sptr<CaptureInput> input = (sptr<CaptureInput>&)input_;
     ASSERT_NE(input, nullptr);
 
     intResult = camSession->AddInput(input);
@@ -3570,7 +3561,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_017, TestSize.L
     intResult = camSession->AddOutput(photoOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput> &)photoOutput;
+    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput>&)photoOutput;
 
     intResult = photoOutput_1->Capture(photoSetting);
     EXPECT_EQ(intResult, 7400104);
@@ -3633,7 +3624,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_018, TestSize.L
     intResult = camSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureInput> input = (sptr<CaptureInput> &)input_;
+    sptr<CaptureInput> input = (sptr<CaptureInput>&)input_;
     ASSERT_NE(input, nullptr);
 
     intResult = camSession->AddInput(input);
@@ -3651,7 +3642,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_018, TestSize.L
     intResult = camSession->AddOutput(photoOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput> &)photoOutput;
+    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput>&)photoOutput;
 
     intResult = camSession->CommitConfig();
     EXPECT_EQ(intResult, 0);
@@ -3663,7 +3654,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_018, TestSize.L
     photoOutput_1->SetCallback(callback);
     photoOutput_1->SetCallback(callback);
 
-    sptr<HStreamCaptureCallbackImpl> captureCallback_2 = new(std::nothrow) HStreamCaptureCallbackImpl(photoOutput_1);
+    sptr<HStreamCaptureCallbackImpl> captureCallback_2 = new (std::nothrow) HStreamCaptureCallbackImpl(photoOutput_1);
 
     intResult = captureCallback_2->OnCaptureEnded(captureId, frameCount);
     EXPECT_EQ(intResult, 0);
@@ -3704,7 +3695,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_019, TestSize.L
     intResult = camSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureInput> input = (sptr<CaptureInput> &)input_;
+    sptr<CaptureInput> input = (sptr<CaptureInput>&)input_;
     ASSERT_NE(input, nullptr);
 
     intResult = camSession->AddInput(input);
@@ -3716,7 +3707,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_019, TestSize.L
     intResult = camSession->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<PreviewOutput> previewOutput_1 = (sptr<PreviewOutput> &)previewOutput;
+    sptr<PreviewOutput> previewOutput_1 = (sptr<PreviewOutput>&)previewOutput;
 
     intResult = camSession->CommitConfig();
     EXPECT_EQ(intResult, 0);
@@ -3728,7 +3719,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_019, TestSize.L
     previewOutput_1->SetCallback(callback);
     previewOutput_1->SetCallback(callback);
 
-    sptr<PreviewOutputCallbackImpl> repeatCallback_2 = new(std::nothrow) PreviewOutputCallbackImpl(previewOutput_1);
+    sptr<PreviewOutputCallbackImpl> repeatCallback_2 = new (std::nothrow) PreviewOutputCallbackImpl(previewOutput_1);
 
     intResult = repeatCallback_2->OnFrameEnded(frameCount);
     EXPECT_EQ(intResult, 0);
@@ -3753,7 +3744,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_020, TestSize.L
     int32_t intResult = camSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureInput> input = (sptr<CaptureInput> &)input_;
+    sptr<CaptureInput> input = (sptr<CaptureInput>&)input_;
     ASSERT_NE(input, nullptr);
 
     intResult = camSession->AddInput(input);
@@ -3765,7 +3756,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_020, TestSize.L
     intResult = camSession->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<PreviewOutput> previewOutput_1 = (sptr<PreviewOutput> &)previewOutput;
+    sptr<PreviewOutput> previewOutput_1 = (sptr<PreviewOutput>&)previewOutput;
 
     EXPECT_EQ(previewOutput_1->Start(), 7400103);
 
@@ -3810,7 +3801,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_021, TestSize.L
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureInput> input = (sptr<CaptureInput> &)input_;
+    sptr<CaptureInput> input = (sptr<CaptureInput>&)input_;
     ASSERT_NE(input, nullptr);
 
     intResult = session_->AddInput(input);
@@ -3828,7 +3819,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_021, TestSize.L
     intResult = session_->AddOutput(videoOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<VideoOutput> videoOutput_1 = (sptr<VideoOutput> &)videoOutput;
+    sptr<VideoOutput> videoOutput_1 = (sptr<VideoOutput>&)videoOutput;
 
     std::shared_ptr<AppVideoCallback> callback = std::make_shared<AppVideoCallback>();
 
@@ -3911,7 +3902,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_022, TestSize.L
     intResult = camSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureInput> input = (sptr<CaptureInput> &)input_;
+    sptr<CaptureInput> input = (sptr<CaptureInput>&)input_;
     ASSERT_NE(input, nullptr);
 
     intResult = camSession->AddInput(input);
@@ -3929,7 +3920,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_022, TestSize.L
     intResult = camSession->AddOutput(videoOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<VideoOutput> videoOutput_1 = (sptr<VideoOutput> &)videoOutput;
+    sptr<VideoOutput> videoOutput_1 = (sptr<VideoOutput>&)videoOutput;
 
     intResult = camSession->CommitConfig();
     EXPECT_EQ(intResult, 0);
@@ -3941,7 +3932,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_022, TestSize.L
     videoOutput_1->SetCallback(callback);
     videoOutput_1->SetCallback(callback);
 
-    sptr<VideoOutputCallbackImpl> repeatCallback_2 = new(std::nothrow) VideoOutputCallbackImpl(videoOutput_1);
+    sptr<VideoOutputCallbackImpl> repeatCallback_2 = new (std::nothrow) VideoOutputCallbackImpl(videoOutput_1);
 
     intResult = repeatCallback->OnFrameStarted();
     EXPECT_EQ(intResult, 0);
@@ -3963,7 +3954,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_022, TestSize.L
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_023, TestSize.Level0)
 {
-    sptr<CameraInput> input_1 = (sptr<CameraInput> &)input_;
+    sptr<CameraInput> input_1 = (sptr<CameraInput>&)input_;
     sptr<ICameraDeviceService> deviceObj = input_1->GetCameraDevice();
     ASSERT_NE(deviceObj, nullptr);
 
@@ -4060,11 +4051,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_025, TestSize.L
     sptr<ICameraService> serviceProxy = iface_cast<ICameraService>(object);
     ASSERT_NE(serviceProxy, nullptr);
 
-    sptr<ICameraServiceCallback> callback = new(std::nothrow) CameraStatusServiceCallback(manager_);
+    sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(manager_);
     int32_t intResult = serviceProxy->SetCallback(callback);
     EXPECT_EQ(intResult, -1);
 
-    sptr<ICameraMuteServiceCallback> callback_2 = new(std::nothrow) CameraMuteServiceCallback(manager_);
+    sptr<ICameraMuteServiceCallback> callback_2 = new (std::nothrow) CameraMuteServiceCallback(manager_);
     serviceProxy->SetMuteCallback(callback_2);
     EXPECT_EQ(intResult, -1);
 
@@ -4131,8 +4122,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_026, TestSize.L
     intResult = deviceObj->Release();
     EXPECT_EQ(intResult, -1);
 
-    sptr<CameraInput> input = (sptr<CameraInput> &)input_;
-    sptr<ICameraDeviceServiceCallback> callback = new(std::nothrow) CameraDeviceServiceCallback(input);
+    sptr<CameraInput> input = (sptr<CameraInput>&)input_;
+    sptr<ICameraDeviceServiceCallback> callback = new (std::nothrow) CameraDeviceServiceCallback(input);
     ASSERT_NE(callback, nullptr);
 
     intResult = deviceObj->SetCallback(callback);
@@ -4209,7 +4200,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_028, TestSize.L
     int32_t intResult = captureSession->BeginConfig();
     EXPECT_EQ(intResult, -1);
 
-    sptr<CameraInput> input_1 = (sptr<CameraInput> &)input_;
+    sptr<CameraInput> input_1 = (sptr<CameraInput>&)input_;
     sptr<ICameraDeviceService> deviceObj = input_1->GetCameraDevice();
     ASSERT_NE(deviceObj, nullptr);
 
@@ -4229,7 +4220,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_028, TestSize.L
     intResult = captureSession->Release(pid);
     EXPECT_EQ(intResult, -1);
 
-    sptr<ICaptureSessionCallback> callback = new(std::nothrow) CaptureSessionCallback(session_);
+    sptr<ICaptureSessionCallback> callback = new (std::nothrow) CaptureSessionCallback(session_);
     ASSERT_NE(callback, nullptr);
 
     intResult = captureSession->SetCallback(callback);
@@ -4311,8 +4302,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_030, TestSize.L
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
     ASSERT_NE(photoOutput, nullptr);
 
-    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput> &)photoOutput;
-    sptr<IStreamCaptureCallback> callback = new(std::nothrow) HStreamCaptureCallbackImpl(photoOutput_1);
+    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput>&)photoOutput;
+    sptr<IStreamCaptureCallback> callback = new (std::nothrow) HStreamCaptureCallbackImpl(photoOutput_1);
     ASSERT_NE(callback, nullptr);
 
     intResult = capture->SetCallback(callback);
@@ -4380,8 +4371,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_032, TestSize.L
     sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
     ASSERT_NE(previewOutput, nullptr);
 
-    sptr<PreviewOutput> previewOutput_1 = (sptr<PreviewOutput> &)previewOutput;
-    callback = new(std::nothrow) PreviewOutputCallbackImpl(previewOutput_1);
+    sptr<PreviewOutput> previewOutput_1 = (sptr<PreviewOutput>&)previewOutput;
+    callback = new (std::nothrow) PreviewOutputCallbackImpl(previewOutput_1);
     ASSERT_NE(callback, nullptr);
 
     intResult = repeat->SetCallback(callback);
@@ -4410,7 +4401,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_033, TestSize.L
     int32_t intResult = camSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureInput> input = (sptr<CaptureInput> &)input_;
+    sptr<CaptureInput> input = (sptr<CaptureInput>&)input_;
     ASSERT_NE(input, nullptr);
 
     intResult = camSession->AddInput(input);
@@ -4428,14 +4419,14 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_033, TestSize.L
     intResult = camSession->AddOutput(photoOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput> &)photoOutput;
+    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput>&)photoOutput;
 
     intResult = camSession->CommitConfig();
     EXPECT_EQ(intResult, 0);
 
     sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
     sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, g_previewFd, previewSurface);
-    sptr<IBufferConsumerListener> listener_1 = (sptr<IBufferConsumerListener> &)listener;
+    sptr<IBufferConsumerListener> listener_1 = (sptr<IBufferConsumerListener>&)listener;
 
     photoOutput_1->SetThumbnailListener(listener_1);
 
@@ -4501,13 +4492,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_035, TestSize.L
 
     manager_->MuteCamera(cameraMuted);
 
-    sptr<CameraMuteServiceCallback> muteService = new(std::nothrow) CameraMuteServiceCallback();
+    sptr<CameraMuteServiceCallback> muteService = new (std::nothrow) CameraMuteServiceCallback();
     ASSERT_NE(muteService, nullptr);
 
     int32_t muteCameraState = muteService->OnCameraMute(cameraMuted);
     EXPECT_EQ(muteCameraState, 0);
 
-    muteService = new(std::nothrow) CameraMuteServiceCallback(manager_);
+    muteService = new (std::nothrow) CameraMuteServiceCallback(manager_);
     ASSERT_NE(muteService, nullptr);
 
     muteCameraState = muteService->OnCameraMute(cameraMuted);
@@ -4530,11 +4521,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_036, TestSize.L
     std::string cameraIdtest = "";
     FlashStatus status = FLASH_STATUS_OFF;
 
-    sptr<CameraStatusServiceCallback> camServiceCallback = new(std::nothrow) CameraStatusServiceCallback();
+    sptr<CameraStatusServiceCallback> camServiceCallback = new (std::nothrow) CameraStatusServiceCallback();
     int32_t cameraStatusChanged = camServiceCallback->OnFlashlightStatusChanged(cameraIdtest, status);
     EXPECT_EQ(cameraStatusChanged, 0);
 
-    sptr<CameraDeviceServiceCallback> camDeviceSvcCallback = new(std::nothrow) CameraDeviceServiceCallback();
+    sptr<CameraDeviceServiceCallback> camDeviceSvcCallback = new (std::nothrow) CameraDeviceServiceCallback();
     int32_t onError = camDeviceSvcCallback->OnError(CAMERA_DEVICE_PREEMPTED, 0);
     EXPECT_EQ(onError, 0);
 
@@ -4542,27 +4533,27 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_036, TestSize.L
     int32_t onResult = camDeviceSvcCallback->OnResult(0, result);
     EXPECT_EQ(onResult, 0);
 
-    sptr<CameraInput> input = (sptr<CameraInput> &)input_;
+    sptr<CameraInput> input = (sptr<CameraInput>&)input_;
     sptr<ICameraDeviceService> deviceObj = input->GetCameraDevice();
     ASSERT_NE(deviceObj, nullptr);
 
     sptr<CameraDevice> camdeviceObj = nullptr;
-    sptr<CameraInput> camInput_1 = new(std::nothrow) CameraInput(deviceObj, camdeviceObj);
+    sptr<CameraInput> camInput_1 = new (std::nothrow) CameraInput(deviceObj, camdeviceObj);
     ASSERT_NE(camInput_1, nullptr);
 
-    camDeviceSvcCallback = new(std::nothrow) CameraDeviceServiceCallback(camInput_1);
+    camDeviceSvcCallback = new (std::nothrow) CameraDeviceServiceCallback(camInput_1);
     onResult = camDeviceSvcCallback->OnResult(0, result);
     EXPECT_EQ(onResult, 0);
 
-    sptr<CameraInput> camInput_2 = new(std::nothrow) CameraInput(deviceObj, cameras_[0]);
-    camDeviceSvcCallback = new(std::nothrow) CameraDeviceServiceCallback(camInput_2);
+    sptr<CameraInput> camInput_2 = new (std::nothrow) CameraInput(deviceObj, cameras_[0]);
+    camDeviceSvcCallback = new (std::nothrow) CameraDeviceServiceCallback(camInput_2);
     onError = camDeviceSvcCallback->OnError(CAMERA_DEVICE_PREEMPTED, 0);
     EXPECT_EQ(onError, 0);
 
     std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
     camInput_2->SetErrorCallback(callback);
 
-    camDeviceSvcCallback = new(std::nothrow) CameraDeviceServiceCallback(camInput_2);
+    camDeviceSvcCallback = new (std::nothrow) CameraDeviceServiceCallback(camInput_2);
     onError = camDeviceSvcCallback->OnError(CAMERA_DEVICE_PREEMPTED, 0);
     EXPECT_EQ(onError, 0);
 
@@ -4609,7 +4600,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_038, TestSize.L
 {
     std::string cameraId = "";
     dmDeviceInfo deviceInfo = {};
-    sptr<CameraDevice> camdeviceObj = new(std::nothrow) CameraDevice(cameraId, g_metaResult, deviceInfo);
+    sptr<CameraDevice> camdeviceObj = new (std::nothrow) CameraDevice(cameraId, g_metaResult, deviceInfo);
     ASSERT_NE(camdeviceObj, nullptr);
 
     std::vector<float> zoomRatioRange = camdeviceObj->GetZoomRatioRange();
@@ -4630,7 +4621,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_038, TestSize.L
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_039, TestSize.Level0)
 {
     sptr<ICameraDeviceService> deviceObj = nullptr;
-    sptr<CaptureInput> camInput = new(std::nothrow) CameraInput(deviceObj, cameras_[0]);
+    sptr<CaptureInput> camInput = new (std::nothrow) CameraInput(deviceObj, cameras_[0]);
     ASSERT_NE(camInput, nullptr);
 
     int32_t intResult = session_->BeginConfig();
@@ -4821,15 +4812,15 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_042, TestSize.L
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_043, TestSize.Level0)
 {
     sptr<ICameraDeviceService> deviceObj_1 = nullptr;
-    sptr<CameraInput> camInput_1 =  new(std::nothrow) CameraInput(deviceObj_1, cameras_[0]);
+    sptr<CameraInput> camInput_1 = new (std::nothrow) CameraInput(deviceObj_1, cameras_[0]);
     ASSERT_NE(camInput_1, nullptr);
 
-    sptr<CameraInput> input = (sptr<CameraInput> &)input_;
+    sptr<CameraInput> input = (sptr<CameraInput>&)input_;
     sptr<ICameraDeviceService> deviceObj_2 = input->GetCameraDevice();
     ASSERT_NE(deviceObj_2, nullptr);
 
     sptr<CameraDevice> camdeviceObj = nullptr;
-    sptr<CameraInput> camInput_2 = new(std::nothrow) CameraInput(deviceObj_2, camdeviceObj);
+    sptr<CameraInput> camInput_2 = new (std::nothrow) CameraInput(deviceObj_2, camdeviceObj);
     ASSERT_NE(camInput_2, nullptr);
 
     int32_t intResult = camInput_1->Open();
@@ -4846,7 +4837,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_043, TestSize.L
     intResult = camInput_2->SetCameraSettings(getCameraSettings_2);
     EXPECT_EQ(intResult, 2);
 
-    sptr<CameraInput> camInput_3 = (sptr<CameraInput> &)input_;
+    sptr<CameraInput> camInput_3 = (sptr<CameraInput>&)input_;
     getCameraSettings_2 = camInput_3->GetCameraSettings();
     intResult = camInput_3->SetCameraSettings(getCameraSettings_2);
     EXPECT_EQ(intResult, 0);
@@ -4890,7 +4881,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_044, TestSize.L
         camSession->SetZoomRatio(zoomRatioRange[0]);
     }
 
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input_;
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     camInput->Close();
 
     intResult = camSession->UnlockForControl();
@@ -5159,9 +5150,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_048, TestSize.L
     videoOutput->Release();
     videoOutput->SetSession(camSession);
 
-    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput> &)photoOutput;
-    sptr<PreviewOutput> previewOutput_1 = (sptr<PreviewOutput> &)previewOutput;
-    sptr<VideoOutput> videoOutput_1 = (sptr<VideoOutput> &)videoOutput;
+    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput>&)photoOutput;
+    sptr<PreviewOutput> previewOutput_1 = (sptr<PreviewOutput>&)previewOutput;
+    sptr<VideoOutput> videoOutput_1 = (sptr<VideoOutput>&)videoOutput;
 
     std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
     photoOutput_1->SetCallback(callback);
@@ -5221,7 +5212,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_049, TestSize.L
     metadatOutput->Release();
     metadatOutput->SetSession(camSession);
 
-    sptr<MetadataOutput> metadatOutput_1 = (sptr<MetadataOutput> &)metadatOutput;
+    sptr<MetadataOutput> metadatOutput_1 = (sptr<MetadataOutput>&)metadatOutput;
 
     intResult = metadatOutput_1->Start();
     EXPECT_EQ(intResult, 7400201);
@@ -5266,7 +5257,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_050, TestSize.L
     ReleaseInput();
     photoOutput->SetSession(camSession);
 
-    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput> &)photoOutput;
+    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput>&)photoOutput;
 
     bool isMirrorSupported = photoOutput_1->IsMirrorSupported();
     EXPECT_EQ(isMirrorSupported, false);
@@ -5295,12 +5286,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_052, TestSize.L
 
     object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
 
-    sptr<CameraInput> input = (sptr<CameraInput> &)input_;
-    sptr<ICameraDeviceServiceCallback> callback = new(std::nothrow) CameraDeviceServiceCallback(input);
+    sptr<CameraInput> input = (sptr<CameraInput>&)input_;
+    sptr<ICameraDeviceServiceCallback> callback = new (std::nothrow) CameraDeviceServiceCallback(input);
     ASSERT_NE(callback, nullptr);
 
-    sptr<HCameraDeviceCallbackProxy> deviceCallback = (sptr<HCameraDeviceCallbackProxy> &)callback;
-    deviceCallback = new(std::nothrow) HCameraDeviceCallbackProxy(object);
+    sptr<HCameraDeviceCallbackProxy> deviceCallback = (sptr<HCameraDeviceCallbackProxy>&)callback;
+    deviceCallback = new (std::nothrow) HCameraDeviceCallbackProxy(object);
 
     uint64_t timestamp = 10;
     std::shared_ptr<OHOS::Camera::CameraMetadata> result = nullptr;
@@ -5321,7 +5312,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_058, TestSize.L
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     ASSERT_NE(camManagerObj, nullptr);
 
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input_;
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     std::string cameraId = camInput->GetCameraId();
 
     int32_t intResult = camManagerObj->SetPrelaunchConfig(cameraId);
@@ -5349,7 +5340,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_058, TestSize.L
     } else {
         EXPECT_EQ(isPreLaunchSupported, true);
     }
-
 
     intResult = camManagerObj->SetPrelaunchConfig(cameraId);
     EXPECT_EQ(intResult, 7400201);
@@ -5436,11 +5426,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_061, TestSize.L
 
     std::string cameraId = "";
     dmDeviceInfo deviceInfo = {};
-    sptr<CameraDevice> camdeviceObj_1 = new(std::nothrow) CameraDevice(cameraId, g_metaResult, deviceInfo);
+    sptr<CameraDevice> camdeviceObj_1 = new (std::nothrow) CameraDevice(cameraId, g_metaResult, deviceInfo);
     ASSERT_NE(camdeviceObj_1, nullptr);
 
     cameraId = cameras_[0]->GetID();
-    sptr<CameraDevice> camdeviceObj_2  = new(std::nothrow) CameraDevice(cameraId, g_metaResult, deviceInfo);
+    sptr<CameraDevice> camdeviceObj_2 = new (std::nothrow) CameraDevice(cameraId, g_metaResult, deviceInfo);
     ASSERT_NE(camdeviceObj_2, nullptr);
 
     sptr<CameraDevice> camdeviceObj_3 = nullptr;
@@ -5460,17 +5450,17 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_061, TestSize.L
     EXPECT_EQ(camInput, nullptr);
 
     sptr<ICameraDeviceService> deviceObj_1 = nullptr;
-    sptr<CameraInput> input_1 =  new(std::nothrow) CameraInput(deviceObj_1, cameras_[0]);
+    sptr<CameraInput> input_1 = new (std::nothrow) CameraInput(deviceObj_1, cameras_[0]);
     ASSERT_NE(input_1, nullptr);
 
-    sptr<CameraInput> input_2 = (sptr<CameraInput> &)input_;
+    sptr<CameraInput> input_2 = (sptr<CameraInput>&)input_;
     sptr<ICameraDeviceService> deviceObj_2 = input_2->GetCameraDevice();
     ASSERT_NE(deviceObj_2, nullptr);
 
-    input_2 = new(std::nothrow) CameraInput(deviceObj_2, camdeviceObj_3);
+    input_2 = new (std::nothrow) CameraInput(deviceObj_2, camdeviceObj_3);
     ASSERT_NE(input_2, nullptr);
 
-    input_2 = new(std::nothrow) CameraInput(deviceObj_1, cameras_[0]);
+    input_2 = new (std::nothrow) CameraInput(deviceObj_1, cameras_[0]);
     ASSERT_NE(input_2, nullptr);
 }
 
@@ -5537,7 +5527,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_064, TestSize.L
 
     EXPECT_EQ(session_->AddOutput(metadatOutput), 0);
 
-    sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput> &)metadatOutput;
+    sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadatOutput;
 
     EXPECT_EQ(session_->CommitConfig(), 0);
     EXPECT_EQ(session_->Start(), 0);
@@ -5552,14 +5542,14 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_064, TestSize.L
 
     session_->inputDevice_ = nullptr;
     std::vector<MetadataObjectType> metadataObjectTypes = metaOutput->GetSupportedMetadataObjectTypes();
-    metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> {MetadataObjectType::FACE});
+    metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> { MetadataObjectType::FACE });
 
     session_->Release();
 
-    metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> {MetadataObjectType::FACE});
+    metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> { MetadataObjectType::FACE });
 
     metaOutput->~MetadataOutput();
-    metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> {MetadataObjectType::FACE});
+    metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> { MetadataObjectType::FACE });
     EXPECT_EQ(metaOutput->Start(), 7400103);
 }
 
@@ -5587,7 +5577,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_065, TestSize.L
 
     EXPECT_EQ(session_->AddOutput(photoOutput), 0);
 
-    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput> &)photoOutput;
+    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput>&)photoOutput;
 
     EXPECT_EQ(photoOutput_1->Capture(), 7400104);
     EXPECT_EQ(photoOutput_1->CancelCapture(), 7400104);
@@ -5597,7 +5587,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_065, TestSize.L
 
     sleep(WAIT_TIME_AFTER_START);
 
-    EXPECT_EQ(((sptr<PhotoOutput> &)photoOutput)->Capture(), 0);
+    EXPECT_EQ(((sptr<PhotoOutput>&)photoOutput)->Capture(), 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
     session_->inputDevice_ = nullptr;
@@ -5633,7 +5623,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_066, TestSize.L
 
     EXPECT_EQ(session_->AddOutput(metadatOutput), 0);
 
-    sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput> &)metadatOutput;
+    sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadatOutput;
 
     EXPECT_EQ(session_->CommitConfig(), 0);
     EXPECT_EQ(session_->Start(), 0);
@@ -5684,9 +5674,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_067, TestSize.L
 
     EXPECT_EQ(session_->AddOutput(videoOutput), 0);
 
-    sptr<VideoOutput> videoOutput_1 = (sptr<VideoOutput> &)videoOutput;
-    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput> &)photoOutput;
-    sptr<PreviewOutput> previewOutput_1 = (sptr<PreviewOutput> &)previewOutput;
+    sptr<VideoOutput> videoOutput_1 = (sptr<VideoOutput>&)videoOutput;
+    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput>&)photoOutput;
+    sptr<PreviewOutput> previewOutput_1 = (sptr<PreviewOutput>&)previewOutput;
 
     EXPECT_EQ(session_->CommitConfig(), 0);
     EXPECT_EQ(session_->Start(), 0);
@@ -5897,7 +5887,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_072, TestSize.L
     uint64_t timestamp = 0;
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer = Surface->GetProducer();
-    sptr<HStreamCapture> streamCapture= new(std::nothrow) HStreamCapture(producer, format, width, height);
+    sptr<HStreamCapture> streamCapture = new (std::nothrow) HStreamCapture(producer, format, width, height);
     EXPECT_EQ(streamCapture->SetCallback(captureCallback), CAMERA_OK);
     EXPECT_EQ(streamCapture->OnCaptureEnded(captureId, frameCount), CAMERA_OK);
     EXPECT_EQ(streamCapture->OnCaptureError(captureId, frameCount), CAMERA_OK);
@@ -5920,11 +5910,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_044, TestSize.Le
         return;
     }
     std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
-    sptr<CameraInput> camInput_2 = (sptr<CameraInput> &)input_;
+    sptr<CameraInput> camInput_2 = (sptr<CameraInput>&)input_;
     camInput_2->Open();
 
     camInput_2->SetErrorCallback(callback);
-
 
     sptr<CaptureSession> session_2 = manager_->CreateCaptureSession();
     ASSERT_NE(session_2, nullptr);
@@ -5957,7 +5946,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_044, TestSize.Le
     sptr<CaptureInput> input_3 = manager_->CreateCameraInput(cameras_[1]);
     ASSERT_NE(input_3, nullptr);
 
-    sptr<CameraInput> camInput_3 = (sptr<CameraInput> &)input_3;
+    sptr<CameraInput> camInput_3 = (sptr<CameraInput>&)input_3;
     camInput_3->Open();
 
     sptr<CaptureSession> session_3 = manager_->CreateCaptureSession();
@@ -5980,5 +5969,71 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_044, TestSize.Le
 
     session_3->Stop();
 }
-} // CameraStandard
-} // OHOS
+
+/*
+ * Feature: Framework
+ * Function: Test sketch function
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test sketch function
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_055, TestSize.Level0)
+{
+    const int32_t captureMode = 1;
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    auto output = CreatePreviewOutput();
+    ASSERT_NE(output, nullptr);
+
+    intResult = session_->AddOutput(output);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
+    previewOutput->SetCallback(std::make_shared<AppCallback>());
+
+    bool isSketchSupport = previewOutput->IsSketchSupported();
+    if (isSketchSupport) {
+        int sketchEnableRatio = previewOutput->GetSketchEnableRatio(captureMode);
+        EXPECT_GT(sketchEnableRatio, 0);
+
+        intResult = previewOutput->EnableSketch(true);
+        EXPECT_EQ(intResult, 0);
+    }
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    if (isSketchSupport) {
+        intResult = previewOutput->StartSketch();
+        EXPECT_EQ(intResult, 0);
+    }
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    if (isSketchSupport) {
+        intResult = previewOutput->StopSketch();
+        EXPECT_EQ(intResult, 0);
+    }
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = input_->Close();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = previewOutput->Release();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Release();
+    EXPECT_EQ(intResult, 0);
+}
+} // namespace CameraStandard
+} // namespace OHOS

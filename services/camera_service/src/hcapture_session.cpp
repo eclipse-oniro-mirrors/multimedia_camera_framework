@@ -14,9 +14,11 @@
  */
 
 #include "hcapture_session.h"
+#include <vector>
 
 #include "bundle_mgr_interface.h"
 #include "camera_log.h"
+#include "hstream_repeat.h"
 #include "iconsumer_surface.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
@@ -133,6 +135,7 @@ int32_t HCaptureSession::BeginConfig()
     tempCameraDevices_.clear();
     tempStreams_.clear();
     deletedStreamIds_.clear();
+    ClearSketchRepeatStream();
     return CAMERA_OK;
 }
 
@@ -279,18 +282,17 @@ int32_t HCaptureSession::RemoveOutputStream(sptr<HStreamCommon> stream)
     auto it = std::find(tempStreams_.begin(), tempStreams_.end(), stream);
     if (it != tempStreams_.end()) {
         tempStreams_.erase(it);
-    } else {
-        std::lock_guard<std::mutex> lock(streamsLock_);
-        it = std::find(streams_.begin(), streams_.end(), stream);
-        if (it != streams_.end()) {
-            if (stream && !stream->IsReleaseStream()) {
-                deletedStreamIds_.emplace_back(stream->GetStreamId());
-                stream->SetReleaseStream(true);
-            }
-        } else {
-            MEDIA_ERR_LOG("HCaptureSession::RemoveOutputStream Invalid output");
-            return CAMERA_INVALID_SESSION_CFG;
-        }
+        return CAMERA_OK;
+    }
+    std::lock_guard<std::mutex> lock(streamsLock_);
+    it = std::find(streams_.begin(), streams_.end(), stream);
+    if (it == streams_.end()) {
+        MEDIA_ERR_LOG("HCaptureSession::RemoveOutputStream Invalid output");
+        return CAMERA_INVALID_SESSION_CFG;
+    }
+    if (stream && !stream->IsReleaseStream()) {
+        deletedStreamIds_.emplace_back(stream->GetStreamId());
+        stream->SetReleaseStream(true);
     }
     return CAMERA_OK;
 }
@@ -600,25 +602,49 @@ int32_t HCaptureSession::HandleCaptureOuputsConfig(sptr<HCameraDevice>& device)
 
 void HCaptureSession::ExpandSketchRepeatStream()
 {
-    std::vector<sptr<HStreamCommon>> sketchStreams;
+    MEDIA_DEBUG_LOG("Enter HCaptureSession::ExpandSketchRepeatStream()");
+    std::set<sptr<HStreamCommon>> sketchStreams;
     {
         std::lock_guard<std::mutex> lock(sessionLock_);
-        for (auto item = tempStreams_.begin(); item != tempStreams_.end(); item++) {
-            sptr<HStreamCommon> stream = *item;
-            if (stream == nullptr || stream->IsReleaseStream() || stream->GetStreamType() != StreamType::REPEAT) {
-                continue;
+        auto streamsCollection = { &tempStreams_, &repeatStreams_ };
+        for (auto collection : streamsCollection) {
+            for (auto& stream : *collection) {
+                if (stream == nullptr || stream->IsReleaseStream() || stream->GetStreamType() != StreamType::REPEAT) {
+                    continue;
+                }
+                HStreamRepeat* streamRepeat = static_cast<HStreamRepeat*>(stream.GetRefPtr());
+                sptr<HStreamRepeat> sketchStream = streamRepeat->GetSketchStream();
+                if (sketchStream == nullptr || sketchStream->IsReleaseStream()) {
+                    continue;
+                }
+                sketchStreams.insert(sketchStream);
             }
-            HStreamRepeat* streamRepeat = static_cast<HStreamRepeat*>(stream.GetRefPtr());
-            sptr<HStreamRepeat> sketchStream = streamRepeat->GetSketchStream();
-            if (sketchStream == nullptr || sketchStream->IsReleaseStream()) {
-                continue;
-            }
-            sketchStreams.emplace_back(sketchStream);
         }
     }
-    for (auto item = sketchStreams.begin(); item != sketchStreams.end(); item++) {
-        AddOutputStream(*item);
+    MEDIA_DEBUG_LOG("HCaptureSession::ExpandSketchRepeatStream() sketch size is:%{public}zu", sketchStreams.size());
+    for (auto& stream : sketchStreams) {
+        AddOutputStream(stream);
     }
+    MEDIA_DEBUG_LOG("Exit HCaptureSession::ExpandSketchRepeatStream()");
+}
+
+void HCaptureSession::ClearSketchRepeatStream()
+{
+    MEDIA_DEBUG_LOG("Enter HCaptureSession::ClearSketchRepeatStream()");
+
+    // Already added session lock in BeginConfig()
+    for (auto repeatStream : repeatStreams_) {
+        if (repeatStream == nullptr || repeatStream->IsReleaseStream()) {
+            continue;
+        }
+        auto sketchStream = static_cast<HStreamRepeat*>(repeatStream.GetRefPtr());
+        if (sketchStream->GetRepeatStreamType() != RepeatStreamType::SKETCH) {
+            continue;
+        }
+        MEDIA_DEBUG_LOG("HCaptureSession::ClearSketchRepeatStream() stream id is:%{public}d", sketchStream->streamId_);
+        RemoveOutputStream(repeatStream);
+    }
+    MEDIA_DEBUG_LOG("Exit HCaptureSession::ClearSketchRepeatStream()");
 }
 
 int32_t HCaptureSession::CommitConfig()
@@ -705,11 +731,12 @@ int32_t HCaptureSession::Start()
         StartUsingPermissionCallback(callerToken, OHOS_PERMISSION_CAMERA);
         RegisterPermissionCallback(callerToken, OHOS_PERMISSION_CAMERA);
     }
-    sptr<HStreamRepeat> curStreamRepeat;
+
     int32_t rc = CAMERA_OK;
-    for (auto item = repeatStreams_.begin(); item != repeatStreams_.end(); ++item) {
-        curStreamRepeat = static_cast<HStreamRepeat*>((*item).GetRefPtr());
-        if (curStreamRepeat->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
+    for (auto& item : repeatStreams_) {
+        HStreamRepeat* curStreamRepeat = static_cast<HStreamRepeat*>(item.GetRefPtr());
+        auto repeatType = curStreamRepeat->GetRepeatStreamType();
+        if (repeatType == RepeatStreamType::PREVIEW || repeatType == RepeatStreamType::SKETCH) {
             rc = curStreamRepeat->Start();
             if (rc != CAMERA_OK) {
                 MEDIA_ERR_LOG("HCaptureSession::Start(), Failed to start preview, rc: %{public}d", rc);
@@ -723,14 +750,14 @@ int32_t HCaptureSession::Start()
 int32_t HCaptureSession::Stop()
 {
     int32_t rc = CAMERA_OK;
-    sptr<HStreamRepeat> curStreamRepeat;
     if (curState_ != CaptureSessionState::SESSION_CONFIG_COMMITTED) {
         return CAMERA_INVALID_STATE;
     }
     std::lock_guard<std::mutex> lock(sessionLock_);
-    for (auto item = repeatStreams_.begin(); item != repeatStreams_.end(); ++item) {
-        curStreamRepeat = static_cast<HStreamRepeat*>((*item).GetRefPtr());
-        if (!curStreamRepeat->IsVideo()) {
+    for (auto& item : repeatStreams_) {
+        HStreamRepeat* curStreamRepeat = static_cast<HStreamRepeat*>(item.GetRefPtr());
+        auto repeatType = curStreamRepeat->GetRepeatStreamType();
+        if (repeatType == RepeatStreamType::PREVIEW || repeatType == RepeatStreamType::SKETCH) {
             rc = curStreamRepeat->Stop();
             if (rc != CAMERA_OK) {
                 MEDIA_ERR_LOG("HCaptureSession::Stop(), Failed to stop preview, rc: %{public}d", rc);
@@ -738,7 +765,6 @@ int32_t HCaptureSession::Stop()
             }
         }
     }
-
     return rc;
 }
 

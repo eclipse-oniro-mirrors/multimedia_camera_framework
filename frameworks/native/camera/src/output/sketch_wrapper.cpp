@@ -17,6 +17,7 @@
 
 #include "camera_log.h"
 #include "camera_util.h"
+#include "image_format.h"
 #include "image_source.h"
 
 namespace OHOS {
@@ -101,25 +102,42 @@ void SketchWrapper::SketchBufferAvaliableListener::OnSurfaceBufferAvaliable()
 
 SketchWrapper::SketchWrapper(PreviewOutput* holder) : holder_(holder) {}
 
-int32_t SketchWrapper::Init(std::shared_ptr<SketchBufferAvaliableListener>& listener, const Size size)
+int32_t SketchWrapper::Init(
+    std::shared_ptr<SketchBufferAvaliableListener>& listener, const Size size, Media::ImageFormat imageFormat)
 {
-    sketchImgReceiver_ = Media::ImageReceiver::CreateImageReceiver(
-        size.width, size.height, static_cast<int32_t>(Media::ImageFormat::YUV420_888), 1);
+    sketchImgReceiver_ =
+        Media::ImageReceiver::CreateImageReceiver(size.width, size.height, static_cast<int32_t>(imageFormat), 1);
     sptr<Surface> surface = sketchImgReceiver_->GetReceiverSurface();
-    sketchSurfaceBufferAvaliableListener_ = listener;
-    sketchImgReceiver_->RegisterBufferAvaliableListener(sketchSurfaceBufferAvaliableListener_);
+    sketchImgReceiver_->RegisterBufferAvaliableListener(listener);
     sptr<IStreamCommon> hostStream = holder_->GetStream();
     IStreamRepeat* repeatStream = static_cast<IStreamRepeat*>(hostStream.GetRefPtr());
     return repeatStream->ForkSketchStreamRepeat(surface->GetProducer(), size.width, size.height, sketchStream_);
 }
 
-SketchWrapper::~SketchWrapper()
+int32_t SketchWrapper::Destory()
 {
     if (sketchStream_ != nullptr) {
+        sketchStream_->Stop();
         sketchStream_->Release();
     }
     if (sketchImgReceiver_ != nullptr) {
         sketchImgReceiver_->RegisterBufferAvaliableListener(nullptr);
+        sketchImgReceiver_->ReleaseReceiver();
+    }
+    sptr<IStreamCommon> hostStream = holder_->GetStream();
+    IStreamRepeat* repeatStream = static_cast<IStreamRepeat*>(hostStream.GetRefPtr());
+    return repeatStream->RemoveSketchStreamRepeat();
+}
+
+SketchWrapper::~SketchWrapper()
+{
+    if (sketchStream_ != nullptr) {
+        sketchStream_->Stop();
+        sketchStream_->Release();
+    }
+    if (sketchImgReceiver_ != nullptr) {
+        sketchImgReceiver_->RegisterBufferAvaliableListener(nullptr);
+        sketchImgReceiver_->ReleaseReceiver();
     }
 }
 
