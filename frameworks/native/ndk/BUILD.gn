@@ -14,7 +14,7 @@
 import("//build/ohos.gni")
 
 import(
-    "//foundation/multimedia/camera_framework/multimedia_camera_framework.gni")
+    "./../../../multimedia_camera_framework.gni")
 
 config("camera_ndk_config") {
   include_dirs = [
