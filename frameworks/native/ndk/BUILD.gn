@@ -75,7 +75,7 @@ ohos_shared_library("camera_ndk") {
     "image_framework:image",
     "image_framework:image_native",
     "ipc:ipc_core",
-    ]
+  ]
 
   innerapi_tags = [ "ndk" ]
 

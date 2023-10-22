@@ -19,8 +19,8 @@ ohos_ndk_headers("camera_ndk_header") {
   dest_dir = "$ndk_headers_out_dir/camera_ndk"
   sources = [
     "./camera.h",
-    "./camera_manager.h",
     "./camera_input.h",
+    "./camera_manager.h",
     "./capture_session.h",
     "./metadata_output.h",
     "./photo_output.h",
