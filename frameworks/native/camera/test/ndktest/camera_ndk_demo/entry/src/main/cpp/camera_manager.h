@@ -27,13 +27,14 @@
 #include <native_buffer/native_buffer.h>
 #include "iostream"
 #include "mutex"
-#include "/multimedia/camera_framework/camera.h"
-#include "/multimedia/camera_framework/camera_manager.h"
-#include "multimedia/camera_framework/camera_input.h"
-#include "multimedia/camera_framework/capture_session.h"
-#include "multimedia/camera_framework/preview_output.h"
-#include "multimedia/camera_framework/photo_output.h"
+
 #include "hilog/log.h"
+#include "multimedia/camera_framework/camera.h"
+#include "multimedia/camera_framework/camera_input.h"
+#include "multimedia/camera_framework/camera_manager.h"
+#include "multimedia/camera_framework/capture_session.h"
+#include "multimedia/camera_framework/photo_output.h"
+#include "multimedia/camera_framework/preview_output.h"
 #include "napi/native_api.h"
 
 class NDKCamera {
