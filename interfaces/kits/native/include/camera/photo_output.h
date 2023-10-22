@@ -98,7 +98,8 @@ Camera_ErrorCode OH_PhotoOutput_Capture(Camera_PhotoOutput* photoOutput);
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_PhotoOutput_Capture_WithCaptureSetting(Camera_PhotoOutput* photoOutput, Camera_PhotoCaptureSetting setting);
+Camera_ErrorCode OH_PhotoOutput_Capture_WithCaptureSetting(Camera_PhotoOutput* photoOutput,
+    Camera_PhotoCaptureSetting setting);
 
 /**
  * @brief Acquire the video buffer for the av screen capture

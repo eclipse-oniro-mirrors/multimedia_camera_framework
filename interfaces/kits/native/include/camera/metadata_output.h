@@ -33,7 +33,8 @@ extern "C" {
  */
 typedef struct Camera_MetadataOutput Camera_MetadataOutput;
 
-typedef void (*OH_MetadataOutput_OnMetadataObjectAvailable)(Camera_MetadataOutput* metadataOutput, Camera_MetadataObject* metadataObject, uint32_t size);
+typedef void (*OH_MetadataOutput_OnMetadataObjectAvailable)(Camera_MetadataOutput* metadataOutput,
+    Camera_MetadataObject* metadataObject, uint32_t size);
 
 typedef void (*OH_MetadataOutput_OnError)(Camera_MetadataOutput* metadataOutput, Camera_ErrorCode errorCode);
 
@@ -53,7 +54,8 @@ typedef struct MetadataOutput_Callbacks {
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_MetadataOutput_RegisterCallback(Camera_MetadataOutput* metadataOutput, MetadataOutput_Callbacks* callback);
+Camera_ErrorCode OH_MetadataOutput_RegisterCallback(Camera_MetadataOutput* metadataOutput,
+    MetadataOutput_Callbacks* callback);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -66,7 +68,8 @@ Camera_ErrorCode OH_MetadataOutput_RegisterCallback(Camera_MetadataOutput* metad
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_MetadataOutput_UnregisterCallback(Camera_MetadataOutput* metadataOutput, MetadataOutput_Callbacks* callback);
+Camera_ErrorCode OH_MetadataOutput_UnregisterCallback(Camera_MetadataOutput* metadataOutput,
+    MetadataOutput_Callbacks* callback);
 
 /**
  * @brief Acquire the video buffer for the av screen capture

@@ -126,7 +126,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
             if (innerCameraDevice->GetPosition() == static_cast<CameraPosition>(camera->cameraPosition) &&
                 innerCameraDevice->GetCameraType() == static_cast<CameraType>(camera->cameraType)) {
                 MEDIA_ERR_LOG("zss GetSupportedCameraOutputCapability position:%{public}d, type:%{public}d ",
-                    innerCameraDevice->GetPosition(),innerCameraDevice->GetCameraType());
+                    innerCameraDevice->GetPosition(), innerCameraDevice->GetCameraType());
                 cameraDevice = innerCameraDevice;
 
                 break;
@@ -154,7 +154,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
         outPreviewProfiles[i].size.height = previewProfiles[i].GetSize().height;
         MEDIA_ERR_LOG("zss GetSupportedCameraOutputCapability previewOutputNum enter");
     }
-     MEDIA_ERR_LOG("zss GetSupportedCameraOutputCapability previewOutputNum exit");
+    MEDIA_ERR_LOG("zss GetSupportedCameraOutputCapability previewOutputNum exit");
 
     outCapability->previewProfiles = &outPreviewProfiles;
 
@@ -170,7 +170,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
         outVideoProfiles[i].size.width = videoProfiles[i].GetSize().width;
         outVideoProfiles[i].size.height = videoProfiles[i].GetSize().height;
         outVideoProfiles[i].range.min  = videoProfiles[i].framerates_[0];
-        outVideoProfiles[i].range.max  = videoProfiles[i].framerates_[1];;
+        outVideoProfiles[i].range.max  = videoProfiles[i].framerates_[1];
     }
     outCapability->videoProfiles = &outVideoProfiles;
 
@@ -232,7 +232,7 @@ Camera_ErrorCode Camera_Manager::CreateCameraInputWithPositionAndType(Camera_Pos
 {
     MEDIA_ERR_LOG("Camera_Manager CreateCameraInputWithPositionAndType is called");
     sptr<CameraInput> innerCameraInput = nullptr;
-    CameraPosition innerPosition= static_cast<CameraPosition>(position);
+    CameraPosition innerPosition = static_cast<CameraPosition>(position);
     CameraType innerType = static_cast<CameraType>(type);
 
     innerCameraInput = CameraManager::GetInstance()->CreateCameraInput(innerPosition, innerType);
@@ -242,7 +242,7 @@ Camera_ErrorCode Camera_Manager::CreateCameraInputWithPositionAndType(Camera_Pos
 
     Camera_Input* outInput = new Camera_Input(innerCameraInput);
     *cameraInput = outInput;
-    return CAMERA_OK; 
+    return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_Manager::CreatePreviewOutput(const Camera_Profile* profile,

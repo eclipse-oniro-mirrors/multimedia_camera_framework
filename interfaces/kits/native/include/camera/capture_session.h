@@ -58,7 +58,8 @@ typedef struct CaptureSession_Callbacks {
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CaptureSession_RegisterCallback(Camera_CaptureSession* session, CaptureSession_Callbacks* callback);
+Camera_ErrorCode OH_CaptureSession_RegisterCallback(Camera_CaptureSession* session,
+    CaptureSession_Callbacks* callback);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -71,7 +72,8 @@ Camera_ErrorCode OH_CaptureSession_RegisterCallback(Camera_CaptureSession* sessi
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CaptureSession_UnregisterCallback(Camera_CaptureSession* session, CaptureSession_Callbacks* callback);
+Camera_ErrorCode OH_CaptureSession_UnregisterCallback(Camera_CaptureSession* session,
+    CaptureSession_Callbacks* callback);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -136,7 +138,8 @@ Camera_ErrorCode OH_CaptureSession_RemoveInput(Camera_CaptureSession* session, C
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CaptureSession_AddPreviewOutput(Camera_CaptureSession* session, Camera_PreviewOutput* previewOutput);
+Camera_ErrorCode OH_CaptureSession_AddPreviewOutput(Camera_CaptureSession* session,
+    Camera_PreviewOutput* previewOutput);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -149,7 +152,8 @@ Camera_ErrorCode OH_CaptureSession_AddPreviewOutput(Camera_CaptureSession* sessi
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CaptureSession_RemovePreviewOutput(Camera_CaptureSession* session, Camera_PreviewOutput* previewOutput);
+Camera_ErrorCode OH_CaptureSession_RemovePreviewOutput(Camera_CaptureSession* session,
+    Camera_PreviewOutput* previewOutput);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -214,7 +218,8 @@ Camera_ErrorCode OH_CaptureSession_RemoveVideoOutput(Camera_CaptureSession* sess
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CaptureSession_AddMetadataOutput(Camera_CaptureSession* session, Camera_MetadataOutput* metadataOutput);
+Camera_ErrorCode OH_CaptureSession_AddMetadataOutput(Camera_CaptureSession* session,
+    Camera_MetadataOutput* metadataOutput);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -227,7 +232,8 @@ Camera_ErrorCode OH_CaptureSession_AddMetadataOutput(Camera_CaptureSession* sess
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CaptureSession_RemoveMetadataOutput(Camera_CaptureSession* session, Camera_MetadataOutput* metadataOutput);
+Camera_ErrorCode OH_CaptureSession_RemoveMetadataOutput(Camera_CaptureSession* session,
+    Camera_MetadataOutput* metadataOutput);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -292,7 +298,8 @@ Camera_ErrorCode OH_CaptureSession_HasFlash(Camera_CaptureSession* session, bool
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CaptureSession_IsFlashModeSupported(Camera_CaptureSession* session, Camera_FlashMode flashMode, bool* isSupported);
+Camera_ErrorCode OH_CaptureSession_IsFlashModeSupported(Camera_CaptureSession* session,
+    Camera_FlashMode flashMode, bool* isSupported);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -331,7 +338,8 @@ Camera_ErrorCode OH_CaptureSession_SetFlashMode(Camera_CaptureSession* session, 
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CaptureSession_IsExposureModeSupported(Camera_CaptureSession* session, Camera_ExposureMode exposureMode, bool* isSupported);
+Camera_ErrorCode OH_CaptureSession_IsExposureModeSupported(Camera_CaptureSession* session,
+    Camera_ExposureMode exposureMode, bool* isSupported);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -396,7 +404,8 @@ Camera_ErrorCode OH_CaptureSession_SetMeteringPoint(Camera_CaptureSession* sessi
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CaptureSession_GetExposureBiasRange(Camera_CaptureSession* session, float* minExposureBias, float* maxExposureBias, float* step);
+Camera_ErrorCode OH_CaptureSession_GetExposureBiasRange(Camera_CaptureSession* session, float* minExposureBias,
+    float* maxExposureBias, float* step);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -439,7 +448,8 @@ Camera_ErrorCode OH_CaptureSession_SetMeteringPoint(Camera_CaptureSession* sessi
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CaptureSession_IsFocusModeSupported(Camera_CaptureSession* session, Camera_FocusMode focusMode, bool* isSupported);
+Camera_ErrorCode OH_CaptureSession_IsFocusModeSupported(Camera_CaptureSession* session,
+    Camera_FocusMode focusMode, bool* isSupported);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -543,7 +553,8 @@ Camera_ErrorCode OH_CaptureSession_SetZoomRatio(Camera_CaptureSession* session, 
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CaptureSession_IsVideoStabilizationModeSupported(Camera_CaptureSession* session, Camera_VideoStabilizationMode mode, bool* isSupported);
+Camera_ErrorCode OH_CaptureSession_IsVideoStabilizationModeSupported(Camera_CaptureSession* session,
+    Camera_VideoStabilizationMode mode, bool* isSupported);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -556,7 +567,8 @@ Camera_ErrorCode OH_CaptureSession_IsVideoStabilizationModeSupported(Camera_Capt
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CaptureSession_GetVideoStabilizationMode(Camera_CaptureSession* session, Camera_VideoStabilizationMode* mode);
+Camera_ErrorCode OH_CaptureSession_GetVideoStabilizationMode(Camera_CaptureSession* session,
+    Camera_VideoStabilizationMode* mode);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -569,7 +581,8 @@ Camera_ErrorCode OH_CaptureSession_GetVideoStabilizationMode(Camera_CaptureSessi
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CaptureSession_SetVideoStabilizationMode(Camera_CaptureSession* session, Camera_VideoStabilizationMode mode);
+Camera_ErrorCode OH_CaptureSession_SetVideoStabilizationMode(Camera_CaptureSession* session,
+    Camera_VideoStabilizationMode mode);
 
 #ifdef __cplusplus
 }

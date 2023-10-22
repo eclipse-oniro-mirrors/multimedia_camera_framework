@@ -56,7 +56,8 @@ typedef struct PreviewOutput_Callbacks {
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_PreviewOutput_RegisterCallback(Camera_PreviewOutput* previewOutput, PreviewOutput_Callbacks* callback);
+Camera_ErrorCode OH_PreviewOutput_RegisterCallback(Camera_PreviewOutput* previewOutput,
+    PreviewOutput_Callbacks* callback);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -69,7 +70,8 @@ Camera_ErrorCode OH_PreviewOutput_RegisterCallback(Camera_PreviewOutput* preview
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_PreviewOutput_UnregisterCallback(Camera_PreviewOutput* previewOutput, PreviewOutput_Callbacks* callback);
+Camera_ErrorCode OH_PreviewOutput_UnregisterCallback(Camera_PreviewOutput* previewOutput,
+    PreviewOutput_Callbacks* callback);
 
 /**
  * @brief Acquire the video buffer for the av screen capture

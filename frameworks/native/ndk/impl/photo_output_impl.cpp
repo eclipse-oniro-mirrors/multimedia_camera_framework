@@ -40,7 +40,6 @@ public:
     void OnFrameShutter(const int32_t captureId, const uint64_t timestamp) const override
     {
         MEDIA_DEBUG_LOG("onFrameShutter is called!, captureId: %{public}d", captureId);
-        // MEDIA_DEBUG_LOG("onFrameShutter is called!, timestamp: %{public}d", timestamp);
         Camera_FrameShutterInfo info;
         info.captureId = captureId;
         info.timestamp = timestamp;
