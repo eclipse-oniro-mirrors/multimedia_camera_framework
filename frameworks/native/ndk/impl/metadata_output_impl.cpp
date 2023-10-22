@@ -53,6 +53,9 @@ public:
             MEDIA_ERR_LOG("OnMetadataObjectsAvailable: metaObjects is empty");
         }
         uint32_t size = metaObjects.size();
+        if (size <= 0) {
+            MEDIA_ERR_LOG("metaObjects size <= 0");
+        }
         Camera_MetadataObject* object = new Camera_MetadataObject[size];
         Camera_Rect boundingBox;
         if (metadataOutput_ != nullptr && callback_.onMetadataObjectAvailable != nullptr) {

@@ -176,8 +176,7 @@ Camera_ErrorCode Camera_CaptureSession::SetVideoStabilizationMode(Camera_VideoSt
 Camera_ErrorCode Camera_CaptureSession::GetZoomRatioRange(float* minZoom, float* maxZoom)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetZoomRatioRange is called");
-    std::vector<float> vecZoomRatioList;
-    vecZoomRatioList = innerCaptureSession_->GetZoomRatioRange();
+    std::vector<float> vecZoomRatioList = innerCaptureSession_->GetZoomRatioRange();
     *minZoom = vecZoomRatioList[0];
     *maxZoom = vecZoomRatioList[1];
 

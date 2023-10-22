@@ -24,7 +24,7 @@ std::mutex NDKCamera::mtx_;
 NDKCamera::NDKCamera(char* str)
     : previewSurfaceId_(str), cameras_(nullptr),
       cameraOutputCapability_(nullptr), cameraInput_(nullptr),
-      captureSession_(nullptr),size_(0),
+      captureSession_(nullptr), size_(0),
       isCameraMuted_(nullptr), profile_(nullptr),
       photoSurfaceId_(nullptr),
       previewOutput_(nullptr), photoOutput_(nullptr),
@@ -122,7 +122,8 @@ Camera_ErrorCode NDKCamera::setZoomRatioFn(uint32_t zoomRatio)
     if (captureSession_ == nullptr || ret != CAMERA_OK) {
         OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_GetZoomRatioRange failed.");
     } else {
-        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_GetZoomRatioRange success. minZoom: %f, maxZoom: %f", minZoom, maxZoom);
+        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_GetZoomRatioRange success. minZoom: %f, maxZoom: %f",
+            minZoom, maxZoom);
     }
     
     // 设置变焦
@@ -136,7 +137,7 @@ Camera_ErrorCode NDKCamera::setZoomRatioFn(uint32_t zoomRatio)
     // 获取当前设备的变焦值
     ret = OH_CaptureSession_GetZoomRatio(captureSession_, &zoom);
     if (ret == CAMERA_OK) {
-        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_GetZoomRatio success. zoom：%f ", zoom);
+        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_GetZoomRatio success. zoom: %f ", zoom);
     } else {
         OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_GetZoomRatio failed. %d ", ret);
     }
@@ -192,7 +193,8 @@ Camera_ErrorCode NDKCamera::CameraInputOpen(void)
     return ret_;
 }
 
-Camera_ErrorCode NDKCamera::CameraInputClose(void) {
+Camera_ErrorCode NDKCamera::CameraInputClose(void)
+{
     ret_ = OH_CameraInput_Close(ndkCamera_->cameraInput_);
     if (ret_ != CAMERA_OK) {
         OH_LOG_ERROR(LOG_APP, "CameraInput_Close failed.");
@@ -201,7 +203,8 @@ Camera_ErrorCode NDKCamera::CameraInputClose(void) {
     return ret_;
 }
 
-Camera_ErrorCode NDKCamera::CameraInputRelease(void) {
+Camera_ErrorCode NDKCamera::CameraInputRelease(void)
+{
     ret_ = OH_CameraInput_Release(ndkCamera_->cameraInput_);
     if (ret_ != CAMERA_OK) {
         OH_LOG_ERROR(LOG_APP, "CameraInput_Release failed.");
@@ -262,7 +265,7 @@ Camera_ErrorCode NDKCamera::CreatePhotoOutput(void)
 
 Camera_ErrorCode NDKCamera::CreateMetadataOutput(void)
 {
-    metaDataObjectType_ = cameraOutputCapability_->supportedMetadataObjectTypes[2];
+    metaDataObjectType_ = cameraOutputCapability_->supportedMetadataObjectTypes[2]; // 2:camera metedata types
     if (metaDataObjectType_ == nullptr) {
         OH_LOG_ERROR(LOG_APP, "Get metaDataObjectType failed.");
         return CAMERA_INVALID_ARGUMENT;

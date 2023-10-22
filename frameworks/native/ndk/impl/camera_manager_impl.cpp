@@ -88,6 +88,10 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, ui
 {
     std::vector<sptr<CameraDevice>> cameraObjList = CameraManager::GetInstance()->GetSupportedCameras();
     int cameraSize = cameraObjList.size();
+    if (cameraSize <= 0) {
+        MEDIA_ERR_LOG("camera size <= 0");
+        return CAMERA_INVALID_ARGUMENT;
+    }
     Camera_Device *outCameras = new Camera_Device[cameraSize];
     for (int i = 0; i < cameraSize; i++) {
         const char* src = cameraObjList[i]->GetID().c_str();
@@ -114,37 +118,41 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
 
     sptr<CameraDevice> cameraDevice = nullptr;
     std::vector<sptr<CameraDevice>> cameraObjList = CameraManager::GetInstance()->GetSupportedCameras();
-        MEDIA_ERR_LOG("zss GetSupportedCameraOutputCapability cameraInfo is null, the cameraObjList size is %{public}zu",
+        MEDIA_ERR_LOG("GetSupportedCameraOutputCapability cameraInfo is null, the cameraObjList size is %{public}zu",
             cameraObjList.size());
         for (size_t i = 0; i < cameraObjList.size(); i++) {
-            MEDIA_ERR_LOG("zss GetSupportedCameraOutputCapability for");
+            MEDIA_ERR_LOG("GetSupportedCameraOutputCapability for");
             sptr<CameraDevice> innerCameraDevice = cameraObjList[i];
             if (innerCameraDevice == nullptr) {
-                MEDIA_ERR_LOG("zss GetSupportedCameraOutputCapability innerCameraDevice == null");
+                MEDIA_ERR_LOG("GetSupportedCameraOutputCapability innerCameraDevice == null");
                 continue;
             }
             if (innerCameraDevice->GetPosition() == static_cast<CameraPosition>(camera->cameraPosition) &&
                 innerCameraDevice->GetCameraType() == static_cast<CameraType>(camera->cameraType)) {
-                MEDIA_ERR_LOG("zss GetSupportedCameraOutputCapability position:%{public}d, type:%{public}d ",
+                MEDIA_ERR_LOG("GetSupportedCameraOutputCapability position:%{public}d, type:%{public}d ",
                     innerCameraDevice->GetPosition(), innerCameraDevice->GetCameraType());
                 cameraDevice = innerCameraDevice;
 
                 break;
             }
         }
-    MEDIA_ERR_LOG("zss GetSupportedCameraOutputCapability  test");
+    MEDIA_ERR_LOG("GetSupportedCameraOutputCapability  test");
     sptr<CameraOutputCapability> innerCameraOutputCapability =
         CameraManager::GetInstance()->GetSupportedOutputCapability(cameraDevice);
     if (innerCameraOutputCapability == nullptr) {
-        MEDIA_ERR_LOG("zss GetSupportedCameraOutputCapability innerCameraOutputCapability == null");
+        MEDIA_ERR_LOG("GetSupportedCameraOutputCapability innerCameraOutputCapability == null");
     }
-    MEDIA_ERR_LOG("zss GetSupportedCameraOutputCapability innerCameraOutputCapability !- null");
+    MEDIA_ERR_LOG("GetSupportedCameraOutputCapability innerCameraOutputCapability !- null");
     std::vector<Profile> previewProfiles = innerCameraOutputCapability->GetPreviewProfiles();
     std::vector<Profile> photoProfiles = innerCameraOutputCapability->GetPhotoProfiles();
     std::vector<VideoProfile> videoProfiles = innerCameraOutputCapability->GetVideoProfiles();
     int previewOutputNum = previewProfiles.size();
     int photoOutputNum = previewProfiles.size();
     int videoOutputNum = videoProfiles.size();
+    if (previewOutputNum <= 0 || photoOutputNum <= 0 || videoOutputNum <= 0) {
+        MEDIA_ERR_LOG("alloc size <= 0");
+        return CAMERA_INVALID_ARGUMENT;
+    }
     Camera_Profile *outPreviewProfiles = new Camera_Profile[previewOutputNum];
     Camera_Profile *outPhotoProfiles = new Camera_Profile[photoOutputNum];
     Camera_VideoProfile *outVideoProfiles = new Camera_VideoProfile[videoOutputNum];
@@ -152,9 +160,9 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
         outPreviewProfiles[i].format = static_cast<Camera_Format>(previewProfiles[i].GetCameraFormat());
         outPreviewProfiles[i].size.width = previewProfiles[i].GetSize().width;
         outPreviewProfiles[i].size.height = previewProfiles[i].GetSize().height;
-        MEDIA_ERR_LOG("zss GetSupportedCameraOutputCapability previewOutputNum enter");
+        MEDIA_ERR_LOG("GetSupportedCameraOutputCapability previewOutputNum enter");
     }
-    MEDIA_ERR_LOG("zss GetSupportedCameraOutputCapability previewOutputNum exit");
+    MEDIA_ERR_LOG("GetSupportedCameraOutputCapability previewOutputNum exit");
 
     outCapability->previewProfiles = &outPreviewProfiles;
 
@@ -175,7 +183,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
     outCapability->videoProfiles = &outVideoProfiles;
 
     *cameraOutputCapability = outCapability;
-    MEDIA_ERR_LOG("zss GetSupportedCameraOutputCapability previewOutputNum return");
+    MEDIA_ERR_LOG("GetSupportedCameraOutputCapability previewOutputNum return");
     return CAMERA_OK;
 }
 
@@ -272,7 +280,7 @@ Camera_ErrorCode Camera_Manager::CreatePreviewOutput(const Camera_Profile* profi
     }
     Camera_PreviewOutput* out = new Camera_PreviewOutput(innerPreviewOutput);
     *previewOutput = out;
-    MEDIA_ERR_LOG("zss Camera_Manager::CreatePreviewOutput");
+    MEDIA_ERR_LOG("Camera_Manager::CreatePreviewOutput");
     return CAMERA_OK;
 }
 
