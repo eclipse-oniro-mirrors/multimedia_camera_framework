@@ -40,4 +40,4 @@ public:
 private:
     OHOS::sptr<OHOS::CameraStandard::CameraInput> innerCameraInput_;
 };
-#endif // OHOS_CAMERA_CAPTURE_INPUT_H
+#endif // OHOS_CAMERA_INPUT_IMPL_H

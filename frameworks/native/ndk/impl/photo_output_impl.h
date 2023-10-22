@@ -42,4 +42,4 @@ public:
 private:
     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> innerPhotoOutput_;
 };
-#endif // OHOS_CAMERA_CAPTURE_INPUT_H
+#endif // OHOS_PHOTO_OUTPUT_IMPL_H

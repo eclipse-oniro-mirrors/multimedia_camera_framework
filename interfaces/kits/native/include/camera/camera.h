@@ -24,10 +24,7 @@ extern "C" {
 #endif
 
 /**
- * @brief Create a screen capture
- * @syscap SystemCapability.Multimedia.Media.AVScreenCapture
- * @return Returns a pointer to an OH_AVScreenCapture instance
- * @since 10
+ * @since 11
  * @version 1.0
  */
 typedef struct Camera_Manager Camera_Manager;
@@ -509,14 +506,7 @@ typedef struct Camera_MetadataObject {
 } Camera_MetadataObject;
 
 /**
- * @brief Acquire the audio buffer for the av screen capture
- * @syscap SystemCapability.Multimedia.Media.AVScreenCapture
- * @param capture Pointer to an OH_AVScreenCapture instance
- * @param audiobuffer Information describing the audio buffer of the capture
- * @param type Information describing the audio source type
- * @return Returns AVSCREEN_CAPTURE_ERR_OK if the execution is successful,
- * otherwise returns a specific error code, refer to {@link OH_AVSCREEN_CAPTURE_ErrCode}
- * @since 10
+ * @since 11
  * @version 1.0
  */
 Camera_ErrorCode OH_Camera_GetCameraMananger(Camera_Manager** cameraManager);
@@ -525,4 +515,4 @@ Camera_ErrorCode OH_Camera_GetCameraMananger(Camera_Manager** cameraManager);
 }
 #endif
 
-#endif // NATIVE_AVSCREEN_CAPTURE_H
+#endif // NATIVE_INCLUDE_CAMERA_CAMERA_H

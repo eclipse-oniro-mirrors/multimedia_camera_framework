@@ -105,4 +105,3 @@ sptr<VideoOutput> Camera_VideoOutput::GetInnerVideoOutput()
 {
     return innerVideoOutput_;
 }
-

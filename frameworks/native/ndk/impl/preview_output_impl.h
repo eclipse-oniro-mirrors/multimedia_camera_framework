@@ -40,4 +40,4 @@ public:
 private:
     OHOS::sptr<OHOS::CameraStandard::PreviewOutput> innerPreviewOutput_;
 };
-#endif // OHOS_CAMERA_CAPTURE_INPUT_H
+#endif // OHOS_PREVIEW_OUTPUT_IMPL_H

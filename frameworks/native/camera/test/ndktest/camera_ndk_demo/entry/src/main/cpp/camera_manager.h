@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef CAMERA_NATIVE_CAMERA_H
-#define CAMERA_NATIVE_CAMERA_H
+#ifndef CAMERA_NDK_CAMERA_H
+#define CAMERA_NDK_CAMERA_H
 
 #include <unistd.h>
 #include <string>
@@ -108,4 +108,4 @@ private:
     volatile bool valid_;
 };
 
-#endif  // CAMERA_NATIVE_CAMERA_H
+#endif  // CAMERA_NDK_CAMERA_H

@@ -25,10 +25,7 @@ extern "C" {
 #endif
 
 /**
- * @brief Create a screen capture
- * @syscap SystemCapability.Multimedia.Media.AVScreenCapture
- * @return Returns a pointer to an OH_AVScreenCapture instance
- * @since 10
+ * @since 11
  * @version 1.0
  */
 typedef struct Camera_Input Camera_Input;
@@ -40,66 +37,31 @@ typedef struct CameraInput_Callbacks {
 } CameraInput_Callbacks;
 
 /**
- * @brief Acquire the video buffer for the av screen capture
- * @syscap SystemCapability.Multimedia.Media.AVScreenCapture
- * @param capture Pointer to an OH_AVScreenCapture instance
- * @param fence A processing state of display buffer
- * @param timestamp Information about the video buffer
- * @param region Information about the video buffer
- * @return Returns a pointer to an OH_NativeBuffer instance
- * @since 10
+ * @since 11
  * @version 1.0
  */
 Camera_ErrorCode OH_CameraInput_RegisterCallback(Camera_Input* cameraInput, CameraInput_Callbacks* callback);
 
 /**
- * @brief Acquire the video buffer for the av screen capture
- * @syscap SystemCapability.Multimedia.Media.AVScreenCapture
- * @param capture Pointer to an OH_AVScreenCapture instance
- * @param fence A processing state of display buffer
- * @param timestamp Information about the video buffer
- * @param region Information about the video buffer
- * @return Returns a pointer to an OH_NativeBuffer instance
- * @since 10
+ * @since 11
  * @version 1.0
  */
 Camera_ErrorCode OH_CameraInput_UnregisterCallback(Camera_Input* cameraInput, CameraInput_Callbacks* callback);
 
 /**
- * @brief Acquire the video buffer for the av screen capture
- * @syscap SystemCapability.Multimedia.Media.AVScreenCapture
- * @param capture Pointer to an OH_AVScreenCapture instance
- * @param fence A processing state of display buffer
- * @param timestamp Information about the video buffer
- * @param region Information about the video buffer
- * @return Returns a pointer to an OH_NativeBuffer instance
- * @since 10
+ * @since 11
  * @version 1.0
  */
 Camera_ErrorCode OH_CameraInput_Open(Camera_Input* cameraInput);
 
 /**
- * @brief Acquire the video buffer for the av screen capture
- * @syscap SystemCapability.Multimedia.Media.AVScreenCapture
- * @param capture Pointer to an OH_AVScreenCapture instance
- * @param fence A processing state of display buffer
- * @param timestamp Information about the video buffer
- * @param region Information about the video buffer
- * @return Returns a pointer to an OH_NativeBuffer instance
- * @since 10
+ * @since 11
  * @version 1.0
  */
 Camera_ErrorCode OH_CameraInput_Close(Camera_Input* cameraInput);
 
 /**
- * @brief Acquire the video buffer for the av screen capture
- * @syscap SystemCapability.Multimedia.Media.AVScreenCapture
- * @param capture Pointer to an OH_AVScreenCapture instance
- * @param fence A processing state of display buffer
- * @param timestamp Information about the video buffer
- * @param region Information about the video buffer
- * @return Returns a pointer to an OH_NativeBuffer instance
- * @since 10
+ * @since 11
  * @version 1.0
  */
 Camera_ErrorCode OH_CameraInput_Release(Camera_Input* cameraInput);
@@ -108,4 +70,4 @@ Camera_ErrorCode OH_CameraInput_Release(Camera_Input* cameraInput);
 }
 #endif
 
-#endif // NATIVE_AVSCREEN_CAPTURE_H
+#endif // NATIVE_INCLUDE_CAMERA_CAMERA_INPUT_H

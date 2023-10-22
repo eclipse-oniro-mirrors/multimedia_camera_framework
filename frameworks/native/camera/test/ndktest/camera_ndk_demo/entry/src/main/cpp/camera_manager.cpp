@@ -15,9 +15,6 @@
 
 #include "camera_manager.h"
 
-#define LOG_TAG "zssndkdemo"
-#define LOG_DOMAIN 0x3200
-
 NDKCamera* NDKCamera::ndkCamera_ = nullptr;
 std::mutex NDKCamera::mtx_;
 
@@ -110,6 +107,7 @@ Camera_ErrorCode NDKCamera::HasFlashFn(uint32_t mode)
     } else {
         OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_GetFlashMode failed. %d ", ret);
     }
+    return ret;
 }
 
 Camera_ErrorCode NDKCamera::setZoomRatioFn(uint32_t zoomRatio)

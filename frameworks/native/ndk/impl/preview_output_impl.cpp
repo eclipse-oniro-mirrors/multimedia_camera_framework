@@ -108,4 +108,3 @@ sptr<PreviewOutput> Camera_PreviewOutput::GetInnerPreviewOutput()
 {
     return innerPreviewOutput_;
 }
-

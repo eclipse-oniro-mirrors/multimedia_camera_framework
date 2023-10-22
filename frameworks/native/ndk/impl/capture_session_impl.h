@@ -113,4 +113,4 @@ public:
 private:
     OHOS::sptr<OHOS::CameraStandard::CaptureSession> innerCaptureSession_;
 };
-#endif // OHOS_CAMERA_CAPTURE_INPUT_H
+#endif // OHOS_CAPTURE_SESSION_IMPL_H

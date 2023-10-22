@@ -40,4 +40,4 @@ public:
 private:
     OHOS::sptr<OHOS::CameraStandard::MetadataOutput> innerMetadataOutput_;
 };
-#endif // OHOS_CAMERA_CAPTURE_INPUT_H
+#endif // OHOS_METADATA_OUTPUT_IMPL_H
