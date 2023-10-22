@@ -43,8 +43,8 @@ private:
 // need fix
 class InnerMetadataObjectCallback : public MetadataObjectCallback {
 public:
-    InnerMetadataObjectCallback(Camera_MetadataOutput* metadataOutput, MetadataOutput_Callbacks* callback) :
-        metadataOutput_(metadataOutput), callback_(*callback) {}
+    InnerMetadataObjectCallback(Camera_MetadataOutput* metadataOutput, MetadataOutput_Callbacks* callback)
+        : metadataOutput_(metadataOutput), callback_(*callback) {}
     ~InnerMetadataObjectCallback() = default;
 
     void OnMetadataObjectsAvailable(std::vector<sptr<MetadataObject>> metaObjects) const override
@@ -79,8 +79,8 @@ private:
     MetadataOutput_Callbacks callback_;
 };
 
-Camera_MetadataOutput::Camera_MetadataOutput(sptr<MetadataOutput> &innerMetadataOutput) :
-    innerMetadataOutput_(innerMetadataOutput)
+Camera_MetadataOutput::Camera_MetadataOutput(sptr<MetadataOutput> &innerMetadataOutput)
+    : innerMetadataOutput_(innerMetadataOutput)
 {
     MEDIA_DEBUG_LOG("Camera_MetadataOutput Constructor is called");
 }

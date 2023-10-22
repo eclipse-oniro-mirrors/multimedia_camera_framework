@@ -48,8 +48,8 @@ private:
     CaptureSession_Callbacks callback_;
 };
 
-Camera_CaptureSession::Camera_CaptureSession(sptr<CaptureSession> &innerCaptureSession) :
-    innerCaptureSession_(innerCaptureSession)
+Camera_CaptureSession::Camera_CaptureSession(sptr<CaptureSession> &innerCaptureSession)
+    : innerCaptureSession_(innerCaptureSession)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession Constructor is called");
 }

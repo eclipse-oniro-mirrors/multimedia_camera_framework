@@ -24,7 +24,7 @@ using namespace OHOS::CameraStandard;
 class InnerVideoOutputCallback : public VideoStateCallback {
 public:
     InnerVideoOutputCallback(Camera_VideoOutput* videoOutput, VideoOutput_Callbacks* callback)
-    : videoOutput_(videoOutput), callback_(*callback) {}
+        : videoOutput_(videoOutput), callback_(*callback) {}
     ~InnerVideoOutputCallback() = default;
 
     void OnFrameStarted() const override

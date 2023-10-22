@@ -56,8 +56,8 @@ private:
     PreviewOutput_Callbacks callback_;
 };
 
-Camera_PreviewOutput::Camera_PreviewOutput(sptr<PreviewOutput> &innerPreviewOutput) :
-    innerPreviewOutput_(innerPreviewOutput)
+Camera_PreviewOutput::Camera_PreviewOutput(sptr<PreviewOutput> &innerPreviewOutput)
+    : innerPreviewOutput_(innerPreviewOutput)
 {
     MEDIA_DEBUG_LOG("Camera_PreviewOutput Constructor is called");
 }
