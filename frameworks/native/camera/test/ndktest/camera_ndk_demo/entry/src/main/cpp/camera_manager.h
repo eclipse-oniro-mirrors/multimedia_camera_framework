@@ -24,6 +24,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <native_buffer/native_buffer.h>
 #include "iostream"
 #include "mutex"
 #include "/multimedia/camera_framework/camera.h"
@@ -33,7 +34,6 @@
 #include "multimedia/camera_framework/preview_output.h"
 #include "multimedia/camera_framework/photo_output.h"
 #include "hilog/log.h"
-#include <native_buffer/native_buffer.h>
 #include "napi/native_api.h"
 
 class NDKCamera {
@@ -77,7 +77,7 @@ public:
     Camera_ErrorCode SessionFlowFn();
 
 private:
-    NDKCamera(char *str);
+    explicit NDKCamera(char *str);
     NDKCamera(const NDKCamera&) = delete;
     NDKCamera& operator = (const NDKCamera&) = delete;
     

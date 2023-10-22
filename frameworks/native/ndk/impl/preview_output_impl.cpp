@@ -51,6 +51,8 @@ public:
         }
     }
 
+    void OnSketchAvailable(SketchData& SketchData) const override {}
+
 private:
     Camera_PreviewOutput* previewOutput_;
     PreviewOutput_Callbacks callback_;
