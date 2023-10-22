@@ -31,11 +31,11 @@
 #include "hilog/log.h"
 #include "multimedia/camera_framework/camera.h"
 #include "multimedia/camera_framework/camera_input.h"
-#include "multimedia/camera_framework/camera_manager.h"
 #include "multimedia/camera_framework/capture_session.h"
 #include "multimedia/camera_framework/photo_output.h"
 #include "multimedia/camera_framework/preview_output.h"
 #include "napi/native_api.h"
+#include "multimedia/camera_framework/camera_manager.h"
 
 class NDKCamera {
 public:
