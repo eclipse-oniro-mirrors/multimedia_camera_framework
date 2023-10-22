@@ -22,7 +22,7 @@
 
 struct Camera_PreviewOutput {
 public:
-    Camera_PreviewOutput(OHOS::sptr<OHOS::CameraStandard::PreviewOutput> &innerPreviewOutput);
+    explicit Camera_PreviewOutput(OHOS::sptr<OHOS::CameraStandard::PreviewOutput> &innerPreviewOutput);
     ~Camera_PreviewOutput();
 
     Camera_ErrorCode RegisterCallback(PreviewOutput_Callbacks* callback);

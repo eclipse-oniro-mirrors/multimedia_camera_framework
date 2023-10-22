@@ -22,7 +22,7 @@
 
 struct Camera_VideoOutput {
 public:
-    Camera_VideoOutput(OHOS::sptr<OHOS::CameraStandard::VideoOutput> &innerVideoOutput);
+    explicit Camera_VideoOutput(OHOS::sptr<OHOS::CameraStandard::VideoOutput> &innerVideoOutput);
     ~Camera_VideoOutput();
 
     Camera_ErrorCode RegisterCallback(VideoOutput_Callbacks* callback);

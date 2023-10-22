@@ -23,8 +23,8 @@ using namespace OHOS::CameraStandard;
 
 class InnerCaptureSessionCallback : public SessionCallback, public FocusCallback {
 public:
-    InnerCaptureSessionCallback(Camera_CaptureSession* captureSession, CaptureSession_Callbacks* callback) :
-        captureSession_(captureSession), callback_(*callback) {}
+    InnerCaptureSessionCallback(Camera_CaptureSession* captureSession, CaptureSession_Callbacks* callback)
+        : captureSession_(captureSession), callback_(*callback) {}
     ~InnerCaptureSessionCallback() = default;
 
     void OnFocusState(FocusState state) override

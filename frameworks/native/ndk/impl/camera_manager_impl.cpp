@@ -25,8 +25,8 @@ using namespace OHOS::CameraStandard;
 
 class InnerCameraManagerCallback : public CameraManagerCallback {
 public:
-    InnerCameraManagerCallback(Camera_Manager* cameraManager, CameraManager_Callbacks* callback) :
-        cameraManager_(cameraManager), callback_(*callback) {}
+    InnerCameraManagerCallback(Camera_Manager* cameraManager, CameraManager_Callbacks* callback)
+        : cameraManager_(cameraManager), callback_(*callback) {}
     ~InnerCameraManagerCallback() = default;
 
     void OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const override

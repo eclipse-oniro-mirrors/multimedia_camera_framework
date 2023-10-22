@@ -23,8 +23,8 @@ using namespace OHOS::CameraStandard;
 
 class InnerPhotoOutputCallback : public PhotoStateCallback {
 public:
-    InnerPhotoOutputCallback(Camera_PhotoOutput* photoOutput, PhotoOutput_Callbacks* callback) :
-        photoOutput_(photoOutput), callback_(*callback) {}
+    InnerPhotoOutputCallback(Camera_PhotoOutput* photoOutput, PhotoOutput_Callbacks* callback)
+        : photoOutput_(photoOutput), callback_(*callback) {}
     ~InnerPhotoOutputCallback() = default;
 
 // need fix
@@ -110,11 +110,9 @@ Camera_ErrorCode Camera_PhotoOutput::Capture_WithCaptureSetting(Camera_PhotoCapt
 {
     std::shared_ptr<PhotoCaptureSetting> capSettings = make_shared<PhotoCaptureSetting>();
 
-    capSettings->SetQuality(
-            static_cast<PhotoCaptureSetting::QualityLevel>(setting.quality));
+    capSettings->SetQuality(static_cast<PhotoCaptureSetting::QualityLevel>(setting.quality));
 
-    capSettings->SetRotation(
-            static_cast<PhotoCaptureSetting::RotationConfig>(setting.rotation));
+    capSettings->SetRotation(static_cast<PhotoCaptureSetting::RotationConfig>(setting.rotation));
 
     if (setting.location != nullptr) {
         std::unique_ptr<Location> location = std::make_unique<Location>();
@@ -148,4 +146,3 @@ sptr<PhotoOutput> Camera_PhotoOutput::GetInnerPhotoOutput()
 {
     return innerPhotoOutput_;
 }
-

@@ -23,8 +23,8 @@ using namespace OHOS::CameraStandard;
 
 class InnerPreviewOutputCallback : public PreviewStateCallback {
 public:
-    InnerPreviewOutputCallback(Camera_PreviewOutput* previewOutput, PreviewOutput_Callbacks* callback) :
-        previewOutput_(previewOutput), callback_(*callback) {}
+    InnerPreviewOutputCallback(Camera_PreviewOutput* previewOutput, PreviewOutput_Callbacks* callback)
+        : previewOutput_(previewOutput), callback_(*callback) {}
     ~InnerPreviewOutputCallback() = default;
 
     void OnFrameStarted() const override

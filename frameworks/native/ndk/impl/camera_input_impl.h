@@ -22,7 +22,7 @@
 
 struct Camera_Input {
 public:
-    Camera_Input(OHOS::sptr<OHOS::CameraStandard::CameraInput> &innerCameraInput);
+    explicit Camera_Input(OHOS::sptr<OHOS::CameraStandard::CameraInput> &innerCameraInput);
     ~Camera_Input();
 
     Camera_ErrorCode RegisterCallback(CameraInput_Callbacks* callback);

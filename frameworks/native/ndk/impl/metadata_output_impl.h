@@ -22,7 +22,7 @@
 
 struct Camera_MetadataOutput {
 public:
-    Camera_MetadataOutput(OHOS::sptr<OHOS::CameraStandard::MetadataOutput> &innerMetadataOutput);
+    explicit Camera_MetadataOutput(OHOS::sptr<OHOS::CameraStandard::MetadataOutput> &innerMetadataOutput);
     ~Camera_MetadataOutput();
 
     Camera_ErrorCode RegisterCallback(MetadataOutput_Callbacks* callback);

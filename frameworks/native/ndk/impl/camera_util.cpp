@@ -14,9 +14,9 @@
  */
 
 #include "kits/native/include/camera/camera.h"
-#include "camera_util.h"
 #include "camera_log.h"
 #include "camera_error_code.h"
+#include "camera_util.h"
 
 namespace OHOS {
 namespace CameraStandard {

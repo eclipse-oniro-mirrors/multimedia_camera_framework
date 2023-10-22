@@ -22,6 +22,9 @@
 #include <thread>
 #include <cstdio>
 #include <fcntl.h>
+#include <map>
+#include <string>
+#include <vector>
 #include "napi/native_api.h"
 #include "iostream"
 #include "mutex"
@@ -32,11 +35,48 @@
 #include "multimedia/camera_framework/capture_session.h"
 #include "multimedia/camera_framework/preview_output.h"
 #include "multimedia/camera_framework/photo_output.h"
-#include <map>
-#include <string>
-#include <vector>
+
 
 class NDKCamera {
+public:
+    ~NDKCamera();
+    static NDKCamera* GetInstance(char *str)
+    {
+        if (ndkCamera_ == nullptr) {
+            std::lock_guard<std::mutex> lock(mtx_);
+            if (ndkCamera_ == nullptr) {
+                ndkCamera_ = new NDKCamera(str);
+            }
+        }
+        return ndkCamera_;
+    }
+    
+    static void Destroy()
+    {
+        if (ndkCamera_ != nullptr) {
+            delete ndkCamera_;
+            ndkCamera_ = nullptr;
+        }
+    }
+    
+    void EnumerateCamera(void);
+    Camera_ErrorCode CreateCameraInput(void);
+    Camera_ErrorCode CameraInputOpen(void);
+    Camera_ErrorCode CameraInputClose(void);
+    Camera_ErrorCode CameraInputRelease(void);
+    Camera_ErrorCode GetSupportedCameras(void);
+    Camera_ErrorCode GetSupportedOutputCapability(void);
+    Camera_ErrorCode CreatePreviewOutput(void);
+    Camera_ErrorCode CreatePhotoOutput(void);
+    Camera_ErrorCode CreateMetadataOutput(void);
+    Camera_ErrorCode IsCameraMuted(void);
+    Camera_ErrorCode PreviewOutputStop(void);
+    Camera_ErrorCode PreviewOutputRelease(void);
+    Camera_ErrorCode PhotoOutputRelease(void);
+    Camera_ErrorCode HasFlashFn(uint32_t mode);
+    Camera_ErrorCode setZoomRatioFn(uint32_t zoomRatio);
+    Camera_ErrorCode SessionFlowFn();
+
 private:
     NDKCamera(char *str);
     NDKCamera(const NDKCamera&) = delete;
@@ -66,42 +106,6 @@ private:
     static NDKCamera* ndkCamera_;
     static std::mutex mtx_;
     volatile bool valid_;
-public:
-    ~NDKCamera();
-    static NDKCamera* GetInstance(char *str) {
-        if (ndkCamera_ == nullptr) {
-            std::lock_guard<std::mutex> lock(mtx_);
-            if (ndkCamera_ == nullptr) {
-                ndkCamera_ = new NDKCamera(str);
-            }
-        }
-        return ndkCamera_;
-    }
-    
-    static void Destroy() {
-        if (ndkCamera_ != nullptr) {
-            delete ndkCamera_;
-            ndkCamera_ = nullptr;
-        }
-    }
-    
-    void EnumerateCamera(void);
-    Camera_ErrorCode CreateCameraInput(void);
-    Camera_ErrorCode CameraInputOpen(void);
-    Camera_ErrorCode CameraInputClose(void);
-    Camera_ErrorCode CameraInputRelease(void);
-    Camera_ErrorCode GetSupportedCameras(void);
-    Camera_ErrorCode GetSupportedOutputCapability(void);
-    Camera_ErrorCode CreatePreviewOutput(void);
-    Camera_ErrorCode CreatePhotoOutput(void);
-    Camera_ErrorCode CreateMetadataOutput(void);
-    Camera_ErrorCode IsCameraMuted(void);
-    Camera_ErrorCode PreviewOutputStop(void);
-    Camera_ErrorCode PreviewOutputRelease(void);
-    Camera_ErrorCode PhotoOutputRelease(void);
-    Camera_ErrorCode HasFlashFn(uint32_t mode);
-    Camera_ErrorCode setZoomRatioFn(uint32_t zoomRatio);
-    Camera_ErrorCode SessionFlowFn();
 };
 
 #endif  // CAMERA_NATIVE_CAMERA_H

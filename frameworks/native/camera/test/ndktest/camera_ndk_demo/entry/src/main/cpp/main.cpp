@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 
+#include <js_native_api.h>
+#include <multimedia/camera_framework/camera.h>
 #include "napi/native_api.h"
 #include "camera_manager.h"
 #include "hilog/log.h"
-#include <js_native_api.h>
-#include <multimedia/camera_framework/camera.h>
 
 #define LOG_TAG "zssndkdemo"
 #define LOG_DOMAIN 0x3200

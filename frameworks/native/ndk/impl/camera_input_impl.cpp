@@ -23,8 +23,8 @@ using namespace OHOS::CameraStandard;
 
 class InnerCameraInputCallback : public ErrorCallback {
 public:
-    InnerCameraInputCallback(Camera_Input* cameraInput, CameraInput_Callbacks* callback) :
-        cameraInput_(cameraInput), callback_(*callback) {}
+    InnerCameraInputCallback(Camera_Input* cameraInput, CameraInput_Callbacks* callback)
+        : cameraInput_(cameraInput), callback_(*callback) {}
     ~InnerCameraInputCallback() = default;
     void OnError(const int32_t errorType, const int32_t errorMsg) const override
     {

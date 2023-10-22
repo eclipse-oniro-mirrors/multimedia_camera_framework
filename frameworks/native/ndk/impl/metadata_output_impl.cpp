@@ -23,8 +23,8 @@ using namespace OHOS::CameraStandard;
 
 class InnerMetadataOutputCallback : public MetadataStateCallback {
 public:
-    InnerMetadataOutputCallback(Camera_MetadataOutput* metadataOutput, MetadataOutput_Callbacks* callback) :
-        metadataOutput_(metadataOutput), callback_(*callback) {}
+    InnerMetadataOutputCallback(Camera_MetadataOutput* metadataOutput, MetadataOutput_Callbacks* callback)
+        : metadataOutput_(metadataOutput), callback_(*callback) {}
     ~InnerMetadataOutputCallback() = default;
 
     void OnError(const int32_t errorCode) const override
@@ -134,4 +134,3 @@ sptr<MetadataOutput> Camera_MetadataOutput::GetInnerMetadataOutput()
 {
     return innerMetadataOutput_;
 }
-

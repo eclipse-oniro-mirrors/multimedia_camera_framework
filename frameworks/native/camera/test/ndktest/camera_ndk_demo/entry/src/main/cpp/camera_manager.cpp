@@ -13,12 +13,7 @@
  * limitations under the License.
  */
 
-#include "./camera_manager.h"
-#include <unistd.h>
-
-#include <cinttypes>
-#include <queue>
-#include <utility>
+#include "camera_manager.h"
 
 #define LOG_TAG "zssndkdemo"
 #define LOG_DOMAIN 0x3200

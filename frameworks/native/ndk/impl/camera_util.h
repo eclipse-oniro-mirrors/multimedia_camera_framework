@@ -16,7 +16,7 @@
 #ifndef OHOS_CAMERA_CAMERA_UTIL_H
 #define OHOS_CAMERA_CAMERA_UTIL_H
 
-#include <limits.h>
+#include <climits>
 #include "display_type.h"
 #include "kits/native/include/camera/camera.h"
 

@@ -27,88 +27,88 @@
 
 struct Camera_CaptureSession {
 public:
-    Camera_CaptureSession(OHOS::sptr<OHOS::CameraStandard::CaptureSession> &innerCaptureSession);
+    explicit Camera_CaptureSession(OHOS::sptr<OHOS::CameraStandard::CaptureSession> &innerCaptureSession);
     ~Camera_CaptureSession();
 
-Camera_ErrorCode RegisterCallback(CaptureSession_Callbacks* callback);
+    Camera_ErrorCode RegisterCallback(CaptureSession_Callbacks* callback);
 
-Camera_ErrorCode UnregisterCallback(CaptureSession_Callbacks* callback);
+    Camera_ErrorCode UnregisterCallback(CaptureSession_Callbacks* callback);
 
-Camera_ErrorCode BeginConfig();
+    Camera_ErrorCode BeginConfig();
 
-Camera_ErrorCode CommitConfig();
+    Camera_ErrorCode CommitConfig();
 
-Camera_ErrorCode AddInput(Camera_Input* cameraInput);
+    Camera_ErrorCode AddInput(Camera_Input* cameraInput);
 
-Camera_ErrorCode RemoveInput(Camera_Input* cameraInput);
+    Camera_ErrorCode RemoveInput(Camera_Input* cameraInput);
 
-Camera_ErrorCode AddPreviewOutput(Camera_PreviewOutput* previewOutput);
+    Camera_ErrorCode AddPreviewOutput(Camera_PreviewOutput* previewOutput);
 
-Camera_ErrorCode RemovePreviewOutput(Camera_PreviewOutput* previewOutput);
+    Camera_ErrorCode RemovePreviewOutput(Camera_PreviewOutput* previewOutput);
 
-Camera_ErrorCode AddPhotoOutput(Camera_PhotoOutput* photoOutput);
+    Camera_ErrorCode AddPhotoOutput(Camera_PhotoOutput* photoOutput);
 
-Camera_ErrorCode RemovePhotoOutput(Camera_PhotoOutput* photoOutput);
+    Camera_ErrorCode RemovePhotoOutput(Camera_PhotoOutput* photoOutput);
 
-Camera_ErrorCode AddVideoOutput(Camera_VideoOutput* videoOutput);
+    Camera_ErrorCode AddVideoOutput(Camera_VideoOutput* videoOutput);
 
-Camera_ErrorCode RemoveVideoOutput(Camera_VideoOutput* videoOutput);
+    Camera_ErrorCode RemoveVideoOutput(Camera_VideoOutput* videoOutput);
 
-Camera_ErrorCode AddMetaDataOutput(Camera_MetadataOutput* metadataOutput);
+    Camera_ErrorCode AddMetaDataOutput(Camera_MetadataOutput* metadataOutput);
 
-Camera_ErrorCode RemoveMetaDataOutput(Camera_MetadataOutput* metadataOutput);
+    Camera_ErrorCode RemoveMetaDataOutput(Camera_MetadataOutput* metadataOutput);
 
-Camera_ErrorCode IsVideoStabilizationModeSupported(Camera_VideoStabilizationMode mode, bool* isSupported);
+    Camera_ErrorCode IsVideoStabilizationModeSupported(Camera_VideoStabilizationMode mode, bool* isSupported);
 
-Camera_ErrorCode GetVideoStabilizationMode(Camera_VideoStabilizationMode* mode);
+    Camera_ErrorCode GetVideoStabilizationMode(Camera_VideoStabilizationMode* mode);
 
-Camera_ErrorCode SetVideoStabilizationMode(Camera_VideoStabilizationMode mode);
+    Camera_ErrorCode SetVideoStabilizationMode(Camera_VideoStabilizationMode mode);
 
-Camera_ErrorCode GetZoomRatioRange(float* minZoom, float* maxZoom);
+    Camera_ErrorCode GetZoomRatioRange(float* minZoom, float* maxZoom);
 
-Camera_ErrorCode GetZoomRatio(float* zoom);
+    Camera_ErrorCode GetZoomRatio(float* zoom);
 
-Camera_ErrorCode SetZoomRatio(float zoom);
+    Camera_ErrorCode SetZoomRatio(float zoom);
 
-Camera_ErrorCode IsFocusModeSupported(Camera_FocusMode focusMode, bool* isSupported);
+    Camera_ErrorCode IsFocusModeSupported(Camera_FocusMode focusMode, bool* isSupported);
 
-Camera_ErrorCode GetFocusMode(Camera_FocusMode* focusMode);
+    Camera_ErrorCode GetFocusMode(Camera_FocusMode* focusMode);
 
-Camera_ErrorCode SetFocusMode(Camera_FocusMode focusMode);
+    Camera_ErrorCode SetFocusMode(Camera_FocusMode focusMode);
 
-Camera_ErrorCode SetFocusPoint(Camera_Point focusPoint);
+    Camera_ErrorCode SetFocusPoint(Camera_Point focusPoint);
 
-Camera_ErrorCode GetFocusPoint(Camera_Point* focusPoint);
+    Camera_ErrorCode GetFocusPoint(Camera_Point* focusPoint);
 
-Camera_ErrorCode HasFlash(bool* hasFlash);
+    Camera_ErrorCode HasFlash(bool* hasFlash);
 
-Camera_ErrorCode IsFlashModeSupported(Camera_FlashMode flashMode, bool* isSupported);
+    Camera_ErrorCode IsFlashModeSupported(Camera_FlashMode flashMode, bool* isSupported);
 
-Camera_ErrorCode GetFlashMode(Camera_FlashMode* flashMode);
+    Camera_ErrorCode GetFlashMode(Camera_FlashMode* flashMode);
 
-Camera_ErrorCode SetFlashMode(Camera_FlashMode flashMode);
+    Camera_ErrorCode SetFlashMode(Camera_FlashMode flashMode);
 
-Camera_ErrorCode IsExposureModeSupported(Camera_ExposureMode exposureMode, bool* isSupported);
+    Camera_ErrorCode IsExposureModeSupported(Camera_ExposureMode exposureMode, bool* isSupported);
 
-Camera_ErrorCode GetExposureMode(Camera_ExposureMode* exposureMode);
+    Camera_ErrorCode GetExposureMode(Camera_ExposureMode* exposureMode);
 
-Camera_ErrorCode SetExposureMode(Camera_ExposureMode exposureMode);
+    Camera_ErrorCode SetExposureMode(Camera_ExposureMode exposureMode);
 
-Camera_ErrorCode GetMeteringPoint(Camera_Point* point);
+    Camera_ErrorCode GetMeteringPoint(Camera_Point* point);
 
-Camera_ErrorCode SetMeteringPoint(Camera_Point point);
+    Camera_ErrorCode SetMeteringPoint(Camera_Point point);
 
-Camera_ErrorCode GetExposureBiasRange(float* minExposureBias, float* maxExposureBias, float* step);
+    Camera_ErrorCode GetExposureBiasRange(float* minExposureBias, float* maxExposureBias, float* step);
 
-Camera_ErrorCode SetExposureBias(float exposureBias);
+    Camera_ErrorCode SetExposureBias(float exposureBias);
 
-Camera_ErrorCode GetExposureBias(float* exposureBias);
+    Camera_ErrorCode GetExposureBias(float* exposureBias);
 
-Camera_ErrorCode Start();
+    Camera_ErrorCode Start();
 
-Camera_ErrorCode Stop();
+    Camera_ErrorCode Stop();
 
-Camera_ErrorCode Release();
+    Camera_ErrorCode Release();
 
 private:
     OHOS::sptr<OHOS::CameraStandard::CaptureSession> innerCaptureSession_;
