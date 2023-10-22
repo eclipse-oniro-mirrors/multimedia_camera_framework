@@ -73,7 +73,8 @@ Camera_ErrorCode OH_CameraManager_UnregisterCallback(Camera_Manager* cameraManag
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CameraManager_GetSupportedCameras(Camera_Manager* cameraManager, Camera_Device** cameras, uint32_t* size);
+Camera_ErrorCode OH_CameraManager_GetSupportedCameras(Camera_Manager* cameraManager,
+    Camera_Device** cameras, uint32_t* size);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -86,7 +87,8 @@ Camera_ErrorCode OH_CameraManager_GetSupportedCameras(Camera_Manager* cameraMana
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CameraManager_GetSupportedCameraOutputCapability(Camera_Manager* cameraManager, const Camera_Device* camera, Camera_OutputCapability** cameraOutputCapability);
+Camera_ErrorCode OH_CameraManager_GetSupportedCameraOutputCapability(Camera_Manager* cameraManager,
+    const Camera_Device* camera, Camera_OutputCapability** cameraOutputCapability);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -112,7 +114,8 @@ Camera_ErrorCode OH_CameraManager_IsCameraMuted(Camera_Manager* cameraManager, b
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CameraManager_CreateCaptureSession(Camera_Manager* cameraManager, Camera_CaptureSession** captureSession);
+Camera_ErrorCode OH_CameraManager_CreateCaptureSession(Camera_Manager* cameraManager,
+    Camera_CaptureSession** captureSession);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -125,7 +128,8 @@ Camera_ErrorCode OH_CameraManager_CreateCaptureSession(Camera_Manager* cameraMan
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CameraManager_CreateCameraInput(Camera_Manager* cameraManager, const Camera_Device* camera, Camera_Input** cameraInput);
+Camera_ErrorCode OH_CameraManager_CreateCameraInput(Camera_Manager* cameraManager,
+    const Camera_Device* camera, Camera_Input** cameraInput);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -138,7 +142,8 @@ Camera_ErrorCode OH_CameraManager_CreateCameraInput(Camera_Manager* cameraManage
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CameraManager_CreateCameraInput_WithPositionAndType(Camera_Manager* cameraManager, Camera_Position position, Camera_Type type, Camera_Input** cameraInput);
+Camera_ErrorCode OH_CameraManager_CreateCameraInput_WithPositionAndType(Camera_Manager* cameraManager,
+    Camera_Position position, Camera_Type type, Camera_Input** cameraInput);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -151,7 +156,8 @@ Camera_ErrorCode OH_CameraManager_CreateCameraInput_WithPositionAndType(Camera_M
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CameraManager_CreatePreviewOutput(Camera_Manager* cameraManager, const Camera_Profile* profile, const char* surfaceId, Camera_PreviewOutput** previewOutput);
+Camera_ErrorCode OH_CameraManager_CreatePreviewOutput(Camera_Manager* cameraManager, const Camera_Profile* profile,
+    const char* surfaceId, Camera_PreviewOutput** previewOutput);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -164,7 +170,8 @@ Camera_ErrorCode OH_CameraManager_CreatePreviewOutput(Camera_Manager* cameraMana
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CameraManager_CreatePhotoOutput(Camera_Manager* cameraManager, const Camera_Profile* profile, const char* surfaceId, Camera_PhotoOutput** photoOutput);
+Camera_ErrorCode OH_CameraManager_CreatePhotoOutput(Camera_Manager* cameraManager, const Camera_Profile* profile,
+    const char* surfaceId, Camera_PhotoOutput** photoOutput);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -177,7 +184,8 @@ Camera_ErrorCode OH_CameraManager_CreatePhotoOutput(Camera_Manager* cameraManage
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CameraManager_CreateVideoOutput(Camera_Manager* cameraManager, const Camera_VideoProfile* profile, const char* surfaceId, Camera_VideoOutput** videoOutput);
+Camera_ErrorCode OH_CameraManager_CreateVideoOutput(Camera_Manager* cameraManager, const Camera_VideoProfile* profile,
+    const char* surfaceId, Camera_VideoOutput** videoOutput);
 
 /**
  * @brief Acquire the video buffer for the av screen capture
@@ -190,7 +198,8 @@ Camera_ErrorCode OH_CameraManager_CreateVideoOutput(Camera_Manager* cameraManage
  * @since 10
  * @version 1.0
  */
-Camera_ErrorCode OH_CameraManager_CreateMetadataOutput(Camera_Manager* cameraManager, const Camera_MetadataObjectType* profile, Camera_MetadataOutput** metadataOutput);
+Camera_ErrorCode OH_CameraManager_CreateMetadataOutput(Camera_Manager* cameraManager,
+    const Camera_MetadataObjectType* profile, Camera_MetadataOutput** metadataOutput);
 
 #ifdef __cplusplus
 }

@@ -27,7 +27,7 @@ NDKCamera* NDKCamera::ndkCamera_ = nullptr;
 std::mutex NDKCamera::mtx_;
 
 NDKCamera::NDKCamera(char* str)
-    : previewSurfaceId_(str), cameras_(nullptr), 
+    : previewSurfaceId_(str), cameras_(nullptr),
       cameraOutputCapability_(nullptr), cameraInput_(nullptr),
       captureSession_(nullptr),size_(0),
       isCameraMuted_(nullptr), profile_(nullptr),
@@ -49,14 +49,14 @@ NDKCamera::NDKCamera(char* str)
     GetSupportedCameras();
     GetSupportedOutputCapability();
     CreatePreviewOutput();
-    //CreatePhotoOutput();
     CreateCameraInput();
     CameraInputOpen();
     SessionFlowFn();
     valid_ = true;
 }
 
-NDKCamera::~NDKCamera() {
+NDKCamera::~NDKCamera()
+{
     valid_ = false;
 
     Camera_ErrorCode ret = OH_CaptureSession_Release(captureSession_);
@@ -65,7 +65,7 @@ NDKCamera::~NDKCamera() {
     }
 
     if (cameraManager_) {
-      cameraManager_ = nullptr;
+        cameraManager_ = nullptr;
     }
     
     PreviewOutputStop();
@@ -82,7 +82,7 @@ Camera_ErrorCode NDKCamera::HasFlashFn(uint32_t mode)
     if (captureSession_ == nullptr || ret != CAMERA_OK) {
         OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_HasFlash failed.");
     }
-    if (hasFlash){
+    if (hasFlash) {
         OH_LOG_ERROR(LOG_APP, "hasFlash success-----");
     } else {
         OH_LOG_ERROR(LOG_APP, "hasFlash fail-----");
@@ -94,7 +94,7 @@ Camera_ErrorCode NDKCamera::HasFlashFn(uint32_t mode)
     if (ret != CAMERA_OK) {
         OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_IsFlashModeSupported failed.");
     }
-    if (isSupported){
+    if (isSupported) {
         OH_LOG_ERROR(LOG_APP, "isFlashModeSupported success-----");
     } else {
         OH_LOG_ERROR(LOG_APP, "isFlashModeSupported fail-----");
@@ -148,11 +148,9 @@ Camera_ErrorCode NDKCamera::setZoomRatioFn(uint32_t zoomRatio)
     return ret;
 }
 
-Camera_ErrorCode NDKCamera::SessionFlowFn() {
+Camera_ErrorCode NDKCamera::SessionFlowFn()
+{
     OH_LOG_ERROR(LOG_APP, "Start SessionFlowFn IN.");
-    //this.captureSession = await this.cameraManager.createCaptureSession()
-    // 监听拍照会话的错误事件
-    //await this.onCaptureSessionErrorChange()
     // 开始配置会话
     OH_LOG_ERROR(LOG_APP, "session beginConfig.");
     Camera_ErrorCode ret =  OH_CaptureSession_BeginConfig(captureSession_);
@@ -167,7 +165,6 @@ Camera_ErrorCode NDKCamera::SessionFlowFn() {
 
     // 把photoOutput加入到会话
     OH_LOG_ERROR(LOG_APP, "session add Photo Output.");
-    //ret = OH_CaptureSession_AddPhotoOutput(captureSession_, photoOutput_);
 
     // 提交配置信息
     OH_LOG_ERROR(LOG_APP, "session commitConfig");
@@ -180,7 +177,8 @@ Camera_ErrorCode NDKCamera::SessionFlowFn() {
     return ret;
 }
 
-Camera_ErrorCode NDKCamera::CreateCameraInput(void) {
+Camera_ErrorCode NDKCamera::CreateCameraInput(void)
+{
     ret_ = OH_CameraManager_CreateCameraInput(cameraManager_, cameras_, &cameraInput_);
     if (cameraInput_ == nullptr || ret_ != CAMERA_OK) {
         OH_LOG_ERROR(LOG_APP, "CreateCameraInput failed.");
@@ -189,7 +187,8 @@ Camera_ErrorCode NDKCamera::CreateCameraInput(void) {
     return ret_;
 }
 
-Camera_ErrorCode NDKCamera::CameraInputOpen(void) {
+Camera_ErrorCode NDKCamera::CameraInputOpen(void)
+{
     ret_ = OH_CameraInput_Open(cameraInput_);
     if (ret_ != CAMERA_OK) {
         OH_LOG_ERROR(LOG_APP, "CameraInput_Open failed.");
@@ -210,13 +209,14 @@ Camera_ErrorCode NDKCamera::CameraInputClose(void) {
 Camera_ErrorCode NDKCamera::CameraInputRelease(void) {
     ret_ = OH_CameraInput_Release(ndkCamera_->cameraInput_);
     if (ret_ != CAMERA_OK) {
-      OH_LOG_ERROR(LOG_APP, "CameraInput_Release failed.");
+        OH_LOG_ERROR(LOG_APP, "CameraInput_Release failed.");
         return CAMERA_INVALID_ARGUMENT;
     }
     return ret_;
 }
 
-Camera_ErrorCode NDKCamera::GetSupportedCameras(void) {
+Camera_ErrorCode NDKCamera::GetSupportedCameras(void)
+{
     ret_ = OH_CameraManager_GetSupportedCameras(cameraManager_, &cameras_, &size_);
     if (cameras_ == nullptr || &size_ == nullptr || ret_ != CAMERA_OK) {
         OH_LOG_ERROR(LOG_APP, "Get supported cameras failed.");
@@ -225,7 +225,8 @@ Camera_ErrorCode NDKCamera::GetSupportedCameras(void) {
     return ret_;
 }
 
-Camera_ErrorCode NDKCamera::GetSupportedOutputCapability(void) {
+Camera_ErrorCode NDKCamera::GetSupportedOutputCapability(void)
+{
     ret_ = OH_CameraManager_GetSupportedCameraOutputCapability(cameraManager_, cameras_, &cameraOutputCapability_);
     if (cameraOutputCapability_ == nullptr || ret_ != CAMERA_OK) {
         OH_LOG_ERROR(LOG_APP, "GetSupportedCameraOutputCapability failed.");
@@ -234,8 +235,8 @@ Camera_ErrorCode NDKCamera::GetSupportedOutputCapability(void) {
     return ret_;
 }
 
-Camera_ErrorCode NDKCamera::CreatePreviewOutput(void) {
-//    uint32_t preSize = cameraOutputCapability_->previewProfilesSize;
+Camera_ErrorCode NDKCamera::CreatePreviewOutput(void)
+{
     profile_ = cameraOutputCapability_->previewProfiles[0];
     if (profile_ == nullptr) {
         OH_LOG_ERROR(LOG_APP, "Get previewProfiles failed.");
@@ -249,8 +250,8 @@ Camera_ErrorCode NDKCamera::CreatePreviewOutput(void) {
     return ret_;
 }
 
-Camera_ErrorCode NDKCamera::CreatePhotoOutput(void) {
-//    uint32_t phoSize = cameraOutputCapability_->photoProfilesSize;
+Camera_ErrorCode NDKCamera::CreatePhotoOutput(void)
+{
     profile_ = cameraOutputCapability_->photoProfiles[0];
     if (profile_ == nullptr) {
         OH_LOG_ERROR(LOG_APP, "Get photoProfiles failed.");
@@ -264,8 +265,8 @@ Camera_ErrorCode NDKCamera::CreatePhotoOutput(void) {
     return ret_;
 }
 
-Camera_ErrorCode NDKCamera::CreateMetadataOutput(void) {
-//    uint32_t metaSize = cameraOutputCapability_->metadataProfilesSize;
+Camera_ErrorCode NDKCamera::CreateMetadataOutput(void)
+{
     metaDataObjectType_ = cameraOutputCapability_->supportedMetadataObjectTypes[2];
     if (metaDataObjectType_ == nullptr) {
         OH_LOG_ERROR(LOG_APP, "Get metaDataObjectType failed.");
@@ -279,7 +280,8 @@ Camera_ErrorCode NDKCamera::CreateMetadataOutput(void) {
     return ret_;
 }
 
-Camera_ErrorCode NDKCamera::IsCameraMuted(void) {
+Camera_ErrorCode NDKCamera::IsCameraMuted(void)
+{
     ret_ = OH_CameraManager_IsCameraMuted(cameraManager_, isCameraMuted_);
     if (isCameraMuted_ == nullptr || ret_ != CAMERA_OK) {
         OH_LOG_ERROR(LOG_APP, "IsCameraMuted failed.");
@@ -288,7 +290,8 @@ Camera_ErrorCode NDKCamera::IsCameraMuted(void) {
     return ret_;
 }
 
-Camera_ErrorCode NDKCamera::PreviewOutputStop(void) {
+Camera_ErrorCode NDKCamera::PreviewOutputStop(void)
+{
     ret_ = OH_PreviewOutput_Stop(previewOutput_);
     if (ret_ != CAMERA_OK) {
         OH_LOG_ERROR(LOG_APP, "PreviewOutputStop failed.");
@@ -297,7 +300,8 @@ Camera_ErrorCode NDKCamera::PreviewOutputStop(void) {
     return ret_;
 }
 
-Camera_ErrorCode NDKCamera::PreviewOutputRelease(void) {
+Camera_ErrorCode NDKCamera::PreviewOutputRelease(void)
+{
     ret_ = OH_PreviewOutput_Release(previewOutput_);
     if (ret_ != CAMERA_OK) {
         OH_LOG_ERROR(LOG_APP, "PreviewOutputRelease failed.");
@@ -306,7 +310,8 @@ Camera_ErrorCode NDKCamera::PreviewOutputRelease(void) {
     return ret_;
 }
 
-Camera_ErrorCode NDKCamera::PhotoOutputRelease(void) {
+Camera_ErrorCode NDKCamera::PhotoOutputRelease(void)
+{
     ret_ = OH_PhotoOutput_Release(photoOutput_);
     if (ret_ != CAMERA_OK) {
         OH_LOG_ERROR(LOG_APP, "PhotoOutputRelease failed.");

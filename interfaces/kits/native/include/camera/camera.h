@@ -49,7 +49,7 @@ typedef enum Camera_ErrorCode {
     /**
      * Camera operation was not allowed.
      */
-    CAMERA_OPERATION_NOT_ALLOWED = 7400102,                                                                                                          
+    CAMERA_OPERATION_NOT_ALLOWED = 7400102,
     /**
      * Camera session not config.
      */
@@ -106,12 +106,12 @@ typedef enum Camera_Status {
     CAMERA_STATUS_DISAPPEAR = 1,
 
     /**
-     * Camera operation was not allowed. 
+     * Camera operation was not allowed.
      */
     CAMERA_STATUS_AVAILABLE = 2,
 
     /**
-     * Camera operation was not allowed. 
+     * Camera operation was not allowed.
      */
     CAMERA_STATUS_UNAVAILABLE = 3
 } Camera_Status;
@@ -131,7 +131,7 @@ typedef enum Camera_Position {
     CAMERA_POSITION_BACK = 1,
 
     /**
-     * Camera operation was not allowed. 
+     * Camera operation was not allowed.
      */
     CAMERA_POSITION_FRONT = 2
 } Camera_Position;
@@ -151,17 +151,17 @@ typedef enum Camera_Type {
     CAMERA_TYPE_WIDE_ANGLE = 1,
 
     /**
-     * Camera operation was not allowed. 
+     * Camera operation was not allowed.
      */
     CAMERA_TYPE_ULTRA_WIDE = 2,
 
     /**
-     * Camera operation was not allowed. 
+     * Camera operation was not allowed.
      */
     CAMERA_TYPE_TELEPHOTO = 3,
 
     /**
-     * Camera operation was not allowed. 
+     * Camera operation was not allowed.
      */
     CAMERA_TYPE_TRUE_DEPTH = 4
 } Camera_Type;
@@ -181,7 +181,7 @@ typedef enum Camera_Connection {
     CAMERA_CONNECTION_USB_PLUGIN = 1,
 
     /**
-     * Camera operation was not allowed. 
+     * Camera operation was not allowed.
      */
     CAMERA_CONNECTION_REMOTE = 2
 } Camera_Connection;
@@ -201,7 +201,7 @@ typedef enum Camera_Format {
     CAMERA_FORMAT_YUV_420_SP = 1003,
 
     /**
-     * Camera operation was not allowed. 
+     * Camera operation was not allowed.
      */
     CAMERA_FORMAT_JPEG = 2000
 } Camera_Format;
@@ -221,12 +221,12 @@ typedef enum Camera_FlashMode {
     FLASH_MODE_OPEN = 1,
 
     /**
-     * Camera operation was not allowed. 
+     * Camera operation was not allowed.
      */
     FLASH_MODE_AUTO = 2,
 
     /**
-     * Camera operation was not allowed. 
+     * Camera operation was not allowed.
      */
     FLASH_MODE_ALWAYS_OPEN = 3
 } Camera_FlashMode;
@@ -246,7 +246,7 @@ typedef enum Camera_ExposureMode {
     EXPOSURE_MODE_AUTO = 1,
 
     /**
-     * Camera operation was not allowed. 
+     * Camera operation was not allowed.
      */
     EXPOSURE_MODE_CONTINUOUS_AUTO = 2
 } Camera_ExposureMode;
@@ -266,12 +266,12 @@ typedef enum Camera_FocusMode {
     FOCUS_MODE_CONTINUOUS_AUTO = 1,
 
     /**
-     * Camera operation was not allowed. 
+     * Camera operation was not allowed.
      */
     FOCUS_MODE_AUTO = 2,
 
     /**
-     * Camera operation was not allowed. 
+     * Camera operation was not allowed.
      */
     FOCUS_MODE_LOCKED = 3
 } Camera_FocusMode;
@@ -291,7 +291,7 @@ typedef enum Camera_FocusState {
     FOCUS_STATE_FOCUSED = 1,
 
     /**
-     * Camera operation was not allowed. 
+     * Camera operation was not allowed.
      */
     FOCUS_STATE_UNFOCUSED = 2
 } Camera_FocusState;
@@ -311,17 +311,17 @@ typedef enum Camera_VideoStabilizationMode {
     STABILIZATION_MODE_LOW = 1,
 
     /**
-     * Camera operation was not allowed. 
+     * Camera operation was not allowed.
      */
     STABILIZATION_MODE_MIDDLE = 2,
 
     /**
-     * Camera operation was not allowed. 
+     * Camera operation was not allowed.
      */
     STABILIZATION_MODE_HIGH = 3,
 
     /**
-     * Camera operation was not allowed. 
+     * Camera operation was not allowed.
      */
     STABILIZATION_MODE_AUTO = 4
 } Camera_VideoStabilizationMode;
@@ -341,12 +341,12 @@ typedef enum Camera_ImageRotation {
     IAMGE_ROTATION_90 = 90,
 
     /**
-     * Camera operation was not allowed. 
+     * Camera operation was not allowed.
      */
     IAMGE_ROTATION_180 = 180,
 
     /**
-     * Camera operation was not allowed. 
+     * Camera operation was not allowed.
      */
     IAMGE_ROTATION_270 = 270
 } Camera_ImageRotation;
@@ -366,7 +366,7 @@ typedef enum Camera_QualityLevel {
     QUALITY_LEVEL_MEDIUM = 1,
 
     /**
-     * Camera operation was not allowed. 
+     * Camera operation was not allowed.
      */
     QUALITY_LEVEL_LOW = 2
 } Camera_QualityLevel;

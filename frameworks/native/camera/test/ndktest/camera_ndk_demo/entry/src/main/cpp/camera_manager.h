@@ -104,5 +104,4 @@ public:
     Camera_ErrorCode SessionFlowFn();
 };
 
-
 #endif  // CAMERA_NATIVE_CAMERA_H
