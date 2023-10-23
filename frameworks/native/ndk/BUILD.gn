@@ -1,0 +1,84 @@
+# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("./../../../multimedia_camera_framework.gni")
+
+config("camera_ndk_config") {
+  include_dirs = [
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/interfaces/kits/native/include/camera",
+  ]
+
+  cflags = [
+    "-Wall",
+    "-Werror",
+  ]
+}
+
+ohos_shared_library("camera_ndk") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  include_dirs = [
+    "${driver_disply_path}/interfaces/include",
+    "${graphic_2d_path}/frameworks/surface/include",
+    "${multimedia_camera_framework_path}/interfaces",
+    "${multimedia_camera_framework_path}/interfaces/kits/native/include/camera",
+    "${multimedia_camera_framework_path}/services/camera_service/include",
+  ]
+
+  configs = [ ":camera_ndk_config" ]
+
+  sources = [
+    "./camera_input.cpp",
+    "./camera_manager.cpp",
+    "./capture_session.cpp",
+    "./metadata_output.cpp",
+    "./photo_output.cpp",
+    "./preview_output.cpp",
+    "./video_output.cpp",
+    "impl/camera_input_impl.cpp",
+    "impl/camera_manager_impl.cpp",
+    "impl/camera_util.cpp",
+    "impl/capture_session_impl.cpp",
+    "impl/metadata_output_impl.cpp",
+    "impl/photo_output_impl.cpp",
+    "impl/preview_output_impl.cpp",
+    "impl/video_output_impl.cpp",
+  ]
+
+  deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
+
+  cflags = [ "-Werror" ]
+
+  external_deps = [
+    "c_utils:utils",
+    "graphic_2d:surface",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "image_framework:image",
+    "image_framework:image_native",
+    "ipc:ipc_core",
+  ]
+
+  innerapi_tags = [ "ndk" ]
+
+  output_extension = "so"
+  subsystem_name = "multimedia"
+  part_name = "camera_framework"
+}

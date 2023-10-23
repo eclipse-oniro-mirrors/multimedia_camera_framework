@@ -110,9 +110,8 @@ void VideoCallbackListener::UpdateJSCallback(VideoOutputEventType eventType, con
         napi_env env = (*it)->env_;
         if (eventType == VideoOutputEventType::VIDEO_FRAME_ERROR) {
             napi_value errJsResult[ARGS_ONE];
-            int32_t jsErrorCodeUnknown = -1;
             napi_create_object(env, &errJsResult[PARAM0]);
-            napi_create_int32(env, jsErrorCodeUnknown, &propValue);
+            napi_create_int32(env, value, &propValue);
             napi_set_named_property(env, errJsResult[PARAM0], "code", propValue);
             napi_get_reference_value(env, (*it)->cb_, &callback); // should errorcode be valued as -1
             napi_call_function(env, nullptr, callback, ARGS_ONE, errJsResult, &retVal);

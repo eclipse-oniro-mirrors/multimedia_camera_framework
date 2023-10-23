@@ -188,6 +188,32 @@ CaptureSession::CaptureSession(sptr<ICaptureSession> &captureSession)
     inputDevice_ = nullptr;
     modeName_ = 0;
     metaOutput_ = nullptr;
+    sptr<IRemoteObject> object = captureSession_->AsObject();
+    pid_t pid = 0;
+    deathRecipient_ = new(std::nothrow) CameraDeathRecipient(pid);
+    CHECK_AND_RETURN_LOG(deathRecipient_ != nullptr, "failed to new CameraDeathRecipient.");
+
+    deathRecipient_->SetNotifyCb(std::bind(&CaptureSession::CameraServerDied, this, std::placeholders::_1));
+    bool result = object->AddDeathRecipient(deathRecipient_);
+    if (!result) {
+        MEDIA_ERR_LOG("failed to add deathRecipient");
+        return;
+    }
+}
+
+void CaptureSession::CameraServerDied(pid_t pid)
+{
+    MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
+    if (appCallback_ != nullptr) {
+        MEDIA_DEBUG_LOG("appCallback not nullptr");
+        int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
+        appCallback_->OnError(serviceErrorType);
+    }
+    if (captureSession_ != nullptr) {
+        (void)captureSession_->AsObject()->RemoveDeathRecipient(deathRecipient_);
+        captureSession_ = nullptr;
+    }
+    deathRecipient_ = nullptr;
 }
 
 CaptureSession::~CaptureSession()

@@ -116,6 +116,7 @@ private:
     std::shared_ptr<VideoStateCallback> appCallback_;
     sptr<IStreamRepeatCallback> svcCallback_;
     std::vector<int32_t> videoFrameRateRange_;
+    void CameraServerDied(pid_t pid) override;
 };
 
 class VideoOutputCallbackImpl : public HStreamRepeatCallbackStub {

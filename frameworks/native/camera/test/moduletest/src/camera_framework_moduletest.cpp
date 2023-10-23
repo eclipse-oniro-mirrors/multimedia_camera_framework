@@ -2149,11 +2149,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_040, TestSize.Le
 
 /*
  * Feature: Framework
- * Function: Test capture session with Video Stabilization Mode
+ * Function: Test capture session with color effect
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test capture session with Video Stabilization Mode
+ * CaseDescription: Test capture session with color effect
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_042, TestSize.Level0)
 {
@@ -2169,41 +2169,23 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_042, TestSize.Le
     intResult = session_->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput();
-    ASSERT_NE(videoOutput, nullptr);
-
-    intResult = session_->AddOutput(videoOutput);
-    EXPECT_EQ(intResult, 0);
-
     intResult = session_->CommitConfig();
     EXPECT_EQ(intResult, 0);
 
-    std::vector<VideoStabilizationMode> stabilizationmodes = session_->GetSupportedStabilizationMode();
-    if (stabilizationmodes.empty()) {
+    std::vector<ColorEffect> colorEffects = session_->GetSupportedColorEffects();
+    if (colorEffects.empty()) {
         return;
     }
-    ASSERT_EQ(stabilizationmodes.empty(), false);
+    ASSERT_EQ(colorEffects.empty(), false);
 
-    VideoStabilizationMode stabilizationMode = stabilizationmodes.back();
-    if (session_->IsVideoStabilizationModeSupported(stabilizationMode)) {
-        session_->SetVideoStabilizationMode(stabilizationMode);
-        EXPECT_EQ(session_->GetActiveVideoStabilizationMode(), stabilizationMode);
-    }
+    ColorEffect colorEffect = colorEffects.back();
+    session_->SetColorEffect(colorEffect);
+    EXPECT_EQ(session_->GetColorEffect(), colorEffect);
 
     intResult = session_->Start();
     EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
-
-    intResult = ((sptr<VideoOutput>&)videoOutput)->Start();
-    EXPECT_EQ(intResult, 0);
-
-    sleep(WAIT_TIME_AFTER_START);
-
-    intResult = ((sptr<VideoOutput>&)videoOutput)->Stop();
-    EXPECT_EQ(intResult, 0);
-
-    TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
 
     sleep(WAIT_TIME_BEFORE_STOP);
     session_->Stop();
@@ -5972,13 +5954,75 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_044, TestSize.Le
 
 /*
  * Feature: Framework
+ * Function: Test capture session with Video Stabilization Mode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test capture session with Video Stabilization Mode
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_049, TestSize.Level0)
+{
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+
+    intResult = session_->AddOutput(videoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    std::vector<VideoStabilizationMode> stabilizationmodes = session_->GetSupportedStabilizationMode();
+    if (stabilizationmodes.empty()) {
+        return;
+    }
+    ASSERT_EQ(stabilizationmodes.empty(), false);
+
+    VideoStabilizationMode stabilizationMode = stabilizationmodes.back();
+    if (session_->IsVideoStabilizationModeSupported(stabilizationMode)) {
+        session_->SetVideoStabilizationMode(stabilizationMode);
+        EXPECT_EQ(session_->GetActiveVideoStabilizationMode(), stabilizationMode);
+    }
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Stop();
+    EXPECT_EQ(intResult, 0);
+
+    TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
+
+    sleep(WAIT_TIME_BEFORE_STOP);
+    session_->Stop();
+}
+
+/*
+ * Feature: Framework
  * Function: Test sketch function
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Test sketch function
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_055, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_050, TestSize.Level0)
 {
     const int32_t captureMode = 1;
     int32_t intResult = session_->BeginConfig();

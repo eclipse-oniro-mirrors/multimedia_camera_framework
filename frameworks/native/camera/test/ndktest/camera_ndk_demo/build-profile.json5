@@ -1,0 +1,40 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "material": {
+          "certpath": "C:\\Users\\ts\\.ohos\\config\\openharmony\\auto_ohos_default_NDK_camera_demo_com.example.myapplication.cer",
+          "storePassword": "0000001B581389A60EA131D3FCFBA79694FB5F1B74B7E7D10EF8424463EBA73B085815DBC32D926DC5F578",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001BBCDD432B3403D8CE7DDA05A292BB2C41737C50BAD0F4D1DD866378C0A59CCACB6A7526BAC0787C",
+          "profile": "C:\\Users\\ts\\.ohos\\config\\openharmony\\auto_ohos_default_NDK_camera_demo_com.example.myapplication.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\ts\\.ohos\\config\\openharmony\\auto_ohos_default_NDK_camera_demo_com.example.myapplication.p12"
+        }
+      }
+    ],
+    "compileSdkVersion": 9,
+    "compatibleSdkVersion": 9,
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}

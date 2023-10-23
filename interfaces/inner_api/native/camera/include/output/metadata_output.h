@@ -128,6 +128,7 @@ private:
     sptr<IConsumerSurface> surface_;
     std::shared_ptr<MetadataObjectCallback> appObjectCallback_;
     std::shared_ptr<MetadataStateCallback> appStateCallback_;
+    void CameraServerDied(pid_t pid) override;
 };
 
 class MetadataObjectListener : public IBufferConsumerListener {

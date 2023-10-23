@@ -467,5 +467,19 @@ std::shared_ptr<PreviewStateCallback> PreviewOutput::GetApplicationCallback()
 {
     return appCallback_;
 }
+
+void PreviewOutput::CameraServerDied(pid_t pid)
+{
+    MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
+    if (appCallback_ != nullptr) {
+        MEDIA_DEBUG_LOG("appCallback not nullptr");
+        int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
+        appCallback_->OnError(serviceErrorType);
+    }
+    if (GetStream() != nullptr) {
+        (void)GetStream()->AsObject()->RemoveDeathRecipient(deathRecipient_);
+    }
+    deathRecipient_ = nullptr;
+}
 } // namespace CameraStandard
 } // namespace OHOS

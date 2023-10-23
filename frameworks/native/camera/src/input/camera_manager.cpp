@@ -500,7 +500,7 @@ void CameraManager::CameraServerDied(pid_t pid)
     if (cameraSvcCallback_ != nullptr) {
         MEDIA_DEBUG_LOG("cameraSvcCallback_ not nullptr");
         for (size_t i = 0; i < cameraObjList.size(); i++) {
-            cameraSvcCallback_->OnCameraStatusChanged(cameraObjList[i]->GetID(), CAMERA_STATUS_UNAVAILABLE);
+            cameraSvcCallback_->OnCameraStatusChanged(cameraObjList[i]->GetID(), CAMERA_STATUS_DISAPPEAR);
         }
     }
     if (serviceProxy_ != nullptr) {
@@ -738,7 +738,7 @@ void CameraManager::ChooseDeFaultCameras(std::vector<sptr<CameraDevice>>& suppor
                 MEDIA_INFO_LOG("ChooseDeFaultCameras need add default camera");
             }
         }
-        if (!hasDefaultCamera && (camera->GetPosition() != CAMERA_POSITION_UNSPECIFIED)) {
+        if (!hasDefaultCamera) {
             cameraObjList.emplace_back(camera);
         }
     }

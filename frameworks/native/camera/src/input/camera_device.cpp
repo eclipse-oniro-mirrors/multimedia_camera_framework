@@ -133,7 +133,7 @@ CameraPosition CameraDevice::GetPosition()
 {
     bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
     if (isFoldable && cameraPosition_ == CAMERA_POSITION_FRONT) {
-        cameraPosition_ = (foldScreenType_ == CAMERA_FOLDSCREEN_UNSPECIFIED) ? CAMERA_POSITION_UNSPECIFIED :
+        cameraPosition_ = (foldScreenType_ == CAMERA_FOLDSCREEN_UNSPECIFIED) ? CAMERA_POSITION_BACK :
             (foldScreenType_ == CAMERA_FOLDSCREEN_INNER) ? CAMERA_POSITION_FOLD_INNER : CAMERA_POSITION_FRONT;
     }
     return cameraPosition_;

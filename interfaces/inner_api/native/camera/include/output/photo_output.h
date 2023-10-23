@@ -282,6 +282,7 @@ private:
     std::shared_ptr<PhotoStateCallback> appCallback_;
     sptr<IStreamCaptureCallback> cameraSvcCallback_;
     std::shared_ptr<PhotoCaptureSetting> defaultCaptureSetting_;
+    void CameraServerDied(pid_t pid) override;
 };
 class HStreamCaptureCallbackImpl : public HStreamCaptureCallbackStub {
 public:

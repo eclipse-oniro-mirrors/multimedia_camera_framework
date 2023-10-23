@@ -151,6 +151,7 @@ private:
     void UpdateSketchEnableRatio(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata);
     void UpdateSketchRefferenceFovRatio(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata);
     std::shared_ptr<Size> FindSketchSize();
+    void CameraServerDied(pid_t pid) override;
 };
 
 class PreviewOutputCallbackImpl : public HStreamRepeatCallbackStub {
