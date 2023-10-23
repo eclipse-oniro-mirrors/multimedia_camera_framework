@@ -153,9 +153,15 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
         MEDIA_ERR_LOG("alloc size <= 0");
         return CAMERA_INVALID_ARGUMENT;
     }
+    Camera_Profile **previewProfilesWarp = new Camera_Profile *;
+    Camera_Profile **photoProfilesWarp = new Camera_Profile *;
+    Camera_VideoProfile **videoProfilesWarp = new Camera_VideoProfile *;
     Camera_Profile *outPreviewProfiles = new Camera_Profile[previewOutputNum];
     Camera_Profile *outPhotoProfiles = new Camera_Profile[photoOutputNum];
     Camera_VideoProfile *outVideoProfiles = new Camera_VideoProfile[videoOutputNum];
+    *previewProfilesWarp = outPreviewProfiles;
+    *photoProfilesWarp = outPhotoProfiles;
+    *videoProfilesWarp = outVideoProfiles;
     for (int i = 0; i < previewOutputNum; i++) {
         outPreviewProfiles[i].format = static_cast<Camera_Format>(previewProfiles[i].GetCameraFormat());
         outPreviewProfiles[i].size.width = previewProfiles[i].GetSize().width;
@@ -164,14 +170,14 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
     }
     MEDIA_ERR_LOG("GetSupportedCameraOutputCapability previewOutputNum exit");
 
-    outCapability->previewProfiles = &outPreviewProfiles;
+    outCapability->previewProfiles = previewProfilesWarp;
 
     for (int i = 0; i < photoOutputNum; i++) {
         outPhotoProfiles[i].format = static_cast<Camera_Format>(photoProfiles[i].GetCameraFormat());
         outPhotoProfiles[i].size.width = photoProfiles[i].GetSize().width;
         outPhotoProfiles[i].size.height = photoProfiles[i].GetSize().height;
     }
-    outCapability->photoProfiles = &outPhotoProfiles;
+    outCapability->photoProfiles = photoProfilesWarp;
 
     for (int i = 0; i < videoOutputNum; i++) {
         outVideoProfiles[i].format = static_cast<Camera_Format>(videoProfiles[i].GetCameraFormat());
@@ -180,7 +186,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
         outVideoProfiles[i].range.min  = videoProfiles[i].framerates_[0];
         outVideoProfiles[i].range.max  = videoProfiles[i].framerates_[1];
     }
-    outCapability->videoProfiles = &outVideoProfiles;
+    outCapability->videoProfiles = videoProfilesWarp;
 
     *cameraOutputCapability = outCapability;
     MEDIA_ERR_LOG("GetSupportedCameraOutputCapability previewOutputNum return");
