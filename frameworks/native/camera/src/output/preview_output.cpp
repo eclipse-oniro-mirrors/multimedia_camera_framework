@@ -14,16 +14,20 @@
  */
 
 #include "output/preview_output.h"
+#include <cstdint>
 
 #include "camera_log.h"
+#include "camera_output_capability.h"
 #include "camera_util.h"
 #include "hstream_repeat_callback_stub.h"
+#include "image_format.h"
 #include "metadata_common_utils.h"
 #include "pixel_map.h"
 #include "sketch_wrapper.h"
 
 namespace OHOS {
 namespace CameraStandard {
+static constexpr int32_t SKETCH_MIN_WIDTH = 600;
 PreviewOutput::PreviewOutput(sptr<IStreamRepeat>& streamRepeat)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PREVIEW, StreamType::REPEAT, streamRepeat)
 {}
@@ -156,6 +160,14 @@ bool PreviewOutput::IsSketchSupported()
 {
     MEDIA_DEBUG_LOG("Enter Into PreviewOutput::IsSketchSupported");
 
+    Profile profile = GetPreviewProfile();
+    CameraFormat cameraFormat = profile.GetCameraFormat();
+    if (cameraFormat != CAMERA_FORMAT_YUV_420_SP && cameraFormat != CAMERA_FORMAT_YCBCR_420_888) {
+        MEDIA_ERR_LOG("PreviewOutput::IsSketchSupported preview format is illegal:%{public}d",
+            static_cast<int32_t>(cameraFormat));
+        return false;
+    }
+
     auto sketchSize = FindSketchSize();
     if (sketchSize != nullptr) {
         MEDIA_INFO_LOG(
@@ -224,14 +236,29 @@ int32_t PreviewOutput::EnableSketch(bool isEnable)
         MEDIA_INFO_LOG(
             "EnableSketch FindSketchSize Size is %{public}dx%{public}d", sketchSize->width, sketchSize->height);
 
+        CameraFormat camFormat = GetPreviewProfile().GetCameraFormat();
+        Media::ImageFormat imageFormat;
+        if (camFormat == CAMERA_FORMAT_YCBCR_420_888) {
+            imageFormat = Media::ImageFormat::YUV420_888;
+        } else if (camFormat == CAMERA_FORMAT_YUV_420_SP) {
+            imageFormat = Media::ImageFormat::NV21;
+        } else {
+            MEDIA_ERR_LOG("EnableSketch camFormat is not support %{public}d", static_cast<int32_t>(camFormat));
+            return ServiceToCameraError(CAMERA_INVALID_ARG);
+        }
+
         auto wrapper = std::make_shared<SketchWrapper>(this);
-        sketchWrapper_ = wrapper;
         auto listener = std::make_shared<SketchWrapper::SketchBufferAvaliableListener>(wrapper);
-        errCode = wrapper->Init(listener, *sketchSize.get());
+        errCode = wrapper->Init(listener, *sketchSize, imageFormat);
+        if (errCode == CAMERA_OK) {
+            sketchWrapper_ = wrapper;
+        }
     } else {
         if (sketchWrapper_ == nullptr) {
             return ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED);
         }
+        auto wrapper = static_pointer_cast<SketchWrapper>(sketchWrapper_);
+        errCode = wrapper->Destory();
         sketchWrapper_ = nullptr;
     }
     return ServiceToCameraError(errCode);
@@ -297,8 +324,8 @@ std::shared_ptr<Size> PreviewOutput::FindSketchSize()
     CameraFormat cameraFormat = profile.GetCameraFormat();
     if (cameraFormat == CAMERA_FORMAT_YUV_420_SP) {
         hdi_format = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
-    } else if (cameraFormat == CAMERA_FORMAT_RGBA_8888) {
-        hdi_format = OHOS_CAMERA_FORMAT_RGBA_8888;
+    } else if (cameraFormat == CAMERA_FORMAT_YCBCR_420_888) {
+        hdi_format = OHOS_CAMERA_FORMAT_YCBCR_420_888;
     } else {
         MEDIA_ERR_LOG("PreviewOutput::FindSketchSize preview format is illegal");
         return nullptr;
@@ -316,7 +343,7 @@ std::shared_ptr<Size> PreviewOutput::FindSketchSize()
         previewSize.width, previewSize.height, ratio);
     std::shared_ptr<Size> outSize;
     for (auto size : *sizeList.get()) {
-        if (size.width >= previewSize.width) {
+        if (size.width >= previewSize.width || size.width < SKETCH_MIN_WIDTH) {
             continue;
         }
         float checkRatio = static_cast<float>(size.width) / size.height;
@@ -325,7 +352,7 @@ std::shared_ptr<Size> PreviewOutput::FindSketchSize()
         if (abs(checkRatio - ratio) / ratio <= 0.05f) { // 0.05f is 5% tolerance
             if (outSize == nullptr) {
                 outSize = std::make_shared<Size>(size);
-            } else if (size.width > outSize->width) {
+            } else if (size.width < outSize->width) {
                 outSize = std::make_shared<Size>(size);
             }
         }

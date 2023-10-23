@@ -26,7 +26,7 @@ public:
     class SketchBufferAvaliableListener : public Media::SurfaceBufferAvaliableListener {
     public:
         explicit SketchBufferAvaliableListener(std::shared_ptr<SketchWrapper>& sketchWrapper)
-            : Media::SurfaceBufferAvaliableListener(), sketchWrapper_(std::weak_ptr(sketchWrapper)) {};
+            : sketchWrapper_(std::weak_ptr(sketchWrapper)) {};
         virtual void OnSurfaceBufferAvaliable() override;
 
     private:
@@ -37,13 +37,14 @@ public:
     virtual ~SketchWrapper();
     int32_t StartSketchStream();
     int32_t StopSketchStream();
-    int32_t Init(std::shared_ptr<SketchBufferAvaliableListener>& listener, const Size size);
+    int32_t Init(
+        std::shared_ptr<SketchBufferAvaliableListener>& listener, const Size size, Media::ImageFormat imageFormat);
+    int32_t Destory();
 
 private:
     PreviewOutput* holder_;
     sptr<IStreamRepeat> sketchStream_;
     std::shared_ptr<Media::ImageReceiver> sketchImgReceiver_;
-    std::shared_ptr<SketchBufferAvaliableListener> sketchSurfaceBufferAvaliableListener_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

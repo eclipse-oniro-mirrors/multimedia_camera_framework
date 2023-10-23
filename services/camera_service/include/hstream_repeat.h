@@ -55,7 +55,6 @@ public:
     int32_t RemoveSketchStreamRepeat() override;
     sptr<HStreamRepeat> GetSketchStream();
     RepeatStreamType GetRepeatStreamType();
-    bool IsVideo();
     void DumpStreamInfo(std::string& dumpString) override;
 
 private:

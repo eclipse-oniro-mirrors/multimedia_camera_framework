@@ -99,6 +99,7 @@ private:
     void StartUsingPermissionCallback(const uint32_t callingTokenId, const std::string permissionName);
     void StopUsingPermissionCallback(const uint32_t callingTokenId, const std::string permissionName);
     void CloseDevice(sptr<HCameraDevice>& device);
+    void ClearSketchRepeatStream();
     void ExpandSketchRepeatStream();
 
     std::string GetSessionState();

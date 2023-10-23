@@ -832,7 +832,6 @@ napi_value PreviewOutputNapi::RegisterCallback(
             return undefinedResult;
         }
         previewOutputNapi->previewCallback_->SaveCallbackReference(eventType, callback, isOnce);
-
         if (eventTypeEnum == PreviewOutputEventType::SKETCH_AVAILABLE && status == napi_ok &&
             previewOutputNapi->previewOutput_ != nullptr) {
             previewOutputNapi->previewOutput_->StartSketch();

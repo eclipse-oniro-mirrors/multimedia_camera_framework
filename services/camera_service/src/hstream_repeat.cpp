@@ -110,6 +110,7 @@ int32_t HStreamRepeat::Start()
         MEDIA_ERR_LOG("HStreamRepeat::Start Failed with error Code:%{public}d", rc);
         ret = HdiToServiceError(rc);
     }
+    // Do not start sketch in this function
     return ret;
 }
 
@@ -132,12 +133,18 @@ int32_t HStreamRepeat::Stop()
     }
     ReleaseCaptureId(curCaptureID_);
     curCaptureID_ = 0;
+
+    {
+        std::lock_guard<std::mutex> lock(sketchStreamLock_);
+        if (sketchStreamRepeat_ != nullptr && !sketchStreamRepeat_->IsReleaseStream()) {
+            sketchStreamRepeat_->Stop();
+        }
+    }
     return ret;
 }
 
 int32_t HStreamRepeat::Release()
 {
-    RemoveSketchStreamRepeat();
     if (curCaptureID_) {
         ReleaseCaptureId(curCaptureID_);
     }
@@ -145,12 +152,14 @@ int32_t HStreamRepeat::Release()
         std::lock_guard<std::mutex> lock(callbackLock_);
         streamRepeatCallback_ = nullptr;
     }
-    return HStreamCommon::Release();
-}
 
-bool HStreamRepeat::IsVideo()
-{
-    return repeatStreamType_ == RepeatStreamType::VIDEO;
+    {
+        std::lock_guard<std::mutex> lock(sketchStreamLock_);
+        if (sketchStreamRepeat_ != nullptr && !sketchStreamRepeat_->IsReleaseStream()) {
+            sketchStreamRepeat_->Release();
+        }
+    }
+    return HStreamCommon::Release();
 }
 
 int32_t HStreamRepeat::SetCallback(sptr<IStreamRepeatCallback>& callback)
@@ -236,15 +245,16 @@ int32_t HStreamRepeat::ForkSketchStreamRepeat(
         MEDIA_ERR_LOG("HCameraService::ForkSketchStreamRepeat producer is null");
         return CAMERA_INVALID_ARG;
     }
+
+    if (sketchStreamRepeat_ != nullptr && !sketchStreamRepeat_->IsReleaseStream()) {
+        sketchStreamRepeat_->Release();
+    }
+
     auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, format_, width, height, RepeatStreamType::SKETCH);
     CHECK_AND_RETURN_RET_LOG(streamRepeat != nullptr, CAMERA_ALLOC_ERROR,
         "HStreamRepeat::ForkSketchStreamRepeat HStreamRepeat allocation failed");
     POWERMGR_SYSEVENT_CAMERA_CONFIG(SKETCH, width, height);
     sketchStream = streamRepeat;
-
-    if (sketchStreamRepeat_ != nullptr && !sketchStreamRepeat_->IsReleaseStream()) {
-        sketchStreamRepeat_->Release();
-    }
     sketchStreamRepeat_ = streamRepeat;
     MEDIA_INFO_LOG("HCameraService::ForkSketchStreamRepeat end");
     return CAMERA_OK;
