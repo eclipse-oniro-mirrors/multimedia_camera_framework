@@ -153,9 +153,9 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
         MEDIA_ERR_LOG("alloc size <= 0");
         return CAMERA_INVALID_ARGUMENT;
     }
-    Camera_Profile **previewProfilesWarp = new Camera_Profile*;
-    Camera_Profile **photoProfilesWarp = new Camera_Profile*;
-    Camera_VideoProfile **videoProfilesWarp = new Camera_VideoProfile*;
+    Camera_Profile **previewProfilesWarp = new Camera_Profile *;
+    Camera_Profile **photoProfilesWarp = new Camera_Profile *;
+    Camera_VideoProfile **videoProfilesWarp = new Camera_VideoProfile *;
     Camera_Profile *outPreviewProfiles = new Camera_Profile[previewOutputNum];
     Camera_Profile *outPhotoProfiles = new Camera_Profile[photoOutputNum];
     Camera_VideoProfile *outVideoProfiles = new Camera_VideoProfile[videoOutputNum];

@@ -69,7 +69,7 @@ public:
     Camera_ErrorCode GetSupportedOutputCapability(void);
     Camera_ErrorCode CreatePreviewOutput(void);
     Camera_ErrorCode CreatePhotoOutput(void);
-    Camera_ErrorCode CreateVideoOutput(char* videoId);
+    Camera_ErrorCode CreateVideoOutput(char *videoId);
     Camera_ErrorCode CreateMetadataOutput(void);
     Camera_ErrorCode IsCameraMuted(void);
     Camera_ErrorCode PreviewOutputStop(void);
@@ -78,11 +78,11 @@ public:
     Camera_ErrorCode HasFlashFn(uint32_t mode);
     Camera_ErrorCode setZoomRatioFn(uint32_t zoomRatio);
     Camera_ErrorCode SessionFlowFn();
-	Camera_ErrorCode SessionBegin();
+    Camera_ErrorCode SessionBegin();
     Camera_ErrorCode SessionCommitConfig();
     Camera_ErrorCode SessionStart();
     Camera_ErrorCode SessionStop();
-    Camera_ErrorCode startVideo(char* videoId);
+    Camera_ErrorCode startVideo(char *videoId);
     Camera_ErrorCode AddVideoOutput();
     Camera_ErrorCode VideoOutputStart();
 
@@ -97,10 +97,10 @@ private:
     uint32_t size_;
     Camera_OutputCapability* cameraOutputCapability_;
     const Camera_Profile* profile_;
-	const Camera_VideoProfile* videoProfile_;
+    const Camera_VideoProfile* videoProfile_;
     Camera_PreviewOutput* previewOutput_;
     Camera_PhotoOutput* photoOutput_;
-	Camera_VideoOutput* videoOutput_;
+    Camera_VideoOutput* videoOutput_;
     const Camera_MetadataObjectType* metaDataObjectType_;
     Camera_MetadataOutput* metadataOutput_;
     Camera_Input* cameraInput_;

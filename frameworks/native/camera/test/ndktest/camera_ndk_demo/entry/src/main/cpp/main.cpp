@@ -75,10 +75,10 @@ static napi_value StartPhotoOrVideo(napi_env env, napi_callback_info info)
     napi_value result;
     size_t typeLen = 0;
     size_t videoIdLen = 0;
-    char * modeFlag = nullptr;
-    char * videoId = nullptr;
+    char *modeFlag = nullptr;
+    char *videoId = nullptr;
 
-    napi_get_cb_info(env, info, &argc, args , nullptr, nullptr);
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
     napi_get_value_string_utf8(env, args[0], nullptr, 0, &typeLen);
     modeFlag = new char[typeLen + 1];
@@ -88,15 +88,14 @@ static napi_value StartPhotoOrVideo(napi_env env, napi_callback_info info)
     videoId = new char[videoIdLen + 1];
     napi_get_value_string_utf8(env, args[1], videoId, videoIdLen + 1, &videoIdLen);
 
-    if (!strcmp(modeFlag, "photo")){
+    if (!strcmp(modeFlag, "photo")) {
         // take photo func
     } else if (!strcmp(modeFlag, "video")) {
         ndkCamera_->startVideo(videoId);
-        OH_LOG_ERROR(LOG_APP, "StartPhotoOrVideo000 %{public}s",videoId);
+        OH_LOG_ERROR(LOG_APP, "StartPhotoOrVideo000 %{public}s", videoId);
     }
 
     return result;
-
 }
 
 static napi_value VideoOutputStart(napi_env env, napi_callback_info info)
@@ -108,7 +107,6 @@ static napi_value VideoOutputStart(napi_env env, napi_callback_info info)
     ndkCamera_->VideoOutputStart();
 
     return result;
-
 }
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports)

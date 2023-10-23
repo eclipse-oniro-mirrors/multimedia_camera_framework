@@ -309,7 +309,6 @@ Camera_ErrorCode NDKCamera::CreatePhotoOutput(void)
 Camera_ErrorCode NDKCamera::CreateVideoOutput(char* videoId)
 {
     videoProfile_ = cameraOutputCapability_->videoProfiles[0];
-
     if (videoProfile_ == nullptr) {
         OH_LOG_ERROR(LOG_APP, "Get videoProfiles failed.");
         return CAMERA_INVALID_ARGUMENT;
@@ -388,12 +387,11 @@ Camera_ErrorCode NDKCamera::PhotoOutputRelease(void)
     }
     return ret_;
 }
+
 Camera_ErrorCode NDKCamera::startVideo(char* videoId)
 {
     OH_LOG_ERROR(LOG_APP, "startVideo begin.");
-
     Camera_ErrorCode ret = SessionStop();
-
     if (ret == CAMERA_OK) {
         OH_LOG_ERROR(LOG_APP, "SessionStop success.");
     } else {
