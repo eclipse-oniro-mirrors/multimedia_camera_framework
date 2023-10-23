@@ -305,11 +305,10 @@ void PhotoOutputCallback::ExecuteCaptureErrorCb(const CallbackInfo &info) const
     napi_value callback = nullptr;
     napi_value retVal;
     napi_value propValue;
-    int32_t jsErrorCodeUnknown = -1;
     for (auto it = errorCbList_.begin(); it != errorCbList_.end();) {
         napi_env env = (*it)->env_;
         napi_create_object(env, &errJsResult[PARAM0]);
-        napi_create_int32(env, jsErrorCodeUnknown, &propValue);
+        napi_create_int32(env, info.errorCode, &propValue);
         napi_set_named_property(env, errJsResult[PARAM0], "code", propValue);
         napi_get_reference_value(env, (*it)->cb_, &callback);
         napi_call_function(env, nullptr, callback, ARGS_ONE, errJsResult, &retVal);

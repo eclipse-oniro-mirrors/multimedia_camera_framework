@@ -287,7 +287,6 @@ void SessionCallbackListener::OnErrorCallbackAsync(int32_t errorCode) const
 void SessionCallbackListener::OnErrorCallback(int32_t errorCode) const
 {
     MEDIA_DEBUG_LOG("OnErrorCallback is called");
-    int32_t jsErrorCodeUnknown = -1;
     napi_value result[ARGS_ONE] = {nullptr};
     napi_value callback = nullptr;
     napi_value retVal;
@@ -295,7 +294,7 @@ void SessionCallbackListener::OnErrorCallback(int32_t errorCode) const
     for (auto it = sessionCbList_.begin(); it != sessionCbList_.end();) {
         napi_env env = (*it)->env_;
         napi_create_object(env, &result[PARAM0]);
-        napi_create_int32(env, jsErrorCodeUnknown, &propValue);
+        napi_create_int32(env, errorCode, &propValue);
         napi_set_named_property(env, result[PARAM0], "code", propValue);
         napi_get_reference_value(env, (*it)->cb_, &callback);
         napi_call_function(env_, nullptr, callback, ARGS_ONE, result, &retVal);

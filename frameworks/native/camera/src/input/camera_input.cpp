@@ -81,6 +81,33 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
     } else {
         MEDIA_ERR_LOG("CameraInput::CameraInput() deviceObj_ is nullptr");
     }
+    sptr<IRemoteObject> object = deviceObj_->AsObject();
+    pid_t pid = 0;
+    deathRecipient_ = new(std::nothrow) CameraDeathRecipient(pid);
+    CHECK_AND_RETURN_LOG(deathRecipient_ != nullptr, "failed to new CameraDeathRecipient.");
+
+    deathRecipient_->SetNotifyCb(std::bind(&CameraInput::CameraServerDied, this, std::placeholders::_1));
+    bool result = object->AddDeathRecipient(deathRecipient_);
+    if (!result) {
+        MEDIA_ERR_LOG("failed to add deathRecipient");
+        return;
+    }
+}
+
+void CameraInput::CameraServerDied(pid_t pid)
+{
+    MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
+    if (errorCallback_ != nullptr) {
+        MEDIA_DEBUG_LOG("appCallback not nullptr");
+        int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
+        int32_t serviceErrorMsg = 0;
+        errorCallback_->OnError(serviceErrorType, serviceErrorMsg);
+    }
+    if (deviceObj_ != nullptr) {
+        (void)deviceObj_->AsObject()->RemoveDeathRecipient(deathRecipient_);
+        deviceObj_ = nullptr;
+    }
+    deathRecipient_ = nullptr;
 }
 
 CameraInput::~CameraInput()

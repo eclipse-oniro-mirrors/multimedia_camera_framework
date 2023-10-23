@@ -442,5 +442,20 @@ std::shared_ptr<PhotoCaptureSetting> PhotoOutput::GetDefaultCaptureSetting()
 {
     return defaultCaptureSetting_;
 }
+
+void PhotoOutput::CameraServerDied(pid_t pid)
+{
+    MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
+    if (appCallback_ != nullptr) {
+        MEDIA_DEBUG_LOG("appCallback not nullptr");
+        int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
+        int32_t captureId = -1;
+        appCallback_->OnCaptureError(captureId, serviceErrorType);
+    }
+    if (GetStream() != nullptr) {
+        (void)GetStream()->AsObject()->RemoveDeathRecipient(deathRecipient_);
+    }
+    deathRecipient_ = nullptr;
+}
 } // CameraStandard
 } // OHOS

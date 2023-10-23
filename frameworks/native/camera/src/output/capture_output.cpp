@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include "camera_log.h"
 #include "output/capture_output.h"
 
 namespace OHOS {
@@ -21,6 +22,17 @@ CaptureOutput::CaptureOutput(CaptureOutputType outputType, StreamType streamType
     sptr<IStreamCommon> stream) : outputType_(outputType), streamType_(streamType), stream_(stream)
 {
     session_ = nullptr;
+    sptr<IRemoteObject> object = stream_->AsObject();
+    pid_t pid = 0;
+    deathRecipient_ = new(std::nothrow) CameraDeathRecipient(pid);
+    CHECK_AND_RETURN_LOG(deathRecipient_ != nullptr, "failed to new CameraDeathRecipient.");
+
+    deathRecipient_->SetNotifyCb(std::bind(&CaptureOutput::CameraServerDied, this, std::placeholders::_1));
+    bool result = object->AddDeathRecipient(deathRecipient_);
+    if (!result) {
+        MEDIA_ERR_LOG("failed to add deathRecipient");
+        return;
+    }
 }
 
 CaptureOutputType CaptureOutput::GetOutputType()
