@@ -110,13 +110,7 @@ int32_t HStreamRepeat::Start()
         MEDIA_ERR_LOG("HStreamRepeat::Start Failed with error Code:%{public}d", rc);
         ret = HdiToServiceError(rc);
     }
-
-    {
-        std::lock_guard<std::mutex> lock(sketchStreamLock_);
-        if (sketchStreamRepeat_ != nullptr && !sketchStreamRepeat_->IsReleaseStream()) {
-            sketchStreamRepeat_->Start();
-        }
-    }
+    // Do not start sketch in this function
     return ret;
 }
 

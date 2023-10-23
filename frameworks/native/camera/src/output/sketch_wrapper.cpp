@@ -119,10 +119,12 @@ int32_t SketchWrapper::Destory()
     if (sketchStream_ != nullptr) {
         sketchStream_->Stop();
         sketchStream_->Release();
+        sketchStream_ = nullptr;
     }
     if (sketchImgReceiver_ != nullptr) {
         sketchImgReceiver_->RegisterBufferAvaliableListener(nullptr);
         sketchImgReceiver_->ReleaseReceiver();
+        sketchImgReceiver_ = nullptr;
     }
     sptr<IStreamCommon> hostStream = holder_->GetStream();
     IStreamRepeat* repeatStream = static_cast<IStreamRepeat*>(hostStream.GetRefPtr());
@@ -134,10 +136,12 @@ SketchWrapper::~SketchWrapper()
     if (sketchStream_ != nullptr) {
         sketchStream_->Stop();
         sketchStream_->Release();
+        sketchStream_ = nullptr;
     }
     if (sketchImgReceiver_ != nullptr) {
         sketchImgReceiver_->RegisterBufferAvaliableListener(nullptr);
         sketchImgReceiver_->ReleaseReceiver();
+        sketchImgReceiver_ = nullptr;
     }
 }
 

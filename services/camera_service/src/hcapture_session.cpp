@@ -736,7 +736,7 @@ int32_t HCaptureSession::Start()
     for (auto& item : repeatStreams_) {
         HStreamRepeat* curStreamRepeat = static_cast<HStreamRepeat*>(item.GetRefPtr());
         auto repeatType = curStreamRepeat->GetRepeatStreamType();
-        if (repeatType == RepeatStreamType::PREVIEW || repeatType == RepeatStreamType::SKETCH) {
+        if (repeatType == RepeatStreamType::PREVIEW) {
             rc = curStreamRepeat->Start();
             if (rc != CAMERA_OK) {
                 MEDIA_ERR_LOG("HCaptureSession::Start(), Failed to start preview, rc: %{public}d", rc);
@@ -757,7 +757,7 @@ int32_t HCaptureSession::Stop()
     for (auto& item : repeatStreams_) {
         HStreamRepeat* curStreamRepeat = static_cast<HStreamRepeat*>(item.GetRefPtr());
         auto repeatType = curStreamRepeat->GetRepeatStreamType();
-        if (repeatType == RepeatStreamType::PREVIEW || repeatType == RepeatStreamType::SKETCH) {
+        if (repeatType == RepeatStreamType::PREVIEW) {
             rc = curStreamRepeat->Stop();
             if (rc != CAMERA_OK) {
                 MEDIA_ERR_LOG("HCaptureSession::Stop(), Failed to stop preview, rc: %{public}d", rc);

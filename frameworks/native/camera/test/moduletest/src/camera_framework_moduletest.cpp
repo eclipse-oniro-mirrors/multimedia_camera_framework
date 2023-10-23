@@ -6016,11 +6016,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_049, TestSize.Le
 
 /*
  * Feature: Framework
- * Function: Test sketch function
+ * Function: Test sketch functions.
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test sketch function
+ * CaseDescription: Test sketch functions.
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_050, TestSize.Level0)
 {
@@ -6047,6 +6047,75 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_050, TestSize.Le
 
         intResult = previewOutput->EnableSketch(true);
         EXPECT_EQ(intResult, 0);
+    }
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    if (isSketchSupport) {
+        intResult = previewOutput->StartSketch();
+        EXPECT_EQ(intResult, 0);
+    }
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    if (isSketchSupport) {
+        intResult = previewOutput->StopSketch();
+        EXPECT_EQ(intResult, 0);
+    }
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = input_->Close();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = previewOutput->Release();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Release();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test sketch anomalous branch.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test sketch anomalous branch.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_051, TestSize.Level0)
+{
+    const int32_t captureMode = 1;
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    auto output = CreatePreviewOutput();
+    ASSERT_NE(output, nullptr);
+
+    intResult = session_->AddOutput(output);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
+    previewOutput->SetCallback(std::make_shared<AppCallback>());
+
+    bool isSketchSupport = previewOutput->IsSketchSupported();
+    if (isSketchSupport) {
+        int sketchEnableRatio = previewOutput->GetSketchEnableRatio(captureMode);
+        EXPECT_GT(sketchEnableRatio, 0);
+
+        intResult = previewOutput->EnableSketch(true);
+        EXPECT_EQ(intResult, 0);
+
+        intResult = previewOutput->EnableSketch(true);
+        EXPECT_EQ(intResult, 7400102);
     }
 
     intResult = session_->CommitConfig();

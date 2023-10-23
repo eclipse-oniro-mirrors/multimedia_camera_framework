@@ -832,6 +832,10 @@ napi_value PreviewOutputNapi::RegisterCallback(
             return undefinedResult;
         }
         previewOutputNapi->previewCallback_->SaveCallbackReference(eventType, callback, isOnce);
+        if (eventTypeEnum == PreviewOutputEventType::SKETCH_AVAILABLE && status == napi_ok &&
+            previewOutputNapi->previewOutput_ != nullptr) {
+            previewOutputNapi->previewOutput_->StartSketch();
+        }
     } else {
         MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
     }
@@ -901,6 +905,10 @@ napi_value PreviewOutputNapi::UnregisterCallback(
         }
         // unset callback for error
         previewOutputNapi->previewCallback_->RemoveCallbackRef(env, callback, eventType);
+        if (eventTypeEnum == PreviewOutputEventType::SKETCH_AVAILABLE && status == napi_ok &&
+            previewOutputNapi->previewOutput_ != nullptr) {
+            previewOutputNapi->previewOutput_->StopSketch();
+        }
     } else {
         MEDIA_ERR_LOG("Incorrect callback event type provided for camera input!");
     }

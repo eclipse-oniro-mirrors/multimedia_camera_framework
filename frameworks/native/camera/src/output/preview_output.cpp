@@ -14,6 +14,7 @@
  */
 
 #include "output/preview_output.h"
+#include <cstdint>
 
 #include "camera_log.h"
 #include "camera_output_capability.h"
@@ -257,7 +258,7 @@ int32_t PreviewOutput::EnableSketch(bool isEnable)
             return ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED);
         }
         auto wrapper = static_pointer_cast<SketchWrapper>(sketchWrapper_);
-        wrapper->Destory();
+        errCode = wrapper->Destory();
         sketchWrapper_ = nullptr;
     }
     return ServiceToCameraError(errCode);
