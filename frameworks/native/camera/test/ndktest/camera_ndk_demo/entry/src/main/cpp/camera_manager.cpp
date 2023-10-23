@@ -41,6 +41,7 @@ NDKCamera::NDKCamera(char* str)
     GetSupportedCameras();
     GetSupportedOutputCapability();
     CreatePreviewOutput();
+    CreatePhotoOutput();
     CreateCameraInput();
     CameraInputOpen();
     SessionFlowFn();
@@ -138,6 +139,50 @@ Camera_ErrorCode NDKCamera::setZoomRatioFn(uint32_t zoomRatio)
         OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_GetZoomRatio success. zoom: %f ", zoom);
     } else {
         OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_GetZoomRatio failed. %d ", ret);
+    }
+    return ret;
+}
+
+Camera_ErrorCode NDKCamera::SessionBegin()
+{
+    Camera_ErrorCode ret =  OH_CaptureSession_BeginConfig(captureSession_);
+    if (ret == CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_BeginConfig success.");
+    } else {
+        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_BeginConfig failed. %d ", ret);
+    }
+    return ret;
+}
+
+Camera_ErrorCode NDKCamera::SessionCommitConfig()
+{
+    Camera_ErrorCode ret =  OH_CaptureSession_CommitConfig(captureSession_);
+    if (ret == CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_CommitConfig success.");
+    } else {
+        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_CommitConfig failed. %d ", ret);
+    }
+    return ret;
+}
+
+Camera_ErrorCode NDKCamera::SessionStart()
+{
+    Camera_ErrorCode ret =  OH_CaptureSession_Start(captureSession_);
+    if (ret == CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_Start success.");
+    } else {
+        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_Start failed. %d ", ret);
+    }
+    return ret;
+}
+
+Camera_ErrorCode NDKCamera::SessionStop()
+{
+    Camera_ErrorCode ret =  OH_CaptureSession_Stop(captureSession_);
+    if (ret == CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_Stop success.");
+    } else {
+        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_Stop failed. %d ", ret);
     }
     return ret;
 }
@@ -261,6 +306,34 @@ Camera_ErrorCode NDKCamera::CreatePhotoOutput(void)
     return ret_;
 }
 
+Camera_ErrorCode NDKCamera::CreateVideoOutput(char* videoId)
+{
+    videoProfile_ = cameraOutputCapability_->videoProfiles[0];
+
+    if (videoProfile_ == nullptr) {
+        OH_LOG_ERROR(LOG_APP, "Get videoProfiles failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    ret_ = OH_CameraManager_CreateVideoOutput(cameraManager_, videoProfile_, videoId, &videoOutput_);
+    if (videoId == nullptr || videoOutput_ == nullptr || ret_ != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "CreateVideoOutput failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+
+    return ret_;
+}
+
+Camera_ErrorCode NDKCamera::AddVideoOutput()
+{
+    Camera_ErrorCode ret = OH_CaptureSession_AddVideoOutput(captureSession_, videoOutput_);
+    if (ret == CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_AddVideoOutput success.");
+    } else {
+        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_AddVideoOutput failed. %d ", ret);
+    }
+    return ret;
+}
+
 Camera_ErrorCode NDKCamera::CreateMetadataOutput(void)
 {
     metaDataObjectType_ = cameraOutputCapability_->supportedMetadataObjectTypes[2]; // 2:camera metedata types
@@ -314,4 +387,39 @@ Camera_ErrorCode NDKCamera::PhotoOutputRelease(void)
         return CAMERA_INVALID_ARGUMENT;
     }
     return ret_;
+}
+Camera_ErrorCode NDKCamera::startVideo(char* videoId)
+{
+    OH_LOG_ERROR(LOG_APP, "startVideo begin.");
+
+    Camera_ErrorCode ret = SessionStop();
+
+    if (ret == CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "SessionStop success.");
+    } else {
+        OH_LOG_ERROR(LOG_APP, "SessionStop failed. %d ", ret);
+    }
+    ret = SessionBegin();
+    if (ret == CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "SessionBegin success.");
+    } else {
+        OH_LOG_ERROR(LOG_APP, "SessionBegin failed. %d ", ret);
+    }
+    CreateVideoOutput(videoId);
+    AddVideoOutput();
+    SessionCommitConfig();
+    SessionStart();
+    return ret;
+}
+
+Camera_ErrorCode NDKCamera::VideoOutputStart()
+{
+    OH_LOG_ERROR(LOG_APP, "VideoOutputStart begin.");
+    Camera_ErrorCode ret = OH_VideoOutput_Start(videoOutput_);
+    if (ret == CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "OH_VideoOutput_Start success.");
+    } else {
+        OH_LOG_ERROR(LOG_APP, "OH_VideoOutput_Start failed. %d ", ret);
+    }
+    return ret;
 }

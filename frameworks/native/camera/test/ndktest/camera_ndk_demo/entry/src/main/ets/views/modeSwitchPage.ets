@@ -19,17 +19,51 @@
 //
 // import { MultiCameraDialog } from '../Dialog/MultiCameraDialog'
 // import { PortraitCameraDialog } from  '../Dialog/PortraitCameraDialog'
-// import DateTimeUtil from '../model/DateTimeUtil'
+import DateTimeUtil from '../model/DateTimeUtil'
 import Logger from '../model/Logger'
+import cameraDemo from 'libentry.so'
 // import CameraService from '../model/CameraService'
 
 import mediaLibrary from '@ohos.multimedia.mediaLibrary';
 
 import image from '@ohos.multimedia.image';
+import media from '@ohos.multimedia.media'
+import MediaUtils from '../model/MediaUtils'
+import AVRecorder from '@ohos.multimedia.media'
 
 @Component
 export struct modeSwitchPage {
-  private tag: string = 'zyk modeSwitchPage:'
+  private tag: string = 'UI modeSwitchPage:'
+  private mediaUtil = MediaUtils.getInstance()
+  private fileAsset: mediaLibrary.FileAsset = undefined
+  private fd: number = -1
+  @State videoId: string = ''
+  private videoRecorder: media.AVRecorder = undefined
+  private videoConfig: AVRecorder.AVRecorderConfig = {
+    audioSourceType: 1,
+    videoSourceType: 1,
+    profile: {
+      audioBitrate: 48000,
+      audioChannels: 2,
+      // @ts-ignore
+      audioCodec: 'audio/mp4a-latm',
+      audioSampleRate: 48000,
+      durationTime: 1000,
+      // @ts-ignore
+      fileFormat: 'mp4',
+      videoBitrate: 3000000,
+      // @ts-ignore
+      videoCodec: 'video/avc',
+      videoFrameWidth: 640,
+      videoFrameHeight: 480,
+      videoFrameRate: 30
+    },
+    url: 'file:///data/media/01.mp4',
+    orientationHint: 0,
+    maxSize: 100,
+    maxDuration: 500,
+    rotation: 0
+  }
   // 相机摄像头
   @Link cameraDeviceIndex: number
   // surfaceID值
@@ -48,11 +82,11 @@ export struct modeSwitchPage {
   // 录制时间定时器
   @State timer: number = undefined
   // 时间管理器
-  // @State dateTimeUtil: DateTimeUtil = new DateTimeUtil()
+  @State dateTimeUtil: DateTimeUtil = new DateTimeUtil()
   // 选择模式
   @State modelBagCol: string = 'photo'
   // 选择相机或者拍照
-  // @State @Watch('onChangeIsModeBol') isModeBol: boolean = true
+  @State @Watch('onChangeIsModeBol') isModeBol: boolean = true
   // 录像开始暂停
   // @State @Watch('onChangeRecord') isRecording: boolean = true
   // 视频缩略图
@@ -81,9 +115,9 @@ export struct modeSwitchPage {
   //   customStyle: true
   // })
   // // 暂停后点击停止 需要将暂停回复默认
-  // onChangeIsModeBol() {
+  onChangeIsModeBol() {
   //   this.isRecording = true
-  // }
+  }
   // // 恢复视频录制
   // resumeVideo() {
   //   CameraService.resumeVideo().then(() => {
@@ -107,52 +141,80 @@ export struct modeSwitchPage {
   //     CameraService.pauseVideo()
   //   }
   // }
-  // // 倒计时拍照和录像
-  // countTakeVideoFn() {
-  //   if (this.countdownNum) {
-  //     // 清除定时器
-  //     if (this.countTimerOut) {
-  //       clearTimeout(this.countTimerOut)
-  //     }
-  //     if (this.countTimerInt) {
-  //       clearInterval(this.countTimerInt)
-  //     }
-  //     // 开启定时器
-  //     this.countTimerOut = setTimeout(() => {
-  //       // 判断是录像还是拍照模式
-  //       this.isVideoPhotoFn()
-  //     }, this.countdownNum * 1000)
-  //     // 开启计时器
-  //     this.countTimerInt = setInterval(() => {
-  //       this.countdownNum--
-  //       if (this.countdownNum === 0) {
-  //         clearInterval(this.countTimerInt)
-  //       }
-  //     }, 1000)
-  //   } else {
-  //     this.isVideoPhotoFn()
-  //   }
-  // }
-  // // 判断录像或者照片模式
-  // isVideoPhotoFn() {
-  //   if (this.modelBagCol == 'photo') {
-  //     CameraService.takePicture()
-  //   } else if (this.modelBagCol == 'portrait') {
-  //     CameraService.takePicture()
-  //   } else if (this.modelBagCol == 'video') {
-  //     this.isModeBol = false
-  //     if (this.timer) {
-  //       clearInterval(this.timer)
-  //     }
-  //     // 开始录制
-  //     CameraService.startVideo().then(() => {
-  //       // 计时器
-  //       this.timer = setInterval(() => {
-  //         this.videoRecodeTime += 1000
-  //       }, 1000)
-  //     })
-  //   }
-  // }
+   // 倒计时拍照和录像
+   countTakeVideoFn() {
+     if (this.countdownNum) {
+       // 清除定时器
+       if (this.countTimerOut) {
+         clearTimeout(this.countTimerOut)
+       }
+       if (this.countTimerInt) {
+         clearInterval(this.countTimerInt)
+       }
+       // 开启定时器
+       this.countTimerOut = setTimeout(() => {
+         // 判断是录像还是拍照模式
+         this.isVideoPhotoFn()
+       }, this.countdownNum * 1000)
+       // 开启计时器
+       this.countTimerInt = setInterval(() => {
+         this.countdownNum--
+         if (this.countdownNum === 0) {
+           clearInterval(this.countTimerInt)
+         }
+       }, 1000)
+     } else {
+       this.isVideoPhotoFn()
+     }
+   }
+  async getVideoSurfaceID(){
+    Logger.info(this.tag, `getVideoSurfaceID`)
+    this.videoRecorder = await media.createAVRecorder()
+    Logger.info(this.tag, `getVideoSurfaceID videoRecorder: ${this.videoRecorder}`)
+
+    this.fileAsset = await this.mediaUtil.createAndGetUri(mediaLibrary.MediaType.VIDEO)
+    Logger.info(this.tag, `getVideoSurfaceID fileAsset: ${this.fileAsset}`)
+
+    this.fd = await this.mediaUtil.getFdPath(this.fileAsset)
+    Logger.info(this.tag, `getVideoSurfaceID fd: ${this.fd}`)
+
+    this.videoConfig.url = `fd://${this.fd}`
+    Logger.info(this.tag, `getVideoSurfaceID videoConfig.url : ${this.videoConfig.url }`)
+    this.videoConfig.profile.videoFrameRate = 15
+    Logger.info(this.tag, `getVideoSurfaceID 111`)
+    await this.videoRecorder.prepare(this.videoConfig)
+    Logger.info(this.tag, `getVideoSurfaceID 222`)
+    this.videoId = await this.videoRecorder.getInputSurface()
+    Logger.info(this.tag, `getVideoSurfaceID videoId: ${this.videoId}`)
+  }
+
+   // 判断录像或者照片模式
+   async  isVideoPhotoFn() {
+     await this.getVideoSurfaceID()
+
+     //this.mReceiver = image.createImageReceiver(640, 480, 2000, 8)
+     // @ts-ignore
+     //this.videoId =  this.mReceiver.getReceivingSurfaceId();
+
+     if (this.modelBagCol == 'photo') {
+       cameraDemo.startPhotoOrVideo(this.modelBagCol, this.videoId)
+     } else if (this.modelBagCol == 'video') {
+       this.isModeBol = false
+       if (this.timer) {
+         clearInterval(this.timer)
+       }
+       // 开始录制
+       cameraDemo.startPhotoOrVideo(this.modelBagCol, this.videoId)
+       cameraDemo.videoOutputStart()
+       this.videoRecorder.start()
+//       cameraDemo.startPhotoOrVideo(this.modelBagCol).then(() => {
+//         // 计时器
+//         this.timer = setInterval(() => {
+//           this.videoRecodeTime += 1000
+//         }, 1000)
+//       })
+     }
+   }
 
   aboutToAppear() {
     // CameraService.setTakePictureCallback(this.handleTakePicture.bind(this))
@@ -164,7 +226,7 @@ export struct modeSwitchPage {
   }
 
   build() {
-    if (true) {
+    if (this.isModeBol) {
 
       Column() {
         Text('拍照')
@@ -265,7 +327,7 @@ export struct modeSwitchPage {
           .backgroundColor('rgba(255,255,255,0.20)')
           .onClick(() => {
             // 倒计时拍照录像—默认拍照录像
-            // this.countTakeVideoFn()
+            this.countTakeVideoFn()
           })
         }
         //.margin({ top: 32 })
@@ -293,104 +355,126 @@ export struct modeSwitchPage {
           }
       }.position({ x: '70%', y: '82%' })
     } else {
-    //   Column() {
-    //     Row() {
-    //       Text().size({ width: 12, height: 12 }).backgroundColor($r('app.color.theme_color')).borderRadius(6)
-    //       Text(this.dateTimeUtil.getVideoTime(this.videoRecodeTime))
-    //         .fontSize(30)
-    //         .fontColor(Color.White)
-    //         .margin({ left: 8 })
-    //     }.offset({ x: -580, y: -180 })
-    //   }.position({ x: 120, y: 450 })
-    //
-    //   Column() {
-    //     // 录像抓拍键
-    //     Button() {
-    //       Text().width('120px').height('120px').borderRadius('35px').backgroundColor(Color.White)
-    //     }
-    //     .border({ width: 2, color: 0xFFFFFF, radius: 45 })
-    //     .width('200px')
-    //     .height('200px')
-    //     .backgroundColor('rgba(255,255,255,0.20)')
-    //     .onClick(() => {
-    //       CameraService.takePicture()
-    //     })
-    //   }.position({ x: '10%', y: '82%' })
-    //
-    //   Column() {
-    //     Row() {
-    //       Column() {
-    //         // 录像停止键
-    //         Button() {
-    //           Image($r('app.media.ic_camera_video_close')).size({ width: 25, height: 25 })
-    //         }
-    //         .width('120px')
-    //         .height('120px')
-    //         .backgroundColor($r('app.color.theme_color'))
-    //         .onClick(() => {
-    //           if (this.timer) {
-    //             clearInterval(this.timer)
-    //           }
-    //           // 弹框无法响应
-    //           // CameraService.pauseVideo()
-    //           // 停止录制
-    //           CameraService.stopVideo().then(async (fileAsset) => {
-    //             this.videoRecodeTime = 0
-    //             this.isModeBol = true
-    //             try {
-    //               // 获取录制缩略图
-    //               this.videoThumbnail = await fileAsset.getThumbnail()
-    //             } catch (err) {
-    //               Logger.info(this.tag, 'videoThumbnail err----------:' + JSON.stringify(err.message))
-    //             }
-    //           })
-    //           // 打开停止弹框
-    //           // this.isRecodeStopDialogController.open()
-    //         })
-    //       }
-    //       .width('180px')
-    //       .height('180px')
-    //       .borderRadius('60px')
-    //       .backgroundColor($r('app.color.theme_color'))
-    //       .justifyContent(FlexAlign.SpaceAround)
-    //     }
-    //     .justifyContent(FlexAlign.Center)
-    //     .border({ width: 3, color: 0xFFFFFF, radius: 70 })
-    //     .width('200px')
-    //     .height('200px')
-    //     .backgroundColor('rgba(255,255,255,0.20)')
-    //   }.position({ x: '40%', y: '82%' })
-    //
-    //   Column() {
-    //     Row() {
-    //       Column() {
-    //         // 录像暂停-播放键
-    //         Button() {
-    //           Image(this.isRecording ? $r('app.media.ic_camera_video_on') : $r('app.media.ic_camera_video_off'))
-    //             .size({
-    //               width: 25,
-    //               height: 25
-    //             })
-    //         }
-    //         .width('120px')
-    //         .height('120px')
-    //         .backgroundColor($r('app.color.theme_color'))
-    //         .onClick(() => {
-    //           this.isRecording = !this.isRecording
-    //         })
-    //       }
-    //       .width('180px')
-    //       .height('180px')
-    //       .borderRadius('60px')
-    //       .backgroundColor($r('app.color.theme_color'))
-    //       .justifyContent(FlexAlign.SpaceAround)
-    //     }
-    //     .justifyContent(FlexAlign.Center)
-    //     .border({ width: 3, color: 0xFFFFFF, radius: 70 })
-    //     .width('200px')
-    //     .height('200px')
-    //     .backgroundColor('rgba(255,255,255,0.20)')
-    //   }.position({ x: '70%', y: '82%' })
+       Column() {
+         Row() {
+           Text().size({ width: 12, height: 12 }).backgroundColor($r('app.color.theme_color')).borderRadius(6)
+           Text(this.dateTimeUtil.getVideoTime(this.videoRecodeTime))
+             .fontSize(30)
+             .fontColor(Color.White)
+             .margin({ left: 8 })
+         }.offset({ x: -580, y: -180 })
+       }.position({ x: 120, y: 450 })
+
+       Column() {
+         // 录像抓拍键
+         Button() {
+           Text().width('120px').height('120px').borderRadius('35px').backgroundColor(Color.White)
+         }
+         .border({ width: 2, color: 0xFFFFFF, radius: 45 })
+         .width('200px')
+         .height('200px')
+         .backgroundColor('rgba(255,255,255,0.20)')
+         .onClick(() => {
+           //CameraService.takePicture()
+         })
+       }.position({ x: '10%', y: '82%' })
+
+       Column() {
+         Row() {
+           Column() {
+             // 录像停止键
+             Button() {
+               Image($r('app.media.ic_camera_video_close')).size({ width: 25, height: 25 })
+             }
+             .width('120px')
+             .height('120px')
+             .backgroundColor($r('app.color.theme_color'))
+             .onClick(() => {
+               if (this.timer) {
+                 clearInterval(this.timer)
+               }
+               // 弹框无法响应
+               // CameraService.pauseVideo()
+               // 停止录制
+                 this.stopVideo().then(async (fileAsset) => {
+                 this.videoRecodeTime = 0
+                 this.isModeBol = true
+                 try {
+                   // 获取录制缩略图
+                   this.videoThumbnail = await fileAsset.getThumbnail()
+                 } catch (err) {
+                   Logger.info(this.tag, 'videoThumbnail err----------:' + JSON.stringify(err.message))
+                 }
+               })
+               // 打开停止弹框
+               // this.isRecodeStopDialogController.open()
+             })
+           }
+           .width('180px')
+           .height('180px')
+           .borderRadius('60px')
+           .backgroundColor($r('app.color.theme_color'))
+           .justifyContent(FlexAlign.SpaceAround)
+         }
+         .justifyContent(FlexAlign.Center)
+         .border({ width: 3, color: 0xFFFFFF, radius: 70 })
+         .width('200px')
+         .height('200px')
+         .backgroundColor('rgba(255,255,255,0.20)')
+       }.position({ x: '40%', y: '82%' })
+
+//       Column() {
+//         Row() {
+//           Column() {
+//             // 录像暂停-播放键
+//             Button() {
+//               Image(this.isRecording ? $r('app.media.ic_camera_video_on') : $r('app.media.ic_camera_video_off'))
+//                 .size({
+//                   width: 25,
+//                   height: 25
+//                 })
+//             }
+//             .width('120px')
+//             .height('120px')
+//             .backgroundColor($r('app.color.theme_color'))
+//             .onClick(() => {
+//               this.isRecording = !this.isRecording
+//             })
+//           }
+//           .width('180px')
+//           .height('180px')
+//           .borderRadius('60px')
+//           .backgroundColor($r('app.color.theme_color'))
+//           .justifyContent(FlexAlign.SpaceAround)
+//         }
+//         .justifyContent(FlexAlign.Center)
+//         .border({ width: 3, color: 0xFFFFFF, radius: 70 })
+//         .width('200px')
+//         .height('200px')
+//         .backgroundColor('rgba(255,255,255,0.20)')
+//       }.position({ x: '70%', y: '82%' })
+    }
+  }
+
+  async stopVideo() {
+    try {
+      if (this.videoRecorder) {
+        await this.videoRecorder.stop()
+        await this.videoRecorder.release()
+      }
+//      if (this.videoOutput) {
+//        await this.videoOutput.stop()
+//        await this.videoOutput.release()
+//      }
+      if (this.fileAsset) {
+        await this.fileAsset.close(this.fd)
+        return this.fileAsset
+      }
+      Logger.info(this.tag, 'stopVideo end')
+//                   弹框开始需要注释
+//       await this.videoOutput.stop()
+    } catch (err) {
+      Logger.info(this.tag, 'stopVideo err: ' + JSON.stringify(err))
     }
   }
 }

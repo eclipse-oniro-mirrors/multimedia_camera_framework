@@ -23,7 +23,11 @@ import { CountdownPage } from '../views/CountdownPage'
 import { FlashingLightPage } from '../views/FlashingLightPage'
 import { SlidePage } from '../views/SlidePage'
 import { modeSwitchPage } from '../views/modeSwitchPage'
+import mediaLibrary from '@ohos.multimedia.mediaLibrary'
+import fileio from '@ohos.fileio'
 
+import media from '@ohos.multimedia.media'
+import MediaUtils from '../model/MediaUtils'
 
 // import CameraService from '../model/CameraService'
 // import { CountdownPage } from '../views/CountdownPage'
@@ -32,7 +36,7 @@ import { modeSwitchPage } from '../views/modeSwitchPage'
 // import { setting } from '../model/Setting'
 
 
-const TAG: string = 'xmj indexPage'
+const TAG: string = 'UI indexPage'
 
 globalThis.settingDataObj = {
   mirrorBol: false, // 镜像使能 -> 关闭
@@ -87,6 +91,7 @@ struct Index {
     autoCancel: false,
     customStyle: true
   })
+
   // 参考线
   @State referenceLineBol: boolean = false
   @State onShow: boolean = false

@@ -34,6 +34,7 @@
 #include "multimedia/camera_framework/capture_session.h"
 #include "multimedia/camera_framework/photo_output.h"
 #include "multimedia/camera_framework/preview_output.h"
+#include "multimedia/camera_framework/video_output.h"
 #include "napi/native_api.h"
 #include "multimedia/camera_framework/camera_manager.h"
 
@@ -68,6 +69,7 @@ public:
     Camera_ErrorCode GetSupportedOutputCapability(void);
     Camera_ErrorCode CreatePreviewOutput(void);
     Camera_ErrorCode CreatePhotoOutput(void);
+    Camera_ErrorCode CreateVideoOutput(char* videoId);
     Camera_ErrorCode CreateMetadataOutput(void);
     Camera_ErrorCode IsCameraMuted(void);
     Camera_ErrorCode PreviewOutputStop(void);
@@ -76,6 +78,13 @@ public:
     Camera_ErrorCode HasFlashFn(uint32_t mode);
     Camera_ErrorCode setZoomRatioFn(uint32_t zoomRatio);
     Camera_ErrorCode SessionFlowFn();
+	Camera_ErrorCode SessionBegin();
+    Camera_ErrorCode SessionCommitConfig();
+    Camera_ErrorCode SessionStart();
+    Camera_ErrorCode SessionStop();
+    Camera_ErrorCode startVideo(char* videoId);
+    Camera_ErrorCode AddVideoOutput();
+    Camera_ErrorCode VideoOutputStart();
 
 private:
     explicit NDKCamera(char *str);
@@ -88,8 +97,10 @@ private:
     uint32_t size_;
     Camera_OutputCapability* cameraOutputCapability_;
     const Camera_Profile* profile_;
+	const Camera_VideoProfile* videoProfile_;
     Camera_PreviewOutput* previewOutput_;
     Camera_PhotoOutput* photoOutput_;
+	Camera_VideoOutput* videoOutput_;
     const Camera_MetadataObjectType* metaDataObjectType_;
     Camera_MetadataOutput* metadataOutput_;
     Camera_Input* cameraInput_;
