@@ -30,14 +30,22 @@ import image from '@ohos.multimedia.image';
 import media from '@ohos.multimedia.media'
 import MediaUtils from '../model/MediaUtils'
 import AVRecorder from '@ohos.multimedia.media'
+import fileio from '@ohos.fileio'
+
+const CameraSize = {
+  WIDTH: 1280,
+  HEIGHT: 720
+}
 
 @Component
 export struct modeSwitchPage {
-  private tag: string = 'UI modeSwitchPage:'
+  private tag: string = 'CAIHF modeSwitchPage:'
   private mediaUtil = MediaUtils.getInstance()
   private fileAsset: mediaLibrary.FileAsset = undefined
   private fd: number = -1
   @State videoId: string = ''
+  @State mSurfaceId: string = ''
+  private mReceiver: image.ImageReceiver = undefined
   private videoRecorder: media.AVRecorder = undefined
   private videoConfig: AVRecorder.AVRecorderConfig = {
     audioSourceType: 1,
@@ -188,22 +196,92 @@ export struct modeSwitchPage {
     Logger.info(this.tag, `getVideoSurfaceID videoId: ${this.videoId}`)
   }
 
+  createImageReceiver() {
+    try {
+      // 多少数据 不能直接把buff ， 写进去
+      // buffer大小固定死 直接写进去就已经确定了
+      // 需要拿到dataSize 再进行写入
+      this.mReceiver = image.createImageReceiver(CameraSize.WIDTH, CameraSize.HEIGHT, 2000, 8)
+      Logger.info(this.tag, `createImageReceiver value: ${this.mReceiver} `)
+      this.mReceiver.on('imageArrival', () => {
+        Logger.info(this.tag, 'imageArrival start')
+        this.mReceiver.readNextImage((err, image) => {
+          Logger.info(this.tag, 'readNextImage start')
+          if (err || image === undefined) {
+            Logger.error(this.tag, 'readNextImage failed ')
+            return
+          }
+          image.getComponent(4, (errMsg, img) => {
+            Logger.info(this.tag, 'getComponent start')
+            if (errMsg || img === undefined) {
+              Logger.info(this.tag, 'getComponent failed ')
+              return
+            }
+            // let buffer = new ArrayBuffer(2048)
+            let buffer
+            if (img.byteBuffer) {
+              buffer = img.byteBuffer
+            } else {
+              Logger.error(this.tag, 'img.byteBuffer is undefined')
+            }
+            this.savePicture(buffer, image)
+          })
+        })
+      })
+    } catch {
+      Logger.info(this.tag, 'savePicture err')
+    }
+  }
+
+  // 读取图像
+  async savePicture(buffer: ArrayBuffer, img: image.Image) {
+    try {
+      Logger.info(this.tag, 'savePicture start')
+      let imgFileAsset = await this.mediaUtil.createAndGetUri(mediaLibrary.MediaType.IMAGE)
+      let imgPhotoUri = imgFileAsset.uri
+      Logger.info(this.tag, `photoUri = ${imgPhotoUri}`)
+      let imgFd = await this.mediaUtil.getFdPath(imgFileAsset)
+      Logger.info(this.tag, `fd = ${imgFd}`)
+      await fileio.write(imgFd, buffer)
+      await imgFileAsset.close(imgFd)
+      await img.release()
+      Logger.info(this.tag, 'save image End')
+      if (this.handleTakePicture) {
+        this.handleTakePicture(imgPhotoUri)
+      }
+    } catch (err) {
+      Logger.info(this.tag, 'savePicture err' + JSON.stringify(err.message))
+    }
+  }
+
    // 判断录像或者照片模式
    async  isVideoPhotoFn() {
-     await this.getVideoSurfaceID()
-
      //this.mReceiver = image.createImageReceiver(640, 480, 2000, 8)
      // @ts-ignore
      //this.videoId =  this.mReceiver.getReceivingSurfaceId();
 
      if (this.modelBagCol == 'photo') {
-       cameraDemo.startPhotoOrVideo(this.modelBagCol, this.videoId)
+       if(this.mReceiver) {} else {
+         this.createImageReceiver()
+       }
+
+       this.mSurfaceId = await this.mReceiver.getReceivingSurfaceId()
+       if(this.mSurfaceId) {
+         Logger.info(this.tag, `createImageReceiver mSurfaceId: ${this.mSurfaceId} `)
+       } else {
+         Logger.info(this.tag, `Get mSurfaceId failed `)
+       }
+
+       cameraDemo.startPhotoOrVideo(this.modelBagCol, this.mSurfaceId)
+
+       //cameraDemo.startPhotoOrVideo(this.modelBagCol, this.videoId)
      } else if (this.modelBagCol == 'video') {
        this.isModeBol = false
        if (this.timer) {
          clearInterval(this.timer)
        }
        // 开始录制
+       await this.getVideoSurfaceID()
        cameraDemo.startPhotoOrVideo(this.modelBagCol, this.videoId)
        cameraDemo.videoOutputStart()
        this.videoRecorder.start()

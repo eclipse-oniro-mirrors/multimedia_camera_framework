@@ -68,8 +68,8 @@ public:
     Camera_ErrorCode GetSupportedCameras(void);
     Camera_ErrorCode GetSupportedOutputCapability(void);
     Camera_ErrorCode CreatePreviewOutput(void);
-    Camera_ErrorCode CreatePhotoOutput(void);
-    Camera_ErrorCode CreateVideoOutput(char *videoId);
+    Camera_ErrorCode CreatePhotoOutput(char* photoId);
+    Camera_ErrorCode CreateVideoOutput(char* videoId);
     Camera_ErrorCode CreateMetadataOutput(void);
     Camera_ErrorCode IsCameraMuted(void);
     Camera_ErrorCode PreviewOutputStop(void);
@@ -78,13 +78,14 @@ public:
     Camera_ErrorCode HasFlashFn(uint32_t mode);
     Camera_ErrorCode setZoomRatioFn(uint32_t zoomRatio);
     Camera_ErrorCode SessionFlowFn();
-    Camera_ErrorCode SessionBegin();
+	  Camera_ErrorCode SessionBegin();
     Camera_ErrorCode SessionCommitConfig();
     Camera_ErrorCode SessionStart();
     Camera_ErrorCode SessionStop();
-    Camera_ErrorCode startVideo(char *videoId);
+    Camera_ErrorCode startVideo(char* videoId);
     Camera_ErrorCode AddVideoOutput();
     Camera_ErrorCode VideoOutputStart();
+    Camera_ErrorCode startPhoto(char *mSurfaceId);
 
 private:
     explicit NDKCamera(char *str);
@@ -110,6 +111,7 @@ private:
     char* previewSurfaceId_;
     char* photoSurfaceId_;
     Camera_ErrorCode ret_;
+    uint32_t takePictureTimes = 0;
     
     // callback
     CameraManager_Callbacks* callback_;
