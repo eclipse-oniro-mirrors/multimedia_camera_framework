@@ -16,7 +16,7 @@
 #include "camera_manager.h"
 #include <multimedia/camera_framework/capture_session.h>
 
-#define LOG_TAG "NDK DEMO"
+#define LOG_TAG "DEMO:"
 #define LOG_DOMAIN 0x3200
 NDKCamera* NDKCamera::ndkCamera_ = nullptr;
 std::mutex NDKCamera::mtx_;
@@ -44,7 +44,6 @@ NDKCamera::NDKCamera(char* str)
     GetSupportedCameras();
     GetSupportedOutputCapability();
     CreatePreviewOutput();
-    //CreatePhotoOutput();
     CreateCameraInput();
     CameraInputOpen();
     SessionFlowFn();
@@ -397,9 +396,7 @@ Camera_ErrorCode NDKCamera::PhotoOutputRelease(void)
 Camera_ErrorCode NDKCamera::startVideo(char* videoId)
 {
     OH_LOG_ERROR(LOG_APP, "startVideo begin.");
-
     Camera_ErrorCode ret = SessionStop();
-
     if (ret == CAMERA_OK) {
         OH_LOG_ERROR(LOG_APP, "SessionStop success.");
     } else {
