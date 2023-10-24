@@ -66,6 +66,11 @@ void ErrorCallbackListener::OnErrorCallbackAsync(const int32_t errorType, const 
 void ErrorCallbackListener::OnErrorCallback(const int32_t errorType, const int32_t errorMsg) const
 {
     MEDIA_DEBUG_LOG("OnErrorCallback is called");
+    napi_handle_scope scope = nullptr;
+    napi_open_handle_scope(env_, &scope);
+    if (scope == nullptr) {
+        return;
+    }
     napi_value result;
     napi_value callback = nullptr;
     napi_value retVal;
@@ -86,6 +91,7 @@ void ErrorCallbackListener::OnErrorCallback(const int32_t errorType, const int32
             it++;
         }
     }
+    napi_close_handle_scope(env_, scope);
 }
 
 void ErrorCallbackListener::OnError(const int32_t errorType, const int32_t errorMsg) const

@@ -64,6 +64,11 @@ void CameraMuteListenerNapi::OnCameraMuteCallbackAsync(bool muteMode) const
 void CameraMuteListenerNapi::OnCameraMuteCallback(bool muteMode) const
 {
     MEDIA_DEBUG_LOG("OnCameraMuteCallback is called, muteMode: %{public}d", muteMode);
+    napi_handle_scope scope = nullptr;
+    napi_open_handle_scope(env_, &scope);
+    if (scope == nullptr) {
+        return;
+    }
     napi_value result[ARGS_TWO];
     napi_value callback;
     napi_value retVal;
@@ -83,6 +88,7 @@ void CameraMuteListenerNapi::OnCameraMuteCallback(bool muteMode) const
             it++;
         }
     }
+    napi_close_handle_scope(env_, scope);
 }
 
 void CameraMuteListenerNapi::OnCameraMute(bool muteMode) const
