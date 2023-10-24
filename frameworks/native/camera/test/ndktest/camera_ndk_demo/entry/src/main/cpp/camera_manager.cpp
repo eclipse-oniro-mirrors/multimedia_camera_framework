@@ -14,7 +14,10 @@
  */
 
 #include "camera_manager.h"
+#include <multimedia/camera_framework/capture_session.h>
 
+#define LOG_TAG "DEMO:"
+#define LOG_DOMAIN 0x3200
 NDKCamera* NDKCamera::ndkCamera_ = nullptr;
 std::mutex NDKCamera::mtx_;
 
@@ -41,7 +44,6 @@ NDKCamera::NDKCamera(char* str)
     GetSupportedCameras();
     GetSupportedOutputCapability();
     CreatePreviewOutput();
-    CreatePhotoOutput();
     CreateCameraInput();
     CameraInputOpen();
     SessionFlowFn();
@@ -291,24 +293,28 @@ Camera_ErrorCode NDKCamera::CreatePreviewOutput(void)
     return ret_;
 }
 
-Camera_ErrorCode NDKCamera::CreatePhotoOutput(void)
+Camera_ErrorCode NDKCamera::CreatePhotoOutput(char* photoSurfaceId)
 {
     profile_ = cameraOutputCapability_->photoProfiles[0];
     if (profile_ == nullptr) {
         OH_LOG_ERROR(LOG_APP, "Get photoProfiles failed.");
         return CAMERA_INVALID_ARGUMENT;
     }
-    ret_ = OH_CameraManager_CreatePhotoOutput(cameraManager_, profile_, photoSurfaceId_, &photoOutput_);
-    if (photoSurfaceId_ == nullptr || photoOutput_ == nullptr || ret_ != CAMERA_OK) {
+
+    if (photoSurfaceId == nullptr) {
         OH_LOG_ERROR(LOG_APP, "CreatePhotoOutput failed.");
         return CAMERA_INVALID_ARGUMENT;
     }
+
+    ret_ = OH_CameraManager_CreatePhotoOutput(cameraManager_, profile_, photoSurfaceId, &photoOutput_);
+
     return ret_;
 }
 
 Camera_ErrorCode NDKCamera::CreateVideoOutput(char* videoId)
 {
     videoProfile_ = cameraOutputCapability_->videoProfiles[0];
+
     if (videoProfile_ == nullptr) {
         OH_LOG_ERROR(LOG_APP, "Get videoProfiles failed.");
         return CAMERA_INVALID_ARGUMENT;
@@ -387,7 +393,6 @@ Camera_ErrorCode NDKCamera::PhotoOutputRelease(void)
     }
     return ret_;
 }
-
 Camera_ErrorCode NDKCamera::startVideo(char* videoId)
 {
     OH_LOG_ERROR(LOG_APP, "startVideo begin.");
@@ -420,4 +425,42 @@ Camera_ErrorCode NDKCamera::VideoOutputStart()
         OH_LOG_ERROR(LOG_APP, "OH_VideoOutput_Start failed. %d ", ret);
     }
     return ret;
+}
+
+Camera_ErrorCode NDKCamera::startPhoto(char *mSurfaceId)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    if (takePictureTimes == 0) {
+        ret = SessionStop();
+        if (ret == CAMERA_OK) {
+            OH_LOG_ERROR(LOG_APP, "SessionStop success.");
+        } else {
+            OH_LOG_ERROR(LOG_APP, "SessionStop failed. %d ", ret);
+        }
+        ret = SessionBegin();
+        if (ret == CAMERA_OK) {
+            OH_LOG_ERROR(LOG_APP, "SessionBegin success.");
+        } else {
+            OH_LOG_ERROR(LOG_APP, "SessionBegin failed. %d ", ret);
+        }
+        OH_LOG_ERROR(LOG_APP, "startPhoto begin.");
+        ret = CreatePhotoOutput(mSurfaceId);
+
+        OH_LOG_ERROR(LOG_APP, "startPhoto CreatePhotoOutput ret = %{public}d.", ret);
+        ret = OH_CaptureSession_AddPhotoOutput(captureSession_, photoOutput_);
+        OH_LOG_ERROR(LOG_APP, "startPhoto AddPhotoOutput ret = %{public}d.", ret);
+        ret = SessionCommitConfig();
+
+        OH_LOG_ERROR(LOG_APP, "startPhoto SessionCommitConfig ret = %{public}d.", ret);
+        ret = SessionStart();
+        OH_LOG_ERROR(LOG_APP, "startPhoto SessionStart ret = %{public}d.", ret);
+    }
+    ret = OH_PhotoOutput_Capture(photoOutput_);
+    OH_LOG_ERROR(LOG_APP, "startPhoto OH_PhotoOutput_Capture ret = %{public}d.", ret);
+    if (ret_ != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "startPhoto failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    takePictureTimes ++;
+    return ret_;
 }

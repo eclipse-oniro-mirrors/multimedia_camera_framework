@@ -19,6 +19,8 @@
 #include "camera_manager.h"
 #include "hilog/log.h"
 
+#define LOG_TAG "DEMO:"
+#define LOG_DOMAIN 0x3200
 static NDKCamera* ndkCamera_ = nullptr;
 
 static napi_value SetZoomRatio(napi_env env, napi_callback_info info)
@@ -75,8 +77,8 @@ static napi_value StartPhotoOrVideo(napi_env env, napi_callback_info info)
     napi_value result;
     size_t typeLen = 0;
     size_t videoIdLen = 0;
-    char *modeFlag = nullptr;
-    char *videoId = nullptr;
+    char* modeFlag = nullptr;
+    char* videoId = nullptr;
 
     napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
@@ -89,12 +91,12 @@ static napi_value StartPhotoOrVideo(napi_env env, napi_callback_info info)
     napi_get_value_string_utf8(env, args[1], videoId, videoIdLen + 1, &videoIdLen);
 
     if (!strcmp(modeFlag, "photo")) {
-        // take photo func
+        OH_LOG_ERROR(LOG_APP, "StartPhoto surfaceId %{public}s", videoId);
+        ndkCamera_->startPhoto(videoId);
     } else if (!strcmp(modeFlag, "video")) {
         ndkCamera_->startVideo(videoId);
         OH_LOG_ERROR(LOG_APP, "StartPhotoOrVideo000 %{public}s", videoId);
     }
-
     return result;
 }
 
@@ -105,7 +107,6 @@ static napi_value VideoOutputStart(napi_env env, napi_callback_info info)
     size_t argc = 0;
     napi_value result;
     ndkCamera_->VideoOutputStart();
-
     return result;
 }
 EXTERN_C_START
