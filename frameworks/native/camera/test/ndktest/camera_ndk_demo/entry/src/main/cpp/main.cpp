@@ -90,8 +90,7 @@ static napi_value StartPhotoOrVideo(napi_env env, napi_callback_info info)
     videoId = new char[videoIdLen + 1];
     napi_get_value_string_utf8(env, args[1], videoId, videoIdLen + 1, &videoIdLen);
 
-    if (!strcmp(modeFlag, "photo"))
-    {
+    if (!strcmp(modeFlag, "photo")) {
         OH_LOG_ERROR(LOG_APP, "StartPhoto surfaceId %{public}s", videoId);
         ndkCamera_->startPhoto(videoId);
     } else if (!strcmp(modeFlag, "video")) {

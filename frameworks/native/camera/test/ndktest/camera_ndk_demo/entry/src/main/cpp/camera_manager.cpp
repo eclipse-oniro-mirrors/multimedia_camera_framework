@@ -427,7 +427,8 @@ Camera_ErrorCode NDKCamera::VideoOutputStart()
     return ret;
 }
 
-Camera_ErrorCode NDKCamera::startPhoto(char *mSurfaceId) {
+Camera_ErrorCode NDKCamera::startPhoto(char *mSurfaceId)
+{
     Camera_ErrorCode ret = CAMERA_OK;
     if (takePictureTimes == 0) {
         ret = SessionStop();

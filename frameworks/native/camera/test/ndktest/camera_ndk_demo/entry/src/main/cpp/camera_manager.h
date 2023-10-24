@@ -78,7 +78,7 @@ public:
     Camera_ErrorCode HasFlashFn(uint32_t mode);
     Camera_ErrorCode setZoomRatioFn(uint32_t zoomRatio);
     Camera_ErrorCode SessionFlowFn();
-	  Camera_ErrorCode SessionBegin();
+    Camera_ErrorCode SessionBegin();
     Camera_ErrorCode SessionCommitConfig();
     Camera_ErrorCode SessionStart();
     Camera_ErrorCode SessionStop();
