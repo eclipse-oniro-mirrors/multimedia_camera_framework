@@ -14,7 +14,10 @@
  */
 
 #include "session/capture_session.h"
+#include <mutex>
+#include "camera_metadata_operator.h"
 #include "camera_util.h"
+#include "capture_output.h"
 #include "hcapture_session_callback_stub.h"
 #include "input/camera_input.h"
 #include "camera_log.h"
@@ -345,7 +348,25 @@ void CaptureSession::ConfigureOutput(sptr<CaptureOutput> &output)
     }
 }
 
-int32_t CaptureSession::AddOutput(sptr<CaptureOutput> &output)
+void CaptureSession::InsertOutputIntoSet(sptr<CaptureOutput>& output)
+{
+    std::lock_guard<std::mutex> lock(captureOutputSetsMutex_);
+    auto it = captureOutputSets_.begin();
+    while (it != captureOutputSets_.end()) {
+        if (*it == nullptr) {
+            it = captureOutputSets_.erase(it);
+        } else if (*it == output) {
+            break;
+        } else {
+            ++it;
+        }
+    }
+    if (it == captureOutputSets_.end()) {
+        captureOutputSets_.insert(output);
+    }
+}
+
+int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::AddOutput");
@@ -364,15 +385,17 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput> &output)
         return ServiceToCameraError(CAMERA_OK);
     }
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    if (captureSession_) {
-        errCode = captureSession_->AddOutput(output->GetStreamType(), output->GetStream());
-        MEDIA_INFO_LOG("CaptureSession::AddOutput StreamType = %{public}d", output->GetStreamType());
-        if (errCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("Failed to AddOutput!, %{public}d", errCode);
-        }
-    } else {
+    if (captureSession_ == nullptr) {
         MEDIA_ERR_LOG("CaptureSession::AddOutput() captureSession_ is nullptr");
+        return ServiceToCameraError(errCode);
     }
+    errCode = captureSession_->AddOutput(output->GetStreamType(), output->GetStream());
+    MEDIA_INFO_LOG("CaptureSession::AddOutput StreamType = %{public}d", output->GetStreamType());
+    if (errCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("Failed to AddOutput!, %{public}d", errCode);
+        return ServiceToCameraError(errCode);
+    }
+    InsertOutputIntoSet(output);
     return ServiceToCameraError(errCode);
 }
 
@@ -403,6 +426,22 @@ int32_t CaptureSession::RemoveInput(sptr<CaptureInput> &input)
     return ServiceToCameraError(errCode);
 }
 
+void CaptureSession::RemoveOutputFromSet(sptr<CaptureOutput>& output)
+{
+    std::lock_guard<std::mutex> lock(captureOutputSetsMutex_);
+    auto it = captureOutputSets_.begin();
+    while (it != captureOutputSets_.end()) {
+        if (*it == nullptr) {
+            it = captureOutputSets_.erase(it);
+        } else if (*it == output) {
+            captureOutputSets_.erase(it);
+            return;
+        } else {
+            ++it;
+        }
+    }
+}
+
 int32_t CaptureSession::RemoveOutput(sptr<CaptureOutput> &output)
 {
     CAMERA_SYNC_TRACE;
@@ -425,6 +464,7 @@ int32_t CaptureSession::RemoveOutput(sptr<CaptureOutput> &output)
     } else {
         MEDIA_ERR_LOG("CaptureSession::RemoveOutput() captureSession_ is nullptr");
     }
+    RemoveOutputFromSet(output);
     return ServiceToCameraError(errCode);
 }
 
@@ -567,7 +607,34 @@ int32_t CaptureSession::UpdateSetting(std::shared_ptr<Camera::CameraMetadata> ch
                           itemEntry->item);
         }
     }
+    OnSettingUpdated(changedMetadata);
     return CameraErrorCode::SUCCESS;
+}
+
+void CaptureSession::OnSettingUpdated(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata)
+{
+    std::lock_guard<std::mutex> lock(captureOutputSetsMutex_);
+    auto it = captureOutputSets_.begin();
+    while (it != captureOutputSets_.end()) {
+        auto output = it->promote();
+        if (output == nullptr) {
+            it = captureOutputSets_.erase(it);
+            continue;
+        }
+        ++it;
+        auto filters = output->GetObserverTags();
+        if (filters.empty()) {
+            continue;
+        }
+        for (auto tag : filters) {
+            camera_metadata_item_t item;
+            int ret = Camera::FindCameraMetadataItem(changedMetadata->get(), tag, &item);
+            if (ret != CAM_META_SUCCESS || item.count <= 0) {
+                continue;
+            }
+            output->OnMetadataChanged(tag, item);
+        }
+    }
 }
 
 void CaptureSession::LockForControl()

@@ -16,12 +16,13 @@
 #include "camera_framework_moduletest.h"
 
 #include <cinttypes>
+#include <memory>
 #include <vector>
 
-#include "access_token.h"
 #include "accesstoken_kit.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
+#include "camera_output_capability.h"
 #include "camera_util.h"
 #include "hap_token_info.h"
 #include "hcamera_device.h"
@@ -72,6 +73,8 @@ const int32_t WAIT_TIME_AFTER_CAPTURE = 1;
 const int32_t WAIT_TIME_AFTER_START = 2;
 const int32_t WAIT_TIME_BEFORE_STOP = 1;
 const int32_t CAMERA_NUMBER = 2;
+const int32_t SKETCH_PREVIEW_MIN_HEIGHT = 720;
+const int32_t SKETCH_PREVIEW_MAX_WIDTH = 3000;
 
 bool g_camInputOnError = false;
 bool g_sessionclosed = false;
@@ -316,6 +319,54 @@ sptr<CaptureOutput> CameraFrameworkModuleTest::CreatePreviewOutput(int32_t width
 
     sptr<CaptureOutput> previewOutput = nullptr;
     previewOutput = manager_->CreatePreviewOutput(previewProfiles[0], pSurface);
+    return previewOutput;
+}
+
+std::shared_ptr<Profile> CameraFrameworkModuleTest::GetSketchPreviewProfile()
+{
+    std::shared_ptr<Profile> returnProfile;
+    Size size720P { 1280, 720 };
+    Size size1080P { 1920, 1080 };
+    for (const auto& profile : previewProfiles) {
+        if (profile.format_ != CAMERA_FORMAT_YUV_420_SP) {
+            continue;
+        }
+        if (profile.size_.width == size720P.width && profile.size_.height == size720P.height) {
+            returnProfile = std::make_shared<Profile>(profile);
+            return returnProfile;
+        }
+        if (profile.size_.width == size1080P.width && profile.size_.height == size1080P.height) {
+            returnProfile = std::make_shared<Profile>(profile);
+            return returnProfile;
+        }
+        if (profile.size_.height < SKETCH_PREVIEW_MIN_HEIGHT || profile.size_.width > SKETCH_PREVIEW_MAX_WIDTH) {
+            continue;
+        }
+        if (returnProfile == nullptr) {
+            returnProfile = std::make_shared<Profile>(profile);
+            continue;
+        }
+        if (profile.size_.width > returnProfile->size_.width) {
+            returnProfile = std::make_shared<Profile>(profile);
+        }
+    }
+    return returnProfile;
+}
+
+sptr<CaptureOutput> CameraFrameworkModuleTest::CreatePreviewOutput(Profile& profile)
+{
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, g_previewFd, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    Size previewSize = profile.GetSize();
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewSize.width, previewSize.height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+
+    sptr<CaptureOutput> previewOutput = nullptr;
+    previewOutput = manager_->CreatePreviewOutput(profile, pSurface);
     return previewOutput;
 }
 
@@ -689,7 +740,6 @@ void CameraFrameworkModuleTest::SetUp()
 
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     camInput->Open();
-
     session_ = manager_->CreateCaptureSession();
     ASSERT_NE(session_, nullptr);
 }
@@ -718,7 +768,7 @@ void CameraFrameworkModuleTest::TearDown()
 HWTEST_F(CameraFrameworkModuleTest, Camera_fwInfoManager_moduletest_001, TestSize.Level0)
 {
     std::string hostName;
-    for (int i = 0; i < cameras_.size(); i++) {
+    for (size_t i = 0; i < cameras_.size(); i++) {
         hostName = cameras_[i]->GetHostName();
         std::string cameraId = cameras_[i]->GetID();
         std::string networkId = cameras_[i]->GetNetWorkId();
@@ -742,7 +792,7 @@ HWTEST_F(CameraFrameworkModuleTest, Camera_fwInfoManager_moduletest_002, TestSiz
     std::vector<sptr<CameraDevice>> cameras = manager_->GetSupportedCameras();
     auto judgeDeviceType = [&cameras]() -> bool {
         bool isOk = false;
-        for (int i = 0; i < cameras.size(); i++) {
+        for (size_t i = 0; i < cameras.size(); i++) {
             uint16_t deviceType = cameras[i]->GetDeviceType();
             switch (deviceType) {
                 case HostDeviceType::UNKNOWN:
@@ -6024,30 +6074,35 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_049, TestSize.Le
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_050, TestSize.Level0)
 {
-    const int32_t captureMode = 1;
+    auto previewProfile = GetSketchPreviewProfile();
+    if (previewProfile == nullptr) {
+        EXPECT_EQ(previewProfile.get(), nullptr);
+        return;
+    }
+    auto output = CreatePreviewOutput(*previewProfile);
+    ASSERT_NE(output, nullptr);
+
+    session_->SetMode(static_cast<int32_t>(CameraMode::CAPTURE));
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
     intResult = session_->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    auto output = CreatePreviewOutput();
-    ASSERT_NE(output, nullptr);
-
     intResult = session_->AddOutput(output);
     EXPECT_EQ(intResult, 0);
 
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
-    previewOutput->SetCallback(std::make_shared<AppCallback>());
-
     bool isSketchSupport = previewOutput->IsSketchSupported();
-    if (isSketchSupport) {
-        int sketchEnableRatio = previewOutput->GetSketchEnableRatio(captureMode);
-        EXPECT_GT(sketchEnableRatio, 0);
-
-        intResult = previewOutput->EnableSketch(true);
-        EXPECT_EQ(intResult, 0);
+    if (!isSketchSupport) {
+        return;
     }
+
+    int sketchEnableRatio = previewOutput->GetSketchEnableRatio(session_->GetMode());
+    EXPECT_GT(sketchEnableRatio, 0);
+
+    intResult = previewOutput->EnableSketch(true);
+    EXPECT_EQ(intResult, 0);
 
     intResult = session_->CommitConfig();
     EXPECT_EQ(intResult, 0);
@@ -6055,28 +6110,90 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_050, TestSize.Le
     intResult = session_->Start();
     EXPECT_EQ(intResult, 0);
 
-    if (isSketchSupport) {
-        intResult = previewOutput->StartSketch();
-        EXPECT_EQ(intResult, 0);
-    }
+    intResult = previewOutput->StartSketch();
+    EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
 
-    if (isSketchSupport) {
-        intResult = previewOutput->StopSketch();
-        EXPECT_EQ(intResult, 0);
-    }
+    intResult = previewOutput->StopSketch();
+    EXPECT_EQ(intResult, 0);
 
     intResult = session_->Stop();
     EXPECT_EQ(intResult, 0);
+}
 
-    intResult = input_->Close();
+/*
+ * Feature: Framework
+ * Function: Test sketch functions callback.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test sketch functions.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_051, TestSize.Level0)
+{
+    auto previewProfile = GetSketchPreviewProfile();
+    if (previewProfile == nullptr) {
+        EXPECT_EQ(previewProfile.get(), nullptr);
+        return;
+    }
+    auto output = CreatePreviewOutput(*previewProfile);
+    ASSERT_NE(output, nullptr);
+
+    session_->SetMode(static_cast<int32_t>(CameraMode::CAPTURE));
+    int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
-    intResult = previewOutput->Release();
+    intResult = session_->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    intResult = session_->Release();
+    intResult = session_->AddOutput(output);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
+    bool isSketchSupport = previewOutput->IsSketchSupported();
+    if (!isSketchSupport) {
+        return;
+    }
+
+    previewOutput->SetCallback(std::make_shared<AppCallback>());
+
+    int sketchEnableRatio = previewOutput->GetSketchEnableRatio(session_->GetMode());
+    EXPECT_GT(sketchEnableRatio, 0);
+
+    intResult = previewOutput->EnableSketch(true);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = previewOutput->StartSketch();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_SKETCH_AVAILABLE)], 0);
+
+    session_->LockForControl();
+    intResult = session_->SetZoomRatio(30.0f);
+    EXPECT_EQ(intResult, 0);
+    session_->UnlockForControl();
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_SKETCH_AVAILABLE)], 1);
+
+    intResult = previewOutput->StopSketch();
+    EXPECT_EQ(intResult, 0);
+    sleep(1);
+    g_previewEvents.reset();
+    sleep(2);
+    EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_SKETCH_AVAILABLE)], 0);
+
+    intResult = session_->Stop();
     EXPECT_EQ(intResult, 0);
 }
 
@@ -6088,64 +6205,142 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_050, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test sketch anomalous branch.
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_051, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_052, TestSize.Level0)
 {
-    const int32_t captureMode = 1;
+    auto previewProfile = GetSketchPreviewProfile();
+    if (previewProfile == nullptr) {
+        EXPECT_EQ(previewProfile.get(), nullptr);
+        return;
+    }
+    auto output = CreatePreviewOutput(*previewProfile);
+    ASSERT_NE(output, nullptr);
+
+    session_->SetMode(static_cast<int32_t>(CameraMode::CAPTURE));
     int32_t intResult = session_->BeginConfig();
+
     EXPECT_EQ(intResult, 0);
 
     intResult = session_->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    auto output = CreatePreviewOutput();
+    intResult = session_->AddOutput(output);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
+    bool isSketchSupport = previewOutput->IsSketchSupported();
+    if (!isSketchSupport) {
+        return;
+    }
+
+    int sketchEnableRatio = previewOutput->GetSketchEnableRatio(CameraMode::PORTRAIT);
+    EXPECT_LT(sketchEnableRatio, 0);
+
+    intResult = previewOutput->EnableSketch(true);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = previewOutput->EnableSketch(true);
+    EXPECT_EQ(intResult, 7400102);
+
+    intResult = previewOutput->StartSketch();
+    EXPECT_EQ(intResult, 7400103);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = previewOutput->StartSketch();
+    EXPECT_EQ(intResult, 7400201);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = previewOutput->StartSketch();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = previewOutput->StartSketch();
+    EXPECT_EQ(intResult, 7400201);
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = previewOutput->StopSketch();
+    EXPECT_EQ(intResult, 0);
+    intResult = previewOutput->StopSketch();
+    EXPECT_EQ(intResult, 7400201);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test sketch functions auto start sketch while zoom set.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test sketch functions auto start sketch while zoom set.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_053, TestSize.Level0)
+{
+    auto previewProfile = GetSketchPreviewProfile();
+    if (previewProfile == nullptr) {
+        EXPECT_EQ(previewProfile.get(), nullptr);
+        return;
+    }
+    auto output = CreatePreviewOutput(*previewProfile);
     ASSERT_NE(output, nullptr);
+
+    session_->SetMode(static_cast<int32_t>(CameraMode::CAPTURE));
+    int32_t intResult = session_->BeginConfig();
+
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
 
     intResult = session_->AddOutput(output);
     EXPECT_EQ(intResult, 0);
 
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
-    previewOutput->SetCallback(std::make_shared<AppCallback>());
-
     bool isSketchSupport = previewOutput->IsSketchSupported();
-    if (isSketchSupport) {
-        int sketchEnableRatio = previewOutput->GetSketchEnableRatio(captureMode);
-        EXPECT_GT(sketchEnableRatio, 0);
-
-        intResult = previewOutput->EnableSketch(true);
-        EXPECT_EQ(intResult, 0);
-
-        intResult = previewOutput->EnableSketch(true);
-        EXPECT_EQ(intResult, 7400102);
+    if (!isSketchSupport) {
+        return;
     }
+
+    int sketchEnableRatio = previewOutput->GetSketchEnableRatio(session_->GetMode());
+    EXPECT_GT(sketchEnableRatio, 0);
+
+    intResult = previewOutput->EnableSketch(true);
+    EXPECT_EQ(intResult, 0);
 
     intResult = session_->CommitConfig();
     EXPECT_EQ(intResult, 0);
 
+    session_->LockForControl();
+    intResult = session_->SetZoomRatio(30.0f);
+    EXPECT_EQ(intResult, 0);
+    session_->UnlockForControl();
+
     intResult = session_->Start();
     EXPECT_EQ(intResult, 0);
 
-    if (isSketchSupport) {
-        intResult = previewOutput->StartSketch();
-        EXPECT_EQ(intResult, 0);
-    }
+    intResult = previewOutput->StartSketch();
+    EXPECT_EQ(intResult, 7400201);
+
+    intResult = previewOutput->StopSketch();
+    EXPECT_EQ(intResult, 0);
+
+    session_->LockForControl();
+    intResult = session_->SetZoomRatio(35.0f);
+    EXPECT_EQ(intResult, 0);
+    session_->UnlockForControl();
+
+    intResult = previewOutput->StartSketch();
+    EXPECT_EQ(intResult, 7400201);
 
     sleep(WAIT_TIME_AFTER_START);
 
-    if (isSketchSupport) {
-        intResult = previewOutput->StopSketch();
-        EXPECT_EQ(intResult, 0);
-    }
+    intResult = previewOutput->StopSketch();
+    EXPECT_EQ(intResult, 0);
 
     intResult = session_->Stop();
-    EXPECT_EQ(intResult, 0);
-
-    intResult = input_->Close();
-    EXPECT_EQ(intResult, 0);
-
-    intResult = previewOutput->Release();
-    EXPECT_EQ(intResult, 0);
-
-    intResult = session_->Release();
     EXPECT_EQ(intResult, 0);
 }
 } // namespace CameraStandard

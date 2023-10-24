@@ -14,9 +14,14 @@
  */
 
 #include "output/preview_output.h"
-#include <cstdint>
 
+#include <limits>
+#include <memory>
+#include <variant>
+
+#include "camera_device_ability_items.h"
 #include "camera_log.h"
+#include "camera_metadata_operator.h"
 #include "camera_output_capability.h"
 #include "camera_util.h"
 #include "hstream_repeat_callback_stub.h"
@@ -113,7 +118,7 @@ int32_t PreviewOutput::Start()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into PreviewOutput::Start");
-    CaptureSession* captureSession = GetSession();
+    auto captureSession = GetSession();
     if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
         MEDIA_ERR_LOG("PreviewOutput Failed to Start!, session not config");
         return CameraErrorCode::SESSION_NOT_CONFIG;
@@ -215,6 +220,27 @@ float PreviewOutput::GetSketchRatio()
     return ratio;
 }
 
+int32_t PreviewOutput::CreateSketchWrapper(Size sketchSize, int32_t imageFormat)
+{
+    auto session = GetSession();
+    if (session == nullptr) {
+        MEDIA_ERR_LOG("EnableSketch session null");
+        return ServiceToCameraError(CAMERA_INVALID_STATE);
+    }
+    float ratio = GetSketchEnableRatio(session->GetMode());
+    if (ratio <= 0) {
+        MEDIA_ERR_LOG("EnableSketch sketch ratio is illegal");
+        return ServiceToCameraError(CAMERA_INVALID_ARG);
+    }
+    auto wrapper = std::make_shared<SketchWrapper>(this, ratio);
+    auto listener = std::make_shared<SketchWrapper::SketchBufferAvaliableListener>(wrapper);
+    int32_t errCode = wrapper->Init(listener, sketchSize, static_cast<Media::ImageFormat>(imageFormat), ratio);
+    if (errCode == CAMERA_OK) {
+        sketchWrapper_ = wrapper;
+    }
+    return ServiceToCameraError(errCode);
+}
+
 int32_t PreviewOutput::EnableSketch(bool isEnable)
 {
     MEDIA_DEBUG_LOG("Enter Into PreviewOutput::EnableSketch");
@@ -224,6 +250,13 @@ int32_t PreviewOutput::EnableSketch(bool isEnable)
     }
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
+
+    auto captureSession = GetSession();
+    if (captureSession == nullptr || !captureSession->IsSessionConfiged()) {
+        MEDIA_ERR_LOG("PreviewOutput Failed EnableSketch!, session not config");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+
     if (isEnable) {
         if (sketchWrapper_ != nullptr) {
             return ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED);
@@ -246,21 +279,16 @@ int32_t PreviewOutput::EnableSketch(bool isEnable)
             MEDIA_ERR_LOG("EnableSketch camFormat is not support %{public}d", static_cast<int32_t>(camFormat));
             return ServiceToCameraError(CAMERA_INVALID_ARG);
         }
-
-        auto wrapper = std::make_shared<SketchWrapper>(this);
-        auto listener = std::make_shared<SketchWrapper::SketchBufferAvaliableListener>(wrapper);
-        errCode = wrapper->Init(listener, *sketchSize, imageFormat);
-        if (errCode == CAMERA_OK) {
-            sketchWrapper_ = wrapper;
-        }
-    } else {
-        if (sketchWrapper_ == nullptr) {
-            return ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED);
-        }
-        auto wrapper = static_pointer_cast<SketchWrapper>(sketchWrapper_);
-        errCode = wrapper->Destory();
-        sketchWrapper_ = nullptr;
+        return CreateSketchWrapper(*sketchSize, static_cast<int32_t>(imageFormat));
     }
+
+    // Disable sketch branch
+    if (sketchWrapper_ == nullptr) {
+        return ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED);
+    }
+    auto wrapper = static_pointer_cast<SketchWrapper>(sketchWrapper_);
+    errCode = wrapper->Destory();
+    sketchWrapper_ = nullptr;
     return ServiceToCameraError(errCode);
 }
 
@@ -269,8 +297,13 @@ int32_t PreviewOutput::StartSketch()
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
 
+    auto captureSession = GetSession();
+    if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
+        MEDIA_ERR_LOG("PreviewOutput Failed StartSketch!, session not commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
     if (sketchWrapper_ != nullptr) {
-        errCode = static_cast<SketchWrapper*>(sketchWrapper_.get())->StartSketchStream();
+        errCode = static_pointer_cast<SketchWrapper>(sketchWrapper_)->StartSketchStream();
     }
     return ServiceToCameraError(errCode);
 }
@@ -280,8 +313,14 @@ int32_t PreviewOutput::StopSketch()
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
 
+    auto captureSession = GetSession();
+    if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
+        MEDIA_ERR_LOG("PreviewOutput Failed StopSketch!, session not commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+
     if (sketchWrapper_ != nullptr) {
-        errCode = static_cast<SketchWrapper*>(sketchWrapper_.get())->StopSketchStream();
+        errCode = static_pointer_cast<SketchWrapper>(sketchWrapper_)->StopSketchStream();
     }
     return ServiceToCameraError(errCode);
 }
@@ -376,7 +415,7 @@ void PreviewOutput::UpdateSketchStaticInfo()
         return;
     }
     UpdateSketchEnableRatio(metaData);
-    UpdateSketchRefferenceFovRatio(metaData);
+    UpdateSketchReferenceFovRatio(metaData);
 }
 
 void PreviewOutput::UpdateSketchEnableRatio(std::shared_ptr<Camera::CameraMetadata>& deviceMetadata)
@@ -405,7 +444,7 @@ void PreviewOutput::UpdateSketchEnableRatio(std::shared_ptr<Camera::CameraMetada
     }
 }
 
-void PreviewOutput::UpdateSketchRefferenceFovRatio(std::shared_ptr<Camera::CameraMetadata>& deviceMetadata)
+void PreviewOutput::UpdateSketchReferenceFovRatio(std::shared_ptr<Camera::CameraMetadata>& deviceMetadata)
 {
     camera_metadata_item_t item;
     int ret =
@@ -413,11 +452,11 @@ void PreviewOutput::UpdateSketchRefferenceFovRatio(std::shared_ptr<Camera::Camer
     std::lock_guard<std::mutex> lock(sketchReferenceFovRatioMutex_);
     sketchReferenceFovRatioMap_.clear();
     if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("PreviewOutput::UpdateSketchRefferenceFovRatio get sketch reference fov ratio failed");
+        MEDIA_ERR_LOG("PreviewOutput::UpdateSketchReferenceFovRatio get sketch reference fov ratio failed");
         return;
     }
     if (item.count <= 0) {
-        MEDIA_ERR_LOG("PreviewOutput::UpdateSketchRefferenceFovRatio sketch reference fov ratio count <= 0");
+        MEDIA_ERR_LOG("PreviewOutput::UpdateSketchReferenceFovRatio sketch reference fov ratio count <= 0");
         return;
     }
     int32_t groupCount = item.count / 2; // 2 datas as a group: key,value
@@ -425,7 +464,7 @@ void PreviewOutput::UpdateSketchRefferenceFovRatio(std::shared_ptr<Camera::Camer
     for (int32_t i = 0; i < groupCount; i++) {
         float key = dataEntry[i * 2];       // 2 datas as a group: key,value
         float value = dataEntry[i * 2 + 1]; // 2 datas as a group: key,value
-        MEDIA_DEBUG_LOG("PreviewOutput::UpdateSketchRefferenceFovRatio get sketch reference fov ratio "
+        MEDIA_DEBUG_LOG("PreviewOutput::UpdateSketchReferenceFovRatio get sketch reference fov ratio "
                         "%{public}f:%{public}f",
             key, value);
         sketchReferenceFovRatioMap_[(int32_t)key] = value;
@@ -464,9 +503,91 @@ void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
     return;
 }
 
+std::set<camera_device_metadata_tag_t> PreviewOutput::GetObserverTags() const
+{
+    return {OHOS_CONTROL_ZOOM_RATIO};
+}
+
+int32_t PreviewOutput::OnMetadataChanged(
+    const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem)
+{
+    // Don't trust outer public interface passthrough data. Check the legitimacy of the data.
+    if (metadataItem.count <= 0) {
+        return CAM_META_INVALID_PARAM;
+    }
+    if (tag == OHOS_CONTROL_ZOOM_RATIO) {
+        std::lock_guard<std::mutex> lock(asyncOpMutex_);
+        if (sketchWrapper_ == nullptr) {
+            return CAM_META_SUCCESS;
+        }
+        float tagRatio = *metadataItem.data.f;
+        auto sketchWrapper = static_pointer_cast<SketchWrapper>(sketchWrapper_);
+        float sketchRatio = sketchWrapper->GetSketchRatio();
+        MEDIA_DEBUG_LOG("PreviewOutput::OnMetadataChanged OHOS_CONTROL_ZOOM_RATIO >>> tagRatio:%{public}f -- "
+                        "sketchRatio:%{public}f",
+            tagRatio, sketchRatio);
+        if ((tagRatio - sketchRatio) >= std::numeric_limits<float>::epsilon()) {
+            sketchWrapper->StartSketchStream();
+        } else {
+            sketchWrapper->StopSketchStream();
+        }
+    }
+    return CAM_META_SUCCESS;
+}
+
 std::shared_ptr<PreviewStateCallback> PreviewOutput::GetApplicationCallback()
 {
     return appCallback_;
+}
+
+void PreviewOutput::OnNativeRegisterCallback(const std::string& eventString)
+{
+    if (eventString == "sketchAvailable") {
+        std::lock_guard<std::mutex> lock(asyncOpMutex_);
+        if (sketchWrapper_ == nullptr) {
+            return;
+        }
+        auto session = GetSession();
+        if (session == nullptr) {
+            return;
+        }
+        if (!session->IsSessionCommited()) {
+            return;
+        }
+        auto metadata = GetDeviceMetadata();
+        camera_metadata_item_t item;
+        int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
+        if (ret != CAM_META_SUCCESS || item.count <= 0) {
+            return;
+        }
+        float tagRatio = *item.data.f;
+        if (tagRatio <= 0) {
+            return;
+        }
+        auto sketchWrapper = static_pointer_cast<SketchWrapper>(sketchWrapper_);
+        float sketchRatio = sketchWrapper->GetSketchRatio();
+        MEDIA_DEBUG_LOG("PreviewOutput::OnMetadataChanged OHOS_CONTROL_ZOOM_RATIO >>> tagRatio:%{public}f -- "
+                        "sketchRatio:%{public}f",
+            tagRatio, sketchRatio);
+        if (tagRatio - sketchRatio >= std::numeric_limits<float>::epsilon()) {
+            MEDIA_DEBUG_LOG(
+                "PreviewOutput::OnNativeRegisterCallback ready to start sketch: current ratio is:%{public}f", tagRatio);
+            // If preview stream is not started, this function will fail and won't start sketch stream.
+            sketchWrapper->StartSketchStream();
+        }
+    }
+}
+
+void PreviewOutput::OnNativeUnregisterCallback(const std::string& eventString)
+{
+    if (eventString == "sketchAvailable") {
+        std::lock_guard<std::mutex> lock(asyncOpMutex_);
+        if (sketchWrapper_ == nullptr) {
+            return;
+        }
+        auto sketchWrapper = static_pointer_cast<SketchWrapper>(sketchWrapper_);
+        sketchWrapper->StopSketchStream();
+    }
 }
 
 void PreviewOutput::CameraServerDied(pid_t pid)

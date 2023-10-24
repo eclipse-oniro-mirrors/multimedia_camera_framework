@@ -55,9 +55,9 @@ sptr<IStreamCommon> CaptureOutput::GetStream()
     return stream_;
 }
 
-CaptureSession* CaptureOutput::GetSession()
+sptr<CaptureSession> CaptureOutput::GetSession()
 {
-    return session_;
+    return session_.promote();
 }
 
 int32_t CaptureOutput::Release()
@@ -67,7 +67,7 @@ int32_t CaptureOutput::Release()
     return 0;
 }
 
-void CaptureOutput::SetSession(CaptureSession* captureSession)
+void CaptureOutput::SetSession(sptr<CaptureSession> captureSession)
 {
     session_ = captureSession;
 }

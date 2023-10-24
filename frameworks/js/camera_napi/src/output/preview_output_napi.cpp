@@ -654,7 +654,8 @@ napi_status PreviewOutputNapi::CreateAsyncTask(
                 MEDIA_ERR_LOG("failed to get surface");
                 return;
             }
-            CameraFormat format = ((sptr<PreviewOutput> &)(context->objectInfo->previewOutput_))->format;
+            CameraFormat format =
+                ((sptr<PreviewOutput>&)(context->objectInfo->previewOutput_))->GetPreviewProfile().format_;
             surface->SetUserData(CameraManager::surfaceFormat, std::to_string(format));
             ((sptr<PreviewOutput> &)(context->objectInfo->previewOutput_))->AddDeferredSurface(surface);
         }
@@ -832,10 +833,7 @@ napi_value PreviewOutputNapi::RegisterCallback(
             return undefinedResult;
         }
         previewOutputNapi->previewCallback_->SaveCallbackReference(eventType, callback, isOnce);
-        if (eventTypeEnum == PreviewOutputEventType::SKETCH_AVAILABLE && status == napi_ok &&
-            previewOutputNapi->previewOutput_ != nullptr) {
-            previewOutputNapi->previewOutput_->StartSketch();
-        }
+        previewOutputNapi->previewOutput_->OnNativeRegisterCallback(eventType);
     } else {
         MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
     }
@@ -903,12 +901,8 @@ napi_value PreviewOutputNapi::UnregisterCallback(
             MEDIA_ERR_LOG("SystemApi Off sketchAvailable is called!");
             return undefinedResult;
         }
-        // unset callback for error
         previewOutputNapi->previewCallback_->RemoveCallbackRef(env, callback, eventType);
-        if (eventTypeEnum == PreviewOutputEventType::SKETCH_AVAILABLE && status == napi_ok &&
-            previewOutputNapi->previewOutput_ != nullptr) {
-            previewOutputNapi->previewOutput_->StopSketch();
-        }
+        previewOutputNapi->previewOutput_->OnNativeUnregisterCallback(eventType);
     } else {
         MEDIA_ERR_LOG("Incorrect callback event type provided for camera input!");
     }

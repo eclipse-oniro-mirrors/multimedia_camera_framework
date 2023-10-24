@@ -15,7 +15,9 @@
 
 #include "hstream_repeat.h"
 
+#include "camera_device_ability_items.h"
 #include "camera_log.h"
+#include "camera_metadata_operator.h"
 #include "camera_util.h"
 #include "display.h"
 #include "display_manager.h"
@@ -74,11 +76,40 @@ void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
                 .dataspace = 0,
                 .bufferQueue = nullptr
             };
-            streamInfo.extendedStreamInfos = {extendedStreamInfo};
+            streamInfo.extendedStreamInfos = { extendedStreamInfo };
     }
 }
 
-int32_t HStreamRepeat::Start()
+void HStreamRepeat::StartSketchStream(std::shared_ptr<OHOS::Camera::CameraMetadata> settings)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("HStreamRepeat::StartSketchStream Enter");
+    sptr<HStreamRepeat> sketchStreamRepeat;
+    {
+        std::lock_guard<std::mutex> lock(sketchStreamLock_);
+        if (sketchStreamRepeat_ == nullptr || sketchStreamRepeat_->sketchRatio_ <= 0) {
+            MEDIA_DEBUG_LOG("HStreamRepeat::StartSketchStream sketchStreamRepeat_ is null or ratio is illegal");
+            return;
+        }
+        sketchStreamRepeat = sketchStreamRepeat_;
+    }
+    camera_metadata_item_t item;
+    int32_t ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
+    if (ret != CAM_META_SUCCESS || item.count <= 0) {
+        MEDIA_DEBUG_LOG("HStreamRepeat::StartSketchStream get OHOS_CONTROL_ZOOM_RATIO fail");
+        return;
+    }
+    float tagRatio = *item.data.f;
+    MEDIA_DEBUG_LOG("HStreamRepeat::StartSketchStream OHOS_CONTROL_ZOOM_RATIO >>> tagRatio:%{public}f -- "
+                    "sketchRatio:%{public}f",
+        tagRatio, sketchStreamRepeat->sketchRatio_);
+    if (tagRatio - sketchStreamRepeat->sketchRatio_ >= std::numeric_limits<float>::epsilon()) {
+        sketchStreamRepeat->Start();
+    }
+    MEDIA_DEBUG_LOG("HStreamRepeat::StartSketchStream Exit");
+}
+
+int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> settings)
 {
     CAMERA_SYNC_TRACE;
     if (streamOperator_ == nullptr) {
@@ -88,18 +119,31 @@ int32_t HStreamRepeat::Start()
         MEDIA_ERR_LOG("HStreamRepeat::Start, Already started with captureID: %{public}d", curCaptureID_);
         return CAMERA_INVALID_STATE;
     }
+
+    // If current is sketch stream, check parent is start or not.
+    if (repeatStreamType_ == RepeatStreamType::SKETCH) {
+        auto parentRepeat = parentStreamRepeat_.promote();
+        if (parentRepeat == nullptr || parentRepeat->curCaptureID_ == 0) {
+            MEDIA_ERR_LOG("HStreamRepeat::Start sketch parent state is illegal");
+            return CAMERA_INVALID_STATE;
+        }
+    }
+
     int32_t ret = AllocateCaptureId(curCaptureID_);
     if (ret != CAMERA_OK) {
         MEDIA_ERR_LOG("HStreamRepeat::Start Failed to allocate a captureId");
         return ret;
     }
+
     std::vector<uint8_t> ability;
-    {
+    if (settings == nullptr) {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
+    } else {
+        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(settings, ability);
     }
     CaptureInfo captureInfo;
-    captureInfo.streamIds_ = {streamId_};
+    captureInfo.streamIds_ = { streamId_ };
     captureInfo.captureSetting_ = ability;
     captureInfo.enableShutterCallback_ = false;
     MEDIA_INFO_LOG("HStreamRepeat::Start Starting with capture ID: %{public}d", curCaptureID_);
@@ -110,8 +154,15 @@ int32_t HStreamRepeat::Start()
         MEDIA_ERR_LOG("HStreamRepeat::Start Failed with error Code:%{public}d", rc);
         ret = HdiToServiceError(rc);
     }
-    // Do not start sketch in this function
+    if (settings != nullptr) {
+        StartSketchStream(settings);
+    }
     return ret;
+}
+
+int32_t HStreamRepeat::Start()
+{
+    return Start(nullptr);
 }
 
 int32_t HStreamRepeat::Stop()
@@ -136,7 +187,7 @@ int32_t HStreamRepeat::Stop()
 
     {
         std::lock_guard<std::mutex> lock(sketchStreamLock_);
-        if (sketchStreamRepeat_ != nullptr && !sketchStreamRepeat_->IsReleaseStream()) {
+        if (sketchStreamRepeat_ != nullptr) {
             sketchStreamRepeat_->Stop();
         }
     }
@@ -155,7 +206,7 @@ int32_t HStreamRepeat::Release()
 
     {
         std::lock_guard<std::mutex> lock(sketchStreamLock_);
-        if (sketchStreamRepeat_ != nullptr && !sketchStreamRepeat_->IsReleaseStream()) {
+        if (sketchStreamRepeat_ != nullptr) {
             sketchStreamRepeat_->Release();
         }
     }
@@ -236,17 +287,17 @@ int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& pro
     return CAMERA_OK;
 }
 
-int32_t HStreamRepeat::ForkSketchStreamRepeat(
-    const sptr<OHOS::IBufferProducer>& producer, int32_t width, int32_t height, sptr<IStreamRepeat>& sketchStream)
+int32_t HStreamRepeat::ForkSketchStreamRepeat(const sptr<OHOS::IBufferProducer>& producer, int32_t width,
+    int32_t height, sptr<IStreamRepeat>& sketchStream, float sketchRatio)
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(sketchStreamLock_);
-    if ((producer == nullptr) || (width <= 0) || (height <= 0)) {
-        MEDIA_ERR_LOG("HCameraService::ForkSketchStreamRepeat producer is null");
+    if ((producer == nullptr) || (width <= 0) || (height <= 0) || sketchRatio <= 0) {
+        MEDIA_ERR_LOG("HCameraService::ForkSketchStreamRepeat args is illegal");
         return CAMERA_INVALID_ARG;
     }
 
-    if (sketchStreamRepeat_ != nullptr && !sketchStreamRepeat_->IsReleaseStream()) {
+    if (sketchStreamRepeat_ != nullptr) {
         sketchStreamRepeat_->Release();
     }
 
@@ -256,6 +307,8 @@ int32_t HStreamRepeat::ForkSketchStreamRepeat(
     POWERMGR_SYSEVENT_CAMERA_CONFIG(SKETCH, width, height);
     sketchStream = streamRepeat;
     sketchStreamRepeat_ = streamRepeat;
+    sketchStreamRepeat_->sketchRatio_ = sketchRatio;
+    sketchStreamRepeat_->parentStreamRepeat_ = this;
     MEDIA_INFO_LOG("HCameraService::ForkSketchStreamRepeat end");
     return CAMERA_OK;
 }
@@ -264,10 +317,11 @@ int32_t HStreamRepeat::RemoveSketchStreamRepeat()
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(sketchStreamLock_);
-    if (sketchStreamRepeat_ == nullptr || sketchStreamRepeat_->IsReleaseStream()) {
+    if (sketchStreamRepeat_ == nullptr) {
         return CAMERA_OK;
     }
     sketchStreamRepeat_->Release();
+    sketchStreamRepeat_->parentStreamRepeat_ = nullptr;
     sketchStreamRepeat_ = nullptr;
 
     return CAMERA_OK;

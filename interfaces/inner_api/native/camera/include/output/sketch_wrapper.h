@@ -33,18 +33,20 @@ public:
         std::weak_ptr<SketchWrapper> sketchWrapper_;
     };
 
-    explicit SketchWrapper(PreviewOutput* holder);
+    explicit SketchWrapper(PreviewOutput* holder, float sketchRatio);
     virtual ~SketchWrapper();
     int32_t StartSketchStream();
     int32_t StopSketchStream();
-    int32_t Init(
-        std::shared_ptr<SketchBufferAvaliableListener>& listener, const Size size, Media::ImageFormat imageFormat);
+    int32_t Init(std::shared_ptr<SketchBufferAvaliableListener>& listener, const Size size,
+        Media::ImageFormat imageFormat, float sketchRatio);
     int32_t Destory();
+    float GetSketchRatio();
 
 private:
     PreviewOutput* holder_;
     sptr<IStreamRepeat> sketchStream_;
     std::shared_ptr<Media::ImageReceiver> sketchImgReceiver_;
+    float sketchRatio_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

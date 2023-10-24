@@ -17,10 +17,11 @@
 #define OHOS_CAMERA_PHOTO_OUTPUT_H
 
 #include <iostream>
+
 #include "camera_metadata_info.h"
 #include "capture_output.h"
-#include "istream_capture.h"
 #include "hstream_capture_callback_stub.h"
+#include "istream_capture.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -123,12 +124,7 @@ public:
         NORMAL_QUALITY [[deprecated]],
         LOW_QUALITY [[deprecated]]
     };
-    enum RotationConfig {
-        Rotation_0 = 0,
-        Rotation_90 = 90,
-        Rotation_180 = 180,
-        Rotation_270 = 270
-    };
+    enum RotationConfig { Rotation_0 = 0, Rotation_90 = 90, Rotation_180 = 180, Rotation_270 = 270 };
     PhotoCaptureSetting();
     virtual ~PhotoCaptureSetting() = default;
 
@@ -173,7 +169,7 @@ public:
      *
      * @param location value to be set.
      */
-    void SetLocation(std::unique_ptr<Location> &location);
+    void SetLocation(std::unique_ptr<Location>& location);
 
     /**
      * @brief Set the mirror option for the photo capture.
@@ -195,7 +191,7 @@ private:
 
 class PhotoOutput : public CaptureOutput {
 public:
-    explicit PhotoOutput(sptr<IStreamCapture> &streamCapture);
+    explicit PhotoOutput(sptr<IStreamCapture>& streamCapture);
     virtual ~PhotoOutput();
 
     /**
@@ -213,10 +209,10 @@ public:
     void SetThumbnailListener(sptr<IBufferConsumerListener>& listener);
 
     /**
-    * @brief Set the Thumbnail profile.
-    *
-    * @param isEnabled quickThumbnail is enabled.
-    */
+     * @brief Set the Thumbnail profile.
+     *
+     * @param isEnabled quickThumbnail is enabled.
+     */
     int32_t SetThumbnail(bool isEnabled);
 
     /**
@@ -277,7 +273,22 @@ public:
      */
     std::shared_ptr<PhotoCaptureSetting> GetDefaultCaptureSetting();
 
+    /**
+     * @brief Get Observed matadata tags
+     *        Register tags into capture session. If the tags data changes,{@link OnMetadataChanged} will be called.
+     * @return Observed tags
+     */
+    std::set<camera_device_metadata_tag_t> GetObserverTags() const override;
+
+    /**
+     * @brief Callback of metadata change.
+     * @return Operate result
+     */
+    int32_t OnMetadataChanged(
+        const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem) override;
+
     sptr<Surface> thumbnailSurface_;
+
 private:
     std::shared_ptr<PhotoStateCallback> appCallback_;
     sptr<IStreamCaptureCallback> cameraSvcCallback_;
@@ -287,11 +298,9 @@ private:
 class HStreamCaptureCallbackImpl : public HStreamCaptureCallbackStub {
 public:
     PhotoOutput* photoOutput_ = nullptr;
-    HStreamCaptureCallbackImpl() : photoOutput_(nullptr) {
-    }
+    HStreamCaptureCallbackImpl() : photoOutput_(nullptr) {}
 
-    explicit HStreamCaptureCallbackImpl(PhotoOutput* photoOutput) : photoOutput_(photoOutput) {
-    }
+    explicit HStreamCaptureCallbackImpl(PhotoOutput* photoOutput) : photoOutput_(photoOutput) {}
 
     ~HStreamCaptureCallbackImpl()
     {

@@ -44,6 +44,7 @@ public:
     void SetStreamInfo(StreamInfo_V1_1& streamInfo) override;
     int32_t Release() override;
     int32_t Start() override;
+    int32_t Start(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
     int32_t Stop() override;
     int32_t SetCallback(sptr<IStreamRepeatCallback>& callback) override;
     int32_t OnFrameStarted();
@@ -51,7 +52,7 @@ public:
     int32_t OnFrameError(int32_t errorType);
     int32_t AddDeferredSurface(const sptr<OHOS::IBufferProducer>& producer) override;
     int32_t ForkSketchStreamRepeat(const sptr<OHOS::IBufferProducer>& producer, int32_t width, int32_t height,
-        sptr<IStreamRepeat>& sketchStream) override;
+        sptr<IStreamRepeat>& sketchStream, float sketchRatio) override;
     int32_t RemoveSketchStreamRepeat() override;
     sptr<HStreamRepeat> GetSketchStream();
     RepeatStreamType GetRepeatStreamType();
@@ -59,11 +60,14 @@ public:
 
 private:
     void SetStreamTransform();
+    void StartSketchStream(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
     RepeatStreamType repeatStreamType_;
     sptr<IStreamRepeatCallback> streamRepeatCallback_;
     std::mutex callbackLock_;
-    std::mutex sketchStreamLock_;
+    std::mutex sketchStreamLock_; // Guard sketchStreamRepeat_
     sptr<HStreamRepeat> sketchStreamRepeat_;
+    wptr<HStreamRepeat> parentStreamRepeat_;
+    float sketchRatio_ = -1.0f;
 };
 } // namespace CameraStandard
 } // namespace OHOS
