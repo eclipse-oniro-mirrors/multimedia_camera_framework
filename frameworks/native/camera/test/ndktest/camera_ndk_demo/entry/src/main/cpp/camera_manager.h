@@ -41,12 +41,12 @@
 class NDKCamera {
 public:
     ~NDKCamera();
-    static NDKCamera* GetInstance(char *str)
+    static NDKCamera* GetInstance(char *str, uint32_t focusMode)
     {
         if (ndkCamera_ == nullptr) {
             std::lock_guard<std::mutex> lock(mtx_);
             if (ndkCamera_ == nullptr) {
-                ndkCamera_ = new NDKCamera(str);
+                ndkCamera_ = new NDKCamera(str, focusMode);
             }
         }
         return ndkCamera_;
@@ -76,19 +76,31 @@ public:
     Camera_ErrorCode PreviewOutputRelease(void);
     Camera_ErrorCode PhotoOutputRelease(void);
     Camera_ErrorCode HasFlashFn(uint32_t mode);
+    Camera_ErrorCode IsVideoStabilizationModeSupportedFn(uint32_t mode);
     Camera_ErrorCode setZoomRatioFn(uint32_t zoomRatio);
-    Camera_ErrorCode SessionFlowFn();
-    Camera_ErrorCode SessionBegin();
-    Camera_ErrorCode SessionCommitConfig();
-    Camera_ErrorCode SessionStart();
-    Camera_ErrorCode SessionStop();
+    Camera_ErrorCode SessionFlowFn(void);
+    Camera_ErrorCode SessionBegin(void);
+    Camera_ErrorCode SessionCommitConfig(void);
+    Camera_ErrorCode SessionStart(void);
+    Camera_ErrorCode SessionStop(void);
     Camera_ErrorCode startVideo(char* videoId);
-    Camera_ErrorCode AddVideoOutput();
-    Camera_ErrorCode VideoOutputStart();
+    Camera_ErrorCode AddVideoOutput(void);
+    Camera_ErrorCode VideoOutputStart(void);
     Camera_ErrorCode startPhoto(char *mSurfaceId);
+    Camera_ErrorCode IsExposureModeSupportedFn(uint32_t mode);
+    Camera_ErrorCode IsMeteringPoint(int x, int y);
+    Camera_ErrorCode IsExposureBiasRange(int exposureBias);
+    Camera_ErrorCode IsFocusMode(uint32_t mode);
+    Camera_ErrorCode IsFocusPoint(int x, int y);
+    Camera_ErrorCode IsFocusModeSupported(uint32_t mode);
+    int32_t GetVideoFrameWidth(void);
+    int32_t GetVideoFrameHeight(void);
+    int32_t GetVideoFrameRate(void);
+    Camera_ErrorCode VideoOutputStop(void);
+    Camera_ErrorCode VideoOutputRelease(void);
 
 private:
-    explicit NDKCamera(char *str);
+    NDKCamera(char *str, uint32_t focusMode);
     NDKCamera(const NDKCamera&) = delete;
     NDKCamera& operator = (const NDKCamera&) = delete;
     
@@ -112,6 +124,13 @@ private:
     char* photoSurfaceId_;
     Camera_ErrorCode ret_;
     uint32_t takePictureTimes = 0;
+    Camera_ExposureMode exposureMode_;
+    bool isExposureModeSupported_;
+    bool isFocusModeSupported_;
+    float minExposureBias_;
+    float maxExposureBias_;
+    float step_;
+    uint32_t focusMode_;
     
     // callback
     CameraManager_Callbacks* callback_;

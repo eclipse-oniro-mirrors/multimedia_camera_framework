@@ -15,20 +15,16 @@
 
 // 反转摄像头_多机位_拍照_摄像
 
-// import { isRecodeStopDialog } from '../Dialog/isRecodeStopDialog'
-//
-// import { MultiCameraDialog } from '../Dialog/MultiCameraDialog'
-// import { PortraitCameraDialog } from  '../Dialog/PortraitCameraDialog'
 import DateTimeUtil from '../model/DateTimeUtil'
 import Logger from '../model/Logger'
 import cameraDemo from 'libentry.so'
-// import CameraService from '../model/CameraService'
 
 import mediaLibrary from '@ohos.multimedia.mediaLibrary';
 
 import image from '@ohos.multimedia.image';
 import media from '@ohos.multimedia.media'
 import MediaUtils from '../model/MediaUtils'
+import deviceInfo from '@ohos.deviceInfo';
 import AVRecorder from '@ohos.multimedia.media'
 import fileio from '@ohos.fileio'
 
@@ -47,31 +43,30 @@ export struct modeSwitchPage {
   @State mSurfaceId: string = ''
   private mReceiver: image.ImageReceiver = undefined
   private videoRecorder: media.AVRecorder = undefined
-  private videoConfig: AVRecorder.AVRecorderConfig = {
-    audioSourceType: 1,
-    videoSourceType: 1,
+  private videoConfig: media.AVRecorderConfig = {
+    audioSourceType: media.AudioSourceType.AUDIO_SOURCE_TYPE_MIC,
+    videoSourceType: media.VideoSourceType.VIDEO_SOURCE_TYPE_SURFACE_YUV,
     profile: {
       audioBitrate: 48000,
       audioChannels: 2,
-      // @ts-ignore
-      audioCodec: 'audio/mp4a-latm',
+      audioCodec: media.CodecMimeType.AUDIO_AAC,
       audioSampleRate: 48000,
-      durationTime: 1000,
-      // @ts-ignore
-      fileFormat: 'mp4',
-      videoBitrate: 3000000,
-      // @ts-ignore
-      videoCodec: 'video/avc',
+      fileFormat: media.ContainerFormatType.CFT_MPEG_4,
+      videoBitrate: 512000,
+      videoCodec: media.CodecMimeType.VIDEO_AVC,
       videoFrameWidth: 640,
       videoFrameHeight: 480,
       videoFrameRate: 30
     },
-    url: 'file:///data/media/01.mp4',
-    orientationHint: 0,
-    maxSize: 100,
-    maxDuration: 500,
+    url: '',
     rotation: 0
-  }
+  };
+  private photoRotationMap = {
+    rotation0: 0,
+    rotation90: 90,
+    rotation180: 180,
+    rotation270: 270,
+  };
   // 相机摄像头
   @Link cameraDeviceIndex: number
   // surfaceID值
@@ -188,7 +183,25 @@ export struct modeSwitchPage {
 
     this.videoConfig.url = `fd://${this.fd}`
     Logger.info(this.tag, `getVideoSurfaceID videoConfig.url : ${this.videoConfig.url }`)
-    this.videoConfig.profile.videoFrameRate = 15
+
+    if (deviceInfo.deviceType == 'default') {
+      Logger.info(this.tag, `deviceType = default`)
+      this.videoConfig.videoSourceType = media.VideoSourceType.VIDEO_SOURCE_TYPE_SURFACE_ES
+    }
+    if (deviceInfo.deviceType == 'phone') {
+      Logger.info(this.tag, `deviceType = phone`)
+      this.videoConfig.videoSourceType = media.VideoSourceType.VIDEO_SOURCE_TYPE_SURFACE_YUV
+      this.videoConfig.profile.videoCodec = media.CodecMimeType.VIDEO_MPEG4;
+      this.videoConfig.rotation = this.photoRotationMap.rotation90;
+    }
+    if (deviceInfo.deviceType == 'tablet') {
+      Logger.info(this.tag, `deviceType = tablet`)
+      this.videoConfig.videoSourceType = media.VideoSourceType.VIDEO_SOURCE_TYPE_SURFACE_YUV
+    }
+    this.videoConfig.profile.videoFrameWidth = cameraDemo.getVideoFrameWidth();
+    this.videoConfig.profile.videoFrameHeight = cameraDemo.getVideoFrameHeight();
+    this.videoConfig.profile.videoFrameRate = cameraDemo.getVideoFrameRate();
+
     Logger.info(this.tag, `getVideoSurfaceID 111`)
     await this.videoRecorder.prepare(this.videoConfig)
     Logger.info(this.tag, `getVideoSurfaceID 222`)
@@ -255,12 +268,7 @@ export struct modeSwitchPage {
   }
 
    // 判断录像或者照片模式
-   async  isVideoPhotoFn() {
-     //this.mReceiver = image.createImageReceiver(640, 480, 2000, 8)
-     // @ts-ignore
-     //this.videoId =  this.mReceiver.getReceivingSurfaceId();
-
-     if (this.modelBagCol == 'photo') {
+   async  isVideoPhotoFn() {if (this.modelBagCol == 'photo') {
        if(this.mReceiver) {} else {
          this.createImageReceiver()
        }
@@ -273,8 +281,6 @@ export struct modeSwitchPage {
        }
 
        cameraDemo.startPhotoOrVideo(this.modelBagCol, this.mSurfaceId)
-
-       //cameraDemo.startPhotoOrVideo(this.modelBagCol, this.videoId)
      } else if (this.modelBagCol == 'video') {
        this.isModeBol = false
        if (this.timer) {
@@ -285,12 +291,6 @@ export struct modeSwitchPage {
        cameraDemo.startPhotoOrVideo(this.modelBagCol, this.videoId)
        cameraDemo.videoOutputStart()
        this.videoRecorder.start()
-//       cameraDemo.startPhotoOrVideo(this.modelBagCol).then(() => {
-//         // 计时器
-//         this.timer = setInterval(() => {
-//           this.videoRecodeTime += 1000
-//         }, 1000)
-//       })
      }
    }
 
@@ -453,7 +453,7 @@ export struct modeSwitchPage {
          .height('200px')
          .backgroundColor('rgba(255,255,255,0.20)')
          .onClick(() => {
-           //CameraService.takePicture()
+           cameraDemo.startPhotoOrVideo(this.modelBagCol, this.videoId)
          })
        }.position({ x: '10%', y: '82%' })
 
@@ -540,10 +540,7 @@ export struct modeSwitchPage {
         await this.videoRecorder.stop()
         await this.videoRecorder.release()
       }
-//      if (this.videoOutput) {
-//        await this.videoOutput.stop()
-//        await this.videoOutput.release()
-//      }
+      cameraDemo.videoOutputStopAndRelease();
       if (this.fileAsset) {
         await this.fileAsset.close(this.fd)
         return this.fileAsset

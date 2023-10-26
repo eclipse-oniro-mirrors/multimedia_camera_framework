@@ -14,22 +14,21 @@
  */
 
 #include "camera_manager.h"
-#include <multimedia/camera_framework/capture_session.h>
 
 #define LOG_TAG "DEMO:"
 #define LOG_DOMAIN 0x3200
 NDKCamera* NDKCamera::ndkCamera_ = nullptr;
 std::mutex NDKCamera::mtx_;
 
-NDKCamera::NDKCamera(char* str)
-    : previewSurfaceId_(str), cameras_(nullptr),
+NDKCamera::NDKCamera(char* str, uint32_t focusMode)
+    : previewSurfaceId_(str), cameras_(nullptr), focusMode_(focusMode),
       cameraOutputCapability_(nullptr), cameraInput_(nullptr),
       captureSession_(nullptr), size_(0),
       isCameraMuted_(nullptr), profile_(nullptr),
-      photoSurfaceId_(nullptr),
-      previewOutput_(nullptr), photoOutput_(nullptr),
-      metaDataObjectType_(nullptr), metadataOutput_(nullptr),
-      ret_(CAMERA_OK)
+      photoSurfaceId_(nullptr), previewOutput_(nullptr), photoOutput_(nullptr),
+      metaDataObjectType_(nullptr), metadataOutput_(nullptr), isExposureModeSupported_(false),
+      isFocusModeSupported_(false), exposureMode_(EXPOSURE_MODE_LOCKED),
+      minExposureBias_(0), maxExposureBias_(0), step_(0), ret_(CAMERA_OK)
 {
     valid_ = false;
     Camera_ErrorCode ret = OH_Camera_GetCameraMananger(&cameraManager_);
@@ -78,7 +77,7 @@ Camera_ErrorCode NDKCamera::HasFlashFn(uint32_t mode)
         OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_HasFlash failed.");
     }
     if (hasFlash) {
-        OH_LOG_ERROR(LOG_APP, "hasFlash success-----");
+        OH_LOG_INFO(LOG_APP, "hasFlash success-----");
     } else {
         OH_LOG_ERROR(LOG_APP, "hasFlash fail-----");
     }
@@ -90,7 +89,7 @@ Camera_ErrorCode NDKCamera::HasFlashFn(uint32_t mode)
         OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_IsFlashModeSupported failed.");
     }
     if (isSupported) {
-        OH_LOG_ERROR(LOG_APP, "isFlashModeSupported success-----");
+        OH_LOG_INFO(LOG_APP, "isFlashModeSupported success-----");
     } else {
         OH_LOG_ERROR(LOG_APP, "isFlashModeSupported fail-----");
     }
@@ -98,17 +97,50 @@ Camera_ErrorCode NDKCamera::HasFlashFn(uint32_t mode)
     // 设置闪光灯模式
     ret = OH_CaptureSession_SetFlashMode(captureSession_, flashMode);
     if (ret == CAMERA_OK) {
-        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_SetFlashMode success.");
+        OH_LOG_INFO(LOG_APP, "OH_CaptureSession_SetFlashMode success.");
     } else {
-        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_SetFlashMode failed. %d ", ret);
+        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_SetFlashMode failed. %{public}d ", ret);
     }
 
     // 获取当前设备的闪光灯模式
     ret = OH_CaptureSession_GetFlashMode(captureSession_, &flashMode);
     if (ret == CAMERA_OK) {
-        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_GetFlashMode success. flashMode：%d ", flashMode);
+        OH_LOG_INFO(LOG_APP, "OH_CaptureSession_GetFlashMode success. flashMode：%{public}d ", flashMode);
     } else {
         OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_GetFlashMode failed. %d ", ret);
+    }
+    return ret;
+}
+
+Camera_ErrorCode NDKCamera::IsVideoStabilizationModeSupportedFn(uint32_t mode)
+{
+    Camera_VideoStabilizationMode videoMode = static_cast<Camera_VideoStabilizationMode>(mode);
+    // 查询是否支持指定的视频防抖模式
+    bool isSupported = false;
+    Camera_ErrorCode ret = OH_CaptureSession_IsVideoStabilizationModeSupported(
+        captureSession_, videoMode, &isSupported);
+    if (ret != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_IsVideoStabilizationModeSupported failed.");
+    }
+    if (isSupported) {
+        OH_LOG_INFO(LOG_APP, "OH_CaptureSession_IsVideoStabilizationModeSupported success-----");
+    } else {
+        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_IsVideoStabilizationModeSupported fail-----");
+    }
+
+    // 设置视频防抖
+    ret = OH_CaptureSession_SetVideoStabilizationMode(captureSession_, videoMode);
+    if (ret == CAMERA_OK) {
+        OH_LOG_INFO(LOG_APP, "OH_CaptureSession_SetVideoStabilizationMode success.");
+    } else {
+        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_SetVideoStabilizationMode failed. %{public}d ", ret);
+    }
+
+    ret = OH_CaptureSession_GetVideoStabilizationMode(captureSession_, &videoMode);
+    if (ret == CAMERA_OK) {
+        OH_LOG_INFO(LOG_APP, "OH_CaptureSession_GetVideoStabilizationMode success. videoMode：%{public}f ", videoMode);
+    } else {
+        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_GetVideoStabilizationMode failed. %{public}d ", ret);
     }
     return ret;
 }
@@ -123,98 +155,103 @@ Camera_ErrorCode NDKCamera::setZoomRatioFn(uint32_t zoomRatio)
     if (captureSession_ == nullptr || ret != CAMERA_OK) {
         OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_GetZoomRatioRange failed.");
     } else {
-        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_GetZoomRatioRange success. minZoom: %f, maxZoom: %f",
+        OH_LOG_INFO(LOG_APP, "OH_CaptureSession_GetZoomRatioRange success. minZoom: %{public}f, maxZoom:%{public}f",
             minZoom, maxZoom);
     }
     
     // 设置变焦
     ret = OH_CaptureSession_SetZoomRatio(captureSession_, zoom);
     if (ret == CAMERA_OK) {
-        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_SetZoomRatio success.");
+        OH_LOG_INFO(LOG_APP, "OH_CaptureSession_SetZoomRatio success.");
     } else {
-        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_SetZoomRatio failed. %d ", ret);
+        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_SetZoomRatio failed. %{public}d ", ret);
     }
 
     // 获取当前设备的变焦值
     ret = OH_CaptureSession_GetZoomRatio(captureSession_, &zoom);
     if (ret == CAMERA_OK) {
-        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_GetZoomRatio success. zoom: %f ", zoom);
+        OH_LOG_INFO(LOG_APP, "OH_CaptureSession_GetZoomRatio success. zoom：%{public}f ", zoom);
     } else {
-        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_GetZoomRatio failed. %d ", ret);
+        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_GetZoomRatio failed. %{public}d ", ret);
     }
     return ret;
 }
 
-Camera_ErrorCode NDKCamera::SessionBegin()
+Camera_ErrorCode NDKCamera::SessionBegin(void)
 {
     Camera_ErrorCode ret =  OH_CaptureSession_BeginConfig(captureSession_);
     if (ret == CAMERA_OK) {
-        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_BeginConfig success.");
+        OH_LOG_INFO(LOG_APP, "OH_CaptureSession_BeginConfig success.");
     } else {
         OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_BeginConfig failed. %d ", ret);
     }
     return ret;
 }
 
-Camera_ErrorCode NDKCamera::SessionCommitConfig()
+Camera_ErrorCode NDKCamera::SessionCommitConfig(void)
 {
     Camera_ErrorCode ret =  OH_CaptureSession_CommitConfig(captureSession_);
     if (ret == CAMERA_OK) {
-        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_CommitConfig success.");
+        OH_LOG_INFO(LOG_APP, "OH_CaptureSession_CommitConfig success.");
     } else {
         OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_CommitConfig failed. %d ", ret);
     }
     return ret;
 }
 
-Camera_ErrorCode NDKCamera::SessionStart()
+Camera_ErrorCode NDKCamera::SessionStart(void)
 {
     Camera_ErrorCode ret =  OH_CaptureSession_Start(captureSession_);
     if (ret == CAMERA_OK) {
-        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_Start success.");
+        OH_LOG_INFO(LOG_APP, "OH_CaptureSession_Start success.");
     } else {
         OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_Start failed. %d ", ret);
     }
     return ret;
 }
 
-Camera_ErrorCode NDKCamera::SessionStop()
+Camera_ErrorCode NDKCamera::SessionStop(void)
 {
     Camera_ErrorCode ret =  OH_CaptureSession_Stop(captureSession_);
     if (ret == CAMERA_OK) {
-        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_Stop success.");
+        OH_LOG_INFO(LOG_APP, "OH_CaptureSession_Stop success.");
     } else {
         OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_Stop failed. %d ", ret);
     }
     return ret;
 }
 
-Camera_ErrorCode NDKCamera::SessionFlowFn()
+Camera_ErrorCode NDKCamera::SessionFlowFn(void)
 {
-    OH_LOG_ERROR(LOG_APP, "Start SessionFlowFn IN.");
+    OH_LOG_INFO(LOG_APP, "Start SessionFlowFn IN.");
     // 开始配置会话
-    OH_LOG_ERROR(LOG_APP, "session beginConfig.");
+    OH_LOG_INFO(LOG_APP, "session beginConfig.");
     Camera_ErrorCode ret =  OH_CaptureSession_BeginConfig(captureSession_);
 
     // 把CameraInput加入到会话
-    OH_LOG_ERROR(LOG_APP, "session addInput.");
+    OH_LOG_INFO(LOG_APP, "session addInput.");
     ret = OH_CaptureSession_AddInput(captureSession_, cameraInput_);
 
     // 把previewOutput加入到会话
-    OH_LOG_ERROR(LOG_APP, "session add Preview Output.");
+    OH_LOG_INFO(LOG_APP, "session add Preview Output.");
     ret = OH_CaptureSession_AddPreviewOutput(captureSession_, previewOutput_);
 
     // 把photoOutput加入到会话
-    OH_LOG_ERROR(LOG_APP, "session add Photo Output.");
+    OH_LOG_INFO(LOG_APP, "session add Photo Output.");
 
     // 提交配置信息
-    OH_LOG_ERROR(LOG_APP, "session commitConfig");
+    OH_LOG_INFO(LOG_APP, "session commitConfig");
     ret = OH_CaptureSession_CommitConfig(captureSession_);
 
     // 开始会话工作
-    OH_LOG_ERROR(LOG_APP, "session start");
+    OH_LOG_INFO(LOG_APP, "session start");
     ret = OH_CaptureSession_Start(captureSession_);
-    OH_LOG_ERROR(LOG_APP, "session success");
+    OH_LOG_INFO(LOG_APP, "session success");
+
+    // 启动对焦
+    OH_LOG_INFO(LOG_APP, "IsFocusMode start");
+    ret = IsFocusMode(focusMode_);
+    OH_LOG_INFO(LOG_APP, "IsFocusMode success");
     return ret;
 }
 
@@ -328,7 +365,7 @@ Camera_ErrorCode NDKCamera::CreateVideoOutput(char* videoId)
     return ret_;
 }
 
-Camera_ErrorCode NDKCamera::AddVideoOutput()
+Camera_ErrorCode NDKCamera::AddVideoOutput(void)
 {
     Camera_ErrorCode ret = OH_CaptureSession_AddVideoOutput(captureSession_, videoOutput_);
     if (ret == CAMERA_OK) {
@@ -395,16 +432,16 @@ Camera_ErrorCode NDKCamera::PhotoOutputRelease(void)
 }
 Camera_ErrorCode NDKCamera::startVideo(char* videoId)
 {
-    OH_LOG_ERROR(LOG_APP, "startVideo begin.");
+    OH_LOG_INFO(LOG_APP, "startVideo begin.");
     Camera_ErrorCode ret = SessionStop();
     if (ret == CAMERA_OK) {
-        OH_LOG_ERROR(LOG_APP, "SessionStop success.");
+        OH_LOG_INFO(LOG_APP, "SessionStop success.");
     } else {
         OH_LOG_ERROR(LOG_APP, "SessionStop failed. %d ", ret);
     }
     ret = SessionBegin();
     if (ret == CAMERA_OK) {
-        OH_LOG_ERROR(LOG_APP, "SessionBegin success.");
+        OH_LOG_INFO(LOG_APP, "SessionBegin success.");
     } else {
         OH_LOG_ERROR(LOG_APP, "SessionBegin failed. %d ", ret);
     }
@@ -415,12 +452,12 @@ Camera_ErrorCode NDKCamera::startVideo(char* videoId)
     return ret;
 }
 
-Camera_ErrorCode NDKCamera::VideoOutputStart()
+Camera_ErrorCode NDKCamera::VideoOutputStart(void)
 {
-    OH_LOG_ERROR(LOG_APP, "VideoOutputStart begin.");
+    OH_LOG_INFO(LOG_APP, "VideoOutputStart begin.");
     Camera_ErrorCode ret = OH_VideoOutput_Start(videoOutput_);
     if (ret == CAMERA_OK) {
-        OH_LOG_ERROR(LOG_APP, "OH_VideoOutput_Start success.");
+        OH_LOG_INFO(LOG_APP, "OH_VideoOutput_Start success.");
     } else {
         OH_LOG_ERROR(LOG_APP, "OH_VideoOutput_Start failed. %d ", ret);
     }
@@ -433,34 +470,211 @@ Camera_ErrorCode NDKCamera::startPhoto(char *mSurfaceId)
     if (takePictureTimes == 0) {
         ret = SessionStop();
         if (ret == CAMERA_OK) {
-            OH_LOG_ERROR(LOG_APP, "SessionStop success.");
+            OH_LOG_INFO(LOG_APP, "SessionStop success.");
         } else {
             OH_LOG_ERROR(LOG_APP, "SessionStop failed. %d ", ret);
         }
         ret = SessionBegin();
         if (ret == CAMERA_OK) {
-            OH_LOG_ERROR(LOG_APP, "SessionBegin success.");
+            OH_LOG_INFO(LOG_APP, "SessionBegin success.");
         } else {
             OH_LOG_ERROR(LOG_APP, "SessionBegin failed. %d ", ret);
         }
-        OH_LOG_ERROR(LOG_APP, "startPhoto begin.");
+        OH_LOG_INFO(LOG_APP, "startPhoto begin.");
         ret = CreatePhotoOutput(mSurfaceId);
 
-        OH_LOG_ERROR(LOG_APP, "startPhoto CreatePhotoOutput ret = %{public}d.", ret);
+        OH_LOG_INFO(LOG_APP, "startPhoto CreatePhotoOutput ret = %{public}d.", ret);
         ret = OH_CaptureSession_AddPhotoOutput(captureSession_, photoOutput_);
-        OH_LOG_ERROR(LOG_APP, "startPhoto AddPhotoOutput ret = %{public}d.", ret);
+        OH_LOG_INFO(LOG_APP, "startPhoto AddPhotoOutput ret = %{public}d.", ret);
         ret = SessionCommitConfig();
 
-        OH_LOG_ERROR(LOG_APP, "startPhoto SessionCommitConfig ret = %{public}d.", ret);
+        OH_LOG_INFO(LOG_APP, "startPhoto SessionCommitConfig ret = %{public}d.", ret);
         ret = SessionStart();
-        OH_LOG_ERROR(LOG_APP, "startPhoto SessionStart ret = %{public}d.", ret);
+        OH_LOG_INFO(LOG_APP, "startPhoto SessionStart ret = %{public}d.", ret);
     }
     ret = OH_PhotoOutput_Capture(photoOutput_);
-    OH_LOG_ERROR(LOG_APP, "startPhoto OH_PhotoOutput_Capture ret = %{public}d.", ret);
+    OH_LOG_INFO(LOG_APP, "startPhoto OH_PhotoOutput_Capture ret = %{public}d.", ret);
     if (ret_ != CAMERA_OK) {
         OH_LOG_ERROR(LOG_APP, "startPhoto failed.");
         return CAMERA_INVALID_ARGUMENT;
     }
-    takePictureTimes ++;
+    takePictureTimes++;
+    return ret_;
+}
+
+// exposure mode
+Camera_ErrorCode NDKCamera::IsExposureModeSupportedFn(uint32_t mode)
+{
+    OH_LOG_INFO(LOG_APP, "IsExposureModeSupportedFn start.");
+    exposureMode_ = static_cast<Camera_ExposureMode>(mode);
+    ret_ = OH_CaptureSession_IsExposureModeSupported(captureSession_, exposureMode_, &isExposureModeSupported_);
+    if (&isExposureModeSupported_ == nullptr || ret_ != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "IsExposureModeSupported failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    ret_ = OH_CaptureSession_SetExposureMode(captureSession_, exposureMode_);
+    if (ret_ != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "SetExposureMode failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    ret_ = OH_CaptureSession_GetExposureMode(captureSession_, &exposureMode_);
+    if (&exposureMode_ == nullptr || ret_ != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "GetExposureMode failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    OH_LOG_INFO(LOG_APP, "IsExposureModeSupportedFn end.");
+    return ret_;
+}
+
+Camera_ErrorCode NDKCamera::IsMeteringPoint(int x, int y)
+{
+    OH_LOG_INFO(LOG_APP, "IsMeteringPoint start.");
+    ret_ = OH_CaptureSession_GetExposureMode(captureSession_, &exposureMode_);
+    if (&exposureMode_ == nullptr || ret_ != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "GetExposureMode failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    Camera_Point exposurePoint;
+    exposurePoint.x = x;
+    exposurePoint.y = y;
+    ret_ = OH_CaptureSession_SetMeteringPoint(captureSession_, exposurePoint);
+    if (ret_ != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "SetMeteringPoint failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    ret_ = OH_CaptureSession_GetMeteringPoint(captureSession_, &exposurePoint);
+    if (ret_ != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "GetMeteringPoint failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    OH_LOG_INFO(LOG_APP, "IsMeteringPoint end.");
+    return ret_;
+}
+
+Camera_ErrorCode NDKCamera::IsExposureBiasRange(int exposureBias)
+{
+    OH_LOG_INFO(LOG_APP, "IsExposureBiasRange end.");
+    float exposureBiasValue = (float)exposureBias;
+    ret_ = OH_CaptureSession_GetExposureBiasRange(captureSession_, &minExposureBias_, &maxExposureBias_, &step_);
+    if (&minExposureBias_ == nullptr || &maxExposureBias_ == nullptr || &step_ == nullptr || ret_ != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "GetExposureBiasRange failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    ret_ = OH_CaptureSession_SetExposureBias(captureSession_, exposureBiasValue);
+    OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_SetExposureBias end.");
+    if (ret_ != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "SetExposureBias failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    ret_ = OH_CaptureSession_GetExposureBias(captureSession_, &exposureBiasValue);
+    if (&exposureBiasValue == nullptr || ret_ != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "GetExposureBias failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    OH_LOG_INFO(LOG_APP, "IsExposureBiasRange end.");
+    return ret_;
+}
+
+// focus mode
+Camera_ErrorCode NDKCamera::IsFocusModeSupported(uint32_t mode)
+{
+    Camera_FocusMode focusMode = static_cast<Camera_FocusMode>(mode);
+    ret_ = OH_CaptureSession_IsFocusModeSupported(captureSession_, focusMode, &isFocusModeSupported_);
+    if (&isFocusModeSupported_ == nullptr || ret_ != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "IsFocusModeSupported failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    return ret_;
+}
+
+Camera_ErrorCode NDKCamera::IsFocusMode(uint32_t mode)
+{
+    OH_LOG_INFO(LOG_APP, "IsFocusMode start.");
+    Camera_FocusMode focusMode = static_cast<Camera_FocusMode>(mode);
+    ret_ = OH_CaptureSession_IsFocusModeSupported(captureSession_, focusMode, &isFocusModeSupported_);
+    if (&isFocusModeSupported_ == nullptr || ret_ != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "IsFocusModeSupported failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    ret_ = OH_CaptureSession_SetFocusMode(captureSession_, focusMode);
+    if (ret_ != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "SetFocusMode failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    ret_ = OH_CaptureSession_GetFocusMode(captureSession_, &focusMode);
+    if (&focusMode == nullptr || ret_ != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "GetFocusMode failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    OH_LOG_INFO(LOG_APP, "IsFocusMode end.");
+    return ret_;
+}
+
+Camera_ErrorCode NDKCamera::IsFocusPoint(int x, int y)
+{
+    OH_LOG_INFO(LOG_APP, "IsFocusPoint start.");
+    Camera_Point focusPoint;
+    focusPoint.x = x;
+    focusPoint.y = y;
+    ret_ = OH_CaptureSession_SetFocusPoint(captureSession_, focusPoint);
+    if (ret_ != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "SetFocusPoint failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    ret_ = OH_CaptureSession_GetFocusPoint(captureSession_, &focusPoint);
+    if (&focusPoint == nullptr || ret_ != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "GetFocusPoint failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    OH_LOG_INFO(LOG_APP, "IsFocusPoint end.");
+    return ret_;
+}
+int32_t NDKCamera::GetVideoFrameWidth(void)
+{
+    videoProfile_ = cameraOutputCapability_->videoProfiles[0];
+    if (videoProfile_ == nullptr) {
+        OH_LOG_ERROR(LOG_APP, "Get videoProfiles failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    return videoProfile_->size.width;
+}
+
+int32_t NDKCamera::GetVideoFrameHeight(void)
+{
+    videoProfile_ = cameraOutputCapability_->videoProfiles[0];
+    if (videoProfile_ == nullptr) {
+        OH_LOG_ERROR(LOG_APP, "Get videoProfiles failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    return videoProfile_->size.height;
+}
+
+int32_t NDKCamera::GetVideoFrameRate(void)
+{
+    videoProfile_ = cameraOutputCapability_->videoProfiles[0];
+    if (videoProfile_ == nullptr) {
+        OH_LOG_ERROR(LOG_APP, "Get videoProfiles failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    return videoProfile_->range.min;
+}
+
+Camera_ErrorCode NDKCamera::VideoOutputStop(void)
+{
+    ret_ = OH_VideoOutput_Stop(videoOutput_);
+    if (ret_ != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "VideoOutputStop failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    return ret_;
+}
+
+Camera_ErrorCode NDKCamera::VideoOutputRelease(void)
+{
+    ret_ = OH_VideoOutput_Release(videoOutput_);
+    if (ret_ != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "VideoOutputRelease failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
     return ret_;
 }

@@ -160,16 +160,17 @@ Camera_ErrorCode Camera_CaptureSession::IsVideoStabilizationModeSupported(Camera
 Camera_ErrorCode Camera_CaptureSession::GetVideoStabilizationMode(Camera_VideoStabilizationMode* mode)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetVideoStabilizationMode is called");
-    VideoStabilizationMode innerVideoStabilizationMode = static_cast<VideoStabilizationMode>(*mode);
-    int32_t ret = innerCaptureSession_->GetActiveVideoStabilizationMode(innerVideoStabilizationMode);
-    return FrameworkToNdkCameraError(ret);
+
+    *mode = static_cast<Camera_VideoStabilizationMode>(innerCaptureSession_->GetActiveVideoStabilizationMode());
+    return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_CaptureSession::SetVideoStabilizationMode(Camera_VideoStabilizationMode mode)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetVideoStabilizationMode is called");
+
     VideoStabilizationMode innerVideoStabilizationMode = static_cast<VideoStabilizationMode>(mode);
-    int32_t ret = innerCaptureSession_->IsVideoStabilizationModeSupported(innerVideoStabilizationMode);
+    int32_t ret = innerCaptureSession_->SetVideoStabilizationMode(innerVideoStabilizationMode);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -194,7 +195,11 @@ Camera_ErrorCode Camera_CaptureSession::GetZoomRatio(float* zoom)
 Camera_ErrorCode Camera_CaptureSession::SetZoomRatio(float zoom)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetZoomRatio is called");
+
+    innerCaptureSession_->LockForControl();
     int32_t ret = innerCaptureSession_->SetZoomRatio(zoom);
+    innerCaptureSession_->UnlockForControl();
+
     if (ret != CameraErrorCode::SUCCESS) {
         return CAMERA_SERVICE_FATAL_ERROR;
     }
@@ -215,19 +220,20 @@ Camera_ErrorCode Camera_CaptureSession::IsFocusModeSupported(Camera_FocusMode fo
 Camera_ErrorCode Camera_CaptureSession::GetFocusMode(Camera_FocusMode* focusMode)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetFocusMode is called");
-    FocusMode innerFocusMode = static_cast<FocusMode>(*focusMode);
-    int32_t ret = innerCaptureSession_->GetFocusMode(innerFocusMode);
-    if (ret != CameraErrorCode::SUCCESS) {
-        return CAMERA_SERVICE_FATAL_ERROR;
-    }
-    return FrameworkToNdkCameraError(ret);
+
+    *focusMode = static_cast<Camera_FocusMode>(innerCaptureSession_->GetFocusMode());
+    return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_CaptureSession::SetFocusMode(Camera_FocusMode focusMode)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetFocusMode is called");
+
     FocusMode innerFocusMode = static_cast<FocusMode>(focusMode);
+    innerCaptureSession_->LockForControl();
     int32_t ret = innerCaptureSession_->SetFocusMode(innerFocusMode);
+    innerCaptureSession_->UnlockForControl();
+
     if (ret != CameraErrorCode::SUCCESS) {
         return CAMERA_SERVICE_FATAL_ERROR;
     }
@@ -237,10 +243,15 @@ Camera_ErrorCode Camera_CaptureSession::SetFocusMode(Camera_FocusMode focusMode)
 Camera_ErrorCode Camera_CaptureSession::SetFocusPoint(Camera_Point focusPoint)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetFocusPoint is called");
+
     Point innerFocusPoint;
     innerFocusPoint.x = focusPoint.x;
     innerFocusPoint.y = focusPoint.y;
+
+    innerCaptureSession_->LockForControl();
     int32_t ret = innerCaptureSession_->SetFocusPoint(innerFocusPoint);
+    innerCaptureSession_->UnlockForControl();
+
     if (ret != CameraErrorCode::SUCCESS) {
         return CAMERA_SERVICE_FATAL_ERROR;
     }
@@ -250,14 +261,11 @@ Camera_ErrorCode Camera_CaptureSession::SetFocusPoint(Camera_Point focusPoint)
 Camera_ErrorCode Camera_CaptureSession::GetFocusPoint(Camera_Point* focusPoint)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetFocusPoint is called");
-    Point innerFocusPoint;
-    innerFocusPoint.x = focusPoint->x;
-    innerFocusPoint.y = focusPoint->y;
-    int32_t ret = innerCaptureSession_->GetFocusPoint(innerFocusPoint);
-    if (ret != CameraErrorCode::SUCCESS) {
-        return CAMERA_SERVICE_FATAL_ERROR;
-    }
-    return FrameworkToNdkCameraError(ret);
+    Point innerFocusPoint = innerCaptureSession_->GetFocusPoint();
+    (*focusPoint).x = innerFocusPoint.x;
+    (*focusPoint).y = innerFocusPoint.y;
+
+    return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_CaptureSession::HasFlash(bool* hasFlash)
@@ -290,8 +298,12 @@ Camera_ErrorCode Camera_CaptureSession::GetFlashMode(Camera_FlashMode* flashMode
 Camera_ErrorCode Camera_CaptureSession::SetFlashMode(Camera_FlashMode flashMode)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetFlashMode is called");
+
     FlashMode innerFlashMode = static_cast<FlashMode>(flashMode);
+    innerCaptureSession_->LockForControl();
     int32_t ret = innerCaptureSession_->SetFlashMode(innerFlashMode);
+    innerCaptureSession_->UnlockForControl();
+
     if (ret != CameraErrorCode::SUCCESS) {
         return CAMERA_SERVICE_FATAL_ERROR;
     }
@@ -312,19 +324,20 @@ Camera_ErrorCode Camera_CaptureSession::IsExposureModeSupported(Camera_ExposureM
 Camera_ErrorCode Camera_CaptureSession::GetExposureMode(Camera_ExposureMode* exposureMode)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetExposureMode is called");
-    ExposureMode innerExposureMode = static_cast<ExposureMode>(*exposureMode);
-    int32_t ret = innerCaptureSession_->GetExposureMode(innerExposureMode);
-    if (ret != CameraErrorCode::SUCCESS) {
-        return CAMERA_SERVICE_FATAL_ERROR;
-    }
-    return FrameworkToNdkCameraError(ret);
+
+    *exposureMode = static_cast<Camera_ExposureMode>(innerCaptureSession_->GetExposureMode());
+    return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_CaptureSession::SetExposureMode(Camera_ExposureMode exposureMode)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetExposureMode is called");
+
     ExposureMode innerExposureMode = static_cast<ExposureMode>(exposureMode);
+    innerCaptureSession_->LockForControl();
     int32_t ret = innerCaptureSession_->SetExposureMode(innerExposureMode);
+    innerCaptureSession_->UnlockForControl();
+
     if (ret != CameraErrorCode::SUCCESS) {
         return CAMERA_SERVICE_FATAL_ERROR;
     }
@@ -334,14 +347,11 @@ Camera_ErrorCode Camera_CaptureSession::SetExposureMode(Camera_ExposureMode expo
 Camera_ErrorCode Camera_CaptureSession::GetMeteringPoint(Camera_Point* point)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetMeteringPoint is called");
-    Point innerExposurePoint;
-    innerExposurePoint.x = point->x;
-    innerExposurePoint.y = point->y;
-    int32_t ret = innerCaptureSession_->GetMeteringPoint(innerExposurePoint);
-    if (ret != CameraErrorCode::SUCCESS) {
-        return CAMERA_SERVICE_FATAL_ERROR;
-    }
-    return FrameworkToNdkCameraError(ret);
+
+    Point innerFocusPoint = innerCaptureSession_->GetMeteringPoint();
+    (*point).x = innerFocusPoint.x;
+    (*point).y = innerFocusPoint.y;
+    return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_CaptureSession::SetMeteringPoint(Camera_Point point)
@@ -350,7 +360,11 @@ Camera_ErrorCode Camera_CaptureSession::SetMeteringPoint(Camera_Point point)
     Point innerExposurePoint;
     innerExposurePoint.x = point.x;
     innerExposurePoint.y = point.y;
+
+    innerCaptureSession_->LockForControl();
     int32_t ret = innerCaptureSession_->SetMeteringPoint(innerExposurePoint);
+    innerCaptureSession_->UnlockForControl();
+
     if (ret != CameraErrorCode::SUCCESS) {
         return CAMERA_SERVICE_FATAL_ERROR;
     }
@@ -361,24 +375,22 @@ Camera_ErrorCode Camera_CaptureSession::GetExposureBiasRange(float* minExposureB
     float* maxExposureBias, float* step)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetExposureBiasRange is called");
-    std::vector<float> vecExposureBiasList;
-    int32_t ret = innerCaptureSession_->GetExposureBiasRange(vecExposureBiasList);
-    if (ret != CameraErrorCode::SUCCESS) {
-        return CAMERA_SERVICE_FATAL_ERROR;
-    }
 
-    size_t len = vecExposureBiasList.size();
-    for (size_t i = 0; i < len; i++) {
-        *minExposureBias = vecExposureBiasList[0];
-        *maxExposureBias = vecExposureBiasList[0];
-    }
-    return FrameworkToNdkCameraError(ret);
+    std::vector<float> vecExposureBiasList = innerCaptureSession_->GetExposureBiasRange();
+    *minExposureBias = vecExposureBiasList[0];
+    *maxExposureBias = vecExposureBiasList[1];
+
+    return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_CaptureSession::SetExposureBias(float exposureBias)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetExposureBias is called");
+
+    innerCaptureSession_->LockForControl();
     int32_t ret = innerCaptureSession_->SetExposureBias(exposureBias);
+    innerCaptureSession_->UnlockForControl();
+
     if (ret != CameraErrorCode::SUCCESS) {
         return CAMERA_SERVICE_FATAL_ERROR;
     }
@@ -388,11 +400,10 @@ Camera_ErrorCode Camera_CaptureSession::SetExposureBias(float exposureBias)
 Camera_ErrorCode Camera_CaptureSession::GetExposureBias(float* exposureBias)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetExposureBias is called");
-    int32_t ret = innerCaptureSession_->GetExposureValue(*exposureBias);
-    if (ret != CameraErrorCode::SUCCESS) {
-        return CAMERA_SERVICE_FATAL_ERROR;
-    }
-    return FrameworkToNdkCameraError(ret);
+
+    *exposureBias = innerCaptureSession_->GetExposureValue();
+
+    return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_CaptureSession::AddVideoOutput(Camera_VideoOutput* videoOutput)

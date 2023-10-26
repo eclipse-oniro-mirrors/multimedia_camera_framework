@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
-// import CameraService from '../model/CameraService'
+
+import cameraDemo from 'libentry.so'
 
 @Component
 export struct settingItem {
@@ -27,15 +27,15 @@ export struct settingItem {
     switch (this.settingMessageNum) {
       case 2:
         globalThis.settingDataObj.videoStabilizationMode = this.index
-        // CameraService.isVideoStabilizationModeSupportedFn(globalThis.settingDataObj.videoStabilizationMode)
+        cameraDemo.isVideoStabilizationModeSupported(globalThis.settingDataObj.videoStabilizationMode)
         break
       case 3:
         globalThis.settingDataObj.exposureMode = this.index
-        // CameraService.isExposureModeSupportedFn(globalThis.settingDataObj.exposureMode)
+        cameraDemo.isExposureModeSupported(globalThis.settingDataObj.exposureMode)
         break
       case 4:
         globalThis.settingDataObj.focusMode = this.index
-        // CameraService.isFocusMode(globalThis.settingDataObj.focusMode)
+        cameraDemo.isFocusModeSupported(globalThis.settingDataObj.focusMode)
         break
       case 5:
         globalThis.settingDataObj.photoQuality = this.index

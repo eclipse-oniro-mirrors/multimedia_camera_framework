@@ -15,8 +15,7 @@
 
 // 闪关灯页面
 // 对于图标遍历渲染，后续需要对此进行改进
-// import CameraService from '../model/CameraService'
-
+import cameraDemo from 'libentry.so'
 @Component
 export struct FlashingLightPage {
   // 页面判断
@@ -64,7 +63,7 @@ export struct FlashingLightPage {
             .onClick(() => {
               this.flashingNum = 2
               this.flashingBol = true
-              // CameraService.hasFlashFn(this.flashingNum)
+              cameraDemo.hasFlash(this.flashingNum)
             })
           Image($r('app.media.ic_camera_public_flash_off'))
             .width('60px')
@@ -73,7 +72,7 @@ export struct FlashingLightPage {
             .onClick(() => {
               this.flashingNum = 0
               this.flashingBol = true
-              // CameraService.hasFlashFn(this.flashingNum)
+              cameraDemo.hasFlash(this.flashingNum)
             })
           Image($r('app.media.ic_camera_public_flash_on'))
             .width('60px')
@@ -82,7 +81,7 @@ export struct FlashingLightPage {
             .onClick(() => {
               this.flashingNum = 1
               this.flashingBol = true
-              // CameraService.hasFlashFn(this.flashingNum)
+              cameraDemo.hasFlash(this.flashingNum)
             })
           Image($r('app.media.flash_always_on'))
             .width('50px')
@@ -91,7 +90,7 @@ export struct FlashingLightPage {
             .onClick(() => {
               this.flashingNum = 3
               this.flashingBol = true
-              // CameraService.hasFlashFn(this.flashingNum)
+              cameraDemo.hasFlash(this.flashingNum)
             })
         }
         .backgroundColor('#FFFFFF')

@@ -15,7 +15,10 @@
  
 // 变焦组件
 // 对于组件的变化——只能1到6整数 ， 后续需要对此进行修改
-// import CameraService from '../model/CameraService'
+import cameraDemo from 'libentry.so'
+import Logger from '../model/Logger';
+
+const TAG: string = 'SlidePage';
 
 @Component
 export struct SlidePage {
@@ -25,7 +28,7 @@ export struct SlidePage {
   @State sliderTextPos: string = '-10'
 
   slideChange(value) {
-    // CameraService.setZoomRatioFn(value)
+    cameraDemo.setZoomRatio(value);
     switch (value) {
       case 1:
         this.sliderTextPos = '-10'
@@ -46,6 +49,7 @@ export struct SlidePage {
         this.sliderTextPos = '380'
         break
       default:
+        break;
     //        this.sliderTextPos += 1
     }
   }

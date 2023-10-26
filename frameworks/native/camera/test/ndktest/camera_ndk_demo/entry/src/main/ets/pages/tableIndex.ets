@@ -23,18 +23,11 @@ import { CountdownPage } from '../views/CountdownPage'
 import { FlashingLightPage } from '../views/FlashingLightPage'
 import { SlidePage } from '../views/SlidePage'
 import { modeSwitchPage } from '../views/modeSwitchPage'
-import mediaLibrary from '@ohos.multimedia.mediaLibrary'
-import fileio from '@ohos.fileio'
-
-import media from '@ohos.multimedia.media'
-import MediaUtils from '../model/MediaUtils'
-
-// import CameraService from '../model/CameraService'
-// import { CountdownPage } from '../views/CountdownPage'
-// import { focusPage } from '../views/focusPage'
-// import { focusAreaPage } from '../views/focusAreaPage'
-// import { setting } from '../model/Setting'
-
+import { focusPage } from '../views/focusPage'
+import { FocusAreaPage } from '../views/focusAreaPage'
+import { Constants } from '../common/Constants'
+import DisplayCalculator from '../common/DisplayCalculator'
+import display from '@ohos.display'
 
 const TAG: string = 'UI indexPage'
 
@@ -81,6 +74,12 @@ struct Index {
   @State countdownNum: number = 0
   // 相机摄像头
   @State cameraDeviceIndex: number = 0
+  @State xComponentWidth: number = 384;
+  @State xComponentHeight: number = 450;
+  private deviceType: string;
+  private screenHeight: number;
+  private screenWidth: number;
+
   // 设置弹框
   private settingDialogController: CustomDialogController = new CustomDialogController({
     builder: settingDialog({
@@ -94,11 +93,27 @@ struct Index {
 
   // 参考线
   @State referenceLineBol: boolean = false
+  @StorageLink('defaultAspectRatio') @Watch('initXComponentSize') defaultAspectRatio: number = Constants.MIN_ASPECT_RATIO;
   @State onShow: boolean = false
   atManager = abilityAccessCtrl.createAtManager();
   // 入口初始化函数
   async aboutToAppear() {
     await this.requestPermissionsFn();
+    let mDisplay = display.getDefaultDisplaySync();
+    this.screenWidth = px2vp(mDisplay.width);
+    this.screenHeight = px2vp(mDisplay.height);
+    // @ts-ignore
+    this.deviceType = AppStorage.get<string>('deviceType');
+    if (this.deviceType === Constants.TABLET) {
+      this.defaultAspectRatio = Constants.MAX_ASPECT_RATIO;
+    }
+    this.initXComponentSize();
+  }
+
+  initXComponentSize(): void {
+    let defaultSize = DisplayCalculator.calcSurfaceDisplaySize(this.screenWidth, this.screenHeight, this.defaultAspectRatio);
+    this.xComponentWidth = defaultSize.width;
+    this.xComponentHeight = defaultSize.height;
   }
 
   async aboutToDisAppear() {
@@ -123,17 +138,14 @@ struct Index {
     } catch (err) {
       Logger.info(TAG, `requestPermissionsFromUser call Failed! error: ${err.code}`)
     }
-    // 默认打开选择网络弹框
-    //this.mainDialogController.open()
   }
 
   async onPageShow() {
     Logger.info(TAG, `onPageShow App`)
     if (this.surfaceId && this.onShow) {
-      Logger.error(TAG, `zss initCamera`)
-      cameraDemo.initCamera(this.surfaceId)
-      Logger.error(TAG, `zss initCamera 111`)
-      // await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex)
+      Logger.error(TAG, `initCamera`)
+      cameraDemo.initCamera(this.surfaceId, globalThis.settingDataObj.focusMode)
+      Logger.error(TAG, `initCamera 111`)
     }
   }
 
@@ -155,10 +167,9 @@ struct Index {
             Logger.info(TAG, 'onLoad is called');
             this.surfaceId = this.mXComponentController.getXComponentSurfaceId()
             Logger.info(TAG, `onLoad surfaceId: ${this.surfaceId}`)
-            Logger.error(TAG, `zss initCamera 222`)
-            cameraDemo.initCamera(this.surfaceId)
-            Logger.error(TAG, `zss initCamera 333`)
-            // await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex)
+            Logger.error(TAG, `initCamera 222`)
+            cameraDemo.initCamera(this.surfaceId, globalThis.settingDataObj.focusMode)
+            Logger.error(TAG, `initCamera 333`)
           })
           .backgroundColor(Color.Blue)
           .width('100%')
@@ -180,20 +191,22 @@ struct Index {
           // 打开设置弹框
           this.settingDialogController.open()
         })
-        // // 曝光框和对焦框
-        // focusPage({
-        //   focusPointBol: $focusPointBol,
-        //   focusPointVal: $focusPointVal,
-        //   exposureBol: $exposureBol,
-        //   exposureNum: $exposureNum
-        // })
-        // // 曝光对焦手指点击区域
-        // focusAreaPage({
-        //   focusPointBol: $focusPointBol,
-        //   focusPointVal: $focusPointVal,
-        //   exposureBol: $exposureBol,
-        //   exposureNum: $exposureNum
-        // })
+        // 曝光框和对焦框
+        focusPage({
+          focusPointBol: $focusPointBol,
+          focusPointVal: $focusPointVal,
+          exposureBol: $exposureBol,
+          exposureNum: $exposureNum
+        })
+        // 曝光对焦手指点击区域
+        FocusAreaPage({
+          focusPointBol: $focusPointBol,
+          focusPointVal: $focusPointVal,
+          exposureBol: $exposureBol,
+          exposureNum: $exposureNum,
+          xComponentWidth: this.xComponentWidth,
+          xComponentHeight: this.xComponentHeight
+        })
         // 倒计时
         CountdownPage({ countdownNum: $countdownNum })
         // 闪光灯
