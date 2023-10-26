@@ -156,7 +156,7 @@ Camera_ErrorCode NDKCamera::setZoomRatioFn(uint32_t zoomRatio)
         OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_GetZoomRatioRange failed.");
     } else {
         OH_LOG_INFO(LOG_APP, "OH_CaptureSession_GetZoomRatioRange success. minZoom: %{public}f, maxZoom:%{public}f",
-			minZoom, maxZoom);
+            minZoom, maxZoom);
     }
     
     // 设置变焦

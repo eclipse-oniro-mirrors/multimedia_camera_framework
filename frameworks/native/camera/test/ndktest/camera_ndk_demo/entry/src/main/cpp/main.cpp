@@ -35,7 +35,7 @@ static napi_value SetZoomRatio(napi_env env, napi_callback_info info)
     int32_t zoomRatio;
     napi_get_value_int32(env, args[0], &zoomRatio);
     
-    OH_LOG_ERROR(LOG_APP, "SetZoomRatio : %{public}d",zoomRatio);
+    OH_LOG_ERROR(LOG_APP, "SetZoomRatio : %{public}d", zoomRatio);
 
     ndkCamera_->setZoomRatioFn(zoomRatio);
 

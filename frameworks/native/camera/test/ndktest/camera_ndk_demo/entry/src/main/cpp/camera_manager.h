@@ -87,7 +87,7 @@ public:
     Camera_ErrorCode AddVideoOutput(void);
     Camera_ErrorCode VideoOutputStart(void);
     Camera_ErrorCode startPhoto(char *mSurfaceId);
-	Camera_ErrorCode IsExposureModeSupportedFn(uint32_t mode);
+    Camera_ErrorCode IsExposureModeSupportedFn(uint32_t mode);
     Camera_ErrorCode IsMeteringPoint(int x, int y);
     Camera_ErrorCode IsExposureBiasRange(int exposureBias);
     Camera_ErrorCode IsFocusMode(uint32_t mode);
@@ -124,7 +124,7 @@ private:
     char* photoSurfaceId_;
     Camera_ErrorCode ret_;
     uint32_t takePictureTimes = 0;
-	Camera_ExposureMode exposureMode_;
+    Camera_ExposureMode exposureMode_;
     bool isExposureModeSupported_;
     bool isFocusModeSupported_;
     float minExposureBias_;

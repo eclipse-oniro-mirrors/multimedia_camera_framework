@@ -107,7 +107,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, ui
         outCameras[i].cameraType = static_cast<Camera_Type>(cameraObjList[i]->GetCameraType());
         outCameras[i].connectionType = static_cast<Camera_Connection>(cameraObjList[i]->GetConnectionType());
     }
-    *size = cameraSize; 
+    *size = cameraSize;
     *cameras = outCameras;
     return CAMERA_OK;
 }

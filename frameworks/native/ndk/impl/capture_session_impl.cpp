@@ -261,8 +261,7 @@ Camera_ErrorCode Camera_CaptureSession::SetFocusPoint(Camera_Point focusPoint)
 Camera_ErrorCode Camera_CaptureSession::GetFocusPoint(Camera_Point* focusPoint)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetFocusPoint is called");
-    Point innerFocusPoint;
-    innerFocusPoint = innerCaptureSession_->GetFocusPoint();
+    Point innerFocusPoint = innerCaptureSession_->GetFocusPoint();
     (*focusPoint).x = innerFocusPoint.x;
     (*focusPoint).y = innerFocusPoint.y;
 
@@ -349,8 +348,7 @@ Camera_ErrorCode Camera_CaptureSession::GetMeteringPoint(Camera_Point* point)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetMeteringPoint is called");
 
-    Point innerFocusPoint;
-    innerFocusPoint = innerCaptureSession_->GetMeteringPoint();
+    Point innerFocusPoint = innerCaptureSession_->GetMeteringPoint();
     (*point).x = innerFocusPoint.x;
     (*point).y = innerFocusPoint.y;
     return CAMERA_OK;
