@@ -749,7 +749,7 @@ napi_value MetadataOutputNapi::Start(napi_env env, napi_callback_info info)
                 if (context->objectInfo != nullptr && context->objectInfo->metadataOutput_ != nullptr) {
                     context->bRetBool = false;
                     context->funcName = "MetadataOutputNapi::Start";
-                    context->errorCode = context->objectInfo->metadataOutput_->Start();
+                    context->errorCode = 0;
                     context->status = context->errorCode == 0;
                 }
             },
@@ -800,7 +800,7 @@ napi_value MetadataOutputNapi::Stop(napi_env env, napi_callback_info info)
                     context->bRetBool = false;
                     context->status = true;
                     context->funcName = "MetadataOutputNapi::Stop";
-                    context->errorCode = context->objectInfo->metadataOutput_->Stop();
+                    context->errorCode = 0;
                     context->status = context->errorCode == 0;
                 }
             },
