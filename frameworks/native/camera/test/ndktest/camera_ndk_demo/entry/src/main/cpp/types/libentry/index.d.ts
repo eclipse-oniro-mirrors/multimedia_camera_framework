@@ -1,5 +1,15 @@
-export const add: (a: number, b: number) => number;
-export const initCamera:(surfaceId: string) => number;
+export const initCamera:(surfaceId: string, focusMode: number) => number;
 export const startPhotoOrVideo:(modeFlag: string, videoId: string) => number;
 export const videoOutputStart: () => number;
 export const setZoomRatio: (a: number) => number;
+export const hasFlash: (a: number) => number;
+export const isVideoStabilizationModeSupported: (a: number) => number;
+export const isExposureModeSupported:(a: number) => number;
+export const isMeteringPoint: (a: number, b: number) => number;
+export const isExposureBiasRange: (a: number) => number;
+export const isFocusModeSupported: (a: number) => number;
+export const isFocusPoint: (a: number, b: number) => number;
+export const getVideoFrameWidth: () => number;
+export const getVideoFrameHeight: () => number;
+export const getVideoFrameRate: () => number;
+export const videoOutputStopAndRelease: () => number;
