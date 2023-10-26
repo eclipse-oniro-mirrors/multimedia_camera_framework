@@ -113,6 +113,8 @@ void CameraDevice::init(common_metadata_header_t* metadata)
             foldScreenType_ = itr->second;
         }
     }
+	
+    isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
 
     MEDIA_INFO_LOG("camera position: %{public}d, camera type: %{public}d, camera connection type: %{public}d, "
                     "Mirror Supported: %{public}d , camera foldScreen type: %{public}d",
@@ -131,7 +133,6 @@ std::shared_ptr<Camera::CameraMetadata> CameraDevice::GetMetadata()
 
 CameraPosition CameraDevice::GetPosition()
 {
-    bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
     if (isFoldable && cameraPosition_ == CAMERA_POSITION_FRONT) {
         cameraPosition_ = (foldScreenType_ == CAMERA_FOLDSCREEN_UNSPECIFIED) ? CAMERA_POSITION_BACK :
             (foldScreenType_ == CAMERA_FOLDSCREEN_INNER) ? CAMERA_POSITION_FOLD_INNER : CAMERA_POSITION_FRONT;

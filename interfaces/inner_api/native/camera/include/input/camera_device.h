@@ -162,6 +162,7 @@ public:
     std::unordered_map<int32_t, std::vector<VideoProfile>> modeVideoProfiles_ = {};
 private:
     std::string cameraID_;
+    bool isFoldable = false;
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata_;
     CameraPosition cameraPosition_ = CAMERA_POSITION_UNSPECIFIED;
     CameraType cameraType_ = CAMERA_TYPE_DEFAULT;
