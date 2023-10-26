@@ -215,8 +215,9 @@ int32_t HCameraDevice::CloseDevice()
         UnRegisterFoldStatusListener();
     }
     if (hdiCameraDevice_ != nullptr) {
-        MEDIA_INFO_LOG("HCameraDevice::CloseDevice Closing camera device: %{public}s", cameraID_.c_str());
+        MEDIA_INFO_LOG("Closing camera device: %{public}s start", cameraID_.c_str());
         hdiCameraDevice_->Close();
+        MEDIA_INFO_LOG("Closing camera device: %{public}s end", cameraID_.c_str());
         isOpenedCameraDevice_ = false;
         hdiCameraDevice_ = nullptr;
     }
