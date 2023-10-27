@@ -33,7 +33,7 @@ public:
     static const int32_t PREVIEW_DEFAULT_WIDTH = 640;
     static const int32_t PREVIEW_DEFAULT_HEIGHT = 480;
     static const int32_t VIDEO_DEFAULT_WIDTH = 640;
-    static const int32_t VIDEO_DEFAULT_HEIGHT =480;
+    static const int32_t VIDEO_DEFAULT_HEIGHT = 480;
 
     static const int32_t WAIT_TIME_AFTER_CAPTURE = 1;
     static const int32_t WAIT_TIME_AFTER_START = 2;
