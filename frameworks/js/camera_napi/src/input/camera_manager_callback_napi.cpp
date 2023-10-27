@@ -70,11 +70,6 @@ void CameraManagerCallbackNapi::OnCameraStatusCallbackAsync(const CameraStatusIn
 void CameraManagerCallbackNapi::OnCameraStatusCallback(const CameraStatusInfo &cameraStatusInfo) const
 {
     MEDIA_DEBUG_LOG("OnCameraStatusCallback is called");
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env_, &scope);
-    if (scope == nullptr) {
-        return;
-    }
     napi_value result[ARGS_TWO];
     napi_value callback = nullptr;
     napi_value retVal;
@@ -116,7 +111,6 @@ void CameraManagerCallbackNapi::OnCameraStatusCallback(const CameraStatusInfo &c
             it++;
         }
     }
-    napi_close_handle_scope(env_, scope);
 }
 
 void CameraManagerCallbackNapi::OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const

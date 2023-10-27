@@ -59,11 +59,6 @@ void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state)
 void ExposureCallbackListener::OnExposureStateCallback(ExposureState state) const
 {
     MEDIA_DEBUG_LOG("OnExposureStateCallback is called");
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env_, &scope);
-    if (scope == nullptr) {
-        return;
-    }
     napi_value result[ARGS_TWO] = {nullptr, nullptr};
     napi_value callback = nullptr;
     napi_value retVal;
@@ -82,7 +77,6 @@ void ExposureCallbackListener::OnExposureStateCallback(ExposureState state) cons
             it++;
         }
     }
-    napi_close_handle_scope(env_, scope);
 }
 
 void ExposureCallbackListener::OnExposureState(const ExposureState state)
@@ -178,11 +172,6 @@ void FocusCallbackListener::OnFocusStateCallbackAsync(FocusState state) const
 void FocusCallbackListener::OnFocusStateCallback(FocusState state) const
 {
     MEDIA_DEBUG_LOG("OnFocusStateCallback is called");
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env_, &scope);
-    if (scope == nullptr) {
-        return;
-    }
     napi_value result[ARGS_TWO] = {nullptr, nullptr};
     napi_value callback = nullptr;
     napi_value retVal;
@@ -202,7 +191,6 @@ void FocusCallbackListener::OnFocusStateCallback(FocusState state) const
         }
     }
     MEDIA_DEBUG_LOG("FocusCallbackListener list size [%{public}zu]", focusCbList_.size());
-    napi_close_handle_scope(env_, scope);
 }
 
 void FocusCallbackListener::OnFocusState(FocusState state)
@@ -299,11 +287,6 @@ void SessionCallbackListener::OnErrorCallbackAsync(int32_t errorCode) const
 void SessionCallbackListener::OnErrorCallback(int32_t errorCode) const
 {
     MEDIA_DEBUG_LOG("OnErrorCallback is called");
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env_, &scope);
-    if (scope == nullptr) {
-        return;
-    }
     napi_value result[ARGS_ONE] = {nullptr};
     napi_value callback = nullptr;
     napi_value retVal;
@@ -325,7 +308,6 @@ void SessionCallbackListener::OnErrorCallback(int32_t errorCode) const
         }
     }
     MEDIA_DEBUG_LOG("OnErrorCallback list size [%{public}zu]", sessionCbList_.size());
-    napi_close_handle_scope(env_, scope);
 }
 
 void SessionCallbackListener::OnError(int32_t errorCode)
