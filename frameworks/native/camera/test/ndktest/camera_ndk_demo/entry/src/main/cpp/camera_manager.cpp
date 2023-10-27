@@ -71,13 +71,13 @@ Camera_ErrorCode NDKCamera::ReleaseCamera()
     if (previewOutput_) {
         PreviewOutputStop();
         PreviewOutputRelease();
-        OH_CaptureSession_RemovePreviewOutput(captureSession_,previewOutput_);
+        OH_CaptureSession_RemovePreviewOutput(captureSession_, previewOutput_);
     }
     if (photoOutput_) {
         PhotoOutputRelease();
     }
     if (videoOutput_) {
-        OH_CaptureSession_RemoveVideoOutput(captureSession_,videoOutput_);
+        OH_CaptureSession_RemoveVideoOutput(captureSession_, videoOutput_);
     }
     if (captureSession_) {
         SessionRealese();
@@ -354,7 +354,8 @@ Camera_ErrorCode NDKCamera::GetSupportedCameras(void)
 
 Camera_ErrorCode NDKCamera::GetSupportedOutputCapability(void)
 {
-    ret_ = OH_CameraManager_GetSupportedCameraOutputCapability(cameraManager_, &cameras_[cameraDeviceIndex_], &cameraOutputCapability_);
+    ret_ = OH_CameraManager_GetSupportedCameraOutputCapability(cameraManager_, &cameras_[cameraDeviceIndex_],
+                                                               &cameraOutputCapability_);
     if (cameraOutputCapability_ == nullptr || ret_ != CAMERA_OK) {
         OH_LOG_ERROR(LOG_APP, "GetSupportedCameraOutputCapability failed.");
         return CAMERA_INVALID_ARGUMENT;

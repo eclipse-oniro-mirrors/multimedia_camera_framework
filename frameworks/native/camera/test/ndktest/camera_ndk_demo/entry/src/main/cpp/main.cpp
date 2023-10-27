@@ -127,7 +127,7 @@ static napi_value InitCamera(napi_env env, napi_callback_info info)
     OH_LOG_ERROR(LOG_APP, "InitCamera surfaceId : %{public}s", surfaceId);
     OH_LOG_ERROR(LOG_APP, "InitCamera cameraDeviceIndex : %{public}d", cameraDeviceIndex);
 
-    if(ndkCamera_){
+    if (ndkCamera_) {
         OH_LOG_ERROR(LOG_APP, "ndkCamera_ is not null");
         delete ndkCamera_;
         ndkCamera_ = nullptr;
@@ -490,7 +490,8 @@ static napi_value Init(napi_env env, napi_value exports)
         { "videoOutputStopAndRelease", nullptr, VideoOutputStopAndRelease,
             nullptr, nullptr, nullptr, napi_default, nullptr },
         { "takePicture", nullptr, TakePicture, nullptr, nullptr, nullptr, napi_default, nullptr },
-        { "takePictureWithSettings", nullptr, TakePictureWithSettings, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "takePictureWithSettings", nullptr, TakePictureWithSettings, nullptr, nullptr, nullptr,
+            napi_default, nullptr },
         { "releaseSession", nullptr, ReleaseSession, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "releaseCamera", nullptr, ReleaseCamera, nullptr, nullptr, nullptr, napi_default, nullptr }
 
