@@ -28,7 +28,6 @@ using namespace testing::ext;
 
 namespace OHOS {
 namespace CameraStandard {
-
 Camera_PhotoOutput* CameraNdkUnitTest::CreatePhotoOutput(int32_t width, int32_t height)
 {
     Camera_Size photoSize = {
@@ -94,7 +93,7 @@ Camera_VideoOutput* CameraNdkUnitTest::CreateVideoOutput(int32_t width, int32_t 
     Camera_Format format = (Camera_Format)CAMERA_FORMAT_RGBA_8888;
     Camera_FrameRateRange videoRange = {
         .min = 30,
-        .max = 30 
+        .max = 30
     };
     Camera_VideoProfile videoProfile = {
         .format = format,
@@ -110,8 +109,7 @@ Camera_VideoOutput* CameraNdkUnitTest::CreateVideoOutput(int32_t width, int32_t 
     surfaceId = surfaceIdStr.c_str();
     SurfaceUtils::GetInstance()->Add(surfaceIdInt, pSurface);
     Camera_VideoOutput* videoOutput = nullptr;
-    Camera_ErrorCode ret = OH_CameraManager_CreateVideoOutput(cameraManager,
-                                                              &videoProfile, surfaceId, &videoOutput);
+    Camera_ErrorCode ret = OH_CameraManager_CreateVideoOutput(cameraManager, &videoProfile, surfaceId, &videoOutput);
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_NE(videoOutput, nullptr);
     return videoOutput;
@@ -226,7 +224,7 @@ static void CameraPreviewOutptOnErrorCb(Camera_PreviewOutput* previewOutput, Cam
     MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
 }
 
-static void CameraPhotoOutptOnFrameStartCb(Camera_PhotoOutput* photoOutput /*, int64_t timestamp*/)
+static void CameraPhotoOutptOnFrameStartCb(Camera_PhotoOutput* photoOutput)
 {
     MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
 }
@@ -269,7 +267,7 @@ static void CameraVideoOutptOnErrorCb(Camera_VideoOutput* videoOutput, Camera_Er
  * EnvConditions: NA
  * CaseDescription: Test Capture
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_001, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_001, TestSize.Level0)
 {
     Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
     EXPECT_NE(photoOutput, nullptr);
@@ -309,7 +307,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test capture session with commit config multiple times
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_002, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_002, TestSize.Level0)
 {
     Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
     EXPECT_NE(photoOutput, nullptr);
@@ -343,14 +341,14 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_002, TestSize.Level0)
 }
 
 /*
- * Feature: Ndk
+ * Feature: Framework
  * Function: Test create preview output
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Test create preview output
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_004, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_004, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret =CAMERA_OK;
@@ -415,7 +413,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_004, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test capture session start and stop preview multiple times
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_006, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_006, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -468,7 +466,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_006, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test capture session start and stop video multiple times
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_007, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_007, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret=CAMERA_OK;
@@ -521,7 +519,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_007, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test video add preview and photo output, remove photo output, add video output
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_008, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_008, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -576,7 +574,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_008, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test add preview video and photo output, video start do capture
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_009, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_009, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -643,7 +641,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_009, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test add preview and video output, commitconfig remove video Output, add photo output, take photo
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_010, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_010, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -706,7 +704,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_010, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test do OH_CaptureSession_BeginConfig/OH_CaptureSession_CommitConfig again
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_013, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_013, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -756,7 +754,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_013, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test do OH_CaptureSession_BeginConfig/OH_CaptureSession_CommitConfig again
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_014, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_014, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -815,7 +813,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_014, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test add two preview output and use
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_017, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_017, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -875,7 +873,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_017, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test capture session commit config without adding input
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_027, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_027, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -905,7 +903,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_027, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test capture session commit config without adding output
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_028, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_028, TestSize.Level0)
 {
     Camera_Input *cameraInput = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
@@ -939,7 +937,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_028, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test capture session without begin config
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_029, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_029, TestSize.Level0)
 {
     Camera_Input *cameraInput = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
@@ -1009,7 +1007,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_029, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test capture session start and stop without adding preview output
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_030, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_030, TestSize.Level0)
 {
     Camera_Input *cameraInput = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
@@ -1051,7 +1049,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_030, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test session with preview + photo
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_031, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_031, TestSize.Level0)
 {
     Camera_Input *cameraInput = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
@@ -1101,7 +1099,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_031, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test session with preview + video
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_033, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_033, TestSize.Level0)
 {
     Camera_Input *cameraInput = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
@@ -1155,7 +1153,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_033, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test capture session remove input with null
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_036, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_036, TestSize.Level0)
 {
     Camera_ErrorCode ret =CAMERA_OK;
     Camera_Input *cameraInput = nullptr;
@@ -1199,7 +1197,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_036, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test capture session remove input
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_037, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_037, TestSize.Level0)
 {
     Camera_ErrorCode ret =CAMERA_OK;
     Camera_Input *cameraInput = nullptr;
@@ -1241,7 +1239,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_037, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photo capture with photo settings
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_038, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_038, TestSize.Level0)
 {
     Camera_ErrorCode ret =CAMERA_OK;
     Camera_PhotoOutput* PhotoOutput = CreatePhotoOutput();
@@ -1285,7 +1283,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_038, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test SetMeteringPoint & GetMeteringPoint
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_041, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_041, TestSize.Level0)
 {
     Camera_ErrorCode ret =CAMERA_OK;
     Camera_Input *cameraInput = nullptr;
@@ -1336,7 +1334,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_041, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test SetFocusPoint & GetFousPoint
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_042, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_042, TestSize.Level0)
 {
     Camera_ErrorCode ret =CAMERA_OK;
     Camera_Input *cameraInput = nullptr;
@@ -1388,7 +1386,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_042, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetExposureValue and SetExposureBias with value less then the range
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_043, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_043, TestSize.Level0)
 {
     Camera_ErrorCode ret =CAMERA_OK;
     Camera_Input *cameraInput = nullptr;
@@ -1439,7 +1437,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_043, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetExposureValue and SetExposureBias with value between the range
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_044, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_044, TestSize.Level0)
 {
     Camera_ErrorCode ret =CAMERA_OK;
     Camera_Input *cameraInput = nullptr;
@@ -1490,7 +1488,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_044, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test GetExposureValue and SetExposureBias with value more then the range
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_045, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_045, TestSize.Level0)
 {
     Camera_ErrorCode ret =CAMERA_OK;
     Camera_Input *cameraInput = nullptr;
@@ -1541,7 +1539,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_045, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photo capture with capture settings
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_053, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_053, TestSize.Level0)
 {
     Camera_ErrorCode ret =CAMERA_OK;
     Camera_PhotoOutput* PhotoOutput = CreatePhotoOutput();
@@ -1603,7 +1601,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_053, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test photo capture with preview output & capture settings
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_054, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_054, TestSize.Level0)
 {
     Camera_ErrorCode ret =CAMERA_OK;
     Camera_PhotoOutput* PhotoOutput = CreatePhotoOutput();
@@ -1652,7 +1650,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_054, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test capture session with multiple photo outputs
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_055, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_055, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -1699,9 +1697,9 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_055, TestSize.Level0)
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: VideoOutput_Start  with multiple videoOutput 
+ * CaseDescription: VideoOutput_Start  with multiple videoOutput
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_056, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_056, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -1752,7 +1750,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_056, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test capture session with Video Stabilization Mode
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_057, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_057, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -1782,7 +1780,8 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_057, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     bool isSupported=false;
     ret = OH_CaptureSession_IsVideoStabilizationModeSupported(captureSession, STABILIZATION_MODE_MIDDLE, &isSupported);
-    if (isSupported) 
+
+    if (isSupported)
     {
         ret = OH_CaptureSession_SetVideoStabilizationMode(captureSession, STABILIZATION_MODE_MIDDLE);
         EXPECT_EQ(ret, 0);
@@ -1812,7 +1811,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_057, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test add preview video and photo output, video start do capture
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_058, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_058, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -1846,10 +1845,11 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_058, TestSize.Level0)
     EXPECT_EQ(ret, 0);
 
     Camera_PhotoCaptureSetting capSettings;
-    capSettings.quality=QUALITY_LEVEL_MEDIUM;
+    capSettings.quality = QUALITY_LEVEL_MEDIUM;
+
     Camera_Location location = { 1.0 , 1.0 , 1.0 };
-    capSettings.location=&location;
-    ret =OH_PhotoOutput_Capture_WithCaptureSetting(photoOutput, capSettings);
+    capSettings.location = &location;
+    ret = OH_PhotoOutput_Capture_WithCaptureSetting(photoOutput, capSettings);
     EXPECT_EQ(ret, 0);
 
     ret = OH_VideoOutput_Stop(videoOutput);
@@ -1872,7 +1872,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_058, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test add preview video and photo output, video start do capture
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_059, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_059, TestSize.Level0)
 {
     Camera_CaptureSession* captureSession = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
@@ -1928,7 +1928,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_059, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test open flash preview capture video callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_061, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_061, TestSize.Level0)
 {
     Camera_ErrorCode ret =CAMERA_OK;
     Camera_CaptureSession* captureSession = nullptr;
@@ -1949,12 +1949,10 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_061, TestSize.Level0)
 
     if (isSupported)
     {
-        ret = OH_CaptureSession_SetFlashMode(captureSession, flash);
-        EXPECT_EQ(ret, 0);
+        EXPECT_EQ(OH_CaptureSession_SetFlashMode(captureSession, flash), 0);
     }
 
-    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(OH_CaptureSession_AddInput(captureSession, cameraInput), 0);
     Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
     EXPECT_NE(previewOutput, nullptr);
 
@@ -1967,8 +1965,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_061, TestSize.Level0)
     ret = OH_PreviewOutput_RegisterCallback(previewOutput, &setPreviewResultCallback);
     EXPECT_EQ(ret, CAMERA_OK);
 
-    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput), 0);
 
     Camera_PhotoOutput* PhotoOutput = CreatePhotoOutput();
     EXPECT_NE(PhotoOutput, nullptr);
@@ -1981,8 +1978,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_061, TestSize.Level0)
     ret = OH_PhotoOutput_RegisterCallback(PhotoOutput, &setPhotoOutputResultCallback);
     EXPECT_EQ(ret, CAMERA_OK);
 
-    ret = OH_CaptureSession_AddPhotoOutput(captureSession, PhotoOutput);
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(OH_CaptureSession_AddPhotoOutput(captureSession, PhotoOutput), 0);
 
     Camera_VideoOutput* videoOutput = CreateVideoOutput();
     EXPECT_NE(videoOutput, nullptr);
@@ -1999,8 +1995,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_061, TestSize.Level0)
     EXPECT_EQ(OH_PreviewOutput_Start(previewOutput), 0);
     EXPECT_EQ(OH_PhotoOutput_Capture(PhotoOutput), 0);
 
-    ret = OH_VideoOutput_UnregisterCallback(videoOutput, &setVideoResultCallback);
-    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_VideoOutput_UnregisterCallback(videoOutput, &setVideoResultCallback), 0);
 
     EXPECT_EQ(OH_VideoOutput_Release(videoOutput), CAMERA_OK);
     EXPECT_EQ(OH_PhotoOutput_UnregisterCallback(PhotoOutput, &setPhotoOutputResultCallback), 0);
@@ -2011,7 +2006,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_061, TestSize.Level0)
 
     EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), 0);
     EXPECT_EQ(OH_CaptureSession_Release(captureSession), 0);
-    EXPECT_EQ(OH_CameraInput_Release(cameraInput), 0); 
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), 0);
 }
 
 /*
@@ -2022,7 +2017,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_061, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test close flash preview capture video callback
  */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_062, TestSize.Level0)
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_062, TestSize.Level0)
 {
     Camera_ErrorCode ret = CAMERA_OK;
     Camera_CaptureSession* captureSession = nullptr;
