@@ -33,6 +33,15 @@ const CameraSize = {
   HEIGHT: 720
 }
 
+globalThis.photoSettings = {
+  quality: 0,          // 拍照质量
+  rotation: 0,         // 照片方向
+  mirror: false,       // 镜像使能
+  latitude: 12.9698,   // 地理位置
+  longitude: 77.7500,  // 地理位置
+  altitude: 1000       // 地理位置
+};
+
 @Component
 export struct modeSwitchPage {
   private tag: string = 'CAIHF modeSwitchPage:'
@@ -192,12 +201,17 @@ export struct modeSwitchPage {
       Logger.info(this.tag, `deviceType = phone`)
       this.videoConfig.videoSourceType = media.VideoSourceType.VIDEO_SOURCE_TYPE_SURFACE_YUV
       this.videoConfig.profile.videoCodec = media.CodecMimeType.VIDEO_MPEG4;
-      this.videoConfig.rotation = this.photoRotationMap.rotation90;
+      if (this.cameraDeviceIndex == 1) {
+        this.videoConfig.rotation = this.photoRotationMap.rotation270;
+      } else {
+        this.videoConfig.rotation = this.photoRotationMap.rotation90;
+      }
     }
     if (deviceInfo.deviceType == 'tablet') {
       Logger.info(this.tag, `deviceType = tablet`)
       this.videoConfig.videoSourceType = media.VideoSourceType.VIDEO_SOURCE_TYPE_SURFACE_YUV
     }
+
     this.videoConfig.profile.videoFrameWidth = cameraDemo.getVideoFrameWidth();
     this.videoConfig.profile.videoFrameHeight = cameraDemo.getVideoFrameHeight();
     this.videoConfig.profile.videoFrameRate = cameraDemo.getVideoFrameRate();
@@ -267,20 +281,26 @@ export struct modeSwitchPage {
     }
   }
 
+  async getPhotoSurfaceID() {
+    if(this.mReceiver) {
+      Logger.info(this.tag, 'imageReceiver has been created')
+    } else {
+      this.createImageReceiver()
+    }
+    this.mSurfaceId = await this.mReceiver.getReceivingSurfaceId()
+    if(this.mSurfaceId) {
+      Logger.info(this.tag, `createImageReceiver mSurfaceId: ${this.mSurfaceId} `)
+    } else {
+      Logger.info(this.tag, `Get mSurfaceId failed `)
+    }
+  }
+
    // 判断录像或者照片模式
-   async  isVideoPhotoFn() {if (this.modelBagCol == 'photo') {
-       if(this.mReceiver) {} else {
-         this.createImageReceiver()
-       }
+   async  isVideoPhotoFn() {
+     await this.getPhotoSurfaceID()
 
-       this.mSurfaceId = await this.mReceiver.getReceivingSurfaceId()
-       if(this.mSurfaceId) {
-         Logger.info(this.tag, `createImageReceiver mSurfaceId: ${this.mSurfaceId} `)
-       } else {
-         Logger.info(this.tag, `Get mSurfaceId failed `)
-       }
-
-       cameraDemo.startPhotoOrVideo(this.modelBagCol, this.mSurfaceId)
+     if (this.modelBagCol == 'photo') {
+       cameraDemo.startPhotoOrVideo(this.modelBagCol, this.videoId, this.mSurfaceId)
      } else if (this.modelBagCol == 'video') {
        this.isModeBol = false
        if (this.timer) {
@@ -288,7 +308,7 @@ export struct modeSwitchPage {
        }
        // 开始录制
        await this.getVideoSurfaceID()
-       cameraDemo.startPhotoOrVideo(this.modelBagCol, this.videoId)
+       cameraDemo.startPhotoOrVideo(this.modelBagCol, this.videoId, this.mSurfaceId)
        cameraDemo.videoOutputStart()
        this.videoRecorder.start()
      }
@@ -382,10 +402,18 @@ export struct modeSwitchPage {
               .height('200px')
           }
         }.onClick(() => {
-          globalThis.abilityContext.startAbility({
-            bundleName: 'com.ohos.photos',
-            abilityName: 'com.ohos.photos.MainAbility'
-          })
+          if (deviceInfo.deviceType == 'default') {
+              globalThis.abilityContext.startAbility({
+              bundleName: 'com.ohos.photos',
+              abilityName: 'com.ohos.photos.MainAbility'
+            })
+          } else if (deviceInfo.deviceType == 'phone') {
+              globalThis.abilityContext.startAbility({
+              bundleName: 'com.huawei.hmos.photos',
+              abilityName: 'com.huawei.hmos.photos.MainAbility'
+            })
+          }
+
         })
       }.position({ x: '10%', y: '82%' })
 
@@ -426,8 +454,10 @@ export struct modeSwitchPage {
               // 切换摄像头
               this.cameraDeviceIndex ? this.cameraDeviceIndex = 0 : this.cameraDeviceIndex = 1
               // 清除配置
+              cameraDemo.releaseSession()
               // await CameraService.releaseSession()
               // 开始预览
+              cameraDemo.initCamera(this.surfaceId, globalThis.settingDataObj.focusMode, this.cameraDeviceIndex)
               // await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex)
             })
           }
@@ -453,7 +483,7 @@ export struct modeSwitchPage {
          .height('200px')
          .backgroundColor('rgba(255,255,255,0.20)')
          .onClick(() => {
-           cameraDemo.startPhotoOrVideo(this.modelBagCol, this.videoId)
+           cameraDemo.takePictureWithSettings(globalThis.photoSettings);
          })
        }.position({ x: '10%', y: '82%' })
 

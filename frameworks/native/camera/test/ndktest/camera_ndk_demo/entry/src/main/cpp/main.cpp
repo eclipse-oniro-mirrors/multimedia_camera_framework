@@ -19,6 +19,16 @@
 #define LOG_TAG "DEMO:"
 #define LOG_DOMAIN 0x3200
 static NDKCamera* ndkCamera_ = nullptr;
+const int32_t ARGS_TWO = 2;
+struct Capture_Setting {
+    int32_t quality;
+    int32_t rotation;
+    int32_t location;
+    bool mirror;
+    int32_t latitude;
+    int32_t longitude;
+    int32_t altitude;
+};
 
 static napi_value SetZoomRatio(napi_env env, napi_callback_info info)
 {
@@ -91,9 +101,9 @@ static napi_value IsVideoStabilizationModeSupported(napi_env env, napi_callback_
 static napi_value InitCamera(napi_env env, napi_callback_info info)
 {
     OH_LOG_ERROR(LOG_APP, "InitCamera Start");
-    size_t requireArgc = 2;
-    size_t argc = 2;
-    napi_value args[2] = {nullptr};
+    size_t requireArgc = 3;
+    size_t argc = 3;
+    napi_value args[3] = {nullptr};
     napi_value result;
     size_t typeLen = 0;
     char* surfaceId = nullptr;
@@ -106,27 +116,80 @@ static napi_value InitCamera(napi_env env, napi_callback_info info)
 
     napi_valuetype valuetype1;
     napi_typeof(env, args[1], &valuetype1);
+
     int32_t focusMode;
     napi_get_value_int32(env, args[1], &focusMode);
+
+    uint32_t cameraDeviceIndex;
+    napi_get_value_uint32(env, args[ARGS_TWO], &cameraDeviceIndex);
+
     OH_LOG_ERROR(LOG_APP, "InitCamera focusMode : %{public}d", focusMode);
     OH_LOG_ERROR(LOG_APP, "InitCamera surfaceId : %{public}s", surfaceId);
-    ndkCamera_ = NDKCamera::GetInstance(surfaceId, focusMode);
+    OH_LOG_ERROR(LOG_APP, "InitCamera cameraDeviceIndex : %{public}d", cameraDeviceIndex);
+
+    if (ndkCamera_) {
+        OH_LOG_ERROR(LOG_APP, "ndkCamera_ is not null");
+        delete ndkCamera_;
+        ndkCamera_ = nullptr;
+    }
+    ndkCamera_ = new NDKCamera(surfaceId, focusMode, cameraDeviceIndex);
     OH_LOG_ERROR(LOG_APP, "InitCamera End");
     
     return result;
 }
 
-static napi_value StartPhotoOrVideo(napi_env env, napi_callback_info info)
+static napi_value ReleaseCamera(napi_env env, napi_callback_info info)
 {
-    OH_LOG_INFO(LOG_APP, "StartPhotoOrVideo Start");
+    OH_LOG_ERROR(LOG_APP, "ReleaseCamera Start");
     size_t requireArgc = 2;
     size_t argc = 2;
     napi_value args[2] = {nullptr};
     napi_value result;
     size_t typeLen = 0;
+    char* surfaceId = nullptr;
+
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+    ndkCamera_->ReleaseCamera();
+
+    OH_LOG_ERROR(LOG_APP, "ReleaseCamera End");
+    napi_create_int32(env, argc, &result);
+
+    return result;
+}
+static napi_value ReleaseSession(napi_env env, napi_callback_info info)
+{
+    OH_LOG_ERROR(LOG_APP, "ReleaseCamera Start");
+    size_t requireArgc = 2;
+    size_t argc = 2;
+    napi_value args[2] = {nullptr};
+    napi_value result;
+    size_t typeLen = 0;
+    char* surfaceId = nullptr;
+
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+    ndkCamera_->ReleaseSession();
+
+    OH_LOG_ERROR(LOG_APP, "ReleaseCamera End");
+    napi_create_int32(env, argc, &result);
+
+    return result;
+}
+static napi_value StartPhotoOrVideo(napi_env env, napi_callback_info info)
+{
+    OH_LOG_INFO(LOG_APP, "StartPhotoOrVideo Start");
+    Camera_ErrorCode ret = CAMERA_OK;
+    size_t requireArgc = 3;
+    size_t argc = 3;
+    napi_value args[3] = {nullptr};
+    napi_value result;
+    size_t typeLen = 0;
     size_t videoIdLen = 0;
+    size_t photoIdLen = 0;
     char* modeFlag = nullptr;
     char* videoId = nullptr;
+    char* photoId = nullptr;
 
     napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
@@ -138,25 +201,27 @@ static napi_value StartPhotoOrVideo(napi_env env, napi_callback_info info)
     videoId = new char[videoIdLen + 1];
     napi_get_value_string_utf8(env, args[1], videoId, videoIdLen + 1, &videoIdLen);
 
+    napi_get_value_string_utf8(env, args[ARGS_TWO], nullptr, 0, &photoIdLen);
+    photoId = new char[photoIdLen + 1];
+    napi_get_value_string_utf8(env, args[ARGS_TWO], photoId, photoIdLen + 1, &photoIdLen);
+
     if (!strcmp(modeFlag, "photo")) {
-        OH_LOG_ERROR(LOG_APP, "StartPhoto surfaceId %{public}s", videoId);
-        ndkCamera_->startPhoto(videoId);
+        OH_LOG_ERROR(LOG_APP, "StartPhoto surfaceId %{public}s", photoId);
+        ret = ndkCamera_->StartPhoto(photoId);
     } else if (!strcmp(modeFlag, "video")) {
-        ndkCamera_->startVideo(videoId);
-        OH_LOG_ERROR(LOG_APP, "StartPhotoOrVideo000 %{public}s", videoId);
+        ret = ndkCamera_->StartVideo(videoId, photoId);
+        OH_LOG_ERROR(LOG_APP, "StartPhotoOrVideo %{public}s, %{public}s", videoId, photoId);
     }
+    napi_create_int32(env, ret, &result);
     return result;
 }
 
 static napi_value VideoOutputStart(napi_env env, napi_callback_info info)
 {
     OH_LOG_INFO(LOG_APP, "VideoOutputStart Start");
-    size_t requireArgc = 0;
-    size_t argc = 0;
-    napi_value args[2] = {nullptr};
     napi_value result;
-    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
-    ndkCamera_->VideoOutputStart();
+    Camera_ErrorCode ret = ndkCamera_->VideoOutputStart();
+    napi_create_int32(env, ret, &result);
     return result;
 }
 
@@ -331,6 +396,77 @@ static napi_value VideoOutputStopAndRelease(napi_env env, napi_callback_info inf
     return result;
 }
 
+static napi_value TakePicture(napi_env env, napi_callback_info info)
+{
+    OH_LOG_INFO(LOG_APP, "TakePicture Start");
+    napi_value result;
+    Camera_ErrorCode ret = ndkCamera_->TakePicture();
+    OH_LOG_ERROR(LOG_APP, "TakePicture result is %{public}d", ret);
+    napi_create_int32(env, ret, &result);
+    return result;
+}
+
+static napi_value GetCaptureParam(napi_env env, napi_value captureConfigValue, Capture_Setting *config)
+{
+    napi_value value = nullptr;
+    napi_get_named_property(env, captureConfigValue, "quality", &value);
+    napi_get_value_int32(env, value, &config->quality);
+
+    napi_get_named_property(env, captureConfigValue, "rotation", &value);
+    napi_get_value_int32(env, value, &config->rotation);
+
+    napi_get_named_property(env, captureConfigValue, "mirror", &value);
+    napi_get_value_bool(env, value, &config->mirror);
+
+    napi_get_named_property(env, captureConfigValue, "latitude", &value);
+    napi_get_value_int32(env, value, &config->latitude);
+
+    napi_get_named_property(env, captureConfigValue, "longitude", &value);
+    napi_get_value_int32(env, value, &config->longitude);
+
+    napi_get_named_property(env, captureConfigValue, "altitude", &value);
+    napi_get_value_int32(env, value, &config->altitude);
+
+    OH_LOG_INFO(LOG_APP, "get quality %{public}d, rotation %{public}d, mirror %{public}d, latitude "
+        "%{public}d, longitude %{public}d, altitude %{public}d", config->quality, config->rotation,
+        config->mirror, config->latitude, config->longitude, config->altitude);
+    return 0;
+}
+static void SetConfig(Capture_Setting settings, Camera_PhotoCaptureSetting* photoSetting, Camera_Location* location)
+{
+    if (photoSetting == nullptr || location == nullptr) {
+        OH_LOG_INFO(LOG_APP, "photoSetting is null");
+    }
+    photoSetting->quality = static_cast<Camera_QualityLevel>(settings.quality);
+    photoSetting->rotation = static_cast<Camera_ImageRotation>(settings.rotation);
+    photoSetting->mirror = settings.mirror;
+    location->altitude = settings.altitude;
+    location->latitude = settings.latitude;
+    location->longitude = settings.longitude;
+    photoSetting->location = location;
+}
+
+static napi_value TakePictureWithSettings(napi_env env, napi_callback_info info)
+{
+    OH_LOG_INFO(LOG_APP, "TakePictureWithSettings Start");
+    size_t requireArgc = 1;
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    Camera_PhotoCaptureSetting photoSetting;
+    Capture_Setting setting_inner;
+    Camera_Location* location = new Camera_Location;
+
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+    GetCaptureParam(env, args[0], &setting_inner);
+    SetConfig(setting_inner, &photoSetting, location);
+
+    napi_value result;
+    Camera_ErrorCode ret = ndkCamera_->TakePictureWithPhotoSettings(photoSetting);
+    OH_LOG_ERROR(LOG_APP, "TakePictureWithSettings result is %{public}d", ret);
+    napi_create_int32(env, ret, &result);
+    return result;
+}
+
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports)
 {
@@ -353,6 +489,12 @@ static napi_value Init(napi_env env, napi_value exports)
         { "getVideoFrameRate", nullptr, GetVideoFrameRate, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "videoOutputStopAndRelease", nullptr, VideoOutputStopAndRelease,
             nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "takePicture", nullptr, TakePicture, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "takePictureWithSettings", nullptr, TakePictureWithSettings, nullptr, nullptr, nullptr,
+            napi_default, nullptr },
+        { "releaseSession", nullptr, ReleaseSession, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "releaseCamera", nullptr, ReleaseCamera, nullptr, nullptr, nullptr, napi_default, nullptr }
+
     };
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     return exports;

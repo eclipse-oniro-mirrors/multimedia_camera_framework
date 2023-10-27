@@ -41,17 +41,8 @@
 class NDKCamera {
 public:
     ~NDKCamera();
-    static NDKCamera* GetInstance(char *str, uint32_t focusMode)
-    {
-        if (ndkCamera_ == nullptr) {
-            std::lock_guard<std::mutex> lock(mtx_);
-            if (ndkCamera_ == nullptr) {
-                ndkCamera_ = new NDKCamera(str, focusMode);
-            }
-        }
-        return ndkCamera_;
-    }
-    
+    NDKCamera(char *str, uint32_t focusMode, uint32_t cameraDeviceIndex);
+
     static void Destroy()
     {
         if (ndkCamera_ != nullptr) {
@@ -83,27 +74,32 @@ public:
     Camera_ErrorCode SessionCommitConfig(void);
     Camera_ErrorCode SessionStart(void);
     Camera_ErrorCode SessionStop(void);
-    Camera_ErrorCode startVideo(char* videoId);
+    Camera_ErrorCode StartVideo(char* videoId, char* photoId);
     Camera_ErrorCode AddVideoOutput(void);
+    Camera_ErrorCode AddPhotoOutput();
     Camera_ErrorCode VideoOutputStart(void);
-    Camera_ErrorCode startPhoto(char *mSurfaceId);
+    Camera_ErrorCode StartPhoto(char* mSurfaceId);
     Camera_ErrorCode IsExposureModeSupportedFn(uint32_t mode);
     Camera_ErrorCode IsMeteringPoint(int x, int y);
     Camera_ErrorCode IsExposureBiasRange(int exposureBias);
     Camera_ErrorCode IsFocusMode(uint32_t mode);
     Camera_ErrorCode IsFocusPoint(int x, int y);
     Camera_ErrorCode IsFocusModeSupported(uint32_t mode);
+    Camera_ErrorCode ReleaseCamera();
+    Camera_ErrorCode SessionRealese();
+    Camera_ErrorCode ReleaseSession();
     int32_t GetVideoFrameWidth(void);
     int32_t GetVideoFrameHeight(void);
     int32_t GetVideoFrameRate(void);
     Camera_ErrorCode VideoOutputStop(void);
     Camera_ErrorCode VideoOutputRelease(void);
+    Camera_ErrorCode TakePicture();
+    Camera_ErrorCode TakePictureWithPhotoSettings(Camera_PhotoCaptureSetting photoSetting);
 
 private:
-    NDKCamera(char *str, uint32_t focusMode);
     NDKCamera(const NDKCamera&) = delete;
     NDKCamera& operator = (const NDKCamera&) = delete;
-    
+    uint32_t cameraDeviceIndex_;
     Camera_Manager* cameraManager_;
     Camera_CaptureSession* captureSession_;
     Camera_Device* cameras_;
