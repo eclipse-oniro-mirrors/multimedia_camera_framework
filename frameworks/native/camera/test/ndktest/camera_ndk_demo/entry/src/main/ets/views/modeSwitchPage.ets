@@ -33,6 +33,15 @@ const CameraSize = {
   HEIGHT: 720
 }
 
+globalThis.photoSettings = {
+  quality: 0,          // 拍照质量
+  rotation: 0,         // 照片方向
+  mirror: false,       // 镜像使能
+  latitude: 12.9698,   // 地理位置
+  longitude: 77.7500,  // 地理位置
+  altitude: 1000       // 地理位置
+};
+
 @Component
 export struct modeSwitchPage {
   private tag: string = 'CAIHF modeSwitchPage:'
@@ -267,20 +276,26 @@ export struct modeSwitchPage {
     }
   }
 
+  async getPhotoSurfaceID() {
+    if(this.mReceiver) {
+      Logger.info(this.tag, 'imageReceiver has been created')
+    } else {
+      this.createImageReceiver()
+    }
+    this.mSurfaceId = await this.mReceiver.getReceivingSurfaceId()
+    if(this.mSurfaceId) {
+      Logger.info(this.tag, `createImageReceiver mSurfaceId: ${this.mSurfaceId} `)
+    } else {
+      Logger.info(this.tag, `Get mSurfaceId failed `)
+    }
+  }
+
    // 判断录像或者照片模式
-   async  isVideoPhotoFn() {if (this.modelBagCol == 'photo') {
-       if(this.mReceiver) {} else {
-         this.createImageReceiver()
-       }
+   async  isVideoPhotoFn() {
+     await this.getPhotoSurfaceID()
 
-       this.mSurfaceId = await this.mReceiver.getReceivingSurfaceId()
-       if(this.mSurfaceId) {
-         Logger.info(this.tag, `createImageReceiver mSurfaceId: ${this.mSurfaceId} `)
-       } else {
-         Logger.info(this.tag, `Get mSurfaceId failed `)
-       }
-
-       cameraDemo.startPhotoOrVideo(this.modelBagCol, this.mSurfaceId)
+     if (this.modelBagCol == 'photo') {
+       cameraDemo.startPhotoOrVideo(this.modelBagCol, this.videoId, this.mSurfaceId)
      } else if (this.modelBagCol == 'video') {
        this.isModeBol = false
        if (this.timer) {
@@ -288,7 +303,7 @@ export struct modeSwitchPage {
        }
        // 开始录制
        await this.getVideoSurfaceID()
-       cameraDemo.startPhotoOrVideo(this.modelBagCol, this.videoId)
+       cameraDemo.startPhotoOrVideo(this.modelBagCol, this.videoId, this.mSurfaceId)
        cameraDemo.videoOutputStart()
        this.videoRecorder.start()
      }
@@ -453,7 +468,7 @@ export struct modeSwitchPage {
          .height('200px')
          .backgroundColor('rgba(255,255,255,0.20)')
          .onClick(() => {
-           cameraDemo.startPhotoOrVideo(this.modelBagCol, this.videoId)
+           cameraDemo.takePictureWithSettings(globalThis.photoSettings);
          })
        }.position({ x: '10%', y: '82%' })
 

@@ -41,6 +41,7 @@
 class NDKCamera {
 public:
     ~NDKCamera();
+    NDKCamera(char *str, uint32_t focusMode);
     static NDKCamera* GetInstance(char *str, uint32_t focusMode)
     {
         if (ndkCamera_ == nullptr) {
@@ -83,10 +84,11 @@ public:
     Camera_ErrorCode SessionCommitConfig(void);
     Camera_ErrorCode SessionStart(void);
     Camera_ErrorCode SessionStop(void);
-    Camera_ErrorCode startVideo(char* videoId);
+    Camera_ErrorCode StartVideo(char* videoId, char* photoId);
     Camera_ErrorCode AddVideoOutput(void);
+    Camera_ErrorCode AddPhotoOutput();
     Camera_ErrorCode VideoOutputStart(void);
-    Camera_ErrorCode startPhoto(char *mSurfaceId);
+    Camera_ErrorCode StartPhoto(char* mSurfaceId);
     Camera_ErrorCode IsExposureModeSupportedFn(uint32_t mode);
     Camera_ErrorCode IsMeteringPoint(int x, int y);
     Camera_ErrorCode IsExposureBiasRange(int exposureBias);
@@ -98,9 +100,10 @@ public:
     int32_t GetVideoFrameRate(void);
     Camera_ErrorCode VideoOutputStop(void);
     Camera_ErrorCode VideoOutputRelease(void);
+    Camera_ErrorCode TakePicture();
+    Camera_ErrorCode TakePictureWithPhotoSettings(Camera_PhotoCaptureSetting photoSetting);
 
 private:
-    NDKCamera(char *str, uint32_t focusMode);
     NDKCamera(const NDKCamera&) = delete;
     NDKCamera& operator = (const NDKCamera&) = delete;
     

@@ -376,6 +376,17 @@ Camera_ErrorCode NDKCamera::AddVideoOutput(void)
     return ret;
 }
 
+Camera_ErrorCode NDKCamera::AddPhotoOutput()
+{
+    Camera_ErrorCode ret = OH_CaptureSession_AddPhotoOutput(captureSession_, photoOutput_);
+    if (ret == CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_AddPhotoOutput success.");
+    } else {
+        OH_LOG_ERROR(LOG_APP, "OH_CaptureSession_AddPhotoOutput failed. %d ", ret);
+    }
+    return ret;
+}
+
 Camera_ErrorCode NDKCamera::CreateMetadataOutput(void)
 {
     metaDataObjectType_ = cameraOutputCapability_->supportedMetadataObjectTypes[2]; // 2:camera metedata types
@@ -430,9 +441,9 @@ Camera_ErrorCode NDKCamera::PhotoOutputRelease(void)
     }
     return ret_;
 }
-Camera_ErrorCode NDKCamera::startVideo(char* videoId)
+Camera_ErrorCode NDKCamera::StartVideo(char* videoId, char* photoId)
 {
-    OH_LOG_INFO(LOG_APP, "startVideo begin.");
+    OH_LOG_INFO(LOG_APP, "StartVideo begin.");
     Camera_ErrorCode ret = SessionStop();
     if (ret == CAMERA_OK) {
         OH_LOG_INFO(LOG_APP, "SessionStop success.");
@@ -445,6 +456,9 @@ Camera_ErrorCode NDKCamera::startVideo(char* videoId)
     } else {
         OH_LOG_ERROR(LOG_APP, "SessionBegin failed. %d ", ret);
     }
+    OH_CaptureSession_RemovePhotoOutput(captureSession_, photoOutput_);
+    CreatePhotoOutput(photoId);
+    AddPhotoOutput();
     CreateVideoOutput(videoId);
     AddVideoOutput();
     SessionCommitConfig();
@@ -464,7 +478,7 @@ Camera_ErrorCode NDKCamera::VideoOutputStart(void)
     return ret;
 }
 
-Camera_ErrorCode NDKCamera::startPhoto(char *mSurfaceId)
+Camera_ErrorCode NDKCamera::StartPhoto(char *mSurfaceId)
 {
     Camera_ErrorCode ret = CAMERA_OK;
     if (takePictureTimes == 0) {
@@ -492,7 +506,7 @@ Camera_ErrorCode NDKCamera::startPhoto(char *mSurfaceId)
         ret = SessionStart();
         OH_LOG_INFO(LOG_APP, "startPhoto SessionStart ret = %{public}d.", ret);
     }
-    ret = OH_PhotoOutput_Capture(photoOutput_);
+    ret = TakePicture();
     OH_LOG_INFO(LOG_APP, "startPhoto OH_PhotoOutput_Capture ret = %{public}d.", ret);
     if (ret_ != CAMERA_OK) {
         OH_LOG_ERROR(LOG_APP, "startPhoto failed.");
@@ -677,4 +691,34 @@ Camera_ErrorCode NDKCamera::VideoOutputRelease(void)
         return CAMERA_INVALID_ARGUMENT;
     }
     return ret_;
+}
+
+Camera_ErrorCode NDKCamera::TakePicture()
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    ret = OH_PhotoOutput_Capture(photoOutput_);
+    OH_LOG_ERROR(LOG_APP, "takePicture OH_PhotoOutput_Capture ret = %{public}d.", ret);
+    if (ret != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "startPhoto failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    return ret;
+}
+
+Camera_ErrorCode NDKCamera::TakePictureWithPhotoSettings(Camera_PhotoCaptureSetting photoSetting)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    ret = OH_PhotoOutput_Capture_WithCaptureSetting(photoOutput_, photoSetting);
+
+    OH_LOG_INFO(LOG_APP, "TakePictureWithPhotoSettings get quality %{public}d, rotation %{public}d, mirror %{public}d, "
+        "latitude, %{public}d, longitude %{public}d, altitude %{public}d", photoSetting.quality, photoSetting.rotation,
+        photoSetting.mirror, photoSetting.location->latitude, photoSetting.location->longitude,
+        photoSetting.location->altitude);
+
+    OH_LOG_ERROR(LOG_APP, "takePicture TakePictureWithPhotoSettings ret = %{public}d.", ret);
+    if (ret != CAMERA_OK) {
+        OH_LOG_ERROR(LOG_APP, "startPhoto failed.");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    return ret;
 }
