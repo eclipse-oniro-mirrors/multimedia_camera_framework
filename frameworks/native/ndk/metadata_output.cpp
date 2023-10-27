@@ -95,7 +95,11 @@ Camera_ErrorCode OH_MetadataOutput_Release(Camera_MetadataOutput* metadataOutput
     CHECK_AND_RETURN_RET_LOG(metadataOutput != nullptr, CAMERA_INVALID_ARGUMENT,
         "invaild argument! metadataOutput is null!");
 
-    return metadataOutput->Release();
+    Camera_ErrorCode retCode = metadataOutput->Release();
+    if (metadataOutput != nullptr) {
+        delete metadataOutput;
+    }
+    return retCode;
 }
 #ifdef __cplusplus
 }

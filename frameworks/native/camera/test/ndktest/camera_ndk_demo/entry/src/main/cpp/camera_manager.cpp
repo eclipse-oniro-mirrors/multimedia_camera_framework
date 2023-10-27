@@ -54,15 +54,37 @@ NDKCamera::NDKCamera(char* str, uint32_t focusMode, uint32_t cameraDeviceIndex)
 NDKCamera::~NDKCamera()
 {
     valid_ = false;
-
+    OH_LOG_ERROR(LOG_APP, "zss  ~NDKCamera");
     Camera_ErrorCode ret = OH_CaptureSession_Release(captureSession_);
     if (ret != CAMERA_OK) {
         OH_LOG_ERROR(LOG_APP, "Release failed.");
     }
 
-    if (cameraManager_) {
+   if (cameraManager_) {
+        OH_LOG_ERROR(LOG_APP, "zss Release OH_CameraManager_DeleteSupportedCameras. enter");
+        ret = OH_CameraManager_DeleteSupportedCameras(cameraManager_, cameras_, size_);
+        if (ret != CAMERA_OK) {
+            OH_LOG_ERROR(LOG_APP, "Delete Cameras failed.");
+        } else {
+           OH_LOG_ERROR(LOG_APP, "zss Release OH_CameraManager_DeleteSupportedCameras. ok");
+        }
+
+        ret = OH_CameraManager_DeleteSupportedCameraOutputCapability(cameraManager_, cameraOutputCapability_);
+        if (ret != CAMERA_OK) {
+            OH_LOG_ERROR(LOG_APP, "Delete CameraOutputCapability failed.");
+        } else {
+                    OH_LOG_ERROR(LOG_APP, "zss Release OH_CameraManager_DeleteSupportedCameraOutputCapability. ok");
+                 }
+
+        ret = OH_Camera_DeleteCameraMananger(cameraManager_);
+        if (ret != CAMERA_OK) {
+            OH_LOG_ERROR(LOG_APP, "Delete CameraManager failed.");
+        } else {
+                             OH_LOG_ERROR(LOG_APP, "zss Release OH_Camera_DeleteCameraMananger. ok");
+                          }
         cameraManager_ = nullptr;
     }
+    OH_LOG_ERROR(LOG_APP, "zss  ~NDKCamera exit");
 }
 
 Camera_ErrorCode NDKCamera::ReleaseCamera()

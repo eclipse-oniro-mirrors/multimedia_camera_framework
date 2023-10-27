@@ -151,7 +151,11 @@ static napi_value ReleaseCamera(napi_env env, napi_callback_info info)
     napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
     ndkCamera_->ReleaseCamera();
-
+    if(ndkCamera_){
+        OH_LOG_ERROR(LOG_APP, "ndkCamera_ 22is not null");
+        delete ndkCamera_;
+        ndkCamera_ = nullptr;
+    }
     OH_LOG_ERROR(LOG_APP, "ReleaseCamera End");
     napi_create_int32(env, argc, &result);
 

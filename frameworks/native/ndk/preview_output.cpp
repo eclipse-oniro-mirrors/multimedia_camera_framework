@@ -99,7 +99,11 @@ Camera_ErrorCode OH_PreviewOutput_Release(Camera_PreviewOutput* previewOutput)
     CHECK_AND_RETURN_RET_LOG(previewOutput != nullptr, CAMERA_INVALID_ARGUMENT,
         "invaild argument! previewOutput is null!");
 
-    return previewOutput->Release();
+    Camera_ErrorCode retCode = previewOutput->Release();
+    if (previewOutput != nullptr) {
+        delete previewOutput;
+    }
+    return retCode;
 }
 #ifdef __cplusplus
 }

@@ -68,7 +68,9 @@ Camera_ErrorCode OH_CameraInput_Release(Camera_Input* cameraInput)
         "invaild argument! cameraInput is null!");
 
     Camera_ErrorCode retCode = cameraInput->Release();
-    delete cameraInput;
+    if (cameraInput != nullptr) {
+        delete cameraInput;
+    }
     return retCode;
 }
 

@@ -511,6 +511,13 @@ typedef struct Camera_MetadataObject {
  */
 Camera_ErrorCode OH_Camera_GetCameraMananger(Camera_Manager** cameraManager);
 
+/**
+ * @since 11
+ * @version 1.0
+ */
+Camera_ErrorCode OH_Camera_DeleteCameraMananger(Camera_Manager* cameraManager);
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -281,7 +281,11 @@ Camera_ErrorCode OH_CaptureSession_Release(Camera_CaptureSession* session)
 {
     CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT, "invaild argument! session is null!");
 
-    return session->Release();
+    Camera_ErrorCode retCode = session->Release();
+    if (session != nullptr) {
+        delete session;
+    }
+    return retCode;
 }
 
 Camera_ErrorCode OH_CaptureSession_HasFlash(Camera_CaptureSession* session, bool* hasFlash)

@@ -97,7 +97,11 @@ Camera_ErrorCode OH_VideoOutput_Release(Camera_VideoOutput* videoOutput)
     CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
         "invaild argument! videoOutput is null!");
 
-    return videoOutput->Release();
+    Camera_ErrorCode retCode = videoOutput->Release();
+    if (videoOutput != nullptr) {
+        delete videoOutput;
+    }
+    return retCode;
 }
 
 #ifdef __cplusplus
