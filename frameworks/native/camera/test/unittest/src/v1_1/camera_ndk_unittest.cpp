@@ -48,9 +48,9 @@ Camera_PhotoOutput* CameraNdkUnitTest::CreatePhotoOutput(int32_t width, int32_t 
     string surfaceIdStr = std::to_string(surfaceIdInt);
     const char *surfaceId = nullptr;
     surfaceId = surfaceIdStr.c_str();
-    SurfaceUtils::GetInstance()->Add(surfaceIdInt,pSurface);
+    SurfaceUtils::GetInstance()->Add(surfaceIdInt, pSurface);
 
-    Camera_PhotoOutput* photoOutput = nullptr; 
+    Camera_PhotoOutput* photoOutput = nullptr;
     Camera_ErrorCode ret = OH_CameraManager_CreatePhotoOutput(cameraManager, &photoProfile, surfaceId, &photoOutput);
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_NE(photoOutput, nullptr);
@@ -212,10 +212,11 @@ static void CameraPreviewOutptOnFrameStartCb(Camera_PreviewOutput* previewOutput
 {
     MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
 }
+
 static void CameraPreviewOutptOnFrameEndCb(Camera_PreviewOutput* previewOutput, int32_t frameCount)
- {
+{
     MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
- }
+}
 
 static void CameraPreviewOutptOnErrorCb(Camera_PreviewOutput* previewOutput, Camera_ErrorCode errorCode) 
 {
@@ -228,9 +229,9 @@ static void CameraPhotoOutptOnFrameStartCb(Camera_PhotoOutput* photoOutput/*, in
 }
 
 static void CameraPhotoOutptOnFrameShutterCb(Camera_PhotoOutput* photoOutput, Camera_FrameShutterInfo* info)
- {
+{
     MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
- }
+}
 
 static void CameraPhotoOutptOnFrameEndCb(Camera_PhotoOutput* photoOutput, int32_t timestamp) 
 {
@@ -238,23 +239,25 @@ static void CameraPhotoOutptOnFrameEndCb(Camera_PhotoOutput* photoOutput, int32_
 }
 
 static void CameraPhotoOutptOnErrorCb(Camera_PhotoOutput* photoOutput, Camera_ErrorCode errorCode)
- {
-    MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
- }
-
-static void CameraVideoOutptOnFrameStartCb(Camera_VideoOutput* videoOutput) 
 {
     MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
 }
 
-static void CameraVideoOutptOnFrameEndCb(Camera_VideoOutput* videoOutput, int32_t frameCount) 
+static void CameraVideoOutptOnFrameStartCb(Camera_VideoOutput* videoOutput)
 {
     MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
 }
+
+static void CameraVideoOutptOnFrameEndCb(Camera_VideoOutput* videoOutput, int32_t frameCount)
+{
+    MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
+}
+
 static void CameraVideoOutptOnErrorCb(Camera_VideoOutput* videoOutput, Camera_ErrorCode errorCode)
- {
+{
     MEDIA_DEBUG_LOG("fun:%s", __FUNCTION__);
- }
+}
+
 /*
  * Feature: Framework
  * Function: Test Capture
@@ -294,6 +297,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_001, TestSize.Level0)
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
 }
+
 /*
  * Feature: Framework
  * Function: Test capture session with commit config multiple times
@@ -334,6 +338,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_002, TestSize.Level0)
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
 }
+
 /*
  * Feature: Ndk
  * Function: Test create preview output
@@ -374,7 +379,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_004, TestSize.Level0)
     string surfaceIdStr = std::to_string(surfaceIdInt);
     const char *surfaceId = nullptr;
     surfaceId = surfaceIdStr.c_str();
-    SurfaceUtils::GetInstance()->Add(surfaceIdInt,pSurface);
+    SurfaceUtils::GetInstance()->Add(surfaceIdInt, pSurface);
     Camera_PreviewOutput* previewOutput = nullptr;
     ret = OH_CameraManager_CreatePreviewOutput(cameraManager, &previewProfile, surfaceId, &previewOutput);
     EXPECT_EQ(ret, CAMERA_OK);
@@ -406,6 +411,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_004, TestSize.Level0)
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
 }
+
 /*
  * Feature: Framework
  * Function: Test capture session start and stop preview multiple times
@@ -458,6 +464,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_006, TestSize.Level0)
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
 }
+
 /*
  * Feature: Framework
  * Function: Test capture session start and stop video multiple times
@@ -565,6 +572,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_008, TestSize.Level0)
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
 }
+
 /*
  * Feature: Framework
  * Function: Test add preview,video and photo output, video start do capture
@@ -631,6 +639,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_009, TestSize.Level0)
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
 }
+
 /*
  * Feature: Framework
  * Function: Test add preview and video output, commitconfig remove video Output, add photo output, take photo
@@ -693,6 +702,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_010, TestSize.Level0)
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
 }
+
 /*
  * Feature: Framework
  * Function: Test add preview and video output, commitconfig remove video Output, do OH_CaptureSession_BeginConfig/OH_CaptureSession_CommitConfig again
@@ -742,7 +752,6 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_013, TestSize.Level0)
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
 }
-
 
 /*
  * Feature: Framework
@@ -892,6 +901,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_027, TestSize.Level0)
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
 }
+
 /*
  * Feature: Framework
  * Function: Test capture session commit config without adding output
@@ -925,6 +935,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_028, TestSize.Level0)
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
 }
+
 /*
  * Feature: Framework
  * Function: Test capture session without begin config
@@ -1086,6 +1097,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_031, TestSize.Level0)
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
 }
+
 /*
  * Feature: Framework
  * Function: Test session with preview + video
@@ -1139,6 +1151,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_033, TestSize.Level0)
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
 }
+
 /*
  * Feature: Framework
  * Function: Test capture session remove input with null
@@ -1258,13 +1271,13 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_038, TestSize.Level0)
     Camera_PhotoCaptureSetting capSettings;
     capSettings.quality=QUALITY_LEVEL_MEDIUM;
     capSettings.rotation=IAMGE_ROTATION_90;
-    ret =OH_PhotoOutput_Capture_WithCaptureSetting(PhotoOutput,capSettings);
+    ret =OH_PhotoOutput_Capture_WithCaptureSetting(PhotoOutput, capSettings);
     EXPECT_EQ(ret, 0);
-    OH_CaptureSession_RemovePhotoOutput(captureSession,PhotoOutput);
+    OH_CaptureSession_RemovePhotoOutput(captureSession, PhotoOutput);
     ret = OH_PhotoOutput_Release(PhotoOutput);
     EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CameraInput_Release(cameraInput);
-    EXPECT_EQ(ret, 0); 
+    EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
 }
@@ -1399,7 +1412,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_043, TestSize.Level0)
     EXPECT_NE(previewOutput, nullptr);
     ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
     EXPECT_EQ(ret, 0);
-	Camera_PhotoOutput* PhotoOutput = CreatePhotoOutput();
+    Camera_PhotoOutput* PhotoOutput = CreatePhotoOutput();
     EXPECT_NE(PhotoOutput, nullptr);
     ret = OH_CaptureSession_AddPhotoOutput(captureSession, PhotoOutput);
     EXPECT_EQ(ret, 0);
@@ -1450,12 +1463,12 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_044, TestSize.Level0)
     EXPECT_NE(previewOutput, nullptr);
     ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
     EXPECT_EQ(ret, 0);
-	Camera_PhotoOutput* PhotoOutput = CreatePhotoOutput();
+    Camera_PhotoOutput* PhotoOutput = CreatePhotoOutput();
     EXPECT_NE(PhotoOutput, nullptr);
     ret = OH_CaptureSession_AddPhotoOutput(captureSession, PhotoOutput);
     EXPECT_EQ(ret, 0);
     ret =OH_CaptureSession_CommitConfig(captureSession);
-	EXPECT_EQ(ret, 0);
+    EXPECT_EQ(ret, 0);
     float minExposureBias = 0.0f, maxExposureBias = 0.0f, step = 0.0f;
     ret = OH_CaptureSession_GetExposureBiasRange(captureSession, &minExposureBias, &maxExposureBias, &step);
     EXPECT_EQ(ret, CAMERA_OK);
@@ -1472,6 +1485,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_044, TestSize.Level0)
     ret = OH_CameraInput_Release(cameraInput);
     EXPECT_EQ(ret, 0);
 }
+
 /*
  * Feature: Framework
  * Function: Test GetExposureValue and SetExposureBias
@@ -1500,12 +1514,12 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_045, TestSize.Level0)
     EXPECT_NE(previewOutput, nullptr);
     ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
     EXPECT_EQ(ret, 0);
-	Camera_PhotoOutput* PhotoOutput = CreatePhotoOutput();
+    Camera_PhotoOutput* PhotoOutput = CreatePhotoOutput();
     EXPECT_NE(PhotoOutput, nullptr);
     ret = OH_CaptureSession_AddPhotoOutput(captureSession, PhotoOutput);
     EXPECT_EQ(ret, 0);
     ret =OH_CaptureSession_CommitConfig(captureSession);
-	EXPECT_EQ(ret, 0);
+    EXPECT_EQ(ret, 0);
     float minExposureBias = 0.0f, maxExposureBias = 0.0f, step = 0.0f;
     ret = OH_CaptureSession_GetExposureBiasRange(captureSession, &minExposureBias, &maxExposureBias, &step);
     EXPECT_EQ(ret, CAMERA_OK);
@@ -1770,8 +1784,8 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_057, TestSize.Level0)
     ret = OH_CaptureSession_IsVideoStabilizationModeSupported(captureSession, STABILIZATION_MODE_MIDDLE, &isSupported);
     if (isSupported) 
     {
-      ret = OH_CaptureSession_SetVideoStabilizationMode(captureSession,STABILIZATION_MODE_MIDDLE);
-      EXPECT_EQ(ret, 0);
+        ret = OH_CaptureSession_SetVideoStabilizationMode(captureSession, STABILIZATION_MODE_MIDDLE);
+        EXPECT_EQ(ret, 0);
     }
     ret = OH_VideoOutput_Start(videoOutput);
     EXPECT_EQ(ret, 0);
@@ -1826,15 +1840,15 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_058, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
     EXPECT_EQ(ret, 0);
-     ret = OH_CaptureSession_CommitConfig(captureSession);
-     EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, 0);
     ret = OH_VideoOutput_Start(videoOutput);
     EXPECT_EQ(ret, 0);
     Camera_PhotoCaptureSetting capSettings;
     capSettings.quality=QUALITY_LEVEL_MEDIUM;
     Camera_Location location ={ 1.0 , 1.0 , 1.0 };
     capSettings.location=&location;	
-    ret =OH_PhotoOutput_Capture_WithCaptureSetting(photoOutput,capSettings);
+    ret =OH_PhotoOutput_Capture_WithCaptureSetting(photoOutput, capSettings);
     EXPECT_EQ(ret, 0);
     ret = OH_VideoOutput_Stop(videoOutput);
     EXPECT_EQ(ret, 0);
@@ -1884,8 +1898,8 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_059, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
     EXPECT_EQ(ret, 0);
-     ret = OH_CaptureSession_CommitConfig(captureSession);
-     EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, 0);
     ret = OH_VideoOutput_Start(videoOutput);
     EXPECT_EQ(ret, 0);
     Camera_PhotoCaptureSetting capSettings;
@@ -1932,8 +1946,8 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_061, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     if(isSupported)
     {
-       ret = OH_CaptureSession_SetFlashMode(captureSession, flash);
-       EXPECT_EQ(ret, 0);
+        ret = OH_CaptureSession_SetFlashMode(captureSession, flash);
+        EXPECT_EQ(ret, 0);
     }
     ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
     EXPECT_EQ(ret, 0);
@@ -2025,8 +2039,8 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_062, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     if(isSupported)
     {
-       ret = OH_CaptureSession_SetFlashMode(captureSession, flash);
-       EXPECT_EQ(ret, 0);
+        ret = OH_CaptureSession_SetFlashMode(captureSession, flash);
+        EXPECT_EQ(ret, 0);
     }
 
     ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
@@ -2093,7 +2107,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_062, TestSize.Level0)
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
     ret = OH_CameraInput_Release(cameraInput);
-    EXPECT_EQ(ret, 0); 
+    EXPECT_EQ(ret, 0);
 }
 } // CameraStandard
 } // OHOS

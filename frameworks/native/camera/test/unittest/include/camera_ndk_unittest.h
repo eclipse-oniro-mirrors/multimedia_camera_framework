@@ -15,11 +15,11 @@
 
 #ifndef CAMERA_NDK_UNITTEST_H
 #define CAMERA_NDK_UNITTEST_H
+
 #include "gtest/gtest.h"
 #include "camera/camera_manager.h"
 #include <refbase.h>
 #include "camera/photo_output.h"
-
 
 namespace OHOS {
 namespace CameraStandard {
