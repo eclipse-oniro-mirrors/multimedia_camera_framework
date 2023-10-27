@@ -567,11 +567,11 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_008, TestSize.Level0)
 }
 /*
  * Feature: Framework
- * Function: Test add preview,video and photo output, video start�� do capture
+ * Function: Test add preview,video and photo output, video start do capture
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test add preview ��video and photo output, video start�� do capture
+ * CaseDescription: Test add preview video and photo output, video start do capture
  */
 HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_009, TestSize.Level0)
 {
@@ -633,11 +633,11 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_009, TestSize.Level0)
 }
 /*
  * Feature: Framework
- * Function: Test add preview and video output, commitconfig�� remove video Output, add photo output, take photo
+ * Function: Test add preview and video output, commitconfig remove video Output, add photo output, take photo
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test add preview and video output, commitconfig�� remove video Output, add photo output, take photo
+ * CaseDescription: Test add preview and video output, commitconfig remove video Output, add photo output, take photo
  */
 HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_010, TestSize.Level0)
 {
@@ -695,11 +695,11 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_010, TestSize.Level0)
 }
 /*
  * Feature: Framework
- * Function: Test add preview and video output, commitconfig�� remove video Output, do OH_CaptureSession_BeginConfig/OH_CaptureSession_CommitConfig again
+ * Function: Test add preview and video output, commitconfig remove video Output, do OH_CaptureSession_BeginConfig/OH_CaptureSession_CommitConfig again
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test add preview and video output, commitconfig�� remove video Output, do OH_CaptureSession_BeginConfig/OH_CaptureSession_CommitConfig again
+ * CaseDescription: Test add preview and video output, commitconfig remove video Output, do OH_CaptureSession_BeginConfig/OH_CaptureSession_CommitConfig again
  */
 HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_013, TestSize.Level0)
 {
@@ -746,11 +746,11 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_013, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test add preview and photo output, commitconfig�� remove photo Output, do OH_CaptureSession_BeginConfig/OH_CaptureSession_CommitConfig again
+ * Function: Test add preview and photo output, commitconfig remove photo Output, do OH_CaptureSession_BeginConfig/OH_CaptureSession_CommitConfig again
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test add preview and photo output, commitconfig�� remove photo Output, do OH_CaptureSession_BeginConfig/OH_CaptureSession_CommitConfig again
+ * CaseDescription: Test add preview and photo output, commitconfig remove photo Output, do OH_CaptureSession_BeginConfig/OH_CaptureSession_CommitConfig again
  */
 HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_014, TestSize.Level0)
 {
@@ -863,10 +863,8 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_017, TestSize.Level0)
     EXPECT_EQ(ret, 0);
 }
 
-
-
 /*
- * Feature: Ndk
+ * Feature: Framework
  * Function: Test capture session commit config without adding input
  * SubFunction: NA
  * FunctionPoints: NA
@@ -895,7 +893,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_027, TestSize.Level0)
     EXPECT_EQ(ret, 0);
 }
 /*
- * Feature: Ndk
+ * Feature: Framework
  * Function: Test capture session commit config without adding output
  * SubFunction: NA
  * FunctionPoints: NA
@@ -928,7 +926,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_028, TestSize.Level0)
     EXPECT_EQ(ret, 0);
 }
 /*
- * Feature: Ndk
+ * Feature: Framework
  * Function: Test capture session without begin config
  * SubFunction: NA
  * FunctionPoints: NA
@@ -998,7 +996,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_029, TestSize.Level0)
 }
 
 /*
- * Feature: Ndk
+ * Feature: Framework
  * Function: Test capture session start and stop without adding preview output
  * SubFunction: NA
  * FunctionPoints: NA
@@ -1038,8 +1036,9 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_030, TestSize.Level0)
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
 }
+
 /*
- * Feature: Ndk
+ * Feature: Framework
  * Function: Test session with preview + photo
  * SubFunction: NA
  * FunctionPoints: NA
@@ -1088,7 +1087,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_031, TestSize.Level0)
     EXPECT_EQ(ret, 0);
 }
 /*
- * Feature: Ndk
+ * Feature: Framework
  * Function: Test session with preview + video
  * SubFunction: NA
  * FunctionPoints: NA
@@ -1141,7 +1140,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_033, TestSize.Level0)
     EXPECT_EQ(ret, 0);
 }
 /*
- * Feature: Ndk
+ * Feature: Framework
  * Function: Test capture session remove input with null
  * SubFunction: NA
  * FunctionPoints: NA
@@ -1185,7 +1184,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_036, TestSize.Level0)
 }
 
 /*
- * Feature: Ndk
+ * Feature: Framework
  * Function: Test capture session remove input
  * SubFunction: NA
  * FunctionPoints: NA
@@ -1227,7 +1226,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_037, TestSize.Level0)
 }
 
 /*
- * Feature: Ndk
+ * Feature: Framework
  * Function: Test photo capture with photo settings
  * SubFunction: NA
  * FunctionPoints: NA
@@ -1269,8 +1268,9 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_038, TestSize.Level0)
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
 }
+
 /*
- * Feature: Ndk
+ * Feature: Framework
  * Function: Test SetMeteringPoint & GetMeteringPoint
  * SubFunction: NA
  * FunctionPoints: NA
@@ -1320,7 +1320,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_041, TestSize.Level0)
 }
 
 /*
- * Feature: Ndk
+ * Feature: Framework
  * Function: Test SetFocusPoint & GetFousPoint
  * SubFunction: NA
  * FunctionPoints: NA
@@ -1371,11 +1371,8 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_042, TestSize.Level0)
     EXPECT_EQ(ret, 0);
 }
 
-
-
-
 /*
- * Feature: Ndk
+ * Feature: Framework
  * Function: Test GetExposureValue and SetExposureBias
  * SubFunction: NA
  * FunctionPoints: NA
@@ -1426,7 +1423,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_043, TestSize.Level0)
 }
 
 /*
- * Feature: Ndk
+ * Feature: Framework
  * Function: Test GetExposureValue and SetExposureBias
  * SubFunction: NA
  * FunctionPoints: NA
@@ -1476,7 +1473,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_044, TestSize.Level0)
     EXPECT_EQ(ret, 0);
 }
 /*
- * Feature: Ndk
+ * Feature: Framework
  * Function: Test GetExposureValue and SetExposureBias
  * SubFunction: NA
  * FunctionPoints: NA
@@ -1527,12 +1524,12 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_045, TestSize.Level0)
 }
 
 /*
- * Feature: Ndk
- * Function: Test photo capture with   location of capture settings
+ * Feature: Framework
+ * Function: Test photo capture with location of capture settings
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test photo capture with  capture settings
+ * CaseDescription: Test photo capture with capture settings
  */
 HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_053, TestSize.Level0)
 {
@@ -1585,7 +1582,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_053, TestSize.Level0)
 }
 
 /*
- * Feature: Ndk
+ * Feature: Framework
  * Function: Test photo capture with capture settings
  * SubFunction: NA
  * FunctionPoints: NA
@@ -1634,7 +1631,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_054, TestSize.Level0)
 }
 
 /*
- * Feature: ndk
+ * Feature: Framework
  * Function: Test capture session with multiple photo outputs
  * SubFunction: NA
  * FunctionPoints: NA
@@ -1681,8 +1678,9 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_055, TestSize.Level0)
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
 }
+
 /*
- * Feature: ndk
+ * Feature: Framework
  * Function: Test capture session with multiple video outputs
  * SubFunction: NA
  * FunctionPoints: NA
@@ -1731,8 +1729,9 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_056, TestSize.Level0)
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);   
 }
+
 /*
- * Feature: ndk
+ * Feature: Framework
  * Function: Test capture session with Video Stabilization Mode
  * SubFunction: NA
  * FunctionPoints: NA
@@ -1790,13 +1789,14 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_057, TestSize.Level0)
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
 }
+
 /*
- * Feature: ndk
- * Function: Test add preview,video and photo output,set location,video start�� do capture
+ * Feature: Framework
+ * Function: Test add preview,video and photo output,set location,video start do capture
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test add preview ��video and photo output, video start�� do capture
+ * CaseDescription: Test add preview video and photo output, video start do capture
  */
 HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_058, TestSize.Level0)
 {
@@ -1849,7 +1849,7 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_058, TestSize.Level0)
 }
 
 /*
- * Feature: ndk
+ * Feature: Framework
  * Function: Test add preview,video and photo output, set mirror,video start�� do capture
  * SubFunction: NA
  * FunctionPoints: NA
@@ -1903,87 +1903,9 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_059, TestSize.Level0)
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
 }
-/*
- * Feature: ndk
- * Function: Test camera preempted.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test camera preempted.
- * @tc.require: SR000GVTU0
- */
-HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_060, TestSize.Level0)
-{
-#ifdef DEBUG_PREEMPTED 
-    Camera_ErrorCode ret =CAMERA_OK;
-    Camera_CaptureSession* captureSession1 = nullptr;
-    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession1);
-    EXPECT_EQ(ret, CAMERA_OK);
-    EXPECT_NE(captureSession1, nullptr);
-    Camera_Input *cameraInput1 = nullptr;
-    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput1);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CameraInput_Open(cameraInput1);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_BeginConfig(captureSession1);
-    EXPECT_EQ(ret, 0);
-    ret = OH_CaptureSession_AddInput(captureSession1, cameraInput1);
-    EXPECT_EQ(ret, 0);
-    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
-    EXPECT_EQ(previewOutput, nullptr);
-    ret = OH_CaptureSession_AddPreviewOutput(captureSession1, previewOutput);
-    EXPECT_EQ(ret, 0);
-    OH_CaptureSession_CommitConfig(captureSession1);
-    OH_CaptureSession_Start(captureSession1);
 
-    if(cameraDeviceSize<2)
-    {
-        return ;
-    }
-    Camera_Input *cameraInput2 = nullptr;
-    ret = OH_CameraManager_CreateCameraInput(cameraManager, &cameraDevice[1], &cameraInput2);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ASSERT_NE(cameraInput2, nullptr);
-     ret = OH_CameraInput_Open(cameraInput2);
-    EXPECT_EQ(ret, CAMERA_OK);
-    Camera_CaptureSession* captureSession2 = nullptr;
-    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession2);
-    EXPECT_EQ(ret, CAMERA_OK);
-    EXPECT_EQ(captureSession2, nullptr);
-    ret = OH_CaptureSession_BeginConfig(captureSession2);
-    EXPECT_EQ(ret, 0);
-    ret = OH_CaptureSession_AddInput(captureSession2, cameraInput2);
-    EXPECT_EQ(ret, 0);
-    Camera_PreviewOutput* previewOutput2 = CreatePreviewOutput();
-    EXPECT_EQ(previewOutput, nullptr);
-    ret = OH_CaptureSession_AddPreviewOutput(captureSession2, previewOutput2);
-    EXPECT_EQ(ret, 0);
-    OH_CaptureSession_CommitConfig(captureSession1);
-    ret =OH_CaptureSession_Stop(captureSession1);
-    EXPECT_EQ(ret, 0);
-    ret =OH_CaptureSession_RemovePreviewOutput(captureSession1,previewOutput);
-    EXPECT_EQ(ret, 0);
-    ret = OH_CaptureSession_RemoveInput(captureSession1,cameraInput1);
-    EXPECT_NE(ret, 0);
-    ret = OH_CaptureSession_Release(captureSession1);
-    EXPECT_EQ(ret, 0);
-    ret = OH_CameraInput_Release(cameraInput1);
-    EXPECT_EQ(ret, 0); 
-    ret =OH_CaptureSession_Stop(captureSession2);
-    EXPECT_EQ(ret, 0);
-    ret =OH_CaptureSession_RemovePreviewOutput(captureSession2,previewOutput2);
-    EXPECT_EQ(ret, 0);
-    ret = OH_CaptureSession_RemoveInput(captureSession2,cameraInput2);
-    EXPECT_NE(ret, 0);
-    ret = OH_CaptureSession_Release(captureSession2);
-    EXPECT_EQ(ret, 0);
-    ret = OH_CameraInput_Release(cameraInput2);
-    EXPECT_EQ(ret, 0); 
-    MEDIA_DEBUG_LOG(" camera_ndk_unittest_060 end  ");
-#endif
-}
 /*
- * Feature: ndk
+ * Feature: Framework
  * Function: Test open flash preview capture video callback
  * SubFunction: NA
  * FunctionPoints: NA
@@ -2074,8 +1996,9 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_061, TestSize.Level0)
     ret = OH_CameraInput_Release(cameraInput);
     EXPECT_EQ(ret, 0); 
 }
+
 /*
- * Feature: ndk
+ * Feature: Framework
  * Function: Test close flash preview capture video callback
  * SubFunction: NA
  * FunctionPoints: NA
@@ -2172,6 +2095,5 @@ HWTEST_F(CameraNdkUnitTest, camera_ndk_unittest_062, TestSize.Level0)
     ret = OH_CameraInput_Release(cameraInput);
     EXPECT_EQ(ret, 0); 
 }
-
 } // CameraStandard
 } // OHOS
