@@ -127,11 +127,6 @@ void PreviewOutputCallback::OnSketchAvailableCall(SketchData& sketchData) const
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("OnSketchAvailableCall is called");
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env_, &scope);
-    if (scope == nullptr) {
-        return;
-    }
     napi_value args[ARGS_TWO];
     napi_value callback = nullptr;
     napi_value retVal;
@@ -150,7 +145,6 @@ void PreviewOutputCallback::OnSketchAvailableCall(SketchData& sketchData) const
             it++;
         }
     }
-    napi_close_handle_scope(env_, scope);
 }
 
 void PreviewOutputCallback::OnSketchAvailable(SketchData& sketchData) const
@@ -163,11 +157,6 @@ void PreviewOutputCallback::OnSketchAvailable(SketchData& sketchData) const
 void PreviewOutputCallback::UpdateJSCallback(PreviewOutputEventType eventType, const int32_t value) const
 {
     MEDIA_DEBUG_LOG("UpdateJSCallback is called");
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env_, &scope);
-    if (scope == nullptr) {
-        return;
-    }
     napi_value result[ARGS_TWO];
     napi_value callback = nullptr;
     napi_value retVal;
@@ -214,7 +203,6 @@ void PreviewOutputCallback::UpdateJSCallback(PreviewOutputEventType eventType, c
             it++;
         }
     }
-    napi_close_handle_scope(env_, scope);
 }
 
 void PreviewOutputCallback::SaveCallbackReference(const std::string& eventType, napi_value callback, bool isOnce)

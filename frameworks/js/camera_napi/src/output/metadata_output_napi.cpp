@@ -97,11 +97,6 @@ void MetadataOutputCallback::OnMetadataObjectsAvailableCallback(
     const std::vector<sptr<MetadataObject>> metadataObjList) const
 {
     MEDIA_DEBUG_LOG("OnMetadataObjectsAvailableCallback is called");
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env_, &scope);
-    if (scope == nullptr) {
-        return;
-    }
     napi_value result[ARGS_TWO];
     napi_value callback = nullptr;
     napi_value retVal;
@@ -130,7 +125,6 @@ void MetadataOutputCallback::OnMetadataObjectsAvailableCallback(
             it++;
         }
     }
-    napi_close_handle_scope(env_, scope);
 }
 
 void MetadataOutputCallback::SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce)
@@ -224,11 +218,6 @@ void MetadataStateCallbackNapi::OnErrorCallbackAsync(const int32_t errorType) co
 void MetadataStateCallbackNapi::OnErrorCallback(const int32_t errorType) const
 {
     MEDIA_DEBUG_LOG("OnErrorCallback is called");
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env_, &scope);
-    if (scope == nullptr) {
-        return;
-    }
     napi_value result;
     napi_value callback = nullptr;
     napi_value retVal;
@@ -250,7 +239,6 @@ void MetadataStateCallbackNapi::OnErrorCallback(const int32_t errorType) const
             it++;
         }
     }
-    napi_close_handle_scope(env_, scope);
 }
 
 void MetadataStateCallbackNapi::OnError(const int32_t errorType) const

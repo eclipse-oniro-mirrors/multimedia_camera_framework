@@ -222,11 +222,6 @@ void PhotoOutputCallback::RemoveAllCallbacks(const std::string &eventType)
 
 void PhotoOutputCallback::ExecuteCaptureStartCb(const CallbackInfo &info) const
 {
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env_, &scope);
-    if (scope == nullptr) {
-        return;
-    }
     napi_value result[ARGS_TWO] = {nullptr, nullptr};
     napi_value callback = nullptr;
     napi_value retVal;
@@ -246,16 +241,10 @@ void PhotoOutputCallback::ExecuteCaptureStartCb(const CallbackInfo &info) const
             it++;
         }
     }
-    napi_close_handle_scope(env_, scope);
 }
 
 void PhotoOutputCallback::ExecuteCaptureEndCb(const CallbackInfo &info) const
 {
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env_, &scope);
-    if (scope == nullptr) {
-        return;
-    }
     napi_value result[ARGS_TWO] = {nullptr, nullptr};
     napi_value callback = nullptr;
     napi_value retVal;
@@ -280,16 +269,10 @@ void PhotoOutputCallback::ExecuteCaptureEndCb(const CallbackInfo &info) const
             it++;
         }
     }
-    napi_close_handle_scope(env_, scope);
 }
 
 void PhotoOutputCallback::ExecuteFrameShutterCb(const CallbackInfo &info) const
 {
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env_, &scope);
-    if (scope == nullptr) {
-        return;
-    }
     napi_value result[ARGS_TWO] = {nullptr, nullptr};
     napi_value callback = nullptr;
     napi_value retVal;
@@ -314,16 +297,10 @@ void PhotoOutputCallback::ExecuteFrameShutterCb(const CallbackInfo &info) const
             it++;
         }
     }
-    napi_close_handle_scope(env_, scope);
 }
 
 void PhotoOutputCallback::ExecuteCaptureErrorCb(const CallbackInfo &info) const
 {
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env_, &scope);
-    if (scope == nullptr) {
-        return;
-    }
     napi_value errJsResult[ARGS_ONE] = {nullptr};
     napi_value callback = nullptr;
     napi_value retVal;
@@ -344,7 +321,6 @@ void PhotoOutputCallback::ExecuteCaptureErrorCb(const CallbackInfo &info) const
             it++;
         }
     }
-    napi_close_handle_scope(env_, scope);
 }
 
 void PhotoOutputCallback::UpdateJSCallback(PhotoOutputEventType eventType, const CallbackInfo &info) const
@@ -384,11 +360,6 @@ void ThumbnailListener::OnBufferAvailable()
 
 void ThumbnailListener::UpdateJSCallback(sptr<PhotoOutput> photoOutput) const
 {
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env_, &scope);
-    if (scope == nullptr) {
-        return;
-    }
     napi_value result[ARGS_TWO] = {0};
     napi_get_undefined(env_, &result[0]);
     napi_get_undefined(env_, &result[1]);
@@ -439,7 +410,6 @@ void ThumbnailListener::UpdateJSCallback(sptr<PhotoOutput> photoOutput) const
         }
     }
     photoOutput_->thumbnailSurface_->ReleaseBuffer(thumbnailBuffer, -1);
-    napi_close_handle_scope(env_, scope);
 }
 
 void ThumbnailListener::UpdateJSCallbackAsync(sptr<PhotoOutput> photoOutput) const

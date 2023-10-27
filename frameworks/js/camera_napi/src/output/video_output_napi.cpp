@@ -86,11 +86,6 @@ void VideoCallbackListener::OnError(const int32_t errorCode) const
 void VideoCallbackListener::UpdateJSCallback(VideoOutputEventType eventType, const int32_t value) const
 {
     MEDIA_DEBUG_LOG("UpdateJSCallback is called");
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env_, &scope);
-    if (scope == nullptr) {
-        return;
-    }
     napi_value result[ARGS_TWO];
     napi_value callback = nullptr;
     napi_value retVal;
@@ -134,7 +129,6 @@ void VideoCallbackListener::UpdateJSCallback(VideoOutputEventType eventType, con
             it++;
         }
     }
-    napi_close_handle_scope(env_, scope);
 }
 
 void VideoCallbackListener::SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce)
