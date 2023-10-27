@@ -14,14 +14,57 @@
  */
 
 #include "hcamera_device.h"
+#include <cstdint>
+#include <memory>
+#include <mutex>
 
 #include "camera_log.h"
+#include "camera_util.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
 #include "display_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
+namespace {
+int32_t MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata,
+    std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata)
+{
+    if (srcMetadata == nullptr || dstMetadata == nullptr) {
+        return CAMERA_INVALID_ARG;
+    }
+    auto srcHeader = srcMetadata->get();
+    if (srcHeader == nullptr) {
+        return CAMERA_INVALID_ARG;
+    }
+    auto dstHeader = dstMetadata->get();
+    if (dstHeader == nullptr) {
+        return CAMERA_INVALID_ARG;
+    }
+    auto srcItemCount = srcHeader->item_count;
+    camera_metadata_item_t srcItem;
+    for (uint32_t index = 0; index < srcItemCount; index++) {
+        int ret = OHOS::Camera::GetCameraMetadataItem(srcHeader, index, &srcItem);
+        if (ret != CAM_META_SUCCESS) {
+            MEDIA_ERR_LOG("Failed to get metadata item at index: %{public}d", index);
+            return CAMERA_INVALID_ARG;
+        }
+        bool status = false;
+        uint32_t currentIndex;
+        ret = OHOS::Camera::FindCameraMetadataItemIndex(dstHeader, srcItem.item, &currentIndex);
+        if (ret == CAM_META_ITEM_NOT_FOUND) {
+            status = dstMetadata->addEntry(srcItem.item, srcItem.data.u8, srcItem.count);
+        } else if (ret == CAM_META_SUCCESS) {
+            status = dstMetadata->updateEntry(srcItem.item, srcItem.data.u8, srcItem.count);
+        }
+        if (!status) {
+            MEDIA_ERR_LOG("Failed to update metadata item: %{public}d", srcItem.item);
+            return CAMERA_UNKNOWN_ERROR;
+        }
+    }
+    return CAMERA_OK;
+}
+} // namespace
 sptr<OHOS::Rosen::DisplayManager::IFoldStatusListener> listener;
 class HCameraDevice::FoldScreenListener : public OHOS::Rosen::DisplayManager::IFoldStatusListener {
 public:
@@ -96,6 +139,26 @@ bool HCameraDevice::IsReleaseCameraDevice()
 bool HCameraDevice::IsOpenedCameraDevice()
 {
     return isOpenedCameraDevice_;
+}
+
+std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraDevice::CloneCachedSettings()
+{
+    std::lock_guard<std::mutex> cachedLock(cachedSettingsMutex_);
+    if (cachedSettings_ == nullptr) {
+        return nullptr;
+    }
+    auto itemHeader = cachedSettings_->get();
+    if (itemHeader == nullptr) {
+        return nullptr;
+    }
+    auto returnSettings =
+        std::make_shared<OHOS::Camera::CameraMetadata>(itemHeader->item_capacity, itemHeader->data_capacity);
+    int32_t errCode = MergeMetadata(cachedSettings_, returnSettings);
+    if (errCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCameraDevice::CloneCachedSettings failed: %{public}d", errCode);
+        return nullptr;
+    }
+    return returnSettings;
 }
 
 std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraDevice::GetSettings()
@@ -255,7 +318,7 @@ int32_t HCameraDevice::GetEnabledResults(std::vector<int32_t> &results)
     return CAMERA_OK;
 }
 
-int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings)
+int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
 {
     CAMERA_SYNC_TRACE;
     if (settings == nullptr) {
@@ -269,43 +332,34 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
         return CAMERA_OK;
     }
     std::lock_guard<std::mutex> lock(settingsMutex_);
-    if (updateSettings_) {
-        camera_metadata_item_t metadataItem;
-        for (uint32_t index = 0; index < count; index++) {
-            int ret = OHOS::Camera::GetCameraMetadataItem(settings->get(), index, &metadataItem);
-            if (ret != CAM_META_SUCCESS) {
-                MEDIA_ERR_LOG("Failed to get metadata item at index: %{public}d", index);
-                return CAMERA_INVALID_ARG;
-            }
-            bool status = false;
-            uint32_t currentIndex;
-            ret = OHOS::Camera::FindCameraMetadataItemIndex(updateSettings_->get(), metadataItem.item, &currentIndex);
-            if (ret == CAM_META_ITEM_NOT_FOUND) {
-                status = updateSettings_->addEntry(metadataItem.item, metadataItem.data.u8, metadataItem.count);
-            } else if (ret == CAM_META_SUCCESS) {
-                status = updateSettings_->updateEntry(metadataItem.item, metadataItem.data.u8, metadataItem.count);
-            }
-            if (!status) {
-                MEDIA_ERR_LOG("Failed to update metadata item: %{public}d", metadataItem.item);
-                return CAMERA_UNKNOWN_ERROR;
-            }
+    if (updateSettings_ != nullptr) {
+        int ret = MergeMetadata(settings, updateSettings_);
+        if (ret != CAMERA_OK) {
+            return ret;
         }
     } else {
         updateSettings_ = settings;
     }
     MEDIA_DEBUG_LOG("Updated device settings  hdiCameraDevice_(%{public}d)", hdiCameraDevice_ != nullptr);
     if (hdiCameraDevice_ != nullptr) {
-        std::vector<uint8_t> setting;
-        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(updateSettings_, setting);
+        std::vector<uint8_t> hdiSettings;
+        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(updateSettings_, hdiSettings);
         ReportMetadataDebugLog(updateSettings_);
         GetFrameRateSetting(updateSettings_);
-
-        CamRetCode rc = (CamRetCode)(hdiCameraDevice_->UpdateSettings(setting));
+        CamRetCode rc = (CamRetCode)(hdiCameraDevice_->UpdateSettings(hdiSettings));
         if (rc != HDI::Camera::V1_0::NO_ERROR) {
             MEDIA_ERR_LOG("Failed with error Code: %{public}d", rc);
             return HdiToServiceError(rc);
         }
         ReportFlashEvent(updateSettings_);
+        {
+            std::lock_guard<std::mutex> cachedLock(cachedSettingsMutex_);
+            if (cachedSettings_ == nullptr) {
+                cachedSettings_ = updateSettings_;
+            } else {
+                MergeMetadata(cachedSettings_, settings);
+            }
+        }
         updateSettings_ = nullptr;
     }
     MEDIA_DEBUG_LOG("Updated device settings");

@@ -18,8 +18,8 @@
 #include <cinttypes>
 #include <set>
 
-#include "camera_util.h"
 #include "camera_log.h"
+#include "camera_util.h"
 #include "input/camera_input.h"
 #include "session/capture_session.h"
 
@@ -46,7 +46,7 @@ Rect MetadataObject::GetBoundingBox()
     return box_;
 }
 
-MetadataOutput::MetadataOutput(sptr<IConsumerSurface> surface, sptr<IStreamMetadata> &streamMetadata)
+MetadataOutput::MetadataOutput(sptr<IConsumerSurface> surface, sptr<IStreamMetadata>& streamMetadata)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_METADATA, StreamType::METADATA, streamMetadata)
 {
     surface_ = surface;
@@ -73,7 +73,7 @@ std::shared_ptr<MetadataObjectCallback> MetadataOutput::GetAppObjectCallback()
 
 std::vector<MetadataObjectType> MetadataOutput::GetSupportedMetadataObjectTypes()
 {
-    CaptureSession* captureSession = GetSession();
+    auto captureSession = GetSession();
     if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
         return {};
     }
@@ -95,12 +95,12 @@ std::vector<MetadataObjectType> MetadataOutput::GetSupportedMetadataObjectTypes(
 
 void MetadataOutput::SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> metadataObjectTypes)
 {
-    CaptureSession* captureSession = GetSession();
+    auto captureSession = GetSession();
     if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
         return;
     }
     std::set<camera_face_detect_mode_t> objectTypes;
-    for (const auto &type : metadataObjectTypes) {
+    for (const auto& type : metadataObjectTypes) {
         if (type == MetadataObjectType::FACE) {
             objectTypes.insert(OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE);
         }
@@ -124,7 +124,7 @@ void MetadataOutput::SetCallback(std::shared_ptr<MetadataStateCallback> metadata
 
 int32_t MetadataOutput::Start()
 {
-    CaptureSession* captureSession = GetSession();
+    auto captureSession = GetSession();
     if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
         MEDIA_ERR_LOG("MetadataOutput Failed to Start!, session not config");
         return CameraErrorCode::SESSION_NOT_CONFIG;
@@ -133,7 +133,7 @@ int32_t MetadataOutput::Start()
         MEDIA_ERR_LOG("MetadataOutput Failed to Start!, GetStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
-    int32_t errCode = static_cast<IStreamMetadata *>(GetStream().GetRefPtr())->Start();
+    int32_t errCode = static_cast<IStreamMetadata*>(GetStream().GetRefPtr())->Start();
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to Start MetadataOutput!, errCode: %{public}d", errCode);
     }
@@ -160,7 +160,7 @@ int32_t MetadataOutput::Stop()
         MEDIA_ERR_LOG("MetadataOutput Failed to Stop!, GetStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
-    int32_t errCode = static_cast<IStreamMetadata *>(GetStream().GetRefPtr())->Stop();
+    int32_t errCode = static_cast<IStreamMetadata*>(GetStream().GetRefPtr())->Stop();
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to Stop MetadataOutput!, errCode: %{public}d", errCode);
     }
@@ -173,7 +173,7 @@ int32_t MetadataOutput::Release()
         MEDIA_ERR_LOG("MetadataOutput Failed to Release!, GetStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
-    int32_t errCode = static_cast<IStreamMetadata *>(GetStream().GetRefPtr())->Release();
+    int32_t errCode = static_cast<IStreamMetadata*>(GetStream().GetRefPtr())->Release();
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to release MetadataOutput!, errCode: %{public}d", errCode);
     }
@@ -190,9 +190,22 @@ int32_t MetadataOutput::Release()
     return ServiceToCameraError(errCode);
 }
 
+std::set<camera_device_metadata_tag_t> MetadataOutput::GetObserverTags() const
+{
+    // Empty impl
+    return {};
+}
+
+int32_t MetadataOutput::OnMetadataChanged(
+    const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem)
+{
+    // Empty impl
+    return CAM_META_SUCCESS;
+}
+
 void MetadataOutput::ProcessFaceRectangles(int64_t timestamp,
-                                           const std::shared_ptr<OHOS::Camera::CameraMetadata> &result,
-                                           std::vector<sptr<MetadataObject>> &metaObjects, bool isNeedMirror)
+    const std::shared_ptr<OHOS::Camera::CameraMetadata>& result, std::vector<sptr<MetadataObject>>& metaObjects,
+    bool isNeedMirror)
 {
     camera_metadata_item_t metadataItem;
     common_metadata_header_t* metadata = result->get();
@@ -224,7 +237,7 @@ void MetadataOutput::ProcessFaceRectangles(int64_t timestamp,
     for (; start < end; start += rectangleUnitLen) {
         if (isNeedMirror) {
             topLeftX = 1 - start[offsetBottomRightY];
-            topLeftY = 1- start[offsetBottomRightX];
+            topLeftY = 1 - start[offsetBottomRightX];
             width = start[offsetBottomRightY] - start[offsetTopLeftY];
             height = start[offsetBottomRightX] - start[offsetTopLeftX];
         } else {
@@ -256,11 +269,10 @@ void MetadataOutput::ProcessFaceRectangles(int64_t timestamp,
     return;
 }
 
-MetadataObjectListener::MetadataObjectListener(sptr<MetadataOutput> metadata) : metadata_(metadata)
-{}
+MetadataObjectListener::MetadataObjectListener(sptr<MetadataOutput> metadata) : metadata_(metadata) {}
 
-int32_t MetadataObjectListener::ProcessFaceRectangles(int64_t timestamp, const camera_metadata_item_t &metadataItem,
-                                                      std::vector<sptr<MetadataObject>> &metaObjects)
+int32_t MetadataObjectListener::ProcessFaceRectangles(
+    int64_t timestamp, const camera_metadata_item_t& metadataItem, std::vector<sptr<MetadataObject>>& metaObjects)
 {
     return CAMERA_OK;
 }
@@ -306,5 +318,5 @@ void MetadataObjectListener::OnBufferAvailable()
 
     surface->ReleaseBuffer(buffer, -1);
 }
-} // CameraStandard
-} // OHOS
+} // namespace CameraStandard
+} // namespace OHOS

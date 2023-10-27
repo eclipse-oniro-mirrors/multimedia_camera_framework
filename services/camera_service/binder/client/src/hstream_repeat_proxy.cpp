@@ -120,8 +120,8 @@ int32_t HStreamRepeatProxy::AddDeferredSurface(const sptr<OHOS::IBufferProducer>
     return error;
 }
 
-int32_t HStreamRepeatProxy::ForkSketchStreamRepeat(
-    const sptr<OHOS::IBufferProducer>& producer, int32_t width, int32_t height, sptr<IStreamRepeat>& sketchStream)
+int32_t HStreamRepeatProxy::ForkSketchStreamRepeat(const sptr<OHOS::IBufferProducer>& producer, int32_t width,
+    int32_t height, sptr<IStreamRepeat>& sketchStream, float sketchRatio)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -136,6 +136,7 @@ int32_t HStreamRepeatProxy::ForkSketchStreamRepeat(
     data.WriteRemoteObject(producer->AsObject());
     data.WriteInt32(width);
     data.WriteInt32(height);
+    data.WriteFloat(sketchRatio);
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_FORK_SKETCH_STREAM_REPEAT), data, reply, option);
