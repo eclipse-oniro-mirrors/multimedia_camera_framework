@@ -201,12 +201,17 @@ export struct modeSwitchPage {
       Logger.info(this.tag, `deviceType = phone`)
       this.videoConfig.videoSourceType = media.VideoSourceType.VIDEO_SOURCE_TYPE_SURFACE_YUV
       this.videoConfig.profile.videoCodec = media.CodecMimeType.VIDEO_MPEG4;
-      this.videoConfig.rotation = this.photoRotationMap.rotation90;
+      if (this.cameraDeviceIndex == 1) {
+        this.videoConfig.rotation = this.photoRotationMap.rotation270;
+      } else {
+        this.videoConfig.rotation = this.photoRotationMap.rotation90;
+      }
     }
     if (deviceInfo.deviceType == 'tablet') {
       Logger.info(this.tag, `deviceType = tablet`)
       this.videoConfig.videoSourceType = media.VideoSourceType.VIDEO_SOURCE_TYPE_SURFACE_YUV
     }
+
     this.videoConfig.profile.videoFrameWidth = cameraDemo.getVideoFrameWidth();
     this.videoConfig.profile.videoFrameHeight = cameraDemo.getVideoFrameHeight();
     this.videoConfig.profile.videoFrameRate = cameraDemo.getVideoFrameRate();
@@ -397,10 +402,18 @@ export struct modeSwitchPage {
               .height('200px')
           }
         }.onClick(() => {
-          globalThis.abilityContext.startAbility({
-            bundleName: 'com.ohos.photos',
-            abilityName: 'com.ohos.photos.MainAbility'
-          })
+          if (deviceInfo.deviceType == 'default') {
+              globalThis.abilityContext.startAbility({
+              bundleName: 'com.ohos.photos',
+              abilityName: 'com.ohos.photos.MainAbility'
+            })
+          } else if (deviceInfo.deviceType == 'phone') {
+              globalThis.abilityContext.startAbility({
+              bundleName: 'com.huawei.ohos.photos',
+              abilityName: 'com.huawei.ohos.photos.MainAbility'
+            })
+          }
+
         })
       }.position({ x: '10%', y: '82%' })
 
@@ -441,8 +454,10 @@ export struct modeSwitchPage {
               // 切换摄像头
               this.cameraDeviceIndex ? this.cameraDeviceIndex = 0 : this.cameraDeviceIndex = 1
               // 清除配置
+              cameraDemo.releaseSession()
               // await CameraService.releaseSession()
               // 开始预览
+              cameraDemo.initCamera(this.surfaceId, globalThis.settingDataObj.focusMode, this.cameraDeviceIndex)
               // await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex)
             })
           }

@@ -117,6 +117,7 @@ struct Index {
   }
 
   async aboutToDisAppear() {
+    await cameraDemo.releaseCamera();
     // await CameraService.releaseCamera();
   }
   // 获取权限
@@ -144,13 +145,14 @@ struct Index {
     Logger.info(TAG, `onPageShow App`)
     if (this.surfaceId && this.onShow) {
       Logger.error(TAG, `initCamera`)
-      cameraDemo.initCamera(this.surfaceId, globalThis.settingDataObj.focusMode)
+      cameraDemo.initCamera(this.surfaceId, globalThis.settingDataObj.focusMode, this.cameraDeviceIndex)
       Logger.error(TAG, `initCamera 111`)
     }
   }
 
-  onPageHide() {
+  async  onPageHide() {
     Logger.info(TAG, `onPageHide App`)
+    await cameraDemo.releaseCamera();
     // CameraService.releaseCamera()
   }
 
@@ -168,7 +170,8 @@ struct Index {
             this.surfaceId = this.mXComponentController.getXComponentSurfaceId()
             Logger.info(TAG, `onLoad surfaceId: ${this.surfaceId}`)
             Logger.error(TAG, `initCamera 222`)
-            cameraDemo.initCamera(this.surfaceId, globalThis.settingDataObj.focusMode)
+            cameraDemo.initCamera(this.surfaceId, globalThis.settingDataObj.focusMode, this.cameraDeviceIndex);
+            globalThis.cameraDeviceIndex = this.cameraDeviceIndex;
             Logger.error(TAG, `initCamera 333`)
           })
           .backgroundColor(Color.Blue)
