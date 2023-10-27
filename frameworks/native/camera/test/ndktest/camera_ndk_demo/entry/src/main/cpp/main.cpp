@@ -19,7 +19,7 @@
 #define LOG_TAG "DEMO:"
 #define LOG_DOMAIN 0x3200
 static NDKCamera* ndkCamera_ = nullptr;
-
+const int32_t ARGS_TWO = 2;
 struct Capture_Setting {
     int32_t quality;
     int32_t rotation;
@@ -104,7 +104,6 @@ static napi_value InitCamera(napi_env env, napi_callback_info info)
     size_t requireArgc = 3;
     size_t argc = 3;
     napi_value args[3] = {nullptr};
-    constexpr size_t argsTwo = 2;
     napi_value result;
     size_t typeLen = 0;
     char* surfaceId = nullptr;
@@ -122,7 +121,7 @@ static napi_value InitCamera(napi_env env, napi_callback_info info)
     napi_get_value_int32(env, args[1], &focusMode);
 
     uint32_t cameraDeviceIndex;
-    napi_get_value_uint32(env, args[argsTwo], &cameraDeviceIndex);
+    napi_get_value_uint32(env, args[ARGS_TWO], &cameraDeviceIndex);
 
     OH_LOG_ERROR(LOG_APP, "InitCamera focusMode : %{public}d", focusMode);
     OH_LOG_ERROR(LOG_APP, "InitCamera surfaceId : %{public}s", surfaceId);
@@ -183,7 +182,6 @@ static napi_value StartPhotoOrVideo(napi_env env, napi_callback_info info)
     Camera_ErrorCode ret = CAMERA_OK;
     size_t requireArgc = 3;
     size_t argc = 3;
-    constexpr size_t argsTwo = 2;
     napi_value args[3] = {nullptr};
     napi_value result;
     size_t typeLen = 0;
@@ -203,9 +201,9 @@ static napi_value StartPhotoOrVideo(napi_env env, napi_callback_info info)
     videoId = new char[videoIdLen + 1];
     napi_get_value_string_utf8(env, args[1], videoId, videoIdLen + 1, &videoIdLen);
 
-    napi_get_value_string_utf8(env, args[argsTwo], nullptr, 0, &photoIdLen);
+    napi_get_value_string_utf8(env, args[ARGS_TWO], nullptr, 0, &photoIdLen);
     photoId = new char[photoIdLen + 1];
-    napi_get_value_string_utf8(env, args[argsTwo], photoId, photoIdLen + 1, &photoIdLen);
+    napi_get_value_string_utf8(env, args[ARGS_TWO], photoId, photoIdLen + 1, &photoIdLen);
 
     if (!strcmp(modeFlag, "photo")) {
         OH_LOG_ERROR(LOG_APP, "StartPhoto surfaceId %{public}s", photoId);
