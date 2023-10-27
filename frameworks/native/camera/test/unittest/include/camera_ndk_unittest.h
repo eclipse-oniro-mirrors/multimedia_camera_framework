@@ -21,6 +21,8 @@
 #include <refbase.h>
 #include "camera/photo_output.h"
 
+#include "image_receiver.h"
+#include "image_receiver_manager.h"
 namespace OHOS {
 namespace CameraStandard {
 class MockStreamOperator;
@@ -44,6 +46,7 @@ public:
     Camera_Device *cameraDevice = nullptr;
     uint32_t cameraDeviceSize = 0;
 
+    std::shared_ptr<Media::ImageReceiver> imageReceiver;
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
     static void SetUpTestCase(void);
 
@@ -51,6 +54,7 @@ public:
     static void TearDownTestCase(void);
     /* SetUp:Execute before each test case */
     void SetUp();
+    void ReleaseImageReceiver();
 
     /* TearDown:Execute after each test case */
     void TearDown();

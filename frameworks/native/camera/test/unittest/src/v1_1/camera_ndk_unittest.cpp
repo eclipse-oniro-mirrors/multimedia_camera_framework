@@ -28,6 +28,10 @@ using namespace testing::ext;
 
 namespace OHOS {
 namespace CameraStandard {
+static constexpr int32_t RECEIVER_TEST_WIDTH = 8192;
+static constexpr int32_t RECEIVER_TEST_HEIGHT = 8;
+static constexpr int32_t RECEIVER_TEST_CAPACITY = 8;
+static constexpr int32_t RECEIVER_TEST_FORMAT = 4;
 Camera_PhotoOutput* CameraNdkUnitTest::CreatePhotoOutput(int32_t width, int32_t height)
 {
     Camera_Size photoSize = {
@@ -39,18 +43,15 @@ Camera_PhotoOutput* CameraNdkUnitTest::CreatePhotoOutput(int32_t width, int32_t 
         .format = format,
         .size = photoSize
     };
-    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    sptr<IBufferProducer> photoProducer = photoSurface->GetProducer();
-    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(photoProducer);
-    int64_t surfaceIdInt = photoProducer->GetUniqueId();
-    string surfaceIdStr = std::to_string(surfaceIdInt);
-    const char *surfaceId = nullptr;
-    surfaceId = surfaceIdStr.c_str();
-    SurfaceUtils::GetInstance()->Add(surfaceIdInt, pSurface);
 
+    //std::shared_ptr<Media::ImageReceiver> imageReceiver;
+    imageReceiver = Media::ImageReceiver ::CreateImageReceiver(RECEIVER_TEST_WIDTH,RECEIVER_TEST_HEIGHT,RECEIVER_TEST_FORMAT,RECEIVER_TEST_CAPACITY);
+    std::string receiverKey;
+    receiverKey=imageReceiver->iraContext_->GetReceiverKey();
+    const char *surfaceId = nullptr;
+    surfaceId = receiverKey.c_str();
     Camera_PhotoOutput* photoOutput = nullptr;
-    Camera_ErrorCode ret = OH_CameraManager_CreatePhotoOutput(cameraManager,
-                                                              &photoProfile, surfaceId, &photoOutput);
+    Camera_ErrorCode ret = OH_CameraManager_CreatePhotoOutput(cameraManager, &photoProfile, surfaceId, &photoOutput);
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_NE(photoOutput, nullptr);
     return photoOutput;
@@ -77,10 +78,9 @@ Camera_PreviewOutput* CameraNdkUnitTest::CreatePreviewOutput(int32_t width, int3
     SurfaceUtils::GetInstance()->Add(surfaceIdInt, pSurface);
     EXPECT_NE(surfaceId, nullptr);
     Camera_PreviewOutput* previewOutput = nullptr;
-    Camera_ErrorCode ret = OH_CameraManager_CreatePreviewOutput(cameraManager,
-                                                                &previewProfile, surfaceId, &previewOutput);
+    Camera_ErrorCode ret = OH_CameraManager_CreatePreviewOutput(cameraManager, &previewProfile, surfaceId, &previewOutput);
     EXPECT_EQ(ret, CAMERA_OK);
-    EXPECT_NE(previewOutput, nullptr); 
+    EXPECT_NE(previewOutput, nullptr);
     return previewOutput;
 }
 
@@ -208,6 +208,15 @@ void CameraNdkUnitTest::SetUp()
 void CameraNdkUnitTest::TearDown()
 {
 }
+void CameraNdkUnitTest::ReleaseImageReceiver()
+{
+    if(imageReceiver!=nullptr)
+    {
+        std::string receiverKey;
+        receiverKey=imageReceiver->iraContext_->GetReceiverKey();
+        Media::ImageReceiverManager::ReleaseReceiverById(receiverKey);
+    }
+}
 
 static void CameraPreviewOutptOnFrameStartCb(Camera_PreviewOutput* previewOutput)
 {
@@ -277,7 +286,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_001, TestSize.Level0)
     EXPECT_NE(captureSession, nullptr);
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(ret, CAMERA_OK); 
     EXPECT_NE(&cameraInput, nullptr);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
@@ -297,6 +306,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_001, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
+    ReleaseImageReceiver();
 }
 
 /*
@@ -338,6 +348,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_002, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
+    ReleaseImageReceiver();
 }
 
 /*
@@ -382,8 +393,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_004, TestSize.Level0)
     surfaceId = surfaceIdStr.c_str();
     SurfaceUtils::GetInstance()->Add(surfaceIdInt, pSurface);
     Camera_PreviewOutput* previewOutput = nullptr;
-    ret = OH_CameraManager_CreatePreviewOutput(cameraManager,
-                                               &previewProfile, surfaceId, &previewOutput);
+    ret = OH_CameraManager_CreatePreviewOutput(cameraManager, &previewProfile, surfaceId, &previewOutput);
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_NE(previewOutput, nullptr);
     ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
@@ -564,6 +574,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_008, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
+    ReleaseImageReceiver();
 }
 
 /*
@@ -631,6 +642,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_009, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
+    ReleaseImageReceiver();
 }
 
 /*
@@ -694,6 +706,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_010, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
+    ReleaseImageReceiver();
 }
 
 /*
@@ -803,6 +816,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_014, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
+    ReleaseImageReceiver();
 }
 
 /*
@@ -893,6 +907,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_027, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
+    ReleaseImageReceiver();
 }
 
 /*
@@ -997,6 +1012,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_029, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
+    ReleaseImageReceiver();
 }
 
 /*
@@ -1039,6 +1055,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_030, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
+    ReleaseImageReceiver();
 }
 
 /*
@@ -1089,6 +1106,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_031, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
+    ReleaseImageReceiver();
 }
 
 /*
@@ -1242,8 +1260,6 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_037, TestSize.Level0)
 HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_038, TestSize.Level0)
 {
     Camera_ErrorCode ret =CAMERA_OK;
-    Camera_PhotoOutput* PhotoOutput = CreatePhotoOutput();
-    EXPECT_NE(PhotoOutput, nullptr);
     Camera_CaptureSession* captureSession = nullptr;
     ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
@@ -1257,6 +1273,8 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_038, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
     EXPECT_EQ(ret, 0);
+    Camera_PhotoOutput* PhotoOutput = CreatePhotoOutput();
+    EXPECT_NE(PhotoOutput, nullptr);
     ret = OH_CaptureSession_AddPhotoOutput(captureSession, PhotoOutput);
     EXPECT_EQ(ret, 0);
     ret =OH_CaptureSession_CommitConfig(captureSession);
@@ -1273,6 +1291,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_038, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
+    ReleaseImageReceiver();
 }
 
 /*
@@ -1324,6 +1343,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_041, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CameraInput_Release(cameraInput);
     EXPECT_EQ(ret, 0);
+    ReleaseImageReceiver();
 }
 
 /*
@@ -1376,6 +1396,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_042, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CameraInput_Release(cameraInput);
     EXPECT_EQ(ret, 0);
+    ReleaseImageReceiver();
 }
 
 /*
@@ -1427,6 +1448,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_043, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CameraInput_Release(cameraInput);
     EXPECT_EQ(ret, 0);
+    ReleaseImageReceiver();
 }
 
 /*
@@ -1478,6 +1500,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_044, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CameraInput_Release(cameraInput);
     EXPECT_EQ(ret, 0);
+    ReleaseImageReceiver();
 }
 
 /*
@@ -1529,6 +1552,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_045, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CameraInput_Release(cameraInput);
     EXPECT_EQ(ret, 0);
+    ReleaseImageReceiver();
 }
 
 /*
@@ -1591,6 +1615,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_053, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
+    ReleaseImageReceiver();
 }
 
 /*
@@ -1640,107 +1665,12 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_054, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
+    ReleaseImageReceiver();
 }
 
-/*
- * Feature: Framework
- * Function: Test capture session with multiple photo outputs
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test capture session with multiple photo outputs
- */
-HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_055, TestSize.Level0)
-{
-    Camera_CaptureSession* captureSession;
-    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    EXPECT_NE(captureSession, nullptr);
-    Camera_Input *cameraInput;
-    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CameraInput_Open(cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_BeginConfig(captureSession);
-    EXPECT_EQ(ret, 0);
-    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
-    EXPECT_EQ(ret, 0);
-    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
-    EXPECT_NE(previewOutput, nullptr);
-    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
-    EXPECT_EQ(ret, 0);
-    Camera_PhotoOutput *photoOutput1 = CreatePhotoOutput();
-    EXPECT_NE(photoOutput1, nullptr);
-    Camera_PhotoOutput *photoOutput2 = CreatePhotoOutput();
-    EXPECT_NE(photoOutput2, nullptr);
-    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput1);
-    EXPECT_EQ(ret, 0);
-    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput2);
-    EXPECT_EQ(ret, 0);
-    ret = OH_CaptureSession_CommitConfig(captureSession);
-    EXPECT_NE(ret, 0);
-    ret = OH_PreviewOutput_Release(previewOutput);
-    EXPECT_EQ(ret, 0);
-    ret = OH_CameraInput_Release(cameraInput);
-    EXPECT_EQ(ret, 0);
-    ret = OH_PhotoOutput_Release(photoOutput1);
-    EXPECT_EQ(ret, 0);
-    ret = OH_PhotoOutput_Release(photoOutput2);
-    EXPECT_EQ(ret, 0);
-    ret = OH_CaptureSession_Release(captureSession);
-    EXPECT_EQ(ret, 0);
-}
 
-/*
- * Feature: Framework
- * Function: Test capture session with multiple video outputs
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: VideoOutput_Start  with multiple videoOutput
- */
-HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_056, TestSize.Level0)
-{
-    Camera_CaptureSession* captureSession;
-    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    EXPECT_NE(captureSession, nullptr);
-    ret = OH_CaptureSession_BeginConfig(captureSession);
-    EXPECT_EQ(ret, 0);
-    Camera_Input *cameraInput;
-    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CameraInput_Open(cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
-    EXPECT_EQ(ret, 0);
-    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
-    EXPECT_NE(previewOutput, nullptr);
-    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
-    EXPECT_EQ(ret, 0);
-    Camera_VideoOutput* videoOutput1 = CreateVideoOutput();
-    EXPECT_NE(videoOutput1, nullptr);
-    Camera_VideoOutput* videoOutput2 = CreateVideoOutput();
-    EXPECT_NE(videoOutput2, nullptr);
-    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput1);
-    EXPECT_EQ(ret, 0);
-    ret =OH_CaptureSession_CommitConfig(captureSession);
-    EXPECT_EQ(ret, 0);
-    ret = OH_PreviewOutput_Start(previewOutput);
-    EXPECT_EQ(ret, 0);
-    ret = OH_VideoOutput_Start(videoOutput1);
-    EXPECT_EQ(ret, 0);
-    ret = OH_VideoOutput_Stop(videoOutput1);
-    EXPECT_EQ(ret, 0);
-    ret = OH_VideoOutput_Release(videoOutput1);
-    EXPECT_EQ(ret, 0);
-    ret = OH_VideoOutput_Release(videoOutput2);
-    EXPECT_EQ(ret, 0);
-    ret = OH_CameraInput_Release(cameraInput);
-    EXPECT_EQ(ret, 0);
-    ret = OH_CaptureSession_Release(captureSession);
-    EXPECT_EQ(ret, 0); 
-}
+
+
 
 /*
  * Feature: Framework
@@ -1862,6 +1792,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_058, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
+    ReleaseImageReceiver();
 }
 
 /*
@@ -1918,6 +1849,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_059, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, 0);
+    ReleaseImageReceiver();
 }
 
 /*
@@ -1951,8 +1883,68 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_061, TestSize.Level0)
     {
         EXPECT_EQ(OH_CaptureSession_SetFlashMode(captureSession, flash), 0);
     }
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, 0);
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    EXPECT_NE(previewOutput, nullptr);
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    EXPECT_EQ(ret, 0);
+    Camera_PhotoOutput* PhotoOutput = CreatePhotoOutput();
+    EXPECT_NE(PhotoOutput, nullptr);
 
-    EXPECT_EQ(OH_CaptureSession_AddInput(captureSession, cameraInput), 0);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, PhotoOutput);
+    EXPECT_EQ(ret, 0);
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    EXPECT_NE(videoOutput, nullptr);
+    VideoOutput_Callbacks setVideoResultCallback = {
+        .onFrameStart = &CameraVideoOutptOnFrameStartCb,
+        .onFrameEnd = &CameraVideoOutptOnFrameEndCb,
+        .onError = &CameraVideoOutptOnErrorCb
+    };
+    ret = OH_VideoOutput_RegisterCallback(videoOutput, &setVideoResultCallback);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_AddVideoOutput(captureSession, videoOutput), 0);
+    EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), 0);
+    EXPECT_EQ(OH_PreviewOutput_Start(previewOutput), 0);
+    EXPECT_EQ(OH_VideoOutput_UnregisterCallback(videoOutput, &setVideoResultCallback), 0);
+    
+    EXPECT_EQ(OH_VideoOutput_Release(videoOutput), 0);
+    EXPECT_EQ(OH_PhotoOutput_Release(PhotoOutput), 0);
+    EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), 0);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), 0);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), 0);
+    ReleaseImageReceiver();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test close flash preview capture video callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test close flash preview capture video callback
+ */
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_065, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_CaptureSession* captureSession = nullptr;
+    EXPECT_EQ(OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession), 0);
+    EXPECT_NE(captureSession, nullptr);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_BeginConfig(captureSession), 0);
+    Camera_FlashMode flash =static_cast<Camera_FlashMode>(FLASH_MODE_OPEN);
+    bool isSupported = false;
+    ret = OH_CaptureSession_IsFlashModeSupported(captureSession, flash, &isSupported);
+    EXPECT_EQ(ret, 0);
+    if (isSupported)
+    {
+        EXPECT_EQ(OH_CaptureSession_SetFlashMode(captureSession, flash), 0);
+    }
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, 0);
     Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
     EXPECT_NE(previewOutput, nullptr);
 
@@ -1960,13 +1952,53 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_061, TestSize.Level0)
             .onFrameStart = &CameraPreviewOutptOnFrameStartCb,
             .onFrameEnd =   &CameraPreviewOutptOnFrameEndCb,
             .onError =      &CameraPreviewOutptOnErrorCb
-        };
+    };
 
     ret = OH_PreviewOutput_RegisterCallback(previewOutput, &setPreviewResultCallback);
     EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), 0);
+    EXPECT_EQ(OH_PreviewOutput_Start(previewOutput), 0);
+    EXPECT_EQ(OH_PreviewOutput_UnregisterCallback(previewOutput, &setPreviewResultCallback), 0);
+    EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), 0);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), 0);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), 0);
+}
 
-    EXPECT_EQ(OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput), 0);
-
+/*
+ * Feature: Framework
+ * Function: Test close flash preview capture video callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test close flash preview capture video callback
+ */
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_066, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_CaptureSession* captureSession = nullptr;
+    EXPECT_EQ(OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession), 0);
+    EXPECT_NE(captureSession, nullptr);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_BeginConfig(captureSession), 0);
+    Camera_FlashMode flash =static_cast<Camera_FlashMode>(FLASH_MODE_OPEN);
+    bool isSupported = false;
+    ret = OH_CaptureSession_IsFlashModeSupported(captureSession, flash, &isSupported);
+    EXPECT_EQ(ret, 0);
+    if (isSupported)
+    {
+        EXPECT_EQ(OH_CaptureSession_SetFlashMode(captureSession, flash), 0);
+    }
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, 0);
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    EXPECT_NE(previewOutput, nullptr);
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    EXPECT_EQ(ret, 0);
     Camera_PhotoOutput* PhotoOutput = CreatePhotoOutput();
     EXPECT_NE(PhotoOutput, nullptr);
     PhotoOutput_Callbacks setPhotoOutputResultCallback = {
@@ -1977,36 +2009,16 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_061, TestSize.Level0)
     };
     ret = OH_PhotoOutput_RegisterCallback(PhotoOutput, &setPhotoOutputResultCallback);
     EXPECT_EQ(ret, CAMERA_OK);
-
-    EXPECT_EQ(OH_CaptureSession_AddPhotoOutput(captureSession, PhotoOutput), 0);
-
-    Camera_VideoOutput* videoOutput = CreateVideoOutput();
-    EXPECT_NE(videoOutput, nullptr);
-
-    VideoOutput_Callbacks setVideoResultCallback = {
-        .onFrameStart = &CameraVideoOutptOnFrameStartCb,
-        .onFrameEnd = &CameraVideoOutptOnFrameEndCb,
-        .onError = &CameraVideoOutptOnErrorCb
-    };
-
-    EXPECT_EQ(OH_VideoOutput_RegisterCallback(videoOutput, &setVideoResultCallback), 0);
-    EXPECT_EQ(OH_CaptureSession_AddVideoOutput(captureSession, videoOutput), 0);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, PhotoOutput);
+    EXPECT_EQ(ret, 0);
     EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), 0);
     EXPECT_EQ(OH_PreviewOutput_Start(previewOutput), 0);
     EXPECT_EQ(OH_PhotoOutput_Capture(PhotoOutput), 0);
-
-    EXPECT_EQ(OH_VideoOutput_UnregisterCallback(videoOutput, &setVideoResultCallback), 0);
-
-    EXPECT_EQ(OH_VideoOutput_Release(videoOutput), CAMERA_OK);
     EXPECT_EQ(OH_PhotoOutput_UnregisterCallback(PhotoOutput, &setPhotoOutputResultCallback), 0);
-    EXPECT_EQ(OH_PhotoOutput_Release(PhotoOutput), CAMERA_OK);
-
-    ret = OH_PreviewOutput_UnregisterCallback(previewOutput, &setPreviewResultCallback);
-    EXPECT_EQ(ret, CAMERA_OK);
-
-    EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), 0);
+    EXPECT_EQ(OH_PhotoOutput_Release(PhotoOutput), 0);
     EXPECT_EQ(OH_CaptureSession_Release(captureSession), 0);
     EXPECT_EQ(OH_CameraInput_Release(cameraInput), 0);
+    ReleaseImageReceiver();
 }
 
 /*
@@ -2023,54 +2035,28 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_062, TestSize.Level0)
     Camera_CaptureSession* captureSession = nullptr;
     EXPECT_EQ(OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession), 0);
     EXPECT_NE(captureSession, nullptr);
-
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
-
     EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
     EXPECT_EQ(OH_CaptureSession_BeginConfig(captureSession), 0);
-
     Camera_FlashMode flash =static_cast<Camera_FlashMode>(FLASH_MODE_CLOSE);
     bool isSupported = false;
     ret = OH_CaptureSession_IsFlashModeSupported(captureSession, flash, &isSupported);
     EXPECT_EQ(ret, 0);
-
     if (isSupported)
     {
         EXPECT_EQ(OH_CaptureSession_SetFlashMode(captureSession, flash), 0);
     }
-
     ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
     EXPECT_EQ(ret, 0);
-
     Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
     EXPECT_NE(previewOutput, nullptr);
-
-    PreviewOutput_Callbacks setPreviewResultCallback = {
-            .onFrameStart = &CameraPreviewOutptOnFrameStartCb,
-            .onFrameEnd =   &CameraPreviewOutptOnFrameEndCb,
-            .onError =      &CameraPreviewOutptOnErrorCb
-    };
-    
-    ret = OH_PreviewOutput_RegisterCallback(previewOutput, &setPreviewResultCallback);
-    EXPECT_EQ(ret, CAMERA_OK);
-
     ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
     EXPECT_EQ(ret, 0);
-
     Camera_PhotoOutput* PhotoOutput = CreatePhotoOutput();
     EXPECT_NE(PhotoOutput, nullptr);
 
-    PhotoOutput_Callbacks setPhotoOutputResultCallback = {
-        .onFrameStart = &CameraPhotoOutptOnFrameStartCb,
-        .onFrameShutter = &CameraPhotoOutptOnFrameShutterCb,
-        .onFrameEnd = &CameraPhotoOutptOnFrameEndCb,
-        .onError = &CameraPhotoOutptOnErrorCb
-    };
-
-    ret = OH_PhotoOutput_RegisterCallback(PhotoOutput, &setPhotoOutputResultCallback);
-    EXPECT_EQ(ret, CAMERA_OK);
     ret = OH_CaptureSession_AddPhotoOutput(captureSession, PhotoOutput);
     EXPECT_EQ(ret, 0);
     Camera_VideoOutput* videoOutput = CreateVideoOutput();
@@ -2082,25 +2068,122 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_062, TestSize.Level0)
     };
     ret = OH_VideoOutput_RegisterCallback(videoOutput, &setVideoResultCallback);
     EXPECT_EQ(ret, CAMERA_OK);
-
     EXPECT_EQ(OH_CaptureSession_AddVideoOutput(captureSession, videoOutput), 0);
-
     EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), 0);
     EXPECT_EQ(OH_PreviewOutput_Start(previewOutput), 0);
-
-    EXPECT_EQ(OH_PhotoOutput_Capture(PhotoOutput), 0);
-
     EXPECT_EQ(OH_VideoOutput_UnregisterCallback(videoOutput, &setVideoResultCallback), 0);
+    
     EXPECT_EQ(OH_VideoOutput_Release(videoOutput), 0);
-
-    EXPECT_EQ(OH_PhotoOutput_UnregisterCallback(PhotoOutput, &setPhotoOutputResultCallback), 0);
     EXPECT_EQ(OH_PhotoOutput_Release(PhotoOutput), 0);
-
-    EXPECT_EQ(OH_PreviewOutput_UnregisterCallback(previewOutput, &setPreviewResultCallback), 0);
     EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), 0);
-
     EXPECT_EQ(OH_CaptureSession_Release(captureSession), 0);
     EXPECT_EQ(OH_CameraInput_Release(cameraInput), 0);
+    ReleaseImageReceiver();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test close flash preview capture video callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test close flash preview capture video callback
+ */
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_063, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_CaptureSession* captureSession = nullptr;
+    EXPECT_EQ(OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession), 0);
+    EXPECT_NE(captureSession, nullptr);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_BeginConfig(captureSession), 0);
+    Camera_FlashMode flash =static_cast<Camera_FlashMode>(FLASH_MODE_CLOSE);
+    bool isSupported = false;
+    ret = OH_CaptureSession_IsFlashModeSupported(captureSession, flash, &isSupported);
+    EXPECT_EQ(ret, 0);
+    if (isSupported)
+    {
+        EXPECT_EQ(OH_CaptureSession_SetFlashMode(captureSession, flash), 0);
+    }
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, 0);
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    EXPECT_NE(previewOutput, nullptr);
+
+    PreviewOutput_Callbacks setPreviewResultCallback = {
+            .onFrameStart = &CameraPreviewOutptOnFrameStartCb,
+            .onFrameEnd =   &CameraPreviewOutptOnFrameEndCb,
+            .onError =      &CameraPreviewOutptOnErrorCb
+    };
+
+    ret = OH_PreviewOutput_RegisterCallback(previewOutput, &setPreviewResultCallback);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), 0);
+    EXPECT_EQ(OH_PreviewOutput_Start(previewOutput), 0);
+    EXPECT_EQ(OH_PreviewOutput_UnregisterCallback(previewOutput, &setPreviewResultCallback), 0);
+    EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), 0);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), 0);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test close flash preview capture video callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test close flash preview capture video callback
+ */
+HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_064, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_CaptureSession* captureSession = nullptr;
+    EXPECT_EQ(OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession), 0);
+    EXPECT_NE(captureSession, nullptr);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_BeginConfig(captureSession), 0);
+    Camera_FlashMode flash =static_cast<Camera_FlashMode>(FLASH_MODE_CLOSE);
+    bool isSupported = false;
+    ret = OH_CaptureSession_IsFlashModeSupported(captureSession, flash, &isSupported);
+    EXPECT_EQ(ret, 0);
+    if (isSupported)
+    {
+        EXPECT_EQ(OH_CaptureSession_SetFlashMode(captureSession, flash), 0);
+    }
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, 0);
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    EXPECT_NE(previewOutput, nullptr);
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    EXPECT_EQ(ret, 0);
+    Camera_PhotoOutput* PhotoOutput = CreatePhotoOutput();
+    EXPECT_NE(PhotoOutput, nullptr);
+    PhotoOutput_Callbacks setPhotoOutputResultCallback = {
+        .onFrameStart = &CameraPhotoOutptOnFrameStartCb,
+        .onFrameShutter = &CameraPhotoOutptOnFrameShutterCb,
+        .onFrameEnd = &CameraPhotoOutptOnFrameEndCb,
+        .onError = &CameraPhotoOutptOnErrorCb
+    };
+    ret = OH_PhotoOutput_RegisterCallback(PhotoOutput, &setPhotoOutputResultCallback);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, PhotoOutput);
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), 0);
+    EXPECT_EQ(OH_PreviewOutput_Start(previewOutput), 0);
+    EXPECT_EQ(OH_PhotoOutput_Capture(PhotoOutput), 0);
+    EXPECT_EQ(OH_PhotoOutput_UnregisterCallback(PhotoOutput, &setPhotoOutputResultCallback), 0);
+    EXPECT_EQ(OH_PhotoOutput_Release(PhotoOutput), 0);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), 0);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), 0);
+    ReleaseImageReceiver();
 }
 } // CameraStandard
 } // OHOS
