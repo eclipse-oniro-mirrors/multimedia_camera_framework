@@ -409,8 +409,8 @@ export struct modeSwitchPage {
             })
           } else if (deviceInfo.deviceType == 'phone') {
               globalThis.abilityContext.startAbility({
-              bundleName: 'com.huawei.ohos.photos',
-              abilityName: 'com.huawei.ohos.photos.MainAbility'
+              bundleName: 'com.huawei.hmos.photos',
+              abilityName: 'com.huawei.hmos.photos.MainAbility'
             })
           }
 
