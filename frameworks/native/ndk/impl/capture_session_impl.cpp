@@ -178,11 +178,13 @@ Camera_ErrorCode Camera_CaptureSession::SetVideoStabilizationMode(Camera_VideoSt
 
 Camera_ErrorCode Camera_CaptureSession::GetZoomRatioRange(float* minZoom, float* maxZoom)
 {
-    MEDIA_DEBUG_LOG("Camera_CaptureSession::GetZoomRatioRange is called");
     std::vector<float> vecZoomRatioList = innerCaptureSession_->GetZoomRatioRange();
-    *minZoom = vecZoomRatioList[0];
-    *maxZoom = vecZoomRatioList[1];
-
+    if (vecZoomRatioList.empty()) {
+        MEDIA_ERR_LOG("Camera_CaptureSession::GetZoomRatioRange vecZoomRatioList  size is null ");
+    } else {
+        *minZoom = vecZoomRatioList[0];
+        *maxZoom = vecZoomRatioList[1];
+    }
     return CAMERA_OK;
 }
 
