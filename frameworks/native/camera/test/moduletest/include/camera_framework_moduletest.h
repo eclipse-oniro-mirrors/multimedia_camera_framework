@@ -47,6 +47,7 @@ public:
     sptr<ModeManager> modeManager_;
     sptr<PortraitSession> portraitSession_;
     sptr<CaptureSession> session_;
+    sptr<CaptureSession> scanSession_;
     sptr<CaptureInput> input_;
     std::vector<sptr<CameraDevice>> cameras_;
     std::vector<CameraFormat> previewFormats_;
@@ -82,6 +83,7 @@ public:
     sptr<CaptureOutput> CreateVideoOutput();
     sptr<CaptureOutput> CreatePhotoOutput(Profile profile);
     void GetSupportedOutputCapability();
+    void CreateModeManager();
     void ReleaseInput();
 
     void SetCameraParameters(sptr<CaptureSession> &session, bool video);

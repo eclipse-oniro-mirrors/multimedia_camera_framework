@@ -412,6 +412,15 @@ sptr<CaptureOutput> CameraFrameworkModuleTest::CreatePhotoOutput(Profile profile
     return photoOutput;
 }
 
+void CameraFrameworkModuleTest::CreateModeManager()
+{
+    if (session_) {
+        MEDIA_INFO_LOG("old session exist, need release");
+        session_->Release();
+    }
+    scanSession_ = modeManager_ -> CreateCaptureSession(CameraMode::SCAN);
+}
+
 void CameraFrameworkModuleTest::GetSupportedOutputCapability()
 {
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
@@ -748,6 +757,9 @@ void CameraFrameworkModuleTest::TearDown()
 {
     if (session_) {
         session_->Release();
+    }
+    if (scanSession_) {
+        scanSession_->Release();
     }
     if (input_) {
         sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
@@ -2591,6 +2603,125 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_048, TestSize.Le
 
     ((sptr<PreviewOutput>&)previewOutput)->Stop();
     portraitSession->Stop();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Scan Session add output
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test scan session with two preview outputs
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_049, TestSize.Level0)
+{
+    if (!IsSupportNow())
+    {
+        return;
+    }
+    MEDIA_INFO_LOG("teset049 begin");
+    CreateModeManager();
+    ASSERT_NE(scanSession_, nullptr);
+ 
+    int32_t intResult = scanSession_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+ 
+    intResult = scanSession_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+ 
+    sptr<CaptureOutput> previewOutput_1 = CreatePreviewOutput();
+    ASSERT_NE(previewOutput_1, nullptr);
+    intResult = scanSession_->AddOutput(previewOutput_1);
+    EXPECT_EQ(intResult, 0);
+ 
+    sptr<CaptureOutput> previewOutput_2 = CreatePreviewOutput();
+    ASSERT_NE(previewOutput_2, nullptr);
+    intResult = scanSession_->AddOutput(previewOutput_2);
+    EXPECT_EQ(intResult, 0);
+ 
+    intResult = scanSession_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+ 
+    intResult = scanSession_->Start();
+    EXPECT_EQ(intResult, 0);
+ 
+    sleep(WAIT_TIME_AFTER_START);
+ 
+    intResult = scanSession_->Stop();
+    EXPECT_EQ(intResult, 0);
+ 
+    ((sptr<PreviewOutput> &) previewOutput_1)->Release();
+    ((sptr<PreviewOutput> &) previewOutput_2)->Release();
+    MEDIA_INFO_LOG("teset049 end");
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test Scan Session add output
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test scan session with Capture and video output
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_050, TestSize.Level0)
+{
+    if (!IsSupportNow())
+    {
+        return;
+    }
+    MEDIA_INFO_LOG("teset050 begin");
+    CreateModeManager();
+    ASSERT_NE(scanSession_, nullptr);
+ 
+    int32_t intResult = scanSession_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+ 
+    intResult = scanSession_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+ 
+    sptr<CaptureOutput> phtotOutput = CreatePhotoOutput();
+    ASSERT_NE(phtotOutput, nullptr);
+ 
+    intResult = scanSession_->AddOutput(phtotOutput);
+    EXPECT_NE(intResult, 0);
+ 
+    intResult = scanSession_->CommitConfig();
+    EXPECT_NE(intResult, 0);
+ 
+    ((sptr<PreviewOutput> &) phtotOutput)->Release();
+    MEDIA_INFO_LOG("teset050 end");
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test Scan Session outputcapability and supported mode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test scan session print outputcapability and supported mode
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_051, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("teset051 start");
+    sptr<CameraDevice> scanModeDevice = cameras_[0];
+    vector<CameraMode> modeVec = modeManager_ -> GetSupportedModes(scanModeDevice);
+    EXPECT_TRUE(find(modeVec.begin(), modeVec.end(), CameraMode::SCAN) != modeVec.end());
+
+    for (auto iter : modeVec) {
+        MEDIA_INFO_LOG("get supportedMode : %{public}d", iter);
+    }
+
+    sptr<CameraOutputCapability> scanCapability =
+        modeManager_ -> GetSupportedOutputCapability(scanModeDevice, CameraMode::SCAN);
+    EXPECT_EQ(scanCapability -> GetPhotoProfiles().size(), 0);
+    EXPECT_NE(scanCapability -> GetPreviewProfiles().size(), 0);
+    EXPECT_EQ(scanCapability -> GetVideoProfiles().size(), 0);
+
+    MEDIA_INFO_LOG("photoProfile/previewProfile/videoProfiles size : %{public}zu, %{public}zu, %{public}zu",
+                    scanCapability -> GetPhotoProfiles().size(),
+                    scanCapability -> GetPreviewProfiles().size(),
+                    scanCapability -> GetVideoProfiles().size());
+    MEDIA_INFO_LOG("teset051 end");
 }
 
 /*

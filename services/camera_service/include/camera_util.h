@@ -20,6 +20,7 @@
 #include "display_type.h"
 #include "v1_0/types.h"
 #include "v1_1/types.h"
+#include "v1_2/types.h"
 #include "camera_metadata_info.h"
 #include <malloc.h>
 #include "safe_map.h"
