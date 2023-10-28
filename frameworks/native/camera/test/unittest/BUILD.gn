@@ -142,3 +142,63 @@ ohos_unittest("camera_framework_unittest_v1_1") {
 
   cflags_cc = cflags
 }
+
+ohos_unittest("camera_ndk_unittest_v1_1") {
+  module_out_path = module_output_path
+  include_dirs = [
+    "./include",
+    "${multimedia_camera_framework_path}/interfaces/kits/native/include",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test",
+    "${base_security_path}/interfaces/innerkits/accesstoken/include",
+    "${base_security_path}/interfaces/innerkits/token_setproc/include",
+  ]
+
+  sources = [
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/test/test_common.cpp",
+    "src/v1_1/camera_ndk_unittest.cpp",
+  ]
+
+  deps = [
+    "${graphic_2d_path}:libsurface",
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/frameworks/native/ndk:camera_ndk",
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${third_party_path}:gmock_main",
+  ]
+
+  external_deps = [
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken",
+    "access_token:libprivacy_sdk",
+    "access_token:libtoken_setproc",
+    "c_utils:utils",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:metadata",
+    "drivers_peripheral_display:hdi_gralloc_client",
+    "hdf_core:libhdi",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "image_framework:image_native",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
+  ]
+
+  cflags = [
+    "-fPIC",
+    "-Werror=unused",
+  ]
+
+  include_dirs += [
+    "${driver_peripheral_path}/interfaces/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/utils/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/server/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/device/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/operator/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/host/include",
+  ]
+
+  cflags_cc = cflags
+}
