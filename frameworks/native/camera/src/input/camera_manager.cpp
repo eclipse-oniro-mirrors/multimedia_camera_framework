@@ -900,6 +900,7 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     cameraOutputCapability = new(std::nothrow) CameraOutputCapability();
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = camera->GetMetadata();
     camera_metadata_item_t item;
+    std::lock_guard<std::mutex> lock(vectorMutex_);
     photoProfiles_.clear();
     previewProfiles_.clear();
     vidProfiles_.clear();
