@@ -16,7 +16,7 @@ import("//build/test.gni")
 import("./../../../multimedia_camera_framework.gni")
 
 ohos_fuzztest("StreamCaptureFuzzTest") {
-  module_out_path = "camera_framework/cameradevice"
+  module_out_path = "camera_framework/camera_framework"
   fuzz_config_file = "../streamcapture_fuzzer"
 
   include_dirs = [
