@@ -150,9 +150,9 @@ struct Index {
     }
   }
 
-  async  onPageHide() {
+  onPageHide() {
     Logger.info(TAG, `onPageHide App`)
-    await cameraDemo.releaseCamera();
+     cameraDemo.releaseCamera();
     // CameraService.releaseCamera()
   }
 

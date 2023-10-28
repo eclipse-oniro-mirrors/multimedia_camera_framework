@@ -55,12 +55,28 @@ Camera_ErrorCode OH_CameraManager_UnregisterCallback(Camera_Manager* cameraManag
 Camera_ErrorCode OH_CameraManager_GetSupportedCameras(Camera_Manager* cameraManager,
     Camera_Device** cameras, uint32_t* size);
 
+
+/**
+ * @since 11
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CameraManager_DeleteSupportedCameras(Camera_Manager* cameraManager,
+    Camera_Device* cameras, uint32_t size);
+
+
 /**
  * @since 11
  * @version 1.0
  */
 Camera_ErrorCode OH_CameraManager_GetSupportedCameraOutputCapability(Camera_Manager* cameraManager,
     const Camera_Device* camera, Camera_OutputCapability** cameraOutputCapability);
+
+/**
+ * @since 11
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CameraManager_DeleteSupportedCameraOutputCapability(Camera_Manager* cameraManager,
+    Camera_OutputCapability* cameraOutputCapability);
 
 /**
  * @since 11

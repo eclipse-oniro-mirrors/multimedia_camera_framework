@@ -28,6 +28,14 @@ Camera_ErrorCode OH_Camera_GetCameraMananger(Camera_Manager** cameraManager)
     return CAMERA_OK;
 }
 
+Camera_ErrorCode OH_Camera_DeleteCameraMananger(Camera_Manager* cameraManager)
+{
+    CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
+        "invaild argument! cameraManager is null!");
+    delete cameraManager;
+    return CAMERA_OK;
+}
+
 Camera_ErrorCode OH_CameraManager_RegisterCallback(Camera_Manager* cameraManager, CameraManager_Callbacks* callback)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
@@ -66,6 +74,17 @@ Camera_ErrorCode OH_CameraManager_GetSupportedCameras(Camera_Manager* cameraMana
     return cameraManager->GetSupportedCameras(cameras, size);
 }
 
+Camera_ErrorCode OH_CameraManager_DeleteSupportedCameras(Camera_Manager* cameraManager,
+    Camera_Device* cameras, uint32_t size)
+{
+    CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
+        "invaild argument! cameraManager is null!");
+    CHECK_AND_RETURN_RET_LOG(cameras != nullptr, CAMERA_INVALID_ARGUMENT,
+        "invaild argument! cameras is null!");
+
+    return cameraManager->DeleteSupportedCameras(cameras, size);
+}
+
 Camera_ErrorCode OH_CameraManager_GetSupportedCameraOutputCapability(Camera_Manager* cameraManager,
     const Camera_Device* camera, Camera_OutputCapability** cameraOutputCapability)
 {
@@ -75,6 +94,17 @@ Camera_ErrorCode OH_CameraManager_GetSupportedCameraOutputCapability(Camera_Mana
         "invaild argument! cameraOutputCapability is null!");
 
     return cameraManager->GetSupportedCameraOutputCapability(camera, cameraOutputCapability);
+}
+
+Camera_ErrorCode OH_CameraManager_DeleteSupportedCameraOutputCapability(Camera_Manager* cameraManager,
+    Camera_OutputCapability* cameraOutputCapability)
+{
+    CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
+        "invaild argument! cameraManager is null!");
+    CHECK_AND_RETURN_RET_LOG(cameraOutputCapability != nullptr, CAMERA_INVALID_ARGUMENT,
+        "invaild argument! cameraOutputCapability is null!");
+
+    return cameraManager->DeleteSupportedCameraOutputCapability(cameraOutputCapability);
 }
 
 Camera_ErrorCode OH_CameraManager_IsCameraMuted(Camera_Manager* cameraManager, bool* isCameraMuted)

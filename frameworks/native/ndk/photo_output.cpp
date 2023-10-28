@@ -100,7 +100,11 @@ Camera_ErrorCode OH_PhotoOutput_Release(Camera_PhotoOutput* photoOutput)
     CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
         "invaild argument! photoOutput is null!");
 
-    return photoOutput->Release();
+    Camera_ErrorCode retCode = photoOutput->Release();
+    if (photoOutput != nullptr) {
+        delete photoOutput;
+    }
+    return retCode;
 }
 
 /**

@@ -447,17 +447,17 @@ typedef struct Camera_StatusInfo {
  * Enumerates the return values that may be used by the interface.
  */
 typedef struct Camera_Point {
-    int32_t x;
-    int32_t y;
+    double x;
+    double y;
 } Camera_Point;
 
 /**
  * Enumerates the return values that may be used by the interface.
  */
 typedef struct Camera_Location {
-    int32_t latitude;
-    int32_t longitude;
-    int32_t altitude;
+    double latitude;
+    double longitude;
+    double altitude;
 } Camera_Location;
 
 /**
@@ -475,7 +475,7 @@ typedef struct Camera_PhotoCaptureSetting {
  */
 typedef struct Camera_FrameShutterInfo {
     int32_t captureId;
-    int64_t timestamp;
+    uint64_t timestamp;
 } Camera_FrameShutterInfo;
 
 /**
@@ -510,6 +510,13 @@ typedef struct Camera_MetadataObject {
  * @version 1.0
  */
 Camera_ErrorCode OH_Camera_GetCameraMananger(Camera_Manager** cameraManager);
+
+/**
+ * @since 11
+ * @version 1.0
+ */
+Camera_ErrorCode OH_Camera_DeleteCameraMananger(Camera_Manager* cameraManager);
+
 
 #ifdef __cplusplus
 }

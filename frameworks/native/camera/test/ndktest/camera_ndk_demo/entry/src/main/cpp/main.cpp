@@ -151,7 +151,11 @@ static napi_value ReleaseCamera(napi_env env, napi_callback_info info)
     napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
     ndkCamera_->ReleaseCamera();
-
+    if(ndkCamera_){
+        OH_LOG_ERROR(LOG_APP, "ndkCamera_ is not null");
+        delete ndkCamera_;
+        ndkCamera_ = nullptr;
+    }
     OH_LOG_ERROR(LOG_APP, "ReleaseCamera End");
     napi_create_int32(env, argc, &result);
 
@@ -324,14 +328,17 @@ static napi_value IsFocusPoint(napi_env env, napi_callback_info info)
 
     napi_valuetype valuetype0;
     napi_typeof(env, args[0], &valuetype0);
-    int x;
-    napi_get_value_int32(env, args[0], &x);
+    double x;
+    napi_get_value_double(env, args[0], &x);
 
     napi_valuetype valuetype1;
-    napi_typeof(env, args[0], &valuetype0);
-    int y;
-    napi_get_value_int32(env, args[1], &y);
-    ndkCamera_->IsFocusPoint(x, y);
+    napi_typeof(env, args[1], &valuetype1);
+    double y;
+    napi_get_value_double(env, args[1], &y);
+
+    float focusPointX = (float)x;
+    float focusPointY = (float)y;
+    ndkCamera_->IsFocusPoint(focusPointX, focusPointY);
     return result;
 }
 

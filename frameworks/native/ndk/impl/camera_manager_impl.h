@@ -37,8 +37,12 @@ public:
 
     Camera_ErrorCode GetSupportedCameras(Camera_Device** cameras, uint32_t* size);
 
+    Camera_ErrorCode DeleteSupportedCameras(Camera_Device* cameras, uint32_t size);
+
     Camera_ErrorCode GetSupportedCameraOutputCapability(const Camera_Device* camera,
         Camera_OutputCapability** cameraOutputCapability);
+
+    Camera_ErrorCode DeleteSupportedCameraOutputCapability(Camera_OutputCapability* cameraOutputCapability);
 
     Camera_ErrorCode IsCameraMuted(bool* isCameraMuted);
 
@@ -62,6 +66,18 @@ public:
         Camera_MetadataOutput** metadataOutput);
 
 private:
+    Camera_ErrorCode GetSupportedPreviewProfiles(Camera_OutputCapability* outCapability,
+        std::vector<OHOS::CameraStandard::Profile> &previewProfiles);
+
+    Camera_ErrorCode GetSupportedPhotoProfiles(Camera_OutputCapability* outCapability,
+        std::vector<OHOS::CameraStandard::Profile> &photoProfiles);
+
+    Camera_ErrorCode GetSupportedVideoProfiles(Camera_OutputCapability* outCapability,
+        std::vector<OHOS::CameraStandard::VideoProfile> &videoProfiles);
+
+    Camera_ErrorCode GetSupportedMetadataTypeList(Camera_OutputCapability* outCapability,
+        std::vector<OHOS::CameraStandard::MetadataObjectType> &metadataTypeList);
+
     OHOS::sptr<OHOS::CameraStandard::CameraManager> cameraManager_;
 };
 #endif // OHOS_CAMERA_CAPTURE_INPUT_H
