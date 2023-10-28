@@ -161,9 +161,9 @@ ohos_unittest("camera_ndk_unittest_v1_1") {
   deps = [
     "${graphic_2d_path}:libsurface",
     "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    "${multimedia_camera_framework_path}/frameworks/native/ndk:camera_ndk",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
     "${third_party_path}:gmock_main",
-    "${multimedia_camera_framework_path}/frameworks/native/ndk:camera_ndk",
   ]
 
   external_deps = [
