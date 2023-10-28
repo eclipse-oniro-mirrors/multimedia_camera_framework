@@ -83,7 +83,7 @@ public:
     Camera_ErrorCode IsMeteringPoint(int x, int y);
     Camera_ErrorCode IsExposureBiasRange(int exposureBias);
     Camera_ErrorCode IsFocusMode(uint32_t mode);
-    Camera_ErrorCode IsFocusPoint(int x, int y);
+    Camera_ErrorCode IsFocusPoint(float x, float y);
     Camera_ErrorCode IsFocusModeSupported(uint32_t mode);
     Camera_ErrorCode ReleaseCamera(void);
     Camera_ErrorCode SessionRealese(void);

@@ -279,27 +279,37 @@ Camera_ErrorCode Camera_Manager::GetSupportedMetadataTypeList(Camera_OutputCapab
 Camera_ErrorCode Camera_Manager::DeleteSupportedCameraOutputCapability(Camera_OutputCapability* cameraOutputCapability)
 {
     if (cameraOutputCapability != nullptr) {
-        for (int i = 0; i < cameraOutputCapability->previewProfilesSize; i++) {
-            if (cameraOutputCapability->previewProfiles[i] != nullptr) {
-                delete cameraOutputCapability->previewProfiles[i];
+        if (cameraOutputCapability->previewProfiles != nullptr) {
+            for (int i = 0; i < cameraOutputCapability->previewProfilesSize; i++) {
+                if (cameraOutputCapability->previewProfiles[i] != nullptr) {
+                    delete cameraOutputCapability->previewProfiles[i];
+                }
             }
+            delete[] cameraOutputCapability->previewProfiles;
         }
 
-        for (int i = 0; i < cameraOutputCapability->photoProfilesSize; i++) {
-            if (cameraOutputCapability->photoProfiles[i] != nullptr) {
-                delete cameraOutputCapability->photoProfiles[i];
+        if (cameraOutputCapability->photoProfiles != nullptr) {
+            for (int i = 0; i < cameraOutputCapability->photoProfilesSize; i++) {
+                if (cameraOutputCapability->photoProfiles[i] != nullptr) {
+                    delete cameraOutputCapability->photoProfiles[i];
+                }
             }
+            delete[] cameraOutputCapability->photoProfiles;
         }
-        for (int i = 0; i < cameraOutputCapability->videoProfilesSize; i++) {
-            if (cameraOutputCapability->videoProfiles[i] != nullptr) {
-                delete cameraOutputCapability->videoProfiles[i];
+
+        if (cameraOutputCapability->videoProfiles != nullptr) {
+            for (int i = 0; i < cameraOutputCapability->videoProfilesSize; i++) {
+                if (cameraOutputCapability->videoProfiles[i] != nullptr) {
+                    delete cameraOutputCapability->videoProfiles[i];
+                }
             }
+            delete[] cameraOutputCapability->videoProfiles;
         }
-        for (int i = 0; i < cameraOutputCapability->metadataProfilesSize; i++) {
-            if (cameraOutputCapability->supportedMetadataObjectTypes[i] != nullptr) {
-                delete cameraOutputCapability->supportedMetadataObjectTypes[i];
-            }
+
+        if (cameraOutputCapability->supportedMetadataObjectTypes != nullptr) {
+            delete[] cameraOutputCapability->supportedMetadataObjectTypes;
         }
+
         delete cameraOutputCapability;
     }
     return CAMERA_OK;

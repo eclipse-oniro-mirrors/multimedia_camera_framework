@@ -67,12 +67,14 @@ Camera_ErrorCode Camera_CaptureSession::RegisterCallback(CaptureSession_Callback
     shared_ptr<InnerCaptureSessionCallback> innerCallback =
         make_shared<InnerCaptureSessionCallback>(this, callback);
     innerCaptureSession_->SetCallback(innerCallback);
+    innerCaptureSession_->SetFocusCallback(innerCallback);
     return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_CaptureSession::UnregisterCallback(CaptureSession_Callbacks* callback)
 {
     innerCaptureSession_->SetCallback(nullptr);
+    innerCaptureSession_->SetFocusCallback(nullptr);
     return CAMERA_OK;
 }
 
