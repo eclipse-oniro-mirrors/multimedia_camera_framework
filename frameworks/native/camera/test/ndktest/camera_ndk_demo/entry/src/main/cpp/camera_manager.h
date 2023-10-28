@@ -85,16 +85,33 @@ public:
     Camera_ErrorCode IsFocusMode(uint32_t mode);
     Camera_ErrorCode IsFocusPoint(int x, int y);
     Camera_ErrorCode IsFocusModeSupported(uint32_t mode);
-    Camera_ErrorCode ReleaseCamera();
-    Camera_ErrorCode SessionRealese();
-    Camera_ErrorCode ReleaseSession();
+    Camera_ErrorCode ReleaseCamera(void);
+    Camera_ErrorCode SessionRealese(void);
+    Camera_ErrorCode ReleaseSession(void);
     int32_t GetVideoFrameWidth(void);
     int32_t GetVideoFrameHeight(void);
     int32_t GetVideoFrameRate(void);
     Camera_ErrorCode VideoOutputStop(void);
     Camera_ErrorCode VideoOutputRelease(void);
-    Camera_ErrorCode TakePicture();
+    Camera_ErrorCode TakePicture(void);
     Camera_ErrorCode TakePictureWithPhotoSettings(Camera_PhotoCaptureSetting photoSetting);
+    // callback
+    Camera_ErrorCode CameraManagerRegisterCallback(void);
+    Camera_ErrorCode CameraInputRegisterCallback(void);
+    Camera_ErrorCode PreviewOutputRegisterCallback(void);
+    Camera_ErrorCode PhotoOutputRegisterCallback(void);
+    Camera_ErrorCode VideoOutputRegisterCallback(void);
+    Camera_ErrorCode MetadataOutputRegisterCallback(void);
+    Camera_ErrorCode CaptureSessionRegisterCallback(void);
+    
+    // Get callback
+    CameraManager_Callbacks* GetCameraManagerListener(void);
+    CameraInput_Callbacks* GetCameraInputListener(void);
+    PreviewOutput_Callbacks* GetPreviewOutputListener(void);
+    PhotoOutput_Callbacks* GetPhotoOutputListener(void);
+    VideoOutput_Callbacks* GetVideoOutputListener(void);
+    MetadataOutput_Callbacks* GetMetadataOutputListener(void);
+    CaptureSession_Callbacks* GetCaptureSessionRegister(void);
 
 private:
     NDKCamera(const NDKCamera&) = delete;
@@ -127,9 +144,6 @@ private:
     float maxExposureBias_;
     float step_;
     uint32_t focusMode_;
-    
-    // callback
-    CameraManager_Callbacks* callback_;
     
     static NDKCamera* ndkCamera_;
     static std::mutex mtx_;
