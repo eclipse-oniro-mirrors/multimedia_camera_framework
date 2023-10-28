@@ -481,6 +481,7 @@ private:
 
     std::mutex mutex_;
     std::mutex cameraMngrCbMutex_;
+    std::mutex vectorMutex_;
     int CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> *pICameraDeviceService);
     camera_format_t GetCameraMetadataFormat(CameraFormat format);
     bool GetDmDeviceInfo();
