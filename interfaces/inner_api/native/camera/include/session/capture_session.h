@@ -208,7 +208,7 @@ public:
      *
      * @param CaptureOutput to be added to session.
      */
-    int32_t AddOutput(sptr<CaptureOutput>& output);
+    virtual int32_t AddOutput(sptr<CaptureOutput> &output);
 
     /**
      * @brief Remove CaptureInput for the capture session.

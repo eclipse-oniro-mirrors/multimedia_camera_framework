@@ -74,6 +74,7 @@ ohos_shared_library("camera_framework") {
     "src/output/video_output.cpp",
     "src/session/capture_session.cpp",
     "src/session/portrait_session.cpp",
+    "src/session/scan_session.cpp",
     "src/utils/metadata_common_utils.cpp",
   ]
 
@@ -109,6 +110,7 @@ ohos_shared_library("camera_framework") {
     "device_manager:devicemanagersdk",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libcamera_proxy_1.2",
     "drivers_interface_camera:metadata",
     "graphic_2d:surface",
     "hilog:libhilog",

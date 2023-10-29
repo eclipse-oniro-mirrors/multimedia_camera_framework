@@ -201,8 +201,8 @@ bool IsValidMode(
     const int32_t finish = -1;
     for (uint32_t index = twoStep; index < item.count; index++) {
         if (item.data.i32[index - twoStep] == finish && item.data.i32[index - 1] == finish &&
-            item.data.i32[index] == finish && (g_operationMode == item.data.i32[index + 1]) &&
-            ((index + 1) < item.count)) {
+            item.data.i32[index] == finish && ((index + 1) < item.count) &&
+            (g_operationMode == item.data.i32[index + 1])) {
             MEDIA_INFO_LOG("operationMode:%{public}d found in supported streams", g_operationMode);
             return true;
         } else {
