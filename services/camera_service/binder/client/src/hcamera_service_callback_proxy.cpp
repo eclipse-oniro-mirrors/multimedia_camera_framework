@@ -84,5 +84,27 @@ int32_t HCameraMuteServiceCallbackProxy::OnCameraMute(bool muteMode)
     }
     return error;
 }
+
+HTorchServiceCallbackProxy::HTorchServiceCallbackProxy(const sptr<IRemoteObject> &impl)
+    : IRemoteProxy<ITorchServiceCallback>(impl) { }
+
+int32_t HTorchServiceCallbackProxy::OnTorchStatusChange(const TorchStatus status)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    option.SetFlags(option.TF_ASYNC);
+    int error = ERR_NONE;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(status);
+    error = Remote()->SendRequest(
+        static_cast<uint32_t>(TorchServiceCallbackInterfaceCode::TORCH_CALLBACK_TORCH_STATUS_CHANGE),
+        data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnTorchStatusChange failed, error: %{public}d", error);
+    }
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS

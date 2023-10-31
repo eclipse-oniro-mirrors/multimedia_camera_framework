@@ -109,6 +109,11 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("createPhotoOutput", CreatePhotoOutputInstance),
         DECLARE_NAPI_FUNCTION("createVideoOutput", CreateVideoOutputInstance),
         DECLARE_NAPI_FUNCTION("createMetadataOutput", CreateMetadataOutputInstance),
+        DECLARE_NAPI_FUNCTION("isTorchSupported", IsTorchSupported),
+        DECLARE_NAPI_FUNCTION("isTorchModeSupported", IsTorchModeSupported),
+        DECLARE_NAPI_FUNCTION("getTorchMode", GetTorchMode),
+        DECLARE_NAPI_FUNCTION("setTorchMode", SetTorchMode),
+        DECLARE_NAPI_FUNCTION("setTorchModeOnWithLevel", SetTorchModeOnWithLevel),
         DECLARE_NAPI_FUNCTION("on", On),
         DECLARE_NAPI_FUNCTION("once", Once),
         DECLARE_NAPI_FUNCTION("off", Off)
@@ -725,6 +730,14 @@ napi_value CameraManagerNapi::RegisterCallback(napi_env env, napi_value jsThis,
             cameraManagerNapi->cameraManager_->RegisterCameraMuteListener(cameraMuteListener);
         }
         cameraManagerNapi->cameraMuteListener_->SaveCallbackReference(eventType, callback, isOnce);
+    }else if ((eventType.compare("torchStatusChange")==0)) {
+        if (cameraManagerNapi->torchListener_ == nullptr) {
+            shared_ptr<TorchListenerNapi> torchListener =
+                    make_shared<TorchListenerNapi>(env);
+            cameraManagerNapi->torchListener_ = torchListener;
+            cameraManagerNapi->cameraManager_->RegisterTorchListener(torchListener);
+        }
+        cameraManagerNapi->torchListener_->SaveCallbackReference(eventType, callback, isOnce);
     } else {
         MEDIA_ERR_LOG("Incorrect callback event type provided for camera manager!");
         if (callbackRef != nullptr) {
@@ -759,6 +772,12 @@ napi_value CameraManagerNapi::UnregisterCallback(napi_env env, napi_value jsThis
             MEDIA_ERR_LOG("cameraMuteListener is null");
         } else {
             cameraManagerNapi->cameraMuteListener_->RemoveCallbackRef(env, callback);
+        }
+    } else if (eventType.compare("torchStatusChange") == 0) {
+        if (cameraManagerNapi->torchListener_ == nullptr) {
+            MEDIA_ERR_LOG("torchListener_ is null");
+        } else {
+            cameraManagerNapi->torchListener_->RemoveCallbackRef(env, callback);
         }
     } else {
         MEDIA_ERR_LOG("off no such supported!");
@@ -940,6 +959,138 @@ napi_value CameraManagerNapi::SetPrelaunchConfig(napi_env env, napi_callback_inf
         return result;
     }
     napi_get_undefined(env, &result);
+    return result;
+}
+
+napi_value CameraManagerNapi::IsTorchSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("IsTorchSupported is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraManagerNapi* cameraManagerNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
+    if (status == napi_ok && cameraManagerNapi != nullptr) {
+        bool isTorchSupported = CameraManager::GetInstance()->IsTorchSupported();
+        MEDIA_DEBUG_LOG("IsTorchSupported : %{public}d", isTorchSupported);
+        napi_get_boolean(env, isTorchSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("IsTorchSupported call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraManagerNapi::IsTorchModeSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("IsTorchModeSupported is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraManagerNapi* cameraManagerNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
+    if (status == napi_ok && cameraManagerNapi != nullptr) {
+        int32_t mode;
+        napi_get_value_int32(env, argv[PARAM0], &mode);
+        MEDIA_INFO_LOG("CameraManagerNapi::IsTorchModeSupported mode = %{public}d", mode);
+        TorchMode torchMode = (TorchMode)mode;
+        bool isTorchModeSupported = CameraManager::GetInstance()->IsTorchModeSupported(torchMode);
+        MEDIA_DEBUG_LOG("IsTorchModeSupported : %{public}d", isTorchModeSupported);
+        napi_get_boolean(env, isTorchModeSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("GetTorchMode call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraManagerNapi::GetTorchMode(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("GetTorchMode is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraManagerNapi* cameraManagerNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
+    if (status == napi_ok && cameraManagerNapi != nullptr) {
+        TorchMode torchMode = CameraManager::GetInstance()->GetTorchMode();
+        MEDIA_DEBUG_LOG("GetTorchMode : %{public}d", torchMode);
+        napi_create_int32(env, torchMode, &result);
+    } else {
+        MEDIA_ERR_LOG("GetTorchMode call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraManagerNapi::SetTorchMode(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("SetTorchMode is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraManagerNapi* cameraManagerNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
+    if (status == napi_ok && cameraManagerNapi != nullptr) {
+        int32_t mode;
+        napi_get_value_int32(env, argv[PARAM0], &mode);
+        MEDIA_INFO_LOG("CameraManagerNapi::SetTorchMode mode = %{public}d", mode);
+        TorchMode torchMode = (TorchMode)mode;
+        bool isSuccess = CameraManager::GetInstance()->SetTorchMode(torchMode);
+        MEDIA_DEBUG_LOG("SetTorchMode : %{public}d", isSuccess);
+        napi_get_boolean(env, isSuccess, &result);
+    } else {
+        MEDIA_ERR_LOG("GetTorchMode call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraManagerNapi::SetTorchModeOnWithLevel(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("SetTorchModeOnWithLevel is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraManagerNapi* cameraManagerNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
+    if (status == napi_ok && cameraManagerNapi != nullptr) {
+        double num;
+        napi_get_value_double(env, argv[PARAM0], &num);
+        float level = static_cast<float>(num);
+        MEDIA_INFO_LOG("CameraManagerNapi::SetTorchModeOnWithLevel level = %{public}f", level);
+        bool isSuccess = CameraManager::GetInstance()->SetTorchModeOnWithLevel(level);
+        MEDIA_DEBUG_LOG("SetTorchModeOnWithLevel : %{public}d", isSuccess);
+        napi_get_boolean(env, isSuccess, &result);
+    } else {
+        MEDIA_ERR_LOG("GetTorchMode call Failed!");
+    }
     return result;
 }
 } // namespace CameraStandard

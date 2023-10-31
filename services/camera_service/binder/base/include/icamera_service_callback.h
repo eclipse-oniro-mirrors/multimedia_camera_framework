@@ -33,6 +33,12 @@ enum FlashStatus {
     FLASH_STATUS_UNAVAILABLE
 };
 
+enum TorchStatus {
+    TORCH_STATUS_OFF = 0,
+    TORCH_STATUS_ON,
+    TORCH_STATUS_UNAVAILABLE
+};
+
 class ICameraServiceCallback : public IRemoteBroker {
 public:
     virtual int32_t OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status) = 0;
@@ -46,6 +52,13 @@ public:
     virtual int32_t OnCameraMute(bool muteMode) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ICameraMuteServiceCallback");
+};
+
+class ITorchServiceCallback : public IRemoteBroker {
+public:
+    virtual int32_t OnTorchStatusChange(const TorchStatus status) = 0;
+
+    DECLARE_INTERFACE_DESCRIPTOR(u"ITorchServiceCallback");
 };
 } // namespace CameraStandard
 } // namespace OHOS

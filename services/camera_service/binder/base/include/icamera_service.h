@@ -36,6 +36,8 @@ public:
 
     virtual int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback>& callback) = 0;
 
+    virtual int32_t SetTorchCallback(sptr<ITorchServiceCallback>& callback) = 0;
+
     virtual int32_t GetCameras(std::vector<std::string> &cameraIds,
         std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> &cameraAbilityList) = 0;
 
@@ -65,6 +67,8 @@ public:
     virtual int32_t SetPrelaunchConfig(std::string cameraId) = 0;
 
     virtual int32_t IsCameraMuted(bool &muteMode) = 0;
+
+    virtual int32_t SetTorchModeOnWithLevel(float level) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ICameraService");
 };

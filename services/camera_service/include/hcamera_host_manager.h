@@ -43,6 +43,7 @@ public:
         virtual ~StatusCallback() = default;
         virtual void OnCameraStatus(const std::string& cameraId, CameraStatus status) = 0;
         virtual void OnFlashlightStatus(const std::string& cameraId, FlashStatus status) = 0;
+        virtual void OnTorchStatus(TorchStatus status) = 0;
     };
 
     explicit HCameraHostManager(StatusCallback* statusCallback);
@@ -62,6 +63,7 @@ public:
                                      sptr<OHOS::HDI::Camera::V1_1::ICameraDevice> &pDevice);
     virtual int32_t SetFlashlight(const std::string& cameraId, bool isEnable);
     virtual int32_t Prelaunch(const std::string& cameraId);
+    virtual int32_t SetTorchModeOnWithLevel(float level);
     void NotifyDeviceStateChangeInfo(const std::string& cameraId, int notifyType, int deviceState);
 
     // HDI::ServiceManager::V1_0::IServStatListener
@@ -75,6 +77,7 @@ private:
     void AddCameraHost(const std::string& svcName);
     void RemoveCameraHost(const std::string& svcName);
     sptr<CameraHostInfo> FindCameraHostInfo(const std::string& cameraId);
+    sptr<CameraHostInfo> FindLocalCameraHostInfo();
     bool IsCameraHostInfoAdded(const std::string& svcName);
 
     std::mutex mutex_;

@@ -19,6 +19,7 @@ import { SettingDialog } from '../Dialog/SettingDialog';
 import CameraService from '../model/CameraService';
 import { CountdownPage } from '../views/CountdownPage';
 import { FlashingLightPage } from '../views/FlashingLightPage';
+import { TorchPage } from '../views/TorchPage';
 import { FocusPage } from '../views/FocusPage';
 import { SlidePage } from '../views/SlidePage';
 import { DividerPage } from '../views/DividerPage';
@@ -210,6 +211,8 @@ struct Index {
         })
         // 闪光灯
         FlashingLightPage()
+        // 手电筒
+        TorchPage()
       }
       .margin({ left: 24 })
       .alignItems(VerticalAlign.Top)

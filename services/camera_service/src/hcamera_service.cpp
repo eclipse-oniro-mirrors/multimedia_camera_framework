@@ -333,6 +333,23 @@ void HCameraService::OnFlashlightStatus(const std::string& cameraId, FlashStatus
     }
 }
 
+void HCameraService::OnTorchStatus(TorchStatus status)
+{
+    std::lock_guard<std::mutex> lock(torchCbMutex_);
+    MEDIA_INFO_LOG("HCameraService::OnTorchtStatus "
+                   "callbacks.size = %{public}zu,  status = %{public}d, pid = %{public}d",
+        torchServiceCallbacks_.size(), status, IPCSkeleton::GetCallingPid());
+    for (auto it : torchServiceCallbacks_) {
+        if (it.second == nullptr) {
+            MEDIA_ERR_LOG("HCameraService::OnTorchtStatus torchServiceCallback is null, pid = %{public}d",
+                IPCSkeleton::GetCallingPid());
+            continue;
+        } else {
+            it.second->OnTorchStatusChange(status);
+        }
+    }
+}
+
 int32_t HCameraService::SetCallback(sptr<ICameraServiceCallback>& callback)
 {
     std::lock_guard<std::mutex> lock(cbMutex_);
@@ -419,6 +436,7 @@ int32_t HCameraService::UnSetCallback(pid_t pid)
         cameraServiceCallbacks_.size());
     int32_t ret = CAMERA_OK;
     ret = UnSetMuteCallback(pid);
+    UnSetTorchCallback(pid);
     return ret;
 }
 
@@ -431,6 +449,37 @@ int32_t HCameraService::SetMuteCallback(sptr<ICameraMuteServiceCallback>& callba
         return CAMERA_INVALID_ARG;
     }
     cameraMuteServiceCallbacks_.insert(std::make_pair(pid, callback));
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::SetTorchCallback(sptr<ITorchServiceCallback>& callback)
+{
+    std::lock_guard<std::mutex> lock(torchCbMutex_);
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    if (callback == nullptr) {
+        MEDIA_ERR_LOG("HCameraService::SetTorchCallback callback is null");
+        return CAMERA_INVALID_ARG;
+    }
+    torchServiceCallbacks_.insert(std::make_pair(pid, callback));
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::UnSetTorchCallback(pid_t pid)
+{
+    std::lock_guard<std::mutex> lock(torchCbMutex_);
+    MEDIA_INFO_LOG("HCameraService::UnSetTorchCallback pid = %{public}d, size = %{public}zu", pid,
+        torchServiceCallbacks_.size());
+    if (!torchServiceCallbacks_.empty()) {
+        MEDIA_INFO_LOG("HCameraDevice::UnSetTorchCallback torchServiceCallbacks_ is not empty, reset it");
+        auto it = torchServiceCallbacks_.find(pid);
+        if ((it != torchServiceCallbacks_.end()) && (it->second)) {
+            it->second = nullptr;
+            torchServiceCallbacks_.erase(it);
+        }
+    }
+
+    MEDIA_INFO_LOG("HCameraService::UnSetTorchCallback after erase pid = %{public}d, size = %{public}zu", pid,
+        torchServiceCallbacks_.size());
     return CAMERA_OK;
 }
 
@@ -584,6 +633,15 @@ int32_t HCameraService::SetPrelaunchConfig(std::string cameraId)
     } else {
         MEDIA_ERR_LOG("HCameraService::SetPrelaunchConfig illegal");
         ret = CAMERA_INVALID_ARG;
+    }
+    return ret;
+}
+
+int32_t HCameraService::SetTorchModeOnWithLevel(float level)
+{
+    int32_t ret = cameraHostManager_->SetTorchModeOnWithLevel(level);
+    if (ret != CAMERA_OK) {
+        MEDIA_DEBUG_LOG("Failed to SetTorchModeOnWithLevel");
     }
     return ret;
 }

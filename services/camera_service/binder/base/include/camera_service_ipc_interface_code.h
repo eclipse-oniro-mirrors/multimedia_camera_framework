@@ -58,6 +58,16 @@ enum CameraMuteServiceCallbackInterfaceCode {
 };
 
 /**
+ * @brief Torch service callback remote request code for IPC.
+ *
+ * @since 1.0
+ * @version 1.0
+ */
+enum TorchServiceCallbackInterfaceCode {
+    TORCH_CALLBACK_TORCH_STATUS_CHANGE = 0
+};
+
+/**
  * @brief Camera service remote request code for IPC.
  *
  * @since 1.0
@@ -67,6 +77,7 @@ enum CameraServiceInterfaceCode {
     CAMERA_SERVICE_CREATE_DEVICE = 0,
     CAMERA_SERVICE_SET_CALLBACK,
     CAMERA_SERVICE_SET_MUTE_CALLBACK,
+    CAMERA_SERVICE_SET_TORCH_CALLBACK,
     CAMERA_SERVICE_GET_CAMERAS,
     CAMERA_SERVICE_CREATE_CAPTURE_SESSION,
     CAMERA_SERVICE_CREATE_PHOTO_OUTPUT,
@@ -78,7 +89,8 @@ enum CameraServiceInterfaceCode {
     CAMERA_SERVICE_MUTE_CAMERA,
     CAMERA_SERVICE_IS_CAMERA_MUTED,
     CAMERA_SERVICE_PRE_LAUNCH_CAMERA,
-    CAMERA_SERVICE_SET_PRE_LAUNCH_CAMERA
+    CAMERA_SERVICE_SET_PRE_LAUNCH_CAMERA,
+    CAMERA_SERVICE_SET_TORCH_MODE_ON_WITH_LEVEL
 };
 
 /**

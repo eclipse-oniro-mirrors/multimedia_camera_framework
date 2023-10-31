@@ -42,6 +42,16 @@ public:
 private:
     static inline BrokerDelegator<HCameraMuteServiceCallbackProxy> delegator_;
 };
+
+class HTorchServiceCallbackProxy : public IRemoteProxy<ITorchServiceCallback> {
+public:
+    explicit HTorchServiceCallbackProxy(const sptr<IRemoteObject> &impl);
+    virtual ~HTorchServiceCallbackProxy() = default;
+
+    int32_t OnTorchStatusChange(const TorchStatus torchStatus) override;
+private:
+    static inline BrokerDelegator<HTorchServiceCallbackProxy> delegator_;
+};
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_HCAMERA_SERVICE_CALLBACK_PROXY_H

@@ -64,10 +64,12 @@ public:
     int32_t UnSetCallback(pid_t pid) override;
     int32_t CloseCameraForDestory(pid_t pid) override;
     int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback> &callback) override;
+    int32_t SetTorchCallback(sptr<ITorchServiceCallback> &callback) override;
     int32_t MuteCamera(bool muteMode) override;
     int32_t PrelaunchCamera() override;
     int32_t SetPrelaunchConfig(std::string cameraId) override;
     int32_t IsCameraMuted(bool &muteMode) override;
+    int32_t SetTorchModeOnWithLevel(float level) override;
     void OnDump() override;
     void OnStart() override;
     void OnStop() override;
@@ -76,6 +78,7 @@ public:
     // HCameraHostManager::StatusCallback
     void OnCameraStatus(const std::string& cameraId, CameraStatus status) override;
     void OnFlashlightStatus(const std::string& cameraId, FlashStatus status) override;
+    void OnTorchStatus(TorchStatus status) override;
     // IDeviceOperatorsCallback
     int32_t DeviceOpen(const std::string& cameraId) override;
     int32_t DeviceClose(const std::string& cameraId, pid_t pidFromSession = 0) override;
@@ -103,13 +106,16 @@ private:
     bool IsPrelaunchSupported(std::string cameraId);
     int32_t UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool muteMode);
     int32_t UnSetMuteCallback(pid_t pid);
+    int32_t UnSetTorchCallback(pid_t pid);
     bool IsDeviceAlreadyOpen(pid_t& tempPid, std::string& tempCameraId, sptr<HCameraDevice> &tempDevice);
     int32_t DeviceClose(sptr<HCameraDevice> cameraDevice);
     std::mutex mutex_;
     std::mutex cbMutex_;
     std::mutex muteCbMutex_;
+    std::mutex torchCbMutex_;
     sptr<HCameraHostManager> cameraHostManager_;
     sptr<StreamOperatorCallback> streamOperatorCallback_;
+    std::map<uint32_t, sptr<ITorchServiceCallback>> torchServiceCallbacks_;
     std::map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
     std::map<uint32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
     SafeMap<std::string, sptr<HCameraDevice>> devicesManager_;

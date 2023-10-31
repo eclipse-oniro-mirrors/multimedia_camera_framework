@@ -34,6 +34,8 @@ public:
 
     int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback>& callback) override;
 
+    int32_t SetTorchCallback(sptr<ITorchServiceCallback>& callback) override;
+
     int32_t GetCameras(std::vector<std::string> &cameraIds,
         std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> &cameraAbilityList) override;
 
@@ -63,6 +65,8 @@ public:
     int32_t SetPrelaunchConfig(std::string cameraId) override;
 
     int32_t IsCameraMuted(bool &muteMode) override;
+
+    int32_t SetTorchModeOnWithLevel(float level) override;
 
 private:
     static inline BrokerDelegator<HCameraServiceProxy> delegator_;

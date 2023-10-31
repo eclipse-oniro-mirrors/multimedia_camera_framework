@@ -63,6 +63,7 @@ CameraManager::~CameraManager()
     cameraMuteSvcCallback_ = nullptr;
     cameraMngrCallback_ = nullptr;
     cameraMuteListener = nullptr;
+    torchListener = nullptr;
     for (unsigned int i = 0; i < cameraObjList.size(); i++) {
         cameraObjList[i] = nullptr;
     }
@@ -478,6 +479,8 @@ void CameraManager::Init()
         SetCameraServiceCallback(cameraSvcCallback_);
         cameraMuteSvcCallback_ = new(std::nothrow) CameraMuteServiceCallback(this);
         SetCameraMuteServiceCallback(cameraMuteSvcCallback_);
+        torchSvcCallback_ = new(std::nothrow) TorchServiceCallback(this);
+        SetTorchServiceCallback(torchSvcCallback_);
     }
     pid_t pid = 0;
     deathRecipient_ = new(std::nothrow) CameraDeathRecipient(pid);
@@ -1014,6 +1017,66 @@ camera_format_t CameraManager::GetCameraMetadataFormat(CameraFormat format)
     return metaFormat;
 }
 
+
+int32_t TorchServiceCallback::OnTorchStatusChange(const TorchStatus status)
+{
+    MEDIA_DEBUG_LOG("status is %{public}d", status);
+    if (camMngr_ == nullptr) {
+        MEDIA_INFO_LOG("camMngr_ is nullptr");
+        return CAMERA_OK;
+    }
+    shared_ptr<TorchListener> torcheListener = camMngr_->GetTorchListener();
+    if (torcheListener != nullptr) {
+        TorchStatusInfo torchStatusInfo;
+        if(status == TorchStatus::TORCH_STATUS_UNAVAILABLE){
+            torchStatusInfo.isTorchAvailable=false;
+            torchStatusInfo.isTorchActive=false;
+            torchStatusInfo.torchLevel=0;
+        }else if(status == TorchStatus::TORCH_STATUS_ON){
+            torchStatusInfo.isTorchAvailable=true;
+            torchStatusInfo.isTorchActive=true;
+            torchStatusInfo.torchLevel=1;
+        }else if(status == TorchStatus::TORCH_STATUS_OFF){
+            torchStatusInfo.isTorchAvailable=true;
+            torchStatusInfo.isTorchActive=false;
+            torchStatusInfo.torchLevel=0;
+        }else{
+            torchStatusInfo.isTorchAvailable=false;
+            torchStatusInfo.isTorchActive=false;
+            torchStatusInfo.torchLevel=0;
+        }
+        torcheListener->OnTorchStatusChange(torchStatusInfo);
+    } else {
+        MEDIA_INFO_LOG("OnTorchStatusChange not registered!, Ignore the callback");
+    }
+    return CAMERA_OK;
+}
+
+void CameraManager::RegisterTorchListener(std::shared_ptr<TorchListener> listener)
+{
+    torchListener = listener;
+}
+
+shared_ptr<TorchListener> CameraManager::GetTorchListener()
+{
+    return torchListener;
+}
+
+void CameraManager::SetTorchServiceCallback(sptr<ITorchServiceCallback>& callback)
+{
+    int32_t retCode = CAMERA_OK;
+
+    if (serviceProxy_ == nullptr) {
+        MEDIA_ERR_LOG("serviceProxy_ is null");
+        return;
+    }
+    retCode = serviceProxy_->SetTorchCallback(callback);
+    if (retCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("Set Mute service Callback failed, retCode: %{public}d", retCode);
+    }
+    return;
+}
+
 int32_t CameraMuteServiceCallback::OnCameraMute(bool muteMode)
 {
     MEDIA_DEBUG_LOG("muteMode is %{public}d", muteMode);
@@ -1143,6 +1206,65 @@ bool CameraManager::IsPrelaunchSupported(sptr<CameraDevice> camera)
         MEDIA_ERR_LOG("Failed to get OHOS_ABILITY_PRELAUNCH_AVAILABLE ret = %{public}d", ret);
     }
     return isPrelaunch;
+}
+
+bool CameraManager::IsTorchSupported()
+{
+    if (cameraObjList.empty()) {
+        this->GetSupportedCameras();
+    }
+    for (size_t i = 0; i < cameraObjList.size(); i++) {
+        std::shared_ptr<Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
+        camera_metadata_item_t item;
+        int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_MODES, &item);
+        if (ret == CAM_META_SUCCESS) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool CameraManager::IsTorchModeSupported(TorchMode mode)
+{
+    return mode != TorchMode::TORCH_MODE_AUTO;
+}
+
+TorchMode CameraManager::GetTorchMode()
+{
+    return TorchMode::TORCH_MODE_ON;
+}
+
+bool CameraManager::SetTorchMode(TorchMode mode)
+{
+    bool isSuccess=false;
+    switch (mode) {
+        case TorchMode::TORCH_MODE_OFF:
+            isSuccess = SetTorchModeOnWithLevel(0);
+            break;
+        case TorchMode::TORCH_MODE_ON:
+            isSuccess = SetTorchModeOnWithLevel(1);
+            break;
+        case TorchMode::TORCH_MODE_AUTO:
+            MEDIA_ERR_LOG("Invalid or unsupported torchMode value received from application");
+            break;
+        default:
+            MEDIA_ERR_LOG("Invalid or unsupported torchMode value received from application");
+    }
+    return isSuccess;
+}
+
+bool CameraManager::SetTorchModeOnWithLevel(float level)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (serviceProxy_ == nullptr) {
+        MEDIA_ERR_LOG("CameraManager::SetFlashlight serviceProxy_ is null");
+        return SERVICE_FATL_ERROR;
+    }
+    int32_t retCode = serviceProxy_->SetTorchModeOnWithLevel(level);
+    if (retCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("CameraManager::SetFlashlight failed, retCode: %{public}d", retCode);
+    }
+    return retCode != CAMERA_OK;
 }
 
 int32_t CameraManager::SetPrelaunchConfig(std::string cameraId)

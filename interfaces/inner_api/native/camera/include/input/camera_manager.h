@@ -49,6 +49,12 @@ enum FlashlightStatus {
     FLASHLIGHT_STATUS_UNAVAILABLE
 };
 
+enum TorchMode {
+    TORCH_MODE_OFF = 0,
+    TORCH_MODE_ON,
+    TORCH_MODE_AUTO
+};
+
 struct CameraStatusInfo {
     sptr<CameraInfo> cameraInfo;
     sptr<CameraDevice> cameraDevice;
@@ -58,6 +64,12 @@ struct CameraStatusInfo {
         cameraInfo = nullptr;
         cameraDevice = nullptr;
     }
+};
+
+struct TorchStatusInfo {
+    bool isTorchAvailable;
+    bool isTorchActive;
+    float torchLevel;
 };
 
 typedef enum OutputCapStreamType {
@@ -82,6 +94,13 @@ public:
     CameraMuteListener() = default;
     virtual ~CameraMuteListener() = default;
     virtual void OnCameraMute(bool muteMode) const = 0;
+};
+
+class TorchListener {
+public:
+    TorchListener() = default;
+    virtual ~TorchListener() = default;
+    virtual void OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) const = 0;
 };
 
 class CameraManager;
@@ -119,6 +138,23 @@ public:
     int32_t OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status) override;
 
     int32_t OnFlashlightStatusChanged(const std::string& cameraId, const FlashStatus status) override;
+};
+
+class TorchServiceCallback : public HTorchServiceCallbackStub {
+public:
+    sptr<CameraManager> camMngr_ = nullptr;
+    TorchServiceCallback() : camMngr_(nullptr) {
+    }
+
+    explicit TorchServiceCallback(const sptr<CameraManager>& cameraManager) : camMngr_(cameraManager) {
+    }
+
+    ~TorchServiceCallback()
+    {
+        camMngr_ = nullptr;
+    }
+
+    int32_t OnTorchStatusChange(const TorchStatus status) override;
 };
 
 class CameraManager : public RefBase {
@@ -457,6 +493,56 @@ public:
     */
     bool IsPrelaunchSupported(sptr<CameraDevice> camera);
 
+    /**
+    * @brief register camera mute listener
+    *
+    * @param TorchListener listener object.
+    * @return.
+    */
+    void RegisterTorchListener(std::shared_ptr<TorchListener> listener);
+
+    /**
+    * @brief get the camera mute listener
+    *
+    * @return TorchListener point..
+    */
+    std::shared_ptr<TorchListener> GetTorchListener();
+    
+    /**
+    * @brief check device if support torch
+    *
+    * @return Returns true is supported, false is not supported.
+    */
+    bool IsTorchSupported();
+
+    /**
+    * @brief check mode if device can support
+    *
+    * @return Returns true is supported, false is not supported.
+    */
+    bool IsTorchModeSupported(TorchMode mode);
+
+    /**
+    * @brief get current torchmode
+    *
+    * @return Returns current torchmode
+    */
+    TorchMode GetTorchMode();
+
+    /**
+    * @brief set torch mode
+    *
+    * @return Returns true is success, false is fail.
+    */
+    bool SetTorchMode(TorchMode mode);
+    
+    /**
+    * @brief set torchmode on and brightness level
+    *
+    * @return Returns true is success, false is fail.
+    */
+    bool SetTorchModeOnWithLevel(float level);
+
     static const std::string surfaceFormat;
 
 protected:
@@ -467,6 +553,7 @@ private:
     void Init();
     void SetCameraServiceCallback(sptr<ICameraServiceCallback>& callback);
     void SetCameraMuteServiceCallback(sptr<ICameraMuteServiceCallback>& callback);
+    void SetTorchServiceCallback(sptr<ITorchServiceCallback>& callback);
     int32_t CreateListenerObject();
     void CameraServerDied(pid_t pid);
     void ChooseDeFaultCameras(std::vector<sptr<CameraDevice>>& supportedCameras);
@@ -497,6 +584,8 @@ private:
 
     sptr<ICameraMuteServiceCallback> cameraMuteSvcCallback_;
     std::shared_ptr<CameraMuteListener> cameraMuteListener;
+    sptr<ITorchServiceCallback> torchSvcCallback_;
+    std::shared_ptr<TorchListener> torchListener;
     std::vector<sptr<CameraDevice>> cameraObjList;
     std::vector<sptr<CameraInfo>> dcameraObjList;
     std::vector<dmDeviceInfo> distributedCamInfo_;
