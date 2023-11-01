@@ -541,7 +541,13 @@ public:
     *
     * @return Returns true is success, false is fail.
     */
-    bool SetTorchModeOnWithLevel(float level);
+    bool SetTorchLevel(float level);
+
+    /**
+    * @brief update torch mode
+    *
+    */
+    void UpdateTorchMode(TorchMode mode);
 
     static const std::string surfaceFormat;
 
@@ -567,7 +573,6 @@ private:
     void ParseBasicCapability(sptr<CameraOutputCapability> cameraOutputCapability,
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, const camera_metadata_item_t &item);
     void AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& cameraObjList);
-
     std::mutex mutex_;
     std::mutex vectorMutex_;
     int CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> *pICameraDeviceService);
@@ -598,6 +603,7 @@ private:
     std::vector<Profile> previewProfiles_ = {};
     std::vector<VideoProfile> vidProfiles_ = {};
     sptr<CameraInput> cameraInput_;
+    TorchMode torchMode_ = TorchMode::TORCH_MODE_OFF;
 };
 } // namespace CameraStandard
 } // namespace OHOS

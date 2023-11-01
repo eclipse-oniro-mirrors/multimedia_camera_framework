@@ -72,7 +72,7 @@ public:
     int32_t OpenCamera(std::string& cameraId, const sptr<ICameraDeviceCallback>& callback,
                        sptr<OHOS::HDI::Camera::V1_1::ICameraDevice>& pDevice);
     int32_t SetFlashlight(const std::string& cameraId, bool isEnable);
-    int32_t SetTorchModeOnWithLevel(float level);
+    int32_t SetTorchLevel(float level);
     int32_t Prelaunch(const std::string& cameraId);
     void NotifyDeviceStateChangeInfo(int notifyType, int deviceState);
     bool IsLocalCameraHostInfo();
@@ -263,16 +263,16 @@ int32_t HCameraHostManager::CameraHostInfo::SetFlashlight(const std::string& cam
     return CAMERA_OK;
 }
 
-int32_t HCameraHostManager::CameraHostInfo::SetTorchModeOnWithLevel(float level)
+int32_t HCameraHostManager::CameraHostInfo::SetTorchLevel(float level)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (cameraHostProxy_ == nullptr) {
-        MEDIA_ERR_LOG("CameraHostInfo::SetTorchModeOnWithLevel cameraHostProxy_ is null");
+        MEDIA_ERR_LOG("CameraHostInfo::SetTorchLevel cameraHostProxy_ is null");
         return CAMERA_UNKNOWN_ERROR;
     }
     HDI::Camera::V1_2::CamRetCode rc = (HDI::Camera::V1_2::CamRetCode)(cameraHostProxy_->SetFlashlightV1_2(level));
     if (rc != HDI::Camera::V1_2::NO_ERROR) {
-        MEDIA_ERR_LOG("CameraHostInfo::SetTorchModeOnWithLevel failed with error Code:%{public}d", rc);
+        MEDIA_ERR_LOG("CameraHostInfo::SetTorchLevel failed with error Code:%{public}d", rc);
         return HdiToServiceErrorV1_2(rc);
     }
     return CAMERA_OK;
@@ -667,14 +667,14 @@ int32_t HCameraHostManager::OpenCameraDevice(std::string &cameraId,
     return cameraHostInfo->OpenCamera(cameraId, callback, pDevice);
 }
 
-int32_t HCameraHostManager::SetTorchModeOnWithLevel(float level)
+int32_t HCameraHostManager::SetTorchLevel(float level)
 {
     auto cameraHostInfo = FindLocalCameraHostInfo();
     if (cameraHostInfo == nullptr) {
-        MEDIA_ERR_LOG("HCameraHostManager::SetTorchModeOnWithLevel failed with not exist support device info");
+        MEDIA_ERR_LOG("HCameraHostManager::SetTorchLevel failed with not exist support device info");
         return CAMERA_INVALID_ARG;
     }
-    return cameraHostInfo->SetTorchModeOnWithLevel(level);
+    return cameraHostInfo->SetTorchLevel(level);
 }
 
 int32_t HCameraHostManager::SetFlashlight(const std::string& cameraId, bool isEnable)

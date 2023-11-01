@@ -761,16 +761,6 @@ declare namespace camera {
     setTorchMode(mode: TorchMode):boolean;
     
     /**
-     * Set torchMode On and torch brightness level.
-     *  
-     * @param { number } level torch brightness level.
-     * @return { boolean } if success.
-     * @syscap SystemCapability.Multimedia.Camera.Core
-     * @since 11
-     */
-    setTorchModeOnWithLevel(level:number):boolean
-    
-    /**
      * Subscribes torch status change event callback.
      * 
      * @param { 'torchStatusChange' } type Event type

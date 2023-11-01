@@ -69,7 +69,7 @@ public:
     int32_t PrelaunchCamera() override;
     int32_t SetPrelaunchConfig(std::string cameraId) override;
     int32_t IsCameraMuted(bool &muteMode) override;
-    int32_t SetTorchModeOnWithLevel(float level) override;
+    int32_t SetTorchLevel(float level) override;
     void OnDump() override;
     void OnStart() override;
     void OnStop() override;

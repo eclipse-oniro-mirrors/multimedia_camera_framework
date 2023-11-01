@@ -63,7 +63,7 @@ public:
                                      sptr<OHOS::HDI::Camera::V1_1::ICameraDevice> &pDevice);
     virtual int32_t SetFlashlight(const std::string& cameraId, bool isEnable);
     virtual int32_t Prelaunch(const std::string& cameraId);
-    virtual int32_t SetTorchModeOnWithLevel(float level);
+    virtual int32_t SetTorchLevel(float level);
     void NotifyDeviceStateChangeInfo(const std::string& cameraId, int notifyType, int deviceState);
 
     // HDI::ServiceManager::V1_0::IServStatListener

@@ -103,8 +103,8 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_PRE_LAUNCH_CAMERA):
             errCode = HCameraServiceStub::HandleSetPrelaunchConfig(data, reply);
             break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_MODE_ON_WITH_LEVEL):
-            errCode = HCameraServiceStub::HandleSetTorchModeOnWithLevel(data, reply);
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_LEVEL):
+            errCode = HCameraServiceStub::HandleSetTorchLevel(data, reply);
             break;
         default:
             MEDIA_ERR_LOG("HCameraServiceStub request code %{public}d not handled", code);
@@ -353,12 +353,12 @@ int HCameraServiceStub::HandleCreateVideoOutput(MessageParcel& data, MessageParc
     return errCode;
 }
 
-int HCameraServiceStub::HandleSetTorchModeOnWithLevel(MessageParcel &data, MessageParcel &reply)
+int HCameraServiceStub::HandleSetTorchLevel(MessageParcel &data, MessageParcel &reply)
 {
-    MEDIA_DEBUG_LOG("HCameraServiceStub HandleSetTorchModeOnWithLevel enter");
+    MEDIA_DEBUG_LOG("HCameraServiceStub HandleSetTorchLevel enter");
     float level = data.ReadFloat();
-    int errCode = SetTorchModeOnWithLevel(level);
-    MEDIA_INFO_LOG("HCameraServiceStub HandleSetTorchModeOnWithLevel result: %{public}d", errCode);
+    int errCode = SetTorchLevel(level);
+    MEDIA_INFO_LOG("HCameraServiceStub HandleSetTorchLevel result: %{public}d", errCode);
     return errCode;
 }
 

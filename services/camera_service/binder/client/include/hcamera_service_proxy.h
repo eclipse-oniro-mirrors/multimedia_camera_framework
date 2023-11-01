@@ -66,7 +66,7 @@ public:
 
     int32_t IsCameraMuted(bool &muteMode) override;
 
-    int32_t SetTorchModeOnWithLevel(float level) override;
+    int32_t SetTorchLevel(float level) override;
 
 private:
     static inline BrokerDelegator<HCameraServiceProxy> delegator_;

@@ -113,7 +113,6 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isTorchModeSupported", IsTorchModeSupported),
         DECLARE_NAPI_FUNCTION("getTorchMode", GetTorchMode),
         DECLARE_NAPI_FUNCTION("setTorchMode", SetTorchMode),
-        DECLARE_NAPI_FUNCTION("setTorchModeOnWithLevel", SetTorchModeOnWithLevel),
         DECLARE_NAPI_FUNCTION("on", On),
         DECLARE_NAPI_FUNCTION("once", Once),
         DECLARE_NAPI_FUNCTION("off", Off)
@@ -1059,34 +1058,6 @@ napi_value CameraManagerNapi::SetTorchMode(napi_env env, napi_callback_info info
         TorchMode torchMode = (TorchMode)mode;
         bool isSuccess = CameraManager::GetInstance()->SetTorchMode(torchMode);
         MEDIA_DEBUG_LOG("SetTorchMode : %{public}d", isSuccess);
-        napi_get_boolean(env, isSuccess, &result);
-    } else {
-        MEDIA_ERR_LOG("GetTorchMode call Failed!");
-    }
-    return result;
-}
-
-napi_value CameraManagerNapi::SetTorchModeOnWithLevel(napi_env env, napi_callback_info info)
-{
-    MEDIA_INFO_LOG("SetTorchModeOnWithLevel is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
-    CameraManagerNapi* cameraManagerNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
-    if (status == napi_ok && cameraManagerNapi != nullptr) {
-        double num;
-        napi_get_value_double(env, argv[PARAM0], &num);
-        float level = static_cast<float>(num);
-        MEDIA_INFO_LOG("CameraManagerNapi::SetTorchModeOnWithLevel level = %{public}f", level);
-        bool isSuccess = CameraManager::GetInstance()->SetTorchModeOnWithLevel(level);
-        MEDIA_DEBUG_LOG("SetTorchModeOnWithLevel : %{public}d", isSuccess);
         napi_get_boolean(env, isSuccess, &result);
     } else {
         MEDIA_ERR_LOG("GetTorchMode call Failed!");

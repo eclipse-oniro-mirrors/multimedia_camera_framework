@@ -438,7 +438,7 @@ int32_t HCameraServiceProxy::IsCameraMuted(bool &muteMode)
     return error;
 }
 
-int32_t HCameraServiceProxy::SetTorchModeOnWithLevel(float level)
+int32_t HCameraServiceProxy::SetTorchLevel(float level)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -447,10 +447,10 @@ int32_t HCameraServiceProxy::SetTorchModeOnWithLevel(float level)
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteFloat(level);
     int error = Remote()->SendRequest(
-        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_MODE_ON_WITH_LEVEL),
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_LEVEL),
         data, reply, option);
     if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy::SetTorchModeOnWithLevel Set listener obj failed, error: %{public}d", error);
+        MEDIA_ERR_LOG("HCameraServiceProxy::SetTorchLevel Set listener obj failed, error: %{public}d", error);
         return error;
     }
     return error;

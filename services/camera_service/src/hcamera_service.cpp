@@ -637,11 +637,11 @@ int32_t HCameraService::SetPrelaunchConfig(std::string cameraId)
     return ret;
 }
 
-int32_t HCameraService::SetTorchModeOnWithLevel(float level)
+int32_t HCameraService::SetTorchLevel(float level)
 {
-    int32_t ret = cameraHostManager_->SetTorchModeOnWithLevel(level);
+    int32_t ret = cameraHostManager_->SetTorchLevel(level);
     if (ret != CAMERA_OK) {
-        MEDIA_DEBUG_LOG("Failed to SetTorchModeOnWithLevel");
+        MEDIA_DEBUG_LOG("Failed to SetTorchLevel");
     }
     return ret;
 }

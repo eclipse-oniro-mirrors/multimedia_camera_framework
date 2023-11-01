@@ -1032,18 +1032,17 @@ int32_t TorchServiceCallback::OnTorchStatusChange(const TorchStatus status)
             torchStatusInfo.isTorchAvailable=false;
             torchStatusInfo.isTorchActive=false;
             torchStatusInfo.torchLevel=0;
+            camMngr_->UpdateTorchMode(TORCH_MODE_OFF);
         } else if (status == TorchStatus::TORCH_STATUS_ON) {
             torchStatusInfo.isTorchAvailable=true;
             torchStatusInfo.isTorchActive=true;
             torchStatusInfo.torchLevel=1;
+            camMngr_->UpdateTorchMode(TORCH_MODE_ON);
         } else if (status == TorchStatus::TORCH_STATUS_OFF) {
             torchStatusInfo.isTorchAvailable=true;
             torchStatusInfo.isTorchActive=false;
             torchStatusInfo.torchLevel=0;
-        } else {
-            torchStatusInfo.isTorchAvailable=false;
-            torchStatusInfo.isTorchActive=false;
-            torchStatusInfo.torchLevel=0;
+            camMngr_->UpdateTorchMode(TORCH_MODE_OFF);
         }
         torcheListener->OnTorchStatusChange(torchStatusInfo);
     } else {
@@ -1226,12 +1225,12 @@ bool CameraManager::IsTorchSupported()
 
 bool CameraManager::IsTorchModeSupported(TorchMode mode)
 {
-    return mode != TorchMode::TORCH_MODE_AUTO;
+    return mode == TorchMode::TORCH_MODE_OFF || mode == TorchMode::TORCH_MODE_ON;
 }
 
 TorchMode CameraManager::GetTorchMode()
-{
-    return TorchMode::TORCH_MODE_ON;
+{   
+    return torchMode_;
 }
 
 bool CameraManager::SetTorchMode(TorchMode mode)
@@ -1239,10 +1238,10 @@ bool CameraManager::SetTorchMode(TorchMode mode)
     bool isSuccess = false;
     switch (mode) {
         case TorchMode::TORCH_MODE_OFF:
-            isSuccess = SetTorchModeOnWithLevel(0);
+            isSuccess = SetTorchLevel(0);
             break;
         case TorchMode::TORCH_MODE_ON:
-            isSuccess = SetTorchModeOnWithLevel(1);
+            isSuccess = SetTorchLevel(1);
             break;
         case TorchMode::TORCH_MODE_AUTO:
             MEDIA_ERR_LOG("Invalid or unsupported torchMode value received from application");
@@ -1250,17 +1249,29 @@ bool CameraManager::SetTorchMode(TorchMode mode)
         default:
             MEDIA_ERR_LOG("Invalid or unsupported torchMode value received from application");
     }
+    if(isSuccess){
+        UpdateTorchMode(mode);
+    }
     return isSuccess;
 }
 
-bool CameraManager::SetTorchModeOnWithLevel(float level)
+void CameraManager::UpdateTorchMode(TorchMode mode){
+    std::lock_guard<std::mutex> lock(mutex_);
+    if(torchMode_ == mode){
+        return;
+    }
+    torchMode_ = mode;
+    MEDIA_INFO_LOG("CameraManager::UpdateTorchMode() mode is %{public}d", mode);
+}
+
+bool CameraManager::SetTorchLevel(float level)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (serviceProxy_ == nullptr) {
         MEDIA_ERR_LOG("CameraManager::SetFlashlight serviceProxy_ is null");
         return SERVICE_FATL_ERROR;
     }
-    int32_t retCode = serviceProxy_->SetTorchModeOnWithLevel(level);
+    int32_t retCode = serviceProxy_->SetTorchLevel(level);
     if (retCode != CAMERA_OK) {
         MEDIA_ERR_LOG("CameraManager::SetFlashlight failed, retCode: %{public}d", retCode);
     }
