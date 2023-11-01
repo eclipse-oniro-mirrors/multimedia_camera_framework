@@ -23,6 +23,7 @@ import CameraService from '../model/CameraService';
 import image from '@ohos.multimedia.image';
 import mediaLibrary from '@ohos.multimedia.mediaLibrary';
 import { BusinessError } from '@ohos.base';
+import { Constants } from '../common/Constants';
 
 const TAG: string = 'ModeSwitchPage';
 
@@ -54,6 +55,7 @@ export struct ModeSwitchPage {
   // 视频缩略图
   @State videoThumbnail: image.PixelMap = undefined;
   private videoUri: string;
+  private deviceType: string;
   // 确定是否停止录制的弹框
   private recodeStopDialogController: CustomDialogController = new CustomDialogController({
     builder: RecodeStopDialog({
@@ -140,7 +142,7 @@ export struct ModeSwitchPage {
    * 判断录像或者照片模式
    */
   isVideoPhotoFn(): void {
-    if (this.modelBagCol == 'photo') {
+    if (this.modelBagCol == 'photo' || this.modelBagCol == 'portrait') {
       CameraService.takePicture();
     } else if (this.modelBagCol == 'video') {
       this.isModeBol = false;
@@ -158,6 +160,7 @@ export struct ModeSwitchPage {
   }
 
   aboutToAppear(): void {
+    this.deviceType = AppStorage.get<string>('deviceType');
     CameraService.setTakePictureCallback(this.handleTakePicture.bind(this));
   }
 
@@ -172,6 +175,22 @@ export struct ModeSwitchPage {
         Stack({ alignContent: Alignment.Bottom }) {
           Column({ space: 24 }) {
             Row() {
+              // 人像
+              Column() {
+                Text('人像')
+                  .fontSize(14)
+                  .fontColor(Color.White)
+              }
+              .width(50)
+              .backgroundColor(this.modelBagCol === 'portrait' ? $r('app.color.theme_color') : '')
+              .borderRadius(14)
+              .onClick(async () => {
+                this.modelBagCol = 'portrait';
+                CameraService.setIsPortraitMode(true);
+                await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
+              })
+              .visibility(this.deviceType === Constants.DEFAULT ? Visibility.Hidden : Visibility.Visible)
+
               // 拍照
               Column() {
                 Text('拍照')
@@ -181,8 +200,12 @@ export struct ModeSwitchPage {
               .width(50)
               .backgroundColor(this.modelBagCol === 'photo' ? $r('app.color.theme_color') : '')
               .borderRadius(14)
-              .onClick(() => {
+              .onClick(async () => {
                 this.modelBagCol = 'photo';
+                if (CameraService.getIsPortraitMode()) {
+                  CameraService.setIsPortraitMode(false);
+                  await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
+                }
               })
 
               // 录像
@@ -194,8 +217,12 @@ export struct ModeSwitchPage {
               .width(50)
               .backgroundColor(this.modelBagCol === 'video' ? $r('app.color.theme_color') : '')
               .borderRadius(14)
-              .onClick(() => {
+              .onClick(async () => {
                 this.modelBagCol = 'video';
+                if (CameraService.getIsPortraitMode()) {
+                  CameraService.setIsPortraitMode(false);
+                  await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
+                }
               })
 
               // 多机位
@@ -207,8 +234,12 @@ export struct ModeSwitchPage {
               .width(50)
               .backgroundColor(this.modelBagCol === 'multi' ? $r('app.color.theme_color') : '')
               .borderRadius(14)
-              .onClick(() => {
+              .onClick(async () => {
                 this.modelBagCol = 'multi';
+                if (CameraService.getIsPortraitMode()) {
+                  CameraService.setIsPortraitMode(false);
+                  await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
+                }
                 this.MultiCameraDialogController.open();
               })
             }
@@ -221,15 +252,15 @@ export struct ModeSwitchPage {
               // 图库
               Column() {
                 Row() {
-                  if (this.modelBagCol === 'photo') {
-                    Image(this.imgThumbnail || $r('app.media.pic_avatar_radio02'))
+                  if (this.modelBagCol === 'video') {
+                    Image(this.videoThumbnail || $r('app.media.pic_avatar_radio02'))
                       .aspectRatio(1)
                       .objectFit(ImageFit.Fill)
                       .border({ width: 2, color: 0xFFFFFF, radius: 40 })
                       .width('200px')
                       .height('200px')
                   } else {
-                    Image(this.videoThumbnail || $r('app.media.pic_avatar_radio02'))
+                    Image(this.imgThumbnail || $r('app.media.pic_avatar_radio02'))
                       .aspectRatio(1)
                       .objectFit(ImageFit.Fill)
                       .border({ width: 2, color: 0xFFFFFF, radius: 40 })
@@ -238,10 +269,10 @@ export struct ModeSwitchPage {
                   }
                 }.onClick(() => {
                   let uri: string;
-                  if (this.modelBagCol === 'photo') {
-                    uri = this.imgThumbnail;
-                  } else {
+                  if (this.modelBagCol === 'video') {
                     uri = this.videoUri;
+                  } else {
+                    uri = this.imgThumbnail;
                   }
                   globalThis.abilityContext.startAbility({
                     parameters: { uri: uri },
@@ -288,8 +319,6 @@ export struct ModeSwitchPage {
                     // 切换摄像头
                     this.cameraDeviceIndex ? this.cameraDeviceIndex = 0 : this.cameraDeviceIndex = 1;
                     globalThis.cameraDeviceIndex = this.cameraDeviceIndex;
-                    // 清除配置
-                    await CameraService.releaseSession();
                     // 开始预览
                     await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
                   })
