@@ -27,12 +27,21 @@ class InnerCameraManagerCallback : public CameraManagerCallback {
 public:
     InnerCameraManagerCallback(Camera_Manager* cameraManager, CameraManager_Callbacks* callback)
         : cameraManager_(cameraManager), callback_(*callback) {}
-    ~InnerCameraManagerCallback() = default;
+    ~InnerCameraManagerCallback() {
+        if (camera_ != nullptr) {
+            delete camera_;
+            camera_ = nullptr;
+        }
+    }
 
     void OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const override
     {
-        MEDIA_DEBUG_LOG("OnFrameStarted is called!");
+        MEDIA_DEBUG_LOG("OnCameraStatusChanged is called!");
+        InnerCameraManagerCallback::camera_ = new Camera_Device;
         Camera_StatusInfo statusInfo;
+        statusInfo.camera = InnerCameraManagerCallback::camera_;
+        MEDIA_INFO_LOG("cameraId is %{public}s", cameraStatusInfo.cameraDevice->GetID().data());
+        MEDIA_INFO_LOG("statusInfo.camera is %{public}p", statusInfo.camera);
         statusInfo.camera->cameraId = cameraStatusInfo.cameraDevice->GetID().data();
         statusInfo.camera->cameraPosition = static_cast<Camera_Position>(cameraStatusInfo.cameraDevice->GetPosition());
         statusInfo.camera->cameraType = static_cast<Camera_Type>(cameraStatusInfo.cameraDevice->GetCameraType());
@@ -46,7 +55,7 @@ public:
 
     void OnFlashlightStatusChanged(const std::string &cameraID, const FlashStatus flashStatus) const override
     {
-        MEDIA_DEBUG_LOG("OnFrameStarted is called!");
+        MEDIA_DEBUG_LOG("OnFlashlightStatusChanged is called!");
         (void)cameraID;
         (void)flashStatus;
     }
@@ -54,7 +63,9 @@ public:
 private:
     Camera_Manager* cameraManager_;
     CameraManager_Callbacks callback_;
+    static Camera_Device* camera_;
 };
+Camera_Device* InnerCameraManagerCallback::camera_ = nullptr;
 
 Camera_Manager::Camera_Manager()
 {
