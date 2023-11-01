@@ -64,7 +64,6 @@ struct TorchStatusChangeCallbackInfo {
         listener_ = nullptr;
     }
 };
-
 } // namespace CameraStandard
 } // namespace OHOS
 #endif /* TORCH_LISTENER_NAPI_H_ */

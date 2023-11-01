@@ -37,8 +37,6 @@ config("camera_framework_local_config") {
 
 config("camera_framework_drivers_config") {
   include_dirs = [
-    "//drivers/peripheral/camera/interfaces/camera/sequenceable/buffer_handle",
-    "//drivers/peripheral/camera/interfaces/camera/sequenceable/map_data",
     "//drivers/peripheral/camera/interfaces/include",
     "//drivers/peripheral/camera/interfaces/hdi_ipc",
     "//drivers/peripheral/camera/interfaces/hdi_ipc/server",
@@ -110,12 +108,12 @@ ohos_shared_library("camera_framework") {
   external_deps = [
     "c_utils:utils",
     "device_manager:devicemanagersdk",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:libcamera_proxy_1.2",
-    "drivers_interface_camera:metadata",
-    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
+    "drivers_interface_camera:metadata",
     "graphic_2d:surface",
     "hilog:libhilog",
     "hisysevent:libhisysevent",

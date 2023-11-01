@@ -1028,19 +1028,19 @@ int32_t TorchServiceCallback::OnTorchStatusChange(const TorchStatus status)
     shared_ptr<TorchListener> torcheListener = camMngr_->GetTorchListener();
     if (torcheListener != nullptr) {
         TorchStatusInfo torchStatusInfo;
-        if(status == TorchStatus::TORCH_STATUS_UNAVAILABLE){
+        if (status == TorchStatus::TORCH_STATUS_UNAVAILABLE) {
             torchStatusInfo.isTorchAvailable=false;
             torchStatusInfo.isTorchActive=false;
             torchStatusInfo.torchLevel=0;
-        }else if(status == TorchStatus::TORCH_STATUS_ON){
+        } else if (status == TorchStatus::TORCH_STATUS_ON) {
             torchStatusInfo.isTorchAvailable=true;
             torchStatusInfo.isTorchActive=true;
             torchStatusInfo.torchLevel=1;
-        }else if(status == TorchStatus::TORCH_STATUS_OFF){
+        } else if (status == TorchStatus::TORCH_STATUS_OFF) {
             torchStatusInfo.isTorchAvailable=true;
             torchStatusInfo.isTorchActive=false;
             torchStatusInfo.torchLevel=0;
-        }else{
+        } else {
             torchStatusInfo.isTorchAvailable=false;
             torchStatusInfo.isTorchActive=false;
             torchStatusInfo.torchLevel=0;
@@ -1236,7 +1236,7 @@ TorchMode CameraManager::GetTorchMode()
 
 bool CameraManager::SetTorchMode(TorchMode mode)
 {
-    bool isSuccess=false;
+    bool isSuccess = false;
     switch (mode) {
         case TorchMode::TORCH_MODE_OFF:
             isSuccess = SetTorchModeOnWithLevel(0);

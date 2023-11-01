@@ -104,7 +104,7 @@ void TorchListenerNapi::OnTorchStatusChangeCallback(const TorchStatusInfo &torch
 
 void TorchListenerNapi::OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) const
 {
-    MEDIA_DEBUG_LOG("OnTorchStatusChange is called, TorchStatusInfo.isTorchAvailable: %{public}d", torchStatusInfo.isTorchAvailable);
+    MEDIA_DEBUG_LOG("OnTorchStatusChange is called");
     OnTorchStatusChangeCallbackAsync(torchStatusInfo);
 }
 
