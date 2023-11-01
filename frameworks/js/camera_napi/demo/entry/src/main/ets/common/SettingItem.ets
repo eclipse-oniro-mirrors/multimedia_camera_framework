@@ -21,9 +21,9 @@ const TAG: string = "SettingItem";
 
 @Component
 export struct SettingItem {
-  private itemData: string; // 所选模式的名称
+  private itemData: string = ''; // 所选模式的名称
   @Prop settingMessageNum: number; // 传进来的点击设置
-  private index: number; // 所选模式的索引值
+  private index: number = -1; // 所选模式的索引值
   @Link @Watch('onChangeFn') isIndex: number; // 默认图标选在第几个
   @State isBol: boolean = false; // 隐藏显示图标
 

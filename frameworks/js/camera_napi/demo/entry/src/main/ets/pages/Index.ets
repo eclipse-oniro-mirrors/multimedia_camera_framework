@@ -27,6 +27,7 @@ import { FocusAreaPage } from '../views/FocusAreaPage';
 import { ModeSwitchPage } from '../views/ModeSwitchPage';
 import { Constants } from '../common/Constants';
 import DisplayCalculator from '../common/DisplayCalculator';
+import { ColorEffectComponent } from '../views/ColorEffectComponent';
 
 const TAG: string = 'indexPage';
 
@@ -95,6 +96,12 @@ struct Index {
       this.defaultAspectRatio = Constants.MAX_ASPECT_RATIO;
     }
     this.initXComponentSize();
+  }
+
+  cancelDialog(): void {
+    AppStorage.setOrCreate<boolean>('flashingBol', true);
+    AppStorage.setOrCreate<boolean>('countdownBol', true);
+    AppStorage.setOrCreate<boolean>('colorEffectComponentIsShow', true);
   }
 
   initXComponentSize(): void {
@@ -198,8 +205,7 @@ struct Index {
         .backgroundColor('rgba(255,255,255,0.20)')
         .onClick(() => {
           Logger.info(TAG, 'icon_camera_setting onClick is called');
-          AppStorage.setOrCreate<boolean>('flashingBol', true);
-          AppStorage.setOrCreate<boolean>('countdownBol', true);
+          this.cancelDialog();
           this.countdownNum = 0;
           // 打开设置弹框
           this.settingDialogController.open();
@@ -213,13 +219,20 @@ struct Index {
         FlashingLightPage()
         // 手电筒
         TorchPage()
+        ColorEffectComponent()
       }
       .margin({ left: 24 })
       .alignItems(VerticalAlign.Top)
       .justifyContent(FlexAlign.Start)
       .position({ x: 0, y: 0 })
       .width('100%')
+      .onClick(() => {
+        this.cancelDialog();
+      })
     }
+    .onClick(() => {
+      this.cancelDialog();
+    })
     .size({ width: '100%', height: '100%' })
     .backgroundColor(Color.Black)
   }
