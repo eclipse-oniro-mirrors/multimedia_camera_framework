@@ -1056,9 +1056,10 @@ napi_value CameraManagerNapi::SetTorchMode(napi_env env, napi_callback_info info
         napi_get_value_int32(env, argv[PARAM0], &mode);
         MEDIA_INFO_LOG("CameraManagerNapi::SetTorchMode mode = %{public}d", mode);
         TorchMode torchMode = (TorchMode)mode;
-        bool isSuccess = CameraManager::GetInstance()->SetTorchMode(torchMode);
-        MEDIA_DEBUG_LOG("SetTorchMode : %{public}d", isSuccess);
-        napi_get_boolean(env, isSuccess, &result);
+        int32_t retCode = CameraManager::GetInstance()->SetTorchMode(torchMode);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            MEDIA_DEBUG_LOG("SetTorchMode fail throw error");
+        }
     } else {
         MEDIA_ERR_LOG("GetTorchMode call Failed!");
     }

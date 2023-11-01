@@ -473,10 +473,10 @@ public:
     std::shared_ptr<CameraMuteListener> GetCameraMuteListener();
 
     /**
-       * @brief prelaunch the camera
-       *
-       * @return.
-       */
+    * @brief prelaunch the camera
+    *
+    * @return.
+    */
     int32_t PrelaunchCamera();
 
     /**
@@ -532,9 +532,9 @@ public:
     /**
     * @brief set torch mode
     *
-    * @return Returns true is success, false is fail.
+    * @return.
     */
-    bool SetTorchMode(TorchMode mode);
+    int32_t SetTorchMode(TorchMode mode);
 
     /**
     * @brief update torch mode

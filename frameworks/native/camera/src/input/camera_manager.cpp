@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include <cstdint>
 #include <cstring>
 #include "input/camera_manager.h"
 
@@ -1233,7 +1234,7 @@ TorchMode CameraManager::GetTorchMode()
     return torchMode_;
 }
 
-bool CameraManager::SetTorchMode(TorchMode mode)
+int32_t CameraManager::SetTorchMode(TorchMode mode)
 {
     int32_t retCode = CAMERA_INVALID_ARG;
     switch (mode) {

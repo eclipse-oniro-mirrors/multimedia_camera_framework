@@ -730,7 +730,7 @@ declare namespace camera {
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 11
      */
-    isTorchSupported():boolean;
+    isTorchSupported(): boolean;
     
     /**
      * Check if a specifies torch mode is supported.
@@ -739,7 +739,7 @@ declare namespace camera {
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 11
      */
-    isTorchModeSupported(mode: TorchMode):boolean;
+    isTorchModeSupported(mode: TorchMode): boolean;
     
     /**
      * Get current torch mode.
@@ -748,17 +748,17 @@ declare namespace camera {
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 11
      */
-    getTorchMode():TorchMode;
+    getTorchMode(): TorchMode;
     
     /**
      * Get current torch mode.
      *
      * @param { TorchMode } mode torch mode.
-     * @return { boolean } if success.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 11
      */
-    setTorchMode(mode: TorchMode):boolean;
+    setTorchMode(mode: TorchMode): void;
     
     /**
      * Subscribes torch status change event callback.
