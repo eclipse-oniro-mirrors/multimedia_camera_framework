@@ -16,13 +16,6 @@
 #ifndef PHOTO_OUTPUT_NAPI_H_
 #define PHOTO_OUTPUT_NAPI_H_
 
-#include <cinttypes>
-#include <securec.h>
-
-#include "camera_log.h"
-#include "napi/native_api.h"
-#include "napi/native_node_api.h"
-
 #include "input/camera_manager.h"
 #include "input/camera_device.h"
 #include "output/camera_output_capability.h"
@@ -30,16 +23,6 @@
 
 #include "hilog/log.h"
 #include "camera_napi_utils.h"
-
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <vector>
-
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
 #include "image_receiver.h"
 
 namespace OHOS {

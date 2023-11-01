@@ -16,25 +16,11 @@
 #ifndef PREVIEW_OUTPUT_NAPI_H_
 #define PREVIEW_OUTPUT_NAPI_H_
 
-#include <cinttypes>
-#include <fcntl.h>
-#include <fstream>
-#include <iostream>
-#include <securec.h>
-#include <sstream>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <vector>
-
-#include "camera_log.h"
 #include "camera_napi_utils.h"
 #include "camera_output_napi.h"
 #include "hilog/log.h"
 #include "image_receiver.h"
 #include "input/camera_manager.h"
-#include "napi/native_api.h"
-#include "napi/native_node_api.h"
 #include "output/camera_output_capability.h"
 #include "output/preview_output.h"
 #include "surface_utils.h"

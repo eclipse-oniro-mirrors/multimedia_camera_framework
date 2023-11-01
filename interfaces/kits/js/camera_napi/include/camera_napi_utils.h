@@ -16,7 +16,17 @@
 #ifndef CAMERA_NAPI_UTILS_H_
 #define CAMERA_NAPI_UTILS_H_
 
+#include <cinttypes>
+#include <securec.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 #include <vector>
+
 #include "camera_error_code.h"
 #include "camera_device_ability_items.h"
 #include "input/camera_input.h"
