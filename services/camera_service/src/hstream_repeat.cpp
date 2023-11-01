@@ -136,11 +136,9 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     }
 
     std::vector<uint8_t> ability;
-    if (settings == nullptr) {
+    {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
-    } else {
-        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(settings, ability);
     }
     CaptureInfo captureInfo;
     captureInfo.streamIds_ = { streamId_ };
