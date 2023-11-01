@@ -15,6 +15,7 @@ import("//build/ohos.gni")
 import("./../../multimedia_camera_framework.gni")
 
 ohos_shared_library("camera_service") {
+  branch_protector_ret = "pac_ret"
   install_enable = true
   sources = [
     "binder/client/src/hcamera_device_callback_proxy.cpp",

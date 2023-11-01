@@ -44,6 +44,7 @@ config("camera_framework_drivers_config") {
 }
 
 ohos_shared_library("camera_framework") {
+  branch_protector_ret = "pac_ret"
   install_enable = true
   sources = [
     "//foundation/multimedia/camera_framework/services/camera_service/binder/base/src/icamera_util.cpp",
