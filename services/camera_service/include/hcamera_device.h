@@ -53,7 +53,6 @@ public:
     int32_t OnError(ErrorType type, int32_t errorCode) override;
     int32_t OnResult(uint64_t timestamp, const std::vector<uint8_t>& result) override;
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetSettings();
-    std::shared_ptr<OHOS::Camera::CameraMetadata> CloneCachedSettings();
     std::string GetCameraId();
     bool IsReleaseCameraDevice();
     bool IsOpenedCameraDevice();
@@ -73,11 +72,9 @@ private:
     std::mutex deviceSvcCbMutex_;
     std::mutex videoFrameRangeMutex_;
     std::mutex settingsMutex_;
-    std::mutex cachedSettingsMutex_;
     sptr<ICameraDeviceServiceCallback> deviceSvcCallback_;
     std::map<int32_t, wptr<ICameraServiceCallback>> statusSvcCallbacks_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> updateSettings_;
-    std::shared_ptr<OHOS::Camera::CameraMetadata> cachedSettings_;
     sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator_;
     uint32_t callerToken_;
     std::vector<int32_t> videoFrameRateRange_;

@@ -74,7 +74,6 @@ public:
     /* TearDown:Execute after each test case */
     void TearDown();
 
-    sptr<CaptureOutput> CreatePreviewOutput(Profile& profile);
     sptr<CaptureOutput> CreatePreviewOutput(int32_t width, int32_t height);
     sptr<CaptureOutput> CreatePreviewOutput();
     sptr<CaptureOutput> CreatePhotoOutput(int32_t width, int32_t height);
@@ -96,8 +95,6 @@ public:
                                    int32_t photoHeight, int32_t videoWidth, int32_t videoHeight);
     bool IsSupportNow();
     bool IsSupportMode();
-
-    std::shared_ptr<Profile> GetSketchPreviewProfile();
 };
 } // CameraStandard
 } // OHOS

@@ -14,18 +14,17 @@
  */
 
 #include "output/video_output.h"
-
-#include "camera_log.h"
 #include "camera_util.h"
 #include "hstream_repeat_callback_stub.h"
 #include "input/camera_device.h"
 #include "input/camera_input.h"
+#include "camera_log.h"
 
 namespace OHOS {
 namespace CameraStandard {
-VideoOutput::VideoOutput(sptr<IStreamRepeat>& streamRepeat)
-    : CaptureOutput(CAPTURE_OUTPUT_TYPE_VIDEO, StreamType::REPEAT, streamRepeat)
-{}
+VideoOutput::VideoOutput(sptr<IStreamRepeat> &streamRepeat)
+    : CaptureOutput(CAPTURE_OUTPUT_TYPE_VIDEO, StreamType::REPEAT, streamRepeat) {
+}
 
 VideoOutput::~VideoOutput()
 {
@@ -70,7 +69,7 @@ void VideoOutput::SetCallback(std::shared_ptr<VideoStateCallback> callback)
     appCallback_ = callback;
     if (appCallback_ != nullptr) {
         if (svcCallback_ == nullptr) {
-            svcCallback_ = new (std::nothrow) VideoOutputCallbackImpl(this);
+            svcCallback_ = new(std::nothrow) VideoOutputCallbackImpl(this);
             if (svcCallback_ == nullptr) {
                 MEDIA_ERR_LOG("new VideoOutputCallbackImpl Failed to register callback");
                 appCallback_ = nullptr;
@@ -82,7 +81,7 @@ void VideoOutput::SetCallback(std::shared_ptr<VideoStateCallback> callback)
             return;
         }
         int32_t errorCode = CAMERA_OK;
-        auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+        auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
         if (itemStream) {
             errorCode = itemStream->SetCallback(svcCallback_);
         } else {
@@ -101,7 +100,7 @@ int32_t VideoOutput::Start()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into VideoOutput::Start");
-    auto captureSession = GetSession();
+    CaptureSession* captureSession = GetSession();
     if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
         MEDIA_ERR_LOG("VideoOutput Failed to Start!, session not config");
         return CameraErrorCode::SESSION_NOT_CONFIG;
@@ -110,7 +109,7 @@ int32_t VideoOutput::Start()
         MEDIA_ERR_LOG("VideoOutput Failed to Start!, GetStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
-    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Start();
@@ -131,7 +130,7 @@ int32_t VideoOutput::Stop()
         MEDIA_ERR_LOG("VideoOutput Failed to Stop!, GetStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
-    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Stop();
@@ -152,7 +151,7 @@ int32_t VideoOutput::Resume()
         MEDIA_ERR_LOG("VideoOutput Failed to Resume!, GetStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
-    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Start();
@@ -170,7 +169,7 @@ int32_t VideoOutput::Pause()
         MEDIA_ERR_LOG("VideoOutput Failed to Pause!, GetStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
-    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Stop();
@@ -188,7 +187,7 @@ int32_t VideoOutput::Release()
         MEDIA_ERR_LOG("VideoOutput Failed to Release!, GetStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
-    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    auto itemStream = static_cast<IStreamRepeat *>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Release();
@@ -214,24 +213,12 @@ const std::vector<int32_t>& VideoOutput::GetFrameRateRange()
     return videoFrameRateRange_;
 }
 
-std::set<camera_device_metadata_tag_t> VideoOutput::GetObserverTags() const
-{
-    // Empty impl
-    return {};
-}
-
-int32_t VideoOutput::OnMetadataChanged(
-    const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem)
-{
-    // Empty impl
-    return CAM_META_SUCCESS;
-}
-
 void VideoOutput::SetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate)
 {
-    MEDIA_DEBUG_LOG("VideoOutput::SetFrameRateRange min = %{public}d and max = %{public}d", minFrameRate, maxFrameRate);
+    MEDIA_DEBUG_LOG("VideoOutput::SetFrameRateRange min = %{public}d and max = %{public}d",
+        minFrameRate, maxFrameRate);
 
-    videoFrameRateRange_ = { minFrameRate, maxFrameRate };
+    videoFrameRateRange_ = {minFrameRate, maxFrameRate};
 }
 
 void VideoOutput::CameraServerDied(pid_t pid)
@@ -247,5 +234,5 @@ void VideoOutput::CameraServerDied(pid_t pid)
     }
     deathRecipient_ = nullptr;
 }
-} // namespace CameraStandard
-} // namespace OHOS
+} // CameraStandard
+} // OHOS

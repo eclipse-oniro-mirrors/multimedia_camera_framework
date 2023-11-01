@@ -731,22 +731,17 @@ int32_t HCaptureSession::Start()
         StartUsingPermissionCallback(callerToken, OHOS_PERMISSION_CAMERA);
         RegisterPermissionCallback(callerToken, OHOS_PERMISSION_CAMERA);
     }
-    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = nullptr;
-    if (cameraDevice_ != nullptr) {
-        settings = cameraDevice_->CloneCachedSettings();
-    }
 
     int32_t rc = CAMERA_OK;
     for (auto& item : repeatStreams_) {
         HStreamRepeat* curStreamRepeat = static_cast<HStreamRepeat*>(item.GetRefPtr());
         auto repeatType = curStreamRepeat->GetRepeatStreamType();
-        if (repeatType != RepeatStreamType::PREVIEW) {
-            continue;
-        }
-        rc = curStreamRepeat->Start(settings);
-        if (rc != CAMERA_OK) {
-            MEDIA_ERR_LOG("HCaptureSession::Start(), Failed to start preview, rc: %{public}d", rc);
-            break;
+        if (repeatType == RepeatStreamType::PREVIEW) {
+            rc = curStreamRepeat->Start();
+            if (rc != CAMERA_OK) {
+                MEDIA_ERR_LOG("HCaptureSession::Start(), Failed to start preview, rc: %{public}d", rc);
+                break;
+            }
         }
     }
     return rc;

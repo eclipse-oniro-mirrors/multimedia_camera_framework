@@ -94,9 +94,8 @@ int HStreamRepeatStub::HandleForkSketchStreamRepeat(MessageParcel& data, Message
         "HStreamRepeatStub HandleForkSketchStreamRepeat BufferProducer is null");
     int32_t width = data.ReadInt32();
     int32_t height = data.ReadInt32();
-    float sketchRatio = data.ReadFloat();
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
-    int errCode = ForkSketchStreamRepeat(producer, width, height, sketchStream, sketchRatio);
+    int errCode = ForkSketchStreamRepeat(producer, width, height, sketchStream);
     if (errCode != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamRepeatStub::HandleForkSketchStreamRepeat failed : %{public}d", errCode);
         return errCode;

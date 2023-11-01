@@ -18,13 +18,12 @@
 
 #include <iostream>
 #include <vector>
-
 #include "camera_metadata_info.h"
-#include "hstream_repeat_callback_stub.h"
+#include "output/capture_output.h"
 #include "istream_repeat.h"
 #include "istream_repeat_callback.h"
-#include "output/capture_output.h"
 #include "session/capture_session.h"
+#include "hstream_repeat_callback_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -55,7 +54,7 @@ public:
 
 class VideoOutput : public CaptureOutput {
 public:
-    explicit VideoOutput(sptr<IStreamRepeat>& streamRepeat);
+    explicit VideoOutput(sptr<IStreamRepeat> &streamRepeat);
     virtual ~VideoOutput();
 
     /**
@@ -98,10 +97,10 @@ public:
     std::shared_ptr<VideoStateCallback> GetApplicationCallback();
 
     /**
-     * @brief Get the supported video frame rate range.
-     *
-     * @return Returns vector<int32_t> of supported exposure compensation range.
-     */
+    * @brief Get the supported video frame rate range.
+    *
+    * @return Returns vector<int32_t> of supported exposure compensation range.
+    */
     const std::vector<int32_t>& GetFrameRateRange();
 
     /**
@@ -113,20 +112,6 @@ public:
      */
     void SetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate);
 
-    /**
-     * @brief Get Observed matadata tags
-     *        Register tags into capture session. If the tags data changes,{@link OnMetadataChanged} will be called.
-     * @return Observed tags
-     */
-    std::set<camera_device_metadata_tag_t> GetObserverTags() const override;
-
-    /**
-     * @brief Callback of metadata change.
-     * @return Operate result
-     */
-    int32_t OnMetadataChanged(
-        const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem) override;
-
 private:
     std::shared_ptr<VideoStateCallback> appCallback_;
     sptr<IStreamRepeatCallback> svcCallback_;
@@ -137,27 +122,29 @@ private:
 class VideoOutputCallbackImpl : public HStreamRepeatCallbackStub {
 public:
     VideoOutput* videoOutput_ = nullptr;
-    VideoOutputCallbackImpl() : videoOutput_(nullptr) {}
+    VideoOutputCallbackImpl() : videoOutput_(nullptr) {
+    }
 
-    explicit VideoOutputCallbackImpl(VideoOutput* videoOutput) : videoOutput_(videoOutput) {}
+    explicit VideoOutputCallbackImpl(VideoOutput* videoOutput) : videoOutput_(videoOutput) {
+    }
 
     ~VideoOutputCallbackImpl()
     {
         videoOutput_ = nullptr;
     }
-
+    
     /**
      * @brief Called when video frame is started rendering.
      */
     int32_t OnFrameStarted() override;
-
+    
     /**
      * @brief Called when video frame is ended.
      *
      * @param frameCount Indicates number of frames captured.
      */
     int32_t OnFrameEnded(const int32_t frameCount) override;
-
+    
     /**
      * @brief Called when error occured during video rendering.
      *

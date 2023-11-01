@@ -18,14 +18,12 @@
 
 #include <mutex>
 #include <refbase.h>
-#include <vector>
-
 #include "camera_error_code.h"
-#include "camera_output_capability.h"
 #include "icamera_util.h"
 #include "input/camera_death_recipient.h"
 #include "istream_common.h"
 #include "session/capture_session.h"
+#include "camera_output_capability.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -37,28 +35,11 @@ enum CaptureOutputType {
     CAPTURE_OUTPUT_TYPE_MAX
 };
 static const char* g_captureOutputTypeString[CAPTURE_OUTPUT_TYPE_MAX] = {"Preview", "Photo", "Video", "Metadata"};
-
-class MetadataObserver {
-public:
-    /**
-     * @brief Get Observed matadata tags
-     *        Register tags into capture session. If the tags data changes,{@link OnMetadataChanged} will be called.
-     * @return Observed tags
-     */
-    virtual std::set<camera_device_metadata_tag_t> GetObserverTags() const = 0;
-
-    /**
-     * @brief Callback of metadata change.
-     * @return Operate result
-     */
-    virtual int32_t OnMetadataChanged(
-        const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem) = 0;
-};
-
 class CaptureSession;
-class CaptureOutput : public RefBase, public MetadataObserver {
+class CaptureOutput : public RefBase {
 public:
-    explicit CaptureOutput(CaptureOutputType OutputType, StreamType streamType, sptr<IStreamCommon> stream);
+    explicit CaptureOutput(CaptureOutputType OutputType, StreamType streamType,
+                           sptr<IStreamCommon> stream);
     virtual ~CaptureOutput()
     {
         stream_ = nullptr;
@@ -74,23 +55,21 @@ public:
     const char* GetOutputTypeString();
     StreamType GetStreamType();
     sptr<IStreamCommon> GetStream();
-    sptr<CaptureSession> GetSession();
-    void SetSession(sptr<CaptureSession> captureSession);
+    CaptureSession* GetSession();
+    void SetSession(CaptureSession* captureSession);
     std::mutex asyncOpMutex_;
-    int32_t SetPhotoProfile(Profile& profile);
+    int32_t SetPhotoProfile(Profile &profile);
     Profile GetPhotoProfile();
-    int32_t SetPreviewProfile(Profile& profile);
+    int32_t SetPreviewProfile(Profile &profile);
     Profile GetPreviewProfile();
     virtual void CameraServerDied(pid_t pid) = 0;
-
 protected:
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
-
 private:
     CaptureOutputType outputType_;
     StreamType streamType_;
     sptr<IStreamCommon> stream_;
-    wptr<CaptureSession> session_;
+    CaptureSession* session_;
     Profile photoProfile_;
     Profile previewProfile_;
 };
