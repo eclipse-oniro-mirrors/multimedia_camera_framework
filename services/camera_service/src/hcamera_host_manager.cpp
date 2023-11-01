@@ -483,7 +483,7 @@ bool HCameraHostManager::CameraHostInfo::IsLocalCameraHostInfo()
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility = deviceInfo->ability;
         camera_metadata_item_t item;
         int ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(),
-             OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
+        OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
         if (ret == CAM_META_SUCCESS) {
             if (static_cast<camera_connection_type_t>(item.data.u8[0]) == OHOS_CAMERA_CONNECTION_TYPE_BUILTIN) {
                 MEDIA_INFO_LOG("CameraHostInfo::IsLocalCameraHostInfo succeed");

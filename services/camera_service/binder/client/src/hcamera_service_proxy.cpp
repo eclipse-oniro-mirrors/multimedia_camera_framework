@@ -447,8 +447,8 @@ int32_t HCameraServiceProxy::SetTorchModeOnWithLevel(float level)
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteFloat(level);
     int error = Remote()->SendRequest(
-        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_MODE_ON_WITH_LEVEL), 
-            data, reply, option);
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_MODE_ON_WITH_LEVEL),
+        data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceProxy::SetTorchModeOnWithLevel Set listener obj failed, error: %{public}d", error);
         return error;
