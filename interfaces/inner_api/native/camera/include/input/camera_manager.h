@@ -535,13 +535,6 @@ public:
     * @return Returns true is success, false is fail.
     */
     bool SetTorchMode(TorchMode mode);
-    
-    /**
-    * @brief set torchmode on and brightness level
-    *
-    * @return Returns true is success, false is fail.
-    */
-    bool SetTorchLevel(float level);
 
     /**
     * @brief update torch mode
@@ -579,6 +572,7 @@ private:
     camera_format_t GetCameraMetadataFormat(CameraFormat format);
     bool GetDmDeviceInfo();
     bool isDistributeCamera(std::string cameraId, dmDeviceInfo& deviceInfo);
+    int32_t SetTorchLevel(float level);
     sptr<ICameraService> serviceProxy_;
     sptr<CameraListenerStub> listenerStub_ = nullptr;
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
