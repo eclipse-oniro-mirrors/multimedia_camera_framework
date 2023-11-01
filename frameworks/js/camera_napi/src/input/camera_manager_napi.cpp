@@ -730,7 +730,7 @@ napi_value CameraManagerNapi::RegisterCallback(napi_env env, napi_value jsThis,
             cameraManagerNapi->cameraManager_->RegisterCameraMuteListener(cameraMuteListener);
         }
         cameraManagerNapi->cameraMuteListener_->SaveCallbackReference(eventType, callback, isOnce);
-    } else if ((eventType.compare("torchStatusChange")==0)) {
+    } else if ((eventType.compare("torchStatusChange") == 0)) {
         if (cameraManagerNapi->torchListener_ == nullptr) {
             shared_ptr<TorchListenerNapi> torchListener =
                     make_shared<TorchListenerNapi>(env);
