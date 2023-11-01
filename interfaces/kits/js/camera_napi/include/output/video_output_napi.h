@@ -15,27 +15,11 @@
 
 #ifndef VIDEO_OUTPUT_NAPI_H_
 #define VIDEO_OUTPUT_NAPI_H_
-#include <securec.h>
-
-#include "camera_log.h"
-#include "napi/native_api.h"
-#include "napi/native_node_api.h"
 
 #include "output/video_output.h"
 #include "hilog/log.h"
 #include "camera_napi_utils.h"
 #include "input/camera_manager.h"
-
-#include <cinttypes>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <vector>
-
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
 #include "surface_utils.h"
 
 namespace OHOS {

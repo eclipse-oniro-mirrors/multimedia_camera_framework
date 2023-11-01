@@ -16,10 +16,6 @@
 #ifndef CAMERA_SESSION_NAPI_H_
 #define CAMERA_SESSION_NAPI_H_
 
-#include "camera_log.h"
-#include "napi/native_api.h"
-#include "napi/native_node_api.h"
-
 #include "hilog/log.h"
 #include "camera_napi_utils.h"
 
@@ -32,16 +28,6 @@
 #include "output/preview_output_napi.h"
 #include "output/video_output_napi.h"
 #include "output/metadata_output_napi.h"
-
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <vector>
-
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
 
 namespace OHOS {
 namespace CameraStandard {

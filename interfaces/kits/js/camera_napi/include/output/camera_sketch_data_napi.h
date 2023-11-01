@@ -16,20 +16,8 @@
 #ifndef CAMERA_SKETCH_DATA_NAPI_H_
 #define CAMERA_SKETCH_DATA_NAPI_H_
 
-#include <fcntl.h>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <vector>
-
-#include "camera_log.h"
 #include "camera_napi_utils.h"
 #include "hilog/log.h"
-#include "napi/native_api.h"
-#include "napi/native_node_api.h"
 
 namespace OHOS {
 namespace CameraStandard {

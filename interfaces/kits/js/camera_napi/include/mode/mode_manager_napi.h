@@ -16,13 +16,8 @@
 #ifndef MODE_MANAGER_NAPI_H_
 #define MODE_MANAGER_NAPI_H_
 
-#include <securec.h>
-
 #include "display_type.h"
-#include "camera_log.h"
 #include "hilog/log.h"
-#include "napi/native_api.h"
-#include "napi/native_node_api.h"
 
 #include "input/camera_manager.h"
 #include "mode/mode_manager.h"
@@ -38,15 +33,6 @@
 #include "portrait_session_napi.h"
 #include "session/camera_session_napi.h"
 #include "camera_napi_utils.h"
-
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <vector>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
 
 namespace OHOS {
 namespace CameraStandard {

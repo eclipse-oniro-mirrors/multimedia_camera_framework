@@ -16,23 +16,9 @@
 #ifndef CAMERA_SIZE_NAPI_H_
 #define CAMERA_SIZE_NAPI_H_
 
-#include "camera_log.h"
-#include "napi/native_api.h"
-#include "napi/native_node_api.h"
-
 #include "hilog/log.h"
 #include "camera_napi_utils.h"
 #include "input/camera_input.h"
-
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <vector>
-
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
 
 namespace OHOS {
 namespace CameraStandard {

@@ -16,14 +16,6 @@
 #ifndef CAMERA_INFO_NAPI_H_
 #define CAMERA_INFO_NAPI_H_
 
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <vector>
 #include "display_type.h"
 #include "camera_log.h"
 #include "camera_napi_utils.h"
