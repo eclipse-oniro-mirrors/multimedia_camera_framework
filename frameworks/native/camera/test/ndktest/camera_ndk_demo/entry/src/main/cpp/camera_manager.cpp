@@ -57,12 +57,9 @@ NDKCamera::~NDKCamera()
 {
     valid_ = false;
     OH_LOG_ERROR(LOG_APP, "~NDKCamera");
-    Camera_ErrorCode ret = OH_CaptureSession_Release(captureSession_);
-    if (ret != CAMERA_OK) {
-        OH_LOG_ERROR(LOG_APP, "Release failed.");
-    }
+    Camera_ErrorCode ret = CAMERA_OK;
 
-   if (cameraManager_) {
+    if (cameraManager_) {
         OH_LOG_ERROR(LOG_APP, "Release OH_CameraManager_DeleteSupportedCameras. enter");
         ret = OH_CameraManager_DeleteSupportedCameras(cameraManager_, cameras_, size_);
         if (ret != CAMERA_OK) {
