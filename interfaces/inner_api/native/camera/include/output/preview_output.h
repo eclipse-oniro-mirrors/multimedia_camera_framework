@@ -131,37 +131,13 @@ public:
     std::shared_ptr<PreviewStateCallback> GetApplicationCallback();
 
     /**
-     * @brief Get sketch reference FOV ratio.
-     *
-     * @param modeName Mode name.
-     *
+     * @brief Get the application callback information.
      */
+    CameraFormat format;
+
+    void UpdateSketchStaticInfo();
     float GetSketchReferenceFovRatio(int32_t modeName);
-
-    /**
-     * @brief Get sketch enable ratio.
-     *
-     * @param modeName Mode name.
-     *
-     */
     float GetSketchEnableRatio(int32_t modeName);
-
-    /**
-     * @brief Get Observed matadata tags
-     *        Register tags into capture session. If the tags data changes,{@link OnMetadataChanged} will be called.
-     * @return Observed tags
-     */
-    std::set<camera_device_metadata_tag_t> GetObserverTags() const override;
-
-    /**
-     * @brief Callback of metadata change.
-     * @return Operate result
-     */
-    int32_t OnMetadataChanged(
-        const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem) override;
-
-    void OnNativeRegisterCallback(const std::string& eventString);
-    void OnNativeUnregisterCallback(const std::string& eventString);
 
 private:
     std::shared_ptr<PreviewStateCallback> appCallback_;
@@ -172,11 +148,9 @@ private:
     std::mutex sketchEnableRatioMutex_;
     std::map<int32_t, float> sketchEnableRatioMap_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetDeviceMetadata();
-    void UpdateSketchStaticInfo();
     void UpdateSketchEnableRatio(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata);
-    void UpdateSketchReferenceFovRatio(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata);
+    void UpdateSketchRefferenceFovRatio(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata);
     std::shared_ptr<Size> FindSketchSize();
-    int32_t CreateSketchWrapper(Size sketchSize, int32_t imageFormat);
     void CameraServerDied(pid_t pid) override;
 };
 

@@ -100,19 +100,18 @@ void SketchWrapper::SketchBufferAvaliableListener::OnSurfaceBufferAvaliable()
     sketchWrapper->sketchImgReceiver_->ReleaseBuffer(buffer);
 }
 
-SketchWrapper::SketchWrapper(PreviewOutput* holder, float sketchRatio) : holder_(holder), sketchRatio_(sketchRatio) {}
+SketchWrapper::SketchWrapper(PreviewOutput* holder) : holder_(holder) {}
 
-int32_t SketchWrapper::Init(std::shared_ptr<SketchBufferAvaliableListener>& listener, const Size size,
-    Media::ImageFormat imageFormat, float sketchRatio)
+int32_t SketchWrapper::Init(
+    std::shared_ptr<SketchBufferAvaliableListener>& listener, const Size size, Media::ImageFormat imageFormat)
 {
     sketchImgReceiver_ =
         Media::ImageReceiver::CreateImageReceiver(size.width, size.height, static_cast<int32_t>(imageFormat), 1);
-    auto receiverSurface = sketchImgReceiver_->GetReceiverSurface();
+    sptr<Surface> surface = sketchImgReceiver_->GetReceiverSurface();
     sketchImgReceiver_->RegisterBufferAvaliableListener(listener);
     sptr<IStreamCommon> hostStream = holder_->GetStream();
     IStreamRepeat* repeatStream = static_cast<IStreamRepeat*>(hostStream.GetRefPtr());
-    return repeatStream->ForkSketchStreamRepeat(
-        receiverSurface->GetProducer(), size.width, size.height, sketchStream_, sketchRatio);
+    return repeatStream->ForkSketchStreamRepeat(surface->GetProducer(), size.width, size.height, sketchStream_);
 }
 
 int32_t SketchWrapper::Destory()
@@ -132,11 +131,6 @@ int32_t SketchWrapper::Destory()
     return repeatStream->RemoveSketchStreamRepeat();
 }
 
-float SketchWrapper::GetSketchRatio()
-{
-    return sketchRatio_;
-}
-
 SketchWrapper::~SketchWrapper()
 {
     if (sketchStream_ != nullptr) {
@@ -154,7 +148,8 @@ SketchWrapper::~SketchWrapper()
 int32_t SketchWrapper::SketchWrapper::StartSketchStream()
 {
     if (sketchStream_ != nullptr) {
-        MEDIA_DEBUG_LOG("Enter Into SketchWrapper::SketchWrapper::StartSketchStream");
+        MEDIA_INFO_LOG("Enter Into SketchWrapper::SketchWrapper::StartSketchStream");
+        holder_->UpdateSketchStaticInfo();
         return sketchStream_->Start();
     }
     return CAMERA_UNKNOWN_ERROR;
@@ -163,7 +158,7 @@ int32_t SketchWrapper::SketchWrapper::StartSketchStream()
 int32_t SketchWrapper::SketchWrapper::StopSketchStream()
 {
     if (sketchStream_ != nullptr) {
-        MEDIA_DEBUG_LOG("Enter Into SketchWrapper::SketchWrapper::StopSketchStream");
+        MEDIA_INFO_LOG("Enter Into SketchWrapper::SketchWrapper::StopSketchStream");
         return sketchStream_->Stop();
     }
     return CAMERA_UNKNOWN_ERROR;

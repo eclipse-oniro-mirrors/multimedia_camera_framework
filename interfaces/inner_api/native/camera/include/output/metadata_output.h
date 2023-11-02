@@ -17,13 +17,13 @@
 #define OHOS_CAMERA_METADATA_OUTPUT_H
 
 #include <iostream>
+#include "capture_output.h"
+#include "istream_metadata.h"
 
 #include "camera_metadata_operator.h"
-#include "capture_output.h"
 #include "iconsumer_surface.h"
-#include "istream_metadata.h"
-#include "metadata_type.h"
 #include "surface.h"
+#include "metadata_type.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -75,7 +75,7 @@ public:
 
 class MetadataOutput : public CaptureOutput {
 public:
-    MetadataOutput(sptr<IConsumerSurface> surface, sptr<IStreamMetadata>& streamMetadata);
+    MetadataOutput(sptr<IConsumerSurface> surface, sptr<IStreamMetadata> &streamMetadata);
     ~MetadataOutput();
 
     /**
@@ -120,26 +120,10 @@ public:
      * @brief Releases a instance of the MetadataOutput.
      */
     int32_t Release() override;
-
-    /**
-     * @brief Get Observed matadata tags
-     *        Register tags into capture session. If the tags data changes,{@link OnMetadataChanged} will be called.
-     * @return Observed tags
-     */
-    std::set<camera_device_metadata_tag_t> GetObserverTags() const override;
-
-    /**
-     * @brief Callback of metadata change.
-     * @return Operate result
-     */
-    int32_t OnMetadataChanged(
-        const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem) override;
-
-    void ProcessFaceRectangles(int64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result,
-        std::vector<sptr<MetadataObject>>& metaObjects, bool isNeedMirror);
+    void ProcessFaceRectangles(int64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata> &result,
+                               std::vector<sptr<MetadataObject>> &metaObjects, bool isNeedMirror);
     std::shared_ptr<MetadataObjectCallback> GetAppObjectCallback();
     friend class MetadataObjectListener;
-
 private:
     sptr<IConsumerSurface> surface_;
     std::shared_ptr<MetadataObjectCallback> appObjectCallback_;
@@ -158,8 +142,8 @@ public:
 
 private:
     int32_t ProcessMetadataBuffer(void* buffer, int64_t timestamp);
-    int32_t ProcessFaceRectangles(
-        int64_t timestamp, const camera_metadata_item_t& metadataItem, std::vector<sptr<MetadataObject>>& metaObjects);
+    int32_t ProcessFaceRectangles(int64_t timestamp, const camera_metadata_item_t &metadataItem,
+                                  std::vector<sptr<MetadataObject>> &metaObjects);
     sptr<MetadataOutput> metadata_;
 };
 } // namespace CameraStandard

@@ -14,14 +14,12 @@
  */
 
 #include "output/photo_output.h"
-
 #include <securec.h>
-
-#include "camera_log.h"
 #include "camera_util.h"
 #include "hstream_capture_callback_stub.h"
 #include "input/camera_device.h"
 #include "session/capture_session.h"
+#include "camera_log.h"
 
 using namespace std;
 
@@ -115,21 +113,21 @@ void PhotoCaptureSetting::SetGpsLocation(double latitude, double longitude)
     SetLocation(location);
 }
 
-void PhotoCaptureSetting::SetLocation(std::unique_ptr<Location>& location)
+void PhotoCaptureSetting::SetLocation(std::unique_ptr<Location> &location)
 {
     double gpsCoordinates[3] = {location->latitude, location->longitude, location->altitude};
     bool status = false;
     camera_metadata_item_t item;
 
     MEDIA_DEBUG_LOG("PhotoCaptureSetting::SetLocation lat=%{public}f, long=%{public}f and alt=%{public}f",
-        location->latitude, location->longitude, location->altitude);
+                    location->latitude, location->longitude, location->altitude);
     int ret = Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_GPS_COORDINATES, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = captureMetadataSetting_->addEntry(
-            OHOS_JPEG_GPS_COORDINATES, gpsCoordinates, sizeof(gpsCoordinates) / sizeof(gpsCoordinates[0]));
+        status = captureMetadataSetting_->addEntry(OHOS_JPEG_GPS_COORDINATES, gpsCoordinates,
+            sizeof(gpsCoordinates) / sizeof(gpsCoordinates[0]));
     } else if (ret == CAM_META_SUCCESS) {
-        status = captureMetadataSetting_->updateEntry(
-            OHOS_JPEG_GPS_COORDINATES, gpsCoordinates, sizeof(gpsCoordinates) / sizeof(gpsCoordinates[0]));
+        status = captureMetadataSetting_->updateEntry(OHOS_JPEG_GPS_COORDINATES, gpsCoordinates,
+            sizeof(gpsCoordinates) / sizeof(gpsCoordinates[0]));
     }
 
     if (!status) {
@@ -205,7 +203,7 @@ int32_t HStreamCaptureCallbackImpl::OnFrameShutter(const int32_t captureId, cons
     return CAMERA_OK;
 }
 
-PhotoOutput::PhotoOutput(sptr<IStreamCapture>& streamCapture)
+PhotoOutput::PhotoOutput(sptr<IStreamCapture> &streamCapture)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PHOTO, StreamType::CAPTURE, streamCapture)
 {
     defaultCaptureSetting_ = nullptr;
@@ -224,14 +222,14 @@ void PhotoOutput::SetCallback(std::shared_ptr<PhotoStateCallback> callback)
     appCallback_ = callback;
     if (appCallback_ != nullptr) {
         if (cameraSvcCallback_ == nullptr) {
-            cameraSvcCallback_ = new (std::nothrow) HStreamCaptureCallbackImpl(this);
+            cameraSvcCallback_ = new(std::nothrow) HStreamCaptureCallbackImpl(this);
             if (cameraSvcCallback_ == nullptr) {
                 MEDIA_ERR_LOG("PhotoOutput::SetCallback new HStreamCaptureCallbackImpl Failed to register callback");
                 appCallback_ = nullptr;
                 return;
             }
         }
-        auto itemStream = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
+        auto itemStream = static_cast<IStreamCapture *>(GetStream().GetRefPtr());
         int32_t errorCode = CAMERA_OK;
         if (itemStream) {
             errorCode = itemStream->SetCallback(cameraSvcCallback_);
@@ -261,8 +259,9 @@ void PhotoOutput::SetThumbnailListener(sptr<IBufferConsumerListener>& listener)
 int32_t PhotoOutput::SetThumbnail(bool isEnabled)
 {
     CAMERA_SYNC_TRACE;
+    int32_t retCode = 0;
     sptr<CameraDevice> cameraObj;
-    auto captureSession = GetSession();
+    CaptureSession* captureSession = GetSession();
     if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
         MEDIA_ERR_LOG("PhotoOutput isQuickThumbnailEnabled error!, captureSession or inputDevice_ is nullptr");
         return SESSION_NOT_RUNNING;
@@ -277,8 +276,9 @@ int32_t PhotoOutput::SetThumbnail(bool isEnabled)
         MEDIA_ERR_LOG("PhotoOutput::SetThumbnail Failed to create surface");
         return SERVICE_FATL_ERROR;
     }
-    auto streamCapturePtr = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
-    return streamCapturePtr->SetThumbnail(isEnabled, thumbnailSurface_->GetProducer());
+    retCode = static_cast<IStreamCapture *>(
+                GetStream().GetRefPtr())->SetThumbnail(isEnabled, thumbnailSurface_->GetProducer());
+    return retCode;
 }
 
 std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
@@ -289,7 +289,7 @@ std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
 int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSettings)
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
-    auto captureSession = GetSession();
+    CaptureSession* captureSession = GetSession();
     if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
         MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, session not runing");
         return CameraErrorCode::SESSION_NOT_RUNNING;
@@ -299,7 +299,7 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     defaultCaptureSetting_ = photoCaptureSettings;
-    auto itemStream = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
+    auto itemStream = static_cast<IStreamCapture *>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Capture(photoCaptureSettings->GetCaptureMetadataSetting());
@@ -315,7 +315,7 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
 int32_t PhotoOutput::Capture()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
-    auto captureSession = GetSession();
+    CaptureSession* captureSession = GetSession();
     if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
         MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, session not runing");
         return CameraErrorCode::SESSION_NOT_RUNNING;
@@ -328,7 +328,7 @@ int32_t PhotoOutput::Capture()
     int32_t dataLength = 0;
     std::shared_ptr<Camera::CameraMetadata> captureMetadataSetting =
         std::make_shared<Camera::CameraMetadata>(items, dataLength);
-    auto itemStream = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
+    auto itemStream = static_cast<IStreamCapture *>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Capture(captureMetadataSetting);
@@ -344,7 +344,7 @@ int32_t PhotoOutput::Capture()
 int32_t PhotoOutput::CancelCapture()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
-    auto captureSession = GetSession();
+    CaptureSession* captureSession = GetSession();
     if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
         MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, session not runing");
         return CameraErrorCode::SESSION_NOT_RUNNING;
@@ -353,7 +353,7 @@ int32_t PhotoOutput::CancelCapture()
         MEDIA_ERR_LOG("PhotoOutput Failed to CancelCapture!, GetStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
-    auto itemStream = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
+    auto itemStream = static_cast<IStreamCapture *>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->CancelCapture();
@@ -374,7 +374,7 @@ int32_t PhotoOutput::Release()
         MEDIA_ERR_LOG("PhotoOutput Failed to Release!, GetStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
-    auto itemStream = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
+    auto itemStream = static_cast<IStreamCapture *>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Release();
@@ -396,7 +396,7 @@ bool PhotoOutput::IsMirrorSupported()
     bool isMirrorEnabled = false;
     camera_metadata_item_t item;
     sptr<CameraDevice> cameraObj;
-    auto captureSession = GetSession();
+    CaptureSession* captureSession = GetSession();
     if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
         MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, captureSession or inputDevice_ is nullptr");
         return isMirrorEnabled;
@@ -420,7 +420,7 @@ int32_t PhotoOutput::IsQuickThumbnailSupported()
     int32_t isQuickThumbnailEnabled = -1;
     camera_metadata_item_t item;
     sptr<CameraDevice> cameraObj;
-    auto captureSession = GetSession();
+    CaptureSession* captureSession = GetSession();
     if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
         MEDIA_ERR_LOG("PhotoOutput isQuickThumbnailEnabled error!, captureSession or inputDevice_ is nullptr");
         return SESSION_NOT_RUNNING;
@@ -457,18 +457,5 @@ void PhotoOutput::CameraServerDied(pid_t pid)
     }
     deathRecipient_ = nullptr;
 }
-
-std::set<camera_device_metadata_tag_t> PhotoOutput::GetObserverTags() const
-{
-    // Empty impl
-    return {};
-}
-
-int32_t PhotoOutput::OnMetadataChanged(
-    const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem)
-{
-    // Empty impl
-    return CAM_META_SUCCESS;
-}
-} // namespace CameraStandard
-} // namespace OHOS
+} // CameraStandard
+} // OHOS
