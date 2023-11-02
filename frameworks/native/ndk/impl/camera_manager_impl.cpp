@@ -39,7 +39,6 @@ public:
     void OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const override
     {
         MEDIA_DEBUG_LOG("OnCameraStatusChanged is called!");
-        InnerCameraManagerCallback::
         Camera_StatusInfo statusInfo;
         statusInfo.camera = camera_;
         MEDIA_INFO_LOG("cameraId is %{public}s", cameraStatusInfo.cameraDevice->GetID().data());
