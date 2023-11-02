@@ -357,7 +357,7 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
             if (cachedSettings_ == nullptr) {
                 cachedSettings_ = updateSettings_;
             } else {
-                MergeMetadata(cachedSettings_, settings);
+                MergeMetadata(settings, cachedSettings_);
             }
         }
         updateSettings_ = nullptr;
