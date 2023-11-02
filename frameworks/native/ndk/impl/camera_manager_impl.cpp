@@ -26,10 +26,12 @@ using namespace OHOS::CameraStandard;
 class InnerCameraManagerCallback : public CameraManagerCallback {
 public:
     InnerCameraManagerCallback(Camera_Manager* cameraManager, CameraManager_Callbacks* callback)
-        : cameraManager_(cameraManager), callback_(*callback) {
+        : cameraManager_(cameraManager), callback_(*callback)
+        {
             camera_ = new Camera_Device;
         }
-    ~InnerCameraManagerCallback() {
+    ~InnerCameraManagerCallback()
+    {
         if (camera_ != nullptr) {
             delete camera_;
             camera_ = nullptr;
@@ -66,7 +68,6 @@ private:
     CameraManager_Callbacks callback_;
     Camera_Device* camera_;
 };
-Camera_Device* InnerCameraManagerCallback::camera_ = nullptr;
 
 Camera_Manager::Camera_Manager()
 {
