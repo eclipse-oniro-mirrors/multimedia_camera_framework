@@ -309,8 +309,6 @@ class CameraService {
       this.photoOutPutCallBack();
       // 镜头状态回调
       this.onCameraStatusChange();
-      // 手电筒状态回调
-      this.onTorchStatusChange();
       // 监听CameraInput的错误事件
       this.onCameraInputChange();
       // 会话流程
@@ -478,23 +476,6 @@ class CameraService {
       session = this.captureSession;
     }
     return session;
-  }
-
-  /**
-   * 手电筒灯
-   */
-  hasTorch(torchMode: camera.TorchMode): void {
-    // 检测是否有闪关灯
-    let hasFlash = this.cameraManager.isTorchSupported();
-    Logger.debug(TAG, `hasFlash success, hasFlash: ${hasFlash}`);
-    // 检测闪光灯模式是否支持
-    let isTorchModeSupported = this.cameraManager.isTorchModeSupported(torchMode);
-    Logger.debug(TAG, `isTorchModeSupported success, isTorchModeSupported: ${isTorchModeSupported}`);
-    // 设置闪光灯模式
-    this.cameraManager.setTorchMode(torchMode);
-    // 获取当前设备的闪光灯模式
-    let nowTorchMode = this.cameraManager.getTorchMode();
-    Logger.debug(TAG, `getTorchMode success, nowTorchMode: ${nowTorchMode}`);
   }
 
   /**
@@ -1136,16 +1117,6 @@ class CameraService {
     Logger.info(TAG, 'onCameraStatusChange is called');
     this.cameraManager.on('cameraStatus', async (err: BusinessError, cameraStatusInfo: camera.CameraStatusInfo): Promise<void> => {
       Logger.info(TAG, `onCameraStatusChange cameraStatus success, cameraId: ${cameraStatusInfo.camera.cameraId}, status: ${cameraStatusInfo.status}`);
-    });
-  }
-  
-  /**
-   * 手电筒状态回调
-   */
-  onTorchStatusChange(): void {
-    this.cameraManager.on('torchStatus', (err: BusinessError, torchStatusInfo: camera.TorchStatusInfo): void => {
-      Logger.info(TAG, `onTorchStatusChange torchStatus success, isTorchAvailable: ${torchStatusInfo.isTorchAvailable},
-      isTorchActive: ${torchStatusInfo.isTorchActive},torchLevel: ${torchStatusInfo.torchLevel}`);
     });
   }
 

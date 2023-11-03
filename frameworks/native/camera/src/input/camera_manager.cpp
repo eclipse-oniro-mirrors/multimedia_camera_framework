@@ -1236,7 +1236,7 @@ TorchMode CameraManager::GetTorchMode()
 
 int32_t CameraManager::SetTorchMode(TorchMode mode)
 {
-    int32_t retCode = CAMERA_INVALID_ARG;
+    int32_t retCode = CAMERA_OPERATION_NOT_ALLOWED;
     switch (mode) {
         case TorchMode::TORCH_MODE_OFF:
             retCode = SetTorchLevel(0);
