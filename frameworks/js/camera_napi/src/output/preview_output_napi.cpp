@@ -136,6 +136,9 @@ void PreviewOutputCallback::OnSketchAvailableCall(SketchData& sketchData) const
         args[PARAM1] = CameraSketchDataNapi::CreateCameraSketchData(env_, sketchData);
         napi_get_reference_value(env, (*it)->cb_, &callback);
         napi_call_function(env_, nullptr, callback, ARGS_TWO, args, &retVal);
+        CameraSketchDataNapi* ptr;
+        napi_unwrap(env_, args[PARAM1], reinterpret_cast<void**>(&ptr));
+        delete ptr;
         if ((*it)->isOnce_) {
             napi_status status = napi_delete_reference(env, (*it)->cb_);
             CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");

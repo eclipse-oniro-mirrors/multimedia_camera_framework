@@ -19,6 +19,8 @@
 #include "camera_util.h"
 #include "image_format.h"
 #include "image_source.h"
+#include "image_type.h"
+#include "surface_type.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -26,8 +28,21 @@ namespace {
 std::shared_ptr<OHOS::Media::PixelMap> CreatePixelMapFromBuffer(const OHOS::sptr<OHOS::SurfaceBuffer>& buffer)
 {
     Media::SourceOptions srcOpt;
-    srcOpt = { .pixelFormat = Media::PixelFormat::NV21,
-        .size = { .width = buffer->GetWidth(), .height = buffer->GetHeight() } };
+    auto bufferFormat = buffer->GetFormat();
+    MEDIA_DEBUG_LOG("CreatePixelMapFromBuffer bufferFormat %{public}d", bufferFormat);
+    Media::PixelFormat imageFormat;
+    switch (bufferFormat) {
+        case GraphicPixelFormat::GRAPHIC_PIXEL_FMT_YCBCR_420_SP:
+            imageFormat = Media::PixelFormat::NV21;
+            break;
+        case GraphicPixelFormat::GRAPHIC_PIXEL_FMT_YCRCB_420_SP:
+            imageFormat = Media::PixelFormat::NV12;
+            break;
+        default:
+            imageFormat = Media::PixelFormat::NV12;
+            break;
+    }
+    srcOpt = { .pixelFormat = imageFormat, .size = { .width = buffer->GetWidth(), .height = buffer->GetHeight() } };
     uint32_t errorCode = Media::SUCCESS;
     auto imageSource = Media::ImageSource::CreateImageSource(
         static_cast<uint8_t*>(buffer->GetVirAddr()), buffer->GetSize(), srcOpt, errorCode);
