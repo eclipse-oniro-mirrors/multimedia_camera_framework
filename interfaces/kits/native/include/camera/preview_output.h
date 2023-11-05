@@ -81,40 +81,77 @@ typedef void (*OH_PreviewOutput_OnError)(Camera_PreviewOutput* previewOutput, Ca
  * @version 1.0
  */
 typedef struct PreviewOutput_Callbacks {
+    /**
+     * Preview output frame start event.
+     */
     OH_PreviewOutput_OnFrameStart onFrameStart;
+
+    /**
+     * Preview output frame end event.
+     */
     OH_PreviewOutput_OnFrameEnd onFrameEnd;
+
+    /**
+     * Preview output error event.
+     */
     OH_PreviewOutput_OnError onError;
 } PreviewOutput_Callbacks;
 
 /**
+ * @brief Register preview output change event callback.
+ *
+ * @param previewOutput the {@link Camera_PreviewOutput} instance.
+ * @param callback the {@link PreviewOutput_Callbacks} to be registered.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
  * @since 11
- * @version 1.0
  */
 Camera_ErrorCode OH_PreviewOutput_RegisterCallback(Camera_PreviewOutput* previewOutput,
     PreviewOutput_Callbacks* callback);
 
 /**
+ * @brief Unregister preview output change event callback.
+ *
+ * @param previewOutput the {@link Camera_PreviewOutput} instance.
+ * @param callback the {@link PreviewOutput_Callbacks} to be unregistered.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
  * @since 11
- * @version 1.0
  */
 Camera_ErrorCode OH_PreviewOutput_UnregisterCallback(Camera_PreviewOutput* previewOutput,
     PreviewOutput_Callbacks* callback);
 
 /**
+ * @brief Start preview output.
+ *
+ * @param previewOutput the {@link Camera_PreviewOutput} instance to be started.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SESSION_NOT_CONFIG} if the capture session not config.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
  * @since 11
- * @version 1.0
  */
 Camera_ErrorCode OH_PreviewOutput_Start(Camera_PreviewOutput* previewOutput);
 
 /**
+ * @brief Stop preview output.
+ *
+ * @param previewOutput the {@link Camera_PreviewOutput} instance to be stoped.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
  * @since 11
- * @version 1.0
  */
 Camera_ErrorCode OH_PreviewOutput_Stop(Camera_PreviewOutput* previewOutput);
 
 /**
+ * @brief Release preview output.
+ *
+ * @param previewOutput the {@link Camera_PreviewOutput} instance to be released.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
  * @since 11
- * @version 1.0
  */
 Camera_ErrorCode OH_PreviewOutput_Release(Camera_PreviewOutput* previewOutput);
 

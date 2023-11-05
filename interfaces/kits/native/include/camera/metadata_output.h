@@ -128,7 +128,6 @@ Camera_ErrorCode OH_MetadataOutput_Start(Camera_MetadataOutput* metadataOutput);
  * @param metadataOutput the {@link Camera_MetadataOutput} instance to be stoped.
  * @return {@link #CAMERA_OK} if the method call succeeds.
  *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
- *         {@link #CAMERA_SESSION_NOT_CONFIG} if the capture session not config.
  *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
  * @since 11
  */
