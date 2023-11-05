@@ -15,7 +15,7 @@
 
 /**
  * @file photo_output.h
- * 
+ *
  * @brief Declare the photo output concepts.
  *
  * @library libcamera_ndk.so

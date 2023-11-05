@@ -15,7 +15,7 @@
 
 /**
  * @file capture_session.h
- * 
+ *
  * @brief Declare the capture Session concepts.
  *
  * @library libcamera_ndk.so

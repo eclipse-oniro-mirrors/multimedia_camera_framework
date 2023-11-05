@@ -15,7 +15,7 @@
 
 /**
  * @file preview_output.h
- * 
+ *
  * @brief Declare the preview output concepts.
  *
  * @library libcamera_ndk.so

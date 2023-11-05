@@ -15,7 +15,7 @@
 
 /**
  * @file camera_input.h
- * 
+ *
  * @brief Declare the camera input concepts.
  *
  * @library libcamera_ndk.so

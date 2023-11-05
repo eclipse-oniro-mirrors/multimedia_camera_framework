@@ -15,7 +15,7 @@
 
 /**
  * @file camera.h
- * 
+ *
  * @brief Declare the camera base concepts.
  *
  * @library libcamera_ndk.so
@@ -438,7 +438,7 @@ typedef enum Camera_MetadataObjectType {
 
 /**
  * @brief Size parameter.
- * 
+ *
  * @since 11
  * @version 1.0
  */
@@ -456,7 +456,7 @@ typedef struct Camera_Size {
 
 /**
  * @brief Profile for camera streams.
- * 
+ *
  * @since 11
  * @version 1.0
  */
@@ -474,7 +474,7 @@ typedef struct Camera_Profile {
 
 /**
  * @brief Frame rate range.
- * 
+ *
  * @since 11
  * @version 1.0
  */
@@ -492,7 +492,7 @@ typedef struct Camera_FrameRateRange {
 
 /**
  * @brief Video profile.
- * 
+ *
  * @since 11
  * @version 1.0
  */
@@ -515,7 +515,7 @@ typedef struct Camera_VideoProfile {
 
 /**
  * @brief Camera output capability.
- * 
+ *
  * @since 11
  * @version 1.0
  */
@@ -563,7 +563,7 @@ typedef struct Camera_OutputCapability {
 
 /**
  * @brief Camera device object.
- * 
+ *
  * @since 11
  * @version 1.0
  */
@@ -591,7 +591,7 @@ typedef struct Camera_Device {
 
 /**
  * @brief Camera status info.
- * 
+ *
  * @since 11
  * @version 1.0
  */
@@ -609,7 +609,7 @@ typedef struct Camera_StatusInfo {
 
 /**
  * @brief Point parameter.
- * 
+ *
  * @since 11
  * @version 1.0
  */
@@ -627,7 +627,7 @@ typedef struct Camera_Point {
 
 /**
  * @brief Photo capture location.
- * 
+ *
  * @since 11
  * @version 1.0
  */
@@ -650,7 +650,7 @@ typedef struct Camera_Location {
 
 /**
  * @brief Photo capture options to set.
- * 
+ *
  * @since 11
  * @version 1.0
  */
@@ -678,7 +678,7 @@ typedef struct Camera_PhotoCaptureSetting {
 
 /**
  * @brief Frame shutter callback info.
- * 
+ *
  * @since 11
  * @version 1.0
  */
@@ -696,7 +696,7 @@ typedef struct Camera_FrameShutterInfo {
 
 /**
  * @brief Capture end info.
- * 
+ *
  * @since 11
  * @version 1.0
  */
@@ -714,7 +714,7 @@ typedef struct Camera_CaptureEndInfo {
 
 /**
  * @brief Rectangle definition.
- * 
+ *
  * @since 11
  * @version 1.0
  */
@@ -742,7 +742,7 @@ typedef struct Camera_Rect {
 
 /**
  * @brief Metadata object basis.
- * 
+ *
  * @since 11
  * @version 1.0
  */

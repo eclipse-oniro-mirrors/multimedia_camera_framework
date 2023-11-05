@@ -15,7 +15,7 @@
 
 /**
  * @file video_output.h
- * 
+ *
  * @brief Declare the video output concepts.
  *
  * @library libcamera_ndk.so

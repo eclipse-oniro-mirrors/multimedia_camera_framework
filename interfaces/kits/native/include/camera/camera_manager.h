@@ -15,7 +15,7 @@
 
 /**
  * @file camera_manager.h
- * 
+ *
  * @brief Declare the camera manager concepts.
  *
  * @library libcamera_ndk.so

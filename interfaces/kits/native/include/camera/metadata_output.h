@@ -15,7 +15,7 @@
 
 /**
  * @file metadata_output.h
- * 
+ *
  * @brief Declare the metadata output concepts.
  *
  * @library libcamera_ndk.so
