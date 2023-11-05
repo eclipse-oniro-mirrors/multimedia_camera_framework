@@ -33,6 +33,7 @@
 #include "camera_napi_utils.h"
 #include "camera_manager_callback_napi.h"
 #include "camera_mute_listener_napi.h"
+#include "torch_listener_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -63,6 +64,10 @@ public:
     static napi_value CreatePhotoOutputInstance(napi_env env, napi_callback_info info);
     static napi_value CreateVideoOutputInstance(napi_env env, napi_callback_info info);
     static napi_value CreateMetadataOutputInstance(napi_env env, napi_callback_info info);
+    static napi_value IsTorchSupported(napi_env env, napi_callback_info info);
+    static napi_value IsTorchModeSupported(napi_env env, napi_callback_info info);
+    static napi_value GetTorchMode(napi_env env, napi_callback_info info);
+    static napi_value SetTorchMode(napi_env env, napi_callback_info info);
     static napi_value On(napi_env env, napi_callback_info info);
     static napi_value Off(napi_env env, napi_callback_info info);
     static napi_value Once(napi_env env, napi_callback_info info);
@@ -83,6 +88,7 @@ private:
     sptr<CameraManager> cameraManager_;
     std::shared_ptr<CameraManagerCallbackNapi> cameraManagerCallback_;
     std::shared_ptr<CameraMuteListenerNapi> cameraMuteListener_;
+    std::shared_ptr<TorchListenerNapi> torchListener_;
     static thread_local uint32_t cameraManagerTaskId;
 };
 

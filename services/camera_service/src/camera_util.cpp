@@ -123,6 +123,39 @@ int32_t HdiToServiceError(CamRetCode ret)
     return err;
 }
 
+int32_t HdiToServiceErrorV1_2(HDI::Camera::V1_2::CamRetCode ret)
+{
+    enum CamServiceError err = CAMERA_UNKNOWN_ERROR;
+
+    switch (ret) {
+        case HDI::Camera::V1_2::NO_ERROR:
+            err = CAMERA_OK;
+            break;
+        case HDI::Camera::V1_2::CAMERA_BUSY:
+            err = CAMERA_DEVICE_BUSY;
+            break;
+        case HDI::Camera::V1_2::INVALID_ARGUMENT:
+            err = CAMERA_INVALID_ARG;
+            break;
+        case HDI::Camera::V1_2::CAMERA_CLOSED:
+            err = CAMERA_DEVICE_CLOSED;
+            break;
+        case HDI::Camera::V1_2::DEVICE_ERROR:
+            err = CAMERA_DEVICE_ERROR;
+            break;
+        case HDI::Camera::V1_2::NO_PERMISSION:
+            err = CAMERA_NO_PERMISSION;
+            break;
+        case HDI::Camera::V1_2::DEVICE_CONFLICT:
+            err = CAMERA_DEVICE_CONFLICT;
+            break;
+        default:
+            MEDIA_ERR_LOG("HdiToServiceErrorV1_2() error code from hdi: %{public}d", ret);
+            break;
+    }
+    return err;
+}
+
 std::string CreateMsg(const char* format, ...)
 {
     va_list args;

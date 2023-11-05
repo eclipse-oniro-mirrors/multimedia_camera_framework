@@ -722,6 +722,119 @@ declare namespace camera {
      * @since 10
      */
     createDeferredPreviewOutput(profile: Profile): PreviewOutput;
+
+    /**
+     * Check if the device has a torch.
+     *
+     * @return { boolean } this value that specifies whether the device has a torch.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 11
+     */
+    isTorchSupported(): boolean;
+    
+    /**
+     * Check if a specifies torch mode is supported.
+     * @param { TorchMode } mode torch mode.
+     * @return { boolean } is torch mode supported.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 11
+     */
+    isTorchModeSupported(mode: TorchMode): boolean;
+    
+    /**
+     * Get current torch mode.
+     *
+     * @return { boolean } torch mode.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 11
+     */
+    getTorchMode(): TorchMode;
+    
+    /**
+     * Get current torch mode.
+     *
+     * @param { TorchMode } mode torch mode.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 11
+     */
+    setTorchMode(mode: TorchMode): void;
+    
+    /**
+     * Subscribes torch status change event callback.
+     * 
+     * @param { 'torchStatusChange' } type Event type
+     * @param { AsyncCallback<TorchStatusInfo> } callback Callback used to get the torch state change
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 11
+     */
+    on(type: 'torchStatusChange', callback: AsyncCallback<TorchStatusInfo>): void;
+  }
+  /**
+   * Torch status info.
+   *
+   * @typedef TorchStatusInfo
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 11
+   */
+  interface TorchStatusInfo {
+  
+    /**
+     * is torch available
+     *
+     * @type { boolean }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 11
+     */
+    readonly isTorchAvailable: boolean;
+
+    /**
+     * is torch active
+     *
+     * @type { boolean }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 11
+     */
+    readonly isTorchActive: boolean;
+
+    /**
+     * the current torch brightness level.
+     *
+     * @type { number }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 11
+     */
+    readonly torchLevel: number;
+  }
+  /**
+   * Enum for torch mode.
+   *
+   * @enum { number }
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 11
+   */
+  enum TorchMode {
+    /**
+     * The device torch is always off.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 11
+     */
+    OFF = 0,
+    /**
+     * The device torch is always on.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 11
+     */
+    ON = 1,
+    /**
+     * The device continuously monitors light levels and uses the torch when necessary.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 11
+     */
+    AUTO = 2
   }
 
   /**

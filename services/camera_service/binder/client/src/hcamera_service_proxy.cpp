@@ -128,6 +128,28 @@ int32_t HCameraServiceProxy::SetMuteCallback(sptr<ICameraMuteServiceCallback>& c
     return error;
 }
 
+int32_t HCameraServiceProxy::SetTorchCallback(sptr<ITorchServiceCallback>& callback)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    if (callback == nullptr) {
+        MEDIA_ERR_LOG("HCameraServiceProxy SetTorchCallback callback is null");
+        return IPC_PROXY_ERR;
+    }
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteRemoteObject(callback->AsObject());
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_CALLBACK), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy SetTorchCallback failed, error: %{public}d", error);
+    }
+
+    return error;
+}
+
 int32_t HCameraServiceProxy::CreateCaptureSession(sptr<ICaptureSession>& session, int32_t operationMode)
 {
     MessageParcel data;
@@ -413,6 +435,24 @@ int32_t HCameraServiceProxy::IsCameraMuted(bool &muteMode)
 
     muteMode = reply.ReadBool();
     MEDIA_DEBUG_LOG("HCameraServiceProxy IsCameraMuted Read muteMode is %{public}d", muteMode);
+    return error;
+}
+
+int32_t HCameraServiceProxy::SetTorchLevel(float level)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteFloat(level);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_LEVEL),
+        data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy::SetTorchLevel Set listener obj failed, error: %{public}d", error);
+        return error;
+    }
     return error;
 }
 } // namespace CameraStandard

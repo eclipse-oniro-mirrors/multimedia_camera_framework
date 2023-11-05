@@ -45,7 +45,10 @@ enum CamServiceError {
     CAMERA_INVALID_STATE,
     CAMERA_UNKNOWN_ERROR,
     CAMERA_DEVICE_PREEMPTED,
-    CAMERA_OPERATION_NOT_ALLOWED
+    CAMERA_OPERATION_NOT_ALLOWED,
+    CAMERA_DEVICE_ERROR,
+    CAMERA_NO_PERMISSION,
+    CAMERA_DEVICE_CONFLICT
 };
 
 enum ClientPriorityLevels {
@@ -94,6 +97,8 @@ inline void DisableJeMalloc()
 int32_t SetOpMode(int32_t opMode);
 
 int32_t HdiToServiceError(CamRetCode ret);
+
+int32_t HdiToServiceErrorV1_2(HDI::Camera::V1_2::CamRetCode ret);
 
 std::string CreateMsg(const char* format, ...);
 

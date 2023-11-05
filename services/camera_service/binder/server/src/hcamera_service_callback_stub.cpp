@@ -60,6 +60,33 @@ int HCameraServiceCallbackStub::HandleOnFlashlightStatusChanged(MessageParcel& d
     return OnFlashlightStatusChanged(cameraId, (FlashStatus)status);
 }
 
+int HTorchServiceCallbackStub::OnRemoteRequest(
+    uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
+{
+    int errCode = -1;
+
+    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    switch (code) {
+        case static_cast<uint32_t>(TorchServiceCallbackInterfaceCode::TORCH_CALLBACK_TORCH_STATUS_CHANGE):
+            errCode = HTorchServiceCallbackStub::HandleOnTorchStatusChange(data);
+            break;
+        default:
+            MEDIA_ERR_LOG("HTorchServiceCallbackStub request code %{public}u not handled", code);
+            errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+            break;
+    }
+
+    return errCode;
+}
+
+int HTorchServiceCallbackStub::HandleOnTorchStatusChange(MessageParcel& data)
+{
+    std::string cameraId = data.ReadString();
+    int32_t status = data.ReadInt32();
+
+    return OnTorchStatusChange((TorchStatus)status);
+}
+
 int HCameraMuteServiceCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {

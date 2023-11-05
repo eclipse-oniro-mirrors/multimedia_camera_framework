@@ -61,6 +61,10 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
             errCode = HCameraServiceStub::HandleSetMuteCallback(data, reply);
             break;
         }
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_CALLBACK): {
+            errCode = HCameraServiceStub::HandleSetTorchCallback(data, reply);
+            break;
+        }
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_CAMERAS):
             errCode = HCameraServiceStub::HandleGetCameras(data, reply);
             break;
@@ -98,6 +102,9 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
             break;
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_PRE_LAUNCH_CAMERA):
             errCode = HCameraServiceStub::HandleSetPrelaunchConfig(data, reply);
+            break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_LEVEL):
+            errCode = HCameraServiceStub::HandleSetTorchLevel(data, reply);
             break;
         default:
             MEDIA_ERR_LOG("HCameraServiceStub request code %{public}d not handled", code);
@@ -206,6 +213,17 @@ int HCameraServiceStub::HandleSetMuteCallback(MessageParcel& data, MessageParcel
     auto callback = iface_cast<ICameraMuteServiceCallback>(remoteObject);
 
     return SetMuteCallback(callback);
+}
+
+int HCameraServiceStub::HandleSetTorchCallback(MessageParcel& data, MessageParcel& reply)
+{
+    auto remoteObject = data.ReadRemoteObject();
+    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCameraServiceStub HandleSetTorchCallback TorchServiceCallback is null");
+
+    auto callback = iface_cast<ITorchServiceCallback>(remoteObject);
+
+    return SetTorchCallback(callback);
 }
 
 int HCameraServiceStub::HandleCreateCaptureSession(MessageParcel& data, MessageParcel& reply)
@@ -332,6 +350,15 @@ int HCameraServiceStub::HandleCreateVideoOutput(MessageParcel& data, MessageParc
     CHECK_AND_RETURN_RET_LOG(reply.WriteRemoteObject(videoOutput->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
         "HCameraServiceStub HandleCreateVideoOutput Write videoOutput obj failed");
 
+    return errCode;
+}
+
+int HCameraServiceStub::HandleSetTorchLevel(MessageParcel &data, MessageParcel &reply)
+{
+    MEDIA_DEBUG_LOG("HCameraServiceStub HandleSetTorchLevel enter");
+    float level = data.ReadFloat();
+    int errCode = SetTorchLevel(level);
+    MEDIA_INFO_LOG("HCameraServiceStub HandleSetTorchLevel result: %{public}d", errCode);
     return errCode;
 }
 

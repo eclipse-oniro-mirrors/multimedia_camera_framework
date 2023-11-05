@@ -202,6 +202,11 @@ public:
             MEDIA_DEBUG_LOG("MockStatusCallback::OnFlashlightStatus");
             return;
         }
+        void OnTorchStatus(TorchStatus status) override
+        {
+            MEDIA_DEBUG_LOG("MockStatusCallback::OnTorchStatus");
+            return;
+        }
     };
 
     explicit MockHCameraHostManager(StatusCallback* statusCallback) : HCameraHostManager(statusCallback)

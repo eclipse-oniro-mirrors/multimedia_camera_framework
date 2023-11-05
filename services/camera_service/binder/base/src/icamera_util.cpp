@@ -66,6 +66,15 @@ int32_t ServiceToCameraError(int32_t ret)
         case CAMERA_OPERATION_NOT_ALLOWED:
             err = CameraErrorCode::OPERATION_NOT_ALLOWED;
             break;
+        case CAMERA_DEVICE_ERROR:
+            err = CameraErrorCode::OPERATION_NOT_ALLOWED;
+            break;
+        case CAMERA_NO_PERMISSION:
+            err = CameraErrorCode::OPERATION_NOT_ALLOWED;
+            break;
+        case CAMERA_DEVICE_CONFLICT:
+            err = CameraErrorCode::OPERATION_NOT_ALLOWED;
+            break;
         case IPC_PROXY_ERR:
         case IPC_PROXY_DEAD_OBJECT_ERR:
         case IPC_PROXY_NULL_INVOKER_ERR:

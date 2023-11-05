@@ -15,7 +15,7 @@
 
 #include "hcamera_host_manager.h"
 
-#include "v1_0/icamera_host_callback.h"
+#include "v1_2/icamera_host_callback.h"
 #include "metadata_utils.h"
 #include "camera_util.h"
 #include "hdf_device_class.h"
@@ -38,7 +38,7 @@ struct HCameraHostManager::CameraDeviceInfo {
     ~CameraDeviceInfo() = default;
 };
 
-class HCameraHostManager::CameraHostInfo : public ICameraHostCallback {
+class HCameraHostManager::CameraHostInfo : public OHOS::HDI::Camera::V1_2::ICameraHostCallback {
 public:
     class CameraHostDeathRecipient : public IRemoteObject::DeathRecipient {
     public:
@@ -72,12 +72,15 @@ public:
     int32_t OpenCamera(std::string& cameraId, const sptr<ICameraDeviceCallback>& callback,
                        sptr<OHOS::HDI::Camera::V1_1::ICameraDevice>& pDevice);
     int32_t SetFlashlight(const std::string& cameraId, bool isEnable);
+    int32_t SetTorchLevel(float level);
     int32_t Prelaunch(const std::string& cameraId);
     void NotifyDeviceStateChangeInfo(int notifyType, int deviceState);
+    bool IsLocalCameraHostInfo();
 
     // CameraHostCallbackStub
     int32_t OnCameraStatus(const std::string& cameraId, HDI::Camera::V1_0::CameraStatus status) override;
     int32_t OnFlashlightStatus(const std::string& cameraId, FlashlightStatus status) override;
+    int32_t OnFlashlightStatusV1_2(FlashlightStatus status) override;
     int32_t OnCameraEvent(const std::string &cameraId, CameraEvent event) override;
 
 private:
@@ -127,7 +130,7 @@ bool HCameraHostManager::CameraHostInfo::Init()
     }
     // Get cameraHost veresion
     cameraHostProxy_->GetVersion(majorVer_, minorVer_);
-    cameraHostProxy_->SetCallback(this);
+    cameraHostProxy_->SetCallbackV1_2(this);
     sptr<CameraHostDeathRecipient> cameraHostDeathRecipient = new CameraHostDeathRecipient(this);
     const sptr<IRemoteObject> &remote = OHOS::HDI::hdi_objcast<ICameraHost>(cameraHostProxy_);
     bool result = remote->AddDeathRecipient(cameraHostDeathRecipient);
@@ -260,6 +263,21 @@ int32_t HCameraHostManager::CameraHostInfo::SetFlashlight(const std::string& cam
     return CAMERA_OK;
 }
 
+int32_t HCameraHostManager::CameraHostInfo::SetTorchLevel(float level)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (cameraHostProxy_ == nullptr) {
+        MEDIA_ERR_LOG("CameraHostInfo::SetTorchLevel cameraHostProxy_ is null");
+        return CAMERA_UNKNOWN_ERROR;
+    }
+    HDI::Camera::V1_2::CamRetCode rc = (HDI::Camera::V1_2::CamRetCode)(cameraHostProxy_->SetFlashlightV1_2(level));
+    if (rc != HDI::Camera::V1_2::NO_ERROR) {
+        MEDIA_ERR_LOG("CameraHostInfo::SetTorchLevel failed with error Code:%{public}d", rc);
+        return HdiToServiceErrorV1_2(rc);
+    }
+    return CAMERA_OK;
+}
+
 int32_t HCameraHostManager::CameraHostInfo::Prelaunch(const std::string& cameraId)
 {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -360,6 +378,38 @@ int32_t HCameraHostManager::CameraHostInfo::OnFlashlightStatus(const std::string
     return CAMERA_OK;
 }
 
+int32_t HCameraHostManager::CameraHostInfo::OnFlashlightStatusV1_2(FlashlightStatus status)
+{
+    if ((cameraHostManager_ == nullptr) || (cameraHostManager_->statusCallback_ == nullptr)) {
+        MEDIA_WARNING_LOG("CameraHostInfo::OnFlashlightStatusV1_2 with status %{public}d "
+                          "failed due to no callback or cameraHostManager_ is null", status);
+        return CAMERA_UNKNOWN_ERROR;
+    }
+    TorchStatus torchStatus = TORCH_STATUS_OFF;
+    switch (status) {
+        case FLASHLIGHT_OFF:
+            torchStatus = TORCH_STATUS_OFF;
+            MEDIA_INFO_LOG("CameraHostInfo::OnFlashlightStatusV1_2, torch status is off");
+            break;
+
+        case FLASHLIGHT_ON:
+            torchStatus = TORCH_STATUS_ON;
+            MEDIA_INFO_LOG("CameraHostInfo::OnFlashlightStatusV1_2, torch status is on");
+            break;
+
+        case FLASHLIGHT_UNAVAILABLE:
+            torchStatus = TORCH_STATUS_UNAVAILABLE;
+            MEDIA_INFO_LOG("CameraHostInfo::OnFlashlightStatusV1_2, torch status is unavailable");
+            break;
+
+        default:
+            MEDIA_ERR_LOG("CameraHostInfo::OnFlashlightStatusV1_2, Unknown flashlight status: %{public}d", status);
+            return CAMERA_UNKNOWN_ERROR;
+    }
+    cameraHostManager_->statusCallback_->OnTorchStatus(torchStatus);
+    return CAMERA_OK;
+}
+
 int32_t HCameraHostManager::CameraHostInfo::OnCameraEvent(const std::string &cameraId, CameraEvent event)
 {
     if ((cameraHostManager_ == nullptr) || (cameraHostManager_->statusCallback_ == nullptr)) {
@@ -424,6 +474,24 @@ void HCameraHostManager::CameraHostInfo::RemoveDevice(const std::string& cameraI
     devices_.erase(std::remove_if(devices_.begin(), devices_.end(),
         [&cameraId](const auto& devInfo) { return devInfo->cameraId == cameraId; }),
         devices_.end());
+}
+
+bool HCameraHostManager::CameraHostInfo::IsLocalCameraHostInfo()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (const auto& deviceInfo : devices_) {
+        std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility = deviceInfo->ability;
+        camera_metadata_item_t item;
+        int ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(),
+        OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
+        if (ret == CAM_META_SUCCESS) {
+            if (static_cast<camera_connection_type_t>(item.data.u8[0]) == OHOS_CAMERA_CONNECTION_TYPE_BUILTIN) {
+                MEDIA_INFO_LOG("CameraHostInfo::IsLocalCameraHostInfo succeed");
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 HCameraHostManager::HCameraHostManager(StatusCallback* statusCallback)
@@ -599,6 +667,16 @@ int32_t HCameraHostManager::OpenCameraDevice(std::string &cameraId,
     return cameraHostInfo->OpenCamera(cameraId, callback, pDevice);
 }
 
+int32_t HCameraHostManager::SetTorchLevel(float level)
+{
+    auto cameraHostInfo = FindLocalCameraHostInfo();
+    if (cameraHostInfo == nullptr) {
+        MEDIA_ERR_LOG("HCameraHostManager::SetTorchLevel failed with not exist support device info");
+        return CAMERA_INVALID_ARG;
+    }
+    return cameraHostInfo->SetTorchLevel(level);
+}
+
 int32_t HCameraHostManager::SetFlashlight(const std::string& cameraId, bool isEnable)
 {
     auto cameraHostInfo = FindCameraHostInfo(cameraId);
@@ -702,6 +780,17 @@ sptr<HCameraHostManager::CameraHostInfo> HCameraHostManager::FindCameraHostInfo(
     std::lock_guard<std::mutex> lock(mutex_);
     for (const auto& cameraHostInfo : cameraHostInfos_) {
         if (cameraHostInfo->IsCameraSupported(cameraId)) {
+            return cameraHostInfo;
+        }
+    }
+    return nullptr;
+}
+
+sptr<HCameraHostManager::CameraHostInfo> HCameraHostManager::FindLocalCameraHostInfo()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (const auto& cameraHostInfo : cameraHostInfos_) {
+        if (cameraHostInfo->IsLocalCameraHostInfo()) {
             return cameraHostInfo;
         }
     }
