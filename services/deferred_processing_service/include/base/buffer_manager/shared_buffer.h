@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,10 +16,7 @@
 #ifndef OHOS_DEFERRED_PROCESSING_SERVICE_SHARED_BUFFER_H
 #define OHOS_DEFERRED_PROCESSING_SERVICE_SHARED_BUFFER_H
 
-#include <atomic>
-#include <cstdint>
 #include <memory>
-#include <mutex>
 #include <string>
 
 namespace OHOS {
@@ -58,7 +55,7 @@ private:
     std::atomic<bool> pinned_;
 }
 using SharedBufferPtr = std::shared_ptr<SharedBuffer>;
-} //namespace DeferredProcessing
+} // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_DEFERRED_PROCESSING_SERVICE_SHARED_BUFFER_H

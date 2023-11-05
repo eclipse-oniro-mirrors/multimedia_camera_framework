@@ -67,7 +67,7 @@ private:
     std::map<SharedBuffer*, uint32_t> decayingBuffers_;
 };
 using BufferPoolPtr = std::shared_ptr<BufferPool>;
-} //namespace DeferredProcessing
+} // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_DEFERRED_PROCESSING_SERVICE_BUFFER_POOL_H

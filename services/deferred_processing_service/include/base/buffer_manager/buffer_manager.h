@@ -43,7 +43,7 @@ private:
     std::mutex mutex_;
     std::map<int32_t, BufferPoolPtr> bufferPools_;
 };
-} //namespace DeferredProcessing
+} // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_DEFERRED_PROCESSING_SERVICE_BUFFER_MANAGER_H

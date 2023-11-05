@@ -27,25 +27,25 @@ std::unique_ptr<BufferManager> BufferManager::Create(const std:;string& name)
 
 BufferManager::BufferManager(const std::string& name)
 {
-    //DPS_LOG
+    // DPS_LOG
 }
 BufferManager::~BufferManager()
 {
-    //DPS_LOG
+    // DPS_LOG
     std::lock_guard<std::mutex> lock(mutex_);
     bufferPools_.clear();
 }
 
 SharedBufferPtr BufferManager::GetBuffer(int64_t msgSize)
 {
-    //DPS_LOG
+    // DPS_LOG
     auto& bufferPoolPtr = GetBufferPool(msgSize);
     return bufferPoolPtr->AllocateBuffer();
 }
 
 SharedBufferPtr BufferManager::TryGetBuffer(int64_t msgSize)
 {
-    //DPS_LOG
+    // DPS_LOG
     auto& bufferPoolPtr = GetBufferPool(msgSize);
     return bufferPoolPtr->AllocateBufferNonBlocking();
 }
@@ -64,12 +64,9 @@ BufferPoolPtr& BufferManager::GetBufferPool(int64_t msgSize)
 }
 BufferPoolPtr BufferManager::CreateBufferPoolUnlocked(int32_t capacity, int64_t msgSize_)
 {
-    //DPS_LOG
+    // DPS_LOG
     return BufferPool::Create(capacity, msgSize_);
 }
-
-
-
-} //namespace DeferredProcessing
+} // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

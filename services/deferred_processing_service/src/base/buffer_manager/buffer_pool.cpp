@@ -13,9 +13,6 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_DEFERRED_PROCESSING_SERVICE_BUFFER_POOL_H
-#define OHOS_DEFERRED_PROCESSING_SERVICE_BUFFER_POOL_H
-
 #include "buffer_pool.h"
 #include <new>
 
@@ -27,7 +24,7 @@ namespace {
 namespace DeferredProcessing {
 std::shared_ptr<BufferPool> BufferPool::Create(int32_t capacity, int64_t msgSize)
 {
-    //dps_log
+    // DPS_LOG
     auto pool = std::make_shared<BufferPool>(capacity, msgSize);
     if (pool && pool->Initialize()) {
         pool = nullptr;
@@ -46,13 +43,13 @@ BufferPool::BufferPool(int32_t capacity, int64_t msgSize)
       timeBroker_(nullptr),
       decayingBuffers_()
 {
-    //DPS_LOG
+    // DPS_LOG
 }
 
 BufferPool::~BufferPool()
 {
     std::unique_lock<std::mutex> lock(mutex_);
-    //DPS_LOG
+    // DPS_LOG
     initialized_ = false;
     isActive_ = false;
     cv_.notify_one();
@@ -68,12 +65,12 @@ BufferPool::~BufferPool()
 bool BufferPool::Initialize()
 {
     std::unique_lock<std::mutex> lock(mutex_);
-    //DPS_LOG
+    // DPS_LOG
     if (initialized_) {
         return true;
     }
     if (capacity_ <= 0 || msgSize_ <= 0) {
-        //DPS_LOG
+        // DPS_LOG
         return false;
     }
     freeBuffers_.clear();
@@ -85,9 +82,9 @@ bool BufferPool::Initialize()
 void BufferPool::SetActive(bool active)
 {
     std::unique_lock<std::mutex> lock(mutex_);
-    //DPS_LOG
+    // DPS_LOG
     if (!initialized_) {
-        //DPS_LOG
+        // DPS_LOG
         return;
     }
     if (!active) {
@@ -99,28 +96,28 @@ void BufferPool::SetActive(bool active)
 int32_t BufferPool::GetSize()
 {
     std::unique_lock<std::mutex> lock(mutex_);
-    //DPS_LOG
+    // DPS_LOG
     return static_cast<int32_t>(freeBuffers_.size());
 }
 
 int32_t BufferPool::GetCapacity()
 {
     std::unique_lock<std::mutex> lock(mutex_);
-    //DPS_LOG
+    // DPS_LOG
     return capacity_;
 }
 
 bool BufferPool::Empty()
 {
     std::unique_lock<std::mutex> lock(mutex_);
-    //DPS_LOG
+    // DPS_LOG
     return freeBuffers_.empty();
 }
 
 void BufferPool::RecycleBuffer(std::unique_ptr<SharedBuffer> buffer)
 {
     std::unique_lock<std::mutex> lock(mutex_);
-    //DPS_LOG
+    // DPS_LOG
     buffer->Reset();
     StartDecayTimerUnlocked(buffer.get());
     freeBuffers_.emplace_back(std::move(buffer));
@@ -131,7 +128,7 @@ void BufferPool::RecycleBuffer(std::unique_ptr<SharedBuffer> buffer)
 SharedBufferPtr BufferPool::AllocateBuffer()
 {
     std::unique_lock<std::mutex> lock(mutex_);
-    //DPS_LOG
+    // DPS_LOG
     allocInProgress_ = true;
     if (isActive_ && !HasMoreBuffersUnlocked()) {
         cv_.wait(lock, [this] { return !isActive_ || HasMoreBuffersUnlocked(); });
@@ -166,26 +163,26 @@ bool BufferPool::CanExpandBufferUnlocked()
 
 void BufferPool::ExpandBufferUnlocked()
 {
-    //DPS_LOG
+    // DPS_LOG
     if (isActive_ && CanExpandBufferUnlocked()) {
         auto bufferNmae = "BufferPool_" + std::to_string(msgSize_) + "_" + std::string(freeBuffers_.size());
         auto bufferPtr = SharedBuffer::Create(bufferNmae, msgSizeAligned_);
         if (bufferPtr) {
             freeBuffers_.emplace_back(std::move(bufferPtr));
         } else {
-            //DPS_LOG
+            // DPS_LOG
         }
     }
 }
 
 SharedBufferPtr BufferPool::AllocateBufferUnlocked()
 {
-    //DPS_LOG
+    // DPS_LOG
     if (freeBuffers_.empty() && CanExpandBufferUnlocked()) {
         ExpandBufferUnlocked();
     }
     if (freeBuffers_.empty()) {
-        //DPS_LOG
+        // DPS_LOG
         return nullptr;
     }
     std::weak_ptr<BufferPool> weakRef(shared_from_this());
@@ -223,17 +220,17 @@ void BufferPool::StartDecayTimerUnlocked(SharedBuffer* bufferPtr)
         },
         handle);
     if (ret) {
-        //DPS_LOG
+        // DPS_LOG
         decayingBuffers_.emplace(bufferPtr, handle);
     } else {
-        //DPS_LOG
+        // DPS_LOG
     }
 }
 
 void BufferPool::StopDecayTimerUnlocked(SharedBuffer* bufferPtr)
 {
     if (decayingBuffers_.count(bufferPtr) > 0) {
-        //DPS_LOG
+        // DPS_LOG
         timeBroker_->DeregisterCallback(decayingBuffers_[bufferPtr]);
         decayingBuffers_.erase(bufferPtr);
     }
@@ -242,7 +239,7 @@ void BufferPool::StopDecayTimerUnlocked(SharedBuffer* bufferPtr)
 void BufferPool::FreePhysicalMemory(uint32_t handle)
 {
     std::unique_lock<std::mutex> lock(mutex_);
-    //DPS_LOG
+    // DPS_LOG
     for (auto it = decayingBuffers_.begin(); it != decayingBuffers_.end(); ++it) {
         if (it->second == handle) {
             auto bufferPtr = it->first;
@@ -252,6 +249,6 @@ void BufferPool::FreePhysicalMemory(uint32_t handle)
         }
     }
 }
-} //namespace DeferredProcessing
+} // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
