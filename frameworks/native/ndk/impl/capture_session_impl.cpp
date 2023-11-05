@@ -172,7 +172,9 @@ Camera_ErrorCode Camera_CaptureSession::SetVideoStabilizationMode(Camera_VideoSt
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetVideoStabilizationMode is called");
 
     VideoStabilizationMode innerVideoStabilizationMode = static_cast<VideoStabilizationMode>(mode);
+    innerCaptureSession_->LockForControl();
     int32_t ret = innerCaptureSession_->SetVideoStabilizationMode(innerVideoStabilizationMode);
+    innerCaptureSession_->UnlockForControl();
     return FrameworkToNdkCameraError(ret);
 }
 

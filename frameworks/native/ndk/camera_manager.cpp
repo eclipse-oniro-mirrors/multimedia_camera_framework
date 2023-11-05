@@ -22,13 +22,13 @@
 extern "C" {
 #endif
 
-Camera_ErrorCode OH_Camera_GetCameraMananger(Camera_Manager** cameraManager)
+Camera_ErrorCode OH_Camera_GetCameraManager(Camera_Manager** cameraManager)
 {
     *cameraManager = new Camera_Manager();
     return CAMERA_OK;
 }
 
-Camera_ErrorCode OH_Camera_DeleteCameraMananger(Camera_Manager* cameraManager)
+Camera_ErrorCode OH_Camera_DeleteCameraManager(Camera_Manager* cameraManager)
 {
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
         "invaild argument! cameraManager is null!");

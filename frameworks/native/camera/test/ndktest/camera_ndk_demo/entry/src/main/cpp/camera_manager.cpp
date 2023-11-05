@@ -33,7 +33,7 @@ NDKCamera::NDKCamera(char* str, uint32_t focusMode, uint32_t cameraDeviceIndex)
 {
     valid_ = false;
     ReleaseCamera();
-    Camera_ErrorCode ret = OH_Camera_GetCameraMananger(&cameraManager_);
+    Camera_ErrorCode ret = OH_Camera_GetCameraManager(&cameraManager_);
     if (cameraManager_ == nullptr || ret != CAMERA_OK) {
         OH_LOG_ERROR(LOG_APP, "Get CameraManager failed.");
     }
@@ -78,11 +78,11 @@ NDKCamera::~NDKCamera()
             OH_LOG_ERROR(LOG_APP, "Release OH_CameraManager_DeleteSupportedCameraOutputCapability. ok");
         }
 
-        ret = OH_Camera_DeleteCameraMananger(cameraManager_);
+        ret = OH_Camera_DeleteCameraManager(cameraManager_);
         if (ret != CAMERA_OK) {
             OH_LOG_ERROR(LOG_APP, "Delete CameraManager failed.");
         } else {
-            OH_LOG_ERROR(LOG_APP, "Release OH_Camera_DeleteCameraMananger. ok");
+            OH_LOG_ERROR(LOG_APP, "Release OH_Camera_DeleteCameraManager. ok");
         }
         cameraManager_ = nullptr;
     }

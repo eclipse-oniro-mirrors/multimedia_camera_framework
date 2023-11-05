@@ -16,7 +16,7 @@
     { "name": "OH_CameraManager_CreatePhotoOutput" },
     { "name": "OH_CameraManager_CreateVideoOutput" },
     { "name": "OH_CameraManager_CreateMetadataOutput" },
-    { "name": "OH_Camera_GetCameraMananger" },
+    { "name": "OH_Camera_GetCameraManager" },
     { "name": "OH_CaptureSession_RegisterCallback" },
     { "name": "OH_CaptureSession_UnregisterCallback" },
     { "name": "OH_CaptureSession_BeginConfig" },
