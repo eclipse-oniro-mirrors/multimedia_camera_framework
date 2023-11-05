@@ -203,7 +203,6 @@ SharedBufferPtr BufferPool::AllocateBufferUnlocked()
 
 void BufferPool::StartDecayTimerUnlocked(SharedBuffer* bufferPtr)
 {
-
 }
 
 void BufferPool::StartDecayTimerUnlocked(SharedBuffer* bufferPtr)
