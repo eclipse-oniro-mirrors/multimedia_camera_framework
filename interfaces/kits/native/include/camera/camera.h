@@ -13,6 +13,17 @@
  * limitations under the License.
  */
 
+/**
+ * @file camera.h
+ *
+ * @brief Declare the camera base concepts.
+ *
+ * @library libcamera_ndk.so
+ * @syscap SystemCapability.Multimedia.Camera.Core
+ * @since 11
+ * @version 1.0
+ */
+
 #ifndef NATIVE_INCLUDE_CAMERA_CAMERA_H
 #define NATIVE_INCLUDE_CAMERA_CAMERA_H
 
@@ -24,17 +35,24 @@ extern "C" {
 #endif
 
 /**
+ * @brief camera manager
+ *
+ * A pointer can be created using {@link OH_Camera_GetCameraManager} method.
+ *
  * @since 11
  * @version 1.0
  */
 typedef struct Camera_Manager Camera_Manager;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Enum for camera error code.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef enum Camera_ErrorCode {
     /**
-     * Camera operation success.
+     * Camera result is ok.
      */
     CAMERA_OK = 0,
 
@@ -44,31 +62,32 @@ typedef enum Camera_ErrorCode {
     CAMERA_INVALID_ARGUMENT = 7400101,
 
     /**
-     * Camera operation was not allowed.
+     * Operation not allowed.
      */
     CAMERA_OPERATION_NOT_ALLOWED = 7400102,
+
     /**
-     * Camera session not config.
+     * Session not config.
      */
     CAMERA_SESSION_NOT_CONFIG = 7400103,
 
     /**
-     * Camera session not running.
+     * Session not running.
      */
     CAMERA_SESSION_NOT_RUNNING = 7400104,
 
     /**
-     * Camera session config locked.
+     * Session config locked.
      */
     CAMERA_SESSION_CONFIG_LOCKED = 7400105,
 
     /**
-     * Camera device setting locked.
+     * Device setting locked.
      */
     CAMERA_DEVICE_SETTING_LOCKED = 7400106,
 
     /**
-     * Camera can not use cause of conflict.
+     * Can not use camera cause of conflict.
      */
     CAMERA_CONFLICT_CAMERA = 7400107,
 
@@ -78,7 +97,7 @@ typedef enum Camera_ErrorCode {
     CAMERA_DEVICE_DISABLED = 7400108,
 
     /**
-     * Camera can not use cause of preempted.
+     * Can not use camera cause of preempted.
      */
     CAMERA_DEVICE_PREEMPTED = 7400109,
 
@@ -89,433 +108,683 @@ typedef enum Camera_ErrorCode {
 } Camera_ErrorCode;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Enum for camera status.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef enum Camera_Status {
     /**
-     * Camera operation success.
+     * Appear status.
      */
     CAMERA_STATUS_APPEAR = 0,
 
     /**
-     * Parameter missing or parameter type incorrect.
+     * Disappear status.
      */
     CAMERA_STATUS_DISAPPEAR = 1,
 
     /**
-     * Camera operation was not allowed.
+     * Available status.
      */
     CAMERA_STATUS_AVAILABLE = 2,
 
     /**
-     * Camera operation was not allowed.
+     * Unavailable status.
      */
     CAMERA_STATUS_UNAVAILABLE = 3
 } Camera_Status;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Enum for camera position.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef enum Camera_Position {
     /**
-     * Camera operation success.
+     * Unspecified position.
      */
     CAMERA_POSITION_UNSPECIFIED = 0,
 
     /**
-     * Parameter missing or parameter type incorrect.
+     * Back position.
      */
     CAMERA_POSITION_BACK = 1,
 
     /**
-     * Camera operation was not allowed.
+     * Front position.
      */
     CAMERA_POSITION_FRONT = 2
 } Camera_Position;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Enum for camera type.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef enum Camera_Type {
     /**
-     * Camera operation success.
+     * Default camera type.
      */
     CAMERA_TYPE_DEFAULT = 0,
 
     /**
-     * Parameter missing or parameter type incorrect.
+     * Wide camera.
      */
     CAMERA_TYPE_WIDE_ANGLE = 1,
 
     /**
-     * Camera operation was not allowed.
+     * Ultra wide camera.
      */
     CAMERA_TYPE_ULTRA_WIDE = 2,
 
     /**
-     * Camera operation was not allowed.
+     * Telephoto camera.
      */
     CAMERA_TYPE_TELEPHOTO = 3,
 
     /**
-     * Camera operation was not allowed.
+     * True depth camera.
      */
     CAMERA_TYPE_TRUE_DEPTH = 4
 } Camera_Type;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Enum for camera connection type.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef enum Camera_Connection {
     /**
-     * Camera operation success.
+     * Built-in camera.
      */
     CAMERA_CONNECTION_BUILT_IN = 0,
 
     /**
-     * Parameter missing or parameter type incorrect.
+     * Camera connected using USB.
      */
     CAMERA_CONNECTION_USB_PLUGIN = 1,
 
     /**
-     * Camera operation was not allowed.
+     * Remote camera.
      */
     CAMERA_CONNECTION_REMOTE = 2
 } Camera_Connection;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Enum for camera format type.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef enum Camera_Format {
     /**
-     * Camera operation success.
+     * RGBA 8888 Format.
      */
     CAMERA_FORMAT_RGBA_8888 = 3,
 
     /**
-     * Parameter missing or parameter type incorrect.
+     * YUV 420 Format.
      */
     CAMERA_FORMAT_YUV_420_SP = 1003,
 
     /**
-     * Camera operation was not allowed.
+     * JPEG Format.
      */
     CAMERA_FORMAT_JPEG = 2000
 } Camera_Format;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Enum for flash mode.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef enum Camera_FlashMode {
     /**
-     * Camera operation success.
+     * Close mode.
      */
     FLASH_MODE_CLOSE = 0,
 
     /**
-     * Parameter missing or parameter type incorrect.
+     * Open mode.
      */
     FLASH_MODE_OPEN = 1,
 
     /**
-     * Camera operation was not allowed.
+     * Auto mode.
      */
     FLASH_MODE_AUTO = 2,
 
     /**
-     * Camera operation was not allowed.
+     * Always open mode.
      */
     FLASH_MODE_ALWAYS_OPEN = 3
 } Camera_FlashMode;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Enum for exposure mode.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef enum Camera_ExposureMode {
     /**
-     * Camera operation success.
+     * Lock exposure mode.
      */
     EXPOSURE_MODE_LOCKED = 0,
 
     /**
-     * Parameter missing or parameter type incorrect.
+     * Auto exposure mode.
      */
     EXPOSURE_MODE_AUTO = 1,
 
     /**
-     * Camera operation was not allowed.
+     * Continuous automatic exposure.
      */
     EXPOSURE_MODE_CONTINUOUS_AUTO = 2
 } Camera_ExposureMode;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Enum for focus mode.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef enum Camera_FocusMode {
     /**
-     * Camera operation success.
+     * Manual mode.
      */
     FOCUS_MODE_MANUAL = 0,
 
     /**
-     * Parameter missing or parameter type incorrect.
+     * Continuous auto mode.
      */
     FOCUS_MODE_CONTINUOUS_AUTO = 1,
 
     /**
-     * Camera operation was not allowed.
+     * Auto mode.
      */
     FOCUS_MODE_AUTO = 2,
 
     /**
-     * Camera operation was not allowed.
+     * Locked mode.
      */
     FOCUS_MODE_LOCKED = 3
 } Camera_FocusMode;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Enum for focus state.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef enum Camera_FocusState {
     /**
-     * Camera operation success.
+     * Scan state.
      */
     FOCUS_STATE_SCAN = 0,
 
     /**
-     * Parameter missing or parameter type incorrect.
+     * Focused state.
      */
     FOCUS_STATE_FOCUSED = 1,
 
     /**
-     * Camera operation was not allowed.
+     * Unfocused state.
      */
     FOCUS_STATE_UNFOCUSED = 2
 } Camera_FocusState;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Enum for video stabilization mode.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef enum Camera_VideoStabilizationMode {
     /**
-     * Camera operation success.
+     * Turn off video stablization.
      */
     STABILIZATION_MODE_OFF = 0,
 
     /**
-     * Parameter missing or parameter type incorrect.
+     * LOW mode provides basic stabilization effect.
      */
     STABILIZATION_MODE_LOW = 1,
 
     /**
-     * Camera operation was not allowed.
+     * MIDDLE mode means algorithms can achieve better effects than LOW mode.
      */
     STABILIZATION_MODE_MIDDLE = 2,
 
     /**
-     * Camera operation was not allowed.
+     * HIGH mode means algorithms can achieve better effects than MIDDLE mode.
      */
     STABILIZATION_MODE_HIGH = 3,
 
     /**
-     * Camera operation was not allowed.
+     * Camera HDF can select mode automatically.
      */
     STABILIZATION_MODE_AUTO = 4
 } Camera_VideoStabilizationMode;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Enum for the image rotation angles.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef enum Camera_ImageRotation {
     /**
-     * Camera operation success.
+     * The capture image rotates 0 degrees.
      */
     IAMGE_ROTATION_0 = 0,
 
     /**
-     * Parameter missing or parameter type incorrect.
+     * The capture image rotates 90 degrees.
      */
     IAMGE_ROTATION_90 = 90,
 
     /**
-     * Camera operation was not allowed.
+     * The capture image rotates 180 degrees.
      */
     IAMGE_ROTATION_180 = 180,
 
     /**
-     * Camera operation was not allowed.
+     * The capture image rotates 270 degrees.
      */
     IAMGE_ROTATION_270 = 270
 } Camera_ImageRotation;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Enum for the image quality levels.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef enum Camera_QualityLevel {
     /**
-     * Camera operation success.
+     * High image quality.
      */
     QUALITY_LEVEL_HIGH = 0,
 
     /**
-     * Parameter missing or parameter type incorrect.
+     * Medium image quality.
      */
     QUALITY_LEVEL_MEDIUM = 1,
 
     /**
-     * Camera operation was not allowed.
+     * Low image quality.
      */
     QUALITY_LEVEL_LOW = 2
 } Camera_QualityLevel;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Enum for metadata object type.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef enum Camera_MetadataObjectType {
     /**
-     * Camera operation success.
+     * Face detection.
      */
     FACE_DETECTION = 0
 } Camera_MetadataObjectType;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Size parameter.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef struct Camera_Size {
+    /**
+     * Width.
+     */
     uint32_t width;
+
+    /**
+     * Height.
+     */
     uint32_t height;
 } Camera_Size;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Profile for camera streams.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef struct Camera_Profile {
+    /**
+     * Camera format.
+     */
     Camera_Format format;
+
+    /**
+     * Picture size.
+     */
     Camera_Size size;
 } Camera_Profile;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Frame rate range.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef struct Camera_FrameRateRange {
+    /**
+     * Min frame rate.
+     */
     uint32_t min;
+
+    /**
+     * Max frame rate.
+     */
     uint32_t max;
 } Camera_FrameRateRange;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Video profile.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef struct Camera_VideoProfile {
+    /**
+     * Camera format.
+     */
     Camera_Format format;
+
+    /**
+     * Picture size.
+     */
     Camera_Size size;
+
+    /**
+     * Frame rate in unit fps (frames per second).
+     */
     Camera_FrameRateRange range;
 } Camera_VideoProfile;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Camera output capability.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef struct Camera_OutputCapability {
+    /**
+     * Preview profiles list.
+     */
     Camera_Profile** previewProfiles;
+
+    /**
+     * Size of preview profiles list.
+     */
     uint32_t previewProfilesSize;
+
+    /**
+     * Photo profiles list.
+     */
     Camera_Profile** photoProfiles;
+
+    /**
+     * Size of photo profiles list.
+     */
     uint32_t photoProfilesSize;
+
+    /**
+     * Video profiles list.
+     */
     Camera_VideoProfile** videoProfiles;
+
+    /**
+     * Size of video profiles list.
+     */
     uint32_t videoProfilesSize;
+
+    /**
+     * Metadata object types list.
+     */
     Camera_MetadataObjectType** supportedMetadataObjectTypes;
+
+    /**
+     * Size of metadata object types list.
+     */
     uint32_t metadataProfilesSize;
 } Camera_OutputCapability;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Camera device object.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef struct Camera_Device {
+    /**
+     * Camera id attribute.
+     */
     char* cameraId;
+
+    /**
+     * Camera position attribute.
+     */
     Camera_Position cameraPosition;
+
+    /**
+     * Camera type attribute.
+     */
     Camera_Type cameraType;
+
+    /**
+     * Camera connection type attribute.
+     */
     Camera_Connection connectionType;
 } Camera_Device;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Camera status info.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef struct Camera_StatusInfo {
+    /**
+     * Camera instance.
+     */
     Camera_Device* camera;
+
+    /**
+     * Current camera status.
+     */
     Camera_Status status;
 } Camera_StatusInfo;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Point parameter.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef struct Camera_Point {
-    double x;
-    double y;
+    /**
+     * X co-ordinate.
+     */
+    int32_t x;
+
+    /**
+     * Y co-ordinate.
+     */
+    int32_t y;
 } Camera_Point;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Photo capture location.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef struct Camera_Location {
+    /**
+     * Latitude.
+     */
     double latitude;
+
+    /**
+     * Longitude.
+     */
     double longitude;
+
+    /**
+     * Altitude.
+     */
     double altitude;
 } Camera_Location;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Photo capture options to set.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef struct Camera_PhotoCaptureSetting {
+    /**
+     * Photo image quality.
+     */
     Camera_QualityLevel quality;
+
+    /**
+     * Photo rotation.
+     */
     Camera_ImageRotation rotation;
+
+    /**
+     * Photo location.
+     */
     Camera_Location* location;
+
+    /**
+     * Set the mirror photo function switch, default to false.
+     */
     bool mirror;
 } Camera_PhotoCaptureSetting;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Frame shutter callback info.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef struct Camera_FrameShutterInfo {
+    /**
+     * Capture id.
+     */
     int32_t captureId;
+
+    /**
+     * Timestamp for frame.
+     */
     uint64_t timestamp;
 } Camera_FrameShutterInfo;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Capture end info.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef struct Camera_CaptureEndInfo {
+    /**
+     * Capture id.
+     */
     int32_t captureId;
+
+    /**
+     * Frame count.
+     */
     int64_t frameCount;
 } Camera_CaptureEndInfo;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Rectangle definition.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef struct Camera_Rect {
+    /**
+     * X coordinator of top left point.
+     */
     int32_t topLeftX;
+
+    /**
+     * Y coordinator of top left point.
+     */
     int32_t topLeftY;
+
+    /**
+     * Width of this rectangle.
+     */
     int32_t width;
+
+    /**
+     * Height of this rectangle.
+     */
     int32_t height;
 } Camera_Rect;
 
 /**
- * Enumerates the return values that may be used by the interface.
+ * @brief Metadata object basis.
+ *
+ * @since 11
+ * @version 1.0
  */
 typedef struct Camera_MetadataObject {
+    /**
+     * Metadata object type.
+     */
     Camera_MetadataObjectType type;
+
+    /**
+     * Metadata object timestamp in milliseconds.
+     */
     int64_t timestamp;
+
+    /**
+     * The axis-aligned bounding box of detected metadata object.
+     */
     Camera_Rect* boundingBox;
 } Camera_MetadataObject;
 
 /**
+ * @brief Creates a CameraManager instance.
+ *
+ * @param cameraManager the output {@link Camera_Manager} cameraManager will be created
+ *        if the method call succeeds.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
  * @since 11
- * @version 1.0
  */
-Camera_ErrorCode OH_Camera_GetCameraMananger(Camera_Manager** cameraManager);
+Camera_ErrorCode OH_Camera_GetCameraManager(Camera_Manager** cameraManager);
 
 /**
+ * @brief Delete the CameraManager instance.
+ *
+ * @param cameraManager the {@link Camera_Manager} cameraManager instance to be deleted.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
  * @since 11
- * @version 1.0
  */
-Camera_ErrorCode OH_Camera_DeleteCameraMananger(Camera_Manager* cameraManager);
+Camera_ErrorCode OH_Camera_DeleteCameraManager(Camera_Manager* cameraManager);
 
 
 #ifdef __cplusplus

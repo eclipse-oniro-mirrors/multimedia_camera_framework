@@ -199,7 +199,7 @@ void CameraNdkUnitTest::SetUp()
     SetSelfTokenID(tokenId);
     OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
 
-    Camera_ErrorCode ret = OH_Camera_GetCameraMananger(&cameraManager);
+    Camera_ErrorCode ret = OH_Camera_GetCameraManager(&cameraManager);
     EXPECT_EQ(ret, 0);
     ret = OH_CameraManager_GetSupportedCameras(cameraManager, &cameraDevice, &cameraDeviceSize);
     EXPECT_EQ(ret, 0);

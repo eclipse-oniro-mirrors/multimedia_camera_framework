@@ -13,6 +13,17 @@
  * limitations under the License.
  */
 
+/**
+ * @file camera_input.h
+ *
+ * @brief Declare the camera input concepts.
+ *
+ * @library libcamera_ndk.so
+ * @syscap SystemCapability.Multimedia.Camera.Core
+ * @since 11
+ * @version 1.0
+ */
+
 #ifndef NATIVE_INCLUDE_CAMERA_CAMERA_INPUT_H
 #define NATIVE_INCLUDE_CAMERA_CAMERA_INPUT_H
 
@@ -25,44 +36,97 @@ extern "C" {
 #endif
 
 /**
+ * @brief Camera input object
+ *
+ * A pointer can be created using {@link OH_CameraManager_CreateCameraInput} method.
+ *
  * @since 11
  * @version 1.0
  */
 typedef struct Camera_Input Camera_Input;
 
+/**
+ * @brief Camera input error callback to be called in {@link CameraInput_Callbacks}.
+ *
+ * @param cameraInput the {@link Camera_Input} which deliver the callback.
+ * @param errorCode the {@link Camera_ErrorCode} of the camera input.
+ *
+ * @see CAMERA_CONFLICT_CAMERA
+ * @see CAMERA_DEVICE_DISABLED
+ * @see CAMERA_DEVICE_PREEMPTED
+ * @see CAMERA_SERVICE_FATAL_ERROR
+ * @since 11
+ */
 typedef void (*OH_CameraInput_OnError)(const Camera_Input* cameraInput, Camera_ErrorCode errorCode);
 
+/**
+ * @brief A listener for camera input error events.
+ *
+ * @see OH_CameraInput_RegisterCallback
+ * @since 11
+ * @version 1.0
+ */
 typedef struct CameraInput_Callbacks {
+    /**
+     * Camera input error event.
+     */
     OH_CameraInput_OnError onError;
 } CameraInput_Callbacks;
 
 /**
+ * @brief Register camera input change event callback.
+ *
+ * @param cameraInput the {@link Camera_Input} instance.
+ * @param callback the {@link CameraInput_Callbacks} to be registered.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
  * @since 11
- * @version 1.0
  */
 Camera_ErrorCode OH_CameraInput_RegisterCallback(Camera_Input* cameraInput, CameraInput_Callbacks* callback);
 
 /**
+ * @brief Unregister camera input change event callback.
+ *
+ * @param cameraInput the {@link Camera_Input} instance.
+ * @param callback the {@link CameraInput_Callbacks} to be unregistered.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
  * @since 11
- * @version 1.0
  */
 Camera_ErrorCode OH_CameraInput_UnregisterCallback(Camera_Input* cameraInput, CameraInput_Callbacks* callback);
 
 /**
+ * @brief Open camera.
+ *
+ * @param cameraInput the {@link Camera_Input} instance to be opened.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_CONFLICT_CAMERA} if can not use camera cause of conflict.
+ *         {@link #CAMERA_DEVICE_DISABLED} if camera disabled cause of security reason.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
  * @since 11
- * @version 1.0
  */
 Camera_ErrorCode OH_CameraInput_Open(Camera_Input* cameraInput);
 
 /**
+ * @brief Close camera.
+ *
+ * @param cameraInput the {@link Camera_Input} instance to be closed.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
  * @since 11
- * @version 1.0
  */
 Camera_ErrorCode OH_CameraInput_Close(Camera_Input* cameraInput);
 
 /**
+ * @brief Release camera input instance.
+ *
+ * @param cameraInput the {@link Camera_Input} instance to be released.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
  * @since 11
- * @version 1.0
  */
 Camera_ErrorCode OH_CameraInput_Release(Camera_Input* cameraInput);
 
