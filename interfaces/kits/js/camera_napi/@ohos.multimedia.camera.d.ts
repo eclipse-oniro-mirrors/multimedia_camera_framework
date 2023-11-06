@@ -754,7 +754,7 @@ declare namespace camera {
      * Get current torch mode.
      *
      * @param { TorchMode } mode torch mode.
-     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @throws { BusinessError } 7400102 - Operation not allow.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 11
      */
@@ -769,6 +769,15 @@ declare namespace camera {
      * @since 11
      */
     on(type: 'torchStatusChange', callback: AsyncCallback<TorchStatusInfo>): void;
+    
+    /**
+     * Unsubscribes torch status change event callback.
+     * 
+     * @param { 'torchStatusChange' } type Event type
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 11
+     */
+    off(type: 'torchStatusChange'): void;
   }
   /**
    * Torch status info.

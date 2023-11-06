@@ -494,13 +494,21 @@ public:
     bool IsPrelaunchSupported(sptr<CameraDevice> camera);
 
     /**
-    * @brief register camera mute listener
+    * @brief register torch listener
     *
     * @param TorchListener listener object.
     * @return.
     */
     void RegisterTorchListener(std::shared_ptr<TorchListener> listener);
 
+
+    /**
+    * @brief unregister torch listener
+    *
+    * @return.
+    */
+    void UnRegisterTorchListener();
+    
     /**
     * @brief get the camera mute listener
     *
