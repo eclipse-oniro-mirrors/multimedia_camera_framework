@@ -501,7 +501,6 @@ public:
     */
     void RegisterTorchListener(std::shared_ptr<TorchListener> listener);
 
-
     /**
     * @brief unregister torch listener
     *
