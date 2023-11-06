@@ -1057,6 +1057,11 @@ void CameraManager::RegisterTorchListener(std::shared_ptr<TorchListener> listene
     torchListener = listener;
 }
 
+void CameraManager::UnRegisterTorchListener()
+{
+    torchListener = nullptr;
+}
+
 shared_ptr<TorchListener> CameraManager::GetTorchListener()
 {
     return torchListener;
