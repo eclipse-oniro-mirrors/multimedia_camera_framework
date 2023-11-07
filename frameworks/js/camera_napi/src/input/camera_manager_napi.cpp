@@ -777,8 +777,6 @@ napi_value CameraManagerNapi::UnregisterCallback(napi_env env, napi_value jsThis
             MEDIA_ERR_LOG("torchListener_ is null");
         } else {
             cameraManagerNapi->torchListener_->RemoveCallbackRef(env, callback);
-            cameraManagerNapi->torchListener_ = nullptr;
-            cameraManagerNapi->cameraManager_->UnRegisterTorchListener();
         }
     } else {
         MEDIA_ERR_LOG("off no such supported!");

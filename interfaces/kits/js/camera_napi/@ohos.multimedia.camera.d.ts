@@ -771,13 +771,14 @@ declare namespace camera {
     on(type: 'torchStatusChange', callback: AsyncCallback<TorchStatusInfo>): void;
     
     /**
-     * Unsubscribes torch status change event callback.
-     * 
+     * unSubscribes torch status change event callback.
+     *
      * @param { 'torchStatusChange' } type Event type
+     * @param { AsyncCallback<TorchStatusInfo> } callback Callback used to get the torch state change
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 11
      */
-    off(type: 'torchStatusChange'): void;
+    off(type: 'torchStatusChange', callback?: AsyncCallback<TorchStatusInfo>): void;
   }
   /**
    * Torch status info.

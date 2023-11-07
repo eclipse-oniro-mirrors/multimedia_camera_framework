@@ -501,14 +501,6 @@ public:
     */
     void RegisterTorchListener(std::shared_ptr<TorchListener> listener);
 
-
-    /**
-    * @brief unregister torch listener
-    *
-    * @return.
-    */
-    void UnRegisterTorchListener();
-    
     /**
     * @brief get the camera mute listener
     *
