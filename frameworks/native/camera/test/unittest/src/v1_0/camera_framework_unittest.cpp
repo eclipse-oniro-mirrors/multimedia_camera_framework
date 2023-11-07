@@ -156,7 +156,7 @@ public:
         });
         ON_CALL(*this, OpenCameraDevice).WillByDefault([this](std::string &cameraId,
                                                             const sptr<ICameraDeviceCallback> &callback,
-                                                            sptr<OHOS::HDI::Camera::V1_1::ICameraDevice> &pDevice) {
+                                                            sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> &pDevice) {
             sptr<ICameraDevice> tempDevice;
             tempDevice = static_cast<ICameraDevice *>(cameraDevice.GetRefPtr());
             // static_cast to V1.1
@@ -173,7 +173,7 @@ public:
         std::shared_ptr<OHOS::Camera::CameraMetadata> &ability));
     MOCK_METHOD2(SetFlashlight, int32_t(const std::string &cameraId, bool isEnable));
     MOCK_METHOD3(OpenCameraDevice, int32_t(std::string &cameraId,
-        const sptr<ICameraDeviceCallback> &callback, sptr<OHOS::HDI::Camera::V1_1::ICameraDevice> &pDevice));
+        const sptr<ICameraDeviceCallback> &callback, sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> &pDevice));
     sptr<MockCameraDevice> cameraDevice;
 };
 

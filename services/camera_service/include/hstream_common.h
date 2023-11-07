@@ -34,7 +34,7 @@ public:
     HStreamCommon(
         StreamType streamType, sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height);
     virtual ~HStreamCommon();
-    virtual int32_t LinkInput(sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator,
+    virtual int32_t LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t streamId) = 0;
     virtual void SetStreamInfo(StreamInfo_V1_1& streamInfo) = 0;
     virtual int32_t Release() = 0;

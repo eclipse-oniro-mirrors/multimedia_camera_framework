@@ -39,7 +39,7 @@ public:
         sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height, RepeatStreamType type);
     ~HStreamRepeat();
 
-    int32_t LinkInput(sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator,
+    int32_t LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t streamId) override;
     void SetStreamInfo(StreamInfo_V1_1& streamInfo) override;
     int32_t Release() override;

@@ -29,7 +29,7 @@ HStreamCapture::HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t for
 HStreamCapture::~HStreamCapture()
 {}
 
-int32_t HStreamCapture::LinkInput(sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator,
+int32_t HStreamCapture::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
                                   std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t streamId)
 {
     return HStreamCommon::LinkInput(streamOperator, cameraAbility, streamId);
