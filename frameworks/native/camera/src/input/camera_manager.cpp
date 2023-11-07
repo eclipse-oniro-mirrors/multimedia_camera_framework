@@ -106,8 +106,11 @@ int32_t CameraStatusServiceCallback::OnCameraStatusChanged(const std::string& ca
         }
         cameraStatusInfo.cameraStatus = status;
         if (cameraStatusInfo.cameraDevice) {
-            MEDIA_INFO_LOG("Callback cameraStatus");
-            camMngr_->GetApplicationCallback()->OnCameraStatusChanged(cameraStatusInfo);
+            std::shared_ptr<CameraManagerCallback> cameraManagerCallback = camMngr_->GetApplicationCallback();
+            if (cameraManagerCallback != nullptr) {
+                MEDIA_INFO_LOG("Callback cameraStatus");
+                cameraManagerCallback->OnCameraStatusChanged(cameraStatusInfo);
+            }
         }
     } else {
         MEDIA_INFO_LOG("Callback not registered!, Ignore the callback");
