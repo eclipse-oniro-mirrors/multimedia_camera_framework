@@ -83,7 +83,7 @@ public:
     sptr<CaptureOutput> CreateVideoOutput();
     sptr<CaptureOutput> CreatePhotoOutput(Profile profile);
     void GetSupportedOutputCapability();
-    void CreateModeManager();
+    void ConfigScanSession(sptr<CaptureOutput> &previewOutput_1, sptr<CaptureOutput> &previewOutput_2);
     void ReleaseInput();
 
     void SetCameraParameters(sptr<CaptureSession> &session, bool video);

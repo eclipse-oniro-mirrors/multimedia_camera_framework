@@ -412,13 +412,36 @@ sptr<CaptureOutput> CameraFrameworkModuleTest::CreatePhotoOutput(Profile profile
     return photoOutput;
 }
 
-void CameraFrameworkModuleTest::CreateModeManager()
+void CameraFrameworkModuleTest::ConfigScanSession(sptr<CaptureOutput> &previewOutput_1,
+                                                  sptr<CaptureOutput> &previewOutput_2)
 {
     if (session_) {
         MEDIA_INFO_LOG("old session exist, need release");
         session_->Release();
     }
     scanSession_ = modeManager_ -> CreateCaptureSession(CameraMode::SCAN);
+    ASSERT_NE(scanSession_, nullptr);
+
+    int32_t intResult = scanSession_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+ 
+    intResult = scanSession_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+ 
+    previewOutput_1 = CreatePreviewOutput();
+    ASSERT_NE(previewOutput_1, nullptr);
+
+    intResult = scanSession_->AddOutput(previewOutput_1);
+    EXPECT_EQ(intResult, 0);
+ 
+    previewOutput_2 = CreatePreviewOutput();
+    ASSERT_NE(previewOutput_2, nullptr);
+
+    intResult = scanSession_->AddOutput(previewOutput_2);
+    EXPECT_EQ(intResult, 0);
+ 
+    intResult = scanSession_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
 }
 
 void CameraFrameworkModuleTest::GetSupportedOutputCapability()
@@ -2620,36 +2643,18 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_049, TestSi
         return;
     }
     MEDIA_INFO_LOG("teset049 begin");
-    CreateModeManager();
-    ASSERT_NE(scanSession_, nullptr);
+    sptr<CaptureOutput> previewOutput_1;
+    sptr<CaptureOutput> previewOutput_2;
+    ConfigScanSession(previewOutput_1, previewOutput_2);
  
-    int32_t intResult = scanSession_->BeginConfig();
-    EXPECT_EQ(intResult, 0);
- 
-    intResult = scanSession_->AddInput(input_);
-    EXPECT_EQ(intResult, 0);
- 
-    sptr<CaptureOutput> previewOutput_1 = CreatePreviewOutput();
-    ASSERT_NE(previewOutput_1, nullptr);
-    intResult = scanSession_->AddOutput(previewOutput_1);
-    EXPECT_EQ(intResult, 0);
- 
-    sptr<CaptureOutput> previewOutput_2 = CreatePreviewOutput();
-    ASSERT_NE(previewOutput_2, nullptr);
-    intResult = scanSession_->AddOutput(previewOutput_2);
-    EXPECT_EQ(intResult, 0);
- 
-    intResult = scanSession_->CommitConfig();
-    EXPECT_EQ(intResult, 0);
- 
-    intResult = scanSession_->Start();
+    int32_t intResult = scanSession_->Start();
     EXPECT_EQ(intResult, 0);
  
     sleep(WAIT_TIME_AFTER_START);
  
     intResult = scanSession_->Stop();
     EXPECT_EQ(intResult, 0);
- 
+
     ((sptr<PreviewOutput> &) previewOutput_1)->Release();
     ((sptr<PreviewOutput> &) previewOutput_2)->Release();
     MEDIA_INFO_LOG("teset049 end");
@@ -2670,7 +2675,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_050, TestSi
         return;
     }
     MEDIA_INFO_LOG("teset050 begin");
-    CreateModeManager();
+    if (session_) {
+        MEDIA_INFO_LOG("old session exist, need release");
+        session_->Release();
+    }
+    scanSession_ = modeManager_ -> CreateCaptureSession(CameraMode::SCAN);
     ASSERT_NE(scanSession_, nullptr);
  
     int32_t intResult = scanSession_->BeginConfig();
@@ -2681,6 +2690,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_050, TestSi
  
     sptr<CaptureOutput> phtotOutput = CreatePhotoOutput();
     ASSERT_NE(phtotOutput, nullptr);
+
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput();
+    ASSERT_NE(phtotOutput, nullptr);
+
+    intResult = scanSession_->AddOutput(videoOutput);
+    EXPECT_NE(intResult, 0);
  
     intResult = scanSession_->AddOutput(phtotOutput);
     EXPECT_NE(intResult, 0);
@@ -2689,6 +2704,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_050, TestSi
     EXPECT_NE(intResult, 0);
  
     ((sptr<PreviewOutput> &) phtotOutput)->Release();
+    ((sptr<VideoOutput> &) videoOutput)->Release();
     MEDIA_INFO_LOG("teset050 end");
 }
  
@@ -2722,6 +2738,119 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_051, TestSi
                     scanCapability -> GetPreviewProfiles().size(),
                     scanCapability -> GetVideoProfiles().size());
     MEDIA_INFO_LOG("teset051 end");
+}
+
+/*
+ * Feature: Framework
+ * Function: Test scan session set Focus mode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test scan session set Focus mode
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_052, TestSize.Level0)
+{
+    sptr<CaptureOutput> previewOutput_1;
+    sptr<CaptureOutput> previewOutput_2;
+    ConfigScanSession(previewOutput_1, previewOutput_2);
+
+    scanSession_->LockForControl();
+    int32_t setFocusMode = scanSession_->SetFocusMode(FOCUS_MODE_AUTO);
+    EXPECT_EQ(setFocusMode, 0);
+    scanSession_->UnlockForControl();
+
+    FocusMode focusMode = scanSession_->GetFocusMode();
+    EXPECT_NE(focusMode, FOCUS_MODE_MANUAL);
+    EXPECT_NE(focusMode, FOCUS_MODE_CONTINUOUS_AUTO);
+    EXPECT_EQ(focusMode, FOCUS_MODE_AUTO);
+    EXPECT_NE(focusMode, FOCUS_MODE_LOCKED);
+
+    int32_t getFoucusMode = scanSession_->GetFocusMode(focusMode);
+    EXPECT_EQ(getFoucusMode, 0);
+    EXPECT_EQ(focusMode, FOCUS_MODE_AUTO);
+
+    bool isSupported = scanSession_->IsFocusModeSupported(focusMode);
+    EXPECT_EQ(isSupported, true);
+
+    int32_t isFocusSupported = scanSession_->IsFocusModeSupported(focusMode, isSupported);
+    EXPECT_EQ(isFocusSupported, 0);
+    EXPECT_EQ(isSupported, true);
+
+    std::vector<FocusMode> supportedFocusModes = scanSession_->GetSupportedFocusModes();
+    EXPECT_EQ(supportedFocusModes.empty(), false);
+
+    int32_t getSupportedFocusModes = scanSession_->GetSupportedFocusModes(supportedFocusModes);
+    EXPECT_EQ(supportedFocusModes.empty(), false);
+    EXPECT_EQ(getSupportedFocusModes, 0);
+
+    ((sptr<PreviewOutput> &) previewOutput_1)->Release();
+    ((sptr<PreviewOutput> &) previewOutput_2)->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test scan session set Focus Point
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test scan session set Focus Point
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_053, TestSize.Level0)
+{
+    sptr<CaptureOutput> previewOutput_1;
+    sptr<CaptureOutput> previewOutput_2;
+    ConfigScanSession(previewOutput_1, previewOutput_2);
+
+    Point point = { 1, 1 };
+    scanSession_->LockForControl();
+    int32_t setFocusMode = scanSession_->SetFocusPoint(point);
+    EXPECT_EQ(setFocusMode, 0);
+    scanSession_->UnlockForControl();
+
+    Point focusPointGet = scanSession_->GetFocusPoint();
+    EXPECT_EQ(focusPointGet.x, 1);
+    EXPECT_EQ(focusPointGet.y, 1);
+
+    float focalLength;
+    int32_t focalLengthGet = scanSession_->GetFocalLength(focalLength);
+    EXPECT_EQ(focalLengthGet, 0);
+
+    ((sptr<PreviewOutput> &) previewOutput_1)->Release();
+    ((sptr<PreviewOutput> &) previewOutput_2)->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test scan session set Focus Point
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test scan session set Zoom Ratio
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_054, TestSize.Level0)
+{
+    sptr<CaptureOutput> previewOutput_1;
+    sptr<CaptureOutput> previewOutput_2;
+    ConfigScanSession(previewOutput_1, previewOutput_2);
+
+    scanSession_->LockForControl();
+    int32_t zoomRatioSet = scanSession_->SetZoomRatio(100);
+    EXPECT_EQ(zoomRatioSet, 0);
+    scanSession_->UnlockForControl();
+
+    std::vector<float> zoomRatioRange = scanSession_->GetZoomRatioRange();
+    EXPECT_EQ(zoomRatioRange.empty(), false);
+
+    int32_t zoomRatioRangeGet = scanSession_->GetZoomRatioRange(zoomRatioRange);
+    EXPECT_EQ(zoomRatioRange.empty(), false);
+    EXPECT_EQ(zoomRatioRangeGet, 0);
+
+    float zoomRatio = scanSession_->GetZoomRatio();
+    int32_t zoomRatioGet = scanSession_->GetZoomRatio(zoomRatio);
+    EXPECT_EQ(zoomRatioGet, 0);
+
+    ((sptr<PreviewOutput> &) previewOutput_1)->Release();
+    ((sptr<PreviewOutput> &) previewOutput_2)->Release();
 }
 
 /*

@@ -1308,7 +1308,6 @@ int32_t CaptureSession::GetSupportedFocusModes(std::vector<FocusMode> &supported
         auto itr = metaFocusModeMap_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[i]));
         if (itr != metaFocusModeMap_.end()) {
             supportedFocusModes.emplace_back(itr->second);
-            return CameraErrorCode::SUCCESS;
         }
     }
     return CameraErrorCode::SUCCESS;
