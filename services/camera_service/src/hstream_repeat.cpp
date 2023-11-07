@@ -39,7 +39,7 @@ HStreamRepeat::HStreamRepeat(
 
 HStreamRepeat::~HStreamRepeat() {}
 
-int32_t HStreamRepeat::LinkInput(sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator,
+int32_t HStreamRepeat::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t streamId)
 {
     int32_t ret = HStreamCommon::LinkInput(streamOperator, cameraAbility, streamId);

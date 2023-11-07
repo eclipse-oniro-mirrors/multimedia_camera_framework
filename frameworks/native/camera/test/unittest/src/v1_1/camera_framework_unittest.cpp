@@ -355,7 +355,7 @@ public:
         });
         ON_CALL(*this, OpenCameraDevice).WillByDefault([this](std::string &cameraId,
                                                             const sptr<ICameraDeviceCallback> &callback,
-                                                            sptr<OHOS::HDI::Camera::V1_1::ICameraDevice> &pDevice) {
+                                                            sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> &pDevice) {
             pDevice = cameraDevice;
             return CAMERA_OK;
         });
@@ -370,7 +370,7 @@ public:
         std::shared_ptr<OHOS::Camera::CameraMetadata> &ability));
     MOCK_METHOD2(SetFlashlight, int32_t(const std::string &cameraId, bool isEnable));
     MOCK_METHOD3(OpenCameraDevice, int32_t(std::string &cameraId,
-        const sptr<ICameraDeviceCallback> &callback, sptr<OHOS::HDI::Camera::V1_1::ICameraDevice> &pDevice));
+        const sptr<ICameraDeviceCallback> &callback, sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> &pDevice));
     sptr<MockCameraDevice> cameraDevice;
 };
 
@@ -2475,7 +2475,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_001, TestSize.Level
     EXPECT_EQ(ret, 0);
 
     sptr<IStreamOperatorCallback> callback = nullptr;
-    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator = nullptr;
+    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = nullptr;
     ret = camDevice->HCameraDevice::GetStreamOperator(callback, streamOperator);
     EXPECT_EQ(ret, 2);
 
@@ -3948,7 +3948,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_025, TestSize.Level
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
 
-    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator = nullptr;
+    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = nullptr;
     sptr<CameraInput> input = cameraManager->CreateCameraInput(cameras[0]);
     sptr<ICameraDeviceServiceCallback> callback1 = new(std::nothrow) CameraDeviceServiceCallback(input);
     sptr<StreamOperatorCallback> streamOperatorCallback_ = new StreamOperatorCallback();
@@ -4133,7 +4133,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_030, TestSize.Level
 
     EXPECT_EQ(camDevice1->Open(), CAMERA_OPERATION_NOT_ALLOWED);
 
-    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperator = nullptr;
+    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = nullptr;
     sptr<CameraInput> input = cameraManager->CreateCameraInput(cameras[0]);
     sptr<ICameraDeviceServiceCallback> callback1 = new(std::nothrow) CameraDeviceServiceCallback(input);
     sptr<StreamOperatorCallback> streamOperatorCallback_= new StreamOperatorCallback();
@@ -4199,7 +4199,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_031, TestSize.Level
 
     EXPECT_EQ(cameraHostManager->HCameraHostManager::GetVersionByCamera(cameraId), 0);
 
-    sptr<OHOS::HDI::Camera::V1_1::ICameraDevice> pDevice;
+    sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> pDevice;
     cameraHostManager->HCameraHostManager::OpenCameraDevice(cameraId, nullptr, pDevice);
 
     cameraId = cameras[0]->GetID();
