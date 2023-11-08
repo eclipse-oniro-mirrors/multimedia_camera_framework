@@ -505,7 +505,7 @@ int main(int argc, char **argv)
 
     std::vector<float> vecZoomRatioList;
     portraitSession->GetZoomRatioRange(vecZoomRatioList);
-    cout<< "getMode:" << portraitSession->GetMode() << ",minZoom:" << vecZoomRatioList[0]
+    cout<< "getMode:" << portraitSession->GetFeaturesMode() << ",minZoom:" << vecZoomRatioList[0]
         << ", maxZoom:" << vecZoomRatioList[1]<<endl;
     std::vector<BeautyType> supportedBeautyType = portraitSession->GetSupportedBeautyTypes();
     PrintSupportBeautyTypes(supportedBeautyType);

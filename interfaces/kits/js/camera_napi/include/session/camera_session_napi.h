@@ -21,6 +21,7 @@
 
 #include "input/camera_manager.h"
 #include "input/camera_device.h"
+#include "js_native_api_types.h"
 #include "session/capture_session.h"
 
 #include "input/camera_input_napi.h"
@@ -93,6 +94,32 @@ struct FocusCallbackInfo {
         : state_(state), listener_(listener) {}
 };
 
+class MacroStatusCallbackListener : public MacroStatusCallback {
+public:
+    MacroStatusCallbackListener(napi_env env) : env_(env) {}
+    ~MacroStatusCallbackListener() = default;
+    void OnMacroStatusChanged(MacroStatus status) override;
+    void SaveCallbackReference(const std::string& eventType, napi_value callback, bool isOnce);
+    void RemoveCallbackRef(napi_env env, napi_value args);
+    void RemoveAllCallbacks();
+
+private:
+    void OnMacroStatusCallback(MacroStatus status) const;
+    void OnMacroStatusCallbackAsync(MacroStatus status) const;
+
+    std::mutex mutex_;
+    napi_env env_;
+    mutable std::vector<std::shared_ptr<AutoRef>> macroCbList_;
+};
+
+struct MacroStatusCallbackInfo {
+    MacroStatusCallback::MacroStatus status_;
+    const MacroStatusCallbackListener* listener_;
+    MacroStatusCallbackInfo(MacroStatusCallback::MacroStatus status, const MacroStatusCallbackListener* listener)
+        : status_(status), listener_(listener)
+    {}
+};
+
 class SessionCallbackListener : public SessionCallback {
 public:
     SessionCallbackListener(napi_env env) : env_(env) {}
@@ -159,6 +186,8 @@ public:
     static napi_value GetSupportedColorEffects(napi_env env, napi_callback_info info);
     static napi_value GetColorEffect(napi_env env, napi_callback_info info);
     static napi_value SetColorEffect(napi_env env, napi_callback_info info);
+    static napi_value IsMacroSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableMacro(napi_env env, napi_callback_info info);
 
     static napi_value BeginConfig(napi_env env, napi_callback_info info);
     static napi_value CommitConfig(napi_env env, napi_callback_info info);
@@ -194,6 +223,7 @@ public:
     std::shared_ptr<FocusCallbackListener> focusCallback_;
     std::shared_ptr<SessionCallbackListener> sessionCallback_;
     std::shared_ptr<ExposureCallbackListener> exposureCallback_;
+    std::shared_ptr<MacroStatusCallbackListener> macroStatusCallback_;
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<CaptureSession> sCameraSession_;

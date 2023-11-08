@@ -21,6 +21,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+static constexpr float SKETCH_RATIO_MAX_VALUE = 100.0f;
 int HStreamRepeatStub::OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
     DisableJeMalloc();
@@ -49,6 +50,9 @@ int HStreamRepeatStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Messa
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_REMOVE_SKETCH_STREAM_REPEAT):
             errCode = RemoveSketchStreamRepeat();
             break;
+        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_UPDATE_SKETCH_RATIO):
+            errCode = HandleUpdateSketchRatio(data);
+            break;
         default:
             MEDIA_ERR_LOG("HStreamRepeatStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -58,7 +62,7 @@ int HStreamRepeatStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Messa
     return errCode;
 }
 
-int HStreamRepeatStub::HandleSetCallback(MessageParcel& data)
+int32_t HStreamRepeatStub::HandleSetCallback(MessageParcel& data)
 {
     auto remoteObject = data.ReadRemoteObject();
     CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
@@ -69,7 +73,7 @@ int HStreamRepeatStub::HandleSetCallback(MessageParcel& data)
     return SetCallback(callback);
 }
 
-int HStreamRepeatStub::HandleAddDeferredSurface(MessageParcel& data)
+int32_t HStreamRepeatStub::HandleAddDeferredSurface(MessageParcel& data)
 {
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
 
@@ -86,7 +90,7 @@ int HStreamRepeatStub::HandleAddDeferredSurface(MessageParcel& data)
     return errCode;
 }
 
-int HStreamRepeatStub::HandleForkSketchStreamRepeat(MessageParcel& data, MessageParcel& reply)
+int32_t HStreamRepeatStub::HandleForkSketchStreamRepeat(MessageParcel& data, MessageParcel& reply)
 {
     sptr<IStreamRepeat> sketchStream = nullptr;
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
@@ -104,6 +108,14 @@ int HStreamRepeatStub::HandleForkSketchStreamRepeat(MessageParcel& data, Message
     CHECK_AND_RETURN_RET_LOG(reply.WriteRemoteObject(sketchStream->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
         "HStreamRepeatStub HandleForkSketchStreamRepeat Write sketchStream obj failed");
     return errCode;
+}
+
+int32_t HStreamRepeatStub::HandleUpdateSketchRatio(MessageParcel& data)
+{
+    float sketchRatio = data.ReadFloat();
+    CHECK_AND_RETURN_RET_LOG(sketchRatio > 0 && sketchRatio <= SKETCH_RATIO_MAX_VALUE, IPC_STUB_INVALID_DATA_ERR,
+        "HStreamRepeatStub HandleUpdateSketchRatio sketchRatio value is illegal %{public}f", sketchRatio);
+    return UpdateSketchRatio(sketchRatio);
 }
 } // namespace CameraStandard
 } // namespace OHOS

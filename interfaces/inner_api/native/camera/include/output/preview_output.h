@@ -134,9 +134,10 @@ public:
      * @brief Get sketch reference FOV ratio.
      *
      * @param modeName Mode name.
+     * @param currentZoomRatio Current zoom ratio.
      *
      */
-    float GetSketchReferenceFovRatio(int32_t modeName);
+    float GetSketchReferenceFovRatio(int32_t modeName, float currentZoomRatio);
 
     /**
      * @brief Get sketch enable ratio.
@@ -164,11 +165,17 @@ public:
     void OnNativeUnregisterCallback(const std::string& eventString);
 
 private:
+    struct SketchReferenceFovRange {
+        float zoomMin = -1.0f;
+        float zoomMax = -1.0f;
+        float referenceValue = -1.0f;
+    };
+
     std::shared_ptr<PreviewStateCallback> appCallback_;
     sptr<IStreamRepeatCallback> svcCallback_;
     std::shared_ptr<void> sketchWrapper_;
     std::mutex sketchReferenceFovRatioMutex_;
-    std::map<int32_t, float> sketchReferenceFovRatioMap_;
+    std::map<int32_t, std::vector<SketchReferenceFovRange>> sketchReferenceFovRatioMap_;
     std::mutex sketchEnableRatioMutex_;
     std::map<int32_t, float> sketchEnableRatioMap_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetDeviceMetadata();
@@ -176,6 +183,9 @@ private:
     void UpdateSketchEnableRatio(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata);
     void UpdateSketchReferenceFovRatio(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata);
     std::shared_ptr<Size> FindSketchSize();
+    int32_t OnMetadataChangedMacro(const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem);
+    int32_t OnMetadataChangedZoomRatio(
+        const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem);
     int32_t CreateSketchWrapper(Size sketchSize, int32_t imageFormat);
     void CameraServerDied(pid_t pid) override;
 };

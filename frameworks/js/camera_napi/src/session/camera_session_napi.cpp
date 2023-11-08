@@ -252,6 +252,123 @@ void FocusCallbackListener::RemoveAllCallbacks()
     MEDIA_INFO_LOG("RemoveAllCallbacks: remove all js callbacks success");
 }
 
+void MacroStatusCallbackListener::OnMacroStatusCallbackAsync(MacroStatus status) const
+{
+    MEDIA_DEBUG_LOG("OnMacroStatusCallbackAsync is called");
+    uv_loop_s* loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (!loop) {
+        MEDIA_ERR_LOG("failed to get event loop");
+        return;
+    }
+    uv_work_t* work = new (std::nothrow) uv_work_t;
+    if (!work) {
+        MEDIA_ERR_LOG("failed to allocate work");
+        return;
+    }
+    auto callbackInfo = std::make_unique<MacroStatusCallbackInfo>(status, this);
+    work->data = callbackInfo.get();
+    int ret = uv_queue_work_with_qos(
+        loop, work, [](uv_work_t* work) {},
+        [](uv_work_t* work, int status) {
+            auto callbackInfo = reinterpret_cast<MacroStatusCallbackInfo*>(work->data);
+            if (callbackInfo) {
+                callbackInfo->listener_->OnMacroStatusCallback(callbackInfo->status_);
+                delete callbackInfo;
+            }
+            delete work;
+        },
+        uv_qos_user_initiated);
+    if (ret) {
+        MEDIA_ERR_LOG("failed to execute work");
+        delete work;
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void MacroStatusCallbackListener::OnMacroStatusCallback(MacroStatus status) const
+{
+    MEDIA_DEBUG_LOG("OnMacroStatusCallback is called");
+    napi_value result[ARGS_TWO] = { nullptr, nullptr };
+    napi_value callback = nullptr;
+    napi_value retVal;
+    for (auto it = macroCbList_.begin(); it != macroCbList_.end();) {
+        napi_env env = (*it)->env_;
+        napi_get_undefined(env, &result[PARAM0]);
+        napi_get_boolean(env, status == MacroStatus::ACTIVE, &result[PARAM1]);
+        napi_get_reference_value(env, (*it)->cb_, &callback);
+        napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
+        if ((*it)->isOnce_) {
+            napi_status status = napi_delete_reference(env, (*it)->cb_);
+            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
+            (*it)->cb_ = nullptr;
+            macroCbList_.erase(it);
+        } else {
+            it++;
+        }
+    }
+    MEDIA_DEBUG_LOG("MacroStatusCallbackListener list size [%{public}zu]", macroCbList_.size());
+}
+
+void MacroStatusCallbackListener::OnMacroStatusChanged(MacroStatus status)
+{
+    MEDIA_DEBUG_LOG("OnMacroStatusChanged is called, status: %{public}d", status);
+    OnMacroStatusCallbackAsync(status);
+}
+
+void MacroStatusCallbackListener::SaveCallbackReference(const std::string& eventType, napi_value callback, bool isOnce)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (auto it = macroCbList_.begin(); it != macroCbList_.end(); ++it) {
+        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
+    }
+    napi_ref callbackRef = nullptr;
+    const int32_t refCount = 1;
+    napi_status status = napi_create_reference(env_, callback, refCount, &callbackRef);
+    CHECK_AND_RETURN_LOG(status == napi_ok && callbackRef != nullptr,
+        "MacroStatusCallbackListener: creating reference for callback fail");
+    std::shared_ptr<AutoRef> cb = std::make_shared<AutoRef>(env_, callbackRef, isOnce);
+    macroCbList_.push_back(cb);
+    MEDIA_DEBUG_LOG("Save callback reference success, callback list size [%{public}zu]", macroCbList_.size());
+}
+
+void MacroStatusCallbackListener::RemoveCallbackRef(napi_env env, napi_value callback)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (callback == nullptr) {
+        MEDIA_INFO_LOG("RemoveCallbackRef: js callback is nullptr, remove all callback reference");
+        RemoveAllCallbacks();
+        return;
+    }
+    for (auto it = macroCbList_.begin(); it != macroCbList_.end(); ++it) {
+        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        if (isSameCallback) {
+            MEDIA_INFO_LOG("RemoveCallbackRef: find js callback, delete it");
+            napi_status status = napi_delete_reference(env, (*it)->cb_);
+            (*it)->cb_ = nullptr;
+            CHECK_AND_RETURN_LOG(status == napi_ok, "RemoveCallbackRef: delete reference for callback fail");
+            macroCbList_.erase(it);
+            return;
+        }
+    }
+    MEDIA_INFO_LOG("RemoveCallbackRef: js callback no find");
+}
+
+void MacroStatusCallbackListener::RemoveAllCallbacks()
+{
+    for (auto it = macroCbList_.begin(); it != macroCbList_.end(); ++it) {
+        napi_status ret = napi_delete_reference(env_, (*it)->cb_);
+        if (ret != napi_ok) {
+            MEDIA_ERR_LOG("RemoveAllCallbackReferences: napi_delete_reference err.");
+        }
+        (*it)->cb_ = nullptr;
+    }
+    macroCbList_.clear();
+    MEDIA_INFO_LOG("RemoveAllCallbacks: remove all js callbacks success");
+}
+
 void SessionCallbackListener::OnErrorCallbackAsync(int32_t errorCode) const
 {
     MEDIA_DEBUG_LOG("OnErrorCallbackAsync is called");
@@ -460,7 +577,10 @@ napi_value CameraSessionNapi::Init(napi_env env, napi_value exports)
 
         DECLARE_NAPI_FUNCTION("getSupportedColorEffects", GetSupportedColorEffects),
         DECLARE_NAPI_FUNCTION("getColorEffect", GetColorEffect),
-        DECLARE_NAPI_FUNCTION("setColorEffect", SetColorEffect)
+        DECLARE_NAPI_FUNCTION("setColorEffect", SetColorEffect),
+
+        DECLARE_NAPI_FUNCTION("isMacroSupported", IsMacroSupported),
+        DECLARE_NAPI_FUNCTION("enableMacro", EnableMacro),
     };
 
     status = napi_define_class(env, CAMERA_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -2218,8 +2338,70 @@ napi_value CameraSessionNapi::SetColorEffect(napi_env env, napi_callback_info in
     return result;
 }
 
-napi_value CameraSessionNapi::RegisterCallback(napi_env env, napi_value jsThis,
-    const string &eventType, napi_value callback, bool isOnce)
+napi_value CameraSessionNapi::IsMacroSupported(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiUtils::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsMacroSupported is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("IsMacroSupported is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        bool isSupported = cameraSessionNapi->cameraSession_->IsMacroSupported();
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("IsMacroSupported call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::EnableMacro(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiUtils::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi EnableMacro is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("EnableMacro is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = { 0 };
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[0], &valueType);
+    if (valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
+        return result;
+    }
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        bool isEnableMacro;
+        napi_get_value_bool(env, argv[PARAM0], &isEnableMacro);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int32_t retCode = cameraSessionNapi->cameraSession_->EnableMacro(isEnableMacro);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        if (retCode != 0 && !CameraNapiUtils::CheckError(env, retCode)) {
+            return result;
+        }
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::RegisterCallback(
+    napi_env env, napi_value jsThis, const string& eventType, napi_value callback, bool isOnce)
 {
     MEDIA_DEBUG_LOG("RegisterCallback is called");
     napi_value undefinedResult = nullptr;
@@ -2227,14 +2409,13 @@ napi_value CameraSessionNapi::RegisterCallback(napi_env env, napi_value jsThis,
     napi_status status;
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&cameraSessionNapi));
-    NAPI_ASSERT(env, status == napi_ok && cameraSessionNapi != nullptr,
-                "Failed to retrieve cameraSessionNapi instance.");
+    NAPI_ASSERT(
+        env, status == napi_ok && cameraSessionNapi != nullptr, "Failed to retrieve cameraSessionNapi instance.");
     NAPI_ASSERT(env, cameraSessionNapi->cameraSession_ != nullptr, "cameraSession is null.");
     if (eventType.compare("exposureStateChange") == 0) {
         // Set callback for exposureStateChange
         if (cameraSessionNapi->exposureCallback_ == nullptr) {
-            std::shared_ptr<ExposureCallbackListener> exposureCallback =
-                    make_shared<ExposureCallbackListener>(env);
+            auto exposureCallback = make_shared<ExposureCallbackListener>(env);
             cameraSessionNapi->exposureCallback_ = exposureCallback;
             cameraSessionNapi->cameraSession_->SetExposureCallback(exposureCallback);
         }
@@ -2242,21 +2423,30 @@ napi_value CameraSessionNapi::RegisterCallback(napi_env env, napi_value jsThis,
     } else if (eventType.compare("focusStateChange") == 0) {
         // Set callback for focusStateChange
         if (cameraSessionNapi->focusCallback_ == nullptr) {
-            std::shared_ptr<FocusCallbackListener> focusCallback =
-                    make_shared<FocusCallbackListener>(env);
+            auto focusCallback = make_shared<FocusCallbackListener>(env);
             cameraSessionNapi->focusCallback_ = focusCallback;
             cameraSessionNapi->cameraSession_->SetFocusCallback(focusCallback);
         }
         cameraSessionNapi->focusCallback_->SaveCallbackReference(eventType, callback, isOnce);
+    } else if (eventType.compare("macroStatusChanged") == 0) {
+        if (!CameraNapiUtils::CheckSystemApp(env)) {
+            MEDIA_ERR_LOG("SystemApi on macroStatusChanged is called!");
+            return undefinedResult;
+        }
+        if (cameraSessionNapi->macroStatusCallback_ == nullptr) {
+            auto callback = std::make_shared<MacroStatusCallbackListener>(env);
+            cameraSessionNapi->macroStatusCallback_ = callback;
+            cameraSessionNapi->cameraSession_->SetMacroStatusCallback(callback);
+        }
+        cameraSessionNapi->macroStatusCallback_->SaveCallbackReference(eventType, callback, isOnce);
     } else if (eventType.compare("error") == 0) {
         if (cameraSessionNapi->sessionCallback_ == nullptr) {
-            std::shared_ptr<SessionCallbackListener> sessionCallback =
-                    std::make_shared<SessionCallbackListener>(env);
+            auto sessionCallback = std::make_shared<SessionCallbackListener>(env);
             cameraSessionNapi->sessionCallback_ = sessionCallback;
             cameraSessionNapi->cameraSession_->SetCallback(sessionCallback);
         }
         cameraSessionNapi->sessionCallback_->SaveCallbackReference(eventType, callback, isOnce);
-    } else  {
+    } else {
         MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
     }
     return undefinedResult;
@@ -2318,8 +2508,8 @@ napi_value CameraSessionNapi::Once(napi_env env, napi_callback_info info)
     return RegisterCallback(env, thisVar, eventType, argv[PARAM1], true);
 }
 
-napi_value CameraSessionNapi::UnregisterCallback(napi_env env, napi_value jsThis,
-    const std::string &eventType, napi_value callback)
+napi_value CameraSessionNapi::UnregisterCallback(
+    napi_env env, napi_value jsThis, const std::string& eventType, napi_value callback)
 {
     MEDIA_DEBUG_LOG("UnregisterCallback is called");
     napi_value undefinedResult = nullptr;
@@ -2327,8 +2517,8 @@ napi_value CameraSessionNapi::UnregisterCallback(napi_env env, napi_value jsThis
     napi_status status;
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&cameraSessionNapi));
-    NAPI_ASSERT(env, status == napi_ok && cameraSessionNapi != nullptr,
-                "Failed to retrieve cameraSessionNapi instance.");
+    NAPI_ASSERT(
+        env, status == napi_ok && cameraSessionNapi != nullptr, "Failed to retrieve cameraSessionNapi instance.");
     if (eventType.compare("exposureStateChange") == 0) {
         // Set callback for exposureStateChange
         if (cameraSessionNapi->exposureCallback_ == nullptr) {
@@ -2343,13 +2533,23 @@ napi_value CameraSessionNapi::UnregisterCallback(napi_env env, napi_value jsThis
         } else {
             cameraSessionNapi->focusCallback_->RemoveCallbackRef(env, callback);
         }
+    } else if (eventType.compare("macroStatusChanged") == 0) {
+        if (!CameraNapiUtils::CheckSystemApp(env)) {
+            MEDIA_ERR_LOG("SystemApi off macroStatusChanged is called!");
+            return undefinedResult;
+        }
+        if (cameraSessionNapi->macroStatusCallback_ == nullptr) {
+            MEDIA_ERR_LOG("macroStatusCallback is null");
+        } else {
+            cameraSessionNapi->macroStatusCallback_->RemoveCallbackRef(env, callback);
+        }
     } else if (eventType.compare("error") == 0) {
         if (cameraSessionNapi->sessionCallback_ == nullptr) {
             MEDIA_ERR_LOG("sessionCallback is null");
         } else {
             cameraSessionNapi->sessionCallback_->RemoveCallbackRef(env, callback);
         }
-    } else  {
+    } else {
         MEDIA_ERR_LOG("Failed to Unregister Callback");
     }
     return undefinedResult;

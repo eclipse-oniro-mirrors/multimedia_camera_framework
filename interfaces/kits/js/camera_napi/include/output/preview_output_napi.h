@@ -65,6 +65,7 @@ private:
     void UpdateJSCallbackAsync(PreviewOutputEventType eventType, const int32_t value) const;
     void OnSketchAvailableAsync(SketchData& sketchData) const;
     void OnSketchAvailableCall(SketchData& sketchData) const;
+    void AfterSketchAvailableCall(napi_env env, napi_value promiseValue, napi_value napiObj) const;
     std::mutex previewOutputCbMutex_;
     napi_env env_;
     mutable std::vector<std::shared_ptr<AutoRef>> frameStartCbList_;
@@ -84,8 +85,9 @@ struct PreviewOutputCallbackInfo {
 struct SketchDataCallbackInfo {
     SketchData sketchData_;
     const PreviewOutputCallback* listener_;
-    SketchDataCallbackInfo(SketchData sketchData, const PreviewOutputCallback* listener)
-        : sketchData_(sketchData), listener_(listener)
+    napi_env env_;
+    SketchDataCallbackInfo(SketchData sketchData, const PreviewOutputCallback* listener, napi_env env)
+        : sketchData_(sketchData), listener_(listener), env_(env)
     {}
 };
 

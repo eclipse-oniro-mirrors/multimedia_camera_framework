@@ -255,6 +255,7 @@ void CameraInput::ProcessDeviceCallbackUpdates(const std::shared_ptr<Camera::Cam
     }
 
     captureSession->ProcessAutoFocusUpdates(result);
+    captureSession->ProcessMacroStatusChange(result);
 }
 
 int32_t CameraInput::UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata)

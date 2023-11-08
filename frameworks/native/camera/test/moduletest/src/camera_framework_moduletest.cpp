@@ -69,6 +69,12 @@ enum class CAM_VIDEO_EVENTS {
     CAM_VIDEO_MAX_EVENT
 };
 
+enum class CAM_MACRO_DETECT_EVENTS {
+    CAM_MACRO_EVENT_IDLE = 0,
+    CAM_MACRO_EVENT_ACTIVE,
+    CAM_MACRO_EVENT_MAX_EVENT
+};
+
 const int32_t WAIT_TIME_AFTER_CAPTURE = 1;
 const int32_t WAIT_TIME_AFTER_START = 2;
 const int32_t WAIT_TIME_BEFORE_STOP = 1;
@@ -84,6 +90,7 @@ int32_t g_previewFd = -1;
 std::bitset<static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_MAX_EVENT)> g_photoEvents;
 std::bitset<static_cast<unsigned int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_MAX_EVENT)> g_previewEvents;
 std::bitset<static_cast<unsigned int>(CAM_VIDEO_EVENTS::CAM_VIDEO_MAX_EVENT)> g_videoEvents;
+std::bitset<static_cast<unsigned int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_MAX_EVENT)> g_macroEvents;
 std::unordered_map<std::string, int> g_camStatusMap;
 std::unordered_map<std::string, bool> g_camFlashMap;
 
@@ -91,7 +98,8 @@ class AppCallback : public CameraManagerCallback,
                     public ErrorCallback,
                     public PhotoStateCallback,
                     public PreviewStateCallback,
-                    public ResultCallback {
+                    public ResultCallback,
+                    public MacroStatusCallback {
 public:
     void OnCameraStatusChanged(const CameraStatusInfo& cameraDeviceInfo) const override
     {
@@ -235,6 +243,18 @@ public:
     {
         MEDIA_DEBUG_LOG("AppCallback::OnSketchAvailable");
         g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_SKETCH_AVAILABLE)] = 1;
+        return;
+    }
+    void OnMacroStatusChanged(MacroStatus status) override
+    {
+        MEDIA_DEBUG_LOG("AppCallback::OnMacroStatusChanged");
+        if (status == IDLE) {
+            g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_IDLE)] = 1;
+            g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_ACTIVE)] = 0;
+        } else if (status == ACTIVE) {
+            g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_ACTIVE)] = 1;
+            g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_IDLE)] = 0;
+        }
         return;
     }
 };
@@ -6358,7 +6378,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_050, TestSize.Le
         return;
     }
 
-    int sketchEnableRatio = previewOutput->GetSketchEnableRatio(session_->GetMode());
+    int sketchEnableRatio = previewOutput->GetSketchEnableRatio(session_->GetFeaturesMode());
     EXPECT_GT(sketchEnableRatio, 0);
 
     intResult = previewOutput->EnableSketch(true);
@@ -6418,7 +6438,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_051, TestSize.Le
 
     previewOutput->SetCallback(std::make_shared<AppCallback>());
 
-    int sketchEnableRatio = previewOutput->GetSketchEnableRatio(session_->GetMode());
+    int sketchEnableRatio = previewOutput->GetSketchEnableRatio(session_->GetFeaturesMode());
     EXPECT_GT(sketchEnableRatio, 0);
 
     intResult = previewOutput->EnableSketch(true);
@@ -6564,7 +6584,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_053, TestSize.Le
         return;
     }
 
-    int sketchEnableRatio = previewOutput->GetSketchEnableRatio(session_->GetMode());
+    int sketchEnableRatio = previewOutput->GetSketchEnableRatio(session_->GetFeaturesMode());
     EXPECT_GT(sketchEnableRatio, 0);
 
     intResult = previewOutput->EnableSketch(true);
@@ -6599,6 +6619,132 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_053, TestSize.Le
 
     intResult = previewOutput->StopSketch();
     EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test macro function.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test macro function.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_054, TestSize.Level0)
+{
+    auto previewProfile = GetSketchPreviewProfile();
+    if (previewProfile == nullptr) {
+        EXPECT_EQ(previewProfile.get(), nullptr);
+        return;
+    }
+    auto output = CreatePreviewOutput(*previewProfile);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
+    ASSERT_NE(output, nullptr);
+
+    session_->SetMode(static_cast<int32_t>(CameraMode::CAPTURE));
+    int32_t intResult = session_->BeginConfig();
+
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(output);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    session_->SetMacroStatusCallback(std::make_shared<AppCallback>());
+
+    g_macroEvents.reset();
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    bool isMacroSupported = session_->IsMacroSupported();
+    if (isMacroSupported) {
+        EXPECT_EQ(g_macroEvents.count(), 1);
+        if (g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_ACTIVE)] == 1) {
+            session_->LockForControl();
+            intResult = session_->EnableMacro(true);
+            EXPECT_EQ(intResult, 0);
+            session_->UnlockForControl();
+        }
+        if (g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_IDLE)] == 1) {
+            session_->LockForControl();
+            intResult = session_->EnableMacro(false);
+            EXPECT_EQ(intResult, 0);
+            session_->UnlockForControl();
+        }
+    }
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test macro function anomalous branch..
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test macro function anomalous branch..
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_055, TestSize.Level0)
+{
+    auto previewProfile = GetSketchPreviewProfile();
+    if (previewProfile == nullptr) {
+        EXPECT_EQ(previewProfile.get(), nullptr);
+        return;
+    }
+    auto output = CreatePreviewOutput(*previewProfile);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
+    ASSERT_NE(output, nullptr);
+
+    session_->SetMode(static_cast<int32_t>(CameraMode::CAPTURE));
+    int32_t intResult = session_->BeginConfig();
+
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(output);
+    EXPECT_EQ(intResult, 0);
+
+    bool isMacroSupported = session_->IsMacroSupported();
+    EXPECT_FALSE(isMacroSupported);
+
+    intResult = session_->EnableMacro(true);
+    EXPECT_EQ(intResult, 7400102);
+
+    intResult = session_->EnableMacro(false);
+    EXPECT_EQ(intResult, 7400102);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    isMacroSupported = session_->IsMacroSupported();
+    if (!isMacroSupported) {
+        intResult = session_->EnableMacro(false);
+        EXPECT_EQ(intResult, 7400102);
+    }
+
+    session_->SetMacroStatusCallback(std::make_shared<AppCallback>());
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    g_macroEvents.reset();
+
+    sleep(WAIT_TIME_AFTER_START);
 
     intResult = session_->Stop();
     EXPECT_EQ(intResult, 0);

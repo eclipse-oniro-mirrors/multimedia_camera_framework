@@ -103,7 +103,8 @@ void HStreamRepeat::StartSketchStream(std::shared_ptr<OHOS::Camera::CameraMetada
     MEDIA_DEBUG_LOG("HStreamRepeat::StartSketchStream OHOS_CONTROL_ZOOM_RATIO >>> tagRatio:%{public}f -- "
                     "sketchRatio:%{public}f",
         tagRatio, sketchStreamRepeat->sketchRatio_);
-    if (tagRatio - sketchStreamRepeat->sketchRatio_ >= std::numeric_limits<float>::epsilon()) {
+    if (sketchStreamRepeat->sketchRatio_ > 0 &&
+        tagRatio - sketchStreamRepeat->sketchRatio_ >= -std::numeric_limits<float>::epsilon()) {
         sketchStreamRepeat->Start();
     }
     MEDIA_DEBUG_LOG("HStreamRepeat::StartSketchStream Exit");
@@ -144,7 +145,8 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     captureInfo.streamIds_ = { streamId_ };
     captureInfo.captureSetting_ = ability;
     captureInfo.enableShutterCallback_ = false;
-    MEDIA_INFO_LOG("HStreamRepeat::Start Starting with capture ID: %{public}d", curCaptureID_);
+    MEDIA_INFO_LOG("HStreamRepeat::Start Starting with capture ID: %{public}d, repeatStreamType:%{public}d",
+        curCaptureID_, repeatStreamType_);
     CamRetCode rc = (CamRetCode)(streamOperator_->Capture(curCaptureID_, captureInfo, true));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         ReleaseCaptureId(curCaptureID_);
@@ -290,7 +292,7 @@ int32_t HStreamRepeat::ForkSketchStreamRepeat(const sptr<OHOS::IBufferProducer>&
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(sketchStreamLock_);
-    if ((producer == nullptr) || (width <= 0) || (height <= 0) || sketchRatio <= 0) {
+    if ((producer == nullptr) || (width <= 0) || (height <= 0)) {
         MEDIA_ERR_LOG("HCameraService::ForkSketchStreamRepeat args is illegal");
         return CAMERA_INVALID_ARG;
     }
@@ -322,6 +324,17 @@ int32_t HStreamRepeat::RemoveSketchStreamRepeat()
     sketchStreamRepeat_->parentStreamRepeat_ = nullptr;
     sketchStreamRepeat_ = nullptr;
 
+    return CAMERA_OK;
+}
+
+int32_t HStreamRepeat::UpdateSketchRatio(float sketchRatio)
+{
+    std::lock_guard<std::mutex> lock(sketchStreamLock_);
+    if (sketchStreamRepeat_ == nullptr) {
+        MEDIA_ERR_LOG("HCameraService::UpdateSketchRatio sketch stream not create!");
+        return CAMERA_INVALID_STATE;
+    }
+    sketchStreamRepeat_->sketchRatio_ = sketchRatio;
     return CAMERA_OK;
 }
 

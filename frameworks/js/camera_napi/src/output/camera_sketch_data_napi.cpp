@@ -15,6 +15,7 @@
 
 #include "output/camera_sketch_data_napi.h"
 
+#include "js_native_api.h"
 #include "pixel_map_napi.h"
 
 namespace OHOS {
@@ -26,13 +27,26 @@ using OHOS::HiviewDFX::HiLogLabel;
 thread_local napi_ref CameraSketchDataNapi::sConstructor_ = nullptr;
 thread_local unique_ptr<SketchData> CameraSketchDataNapi::sSketchData_ = nullptr;
 
-CameraSketchDataNapi::CameraSketchDataNapi() : env_(nullptr), wrapper_(nullptr) {}
+CameraSketchDataNapi::CameraSketchDataNapi() : env_(nullptr), napiPixelMap_(nullptr) {}
 
 CameraSketchDataNapi::~CameraSketchDataNapi()
 {
     MEDIA_DEBUG_LOG("~CameraSketchData is called");
-    if (wrapper_ != nullptr) {
-        napi_delete_reference(env_, wrapper_);
+    if (napiPixelMap_ != nullptr) {
+        napi_delete_reference(env_, napiPixelMap_);
+        napiPixelMap_ = nullptr;
+    }
+}
+
+void CameraSketchDataNapi::Release()
+{
+    MEDIA_DEBUG_LOG("CameraSketchDataNapi Release is called");
+    if (napiPixelMap_ != nullptr) {
+        napi_delete_reference(env_, napiPixelMap_);
+        napiPixelMap_ = nullptr;
+    }
+    if (sketchData_ != nullptr) {
+        sketchData_ = nullptr;
     }
 }
 
@@ -161,32 +175,46 @@ napi_value CameraSketchDataNapi::GetCameraSketchPixelMap(napi_env env, napi_call
 {
     MEDIA_DEBUG_LOG("GetCameraSketchPixelMap is called");
     napi_status status;
-    napi_value undefinedResult = nullptr;
+    napi_value result = nullptr;
     CameraSketchDataNapi* obj = nullptr;
     napi_value thisVar = nullptr;
 
-    napi_get_undefined(env, &undefinedResult);
+    napi_get_undefined(env, &result);
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
 
     if (status != napi_ok || thisVar == nullptr) {
         MEDIA_ERR_LOG("Invalid arguments!");
-        return undefinedResult;
+        return result;
     }
 
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
-    if ((status == napi_ok) && (obj != nullptr) && (obj->sketchData_ != nullptr) &&
-        obj->sketchData_->pixelMap != nullptr) {
+    if ((status != napi_ok) || (obj == nullptr)) {
+        MEDIA_ERR_LOG("GetCameraSketchPixelMap call Failed!");
+        return result;
+    }
+
+    if (obj->napiPixelMap_ != nullptr) {
+        status = napi_get_reference_value(env, obj->napiPixelMap_, &result);
+        if (status == napi_ok && result != nullptr) {
+            MEDIA_DEBUG_LOG("GetCameraSketchPixelMap get cached pixelMap!");
+            return result;
+        }
+    }
+
+    if ((obj->sketchData_ != nullptr) && obj->sketchData_->pixelMap != nullptr) {
         std::shared_ptr<Media::PixelMap> pixelMap =
             std::static_pointer_cast<Media::PixelMap>(obj->sketchData_->pixelMap);
         napi_value jsResult = Media::PixelMapNapi::CreatePixelMap(obj->env_, std::move(pixelMap));
         if (jsResult == nullptr) {
             MEDIA_ERR_LOG("ImageNapi Create failed");
-            return undefinedResult;
+            return result;
         }
+        napi_create_reference(env, jsResult, 1, &obj->napiPixelMap_);
+        obj->sketchData_->pixelMap = nullptr;
         return jsResult;
     }
-    MEDIA_ERR_LOG("GetCameraSketchPixelMap call Failed!");
-    return undefinedResult;
+    MEDIA_ERR_LOG("GetCameraSketchPixelMap call Failed! Unknown error");
+    return result;
 }
 } // namespace CameraStandard
 } // namespace OHOS

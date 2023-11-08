@@ -15,8 +15,10 @@
 
 #include "output/preview_output.h"
 
+#include <cstdint>
 #include <limits>
 #include <memory>
+#include <utility>
 #include <variant>
 
 #include "camera_device_ability_items.h"
@@ -27,6 +29,7 @@
 #include "hstream_repeat_callback_stub.h"
 #include "image_format.h"
 #include "metadata_common_utils.h"
+#include "mode/mode_manager.h"
 #include "pixel_map.h"
 #include "sketch_wrapper.h"
 
@@ -174,19 +177,56 @@ bool PreviewOutput::IsSketchSupported()
     }
 
     auto sketchSize = FindSketchSize();
-    if (sketchSize != nullptr) {
-        MEDIA_INFO_LOG(
-            "IsSketchSupported FindSketchSize Size is %{public}dx%{public}d", sketchSize->width, sketchSize->height);
+    if (sketchSize == nullptr) {
+        return false;
     }
-    return sketchSize != nullptr && GetSketchRatio() > 0;
+    MEDIA_INFO_LOG(
+        "IsSketchSupported FindSketchSize Size is %{public}dx%{public}d", sketchSize->width, sketchSize->height);
+    auto sketchRatio = GetSketchRatio();
+    if (sketchRatio > 0) {
+        return true;
+    }
+    MEDIA_DEBUG_LOG("IsSketchSupported GetSketchRatio failed, %{public}f ", sketchRatio);
+    auto session = GetSession();
+    if (session == nullptr) {
+        return false;
+    }
+    auto subModeNames = session->GetSubFeatureMods();
+    for (auto subModeName : subModeNames) {
+        float ratio = GetSketchEnableRatio(subModeName);
+        if (ratio > 0) {
+            MEDIA_DEBUG_LOG("IsSketchSupported GetSketchEnableRatio success,mode:%{public}d, ratio:%{public}f ",
+                subModeName, ratio);
+            return true;
+        }
+    }
+    return false;
 }
 
-float PreviewOutput::GetSketchReferenceFovRatio(int32_t modeName)
+float PreviewOutput::GetSketchReferenceFovRatio(int32_t modeName, float currentZoomRatio)
 {
     std::lock_guard<std::mutex> lock(sketchReferenceFovRatioMutex_);
     auto it = sketchReferenceFovRatioMap_.find(modeName);
     if (it != sketchReferenceFovRatioMap_.end()) {
-        return it->second;
+        if (it->second.size() == 1) { // only 1 element, just return result;
+            return it->second[0].referenceValue;
+        }
+        // If zoom ratio out of range, try return min or max range value.
+        auto& minRange = it->second.front();
+        if (currentZoomRatio - minRange.zoomMin <= std::numeric_limits<float>::epsilon()) {
+            return minRange.referenceValue;
+        }
+        auto& maxRange = it->second.back();
+        if (currentZoomRatio - maxRange.zoomMax >= -std::numeric_limits<float>::epsilon()) {
+            return maxRange.referenceValue;
+        }
+
+        for (auto& range : it->second) {
+            if (currentZoomRatio - range.zoomMin >= -std::numeric_limits<float>::epsilon() &&
+                currentZoomRatio - range.zoomMax < -std::numeric_limits<float>::epsilon()) {
+                return range.referenceValue;
+            }
+        }
     }
     return -1.0f;
 }
@@ -203,7 +243,6 @@ float PreviewOutput::GetSketchEnableRatio(int32_t modeName)
 
 float PreviewOutput::GetSketchRatio()
 {
-    std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into PreviewOutput::GetSketchRatio");
 
     auto session = GetSession();
@@ -211,11 +250,11 @@ float PreviewOutput::GetSketchRatio()
         MEDIA_WARNING_LOG("PreviewOutput::GetSketchRatio session is null");
         return -1.0f;
     }
-    int32_t currentMode = session->GetMode();
+    int32_t currentMode = session->GetFeaturesMode();
     UpdateSketchStaticInfo();
     float ratio = GetSketchEnableRatio(currentMode);
     if (ratio <= 0) {
-        MEDIA_WARNING_LOG("PreviewOutput::GetSketchRatio  %{public}d mode not support sketch", currentMode);
+        MEDIA_WARNING_LOG("PreviewOutput::GetSketchRatio %{public}d mode", currentMode);
     }
     return ratio;
 }
@@ -227,10 +266,9 @@ int32_t PreviewOutput::CreateSketchWrapper(Size sketchSize, int32_t imageFormat)
         MEDIA_ERR_LOG("EnableSketch session null");
         return ServiceToCameraError(CAMERA_INVALID_STATE);
     }
-    float ratio = GetSketchEnableRatio(session->GetMode());
+    float ratio = GetSketchEnableRatio(session->GetFeaturesMode());
     if (ratio <= 0) {
-        MEDIA_ERR_LOG("EnableSketch sketch ratio is illegal");
-        return ServiceToCameraError(CAMERA_INVALID_ARG);
+        MEDIA_WARNING_LOG("EnableSketch sketch ratio is illegal:%{public}f, will create a temp sketch surface", ratio);
     }
     auto wrapper = std::make_shared<SketchWrapper>(this, ratio);
     auto listener = std::make_shared<SketchWrapper::SketchBufferAvaliableListener>(wrapper);
@@ -246,7 +284,7 @@ int32_t PreviewOutput::EnableSketch(bool isEnable)
     MEDIA_DEBUG_LOG("Enter Into PreviewOutput::EnableSketch");
     if (!IsSketchSupported()) {
         MEDIA_ERR_LOG("EnableSketch IsSketchSupported is false");
-        return ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED);
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
     }
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
@@ -287,7 +325,7 @@ int32_t PreviewOutput::EnableSketch(bool isEnable)
         return ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED);
     }
     auto wrapper = static_pointer_cast<SketchWrapper>(sketchWrapper_);
-    errCode = wrapper->Destory();
+    errCode = wrapper->Destroy();
     sketchWrapper_ = nullptr;
     return ServiceToCameraError(errCode);
 }
@@ -295,7 +333,6 @@ int32_t PreviewOutput::EnableSketch(bool isEnable)
 int32_t PreviewOutput::StartSketch()
 {
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    std::lock_guard<std::mutex> lock(asyncOpMutex_);
 
     auto captureSession = GetSession();
     if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
@@ -311,7 +348,6 @@ int32_t PreviewOutput::StartSketch()
 int32_t PreviewOutput::StopSketch()
 {
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    std::lock_guard<std::mutex> lock(asyncOpMutex_);
 
     auto captureSession = GetSession();
     if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
@@ -369,7 +405,7 @@ std::shared_ptr<Size> PreviewOutput::FindSketchSize()
         MEDIA_ERR_LOG("PreviewOutput::FindSketchSize preview format is illegal");
         return nullptr;
     }
-    auto sizeList = MetadataCommonUtils::GetSupportedPreviewSizeRange(session->GetMode(), hdi_format, metaData);
+    auto sizeList = MetadataCommonUtils::GetSupportedPreviewSizeRange(session->GetFeaturesMode(), hdi_format, metaData);
     if (sizeList == nullptr || sizeList->size() == 0) {
         return nullptr;
     }
@@ -451,23 +487,47 @@ void PreviewOutput::UpdateSketchReferenceFovRatio(std::shared_ptr<Camera::Camera
         OHOS::Camera::FindCameraMetadataItem(deviceMetadata->get(), OHOS_ABILITY_SKETCH_REFERENCE_FOV_RATIO, &item);
     std::lock_guard<std::mutex> lock(sketchReferenceFovRatioMutex_);
     sketchReferenceFovRatioMap_.clear();
-    if (ret != CAM_META_SUCCESS) {
+    if (ret != CAM_META_SUCCESS || item.count <= 0) {
         MEDIA_ERR_LOG("PreviewOutput::UpdateSketchReferenceFovRatio get sketch reference fov ratio failed");
         return;
     }
-    if (item.count <= 0) {
-        MEDIA_ERR_LOG("PreviewOutput::UpdateSketchReferenceFovRatio sketch reference fov ratio count <= 0");
-        return;
-    }
-    int32_t groupCount = item.count / 2; // 2 datas as a group: key,value
-    float* dataEntry = item.data.f;
-    for (int32_t i = 0; i < groupCount; i++) {
-        float key = dataEntry[i * 2];       // 2 datas as a group: key,value
-        float value = dataEntry[i * 2 + 1]; // 2 datas as a group: key,value
-        MEDIA_DEBUG_LOG("PreviewOutput::UpdateSketchReferenceFovRatio get sketch reference fov ratio "
-                        "%{public}f:%{public}f",
-            key, value);
-        sketchReferenceFovRatioMap_[(int32_t)key] = value;
+    int32_t dataCount = item.count;
+    float currentMode = -1.0f;
+    float currentMinRatio = -1.0f;
+    float currentMaxRatio = -1.0f;
+    for (int32_t i = 0; i < dataCount; i++) {
+        if (currentMode < 0) {
+            currentMode = item.data.f[i];
+            continue;
+        }
+        if (currentMinRatio < 0) {
+            currentMinRatio = item.data.f[i];
+            continue;
+        }
+        if (currentMaxRatio < 0) {
+            currentMaxRatio = item.data.f[i];
+            continue;
+        }
+        SketchReferenceFovRange fovRange;
+        fovRange.zoomMin = item.data.f[i];
+        fovRange.zoomMax = item.data.f[i + 1];        // Offset 1 data
+        fovRange.referenceValue = item.data.f[i + 2]; // Offset 2 data
+        i = i + 2;                                    // Offset 2 data
+        auto it = sketchReferenceFovRatioMap_.find((int32_t)currentMode);
+        std::vector<SketchReferenceFovRange> rangeFov;
+        if (it != sketchReferenceFovRatioMap_.end()) {
+            rangeFov = std::move(it->second);
+        }
+        rangeFov.emplace_back(fovRange);
+        sketchReferenceFovRatioMap_[(int32_t)currentMode] = rangeFov;
+        MEDIA_DEBUG_LOG("PreviewOutput::UpdateSketchReferenceFovRatio get sketch reference fov ratio:mode->%{public}f "
+                        "%{public}f-%{public}f value->%{public}f",
+            currentMode, fovRange.zoomMin, fovRange.zoomMax, fovRange.referenceValue);
+        if (fovRange.zoomMax - currentMaxRatio >= -std::numeric_limits<float>::epsilon()) {
+            currentMode = -1.0f;
+            currentMinRatio = -1.0f;
+            currentMaxRatio = -1.0f;
+        }
     }
 }
 
@@ -505,7 +565,7 @@ void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
 
 std::set<camera_device_metadata_tag_t> PreviewOutput::GetObserverTags() const
 {
-    return {OHOS_CONTROL_ZOOM_RATIO};
+    return { OHOS_CONTROL_ZOOM_RATIO, OHOS_CONTROL_CAMERA_MACRO };
 }
 
 int32_t PreviewOutput::OnMetadataChanged(
@@ -516,21 +576,67 @@ int32_t PreviewOutput::OnMetadataChanged(
         return CAM_META_INVALID_PARAM;
     }
     if (tag == OHOS_CONTROL_ZOOM_RATIO) {
-        std::lock_guard<std::mutex> lock(asyncOpMutex_);
-        if (sketchWrapper_ == nullptr) {
-            return CAM_META_SUCCESS;
-        }
-        float tagRatio = *metadataItem.data.f;
-        auto sketchWrapper = static_pointer_cast<SketchWrapper>(sketchWrapper_);
-        float sketchRatio = sketchWrapper->GetSketchRatio();
-        MEDIA_DEBUG_LOG("PreviewOutput::OnMetadataChanged OHOS_CONTROL_ZOOM_RATIO >>> tagRatio:%{public}f -- "
-                        "sketchRatio:%{public}f",
-            tagRatio, sketchRatio);
-        if ((tagRatio - sketchRatio) >= std::numeric_limits<float>::epsilon()) {
-            sketchWrapper->StartSketchStream();
-        } else {
-            sketchWrapper->StopSketchStream();
-        }
+        OnMetadataChangedZoomRatio(tag, metadataItem);
+    } else if (tag == OHOS_CONTROL_CAMERA_MACRO) {
+        OnMetadataChangedMacro(tag, metadataItem);
+    }
+    return CAM_META_SUCCESS;
+}
+
+int32_t PreviewOutput::OnMetadataChangedZoomRatio(
+    const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem)
+{
+    std::lock_guard<std::mutex> lock(asyncOpMutex_);
+    auto sketchWrapper = static_pointer_cast<SketchWrapper>(sketchWrapper_);
+    if (sketchWrapper_ == nullptr) {
+        return CAM_META_FAILURE;
+    }
+    float tagRatio = *metadataItem.data.f;
+    float sketchRatio = sketchWrapper->GetSketchRatio();
+    MEDIA_DEBUG_LOG("PreviewOutput::OnMetadataChangedZoomRatio OHOS_CONTROL_ZOOM_RATIO >>> tagRatio:%{public}f -- "
+                    "sketchRatio:%{public}f",
+        tagRatio, sketchRatio);
+    sketchWrapper->UpdateCurrentZoomRatio(tagRatio);
+    if (sketchRatio > 0 && tagRatio - sketchRatio >= -std::numeric_limits<float>::epsilon()) {
+        sketchWrapper->StartSketchStream();
+    } else {
+        sketchWrapper->StopSketchStream();
+    }
+    return CAM_META_SUCCESS;
+}
+
+int32_t PreviewOutput::OnMetadataChangedMacro(
+    const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem)
+{
+    std::lock_guard<std::mutex> lock(asyncOpMutex_);
+    auto metadata = GetDeviceMetadata();
+    if (metadata == nullptr) {
+        return CAM_META_FAILURE;
+    }
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
+    if (ret != CAM_META_SUCCESS || item.count <= 0) {
+        return CAM_META_FAILURE;
+    }
+    float tagRatio = *item.data.f;
+    auto sketchWrapper = static_pointer_cast<SketchWrapper>(sketchWrapper_);
+    if (sketchWrapper_ == nullptr) {
+        return CAM_META_FAILURE;
+    }
+    auto session = GetSession();
+    if (session == nullptr) {
+        return CAM_META_FAILURE;
+    }
+    float sketchRatio = GetSketchEnableRatio(session->GetFeaturesMode());
+    MEDIA_DEBUG_LOG("PreviewOutput::OnMetadataChangedMacro OHOS_CONTROL_ZOOM_RATIO >>> tagRatio:%{public}f -- "
+                    "sketchRatio:%{public}f",
+        tagRatio, sketchRatio);
+    sketchWrapper->UpdateSketchRatio(sketchRatio);
+    sketchWrapper->UpdateCurrentZoomRatio(tagRatio);
+    if (sketchRatio > 0 && tagRatio - sketchRatio >= -std::numeric_limits<float>::epsilon()) {
+        sketchWrapper->StartSketchStream();
+    } else {
+        sketchWrapper->StopSketchStream();
     }
     return CAM_META_SUCCESS;
 }
@@ -569,7 +675,9 @@ void PreviewOutput::OnNativeRegisterCallback(const std::string& eventString)
         MEDIA_DEBUG_LOG("PreviewOutput::OnMetadataChanged OHOS_CONTROL_ZOOM_RATIO >>> tagRatio:%{public}f -- "
                         "sketchRatio:%{public}f",
             tagRatio, sketchRatio);
-        if (tagRatio - sketchRatio >= std::numeric_limits<float>::epsilon()) {
+        sketchWrapper->UpdateSketchRatio(sketchRatio);
+        sketchWrapper->UpdateCurrentZoomRatio(tagRatio);
+        if (sketchRatio > 0 && tagRatio - sketchRatio >= -std::numeric_limits<float>::epsilon()) {
             MEDIA_DEBUG_LOG(
                 "PreviewOutput::OnNativeRegisterCallback ready to start sketch: current ratio is:%{public}f", tagRatio);
             // If preview stream is not started, this function will fail and won't start sketch stream.

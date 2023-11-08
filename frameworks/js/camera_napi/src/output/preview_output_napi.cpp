@@ -15,9 +15,14 @@
 
 #include "output/preview_output_napi.h"
 
+#include <cstdint>
+#include <memory>
 #include <unistd.h>
 #include <uv.h>
 
+#include "camera_napi_utils.h"
+#include "js_native_api.h"
+#include "js_native_api_types.h"
 #include "output/camera_sketch_data_napi.h"
 
 namespace OHOS {
@@ -102,16 +107,20 @@ void PreviewOutputCallback::OnSketchAvailableAsync(SketchData& sketchData) const
         MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
-    std::unique_ptr<SketchDataCallbackInfo> callbackInfo = std::make_unique<SketchDataCallbackInfo>(sketchData, this);
+    std::unique_ptr<SketchDataCallbackInfo> callbackInfo =
+        std::make_unique<SketchDataCallbackInfo>(sketchData, this, env_);
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(
         loop, work, [](uv_work_t* work) {},
         [](uv_work_t* work, int status) {
             SketchDataCallbackInfo* callbackInfo = reinterpret_cast<SketchDataCallbackInfo*>(work->data);
+            napi_handle_scope scope = nullptr;
+            napi_open_handle_scope(callbackInfo->env_, &scope);
             if (callbackInfo) {
                 callbackInfo->listener_->OnSketchAvailableCall(callbackInfo->sketchData_);
                 delete callbackInfo;
             }
+            napi_close_handle_scope(callbackInfo->env_, scope);
             delete work;
         },
         uv_qos_user_initiated);
@@ -120,6 +129,32 @@ void PreviewOutputCallback::OnSketchAvailableAsync(SketchData& sketchData) const
         delete work;
     } else {
         callbackInfo.release();
+    }
+}
+
+void PreviewOutputCallback::AfterSketchAvailableCall(napi_env env, napi_value promiseValue, napi_value napiObj) const
+{
+    CameraSketchDataNapi* ptr;
+    napi_unwrap(env, napiObj, reinterpret_cast<void**>(&ptr));
+    bool isPromise = false;
+    napi_is_promise(env, promiseValue, &isPromise);
+    if (isPromise) {
+        MEDIA_DEBUG_LOG("PreviewOutputCallback::OnSketchAvailableCall retValue is promise");
+        auto promiseCallback = [](napi_env env, napi_callback_info info) {
+            MEDIA_DEBUG_LOG("AfterSketchAvailableCall promise callback Enter");
+            size_t argc = 1;
+            napi_value argv[ARGS_ONE] = { nullptr };
+            void* data = nullptr;
+            napi_get_cb_info(env, info, &argc, argv, nullptr, &data);
+            CameraSketchDataNapi* sketchDataNapiPtr = reinterpret_cast<CameraSketchDataNapi*>(data);
+            sketchDataNapiPtr->Release();
+            napi_value retNapiValue;
+            napi_get_undefined(env, &retNapiValue);
+            return retNapiValue;
+        };
+        CameraNapiUtils::CallPromiseFun(env, promiseValue, ptr, promiseCallback, promiseCallback);
+    } else {
+        ptr->Release();
     }
 }
 
@@ -135,10 +170,8 @@ void PreviewOutputCallback::OnSketchAvailableCall(SketchData& sketchData) const
         napi_env env = (*it)->env_;
         args[PARAM1] = CameraSketchDataNapi::CreateCameraSketchData(env_, sketchData);
         napi_get_reference_value(env, (*it)->cb_, &callback);
-        napi_call_function(env_, nullptr, callback, ARGS_TWO, args, &retVal);
-        CameraSketchDataNapi* ptr;
-        napi_unwrap(env_, args[PARAM1], reinterpret_cast<void**>(&ptr));
-        delete ptr;
+        napi_call_function(env, nullptr, callback, ARGS_TWO, args, &retVal);
+        AfterSketchAvailableCall(env, retVal, args[PARAM1]);
         if ((*it)->isOnce_) {
             napi_status status = napi_delete_reference(env, (*it)->cb_);
             CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");

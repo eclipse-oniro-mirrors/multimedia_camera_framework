@@ -54,6 +54,7 @@ public:
     int32_t ForkSketchStreamRepeat(const sptr<OHOS::IBufferProducer>& producer, int32_t width, int32_t height,
         sptr<IStreamRepeat>& sketchStream, float sketchRatio) override;
     int32_t RemoveSketchStreamRepeat() override;
+    int32_t UpdateSketchRatio(float sketchRatio) override;
     sptr<HStreamRepeat> GetSketchStream();
     RepeatStreamType GetRepeatStreamType();
     void DumpStreamInfo(std::string& dumpString) override;
