@@ -48,7 +48,7 @@ static napi_value SetZoomRatio(napi_env env, napi_callback_info info)
     OH_LOG_ERROR(LOG_APP, "SetZoomRatio : %{public}d", zoomRatio);
 
     ndkCamera_->setZoomRatioFn(zoomRatio);
-
+    napi_create_int32(env, argc, &result);
     return result;
 }
 
@@ -58,7 +58,7 @@ static napi_value HasFlash(napi_env env, napi_callback_info info)
     size_t requireArgc = 2;
     size_t argc = 2;
     napi_value args[2] = {nullptr};
-    napi_value resutl;
+    napi_value result;
 
     napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
@@ -71,8 +71,8 @@ static napi_value HasFlash(napi_env env, napi_callback_info info)
     OH_LOG_ERROR(LOG_APP, "HasFlash flashMode : %{public}d", flashMode);
 
     ndkCamera_->HasFlashFn(flashMode);
-
-    return resutl;
+    napi_create_int32(env, argc, &result);
+    return result;
 }
 
 static napi_value IsVideoStabilizationModeSupported(napi_env env, napi_callback_info info)
@@ -81,7 +81,7 @@ static napi_value IsVideoStabilizationModeSupported(napi_env env, napi_callback_
     size_t requireArgc = 2;
     size_t argc = 2;
     napi_value args[2] = {nullptr};
-    napi_value resutl;
+    napi_value result;
 
     napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
@@ -94,8 +94,8 @@ static napi_value IsVideoStabilizationModeSupported(napi_env env, napi_callback_
     OH_LOG_ERROR(LOG_APP, "IsVideoStabilizationModeSupportedFn videoMode : %{public}d", videoMode);
 
     ndkCamera_->IsVideoStabilizationModeSupportedFn(videoMode);
-
-    return resutl;
+    napi_create_int32(env, argc, &result);
+    return result;
 }
 
 static napi_value InitCamera(napi_env env, napi_callback_info info)
@@ -134,7 +134,7 @@ static napi_value InitCamera(napi_env env, napi_callback_info info)
     }
     ndkCamera_ = new NDKCamera(surfaceId, focusMode, cameraDeviceIndex);
     OH_LOG_ERROR(LOG_APP, "InitCamera End");
-    
+    napi_create_int32(env, argc, &result);
     return result;
 }
 
@@ -249,6 +249,7 @@ static napi_value IsExposureModeSupported(napi_env env, napi_callback_info info)
 
     ndkCamera_->IsExposureModeSupportedFn(exposureMode);
     OH_LOG_INFO(LOG_APP, "IsExposureModeSupported exposureMode end.");
+    napi_create_int32(env, argc, &result);
     return result;
 }
 
@@ -271,6 +272,7 @@ static napi_value IsMeteringPoint(napi_env env, napi_callback_info info)
     int y;
     napi_get_value_int32(env, args[1], &y);
     ndkCamera_->IsMeteringPoint(x, y);
+    napi_create_int32(env, argc, &result);
     return result;
 }
 
@@ -291,6 +293,7 @@ static napi_value IsExposureBiasRange(napi_env env, napi_callback_info info)
     napi_get_value_int32(env, args[0], &exposureBiasValue);
     ndkCamera_->IsExposureBiasRange(exposureBiasValue);
     OH_LOG_INFO(LOG_APP, "IsExposureBiasRange end.");
+    napi_create_int32(env, argc, &result);
     return result;
 }
 
@@ -314,6 +317,7 @@ static napi_value IsFocusModeSupported(napi_env env, napi_callback_info info)
 
     ndkCamera_->IsFocusModeSupported(focusMode);
     OH_LOG_INFO(LOG_APP, "IsFocusModeSupported end.");
+    napi_create_int32(env, argc, &result);
     return result;
 }
 
@@ -339,6 +343,7 @@ static napi_value IsFocusPoint(napi_env env, napi_callback_info info)
     float focusPointX = (float)x;
     float focusPointY = (float)y;
     ndkCamera_->IsFocusPoint(focusPointX, focusPointY);
+    napi_create_int32(env, argc, &result);
     return result;
 }
 
@@ -399,7 +404,7 @@ static napi_value VideoOutputStopAndRelease(napi_env env, napi_callback_info inf
     ndkCamera_->VideoOutputRelease();
 
     OH_LOG_ERROR(LOG_APP, "VideoOutputStopAndRelease End");
-
+    napi_create_int32(env, argc, &result);
     return result;
 }
 
@@ -501,7 +506,6 @@ static napi_value Init(napi_env env, napi_value exports)
             napi_default, nullptr },
         { "releaseSession", nullptr, ReleaseSession, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "releaseCamera", nullptr, ReleaseCamera, nullptr, nullptr, nullptr, napi_default, nullptr }
-
     };
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     return exports;
