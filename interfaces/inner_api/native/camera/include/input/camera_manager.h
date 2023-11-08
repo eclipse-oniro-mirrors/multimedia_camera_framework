@@ -494,7 +494,7 @@ public:
     bool IsPrelaunchSupported(sptr<CameraDevice> camera);
 
     /**
-    * @brief register camera mute listener
+    * @brief register torch listener
     *
     * @param TorchListener listener object.
     * @return.
