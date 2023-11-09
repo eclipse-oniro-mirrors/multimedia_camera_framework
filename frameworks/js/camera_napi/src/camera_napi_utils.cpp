@@ -14,6 +14,7 @@
  */
 
 #include "camera_napi_utils.h"
+#include "js_native_api_types.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -570,6 +571,47 @@ bool CameraNapiUtils::IsSameCallback(napi_env env, napi_value callback, napi_ref
     }
 
     return isEquals;
+}
+
+napi_status CameraNapiUtils::CallPromiseFun(
+    napi_env env, napi_value promiseValue, void* data, napi_callback thenCallback, napi_callback catchCallback)
+{
+    MEDIA_DEBUG_LOG("CallPromiseFun Start");
+    bool isPromise = false;
+    napi_is_promise(env, promiseValue, &isPromise);
+    if (!isPromise) {
+        MEDIA_ERR_LOG("CallPromiseFun promiseValue is not promise");
+        return napi_invalid_arg;
+    }
+    // Create promiseThen
+    napi_value promiseThen = nullptr;
+    napi_get_named_property(env, promiseValue, "then", &promiseThen);
+    if (promiseThen == nullptr) {
+        MEDIA_ERR_LOG("CallPromiseFun get promiseThen failed");
+        return napi_invalid_arg;
+    }
+    napi_value thenValue;
+    napi_status ret = napi_create_function(env, "thenCallback", NAPI_AUTO_LENGTH, thenCallback, data, &thenValue);
+    if (ret != napi_ok) {
+        MEDIA_ERR_LOG("CallPromiseFun thenCallback got exception");
+        return ret;
+    }
+    napi_value catchValue;
+    ret = napi_create_function(env, "catchCallback", NAPI_AUTO_LENGTH, catchCallback, data, &catchValue);
+    if (ret != napi_ok) {
+        MEDIA_ERR_LOG("CallPromiseFun  catchCallback got exception");
+        return ret;
+    }
+    napi_value thenReturnValue;
+    constexpr uint32_t THEN_ARGC = 2;
+    napi_value thenArgv[THEN_ARGC] = { thenValue, catchValue };
+    ret = napi_call_function(env, promiseValue, promiseThen, THEN_ARGC, thenArgv, &thenReturnValue);
+    if (ret != napi_ok) {
+        MEDIA_ERR_LOG("CallPromiseFun PromiseThen got exception");
+        return ret;
+    }
+    MEDIA_DEBUG_LOG("CallPromiseFun End");
+    return napi_ok;
 }
 } // namespace CameraStandard
 } // namespace OHOS
