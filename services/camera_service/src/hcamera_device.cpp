@@ -68,7 +68,7 @@ int32_t MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMet
 sptr<OHOS::Rosen::DisplayManager::IFoldStatusListener> listener;
 class HCameraDevice::FoldScreenListener : public OHOS::Rosen::DisplayManager::IFoldStatusListener {
 public:
-    explicit FoldScreenListener(sptr<HCameraHostManager> &cameraHostManager, std::string cameraId)
+    explicit FoldScreenListener(sptr<HCameraHostManager> &cameraHostManager, const std::string cameraId)
         : cameraHostManager_(cameraHostManager), cameraId_(cameraId)
     {
         MEDIA_DEBUG_LOG("FoldScreenListener enter");

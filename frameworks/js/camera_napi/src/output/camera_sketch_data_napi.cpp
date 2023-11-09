@@ -50,7 +50,6 @@ napi_value CameraSketchDataNapi::Init(napi_env env, napi_value exports)
     MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
-    int32_t refCount = 1;
 
     napi_property_descriptor cameraSketchDataProps[] = { DECLARE_NAPI_GETTER("ratio", GetCameraSketchRatio),
         DECLARE_NAPI_GETTER("pixelMap", GetCameraSketchPixelMap) };
@@ -59,6 +58,7 @@ napi_value CameraSketchDataNapi::Init(napi_env env, napi_value exports)
         CameraSketchDataNapiConstructor, nullptr, sizeof(cameraSketchDataProps) / sizeof(cameraSketchDataProps[PARAM0]),
         cameraSketchDataProps, &ctorObj);
     if (status == napi_ok) {
+        int32_t refCount = 1;
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
             status = napi_set_named_property(env, exports, CAMERA_SKETCH_DATA_NAPI_CLASS_NAME, ctorObj);
@@ -131,7 +131,6 @@ napi_value CameraSketchDataNapi::GetCameraSketchRatio(napi_env env, napi_callbac
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
     CameraSketchDataNapi* obj = nullptr;
-    float sketchRatio = 1.0f;
     napi_value thisVar = nullptr;
 
     napi_get_undefined(env, &undefinedResult);
@@ -144,6 +143,7 @@ napi_value CameraSketchDataNapi::GetCameraSketchRatio(napi_env env, napi_callbac
 
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
+        float sketchRatio = 1.0f;
         sketchRatio = obj->sketchData_->ratio;
         MEDIA_INFO_LOG("GetCameraSketchRatio %{public}f", sketchRatio);
         status = napi_create_double(env, static_cast<double>(sketchRatio), &jsResult);
