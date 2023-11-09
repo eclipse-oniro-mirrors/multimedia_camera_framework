@@ -283,6 +283,9 @@ public:
     static void ThrowError(napi_env env, int32_t code);
 
     static bool IsSameCallback(napi_env env, napi_value callback, napi_ref refCallback);
+
+    static napi_status CallPromiseFun(
+        napi_env env, napi_value promiseValue, void* data, napi_callback thenCallback, napi_callback catchCallback);
 };
 
 template <typename T>
