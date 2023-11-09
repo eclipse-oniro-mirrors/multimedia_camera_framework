@@ -81,7 +81,6 @@ int HTorchServiceCallbackStub::OnRemoteRequest(
 
 int HTorchServiceCallbackStub::HandleOnTorchStatusChange(MessageParcel& data)
 {
-    std::string cameraId = data.ReadString();
     int32_t status = data.ReadInt32();
 
     return OnTorchStatusChange((TorchStatus)status);
