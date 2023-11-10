@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_ISTREAM_REPEAT_H
 #define OHOS_CAMERA_ISTREAM_REPEAT_H
 
+#include <cstdint>
 #include "istream_common.h"
 #include "istream_repeat_callback.h"
 #include "surface.h"
@@ -36,6 +37,8 @@ public:
 
     virtual int32_t ForkSketchStreamRepeat(const sptr<OHOS::IBufferProducer>& producer, int32_t width, int32_t height,
         sptr<IStreamRepeat>& sketchStream, float sketchRatio) = 0;
+
+    virtual int32_t UpdateSketchRatio(float sketchRatio) = 0;
 
     virtual int32_t RemoveSketchStreamRepeat() = 0;
 

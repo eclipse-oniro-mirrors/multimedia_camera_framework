@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include <map>
+#include <memory>
 #include <set>
 #include <vector>
 
@@ -139,6 +140,15 @@ public:
     virtual ~FocusCallback() = default;
     virtual void OnFocusState(FocusState state) = 0;
     FocusState currentState;
+};
+
+class MacroStatusCallback {
+public:
+    enum MacroStatus { IDLE = 0, ACTIVE, UNKNOWN };
+    MacroStatusCallback() = default;
+    virtual ~MacroStatusCallback() = default;
+    virtual void OnMacroStatusChanged(MacroStatus status) = 0;
+    MacroStatus currentStatus = UNKNOWN;
 };
 
 class CaptureSessionCallback : public HCaptureSessionCallbackStub {
@@ -725,6 +735,32 @@ public:
     void SetColorEffect(ColorEffect colorEffect);
 
     /**
+     * @brief Check current status is support macro or not.
+     */
+    bool IsMacroSupported();
+
+    /**
+     * @brief Enable macro lens.
+     */
+    int32_t EnableMacro(bool isEnable);
+
+    /**
+     * @brief Set the macro status callback.
+     * which will be called when there is macro state change.
+     *
+     * @param The MacroStatusCallback pointer.
+     */
+    void SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback);
+
+    /**
+     * @brief This function is called when there is macro status change
+     * and process the macro status callback.
+     *
+     * @param result Metadata got from callback from service layer.
+     */
+    void ProcessMacroStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+
+    /**
      * @brief Get whether or not commit config.
      *
      * @return Returns whether or not commit config.
@@ -739,6 +775,9 @@ public:
     bool IsSessionConfiged();
     void SetMode(int32_t modeName);
     int32_t GetMode();
+    int32_t GetFeaturesMode();
+    std::vector<int32_t> GetSubFeatureMods();
+    bool IsSetEnableMacro();
     sptr<CaptureOutput> GetMetaOutput();
 
 protected:
@@ -756,11 +795,13 @@ private:
     sptr<ICaptureSessionCallback> captureSessionCallback_;
     std::shared_ptr<ExposureCallback> exposureCallback_;
     std::shared_ptr<FocusCallback> focusCallback_;
+    std::shared_ptr<MacroStatusCallback> macroStatusCallback_;
     std::vector<int32_t> skinSmoothBeautyRange_;
     std::vector<int32_t> faceSlendorBeautyRange_;
     std::vector<int32_t> skinToneBeautyRange_;
     std::mutex captureOutputSetsMutex_;
     std::set<wptr<CaptureOutput>, RefBaseCompare<CaptureOutput>> captureOutputSets_;
+    volatile bool isSetMacroEnable_ = false;
     static const std::unordered_map<camera_focus_state_t, FocusCallback::FocusState> metaFocusStateMap_;
     static const std::unordered_map<camera_exposure_state_t, ExposureCallback::ExposureState> metaExposureStateMap_;
     static const std::unordered_map<camera_exposure_mode_enum_t, ExposureMode> metaExposureModeMap_;

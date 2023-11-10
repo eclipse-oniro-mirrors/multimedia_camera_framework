@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_SKETCH_WRAPPER_H
 #define OHOS_CAMERA_SKETCH_WRAPPER_H
 
+#include <cstdint>
 #include "image_receiver.h"
 #include "preview_output.h"
 
@@ -39,14 +40,17 @@ public:
     int32_t StopSketchStream();
     int32_t Init(std::shared_ptr<SketchBufferAvaliableListener>& listener, const Size size,
         Media::ImageFormat imageFormat, float sketchRatio);
-    int32_t Destory();
+    int32_t UpdateSketchRatio(float sketchRatio);
+    int32_t Destroy();
     float GetSketchRatio();
+    void UpdateCurrentZoomRatio(float zoomRatio);
 
 private:
     PreviewOutput* holder_;
     sptr<IStreamRepeat> sketchStream_;
     std::shared_ptr<Media::ImageReceiver> sketchImgReceiver_;
     float sketchRatio_;
+    float currentZoomRatio_ = -1.0f;
 };
 } // namespace CameraStandard
 } // namespace OHOS

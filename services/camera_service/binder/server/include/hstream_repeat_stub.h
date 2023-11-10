@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_HSTREAM_REPEAT_STUB_H
 #define OHOS_CAMERA_HSTREAM_REPEAT_STUB_H
 
+#include <cstdint>
 #include "iremote_stub.h"
 #include "istream_repeat.h"
 
@@ -26,9 +27,10 @@ public:
     int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;
 
 private:
-    int HandleSetCallback(MessageParcel& data);
-    int HandleAddDeferredSurface(MessageParcel& data);
-    int HandleForkSketchStreamRepeat(MessageParcel& data, MessageParcel& reply);
+    int32_t HandleSetCallback(MessageParcel& data);
+    int32_t HandleAddDeferredSurface(MessageParcel& data);
+    int32_t HandleForkSketchStreamRepeat(MessageParcel& data, MessageParcel& reply);
+    int32_t HandleUpdateSketchRatio(MessageParcel& data);
 };
 } // namespace CameraStandard
 } // namespace OHOS

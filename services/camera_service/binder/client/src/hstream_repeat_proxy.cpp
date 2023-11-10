@@ -20,6 +20,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+static constexpr float SKETCH_RATIO_MAX_VALUE = 100.0f;
 HStreamRepeatProxy::HStreamRepeatProxy(const sptr<IRemoteObject>& impl) : IRemoteProxy<IStreamRepeat>(impl) {}
 
 HStreamRepeatProxy::~HStreamRepeatProxy()
@@ -146,6 +147,27 @@ int32_t HStreamRepeatProxy::ForkSketchStreamRepeat(const sptr<OHOS::IBufferProdu
     } else {
         MEDIA_ERR_LOG("HCameraServiceProxy ForkSketchStreamRepeat sketchStream is null");
         error = IPC_PROXY_ERR;
+    }
+    return error;
+}
+
+int32_t HStreamRepeatProxy::UpdateSketchRatio(float sketchRatio)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    if (sketchRatio <= 0 || sketchRatio > SKETCH_RATIO_MAX_VALUE) {
+        MEDIA_ERR_LOG("HStreamRepeatProxy UpdateSketchRatio value is illegal %{public}f", sketchRatio);
+        return IPC_PROXY_ERR;
+    }
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteFloat(sketchRatio);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_UPDATE_SKETCH_RATIO), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamRepeatProxy UpdateSketchRatio failed, error: %{public}d", error);
     }
     return error;
 }

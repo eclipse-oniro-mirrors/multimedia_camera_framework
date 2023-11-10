@@ -14,13 +14,16 @@
  */
 
 #include "session/capture_session.h"
+#include <cstdint>
 #include <mutex>
+#include "camera_device_ability_items.h"
 #include "camera_metadata_operator.h"
 #include "camera_util.h"
 #include "capture_output.h"
 #include "hcapture_session_callback_stub.h"
 #include "input/camera_input.h"
 #include "camera_log.h"
+#include "mode/mode_manager.h"
 #include "output/photo_output.h"
 #include "output/preview_output.h"
 #include "output/video_output.h"
@@ -229,6 +232,7 @@ CaptureSession::~CaptureSession()
     captureSessionCallback_ = nullptr;
     exposureCallback_ = nullptr;
     focusCallback_ = nullptr;
+    macroStatusCallback_ = nullptr;
 }
 
 int32_t CaptureSession::BeginConfig()
@@ -533,6 +537,7 @@ int32_t CaptureSession::Release()
     appCallback_ = nullptr;
     exposureCallback_ = nullptr;
     focusCallback_ = nullptr;
+    macroStatusCallback_ = nullptr;
     return ServiceToCameraError(errCode);
 }
 
@@ -1853,7 +1858,7 @@ std::vector<float> CaptureSession::GetZoomRatioRange()
     for (uint32_t i = 0; i < item.count; i += step) {
         MEDIA_INFO_LOG("Scene zoom cap mode: %{public}d, min: %{public}d, max: %{public}d",
                        item.data.i32[i], item.data.i32[i + minIndex], item.data.i32[i + maxIndex]);
-        if (GetMode() == item.data.i32[i]) {
+        if (GetFeaturesMode() == item.data.i32[i]) {
             minZoom = item.data.i32[i + minIndex] / factor;
             maxZoom = item.data.i32[i + maxIndex] / factor;
             break;
@@ -1891,7 +1896,7 @@ int32_t CaptureSession::GetZoomRatioRange(std::vector<float> &zoomRatioRange)
     for (uint32_t i = 0; i < item.count; i += step) {
         MEDIA_INFO_LOG("Scene zoom cap mode: %{public}d, min: %{public}d, max: %{public}d",
                        item.data.i32[i], item.data.i32[i + minIndex], item.data.i32[i + maxIndex]);
-        if (GetMode() == item.data.i32[i]) {
+        if (GetFeaturesMode() == item.data.i32[i]) {
             minZoom = item.data.i32[i + minIndex] / factor;
             maxZoom = item.data.i32[i + maxIndex] / factor;
             break;
@@ -2026,6 +2031,28 @@ int32_t CaptureSession::GetMode()
 {
     MEDIA_INFO_LOG("CaptureSession GetMode modeName = %{public}d", modeName_);
     return modeName_;
+}
+
+int32_t CaptureSession::GetFeaturesMode()
+{
+    if (isSetMacroEnable_) {
+        if (modeName_ == CameraMode::CAPTURE) {
+            return CameraMode::CAPTURE_MACRO;
+        } else if (modeName_ == CameraMode::VIDEO) {
+            return CameraMode::VIDEO_MACRO;
+        }
+    }
+    return modeName_;
+}
+
+vector<int32_t> CaptureSession::GetSubFeatureMods()
+{
+    if (modeName_ == CameraMode::CAPTURE) {
+        return vector<int32_t> { CameraMode::CAPTURE_MACRO };
+    } else if (modeName_ == CameraMode::VIDEO) {
+        return vector<int32_t> { CameraMode::VIDEO_MACRO };
+    }
+    return vector<int32_t> {};
 }
 
 int32_t CaptureSession::VerifyAbility(uint32_t ability)
@@ -2559,6 +2586,105 @@ void CaptureSession::SetColorEffect(ColorEffect colorEffect)
         MEDIA_ERR_LOG("CaptureSession::SetColorEffect Failed to set color effect");
     }
     return;
+}
+
+bool CaptureSession::IsMacroSupported()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter IsMacroSupported");
+
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::IsMacroSupported Session is not Commited");
+        return false;
+    }
+    if (inputDevice_ == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::IsMacroSupported camera device is null");
+        return false;
+    }
+    auto deviceInfo = inputDevice_->GetCameraDeviceInfo();
+    if (deviceInfo == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::IsMacroSupported camera deviceInfo is null");
+        return false;
+    }
+    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAMERA_MACRO_SUPPORTED, &item);
+    if (ret != CAM_META_SUCCESS || item.count <= 0) {
+        MEDIA_ERR_LOG("CaptureSession::IsMacroSupported Failed with return code %{public}d", ret);
+        return false;
+    }
+    auto supportResult = static_cast<camera_macro_supported_type_t>(*item.data.i32);
+    return supportResult == OHOS_CAMERA_MACRO_SUPPORTED;
+}
+
+int32_t CaptureSession::EnableMacro(bool isEnable)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter EnableMacro, isEnable:%{public}d", isEnable);
+    if (!IsMacroSupported()) {
+        MEDIA_ERR_LOG("EnableMacro IsMacroSupported is false");
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
+    }
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession Failed EnableMacro!, session not commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    bool status = false;
+    int32_t ret;
+    camera_metadata_item_t item;
+    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_CAMERA_MACRO, &item);
+    uint8_t enableValue = static_cast<uint8_t>(isEnable ? OHOS_CAMERA_MACRO_ENABLE : OHOS_CAMERA_MACRO_DISABLE);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_CAMERA_MACRO, &enableValue, 1);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_CAMERA_MACRO, &enableValue, 1);
+    }
+    if (!status) {
+        MEDIA_ERR_LOG("CaptureSession::EnableMacro Failed to enable macro");
+    }
+    isSetMacroEnable_ = isEnable;
+    return CameraErrorCode::SUCCESS;
+}
+
+void CaptureSession::SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback)
+{
+    macroStatusCallback_ = callback;
+    return;
+}
+
+void CaptureSession::ProcessMacroStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Entry ProcessMacroStatusChange");
+
+    // To avoid macroStatusCallback_ change pointed value occur multithread problem, copy pointer first.
+    auto safeMacroStatusCallback = macroStatusCallback_;
+    if (safeMacroStatusCallback == nullptr) {
+        MEDIA_DEBUG_LOG("CaptureSession::ProcessMacroStatusChange safeMacroStatusCallback is null");
+        return;
+    }
+    camera_metadata_item_t item;
+    common_metadata_header_t* metadata = result->get();
+    int ret = Camera::FindCameraMetadataItem(metadata, OHOS_CAMERA_MACRO_STATUS, &item);
+    if (ret != CAM_META_SUCCESS || item.count <= 0) {
+        MEDIA_DEBUG_LOG("Camera not support macro mode");
+        return;
+    }
+    auto isMacroActive = static_cast<bool>(item.data.u8[0]);
+    MEDIA_DEBUG_LOG("Macro active: %{public}d", isMacroActive);
+    auto macroStatus =
+        isMacroActive ? MacroStatusCallback::MacroStatus::ACTIVE : MacroStatusCallback::MacroStatus::IDLE;
+    if (macroStatus == safeMacroStatusCallback->currentStatus) {
+        MEDIA_DEBUG_LOG("Macro mode: no change");
+        return;
+    }
+    safeMacroStatusCallback->currentStatus = macroStatus;
+    safeMacroStatusCallback->OnMacroStatusChanged(macroStatus);
+}
+
+bool CaptureSession::IsSetEnableMacro()
+{
+    return isSetMacroEnable_;
 }
 } // CameraStandard
 } // OHOS

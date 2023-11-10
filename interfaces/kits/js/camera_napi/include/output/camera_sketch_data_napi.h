@@ -34,13 +34,15 @@ public:
     CameraSketchDataNapi();
     ~CameraSketchDataNapi();
 
+    void Release();
+
 private:
     static void CameraSketchDataNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value CameraSketchDataNapiConstructor(napi_env env, napi_callback_info info);
 
     napi_env env_;
-    napi_ref wrapper_;
     unique_ptr<SketchData> sketchData_;
+    napi_ref napiPixelMap_;
 
     static thread_local napi_ref sConstructor_;
     static thread_local unique_ptr<SketchData> sSketchData_;

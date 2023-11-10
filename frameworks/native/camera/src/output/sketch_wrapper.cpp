@@ -14,6 +14,7 @@
  */
 
 #include "sketch_wrapper.h"
+#include <cstdint>
 
 #include "camera_log.h"
 #include "camera_util.h"
@@ -87,8 +88,9 @@ void SketchWrapper::SketchBufferAvaliableListener::OnSurfaceBufferAvaliable()
     float referenceFovValue = -1.0f;
     float sketchEnableRatio = -1.0f;
     if (session != nullptr) {
-        int32_t currentMode = session->GetMode();
-        referenceFovValue = sketchWrapper->holder_->GetSketchReferenceFovRatio(currentMode);
+        int32_t currentMode = session->GetFeaturesMode();
+        referenceFovValue =
+            sketchWrapper->holder_->GetSketchReferenceFovRatio(currentMode, sketchWrapper->currentZoomRatio_);
         if (referenceFovValue > 0) {
             sketchEnableRatio = sketchWrapper->holder_->GetSketchEnableRatio(currentMode);
         }
@@ -130,7 +132,26 @@ int32_t SketchWrapper::Init(std::shared_ptr<SketchBufferAvaliableListener>& list
         receiverSurface->GetProducer(), size.width, size.height, sketchStream_, sketchRatio);
 }
 
-int32_t SketchWrapper::Destory()
+int32_t SketchWrapper::UpdateSketchRatio(float sketchRatio)
+{
+    MEDIA_DEBUG_LOG("Enter Into SketchWrapper::UpdateSketchRatio");
+    if (sketchStream_ == nullptr) {
+        return CAMERA_INVALID_STATE;
+    }
+    if (sketchRatio <= 0) {
+        MEDIA_WARNING_LOG("SketchWrapper::UpdateSketchRatio arg is illegal:%{public}f", sketchRatio);
+        return CAMERA_INVALID_ARG;
+    }
+    sptr<IStreamCommon> hostStream = holder_->GetStream();
+    IStreamRepeat* repeatStream = static_cast<IStreamRepeat*>(hostStream.GetRefPtr());
+    int32_t ret = repeatStream->UpdateSketchRatio(sketchRatio);
+    if (ret == CAMERA_OK) {
+        sketchRatio_ = sketchRatio;
+    }
+    return ret;
+}
+
+int32_t SketchWrapper::Destroy()
 {
     if (sketchStream_ != nullptr) {
         sketchStream_->Stop();
@@ -150,6 +171,11 @@ int32_t SketchWrapper::Destory()
 float SketchWrapper::GetSketchRatio()
 {
     return sketchRatio_;
+}
+
+void SketchWrapper::UpdateCurrentZoomRatio(float zoomRatio)
+{
+    currentZoomRatio_ = zoomRatio;
 }
 
 SketchWrapper::~SketchWrapper()

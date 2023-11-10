@@ -49,6 +49,8 @@ enum CameraMode {
     PROFESSIONAL = 5,
     SLOW_MOTION = 6,
     SCAN = 7,
+    CAPTURE_MACRO = 8,
+    VIDEO_MACRO = 9
 };
 
 class ModeManager : public RefBase {
