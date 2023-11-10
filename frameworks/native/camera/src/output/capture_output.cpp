@@ -35,6 +35,15 @@ CaptureOutput::CaptureOutput(CaptureOutputType outputType, StreamType streamType
     }
 }
 
+CaptureOutput::~CaptureOutput()
+{
+    stream_ = nullptr;
+    session_ = nullptr;
+    if (GetStream() != nullptr) {
+        (void)GetStream()->AsObject()->RemoveDeathRecipient(deathRecipient_);
+    }
+}
+
 CaptureOutputType CaptureOutput::GetOutputType()
 {
     return outputType_;

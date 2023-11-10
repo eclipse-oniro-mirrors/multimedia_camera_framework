@@ -57,7 +57,10 @@ CameraManager::CameraManager()
 CameraManager::~CameraManager()
 {
     MEDIA_INFO_LOG("CameraManager::~CameraManager() called");
-    serviceProxy_ = nullptr;
+    if (serviceProxy_ != nullptr) {
+        (void)serviceProxy_->AsObject()->RemoveDeathRecipient(deathRecipient_);
+        serviceProxy_ = nullptr;
+    }
     listenerStub_ = nullptr;
     deathRecipient_ = nullptr;
     cameraSvcCallback_ = nullptr;
