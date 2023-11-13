@@ -116,8 +116,11 @@ CameraInput::~CameraInput()
     if (cameraObj_) {
         MEDIA_INFO_LOG("CameraInput::CameraInput Destructor Camera: %{public}s", cameraObj_->GetID().c_str());
     }
+    if (deviceObj_ != nullptr) {
+        (void)deviceObj_->AsObject()->RemoveDeathRecipient(deathRecipient_);
+        deviceObj_ = nullptr;
+    }
     cameraObj_ = nullptr;
-    deviceObj_ = nullptr;
     CameraDeviceSvcCallback_ = nullptr;
     CaptureInput::Release();
 }

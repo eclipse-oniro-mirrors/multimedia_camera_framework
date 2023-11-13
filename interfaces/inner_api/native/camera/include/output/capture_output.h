@@ -59,11 +59,7 @@ class CaptureSession;
 class CaptureOutput : public RefBase, public MetadataObserver {
 public:
     explicit CaptureOutput(CaptureOutputType OutputType, StreamType streamType, sptr<IStreamCommon> stream);
-    virtual ~CaptureOutput()
-    {
-        stream_ = nullptr;
-        session_ = nullptr;
-    }
+    virtual ~CaptureOutput();
 
     /**
      * @brief Releases the instance of CaptureOutput.
