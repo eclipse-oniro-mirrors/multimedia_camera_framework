@@ -170,28 +170,6 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraDevice::GetSettings()
         MEDIA_ERR_LOG("HCameraDevice::GetSettings Failed to get Camera Ability: %{public}d", errCode);
         return nullptr;
     }
-    int32_t* pos = nullptr;
-    int32_t videoFrameRateRangeSize;
-    {
-        std::lock_guard<std::mutex> lock(videoFrameRangeMutex_);
-        videoFrameRateRangeSize = videoFrameRateRange_.size();
-        if (videoFrameRateRangeSize != 0) {
-            pos = videoFrameRateRange_.data();
-        }
-    }
-    if (videoFrameRateRangeSize != 0 && ability != nullptr) {
-        bool status = false;
-        camera_metadata_item_t item;
-        int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_CONTROL_FPS_RANGES, &item);
-        if (ret == CAM_META_ITEM_NOT_FOUND) {
-            status = ability->addEntry(OHOS_CONTROL_FPS_RANGES, pos, videoFrameRateRangeSize);
-        } else if (ret == CAM_META_SUCCESS) {
-            status = ability->updateEntry(OHOS_CONTROL_FPS_RANGES, pos, videoFrameRateRangeSize);
-        }
-        if (!status) {
-            MEDIA_ERR_LOG("HCameraDevice::Set fps renges Failed");
-        }
-    }
     return ability;
 }
 
@@ -345,7 +323,6 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
         std::vector<uint8_t> hdiSettings;
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(updateSettings_, hdiSettings);
         ReportMetadataDebugLog(updateSettings_);
-        GetFrameRateSetting(updateSettings_);
         CamRetCode rc = (CamRetCode)(hdiCameraDevice_->UpdateSettings(hdiSettings));
         if (rc != HDI::Camera::V1_0::NO_ERROR) {
             MEDIA_ERR_LOG("Failed with error Code: %{public}d", rc);
@@ -481,20 +458,6 @@ void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::C
     } else {
         MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE value = %{public}d portraitEffect",
             item.data.i32[0]);
-    }
-}
-
-void HCameraDevice::GetFrameRateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings)
-{
-    camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_FPS_RANGES, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_FPS_RANGES tag");
-    } else {
-        std::lock_guard<std::mutex> lock(videoFrameRangeMutex_);
-        videoFrameRateRange_ = {item.data.i32[0], item.data.i32[1]};
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_FPS_RANGES min = %{public}d, max = %{public}d",
-            item.data.i32[0], item.data.i32[1]);
     }
 }
 
