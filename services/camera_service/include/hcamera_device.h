@@ -71,7 +71,6 @@ private:
     bool isReleaseCameraDevice_;
     bool isOpenedCameraDevice_;
     std::mutex deviceSvcCbMutex_;
-    std::mutex videoFrameRangeMutex_;
     std::mutex settingsMutex_;
     std::mutex cachedSettingsMutex_;
     sptr<ICameraDeviceServiceCallback> deviceSvcCallback_;
@@ -80,12 +79,10 @@ private:
     std::shared_ptr<OHOS::Camera::CameraMetadata> cachedSettings_;
     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator_;
     uint32_t callerToken_;
-    std::vector<int32_t> videoFrameRateRange_;
     wptr<IDeviceOperatorsCallback> deviceOperatorsCallback_;
 
     void ReportFlashEvent(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
     void ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
-    void GetFrameRateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
     void RegisterFoldStatusListener();
     void UnRegisterFoldStatusListener();
 };

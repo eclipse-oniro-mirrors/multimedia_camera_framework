@@ -2450,6 +2450,9 @@ void CaptureSession::SetFrameRateRange(const std::vector<int32_t>& frameRateRang
         videoFrameRateRange.data(), videoFrameRateRange.size())) {
         MEDIA_ERR_LOG("Failed to SetFrameRateRange");
     }
+    for (size_t i = 0; i < frameRateRange.size(); i++) {
+        MEDIA_DEBUG_LOG("CaptureSession::SetFrameRateRange:index:%{public}zu->%{public}d", i, frameRateRange[i]);
+    }
     this->UnlockForControl();
 }
 
