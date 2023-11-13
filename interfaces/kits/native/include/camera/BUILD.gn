@@ -29,7 +29,7 @@ ohos_ndk_headers("camera_ndk_header") {
   ]
 }
 
-ohos_ndk_library("libcamera_ndk") {
+ohos_ndk_library("libohcamera") {
   output_name = "camera_ndk"
   output_extension = "so"
   ndk_description_file = "./camera.ndk.json"

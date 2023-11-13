@@ -14,11 +14,23 @@
  */
 
 /**
+ * @addtogroup OH_Camera
+ * @{
+ *
+ * @brief Provide the definition of the C interface for the camera module.
+ *
+ * @syscap SystemCapability.Multimedia.Camera.Core
+ *
+ * @since 11
+ * @version 1.0
+ */
+
+/**
  * @file photo_output.h
  *
  * @brief Declare the photo output concepts.
  *
- * @library libcamera_ndk.so
+ * @library libohcamera.so
  * @syscap SystemCapability.Multimedia.Camera.Core
  * @since 11
  * @version 1.0
@@ -187,3 +199,4 @@ Camera_ErrorCode OH_PhotoOutput_IsMirrorSupported(Camera_PhotoOutput* photoOutpu
 #endif
 
 #endif // NATIVE_INCLUDE_CAMERA_PHOTOOUTPUT_H
+/** @} */

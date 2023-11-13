@@ -14,11 +14,23 @@
  */
 
 /**
+ * @addtogroup OH_Camera
+ * @{
+ *
+ * @brief Provide the definition of the C interface for the camera module.
+ *
+ * @syscap SystemCapability.Multimedia.Camera.Core
+ *
+ * @since 11
+ * @version 1.0
+ */
+
+/**
  * @file camera.h
  *
  * @brief Declare the camera base concepts.
  *
- * @library libcamera_ndk.so
+ * @library libohcamera.so
  * @syscap SystemCapability.Multimedia.Camera.Core
  * @since 11
  * @version 1.0
@@ -35,7 +47,7 @@ extern "C" {
 #endif
 
 /**
- * @brief camera manager
+ * @brief camera manager object.
  *
  * A pointer can be created using {@link OH_Camera_GetCameraManager} method.
  *
@@ -792,3 +804,4 @@ Camera_ErrorCode OH_Camera_DeleteCameraManager(Camera_Manager* cameraManager);
 #endif
 
 #endif // NATIVE_INCLUDE_CAMERA_CAMERA_H
+/** @} */
