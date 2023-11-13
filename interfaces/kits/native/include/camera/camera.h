@@ -617,12 +617,12 @@ typedef struct Camera_Point {
     /**
      * X co-ordinate.
      */
-    int32_t x;
+    double x;
 
     /**
      * Y co-ordinate.
      */
-    int32_t y;
+    double y;
 } Camera_Point;
 
 /**
