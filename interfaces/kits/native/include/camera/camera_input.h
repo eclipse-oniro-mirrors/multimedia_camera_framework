@@ -14,11 +14,23 @@
  */
 
 /**
+ * @addtogroup OH_Camera
+ * @{
+ *
+ * @brief Provide the definition of the C interface for the camera module.
+ *
+ * @syscap SystemCapability.Multimedia.Camera.Core
+ *
+ * @since 11
+ * @version 1.0
+ */
+
+/**
  * @file camera_input.h
  *
  * @brief Declare the camera input concepts.
  *
- * @library libcamera_ndk.so
+ * @library libohcamera.so
  * @syscap SystemCapability.Multimedia.Camera.Core
  * @since 11
  * @version 1.0
@@ -36,7 +48,7 @@ extern "C" {
 #endif
 
 /**
- * @brief Camera input object
+ * @brief Camera input object.
  *
  * A pointer can be created using {@link OH_CameraManager_CreateCameraInput} method.
  *
@@ -135,3 +147,4 @@ Camera_ErrorCode OH_CameraInput_Release(Camera_Input* cameraInput);
 #endif
 
 #endif // NATIVE_INCLUDE_CAMERA_CAMERA_INPUT_H
+/** @} */

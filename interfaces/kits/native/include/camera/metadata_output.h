@@ -14,11 +14,23 @@
  */
 
 /**
+ * @addtogroup OH_Camera
+ * @{
+ *
+ * @brief Provide the definition of the C interface for the camera module.
+ *
+ * @syscap SystemCapability.Multimedia.Camera.Core
+ *
+ * @since 11
+ * @version 1.0
+ */
+
+/**
  * @file metadata_output.h
  *
  * @brief Declare the metadata output concepts.
  *
- * @library libcamera_ndk.so
+ * @library libohcamera.so
  * @syscap SystemCapability.Multimedia.Camera.Core
  * @since 11
  * @version 1.0
@@ -149,3 +161,4 @@ Camera_ErrorCode OH_MetadataOutput_Release(Camera_MetadataOutput* metadataOutput
 #endif
 
 #endif // NATIVE_INCLUDE_CAMERA_METADATAOUTPUT_H
+/** @} */

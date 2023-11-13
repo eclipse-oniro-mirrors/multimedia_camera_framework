@@ -14,11 +14,23 @@
  */
 
 /**
+ * @addtogroup OH_Camera
+ * @{
+ *
+ * @brief Provide the definition of the C interface for the camera module.
+ *
+ * @syscap SystemCapability.Multimedia.Camera.Core
+ *
+ * @since 11
+ * @version 1.0
+ */
+
+/**
  * @file capture_session.h
  *
  * @brief Declare the capture Session concepts.
  *
- * @library libcamera_ndk.so
+ * @library libohcamera.so
  * @syscap SystemCapability.Multimedia.Camera.Core
  * @since 11
  * @version 1.0
@@ -589,3 +601,4 @@ Camera_ErrorCode OH_CaptureSession_SetVideoStabilizationMode(Camera_CaptureSessi
 #endif
 
 #endif // NATIVE_INCLUDE_CAMERA_CAMERA_SESSION_H
+/** @} */

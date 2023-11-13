@@ -14,11 +14,23 @@
  */
 
 /**
+ * @addtogroup OH_Camera
+ * @{
+ *
+ * @brief Provide the definition of the C interface for the camera module.
+ *
+ * @syscap SystemCapability.Multimedia.Camera.Core
+ *
+ * @since 11
+ * @version 1.0
+ */
+
+/**
  * @file preview_output.h
  *
  * @brief Declare the preview output concepts.
  *
- * @library libcamera_ndk.so
+ * @library libohcamera.so
  * @syscap SystemCapability.Multimedia.Camera.Core
  * @since 11
  * @version 1.0
@@ -160,3 +172,4 @@ Camera_ErrorCode OH_PreviewOutput_Release(Camera_PreviewOutput* previewOutput);
 #endif
 
 #endif // NATIVE_INCLUDE_CAMERA_PREVIEWOUTPUT_H
+/** @} */
