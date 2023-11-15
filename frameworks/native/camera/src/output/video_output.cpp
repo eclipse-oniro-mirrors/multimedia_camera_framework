@@ -65,6 +65,12 @@ int32_t VideoOutputCallbackImpl::OnFrameError(const int32_t errorCode)
     return CAMERA_OK;
 }
 
+int32_t VideoOutputCallbackImpl::OnSketchStatusChanged(SketchStatus status)
+{
+    // Empty implement
+    return CAMERA_OK;
+}
+
 void VideoOutput::SetCallback(std::shared_ptr<VideoStateCallback> callback)
 {
     appCallback_ = callback;

@@ -16,10 +16,21 @@
 #ifndef OHOS_CAMERA_ISTREAM_REPEAT_CALLBACK_H
 #define OHOS_CAMERA_ISTREAM_REPEAT_CALLBACK_H
 
+#include <cstdint>
 #include "iremote_broker.h"
 
 namespace OHOS {
 namespace CameraStandard {
+enum class SketchStatus : int32_t {
+    STOPED = 0,
+    STARTED = 1
+};
+
+typedef struct {
+    SketchStatus status;
+    float sketchRatio;
+} SketchStatusData;
+
 class IStreamRepeatCallback : public IRemoteBroker {
 public:
     virtual int32_t OnFrameStarted() = 0;
@@ -27,6 +38,8 @@ public:
     virtual int32_t OnFrameEnded(int32_t frameCount) = 0;
 
     virtual int32_t OnFrameError(int32_t errorCode) = 0;
+
+    virtual int32_t OnSketchStatusChanged(SketchStatus status) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamRepeatCallback");
 };

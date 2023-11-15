@@ -16,10 +16,12 @@
 #ifndef OHOS_CAMERA_OUTPUT_CAPABILITY_H
 #define OHOS_CAMERA_OUTPUT_CAPABILITY_H
 
+#include <cstdint>
 #include <iostream>
 #include <vector>
 #include <refbase.h>
 
+#include "istream_repeat_callback.h"
 #include "metadata_type.h"
 
 namespace OHOS {
@@ -34,11 +36,6 @@ typedef struct {
     uint32_t minFps;
     uint32_t maxFps;
 } Fps;
-
-typedef struct {
-    float ratio;
-    std::shared_ptr<void> pixelMap;
-} SketchData;
 
 enum CameraFormat {
     CAMERA_FORMAT_INVALID = -1,

@@ -34,7 +34,7 @@ enum PreviewOutputEventType {
     PREVIEW_FRAME_START,
     PREVIEW_FRAME_END,
     PREVIEW_FRAME_ERROR,
-    SKETCH_AVAILABLE,
+    SKETCH_STATUS_CHANGED,
     PREVIEW_INVALID_TYPE
 };
 
@@ -42,7 +42,7 @@ static EnumHelper<PreviewOutputEventType> PreviewOutputEventTypeHelper({
         {PREVIEW_FRAME_START, "frameStart"},
         {PREVIEW_FRAME_END, "frameEnd"},
         {PREVIEW_FRAME_ERROR, "error"},
-        {SKETCH_AVAILABLE, "sketchAvailable"}
+        {SKETCH_STATUS_CHANGED, "sketchStatusChanged"}
     },
     PreviewOutputEventType::PREVIEW_INVALID_TYPE
 );
@@ -55,7 +55,7 @@ public:
     void OnFrameStarted() const override;
     void OnFrameEnded(const int32_t frameCount) const override;
     void OnError(const int32_t errorCode) const override;
-    void OnSketchAvailable(SketchData& sketchData) const override;
+    void OnSketchStatusDataChanged(SketchStatusData sketchStatusData) const override;
     void SaveCallbackReference(const std::string& eventType, napi_value callback, bool isOnce);
     void RemoveCallbackRef(napi_env env, napi_value callback, const std::string& eventType);
     void RemoveAllCallbacks(const std::string& eventType);
@@ -63,15 +63,14 @@ public:
 private:
     void UpdateJSCallback(PreviewOutputEventType eventType, const int32_t value) const;
     void UpdateJSCallbackAsync(PreviewOutputEventType eventType, const int32_t value) const;
-    void OnSketchAvailableAsync(SketchData& sketchData) const;
-    void OnSketchAvailableCall(SketchData& sketchData) const;
-    void AfterSketchAvailableCall(napi_env env, napi_value promiseValue, napi_value napiObj) const;
+    void OnSketchStatusDataChangedAsync(SketchStatusData sketchStatusData) const;
+    void OnSketchStatusDataChangedCall(SketchStatusData sketchStatusData) const;
     std::mutex previewOutputCbMutex_;
     napi_env env_;
     mutable std::vector<std::shared_ptr<AutoRef>> frameStartCbList_;
     mutable std::vector<std::shared_ptr<AutoRef>> frameEndCbList_;
     mutable std::vector<std::shared_ptr<AutoRef>> errorCbList_;
-    mutable std::vector<std::shared_ptr<AutoRef>> sketchAvailableCbList_;
+    mutable std::vector<std::shared_ptr<AutoRef>> sketchStatusChangedCbList_;
 };
 
 struct PreviewOutputCallbackInfo {
@@ -82,12 +81,12 @@ struct PreviewOutputCallbackInfo {
         : eventType_(eventType), value_(value), listener_(listener) {}
 };
 
-struct SketchDataCallbackInfo {
-    SketchData sketchData_;
+struct SketchStatusCallbackInfo {
+    SketchStatusData sketchStatusData_;
     const PreviewOutputCallback* listener_;
     napi_env env_;
-    SketchDataCallbackInfo(SketchData sketchData, const PreviewOutputCallback* listener, napi_env env)
-        : sketchData_(sketchData), listener_(listener), env_(env)
+    SketchStatusCallbackInfo(SketchStatusData sketchStatusData, const PreviewOutputCallback* listener, napi_env env)
+        : sketchStatusData_(sketchStatusData), listener_(listener), env_(env)
     {}
 };
 

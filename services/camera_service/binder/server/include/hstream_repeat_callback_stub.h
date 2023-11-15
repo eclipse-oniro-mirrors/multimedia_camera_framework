@@ -29,6 +29,7 @@ public:
 private:
     int HandleOnFrameEnded(MessageParcel& data);
     int HandleOnFrameError(MessageParcel& data);
+    int HandleOnSketchStatusChanged(MessageParcel& data);
 };
 } // namespace CameraStandard
 } // namespace OHOS

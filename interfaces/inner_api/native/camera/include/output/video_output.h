@@ -164,6 +164,13 @@ public:
      * @param errorCode Indicates a {@link ErrorCode} which will give information for video callback error.
      */
     int32_t OnFrameError(const int32_t errorCode) override;
+
+    /**
+     * @brief Empty function.
+     *
+     * @param status sketch status.
+     */
+    int32_t OnSketchStatusChanged(SketchStatus status) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

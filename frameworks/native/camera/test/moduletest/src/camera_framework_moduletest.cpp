@@ -58,7 +58,7 @@ enum class CAM_PREVIEW_EVENTS {
     CAM_PREVIEW_FRAME_START = 0,
     CAM_PREVIEW_FRAME_END,
     CAM_PREVIEW_FRAME_ERR,
-    CAM_PREVIEW_FRAME_SKETCH_AVAILABLE,
+    CAM_PREVIEW_SKETCH_STATUS_CHANGED,
     CAM_PREVIEW_MAX_EVENT
 };
 
@@ -81,12 +81,15 @@ const int32_t WAIT_TIME_BEFORE_STOP = 1;
 const int32_t CAMERA_NUMBER = 2;
 const int32_t SKETCH_PREVIEW_MIN_HEIGHT = 720;
 const int32_t SKETCH_PREVIEW_MAX_WIDTH = 3000;
+const int32_t SKETCH_DEFAULT_WIDTH = 640;
+const int32_t SKETCH_DEFAULT_HEIGHT = 480;
 
 bool g_camInputOnError = false;
 bool g_sessionclosed = false;
 std::shared_ptr<OHOS::Camera::CameraMetadata> g_metaResult = nullptr;
 int32_t g_videoFd = -1;
 int32_t g_previewFd = -1;
+int32_t g_sketchFd = -1;
 std::bitset<static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_MAX_EVENT)> g_photoEvents;
 std::bitset<static_cast<unsigned int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_MAX_EVENT)> g_previewEvents;
 std::bitset<static_cast<unsigned int>(CAM_VIDEO_EVENTS::CAM_VIDEO_MAX_EVENT)> g_videoEvents;
@@ -239,10 +242,10 @@ public:
         g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_ERR)] = 1;
         return;
     }
-    void OnSketchAvailable(SketchData& SketchData) const override
+    void OnSketchStatusDataChanged(SketchStatusData statusData) const override
     {
-        MEDIA_DEBUG_LOG("AppCallback::OnSketchAvailable");
-        g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_SKETCH_AVAILABLE)] = 1;
+        MEDIA_DEBUG_LOG("AppCallback::OnSketchStatusDataChanged");
+        g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)] = 1;
         return;
     }
     void OnMacroStatusChanged(MacroStatus status) override
@@ -388,6 +391,17 @@ sptr<CaptureOutput> CameraFrameworkModuleTest::CreatePreviewOutput(Profile& prof
     sptr<CaptureOutput> previewOutput = nullptr;
     previewOutput = manager_->CreatePreviewOutput(profile, pSurface);
     return previewOutput;
+}
+
+sptr<Surface> CameraFrameworkModuleTest::CreateSketchSurface(CameraFormat cameraFormat)
+{
+    sptr<IConsumerSurface> sketchSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Sketch", SurfaceType::SKETCH, g_sketchFd, sketchSurface);
+    sketchSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    sketchSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(cameraFormat));
+    sketchSurface->SetDefaultWidthAndHeight(SKETCH_DEFAULT_WIDTH, SKETCH_DEFAULT_HEIGHT);
+    sptr<IBufferProducer> bp = sketchSurface->GetProducer();
+    return Surface::CreateSurfaceAsProducer(bp);
 }
 
 sptr<CaptureOutput> CameraFrameworkModuleTest::CreatePreviewOutput()
@@ -6378,10 +6392,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_050, TestSize.Le
         return;
     }
 
-    int sketchEnableRatio = previewOutput->GetSketchEnableRatio(session_->GetFeaturesMode());
+    int sketchEnableRatio = previewOutput->GetSketchRatio();
     EXPECT_GT(sketchEnableRatio, 0);
 
-    intResult = previewOutput->EnableSketch(true);
+    intResult = previewOutput->EnableSketch(true, CreateSketchSurface(previewProfile->GetCameraFormat()));
     EXPECT_EQ(intResult, 0);
 
     intResult = session_->CommitConfig();
@@ -6390,13 +6404,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_050, TestSize.Le
     intResult = session_->Start();
     EXPECT_EQ(intResult, 0);
 
-    intResult = previewOutput->StartSketch();
-    EXPECT_EQ(intResult, 0);
-
     sleep(WAIT_TIME_AFTER_START);
-
-    intResult = previewOutput->StopSketch();
-    EXPECT_EQ(intResult, 0);
 
     intResult = session_->Stop();
     EXPECT_EQ(intResult, 0);
@@ -6438,10 +6446,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_051, TestSize.Le
 
     previewOutput->SetCallback(std::make_shared<AppCallback>());
 
-    int sketchEnableRatio = previewOutput->GetSketchEnableRatio(session_->GetFeaturesMode());
+    int sketchEnableRatio = previewOutput->GetSketchRatio();
     EXPECT_GT(sketchEnableRatio, 0);
 
-    intResult = previewOutput->EnableSketch(true);
+    intResult = previewOutput->EnableSketch(true, CreateSketchSurface(previewProfile->GetCameraFormat()));
     EXPECT_EQ(intResult, 0);
 
     intResult = session_->CommitConfig();
@@ -6450,12 +6458,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_051, TestSize.Le
     intResult = session_->Start();
     EXPECT_EQ(intResult, 0);
 
-    intResult = previewOutput->StartSketch();
-    EXPECT_EQ(intResult, 0);
-
     sleep(WAIT_TIME_AFTER_START);
 
-    EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_SKETCH_AVAILABLE)], 0);
+    EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 0);
 
     session_->LockForControl();
     intResult = session_->SetZoomRatio(30.0f);
@@ -6464,14 +6469,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_051, TestSize.Le
 
     sleep(WAIT_TIME_AFTER_START);
 
-    EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_SKETCH_AVAILABLE)], 1);
-
-    intResult = previewOutput->StopSketch();
-    EXPECT_EQ(intResult, 0);
-    sleep(1);
+    EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 1);
     g_previewEvents.reset();
-    sleep(2);
-    EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_SKETCH_AVAILABLE)], 0);
+    sleep(1);
+    EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 0);
 
     intResult = session_->Stop();
     EXPECT_EQ(intResult, 0);
@@ -6495,6 +6496,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_052, TestSize.Le
     auto output = CreatePreviewOutput(*previewProfile);
     ASSERT_NE(output, nullptr);
 
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
+    bool isSketchSupport = previewOutput->IsSketchSupported();
+    ASSERT_FALSE(isSketchSupport);
+
     session_->SetMode(static_cast<int32_t>(CameraMode::CAPTURE));
     int32_t intResult = session_->BeginConfig();
 
@@ -6506,44 +6511,40 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_052, TestSize.Le
     intResult = session_->AddOutput(output);
     EXPECT_EQ(intResult, 0);
 
-    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
-    bool isSketchSupport = previewOutput->IsSketchSupported();
+    isSketchSupport = previewOutput->IsSketchSupported();
     if (!isSketchSupport) {
         return;
     }
 
-    int sketchEnableRatio = previewOutput->GetSketchEnableRatio(CameraMode::PORTRAIT);
+    session_->SetMode(CameraMode::PORTRAIT);
+    int sketchEnableRatio = previewOutput->GetSketchRatio();
     EXPECT_LT(sketchEnableRatio, 0);
 
-    intResult = previewOutput->EnableSketch(true);
+    session_->SetMode(CameraMode::CAPTURE);
+    sketchEnableRatio = previewOutput->GetSketchRatio();
+    EXPECT_GT(sketchEnableRatio, 0);
+
+    auto sketchSurface = CreateSketchSurface(previewProfile->GetCameraFormat());
+
+    intResult = previewOutput->EnableSketch(true, sketchSurface);
     EXPECT_EQ(intResult, 0);
 
-    intResult = previewOutput->EnableSketch(true);
+    intResult = previewOutput->EnableSketch(true, sketchSurface);
     EXPECT_EQ(intResult, 7400102);
-
-    intResult = previewOutput->StartSketch();
-    EXPECT_EQ(intResult, 7400103);
 
     intResult = session_->CommitConfig();
     EXPECT_EQ(intResult, 0);
 
-    intResult = previewOutput->StartSketch();
-    EXPECT_EQ(intResult, 7400201);
-
     intResult = session_->Start();
     EXPECT_EQ(intResult, 0);
 
-    intResult = previewOutput->StartSketch();
-    EXPECT_EQ(intResult, 0);
+    intResult = previewOutput->EnableSketch(true, sketchSurface);
+    EXPECT_EQ(intResult, 7400103);
 
-    intResult = previewOutput->StartSketch();
-    EXPECT_EQ(intResult, 7400201);
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = previewOutput->StopSketch();
-    EXPECT_EQ(intResult, 0);
-    intResult = previewOutput->StopSketch();
-    EXPECT_EQ(intResult, 7400201);
+    intResult = previewOutput->EnableSketch(false, sketchSurface);
+    EXPECT_EQ(intResult, 7400103);
 
     intResult = session_->Stop();
     EXPECT_EQ(intResult, 0);
@@ -6569,7 +6570,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_053, TestSize.Le
 
     session_->SetMode(static_cast<int32_t>(CameraMode::CAPTURE));
     int32_t intResult = session_->BeginConfig();
-
     EXPECT_EQ(intResult, 0);
 
     intResult = session_->AddInput(input_);
@@ -6579,15 +6579,16 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_053, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
+    previewOutput->SetCallback(std::make_shared<AppCallback>());
     bool isSketchSupport = previewOutput->IsSketchSupported();
     if (!isSketchSupport) {
         return;
     }
 
-    int sketchEnableRatio = previewOutput->GetSketchEnableRatio(session_->GetFeaturesMode());
+    int sketchEnableRatio = previewOutput->GetSketchRatio();
     EXPECT_GT(sketchEnableRatio, 0);
 
-    intResult = previewOutput->EnableSketch(true);
+    intResult = previewOutput->EnableSketch(true, CreateSketchSurface(previewProfile->GetCameraFormat()));
     EXPECT_EQ(intResult, 0);
 
     intResult = session_->CommitConfig();
@@ -6601,24 +6602,26 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_053, TestSize.Le
     intResult = session_->Start();
     EXPECT_EQ(intResult, 0);
 
-    intResult = previewOutput->StartSketch();
-    EXPECT_EQ(intResult, 7400201);
+    sleep(WAIT_TIME_AFTER_START);
+    EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 1);
+    g_previewEvents.reset();
 
-    intResult = previewOutput->StopSketch();
-    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_START);
+    EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 0);
+    g_previewEvents.reset();
 
     session_->LockForControl();
-    intResult = session_->SetZoomRatio(35.0f);
+    intResult = session_->SetZoomRatio(1.0f);
     EXPECT_EQ(intResult, 0);
     session_->UnlockForControl();
 
-    intResult = previewOutput->StartSketch();
-    EXPECT_EQ(intResult, 7400201);
+    sleep(WAIT_TIME_AFTER_START);
+    EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 1);
+    g_previewEvents.reset();
 
     sleep(WAIT_TIME_AFTER_START);
-
-    intResult = previewOutput->StopSketch();
-    EXPECT_EQ(intResult, 0);
+    EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 0);
+    g_previewEvents.reset();
 
     intResult = session_->Stop();
     EXPECT_EQ(intResult, 0);
@@ -6662,7 +6665,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_054, TestSize.Le
     g_macroEvents.reset();
     intResult = session_->Start();
     EXPECT_EQ(intResult, 0);
-
 
     sleep(WAIT_TIME_AFTER_START);
 
