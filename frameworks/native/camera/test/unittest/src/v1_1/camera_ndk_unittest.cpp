@@ -34,24 +34,33 @@ static constexpr int32_t RECEIVER_TEST_CAPACITY = 8;
 static constexpr int32_t RECEIVER_TEST_FORMAT = 4;
 Camera_PhotoOutput* CameraNdkUnitTest::CreatePhotoOutput(int32_t width, int32_t height)
 {
-    Camera_Size photoSize = {
-        .width = width,
-        .height = height
-    };
+    uint32_t photo_width = width;
+    uint32_t photo_height = height;
     Camera_Format format = (Camera_Format)CAMERA_FORMAT_JPEG;
+    Camera_OutputCapability* OutputCapability = new Camera_OutputCapability;
+    Camera_ErrorCode ret = OH_CameraManager_GetSupportedCameraOutputCapability(cameraManager,
+                                                                               cameraDevice, &OutputCapability);
+    EXPECT_EQ(ret, CAMERA_OK);
+    photo_width = OutputCapability->photoProfiles[0]->size.width;
+    photo_height = OutputCapability->photoProfiles[0]->size.height;
+    format = OutputCapability->photoProfiles[0]->format;
+    delete OutputCapability;
+    Camera_Size photoSize = {
+        .width = photo_width,
+        .height = photo_height
+    };
     Camera_Profile photoProfile = {
         .format = format,
         .size = photoSize
     };
 
-    //std::shared_ptr<Media::ImageReceiver> imageReceiver;
     imageReceiver = Media::ImageReceiver ::CreateImageReceiver(RECEIVER_TEST_WIDTH,RECEIVER_TEST_HEIGHT,RECEIVER_TEST_FORMAT,RECEIVER_TEST_CAPACITY);
     std::string receiverKey;
-    receiverKey=imageReceiver->iraContext_->GetReceiverKey();
+    receiverKey = imageReceiver->iraContext_->GetReceiverKey();
     const char *surfaceId = nullptr;
     surfaceId = receiverKey.c_str();
     Camera_PhotoOutput* photoOutput = nullptr;
-    Camera_ErrorCode ret = OH_CameraManager_CreatePhotoOutput(cameraManager, &photoProfile, surfaceId, &photoOutput);
+    ret = OH_CameraManager_CreatePhotoOutput(cameraManager, &photoProfile, surfaceId, &photoOutput);
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_NE(photoOutput, nullptr);
     return photoOutput;
@@ -59,11 +68,21 @@ Camera_PhotoOutput* CameraNdkUnitTest::CreatePhotoOutput(int32_t width, int32_t 
 
 Camera_PreviewOutput* CameraNdkUnitTest::CreatePreviewOutput(int32_t width, int32_t height)
 {
-    Camera_Size previewSize = {
-        .width = width,
-        .height = height
-    };
+    uint32_t preview_width = width;
+    uint32_t preview_height = height;
     Camera_Format format = (Camera_Format)CAMERA_FORMAT_RGBA_8888;
+    Camera_OutputCapability* OutputCapability = new Camera_OutputCapability;
+    Camera_ErrorCode ret = OH_CameraManager_GetSupportedCameraOutputCapability(cameraManager,
+                                                                               cameraDevice, &OutputCapability);
+    EXPECT_EQ(ret, CAMERA_OK);
+    preview_width = OutputCapability->previewProfiles[0]->size.width;
+    preview_height = OutputCapability->previewProfiles[0]->size.height;
+    format = OutputCapability->previewProfiles[0]->format;
+    delete OutputCapability;
+    Camera_Size previewSize = {
+        .width = preview_width,
+        .height = preview_height
+    };
     Camera_Profile previewProfile = {
         .format = format,
         .size = previewSize
@@ -78,7 +97,7 @@ Camera_PreviewOutput* CameraNdkUnitTest::CreatePreviewOutput(int32_t width, int3
     SurfaceUtils::GetInstance()->Add(surfaceIdInt, pSurface);
     EXPECT_NE(surfaceId, nullptr);
     Camera_PreviewOutput* previewOutput = nullptr;
-    Camera_ErrorCode ret = OH_CameraManager_CreatePreviewOutput(cameraManager, &previewProfile, surfaceId, &previewOutput);
+    ret = OH_CameraManager_CreatePreviewOutput(cameraManager, &previewProfile, surfaceId, &previewOutput);
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_NE(previewOutput, nullptr);
     return previewOutput;
@@ -86,11 +105,21 @@ Camera_PreviewOutput* CameraNdkUnitTest::CreatePreviewOutput(int32_t width, int3
 
 Camera_VideoOutput* CameraNdkUnitTest::CreateVideoOutput(int32_t width, int32_t height)
 {
-    Camera_Size videoSize = {
-        .width = width,
-        .height = height
-    };
+    uint32_t video_width = width;
+    uint32_t video_height = height;
     Camera_Format format = (Camera_Format)CAMERA_FORMAT_RGBA_8888;
+    Camera_OutputCapability* OutputCapability = new Camera_OutputCapability;
+    Camera_ErrorCode ret = OH_CameraManager_GetSupportedCameraOutputCapability(cameraManager,
+                                                                               cameraDevice, &OutputCapability);
+    EXPECT_EQ(ret, CAMERA_OK);
+    video_width = OutputCapability->videoProfiles[0]->size.width;
+    video_height = OutputCapability->videoProfiles[0]->size.height;
+    format = OutputCapability->videoProfiles[0]->format;
+    delete OutputCapability;
+    Camera_Size videoSize = {
+        .width = video_width,
+        .height = video_height
+    };
     Camera_FrameRateRange videoRange = {
         .min = 30,
         .max = 30
@@ -109,7 +138,7 @@ Camera_VideoOutput* CameraNdkUnitTest::CreateVideoOutput(int32_t width, int32_t 
     surfaceId = surfaceIdStr.c_str();
     SurfaceUtils::GetInstance()->Add(surfaceIdInt, pSurface);
     Camera_VideoOutput* videoOutput = nullptr;
-    Camera_ErrorCode ret = OH_CameraManager_CreateVideoOutput(cameraManager, &videoProfile, surfaceId, &videoOutput);
+    ret = OH_CameraManager_CreateVideoOutput(cameraManager, &videoProfile, surfaceId, &videoOutput);
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_NE(videoOutput, nullptr);
     return videoOutput;
@@ -286,7 +315,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_001, TestSize.Level0)
     EXPECT_NE(captureSession, nullptr);
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
-    EXPECT_EQ(ret, CAMERA_OK); 
+    EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_NE(&cameraInput, nullptr);
     ret = OH_CameraInput_Open(cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
@@ -372,29 +401,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_004, TestSize.Level0)
     ret = OH_CaptureSession_BeginConfig(captureSession);
     EXPECT_EQ(ret, 0);
 
-    int32_t width =PREVIEW_DEFAULT_WIDTH;
-    int32_t height =PREVIEW_DEFAULT_HEIGHT;
-    Camera_Size previewSize = {
-        .width = width,
-        .height = height
-    };
-    Camera_Format format = (Camera_Format)CAMERA_FORMAT_RGBA_8888;
-    Camera_Profile previewProfile = {
-        .format =format,
-        .size = previewSize
-    };
-
-    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
-    sptr<IBufferProducer> previewProducer = previewSurface->GetProducer();
-    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(previewProducer);
-    int64_t surfaceIdInt = previewProducer->GetUniqueId();
-    string surfaceIdStr = std::to_string(surfaceIdInt);
-    const char *surfaceId = nullptr;
-    surfaceId = surfaceIdStr.c_str();
-    SurfaceUtils::GetInstance()->Add(surfaceIdInt, pSurface);
-    Camera_PreviewOutput* previewOutput = nullptr;
-    ret = OH_CameraManager_CreatePreviewOutput(cameraManager, &previewProfile, surfaceId, &previewOutput);
-    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
     EXPECT_NE(previewOutput, nullptr);
     ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
     EXPECT_EQ(ret, 0);
@@ -1907,7 +1914,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_061, TestSize.Level0)
     EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), 0);
     EXPECT_EQ(OH_PreviewOutput_Start(previewOutput), 0);
     EXPECT_EQ(OH_VideoOutput_UnregisterCallback(videoOutput, &setVideoResultCallback), 0);
-    
+
     EXPECT_EQ(OH_VideoOutput_Release(videoOutput), 0);
     EXPECT_EQ(OH_PhotoOutput_Release(PhotoOutput), 0);
     EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), 0);
@@ -2072,7 +2079,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_062, TestSize.Level0)
     EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), 0);
     EXPECT_EQ(OH_PreviewOutput_Start(previewOutput), 0);
     EXPECT_EQ(OH_VideoOutput_UnregisterCallback(videoOutput, &setVideoResultCallback), 0);
-    
+
     EXPECT_EQ(OH_VideoOutput_Release(videoOutput), 0);
     EXPECT_EQ(OH_PhotoOutput_Release(PhotoOutput), 0);
     EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), 0);
