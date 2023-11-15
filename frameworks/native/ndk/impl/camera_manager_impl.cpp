@@ -191,8 +191,10 @@ Camera_ErrorCode Camera_Manager::GetSupportedPreviewProfiles(Camera_OutputCapabi
     std::vector<Profile> &previewProfiles)
 {
     int previewOutputSize = previewProfiles.size();
+    outCapability->previewProfilesSize = previewOutputSize;
     if (previewOutputSize <= 0) {
         MEDIA_ERR_LOG("alloc size <= 0");
+        outCapability->previewProfiles = nullptr;
         return CAMERA_INVALID_ARGUMENT;
     }
     outCapability->previewProfiles = new Camera_Profile*[previewOutputSize];
@@ -210,7 +212,6 @@ Camera_ErrorCode Camera_Manager::GetSupportedPreviewProfiles(Camera_OutputCapabi
         outCapability->previewProfiles[i] = outPreviewProfile;
         MEDIA_ERR_LOG("GetSupportedCameraOutputCapability previewOutputSize enter");
     }
-    outCapability->previewProfilesSize = previewOutputSize;
     MEDIA_ERR_LOG("GetSupportedCameraOutputCapability previewOutputSize exit");
     return CAMERA_OK;
 }
@@ -219,8 +220,10 @@ Camera_ErrorCode Camera_Manager::GetSupportedPhotoProfiles(Camera_OutputCapabili
     std::vector<Profile> &photoProfiles)
 {
     int photoOutputSize = photoProfiles.size();
+    outCapability->photoProfilesSize = photoOutputSize;
     if (photoOutputSize <= 0) {
         MEDIA_ERR_LOG("alloc size <= 0");
+        outCapability->photoProfiles = nullptr;
         return CAMERA_INVALID_ARGUMENT;
     }
     outCapability->photoProfiles = new Camera_Profile*[photoOutputSize];
@@ -237,7 +240,6 @@ Camera_ErrorCode Camera_Manager::GetSupportedPhotoProfiles(Camera_OutputCapabili
         outPhotoProfile->size.height = photoProfiles[i].GetSize().height;
         outCapability->photoProfiles[i] = outPhotoProfile;
     }
-    outCapability->photoProfilesSize = photoOutputSize;
     return CAMERA_OK;
 }
 
@@ -245,8 +247,10 @@ Camera_ErrorCode Camera_Manager::GetSupportedVideoProfiles(Camera_OutputCapabili
     std::vector<VideoProfile> &videoProfiles)
 {
     int videoOutputSize = videoProfiles.size();
+    outCapability->videoProfilesSize = videoOutputSize;
     if (videoOutputSize <= 0) {
         MEDIA_ERR_LOG("alloc size <= 0");
+        outCapability->videoProfiles = nullptr;
         return CAMERA_INVALID_ARGUMENT;
     }
     outCapability->videoProfiles = new Camera_VideoProfile*[videoOutputSize];
@@ -265,7 +269,6 @@ Camera_ErrorCode Camera_Manager::GetSupportedVideoProfiles(Camera_OutputCapabili
         outVideoProfile->range.max  = videoProfiles[i].framerates_[1];
         outCapability->videoProfiles[i] = outVideoProfile;
     }
-    outCapability->videoProfilesSize = videoOutputSize;
     return CAMERA_OK;
 }
 
@@ -273,8 +276,10 @@ Camera_ErrorCode Camera_Manager::GetSupportedMetadataTypeList(Camera_OutputCapab
     std::vector<MetadataObjectType> &metadataTypeList)
 {
     int metadataOutputSize = metadataTypeList.size();
+    outCapability->metadataProfilesSize = metadataOutputSize;
     if (metadataOutputSize <= 0) {
         MEDIA_ERR_LOG("alloc size <= 0");
+        outCapability->supportedMetadataObjectTypes = nullptr;
         return CAMERA_INVALID_ARGUMENT;
     }
     outCapability->supportedMetadataObjectTypes = new Camera_MetadataObjectType*[metadataOutputSize];
@@ -285,7 +290,6 @@ Camera_ErrorCode Camera_Manager::GetSupportedMetadataTypeList(Camera_OutputCapab
         Camera_MetadataObjectType outmetadataObject = static_cast<Camera_MetadataObjectType>(metadataTypeList[i]);
         outCapability->supportedMetadataObjectTypes[i] = &outmetadataObject;
     }
-    outCapability->metadataProfilesSize = metadataOutputSize;
     return CAMERA_OK;
 }
 
