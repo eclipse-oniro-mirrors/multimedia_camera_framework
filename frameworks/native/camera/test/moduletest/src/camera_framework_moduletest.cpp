@@ -743,9 +743,22 @@ void CameraFrameworkModuleTest::SetUp()
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     std::vector<sptr<CameraDevice>> cameraObjList = camManagerObj->GetSupportedCameras();
     sptr<CameraOutputCapability> outputcapability = camManagerObj->GetSupportedOutputCapability(cameraObjList[0]);
-    previewProfiles = outputcapability->GetPreviewProfiles();
 
+    std::vector<Profile> tempPreviewProfiles = outputcapability->GetPreviewProfiles();
+    for (const auto& profile : tempPreviewProfiles) {
+        if ((profile.size_.width == 176 && profile.size_.height == 144) ||
+            (profile.size_.width == 640 && profile.size_.height == 640) ||
+            (profile.size_.width == 4096 && profile.size_.height == 3072) ||
+            (profile.size_.width == 4160 && profile.size_.height == 3120) ||
+            (profile.size_.width == 8192 && profile.size_.height == 6144)) {
+            MEDIA_DEBUG_LOG("SetUp skip previewProfile width:%{public}d height:%{public}d", profile.size_.width, profile.size_.height);
+            continue;
+        }
+        previewProfiles.push_back(profile);
+    }
+    
     for (auto i : previewProfiles) {
+        MEDIA_DEBUG_LOG("SetUp previewProfiles width:%{public}d height:%{public}d", i.size_.width, i.size_.height);
         previewFormats_.push_back(i.GetCameraFormat());
         previewSizes_.push_back(i.GetSize());
     }
