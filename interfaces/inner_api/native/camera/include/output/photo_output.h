@@ -297,7 +297,7 @@ private:
 };
 class HStreamCaptureCallbackImpl : public HStreamCaptureCallbackStub {
 public:
-    PhotoOutput* photoOutput_ = nullptr;
+    wptr<PhotoOutput> photoOutput_ = nullptr;
     HStreamCaptureCallbackImpl() : photoOutput_(nullptr) {}
 
     explicit HStreamCaptureCallbackImpl(PhotoOutput* photoOutput) : photoOutput_(photoOutput) {}

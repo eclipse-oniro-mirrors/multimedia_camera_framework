@@ -192,7 +192,7 @@ private:
 
 class PreviewOutputCallbackImpl : public HStreamRepeatCallbackStub {
 public:
-    PreviewOutput* previewOutput_ = nullptr;
+    wptr<PreviewOutput> previewOutput_ = nullptr;
     PreviewOutputCallbackImpl() : previewOutput_(nullptr) {}
 
     explicit PreviewOutputCallbackImpl(PreviewOutput* previewOutput) : previewOutput_(previewOutput) {}

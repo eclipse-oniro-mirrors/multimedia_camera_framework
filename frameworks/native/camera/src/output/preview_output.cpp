@@ -73,8 +73,9 @@ int32_t PreviewOutput::Release()
 int32_t PreviewOutputCallbackImpl::OnFrameStarted()
 {
     CAMERA_SYNC_TRACE;
-    if (previewOutput_ != nullptr && previewOutput_->GetApplicationCallback() != nullptr) {
-        previewOutput_->GetApplicationCallback()->OnFrameStarted();
+    auto item = previewOutput_.promote();
+    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
+        item->GetApplicationCallback()->OnFrameStarted();
     } else {
         MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameStarted callback in preview");
     }
@@ -84,8 +85,9 @@ int32_t PreviewOutputCallbackImpl::OnFrameStarted()
 int32_t PreviewOutputCallbackImpl::OnFrameEnded(int32_t frameCount)
 {
     CAMERA_SYNC_TRACE;
-    if (previewOutput_ != nullptr && previewOutput_->GetApplicationCallback() != nullptr) {
-        previewOutput_->GetApplicationCallback()->OnFrameEnded(frameCount);
+    auto item = previewOutput_.promote();
+    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
+        item->GetApplicationCallback()->OnFrameEnded(frameCount);
     } else {
         MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameEnded callback in preview");
     }
@@ -94,8 +96,9 @@ int32_t PreviewOutputCallbackImpl::OnFrameEnded(int32_t frameCount)
 
 int32_t PreviewOutputCallbackImpl::OnFrameError(int32_t errorCode)
 {
-    if (previewOutput_ != nullptr && previewOutput_->GetApplicationCallback() != nullptr) {
-        previewOutput_->GetApplicationCallback()->OnError(errorCode);
+    auto item = previewOutput_.promote();
+    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
+        item->GetApplicationCallback()->OnError(errorCode);
     } else {
         MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameError callback in preview");
     }

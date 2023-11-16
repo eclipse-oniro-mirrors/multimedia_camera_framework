@@ -136,7 +136,7 @@ private:
 
 class VideoOutputCallbackImpl : public HStreamRepeatCallbackStub {
 public:
-    VideoOutput* videoOutput_ = nullptr;
+    wptr<VideoOutput> videoOutput_ = nullptr;
     VideoOutputCallbackImpl() : videoOutput_(nullptr) {}
 
     explicit VideoOutputCallbackImpl(VideoOutput* videoOutput) : videoOutput_(videoOutput) {}
