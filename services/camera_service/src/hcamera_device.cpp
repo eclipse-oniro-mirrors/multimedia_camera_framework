@@ -42,6 +42,7 @@ HCameraDevice::~HCameraDevice()
         cameraHostManager_ = nullptr;
     }
     deviceHDICallback_ = nullptr;
+    std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
     deviceSvcCallback_ = nullptr;
 }
 
@@ -164,21 +165,24 @@ int32_t HCameraDevice::OpenHdiCamera()
 int32_t HCameraDevice::Close()
 {
     CAMERA_SYNC_TRACE;
-    std::lock_guard<std::mutex> lock(deviceLock_);
-    if (hdiCameraDevice_ != nullptr) {
-        MEDIA_INFO_LOG("HCameraDevice::Close Closing camera device: %{public}s", cameraID_.c_str());
-        hdiCameraDevice_->Close();
-        (void)OnCameraStatus(cameraID_, CAMERA_STATUS_AVAILABLE);
-    }
-    isOpenedCameraDevice_ = false;
-    hdiCameraDevice_ = nullptr;
-    if (streamOperator_) {
-        streamOperator_ = nullptr;
-    }
-    if (cameraHostManager_) {
-        cameraHostManager_->RemoveCameraDevice(cameraID_);
+    {
+        std::lock_guard<std::mutex> lock(deviceLock_);
+        if (hdiCameraDevice_ != nullptr) {
+            MEDIA_INFO_LOG("HCameraDevice::Close Closing camera device: %{public}s", cameraID_.c_str());
+            hdiCameraDevice_->Close();
+            (void)OnCameraStatus(cameraID_, CAMERA_STATUS_AVAILABLE);
+        }
+        isOpenedCameraDevice_ = false;
+        hdiCameraDevice_ = nullptr;
+        if (streamOperator_) {
+            streamOperator_ = nullptr;
+        }
+        if (cameraHostManager_) {
+            cameraHostManager_->RemoveCameraDevice(cameraID_);
+        }
     }
     deviceHDICallback_ = nullptr;
+    std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
     deviceSvcCallback_ = nullptr;
     return CAMERA_OK;
 }
@@ -398,6 +402,7 @@ int32_t HCameraDevice::SetCallback(sptr<ICameraDeviceServiceCallback> &callback)
         MEDIA_ERR_LOG("HCameraDevice::SetCallback callback is null");
         return CAMERA_INVALID_ARG;
     }
+    std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
     deviceSvcCallback_ = callback;
     return CAMERA_OK;
 }
@@ -448,6 +453,7 @@ sptr<IStreamOperator> HCameraDevice::GetStreamOperator()
 
 int32_t HCameraDevice::OnError(const ErrorType type, const int32_t errorMsg)
 {
+    std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
     if (deviceSvcCallback_ != nullptr) {
         int32_t errorType;
         if (type == REQUEST_TIMEOUT) {
@@ -487,6 +493,7 @@ int32_t HCameraDevice::OnCameraStatus(const std::string& cameraId, CameraStatus 
 int32_t HCameraDevice::OnResult(const uint64_t timestamp,
                                 const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
+    std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
     if (deviceSvcCallback_ != nullptr) {
         deviceSvcCallback_->OnResult(timestamp, result);
     }

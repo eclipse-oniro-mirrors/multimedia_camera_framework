@@ -67,6 +67,7 @@ private:
     bool isReleaseCameraDevice_;
     bool isOpenedCameraDevice_;
 
+    std::mutex deviceSvcCbMutex_;
     sptr<ICameraDeviceServiceCallback> deviceSvcCallback_;
     sptr<CameraDeviceCallback> deviceHDICallback_;
     std::map<int32_t, wptr<ICameraServiceCallback>> statusSvcCallbacks_;
