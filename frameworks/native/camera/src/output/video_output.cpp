@@ -36,8 +36,9 @@ VideoOutput::~VideoOutput()
 int32_t VideoOutputCallbackImpl::OnFrameStarted()
 {
     CAMERA_SYNC_TRACE;
-    if (videoOutput_ != nullptr && videoOutput_->GetApplicationCallback() != nullptr) {
-        videoOutput_->GetApplicationCallback()->OnFrameStarted();
+    auto item = videoOutput_.promote();
+    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
+        item->GetApplicationCallback()->OnFrameStarted();
     } else {
         MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameStarted callback in video");
     }
@@ -47,8 +48,9 @@ int32_t VideoOutputCallbackImpl::OnFrameStarted()
 int32_t VideoOutputCallbackImpl::OnFrameEnded(const int32_t frameCount)
 {
     CAMERA_SYNC_TRACE;
-    if (videoOutput_ != nullptr && videoOutput_->GetApplicationCallback() != nullptr) {
-        videoOutput_->GetApplicationCallback()->OnFrameEnded(frameCount);
+    auto item = videoOutput_.promote();
+    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
+        item->GetApplicationCallback()->OnFrameEnded(frameCount);
     } else {
         MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameEnded callback in video");
     }
@@ -57,8 +59,9 @@ int32_t VideoOutputCallbackImpl::OnFrameEnded(const int32_t frameCount)
 
 int32_t VideoOutputCallbackImpl::OnFrameError(const int32_t errorCode)
 {
-    if (videoOutput_ != nullptr && videoOutput_->GetApplicationCallback() != nullptr) {
-        videoOutput_->GetApplicationCallback()->OnError(errorCode);
+    auto item = videoOutput_.promote();
+    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
+        item->GetApplicationCallback()->OnError(errorCode);
     } else {
         MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameError callback in video");
     }

@@ -165,8 +165,9 @@ std::shared_ptr<Camera::CameraMetadata> PhotoCaptureSetting::GetCaptureMetadataS
 int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId)
 {
     CAMERA_SYNC_TRACE;
-    if (photoOutput_ != nullptr && photoOutput_->GetApplicationCallback() != nullptr) {
-        photoOutput_->GetApplicationCallback()->OnCaptureStarted(captureId);
+    auto item = photoOutput_.promote();
+    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
+        item->GetApplicationCallback()->OnCaptureStarted(captureId);
     } else {
         MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnCaptureStarted callback");
     }
@@ -176,8 +177,9 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId)
 int32_t HStreamCaptureCallbackImpl::OnCaptureEnded(const int32_t captureId, const int32_t frameCount)
 {
     CAMERA_SYNC_TRACE;
-    if (photoOutput_ != nullptr && photoOutput_->GetApplicationCallback() != nullptr) {
-        photoOutput_->GetApplicationCallback()->OnCaptureEnded(captureId, frameCount);
+    auto item = photoOutput_.promote();
+    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
+        item->GetApplicationCallback()->OnCaptureEnded(captureId, frameCount);
     } else {
         MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnCaptureEnded callback");
     }
@@ -186,8 +188,9 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureEnded(const int32_t captureId, cons
 
 int32_t HStreamCaptureCallbackImpl::OnCaptureError(const int32_t captureId, const int32_t errorCode)
 {
-    if (photoOutput_ != nullptr && photoOutput_->GetApplicationCallback() != nullptr) {
-        photoOutput_->GetApplicationCallback()->OnCaptureError(captureId, errorCode);
+    auto item = photoOutput_.promote();
+    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
+        item->GetApplicationCallback()->OnCaptureError(captureId, errorCode);
     } else {
         MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnCaptureError callback");
     }
@@ -197,8 +200,9 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureError(const int32_t captureId, cons
 int32_t HStreamCaptureCallbackImpl::OnFrameShutter(const int32_t captureId, const uint64_t timestamp)
 {
     CAMERA_SYNC_TRACE;
-    if (photoOutput_ != nullptr && photoOutput_->GetApplicationCallback() != nullptr) {
-        photoOutput_->GetApplicationCallback()->OnFrameShutter(captureId, timestamp);
+    auto item = photoOutput_.promote();
+    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
+        item->GetApplicationCallback()->OnFrameShutter(captureId, timestamp);
     } else {
         MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnFrameShutter callback");
     }
