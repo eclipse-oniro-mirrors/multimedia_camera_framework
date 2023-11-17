@@ -744,6 +744,7 @@ void CameraFrameworkModuleTest::SetUp()
     std::vector<sptr<CameraDevice>> cameraObjList = camManagerObj->GetSupportedCameras();
     sptr<CameraOutputCapability> outputcapability = camManagerObj->GetSupportedOutputCapability(cameraObjList[0]);
 
+    previewProfiles.clear();
     std::vector<Profile> tempPreviewProfiles = outputcapability->GetPreviewProfiles();
     for (const auto& profile : tempPreviewProfiles) {
         if ((profile.size_.width == 176 && profile.size_.height == 144) ||
