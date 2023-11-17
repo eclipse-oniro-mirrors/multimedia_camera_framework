@@ -112,7 +112,7 @@ HCameraDevice::~HCameraDevice()
 {
     MEDIA_INFO_LOG("HCameraDevice::~HCameraDevice Destructor Camera: %{public}s", cameraID_.c_str());
     {
-        std::lock_guard<std::mutex> cachedLock(opMutex_);
+        std::lock_guard<std::mutex> lock(opMutex_);
         hdiCameraDevice_ = nullptr;
         streamOperator_ = nullptr;
     }
@@ -121,7 +121,7 @@ HCameraDevice::~HCameraDevice()
         cameraHostManager_ = nullptr;
     }
     {
-        std::lock_guard<std::mutex> cachedLock(deviceSvcCbMutex_);
+        std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
         deviceSvcCallback_ = nullptr;
     }
     deviceOperatorsCallback_ = nullptr;
@@ -285,10 +285,7 @@ int32_t HCameraDevice::CloseDevice()
 
 int32_t HCameraDevice::Release()
 {
-    std::lock_guard<std::mutex> lock(opMutex_);
-    if (hdiCameraDevice_ != nullptr) {
-        Close();
-    }
+    Close();
     return CAMERA_OK;
 }
 
