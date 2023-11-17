@@ -568,6 +568,7 @@ private:
     void AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& cameraObjList);
     std::mutex mutex_;
     std::mutex vectorMutex_;
+    std::mutex cameraMngrCallbackMutex_;
     int CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> *pICameraDeviceService);
     camera_format_t GetCameraMetadataFormat(CameraFormat format);
     bool GetDmDeviceInfo();

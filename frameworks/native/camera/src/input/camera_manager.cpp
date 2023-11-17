@@ -65,7 +65,10 @@ CameraManager::~CameraManager()
     deathRecipient_ = nullptr;
     cameraSvcCallback_ = nullptr;
     cameraMuteSvcCallback_ = nullptr;
-    cameraMngrCallback_ = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(cameraMngrCallbackMutex_);
+        cameraMngrCallback_ = nullptr;
+    }
     cameraMuteListener = nullptr;
     torchListener = nullptr;
     for (unsigned int i = 0; i < cameraObjList.size(); i++) {
@@ -547,11 +550,13 @@ void CameraManager::SetCallback(std::shared_ptr<CameraManagerCallback> callback)
     if (callback == nullptr) {
         MEDIA_INFO_LOG("Application unregistering the callback");
     }
+    std::lock_guard<std::mutex> lock(cameraMngrCallbackMutex_);
     cameraMngrCallback_ = callback;
 }
 
 std::shared_ptr<CameraManagerCallback> CameraManager::GetApplicationCallback()
 {
+    std::lock_guard<std::mutex> lock(cameraMngrCallbackMutex_);
     MEDIA_INFO_LOG("callback! isExist = %{public}d",
                    cameraMngrCallback_ != nullptr);
     return cameraMngrCallback_;
