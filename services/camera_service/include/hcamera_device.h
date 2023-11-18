@@ -71,7 +71,7 @@ private:
     bool isReleaseCameraDevice_;
     bool isOpenedCameraDevice_;
     std::mutex deviceSvcCbMutex_;
-    std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.
+    std::mutex settingsMutex_;
     std::mutex cachedSettingsMutex_;
     sptr<ICameraDeviceServiceCallback> deviceSvcCallback_;
     std::map<int32_t, wptr<ICameraServiceCallback>> statusSvcCallbacks_;

@@ -111,19 +111,12 @@ HCameraDevice::HCameraDevice(sptr<HCameraHostManager> &cameraHostManager,
 HCameraDevice::~HCameraDevice()
 {
     MEDIA_INFO_LOG("HCameraDevice::~HCameraDevice Destructor Camera: %{public}s", cameraID_.c_str());
-    {
-        std::lock_guard<std::mutex> cachedLock(opMutex_);
-        hdiCameraDevice_ = nullptr;
-        streamOperator_ = nullptr;
-    }
-
+    hdiCameraDevice_ = nullptr;
+    streamOperator_ = nullptr;
     if (cameraHostManager_) {
         cameraHostManager_ = nullptr;
     }
-    {
-        std::lock_guard<std::mutex> cachedLock(deviceSvcCbMutex_);
-        deviceSvcCallback_ = nullptr;
-    }
+    deviceSvcCallback_ = nullptr;
     deviceOperatorsCallback_ = nullptr;
 }
 
@@ -226,11 +219,11 @@ int32_t HCameraDevice::OpenDevice()
     CAMERA_SYNC_TRACE;
     int32_t errorCode;
     MEDIA_INFO_LOG("HCameraDevice::OpenDevice Opening camera device: %{public}s", cameraID_.c_str());
-    std::lock_guard<std::mutex> lock(opMutex_);
     errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_);
     if (errorCode != CAMERA_OK) {
         MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");
     }
+    std::lock_guard<std::mutex> lock(settingsMutex_);
     isOpenedCameraDevice_ = true;
     if (hdiCameraDevice_ != nullptr) {
         cameraHostManager_->AddCameraDevice(cameraID_, this);
@@ -262,18 +255,15 @@ int32_t HCameraDevice::CloseDevice()
     if (isFoldable) {
         UnRegisterFoldStatusListener();
     }
-    {
-        std::lock_guard<std::mutex> lock(opMutex_);
-        if (hdiCameraDevice_ != nullptr) {
-            MEDIA_INFO_LOG("Closing camera device: %{public}s start", cameraID_.c_str());
-            hdiCameraDevice_->Close();
-            MEDIA_INFO_LOG("Closing camera device: %{public}s end", cameraID_.c_str());
-            isOpenedCameraDevice_ = false;
-            hdiCameraDevice_ = nullptr;
-        }
-        if (streamOperator_) {
-            streamOperator_ = nullptr;
-        }
+    if (hdiCameraDevice_ != nullptr) {
+        MEDIA_INFO_LOG("Closing camera device: %{public}s start", cameraID_.c_str());
+        hdiCameraDevice_->Close();
+        MEDIA_INFO_LOG("Closing camera device: %{public}s end", cameraID_.c_str());
+        isOpenedCameraDevice_ = false;
+        hdiCameraDevice_ = nullptr;
+    }
+    if (streamOperator_) {
+        streamOperator_ = nullptr;
     }
     if (cameraHostManager_) {
         cameraHostManager_->RemoveCameraDevice(cameraID_);
@@ -285,7 +275,6 @@ int32_t HCameraDevice::CloseDevice()
 
 int32_t HCameraDevice::Release()
 {
-    std::lock_guard<std::mutex> lock(opMutex_);
     if (hdiCameraDevice_ != nullptr) {
         Close();
     }
@@ -294,7 +283,6 @@ int32_t HCameraDevice::Release()
 
 int32_t HCameraDevice::GetEnabledResults(std::vector<int32_t> &results)
 {
-    std::lock_guard<std::mutex> lock(opMutex_);
     if (hdiCameraDevice_) {
         CamRetCode rc = (CamRetCode)(hdiCameraDevice_->GetEnabledResults(results));
         if (rc != HDI::Camera::V1_0::NO_ERROR) {
@@ -321,7 +309,7 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
         MEDIA_DEBUG_LOG("Nothing to update");
         return CAMERA_OK;
     }
-    std::lock_guard<std::mutex> lock(opMutex_);
+    std::lock_guard<std::mutex> lock(settingsMutex_);
     if (updateSettings_ != nullptr) {
         int ret = MergeMetadata(settings, updateSettings_);
         if (ret != CAMERA_OK) {
@@ -525,7 +513,7 @@ int32_t HCameraDevice::EnableResult(std::vector<int32_t> &results)
         MEDIA_ERR_LOG("HCameraDevice::EnableResult results vector empty");
         return CAMERA_INVALID_ARG;
     }
-    std::lock_guard<std::mutex> lock(opMutex_);
+
     if (hdiCameraDevice_ == nullptr) {
         MEDIA_ERR_LOG("HCameraDevice::hdiCameraDevice_ is null");
         return CAMERA_UNKNOWN_ERROR;
@@ -546,7 +534,7 @@ int32_t HCameraDevice::DisableResult(std::vector<int32_t> &results)
         MEDIA_ERR_LOG("HCameraDevice::DisableResult results vector empty");
         return CAMERA_INVALID_ARG;
     }
-    std::lock_guard<std::mutex> lock(opMutex_);
+
     if (hdiCameraDevice_ == nullptr) {
         MEDIA_ERR_LOG("HCameraDevice::hdiCameraDevice_ is null");
         return CAMERA_UNKNOWN_ERROR;
@@ -578,7 +566,7 @@ int32_t HCameraDevice::GetStreamOperator(sptr<IStreamOperatorCallback> callback,
         MEDIA_ERR_LOG("HCameraDevice::GetStreamOperator callback is null");
         return CAMERA_INVALID_ARG;
     }
-    std::lock_guard<std::mutex> lock(opMutex_);
+
     if (hdiCameraDevice_ == nullptr) {
         MEDIA_ERR_LOG("HCameraDevice::hdiCameraDevice_ is null");
         return CAMERA_UNKNOWN_ERROR;
@@ -623,7 +611,6 @@ int32_t HCameraDevice::SetDeviceOperatorsCallback(wptr<IDeviceOperatorsCallback>
 
 sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> HCameraDevice::GetStreamOperator()
 {
-    std::lock_guard<std::mutex> lock(opMutex_);
     return streamOperator_;
 }
 
