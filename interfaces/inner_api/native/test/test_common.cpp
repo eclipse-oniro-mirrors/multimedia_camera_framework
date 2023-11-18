@@ -20,6 +20,7 @@
 #include <securec.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include "camera_output_capability.h"
 #include "camera_util.h"
 #include "camera_log.h"
 
@@ -236,9 +237,9 @@ void TestPreviewOutputCallback::OnError(const int32_t errorCode) const
                    testName_, errorCode);
 }
 
-void TestPreviewOutputCallback::OnSketchAvailable(SketchData& sketchData) const
+void TestPreviewOutputCallback::OnSketchStatusDataChanged(SketchStatusData sketchData) const
 {
-    MEDIA_DEBUG_LOG("TestPreviewOutputCallback::OnSketchAvailable(), testName_: %{public}s", testName_);
+    MEDIA_DEBUG_LOG("TestPreviewOutputCallback::OnSketchStatusDataChanged(), testName_: %{public}s", testName_);
     return;
 }
 

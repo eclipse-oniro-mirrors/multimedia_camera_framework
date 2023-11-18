@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_PREVIEW_OUTPUT_H
 #define OHOS_CAMERA_PREVIEW_OUTPUT_H
 
+#include <cstdint>
 #include "camera_output_capability.h"
 #include "capture_output.h"
 #include "hstream_repeat_callback_stub.h"
@@ -50,11 +51,11 @@ public:
     virtual void OnError(const int32_t errorCode) const = 0;
 
     /**
-     * @brief Called when sketch data available.
+     * @brief Called when sketch status changed.
      *
-     * @param SketchData Indicates a {@link SketchData}.
+     * @param statusData Indicates a {@link SketchStatusData}.
      */
-    virtual void OnSketchAvailable(SketchData& SketchData) const = 0;
+    virtual void OnSketchStatusDataChanged(SketchStatusData statusData) const = 0;
 };
 
 class PreviewOutput : public CaptureOutput {
@@ -109,19 +110,10 @@ public:
      * @brief Enable sketch
      *
      * @param isEnable True for enable, false otherwise.
+     * @param sketchSurface Sketch surface
      *
      */
-    int32_t EnableSketch(bool isEnable);
-
-    /**
-     * @brief Start sketch.
-     */
-    int32_t StartSketch();
-
-    /**
-     * @brief Stop sketch.
-     */
-    int32_t StopSketch();
+    int32_t EnableSketch(bool isEnable, sptr<Surface> sketchSurface);
 
     /**
      * @brief Get the application callback information.
@@ -129,23 +121,6 @@ public:
      * @return Returns the pointer application callback.
      */
     std::shared_ptr<PreviewStateCallback> GetApplicationCallback();
-
-    /**
-     * @brief Get sketch reference FOV ratio.
-     *
-     * @param modeName Mode name.
-     * @param currentZoomRatio Current zoom ratio.
-     *
-     */
-    float GetSketchReferenceFovRatio(int32_t modeName, float currentZoomRatio);
-
-    /**
-     * @brief Get sketch enable ratio.
-     *
-     * @param modeName Mode name.
-     *
-     */
-    float GetSketchEnableRatio(int32_t modeName);
 
     /**
      * @brief Get Observed matadata tags
@@ -161,32 +136,20 @@ public:
     int32_t OnMetadataChanged(
         const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem) override;
 
+    int32_t OnSketchStatusChanged(SketchStatus status);
+
     void OnNativeRegisterCallback(const std::string& eventString);
     void OnNativeUnregisterCallback(const std::string& eventString);
 
 private:
-    struct SketchReferenceFovRange {
-        float zoomMin = -1.0f;
-        float zoomMax = -1.0f;
-        float referenceValue = -1.0f;
-    };
-
     std::shared_ptr<PreviewStateCallback> appCallback_;
     sptr<IStreamRepeatCallback> svcCallback_;
     std::shared_ptr<void> sketchWrapper_;
-    std::mutex sketchReferenceFovRatioMutex_;
-    std::map<int32_t, std::vector<SketchReferenceFovRange>> sketchReferenceFovRatioMap_;
-    std::mutex sketchEnableRatioMutex_;
-    std::map<int32_t, float> sketchEnableRatioMap_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetDeviceMetadata();
-    void UpdateSketchStaticInfo();
-    void UpdateSketchEnableRatio(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata);
-    void UpdateSketchReferenceFovRatio(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata);
     std::shared_ptr<Size> FindSketchSize();
-    int32_t OnMetadataChangedMacro(const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem);
-    int32_t OnMetadataChangedZoomRatio(
-        const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem);
-    int32_t CreateSketchWrapper(Size sketchSize, int32_t imageFormat);
+    int32_t CreateSketchWrapper(Size sketchSize, sptr<Surface> sketchSurface);
+    int32_t StartSketch();
+    int32_t StopSketch();
     void CameraServerDied(pid_t pid) override;
 };
 
@@ -220,6 +183,13 @@ public:
      * @param errorCode Indicates a {@link ErrorCode} which will give information for preview callback error.
      */
     int32_t OnFrameError(int32_t errorCode) override;
+
+    /**
+     * @brief Called when sketch status changed.
+     *
+     * @param status Indicates a {@link SketchStatus} which will give information for preview callback error.
+     */
+    int32_t OnSketchStatusChanged(SketchStatus status) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

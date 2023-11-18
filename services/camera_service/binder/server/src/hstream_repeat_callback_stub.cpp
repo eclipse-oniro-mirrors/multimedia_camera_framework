@@ -16,6 +16,7 @@
 #include "hstream_repeat_callback_stub.h"
 #include "camera_log.h"
 #include "camera_service_ipc_interface_code.h"
+#include "istream_repeat_callback.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -35,6 +36,9 @@ int HStreamRepeatCallbackStub::OnRemoteRequest(
         case static_cast<uint32_t>(StreamRepeatCallbackInterfaceCode::CAMERA_STREAM_REPEAT_ON_ERROR):
             errCode = HStreamRepeatCallbackStub::HandleOnFrameError(data);
             break;
+        case static_cast<uint32_t>(StreamRepeatCallbackInterfaceCode::CAMERA_STREAM_SKETCH_STATUS_ON_CHANGED):
+            errCode = HStreamRepeatCallbackStub::HandleOnSketchStatusChanged(data);
+            break;
         default:
             MEDIA_ERR_LOG("HStreamRepeatCallbackStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -47,15 +51,19 @@ int HStreamRepeatCallbackStub::OnRemoteRequest(
 int HStreamRepeatCallbackStub::HandleOnFrameEnded(MessageParcel& data)
 {
     int32_t frameCount = data.ReadInt32();
-
     return OnFrameEnded(frameCount);
 }
 
 int HStreamRepeatCallbackStub::HandleOnFrameError(MessageParcel& data)
 {
     int32_t errorType = static_cast<int32_t>(data.ReadUint64());
-
     return OnFrameError(errorType);
+}
+
+int HStreamRepeatCallbackStub::HandleOnSketchStatusChanged(MessageParcel& data)
+{
+    int32_t status = data.ReadInt32();
+    return OnSketchStatusChanged(static_cast<SketchStatus>(status));
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -1129,14 +1129,24 @@ declare namespace camera {
   }
 
   /**
-   * SketchData parameter.
+   * SketchStatus parameter.
    *
-   * @typedef SketchData
+   * @typedef SketchStatus
    * @syscap SystemCapability.Multimedia.Camera.Core
    * @systemapi
    * @since 11
    */
-  interface SketchData {
+  interface SketchStatus {
+    /**
+     * Sketch status.
+     *
+     * @type { number }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 11
+     */
+    status: number;
+
     /**
      * Sketch scale ratio.
      *
@@ -1145,16 +1155,7 @@ declare namespace camera {
      * @systemapi
      * @since 11
      */
-    ratio: number;
-    /**
-     * Sketch image data.
-     *
-     * @type { image.PixelMap }
-     * @syscap SystemCapability.Multimedia.Camera.Core
-     * @systemapi
-     * @since 11
-     */
-    pixelMap: image.PixelMap;
+    sketchRatio: number;
   }
 
   /**

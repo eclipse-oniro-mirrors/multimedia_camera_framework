@@ -15,6 +15,7 @@
 
 #include "preview_output_impl.h"
 #include "camera_log.h"
+#include "camera_output_capability.h"
 #include "camera_util.h"
 
 using namespace std;
@@ -51,7 +52,7 @@ public:
         }
     }
 
-    void OnSketchAvailable(SketchData& SketchData) const override {}
+    void OnSketchStatusDataChanged(SketchStatusData statusData) const override {}
 
 private:
     Camera_PreviewOutput* previewOutput_;

@@ -14,6 +14,7 @@
  */
 
 #include "hstream_repeat.h"
+#include <cstdint>
 
 #include "camera_device_ability_items.h"
 #include "camera_log.h"
@@ -21,6 +22,7 @@
 #include "camera_util.h"
 #include "display.h"
 #include "display_manager.h"
+#include "istream_repeat_callback.h"
 #include "metadata_utils.h"
 
 namespace OHOS {
@@ -77,6 +79,21 @@ void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
                 .bufferQueue = nullptr
             };
             streamInfo.extendedStreamInfos = { extendedStreamInfo };
+    }
+}
+
+void HStreamRepeat::UpdateSketchStatus(SketchStatus status)
+{
+    if (repeatStreamType_ != RepeatStreamType::SKETCH) {
+        return;
+    }
+    auto parent = parentStreamRepeat_.promote();
+    if (parent == nullptr) {
+        return;
+    }
+    if (sketchStatus_ != status) {
+        sketchStatus_ = status;
+        parent->OnSketchStatusChanged(sketchStatus_);
     }
 }
 
@@ -154,6 +171,9 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
         MEDIA_ERR_LOG("HStreamRepeat::Start Failed with error Code:%{public}d", rc);
         ret = HdiToServiceError(rc);
     }
+    if (repeatStreamType_ == RepeatStreamType::SKETCH) {
+        UpdateSketchStatus(SketchStatus::STARTED);
+    }
     if (settings != nullptr) {
         StartSketchStream(settings);
     }
@@ -184,6 +204,9 @@ int32_t HStreamRepeat::Stop()
     }
     ReleaseCaptureId(curCaptureID_);
     curCaptureID_ = 0;
+    if (repeatStreamType_ == RepeatStreamType::SKETCH) {
+        UpdateSketchStatus(SketchStatus::STOPED);
+    }
 
     {
         std::lock_guard<std::mutex> lock(sketchStreamLock_);
@@ -260,6 +283,16 @@ int32_t HStreamRepeat::OnFrameError(int32_t errorType)
     return CAMERA_OK;
 }
 
+int32_t HStreamRepeat::OnSketchStatusChanged(SketchStatus status)
+{
+    std::lock_guard<std::mutex> lock(callbackLock_);
+    MEDIA_DEBUG_LOG("HStreamRepeat::OnSketchStatusChanged %{public}d", status);
+    if (streamRepeatCallback_ != nullptr) {
+        streamRepeatCallback_->OnSketchStatusChanged(status);
+    }
+    return CAMERA_OK;
+}
+
 int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& producer)
 {
     MEDIA_INFO_LOG("HStreamRepeat::AddDeferredSurface called");
@@ -305,6 +338,8 @@ int32_t HStreamRepeat::ForkSketchStreamRepeat(const sptr<OHOS::IBufferProducer>&
     CHECK_AND_RETURN_RET_LOG(streamRepeat != nullptr, CAMERA_ALLOC_ERROR,
         "HStreamRepeat::ForkSketchStreamRepeat HStreamRepeat allocation failed");
     POWERMGR_SYSEVENT_CAMERA_CONFIG(SKETCH, width, height);
+    MEDIA_DEBUG_LOG(
+        "HStreamRepeat::ForkSketchStreamRepeat para is:%{public}dx%{public}d,%{public}f", width, height, sketchRatio);
     sketchStream = streamRepeat;
     sketchStreamRepeat_ = streamRepeat;
     sketchStreamRepeat_->sketchRatio_ = sketchRatio;

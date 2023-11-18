@@ -55,7 +55,6 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/portrait_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/native_module_ohos_camera.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/camera_output_napi.cpp",
-    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/camera_sketch_data_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/metadata_object_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/metadata_output_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/photo_output_napi.cpp",

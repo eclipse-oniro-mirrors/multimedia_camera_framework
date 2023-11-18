@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_HSTREAM_REPEAT_CALLBACK_PROXY_H
 #define OHOS_CAMERA_HSTREAM_REPEAT_CALLBACK_PROXY_H
 
+#include <cstdint>
 #include "istream_repeat_callback.h"
 #include "iremote_proxy.h"
 
@@ -32,6 +33,8 @@ public:
     int32_t OnFrameEnded(int32_t frameCount) override;
 
     int32_t OnFrameError(int32_t errorCode) override;
+
+    int32_t OnSketchStatusChanged(SketchStatus status) override;
 
 private:
     static inline BrokerDelegator<HStreamRepeatCallbackProxy> delegator_;

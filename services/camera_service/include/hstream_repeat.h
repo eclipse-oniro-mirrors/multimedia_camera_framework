@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_H_STREAM_REPEAT_H
 #define OHOS_CAMERA_H_STREAM_REPEAT_H
 
+#include <cstdint>
 #include <iostream>
 #include <refbase.h>
 
@@ -23,6 +24,7 @@
 #include "display_type.h"
 #include "hstream_common.h"
 #include "hstream_repeat_stub.h"
+#include "istream_repeat_callback.h"
 #include "v1_0/istream_operator.h"
 
 namespace OHOS {
@@ -33,6 +35,7 @@ enum class RepeatStreamType {
     VIDEO,
     SKETCH
 };
+
 class HStreamRepeat : public HStreamRepeatStub, public HStreamCommon {
 public:
     HStreamRepeat(
@@ -50,6 +53,7 @@ public:
     int32_t OnFrameStarted();
     int32_t OnFrameEnded(int32_t frameCount);
     int32_t OnFrameError(int32_t errorType);
+    int32_t OnSketchStatusChanged(SketchStatus status);
     int32_t AddDeferredSurface(const sptr<OHOS::IBufferProducer>& producer) override;
     int32_t ForkSketchStreamRepeat(const sptr<OHOS::IBufferProducer>& producer, int32_t width, int32_t height,
         sptr<IStreamRepeat>& sketchStream, float sketchRatio) override;
@@ -62,6 +66,7 @@ public:
 private:
     void SetStreamTransform();
     void StartSketchStream(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
+    void UpdateSketchStatus(SketchStatus status);
     RepeatStreamType repeatStreamType_;
     sptr<IStreamRepeatCallback> streamRepeatCallback_;
     std::mutex callbackLock_;
@@ -69,6 +74,7 @@ private:
     sptr<HStreamRepeat> sketchStreamRepeat_;
     wptr<HStreamRepeat> parentStreamRepeat_;
     float sketchRatio_ = -1.0f;
+    SketchStatus sketchStatus_ = SketchStatus::STOPED;
 };
 } // namespace CameraStandard
 } // namespace OHOS

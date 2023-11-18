@@ -77,6 +77,7 @@ public:
     sptr<CaptureOutput> CreatePreviewOutput(Profile& profile);
     sptr<CaptureOutput> CreatePreviewOutput(int32_t width, int32_t height);
     sptr<CaptureOutput> CreatePreviewOutput();
+    sptr<Surface> CreateSketchSurface(CameraFormat cameraFormat);
     sptr<CaptureOutput> CreatePhotoOutput(int32_t width, int32_t height);
     sptr<CaptureOutput> CreatePhotoOutput();
     sptr<CaptureOutput> CreateVideoOutput(int32_t width, int32_t height);

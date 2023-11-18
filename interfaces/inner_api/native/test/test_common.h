@@ -15,6 +15,7 @@
 #ifndef CAMERA_TEST_COMMON_H
 #define CAMERA_TEST_COMMON_H
 
+#include "camera_output_capability.h"
 #include "input/camera_manager.h"
 
 namespace OHOS {
@@ -30,7 +31,8 @@ enum class SurfaceType {
     PREVIEW,
     SECOND_PREVIEW,
     PHOTO,
-    VIDEO
+    VIDEO,
+    SKETCH
 };
 
 enum HostDeviceType {
@@ -114,7 +116,7 @@ public:
     void OnFrameStarted() const override;
     void OnFrameEnded(const int32_t frameCount) const override;
     void OnError(const int32_t errorCode) const override;
-    void OnSketchAvailable(SketchData& sketchData) const override;
+    void OnSketchStatusDataChanged(SketchStatusData statusData) const override;
 
 private:
     const char* testName_;

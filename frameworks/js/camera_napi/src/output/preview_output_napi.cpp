@@ -21,9 +21,11 @@
 #include <uv.h>
 
 #include "camera_napi_utils.h"
+#include "camera_output_capability.h"
 #include "js_native_api.h"
 #include "js_native_api_types.h"
-#include "output/camera_sketch_data_napi.h"
+#include "refbase.h"
+#include "surface_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -31,8 +33,24 @@ using namespace std;
 using OHOS::HiviewDFX::HiLog;
 using OHOS::HiviewDFX::HiLogLabel;
 namespace {
-    constexpr HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "PreviewOutputNapi"};
+constexpr HiLogLabel LABEL = { LOG_CORE, LOG_DOMAIN, "PreviewOutputNapi" };
+sptr<Surface> GetSurfaceFromSurfaceId(napi_env env, napi_value napi_surfaceId)
+{
+    MEDIA_DEBUG_LOG("GetSurfaceFromSurfaceId enter");
+    char surfaceIdBuffer[PATH_MAX];
+    size_t length = 0;
+    if (napi_get_value_string_utf8(env, napi_surfaceId, surfaceIdBuffer, PATH_MAX, &length) != napi_ok) {
+        MEDIA_ERR_LOG("GetSurfaceFromSurfaceId get surface id fail!");
+        return nullptr;
+    }
+    MEDIA_INFO_LOG("GetSurfaceFromSurfaceId surfaceId buffer:%{public}s", surfaceIdBuffer);
+    std::string surfaceId = std::string(surfaceIdBuffer);
+    uint64_t iSurfaceId;
+    std::istringstream iss(surfaceId);
+    iss >> iSurfaceId;
+    return SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
 }
+} // namespace
 thread_local napi_ref PreviewOutputNapi::sConstructor_ = nullptr;
 thread_local sptr<PreviewOutput> PreviewOutputNapi::sPreviewOutput_ = nullptr;
 thread_local uint32_t PreviewOutputNapi::previewOutputTaskId = CAMERA_PREVIEW_OUTPUT_TASKID;
@@ -93,9 +111,9 @@ void PreviewOutputCallback::OnError(const int32_t errorCode) const
     UpdateJSCallbackAsync(PreviewOutputEventType::PREVIEW_FRAME_ERROR, errorCode);
 }
 
-void PreviewOutputCallback::OnSketchAvailableAsync(SketchData& sketchData) const
+void PreviewOutputCallback::OnSketchStatusDataChangedAsync(SketchStatusData statusData) const
 {
-    MEDIA_DEBUG_LOG("OnSketchAvailableAsync is called");
+    MEDIA_DEBUG_LOG("OnSketchStatusChangedAsync is called");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
     if (!loop) {
@@ -107,17 +125,17 @@ void PreviewOutputCallback::OnSketchAvailableAsync(SketchData& sketchData) const
         MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
-    std::unique_ptr<SketchDataCallbackInfo> callbackInfo =
-        std::make_unique<SketchDataCallbackInfo>(sketchData, this, env_);
+    std::unique_ptr<SketchStatusCallbackInfo> callbackInfo =
+        std::make_unique<SketchStatusCallbackInfo>(statusData, this, env_);
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(
         loop, work, [](uv_work_t* work) {},
         [](uv_work_t* work, int status) {
-            SketchDataCallbackInfo* callbackInfo = reinterpret_cast<SketchDataCallbackInfo*>(work->data);
+            SketchStatusCallbackInfo* callbackInfo = reinterpret_cast<SketchStatusCallbackInfo*>(work->data);
             napi_handle_scope scope = nullptr;
             napi_open_handle_scope(callbackInfo->env_, &scope);
             if (callbackInfo) {
-                callbackInfo->listener_->OnSketchAvailableCall(callbackInfo->sketchData_);
+                callbackInfo->listener_->OnSketchStatusDataChangedCall(callbackInfo->sketchStatusData_);
                 delete callbackInfo;
             }
             napi_close_handle_scope(callbackInfo->env_, scope);
@@ -132,62 +150,50 @@ void PreviewOutputCallback::OnSketchAvailableAsync(SketchData& sketchData) const
     }
 }
 
-void PreviewOutputCallback::AfterSketchAvailableCall(napi_env env, napi_value promiseValue, napi_value napiObj) const
-{
-    CameraSketchDataNapi* ptr;
-    napi_unwrap(env, napiObj, reinterpret_cast<void**>(&ptr));
-    bool isPromise = false;
-    napi_is_promise(env, promiseValue, &isPromise);
-    if (isPromise) {
-        MEDIA_DEBUG_LOG("PreviewOutputCallback::OnSketchAvailableCall retValue is promise");
-        auto promiseCallback = [](napi_env env, napi_callback_info info) {
-            MEDIA_DEBUG_LOG("AfterSketchAvailableCall promise callback Enter");
-            size_t argc = 1;
-            napi_value argv[ARGS_ONE] = { nullptr };
-            void* data = nullptr;
-            napi_get_cb_info(env, info, &argc, argv, nullptr, &data);
-            CameraSketchDataNapi* sketchDataNapiPtr = reinterpret_cast<CameraSketchDataNapi*>(data);
-            sketchDataNapiPtr->Release();
-            napi_value retNapiValue;
-            napi_get_undefined(env, &retNapiValue);
-            return retNapiValue;
-        };
-        CameraNapiUtils::CallPromiseFun(env, promiseValue, ptr, promiseCallback, promiseCallback);
-    } else {
-        ptr->Release();
-    }
-}
-
-void PreviewOutputCallback::OnSketchAvailableCall(SketchData& sketchData) const
+void PreviewOutputCallback::OnSketchStatusDataChangedCall(SketchStatusData sketchStatusData) const
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_DEBUG_LOG("OnSketchAvailableCall is called");
+    MEDIA_DEBUG_LOG("OnSketchStatusChangedCall is called");
     napi_value args[ARGS_TWO];
     napi_value callback = nullptr;
     napi_value retVal;
     napi_get_undefined(env_, &args[PARAM0]);
-    for (auto it = sketchAvailableCbList_.begin(); it != sketchAvailableCbList_.end();) {
+    for (auto it = sketchStatusChangedCbList_.begin(); it != sketchStatusChangedCbList_.end();) {
         napi_env env = (*it)->env_;
-        args[PARAM1] = CameraSketchDataNapi::CreateCameraSketchData(env_, sketchData);
+        napi_value napiSketchStatus;
+        napi_value napiSketchStatusKey;
+        napi_value napiSketchRatio;
+        napi_value napiSketchRatioKey;
+        napi_value callbackObj;
+        napi_create_object(env, &callbackObj);
+
+        napi_create_string_utf8(env, "status", NAPI_AUTO_LENGTH, &napiSketchStatusKey);
+        napi_create_int32(env, static_cast<int32_t>(sketchStatusData.status), &napiSketchStatus);
+        napi_set_property(env, callbackObj, napiSketchStatusKey, napiSketchStatus);
+
+        napi_create_string_utf8(env, "sketchRatio", NAPI_AUTO_LENGTH, &napiSketchRatioKey);
+        napi_create_double(env, sketchStatusData.sketchRatio, &napiSketchRatio);
+        napi_set_property(env, callbackObj, napiSketchRatioKey, napiSketchRatio);
+
+        args[PARAM1] = callbackObj;
         napi_get_reference_value(env, (*it)->cb_, &callback);
         napi_call_function(env, nullptr, callback, ARGS_TWO, args, &retVal);
-        AfterSketchAvailableCall(env, retVal, args[PARAM1]);
         if ((*it)->isOnce_) {
             napi_status status = napi_delete_reference(env, (*it)->cb_);
             CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
             (*it)->cb_ = nullptr;
-            it = sketchAvailableCbList_.erase(it);
+            it = sketchStatusChangedCbList_.erase(it);
         } else {
             it++;
         }
     }
 }
 
-void PreviewOutputCallback::OnSketchAvailable(SketchData& sketchData) const
+void PreviewOutputCallback::OnSketchStatusDataChanged(SketchStatusData statusData) const
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_DEBUG_LOG("OnSketchAvailable is called");
-    OnSketchAvailableAsync(sketchData);
+    MEDIA_DEBUG_LOG("OnSketchStatusDataChanged is called");
+    OnSketchStatusDataChangedAsync(statusData);
 }
 
 void PreviewOutputCallback::UpdateJSCallback(PreviewOutputEventType eventType, const int32_t value) const
@@ -209,8 +215,8 @@ void PreviewOutputCallback::UpdateJSCallback(PreviewOutputEventType eventType, c
         case PreviewOutputEventType::PREVIEW_FRAME_ERROR:
             callbackList = &errorCbList_;
             break;
-        case PreviewOutputEventType::SKETCH_AVAILABLE:
-            callbackList = &sketchAvailableCbList_;
+        case PreviewOutputEventType::SKETCH_STATUS_CHANGED:
+            callbackList = &sketchStatusChangedCbList_;
             break;
         default:
             MEDIA_ERR_LOG("Incorrect preview callback event type received from JS");
@@ -256,8 +262,8 @@ void PreviewOutputCallback::SaveCallbackReference(const std::string& eventType, 
         case PreviewOutputEventType::PREVIEW_FRAME_ERROR:
             callbackList = &errorCbList_;
             break;
-        case PreviewOutputEventType::SKETCH_AVAILABLE:
-            callbackList = &sketchAvailableCbList_;
+        case PreviewOutputEventType::SKETCH_STATUS_CHANGED:
+            callbackList = &sketchStatusChangedCbList_;
             break;
         default:
             MEDIA_ERR_LOG("Incorrect preview callback event type received from JS");
@@ -298,8 +304,8 @@ void PreviewOutputCallback::RemoveCallbackRef(napi_env env, napi_value callback,
         case PreviewOutputEventType::PREVIEW_FRAME_ERROR:
             callbackList = &errorCbList_;
             break;
-        case PreviewOutputEventType::SKETCH_AVAILABLE:
-            callbackList = &sketchAvailableCbList_;
+        case PreviewOutputEventType::SKETCH_STATUS_CHANGED:
+            callbackList = &sketchStatusChangedCbList_;
             break;
         default:
             MEDIA_ERR_LOG("Incorrect preview callback event type received from JS");
@@ -333,8 +339,8 @@ void PreviewOutputCallback::RemoveAllCallbacks(const std::string& eventType)
         case PreviewOutputEventType::PREVIEW_FRAME_ERROR:
             callbackList = &errorCbList_;
             break;
-        case PreviewOutputEventType::SKETCH_AVAILABLE:
-            callbackList = &sketchAvailableCbList_;
+        case PreviewOutputEventType::SKETCH_STATUS_CHANGED:
+            callbackList = &sketchStatusChangedCbList_;
             break;
         default:
             MEDIA_ERR_LOG("Incorrect preview callback event type received from JS");
@@ -864,8 +870,8 @@ napi_value PreviewOutputNapi::RegisterCallback(
     NAPI_ASSERT(env, previewOutputNapi->previewCallback_ != nullptr, "previewCallback is null.");
     if (!eventType.empty()) {
         auto eventTypeEnum = PreviewOutputEventTypeHelper.ToEnum(eventType);
-        if (eventTypeEnum == PreviewOutputEventType::SKETCH_AVAILABLE && !CameraNapiUtils::CheckSystemApp(env)) {
-            MEDIA_ERR_LOG("SystemApi On sketchAvailable is called!");
+        if (eventTypeEnum == PreviewOutputEventType::SKETCH_STATUS_CHANGED && !CameraNapiUtils::CheckSystemApp(env)) {
+            MEDIA_ERR_LOG("SystemApi On sketchStatusChanged is called!");
             return undefinedResult;
         }
         previewOutputNapi->previewCallback_->SaveCallbackReference(eventType, callback, isOnce);
@@ -933,8 +939,8 @@ napi_value PreviewOutputNapi::UnregisterCallback(
     NAPI_ASSERT(env, previewOutputNapi->previewCallback_ != nullptr, "previewCallback is null.");
     if (!eventType.empty()) {
         auto eventTypeEnum = PreviewOutputEventTypeHelper.ToEnum(eventType);
-        if (eventTypeEnum == PreviewOutputEventType::SKETCH_AVAILABLE && !CameraNapiUtils::CheckSystemApp(env)) {
-            MEDIA_ERR_LOG("SystemApi Off sketchAvailable is called!");
+        if (eventTypeEnum == PreviewOutputEventType::SKETCH_STATUS_CHANGED && !CameraNapiUtils::CheckSystemApp(env)) {
+            MEDIA_ERR_LOG("SystemApi Off sketchStatusChanged is called!");
             return undefinedResult;
         }
         previewOutputNapi->previewCallback_->RemoveCallbackRef(env, callback, eventType);
@@ -1029,33 +1035,49 @@ napi_value PreviewOutputNapi::GetSketchRatio(napi_env env, napi_callback_info in
 
 napi_value PreviewOutputNapi::EnableSketch(napi_env env, napi_callback_info info)
 {
+    MEDIA_DEBUG_LOG("PreviewOutputNapi::EnableSketch enter");
     if (!CameraNapiUtils::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi EnableSketch is called!");
         return nullptr;
     }
     napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    napi_value result;
+    size_t argc = ARGS_TWO;
+    napi_value argv[ARGS_TWO] = { 0 };
     napi_value thisVar = nullptr;
+    napi_get_undefined(env, &result);
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
+    NAPI_ASSERT(env, argc == ARGS_TWO, "requires two parameter");
     napi_valuetype valueType = napi_undefined;
-    napi_typeof(env, argv[0], &valueType);
+    napi_typeof(env, argv[PARAM0], &valueType);
     if (valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
         return result;
     }
-    napi_get_undefined(env, &result);
+    bool isEnableSketch;
+    if (napi_get_value_bool(env, argv[PARAM0], &isEnableSketch) != napi_ok) {
+        MEDIA_ERR_LOG("EnableSketch get isEnableSketch fail");
+        return result;
+    }
     PreviewOutputNapi* previewOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&previewOutputNapi));
-    if (status == napi_ok && previewOutputNapi != nullptr && previewOutputNapi->previewOutput_ != nullptr) {
-        bool isEnableSketch;
-        napi_get_value_bool(env, argv[PARAM0], &isEnableSketch);
-        int32_t retCode = previewOutputNapi->previewOutput_->EnableSketch(isEnableSketch);
-        if (retCode != 0 && !CameraNapiUtils::CheckError(env, retCode)) {
+    if (status != napi_ok || previewOutputNapi == nullptr || previewOutputNapi->previewOutput_ == nullptr) {
+        MEDIA_ERR_LOG("EnableSketch get previewOutputNapi status error");
+        return result;
+    }
+    sptr<Surface> surface = nullptr;
+    if (isEnableSketch) {
+        napi_typeof(env, argv[PARAM1], &valueType);
+        if (valueType != napi_string && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
+            MEDIA_ERR_LOG("PreviewOutputNapi::EnableSketch check PARAM1 value type fail,type is:%{public}d", valueType);
             return result;
         }
+        surface = GetSurfaceFromSurfaceId(env, argv[PARAM1]);
     }
+    int32_t retCode = previewOutputNapi->previewOutput_->EnableSketch(isEnableSketch, surface);
+    if (retCode != 0 && !CameraNapiUtils::CheckError(env, retCode)) {
+        MEDIA_ERR_LOG("EnableSketch fail! %{public}d", retCode);
+    }
+    MEDIA_DEBUG_LOG("PreviewOutputNapi::EnableSketch success");
     return result;
 }
 } // namespace CameraStandard
