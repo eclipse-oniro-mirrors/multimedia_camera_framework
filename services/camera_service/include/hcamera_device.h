@@ -27,6 +27,8 @@
 #include "hcamera_device_stub.h"
 #include "hcamera_host_manager.h"
 #include "v1_0/icamera_device.h"
+#include "v1_1/icamera_device.h"
+#include "v1_2/icamera_device.h"
 #include "v1_0/icamera_host.h"
 
 namespace OHOS {

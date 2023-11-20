@@ -779,7 +779,10 @@ public:
     std::vector<int32_t> GetSubFeatureMods();
     bool IsSetEnableMacro();
     sptr<CaptureOutput> GetMetaOutput();
-
+    void ProcessFaceRecUpdates(const uint64_t timestamp,
+                                    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
+    virtual void ProcessCallbacks(const uint64_t timestamp,
+                                    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
 protected:
     std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
     Profile photoProfile_;

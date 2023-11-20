@@ -28,6 +28,8 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
+static constexpr int32_t HDI_VERSION_1 = 1;
+static constexpr int32_t HDI_VERSION_2 = 2;
 static constexpr int32_t CAMERA_COLOR_SPACE = 8;
 static const std::string OHOS_PERMISSION_CAMERA = "ohos.permission.CAMERA";
 static const std::string OHOS_PERMISSION_MANAGE_CAMERA_CONFIG = "ohos.permission.MANAGE_CAMERA_CONFIG";

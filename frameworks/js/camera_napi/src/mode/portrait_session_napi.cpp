@@ -136,44 +136,31 @@ napi_value PortraitSessionNapi::Init(napi_env env, napi_value exports)
     return nullptr;
 }
 
-napi_value PortraitSessionNapi::CreateCameraSession(napi_env env, napi_callback_info info)
+napi_value PortraitSessionNapi::CreateCameraSession(napi_env env)
 {
     MEDIA_DEBUG_LOG("CreateCameraSession is called");
     CAMERA_SYNC_TRACE;
     napi_status status;
     napi_value result = nullptr;
     napi_value constructor;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
-        int32_t modeName;
-        napi_get_value_int32(env, argv[PARAM0], &modeName);
-        MEDIA_INFO_LOG("PortraitSessionNapi::CreateCameraSession mode = %{public}d", modeName);
-        if (modeName == 1) { // trans js portrait to fwk portrait
-            modeName = CameraMode::PORTRAIT;
-        } else {
-            modeName = CameraMode::NORMAL;
-        }
-        sCameraSession_ = ModeManager::GetInstance()->CreateCaptureSession(static_cast<CameraMode>(modeName));
+        sCameraSession_ = ModeManager::GetInstance()->CreateCaptureSession(CameraMode::PORTRAIT);
         if (sCameraSession_ == nullptr) {
-            MEDIA_ERR_LOG("Failed to create Camera session instance");
+            MEDIA_ERR_LOG("Failed to create Portrait session instance");
             napi_get_undefined(env, &result);
             return result;
         }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sCameraSession_ = nullptr;
         if (status == napi_ok && result != nullptr) {
-            MEDIA_DEBUG_LOG("success to create Camera session napi instance");
+            MEDIA_DEBUG_LOG("success to create Portrait session napi instance");
             return result;
         } else {
-            MEDIA_ERR_LOG("Failed to create Camera session napi instance");
+            MEDIA_ERR_LOG("Failed to create Portrait session napi instance");
         }
     }
-    MEDIA_ERR_LOG("Failed to create Camera session napi instance last");
+    MEDIA_ERR_LOG("Failed to create Portrait session napi instance last");
     napi_get_undefined(env, &result);
     return result;
 }

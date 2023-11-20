@@ -22,6 +22,7 @@
 #include "input/camera_napi.h"
 #include "input/camera_pre_launch_config_napi.h"
 #include "mode/mode_manager_napi.h"
+#include "mode/night_session_napi.h"
 #include "mode/portrait_session_napi.h"
 #include "output/metadata_object_napi.h"
 #include "output/photo_output_napi.h"

@@ -24,8 +24,9 @@
 #include <vector>
 #include "camera_metadata_info.h"
 #include "v1_0/icamera_device.h"
-#include "v1_0/icamera_host.h"
 #include "v1_1/icamera_device.h"
+#include "v1_2/icamera_device.h"
+#include "v1_0/icamera_host.h"
 #include "v1_1/icamera_host.h"
 #include "v1_2/icamera_host.h"
 #include "icamera_device_service.h"

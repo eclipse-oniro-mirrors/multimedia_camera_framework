@@ -27,7 +27,6 @@
 
 using namespace OHOS::AppExecFwk;
 using namespace OHOS::AAFwk;
-
 namespace OHOS {
 namespace CameraStandard {
 static std::map<int32_t, sptr<HCaptureSession>> session_;
@@ -233,6 +232,7 @@ int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> st
 
     if (streamType == StreamType::CAPTURE) {
         rc = AddOutputStream(static_cast<HStreamCapture*>(stream.GetRefPtr()));
+        static_cast<HStreamCapture*>(stream.GetRefPtr())->SetMode(opMode_);
     } else if (streamType == StreamType::REPEAT) {
         rc = AddOutputStream(static_cast<HStreamRepeat*>(stream.GetRefPtr()));
     } else if (streamType == StreamType::METADATA) {
@@ -1087,6 +1087,30 @@ int32_t StreamOperatorCallback::OnCaptureStarted(int32_t captureId, const std::v
             static_cast<HStreamRepeat*>(curStream.GetRefPtr())->OnFrameStarted();
         } else if (curStream->GetStreamType() == StreamType::CAPTURE) {
             static_cast<HStreamCapture*>(curStream.GetRefPtr())->OnCaptureStarted(captureId);
+        }
+    }
+    return CAMERA_OK;
+}
+
+int32_t StreamOperatorCallback::OnCaptureStartedV1_2(int32_t captureId,
+    const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo>& infos)
+{
+    MEDIA_DEBUG_LOG("StreamOperatorCallback::OnCaptureStartedV1_2");
+    sptr<HStreamCommon> curStream;
+    OHOS::HDI::Camera::V1_2::CaptureStartedInfo captureInfo;
+    std::lock_guard<std::mutex> lock(cbMutex_);
+    for (auto item = infos.begin(); item != infos.end(); ++item) {
+        captureInfo = *item;
+        curStream = GetStreamByStreamID(captureInfo.streamId_);
+        if (curStream == nullptr) {
+            MEDIA_ERR_LOG("StreamOperatorCallback::OnCaptureStartedV1_2 StreamId: %{public}d not found."
+                          " exposureTime: %{public}u",
+                captureInfo.streamId_, captureInfo.exposureTime_);
+            return CAMERA_INVALID_ARG;
+        } else if (curStream->GetStreamType() == StreamType::CAPTURE) {
+            MEDIA_DEBUG_LOG("StreamOperatorCallback::OnCaptureStartedV1_2 StreamId: %{public}d."
+                            " exposureTime: %{public}u", captureInfo.streamId_, captureInfo.exposureTime_);
+            static_cast<HStreamCapture*>(curStream.GetRefPtr())->OnCaptureStarted(captureId, captureInfo.exposureTime_);
         }
     }
     return CAMERA_OK;

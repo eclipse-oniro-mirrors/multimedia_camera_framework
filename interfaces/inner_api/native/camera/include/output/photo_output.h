@@ -38,6 +38,13 @@ public:
     virtual void OnCaptureStarted(const int32_t captureID) const = 0;
 
     /**
+     * @brief Called when camera capture started.
+     *
+     * @param captureID Obtain the constant capture id for the photo capture callback.
+     */
+    virtual void OnCaptureStarted(const int32_t captureID, uint32_t exposureTime) const = 0;
+
+    /**
      * @brief Called when camera capture ended.
      *
      * @param captureID Obtain the constant capture id for the photo capture callback.
@@ -241,6 +248,11 @@ public:
     int32_t CancelCapture();
 
     /**
+     * @brief cancelling the photo capture. Applicable only for burst/ continuous capture.
+     */
+    int32_t ConfirmCapture();
+
+    /**
      * @brief Releases the instance of PhotoOutput.
      */
     int32_t Release() override;
@@ -314,6 +326,12 @@ public:
      */
     int32_t OnCaptureStarted(const int32_t captureId) override;
 
+    /**
+     * @brief Called when camera capture started.
+     *
+     * @param captureID Obtain the constant capture id for the photo capture callback.
+     */
+    int32_t OnCaptureStarted(const int32_t captureId, uint32_t exposureTime) override;
     /**
      * @brief Called when camera capture ended.
      *

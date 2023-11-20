@@ -101,6 +101,7 @@ public:
     explicit TestPhotoOutputCallback(const char* testName);
     virtual ~TestPhotoOutputCallback() = default;
     void OnCaptureStarted(const int32_t captureID) const override;
+    void OnCaptureStarted(const int32_t captureID, uint32_t exposureTime) const override;
     void OnCaptureEnded(const int32_t captureID, const int32_t frameCount) const override;
     void OnFrameShutter(const int32_t captureId, const uint64_t timestamp) const override;
     void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override;

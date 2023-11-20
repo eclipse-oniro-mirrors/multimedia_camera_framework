@@ -260,15 +260,17 @@ int32_t HCameraHostManager::CameraHostInfo::OpenCamera(std::string& cameraId,
     }
     CamRetCode rc;
     // try to get higher version
-    sptr<OHOS::HDI::Camera::V1_1::ICameraDevice> tempDevice;
-    if (cameraHostProxyV1_2_ != nullptr && GetCameraHostVersion() > GetVersionId(1, 1)) {
+    sptr<OHOS::HDI::Camera::V1_1::ICameraDevice> hdiDevice_v1_1;
+    sptr<OHOS::HDI::Camera::V1_2::ICameraDevice> hdiDevice_v1_2;
+    if (cameraHostProxyV1_2_ != nullptr && GetCameraHostVersion() >= GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::OpenCamera ICameraDevice V1_2");
-        rc = (CamRetCode)(cameraHostProxyV1_2_->OpenCamera_V1_1(cameraId, callback, tempDevice));
-        pDevice = static_cast<OHOS::HDI::Camera::V1_0::ICameraDevice *>(tempDevice.GetRefPtr());
-    } else if (cameraHostProxyV1_1_ != nullptr && GetCameraHostVersion() == GetVersionId(1, 1)) {
+        rc = (CamRetCode)(cameraHostProxyV1_2_->OpenCameraV1_2(cameraId, callback, hdiDevice_v1_2));
+        pDevice = static_cast<OHOS::HDI::Camera::V1_0::ICameraDevice *>(hdiDevice_v1_2.GetRefPtr());
+    } else if (cameraHostProxyV1_1_ != nullptr
+        && GetCameraHostVersion() == GetVersionId(HDI_VERSION_1, HDI_VERSION_1)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::OpenCamera ICameraDevice V1_1");
-        rc = (CamRetCode)(cameraHostProxyV1_1_->OpenCamera_V1_1(cameraId, callback, tempDevice));
-        pDevice = static_cast<OHOS::HDI::Camera::V1_0::ICameraDevice *>(tempDevice.GetRefPtr());
+        rc = (CamRetCode)(cameraHostProxyV1_1_->OpenCamera_V1_1(cameraId, callback, hdiDevice_v1_1));
+        pDevice = static_cast<OHOS::HDI::Camera::V1_0::ICameraDevice *>(hdiDevice_v1_1.GetRefPtr());
     } else {
         MEDIA_DEBUG_LOG("CameraHostInfo::OpenCamera ICameraDevice V1_0");
         rc = (CamRetCode)(cameraHostProxy_->OpenCamera(cameraId, callback, pDevice));

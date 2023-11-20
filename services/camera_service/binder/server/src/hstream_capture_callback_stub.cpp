@@ -29,6 +29,9 @@ int HStreamCaptureCallbackStub::OnRemoteRequest(
         case static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED):
             errCode = HandleOnCaptureStarted(data);
             break;
+        case static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED_V1_2):
+            errCode = HandleOnCaptureStarted_V1_2(data);
+            break;
         case static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_ENDED):
             errCode = HandleOnCaptureEnded(data);
             break;
@@ -52,6 +55,14 @@ int HStreamCaptureCallbackStub::HandleOnCaptureStarted(MessageParcel& data)
     int32_t captureId = data.ReadInt32();
 
     return OnCaptureStarted(captureId);
+}
+
+int HStreamCaptureCallbackStub::HandleOnCaptureStarted_V1_2(MessageParcel& data)
+{
+    int32_t captureId = data.ReadInt32();
+    uint32_t exposureTime = data.ReadUint32();
+
+    return OnCaptureStarted(captureId, exposureTime);
 }
 
 int HStreamCaptureCallbackStub::HandleOnCaptureEnded(MessageParcel& data)

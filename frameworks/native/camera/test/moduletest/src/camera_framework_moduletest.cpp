@@ -200,10 +200,17 @@ public:
         return;
     }
 
+    void OnCaptureStarted(const int32_t captureId, uint32_t exposureTime) const override
+    {
+        MEDIA_DEBUG_LOG("AppCallback::OnCaptureStarted captureId: %{public}d", captureId);
+        g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_START)] = 1;
+        return;
+    }
+
     void OnCaptureEnded(const int32_t captureId, const int32_t frameCount) const override
     {
-        MEDIA_DEBUG_LOG(
-            "AppCallback::OnCaptureEnded captureId: %{public}d, frameCount: %{public}d", captureId, frameCount);
+        MEDIA_DEBUG_LOG("AppCallback::OnCaptureEnded captureId: %{public}d, frameCount: %{public}d",
+                        captureId, frameCount);
         g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_END)] = 1;
         return;
     }
@@ -458,22 +465,22 @@ void CameraFrameworkModuleTest::ConfigScanSession(sptr<CaptureOutput> &previewOu
 
     int32_t intResult = scanSession_->BeginConfig();
     EXPECT_EQ(intResult, 0);
- 
+
     intResult = scanSession_->AddInput(input_);
     EXPECT_EQ(intResult, 0);
- 
+
     previewOutput_1 = CreatePreviewOutput();
     ASSERT_NE(previewOutput_1, nullptr);
 
     intResult = scanSession_->AddOutput(previewOutput_1);
     EXPECT_EQ(intResult, 0);
- 
+
     previewOutput_2 = CreatePreviewOutput();
     ASSERT_NE(previewOutput_2, nullptr);
 
     intResult = scanSession_->AddOutput(previewOutput_2);
     EXPECT_EQ(intResult, 0);
- 
+
     intResult = scanSession_->CommitConfig();
     EXPECT_EQ(intResult, 0);
 }
@@ -2695,12 +2702,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_049, TestSi
     sptr<CaptureOutput> previewOutput_1;
     sptr<CaptureOutput> previewOutput_2;
     ConfigScanSession(previewOutput_1, previewOutput_2);
- 
+
     int32_t intResult = scanSession_->Start();
     EXPECT_EQ(intResult, 0);
- 
+
     sleep(WAIT_TIME_AFTER_START);
- 
+
     intResult = scanSession_->Stop();
     EXPECT_EQ(intResult, 0);
 
@@ -2708,7 +2715,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_049, TestSi
     ((sptr<PreviewOutput> &) previewOutput_2)->Release();
     MEDIA_INFO_LOG("teset049 end");
 }
- 
+
 /*
  * Feature: Framework
  * Function: Test Scan Session add output
@@ -2730,13 +2737,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_050, TestSi
     }
     scanSession_ = modeManager_ -> CreateCaptureSession(CameraMode::SCAN);
     ASSERT_NE(scanSession_, nullptr);
- 
+
     int32_t intResult = scanSession_->BeginConfig();
     EXPECT_EQ(intResult, 0);
- 
+
     intResult = scanSession_->AddInput(input_);
     EXPECT_EQ(intResult, 0);
- 
+
     sptr<CaptureOutput> phtotOutput = CreatePhotoOutput();
     ASSERT_NE(phtotOutput, nullptr);
 
@@ -2745,18 +2752,18 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_050, TestSi
 
     intResult = scanSession_->AddOutput(videoOutput);
     EXPECT_NE(intResult, 0);
- 
+
     intResult = scanSession_->AddOutput(phtotOutput);
     EXPECT_NE(intResult, 0);
- 
+
     intResult = scanSession_->CommitConfig();
     EXPECT_NE(intResult, 0);
- 
+
     ((sptr<PreviewOutput> &) phtotOutput)->Release();
     ((sptr<VideoOutput> &) videoOutput)->Release();
     MEDIA_INFO_LOG("teset050 end");
 }
- 
+
 /*
  * Feature: Framework
  * Function: Test Scan Session outputcapability and supported mode
