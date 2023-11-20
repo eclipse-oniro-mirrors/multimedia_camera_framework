@@ -610,6 +610,7 @@ void HCameraHostManager::AddCameraDevice(const std::string& cameraId, sptr<ICame
 
 void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId)
 {
+    MEDIA_DEBUG_LOG("HCameraHostManager::RemoveCameraDevice start");
     std::lock_guard<std::mutex> lock(deviceMutex_);
     auto it = cameraDevices_.find(cameraId);
     if (it != cameraDevices_.end()) {
@@ -619,6 +620,7 @@ void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId)
     if (statusCallback_) {
         statusCallback_->OnCameraStatus(cameraId, CAMERA_STATUS_AVAILABLE);
     }
+    MEDIA_DEBUG_LOG("HCameraHostManager::RemoveCameraDevice end");
 }
 
 void HCameraHostManager::CloseCameraDevice(const std::string& cameraId)
@@ -660,35 +662,6 @@ int32_t HCameraHostManager::GetCameraAbility(std::string &cameraId,
         return CAMERA_INVALID_ARG;
     }
     return cameraHostInfo->GetCameraAbility(cameraId, ability);
-}
-
-std::vector<sptr<ICameraDeviceService>> HCameraHostManager::CameraConflictDetection(const std::string& cameraId)
-{
-    MEDIA_INFO_LOG("HCameraHostManager::CameraConflictDetection CameraConflictDetection enter");
-    std::vector<sptr<ICameraDeviceService>> devicesNeedClose;
-    {
-        std::lock_guard<std::mutex> lock(deviceMutex_);
-        MEDIA_INFO_LOG("HCameraHostManager::CameraConflictDetection "
-                       "cameraDevices_ size : %{public}zu", cameraDevices_.size());
-        for (auto it = cameraDevices_.begin(); it != cameraDevices_.end(); it++) {
-            if (it->second != nullptr) {
-                if (it->first == cameraId) {
-                    MEDIA_INFO_LOG("HCameraHostManager::CameraConflictDetection current camera [%{public}s] has Opened,"
-                                   "need close", it->first.c_str());
-                } else {
-                    MEDIA_INFO_LOG("HCameraHostManager::CameraConflictDetection other camera [%{public}s] has Opened,"
-                                   "need close", it->first.c_str());
-                }
-                devicesNeedClose.push_back(it->second);
-            } else {
-                MEDIA_ERR_LOG("HCameraHostManager::CameraConflictDetection cameraDevice [%{public}s] is null",
-                              it->first.c_str());
-            }
-        }
-    }
-    MEDIA_INFO_LOG("HCameraHostManager::CameraConflictDetection "
-                   "devicesNeedClose size : %{public}zu", devicesNeedClose.size());
-    return devicesNeedClose;
 }
 
 int32_t HCameraHostManager::GetVersionByCamera(const std::string& cameraId)

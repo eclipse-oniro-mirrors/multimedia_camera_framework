@@ -82,7 +82,6 @@ public:
     // IDeviceOperatorsCallback
     int32_t DeviceOpen(const std::string& cameraId) override;
     int32_t DeviceClose(const std::string& cameraId, pid_t pidFromSession = 0) override;
-    std::vector<sptr<HCameraDevice>> CameraConflictDetection(const std::string& cameraId, bool& isPermisson) override;
 
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager) : cameraHostManager_(cameraHostManager),

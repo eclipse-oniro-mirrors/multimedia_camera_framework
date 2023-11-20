@@ -68,7 +68,6 @@ public:
 
     // HDI::ServiceManager::V1_0::IServStatListener
     void OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status) override;
-    std::vector<sptr<ICameraDeviceService>> CameraConflictDetection(const std::string& cameraId);
 
 private:
     struct CameraDeviceInfo;

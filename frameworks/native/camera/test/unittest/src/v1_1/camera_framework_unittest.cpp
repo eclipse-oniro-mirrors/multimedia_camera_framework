@@ -4189,8 +4189,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_031, TestSize.Level
 
     cameraHostManager->AddCameraDevice(cameraId, nullptr);
     EXPECT_EQ(cameraHostManager->HCameraHostManager::SetFlashlight(cameraId, true), 2);
-    std::vector<sptr<ICameraDeviceService>> devicesNeedClose = cameraHostManager->CameraConflictDetection(cameraId);
-    EXPECT_EQ(devicesNeedClose.empty(), false);
 
     cameraHostManager->CloseCameraDevice(cameraId);
 

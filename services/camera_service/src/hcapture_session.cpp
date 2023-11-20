@@ -854,7 +854,6 @@ int32_t HCaptureSession::Release(pid_t pid)
         streamOperatorCallback_ = nullptr;
     }
     if (cameraDevice_ != nullptr) {
-        CloseDevice(cameraDevice_);
         POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraDevice_->GetCameraId().c_str());
         cameraDevice_ = nullptr;
     }

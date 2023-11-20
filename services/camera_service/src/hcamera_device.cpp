@@ -23,9 +23,12 @@
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
 #include "display_manager.h"
+#include "hcamera_device_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
+std::mutex HCameraDevice::deviceOpenMutex_;
+std::mutex HCameraDevice::deviceCloseMutex_;
 namespace {
 int32_t MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata,
     std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata)
@@ -103,7 +106,7 @@ HCameraDevice::HCameraDevice(sptr<HCameraHostManager> &cameraHostManager,
     cameraID_ = cameraID;
     streamOperator_ = nullptr;
     isReleaseCameraDevice_ = false;
-    isOpenedCameraDevice_ = false;
+    isOpenedCameraDevice_.store(false);
     callerToken_ = callingTokenId;
     deviceOperatorsCallback_ = nullptr;
 }
@@ -145,7 +148,7 @@ bool HCameraDevice::IsReleaseCameraDevice()
 
 bool HCameraDevice::IsOpenedCameraDevice()
 {
-    return isOpenedCameraDevice_;
+    return isOpenedCameraDevice_.load();
 }
 
 std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraDevice::CloneCachedSettings()
@@ -183,7 +186,7 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraDevice::GetSettings()
 int32_t HCameraDevice::Open()
 {
     CAMERA_SYNC_TRACE;
-    if (isOpenedCameraDevice_) {
+    if (isOpenedCameraDevice_.load()) {
         MEDIA_ERR_LOG("HCameraDevice::Open failed, camera is busy");
     }
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
@@ -207,7 +210,7 @@ int32_t HCameraDevice::Open()
     }
 
     MEDIA_INFO_LOG("HCameraDevice::Open Camera:[%{public}s", cameraID_.c_str());
-    return deviceOperatorsCallback_->DeviceOpen(cameraID_);
+    return OpenDevice();
 }
 
 int32_t HCameraDevice::Close()
@@ -218,20 +221,39 @@ int32_t HCameraDevice::Close()
         MEDIA_ERR_LOG("HCameraDevice::Close there is no device operator callback");
         return CAMERA_OPERATION_NOT_ALLOWED;
     }
-    return deviceOperatorsCallback_->DeviceClose(cameraID_);
+    return CloseDevice();
 }
 
 int32_t HCameraDevice::OpenDevice()
 {
+    MEDIA_DEBUG_LOG("HCameraDevice::OpenDevice start");
     CAMERA_SYNC_TRACE;
     int32_t errorCode;
     MEDIA_INFO_LOG("HCameraDevice::OpenDevice Opening camera device: %{public}s", cameraID_.c_str());
-    std::lock_guard<std::mutex> lock(opMutex_);
-    errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_);
-    if (errorCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");
+
+    {
+        std::lock_guard<std::mutex> lock(deviceOpenMutex_);
+        sptr<HCameraDevice> cameraNeedEvict;
+        bool canOpenCamera = HCameraDeviceManager::GetInstance()->GetConflictDevices(cameraNeedEvict, this);
+        if (cameraNeedEvict != nullptr) {
+            MEDIA_DEBUG_LOG("HCameraDevice::Open current device need to close other devices");
+            // 关闭camerasNeedEvict里面的相机
+            cameraNeedEvict->OnError(DEVICE_PREEMPT, 0);
+            cameraNeedEvict->CloseDevice();  // 2
+        }
+        if (canOpenCamera) {
+            errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_);
+        } else {
+            return CAMERA_UNKNOWN_ERROR;
+        }
+        if (errorCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");
+        }
+        HCameraDeviceManager::GetInstance()->AddDevice(IPCSkeleton::GetCallingPid(), this);
     }
-    isOpenedCameraDevice_ = true;
+
+    std::lock_guard<std::mutex> lockSetting(opMutex_);
+    isOpenedCameraDevice_.store(true);
     if (hdiCameraDevice_ != nullptr) {
         cameraHostManager_->AddCameraDevice(cameraID_, this);
         if (updateSettings_ != nullptr) {
@@ -252,34 +274,41 @@ int32_t HCameraDevice::OpenDevice()
     if (isFoldable) {
         RegisterFoldStatusListener();
     }
+    MEDIA_DEBUG_LOG("HCameraDevice::OpenDevice end");
     return errorCode;
 }
 
 int32_t HCameraDevice::CloseDevice()
 {
+    MEDIA_DEBUG_LOG("HCameraDevice::CloseDevice start");
     CAMERA_SYNC_TRACE;
-    bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
-    if (isFoldable) {
-        UnRegisterFoldStatusListener();
-    }
     {
-        std::lock_guard<std::mutex> lock(opMutex_);
+        std::lock_guard<std::mutex> lock(deviceCloseMutex_);
+        if (!isOpenedCameraDevice_.load()) {
+            MEDIA_DEBUG_LOG("HCameraDevice::CloseDevice device has benn closed");
+        }
+        bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
+        if (isFoldable) {
+            UnRegisterFoldStatusListener();
+        }
         if (hdiCameraDevice_ != nullptr) {
+            isOpenedCameraDevice_.store(false);
             MEDIA_INFO_LOG("Closing camera device: %{public}s start", cameraID_.c_str());
             hdiCameraDevice_->Close();
+            HCameraDeviceManager::GetInstance()->RemoveDevice();
             MEDIA_INFO_LOG("Closing camera device: %{public}s end", cameraID_.c_str());
-            isOpenedCameraDevice_ = false;
             hdiCameraDevice_ = nullptr;
         }
-        if (streamOperator_) {
-            streamOperator_ = nullptr;
-        }
+    }
+    if (streamOperator_) {
+        streamOperator_ = nullptr;
     }
     if (cameraHostManager_) {
         cameraHostManager_->RemoveCameraDevice(cameraID_);
     }
     std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
     deviceSvcCallback_ = nullptr;
+    MEDIA_DEBUG_LOG("HCameraDevice::CloseDevice end");
     return CAMERA_OK;
 }
 

@@ -17,6 +17,7 @@
 #define OHOS_CAMERA_H_CAMERA_DEVICE_H
 
 #include <iostream>
+#include <atomic>
 
 #include "accesstoken_kit.h"
 #include "privacy_kit.h"
@@ -69,10 +70,12 @@ private:
     sptr<HCameraHostManager> cameraHostManager_;
     std::string cameraID_;
     bool isReleaseCameraDevice_;
-    bool isOpenedCameraDevice_;
+    std::atomic<bool> isOpenedCameraDevice_;
     std::mutex deviceSvcCbMutex_;
     std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.
     std::mutex cachedSettingsMutex_;
+    static std::mutex deviceOpenMutex_;
+    static std::mutex deviceCloseMutex_;
     sptr<ICameraDeviceServiceCallback> deviceSvcCallback_;
     std::map<int32_t, wptr<ICameraServiceCallback>> statusSvcCallbacks_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> updateSettings_;
@@ -93,8 +96,6 @@ public:
     virtual ~IDeviceOperatorsCallback() = default;
     virtual int32_t DeviceOpen(const std::string& cameraId) = 0;
     virtual int32_t DeviceClose(const std::string& cameraId, pid_t pidFromSession = 0) = 0;
-    virtual std::vector<sptr<HCameraDevice>> CameraConflictDetection(const std::string& cameraId,
-                                                                     bool& isPermisson) = 0;
 };
 } // namespace CameraStandard
 } // namespace OHOS
