@@ -146,19 +146,6 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
         return CAMERA_ALLOC_ERROR;
     }
 
-    bool isPermisson = true;
-    auto conflictDevices = CameraConflictDetection(cameraId, isPermisson);
-    if (!isPermisson) {
-        MEDIA_ERR_LOG("HCameraDevice::CreateCameraDevice device busy!");
-        return CAMERA_DEVICE_BUSY;
-    }
-    // Destory conflict devices
-    for (auto& i : conflictDevices) {
-        if (i != nullptr) {
-            i->OnError(DEVICE_PREEMPT, 0);
-            DeviceClose(i->GetCameraId());
-        }
-    }
     std::lock_guard<std::mutex> lock(mapOperatorsLock_);
     sptr<HCameraDevice> cameraDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     CHECK_AND_RETURN_RET_LOG(cameraDevice != nullptr, CAMERA_ALLOC_ERROR,
@@ -1124,82 +1111,6 @@ int32_t HCameraService::DeviceClose(const std::string& cameraId, pid_t pidFromSe
     }
     MEDIA_INFO_LOG("HCameraService::DeviceClose Exit");
     return ret;
-}
-
-bool HCameraService::IsDeviceAlreadyOpen(pid_t& tempPid, std::string& tempCameraId, sptr<HCameraDevice>& tempDevice)
-{
-    bool isOpened = false;
-    devicesManager_.Iterate([&](std::string cameraId, sptr<HCameraDevice> cameraDevice) {
-        if (isOpened) {
-            return;
-        }
-        if (cameraDevice != nullptr) {
-            isOpened = cameraDevice->IsOpenedCameraDevice();
-            MEDIA_INFO_LOG("HCameraService::IsDeviceAlreadyOpen cameraId: %{public}s opened %{public}d",
-                cameraId.c_str(), isOpened);
-            tempCameraId = cameraId;
-            tempDevice = cameraDevice;
-        }
-    });
-
-    if (isOpened) {
-        for (auto it : camerasForPid_) {
-            std::set<std::string> cameraIds = it.second;
-            if (cameraIds.size() > 0 && cameraIds.find(tempCameraId) != cameraIds.end()) {
-                tempPid = it.first;
-                break;
-            }
-        }
-        MEDIA_INFO_LOG("HCameraService::IsDeviceAlreadyOpen pid: %{public}d cameraId: %{public}s opened %{public}d",
-            tempPid, tempCameraId.c_str(), isOpened);
-    }
-    return isOpened;
-}
-
-std::vector<sptr<HCameraDevice>> HCameraService::CameraConflictDetection(const std::string& cameraId, bool& isPermisson)
-{
-    std::vector<sptr<HCameraDevice>> devicesNeedClose;
-    pid_t tempPid;
-    std::string tempCameraId;
-    sptr<HCameraDevice> tempDevice = nullptr;
-    std::lock_guard<std::mutex> lock(mapOperatorsLock_);
-    pid_t pid = IPCSkeleton::GetCallingPid();
-    /*  whether there is a device being used, if not, the current operation is allowed */
-    if (!IsDeviceAlreadyOpen(tempPid, tempCameraId, tempDevice)) {
-        MEDIA_INFO_LOG("There is no clients use device, allowed!");
-        isPermisson = true;
-        return devicesNeedClose;
-    }
-
-    MEDIA_INFO_LOG("HCameraService::CameraConflictDetection pid: %{public}d cameraId: %{public}s already opened",
-        tempPid, tempCameraId.c_str());
-    /*
-     *  whether the application that is using the device is the same application
-     *  as the application currently operating, if they are the same, the operation will be rejected
-     */
-    if (IsSameClient(tempPid, pid)) {
-        MEDIA_INFO_LOG("Same client, reject!");
-        isPermisson = false;
-        return devicesNeedClose;
-    }
-
-    /*
-     *  1. if it is judged that the application that is using the device is in the background,
-     *     it is necessary to close the used device and allow this operation to seize the device.
-     *  2. The application that is using the device is in the foreground, and the priority is judged;
-     *     If there is a conflict, the operation is rejected; otherwise,
-     *     the operation is allowed to preempt the device, and the device in use needs to be close.
-     */
-    if (tempDevice != nullptr) {
-        if (IsCameraNeedClose(tempDevice->GetCallerToken(), tempPid, pid)) {
-            isPermisson = true;
-            devicesNeedClose.push_back(tempDevice);
-            MEDIA_INFO_LOG("HCameraService::CameraConflictDetection device can be preempted, allowed!");
-        } else {
-            isPermisson = false;
-        }
-    }
-    return devicesNeedClose;
 }
 } // namespace CameraStandard
 } // namespace OHOS

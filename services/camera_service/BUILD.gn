@@ -32,6 +32,7 @@ ohos_shared_library("camera_service") {
     "binder/server/src/hstream_repeat_stub.cpp",
     "src/camera_util.cpp",
     "src/hcamera_device.cpp",
+    "src/hcamera_device_manager.cpp",
     "src/hcamera_host_manager.cpp",
     "src/hcamera_service.cpp",
     "src/hcapture_session.cpp",
@@ -91,6 +92,12 @@ ohos_shared_library("camera_service") {
     "samgr:samgr_proxy",
     "window_manager:libdm",
   ]
+
+  if (use_memmgr_plugin) {
+    external_deps += [ "memmgr_plugin:memmgrclient" ]
+  } else if (use_memmgr) {
+    external_deps += [ "memmgr:memmgrclient" ]
+  }
 
   include_dirs += [
     "//drivers/peripheral/camera/interfaces/include",

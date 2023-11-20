@@ -19,3 +19,15 @@ base_security_path = "//base/security/access_token"
 driver_disply_path = "//drivers/peripheral/display"
 window_manager_path = "//foundation/window/window_manager"
 system_safwk_path = "//utils/system/safwk"
+memmgr_root = "//foundation/resourceschedule/memmgr"
+memmgr_plugin_root = "//foundation/resourceschedule/memmgr_plugin"
+
+use_memmgr_plugin = false
+if (defined(global_parts_info.resourceschedule_memmgr_plugin)) {
+  use_memmgr_plugin = true
+}
+
+use_memmgr = false
+if (defined(global_parts_info.resourceschedule_memmgr)) {
+  use_memmgr = true
+}
