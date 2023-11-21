@@ -30,7 +30,7 @@ namespace CameraStandard {
 const std::string dataWidth = "dataWidth";
 const std::string dataHeight = "dataHeight";
 const std::string thumbnailRegisterName = "quickThumbnail";
-const std::string captuureRegisterName = "photoAvailable";
+const std::string captureRegisterName = "photoAvailable";
 static const char CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME[] = "PhotoOutput";
 
 struct CallbackInfo {

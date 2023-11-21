@@ -417,7 +417,7 @@ napi_value CameraManagerNapi::CreatePhotoOutputInstance(napi_env env, napi_callb
     if (argc == ARGS_ONE) {
         MEDIA_INFO_LOG("surface will be create locally");
         result = PhotoOutputNapi::CreatePhotoOutput(env, profile, "");
-    } else if (argc == ARGS_TWO && 
+    } else if (argc == ARGS_TWO &&
                napi_get_value_string_utf8(env, argv[PARAM1], buffer, PATH_MAX, &length) == napi_ok) {
         MEDIA_INFO_LOG("surfaceId buffer --1  : %{public}s", buffer);
         std::string surfaceId = std::string(buffer);

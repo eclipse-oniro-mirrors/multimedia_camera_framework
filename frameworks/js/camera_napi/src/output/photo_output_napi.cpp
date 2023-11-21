@@ -67,7 +67,7 @@ void PhotoListener::UpdateJSCallback(sptr<Surface> photoSurface) const
         return;
     }
     std::shared_ptr<Media::NativeImage> image = std::make_shared<Media::NativeImage>(photoBuffer, bufferProcessor_);
-    napi_value valueParam = Media::ImageNapi::Create(env_,image);
+    napi_value valueParam = Media::ImageNapi::Create(env_, image);
     if (valueParam == nullptr) {
         MEDIA_ERR_LOG("ImageNapi Create failed");
         napi_get_undefined(env_, &valueParam);
@@ -174,8 +174,6 @@ void PhotoListener::RemoveAllCallbacks()
     photoListenerList_.clear();
     MEDIA_INFO_LOG("RemoveAllCallbacks: remove all js callbacks success");
 }
-
-
 
 PhotoOutputCallback::PhotoOutputCallback(napi_env env) : env_(env) {}
 
@@ -771,24 +769,24 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile &profile, st
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
         MEDIA_INFO_LOG("CreatePhotoOutput surfaceId: %{public}s", surfaceId.c_str());
-        sptr<Surface> sface;
-        if ("" == surfaceId) {
+        sptr<Surface> photoSurface;
+        if (surfaceId == "") {
             MEDIA_ERR_LOG("create surface as consumer");
-            sface = Surface::CreateSurfaceAsConsumer("photoOutput");
-            sPhotoSurface_ = sface;
+            photoSurface = Surface::CreateSurfaceAsConsumer("photoOutput");
+            sPhotoSurface_ = photoSurface;
         } else {
             MEDIA_ERR_LOG("get surface by surfaceId");
-            sface = Media::ImageReceiver::getSurfaceById(surfaceId);
+            photoSurface = Media::ImageReceiver::getSurfaceById(surfaceId);
         }
-        if (sface == nullptr) {
+        if (photoSurface == nullptr) {
             MEDIA_ERR_LOG("failed to get surface");
             return result;
         }
 
-        MEDIA_INFO_LOG("surface width: %{public}d, height: %{public}d", sface->GetDefaultWidth(),
-                       sface->GetDefaultHeight());
-        sface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
-        sptr<IBufferProducer> surfaceProducer = sface->GetProducer();
+        MEDIA_INFO_LOG("surface width: %{public}d, height: %{public}d", photoSurface->GetDefaultWidth(),
+                       photoSurface->GetDefaultHeight());
+        photoSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
+        sptr<IBufferProducer> surfaceProducer = photoSurface->GetProducer();
         int retCode = CameraManager::GetInstance()->CreatePhotoOutput(profile, surfaceProducer, &sPhotoOutput_);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
@@ -1336,7 +1334,7 @@ napi_value PhotoOutputNapi::RegisterCallback(napi_env env, napi_value jsThis,
             photoOutputNapi->photoOutput_->SetThumbnailListener((sptr<IBufferConsumerListener>&)listener);
         }
         photoOutputNapi->thumbnailListener_->SaveCallbackReference(callback, isOnce);
-    } else if (eventType.compare(OHOS::CameraStandard::captuureRegisterName) == 0 && sPhotoSurface_) {
+    } else if (eventType.compare(OHOS::CameraStandard::captureRegisterName) == 0 && sPhotoSurface_) {
         if (photoOutputNapi->photoListener_ == nullptr) {
             sptr<PhotoListener> phtotListener = new PhotoListener(env, sPhotoSurface_);
             SurfaceError ret = sPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)phtotListener);

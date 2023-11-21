@@ -37,7 +37,7 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/services/camera_service/binder/base/include/",
     "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
     "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
-    "//foundation/multimedia/image_framework/interfaces/innerkits/include",
+    "${multimedia_image_framework_path}/interfaces/innerkits/include",
     "//foundation/multimedia/graphic/graphic_2d/interfaces/inner_api/surface",
   ]
   sources = [
