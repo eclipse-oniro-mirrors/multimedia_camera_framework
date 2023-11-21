@@ -81,6 +81,7 @@ public:
     int32_t SetFlashlight(const std::string& cameraId, bool isEnable);
     int32_t SetTorchLevel(float level);
     int32_t Prelaunch(sptr<HCameraRestoreParam> cameraRestoreParam);
+    int32_t PreCameraSwitch(const std::string& cameraId);
     void NotifyDeviceStateChangeInfo(int notifyType, int deviceState);
     bool IsLocalCameraHostInfo();
 
@@ -351,6 +352,28 @@ int32_t HCameraHostManager::CameraHostInfo::Prelaunch(sptr<HCameraRestoreParam> 
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         MEDIA_ERR_LOG("CameraHostInfo::Prelaunch failed with error Code:%{public}d", rc);
         return HdiToServiceError(rc);
+    }
+    return CAMERA_OK;
+}
+
+int32_t HCameraHostManager::CameraHostInfo::PreCameraSwitch(const std::string& cameraId)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (cameraHostProxy_ == nullptr) {
+        MEDIA_ERR_LOG("CameraHostInfo::PreCameraSwitch cameraHostProxy_ is null");
+        return CAMERA_UNKNOWN_ERROR;
+    }
+    if (GetCameraHostVersion() <= GetVersionId(1, 1)) {
+        MEDIA_ERR_LOG("CameraHostInfo::PreCameraSwitch not support host V1_0 and V1_1!");
+        return CAMERA_UNKNOWN_ERROR;
+    }
+    if (cameraHostProxyV1_2_ != nullptr) {
+        MEDIA_DEBUG_LOG("CameraHostInfo::PreCameraSwitch ICameraHost V1_2");
+        CamRetCode rc = (CamRetCode)(cameraHostProxyV1_2_->PreCameraSwitch(cameraId));
+        if (rc != HDI::Camera::V1_0::NO_ERROR) {
+            MEDIA_ERR_LOG("CameraHostInfo::PreCameraSwitch failed with error Code:%{public}d", rc);
+            return HdiToServiceError(rc);
+        }
     }
     return CAMERA_OK;
 }
@@ -748,6 +771,16 @@ int32_t HCameraHostManager::Prelaunch(const std::string& cameraId, std::string c
         transitentParamMap_.erase(clientName);
     }
     return 0;
+}
+
+int32_t HCameraHostManager::PreSwitchCamera(const std::string& cameraId)
+{
+    auto cameraHostInfo = FindCameraHostInfo(cameraId);
+    if (cameraHostInfo == nullptr) {
+        MEDIA_ERR_LOG("HCameraHostManager::PreSwitchCamera failed with invalid device info");
+        return CAMERA_INVALID_ARG;
+    }
+    return cameraHostInfo->PreCameraSwitch(cameraId);
 }
 
 void HCameraHostManager::NotifyDeviceStateChangeInfo(int notifyType, int deviceState)

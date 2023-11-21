@@ -15,6 +15,7 @@
 
 #include "hcamera_service.h"
 
+#include <algorithm>
 #include <memory>
 #include <mutex>
 #include <securec.h>
@@ -24,10 +25,10 @@
 #include "accesstoken_kit.h"
 #include "camera_log.h"
 #include "camera_util.h"
+#include "display_manager.h"
 #include "hcamera_device_manager.h"
 #include "ipc_skeleton.h"
 #include "system_ability_definition.h"
-#include "display_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -591,6 +592,31 @@ int32_t HCameraService::PrelaunchCamera()
     MEDIA_INFO_LOG("HCameraService::PrelaunchCamera preCameraId_ is: %{public}s", preCameraId_.c_str());
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("Camera Prelaunch CameraId:%s", preCameraId_.c_str()));
     int32_t ret = cameraHostManager_->Prelaunch(preCameraId_, preCameraClient_);
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCameraService::Prelaunch failed");
+    }
+    return ret;
+}
+
+int32_t HCameraService::PreSwitchCamera(const std::string cameraId)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("HCameraService::PreSwitchCamera");
+    if (cameraId.empty()) {
+        return CAMERA_INVALID_ARG;
+    }
+    std::vector<std::string> cameraIds_;
+    cameraHostManager_->GetCameras(cameraIds_);
+    if (cameraIds_.empty()) {
+        return CAMERA_INVALID_STATE;
+    }
+
+    auto it = std::find(cameraIds_.begin(), cameraIds_.end(), cameraId);
+    if (it == cameraIds_.end()) {
+        return CAMERA_INVALID_ARG;
+    }
+    MEDIA_INFO_LOG("HCameraService::PreSwitchCamera cameraId is: %{public}s", cameraId.c_str());
+    int32_t ret = cameraHostManager_->PreSwitchCamera(cameraId);
     if (ret != CAMERA_OK) {
         MEDIA_ERR_LOG("HCameraService::Prelaunch failed");
     }

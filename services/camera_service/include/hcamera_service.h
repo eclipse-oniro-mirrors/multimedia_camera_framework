@@ -77,6 +77,7 @@ public:
     int32_t SetTorchCallback(sptr<ITorchServiceCallback>& callback) override;
     int32_t MuteCamera(bool muteMode) override;
     int32_t PrelaunchCamera() override;
+    int32_t PreSwitchCamera(const std::string cameraId) override;
     int32_t SetPrelaunchConfig(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
         EffectParam effectParam) override;
 //    std::string GetClientBundle(int uid);

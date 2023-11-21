@@ -424,6 +424,21 @@ int32_t HCameraServiceProxy::SetPrelaunchConfig(std::string cameraId, RestorePar
     return error;
 }
 
+int32_t HCameraServiceProxy::PreSwitchCamera(const std::string cameraId)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteString(cameraId);
+    int32_t error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_PRE_SWITCH_CAMERA), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy::PreSwitchCamera failed, error: %{public}d", error);
+    }
+    return error;
+}
+
 int32_t HCameraServiceProxy::IsCameraMuted(bool &muteMode)
 {
     MessageParcel data;
