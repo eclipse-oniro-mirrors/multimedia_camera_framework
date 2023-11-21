@@ -393,7 +393,7 @@ napi_value CameraManagerNapi::CreatePhotoOutputInstance(napi_env env, napi_callb
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_TWO, argv, CREATE_PHOTO_OUTPUT_INSTANCE)) {
+    if (!CameraNapiUtils::CheckInvalidArgument(env, argc, argc, argv, CREATE_PHOTO_OUTPUT_INSTANCE)) {
         return result;
     }
 
@@ -411,9 +411,14 @@ napi_value CameraManagerNapi::CreatePhotoOutputInstance(napi_env env, napi_callb
                    "size.width = %{public}d, size.height = %{public}d, format = %{public}d",
                    profile.size_.width, profile.size_.height, profile.format_);
 
+    // API10
     char buffer[PATH_MAX];
     size_t length = 0;
-    if (napi_get_value_string_utf8(env, argv[PARAM1], buffer, PATH_MAX, &length) == napi_ok) {
+    if (argc == ARGS_ONE) {
+        MEDIA_INFO_LOG("surface will be create locally");
+        result = PhotoOutputNapi::CreatePhotoOutput(env, profile, "");
+    } else if (argc == ARGS_TWO && 
+               napi_get_value_string_utf8(env, argv[PARAM1], buffer, PATH_MAX, &length) == napi_ok) {
         MEDIA_INFO_LOG("surfaceId buffer --1  : %{public}s", buffer);
         std::string surfaceId = std::string(buffer);
         result = PhotoOutputNapi::CreatePhotoOutput(env, profile, surfaceId);
