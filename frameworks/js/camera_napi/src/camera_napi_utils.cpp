@@ -433,8 +433,7 @@ bool CameraNapiUtils::CheckInvalidArgument(napi_env env, size_t argc, int32_t le
             break;
 
         case CREATE_PHOTO_OUTPUT_INSTANCE:
-            isPass = (argc == ARGS_TWO) &&
-                        (valueTypeArray[0] == napi_object) && (valueTypeArray[1] == napi_string);
+            isPass = (argc >= ARGS_ONE) && (valueTypeArray[0] == napi_object);
             break;
 
         case CREATE_VIDEO_OUTPUT_INSTANCE:

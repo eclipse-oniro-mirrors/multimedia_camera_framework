@@ -16,6 +16,7 @@
 #include "output/photo_output_napi.h"
 #include <uv.h>
 #include "image_napi.h"
+#include "image_receiver.h"
 #include "pixel_map_napi.h"
 
 namespace OHOS {
@@ -28,7 +29,151 @@ namespace {
 }
 thread_local napi_ref PhotoOutputNapi::sConstructor_ = nullptr;
 thread_local sptr<PhotoOutput> PhotoOutputNapi::sPhotoOutput_ = nullptr;
+thread_local sptr<Surface> PhotoOutputNapi::sPhotoSurface_ = nullptr;
 thread_local uint32_t PhotoOutputNapi::photoOutputTaskId = CAMERA_PHOTO_OUTPUT_TASKID;
+
+PhotoListener::PhotoListener(napi_env env, const sptr<Surface> photoSurface) : env_(env), photoSurface_(photoSurface)
+{
+    if (bufferProcessor_ == nullptr && photoSurface != nullptr) {
+        bufferProcessor_ = std::make_shared<PhotoBufferProcessor> (photoSurface);
+    }
+}
+
+void PhotoListener::OnBufferAvailable()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("PhotoListener::OnBufferAvailable is called");
+    if (!photoSurface_) {
+        MEDIA_ERR_LOG("photoOutput napi photoSurface_ is null");
+        return;
+    }
+    UpdateJSCallbackAsync(photoSurface_);
+}
+
+void PhotoListener::UpdateJSCallback(sptr<Surface> photoSurface) const
+{
+    napi_value result[ARGS_TWO] = {0};
+    napi_get_undefined(env_, &result[0]);
+    napi_get_undefined(env_, &result[1]);
+    napi_value callback = nullptr;
+    napi_value retVal;
+    int32_t fence = -1;
+    int64_t timestamp;
+    OHOS::Rect damage;
+    sptr<SurfaceBuffer> photoBuffer = nullptr;
+    SurfaceError surfaceRet = photoSurface->AcquireBuffer(photoBuffer, fence, timestamp, damage);
+    if (surfaceRet != SURFACE_ERROR_OK) {
+        MEDIA_ERR_LOG("PhotoListener Failed to acquire surface buffer");
+        return;
+    }
+    std::shared_ptr<Media::NativeImage> image = std::make_shared<Media::NativeImage>(photoBuffer, bufferProcessor_);
+    napi_value valueParam = Media::ImageNapi::Create(env_, image);
+    if (valueParam == nullptr) {
+        MEDIA_ERR_LOG("ImageNapi Create failed");
+        napi_get_undefined(env_, &valueParam);
+    }
+    MEDIA_INFO_LOG("enter ImageNapi::Create end");
+    result[1] = valueParam;
+    for (auto it = photoListenerList_.begin(); it != photoListenerList_.end();) {
+        napi_get_reference_value((*it)->env_, (*it)->cb_, &callback);
+        napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
+        if ((*it)->isOnce_) {
+            napi_status status = napi_delete_reference((*it)->env_, (*it)->cb_);
+            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
+            (*it)->cb_ = nullptr;
+            photoListenerList_.erase(it);
+        } else {
+            it++;
+        }
+    }
+}
+
+void PhotoListener::UpdateJSCallbackAsync(sptr<Surface> photoSurface) const
+{
+    uv_loop_s* loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (!loop) {
+        MEDIA_ERR_LOG("PhotoListener:UpdateJSCallbackAsync() failed to get event loop");
+        return;
+    }
+    uv_work_t* work = new(std::nothrow) uv_work_t;
+    if (!work) {
+        MEDIA_ERR_LOG("PhotoListener:UpdateJSCallbackAsync() failed to allocate work");
+        return;
+    }
+    std::unique_ptr<PhotoListenerInfo> callbackInfo =
+            std::make_unique<PhotoListenerInfo>(photoSurface, this);
+    work->data = callbackInfo.get();
+    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+        PhotoListenerInfo* callbackInfo = reinterpret_cast<PhotoListenerInfo *>(work->data);
+        if (callbackInfo) {
+            callbackInfo->listener_->UpdateJSCallback(callbackInfo->photoSurface_);
+            MEDIA_ERR_LOG("PhotoListener:UpdateJSCallbackAsync() complete");
+            callbackInfo->photoSurface_ =  nullptr;
+            callbackInfo->listener_ = nullptr;
+            delete callbackInfo;
+        }
+        delete work;
+    }, uv_qos_user_initiated);
+    if (ret) {
+        MEDIA_ERR_LOG("PhotoListener:UpdateJSCallbackAsync() failed to execute work");
+        delete work;
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void PhotoListener::SaveCallbackReference(napi_value callback, bool isOnce)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    napi_ref callbackRef = nullptr;
+    const int32_t refCount = 1;
+
+    for (auto it = photoListenerList_.begin(); it != photoListenerList_.end(); ++it) {
+        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
+    }
+    napi_status status = napi_create_reference(env_, callback, refCount, &callbackRef);
+    CHECK_AND_RETURN_LOG(status == napi_ok && callbackRef != nullptr,
+                         "ErrorCallbackListener: creating reference for callback fail");
+    std::shared_ptr<AutoRef> cb = std::make_shared<AutoRef>(env_, callbackRef, isOnce);
+    photoListenerList_.push_back(cb);
+    MEDIA_DEBUG_LOG("Save callback reference success, PhotoListener list size [%{public}zu]",
+        photoListenerList_.size());
+}
+
+void PhotoListener::RemoveCallbackRef(napi_env env, napi_value callback)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    if (callback == nullptr) {
+        MEDIA_INFO_LOG("RemoveCallbackReference: js callback is nullptr, remove all callback reference");
+        RemoveAllCallbacks();
+        return;
+    }
+    for (auto it = photoListenerList_.begin(); it != photoListenerList_.end(); ++it) {
+        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        if (isSameCallback) {
+            MEDIA_INFO_LOG("RemoveCallbackReference: find js callback, delete it");
+            napi_status status = napi_delete_reference(env, (*it)->cb_);
+            (*it)->cb_ = nullptr;
+            CHECK_AND_RETURN_LOG(status == napi_ok, "RemoveCallbackReference: delete reference for callback fail");
+            photoListenerList_.erase(it);
+            return;
+        }
+    }
+    MEDIA_INFO_LOG("RemoveCallbackReference: js callback no find");
+}
+
+void PhotoListener::RemoveAllCallbacks()
+{
+    for (auto it = photoListenerList_.begin(); it != photoListenerList_.end(); ++it) {
+        napi_delete_reference(env_, (*it)->cb_);
+        (*it)->cb_ = nullptr;
+    }
+    photoListenerList_.clear();
+    MEDIA_INFO_LOG("RemoveAllCallbacks: remove all js callbacks success");
+}
 
 PhotoOutputCallback::PhotoOutputCallback(napi_env env) : env_(env) {}
 
@@ -447,7 +592,7 @@ void ThumbnailListener::UpdateJSCallbackAsync(sptr<PhotoOutput> photoOutput) con
     }
 }
 
-void ThumbnailListener::SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce)
+void ThumbnailListener::SaveCallbackReference(napi_value callback, bool isOnce)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     napi_ref callbackRef = nullptr;
@@ -624,15 +769,24 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile &profile, st
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
         MEDIA_INFO_LOG("CreatePhotoOutput surfaceId: %{public}s", surfaceId.c_str());
-        sptr<Surface> sface = Media::ImageReceiver::getSurfaceById(surfaceId);
-        if (sface == nullptr) {
-            MEDIA_ERR_LOG("failed to get surface from ImageReceiver");
+        sptr<Surface> photoSurface;
+        if (surfaceId == "") {
+            MEDIA_ERR_LOG("create surface as consumer");
+            photoSurface = Surface::CreateSurfaceAsConsumer("photoOutput");
+            sPhotoSurface_ = photoSurface;
+        } else {
+            MEDIA_ERR_LOG("get surface by surfaceId");
+            photoSurface = Media::ImageReceiver::getSurfaceById(surfaceId);
+        }
+        if (photoSurface == nullptr) {
+            MEDIA_ERR_LOG("failed to get surface");
             return result;
         }
-        MEDIA_INFO_LOG("surface width: %{public}d, height: %{public}d", sface->GetDefaultWidth(),
-                       sface->GetDefaultHeight());
-        sface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
-        sptr<IBufferProducer> surfaceProducer = sface->GetProducer();
+
+        MEDIA_INFO_LOG("surface width: %{public}d, height: %{public}d", photoSurface->GetDefaultWidth(),
+                       photoSurface->GetDefaultHeight());
+        photoSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
+        sptr<IBufferProducer> surfaceProducer = photoSurface->GetProducer();
         int retCode = CameraManager::GetInstance()->CreatePhotoOutput(profile, surfaceProducer, &sPhotoOutput_);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
@@ -1179,7 +1333,17 @@ napi_value PhotoOutputNapi::RegisterCallback(napi_env env, napi_value jsThis,
             photoOutputNapi->thumbnailListener_ = listener;
             photoOutputNapi->photoOutput_->SetThumbnailListener((sptr<IBufferConsumerListener>&)listener);
         }
-        photoOutputNapi->thumbnailListener_->SaveCallbackReference(eventType, callback, isOnce);
+        photoOutputNapi->thumbnailListener_->SaveCallbackReference(callback, isOnce);
+    } else if (eventType.compare(OHOS::CameraStandard::captureRegisterName) == 0 && sPhotoSurface_) {
+        if (photoOutputNapi->photoListener_ == nullptr) {
+            sptr<PhotoListener> phtotListener = new PhotoListener(env, sPhotoSurface_);
+            SurfaceError ret = sPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)phtotListener);
+            if (ret != SURFACE_ERROR_OK) {
+                MEDIA_ERR_LOG("PhotoOutputNapi RegisterCallback failed!");
+            }
+            photoOutputNapi->photoListener_ = phtotListener;
+        }
+        photoOutputNapi->photoListener_->SaveCallbackReference(callback, isOnce);
     } else if (!eventType.empty()) {
         // Set callback for focusStateChange
         if (photoOutputNapi->photoCallback_ == nullptr) {
