@@ -72,12 +72,15 @@ void PreviewOutputCallback::UpdateJSCallbackAsync(PreviewOutputEventType eventTy
         return;
     }
     std::unique_ptr<PreviewOutputCallbackInfo> callbackInfo =
-        std::make_unique<PreviewOutputCallbackInfo>(eventType, value, this);
+        std::make_unique<PreviewOutputCallbackInfo>(eventType, value, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         PreviewOutputCallbackInfo* callbackInfo = reinterpret_cast<PreviewOutputCallbackInfo *>(work->data);
         if (callbackInfo) {
-            callbackInfo->listener_->UpdateJSCallback(callbackInfo->eventType_, callbackInfo->value_);
+            auto listener = callbackInfo->listener_.lock();
+            if (listener) {
+                listener->UpdateJSCallback(callbackInfo->eventType_, callbackInfo->value_);
+            }
             delete callbackInfo;
         }
         delete work;
@@ -126,7 +129,7 @@ void PreviewOutputCallback::OnSketchStatusDataChangedAsync(SketchStatusData stat
         return;
     }
     std::unique_ptr<SketchStatusCallbackInfo> callbackInfo =
-        std::make_unique<SketchStatusCallbackInfo>(statusData, this, env_);
+        std::make_unique<SketchStatusCallbackInfo>(statusData, shared_from_this(), env_);
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(
         loop, work, [](uv_work_t* work) {},
@@ -135,7 +138,10 @@ void PreviewOutputCallback::OnSketchStatusDataChangedAsync(SketchStatusData stat
             napi_handle_scope scope = nullptr;
             napi_open_handle_scope(callbackInfo->env_, &scope);
             if (callbackInfo) {
-                callbackInfo->listener_->OnSketchStatusDataChangedCall(callbackInfo->sketchStatusData_);
+                auto listener = callbackInfo->listener_.lock();
+                if (listener) {
+                    listener->OnSketchStatusDataChangedCall(callbackInfo->sketchStatusData_);
+                }
                 delete callbackInfo;
             }
             napi_close_handle_scope(callbackInfo->env_, scope);

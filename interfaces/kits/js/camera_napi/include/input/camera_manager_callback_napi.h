@@ -23,7 +23,8 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class CameraManagerCallbackNapi : public  CameraManagerCallback {
+class CameraManagerCallbackNapi : public  CameraManagerCallback,
+    public std::enable_shared_from_this<CameraManagerCallbackNapi> {
 public:
     explicit CameraManagerCallbackNapi(napi_env env);
     virtual ~CameraManagerCallbackNapi();
@@ -43,12 +44,12 @@ private:
 
 struct CameraStatusCallbackInfo {
     CameraStatusInfo info_;
-    const CameraManagerCallbackNapi* listener_;
-    CameraStatusCallbackInfo(CameraStatusInfo info, const CameraManagerCallbackNapi* listener)
+    weak_ptr<const CameraManagerCallbackNapi> listener_;
+    CameraStatusCallbackInfo(CameraStatusInfo info, shared_ptr<const CameraManagerCallbackNapi> listener)
         : info_(info), listener_(listener) {}
     ~CameraStatusCallbackInfo()
     {
-        listener_ = nullptr;
+        listener_.reset();
     }
 };
 } // namespace CameraStandard

@@ -96,7 +96,7 @@ private:
     void UpdateJSCallbackAsync(sptr<Surface> photoSurface) const;
 };
 
-class PhotoOutputCallback : public PhotoStateCallback {
+class PhotoOutputCallback : public PhotoStateCallback, public std::enable_shared_from_this<PhotoOutputCallback> {
 public:
     explicit PhotoOutputCallback(napi_env env);
     ~PhotoOutputCallback() = default;
@@ -145,8 +145,9 @@ private:
 struct PhotoOutputCallbackInfo {
     PhotoOutputEventType eventType_;
     CallbackInfo info_;
-    const PhotoOutputCallback* listener_;
-    PhotoOutputCallbackInfo(PhotoOutputEventType eventType, CallbackInfo info, const PhotoOutputCallback* listener)
+    weak_ptr<const PhotoOutputCallback> listener_;
+    PhotoOutputCallbackInfo(PhotoOutputEventType eventType, CallbackInfo info,
+        shared_ptr<const PhotoOutputCallback> listener)
         : eventType_(eventType), info_(info), listener_(listener) {}
 };
 
