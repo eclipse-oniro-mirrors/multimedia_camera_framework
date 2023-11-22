@@ -56,7 +56,7 @@ BufferPool::~BufferPool()
     if (allocInProgress_.load()) {
         cvFinishAlloc_.wait(lock, [this] { return !allocInProgress_.load(); });
     }
-    for (auto it = decayingBuffers_.begin(); it != decayingBuffers_.end(), ++it) {
+    for (auto it = decayingBuffers_.begin(); it != decayingBuffers_.end(); ++it) {
         timeBroker_->DeregisterCallback(it->second);
     }
     decayingBuffers_.clear();

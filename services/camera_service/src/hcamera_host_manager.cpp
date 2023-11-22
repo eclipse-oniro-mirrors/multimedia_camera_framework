@@ -776,10 +776,9 @@ void HCameraHostManager::AddCameraHost(const std::string& svcName)
 void HCameraHostManager::RemoveCameraHost(const std::string& svcName)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    std::vector<sptr<CameraHostInfo>>::iterator it;
     MEDIA_INFO_LOG("HCameraHostManager::RemoveCameraHost camera host %{public}s removed", svcName.c_str());
-    it = std::find_if(cameraHostInfos_.begin(), cameraHostInfos_.end(),
-                      [&svcName](const auto& camHost) { return camHost->GetName() == svcName; });
+    std::vector<sptr<CameraHostInfo>>::iterator it = std::find_if(cameraHostInfos_.begin(), cameraHostInfos_.end(),
+        [&svcName](const auto& camHost) { return camHost->GetName() == svcName; });
     if (it == cameraHostInfos_.end()) {
         MEDIA_WARNING_LOG("HCameraHostManager::RemoveCameraHost camera host %{public}s doesn't exist",
             svcName.c_str());
@@ -810,10 +809,10 @@ sptr<HCameraHostManager::CameraHostInfo> HCameraHostManager::FindCameraHostInfo(
 sptr<HCameraHostManager::CameraHostInfo> HCameraHostManager::FindLocalCameraHostInfo()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    for (const auto& cameraHostInfo : cameraHostInfos_) {
-        if (cameraHostInfo->IsLocalCameraHostInfo()) {
-            return cameraHostInfo;
-        }
+    std::vector<sptr<CameraHostInfo>>::iterator it = std::find_if(cameraHostInfos_.begin(), cameraHostInfos_.end(),
+        [](const auto& cameraHostInfo) { return cameraHostInfo->IsLocalCameraHostInfo(); });
+    if (it != cameraHostInfos_.end()) {
+        return (*it);
     }
     return nullptr;
 }
