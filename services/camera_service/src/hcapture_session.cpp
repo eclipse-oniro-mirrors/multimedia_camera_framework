@@ -24,6 +24,7 @@
 #include "iservice_registry.h"
 #include "metadata_utils.h"
 #include "system_ability_definition.h"
+#include "hcamera_device_manager.h"
 
 using namespace OHOS::AppExecFwk;
 using namespace OHOS::AAFwk;
@@ -840,7 +841,8 @@ int32_t HCaptureSession::ReleaseInner()
 int32_t HCaptureSession::Release(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(sessionLock_);
-    pid = pid != 0 ? pid : IPCSkeleton::GetCallingPid();
+    auto callingPid = IPCSkeleton::GetCallingPid();
+    pid = pid != 0 ? pid : callingPid;
     MEDIA_INFO_LOG("HCaptureSession::Release pid(%{public}d).", pid);
     auto it = session_.find(pid);
     if (it == session_.end()) {
@@ -853,7 +855,11 @@ int32_t HCaptureSession::Release(pid_t pid)
         streamOperatorCallback_->SetCaptureSession(nullptr);
         streamOperatorCallback_ = nullptr;
     }
-    if (cameraDevice_ != nullptr) {
+    pid_t activePid = HCameraDeviceManager::GetInstance()->GetActiveClient();
+    MEDIA_INFO_LOG("HCaptureSession::calling pid(%{public}d). activePid(%{public}d).", callingPid, activePid);
+    if (cameraDevice_ != nullptr && callingPid != pid && pid == activePid) {
+        MEDIA_DEBUG_LOG("HCaptureSession::Release close device, pid(%{public}d)", pid);
+        CloseDevice(cameraDevice_);
         POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraDevice_->GetCameraId().c_str());
         cameraDevice_ = nullptr;
     }
