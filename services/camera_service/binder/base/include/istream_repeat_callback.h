@@ -23,7 +23,9 @@ namespace OHOS {
 namespace CameraStandard {
 enum class SketchStatus : int32_t {
     STOPED = 0,
-    STARTED = 1
+    STARTED = 1,
+    STOPPING = 2,
+    STARTING = 3
 };
 
 typedef struct {

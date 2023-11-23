@@ -249,18 +249,14 @@ float PreviewOutput::GetSketchRatio()
     return ratio;
 }
 
-int32_t PreviewOutput::CreateSketchWrapper(Size sketchSize, sptr<Surface> sketchSurface)
+int32_t PreviewOutput::CreateSketchWrapper(Size sketchSize)
 {
-    if (sketchSurface == nullptr) {
-        MEDIA_ERR_LOG("CreateSketchWrapper sketchSurface is null");
-        return ServiceToCameraError(CAMERA_INVALID_ARG);
-    }
     auto session = GetSession();
     if (session == nullptr) {
         MEDIA_ERR_LOG("EnableSketch session null");
         return ServiceToCameraError(CAMERA_INVALID_STATE);
     }
-    auto wrapper = std::make_shared<SketchWrapper>(GetStream(), sketchSize, sketchSurface);
+    auto wrapper = std::make_shared<SketchWrapper>(GetStream(), sketchSize);
     if (wrapper == nullptr) {
         return ServiceToCameraError(CAMERA_ALLOC_ERROR);
     }
@@ -271,7 +267,7 @@ int32_t PreviewOutput::CreateSketchWrapper(Size sketchSize, sptr<Surface> sketch
     return ServiceToCameraError(retCode);
 }
 
-int32_t PreviewOutput::EnableSketch(bool isEnable, sptr<Surface> sketchSurface)
+int32_t PreviewOutput::EnableSketch(bool isEnable)
 {
     MEDIA_DEBUG_LOG("Enter Into PreviewOutput::EnableSketch");
     if (!IsSketchSupported()) {
@@ -298,7 +294,7 @@ int32_t PreviewOutput::EnableSketch(bool isEnable, sptr<Surface> sketchSurface)
         }
         MEDIA_INFO_LOG(
             "EnableSketch FindSketchSize Size is %{public}dx%{public}d", sketchSize->width, sketchSize->height);
-        return CreateSketchWrapper(*sketchSize, sketchSurface);
+        return CreateSketchWrapper(*sketchSize);
     }
 
     // Disable sketch branch
@@ -308,6 +304,23 @@ int32_t PreviewOutput::EnableSketch(bool isEnable, sptr<Surface> sketchSurface)
     auto wrapper = static_pointer_cast<SketchWrapper>(sketchWrapper_);
     errCode = wrapper->Destroy();
     sketchWrapper_ = nullptr;
+    return ServiceToCameraError(errCode);
+}
+
+int32_t PreviewOutput::AttachSketchSurface(sptr<Surface> sketchSurface)
+{
+    auto captureSession = GetSession();
+    if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
+        MEDIA_ERR_LOG("PreviewOutput AttachSketchSurface!, session not commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (sketchWrapper_ == nullptr) {
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
+    }
+    if (sketchSurface == nullptr) {
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+    int32_t errCode = static_pointer_cast<SketchWrapper>(sketchWrapper_)->AttachSketchSurface(sketchSurface);
     return ServiceToCameraError(errCode);
 }
 

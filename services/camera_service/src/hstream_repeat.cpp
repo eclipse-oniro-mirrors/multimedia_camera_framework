@@ -152,7 +152,7 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
         MEDIA_ERR_LOG("HStreamRepeat::Start Failed to allocate a captureId");
         return ret;
     }
-
+    UpdateSketchStatus(SketchStatus::STARTING);
     std::vector<uint8_t> ability;
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
@@ -170,8 +170,8 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
         curCaptureID_ = 0;
         MEDIA_ERR_LOG("HStreamRepeat::Start Failed with error Code:%{public}d", rc);
         ret = HdiToServiceError(rc);
-    }
-    if (repeatStreamType_ == RepeatStreamType::SKETCH) {
+        UpdateSketchStatus(SketchStatus::STOPED);
+    } else {
         UpdateSketchStatus(SketchStatus::STARTED);
     }
     if (settings != nullptr) {
@@ -195,6 +195,7 @@ int32_t HStreamRepeat::Stop()
         MEDIA_ERR_LOG("HStreamRepeat::Stop, Stream not started yet");
         return CAMERA_INVALID_STATE;
     }
+    UpdateSketchStatus(SketchStatus::STOPPING);
     int32_t ret = CAMERA_OK;
     CamRetCode rc = (CamRetCode)(streamOperator_->CancelCapture(curCaptureID_));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
@@ -204,9 +205,7 @@ int32_t HStreamRepeat::Stop()
     }
     ReleaseCaptureId(curCaptureID_);
     curCaptureID_ = 0;
-    if (repeatStreamType_ == RepeatStreamType::SKETCH) {
-        UpdateSketchStatus(SketchStatus::STOPED);
-    }
+    UpdateSketchStatus(SketchStatus::STOPED);
 
     {
         std::lock_guard<std::mutex> lock(sketchStreamLock_);
@@ -320,12 +319,12 @@ int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& pro
     return CAMERA_OK;
 }
 
-int32_t HStreamRepeat::ForkSketchStreamRepeat(const sptr<OHOS::IBufferProducer>& producer, int32_t width,
-    int32_t height, sptr<IStreamRepeat>& sketchStream, float sketchRatio)
+int32_t HStreamRepeat::ForkSketchStreamRepeat(
+    int32_t width, int32_t height, sptr<IStreamRepeat>& sketchStream, float sketchRatio)
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(sketchStreamLock_);
-    if ((producer == nullptr) || (width <= 0) || (height <= 0)) {
+    if (width <= 0 || height <= 0) {
         MEDIA_ERR_LOG("HCameraService::ForkSketchStreamRepeat args is illegal");
         return CAMERA_INVALID_ARG;
     }
@@ -334,7 +333,7 @@ int32_t HStreamRepeat::ForkSketchStreamRepeat(const sptr<OHOS::IBufferProducer>&
         sketchStreamRepeat_->Release();
     }
 
-    auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, format_, width, height, RepeatStreamType::SKETCH);
+    auto streamRepeat = new (std::nothrow) HStreamRepeat(nullptr, format_, width, height, RepeatStreamType::SKETCH);
     CHECK_AND_RETURN_RET_LOG(streamRepeat != nullptr, CAMERA_ALLOC_ERROR,
         "HStreamRepeat::ForkSketchStreamRepeat HStreamRepeat allocation failed");
     POWERMGR_SYSEVENT_CAMERA_CONFIG(SKETCH, width, height);

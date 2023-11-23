@@ -93,14 +93,10 @@ int32_t HStreamRepeatStub::HandleAddDeferredSurface(MessageParcel& data)
 int32_t HStreamRepeatStub::HandleForkSketchStreamRepeat(MessageParcel& data, MessageParcel& reply)
 {
     sptr<IStreamRepeat> sketchStream = nullptr;
-    sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
-    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
-        "HStreamRepeatStub HandleForkSketchStreamRepeat BufferProducer is null");
     int32_t width = data.ReadInt32();
     int32_t height = data.ReadInt32();
     float sketchRatio = data.ReadFloat();
-    sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
-    int errCode = ForkSketchStreamRepeat(producer, width, height, sketchStream, sketchRatio);
+    int errCode = ForkSketchStreamRepeat(width, height, sketchStream, sketchRatio);
     if (errCode != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamRepeatStub::HandleForkSketchStreamRepeat failed : %{public}d", errCode);
         return errCode;

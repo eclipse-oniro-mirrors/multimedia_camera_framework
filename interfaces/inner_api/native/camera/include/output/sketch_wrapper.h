@@ -32,9 +32,10 @@ public:
     static float GetSketchEnableRatio(int32_t modeName);
     static void UpdateSketchStaticInfo(std::shared_ptr<Camera::CameraMetadata> deviceMetadata);
 
-    explicit SketchWrapper(sptr<IStreamCommon> hostStream, const Size size, sptr<Surface> sketchSurface);
+    explicit SketchWrapper(sptr<IStreamCommon> hostStream, const Size size);
     virtual ~SketchWrapper();
     int32_t Init(std::shared_ptr<Camera::CameraMetadata>& deviceMetadata, int32_t modeName);
+    int32_t AttachSketchSurface(sptr<Surface> sketchSurface);
     int32_t StartSketchStream();
     int32_t StopSketchStream();
     int32_t Destroy();
@@ -62,7 +63,7 @@ private:
 
     wptr<IStreamCommon> hostStream_;
     Size sketchSize_;
-    sptr<Surface> sketchSurface_;
+    sptr<Surface> sketchSurface_ = nullptr;
     sptr<IStreamRepeat> sketchStream_;
     std::mutex sketchStatusChangeMutex_;
 

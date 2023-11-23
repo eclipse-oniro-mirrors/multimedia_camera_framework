@@ -35,8 +35,8 @@ public:
 
     virtual int32_t AddDeferredSurface(const sptr<OHOS::IBufferProducer>& producer) = 0;
 
-    virtual int32_t ForkSketchStreamRepeat(const sptr<OHOS::IBufferProducer>& producer, int32_t width, int32_t height,
-        sptr<IStreamRepeat>& sketchStream, float sketchRatio) = 0;
+    virtual int32_t ForkSketchStreamRepeat(
+        int32_t width, int32_t height, sptr<IStreamRepeat>& sketchStream, float sketchRatio) = 0;
 
     virtual int32_t UpdateSketchRatio(float sketchRatio) = 0;
 

@@ -52,7 +52,7 @@ public:
         }
     }
 
-    void OnSketchStatusDataChanged(SketchStatusData statusData) const override {}
+    void OnSketchStatusDataChanged(const SketchStatusData& statusData) const override {}
 
 private:
     Camera_PreviewOutput* previewOutput_;
