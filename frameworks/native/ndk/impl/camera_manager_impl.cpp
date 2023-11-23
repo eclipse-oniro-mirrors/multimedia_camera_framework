@@ -187,6 +187,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
     MEDIA_ERR_LOG("GetSupportedCameraOutputCapability previewOutputSize return");
     return CAMERA_OK;
 }
+
 Camera_ErrorCode Camera_Manager::GetSupportedPreviewProfiles(Camera_OutputCapability* outCapability,
     std::vector<Profile> &previewProfiles)
 {
@@ -197,7 +198,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedPreviewProfiles(Camera_OutputCapabi
         outCapability->previewProfiles = nullptr;
         return CAMERA_INVALID_ARGUMENT;
     }
-    outCapability->previewProfiles = new Camera_Profile*[previewOutputSize];
+    outCapability->previewProfiles = new Camera_Profile* [previewOutputSize];
     if (!outCapability->previewProfiles) {
         MEDIA_ERR_LOG("Failed to allocate memory for previewProfiles");
     }
@@ -226,7 +227,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedPhotoProfiles(Camera_OutputCapabili
         outCapability->photoProfiles = nullptr;
         return CAMERA_INVALID_ARGUMENT;
     }
-    outCapability->photoProfiles = new Camera_Profile*[photoOutputSize];
+    outCapability->photoProfiles = new Camera_Profile* [photoOutputSize];
     if (!outCapability->photoProfiles) {
         MEDIA_ERR_LOG("Failed to allocate memory for photoProfiles");
     }
@@ -253,7 +254,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedVideoProfiles(Camera_OutputCapabili
         outCapability->videoProfiles = nullptr;
         return CAMERA_INVALID_ARGUMENT;
     }
-    outCapability->videoProfiles = new Camera_VideoProfile*[videoOutputSize];
+    outCapability->videoProfiles = new Camera_VideoProfile* [videoOutputSize];
     if (!outCapability->videoProfiles) {
         MEDIA_ERR_LOG("Failed to allocate memory for videoProfiles");
     }
@@ -282,7 +283,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedMetadataTypeList(Camera_OutputCapab
         outCapability->supportedMetadataObjectTypes = nullptr;
         return CAMERA_INVALID_ARGUMENT;
     }
-    outCapability->supportedMetadataObjectTypes = new Camera_MetadataObjectType*[metadataOutputSize];
+    outCapability->supportedMetadataObjectTypes = new Camera_MetadataObjectType* [metadataOutputSize];
     if (!outCapability->supportedMetadataObjectTypes) {
         MEDIA_ERR_LOG("Failed to allocate memory for supportedMetadataObjectTypes");
     }
@@ -484,7 +485,6 @@ Camera_ErrorCode Camera_Manager::CreateVideoOutput(const Camera_VideoProfile* pr
     *videoOutput = out;
     return CAMERA_OK;
 }
-
 
 Camera_ErrorCode Camera_Manager::CreateMetadataOutput(const Camera_MetadataObjectType* type,
     Camera_MetadataOutput** metadataOutput)

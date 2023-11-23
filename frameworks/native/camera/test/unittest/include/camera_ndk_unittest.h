@@ -53,11 +53,11 @@ public:
     /* TearDownTestCase:The test suite cleanup action is executed after the last TestCase */
     static void TearDownTestCase(void);
     /* SetUp:Execute before each test case */
-    void SetUp();
-    void ReleaseImageReceiver();
+    void SetUp(void);
+    void ReleaseImageReceiver(void);
 
     /* TearDown:Execute after each test case */
-    void TearDown();
+    void TearDown(void);
     void SessionCommit(Camera_CaptureSession *captureSession);
     void SessionControlParams(Camera_CaptureSession *captureSession);
     Camera_PhotoOutput* CreatePhotoOutput(int32_t width = PHOTO_DEFAULT_WIDTH, int32_t height = PHOTO_DEFAULT_HEIGHT);

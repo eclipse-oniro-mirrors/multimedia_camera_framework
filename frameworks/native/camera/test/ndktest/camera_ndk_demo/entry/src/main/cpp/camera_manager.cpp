@@ -17,6 +17,8 @@
 
 #define LOG_TAG "DEMO:"
 #define LOG_DOMAIN 0x3200
+
+namespace OHOS_NDK_CAMERA {
 NDKCamera* NDKCamera::ndkCamera_ = nullptr;
 std::mutex NDKCamera::mtx_;
 
@@ -65,7 +67,7 @@ NDKCamera::~NDKCamera()
         if (ret != CAMERA_OK) {
             OH_LOG_ERROR(LOG_APP, "Delete Cameras failed.");
         } else {
-           OH_LOG_ERROR(LOG_APP, "Release OH_CameraManager_DeleteSupportedCameras. ok");
+            OH_LOG_ERROR(LOG_APP, "Release OH_CameraManager_DeleteSupportedCameras. ok");
         }
 
         ret = OH_CameraManager_DeleteSupportedCameraOutputCapability(cameraManager_, cameraOutputCapability_);
@@ -96,9 +98,6 @@ Camera_ErrorCode NDKCamera::ReleaseCamera(void)
     }
     if (photoOutput_) {
         PhotoOutputRelease();
-    }
-    if (videoOutput_) {
-        OH_CaptureSession_RemoveVideoOutput(captureSession_, videoOutput_);
     }
     if (captureSession_) {
         SessionRealese();
@@ -460,7 +459,7 @@ Camera_ErrorCode NDKCamera::AddPhotoOutput()
 
 Camera_ErrorCode NDKCamera::CreateMetadataOutput(void)
 {
-    metaDataObjectType_ = cameraOutputCapability_->supportedMetadataObjectTypes[2]; // 2:camera metedata types
+    metaDataObjectType_ = cameraOutputCapability_->supportedMetadataObjectTypes[0];
     if (metaDataObjectType_ == nullptr) {
         OH_LOG_ERROR(LOG_APP, "Get metaDataObjectType failed.");
         return CAMERA_INVALID_ARGUMENT;
@@ -1016,3 +1015,4 @@ Camera_ErrorCode NDKCamera::CaptureSessionRegisterCallback(void)
     }
     return ret_;
 }
+} // OHOS_NDK_CAMERA
