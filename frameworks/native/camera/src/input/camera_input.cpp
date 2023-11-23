@@ -291,5 +291,39 @@ int32_t CameraInput::SetCameraSettings(std::string setting)
     }
     return UpdateSetting(metadata);
 }
+
+std::shared_ptr<camera_metadata_item_t> CameraInput::GetMetaSetting(uint32_t metaTag)
+{
+    if (cameraObj_ ==nullptr) {
+        MEDIA_ERR_LOG("CameraInput::GetMetaSetting cameraObj has release!");
+        return nullptr;
+    }
+    std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObj_->GetMetadata();
+    if (baseMetadata == nullptr) {
+        MEDIA_ERR_LOG("CameraInput::GetMetaSetting Failed to find baseMetadata");
+        return nullptr;
+    }
+    std::shared_ptr<camera_metadata_item_t> item = MetadataCommonUtils::GetCapabilityEntry(baseMetadata, metaTag);
+    if (item == nullptr || item->count == 0) {
+        MEDIA_ERR_LOG("CameraInput::GetMetaSetting Failed to find meta item: metaTag = %{public}u", metaTag);
+        return nullptr;
+    }
+    return item;
+}
+
+int32_t CameraInput::GetCameraAllVendorTags(std::vector<vendorTag_t> &infos)
+{
+    infos.clear();
+    MEDIA_INFO_LOG("CameraInput::GetCameraAllVendorTags called!");
+    int32_t ret = OHOS::Camera::GetAllVendorTags(infos);
+    if (ret == CAM_META_SUCCESS) {
+        MEDIA_INFO_LOG("CameraInput::GetCameraAllVendorTags success! vendors size = %{public}zu!", infos.size());
+    } else {
+        MEDIA_ERR_LOG("CameraInput::GetCameraAllVendorTags failed! because of hdi error, ret = %{public}d", ret);
+        return CAMERA_UNKNOWN_ERROR;
+    }
+    MEDIA_INFO_LOG("CameraInput::GetCameraAllVendorTags end!");
+    return CAMERA_OK;
+}
 } // namespace CameraStandard
 } // namespace OHOS
