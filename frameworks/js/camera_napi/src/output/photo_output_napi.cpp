@@ -222,6 +222,16 @@ void PhotoOutputCallback::OnCaptureStarted(const int32_t captureID) const
     UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_START, info);
 }
 
+void PhotoOutputCallback::OnCaptureStarted(const int32_t captureID, uint32_t exposureTime) const
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("OnCaptureStarted is called!, captureID: %{public}d", captureID);
+    CallbackInfo info;
+    info.captureID = captureID;
+    info.timestamp = exposureTime;
+    UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_START, info);
+}
+
 void PhotoOutputCallback::OnCaptureEnded(const int32_t captureID, const int32_t frameCount) const
 {
     CAMERA_SYNC_TRACE;
@@ -373,11 +383,16 @@ void PhotoOutputCallback::ExecuteCaptureStartCb(const CallbackInfo &info) const
     napi_value result[ARGS_TWO] = {nullptr, nullptr};
     napi_value callback = nullptr;
     napi_value retVal;
+    napi_value propValue;
     napi_get_undefined(env_, &result[PARAM0]);
     napi_get_undefined(env_, &result[PARAM1]);
     for (auto it = captureStartCbList_.begin(); it != captureStartCbList_.end();) {
         napi_env env = (*it)->env_;
-        napi_create_int32(env, info.captureID, &result[PARAM1]);
+        napi_create_object(env, &result[PARAM1]);
+        napi_create_int32(env, info.captureID, &propValue);
+        napi_set_named_property(env, result[PARAM1], "captureId", propValue);
+        napi_create_int32(env, info.timestamp, &propValue);
+        napi_set_named_property(env, result[PARAM1], "time", propValue);
         napi_get_reference_value(env, (*it)->cb_, &callback);
         napi_call_function(env, nullptr, callback, ARGS_TWO, result, &retVal);
         if ((*it)->isOnce_) {
@@ -684,6 +699,7 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
     napi_property_descriptor photo_output_props[] = {
         DECLARE_NAPI_FUNCTION("getDefaultCaptureSetting", GetDefaultCaptureSetting),
         DECLARE_NAPI_FUNCTION("capture", Capture),
+        DECLARE_NAPI_FUNCTION("confirmCapture", ConfirmCapture),
         DECLARE_NAPI_FUNCTION("release", Release),
         DECLARE_NAPI_FUNCTION("isMirrorSupported", IsMirrorSupported),
         DECLARE_NAPI_FUNCTION("setMirror", SetMirror),
@@ -1061,6 +1077,29 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
         }
     } else {
         MEDIA_ERR_LOG("Capture call Failed!");
+    }
+    return result;
+}
+
+napi_value PhotoOutputNapi::ConfirmCapture(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("ConfirmCapture is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO] = {};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
+    if (status == napi_ok && photoOutputNapi != nullptr) {
+        int32_t retCode = photoOutputNapi->photoOutput_->ConfirmCapture();
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return result;
+        }
     }
     return result;
 }

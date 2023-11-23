@@ -28,6 +28,7 @@ public:
 
 private:
     int HandleOnCaptureStarted(MessageParcel& data);
+    int HandleOnCaptureStarted_V1_2(MessageParcel& data);
     int HandleOnCaptureEnded(MessageParcel& data);
     int HandleOnCaptureError(MessageParcel& data);
     int HandleOnFrameShutter(MessageParcel& data);

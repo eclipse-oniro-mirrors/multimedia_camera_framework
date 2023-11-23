@@ -37,6 +37,15 @@ public:
     }
 
 // need fix
+    void OnCaptureStarted(const int32_t captureID, uint32_t exposureTime) const override
+    {
+        MEDIA_DEBUG_LOG("OnCaptureStarted is called!, captureID: %{public}d", captureID);
+        if (photoOutput_ != nullptr && callback_.onFrameStart != nullptr) {
+            callback_.onFrameStart(photoOutput_);
+        }
+    }
+
+// need fix
     void OnFrameShutter(const int32_t captureId, const uint64_t timestamp) const override
     {
         MEDIA_DEBUG_LOG("onFrameShutter is called!, captureId: %{public}d", captureId);

@@ -30,8 +30,8 @@
 #include "privacy_kit.h"
 #include "state_customized_cbk.h"
 #include "v1_0/istream_operator.h"
-#include "v1_0/istream_operator_callback.h"
 #include "v1_1/istream_operator.h"
+#include "v1_2/istream_operator_callback.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -153,13 +153,17 @@ private:
     wptr<HCaptureSession> captureSession_;
 };
 
-class StreamOperatorCallback : public IStreamOperatorCallback {
+class StreamOperatorCallback : public OHOS::HDI::Camera::V1_2::IStreamOperatorCallback {
 public:
     StreamOperatorCallback() = default;
     explicit StreamOperatorCallback(sptr<HCaptureSession> session);
     virtual ~StreamOperatorCallback();
 
     int32_t OnCaptureStarted(int32_t captureId, const std::vector<int32_t>& streamIds) override;
+
+    int32_t OnCaptureStartedV1_2(int32_t captureId,
+            const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo>& infos) override;
+
     int32_t OnCaptureEnded(int32_t captureId, const std::vector<CaptureEndedInfo>& infos) override;
     int32_t OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos) override;
     int32_t OnFrameShutter(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;

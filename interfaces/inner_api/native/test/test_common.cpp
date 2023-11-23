@@ -200,6 +200,12 @@ void TestPhotoOutputCallback::OnCaptureStarted(const int32_t captureID) const
                    testName_, captureID);
 }
 
+void TestPhotoOutputCallback::OnCaptureStarted(const int32_t captureID, uint32_t exposureTime) const
+{
+    MEDIA_INFO_LOG("PhotoOutputCallback:OnCaptureStarted(), testName_: %{public}s, captureID: %{public}d",
+                   testName_, captureID);
+}
+
 void TestPhotoOutputCallback::OnCaptureEnded(const int32_t captureID, const int32_t frameCount) const
 {
     MEDIA_INFO_LOG("TestPhotoOutputCallback:OnCaptureEnded(), testName_: %{public}s, captureID: %{public}d,"

@@ -107,8 +107,11 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         MEDIA_ERR_LOG("HStreamCapture::Capture failed with error Code: %{public}d", rc);
         ret = HdiToServiceError(rc);
     }
-    ReleaseCaptureId(curCaptureID_);
-    curCaptureID_ = 0;
+    int32_t NightMode = 4;
+    if (GetMode() != NightMode) {
+        ReleaseCaptureId(curCaptureID_);
+        curCaptureID_ = 0;
+    }
     return ret;
 }
 
@@ -194,6 +197,43 @@ int32_t HStreamCapture::CancelCapture()
     return CAMERA_OK;
 }
 
+void HStreamCapture::SetMode(int32_t modeName)
+{
+    modeName_ = modeName;
+    MEDIA_INFO_LOG("HStreamCapture SetMode modeName = %{public}d", modeName);
+}
+
+int32_t HStreamCapture::GetMode()
+{
+    MEDIA_INFO_LOG("HStreamCapture GetMode modeName = %{public}d", modeName_);
+    return modeName_;
+}
+
+int32_t HStreamCapture::ConfirmCapture()
+{
+    CAMERA_SYNC_TRACE;
+    if (streamOperator_ == nullptr) {
+        return CAMERA_INVALID_STATE;
+    }
+    MEDIA_INFO_LOG("HStreamCapture::ConfirmCapture with capture ID: %{public}d", curCaptureID_);
+    sptr<OHOS::HDI::Camera::V1_2::IStreamOperator> streamOperatorV1_2 =
+        OHOS::HDI::Camera::V1_2::IStreamOperator::CastFrom(streamOperator_);
+    if (streamOperatorV1_2 == nullptr) {
+        MEDIA_ERR_LOG("HStreamCapture::ConfirmCapture streamOperatorV1_2 castFrom failed!");
+        return CAMERA_UNKNOWN_ERROR;
+    }
+    OHOS::HDI::Camera::V1_2::CamRetCode rc =
+        (OHOS::HDI::Camera::V1_2::CamRetCode)(streamOperatorV1_2->ConfirmCapture(curCaptureID_));
+    int32_t ret = 0;
+    if (rc != HDI::Camera::V1_2::NO_ERROR) {
+        MEDIA_ERR_LOG("HStreamCapture::ConfirmCapture failed with error Code: %{public}d", rc);
+        ret = HdiToServiceErrorV1_2(rc);
+    }
+    ReleaseCaptureId(curCaptureID_);
+    curCaptureID_ = 0;
+    return ret;
+}
+
 int32_t HStreamCapture::Release()
 {
     if (curCaptureID_) {
@@ -221,6 +261,16 @@ int32_t HStreamCapture::OnCaptureStarted(int32_t captureId)
     std::lock_guard<std::mutex> lock(callbackLock_);
     if (streamCaptureCallback_ != nullptr) {
         streamCaptureCallback_->OnCaptureStarted(captureId);
+    }
+    return CAMERA_OK;
+}
+
+int32_t HStreamCapture::OnCaptureStarted(int32_t captureId, uint32_t exposureTime)
+{
+    CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(callbackLock_);
+    if (streamCaptureCallback_ != nullptr) {
+        streamCaptureCallback_->OnCaptureStarted(captureId, exposureTime);
     }
     return CAMERA_OK;
 }

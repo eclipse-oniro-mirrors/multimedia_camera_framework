@@ -62,8 +62,7 @@ int32_t CameraDeviceServiceCallback::OnResult(const uint64_t timestamp,
     } else {
         MEDIA_INFO_LOG("CameraDeviceServiceCallback::ResultCallback not set!, Discarding callback");
     }
-    camInput_->ProcessDeviceCallbackUpdates(result);
-    camInput_->ProcessFaceRecUpdates(timestamp, result);
+    camInput_->ProcessCallbackUpdates(timestamp, result);
     return CAMERA_OK;
 }
 
@@ -222,43 +221,14 @@ sptr<CameraDevice> CameraInput::GetCameraDeviceInfo()
     return cameraObj_;
 }
 
-void CameraInput::ProcessFaceRecUpdates(const uint64_t timestamp,
-                                        const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
+void CameraInput::ProcessCallbackUpdates(const uint64_t timestamp,
+    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
     CaptureSession* captureSession = GetSession();
     if (captureSession == nullptr) {
         return;
     }
-
-    if (captureSession->GetMetaOutput()) {
-        sptr<MetadataOutput> metaOutput = static_cast<MetadataOutput *>(captureSession->GetMetaOutput().GetRefPtr());
-        if (!metaOutput) {
-            MEDIA_DEBUG_LOG("CameraInput::metaOutput is null");
-            return;
-        }
-        bool isNeedMirror = false;
-        if (GetCameraDeviceInfo()) {
-            isNeedMirror = GetCameraDeviceInfo()->GetPosition() == CAMERA_POSITION_FRONT;
-        }
-        std::vector<sptr<MetadataObject>> metaObjects;
-        metaOutput->ProcessFaceRectangles(timestamp, result, metaObjects, isNeedMirror);
-        std::shared_ptr<MetadataObjectCallback> appObjectCallback = metaOutput->GetAppObjectCallback();
-        if (!metaObjects.empty() && appObjectCallback) {
-            MEDIA_DEBUG_LOG("CameraInput::OnMetadataObjectsAvailable");
-            appObjectCallback->OnMetadataObjectsAvailable(metaObjects);
-        }
-    }
-}
-
-void CameraInput::ProcessDeviceCallbackUpdates(const std::shared_ptr<Camera::CameraMetadata> &result)
-{
-    CaptureSession* captureSession = GetSession();
-    if (captureSession == nullptr) {
-        return;
-    }
-
-    captureSession->ProcessAutoFocusUpdates(result);
-    captureSession->ProcessMacroStatusChange(result);
+    captureSession->ProcessCallbacks(timestamp, result);
 }
 
 int32_t CameraInput::UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata)
@@ -320,6 +290,40 @@ int32_t CameraInput::SetCameraSettings(std::string setting)
         return CAMERA_INVALID_ARG;
     }
     return UpdateSetting(metadata);
+}
+
+std::shared_ptr<camera_metadata_item_t> CameraInput::GetMetaSetting(uint32_t metaTag)
+{
+    if (cameraObj_ ==nullptr) {
+        MEDIA_ERR_LOG("CameraInput::GetMetaSetting cameraObj has release!");
+        return nullptr;
+    }
+    std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObj_->GetMetadata();
+    if (baseMetadata == nullptr) {
+        MEDIA_ERR_LOG("CameraInput::GetMetaSetting Failed to find baseMetadata");
+        return nullptr;
+    }
+    std::shared_ptr<camera_metadata_item_t> item = MetadataCommonUtils::GetCapabilityEntry(baseMetadata, metaTag);
+    if (item == nullptr || item->count == 0) {
+        MEDIA_ERR_LOG("CameraInput::GetMetaSetting Failed to find meta item: metaTag = %{public}u", metaTag);
+        return nullptr;
+    }
+    return item;
+}
+
+int32_t CameraInput::GetCameraAllVendorTags(std::vector<vendorTag_t> &infos)
+{
+    infos.clear();
+    MEDIA_INFO_LOG("CameraInput::GetCameraAllVendorTags called!");
+    int32_t ret = OHOS::Camera::GetAllVendorTags(infos);
+    if (ret == CAM_META_SUCCESS) {
+        MEDIA_INFO_LOG("CameraInput::GetCameraAllVendorTags success! vendors size = %{public}zu!", infos.size());
+    } else {
+        MEDIA_ERR_LOG("CameraInput::GetCameraAllVendorTags failed! because of hdi error, ret = %{public}d", ret);
+        return CAMERA_UNKNOWN_ERROR;
+    }
+    MEDIA_INFO_LOG("CameraInput::GetCameraAllVendorTags end!");
+    return CAMERA_OK;
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -22,6 +22,7 @@
 #include "hstream_capture_callback_stub.h"
 #include "input/camera_device.h"
 #include "session/capture_session.h"
+#include "session/night_session.h"
 
 using namespace std;
 
@@ -168,6 +169,18 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId)
     auto item = photoOutput_.promote();
     if (item != nullptr && item->GetApplicationCallback() != nullptr) {
         item->GetApplicationCallback()->OnCaptureStarted(captureId);
+    } else {
+        MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnCaptureStarted callback");
+    }
+    return CAMERA_OK;
+}
+
+int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId, uint32_t exposureTime)
+{
+    CAMERA_SYNC_TRACE;
+    auto item = photoOutput_.promote();
+    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
+        item->GetApplicationCallback()->OnCaptureStarted(captureId, exposureTime);
     } else {
         MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnCaptureStarted callback");
     }
@@ -370,6 +383,31 @@ int32_t PhotoOutput::CancelCapture()
     return ServiceToCameraError(errCode);
 }
 
+int32_t PhotoOutput::ConfirmCapture()
+{
+    std::lock_guard<std::mutex> lock(asyncOpMutex_);
+    auto captureSession = GetSession();
+    if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
+        MEDIA_ERR_LOG("PhotoOutput Failed to ConfirmCapture!, session not runing");
+        return CameraErrorCode::SESSION_NOT_RUNNING;
+    }
+    if (GetStream() == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput Failed to ConfirmCapture!, GetStream is nullptr");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
+    auto itemStream = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (itemStream) {
+        errCode = itemStream->ConfirmCapture();
+    } else {
+        MEDIA_ERR_LOG("PhotoOutput::ConfirmCapture() itemStream is nullptr");
+    }
+    if (errCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("PhotoOutput Failed to ConfirmCapture!, errCode: %{public}d", errCode);
+    }
+    return ServiceToCameraError(errCode);
+}
+
 int32_t PhotoOutput::Release()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
@@ -438,6 +476,10 @@ int32_t PhotoOutput::IsQuickThumbnailSupported()
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_QUICK_THUMBNAIL_AVAILABLE, &item);
     if (ret == CAM_META_SUCCESS) {
         isQuickThumbnailEnabled = (item.data.u8[0] == 1) ? 0 : -1;
+    }
+    const int32_t nightMode = 4;
+    if (captureSession->GetMode() == nightMode && (cameraObj->GetPosition() != CAMERA_POSITION_FRONT)) {
+        isQuickThumbnailEnabled = -1;
     }
     return isQuickThumbnailEnabled;
 }

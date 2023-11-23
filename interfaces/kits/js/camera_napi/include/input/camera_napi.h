@@ -130,7 +130,13 @@ static const std::unordered_map<std::string, int32_t> mapExposureState = {
 };
 
 static const std::unordered_map<std::string, int32_t> mapCameraMode = {
-    {"PORTRAIT", 1},
+    {"NORMAL", 0},
+    {"CAPTURE", 1},
+    {"VIDEO", 2},
+    {"PORTRAIT", 3},
+    {"NIGHT", 4},
+    {"PROFESSIONAL", 5},
+    {"SLOW_MOTION", 6},
 };
 
 static const std::unordered_map<std::string, int32_t> mapFilterType = {

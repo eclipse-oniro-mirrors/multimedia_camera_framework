@@ -1628,6 +1628,37 @@ void CaptureSession::ProcessAutoFocusUpdates(const std::shared_ptr<Camera::Camer
     }
 }
 
+void CaptureSession::ProcessFaceRecUpdates(const uint64_t timestamp,
+    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
+{
+    if (GetMetaOutput() != nullptr) {
+        sptr<MetadataOutput> metaOutput = static_cast<MetadataOutput *>(GetMetaOutput().GetRefPtr());
+        if (!metaOutput) {
+            MEDIA_DEBUG_LOG("metaOutput is null");
+            return;
+        }
+        bool isNeedMirror = false;
+        if (inputDevice_ && inputDevice_->GetCameraDeviceInfo()) {
+            isNeedMirror = (inputDevice_->GetCameraDeviceInfo()->GetPosition() == CAMERA_POSITION_FRONT);
+        }
+        std::vector<sptr<MetadataObject>> metaObjects;
+        metaOutput->ProcessFaceRectangles(timestamp, result, metaObjects, isNeedMirror);
+        std::shared_ptr<MetadataObjectCallback> appObjectCallback = metaOutput->GetAppObjectCallback();
+        if (!metaObjects.empty() && appObjectCallback) {
+            MEDIA_DEBUG_LOG("OnMetadataObjectsAvailable");
+            appObjectCallback->OnMetadataObjectsAvailable(metaObjects);
+        }
+    }
+}
+
+void CaptureSession::ProcessCallbacks(const uint64_t timestamp,
+    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
+{
+    MEDIA_INFO_LOG("ProcessCallbacks");
+    ProcessFaceRecUpdates(timestamp, result);
+    ProcessAutoFocusUpdates(result);
+}
+
 std::vector<FlashMode> CaptureSession::GetSupportedFlashModes()
 {
     std::vector<FlashMode> supportedFlashModes = {};

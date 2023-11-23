@@ -24,6 +24,7 @@
 #include "camera_device.h"
 #include "capture_input.h"
 #include "icamera_device_service.h"
+#include "metadata_common_utils.h"
 #include "icamera_device_service_callback.h"
 #include "hcamera_device_callback_stub.h"
 #include "camera_death_recipient.h"
@@ -284,7 +285,7 @@ public:
     *
     * @param result metadata got from callback from service layer.
     */
-    void ProcessDeviceCallbackUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
+    void ProcessCallbackUpdates(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
 
     /**
     * @brief This function is called when there is focus state change
@@ -316,6 +317,10 @@ public:
     * @return Returns 0 if success or appropriate error code if failed.
     */
     int32_t SetCameraSettings(std::string setting);
+
+    std::shared_ptr<camera_metadata_item_t> GetMetaSetting(uint32_t metaTag);
+
+    int32_t GetCameraAllVendorTags(std::vector<vendorTag_t> &infos);
 
     void ProcessFaceRecUpdates(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
 private:

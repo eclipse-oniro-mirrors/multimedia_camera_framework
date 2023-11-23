@@ -31,7 +31,7 @@
 #include "accesstoken_kit.h"
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
-
+#include "camera_utils_stub.h"
 using namespace std;
 using namespace OHOS;
 using namespace OHOS::CameraStandard;
@@ -237,6 +237,19 @@ std::vector<int32_t> GetSupportedBeautyRangeStub(void* obj, BeautyType beautyTyp
     return beautyRange;
 }
 
+int32_t GetExposureRangeStub(std::vector<uint32_t> &exposureRange)
+{
+    cout<<"=================GetSupportedBeautyRangeStub call================="<<endl;
+    exposureRange.clear();
+    std::vector<uint32_t> exposureRangeStub = {250, 500, 1000, 2000, 4000, 8000,
+        12000, 16000, 20000, 24000, 28000, 32000};
+    for (size_t i = 0; i < exposureRangeStub.size(); i++) {
+        exposureRange.push_back(exposureRangeStub.at(i));
+    }
+    cout << " exposureRangeStub size()" << exposureRangeStub.size() <<endl;
+    return 0;
+}
+
 std::vector<FilterType> GetSupportedFiltersStub()
 {
     cout<<"=================GetSupportedFiltersStub call================="<<endl;
@@ -247,6 +260,8 @@ std::vector<FilterType> GetSupportedFiltersStub()
 int main(int argc, char **argv)
 {
     cout<<"-----------------version:20230822-----------------"<<endl;
+    Stub stub;
+    stub.set(ADDR(NightSession, GetExposureRange), GetExposureRangeStub);
     const int32_t previewWidthIndex = 1;
     const int32_t previewHeightIndex = 2;
     const int32_t photoWidthIndex = 3;

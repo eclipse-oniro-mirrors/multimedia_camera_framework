@@ -82,6 +82,7 @@ public:
     static napi_value Off(napi_env env, napi_callback_info info);
     static napi_value Once(napi_env env, napi_callback_info info);
     sptr<CameraInput> GetCameraInput();
+    sptr<CameraInput> cameraInput_;
 private:
     static void CameraInputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value CameraInputNapiConstructor(napi_env env, napi_callback_info info);
@@ -93,7 +94,6 @@ private:
     napi_env env_;
     napi_ref wrapper_;
     std::string cameraId_;
-    sptr<CameraInput> cameraInput_;
     shared_ptr<ErrorCallbackListener> errorCallback_;
 
     static thread_local napi_ref sConstructor_;

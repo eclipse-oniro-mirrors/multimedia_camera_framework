@@ -29,6 +29,8 @@ public:
 
     virtual int32_t CancelCapture() = 0;
 
+    virtual int32_t ConfirmCapture() = 0;
+
     virtual int32_t SetCallback(sptr<IStreamCaptureCallback> &callback) = 0;
 
     virtual int32_t Release() = 0;
