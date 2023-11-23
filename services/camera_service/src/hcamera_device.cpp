@@ -286,6 +286,7 @@ int32_t HCameraDevice::CloseDevice()
         std::lock_guard<std::mutex> lock(deviceCloseMutex_);
         if (!isOpenedCameraDevice_.load()) {
             MEDIA_DEBUG_LOG("HCameraDevice::CloseDevice device has benn closed");
+            return CAMERA_OK;
         }
         bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
         if (isFoldable) {
