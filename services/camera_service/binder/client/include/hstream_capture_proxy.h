@@ -31,6 +31,8 @@ public:
 
     int32_t CancelCapture() override;
 
+    int32_t ConfirmCapture() override;
+
     int32_t Release() override;
 
     int32_t SetCallback(sptr<IStreamCaptureCallback> &callback) override;

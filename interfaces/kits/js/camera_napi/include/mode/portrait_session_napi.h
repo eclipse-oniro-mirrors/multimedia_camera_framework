@@ -27,7 +27,7 @@ static const char PORTRAIT_SESSION_NAPI_CLASS_NAME[] = "PortraitSession";
 class PortraitSessionNapi : public CameraSessionNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
-    static napi_value CreateCameraSession(napi_env env, napi_callback_info info);
+    static napi_value CreateCameraSession(napi_env env);
     PortraitSessionNapi();
     ~PortraitSessionNapi();
 

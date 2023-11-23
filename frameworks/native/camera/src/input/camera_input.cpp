@@ -62,8 +62,7 @@ int32_t CameraDeviceServiceCallback::OnResult(const uint64_t timestamp,
     } else {
         MEDIA_INFO_LOG("CameraDeviceServiceCallback::ResultCallback not set!, Discarding callback");
     }
-    camInput_->ProcessDeviceCallbackUpdates(result);
-    camInput_->ProcessFaceRecUpdates(timestamp, result);
+    camInput_->ProcessCallbackUpdates(timestamp, result);
     return CAMERA_OK;
 }
 
@@ -222,43 +221,14 @@ sptr<CameraDevice> CameraInput::GetCameraDeviceInfo()
     return cameraObj_;
 }
 
-void CameraInput::ProcessFaceRecUpdates(const uint64_t timestamp,
-                                        const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
+void CameraInput::ProcessCallbackUpdates(const uint64_t timestamp,
+    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
     CaptureSession* captureSession = GetSession();
     if (captureSession == nullptr) {
         return;
     }
-
-    if (captureSession->GetMetaOutput()) {
-        sptr<MetadataOutput> metaOutput = static_cast<MetadataOutput *>(captureSession->GetMetaOutput().GetRefPtr());
-        if (!metaOutput) {
-            MEDIA_DEBUG_LOG("CameraInput::metaOutput is null");
-            return;
-        }
-        bool isNeedMirror = false;
-        if (GetCameraDeviceInfo()) {
-            isNeedMirror = GetCameraDeviceInfo()->GetPosition() == CAMERA_POSITION_FRONT;
-        }
-        std::vector<sptr<MetadataObject>> metaObjects;
-        metaOutput->ProcessFaceRectangles(timestamp, result, metaObjects, isNeedMirror);
-        std::shared_ptr<MetadataObjectCallback> appObjectCallback = metaOutput->GetAppObjectCallback();
-        if (!metaObjects.empty() && appObjectCallback) {
-            MEDIA_DEBUG_LOG("CameraInput::OnMetadataObjectsAvailable");
-            appObjectCallback->OnMetadataObjectsAvailable(metaObjects);
-        }
-    }
-}
-
-void CameraInput::ProcessDeviceCallbackUpdates(const std::shared_ptr<Camera::CameraMetadata> &result)
-{
-    CaptureSession* captureSession = GetSession();
-    if (captureSession == nullptr) {
-        return;
-    }
-
-    captureSession->ProcessAutoFocusUpdates(result);
-    captureSession->ProcessMacroStatusChange(result);
+    captureSession->ProcessCallbacks(timestamp, result);
 }
 
 int32_t CameraInput::UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata)

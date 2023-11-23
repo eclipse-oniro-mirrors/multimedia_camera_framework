@@ -200,10 +200,17 @@ public:
         return;
     }
 
+    void OnCaptureStarted(const int32_t captureId, uint32_t exposureTime) const override
+    {
+        MEDIA_DEBUG_LOG("AppCallback::OnCaptureStarted captureId: %{public}d", captureId);
+        g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_START)] = 1;
+        return;
+    }
+
     void OnCaptureEnded(const int32_t captureId, const int32_t frameCount) const override
     {
-        MEDIA_DEBUG_LOG(
-            "AppCallback::OnCaptureEnded captureId: %{public}d, frameCount: %{public}d", captureId, frameCount);
+        MEDIA_DEBUG_LOG("AppCallback::OnCaptureEnded captureId: %{public}d, frameCount: %{public}d",
+                        captureId, frameCount);
         g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_END)] = 1;
         return;
     }

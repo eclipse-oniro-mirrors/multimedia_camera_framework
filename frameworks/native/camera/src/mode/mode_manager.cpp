@@ -138,6 +138,9 @@ sptr<CaptureSession> ModeManager::CreateCaptureSession(CameraMode mode)
             case CameraMode::SCAN:
                 captureSession = new(std::nothrow) ScanSession(session);
                 break;
+            case CameraMode::NIGHT:
+                captureSession = new(std::nothrow) NightSession(session);
+                break;
             default:
                 captureSession = new(std::nothrow) CaptureSession(session);
                 break;
@@ -190,7 +193,7 @@ sptr<CameraOutputCapability> ModeManager::GetSupportedOutputCapability(sptr<Came
         MEDIA_ERR_LOG("Failed get extend stream info %{public}d %{public}d", ret, item.count);
         return nullptr;
     }
-    std::shared_ptr<CameraStreamInfoParse>modeStreamParse = std::make_shared<CameraStreamInfoParse>();
+    std::shared_ptr<CameraStreamInfoParse> modeStreamParse = std::make_shared<CameraStreamInfoParse>();
     modeStreamParse->getModeInfo(item.data.i32, item.count, extendInfo); // 解析tag中带的数据信息意义
     for (uint32_t i = 0; i < extendInfo.modeCount; i++) {
         if (modeName != 0 && modeName == extendInfo.modeInfo[i].modeName) {

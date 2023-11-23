@@ -284,7 +284,7 @@ public:
     *
     * @param result metadata got from callback from service layer.
     */
-    void ProcessDeviceCallbackUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
+    void ProcessCallbackUpdates(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
 
     /**
     * @brief This function is called when there is focus state change
@@ -317,8 +317,8 @@ public:
     */
     int32_t SetCameraSettings(std::string setting);
 
-    void ProcessFaceRecUpdates(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
 private:
+    void ProcessFaceRecUpdates(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
     sptr<ICameraDeviceService> deviceObj_;
     sptr<CameraDevice> cameraObj_;
     std::shared_ptr<ResultCallback> resultCallback_;

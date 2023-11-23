@@ -27,6 +27,7 @@
 #include "icamera_device_service.h"
 #include "session/capture_session.h"
 #include "session/portrait_session.h"
+#include "session/night_session.h"
 #include "session/scan_session.h"
 #include "output/camera_output_capability.h"
 #include "output/metadata_output.h"

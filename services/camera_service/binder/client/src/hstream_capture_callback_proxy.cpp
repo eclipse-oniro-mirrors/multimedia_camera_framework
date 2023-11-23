@@ -41,6 +41,26 @@ int32_t HStreamCaptureCallbackProxy::OnCaptureStarted(int32_t captureId)
     return error;
 }
 
+int32_t HStreamCaptureCallbackProxy::OnCaptureStarted(int32_t captureId, uint32_t exposureTime)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    option.SetFlags(option.TF_ASYNC);
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(captureId);
+    data.WriteUint32(exposureTime);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_STARTED_V1_2),
+        data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureStarted failed, error: %{public}d", error);
+    }
+
+    return error;
+}
+
 int32_t HStreamCaptureCallbackProxy::OnCaptureEnded(int32_t captureId, int32_t frameCount)
 {
     MessageParcel data;

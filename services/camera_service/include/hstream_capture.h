@@ -24,6 +24,7 @@
 #include "hstream_capture_stub.h"
 #include "hstream_common.h"
 #include "v1_0/istream_operator.h"
+#include "v1_2/istream_operator.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -39,21 +40,26 @@ public:
     int32_t SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer) override;
     int32_t Capture(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureSettings) override;
     int32_t CancelCapture() override;
+    int32_t ConfirmCapture() override;
     int32_t Release() override;
     int32_t SetCallback(sptr<IStreamCaptureCallback> &callback) override;
     int32_t OnCaptureStarted(int32_t captureId);
+    int32_t OnCaptureStarted(int32_t captureId, uint32_t exposureTime);
     int32_t OnCaptureEnded(int32_t captureId, int32_t frameCount);
     int32_t OnCaptureError(int32_t captureId, int32_t errorType);
     int32_t OnFrameShutter(int32_t captureId, uint64_t timestamp);
     void DumpStreamInfo(std::string& dumpString) override;
     void SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_);
     void PrintDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_);
+    void SetMode(int32_t modeName);
+    int32_t GetMode();
 
 private:
     sptr<IStreamCaptureCallback> streamCaptureCallback_;
     std::mutex callbackLock_;
     int32_t thumbnailSwitch_ = 0;
     sptr<BufferProducerSequenceable> thumbnailBufferQueue_;
+    int32_t modeName_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

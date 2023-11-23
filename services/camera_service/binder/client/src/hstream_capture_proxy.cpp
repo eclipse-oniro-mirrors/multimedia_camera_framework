@@ -60,6 +60,22 @@ int32_t HStreamCaptureProxy::CancelCapture()
     return error;
 }
 
+int32_t HStreamCaptureProxy::ConfirmCapture()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_CANCEL), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamCaptureProxy CancelCapture failed, error: %{public}d", error);
+    }
+
+    return error;
+}
+
 int32_t HStreamCaptureProxy::Release()
 {
     MessageParcel data;

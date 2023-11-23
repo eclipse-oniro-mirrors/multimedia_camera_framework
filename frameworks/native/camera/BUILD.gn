@@ -74,6 +74,7 @@ ohos_shared_library("camera_framework") {
     "src/output/sketch_wrapper.cpp",
     "src/output/video_output.cpp",
     "src/session/capture_session.cpp",
+    "src/session/night_session.cpp",
     "src/session/portrait_session.cpp",
     "src/session/scan_session.cpp",
     "src/utils/metadata_common_utils.cpp",

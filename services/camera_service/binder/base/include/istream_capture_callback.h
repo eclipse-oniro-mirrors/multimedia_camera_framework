@@ -24,6 +24,8 @@ class IStreamCaptureCallback : public IRemoteBroker {
 public:
     virtual int32_t OnCaptureStarted(int32_t captureId) = 0;
 
+    virtual int32_t OnCaptureStarted(int32_t captureId, uint32_t exposureTime) = 0;
+
     virtual int32_t OnCaptureEnded(int32_t captureId, int32_t frameCount) = 0;
 
     virtual int32_t OnCaptureError(int32_t captureId, int32_t errorType) = 0;

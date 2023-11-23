@@ -16,7 +16,6 @@
 #include "input/camera_napi.h"
 #include "input/camera_manager_napi.h"
 #include "mode/mode_manager_napi.h"
-
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
@@ -132,6 +131,16 @@ napi_value ModeManagerNapi::CreateModeManager(napi_env env)
     return result;
 }
 
+enum JsCameraMode {
+    JS_NORMAL = 0,
+    JS_CAPTURE = 1,
+    JS_VIDEO = 2,
+    JS_PORTRAIT = 3,
+    JS_NIGHT = 4,
+    JS_PROFESSIONAL = 5,
+    JS_SLOW_MOTION = 6,
+};
+
 napi_value ModeManagerNapi::CreateCameraSessionInstance(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CreateCameraSessionInstance is called");
@@ -152,24 +161,23 @@ napi_value ModeManagerNapi::CreateCameraSessionInstance(napi_env env, napi_callb
         return nullptr;
     }
 
-    int32_t modeName;
-    napi_get_value_int32(env, argv[PARAM0], &modeName);
-    MEDIA_INFO_LOG("ModeManagerNapi::CreateCameraSessionInstance mode = %{public}d", modeName);
-    if (modeName == 1) { // trans js portrait to fwk portrait
-        modeName = CameraMode::PORTRAIT;
-    } else {
-        modeName = CameraMode::NORMAL;
-    }
-    switch (modeName) {
-        case CameraMode::PORTRAIT:
-            result = PortraitSessionNapi::CreateCameraSession(env, info);
-            break;
-
-        default:
+    int32_t jsModeName;
+    napi_get_value_int32(env, argv[PARAM0], &jsModeName);
+    MEDIA_INFO_LOG("ModeManagerNapi::CreateCameraSessionInstance mode = %{public}d", jsModeName);
+    switch (jsModeName) {
+        case JS_NORMAL:
             result = CameraSessionNapi::CreateCameraSession(env);
             break;
+        case JS_PORTRAIT:
+            result = PortraitSessionNapi::CreateCameraSession(env);
+            break;
+        case JS_NIGHT:
+            result = NightSessionNapi::CreateCameraSession(env);
+            break;
+        default:
+            MEDIA_ERR_LOG("ModeManagerNapi::CreateCameraSessionInstance mode = %{public}d not supported", jsModeName);
+            break;
     }
-
     return result;
 }
 
@@ -220,14 +228,8 @@ napi_value ModeManagerNapi::GetSupportedModes(napi_env env, napi_callback_info i
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&modeManagerNapi));
     if (status == napi_ok && modeManagerNapi != nullptr) {
         std::vector<CameraMode> modeObjList = modeManagerNapi->modeManager_->GetSupportedModes(cameraInfo);
-        std::vector<CameraMode> modeObjListJs = {};
-        if (std::find(modeObjList.begin(), modeObjList.end(), CameraMode::PORTRAIT) != modeObjList.end()) {
-            CameraMode modeJs = CameraMode::CAPTURE;
-            modeObjListJs.push_back(modeJs);
-            MEDIA_INFO_LOG("ModeManagerNapi::GetSupportedModes mode=[%{public}d]", modeJs);
-        }
-        MEDIA_INFO_LOG("ModeManagerNapi::GetSupportedModes size=[%{public}zu]", modeObjListJs.size());
-        jsResult = CreateJSArray(env, status, modeObjListJs);
+        MEDIA_INFO_LOG("ModeManagerNapi::GetSupportedModes size=[%{public}zu]", modeObjList.size());
+        jsResult = CreateJSArray(env, status, modeObjList);
         if (status == napi_ok) {
             return jsResult;
         } else {
@@ -268,13 +270,20 @@ napi_value ModeManagerNapi::GetSupportedOutputCapability(napi_env env, napi_call
     int32_t cameraMode;
     napi_get_value_int32(env, argv[PARAM1], &cameraMode);
     MEDIA_INFO_LOG("ModeManagerNapi::GetSupportedOutputCapability mode = %{public}d", cameraMode);
-    if (cameraMode == 1) { // trans js portrait to fwk portrait
-        cameraMode = CameraMode::PORTRAIT;
-    } else {
-        cameraMode = CameraMode::NORMAL;
+    switch (cameraMode) {
+        case JS_NORMAL:
+            result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, CameraMode::NORMAL);
+            break;
+        case JS_PORTRAIT:
+            result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, CameraMode::PORTRAIT);
+            break;
+        case JS_NIGHT:
+            result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, CameraMode::NIGHT);
+            break;
+        default:
+            MEDIA_ERR_LOG("ModeManagerNapi::CreateCameraSessionInstance mode = %{public}d not supported", cameraMode);
+            break;
     }
-    result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo,
-        static_cast<CameraMode>(cameraMode));
     return result;
 }
 } // namespace CameraStandard
