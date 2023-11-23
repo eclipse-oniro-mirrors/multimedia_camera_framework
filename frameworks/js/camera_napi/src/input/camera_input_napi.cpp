@@ -45,12 +45,16 @@ void ErrorCallbackListener::OnErrorCallbackAsync(const int32_t errorType, const 
         MEDIA_ERR_LOG("failed to allocate work");
         return;
     }
-    std::unique_ptr<ErrorCallbackInfo> callbackInfo = std::make_unique<ErrorCallbackInfo>(errorType, errorMsg, this);
+    std::unique_ptr<ErrorCallbackInfo> callbackInfo =
+        std::make_unique<ErrorCallbackInfo>(errorType, errorMsg, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         ErrorCallbackInfo* callbackInfo = reinterpret_cast<ErrorCallbackInfo *>(work->data);
         if (callbackInfo) {
-            callbackInfo->listener_->OnErrorCallback(callbackInfo->errorType_, callbackInfo->errorMsg_);
+            auto listener = callbackInfo->listener_.lock();
+            if (listener) {
+                listener->OnErrorCallback(callbackInfo->errorType_, callbackInfo->errorMsg_);
+            }
             delete callbackInfo;
         }
         delete work;

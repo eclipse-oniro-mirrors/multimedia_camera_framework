@@ -192,12 +192,15 @@ void PhotoOutputCallback::UpdateJSCallbackAsync(PhotoOutputEventType eventType, 
         return;
     }
     std::unique_ptr<PhotoOutputCallbackInfo> callbackInfo =
-        std::make_unique<PhotoOutputCallbackInfo>(eventType, info, this);
+        std::make_unique<PhotoOutputCallbackInfo>(eventType, info, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         PhotoOutputCallbackInfo* callbackInfo = reinterpret_cast<PhotoOutputCallbackInfo *>(work->data);
         if (callbackInfo) {
-            callbackInfo->listener_->UpdateJSCallback(callbackInfo->eventType_, callbackInfo->info_);
+            auto listener = callbackInfo->listener_.lock();
+            if (listener) {
+                listener->UpdateJSCallback(callbackInfo->eventType_, callbackInfo->info_);
+            }
             delete callbackInfo;
         }
         delete work;

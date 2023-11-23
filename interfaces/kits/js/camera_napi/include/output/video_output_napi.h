@@ -41,7 +41,7 @@ static EnumHelper<VideoOutputEventType> VideoOutputEventTypeHelper({
     VideoOutputEventType::VIDEO_INVALID_TYPE
 );
 
-class VideoCallbackListener : public VideoStateCallback  {
+class VideoCallbackListener : public VideoStateCallback, public std::enable_shared_from_this<VideoCallbackListener> {
 public:
     explicit VideoCallbackListener(napi_env env);
     ~VideoCallbackListener() = default;
@@ -66,8 +66,9 @@ private:
 struct VideoOutputCallbackInfo {
     VideoOutputEventType eventType_;
     int32_t value_;
-    const VideoCallbackListener* listener_;
-    VideoOutputCallbackInfo(VideoOutputEventType eventType, int32_t value, const VideoCallbackListener* listener)
+    weak_ptr<const VideoCallbackListener> listener_;
+    VideoOutputCallbackInfo(VideoOutputEventType eventType, int32_t value,
+        shared_ptr<const VideoCallbackListener> listener)
         : eventType_(eventType), value_(value), listener_(listener) {}
 };
 

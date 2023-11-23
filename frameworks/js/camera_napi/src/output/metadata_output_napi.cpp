@@ -45,12 +45,15 @@ void MetadataOutputCallback::OnMetadataObjectsAvailable(const std::vector<sptr<M
         return;
     }
     std::unique_ptr<MetadataOutputCallbackInfo> callbackInfo =
-        std::make_unique<MetadataOutputCallbackInfo>(metadataObjList, this);
+        std::make_unique<MetadataOutputCallbackInfo>(metadataObjList, shared_from_this());
     work->data = reinterpret_cast<void *>(callbackInfo.get());
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         MetadataOutputCallbackInfo* callbackInfo = reinterpret_cast<MetadataOutputCallbackInfo *>(work->data);
         if (callbackInfo) {
-            callbackInfo->listener_->OnMetadataObjectsAvailableCallback(callbackInfo->info_);
+            auto listener = callbackInfo->listener_.lock();
+            if (listener) {
+                listener->OnMetadataObjectsAvailableCallback(callbackInfo->info_);
+            }
             delete callbackInfo;
         }
         delete work;
@@ -197,12 +200,15 @@ void MetadataStateCallbackNapi::OnErrorCallbackAsync(const int32_t errorType) co
         return;
     }
     std::unique_ptr<MetadataStateCallbackInfo> callbackInfo =
-        std::make_unique<MetadataStateCallbackInfo>(errorType, this);
+        std::make_unique<MetadataStateCallbackInfo>(errorType, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         MetadataStateCallbackInfo* callbackInfo = reinterpret_cast<MetadataStateCallbackInfo *>(work->data);
         if (callbackInfo) {
-            callbackInfo->listener_->OnErrorCallback(callbackInfo->errorType_);
+            auto listener = callbackInfo->listener_.lock();
+            if (listener) {
+                listener->OnErrorCallback(callbackInfo->errorType_);
+            }
             delete callbackInfo;
         }
         delete work;

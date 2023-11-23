@@ -26,7 +26,8 @@ namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_METADATA_OUTPUT_NAPI_CLASS_NAME[] = "MetadataOutput";
 
-class MetadataOutputCallback : public MetadataObjectCallback {
+class MetadataOutputCallback : public MetadataObjectCallback,
+    public std::enable_shared_from_this<MetadataOutputCallback> {
 public:
     explicit MetadataOutputCallback(napi_env env);
     virtual ~MetadataOutputCallback() = default;
@@ -43,7 +44,8 @@ private:
     mutable std::vector<std::shared_ptr<AutoRef>> metadataOutputCbList_;
 };
 
-class MetadataStateCallbackNapi : public MetadataStateCallback {
+class MetadataStateCallbackNapi : public MetadataStateCallback,
+    public std::enable_shared_from_this<MetadataStateCallbackNapi> {
 public:
     explicit MetadataStateCallbackNapi(napi_env env);
     virtual ~MetadataStateCallbackNapi() = default;
@@ -62,16 +64,16 @@ private:
 
 struct MetadataOutputCallbackInfo {
     const std::vector<sptr<MetadataObject>> info_;
-    const MetadataOutputCallback* listener_;
+    weak_ptr<const MetadataOutputCallback> listener_;
     MetadataOutputCallbackInfo(std::vector<sptr<MetadataObject>> metadataObjList,
-        const MetadataOutputCallback* listener)
+        shared_ptr<const MetadataOutputCallback> listener)
         : info_(metadataObjList), listener_(listener) {}
 };
 
 struct MetadataStateCallbackInfo {
     int32_t errorType_;
-    const MetadataStateCallbackNapi* listener_;
-    MetadataStateCallbackInfo(int32_t errorType, const MetadataStateCallbackNapi* listener)
+    weak_ptr<const MetadataStateCallbackNapi> listener_;
+    MetadataStateCallbackInfo(int32_t errorType, shared_ptr<const MetadataStateCallbackNapi> listener)
         : errorType_(errorType), listener_(listener) {}
 };
 

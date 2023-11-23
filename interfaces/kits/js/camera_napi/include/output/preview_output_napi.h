@@ -47,7 +47,7 @@ static EnumHelper<PreviewOutputEventType> PreviewOutputEventTypeHelper({
     PreviewOutputEventType::PREVIEW_INVALID_TYPE
 );
 
-class PreviewOutputCallback : public PreviewStateCallback {
+class PreviewOutputCallback : public PreviewStateCallback, public std::enable_shared_from_this<PreviewOutputCallback> {
 public:
     explicit PreviewOutputCallback(napi_env env);
     ~PreviewOutputCallback() = default;
@@ -76,16 +76,18 @@ private:
 struct PreviewOutputCallbackInfo {
     PreviewOutputEventType eventType_;
     int32_t value_;
-    const PreviewOutputCallback* listener_;
-    PreviewOutputCallbackInfo(PreviewOutputEventType eventType, int32_t value, const PreviewOutputCallback* listener)
+    weak_ptr<const PreviewOutputCallback> listener_;
+    PreviewOutputCallbackInfo(PreviewOutputEventType eventType, int32_t value,
+        shared_ptr<const PreviewOutputCallback> listener)
         : eventType_(eventType), value_(value), listener_(listener) {}
 };
 
 struct SketchStatusCallbackInfo {
     SketchStatusData sketchStatusData_;
-    const PreviewOutputCallback* listener_;
+    weak_ptr<const PreviewOutputCallback> listener_;
     napi_env env_;
-    SketchStatusCallbackInfo(SketchStatusData sketchStatusData, const PreviewOutputCallback* listener, napi_env env)
+    SketchStatusCallbackInfo(SketchStatusData sketchStatusData, shared_ptr<const PreviewOutputCallback>
+        listener, napi_env env)
         : sketchStatusData_(sketchStatusData), listener_(listener), env_(env)
     {}
 };

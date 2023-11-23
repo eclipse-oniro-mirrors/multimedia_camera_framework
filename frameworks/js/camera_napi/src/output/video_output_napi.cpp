@@ -45,12 +45,15 @@ void VideoCallbackListener::UpdateJSCallbackAsync(VideoOutputEventType eventType
         return;
     }
     std::unique_ptr<VideoOutputCallbackInfo> callbackInfo =
-        std::make_unique<VideoOutputCallbackInfo>(eventType, value, this);
+        std::make_unique<VideoOutputCallbackInfo>(eventType, value, shared_from_this());
     work->data = callbackInfo.get();
     int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
         VideoOutputCallbackInfo* callbackInfo = reinterpret_cast<VideoOutputCallbackInfo *>(work->data);
         if (callbackInfo) {
-            callbackInfo->listener_->UpdateJSCallback(callbackInfo->eventType_, callbackInfo->value_);
+            auto listener = callbackInfo->listener_.lock();
+            if (listener) {
+                listener->UpdateJSCallback(callbackInfo->eventType_, callbackInfo->value_);
+            }
             delete callbackInfo;
         }
         delete work;

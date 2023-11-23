@@ -38,7 +38,7 @@ enum InputAsyncCallbackModes {
 
 struct CameraInputAsyncContext;
 
-class ErrorCallbackListener : public ErrorCallback {
+class ErrorCallbackListener : public ErrorCallback, public std::enable_shared_from_this<ErrorCallbackListener> {
 public:
     ErrorCallbackListener(napi_env env) : env_(env) {}
     ~ErrorCallbackListener() = default;
@@ -58,8 +58,8 @@ private:
 struct ErrorCallbackInfo {
     int32_t errorType_;
     int32_t errorMsg_;
-    const ErrorCallbackListener* listener_;
-    ErrorCallbackInfo(int32_t errorType, int32_t errorMsg, const ErrorCallbackListener* listener)
+    weak_ptr<const ErrorCallbackListener> listener_;
+    ErrorCallbackInfo(int32_t errorType, int32_t errorMsg, shared_ptr<const ErrorCallbackListener> listener)
         : errorType_(errorType), errorMsg_(errorMsg), listener_(listener) {}
 };
 
