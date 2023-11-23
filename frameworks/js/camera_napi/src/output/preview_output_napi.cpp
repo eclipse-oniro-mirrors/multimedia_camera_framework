@@ -135,16 +135,16 @@ void PreviewOutputCallback::OnSketchStatusDataChangedAsync(SketchStatusData stat
         loop, work, [](uv_work_t* work) {},
         [](uv_work_t* work, int status) {
             SketchStatusCallbackInfo* callbackInfo = reinterpret_cast<SketchStatusCallbackInfo*>(work->data);
-            napi_handle_scope scope = nullptr;
-            napi_open_handle_scope(callbackInfo->env_, &scope);
             if (callbackInfo) {
                 auto listener = callbackInfo->listener_.lock();
                 if (listener) {
+                    napi_handle_scope scope = nullptr;
+                    napi_open_handle_scope(callbackInfo->env_, &scope);
                     listener->OnSketchStatusDataChangedCall(callbackInfo->sketchStatusData_);
+                    napi_close_handle_scope(callbackInfo->env_, scope);
                 }
                 delete callbackInfo;
             }
-            napi_close_handle_scope(callbackInfo->env_, scope);
             delete work;
         },
         uv_qos_user_initiated);
@@ -195,7 +195,7 @@ void PreviewOutputCallback::OnSketchStatusDataChangedCall(SketchStatusData sketc
     }
 }
 
-void PreviewOutputCallback::OnSketchStatusDataChanged(SketchStatusData statusData) const
+void PreviewOutputCallback::OnSketchStatusDataChanged(const SketchStatusData& statusData) const
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("OnSketchStatusDataChanged is called");
@@ -405,7 +405,8 @@ napi_value PreviewOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("off", Off),
         DECLARE_NAPI_FUNCTION("isSketchSupported", IsSketchSupported),
         DECLARE_NAPI_FUNCTION("getSketchRatio", GetSketchRatio),
-        DECLARE_NAPI_FUNCTION("enableSketch", EnableSketch)
+        DECLARE_NAPI_FUNCTION("enableSketch", EnableSketch),
+        DECLARE_NAPI_FUNCTION("attachSketchSurface", AttachSketchSurface)
     };
 
     status = napi_define_class(env, CAMERA_PREVIEW_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -1048,12 +1049,12 @@ napi_value PreviewOutputNapi::EnableSketch(napi_env env, napi_callback_info info
     }
     napi_status status;
     napi_value result;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = { 0 };
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = { 0 };
     napi_value thisVar = nullptr;
     napi_get_undefined(env, &result);
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc == ARGS_TWO, "requires two parameter");
+    NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
     napi_valuetype valueType = napi_undefined;
     napi_typeof(env, argv[PARAM0], &valueType);
     if (valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
@@ -1070,16 +1071,52 @@ napi_value PreviewOutputNapi::EnableSketch(napi_env env, napi_callback_info info
         MEDIA_ERR_LOG("EnableSketch get previewOutputNapi status error");
         return result;
     }
-    sptr<Surface> surface = nullptr;
-    if (isEnableSketch) {
-        napi_typeof(env, argv[PARAM1], &valueType);
-        if (valueType != napi_string && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
-            MEDIA_ERR_LOG("PreviewOutputNapi::EnableSketch check PARAM1 value type fail,type is:%{public}d", valueType);
-            return result;
-        }
-        surface = GetSurfaceFromSurfaceId(env, argv[PARAM1]);
+
+    int32_t retCode = previewOutputNapi->previewOutput_->EnableSketch(isEnableSketch);
+    if (retCode != 0 && !CameraNapiUtils::CheckError(env, retCode)) {
+        MEDIA_ERR_LOG("EnableSketch fail! %{public}d", retCode);
     }
-    int32_t retCode = previewOutputNapi->previewOutput_->EnableSketch(isEnableSketch, surface);
+    MEDIA_DEBUG_LOG("PreviewOutputNapi::EnableSketch success");
+    return result;
+}
+
+napi_value PreviewOutputNapi::AttachSketchSurface(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PreviewOutputNapi::AttachSketchSurface enter");
+    if (!CameraNapiUtils::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi AttachSketchSurface is called!");
+        return nullptr;
+    }
+
+    napi_status status;
+    napi_value result;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = { 0 };
+    napi_value thisVar = nullptr;
+    napi_get_undefined(env, &result);
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[PARAM0], &valueType);
+    if (valueType != napi_string && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
+        MEDIA_ERR_LOG(
+            "PreviewOutputNapi::AttachSketchSurface check PARAM0 value type fail,type is:%{public}d", valueType);
+        return result;
+    }
+    sptr<Surface> surface = GetSurfaceFromSurfaceId(env, argv[PARAM0]);
+    if (surface == nullptr) {
+        MEDIA_ERR_LOG("PreviewOutputNapi::AttachSketchSurface get surface is null");
+        return result;
+    }
+
+    PreviewOutputNapi* previewOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&previewOutputNapi));
+    if (status != napi_ok || previewOutputNapi == nullptr || previewOutputNapi->previewOutput_ == nullptr) {
+        MEDIA_ERR_LOG("AttachSketchSurface get previewOutputNapi status error");
+        return result;
+    }
+
+    int32_t retCode = previewOutputNapi->previewOutput_->AttachSketchSurface(surface);
     if (retCode != 0 && !CameraNapiUtils::CheckError(env, retCode)) {
         MEDIA_ERR_LOG("EnableSketch fail! %{public}d", retCode);
     }

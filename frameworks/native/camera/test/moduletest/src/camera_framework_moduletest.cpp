@@ -94,6 +94,7 @@ std::bitset<static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_MAX_EVENT)> g_photoEven
 std::bitset<static_cast<unsigned int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_MAX_EVENT)> g_previewEvents;
 std::bitset<static_cast<unsigned int>(CAM_VIDEO_EVENTS::CAM_VIDEO_MAX_EVENT)> g_videoEvents;
 std::bitset<static_cast<unsigned int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_MAX_EVENT)> g_macroEvents;
+std::list<int32_t> g_sketchStatus;
 std::unordered_map<std::string, int> g_camStatusMap;
 std::unordered_map<std::string, bool> g_camFlashMap;
 
@@ -242,10 +243,11 @@ public:
         g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_FRAME_ERR)] = 1;
         return;
     }
-    void OnSketchStatusDataChanged(SketchStatusData statusData) const override
+    void OnSketchStatusDataChanged(const SketchStatusData& statusData) const override
     {
         MEDIA_DEBUG_LOG("AppCallback::OnSketchStatusDataChanged");
         g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)] = 1;
+        g_sketchStatus.push_back(static_cast<int32_t>(statusData.status));
         return;
     }
     void OnMacroStatusChanged(MacroStatus status) override
@@ -705,6 +707,7 @@ void CameraFrameworkModuleTest::SetUpInit()
     g_videoEvents.reset();
     g_camStatusMap.clear();
     g_camFlashMap.clear();
+    g_sketchStatus.clear();
     g_camInputOnError = false;
     g_videoFd = -1;
     g_previewFd = -1;
@@ -6410,10 +6413,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_050, TestSize.Le
     int sketchEnableRatio = previewOutput->GetSketchRatio();
     EXPECT_GT(sketchEnableRatio, 0);
 
-    intResult = previewOutput->EnableSketch(true, CreateSketchSurface(previewProfile->GetCameraFormat()));
+    intResult = previewOutput->EnableSketch(true);
     EXPECT_EQ(intResult, 0);
 
     intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = previewOutput->AttachSketchSurface(CreateSketchSurface(previewProfile->GetCameraFormat()));
     EXPECT_EQ(intResult, 0);
 
     intResult = session_->Start();
@@ -6464,10 +6470,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_051, TestSize.Le
     int sketchEnableRatio = previewOutput->GetSketchRatio();
     EXPECT_GT(sketchEnableRatio, 0);
 
-    intResult = previewOutput->EnableSketch(true, CreateSketchSurface(previewProfile->GetCameraFormat()));
+    intResult = previewOutput->EnableSketch(true);
     EXPECT_EQ(intResult, 0);
 
     intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = previewOutput->AttachSketchSurface(CreateSketchSurface(previewProfile->GetCameraFormat()));
     EXPECT_EQ(intResult, 0);
 
     intResult = session_->Start();
@@ -6486,6 +6495,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_051, TestSize.Le
 
     EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 1);
     g_previewEvents.reset();
+
+    EXPECT_EQ(g_sketchStatus.size(), 2);
+    EXPECT_EQ(g_sketchStatus.front(), 3);
+    g_sketchStatus.pop_front();
+    EXPECT_EQ(g_sketchStatus.front(), 1);
+    g_sketchStatus.pop_front();
+
     sleep(1);
     EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 0);
 
@@ -6541,25 +6557,28 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_052, TestSize.Le
 
     auto sketchSurface = CreateSketchSurface(previewProfile->GetCameraFormat());
 
-    intResult = previewOutput->EnableSketch(true, sketchSurface);
+    intResult = previewOutput->EnableSketch(true);
     EXPECT_EQ(intResult, 0);
 
-    intResult = previewOutput->EnableSketch(true, sketchSurface);
-    EXPECT_EQ(intResult, 7400102);
+    intResult = previewOutput->AttachSketchSurface(sketchSurface);
+    EXPECT_EQ(intResult, 7400103);
 
     intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = previewOutput->AttachSketchSurface(sketchSurface);
     EXPECT_EQ(intResult, 0);
 
     intResult = session_->Start();
     EXPECT_EQ(intResult, 0);
 
-    intResult = previewOutput->EnableSketch(true, sketchSurface);
+    intResult = previewOutput->EnableSketch(true);
     EXPECT_EQ(intResult, 7400103);
 
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = previewOutput->EnableSketch(false, sketchSurface);
-    EXPECT_EQ(intResult, 7400103);
+    intResult = previewOutput->AttachSketchSurface(sketchSurface);
+    EXPECT_EQ(intResult, 0);
 
     intResult = session_->Stop();
     EXPECT_EQ(intResult, 0);
@@ -6603,10 +6622,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_053, TestSize.Le
     int sketchEnableRatio = previewOutput->GetSketchRatio();
     EXPECT_GT(sketchEnableRatio, 0);
 
-    intResult = previewOutput->EnableSketch(true, CreateSketchSurface(previewProfile->GetCameraFormat()));
+    intResult = previewOutput->EnableSketch(true);
     EXPECT_EQ(intResult, 0);
 
     intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = previewOutput->AttachSketchSurface(CreateSketchSurface(previewProfile->GetCameraFormat()));
     EXPECT_EQ(intResult, 0);
 
     session_->LockForControl();
@@ -6621,6 +6643,14 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_053, TestSize.Le
     EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 1);
     g_previewEvents.reset();
 
+    EXPECT_EQ(g_sketchStatus.size(), 3);
+    EXPECT_EQ(g_sketchStatus.front(), 0);
+    g_sketchStatus.pop_front();
+    EXPECT_EQ(g_sketchStatus.front(), 3);
+    g_sketchStatus.pop_front();
+    EXPECT_EQ(g_sketchStatus.front(), 1);
+    g_sketchStatus.pop_front();
+
     sleep(WAIT_TIME_AFTER_START);
     EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 0);
     g_previewEvents.reset();
@@ -6633,6 +6663,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_053, TestSize.Le
     sleep(WAIT_TIME_AFTER_START);
     EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 1);
     g_previewEvents.reset();
+
+    EXPECT_EQ(g_sketchStatus.size(), 2);
+    EXPECT_EQ(g_sketchStatus.front(), 2);
+    g_sketchStatus.pop_front();
+    EXPECT_EQ(g_sketchStatus.front(), 0);
+    g_sketchStatus.pop_front();
 
     sleep(WAIT_TIME_AFTER_START);
     EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 0);

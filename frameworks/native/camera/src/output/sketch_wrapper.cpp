@@ -34,8 +34,8 @@ std::map<int32_t, std::vector<SketchWrapper::SketchReferenceFovRange>> SketchWra
 std::mutex SketchWrapper::g_sketchEnableRatioMutex_;
 std::map<int32_t, float> SketchWrapper::g_sketchEnableRatioMap_;
 
-SketchWrapper::SketchWrapper(sptr<IStreamCommon> hostStream, const Size size, sptr<Surface> sketchSurface)
-    : hostStream_(hostStream), sketchSize_(size), sketchSurface_(sketchSurface)
+SketchWrapper::SketchWrapper(sptr<IStreamCommon> hostStream, const Size size)
+    : hostStream_(hostStream), sketchSize_(size)
 {}
 
 int32_t SketchWrapper::Init(std::shared_ptr<Camera::CameraMetadata>& deviceMetadata, int32_t modeName)
@@ -48,7 +48,18 @@ int32_t SketchWrapper::Init(std::shared_ptr<Camera::CameraMetadata>& deviceMetad
     sketchEnableRatio_ = GetSketchEnableRatio(modeName);
     IStreamRepeat* repeatStream = static_cast<IStreamRepeat*>(hostStream.GetRefPtr());
     return repeatStream->ForkSketchStreamRepeat(
-        sketchSurface_->GetProducer(), sketchSize_.width, sketchSize_.height, sketchStream_, sketchEnableRatio_);
+        sketchSize_.width, sketchSize_.height, sketchStream_, sketchEnableRatio_);
+}
+
+int32_t SketchWrapper::AttachSketchSurface(sptr<Surface> sketchSurface)
+{
+    if (sketchStream_ == nullptr) {
+        return CAMERA_INVALID_STATE;
+    }
+    if (sketchSurface == nullptr) {
+        return CAMERA_INVALID_ARG;
+    }
+    return sketchStream_->AddDeferredSurface(sketchSurface->GetProducer());
 }
 
 int32_t SketchWrapper::UpdateSketchRatio(float sketchRatio)

@@ -237,7 +237,7 @@ void TestPreviewOutputCallback::OnError(const int32_t errorCode) const
                    testName_, errorCode);
 }
 
-void TestPreviewOutputCallback::OnSketchStatusDataChanged(SketchStatusData sketchData) const
+void TestPreviewOutputCallback::OnSketchStatusDataChanged(const SketchStatusData& sketchData) const
 {
     MEDIA_DEBUG_LOG("TestPreviewOutputCallback::OnSketchStatusDataChanged(), testName_: %{public}s", testName_);
     return;

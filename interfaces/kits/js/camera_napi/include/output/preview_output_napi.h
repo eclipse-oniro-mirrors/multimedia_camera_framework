@@ -55,7 +55,7 @@ public:
     void OnFrameStarted() const override;
     void OnFrameEnded(const int32_t frameCount) const override;
     void OnError(const int32_t errorCode) const override;
-    void OnSketchStatusDataChanged(SketchStatusData sketchStatusData) const override;
+    void OnSketchStatusDataChanged(const SketchStatusData& sketchStatusData) const override;
     void SaveCallbackReference(const std::string& eventType, napi_value callback, bool isOnce);
     void RemoveCallbackRef(napi_env env, napi_value callback, const std::string& eventType);
     void RemoveAllCallbacks(const std::string& eventType);
@@ -108,6 +108,7 @@ public:
     static napi_value IsSketchSupported(napi_env env, napi_callback_info info);
     static napi_value GetSketchRatio(napi_env env, napi_callback_info info);
     static napi_value EnableSketch(napi_env env, napi_callback_info info);
+    static napi_value AttachSketchSurface(napi_env env, napi_callback_info info);
     sptr<PreviewOutput> GetPreviewOutput();
 
     PreviewOutputNapi();

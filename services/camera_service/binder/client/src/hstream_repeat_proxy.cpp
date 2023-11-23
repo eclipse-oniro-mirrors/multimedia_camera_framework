@@ -121,20 +121,19 @@ int32_t HStreamRepeatProxy::AddDeferredSurface(const sptr<OHOS::IBufferProducer>
     return error;
 }
 
-int32_t HStreamRepeatProxy::ForkSketchStreamRepeat(const sptr<OHOS::IBufferProducer>& producer, int32_t width,
-    int32_t height, sptr<IStreamRepeat>& sketchStream, float sketchRatio)
+int32_t HStreamRepeatProxy::ForkSketchStreamRepeat(
+    int32_t width, int32_t height, sptr<IStreamRepeat>& sketchStream, float sketchRatio)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
 
-    if ((producer == nullptr) || (width == 0) || (height == 0)) {
+    if (width <= 0 || height <= 0) {
         MEDIA_ERR_LOG("HStreamRepeatProxy ForkSketchStreamRepeat producer is null or invalid size is set");
         return IPC_PROXY_ERR;
     }
 
     data.WriteInterfaceToken(GetDescriptor());
-    data.WriteRemoteObject(producer->AsObject());
     data.WriteInt32(width);
     data.WriteInt32(height);
     data.WriteFloat(sketchRatio);

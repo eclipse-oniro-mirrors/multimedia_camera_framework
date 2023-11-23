@@ -55,7 +55,7 @@ public:
      *
      * @param statusData Indicates a {@link SketchStatusData}.
      */
-    virtual void OnSketchStatusDataChanged(SketchStatusData statusData) const = 0;
+    virtual void OnSketchStatusDataChanged(const SketchStatusData& statusData) const = 0;
 };
 
 class PreviewOutput : public CaptureOutput {
@@ -110,10 +110,17 @@ public:
      * @brief Enable sketch
      *
      * @param isEnable True for enable, false otherwise.
+     *
+     */
+    int32_t EnableSketch(bool isEnable);
+
+    /**
+     * @brief Attach sketch surface
+     *
      * @param sketchSurface Sketch surface
      *
      */
-    int32_t EnableSketch(bool isEnable, sptr<Surface> sketchSurface);
+    int32_t AttachSketchSurface(sptr<Surface> sketchSurface);
 
     /**
      * @brief Get the application callback information.
@@ -147,7 +154,7 @@ private:
     std::shared_ptr<void> sketchWrapper_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetDeviceMetadata();
     std::shared_ptr<Size> FindSketchSize();
-    int32_t CreateSketchWrapper(Size sketchSize, sptr<Surface> sketchSurface);
+    int32_t CreateSketchWrapper(Size sketchSize);
     int32_t StartSketch();
     int32_t StopSketch();
     void CameraServerDied(pid_t pid) override;
