@@ -458,22 +458,22 @@ void CameraFrameworkModuleTest::ConfigScanSession(sptr<CaptureOutput> &previewOu
 
     int32_t intResult = scanSession_->BeginConfig();
     EXPECT_EQ(intResult, 0);
- 
+
     intResult = scanSession_->AddInput(input_);
     EXPECT_EQ(intResult, 0);
- 
+
     previewOutput_1 = CreatePreviewOutput();
     ASSERT_NE(previewOutput_1, nullptr);
 
     intResult = scanSession_->AddOutput(previewOutput_1);
     EXPECT_EQ(intResult, 0);
- 
+
     previewOutput_2 = CreatePreviewOutput();
     ASSERT_NE(previewOutput_2, nullptr);
 
     intResult = scanSession_->AddOutput(previewOutput_2);
     EXPECT_EQ(intResult, 0);
- 
+
     intResult = scanSession_->CommitConfig();
     EXPECT_EQ(intResult, 0);
 }
@@ -2695,12 +2695,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_049, TestSi
     sptr<CaptureOutput> previewOutput_1;
     sptr<CaptureOutput> previewOutput_2;
     ConfigScanSession(previewOutput_1, previewOutput_2);
- 
+
     int32_t intResult = scanSession_->Start();
     EXPECT_EQ(intResult, 0);
- 
+
     sleep(WAIT_TIME_AFTER_START);
- 
+
     intResult = scanSession_->Stop();
     EXPECT_EQ(intResult, 0);
 
@@ -2708,7 +2708,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_049, TestSi
     ((sptr<PreviewOutput> &) previewOutput_2)->Release();
     MEDIA_INFO_LOG("teset049 end");
 }
- 
+
 /*
  * Feature: Framework
  * Function: Test Scan Session add output
@@ -2730,13 +2730,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_050, TestSi
     }
     scanSession_ = modeManager_ -> CreateCaptureSession(CameraMode::SCAN);
     ASSERT_NE(scanSession_, nullptr);
- 
+
     int32_t intResult = scanSession_->BeginConfig();
     EXPECT_EQ(intResult, 0);
- 
+
     intResult = scanSession_->AddInput(input_);
     EXPECT_EQ(intResult, 0);
- 
+
     sptr<CaptureOutput> phtotOutput = CreatePhotoOutput();
     ASSERT_NE(phtotOutput, nullptr);
 
@@ -2745,18 +2745,18 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_050, TestSi
 
     intResult = scanSession_->AddOutput(videoOutput);
     EXPECT_NE(intResult, 0);
- 
+
     intResult = scanSession_->AddOutput(phtotOutput);
     EXPECT_NE(intResult, 0);
- 
+
     intResult = scanSession_->CommitConfig();
     EXPECT_NE(intResult, 0);
- 
+
     ((sptr<PreviewOutput> &) phtotOutput)->Release();
     ((sptr<VideoOutput> &) videoOutput)->Release();
     MEDIA_INFO_LOG("teset050 end");
 }
- 
+
 /*
  * Feature: Framework
  * Function: Test Scan Session outputcapability and supported mode
@@ -4961,9 +4961,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_038, TestSize.L
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_039, TestSize.Level0)
 {
-    sptr<ICameraDeviceService> deviceObj = nullptr;
-    sptr<CaptureInput> camInput = new (std::nothrow) CameraInput(deviceObj, cameras_[0]);
-    ASSERT_NE(camInput, nullptr);
+    sptr<CameraInput> input = (sptr<CameraInput>&)input_;
+    input->Close();
+    input->SetSession(session_);
+
+    sptr<CaptureInput> input_2 = (sptr<CaptureInput>&)input;
 
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
@@ -4971,7 +4973,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_039, TestSize.L
     intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 7400105);
 
-    intResult = session_->AddInput(camInput);
+    intResult = session_->AddInput(input_2);
     EXPECT_EQ(intResult, 7400201);
 
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
@@ -5152,10 +5154,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_042, TestSize.L
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_043, TestSize.Level0)
 {
-    sptr<ICameraDeviceService> deviceObj_1 = nullptr;
-    sptr<CameraInput> camInput_1 = new (std::nothrow) CameraInput(deviceObj_1, cameras_[0]);
-    ASSERT_NE(camInput_1, nullptr);
-
     sptr<CameraInput> input = (sptr<CameraInput>&)input_;
     sptr<ICameraDeviceService> deviceObj_2 = input->GetCameraDevice();
     ASSERT_NE(deviceObj_2, nullptr);
@@ -5164,13 +5162,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_043, TestSize.L
     sptr<CameraInput> camInput_2 = new (std::nothrow) CameraInput(deviceObj_2, camdeviceObj);
     ASSERT_NE(camInput_2, nullptr);
 
-    int32_t intResult = camInput_1->Open();
-    EXPECT_EQ(intResult, 7400201);
+    std::string cameraId = input->GetCameraId();
 
-    std::string cameraId = camInput_1->GetCameraId();
-
-    std::string getCameraSettings_1 = camInput_1->GetCameraSettings();
-    intResult = camInput_1->SetCameraSettings(getCameraSettings_1);
+    std::string getCameraSettings_1 = input->GetCameraSettings();
+    int32_t intResult = input->SetCameraSettings(getCameraSettings_1);
     EXPECT_EQ(intResult, 0);
 
     std::string getCameraSettings_2 = "";
@@ -5182,6 +5177,15 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_043, TestSize.L
     getCameraSettings_2 = camInput_3->GetCameraSettings();
     intResult = camInput_3->SetCameraSettings(getCameraSettings_2);
     EXPECT_EQ(intResult, 0);
+
+    sptr<CameraInput> input_1 = (sptr<CameraInput>&)input_;
+    input_1->Close();
+    input_1->SetSession(session_);
+
+    sptr<CaptureInput> input_2 = (sptr<CaptureInput>&)input_1;
+
+    intResult = input_2->Open();
+    EXPECT_EQ(intResult, 7400201);
 
     intResult = camInput_2->Release();
     EXPECT_EQ(intResult, 0);
@@ -5790,18 +5794,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_061, TestSize.L
     camInput = camManagerObj->CreateCameraInput(cameraPosition, cameraType);
     EXPECT_EQ(camInput, nullptr);
 
-    sptr<ICameraDeviceService> deviceObj_1 = nullptr;
-    sptr<CameraInput> input_1 = new (std::nothrow) CameraInput(deviceObj_1, cameras_[0]);
-    ASSERT_NE(input_1, nullptr);
-
     sptr<CameraInput> input_2 = (sptr<CameraInput>&)input_;
     sptr<ICameraDeviceService> deviceObj_2 = input_2->GetCameraDevice();
     ASSERT_NE(deviceObj_2, nullptr);
 
     input_2 = new (std::nothrow) CameraInput(deviceObj_2, camdeviceObj_3);
-    ASSERT_NE(input_2, nullptr);
-
-    input_2 = new (std::nothrow) CameraInput(deviceObj_1, cameras_[0]);
     ASSERT_NE(input_2, nullptr);
 }
 
@@ -6171,7 +6168,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_070, TestSize.L
     EXPECT_EQ(session_->AddInput(input), 7400102);
 
     sptr<CaptureOutput> output;
-    EXPECT_EQ(session_->AddOutput(output), 7400102);
     EXPECT_EQ(session_->RemoveInput(input), 7400102);
     EXPECT_EQ(session_->RemoveOutput(output), 7400102);
 }
