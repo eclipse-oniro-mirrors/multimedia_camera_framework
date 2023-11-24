@@ -334,6 +334,9 @@ export struct modeSwitchPage {
           .fontSize(14)
           .fontColor(Color.White)
           .onClick(() => {
+            // 重置相机
+            cameraDemo.releaseSession()
+            cameraDemo.initCamera(this.surfaceId, globalThis.settingDataObj.focusMode, this.cameraDeviceIndex)
             this.modelBagCol = 'photo'
           })
       }.position({ x: '20%', y: '75%' })
@@ -346,6 +349,9 @@ export struct modeSwitchPage {
           .size({ width: 64, height: 28 })
           .backgroundColor(this.modelBagCol === 'video' ? $r('app.color.theme_color') : '')
           .onClick(() => {
+            // 重置相机
+            cameraDemo.releaseSession()
+            cameraDemo.initCamera(this.surfaceId, globalThis.settingDataObj.focusMode, this.cameraDeviceIndex)
             this.modelBagCol = 'video'
           })
       }.position({ x: '40%', y: '75%' })
@@ -510,6 +516,9 @@ export struct modeSwitchPage {
                  try {
                    // 获取录制缩略图
                    this.videoThumbnail = await fileAsset.getThumbnail()
+                   // 重置相机
+                   cameraDemo.releaseSession()
+                   cameraDemo.initCamera(this.surfaceId, globalThis.settingDataObj.focusMode, this.cameraDeviceIndex)
                  } catch (err) {
                    Logger.info(this.tag, 'videoThumbnail err----------:' + JSON.stringify(err.message))
                  }
