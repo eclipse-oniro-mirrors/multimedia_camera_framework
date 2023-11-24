@@ -338,7 +338,7 @@ private:
 class CameraDeviceServiceCallback : public HCameraDeviceCallbackStub {
 public:
     std::mutex deviceCallbackMutex_;
-    CameraInput* camInput_ = nullptr;
+    wptr<CameraInput> camInput_ = nullptr;
     CameraDeviceServiceCallback() : camInput_(nullptr) {
     }
 
