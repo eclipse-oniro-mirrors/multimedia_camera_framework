@@ -171,8 +171,6 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
         MEDIA_ERR_LOG("HStreamRepeat::Start Failed with error Code:%{public}d", rc);
         ret = HdiToServiceError(rc);
         UpdateSketchStatus(SketchStatus::STOPED);
-    } else {
-        UpdateSketchStatus(SketchStatus::STARTED);
     }
     if (settings != nullptr) {
         StartSketchStream(settings);
@@ -205,8 +203,6 @@ int32_t HStreamRepeat::Stop()
     }
     ReleaseCaptureId(curCaptureID_);
     curCaptureID_ = 0;
-    UpdateSketchStatus(SketchStatus::STOPED);
-
     {
         std::lock_guard<std::mutex> lock(sketchStreamLock_);
         if (sketchStreamRepeat_ != nullptr) {
@@ -249,20 +245,26 @@ int32_t HStreamRepeat::SetCallback(sptr<IStreamRepeatCallback>& callback)
 int32_t HStreamRepeat::OnFrameStarted()
 {
     CAMERA_SYNC_TRACE;
-    std::lock_guard<std::mutex> lock(callbackLock_);
-    if (streamRepeatCallback_ != nullptr) {
-        streamRepeatCallback_->OnFrameStarted();
+    {
+        std::lock_guard<std::mutex> lock(callbackLock_);
+        if (streamRepeatCallback_ != nullptr) {
+            streamRepeatCallback_->OnFrameStarted();
+        }
     }
+    UpdateSketchStatus(SketchStatus::STARTED);
     return CAMERA_OK;
 }
 
 int32_t HStreamRepeat::OnFrameEnded(int32_t frameCount)
 {
     CAMERA_SYNC_TRACE;
-    std::lock_guard<std::mutex> lock(callbackLock_);
-    if (streamRepeatCallback_ != nullptr) {
-        streamRepeatCallback_->OnFrameEnded(frameCount);
+    {
+        std::lock_guard<std::mutex> lock(callbackLock_);
+        if (streamRepeatCallback_ != nullptr) {
+            streamRepeatCallback_->OnFrameEnded(frameCount);
+        }
     }
+    UpdateSketchStatus(SketchStatus::STOPED);
     return CAMERA_OK;
 }
 
