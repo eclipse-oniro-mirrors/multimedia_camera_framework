@@ -25,7 +25,6 @@
 #include "session/capture_session.h"
 
 #include "input/camera_input_napi.h"
-#include "output/photo_output_napi.h"
 #include "output/preview_output_napi.h"
 #include "output/video_output_napi.h"
 #include "output/metadata_output_napi.h"

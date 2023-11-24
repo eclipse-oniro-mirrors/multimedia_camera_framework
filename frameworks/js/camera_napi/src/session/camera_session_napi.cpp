@@ -13,8 +13,9 @@
  * limitations under the License.
  */
 
-#include "session/camera_session_napi.h"
 #include <uv.h>
+#include "output/photo_output_napi.h"
+#include "session/camera_session_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
