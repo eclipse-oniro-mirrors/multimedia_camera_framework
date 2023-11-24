@@ -96,8 +96,6 @@ class IDeviceOperatorsCallback : public virtual RefBase {
 public:
     IDeviceOperatorsCallback() = default;
     virtual ~IDeviceOperatorsCallback() = default;
-    virtual int32_t DeviceOpen(const std::string& cameraId) = 0;
-    virtual int32_t DeviceClose(const std::string& cameraId, pid_t pidFromSession = 0) = 0;
 };
 } // namespace CameraStandard
 } // namespace OHOS

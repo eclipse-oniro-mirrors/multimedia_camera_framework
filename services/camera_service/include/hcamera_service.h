@@ -79,9 +79,6 @@ public:
     void OnCameraStatus(const std::string& cameraId, CameraStatus status) override;
     void OnFlashlightStatus(const std::string& cameraId, FlashStatus status) override;
     void OnTorchStatus(TorchStatus status) override;
-    // IDeviceOperatorsCallback
-    int32_t DeviceOpen(const std::string& cameraId) override;
-    int32_t DeviceClose(const std::string& cameraId, pid_t pidFromSession = 0) override;
 
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager) : cameraHostManager_(cameraHostManager),
@@ -117,8 +114,6 @@ private:
     std::map<uint32_t, sptr<ITorchServiceCallback>> torchServiceCallbacks_;
     std::map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
     std::map<uint32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
-    SafeMap<std::string, sptr<HCameraDevice>> devicesManager_;
-    std::map<uint32_t, std::set<std::string>> camerasForPid_;
     bool muteMode_;
     std::mutex mapOperatorsLock_;
     std::string preCameraId_;
