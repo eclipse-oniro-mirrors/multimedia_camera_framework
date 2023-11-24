@@ -14,8 +14,8 @@
  */
 
 #include <uv.h>
-#include "session/camera_session_napi.h"
 #include "output/photo_output_napi.h"
+#include "session/camera_session_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
