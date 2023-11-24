@@ -117,8 +117,8 @@ pid_t HCaptureSession::GetPid()
 
 void HCaptureSession::CloseDevice(sptr<HCameraDevice>& device)
 {
-    if (device != nullptr && deviceOperatorsCallback_.promote() != nullptr) {
-        deviceOperatorsCallback_->DeviceClose(device->GetCameraId(), pid_);
+    if (device != nullptr) {
+        device->CloseDevice();
     }
 }
 
@@ -857,7 +857,7 @@ int32_t HCaptureSession::Release(pid_t pid)
     }
     pid_t activePid = HCameraDeviceManager::GetInstance()->GetActiveClient();
     MEDIA_INFO_LOG("HCaptureSession::calling pid(%{public}d). activePid(%{public}d).", callingPid, activePid);
-    if (cameraDevice_ != nullptr && callingPid != pid && pid == activePid) {
+    if (cameraDevice_ != nullptr) {
         MEDIA_DEBUG_LOG("HCaptureSession::Release close device, pid(%{public}d)", pid);
         CloseDevice(cameraDevice_);
         POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraDevice_->GetCameraId().c_str());

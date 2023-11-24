@@ -25,6 +25,7 @@
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
+#include "hcamera_device_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -160,15 +161,6 @@ int32_t HCameraService::CreateCameraDevice(std::string cameraId, sptr<ICameraDev
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice MuteCamera not Supported");
     }
     cameraDevice->SetDeviceOperatorsCallback(this);
-    pid_t pid = IPCSkeleton::GetCallingPid();
-    MEDIA_INFO_LOG("HCameraService::CreateCameraDevice before insert! cameraId: %{public}s, pid = %{public}d, "
-                   "devices size = %{public}d, cameraIds size = %{public}zu",
-        cameraId.c_str(), pid, devicesManager_.Size(), camerasForPid_[pid].size());
-    devicesManager_.EnsureInsert(cameraId, cameraDevice);
-    camerasForPid_[pid].insert(cameraId);
-    MEDIA_INFO_LOG("HCameraService::CreateCameraDevice after insert! cameraId: %{public}s, pid = %{public}d, "
-                   "devices size = %{public}d, cameraIds size = %{public}zu",
-        cameraId.c_str(), pid, devicesManager_.Size(), camerasForPid_[pid].size());
     device = cameraDevice;
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager_CreateCameraInput CameraId:%s", cameraId.c_str()));
     return CAMERA_OK;
@@ -357,33 +349,11 @@ int32_t HCameraService::SetCallback(sptr<ICameraServiceCallback>& callback)
 
 int32_t HCameraService::CloseCameraForDestory(pid_t pid)
 {
-    std::lock_guard<std::mutex> lock(mapOperatorsLock_);
-    MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory pid = %{public}d, Camera created size = %{public}zu", pid,
-        camerasForPid_[pid].size());
-    auto cameraIds = camerasForPid_[pid];
-    for (std::set<std::string>::iterator itIds = cameraIds.begin(); itIds != cameraIds.end(); itIds++) {
-        MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory cameraId %{public}s in camerasForPid_[%{public}d]",
-            (*itIds).c_str(), pid);
-        devicesManager_.Iterate([&](std::string cameraId, sptr<HCameraDevice> cameraDevice) {
-            MEDIA_INFO_LOG(
-                "HCameraService::CloseCameraForDestory cameraId %{public}s in devicesManager_", cameraId.c_str());
-            if (cameraId != *itIds || cameraDevice == nullptr) {
-                MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory item is null: %{public}d or"
-                               "cameraId not equal: %{public}d {%{public}s, %{public}s}",
-                    cameraDevice == nullptr, cameraId != *itIds, cameraId.c_str(), (*itIds).c_str());
-                return;
-            } else {
-                MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory pid = %{public}d,Camera:[%{public}s] need close",
-                    pid, cameraId.c_str());
-                DeviceClose(cameraDevice);
-                cameraDevice = nullptr;
-            }
-        });
+    sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
+    sptr<HCameraDevice> deviceNeedClose = deviceManager->GetCameraByPid(pid);
+    if (deviceNeedClose != nullptr) {
+        deviceNeedClose->CloseDevice();
     }
-    cameraIds.clear();
-    size_t eraseSize = camerasForPid_.erase(pid);
-    MEDIA_INFO_LOG(
-        "HCameraService::CloseCameraForDestory pid: %{public}d cameraIds have removed: %{public}zu", pid, eraseSize);
     return CAMERA_OK;
 }
 
@@ -541,7 +511,9 @@ int32_t HCameraService::MuteCamera(bool muteMode)
     } else {
         muteMode_ = muteMode;
     }
-    if (devicesManager_.IsEmpty()) {
+    sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
+    pid_t activeClient = deviceManager->GetActiveClient();
+    if (activeClient == -1) {
         if (!cameraMuteServiceCallbacks_.empty()) {
             for (auto cb : cameraMuteServiceCallbacks_) {
                 cb.second->OnCameraMute(muteMode);
@@ -550,25 +522,21 @@ int32_t HCameraService::MuteCamera(bool muteMode)
         }
         return CAMERA_OK;
     }
-    bool isCameraMuteSuccess = true;
-    devicesManager_.Iterate([&](std::string cameraId, sptr<HCameraDevice> cameraDevice) {
-        if (!isCameraMuteSuccess) {
-            return;
-        }
+    sptr<HCameraDevice> activeDevice = deviceManager->GetCameraByPid(activeClient);
+    if (activeDevice != nullptr) {
+        std::string cameraId = activeDevice->GetCameraId();
         if (!IsCameraMuteSupported(cameraId)) {
-            isCameraMuteSuccess = false;
             MEDIA_ERR_LOG("Not Supported Mute,cameraId: %{public}s", cameraId.c_str());
-            return;
+            return CAMERA_UNSUPPORTED;
         }
-        if (cameraDevice != nullptr) {
-            ret = UpdateMuteSetting(cameraDevice, muteMode);
+        if (activeDevice != nullptr) {
+            ret = UpdateMuteSetting(activeDevice, muteMode);
         }
         if (ret != CAMERA_OK) {
             MEDIA_ERR_LOG("UpdateMuteSetting Failed, cameraId: %{public}s", cameraId.c_str());
             muteMode_ = oldMuteMode;
-            isCameraMuteSuccess = false;
         }
-    });
+    }
     if (!cameraMuteServiceCallbacks_.empty() && ret == CAMERA_OK) {
         for (auto cb : cameraMuteServiceCallbacks_) {
             if (cb.second) {
@@ -665,7 +633,7 @@ int32_t HCameraService::IsCameraMuted(bool& muteMode)
 void HCameraService::CameraSummary(std::vector<std::string> cameraIds, std::string& dumpString)
 {
     dumpString += "# Number of Cameras:[" + std::to_string(cameraIds.size()) + "]:\n";
-    dumpString += "# Number of Active Cameras:[" + std::to_string(devicesManager_.Size()) + "]:\n";
+    dumpString += "# Number of Active Cameras:[" + std::to_string(1) + "]:\n";
     HCaptureSession::CameraSessionSummary(dumpString);
 }
 
@@ -1029,88 +997,6 @@ int32_t HCameraService::Dump(int fd, const std::vector<std::u16string>& args)
 
     (void)write(fd, dumpString.c_str(), dumpString.size());
     return CAMERA_OK;
-}
-
-int32_t HCameraService::DeviceOpen(const std::string& cameraId)
-{
-    MEDIA_INFO_LOG("HCameraService::DeviceOpen Enter");
-    int32_t ret = CAMERA_OK;
-    sptr<HCameraDevice> cameraDevice = nullptr;
-    if (devicesManager_.Find(cameraId, cameraDevice)) {
-        MEDIA_INFO_LOG("HCameraService::DeviceOpen Camera:[%{public}s] need open", cameraId.c_str());
-        if (cameraDevice != nullptr && !cameraDevice->IsOpenedCameraDevice()) {
-            ret = cameraDevice->OpenDevice();
-        } else {
-            MEDIA_ERR_LOG("HCameraService::DeviceOpen device is null");
-        }
-    }
-    MEDIA_INFO_LOG("HCameraService::DeviceOpen Exit");
-    return ret;
-}
-
-int32_t HCameraService::DeviceClose(sptr<HCameraDevice> cameraDevice)
-{
-    MEDIA_INFO_LOG("HCameraService::DeviceClose Enter");
-    int32_t ret = CAMERA_OK;
-    std::string cameraId;
-    pid_t pid = IPCSkeleton::GetCallingPid();
-    if (cameraDevice != nullptr && cameraDevice->IsOpenedCameraDevice()) {
-        cameraId = cameraDevice->GetCameraId();
-        MEDIA_INFO_LOG(
-            "HCameraService::DeviceClose pid = %{public}d Camera:[%{public}s] need close", pid, cameraId.c_str());
-        ret = cameraDevice->CloseDevice();
-        cameraDevice = nullptr;
-    }
-
-    for (auto& it : camerasForPid_) {
-        std::set<std::string>& cameraIds = it.second;
-        MEDIA_INFO_LOG("HCameraService::DeviceClose pid = %{public}d size %{public}zu E", it.first, cameraIds.size());
-        if (!cameraIds.empty()) {
-            for (std::set<std::string>::iterator itIds = cameraIds.begin(); itIds != cameraIds.end(); itIds++) {
-                if (*itIds == cameraId && !IsInForeGround(it.first)) {
-                    cameraIds.erase(itIds);
-                    break;
-                }
-            }
-        }
-        MEDIA_INFO_LOG("HCameraService::DeviceClose pid = %{public}d size %{public}zu X", it.first, cameraIds.size());
-    }
-    MEDIA_INFO_LOG("HCameraService::DeviceClose Exit");
-    return ret;
-}
-
-int32_t HCameraService::DeviceClose(const std::string& cameraId, pid_t pidFromSession)
-{
-    std::lock_guard<std::mutex> lock(mapOperatorsLock_);
-    MEDIA_INFO_LOG("HCameraService::DeviceClose Enter");
-    int32_t ret = CAMERA_OK;
-
-    pid_t pid = pidFromSession != 0 ? pidFromSession : IPCSkeleton::GetCallingPid();
-    sptr<HCameraDevice> cameraDevice = nullptr;
-    if (devicesManager_.Find(cameraId, cameraDevice)) {
-        MEDIA_INFO_LOG(
-            "HCameraService::DeviceClose pid = %{public}d Camera:[%{public}s] need close", pid, cameraId.c_str());
-        if (cameraDevice != nullptr && cameraDevice->IsOpenedCameraDevice()) {
-            ret = cameraDevice->CloseDevice();
-            cameraDevice = nullptr;
-        }
-    }
-    devicesManager_.Erase(cameraId);
-    for (auto& it : camerasForPid_) {
-        std::set<std::string>& cameraIds = it.second;
-        MEDIA_INFO_LOG("HCameraService::DeviceClose pid = %{public}d size %{public}zu E", it.first, cameraIds.size());
-        if (!cameraIds.empty()) {
-            for (std::set<std::string>::iterator itIds = cameraIds.begin(); itIds != cameraIds.end(); itIds++) {
-                if (*itIds == cameraId && !IsInForeGround(it.first)) {
-                    cameraIds.erase(itIds);
-                    break;
-                }
-            }
-        }
-        MEDIA_INFO_LOG("HCameraService::DeviceClose pid = %{public}d size %{public}zu X", it.first, cameraIds.size());
-    }
-    MEDIA_INFO_LOG("HCameraService::DeviceClose Exit");
-    return ret;
 }
 } // namespace CameraStandard
 } // namespace OHOS
