@@ -31,11 +31,12 @@ namespace CameraStandard {
 int32_t CameraDeviceServiceCallback::OnError(const int32_t errorType, const int32_t errorMsg)
 {
     std::lock_guard<std::mutex> lock(deviceCallbackMutex_);
+    auto camInputSptr = camInput_.promote();
     MEDIA_ERR_LOG("CameraDeviceServiceCallback::OnError() is called!, errorType: %{public}d, errorMsg: %{public}d",
                   errorType, errorMsg);
-    if (camInput_ != nullptr && camInput_->GetErrorCallback() != nullptr) {
+    if (camInputSptr != nullptr && camInputSptr->GetErrorCallback() != nullptr) {
         int32_t serviceErrorType = ServiceToCameraError(errorType);
-        camInput_->GetErrorCallback()->OnError(serviceErrorType, errorMsg);
+        camInputSptr->GetErrorCallback()->OnError(serviceErrorType, errorMsg);
     } else {
         MEDIA_INFO_LOG("CameraDeviceServiceCallback::ErrorCallback not set!, Discarding callback");
     }
@@ -46,23 +47,24 @@ int32_t CameraDeviceServiceCallback::OnResult(const uint64_t timestamp,
                                               const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
     std::lock_guard<std::mutex> lock(deviceCallbackMutex_);
-    if (camInput_ == nullptr) {
+    auto camInputSptr = camInput_.promote();
+    if (camInputSptr == nullptr) {
         MEDIA_ERR_LOG("CameraDeviceServiceCallback::OnResult() camInput_ is null!");
         return CAMERA_OK;
     }
-    if (camInput_->GetCameraDeviceInfo() == nullptr) {
+    if (camInputSptr->GetCameraDeviceInfo() == nullptr) {
         MEDIA_ERR_LOG("CameraDeviceServiceCallback::OnResult() camInput_->GetCameraDeviceInfo() is null!");
     } else {
         MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::OnResult()"
                         "is called!, cameraId: %{public}s, timestamp: %{public}"
-                        PRIu64, camInput_->GetCameraDeviceInfo()->GetID().c_str(), timestamp);
+                        PRIu64, camInputSptr->GetCameraDeviceInfo()->GetID().c_str(), timestamp);
     }
-    if (camInput_->GetResultCallback() != nullptr) {
-        camInput_->GetResultCallback()->OnResult(timestamp, result);
+    if (camInputSptr->GetResultCallback() != nullptr) {
+        camInputSptr->GetResultCallback()->OnResult(timestamp, result);
     } else {
         MEDIA_INFO_LOG("CameraDeviceServiceCallback::ResultCallback not set!, Discarding callback");
     }
-    camInput_->ProcessCallbackUpdates(timestamp, result);
+    camInputSptr->ProcessCallbackUpdates(timestamp, result);
     return CAMERA_OK;
 }
 
