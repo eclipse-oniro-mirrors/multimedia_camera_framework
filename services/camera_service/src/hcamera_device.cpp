@@ -28,7 +28,6 @@
 namespace OHOS {
 namespace CameraStandard {
 std::mutex HCameraDevice::deviceOpenMutex_;
-std::mutex HCameraDevice::deviceCloseMutex_;
 namespace {
 int32_t MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata,
     std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata)
@@ -283,7 +282,7 @@ int32_t HCameraDevice::CloseDevice()
     MEDIA_DEBUG_LOG("HCameraDevice::CloseDevice start");
     CAMERA_SYNC_TRACE;
     {
-        std::lock_guard<std::mutex> lock(deviceCloseMutex_);
+        std::lock_guard<std::mutex> lock(opMutex_);
         if (!isOpenedCameraDevice_.load()) {
             MEDIA_DEBUG_LOG("HCameraDevice::CloseDevice device has benn closed");
             return CAMERA_OK;
@@ -300,9 +299,9 @@ int32_t HCameraDevice::CloseDevice()
             MEDIA_INFO_LOG("Closing camera device: %{public}s end", cameraID_.c_str());
             hdiCameraDevice_ = nullptr;
         }
-    }
-    if (streamOperator_) {
-        streamOperator_ = nullptr;
+        if (streamOperator_) {
+            streamOperator_ = nullptr;
+        }
     }
     if (cameraHostManager_) {
         cameraHostManager_->RemoveCameraDevice(cameraID_);

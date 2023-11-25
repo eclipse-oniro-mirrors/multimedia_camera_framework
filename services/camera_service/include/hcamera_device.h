@@ -77,7 +77,6 @@ private:
     std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.
     std::mutex cachedSettingsMutex_;
     static std::mutex deviceOpenMutex_;
-    static std::mutex deviceCloseMutex_;
     sptr<ICameraDeviceServiceCallback> deviceSvcCallback_;
     std::map<int32_t, wptr<ICameraServiceCallback>> statusSvcCallbacks_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> updateSettings_;
