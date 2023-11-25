@@ -77,7 +77,6 @@ private:
     std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.
     std::mutex cachedSettingsMutex_;
     static std::mutex deviceOpenMutex_;
-    static std::mutex deviceCloseMutex_;
     sptr<ICameraDeviceServiceCallback> deviceSvcCallback_;
     std::map<int32_t, wptr<ICameraServiceCallback>> statusSvcCallbacks_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> updateSettings_;
@@ -96,8 +95,6 @@ class IDeviceOperatorsCallback : public virtual RefBase {
 public:
     IDeviceOperatorsCallback() = default;
     virtual ~IDeviceOperatorsCallback() = default;
-    virtual int32_t DeviceOpen(const std::string& cameraId) = 0;
-    virtual int32_t DeviceClose(const std::string& cameraId, pid_t pidFromSession = 0) = 0;
 };
 } // namespace CameraStandard
 } // namespace OHOS

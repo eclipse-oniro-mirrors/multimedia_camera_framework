@@ -58,7 +58,7 @@ void HCameraDeviceManager::RemoveDevice()
 sptr<HCameraDevice> HCameraDeviceManager::GetCameraByPid(pid_t pidRequest)
 {
     MEDIA_DEBUG_LOG("HCameraDeviceManager::GetCameraByPid start");
-    sptr<HCameraDevice> camera;
+    sptr<HCameraDevice> camera = nullptr;
     pidToCameras_.Find(pidRequest, camera);
     MEDIA_DEBUG_LOG("HCameraDeviceManager::GetCameraByPid end");
     return camera;
@@ -84,6 +84,10 @@ bool HCameraDeviceManager::GetConflictDevices(sptr<HCameraDevice> &cameraNeedEvi
     if (activeClient == -1) {
         return true;
     }
+    sptr<HCameraDevice> activeCamera = HCameraDeviceManager::GetCameraByPid(activeClient);
+    if (activeCamera == nullptr) {
+        return true;
+    }
     pid_t pidOfOpenRequest = IPCSkeleton::GetCallingPid();
     MEDIA_DEBUG_LOG("HCameraDeviceManager::GetConflictDevices callerPid:%{public}d", pidOfOpenRequest);
 
@@ -93,7 +97,6 @@ bool HCameraDeviceManager::GetConflictDevices(sptr<HCameraDevice> &cameraNeedEvi
     MEDIA_DEBUG_LOG("HCameraDeviceManager::GetConflictDevices result:%{public}d, priority score: %{public}d",
                     result, priorityOfOpenRequestPid);
 
-    sptr<HCameraDevice> activeCamera = HCameraDeviceManager::GetCameraByPid(activeClient);
     if (!result) {
         // 如果是同一个进程，两种情况，1：相机已打开，相机进驱逐队列，但提示可开 2:根据组合判断是否可开
         if (activeClient == pidOfOpenRequest) {
