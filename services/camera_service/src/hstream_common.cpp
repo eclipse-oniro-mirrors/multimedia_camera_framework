@@ -14,12 +14,29 @@
  */
 
 #include "hstream_common.h"
-
 #include "camera_util.h"
 #include "camera_log.h"
 
 namespace OHOS {
 namespace CameraStandard {
+static const std::map<ColorSpace_CM, CM_ColorSpaceType> g_fwkToMetaColorSpaceMap_ = {
+    {COLOR_SPACE_UNKNOWN_CM, CM_COLORSPACE_NONE},
+    {DISPLAY_P3_CM, CM_P3_FULL},
+    {SRGB_CM, CM_SRGB_FULL},
+    {BT709_CM, CM_BT709_FULL},
+    {BT2020_HLG_CM, CM_BT2020_HLG_FULL},
+    {BT2020_PQ_CM, CM_BT2020_PQ_FULL},
+    {P3_HLG_CM, CM_P3_HLG_FULL},
+    {P3_PQ_CM, CM_P3_PQ_FULL},
+    {DISPLAY_P3_LIMIT_CM, CM_P3_LIMIT},
+    {SRGB_LIMIT_CM, CM_SRGB_LIMIT},
+    {BT709_LIMIT_CM, CM_BT709_LIMIT},
+    {BT2020_HLG_LIMIT_CM, CM_BT2020_HLG_LIMIT},
+    {BT2020_PQ_LIMIT_CM, CM_BT2020_PQ_LIMIT},
+    {P3_HLG_LIMIT_CM, CM_P3_HLG_LIMIT},
+    {P3_PQ_LIMIT_CM, CM_P3_PQ_LIMIT}
+};
+
 HStreamCommon::HStreamCommon(StreamType streamType, sptr<OHOS::IBufferProducer> producer,
                              int32_t format, int32_t width, int32_t height)
 {
@@ -58,6 +75,16 @@ int32_t HStreamCommon::GetStreamId()
 StreamType HStreamCommon::GetStreamType()
 {
     return streamType_;
+}
+
+void HStreamCommon::SetColorSpace(ColorSpace_CM colorSpace)
+{
+    auto itr = g_fwkToMetaColorSpaceMap_.find(colorSpace);
+    if (itr != g_fwkToMetaColorSpaceMap_.end()) {
+        dataSpace_ = itr->second;
+    } else {
+        MEDIA_ERR_LOG("HStreamCommon::SetColorSpace, %{public}d failed", static_cast<int32_t>(colorSpace));
+    }
 }
 
 int32_t HStreamCommon::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
@@ -103,7 +130,8 @@ void HStreamCommon::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
     } else {
         streamInfo.v1_0.bufferQueue_ = nullptr;
     }
-    streamInfo.v1_0.dataspace_ = CAMERA_COLOR_SPACE;
+    MEDIA_DEBUG_LOG("HStreamCommon::SetStreamInfo type %{public}d, dataSpace %{public}d", streamType_, dataSpace_);
+    streamInfo.v1_0.dataspace_ = dataSpace_;
     streamInfo.extendedStreamInfos = {};
 }
 

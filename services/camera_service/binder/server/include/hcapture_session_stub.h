@@ -35,6 +35,8 @@ private:
     int HandleRemoveOutput(MessageParcel &data);
     int HandleSetCallback(MessageParcel &data);
     int HandleGetSesstionState(MessageParcel &reply);
+    int HandleGetActiveColorSpace(MessageParcel &reply);
+    int HandleSetColorSpace(MessageParcel &data);
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -196,6 +196,11 @@ int32_t HCaptureSession::AddOutputStream(sptr<HStreamCommon> stream)
     }
     if (stream) {
         stream->SetReleaseStream(false);
+        if (stream->GetStreamType() == StreamType::CAPTURE) {
+            stream->SetColorSpace(currCaptureColorSpace_);
+        } else {
+            stream->SetColorSpace(currColorSpace_);
+        }
     }
     tempStreams_.emplace_back(stream);
     return CAMERA_OK;
@@ -394,7 +399,7 @@ int32_t HCaptureSession::GetCurrentStreamInfos(sptr<HCameraDevice>& device,
 int32_t HCaptureSession::CreateAndCommitStreams(sptr<HCameraDevice>& device,
     std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, std::vector<StreamInfo_V1_1>& streamInfos)
 {
-    CamRetCode hdiRc = HDI::Camera::V1_0::NO_ERROR;
+    CamRetCode hdiRc = HDI::Camera::V1_0::CamRetCode::NO_ERROR;
     StreamInfo_V1_1 curStreamInfo;
     uint32_t major;
     uint32_t minor;
@@ -724,6 +729,169 @@ int32_t HCaptureSession::CommitConfig()
     return rc;
 }
 
+int32_t HCaptureSession::GetActiveColorSpace(ColorSpace_CM& colorSpace)
+{
+    colorSpace = currColorSpace_;
+    return CAMERA_OK;
+}
+
+int32_t HCaptureSession::SetColorSpace(
+    ColorSpace_CM& colorSpace, ColorSpace_CM& captureColorSpace, bool isNeedUpdate)
+{
+    int32_t result = CAMERA_OK;
+    if (colorSpace == currColorSpace_ && captureColorSpace == currCaptureColorSpace_) {
+        MEDIA_INFO_LOG("HCaptureSession::SetColorSpace() colorSpace no need to update.");
+        return result;
+    }
+
+    std::lock_guard<std::mutex> lock(sessionLock_);
+    currColorSpace_ = colorSpace;
+    currCaptureColorSpace_ = captureColorSpace;
+    MEDIA_INFO_LOG("HCaptureSession::SetColorSpace() colorSpace %{public}d, captureColorSpace %{public}d, "
+        "isNeedUpdate %{public}d", colorSpace, captureColorSpace, isNeedUpdate);
+
+    result = CheckIfColorSpaceMatchesFormat(colorSpace);
+    if (result != CAMERA_OK && isNeedUpdate) {
+        MEDIA_ERR_LOG("HCaptureSession::SetColorSpace() Failed, format and colorSpace not match.");
+        return result;
+    }
+    if (result != CAMERA_OK && !isNeedUpdate) {
+        MEDIA_ERR_LOG("HCaptureSession::SetColorSpace() %{public}d, format and colorSpace not match.", result);
+        currColorSpace_ = BT709_CM;
+    }
+
+    sptr<HStreamCommon> curStream;
+    for (auto item = streams_.begin(); item != streams_.end(); ++item) {
+        curStream = *item;
+        if (curStream) {
+            MEDIA_DEBUG_LOG("HCaptureSession::SetColorSpace() streams type %{public}d", curStream->GetStreamType());
+            if (curStream->GetStreamType() == StreamType::CAPTURE) {
+                curStream->SetColorSpace(currCaptureColorSpace_);
+            } else {
+                curStream->SetColorSpace(currColorSpace_);
+            }
+        }
+    }
+
+    for (auto item = tempStreams_.begin(); item != tempStreams_.end(); ++item) {
+        curStream = *item;
+        if (curStream) {
+            MEDIA_DEBUG_LOG("HCaptureSession::SetColorSpace() tempStreams type %{public}d", curStream->GetStreamType());
+            if (curStream->GetStreamType() == StreamType::CAPTURE) {
+                curStream->SetColorSpace(currCaptureColorSpace_);
+            } else {
+                curStream->SetColorSpace(currColorSpace_);
+            }
+        }
+    }
+
+    if (!isNeedUpdate) {
+        return result;
+    }
+
+    UpdateStreamInfos();
+    return result;
+}
+
+void HCaptureSession::CancelStreamsAndGetStreamInfos(std::vector<StreamInfo_V1_1>& streamInfos)
+{
+    MEDIA_INFO_LOG("HCaptureSession::CancelStreamsAndGetStreamInfos enter.");
+    StreamInfo_V1_1 curStreamInfo;
+    sptr<HStreamCommon> curStream;
+    for (auto item = streams_.begin(); item != streams_.end(); ++item) {
+        curStream = *item;
+        if (curStream && curStream->IsReleaseStream()) {
+            continue;
+        }
+        if (curStream && curStream->GetStreamType() == StreamType::METADATA) {
+            continue;
+        }
+        if (curStream && curStream->GetStreamType() == StreamType::CAPTURE && isSessionStarted_) {
+            static_cast<HStreamCapture*>(curStream.GetRefPtr())->CancelCapture();
+        } else if (curStream && curStream->GetStreamType() == StreamType::REPEAT && isSessionStarted_) {
+            static_cast<HStreamRepeat*>(curStream.GetRefPtr())->Stop();
+        }
+        if (curStream) {
+            curStream->SetStreamInfo(curStreamInfo);
+            streamInfos.push_back(curStreamInfo);
+        }
+    }
+}
+
+void HCaptureSession::RestartStreams()
+{
+    MEDIA_INFO_LOG("HCaptureSession::RestartStreams() enter.");
+    if (!isSessionStarted_) {
+        MEDIA_DEBUG_LOG("HCaptureSession::RestartStreams() session is not started yet.");
+        return;
+    }
+    sptr<HStreamCommon> curStream;
+    for (auto item = streams_.begin(); item != streams_.end(); ++item) {
+        curStream = *item;
+        if (curStream && curStream->IsReleaseStream()) {
+            continue;
+        }
+
+        if (curStream && curStream->GetStreamType() == StreamType::REPEAT &&
+            static_cast<HStreamRepeat*>(curStream.GetRefPtr())->GetRepeatStreamType() != RepeatStreamType::VIDEO) {
+            static_cast<HStreamRepeat*>(curStream.GetRefPtr())->Start();
+        }
+    }
+}
+
+int32_t HCaptureSession::UpdateStreamInfos()
+{
+    std::vector<StreamInfo_V1_1> streamInfos;
+    CancelStreamsAndGetStreamInfos(streamInfos);
+
+    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator;
+    sptr<OHOS::HDI::Camera::V1_2::IStreamOperator> streamOperatorV1_2;
+    if (cameraDevice_ != nullptr) {
+        streamOperator = cameraDevice_->GetStreamOperator();
+    }
+    if (streamOperator == nullptr) {
+        MEDIA_ERR_LOG("HCaptureSession::UpdateStreamInfos GetStreamOperator is null!");
+        return CAMERA_UNKNOWN_ERROR;
+    }
+
+    uint32_t major;
+    uint32_t minor;
+    streamOperator->GetVersion(major, minor);
+    MEDIA_INFO_LOG("UpdateStreamInfos: streamOperator GetVersion major:%{public}d, minor:%{public}d", major, minor);
+    if (major >= HDI_VERSION_1 && minor >= HDI_VERSION_2) {
+        streamOperatorV1_2 = OHOS::HDI::Camera::V1_2::IStreamOperator::CastFrom(streamOperator);
+        if (streamOperatorV1_2 == nullptr) {
+            MEDIA_ERR_LOG("HCaptureSession::UpdateStreamInfos IStreamOperator cast to V1_2 error");
+            streamOperatorV1_2 = static_cast<OHOS::HDI::Camera::V1_2::IStreamOperator *>(streamOperator.GetRefPtr());
+        }
+    }
+    CamRetCode hdiRc = HDI::Camera::V1_0::CamRetCode::NO_ERROR;
+    if (streamOperatorV1_2 != nullptr) {
+        MEDIA_DEBUG_LOG("HCaptureSession::UpdateStreamInfos streamOperator V1_2");
+        hdiRc = (CamRetCode)(streamOperatorV1_2->UpdateStreams(streamInfos));
+    } else {
+        MEDIA_DEBUG_LOG("HCaptureSession::UpdateStreamInfos failed, streamOperator V1_2 is null.");
+        return CAMERA_UNKNOWN_ERROR;
+    }
+
+    if (hdiRc == HDI::Camera::V1_0::NO_ERROR) {
+        RestartStreams();
+    } else {
+        MEDIA_DEBUG_LOG("HCaptureSession::UpdateStreamInfos err %{public}d", hdiRc);
+    }
+    return HdiToServiceError(hdiRc);
+}
+
+int32_t HCaptureSession::CheckIfColorSpaceMatchesFormat(ColorSpace_CM& colorSpace)
+{
+    if (!(colorSpace == BT2020_HLG_CM || colorSpace == BT2020_PQ_CM || colorSpace == BT2020_HLG_LIMIT_CM ||
+        colorSpace == BT2020_PQ_LIMIT_CM)) {
+        return CAMERA_OK;
+    }
+    // 待为HDR VIVID增加逻辑
+    return CAMERA_OPERATION_NOT_ALLOWED;
+}
+
 int32_t HCaptureSession::GetSessionState(CaptureSessionState& sessionState)
 {
     int32_t rc = CAMERA_OK;
@@ -770,6 +938,9 @@ int32_t HCaptureSession::Start()
             break;
         }
     }
+    if (rc == CAMERA_OK) {
+        isSessionStarted_ = true;
+    }
     return rc;
 }
 
@@ -790,6 +961,9 @@ int32_t HCaptureSession::Stop()
                 break;
             }
         }
+    }
+    if (rc == CAMERA_OK) {
+        isSessionStarted_ = false;
     }
     return rc;
 }
@@ -871,6 +1045,7 @@ int32_t HCaptureSession::Release(pid_t pid)
     ClearCaptureSession(pid);
     sessionCallback_ = nullptr;
     cameraHostManager_ = nullptr;
+    isSessionStarted_ = false;
     return CAMERA_OK;
 }
 

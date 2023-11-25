@@ -49,6 +49,10 @@ public:
 
     int32_t GetSessionState(CaptureSessionState &sessionState) override;
 
+    int32_t GetActiveColorSpace(ColorSpace_CM& colorSpace) override;
+
+    int32_t SetColorSpace(ColorSpace_CM& colorSpace, ColorSpace_CM& captureColorSpace, bool isNeedUpdate) override;
+
 private:
     static inline BrokerDelegator<HCaptureSessionProxy> delegator_;
 };

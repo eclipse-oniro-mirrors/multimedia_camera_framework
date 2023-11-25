@@ -576,6 +576,10 @@ napi_value CameraSessionNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("once", Once),
         DECLARE_NAPI_FUNCTION("off", Off),
 
+        DECLARE_NAPI_FUNCTION("getSupportedColorSpaces", GetSupportedColorSpaces),
+        DECLARE_NAPI_FUNCTION("getActiveColorSpace", GetActiveColorSpace),
+        DECLARE_NAPI_FUNCTION("setColorSpace", SetColorSpace),
+
         DECLARE_NAPI_FUNCTION("getSupportedColorEffects", GetSupportedColorEffects),
         DECLARE_NAPI_FUNCTION("getColorEffect", GetColorEffect),
         DECLARE_NAPI_FUNCTION("setColorEffect", SetColorEffect),
@@ -2249,6 +2253,97 @@ napi_value CameraSessionNapi::SetBeauty(napi_env env, napi_callback_info info)
         cameraSessionNapi->cameraSession_->UnlockForControl();
     } else {
         MEDIA_ERR_LOG("SetBeauty call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetSupportedColorSpaces(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetSupportedColorSpaces is called.");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    status = napi_create_array(env, &result);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("napi_create_array call Failed!");
+        return result;
+    }
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        std::vector<ColorSpace> colorSpaces = cameraSessionNapi->cameraSession_->GetSupportedColorSpaces();
+        if (!colorSpaces.empty()) {
+            for (size_t i = 0; i < colorSpaces.size(); i++) {
+                int colorSpace = colorSpaces[i];
+                napi_value value;
+                napi_create_int32(env, colorSpace, &value);
+                napi_set_element(env, result, i, value);
+            }
+        }
+    } else {
+        MEDIA_ERR_LOG("GetSupportedColorSpaces call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetActiveColorSpace(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetActiveColorSpace is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        ColorSpace colorSpace;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetActiveColorSpace(colorSpace);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return result;
+        }
+        napi_create_int32(env, colorSpace, &result);
+    } else {
+        MEDIA_ERR_LOG("GetActiveColorSpace call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::SetColorSpace(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetColorSpace is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        int32_t colorSpaceNumber;
+        napi_get_value_int32(env, argv[PARAM0], &colorSpaceNumber);
+        ColorSpace colorSpace = (ColorSpace)colorSpaceNumber;
+        int32_t retCode = cameraSessionNapi->cameraSession_->SetColorSpace(colorSpace);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return result;
+        }
+    } else {
+        MEDIA_ERR_LOG("SetColorSpace call Failed!");
     }
     return result;
 }

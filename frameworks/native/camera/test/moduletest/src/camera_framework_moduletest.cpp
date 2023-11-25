@@ -6842,5 +6842,38 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_056, TestSize.Le
     intResult = session_->Stop();
     EXPECT_EQ(intResult, 0);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test HStreamCapture
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test HStreamCapture with abnormal branches
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_073, TestSize.Level0)
+{
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
+
+    sptr<IStreamCaptureCallback> captureCallback = iface_cast<IStreamCaptureCallback>(object);
+    ASSERT_NE(captureCallback, nullptr);
+
+    int32_t format = 0;
+    int32_t width = 0;
+    int32_t height = 0;
+    int32_t captureId = 0;
+    int32_t frameCount = 0;
+    uint64_t timestamp = 0;
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+    sptr<HStreamCapture> streamCapture = new (std::nothrow) HStreamCapture(producer, format, width, height);
+    EXPECT_EQ(streamCapture->SetCallback(captureCallback), CAMERA_OK);
+    EXPECT_EQ(streamCapture->OnCaptureEnded(captureId, frameCount), CAMERA_OK);
+    EXPECT_EQ(streamCapture->OnCaptureError(captureId, frameCount), CAMERA_OK);
+    EXPECT_EQ(streamCapture->OnCaptureError(captureId, BUFFER_LOST), CAMERA_OK);
+    EXPECT_EQ(streamCapture->OnFrameShutter(captureId, timestamp), CAMERA_OK);
+}
 } // namespace CameraStandard
 } // namespace OHOS

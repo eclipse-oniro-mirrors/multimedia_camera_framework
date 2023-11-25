@@ -26,6 +26,7 @@
               "c_utils",
               "device_manager",
               "drivers_interface_camera",
+              "drivers_interface_display",
               "drivers_peripheral_display",
               "graphic_2d",
               "hdf_core",

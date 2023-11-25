@@ -64,6 +64,12 @@ int HCaptureSessionStub::OnRemoteRequest(
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_GET_SESSION_STATE):
             errCode =  HandleGetSesstionState(reply);
             break;
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_GET_ACTIVE_COLOR_SPACE):
+            errCode =  HandleGetActiveColorSpace(reply);
+            break;
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SET_COLOR_SPACE):
+            errCode =  HandleSetColorSpace(data);
+            break;
         default:
             MEDIA_ERR_LOG("HCaptureSessionStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -148,6 +154,23 @@ int HCaptureSessionStub::HandleGetSesstionState(MessageParcel &reply)
     CHECK_AND_RETURN_RET_LOG(reply.WriteUint32(static_cast<uint32_t>(sessionState)), IPC_STUB_WRITE_PARCEL_ERR,
                              "HCaptureSessionStub HandleGetSesstionState Write sessionState failed");
     return ret;
+}
+
+int HCaptureSessionStub::HandleGetActiveColorSpace(MessageParcel &reply)
+{
+    ColorSpace_CM currColorSpace;
+    int32_t ret = GetActiveColorSpace(currColorSpace);
+    CHECK_AND_RETURN_RET_LOG(reply.WriteInt32(static_cast<int32_t>(currColorSpace)), IPC_STUB_WRITE_PARCEL_ERR,
+                             "HCaptureSessionStub HandleGetActiveColorSpace write colorSpace failed");
+    return ret;
+}
+
+int HCaptureSessionStub::HandleSetColorSpace(MessageParcel &data)
+{
+    ColorSpace_CM colorSpace = static_cast<ColorSpace_CM>(data.ReadInt32());
+    ColorSpace_CM colorSpaceForCapture = static_cast<ColorSpace_CM>(data.ReadInt32());
+    bool isNeedUpdate = data.ReadBool();
+    return SetColorSpace(colorSpace, colorSpaceForCapture, isNeedUpdate);
 }
 } // namespace CameraStandard
 } // namespace OHOS

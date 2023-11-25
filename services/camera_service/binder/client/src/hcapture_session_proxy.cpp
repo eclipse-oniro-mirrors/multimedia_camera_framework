@@ -234,5 +234,41 @@ int32_t HCaptureSessionProxy::GetSessionState(CaptureSessionState &sessionState)
     sessionState = static_cast<CaptureSessionState>(reply.ReadUint32());
     return error;
 }
+
+int32_t HCaptureSessionProxy::GetActiveColorSpace(ColorSpace_CM& colorSpace)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_GET_ACTIVE_COLOR_SPACE), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCaptureSessionProxy GetActiveColorSpace failed, error: %{public}d", error);
+    }
+    colorSpace = static_cast<ColorSpace_CM>(reply.ReadInt32());
+    return error;
+}
+
+int32_t HCaptureSessionProxy::SetColorSpace(
+    ColorSpace_CM& colorSpace, ColorSpace_CM& captureColorSpace, bool isNeedUpdate)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(static_cast<int32_t>(colorSpace));
+    data.WriteInt32(static_cast<int32_t>(captureColorSpace));
+    data.WriteBool(isNeedUpdate);
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SET_COLOR_SPACE), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCaptureSessionProxy SetCallback failed, error: %{public}d", error);
+    }
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS

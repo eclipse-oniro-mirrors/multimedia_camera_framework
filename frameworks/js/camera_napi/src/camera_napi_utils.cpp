@@ -126,24 +126,6 @@ int32_t CameraNapiUtils::MapCameraPositionEnumFromJs(int32_t jsCameraPosition, c
     return 0;
 }
 
-void CameraNapiUtils::MapCameraFormatEnum(camera_format_t nativeCamFormat, int32_t &jsCameraFormat)
-{
-    MEDIA_INFO_LOG("native cam format = %{public}d", static_cast<int32_t>(nativeCamFormat));
-    switch (nativeCamFormat) {
-        case OHOS_CAMERA_FORMAT_YCRCB_420_SP:
-            jsCameraFormat = CAMERA_FORMAT_YUV_420_SP;
-            break;
-        case OHOS_CAMERA_FORMAT_JPEG:
-            jsCameraFormat = CAMERA_FORMAT_JPEG;
-            break;
-        case OHOS_CAMERA_FORMAT_RGBA_8888:
-        case OHOS_CAMERA_FORMAT_YCBCR_420_888:
-        default:
-            jsCameraFormat = -1;
-            MEDIA_ERR_LOG("The native camera format is not supported with JS");
-    }
-}
-
 void CameraNapiUtils::MapMetadataObjSupportedTypesEnum(
     MetadataObjectType nativeMetadataObjType, int32_t &jsMetadataObjType)
 {
@@ -170,24 +152,6 @@ void CameraNapiUtils::MapMetadataObjSupportedTypesEnumFromJS(int32_t jsMetadataO
             isValid = false;
             MEDIA_ERR_LOG("JS Metadata object type not supported with native");
     }
-}
-
-int32_t CameraNapiUtils::MapCameraFormatEnumFromJs(int32_t jsCameraFormat, camera_format_t &nativeCamFormat)
-{
-    MEDIA_INFO_LOG("js cam format = %{public}d", jsCameraFormat);
-    switch (jsCameraFormat) {
-        case CAMERA_FORMAT_YUV_420_SP:
-            nativeCamFormat = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
-            break;
-        case CAMERA_FORMAT_JPEG:
-            nativeCamFormat = OHOS_CAMERA_FORMAT_JPEG;
-            break;
-        default:
-            MEDIA_ERR_LOG("Invalid or unsupported camera format value received from application");
-            return -1;
-    }
-
-    return 0;
 }
 
 void CameraNapiUtils::MapCameraTypeEnum(camera_type_enum_t nativeCamType, int32_t &jsCameraType)

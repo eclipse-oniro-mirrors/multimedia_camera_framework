@@ -115,9 +115,13 @@ napi_value PortraitSessionNapi::Init(napi_env env, napi_value exports)
 
         DECLARE_NAPI_FUNCTION("getSupportedColorEffects", CameraSessionNapi::GetSupportedColorEffects),
         DECLARE_NAPI_FUNCTION("getColorEffect", CameraSessionNapi::GetColorEffect),
-        DECLARE_NAPI_FUNCTION("setColorEffect", CameraSessionNapi::SetColorEffect)
+        DECLARE_NAPI_FUNCTION("setColorEffect", CameraSessionNapi::SetColorEffect),
 
+        DECLARE_NAPI_FUNCTION("getSupportedColorSpaces", CameraSessionNapi::GetSupportedColorSpaces),
+        DECLARE_NAPI_FUNCTION("getActiveColorSpace", CameraSessionNapi::GetActiveColorSpace),
+        DECLARE_NAPI_FUNCTION("setColorSpace", CameraSessionNapi::SetColorSpace)
     };
+
     status = napi_define_class(env, PORTRAIT_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                PortraitSessionNapiConstructor, nullptr,
                                sizeof(portrait_session_props) / sizeof(portrait_session_props[PARAM0]),
