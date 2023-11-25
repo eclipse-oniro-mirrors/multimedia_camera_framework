@@ -18,16 +18,19 @@
 
 #include <iostream>
 #include <refbase.h>
-
+#include "display/graphic/common/v1_0/cm_color_space.h"
 #include "camera/v1_2/types.h"
 #include "camera_metadata_info.h"
+#include "icapture_session.h"
 #include "istream_common.h"
 #include "v1_0/istream_operator.h"
 #include "v1_1/istream_operator.h"
+#include "v1_2/istream_operator.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
+using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
 using OHOS::HDI::Camera::V1_1::StreamInfo_V1_1;
 class HStreamCommon : virtual public RefBase {
 public:
@@ -43,14 +46,16 @@ public:
     virtual int32_t SetReleaseStream(bool isReleaseStream) final;
     virtual int32_t GetStreamId() final;
     virtual StreamType GetStreamType() final;
+    virtual void SetColorSpace(ColorSpace_CM colorSpace) final;
 
     int32_t curCaptureID_;
     int32_t streamId_;
     int32_t format_;
     int32_t width_;
     int32_t height_;
+    int32_t dataSpace_;
     sptr<OHOS::IBufferProducer> producer_;
-    sptr<IStreamOperator> streamOperator_;
+    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility_;
 
 protected:

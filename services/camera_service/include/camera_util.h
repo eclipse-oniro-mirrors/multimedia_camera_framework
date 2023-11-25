@@ -21,6 +21,7 @@
 #include "v1_0/types.h"
 #include "v1_1/types.h"
 #include "v1_2/types.h"
+#include "display/graphic/common/v1_0/cm_color_space.h"
 #include "camera_metadata_info.h"
 #include <malloc.h>
 #include "safe_map.h"
@@ -30,7 +31,6 @@ namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
 static constexpr int32_t HDI_VERSION_1 = 1;
 static constexpr int32_t HDI_VERSION_2 = 2;
-static constexpr int32_t CAMERA_COLOR_SPACE = 8;
 static const std::string OHOS_PERMISSION_CAMERA = "ohos.permission.CAMERA";
 static const std::string OHOS_PERMISSION_MANAGE_CAMERA_CONFIG = "ohos.permission.MANAGE_CAMERA_CONFIG";
 enum CamServiceError {

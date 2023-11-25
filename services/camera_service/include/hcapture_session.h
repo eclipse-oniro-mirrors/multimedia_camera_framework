@@ -31,11 +31,13 @@
 #include "state_customized_cbk.h"
 #include "v1_0/istream_operator.h"
 #include "v1_1/istream_operator.h"
+#include "v1_2/istream_operator.h"
 #include "v1_2/istream_operator_callback.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
+using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
 class StreamOperatorCallback;
 class PermissionStatusChangeCb;
 class CameraUseStateChangeCb;
@@ -66,6 +68,8 @@ public:
     int32_t SetCallback(sptr<ICaptureSessionCallback>& callback) override;
 
     int32_t GetSessionState(CaptureSessionState& sessionState) override;
+    int32_t GetActiveColorSpace(ColorSpace_CM& colorSpace) override;
+    int32_t SetColorSpace(ColorSpace_CM& colorSpace, ColorSpace_CM& captureColorSpace, bool isNeedUpdate) override;
 
     friend class StreamOperatorCallback;
     static void dumpSessions(std::string& dumpString);
@@ -101,6 +105,10 @@ private:
     void CloseDevice(sptr<HCameraDevice>& device);
     void ClearSketchRepeatStream();
     void ExpandSketchRepeatStream();
+    int32_t CheckIfColorSpaceMatchesFormat(ColorSpace_CM& colorSpace);
+    void CancelStreamsAndGetStreamInfos(std::vector<StreamInfo_V1_1>& streamInfos);
+    void RestartStreams();
+    int32_t UpdateStreamInfos();
 
     std::string GetSessionState();
 
@@ -127,6 +135,9 @@ private:
     std::shared_ptr<CameraUseStateChangeCb> cameraUseCallbackPtr_;
     wptr<IDeviceOperatorsCallback> deviceOperatorsCallback_;
     int32_t opMode_;
+    ColorSpace_CM currColorSpace_ = ColorSpace_CM::COLOR_SPACE_UNKNOWN_CM;
+    ColorSpace_CM currCaptureColorSpace_ = ColorSpace_CM::COLOR_SPACE_UNKNOWN_CM;
+    bool isSessionStarted_ = false;
 };
 
 class PermissionStatusChangeCb : public Security::AccessToken::PermStateChangeCallbackCustomize {

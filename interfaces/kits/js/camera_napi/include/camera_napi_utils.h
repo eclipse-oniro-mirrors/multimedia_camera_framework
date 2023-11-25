@@ -237,14 +237,10 @@ public:
 
     static int32_t MapCameraPositionEnumFromJs(int32_t jsCameraPosition, camera_position_enum_t &nativeCamPos);
 
-    static void MapCameraFormatEnum(camera_format_t nativeCamFormat, int32_t &jsCameraFormat);
-
     static void MapMetadataObjSupportedTypesEnum(MetadataObjectType nativeMetadataObjType, int32_t &jsMetadataObjType);
 
     static void MapMetadataObjSupportedTypesEnumFromJS(int32_t jsMetadataObjType,
         MetadataObjectType &nativeMetadataObjType, bool &isValid);
-
-    static int32_t MapCameraFormatEnumFromJs(int32_t jsCameraFormat, camera_format_t &nativeCamFormat);
 
     static void MapCameraTypeEnum(camera_type_enum_t nativeCamType, int32_t &jsCameraType);
 

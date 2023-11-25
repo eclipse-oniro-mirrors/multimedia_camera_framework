@@ -246,7 +246,17 @@ typedef enum Camera_Format {
     /**
      * JPEG Format.
      */
-    CAMERA_FORMAT_JPEG = 2000
+    CAMERA_FORMAT_JPEG = 2000,
+
+    /**
+     * YCBCR P010 Format.
+     */
+    CAMERA_FORMAT_YCBCR_P010,
+
+    /**
+     * YCRCB P010 Format.
+     */
+    CAMERA_FORMAT_YCRCB_P010
 } Camera_Format;
 
 /**
