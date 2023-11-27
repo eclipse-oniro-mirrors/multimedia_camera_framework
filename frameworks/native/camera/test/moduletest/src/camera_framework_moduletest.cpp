@@ -6929,9 +6929,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_057, TestSize.Le
         bool boolResult = portraitSession->SetBeautyValue(beautyLists[3], rangeLists[0]);
         EXPECT_TRUE(boolResult);
     }
-
+    
     portraitSession->UnlockForControl();
-
 }
 } // namespace CameraStandard
 } // namespace OHOS
