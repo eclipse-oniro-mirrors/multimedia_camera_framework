@@ -386,7 +386,13 @@ Camera_ErrorCode NDKCamera::GetSupportedOutputCapability(void)
 
 Camera_ErrorCode NDKCamera::CreatePreviewOutput(void)
 {
-    profile_ = cameraOutputCapability_->previewProfiles[0];
+    for (int i = 0; i < cameraOutputCapability_->previewProfilesSize; i ++) {
+        if (cameraOutputCapability_->previewProfiles[i]->size.height == 1080 ||
+            cameraOutputCapability_->previewProfiles[i]->size.width == 1920) {
+            profile_ = cameraOutputCapability_->previewProfiles[i];
+            break;
+            }
+    }
     if (profile_ == nullptr) {
         OH_LOG_ERROR(LOG_APP, "Get previewProfiles failed.");
         return CAMERA_INVALID_ARGUMENT;
@@ -402,7 +408,13 @@ Camera_ErrorCode NDKCamera::CreatePreviewOutput(void)
 
 Camera_ErrorCode NDKCamera::CreatePhotoOutput(char* photoSurfaceId)
 {
-    profile_ = cameraOutputCapability_->photoProfiles[0];
+    for (int i = 0; i < cameraOutputCapability_->photoProfilesSize; i++) {
+        if (cameraOutputCapability_->photoProfiles[i]->size.height == 1080 ||
+            cameraOutputCapability_->photoProfiles[i]->size.width == 1920) {
+            profile_ = cameraOutputCapability_->photoProfiles[i];
+            break;
+        }
+    }
     if (profile_ == nullptr) {
         OH_LOG_ERROR(LOG_APP, "Get photoProfiles failed.");
         return CAMERA_INVALID_ARGUMENT;
@@ -420,8 +432,13 @@ Camera_ErrorCode NDKCamera::CreatePhotoOutput(char* photoSurfaceId)
 
 Camera_ErrorCode NDKCamera::CreateVideoOutput(char* videoId)
 {
-    videoProfile_ = cameraOutputCapability_->videoProfiles[0];
-
+    for (int i = 0; i < cameraOutputCapability_->videoProfilesSize; i++) {
+        if (cameraOutputCapability_->videoProfiles[i]->size.height == 1080 ||
+            cameraOutputCapability_->videoProfiles[i]->size.width == 1920) {
+            videoProfile_ = cameraOutputCapability_->videoProfiles[i];
+            break;
+        }
+    }
     if (videoProfile_ == nullptr) {
         OH_LOG_ERROR(LOG_APP, "Get videoProfiles failed.");
         return CAMERA_INVALID_ARGUMENT;
