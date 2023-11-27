@@ -66,9 +66,13 @@ int32_t HStreamCapture::SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferPro
 int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureSettings)
 {
     CAMERA_SYNC_TRACE;
-    if (streamOperator_ == nullptr) {
-        return CAMERA_INVALID_STATE;
+    {
+        std::lock_guard<std::mutex> lock(streamOperatorLock_);
+        if (streamOperator_ == nullptr) {
+            return CAMERA_INVALID_STATE;
+        }
     }
+
     int32_t ret = AllocateCaptureId(curCaptureID_);
     if (ret != CAMERA_OK) {
         MEDIA_ERR_LOG("HStreamCapture::Capture Failed to allocate a captureId");
@@ -102,7 +106,11 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         captureInfoPhoto.captureSetting_ = finalSetting;
     }
     MEDIA_INFO_LOG("HStreamCapture::Capture Starting photo capture with capture ID: %{public}d", curCaptureID_);
-    CamRetCode rc = (CamRetCode)(streamOperator_->Capture(curCaptureID_, captureInfoPhoto, false));
+    CamRetCode rc;
+    {
+        std::lock_guard<std::mutex> lock(streamOperatorLock_);
+        rc = (CamRetCode)(streamOperator_->Capture(curCaptureID_, captureInfoPhoto, false));
+    }
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         MEDIA_ERR_LOG("HStreamCapture::Capture failed with error Code: %{public}d", rc);
         ret = HdiToServiceError(rc);
@@ -212,6 +220,7 @@ int32_t HStreamCapture::GetMode()
 int32_t HStreamCapture::ConfirmCapture()
 {
     CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(streamOperatorLock_);
     if (streamOperator_ == nullptr) {
         return CAMERA_INVALID_STATE;
     }

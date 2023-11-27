@@ -102,7 +102,10 @@ int32_t HStreamCommon::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> 
     }
     streamId_ = streamId;
     MEDIA_DEBUG_LOG("HStreamCommon::LinkInput streamId_ is %{public}d", streamId_);
-    streamOperator_ = streamOperator;
+    {
+        std::lock_guard<std::mutex> lock(streamOperatorLock_);
+        streamOperator_ = streamOperator;
+    }
     std::lock_guard<std::mutex> lock(cameraAbilityLock_);
     cameraAbility_ = cameraAbility;
     return CAMERA_OK;
@@ -140,7 +143,10 @@ int32_t HStreamCommon::Release()
     MEDIA_DEBUG_LOG("Enter Into HStreamCommon::Release");
     streamId_ = 0;
     curCaptureID_ = 0;
-    streamOperator_ = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(streamOperatorLock_);
+        streamOperator_ = nullptr;
+    }
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
         cameraAbility_ = nullptr;
