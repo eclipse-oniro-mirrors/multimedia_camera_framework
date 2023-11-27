@@ -29,8 +29,8 @@ import AVRecorder from '@ohos.multimedia.media'
 import fileio from '@ohos.fileio'
 
 const CameraSize = {
-  WIDTH: 1280,
-  HEIGHT: 720
+  WIDTH: 1920,
+  HEIGHT: 1080
 }
 
 globalThis.photoSettings = {
