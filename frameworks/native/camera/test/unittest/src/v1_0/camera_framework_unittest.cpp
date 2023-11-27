@@ -69,7 +69,8 @@ public:
         const sptr<BufferProducerSequenceable>& bufferProducer));
     MOCK_METHOD3(Capture, int32_t(int32_t captureId, const CaptureInfo& info, bool isStreaming));
     MOCK_METHOD3(ChangeToOfflineStream, int32_t(const std::vector<int32_t>& streamIds,
-         const sptr<IStreamOperatorCallback>& callbackObj, sptr<IOfflineStreamOperator>& offlineOperator));
+                                            const sptr<HDI::Camera::V1_0::IStreamOperatorCallback>& callbackObj,
+                                            sptr<HDI::Camera::V1_0::IOfflineStreamOperator>& offlineOperator));
     MOCK_METHOD4(IsStreamsSupported, int32_t(OperationMode mode,
         const std::shared_ptr<OHOS::Camera::CameraMetadata> &modeSetting,
         const std::shared_ptr<StreamInfo> &info, StreamSupportType &type));
@@ -83,8 +84,8 @@ public:
     {
         streamOperator = new MockStreamOperator();
         ON_CALL(*this, GetStreamOperator).WillByDefault([this](
-            const OHOS::sptr<IStreamOperatorCallback> &callback,
-            OHOS::sptr<IStreamOperator> &pStreamOperator) {
+            const OHOS::sptr<HDI::Camera::V1_0::IStreamOperatorCallback> &callback,
+            OHOS::sptr<HDI::Camera::V1_0::IStreamOperator> &pStreamOperator) {
             pStreamOperator = streamOperator;
             return HDI::Camera::V1_0::NO_ERROR;
         });
@@ -104,14 +105,14 @@ public:
     MOCK_METHOD1(GetEnabledResults, int32_t(std::vector<int32_t>& results));
     MOCK_METHOD1(EnableResult, int32_t(const std::vector<int32_t>& results));
     MOCK_METHOD1(DisableResult, int32_t(const std::vector<int32_t>& results));
-    MOCK_METHOD2(GetStreamOperator, int32_t(const sptr<IStreamOperatorCallback>& callbackObj,
-        sptr<IStreamOperator>& streamOperator));
+    MOCK_METHOD2(GetStreamOperator, int32_t(const sptr<HDI::Camera::V1_0::IStreamOperatorCallback>& callbackObj,
+        sptr<HDI::Camera::V1_0::IStreamOperator>& streamOperator));
     sptr<MockStreamOperator> streamOperator;
 };
 
 class MockHCameraHostManager : public HCameraHostManager {
 public:
-    explicit MockHCameraHostManager(StatusCallback* statusCallback) : HCameraHostManager(statusCallback)
+    explicit MockHCameraHostManager(std::shared_ptr<StatusCallback> statusCallback) : HCameraHostManager(statusCallback)
     {
         cameraDevice = new MockCameraDevice();
         ON_CALL(*this, GetCameras).WillByDefault([](std::vector<std::string> &cameraIds) {

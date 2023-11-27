@@ -16,8 +16,13 @@
 #ifndef OHOS_CAMERA_H_CAPTURE_SESSION_H
 #define OHOS_CAMERA_H_CAPTURE_SESSION_H
 
+#include <cstdint>
+#include <functional>
 #include <iostream>
+#include <list>
+#include <mutex>
 #include <refbase.h>
+#include <unordered_map>
 
 #include "accesstoken_kit.h"
 #include "camera_util.h"
@@ -26,6 +31,8 @@
 #include "hstream_capture.h"
 #include "hstream_metadata.h"
 #include "hstream_repeat.h"
+#include "icapture_session.h"
+#include "istream_common.h"
 #include "perm_state_change_callback_customize.h"
 #include "privacy_kit.h"
 #include "state_customized_cbk.h"
@@ -37,20 +44,87 @@
 
 namespace OHOS {
 namespace CameraStandard {
-using namespace OHOS::HDI::Camera::V1_0;
+using OHOS::HDI::Camera::V1_0::CaptureEndedInfo;
+using OHOS::HDI::Camera::V1_0::CaptureErrorInfo;
 using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
-class StreamOperatorCallback;
 class PermissionStatusChangeCb;
 class CameraUseStateChangeCb;
 
-static const int32_t STREAMID_BEGIN = 1;
 static const int32_t STREAM_NOT_FOUNT = -1;
 
-class HCaptureSession : public HCaptureSessionStub {
+enum class CaptureSessionReleaseType : int32_t {
+    RELEASE_TYPE_CLIENT = 0,
+    RELEASE_TYPE_CLIENT_DIED,
+    RELEASE_TYPE_SECURE,
+    RELEASE_TYPE_OBJ_DIED,
+};
+
+class StateMachine {
 public:
-    HCaptureSession(sptr<HCameraHostManager> cameraHostManager, sptr<StreamOperatorCallback> streamOperatorCb,
-        const uint32_t callingTokenId, int32_t opMode);
-    ~HCaptureSession();
+    explicit StateMachine();
+    virtual ~StateMachine() = default;
+    bool CheckTransfer(CaptureSessionState targetState);
+    bool Transfer(CaptureSessionState targetState);
+
+    inline CaptureSessionState GetCurrentState()
+    {
+        std::lock_guard<std::recursive_mutex> lock(sessionStateLock_);
+        return currentState_;
+    }
+
+    inline void StateGuard(const std::function<void(const CaptureSessionState)>& fun)
+    {
+        std::lock_guard<std::recursive_mutex> lock(sessionStateLock_);
+        fun(currentState_);
+    }
+
+private:
+    std::vector<CaptureSessionState> stateTransferMap_[static_cast<uint32_t>(CaptureSessionState::SESSION_STATE_MAX)];
+    std::recursive_mutex sessionStateLock_;
+    CaptureSessionState currentState_ = CaptureSessionState::SESSION_INIT;
+};
+
+class StreamContainer {
+public:
+    StreamContainer() {};
+    virtual ~StreamContainer() = default;
+
+    bool AddStream(sptr<HStreamCommon> stream);
+    bool RemoveStream(sptr<HStreamCommon> stream);
+    sptr<HStreamCommon> GetStream(int32_t streamId);
+    void Clear();
+    size_t Size();
+
+    std::list<sptr<HStreamCommon>> GetStreams(const StreamType streamType);
+    std::list<sptr<HStreamCommon>> GetAllStreams();
+
+private:
+    std::mutex streamsLock_;
+    std::map<const StreamType, std::list<sptr<HStreamCommon>>> streams_;
+};
+
+class StreamOperatorCallback : public OHOS::HDI::Camera::V1_2::IStreamOperatorCallback {
+public:
+    StreamOperatorCallback() = default;
+    virtual ~StreamOperatorCallback() = default;
+
+    int32_t OnCaptureStarted(int32_t captureId, const std::vector<int32_t>& streamIds) override;
+    int32_t OnCaptureStartedV1_2(
+        int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo>& infos) override;
+    int32_t OnCaptureEnded(int32_t captureId, const std::vector<CaptureEndedInfo>& infos) override;
+    int32_t OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos) override;
+    int32_t OnFrameShutter(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
+
+    virtual const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) = 0;
+
+private:
+    std::mutex cbMutex_;
+};
+
+class HCaptureSession : public HCaptureSessionStub, public StreamOperatorCallback {
+public:
+    explicit HCaptureSession(const uint32_t callingTokenId, int32_t opMode);
+    virtual ~HCaptureSession();
 
     int32_t BeginConfig() override;
     int32_t CommitConfig() override;
@@ -63,8 +137,9 @@ public:
 
     int32_t Start() override;
     int32_t Stop() override;
-    int32_t Release(pid_t pid) override;
-    int32_t ReleaseInner();
+    int32_t Release() override;
+    int32_t Release(CaptureSessionReleaseType type);
+
     static void DestroyStubObjectForPid(pid_t pid);
     int32_t SetCallback(sptr<ICaptureSessionCallback>& callback) override;
 
@@ -76,39 +151,42 @@ public:
     int32_t SetSmoothZoom(int32_t smoothZoomType, int32_t operationMode, float targetZoomRatio,
         float &duration) override;
 
-    friend class StreamOperatorCallback;
     static void dumpSessions(std::string& dumpString);
     void dumpSessionInfo(std::string& dumpString);
     static void CameraSessionSummary(std::string& dumpString);
-    int32_t SetDeviceOperatorsCallback(wptr<IDeviceOperatorsCallback> callback);
     pid_t GetPid();
-    int32_t GetCurrentStreamInfos(sptr<HCameraDevice>& device,
-        std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, std::vector<StreamInfo_V1_1>& streamInfos);
-    int32_t GetCameraDevice(sptr<HCameraDevice>& device);
+    int32_t GetCurrentStreamInfos(std::vector<StreamInfo_V1_1>& streamInfos);
     int32_t GetopMode();
 
+    int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
+    const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) override;
+
 private:
+    inline void SetCameraDevice(sptr<HCameraDevice> device)
+    {
+        std::lock_guard<std::mutex> lock(cameraDeviceLock_);
+        cameraDevice_ = device;
+    }
+
+    inline const sptr<HCameraDevice> GetCameraDevice()
+    {
+        std::lock_guard<std::mutex> lock(cameraDeviceLock_);
+        return cameraDevice_;
+    }
+
     int32_t ValidateSessionInputs();
     int32_t ValidateSessionOutputs();
     int32_t AddOutputStream(sptr<HStreamCommon> stream);
-    int32_t FindRepeatStream(sptr<HStreamCommon> stream);
     int32_t RemoveOutputStream(sptr<HStreamCommon> stream);
-    int32_t HandleCaptureOuputsConfig(sptr<HCameraDevice>& device);
-    int32_t CreateAndCommitStreams(sptr<HCameraDevice>& device,
-        std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, std::vector<StreamInfo_V1_1>& streamInfos);
-    int32_t CheckAndCommitStreams(sptr<HCameraDevice>& device,
-        std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, std::vector<StreamInfo_V1_1>& allStreamInfos,
-        std::vector<StreamInfo_V1_1>& newStreamInfos);
-    void UpdateSessionConfig(sptr<HCameraDevice>& device);
-    void DeleteReleasedStream();
-    void RestorePreviousState(sptr<HCameraDevice>& device, bool isCreateReleaseStreams);
+    int32_t LinkInputAndOutputs();
+    int32_t UnlinkInputAndOutputs();
+
     void ReleaseStreams();
-    void ClearCaptureSession(pid_t pid);
     void RegisterPermissionCallback(const uint32_t callingTokenId, const std::string permissionName);
     void UnregisterPermissionCallback(const uint32_t callingTokenId);
     void StartUsingPermissionCallback(const uint32_t callingTokenId, const std::string permissionName);
     void StopUsingPermissionCallback(const uint32_t callingTokenId, const std::string permissionName);
-    void CloseDevice(sptr<HCameraDevice>& device);
+
     void ClearSketchRepeatStream();
     void ExpandSketchRepeatStream();
     int32_t CheckIfColorSpaceMatchesFormat(ColorSpace colorSpace);
@@ -116,32 +194,22 @@ private:
     void RestartStreams();
     int32_t UpdateStreamInfos();
     void SetColorSpaceForStreams();
-    void SetColorSpaceForTempStreams();
 
     std::string GetSessionState();
 
-    CaptureSessionState curState_ = CaptureSessionState::SESSION_INIT;
-    CaptureSessionState prevState_ = CaptureSessionState::SESSION_INIT;
+    StateMachine stateMachine_;
+
+    // Make sure device thread safe,set device by {SetCameraDevice}, get device by {GetCameraDevice}
+    std::mutex cameraDeviceLock_;
     sptr<HCameraDevice> cameraDevice_;
-    std::vector<sptr<HStreamCommon>> repeatStreams_;
-    std::vector<sptr<HStreamCommon>> captureStreams_;
-    std::vector<sptr<HStreamCommon>> metadataStreams_;
-    std::vector<sptr<HStreamCommon>> streams_;
-    std::vector<sptr<HStreamCommon>> tempStreams_;
-    std::vector<sptr<HCameraDevice>> tempCameraDevices_;
-    std::vector<int32_t> deletedStreamIds_;
-    sptr<HCameraHostManager> cameraHostManager_;
-    sptr<StreamOperatorCallback> streamOperatorCallback_;
-    sptr<ICaptureSessionCallback> sessionCallback_;
-    int32_t streamId_ = STREAMID_BEGIN;
-    std::mutex streamsLock_;
-    std::mutex sessionCallbackLock_;
+
+    StreamContainer streamContainer_;
+
     pid_t pid_;
-    int32_t uid_;
+    uid_t uid_;
     uint32_t callerToken_;
     std::shared_ptr<PermissionStatusChangeCb> callbackPtr_;
     std::shared_ptr<CameraUseStateChangeCb> cameraUseCallbackPtr_;
-    wptr<IDeviceOperatorsCallback> deviceOperatorsCallback_;
     int32_t opMode_;
     ColorSpace currColorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
     ColorSpace currCaptureColorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
@@ -150,12 +218,12 @@ private:
 
 class PermissionStatusChangeCb : public Security::AccessToken::PermStateChangeCallbackCustomize {
 public:
-    explicit PermissionStatusChangeCb(const Security::AccessToken::PermStateChangeScope& scopeInfo)
-        : PermStateChangeCallbackCustomize(scopeInfo)
+    explicit PermissionStatusChangeCb(
+        sptr<HCaptureSession> session, const Security::AccessToken::PermStateChangeScope& scopeInfo)
+        : PermStateChangeCallbackCustomize(scopeInfo), captureSession_(session)
     {}
-    ~PermissionStatusChangeCb();
+    virtual ~PermissionStatusChangeCb() = default;
     void PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result) override;
-    void SetCaptureSession(sptr<HCaptureSession> captureSession);
 
 private:
     wptr<HCaptureSession> captureSession_;
@@ -163,35 +231,12 @@ private:
 
 class CameraUseStateChangeCb : public Security::AccessToken::StateCustomizedCbk {
 public:
-    CameraUseStateChangeCb() {}
-    ~CameraUseStateChangeCb();
+    explicit CameraUseStateChangeCb(sptr<HCaptureSession> session) : captureSession_(session) {}
+    virtual ~CameraUseStateChangeCb() = default;
     void StateChangeNotify(Security::AccessToken::AccessTokenID tokenId, bool isShowing) override;
-    void SetCaptureSession(sptr<HCaptureSession> captureSession);
 
 private:
     wptr<HCaptureSession> captureSession_;
-};
-
-class StreamOperatorCallback : public OHOS::HDI::Camera::V1_2::IStreamOperatorCallback {
-public:
-    StreamOperatorCallback() = default;
-    explicit StreamOperatorCallback(sptr<HCaptureSession> session);
-    virtual ~StreamOperatorCallback();
-
-    int32_t OnCaptureStarted(int32_t captureId, const std::vector<int32_t>& streamIds) override;
-
-    int32_t OnCaptureStartedV1_2(int32_t captureId,
-            const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo>& infos) override;
-
-    int32_t OnCaptureEnded(int32_t captureId, const std::vector<CaptureEndedInfo>& infos) override;
-    int32_t OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos) override;
-    int32_t OnFrameShutter(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
-    void SetCaptureSession(sptr<HCaptureSession> captureSession);
-
-private:
-    sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId);
-    sptr<HCaptureSession> captureSession_;
-    std::mutex cbMutex_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

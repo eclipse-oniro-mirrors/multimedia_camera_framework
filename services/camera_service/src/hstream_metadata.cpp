@@ -15,12 +15,16 @@
 
 #include "hstream_metadata.h"
 
-#include "camera_util.h"
 #include "camera_log.h"
+#include "camera_service_ipc_interface_code.h"
+#include "camera_util.h"
+#include "hstream_common.h"
+#include "ipc_skeleton.h"
 #include "metadata_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
+using namespace OHOS::HDI::Camera::V1_0;
 HStreamMetadata::HStreamMetadata(sptr<OHOS::IBufferProducer> producer, int32_t format)
     : HStreamCommon(StreamType::METADATA, producer, format, producer->GetDefaultWidth(), producer->GetDefaultHeight())
 {}
@@ -29,17 +33,13 @@ HStreamMetadata::~HStreamMetadata()
 {}
 
 int32_t HStreamMetadata::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
-                                   std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t streamId)
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
     if (streamOperator == nullptr || cameraAbility == nullptr) {
         MEDIA_ERR_LOG("HStreamMetadata::LinkInput streamOperator is null");
         return CAMERA_INVALID_ARG;
     }
-    streamId_ = streamId;
-    {
-        std::lock_guard<std::mutex> lock(streamOperatorLock_);
-        streamOperator_ = streamOperator;
-    }
+    SetStreamOperator(streamOperator);
     std::lock_guard<std::mutex> lock(cameraAbilityLock_);
     cameraAbility_ = cameraAbility;
     return CAMERA_OK;
@@ -54,18 +54,18 @@ void HStreamMetadata::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
 int32_t HStreamMetadata::Start()
 {
     CAMERA_SYNC_TRACE;
-    {
-        std::lock_guard<std::mutex> lock(streamOperatorLock_);
-        if (streamOperator_ == nullptr) {
-            return CAMERA_INVALID_STATE;
-        }
-    }
-    if (curCaptureID_ != 0) {
-        MEDIA_ERR_LOG("HStreamMetadata::Start, Already started with captureID: %{public}d", curCaptureID_);
+    auto streamOperator = GetStreamOperator();
+    if (streamOperator == nullptr) {
         return CAMERA_INVALID_STATE;
     }
-    int32_t ret = AllocateCaptureId(curCaptureID_);
-    if (ret != CAMERA_OK) {
+    auto preparedCaptureId = GetPreparedCaptureId();
+    if (preparedCaptureId != CAPTURE_ID_UNSET) {
+        MEDIA_ERR_LOG("HStreamMetadata::Start, Already started with captureID: %{public}d", preparedCaptureId);
+        return CAMERA_INVALID_STATE;
+    }
+    int32_t ret = PrepareCaptureId();
+    preparedCaptureId = GetPreparedCaptureId();
+    if (ret != CAMERA_OK || preparedCaptureId == CAPTURE_ID_UNSET) {
         MEDIA_ERR_LOG("HStreamMetadata::Start Failed to allocate a captureId");
         return ret;
     }
@@ -75,18 +75,13 @@ int32_t HStreamMetadata::Start()
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
     }
     CaptureInfo captureInfo;
-    captureInfo.streamIds_ = {streamId_};
+    captureInfo.streamIds_ = { GetStreamId() };
     captureInfo.captureSetting_ = ability;
     captureInfo.enableShutterCallback_ = false;
-    MEDIA_INFO_LOG("HStreamMetadata::Start Starting with capture ID: %{public}d", curCaptureID_);
-    CamRetCode rc;
-    {
-        std::lock_guard<std::mutex> lock(streamOperatorLock_);
-        rc = (CamRetCode)(streamOperator_->Capture(curCaptureID_, captureInfo, true));
-    }
+    MEDIA_INFO_LOG("HStreamMetadata::Start Starting with capture ID: %{public}d", preparedCaptureId);
+    CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfo, true));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
-        ReleaseCaptureId(curCaptureID_);
-        curCaptureID_ = 0;
+        ResetCaptureId();
         MEDIA_ERR_LOG("HStreamMetadata::Start Failed with error Code:%{public}d", rc);
         ret = HdiToServiceError(rc);
     }
@@ -96,29 +91,20 @@ int32_t HStreamMetadata::Start()
 int32_t HStreamMetadata::Stop()
 {
     CAMERA_SYNC_TRACE;
-    {
-        std::lock_guard<std::mutex> lock(streamOperatorLock_);
-        if (streamOperator_ == nullptr) {
-            return CAMERA_INVALID_STATE;
-        }
+    auto streamOperator = GetStreamOperator();
+    if (streamOperator == nullptr) {
+        return CAMERA_INVALID_STATE;
     }
-    if (curCaptureID_ == 0) {
+    auto preparedCaptureId = GetPreparedCaptureId();
+    if (preparedCaptureId == CAPTURE_ID_UNSET) {
         MEDIA_ERR_LOG("HStreamMetadata::Stop, Stream not started yet");
         return CAMERA_INVALID_STATE;
     }
-    int32_t ret = CAMERA_OK;
-    CamRetCode rc;
-    {
-        std::lock_guard<std::mutex> lock(streamOperatorLock_);
-        rc = (CamRetCode)(streamOperator_->CancelCapture(curCaptureID_));
+    int32_t ret = StopStream();
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("HStreamMetadata::Stop Failed with errorCode:%{public}d, curCaptureID_: %{public}d", ret,
+            preparedCaptureId);
     }
-    if (rc != HDI::Camera::V1_0::NO_ERROR) {
-        MEDIA_ERR_LOG("HStreamMetadata::Stop Failed with errorCode:%{public}d, curCaptureID_: %{public}d",
-                      rc, curCaptureID_);
-        ret = HdiToServiceError(rc);
-    }
-    ReleaseCaptureId(curCaptureID_);
-    curCaptureID_ = 0;
     return ret;
 }
 
@@ -131,6 +117,25 @@ void HStreamMetadata::DumpStreamInfo(std::string& dumpString)
 {
     dumpString += "metadata stream:\n";
     HStreamCommon::DumpStreamInfo(dumpString);
+}
+
+int32_t HStreamMetadata::OperatePermissionCheck(uint32_t interfaceCode)
+{
+    switch (static_cast<StreamMetadataInterfaceCode>(interfaceCode)) {
+        case StreamMetadataInterfaceCode::CAMERA_STREAM_META_START: {
+            auto callerToken = IPCSkeleton::GetCallingTokenID();
+            if (callerToken_ != callerToken) {
+                MEDIA_ERR_LOG("HStreamMetadata::OperatePermissionCheck fail, callerToken_ is : %{public}d, now token "
+                              "is %{public}d",
+                    callerToken_, callerToken);
+                return CAMERA_OPERATION_NOT_ALLOWED;
+            }
+            break;
+        }
+        default:
+            break;
+    }
+    return CAMERA_OK;
 }
 } // namespace Standard
 } // namespace OHOS

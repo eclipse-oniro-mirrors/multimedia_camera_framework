@@ -28,11 +28,12 @@
 
 namespace OHOS {
 namespace CameraStandard {
-using namespace OHOS::HDI::Camera::V1_0;
+class HStreamCommon;
 static constexpr int32_t HDI_VERSION_1 = 1;
 static constexpr int32_t HDI_VERSION_2 = 2;
 static const std::string OHOS_PERMISSION_CAMERA = "ohos.permission.CAMERA";
 static const std::string OHOS_PERMISSION_MANAGE_CAMERA_CONFIG = "ohos.permission.MANAGE_CAMERA_CONFIG";
+
 enum CamServiceError {
     CAMERA_OK = 0,
     CAMERA_ALLOC_ERROR,
@@ -86,6 +87,7 @@ extern std::map<int, std::string> g_cameraFlashMode;
 extern std::map<int, std::string> g_cameraVideoStabilizationMode;
 extern std::map<int, std::string> g_cameraPrelaunchAvailable;
 extern std::map<int, std::string> g_cameraQuickThumbnailAvailable;
+extern bool g_cameraDebugOn;
 
 inline void DisableJeMalloc()
 {
@@ -98,15 +100,11 @@ inline void DisableJeMalloc()
 
 int32_t SetOpMode(int32_t opMode);
 
-int32_t HdiToServiceError(CamRetCode ret);
+int32_t HdiToServiceError(OHOS::HDI::Camera::V1_0::CamRetCode ret);
 
 int32_t HdiToServiceErrorV1_2(HDI::Camera::V1_2::CamRetCode ret);
 
 std::string CreateMsg(const char* format, ...);
-
-int32_t AllocateCaptureId(int32_t &captureId);
-
-void ReleaseCaptureId(int32_t captureId);
 
 bool IsValidTokenId(uint32_t tokenId);
 
@@ -131,6 +129,25 @@ bool IsInForeGround(const uint32_t callerToken);
 bool IsCameraNeedClose(const uint32_t callerToken, const pid_t& pid, const pid_t& pidCompared);
 
 int32_t CheckPermission(std::string permissionName, uint32_t callerToken);
+
+inline bool IsCameraDebugOn()
+{
+    return g_cameraDebugOn;
+}
+
+inline void SetCameraDebugValue(bool value)
+{
+    g_cameraDebugOn = value;
+}
+
+template<typename T>
+sptr<T> CastStream(sptr<HStreamCommon> streamCommon)
+{
+    if (streamCommon == nullptr) {
+        return nullptr;
+    }
+    return static_cast<T*>(streamCommon.GetRefPtr());
+}
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_UTIL_H

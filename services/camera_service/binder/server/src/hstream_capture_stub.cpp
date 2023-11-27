@@ -28,6 +28,8 @@ int HStreamCaptureStub::OnRemoteRequest(
     int errCode = -1;
 
     CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    errCode = OperatePermissionCheck(code);
+    CHECK_AND_RETURN_RET(errCode == CAMERA_OK, errCode);
     switch (code) {
         case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_START):
             errCode = HStreamCaptureStub::HandleCapture(data);
@@ -56,7 +58,7 @@ int HStreamCaptureStub::OnRemoteRequest(
     return errCode;
 }
 
-int HStreamCaptureStub::HandleCapture(MessageParcel &data)
+int32_t HStreamCaptureStub::HandleCapture(MessageParcel &data)
 {
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = nullptr;
     OHOS::Camera::MetadataUtils::DecodeCameraMetadata(data, metadata);
@@ -64,7 +66,7 @@ int HStreamCaptureStub::HandleCapture(MessageParcel &data)
     return Capture(metadata);
 }
 
-int HStreamCaptureStub::HandleSetThumbnail(MessageParcel &data)
+int32_t HStreamCaptureStub::HandleSetThumbnail(MessageParcel &data)
 {
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
     CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
@@ -76,7 +78,7 @@ int HStreamCaptureStub::HandleSetThumbnail(MessageParcel &data)
     return ret;
 }
 
-int HStreamCaptureStub::HandleSetCallback(MessageParcel &data)
+int32_t HStreamCaptureStub::HandleSetCallback(MessageParcel &data)
 {
     auto remoteObject = data.ReadRemoteObject();
     CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,

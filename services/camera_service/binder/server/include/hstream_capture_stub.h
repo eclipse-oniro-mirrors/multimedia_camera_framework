@@ -16,20 +16,22 @@
 #ifndef OHOS_CAMERA_HSTREAM_CAPTURE_STUB_H
 #define OHOS_CAMERA_HSTREAM_CAPTURE_STUB_H
 
+#include <cstdint>
+
+#include "icamera_ipc_checker.h"
 #include "iremote_stub.h"
 #include "istream_capture.h"
 
 namespace OHOS {
 namespace CameraStandard {
-class HStreamCaptureStub : public IRemoteStub<IStreamCapture> {
+class HStreamCaptureStub : public IRemoteStub<IStreamCapture>, public ICameraIpcChecker {
 public:
-    int OnRemoteRequest(uint32_t code, MessageParcel &data,
-                                MessageParcel &reply, MessageOption &option) override;
+    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;
 
 public:
-    int HandleCapture(MessageParcel &data);
-    int HandleSetCallback(MessageParcel &data);
-    int HandleSetThumbnail(MessageParcel &data);
+    int32_t HandleCapture(MessageParcel& data);
+    int32_t HandleSetCallback(MessageParcel& data);
+    int32_t HandleSetThumbnail(MessageParcel& data);
 };
 } // namespace CameraStandard
 } // namespace OHOS

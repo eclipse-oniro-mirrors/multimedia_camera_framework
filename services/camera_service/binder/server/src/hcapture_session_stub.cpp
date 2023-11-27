@@ -28,6 +28,8 @@ int HCaptureSessionStub::OnRemoteRequest(
     int errCode = -1;
 
     CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    errCode = OperatePermissionCheck(code);
+    CHECK_AND_RETURN_RET(errCode == CAMERA_OK, errCode);
     switch (code) {
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_BEGIN_CONFIG):
             errCode = BeginConfig();
@@ -53,25 +55,23 @@ int HCaptureSessionStub::OnRemoteRequest(
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_STOP):
             errCode = Stop();
             break;
-        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_RELEASE): {
-                pid_t pid = IPCSkeleton::GetCallingPid();
-                errCode = Release(pid);
-            }
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_RELEASE):
+            errCode = Release();
             break;
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_CALLBACK):
             errCode = HandleSetCallback(data);
             break;
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_GET_SESSION_STATE):
-            errCode =  HandleGetSesstionState(reply);
+            errCode = HandleGetSessionState(reply);
             break;
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_SMOOTH_ZOOM):
             errCode = HandleSetSmoothZoom(data, reply);
             break;
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_GET_ACTIVE_COLOR_SPACE):
-            errCode =  HandleGetActiveColorSpace(reply);
+            errCode = HandleGetActiveColorSpace(reply);
             break;
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SET_COLOR_SPACE):
-            errCode =  HandleSetColorSpace(data);
+            errCode = HandleSetColorSpace(data);
             break;
         default:
             MEDIA_ERR_LOG("HCaptureSessionStub request code %{public}u not handled", code);
@@ -82,7 +82,7 @@ int HCaptureSessionStub::OnRemoteRequest(
     return errCode;
 }
 
-int HCaptureSessionStub::HandleAddInput(MessageParcel &data)
+int32_t HCaptureSessionStub::HandleAddInput(MessageParcel &data)
 {
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
     CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
@@ -93,7 +93,7 @@ int HCaptureSessionStub::HandleAddInput(MessageParcel &data)
     return AddInput(cameraDevice);
 }
 
-int HCaptureSessionStub::HandleRemoveInput(MessageParcel &data)
+int32_t HCaptureSessionStub::HandleRemoveInput(MessageParcel &data)
 {
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
     CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
@@ -104,7 +104,7 @@ int HCaptureSessionStub::HandleRemoveInput(MessageParcel &data)
     return RemoveInput(cameraDevice);
 }
 
-int HCaptureSessionStub::HandleAddOutput(MessageParcel &data)
+int32_t HCaptureSessionStub::HandleAddOutput(MessageParcel &data)
 {
     StreamType streamType = static_cast<StreamType>(data.ReadUint32());
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
@@ -122,7 +122,7 @@ int HCaptureSessionStub::HandleAddOutput(MessageParcel &data)
     return AddOutput(streamType, stream);
 }
 
-int HCaptureSessionStub::HandleRemoveOutput(MessageParcel &data)
+int32_t HCaptureSessionStub::HandleRemoveOutput(MessageParcel &data)
 {
     StreamType streamType = static_cast<StreamType>(data.ReadUint32());
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
@@ -139,7 +139,7 @@ int HCaptureSessionStub::HandleRemoveOutput(MessageParcel &data)
     return RemoveOutput(streamType, stream);
 }
 
-int HCaptureSessionStub::HandleSetCallback(MessageParcel &data)
+int32_t HCaptureSessionStub::HandleSetCallback(MessageParcel &data)
 {
     auto remoteObject = data.ReadRemoteObject();
     CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
@@ -150,7 +150,7 @@ int HCaptureSessionStub::HandleSetCallback(MessageParcel &data)
     return SetCallback(callback);
 }
 
-int HCaptureSessionStub::HandleGetSesstionState(MessageParcel &reply)
+int32_t HCaptureSessionStub::HandleGetSessionState(MessageParcel &reply)
 {
     CaptureSessionState sessionState;
     int32_t ret = GetSessionState(sessionState);

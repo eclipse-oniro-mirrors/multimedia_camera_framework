@@ -24,6 +24,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include "camera_log.h"
 #include "camera_metadata_info.h"
 #include "v1_0/icamera_device.h"
 #include "v1_1/icamera_device.h"
@@ -38,9 +39,8 @@
 
 namespace OHOS {
 namespace CameraStandard {
-using namespace OHOS::HDI::Camera::V1_0;
-using namespace OHOS::HDI;
-class HCameraHostManager : public virtual RefBase, public HDI::ServiceManager::V1_0::ServStatListenerStub {
+using OHOS::HDI::Camera::V1_0::ICameraDeviceCallback;
+class HCameraHostManager : public HDI::ServiceManager::V1_0::ServStatListenerStub {
 public:
     class StatusCallback {
     public:
@@ -49,8 +49,24 @@ public:
         virtual void OnFlashlightStatus(const std::string& cameraId, FlashStatus status) = 0;
         virtual void OnTorchStatus(TorchStatus status) = 0;
     };
+    class CameraHostDeadCallback {
+    public:
+        explicit CameraHostDeadCallback(sptr<HCameraHostManager> hostManager) : hostManager_(hostManager) {};
+        virtual ~CameraHostDeadCallback() = default;
+        virtual void OnCameraHostDied(const std::string& hostName)
+        {
+            auto hostManager = hostManager_.promote();
+            if (hostManager == nullptr) {
+                MEDIA_ERR_LOG("HCameraHostManager OnCameraHostDied, but manager is nullptr");
+            }
+            hostManager->RemoveCameraHost(hostName);
+        };
 
-    explicit HCameraHostManager(StatusCallback* statusCallback);
+    private:
+        wptr<HCameraHostManager> hostManager_;
+    };
+
+    explicit HCameraHostManager(std::shared_ptr<StatusCallback> statusCallback);
     ~HCameraHostManager() override;
 
     int32_t Init(void);
@@ -97,7 +113,8 @@ private:
 
     std::mutex mutex_;
     std::mutex deviceMutex_;
-    StatusCallback* statusCallback_;
+    std::weak_ptr<StatusCallback> statusCallback_;
+    std::shared_ptr<CameraHostDeadCallback> cameraHostDeadCallback_;
     std::vector<sptr<CameraHostInfo>> cameraHostInfos_;
     std::map<std::string, sptr<ICameraDeviceService>> cameraDevices_;
     std::map<std::string, std::map<std::string, sptr<HCameraRestoreParam>>> persistentParamMap_;

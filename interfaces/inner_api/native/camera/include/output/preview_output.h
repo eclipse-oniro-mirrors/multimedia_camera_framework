@@ -134,7 +134,7 @@ public:
      *        Register tags into capture session. If the tags data changes,{@link OnMetadataChanged} will be called.
      * @return Observed tags
      */
-    std::set<camera_device_metadata_tag_t> GetObserverTags() const override;
+    virtual const std::set<camera_device_metadata_tag_t>& GetObserverTags() override;
 
     /**
      * @brief Callback of metadata change.

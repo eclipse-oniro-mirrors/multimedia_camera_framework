@@ -18,6 +18,7 @@
 
 #include <iostream>
 
+#include "camera_metadata_info.h"
 #include "camera_metadata_operator.h"
 #include "capture_output.h"
 #include "iconsumer_surface.h"
@@ -126,7 +127,7 @@ public:
      *        Register tags into capture session. If the tags data changes,{@link OnMetadataChanged} will be called.
      * @return Observed tags
      */
-    std::set<camera_device_metadata_tag_t> GetObserverTags() const override;
+    virtual const std::set<camera_device_metadata_tag_t>& GetObserverTags() override;
 
     /**
      * @brief Callback of metadata change.

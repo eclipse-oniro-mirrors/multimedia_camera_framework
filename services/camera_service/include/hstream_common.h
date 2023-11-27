@@ -16,8 +16,12 @@
 #ifndef OHOS_CAMERA_H_STREAM_COMMON_H
 #define OHOS_CAMERA_H_STREAM_COMMON_H
 
+#include <atomic>
+#include <cstdint>
 #include <iostream>
+#include <mutex>
 #include <refbase.h>
+
 #include "camera/v1_2/types.h"
 #include "camera_metadata_info.h"
 #include "icapture_session.h"
@@ -28,42 +32,67 @@
 
 namespace OHOS {
 namespace CameraStandard {
-using namespace OHOS::HDI::Camera::V1_0;
+using OHOS::HDI::Camera::V1_0::IStreamOperator;
 using OHOS::HDI::Camera::V1_1::StreamInfo_V1_1;
+constexpr int32_t CAPTURE_ID_UNSET = 0;
+constexpr int32_t STREAM_ID_UNSET = 0;
+
 class HStreamCommon : virtual public RefBase {
 public:
     HStreamCommon(
         StreamType streamType, sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height);
     virtual ~HStreamCommon();
     virtual int32_t LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
-        std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t streamId) = 0;
+        std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility);
+    virtual int32_t UnlinkInput();
     virtual void SetStreamInfo(StreamInfo_V1_1& streamInfo) = 0;
     virtual int32_t Release() = 0;
     virtual void DumpStreamInfo(std::string& dumpString) = 0;
-    virtual bool IsReleaseStream() final;
-    virtual int32_t SetReleaseStream(bool isReleaseStream) final;
     virtual int32_t GetStreamId() final;
     virtual StreamType GetStreamType() final;
     virtual void SetColorSpace(ColorSpace colorSpace) final;
+    virtual int32_t StopStream() final;
 
-    int32_t curCaptureID_;
-    int32_t streamId_;
+    virtual int32_t GetPreparedCaptureId() final;
+
     int32_t format_;
     int32_t width_;
     int32_t height_;
     int32_t dataSpace_;
     sptr<OHOS::IBufferProducer> producer_;
-    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator_;
+
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility_;
 
 protected:
+    /*
+     * Prepare a capture id, return CAMERA_OK or CAMERA_CAPTURE_LIMIT_EXCEED
+     */
+    virtual int32_t PrepareCaptureId() final;
+    virtual void ResetCaptureId() final;
+
+    inline sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> GetStreamOperator()
+    {
+        std::lock_guard<std::mutex> lock(streamOperatorLock_);
+        return streamOperator_;
+    }
+
+    inline void SetStreamOperator(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator)
+    {
+        std::lock_guard<std::mutex> lock(streamOperatorLock_);
+        streamOperator_ = streamOperator;
+    }
+
     std::mutex producerLock_;
     std::mutex cameraAbilityLock_;
+    uint32_t callerToken_;
+
     std::mutex streamOperatorLock_;
+    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator_;
 
 private:
     StreamType streamType_;
-    bool isReleaseStream_;
+    int32_t streamId_;
+    int32_t curCaptureID_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

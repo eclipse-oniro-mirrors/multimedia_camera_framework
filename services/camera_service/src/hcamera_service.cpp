@@ -15,6 +15,8 @@
 
 #include "hcamera_service.h"
 
+#include <memory>
+#include <mutex>
 #include <securec.h>
 #include <unordered_set>
 
@@ -33,22 +35,35 @@ REGISTER_SYSTEM_ABILITY_BY_ID(HCameraService, CAMERA_SERVICE_ID, true)
 constexpr int32_t SENSOR_SUCCESS = 0;
 constexpr int32_t POSTURE_INTERVAL = 1000000;
 constexpr uint8_t POSITION_FOLD_INNER = 3;
-static sptr<HCameraService> mCameraService;
+static std::mutex g_cameraServiceInstanceMutex;
+static HCameraService* g_cameraServiceInstance = nullptr;
+static sptr<HCameraService> g_cameraServiceHolder = nullptr;
 
 HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
-    : SystemAbility(systemAbilityId, runOnCreate), cameraHostManager_(nullptr), streamOperatorCallback_(nullptr),
-      muteMode_(false), isRegisterSensorSuccess(false)
+    : SystemAbility(systemAbilityId, runOnCreate), muteMode_(false), isRegisterSensorSuccess(false)
+{
+    MEDIA_INFO_LOG("HCameraService Construct begin");
+    g_cameraServiceHolder = this;
+    {
+        std::lock_guard<std::mutex> lock(g_cameraServiceInstanceMutex);
+        g_cameraServiceInstance = this;
+    }
+    statusCallback_ = std::make_shared<ServiceHostStatus>(this);
+    cameraHostManager_ = new (std::nothrow) HCameraHostManager(statusCallback_);
+    CHECK_AND_RETURN_LOG(
+        cameraHostManager_ != nullptr, "HCameraService OnStart failed to create HCameraHostManager obj");
+    MEDIA_INFO_LOG("HCameraService Construct end");
+}
+
+HCameraService::HCameraService(sptr<HCameraHostManager> cameraHostManager)
+    : cameraHostManager_(cameraHostManager), muteMode_(false), isRegisterSensorSuccess(false)
 {}
 
 HCameraService::~HCameraService() {}
 
 void HCameraService::OnStart()
 {
-    if (cameraHostManager_ == nullptr) {
-        cameraHostManager_ = new (nothrow) HCameraHostManager(this);
-        CHECK_AND_RETURN_LOG(
-            cameraHostManager_ != nullptr, "HCameraService OnStart failed to create HCameraHostManager obj");
-    }
+    MEDIA_INFO_LOG("HCameraService OnStart begin");
     if (cameraHostManager_->Init() != CAMERA_OK) {
         MEDIA_ERR_LOG("HCameraService OnStart failed to init camera host manager.");
     }
@@ -57,6 +72,7 @@ void HCameraService::OnStart()
         MEDIA_INFO_LOG("HCameraService OnStart res=%{public}d", res);
     }
     RegisterSensorCallback();
+    MEDIA_INFO_LOG("HCameraService OnStart end");
 }
 
 void HCameraService::OnDump()
@@ -67,15 +83,7 @@ void HCameraService::OnDump()
 void HCameraService::OnStop()
 {
     MEDIA_INFO_LOG("HCameraService::OnStop called");
-
-    if (cameraHostManager_) {
-        cameraHostManager_->DeInit();
-        delete cameraHostManager_;
-        cameraHostManager_ = nullptr;
-    }
-    if (streamOperatorCallback_) {
-        streamOperatorCallback_ = nullptr;
-    }
+    cameraHostManager_->DeInit();
     UnRegisterSensorCallback();
 }
 
@@ -183,7 +191,6 @@ int32_t HCameraService::CreateCameraDevice(string cameraId, sptr<ICameraDeviceSe
     } else {
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice MuteCamera not Supported");
     }
-    cameraDevice->SetDeviceOperatorsCallback(this);
     device = cameraDevice;
     RegisterSensorCallback();
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager_CreateCameraInput CameraId:%s", cameraId.c_str()));
@@ -193,21 +200,13 @@ int32_t HCameraService::CreateCameraDevice(string cameraId, sptr<ICameraDeviceSe
 int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int32_t opMode)
 {
     CAMERA_SYNC_TRACE;
-    lock_guard<mutex> lock(mutex_);
-    sptr<HCaptureSession> captureSession;
-    if (streamOperatorCallback_ == nullptr) {
-        streamOperatorCallback_ = new (nothrow) StreamOperatorCallback();
-        CHECK_AND_RETURN_RET_LOG(streamOperatorCallback_ != nullptr, CAMERA_ALLOC_ERROR,
-            "HCameraService::CreateCaptureSession streamOperatorCallback_ allocation failed");
-    }
+    std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("HCameraService::CreateCaptureSession opMode_= %{public}d", opMode);
 
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
-    captureSession =
-        new (nothrow) HCaptureSession(cameraHostManager_, streamOperatorCallback_, callerToken, opMode);
+    sptr<HCaptureSession> captureSession = new (nothrow) HCaptureSession(callerToken, opMode);
     CHECK_AND_RETURN_RET_LOG(captureSession != nullptr, CAMERA_ALLOC_ERROR,
         "HCameraService::CreateCaptureSession HCaptureSession allocation failed");
-    captureSession->SetDeviceOperatorsCallback(this);
     session = captureSession;
     pid_t pid = IPCSkeleton::GetCallingPid();
     captureSessionsManager_.EnsureInsert(pid, captureSession);
@@ -675,6 +674,28 @@ void HCameraService::CameraSummary(vector<string> cameraIds, string& dumpString)
     HCaptureSession::CameraSessionSummary(dumpString);
 }
 
+void HCameraService::CameraDumpCameraInfo(std::string& dumpString, std::vector<std::string>& cameraIds,
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList)
+{
+    int32_t capIdx = 0;
+    for (auto& it : cameraIds) {
+        auto metadata = cameraAbilityList[capIdx++];
+        common_metadata_header_t* metadataEntry = metadata->get();
+        dumpString += "# Camera ID:[" + it + "]: \n";
+        CameraDumpAbility(metadataEntry, dumpString);
+        CameraDumpStreaminfo(metadataEntry, dumpString);
+        CameraDumpZoom(metadataEntry, dumpString);
+        CameraDumpFlash(metadataEntry, dumpString);
+        CameraDumpAF(metadataEntry, dumpString);
+        CameraDumpAE(metadataEntry, dumpString);
+        CameraDumpSensorInfo(metadataEntry, dumpString);
+        CameraDumpVideoStabilization(metadataEntry, dumpString);
+        CameraDumpVideoFrameRateRange(metadataEntry, dumpString);
+        CameraDumpPrelaunch(metadataEntry, dumpString);
+        CameraDumpThumbnail(metadataEntry, dumpString);
+    }
+}
+
 void HCameraService::CameraDumpAbility(common_metadata_header_t* metadataEntry, string& dumpString)
 {
     camera_metadata_item_t item;
@@ -983,49 +1004,37 @@ void HCameraService::CameraDumpThumbnail(common_metadata_header_t* metadataEntry
 int32_t HCameraService::Dump(int fd, const vector<u16string>& args)
 {
     unordered_set<u16string> argSets;
-    u16string arg1(u"summary");
-    u16string arg2(u"ability");
-    u16string arg3(u"clientwiseinfo");
+    u16string summary(u"summary");
+    u16string ability(u"ability");
+    u16string clientwiseinfo(u"clientwiseinfo");
+    std::u16string debugOn(u"debugOn");
     for (decltype(args.size()) index = 0; index < args.size(); ++index) {
         argSets.insert(args[index]);
     }
-    string dumpString;
-    vector<string> cameraIds;
-    vector<shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
-    int32_t capIdx = 0;
-    shared_ptr<OHOS::Camera::CameraMetadata> metadata;
+    std::string dumpString;
+    std::vector<std::string> cameraIds;
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
     int ret;
 
     ret = GetCameras(cameraIds, cameraAbilityList);
     if ((ret != CAMERA_OK) || cameraIds.empty() || (cameraAbilityList.empty())) {
         return CAMERA_INVALID_STATE;
     }
-    if (args.size() == 0 || argSets.count(arg1) != 0) {
+    if (args.size() == 0 || argSets.count(summary) != 0) {
         dumpString += "-------- Summary -------\n";
         CameraSummary(cameraIds, dumpString);
     }
-    if (args.size() == 0 || argSets.count(arg2) != 0) {
+    if (args.size() == 0 || argSets.count(ability) != 0) {
         dumpString += "-------- CameraDevice -------\n";
-        for (auto& it : cameraIds) {
-            metadata = cameraAbilityList[capIdx++];
-            common_metadata_header_t* metadataEntry = metadata->get();
-            dumpString += "# Camera ID:[" + it + "]: \n";
-            CameraDumpAbility(metadataEntry, dumpString);
-            CameraDumpStreaminfo(metadataEntry, dumpString);
-            CameraDumpZoom(metadataEntry, dumpString);
-            CameraDumpFlash(metadataEntry, dumpString);
-            CameraDumpAF(metadataEntry, dumpString);
-            CameraDumpAE(metadataEntry, dumpString);
-            CameraDumpSensorInfo(metadataEntry, dumpString);
-            CameraDumpVideoStabilization(metadataEntry, dumpString);
-            CameraDumpVideoFrameRateRange(metadataEntry, dumpString);
-            CameraDumpPrelaunch(metadataEntry, dumpString);
-            CameraDumpThumbnail(metadataEntry, dumpString);
-        }
+        CameraDumpCameraInfo(dumpString, cameraIds, cameraAbilityList);
     }
-    if (args.size() == 0 || argSets.count(arg3) != 0) {
+    if (args.size() == 0 || argSets.count(clientwiseinfo) != 0) {
         dumpString += "-------- Clientwise Info -------\n";
         HCaptureSession::dumpSessions(dumpString);
+    }
+    if (argSets.count(debugOn) != 0) {
+        dumpString += "-------- Debug On -------\n";
+        SetCameraDebugValue(true);
     }
 
     if (dumpString.size() == 0) {
@@ -1036,12 +1045,13 @@ int32_t HCameraService::Dump(int fd, const vector<u16string>& args)
     (void)write(fd, dumpString.c_str(), dumpString.size());
     return CAMERA_OK;
 }
+
 void HCameraService::RegisterSensorCallback()
 {
     if (isRegisterSensorSuccess) {
+        MEDIA_INFO_LOG("HCameraService::RegisterSensorCallback isRegisterSensorSuccess return");
         return;
     }
-    mCameraService = this;
     MEDIA_INFO_LOG("HCameraService::RegisterSensorCallback start");
     user.callback = DropDetectionDataCallbackImpl;
     int32_t subscribeRet = SubscribeSensor(SENSOR_TYPE_ID_DROP_DETECTION, &user);
@@ -1067,8 +1077,9 @@ void HCameraService::UnRegisterSensorCallback()
     }
 }
 
-void HCameraService::DropDetectionDataCallbackImpl(SensorEvent *event)
+void HCameraService::DropDetectionDataCallbackImpl(SensorEvent* event)
 {
+    MEDIA_INFO_LOG("HCameraService::DropDetectionDataCallbackImpl entry");
     if (event == nullptr) {
         MEDIA_INFO_LOG("SensorEvent is nullptr.");
         return;
@@ -1081,9 +1092,10 @@ void HCameraService::DropDetectionDataCallbackImpl(SensorEvent *event)
         MEDIA_INFO_LOG("less than drop detection data size, event.dataLen:%{public}u", event[0].dataLen);
         return;
     }
-    if (mCameraService != nullptr && mCameraService->cameraHostManager_) {
-        mCameraService->cameraHostManager_->NotifyDeviceStateChangeInfo(DeviceType::FALLING_TYPE,
-            FallingState::FALLING_STATE);
+    {
+        std::lock_guard<std::mutex> lock(g_cameraServiceInstanceMutex);
+        g_cameraServiceInstance->cameraHostManager_->NotifyDeviceStateChangeInfo(
+            DeviceType::FALLING_TYPE, FallingState::FALLING_STATE);
     }
 }
 
@@ -1128,7 +1140,7 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
         return CAMERA_UNKNOWN_ERROR;
     }
     MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore param %d", effectParam.skinSmoothLevel);
-    rc = captureSession->GetCurrentStreamInfos(activeDevice, defaultSettings_, allStreamInfos);
+    rc = captureSession->GetCurrentStreamInfos(allStreamInfos);
     if (rc != CAMERA_OK) {
         MEDIA_ERR_LOG("HCaptureSession::SaveCurrentParamForRestore() Failed to get streams info, %{public}d", rc);
         return rc;
