@@ -387,8 +387,8 @@ Camera_ErrorCode NDKCamera::GetSupportedOutputCapability(void)
 Camera_ErrorCode NDKCamera::CreatePreviewOutput(void)
 {
     for (int i = 0; i < cameraOutputCapability_->previewProfilesSize; i ++) {
-        if (cameraOutputCapability_->previewProfiles[i]->size.height == 1080 ||
-            cameraOutputCapability_->previewProfiles[i]->size.width == 1920) {
+        if (cameraOutputCapability_->previewProfiles[i]->size.height == height_ ||
+            cameraOutputCapability_->previewProfiles[i]->size.width == width_) {
             profile_ = cameraOutputCapability_->previewProfiles[i];
             break;
             }
@@ -409,8 +409,8 @@ Camera_ErrorCode NDKCamera::CreatePreviewOutput(void)
 Camera_ErrorCode NDKCamera::CreatePhotoOutput(char* photoSurfaceId)
 {
     for (int i = 0; i < cameraOutputCapability_->photoProfilesSize; i++) {
-        if (cameraOutputCapability_->photoProfiles[i]->size.height == 1080 ||
-            cameraOutputCapability_->photoProfiles[i]->size.width == 1920) {
+        if (cameraOutputCapability_->photoProfiles[i]->size.height == height_ ||
+            cameraOutputCapability_->photoProfiles[i]->size.width == width_) {
             profile_ = cameraOutputCapability_->photoProfiles[i];
             break;
         }
@@ -433,8 +433,8 @@ Camera_ErrorCode NDKCamera::CreatePhotoOutput(char* photoSurfaceId)
 Camera_ErrorCode NDKCamera::CreateVideoOutput(char* videoId)
 {
     for (int i = 0; i < cameraOutputCapability_->videoProfilesSize; i++) {
-        if (cameraOutputCapability_->videoProfiles[i]->size.height == 1080 ||
-            cameraOutputCapability_->videoProfiles[i]->size.width == 1920) {
+        if (cameraOutputCapability_->videoProfiles[i]->size.height == height_ ||
+            cameraOutputCapability_->videoProfiles[i]->size.width == width_) {
             videoProfile_ = cameraOutputCapability_->videoProfiles[i];
             break;
         }
