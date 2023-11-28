@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "camera_manager.h"
+#include "cpp/camera_manager.h"
 
 #define LOG_TAG "DEMO:"
 #define LOG_DOMAIN 0x3200
