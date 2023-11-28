@@ -21,6 +21,8 @@
 namespace OHOS_NDK_CAMERA {
 NDKCamera* NDKCamera::ndkCamera_ = nullptr;
 std::mutex NDKCamera::mtx_;
+const uint32_t NDKCamera::width_ = 1920;
+const uint32_t NDKCamera::height_ = 1080;
 
 NDKCamera::NDKCamera(char* str, uint32_t focusMode, uint32_t cameraDeviceIndex)
     : previewSurfaceId_(str), cameras_(nullptr), focusMode_(focusMode),
