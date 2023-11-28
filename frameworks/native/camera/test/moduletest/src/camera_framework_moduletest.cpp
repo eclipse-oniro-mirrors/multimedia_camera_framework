@@ -6875,5 +6875,62 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_073, TestSize.L
     EXPECT_EQ(streamCapture->OnCaptureError(captureId, BUFFER_LOST), CAMERA_OK);
     EXPECT_EQ(streamCapture->OnFrameShutter(captureId, timestamp), CAMERA_OK);
 }
+
+/* Feature: Framework
+ * Function: Test preview/capture with portrait session's beauty
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test preview/capture with portrait session's beauty
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_057, TestSize.Level0)
+{
+    if (!IsSupportMode()) {
+        return;
+    }
+    sptr<ModeManager> modeManagerObj = ModeManager::GetInstance();
+    ASSERT_NE(modeManagerObj, nullptr);
+
+    std::vector<CameraMode> modes = modeManagerObj->GetSupportedModes(cameras_[0]);
+    ASSERT_TRUE(modes.size() != 0);
+
+    sptr<CameraOutputCapability> modeAbility = modeManagerObj->GetSupportedOutputCapability(cameras_[0], modes[3]);
+    ASSERT_NE(modeAbility, nullptr);
+
+    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(modes[3]);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<PortraitSession> portraitSession = static_cast<PortraitSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(portraitSession, nullptr);
+
+    int32_t intResult = portraitSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = portraitSession->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = portraitSession->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = portraitSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    portraitSession->LockForControl();
+
+    std::vector<BeautyType> beautyLists = portraitSession->GetSupportedBeautyTypes();
+    EXPECT_NE(beautyLists.size(), 0);
+
+    std::vector<int32_t> rangeLists = portraitSession->GetSupportedBeautyRange(beautyLists[3]);
+    EXPECT_NE(rangeLists.size(), 0);
+
+    if (!beautyLists.empty()) {
+        bool boolResult = portraitSession->SetBeautyValue(beautyLists[3], rangeLists[0]);
+        EXPECT_TRUE(boolResult);
+    }
+    
+    portraitSession->UnlockForControl();
+}
 } // namespace CameraStandard
 } // namespace OHOS
