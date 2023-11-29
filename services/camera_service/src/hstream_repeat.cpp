@@ -166,8 +166,7 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     captureInfo.streamIds_ = { streamId_ };
     captureInfo.captureSetting_ = ability;
     captureInfo.enableShutterCallback_ = false;
-    MEDIA_INFO_LOG("HStreamRepeat::Start Starting with capture ID: %{public}d, repeatStreamType:%{public}d",
-        curCaptureID_, repeatStreamType_);
+    MEDIA_INFO_LOG("With capture ID: %{public}d, repeatStreamType:%{public}d", curCaptureID_, repeatStreamType_);
     CamRetCode rc;
     {
         std::lock_guard<std::mutex> lock(streamOperatorLock_);
