@@ -149,6 +149,8 @@ private:
     static NDKCamera* ndkCamera_;
     static std::mutex mtx_;
     volatile bool valid_;
+    static const uint32_t width_;
+    static const uint32_t height_;
 };
 } // OHOS_NDK_CAMERA
 #endif  // CAMERA_NDK_CAMERA_H

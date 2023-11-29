@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "camera_manager.h"
+#include "cpp/camera_manager.h"
 
 #define LOG_TAG "DEMO:"
 #define LOG_DOMAIN 0x3200
@@ -21,6 +21,8 @@
 namespace OHOS_NDK_CAMERA {
 NDKCamera* NDKCamera::ndkCamera_ = nullptr;
 std::mutex NDKCamera::mtx_;
+const uint32_t NDKCamera::width_ = 1920;
+const uint32_t NDKCamera::height_ = 1080;
 
 NDKCamera::NDKCamera(char* str, uint32_t focusMode, uint32_t cameraDeviceIndex)
     : previewSurfaceId_(str), cameras_(nullptr), focusMode_(focusMode),
@@ -386,7 +388,13 @@ Camera_ErrorCode NDKCamera::GetSupportedOutputCapability(void)
 
 Camera_ErrorCode NDKCamera::CreatePreviewOutput(void)
 {
-    profile_ = cameraOutputCapability_->previewProfiles[0];
+    for (int i = 0; i < cameraOutputCapability_->previewProfilesSize; i ++) {
+        if (cameraOutputCapability_->previewProfiles[i]->size.height == height_ ||
+            cameraOutputCapability_->previewProfiles[i]->size.width == width_) {
+            profile_ = cameraOutputCapability_->previewProfiles[i];
+            break;
+            }
+    }
     if (profile_ == nullptr) {
         OH_LOG_ERROR(LOG_APP, "Get previewProfiles failed.");
         return CAMERA_INVALID_ARGUMENT;
@@ -402,7 +410,13 @@ Camera_ErrorCode NDKCamera::CreatePreviewOutput(void)
 
 Camera_ErrorCode NDKCamera::CreatePhotoOutput(char* photoSurfaceId)
 {
-    profile_ = cameraOutputCapability_->photoProfiles[0];
+    for (int i = 0; i < cameraOutputCapability_->photoProfilesSize; i++) {
+        if (cameraOutputCapability_->photoProfiles[i]->size.height == height_ ||
+            cameraOutputCapability_->photoProfiles[i]->size.width == width_) {
+            profile_ = cameraOutputCapability_->photoProfiles[i];
+            break;
+        }
+    }
     if (profile_ == nullptr) {
         OH_LOG_ERROR(LOG_APP, "Get photoProfiles failed.");
         return CAMERA_INVALID_ARGUMENT;
@@ -420,8 +434,13 @@ Camera_ErrorCode NDKCamera::CreatePhotoOutput(char* photoSurfaceId)
 
 Camera_ErrorCode NDKCamera::CreateVideoOutput(char* videoId)
 {
-    videoProfile_ = cameraOutputCapability_->videoProfiles[0];
-
+    for (int i = 0; i < cameraOutputCapability_->videoProfilesSize; i++) {
+        if (cameraOutputCapability_->videoProfiles[i]->size.height == height_ ||
+            cameraOutputCapability_->videoProfiles[i]->size.width == width_) {
+            videoProfile_ = cameraOutputCapability_->videoProfiles[i];
+            break;
+        }
+    }
     if (videoProfile_ == nullptr) {
         OH_LOG_ERROR(LOG_APP, "Get videoProfiles failed.");
         return CAMERA_INVALID_ARGUMENT;
