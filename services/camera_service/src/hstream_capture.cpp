@@ -72,7 +72,6 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
             return CAMERA_INVALID_STATE;
         }
     }
-
     int32_t ret = AllocateCaptureId(curCaptureID_);
     if (ret != CAMERA_OK) {
         MEDIA_ERR_LOG("HStreamCapture::Capture Failed to allocate a captureId");
@@ -90,7 +89,6 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         captureInfoPhoto.captureSetting_ = setting;
     }
     captureInfoPhoto.enableShutterCallback_ = true;
-
     // debug log for jpeg quality
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureMetadataSetting_ = nullptr;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(captureInfoPhoto.captureSetting_, captureMetadataSetting_);
