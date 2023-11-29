@@ -821,6 +821,7 @@ sptr<HCameraHostManager::CameraHostInfo> HCameraHostManager::FindLocalCameraHost
 
 bool HCameraHostManager::IsCameraHostInfoAdded(const std::string& svcName)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     return std::any_of(cameraHostInfos_.begin(), cameraHostInfos_.end(),
                        [&svcName](const auto& camHost) {return camHost->GetName() == svcName; });
 }

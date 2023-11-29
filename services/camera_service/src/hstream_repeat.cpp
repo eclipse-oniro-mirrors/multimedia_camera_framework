@@ -130,9 +130,13 @@ void HStreamRepeat::StartSketchStream(std::shared_ptr<OHOS::Camera::CameraMetada
 int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> settings)
 {
     CAMERA_SYNC_TRACE;
-    if (streamOperator_ == nullptr) {
-        return CAMERA_INVALID_STATE;
+    {
+        std::lock_guard<std::mutex> lock(streamOperatorLock_);
+        if (streamOperator_ == nullptr) {
+            return CAMERA_INVALID_STATE;
+        }
     }
+
     if (curCaptureID_ != 0) {
         MEDIA_ERR_LOG("HStreamRepeat::Start, Already started with captureID: %{public}d", curCaptureID_);
         return CAMERA_INVALID_STATE;
@@ -162,9 +166,12 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     captureInfo.streamIds_ = { streamId_ };
     captureInfo.captureSetting_ = ability;
     captureInfo.enableShutterCallback_ = false;
-    MEDIA_INFO_LOG("HStreamRepeat::Start Starting with capture ID: %{public}d, repeatStreamType:%{public}d",
-        curCaptureID_, repeatStreamType_);
-    CamRetCode rc = (CamRetCode)(streamOperator_->Capture(curCaptureID_, captureInfo, true));
+    MEDIA_INFO_LOG("With capture ID: %{public}d, repeatStreamType:%{public}d", curCaptureID_, repeatStreamType_);
+    CamRetCode rc;
+    {
+        std::lock_guard<std::mutex> lock(streamOperatorLock_);
+        rc = (CamRetCode)(streamOperator_->Capture(curCaptureID_, captureInfo, true));
+    }
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         ReleaseCaptureId(curCaptureID_);
         curCaptureID_ = 0;
@@ -186,16 +193,24 @@ int32_t HStreamRepeat::Start()
 int32_t HStreamRepeat::Stop()
 {
     CAMERA_SYNC_TRACE;
-    if (streamOperator_ == nullptr) {
-        return CAMERA_INVALID_STATE;
+    {
+        std::lock_guard<std::mutex> lock(streamOperatorLock_);
+        if (streamOperator_ == nullptr) {
+            return CAMERA_INVALID_STATE;
+        }
     }
+
     if (curCaptureID_ == 0) {
         MEDIA_ERR_LOG("HStreamRepeat::Stop, Stream not started yet");
         return CAMERA_INVALID_STATE;
     }
     UpdateSketchStatus(SketchStatus::STOPPING);
     int32_t ret = CAMERA_OK;
-    CamRetCode rc = (CamRetCode)(streamOperator_->CancelCapture(curCaptureID_));
+    CamRetCode rc;
+    {
+        std::lock_guard<std::mutex> lock(streamOperatorLock_);
+        rc = (CamRetCode)(streamOperator_->CancelCapture(curCaptureID_));
+    }
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         MEDIA_ERR_LOG(
             "HStreamRepeat::Stop Failed with errorCode:%{public}d, curCaptureID_: %{public}d", rc, curCaptureID_);
@@ -311,9 +326,17 @@ int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& pro
         return CAMERA_INVALID_STATE;
     }
     MEDIA_INFO_LOG("HStreamRepeat::AttachBufferQueue start");
-    std::lock_guard<std::mutex> lock(producerLock_);
-    CamRetCode rc =
-        (CamRetCode)(streamOperator_->AttachBufferQueue(streamId_, new BufferProducerSequenceable(producer_)));
+    sptr<BufferProducerSequenceable> bufferProducerSequenceable;
+    CamRetCode rc;
+    {
+        std::lock_guard<std::mutex> lock(producerLock_);
+        bufferProducerSequenceable = new BufferProducerSequenceable(producer_);
+    }
+    {
+        std::lock_guard<std::mutex> lock(streamOperatorLock_);
+        rc = (CamRetCode)(streamOperator_->AttachBufferQueue(streamId_, bufferProducerSequenceable));
+    }
+
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         MEDIA_ERR_LOG("HStreamRepeat::AttachBufferQueue(), Failed to AttachBufferQueue %{public}d", rc);
     }

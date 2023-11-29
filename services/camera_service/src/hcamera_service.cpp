@@ -514,6 +514,7 @@ int32_t HCameraService::MuteCamera(bool muteMode)
     sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
     pid_t activeClient = deviceManager->GetActiveClient();
     if (activeClient == -1) {
+        std::lock_guard<std::mutex> lock(muteCbMutex_);
         if (!cameraMuteServiceCallbacks_.empty()) {
             for (auto cb : cameraMuteServiceCallbacks_) {
                 cb.second->OnCameraMute(muteMode);
@@ -537,6 +538,7 @@ int32_t HCameraService::MuteCamera(bool muteMode)
             muteMode_ = oldMuteMode;
         }
     }
+    std::lock_guard<std::mutex> lock(muteCbMutex_);
     if (!cameraMuteServiceCallbacks_.empty() && ret == CAMERA_OK) {
         for (auto cb : cameraMuteServiceCallbacks_) {
             if (cb.second) {
