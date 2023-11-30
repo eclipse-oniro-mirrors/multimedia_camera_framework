@@ -14,6 +14,7 @@
  */
 
 #include "output/photo_output_napi.h"
+#include <unistd.h>
 #include <uv.h>
 #include "image_napi.h"
 #include "image_receiver.h"
@@ -199,6 +200,10 @@ void PhotoOutputCallback::UpdateJSCallbackAsync(PhotoOutputEventType eventType, 
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             if (listener) {
+                if (callbackInfo->eventType_ == PhotoOutputEventType::CAPTURE_FRAME_SHUTTER) {
+                    const uint32_t delayTime = 20;
+                    usleep(delayTime);
+                }
                 listener->UpdateJSCallback(callbackInfo->eventType_, callbackInfo->info_);
             }
             delete callbackInfo;
@@ -251,6 +256,8 @@ void PhotoOutputCallback::OnFrameShutter(const int32_t captureId, const uint64_t
     CallbackInfo info;
     info.captureID = captureId;
     info.timestamp = timestamp;
+    const uint32_t delayTime = 50;
+    usleep(delayTime);
     UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_FRAME_SHUTTER, info);
 }
 

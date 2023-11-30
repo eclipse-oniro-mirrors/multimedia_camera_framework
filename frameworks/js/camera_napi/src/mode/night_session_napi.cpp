@@ -115,6 +115,10 @@ napi_value NightSessionNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getExposure", NightSessionNapi::GetExposure),
         DECLARE_NAPI_FUNCTION("setExposure", NightSessionNapi::SetExposure),
 
+        DECLARE_NAPI_FUNCTION("getSupportedColorEffects", CameraSessionNapi::GetSupportedColorEffects),
+        DECLARE_NAPI_FUNCTION("getColorEffect", CameraSessionNapi::GetColorEffect),
+        DECLARE_NAPI_FUNCTION("setColorEffect", CameraSessionNapi::SetColorEffect),
+
         DECLARE_NAPI_FUNCTION("on", NightSessionNapi::On),
         DECLARE_NAPI_FUNCTION("off", NightSessionNapi::Off),
         DECLARE_NAPI_FUNCTION("TryAE", NightSessionNapi::TryAE),
