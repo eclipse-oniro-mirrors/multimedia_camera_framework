@@ -18,7 +18,6 @@
 
 #include <iostream>
 #include <refbase.h>
-#include "display/graphic/common/v1_0/cm_color_space.h"
 #include "camera/v1_2/types.h"
 #include "camera_metadata_info.h"
 #include "icapture_session.h"
@@ -30,7 +29,6 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
-using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
 using OHOS::HDI::Camera::V1_1::StreamInfo_V1_1;
 class HStreamCommon : virtual public RefBase {
 public:
@@ -46,7 +44,7 @@ public:
     virtual int32_t SetReleaseStream(bool isReleaseStream) final;
     virtual int32_t GetStreamId() final;
     virtual StreamType GetStreamType() final;
-    virtual void SetColorSpace(ColorSpace_CM colorSpace) final;
+    virtual void SetColorSpace(ColorSpace colorSpace) final;
 
     int32_t curCaptureID_;
     int32_t streamId_;

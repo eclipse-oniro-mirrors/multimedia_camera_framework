@@ -29,22 +29,22 @@ enum class CaptureSessionState {
     SESSION_CONFIG_COMMITTED,
 };
 
-enum ColorSpace_CM {
-    COLOR_SPACE_UNKNOWN_CM = 0,
-    DISPLAY_P3_CM = 3, // CM_P3_FULL
-    SRGB_CM = 4, // CM_SRGB_FULL
-    BT709_CM = 6, // CM_BT709_FULL
-    BT2020_HLG_CM = 9, // CM_BT2020_HLG_FULL
-    BT2020_PQ_CM = 10, // CM_BT2020_PQ_FULL
-    P3_HLG_CM = 11, // CM_P3_HLG_FULL
-    P3_PQ_CM = 12, // CM_P3_PQ_FULL
-    DISPLAY_P3_LIMIT_CM = 14, // CM_P3_LIMIT
-    SRGB_LIMIT_CM = 15, // CM_SRGB_LIMIT
-    BT709_LIMIT_CM = 16, // CM_BT709_LIMIT
-    BT2020_HLG_LIMIT_CM = 19, // CM_BT2020_HLG_LIMIT
-    BT2020_PQ_LIMIT_CM = 20, // CM_BT2020_PQ_LIMIT
-    P3_HLG_LIMIT_CM = 21, // CM_P3_HLG_LIMIT
-    P3_PQ_LIMIT_CM = 22 // CM_P3_PQ_LIMIT
+enum ColorSpace {
+    COLOR_SPACE_UNKNOWN = 0,
+    DISPLAY_P3 = 3, // CM_P3_FULL
+    SRGB = 4, // CM_SRGB_FULL
+    BT709 = 6, // CM_BT709_FULL
+    BT2020_HLG = 9, // CM_BT2020_HLG_FULL
+    BT2020_PQ = 10, // CM_BT2020_PQ_FULL
+    P3_HLG = 11, // CM_P3_HLG_FULL
+    P3_PQ = 12, // CM_P3_PQ_FULL
+    DISPLAY_P3_LIMIT = 14, // CM_P3_LIMIT
+    SRGB_LIMIT = 15, // CM_SRGB_LIMIT
+    BT709_LIMIT = 16, // CM_BT709_LIMIT
+    BT2020_HLG_LIMIT = 19, // CM_BT2020_HLG_LIMIT
+    BT2020_PQ_LIMIT = 20, // CM_BT2020_PQ_LIMIT
+    P3_HLG_LIMIT = 21, // CM_P3_HLG_LIMIT
+    P3_PQ_LIMIT = 22 // CM_P3_PQ_LIMIT
 };
 
 class ICaptureSession : public IRemoteBroker {
@@ -71,9 +71,9 @@ public:
 
     virtual int32_t GetSessionState(CaptureSessionState &sessionState) = 0;
 
-    virtual int32_t GetActiveColorSpace(ColorSpace_CM& colorSpace) = 0;
+    virtual int32_t GetActiveColorSpace(ColorSpace& colorSpace) = 0;
 
-    virtual int32_t SetColorSpace(ColorSpace_CM& colorSpace, ColorSpace_CM& captureColorSpace, bool isNeedUpdate) = 0;
+    virtual int32_t SetColorSpace(ColorSpace colorSpace, ColorSpace captureColorSpace, bool isNeedUpdate) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ICaptureSession");
 };

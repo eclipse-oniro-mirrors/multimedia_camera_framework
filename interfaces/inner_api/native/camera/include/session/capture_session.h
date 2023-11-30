@@ -93,24 +93,6 @@ enum ColorEffect {
     COLOR_EFFECT_SOFT
 };
 
-enum ColorSpace {
-    COLOR_SPACE_UNKNOWN = 0,
-    DISPLAY_P3 = 3, // CM_P3_FULL
-    SRGB = 4, // CM_SRGB_FULL
-    BT709 = 6, // CM_BT709_FULL
-    BT2020_HLG = 9, // CM_BT2020_HLG_FULL
-    BT2020_PQ = 10, // CM_BT2020_PQ_FULL
-    P3_HLG = 11, // CM_P3_HLG_FULL
-    P3_PQ = 12, // CM_P3_PQ_FULL
-    DISPLAY_P3_LIMIT = 14, // CM_P3_LIMIT
-    SRGB_LIMIT = 15, // CM_SRGB_LIMIT
-    BT709_LIMIT = 16, // CM_BT709_LIMIT
-    BT2020_HLG_LIMIT = 19, // CM_BT2020_HLG_LIMIT
-    BT2020_PQ_LIMIT = 20, // CM_BT2020_PQ_LIMIT
-    P3_HLG_LIMIT = 21, // CM_P3_HLG_LIMIT
-    P3_PQ_LIMIT = 22 // CM_P3_PQ_LIMIT
-};
-
 typedef struct {
     float x;
     float y;

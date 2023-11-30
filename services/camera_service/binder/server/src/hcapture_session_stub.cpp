@@ -158,7 +158,7 @@ int HCaptureSessionStub::HandleGetSesstionState(MessageParcel &reply)
 
 int HCaptureSessionStub::HandleGetActiveColorSpace(MessageParcel &reply)
 {
-    ColorSpace_CM currColorSpace;
+    ColorSpace currColorSpace;
     int32_t ret = GetActiveColorSpace(currColorSpace);
     CHECK_AND_RETURN_RET_LOG(reply.WriteInt32(static_cast<int32_t>(currColorSpace)), IPC_STUB_WRITE_PARCEL_ERR,
                              "HCaptureSessionStub HandleGetActiveColorSpace write colorSpace failed");
@@ -167,8 +167,8 @@ int HCaptureSessionStub::HandleGetActiveColorSpace(MessageParcel &reply)
 
 int HCaptureSessionStub::HandleSetColorSpace(MessageParcel &data)
 {
-    ColorSpace_CM colorSpace = static_cast<ColorSpace_CM>(data.ReadInt32());
-    ColorSpace_CM colorSpaceForCapture = static_cast<ColorSpace_CM>(data.ReadInt32());
+    ColorSpace colorSpace = static_cast<ColorSpace>(data.ReadInt32());
+    ColorSpace colorSpaceForCapture = static_cast<ColorSpace>(data.ReadInt32());
     bool isNeedUpdate = data.ReadBool();
     return SetColorSpace(colorSpace, colorSpaceForCapture, isNeedUpdate);
 }
