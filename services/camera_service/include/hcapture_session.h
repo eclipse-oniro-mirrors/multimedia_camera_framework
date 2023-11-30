@@ -68,8 +68,8 @@ public:
     int32_t SetCallback(sptr<ICaptureSessionCallback>& callback) override;
 
     int32_t GetSessionState(CaptureSessionState& sessionState) override;
-    int32_t GetActiveColorSpace(ColorSpace_CM& colorSpace) override;
-    int32_t SetColorSpace(ColorSpace_CM& colorSpace, ColorSpace_CM& captureColorSpace, bool isNeedUpdate) override;
+    int32_t GetActiveColorSpace(ColorSpace& colorSpace) override;
+    int32_t SetColorSpace(ColorSpace colorSpace, ColorSpace captureColorSpace, bool isNeedUpdate) override;
 
     friend class StreamOperatorCallback;
     static void dumpSessions(std::string& dumpString);
@@ -105,7 +105,7 @@ private:
     void CloseDevice(sptr<HCameraDevice>& device);
     void ClearSketchRepeatStream();
     void ExpandSketchRepeatStream();
-    int32_t CheckIfColorSpaceMatchesFormat(ColorSpace_CM& colorSpace);
+    int32_t CheckIfColorSpaceMatchesFormat(ColorSpace colorSpace);
     void CancelStreamsAndGetStreamInfos(std::vector<StreamInfo_V1_1>& streamInfos);
     void RestartStreams();
     int32_t UpdateStreamInfos();
@@ -135,8 +135,8 @@ private:
     std::shared_ptr<CameraUseStateChangeCb> cameraUseCallbackPtr_;
     wptr<IDeviceOperatorsCallback> deviceOperatorsCallback_;
     int32_t opMode_;
-    ColorSpace_CM currColorSpace_ = ColorSpace_CM::COLOR_SPACE_UNKNOWN_CM;
-    ColorSpace_CM currCaptureColorSpace_ = ColorSpace_CM::COLOR_SPACE_UNKNOWN_CM;
+    ColorSpace currColorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
+    ColorSpace currCaptureColorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
     bool isSessionStarted_ = false;
 };
 

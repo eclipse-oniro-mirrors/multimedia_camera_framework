@@ -729,14 +729,13 @@ int32_t HCaptureSession::CommitConfig()
     return rc;
 }
 
-int32_t HCaptureSession::GetActiveColorSpace(ColorSpace_CM& colorSpace)
+int32_t HCaptureSession::GetActiveColorSpace(ColorSpace& colorSpace)
 {
     colorSpace = currColorSpace_;
     return CAMERA_OK;
 }
 
-int32_t HCaptureSession::SetColorSpace(
-    ColorSpace_CM& colorSpace, ColorSpace_CM& captureColorSpace, bool isNeedUpdate)
+int32_t HCaptureSession::SetColorSpace(ColorSpace colorSpace, ColorSpace captureColorSpace, bool isNeedUpdate)
 {
     int32_t result = CAMERA_OK;
     if (colorSpace == currColorSpace_ && captureColorSpace == currCaptureColorSpace_) {
@@ -757,7 +756,7 @@ int32_t HCaptureSession::SetColorSpace(
     }
     if (result != CAMERA_OK && !isNeedUpdate) {
         MEDIA_ERR_LOG("HCaptureSession::SetColorSpace() %{public}d, format and colorSpace not match.", result);
-        currColorSpace_ = BT709_CM;
+        currColorSpace_ = ColorSpace::BT709;
     }
 
     sptr<HStreamCommon> curStream;
@@ -882,10 +881,10 @@ int32_t HCaptureSession::UpdateStreamInfos()
     return HdiToServiceError(hdiRc);
 }
 
-int32_t HCaptureSession::CheckIfColorSpaceMatchesFormat(ColorSpace_CM& colorSpace)
+int32_t HCaptureSession::CheckIfColorSpaceMatchesFormat(ColorSpace colorSpace)
 {
-    if (!(colorSpace == BT2020_HLG_CM || colorSpace == BT2020_PQ_CM || colorSpace == BT2020_HLG_LIMIT_CM ||
-        colorSpace == BT2020_PQ_LIMIT_CM)) {
+    if (!(colorSpace == ColorSpace::BT2020_HLG || colorSpace == ColorSpace::BT2020_PQ ||
+        colorSpace == ColorSpace::BT2020_HLG_LIMIT || colorSpace == ColorSpace::BT2020_PQ_LIMIT)) {
         return CAMERA_OK;
     }
     // 待为HDR VIVID增加逻辑

@@ -235,7 +235,7 @@ int32_t HCaptureSessionProxy::GetSessionState(CaptureSessionState &sessionState)
     return error;
 }
 
-int32_t HCaptureSessionProxy::GetActiveColorSpace(ColorSpace_CM& colorSpace)
+int32_t HCaptureSessionProxy::GetActiveColorSpace(ColorSpace& colorSpace)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -247,12 +247,11 @@ int32_t HCaptureSessionProxy::GetActiveColorSpace(ColorSpace_CM& colorSpace)
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCaptureSessionProxy GetActiveColorSpace failed, error: %{public}d", error);
     }
-    colorSpace = static_cast<ColorSpace_CM>(reply.ReadInt32());
+    colorSpace = static_cast<ColorSpace>(reply.ReadInt32());
     return error;
 }
 
-int32_t HCaptureSessionProxy::SetColorSpace(
-    ColorSpace_CM& colorSpace, ColorSpace_CM& captureColorSpace, bool isNeedUpdate)
+int32_t HCaptureSessionProxy::SetColorSpace(ColorSpace colorSpace, ColorSpace captureColorSpace, bool isNeedUpdate)
 {
     MessageParcel data;
     MessageParcel reply;

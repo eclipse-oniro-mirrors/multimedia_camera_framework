@@ -16,25 +16,28 @@
 #include "hstream_common.h"
 #include "camera_util.h"
 #include "camera_log.h"
+#include "display/graphic/common/v1_0/cm_color_space.h"
 
 namespace OHOS {
 namespace CameraStandard {
-static const std::map<ColorSpace_CM, CM_ColorSpaceType> g_fwkToMetaColorSpaceMap_ = {
-    {COLOR_SPACE_UNKNOWN_CM, CM_COLORSPACE_NONE},
-    {DISPLAY_P3_CM, CM_P3_FULL},
-    {SRGB_CM, CM_SRGB_FULL},
-    {BT709_CM, CM_BT709_FULL},
-    {BT2020_HLG_CM, CM_BT2020_HLG_FULL},
-    {BT2020_PQ_CM, CM_BT2020_PQ_FULL},
-    {P3_HLG_CM, CM_P3_HLG_FULL},
-    {P3_PQ_CM, CM_P3_PQ_FULL},
-    {DISPLAY_P3_LIMIT_CM, CM_P3_LIMIT},
-    {SRGB_LIMIT_CM, CM_SRGB_LIMIT},
-    {BT709_LIMIT_CM, CM_BT709_LIMIT},
-    {BT2020_HLG_LIMIT_CM, CM_BT2020_HLG_LIMIT},
-    {BT2020_PQ_LIMIT_CM, CM_BT2020_PQ_LIMIT},
-    {P3_HLG_LIMIT_CM, CM_P3_HLG_LIMIT},
-    {P3_PQ_LIMIT_CM, CM_P3_PQ_LIMIT}
+using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
+
+static const std::map<ColorSpace, CM_ColorSpaceType> g_fwkToMetaColorSpaceMap_ = {
+    {COLOR_SPACE_UNKNOWN, CM_COLORSPACE_NONE},
+    {DISPLAY_P3, CM_P3_FULL},
+    {SRGB, CM_SRGB_FULL},
+    {BT709, CM_BT709_FULL},
+    {BT2020_HLG, CM_BT2020_HLG_FULL},
+    {BT2020_PQ, CM_BT2020_PQ_FULL},
+    {P3_HLG, CM_P3_HLG_FULL},
+    {P3_PQ, CM_P3_PQ_FULL},
+    {DISPLAY_P3_LIMIT, CM_P3_LIMIT},
+    {SRGB_LIMIT, CM_SRGB_LIMIT},
+    {BT709_LIMIT, CM_BT709_LIMIT},
+    {BT2020_HLG_LIMIT, CM_BT2020_HLG_LIMIT},
+    {BT2020_PQ_LIMIT, CM_BT2020_PQ_LIMIT},
+    {P3_HLG_LIMIT, CM_P3_HLG_LIMIT},
+    {P3_PQ_LIMIT, CM_P3_PQ_LIMIT}
 };
 
 HStreamCommon::HStreamCommon(StreamType streamType, sptr<OHOS::IBufferProducer> producer,
@@ -77,7 +80,7 @@ StreamType HStreamCommon::GetStreamType()
     return streamType_;
 }
 
-void HStreamCommon::SetColorSpace(ColorSpace_CM colorSpace)
+void HStreamCommon::SetColorSpace(ColorSpace colorSpace)
 {
     auto itr = g_fwkToMetaColorSpaceMap_.find(colorSpace);
     if (itr != g_fwkToMetaColorSpaceMap_.end()) {
