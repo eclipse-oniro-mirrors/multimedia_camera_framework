@@ -96,7 +96,7 @@ public:
     void TestUnSupportedResolution(int32_t previewWidth, int32_t previewHeight, int32_t photoWidth,
                                    int32_t photoHeight, int32_t videoWidth, int32_t videoHeight);
     bool IsSupportNow();
-    bool IsSupportMode();
+    bool IsSupportMode(CameraMode mode);
 
     std::shared_ptr<Profile> GetSketchPreviewProfile();
 };

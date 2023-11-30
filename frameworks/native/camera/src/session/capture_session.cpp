@@ -1764,6 +1764,7 @@ void CaptureSession::ProcessCallbacks(const uint64_t timestamp,
     MEDIA_INFO_LOG("ProcessCallbacks");
     ProcessFaceRecUpdates(timestamp, result);
     ProcessAutoFocusUpdates(result);
+    ProcessMacroStatusChange(result);
 }
 
 std::vector<FlashMode> CaptureSession::GetSupportedFlashModes()
