@@ -720,11 +720,11 @@ int32_t HCameraHostManager::Prelaunch(const std::string& cameraId)
     return cameraHostInfo->Prelaunch(cameraId);
 }
 
-void HCameraHostManager::NotifyDeviceStateChangeInfo(const std::string& cameraId, int notifyType, int deviceState)
+void HCameraHostManager::NotifyDeviceStateChangeInfo(int notifyType, int deviceState)
 {
-    auto cameraHostInfo = FindCameraHostInfo(cameraId);
+    auto cameraHostInfo = FindLocalCameraHostInfo();
     if (cameraHostInfo == nullptr) {
-        MEDIA_ERR_LOG("HCameraHostManager::NotifyDeviceStateChangeInfo failed with invalid device info");
+        MEDIA_ERR_LOG("HCameraHostManager::NotifyDeviceStateChangeInfo failed with not exist support device info");
         return;
     }
     cameraHostInfo->NotifyDeviceStateChangeInfo(notifyType, deviceState);

@@ -30,6 +30,8 @@
 #include "iremote_stub.h"
 #include "privacy_kit.h"
 #include "system_ability.h"
+#include "sensor_agent.h"
+#include "sensor_agent_type.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -105,6 +107,9 @@ private:
     int32_t UnSetTorchCallback(pid_t pid);
     bool IsDeviceAlreadyOpen(pid_t& tempPid, std::string& tempCameraId, sptr<HCameraDevice> &tempDevice);
     int32_t DeviceClose(sptr<HCameraDevice> cameraDevice);
+    void RegisterSensorCallback();
+    void UnRegisterSensorCallback();
+    static void DropDetectionDataCallbackImpl(SensorEvent *event);
     std::mutex mutex_;
     std::mutex cbMutex_;
     std::mutex muteCbMutex_;
@@ -117,6 +122,7 @@ private:
     bool muteMode_;
     std::mutex mapOperatorsLock_;
     std::string preCameraId_;
+    SensorUser user;
 };
 } // namespace CameraStandard
 } // namespace OHOS

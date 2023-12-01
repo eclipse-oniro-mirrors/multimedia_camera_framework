@@ -30,6 +30,10 @@
 namespace OHOS {
 namespace CameraStandard {
 REGISTER_SYSTEM_ABILITY_BY_ID(HCameraService, CAMERA_SERVICE_ID, true)
+constexpr int32_t SENSOR_SUCCESS = 0;
+constexpr int32_t POSTURE_INTERVAL = 1000000;
+static sptr<HCameraService> mCameraService;
+
 HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
     : SystemAbility(systemAbilityId, runOnCreate), cameraHostManager_(nullptr), streamOperatorCallback_(nullptr),
       muteMode_(false)
@@ -51,6 +55,7 @@ void HCameraService::OnStart()
     if (res) {
         MEDIA_INFO_LOG("HCameraService OnStart res=%{public}d", res);
     }
+    RegisterSensorCallback();
 }
 
 void HCameraService::OnDump()
@@ -70,6 +75,7 @@ void HCameraService::OnStop()
     if (streamOperatorCallback_) {
         streamOperatorCallback_ = nullptr;
     }
+    UnRegisterSensorCallback();
 }
 
 int32_t HCameraService::GetCameras(
@@ -999,6 +1005,58 @@ int32_t HCameraService::Dump(int fd, const std::vector<std::u16string>& args)
 
     (void)write(fd, dumpString.c_str(), dumpString.size());
     return CAMERA_OK;
+}
+void HCameraService::RegisterSensorCallback()
+{
+    mCameraService = this;
+    MEDIA_INFO_LOG("HCameraService::RegisterSensorCallback start");
+    user.callback = DropDetectionDataCallbackImpl;
+    int32_t subscribeRet = SubscribeSensor(SENSOR_TYPE_ID_DROP_DETECTION, &user);
+    MEDIA_INFO_LOG("RegisterSensorCallback, subscribeRet: %{public}d", subscribeRet);
+    int32_t setBatchRet = SetBatch(SENSOR_TYPE_ID_DROP_DETECTION, &user, POSTURE_INTERVAL, POSTURE_INTERVAL);
+    MEDIA_INFO_LOG("RegisterSensorCallback, setBatchRet: %{public}d", setBatchRet);
+    int32_t activateRet = ActivateSensor(SENSOR_TYPE_ID_DROP_DETECTION, &user);
+    MEDIA_INFO_LOG("RegisterSensorCallback, activateRet: %{public}d", activateRet);
+    if (subscribeRet != SENSOR_SUCCESS || setBatchRet != SENSOR_SUCCESS || activateRet != SENSOR_SUCCESS) {
+        MEDIA_INFO_LOG("RegisterSensorCallback failed.");
+    }
+}
+
+void HCameraService::UnRegisterSensorCallback()
+{
+    int32_t deactivateRet = DeactivateSensor(SENSOR_TYPE_ID_DROP_DETECTION, &user);
+    int32_t unsubscribeRet = UnsubscribeSensor(SENSOR_TYPE_ID_DROP_DETECTION, &user);
+    if (deactivateRet == SENSOR_SUCCESS && unsubscribeRet == SENSOR_SUCCESS) {
+        MEDIA_INFO_LOG("HCameraService.UnRegisterSensorCallback success.");
+    }
+}
+
+void HCameraService::DropDetectionDataCallbackImpl(SensorEvent *event)
+{
+    if (event == nullptr) {
+        MEDIA_INFO_LOG("SensorEvent is nullptr.");
+        return;
+    }
+    if (event[0].data == nullptr) {
+        MEDIA_INFO_LOG("SensorEvent[0].data is nullptr.");
+        return;
+    }
+    if (event[0].dataLen < sizeof(DropDetectionData)) {
+        MEDIA_INFO_LOG("less than drop detection data size, event.dataLen:%{public}u", event[0].dataLen);
+        return;
+    }
+    DropDetectionData *dropDetectionData = reinterpret_cast<DropDetectionData *>(event[0].data);
+    if (dropDetectionData == nullptr) {
+        MEDIA_INFO_LOG("dropDetectionData is nullptr");
+        return;
+    }
+    MEDIA_DEBUG_LOG("sensorId:%{public}d, version:%{public}d, dataLen:%{public}u, status:%{public}f",
+        event[0].sensorTypeId, event[0].version, event[0].dataLen, dropDetectionData->status);
+
+    if (mCameraService != nullptr && mCameraService->cameraHostManager_) {
+        mCameraService->cameraHostManager_->NotifyDeviceStateChangeInfo(DeviceType::FALLING_TYPE,
+            FallingState::FALLING_STATE);
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

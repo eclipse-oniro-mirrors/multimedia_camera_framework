@@ -47,6 +47,7 @@
               "samgr",
               "samgr_proxy",
               "system_ability_fwk",
+              "sensor",
               "window_manager",
               "memmgr",
               "memmgr_plugin"

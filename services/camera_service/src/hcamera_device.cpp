@@ -88,7 +88,7 @@ public:
             return;
         }
         mLastFoldStatus = currentFoldStatus;
-        cameraHostManager_->NotifyDeviceStateChangeInfo(cameraId_, DeviceType::FOLD_TYPE, (int)currentFoldStatus);
+        cameraHostManager_->NotifyDeviceStateChangeInfo(DeviceType::FOLD_TYPE, (int)currentFoldStatus);
     }
 private:
     sptr<HCameraHostManager> cameraHostManager_;
@@ -512,7 +512,7 @@ void HCameraDevice::RegisterFoldStatusListener()
     listener = new FoldScreenListener(cameraHostManager_, cameraID_);
     if (cameraHostManager_) {
         int foldStatus = (int)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
-        cameraHostManager_->NotifyDeviceStateChangeInfo(cameraID_, DeviceType::FOLD_TYPE, foldStatus);
+        cameraHostManager_->NotifyDeviceStateChangeInfo(DeviceType::FOLD_TYPE, foldStatus);
     }
     auto ret = OHOS::Rosen::DisplayManager::GetInstance().RegisterFoldStatusListener(listener);
     if (ret != OHOS::Rosen::DMError::DM_OK) {
