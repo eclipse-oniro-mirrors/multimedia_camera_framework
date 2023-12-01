@@ -14,7 +14,6 @@
  */
 
 #include "output/photo_output_napi.h"
-#include <unistd.h>
 #include <uv.h>
 #include "image_napi.h"
 #include "image_receiver.h"
@@ -32,7 +31,8 @@ thread_local napi_ref PhotoOutputNapi::sConstructor_ = nullptr;
 thread_local sptr<PhotoOutput> PhotoOutputNapi::sPhotoOutput_ = nullptr;
 thread_local sptr<Surface> PhotoOutputNapi::sPhotoSurface_ = nullptr;
 thread_local uint32_t PhotoOutputNapi::photoOutputTaskId = CAMERA_PHOTO_OUTPUT_TASKID;
-
+static uv_sem_t g_captureStartSem;
+static bool g_isSemInited;
 PhotoListener::PhotoListener(napi_env env, const sptr<Surface> photoSurface) : env_(env), photoSurface_(photoSurface)
 {
     if (bufferProcessor_ == nullptr && photoSurface != nullptr) {
@@ -178,33 +178,47 @@ void PhotoListener::RemoveAllCallbacks()
 
 PhotoOutputCallback::PhotoOutputCallback(napi_env env) : env_(env) {}
 
+void UpdateJSExecute(uv_work_t* work)
+{
+    PhotoOutputCallbackInfo* callbackInfo = reinterpret_cast<PhotoOutputCallbackInfo *>(work->data);
+    if (callbackInfo) {
+        if (callbackInfo->eventType_ == PhotoOutputEventType::CAPTURE_FRAME_SHUTTER) {
+            uv_sem_wait(&g_captureStartSem);
+        }
+    }
+}
+
 void PhotoOutputCallback::UpdateJSCallbackAsync(PhotoOutputEventType eventType, const CallbackInfo &info) const
 {
     MEDIA_DEBUG_LOG("UpdateJSCallbackAsync is called");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
-    if (!loop) {
-        MEDIA_ERR_LOG("failed to get event loop");
+    uv_work_t* work = new(std::nothrow) uv_work_t;
+    if (!loop || !work) {
+        MEDIA_ERR_LOG("failed to get event loop or failed to allocate work");
         return;
     }
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    if (!work) {
-        MEDIA_ERR_LOG("failed to allocate work");
-        return;
+    if (!g_isSemInited) {
+        uv_sem_init(&g_captureStartSem, 0);
+        g_isSemInited = true;
     }
     std::unique_ptr<PhotoOutputCallbackInfo> callbackInfo =
         std::make_unique<PhotoOutputCallbackInfo>(eventType, info, shared_from_this());
     work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+    int ret = uv_queue_work_with_qos(loop, work, UpdateJSExecute, [] (uv_work_t* work, int status) {
         PhotoOutputCallbackInfo* callbackInfo = reinterpret_cast<PhotoOutputCallbackInfo *>(work->data);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             if (listener) {
-                if (callbackInfo->eventType_ == PhotoOutputEventType::CAPTURE_FRAME_SHUTTER) {
-                    const uint32_t delayTime = 20;
-                    usleep(delayTime);
-                }
                 listener->UpdateJSCallback(callbackInfo->eventType_, callbackInfo->info_);
+                if (callbackInfo->eventType_ == PhotoOutputEventType::CAPTURE_START) {
+                    MEDIA_DEBUG_LOG("PhotoOutputEventType::CAPTURE_START work done execute!");
+                    uv_sem_post(&g_captureStartSem);
+                } else if (callbackInfo->eventType_ == PhotoOutputEventType::CAPTURE_FRAME_SHUTTER) {
+                    MEDIA_DEBUG_LOG("PhotoOutputEventType::CAPTURE_FRAME_SHUTTER work done execute!");
+                    uv_sem_destroy(&g_captureStartSem);
+                    g_isSemInited = false;
+                }
             }
             delete callbackInfo;
         }
@@ -256,8 +270,6 @@ void PhotoOutputCallback::OnFrameShutter(const int32_t captureId, const uint64_t
     CallbackInfo info;
     info.captureID = captureId;
     info.timestamp = timestamp;
-    const uint32_t delayTime = 50;
-    usleep(delayTime);
     UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_FRAME_SHUTTER, info);
 }
 
