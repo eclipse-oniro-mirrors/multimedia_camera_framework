@@ -729,11 +729,11 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint
             MEDIA_ERR_LOG("cannot find OHOS_STATISTICS_FACE_RECTANGLES: %{public}d", ret);
             return 0;
         }
-        MEDIA_INFO_LOG("ProcessFaceRectangles: %{public}d count: %{public}d", item.item, item.count);
+        MEDIA_DEBUG_LOG("ProcessFaceRectangles: %{public}d count: %{public}d", item.item, item.count);
         constexpr int32_t rectangleUnitLen = 4;
 
         if (item.count % rectangleUnitLen) {
-            MEDIA_ERR_LOG("Metadata item: %{public}d count: %{public}d is invalid", item.item, item.count);
+            MEDIA_DEBUG_LOG("Metadata item: %{public}d count: %{public}d is invalid", item.item, item.count);
             return CAM_META_SUCCESS;
         }
         const int32_t offsetX = 0;
@@ -743,8 +743,8 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint
         float* start = item.data.f;
         float* end = item.data.f + item.count;
         for (; start < end; start += rectangleUnitLen) {
-            MEDIA_INFO_LOG("Metadata item: %{public}f,%{public}f,%{public}f,%{public}f",
-                           start[offsetX], start[offsetY], start[offsetW], start[offsetH]);
+            MEDIA_DEBUG_LOG("Metadata item: %{public}f,%{public}f,%{public}f,%{public}f",
+                            start[offsetX], start[offsetY], start[offsetW], start[offsetH]);
         }
     } else {
         MEDIA_ERR_LOG("HCameraDevice::OnResult cameraResult is nullptr");
