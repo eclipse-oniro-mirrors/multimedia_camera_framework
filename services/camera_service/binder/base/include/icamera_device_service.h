@@ -34,6 +34,9 @@ public:
 
     virtual int32_t UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings) = 0;
 
+    virtual int32_t GetStatus(std::shared_ptr<OHOS::Camera::CameraMetadata> &metaIn,
+                std::shared_ptr<OHOS::Camera::CameraMetadata> &metaOut) = 0;
+
     virtual int32_t GetEnabledResults(std::vector<int32_t> &results) = 0;
 
     virtual int32_t EnableResult(std::vector<int32_t> &results) = 0;

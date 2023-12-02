@@ -70,6 +70,7 @@ public:
     int32_t GetSessionState(CaptureSessionState& sessionState) override;
     int32_t GetActiveColorSpace(ColorSpace& colorSpace) override;
     int32_t SetColorSpace(ColorSpace colorSpace, ColorSpace captureColorSpace, bool isNeedUpdate) override;
+    int32_t SetSmoothZoom(int32_t smoothZoomType, int32_t operationMode, float targetZoomRatio, float &duration) override;
 
     friend class StreamOperatorCallback;
     static void dumpSessions(std::string& dumpString);

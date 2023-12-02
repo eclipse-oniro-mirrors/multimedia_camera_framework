@@ -167,6 +167,13 @@ public:
     int32_t OnError(int32_t errorCode) override;
 };
 
+class SmoothZoomCallback {
+public:
+    SmoothZoomCallback() = default;
+    virtual ~SmoothZoomCallback() = default;
+    virtual void OnSmoothZoom(int32_t duration) = 0;
+};
+
 enum VideoStabilizationMode {
     OFF = 0,
     LOW,
@@ -559,6 +566,14 @@ public:
     int32_t GetFocalLength(float& focalLength);
 
     /**
+    * @brief Set the smooth zoom callback.
+    * which will be called when there is smooth zoom change.
+    *
+    * @param The SmoothZoomCallback pointer.
+    */
+    void SetSmoothZoomCallback(std::shared_ptr<SmoothZoomCallback> smoothZoomCallback);
+
+    /**
      * @brief Get the supported Focus modes.
      *
      * @return Returns vector of camera_focus_mode_enum_t supported exposure modes.
@@ -659,6 +674,29 @@ public:
      * @return Returns errCode.
      */
     int32_t SetZoomRatio(float zoomRatio);
+
+    /**
+     * @brief Prepare Zoom change.
+     *
+     * @return Returns errCode.
+     */
+    int32_t PrepareZoom();
+
+    /**
+     * @brief UnPrepare Zoom hange.
+     *
+     * @return Returns errCode.
+     */
+    int32_t UnPrepareZoom();
+
+    /**
+     * @brief Set Smooth Zoom.
+     *
+     * @param Target smooth zoom ratio.
+     * @param Smooth zoom type.
+     * @return Returns errCode.
+     */
+    int32_t SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoomType);
 
     /**
      * @brief Set Metadata Object types.
@@ -819,6 +857,10 @@ private:
     std::shared_ptr<ExposureCallback> exposureCallback_;
     std::shared_ptr<FocusCallback> focusCallback_;
     std::shared_ptr<MacroStatusCallback> macroStatusCallback_;
+    std::shared_ptr<SmoothZoomCallback> smoothZoomCallback_;
+    std::shared_ptr<OHOS::Utils::Timer> zoomTimer_;
+    uint32_t zoomTimerId_;
+    bool inPrepareZoom_;
     std::vector<int32_t> skinSmoothBeautyRange_;
     std::vector<int32_t> faceSlendorBeautyRange_;
     std::vector<int32_t> skinToneBeautyRange_;
@@ -860,6 +902,7 @@ private:
     ColorSpaceInfo GetSupportedColorSpaceInfo();
     bool IsModeWithVideoStream();
     void SetDefaultColorSpace();
+    void ResetZoomTimer();
 };
 } // namespace CameraStandard
 } // namespace OHOS

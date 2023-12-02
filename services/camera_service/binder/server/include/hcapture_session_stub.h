@@ -37,6 +37,7 @@ private:
     int HandleGetSesstionState(MessageParcel &reply);
     int HandleGetActiveColorSpace(MessageParcel &reply);
     int HandleSetColorSpace(MessageParcel &data);
+    int HandleSetSmoothZoom(MessageParcel &data, MessageParcel &reply);
 };
 } // namespace CameraStandard
 } // namespace OHOS

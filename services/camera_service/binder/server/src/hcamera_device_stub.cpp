@@ -50,6 +50,9 @@ int HCameraDeviceStub::OnRemoteRequest(
         case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_UPDATE_SETTNGS):
             errCode = HCameraDeviceStub::HandleUpdateSetting(data);
             break;
+        case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_GET_STATUS):
+            errCode = HCameraDeviceStub::HandleGetStatus(data, reply);
+            break;
         case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_ENABLED_RESULT):
             errCode = HCameraDeviceStub::HandleEnableResult(data);
             break;
@@ -85,6 +88,23 @@ int HCameraDeviceStub::HandleUpdateSetting(MessageParcel &data)
     OHOS::Camera::MetadataUtils::DecodeCameraMetadata(data, metadata);
 
     return UpdateSetting(metadata);
+}
+
+int HCameraDeviceStub::HandleGetStatus(MessageParcel &data, MessageParcel &reply)
+{
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadataIn = nullptr;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadataOut = nullptr;
+
+    OHOS::Camera::MetadataUtils::DecodeCameraMetadata(data, metadataIn);
+
+    int errCode = GetStatus(metadataIn, metadataOut);
+
+    if (!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(metadataOut, reply))) {
+        MEDIA_ERR_LOG("HCameraServiceStub HandleGetStatus write metadata failed");
+        return IPC_STUB_WRITE_PARCEL_ERR;
+    }
+
+    return errCode;
 }
 
 int HCameraDeviceStub::HandleGetEnabledResults(MessageParcel &reply)

@@ -243,6 +243,9 @@ CaptureSession::CaptureSession(sptr<ICaptureSession> &captureSession)
         MEDIA_ERR_LOG("failed to add deathRecipient");
         return;
     }
+    zoomTimer_ = std::make_shared<OHOS::Utils::Timer>("ZoomTimer");
+    zoomTimer_->Setup();
+    inPrepareZoom_ = false;
 }
 
 void CaptureSession::CameraServerDied(pid_t pid)
@@ -271,6 +274,10 @@ CaptureSession::~CaptureSession()
     exposureCallback_ = nullptr;
     focusCallback_ = nullptr;
     macroStatusCallback_ = nullptr;
+    smoothZoomCallback_ = nullptr;
+    zoomTimer_->Shutdown();
+    zoomTimer_ = nullptr;
+    inPrepareZoom_ = false;
 }
 
 int32_t CaptureSession::BeginConfig()
@@ -645,6 +652,7 @@ int32_t CaptureSession::Release()
     exposureCallback_ = nullptr;
     focusCallback_ = nullptr;
     macroStatusCallback_ = nullptr;
+    smoothZoomCallback_ = nullptr;
     return ServiceToCameraError(errCode);
 }
 
@@ -2077,14 +2085,25 @@ int32_t CaptureSession::GetZoomRatio(float &zoomRatio)
         MEDIA_ERR_LOG("CaptureSession::GetZoomRatio camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaIn;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaOut;
+    uint32_t count = 1;
+    int32_t zoomRatioMultiple = 100;
+    int32_t metaInZoomRatio = 1 * zoomRatioMultiple;
+    metaIn->addEntry(OHOS_STATUS_CAMERA_CURRENT_ZOOM_RATIO, &metaInZoomRatio, count);
+    int32_t ret = ((sptr<CameraInput> &)inputDevice_)->GetCameraDevice()->GetStatus(metaIn, metaOut);
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("CaptureSession::GetZoomRatio Failed to Get ZoomRatio, errCode = %{public}d", ret);
+        return ServiceToCameraError(ret);
+    }
     camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
+    ret = Camera::FindCameraMetadataItem(metaOut->get(), OHOS_STATUS_CAMERA_CURRENT_ZOOM_RATIO, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("CaptureSession::GetZoomRatio Failed with return code %{public}d", ret);
         return CameraErrorCode::SUCCESS;
     }
-    zoomRatio = static_cast<float>(item.data.f[0]);
+    zoomRatio = static_cast<float>(item.data.i32[0]) / zoomRatioMultiple;
+    MEDIA_ERR_LOG("CaptureSession::GetZoomRatio %{public}f", zoomRatio);
     return CameraErrorCode::SUCCESS;
 }
 
@@ -2099,7 +2118,7 @@ int32_t CaptureSession::SetZoomRatio(float zoomRatio)
         MEDIA_ERR_LOG("CaptureSession::SetZoomRatio Need to call LockForControl() before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
-
+    ResetZoomTimer();
     bool status = false;
     int32_t ret;
     int32_t minIndex = 0;
@@ -2138,6 +2157,141 @@ int32_t CaptureSession::SetZoomRatio(float zoomRatio)
         MEDIA_ERR_LOG("CaptureSession::SetZoomRatio Failed to set zoom mode");
     }
     return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::PrepareZoom()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("CaptureSession::PrepareZoom");
+    if (!(IsSessionCommited() || IsSessionConfiged())) {
+        MEDIA_ERR_LOG("CaptureSession::PrepareZoom Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::PrepareZoom Need to call LockForControl() before setting camera properties");
+        return CameraErrorCode::SUCCESS;
+    }
+    inPrepareZoom_ = true;
+    ResetZoomTimer();
+    bool status = false;
+    int32_t ret;
+    uint32_t count = 1;
+    uint32_t prepareZoomType = OHOS_CAMERA_ZOOMSMOOTH_PREPARE_ENABLE;
+    camera_metadata_item_t item;
+    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_PREPARE_ZOOM, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_PREPARE_ZOOM, &prepareZoomType, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_PREPARE_ZOOM, &prepareZoomType, count);
+    }
+    if (!status) {
+        MEDIA_ERR_LOG("CaptureSession::SetSmoothZoom CaptureSession::PrepareZoom Failed to prepare zoom");
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::UnPrepareZoom()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("CaptureSession::UnPrepareZoom");
+    if (!(IsSessionCommited() || IsSessionConfiged())) {
+        MEDIA_ERR_LOG("CaptureSession::UnPrepareZoom Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::UnPrepareZoom Need to call LockForControl() before setting camera properties");
+        return CameraErrorCode::SUCCESS;
+    }
+    inPrepareZoom_ = false;
+    ResetZoomTimer();
+    bool status = false;
+    int32_t ret;
+    uint32_t count = 1;
+    uint32_t prepareZoomType = OHOS_CAMERA_ZOOMSMOOTH_PREPARE_DISABLE;
+    camera_metadata_item_t item;
+
+    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_PREPARE_ZOOM, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_PREPARE_ZOOM, &prepareZoomType, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_PREPARE_ZOOM, &prepareZoomType, count);
+    }
+
+    if (!status) {
+        MEDIA_ERR_LOG("CaptureSession::UnPrepareZoom Failed to unPrepare zoom");
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoomType)
+{
+    CAMERA_SYNC_TRACE;
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::SetSmoothZoom Session is not commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    ResetZoomTimer();
+    int32_t minIndex = 0;
+    int32_t maxIndex = 1;
+    std::vector<float> zoomRange = GetZoomRatioRange();
+    if (zoomRange.empty()) {
+        MEDIA_ERR_LOG("CaptureSession::SetSmoothZoom Zoom range is empty");
+        return CameraErrorCode::SUCCESS;
+    }
+    if (targetZoomRatio < zoomRange[minIndex]) {
+        MEDIA_DEBUG_LOG("CaptureSession::SetSmoothZoom Zoom ratio: %{public}f is lesser than minimum zoom: %{public}f",
+                        targetZoomRatio, zoomRange[minIndex]);
+        targetZoomRatio = zoomRange[minIndex];
+    } else if (targetZoomRatio > zoomRange[maxIndex]) {
+        MEDIA_DEBUG_LOG("CaptureSession::SetSmoothZoom Zoom ratio: %{public}f is greater than maximum zoom: %{public}f",
+                        targetZoomRatio, zoomRange[maxIndex]);
+        targetZoomRatio = zoomRange[maxIndex];
+    }
+
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    float duration;
+    if (captureSession_) {
+        errCode = captureSession_->SetSmoothZoom(smoothZoomType, modeName_, targetZoomRatio, duration);
+        MEDIA_DEBUG_LOG("CaptureSession::SetSmoothZoom duration: %{public}f ",duration);
+        if (errCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("Failed to SetSmoothZoom!, %{public}d", errCode);
+        }
+        if (smoothZoomCallback_ != nullptr) {
+            smoothZoomCallback_->OnSmoothZoom(duration);
+        }
+    } else {
+        MEDIA_ERR_LOG("CaptureSession::SetSmoothZoom() captureSession_ is nullptr");
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+void CaptureSession::SetSmoothZoomCallback(std::shared_ptr<SmoothZoomCallback> smoothZoomCallback)
+{
+    MEDIA_ERR_LOG("CaptureSession::SetSmoothZoomCallback() set smooth zoom callback");
+    smoothZoomCallback_ = smoothZoomCallback;
+    return;
+}
+
+void CaptureSession::ResetZoomTimer()
+{
+    if (zoomTimer_) {
+        zoomTimer_->Unregister(zoomTimerId_);
+        if (!inPrepareZoom_) {
+            return;
+        }
+        MEDIA_ERR_LOG("CaptureSession::ResetZoomTimer");
+        uint32_t waitMs = 10 * 1000;
+        bool once = true;
+        wptr<CaptureSession> sessionWptr = this;
+        zoomTimerId_ = zoomTimer_->Register([sessionWptr](){
+            sptr<CaptureSession> sessionSptr = sessionWptr.promote();
+            if (sessionSptr) {
+                 sessionSptr->LockForControl();
+                 sessionSptr->UnPrepareZoom();
+                 sessionSptr->UnlockForControl();
+            }
+        }, waitMs, once);
+    }
 }
 
 void CaptureSession::SetCaptureMetadataObjectTypes(std::set<camera_face_detect_mode_t> metadataObjectTypes)

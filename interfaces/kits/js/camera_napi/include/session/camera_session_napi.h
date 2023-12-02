@@ -144,6 +144,31 @@ struct SessionCallbackInfo {
         : errorCode_(errorCode), listener_(listener) {}
 };
 
+class SmoothZoomCallbackListener : public SmoothZoomCallback {
+public:
+    SmoothZoomCallbackListener(napi_env env) : env_(env) {}
+    ~SmoothZoomCallbackListener() = default;
+    void OnSmoothZoom(int32_t duration) override;
+    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
+    void RemoveCallbackRef(napi_env env, napi_value args);
+    void RemoveAllCallbacks();
+
+private:
+    void OnSmoothZoomCallback(int32_t duration) const;
+    void OnSmoothZoomCallbackAsync(int32_t duration) const;
+
+    std::mutex mutex_;
+    napi_env env_;
+    mutable std::vector<std::shared_ptr<AutoRef>> smoothZoomCbList_;
+};
+
+struct SmoothZoomCallbackInfo {
+    int32_t duration_;
+    const SmoothZoomCallbackListener* listener_;
+    SmoothZoomCallbackInfo(int32_t duration, const SmoothZoomCallbackListener* listener)
+        : duration_(duration), listener_(listener) {}
+};
+
 class CameraSessionNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
@@ -175,6 +200,9 @@ public:
     static napi_value GetZoomRatioRange(napi_env env, napi_callback_info info);
     static napi_value GetZoomRatio(napi_env env, napi_callback_info info);
     static napi_value SetZoomRatio(napi_env env, napi_callback_info info);
+    static napi_value PrepareZoom(napi_env env, napi_callback_info info);
+    static napi_value UnPrepareZoom(napi_env env, napi_callback_info info);
+    static napi_value SetSmoothZoom(napi_env env, napi_callback_info info);
     static napi_value GetSupportedFilters(napi_env env, napi_callback_info info);
     static napi_value GetFilter(napi_env env, napi_callback_info info);
     static napi_value SetFilter(napi_env env, napi_callback_info info);
@@ -226,6 +254,7 @@ public:
     std::shared_ptr<SessionCallbackListener> sessionCallback_;
     std::shared_ptr<ExposureCallbackListener> exposureCallback_;
     std::shared_ptr<MacroStatusCallbackListener> macroStatusCallback_;
+    std::shared_ptr<SmoothZoomCallbackListener> smoothZoomCallback_;
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<CaptureSession> sCameraSession_;

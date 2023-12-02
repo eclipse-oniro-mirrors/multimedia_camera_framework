@@ -119,6 +119,30 @@ int32_t HCameraDeviceProxy::UpdateSetting(const std::shared_ptr<Camera::CameraMe
     return error;
 }
 
+int32_t HCameraDeviceProxy::GetStatus(std::shared_ptr<OHOS::Camera::CameraMetadata> &metaIn,
+        std::shared_ptr<OHOS::Camera::CameraMetadata> &metaOut)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    if (!(Camera::MetadataUtils::EncodeCameraMetadata(metaIn, data))) {
+        MEDIA_ERR_LOG("HCameraDeviceProxy UpdateSetting EncodeCameraMetadata failed");
+        return IPC_PROXY_ERR;
+    }
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_GET_STATUS), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraDeviceProxy GetStatus failed, error: %{public}d", error);
+    } else {
+        Camera::MetadataUtils::DecodeCameraMetadata(reply, metaOut);
+    }
+
+    return error;
+}
+
 int32_t HCameraDeviceProxy::GetEnabledResults(std::vector<int32_t> &results)
 {
     MessageParcel data;

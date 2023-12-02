@@ -269,5 +269,24 @@ int32_t HCaptureSessionProxy::SetColorSpace(ColorSpace colorSpace, ColorSpace ca
     }
     return error;
 }
+
+int32_t HCaptureSessionProxy::SetSmoothZoom(int32_t mode, int32_t operationMode, float targetZoomRatio, float &duration)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteUint32(static_cast<uint32_t>(mode));
+    data.WriteUint32(static_cast<uint32_t>(operationMode));
+    data.WriteFloat(targetZoomRatio);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_SMOOTH_ZOOM), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCaptureSessionProxy set smooth zoom failed, error: %{public}d", error);
+    }
+    duration = reply.ReadFloat();
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS

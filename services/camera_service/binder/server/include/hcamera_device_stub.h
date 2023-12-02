@@ -29,6 +29,7 @@ public:
 private:
     int HandleSetCallback(MessageParcel &data);
     int HandleUpdateSetting(MessageParcel &data);
+    int HandleGetStatus(MessageParcel &data, MessageParcel &reply);
     int HandleGetEnabledResults(MessageParcel &reply);
     int HandleEnableResult(MessageParcel &data);
     int HandleDisableResult(MessageParcel &data);
