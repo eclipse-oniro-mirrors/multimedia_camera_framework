@@ -2751,9 +2751,9 @@ napi_value CameraSessionNapi::RegisterCallback(
         cameraSessionNapi->sessionCallback_->SaveCallbackReference(eventType, callback, isOnce);
     } else if (eventType.compare("smoothZoomInfoAvailable") == 0) {
         if (cameraSessionNapi->smoothZoomCallback_ == nullptr) {
-           auto smoothZoomCallback = std::make_shared<SmoothZoomCallbackListener>(env);
-           cameraSessionNapi->smoothZoomCallback_ = smoothZoomCallback;
-           cameraSessionNapi->cameraSession_->SetSmoothZoomCallback(smoothZoomCallback);
+            auto smoothZoomCallback = std::make_shared<SmoothZoomCallbackListener>(env);
+            cameraSessionNapi->smoothZoomCallback_ = smoothZoomCallback;
+            cameraSessionNapi->cameraSession_->SetSmoothZoomCallback(smoothZoomCallback);
         }
         cameraSessionNapi->smoothZoomCallback_->SaveCallbackReference(eventType, callback, isOnce);
     } else {

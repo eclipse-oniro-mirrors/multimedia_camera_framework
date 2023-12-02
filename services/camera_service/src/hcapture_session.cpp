@@ -915,18 +915,19 @@ int32_t HCaptureSession::SetSmoothZoom(int32_t smoothZoomType, int32_t operation
         std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
     uint32_t count = 1;
     uint32_t fps = 30;
-    int32_t zoomRatio = 1 * ZOOM_RATIO_MULTIPLE;
+    uint32_t zoomRatio = 1 * ZOOM_RATIO_MULTIPLE;
     metaIn->addEntry(OHOS_STATUS_CAMERA_CURRENT_FPS, &fps, count);
     metaIn->addEntry(OHOS_STATUS_CAMERA_CURRENT_ZOOM_RATIO, &zoomRatio, count);
     cameraDevice_->GetStatus(metaIn, metaOut);
 
     camera_metadata_item_t item;
-    int retFindMeta = OHOS::Camera::FindCameraMetadataItem(metaOut->get(), OHOS_STATUS_CAMERA_CURRENT_ZOOM_RATIO, &item);
+    int retFindMeta = OHOS::Camera::FindCameraMetadataItem(metaOut->get(),
+        OHOS_STATUS_CAMERA_CURRENT_ZOOM_RATIO, &item);
     if (retFindMeta == CAM_META_ITEM_NOT_FOUND) {
         MEDIA_ERR_LOG("HCaptureSession::SetSmoothZoom() current zoom not found");
     } else if (retFindMeta == CAM_META_SUCCESS) {
-        currentZoomRatio = static_cast<float>(item.data.i32[0]);
-        MEDIA_DEBUG_LOG("HCaptureSession::SetSmoothZoom() current zoom %{public}d.", item.data.i32[0]);
+        currentZoomRatio = static_cast<float>(item.data.ui32[0]);
+        MEDIA_DEBUG_LOG("HCaptureSession::SetSmoothZoom() current zoom %{public}d.", item.data.ui32[0]);
     }
     retFindMeta = OHOS::Camera::FindCameraMetadataItem(metaOut->get(), OHOS_STATUS_CAMERA_CURRENT_FPS, &item);
     if (retFindMeta == CAM_META_ITEM_NOT_FOUND) {
@@ -942,22 +943,22 @@ int32_t HCaptureSession::SetSmoothZoom(int32_t smoothZoomType, int32_t operation
     camera_metadata_item_t zoomItem;
     OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_CAMERA_ZOOM_PERFORMANCE, &zoomItem);
     MEDIA_ERR_LOG("HCaptureSession::SetSmoothZoom() zoom performance count %{public}d.", zoomItem.count);
-    for(int i = 0; i <= static_cast<int>(zoomItem.count); i++) {
-        MEDIA_DEBUG_LOG("HCaptureSession::SetSmoothZoom() zoom performance value %{public}d.", zoomItem.data.i32[i]);
+    for (int i = 0; i <= static_cast<int>(zoomItem.count); i++) {
+        MEDIA_DEBUG_LOG("HCaptureSession::SetSmoothZoom() zoom performance value %{public}d.", zoomItem.data.ui32[i]);
     }
     std::vector<float> crossZoomAndTime {};
     int dataLenPerPoint = 3;
     int headLenPerMode = 2;
     MEDIA_DEBUG_LOG("HCaptureSession::SetSmoothZoom() operationMode %{public}d.",
         static_cast<OHOS::HDI::Camera::V1_2::OperationMode_V1_2>(operationMode));
-    for(int i = 0; i < static_cast<int>(zoomItem.count);) {
-        int sceneMode = zoomItem.data.i32[i];
-        int zoomPointsNum = zoomItem.data.i32[i + 1];
+    for (int i = 0; i < static_cast<int>(zoomItem.count);) {
+        int sceneMode = zoomItem.data.ui32[i];
+        int zoomPointsNum = zoomItem.data.ui32[i + 1];
         if (static_cast<OHOS::HDI::Camera::V1_2::OperationMode_V1_2>(operationMode) == sceneMode) {
-            for (int j = 0; j < dataLenPerPoint * zoomPointsNum; j++ ) {
-                crossZoomAndTime.push_back(zoomItem.data.i32[i + headLenPerMode + j]);
+            for (int j = 0; j < dataLenPerPoint * zoomPointsNum; j++) {
+                crossZoomAndTime.push_back(zoomItem.data.ui32[i + headLenPerMode + j]);
                 MEDIA_DEBUG_LOG("HCaptureSession::SetSmoothZoom()  crossZoomAndTime %{public}d.",
-                    static_cast<int>(zoomItem.data.i32[i + headLenPerMode + j]));
+                    static_cast<int>(zoomItem.data.ui32[i + headLenPerMode + j]));
             }
             break;
         } else {

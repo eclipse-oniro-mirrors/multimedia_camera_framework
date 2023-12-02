@@ -2102,7 +2102,7 @@ int32_t CaptureSession::GetZoomRatio(float &zoomRatio)
         MEDIA_ERR_LOG("CaptureSession::GetZoomRatio Failed with return code %{public}d", ret);
         return CameraErrorCode::SUCCESS;
     }
-    zoomRatio = static_cast<float>(item.data.i32[0]) / zoomRatioMultiple;
+    zoomRatio = static_cast<float>(item.data.ui32[0]) / zoomRatioMultiple;
     MEDIA_ERR_LOG("CaptureSession::GetZoomRatio %{public}f", zoomRatio);
     return CameraErrorCode::SUCCESS;
 }

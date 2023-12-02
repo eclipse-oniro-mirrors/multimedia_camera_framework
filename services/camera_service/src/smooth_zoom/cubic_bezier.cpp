@@ -60,7 +60,6 @@ float CubicBezier::GetDuration(const float& currentZoom, const float& targetZoom
     } else {
         return (DURATION_SLOP * DURATION_POWER * abs(log(targetZoom / currentZoom)) + DURATION_BASE);
     }
-    
 }
 
 float CubicBezier::GetCubicBezierY(const float& time)
