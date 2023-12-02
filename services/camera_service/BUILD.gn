@@ -58,7 +58,7 @@ ohos_shared_library("camera_service") {
     "//drivers/peripheral/display/interfaces/include",
     "//foundation/graphic/graphic_2d/frameworks/surface/include",
     "//foundation/multimedia/camera_framework/services/camera_service/include",
-    "//foundation/multimedia/camera_framework/services/camera_service/include/smooth_zoom",
+    "${multimedia_camera_framework_path}/services/camera_service/include/smooth_zoom",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/base/include",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/include",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/include",

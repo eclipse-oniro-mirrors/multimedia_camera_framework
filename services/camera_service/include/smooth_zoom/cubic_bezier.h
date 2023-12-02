@@ -20,13 +20,13 @@
 
 namespace OHOS {
 namespace CameraStandard {
-
 class CubicBezier : public IZoomAlgorithm {
 public:
     CubicBezier() = default;
     ~CubicBezier() = default;
 
-    std::vector<float> GetZoomArray(const float& currentZoom, const float& targetZoom, const float& frameInterval) override;
+    std::vector<float> GetZoomArray(const float& currentZoom, const float& targetZoom,
+        const float& frameInterval) override;
 
 private:
     static float GetDuration(const float& currentZoom, const float& targetZoom);

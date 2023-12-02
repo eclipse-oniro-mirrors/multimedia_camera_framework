@@ -2252,7 +2252,7 @@ int32_t CaptureSession::SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoom
     float duration;
     if (captureSession_) {
         errCode = captureSession_->SetSmoothZoom(smoothZoomType, modeName_, targetZoomRatio, duration);
-        MEDIA_DEBUG_LOG("CaptureSession::SetSmoothZoom duration: %{public}f ",duration);
+        MEDIA_DEBUG_LOG("CaptureSession::SetSmoothZoom duration: %{public}f ", duration);
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to SetSmoothZoom!, %{public}d", errCode);
         }
@@ -2283,12 +2283,12 @@ void CaptureSession::ResetZoomTimer()
         uint32_t waitMs = 10 * 1000;
         bool once = true;
         wptr<CaptureSession> sessionWptr = this;
-        zoomTimerId_ = zoomTimer_->Register([sessionWptr](){
+        zoomTimerId_ = zoomTimer_->Register([sessionWptr]() {
             sptr<CaptureSession> sessionSptr = sessionWptr.promote();
             if (sessionSptr) {
-                 sessionSptr->LockForControl();
-                 sessionSptr->UnPrepareZoom();
-                 sessionSptr->UnlockForControl();
+                sessionSptr->LockForControl();
+                sessionSptr->UnPrepareZoom();
+                sessionSptr->UnlockForControl();
             }
         }, waitMs, once);
     }

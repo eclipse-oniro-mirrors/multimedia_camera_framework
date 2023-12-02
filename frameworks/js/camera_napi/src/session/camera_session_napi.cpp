@@ -2751,13 +2751,12 @@ napi_value CameraSessionNapi::RegisterCallback(
         cameraSessionNapi->sessionCallback_->SaveCallbackReference(eventType, callback, isOnce);
     } else if (eventType.compare("smoothZoomInfoAvailable") == 0) {
         if (cameraSessionNapi->smoothZoomCallback_ == nullptr) {
-           std::shared_ptr<SmoothZoomCallbackListener> smoothZoomCallback =
-                   std::make_shared<SmoothZoomCallbackListener>(env);
+           auto smoothZoomCallback = std::make_shared<SmoothZoomCallbackListener>(env);
            cameraSessionNapi->smoothZoomCallback_ = smoothZoomCallback;
            cameraSessionNapi->cameraSession_->SetSmoothZoomCallback(smoothZoomCallback);
         }
         cameraSessionNapi->smoothZoomCallback_->SaveCallbackReference(eventType, callback, isOnce);
-     } else {
+    } else {
         MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
     }
     return undefinedResult;
@@ -2862,11 +2861,11 @@ napi_value CameraSessionNapi::UnregisterCallback(
         }
     } else if (eventType.compare("smoothZoomInfoAvailable") == 0) {
         if (cameraSessionNapi->smoothZoomCallback_ == nullptr) {
-          MEDIA_ERR_LOG("smoothZoomCallback is null");
+            MEDIA_ERR_LOG("smoothZoomCallback is null");
         } else {
-          cameraSessionNapi->smoothZoomCallback_->RemoveCallbackRef(env, callback);
+            cameraSessionNapi->smoothZoomCallback_->RemoveCallbackRef(env, callback);
         }
-     } else {
+    } else {
         MEDIA_ERR_LOG("Failed to Unregister Callback");
     }
     return undefinedResult;

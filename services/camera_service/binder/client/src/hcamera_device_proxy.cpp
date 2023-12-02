@@ -120,7 +120,7 @@ int32_t HCameraDeviceProxy::UpdateSetting(const std::shared_ptr<Camera::CameraMe
 }
 
 int32_t HCameraDeviceProxy::GetStatus(std::shared_ptr<OHOS::Camera::CameraMetadata> &metaIn,
-        std::shared_ptr<OHOS::Camera::CameraMetadata> &metaOut)
+    std::shared_ptr<OHOS::Camera::CameraMetadata> &metaOut)
 {
     MessageParcel data;
     MessageParcel reply;

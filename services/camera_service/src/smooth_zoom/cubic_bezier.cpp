@@ -13,10 +13,8 @@
  * limitations under the License.
  */
 
-#include <cmath>
-
-#include "cubic_bezier.h"
 #include "camera_log.h"
+#include "cubic_bezier.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -35,12 +33,16 @@ constexpr float DURATION_BASE = 450.0;
 constexpr float DURATION_POWER = 1.2;
 }
 
-std::vector<float> CubicBezier::GetZoomArray(const float& currentZoom, const float& targetZoom, const float& frameInterval)
+std::vector<float> CubicBezier::GetZoomArray(const float& currentZoom, const float& targetZoom,
+    const float& frameInterval)
 {
     float duration = GetDuration(currentZoom, targetZoom);
     MEDIA_DEBUG_LOG("CubicBezier::GetZoomArray duration is:%{public}f", duration);
+    std::vector<float> result;
+    if (duration == 0 || frameInterval == 0) {
+        return result;
+    }
     int arraySize = static_cast<int>(duration / frameInterval);
-    std::vector<float> result;//
     for (int i = 1; i <= arraySize; i++) {
         float time = frameInterval * i / duration;
         float zoom = (currentZoom + (targetZoom - currentZoom) * GetInterpolation(time));
@@ -48,13 +50,17 @@ std::vector<float> CubicBezier::GetZoomArray(const float& currentZoom, const flo
         MEDIA_DEBUG_LOG("CubicBezier::GetZoomArray zoom is:%{public}f", zoom);
     }
     result.push_back(targetZoom);
-     return result;
+    return result;
 }
 
 float CubicBezier::GetDuration(const float& currentZoom, const float& targetZoom)
 {
-    return (DURATION_SLOP * DURATION_POWER * abs(log(targetZoom / currentZoom))
-        + DURATION_BASE);
+    if (currentZoom == 0) {
+        return 0;
+    } else {
+        return (DURATION_SLOP * DURATION_POWER * abs(log(targetZoom / currentZoom)) + DURATION_BASE);
+    }
+    
 }
 
 float CubicBezier::GetCubicBezierY(const float& time)
@@ -87,7 +93,6 @@ float CubicBezier::BinarySearch(const float& value)
         }
     }
     return low;
-
 }
 
 float CubicBezier::GetInterpolation(const float& input)

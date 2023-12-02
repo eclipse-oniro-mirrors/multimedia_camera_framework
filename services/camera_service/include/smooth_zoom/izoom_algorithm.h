@@ -20,13 +20,13 @@
 
 namespace OHOS {
 namespace CameraStandard {
-
 class IZoomAlgorithm {
 public:
     IZoomAlgorithm() = default;
     virtual ~IZoomAlgorithm() = default;
 
-    virtual std::vector<float> GetZoomArray(const float& currentZoom, const float& targetZoom, const float& frameInterval) = 0;
+    virtual std::vector<float> GetZoomArray(const float& currentZoom, const float& targetZoom,
+        const float& frameInterval) = 0;
 };
 } // namespace CameraStandard
 } // namespace OHOS
