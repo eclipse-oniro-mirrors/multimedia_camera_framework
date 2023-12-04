@@ -2219,7 +2219,7 @@ napi_value CameraSessionNapi::UnPrepareZoom(napi_env env, napi_callback_info inf
     return result;
 }
 
-+napi_value CameraSessionNapi::SetSmoothZoom(napi_env env, napi_callback_info info)
+napi_value CameraSessionNapi::SetSmoothZoom(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("SetSmoothZoom is called");
     CAMERA_SYNC_TRACE;
