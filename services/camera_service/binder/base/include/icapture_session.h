@@ -71,6 +71,9 @@ public:
 
     virtual int32_t GetSessionState(CaptureSessionState &sessionState) = 0;
 
+    virtual int32_t SetSmoothZoom(int32_t smoothZoomType, int32_t operationMode,
+            float targetZoomRatio, float &duration) = 0;
+
     virtual int32_t GetActiveColorSpace(ColorSpace& colorSpace) = 0;
 
     virtual int32_t SetColorSpace(ColorSpace colorSpace, ColorSpace captureColorSpace, bool isNeedUpdate) = 0;

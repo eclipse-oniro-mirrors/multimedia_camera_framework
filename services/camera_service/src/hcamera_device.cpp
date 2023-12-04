@@ -381,6 +381,73 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
     return CAMERA_OK;
 }
 
+int32_t HCameraDevice::UpdateSettingOnce(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
+{
+    CAMERA_SYNC_TRACE;
+    if (settings == nullptr) {
+        MEDIA_ERR_LOG("settings is null");
+        return CAMERA_INVALID_ARG;
+    }
+
+    uint32_t count = OHOS::Camera::GetCameraMetadataItemCount(settings->get());
+    if (!count) {
+        MEDIA_DEBUG_LOG("Nothing to update");
+        return CAMERA_OK;
+    }
+    std::lock_guard<std::mutex> lock(opMutex_);
+    MEDIA_DEBUG_LOG("Updated device settings once hdiCameraDevice_(%{public}d)", hdiCameraDevice_ != nullptr);
+    if (hdiCameraDevice_ != nullptr) {
+        std::vector<uint8_t> hdiSettings;
+        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(settings, hdiSettings);
+        CamRetCode rc = (CamRetCode)(hdiCameraDevice_->UpdateSettings(hdiSettings));
+        if (rc != HDI::Camera::V1_0::NO_ERROR) {
+            MEDIA_ERR_LOG("Failed with error Code: %{public}d", rc);
+            return HdiToServiceError(rc);
+        }
+    }
+    MEDIA_DEBUG_LOG("Updated device settings once");
+    return CAMERA_OK;
+}
+
+int32_t HCameraDevice::GetStatus(std::shared_ptr<OHOS::Camera::CameraMetadata> &metaIn,
+    std::shared_ptr<OHOS::Camera::CameraMetadata> &metaOut)
+{
+    CAMERA_SYNC_TRACE;
+    if (metaIn == nullptr) {
+        MEDIA_ERR_LOG("HCameraDevice::GetStatus metaIn is null");
+        return CAMERA_INVALID_ARG;
+    }
+    uint32_t count = OHOS::Camera::GetCameraMetadataItemCount(metaIn->get());
+    if (!count) {
+        MEDIA_DEBUG_LOG("HCameraDevice::GetStatus Nothing to query");
+        return CAMERA_OK;
+    }
+
+    sptr<OHOS::HDI::Camera::V1_2::ICameraDevice> hdiCameraDeviceV1_2;
+    if (cameraHostManager_->GetVersionByCamera(cameraID_) >= GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
+        MEDIA_DEBUG_LOG("HCameraDevice::GetStatus ICameraDevice cast to V1_2");
+        hdiCameraDeviceV1_2 = OHOS::HDI::Camera::V1_2::ICameraDevice::CastFrom(hdiCameraDevice_);
+        if (hdiCameraDeviceV1_2 == nullptr) {
+            MEDIA_ERR_LOG("HCameraDevice::GetStatus ICameraDevice cast to V1_2 error");
+            hdiCameraDeviceV1_2 = static_cast<OHOS::HDI::Camera::V1_2::ICameraDevice *>(hdiCameraDevice_.GetRefPtr());
+        }
+    }
+
+    MEDIA_DEBUG_LOG("HCameraDevice::GetStatus hdiCameraDeviceV1_2(%{public}d)", hdiCameraDeviceV1_2 != nullptr);
+    if (hdiCameraDeviceV1_2 != nullptr) {
+        std::vector<uint8_t> hdiMetaIn;
+        std::vector<uint8_t> hdiMetaOut;
+        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(metaIn, hdiMetaIn);
+        CamRetCode rc = (CamRetCode)(hdiCameraDeviceV1_2->GetStatus(hdiMetaIn, hdiMetaOut));
+        if (rc != HDI::Camera::V1_0::NO_ERROR) {
+            MEDIA_ERR_LOG("HCameraDevice::GetStatus Failed with error Code: %{public}d", rc);
+            return HdiToServiceError(rc);
+        }
+        OHOS::Camera::MetadataUtils::ConvertVecToMetadata(hdiMetaOut, metaOut);
+    }
+    return CAMERA_OK;
+}
+
 void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings)
 {
     // debug log for focus mode
