@@ -60,6 +60,7 @@ ohos_unittest("camera_framework_unittest_v1_0") {
     "image_framework:image_native",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
+    "sensor:sensor_interface_native",
   ]
 
   cflags = [
@@ -123,6 +124,7 @@ ohos_unittest("camera_framework_unittest_v1_1") {
     "image_framework:image_native",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
+    "sensor:sensor_interface_native",
   ]
 
   cflags = [
@@ -183,6 +185,7 @@ ohos_unittest("camera_ndk_unittest_v1_1") {
     "image_framework:image_native",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
+    "sensor:sensor_interface_native",
   ]
 
   cflags = [
