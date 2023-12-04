@@ -21,7 +21,7 @@
 #include <memory>
 #include <set>
 #include <vector>
-#include <timer.h>
+#include <commonlibrary/c_utils/base/include/timer.h>
 
 #include "camera_error_code.h"
 #include "hcapture_session_callback_stub.h"
