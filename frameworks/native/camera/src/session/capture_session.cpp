@@ -237,15 +237,15 @@ CaptureSession::CaptureSession(sptr<ICaptureSession> &captureSession)
     deathRecipient_ = new(std::nothrow) CameraDeathRecipient(pid);
     CHECK_AND_RETURN_LOG(deathRecipient_ != nullptr, "failed to new CameraDeathRecipient.");
 
+    zoomTimer_ = std::make_shared<OHOS::Utils::Timer>("ZoomTimer");
+    zoomTimer_->Setup();
+    inPrepareZoom_ = false;
     deathRecipient_->SetNotifyCb(std::bind(&CaptureSession::CameraServerDied, this, std::placeholders::_1));
     bool result = object->AddDeathRecipient(deathRecipient_);
     if (!result) {
         MEDIA_ERR_LOG("failed to add deathRecipient");
         return;
     }
-    zoomTimer_ = std::make_shared<OHOS::Utils::Timer>("ZoomTimer");
-    zoomTimer_->Setup();
-    inPrepareZoom_ = false;
 }
 
 void CaptureSession::CameraServerDied(pid_t pid)
