@@ -494,11 +494,11 @@ std::shared_ptr<HCameraHostManager::CameraDeviceInfo> HCameraHostManager::Camera
    (const std::string& cameraId)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    for (const auto& deviceInfo : devices_) {
-        if (deviceInfo->cameraId == cameraId) {
-            MEDIA_INFO_LOG("CameraHostInfo::FindCameraDeviceInfo succeed for %{public}s", cameraId.c_str());
-            return deviceInfo;
-        }
+    std::vector<std::shared_ptr<CameraDeviceInfo>>::iterator it = std::find_if(devices_.begin(),devices_.end(),
+        [](const auto& deviceInfo) { return deviceInfo->cameraId == cameraId; });
+    if(it != devices_.end()) {
+        MEDIA_INFO_LOG("CameraHostInfo::FindCameraDeviceInfo succeed for %{public}s", cameraId.c_str());
+        return (*it);
     }
     MEDIA_WARNING_LOG("CameraHostInfo::FindCameraDeviceInfo failed for %{public}s", cameraId.c_str());
     return nullptr;
