@@ -495,7 +495,7 @@ std::shared_ptr<HCameraHostManager::CameraDeviceInfo> HCameraHostManager::Camera
 {
     std::lock_guard<std::mutex> lock(mutex_);
     std::vector<std::shared_ptr<CameraDeviceInfo>>::iterator it = std::find_if(devices_.begin(), devices_.end(),
-        [](const auto& deviceInfo) { return deviceInfo->cameraId == cameraId; });
+        [cameraId](const auto& deviceInfo) { return deviceInfo->cameraId == cameraId; });
     if (it != devices_.end()) {
         MEDIA_INFO_LOG("CameraHostInfo::FindCameraDeviceInfo succeed for %{public}s", cameraId.c_str());
         return (*it);
