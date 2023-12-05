@@ -2893,9 +2893,9 @@ int32_t CaptureSession::SetColorSpace(ColorSpace colorSpace)
 
         MEDIA_DEBUG_LOG("CaptureSession::SetColorSpace mode %{public}d, color %{public}d.", GetMode(), metaColorSpace);
         std::vector<int32_t> supportedColorSpaces = colorSpaceInfo.modeInfo[i].streamInfo[0].colorSpaces;
-        auto itr = std::find(supportedColorSpaces.begin(), supportedColorSpaces.end(),
+        auto itColorSpace = std::find(supportedColorSpaces.begin(), supportedColorSpaces.end(),
             static_cast<int32_t>(metaColorSpace));
-        if (itr == supportedColorSpaces.end()) {
+        if (itColorSpace == supportedColorSpaces.end()) {
             MEDIA_ERR_LOG("CaptureSession::SetColorSpace input not found in supportedList.");
             return CameraErrorCode::INVALID_ARGUMENT;
         }
