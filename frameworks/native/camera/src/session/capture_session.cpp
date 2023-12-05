@@ -379,7 +379,7 @@ void CaptureSession::SetDefaultColorSpace()
         MEDIA_ERR_LOG("CaptureSession::SetDefaultColorSpace, %{public}d fail", static_cast<int32_t>(captureColorSpace));
         return;
     }
-    MEDIA_INFO_LOG("CaptureSession::SetDefaultColorSpace mode = %{public}d, ColorSpace = %{public}d,"
+    MEDIA_INFO_LOG("CaptureSession::SetDefaultColorSpace mode = %{public}d, ColorSpace = %{public}d, "
         "captureColorSpace = %{public}d.", GetMode(), fwkColorSpace, fwkCaptureColorSpace);
 
     int32_t errCode = captureSession_->SetColorSpace(fwkColorSpace, fwkCaptureColorSpace, false);
@@ -2856,6 +2856,8 @@ int32_t CaptureSession::GetActiveColorSpace(ColorSpace& colorSpace)
         errCode = captureSession_->GetActiveColorSpace(colorSpace);
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to GetActiveColorSpace! %{public}d", errCode);
+        } else {
+            MEDIA_INFO_LOG("CaptureSession::GetActiveColorSpace %{public}d", static_cast<int32_t>(colorSpace));
         }
     } else {
         MEDIA_ERR_LOG("CaptureSession::GetActiveColorSpace() captureSession_ is nullptr");
@@ -2915,10 +2917,6 @@ int32_t CaptureSession::SetColorSpace(ColorSpace colorSpace)
         break;
     }
 
-    if (IsSessionConfiged()) {
-        isColorSpaceSetted_ = true;
-    }
-
     ColorSpace fwkCaptureColorSpace;
     auto it = g_metaColorSpaceMap_.find(captureColorSpace);
     if (it != g_metaColorSpaceMap_.end()) {
@@ -2926,6 +2924,10 @@ int32_t CaptureSession::SetColorSpace(ColorSpace colorSpace)
     } else {
         MEDIA_ERR_LOG("CaptureSession::SetColorSpace, %{public}d map failed", static_cast<int32_t>(captureColorSpace));
         return CameraErrorCode::INVALID_ARGUMENT;
+    }
+
+    if (IsSessionConfiged()) {
+        isColorSpaceSetted_ = true;
     }
     // 若session还未commit，则后续createStreams会把色域带下去；否则，SetColorSpace要走updateStreams
     MEDIA_DEBUG_LOG("CaptureSession::SetColorSpace, IsSessionCommited %{public}d", IsSessionCommited());
