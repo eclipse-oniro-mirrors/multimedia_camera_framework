@@ -287,7 +287,7 @@ float SketchWrapper::GetSketchReferenceFovRatio(int32_t modeName, float zoomRati
         if (currentZoomRatio - maxRange.zoomMax >= -std::numeric_limits<float>::epsilon()) {
             return maxRange.referenceValue;
         }
-        std::vector<SketchReferenceFovRange>::iterator itRange = std::find_if(it->second.begin(), it->second.end()
+        std::vector<SketchWrapper::SketchReferenceFovRange>::iterator itRange = std::find_if(it->second.begin(), it->second.end()
             [&currentZoomRatio, std::numeric_limits<float>::epsilon()](const auto& range) {
             return currentZoomRatio - range.zoomMin >= -std::numeric_limits<float>::epsilon() &&
             currentZoomRatio - range.zoomMax < -std::numeric_limits<float>::epsilon()
