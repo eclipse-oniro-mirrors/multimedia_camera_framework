@@ -2284,7 +2284,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_042, TestSize.Le
     ASSERT_EQ(colorEffects.empty(), false);
 
     ColorEffect colorEffect = colorEffects.back();
+    session_->LockForControl();
     session_->SetColorEffect(colorEffect);
+    session_->LockForControl();
     EXPECT_EQ(session_->GetColorEffect(), colorEffect);
 
     intResult = session_->Start();
