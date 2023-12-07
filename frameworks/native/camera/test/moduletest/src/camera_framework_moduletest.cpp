@@ -7112,5 +7112,91 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_061, TestSize.Le
     intResult = session_->Stop();
     EXPECT_EQ(intResult, 0);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test macro and sketch function.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test macro and sketch function.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_062, TestSize.Level0)
+{
+    auto previewProfile = GetSketchPreviewProfile();
+    if (previewProfile == nullptr) {
+        EXPECT_EQ(previewProfile.get(), nullptr);
+        return;
+    }
+    auto output = CreatePreviewOutput(*previewProfile);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
+    ASSERT_NE(output, nullptr);
+
+    session_->SetMode(static_cast<int32_t>(CameraMode::VIDEO));
+    int32_t intResult = session_->BeginConfig();
+
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(output);
+    EXPECT_EQ(intResult, 0);
+
+    bool isSketchSupported = previewOutput->IsSketchSupported();
+    if (!isSketchSupported) {
+        return;
+    }
+
+    previewOutput->EnableSketch(true);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    bool isMacroSupported = session_->IsMacroSupported();
+    if (!isMacroSupported) {
+        return;
+    }
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    // Video mode don't support sketch, but MacroVideo mode supported.
+    float sketchRatio = previewOutput->GetSketchRatio();
+    EXPECT_LT(sketchRatio, 0);
+
+    intResult = previewOutput->AttachSketchSurface(CreateSketchSurface(previewProfile->GetCameraFormat()));
+    EXPECT_EQ(intResult, 0);
+
+    session_->LockForControl();
+    intResult = session_->EnableMacro(true);
+    session_->UnlockForControl();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    // Now we are in MacroVideo mode
+    sketchRatio = previewOutput->GetSketchRatio();
+    EXPECT_GT(sketchRatio, 0);
+
+    session_->LockForControl();
+    intResult = session_->EnableMacro(false);
+    session_->UnlockForControl();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    // Now we are in Video mode
+    sketchRatio = previewOutput->GetSketchRatio();
+    EXPECT_LT(sketchRatio, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
 } // namespace CameraStandard
 } // namespace OHOS
