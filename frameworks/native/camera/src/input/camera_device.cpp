@@ -15,7 +15,6 @@
 #include <securec.h>
 #include "camera_metadata_info.h"
 #include "camera_log.h"
-#include "display_manager.h"
 #include "input/camera_device.h"
 
 using namespace std;
@@ -113,8 +112,6 @@ void CameraDevice::init(common_metadata_header_t* metadata)
             foldScreenType_ = itr->second;
         }
     }
-	
-    isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
 
     MEDIA_INFO_LOG("camera position: %{public}d, camera type: %{public}d, camera connection type: %{public}d, "
                     "Mirror Supported: %{public}d , camera foldScreen type: %{public}d",
@@ -133,9 +130,8 @@ std::shared_ptr<Camera::CameraMetadata> CameraDevice::GetMetadata()
 
 CameraPosition CameraDevice::GetPosition()
 {
-    if (isFoldable && cameraPosition_ == CAMERA_POSITION_FRONT) {
-        cameraPosition_ = (foldScreenType_ == CAMERA_FOLDSCREEN_UNSPECIFIED) ? CAMERA_POSITION_BACK :
-            (foldScreenType_ == CAMERA_FOLDSCREEN_INNER) ? CAMERA_POSITION_FOLD_INNER : CAMERA_POSITION_FRONT;
+    if (cameraPosition_ == CAMERA_POSITION_FRONT && foldScreenType_ == CAMERA_FOLDSCREEN_INNER) {
+        cameraPosition_ = CAMERA_POSITION_FOLD_INNER;
     }
     return cameraPosition_;
 }

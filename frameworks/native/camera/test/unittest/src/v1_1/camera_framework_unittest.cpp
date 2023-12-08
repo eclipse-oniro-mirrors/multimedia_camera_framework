@@ -386,12 +386,6 @@ public:
     ~FakeCameraManager() {}
 };
 
-class FakeModeManager : public ModeManager {
-public:
-    explicit FakeModeManager(sptr<HCameraService> service) : ModeManager(service) {}
-    ~FakeModeManager() {}
-};
-
 class CallbackListener : public FocusCallback, public ExposureCallback {
 public:
     void OnFocusState(FocusState state) override
@@ -605,7 +599,6 @@ void CameraFrameworkUnitTest::SetUp()
     mockCameraDevice = mockCameraHostManager->cameraDevice;
     mockStreamOperator = mockCameraDevice->streamOperator;
     cameraManager = new FakeCameraManager(new FakeHCameraService(mockCameraHostManager));
-    modeManager = new FakeModeManager(new FakeHCameraService(mockCameraHostManager));
 }
 
 void CameraFrameworkUnitTest::TearDown()
@@ -2053,11 +2046,11 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_045, TestSize.Level0
 
 /*
  * Feature: Framework
- * Function: Test modeManager and portrait session with beauty/filter/portrait effects
+ * Function: Test cameraManager and portrait session with beauty/filter/portrait effects
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test modeManager and portrait session with beauty/filter/portrait effects
+ * CaseDescription: Test cameraManager and portrait session with beauty/filter/portrait effects
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_046, TestSize.Level0)
 {
@@ -2065,11 +2058,11 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_046, TestSize.Level0
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
 
-    CameraMode mode = PORTRAIT;
-    std::vector<CameraMode> modes = modeManager->GetSupportedModes(cameras[0]);
+    SceneMode mode = PORTRAIT;
+    std::vector<SceneMode> modes = cameraManager->GetSupportedModes(cameras[0]);
     ASSERT_TRUE(modes.size() != 0);
 
-    sptr<CameraOutputCapability> ability = modeManager->GetSupportedOutputCapability(cameras[0], mode);
+    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], mode);
     ASSERT_NE(ability, nullptr);
 
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
@@ -2081,7 +2074,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_046, TestSize.Level0
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
-    sptr<CaptureSession> captureSession = modeManager->CreateCaptureSession(mode);
+    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(mode);
     ASSERT_NE(captureSession, nullptr);
     sptr<PortraitSession> portraitSession = nullptr;
     portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
@@ -2122,7 +2115,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_046, TestSize.Level0
 
 /*
  * Feature: Framework
- * Function: Test modeManager with GetSupportedModes
+ * Function: Test cameraManager with GetSupportedModes
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
@@ -2133,13 +2126,13 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_047, TestSize.Level0
     EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
 
-    std::vector<CameraMode> modes = modeManager->GetSupportedModes(cameras[0]);
+    std::vector<SceneMode> modes = cameraManager->GetSupportedModes(cameras[0]);
     ASSERT_TRUE(modes.size() != 0);
 }
 
 /*
  * Feature: Framework
- * Function: Test modeManager with GetSupportedOutputCapability
+ * Function: Test cameraManager with GetSupportedOutputCapability
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
@@ -2150,32 +2143,32 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_048, TestSize.Level0
     EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
 
-    CameraMode mode = PORTRAIT;
-    std::vector<CameraMode> modes = modeManager->GetSupportedModes(cameras[0]);
+    SceneMode mode = PORTRAIT;
+    std::vector<SceneMode> modes = cameraManager->GetSupportedModes(cameras[0]);
     ASSERT_TRUE(modes.size() != 0);
 
-    sptr<CameraOutputCapability> ability = modeManager->GetSupportedOutputCapability(cameras[0], mode);
+    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], mode);
     ASSERT_NE(ability, nullptr);
 }
 
 /*
  * Feature: Framework
- * Function: Test modeManager with CreateCaptureSession and CommitConfig
+ * Function: Test cameraManager with CreateCaptureSession and CommitConfig
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test modeManager to CreateCaptureSession
+ * CaseDescription: Test cameraManager to CreateCaptureSession
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_049, TestSize.Level0)
 {
     EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
 
-    CameraMode mode = PORTRAIT;
-    std::vector<CameraMode> modes = modeManager->GetSupportedModes(cameras[0]);
+    SceneMode mode = PORTRAIT;
+    std::vector<SceneMode> modes = cameraManager->GetSupportedModes(cameras[0]);
     ASSERT_TRUE(modes.size() != 0);
 
-    sptr<CameraOutputCapability> ability = modeManager->GetSupportedOutputCapability(cameras[0], mode);
+    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], mode);
     ASSERT_NE(ability, nullptr);
 
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
@@ -2195,7 +2188,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_049, TestSize.Level0
     ASSERT_NE(photo, nullptr);
 
 
-    sptr<CaptureSession> captureSession = modeManager->CreateCaptureSession(mode);
+    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(mode);
     ASSERT_NE(captureSession, nullptr);
     sptr<PortraitSession> portraitSession = nullptr;
     portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
@@ -2237,11 +2230,11 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_050, TestSize.Level0
     EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-    CameraMode mode = PORTRAIT;
-    std::vector<CameraMode> modes = modeManager->GetSupportedModes(cameras[0]);
+    SceneMode mode = PORTRAIT;
+    std::vector<SceneMode> modes = cameraManager->GetSupportedModes(cameras[0]);
     ASSERT_TRUE(modes.size() != 0);
 
-    sptr<CameraOutputCapability> ability = modeManager->GetSupportedOutputCapability(cameras[0], mode);
+    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], mode);
     ASSERT_NE(ability, nullptr);
 
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
@@ -2261,7 +2254,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_050, TestSize.Level0
     sptr<CaptureOutput> photo = CreatePhotoOutput();
     ASSERT_NE(photo, nullptr);
 
-    sptr<CaptureSession> captureSession = modeManager->CreateCaptureSession(mode);
+    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(mode);
     ASSERT_NE(captureSession, nullptr);
     sptr<PortraitSession> portraitSession = nullptr;
     portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
@@ -2307,11 +2300,11 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_051, TestSize.Level0
     EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-    CameraMode mode = PORTRAIT;
-    std::vector<CameraMode> modes = modeManager->GetSupportedModes(cameras[0]);
+    SceneMode mode = PORTRAIT;
+    std::vector<SceneMode> modes = cameraManager->GetSupportedModes(cameras[0]);
     ASSERT_TRUE(modes.size() != 0);
 
-    sptr<CameraOutputCapability> ability = modeManager->GetSupportedOutputCapability(cameras[0], mode);
+    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], mode);
     ASSERT_NE(ability, nullptr);
 
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
@@ -2330,7 +2323,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_051, TestSize.Level0
     sptr<CaptureOutput> photo = CreatePhotoOutput();
     ASSERT_NE(photo, nullptr);
 
-    sptr<CaptureSession> captureSession = modeManager->CreateCaptureSession(mode);
+    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(mode);
     ASSERT_NE(captureSession, nullptr);
     sptr<PortraitSession> portraitSession = nullptr;
     portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
@@ -2376,11 +2369,11 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_052, TestSize.Level0
     EXPECT_CALL(*mockCameraHostManager, GetCameras(_));
     EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _)).Times(2);
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-    CameraMode mode = PORTRAIT;
-    std::vector<CameraMode> modes = modeManager->GetSupportedModes(cameras[0]);
+    SceneMode mode = PORTRAIT;
+    std::vector<SceneMode> modes = cameraManager->GetSupportedModes(cameras[0]);
     ASSERT_TRUE(modes.size() != 0);
 
-    sptr<CameraOutputCapability> ability = modeManager->GetSupportedOutputCapability(cameras[0], mode);
+    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], mode);
     ASSERT_NE(ability, nullptr);
 
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
@@ -2400,7 +2393,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_052, TestSize.Level0
     sptr<CaptureOutput> photo = CreatePhotoOutput();
     ASSERT_NE(photo, nullptr);
 
-    sptr<CaptureSession> captureSession = modeManager->CreateCaptureSession(mode);
+    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(mode);
     ASSERT_NE(captureSession, nullptr);
     sptr<PortraitSession> portraitSession = nullptr;
     portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
@@ -2555,7 +2548,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_003, TestSize.Level
     sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     sptr<StreamOperatorCallback> streamOperatorCb = nullptr;
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    CameraMode mode = PORTRAIT;
+    SceneMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
                                                                          streamOperatorCb, callerToken, mode);
     ASSERT_NE(camSession, nullptr);
@@ -3184,7 +3177,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_013, TestSize.Level
     sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     sptr<StreamOperatorCallback> streamOperatorCb = nullptr;
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    CameraMode mode = PORTRAIT;
+    SceneMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
                                                                          streamOperatorCb, callerToken, mode);
     ASSERT_NE(camSession, nullptr);
@@ -3250,7 +3243,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_014, TestSize.Level
     sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     sptr<StreamOperatorCallback> streamOperatorCb = new StreamOperatorCallback();
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    CameraMode mode = PORTRAIT;
+    SceneMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
                                                                          streamOperatorCb, callerToken, mode);
     ASSERT_NE(camSession, nullptr);
@@ -3320,7 +3313,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_015, TestSize.Level
     sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     sptr<StreamOperatorCallback> streamOperatorCb = new StreamOperatorCallback();
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    CameraMode mode = PORTRAIT;
+    SceneMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
                                                                          streamOperatorCb, callerToken, mode);
     ASSERT_NE(camSession, nullptr);
@@ -3391,7 +3384,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_016, TestSize.Level
     sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     sptr<StreamOperatorCallback> streamOperatorCb = new StreamOperatorCallback();;
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    CameraMode mode = PORTRAIT;
+    SceneMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
                                                                          streamOperatorCb, callerToken, mode);
 
@@ -3462,7 +3455,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_017, TestSize.Level
     sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     sptr<StreamOperatorCallback> streamOperatorCb = nullptr;
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    CameraMode mode = PORTRAIT;
+    SceneMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
                                                                          streamOperatorCb, callerToken, mode);
     sptr<HCaptureSession> camSession1 = new(std::nothrow) HCaptureSession(cameraHostManager,

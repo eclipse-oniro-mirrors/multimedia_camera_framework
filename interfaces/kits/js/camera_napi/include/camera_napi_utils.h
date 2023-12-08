@@ -35,7 +35,6 @@
 #include "napi/native_node_api.h"
 #include "output/photo_output.h"
 #include "input/camera_manager.h"
-#include "mode/mode_manager.h"
 #include "ipc_skeleton.h"
 #include "tokenid_kit.h"
 
@@ -282,6 +281,9 @@ public:
 
     static napi_status CallPromiseFun(
         napi_env env, napi_value promiseValue, void* data, napi_callback thenCallback, napi_callback catchCallback);
+
+    static std::vector<napi_property_descriptor> GetPropertyDescriptor(
+        std::vector<std::vector<napi_property_descriptor>> descriptors);
 };
 
 template <typename T>

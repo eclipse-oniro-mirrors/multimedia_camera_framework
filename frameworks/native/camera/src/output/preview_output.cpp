@@ -29,7 +29,6 @@
 #include "hstream_repeat_callback_stub.h"
 #include "image_format.h"
 #include "metadata_common_utils.h"
-#include "mode/mode_manager.h"
 #include "pixel_map.h"
 #include "sketch_wrapper.h"
 

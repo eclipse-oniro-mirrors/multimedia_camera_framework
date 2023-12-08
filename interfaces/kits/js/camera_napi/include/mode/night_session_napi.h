@@ -23,31 +23,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class LongExposureCallbackListener : public LongExposureCallback {
-public:
-    LongExposureCallbackListener(napi_env env) : env_(env) {}
-    ~LongExposureCallbackListener() = default;
-    void OnLongExposure(const uint32_t longExposureTime) override;
-    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
-    void RemoveCallbackRef(napi_env env, napi_value callback);
-    void RemoveAllCallbacks();
-
-private:
-    void OnLongExposureCallback(uint32_t longExposureTime) const;
-    void OnLongExposureCallbackAsync(uint32_t longExposureTime) const;
-
-    std::mutex mutex_;
-    napi_env env_;
-    mutable std::vector<std::shared_ptr<AutoRef>> longExposureCbList_;
-};
-
-struct LongExposureCallbackInfo {
-    uint32_t longExposureTime_;
-    const LongExposureCallbackListener* listener_;
-    LongExposureCallbackInfo(uint32_t longExposureTime, const LongExposureCallbackListener* listener)
-        : longExposureTime_(longExposureTime), listener_(listener) {}
-};
-
 static const char NIGHT_SESSION_NAPI_CLASS_NAME[] = "NightSession";
 class NightSessionNapi : public CameraSessionNapi {
 public:
@@ -62,20 +37,9 @@ public:
     static napi_value GetSupportedExposureRange(napi_env env, napi_callback_info info);
     static napi_value GetExposure(napi_env env, napi_callback_info info);
     static napi_value SetExposure(napi_env env, napi_callback_info info);
-
-    static napi_value TryAE(napi_env env, napi_callback_info info);
-    static napi_value On(napi_env env, napi_callback_info info);
-    static napi_value Once(napi_env env, napi_callback_info info);
-    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-                                        const string &eventType, napi_value callback, bool isOnce);
-    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-                                            const std::string &eventType, napi_value callback);
-    static napi_value Off(napi_env env, napi_callback_info info);
     napi_env env_;
     napi_ref wrapper_;
     sptr<NightSession> nightSession_;
-    std::shared_ptr<LongExposureCallbackListener> longExposureCallback_;
-
     static thread_local napi_ref sConstructor_;
 };
 }

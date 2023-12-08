@@ -47,18 +47,18 @@ class CameraManagerNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateCameraManager(napi_env env);
-
+    static napi_value GetSupportedCameras(napi_env env, napi_callback_info info);
+    static napi_value GetSupportedModes(napi_env env, napi_callback_info info);
     static napi_value GetSupportedOutputCapability(napi_env env, napi_callback_info info);
     static napi_value IsCameraMuted(napi_env env, napi_callback_info info);
     static napi_value IsCameraMuteSupported(napi_env env, napi_callback_info info);
     static napi_value MuteCamera(napi_env env, napi_callback_info info);
-
     static napi_value PrelaunchCamera(napi_env env, napi_callback_info info);
     static napi_value SetPrelaunchConfig(napi_env env, napi_callback_info info);
     static napi_value IsPrelaunchSupported(napi_env env, napi_callback_info info);
-    static napi_value GetSupportedCameras(napi_env env, napi_callback_info info);
     static napi_value CreateCameraInputInstance(napi_env env, napi_callback_info info);
     static napi_value CreateCameraSessionInstance(napi_env env, napi_callback_info info);
+    static napi_value CreateSessionInstance(napi_env env, napi_callback_info info);
     static napi_value CreatePreviewOutputInstance(napi_env env, napi_callback_info info);
     static napi_value CreateDeferredPreviewOutputInstance(napi_env env, napi_callback_info info);
     static napi_value CreatePhotoOutputInstance(napi_env env, napi_callback_info info);

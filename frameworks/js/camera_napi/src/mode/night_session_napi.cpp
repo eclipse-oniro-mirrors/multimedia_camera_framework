@@ -47,87 +47,19 @@ napi_value NightSessionNapi::Init(napi_env env, napi_value exports)
     MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
-    napi_property_descriptor night_session_props[] = {
-        DECLARE_NAPI_FUNCTION("beginConfig", CameraSessionNapi::BeginConfig),
-        DECLARE_NAPI_FUNCTION("commitConfig", CameraSessionNapi::CommitConfig),
-
-        DECLARE_NAPI_FUNCTION("canAddInput", CameraSessionNapi::CanAddInput),
-        DECLARE_NAPI_FUNCTION("addInput", CameraSessionNapi::AddInput),
-        DECLARE_NAPI_FUNCTION("removeInput", CameraSessionNapi::RemoveInput),
-
-        DECLARE_NAPI_FUNCTION("canAddOutput", CameraSessionNapi::CanAddOutput),
-        DECLARE_NAPI_FUNCTION("addOutput", CameraSessionNapi::AddOutput),
-        DECLARE_NAPI_FUNCTION("removeOutput", CameraSessionNapi::RemoveOutput),
-
-        DECLARE_NAPI_FUNCTION("start", CameraSessionNapi::Start),
-        DECLARE_NAPI_FUNCTION("stop", CameraSessionNapi::Stop),
-        DECLARE_NAPI_FUNCTION("release", CameraSessionNapi::Release),
-
-        DECLARE_NAPI_FUNCTION("lockForControl", CameraSessionNapi::LockForControl),
-        DECLARE_NAPI_FUNCTION("unlockForControl", CameraSessionNapi::UnlockForControl),
-
-        DECLARE_NAPI_FUNCTION("isVideoStabilizationModeSupported",
-                              CameraSessionNapi::IsVideoStabilizationModeSupported),
-        DECLARE_NAPI_FUNCTION("getActiveVideoStabilizationMode", CameraSessionNapi::GetActiveVideoStabilizationMode),
-        DECLARE_NAPI_FUNCTION("setVideoStabilizationMode", CameraSessionNapi::SetVideoStabilizationMode),
-
-        DECLARE_NAPI_FUNCTION("hasFlash", CameraSessionNapi::HasFlash),
-        DECLARE_NAPI_FUNCTION("isFlashModeSupported", CameraSessionNapi::IsFlashModeSupported),
-        DECLARE_NAPI_FUNCTION("getFlashMode", CameraSessionNapi::GetFlashMode),
-        DECLARE_NAPI_FUNCTION("setFlashMode", CameraSessionNapi::SetFlashMode),
-
-        DECLARE_NAPI_FUNCTION("isExposureModeSupported", CameraSessionNapi::IsExposureModeSupported),
-        DECLARE_NAPI_FUNCTION("getExposureMode", CameraSessionNapi::GetExposureMode),
-        DECLARE_NAPI_FUNCTION("setExposureMode", CameraSessionNapi::SetExposureMode),
-        DECLARE_NAPI_FUNCTION("getExposureBiasRange", CameraSessionNapi::GetExposureBiasRange),
-        DECLARE_NAPI_FUNCTION("setExposureBias", CameraSessionNapi::SetExposureBias),
-        DECLARE_NAPI_FUNCTION("getExposureValue", CameraSessionNapi::GetExposureValue),
-
-        DECLARE_NAPI_FUNCTION("getMeteringPoint", CameraSessionNapi::GetMeteringPoint),
-        DECLARE_NAPI_FUNCTION("setMeteringPoint", CameraSessionNapi::SetMeteringPoint),
-
-        DECLARE_NAPI_FUNCTION("isFocusModeSupported", CameraSessionNapi::IsFocusModeSupported),
-        DECLARE_NAPI_FUNCTION("getFocusMode", CameraSessionNapi::GetFocusMode),
-        DECLARE_NAPI_FUNCTION("setFocusMode", CameraSessionNapi::SetFocusMode),
-
-        DECLARE_NAPI_FUNCTION("getFocusPoint", CameraSessionNapi::GetFocusPoint),
-        DECLARE_NAPI_FUNCTION("setFocusPoint", CameraSessionNapi::SetFocusPoint),
-        DECLARE_NAPI_FUNCTION("getFocalLength", CameraSessionNapi::GetFocalLength),
-
-        DECLARE_NAPI_FUNCTION("getZoomRatioRange", CameraSessionNapi::GetZoomRatioRange),
-        DECLARE_NAPI_FUNCTION("getZoomRatio", CameraSessionNapi::GetZoomRatio),
-        DECLARE_NAPI_FUNCTION("setZoomRatio", CameraSessionNapi::SetZoomRatio),
-
-        DECLARE_NAPI_FUNCTION("getSupportedFilters", CameraSessionNapi::GetSupportedFilters),
-        DECLARE_NAPI_FUNCTION("getFilter", CameraSessionNapi::GetFilter),
-        DECLARE_NAPI_FUNCTION("setFilter", CameraSessionNapi::SetFilter),
-
-        DECLARE_NAPI_FUNCTION("getSupportedBeautyTypes", CameraSessionNapi::GetSupportedBeautyTypes),
-        DECLARE_NAPI_FUNCTION("getSupportedBeautyRange", CameraSessionNapi::GetSupportedBeautyRange),
-        DECLARE_NAPI_FUNCTION("getBeauty", CameraSessionNapi::GetBeauty),
-        DECLARE_NAPI_FUNCTION("setBeauty", CameraSessionNapi::SetBeauty),
-
-        DECLARE_NAPI_FUNCTION("getSupportedColorSpaces", CameraSessionNapi::GetSupportedColorSpaces),
-        DECLARE_NAPI_FUNCTION("getActiveColorSpace", CameraSessionNapi::GetActiveColorSpace),
-        DECLARE_NAPI_FUNCTION("setColorSpace", CameraSessionNapi::SetColorSpace),
-
+    std::vector<napi_property_descriptor> manual_exposure_props = {
         DECLARE_NAPI_FUNCTION("getSupportedExposureRange", NightSessionNapi::GetSupportedExposureRange),
         DECLARE_NAPI_FUNCTION("getExposure", NightSessionNapi::GetExposure),
-        DECLARE_NAPI_FUNCTION("setExposure", NightSessionNapi::SetExposure),
-
-        DECLARE_NAPI_FUNCTION("getSupportedColorEffects", CameraSessionNapi::GetSupportedColorEffects),
-        DECLARE_NAPI_FUNCTION("getColorEffect", CameraSessionNapi::GetColorEffect),
-        DECLARE_NAPI_FUNCTION("setColorEffect", CameraSessionNapi::SetColorEffect),
-
-        DECLARE_NAPI_FUNCTION("on", NightSessionNapi::On),
-        DECLARE_NAPI_FUNCTION("off", NightSessionNapi::Off),
-        DECLARE_NAPI_FUNCTION("TryAE", NightSessionNapi::TryAE),
-
+        DECLARE_NAPI_FUNCTION("setExposure", NightSessionNapi::SetExposure)
     };
+    std::vector<std::vector<napi_property_descriptor>> descriptors = {camera_process_props, stabilization_props,
+        flash_props, auto_exposure_props, focus_props, zoom_props, filter_props, beauty_props,
+        color_effect_props, macro_props, manual_exposure_props};
+    std::vector<napi_property_descriptor> night_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, NIGHT_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                NightSessionNapiConstructor, nullptr,
-                               sizeof(night_session_props) / sizeof(night_session_props[PARAM0]),
-                               night_session_props, &ctorObj);
+                               night_session_props.size(),
+                               night_session_props.data(), &ctorObj);
     if (status == napi_ok) {
         int32_t refCount = 1;
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
@@ -151,7 +83,7 @@ napi_value NightSessionNapi::CreateCameraSession(napi_env env)
     napi_value constructor;
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
-        sCameraSession_ = ModeManager::GetInstance()->CreateCaptureSession(CameraMode::NIGHT);
+        sCameraSession_ = CameraManager::GetInstance()->CreateCaptureSession(SceneMode::NIGHT);
         if (sCameraSession_ == nullptr) {
             MEDIA_ERR_LOG("Failed to create Camera session instance");
             napi_get_undefined(env, &result);
@@ -168,32 +100,6 @@ napi_value NightSessionNapi::CreateCameraSession(napi_env env)
     }
     MEDIA_ERR_LOG("Failed to create Camera session napi instance last");
     napi_get_undefined(env, &result);
-    return result;
-}
-
-napi_value NightSessionNapi::TryAE(napi_env env, napi_callback_info info)
-{
-    MEDIA_DEBUG_LOG("TryAE is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    napi_get_undefined(env, &result);
-
-    bool isDoTryAE = true;
-    uint32_t exposureTime = 0;
-    NightSessionNapi* nightSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&nightSessionNapi));
-    if (status == napi_ok && nightSessionNapi != nullptr && nightSessionNapi->nightSession_ != nullptr) {
-        nightSessionNapi->nightSession_->LockForControl();
-        nightSessionNapi->nightSession_->DoTryAE(isDoTryAE, exposureTime);
-        nightSessionNapi->nightSession_->UnlockForControl();
-    } else {
-        MEDIA_ERR_LOG("TryAE call Failed!");
-    }
     return result;
 }
 
@@ -327,260 +233,6 @@ napi_value NightSessionNapi::NightSessionNapiConstructor(napi_env env, napi_call
     }
     MEDIA_ERR_LOG("NightSessionNapi call Failed!");
     return result;
-}
-
-void LongExposureCallbackListener::OnLongExposureCallbackAsync(uint32_t longExposureTime) const
-{
-    MEDIA_DEBUG_LOG("OnLongExposureCallbackAsync is called");
-    uv_loop_s* loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
-    if (!loop) {
-        MEDIA_ERR_LOG("failed to get event loop");
-        return;
-    }
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    if (!work) {
-        MEDIA_ERR_LOG("failed to allocate work");
-        return;
-    }
-    std::unique_ptr<LongExposureCallbackInfo> callbackInfo =
-        std::make_unique<LongExposureCallbackInfo>(longExposureTime, this);
-    work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        LongExposureCallbackInfo* callbackInfo = reinterpret_cast<LongExposureCallbackInfo *>(work->data);
-        if (callbackInfo) {
-            callbackInfo->listener_->OnLongExposureCallback(callbackInfo->longExposureTime_);
-            delete callbackInfo;
-        }
-        delete work;
-    }, uv_qos_user_initiated);
-    if (ret) {
-        MEDIA_ERR_LOG("failed to execute work");
-        delete work;
-    } else {
-        callbackInfo.release();
-    }
-}
-
-void LongExposureCallbackListener::OnLongExposureCallback(uint32_t longExposureTime) const
-{
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env_, &scope);
-    MEDIA_DEBUG_LOG("OnLongExposureCallback is called");
-    napi_value result[ARGS_TWO] = {nullptr, nullptr};
-    napi_value callback = nullptr;
-    napi_value retVal;
-    for (auto it = longExposureCbList_.begin(); it != longExposureCbList_.end();) {
-        napi_env env = (*it)->env_;
-        napi_get_undefined(env, &result[PARAM0]);
-        napi_create_int32(env, longExposureTime, &result[PARAM1]);
-        napi_get_reference_value(env, (*it)->cb_, &callback);
-        napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
-        if ((*it)->isOnce_) {
-            napi_status status = napi_delete_reference(env, (*it)->cb_);
-            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
-            (*it)->cb_ = nullptr;
-            longExposureCbList_.erase(it);
-        } else {
-            it++;
-        }
-    }
-    napi_close_handle_scope(env_, scope);
-}
-
-void LongExposureCallbackListener::OnLongExposure(const uint32_t longExposureTime)
-{
-    MEDIA_DEBUG_LOG("OnLongExposure is called");
-    OnLongExposureCallbackAsync(longExposureTime);
-}
-void LongExposureCallbackListener::SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    for (auto it = longExposureCbList_.begin(); it != longExposureCbList_.end(); ++it) {
-        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
-        CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
-    }
-    napi_ref callbackRef = nullptr;
-    const int32_t refCount = 1;
-    napi_status status = napi_create_reference(env_, callback, refCount, &callbackRef);
-    CHECK_AND_RETURN_LOG(status == napi_ok && callbackRef != nullptr,
-                         "LongExposureCallback: creating reference for callback fail");
-    std::shared_ptr<AutoRef> cb = std::make_shared<AutoRef>(env_, callbackRef, isOnce);
-    longExposureCbList_.push_back(cb);
-    MEDIA_INFO_LOG("Save callback reference success, callback list size [%{public}zu]",
-                   longExposureCbList_.size());
-}
-
-void LongExposureCallbackListener::RemoveCallbackRef(napi_env env, napi_value callback)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (callback == nullptr) {
-        MEDIA_INFO_LOG("RemoveCallbackRef: js callback is nullptr, remove all callback reference");
-        RemoveAllCallbacks();
-        return;
-    }
-    for (auto it = longExposureCbList_.begin(); it != longExposureCbList_.end(); ++it) {
-        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
-        if (isSameCallback) {
-            MEDIA_INFO_LOG("RemoveCallbackRef: find js callback, delete it");
-            napi_status status = napi_delete_reference(env, (*it)->cb_);
-            (*it)->cb_ = nullptr;
-            CHECK_AND_RETURN_LOG(status == napi_ok, "RemoveCallbackRef: delete reference for callback fail");
-            longExposureCbList_.erase(it);
-            return;
-        }
-    }
-    MEDIA_INFO_LOG("RemoveCallbackRef: js callback no find");
-}
-
-void LongExposureCallbackListener::RemoveAllCallbacks()
-{
-    for (auto it = longExposureCbList_.begin(); it != longExposureCbList_.end(); ++it) {
-        napi_status ret = napi_delete_reference(env_, (*it)->cb_);
-        if (ret != napi_ok) {
-            MEDIA_ERR_LOG("RemoveAllCallbackReferences: napi_delete_reference err.");
-        }
-        (*it)->cb_ = nullptr;
-    }
-    longExposureCbList_.clear();
-    MEDIA_INFO_LOG("RemoveAllCallbacks: remove all js callbacks success");
-}
-
-napi_value NightSessionNapi::On(napi_env env, napi_callback_info info)
-{
-    CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("On is called");
-    napi_value undefinedResult = nullptr;
-    size_t argCount = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {nullptr, nullptr};
-    napi_value thisVar = nullptr;
-
-    napi_get_undefined(env, &undefinedResult);
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argCount, argv, thisVar);
-    NAPI_ASSERT(env, argCount == ARGS_TWO, "requires 2 parameters");
-
-    if (thisVar == nullptr || argv[PARAM0] == nullptr || argv[PARAM1] == nullptr) {
-        MEDIA_ERR_LOG("Failed to retrieve details about the callback");
-        return undefinedResult;
-    }
-    napi_valuetype valueType = napi_undefined;
-    if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string
-        || napi_typeof(env, argv[PARAM1], &valueType) != napi_ok || valueType != napi_function) {
-        return undefinedResult;
-    }
-    std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[PARAM0]);
-    MEDIA_INFO_LOG("On eventType: %{public}s", eventType.c_str());
-    return RegisterCallback(env, thisVar, eventType, argv[PARAM1], false);
-}
-
-napi_value NightSessionNapi::Once(napi_env env, napi_callback_info info)
-{
-    CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("Once is called");
-    napi_value undefinedResult = nullptr;
-    size_t argCount = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {nullptr, nullptr};
-    napi_value thisVar = nullptr;
-
-    napi_get_undefined(env, &undefinedResult);
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argCount, argv, thisVar);
-    NAPI_ASSERT(env, argCount == ARGS_TWO, "requires 2 parameters");
-
-    if (thisVar == nullptr || argv[PARAM0] == nullptr || argv[PARAM1] == nullptr) {
-        MEDIA_ERR_LOG("Failed to retrieve details about the callback");
-        return undefinedResult;
-    }
-    napi_valuetype valueType = napi_undefined;
-    if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string
-        || napi_typeof(env, argv[PARAM1], &valueType) != napi_ok || valueType != napi_function) {
-        return undefinedResult;
-    }
-    std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[PARAM0]);
-    MEDIA_INFO_LOG("Once eventType: %{public}s", eventType.c_str());
-    return RegisterCallback(env, thisVar, eventType, argv[PARAM1], true);
-}
-
-napi_value NightSessionNapi::RegisterCallback(napi_env env, napi_value jsThis,
-    const string &eventType, napi_value callback, bool isOnce)
-{
-    MEDIA_DEBUG_LOG("RegisterCallback is called");
-    napi_value undefinedResult = nullptr;
-    napi_get_undefined(env, &undefinedResult);
-    napi_status status;
-
-    NightSessionNapi* nightSessionNapi = nullptr;
-    status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&nightSessionNapi));
-    NAPI_ASSERT(env, status == napi_ok && nightSessionNapi != nullptr,
-                "Failed to retrieve nightSessionNapi instance.");
-    NAPI_ASSERT(env, nightSessionNapi->nightSession_ != nullptr, "cameraSession is null.");
-    if (eventType.compare("nightExposure") == 0) {
-        // Set callback for longExposure
-        if (nightSessionNapi->longExposureCallback_ == nullptr) {
-            std::shared_ptr<LongExposureCallbackListener> longExposureCallback =
-                    make_shared<LongExposureCallbackListener>(env);
-            nightSessionNapi->longExposureCallback_ = longExposureCallback;
-            nightSessionNapi->nightSession_->SetLongExposureCallback(longExposureCallback);
-        }
-        nightSessionNapi->longExposureCallback_->SaveCallbackReference(eventType, callback, isOnce);
-    } else  {
-        MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
-    }
-    return undefinedResult;
-}
-
-napi_value NightSessionNapi::UnregisterCallback(napi_env env, napi_value jsThis,
-    const std::string &eventType, napi_value callback)
-{
-    MEDIA_DEBUG_LOG("UnregisterCallback is called");
-    napi_value undefinedResult = nullptr;
-    napi_get_undefined(env, &undefinedResult);
-    napi_status status;
-    NightSessionNapi* nightSessionNapi = nullptr;
-    status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&nightSessionNapi));
-    NAPI_ASSERT(env, status == napi_ok && nightSessionNapi != nullptr,
-                "Failed to retrieve nightSessionNapi instance.");
-    if (eventType.compare("LongExposure") == 0) {
-        // Set callback for exposureStateChange
-        if (nightSessionNapi->longExposureCallback_ == nullptr) {
-            MEDIA_ERR_LOG("exposureCallback is null");
-        } else {
-            nightSessionNapi->longExposureCallback_->RemoveCallbackRef(env, callback);
-        }
-    } else  {
-        MEDIA_ERR_LOG("Failed to Unregister Callback");
-    }
-    return undefinedResult;
-}
-
-napi_value NightSessionNapi::Off(napi_env env, napi_callback_info info)
-{
-    MEDIA_DEBUG_LOG("Off is called");
-    napi_value undefinedResult = nullptr;
-    napi_get_undefined(env, &undefinedResult);
-    const size_t minArgCount = 1;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {nullptr, nullptr};
-    napi_value thisVar = nullptr;
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    if (argc < minArgCount) {
-        return undefinedResult;
-    }
-
-    napi_valuetype valueType = napi_undefined;
-    if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string) {
-        return undefinedResult;
-    }
-
-    napi_valuetype secondArgsType = napi_undefined;
-    if (argc > minArgCount &&
-        (napi_typeof(env, argv[PARAM1], &secondArgsType) != napi_ok || secondArgsType != napi_function)) {
-        return undefinedResult;
-    }
-    std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[PARAM0]);
-    MEDIA_INFO_LOG("Off eventType: %{public}s", eventType.c_str());
-    return UnregisterCallback(env, thisVar, eventType, argv[PARAM1]);
 }
 } // namespace CameraStandard
 } // namespace OHOS

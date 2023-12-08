@@ -129,7 +129,7 @@ static const std::unordered_map<std::string, int32_t> mapExposureState = {
     {"EXPOSURE_STATE_CONVERGED", 1},
 };
 
-static const std::unordered_map<std::string, int32_t> mapCameraMode = {
+static const std::unordered_map<std::string, int32_t> mapSceneMode = {
     {"NORMAL", 0},
     {"CAPTURE", 1},
     {"VIDEO", 2},
@@ -255,7 +255,7 @@ public:
     static napi_value CreateQualityLevelEnum(napi_env env);
     static napi_value CreateVideoStabilizationModeObject(napi_env env);
     static napi_value CreateHostNameType(napi_env env);
-    static napi_value CreateCameraMode(napi_env env);
+    static napi_value CreateSceneMode(napi_env env);
     static napi_value CreateFilterType(napi_env env);
     static napi_value CreateBeautyType(napi_env env);
     static napi_value CreatePortraitEffect(napi_env env);
@@ -286,7 +286,7 @@ private:
     static thread_local napi_ref qualityLevelRef_;
     static thread_local napi_ref videoStabilizationModeRef_;
     static thread_local napi_ref hostNameTypeRef_;
-    static thread_local napi_ref cameraModeRef_;
+    static thread_local napi_ref sceneModeRef_;
     static thread_local napi_ref filterTypeRef_;
     static thread_local napi_ref beautyTypeRef_;
     static thread_local napi_ref portraitEffectRef_;

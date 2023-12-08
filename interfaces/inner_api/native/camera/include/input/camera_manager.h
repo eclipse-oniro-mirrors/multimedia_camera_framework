@@ -26,6 +26,11 @@
 #include "hcamera_service_proxy.h"
 #include "icamera_device_service.h"
 #include "session/capture_session.h"
+#include "session/portrait_session.h"
+#include "session/night_session.h"
+#include "session/scan_session.h"
+#include "session/video_session.h"
+#include "session/photo_session.h"
 #include "output/camera_output_capability.h"
 #include "output/metadata_output.h"
 #include "output/photo_output.h"
@@ -38,6 +43,19 @@
 
 namespace OHOS {
 namespace CameraStandard {
+enum SceneMode {
+    NORMAL = 0,
+    CAPTURE = 1,
+    VIDEO = 2,
+    PORTRAIT = 3,
+    NIGHT = 4,
+    PROFESSIONAL = 5,
+    SLOW_MOTION = 6,
+    SCAN = 7,
+    CAPTURE_MACRO = 8,
+    VIDEO_MACRO = 9
+};
+
 enum CameraDeviceStatus {
     CAMERA_DEVICE_STATUS_UNAVAILABLE = 0,
     CAMERA_DEVICE_STATUS_AVAILABLE
@@ -175,6 +193,13 @@ public:
     std::vector<sptr<CameraDevice>> GetSupportedCameras();
 
     /**
+    * @brief Get support modes.
+    *
+    * @return Returns array the mode of current CameraDevice.
+    */
+    std::vector<SceneMode> GetSupportedModes(sptr<CameraDevice>& camera);
+
+    /**
     * @brief Get extend output capaility of the mode of the given camera.
     *
     * @param Camera device for which extend capability need to be fetched.
@@ -238,6 +263,13 @@ public:
     * @return Returns pointer to capture session.
     */
     sptr<CaptureSession> CreateCaptureSession();
+
+    /**
+    * @brief Create capture session.
+    *
+    * @return Returns pointer to capture session.
+    */
+    sptr<CaptureSession> CreateCaptureSession(SceneMode mode);
 
     /**
     * @brief Create capture session.
@@ -555,7 +587,6 @@ private:
     void SetTorchServiceCallback(sptr<ITorchServiceCallback>& callback);
     int32_t CreateListenerObject();
     void CameraServerDied(pid_t pid);
-    void ChooseDeFaultCameras(std::vector<sptr<CameraDevice>>& supportedCameras);
 
     void CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
         uint32_t streamIndex, ExtendInfo extendInfo);
