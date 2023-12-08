@@ -1754,7 +1754,8 @@ void CaptureSession::ProcessFaceRecUpdates(const uint64_t timestamp,
         }
         bool isNeedMirror = false;
         if (inputDevice_ && inputDevice_->GetCameraDeviceInfo()) {
-            isNeedMirror = (inputDevice_->GetCameraDeviceInfo()->GetPosition() == CAMERA_POSITION_FRONT);
+            isNeedMirror = (inputDevice_->GetCameraDeviceInfo()->GetPosition() == CAMERA_POSITION_FRONT ||
+                            inputDevice_->GetCameraDeviceInfo()->GetPosition() == CAMERA_POSITION_FOLD_INNER);
         }
         std::vector<sptr<MetadataObject>> metaObjects;
         metaOutput->ProcessFaceRectangles(timestamp, result, metaObjects, isNeedMirror);
