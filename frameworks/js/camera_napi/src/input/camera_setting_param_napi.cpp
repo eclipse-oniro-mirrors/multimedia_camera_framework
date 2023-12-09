@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "input/camera_effect_param_napi.h"
+#include "input/camera_setting_param_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {

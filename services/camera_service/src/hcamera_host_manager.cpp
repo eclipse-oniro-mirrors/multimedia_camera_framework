@@ -770,7 +770,7 @@ void HCameraHostManager::SaveRestoreParam(sptr<HCameraRestoreParam> cameraRestor
 void HCameraHostManager::UpdateRestoreParamCloseTime(const std::string& clientName, const std::string& cameraId)
 {
     MEDIA_DEBUG_LOG("HCameraHostManager::UpdateRestoreParamCloseTime enter");
-    struct timeval closeTime;
+    timeval closeTime;
     gettimeofday(&closeTime, nullptr);
     auto itPersistent = persistentParamMap_.find(clientName);
     if (itPersistent != persistentParamMap_.end()) {
@@ -825,14 +825,14 @@ void HCameraHostManager::UpdateRestoreParam(sptr<HCameraRestoreParam> &cameraRes
     std::map<std::string, sptr<HCameraRestoreParam>>::iterator iter = (persistentParamMap_[clientName]).begin();
     while (iter != (persistentParamMap_[clientName]).end()) {
         auto restoreParam = iter->second;
-        struct timeval closeTime = restoreParam->GetCloseCameraTime();
-        MEDIA_DEBUG_LOG("HCameraHostManager::UpdateRestoreParam closeTime.tv_sec %ld", closeTime.tv_sec);
+        timeval closeTime = restoreParam->GetCloseCameraTime();
+        MEDIA_DEBUG_LOG("HCameraHostManager::UpdateRestoreParam closeTime.tv_sec");
         if (closeTime.tv_sec != 0 && CheckCameraId(restoreParam, cameraId)) {
-            struct timeval openTime;
+            timeval openTime;
             gettimeofday(&openTime, nullptr);
             long timeInterval = (openTime.tv_sec - closeTime.tv_sec)+
                 (openTime.tv_usec - closeTime.tv_usec) / 1000; // 1000 is Convert milliseconds to seconds
-            if ((long)(restoreParam->GetStartActiveTime() * 60) < timeInterval) { //60 is 60 Seconds
+            if ((long)(restoreParam->GetStartActiveTime() * 60) < timeInterval) { // 60 is 60 Seconds
                 MEDIA_DEBUG_LOG("HCameraHostManager::UpdateRestoreParam get persistent");
                 cameraRestoreParam = restoreParam;
             } else {

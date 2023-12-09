@@ -12,9 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef CAMERA_EFFECT_PARAM_NAPI_H_
-#define CAMERA_EFFECT_PARAM_NAPI_H_
+#ifndef CAMERA_SETTING_PARAM_NAPI_H
+#define CAMERA_SETTING_PARAM_NAPI_H
 
 #include "camera_log.h"
 #include "napi/native_api.h"

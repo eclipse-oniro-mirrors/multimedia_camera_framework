@@ -18,7 +18,7 @@
 
 #include "hilog/log.h"
 #include "camera_napi_utils.h"
-#include "input/camera_effect_param_napi.h"
+#include "input/camera_setting_param_napi.h"
 #include "input/prelaunch_config.h"
 
 namespace OHOS {

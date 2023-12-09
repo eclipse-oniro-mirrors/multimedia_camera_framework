@@ -20,7 +20,7 @@
 #include "input/camera_input_napi.h"
 #include "input/camera_manager_napi.h"
 #include "input/camera_napi.h"
-#include "input/camera_effect_param_napi.h"
+#include "input/camera_setting_param_napi.h"
 #include "input/camera_pre_launch_config_napi.h"
 #include "mode/mode_manager_napi.h"
 #include "mode/night_session_napi.h"
