@@ -2772,11 +2772,16 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_006, TestSize.Level
     EXPECT_EQ(intResult, 0);
 
     std::string cameraId = camInput->GetCameraId();
-    intResult = cameraService->SetPrelaunchConfig(cameraId);
+    int activeTime = 0;
+    EffectParam effectParam = {0, 0, 0};
+
+    intResult = cameraService->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSISTENT_ACTIVE_PARAM_OHOS,
+        activeTime, effectParam);
     EXPECT_EQ(intResult, 2);
 
     cameraId = "";
-    intResult = cameraService->SetPrelaunchConfig(cameraId);
+    intResult = cameraService->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSISTENT_ACTIVE_PARAM_OHOS,
+        activeTime, effectParam);
     EXPECT_EQ(intResult, 2);
 
     cameraService->OnStop();

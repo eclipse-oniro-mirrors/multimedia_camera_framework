@@ -630,6 +630,36 @@ typedef struct Camera_StatusInfo {
 } Camera_StatusInfo;
 
 /**
+ * @brief Enum for restore param..
+ *
+ * @since 11
+ * @version 1.0
+ */
+typedef enum Camera_RestoreParamType {
+    /**
+     * no need set restore Stream Param, only prelauch cameradevice
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    NO_NEED_RESTORE_PARAM = 0,
+    /**
+     * persistent default param, long-lasting effect after T minutes
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    PERSISTENT_DEFAULT_PARAM = 0,
+    /**
+     * transisitent active param.restore for 0-T minutes
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    TRANSISTENT_ACTIVE_PARAM = 1,
+} Camera_RestoreParamType;
+
+/**
  * @brief Point parameter.
  *
  * @since 11
@@ -648,11 +678,32 @@ typedef struct Camera_Point {
 } Camera_Point;
 
 /**
- * @brief Photo capture location.
+ * @brief Setting Param.
  *
  * @since 11
  * @version 1.0
  */
+typedef struct Camera_SettingParam {
+    /**
+     * smooth level value for restore
+     */
+    int skinSmoothLevel;
+    /**
+     * face slender value for restore
+     */
+    int faceSlender;
+    /**
+     * skin tone value for restore
+     */
+    int skinTone;
+} Camera_SettingParam;
+
+/**
+* @brief Photo capture location.
+*
+* @since 11
+* @version 1.0
+*/
 typedef struct Camera_Location {
     /**
      * Latitude.

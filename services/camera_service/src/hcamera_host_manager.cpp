@@ -22,6 +22,7 @@
 #include "iproxy_broker.h"
 #include "iservmgr_hdi.h"
 #include "camera_log.h"
+#include "display_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -73,7 +74,7 @@ public:
                        sptr<OHOS::HDI::Camera::V1_0::ICameraDevice>& pDevice);
     int32_t SetFlashlight(const std::string& cameraId, bool isEnable);
     int32_t SetTorchLevel(float level);
-    int32_t Prelaunch(const std::string& cameraId);
+    int32_t Prelaunch(sptr<HCameraRestoreParam> cameraRestoreParam);
     void NotifyDeviceStateChangeInfo(int notifyType, int deviceState);
     bool IsLocalCameraHostInfo();
 
@@ -312,7 +313,7 @@ int32_t HCameraHostManager::CameraHostInfo::SetTorchLevel(float level)
     return CAMERA_OK;
 }
 
-int32_t HCameraHostManager::CameraHostInfo::Prelaunch(const std::string& cameraId)
+int32_t HCameraHostManager::CameraHostInfo::Prelaunch(sptr<HCameraRestoreParam> cameraRestoreParam)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (cameraHostProxy_ == nullptr) {
@@ -323,16 +324,21 @@ int32_t HCameraHostManager::CameraHostInfo::Prelaunch(const std::string& cameraI
         MEDIA_ERR_LOG("CameraHostInfo::Prelaunch not support host V1_0!");
         return CAMERA_UNKNOWN_ERROR;
     }
-    MEDIA_INFO_LOG("CameraHostInfo::prelaunch for cameraId %{public}s", cameraId.c_str());
+    MEDIA_INFO_LOG("CameraHostInfo::prelaunch for cameraId %{public}s", (cameraRestoreParam->GetCameraId()).c_str());
     OHOS::HDI::Camera::V1_1::PrelaunchConfig prelaunchConfig;
     std::vector<uint8_t> settings;
-    prelaunchConfig.cameraId = cameraId;
+    prelaunchConfig.cameraId = cameraRestoreParam->GetCameraId();
     prelaunchConfig.streamInfos_V1_1 = {};
+    prelaunchConfig.setting = {};
+    prelaunchConfig.streamInfos_V1_1 = cameraRestoreParam->GetStreamInfo();
+    DumpMetadata(cameraRestoreParam->GetSetting());
+    OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraRestoreParam->GetSetting(), settings);
     prelaunchConfig.setting = settings;
+    int32_t opMode = cameraRestoreParam->GetCameraOpMode();
     CamRetCode rc;
     if (cameraHostProxyV1_2_ != nullptr && GetCameraHostVersion() > GetVersionId(1, 1)) {
-        MEDIA_DEBUG_LOG("CameraHostInfo::Prelaunch ICameraHost V1_2");
-        rc = (CamRetCode)(cameraHostProxyV1_2_->Prelaunch(prelaunchConfig));
+        MEDIA_DEBUG_LOG("CameraHostInfo::PrelaunchWithOpMode ICameraHost V1_2 %{public}d", opMode);
+        rc = (CamRetCode)(cameraHostProxyV1_2_->PrelaunchWithOpMode(prelaunchConfig, opMode));
     } else if (cameraHostProxyV1_1_ != nullptr && GetCameraHostVersion() == GetVersionId(1, 1)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::Prelaunch ICameraHost V1_1");
         rc = (CamRetCode)(cameraHostProxyV1_1_->Prelaunch(prelaunchConfig));
@@ -710,14 +716,29 @@ int32_t HCameraHostManager::SetFlashlight(const std::string& cameraId, bool isEn
     return cameraHostInfo->SetFlashlight(cameraId, isEnable);
 }
 
-int32_t HCameraHostManager::Prelaunch(const std::string& cameraId)
+int32_t HCameraHostManager::Prelaunch(const std::string& cameraId, std::string clientName)
 {
     auto cameraHostInfo = FindCameraHostInfo(cameraId);
     if (cameraHostInfo == nullptr) {
         MEDIA_ERR_LOG("HCameraHostManager::OpenCameraDevice failed with invalid device info");
         return CAMERA_INVALID_ARG;
     }
-    return cameraHostInfo->Prelaunch(cameraId);
+    sptr<HCameraRestoreParam> cameraRestoreParam = GetRestoreParam(clientName, cameraId);
+    int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
+    if (foldStatus != cameraRestoreParam->GetFlodStatus()) {
+        MEDIA_DEBUG_LOG("HCameraHostManager::SaveRestoreParam %d", foldStatus);
+        return 0;
+    }
+    int32_t res = cameraHostInfo->Prelaunch(cameraRestoreParam);
+    if (res == 0 && cameraRestoreParam->GetRestoreParamType() !=
+        RestoreParamTypeOhos::TRANSISTENT_ACTIVE_PARAM_OHOS) {
+        return CAMERA_OK;
+    }
+    auto it = transitentParamMap_.find(clientName);
+    if (it != transitentParamMap_.end() && CheckCameraId(it->second, cameraId)) {
+        transitentParamMap_.erase(clientName);
+    }
+    return 0;
 }
 
 void HCameraHostManager::NotifyDeviceStateChangeInfo(int notifyType, int deviceState)
@@ -728,6 +749,127 @@ void HCameraHostManager::NotifyDeviceStateChangeInfo(int notifyType, int deviceS
         return;
     }
     cameraHostInfo->NotifyDeviceStateChangeInfo(notifyType, deviceState);
+}
+
+void HCameraHostManager::SaveRestoreParam(sptr<HCameraRestoreParam> cameraRestoreParam)
+{
+    if (cameraRestoreParam == nullptr) {
+        MEDIA_ERR_LOG("HCameraRestoreParam is nullptr");
+        return;
+    }
+    std::string clientName = cameraRestoreParam->GetClientName();
+    if (cameraRestoreParam->GetRestoreParamType() == RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS) {
+        (persistentParamMap_[clientName])[cameraRestoreParam->GetCameraId()] = cameraRestoreParam;
+        MEDIA_DEBUG_LOG("HCameraHostManager::SaveRestoreParam save persistent param");
+    } else {
+        transitentParamMap_[clientName] = cameraRestoreParam;
+        MEDIA_DEBUG_LOG("HCameraHostManager::SaveRestoreParam save transist param");
+    }
+}
+
+void HCameraHostManager::UpdateRestoreParamCloseTime(const std::string& clientName, const std::string& cameraId)
+{
+    MEDIA_DEBUG_LOG("HCameraHostManager::UpdateRestoreParamCloseTime enter");
+    struct timeval closeTime;
+    gettimeofday(&closeTime, nullptr);
+    auto itPersistent = persistentParamMap_.find(clientName);
+    if (itPersistent != persistentParamMap_.end()) {
+        MEDIA_DEBUG_LOG("HCameraHostManager::UpdateRestoreParamCloseTime find persistentParam");
+        std::map<std::string, sptr<HCameraRestoreParam>>::iterator iter = (persistentParamMap_[clientName]).begin();
+        while (iter != (persistentParamMap_[clientName]).end()) {
+            auto cameraRestoreParam = iter->second;
+            if (cameraId == cameraRestoreParam->GetCameraId()) {
+                cameraRestoreParam->SetCloseCameraTime(closeTime);
+                MEDIA_DEBUG_LOG("HCameraHostManager::Update persistent closeTime");
+            } else {
+                cameraRestoreParam->SetCloseCameraTime({0, 0});
+            }
+            iter++;
+        }
+    }
+
+    auto itTransitent = transitentParamMap_.find(clientName);
+    if (itTransitent != transitentParamMap_.end()) {
+        MEDIA_INFO_LOG("HCameraHostManager::Update transistent CloseTime ");
+        transitentParamMap_[clientName]->SetCloseCameraTime(closeTime);
+    }
+}
+
+sptr<HCameraRestoreParam> HCameraHostManager::GetRestoreParam(const std::string& clientName,
+    const std::string& cameraId)
+{
+    MEDIA_DEBUG_LOG("HCameraHostManager::GetRestoreParam enter");
+    std::vector<StreamInfo_V1_1> streamInfos;
+    RestoreParamTypeOhos restoreParamType = RestoreParamTypeOhos::NO_NEED_RESTORE_PARAM_OHOS;
+    sptr<HCameraRestoreParam> cameraRestoreParam = new HCameraRestoreParam(clientName, cameraId,
+        streamInfos, nullptr, restoreParamType, 0);
+    auto it = persistentParamMap_.find(clientName);
+    if (it != persistentParamMap_.end()) {
+        MEDIA_DEBUG_LOG("HCameraHostManager::GetRestoreParam find persistent param");
+        UpdateRestoreParam(cameraRestoreParam);
+    } else {
+        cameraRestoreParam = GetTransitentParam(clientName, cameraId);
+        MEDIA_DEBUG_LOG("HCameraHostManager::GetRestoreParam find transist param");
+    }
+    return cameraRestoreParam;
+}
+
+void HCameraHostManager::UpdateRestoreParam(sptr<HCameraRestoreParam> &cameraRestoreParam)
+{
+    if (cameraRestoreParam == nullptr) {
+        MEDIA_ERR_LOG("HCameraHostManager::UpdateRestoreParam is nullptr");
+        return;
+    }
+    std::string clientName = cameraRestoreParam->GetClientName();
+    std::string cameraId = cameraRestoreParam->GetCameraId();
+    std::map<std::string, sptr<HCameraRestoreParam>>::iterator iter = (persistentParamMap_[clientName]).begin();
+    while (iter != (persistentParamMap_[clientName]).end()) {
+        auto restoreParam = iter->second;
+        struct timeval closeTime = restoreParam->GetCloseCameraTime();
+        MEDIA_DEBUG_LOG("HCameraHostManager::UpdateRestoreParam closeTime.tv_sec %ld", closeTime.tv_sec);
+        if (closeTime.tv_sec != 0 && CheckCameraId(restoreParam, cameraId)) {
+            struct timeval openTime;
+            gettimeofday(&openTime, nullptr);
+            long timeInterval = (openTime.tv_sec - closeTime.tv_sec)+
+                (openTime.tv_usec - closeTime.tv_usec) / 1000; // 1000 is Convert milliseconds to seconds
+            if ((long)(restoreParam->GetStartActiveTime() * 60) < timeInterval) { //60 is 60 Seconds
+                MEDIA_DEBUG_LOG("HCameraHostManager::UpdateRestoreParam get persistent");
+                cameraRestoreParam = restoreParam;
+            } else {
+                MEDIA_DEBUG_LOG("HCameraHostManager::UpdateRestoreParam get transistent ");
+                cameraRestoreParam = GetTransitentParam(clientName, cameraId);
+            }
+            break;
+        }
+        iter++;
+    }
+}
+
+sptr<HCameraRestoreParam> HCameraHostManager::GetTransitentParam(const std::string& clientName,
+    const std::string& cameraId)
+{
+    std::vector<StreamInfo_V1_1> streamInfos;
+    RestoreParamTypeOhos restoreParamType = RestoreParamTypeOhos::NO_NEED_RESTORE_PARAM_OHOS;
+    sptr<HCameraRestoreParam> cameraRestoreParam = new HCameraRestoreParam(clientName, cameraId,
+        streamInfos, nullptr, restoreParamType, 0);
+    auto iter = transitentParamMap_.find(clientName);
+    if (iter != transitentParamMap_.end() && (CheckCameraId(transitentParamMap_[clientName], cameraId))) {
+        cameraRestoreParam = transitentParamMap_[clientName];
+        MEDIA_DEBUG_LOG("HCameraHostManager::GetTransitentParam end");
+    }
+    return cameraRestoreParam;
+}
+
+bool HCameraHostManager::CheckCameraId(sptr<HCameraRestoreParam> cameraRestoreParam, const std::string& cameraId)
+{
+    if (cameraRestoreParam == nullptr) {
+        return false;
+    }
+
+    if (cameraRestoreParam->GetCameraId() == cameraId) {
+        return true;
+    }
+    return false;
 }
 
 void HCameraHostManager::OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status)

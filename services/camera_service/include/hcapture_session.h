@@ -33,6 +33,7 @@
 #include "v1_1/istream_operator.h"
 #include "v1_2/istream_operator.h"
 #include "v1_2/istream_operator_callback.h"
+#include "hcamera_restore_param.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -77,6 +78,10 @@ public:
     static void CameraSessionSummary(std::string& dumpString);
     int32_t SetDeviceOperatorsCallback(wptr<IDeviceOperatorsCallback> callback);
     pid_t GetPid();
+    int32_t GetCurrentStreamInfos(sptr<HCameraDevice>& device,
+        std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, std::vector<StreamInfo_V1_1>& streamInfos);
+    int32_t GetCameraDevice(sptr<HCameraDevice>& device);
+    int32_t GetopMode();
 
 private:
     int32_t ValidateSessionInputs();
@@ -84,15 +89,12 @@ private:
     int32_t AddOutputStream(sptr<HStreamCommon> stream);
     int32_t FindRepeatStream(sptr<HStreamCommon> stream);
     int32_t RemoveOutputStream(sptr<HStreamCommon> stream);
-    int32_t GetCameraDevice(sptr<HCameraDevice>& device);
     int32_t HandleCaptureOuputsConfig(sptr<HCameraDevice>& device);
     int32_t CreateAndCommitStreams(sptr<HCameraDevice>& device,
         std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, std::vector<StreamInfo_V1_1>& streamInfos);
     int32_t CheckAndCommitStreams(sptr<HCameraDevice>& device,
         std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, std::vector<StreamInfo_V1_1>& allStreamInfos,
         std::vector<StreamInfo_V1_1>& newStreamInfos);
-    int32_t GetCurrentStreamInfos(sptr<HCameraDevice>& device,
-        std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, std::vector<StreamInfo_V1_1>& streamInfos);
     void UpdateSessionConfig(sptr<HCameraDevice>& device);
     void DeleteReleasedStream();
     void RestorePreviousState(sptr<HCameraDevice>& device, bool isCreateReleaseStreams);

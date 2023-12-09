@@ -118,6 +118,10 @@ bool IsValidMode(
 bool IsValidSize(
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t format, int32_t width, int32_t height);
 
+void DumpMetadata(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraSettings);
+
+std::string  GetClientBundle(int uid);
+
 int32_t JudgmentPriority(const pid_t& pid, const pid_t& pidCompared);
 
 bool IsSameClient(const pid_t& pid, const pid_t& pidCompared);

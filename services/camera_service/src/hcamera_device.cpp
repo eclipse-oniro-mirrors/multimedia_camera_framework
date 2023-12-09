@@ -305,6 +305,7 @@ int32_t HCameraDevice::CloseDevice()
     }
     if (cameraHostManager_) {
         cameraHostManager_->RemoveCameraDevice(cameraID_);
+        cameraHostManager_->UpdateRestoreParamCloseTime(GetClientBundle(IPCSkeleton::GetCallingUid()), cameraID_);
     }
     std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
     deviceSvcCallback_ = nullptr;

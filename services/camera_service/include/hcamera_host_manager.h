@@ -18,6 +18,8 @@
 
 #include <refbase.h>
 #include <iostream>
+#include <map>
+#include <utility>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -32,6 +34,7 @@
 #include "icamera_device_service.h"
 #include "icamera_service_callback.h"
 #include "iservstat_listener_hdi.h"
+#include "hcamera_restore_param.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -63,9 +66,21 @@ public:
                                      const sptr<ICameraDeviceCallback> &callback,
                                      sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> &pDevice);
     virtual int32_t SetFlashlight(const std::string& cameraId, bool isEnable);
-    virtual int32_t Prelaunch(const std::string& cameraId);
+    virtual int32_t Prelaunch(const std::string& cameraId, std::string clientName);
     virtual int32_t SetTorchLevel(float level);
     void NotifyDeviceStateChangeInfo(int notifyType, int deviceState);
+
+    void SaveRestoreParam(sptr<HCameraRestoreParam> cameraRestoreParam);
+
+    void UpdateRestoreParamCloseTime(const std::string& clientName, const std::string& cameraId);
+
+    sptr<HCameraRestoreParam> GetRestoreParam(const std::string& clientName, const std::string& cameraId);
+
+    sptr<HCameraRestoreParam> GetTransitentParam(const std::string& clientName, const std::string& cameraId);
+
+    void UpdateRestoreParam(sptr<HCameraRestoreParam> &cameraRestoreParam);
+
+    bool CheckCameraId(sptr<HCameraRestoreParam> cameraRestoreParam, const std::string& cameraId);
 
     // HDI::ServiceManager::V1_0::IServStatListener
     void OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status) override;
@@ -85,6 +100,8 @@ private:
     StatusCallback* statusCallback_;
     std::vector<sptr<CameraHostInfo>> cameraHostInfos_;
     std::map<std::string, sptr<ICameraDeviceService>> cameraDevices_;
+    std::map<std::string, std::map<std::string, sptr<HCameraRestoreParam>>> persistentParamMap_;
+    std::map<std::string, sptr<HCameraRestoreParam>> transitentParamMap_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

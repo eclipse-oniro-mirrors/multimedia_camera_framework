@@ -5674,8 +5674,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_058, TestSize.L
 
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     std::string cameraId = camInput->GetCameraId();
+    int activeTime = 0;
+    EffectParam effectParam = {0, 0, 0};
 
-    int32_t intResult = camManagerObj->SetPrelaunchConfig(cameraId);
+    int32_t intResult = camManagerObj->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSISTENT_ACTIVE_PARAM_OHOS,
+        activeTime, effectParam);
     if (!IsSupportNow()) {
         EXPECT_EQ(intResult, 7400201);
     } else {
@@ -5701,7 +5704,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_058, TestSize.L
         EXPECT_EQ(isPreLaunchSupported, true);
     }
 
-    intResult = camManagerObj->SetPrelaunchConfig(cameraId);
+    intResult = camManagerObj->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSISTENT_ACTIVE_PARAM_OHOS,
+        activeTime, effectParam);
     EXPECT_EQ(intResult, 7400201);
 }
 

@@ -550,16 +550,16 @@ void ThumbnailListener::UpdateJSCallback(sptr<PhotoOutput> photoOutput) const
     thumbnailBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataWidth, thumbnailWidth);
     thumbnailBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataHeight, thumbnailHeight);
     Media::InitializationOptions opts;
+    opts.srcPixelFormat = Media::PixelFormat::RGBA_8888;
     opts.pixelFormat = Media::PixelFormat::RGBA_8888;
     opts.size = {
             .width = thumbnailWidth,
             .height = thumbnailHeight
     };
-    MEDIA_INFO_LOG("thumbnailWidth:%{public}d, thumbnailheight: %{public}d, bufSize: %{public}d",
-        thumbnailWidth, thumbnailHeight, thumbnailBuffer->GetSize());
-    auto pixelMap = Media::PixelMap::Create(opts);
-    pixelMap->SetPixelsAddr(thumbnailBuffer->GetVirAddr(), nullptr, thumbnailBuffer->GetSize(),
-        Media::AllocatorType::HEAP_ALLOC, nullptr);
+    MEDIA_INFO_LOG("thumbnailWidth:%{public}d, thumbnailheight: %{public}d", thumbnailWidth, thumbnailHeight);
+    const int32_t formatSize = 4;
+    auto pixelMap = Media::PixelMap::Create(static_cast<const uint32_t *>(thumbnailBuffer->GetVirAddr()),
+        thumbnailWidth * thumbnailHeight * formatSize, 0, thumbnailWidth, opts, true);
     napi_value valueParam = Media::PixelMapNapi::CreatePixelMap(env_, std::move(pixelMap));
     if (valueParam == nullptr) {
         MEDIA_ERR_LOG("ImageNapi Create failed");
