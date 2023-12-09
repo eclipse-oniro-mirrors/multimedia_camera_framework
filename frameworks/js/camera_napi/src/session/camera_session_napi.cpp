@@ -487,6 +487,124 @@ void SessionCallbackListener::RemoveAllCallbacks()
     MEDIA_INFO_LOG("RemoveAllCallbacks: remove all js callbacks success");
 }
 
+void SmoothZoomCallbackListener::OnSmoothZoomCallbackAsync(int32_t duration) const
+{
+    MEDIA_DEBUG_LOG("OnSmoothZoomCallbackAsync is called");
+    uv_loop_s* loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (!loop) {
+        MEDIA_ERR_LOG("failed to get event loop");
+        return;
+    }
+    uv_work_t* work = new(std::nothrow) uv_work_t;
+    if (!work) {
+        MEDIA_ERR_LOG("failed to allocate work");
+        return;
+    }
+    std::unique_ptr<SmoothZoomCallbackInfo> callbackInfo = std::make_unique<SmoothZoomCallbackInfo>(duration, this);
+    work->data = callbackInfo.get();
+    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+        SmoothZoomCallbackInfo* callbackInfo = reinterpret_cast<SmoothZoomCallbackInfo *>(work->data);
+        if (callbackInfo) {
+            callbackInfo->listener_->OnSmoothZoomCallback(callbackInfo->duration_);
+            delete callbackInfo;
+        }
+        delete work;
+    }, uv_qos_user_initiated);
+    if (ret) {
+        MEDIA_ERR_LOG("failed to execute work");
+        delete work;
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void SmoothZoomCallbackListener::OnSmoothZoomCallback(int32_t duration) const
+{
+    MEDIA_DEBUG_LOG("OnSmoothZoomCallback is called");
+    napi_value result[ARGS_TWO];
+    napi_value callback = nullptr;
+    napi_value retVal;
+    napi_value propValue;
+    for (auto it = smoothZoomCbList_.begin(); it != smoothZoomCbList_.end();) {
+        napi_env env = (*it)->env_;
+        napi_get_undefined(env, &result[PARAM0]);
+        napi_create_object(env, &result[PARAM1]);
+        napi_create_int32(env, duration, &propValue);
+        napi_set_named_property(env, result[PARAM1], "duration", propValue);
+        napi_get_reference_value(env, (*it)->cb_, &callback);
+        napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
+        if ((*it)->isOnce_) {
+            napi_status status = napi_delete_reference(env, (*it)->cb_);
+            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
+            (*it)->cb_ = nullptr;
+            smoothZoomCbList_.erase(it);
+        } else {
+            it++;
+        }
+    }
+    MEDIA_DEBUG_LOG("OnSmoothZoomCallback list size [%{public}zu]", smoothZoomCbList_.size());
+}
+
+void SmoothZoomCallbackListener::OnSmoothZoom(int32_t duration)
+{
+    MEDIA_DEBUG_LOG("OnSmoothZoom is called, duration: %{public}d", duration);
+    OnSmoothZoomCallbackAsync(duration);
+}
+
+void SmoothZoomCallbackListener::SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (auto it = smoothZoomCbList_.begin(); it != smoothZoomCbList_.end(); ++it) {
+        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
+    }
+    napi_ref callbackRef = nullptr;
+    const int32_t refCount = 1;
+    napi_status status = napi_create_reference(env_, callback, refCount, &callbackRef);
+    CHECK_AND_RETURN_LOG(status == napi_ok && callbackRef != nullptr,
+                         "SmoothZoomCallback: creating reference for callback fail");
+    std::shared_ptr<AutoRef> cb = std::make_shared<AutoRef>(env_, callbackRef, isOnce);
+    smoothZoomCbList_.push_back(cb);
+    MEDIA_DEBUG_LOG("Save callback reference success, callback list size [%{public}zu]",
+        smoothZoomCbList_.size());
+}
+
+void SmoothZoomCallbackListener::RemoveCallbackRef(napi_env env, napi_value callback)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (callback == nullptr) {
+        MEDIA_INFO_LOG("RemoveCallbackRef: js callback is nullptr, remove all callback reference");
+        RemoveAllCallbacks();
+        return;
+    }
+    for (auto it = smoothZoomCbList_.begin(); it != smoothZoomCbList_.end(); ++it) {
+        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+        if (isSameCallback) {
+            MEDIA_INFO_LOG("RemoveCallbackRef: find js callback, delete it");
+            napi_status status = napi_delete_reference(env, (*it)->cb_);
+            (*it)->cb_ = nullptr;
+            CHECK_AND_RETURN_LOG(status == napi_ok, "RemoveCallbackRef: delete reference for callback fail");
+            smoothZoomCbList_.erase(it);
+            return;
+        }
+    }
+    MEDIA_INFO_LOG("RemoveCallbackRef: js callback no find");
+}
+
+void SmoothZoomCallbackListener::RemoveAllCallbacks()
+{
+    for (auto it = smoothZoomCbList_.begin(); it != smoothZoomCbList_.end(); ++it) {
+        napi_status ret = napi_delete_reference(env_, (*it)->cb_);
+        if (ret != napi_ok) {
+            MEDIA_ERR_LOG("RemoveAllCallbackReferences: napi_delete_reference err.");
+        }
+        (*it)->cb_ = nullptr;
+    }
+    smoothZoomCbList_.clear();
+    MEDIA_INFO_LOG("RemoveAllCallbacks: remove all js callbacks success");
+}
+
 CameraSessionNapi::CameraSessionNapi() : env_(nullptr), wrapper_(nullptr)
 {
 }
@@ -563,6 +681,9 @@ napi_value CameraSessionNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getZoomRatioRange", GetZoomRatioRange),
         DECLARE_NAPI_FUNCTION("getZoomRatio", GetZoomRatio),
         DECLARE_NAPI_FUNCTION("setZoomRatio", SetZoomRatio),
+        DECLARE_NAPI_FUNCTION("prepareZoom", PrepareZoom),
+        DECLARE_NAPI_FUNCTION("unPrepareZoom", UnPrepareZoom),
+        DECLARE_NAPI_FUNCTION("setSmoothZoom", SetSmoothZoom),
 
         DECLARE_NAPI_FUNCTION("getSupportedFilters", GetSupportedFilters),
         DECLARE_NAPI_FUNCTION("getFilter", GetFilter),
@@ -2040,6 +2161,92 @@ napi_value CameraSessionNapi::SetZoomRatio(napi_env env, napi_callback_info info
     return result;
 }
 
+napi_value CameraSessionNapi::PrepareZoom(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PrepareZoom is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int32_t retCode = cameraSessionNapi->cameraSession_->PrepareZoom();
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+    } else {
+        MEDIA_ERR_LOG("PrepareZoom call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::UnPrepareZoom(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PrepareZoom is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int32_t retCode = cameraSessionNapi->cameraSession_->UnPrepareZoom();
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+    } else {
+        MEDIA_ERR_LOG("PrepareZoom call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::SetSmoothZoom(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetSmoothZoom is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+
+    size_t argc = ARGS_TWO;
+    napi_value argv[ARGS_TWO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        double targetZoomRatio;
+        int32_t smoothZoomType;
+        napi_get_value_double(env, argv[PARAM0], &targetZoomRatio);
+        napi_get_value_int32(env, argv[PARAM1], &smoothZoomType);
+        cameraSessionNapi->cameraSession_->SetSmoothZoom((float)targetZoomRatio, smoothZoomType);
+    } else {
+        MEDIA_ERR_LOG("SetSmoothZoom call Failed!");
+    }
+    return result;
+}
+
 napi_value CameraSessionNapi::GetSupportedFilters(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("getSupportedFilters is called");
@@ -2542,6 +2749,13 @@ napi_value CameraSessionNapi::RegisterCallback(
             cameraSessionNapi->cameraSession_->SetCallback(sessionCallback);
         }
         cameraSessionNapi->sessionCallback_->SaveCallbackReference(eventType, callback, isOnce);
+    } else if (eventType.compare("smoothZoomInfoAvailable") == 0) {
+        if (cameraSessionNapi->smoothZoomCallback_ == nullptr) {
+            auto smoothZoomCallback = std::make_shared<SmoothZoomCallbackListener>(env);
+            cameraSessionNapi->smoothZoomCallback_ = smoothZoomCallback;
+            cameraSessionNapi->cameraSession_->SetSmoothZoomCallback(smoothZoomCallback);
+        }
+        cameraSessionNapi->smoothZoomCallback_->SaveCallbackReference(eventType, callback, isOnce);
     } else {
         MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
     }
@@ -2644,6 +2858,12 @@ napi_value CameraSessionNapi::UnregisterCallback(
             MEDIA_ERR_LOG("sessionCallback is null");
         } else {
             cameraSessionNapi->sessionCallback_->RemoveCallbackRef(env, callback);
+        }
+    } else if (eventType.compare("smoothZoomInfoAvailable") == 0) {
+        if (cameraSessionNapi->smoothZoomCallback_ == nullptr) {
+            MEDIA_ERR_LOG("smoothZoomCallback is null");
+        } else {
+            cameraSessionNapi->smoothZoomCallback_->RemoveCallbackRef(env, callback);
         }
     } else {
         MEDIA_ERR_LOG("Failed to Unregister Callback");

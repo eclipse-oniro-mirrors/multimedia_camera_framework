@@ -61,8 +61,6 @@ int32_t CameraDeviceServiceCallback::OnResult(const uint64_t timestamp,
     }
     if (camInputSptr->GetResultCallback() != nullptr) {
         camInputSptr->GetResultCallback()->OnResult(timestamp, result);
-    } else {
-        MEDIA_INFO_LOG("CameraDeviceServiceCallback::ResultCallback not set!, Discarding callback");
     }
     camInputSptr->ProcessCallbackUpdates(timestamp, result);
     return CAMERA_OK;

@@ -64,6 +64,9 @@ int HCaptureSessionStub::OnRemoteRequest(
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_GET_SESSION_STATE):
             errCode =  HandleGetSesstionState(reply);
             break;
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_SMOOTH_ZOOM):
+            errCode = HandleSetSmoothZoom(data, reply);
+            break;
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_GET_ACTIVE_COLOR_SPACE):
             errCode =  HandleGetActiveColorSpace(reply);
             break;
@@ -171,6 +174,18 @@ int HCaptureSessionStub::HandleSetColorSpace(MessageParcel &data)
     ColorSpace colorSpaceForCapture = static_cast<ColorSpace>(data.ReadInt32());
     bool isNeedUpdate = data.ReadBool();
     return SetColorSpace(colorSpace, colorSpaceForCapture, isNeedUpdate);
+}
+
+int HCaptureSessionStub::HandleSetSmoothZoom(MessageParcel &data, MessageParcel &reply)
+{
+    int smoothZoomType = data.ReadUint32();
+    int operationMode = data.ReadUint32();
+    float targetZoomRatio = data.ReadFloat();
+    float duration;
+    int32_t ret = SetSmoothZoom(smoothZoomType, operationMode, targetZoomRatio, duration);
+    CHECK_AND_RETURN_RET_LOG(reply.WriteFloat(duration), IPC_STUB_WRITE_PARCEL_ERR,
+                             "HCaptureSessionStub HandleSetSmoothZoom Write duration failed");
+    return ret;
 }
 } // namespace CameraStandard
 } // namespace OHOS
