@@ -28,6 +28,17 @@
 
 namespace OHOS {
 namespace CameraStandard {
+enum RestoreParamTypeOhos {
+    NO_NEED_RESTORE_PARAM_OHOS = 0,
+    PERSISTENT_DEFAULT_PARAM_OHOS = 1,
+    TRANSISTENT_ACTIVE_PARAM_OHOS = 2,
+};
+
+struct EffectParam {
+    int skinSmoothLevel;
+    int faceSlender;
+    int skinTone;
+};
 class ICameraService : public IRemoteBroker {
 public:
     virtual int32_t CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService>& device) = 0;
@@ -64,7 +75,8 @@ public:
 
     virtual int32_t PrelaunchCamera() = 0;
 
-    virtual int32_t SetPrelaunchConfig(std::string cameraId) = 0;
+    virtual int32_t SetPrelaunchConfig(std::string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
+        EffectParam effectParam) = 0;
 
     virtual int32_t IsCameraMuted(bool &muteMode) = 0;
 

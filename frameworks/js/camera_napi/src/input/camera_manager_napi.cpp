@@ -272,6 +272,62 @@ bool ParseProfile(napi_env env, napi_value root, Profile* profile)
     return true;
 }
 
+bool ParsePrelaunchConfig(napi_env env, napi_value root, PrelaunchConfig* prelaunchConfig)
+{
+    napi_value res = nullptr;
+    napi_status status;
+    CameraDeviceNapi* cameraDeviceNapi = nullptr;
+    int32_t intValue;
+    if (napi_get_named_property(env, root, "cameraDevice", &res) == napi_ok) {
+        status = napi_unwrap(env, res, reinterpret_cast<void**>(&cameraDeviceNapi));
+        prelaunchConfig->cameraDevice_ = cameraDeviceNapi->cameraDevice_;
+        if (status != napi_ok || prelaunchConfig->cameraDevice_ == nullptr) {
+            MEDIA_ERR_LOG("napi_unwrap() failure!");
+        }
+    } else {
+        if (!CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
+            return false;
+        }
+    }
+    if (napi_get_named_property(env, root, "restoreParamType", &res) == napi_ok) {
+        napi_get_value_int32(env, res, &intValue);
+        prelaunchConfig->restoreParamType = static_cast<RestoreParamType>(intValue);
+        MEDIA_INFO_LOG("SetPrelaunchConfig restoreParamType = %{public}d", intValue);
+    }
+
+    if (napi_get_named_property(env, root, "activeTime", &res) == napi_ok) {
+        napi_get_value_int32(env, res, &intValue);
+        prelaunchConfig->activeTime = intValue;
+        MEDIA_INFO_LOG("SetPrelaunchConfig activeTime = %{public}d", intValue);
+    }
+    return true;
+}
+
+
+bool ParseSettingParam(napi_env env, napi_value root, EffectParam* effectParam)
+{
+    napi_value res = nullptr;
+    if (napi_get_named_property(env, root, "settingParam",  &res) == napi_ok) {
+        napi_value tempValue = nullptr;
+        int32_t effectValue;
+        if (napi_get_named_property(env, res, "skinSmoothLevel", &tempValue) == napi_ok) {
+            napi_get_value_int32(env, tempValue, &effectValue);
+            effectParam->skinSmoothLevel = effectValue;
+        }
+        if (napi_get_named_property(env, res, "faceSlender", &tempValue) == napi_ok) {
+            napi_get_value_int32(env, tempValue, &effectValue);
+            effectParam->faceSlender = effectValue;
+        }
+
+        if (napi_get_named_property(env, res, "skinTone", &tempValue) == napi_ok) {
+            napi_get_value_int32(env, tempValue, &effectValue);
+            effectParam->skinTone = effectValue;
+        }
+        MEDIA_INFO_LOG("SetPrelaunchConfig effectParam = %{public}d", effectParam->skinSmoothLevel);
+    }
+    return true;
+}
+
 bool ParseVideoProfile(napi_env env, napi_value root, VideoProfile* profile)
 {
     MEDIA_DEBUG_LOG("ParseVideoProfile is called");
@@ -934,31 +990,23 @@ napi_value CameraManagerNapi::SetPrelaunchConfig(napi_env env, napi_callback_inf
         MEDIA_ERR_LOG("SystemApi SetPrelaunchConfig is called!");
         return nullptr;
     }
-    napi_status status;
-    napi_value result = nullptr;
+
     size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
     NAPI_ASSERT(env, argc < ARGS_TWO, "requires 1 parameters maximum");
-    napi_value res = nullptr;
     PrelaunchConfig prelaunchConfig;
-    CameraDeviceNapi* cameraDeviceNapi = nullptr;
-    if (napi_get_named_property(env, argv[PARAM0], "cameraDevice", &res) == napi_ok) {
-        status = napi_unwrap(env, res, reinterpret_cast<void**>(&cameraDeviceNapi));
-        prelaunchConfig.cameraDevice_ = cameraDeviceNapi->cameraDevice_;
-        if (status != napi_ok || prelaunchConfig.cameraDevice_ == nullptr) {
-            MEDIA_ERR_LOG("napi_unwrap( ) failure!");
-            return result;
-        }
-    } else {
-        if (!CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
-            return result;
-        }
-    }
+    EffectParam effectParam;
+    napi_value result = nullptr;
+
+    ParsePrelaunchConfig(env, argv[PARAM0], &prelaunchConfig);
+    ParseSettingParam(env, argv[PARAM0], &effectParam);
     std::string cameraId = prelaunchConfig.GetCameraDevice()->GetID();
     MEDIA_INFO_LOG("SetPrelaunchConfig cameraId = %{public}s", cameraId.c_str());
-    int32_t retCode = CameraManager::GetInstance()->SetPrelaunchConfig(cameraId);
+
+    int32_t retCode = CameraManager::GetInstance()->SetPrelaunchConfig(cameraId,
+        static_cast<RestoreParamTypeOhos>(prelaunchConfig.restoreParamType), prelaunchConfig.activeTime, effectParam);
     if (!CameraNapiUtils::CheckError(env, retCode)) {
         return result;
     }

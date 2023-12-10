@@ -133,6 +133,7 @@ sptr<CaptureSession> ModeManager::CreateCaptureSession(CameraMode mode)
     }
     MEDIA_ERR_LOG("ModeManager CreateCaptureSession E");
     retCode = serviceProxy_->CreateCaptureSession(session, opMode);
+    MEDIA_INFO_LOG("ModeManager CreateCaptureSession opMode, %{public}d", opMode);
     MEDIA_ERR_LOG("ModeManager CreateCaptureSession X, %{public}d", retCode);
     if (retCode == CAMERA_OK && session != nullptr) {
         switch (mode) {

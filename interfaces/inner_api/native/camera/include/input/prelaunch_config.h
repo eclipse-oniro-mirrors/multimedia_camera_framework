@@ -20,7 +20,19 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class PrelaunchConfig {
+enum RestoreParamType {
+    NO_NEED_RESTORE_PARAM = 0,
+    PERSISTENT_DEFAULT_PARAM = 1,
+    TRANSISTENT_ACTIVE_PARAM = 2,
+};
+
+struct SettingParam {
+    int skinSmoothLevel;
+    int faceSlender;
+    int skinTone;
+};
+
+class PrelaunchConfig : public RefBase {
 public:
     PrelaunchConfig(sptr<CameraDevice> cameraDevice);
 
@@ -35,7 +47,19 @@ public:
      */
     sptr<CameraDevice> GetCameraDevice();
 
+    RestoreParamType GetRestoreParamType();
+
+    int GetActiveTime();
+
+    SettingParam GetSettingParam();
+
     sptr<CameraDevice> cameraDevice_ = nullptr;
+
+    SettingParam settingParam = {0, 0};
+
+    int activeTime = 0;
+
+    RestoreParamType  restoreParamType = RestoreParamType::NO_NEED_RESTORE_PARAM;
 };
 }
 }

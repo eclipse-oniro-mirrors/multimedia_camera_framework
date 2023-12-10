@@ -484,7 +484,8 @@ public:
     *
     * @return.
     */
-    int32_t SetPrelaunchConfig(std::string cameraId);
+    int32_t SetPrelaunchConfig(std::string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
+        EffectParam effectParam);
 
     /**
     * @brief Get the support of camera pre launch mode.
