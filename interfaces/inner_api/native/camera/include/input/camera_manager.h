@@ -575,6 +575,12 @@ public:
     */
     void UpdateTorchMode(TorchMode mode);
 
+    /**
+    * @brief Initializes the camera list.
+    *
+    */
+    void InitCameraList();
+
     static const std::string surfaceFormat;
 
 protected:
@@ -599,6 +605,7 @@ private:
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, const camera_metadata_item_t &item);
     void AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& cameraObjList);
     std::mutex mutex_;
+    std::mutex cameraListMutex_;
     std::mutex vectorMutex_;
     std::mutex cameraMngrCallbackMutex_;
     int CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> *pICameraDeviceService);

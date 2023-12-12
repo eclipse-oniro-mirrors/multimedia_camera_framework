@@ -2057,22 +2057,9 @@ int32_t CaptureSession::GetZoomRatioRange(std::vector<float> &zoomRatioRange)
 
 float CaptureSession::GetZoomRatio()
 {
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("CaptureSession::GetZoomRatio Session is not Commited");
-        return 0;
-    }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
-        MEDIA_ERR_LOG("CaptureSession::GetZoomRatio camera device is null");
-        return 0;
-    }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("CaptureSession::GetZoomRatio Failed with return code %{public}d", ret);
-        return 0;
-    }
-    return static_cast<float>(item.data.f[0]);
+    float zoomRatio = 0;
+    GetZoomRatio(zoomRatio);
+    return zoomRatio;
 }
 
 int32_t CaptureSession::GetZoomRatio(float &zoomRatio)
@@ -2086,11 +2073,15 @@ int32_t CaptureSession::GetZoomRatio(float &zoomRatio)
         MEDIA_ERR_LOG("CaptureSession::GetZoomRatio camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metaIn;
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metaOut;
+    int32_t DEFAULT_ITEMS = 1;
+    int32_t DEFAULT_DATA_LENGTH = 100;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaIn =
+        std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaOut =
+        std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
     uint32_t count = 1;
-    int32_t zoomRatioMultiple = 100;
-    int32_t metaInZoomRatio = 1 * zoomRatioMultiple;
+    uint32_t zoomRatioMultiple = 100;
+    uint32_t metaInZoomRatio = 1 * zoomRatioMultiple;
     metaIn->addEntry(OHOS_STATUS_CAMERA_CURRENT_ZOOM_RATIO, &metaInZoomRatio, count);
     int32_t ret = ((sptr<CameraInput> &)inputDevice_)->GetCameraDevice()->GetStatus(metaIn, metaOut);
     if (ret != CAMERA_OK) {
@@ -2103,7 +2094,7 @@ int32_t CaptureSession::GetZoomRatio(float &zoomRatio)
         MEDIA_ERR_LOG("CaptureSession::GetZoomRatio Failed with return code %{public}d", ret);
         return CameraErrorCode::SUCCESS;
     }
-    zoomRatio = static_cast<float>(item.data.ui32[0]) / zoomRatioMultiple;
+    zoomRatio = static_cast<float>(item.data.ui32[0]) / static_cast<float>(zoomRatioMultiple);
     MEDIA_ERR_LOG("CaptureSession::GetZoomRatio %{public}f", zoomRatio);
     return CameraErrorCode::SUCCESS;
 }

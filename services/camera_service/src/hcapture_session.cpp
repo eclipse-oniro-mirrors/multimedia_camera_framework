@@ -908,6 +908,9 @@ bool HCaptureSession::QueryFpsAndZoomRatio(float& currentFps, float& currentZoom
     uint32_t zoomRatio = 100;
     metaIn->addEntry(OHOS_STATUS_CAMERA_CURRENT_FPS, &fps, count);
     metaIn->addEntry(OHOS_STATUS_CAMERA_CURRENT_ZOOM_RATIO, &zoomRatio, count);
+    if (cameraDevice_ == nullptr) {
+        return false;
+    }
     cameraDevice_->GetStatus(metaIn, metaOut);
 
     camera_metadata_item_t item;
@@ -933,7 +936,9 @@ bool HCaptureSession::QueryFpsAndZoomRatio(float& currentFps, float& currentZoom
 
 bool HCaptureSession::QueryZoomPerformance(std::vector<float>& crossZoomAndTime, int32_t operationMode)
 {
-    // query zoom performance. begin
+    if (cameraDevice_ == nullptr) {
+        return false;
+    }
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability = cameraDevice_->GetSettings();
     camera_metadata_item_t zoomItem;
     int retFindMeta = OHOS::Camera::FindCameraMetadataItem(ability->get(),
@@ -1011,7 +1016,9 @@ int32_t HCaptureSession::SetSmoothZoom(int32_t smoothZoomType, int32_t operation
     std::shared_ptr<OHOS::Camera::CameraMetadata> metaZoomArray = std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
     uint32_t zoomCount = static_cast<uint32_t>(zoomAndTimeArray.size());
     metaZoomArray->addEntry(OHOS_CONTROL_SMOOTH_ZOOM_RATIOS, zoomAndTimeArray.data(), zoomCount);
-    cameraDevice_->UpdateSettingOnce(metaZoomArray);
+    if (cameraDevice_ != nullptr) {
+        cameraDevice_->UpdateSettingOnce(metaZoomArray);
+    }
     return CAMERA_OK;
 }
 
