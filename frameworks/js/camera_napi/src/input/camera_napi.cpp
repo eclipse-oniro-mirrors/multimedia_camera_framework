@@ -47,6 +47,7 @@ thread_local napi_ref CameraNapi::cameraModeRef_ = nullptr;
 thread_local napi_ref CameraNapi::filterTypeRef_ = nullptr;
 thread_local napi_ref CameraNapi::beautyTypeRef_ = nullptr;
 thread_local napi_ref CameraNapi::portraitEffectRef_ = nullptr;
+thread_local napi_ref CameraNapi::torchModeRef_ = nullptr;
 
 CameraNapi::CameraNapi() : env_(nullptr), wrapper_(nullptr)
 {
@@ -136,6 +137,7 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("FilterType", CreateFilterType(env)),
         DECLARE_NAPI_PROPERTY("BeautyType", CreateBeautyType(env)),
         DECLARE_NAPI_PROPERTY("PortraitEffect", CreatePortraitEffect(env)),
+        DECLARE_NAPI_PROPERTY("TorchMode", CreateTorchMode(env)),
     };
 
     status = napi_define_class(env, CAMERA_LIB_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, CameraNapiConstructor,
@@ -604,6 +606,37 @@ napi_value CameraNapi::CreateCameraMode(napi_env env)
         }
     }
     MEDIA_ERR_LOG("CreateCameraMode call Failed!");
+    napi_get_undefined(env, &result);
+
+    return result;
+}
+
+napi_value CameraNapi::CreateTorchMode(napi_env env)
+{
+    MEDIA_DEBUG_LOG("CreateTorchMode is called");
+    napi_value result = nullptr;
+    napi_status status;
+
+    status = napi_create_object(env, &result);
+    if (status == napi_ok) {
+        std::string propName;
+        for (auto itr = mapTorchMode.begin(); itr != mapTorchMode.end(); ++itr) {
+            propName = itr->first;
+            status = AddNamedProperty(env, result, propName, itr->second);
+            if (status != napi_ok) {
+                MEDIA_ERR_LOG("Failed to add torchMode prop!");
+                break;
+            }
+            propName.clear();
+        }
+    }
+    if (status == napi_ok) {
+        status = napi_create_reference(env, result, 1, &torchModeRef_);
+        if (status == napi_ok) {
+            return result;
+        }
+    }
+    MEDIA_ERR_LOG("CreateTorchMode call Failed!");
     napi_get_undefined(env, &result);
 
     return result;

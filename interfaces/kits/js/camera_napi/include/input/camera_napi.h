@@ -167,6 +167,12 @@ static const std::unordered_map<std::string, int32_t> mapPortraitEffect = {
     {"THEATOR", 5},
 };
 
+static const std::unordered_map<std::string, int32_t> mapTorchMode = {
+    {"OFF", 0},
+    {"ON", 1},
+    {"AUTO", 2},
+};
+
 static const std::unordered_map<std::string, int32_t> mapCameraErrorCode = {
     {"NO_SYSTEM_APP_PERMISSION", 202},
     {"INVALID_ARGUMENT", 7400101},
@@ -259,6 +265,7 @@ public:
     static napi_value CreateFilterType(napi_env env);
     static napi_value CreateBeautyType(napi_env env);
     static napi_value CreatePortraitEffect(napi_env env);
+    static napi_value CreateTorchMode(napi_env env);
 
     static napi_value CreateCameraErrorCode(napi_env env);
     static napi_value CreateCameraInputErrorCode(napi_env env);
@@ -290,6 +297,7 @@ private:
     static thread_local napi_ref filterTypeRef_;
     static thread_local napi_ref beautyTypeRef_;
     static thread_local napi_ref portraitEffectRef_;
+    static thread_local napi_ref torchModeRef_;
 
     static thread_local napi_ref errorCameraInputRef_;
     static thread_local napi_ref errorCaptureSessionRef_;
