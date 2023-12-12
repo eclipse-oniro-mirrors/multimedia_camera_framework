@@ -444,7 +444,9 @@ int32_t HCameraDevice::GetStatus(std::shared_ptr<OHOS::Camera::CameraMetadata> &
             MEDIA_ERR_LOG("HCameraDevice::GetStatus Failed with error Code: %{public}d", rc);
             return HdiToServiceError(rc);
         }
-        OHOS::Camera::MetadataUtils::ConvertVecToMetadata(hdiMetaOut, metaOut);
+        if (hdiMetaOut.size() != 0) {
+            OHOS::Camera::MetadataUtils::ConvertVecToMetadata(hdiMetaOut, metaOut);
+        }
     }
     return CAMERA_OK;
 }
