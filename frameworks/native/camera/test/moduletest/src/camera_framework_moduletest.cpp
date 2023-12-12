@@ -6376,7 +6376,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_080, TestSize.L
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: test IsSessionCommited() || IsSessionConfiged() with abnormal branches in CaptureSession in CaptureSession
+ * CaseDescription: test Commited() || Configed() with abnormal branches in CaptureSession in CaptureSession
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_081, TestSize.Level0)
 {

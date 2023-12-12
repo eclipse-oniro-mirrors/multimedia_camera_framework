@@ -2196,12 +2196,14 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_001, TestSize.Level0)
     Camera_Input *cameraInputWithPositionAndType = nullptr;
     Camera_Position cameraPosition = Camera_Position::CAMERA_POSITION_BACK;
     Camera_Type cameraType = Camera_Type::CAMERA_TYPE_DEFAULT;
-    ret = OH_CameraManager_CreateCameraInput_WithPositionAndType(cameraManager, cameraPosition, cameraType, &cameraInputWithPositionAndType);
+    ret = OH_CameraManager_CreateCameraInput_WithPositionAndType(cameraManager,
+                                                                 cameraPosition, cameraType, &cameraInputWithPositionAndType);
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_NE(&cameraInputWithPositionAndType, nullptr);
 
     cameraPosition  = Camera_Position::CAMERA_POSITION_UNSPECIFIED;
-    ret = OH_CameraManager_CreateCameraInput_WithPositionAndType(cameraManager, cameraPosition, cameraType, &cameraInputWithPositionAndType);
+    ret = OH_CameraManager_CreateCameraInput_WithPositionAndType(cameraManager,
+                                                                 cameraPosition, cameraType, &cameraInputWithPositionAndType);
     EXPECT_EQ(ret, CAMERA_OK);
 }
 

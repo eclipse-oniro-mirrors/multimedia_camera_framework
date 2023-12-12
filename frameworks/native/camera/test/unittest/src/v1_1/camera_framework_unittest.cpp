@@ -2964,9 +2964,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_009, TestSize.Level
     EXPECT_EQ(session->SetVideoStabilizationMode(stabilizationMode), 0);
     EXPECT_EQ(session->IsFlashModeSupported(FLASH_MODE_AUTO), false);
     EXPECT_EQ(session->IsFlashModeSupported(FLASH_MODE_AUTO, isSupported), 0);
-
-    sptr<PhotoOutput> photoOutput = (sptr<PhotoOutput> &)photo;
-    EXPECT_EQ(photoOutput->IsMirrorSupported(), false);
+    EXPECT_EQ((sptr<PhotoOutput> &)photo->IsMirrorSupported(), false);
 
     input->Close();
     session->Release();
@@ -3124,8 +3122,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_012, TestSize.Level
     sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
 
-    int32_t ret = session->BeginConfig();
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(session->BeginConfig(), 0);
 
     EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
     EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
@@ -3331,7 +3328,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_015, TestSize.Level
     CameraMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
                                                                          streamOperatorCb, callerToken, mode);
-    ASSERT_NE(camSession, nullptr);
 
     camSession->BeginConfig();
     EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
@@ -3400,9 +3396,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_016, TestSize.Level
     sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     sptr<StreamOperatorCallback> streamOperatorCb = new StreamOperatorCallback();;
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    CameraMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
-                                                                         streamOperatorCb, callerToken, mode);
+                                                                         streamOperatorCb, callerToken, PORTRAIT);
 
     EXPECT_EQ(camSession->CommitConfig(), CAMERA_INVALID_STATE);
     camSession->BeginConfig();
@@ -3497,8 +3492,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_017, TestSize.Level
     int32_t ret = camSession->AddInput(cameraDevice);
     EXPECT_EQ(ret, 2);
 
-    ret = camSession->AddInput(cameraDevice);
-    EXPECT_EQ(ret, 8);
+    EXPECT_EQ(camSession->AddInput(cameraDevice), 8);
 
     wptr<IDeviceOperatorsCallback> callback = nullptr;
     ret = camSession->SetDeviceOperatorsCallback(callback);
@@ -3914,7 +3908,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_023, TestSize.Level
     session->GetActiveVideoStabilizationMode(stabilizationMode);
     session->SetVideoStabilizationMode(stabilizationMode);
 
-    photo->Release();
     input->Close();
     input->Release();
     session->Release();
