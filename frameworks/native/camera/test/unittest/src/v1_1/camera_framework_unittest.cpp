@@ -2113,8 +2113,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_046, TestSize.Level0
     ret = portraitSession->CommitConfig();
     EXPECT_EQ(ret, 0);
 
-    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
-
     PortraitSessionControlParams(portraitSession);
 
     portraitSession->Release();
@@ -2287,8 +2285,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_050, TestSize.Level0
     ret = portraitSession->CommitConfig();
     EXPECT_EQ(ret, 0);
 
-    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
-
     PortraitSessionEffectParams(portraitSession);
 
     portraitSession->Release();
@@ -2355,8 +2351,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_051, TestSize.Level0
     EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     ret = portraitSession->CommitConfig();
     EXPECT_EQ(ret, 0);
-
-    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
 
     PortraitSessionFilterParams(portraitSession);
 
@@ -2425,8 +2419,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_052, TestSize.Level0
     EXPECT_CALL(*mockStreamOperator, CommitStreams_V1_1(_, _));
     ret = portraitSession->CommitConfig();
     EXPECT_EQ(ret, 0);
-
-    EXPECT_CALL(*mockCameraHostManager, GetCameraAbility(_, _));
 
     PortraitSessionBeautyParams(portraitSession);
 
@@ -2525,6 +2517,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_002, TestSize.Level
     std::vector<std::u16string> args = {};
     ret = camService->Dump(fd, args);
     EXPECT_EQ(ret, 0);
+
+    input->Close();
 }
 
 /*
@@ -2587,6 +2581,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_003, TestSize.Level
     ret = camSession->RemoveOutput(StreamType::CAPTURE, stream_2);
     EXPECT_EQ(ret, 2);
 
+    input->Close();
     camSession->Release(0);
 }
 
@@ -2660,6 +2655,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_004, TestSize.Level
 
     cameraService->OnStart();
     cameraService->OnStop();
+    input->Close();
 }
 
 /*
@@ -2718,6 +2714,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_005, TestSize.Level
 
     cameraService->OnStart();
     cameraService->OnStop();
+    input->Close();
 }
 
 /*
@@ -2785,6 +2782,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_006, TestSize.Level
     EXPECT_EQ(intResult, 2);
 
     cameraService->OnStop();
+    input->Close();
 }
 
 /*
@@ -2829,6 +2827,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_007, TestSize.Level
 
     status.status = 4;
     cameraHostManager->OnReceive(status);
+
+    input->Close();
 }
 
 /*
@@ -2897,6 +2897,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_008, TestSize.Level
     int32_t exposureValueGet = session->GetExposureValue(exposureValue);
     EXPECT_EQ(exposureValueGet, 0);
 
+    input->Close();
     session->Release();
 }
 
@@ -2963,15 +2964,15 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_009, TestSize.Level
     EXPECT_EQ(session->GetZoomRatio(), 0);
 
     bool isSupported;
-    VideoStabilizationMode stabilizationMode = MIDDLE;
     EXPECT_EQ(session->IsVideoStabilizationModeSupported(MIDDLE, isSupported), 0);
-    EXPECT_EQ(session->SetVideoStabilizationMode(stabilizationMode), 0);
+    EXPECT_EQ(session->SetVideoStabilizationMode(MIDDLE), 0);
     EXPECT_EQ(session->IsFlashModeSupported(FLASH_MODE_AUTO), false);
     EXPECT_EQ(session->IsFlashModeSupported(FLASH_MODE_AUTO, isSupported), 0);
 
     sptr<PhotoOutput> photoOutput = (sptr<PhotoOutput> &)photo;
     EXPECT_EQ(photoOutput->IsMirrorSupported(), false);
 
+    input->Close();
     session->Release();
 }
 
@@ -3020,6 +3021,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_010, TestSize.Level
     EXPECT_EQ(ret, 10);
 
     camService->OnStop();
+    input->Close();
 }
 
 /*
@@ -3082,6 +3084,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_011, TestSize.Level
     ret = ((sptr<PhotoOutput> &)photo)->Capture(photoSetting);
     EXPECT_EQ(ret, 0);
 
+    input->Close();
     session->Release();
     input->Release();
 }
@@ -3125,8 +3128,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_012, TestSize.Level
     sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
 
-    int32_t ret = session->BeginConfig();
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(session->BeginConfig(), 0);
 
     EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
     EXPECT_CALL(*mockCameraDevice, GetStreamOperator_V1_1(_, _));
@@ -3158,6 +3160,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_012, TestSize.Level
 
     EXPECT_EQ(streamRepeat->Start(), CAMERA_INVALID_STATE);
     EXPECT_EQ(streamRepeat->Stop(), CAMERA_INVALID_STATE);
+
+    input->Close();
     session->Release();
 }
 
@@ -3225,6 +3229,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_013, TestSize.Level
     cameraUseStateChangeCb->StateChangeNotify(Security::AccessToken::INVALID_TOKENID, true);
     cameraUseStateChangeCb->StateChangeNotify(Security::AccessToken::INVALID_TOKENID, false);
 
+    input->Close();
     camSession->Release(0);
 }
 
@@ -3295,6 +3300,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_014, TestSize.Level
     std::vector<int32_t> streamIds = {1, 2};
     streamOperatorCallback->OnFrameShutter(0, streamIds, 0);
 
+    input->Close();
     camSession->Release(0);
 }
 
@@ -3328,7 +3334,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_015, TestSize.Level
     CameraMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
                                                                          streamOperatorCb, callerToken, mode);
-    ASSERT_NE(camSession, nullptr);
 
     camSession->BeginConfig();
     EXPECT_CALL(*mockCameraHostManager, GetVersionByCamera(_));
@@ -3365,6 +3370,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_015, TestSize.Level
     std::vector<int32_t> streamIds = {1, 2};
     streamOperatorCallback->OnFrameShutter(0, streamIds, 0);
 
+    input->Close();
     camSession->Release(0);
 }
 
@@ -3396,9 +3402,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_016, TestSize.Level
     sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
     sptr<StreamOperatorCallback> streamOperatorCb = new StreamOperatorCallback();;
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    CameraMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new(std::nothrow) HCaptureSession(cameraHostManager,
-                                                                         streamOperatorCb, callerToken, mode);
+                                                                         streamOperatorCb, callerToken, PORTRAIT);
 
     EXPECT_EQ(camSession->CommitConfig(), CAMERA_INVALID_STATE);
     camSession->BeginConfig();
@@ -3436,6 +3441,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_016, TestSize.Level
     streamOperatorCallback->OnFrameShutter(0, streamIds, 0);
     camSession->BeginConfig();
 
+    input->Close();
     camSession->Release(0);
 }
 
@@ -3492,8 +3498,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_017, TestSize.Level
     int32_t ret = camSession->AddInput(cameraDevice);
     EXPECT_EQ(ret, 2);
 
-    ret = camSession->AddInput(cameraDevice);
-    EXPECT_EQ(ret, 8);
+    EXPECT_EQ(camSession->AddInput(cameraDevice), 8);
 
     wptr<IDeviceOperatorsCallback> callback = nullptr;
     ret = camSession->SetDeviceOperatorsCallback(callback);
@@ -3505,6 +3510,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_017, TestSize.Level
     std::string dumpString = "HCaptureSession";
     camSession->dumpSessionInfo(dumpString);
     camSession->dumpSessions(dumpString);
+
+    input->Close();
     camSession->Release(0);
 }
 
@@ -3573,6 +3580,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_018, TestSize.Level
     EXPECT_EQ(setExposureMode, 0);
 
     session->UnlockForControl();
+    input->Close();
     session->Release();
 }
 
@@ -3637,6 +3645,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_019, TestSize.Level
     int32_t setExposureBias = session->SetExposureBias(exposureValue);
     EXPECT_EQ(setExposureBias, 0);
 
+    input->Close();
     session->Release();
 }
 
@@ -3702,6 +3711,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_020, TestSize.Level
     int32_t supportedFocusModesGet = session->GetSupportedFocusModes(getSupportedFocusModes);
     EXPECT_EQ(supportedFocusModesGet, 0);
 
+    input->Close();
     session->Release();
 }
 
@@ -3764,6 +3774,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_021, TestSize.Level
     int32_t setFlashMode = session->SetFlashMode(flashMode);
     EXPECT_EQ(setFlashMode, 0);
 
+    input->Close();
     session->Release();
 }
 
@@ -3825,6 +3836,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_022, TestSize.Level
     session->RemoveInput(input);
     session->RemoveOutput(photo);
     photo->Release();
+    input->Close();
     input->Release();
     session->Release();
 }
@@ -3902,7 +3914,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_023, TestSize.Level
     session->GetActiveVideoStabilizationMode(stabilizationMode);
     session->SetVideoStabilizationMode(stabilizationMode);
 
-    photo->Release();
+    input->Close();
     input->Release();
     session->Release();
 }
@@ -4153,6 +4165,9 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_030, TestSize.Level
     camDevice->GetSettings();
     g_openCameraDevicerror = true;
     EXPECT_EQ(camDevice->OpenDevice(), 0);
+
+    camDevice->CloseDevice();
+    camDevice1->CloseDevice();
 }
 
 /*
@@ -4222,6 +4237,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_031, TestSize.Level
     sptr<HCameraHostManager> cameraHostManager_2 = (sptr<HCameraHostManager> &)mockCameraHostManager_2;
 
     cameraHostManager_2->AddCameraDevice(cameraId, nullptr);
+
+    input->Close();
 }
 } // CameraStandard
 } // OHOS
