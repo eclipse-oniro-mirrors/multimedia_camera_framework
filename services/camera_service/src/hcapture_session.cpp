@@ -720,6 +720,12 @@ int32_t HCaptureSession::SetColorSpace(ColorSpace colorSpace, ColorSpace capture
         return result;
     }
 
+    if (!(curState_ == CaptureSessionState::SESSION_CONFIG_INPROGRESS ||
+        curState_ == CaptureSessionState::SESSION_CONFIG_COMMITTED)) {
+        MEDIA_ERR_LOG("HCaptureSession::SetColorSpace(), Invalid session state: %{public}d", curState_);
+        return CAMERA_INVALID_STATE;
+    }
+
     std::lock_guard<std::mutex> lock(sessionLock_);
     currColorSpace_ = colorSpace;
     currCaptureColorSpace_ = captureColorSpace;
@@ -736,6 +742,17 @@ int32_t HCaptureSession::SetColorSpace(ColorSpace colorSpace, ColorSpace capture
         currColorSpace_ = ColorSpace::BT709;
     }
 
+    SetColorSpaceForStreams();
+    SetColorSpaceForTempStreams();
+
+    if (isNeedUpdate) {
+        result = UpdateStreamInfos();
+    }
+    return result;
+}
+
+void HCaptureSession::SetColorSpaceForStreams()
+{
     sptr<HStreamCommon> curStream;
     for (auto item = streams_.begin(); item != streams_.end(); ++item) {
         curStream = *item;
@@ -748,7 +765,11 @@ int32_t HCaptureSession::SetColorSpace(ColorSpace colorSpace, ColorSpace capture
             }
         }
     }
+}
 
+void HCaptureSession::SetColorSpaceForTempStreams()
+{
+    sptr<HStreamCommon> curStream;
     for (auto item = tempStreams_.begin(); item != tempStreams_.end(); ++item) {
         curStream = *item;
         if (curStream) {
@@ -760,13 +781,6 @@ int32_t HCaptureSession::SetColorSpace(ColorSpace colorSpace, ColorSpace capture
             }
         }
     }
-
-    if (!isNeedUpdate) {
-        return result;
-    }
-
-    UpdateStreamInfos();
-    return result;
 }
 
 void HCaptureSession::CancelStreamsAndGetStreamInfos(std::vector<StreamInfo_V1_1>& streamInfos)
@@ -809,8 +823,14 @@ void HCaptureSession::RestartStreams()
         }
 
         if (curStream && curStream->GetStreamType() == StreamType::REPEAT &&
-            static_cast<HStreamRepeat*>(curStream.GetRefPtr())->GetRepeatStreamType() != RepeatStreamType::VIDEO) {
-            static_cast<HStreamRepeat*>(curStream.GetRefPtr())->Start();
+            static_cast<HStreamRepeat*>(curStream.GetRefPtr())->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
+            std::shared_ptr<OHOS::Camera::CameraMetadata> settings = nullptr;
+            if (cameraDevice_ != nullptr) {
+                settings = cameraDevice_->CloneCachedSettings();
+                MEDIA_INFO_LOG("HCaptureSession::RestartStreams() CloneCachedSettings");
+                DumpMetadata(settings);
+            }
+            static_cast<HStreamRepeat*>(curStream.GetRefPtr())->Start(settings);
         }
     }
 }
@@ -1019,7 +1039,7 @@ int32_t HCaptureSession::Start()
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings = nullptr;
     if (cameraDevice_ != nullptr) {
         settings = cameraDevice_->CloneCachedSettings();
-        MEDIA_ERR_LOG("HCaptureSession::Start()");
+        MEDIA_INFO_LOG("HCaptureSession::Start()");
         DumpMetadata(settings);
     }
 

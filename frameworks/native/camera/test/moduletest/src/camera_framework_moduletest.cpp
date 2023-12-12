@@ -7111,13 +7111,62 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_061, TestSize.Le
 
 /*
  * Feature: Framework
+ * Function: Test set color space before commitConfig
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test set default color space
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_062, TestSize.Level0)
+{
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
+    camInput->Open();
+
+    session_->SetMode(static_cast<int32_t>(CameraMode::CAPTURE));
+    int32_t intResult = session_->BeginConfig();
+
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    std::vector<ColorSpace> colorSpaceLists = session_->GetSupportedColorSpaces();
+    if (colorSpaceLists.size() != 0) {
+        intResult = session_->SetColorSpace(colorSpaceLists[1]);
+        EXPECT_EQ(intResult, 0);
+        ColorSpace colorSpace;
+        intResult = session_->GetActiveColorSpace(colorSpace);
+        EXPECT_EQ(intResult, 0);
+        EXPECT_EQ(colorSpaceLists[1], colorSpace);
+    }
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
  * Function: Test macro and sketch function.
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
  * CaseDescription: Test macro and sketch function.
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_062, TestSize.Level0)
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_063, TestSize.Level0)
 {
     auto previewProfile = GetSketchPreviewProfile();
     if (previewProfile == nullptr) {
