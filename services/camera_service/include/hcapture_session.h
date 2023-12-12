@@ -115,6 +115,8 @@ private:
     void CancelStreamsAndGetStreamInfos(std::vector<StreamInfo_V1_1>& streamInfos);
     void RestartStreams();
     int32_t UpdateStreamInfos();
+    void SetColorSpaceForStreams();
+    void SetColorSpaceForTempStreams();
 
     std::string GetSessionState();
 

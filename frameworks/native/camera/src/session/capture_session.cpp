@@ -2847,7 +2847,7 @@ std::vector<ColorSpace> CaptureSession::GetSupportedColorSpaces()
 
 int32_t CaptureSession::GetActiveColorSpace(ColorSpace& colorSpace)
 {
-    if (!IsSessionCommited()) {
+    if (!(IsSessionCommited() || IsSessionConfiged())) {
         MEDIA_ERR_LOG("CaptureSession::GetActiveColorSpace Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
