@@ -56,14 +56,18 @@ CameraManager::CameraManager()
     Init();
     cameraObjList = {};
     dcameraObjList = {};
+    InitCameraList();
 }
 
 CameraManager::~CameraManager()
 {
     MEDIA_INFO_LOG("CameraManager::~CameraManager() called");
-    if (serviceProxy_ != nullptr) {
-        (void)serviceProxy_->AsObject()->RemoveDeathRecipient(deathRecipient_);
-        serviceProxy_ = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (serviceProxy_ != nullptr) {
+            (void)serviceProxy_->AsObject()->RemoveDeathRecipient(deathRecipient_);
+            serviceProxy_ = nullptr;
+        }
     }
     listenerStub_ = nullptr;
     deathRecipient_ = nullptr;
@@ -75,6 +79,7 @@ CameraManager::~CameraManager()
     }
     cameraMuteListener = nullptr;
     torchListener = nullptr;
+    std::lock_guard<std::mutex> lock(cameraListMutex_);
     for (unsigned int i = 0; i < cameraObjList.size(); i++) {
         cameraObjList[i] = nullptr;
     }
@@ -110,11 +115,11 @@ int32_t CameraStatusServiceCallback::OnCameraStatusChanged(const std::string& ca
     CameraStatusInfo cameraStatusInfo;
     if (camMngr_ != nullptr && camMngr_->GetApplicationCallback() != nullptr) {
         if (status == CAMERA_STATUS_APPEAR) {
-            camMngr_->GetSupportedCameras();
+            camMngr_->InitCameraList();
         }
         cameraStatusInfo.cameraDevice = camMngr_->GetCameraDeviceFromId(cameraId);
         if (status == CAMERA_STATUS_DISAPPEAR) {
-            camMngr_->GetSupportedCameras();
+            camMngr_->InitCameraList();
         }
         cameraStatusInfo.cameraStatus = status;
         if (cameraStatusInfo.cameraDevice) {
@@ -159,7 +164,7 @@ int CameraManager::CreateCaptureSession(sptr<CaptureSession> *pCaptureSession)
     sptr<ICaptureSession> session = nullptr;
     sptr<CaptureSession> captureSession = nullptr;
     int32_t retCode = CAMERA_OK;
-
+    std::lock_guard<std::mutex> lock(mutex_);
     if (serviceProxy_ == nullptr) {
         MEDIA_ERR_LOG("serviceProxy_ is null");
         return CameraErrorCode::INVALID_ARGUMENT;
@@ -209,7 +214,7 @@ int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &su
     sptr<PhotoOutput> photoOutput = nullptr;
     int32_t retCode = CAMERA_OK;
     camera_format_t metaFormat;
-
+    std::lock_guard<std::mutex> lock(mutex_);
     if ((serviceProxy_ == nullptr) || (surface == nullptr)) {
         MEDIA_ERR_LOG("serviceProxy_ is null or PhotoOutputSurface/profile is null");
         return CameraErrorCode::INVALID_ARGUMENT;
@@ -258,7 +263,7 @@ int CameraManager::CreatePreviewOutput(Profile &profile, sptr<Surface> surface, 
     sptr<PreviewOutput> previewOutput = nullptr;
     int32_t retCode = CAMERA_OK;
     camera_format_t metaFormat;
-
+    std::lock_guard<std::mutex> lock(mutex_);
     if ((serviceProxy_ == nullptr) || (surface == nullptr)) {
         MEDIA_ERR_LOG("serviceProxy_ is null or previewOutputSurface/profile is null");
         return CameraErrorCode::INVALID_ARGUMENT;
@@ -309,7 +314,7 @@ int CameraManager::CreateDeferredPreviewOutput(Profile &profile, sptr<PreviewOut
     sptr<PreviewOutput> previewOutput = nullptr;
     int32_t retCode = CAMERA_OK;
     camera_format_t metaFormat;
-
+    std::lock_guard<std::mutex> lock(mutex_);
     if ((serviceProxy_ == nullptr)) {
         MEDIA_ERR_LOG("serviceProxy_ is null or profile is null");
         return CameraErrorCode::INVALID_ARGUMENT;
@@ -372,7 +377,7 @@ int CameraManager::CreateMetadataOutput(sptr<MetadataOutput> *pMetadataOutput)
     sptr<IStreamMetadata> streamMetadata = nullptr;
     sptr<MetadataOutput> metadataOutput = nullptr;
     int32_t retCode = CAMERA_OK;
-
+    std::lock_guard<std::mutex> lock(mutex_);
     if (!serviceProxy_) {
         MEDIA_ERR_LOG("serviceProxy_ is null");
         return CameraErrorCode::INVALID_ARGUMENT;
@@ -484,6 +489,7 @@ void CameraManager::Init()
         MEDIA_ERR_LOG("object is null");
         return;
     }
+    std::lock_guard<std::mutex> lock(mutex_);
     serviceProxy_ = iface_cast<ICameraService>(object);
     if (serviceProxy_ == nullptr) {
         MEDIA_ERR_LOG("serviceProxy_ is null.");
@@ -516,10 +522,19 @@ void CameraManager::CameraServerDied(pid_t pid)
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
     if (cameraSvcCallback_ != nullptr) {
         MEDIA_DEBUG_LOG("cameraSvcCallback_ not nullptr");
+        std::lock_guard<std::mutex> lock(cameraListMutex_);
         for (size_t i = 0; i < cameraObjList.size(); i++) {
-            cameraSvcCallback_->OnCameraStatusChanged(cameraObjList[i]->GetID(), CAMERA_STATUS_DISAPPEAR);
+            CameraStatusInfo cameraStatusInfo;
+            cameraStatusInfo.cameraDevice = cameraObjList[i];
+            cameraStatusInfo.cameraStatus = CAMERA_STATUS_DISAPPEAR;
+            std::shared_ptr<CameraManagerCallback> cameraManagerCallback = GetApplicationCallback();
+            if (cameraManagerCallback != nullptr) {
+                MEDIA_INFO_LOG("Callback cameraStatus");
+                cameraManagerCallback->OnCameraStatusChanged(cameraStatusInfo);
+            }
         }
     }
+    std::lock_guard<std::mutex> lock(mutex_);
     if (serviceProxy_ != nullptr) {
         (void)serviceProxy_->AsObject()->RemoveDeathRecipient(deathRecipient_);
         serviceProxy_ = nullptr;
@@ -533,7 +548,7 @@ int CameraManager::CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceSe
     CAMERA_SYNC_TRACE;
     sptr<ICameraDeviceService> device = nullptr;
     int32_t retCode = CAMERA_OK;
-
+    std::lock_guard<std::mutex> lock(mutex_);
     if (serviceProxy_ == nullptr || cameraId.empty()) {
         MEDIA_ERR_LOG("serviceProxy_ is null or CameraID is empty: %{public}s", cameraId.c_str());
         return CameraErrorCode::INVALID_ARGUMENT;
@@ -569,9 +584,7 @@ std::shared_ptr<CameraManagerCallback> CameraManager::GetApplicationCallback()
 sptr<CameraDevice> CameraManager::GetCameraDeviceFromId(std::string cameraId)
 {
     sptr<CameraDevice> cameraObj = nullptr;
-    if (cameraObjList.empty()) {
-        this->GetSupportedCameras();
-    }
+    std::lock_guard<std::mutex> lock(cameraListMutex_);
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         if (cameraObjList[i]->GetID() == cameraId) {
             cameraObj = cameraObjList[i];
@@ -635,27 +648,34 @@ bool CameraManager::isDistributeCamera(std::string cameraId, dmDeviceInfo &devic
     }
     return false;
 }
-std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
+
+void CameraManager::InitCameraList()
 {
     CAMERA_SYNC_TRACE;
-    std::lock_guard<std::mutex> lock(mutex_);
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (serviceProxy_ == nullptr) {
+            MEDIA_ERR_LOG("serviceProxy_ is null, returning empty list!");
+            return;
+        }
+    }
     std::vector<std::string> cameraIds;
     std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
     int32_t retCode = -1;
     sptr<CameraDevice> cameraObj = nullptr;
     int32_t index = 0;
-
+    std::lock_guard<std::mutex> lock(cameraListMutex_);
     for (unsigned int i = 0; i < cameraObjList.size(); i++) {
         cameraObjList[i] = nullptr;
     }
     cameraObjList.clear();
-    if (serviceProxy_ == nullptr) {
-        MEDIA_ERR_LOG("serviceProxy_ is null, returning empty list!");
-        return cameraObjList;
-    }
+
     std::vector<sptr<CameraDevice>> supportedCameras;
     GetDmDeviceInfo();
-    retCode = serviceProxy_->GetCameras(cameraIds, cameraAbilityList);
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        retCode = serviceProxy_->GetCameras(cameraIds, cameraAbilityList);
+    }
     if (retCode == CAMERA_OK) {
         for (auto& it : cameraIds) {
             dmDeviceInfo tempDmDeviceInfo;
@@ -681,6 +701,12 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
 
     ChooseDeFaultCameras(supportedCameras);
     AlignVideoFpsProfile(cameraObjList);
+}
+
+std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
+{
+    CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(cameraListMutex_);
     return cameraObjList;
 }
 
@@ -822,9 +848,7 @@ int CameraManager::CreateCameraInput(CameraPosition position, CameraType cameraT
 {
     CAMERA_SYNC_TRACE;
     sptr<CameraInput> cameraInput = nullptr;
-    if (cameraObjList.empty()) {
-        this->GetSupportedCameras();
-    }
+    std::lock_guard<std::mutex> lock(cameraListMutex_);
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         if ((cameraObjList[i]->GetPosition() == position) && (cameraObjList[i]->GetCameraType() == cameraType)) {
             cameraInput = CreateCameraInput(cameraObjList[i]);
@@ -1136,9 +1160,7 @@ shared_ptr<CameraMuteListener> CameraManager::GetCameraMuteListener()
 bool CameraManager::IsCameraMuteSupported()
 {
     bool result = false;
-    if (cameraObjList.empty()) {
-        this->GetSupportedCameras();
-    }
+    std::lock_guard<std::mutex> lock(cameraListMutex_);
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
         camera_metadata_item_t item;
@@ -1166,7 +1188,7 @@ bool CameraManager::IsCameraMuted()
 {
     int32_t retCode = CAMERA_OK;
     bool isMuted = false;
-
+    std::lock_guard<std::mutex> lock(mutex_);
     if (serviceProxy_ == nullptr) {
         MEDIA_ERR_LOG("serviceProxy_ is null");
         return isMuted;
@@ -1225,9 +1247,7 @@ bool CameraManager::IsPrelaunchSupported(sptr<CameraDevice> camera)
 
 bool CameraManager::IsTorchSupported()
 {
-    if (cameraObjList.empty()) {
-        this->GetSupportedCameras();
-    }
+    std::lock_guard<std::mutex> lock(cameraListMutex_);
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         std::shared_ptr<Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
         camera_metadata_item_t item;
@@ -1273,7 +1293,6 @@ int32_t CameraManager::SetTorchMode(TorchMode mode)
 
 void CameraManager::UpdateTorchMode(TorchMode mode)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     if (torchMode_ == mode) {
         return;
     }
