@@ -53,7 +53,10 @@ napi_value CameraPrelaunchConfigNapi::Init(napi_env env, napi_value exports)
     napi_status status;
     napi_value ctorObj;
     napi_property_descriptor prelaunch_config_props[] = {
-        DECLARE_NAPI_GETTER("cameraDevice", GetPrelaunchCameraDevice)
+        DECLARE_NAPI_GETTER("cameraDevice", GetPrelaunchCameraDevice),
+        DECLARE_NAPI_GETTER("restoreParamType", GetRestoreParamType),
+        DECLARE_NAPI_GETTER("activeTime", GetActiveTime),
+        DECLARE_NAPI_GETTER("settingParam", GetSettingParam),
     };
     status = napi_define_class(env, CAMERA_PRELAUNCH_CONFIG_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
         CameraPrelaunchConfigNapiConstructor, nullptr,
@@ -76,7 +79,7 @@ napi_value CameraPrelaunchConfigNapi::Init(napi_env env, napi_value exports)
 // Constructor callback
 napi_value CameraPrelaunchConfigNapi::CameraPrelaunchConfigNapiConstructor(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("CameraProfileNapiConstructor is called");
+    MEDIA_DEBUG_LOG("CameraPrelaunchConfigNapiConstructor is called");
     napi_status status;
     napi_value result = nullptr;
     napi_value thisVar = nullptr;
@@ -105,7 +108,7 @@ napi_value CameraPrelaunchConfigNapi::CameraPrelaunchConfigNapiConstructor(napi_
 
 napi_value CameraPrelaunchConfigNapi::GetPrelaunchCameraDevice(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("GetCameraProfileSize is called");
+    MEDIA_DEBUG_LOG("GetPrelaunchCameraDevice is called");
     napi_status status;
     napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
@@ -127,6 +130,98 @@ napi_value CameraPrelaunchConfigNapi::GetPrelaunchCameraDevice(napi_env env, nap
         MEDIA_INFO_LOG("GetPrelaunchCameraDevice cameraId = %{public}s",
             obj->prelaunchConfig_->GetCameraDevice()->GetID().c_str());
         jsResult = CameraDeviceNapi::CreateCameraObj(env, cameraDevice);
+        return jsResult;
+    }
+    MEDIA_ERR_LOG("GetPrelaunchCameraDevice call Failed!");
+    return undefinedResult;
+}
+
+napi_value CameraPrelaunchConfigNapi::GetRestoreParamType(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetCameraProfileSize is called");
+    napi_status status;
+    napi_value jsResult = nullptr;
+    napi_value undefinedResult = nullptr;
+    CameraPrelaunchConfigNapi* obj = nullptr;
+    napi_value thisVar = nullptr;
+    RestoreParamType restoreParamType;
+
+    napi_get_undefined(env, &undefinedResult);
+    CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
+
+    if (status != napi_ok || thisVar == nullptr) {
+        MEDIA_ERR_LOG("Invalid arguments!");
+        return undefinedResult;
+    }
+
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
+    if ((status == napi_ok) && (obj != nullptr)) {
+        restoreParamType = obj->prelaunchConfig_->GetRestoreParamType();
+        status = napi_create_int32(env, restoreParamType, &jsResult);
+        if (status == napi_ok) {
+            return jsResult;
+        } else {
+            MEDIA_ERR_LOG("Failed to get CameraProfileHeight!, errorCode : %{public}d", status);
+        }
+    }
+    MEDIA_ERR_LOG("GetCameraProfileSize call Failed!");
+    return undefinedResult;
+}
+
+napi_value CameraPrelaunchConfigNapi::GetActiveTime(napi_env env, napi_callback_info info)
+{
+        MEDIA_DEBUG_LOG("GetActiveTime is called");
+    napi_status status;
+    napi_value jsResult = nullptr;
+    napi_value undefinedResult = nullptr;
+    CameraPrelaunchConfigNapi* obj = nullptr;
+    int32_t activeTime;
+    napi_value thisVar = nullptr;
+
+    napi_get_undefined(env, &undefinedResult);
+    CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
+
+    if (status != napi_ok || thisVar == nullptr) {
+        MEDIA_ERR_LOG("Invalid arguments!");
+        return undefinedResult;
+    }
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
+    if ((status == napi_ok) && (obj != nullptr)) {
+        activeTime = obj->prelaunchConfig_->GetActiveTime();
+        status = napi_create_int32(env, activeTime, &jsResult);
+        if (status == napi_ok) {
+            return jsResult;
+        } else {
+            MEDIA_ERR_LOG("Failed to get CameraProfileHeight!, errorCode : %{public}d", status);
+        }
+    }
+    return undefinedResult;
+}
+
+napi_value CameraPrelaunchConfigNapi::GetSettingParam(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetCameraProfileSize is called");
+    napi_status status;
+    napi_value jsResult = nullptr;
+    napi_value undefinedResult = nullptr;
+    CameraPrelaunchConfigNapi* obj = nullptr;
+    SettingParam settingParam;
+    napi_value thisVar = nullptr;
+
+    napi_get_undefined(env, &undefinedResult);
+    CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
+
+    if (status != napi_ok || thisVar == nullptr) {
+        MEDIA_ERR_LOG("Invalid arguments!");
+        return undefinedResult;
+    }
+
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
+    if ((status == napi_ok) && (obj != nullptr)) {
+        settingParam.skinSmoothLevel = obj->prelaunchConfig_->GetSettingParam().skinSmoothLevel;
+        settingParam.faceSlender = obj->prelaunchConfig_->GetSettingParam().faceSlender;
+        settingParam.skinTone = obj->prelaunchConfig_->GetSettingParam().skinTone;
+        jsResult = CameraSettingParamNapi::CreateCameraSettingParam(env, settingParam);
         return jsResult;
     }
     MEDIA_ERR_LOG("GetCameraProfileSize call Failed!");

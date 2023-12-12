@@ -1754,7 +1754,8 @@ void CaptureSession::ProcessFaceRecUpdates(const uint64_t timestamp,
         }
         bool isNeedMirror = false;
         if (inputDevice_ && inputDevice_->GetCameraDeviceInfo()) {
-            isNeedMirror = (inputDevice_->GetCameraDeviceInfo()->GetPosition() == CAMERA_POSITION_FRONT);
+            isNeedMirror = (inputDevice_->GetCameraDeviceInfo()->GetPosition() == CAMERA_POSITION_FRONT ||
+                            inputDevice_->GetCameraDeviceInfo()->GetPosition() == CAMERA_POSITION_FOLD_INNER);
         }
         std::vector<sptr<MetadataObject>> metaObjects;
         metaOutput->ProcessFaceRectangles(timestamp, result, metaObjects, isNeedMirror);
@@ -2846,7 +2847,7 @@ std::vector<ColorSpace> CaptureSession::GetSupportedColorSpaces()
 
 int32_t CaptureSession::GetActiveColorSpace(ColorSpace& colorSpace)
 {
-    if (!IsSessionCommited()) {
+    if (!(IsSessionCommited() || IsSessionConfiged())) {
         MEDIA_ERR_LOG("CaptureSession::GetActiveColorSpace Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }

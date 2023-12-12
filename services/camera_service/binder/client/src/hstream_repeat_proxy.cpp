@@ -156,7 +156,8 @@ int32_t HStreamRepeatProxy::UpdateSketchRatio(float sketchRatio)
     MessageParcel reply;
     MessageOption option;
 
-    if (sketchRatio <= 0 || sketchRatio > SKETCH_RATIO_MAX_VALUE) {
+    // SketchRatio value could be negative value
+    if (sketchRatio > SKETCH_RATIO_MAX_VALUE) {
         MEDIA_ERR_LOG("HStreamRepeatProxy UpdateSketchRatio value is illegal %{public}f", sketchRatio);
         return IPC_PROXY_ERR;
     }

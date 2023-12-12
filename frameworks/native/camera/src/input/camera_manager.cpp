@@ -718,7 +718,13 @@ bool CameraManager::isDistributeCamera(std::string cameraId, dmDeviceInfo &devic
 std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
 {
     CAMERA_SYNC_TRACE;
-    std::lock_guard<std::mutex> lock(mutex_);
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (serviceProxy_ == nullptr) {
+            MEDIA_ERR_LOG("serviceProxy_ is null, returning empty list!");
+            return;
+        }
+    }
     std::vector<std::string> cameraIds;
     std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
     int32_t retCode = -1;
@@ -729,10 +735,6 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
         cameraObjList[i] = nullptr;
     }
     cameraObjList.clear();
-    if (serviceProxy_ == nullptr) {
-        MEDIA_ERR_LOG("serviceProxy_ is null, returning empty list!");
-        return cameraObjList;
-    }
     GetDmDeviceInfo();
     retCode = serviceProxy_->GetCameras(cameraIds, cameraAbilityList);
     if (retCode == CAMERA_OK) {
@@ -1378,14 +1380,16 @@ int32_t CameraManager::SetTorchLevel(float level)
     return retCode;
 }
 
-int32_t CameraManager::SetPrelaunchConfig(std::string cameraId)
+int32_t CameraManager::SetPrelaunchConfig(std::string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
+    EffectParam effectParam)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (serviceProxy_ == nullptr) {
         MEDIA_ERR_LOG("CameraManager::SetPrelaunchConfig serviceProxy_ is null");
         return SERVICE_FATL_ERROR;
     }
-    int32_t retCode = serviceProxy_->SetPrelaunchConfig(cameraId);
+    int32_t retCode = serviceProxy_->SetPrelaunchConfig(cameraId,
+        static_cast<RestoreParamTypeOhos>(restoreParamType), activeTime, effectParam);
     if (retCode != CAMERA_OK) {
         MEDIA_ERR_LOG("CameraManager::SetPrelaunchConfig failed, retCode: %{public}d", retCode);
     }

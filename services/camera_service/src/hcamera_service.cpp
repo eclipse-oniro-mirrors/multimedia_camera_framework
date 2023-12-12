@@ -22,11 +22,10 @@
 #include "accesstoken_kit.h"
 #include "camera_log.h"
 #include "camera_util.h"
-#include "display_manager.h"
-#include "ipc_skeleton.h"
-#include "iservice_registry.h"
-#include "system_ability_definition.h"
 #include "hcamera_device_manager.h"
+#include "ipc_skeleton.h"
+#include "system_ability_definition.h"
+#include "display_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -200,6 +199,7 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
         CHECK_AND_RETURN_RET_LOG(streamOperatorCallback_ != nullptr, CAMERA_ALLOC_ERROR,
             "HCameraService::CreateCaptureSession streamOperatorCallback_ allocation failed");
     }
+    MEDIA_INFO_LOG("HCameraService::CreateCaptureSession opMode_= %{public}d", opMode);
 
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
     captureSession =
@@ -208,6 +208,8 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
         "HCameraService::CreateCaptureSession HCaptureSession allocation failed");
     captureSession->SetDeviceOperatorsCallback(this);
     session = captureSession;
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    captureSessionsManager_.EnsureInsert(pid, captureSession);
     return CAMERA_OK;
 }
 
@@ -588,14 +590,15 @@ int32_t HCameraService::PrelaunchCamera()
     }
     MEDIA_INFO_LOG("HCameraService::PrelaunchCamera preCameraId_ is: %{public}s", preCameraId_.c_str());
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("Camera Prelaunch CameraId:%s", preCameraId_.c_str()));
-    int32_t ret = cameraHostManager_->Prelaunch(preCameraId_);
+    int32_t ret = cameraHostManager_->Prelaunch(preCameraId_, preCameraClient_);
     if (ret != CAMERA_OK) {
         MEDIA_ERR_LOG("HCameraService::Prelaunch failed");
     }
     return ret;
 }
 
-int32_t HCameraService::SetPrelaunchConfig(string cameraId)
+int32_t HCameraService::SetPrelaunchConfig(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
+    EffectParam effectParam)
 {
     CAMERA_SYNC_TRACE;
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
@@ -606,11 +609,19 @@ int32_t HCameraService::SetPrelaunchConfig(string cameraId)
         return ret;
     }
 
-    MEDIA_INFO_LOG("HCameraService::SetPrelaunchConfig");
+    MEDIA_INFO_LOG("HCameraService::SetPrelaunchConfig cameraId %{public}s", (cameraId).c_str());
     vector<string> cameraIds_;
     cameraHostManager_->GetCameras(cameraIds_);
     if ((find(cameraIds_.begin(), cameraIds_.end(), cameraId) != cameraIds_.end()) && IsPrelaunchSupported(cameraId)) {
         preCameraId_ = cameraId;
+        MEDIA_INFO_LOG("CameraHostInfo::prelaunch 111 for cameraId %{public}s", (cameraId).c_str());
+        sptr<HCaptureSession> captureSession_ = nullptr;
+        pid_t pid = IPCSkeleton::GetCallingPid();
+        captureSessionsManager_.Find(pid, captureSession_);
+        SaveCurrentParamForRestore(cameraId, static_cast<RestoreParamTypeOhos>(restoreParamType), activeTime,
+            effectParam, captureSession_);
+        captureSessionsManager_.Clear();
+        captureSessionsManager_.EnsureInsert(pid, captureSession_);
     } else {
         MEDIA_ERR_LOG("HCameraService::SetPrelaunchConfig illegal");
         ret = CAMERA_INVALID_ARG;
@@ -1063,18 +1074,163 @@ void HCameraService::DropDetectionDataCallbackImpl(SensorEvent *event)
         MEDIA_INFO_LOG("less than drop detection data size, event.dataLen:%{public}u", event[0].dataLen);
         return;
     }
-    DropDetectionData *dropDetectionData = reinterpret_cast<DropDetectionData *>(event[0].data);
-    if (dropDetectionData == nullptr) {
-        MEDIA_INFO_LOG("dropDetectionData is nullptr");
-        return;
-    }
-    MEDIA_DEBUG_LOG("sensorId:%{public}d, version:%{public}d, dataLen:%{public}u, status:%{public}f",
-        event[0].sensorTypeId, event[0].version, event[0].dataLen, dropDetectionData->status);
-
     if (mCameraService != nullptr && mCameraService->cameraHostManager_) {
         mCameraService->cameraHostManager_->NotifyDeviceStateChangeInfo(DeviceType::FALLING_TYPE,
             FallingState::FALLING_STATE);
     }
+}
+
+int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, RestoreParamTypeOhos restoreParamType,
+    int activeTime, EffectParam effectParam, sptr<HCaptureSession> captureSession)
+{
+    MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore enter");
+    int32_t rc = CAMERA_OK;
+    preCameraClient_ = GetClientBundle(IPCSkeleton::GetCallingUid());
+    sptr<HCameraRestoreParam> cameraRestoreParam = new HCameraRestoreParam(
+        preCameraClient_, cameraId);
+    cameraRestoreParam->SetRestoreParamType(restoreParamType);
+    cameraRestoreParam->SetStartActiveTime(activeTime);
+    int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
+    cameraRestoreParam->SetFoldStatus(foldStatus);
+    if (captureSession == nullptr) {
+        cameraHostManager_->SaveRestoreParam(cameraRestoreParam);
+        return rc;
+    }
+
+    sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
+    pid_t activeClient = deviceManager->GetActiveClient();
+    if (activeClient == -1) {
+        MEDIA_ERR_LOG("HCaptureSession::SaveCurrentParamForRestore() Failed to save param");
+        return CAMERA_OPERATION_NOT_ALLOWED;
+    }
+    sptr<HCameraDevice> activeDevice = deviceManager->GetCameraByPid(activeClient);
+    if (activeDevice == nullptr) {
+        return CAMERA_OK;
+    }
+
+    std::vector<StreamInfo_V1_1> allStreamInfos;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings;
+
+    if (activeDevice != nullptr) {
+        settings = activeDevice->CloneCachedSettings();
+        cameraRestoreParam->SetSetting(settings);
+        UpdateSkinSmoothSetting(settings, effectParam.skinSmoothLevel);
+        UpdateFaceSlenderSetting(settings, effectParam.faceSlender);
+        UpdateSkinToneSetting(settings, effectParam.skinTone);
+    }
+    if (activeDevice == nullptr || settings == nullptr) {
+        return CAMERA_UNKNOWN_ERROR;
+    }
+    MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore param %d", effectParam.skinSmoothLevel);
+    rc = captureSession->GetCurrentStreamInfos(activeDevice, settings, allStreamInfos);
+    if (rc != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCaptureSession::SaveCurrentParamForRestore() Failed to get streams info, %{public}d", rc);
+        return rc;
+    }
+    cameraRestoreParam->SetStreamInfo(allStreamInfos);
+    cameraRestoreParam->SetCameraOpMode(captureSession->GetopMode());
+    cameraHostManager_->SaveRestoreParam(cameraRestoreParam);
+    MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore end");
+    return rc;
+}
+
+int32_t HCameraService::UpdateSkinSmoothSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata,
+                                                int skinSmoothValue)
+{
+    if (skinSmoothValue <= 0 || changedMetadata == nullptr) {
+        return CAMERA_OK;
+    }
+    bool status;
+    int32_t count = 1;
+    int ret;
+    camera_metadata_item_t item;
+
+    MEDIA_DEBUG_LOG("UpdateBeautySetting skinsmooth: %{public}d", skinSmoothValue);
+    uint8_t beauty = OHOS_CAMERA_BEAUTY_TYPE_SKIN_SMOOTH;
+    ret = OHOS::Camera::FindCameraMetadataItem(changedMetadata->get(), OHOS_CONTROL_BEAUTY_TYPE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata->addEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata->updateEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, count);
+    }
+
+    ret = OHOS::Camera::FindCameraMetadataItem(changedMetadata->get(), OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata->addEntry(OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE, &skinSmoothValue, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata->updateEntry(OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE, &skinSmoothValue, count);
+    }
+    if (status) {
+        MEDIA_INFO_LOG("UpdateBeautySetting status: %{public}d", status);
+    }
+
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::UpdateFaceSlenderSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata,
+                                                 int faceSlenderValue)
+{
+    if (faceSlenderValue <= 0 || changedMetadata == nullptr) {
+        return CAMERA_OK;
+    }
+    bool status;
+    int32_t count = 1;
+    int ret;
+    camera_metadata_item_t item;
+
+    MEDIA_DEBUG_LOG("UpdateBeautySetting faceSlender: %{public}d", faceSlenderValue);
+    uint8_t beauty = OHOS_CAMERA_BEAUTY_TYPE_FACE_SLENDER;
+    ret = OHOS::Camera::FindCameraMetadataItem(changedMetadata->get(), OHOS_CONTROL_BEAUTY_TYPE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata->addEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata->updateEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, count);
+    }
+
+    ret = OHOS::Camera::FindCameraMetadataItem(changedMetadata->get(), OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata->addEntry(OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE, &faceSlenderValue, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata->updateEntry(OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE, &faceSlenderValue, count);
+    }
+    if (status) {
+        MEDIA_INFO_LOG("UpdateBeautySetting status: %{public}d", status);
+    }
+
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::UpdateSkinToneSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata,
+    int skinToneValue)
+{
+    if (skinToneValue <= 0 || changedMetadata == nullptr) {
+        return CAMERA_OK;
+    }
+    bool status;
+    int32_t count = 1;
+    int ret;
+    camera_metadata_item_t item;
+
+    MEDIA_DEBUG_LOG("UpdateBeautySetting skinTone: %{public}d", skinToneValue);
+    uint8_t beauty = OHOS_CAMERA_BEAUTY_TYPE_SKIN_TONE;
+    ret = OHOS::Camera::FindCameraMetadataItem(changedMetadata->get(), OHOS_CONTROL_BEAUTY_TYPE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata->addEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata->updateEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, count);
+    }
+
+    ret = OHOS::Camera::FindCameraMetadataItem(changedMetadata->get(), OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata->addEntry(OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE, &skinToneValue, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata->updateEntry(OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE, &skinToneValue, count);
+    }
+    if (status) {
+        MEDIA_INFO_LOG("UpdateBeautySetting status: %{public}d", status);
+    }
+
+    return CAMERA_OK;
 }
 } // namespace CameraStandard
 } // namespace OHOS

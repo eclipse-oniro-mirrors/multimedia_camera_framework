@@ -648,11 +648,11 @@ typedef struct Camera_Point {
 } Camera_Point;
 
 /**
- * @brief Photo capture location.
- *
- * @since 11
- * @version 1.0
- */
+* @brief Photo capture location.
+*
+* @since 11
+* @version 1.0
+*/
 typedef struct Camera_Location {
     /**
      * Latitude.

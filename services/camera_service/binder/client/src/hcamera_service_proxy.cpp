@@ -157,6 +157,7 @@ int32_t HCameraServiceProxy::CreateCaptureSession(sptr<ICaptureSession>& session
     MessageOption option;
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteInt32(operationMode);
+    MEDIA_INFO_LOG("HCameraServiceProxy::CreateCaptureSession opMode_= %{public}d", operationMode);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_CAPTURE_SESSION), data, reply, option);
     if (error != ERR_NONE) {
@@ -401,7 +402,8 @@ int32_t HCameraServiceProxy::PrelaunchCamera()
     return error;
 }
 
-int32_t HCameraServiceProxy::SetPrelaunchConfig(std::string cameraId)
+int32_t HCameraServiceProxy::SetPrelaunchConfig(std::string cameraId, RestoreParamTypeOhos restoreParamType,
+    int activeTime, EffectParam effectParam)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -409,7 +411,11 @@ int32_t HCameraServiceProxy::SetPrelaunchConfig(std::string cameraId)
 
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteString(cameraId);
-
+    data.WriteUint32(restoreParamType);
+    data.WriteUint32(activeTime);
+    data.WriteUint32(effectParam.skinSmoothLevel);
+    data.WriteUint32(effectParam.faceSlender);
+    data.WriteUint32(effectParam.skinTone);
     int32_t error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_PRE_LAUNCH_CAMERA), data, reply, option);
     if (error != ERR_NONE) {

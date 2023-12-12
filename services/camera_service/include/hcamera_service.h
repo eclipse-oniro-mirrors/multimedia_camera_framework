@@ -79,7 +79,9 @@ public:
     int32_t SetTorchCallback(sptr<ITorchServiceCallback> &callback) override;
     int32_t MuteCamera(bool muteMode) override;
     int32_t PrelaunchCamera() override;
-    int32_t SetPrelaunchConfig(string cameraId) override;
+    int32_t SetPrelaunchConfig(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
+        EffectParam effectParam) override;
+//    std::string GetClientBundle(int uid);
     int32_t IsCameraMuted(bool &muteMode) override;
     int32_t SetTorchLevel(float level) override;
     void OnDump() override;
@@ -114,6 +116,10 @@ private:
     bool IsCameraMuteSupported(string cameraId);
     bool IsPrelaunchSupported(string cameraId);
     int32_t UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool muteMode);
+    int32_t UpdateSkinSmoothSetting(shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata, int skinSmoothValue);
+    int32_t UpdateFaceSlenderSetting(shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata,
+        int faceSlenderValue);
+    int32_t UpdateSkinToneSetting(shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata, int skinToneValue);
     int32_t UnSetMuteCallback(pid_t pid);
     int32_t UnSetTorchCallback(pid_t pid);
     bool IsDeviceAlreadyOpen(pid_t& tempPid, string& tempCameraId, sptr<HCameraDevice> &tempDevice);
@@ -121,6 +127,8 @@ private:
     void RegisterSensorCallback();
     void UnRegisterSensorCallback();
     static void DropDetectionDataCallbackImpl(SensorEvent *event);
+    int32_t SaveCurrentParamForRestore(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
+        EffectParam effectParam, sptr<HCaptureSession> captureSession);
     mutex mutex_;
     mutex cbMutex_;
     mutex muteCbMutex_;
@@ -135,7 +143,9 @@ private:
     bool isFoldableInit = false;
     mutex mapOperatorsLock_;
     string preCameraId_;
+    string preCameraClient_;
     SensorUser user;
+    SafeMap<uint32_t, sptr<HCaptureSession>> captureSessionsManager_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

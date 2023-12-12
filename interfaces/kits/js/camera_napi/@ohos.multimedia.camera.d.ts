@@ -514,6 +514,36 @@ declare namespace camera {
      * @since 10
      */
     cameraDevice: CameraDevice;
+
+    /**
+     * Restore param type.
+     *
+     * @type { RestoreParamType }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 10
+     */
+    restoreParamType: RestoreParamType;
+    
+    /**
+     * begin activing time.
+     *
+     * @type { number }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 10
+     */
+    activeTime: number;
+    
+    /**
+     * Setting Param.
+     *
+     * @type { SettingParam }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 10
+     */
+    settingParam: SettingParam;
   }
 
   /**
@@ -1210,6 +1240,41 @@ declare namespace camera {
     y: number;
   }
 
+
+  /**
+   * setting parameter for stream.
+   *
+   * @interface SettingParam
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 10
+   */
+  interface SettingParam {
+    /**
+     * smooth level value for restore
+     *
+     * @type { number }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    skinSmoothLevel: number;
+    /**
+     * face slender value for restore
+     *
+     * @type { number }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    faceSlender: number;
+    /**
+     * skin tone value for restore
+     *
+     * @type { number }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    skinTone: number;
+  }
+
   /**
    * Camera input object.
    *
@@ -1343,6 +1408,37 @@ declare namespace camera {
      * @since 10
      */
     FLASH_MODE_ALWAYS_OPEN = 3
+  }
+
+  /**
+   * Enum for restore param.
+   *
+   * @enum { number }
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 10
+   */
+  enum RestoreParamType {
+    /**
+     * no need set restore Stream Param, only prelauch cameradevice
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    NO_NEED_RESTORE_PARAM = 0,
+    /**
+     * persistent default param, long-lasting effect after T minutes
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    PERSISTENT_DEFAULT_PARAM = 1,
+    /**
+     * transisitent active param, This parameter has a higher priority than PERSISTENT_DEFAULT_PARAM when both exist.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    TRANSISTENT_ACTIVE_PARAM = 2,
   }
 
   /**

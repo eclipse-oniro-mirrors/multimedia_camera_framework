@@ -27,8 +27,8 @@
 #include "system_ability_definition.h"
 #include "hcamera_device_manager.h"
 #include "smooth_zoom.h"
+#include "hcamera_restore_param.h"
 
-using namespace OHOS::AppExecFwk;
 using namespace OHOS::AAFwk;
 namespace OHOS {
 namespace CameraStandard {
@@ -39,36 +39,6 @@ static std::map<CaptureSessionState, std::string> sessionState_ = {
     {CaptureSessionState::SESSION_CONFIG_INPROGRESS, "Config_In-progress"},
     {CaptureSessionState::SESSION_CONFIG_COMMITTED, "Committed"}
 };
-static std::string GetClientBundle(int uid)
-{
-    std::string bundleName = "";
-    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    if (samgr == nullptr) {
-        MEDIA_ERR_LOG("Get ability manager failed");
-        return bundleName;
-    }
-
-    sptr<IRemoteObject> object = samgr->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
-    if (object == nullptr) {
-        MEDIA_DEBUG_LOG("object is NULL.");
-        return bundleName;
-    }
-
-    sptr<AppExecFwk::IBundleMgr> bms = iface_cast<AppExecFwk::IBundleMgr>(object);
-    if (bms == nullptr) {
-        MEDIA_DEBUG_LOG("bundle manager service is NULL.");
-        return bundleName;
-    }
-
-    auto result = bms->GetNameForUid(uid, bundleName);
-    if (result != ERR_OK) {
-        MEDIA_ERR_LOG("GetBundleNameForUid fail");
-        return "";
-    }
-    MEDIA_INFO_LOG("bundle name is %{public}s ", bundleName.c_str());
-
-    return bundleName;
-}
 
 HCaptureSession::HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
     sptr<StreamOperatorCallback> streamOperatorCb, const uint32_t callingTokenId, int32_t opMode)
@@ -104,7 +74,7 @@ HCaptureSession::HCaptureSession(sptr<HCameraHostManager> cameraHostManager,
     callerToken_ = callingTokenId;
     opMode_ = opMode;
     SetOpMode(opMode_);
-    MEDIA_DEBUG_LOG("HCaptureSession: camera stub services(%{public}zu).", session_.size());
+    MEDIA_INFO_LOG("HCaptureSession: camera stub services(%{public}zu). opMode_= %{public}d", session_.size(), opMode_);
 }
 
 HCaptureSession::~HCaptureSession()
@@ -115,6 +85,11 @@ HCaptureSession::~HCaptureSession()
 pid_t HCaptureSession::GetPid()
 {
     return pid_;
+}
+
+int32_t HCaptureSession::GetopMode()
+{
+    return opMode_;
 }
 
 void HCaptureSession::CloseDevice(sptr<HCameraDevice>& device)
@@ -745,6 +720,12 @@ int32_t HCaptureSession::SetColorSpace(ColorSpace colorSpace, ColorSpace capture
         return result;
     }
 
+    if (!(curState_ == CaptureSessionState::SESSION_CONFIG_INPROGRESS ||
+        curState_ == CaptureSessionState::SESSION_CONFIG_COMMITTED)) {
+        MEDIA_ERR_LOG("HCaptureSession::SetColorSpace(), Invalid session state: %{public}d", curState_);
+        return CAMERA_INVALID_STATE;
+    }
+
     std::lock_guard<std::mutex> lock(sessionLock_);
     currColorSpace_ = colorSpace;
     currCaptureColorSpace_ = captureColorSpace;
@@ -761,6 +742,17 @@ int32_t HCaptureSession::SetColorSpace(ColorSpace colorSpace, ColorSpace capture
         currColorSpace_ = ColorSpace::BT709;
     }
 
+    SetColorSpaceForStreams();
+    SetColorSpaceForTempStreams();
+
+    if (isNeedUpdate) {
+        result = UpdateStreamInfos();
+    }
+    return result;
+}
+
+void HCaptureSession::SetColorSpaceForStreams()
+{
     sptr<HStreamCommon> curStream;
     for (auto item = streams_.begin(); item != streams_.end(); ++item) {
         curStream = *item;
@@ -773,7 +765,11 @@ int32_t HCaptureSession::SetColorSpace(ColorSpace colorSpace, ColorSpace capture
             }
         }
     }
+}
 
+void HCaptureSession::SetColorSpaceForTempStreams()
+{
+    sptr<HStreamCommon> curStream;
     for (auto item = tempStreams_.begin(); item != tempStreams_.end(); ++item) {
         curStream = *item;
         if (curStream) {
@@ -785,13 +781,6 @@ int32_t HCaptureSession::SetColorSpace(ColorSpace colorSpace, ColorSpace capture
             }
         }
     }
-
-    if (!isNeedUpdate) {
-        return result;
-    }
-
-    UpdateStreamInfos();
-    return result;
 }
 
 void HCaptureSession::CancelStreamsAndGetStreamInfos(std::vector<StreamInfo_V1_1>& streamInfos)
@@ -834,8 +823,14 @@ void HCaptureSession::RestartStreams()
         }
 
         if (curStream && curStream->GetStreamType() == StreamType::REPEAT &&
-            static_cast<HStreamRepeat*>(curStream.GetRefPtr())->GetRepeatStreamType() != RepeatStreamType::VIDEO) {
-            static_cast<HStreamRepeat*>(curStream.GetRefPtr())->Start();
+            static_cast<HStreamRepeat*>(curStream.GetRefPtr())->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
+            std::shared_ptr<OHOS::Camera::CameraMetadata> settings = nullptr;
+            if (cameraDevice_ != nullptr) {
+                settings = cameraDevice_->CloneCachedSettings();
+                MEDIA_INFO_LOG("HCaptureSession::RestartStreams() CloneCachedSettings");
+                DumpMetadata(settings);
+            }
+            static_cast<HStreamRepeat*>(curStream.GetRefPtr())->Start(settings);
         }
     }
 }
@@ -1044,6 +1039,8 @@ int32_t HCaptureSession::Start()
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings = nullptr;
     if (cameraDevice_ != nullptr) {
         settings = cameraDevice_->CloneCachedSettings();
+        MEDIA_INFO_LOG("HCaptureSession::Start()");
+        DumpMetadata(settings);
     }
 
     int32_t rc = CAMERA_OK;

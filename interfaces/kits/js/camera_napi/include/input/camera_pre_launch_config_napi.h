@@ -18,6 +18,7 @@
 
 #include "hilog/log.h"
 #include "camera_napi_utils.h"
+#include "input/camera_setting_param_napi.h"
 #include "input/prelaunch_config.h"
 
 namespace OHOS {
@@ -28,6 +29,9 @@ class CameraPrelaunchConfigNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value GetPrelaunchCameraDevice(napi_env env, napi_callback_info info);
+    static napi_value GetRestoreParamType(napi_env env, napi_callback_info info);
+    static napi_value GetActiveTime(napi_env env, napi_callback_info info);
+    static napi_value GetSettingParam(napi_env env, napi_callback_info info);
     CameraPrelaunchConfigNapi();
     ~CameraPrelaunchConfigNapi();
     PrelaunchConfig* prelaunchConfig_;

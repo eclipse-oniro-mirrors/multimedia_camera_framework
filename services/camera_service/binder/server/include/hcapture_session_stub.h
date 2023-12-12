@@ -33,6 +33,7 @@ private:
     int HandleAddOutput(MessageParcel &data);
     int HandleRemoveInput(MessageParcel &data);
     int HandleRemoveOutput(MessageParcel &data);
+    int HandleSaveRestoreParam(MessageParcel &data);
     int HandleSetCallback(MessageParcel &data);
     int HandleGetSesstionState(MessageParcel &reply);
     int HandleGetActiveColorSpace(MessageParcel &reply);
