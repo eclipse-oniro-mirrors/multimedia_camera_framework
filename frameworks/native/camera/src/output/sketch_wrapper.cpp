@@ -64,13 +64,10 @@ int32_t SketchWrapper::AttachSketchSurface(sptr<Surface> sketchSurface)
 
 int32_t SketchWrapper::UpdateSketchRatio(float sketchRatio)
 {
+    // SketchRatio value could be negative value
     MEDIA_DEBUG_LOG("Enter Into SketchWrapper::UpdateSketchRatio");
     if (sketchStream_ == nullptr) {
         return CAMERA_INVALID_STATE;
-    }
-    if (sketchRatio <= 0) {
-        MEDIA_WARNING_LOG("SketchWrapper::UpdateSketchRatio arg is illegal:%{public}f", sketchRatio);
-        return CAMERA_INVALID_ARG;
     }
     sptr<IStreamCommon> hostStream = hostStream_.promote();
     if (hostStream == nullptr) {
