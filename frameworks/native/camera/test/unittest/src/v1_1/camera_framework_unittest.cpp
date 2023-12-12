@@ -2959,12 +2959,13 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_009, TestSize.Level
     EXPECT_EQ(session->GetZoomRatio(), 0);
 
     bool isSupported;
-    VideoStabilizationMode stabilizationMode = MIDDLE;
     EXPECT_EQ(session->IsVideoStabilizationModeSupported(MIDDLE, isSupported), 0);
-    EXPECT_EQ(session->SetVideoStabilizationMode(stabilizationMode), 0);
+    EXPECT_EQ(session->SetVideoStabilizationMode(MIDDLE), 0);
     EXPECT_EQ(session->IsFlashModeSupported(FLASH_MODE_AUTO), false);
     EXPECT_EQ(session->IsFlashModeSupported(FLASH_MODE_AUTO, isSupported), 0);
-    EXPECT_EQ((sptr<PhotoOutput> &)photo->IsMirrorSupported(), false);
+
+    sptr<PhotoOutput> photoOutput = (sptr<PhotoOutput> &)photo;
+    EXPECT_EQ(photoOutput->IsMirrorSupported(), false);
 
     input->Close();
     session->Release();
