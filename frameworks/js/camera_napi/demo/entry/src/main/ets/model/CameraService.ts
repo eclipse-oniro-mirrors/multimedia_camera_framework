@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// @ts-nocheck
 import camera from '@ohos.multimedia.camera';
 import fileio from '@ohos.fileio';
 import image from '@ohos.multimedia.image';
