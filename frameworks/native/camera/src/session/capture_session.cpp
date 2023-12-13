@@ -22,8 +22,8 @@
 #include "capture_output.h"
 #include "hcapture_session_callback_stub.h"
 #include "input/camera_input.h"
+#include "input/camera_manager.h"
 #include "camera_log.h"
-#include "mode/mode_manager.h"
 #include "output/photo_output.h"
 #include "output/preview_output.h"
 #include "output/video_output.h"
@@ -390,11 +390,11 @@ void CaptureSession::SetDefaultColorSpace()
     return;
 }
 
-int32_t CaptureSession::CanAddInput(sptr<CaptureInput> &input)
+bool CaptureSession::CanAddInput(sptr<CaptureInput> &input)
 {
     // todo: get Profile passed to createOutput and compare with OutputCapability
     // if present in capability return ok.
-    return CameraErrorCode::SUCCESS;
+    return true;
 }
 
 int32_t CaptureSession::AddInput(sptr<CaptureInput> &input)
@@ -423,11 +423,11 @@ int32_t CaptureSession::AddInput(sptr<CaptureInput> &input)
     return ServiceToCameraError(errCode);
 }
 
-int32_t CaptureSession::CanAddOutput(sptr<CaptureOutput> &output)
+bool CaptureSession::CanAddOutput(sptr<CaptureOutput> &output)
 {
     // todo: get Profile passed to createOutput and compare with OutputCapability
     // if present in capability return ok.
-    return CameraErrorCode::SUCCESS;
+    return true;
 }
 
 sptr<CaptureOutput> CaptureSession::GetMetaOutput()
@@ -2321,10 +2321,10 @@ int32_t CaptureSession::GetMode()
 int32_t CaptureSession::GetFeaturesMode()
 {
     if (isSetMacroEnable_) {
-        if (modeName_ == CameraMode::CAPTURE) {
-            return CameraMode::CAPTURE_MACRO;
-        } else if (modeName_ == CameraMode::VIDEO) {
-            return CameraMode::VIDEO_MACRO;
+        if (modeName_ == SceneMode::CAPTURE) {
+            return SceneMode::CAPTURE_MACRO;
+        } else if (modeName_ == SceneMode::VIDEO) {
+            return SceneMode::VIDEO_MACRO;
         }
     }
     return modeName_;
@@ -2332,10 +2332,10 @@ int32_t CaptureSession::GetFeaturesMode()
 
 vector<int32_t> CaptureSession::GetSubFeatureMods()
 {
-    if (modeName_ == CameraMode::CAPTURE) {
-        return vector<int32_t> { CameraMode::CAPTURE_MACRO };
-    } else if (modeName_ == CameraMode::VIDEO) {
-        return vector<int32_t> { CameraMode::VIDEO_MACRO };
+    if (modeName_ == SceneMode::CAPTURE) {
+        return vector<int32_t> { SceneMode::CAPTURE_MACRO };
+    } else if (modeName_ == SceneMode::VIDEO) {
+        return vector<int32_t> { SceneMode::VIDEO_MACRO };
     }
     return vector<int32_t> {};
 }
@@ -2932,7 +2932,7 @@ int32_t CaptureSession::SetColorSpace(ColorSpace colorSpace)
 
 bool CaptureSession::IsModeWithVideoStream()
 {
-    return GetMode() == CameraMode::VIDEO;
+    return GetMode() == SceneMode::VIDEO;
 }
 
 std::vector<ColorEffect> CaptureSession::GetSupportedColorEffects()

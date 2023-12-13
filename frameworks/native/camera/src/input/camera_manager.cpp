@@ -30,6 +30,7 @@
 using namespace std;
 namespace OHOS {
 namespace CameraStandard {
+using OHOS::HDI::Camera::V1_2::OperationMode_V1_2;
 sptr<CameraManager> CameraManager::cameraManager_;
 std::mutex CameraManager::instanceMutex_;
 
@@ -49,6 +50,36 @@ const std::unordered_map<CameraFormat, camera_format_t> CameraManager::fwToMetaC
     {CAMERA_FORMAT_RGBA_8888, OHOS_CAMERA_FORMAT_RGBA_8888},
     {CAMERA_FORMAT_YCBCR_P010, OHOS_CAMERA_FORMAT_YCBCR_P010},
     {CAMERA_FORMAT_YCRCB_P010, OHOS_CAMERA_FORMAT_YCRCB_P010}
+};
+
+const std::unordered_map<OperationMode_V1_2, SceneMode> g_metaToFwSupportedMode_ = {
+    {OperationMode_V1_2::NORMAL, NORMAL},
+    {OperationMode_V1_2::CAPTURE, CAPTURE},
+    {OperationMode_V1_2::VIDEO, VIDEO},
+    {OperationMode_V1_2::PORTRAIT, PORTRAIT},
+    {OperationMode_V1_2::NIGHT, NIGHT},
+    {OperationMode_V1_2::PROFESSIONAL, PROFESSIONAL},
+    {OperationMode_V1_2::SLOW_MOTION, SLOW_MOTION},
+    {OperationMode_V1_2::SCAN_CODE, SCAN}
+};
+
+const std::unordered_map<SceneMode, OperationMode_V1_2> g_fwToMetaSupportedMode_ = {
+    {NORMAL, OperationMode_V1_2::NORMAL},
+    {CAPTURE,  OperationMode_V1_2::CAPTURE},
+    {VIDEO,  OperationMode_V1_2::VIDEO},
+    {PORTRAIT,  OperationMode_V1_2::PORTRAIT},
+    {NIGHT,  OperationMode_V1_2::NIGHT},
+    {PROFESSIONAL,  OperationMode_V1_2::PROFESSIONAL},
+    {SLOW_MOTION,  OperationMode_V1_2::SLOW_MOTION},
+    {SCAN, OperationMode_V1_2::SCAN_CODE}
+};
+
+const std::set<int32_t> isTemplateMode_ = {
+    SceneMode::CAPTURE, SceneMode::VIDEO
+};
+
+const std::set<int32_t> isPhotoMode_ = {
+    SceneMode::CAPTURE, SceneMode::PORTRAIT
 };
 
 CameraManager::CameraManager()
@@ -155,6 +186,55 @@ sptr<CaptureSession> CameraManager::CreateCaptureSession()
         MEDIA_ERR_LOG("Failed to CreateCaptureSession with error code:%{public}d", ret);
         return nullptr;
     }
+    return captureSession;
+}
+
+sptr<CaptureSession> CameraManager::CreateCaptureSession(SceneMode mode)
+{
+    CAMERA_SYNC_TRACE;
+    sptr<ICaptureSession> session = nullptr;
+    sptr<CaptureSession> captureSession = nullptr;
+
+    int32_t retCode = CAMERA_OK;
+    if (serviceProxy_ == nullptr) {
+        MEDIA_ERR_LOG("serviceProxy_ is null");
+        return nullptr;
+    }
+    OperationMode_V1_2 opMode = OperationMode_V1_2::NORMAL;
+    for (auto itr = g_fwToMetaSupportedMode_.cbegin(); itr != g_fwToMetaSupportedMode_.cend(); itr++) {
+        if (mode == itr->first) {
+            opMode = itr->second;
+        }
+    }
+    MEDIA_ERR_LOG("CameraManager CreateCaptureSession E");
+    retCode = serviceProxy_->CreateCaptureSession(session, opMode);
+    MEDIA_ERR_LOG("CameraManager CreateCaptureSession X, %{public}d", retCode);
+    if (retCode == CAMERA_OK && session != nullptr) {
+        switch (mode) {
+            case SceneMode::VIDEO:
+                captureSession = new(std::nothrow) VideoSession(session);
+                break;
+            case SceneMode::CAPTURE:
+                captureSession = new(std::nothrow) PhotoSession(session);
+                break;
+            case SceneMode::PORTRAIT:
+                captureSession = new(std::nothrow) PortraitSession(session);
+                break;
+            case SceneMode::SCAN:
+                captureSession = new(std::nothrow) ScanSession(session);
+                break;
+            case SceneMode::NIGHT:
+                captureSession = new(std::nothrow) NightSession(session);
+                break;
+            default:
+                captureSession = new(std::nothrow) CaptureSession(session);
+                break;
+        }
+    } else {
+        MEDIA_ERR_LOG("Failed to get capture session object from hcamera service!, %{public}d", retCode);
+        return nullptr;
+    }
+    captureSession->SetMode(static_cast<int32_t>(mode));
     return captureSession;
 }
 
@@ -669,8 +749,6 @@ void CameraManager::InitCameraList()
         cameraObjList[i] = nullptr;
     }
     cameraObjList.clear();
-
-    std::vector<sptr<CameraDevice>> supportedCameras;
     GetDmDeviceInfo();
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -693,13 +771,12 @@ void CameraManager::InitCameraList()
                 cameraObj->modePreviewProfiles_[portraitMode] = capability->GetPreviewProfiles();
                 cameraObj->modePhotoProfiles_[portraitMode] = capability->GetPhotoProfiles();
             }
-            supportedCameras.emplace_back(cameraObj);
+            cameraObjList.emplace_back(cameraObj);
         }
     } else {
         MEDIA_ERR_LOG("Get camera device failed!, retCode: %{public}d", retCode);
     }
 
-    ChooseDeFaultCameras(supportedCameras);
     AlignVideoFpsProfile(cameraObjList);
 }
 
@@ -708,6 +785,27 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(cameraListMutex_);
     return cameraObjList;
+}
+
+std::vector<SceneMode> CameraManager::GetSupportedModes(sptr<CameraDevice>& camera)
+{
+    std::vector<SceneMode> supportedModes = {};
+
+    std::shared_ptr<Camera::CameraMetadata> metadata = camera->GetMetadata();
+    camera_metadata_item_t item;
+    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAMERA_MODES, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedModes Failed with return code %{public}d", ret);
+        return supportedModes;
+    }
+    for (uint32_t i = 0; i < item.count; i++) {
+        auto itr = g_metaToFwSupportedMode_.find(static_cast<OperationMode_V1_2>(item.data.u8[i]));
+        if (itr != g_metaToFwSupportedMode_.end()) {
+            supportedModes.emplace_back(itr->second);
+        }
+    }
+    MEDIA_INFO_LOG("CameraManager::GetSupportedModes supportedModes size: %{public}zu", supportedModes.size());
+    return supportedModes;
 }
 
 void CameraManager::AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& cameraObjList)
@@ -765,26 +863,6 @@ void CameraManager::AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& camera
                            "w(%{public}d),h(%{public}d) fps min(%{public}d),min(%{public}d)",
                            frontProfile.GetSize().width, frontProfile.GetSize().height,
                            frontProfile.framerates_[minIndex], frontProfile.framerates_[maxIndex]);
-        }
-    }
-}
-
-void CameraManager::ChooseDeFaultCameras(std::vector<sptr<CameraDevice>>& supportedCameras)
-{
-    for (auto& camera : supportedCameras) {
-        bool hasDefaultCamera = false;
-        for (auto& defaultCamera : cameraObjList) {
-            if ((camera->GetConnectionType() != CAMERA_CONNECTION_USB_PLUGIN) &&
-                (defaultCamera->GetPosition() == camera->GetPosition()) &&
-                (defaultCamera->GetConnectionType() == camera->GetConnectionType())) {
-                hasDefaultCamera = true;
-                MEDIA_INFO_LOG("ChooseDeFaultCameras alreadly has default camera");
-            } else {
-                MEDIA_INFO_LOG("ChooseDeFaultCameras need add default camera");
-            }
-        }
-        if (!hasDefaultCamera) {
-            cameraObjList.emplace_back(camera);
         }
     }
 }
@@ -949,7 +1027,9 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     vidProfiles_.clear();
 
     if (g_isCapabilitySupported(metadata, item, OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS)) {
-        ParseExtendCapability(cameraOutputCapability, modeName, item);
+        int32_t mode = isTemplateMode_.count(modeName) ? SceneMode::NORMAL : modeName;
+        MEDIA_INFO_LOG("GetSupportedOutputCapability by mode = %{public}d", mode);
+        ParseExtendCapability(cameraOutputCapability, mode, item);
     } else if (g_isCapabilitySupported(metadata, item, OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS)) {
         ParseBasicCapability(cameraOutputCapability, metadata, item);
     } else {
@@ -961,7 +1041,9 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     MEDIA_INFO_LOG("SetPhotoProfiles size = %{public}zu", photoProfiles_.size());
     cameraOutputCapability->SetPreviewProfiles(previewProfiles_);
     MEDIA_INFO_LOG("SetPreviewProfiles size = %{public}zu", previewProfiles_.size());
-    cameraOutputCapability->SetVideoProfiles(vidProfiles_);
+    if (!isPhotoMode_.count(modeName)) {
+        cameraOutputCapability->SetVideoProfiles(vidProfiles_);
+    }
     MEDIA_INFO_LOG("SetVideoProfiles size = %{public}zu", vidProfiles_.size());
     camera_metadata_item_t metadataItem;
     vector<MetadataObjectType> objectTypes = {};

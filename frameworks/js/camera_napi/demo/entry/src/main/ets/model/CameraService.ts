@@ -39,10 +39,10 @@ const TAG: string = 'CameraService';
 
 class CameraService {
   private mediaUtil: MediaUtils = MediaUtils.getInstance();
-  private modeManager: camera.ModeManager | undefined = undefined;
+  private modeManager: camera.CameraManager | undefined = undefined;
   private cameraManager: camera.CameraManager | undefined = undefined;
   private cameras: Array<camera.CameraDevice> | undefined = undefined;
-  private cameraModes: Array<camera.CameraMode> | undefined = undefined;
+  private sceneModes: Array<camera.SceneMode> | undefined = undefined;
   private cameraOutputCapability: camera.CameraOutputCapability | undefined = undefined;
   private cameraInput: camera.CameraInput | undefined = undefined;
   private previewOutput: camera.PreviewOutput | undefined = undefined;
@@ -858,8 +858,8 @@ class CameraService {
 
   getSupportedModeFn(cameraIndex: number): void {
     try {
-      this.cameraModes = this.modeManager.getSupportedModes(this.cameras[cameraIndex]);
-      Logger.info(TAG, `getSupportedModeFn success: ${this.cameraModes}, length: ${this.cameraModes.length}`);
+      this.sceneModes = this.modeManager.getSupportedModes(this.cameras[cameraIndex]);
+      Logger.info(TAG, `getSupportedModeFn success: ${this.sceneModes}, length: ${this.sceneModes.length}`);
     } catch (error) {
       let err = error as BusinessError;
       Logger.error(TAG, `getSupportedModeFn failed: ${JSON.stringify(err)}`);
@@ -951,10 +951,10 @@ class CameraService {
     }
   }
 
-  async portraitSessionFlowFn(cameraModeIndex: number): Promise<void> {
+  async portraitSessionFlowFn(sceneModeIndex: number): Promise<void> {
     try {
       // 创建PortraitSession实例
-      this.portraitSession = this.modeManager.createCaptureSession(this.cameraModes[cameraModeIndex]) as camera.PortraitSession;
+      this.portraitSession = this.modeManager.createCaptureSession(this.sceneModes[sceneModeIndex]) as camera.PortraitSession;
       // 监听焦距的状态变化
       this.onFocusStateChange();
       // 监听拍照会话的错误事件

@@ -16,6 +16,10 @@
 #include "input/camera_manager_napi.h"
 #include "input/camera_napi.h"
 #include "input/camera_pre_launch_config_napi.h"
+#include "mode/portrait_session_napi.h"
+#include "mode/night_session_napi.h"
+#include "mode/photo_session_napi.h"
+#include "mode/video_session_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -95,6 +99,7 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
     napi_property_descriptor camera_mgr_properties[] = {
         // CameraManager
         DECLARE_NAPI_FUNCTION("getSupportedCameras", GetSupportedCameras),
+        DECLARE_NAPI_FUNCTION("getSupportedSceneModes", GetSupportedModes),
         DECLARE_NAPI_FUNCTION("getSupportedOutputCapability", GetSupportedOutputCapability),
         DECLARE_NAPI_FUNCTION("isCameraMuted", IsCameraMuted),
         DECLARE_NAPI_FUNCTION("isCameraMuteSupported", IsCameraMuteSupported),
@@ -104,6 +109,7 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("setPrelaunchConfig", SetPrelaunchConfig),
         DECLARE_NAPI_FUNCTION("createCameraInput", CreateCameraInputInstance),
         DECLARE_NAPI_FUNCTION("createCaptureSession", CreateCameraSessionInstance),
+        DECLARE_NAPI_FUNCTION("createSession", CreateSessionInstance),
         DECLARE_NAPI_FUNCTION("createPreviewOutput", CreatePreviewOutputInstance),
         DECLARE_NAPI_FUNCTION("createDeferredPreviewOutput", CreateDeferredPreviewOutputInstance),
         DECLARE_NAPI_FUNCTION("createPhotoOutput", CreatePhotoOutputInstance),
@@ -235,6 +241,56 @@ napi_value CameraManagerNapi::CreateCameraSessionInstance(napi_env env, napi_cal
         return nullptr;
     }
     result = CameraSessionNapi::CreateCameraSession(env);
+    return result;
+}
+
+enum JsSceneMode {
+    JS_CAPTURE = 1,
+    JS_VIDEO = 2,
+    JS_PORTRAIT = 3,
+    JS_NIGHT = 4,
+};
+
+napi_value CameraManagerNapi::CreateSessionInstance(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CreateSessionInstance is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+
+    CameraManagerNapi* cameraManagerNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
+    if (status != napi_ok || cameraManagerNapi == nullptr) {
+        MEDIA_ERR_LOG("napi_unwrap failure!");
+        return nullptr;
+    }
+
+    int32_t jsModeName;
+    napi_get_value_int32(env, argv[PARAM0], &jsModeName);
+    MEDIA_INFO_LOG("CameraManagerNapi::CreateSessionInstance mode = %{public}d", jsModeName);
+    switch (jsModeName) {
+        case JS_CAPTURE:
+            result = PhotoSessionNapi::CreateCameraSession(env);
+            break;
+        case JS_VIDEO:
+            result = VideoSessionNapi::CreateCameraSession(env);
+            break;
+        case JS_PORTRAIT:
+            result = PortraitSessionNapi::CreateCameraSession(env);
+            break;
+        case JS_NIGHT:
+            result = NightSessionNapi::CreateCameraSession(env);
+            break;
+        default:
+            MEDIA_ERR_LOG("CameraManagerNapi::CreateSessionInstance mode = %{public}d not supported", jsModeName);
+            break;
+    }
     return result;
 }
 
@@ -601,14 +657,74 @@ napi_value CameraManagerNapi::GetSupportedCameras(napi_env env, napi_callback_in
     return result;
 }
 
+static napi_value CreateJSArray(napi_env env, napi_status status,
+    std::vector<SceneMode> nativeArray)
+{
+    MEDIA_DEBUG_LOG("CreateJSArray is called");
+    napi_value jsArray = nullptr;
+    napi_value item = nullptr;
+
+    if (nativeArray.empty()) {
+        MEDIA_ERR_LOG("nativeArray is empty");
+    }
+
+    status = napi_create_array(env, &jsArray);
+    if (status == napi_ok) {
+        for (size_t i = 0; i < nativeArray.size(); i++) {
+            napi_create_int32(env, nativeArray[i], &item);
+            if (napi_set_element(env, jsArray, i, item) != napi_ok) {
+                MEDIA_ERR_LOG("Failed to create profile napi wrapper object");
+                return nullptr;
+            }
+        }
+    }
+    return jsArray;
+}
+
+napi_value CameraManagerNapi::GetSupportedModes(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("GetSupportedModes is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE];
+    napi_value thisVar = nullptr;
+    napi_value jsResult = nullptr;
+    CameraDeviceNapi* cameraDeviceNapi = nullptr;
+    CameraManagerNapi* cameraManagerNapi = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void**>(&cameraDeviceNapi));
+    if (status != napi_ok || cameraDeviceNapi == nullptr) {
+        MEDIA_ERR_LOG("Could not able to read cameraId argument!");
+        return result;
+    }
+    sptr<CameraDevice> cameraInfo = cameraDeviceNapi->cameraDevice_;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
+    if (status == napi_ok && cameraManagerNapi != nullptr) {
+        std::vector<SceneMode> modeObjList = cameraManagerNapi->cameraManager_->GetSupportedModes(cameraInfo);
+        MEDIA_INFO_LOG("CameraManagerNapi::GetSupportedModes size=[%{public}zu]", modeObjList.size());
+        jsResult = CreateJSArray(env, status, modeObjList);
+        if (status == napi_ok) {
+            return jsResult;
+        } else {
+            MEDIA_ERR_LOG("Failed to get modeObjList!, errorCode : %{public}d", status);
+        }
+    } else {
+        MEDIA_ERR_LOG("GetSupportedModes call Failed!");
+    }
+    return result;
+}
+
 napi_value CameraManagerNapi::GetSupportedOutputCapability(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("GetSupportedOutputCapability is called");
     napi_status status;
 
     napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    size_t argc = ARGS_TWO;
+    napi_value argv[ARGS_TWO] = {0};
     napi_value thisVar = nullptr;
     CameraDeviceNapi* cameraDeviceNapi = nullptr;
     CameraManagerNapi* cameraManagerNapi = nullptr;
@@ -627,7 +743,31 @@ napi_value CameraManagerNapi::GetSupportedOutputCapability(napi_env env, napi_ca
         return result;
     }
     sptr<CameraDevice> cameraInfo = cameraDeviceNapi->cameraDevice_;
-    result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo);
+    if (argc == ARGS_ONE) {
+        result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo);
+    } else if (argc == ARGS_TWO) {
+        int32_t sceneMode;
+        napi_get_value_int32(env, argv[PARAM1], &sceneMode);
+        MEDIA_INFO_LOG("CameraManagerNapi::GetSupportedOutputCapability mode = %{public}d", sceneMode);
+        switch (sceneMode) {
+            case JS_CAPTURE:
+                result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, SceneMode::CAPTURE);
+                break;
+            case JS_VIDEO:
+                result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, SceneMode::VIDEO);
+                break;
+            case JS_PORTRAIT:
+                result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, SceneMode::PORTRAIT);
+                break;
+            case JS_NIGHT:
+                result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, SceneMode::NIGHT);
+                break;
+            default:
+                MEDIA_ERR_LOG("CreateCameraSessionInstance mode = %{public}d not supported", sceneMode);
+                break;
+        }
+    }
+    
     return result;
 }
 

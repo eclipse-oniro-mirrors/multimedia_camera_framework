@@ -18,7 +18,6 @@
 #include <string>
 #include "input/camera_input.h"
 #include "input/camera_manager.h"
-#include "mode/mode_manager.h"
 #include "output/camera_output_capability.h"
 
 #include "camera_log.h"
@@ -348,14 +347,14 @@ int main(int argc, char **argv)
         }
     }
     cout<<"Camera ID ="<<device->GetID()<<",camera Position = "<<device->GetPosition()<<endl;
-    sptr<ModeManager> modeManagerObj = ModeManager::GetInstance();
-    std::vector<CameraMode> supportedModes = modeManagerObj->GetSupportedModes(device);
+    sptr<CameraManager> modeManagerObj = CameraManager::GetInstance();
+    std::vector<SceneMode> supportedModes = modeManagerObj->GetSupportedModes(device);
     std::string modes = "";
     for (auto mode : supportedModes) {
         modes += std::to_string(static_cast<uint32_t>(mode)) + " , ";
     }
     MEDIA_INFO_LOG("supportedModes : %{public}s", modes.c_str());
-    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(CameraMode::PORTRAIT);
+    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(SceneMode::PORTRAIT);
     sptr<PortraitSession> portraitSession = nullptr;
     portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
     if (portraitSession == nullptr) {
@@ -378,7 +377,7 @@ int main(int argc, char **argv)
         std::vector<Size> previewSizes;
         std::vector<Size> photoSizes;
         sptr<CameraOutputCapability> outputcapability =
-            modeManagerObj->GetSupportedOutputCapability(device, CameraMode::PORTRAIT);
+            modeManagerObj->GetSupportedOutputCapability(device, SceneMode::PORTRAIT);
         previewProfiles = outputcapability->GetPreviewProfiles();
         uint32_t profileIndex = 0;
         for (auto i : previewProfiles) {

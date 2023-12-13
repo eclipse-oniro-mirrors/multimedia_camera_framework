@@ -27,7 +27,7 @@ public:
     ScanSession() {};
     ~ScanSession();
  
-    virtual int32_t AddOutput(sptr<CaptureOutput> &output);
+    int32_t AddOutput(sptr<CaptureOutput> &output) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

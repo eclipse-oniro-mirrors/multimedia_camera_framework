@@ -462,7 +462,7 @@ void CameraFrameworkModuleTest::ConfigScanSession(sptr<CaptureOutput> &previewOu
         MEDIA_INFO_LOG("old session exist, need release");
         session_->Release();
     }
-    scanSession_ = modeManager_ -> CreateCaptureSession(CameraMode::SCAN);
+    scanSession_ = manager_ -> CreateCaptureSession(SceneMode::SCAN);
     ASSERT_NE(scanSession_, nullptr);
 
     int32_t intResult = scanSession_->BeginConfig();
@@ -693,9 +693,9 @@ bool CameraFrameworkModuleTest::IsSupportNow()
     return true;
 }
 
-bool CameraFrameworkModuleTest::IsSupportMode(CameraMode mode)
+bool CameraFrameworkModuleTest::IsSupportMode(SceneMode mode)
 {
-    std::vector<CameraMode> modes = modeManager_->GetSupportedModes(cameras_[0]);
+    std::vector<SceneMode> modes = manager_->GetSupportedModes(cameras_[0]);
     if (modes.size() == 0) {
         MEDIA_ERR_LOG("IsSupportMode: modes.size is null");
         return false;
@@ -768,9 +768,6 @@ void CameraFrameworkModuleTest::SetUp()
 
     input_ = manager_->CreateCameraInput(cameras_[0]);
     ASSERT_NE(input_, nullptr);
-
-    modeManager_ = ModeManager::GetInstance();
-    ASSERT_NE(modeManager_, nullptr);
 
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     std::vector<sptr<CameraDevice>> cameraObjList = camManagerObj->GetSupportedCameras();
@@ -2409,20 +2406,23 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_043, TestSize.Le
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_045, TestSize.Level0)
 {
-    CameraMode portraitMode = CameraMode::PORTRAIT;
+    SceneMode portraitMode = SceneMode::PORTRAIT;
     if (!IsSupportMode(portraitMode)) {
         return;
     }
-    sptr<ModeManager> modeManagerObj = ModeManager::GetInstance();
-    ASSERT_NE(modeManagerObj, nullptr);
+    sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(cameraManagerObj, nullptr);
 
-    std::vector<CameraMode> modes = modeManagerObj->GetSupportedModes(cameras_[0]);
+    std::vector<SceneMode> modes = cameraManagerObj->GetSupportedModes(cameras_[0]);
     ASSERT_TRUE(modes.size() != 0);
 
-    sptr<CameraOutputCapability> modeAbility = modeManagerObj->GetSupportedOutputCapability(cameras_[0], portraitMode);
+
+    sptr<CameraOutputCapability> modeAbility =
+        cameraManagerObj->GetSupportedOutputCapability(cameras_[0], portraitMode);
     ASSERT_NE(modeAbility, nullptr);
 
-    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(portraitMode);
+    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(portraitMode);
+
     ASSERT_NE(captureSession, nullptr);
     sptr<PortraitSession> portraitSession = static_cast<PortraitSession*>(captureSession.GetRefPtr());
     ASSERT_NE(portraitSession, nullptr);
@@ -2484,20 +2484,22 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_045, TestSize.Le
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_046, TestSize.Level0)
 {
-    CameraMode portraitMode = CameraMode::PORTRAIT;
+    SceneMode portraitMode = SceneMode::PORTRAIT;
     if (!IsSupportMode(portraitMode)) {
         return;
     }
-    sptr<ModeManager> modeManagerObj = ModeManager::GetInstance();
-    ASSERT_NE(modeManagerObj, nullptr);
+    sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(cameraManagerObj, nullptr);
 
-    std::vector<CameraMode> modes = modeManagerObj->GetSupportedModes(cameras_[0]);
+    std::vector<SceneMode> modes = cameraManagerObj->GetSupportedModes(cameras_[0]);
     ASSERT_TRUE(modes.size() != 0);
 
-    sptr<CameraOutputCapability> modeAbility = modeManagerObj->GetSupportedOutputCapability(cameras_[0], portraitMode);
+    sptr<CameraOutputCapability> modeAbility =
+        cameraManagerObj->GetSupportedOutputCapability(cameras_[0], portraitMode);
     ASSERT_NE(modeAbility, nullptr);
 
-    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(portraitMode);
+    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(portraitMode);
+
     ASSERT_NE(captureSession, nullptr);
     sptr<PortraitSession> portraitSession = static_cast<PortraitSession*>(captureSession.GetRefPtr());
     ASSERT_NE(portraitSession, nullptr);
@@ -2559,19 +2561,21 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_046, TestSize.Le
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_047, TestSize.Level0)
 {
-    CameraMode portraitMode = CameraMode::PORTRAIT;
+    SceneMode portraitMode = SceneMode::PORTRAIT;
     if (!IsSupportMode(portraitMode)) {
         return;
     }
-    sptr<ModeManager> modeManagerObj = ModeManager::GetInstance();
-    ASSERT_NE(modeManagerObj, nullptr);
-    std::vector<CameraMode> modes = modeManagerObj->GetSupportedModes(cameras_[0]);
+    sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(cameraManagerObj, nullptr);
+
+    std::vector<SceneMode> modes = cameraManagerObj->GetSupportedModes(cameras_[0]);
     ASSERT_TRUE(modes.size() != 0);
 
-    sptr<CameraOutputCapability> modeAbility = modeManagerObj->GetSupportedOutputCapability(cameras_[0], portraitMode);
+    sptr<CameraOutputCapability> modeAbility =
+        cameraManagerObj->GetSupportedOutputCapability(cameras_[0], portraitMode);
     ASSERT_NE(modeAbility, nullptr);
 
-    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(portraitMode);
+    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(portraitMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<PortraitSession> portraitSession = static_cast<PortraitSession*>(captureSession.GetRefPtr());
     ASSERT_NE(portraitSession, nullptr);
@@ -2632,20 +2636,21 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_047, TestSize.Le
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_048, TestSize.Level0)
 {
-    CameraMode portraitMode = CameraMode::PORTRAIT;
+    SceneMode portraitMode = SceneMode::PORTRAIT;
     if (!IsSupportMode(portraitMode)) {
         return;
     }
-    sptr<ModeManager> modeManagerObj = ModeManager::GetInstance();
-    ASSERT_NE(modeManagerObj, nullptr);
+    sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(cameraManagerObj, nullptr);
 
-    std::vector<CameraMode> modes = modeManagerObj->GetSupportedModes(cameras_[0]);
+    std::vector<SceneMode> modes = cameraManagerObj->GetSupportedModes(cameras_[0]);
     ASSERT_TRUE(modes.size() != 0);
 
-    sptr<CameraOutputCapability> modeAbility = modeManagerObj->GetSupportedOutputCapability(cameras_[0], portraitMode);
+    sptr<CameraOutputCapability> modeAbility =
+        cameraManagerObj->GetSupportedOutputCapability(cameras_[0], portraitMode);
     ASSERT_NE(modeAbility, nullptr);
 
-    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(portraitMode);
+    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(portraitMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<PortraitSession> portraitSession = static_cast<PortraitSession*>(captureSession.GetRefPtr());
     ASSERT_NE(portraitSession, nullptr);
@@ -2738,7 +2743,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_050, TestSi
         MEDIA_INFO_LOG("old session exist, need release");
         session_->Release();
     }
-    scanSession_ = modeManager_ -> CreateCaptureSession(CameraMode::SCAN);
+    scanSession_ = manager_ -> CreateCaptureSession(SceneMode::SCAN);
     ASSERT_NE(scanSession_, nullptr);
 
     int32_t intResult = scanSession_->BeginConfig();
@@ -2779,15 +2784,15 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_051, TestSi
 {
     MEDIA_INFO_LOG("teset051 start");
     sptr<CameraDevice> scanModeDevice = cameras_[0];
-    vector<CameraMode> modeVec = modeManager_ -> GetSupportedModes(scanModeDevice);
-    EXPECT_TRUE(find(modeVec.begin(), modeVec.end(), CameraMode::SCAN) != modeVec.end());
+    vector<SceneMode> modeVec = manager_ -> GetSupportedModes(scanModeDevice);
+    EXPECT_TRUE(find(modeVec.begin(), modeVec.end(), SceneMode::SCAN) != modeVec.end());
 
     for (auto iter : modeVec) {
         MEDIA_INFO_LOG("get supportedMode : %{public}d", iter);
     }
 
     sptr<CameraOutputCapability> scanCapability =
-        modeManager_ -> GetSupportedOutputCapability(scanModeDevice, CameraMode::SCAN);
+        manager_ -> GetSupportedOutputCapability(scanModeDevice, SceneMode::SCAN);
     EXPECT_EQ(scanCapability -> GetPhotoProfiles().size(), 0);
     EXPECT_NE(scanCapability -> GetPreviewProfiles().size(), 0);
     EXPECT_EQ(scanCapability -> GetVideoProfiles().size(), 0);
@@ -6777,7 +6782,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_050, TestSize.Le
     auto output = CreatePreviewOutput(*previewProfile);
     ASSERT_NE(output, nullptr);
 
-    session_->SetMode(static_cast<int32_t>(CameraMode::CAPTURE));
+    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
@@ -6832,7 +6837,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_051, TestSize.Le
     auto output = CreatePreviewOutput(*previewProfile);
     ASSERT_NE(output, nullptr);
 
-    session_->SetMode(static_cast<int32_t>(CameraMode::CAPTURE));
+    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
@@ -6914,7 +6919,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_052, TestSize.Le
     bool isSketchSupport = previewOutput->IsSketchSupported();
     ASSERT_FALSE(isSketchSupport);
 
-    session_->SetMode(static_cast<int32_t>(CameraMode::CAPTURE));
+    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -6930,11 +6935,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_052, TestSize.Le
         return;
     }
 
-    session_->SetMode(CameraMode::PORTRAIT);
+    session_->SetMode(SceneMode::PORTRAIT);
     int sketchEnableRatio = previewOutput->GetSketchRatio();
     EXPECT_LT(sketchEnableRatio, 0);
 
-    session_->SetMode(CameraMode::CAPTURE);
+    session_->SetMode(SceneMode::CAPTURE);
     sketchEnableRatio = previewOutput->GetSketchRatio();
     EXPECT_GT(sketchEnableRatio, 0);
 
@@ -6985,7 +6990,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_053, TestSize.Le
     auto output = CreatePreviewOutput(*previewProfile);
     ASSERT_NE(output, nullptr);
 
-    session_->SetMode(static_cast<int32_t>(CameraMode::CAPTURE));
+    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
@@ -7080,7 +7085,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_054, TestSize.Le
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
     ASSERT_NE(output, nullptr);
 
-    session_->SetMode(static_cast<int32_t>(CameraMode::CAPTURE));
+    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -7144,7 +7149,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_055, TestSize.Le
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
     ASSERT_NE(output, nullptr);
 
-    session_->SetMode(static_cast<int32_t>(CameraMode::CAPTURE));
+    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -7232,17 +7237,18 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_056, TestSize.Le
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_057, TestSize.Level0)
 {
-    CameraMode portraitMode = CameraMode::PORTRAIT;
+    SceneMode portraitMode = SceneMode::PORTRAIT;
     if (!IsSupportMode(portraitMode)) {
         return;
     }
-    sptr<ModeManager> modeManagerObj = ModeManager::GetInstance();
+    sptr<CameraManager> modeManagerObj = CameraManager::GetInstance();
     ASSERT_NE(modeManagerObj, nullptr);
 
-    std::vector<CameraMode> modes = modeManagerObj->GetSupportedModes(cameras_[0]);
+    std::vector<SceneMode> modes = modeManagerObj->GetSupportedModes(cameras_[0]);
     ASSERT_TRUE(modes.size() != 0);
 
-    sptr<CameraOutputCapability> modeAbility = modeManagerObj->GetSupportedOutputCapability(cameras_[0], portraitMode);
+    sptr<CameraOutputCapability> modeAbility =
+        modeManagerObj->GetSupportedOutputCapability(cameras_[0], portraitMode);
     ASSERT_NE(modeAbility, nullptr);
 
     sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(portraitMode);
@@ -7290,17 +7296,18 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_057, TestSize.Le
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_058, TestSize.Level0)
 {
-    CameraMode nightMode = CameraMode::NIGHT;
+    SceneMode nightMode = SceneMode::NIGHT;
     if (!IsSupportMode(nightMode)) {
         return;
     }
-    sptr<ModeManager> modeManagerObj = ModeManager::GetInstance();
+    sptr<CameraManager> modeManagerObj = CameraManager::GetInstance();
     ASSERT_NE(modeManagerObj, nullptr);
 
-    std::vector<CameraMode> modes = modeManagerObj->GetSupportedModes(cameras_[0]);
+    std::vector<SceneMode> modes = modeManagerObj->GetSupportedModes(cameras_[0]);
     ASSERT_TRUE(modes.size() != 0);
 
-    sptr<CameraOutputCapability> modeAbility = modeManagerObj->GetSupportedOutputCapability(cameras_[0], nightMode);
+    sptr<CameraOutputCapability> modeAbility =
+        modeManagerObj->GetSupportedOutputCapability(cameras_[0], nightMode);
     ASSERT_NE(modeAbility, nullptr);
 
     sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(nightMode);
@@ -7354,7 +7361,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_059, TestSize.Le
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     camInput->Open();
 
-    session_->SetMode(static_cast<int32_t>(CameraMode::CAPTURE));
+    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -7401,7 +7408,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_060, TestSize.Le
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     camInput->Open();
 
-    session_->SetMode(static_cast<int32_t>(CameraMode::CAPTURE));
+    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -7417,6 +7424,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_060, TestSize.Le
 
     intResult = session_->CommitConfig();
     EXPECT_EQ(intResult, 0);
+
 
     std::vector<ColorSpace> colorSpaceLists = session_->GetSupportedColorSpaces();
     if (colorSpaceLists.size() != 0) {
@@ -7450,7 +7458,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_061, TestSize.Le
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     camInput->Open();
 
-    session_->SetMode(static_cast<int32_t>(CameraMode::CAPTURE));
+    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -7499,7 +7507,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_062, TestSize.Le
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     camInput->Open();
 
-    session_->SetMode(static_cast<int32_t>(CameraMode::CAPTURE));
+    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -7554,7 +7562,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_063, TestSize.Le
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
     ASSERT_NE(output, nullptr);
 
-    session_->SetMode(static_cast<int32_t>(CameraMode::VIDEO));
+    session_->SetMode(static_cast<int32_t>(SceneMode::VIDEO));
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);

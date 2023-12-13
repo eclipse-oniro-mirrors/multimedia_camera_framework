@@ -19,7 +19,6 @@
 #include "gtest/gtest.h"
 #include "hcamera_service.h"
 #include "input/camera_manager.h"
-#include "mode/mode_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -55,7 +54,6 @@ public:
     sptr<MockCameraDevice> mockCameraDevice;
     sptr<MockHCameraHostManager> mockCameraHostManager;
     sptr<CameraManager> cameraManager;
-    sptr<ModeManager> modeManager;
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
     static void SetUpTestCase(void);
 

@@ -277,7 +277,7 @@ napi_value CameraOutputCapabilityNapi::CreateCameraOutputCapability(napi_env env
 }
 
 napi_value CameraOutputCapabilityNapi::CreateCameraOutputCapability(napi_env env,
-    sptr<CameraDevice> camera, CameraMode modename)
+    sptr<CameraDevice> camera, SceneMode modename)
 {
     MEDIA_INFO_LOG("CreateCameraOutputCapability is called");
     CAMERA_SYNC_TRACE;
@@ -291,7 +291,7 @@ napi_value CameraOutputCapabilityNapi::CreateCameraOutputCapability(napi_env env
 
     status = napi_get_reference_value(env, sCapabilityConstructor_, &constructor);
     if (status == napi_ok) {
-        sCameraOutputCapability_ = ModeManager::GetInstance()->GetSupportedOutputCapability(camera, modename);
+        sCameraOutputCapability_ = CameraManager::GetInstance()->GetSupportedOutputCapability(camera, modename);
         if (sCameraOutputCapability_ == nullptr) {
             MEDIA_ERR_LOG("failed to create CreateCameraOutputCapability");
             return result;
