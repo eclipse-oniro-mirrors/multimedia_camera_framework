@@ -43,7 +43,7 @@ thread_local napi_ref CameraNapi::focusStateRef_ = nullptr;
 thread_local napi_ref CameraNapi::qualityLevelRef_ = nullptr;
 thread_local napi_ref CameraNapi::videoStabilizationModeRef_ = nullptr;
 thread_local napi_ref CameraNapi::hostNameTypeRef_ = nullptr;
-thread_local napi_ref CameraNapi::cameraModeRef_ = nullptr;
+thread_local napi_ref CameraNapi::sceneModeRef_ = nullptr;
 thread_local napi_ref CameraNapi::filterTypeRef_ = nullptr;
 thread_local napi_ref CameraNapi::beautyTypeRef_ = nullptr;
 thread_local napi_ref CameraNapi::portraitEffectRef_ = nullptr;
@@ -142,7 +142,9 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("HostNameType",
             CreateObjectWithMap(env, "HostNameType", mapHostNameType, hostNameTypeRef_)),
         DECLARE_NAPI_PROPERTY("CameraMode",
-            CreateObjectWithMap(env, "CameraMode", mapCameraMode, cameraModeRef_)),
+            CreateObjectWithMap(env, "SceneMode", mapSceneMode, sceneModeRef_)),
+        DECLARE_NAPI_PROPERTY("SceneMode",
+            CreateObjectWithMap(env, "SceneMode", mapSceneMode, sceneModeRef_)),
         DECLARE_NAPI_PROPERTY("FilterType",
             CreateObjectWithMap(env, "FilterType", mapFilterType, filterTypeRef_)),
         DECLARE_NAPI_PROPERTY("BeautyType",

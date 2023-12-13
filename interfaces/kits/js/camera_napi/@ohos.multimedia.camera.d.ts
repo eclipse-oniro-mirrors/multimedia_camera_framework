@@ -94,7 +94,7 @@ declare namespace camera {
    * @syscap SystemCapability.Multimedia.Camera.Core
    * @since 10
    */
-  enum CameraMode {
+  enum SceneMode {
     /**
     * normal mode.
     *
@@ -888,33 +888,33 @@ declare namespace camera {
     /**
      * Gets supported mode descriptions.
      *
-     * @returns { Array<CameraMode> } An array of supported modes.
+     * @returns { Array<SceneMode> } An array of supported modes.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 10
      */
-    getSupportedModes(camera: CameraDevice): Array<CameraMode>;
+    getSupportedModes(camera: CameraDevice): Array<SceneMode>;
 
     /**
      * Gets supported output capability in specific mode for specific camera.
      *
      * @param { CameraDevice } camera Camera device.
-     * @param { CameraMode } camera Camera mode.
+     * @param { SceneMode } camera Camera mode.
      * @returns { CameraOutputCapability } The camera output capability.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 10
      */
-    getSupportedOutputCapability(camera: CameraDevice, mode: CameraMode): CameraOutputCapability;
+    getSupportedOutputCapability(camera: CameraDevice, mode: SceneMode): CameraOutputCapability;
 
     /**
      * Gets a CaptureSession instance for specific mode.
      *
-     * @param { CameraMode } camera Camera mode.
+     * @param { SceneMode } camera Camera mode.
      * @returns { CaptureSession } The CaptureSession instance.
      * @throws { BusinessError } 7400201 - Camera service fatal error.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 10
      */
-    createCaptureSession(mode: CameraMode): CaptureSession;
+    createCaptureSession(mode: SceneMode): CaptureSession;
   }
 
   /**

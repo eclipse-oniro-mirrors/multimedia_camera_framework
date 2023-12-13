@@ -631,88 +631,14 @@ napi_value CameraSessionNapi::Init(napi_env env, napi_value exports)
     napi_status status;
     napi_value ctorObj;
     int32_t refCount = 1;
-
-    napi_property_descriptor camera_session_props[] = {
-        DECLARE_NAPI_FUNCTION("beginConfig", BeginConfig),
-        DECLARE_NAPI_FUNCTION("commitConfig", CommitConfig),
-
-        DECLARE_NAPI_FUNCTION("canAddInput", CanAddInput),
-        DECLARE_NAPI_FUNCTION("addInput", AddInput),
-        DECLARE_NAPI_FUNCTION("removeInput", RemoveInput),
-
-        DECLARE_NAPI_FUNCTION("canAddOutput", CanAddOutput),
-        DECLARE_NAPI_FUNCTION("addOutput", AddOutput),
-        DECLARE_NAPI_FUNCTION("removeOutput", RemoveOutput),
-
-        DECLARE_NAPI_FUNCTION("start", Start),
-        DECLARE_NAPI_FUNCTION("stop", Stop),
-        DECLARE_NAPI_FUNCTION("release", Release),
-
-        DECLARE_NAPI_FUNCTION("lockForControl", LockForControl),
-        DECLARE_NAPI_FUNCTION("unlockForControl", UnlockForControl),
-
-        DECLARE_NAPI_FUNCTION("isVideoStabilizationModeSupported", IsVideoStabilizationModeSupported),
-        DECLARE_NAPI_FUNCTION("getActiveVideoStabilizationMode", GetActiveVideoStabilizationMode),
-        DECLARE_NAPI_FUNCTION("setVideoStabilizationMode", SetVideoStabilizationMode),
-
-        DECLARE_NAPI_FUNCTION("hasFlash", HasFlash),
-        DECLARE_NAPI_FUNCTION("isFlashModeSupported", IsFlashModeSupported),
-        DECLARE_NAPI_FUNCTION("getFlashMode", GetFlashMode),
-        DECLARE_NAPI_FUNCTION("setFlashMode", SetFlashMode),
-
-        DECLARE_NAPI_FUNCTION("isExposureModeSupported", IsExposureModeSupported),
-        DECLARE_NAPI_FUNCTION("getExposureMode", GetExposureMode),
-        DECLARE_NAPI_FUNCTION("setExposureMode", SetExposureMode),
-        DECLARE_NAPI_FUNCTION("getExposureBiasRange", GetExposureBiasRange),
-        DECLARE_NAPI_FUNCTION("setExposureBias", SetExposureBias),
-        DECLARE_NAPI_FUNCTION("getExposureValue", GetExposureValue),
-
-        DECLARE_NAPI_FUNCTION("getMeteringPoint", GetMeteringPoint),
-        DECLARE_NAPI_FUNCTION("setMeteringPoint", SetMeteringPoint),
-
-        DECLARE_NAPI_FUNCTION("isFocusModeSupported", IsFocusModeSupported),
-        DECLARE_NAPI_FUNCTION("getFocusMode", GetFocusMode),
-        DECLARE_NAPI_FUNCTION("setFocusMode", SetFocusMode),
-
-        DECLARE_NAPI_FUNCTION("getFocusPoint", GetFocusPoint),
-        DECLARE_NAPI_FUNCTION("setFocusPoint", SetFocusPoint),
-        DECLARE_NAPI_FUNCTION("getFocalLength", GetFocalLength),
-
-        DECLARE_NAPI_FUNCTION("getZoomRatioRange", GetZoomRatioRange),
-        DECLARE_NAPI_FUNCTION("getZoomRatio", GetZoomRatio),
-        DECLARE_NAPI_FUNCTION("setZoomRatio", SetZoomRatio),
-        DECLARE_NAPI_FUNCTION("prepareZoom", PrepareZoom),
-        DECLARE_NAPI_FUNCTION("unPrepareZoom", UnPrepareZoom),
-        DECLARE_NAPI_FUNCTION("setSmoothZoom", SetSmoothZoom),
-
-        DECLARE_NAPI_FUNCTION("getSupportedFilters", GetSupportedFilters),
-        DECLARE_NAPI_FUNCTION("getFilter", GetFilter),
-        DECLARE_NAPI_FUNCTION("setFilter", SetFilter),
-
-        DECLARE_NAPI_FUNCTION("getSupportedBeautyTypes", GetSupportedBeautyTypes),
-        DECLARE_NAPI_FUNCTION("getSupportedBeautyRange", GetSupportedBeautyRange),
-        DECLARE_NAPI_FUNCTION("getBeauty", GetBeauty),
-        DECLARE_NAPI_FUNCTION("setBeauty", SetBeauty),
-        DECLARE_NAPI_FUNCTION("on", On),
-        DECLARE_NAPI_FUNCTION("once", Once),
-        DECLARE_NAPI_FUNCTION("off", Off),
-
-        DECLARE_NAPI_FUNCTION("getSupportedColorSpaces", GetSupportedColorSpaces),
-        DECLARE_NAPI_FUNCTION("getActiveColorSpace", GetActiveColorSpace),
-        DECLARE_NAPI_FUNCTION("setColorSpace", SetColorSpace),
-
-        DECLARE_NAPI_FUNCTION("getSupportedColorEffects", GetSupportedColorEffects),
-        DECLARE_NAPI_FUNCTION("getColorEffect", GetColorEffect),
-        DECLARE_NAPI_FUNCTION("setColorEffect", SetColorEffect),
-
-        DECLARE_NAPI_FUNCTION("isMacroSupported", IsMacroSupported),
-        DECLARE_NAPI_FUNCTION("enableMacro", EnableMacro),
-    };
-
+    std::vector<std::vector<napi_property_descriptor>> descriptors = {camera_process_props, stabilization_props,
+        flash_props, auto_exposure_props, focus_props, zoom_props, filter_props, beauty_props,
+        color_effect_props, macro_props};
+    std::vector<napi_property_descriptor> camera_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, CAMERA_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                CameraSessionNapiConstructor, nullptr,
-                               sizeof(camera_session_props) / sizeof(camera_session_props[PARAM0]),
-                               camera_session_props, &ctorObj);
+                               camera_session_props.size(),
+                               camera_session_props.data(), &ctorObj);
     if (status == napi_ok) {
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {

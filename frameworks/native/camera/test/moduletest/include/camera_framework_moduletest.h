@@ -20,7 +20,6 @@
 #include "input/camera_device.h"
 #include "input/camera_input.h"
 #include "input/camera_manager.h"
-#include "mode/mode_manager.h"
 #include "session/capture_session.h"
 #include "session/portrait_session.h"
 
@@ -44,7 +43,6 @@ public:
     int32_t videoWidth_;
     int32_t videoHeight_;
     sptr<CameraManager> manager_;
-    sptr<ModeManager> modeManager_;
     sptr<PortraitSession> portraitSession_;
     sptr<CaptureSession> session_;
     sptr<CaptureSession> scanSession_;
@@ -96,7 +94,7 @@ public:
     void TestUnSupportedResolution(int32_t previewWidth, int32_t previewHeight, int32_t photoWidth,
                                    int32_t photoHeight, int32_t videoWidth, int32_t videoHeight);
     bool IsSupportNow();
-    bool IsSupportMode(CameraMode mode);
+    bool IsSupportMode(SceneMode mode);
 
     std::shared_ptr<Profile> GetSketchPreviewProfile();
 };

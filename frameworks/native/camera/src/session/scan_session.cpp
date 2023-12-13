@@ -15,7 +15,7 @@
  
 #include "session/scan_session.h"
 #include "input/camera_input.h"
-#include "mode/mode_manager.h"
+#include "input/camera_manager.h"
 #include "output/camera_output_capability.h"
 #include "camera_log.h"
 #include "camera_error_code.h"
@@ -32,12 +32,12 @@ int32_t ScanSession::AddOutput(sptr<CaptureOutput> &output)
     int32_t result = CAMERA_UNKNOWN_ERROR;
     if (inputDevice_) {
         sptr<CameraDevice> device = inputDevice_->GetCameraDeviceInfo();
-        sptr<ModeManager> modeManager = ModeManager::GetInstance();
+        sptr<CameraManager> cameraManager = CameraManager::GetInstance();
         sptr<CameraOutputCapability> outputCapability = nullptr;
-        if (device != nullptr && modeManager != nullptr) {
-            outputCapability = modeManager->GetSupportedOutputCapability(device, CameraMode::SCAN);
+        if (device != nullptr && cameraManager != nullptr) {
+            outputCapability = cameraManager->GetSupportedOutputCapability(device, SceneMode::SCAN);
         } else {
-            MEDIA_ERR_LOG("ScanSession::AddOutput get nullptr to device or modeManager");
+            MEDIA_ERR_LOG("ScanSession::AddOutput get nullptr to device or cameraManager");
             return CameraErrorCode::DEVICE_DISABLED;
         }
         if ((outputCapability != nullptr && outputCapability->GetPreviewProfiles().size() != 0 &&

@@ -22,8 +22,8 @@
 #include "capture_output.h"
 #include "hcapture_session_callback_stub.h"
 #include "input/camera_input.h"
+#include "input/camera_manager.h"
 #include "camera_log.h"
-#include "mode/mode_manager.h"
 #include "output/photo_output.h"
 #include "output/preview_output.h"
 #include "output/video_output.h"
@@ -390,11 +390,11 @@ void CaptureSession::SetDefaultColorSpace()
     return;
 }
 
-int32_t CaptureSession::CanAddInput(sptr<CaptureInput> &input)
+bool CaptureSession::CanAddInput(sptr<CaptureInput> &input)
 {
     // todo: get Profile passed to createOutput and compare with OutputCapability
     // if present in capability return ok.
-    return CameraErrorCode::SUCCESS;
+    return true;
 }
 
 int32_t CaptureSession::AddInput(sptr<CaptureInput> &input)
@@ -423,11 +423,11 @@ int32_t CaptureSession::AddInput(sptr<CaptureInput> &input)
     return ServiceToCameraError(errCode);
 }
 
-int32_t CaptureSession::CanAddOutput(sptr<CaptureOutput> &output)
+bool CaptureSession::CanAddOutput(sptr<CaptureOutput> &output)
 {
     // todo: get Profile passed to createOutput and compare with OutputCapability
     // if present in capability return ok.
-    return CameraErrorCode::SUCCESS;
+    return true;
 }
 
 sptr<CaptureOutput> CaptureSession::GetMetaOutput()
@@ -2057,22 +2057,9 @@ int32_t CaptureSession::GetZoomRatioRange(std::vector<float> &zoomRatioRange)
 
 float CaptureSession::GetZoomRatio()
 {
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("CaptureSession::GetZoomRatio Session is not Commited");
-        return 0;
-    }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
-        MEDIA_ERR_LOG("CaptureSession::GetZoomRatio camera device is null");
-        return 0;
-    }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("CaptureSession::GetZoomRatio Failed with return code %{public}d", ret);
-        return 0;
-    }
-    return static_cast<float>(item.data.f[0]);
+    float zoomRatio = 0;
+    GetZoomRatio(zoomRatio);
+    return zoomRatio;
 }
 
 int32_t CaptureSession::GetZoomRatio(float &zoomRatio)
@@ -2086,11 +2073,15 @@ int32_t CaptureSession::GetZoomRatio(float &zoomRatio)
         MEDIA_ERR_LOG("CaptureSession::GetZoomRatio camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metaIn;
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metaOut;
+    int32_t DEFAULT_ITEMS = 1;
+    int32_t DEFAULT_DATA_LENGTH = 100;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaIn =
+        std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaOut =
+        std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
     uint32_t count = 1;
-    int32_t zoomRatioMultiple = 100;
-    int32_t metaInZoomRatio = 1 * zoomRatioMultiple;
+    uint32_t zoomRatioMultiple = 100;
+    uint32_t metaInZoomRatio = 1 * zoomRatioMultiple;
     metaIn->addEntry(OHOS_STATUS_CAMERA_CURRENT_ZOOM_RATIO, &metaInZoomRatio, count);
     int32_t ret = ((sptr<CameraInput> &)inputDevice_)->GetCameraDevice()->GetStatus(metaIn, metaOut);
     if (ret != CAMERA_OK) {
@@ -2103,7 +2094,7 @@ int32_t CaptureSession::GetZoomRatio(float &zoomRatio)
         MEDIA_ERR_LOG("CaptureSession::GetZoomRatio Failed with return code %{public}d", ret);
         return CameraErrorCode::SUCCESS;
     }
-    zoomRatio = static_cast<float>(item.data.ui32[0]) / zoomRatioMultiple;
+    zoomRatio = static_cast<float>(item.data.ui32[0]) / static_cast<float>(zoomRatioMultiple);
     MEDIA_ERR_LOG("CaptureSession::GetZoomRatio %{public}f", zoomRatio);
     return CameraErrorCode::SUCCESS;
 }
@@ -2330,10 +2321,10 @@ int32_t CaptureSession::GetMode()
 int32_t CaptureSession::GetFeaturesMode()
 {
     if (isSetMacroEnable_) {
-        if (modeName_ == CameraMode::CAPTURE) {
-            return CameraMode::CAPTURE_MACRO;
-        } else if (modeName_ == CameraMode::VIDEO) {
-            return CameraMode::VIDEO_MACRO;
+        if (modeName_ == SceneMode::CAPTURE) {
+            return SceneMode::CAPTURE_MACRO;
+        } else if (modeName_ == SceneMode::VIDEO) {
+            return SceneMode::VIDEO_MACRO;
         }
     }
     return modeName_;
@@ -2341,10 +2332,10 @@ int32_t CaptureSession::GetFeaturesMode()
 
 vector<int32_t> CaptureSession::GetSubFeatureMods()
 {
-    if (modeName_ == CameraMode::CAPTURE) {
-        return vector<int32_t> { CameraMode::CAPTURE_MACRO };
-    } else if (modeName_ == CameraMode::VIDEO) {
-        return vector<int32_t> { CameraMode::VIDEO_MACRO };
+    if (modeName_ == SceneMode::CAPTURE) {
+        return vector<int32_t> { SceneMode::CAPTURE_MACRO };
+    } else if (modeName_ == SceneMode::VIDEO) {
+        return vector<int32_t> { SceneMode::VIDEO_MACRO };
     }
     return vector<int32_t> {};
 }
@@ -2941,7 +2932,7 @@ int32_t CaptureSession::SetColorSpace(ColorSpace colorSpace)
 
 bool CaptureSession::IsModeWithVideoStream()
 {
-    return GetMode() == CameraMode::VIDEO;
+    return GetMode() == SceneMode::VIDEO;
 }
 
 std::vector<ColorEffect> CaptureSession::GetSupportedColorEffects()

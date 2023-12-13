@@ -576,5 +576,18 @@ napi_status CameraNapiUtils::CallPromiseFun(
     MEDIA_DEBUG_LOG("CallPromiseFun End");
     return napi_ok;
 }
+
+std::vector<napi_property_descriptor> CameraNapiUtils::GetPropertyDescriptor(
+    std::vector<std::vector<napi_property_descriptor>> descriptors)
+{
+    MEDIA_DEBUG_LOG("GetPropertyDescriptor Start %zu", descriptors.size());
+    std::vector<napi_property_descriptor> properties = {};
+    std::for_each(descriptors.begin(), descriptors.end(),
+                  [&properties](const std::vector<napi_property_descriptor> descriptor) {
+                      properties.insert(properties.end(), descriptor.begin(), descriptor.end());
+                  });
+    return properties;
+};
+
 } // namespace CameraStandard
 } // namespace OHOS

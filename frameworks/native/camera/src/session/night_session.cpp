@@ -26,7 +26,6 @@ namespace CameraStandard {
 NightSession::~NightSession()
 {
     MEDIA_DEBUG_LOG("Enter Into NightSession::~NightSession()");
-    longExposureCallback_ = nullptr;
 }
 
 int32_t NightSession::GetExposureRange(std::vector<uint32_t> &exposureRange)
@@ -120,97 +119,12 @@ int32_t NightSession::GetExposure(uint32_t &exposureValue)
     return CameraErrorCode::SUCCESS;
 }
 
-void NightSession::DoTryAE(bool isTryAe, uint32_t time)
-{
-    CAMERA_SYNC_TRACE;
-    if (!(IsSessionCommited() || IsSessionConfiged())) {
-        MEDIA_ERR_LOG("NightSession::StartLongExposure Session is not Commited");
-        return;
-    }
-    if (changedMetadata_ == nullptr) {
-        MEDIA_ERR_LOG("NightSession::StartLongExposure changedMetadata_ is NULL");
-        return;
-    }
-
-    bool status = false;
-    int32_t ret;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
-    uint8_t doTryAe = isTryAe ? 1 : 0;
-    if (isTryAe) {
-        ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_NIGHT_MODE_TRY_AE, &item);
-        if (ret == CAM_META_ITEM_NOT_FOUND) {
-            status = changedMetadata_->addEntry(OHOS_CONTROL_NIGHT_MODE_TRY_AE, &doTryAe, count);
-        } else if (ret == CAM_META_SUCCESS) {
-            status = changedMetadata_->updateEntry(OHOS_CONTROL_NIGHT_MODE_TRY_AE, &doTryAe, count);
-        }
-        uint32_t exposureTime = 0;
-        ret = GetExposure(exposureTime);
-        ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_MANUAL_EXPOSURE_TIME, &item);
-            if (ret == CAM_META_ITEM_NOT_FOUND) {
-                status = changedMetadata_->addEntry(OHOS_CONTROL_MANUAL_EXPOSURE_TIME, &exposureTime, count);
-            } else if (ret == CAM_META_SUCCESS) {
-                status = changedMetadata_->updateEntry(OHOS_CONTROL_MANUAL_EXPOSURE_TIME, &exposureTime, count);
-            }
-        if (!status) {
-            MEDIA_ERR_LOG("NightSession::StartLongExposure Failed to set effect");
-        }
-    } else {
-        // interrupt the long exposuring;
-        ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_NIGHT_MODE_TRY_AE, &item);
-        if (ret == CAM_META_ITEM_NOT_FOUND) {
-            status = changedMetadata_->addEntry(OHOS_CONTROL_NIGHT_MODE_TRY_AE, &doTryAe, count);
-        } else if (ret == CAM_META_SUCCESS) {
-            status = changedMetadata_->updateEntry(OHOS_CONTROL_NIGHT_MODE_TRY_AE, &doTryAe, count);
-        }
-    }
-    SetLongExposureingState(false);
-    MEDIA_DEBUG_LOG("NightSession::StartLongExposure");
-    return;
-}
-
-void NightSession::SetLongExposureingState(bool isExposuring)
-{
-    isExposuring_ = isExposuring;
-}
-
-bool NightSession::IsLongExposureingState()
-{
-    return isExposuring_;
-}
-
-void NightSession::SetLongExposureCallback(std::shared_ptr<LongExposureCallback> longExposureCallback)
-{
-    longExposureCallback_ = longExposureCallback;
-}
-
 void NightSession::ProcessCallbacks(const uint64_t timestamp,
     const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
     MEDIA_INFO_LOG("ProcessCallbacks");
-    CaptureSession::ProcessCallbacks(timestamp, result);
-    ProcessLongExposureOnce(result);
-}
-
-void NightSession::ProcessLongExposureOnce(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
-{
-    camera_metadata_item_t item;
-    common_metadata_header_t* metadata = result->get();
-
-    int ret = Camera::FindCameraMetadataItem(metadata, OHOS_CAMERA_MESURE_EXPOSURE_TIME, &item);
-    uint32_t exposureTime = 10000;
-    if (ret == CAM_META_SUCCESS) {
-        MEDIA_INFO_LOG("NightSession::ProcessLongExposureOnce exposure time: %{public}d", item.data.i32[0]);
-        exposureTime = item.data.i32[0];
-    } else {
-        MEDIA_ERR_LOG("NightSession::ProcessLongExposureOnce failed ret = %{public}d", ret);
-        return;
-    }
-
-    if (longExposureCallback_ != nullptr && !IsLongExposureingState()) {
-        longExposureCallback_->OnLongExposure(exposureTime);
-        SetLongExposureingState(true);
-    }
+    ProcessFaceRecUpdates(timestamp, result);
+    ProcessAutoFocusUpdates(result);
 }
 } // CameraStandard
 } // OHOS

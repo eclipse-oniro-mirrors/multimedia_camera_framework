@@ -35,7 +35,17 @@
 
 namespace OHOS {
 namespace CameraStandard {
+using namespace std;
 using namespace OHOS::HDI::Camera::V1_0;
+struct CameraMetaInfo {
+    string cameraId;
+    uint8_t position;
+    uint8_t connectionType;
+    shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
+    CameraMetaInfo(string cameraId, uint8_t position, uint8_t connectionType,
+        shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
+        : cameraId(cameraId), position(position), connectionType (connectionType), cameraAbility(cameraAbility) {}
+};
 class HCameraService : public SystemAbility, public HCameraServiceStub, public HCameraHostManager::StatusCallback,
                        public IDeviceOperatorsCallback {
     DECLARE_SYSTEM_ABILITY(HCameraService);
@@ -45,9 +55,9 @@ public:
 
     explicit HCameraService(int32_t systemAbilityId, bool runOnCreate = true);
     ~HCameraService() override;
-    int32_t GetCameras(std::vector<std::string> &cameraIds,
-        std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> &cameraAbilityList) override;
-    int32_t CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> &device) override;
+    int32_t GetCameras(vector<string> &cameraIds,
+        vector<shared_ptr<OHOS::Camera::CameraMetadata>> &cameraAbilityList) override;
+    int32_t CreateCameraDevice(string cameraId, sptr<ICameraDeviceService> &device) override;
     int32_t CreateCaptureSession(sptr<ICaptureSession> &session, int32_t opMode) override;
     int32_t CreatePhotoOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
                               int32_t width, int32_t height,
@@ -69,7 +79,7 @@ public:
     int32_t SetTorchCallback(sptr<ITorchServiceCallback> &callback) override;
     int32_t MuteCamera(bool muteMode) override;
     int32_t PrelaunchCamera() override;
-    int32_t SetPrelaunchConfig(std::string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
+    int32_t SetPrelaunchConfig(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
         EffectParam effectParam) override;
 //    std::string GetClientBundle(int uid);
     int32_t IsCameraMuted(bool &muteMode) override;
@@ -77,11 +87,11 @@ public:
     void OnDump() override;
     void OnStart() override;
     void OnStop() override;
-    int32_t Dump(int fd, const std::vector<std::u16string>& args) override;
+    int32_t Dump(int fd, const vector<u16string>& args) override;
 
     // HCameraHostManager::StatusCallback
-    void OnCameraStatus(const std::string& cameraId, CameraStatus status) override;
-    void OnFlashlightStatus(const std::string& cameraId, FlashStatus status) override;
+    void OnCameraStatus(const string& cameraId, CameraStatus status) override;
+    void OnFlashlightStatus(const string& cameraId, FlashStatus status) override;
     void OnTorchStatus(TorchStatus status) override;
 
 protected:
@@ -90,47 +100,50 @@ protected:
         muteMode_(false) {}
 
 private:
-    void CameraSummary(std::vector<std::string> cameraIds, std::string& dumpString);
-    void CameraDumpAbility(common_metadata_header_t* metadataEntry, std::string& dumpString);
-    void CameraDumpStreaminfo(common_metadata_header_t* metadataEntry, std::string& dumpString);
-    void CameraDumpZoom(common_metadata_header_t* metadataEntry, std::string& dumpString);
-    void CameraDumpFlash(common_metadata_header_t* metadataEntry, std::string& dumpString);
-    void CameraDumpAF(common_metadata_header_t* metadataEntry, std::string& dumpString);
-    void CameraDumpAE(common_metadata_header_t* metadataEntry, std::string& dumpString);
-    void CameraDumpSensorInfo(common_metadata_header_t* metadataEntry, std::string& dumpString);
-    void CameraDumpVideoStabilization(common_metadata_header_t* metadataEntry, std::string& dumpString);
-    void CameraDumpVideoFrameRateRange(common_metadata_header_t* metadataEntry, std::string& dumpString);
-    void CameraDumpPrelaunch(common_metadata_header_t* metadataEntry, std::string& dumpString);
-    void CameraDumpThumbnail(common_metadata_header_t* metadataEntry, std::string& dumpString);
-    bool IsCameraMuteSupported(std::string cameraId);
-    bool IsPrelaunchSupported(std::string cameraId);
+    void CameraSummary(vector<string> cameraIds, string& dumpString);
+    void CameraDumpAbility(common_metadata_header_t* metadataEntry, string& dumpString);
+    void CameraDumpStreaminfo(common_metadata_header_t* metadataEntry, string& dumpString);
+    void CameraDumpZoom(common_metadata_header_t* metadataEntry, string& dumpString);
+    void CameraDumpFlash(common_metadata_header_t* metadataEntry, string& dumpString);
+    void CameraDumpAF(common_metadata_header_t* metadataEntry, string& dumpString);
+    void CameraDumpAE(common_metadata_header_t* metadataEntry, string& dumpString);
+    void CameraDumpSensorInfo(common_metadata_header_t* metadataEntry, string& dumpString);
+    void CameraDumpVideoStabilization(common_metadata_header_t* metadataEntry, string& dumpString);
+    void CameraDumpVideoFrameRateRange(common_metadata_header_t* metadataEntry, string& dumpString);
+    void CameraDumpPrelaunch(common_metadata_header_t* metadataEntry, string& dumpString);
+    void CameraDumpThumbnail(common_metadata_header_t* metadataEntry, string& dumpString);
+    vector<shared_ptr<CameraMetaInfo>> ChooseDeFaultCameras(vector<shared_ptr<CameraMetaInfo>> cameraInfos);
+    bool IsCameraMuteSupported(string cameraId);
+    bool IsPrelaunchSupported(string cameraId);
     int32_t UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool muteMode);
-    int32_t UpdateSkinSmoothSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata, int skinSmoothValue);
-    int32_t UpdateFaceSlenderSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata,
+    int32_t UpdateSkinSmoothSetting(shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata, int skinSmoothValue);
+    int32_t UpdateFaceSlenderSetting(shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata,
         int faceSlenderValue);
-    int32_t UpdateSkinToneSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata, int skinToneValue);
+    int32_t UpdateSkinToneSetting(shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata, int skinToneValue);
     int32_t UnSetMuteCallback(pid_t pid);
     int32_t UnSetTorchCallback(pid_t pid);
-    bool IsDeviceAlreadyOpen(pid_t& tempPid, std::string& tempCameraId, sptr<HCameraDevice> &tempDevice);
+    bool IsDeviceAlreadyOpen(pid_t& tempPid, string& tempCameraId, sptr<HCameraDevice> &tempDevice);
     int32_t DeviceClose(sptr<HCameraDevice> cameraDevice);
     void RegisterSensorCallback();
     void UnRegisterSensorCallback();
     static void DropDetectionDataCallbackImpl(SensorEvent *event);
-    int32_t SaveCurrentParamForRestore(std::string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
+    int32_t SaveCurrentParamForRestore(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
         EffectParam effectParam, sptr<HCaptureSession> captureSession);
-    std::mutex mutex_;
-    std::mutex cbMutex_;
-    std::mutex muteCbMutex_;
-    std::mutex torchCbMutex_;
+    mutex mutex_;
+    mutex cbMutex_;
+    mutex muteCbMutex_;
+    mutex torchCbMutex_;
     sptr<HCameraHostManager> cameraHostManager_;
     sptr<StreamOperatorCallback> streamOperatorCallback_;
-    std::map<uint32_t, sptr<ITorchServiceCallback>> torchServiceCallbacks_;
-    std::map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
-    std::map<uint32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
+    map<uint32_t, sptr<ITorchServiceCallback>> torchServiceCallbacks_;
+    map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
+    map<uint32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
     bool muteMode_;
-    std::mutex mapOperatorsLock_;
-    std::string preCameraId_;
-    std::string preCameraClient_;
+    bool isFoldable = false;
+    bool isFoldableInit = false;
+    mutex mapOperatorsLock_;
+    string preCameraId_;
+    string preCameraClient_;
     SensorUser user;
     SafeMap<uint32_t, sptr<HCaptureSession>> captureSessionsManager_;
 };
