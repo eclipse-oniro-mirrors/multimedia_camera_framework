@@ -231,10 +231,10 @@ napi_value CameraNapi::CreateModeManagerInstance(napi_env env, napi_callback_inf
 
 napi_value CameraNapi::CreateObjectWithMap(napi_env env,
                                            const std::string objectName,
-                                           const std::map<std::string, int>& inputMap,
+                                           const std::unordered_map<std::string, int32_t>& inputMap,
                                            napi_ref& outputRef)
 {
-    MEDIA_DEBUG_LOG("Create" + objectName + " is called");
+    MEDIA_DEBUG_LOG("Create %{public}s is called", objectName.c_str());
     napi_value result = nullptr;
     napi_status status;
 
@@ -245,7 +245,7 @@ napi_value CameraNapi::CreateObjectWithMap(napi_env env,
             propName = itr->first;
             status = AddNamedProperty(env, result, propName, itr->second);
             if (status != napi_ok) {
-                MEDIA_ERR_LOG("Failed to add " + objectName + " property!");
+                MEDIA_ERR_LOG("Failed to add %{public}s property!", objectName.c_str());
                 break;
             }
             propName.clear();
@@ -257,7 +257,7 @@ napi_value CameraNapi::CreateObjectWithMap(napi_env env,
             return result;
         }
     }
-    MEDIA_ERR_LOG("Create" + objectName + " call Failed!");
+    MEDIA_ERR_LOG("Create %{public}s call Failed!", objectName.c_str());
     napi_get_undefined(env, &result);
 
     return result;

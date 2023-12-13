@@ -274,7 +274,7 @@ public:
 
     static napi_value CreateObjectWithMap(napi_env env,
                                           const std::string objectName,
-                                          const std::map<std::string, int>& inputMap,
+                                          const std::unordered_map<std::string, int32_t>& inputMap,
                                           napi_ref& outputRef);
 
 private:
