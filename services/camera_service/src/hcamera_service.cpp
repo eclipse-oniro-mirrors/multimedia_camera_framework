@@ -37,7 +37,7 @@ static sptr<HCameraService> mCameraService;
 
 HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
     : SystemAbility(systemAbilityId, runOnCreate), cameraHostManager_(nullptr), streamOperatorCallback_(nullptr),
-      muteMode_(false)
+      muteMode_(false), isRegisterSensorSuccess(false)
 {}
 
 HCameraService::~HCameraService() {}
@@ -185,6 +185,7 @@ int32_t HCameraService::CreateCameraDevice(string cameraId, sptr<ICameraDeviceSe
     }
     cameraDevice->SetDeviceOperatorsCallback(this);
     device = cameraDevice;
+    RegisterSensorCallback();
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager_CreateCameraInput CameraId:%s", cameraId.c_str()));
     return CAMERA_OK;
 }
@@ -1037,6 +1038,9 @@ int32_t HCameraService::Dump(int fd, const vector<u16string>& args)
 }
 void HCameraService::RegisterSensorCallback()
 {
+    if (isRegisterSensorSuccess) {
+        return;
+    }
     mCameraService = this;
     MEDIA_INFO_LOG("HCameraService::RegisterSensorCallback start");
     user.callback = DropDetectionDataCallbackImpl;
@@ -1047,7 +1051,10 @@ void HCameraService::RegisterSensorCallback()
     int32_t activateRet = ActivateSensor(SENSOR_TYPE_ID_DROP_DETECTION, &user);
     MEDIA_INFO_LOG("RegisterSensorCallback, activateRet: %{public}d", activateRet);
     if (subscribeRet != SENSOR_SUCCESS || setBatchRet != SENSOR_SUCCESS || activateRet != SENSOR_SUCCESS) {
+        isRegisterSensorSuccess = false;
         MEDIA_INFO_LOG("RegisterSensorCallback failed.");
+    }  else {
+        isRegisterSensorSuccess = true;
     }
 }
 
@@ -1109,20 +1116,19 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
     }
 
     std::vector<StreamInfo_V1_1> allStreamInfos;
-    std::shared_ptr<OHOS::Camera::CameraMetadata> settings;
 
     if (activeDevice != nullptr) {
-        settings = activeDevice->CloneCachedSettings();
-        cameraRestoreParam->SetSetting(settings);
-        UpdateSkinSmoothSetting(settings, effectParam.skinSmoothLevel);
-        UpdateFaceSlenderSetting(settings, effectParam.faceSlender);
-        UpdateSkinToneSetting(settings, effectParam.skinTone);
+        CreateDefaultSettingForRestore();
+        cameraRestoreParam->SetSetting(defaultSettings_);
+        UpdateSkinSmoothSetting(defaultSettings_, effectParam.skinSmoothLevel);
+        UpdateFaceSlenderSetting(defaultSettings_, effectParam.faceSlender);
+        UpdateSkinToneSetting(defaultSettings_, effectParam.skinTone);
     }
-    if (activeDevice == nullptr || settings == nullptr) {
+    if (activeDevice == nullptr || defaultSettings_ == nullptr) {
         return CAMERA_UNKNOWN_ERROR;
     }
     MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore param %d", effectParam.skinSmoothLevel);
-    rc = captureSession->GetCurrentStreamInfos(activeDevice, settings, allStreamInfos);
+    rc = captureSession->GetCurrentStreamInfos(activeDevice, defaultSettings_, allStreamInfos);
     if (rc != CAMERA_OK) {
         MEDIA_ERR_LOG("HCaptureSession::SaveCurrentParamForRestore() Failed to get streams info, %{public}d", rc);
         return rc;
@@ -1132,6 +1138,25 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
     cameraHostManager_->SaveRestoreParam(cameraRestoreParam);
     MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore end");
     return rc;
+}
+
+void HCameraService::CreateDefaultSettingForRestore()
+{
+    constexpr int32_t DEFAULT_ITEMS = 1;
+    constexpr int32_t DEFAULT_DATA_LENGTH = 1;
+    if (defaultSettings_ == nullptr) {
+        defaultSettings_ = std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    }
+    float zoomRatio = 1.0f;
+    int32_t count = 1;
+    int32_t ret = 0;
+    camera_metadata_item_t item;
+    ret = OHOS::Camera::FindCameraMetadataItem(defaultSettings_->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        defaultSettings_->addEntry(OHOS_CONTROL_ZOOM_RATIO, &zoomRatio, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        defaultSettings_->updateEntry(OHOS_CONTROL_ZOOM_RATIO, &zoomRatio, count);
+    }
 }
 
 int32_t HCameraService::UpdateSkinSmoothSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata,

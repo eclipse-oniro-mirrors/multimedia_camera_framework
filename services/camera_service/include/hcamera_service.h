@@ -116,6 +116,7 @@ private:
     bool IsCameraMuteSupported(string cameraId);
     bool IsPrelaunchSupported(string cameraId);
     int32_t UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool muteMode);
+    void CreateDefaultSettingForRestore();
     int32_t UpdateSkinSmoothSetting(shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata, int skinSmoothValue);
     int32_t UpdateFaceSlenderSetting(shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata,
         int faceSlenderValue);
@@ -144,6 +145,8 @@ private:
     mutex mapOperatorsLock_;
     string preCameraId_;
     string preCameraClient_;
+    bool isRegisterSensorSuccess;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> defaultSettings_;
     SensorUser user;
     SafeMap<uint32_t, sptr<HCaptureSession>> captureSessionsManager_;
 };
