@@ -1054,7 +1054,7 @@ void HCameraService::RegisterSensorCallback()
         isRegisterSensorSuccess = false;
         MEDIA_INFO_LOG("RegisterSensorCallback failed.");
     }  else {
-        isRegisterSensorSuccess = true
+        isRegisterSensorSuccess = true;
     }
 }
 
