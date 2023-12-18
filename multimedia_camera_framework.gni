@@ -32,3 +32,5 @@ use_memmgr = false
 if (defined(global_parts_info.resourceschedule_memmgr)) {
   use_memmgr = true
 }
+
+use_ace_engine = true

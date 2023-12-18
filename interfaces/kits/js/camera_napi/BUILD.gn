@@ -67,6 +67,11 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/video_output_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/session/camera_session_napi.cpp",
   ]
+  if (use_ace_engine) {
+    sources += [
+      "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/picker/camera_picker_napi.cpp",
+    ]
+  }
   deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
   external_deps = [
     "access_token:libtokenid_sdk",
@@ -82,6 +87,23 @@ ohos_shared_library("camera_napi") {
     "ipc:ipc_core",
     "napi:ace_napi",
   ]
+  if (use_ace_engine) {
+    external_deps += [
+      "ace_engine:ace_uicontent",
+      "ability_base:base",
+      "ability_base:configuration",
+      "ability_base:want",
+      "ability_runtime:ability_context_native",
+      "ability_runtime:ability_manager",
+      "ability_runtime:abilitykit_native",
+      "ability_runtime:app_context",
+      "ability_runtime:extensionkit_native",
+      "ability_runtime:napi_base_context",
+      "ability_runtime:runtime",
+      "ability_runtime:service_extension",
+      "ability_runtime:ui_extension",
+      ]
+  }
   sanitize = {
     cfi = true
     cfi_cross_dso = true
