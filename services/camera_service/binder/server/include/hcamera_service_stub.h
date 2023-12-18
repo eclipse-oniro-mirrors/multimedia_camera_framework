@@ -48,6 +48,8 @@ private:
     int HandlePrelaunchCamera(MessageParcel &data, MessageParcel &reply);
     int HandleSetPrelaunchConfig(MessageParcel &data, MessageParcel &reply);
     int HandleSetTorchLevel(MessageParcel &data, MessageParcel &reply);
+    int HandleAllowOpenByOHSide(MessageParcel& data, MessageParcel& reply);
+    int HandleNotifyCameraState(MessageParcel& data);
     int DestroyStubForPid(pid_t pid);
     void ClientDied(pid_t pid);
     int SetListenerObject(const sptr<IRemoteObject> &object) override;
