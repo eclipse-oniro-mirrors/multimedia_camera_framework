@@ -68,9 +68,7 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/session/camera_session_napi.cpp",
   ]
   if (use_ace_engine) {
-    sources += [
-      "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/picker/camera_picker_napi.cpp",
-    ]
+    sources += [ "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/picker/camera_picker_napi.cpp" ]
   }
   deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
   external_deps = [
@@ -102,7 +100,7 @@ ohos_shared_library("camera_napi") {
       "ability_runtime:service_extension",
       "ability_runtime:ui_extension",
       "ace_engine:ace_uicontent",
-      ]
+    ]
   }
   sanitize = {
     cfi = true
