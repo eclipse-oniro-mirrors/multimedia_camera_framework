@@ -82,6 +82,8 @@ public:
 //    std::string GetClientBundle(int uid);
     int32_t IsCameraMuted(bool& muteMode) override;
     int32_t SetTorchLevel(float level) override;
+    int32_t AllowOpenByOHSide(std::string cameraId, int32_t state, bool &canOpenCamera) override;
+    int32_t NotifyCameraState(std::string cameraId, int32_t state) override;
     void OnDump() override;
     void OnStart() override;
     void OnStop() override;
