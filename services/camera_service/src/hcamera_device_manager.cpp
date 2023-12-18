@@ -168,7 +168,7 @@ int32_t HCameraDeviceManager::GetAdjForCameraState(std::string cameraId)
     stateOfACamera_.Find(cameraId, state);
     MEDIA_INFO_LOG("HCameraDeviceManager::SetStateOfACamera start %{public}s, state: %{public}d",
                    cameraId.c_str(), state);
-    return state == 0 ? priority_OF_FOREGROUND : PRIORITY_OF_BACKGROUND;
+    return state == 0 ? PRIORITY_OF_FOREGROUND : PRIORITY_OF_BACKGROUND;
 }
 
 bool HCameraDeviceManager::isAllowOpen(pid_t pidOfOpenRequest)
