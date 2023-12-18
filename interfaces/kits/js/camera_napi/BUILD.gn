@@ -89,7 +89,6 @@ ohos_shared_library("camera_napi") {
   ]
   if (use_ace_engine) {
     external_deps += [
-      "ace_engine:ace_uicontent",
       "ability_base:base",
       "ability_base:configuration",
       "ability_base:want",
@@ -102,6 +101,7 @@ ohos_shared_library("camera_napi") {
       "ability_runtime:runtime",
       "ability_runtime:service_extension",
       "ability_runtime:ui_extension",
+      "ace_engine:ace_uicontent",
       ]
   }
   sanitize = {
