@@ -74,7 +74,6 @@ ohos_shared_library("camera_napi") {
   }
   deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
   external_deps = [
-    "access_token:libtokenid_sdk",
     "c_utils:utils",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
