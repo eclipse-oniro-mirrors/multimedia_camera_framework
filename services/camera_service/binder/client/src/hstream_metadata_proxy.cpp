@@ -31,7 +31,7 @@ int32_t HStreamMetadataProxy::Start()
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_START), data, reply, option);
     if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy CancelCapture failed, error: %{public}d", error);
+        MEDIA_ERR_LOG("HStreamMetadataProxy::Start failed, error: %{public}d", error);
     }
 
     return error;
@@ -47,7 +47,7 @@ int32_t HStreamMetadataProxy::Stop()
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_STOP), data, reply, option);
     if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy CancelCapture failed, error: %{public}d", error);
+        MEDIA_ERR_LOG("HStreamMetadataProxy::Stop failed, error: %{public}d", error);
     }
 
     return error;
@@ -63,7 +63,7 @@ int32_t HStreamMetadataProxy::Release()
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_RELEASE), data, reply, option);
     if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamCaptureProxy CancelCapture failed, error: %{public}d", error);
+        MEDIA_ERR_LOG("HStreamMetadataProxy::Release failed, error: %{public}d", error);
     }
 
     return error;

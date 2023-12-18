@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_ICAPTURE_SESSION_H
 #define OHOS_CAMERA_ICAPTURE_SESSION_H
 
+#include <cstdint>
 #include "icamera_device_service.h"
 #include "icapture_session_callback.h"
 #include "iremote_broker.h"
@@ -23,10 +24,12 @@
 
 namespace OHOS {
 namespace CameraStandard {
-enum class CaptureSessionState {
+enum class CaptureSessionState : uint32_t {
     SESSION_INIT = 0,
-    SESSION_CONFIG_INPROGRESS,
-    SESSION_CONFIG_COMMITTED,
+    SESSION_CONFIG_INPROGRESS = 1,
+    SESSION_CONFIG_COMMITTED = 2,
+    SESSION_RELEASED = 3,
+    SESSION_STATE_MAX = 4
 };
 
 enum ColorSpace {
@@ -65,7 +68,7 @@ public:
 
     virtual int32_t Stop() = 0;
 
-    virtual int32_t Release(pid_t pid) = 0;
+    virtual int32_t Release() = 0;
 
     virtual int32_t SetCallback(sptr<ICaptureSessionCallback> &callback) = 0;
 

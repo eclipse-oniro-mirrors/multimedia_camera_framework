@@ -30,6 +30,7 @@
 #include "image_format.h"
 #include "metadata_common_utils.h"
 #include "pixel_map.h"
+#include "session/capture_session.h"
 #include "sketch_wrapper.h"
 
 namespace OHOS {
@@ -464,9 +465,10 @@ void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
     return;
 }
 
-std::set<camera_device_metadata_tag_t> PreviewOutput::GetObserverTags() const
+const std::set<camera_device_metadata_tag_t>& PreviewOutput::GetObserverTags()
 {
-    return { OHOS_CONTROL_ZOOM_RATIO, OHOS_CONTROL_CAMERA_MACRO };
+    const static std::set<camera_device_metadata_tag_t> tags = { OHOS_CONTROL_ZOOM_RATIO, OHOS_CONTROL_CAMERA_MACRO };
+    return tags;
 }
 
 int32_t PreviewOutput::OnMetadataChanged(

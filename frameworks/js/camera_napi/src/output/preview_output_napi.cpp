@@ -1075,6 +1075,7 @@ napi_value PreviewOutputNapi::EnableSketch(napi_env env, napi_callback_info info
     int32_t retCode = previewOutputNapi->previewOutput_->EnableSketch(isEnableSketch);
     if (retCode != 0 && !CameraNapiUtils::CheckError(env, retCode)) {
         MEDIA_ERR_LOG("EnableSketch fail! %{public}d", retCode);
+        return result;
     }
     MEDIA_DEBUG_LOG("PreviewOutputNapi::EnableSketch success");
     return result;

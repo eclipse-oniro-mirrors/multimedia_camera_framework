@@ -180,7 +180,7 @@ int32_t HCaptureSessionProxy::Stop()
     return error;
 }
 
-int32_t HCaptureSessionProxy::Release(pid_t pid)
+int32_t HCaptureSessionProxy::Release()
 {
     MessageParcel data;
     MessageParcel reply;

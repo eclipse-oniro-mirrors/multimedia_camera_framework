@@ -1,5 +1,6 @@
+
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,16 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_CAMERA_ICAMERA_UTIL_H
-#define OHOS_CAMERA_ICAMERA_UTIL_H
+#ifndef OHOS_CAMERA_ICAMERA_IPC_CHECKER_H
+#define OHOS_CAMERA_ICAMERA_IPC_CHECKER_H
 
-#include <limits.h>
-
-#include "display_type.h"
-
+#include <cstdint>
 namespace OHOS {
 namespace CameraStandard {
-int32_t ServiceToCameraError(int32_t ret);
+class ICameraIpcChecker {
+public:
+    virtual int32_t OperatePermissionCheck(uint32_t interfaceCode) = 0;
+};
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_ICAMERA_UTIL_H
+#endif // OHOS_CAMERA_ICAMERA_IPC_CHECKER_H

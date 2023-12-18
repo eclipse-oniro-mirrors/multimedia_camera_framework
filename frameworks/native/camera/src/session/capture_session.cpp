@@ -639,7 +639,7 @@ int32_t CaptureSession::Release()
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::Release");
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (captureSession_) {
-        errCode = captureSession_->Release(0);
+        errCode = captureSession_->Release();
         MEDIA_DEBUG_LOG("Release capture session, %{public}d", errCode);
     } else {
         MEDIA_ERR_LOG("CaptureSession::Release() captureSession_ is nullptr");
