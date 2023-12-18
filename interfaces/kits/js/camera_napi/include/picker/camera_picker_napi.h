@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -38,6 +38,7 @@ static const char CAMERA_PICKER_NAPI_CLASS_NAME[] = "CameraPicker";
 class CameraPickerNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
+    static napi_value CreateCameraPickerInstance(napi_env env, napi_callback_info info);
     static napi_value TakePhoto(napi_env env, napi_callback_info info);
     static napi_value RecordVideo(napi_env env, napi_callback_info info);
     static napi_value CreateCameraPicker(napi_env env);

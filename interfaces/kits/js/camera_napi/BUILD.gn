@@ -50,14 +50,10 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_pre_launch_config_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_profile_napi.cpp",
-    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_setting_param_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_size_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/torch_listener_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/mode_manager_napi.cpp",
-    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/night_session_napi.cpp",
-    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/photo_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/portrait_session_napi.cpp",
-    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/video_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/native_module_ohos_camera.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/camera_output_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/metadata_object_napi.cpp",
@@ -67,9 +63,6 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/video_output_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/session/camera_session_napi.cpp",
   ]
-  if (use_ace_engine) {
-    sources += [ "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/picker/camera_picker_napi.cpp" ]
-  }
   deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
   external_deps = [
     "access_token:libtokenid_sdk",
@@ -85,8 +78,41 @@ ohos_shared_library("camera_napi") {
     "ipc:ipc_core",
     "napi:ace_napi",
   ]
-  if (use_ace_engine) {
-    external_deps += [
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "../../../../cfi_blocklist.txt"
+  }
+  cflags = [ "-fPIC" ]
+  cflags_cc = cflags
+  relative_install_dir = "module/multimedia"
+  part_name = "camera_framework"
+  subsystem_name = "multimedia"
+}
+
+if (use_ace_engine) {
+  js_declaration("camerapicker_js") {
+    part_name = "camera_framework"
+    sources = [ "./@ohos.multimedia.camerapicker.d.ts" ]
+  }
+
+  ohos_copy("camerapicker_declaration") {
+    sources = [ "./@ohos.multimedia.camerapicker.d.ts" ]
+    outputs = [ target_out_dir + "/$target_name/" ]
+    module_source_dir = target_out_dir + "/$target_name"
+    module_install_name = ""
+  }
+
+  ohos_shared_library("camerapicker_napi") {
+    branch_protector_ret = "pac_ret"
+    include_dirs = [ "${multimedia_camera_framework_path}/interfaces/kits/js/camera_napi/include" ]
+    sources = [
+      "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/native_module_ohos_camerapicker.cpp",
+      "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/picker/camera_picker_napi.cpp",
+    ]
+    deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
+    external_deps = [
       "ability_base:base",
       "ability_base:configuration",
       "ability_base:want",
@@ -100,17 +126,20 @@ ohos_shared_library("camera_napi") {
       "ability_runtime:service_extension",
       "ability_runtime:ui_extension",
       "ace_engine:ace_uicontent",
+      "c_utils:utils",
+      "hilog:libhilog",
+      "hitrace:hitrace_meter",
+      "napi:ace_napi",
     ]
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+    }
+    cflags = [ "-fPIC" ]
+    cflags_cc = cflags
+    relative_install_dir = "module/multimedia"
+    part_name = "camera_framework"
+    subsystem_name = "multimedia"
   }
-  sanitize = {
-    cfi = true
-    cfi_cross_dso = true
-    debug = false
-    blocklist = "../../../../cfi_blocklist.txt"
-  }
-  cflags = [ "-fPIC" ]
-  cflags_cc = cflags
-  relative_install_dir = "module/multimedia"
-  part_name = "camera_framework"
-  subsystem_name = "multimedia"
 }

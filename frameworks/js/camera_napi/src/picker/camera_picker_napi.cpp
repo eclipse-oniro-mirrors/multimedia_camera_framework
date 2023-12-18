@@ -18,9 +18,9 @@
 #include "ability.h"
 #include "ability_context.h"
 #include "ability_manager_client.h"
+#include "int_wrapper.h"
 #include "modal_ui_extension_config.h"
 #include "napi_base_context.h"
-#include "int_wrapper.h"
 #include "string_wrapper.h"
 #include "ui_content.h"
 #include "want.h"
@@ -262,19 +262,40 @@ napi_value CameraPickerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("recordVideo", RecordVideo),
     };
 
+    napi_property_descriptor camera_picker_static_props[] = {
+        DECLARE_NAPI_STATIC_FUNCTION("getCameraPicker", CreateCameraPickerInstance),
+    };
+
     status = napi_define_class(env, CAMERA_PICKER_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, CameraPickerNapiConstructor,
         nullptr, sizeof(camera_picker_props) / sizeof(camera_picker_props[PARAM0]), camera_picker_props, &ctorObj);
     if (status == napi_ok) {
-        status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
-        if (status == napi_ok) {
+        if (napi_create_reference(env, ctorObj, refCount, &sConstructor_) == napi_ok) {
             status = napi_set_named_property(env, exports, CAMERA_PICKER_NAPI_CLASS_NAME, ctorObj);
-            if (status == napi_ok) {
+            if (status == napi_ok &&
+                napi_define_properties(env, exports,
+                    sizeof(camera_picker_static_props) / sizeof(camera_picker_static_props[PARAM0]),
+                    camera_picker_static_props) == napi_ok) {
                 return exports;
             }
         }
     }
     MEDIA_ERR_LOG("Init call Failed!");
     return nullptr;
+}
+
+napi_value CameraPickerNapi::CreateCameraPickerInstance(napi_env env, napi_callback_info info)
+{
+    MEDIA_ERR_LOG("CreateCameraPickerInstance is called");
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = { 0 };
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    result = CameraPickerNapi::CreateCameraPicker(env);
+    return result;
 }
 
 napi_value CameraPickerNapi::CreateCameraPicker(napi_env env)
