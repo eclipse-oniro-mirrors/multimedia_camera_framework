@@ -606,7 +606,7 @@ void CameraManager::CameraServerDied(pid_t pid)
         for (size_t i = 0; i < cameraObjList.size(); i++) {
             CameraStatusInfo cameraStatusInfo;
             cameraStatusInfo.cameraDevice = cameraObjList[i];
-            cameraStatusInfo.cameraStatus = CAMERA_STATUS_DISAPPEAR;
+            cameraStatusInfo.cameraStatus = CAMERA_SERVER_UNAVAILABLE;
             std::shared_ptr<CameraManagerCallback> cameraManagerCallback = GetApplicationCallback();
             if (cameraManagerCallback != nullptr) {
                 MEDIA_INFO_LOG("Callback cameraStatus");

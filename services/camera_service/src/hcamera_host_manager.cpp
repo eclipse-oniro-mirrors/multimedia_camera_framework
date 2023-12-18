@@ -57,6 +57,7 @@ public:
             if (cameraHostInfo == nullptr) {
                 return;
             }
+            cameraHostInfo->NotifyCameraHostDied();
             cameraHostInfo->CameraHostDied();
         }
 
@@ -93,6 +94,7 @@ public:
 
 private:
     std::shared_ptr<CameraDeviceInfo> FindCameraDeviceInfo(const std::string& cameraId);
+    void NotifyCameraHostDied();
     void AddDevice(const std::string& cameraId);
     void RemoveDevice(const std::string& cameraId);
 
@@ -422,6 +424,16 @@ int32_t HCameraHostManager::CameraHostInfo::OnCameraStatus(
     }
     statusCallback->OnCameraStatus(cameraId, svcStatus);
     return CAMERA_OK;
+}
+
+void HCameraHostManager::CameraHostInfo::NotifyCameraHostDied()
+{
+    auto statusCallback = statusCallback_.lock();
+    if (statusCallback == nullptr) {
+        MEDIA_WARNING_LOG("CameraHostInfo::NotifyCameraHostDied failed due to no callback!");
+        return;
+    }
+    statusCallback->OnCameraStatus("device/0", CAMERA_SERVER_UNAVAILABLE);
 }
 
 int32_t HCameraHostManager::CameraHostInfo::OnFlashlightStatus(const std::string& cameraId, FlashlightStatus status)

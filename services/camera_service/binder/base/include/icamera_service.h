@@ -39,6 +39,14 @@ struct EffectParam {
     int faceSlender;
     int skinTone;
 };
+
+class ICameraProxy : public IRemoteBroker {
+public:
+    DECLARE_INTERFACE_DESCRIPTOR(u"OHOS.Anco.Service.Camera");
+
+    virtual int32_t NotifyCloseCamera(std::string cameraId) = 0;
+};
+
 class ICameraService : public IRemoteBroker {
 public:
     virtual int32_t CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService>& device) = 0;
@@ -83,6 +91,10 @@ public:
     virtual int32_t IsCameraMuted(bool &muteMode) = 0;
 
     virtual int32_t SetTorchLevel(float level) = 0;
+
+    virtual int32_t AllowOpenByOHSide(std::string cameraId, int32_t state, bool &canOpenCamera) = 0;
+
+    virtual int32_t NotifyCameraState(std::string cameraId, int32_t state) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ICameraService");
 };

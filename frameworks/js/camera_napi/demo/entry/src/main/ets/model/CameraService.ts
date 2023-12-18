@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// @ts-nocheck
 import camera from '@ohos.multimedia.camera';
 import fileio from '@ohos.fileio';
 import image from '@ohos.multimedia.image';
@@ -22,7 +22,6 @@ import { BusinessError } from '@ohos.base';
 import Logger from '../model/Logger';
 import MediaUtils from '../model/MediaUtils';
 import { Constants } from '../common/Constants';
-
 const cameraSize = {
   width: 1280,
   height: 720
@@ -39,7 +38,6 @@ const TAG: string = 'CameraService';
 
 class CameraService {
   private mediaUtil: MediaUtils = MediaUtils.getInstance();
-  private modeManager: camera.CameraManager | undefined = undefined;
   private cameraManager: camera.CameraManager | undefined = undefined;
   private cameras: Array<camera.CameraDevice> | undefined = undefined;
   private sceneModes: Array<camera.SceneMode> | undefined = undefined;
@@ -48,7 +46,7 @@ class CameraService {
   private previewOutput: camera.PreviewOutput | undefined = undefined;
   private photoOutPut: camera.PhotoOutput | undefined = undefined;
   private captureSession: camera.CaptureSession | undefined = undefined;
-  private portraitSession: camera.PortraitSession | undefined = undefined;
+  private portraitSession: camera.PortraitPhotoSession | undefined = undefined;
   private mReceiver: image.ImageReceiver | undefined = undefined;
   private fileAsset: mediaLibrary.FileAsset | undefined = undefined;
   private fd: number = -1;
@@ -113,7 +111,7 @@ class CameraService {
     rotation270: 270,
   };
   private videoOutputStatus: boolean = false;
-  private colorEffect: camera.ColorEffect | undefined = undefined;
+  private colorEffect: camera.ColorEffectType | undefined = undefined;
   private isPortraitMode: boolean = false;
 
   constructor() {
@@ -339,7 +337,7 @@ class CameraService {
    */
   isExposureModeSupportedFn(aeMode: camera.ExposureMode): void {
     // 检测曝光模式是否支持
-    let session: camera.PortraitSession | camera.CaptureSession = this.getSession();
+    let session: camera.PortraitPhotoSession | camera.CaptureSession = this.getSession();
     if (!session) {
       return;
     }
@@ -367,7 +365,7 @@ class CameraService {
    */
   isMeteringPoint(point: camera.Point): void {
     // 获取当前曝光模式
-    let session: camera.PortraitSession | camera.CaptureSession = this.getSession();
+    let session: camera.PortraitPhotoSession | camera.CaptureSession = this.getSession();
     if (!session) {
       return;
     }
@@ -386,7 +384,7 @@ class CameraService {
   isExposureBiasRange(exposureBias: number): void {
     Logger.debug(TAG, `setExposureBias value ${exposureBias}`);
     // 查询曝光补偿范围
-    let session: camera.PortraitSession | camera.CaptureSession = this.getSession();
+    let session: camera.PortraitPhotoSession | camera.CaptureSession = this.getSession();
     if (!session) {
       return;
     }
@@ -395,17 +393,13 @@ class CameraService {
     Logger.debug(TAG, `getExposureBiasRange success, biasRangeArray: ${JSON.stringify(biasRangeArray)}`);
     // 设置曝光补偿
     session.setExposureBias(exposureBias);
-    // 查询当前曝光值
-    let exposureValue: number | undefined = undefined;
-    exposureValue = session.getExposureValue();
-    Logger.debug(TAG, `getExposureValue success, exposureValue: ${JSON.stringify(exposureValue)}`);
   }
 
   /**
    * 是否支持对应对焦模式
    */
   isFocusModeSupported(focusMode: camera.FocusMode): boolean {
-    let session: camera.PortraitSession | camera.CaptureSession = this.getSession();
+    let session: camera.PortraitPhotoSession | camera.CaptureSession = this.getSession();
     if (!session) {
       return false;
     }
@@ -423,7 +417,7 @@ class CameraService {
     if (!isSupported) {
       return;
     }
-    let session: camera.PortraitSession | camera.CaptureSession = this.getSession();
+    let session: camera.PortraitPhotoSession | camera.CaptureSession = this.getSession();
     if (!session) {
       return;
     }
@@ -435,7 +429,7 @@ class CameraService {
    */
   isFocusPoint(point: camera.Point): void {
     // 设置焦点
-    let session: camera.PortraitSession | camera.CaptureSession = this.getSession();
+    let session: camera.PortraitPhotoSession | camera.CaptureSession = this.getSession();
     if (!session) {
       return;
     }
@@ -451,7 +445,7 @@ class CameraService {
    * 闪关灯
    */
   hasFlashFn(flashMode: camera.FlashMode): void {
-    let session: camera.PortraitSession | camera.CaptureSession = this.getSession();
+    let session: camera.PortraitPhotoSession | camera.CaptureSession = this.getSession();
     if (!session) {
       return;
     }
@@ -468,8 +462,8 @@ class CameraService {
     Logger.debug(TAG, `getFlashMode success, nowFlashMode: ${nowFlashMode}`);
   }
 
-  getSession(): camera.PortraitSession | camera.CaptureSession | undefined {
-    let session: camera.PortraitSession | camera.CaptureSession = undefined;
+  getSession(): camera.PortraitPhotoSession | camera.CaptureSession | undefined {
+    let session: camera.PortraitPhotoSession | camera.CaptureSession = undefined;
     if (this.isPortraitMode) {
       session = this.portraitSession;
     } else {
@@ -484,7 +478,7 @@ class CameraService {
   setZoomRatioFn(zoomRatio: number): void {
     Logger.info(TAG, `setZoomRatioFn value ${zoomRatio}`);
     // 获取支持的变焦范围
-    let session: camera.PortraitSession | camera.CaptureSession = this.getSession();
+    let session: camera.PortraitPhotoSession | camera.CaptureSession = this.getSession();
     if (!session) {
       return;
     }
@@ -835,8 +829,8 @@ class CameraService {
 
   getModeManagerFn(): void {
     try {
-      this.modeManager = camera.getModeManager(globalThis.abilityContext);
-      Logger.info(TAG, `getModeManagerFn success: ${this.modeManager}`);
+      this.cameraManager = camera.getCameraManager(globalThis.abilityContext);
+      Logger.info(TAG, `getModeManagerFn success: ${this.cameraManager}`);
     } catch (error) {
       let err = error as BusinessError;
       Logger.error(TAG, `getModeManagerFn failed: ${JSON.stringify(err)}`);
@@ -858,7 +852,7 @@ class CameraService {
 
   getSupportedModeFn(cameraIndex: number): void {
     try {
-      this.sceneModes = this.modeManager.getSupportedModes(this.cameras[cameraIndex]);
+      this.sceneModes = this.cameraManager.getSupportedSceneModes(this.cameras[cameraIndex]);
       Logger.info(TAG, `getSupportedModeFn success: ${this.sceneModes}, length: ${this.sceneModes.length}`);
     } catch (error) {
       let err = error as BusinessError;
@@ -954,7 +948,7 @@ class CameraService {
   async portraitSessionFlowFn(sceneModeIndex: number): Promise<void> {
     try {
       // 创建PortraitSession实例
-      this.portraitSession = this.modeManager.createCaptureSession(this.sceneModes[sceneModeIndex]) as camera.PortraitSession;
+      this.portraitSession = this.cameraManager.createSession(camera.SceneMode.PORTRAIT_PHOTO);
       // 监听焦距的状态变化
       this.onFocusStateChange();
       // 监听拍照会话的错误事件
@@ -1004,12 +998,12 @@ class CameraService {
     }
   }
 
-  setColorEffect(colorEffect: camera.ColorEffect): void {
+  setColorEffect(colorEffect: camera.ColorEffectType): void {
     Logger.info(TAG, 'setColorEffect is called.');
     if (this.captureSession || this.portraitSession) {
-      let res: Array<camera.ColorEffect> | undefined = [];
+      let res: Array<camera.ColorEffectType> | undefined = [];
       res = this.getSupportedColorEffects();
-      let session: camera.PortraitSession | camera.CaptureSession = this.getSession();
+      let session: camera.PortraitPhotoSession | camera.CaptureSession = this.getSession();
       if (!session) {
         return;
       }
@@ -1025,11 +1019,11 @@ class CameraService {
     }
   }
 
-  getColorEffect(): camera.ColorEffect | undefined {
+  getColorEffect(): camera.ColorEffectType | undefined {
     Logger.info(TAG, 'getColorEffect is called.');
-    let colorEffect: camera.ColorEffect | undefined = undefined;
+    let colorEffect: camera.ColorEffectType | undefined = undefined;
     if (this.captureSession || this.portraitSession) {
-      let session: camera.PortraitSession | camera.CaptureSession = this.getSession();
+      let session: camera.PortraitPhotoSession | camera.CaptureSession = this.getSession();
       if (!session) {
         return colorEffect;
       }
@@ -1043,11 +1037,11 @@ class CameraService {
     return colorEffect;
   }
 
-  getSupportedColorEffects(): Array<camera.ColorEffect> | undefined {
+  getSupportedColorEffects(): Array<camera.ColorEffectType> | undefined {
     Logger.info(TAG, 'getSupportedColorEffects is called.');
-    let res: Array<camera.ColorEffect> | undefined = [];
+    let res: Array<camera.ColorEffectType> | undefined = [];
     if (this.captureSession || this.portraitSession) {
-      let session: camera.PortraitSession | camera.CaptureSession = this.getSession();
+      let session: camera.PortraitPhotoSession | camera.CaptureSession = this.getSession();
       if (!session) {
         return res;
       }
@@ -1133,7 +1127,7 @@ class CameraService {
    * 监听焦距的状态变化
    */
   onFocusStateChange(): void {
-    let session: camera.PortraitSession | camera.CaptureSession = this.getSession();
+    let session: camera.PortraitPhotoSession | camera.CaptureSession = this.getSession();
     if (!session) {
       return;
     }
@@ -1146,7 +1140,7 @@ class CameraService {
    * 监听拍照会话的错误事件
    */
   onCaptureSessionErrorChange(): void {
-    let session: camera.PortraitSession | camera.CaptureSession = this.getSession();
+    let session: camera.PortraitPhotoSession | camera.CaptureSession = this.getSession();
     if (!session) {
       return;
     }

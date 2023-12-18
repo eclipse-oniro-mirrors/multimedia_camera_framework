@@ -36,6 +36,7 @@ REGISTER_SYSTEM_ABILITY_BY_ID(HCameraService, CAMERA_SERVICE_ID, true)
 constexpr int32_t SENSOR_SUCCESS = 0;
 constexpr int32_t POSTURE_INTERVAL = 1000000;
 constexpr uint8_t POSITION_FOLD_INNER = 3;
+static const int32_t WAIT_FOR_A_CLOSE_CAMERA = 2;
 static std::mutex g_cameraServiceInstanceMutex;
 static HCameraService* g_cameraServiceInstance = nullptr;
 static sptr<HCameraService> g_cameraServiceHolder = nullptr;
@@ -662,6 +663,34 @@ int32_t HCameraService::SetTorchLevel(float level)
         MEDIA_DEBUG_LOG("Failed to SetTorchLevel");
     }
     return ret;
+}
+
+int32_t HCameraService::AllowOpenByOHSide(std::string cameraId, int32_t state, bool& canOpenCamera)
+{
+    MEDIA_INFO_LOG("HCameraService::AllowOpenByOHSide start");
+    pid_t activePid = HCameraDeviceManager::GetInstance()->GetActiveClient();
+    if (activePid == -1) {
+        MEDIA_INFO_LOG("AllowOpenByOHSide::Open allow open camera");
+        NotifyCameraState(cameraId, 0);
+        canOpenCamera = true;
+        return CAMERA_OK;
+    }
+    sptr<HCameraDevice> cameraNeedEvict = HCameraDeviceManager::GetInstance()->GetCameraByPid(activePid);
+    cameraNeedEvict->OnError(DEVICE_PREEMPT, 0);
+    cameraNeedEvict->CloseDevice();
+    sleep(WAIT_FOR_A_CLOSE_CAMERA);
+    NotifyCameraState(cameraId, 0);
+    canOpenCamera = true;
+    MEDIA_INFO_LOG("HCameraService::AllowOpenByOHSide end");
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::NotifyCameraState(std::string cameraId, int32_t state)
+{
+    // 把cameraId和前后台状态刷新给device manager
+    MEDIA_INFO_LOG("HCameraService::NotifyCameraState SetStateOfACamera");
+    HCameraDeviceManager::GetInstance()->SetStateOfACamera(cameraId, state);
+    return CAMERA_OK;
 }
 
 bool HCameraService::IsPrelaunchSupported(string cameraId)
