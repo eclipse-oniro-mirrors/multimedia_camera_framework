@@ -36,7 +36,7 @@ ohos_shared_library("ohcamera") {
 
   include_dirs = [
     "${driver_disply_path}/interfaces/include",
-    "${graphic_2d_path}/frameworks/surface/include",
+    "${graphic_surface_path}/surface/include",
     "${multimedia_camera_framework_path}/interfaces",
     "${multimedia_camera_framework_path}/interfaces/kits/native/include/camera",
     "${multimedia_camera_framework_path}/services/camera_service/include",
@@ -68,7 +68,7 @@ ohos_shared_library("ohcamera") {
 
   external_deps = [
     "c_utils:utils",
-    "graphic_2d:surface",
+    "graphic_surface:surface",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",

@@ -102,7 +102,7 @@ ohos_shared_library("camera_framework") {
   ]
 
   include_dirs = [
-    "//foundation/graphic/graphic_2d/frameworks/surface/include",
+    "//foundation/graphic/graphic_surface/surface/include",
     "//utils/system/safwk/native/include",
     "${window_manager_path}/interfaces/innerkits/dm",
   ]
@@ -117,7 +117,7 @@ ohos_shared_library("camera_framework") {
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_camera:metadata",
     "drivers_interface_display:display_commontype_idl_headers",
-    "graphic_2d:surface",
+    "graphic_surface:surface",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",

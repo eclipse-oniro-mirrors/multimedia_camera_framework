@@ -20,7 +20,8 @@ ohos_moduletest("camera_framework_moduletest") {
   module_out_path = module_output_path
   include_dirs = [
     "./include",
-    "${graphic_2d_path}/frameworks/surface/include",
+    "${graphic_surface_path}/surface/include",
+    "${graphic_surface_path}/surface/include",
     "${multimedia_camera_framework_path}/services/camera_service/include",
     "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
     "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
@@ -40,7 +41,7 @@ ohos_moduletest("camera_framework_moduletest") {
     "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
     "//drivers/interface/camera/v1_0:libcamera_proxy_1.0",
-    "//foundation/graphic/graphic_2d:libsurface",
+    "//foundation/graphic/graphic_surface/surface:surface",
   ]
 
   external_deps = [
@@ -53,7 +54,7 @@ ohos_moduletest("camera_framework_moduletest") {
     "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:metadata",
     "drivers_peripheral_display:hdi_gralloc_client",
-    "graphic_2d:surface",
+    "graphic_surface:surface",
     "hdf_core:libhdi",
     "hilog:libhilog",
     "hisysevent:libhisysevent",

@@ -29,6 +29,7 @@
               "drivers_interface_display",
               "drivers_peripheral_display",
               "graphic_2d",
+              "graphic_surface",
               "hdf_core",
               "hicollie",
               "hicollie_native",
