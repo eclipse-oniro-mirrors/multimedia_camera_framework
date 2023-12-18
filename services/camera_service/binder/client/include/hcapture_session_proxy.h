@@ -43,7 +43,7 @@ public:
 
     int32_t Stop() override;
 
-    int32_t Release(pid_t pid) override;
+    int32_t Release() override;
 
     int32_t SetCallback(sptr<ICaptureSessionCallback> &callback) override;
 

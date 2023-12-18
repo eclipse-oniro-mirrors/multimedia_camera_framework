@@ -25,5 +25,20 @@ sptr<CameraDevice> PrelaunchConfig::GetCameraDevice()
 {
     return cameraDevice_;
 }
+
+RestoreParamType PrelaunchConfig::GetRestoreParamType()
+{
+    return restoreParamType;
+}
+
+int PrelaunchConfig::GetActiveTime()
+{
+    return activeTime;
+}
+
+SettingParam PrelaunchConfig::GetSettingParam()
+{
+    return settingParam;
+}
 }
 }

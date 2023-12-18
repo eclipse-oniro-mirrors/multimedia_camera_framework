@@ -17,12 +17,14 @@
 #define OHOS_CAMERA_HSTREAM_REPEAT_STUB_H
 
 #include <cstdint>
+
+#include "icamera_ipc_checker.h"
 #include "iremote_stub.h"
 #include "istream_repeat.h"
 
 namespace OHOS {
 namespace CameraStandard {
-class HStreamRepeatStub : public IRemoteStub<IStreamRepeat> {
+class HStreamRepeatStub : public IRemoteStub<IStreamRepeat>, public ICameraIpcChecker {
 public:
     int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;
 

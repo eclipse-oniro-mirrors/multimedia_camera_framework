@@ -18,6 +18,9 @@
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "privacy_kit.h"
+#include "iservice_registry.h"
+#include "bundle_mgr_interface.h"
+#include "system_ability_definition.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -96,10 +99,9 @@ std::map<int, std::string> g_cameraQuickThumbnailAvailable = {
 };
 
 int32_t g_operationMode;
-static std::mutex g_captureIdsMutex;
-static std::map<int32_t, bool> g_captureIds;
+bool g_cameraDebugOn = false;
 
-int32_t HdiToServiceError(CamRetCode ret)
+int32_t HdiToServiceError(OHOS::HDI::Camera::V1_0::CamRetCode ret)
 {
     enum CamServiceError err = CAMERA_UNKNOWN_ERROR;
 
@@ -170,32 +172,6 @@ std::string CreateMsg(const char* format, ...)
     return msg;
 }
 
-int32_t AllocateCaptureId(int32_t &captureId)
-{
-    std::lock_guard<std::mutex> lock(g_captureIdsMutex);
-    static int32_t currentCaptureId = 0;
-    for (int32_t i = 0; i < INT_MAX; i++) {
-        if (currentCaptureId == INT_MAX) {
-            currentCaptureId = 0;
-            MEDIA_INFO_LOG("Restarting CaptureId");
-        }
-        currentCaptureId++;
-        if (g_captureIds.find(currentCaptureId) == g_captureIds.end()) {
-            g_captureIds[currentCaptureId] = true;
-            captureId = currentCaptureId;
-            return CAMERA_OK;
-        }
-    }
-    return CAMERA_CAPTURE_LIMIT_EXCEED;
-}
-
-void ReleaseCaptureId(int32_t captureId)
-{
-    std::lock_guard<std::mutex> lock(g_captureIdsMutex);
-    g_captureIds.erase(captureId);
-    return;
-}
-
 bool IsValidTokenId(uint32_t tokenId)
 {
     return Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(tokenId) ==
@@ -244,6 +220,89 @@ bool IsValidMode(
     }
 
     return false;
+}
+
+void DumpMetadata(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraSettings)
+{
+    if (cameraSettings == nullptr) {
+        return;
+    }
+    auto srcHeader = cameraSettings->get();
+    if (srcHeader == nullptr) {
+        return;
+    }
+    auto srcItemCount = srcHeader->item_count;
+    camera_metadata_item_t item;
+    for (uint32_t index = 0; index < srcItemCount; index++) {
+        int ret = OHOS::Camera::GetCameraMetadataItem(srcHeader, index, &item);
+        if (ret != CAM_META_SUCCESS) {
+            MEDIA_ERR_LOG("Failed to get metadata item at index: %{public}d", index);
+            return;
+        }
+        const char *name = OHOS::Camera::GetCameraMetadataItemName(item.item);
+        if (name == nullptr) {
+            MEDIA_DEBUG_LOG("U8ItemToString: get u8 item name fail!");
+            return;
+        }
+        if (item.data_type == META_TYPE_BYTE) {
+            for (size_t k = 0; k < item.count; k++) {
+                MEDIA_DEBUG_LOG("tag index:%d, name:%s, value:%d", item.index, name, (uint8_t)(item.data.u8[k]));
+            }
+        } else if (item.data_type == META_TYPE_INT32) {
+            for (size_t k = 0; k < item.count; k++) {
+                MEDIA_DEBUG_LOG("tag index:%d, name:%s, value:%d", item.index, name, (int32_t)(item.data.i32[k]));
+            }
+        } else if (item.data_type == META_TYPE_UINT32) {
+            for (size_t k = 0; k < item.count; k++) {
+                MEDIA_DEBUG_LOG("tag index:%d, name:%s, value:%d", item.index, name, (uint32_t)(item.data.ui32[k]));
+            }
+        } else if (item.data_type == META_TYPE_FLOAT) {
+            for (size_t k = 0; k < item.count; k++) {
+                MEDIA_DEBUG_LOG("tag index:%d, name:%s, value:%f", item.index, name, (float)(item.data.f[k]));
+            }
+        } else if (item.data_type == META_TYPE_INT64) {
+            for (size_t k = 0; k < item.count; k++) {
+                MEDIA_DEBUG_LOG("tag index:%d, name:%s, value:%lld", item.index, name, (long long)(item.data.i64[k]));
+            }
+        } else if (item.data_type == META_TYPE_DOUBLE) {
+            for (size_t k = 0; k < item.count; k++) {
+                MEDIA_DEBUG_LOG("tag index:%d, name:%s, value:%lf", item.index, name, (double)(item.data.d[k]));
+            }
+        } else {
+            MEDIA_DEBUG_LOG("tag index:%d, name:%s", item.index, name);
+        }
+    }
+}
+
+std::string GetClientBundle(int uid)
+{
+    std::string bundleName = "";
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (samgr == nullptr) {
+        MEDIA_ERR_LOG("Get ability manager failed");
+        return bundleName;
+    }
+
+    sptr<IRemoteObject> object = samgr->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
+    if (object == nullptr) {
+        MEDIA_DEBUG_LOG("object is NULL.");
+        return bundleName;
+    }
+
+    sptr<OHOS::AppExecFwk::IBundleMgr> bms = iface_cast<OHOS::AppExecFwk::IBundleMgr>(object);
+    if (bms == nullptr) {
+        MEDIA_DEBUG_LOG("bundle manager service is NULL.");
+        return bundleName;
+    }
+
+    auto result = bms->GetNameForUid(uid, bundleName);
+    if (result != ERR_OK) {
+        MEDIA_ERR_LOG("GetBundleNameForUid fail");
+        return "";
+    }
+    MEDIA_INFO_LOG("bundle name is %{public}s ", bundleName.c_str());
+
+    return bundleName;
 }
 
 bool IsValidSize(

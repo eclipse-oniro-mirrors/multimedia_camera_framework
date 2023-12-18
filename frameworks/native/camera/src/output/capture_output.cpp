@@ -13,11 +13,15 @@
  * limitations under the License.
  */
 
-#include "camera_log.h"
 #include "output/capture_output.h"
+
+#include "camera_log.h"
+#include "capture_session.h"
 
 namespace OHOS {
 namespace CameraStandard {
+static const char* g_captureOutputTypeString[CAPTURE_OUTPUT_TYPE_MAX] = {"Preview", "Photo", "Video", "Metadata"};
+
 CaptureOutput::CaptureOutput(CaptureOutputType outputType, StreamType streamType,
     sptr<IStreamCommon> stream) : outputType_(outputType), streamType_(streamType), stream_(stream)
 {

@@ -206,7 +206,7 @@ public:
      *
      * @param CaptureInput to be added to session.
      */
-    int32_t CanAddInput(sptr<CaptureInput>& input);
+    virtual bool CanAddInput(sptr<CaptureInput>& input);
 
     /**
      * @brief Add CaptureInput for the capture session.
@@ -220,7 +220,7 @@ public:
      *
      * @param CaptureOutput to be added to session.
      */
-    int32_t CanAddOutput(sptr<CaptureOutput>& output);
+    virtual bool CanAddOutput(sptr<CaptureOutput>& output);
 
     /**
      * @brief Add CaptureOutput for the capture session.

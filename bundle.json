@@ -60,6 +60,7 @@
         "build": {
           "group_type": {
             "base_group": [
+              "//foundation/multimedia/camera_framework/frameworks/js/camera_napi/demo:camera_sample_hap"
             ],
             "fwk_group": [
               "//foundation/multimedia/camera_framework/frameworks/native/camera:camera_framework",

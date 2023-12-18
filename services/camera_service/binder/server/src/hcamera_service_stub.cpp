@@ -178,7 +178,13 @@ int HCameraServiceStub::HandleSetPrelaunchConfig(MessageParcel& data, MessagePar
 {
     MEDIA_DEBUG_LOG("HCameraServiceStub HandleSetPrelaunchConfig enter");
     std::string cameraId = data.ReadString();
-    int32_t ret = SetPrelaunchConfig(cameraId);
+    RestoreParamTypeOhos restoreTypeParam = static_cast<RestoreParamTypeOhos>(data.ReadUint32());
+    int32_t activeTime = data.ReadUint32();
+    EffectParam effectParam;
+    effectParam.skinSmoothLevel = data.ReadUint32();
+    effectParam.faceSlender = data.ReadUint32();
+    effectParam.skinTone = data.ReadUint32();
+    int32_t ret = SetPrelaunchConfig(cameraId, restoreTypeParam, activeTime, effectParam);
     MEDIA_INFO_LOG("HCameraServiceStub HandleSetPrelaunchConfig result: %{public}d", ret);
     return ret;
 }

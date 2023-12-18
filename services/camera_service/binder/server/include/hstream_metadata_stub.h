@@ -16,15 +16,15 @@
 #ifndef OHOS_CAMERA_HSTREAM_METADATA_STUB_H
 #define OHOS_CAMERA_HSTREAM_METADATA_STUB_H
 
+#include "icamera_ipc_checker.h"
 #include "iremote_stub.h"
 #include "istream_metadata.h"
 
 namespace OHOS {
 namespace CameraStandard {
-class HStreamMetadataStub : public IRemoteStub<IStreamMetadata> {
+class HStreamMetadataStub : public IRemoteStub<IStreamMetadata>, public ICameraIpcChecker {
 public:
-    int OnRemoteRequest(uint32_t code, MessageParcel &data,
-                        MessageParcel &reply, MessageOption &option) override;
+    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

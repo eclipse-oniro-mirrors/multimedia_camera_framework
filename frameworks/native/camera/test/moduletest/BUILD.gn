@@ -78,4 +78,9 @@ ohos_moduletest("camera_framework_moduletest") {
 
   cflags = [ "-fPIC" ]
   cflags_cc = cflags
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
 }

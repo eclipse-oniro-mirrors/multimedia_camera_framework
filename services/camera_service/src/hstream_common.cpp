@@ -14,14 +14,21 @@
  */
 
 #include "hstream_common.h"
-#include "camera_util.h"
+
+#include <atomic>
+#include <cstdint>
+#include <mutex>
+#include <queue>
+
 #include "camera_log.h"
+#include "camera_util.h"
 #include "display/graphic/common/v1_0/cm_color_space.h"
+#include "ipc_skeleton.h"
 
 namespace OHOS {
 namespace CameraStandard {
+using namespace OHOS::HDI::Camera::V1_0;
 using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
-
 static const std::map<ColorSpace, CM_ColorSpaceType> g_fwkToMetaColorSpaceMap_ = {
     {COLOR_SPACE_UNKNOWN, CM_COLORSPACE_NONE},
     {DISPLAY_P3, CM_P3_FULL},
@@ -39,14 +46,57 @@ static const std::map<ColorSpace, CM_ColorSpaceType> g_fwkToMetaColorSpaceMap_ =
     {P3_HLG_LIMIT, CM_P3_HLG_LIMIT},
     {P3_PQ_LIMIT, CM_P3_PQ_LIMIT}
 };
+namespace {
+static const int32_t STREAMID_BEGIN = 1;
+static const int32_t CAPTUREID_BEGIN = 1;
+static int32_t g_currentStreamId = STREAMID_BEGIN;
+static std::queue<int32_t> g_freeStreamIdQueue;
+static std::mutex g_freeStreamQueueMutex;
 
-HStreamCommon::HStreamCommon(StreamType streamType, sptr<OHOS::IBufferProducer> producer,
-                             int32_t format, int32_t width, int32_t height)
+static std::atomic_int32_t g_currentCaptureId = CAPTUREID_BEGIN;
+
+static int32_t GenerateStreamId()
+{
+    std::lock_guard<std::mutex> lock(g_freeStreamQueueMutex);
+    int newId;
+    if (g_freeStreamIdQueue.empty()) {
+        newId = g_currentStreamId++;
+        if (newId == INT32_MAX) {
+            g_currentStreamId = STREAMID_BEGIN;
+        }
+        return newId;
+    }
+    newId = g_freeStreamIdQueue.front();
+    g_freeStreamIdQueue.pop();
+    return newId;
+}
+
+static void FreeStreamId(int32_t streamId)
+{
+    if (streamId == STREAM_ID_UNSET) {
+        return;
+    }
+    std::lock_guard<std::mutex> lock(g_freeStreamQueueMutex);
+    g_freeStreamIdQueue.push(streamId);
+}
+
+static int32_t GenerateCaptureId()
+{
+    int32_t newId = g_currentCaptureId++;
+    if (newId == INT32_MAX) {
+        g_currentCaptureId = CAPTUREID_BEGIN;
+    }
+    return newId;
+}
+} // namespace
+
+HStreamCommon::HStreamCommon(
+    StreamType streamType, sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height)
 {
     MEDIA_DEBUG_LOG("Enter Into HStreamCommon::HStreamCommon");
-    streamId_ = 0;
-    curCaptureID_ = 0;
-    isReleaseStream_ = false;
+    callerToken_ = IPCSkeleton::GetCallingTokenID();
+    streamId_ = GenerateStreamId();
+    curCaptureID_ = CAPTURE_ID_UNSET;
     streamOperator_ = nullptr;
     cameraAbility_ = nullptr;
     producer_ = producer;
@@ -54,20 +104,13 @@ HStreamCommon::HStreamCommon(StreamType streamType, sptr<OHOS::IBufferProducer> 
     height_ = height;
     format_ = format;
     streamType_ = streamType;
+    MEDIA_DEBUG_LOG("HStreamCommon Create streamId_ is %{public}d", streamId_);
 }
 
 HStreamCommon::~HStreamCommon()
-{}
-
-int32_t HStreamCommon::SetReleaseStream(bool isReleaseStream)
 {
-    isReleaseStream_ = isReleaseStream;
-    return CAMERA_OK;
-}
-
-bool HStreamCommon::IsReleaseStream()
-{
-    return isReleaseStream_;
+    FreeStreamId(streamId_);
+    streamId_ = 0;
 }
 
 int32_t HStreamCommon::GetStreamId()
@@ -91,7 +134,7 @@ void HStreamCommon::SetColorSpace(ColorSpace colorSpace)
 }
 
 int32_t HStreamCommon::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
-                                 std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t streamId)
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
     if (streamOperator == nullptr || cameraAbility == nullptr) {
         MEDIA_ERR_LOG("HStreamCommon::LinkInput streamOperator is null");
@@ -103,15 +146,55 @@ int32_t HStreamCommon::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> 
     if (!IsValidSize(cameraAbility, format_, width_, height_)) {
         return CAMERA_INVALID_SESSION_CFG;
     }
-    streamId_ = streamId;
-    MEDIA_DEBUG_LOG("HStreamCommon::LinkInput streamId_ is %{public}d", streamId_);
-    {
-        std::lock_guard<std::mutex> lock(streamOperatorLock_);
-        streamOperator_ = streamOperator;
-    }
+    SetStreamOperator(streamOperator);
     std::lock_guard<std::mutex> lock(cameraAbilityLock_);
     cameraAbility_ = cameraAbility;
     return CAMERA_OK;
+}
+
+int32_t HStreamCommon::UnlinkInput()
+{
+    MEDIA_INFO_LOG("HStreamCommon::UnlinkInput streamType:%{public}d, streamId:%{public}d", streamType_, streamId_);
+    StopStream();
+    SetStreamOperator(nullptr);
+    return CAMERA_OK;
+}
+
+int32_t HStreamCommon::StopStream()
+{
+    MEDIA_INFO_LOG("HStreamCommon::StopStream streamType:%{public}d, streamId:%{public}d, captureId:%{public}d",
+        streamType_, streamId_, curCaptureID_);
+    auto streamOperator = GetStreamOperator();
+    if (streamOperator == nullptr) {
+        MEDIA_DEBUG_LOG("HStreamCommon::StopStream streamOperator is nullptr");
+        return CAMERA_OK;
+    }
+
+    if (curCaptureID_ != CAPTURE_ID_UNSET) {
+        CamRetCode rc = (CamRetCode)(streamOperator->CancelCapture(curCaptureID_));
+        if (rc != CamRetCode::NO_ERROR) {
+            MEDIA_ERR_LOG("HStreamCommon::StopStream streamOperator->CancelCapture get error code:%{public}d", rc);
+        }
+        ResetCaptureId();
+        return HdiToServiceError(rc);
+    }
+    return CAMERA_OK;
+}
+
+int32_t HStreamCommon::PrepareCaptureId()
+{
+    curCaptureID_ = GenerateCaptureId();
+    return CAMERA_OK;
+}
+
+void HStreamCommon::ResetCaptureId()
+{
+    curCaptureID_ = CAPTURE_ID_UNSET;
+}
+
+int32_t HStreamCommon::GetPreparedCaptureId()
+{
+    return curCaptureID_;
 }
 
 void HStreamCommon::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
@@ -144,12 +227,8 @@ void HStreamCommon::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
 int32_t HStreamCommon::Release()
 {
     MEDIA_DEBUG_LOG("Enter Into HStreamCommon::Release");
-    streamId_ = 0;
-    curCaptureID_ = 0;
-    {
-        std::lock_guard<std::mutex> lock(streamOperatorLock_);
-        streamOperator_ = nullptr;
-    }
+    StopStream();
+    SetStreamOperator(nullptr);
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
         cameraAbility_ = nullptr;
@@ -165,7 +244,6 @@ void HStreamCommon::DumpStreamInfo(std::string& dumpString)
 {
     StreamInfo_V1_1 curStreamInfo;
     SetStreamInfo(curStreamInfo);
-    dumpString += "release status:[" + std::to_string(isReleaseStream_) + "]:\n";
     dumpString += "stream info: \n";
     std::string bufferProducerId = "    Buffer producer Id:[";
     if (curStreamInfo.v1_0.bufferQueue_ && curStreamInfo.v1_0.bufferQueue_->producer_) {

@@ -29,27 +29,12 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class LongExposureCallback {
-public:
-    LongExposureCallback() = default;
-    virtual ~LongExposureCallback() = default;
-    virtual void OnLongExposure(const uint32_t longExposureTime) = 0;
-};
 class CaptureOutput;
 class NightSession : public CaptureSession {
 public:
-    explicit NightSession(sptr<ICaptureSession> &nightSession): CaptureSession(nightSession)
-    {
-        isExposuring_ = true;
-    }
+    explicit NightSession(sptr<ICaptureSession> &nightSession): CaptureSession(nightSession) {}
     NightSession() {};
     ~NightSession();
-
-    /**
-     * @brief start long exposure
-     *
-     */
-    void DoTryAE(bool isTryAe, uint32_t millisecond = 0);
 
     /**
     * @brief Get exposure compensation range.
@@ -72,21 +57,8 @@ public:
     */
     int32_t GetExposure(uint32_t &exposureValue);
 
-    /**
-    * @brief Set the exposure callback.
-    * which will be called when there is exposure state change.
-    *
-    * @param The LongExposureCallback pointer.
-    */
-    void SetLongExposureCallback(std::shared_ptr<LongExposureCallback> longExposureCallback);
     void ProcessCallbacks(const uint64_t timestamp,
         const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) override;
-    void SetLongExposureingState(bool isExposuring);
-    bool IsLongExposureingState();
-private:
-    void ProcessLongExposureOnce(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
-    bool isExposuring_;
-    std::shared_ptr<LongExposureCallback> longExposureCallback_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

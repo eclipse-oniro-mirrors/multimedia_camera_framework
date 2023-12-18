@@ -20,7 +20,6 @@
 #include "hilog/log.h"
 
 #include "input/camera_manager.h"
-#include "mode/mode_manager.h"
 #include "input/camera_device.h"
 #include "output/capture_output.h"
 
@@ -31,7 +30,9 @@
 #include "output/photo_output_napi.h"
 #include "output/video_output_napi.h"
 #include "portrait_session_napi.h"
+#include "photo_session_napi.h"
 #include "night_session_napi.h"
+#include "video_session_napi.h"
 #include "session/camera_session_napi.h"
 #include "camera_napi_utils.h"
 
@@ -65,7 +66,7 @@ private:
 
     napi_env env_;
     napi_ref wrapper_;
-    sptr<ModeManager> modeManager_;
+    sptr<CameraManager> modeManager_;
 
     static thread_local uint32_t modeManagerTaskId;
 };

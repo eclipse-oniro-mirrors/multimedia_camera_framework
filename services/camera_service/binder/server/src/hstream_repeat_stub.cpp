@@ -28,6 +28,8 @@ int HStreamRepeatStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Messa
     int errCode = -1;
 
     CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    errCode = OperatePermissionCheck(code);
+    CHECK_AND_RETURN_RET(errCode == CAMERA_OK, errCode);
     switch (code) {
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_START_VIDEO_RECORDING):
             errCode = Start();
@@ -109,7 +111,8 @@ int32_t HStreamRepeatStub::HandleForkSketchStreamRepeat(MessageParcel& data, Mes
 int32_t HStreamRepeatStub::HandleUpdateSketchRatio(MessageParcel& data)
 {
     float sketchRatio = data.ReadFloat();
-    CHECK_AND_RETURN_RET_LOG(sketchRatio > 0 && sketchRatio <= SKETCH_RATIO_MAX_VALUE, IPC_STUB_INVALID_DATA_ERR,
+    // SketchRatio value could be negative value
+    CHECK_AND_RETURN_RET_LOG(sketchRatio <= SKETCH_RATIO_MAX_VALUE, IPC_STUB_INVALID_DATA_ERR,
         "HStreamRepeatStub HandleUpdateSketchRatio sketchRatio value is illegal %{public}f", sketchRatio);
     return UpdateSketchRatio(sketchRatio);
 }

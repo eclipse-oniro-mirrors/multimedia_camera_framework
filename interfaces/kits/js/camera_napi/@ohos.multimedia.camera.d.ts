@@ -94,7 +94,7 @@ declare namespace camera {
    * @syscap SystemCapability.Multimedia.Camera.Core
    * @since 10
    */
-  enum CameraMode {
+  enum SceneMode {
     /**
     * normal mode.
     *
@@ -514,6 +514,36 @@ declare namespace camera {
      * @since 10
      */
     cameraDevice: CameraDevice;
+
+    /**
+     * Restore param type.
+     *
+     * @type { RestoreParamType }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 10
+     */
+    restoreParamType: RestoreParamType;
+    
+    /**
+     * begin activing time.
+     *
+     * @type { number }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 10
+     */
+    activeTime: number;
+    
+    /**
+     * Setting Param.
+     *
+     * @type { SettingParam }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 10
+     */
+    settingParam: SettingParam;
   }
 
   /**
@@ -858,33 +888,33 @@ declare namespace camera {
     /**
      * Gets supported mode descriptions.
      *
-     * @returns { Array<CameraMode> } An array of supported modes.
+     * @returns { Array<SceneMode> } An array of supported modes.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 10
      */
-    getSupportedModes(camera: CameraDevice): Array<CameraMode>;
+    getSupportedModes(camera: CameraDevice): Array<SceneMode>;
 
     /**
      * Gets supported output capability in specific mode for specific camera.
      *
      * @param { CameraDevice } camera Camera device.
-     * @param { CameraMode } camera Camera mode.
+     * @param { SceneMode } camera Camera mode.
      * @returns { CameraOutputCapability } The camera output capability.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 10
      */
-    getSupportedOutputCapability(camera: CameraDevice, mode: CameraMode): CameraOutputCapability;
+    getSupportedOutputCapability(camera: CameraDevice, mode: SceneMode): CameraOutputCapability;
 
     /**
      * Gets a CaptureSession instance for specific mode.
      *
-     * @param { CameraMode } camera Camera mode.
+     * @param { SceneMode } camera Camera mode.
      * @returns { CaptureSession } The CaptureSession instance.
      * @throws { BusinessError } 7400201 - Camera service fatal error.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 10
      */
-    createCaptureSession(mode: CameraMode): CaptureSession;
+    createCaptureSession(mode: SceneMode): CaptureSession;
   }
 
   /**
@@ -1210,6 +1240,41 @@ declare namespace camera {
     y: number;
   }
 
+
+  /**
+   * setting parameter for stream.
+   *
+   * @interface SettingParam
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 10
+   */
+  interface SettingParam {
+    /**
+     * smooth level value for restore
+     *
+     * @type { number }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    skinSmoothLevel: number;
+    /**
+     * face slender value for restore
+     *
+     * @type { number }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    faceSlender: number;
+    /**
+     * skin tone value for restore
+     *
+     * @type { number }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    skinTone: number;
+  }
+
   /**
    * Camera input object.
    *
@@ -1343,6 +1408,37 @@ declare namespace camera {
      * @since 10
      */
     FLASH_MODE_ALWAYS_OPEN = 3
+  }
+
+  /**
+   * Enum for restore param.
+   *
+   * @enum { number }
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 10
+   */
+  enum RestoreParamType {
+    /**
+     * no need set restore Stream Param, only prelauch cameradevice
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    NO_NEED_RESTORE_PARAM = 0,
+    /**
+     * persistent default param, long-lasting effect after T minutes
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    PERSISTENT_DEFAULT_PARAM = 1,
+    /**
+     * transisitent active param, This parameter has a higher priority than PERSISTENT_DEFAULT_PARAM when both exist.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    TRANSISTENT_ACTIVE_PARAM = 2,
   }
 
   /**

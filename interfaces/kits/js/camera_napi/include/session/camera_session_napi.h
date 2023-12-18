@@ -259,6 +259,17 @@ public:
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<CaptureSession> sCameraSession_;
     static thread_local uint32_t cameraSessionTaskId;
+    static const std::vector<napi_property_descriptor> camera_process_props;
+    static const std::vector<napi_property_descriptor> stabilization_props;
+    static const std::vector<napi_property_descriptor> flash_props;
+    static const std::vector<napi_property_descriptor> auto_exposure_props;
+    static const std::vector<napi_property_descriptor> focus_props;
+    static const std::vector<napi_property_descriptor> zoom_props;
+    static const std::vector<napi_property_descriptor> filter_props;
+    static const std::vector<napi_property_descriptor> beauty_props;
+    static const std::vector<napi_property_descriptor> color_effect_props;
+    static const std::vector<napi_property_descriptor> macro_props;
+    static const std::vector<napi_property_descriptor> color_management_props;
 };
 
 struct CameraSessionAsyncContext : public AsyncContext {

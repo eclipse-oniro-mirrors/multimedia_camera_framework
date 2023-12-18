@@ -20,7 +20,6 @@
 #include "napi/native_node_api.h"
 #include "session/camera_session_napi.h"
 
-
 namespace OHOS {
 namespace CameraStandard {
 static const char PORTRAIT_SESSION_NAPI_CLASS_NAME[] = "PortraitSession";

@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_HCAPTURE_SESSION_STUB_H
 #define OHOS_CAMERA_HCAPTURE_SESSION_STUB_H
 
+#include "icamera_ipc_checker.h"
 #include "icapture_session.h"
 #include "iremote_stub.h"
 #include "istream_capture.h"
@@ -23,21 +24,21 @@
 #include "istream_repeat.h"
 namespace OHOS {
 namespace CameraStandard {
-class HCaptureSessionStub : public IRemoteStub<ICaptureSession> {
+class HCaptureSessionStub : public IRemoteStub<ICaptureSession>, public ICameraIpcChecker {
 public:
-    int OnRemoteRequest(uint32_t code, MessageParcel &data,
-                        MessageParcel &reply, MessageOption &option) override;
+    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;
 
 private:
-    int HandleAddInput(MessageParcel &data);
-    int HandleAddOutput(MessageParcel &data);
-    int HandleRemoveInput(MessageParcel &data);
-    int HandleRemoveOutput(MessageParcel &data);
-    int HandleSetCallback(MessageParcel &data);
-    int HandleGetSesstionState(MessageParcel &reply);
-    int HandleGetActiveColorSpace(MessageParcel &reply);
-    int HandleSetColorSpace(MessageParcel &data);
-    int HandleSetSmoothZoom(MessageParcel &data, MessageParcel &reply);
+    int32_t HandleAddInput(MessageParcel& data);
+    int32_t HandleAddOutput(MessageParcel& data);
+    int32_t HandleRemoveInput(MessageParcel& data);
+    int32_t HandleRemoveOutput(MessageParcel& data);
+    int32_t HandleSaveRestoreParam(MessageParcel& data);
+    int32_t HandleSetCallback(MessageParcel& data);
+    int32_t HandleGetSessionState(MessageParcel& reply);
+    int32_t HandleGetActiveColorSpace(MessageParcel& reply);
+    int32_t HandleSetColorSpace(MessageParcel& data);
+    int32_t HandleSetSmoothZoom(MessageParcel& data, MessageParcel& reply);
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_H_STREAM_CAPTURE_H
 #define OHOS_CAMERA_H_STREAM_CAPTURE_H
 
+#include <cstdint>
 #include <iostream>
 #include <refbase.h>
 
@@ -28,14 +29,14 @@
 
 namespace OHOS {
 namespace CameraStandard {
-using namespace OHOS::HDI::Camera::V1_0;
+using OHOS::HDI::Camera::V1_0::BufferProducerSequenceable;
 class HStreamCapture : public HStreamCaptureStub, public HStreamCommon {
 public:
     HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height);
     ~HStreamCapture();
 
     int32_t LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
-        std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t streamId) override;
+        std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility) override;
     void SetStreamInfo(StreamInfo_V1_1 &streamInfo) override;
     int32_t SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer) override;
     int32_t Capture(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureSettings) override;
@@ -53,6 +54,8 @@ public:
     void PrintDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_);
     void SetMode(int32_t modeName);
     int32_t GetMode();
+
+    int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
 
 private:
     sptr<IStreamCaptureCallback> streamCaptureCallback_;

@@ -29,7 +29,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-using namespace OHOS::HDI::Camera::V1_0;
 enum class RepeatStreamType {
     PREVIEW,
     VIDEO,
@@ -43,7 +42,7 @@ public:
     ~HStreamRepeat();
 
     int32_t LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
-        std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t streamId) override;
+        std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility) override;
     void SetStreamInfo(StreamInfo_V1_1& streamInfo) override;
     int32_t Release() override;
     int32_t Start() override;
@@ -62,6 +61,8 @@ public:
     sptr<HStreamRepeat> GetSketchStream();
     RepeatStreamType GetRepeatStreamType();
     void DumpStreamInfo(std::string& dumpString) override;
+
+    int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
 
 private:
     void SetStreamTransform();

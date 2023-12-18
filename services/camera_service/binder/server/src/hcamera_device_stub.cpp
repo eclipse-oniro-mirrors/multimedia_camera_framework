@@ -28,11 +28,8 @@ int HCameraDeviceStub::OnRemoteRequest(
     DisableJeMalloc();
     int errCode = -1;
     CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
-    if (errCode != CAMERA_OK) {
-        return errCode;
-    }
+    errCode = OperatePermissionCheck(code);
+    CHECK_AND_RETURN_RET(errCode == CAMERA_OK, errCode);
     switch (code) {
         case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_OPEN): {
             errCode = Open();
@@ -71,7 +68,7 @@ int HCameraDeviceStub::OnRemoteRequest(
     return errCode;
 }
 
-int HCameraDeviceStub::HandleSetCallback(MessageParcel &data)
+int32_t HCameraDeviceStub::HandleSetCallback(MessageParcel &data)
 {
     auto remoteObject = data.ReadRemoteObject();
     CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
@@ -82,7 +79,7 @@ int HCameraDeviceStub::HandleSetCallback(MessageParcel &data)
     return SetCallback(callback);
 }
 
-int HCameraDeviceStub::HandleUpdateSetting(MessageParcel &data)
+int32_t HCameraDeviceStub::HandleUpdateSetting(MessageParcel &data)
 {
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = nullptr;
     OHOS::Camera::MetadataUtils::DecodeCameraMetadata(data, metadata);
@@ -90,7 +87,7 @@ int HCameraDeviceStub::HandleUpdateSetting(MessageParcel &data)
     return UpdateSetting(metadata);
 }
 
-int HCameraDeviceStub::HandleGetStatus(MessageParcel &data, MessageParcel &reply)
+int32_t HCameraDeviceStub::HandleGetStatus(MessageParcel &data, MessageParcel &reply)
 {
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadataIn = nullptr;
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadataOut = nullptr;
@@ -107,7 +104,7 @@ int HCameraDeviceStub::HandleGetStatus(MessageParcel &data, MessageParcel &reply
     return errCode;
 }
 
-int HCameraDeviceStub::HandleGetEnabledResults(MessageParcel &reply)
+int32_t HCameraDeviceStub::HandleGetEnabledResults(MessageParcel &reply)
 {
     std::vector<int32_t> results;
     int ret = GetEnabledResults(results);
@@ -122,7 +119,7 @@ int HCameraDeviceStub::HandleGetEnabledResults(MessageParcel &reply)
     return ret;
 }
 
-int HCameraDeviceStub::HandleEnableResult(MessageParcel &data)
+int32_t HCameraDeviceStub::HandleEnableResult(MessageParcel &data)
 {
     std::vector<int32_t> results;
     CHECK_AND_RETURN_RET_LOG(data.ReadInt32Vector(&results), IPC_STUB_INVALID_DATA_ERR,
@@ -136,7 +133,7 @@ int HCameraDeviceStub::HandleEnableResult(MessageParcel &data)
     return ret;
 }
 
-int HCameraDeviceStub::HandleDisableResult(MessageParcel &data)
+int32_t HCameraDeviceStub::HandleDisableResult(MessageParcel &data)
 {
     std::vector<int32_t> results;
     CHECK_AND_RETURN_RET_LOG(data.ReadInt32Vector(&results), IPC_STUB_INVALID_DATA_ERR,
