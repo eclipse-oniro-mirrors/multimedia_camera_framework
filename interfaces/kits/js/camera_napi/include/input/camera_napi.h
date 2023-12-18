@@ -34,6 +34,7 @@
 #include "output/video_output_napi.h"
 #include "session/camera_session_napi.h"
 #include "output/metadata_output_napi.h"
+#include "picker/camera_picker_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -241,6 +242,7 @@ public:
 
     static napi_value CreateCameraManagerInstance(napi_env env, napi_callback_info info);
     static napi_value CreateModeManagerInstance(napi_env env, napi_callback_info info);
+    static napi_value CreateCameraPickerInstance(napi_env env, napi_callback_info info);
     static napi_value CreateFlashModeObject(napi_env env);
     static napi_value CreateExposureModeObject(napi_env env);
     static napi_value CreateFocusModeObject(napi_env env);

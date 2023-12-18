@@ -110,6 +110,7 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
     napi_property_descriptor camera_static_prop[] = {
         DECLARE_NAPI_STATIC_FUNCTION("getCameraManager", CreateCameraManagerInstance),
         DECLARE_NAPI_STATIC_FUNCTION("getModeManager", CreateModeManagerInstance),
+        DECLARE_NAPI_STATIC_FUNCTION("getCameraPicker", CreateCameraPickerInstance),
         DECLARE_NAPI_PROPERTY("FlashMode", CreateFlashModeObject(env)),
         DECLARE_NAPI_PROPERTY("ExposureMode", CreateExposureModeObject(env)),
         DECLARE_NAPI_PROPERTY("ExposureState", CreateExposureStateEnum(env)),
@@ -196,6 +197,21 @@ napi_value CameraNapi::CreateModeManagerInstance(napi_env env, napi_callback_inf
 
     napi_get_undefined(env, &result);
     result = ModeManagerNapi::CreateModeManager(env);
+    return result;
+}
+
+napi_value CameraNapi::CreateCameraPickerInstance(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CreateCameraPickerInstance is called");
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    result = CameraPickerNapi::CreateCameraPicker(env);
     return result;
 }
 
