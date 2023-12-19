@@ -126,5 +126,37 @@ void NightSession::ProcessCallbacks(const uint64_t timestamp,
     ProcessFaceRecUpdates(timestamp, result);
     ProcessAutoFocusUpdates(result);
 }
+
+bool NightSession::CanAddOutput(sptr<CaptureOutput> &output)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter Into NightSession::CanAddOutput");
+    if (!IsSessionConfiged() || output == nullptr) {
+        MEDIA_ERR_LOG("ScanSession::CanAddOutput operation Not allowed!");
+        return false;
+    }
+    int32_t night = 4;
+    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW) {
+        std::vector<Profile> previewProfiles = inputDevice_->GetCameraDeviceInfo()->modePreviewProfiles_[night];
+        Profile vaildateProfile = output->GetPreviewProfile();
+        for (auto& previewProfile : previewProfiles) {
+            if (vaildateProfile == previewProfile) {
+                return true;
+            }
+        }
+    } else if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO) {
+        std::vector<Profile> photoProfiles = inputDevice_->GetCameraDeviceInfo()->modePhotoProfiles_[night];
+        Profile vaildateProfile = output->GetPhotoProfile();
+        for (auto& photoProfile : photoProfiles) {
+            if (vaildateProfile == photoProfile) {
+                return true;
+            }
+        }
+    } else if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_METADATA) {
+        MEDIA_INFO_LOG("ScanSession::CanAddOutput MetadataOutput");
+        return true;
+    }
+    return false;
+}
 } // CameraStandard
 } // OHOS

@@ -147,5 +147,36 @@ void PortraitSession::SetPortraitEffect(PortraitEffect portraitEffect)
     }
     return;
 }
+bool PortraitSession::CanAddOutput(sptr<CaptureOutput> &output)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter Into PortraitSession::CanAddOutput");
+    if (!IsSessionConfiged() || output == nullptr) {
+        MEDIA_ERR_LOG("PortraitSession::CanAddOutput operation Not allowed!");
+        return false;
+    }
+    int32_t portrait = 3;
+    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW) {
+        std::vector<Profile> previewProfiles = inputDevice_->GetCameraDeviceInfo()->modePreviewProfiles_[portrait];
+        Profile vaildateProfile = output->GetPreviewProfile();
+        for (auto& previewProfile : previewProfiles) {
+            if (vaildateProfile == previewProfile) {
+                return true;
+            }
+        }
+    } else if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO) {
+        std::vector<Profile> photoProfiles = inputDevice_->GetCameraDeviceInfo()->modePhotoProfiles_[portrait];
+        Profile vaildateProfile = output->GetPhotoProfile();
+        for (auto& photoProfile : photoProfiles) {
+            if (vaildateProfile == photoProfile) {
+                return true;
+            }
+        }
+    } else if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_METADATA) {
+        MEDIA_INFO_LOG("PortraitSession::CanAddOutput MetadataOutput");
+        return true;
+    }
+    return false;
+}
 } // CameraStandard
 } // OHOS

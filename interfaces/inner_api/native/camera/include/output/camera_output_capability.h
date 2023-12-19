@@ -62,6 +62,11 @@ public:
         }
         return *this;
     }
+    bool operator==(const Profile& profile)
+    {
+        return this->format_ == profile.format_ && this->size_.width == profile.size_.width &&
+            this->size_.height == profile.size_.height;
+    }
     virtual ~Profile() = default;
 
     /**

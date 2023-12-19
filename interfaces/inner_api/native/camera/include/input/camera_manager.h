@@ -604,6 +604,7 @@ private:
     void ParseBasicCapability(sptr<CameraOutputCapability> cameraOutputCapability,
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, const camera_metadata_item_t &item);
     void AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& cameraObjList);
+    void SetProfile(sptr<CameraDevice>& cameraObj);
     std::mutex mutex_;
     std::mutex cameraListMutex_;
     std::mutex vectorMutex_;

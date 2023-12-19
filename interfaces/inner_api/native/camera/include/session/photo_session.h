@@ -26,13 +26,6 @@ public:
     explicit PhotoSession(sptr<ICaptureSession> &photoSession): CaptureSession(photoSession) {}
     PhotoSession() {};
     ~PhotoSession();
- 
-    /**
-     * @brief Determine if the given Input can be added to session.
-     *
-     * @param CaptureInput to be added to session.
-     */
-    bool CanAddInput(sptr<CaptureInput>& input) override;
 
     /**
      * @brief Determine if the given Ouput can be added to session.

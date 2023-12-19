@@ -174,6 +174,30 @@ int32_t HCaptureSession::BeginConfig()
     return errCode;
 }
 
+int32_t HCaptureSession::CanAddInput(sptr<ICameraDeviceService> cameraDevice, bool& result)
+{
+    CAMERA_SYNC_TRACE;
+    int32_t errorCode = CAMERA_OK;
+    result = false;
+    stateMachine_.StateGuard([this, &errorCode](const CaptureSessionState currentState) {
+        if (currentState != CaptureSessionState::SESSION_CONFIG_INPROGRESS) {
+            MEDIA_ERR_LOG("HCaptureSession::CanAddInput Need to call BeginConfig before adding input");
+            errorCode = CAMERA_INVALID_STATE;
+            return;
+        }
+        if ((GetCameraDevice() != nullptr)) {
+            MEDIA_ERR_LOG("HCaptureSession::CanAddInput Only one input is supported");
+            errorCode = CAMERA_INVALID_SESSION_CFG;
+            return;
+        }
+    });
+    if (errorCode == CAMERA_OK) {
+        result = true;
+        CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::CanAddInput"));
+    }
+    return errorCode;
+}
+
 int32_t HCaptureSession::AddInput(sptr<ICameraDeviceService> cameraDevice)
 {
     CAMERA_SYNC_TRACE;

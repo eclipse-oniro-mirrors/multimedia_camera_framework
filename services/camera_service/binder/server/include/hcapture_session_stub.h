@@ -29,6 +29,7 @@ public:
     int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;
 
 private:
+    int32_t HandleCanAddInput(MessageParcel& data, MessageParcel& reply);
     int32_t HandleAddInput(MessageParcel& data);
     int32_t HandleAddOutput(MessageParcel& data);
     int32_t HandleRemoveInput(MessageParcel& data);
