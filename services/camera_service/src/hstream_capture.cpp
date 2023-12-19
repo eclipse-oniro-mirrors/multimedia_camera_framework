@@ -295,6 +295,12 @@ int32_t HStreamCapture::OnCaptureEnded(int32_t captureId, int32_t frameCount)
     if (streamCaptureCallback_ != nullptr) {
         streamCaptureCallback_->OnCaptureEnded(captureId, frameCount);
     }
+    auto preparedCaptureId = GetPreparedCaptureId();
+    if (preparedCaptureId != CAPTURE_ID_UNSET) {
+        MEDIA_INFO_LOG("HStreamCapture::OnCaptureEnded capturId = %{public}d already used, need release",
+                       preparedCaptureId);
+        ResetCaptureId();
+    }
     return CAMERA_OK;
 }
 
@@ -311,6 +317,12 @@ int32_t HStreamCapture::OnCaptureError(int32_t captureId, int32_t errorCode)
         CAMERA_SYSEVENT_FAULT(CreateMsg("Photo OnCaptureError! captureId:%d & "
                                         "errorCode:%{public}d", captureId, captureErrorCode));
         streamCaptureCallback_->OnCaptureError(captureId, captureErrorCode);
+    }
+    auto preparedCaptureId = GetPreparedCaptureId();
+    if (preparedCaptureId != CAPTURE_ID_UNSET) {
+        MEDIA_INFO_LOG("HStreamCapture::OnCaptureError capturId = %{public}d already used, need release",
+                       preparedCaptureId);
+        ResetCaptureId();
     }
     return CAMERA_OK;
 }

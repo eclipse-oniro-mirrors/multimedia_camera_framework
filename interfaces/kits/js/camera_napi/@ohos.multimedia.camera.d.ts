@@ -16,7 +16,7 @@
 import { ErrorCallback, AsyncCallback } from './@ohos.base';
 import type Context from './application/BaseContext';
 import image from './@ohos.multimedia.image';
-import colorSpaceManager from './@ohos.graphics.colorSpaceManager';
+import type colorSpaceManager from './@ohos.graphics.colorSpaceManager';
 
 /**
  * @namespace camera
