@@ -129,10 +129,14 @@ if (use_ace_engine) {
       "ability_runtime:runtime",
       "ability_runtime:service_extension",
       "ability_runtime:ui_extension",
+      "access_token:libtokenid_sdk",
       "ace_engine:ace_uicontent",
       "c_utils:utils",
       "hilog:libhilog",
       "hitrace:hitrace_meter",
+      "image_framework:image",
+      "image_framework:image_native",
+      "ipc:ipc_core",
       "napi:ace_napi",
     ]
     sanitize = {
