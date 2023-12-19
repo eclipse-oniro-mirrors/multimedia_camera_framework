@@ -1185,13 +1185,13 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
     std::vector<StreamInfo_V1_1> allStreamInfos;
 
     if (activeDevice != nullptr) {
-        CreateDefaultSettingForRestore();
-        cameraRestoreParam->SetSetting(defaultSettings_);
-        UpdateSkinSmoothSetting(defaultSettings_, effectParam.skinSmoothLevel);
-        UpdateFaceSlenderSetting(defaultSettings_, effectParam.faceSlender);
-        UpdateSkinToneSetting(defaultSettings_, effectParam.skinTone);
+        std::shared_ptr<OHOS::Camera::CameraMetadata> defaultSettings = CreateDefaultSettingForRestore(activeDevice);
+        UpdateSkinSmoothSetting(defaultSettings, effectParam.skinSmoothLevel);
+        UpdateFaceSlenderSetting(defaultSettings, effectParam.faceSlender);
+        UpdateSkinToneSetting(defaultSettings, effectParam.skinTone);
+        cameraRestoreParam->SetSetting(defaultSettings);
     }
-    if (activeDevice == nullptr || defaultSettings_ == nullptr) {
+    if (activeDevice == nullptr) {
         return CAMERA_UNKNOWN_ERROR;
     }
     MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore param %d", effectParam.skinSmoothLevel);
@@ -1200,6 +1200,9 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
         MEDIA_ERR_LOG("HCaptureSession::SaveCurrentParamForRestore() Failed to get streams info, %{public}d", rc);
         return rc;
     }
+    for (auto& info : allStreamInfos) {
+        MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore: streamId is:%{public}d", info.v1_0.streamId_);
+    }
     cameraRestoreParam->SetStreamInfo(allStreamInfos);
     cameraRestoreParam->SetCameraOpMode(captureSession->GetopMode());
     cameraHostManager_->SaveRestoreParam(cameraRestoreParam);
@@ -1207,23 +1210,33 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
     return rc;
 }
 
-void HCameraService::CreateDefaultSettingForRestore()
+std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSettingForRestore(
+    sptr<HCameraDevice> activeDevice)
 {
     constexpr int32_t DEFAULT_ITEMS = 1;
     constexpr int32_t DEFAULT_DATA_LENGTH = 1;
-    if (defaultSettings_ == nullptr) {
-        defaultSettings_ = std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
-    }
+    auto defaultSettings = std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
     float zoomRatio = 1.0f;
     int32_t count = 1;
     int32_t ret = 0;
     camera_metadata_item_t item;
-    ret = OHOS::Camera::FindCameraMetadataItem(defaultSettings_->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        defaultSettings_->addEntry(OHOS_CONTROL_ZOOM_RATIO, &zoomRatio, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        defaultSettings_->updateEntry(OHOS_CONTROL_ZOOM_RATIO, &zoomRatio, count);
+    defaultSettings->addEntry(OHOS_CONTROL_ZOOM_RATIO, &zoomRatio, count);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> currentSetting = activeDevice->CloneCachedSettings();
+    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_FPS_RANGES, &item);
+    if (ret == CAM_META_SUCCESS) {
+        uint32_t fpscount = item.count;
+        std::vector<int32_t> fpsRange;
+        for (uint32_t i = 0; i < fpscount; i++) {
+            fpsRange.push_back(*(item.data.i32 + i));
+        }
+        defaultSettings->addEntry(OHOS_CONTROL_FPS_RANGES, fpsRange.data(), fpscount);
     }
+    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        uint8_t stabilizationMode_ = item.data.u8[0];
+        defaultSettings->addEntry(OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &stabilizationMode_, count);
+    }
+    return defaultSettings;
 }
 
 int32_t HCameraService::UpdateSkinSmoothSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata,

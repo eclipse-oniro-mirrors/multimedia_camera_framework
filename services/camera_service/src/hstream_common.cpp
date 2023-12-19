@@ -18,7 +18,7 @@
 #include <atomic>
 #include <cstdint>
 #include <mutex>
-#include <queue>
+#include <set>
 
 #include "camera_log.h"
 #include "camera_util.h"
@@ -50,7 +50,7 @@ namespace {
 static const int32_t STREAMID_BEGIN = 1;
 static const int32_t CAPTUREID_BEGIN = 1;
 static int32_t g_currentStreamId = STREAMID_BEGIN;
-static std::queue<int32_t> g_freeStreamIdQueue;
+static std::set<int32_t> g_freeStreamIdQueue;
 static std::mutex g_freeStreamQueueMutex;
 
 static std::atomic_int32_t g_currentCaptureId = CAPTUREID_BEGIN;
@@ -66,8 +66,9 @@ static int32_t GenerateStreamId()
         }
         return newId;
     }
-    newId = g_freeStreamIdQueue.front();
-    g_freeStreamIdQueue.pop();
+    auto firstIt = g_freeStreamIdQueue.begin();
+    newId = *firstIt;
+    g_freeStreamIdQueue.erase(firstIt);
     return newId;
 }
 
@@ -77,7 +78,7 @@ static void FreeStreamId(int32_t streamId)
         return;
     }
     std::lock_guard<std::mutex> lock(g_freeStreamQueueMutex);
-    g_freeStreamIdQueue.push(streamId);
+    g_freeStreamIdQueue.emplace(streamId);
 }
 
 static int32_t GenerateCaptureId()
@@ -95,7 +96,7 @@ HStreamCommon::HStreamCommon(
 {
     MEDIA_DEBUG_LOG("Enter Into HStreamCommon::HStreamCommon");
     callerToken_ = IPCSkeleton::GetCallingTokenID();
-    streamId_ = GenerateStreamId();
+    streamId_ = streamType == StreamType::METADATA ? STREAM_ID_UNSET : GenerateStreamId();
     curCaptureID_ = CAPTURE_ID_UNSET;
     streamOperator_ = nullptr;
     cameraAbility_ = nullptr;
@@ -104,23 +105,15 @@ HStreamCommon::HStreamCommon(
     height_ = height;
     format_ = format;
     streamType_ = streamType;
-    MEDIA_DEBUG_LOG("HStreamCommon Create streamId_ is %{public}d", streamId_);
+    MEDIA_DEBUG_LOG("HStreamCommon Create streamId_ is %{public}d, streamType is:%{public}d", streamId_, streamType_);
 }
 
 HStreamCommon::~HStreamCommon()
 {
+    MEDIA_DEBUG_LOG("Enter Into HStreamCommon::~HStreamCommon streamId is:%{public}d, streamType is:%{public}d",
+        streamId_, streamType_);
     FreeStreamId(streamId_);
-    streamId_ = 0;
-}
-
-int32_t HStreamCommon::GetStreamId()
-{
-    return streamId_;
-}
-
-StreamType HStreamCommon::GetStreamType()
-{
-    return streamType_;
+    streamId_ = STREAM_ID_UNSET;
 }
 
 void HStreamCommon::SetColorSpace(ColorSpace colorSpace)
@@ -226,8 +219,11 @@ void HStreamCommon::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
 
 int32_t HStreamCommon::Release()
 {
-    MEDIA_DEBUG_LOG("Enter Into HStreamCommon::Release");
+    MEDIA_DEBUG_LOG(
+        "Enter Into HStreamCommon::Release streamId is:%{public}d, streamType is:%{public}d", streamId_, streamType_);
     StopStream();
+    FreeStreamId(streamId_);
+    streamId_ = STREAM_ID_UNSET;
     SetStreamOperator(nullptr);
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
