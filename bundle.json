@@ -127,32 +127,32 @@
                   "metadata_object_napi.h"
                 ]
               }
-          },
-          {
-            "type": "none",
-            "name": "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camerapicker_napi",
-            "header": {
-              "header_base": [
-                  "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi/include",
-                  "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi/include/picker"
-               ],
-              "header_files": [
-                "camera_napi_utils.h",
-                "camera_picker_napi.h"
-              ]
+           },
+            {
+              "type": "none",
+              "name": "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camerapicker_napi",
+              "header": {
+                "header_base": [
+                    "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi/include",
+                    "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi/include/picker"
+                ],
+                "header_files": [
+                  "camera_napi_utils.h",
+                  "camera_picker_napi.h"
+                ]
+              }
             }
-          }
-        ],
-        "test": [
-          "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_video",
-          "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_capture",
-          "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_capture_video",
-          "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_framework_moduletest",
-          "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_framework_unittest_v1_0",
-          "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_framework_unittest_v1_1",
-          "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_ndk_unittest_v1_1",
-          "//foundation/multimedia/camera_framework/test:camera_fuzz_test"
-        ]
-      }
+         ],
+          "test": [
+            "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_video",
+            "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_capture",
+            "//foundation/multimedia/camera_framework/interfaces/inner_api/native/test:camera_capture_video",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/moduletest:camera_framework_moduletest",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_framework_unittest_v1_0",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_framework_unittest_v1_1",
+            "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_ndk_unittest_v1_1",
+            "//foundation/multimedia/camera_framework/test:camera_fuzz_test"
+          ]
+       }
   }
 }
