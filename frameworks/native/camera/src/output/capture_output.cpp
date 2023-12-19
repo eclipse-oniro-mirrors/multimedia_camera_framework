@@ -95,6 +95,7 @@ Profile CaptureOutput::GetPhotoProfile()
 {
     return photoProfile_;
 }
+
 int32_t CaptureOutput::SetPreviewProfile(Profile &profile)
 {
     previewProfile_ = profile;
@@ -104,6 +105,17 @@ int32_t CaptureOutput::SetPreviewProfile(Profile &profile)
 Profile CaptureOutput::GetPreviewProfile()
 {
     return previewProfile_;
+}
+
+int32_t CaptureOutput::SetVideoProfile(VideoProfile &videoProfile)
+{
+    videoProfile_ = videoProfile;
+    return 0;
+}
+
+VideoProfile CaptureOutput::GetVideoProfile()
+{
+    return videoProfile_;
 }
 } // CameraStandard
 } // OHOS

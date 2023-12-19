@@ -541,6 +541,7 @@ int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surfa
         if (videoFrameRates.size() >= 2) { // vaild frame rate range length is 2
             videoOutput->SetFrameRateRange(videoFrameRates[0], videoFrameRates[1]);
         }
+        videoOutput->SetVideoProfile(profile);
         POWERMGR_SYSEVENT_CAMERA_CONFIG(VIDEO,
                                         profile.GetSize().width,
                                         profile.GetSize().height);
@@ -765,12 +766,6 @@ void CameraManager::InitCameraList()
                 tempDmDeviceInfo.networkId = "";
             }
             cameraObj = new(std::nothrow) CameraDevice(it, cameraAbilityList[index++], tempDmDeviceInfo);
-            int32_t portraitMode = 3;
-            sptr<CameraOutputCapability> capability = GetSupportedOutputCapability(cameraObj, portraitMode);
-            if (capability != nullptr) {
-                cameraObj->modePreviewProfiles_[portraitMode] = capability->GetPreviewProfiles();
-                cameraObj->modePhotoProfiles_[portraitMode] = capability->GetPhotoProfiles();
-            }
             cameraObjList.emplace_back(cameraObj);
         }
     } else {
@@ -816,17 +811,8 @@ void CameraManager::AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& camera
     std::vector<VideoProfile> frontVideoProfiles = {};
     std::vector<VideoProfile> backVideoProfiles = {};
     sptr<CameraDevice> frontCamera = nullptr;
-    std::vector<int32_t> modes = {0, 3};
-    sptr<CameraOutputCapability> capability = nullptr;
     for (auto& camera : cameraObjList) {
-        for (auto &mode : modes) {
-            capability = GetSupportedOutputCapability(camera, mode);
-            if (capability != nullptr) {
-                camera->modePreviewProfiles_[mode] = capability->GetPreviewProfiles();
-                camera->modePhotoProfiles_[mode] = capability->GetPhotoProfiles();
-                camera->modeVideoProfiles_[mode] = capability->GetVideoProfiles();
-            }
-        }
+        SetProfile(camera);
         if (camera->GetPosition() == CAMERA_POSITION_FRONT) {
             frontVideoProfiles = camera->modeVideoProfiles_[normalMode];
             frontCamera = camera;
@@ -863,6 +849,30 @@ void CameraManager::AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& camera
                            "w(%{public}d),h(%{public}d) fps min(%{public}d),min(%{public}d)",
                            frontProfile.GetSize().width, frontProfile.GetSize().height,
                            frontProfile.framerates_[minIndex], frontProfile.framerates_[maxIndex]);
+        }
+    }
+}
+
+void CameraManager::SetProfile(sptr<CameraDevice>& cameraObj)
+{
+    std::vector<SceneMode> supportedModes = GetSupportedModes(cameraObj);
+    sptr<CameraOutputCapability> capability = nullptr;
+    if (supportedModes.empty()) {
+        capability = GetSupportedOutputCapability(cameraObj);
+        if (capability != nullptr) {
+            cameraObj->modePreviewProfiles_[0] = capability->GetPreviewProfiles();
+            cameraObj->modePhotoProfiles_[0] = capability->GetPhotoProfiles();
+            cameraObj->modeVideoProfiles_[0] = capability->GetVideoProfiles();
+        }
+    } else {
+        for (auto &modeName : GetSupportedModes(cameraObj)) {
+            int32_t mode = isTemplateMode_.count(modeName) ? SceneMode::NORMAL : modeName;
+            capability = GetSupportedOutputCapability(cameraObj, mode);
+            if (capability != nullptr) {
+                cameraObj->modePreviewProfiles_[mode] = capability->GetPreviewProfiles();
+                cameraObj->modePhotoProfiles_[mode] = capability->GetPhotoProfiles();
+                cameraObj->modeVideoProfiles_[mode] = capability->GetVideoProfiles();
+            }
         }
     }
 }
