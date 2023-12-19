@@ -67,7 +67,8 @@
               "//foundation/multimedia/camera_framework/frameworks/native/camera:camera_framework",
               "//foundation/multimedia/camera_framework/frameworks/native/ndk:ohcamera",
               "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camera_napi",
-              "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camera_js"
+              "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camera_js",
+              "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camerapicker_js"
             ],
             "service_group": [
               "//foundation/multimedia/camera_framework/sa_profile:camera_service_sa_profile",
@@ -153,6 +154,6 @@
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_ndk_unittest_v1_1",
             "//foundation/multimedia/camera_framework/test:camera_fuzz_test"
           ]
-       }
+      }
   }
 }
