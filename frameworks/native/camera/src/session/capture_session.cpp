@@ -230,7 +230,6 @@ CaptureSession::CaptureSession(sptr<ICaptureSession> &captureSession)
 {
     captureSession_ = captureSession;
     inputDevice_ = nullptr;
-    modeName_ = 0;
     metaOutput_ = nullptr;
     sptr<IRemoteObject> object = captureSession_->AsObject();
     pid_t pid = 0;
@@ -436,33 +435,22 @@ sptr<CaptureOutput> CaptureSession::GetMetaOutput()
     return metaOutput_;
 }
 
-void CaptureSession::ConfigureOutput(sptr<CaptureOutput> &output)
+void CaptureSession::ConfigureOutput(sptr<CaptureOutput>& output)
 {
-    const int32_t normalMode = 0;
-    const int32_t captureMode = 1;
-    const int32_t videoMode = 2;
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::AddOutput");
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW) {
         MEDIA_INFO_LOG("CaptureSession::AddOutput PreviewOutput");
-        previewProfile_ = output->GetPreviewProfile();
-        if (GetMode() == normalMode) {
-            SetMode(videoMode);
-        }
+        SetGuessMode(SceneMode::CAPTURE);
     }
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO) {
         MEDIA_INFO_LOG("CaptureSession::AddOutput PhotoOutput");
-        photoProfile_ = output->GetPhotoProfile();
-        if (GetMode() == normalMode) {
-            SetMode(captureMode);
-        }
+        SetGuessMode(SceneMode::CAPTURE);
     }
     output->SetSession(this);
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_VIDEO) {
         MEDIA_INFO_LOG("CaptureSession::AddOutput VideoOutput");
-        SetFrameRateRange(static_cast<VideoOutput *>(output.GetRefPtr())->GetFrameRateRange());
-        if (GetMode() == normalMode) {
-            SetMode(videoMode);
-        }
+        SetFrameRateRange(static_cast<VideoOutput*>(output.GetRefPtr())->GetFrameRateRange());
+        SetGuessMode(SceneMode::VIDEO);
     }
 }
 
@@ -2243,7 +2231,7 @@ int32_t CaptureSession::SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoom
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     float duration;
     if (captureSession_) {
-        errCode = captureSession_->SetSmoothZoom(smoothZoomType, modeName_, targetZoomRatio, duration);
+        errCode = captureSession_->SetSmoothZoom(smoothZoomType, GetMode(), targetZoomRatio, duration);
         MEDIA_DEBUG_LOG("CaptureSession::SetSmoothZoom duration: %{public}f ", duration);
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to SetSmoothZoom!, %{public}d", errCode);
@@ -2306,35 +2294,65 @@ void CaptureSession::SetCaptureMetadataObjectTypes(std::set<camera_face_detect_m
     this->UnlockForControl();
 }
 
-void CaptureSession::SetMode(int32_t modeName)
+void CaptureSession::SetGuessMode(SceneMode mode)
 {
-    modeName_ = modeName;
+    if (currentMode_ != SceneMode::NORMAL) {
+        return;
+    }
+    switch (mode) {
+        case CAPTURE:
+            if (guessMode_ == SceneMode::NORMAL) {
+                guessMode_ = CAPTURE;
+            }
+            break;
+        case VIDEO:
+            if (guessMode_ != SceneMode::VIDEO) {
+                guessMode_ = VIDEO;
+            }
+            break;
+        default:
+            MEDIA_WARNING_LOG("CaptureSession::SetGuessMode not support this guest mode:%{public}d", mode);
+            break;
+    }
+    MEDIA_INFO_LOG(
+        "CaptureSession::SetGuessMode currentMode_:%{public}d guessMode_:%{public}d", currentMode_, guessMode_);
+}
+
+void CaptureSession::SetMode(SceneMode modeName)
+{
+    currentMode_ = modeName;
     MEDIA_INFO_LOG("CaptureSession SetMode modeName = %{public}d", modeName);
 }
 
-int32_t CaptureSession::GetMode()
+SceneMode CaptureSession::GetMode()
 {
-    MEDIA_INFO_LOG("CaptureSession GetMode modeName = %{public}d", modeName_);
-    return modeName_;
+    MEDIA_INFO_LOG(
+        "CaptureSession GetMode currentMode_ = %{public}d, guestMode_ = %{public}d", currentMode_, guessMode_);
+    if (currentMode_ == SceneMode::NORMAL) {
+        return guessMode_;
+    }
+    return currentMode_;
 }
 
-int32_t CaptureSession::GetFeaturesMode()
+SceneMode CaptureSession::GetFeaturesMode()
 {
+    auto mode = GetMode();
     if (isSetMacroEnable_) {
-        if (modeName_ == SceneMode::CAPTURE) {
+        if (mode == SceneMode::CAPTURE) {
             return SceneMode::CAPTURE_MACRO;
-        } else if (modeName_ == SceneMode::VIDEO) {
+        } else if (mode == SceneMode::VIDEO) {
             return SceneMode::VIDEO_MACRO;
         }
     }
-    return modeName_;
+    return mode;
 }
 
 vector<int32_t> CaptureSession::GetSubFeatureMods()
 {
-    if (modeName_ == SceneMode::CAPTURE) {
+    auto mode = GetMode();
+    if (mode == SceneMode::CAPTURE) {
         return vector<int32_t> { SceneMode::CAPTURE_MACRO };
-    } else if (modeName_ == SceneMode::VIDEO) {
+    } else if (mode == SceneMode::VIDEO) {
         return vector<int32_t> { SceneMode::VIDEO_MACRO };
     }
     return vector<int32_t> {};

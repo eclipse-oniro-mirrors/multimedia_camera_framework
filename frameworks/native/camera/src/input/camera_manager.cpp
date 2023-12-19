@@ -234,7 +234,7 @@ sptr<CaptureSession> CameraManager::CreateCaptureSession(SceneMode mode)
         MEDIA_ERR_LOG("Failed to get capture session object from hcamera service!, %{public}d", retCode);
         return nullptr;
     }
-    captureSession->SetMode(static_cast<int32_t>(mode));
+    captureSession->SetMode(mode);
     return captureSession;
 }
 
