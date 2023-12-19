@@ -330,10 +330,12 @@ int32_t HCameraHostManager::CameraHostInfo::Prelaunch(sptr<HCameraRestoreParam> 
         return CAMERA_UNKNOWN_ERROR;
     }
     MEDIA_INFO_LOG("CameraHostInfo::prelaunch for cameraId %{public}s", (cameraRestoreParam->GetCameraId()).c_str());
+    for (auto& streamInfo : cameraRestoreParam->GetStreamInfo()) {
+        MEDIA_DEBUG_LOG("CameraHostInfo::prelaunch for stream id is:%{public}d", streamInfo.v1_0.streamId_);
+    }
     OHOS::HDI::Camera::V1_1::PrelaunchConfig prelaunchConfig;
     std::vector<uint8_t> settings;
     prelaunchConfig.cameraId = cameraRestoreParam->GetCameraId();
-    prelaunchConfig.streamInfos_V1_1 = {};
     prelaunchConfig.setting = {};
     prelaunchConfig.streamInfos_V1_1 = cameraRestoreParam->GetStreamInfo();
     DumpMetadata(cameraRestoreParam->GetSetting());

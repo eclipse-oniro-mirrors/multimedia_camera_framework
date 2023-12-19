@@ -1174,6 +1174,9 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
         MEDIA_ERR_LOG("HCaptureSession::SaveCurrentParamForRestore() Failed to get streams info, %{public}d", rc);
         return rc;
     }
+    for (auto& info : allStreamInfos) {
+        MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore: streamId is:%{public}d", info.v1_0.streamId_);
+    }
     cameraRestoreParam->SetStreamInfo(allStreamInfos);
     cameraRestoreParam->SetCameraOpMode(captureSession->GetopMode());
     cameraHostManager_->SaveRestoreParam(cameraRestoreParam);

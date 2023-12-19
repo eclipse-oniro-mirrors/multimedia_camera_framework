@@ -1254,17 +1254,27 @@ size_t StreamContainer::Size()
 std::list<sptr<HStreamCommon>> StreamContainer::GetStreams(const StreamType streamType)
 {
     std::lock_guard<std::mutex> lock(streamsLock_);
-    return streams_[streamType];
+    std::list<sptr<HStreamCommon>> totalOrderedStreams;
+    for (auto& stream : streams_[streamType]) {
+        auto insertPos = std::find_if(totalOrderedStreams.begin(), totalOrderedStreams.end(),
+            [&stream](auto& it) { return stream->GetStreamId() <= it->GetStreamId(); });
+        totalOrderedStreams.emplace(insertPos, stream);
+    }
+    return totalOrderedStreams;
 }
 
 std::list<sptr<HStreamCommon>> StreamContainer::GetAllStreams()
 {
     std::lock_guard<std::mutex> lock(streamsLock_);
-    std::list<sptr<HStreamCommon>> totalStreams;
+    std::list<sptr<HStreamCommon>> totalOrderedStreams;
     for (auto& pair : streams_) {
-        totalStreams.insert(totalStreams.end(), pair.second.begin(), pair.second.end());
+        for (auto& stream : pair.second) {
+            auto insertPos = std::find_if(totalOrderedStreams.begin(), totalOrderedStreams.end(),
+                [&stream](auto& it) { return stream->GetStreamId() <= it->GetStreamId(); });
+            totalOrderedStreams.emplace(insertPos, stream);
+        }
     }
-    return totalStreams;
+    return totalOrderedStreams;
 }
 } // namespace CameraStandard
 } // namespace OHOS

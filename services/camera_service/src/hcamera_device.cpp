@@ -798,14 +798,13 @@ int32_t HCameraDevice::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V
     CamRetCode hdiRc = HDI::Camera::V1_0::NO_ERROR;
     uint32_t major;
     uint32_t minor;
-    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator;
-    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperatorV1_1;
     if (streamInfos.empty()) {
         MEDIA_WARNING_LOG("HCameraDevice::CreateStreams streamInfos is empty!");
         return CAMERA_OK;
     }
     std::lock_guard<std::mutex> lock(opMutex_);
-    streamOperator = streamOperator_;
+    sptr<OHOS::HDI::Camera::V1_1::IStreamOperator> streamOperatorV1_1;
+    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = streamOperator_;
     if (streamOperator == nullptr) {
         MEDIA_ERR_LOG("HCameraDevice::CreateStreams GetStreamOperator is null!");
         return CAMERA_UNKNOWN_ERROR;
@@ -814,7 +813,6 @@ int32_t HCameraDevice::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V
     streamOperator->GetVersion(major, minor);
     MEDIA_INFO_LOG("streamOperator GetVersion major:%{public}d, minor:%{public}d", major, minor);
     if (major >= HDI_VERSION_1 && minor >= HDI_VERSION_1) {
-        MEDIA_DEBUG_LOG("HCameraDevice::CreateStreams IStreamOperator cast to V1_1");
         streamOperatorV1_1 = OHOS::HDI::Camera::V1_1::IStreamOperator::CastFrom(streamOperator);
         if (streamOperatorV1_1 == nullptr) {
             MEDIA_ERR_LOG("HCameraDevice::CreateStreams IStreamOperator cast to V1_1 error");
@@ -841,6 +839,9 @@ int32_t HCameraDevice::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V
         if (!streamIds.empty() && streamOperator->ReleaseStreams(streamIds) != HDI::Camera::V1_0::NO_ERROR) {
             MEDIA_ERR_LOG("HCameraDevice::CreateStreams(), Failed to release streams");
         }
+    }
+    for (auto& info : streamInfos) {
+        MEDIA_DEBUG_LOG("HCameraDevice::CreateStreams stream id is:%{public}d", info.v1_0.streamId_);
     }
     return HdiToServiceError(hdiRc);
 }
