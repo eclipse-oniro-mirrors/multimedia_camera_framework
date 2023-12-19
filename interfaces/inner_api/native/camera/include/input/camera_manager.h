@@ -179,17 +179,17 @@ class CameraManager : public RefBase {
 public:
     ~CameraManager();
     /**
-    * @brief Get camera manager instance.
-    *
-    * @return Returns pointer to camera manager instance.
-    */
-    static sptr<CameraManager> &GetInstance();
+     * @brief Get camera manager instance.
+     *
+     * @return Returns pointer to camera manager instance.
+     */
+    static sptr<CameraManager>& GetInstance();
 
     /**
-    * @brief Get all available cameras.
-    *
-    * @return Returns vector of cameraDevice of available camera.
-    */
+     * @brief Get all available cameras.
+     *
+     * @return Returns vector of cameraDevice of available camera.
+     */
     std::vector<sptr<CameraDevice>> GetSupportedCameras();
 
     /**
@@ -200,68 +200,68 @@ public:
     std::vector<SceneMode> GetSupportedModes(sptr<CameraDevice>& camera);
 
     /**
-    * @brief Get extend output capaility of the mode of the given camera.
-    *
-    * @param Camera device for which extend capability need to be fetched.
-    * @return Returns vector the ability of the mode of cameraDevice of available camera.
-    */
+     * @brief Get extend output capaility of the mode of the given camera.
+     *
+     * @param Camera device for which extend capability need to be fetched.
+     * @return Returns vector the ability of the mode of cameraDevice of available camera.
+     */
     sptr<CameraOutputCapability> GetSupportedOutputCapability(sptr<CameraDevice>& camera, int32_t modeName = 0);
 
     /**
-    * @brief Create camera input instance with provided camera position and type.
-    *
-    * @param The cameraDevice for which input has to be created.
-    * @return Returns pointer to camera input instance.
-    */
+     * @brief Create camera input instance with provided camera position and type.
+     *
+     * @param The cameraDevice for which input has to be created.
+     * @return Returns pointer to camera input instance.
+     */
 
     sptr<CameraInput> CreateCameraInput(CameraPosition position, CameraType cameraType);
 
     /**
-    * @brief Create camera input instance with provided camera position and type.
-    *
-    * @param The cameraDevice for which input has to be created.
-    * @param Returns pointer to camera input instance.
-    * @return Returns error code.
-    */
-    int CreateCameraInput(CameraPosition position, CameraType cameraType, sptr<CameraInput> *pCameraInput);
+     * @brief Create camera input instance with provided camera position and type.
+     *
+     * @param The cameraDevice for which input has to be created.
+     * @param Returns pointer to camera input instance.
+     * @return Returns error code.
+     */
+    int CreateCameraInput(CameraPosition position, CameraType cameraType, sptr<CameraInput>* pCameraInput);
 
     /**
-    * @brief Create camera input instance.
-    *
-    * @param The cameraDevice for which input has to be created.
-    * @return Returns pointer to camera input instance.
-    */
-    sptr<CameraInput> CreateCameraInput(sptr<CameraDevice> &camera);
+     * @brief Create camera input instance.
+     *
+     * @param The cameraDevice for which input has to be created.
+     * @return Returns pointer to camera input instance.
+     */
+    sptr<CameraInput> CreateCameraInput(sptr<CameraDevice>& camera);
 
     /**
-    * @brief Create camera input instance.
-    *
-    * @param The cameraDevice for which input has to be created.
-    * @param Returns pointer to camera input instance.
-    * @return Returns error code.
-    */
-    int CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInput> *pCameraInput);
+     * @brief Create camera input instance.
+     *
+     * @param The cameraDevice for which input has to be created.
+     * @param Returns pointer to camera input instance.
+     * @return Returns error code.
+     */
+    int CreateCameraInput(sptr<CameraDevice>& camera, sptr<CameraInput>* pCameraInput);
 
     /**
-    * @brief Get all available cameras.
-    *
-    * @return Returns vector of cameraInfo of available camera.
-    */
+     * @brief Get all available cameras.
+     *
+     * @return Returns vector of cameraInfo of available camera.
+     */
     [[deprecated]] std::vector<sptr<CameraInfo>> GetCameras();
 
     /**
-    * @brief Create camera input instance.
-    *
-    * @param The cameraInfo for which input has to be created.
-    * @return Returns pointer to camera input instance.
-    */
-    [[deprecated]] sptr<CameraInput> CreateCameraInput(sptr<CameraInfo> &camera);
+     * @brief Create camera input instance.
+     *
+     * @param The cameraInfo for which input has to be created.
+     * @return Returns pointer to camera input instance.
+     */
+    [[deprecated]] sptr<CameraInput> CreateCameraInput(sptr<CameraInfo>& camera);
 
     /**
-    * @brief Create capture session.
-    *
-    * @return Returns pointer to capture session.
-    */
+     * @brief Create capture session.
+     *
+     * @return Returns pointer to capture session.
+     */
     sptr<CaptureSession> CreateCaptureSession();
 
     /**
@@ -272,307 +272,313 @@ public:
     sptr<CaptureSession> CreateCaptureSession(SceneMode mode);
 
     /**
-    * @brief Create capture session.
-    *
-    * @param Returns pointer to capture session.
-    * @return Returns error code.
-    */
-    int CreateCaptureSession(sptr<CaptureSession> *pCaptureSession);
+     * @brief Create capture session.
+     *
+     * @param Returns pointer to capture session.
+     * @return Returns error code.
+     */
+    int CreateCaptureSession(sptr<CaptureSession>* pCaptureSession);
 
     /**
-    * @brief Create photo output instance using surface.
-    *
-    * @param The surface to be used for photo output.
-    * @return Returns pointer to photo output instance.
-    */
-    sptr<PhotoOutput> CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surface);
+     * @brief Create photo output instance using surface.
+     *
+     * @param The surface to be used for photo output.
+     * @return Returns pointer to photo output instance.
+     */
+    sptr<PhotoOutput> CreatePhotoOutput(Profile& profile, sptr<IBufferProducer>& surface);
 
     /**
-    * @brief Create photo output instance using surface.
-    *
-    * @param The surface to be used for photo output.
-    * @param Returns pointer to photo output instance.
-    * @return Returns error code.
-    */
-    int CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surface, sptr<PhotoOutput> *pPhotoOutput);
+     * @brief Create photo output instance using surface.
+     *
+     * @param The surface to be used for photo output.
+     * @param Returns pointer to photo output instance.
+     * @return Returns error code.
+     */
+    int CreatePhotoOutput(Profile& profile, sptr<IBufferProducer>& surface, sptr<PhotoOutput>* pPhotoOutput);
 
     /**
-    * @brief Create photo output instance using surface.
-    *
-    * @param The surface to be used for photo output.
-    * @return Returns pointer to photo output instance.
-    */
-    [[deprecated]] sptr<PhotoOutput> CreatePhotoOutput(sptr<IBufferProducer> &surface);
+     * @brief Create photo output instance using surface.
+     *
+     * @param The surface to be used for photo output.
+     * @return Returns pointer to photo output instance.
+     */
+    [[deprecated]] sptr<PhotoOutput> CreatePhotoOutput(sptr<IBufferProducer>& surface);
 
     /**
-    * @brief Create photo output instance using IBufferProducer.
-    *
-    * @param The IBufferProducer to be used for photo output.
-    * @param The format to be used for photo capture.
-    * @return Returns pointer to photo output instance.
-    */
-    [[deprecated]] sptr<PhotoOutput> CreatePhotoOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format);
+     * @brief Create photo output instance using IBufferProducer.
+     *
+     * @param The IBufferProducer to be used for photo output.
+     * @param The format to be used for photo capture.
+     * @return Returns pointer to photo output instance.
+     */
+    [[deprecated]] sptr<PhotoOutput> CreatePhotoOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format);
 
     /**
-    * @brief Create video output instance using surface.
-    *
-    * @param The surface to be used for video output.
-    * @return Returns pointer to video output instance.
-    */
-    sptr<VideoOutput> CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surface);
+     * @brief Create video output instance using surface.
+     *
+     * @param The surface to be used for video output.
+     * @return Returns pointer to video output instance.
+     */
+    sptr<VideoOutput> CreateVideoOutput(VideoProfile& profile, sptr<Surface>& surface);
 
     /**
-    * @brief Create video output instance using surface.
-    *
-    * @param The surface to be used for video output.
-    * @param Returns pointer to video output instance.
-    * @return Returns error code.
-    */
-    int CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surface, sptr<VideoOutput> *pVideoOutput);
+     * @brief Create video output instance using surface.
+     *
+     * @param The surface to be used for video output.
+     * @param Returns pointer to video output instance.
+     * @return Returns error code.
+     */
+    int CreateVideoOutput(VideoProfile& profile, sptr<Surface>& surface, sptr<VideoOutput>* pVideoOutput);
 
     /**
-    * @brief Create video output instance using surface.
-    *
-    * @param The surface to be used for video output.
-    * @return Returns pointer to video output instance.
-    */
-    [[deprecated]] sptr<VideoOutput> CreateVideoOutput(sptr<Surface> &surface);
+     * @brief Create video output instance using surface.
+     *
+     * @param The surface to be used for video output.
+     * @return Returns pointer to video output instance.
+     */
+    [[deprecated]] sptr<VideoOutput> CreateVideoOutput(sptr<Surface>& surface);
 
     /**
-    * @brief Create video output instance using IBufferProducer.
-    *
-    * @param The IBufferProducer to be used for video output.
-    * @param The format to be used for video capture.
-    * @return Returns pointer to video output instance.
-    */
-    [[deprecated]] sptr<VideoOutput> CreateVideoOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format);
+     * @brief Create video output instance using IBufferProducer.
+     *
+     * @param The IBufferProducer to be used for video output.
+     * @param The format to be used for video capture.
+     * @return Returns pointer to video output instance.
+     */
+    [[deprecated]] sptr<VideoOutput> CreateVideoOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format);
 
     /**
-    * @brief Create preview output instance using surface.
-    *
-    * @param The surface to be used for preview.
-    * @return Returns pointer to preview output instance.
-    */
-    sptr<PreviewOutput> CreatePreviewOutput(Profile &profile, sptr<Surface> surface);
+     * @brief Create preview output instance using surface.
+     *
+     * @param The surface to be used for preview.
+     * @return Returns pointer to preview output instance.
+     */
+    sptr<PreviewOutput> CreatePreviewOutput(Profile& profile, sptr<Surface> surface);
 
     /**
-    * @brief Create preview output instance using surface.
-    *
-    * @param The surface to be used for preview.
-    * @param Returns pointer to camera preview output instance.
-    * @return Returns error code.
-    */
-    int CreatePreviewOutput(Profile &profile, sptr<Surface> surface, sptr<PreviewOutput> *pPreviewOutput);
+     * @brief Create preview output instance using surface.
+     *
+     * @param The surface to be used for preview.
+     * @param Returns pointer to camera preview output instance.
+     * @return Returns error code.
+     */
+    int CreatePreviewOutput(Profile& profile, sptr<Surface> surface, sptr<PreviewOutput>* pPreviewOutput);
 
     /**
-    * @brief Create preview output instance using surface.
-    *
-    * @param The surface to be used for preview.
-    * @return Returns pointer to preview output instance.
-    */
+     * @brief Create preview output instance using surface.
+     *
+     * @param The surface to be used for preview.
+     * @return Returns pointer to preview output instance.
+     */
     [[deprecated]] sptr<PreviewOutput> CreatePreviewOutput(sptr<Surface> surface);
 
     /**
-    * @brief Create preview output instance using IBufferProducer.
-    *
-    * @param The IBufferProducer to be used for preview output.
-    * @param The format to be used for preview.
-    * @return Returns pointer to video preview instance.
-    */
-    [[deprecated]] sptr<PreviewOutput> CreatePreviewOutput(const sptr<OHOS::IBufferProducer> &producer,
-        int32_t format);
+     * @brief Create preview output instance using IBufferProducer.
+     *
+     * @param The IBufferProducer to be used for preview output.
+     * @param The format to be used for preview.
+     * @return Returns pointer to video preview instance.
+     */
+    [[deprecated]] sptr<PreviewOutput> CreatePreviewOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format);
 
     /**
-    * @brief Create preview output instance using surface.
-    *
-    * @param The surface to be used for preview.
-    * @return Returns pointer to preview output instance.
-    */
-    sptr<PreviewOutput> CreateDeferredPreviewOutput(Profile &profile);
+     * @brief Create preview output instance using surface.
+     *
+     * @param The surface to be used for preview.
+     * @return Returns pointer to preview output instance.
+     */
+    sptr<PreviewOutput> CreateDeferredPreviewOutput(Profile& profile);
 
     /**
-    * @brief Create preview output instance using surface.
-    *
-    * @param The surface to be used for preview.
-    * @param Returns pointer to preview output instance.
-    * @return Returns error code.
-    */
-    int CreateDeferredPreviewOutput(Profile &profile, sptr<PreviewOutput> *pPreviewOutput);
+     * @brief Create preview output instance using surface.
+     *
+     * @param The surface to be used for preview.
+     * @param Returns pointer to preview output instance.
+     * @return Returns error code.
+     */
+    int CreateDeferredPreviewOutput(Profile& profile, sptr<PreviewOutput>* pPreviewOutput);
 
     /**
-    * @brief Create preview output instance using surface
-    * with custom width and height.
-    *
-    * @param The surface to be used for preview.
-    * @param preview width.
-    * @param preview height.
-    * @return Returns pointer to preview output instance.
-    */
+     * @brief Create preview output instance using surface
+     * with custom width and height.
+     *
+     * @param The surface to be used for preview.
+     * @param preview width.
+     * @param preview height.
+     * @return Returns pointer to preview output instance.
+     */
     [[deprecated]] sptr<PreviewOutput> CreateCustomPreviewOutput(sptr<Surface> surface, int32_t width, int32_t height);
 
     /**
-    * @brief Create preview output instance using IBufferProducer
-    * with custom width and height.
-    *
-    * @param The IBufferProducer to be used for preview output.
-    * @param The format to be used for preview.
-    * @param preview width.
-    * @param preview height.
-    * @return Returns pointer to preview output instance.
-    */
-    [[deprecated]] sptr<PreviewOutput> CreateCustomPreviewOutput(const sptr<OHOS::IBufferProducer> &producer,
-        int32_t format, int32_t width, int32_t height);
+     * @brief Create preview output instance using IBufferProducer
+     * with custom width and height.
+     *
+     * @param The IBufferProducer to be used for preview output.
+     * @param The format to be used for preview.
+     * @param preview width.
+     * @param preview height.
+     * @return Returns pointer to preview output instance.
+     */
+    [[deprecated]] sptr<PreviewOutput> CreateCustomPreviewOutput(
+        const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width, int32_t height);
 
     /**
-    * @brief Create metadata output instance.
-    *
-    * @return Returns pointer to metadata output instance.
-    */
+     * @brief Create metadata output instance.
+     *
+     * @return Returns pointer to metadata output instance.
+     */
     sptr<MetadataOutput> CreateMetadataOutput();
 
     /**
-    * @brief Create metadata output instance.
-    *
-    * @param Returns pointer to metadata output instance.
-    * @return Returns error code.
-    */
-    int CreateMetadataOutput(sptr<MetadataOutput> *pMetadataOutput);
+     * @brief Create metadata output instance.
+     *
+     * @param Returns pointer to metadata output instance.
+     * @return Returns error code.
+     */
+    int CreateMetadataOutput(sptr<MetadataOutput>* pMetadataOutput);
 
     /**
-    * @brief Set camera manager callback.
-    *
-    * @param CameraManagerCallback pointer.
-    */
+     * @brief Set camera manager callback.
+     *
+     * @param CameraManagerCallback pointer.
+     */
     void SetCallback(std::shared_ptr<CameraManagerCallback> callback);
 
     /**
-    * @brief Get the application callback.
-    *
-    * @return CameraManagerCallback pointer is set by application.
-    */
+     * @brief Get the application callback.
+     *
+     * @return CameraManagerCallback pointer is set by application.
+     */
     std::shared_ptr<CameraManagerCallback> GetApplicationCallback();
 
     /**
-    * @brief Get cameraDevice of specific camera id.
-    *
-    * @param std::string camera id.
-    * @return Returns pointer to cameraDevice of given Id if found else return nullptr.
-    */
+     * @brief Get cameraDevice of specific camera id.
+     *
+     * @param std::string camera id.
+     * @return Returns pointer to cameraDevice of given Id if found else return nullptr.
+     */
     sptr<CameraDevice> GetCameraDeviceFromId(std::string cameraId);
 
     /**
-    * @brief Get cameraInfo of specific camera id.
-    *
-    * @param std::string camera id.
-    * @return Returns pointer to cameraInfo of given Id if found else return nullptr.
-    */
+     * @brief Get cameraInfo of specific camera id.
+     *
+     * @param std::string camera id.
+     * @return Returns pointer to cameraInfo of given Id if found else return nullptr.
+     */
     [[deprecated]] sptr<CameraInfo> GetCameraInfo(std::string cameraId);
 
     /**
-    * @brief Get the support of camera mute mode.
-    *
-    * @return Returns true is supported, false is not supported.
-    */
+     * @brief Get the support of camera mute mode.
+     *
+     * @return Returns true is supported, false is not supported.
+     */
     bool IsCameraMuteSupported();
 
     /**
-    * @brief Get camera mute mode.
-    *
-    * @return Returns true is in mute, else is not in mute.
-    */
+     * @brief Get camera mute mode.
+     *
+     * @return Returns true is in mute, else is not in mute.
+     */
     bool IsCameraMuted();
 
     /**
-    * @brief Mute the camera
-    *
-    * @return.
-    */
+     * @brief Mute the camera
+     *
+     * @return.
+     */
     void MuteCamera(bool muteMode);
 
     /**
-    * @brief register camera mute listener
-    *
-    * @param CameraMuteListener listener object.
-    * @return.
-    */
+     * @brief register camera mute listener
+     *
+     * @param CameraMuteListener listener object.
+     * @return.
+     */
     void RegisterCameraMuteListener(std::shared_ptr<CameraMuteListener> listener);
 
     /**
-    * @brief get the camera mute listener
-    *
-    * @return CameraMuteListener point..
-    */
+     * @brief get the camera mute listener
+     *
+     * @return CameraMuteListener point..
+     */
     std::shared_ptr<CameraMuteListener> GetCameraMuteListener();
 
     /**
-    * @brief prelaunch the camera
-    *
-    * @return.
-    */
+     * @brief prelaunch the camera
+     *
+     * @return Server error code.
+     */
     int32_t PrelaunchCamera();
 
     /**
-    * @brief set prelaunch config
-    *
-    * @return.
-    */
+     * @brief Pre-switch camera
+     *
+     * @return Server error code.
+     */
+    int32_t PreSwitchCamera(const std::string cameraId);
+
+    /**
+     * @brief set prelaunch config
+     *
+     * @return.
+     */
     int32_t SetPrelaunchConfig(std::string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
         EffectParam effectParam);
 
     /**
-    * @brief Get the support of camera pre launch mode.
-    *
-    * @return Returns true is supported, false is not supported.
-    */
+     * @brief Get the support of camera pre launch mode.
+     *
+     * @return Returns true is supported, false is not supported.
+     */
     bool IsPrelaunchSupported(sptr<CameraDevice> camera);
 
     /**
-    * @brief register torch listener
-    *
-    * @param TorchListener listener object.
-    * @return.
-    */
+     * @brief register torch listener
+     *
+     * @param TorchListener listener object.
+     * @return.
+     */
     void RegisterTorchListener(std::shared_ptr<TorchListener> listener);
 
     /**
-    * @brief get the camera mute listener
-    *
-    * @return TorchListener point..
-    */
+     * @brief get the camera mute listener
+     *
+     * @return TorchListener point..
+     */
     std::shared_ptr<TorchListener> GetTorchListener();
-    
+
     /**
-    * @brief check device if support torch
-    *
-    * @return Returns true is supported, false is not supported.
-    */
+     * @brief check device if support torch
+     *
+     * @return Returns true is supported, false is not supported.
+     */
     bool IsTorchSupported();
 
     /**
-    * @brief check mode if device can support
-    *
-    * @return Returns true is supported, false is not supported.
-    */
+     * @brief check mode if device can support
+     *
+     * @return Returns true is supported, false is not supported.
+     */
     bool IsTorchModeSupported(TorchMode mode);
 
     /**
-    * @brief get current torchmode
-    *
-    * @return Returns current torchmode
-    */
+     * @brief get current torchmode
+     *
+     * @return Returns current torchmode
+     */
     TorchMode GetTorchMode();
 
     /**
-    * @brief set torch mode
-    *
-    * @return.
-    */
+     * @brief set torch mode
+     *
+     * @return.
+     */
     int32_t SetTorchMode(TorchMode mode);
 
     /**
-    * @brief update torch mode
-    *
-    */
+     * @brief update torch mode
+     *
+     */
     void UpdateTorchMode(TorchMode mode);
 
     /**

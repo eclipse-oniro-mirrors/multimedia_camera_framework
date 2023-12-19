@@ -46,6 +46,7 @@ private:
     int HandleMuteCamera(MessageParcel &data, MessageParcel &reply);
     int HandleIsCameraMuted(MessageParcel &data, MessageParcel &reply);
     int HandlePrelaunchCamera(MessageParcel &data, MessageParcel &reply);
+    int HandlePreSwitchCamera(MessageParcel& data, MessageParcel& reply);
     int HandleSetPrelaunchConfig(MessageParcel &data, MessageParcel &reply);
     int HandleSetTorchLevel(MessageParcel &data, MessageParcel &reply);
     int HandleAllowOpenByOHSide(MessageParcel& data, MessageParcel& reply);

@@ -83,6 +83,8 @@ public:
 
     virtual int32_t PrelaunchCamera() = 0;
 
+    virtual int32_t PreSwitchCamera(const std::string cameraId) = 0;
+
     virtual int32_t SetPrelaunchConfig(std::string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
         EffectParam effectParam) = 0;
 

@@ -7587,5 +7587,46 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_063, TestSize.Le
     intResult = session_->Stop();
     EXPECT_EQ(intResult, 0);
 }
+
+/*
+ * Feature: Camera pre_switch test
+ * Function: Test preSwitch interface
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test preSwitch interface
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_064, TestSize.Level0)
+{
+    if (cameras_.size() <= 1) {
+        EXPECT_LT(cameras_.size(), 2);
+        return;
+    }
+
+    manager_->PreSwitchCamera(cameras_[1]->GetID());
+
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
 } // namespace CameraStandard
 } // namespace OHOS

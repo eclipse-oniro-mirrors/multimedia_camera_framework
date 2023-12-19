@@ -1311,6 +1311,20 @@ int32_t CameraManager::PrelaunchCamera()
     return ServiceToCameraError(retCode);
 }
 
+int32_t CameraManager::PreSwitchCamera(const std::string cameraId)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (serviceProxy_ == nullptr) {
+        MEDIA_ERR_LOG("CameraManager::PreSwitchCamera serviceProxy_ is null");
+        return SERVICE_FATL_ERROR;
+    }
+    int32_t retCode = serviceProxy_->PreSwitchCamera(cameraId);
+    if (retCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("CameraManager::PreSwitchCamera failed, retCode: %{public}d", retCode);
+    }
+    return ServiceToCameraError(retCode);
+}
+
 bool CameraManager::IsPrelaunchSupported(sptr<CameraDevice> camera)
 {
     bool isPrelaunch = false;
