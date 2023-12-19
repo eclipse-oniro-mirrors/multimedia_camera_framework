@@ -43,19 +43,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-enum SceneMode {
-    NORMAL = 0,
-    CAPTURE = 1,
-    VIDEO = 2,
-    PORTRAIT = 3,
-    NIGHT = 4,
-    PROFESSIONAL = 5,
-    SLOW_MOTION = 6,
-    SCAN = 7,
-    CAPTURE_MACRO = 8,
-    VIDEO_MACRO = 9
-};
-
 enum CameraDeviceStatus {
     CAMERA_DEVICE_STATUS_UNAVAILABLE = 0,
     CAMERA_DEVICE_STATUS_AVAILABLE
