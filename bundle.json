@@ -154,6 +154,6 @@
             "//foundation/multimedia/camera_framework/frameworks/native/camera/test/unittest:camera_ndk_unittest_v1_1",
             "//foundation/multimedia/camera_framework/test:camera_fuzz_test"
           ]
-      }
-  }
+        }
+    }
 }
