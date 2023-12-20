@@ -94,7 +94,6 @@ private:
     napi_env env_;
     napi_ref wrapper_;
     std::string cameraId_;
-    shared_ptr<ErrorCallbackListener> errorCallback_;
 
     static thread_local napi_ref sConstructor_;
     static thread_local std::string sCameraId_;

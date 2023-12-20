@@ -205,7 +205,6 @@ private:
     sptr<PhotoOutput> photoOutput_;
     Profile profile_;
     bool isQuickThumbnailEnabled_ = false;
-    std::shared_ptr<PhotoOutputCallback> photoCallback_ = nullptr;
     sptr<ThumbnailListener> thumbnailListener_;
     sptr<PhotoListener> photoListener_;
     static thread_local uint32_t photoOutputTaskId;

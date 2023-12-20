@@ -87,8 +87,6 @@ private:
     napi_env env_;
     napi_ref wrapper_;
     sptr<CameraManager> cameraManager_;
-    std::shared_ptr<CameraManagerCallbackNapi> cameraManagerCallback_;
-    std::shared_ptr<CameraMuteListenerNapi> cameraMuteListener_;
     static thread_local uint32_t cameraManagerTaskId;
 };
 

@@ -250,11 +250,6 @@ public:
     napi_env env_;
     napi_ref wrapper_;
     sptr<CaptureSession> cameraSession_;
-    std::shared_ptr<FocusCallbackListener> focusCallback_;
-    std::shared_ptr<SessionCallbackListener> sessionCallback_;
-    std::shared_ptr<ExposureCallbackListener> exposureCallback_;
-    std::shared_ptr<MacroStatusCallbackListener> macroStatusCallback_;
-    std::shared_ptr<SmoothZoomCallbackListener> smoothZoomCallback_;
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<CaptureSession> sCameraSession_;

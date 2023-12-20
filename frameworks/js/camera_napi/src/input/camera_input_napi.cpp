@@ -506,12 +506,14 @@ napi_value CameraInputNapi::RegisterCallback(napi_env env, napi_value jsThis,
 
     if (eventType.compare("error") == 0) {
         // Set callback for error
-        if (cameraInputNapi->errorCallback_ == nullptr) {
-            shared_ptr<ErrorCallbackListener> errorCallback = make_shared<ErrorCallbackListener>(env);
-            cameraInputNapi->errorCallback_ = errorCallback;
-            cameraInputNapi->cameraInput_->SetErrorCallback(errorCallback);
+        shared_ptr<ErrorCallbackListener> errorCallback =
+            std::static_pointer_cast<ErrorCallbackListener>(cameraInputNapi->cameraInput_->GetErrorCallback());
+        if (errorCallback == nullptr) {
+            errorCallback = make_shared<TorchListenerNapi>(env);
+            cameraInputNapi->cameraInput_->SetErrorCallback(torchListener);
         }
-        cameraInputNapi->errorCallback_->SaveCallbackReference(eventType, argv[PARAM2], isOnce);
+        errorCallback->SaveCallbackReference(eventType, argv[PARAM2], isOnce);
+
     } else {
         MEDIA_ERR_LOG("Incorrect callback event type provided for camera input!");
     }
@@ -534,10 +536,12 @@ napi_value CameraInputNapi::UnregisterCallback(napi_env env, napi_value jsThis,
 
     if (eventType.compare("error") == 0) {
         // unset callback for error
-        if (cameraInputNapi->errorCallback_ == nullptr) {
+        shared_ptr<ErrorCallbackListener> errorCallback =
+            std::static_pointer_cast<ErrorCallbackListener>(cameraInputNapi->cameraInput_->GetErrorCallback());
+        if (errorCallback == nullptr) {
             MEDIA_ERR_LOG("errorCallback is null");
         } else {
-            cameraInputNapi->errorCallback_->RemoveCallbackRef(env, argv[PARAM2]);
+            errorCallback->RemoveCallbackRef(env, argv[PARAM2]);
         }
     } else {
         MEDIA_ERR_LOG("Incorrect callback event type provided for camera input!");

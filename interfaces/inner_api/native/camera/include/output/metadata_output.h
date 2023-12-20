@@ -139,6 +139,8 @@ public:
     void ProcessFaceRectangles(int64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result,
         std::vector<sptr<MetadataObject>>& metaObjects, bool isNeedMirror);
     std::shared_ptr<MetadataObjectCallback> GetAppObjectCallback();
+    std::shared_ptr<MetadataStateCallback> GetAppStateCallback();
+
     friend class MetadataObjectListener;
 
 private:

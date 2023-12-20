@@ -443,10 +443,6 @@ napi_value PreviewOutputNapi::PreviewOutputNapiConstructor(napi_env env, napi_ca
             obj->env_ = env;
             obj->previewOutput_ = sPreviewOutput_;
 
-            std::shared_ptr<PreviewOutputCallback> callback = std::make_shared<PreviewOutputCallback>(env);
-            ((sptr<PreviewOutput>&)(obj->previewOutput_))->SetCallback(callback);
-            obj->previewCallback_ = callback;
-
             status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
                 PreviewOutputNapi::PreviewOutputNapiDestructor, nullptr, nullptr);
             if (status == napi_ok) {
@@ -881,7 +877,13 @@ napi_value PreviewOutputNapi::RegisterCallback(
             MEDIA_ERR_LOG("SystemApi On sketchStatusChanged is called!");
             return undefinedResult;
         }
-        previewOutputNapi->previewCallback_->SaveCallbackReference(eventType, callback, isOnce);
+        std::shared_ptr<PreviewOutputCallback> callback =
+            std::static_pointer_cast<PreviewOutputCallback>(previewOutputNapi->previewOutput_->GetApplicationCallback());
+        if (callback == nullptr) {
+            callback = make_shared<PreviewOutputCallback>(env);
+            previewOutputNapi->previewOutput_->SetCallback(callback);
+        }
+        callback->SaveCallbackReference(eventType, callback, isOnce);
         previewOutputNapi->previewOutput_->OnNativeRegisterCallback(eventType);
     } else {
         MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
@@ -950,8 +952,14 @@ napi_value PreviewOutputNapi::UnregisterCallback(
             MEDIA_ERR_LOG("SystemApi Off sketchStatusChanged is called!");
             return undefinedResult;
         }
-        previewOutputNapi->previewCallback_->RemoveCallbackRef(env, callback, eventType);
-        previewOutputNapi->previewOutput_->OnNativeUnregisterCallback(eventType);
+        std::shared_ptr<PreviewOutputCallback> previewCallback =
+            std::static_pointer_cast<PreviewOutputCallback>(previewOutputNapi->previewOutput_->GetApplicationCallback());
+        if (previewCallback == nullptr) {
+            MEDIA_ERR_LOG("previewCallback is null");
+        } else {
+            previewCallback->RemoveCallbackRef(env, callback);
+            previewOutputNapi->previewOutput_->OnNativeUnregisterCallback(eventType);
+        }
     } else {
         MEDIA_ERR_LOG("Incorrect callback event type provided for camera input!");
     }

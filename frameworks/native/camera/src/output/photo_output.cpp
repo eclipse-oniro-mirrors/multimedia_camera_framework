@@ -504,11 +504,10 @@ void PhotoOutput::CameraServerDied(pid_t pid)
     deathRecipient_ = nullptr;
 }
 
-const std::set<camera_device_metadata_tag_t>& PhotoOutput::GetObserverTags()
+std::set<camera_device_metadata_tag_t> PhotoOutput::GetObserverTags() const
 {
     // Empty impl
-    const static std::set<camera_device_metadata_tag_t> tags = {};
-    return tags;
+    return {};
 }
 
 int32_t PhotoOutput::OnMetadataChanged(
