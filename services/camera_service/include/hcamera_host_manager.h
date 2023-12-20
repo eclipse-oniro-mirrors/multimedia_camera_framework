@@ -102,6 +102,8 @@ public:
     // HDI::ServiceManager::V1_0::IServStatListener
     void OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status) override;
 
+    static const std::string LOCAL_SERVICE_NAME;
+
 private:
     struct CameraDeviceInfo;
     class CameraHostInfo;

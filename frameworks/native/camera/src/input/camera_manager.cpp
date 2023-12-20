@@ -110,7 +110,7 @@ CameraManager::~CameraManager()
     }
     cameraMuteListener = nullptr;
     torchListener = nullptr;
-    std::lock_guard<std::mutex> lock(cameraListMutex_);
+    std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
     for (unsigned int i = 0; i < cameraObjList.size(); i++) {
         cameraObjList[i] = nullptr;
     }
@@ -602,7 +602,7 @@ void CameraManager::CameraServerDied(pid_t pid)
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
     if (cameraSvcCallback_ != nullptr) {
         MEDIA_DEBUG_LOG("cameraSvcCallback_ not nullptr");
-        std::lock_guard<std::mutex> lock(cameraListMutex_);
+        std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
         for (size_t i = 0; i < cameraObjList.size(); i++) {
             CameraStatusInfo cameraStatusInfo;
             cameraStatusInfo.cameraDevice = cameraObjList[i];
@@ -664,7 +664,7 @@ std::shared_ptr<CameraManagerCallback> CameraManager::GetApplicationCallback()
 sptr<CameraDevice> CameraManager::GetCameraDeviceFromId(std::string cameraId)
 {
     sptr<CameraDevice> cameraObj = nullptr;
-    std::lock_guard<std::mutex> lock(cameraListMutex_);
+    std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         if (cameraObjList[i]->GetID() == cameraId) {
             cameraObj = cameraObjList[i];
@@ -744,7 +744,7 @@ void CameraManager::InitCameraList()
     int32_t retCode = -1;
     sptr<CameraDevice> cameraObj = nullptr;
     int32_t index = 0;
-    std::lock_guard<std::mutex> lock(cameraListMutex_);
+    std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
     for (unsigned int i = 0; i < cameraObjList.size(); i++) {
         cameraObjList[i] = nullptr;
     }
@@ -783,7 +783,7 @@ void CameraManager::InitCameraList()
 std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
 {
     CAMERA_SYNC_TRACE;
-    std::lock_guard<std::mutex> lock(cameraListMutex_);
+    std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
     return cameraObjList;
 }
 
@@ -926,7 +926,7 @@ int CameraManager::CreateCameraInput(CameraPosition position, CameraType cameraT
 {
     CAMERA_SYNC_TRACE;
     sptr<CameraInput> cameraInput = nullptr;
-    std::lock_guard<std::mutex> lock(cameraListMutex_);
+    std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         if ((cameraObjList[i]->GetPosition() == position) && (cameraObjList[i]->GetCameraType() == cameraType)) {
             cameraInput = CreateCameraInput(cameraObjList[i]);
@@ -1242,7 +1242,7 @@ shared_ptr<CameraMuteListener> CameraManager::GetCameraMuteListener()
 bool CameraManager::IsCameraMuteSupported()
 {
     bool result = false;
-    std::lock_guard<std::mutex> lock(cameraListMutex_);
+    std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
         camera_metadata_item_t item;
@@ -1343,7 +1343,10 @@ bool CameraManager::IsPrelaunchSupported(sptr<CameraDevice> camera)
 
 bool CameraManager::IsTorchSupported()
 {
-    std::lock_guard<std::mutex> lock(cameraListMutex_);
+    std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
+    if (cameraObjList.empty()) {
+        InitCameraList();
+    }
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         std::shared_ptr<Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
         camera_metadata_item_t item;
