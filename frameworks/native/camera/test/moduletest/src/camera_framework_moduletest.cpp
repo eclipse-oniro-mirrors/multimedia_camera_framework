@@ -6356,7 +6356,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_081, TestSize.L
     camSession->SetBeauty(beautyType, 0);
     EXPECT_EQ(camSession->GetSupportedColorSpaces().empty(), true);
     EXPECT_EQ(camSession->SetColorSpace(COLOR_SPACE_UNKNOWN), CameraErrorCode::SESSION_NOT_CONFIG);
-    camSession->SetMode(0);
+    camSession->SetMode(SceneMode::NORMAL);
     EXPECT_EQ(camSession->VerifyAbility(0), CAMERA_INVALID_ARG);
     EXPECT_EQ(camSession->GetActiveColorSpace(colorSpace), CameraErrorCode::SESSION_NOT_CONFIG);
     camSession->SetColorEffect(COLOR_EFFECT_NORMAL);
@@ -6382,7 +6382,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_082, TestSize.L
     ASSERT_NE(previewOutput, nullptr);
     intResult = session_->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
-    session_->SetMode(3);
+    session_->SetMode(SceneMode::PORTRAIT);
     EXPECT_EQ(session_->VerifyAbility(0), CAMERA_INVALID_ARG);
     EXPECT_EQ(session_->GetActiveColorSpace(colorSpace), SESSION_NOT_CONFIG);
     session_->SetColorEffect(COLOR_EFFECT_NORMAL);
@@ -6741,7 +6741,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_050, TestSize.Le
     auto output = CreatePreviewOutput(*previewProfile);
     ASSERT_NE(output, nullptr);
 
-    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
+    session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
@@ -6796,7 +6796,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_051, TestSize.Le
     auto output = CreatePreviewOutput(*previewProfile);
     ASSERT_NE(output, nullptr);
 
-    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
+    session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
@@ -6878,7 +6878,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_052, TestSize.Le
     bool isSketchSupport = previewOutput->IsSketchSupported();
     ASSERT_FALSE(isSketchSupport);
 
-    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
+    session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -6949,7 +6949,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_053, TestSize.Le
     auto output = CreatePreviewOutput(*previewProfile);
     ASSERT_NE(output, nullptr);
 
-    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
+    session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
@@ -7044,7 +7044,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_054, TestSize.Le
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
     ASSERT_NE(output, nullptr);
 
-    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
+    session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -7108,7 +7108,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_055, TestSize.Le
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
     ASSERT_NE(output, nullptr);
 
-    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
+    session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -7320,7 +7320,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_059, TestSize.Le
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     camInput->Open();
 
-    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
+    session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -7367,7 +7367,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_060, TestSize.Le
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     camInput->Open();
 
-    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
+    session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -7417,7 +7417,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_061, TestSize.Le
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     camInput->Open();
 
-    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
+    session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -7466,7 +7466,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_062, TestSize.Le
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     camInput->Open();
 
-    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
+    session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -7521,7 +7521,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_063, TestSize.Le
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
     ASSERT_NE(output, nullptr);
 
-    session_->SetMode(static_cast<int32_t>(SceneMode::VIDEO));
+    session_->SetMode(SceneMode::VIDEO);
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -7618,6 +7618,60 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_064, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Camera sketch add output output with guess mode
+ * Function: Test sketch add output with guess mode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test sketch add output with guess mode
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_065, TestSize.Level0)
+{
+    auto previewProfile = GetSketchPreviewProfile();
+    if (previewProfile == nullptr) {
+        EXPECT_EQ(previewProfile.get(), nullptr);
+        return;
+    }
+    auto output = CreatePreviewOutput(*previewProfile);
+    ASSERT_NE(output, nullptr);
+
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(output);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
+    bool isSketchSupport = previewOutput->IsSketchSupported();
+    if (!isSketchSupport) {
+        return;
+    }
+
+    int sketchEnableRatio = previewOutput->GetSketchRatio();
+    EXPECT_GT(sketchEnableRatio, 0);
+
+    intResult = previewOutput->EnableSketch(true);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = previewOutput->AttachSketchSurface(CreateSketchSurface(previewProfile->GetCameraFormat()));
     EXPECT_EQ(intResult, 0);
 
     intResult = session_->Start();
