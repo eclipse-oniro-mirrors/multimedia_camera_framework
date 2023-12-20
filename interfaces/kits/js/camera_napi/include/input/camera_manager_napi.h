@@ -89,7 +89,6 @@ private:
     sptr<CameraManager> cameraManager_;
     std::shared_ptr<CameraManagerCallbackNapi> cameraManagerCallback_;
     std::shared_ptr<CameraMuteListenerNapi> cameraMuteListener_;
-    std::shared_ptr<TorchListenerNapi> torchListener_;
     static thread_local uint32_t cameraManagerTaskId;
 };
 

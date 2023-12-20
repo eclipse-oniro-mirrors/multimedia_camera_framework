@@ -933,13 +933,13 @@ napi_value CameraManagerNapi::RegisterCallback(napi_env env, napi_value jsThis,
         }
         cameraManagerNapi->cameraMuteListener_->SaveCallbackReference(eventType, callback, isOnce);
     } else if ((eventType.compare("torchStatusChange") == 0)) {
-        if (cameraManagerNapi->torchListener_ == nullptr) {
-            shared_ptr<TorchListenerNapi> torchListener =
-                    make_shared<TorchListenerNapi>(env);
-            cameraManagerNapi->torchListener_ = torchListener;
+        shared_ptr<TorchListenerNapi> torchListener =
+            std::static_pointer_cast<TorchListenerNapi>(cameraManagerNapi->cameraManager_->GetTorchListener());
+        if (torchListener == nullptr) {
+            torchListener = make_shared<TorchListenerNapi>(env);
             cameraManagerNapi->cameraManager_->RegisterTorchListener(torchListener);
         }
-        cameraManagerNapi->torchListener_->SaveCallbackReference(eventType, callback, isOnce);
+        torchListener->SaveCallbackReference(eventType, callback, isOnce);
     } else {
         MEDIA_ERR_LOG("Incorrect callback event type provided for camera manager!");
         if (callbackRef != nullptr) {
@@ -976,10 +976,12 @@ napi_value CameraManagerNapi::UnregisterCallback(napi_env env, napi_value jsThis
             cameraManagerNapi->cameraMuteListener_->RemoveCallbackRef(env, callback);
         }
     } else if (eventType.compare("torchStatusChange") == 0) {
-        if (cameraManagerNapi->torchListener_ == nullptr) {
+        shared_ptr<TorchListenerNapi> torchListener =
+            std::static_pointer_cast<TorchListenerNapi>(cameraManagerNapi->cameraManager_->GetTorchListener());
+        if (torchListener == nullptr) {
             MEDIA_ERR_LOG("torchListener_ is null");
         } else {
-            cameraManagerNapi->torchListener_->RemoveCallbackRef(env, callback);
+            torchListener->RemoveCallbackRef(env, callback);
         }
     } else {
         MEDIA_ERR_LOG("off no such supported!");
