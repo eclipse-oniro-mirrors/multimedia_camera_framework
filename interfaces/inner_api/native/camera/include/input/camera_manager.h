@@ -577,7 +577,10 @@ public:
     static const std::string surfaceFormat;
 
 protected:
-    explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxy_(serviceProxy) {}
+    explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxy_(serviceProxy)
+    {
+        InitCameraList();
+    }
 
 private:
     CameraManager();
