@@ -913,25 +913,26 @@ napi_value CameraManagerNapi::RegisterCallback(napi_env env, napi_value jsThis,
     NAPI_ASSERT(env, cameraManagerNapi->cameraManager_ != nullptr, "cameraManager instance is null.");
     napi_create_reference(env, callback, refCount, &callbackRef);
     if ((eventType.compare("cameraStatus")==0)) {
-        if (cameraManagerNapi->cameraManagerCallback_ == nullptr) {
-            shared_ptr<CameraManagerCallbackNapi> cameraManagerCallback =
-                    make_shared<CameraManagerCallbackNapi>(env);
-            cameraManagerNapi->cameraManagerCallback_ = cameraManagerCallback;
+        shared_ptr<CameraManagerCallbackNapi> cameraManagerCallback =
+            std::static_pointer_cast<CameraManagerCallbackNapi>(cameraManagerNapi->cameraManager_->GetApplicationCallback());
+        if (cameraManagerCallback== nullptr) {
+            cameraManagerCallback = make_shared<CameraManagerCallbackNapi>(env);
             cameraManagerNapi->cameraManager_->SetCallback(cameraManagerCallback);
         }
-        cameraManagerNapi->cameraManagerCallback_->SaveCallbackReference(eventType, callback, isOnce);
+        cameraManagerCallback->SaveCallbackReference(eventType, callback, isOnce);
     } else if ((eventType.compare("cameraMute")==0)) {
         if (!CameraNapiUtils::CheckSystemApp(env)) {
             MEDIA_ERR_LOG("SystemApi On cameraMute is called!");
             return undefinedResult;
         }
-        if (cameraManagerNapi->cameraMuteListener_ == nullptr) {
-            shared_ptr<CameraMuteListenerNapi> cameraMuteListener =
-                    make_shared<CameraMuteListenerNapi>(env);
-            cameraManagerNapi->cameraMuteListener_ = cameraMuteListener;
+        shared_ptr<CameraMuteListenerNapi> cameraMuteListener =
+            std::static_pointer_cast<CameraMuteListenerNapi>(cameraManagerNapi->cameraManager_->GetCameraMuteListener());
+        
+        if (cameraMuteListener == nullptr) {
+            cameraMuteListener = make_shared<CameraMuteListenerNapi>(env);
             cameraManagerNapi->cameraManager_->RegisterCameraMuteListener(cameraMuteListener);
         }
-        cameraManagerNapi->cameraMuteListener_->SaveCallbackReference(eventType, callback, isOnce);
+        cameraMuteListener->SaveCallbackReference(eventType, callback, isOnce);
     } else if ((eventType.compare("torchStatusChange") == 0)) {
         shared_ptr<TorchListenerNapi> torchListener =
             std::static_pointer_cast<TorchListenerNapi>(cameraManagerNapi->cameraManager_->GetTorchListener());
@@ -960,20 +961,24 @@ napi_value CameraManagerNapi::UnregisterCallback(napi_env env, napi_value jsThis
     NAPI_ASSERT(env, cameraManagerNapi->cameraManager_ != nullptr, "audio system mgr instance is null.");
 
     if (eventType.compare("cameraStatus") == 0) {
-        if (cameraManagerNapi->cameraManagerCallback_ == nullptr) {
+        shared_ptr<CameraManagerCallbackNapi> cameraManagerCallback =
+            std::static_pointer_cast<CameraManagerCallbackNapi>(cameraManagerNapi->cameraManager_->GetApplicationCallback());
+        if (cameraManagerCallback == nullptr) {
             MEDIA_ERR_LOG("cameraManagerCallback is null");
         } else {
-            cameraManagerNapi->cameraManagerCallback_->RemoveCallbackRef(env, callback);
+            cameraManagerCallback->RemoveCallbackRef(env, callback);
         }
     } else if (eventType.compare("cameraMute") == 0) {
         if (!CameraNapiUtils::CheckSystemApp(env)) {
             MEDIA_ERR_LOG("SystemApi On cameraMute is called!");
             return undefinedResult;
         }
-        if (cameraManagerNapi->cameraMuteListener_ == nullptr) {
+        shared_ptr<CameraMuteListenerNapi> cameraMuteListener =
+            std::static_pointer_cast<CameraMuteListenerNapi>(cameraManagerNapi->cameraManager_->GetCameraMuteListener());
+        if (cameraMuteListener == nullptr) {
             MEDIA_ERR_LOG("cameraMuteListener is null");
         } else {
-            cameraManagerNapi->cameraMuteListener_->RemoveCallbackRef(env, callback);
+            cameraMuteListener->RemoveCallbackRef(env, callback);
         }
     } else if (eventType.compare("torchStatusChange") == 0) {
         shared_ptr<TorchListenerNapi> torchListener =

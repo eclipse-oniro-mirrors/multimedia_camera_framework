@@ -128,7 +128,6 @@ private:
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<PreviewOutput> sPreviewOutput_;
-    std::shared_ptr<PreviewOutputCallback> previewCallback_;
     static thread_local uint32_t previewOutputTaskId;
 };
 

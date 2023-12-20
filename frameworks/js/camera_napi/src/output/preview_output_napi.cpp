@@ -443,10 +443,6 @@ napi_value PreviewOutputNapi::PreviewOutputNapiConstructor(napi_env env, napi_ca
             obj->env_ = env;
             obj->previewOutput_ = sPreviewOutput_;
 
-            std::shared_ptr<PreviewOutputCallback> callback = std::make_shared<PreviewOutputCallback>(env);
-            ((sptr<PreviewOutput>&)(obj->previewOutput_))->SetCallback(callback);
-            obj->previewCallback_ = callback;
-
             status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
                 PreviewOutputNapi::PreviewOutputNapiDestructor, nullptr, nullptr);
             if (status == napi_ok) {
@@ -881,54 +877,18 @@ napi_value PreviewOutputNapi::RegisterCallback(
             MEDIA_ERR_LOG("SystemApi On sketchStatusChanged is called!");
             return undefinedResult;
         }
-        previewOutputNapi->previewCallback_->SaveCallbackReference(eventType, callback, isOnce);
+        std::shared_ptr<PreviewOutputCallback> callback =
+            std::static_pointer_cast<PreviewOutputCallback>(previewOutputNapi->previewOutput_->GetApplicationCallback());
+        if (callback == nullptr) {
+            callback = make_shared<PreviewOutputCallback>(env);
+            previewOutputNapi->previewOutput_->SetCallback(callback);
+        }
+        callback->SaveCallbackReference(eventType, callback, isOnce);
         previewOutputNapi->previewOutput_->OnNativeRegisterCallback(eventType);
     } else {
         MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
     }
     return undefinedResult;
-}
-
-napi_value PreviewOutputNapi::On(napi_env env, napi_callback_info info)
-{
-    MEDIA_INFO_LOG("On is called");
-    napi_value undefinedResult = nullptr;
-    size_t argCount = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {nullptr, nullptr};
-    napi_value thisVar = nullptr;
-    napi_get_undefined(env, &undefinedResult);
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argCount, argv, thisVar);
-    NAPI_ASSERT(env, argCount == ARGS_TWO, "requires 2 parameters");
-
-    napi_valuetype valueType = napi_undefined;
-    if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string ||
-        napi_typeof(env, argv[PARAM1], &valueType) != napi_ok || valueType != napi_function) {
-        return undefinedResult;
-    }
-    std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[PARAM0]);
-    MEDIA_INFO_LOG("On eventType: %{public}s", eventType.c_str());
-    return RegisterCallback(env, thisVar, eventType, argv[PARAM1], false);
-}
-
-napi_value PreviewOutputNapi::Once(napi_env env, napi_callback_info info)
-{
-    MEDIA_INFO_LOG("Once is called");
-    napi_value undefinedResult = nullptr;
-    size_t argCount = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {nullptr, nullptr};
-    napi_value thisVar = nullptr;
-    napi_get_undefined(env, &undefinedResult);
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argCount, argv, thisVar);
-    NAPI_ASSERT(env, argCount == ARGS_TWO, "requires 2 parameters");
-
-    napi_valuetype valueType = napi_undefined;
-    if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string ||
-        napi_typeof(env, argv[PARAM1], &valueType) != napi_ok || valueType != napi_function) {
-        return undefinedResult;
-    }
-    std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[PARAM0]);
-    MEDIA_INFO_LOG("Once eventType: %{public}s", eventType.c_str());
-    return RegisterCallback(env, thisVar, eventType, argv[PARAM1], true);
 }
 
 napi_value PreviewOutputNapi::UnregisterCallback(
@@ -950,40 +910,18 @@ napi_value PreviewOutputNapi::UnregisterCallback(
             MEDIA_ERR_LOG("SystemApi Off sketchStatusChanged is called!");
             return undefinedResult;
         }
-        previewOutputNapi->previewCallback_->RemoveCallbackRef(env, callback, eventType);
-        previewOutputNapi->previewOutput_->OnNativeUnregisterCallback(eventType);
+        std::shared_ptr<PreviewOutputCallback> previewCallback =
+            std::static_pointer_cast<PreviewOutputCallback>(previewOutputNapi->previewOutput_->GetApplicationCallback());
+        if (previewCallback == nullptr) {
+            MEDIA_ERR_LOG("previewCallback is null");
+        } else {
+            previewCallback->RemoveCallbackRef(env, callback);
+            previewOutputNapi->previewOutput_->OnNativeUnregisterCallback(eventType);
+        }
     } else {
         MEDIA_ERR_LOG("Incorrect callback event type provided for camera input!");
     }
     return undefinedResult;
-}
-
-napi_value PreviewOutputNapi::Off(napi_env env, napi_callback_info info)
-{
-    napi_value undefinedResult = nullptr;
-    napi_get_undefined(env, &undefinedResult);
-    const size_t minArgCount = 1;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {nullptr, nullptr};
-    napi_value thisVar = nullptr;
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    if (argc < minArgCount) {
-        return undefinedResult;
-    }
-
-    napi_valuetype valueType = napi_undefined;
-    if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string) {
-        return undefinedResult;
-    }
-
-    napi_valuetype secondArgsType = napi_undefined;
-    if (argc > minArgCount &&
-        (napi_typeof(env, argv[PARAM1], &secondArgsType) != napi_ok || secondArgsType != napi_function)) {
-        return undefinedResult;
-    }
-    std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[PARAM0]);
-    MEDIA_INFO_LOG("Off eventType: %{public}s", eventType.c_str());
-    return UnregisterCallback(env, thisVar, eventType, argv[PARAM1]);
 }
 
 napi_value PreviewOutputNapi::IsSketchSupported(napi_env env, napi_callback_info info)

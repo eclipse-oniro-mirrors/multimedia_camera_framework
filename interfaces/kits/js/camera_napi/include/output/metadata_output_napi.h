@@ -108,8 +108,6 @@ private:
     napi_env env_;
     napi_ref wrapper_;
     sptr<MetadataOutput> metadataOutput_;
-    std::shared_ptr<MetadataOutputCallback> metadataOutputCallback_ = nullptr;
-    std::shared_ptr<MetadataStateCallbackNapi> metadataStateCallback_;
 };
 
 struct MetadataOutputAsyncContext : public AsyncContext {
