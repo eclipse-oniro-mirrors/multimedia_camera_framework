@@ -200,7 +200,7 @@ int32_t HCaptureSession::AddInput(sptr<ICameraDeviceService> cameraDevice)
     if (errorCode == CAMERA_OK) {
         CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::AddInput"));
     }
-    return CAMERA_OK;
+    return errorCode;
 }
 
 int32_t HCaptureSession::AddOutputStream(sptr<HStreamCommon> stream)
