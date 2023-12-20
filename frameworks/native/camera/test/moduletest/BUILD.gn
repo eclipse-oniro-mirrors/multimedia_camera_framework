@@ -41,7 +41,6 @@ ohos_moduletest("camera_framework_moduletest") {
     "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
     "//drivers/interface/camera/v1_0:libcamera_proxy_1.0",
-    "//foundation/graphic/graphic_surface/surface:surface",
   ]
 
   external_deps = [

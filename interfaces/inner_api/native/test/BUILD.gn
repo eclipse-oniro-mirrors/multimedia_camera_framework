@@ -22,7 +22,7 @@ config("camera_config") {
     "//foundation/multimedia/camera_framework/services/camera_service/binder/base/include",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/include",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/include",
-    "//foundation/graphic/graphic_surface/surface/include",
+    "${graphic_surface_path}/surface/include",
     "//utils/system/safwk/native/include",
     "//drivers/peripheral/display/interfaces/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",

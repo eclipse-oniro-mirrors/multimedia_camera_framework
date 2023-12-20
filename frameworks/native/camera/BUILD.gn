@@ -103,7 +103,7 @@ ohos_shared_library("camera_framework") {
   ]
 
   include_dirs = [
-    "//foundation/graphic/graphic_surface/surface/include",
+    "${graphic_surface_path}/surface/include",
     "//utils/system/safwk/native/include",
     "${window_manager_path}/interfaces/innerkits/dm",
   ]
