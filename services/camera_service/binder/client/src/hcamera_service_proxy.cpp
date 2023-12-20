@@ -492,7 +492,7 @@ int32_t HCameraServiceProxy::SetTorchLevel(float level)
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_LEVEL),
         data, reply, option);
     if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy::SetTorchLevel Set listener obj failed, error: %{public}d", error);
+        MEDIA_ERR_LOG("HCameraServiceProxy::SetTorchLevel failed, error: %{public}d", error);
         return error;
     }
     return error;
