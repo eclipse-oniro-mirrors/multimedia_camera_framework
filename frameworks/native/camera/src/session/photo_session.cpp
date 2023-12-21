@@ -26,21 +26,12 @@ namespace CameraStandard {
 PhotoSession::~PhotoSession()
 {
 }
- 
-bool PhotoSession::CanAddInput(sptr<CaptureInput> &input)
-{
-    // todo: get Profile passed to createOutput and compare with OutputCapability
-    // if present in capability return ok.
-    MEDIA_INFO_LOG("Enter Into PhotoSession::CanAddInput");
-    return true;
-}
 
 bool PhotoSession::CanAddOutput(sptr<CaptureOutput> &output)
 {
-    // todo: get Profile passed to createOutput and compare with OutputCapability
-    // if present in capability return ok.
-    MEDIA_INFO_LOG("Enter Into PhotoSession::CanAddOutput");
-    return true;
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter Into PhotoSession::CanAddOutput");
+    return output->GetOutputType() != CAPTURE_OUTPUT_TYPE_VIDEO && CaptureSession::CanAddOutput(output);
 }
 } // namespace CameraStandard
 } // namespace OHOS

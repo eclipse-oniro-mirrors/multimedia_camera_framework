@@ -56,6 +56,8 @@ public:
 
     virtual int32_t AddInput(sptr<ICameraDeviceService> cameraDevice) = 0;
 
+    virtual int32_t CanAddInput(sptr<ICameraDeviceService> cameraDevice, bool& result) = 0;
+
     virtual int32_t AddOutput(StreamType streamType, sptr<IStreamCommon> stream) = 0;
 
     virtual int32_t RemoveInput(sptr<ICameraDeviceService> cameraDevice) = 0;

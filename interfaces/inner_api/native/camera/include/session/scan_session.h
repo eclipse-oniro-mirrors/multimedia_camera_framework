@@ -28,6 +28,13 @@ public:
     ~ScanSession();
  
     int32_t AddOutput(sptr<CaptureOutput> &output) override;
+
+    /**
+     * @brief Determine if the given Ouput can be added to session.
+     *
+     * @param CaptureOutput to be added to session.
+     */
+    bool CanAddOutput(sptr<CaptureOutput>& output) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

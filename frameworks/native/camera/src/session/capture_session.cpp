@@ -391,9 +391,20 @@ void CaptureSession::SetDefaultColorSpace()
 
 bool CaptureSession::CanAddInput(sptr<CaptureInput> &input)
 {
-    // todo: get Profile passed to createOutput and compare with OutputCapability
-    // if present in capability return ok.
-    return true;
+    // can only add one cameraInput
+    CAMERA_SYNC_TRACE;
+    bool ret = false;
+    MEDIA_INFO_LOG("Enter Into CaptureSession::CanAddInput");
+    if (!IsSessionConfiged() || input == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::AddInput operation Not allowed!");
+        return ret;
+    }
+    if (captureSession_) {
+        captureSession_->CanAddInput(((sptr<CameraInput> &)input)->GetCameraDevice(), ret);
+    } else {
+        MEDIA_ERR_LOG("CaptureSession::CanAddInput() captureSession_ is nullptr");
+    }
+    return ret;
 }
 
 int32_t CaptureSession::AddInput(sptr<CaptureInput> &input)
@@ -408,25 +419,19 @@ int32_t CaptureSession::AddInput(sptr<CaptureInput> &input)
         MEDIA_ERR_LOG("CaptureSession::AddInput input is null");
         return ServiceToCameraError(CAMERA_INVALID_ARG);
     }
-    input->SetSession(this);
-    inputDevice_ = input;
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (captureSession_) {
         errCode = captureSession_->AddInput(((sptr<CameraInput> &)input)->GetCameraDevice());
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to AddInput!, %{public}d", errCode);
+        } else {
+            input->SetSession(this);
+            inputDevice_ = input;
         }
     } else {
         MEDIA_ERR_LOG("CaptureSession::AddInput() captureSession_ is nullptr");
     }
     return ServiceToCameraError(errCode);
-}
-
-bool CaptureSession::CanAddOutput(sptr<CaptureOutput> &output)
-{
-    // todo: get Profile passed to createOutput and compare with OutputCapability
-    // if present in capability return ok.
-    return true;
 }
 
 sptr<CaptureOutput> CaptureSession::GetMetaOutput()
@@ -490,6 +495,10 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
         metaOutput_ = output;
         return ServiceToCameraError(CAMERA_OK);
     }
+    if (!CanAddOutput(output)) {
+        MEDIA_ERR_LOG("CanAddOutput check failed!");
+        return ServiceToCameraError(CAMERA_INVALID_ARG);
+    }
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (captureSession_ == nullptr) {
         MEDIA_ERR_LOG("CaptureSession::AddOutput() captureSession_ is nullptr");
@@ -503,6 +512,46 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
     }
     InsertOutputIntoSet(output);
     return ServiceToCameraError(errCode);
+}
+
+bool CaptureSession::CanAddOutput(sptr<CaptureOutput> &output)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter Into CaptureSession::CanAddOutput");
+    if (!IsSessionConfiged() || output == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::CanAddOutput operation Not allowed!");
+        return false;
+    }
+    int32_t normalMode = 0;
+    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW) {
+        std::vector<Profile> previewProfiles = inputDevice_->GetCameraDeviceInfo()->modePreviewProfiles_[normalMode];
+        Profile vaildateProfile = output->GetPreviewProfile();
+        for (auto& previewProfile : previewProfiles) {
+            if (vaildateProfile == previewProfile) {
+                return true;
+            }
+        }
+    } else if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO) {
+        std::vector<Profile> photoProfiles = inputDevice_->GetCameraDeviceInfo()->modePhotoProfiles_[normalMode];
+        Profile vaildateProfile = output->GetPhotoProfile();
+        for (auto& photoProfile : photoProfiles) {
+            if (vaildateProfile == photoProfile) {
+                return true;
+            }
+        }
+    } else if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_VIDEO) {
+        std::vector<VideoProfile> videoProfiles = inputDevice_->GetCameraDeviceInfo()->modeVideoProfiles_[normalMode];
+        VideoProfile vaildateProfile = output->GetVideoProfile();
+        for (auto& videoProfile : videoProfiles) {
+            if (vaildateProfile == videoProfile) {
+                return true;
+            }
+        }
+    } else if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_METADATA) {
+        MEDIA_INFO_LOG("CaptureSession::CanAddOutput MetadataOutput");
+        return true;
+    }
+    return false;
 }
 
 int32_t CaptureSession::RemoveInput(sptr<CaptureInput> &input)

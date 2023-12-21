@@ -129,6 +129,7 @@ public:
     int32_t BeginConfig() override;
     int32_t CommitConfig() override;
 
+    int32_t CanAddInput(sptr<ICameraDeviceService> cameraDevice, bool& result) override;
     int32_t AddInput(sptr<ICameraDeviceService> cameraDevice) override;
     int32_t AddOutput(StreamType streamType, sptr<IStreamCommon> stream) override;
 

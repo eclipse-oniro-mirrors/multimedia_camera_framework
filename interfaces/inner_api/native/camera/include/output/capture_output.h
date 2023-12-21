@@ -78,6 +78,8 @@ public:
     Profile GetPhotoProfile();
     int32_t SetPreviewProfile(Profile& profile);
     Profile GetPreviewProfile();
+    int32_t SetVideoProfile(VideoProfile& videoProfile);
+    VideoProfile GetVideoProfile();
     virtual void CameraServerDied(pid_t pid) = 0;
 
 protected:
@@ -90,6 +92,7 @@ private:
     wptr<CaptureSession> session_;
     Profile photoProfile_;
     Profile previewProfile_;
+    VideoProfile videoProfile_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
