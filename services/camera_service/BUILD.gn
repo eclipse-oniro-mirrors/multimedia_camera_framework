@@ -31,6 +31,7 @@ ohos_shared_library("camera_service") {
     "binder/server/src/hstream_capture_stub.cpp",
     "binder/server/src/hstream_metadata_stub.cpp",
     "binder/server/src/hstream_repeat_stub.cpp",
+    "src/camera_fwk_metadata_utils.cpp",
     "src/camera_util.cpp",
     "src/hcamera_device.cpp",
     "src/hcamera_device_manager.cpp",

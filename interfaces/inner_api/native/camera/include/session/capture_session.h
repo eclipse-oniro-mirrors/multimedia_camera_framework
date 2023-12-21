@@ -196,12 +196,20 @@ enum VideoStabilizationMode {
     AUTO
 };
 
-class CaptureOutput;
 class CaptureSession : public RefBase {
 public:
+    class CaptureSessionMetadataResultProcessor : public MetadataResultProcessor {
+    public:
+        explicit CaptureSessionMetadataResultProcessor(wptr<CaptureSession> session) : session_(session) {}
+        void ProcessCallbacks(
+            const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result) override;
+
+    private:
+        wptr<CaptureSession> session_;
+    };
+
     sptr<CaptureInput> inputDevice_;
     explicit CaptureSession(sptr<ICaptureSession>& captureSession);
-    CaptureSession() {};
     virtual ~CaptureSession();
 
     /**
@@ -853,14 +861,19 @@ public:
     sptr<CaptureOutput> GetMetaOutput();
     void ProcessFaceRecUpdates(const uint64_t timestamp,
                                     const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
-    virtual void ProcessCallbacks(const uint64_t timestamp,
-                                    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
+
+    inline std::shared_ptr<MetadataResultProcessor> GetMetadataResultProcessor()
+    {
+        return metadataResultProcessor_;
+    }
+
 protected:
     std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
     Profile photoProfile_;
     Profile previewProfile_;
     std::map<BeautyType, std::vector<int32_t>> beautyTypeAndRanges_;
     std::map<BeautyType, int32_t> beautyTypeAndLevels_;
+    std::shared_ptr<MetadataResultProcessor> metadataResultProcessor_ = nullptr;
 
 private:
     std::mutex changeMetaMutex_;

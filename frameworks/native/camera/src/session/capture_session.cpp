@@ -15,6 +15,7 @@
 
 #include "session/capture_session.h"
 #include <cstdint>
+#include <memory>
 #include <mutex>
 #include "camera_device_ability_items.h"
 #include "camera_metadata_operator.h"
@@ -231,6 +232,7 @@ CaptureSession::CaptureSession(sptr<ICaptureSession> &captureSession)
     captureSession_ = captureSession;
     inputDevice_ = nullptr;
     metaOutput_ = nullptr;
+    metadataResultProcessor_ = std::make_shared<CaptureSessionMetadataResultProcessor>(this);
     sptr<IRemoteObject> object = captureSession_->AsObject();
     pid_t pid = 0;
     deathRecipient_ = new(std::nothrow) CameraDeathRecipient(pid);
@@ -425,7 +427,7 @@ int32_t CaptureSession::AddInput(sptr<CaptureInput> &input)
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to AddInput!, %{public}d", errCode);
         } else {
-            input->SetSession(this);
+            input->SetMetadataResultProcessor(GetMetadataResultProcessor());
             inputDevice_ = input;
         }
     } else {
@@ -554,7 +556,7 @@ bool CaptureSession::CanAddOutput(sptr<CaptureOutput> &output)
     return false;
 }
 
-int32_t CaptureSession::RemoveInput(sptr<CaptureInput> &input)
+int32_t CaptureSession::RemoveInput(sptr<CaptureInput>& input)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::RemoveInput");
@@ -562,7 +564,8 @@ int32_t CaptureSession::RemoveInput(sptr<CaptureInput> &input)
         MEDIA_ERR_LOG("CaptureSession::RemoveInput operation Not allowed!");
         return CameraErrorCode::OPERATION_NOT_ALLOWED;
     }
-    if (input == nullptr) {
+    auto device = ((sptr<CameraInput>&)input)->GetCameraDevice();
+    if (device == nullptr) {
         MEDIA_ERR_LOG("CaptureSession::RemoveInput input is null");
         return ServiceToCameraError(CAMERA_INVALID_ARG);
     }
@@ -571,7 +574,11 @@ int32_t CaptureSession::RemoveInput(sptr<CaptureInput> &input)
     }
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (captureSession_) {
-        errCode = captureSession_->RemoveInput(((sptr<CameraInput> &)input)->GetCameraDevice());
+        errCode = captureSession_->RemoveInput(device);
+        auto deviceInfo = input->GetCameraDeviceInfo();
+        if (deviceInfo != nullptr) {
+            deviceInfo->ResetMetadata();
+        }
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to RemoveInput!, %{public}d", errCode);
         }
@@ -726,42 +733,41 @@ std::shared_ptr<SessionCallback> CaptureSession::GetApplicationCallback()
 int32_t CaptureSession::UpdateSetting(std::shared_ptr<Camera::CameraMetadata> changedMetadata)
 {
     CAMERA_SYNC_TRACE;
-    if (!Camera::GetCameraMetadataItemCount(changedMetadata->get())) {
+    auto metadataHeader = changedMetadata->get();
+    uint32_t count = Camera::GetCameraMetadataItemCount(metadataHeader);
+    if (count == 0) {
         MEDIA_INFO_LOG("CaptureSession::UpdateSetting No configuration to update");
         return CameraErrorCode::SUCCESS;
     }
 
-    if (!inputDevice_ || !((sptr<CameraInput> &)inputDevice_)->GetCameraDevice()) {
+    if (inputDevice_ == nullptr || ((sptr<CameraInput>&)inputDevice_)->GetCameraDevice() == nullptr) {
         MEDIA_ERR_LOG("CaptureSession::UpdateSetting Failed inputDevice_ is nullptr");
         return CameraErrorCode::SUCCESS;
     }
-    int32_t ret = ((sptr<CameraInput> &)inputDevice_)->GetCameraDevice()->UpdateSetting(changedMetadata);
+    int32_t ret = ((sptr<CameraInput>&)inputDevice_)->GetCameraDevice()->UpdateSetting(changedMetadata);
     if (ret != CAMERA_OK) {
         MEDIA_ERR_LOG("CaptureSession::UpdateSetting Failed to update settings, errCode = %{public}d", ret);
         return ServiceToCameraError(ret);
     }
 
-    uint32_t count = changedMetadata->get()->item_count;
-    uint8_t* data = Camera::GetMetadataData(changedMetadata->get());
-    camera_metadata_item_entry_t* itemEntry = Camera::GetMetadataItems(changedMetadata->get());
     std::shared_ptr<Camera::CameraMetadata> baseMetadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
-    for (uint32_t i = 0; i < count; i++, itemEntry++) {
+    for (uint32_t index = 0; index < count; index++) {
+        camera_metadata_item_t srcItem;
+        int ret = OHOS::Camera::GetCameraMetadataItem(metadataHeader, index, &srcItem);
+        if (ret != CAM_META_SUCCESS) {
+            MEDIA_ERR_LOG("CaptureSession::UpdateSetting Failed to get metadata item at index: %{public}d", index);
+            return CAMERA_INVALID_ARG;
+        }
         bool status = false;
-        camera_metadata_item_t item;
-        size_t length = Camera::CalculateCameraMetadataItemDataSize(itemEntry->data_type, itemEntry->count);
-        ret = Camera::FindCameraMetadataItem(baseMetadata->get(), itemEntry->item, &item);
+        uint32_t currentIndex;
+        ret = OHOS::Camera::FindCameraMetadataItemIndex(baseMetadata->get(), srcItem.item, &currentIndex);
         if (ret == CAM_META_SUCCESS) {
-            status = baseMetadata->updateEntry(itemEntry->item,
-                                               (length == 0) ? itemEntry->data.value : (data + itemEntry->data.offset),
-                                               itemEntry->count);
+            status = baseMetadata->updateEntry(srcItem.item, srcItem.data.u8, srcItem.count);
         } else if (ret == CAM_META_ITEM_NOT_FOUND) {
-            status = baseMetadata->addEntry(itemEntry->item,
-                                            (length == 0) ? itemEntry->data.value : (data + itemEntry->data.offset),
-                                            itemEntry->count);
+            status = baseMetadata->addEntry(srcItem.item, srcItem.data.u8, srcItem.count);
         }
         if (!status) {
-            MEDIA_ERR_LOG("CaptureSession::UpdateSetting Failed to add/update metadata item: %{public}d",
-                          itemEntry->item);
+            MEDIA_ERR_LOG("CaptureSession::UpdateSetting Failed to add/update metadata item: %{public}d", srcItem.item);
         }
     }
     OnSettingUpdated(changedMetadata);
@@ -1804,13 +1810,18 @@ void CaptureSession::ProcessFaceRecUpdates(const uint64_t timestamp,
     }
 }
 
-void CaptureSession::ProcessCallbacks(const uint64_t timestamp,
-    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
+void CaptureSession::CaptureSessionMetadataResultProcessor::ProcessCallbacks(
+    const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {
-    MEDIA_INFO_LOG("ProcessCallbacks");
-    ProcessFaceRecUpdates(timestamp, result);
-    ProcessAutoFocusUpdates(result);
-    ProcessMacroStatusChange(result);
+    MEDIA_INFO_LOG("CaptureSession::CaptureSessionMetadataResultProcessor ProcessCallbacks");
+    auto session = session_.promote();
+    if (session == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::CaptureSessionMetadataResultProcessor ProcessCallbacks but session is null");
+        return;
+    }
+    session->ProcessFaceRecUpdates(timestamp, result);
+    session->ProcessAutoFocusUpdates(result);
+    session->ProcessMacroStatusChange(result);
 }
 
 std::vector<FlashMode> CaptureSession::GetSupportedFlashModes()

@@ -51,7 +51,7 @@ public:
     };
     class CameraHostDeadCallback {
     public:
-        explicit CameraHostDeadCallback(sptr<HCameraHostManager> hostManager) : hostManager_(hostManager) {};
+        explicit CameraHostDeadCallback(wptr<HCameraHostManager> hostManager) : hostManager_(hostManager) {};
         virtual ~CameraHostDeadCallback() = default;
         virtual void OnCameraHostDied(const std::string& hostName)
         {

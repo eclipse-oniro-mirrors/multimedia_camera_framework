@@ -110,7 +110,12 @@ int32_t HStreamMetadata::Stop()
 
 int32_t HStreamMetadata::Release()
 {
-    return HStreamCommon::Release();
+    return ReleaseStream(false);
+}
+
+int32_t HStreamMetadata::ReleaseStream(bool isDelay)
+{
+    return HStreamCommon::ReleaseStream(isDelay);
 }
 
 void HStreamMetadata::DumpStreamInfo(std::string& dumpString)

@@ -24,7 +24,6 @@ namespace CameraStandard {
 class ScanSession : public CaptureSession {
 public:
     explicit ScanSession(sptr<ICaptureSession> &ScanSession): CaptureSession(ScanSession) {}
-    ScanSession() {};
     ~ScanSession();
  
     int32_t AddOutput(sptr<CaptureOutput> &output) override;

@@ -4952,7 +4952,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_039, TestSize.L
 {
     sptr<CameraInput> input = (sptr<CameraInput>&)input_;
     input->Close();
-    input->SetSession(session_);
+    input->SetMetadataResultProcessor(session_->GetMetadataResultProcessor());
 
     sptr<CaptureInput> input_2 = (sptr<CaptureInput>&)input;
 
@@ -5169,7 +5169,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_043, TestSize.L
 
     sptr<CameraInput> input_1 = (sptr<CameraInput>&)input_;
     input_1->Close();
-    input_1->SetSession(session_);
+    input_1->SetMetadataResultProcessor(session_->GetMetadataResultProcessor());
 
     sptr<CaptureInput> input_2 = (sptr<CaptureInput>&)input_1;
 
@@ -7671,6 +7671,63 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_065, TestSize.Le
 
     intResult = session_->Stop();
     EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Test add released output
+ * Function: Test add released output
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test add released output
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_066, TestSize.Level0)
+{
+    auto previewProfile = GetSketchPreviewProfile();
+    if (previewProfile == nullptr) {
+        EXPECT_EQ(previewProfile.get(), nullptr);
+        return;
+    }
+    auto previewOutput = CreatePreviewOutput(*previewProfile);
+    ASSERT_NE(previewOutput, nullptr);
+
+    auto captureOutput = CreatePhotoOutput();
+    EXPECT_NE(captureOutput, nullptr);
+
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(captureOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->RemoveOutput(captureOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = captureOutput->Release();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(captureOutput);
+    EXPECT_EQ(intResult, 7400101);
 }
 } // namespace CameraStandard
 } // namespace OHOS
