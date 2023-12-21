@@ -24,6 +24,7 @@
 #include "output/camera_output_capability.h"
 #include "output/preview_output.h"
 #include "surface_utils.h"
+#include "listener_base.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -92,7 +93,7 @@ struct SketchStatusCallbackInfo {
     {}
 };
 
-class PreviewOutputNapi : public CameraOutputNapi {
+class PreviewOutputNapi : public CameraOutputNapi : public ListenerBase {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreatePreviewOutput(napi_env env, Profile& profile, std::string surfaceId);
@@ -102,9 +103,6 @@ public:
     static napi_value Start(napi_env env, napi_callback_info info);
     static napi_value Stop(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
-    static napi_value On(napi_env env, napi_callback_info info);
-    static napi_value Once(napi_env env, napi_callback_info info);
-    static napi_value Off(napi_env env, napi_callback_info info);
     static napi_value IsSketchSupported(napi_env env, napi_callback_info info);
     static napi_value GetSketchRatio(napi_env env, napi_callback_info info);
     static napi_value EnableSketch(napi_env env, napi_callback_info info);
@@ -120,8 +118,8 @@ private:
     static napi_status CreateAsyncTask(napi_env env, napi_value resource,
         std::unique_ptr<OHOS::CameraStandard::PreviewOutputAsyncContext>& asyncContext);
     static napi_value RegisterCallback(
-        napi_env env, napi_value jsThis, const string& eventType, napi_value callback, bool isOnce);
-    static napi_value UnregisterCallback(napi_env env, napi_value jsThis, const string& eventType, napi_value callback);
+        napi_env env, napi_value jsThis, const string& eventType, napi_value callback, bool isOnce) override;
+    static napi_value UnregisterCallback(napi_env env, napi_value jsThis, const string& eventType, napi_value callback) override;
     napi_env env_;
     napi_ref wrapper_;
     sptr<PreviewOutput> previewOutput_;

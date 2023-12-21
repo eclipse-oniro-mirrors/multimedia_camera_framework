@@ -23,6 +23,7 @@
 
 #include "hilog/log.h"
 #include "camera_napi_utils.h"
+#include "listener_base.h"
 #include "native_image.h"
 
 namespace OHOS {
@@ -166,7 +167,7 @@ struct PhotoListenerInfo {
         : photoSurface_(photoSurface), listener_(listener) {}
 };
 
-class PhotoOutputNapi {
+class PhotoOutputNapi : public ListenerBase {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreatePhotoOutput(napi_env env, Profile &profile, std::string surfaceId);
@@ -179,9 +180,6 @@ public:
     static napi_value SetMirror(napi_env env, napi_callback_info info);
     static napi_value EnableQuickThumbnail(napi_env env, napi_callback_info info);
     static napi_value IsQuickThumbnailSupported(napi_env env, napi_callback_info info);
-    static napi_value On(napi_env env, napi_callback_info info);
-    static napi_value Off(napi_env env, napi_callback_info info);
-    static napi_value Once(napi_env env, napi_callback_info info);
     static bool IsPhotoOutput(napi_env env, napi_value obj);
     PhotoOutputNapi();
     ~PhotoOutputNapi();
@@ -192,9 +190,9 @@ private:
     static void PhotoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value PhotoOutputNapiConstructor(napi_env env, napi_callback_info info);
     static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string& callbackName, napi_value callback);
+        const std::string& callbackName, napi_value callback) override;
     static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string& callbackName, napi_value callback, bool isOnce);
+        const std::string& callbackName, napi_value callback, bool isOnce) override;
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<PhotoOutput> sPhotoOutput_;

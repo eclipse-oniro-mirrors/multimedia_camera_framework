@@ -3145,5 +3145,25 @@ bool CaptureSession::IsSetEnableMacro()
 {
     return isSetMacroEnable_;
 }
+
+std::shared_ptr<ExposureCallback> CaptureSession::GetExposureCallback()
+{
+    return exposureCallback_;
+}
+
+std::shared_ptr<FocusCallback> CaptureSession::GetFocusCallback()
+{
+    return focusCallback_;
+}
+
+std::shared_ptr<MacroStatusCallback> CaptureSession::GetMacroStatusCallback()
+{
+    return macroStatusCallback_;
+}
+
+std::shared_ptr<SmoothZoomCallback> CaptureSession::GetSmoothZoomCallback()
+{
+    return smoothZoomCallback_;
+}
 } // CameraStandard
 } // OHOS
