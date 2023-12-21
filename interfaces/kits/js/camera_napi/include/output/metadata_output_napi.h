@@ -22,6 +22,8 @@
 #include "hilog/log.h"
 #include "camera_napi_utils.h"
 
+#include "listener_base.h"
+
 namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_METADATA_OUTPUT_NAPI_CLASS_NAME[] = "MetadataOutput";
@@ -77,7 +79,7 @@ struct MetadataStateCallbackInfo {
         : errorType_(errorType), listener_(listener) {}
 };
 
-class MetadataOutputNapi {
+class MetadataOutputNapi : public ListenerBase{
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateMetadataOutput(napi_env env);
@@ -94,13 +96,10 @@ private:
     static napi_value SetCapturingMetadataObjectTypes(napi_env env, napi_callback_info info);
     static napi_value Start(napi_env env, napi_callback_info info);
     static napi_value Stop(napi_env env, napi_callback_info info);
-    static napi_value On(napi_env env, napi_callback_info info);
-    static napi_value Off(napi_env env, napi_callback_info info);
-    static napi_value Once(napi_env env, napi_callback_info info);
     static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value callback, bool isOnce);
+        const std::string& eventType, napi_value callback, bool isOnce) override;
     static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value callback);
+        const std::string& eventType, napi_value callback) override;
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<MetadataOutput> sMetadataOutput_;

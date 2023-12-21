@@ -509,8 +509,8 @@ napi_value CameraInputNapi::RegisterCallback(napi_env env, napi_value jsThis,
         shared_ptr<ErrorCallbackListener> errorCallback =
             std::static_pointer_cast<ErrorCallbackListener>(cameraInputNapi->cameraInput_->GetErrorCallback());
         if (errorCallback == nullptr) {
-            errorCallback = make_shared<TorchListenerNapi>(env);
-            cameraInputNapi->cameraInput_->SetErrorCallback(torchListener);
+            errorCallback = make_shared<ErrorCallbackListener>(env);
+            cameraInputNapi->cameraInput_->SetErrorCallback( );
         }
         errorCallback->SaveCallbackReference(eventType, argv[PARAM2], isOnce);
 

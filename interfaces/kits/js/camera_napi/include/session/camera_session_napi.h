@@ -29,6 +29,7 @@
 #include "output/video_output_napi.h"
 #include "output/metadata_output_napi.h"
 
+#include "listener_base.h"
 namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_SESSION_NAPI_CLASS_NAME[] = "CaptureSession";
@@ -169,7 +170,7 @@ struct SmoothZoomCallbackInfo {
         : duration_(duration), listener_(listener) {}
 };
 
-class CameraSessionNapi {
+class CameraSessionNapi : public ListenerBase {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateCameraSession(napi_env env);
@@ -236,13 +237,6 @@ public:
     static napi_value IsVideoStabilizationModeSupported(napi_env env, napi_callback_info info);
     static napi_value GetActiveVideoStabilizationMode(napi_env env, napi_callback_info info);
     static napi_value SetVideoStabilizationMode(napi_env env, napi_callback_info info);
-    static napi_value On(napi_env env, napi_callback_info info);
-    static napi_value Off(napi_env env, napi_callback_info info);
-    static napi_value Once(napi_env env, napi_callback_info info);
-    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value callback, bool isOnce);
-    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value callback);
 
     static napi_value LockForControl(napi_env env, napi_callback_info info);
     static napi_value UnlockForControl(napi_env env, napi_callback_info info);
@@ -265,6 +259,12 @@ public:
     static const std::vector<napi_property_descriptor> color_effect_props;
     static const std::vector<napi_property_descriptor> macro_props;
     static const std::vector<napi_property_descriptor> color_management_props;
+
+private:
+    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
+        const std::string& eventType, napi_value callback, bool isOnce) override;
+    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
+        const std::string& eventType, napi_value callback) override;
 };
 
 struct CameraSessionAsyncContext : public AsyncContext {

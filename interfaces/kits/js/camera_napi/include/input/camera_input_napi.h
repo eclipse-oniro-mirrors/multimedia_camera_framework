@@ -24,6 +24,7 @@
 #include "input/camera_input.h"
 
 #include "input/camera_size_napi.h"
+#include "listener_base.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -63,7 +64,7 @@ struct ErrorCallbackInfo {
         : errorType_(errorType), errorMsg_(errorMsg), listener_(listener) {}
 };
 
-class CameraInputNapi {
+class CameraInputNapi : public ListenerBase {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateCameraInput(napi_env env, sptr<CameraInput> cameraInput);
