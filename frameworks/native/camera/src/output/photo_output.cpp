@@ -506,6 +506,7 @@ void PhotoOutput::CameraServerDied(pid_t pid)
 
 const std::set<camera_device_metadata_tag_t>& PhotoOutput::GetObserverTags()
 {
+    // Empty impl
     const static std::set<camera_device_metadata_tag_t> tags = {};
     return tags;
 }
