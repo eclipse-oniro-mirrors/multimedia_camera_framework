@@ -58,10 +58,6 @@ static const std::int32_t VIDEO_DEFAULT_HEIGHT = 360;
 
 static const std::int32_t SURFACE_QUEUE_SIZE = 10;
 
-static const std::int32_t CAM_FORMAT_RGBA_8888 = 3;
-static const std::int32_t CAM_FORMAT_JPEG = 2000;
-static const std::int32_t CAM_FORMAT_YUV_420_SP = 1003;
-
 static const std::vector<std::string> vecFlashMode {
     "FLASH_MODE_CLOSE", "FLASH_MODE_OPEN", "FLASH_MODE_AUTO", "FLASH_MODE_ALWAYS_OPEN"
 };
@@ -88,7 +84,8 @@ static const std::vector<std::string> vecConnectionTypeMode {
 };
 
 static const std::vector<std::string> vecCameraFormat {
-    "CAMERA_FORMAT_YUV_420_SP", "CAMERA_FORMAT_JPEG", "CAMERA_FORMAT_RGBA_8888"
+    "CAMERA_FORMAT_YUV_420_SP", "CAMERA_FORMAT_JPEG", "CAMERA_FORMAT_RGBA_8888", "CAMERA_FORMAT_YCBCR_P010",
+    "CAMERA_FORMAT_YCRCB_P010"
 };
 
 static const std::vector<std::string> vecCameraStatus {
