@@ -77,9 +77,9 @@ private:
     static void CameraManagerNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value CameraManagerNapiConstructor(napi_env env, napi_callback_info info);
     static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string &eventType, napi_value callback, bool isOnce) override;
+        const std::string &eventType, napi_value callback, bool isOnce);
     static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string &eventType, napi_value callback) override;
+        const std::string &eventType, napi_value callback);
     static thread_local napi_ref sConstructor_;
 
     napi_env env_;

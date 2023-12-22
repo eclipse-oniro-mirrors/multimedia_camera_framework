@@ -191,9 +191,9 @@ private:
     static void PhotoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value PhotoOutputNapiConstructor(napi_env env, napi_callback_info info);
     static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string& callbackName, napi_value callback) override;
+        const std::string& callbackName, napi_value callback);
     static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string& callbackName, napi_value callback, bool isOnce) override;
+        const std::string& callbackName, napi_value callback, bool isOnce);
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<PhotoOutput> sPhotoOutput_;

@@ -92,9 +92,9 @@ private:
     static napi_value SetFrameRateRange(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
     static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value callback, bool isOnce) override;
+        const std::string& eventType, napi_value callback, bool isOnce);
     static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value callback) override;
+        const std::string& eventType, napi_value callback);
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<VideoOutput> sVideoOutput_;
@@ -102,7 +102,6 @@ private:
     napi_env env_;
     napi_ref wrapper_;
     sptr<VideoOutput> videoOutput_;
-    std::shared_ptr<VideoCallbackListener> videoCallback_;
     static thread_local uint32_t videoOutputTaskId;
 };
 

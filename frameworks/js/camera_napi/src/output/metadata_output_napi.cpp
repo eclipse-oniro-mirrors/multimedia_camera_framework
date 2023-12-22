@@ -318,14 +318,6 @@ MetadataOutputNapi::~MetadataOutputNapi()
     if (metadataOutput_) {
         metadataOutput_ = nullptr;
     }
-    if (metadataOutputCallback_) {
-        metadataOutputCallback_->RemoveCallbackRef(env_, nullptr);
-        metadataOutputCallback_ = nullptr;
-    }
-    if (metadataStateCallback_) {
-        metadataStateCallback_->RemoveCallbackRef(env_, nullptr);
-        metadataStateCallback_ = nullptr;
-    }
 }
 
 void MetadataOutputNapi::MetadataOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
@@ -382,13 +374,13 @@ napi_value MetadataOutputNapi::MetadataOutputNapiConstructor(napi_env env, napi_
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
 
     if (status == napi_ok && thisVar != nullptr) {
-        std::unique_ptr<MetadataOutputNapi> metadataOutputNapi = std::make_unique<MetadataOutputNapi>();
-        metadataOutputNapi->env_ = env;
-        metadataOutputNapi->metadataOutput_ = sMetadataOutput_;
-        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(metadataOutputNapi.get()),
+        std::unique_ptr<MetadataOutputNapi> obj = std::make_unique<MetadataOutputNapi>();
+        obj->env_ = env;
+        obj->metadataOutput_ = sMetadataOutput_;
+        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
                            MetadataOutputNapi::MetadataOutputNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
-            metadataOutputNapi.release();
+            obj.release();
             return thisVar;
         } else {
             MEDIA_ERR_LOG("Failure wrapping js to native napi");
@@ -811,7 +803,6 @@ napi_value MetadataOutputNapi::UnregisterCallback(napi_env env, napi_value jsThi
     MetadataOutputNapi* metadataOutputNapi = nullptr;
     napi_status status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&metadataOutputNapi));
     NAPI_ASSERT(env, status == napi_ok && metadataOutputNapi != nullptr, "Failed to metadataOutput napi instance.");
-    NAPI_ASSERT(env, metadataOutputNapi->metadataOutputCallback_ != nullptr, "metadataOutputCallback is null.");
     if (eventType.compare("metadataObjectsAvailable") == 0) {
         shared_ptr<MetadataOutputCallback> metadataOutputCallback =
             std::static_pointer_cast<MetadataOutputCallback>(metadataOutputNapi->metadataOutput_->GetAppObjectCallback());

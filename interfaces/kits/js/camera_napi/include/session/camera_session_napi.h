@@ -262,9 +262,9 @@ public:
 
 private:
     static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value callback, bool isOnce) override;
+        const std::string& eventType, napi_value callback, bool isOnce);
     static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value callback) override;
+        const std::string& eventType, napi_value callback);
 };
 
 struct CameraSessionAsyncContext : public AsyncContext {
