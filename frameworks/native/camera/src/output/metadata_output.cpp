@@ -190,10 +190,11 @@ int32_t MetadataOutput::Release()
     return ServiceToCameraError(errCode);
 }
 
-std::set<camera_device_metadata_tag_t> MetadataOutput::GetObserverTags() const
+const std::set<camera_device_metadata_tag_t>& MetadataOutput::GetObserverTags()
 {
     // Empty impl
-    return {};
+    const static std::set<camera_device_metadata_tag_t> tags = {};
+    return tags;
 }
 
 int32_t MetadataOutput::OnMetadataChanged(

@@ -14,19 +14,24 @@
  */
 
 #include "hstream_repeat.h"
+
 #include <cstdint>
 
 #include "camera_device_ability_items.h"
 #include "camera_log.h"
 #include "camera_metadata_operator.h"
+#include "camera_service_ipc_interface_code.h"
 #include "camera_util.h"
 #include "display.h"
 #include "display_manager.h"
+#include "hstream_common.h"
+#include "ipc_skeleton.h"
 #include "istream_repeat_callback.h"
 #include "metadata_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
+using namespace OHOS::HDI::Camera::V1_0;
 static const int32_t STREAM_ROTATE_90 = 90;
 static const int32_t STREAM_ROTATE_180 = 180;
 static const int32_t STREAM_ROTATE_270 = 270;
@@ -34,17 +39,15 @@ static const int32_t STREAM_ROTATE_360 = 360;
 
 HStreamRepeat::HStreamRepeat(
     sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height, RepeatStreamType type)
-    : HStreamCommon(StreamType::REPEAT, producer, format, width, height)
-{
-    repeatStreamType_ = type;
-}
+    : HStreamCommon(StreamType::REPEAT, producer, format, width, height), repeatStreamType_(type)
+{}
 
 HStreamRepeat::~HStreamRepeat() {}
 
 int32_t HStreamRepeat::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
-    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t streamId)
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
-    int32_t ret = HStreamCommon::LinkInput(streamOperator, cameraAbility, streamId);
+    int32_t ret = HStreamCommon::LinkInput(streamOperator, cameraAbility);
     if (ret != CAMERA_OK) {
         return ret;
     }
@@ -130,29 +133,29 @@ void HStreamRepeat::StartSketchStream(std::shared_ptr<OHOS::Camera::CameraMetada
 int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> settings)
 {
     CAMERA_SYNC_TRACE;
-    {
-        std::lock_guard<std::mutex> lock(streamOperatorLock_);
-        if (streamOperator_ == nullptr) {
-            return CAMERA_INVALID_STATE;
-        }
+    auto streamOperator = GetStreamOperator();
+    if (streamOperator == nullptr) {
+        return CAMERA_INVALID_STATE;
     }
 
-    if (curCaptureID_ != 0) {
-        MEDIA_ERR_LOG("HStreamRepeat::Start, Already started with captureID: %{public}d", curCaptureID_);
+    auto preparedCaptureId = GetPreparedCaptureId();
+    if (preparedCaptureId != CAPTURE_ID_UNSET) {
+        MEDIA_ERR_LOG("HStreamRepeat::Start, Already started with captureID: %{public}d", preparedCaptureId);
         return CAMERA_INVALID_STATE;
     }
 
     // If current is sketch stream, check parent is start or not.
     if (repeatStreamType_ == RepeatStreamType::SKETCH) {
         auto parentRepeat = parentStreamRepeat_.promote();
-        if (parentRepeat == nullptr || parentRepeat->curCaptureID_ == 0) {
+        if (parentRepeat == nullptr || parentRepeat->GetPreparedCaptureId() == CAPTURE_ID_UNSET) {
             MEDIA_ERR_LOG("HStreamRepeat::Start sketch parent state is illegal");
             return CAMERA_INVALID_STATE;
         }
     }
 
-    int32_t ret = AllocateCaptureId(curCaptureID_);
-    if (ret != CAMERA_OK) {
+    int32_t ret = PrepareCaptureId();
+    preparedCaptureId = GetPreparedCaptureId();
+    if (ret != CAMERA_OK || preparedCaptureId == CAPTURE_ID_UNSET) {
         MEDIA_ERR_LOG("HStreamRepeat::Start Failed to allocate a captureId");
         return ret;
     }
@@ -163,18 +166,14 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
     }
     CaptureInfo captureInfo;
-    captureInfo.streamIds_ = { streamId_ };
+    captureInfo.streamIds_ = { GetStreamId() };
     captureInfo.captureSetting_ = ability;
     captureInfo.enableShutterCallback_ = false;
-    MEDIA_INFO_LOG("With capture ID: %{public}d, repeatStreamType:%{public}d", curCaptureID_, repeatStreamType_);
-    CamRetCode rc;
-    {
-        std::lock_guard<std::mutex> lock(streamOperatorLock_);
-        rc = (CamRetCode)(streamOperator_->Capture(curCaptureID_, captureInfo, true));
-    }
+    MEDIA_INFO_LOG("HStreamRepeat::Start stream:%{public}d With capture ID: %{public}d, repeatStreamType:%{public}d",
+        GetStreamId(), preparedCaptureId, repeatStreamType_);
+    CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfo, true));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
-        ReleaseCaptureId(curCaptureID_);
-        curCaptureID_ = 0;
+        ResetCaptureId();
         MEDIA_ERR_LOG("HStreamRepeat::Start Failed with error Code:%{public}d", rc);
         ret = HdiToServiceError(rc);
         UpdateSketchStatus(SketchStatus::STOPED);
@@ -193,31 +192,24 @@ int32_t HStreamRepeat::Start()
 int32_t HStreamRepeat::Stop()
 {
     CAMERA_SYNC_TRACE;
-    {
-        std::lock_guard<std::mutex> lock(streamOperatorLock_);
-        if (streamOperator_ == nullptr) {
-            return CAMERA_INVALID_STATE;
-        }
+    auto streamOperator = GetStreamOperator();
+    if (streamOperator == nullptr) {
+        MEDIA_INFO_LOG("HStreamRepeat::Stop streamOperator is null");
+        return CAMERA_INVALID_STATE;
     }
-
-    if (curCaptureID_ == 0) {
+    auto preparedCaptureId = GetPreparedCaptureId();
+    MEDIA_INFO_LOG("HStreamRepeat::Stop stream:%{public}d With capture ID: %{public}d, repeatStreamType:%{public}d",
+        GetStreamId(), preparedCaptureId, repeatStreamType_);
+    if (preparedCaptureId == CAPTURE_ID_UNSET) {
         MEDIA_ERR_LOG("HStreamRepeat::Stop, Stream not started yet");
         return CAMERA_INVALID_STATE;
     }
     UpdateSketchStatus(SketchStatus::STOPPING);
-    int32_t ret = CAMERA_OK;
-    CamRetCode rc;
-    {
-        std::lock_guard<std::mutex> lock(streamOperatorLock_);
-        rc = (CamRetCode)(streamOperator_->CancelCapture(curCaptureID_));
-    }
-    if (rc != HDI::Camera::V1_0::NO_ERROR) {
+    int32_t ret = StopStream();
+    if (ret != CAMERA_OK) {
         MEDIA_ERR_LOG(
-            "HStreamRepeat::Stop Failed with errorCode:%{public}d, curCaptureID_: %{public}d", rc, curCaptureID_);
-        ret = HdiToServiceError(rc);
+            "HStreamRepeat::Stop Failed with errorCode:%{public}d, curCaptureID_: %{public}d", ret, preparedCaptureId);
     }
-    ReleaseCaptureId(curCaptureID_);
-    curCaptureID_ = 0;
     {
         std::lock_guard<std::mutex> lock(sketchStreamLock_);
         if (sketchStreamRepeat_ != nullptr) {
@@ -229,9 +221,6 @@ int32_t HStreamRepeat::Stop()
 
 int32_t HStreamRepeat::Release()
 {
-    if (curCaptureID_) {
-        ReleaseCaptureId(curCaptureID_);
-    }
     {
         std::lock_guard<std::mutex> lock(callbackLock_);
         streamRepeatCallback_ = nullptr;
@@ -321,7 +310,8 @@ int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& pro
         producer_ = producer;
     }
     SetStreamTransform();
-    if (streamOperator_ == nullptr) {
+    auto streamOperator = GetStreamOperator();
+    if (streamOperator == nullptr) {
         MEDIA_ERR_LOG("HStreamRepeat::CreateAndHandleDeferredStreams(), streamOperator_ == null");
         return CAMERA_INVALID_STATE;
     }
@@ -332,11 +322,7 @@ int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& pro
         std::lock_guard<std::mutex> lock(producerLock_);
         bufferProducerSequenceable = new BufferProducerSequenceable(producer_);
     }
-    {
-        std::lock_guard<std::mutex> lock(streamOperatorLock_);
-        rc = (CamRetCode)(streamOperator_->AttachBufferQueue(streamId_, bufferProducerSequenceable));
-    }
-
+    rc = (CamRetCode)(streamOperator->AttachBufferQueue(GetStreamId(), bufferProducerSequenceable));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         MEDIA_ERR_LOG("HStreamRepeat::AttachBufferQueue(), Failed to AttachBufferQueue %{public}d", rc);
     }
@@ -508,6 +494,26 @@ void HStreamRepeat::SetStreamTransform()
             MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform none rotate");
         }
     }
+}
+
+int32_t HStreamRepeat::OperatePermissionCheck(uint32_t interfaceCode)
+{
+    switch (static_cast<StreamRepeatInterfaceCode>(interfaceCode)) {
+        case CAMERA_START_VIDEO_RECORDING:
+        case CAMERA_FORK_SKETCH_STREAM_REPEAT: {
+            auto callerToken = IPCSkeleton::GetCallingTokenID();
+            if (callerToken_ != callerToken) {
+                MEDIA_ERR_LOG("HStreamRepeat::OperatePermissionCheck fail, callerToken_ is : %{public}d, now token "
+                              "is %{public}d",
+                    callerToken_, callerToken);
+                return CAMERA_OPERATION_NOT_ALLOWED;
+            }
+            break;
+        }
+        default:
+            break;
+    }
+    return CAMERA_OK;
 }
 } // namespace CameraStandard
 } // namespace OHOS

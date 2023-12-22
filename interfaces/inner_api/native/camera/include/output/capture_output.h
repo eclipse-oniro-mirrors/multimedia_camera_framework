@@ -18,14 +18,16 @@
 
 #include <mutex>
 #include <refbase.h>
+#include <set>
 #include <vector>
 
+#include "camera_device_ability_items.h"
 #include "camera_error_code.h"
+#include "camera_metadata_operator.h"
 #include "camera_output_capability.h"
 #include "icamera_util.h"
 #include "input/camera_death_recipient.h"
 #include "istream_common.h"
-#include "session/capture_session.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -36,7 +38,6 @@ enum CaptureOutputType {
     CAPTURE_OUTPUT_TYPE_METADATA,
     CAPTURE_OUTPUT_TYPE_MAX
 };
-static const char* g_captureOutputTypeString[CAPTURE_OUTPUT_TYPE_MAX] = {"Preview", "Photo", "Video", "Metadata"};
 
 class MetadataObserver {
 public:
@@ -45,7 +46,7 @@ public:
      *        Register tags into capture session. If the tags data changes,{@link OnMetadataChanged} will be called.
      * @return Observed tags
      */
-    virtual std::set<camera_device_metadata_tag_t> GetObserverTags() const = 0;
+    virtual const std::set<camera_device_metadata_tag_t>& GetObserverTags() = 0;
 
     /**
      * @brief Callback of metadata change.
@@ -77,6 +78,8 @@ public:
     Profile GetPhotoProfile();
     int32_t SetPreviewProfile(Profile& profile);
     Profile GetPreviewProfile();
+    int32_t SetVideoProfile(VideoProfile& videoProfile);
+    VideoProfile GetVideoProfile();
     virtual void CameraServerDied(pid_t pid) = 0;
 
 protected:
@@ -89,6 +92,7 @@ private:
     wptr<CaptureSession> session_;
     Profile photoProfile_;
     Profile previewProfile_;
+    VideoProfile videoProfile_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

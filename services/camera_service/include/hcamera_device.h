@@ -16,8 +16,10 @@
 #ifndef OHOS_CAMERA_H_CAMERA_DEVICE_H
 #define OHOS_CAMERA_H_CAMERA_DEVICE_H
 
+#include <cstdint>
 #include <iostream>
 #include <atomic>
+#include <mutex>
 
 #include "accesstoken_kit.h"
 #include "privacy_kit.h"
@@ -33,71 +35,92 @@
 
 namespace OHOS {
 namespace CameraStandard {
-using namespace OHOS::HDI::Camera::V1_0;
-class IDeviceOperatorsCallback;
-
-
-class HCameraDevice : public HCameraDeviceStub, public ICameraDeviceCallback {
+using OHOS::HDI::Camera::V1_0::CaptureEndedInfo;
+using OHOS::HDI::Camera::V1_0::CaptureErrorInfo;
+using OHOS::HDI::Camera::V1_0::ICameraDeviceCallback;
+using OHOS::HDI::Camera::V1_2::IStreamOperatorCallback;
+class HCameraDevice : public HCameraDeviceStub, public ICameraDeviceCallback, public IStreamOperatorCallback {
 public:
-    HCameraDevice(sptr<HCameraHostManager> &cameraHostManager, std::string cameraID, const uint32_t callingTokenId);
+    HCameraDevice(sptr<HCameraHostManager>& cameraHostManager, std::string cameraID, const uint32_t callingTokenId);
     ~HCameraDevice();
 
     int32_t Open() override;
     int32_t Close() override;
     int32_t Release() override;
-    int32_t UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings) override;
+    int32_t UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings) override;
     int32_t UpdateSettingOnce(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     int32_t GetStatus(std::shared_ptr<OHOS::Camera::CameraMetadata> &metaIn,
             std::shared_ptr<OHOS::Camera::CameraMetadata> &metaOut) override;
-    int32_t GetEnabledResults(std::vector<int32_t> &results) override;
-    int32_t EnableResult(std::vector<int32_t> &results) override;
-    int32_t DisableResult(std::vector<int32_t> &results) override;
-    int32_t GetStreamOperator(sptr<IStreamOperatorCallback> callback,
-            sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> &streamOperator);
+    int32_t GetEnabledResults(std::vector<int32_t>& results) override;
+    int32_t EnableResult(std::vector<int32_t>& results) override;
+    int32_t DisableResult(std::vector<int32_t>& results) override;
+    int32_t ReleaseStreams(std::vector<int32_t>& releaseStreamIds);
     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> GetStreamOperator();
-    int32_t SetCallback(sptr<ICameraDeviceServiceCallback> &callback) override;
-    int32_t OnError(ErrorType type, int32_t errorCode) override;
+    int32_t SetCallback(sptr<ICameraDeviceServiceCallback>& callback) override;
+    int32_t OnError(OHOS::HDI::Camera::V1_0::ErrorType type, int32_t errorCode) override;
     int32_t OnResult(uint64_t timestamp, const std::vector<uint8_t>& result) override;
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetSettings();
     std::shared_ptr<OHOS::Camera::CameraMetadata> CloneCachedSettings();
     std::string GetCameraId();
-    bool IsReleaseCameraDevice();
     bool IsOpenedCameraDevice();
-    int32_t SetReleaseCameraDevice(bool isRelease);
-    int32_t SetDeviceOperatorsCallback(wptr<IDeviceOperatorsCallback> callback);
     int32_t OpenDevice();
     int32_t CloseDevice();
     int32_t GetCallerToken();
+    int32_t CreateAndCommitStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V1_1>& streamInfos,
+        std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, int32_t operationMode);
+    int32_t UpdateStreams(std::vector<StreamInfo_V1_1>& streamInfos);
+
+    int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
+
+    int32_t OnCaptureStarted(int32_t captureId, const std::vector<int32_t>& streamIds) override;
+    int32_t OnCaptureStartedV1_2(
+        int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo>& infos) override;
+    int32_t OnCaptureEnded(int32_t captureId, const std::vector<CaptureEndedInfo>& infos) override;
+    int32_t OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos) override;
+    int32_t OnFrameShutter(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
+
+    inline void SetStreamOperatorCallback(sptr<IStreamOperatorCallback> operatorCallback)
+    {
+        std::lock_guard<std::mutex> lock(proxyStreamOperatorCallbackMutex_);
+        proxyStreamOperatorCallback_ = operatorCallback;
+    }
+
+    inline sptr<IStreamOperatorCallback> GetStreamOperatorCallback()
+    {
+        std::lock_guard<std::mutex> lock(proxyStreamOperatorCallbackMutex_);
+        return proxyStreamOperatorCallback_.promote();
+    }
 
 private:
     class FoldScreenListener;
+    std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.
+    std::shared_ptr<OHOS::Camera::CameraMetadata> updateSettings_;
+    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator_;
     sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> hdiCameraDevice_;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cachedSettings_;
+
     sptr<HCameraHostManager> cameraHostManager_;
     std::string cameraID_;
-    bool isReleaseCameraDevice_;
     std::atomic<bool> isOpenedCameraDevice_;
     std::mutex deviceSvcCbMutex_;
-    std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.
     std::mutex cachedSettingsMutex_;
     static std::mutex deviceOpenMutex_;
     sptr<ICameraDeviceServiceCallback> deviceSvcCallback_;
     std::map<int32_t, wptr<ICameraServiceCallback>> statusSvcCallbacks_;
-    std::shared_ptr<OHOS::Camera::CameraMetadata> updateSettings_;
-    std::shared_ptr<OHOS::Camera::CameraMetadata> cachedSettings_;
-    sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator_;
-    uint32_t callerToken_;
-    wptr<IDeviceOperatorsCallback> deviceOperatorsCallback_;
 
-    void ReportFlashEvent(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
-    void ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
+    uint32_t callerToken_;
+
+    std::mutex proxyStreamOperatorCallbackMutex_;
+    wptr<IStreamOperatorCallback> proxyStreamOperatorCallback_;
+
+    int32_t InitStreamOperator();
+    void ReportFlashEvent(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
+    void ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void RegisterFoldStatusListener();
     void UnRegisterFoldStatusListener();
-};
-
-class IDeviceOperatorsCallback : public virtual RefBase {
-public:
-    IDeviceOperatorsCallback() = default;
-    virtual ~IDeviceOperatorsCallback() = default;
+    void CheckOnResultData(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
+    int32_t CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V1_1>& streamInfos);
+    int32_t CommitStreams(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, int32_t operationMode);
 };
 } // namespace CameraStandard
 } // namespace OHOS

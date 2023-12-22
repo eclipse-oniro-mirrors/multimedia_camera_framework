@@ -17,22 +17,22 @@
 #define OHOS_CAMERA_HCAMERA_DEVICE_STUB_H
 
 #include "icamera_device_service.h"
+#include "icamera_ipc_checker.h"
 #include "iremote_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
-class HCameraDeviceStub : public IRemoteStub<ICameraDeviceService> {
+class HCameraDeviceStub : public IRemoteStub<ICameraDeviceService>, public ICameraIpcChecker {
 public:
-    int OnRemoteRequest(uint32_t code, MessageParcel &data,
-                                MessageParcel &reply, MessageOption &option) override;
+    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;
 
 private:
-    int HandleSetCallback(MessageParcel &data);
-    int HandleUpdateSetting(MessageParcel &data);
-    int HandleGetStatus(MessageParcel &data, MessageParcel &reply);
-    int HandleGetEnabledResults(MessageParcel &reply);
-    int HandleEnableResult(MessageParcel &data);
-    int HandleDisableResult(MessageParcel &data);
+    int32_t HandleSetCallback(MessageParcel& data);
+    int32_t HandleUpdateSetting(MessageParcel& data);
+    int32_t HandleGetStatus(MessageParcel& data, MessageParcel& reply);
+    int32_t HandleGetEnabledResults(MessageParcel& reply);
+    int32_t HandleEnableResult(MessageParcel& data);
+    int32_t HandleDisableResult(MessageParcel& data);
 };
 } // namespace CameraStandard
 } // namespace OHOS

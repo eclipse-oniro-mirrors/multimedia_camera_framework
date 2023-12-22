@@ -21,6 +21,7 @@ ohos_shared_library("camera_service") {
     "binder/client/src/hcamera_device_callback_proxy.cpp",
     "binder/client/src/hcamera_listener_proxy.cpp",
     "binder/client/src/hcamera_service_callback_proxy.cpp",
+    "binder/client/src/hcamera_service_proxy.cpp",
     "binder/client/src/hcapture_session_callback_proxy.cpp",
     "binder/client/src/hstream_capture_callback_proxy.cpp",
     "binder/client/src/hstream_repeat_callback_proxy.cpp",

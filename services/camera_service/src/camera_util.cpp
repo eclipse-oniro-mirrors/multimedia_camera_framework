@@ -99,10 +99,9 @@ std::map<int, std::string> g_cameraQuickThumbnailAvailable = {
 };
 
 int32_t g_operationMode;
-static std::mutex g_captureIdsMutex;
-static std::map<int32_t, bool> g_captureIds;
+bool g_cameraDebugOn = false;
 
-int32_t HdiToServiceError(CamRetCode ret)
+int32_t HdiToServiceError(OHOS::HDI::Camera::V1_0::CamRetCode ret)
 {
     enum CamServiceError err = CAMERA_UNKNOWN_ERROR;
 
@@ -171,32 +170,6 @@ std::string CreateMsg(const char* format, ...)
     }
     va_end(args);
     return msg;
-}
-
-int32_t AllocateCaptureId(int32_t &captureId)
-{
-    std::lock_guard<std::mutex> lock(g_captureIdsMutex);
-    static int32_t currentCaptureId = 0;
-    for (int32_t i = 0; i < INT_MAX; i++) {
-        if (currentCaptureId == INT_MAX) {
-            currentCaptureId = 0;
-            MEDIA_INFO_LOG("Restarting CaptureId");
-        }
-        currentCaptureId++;
-        if (g_captureIds.find(currentCaptureId) == g_captureIds.end()) {
-            g_captureIds[currentCaptureId] = true;
-            captureId = currentCaptureId;
-            return CAMERA_OK;
-        }
-    }
-    return CAMERA_CAPTURE_LIMIT_EXCEED;
-}
-
-void ReleaseCaptureId(int32_t captureId)
-{
-    std::lock_guard<std::mutex> lock(g_captureIdsMutex);
-    g_captureIds.erase(captureId);
-    return;
 }
 
 bool IsValidTokenId(uint32_t tokenId)

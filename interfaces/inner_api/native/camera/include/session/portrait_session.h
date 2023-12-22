@@ -64,6 +64,13 @@ public:
      */
     void SetPortraitEffect(PortraitEffect effect);
 
+    /**
+     * @brief Determine if the given Ouput can be added to session.
+     *
+     * @param CaptureOutput to be added to session.
+     */
+    bool CanAddOutput(sptr<CaptureOutput>& output) override;
+
 private:
     static const std::unordered_map<camera_portrait_effect_type_t, PortraitEffect> metaToFwPortraitEffect_;
     static const std::unordered_map<PortraitEffect, camera_portrait_effect_type_t> fwToMetaPortraitEffect_;

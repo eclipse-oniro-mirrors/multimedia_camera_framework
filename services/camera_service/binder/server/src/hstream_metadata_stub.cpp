@@ -27,6 +27,8 @@ int HStreamMetadataStub::OnRemoteRequest(
     int errCode = -1;
 
     CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    errCode = OperatePermissionCheck(code);
+    CHECK_AND_RETURN_RET(errCode == CAMERA_OK, errCode);
     switch (code) {
         case static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_START):
             errCode = Start();

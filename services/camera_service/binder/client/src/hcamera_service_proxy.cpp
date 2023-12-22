@@ -20,6 +20,27 @@
 
 namespace OHOS {
 namespace CameraStandard {
+HCameraProxy::HCameraProxy(const sptr<IRemoteObject> &impl)
+    : IRemoteProxy<ICameraProxy>(impl) { }
+
+int32_t HCameraProxy::NotifyCloseCamera(std::string cameraId)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteString(cameraId);
+    option.SetFlags(option.TF_SYNC);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_NOTIFY_CLOSE_CAMERA), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy notifyCloseCamera failed, error: %{public}d", error);
+    }
+    MEDIA_DEBUG_LOG("HCameraServiceProxy notifyCloseCamera");
+    return error;
+}
+
 HCameraServiceProxy::HCameraServiceProxy(const sptr<IRemoteObject> &impl)
     : IRemoteProxy<ICameraService>(impl) { }
 
@@ -424,6 +445,21 @@ int32_t HCameraServiceProxy::SetPrelaunchConfig(std::string cameraId, RestorePar
     return error;
 }
 
+int32_t HCameraServiceProxy::PreSwitchCamera(const std::string cameraId)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteString(cameraId);
+    int32_t error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_PRE_SWITCH_CAMERA), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy::PreSwitchCamera failed, error: %{public}d", error);
+    }
+    return error;
+}
+
 int32_t HCameraServiceProxy::IsCameraMuted(bool &muteMode)
 {
     MessageParcel data;
@@ -456,8 +492,49 @@ int32_t HCameraServiceProxy::SetTorchLevel(float level)
         static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_LEVEL),
         data, reply, option);
     if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy::SetTorchLevel Set listener obj failed, error: %{public}d", error);
+        MEDIA_ERR_LOG("HCameraServiceProxy::SetTorchLevel failed, error: %{public}d", error);
         return error;
+    }
+    return error;
+}
+
+int32_t HCameraServiceProxy::AllowOpenByOHSide(std::string cameraId, int32_t state, bool &canOpenCamera)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteString(cameraId);
+    data.WriteInt32(state);
+    (void)data.WriteBool(canOpenCamera);
+
+    int32_t error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_ALLOW_OPEN_BY_OHSIDE), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy::AllowOpenByOHSide failed, error: %{public}d", error);
+    }
+
+    canOpenCamera = reply.ReadBool();
+    MEDIA_DEBUG_LOG("HCameraServiceProxy::AllowOpenByOHSide read canOpenCamera is %{public}d", canOpenCamera);
+    return error;
+}
+
+int32_t HCameraServiceProxy::NotifyCameraState(std::string cameraId, int32_t state)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteString(cameraId);
+    data.WriteInt32(state);
+    option.SetFlags(option.TF_ASYNC);
+
+    int32_t error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_ALLOW_OPEN_BY_OHSIDE), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy::NotifyCameraState failed, error: %{public}d", error);
     }
     return error;
 }

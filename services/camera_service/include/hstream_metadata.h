@@ -33,12 +33,14 @@ public:
     ~HStreamMetadata();
 
     int32_t LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
-        std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t streamId) override;
-    void SetStreamInfo(StreamInfo_V1_1 &streamInfo) override;
+        std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility) override;
+    void SetStreamInfo(StreamInfo_V1_1& streamInfo) override;
     int32_t Release() override;
     int32_t Start() override;
     int32_t Stop() override;
     void DumpStreamInfo(std::string& dumpString) override;
+
+    int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

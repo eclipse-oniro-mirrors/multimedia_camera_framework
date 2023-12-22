@@ -67,6 +67,11 @@ ohos_unittest("camera_framework_unittest_v1_0") {
     "-fPIC",
     "-Werror=unused",
   ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
 
   include_dirs += [
     "${driver_peripheral_path}/interfaces/include",
@@ -131,7 +136,11 @@ ohos_unittest("camera_framework_unittest_v1_1") {
     "-fPIC",
     "-Werror=unused",
   ]
-
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
   include_dirs += [
     "${driver_peripheral_path}/interfaces/include",
     "${driver_peripheral_path}/interfaces/hdi_ipc",
@@ -192,7 +201,11 @@ ohos_unittest("camera_ndk_unittest_v1_1") {
     "-fPIC",
     "-Werror=unused",
   ]
-
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
   include_dirs += [
     "${driver_peripheral_path}/interfaces/include",
     "${driver_peripheral_path}/interfaces/hdi_ipc",

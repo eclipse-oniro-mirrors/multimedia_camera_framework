@@ -22,6 +22,16 @@
 
 namespace OHOS {
 namespace CameraStandard {
+class HCameraProxy : public IRemoteProxy<ICameraProxy> {
+public:
+    explicit HCameraProxy(const sptr<IRemoteObject> &impl);
+    ~HCameraProxy() = default;
+
+    int32_t NotifyCloseCamera(std::string cameraId) override;
+private:
+    static inline BrokerDelegator<HCameraProxy> delegator_;
+};
+
 class HCameraServiceProxy : public IRemoteProxy<ICameraService> {
 public:
     explicit HCameraServiceProxy(const sptr<IRemoteObject> &impl);
@@ -62,12 +72,18 @@ public:
 
     int32_t PrelaunchCamera() override;
 
+    int32_t PreSwitchCamera(const std::string cameraId) override;
+
     int32_t SetPrelaunchConfig(std::string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
         EffectParam effectParam) override;
 
     int32_t IsCameraMuted(bool &muteMode) override;
 
     int32_t SetTorchLevel(float level) override;
+
+    int32_t AllowOpenByOHSide(std::string cameraId, int32_t state, bool &canOpenCamera) override;
+
+    int32_t NotifyCameraState(std::string cameraId, int32_t state) override;
 
 private:
     static inline BrokerDelegator<HCameraServiceProxy> delegator_;
