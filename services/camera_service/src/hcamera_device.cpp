@@ -202,13 +202,16 @@ int32_t HCameraDevice::OpenDevice()
             cameraNeedEvict->CloseDevice();  // 2
         }
         if (!canOpenCamera) {
-            return CAMERA_UNKNOWN_ERROR;
+            MEDIA_ERR_LOG("HCameraDevice::OpenDevice refuse to turning on the camera");
+            return CAMERA_DEVICE_CONFLICT;
         }
         errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_);
         if (errorCode != CAMERA_OK) {
             MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");
+        } else {
+            isOpenedCameraDevice_.store(true);
+            HCameraDeviceManager::GetInstance()->AddDevice(IPCSkeleton::GetCallingPid(), this);
         }
-        HCameraDeviceManager::GetInstance()->AddDevice(IPCSkeleton::GetCallingPid(), this);
     }
 
     errorCode = InitStreamOperator();
@@ -216,7 +219,6 @@ int32_t HCameraDevice::OpenDevice()
         MEDIA_ERR_LOG("HCameraDevice::OpenDevice InitStreamOperator fail err code is:%{public}d", errorCode);
     }
     std::lock_guard<std::mutex> lockSetting(opMutex_);
-    isOpenedCameraDevice_.store(true);
     if (hdiCameraDevice_ != nullptr) {
         cameraHostManager_->AddCameraDevice(cameraID_, this);
         if (updateSettings_ != nullptr) {
