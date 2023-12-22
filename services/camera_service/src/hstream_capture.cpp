@@ -252,8 +252,10 @@ int32_t HStreamCapture::ConfirmCapture()
 
 int32_t HStreamCapture::Release()
 {
-    std::lock_guard<std::mutex> lock(callbackLock_);
-    streamCaptureCallback_ = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(callbackLock_);
+        streamCaptureCallback_ = nullptr;
+    }
     return HStreamCommon::Release();
 }
 
