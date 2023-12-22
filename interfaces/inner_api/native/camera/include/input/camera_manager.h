@@ -43,19 +43,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-enum SceneMode {
-    NORMAL = 0,
-    CAPTURE = 1,
-    VIDEO = 2,
-    PORTRAIT = 3,
-    NIGHT = 4,
-    PROFESSIONAL = 5,
-    SLOW_MOTION = 6,
-    SCAN = 7,
-    CAPTURE_MACRO = 8,
-    VIDEO_MACRO = 9
-};
-
 enum CameraDeviceStatus {
     CAMERA_DEVICE_STATUS_UNAVAILABLE = 0,
     CAMERA_DEVICE_STATUS_AVAILABLE
@@ -590,7 +577,10 @@ public:
     static const std::string surfaceFormat;
 
 protected:
-    explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxy_(serviceProxy) {}
+    explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxy_(serviceProxy)
+    {
+        InitCameraList();
+    }
 
 private:
     CameraManager();
@@ -610,8 +600,9 @@ private:
     void ParseBasicCapability(sptr<CameraOutputCapability> cameraOutputCapability,
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, const camera_metadata_item_t &item);
     void AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& cameraObjList);
+    void SetProfile(sptr<CameraDevice>& cameraObj);
     std::mutex mutex_;
-    std::mutex cameraListMutex_;
+    std::recursive_mutex cameraListMutex_;
     std::mutex vectorMutex_;
     std::mutex cameraMngrCallbackMutex_;
     int CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> *pICameraDeviceService);

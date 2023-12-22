@@ -694,9 +694,6 @@ PhotoOutputNapi::~PhotoOutputNapi()
     if (photoOutput_) {
         photoOutput_ = nullptr;
     }
-    if (photoCallback_) {
-        photoCallback_ = nullptr;
-    }
 }
 
 void PhotoOutputNapi::PhotoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
@@ -1449,7 +1446,7 @@ napi_value PhotoOutputNapi::UnregisterCallback(napi_env env, napi_value jsThis,
         if (photoOutputCallback == nullptr) {
             MEDIA_ERR_LOG("photoOutputCallback is null");
         } else {
-            photoOutputCallback->RemoveCallbackRef(env, callback);
+            photoOutputCallback->RemoveCallbackRef(env, callback, eventType);
         }
     } else {
         MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");

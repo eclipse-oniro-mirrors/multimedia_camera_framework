@@ -57,6 +57,13 @@ public:
     */
     int32_t GetExposure(uint32_t &exposureValue);
 
+    /**
+     * @brief Determine if the given Ouput can be added to session.
+     *
+     * @param CaptureOutput to be added to session.
+     */
+    bool CanAddOutput(sptr<CaptureOutput>& output) override;
+
     void ProcessCallbacks(const uint64_t timestamp,
         const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) override;
 };

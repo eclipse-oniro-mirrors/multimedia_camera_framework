@@ -22,6 +22,7 @@
 #include "input/camera_manager.h"
 #include "surface_utils.h"
 
+#include "listener_napi_base.h"
 namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_VIDEO_OUTPUT_NAPI_CLASS_NAME[] = "VideoOutput";
@@ -72,7 +73,7 @@ struct VideoOutputCallbackInfo {
         : eventType_(eventType), value_(value), listener_(listener) {}
 };
 
-class VideoOutputNapi {
+class VideoOutputNapi : public ListenerNapiBase {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateVideoOutput(napi_env env, VideoProfile &profile, std::string surfaceId);
@@ -90,9 +91,6 @@ private:
     static napi_value GetFrameRateRange(napi_env env, napi_callback_info info);
     static napi_value SetFrameRateRange(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
-    static napi_value On(napi_env env, napi_callback_info info);
-    static napi_value Once(napi_env env, napi_callback_info info);
-    static napi_value Off(napi_env env, napi_callback_info info);
     static napi_value RegisterCallback(napi_env env, napi_value jsThis,
         const std::string& eventType, napi_value callback, bool isOnce);
     static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
@@ -104,7 +102,6 @@ private:
     napi_env env_;
     napi_ref wrapper_;
     sptr<VideoOutput> videoOutput_;
-    std::shared_ptr<VideoCallbackListener> videoCallback_;
     static thread_local uint32_t videoOutputTaskId;
 };
 

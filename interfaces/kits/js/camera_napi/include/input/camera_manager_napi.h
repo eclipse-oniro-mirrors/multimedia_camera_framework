@@ -34,6 +34,7 @@
 #include "camera_manager_callback_napi.h"
 #include "camera_mute_listener_napi.h"
 #include "torch_listener_napi.h"
+#include "listener_napi_base.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -43,7 +44,7 @@ enum CameraManagerAsyncCallbackModes {
     CREATE_DEFERRED_PREVIEW_OUTPUT_ASYNC_CALLBACK,
 };
 
-class CameraManagerNapi {
+class CameraManagerNapi : public ListenerNapiBase  {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateCameraManager(napi_env env);
@@ -69,9 +70,6 @@ public:
     static napi_value IsTorchModeSupported(napi_env env, napi_callback_info info);
     static napi_value GetTorchMode(napi_env env, napi_callback_info info);
     static napi_value SetTorchMode(napi_env env, napi_callback_info info);
-    static napi_value On(napi_env env, napi_callback_info info);
-    static napi_value Off(napi_env env, napi_callback_info info);
-    static napi_value Once(napi_env env, napi_callback_info info);
     CameraManagerNapi();
     ~CameraManagerNapi();
 

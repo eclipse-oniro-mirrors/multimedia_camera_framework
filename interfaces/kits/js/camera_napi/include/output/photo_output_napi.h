@@ -23,8 +23,9 @@
 
 #include "hilog/log.h"
 #include "camera_napi_utils.h"
-#include "listener_base.h"
 #include "native_image.h"
+
+#include "listener_napi_base.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -167,7 +168,7 @@ struct PhotoListenerInfo {
         : photoSurface_(photoSurface), listener_(listener) {}
 };
 
-class PhotoOutputNapi : public ListenerBase {
+class PhotoOutputNapi : public ListenerNapiBase {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreatePhotoOutput(napi_env env, Profile &profile, std::string surfaceId);
@@ -190,9 +191,9 @@ private:
     static void PhotoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value PhotoOutputNapiConstructor(napi_env env, napi_callback_info info);
     static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string& callbackName, napi_value callback) override;
+        const std::string& callbackName, napi_value callback);
     static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string& callbackName, napi_value callback, bool isOnce) override;
+        const std::string& callbackName, napi_value callback, bool isOnce);
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<PhotoOutput> sPhotoOutput_;

@@ -37,6 +37,19 @@
 
 namespace OHOS {
 namespace CameraStandard {
+enum SceneMode : int32_t {
+    NORMAL = 0,
+    CAPTURE = 1,
+    VIDEO = 2,
+    PORTRAIT = 3,
+    NIGHT = 4,
+    PROFESSIONAL = 5,
+    SLOW_MOTION = 6,
+    SCAN = 7,
+    CAPTURE_MACRO = 8,
+    VIDEO_MACRO = 9
+};
+
 enum ExposureMode {
     EXPOSURE_MODE_UNSUPPORTED = -1,
     EXPOSURE_MODE_LOCKED = 0,
@@ -859,9 +872,9 @@ public:
      * @return Returns whether or not commit config.
      */
     bool IsSessionConfiged();
-    void SetMode(int32_t modeName);
-    int32_t GetMode();
-    int32_t GetFeaturesMode();
+    void SetMode(SceneMode modeName);
+    SceneMode GetMode();
+    SceneMode GetFeaturesMode();
     std::vector<int32_t> GetSubFeatureMods();
     bool IsSetEnableMacro();
     sptr<CaptureOutput> GetMetaOutput();
@@ -875,7 +888,6 @@ protected:
     Profile previewProfile_;
     std::map<BeautyType, std::vector<int32_t>> beautyTypeAndRanges_;
     std::map<BeautyType, int32_t> beautyTypeAndLevels_;
-    int32_t modeName_;
 
 private:
     std::mutex changeMetaMutex_;
@@ -917,6 +929,11 @@ private:
     sptr<CaptureOutput> metaOutput_;
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
     bool isColorSpaceSetted_ = false;
+
+    // Make sure you know what you are doing, you'd better to use {GetMode()} function instead of this variable.
+    SceneMode currentMode_ = SceneMode::NORMAL;
+    SceneMode guessMode_ = SceneMode::NORMAL;
+    void SetGuessMode(SceneMode mode);
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
     void SetFrameRateRange(const std::vector<int32_t>& frameRateRange);
     Point CoordinateTransform(Point point);
