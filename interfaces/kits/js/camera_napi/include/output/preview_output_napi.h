@@ -25,7 +25,7 @@
 #include "output/preview_output.h"
 #include "surface_utils.h"
 
-#include "listener_base.h"
+#include "listener_napi_base.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -94,7 +94,7 @@ struct SketchStatusCallbackInfo {
     {}
 };
 
-class PreviewOutputNapi : public CameraOutputNapi : public ListenerBase {
+class PreviewOutputNapi : public CameraOutputNapi : public ListenerNapiBase {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreatePreviewOutput(napi_env env, Profile& profile, std::string surfaceId);

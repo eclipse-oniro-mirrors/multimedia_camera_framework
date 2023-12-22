@@ -1,9 +1,9 @@
-#include "listener_base.h"
+#include "listener_napi_base.h"
 
 namespace OHOS {
 namespace CameraStandard {
 
-napi_value ListenerBase::On(napi_env env, napi_callback_info info)
+napi_value ListenerNapiBase::On(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("On is called");
     CAMERA_SYNC_TRACE;
@@ -27,7 +27,7 @@ napi_value ListenerBase::On(napi_env env, napi_callback_info info)
     return RegisterCallback(env, thisVar, eventType, argv[PARAM1], false);
 }
 
-napi_value ListenerBase::Once(napi_env env, napi_callback_info info)
+napi_value ListenerNapiBase::Once(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("Once is called");
     CAMERA_SYNC_TRACE;
@@ -51,7 +51,7 @@ napi_value ListenerBase::Once(napi_env env, napi_callback_info info)
     return RegisterCallback(env, thisVar, eventType, argv[PARAM1], true);
 }
 
-napi_value ListenerBase::Off(napi_env env, napi_callback_info info)
+napi_value ListenerNapiBase::Off(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("Off is called");
     napi_value undefinedResult = nullptr;
@@ -80,7 +80,15 @@ napi_value ListenerBase::Off(napi_env env, napi_callback_info info)
     return UnregisterCallback(env, thisVar, eventType, argv[PARAM1]);
 }
 
-virtual napi_value RegisterCallback(napi_env env, napi_value jsThis,const string &eventType, napi_value callback, bool isOnce)= 0;
-virtual napi_value UnregisterCallback(napi_env env, napi_value jsThis,const std::string& eventType, napi_value callback)= 0;
+napi_value ListenerNapiBase::RegisterCallback(napi_env env, napi_value jsThis,const string &eventType, napi_value callback, bool isOnce)
+{
+    // This method is meant to be implemented in derived classes to provide specific functionality.
+    // Leave this method as it is until a proper implementation is provided in derived classes.
+}
+napi_value ListenerNapiBase::UnregisterCallback(napi_env env, napi_value jsThis,const std::string& eventType, napi_value callback)
+{
+    // This method is meant to be implemented in derived classes to provide specific functionality.
+    // Leave this method as it is until a proper implementation is provided in derived classes.
+}
 } // namespace CameraStandard
 } // namespace OHOS

@@ -22,7 +22,7 @@
 #include "hilog/log.h"
 #include "camera_napi_utils.h"
 
-#include "listener_base.h"
+#include "listener_napi_base.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -79,7 +79,7 @@ struct MetadataStateCallbackInfo {
         : errorType_(errorType), listener_(listener) {}
 };
 
-class MetadataOutputNapi : public ListenerBase{
+class MetadataOutputNapi : public ListenerNapiBase{
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateMetadataOutput(napi_env env);

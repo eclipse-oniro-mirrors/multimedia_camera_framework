@@ -25,7 +25,7 @@
 #include "camera_napi_utils.h"
 #include "native_image.h"
 
-#include "listener_base.h"
+#include "listener_napi_base.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -168,7 +168,7 @@ struct PhotoListenerInfo {
         : photoSurface_(photoSurface), listener_(listener) {}
 };
 
-class PhotoOutputNapi : public ListenerBase {
+class PhotoOutputNapi : public ListenerNapiBase {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreatePhotoOutput(napi_env env, Profile &profile, std::string surfaceId);

@@ -29,7 +29,7 @@
 #include "output/video_output_napi.h"
 #include "output/metadata_output_napi.h"
 
-#include "listener_base.h"
+#include "listener_napi_base.h"
 namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_SESSION_NAPI_CLASS_NAME[] = "CaptureSession";
@@ -170,7 +170,7 @@ struct SmoothZoomCallbackInfo {
         : duration_(duration), listener_(listener) {}
 };
 
-class CameraSessionNapi : public ListenerBase {
+class CameraSessionNapi : public ListenerNapiBase {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateCameraSession(napi_env env);

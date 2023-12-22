@@ -22,7 +22,7 @@
 #include "input/camera_manager.h"
 #include "surface_utils.h"
 
-#include "listener_base.h"
+#include "listener_napi_base.h"
 namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_VIDEO_OUTPUT_NAPI_CLASS_NAME[] = "VideoOutput";
@@ -73,7 +73,7 @@ struct VideoOutputCallbackInfo {
         : eventType_(eventType), value_(value), listener_(listener) {}
 };
 
-class VideoOutputNapi : public ListenerBase {
+class VideoOutputNapi : public ListenerNapiBase {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateVideoOutput(napi_env env, VideoProfile &profile, std::string surfaceId);
