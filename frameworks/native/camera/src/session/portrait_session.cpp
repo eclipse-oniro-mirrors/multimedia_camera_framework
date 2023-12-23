@@ -178,5 +178,203 @@ bool PortraitSession::CanAddOutput(sptr<CaptureOutput> &output)
     }
     return false;
 }
+
+std::vector<float> PortraitSession::GetSupportedVirtualApertures()
+{
+    std::vector<float> supportedVirtualApertures = {};
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("GetSupportedVirtualApertures Session is not Commited");
+        return supportedVirtualApertures;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("GetSupportedVirtualApertures camera device is null");
+        return supportedVirtualApertures;
+    }
+
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAMERA_VIRTUAL_APERTURE_RANGE, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("GetSupportedVirtualApertures Failed with return code %{public}d", ret);
+        return supportedVirtualApertures;
+    }
+    for (uint32_t i = 0; i < item.count; i++) {
+        supportedVirtualApertures.emplace_back(item.data.f[i]);
+    }
+    return supportedVirtualApertures;
+}
+
+float PortraitSession::GetVirtualAperture()
+{
+    float virtualAperture = 0.0;
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("GetVirtualAperture Session is not Commited");
+        return virtualAperture;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("GetVirtualAperture camera device is null");
+        return virtualAperture;
+    }
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_CAMERA_VIRTUAL_APERTURE_VALUE, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("GetVirtualAperture Failed with return code %{public}d", ret);
+        return virtualAperture;
+    }
+    virtualAperture = item.data.f[0];
+    return virtualAperture;
+}
+
+bool PortraitSession::FloatIsEqual(float x, float y)
+{
+    const float EPSILON = 0.000001;
+    return std::fabs(x - y) < EPSILON;
+}
+
+void PortraitSession::SetVirtualAperture(const float virtualAperture)
+{
+    CAMERA_SYNC_TRACE;
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("SetVirtualAperture Session is not Commited");
+        return;
+    }
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG("SetVirtualAperture changedMetadata_ is NULL");
+        return;
+    }
+    std::vector<float> supportedVirtualApertures = GetSupportedVirtualApertures();
+    auto res = std::find_if(supportedVirtualApertures.begin(), supportedVirtualApertures.end(),
+        [&virtualAperture, this](const float item) {return FloatIsEqual(virtualAperture, item);});
+    if (res == supportedVirtualApertures.end()) {
+        MEDIA_ERR_LOG("current virtualAperture is not supported");
+        return;
+    }
+    bool status = false;
+    uint32_t count = 1;
+    camera_metadata_item_t item;
+    MEDIA_DEBUG_LOG("SetVirtualAperture virtualAperture: %{public}f", virtualAperture);
+
+    int32_t ret = Camera::FindCameraMetadataItem(changedMetadata_->get(),
+        OHOS_CONTROL_CAMERA_VIRTUAL_APERTURE_VALUE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_CAMERA_VIRTUAL_APERTURE_VALUE, &virtualAperture, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_CAMERA_VIRTUAL_APERTURE_VALUE, &virtualAperture, count);
+    }
+
+    if (!status) {
+        MEDIA_ERR_LOG("SetVirtualAperture Failed to set virtualAperture");
+    }
+    return;
+}
+
+std::vector<std::vector<float>> PortraitSession::GetSupportedPhysicalApertures()
+{
+    // The data structure of the supportedPhysicalApertures object is { {zoomMin, zoomMax,
+    // physicalAperture1, physicalAperture2···}, }.
+    std::vector<std::vector<float>> supportedPhysicalApertures;
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("GetSupportedPhysicalApertures Session is not Commited");
+        return supportedPhysicalApertures;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("GetSupportedPhysicalApertures camera device is null");
+        return supportedPhysicalApertures;
+    }
+
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAMERA_PHYSICAL_APERTURE_RANGE, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("GetSupportedPhysicalApertures Failed with return code %{public}d", ret);
+        return supportedPhysicalApertures;
+    }
+    int32_t supportedDeviceCount = static_cast<int32_t>(item.data.f[0]);
+    if (supportedDeviceCount == 0) {
+        return supportedPhysicalApertures;
+    }
+    std::vector<float> tempPhysicalApertures = {};
+    for (uint32_t i = 1; i < item.count; i++) {
+        if (static_cast<int32_t>(item.data.f[i]) == -1) {
+            supportedPhysicalApertures.emplace_back(tempPhysicalApertures);
+            vector<float>().swap(tempPhysicalApertures);
+            continue;
+        }
+        tempPhysicalApertures.emplace_back(item.data.f[i]);
+    }
+    return supportedPhysicalApertures;
+}
+
+float PortraitSession::GetPhysicalAperture()
+{
+    float physicalAperture = 0.0;
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("GetPhysicalAperture Session is not Commited");
+        return physicalAperture;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("GetPhysicalAperture camera device is null");
+        return physicalAperture;
+    }
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("GetPhysicalAperture Failed with return code %{public}d", ret);
+        return physicalAperture;
+    }
+    physicalAperture = item.data.f[0];
+    return physicalAperture;
+}
+
+void PortraitSession::SetPhysicalAperture(const float physicalAperture)
+{
+    CAMERA_SYNC_TRACE;
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("SetPhysicalAperture Session is not Commited");
+        return;
+    }
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG("SetPhysicalAperture changedMetadata_ is NULL");
+        return;
+    }
+    std::vector<std::vector<float>> physicalApertures = GetSupportedPhysicalApertures();
+    float currentZoomRatio = GetZoomRatio();
+    int zoomMinIndex = 0;
+    int zoomMaxIndex = 1;
+    auto it = std::find_if(physicalApertures.begin(), physicalApertures.end(),
+        [&currentZoomRatio, &zoomMinIndex, &zoomMaxIndex](const std::vector<float> physicalApertureRange) {
+            return physicalApertureRange[zoomMaxIndex] >= currentZoomRatio >= physicalApertureRange[zoomMinIndex];
+        });
+    if (it == physicalApertures.end()) {
+        MEDIA_ERR_LOG("current zoomRatio not supported in physical apertures zoom ratio");
+        return;
+    }
+    int physicalAperturesIndex = 2;
+    auto res = std::find_if(std::next((*it).begin(), physicalAperturesIndex), (*it).end(),
+        [&physicalAperture, this](const float physicalApertureTemp) {
+            return FloatIsEqual(physicalAperture, physicalApertureTemp);
+        });
+    if (res == (*it).end()) {
+        MEDIA_ERR_LOG("current physicalAperture is not supported");
+        return;
+    }
+    uint32_t count = 1;
+    bool status = false;
+    camera_metadata_item_t item;
+    int32_t ret = Camera::FindCameraMetadataItem(changedMetadata_->get(),
+        OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE, &physicalAperture, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE, &physicalAperture, count);
+    }
+
+    if (!status) {
+        MEDIA_ERR_LOG("SetPhysicalAperture Failed to set physical aperture");
+    }
+    return;
+}
 } // CameraStandard
 } // OHOS
