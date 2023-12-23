@@ -85,7 +85,10 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::focus_props = {
 const std::vector<napi_property_descriptor> CameraSessionNapi::zoom_props = {
     DECLARE_NAPI_FUNCTION("getZoomRatioRange", CameraSessionNapi::GetZoomRatioRange),
     DECLARE_NAPI_FUNCTION("getZoomRatio", CameraSessionNapi::GetZoomRatio),
-    DECLARE_NAPI_FUNCTION("setZoomRatio", CameraSessionNapi::SetZoomRatio)
+    DECLARE_NAPI_FUNCTION("setZoomRatio", CameraSessionNapi::SetZoomRatio),
+    DECLARE_NAPI_FUNCTION("prepareZoom", PrepareZoom),
+    DECLARE_NAPI_FUNCTION("unPrepareZoom", UnPrepareZoom),
+    DECLARE_NAPI_FUNCTION("setSmoothZoom", SetSmoothZoom)
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::filter_props = {
