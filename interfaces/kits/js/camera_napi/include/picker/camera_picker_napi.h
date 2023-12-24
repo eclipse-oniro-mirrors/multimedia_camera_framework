@@ -123,7 +123,6 @@ public:
 private:
     napi_env env_;
     napi_ref wrapper_;
-    napi_callback_info cbInfo_;
     static thread_local uint32_t cameraPickerTaskId;
     static thread_local napi_ref pickerPhotoProfile_;
     static thread_local napi_ref pickerVideoProfile_;

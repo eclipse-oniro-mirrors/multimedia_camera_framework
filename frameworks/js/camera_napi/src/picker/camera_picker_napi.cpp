@@ -269,7 +269,7 @@ napi_value CameraPickerNapi::TakePhoto(napi_env env, napi_callback_info cbInfo)
     napi_get_undefined(env, &result);
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncCtx->objectInfo));
 
-    if (status == napi_ok && asyncCtx->objectInfo != nullptr) {
+    if (status == napi_ok) {
         CAMERA_NAPI_CREATE_PROMISE(env, asyncCtx->callbackRef, asyncCtx->deferred, result);
         CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "TakePhoto");
 
@@ -281,31 +281,29 @@ napi_value CameraPickerNapi::TakePhoto(napi_env env, napi_callback_info cbInfo)
                 context->funcName = "CameraPickerNapi::TakePhoto";
                 context->taskId = CameraNapiUtils::IncreamentAndGet(cameraPickerTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->status = true;
+                context->bRetBool = false;
+                context->status = true;
 
-                    auto asyncContext = std::make_shared<UIExtensionRequestContext>(env);
-                    asyncContext->context = context->abilityContext;
-                    asyncContext->requestWant = context->want;
-                    auto uiExtCallback = std::make_shared<UIExtensionCallback>(asyncContext);
-                    OHOS::Ace::ModalUIExtensionCallbacks extensionCallbacks = {
-                        std::bind(&UIExtensionCallback::OnRelease, uiExtCallback, std::placeholders::_1),
-                        std::bind(&UIExtensionCallback::OnResult, uiExtCallback, std::placeholders::_1, std::placeholders::_2),
-                        std::bind(&UIExtensionCallback::OnReceive, uiExtCallback, std::placeholders::_1),
-                        std::bind(&UIExtensionCallback::OnError, uiExtCallback, std::placeholders::_1,
-                            std::placeholders::_2, std::placeholders::_3),
-                        std::bind(&UIExtensionCallback::OnRemoteReady, uiExtCallback, std::placeholders::_1),
-                        std::bind(&UIExtensionCallback::OnDestroy, uiExtCallback)
-                    };
-                    Ace::ModalUIExtensionConfig config;
-                    if (napi_ok == context->uiContent->CreateModalUIExtension(context->want, extensionCallbacks, config)) {
-                        MEDIA_ERR_LOG("Create modal ui extension is failed.");
-                        return ;
-                    }
-                    std::unique_lock<std::mutex> lock(CameraPickerNapi::mutex_);
-                    cvFinish_.wait(lock);
+                auto asyncContext = std::make_shared<UIExtensionRequestContext>(env);
+                asyncContext->context = context->abilityContext;
+                asyncContext->requestWant = context->want;
+                auto uiExtCallback = std::make_shared<UIExtensionCallback>(asyncContext);
+                OHOS::Ace::ModalUIExtensionCallbacks extensionCallbacks = {
+                    std::bind(&UIExtensionCallback::OnRelease, uiExtCallback, std::placeholders::_1),
+                    std::bind(&UIExtensionCallback::OnResult, uiExtCallback, std::placeholders::_1, std::placeholders::_2),
+                    std::bind(&UIExtensionCallback::OnReceive, uiExtCallback, std::placeholders::_1),
+                    std::bind(&UIExtensionCallback::OnError, uiExtCallback, std::placeholders::_1,
+                        std::placeholders::_2, std::placeholders::_3),
+                    std::bind(&UIExtensionCallback::OnRemoteReady, uiExtCallback, std::placeholders::_1),
+                    std::bind(&UIExtensionCallback::OnDestroy, uiExtCallback)
+                };
+                Ace::ModalUIExtensionConfig config;
+                if (napi_ok == context->uiContent->CreateModalUIExtension(context->want, extensionCallbacks, config)) {
+                    MEDIA_ERR_LOG("Create modal ui extension is failed.");
+                    return ;
                 }
+                std::unique_lock<std::mutex> lock(CameraPickerNapi::mutex_);
+                cvFinish_.wait(lock);
             },
             CommonCompleteCallback, static_cast<void*>(asyncCtx.get()), &asyncCtx->work);
         if (status != napi_ok) {
@@ -342,8 +340,7 @@ napi_value CameraPickerNapi::RecordVideo(napi_env env, napi_callback_info cbInfo
         MEDIA_ERR_LOG("the paramter of number should be at least two");
         return result;
     }
-    std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
-    Ace::UIContent* uiContent;
+
     if (!GetAbilityContext(env, argv[0], asyncCtx->abilityContext, &asyncCtx->uiContent)) {
         MEDIA_ERR_LOG("GetAbilityContext failed");
         return result;
@@ -361,7 +358,7 @@ napi_value CameraPickerNapi::RecordVideo(napi_env env, napi_callback_info cbInfo
     napi_get_undefined(env, &result);
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncCtx->objectInfo));
 
-    if (status == napi_ok && asyncCtx->objectInfo != nullptr) {
+    if (status == napi_ok) {
         CAMERA_NAPI_CREATE_PROMISE(env, asyncCtx->callbackRef, asyncCtx->deferred, result);
         CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "RecordVideo");
 
@@ -373,31 +370,29 @@ napi_value CameraPickerNapi::RecordVideo(napi_env env, napi_callback_info cbInfo
                 context->funcName = "CameraPickerNapi::RecordVideo";
                 context->taskId = CameraNapiUtils::IncreamentAndGet(cameraPickerTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    context->status = true;
+                context->bRetBool = false;
+                context->status = true;
 
-                    auto asyncContext = std::make_shared<UIExtensionRequestContext>(env);
-                    asyncContext->context = context->abilityContext;
-                    asyncContext->requestWant = context->want;
-                    auto uiExtCallback = std::make_shared<UIExtensionCallback>(asyncContext);
-                    OHOS::Ace::ModalUIExtensionCallbacks extensionCallbacks = {
-                        std::bind(&UIExtensionCallback::OnRelease, uiExtCallback, std::placeholders::_1),
-                        std::bind(&UIExtensionCallback::OnResult, uiExtCallback, std::placeholders::_1, std::placeholders::_2),
-                        std::bind(&UIExtensionCallback::OnReceive, uiExtCallback, std::placeholders::_1),
-                        std::bind(&UIExtensionCallback::OnError, uiExtCallback, std::placeholders::_1,
-                            std::placeholders::_2, std::placeholders::_3),
-                        std::bind(&UIExtensionCallback::OnRemoteReady, uiExtCallback, std::placeholders::_1),
-                        std::bind(&UIExtensionCallback::OnDestroy, uiExtCallback)
-                    };
-                    Ace::ModalUIExtensionConfig config;
-                    if (napi_ok == context->uiContent->CreateModalUIExtension(context->want, extensionCallbacks, config)) {
-                        MEDIA_ERR_LOG("Create modal ui extension is failed.");
-                        return ;
-                    }
-                    std::unique_lock<std::mutex> lock(CameraPickerNapi::mutex_);
-                    cvFinish_.wait(lock);
+                auto asyncContext = std::make_shared<UIExtensionRequestContext>(env);
+                asyncContext->context = context->abilityContext;
+                asyncContext->requestWant = context->want;
+                auto uiExtCallback = std::make_shared<UIExtensionCallback>(asyncContext);
+                OHOS::Ace::ModalUIExtensionCallbacks extensionCallbacks = {
+                    std::bind(&UIExtensionCallback::OnRelease, uiExtCallback, std::placeholders::_1),
+                    std::bind(&UIExtensionCallback::OnResult, uiExtCallback, std::placeholders::_1, std::placeholders::_2),
+                    std::bind(&UIExtensionCallback::OnReceive, uiExtCallback, std::placeholders::_1),
+                    std::bind(&UIExtensionCallback::OnError, uiExtCallback, std::placeholders::_1,
+                        std::placeholders::_2, std::placeholders::_3),
+                    std::bind(&UIExtensionCallback::OnRemoteReady, uiExtCallback, std::placeholders::_1),
+                    std::bind(&UIExtensionCallback::OnDestroy, uiExtCallback)
+                };
+                Ace::ModalUIExtensionConfig config;
+                if (napi_ok == context->uiContent->CreateModalUIExtension(context->want, extensionCallbacks, config)) {
+                    MEDIA_ERR_LOG("Create modal ui extension is failed.");
+                    return ;
                 }
+                std::unique_lock<std::mutex> lock(CameraPickerNapi::mutex_);
+                cvFinish_.wait(lock);
             },
             CommonCompleteCallback, static_cast<void*>(asyncCtx.get()), &asyncCtx->work);
         if (status != napi_ok) {
@@ -478,12 +473,6 @@ napi_value CameraPickerNapi::CreatePickerPhotoProfile(napi_env env)
             propName.clear();
         }
     }
-    if (status == napi_ok) {
-        status = napi_create_reference(env, result, 1, &pickerPhotoProfile_);
-        if (status == napi_ok) {
-            return result;
-        }
-    }
     MEDIA_ERR_LOG("CreatePickerPhotoProfile call Failed!");
     napi_get_undefined(env, &result);
 
@@ -509,12 +498,6 @@ napi_value CameraPickerNapi::CreatePickerVideoProfile(napi_env env)
             propName.clear();
         }
     }
-    if (status == napi_ok) {
-        status = napi_create_reference(env, result, 1, &pickerVideoProfile_);
-        if (status == napi_ok) {
-            return result;
-        }
-    }
     MEDIA_ERR_LOG("CreatePickerVideoProfile call Failed!");
     napi_get_undefined(env, &result);
 
@@ -538,12 +521,6 @@ napi_value CameraPickerNapi::CreatePickerResult(napi_env env)
                 break;
             }
             propName.clear();
-        }
-    }
-    if (status == napi_ok) {
-        status = napi_create_reference(env, result, 1, &pickerResult_);
-        if (status == napi_ok) {
-            return result;
         }
     }
     MEDIA_ERR_LOG("CreatePickerResult call Failed!");
