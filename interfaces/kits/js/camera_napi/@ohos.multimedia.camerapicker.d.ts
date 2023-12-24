@@ -12,76 +12,121 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import type _Context from './application/Context';
-import camera from './@ohos.multimedia.camera';
+import type Context from './application/Context';
+import type camera from './@ohos.multimedia.camera';
 
 /**
- * @namespace camerapicker
+ * @namespace cameraPicker
  * @syscap SystemCapability.Multimedia.Camera.Core
- * @since 10
+ * @since 11
  */
 declare namespace cameraPicker {
-  /**
-   * Creates a CameraPicker instance.
-   * @param context Current application context.
-   * @return Promise used to return the CameraPicker instance.
-   * @since 9
-   * @syscap SystemCapability.Multimedia.Camera.Core
-   */
-  function getCameraPicker(context: _Context): CameraPicker;
 
   /**
    * Photo profile for camera picker.
    *
    * @typedef PhotoProfileForPicker
    * @syscap SystemCapability.Multimedia.Camera.Core
-   * @since 10
+   * @since 11
    */
-  interface PhotoProfileForPicker {
+  class PhotoProfileForPicker {
+    /**
+     * The camera position to be used.
+     *
+     * @type { camera.CameraPosition }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 11
+     */
     cameraPosition: camera.CameraPosition;
-    saveUri: string;
+
+    /**
+     * The uri of the result to be saved.
+     *
+     * @type { ?string }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 11
+     */
+    saveUri?: string;
   }
+
   /**
    * Video profile for camera picker.
    *
    * @typedef VideoProfileForPicker
    * @syscap SystemCapability.Multimedia.Camera.Core
-   * @since 10
+   * @since 11
    */
-  interface VideoProfileForPicker {
+  class VideoProfileForPicker {
+    /**
+     * The camera position to be used.
+     *
+     * @type { camera.CameraPosition }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 11
+     */
     cameraPosition: camera.CameraPosition;
-    saveUri: string;
-    videoDuration: number;
+
+    /**
+     * The uri of the result to be saved.
+     *
+     * @type { ?string }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 11
+     */
+    saveUri?: string;
+
+    /**
+     * The max duration of the video.
+     *
+     * @type { ?number }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 11
+     */
+    videoDuration?: number;
   }
+
+
+  class PickerResult {
+    /**
+     * The result code.
+     *
+     * @type { number }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 11
+     */
+    resultCode: number;
+
+    /**
+     * The result saved uri.
+     *
+     * @type { number }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 11
+     */
+    resultUri: string;
+  }
+
   /**
-   * Camera picker object.
+   * takePhoto
    *
-   * @interface CameraPicker
+   * @param { Context } context From UIExtensionAbility.
+   * @param { PhotoProfileForPicker } photoProfile Photo input Profile.
+   * @returns { number } takePhoto result.
    * @syscap SystemCapability.Multimedia.Camera.Core
-   * @since 10
+   * @since 11
    */
-  interface CameraPicker {
-    /**
-     * takePhoto
-     *
-     * @param { _Context } context From UIExtensionAbility.
-     * @param { PhotoProfileForPicker } photoProfile Photo input Profile.
-     * @returns { number } takePhoto result.
-     * @syscap SystemCapability.Multimedia.Camera.Core
-     * @since 10
-     */
-    takePhoto(context: _Context, photoProfile: PhotoProfileForPicker): number;
-    /**
-     * recordVideo
-     *
-     * @param { _Context } context From UIExtensionAbility.
-     * @param { VideoProfileForPicker } videoProfile Video input Profile.
-     * @returns { number } recordVideo result.
-     * @syscap SystemCapability.Multimedia.Camera.Core
-     * @since 10
-     */
-    recordVideo(context: _Context, videoProfile: VideoProfileForPicker): number;
-  }
+  function takePhoto(context: Context, photoProfile: PhotoProfileForPicker): Promise<PickerResult>;
+
+  /**
+   * recordVideo
+   *
+   * @param { Context } context From UIExtensionAbility.
+   * @param { VideoProfileForPicker } videoProfile Video input Profile.
+   * @returns { number } recordVideo result.
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 11
+   */
+  function recordVideo(context: Context, videoProfile: VideoProfileForPicker): Promise<PickerResult>;
 }
 
 export default cameraPicker;
