@@ -39,7 +39,6 @@ public:
     explicit ListenerBase(napi_env env);
     virtual ~ListenerBase();
 
-    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
     void SaveCallbackReference(napi_value callback, bool isOnce);
     void RemoveCallbackRef(napi_env env, napi_value callback);
     void RemoveAllCallbacks();
