@@ -152,7 +152,7 @@ bool GetVideoProfiles(const napi_env& env, const napi_value videoProfiles, Video
     videoProfile.videoDuration = videoDuration;
     videoProfile.saveUri = std::string(saveUri);
     CameraPickerNapi::videoProfile_ = videoProfile;
-    MEDIA_ERR_LOG("GetVideoProfiles cameraPosition: %{public}d,videoDuration: %{public}d", cameraPosition, videoDuration);
+    MEDIA_ERR_LOG("GetVideoProfiles cameraPosition: %{public}d, duration: %{public}d", cameraPosition, videoDuration);
     MEDIA_ERR_LOG("GetVideoProfiles saveUri: %{public}s", saveUri);
     return true;
 }
@@ -268,7 +268,6 @@ napi_value CameraPickerNapi::TakePhoto(napi_env env, napi_callback_info cbInfo)
     NAPI_ASSERT(env, argc <= ARGS_TWO, "requires 2 parameter maximum");
     napi_get_undefined(env, &result);
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncCtx->objectInfo));
-
     if (status == napi_ok) {
         CAMERA_NAPI_CREATE_PROMISE(env, asyncCtx->callbackRef, asyncCtx->deferred, result);
         CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "TakePhoto");
@@ -290,7 +289,8 @@ napi_value CameraPickerNapi::TakePhoto(napi_env env, napi_callback_info cbInfo)
                 auto uiExtCallback = std::make_shared<UIExtensionCallback>(asyncContext);
                 OHOS::Ace::ModalUIExtensionCallbacks extensionCallbacks = {
                     std::bind(&UIExtensionCallback::OnRelease, uiExtCallback, std::placeholders::_1),
-                    std::bind(&UIExtensionCallback::OnResult, uiExtCallback, std::placeholders::_1, std::placeholders::_2),
+                    std::bind(&UIExtensionCallback::OnResult, uiExtCallback, std::placeholders::_1,
+                        std::placeholders::_2),
                     std::bind(&UIExtensionCallback::OnReceive, uiExtCallback, std::placeholders::_1),
                     std::bind(&UIExtensionCallback::OnError, uiExtCallback, std::placeholders::_1,
                         std::placeholders::_2, std::placeholders::_3),
@@ -357,7 +357,6 @@ napi_value CameraPickerNapi::RecordVideo(napi_env env, napi_callback_info cbInfo
     NAPI_ASSERT(env, argc <= ARGS_TWO, "requires 2 parameter maximum");
     napi_get_undefined(env, &result);
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncCtx->objectInfo));
-
     if (status == napi_ok) {
         CAMERA_NAPI_CREATE_PROMISE(env, asyncCtx->callbackRef, asyncCtx->deferred, result);
         CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "RecordVideo");
@@ -379,7 +378,8 @@ napi_value CameraPickerNapi::RecordVideo(napi_env env, napi_callback_info cbInfo
                 auto uiExtCallback = std::make_shared<UIExtensionCallback>(asyncContext);
                 OHOS::Ace::ModalUIExtensionCallbacks extensionCallbacks = {
                     std::bind(&UIExtensionCallback::OnRelease, uiExtCallback, std::placeholders::_1),
-                    std::bind(&UIExtensionCallback::OnResult, uiExtCallback, std::placeholders::_1, std::placeholders::_2),
+                    std::bind(&UIExtensionCallback::OnResult, uiExtCallback, std::placeholders::_1,
+                        std::placeholders::_2),
                     std::bind(&UIExtensionCallback::OnReceive, uiExtCallback, std::placeholders::_1),
                     std::bind(&UIExtensionCallback::OnError, uiExtCallback, std::placeholders::_1,
                         std::placeholders::_2, std::placeholders::_3),
@@ -409,7 +409,7 @@ napi_value CameraPickerNapi::RecordVideo(napi_env env, napi_callback_info cbInfo
 }
 
 napi_status CameraPickerNapi::AddNamedProperty(napi_env env, napi_value object,
-                                         const std::string name, int32_t enumValue)
+                                                const std::string name, int32_t enumValue)
 {
     napi_status status;
     napi_value enumNapiValue;
@@ -492,7 +492,7 @@ napi_value CameraPickerNapi::CreatePickerVideoProfile(napi_env env)
             propName = pickerVideoProfile[i];
             status = AddNamedProperty(env, result, propName, i);
             if (status != napi_ok) {
-                MEDIA_ERR_LOG("Failed to add named prop for videoProfile!");
+                MEDIA_ERR_LOG("Failed to add named prop for pickerVideoProfile!");
                 break;
             }
             propName.clear();

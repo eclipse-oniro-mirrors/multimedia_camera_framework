@@ -114,9 +114,9 @@ if (use_ace_engine) {
     branch_protector_ret = "pac_ret"
     include_dirs = [ "${multimedia_camera_framework_path}/interfaces/kits/js/camera_napi/include" ]
     sources = [
+      "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_utils.cpp",
       "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/native_module_ohos_camerapicker.cpp",
       "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/picker/camera_picker_napi.cpp",
-      "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_utils.cpp",
     ]
     deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
     external_deps = [

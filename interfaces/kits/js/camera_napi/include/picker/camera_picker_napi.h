@@ -63,7 +63,6 @@ struct UIExtensionRequestContext : public CommonAsyncContext {
 static const char CAMERA_PICKER_NAPI_CLASS_NAME[] = "CameraPicker";
 
 class CameraPickerNapi;
-
 static const std::vector<std::string> pickerPhotoProfile {
     "cameraPosition", "saveUri"
 };
@@ -77,7 +76,6 @@ static const std::vector<std::string> pickerResult {
 };
 
 class UIExtensionCallback {
-
 public:
     explicit UIExtensionCallback(std::shared_ptr<UIExtensionRequestContext>& reqContext);
     void SetSessionId(int32_t sessionId);
