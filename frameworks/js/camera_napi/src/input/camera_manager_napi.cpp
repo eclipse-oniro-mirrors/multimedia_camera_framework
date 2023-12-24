@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include <uv.h>
 #include "input/camera_manager_napi.h"
 #include "camera_napi_utils.h"
 #include "input/camera_napi.h"
@@ -32,6 +33,269 @@ namespace {
 }
 thread_local napi_ref CameraManagerNapi::sConstructor_ = nullptr;
 thread_local uint32_t CameraManagerNapi::cameraManagerTaskId = CAMERA_MANAGER_TASKID;
+
+CameraManagerCallbackNapi::CameraManagerCallbackNapi(napi_env env): ListenerBase(env)
+{}
+
+CameraManagerCallbackNapi::~CameraManagerCallbackNapi()
+{
+}
+
+void CameraManagerCallbackNapi::OnCameraStatusCallbackAsync(const CameraStatusInfo &cameraStatusInfo) const
+{
+    MEDIA_DEBUG_LOG("OnCameraStatusCallbackAsync is called");
+    uv_loop_s* loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (!loop) {
+        MEDIA_ERR_LOG("failed to get event loop");
+        return;
+    }
+    uv_work_t* work = new(std::nothrow) uv_work_t;
+    if (!work) {
+        MEDIA_ERR_LOG("failed to allocate work");
+        return;
+    }
+    std::unique_ptr<CameraStatusCallbackInfo> callbackInfo =
+        std::make_unique<CameraStatusCallbackInfo>(cameraStatusInfo, shared_from_this());
+    work->data = callbackInfo.get();
+    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+        CameraStatusCallbackInfo* callbackInfo = reinterpret_cast<CameraStatusCallbackInfo *>(work->data);
+        if (callbackInfo) {
+            auto listener = callbackInfo->listener_.lock();
+            if (listener) {
+                listener->OnCameraStatusCallback(callbackInfo->info_);
+            }
+            delete callbackInfo;
+        }
+        delete work;
+    }, uv_qos_user_initiated);
+    if (ret) {
+        MEDIA_ERR_LOG("failed to execute work");
+        delete work;
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void CameraManagerCallbackNapi::OnCameraStatusCallback(const CameraStatusInfo &cameraStatusInfo) const
+{
+    MEDIA_DEBUG_LOG("OnCameraStatusCallback is called");
+    napi_value result[ARGS_TWO];
+    napi_value callback = nullptr;
+    napi_value retVal;
+    napi_value propValue;
+    napi_value undefinedResult;
+    for (auto it = baseCbList_.begin(); it != baseCbList_.end();) {
+        napi_env env = (*it)->env_;
+        napi_get_undefined(env, &result[PARAM0]);
+        napi_get_undefined(env, &result[PARAM1]);
+        napi_get_undefined(env, &undefinedResult);
+
+        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(cameraStatusInfo.cameraDevice, "callback cameraDevice is null");
+
+        napi_create_object(env, &result[PARAM1]);
+
+        if (cameraStatusInfo.cameraDevice != nullptr) {
+            napi_value cameraDeviceNapi = CameraDeviceNapi::CreateCameraObj(env, cameraStatusInfo.cameraDevice);
+            napi_set_named_property(env, result[PARAM1], "camera", cameraDeviceNapi);
+        } else {
+            MEDIA_ERR_LOG("Camera info is null");
+            napi_set_named_property(env, result[PARAM1], "camera", undefinedResult);
+        }
+
+        int32_t jsCameraStatus = -1;
+        jsCameraStatus = cameraStatusInfo.cameraStatus;
+        napi_create_int64(env, jsCameraStatus, &propValue);
+        napi_set_named_property(env, result[PARAM1], "status", propValue);
+
+        napi_get_reference_value(env, (*it)->cb_, &callback);
+        MEDIA_INFO_LOG("CameraId: %{public}s, CameraStatus: %{public}d",
+                       cameraStatusInfo.cameraDevice->GetID().c_str(), cameraStatusInfo.cameraStatus);
+        napi_call_function(env, nullptr, callback, ARGS_TWO, result, &retVal);
+        if ((*it)->isOnce_) {
+            napi_status status = napi_delete_reference((*it)->env_, (*it)->cb_);
+            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
+            (*it)->cb_ = nullptr;
+            baseCbList_.erase(it);
+        } else {
+            it++;
+        }
+    }
+}
+
+void CameraManagerCallbackNapi::OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const
+{
+    MEDIA_DEBUG_LOG("OnCameraStatusChanged is called, CameraStatus: %{public}d", cameraStatusInfo.cameraStatus);
+    OnCameraStatusCallbackAsync(cameraStatusInfo);
+}
+
+void CameraManagerCallbackNapi::OnFlashlightStatusChanged(const std::string &cameraID,
+    const FlashStatus flashStatus) const
+{
+    (void)cameraID;
+    (void)flashStatus;
+}
+
+CameraMuteListenerNapi::CameraMuteListenerNapi(napi_env env): ListenerBase(env)
+{
+    MEDIA_DEBUG_LOG("CameraMuteListenerNapi is called.");
+}
+
+CameraMuteListenerNapi::~CameraMuteListenerNapi()
+{
+    MEDIA_DEBUG_LOG("~CameraMuteListenerNapi is called.");
+}
+
+void CameraMuteListenerNapi::OnCameraMuteCallbackAsync(bool muteMode) const
+{
+    uv_loop_s* loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (!loop) {
+        MEDIA_ERR_LOG("Failed to get event loop");
+        return;
+    }
+    uv_work_t* work = new(std::nothrow) uv_work_t;
+    if (!work) {
+        MEDIA_ERR_LOG("Failed to allocate work");
+        return;
+    }
+    std::unique_ptr<CameraMuteCallbackInfo> callbackInfo =
+        std::make_unique<CameraMuteCallbackInfo>(muteMode, this);
+    work->data = callbackInfo.get();
+    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+        CameraMuteCallbackInfo* callbackInfo = reinterpret_cast<CameraMuteCallbackInfo *>(work->data);
+        if (callbackInfo) {
+            callbackInfo->listener_->OnCameraMuteCallback(callbackInfo->muteMode_);
+            delete callbackInfo;
+        }
+        delete work;
+    }, uv_qos_user_initiated);
+    if (ret) {
+        MEDIA_ERR_LOG("Failed to execute work");
+        delete work;
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void CameraMuteListenerNapi::OnCameraMuteCallback(bool muteMode) const
+{
+    MEDIA_DEBUG_LOG("OnCameraMuteCallback is called, muteMode: %{public}d", muteMode);
+    napi_value result[ARGS_TWO];
+    napi_value callback;
+    napi_value retVal;
+    for (auto it = baseCbList_.begin(); it != baseCbList_.end();) {
+        napi_env env = (*it)->env_;
+        napi_get_undefined(env, &result[PARAM0]);
+        napi_get_undefined(env, &result[PARAM1]);
+        napi_get_reference_value(env, (*it)->cb_, &callback);
+        napi_get_boolean(env, muteMode, &result[PARAM1]);
+        napi_call_function(env, nullptr, callback, ARGS_TWO, result, &retVal);
+        if ((*it)->isOnce_) {
+            napi_status status = napi_delete_reference((*it)->env_, (*it)->cb_);
+            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
+            (*it)->cb_ = nullptr;
+            baseCbList_.erase(it);
+        } else {
+            it++;
+        }
+    }
+}
+
+void CameraMuteListenerNapi::OnCameraMute(bool muteMode) const
+{
+    MEDIA_DEBUG_LOG("OnCameraMute is called, muteMode: %{public}d", muteMode);
+    OnCameraMuteCallbackAsync(muteMode);
+}
+
+TorchListenerNapi::TorchListenerNapi(napi_env env): ListenerBase(env)
+{
+    MEDIA_DEBUG_LOG("TorchListenerNapi is called.");
+}
+
+TorchListenerNapi::~TorchListenerNapi()
+{
+    MEDIA_DEBUG_LOG("~TorchListenerNapi is called.");
+}
+
+void TorchListenerNapi::OnTorchStatusChangeCallbackAsync(const TorchStatusInfo &torchStatusInfo) const
+{
+    MEDIA_DEBUG_LOG("OnTorchStatusChangeCallbackAsync is called");
+    uv_loop_s* loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (!loop) {
+        MEDIA_ERR_LOG("Failed to get event loop");
+        return;
+    }
+    uv_work_t* work = new(std::nothrow) uv_work_t;
+    if (!work) {
+        MEDIA_ERR_LOG("Failed to allocate work");
+        return;
+    }
+    std::unique_ptr<TorchStatusChangeCallbackInfo> callbackInfo =
+        std::make_unique<TorchStatusChangeCallbackInfo>(torchStatusInfo, this);
+    work->data = callbackInfo.get();
+    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+        TorchStatusChangeCallbackInfo* callbackInfo = reinterpret_cast<TorchStatusChangeCallbackInfo *>(work->data);
+        if (callbackInfo) {
+            callbackInfo->listener_->OnTorchStatusChangeCallback(callbackInfo->info_);
+            delete callbackInfo;
+        }
+        delete work;
+    }, uv_qos_user_initiated);
+    if (ret) {
+        MEDIA_ERR_LOG("Failed to execute work");
+        delete work;
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void TorchListenerNapi::OnTorchStatusChangeCallback(const TorchStatusInfo &torchStatusInfo) const
+{
+    MEDIA_DEBUG_LOG("OnTorchStatusChangeCallback is called");
+    napi_handle_scope scope = nullptr;
+    napi_open_handle_scope(env_, &scope);
+    if (scope == nullptr) {
+        return;
+    }
+    napi_value result[ARGS_TWO];
+    napi_value callback;
+    napi_value retVal;
+    napi_value propValue;
+    for (auto it = baseCbList_.begin(); it != baseCbList_.end();) {
+        napi_env env = (*it)->env_;
+        napi_get_undefined(env, &result[PARAM0]);
+        napi_get_undefined(env, &result[PARAM1]);
+
+        napi_create_object(env, &result[PARAM1]);
+
+        napi_get_boolean(env,  torchStatusInfo.isTorchAvailable, &propValue);
+        napi_set_named_property(env, result[PARAM1], "isTorchAvailable", propValue);
+        napi_get_boolean(env,  torchStatusInfo.isTorchActive, &propValue);
+        napi_set_named_property(env, result[PARAM1], "isTorchActive", propValue);
+        napi_create_double(env,  torchStatusInfo.torchLevel, &propValue);
+        napi_set_named_property(env, result[PARAM1], "torchLevel", propValue);
+
+        napi_get_reference_value(env, (*it)->cb_, &callback);
+        napi_call_function(env, nullptr, callback, ARGS_TWO, result, &retVal);
+        if ((*it)->isOnce_) {
+            napi_status status = napi_delete_reference((*it)->env_, (*it)->cb_);
+            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
+            (*it)->cb_ = nullptr;
+            baseCbList_.erase(it);
+        } else {
+            it++;
+        }
+    }
+    napi_close_handle_scope(env_, scope);
+}
+
+void TorchListenerNapi::OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) const
+{
+    MEDIA_DEBUG_LOG("OnTorchStatusChange is called");
+    OnTorchStatusChangeCallbackAsync(torchStatusInfo);
+}
 
 CameraManagerNapi::CameraManagerNapi() : env_(nullptr), wrapper_(nullptr)
 {
@@ -919,7 +1183,7 @@ napi_value CameraManagerNapi::RegisterCallback(napi_env env, napi_value jsThis,
             cameraManagerCallback = make_shared<CameraManagerCallbackNapi>(env);
             cameraManagerNapi->cameraManager_->SetCallback(cameraManagerCallback);
         }
-        cameraManagerCallback->SaveCallbackReference(eventType, callback, isOnce);
+        cameraManagerCallback->SaveCallbackReference(callback, isOnce);
     } else if ((eventType.compare("cameraMute")==0)) {
         if (!CameraNapiUtils::CheckSystemApp(env)) {
             MEDIA_ERR_LOG("SystemApi On cameraMute is called!");
@@ -932,7 +1196,7 @@ napi_value CameraManagerNapi::RegisterCallback(napi_env env, napi_value jsThis,
             cameraMuteListener = make_shared<CameraMuteListenerNapi>(env);
             cameraManagerNapi->cameraManager_->RegisterCameraMuteListener(cameraMuteListener);
         }
-        cameraMuteListener->SaveCallbackReference(eventType, callback, isOnce);
+        cameraMuteListener->SaveCallbackReference(callback, isOnce);
     } else if ((eventType.compare("torchStatusChange") == 0)) {
         shared_ptr<TorchListenerNapi> torchListener =
             std::static_pointer_cast<TorchListenerNapi>(cameraManagerNapi->cameraManager_->GetTorchListener());
@@ -940,7 +1204,7 @@ napi_value CameraManagerNapi::RegisterCallback(napi_env env, napi_value jsThis,
             torchListener = make_shared<TorchListenerNapi>(env);
             cameraManagerNapi->cameraManager_->RegisterTorchListener(torchListener);
         }
-        torchListener->SaveCallbackReference(eventType, callback, isOnce);
+        torchListener->SaveCallbackReference(callback, isOnce);
     } else {
         MEDIA_ERR_LOG("Incorrect callback event type provided for camera manager!");
         if (callbackRef != nullptr) {

@@ -79,21 +79,15 @@ private:
     sptr<Surface> photoSurface_ = nullptr;
 };
 
-class PhotoListener : public IBufferConsumerListener {
+class PhotoListener : public IBufferConsumerListener, public ListenerBase {
 public:
     explicit PhotoListener(napi_env env, const sptr<Surface> photoSurface);
     ~PhotoListener() = default;
     void OnBufferAvailable() override;
-    void SaveCallbackReference(napi_value callback, bool isOnce);
-    void RemoveCallbackRef(napi_env env, napi_value callback);
-    void RemoveAllCallbacks();
 
 private:
-    std::mutex mutex_;
-    napi_env env_;
     sptr<Surface> photoSurface_;
     shared_ptr<PhotoBufferProcessor> bufferProcessor_;
-    mutable std::vector<std::shared_ptr<AutoRef>> photoListenerList_;
     void UpdateJSCallback(sptr<Surface> photoSurface) const;
     void UpdateJSCallbackAsync(sptr<Surface> photoSurface) const;
 };
@@ -127,20 +121,14 @@ private:
     mutable std::vector<std::shared_ptr<AutoRef>> errorCbList_;
 };
 
-class ThumbnailListener : public IBufferConsumerListener {
+class ThumbnailListener : public IBufferConsumerListener, public ListenerBase {
 public:
     explicit ThumbnailListener(napi_env env, const sptr<PhotoOutput> photoOutput);
     ~ThumbnailListener() = default;
     void OnBufferAvailable() override;
-    void SaveCallbackReference(napi_value callback, bool isOnce);
-    void RemoveCallbackRef(napi_env env, napi_value callback);
-    void RemoveAllCallbacks();
 
 private:
-    std::mutex mutex_;
-    napi_env env_;
     sptr<PhotoOutput> photoOutput_;
-    mutable std::vector<std::shared_ptr<AutoRef>> thumbnailListenerList_;
     void UpdateJSCallback(sptr<PhotoOutput> photoOutput) const;
     void UpdateJSCallbackAsync(sptr<PhotoOutput> photoOutput) const;
 };

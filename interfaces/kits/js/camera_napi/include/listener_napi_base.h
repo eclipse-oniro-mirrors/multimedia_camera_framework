@@ -33,6 +33,22 @@ private:
     static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
         const std::string& eventType, napi_value callback);
 };
+
+class ListenerBase {
+public:
+    explicit ListenerBase(napi_env env);
+    virtual ~ListenerBase();
+
+    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
+    void SaveCallbackReference(napi_value callback, bool isOnce);
+    void RemoveCallbackRef(napi_env env, napi_value callback);
+    void RemoveAllCallbacks();
+
+protected:
+    std::mutex mutex_;
+    napi_env env_ = nullptr;
+    mutable std::vector<std::shared_ptr<AutoRef>> baseCbList_;
+};
 } // namespace CameraStandard
 } // namespace OHOS
 #endif /* LISTENER_NAPI_BASE_H_ */
