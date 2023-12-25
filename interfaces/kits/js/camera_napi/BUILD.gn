@@ -42,7 +42,6 @@ ohos_shared_library("camera_napi") {
   ]
   sources = [
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_utils.cpp",
-    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/listener_base.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_info_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_input_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_manager_napi.cpp",
@@ -51,6 +50,7 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_profile_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_setting_param_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_size_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/listener_base.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/mode_manager_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/night_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/photo_session_napi.cpp",
