@@ -194,15 +194,9 @@ int32_t HCameraDevice::OpenDevice()
     {
         std::lock_guard<std::mutex> lock(deviceOpenMutex_);
         sptr<HCameraDevice> cameraNeedEvict;
-        bool canOpenCamera = HCameraDeviceManager::GetInstance()->GetConflictDevices(cameraNeedEvict, this);
-        if (cameraNeedEvict != nullptr) {
-            MEDIA_DEBUG_LOG("HCameraDevice::Open current device need to close other devices");
-            // 关闭camerasNeedEvict里面的相机
-            cameraNeedEvict->OnError(DEVICE_PREEMPT, 0);
-            cameraNeedEvict->CloseDevice();  // 2
-        }
-        if (!canOpenCamera) {
-            MEDIA_ERR_LOG("HCameraDevice::OpenDevice refuse to turning on the camera");
+        bool canOpenDevice = CanOpenCamera();
+        if (!canOpenDevice) {
+            MEDIA_ERR_LOG("refuse to turning on the camera");
             return CAMERA_DEVICE_CONFLICT;
         }
         errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_);
@@ -898,6 +892,18 @@ int32_t HCameraDevice::CreateAndCommitStreams(std::vector<HDI::Camera::V1_1::Str
         return retCode;
     }
     return CommitStreams(deviceSettings, operationMode);
+}
+
+bool HCameraDevice::CanOpenCamera()
+{
+    sptr<HCameraDevice> cameraNeedEvict;
+    bool ret = HCameraDeviceManager::GetInstance()->GetConflictDevices(cameraNeedEvict, this);
+    if (cameraNeedEvict != nullptr) {
+        MEDIA_DEBUG_LOG("HCameraDevice::CanOpenCamera open current device need to close other devices");
+        cameraNeedEvict->OnError(DEVICE_PREEMPT, 0);
+        cameraNeedEvict->CloseDevice();  // 2
+    }
+    return ret;
 }
 
 int32_t HCameraDevice::UpdateStreams(std::vector<StreamInfo_V1_1>& streamInfos)
