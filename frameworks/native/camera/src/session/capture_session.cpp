@@ -445,10 +445,12 @@ void CaptureSession::ConfigureOutput(sptr<CaptureOutput>& output)
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::AddOutput");
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW) {
         MEDIA_INFO_LOG("CaptureSession::AddOutput PreviewOutput");
+        previewProfile_ = output->GetPreviewProfile();
         SetGuessMode(SceneMode::CAPTURE);
     }
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO) {
         MEDIA_INFO_LOG("CaptureSession::AddOutput PhotoOutput");
+        photoProfile_ = output->GetPhotoProfile();
         SetGuessMode(SceneMode::CAPTURE);
     }
     output->SetSession(this);
