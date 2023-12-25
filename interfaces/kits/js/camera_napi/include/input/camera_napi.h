@@ -58,10 +58,12 @@ static const std::int32_t VIDEO_DEFAULT_HEIGHT = 360;
 
 static const std::int32_t SURFACE_QUEUE_SIZE = 10;
 
-static const std::int32_t CAM_FORMAT_RGBA_8888 = 3;
-static const std::int32_t CAM_FORMAT_JPEG = 2000;
-static const std::int32_t CAM_FORMAT_YUV_420_SP = 1003;
-
+static const std::int32_t CAMERA_FORMAT_RGBA_8888 = 3;
+static const std::int32_t CAMERA_FORMAT_JPEG = 2000;
+static const std::int32_t CAMERA_FORMAT_YUV_420_SP = 1003;
+static const std::int32_t CAMERA_FORMAT_YCBCR_P010 = 2001;
+static const std::int32_t CAMERA_FORMAT_YCRCB_P010 = 2002;
+ 
 static const std::unordered_map<std::string, int32_t> mapFlashMode = {
     {"FLASH_MODE_CLOSE", 0},
     {"FLASH_MODE_OPEN", 1},
@@ -103,9 +105,11 @@ static const std::unordered_map<std::string, int32_t> mapConnectionType = {
 };
 
 static const std::unordered_map<std::string, int32_t> mapCameraFormat = {
-    {"CAMERA_FORMAT_YUV_420_SP", CAM_FORMAT_YUV_420_SP},
-    {"CAMERA_FORMAT_JPEG", CAM_FORMAT_JPEG},
-    {"CAMERA_FORMAT_RGBA_8888", CAM_FORMAT_RGBA_8888},
+    {"CAMERA_FORMAT_YUV_420_SP", CAMERA_FORMAT_YUV_420_SP},
+    {"CAMERA_FORMAT_JPEG", CAMERA_FORMAT_JPEG},
+    {"CAMERA_FORMAT_RGBA_8888", CAMERA_FORMAT_RGBA_8888},
+    {"CAMERA_FORMAT_YCBCR_P010", CAMERA_FORMAT_YCBCR_P010},
+    {"CAMERA_FORMAT_YCRCB_P010", CAMERA_FORMAT_YCRCB_P010},
 };
 
 static const std::unordered_map<std::string, int32_t> mapCameraStatus = {
@@ -190,7 +194,7 @@ static const std::unordered_map<std::string, int32_t> mapPortraitEffect = {
     {"HEART", 2},
     {"ROTATED", 3},
     {"STUDIO", 4},
-    {"THEATOR", 5},
+    {"THEATER", 5},
 };
 
 static const std::unordered_map<std::string, int32_t> mapTorchMode = {

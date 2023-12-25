@@ -23,12 +23,14 @@
 #include "camera_log.h"
 #include "camera_util.h"
 #include "display/graphic/common/v1_0/cm_color_space.h"
+#include "display/composer/v1_1/display_composer_type.h"
 #include "ipc_skeleton.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
 using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
+using namespace OHOS::HDI::Display::Composer::V1_1;
 static const std::map<ColorSpace, CM_ColorSpaceType> g_fwkToMetaColorSpaceMap_ = {
     {COLOR_SPACE_UNKNOWN, CM_COLORSPACE_NONE},
     {DISPLAY_P3, CM_P3_FULL},
@@ -192,7 +194,7 @@ int32_t HStreamCommon::GetPreparedCaptureId()
 
 void HStreamCommon::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
 {
-    int32_t pixelFormat = PIXEL_FMT_YCRCB_420_SP;
+    int32_t pixelFormat = OHOS::HDI::Display::Composer::V1_1::PIXEL_FMT_YCRCB_420_SP;
     auto it = g_cameraToPixelFormat.find(format_);
     if (it != g_cameraToPixelFormat.end()) {
         pixelFormat = it->second;

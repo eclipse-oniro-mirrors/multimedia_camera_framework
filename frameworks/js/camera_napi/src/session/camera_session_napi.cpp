@@ -729,7 +729,7 @@ napi_value CameraSessionNapi::Init(napi_env env, napi_value exports)
     int32_t refCount = 1;
     std::vector<std::vector<napi_property_descriptor>> descriptors = {camera_process_props, stabilization_props,
         flash_props, auto_exposure_props, focus_props, zoom_props, filter_props, beauty_props,
-        color_effect_props, macro_props};
+        color_effect_props, macro_props, color_management_props};
     std::vector<napi_property_descriptor> camera_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, CAMERA_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                CameraSessionNapiConstructor, nullptr,
@@ -2307,7 +2307,7 @@ napi_value CameraSessionNapi::GetSupportedFilters(napi_env env, napi_callback_in
 }
 napi_value CameraSessionNapi::GetFilter(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("GetPortraitEffect is called");
+    MEDIA_DEBUG_LOG("GetFilter is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -2323,7 +2323,7 @@ napi_value CameraSessionNapi::GetFilter(napi_env env, napi_callback_info info)
         FilterType filterType = cameraSessionNapi->cameraSession_->GetFilter();
         napi_create_int32(env, filterType, &result);
     } else {
-        MEDIA_ERR_LOG("GetPortraitEffect call Failed!");
+        MEDIA_ERR_LOG("GetFilter call Failed!");
     }
     return result;
 }
@@ -2351,7 +2351,7 @@ napi_value CameraSessionNapi::SetFilter(napi_env env, napi_callback_info info)
                 SetFilter(static_cast<FilterType>(filterType));
         cameraSessionNapi->cameraSession_->UnlockForControl();
     } else {
-        MEDIA_ERR_LOG("SetFocusMode call Failed!");
+        MEDIA_ERR_LOG("SetFilter call Failed!");
     }
     return result;
 }
@@ -2428,7 +2428,7 @@ napi_value CameraSessionNapi::GetSupportedBeautyRange(napi_env env, napi_callbac
             }
         }
     } else {
-        MEDIA_ERR_LOG("GetSupportedPortraitEffect call Failed!");
+        MEDIA_ERR_LOG("GetSupportedBeautyRange call Failed!");
     }
     return result;
 }
