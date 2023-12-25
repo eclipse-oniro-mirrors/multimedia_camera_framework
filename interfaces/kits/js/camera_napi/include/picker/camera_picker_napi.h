@@ -31,7 +31,6 @@
 namespace OHOS {
 namespace CameraStandard {
 
-struct CameraPickerAsyncContext;
 typedef struct {
     string saveUri;
     CameraPosition cameraPosition;
@@ -62,7 +61,6 @@ struct UIExtensionRequestContext : public CommonAsyncContext {
 
 static const char CAMERA_PICKER_NAPI_CLASS_NAME[] = "CameraPicker";
 
-class CameraPickerNapi;
 class UIExtensionCallback {
 public:
     explicit UIExtensionCallback(std::shared_ptr<UIExtensionRequestContext>& reqContext);
