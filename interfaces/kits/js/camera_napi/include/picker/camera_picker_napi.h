@@ -63,18 +63,6 @@ struct UIExtensionRequestContext : public CommonAsyncContext {
 static const char CAMERA_PICKER_NAPI_CLASS_NAME[] = "CameraPicker";
 
 class CameraPickerNapi;
-static const std::vector<std::string> pickerPhotoProfile {
-    "cameraPosition", "saveUri"
-};
-
-static const std::vector<std::string> pickerVideoProfile {
-    "cameraPosition", "saveUri", "videoDuration"
-};
-
-static const std::vector<std::string> pickerResult {
-    "resultCode", "resultUri"
-};
-
 class UIExtensionCallback {
 public:
     explicit UIExtensionCallback(std::shared_ptr<UIExtensionRequestContext>& reqContext);
@@ -99,7 +87,6 @@ private:
 class CameraPickerNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
-    static napi_value CreateCameraPickerInstance(napi_env env, napi_callback_info info);
     static napi_value CreatePickerPhotoProfile(napi_env env);
     static napi_value CreatePickerVideoProfile(napi_env env);
     static napi_value CreatePickerResult(napi_env env);
@@ -107,24 +94,15 @@ public:
                                         const std::string name, int32_t enumValue);
     static napi_value TakePhoto(napi_env env, napi_callback_info info);
     static napi_value RecordVideo(napi_env env, napi_callback_info info);
-    static napi_value CreateCameraPicker(napi_env env);
     static napi_value CameraPickerNapiConstructor(napi_env env, napi_callback_info info);
     static void CameraPickerNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     CameraPickerNapi();
     ~CameraPickerNapi();
-    static VideoProfileForPicker videoProfile_;
-    static PhotoProfileForPicker photoProfile_;
-    static std::string resultUri_;
-    static int32_t resultCode;
-    static std::mutex mutex_;
 
 private:
     napi_env env_;
     napi_ref wrapper_;
     static thread_local uint32_t cameraPickerTaskId;
-    static thread_local napi_ref pickerPhotoProfile_;
-    static thread_local napi_ref pickerVideoProfile_;
-    static thread_local napi_ref pickerResult_;
     static thread_local napi_ref sConstructor_;
 };
 
