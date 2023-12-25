@@ -94,3 +94,63 @@ ohos_shared_library("camera_napi") {
   part_name = "camera_framework"
   subsystem_name = "multimedia"
 }
+
+if (use_ace_engine) {
+  js_declaration("camerapicker_js") {
+    part_name = "camera_framework"
+    sources = [ "./@ohos.multimedia.camerapicker.d.ts" ]
+  }
+
+  ohos_copy("camerapicker_declaration") {
+    sources = [ "./@ohos.multimedia.camerapicker.d.ts" ]
+    outputs = [ target_out_dir + "/$target_name/" ]
+    module_source_dir = target_out_dir + "/$target_name"
+    module_install_name = ""
+    part_name = "camera_framework"
+    subsystem_name = "multimedia"
+  }
+
+  ohos_shared_library("camerapicker_napi") {
+    branch_protector_ret = "pac_ret"
+    include_dirs = [ "${multimedia_camera_framework_path}/interfaces/kits/js/camera_napi/include" ]
+    sources = [
+      "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_utils.cpp",
+      "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/native_module_ohos_camerapicker.cpp",
+      "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/picker/camera_picker_napi.cpp",
+    ]
+    deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
+    external_deps = [
+      "ability_base:base",
+      "ability_base:configuration",
+      "ability_base:want",
+      "ability_runtime:ability_context_native",
+      "ability_runtime:ability_manager",
+      "ability_runtime:abilitykit_native",
+      "ability_runtime:app_context",
+      "ability_runtime:extensionkit_native",
+      "ability_runtime:napi_base_context",
+      "ability_runtime:runtime",
+      "ability_runtime:service_extension",
+      "ability_runtime:ui_extension",
+      "access_token:libtokenid_sdk",
+      "ace_engine:ace_uicontent",
+      "c_utils:utils",
+      "hilog:libhilog",
+      "hitrace:hitrace_meter",
+      "image_framework:image",
+      "image_framework:image_native",
+      "ipc:ipc_core",
+      "napi:ace_napi",
+    ]
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+    }
+    cflags = [ "-fPIC" ]
+    cflags_cc = cflags
+    relative_install_dir = "module/multimedia"
+    part_name = "camera_framework"
+    subsystem_name = "multimedia"
+  }
+}

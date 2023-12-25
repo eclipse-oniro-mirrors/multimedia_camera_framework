@@ -21,7 +21,9 @@
         "deps": {
           "components": [
               "ability_base",
+              "ability_runtime",
               "access_token",
+              "ace_engine",
               "bundle_framework",
               "c_utils",
               "device_manager",
@@ -63,7 +65,8 @@
               "//foundation/multimedia/camera_framework/frameworks/native/camera:camera_framework",
               "//foundation/multimedia/camera_framework/frameworks/native/ndk:ohcamera",
               "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camera_napi",
-              "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camera_js"
+              "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camera_js",
+              "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camerapicker_js"
             ],
             "service_group": [
               "//foundation/multimedia/camera_framework/sa_profile:camera_service_sa_profile",
@@ -121,6 +124,20 @@
                   "native_module_ohos_camera.h",
                   "metadata_output_napi.h",
                   "metadata_object_napi.h"
+                ]
+              }
+           },
+            {
+              "type": "none",
+              "name": "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camerapicker_napi",
+              "header": {
+                "header_base": [
+                    "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi/include",
+                    "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi/include/picker"
+                ],
+                "header_files": [
+                  "camera_napi_utils.h",
+                  "camera_picker_napi.h"
                 ]
               }
             }
