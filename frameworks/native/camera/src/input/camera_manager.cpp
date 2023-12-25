@@ -110,7 +110,7 @@ CameraManager::~CameraManager()
     }
     cameraMuteListener = nullptr;
     torchListener = nullptr;
-    std::lock_guard<std::mutex> lock(cameraListMutex_);
+    std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
     for (unsigned int i = 0; i < cameraObjList.size(); i++) {
         cameraObjList[i] = nullptr;
     }
@@ -234,7 +234,7 @@ sptr<CaptureSession> CameraManager::CreateCaptureSession(SceneMode mode)
         MEDIA_ERR_LOG("Failed to get capture session object from hcamera service!, %{public}d", retCode);
         return nullptr;
     }
-    captureSession->SetMode(static_cast<int32_t>(mode));
+    captureSession->SetMode(mode);
     return captureSession;
 }
 
@@ -541,6 +541,7 @@ int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surfa
         if (videoFrameRates.size() >= 2) { // vaild frame rate range length is 2
             videoOutput->SetFrameRateRange(videoFrameRates[0], videoFrameRates[1]);
         }
+        videoOutput->SetVideoProfile(profile);
         POWERMGR_SYSEVENT_CAMERA_CONFIG(VIDEO,
                                         profile.GetSize().width,
                                         profile.GetSize().height);
@@ -602,11 +603,11 @@ void CameraManager::CameraServerDied(pid_t pid)
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
     if (cameraSvcCallback_ != nullptr) {
         MEDIA_DEBUG_LOG("cameraSvcCallback_ not nullptr");
-        std::lock_guard<std::mutex> lock(cameraListMutex_);
+        std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
         for (size_t i = 0; i < cameraObjList.size(); i++) {
             CameraStatusInfo cameraStatusInfo;
             cameraStatusInfo.cameraDevice = cameraObjList[i];
-            cameraStatusInfo.cameraStatus = CAMERA_STATUS_DISAPPEAR;
+            cameraStatusInfo.cameraStatus = CAMERA_SERVER_UNAVAILABLE;
             std::shared_ptr<CameraManagerCallback> cameraManagerCallback = GetApplicationCallback();
             if (cameraManagerCallback != nullptr) {
                 MEDIA_INFO_LOG("Callback cameraStatus");
@@ -664,7 +665,7 @@ std::shared_ptr<CameraManagerCallback> CameraManager::GetApplicationCallback()
 sptr<CameraDevice> CameraManager::GetCameraDeviceFromId(std::string cameraId)
 {
     sptr<CameraDevice> cameraObj = nullptr;
-    std::lock_guard<std::mutex> lock(cameraListMutex_);
+    std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         if (cameraObjList[i]->GetID() == cameraId) {
             cameraObj = cameraObjList[i];
@@ -744,7 +745,7 @@ void CameraManager::InitCameraList()
     int32_t retCode = -1;
     sptr<CameraDevice> cameraObj = nullptr;
     int32_t index = 0;
-    std::lock_guard<std::mutex> lock(cameraListMutex_);
+    std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
     for (unsigned int i = 0; i < cameraObjList.size(); i++) {
         cameraObjList[i] = nullptr;
     }
@@ -765,12 +766,6 @@ void CameraManager::InitCameraList()
                 tempDmDeviceInfo.networkId = "";
             }
             cameraObj = new(std::nothrow) CameraDevice(it, cameraAbilityList[index++], tempDmDeviceInfo);
-            int32_t portraitMode = 3;
-            sptr<CameraOutputCapability> capability = GetSupportedOutputCapability(cameraObj, portraitMode);
-            if (capability != nullptr) {
-                cameraObj->modePreviewProfiles_[portraitMode] = capability->GetPreviewProfiles();
-                cameraObj->modePhotoProfiles_[portraitMode] = capability->GetPhotoProfiles();
-            }
             cameraObjList.emplace_back(cameraObj);
         }
     } else {
@@ -783,7 +778,7 @@ void CameraManager::InitCameraList()
 std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
 {
     CAMERA_SYNC_TRACE;
-    std::lock_guard<std::mutex> lock(cameraListMutex_);
+    std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
     return cameraObjList;
 }
 
@@ -816,17 +811,8 @@ void CameraManager::AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& camera
     std::vector<VideoProfile> frontVideoProfiles = {};
     std::vector<VideoProfile> backVideoProfiles = {};
     sptr<CameraDevice> frontCamera = nullptr;
-    std::vector<int32_t> modes = {0, 3};
-    sptr<CameraOutputCapability> capability = nullptr;
     for (auto& camera : cameraObjList) {
-        for (auto &mode : modes) {
-            capability = GetSupportedOutputCapability(camera, mode);
-            if (capability != nullptr) {
-                camera->modePreviewProfiles_[mode] = capability->GetPreviewProfiles();
-                camera->modePhotoProfiles_[mode] = capability->GetPhotoProfiles();
-                camera->modeVideoProfiles_[mode] = capability->GetVideoProfiles();
-            }
-        }
+        SetProfile(camera);
         if (camera->GetPosition() == CAMERA_POSITION_FRONT) {
             frontVideoProfiles = camera->modeVideoProfiles_[normalMode];
             frontCamera = camera;
@@ -863,6 +849,30 @@ void CameraManager::AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& camera
                            "w(%{public}d),h(%{public}d) fps min(%{public}d),min(%{public}d)",
                            frontProfile.GetSize().width, frontProfile.GetSize().height,
                            frontProfile.framerates_[minIndex], frontProfile.framerates_[maxIndex]);
+        }
+    }
+}
+
+void CameraManager::SetProfile(sptr<CameraDevice>& cameraObj)
+{
+    std::vector<SceneMode> supportedModes = GetSupportedModes(cameraObj);
+    sptr<CameraOutputCapability> capability = nullptr;
+    if (supportedModes.empty()) {
+        capability = GetSupportedOutputCapability(cameraObj);
+        if (capability != nullptr) {
+            cameraObj->modePreviewProfiles_[0] = capability->GetPreviewProfiles();
+            cameraObj->modePhotoProfiles_[0] = capability->GetPhotoProfiles();
+            cameraObj->modeVideoProfiles_[0] = capability->GetVideoProfiles();
+        }
+    } else {
+        for (auto &modeName : GetSupportedModes(cameraObj)) {
+            int32_t mode = isTemplateMode_.count(modeName) ? SceneMode::NORMAL : modeName;
+            capability = GetSupportedOutputCapability(cameraObj, mode);
+            if (capability != nullptr) {
+                cameraObj->modePreviewProfiles_[mode] = capability->GetPreviewProfiles();
+                cameraObj->modePhotoProfiles_[mode] = capability->GetPhotoProfiles();
+                cameraObj->modeVideoProfiles_[mode] = capability->GetVideoProfiles();
+            }
         }
     }
 }
@@ -926,7 +936,7 @@ int CameraManager::CreateCameraInput(CameraPosition position, CameraType cameraT
 {
     CAMERA_SYNC_TRACE;
     sptr<CameraInput> cameraInput = nullptr;
-    std::lock_guard<std::mutex> lock(cameraListMutex_);
+    std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         if ((cameraObjList[i]->GetPosition() == position) && (cameraObjList[i]->GetCameraType() == cameraType)) {
             cameraInput = CreateCameraInput(cameraObjList[i]);
@@ -1242,7 +1252,7 @@ shared_ptr<CameraMuteListener> CameraManager::GetCameraMuteListener()
 bool CameraManager::IsCameraMuteSupported()
 {
     bool result = false;
-    std::lock_guard<std::mutex> lock(cameraListMutex_);
+    std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
         camera_metadata_item_t item;
@@ -1311,6 +1321,20 @@ int32_t CameraManager::PrelaunchCamera()
     return ServiceToCameraError(retCode);
 }
 
+int32_t CameraManager::PreSwitchCamera(const std::string cameraId)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (serviceProxy_ == nullptr) {
+        MEDIA_ERR_LOG("CameraManager::PreSwitchCamera serviceProxy_ is null");
+        return SERVICE_FATL_ERROR;
+    }
+    int32_t retCode = serviceProxy_->PreSwitchCamera(cameraId);
+    if (retCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("CameraManager::PreSwitchCamera failed, retCode: %{public}d", retCode);
+    }
+    return ServiceToCameraError(retCode);
+}
+
 bool CameraManager::IsPrelaunchSupported(sptr<CameraDevice> camera)
 {
     bool isPrelaunch = false;
@@ -1329,7 +1353,10 @@ bool CameraManager::IsPrelaunchSupported(sptr<CameraDevice> camera)
 
 bool CameraManager::IsTorchSupported()
 {
-    std::lock_guard<std::mutex> lock(cameraListMutex_);
+    std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
+    if (cameraObjList.empty()) {
+        InitCameraList();
+    }
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         std::shared_ptr<Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
         camera_metadata_item_t item;

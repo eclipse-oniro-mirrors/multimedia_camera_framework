@@ -223,10 +223,11 @@ const std::vector<int32_t>& VideoOutput::GetFrameRateRange()
     return videoFrameRateRange_;
 }
 
-std::set<camera_device_metadata_tag_t> VideoOutput::GetObserverTags() const
+const std::set<camera_device_metadata_tag_t>& VideoOutput::GetObserverTags()
 {
     // Empty impl
-    return {};
+    const static std::set<camera_device_metadata_tag_t> tags = {};
+    return tags;
 }
 
 int32_t VideoOutput::OnMetadataChanged(

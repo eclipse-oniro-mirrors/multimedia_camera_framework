@@ -1,5 +1,6 @@
+
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,22 +14,16 @@
  * limitations under the License.
  */
 
-export class Constants {
-  // aspect ratio: width/height
-  static readonly MIN_ASPECT_RATIO = 4 / 3;
-  static readonly MAX_ASPECT_RATIO = 16 / 9;
+#ifndef OHOS_CAMERA_ICAMERA_IPC_CHECKER_H
+#define OHOS_CAMERA_ICAMERA_IPC_CHECKER_H
 
-  static readonly VIDEO_MAX_WIDTH = 2048;
-  static readonly PHOTO_MAX_WIDTH = 2048;
-  static readonly SURFACE_BOTTOM_MARGIN = 50;
-
-  // device type
-  static readonly TABLET = 'tablet';
-  static readonly DEFAULT = 'default';
-  static readonly PHONE = 'phone';
-
-  // video frame
-  static readonly VIDEO_FRAME_30 = 30;
-  static readonly VIDEO_FRAME_15 = 15;
-}
-
+#include <cstdint>
+namespace OHOS {
+namespace CameraStandard {
+class ICameraIpcChecker {
+public:
+    virtual int32_t OperatePermissionCheck(uint32_t interfaceCode) = 0;
+};
+} // namespace CameraStandard
+} // namespace OHOS
+#endif // OHOS_CAMERA_ICAMERA_IPC_CHECKER_H

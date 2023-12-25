@@ -54,6 +54,7 @@ public:
     static napi_value IsCameraMuteSupported(napi_env env, napi_callback_info info);
     static napi_value MuteCamera(napi_env env, napi_callback_info info);
     static napi_value PrelaunchCamera(napi_env env, napi_callback_info info);
+    static napi_value PreSwitchCamera(napi_env env, napi_callback_info info);
     static napi_value SetPrelaunchConfig(napi_env env, napi_callback_info info);
     static napi_value IsPrelaunchSupported(napi_env env, napi_callback_info info);
     static napi_value CreateCameraInputInstance(napi_env env, napi_callback_info info);
@@ -88,7 +89,6 @@ private:
     sptr<CameraManager> cameraManager_;
     std::shared_ptr<CameraManagerCallbackNapi> cameraManagerCallback_;
     std::shared_ptr<CameraMuteListenerNapi> cameraMuteListener_;
-    std::shared_ptr<TorchListenerNapi> torchListener_;
     static thread_local uint32_t cameraManagerTaskId;
 };
 

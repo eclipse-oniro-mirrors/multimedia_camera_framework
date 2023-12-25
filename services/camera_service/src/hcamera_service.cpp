@@ -15,6 +15,9 @@
 
 #include "hcamera_service.h"
 
+#include <algorithm>
+#include <memory>
+#include <mutex>
 #include <securec.h>
 #include <unordered_set>
 
@@ -22,10 +25,10 @@
 #include "accesstoken_kit.h"
 #include "camera_log.h"
 #include "camera_util.h"
+#include "display_manager.h"
 #include "hcamera_device_manager.h"
 #include "ipc_skeleton.h"
 #include "system_ability_definition.h"
-#include "display_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -33,22 +36,36 @@ REGISTER_SYSTEM_ABILITY_BY_ID(HCameraService, CAMERA_SERVICE_ID, true)
 constexpr int32_t SENSOR_SUCCESS = 0;
 constexpr int32_t POSTURE_INTERVAL = 1000000;
 constexpr uint8_t POSITION_FOLD_INNER = 3;
-static sptr<HCameraService> mCameraService;
+static const int32_t WAIT_FOR_A_CLOSE_CAMERA = 2;
+static std::mutex g_cameraServiceInstanceMutex;
+static HCameraService* g_cameraServiceInstance = nullptr;
+static sptr<HCameraService> g_cameraServiceHolder = nullptr;
 
 HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
-    : SystemAbility(systemAbilityId, runOnCreate), cameraHostManager_(nullptr), streamOperatorCallback_(nullptr),
-      muteMode_(false)
+    : SystemAbility(systemAbilityId, runOnCreate), muteMode_(false), isRegisterSensorSuccess(false)
+{
+    MEDIA_INFO_LOG("HCameraService Construct begin");
+    g_cameraServiceHolder = this;
+    {
+        std::lock_guard<std::mutex> lock(g_cameraServiceInstanceMutex);
+        g_cameraServiceInstance = this;
+    }
+    statusCallback_ = std::make_shared<ServiceHostStatus>(this);
+    cameraHostManager_ = new (std::nothrow) HCameraHostManager(statusCallback_);
+    CHECK_AND_RETURN_LOG(
+        cameraHostManager_ != nullptr, "HCameraService OnStart failed to create HCameraHostManager obj");
+    MEDIA_INFO_LOG("HCameraService Construct end");
+}
+
+HCameraService::HCameraService(sptr<HCameraHostManager> cameraHostManager)
+    : cameraHostManager_(cameraHostManager), muteMode_(false), isRegisterSensorSuccess(false)
 {}
 
 HCameraService::~HCameraService() {}
 
 void HCameraService::OnStart()
 {
-    if (cameraHostManager_ == nullptr) {
-        cameraHostManager_ = new (nothrow) HCameraHostManager(this);
-        CHECK_AND_RETURN_LOG(
-            cameraHostManager_ != nullptr, "HCameraService OnStart failed to create HCameraHostManager obj");
-    }
+    MEDIA_INFO_LOG("HCameraService OnStart begin");
     if (cameraHostManager_->Init() != CAMERA_OK) {
         MEDIA_ERR_LOG("HCameraService OnStart failed to init camera host manager.");
     }
@@ -57,6 +74,7 @@ void HCameraService::OnStart()
         MEDIA_INFO_LOG("HCameraService OnStart res=%{public}d", res);
     }
     RegisterSensorCallback();
+    MEDIA_INFO_LOG("HCameraService OnStart end");
 }
 
 void HCameraService::OnDump()
@@ -67,15 +85,7 @@ void HCameraService::OnDump()
 void HCameraService::OnStop()
 {
     MEDIA_INFO_LOG("HCameraService::OnStop called");
-
-    if (cameraHostManager_) {
-        cameraHostManager_->DeInit();
-        delete cameraHostManager_;
-        cameraHostManager_ = nullptr;
-    }
-    if (streamOperatorCallback_) {
-        streamOperatorCallback_ = nullptr;
-    }
+    cameraHostManager_->DeInit();
     UnRegisterSensorCallback();
 }
 
@@ -183,8 +193,8 @@ int32_t HCameraService::CreateCameraDevice(string cameraId, sptr<ICameraDeviceSe
     } else {
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice MuteCamera not Supported");
     }
-    cameraDevice->SetDeviceOperatorsCallback(this);
     device = cameraDevice;
+    RegisterSensorCallback();
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager_CreateCameraInput CameraId:%s", cameraId.c_str()));
     return CAMERA_OK;
 }
@@ -192,21 +202,13 @@ int32_t HCameraService::CreateCameraDevice(string cameraId, sptr<ICameraDeviceSe
 int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int32_t opMode)
 {
     CAMERA_SYNC_TRACE;
-    lock_guard<mutex> lock(mutex_);
-    sptr<HCaptureSession> captureSession;
-    if (streamOperatorCallback_ == nullptr) {
-        streamOperatorCallback_ = new (nothrow) StreamOperatorCallback();
-        CHECK_AND_RETURN_RET_LOG(streamOperatorCallback_ != nullptr, CAMERA_ALLOC_ERROR,
-            "HCameraService::CreateCaptureSession streamOperatorCallback_ allocation failed");
-    }
+    std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("HCameraService::CreateCaptureSession opMode_= %{public}d", opMode);
 
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
-    captureSession =
-        new (nothrow) HCaptureSession(cameraHostManager_, streamOperatorCallback_, callerToken, opMode);
+    sptr<HCaptureSession> captureSession = new (nothrow) HCaptureSession(callerToken, opMode);
     CHECK_AND_RETURN_RET_LOG(captureSession != nullptr, CAMERA_ALLOC_ERROR,
         "HCameraService::CreateCaptureSession HCaptureSession allocation failed");
-    captureSession->SetDeviceOperatorsCallback(this);
     session = captureSession;
     pid_t pid = IPCSkeleton::GetCallingPid();
     captureSessionsManager_.EnsureInsert(pid, captureSession);
@@ -597,6 +599,31 @@ int32_t HCameraService::PrelaunchCamera()
     return ret;
 }
 
+int32_t HCameraService::PreSwitchCamera(const std::string cameraId)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("HCameraService::PreSwitchCamera");
+    if (cameraId.empty()) {
+        return CAMERA_INVALID_ARG;
+    }
+    std::vector<std::string> cameraIds_;
+    cameraHostManager_->GetCameras(cameraIds_);
+    if (cameraIds_.empty()) {
+        return CAMERA_INVALID_STATE;
+    }
+
+    auto it = std::find(cameraIds_.begin(), cameraIds_.end(), cameraId);
+    if (it == cameraIds_.end()) {
+        return CAMERA_INVALID_ARG;
+    }
+    MEDIA_INFO_LOG("HCameraService::PreSwitchCamera cameraId is: %{public}s", cameraId.c_str());
+    int32_t ret = cameraHostManager_->PreSwitchCamera(cameraId);
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCameraService::Prelaunch failed");
+    }
+    return ret;
+}
+
 int32_t HCameraService::SetPrelaunchConfig(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
     EffectParam effectParam)
 {
@@ -638,6 +665,34 @@ int32_t HCameraService::SetTorchLevel(float level)
     return ret;
 }
 
+int32_t HCameraService::AllowOpenByOHSide(std::string cameraId, int32_t state, bool& canOpenCamera)
+{
+    MEDIA_INFO_LOG("HCameraService::AllowOpenByOHSide start");
+    pid_t activePid = HCameraDeviceManager::GetInstance()->GetActiveClient();
+    if (activePid == -1) {
+        MEDIA_INFO_LOG("AllowOpenByOHSide::Open allow open camera");
+        NotifyCameraState(cameraId, 0);
+        canOpenCamera = true;
+        return CAMERA_OK;
+    }
+    sptr<HCameraDevice> cameraNeedEvict = HCameraDeviceManager::GetInstance()->GetCameraByPid(activePid);
+    cameraNeedEvict->OnError(DEVICE_PREEMPT, 0);
+    cameraNeedEvict->CloseDevice();
+    sleep(WAIT_FOR_A_CLOSE_CAMERA);
+    NotifyCameraState(cameraId, 0);
+    canOpenCamera = true;
+    MEDIA_INFO_LOG("HCameraService::AllowOpenByOHSide end");
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::NotifyCameraState(std::string cameraId, int32_t state)
+{
+    // 把cameraId和前后台状态刷新给device manager
+    MEDIA_INFO_LOG("HCameraService::NotifyCameraState SetStateOfACamera");
+    HCameraDeviceManager::GetInstance()->SetStateOfACamera(cameraId, state);
+    return CAMERA_OK;
+}
+
 bool HCameraService::IsPrelaunchSupported(string cameraId)
 {
     bool isPrelaunchSupported = false;
@@ -672,6 +727,28 @@ void HCameraService::CameraSummary(vector<string> cameraIds, string& dumpString)
     dumpString += "# Number of Cameras:[" + to_string(cameraIds.size()) + "]:\n";
     dumpString += "# Number of Active Cameras:[" + to_string(1) + "]:\n";
     HCaptureSession::CameraSessionSummary(dumpString);
+}
+
+void HCameraService::CameraDumpCameraInfo(std::string& dumpString, std::vector<std::string>& cameraIds,
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList)
+{
+    int32_t capIdx = 0;
+    for (auto& it : cameraIds) {
+        auto metadata = cameraAbilityList[capIdx++];
+        common_metadata_header_t* metadataEntry = metadata->get();
+        dumpString += "# Camera ID:[" + it + "]: \n";
+        CameraDumpAbility(metadataEntry, dumpString);
+        CameraDumpStreaminfo(metadataEntry, dumpString);
+        CameraDumpZoom(metadataEntry, dumpString);
+        CameraDumpFlash(metadataEntry, dumpString);
+        CameraDumpAF(metadataEntry, dumpString);
+        CameraDumpAE(metadataEntry, dumpString);
+        CameraDumpSensorInfo(metadataEntry, dumpString);
+        CameraDumpVideoStabilization(metadataEntry, dumpString);
+        CameraDumpVideoFrameRateRange(metadataEntry, dumpString);
+        CameraDumpPrelaunch(metadataEntry, dumpString);
+        CameraDumpThumbnail(metadataEntry, dumpString);
+    }
 }
 
 void HCameraService::CameraDumpAbility(common_metadata_header_t* metadataEntry, string& dumpString)
@@ -982,49 +1059,37 @@ void HCameraService::CameraDumpThumbnail(common_metadata_header_t* metadataEntry
 int32_t HCameraService::Dump(int fd, const vector<u16string>& args)
 {
     unordered_set<u16string> argSets;
-    u16string arg1(u"summary");
-    u16string arg2(u"ability");
-    u16string arg3(u"clientwiseinfo");
+    u16string summary(u"summary");
+    u16string ability(u"ability");
+    u16string clientwiseinfo(u"clientwiseinfo");
+    std::u16string debugOn(u"debugOn");
     for (decltype(args.size()) index = 0; index < args.size(); ++index) {
         argSets.insert(args[index]);
     }
-    string dumpString;
-    vector<string> cameraIds;
-    vector<shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
-    int32_t capIdx = 0;
-    shared_ptr<OHOS::Camera::CameraMetadata> metadata;
+    std::string dumpString;
+    std::vector<std::string> cameraIds;
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
     int ret;
 
     ret = GetCameras(cameraIds, cameraAbilityList);
     if ((ret != CAMERA_OK) || cameraIds.empty() || (cameraAbilityList.empty())) {
         return CAMERA_INVALID_STATE;
     }
-    if (args.size() == 0 || argSets.count(arg1) != 0) {
+    if (args.size() == 0 || argSets.count(summary) != 0) {
         dumpString += "-------- Summary -------\n";
         CameraSummary(cameraIds, dumpString);
     }
-    if (args.size() == 0 || argSets.count(arg2) != 0) {
+    if (args.size() == 0 || argSets.count(ability) != 0) {
         dumpString += "-------- CameraDevice -------\n";
-        for (auto& it : cameraIds) {
-            metadata = cameraAbilityList[capIdx++];
-            common_metadata_header_t* metadataEntry = metadata->get();
-            dumpString += "# Camera ID:[" + it + "]: \n";
-            CameraDumpAbility(metadataEntry, dumpString);
-            CameraDumpStreaminfo(metadataEntry, dumpString);
-            CameraDumpZoom(metadataEntry, dumpString);
-            CameraDumpFlash(metadataEntry, dumpString);
-            CameraDumpAF(metadataEntry, dumpString);
-            CameraDumpAE(metadataEntry, dumpString);
-            CameraDumpSensorInfo(metadataEntry, dumpString);
-            CameraDumpVideoStabilization(metadataEntry, dumpString);
-            CameraDumpVideoFrameRateRange(metadataEntry, dumpString);
-            CameraDumpPrelaunch(metadataEntry, dumpString);
-            CameraDumpThumbnail(metadataEntry, dumpString);
-        }
+        CameraDumpCameraInfo(dumpString, cameraIds, cameraAbilityList);
     }
-    if (args.size() == 0 || argSets.count(arg3) != 0) {
+    if (args.size() == 0 || argSets.count(clientwiseinfo) != 0) {
         dumpString += "-------- Clientwise Info -------\n";
         HCaptureSession::dumpSessions(dumpString);
+    }
+    if (argSets.count(debugOn) != 0) {
+        dumpString += "-------- Debug On -------\n";
+        SetCameraDebugValue(true);
     }
 
     if (dumpString.size() == 0) {
@@ -1035,9 +1100,13 @@ int32_t HCameraService::Dump(int fd, const vector<u16string>& args)
     (void)write(fd, dumpString.c_str(), dumpString.size());
     return CAMERA_OK;
 }
+
 void HCameraService::RegisterSensorCallback()
 {
-    mCameraService = this;
+    if (isRegisterSensorSuccess) {
+        MEDIA_INFO_LOG("HCameraService::RegisterSensorCallback isRegisterSensorSuccess return");
+        return;
+    }
     MEDIA_INFO_LOG("HCameraService::RegisterSensorCallback start");
     user.callback = DropDetectionDataCallbackImpl;
     int32_t subscribeRet = SubscribeSensor(SENSOR_TYPE_ID_DROP_DETECTION, &user);
@@ -1047,7 +1116,10 @@ void HCameraService::RegisterSensorCallback()
     int32_t activateRet = ActivateSensor(SENSOR_TYPE_ID_DROP_DETECTION, &user);
     MEDIA_INFO_LOG("RegisterSensorCallback, activateRet: %{public}d", activateRet);
     if (subscribeRet != SENSOR_SUCCESS || setBatchRet != SENSOR_SUCCESS || activateRet != SENSOR_SUCCESS) {
+        isRegisterSensorSuccess = false;
         MEDIA_INFO_LOG("RegisterSensorCallback failed.");
+    }  else {
+        isRegisterSensorSuccess = true;
     }
 }
 
@@ -1060,8 +1132,9 @@ void HCameraService::UnRegisterSensorCallback()
     }
 }
 
-void HCameraService::DropDetectionDataCallbackImpl(SensorEvent *event)
+void HCameraService::DropDetectionDataCallbackImpl(SensorEvent* event)
 {
+    MEDIA_INFO_LOG("HCameraService::DropDetectionDataCallbackImpl entry");
     if (event == nullptr) {
         MEDIA_INFO_LOG("SensorEvent is nullptr.");
         return;
@@ -1074,9 +1147,10 @@ void HCameraService::DropDetectionDataCallbackImpl(SensorEvent *event)
         MEDIA_INFO_LOG("less than drop detection data size, event.dataLen:%{public}u", event[0].dataLen);
         return;
     }
-    if (mCameraService != nullptr && mCameraService->cameraHostManager_) {
-        mCameraService->cameraHostManager_->NotifyDeviceStateChangeInfo(DeviceType::FALLING_TYPE,
-            FallingState::FALLING_STATE);
+    {
+        std::lock_guard<std::mutex> lock(g_cameraServiceInstanceMutex);
+        g_cameraServiceInstance->cameraHostManager_->NotifyDeviceStateChangeInfo(
+            DeviceType::FALLING_TYPE, FallingState::FALLING_STATE);
     }
 }
 
@@ -1109,29 +1183,60 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
     }
 
     std::vector<StreamInfo_V1_1> allStreamInfos;
-    std::shared_ptr<OHOS::Camera::CameraMetadata> settings;
 
     if (activeDevice != nullptr) {
-        settings = activeDevice->CloneCachedSettings();
-        cameraRestoreParam->SetSetting(settings);
-        UpdateSkinSmoothSetting(settings, effectParam.skinSmoothLevel);
-        UpdateFaceSlenderSetting(settings, effectParam.faceSlender);
-        UpdateSkinToneSetting(settings, effectParam.skinTone);
+        std::shared_ptr<OHOS::Camera::CameraMetadata> defaultSettings = CreateDefaultSettingForRestore(activeDevice);
+        UpdateSkinSmoothSetting(defaultSettings, effectParam.skinSmoothLevel);
+        UpdateFaceSlenderSetting(defaultSettings, effectParam.faceSlender);
+        UpdateSkinToneSetting(defaultSettings, effectParam.skinTone);
+        cameraRestoreParam->SetSetting(defaultSettings);
     }
-    if (activeDevice == nullptr || settings == nullptr) {
+    if (activeDevice == nullptr) {
         return CAMERA_UNKNOWN_ERROR;
     }
     MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore param %d", effectParam.skinSmoothLevel);
-    rc = captureSession->GetCurrentStreamInfos(activeDevice, settings, allStreamInfos);
+    rc = captureSession->GetCurrentStreamInfos(allStreamInfos);
     if (rc != CAMERA_OK) {
         MEDIA_ERR_LOG("HCaptureSession::SaveCurrentParamForRestore() Failed to get streams info, %{public}d", rc);
         return rc;
+    }
+    for (auto& info : allStreamInfos) {
+        MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore: streamId is:%{public}d", info.v1_0.streamId_);
     }
     cameraRestoreParam->SetStreamInfo(allStreamInfos);
     cameraRestoreParam->SetCameraOpMode(captureSession->GetopMode());
     cameraHostManager_->SaveRestoreParam(cameraRestoreParam);
     MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore end");
     return rc;
+}
+
+std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSettingForRestore(
+    sptr<HCameraDevice> activeDevice)
+{
+    constexpr int32_t DEFAULT_ITEMS = 1;
+    constexpr int32_t DEFAULT_DATA_LENGTH = 1;
+    auto defaultSettings = std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    float zoomRatio = 1.0f;
+    int32_t count = 1;
+    int32_t ret = 0;
+    camera_metadata_item_t item;
+    defaultSettings->addEntry(OHOS_CONTROL_ZOOM_RATIO, &zoomRatio, count);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> currentSetting = activeDevice->CloneCachedSettings();
+    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_FPS_RANGES, &item);
+    if (ret == CAM_META_SUCCESS) {
+        uint32_t fpscount = item.count;
+        std::vector<int32_t> fpsRange;
+        for (uint32_t i = 0; i < fpscount; i++) {
+            fpsRange.push_back(*(item.data.i32 + i));
+        }
+        defaultSettings->addEntry(OHOS_CONTROL_FPS_RANGES, fpsRange.data(), fpscount);
+    }
+    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        uint8_t stabilizationMode_ = item.data.u8[0];
+        defaultSettings->addEntry(OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &stabilizationMode_, count);
+    }
+    return defaultSettings;
 }
 
 int32_t HCameraService::UpdateSkinSmoothSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata,

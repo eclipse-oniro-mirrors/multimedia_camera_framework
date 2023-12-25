@@ -14,6 +14,7 @@
  */
 
 #include "input/camera_manager_napi.h"
+#include "camera_napi_utils.h"
 #include "input/camera_napi.h"
 #include "input/camera_pre_launch_config_napi.h"
 #include "mode/portrait_session_napi.h"
@@ -105,6 +106,7 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isCameraMuteSupported", IsCameraMuteSupported),
         DECLARE_NAPI_FUNCTION("muteCamera", MuteCamera),
         DECLARE_NAPI_FUNCTION("prelaunch", PrelaunchCamera),
+        DECLARE_NAPI_FUNCTION("preSwitchCamera", PreSwitchCamera),
         DECLARE_NAPI_FUNCTION("isPrelaunchSupported", IsPrelaunchSupported),
         DECLARE_NAPI_FUNCTION("setPrelaunchConfig", SetPrelaunchConfig),
         DECLARE_NAPI_FUNCTION("createCameraInput", CreateCameraInputInstance),
@@ -767,7 +769,7 @@ napi_value CameraManagerNapi::GetSupportedOutputCapability(napi_env env, napi_ca
                 break;
         }
     }
-    
+
     return result;
 }
 
@@ -931,13 +933,13 @@ napi_value CameraManagerNapi::RegisterCallback(napi_env env, napi_value jsThis,
         }
         cameraManagerNapi->cameraMuteListener_->SaveCallbackReference(eventType, callback, isOnce);
     } else if ((eventType.compare("torchStatusChange") == 0)) {
-        if (cameraManagerNapi->torchListener_ == nullptr) {
-            shared_ptr<TorchListenerNapi> torchListener =
-                    make_shared<TorchListenerNapi>(env);
-            cameraManagerNapi->torchListener_ = torchListener;
+        shared_ptr<TorchListenerNapi> torchListener =
+            std::static_pointer_cast<TorchListenerNapi>(cameraManagerNapi->cameraManager_->GetTorchListener());
+        if (torchListener == nullptr) {
+            torchListener = make_shared<TorchListenerNapi>(env);
             cameraManagerNapi->cameraManager_->RegisterTorchListener(torchListener);
         }
-        cameraManagerNapi->torchListener_->SaveCallbackReference(eventType, callback, isOnce);
+        torchListener->SaveCallbackReference(eventType, callback, isOnce);
     } else {
         MEDIA_ERR_LOG("Incorrect callback event type provided for camera manager!");
         if (callbackRef != nullptr) {
@@ -974,10 +976,12 @@ napi_value CameraManagerNapi::UnregisterCallback(napi_env env, napi_value jsThis
             cameraManagerNapi->cameraMuteListener_->RemoveCallbackRef(env, callback);
         }
     } else if (eventType.compare("torchStatusChange") == 0) {
-        if (cameraManagerNapi->torchListener_ == nullptr) {
+        shared_ptr<TorchListenerNapi> torchListener =
+            std::static_pointer_cast<TorchListenerNapi>(cameraManagerNapi->cameraManager_->GetTorchListener());
+        if (torchListener == nullptr) {
             MEDIA_ERR_LOG("torchListener_ is null");
         } else {
-            cameraManagerNapi->torchListener_->RemoveCallbackRef(env, callback);
+            torchListener->RemoveCallbackRef(env, callback);
         }
     } else {
         MEDIA_ERR_LOG("off no such supported!");
@@ -1119,6 +1123,31 @@ napi_value CameraManagerNapi::PrelaunchCamera(napi_env env, napi_callback_info i
         return result;
     }
     MEDIA_INFO_LOG("PrelaunchCamera");
+    napi_get_undefined(env, &result);
+    return result;
+}
+
+napi_value CameraManagerNapi::PreSwitchCamera(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("PreSwitchCamera is called");
+    if (!CameraNapiUtils::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi PreSwitchCamera is called!");
+        return nullptr;
+    }
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = { 0 };
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc < ARGS_TWO, "requires 1 parameters maximum");
+    char buffer[PATH_MAX];
+    size_t length;
+    napi_get_value_string_utf8(env, argv[ARGS_ZERO], buffer, PATH_MAX, &length);
+    int32_t retCode = CameraManager::GetInstance()->PreSwitchCamera(std::string(buffer));
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
+        return result;
+    }
+    MEDIA_INFO_LOG("PreSwitchCamera");
     napi_get_undefined(env, &result);
     return result;
 }

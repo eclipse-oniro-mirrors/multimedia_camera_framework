@@ -26,21 +26,5 @@ namespace CameraStandard {
 VideoSession::~VideoSession()
 {
 }
-
-bool VideoSession::CanAddInput(sptr<CaptureInput> &input)
-{
-    // todo: get Profile passed to createOutput and compare with OutputCapability
-    // if present in capability return ok.
-    MEDIA_INFO_LOG("Enter Into VideoSession::CanAddInput");
-    return true;
-}
-
-bool VideoSession::CanAddOutput(sptr<CaptureOutput> &output)
-{
-    // todo: get Profile passed to createOutput and compare with OutputCapability
-    // if present in capability return ok.
-    MEDIA_INFO_LOG("Enter Into VideoSession::CanAddOutput");
-    return true;
-}
 } // namespace CameraStandard
 } // namespace OHOS
