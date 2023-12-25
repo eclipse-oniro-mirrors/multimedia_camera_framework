@@ -148,6 +148,8 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<s
 {
     vector<shared_ptr<CameraMetaInfo>> choosedCameras;
     for (auto& camera : cameraInfos) {
+        MEDIA_INFO_LOG("ChooseDeFaultCameras camera ID:%s, Camera position:%{public}d, Connection Type:%{public}d",
+            camera->cameraId.c_str(), camera->position, camera->connectionType);
         if (any_of(choosedCameras.begin(), choosedCameras.end(),
             [camera](const auto& defaultCamera) {
                 return (camera->connectionType != OHOS_CAMERA_CONNECTION_TYPE_USB_PLUGIN &&
@@ -158,6 +160,7 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<s
             MEDIA_INFO_LOG("ChooseDeFaultCameras alreadly has default camera");
         } else {
             choosedCameras.emplace_back(camera);
+            MEDIA_INFO_LOG("add camera ID:%{public}s", camera->cameraId.c_str());
         }
     }
     return choosedCameras;
