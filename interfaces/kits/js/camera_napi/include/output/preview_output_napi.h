@@ -118,9 +118,9 @@ private:
     static napi_value PreviewOutputNapiConstructor(napi_env env, napi_callback_info info);
     static napi_status CreateAsyncTask(napi_env env, napi_value resource,
         std::unique_ptr<OHOS::CameraStandard::PreviewOutputAsyncContext>& asyncContext);
-    static napi_value RegisterCallback(
-        napi_env env, napi_value jsThis, const string& eventType, napi_value callback, bool isOnce);
-    static napi_value UnregisterCallback(napi_env env, napi_value jsThis, const string& eventType, napi_value callback);
+    napi_value RegisterCallback(
+        napi_env env, napi_value jsThis, const string& eventType, napi_value callback, bool isOnce) override;
+    napi_value UnregisterCallback(napi_env env, napi_value jsThis, const string& eventType, napi_value callback) override;
     napi_env env_;
     napi_ref wrapper_;
     sptr<PreviewOutput> previewOutput_;

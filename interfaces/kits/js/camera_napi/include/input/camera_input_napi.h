@@ -88,10 +88,10 @@ private:
     static void CameraInputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value CameraInputNapiConstructor(napi_env env, napi_callback_info info);
 
-    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value* argv, bool isOnce);
-    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value* argv);
+    napi_value RegisterCallback(napi_env env, napi_value jsThis,
+        const std::string& eventType, napi_value* argv, bool isOnce) override;
+    napi_value UnregisterCallback(napi_env env, napi_value jsThis,
+        const std::string& eventType, napi_value* argv) override;
     napi_env env_;
     napi_ref wrapper_;
     std::string cameraId_;

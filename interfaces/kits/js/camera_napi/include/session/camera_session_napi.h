@@ -261,10 +261,10 @@ public:
     static const std::vector<napi_property_descriptor> color_management_props;
 
 private:
-    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value callback, bool isOnce);
-    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value callback);
+    napi_value RegisterCallback(napi_env env, napi_value jsThis,
+        const std::string& eventType, napi_value callback, bool isOnce) override;
+    napi_value UnregisterCallback(napi_env env, napi_value jsThis,
+        const std::string& eventType, napi_value callback) override;
 };
 
 struct CameraSessionAsyncContext : public AsyncContext {

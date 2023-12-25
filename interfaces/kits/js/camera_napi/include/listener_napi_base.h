@@ -28,10 +28,10 @@ public:
     static napi_value Off(napi_env env, napi_callback_info info);
 
 private:
-    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string &eventType, napi_value callback, bool isOnce);
-    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value callback);
+    virtual napi_value RegisterCallback(napi_env env, napi_value jsThis,
+        const std::string &eventType, napi_value callback, bool isOnce) = 0;
+    virtual static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
+        const std::string& eventType, napi_value callback) = 0;
 };
 } // namespace CameraStandard
 } // namespace OHOS

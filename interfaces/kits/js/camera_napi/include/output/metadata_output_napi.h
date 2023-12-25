@@ -96,10 +96,10 @@ private:
     static napi_value SetCapturingMetadataObjectTypes(napi_env env, napi_callback_info info);
     static napi_value Start(napi_env env, napi_callback_info info);
     static napi_value Stop(napi_env env, napi_callback_info info);
-    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value callback, bool isOnce);
-    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value callback);
+    napi_value RegisterCallback(napi_env env, napi_value jsThis,
+        const std::string& eventType, napi_value callback, bool isOnce) override;
+    napi_value UnregisterCallback(napi_env env, napi_value jsThis,
+        const std::string& eventType, napi_value callback) override;
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<MetadataOutput> sMetadataOutput_;
