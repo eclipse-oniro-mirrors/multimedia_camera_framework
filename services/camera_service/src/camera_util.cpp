@@ -18,17 +18,22 @@
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "privacy_kit.h"
+#include "display/composer/v1_1/display_composer_type.h"
 #include "iservice_registry.h"
 #include "bundle_mgr_interface.h"
 #include "system_ability_definition.h"
 
 namespace OHOS {
 namespace CameraStandard {
+using namespace OHOS::HDI::Display::Composer::V1_1;
+
 std::unordered_map<int32_t, int32_t> g_cameraToPixelFormat = {
-    {OHOS_CAMERA_FORMAT_RGBA_8888, PIXEL_FMT_RGBA_8888},
-    {OHOS_CAMERA_FORMAT_YCBCR_420_888, PIXEL_FMT_YCBCR_420_SP},
-    {OHOS_CAMERA_FORMAT_YCRCB_420_SP, PIXEL_FMT_YCRCB_420_SP},
-    {OHOS_CAMERA_FORMAT_JPEG, PIXEL_FMT_YCRCB_420_SP},
+    {OHOS_CAMERA_FORMAT_RGBA_8888, OHOS::HDI::Display::Composer::V1_1::PIXEL_FMT_RGBA_8888},
+    {OHOS_CAMERA_FORMAT_YCBCR_420_888, OHOS::HDI::Display::Composer::V1_1::PIXEL_FMT_YCBCR_420_SP},
+    {OHOS_CAMERA_FORMAT_YCRCB_420_SP, OHOS::HDI::Display::Composer::V1_1::PIXEL_FMT_YCRCB_420_SP},
+    {OHOS_CAMERA_FORMAT_JPEG, OHOS::HDI::Display::Composer::V1_1::PIXEL_FMT_YCRCB_420_SP},
+    {OHOS_CAMERA_FORMAT_YCBCR_P010, OHOS::HDI::Display::Composer::V1_1::PIXEL_FMT_YCBCR_P010},
+    {OHOS_CAMERA_FORMAT_YCRCB_P010, OHOS::HDI::Display::Composer::V1_1::PIXEL_FMT_YCRCB_P010}
 };
 
 std::map<int, std::string> g_cameraPos = {
