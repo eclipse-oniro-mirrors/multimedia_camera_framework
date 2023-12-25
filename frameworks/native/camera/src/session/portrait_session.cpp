@@ -30,7 +30,7 @@ const std::unordered_map<camera_portrait_effect_type_t, PortraitEffect> Portrait
     {OHOS_CAMERA_PORTRAIT_HEART, HEART},
     {OHOS_CAMERA_PORTRAIT_ROTATED, ROTATED},
     {OHOS_CAMERA_PORTRAIT_STUDIO, STUDIO},
-    {OHOS_CAMERA_PORTRAIT_THEATOR, THEATOR},
+    {OHOS_CAMERA_PORTRAIT_THEATOR, THEATER},
 };
 
 const std::unordered_map<PortraitEffect, camera_portrait_effect_type_t> PortraitSession::fwToMetaPortraitEffect_ = {
@@ -39,7 +39,7 @@ const std::unordered_map<PortraitEffect, camera_portrait_effect_type_t> Portrait
     {HEART, OHOS_CAMERA_PORTRAIT_HEART},
     {ROTATED, OHOS_CAMERA_PORTRAIT_ROTATED},
     {STUDIO, OHOS_CAMERA_PORTRAIT_STUDIO},
-    {THEATOR, OHOS_CAMERA_PORTRAIT_THEATOR},
+    {THEATER, OHOS_CAMERA_PORTRAIT_THEATOR},
 };
 
 PortraitSession::~PortraitSession()

@@ -35,7 +35,7 @@ enum PortraitEffect {
     HEART = 2,
     ROTATED = 3,
     STUDIO = 4,
-    THEATOR = 5,
+    THEATER = 5,
 };
 
 class CaptureOutput;
