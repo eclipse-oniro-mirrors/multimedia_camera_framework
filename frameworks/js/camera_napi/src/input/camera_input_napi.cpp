@@ -74,7 +74,7 @@ void ErrorCallbackListener::OnErrorCallback(const int32_t errorType, const int32
     napi_value callback = nullptr;
     napi_value retVal;
     napi_value propValue;
-    for (auto it = cameraInputErrorCbList_.begin(); it != cameraInputErrorCbList_.end();) {
+    for (auto it = baseCbList_.begin(); it != baseCbList_.end();) {
         napi_env env = (*it)->env_;
         napi_create_int32(env, errorType, &propValue);
         napi_create_object(env, &result);
@@ -85,7 +85,7 @@ void ErrorCallbackListener::OnErrorCallback(const int32_t errorType, const int32
             napi_status status = napi_delete_reference((*it)->env_, (*it)->cb_);
             CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
             (*it)->cb_ = nullptr;
-            cameraInputErrorCbList_.erase(it);
+            baseCbList_.erase(it);
         } else {
             it++;
         }
@@ -96,58 +96,6 @@ void ErrorCallbackListener::OnError(const int32_t errorType, const int32_t error
 {
     MEDIA_DEBUG_LOG("OnError is called!, errorType: %{public}d", errorType);
     OnErrorCallbackAsync(errorType, errorMsg);
-}
-
-void ErrorCallbackListener::SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    napi_ref callbackRef = nullptr;
-    const int32_t refCount = 1;
-
-    for (auto it = cameraInputErrorCbList_.begin(); it != cameraInputErrorCbList_.end(); ++it) {
-        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
-        CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
-    }
-    napi_status status = napi_create_reference(env_, callback, refCount, &callbackRef);
-    CHECK_AND_RETURN_LOG(status == napi_ok && callbackRef != nullptr,
-        "ErrorCallbackListener: creating reference for callback fail");
-    std::shared_ptr<AutoRef> cb = std::make_shared<AutoRef>(env_, callbackRef, isOnce);
-    cameraInputErrorCbList_.push_back(cb);
-    MEDIA_INFO_LOG("Save callback reference success, cameraInput callback list size [%{public}zu]",
-        cameraInputErrorCbList_.size());
-}
-
-void ErrorCallbackListener::RemoveCallbackRef(napi_env env, napi_value callback)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    if (callback == nullptr) {
-        MEDIA_INFO_LOG("RemoveCallbackReference: js callback is nullptr, remove all callback reference");
-        RemoveAllCallbacks();
-        return;
-    }
-    for (auto it = cameraInputErrorCbList_.begin(); it != cameraInputErrorCbList_.end(); ++it) {
-        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
-        if (isSameCallback) {
-            MEDIA_INFO_LOG("RemoveCallbackReference: find js callback, delete it");
-            napi_status status = napi_delete_reference(env, (*it)->cb_);
-            (*it)->cb_ = nullptr;
-            CHECK_AND_RETURN_LOG(status == napi_ok, "RemoveCallbackReference: delete reference for callback fail");
-            cameraInputErrorCbList_.erase(it);
-            return;
-        }
-    }
-    MEDIA_INFO_LOG("RemoveCallbackReference: js callback no find");
-}
-
-void ErrorCallbackListener::RemoveAllCallbacks()
-{
-    for (auto it = cameraInputErrorCbList_.begin(); it != cameraInputErrorCbList_.end(); ++it) {
-        napi_delete_reference(env_, (*it)->cb_);
-        (*it)->cb_ = nullptr;
-    }
-    cameraInputErrorCbList_.clear();
-    MEDIA_INFO_LOG("RemoveAllCallbacks: remove all js callbacks success");
 }
 
 CameraInputNapi::CameraInputNapi() : env_(nullptr), wrapper_(nullptr)
@@ -490,143 +438,57 @@ napi_value CameraInputNapi::Release(napi_env env, napi_callback_info info)
 }
 
 napi_value CameraInputNapi::RegisterCallback(napi_env env, napi_value jsThis,
-    const string &eventType, napi_value* argv, bool isOnce)
+    const string &eventType, napi_value callback, bool isOnce)
 {
-    MEDIA_DEBUG_LOG("RegisterCallback is called");
+    const int32_t refCount = 1;
     napi_value undefinedResult = nullptr;
-    napi_get_undefined(env, &undefinedResult);
     napi_status status;
+    napi_get_undefined(env, &undefinedResult);
     CameraInputNapi* cameraInputNapi = nullptr;
-    CameraDeviceNapi* cameraDeviceNapi = nullptr;
+    napi_ref callbackRef;
     status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&cameraInputNapi));
     NAPI_ASSERT(env, status == napi_ok && cameraInputNapi != nullptr, "Failed to retrieve cameraInput napi instance.");
     NAPI_ASSERT(env, cameraInputNapi->cameraInput_ != nullptr, "cameraInput instance is null.");
-    status = napi_unwrap(env, argv[PARAM1], reinterpret_cast<void**>(&cameraDeviceNapi));
-    NAPI_ASSERT(env, status == napi_ok && cameraDeviceNapi != nullptr, "Could not able to read cameraDevice argument!");
-
-    if (eventType.compare("error") == 0) {
-        // Set callback for error
+    napi_create_reference(env, callback, refCount, &callbackRef);
+    if ((eventType.compare("error")==0)) {
         shared_ptr<ErrorCallbackListener> errorCallback =
             std::static_pointer_cast<ErrorCallbackListener>(cameraInputNapi->cameraInput_->GetErrorCallback());
         if (errorCallback == nullptr) {
             errorCallback = make_shared<ErrorCallbackListener>(env);
-            cameraInputNapi->cameraInput_->SetErrorCallback( );
+            cameraInputNapi->cameraInput_->SetErrorCallback(errorCallback);
         }
-        errorCallback->SaveCallbackReference(eventType, argv[PARAM2], isOnce);
-
+        errorCallback->SaveCallbackReference(callback, isOnce);
     } else {
         MEDIA_ERR_LOG("Incorrect callback event type provided for camera input!");
+        if (callbackRef != nullptr) {
+            napi_delete_reference(env, callbackRef);
+        }
     }
     return undefinedResult;
 }
 
 napi_value CameraInputNapi::UnregisterCallback(napi_env env, napi_value jsThis,
-    const std::string &eventType, napi_value* argv)
+    const std::string& eventType, napi_value callback)
 {
-    MEDIA_DEBUG_LOG("UnregisterCallback is called");
     napi_value undefinedResult = nullptr;
     napi_get_undefined(env, &undefinedResult);
-    CameraDeviceNapi* cameraDeviceNapi = nullptr;
-    napi_status status = napi_unwrap(env, argv[PARAM1], reinterpret_cast<void**>(&cameraDeviceNapi));
-    NAPI_ASSERT(env, status == napi_ok && cameraDeviceNapi != nullptr, "Could not able to read cameraDevice argument!");
     CameraInputNapi *cameraInputNapi = nullptr;
-    status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&cameraInputNapi));
-    NAPI_ASSERT(env, status == napi_ok && cameraInputNapi != nullptr, "Failed to retrieve cameraInput napi instance.");
-    NAPI_ASSERT(env, cameraInputNapi->cameraInput_ != nullptr, "cameraInput instance is null.");
+    napi_status status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&cameraInputNapi));
+    NAPI_ASSERT(env, status == napi_ok && cameraInputNapi != nullptr, "Failed to retrieve camera input napi instance.");
+    NAPI_ASSERT(env, cameraInputNapi->cameraInput_ != nullptr, "camera input instance is null.");
 
     if (eventType.compare("error") == 0) {
-        // unset callback for error
         shared_ptr<ErrorCallbackListener> errorCallback =
             std::static_pointer_cast<ErrorCallbackListener>(cameraInputNapi->cameraInput_->GetErrorCallback());
         if (errorCallback == nullptr) {
             MEDIA_ERR_LOG("errorCallback is null");
         } else {
-            errorCallback->RemoveCallbackRef(env, argv[PARAM2]);
+            errorCallback->RemoveCallbackRef(env, callback);
         }
     } else {
-        MEDIA_ERR_LOG("Incorrect callback event type provided for camera input!");
+        MEDIA_ERR_LOG("off no such supported!");
     }
     return undefinedResult;
-}
-
-napi_value CameraInputNapi::On(napi_env env, napi_callback_info info)
-{
-    MEDIA_INFO_LOG("On is called");
-    CAMERA_SYNC_TRACE;
-    napi_value undefinedResult = nullptr;
-    size_t argCount = ARGS_THREE;
-    napi_value argv[ARGS_THREE] = {nullptr, nullptr, nullptr};
-    napi_value thisVar = nullptr;
-
-    napi_get_undefined(env, &undefinedResult);
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argCount, argv, thisVar);
-
-    NAPI_ASSERT(env, argCount == ARGS_THREE, "requires 3 parameters");
-
-    napi_valuetype valueType = napi_undefined;
-    if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string
-        || napi_typeof(env, argv[PARAM1], &valueType) != napi_ok || valueType != napi_object
-        || napi_typeof(env, argv[PARAM2], &valueType) != napi_ok || valueType != napi_function) {
-        return undefinedResult;
-    }
-
-    std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[PARAM0]);
-    MEDIA_INFO_LOG("On eventType: %{public}s", eventType.c_str());
-    return RegisterCallback(env, thisVar, eventType, argv, false);
-}
-
-napi_value CameraInputNapi::Once(napi_env env, napi_callback_info info)
-{
-    MEDIA_INFO_LOG("Once is called");
-    CAMERA_SYNC_TRACE;
-    napi_value undefinedResult = nullptr;
-    size_t argCount = ARGS_THREE;
-    napi_value argv[ARGS_THREE] = {nullptr, nullptr, nullptr};
-    napi_value thisVar = nullptr;
-
-    napi_get_undefined(env, &undefinedResult);
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argCount, argv, thisVar);
-
-    NAPI_ASSERT(env, argCount == ARGS_THREE, "requires 3 parameters");
-
-    napi_valuetype valueType = napi_undefined;
-    if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string
-        || napi_typeof(env, argv[PARAM1], &valueType) != napi_ok || valueType != napi_object
-        || napi_typeof(env, argv[PARAM2], &valueType) != napi_ok || valueType != napi_function) {
-        return undefinedResult;
-    }
-
-    std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[PARAM0]);
-    MEDIA_INFO_LOG("Once eventType: %{public}s", eventType.c_str());
-    return RegisterCallback(env, thisVar, eventType, argv, true);
-}
-
-napi_value CameraInputNapi::Off(napi_env env, napi_callback_info info)
-{
-    napi_value undefinedResult = nullptr;
-    napi_get_undefined(env, &undefinedResult);
-    const size_t minArgCount = 2;
-    size_t argc = ARGS_THREE;
-    napi_value argv[ARGS_THREE] = {nullptr, nullptr, nullptr};
-    napi_value thisVar = nullptr;
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    if (argc < minArgCount) {
-        return undefinedResult;
-    }
-
-    napi_valuetype valueType = napi_undefined;
-    if ((napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string
-        || napi_typeof(env, argv[PARAM1], &valueType) != napi_ok || valueType != napi_object
-        || (argc > minArgCount &&
-            (napi_typeof(env, argv[PARAM2], &valueType) != napi_ok || valueType != napi_function)))) {
-        return undefinedResult;
-    }
-
-    std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[PARAM0]);
-    MEDIA_INFO_LOG("Off eventType: %{public}s", eventType.c_str());
-    return UnregisterCallback(env, thisVar, eventType, argv);
 }
 } // namespace CameraStandard
 } // namespace OHOS

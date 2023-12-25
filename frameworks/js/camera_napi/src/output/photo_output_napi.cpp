@@ -33,7 +33,7 @@ thread_local sptr<Surface> PhotoOutputNapi::sPhotoSurface_ = nullptr;
 thread_local uint32_t PhotoOutputNapi::photoOutputTaskId = CAMERA_PHOTO_OUTPUT_TASKID;
 static uv_sem_t g_captureStartSem;
 static bool g_isSemInited;
-PhotoListener::PhotoListener(napi_env env, const sptr<Surface> photoSurface) : env_(env), photoSurface_(photoSurface)
+PhotoListener::PhotoListener(napi_env env, const sptr<Surface> photoSurface) : ListenerBase(env), photoSurface_(photoSurface)
 {
     if (bufferProcessor_ == nullptr && photoSurface != nullptr) {
         bufferProcessor_ = std::make_shared<PhotoBufferProcessor> (photoSurface);
@@ -75,14 +75,14 @@ void PhotoListener::UpdateJSCallback(sptr<Surface> photoSurface) const
     }
     MEDIA_INFO_LOG("enter ImageNapi::Create end");
     result[1] = valueParam;
-    for (auto it = photoListenerList_.begin(); it != photoListenerList_.end();) {
+    for (auto it = baseCbList_.begin(); it != baseCbList_.end();) {
         napi_get_reference_value((*it)->env_, (*it)->cb_, &callback);
         napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
         if ((*it)->isOnce_) {
             napi_status status = napi_delete_reference((*it)->env_, (*it)->cb_);
             CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
             (*it)->cb_ = nullptr;
-            photoListenerList_.erase(it);
+            baseCbList_.erase(it);
         } else {
             it++;
         }
@@ -122,58 +122,6 @@ void PhotoListener::UpdateJSCallbackAsync(sptr<Surface> photoSurface) const
     } else {
         callbackInfo.release();
     }
-}
-
-void PhotoListener::SaveCallbackReference(napi_value callback, bool isOnce)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    napi_ref callbackRef = nullptr;
-    const int32_t refCount = 1;
-
-    for (auto it = photoListenerList_.begin(); it != photoListenerList_.end(); ++it) {
-        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
-        CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
-    }
-    napi_status status = napi_create_reference(env_, callback, refCount, &callbackRef);
-    CHECK_AND_RETURN_LOG(status == napi_ok && callbackRef != nullptr,
-                         "ErrorCallbackListener: creating reference for callback fail");
-    std::shared_ptr<AutoRef> cb = std::make_shared<AutoRef>(env_, callbackRef, isOnce);
-    photoListenerList_.push_back(cb);
-    MEDIA_DEBUG_LOG("Save callback reference success, PhotoListener list size [%{public}zu]",
-        photoListenerList_.size());
-}
-
-void PhotoListener::RemoveCallbackRef(napi_env env, napi_value callback)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    if (callback == nullptr) {
-        MEDIA_INFO_LOG("RemoveCallbackReference: js callback is nullptr, remove all callback reference");
-        RemoveAllCallbacks();
-        return;
-    }
-    for (auto it = photoListenerList_.begin(); it != photoListenerList_.end(); ++it) {
-        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
-        if (isSameCallback) {
-            MEDIA_INFO_LOG("RemoveCallbackReference: find js callback, delete it");
-            napi_status status = napi_delete_reference(env, (*it)->cb_);
-            (*it)->cb_ = nullptr;
-            CHECK_AND_RETURN_LOG(status == napi_ok, "RemoveCallbackReference: delete reference for callback fail");
-            photoListenerList_.erase(it);
-            return;
-        }
-    }
-    MEDIA_INFO_LOG("RemoveCallbackReference: js callback no find");
-}
-
-void PhotoListener::RemoveAllCallbacks()
-{
-    for (auto it = photoListenerList_.begin(); it != photoListenerList_.end(); ++it) {
-        napi_delete_reference(env_, (*it)->cb_);
-        (*it)->cb_ = nullptr;
-    }
-    photoListenerList_.clear();
-    MEDIA_INFO_LOG("RemoveAllCallbacks: remove all js callbacks success");
 }
 
 PhotoOutputCallback::PhotoOutputCallback(napi_env env) : env_(env) {}
@@ -527,7 +475,7 @@ void PhotoOutputCallback::UpdateJSCallback(PhotoOutputEventType eventType, const
 }
 
 ThumbnailListener::ThumbnailListener(napi_env env, const sptr<PhotoOutput> photoOutput)
-    : env_(env), photoOutput_(photoOutput) {}
+    : ListenerBase(env), photoOutput_(photoOutput) {}
 
 void ThumbnailListener::OnBufferAvailable()
 {
@@ -579,14 +527,14 @@ void ThumbnailListener::UpdateJSCallback(sptr<PhotoOutput> photoOutput) const
     }
     MEDIA_INFO_LOG("enter ImageNapi::Create end");
     result[1] = valueParam;
-    for (auto it = thumbnailListenerList_.begin(); it != thumbnailListenerList_.end();) {
+    for (auto it = baseCbList_.begin(); it != baseCbList_.end();) {
         napi_get_reference_value((*it)->env_, (*it)->cb_, &callback);
         napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
         if ((*it)->isOnce_) {
             napi_status status = napi_delete_reference((*it)->env_, (*it)->cb_);
             CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
             (*it)->cb_ = nullptr;
-            thumbnailListenerList_.erase(it);
+            baseCbList_.erase(it);
         } else {
             it++;
         }
@@ -627,58 +575,6 @@ void ThumbnailListener::UpdateJSCallbackAsync(sptr<PhotoOutput> photoOutput) con
     } else {
         callbackInfo.release();
     }
-}
-
-void ThumbnailListener::SaveCallbackReference(napi_value callback, bool isOnce)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    napi_ref callbackRef = nullptr;
-    const int32_t refCount = 1;
-
-    for (auto it = thumbnailListenerList_.begin(); it != thumbnailListenerList_.end(); ++it) {
-        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
-        CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
-    }
-    napi_status status = napi_create_reference(env_, callback, refCount, &callbackRef);
-    CHECK_AND_RETURN_LOG(status == napi_ok && callbackRef != nullptr,
-                         "ErrorCallbackListener: creating reference for callback fail");
-    std::shared_ptr<AutoRef> cb = std::make_shared<AutoRef>(env_, callbackRef, isOnce);
-    thumbnailListenerList_.push_back(cb);
-    MEDIA_DEBUG_LOG("Save callback reference success, thumbnailListener list size [%{public}zu]",
-        thumbnailListenerList_.size());
-}
-
-void ThumbnailListener::RemoveCallbackRef(napi_env env, napi_value callback)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    if (callback == nullptr) {
-        MEDIA_INFO_LOG("RemoveCallbackReference: js callback is nullptr, remove all callback reference");
-        RemoveAllCallbacks();
-        return;
-    }
-    for (auto it = thumbnailListenerList_.begin(); it != thumbnailListenerList_.end(); ++it) {
-        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
-        if (isSameCallback) {
-            MEDIA_INFO_LOG("RemoveCallbackReference: find js callback, delete it");
-            napi_status status = napi_delete_reference(env, (*it)->cb_);
-            (*it)->cb_ = nullptr;
-            CHECK_AND_RETURN_LOG(status == napi_ok, "RemoveCallbackReference: delete reference for callback fail");
-            thumbnailListenerList_.erase(it);
-            return;
-        }
-    }
-    MEDIA_INFO_LOG("RemoveCallbackReference: js callback no find");
-}
-
-void ThumbnailListener::RemoveAllCallbacks()
-{
-    for (auto it = thumbnailListenerList_.begin(); it != thumbnailListenerList_.end(); ++it) {
-        napi_delete_reference(env_, (*it)->cb_);
-        (*it)->cb_ = nullptr;
-    }
-    thumbnailListenerList_.clear();
-    MEDIA_INFO_LOG("RemoveAllCallbacks: remove all js callbacks success");
 }
 
 PhotoOutputNapi::PhotoOutputNapi() : env_(nullptr), wrapper_(nullptr)
@@ -1439,6 +1335,10 @@ napi_value PhotoOutputNapi::UnregisterCallback(napi_env env, napi_value jsThis,
         }
         if (photoOutputNapi->thumbnailListener_ != nullptr) {
             photoOutputNapi->thumbnailListener_->RemoveCallbackRef(env, callback);
+        }
+    } else if (eventType == OHOS::CameraStandard::captureRegisterName) {
+        if (photoOutputNapi->photoListener_ != nullptr) {
+            photoOutputNapi->photoListener_->RemoveCallbackRef(env, callback);
         }
     } else if (!eventType.empty()) {
         shared_ptr<PhotoOutputCallback> photoOutputCallback =

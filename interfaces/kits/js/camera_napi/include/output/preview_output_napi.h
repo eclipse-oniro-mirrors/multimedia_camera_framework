@@ -94,7 +94,7 @@ struct SketchStatusCallbackInfo {
     {}
 };
 
-class PreviewOutputNapi : public CameraOutputNapi : public ListenerNapiBase {
+class PreviewOutputNapi : public CameraOutputNapi, public ListenerNapiBase {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreatePreviewOutput(napi_env env, Profile& profile, std::string surfaceId);

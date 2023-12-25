@@ -28,40 +28,27 @@ namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_METADATA_OUTPUT_NAPI_CLASS_NAME[] = "MetadataOutput";
 
-class MetadataOutputCallback : public MetadataObjectCallback,
+class MetadataOutputCallback : public MetadataObjectCallback, public ListenerBase,
     public std::enable_shared_from_this<MetadataOutputCallback> {
 public:
     explicit MetadataOutputCallback(napi_env env);
     virtual ~MetadataOutputCallback() = default;
 
     void OnMetadataObjectsAvailable(std::vector<sptr<MetadataObject>> metaObjects) const override;
-    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
-    void RemoveCallbackRef(napi_env env, napi_value callback);
-    void RemoveAllCallbacks();
-
 private:
     void OnMetadataObjectsAvailableCallback(const std::vector<sptr<MetadataObject>> metadataObjList) const;
-    std::mutex metadataOutputCbMutex_;
-    napi_env env_;
-    mutable std::vector<std::shared_ptr<AutoRef>> metadataOutputCbList_;
 };
 
-class MetadataStateCallbackNapi : public MetadataStateCallback,
+class MetadataStateCallbackNapi : public MetadataStateCallback, public ListenerBase,
     public std::enable_shared_from_this<MetadataStateCallbackNapi> {
 public:
     explicit MetadataStateCallbackNapi(napi_env env);
     virtual ~MetadataStateCallbackNapi() = default;
-    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
-    void RemoveCallbackRef(napi_env env, napi_value args);
-    void RemoveAllCallbacks();
     void OnError(const int32_t errorType) const override;
 
 private:
     void OnErrorCallback(const int32_t errorType) const;
     void OnErrorCallbackAsync(const int32_t errorType) const;
-    std::mutex metadataStateCbMutex_;
-    napi_env env_;
-    mutable std::vector<std::shared_ptr<AutoRef>> metadataStateCbList_;
 };
 
 struct MetadataOutputCallbackInfo {

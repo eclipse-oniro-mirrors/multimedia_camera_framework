@@ -31,9 +31,6 @@
 #include "output/video_output_napi.h"
 #include "session/camera_session_napi.h"
 #include "camera_napi_utils.h"
-#include "camera_manager_callback_napi.h"
-#include "camera_mute_listener_napi.h"
-#include "torch_listener_napi.h"
 #include "listener_napi_base.h"
 
 namespace OHOS {
@@ -42,6 +39,72 @@ static const char CAMERA_MANAGER_NAPI_CLASS_NAME[] = "CameraManager";
 
 enum CameraManagerAsyncCallbackModes {
     CREATE_DEFERRED_PREVIEW_OUTPUT_ASYNC_CALLBACK,
+};
+
+class CameraManagerCallbackNapi : public CameraManagerCallback, public ListenerBase,
+    public std::enable_shared_from_this<CameraManagerCallbackNapi> {
+public:
+    explicit CameraManagerCallbackNapi(napi_env env);
+    virtual ~CameraManagerCallbackNapi();
+    void OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const override;
+    void OnFlashlightStatusChanged(const std::string &cameraID, const FlashStatus flashStatus) const override;
+
+private:
+    void OnCameraStatusCallback(const CameraStatusInfo &cameraStatusInfo) const;
+    void OnCameraStatusCallbackAsync(const CameraStatusInfo &cameraStatusInfo) const;
+};
+
+struct CameraStatusCallbackInfo {
+    CameraStatusInfo info_;
+    weak_ptr<const CameraManagerCallbackNapi> listener_;
+    CameraStatusCallbackInfo(CameraStatusInfo info, shared_ptr<const CameraManagerCallbackNapi> listener)
+        : info_(info), listener_(listener) {}
+    ~CameraStatusCallbackInfo()
+    {
+        listener_.reset();
+    }
+};
+
+class CameraMuteListenerNapi : public CameraMuteListener, public ListenerBase {
+public:
+    explicit CameraMuteListenerNapi(napi_env env);
+    virtual ~CameraMuteListenerNapi();
+    void OnCameraMute(bool muteMode) const override;
+private:
+    void OnCameraMuteCallback(bool muteMode) const;
+    void OnCameraMuteCallbackAsync(bool muteMode) const;
+};
+
+struct CameraMuteCallbackInfo {
+    bool muteMode_;
+    const CameraMuteListenerNapi* listener_;
+    CameraMuteCallbackInfo(bool muteMode, const CameraMuteListenerNapi* listener)
+        : muteMode_(muteMode), listener_(listener) {}
+    ~CameraMuteCallbackInfo()
+    {
+        listener_ = nullptr;
+    }
+};
+
+class TorchListenerNapi : public TorchListener, public ListenerBase {
+public:
+    explicit TorchListenerNapi(napi_env env);
+    virtual ~TorchListenerNapi();
+    void OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) const override;
+private:
+    void OnTorchStatusChangeCallback(const TorchStatusInfo &torchStatusInfo) const;
+    void OnTorchStatusChangeCallbackAsync(const TorchStatusInfo &torchStatusInfo) const;
+};
+
+struct TorchStatusChangeCallbackInfo {
+    TorchStatusInfo info_;
+    const TorchListenerNapi* listener_;
+    TorchStatusChangeCallbackInfo(TorchStatusInfo info, const TorchListenerNapi* listener)
+        : info_(info), listener_(listener) {}
+    ~TorchStatusChangeCallbackInfo()
+    {
+        listener_ = nullptr;
+    }
 };
 
 class CameraManagerNapi : public ListenerNapiBase  {
