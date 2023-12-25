@@ -33,7 +33,9 @@ thread_local sptr<Surface> PhotoOutputNapi::sPhotoSurface_ = nullptr;
 thread_local uint32_t PhotoOutputNapi::photoOutputTaskId = CAMERA_PHOTO_OUTPUT_TASKID;
 static uv_sem_t g_captureStartSem;
 static bool g_isSemInited;
-PhotoListener::PhotoListener(napi_env env, const sptr<Surface> photoSurface) : ListenerBase(env), photoSurface_(photoSurface)
+PhotoListener::PhotoListener(napi_env env, const sptr<Surface> photoSurface) : ListenerBase(env),
+    photoSurface_(photoSurface)
+    
 {
     if (bufferProcessor_ == nullptr && photoSurface != nullptr) {
         bufferProcessor_ = std::make_shared<PhotoBufferProcessor> (photoSurface);

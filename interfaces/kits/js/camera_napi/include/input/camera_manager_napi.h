@@ -31,7 +31,7 @@
 #include "output/video_output_napi.h"
 #include "session/camera_session_napi.h"
 #include "camera_napi_utils.h"
-#include "listener_napi_base.h"
+#include "listener_base.h"
 
 namespace OHOS {
 namespace CameraStandard {

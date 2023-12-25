@@ -322,7 +322,6 @@ private:
 template <class T>
 class ListenerTemplate {
 public:
-    // 模板方法，可以接受不同的类，调用其 RegisterCallback 静态方法
     static napi_value On(napi_env env, napi_callback_info info)
     {
         MEDIA_INFO_LOG("On is called");

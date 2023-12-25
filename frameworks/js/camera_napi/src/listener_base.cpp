@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 #include <uv.h>
-#include "listener_napi_base.h"
+#include "listener_base.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -38,7 +38,7 @@ void ListenerBase::SaveCallbackReference(napi_value callback, bool isOnce)
         CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
     }
     napi_status status = napi_create_reference(env_, callback, refCount, &callbackRef);
-    CHECK_AND_RETURN_LOG(status == napi_ok && callbackRef != nullptr, "ListenerBase: creating reference for callback fail");
+    CHECK_AND_RETURN_LOG(status == napi_ok && callbackRef != nullptr, "creating reference for callback fail");
     std::shared_ptr<AutoRef> cb = std::make_shared<AutoRef>(env_, callbackRef, isOnce);
     baseCbList_.push_back(cb);
     MEDIA_DEBUG_LOG("Save callback reference success, base callback list size [%{public}zu]", baseCbList_.size());

@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef LISTENER_NAPI_BASE_H_
-#define LISTENER_NAPI_BASE_H_
+#ifndef LISTENER_BASE_H_
+#define LISTENER_BASE_H_
 
 #include "camera_napi_utils.h"
 namespace OHOS {
@@ -35,4 +35,4 @@ protected:
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif /* LISTENER_NAPI_BASE_H_ */
+#endif /* LISTENER_BASE_H_ */

@@ -22,7 +22,7 @@
 #include "input/camera_manager.h"
 #include "surface_utils.h"
 
-#include "listener_napi_base.h"
+#include "listener_base.h"
 namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_VIDEO_OUTPUT_NAPI_CLASS_NAME[] = "VideoOutput";

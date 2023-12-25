@@ -22,7 +22,7 @@
 #include "hilog/log.h"
 #include "camera_napi_utils.h"
 
-#include "listener_napi_base.h"
+#include "listener_base.h"
 
 namespace OHOS {
 namespace CameraStandard {

@@ -120,7 +120,7 @@
                   "camera_session_napi.h",
                   "camera_napi_utils.h",
                   "native_module_ohos_camera.h",
-                  "listener_napi_base.h",
+                  "listener_base.h",
                   "metadata_output_napi.h",
                   "metadata_object_napi.h"
                 ]

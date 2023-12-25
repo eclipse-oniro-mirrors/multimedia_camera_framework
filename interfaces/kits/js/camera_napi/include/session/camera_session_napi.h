@@ -29,7 +29,7 @@
 #include "output/video_output_napi.h"
 #include "output/metadata_output_napi.h"
 
-#include "listener_napi_base.h"
+#include "listener_base.h"
 namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_SESSION_NAPI_CLASS_NAME[] = "CaptureSession";

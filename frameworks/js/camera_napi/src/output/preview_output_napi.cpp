@@ -867,6 +867,7 @@ napi_value PreviewOutputNapi::RegisterCallback(
     status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&previewOutputNapi));
     NAPI_ASSERT(
         env, status == napi_ok && previewOutputNapi != nullptr, "Failed to retrieve previewOutputNapi instance.");
+    sptr<PreviewOutput> previewOutput = previewOutputNapi->previewOutput_;
     if (!eventType.empty()) {
         auto eventTypeEnum = PreviewOutputEventTypeHelper.ToEnum(eventType);
         if (eventTypeEnum == PreviewOutputEventType::SKETCH_STATUS_CHANGED && !CameraNapiUtils::CheckSystemApp(env)) {
@@ -874,13 +875,13 @@ napi_value PreviewOutputNapi::RegisterCallback(
             return undefinedResult;
         }
         std::shared_ptr<PreviewOutputCallback> previewCallback =
-            std::static_pointer_cast<PreviewOutputCallback>(previewOutputNapi->previewOutput_->GetApplicationCallback());
+            std::static_pointer_cast<PreviewOutputCallback>(previewOutput->GetApplicationCallback());
         if (previewCallback == nullptr) {
             previewCallback = make_shared<PreviewOutputCallback>(env);
-            previewOutputNapi->previewOutput_->SetCallback(previewCallback);
+            previewOutput->SetCallback(previewCallback);
         }
         previewCallback->SaveCallbackReference(eventType, callback, isOnce);
-        previewOutputNapi->previewOutput_->OnNativeRegisterCallback(eventType);
+        previewOutput->OnNativeRegisterCallback(eventType);
     } else {
         MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
     }
@@ -899,6 +900,7 @@ napi_value PreviewOutputNapi::UnregisterCallback(
     NAPI_ASSERT(
         env, status == napi_ok && previewOutputNapi != nullptr, "Failed to retrieve previewOutputNapi instance.");
     NAPI_ASSERT(env, previewOutputNapi->previewOutput_ != nullptr, "previewOutput is null.");
+    sptr<PreviewOutput> previewOutput = previewOutputNapi->previewOutput_;
     if (!eventType.empty()) {
         auto eventTypeEnum = PreviewOutputEventTypeHelper.ToEnum(eventType);
         if (eventTypeEnum == PreviewOutputEventType::SKETCH_STATUS_CHANGED && !CameraNapiUtils::CheckSystemApp(env)) {
@@ -906,12 +908,12 @@ napi_value PreviewOutputNapi::UnregisterCallback(
             return undefinedResult;
         }
         std::shared_ptr<PreviewOutputCallback> previewCallback =
-            std::static_pointer_cast<PreviewOutputCallback>(previewOutputNapi->previewOutput_->GetApplicationCallback());
+            std::static_pointer_cast<PreviewOutputCallback>(previewOutput->GetApplicationCallback());
         if (previewCallback == nullptr) {
             MEDIA_ERR_LOG("previewCallback is null");
         } else {
             previewCallback->RemoveCallbackRef(env, callback, eventType);
-            previewOutputNapi->previewOutput_->OnNativeUnregisterCallback(eventType);
+            previewOutput->OnNativeUnregisterCallback(eventType);
         }
     } else {
         MEDIA_ERR_LOG("Incorrect callback event type provided for camera input!");

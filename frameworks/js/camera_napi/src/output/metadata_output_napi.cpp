@@ -698,9 +698,10 @@ napi_value MetadataOutputNapi::UnregisterCallback(napi_env env, napi_value jsThi
     MetadataOutputNapi* metadataOutputNapi = nullptr;
     napi_status status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&metadataOutputNapi));
     NAPI_ASSERT(env, status == napi_ok && metadataOutputNapi != nullptr, "Failed to metadataOutput napi instance.");
+    sptr<MetadataOutput> metadataOutput = metadataOutputNapi->metadataOutput_;
     if (eventType.compare("metadataObjectsAvailable") == 0) {
         shared_ptr<MetadataOutputCallback> metadataOutputCallback =
-            std::static_pointer_cast<MetadataOutputCallback>(metadataOutputNapi->metadataOutput_->GetAppObjectCallback());
+            std::static_pointer_cast<MetadataOutputCallback>(metadataOutput->GetAppObjectCallback());
         if (metadataOutputCallback == nullptr) {
             MEDIA_ERR_LOG("metadataOutputCallback is null");
         } else {
@@ -708,7 +709,7 @@ napi_value MetadataOutputNapi::UnregisterCallback(napi_env env, napi_value jsThi
         }
     } else if (eventType.compare("error") == 0) {
         shared_ptr<MetadataStateCallbackNapi> metadataStateCallback =
-            std::static_pointer_cast<MetadataStateCallbackNapi>(metadataOutputNapi->metadataOutput_->GetAppStateCallback());
+            std::static_pointer_cast<MetadataStateCallbackNapi>(metadataOutput->GetAppStateCallback());
         if (metadataStateCallback == nullptr) {
             MEDIA_ERR_LOG("metadataStateCallback is null");
         } else {
@@ -729,21 +730,22 @@ napi_value MetadataOutputNapi::RegisterCallback(napi_env env, napi_value jsThis,
     napi_status status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&metadataOutputNapi));
     NAPI_ASSERT(env, status == napi_ok && metadataOutputNapi != nullptr,
         "Failed to retrieve MetadataOutputNapi instance.");
-    NAPI_ASSERT(env, metadataOutputNapi->metadataOutput_ != nullptr, "metadataOutput instance is null.");
+    sptr<MetadataOutput> metadataOutput = metadataOutputNapi->metadataOutput_;
+    NAPI_ASSERT(env, metadataOutput != nullptr, "metadataOutput instance is null.");
     if (eventType.compare("metadataObjectsAvailable") == 0) {
         shared_ptr<MetadataOutputCallback> metadataOutputCallback =
-            std::static_pointer_cast<MetadataOutputCallback>(metadataOutputNapi->metadataOutput_->GetAppObjectCallback());
+            std::static_pointer_cast<MetadataOutputCallback>(metadataOutput->GetAppObjectCallback());
         if (metadataOutputCallback == nullptr) {
             metadataOutputCallback = make_shared<MetadataOutputCallback>(env);
-            metadataOutputNapi->metadataOutput_->SetCallback(metadataOutputCallback);
+            metadataOutput->SetCallback(metadataOutputCallback);
         }
         metadataOutputCallback->SaveCallbackReference(callback, isOnce);
     } else if (eventType.compare("error") == 0) {
         shared_ptr<MetadataStateCallbackNapi> metadataStateCallback =
-            std::static_pointer_cast<MetadataStateCallbackNapi>(metadataOutputNapi->metadataOutput_->GetAppStateCallback());
+            std::static_pointer_cast<MetadataStateCallbackNapi>(metadataOutput->GetAppStateCallback());
         if (metadataStateCallback == nullptr) {
             metadataStateCallback = make_shared<MetadataStateCallbackNapi>(env);
-            metadataOutputNapi->metadataOutput_->SetCallback(metadataStateCallback);
+            metadataOutput->SetCallback(metadataStateCallback);
         }
         metadataStateCallback->SaveCallbackReference(callback, isOnce);
     } else {

@@ -25,7 +25,7 @@
 #include "output/preview_output.h"
 #include "surface_utils.h"
 
-#include "listener_napi_base.h"
+#include "listener_base.h"
 
 namespace OHOS {
 namespace CameraStandard {
