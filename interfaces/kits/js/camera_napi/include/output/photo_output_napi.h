@@ -156,7 +156,7 @@ struct PhotoListenerInfo {
         : photoSurface_(photoSurface), listener_(listener) {}
 };
 
-class PhotoOutputNapi : public ListenerNapiBase {
+class PhotoOutputNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreatePhotoOutput(napi_env env, Profile &profile, std::string surfaceId);
@@ -170,6 +170,13 @@ public:
     static napi_value EnableQuickThumbnail(napi_env env, napi_callback_info info);
     static napi_value IsQuickThumbnailSupported(napi_env env, napi_callback_info info);
     static bool IsPhotoOutput(napi_env env, napi_value obj);
+    static napi_value On(napi_env env, napi_callback_info info);
+    static napi_value Once(napi_env env, napi_callback_info info);
+    static napi_value Off(napi_env env, napi_callback_info info);
+    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
+        const std::string &eventType, napi_value callback, bool isOnce);
+    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
+        const std::string &eventType, napi_value callback);
     PhotoOutputNapi();
     ~PhotoOutputNapi();
 
@@ -178,10 +185,6 @@ public:
 private:
     static void PhotoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value PhotoOutputNapiConstructor(napi_env env, napi_callback_info info);
-    napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string& callbackName, napi_value callback) override;
-    napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string& callbackName, napi_value callback, bool isOnce) override;
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<PhotoOutput> sPhotoOutput_;

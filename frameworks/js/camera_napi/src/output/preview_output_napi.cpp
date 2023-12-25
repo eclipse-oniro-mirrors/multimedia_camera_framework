@@ -1057,5 +1057,20 @@ napi_value PreviewOutputNapi::AttachSketchSurface(napi_env env, napi_callback_in
     MEDIA_DEBUG_LOG("PreviewOutputNapi::EnableSketch success");
     return result;
 }
+
+napi_value PreviewOutputNapi::On(napi_env env, napi_callback_info info)
+{
+    return ListenerTemplate<PreviewOutputNapi>::On(env, info);
+}
+
+napi_value PreviewOutputNapi::Once(napi_env env, napi_callback_info info)
+{
+    return ListenerTemplate<PreviewOutputNapi>::Once(env, info);
+}
+
+napi_value PreviewOutputNapi::Off(napi_env env, napi_callback_info info)
+{
+    return ListenerTemplate<PreviewOutputNapi>::Off(env, info);
+}
 } // namespace CameraStandard
 } // namespace OHOS

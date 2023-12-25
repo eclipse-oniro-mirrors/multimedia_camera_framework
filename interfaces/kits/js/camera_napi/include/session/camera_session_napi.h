@@ -135,7 +135,7 @@ struct SmoothZoomCallbackInfo {
         : duration_(duration), listener_(listener) {}
 };
 
-class CameraSessionNapi : public ListenerNapiBase {
+class CameraSessionNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateCameraSession(napi_env env);
@@ -206,6 +206,15 @@ public:
     static napi_value LockForControl(napi_env env, napi_callback_info info);
     static napi_value UnlockForControl(napi_env env, napi_callback_info info);
 
+    static napi_value On(napi_env env, napi_callback_info info);
+    static napi_value Once(napi_env env, napi_callback_info info);
+    static napi_value Off(napi_env env, napi_callback_info info);
+
+    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
+        const std::string &eventType, napi_value callback, bool isOnce);
+    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
+        const std::string &eventType, napi_value callback);
+
     napi_env env_;
     napi_ref wrapper_;
     sptr<CaptureSession> cameraSession_;
@@ -224,12 +233,6 @@ public:
     static const std::vector<napi_property_descriptor> color_effect_props;
     static const std::vector<napi_property_descriptor> macro_props;
     static const std::vector<napi_property_descriptor> color_management_props;
-
-private:
-    napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value callback, bool isOnce) override;
-    napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value callback) override;
 };
 
 struct CameraSessionAsyncContext : public AsyncContext {

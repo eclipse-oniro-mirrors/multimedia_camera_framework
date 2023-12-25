@@ -107,7 +107,7 @@ struct TorchStatusChangeCallbackInfo {
     }
 };
 
-class CameraManagerNapi : public ListenerNapiBase  {
+class CameraManagerNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateCameraManager(napi_env env);
@@ -133,16 +133,20 @@ public:
     static napi_value IsTorchModeSupported(napi_env env, napi_callback_info info);
     static napi_value GetTorchMode(napi_env env, napi_callback_info info);
     static napi_value SetTorchMode(napi_env env, napi_callback_info info);
+    static napi_value On(napi_env env, napi_callback_info info);
+    static napi_value Once(napi_env env, napi_callback_info info);
+    static napi_value Off(napi_env env, napi_callback_info info);
+    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
+        const std::string &eventType, napi_value callback, bool isOnce);
+    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
+        const std::string &eventType, napi_value callback);
     CameraManagerNapi();
     ~CameraManagerNapi();
 
 private:
     static void CameraManagerNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value CameraManagerNapiConstructor(napi_env env, napi_callback_info info);
-    napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string &eventType, napi_value callback, bool isOnce) override;
-    napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string &eventType, napi_value callback) override;
+
     static thread_local napi_ref sConstructor_;
 
     napi_env env_;

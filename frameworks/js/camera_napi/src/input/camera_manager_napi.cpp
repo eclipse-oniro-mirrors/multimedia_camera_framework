@@ -72,7 +72,7 @@ void CameraManagerCallbackNapi::OnCameraStatusCallbackAsync(const CameraStatusIn
     if (ret) {
         MEDIA_ERR_LOG("failed to execute work");
         delete work;
-    } else {
+    } else {   
         callbackInfo.release();
     }
 }
@@ -1473,6 +1473,21 @@ napi_value CameraManagerNapi::SetTorchMode(napi_env env, napi_callback_info info
         MEDIA_ERR_LOG("GetTorchMode call Failed!");
     }
     return result;
+}
+
+napi_value CameraManagerNapi::On(napi_env env, napi_callback_info info)
+{
+    return ListenerTemplate<CameraManagerNapi>::On(env, info);
+}
+
+napi_value CameraManagerNapi::Once(napi_env env, napi_callback_info info)
+{
+    return ListenerTemplate<CameraManagerNapi>::Once(env, info);
+}
+
+napi_value CameraManagerNapi::Off(napi_env env, napi_callback_info info)
+{
+    return ListenerTemplate<CameraManagerNapi>::Off(env, info);
 }
 } // namespace CameraStandard
 } // namespace OHOS

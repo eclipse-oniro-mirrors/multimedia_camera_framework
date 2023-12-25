@@ -24,7 +24,6 @@
 #include "input/camera_input.h"
 
 #include "input/camera_size_napi.h"
-#include "listener_napi_base.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -39,15 +38,21 @@ enum InputAsyncCallbackModes {
 
 struct CameraInputAsyncContext;
 
-class ErrorCallbackListener : public ErrorCallback, public ListenerBase, std::enable_shared_from_this<ErrorCallbackListener> {
+class ErrorCallbackListener : public ErrorCallback, public std::enable_shared_from_this<ErrorCallbackListener> {
 public:
-    ErrorCallbackListener(napi_env env) : ListenerBase(env) {}
+    ErrorCallbackListener(napi_env env) : env_(env) {}
     ~ErrorCallbackListener() = default;
+    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
+    void RemoveCallbackRef(napi_env env, napi_value args);
+    void RemoveAllCallbacks();
     void OnError(const int32_t errorType, const int32_t errorMsg) const override;
 
 private:
     void OnErrorCallback(const int32_t errorType, const int32_t errorMsg) const;
     void OnErrorCallbackAsync(const int32_t errorType, const int32_t errorMsg) const;
+    std::mutex mutex_;
+    napi_env env_;
+    mutable std::vector<std::shared_ptr<AutoRef>> cameraInputErrorCbList_;
 };
 
 struct ErrorCallbackInfo {
@@ -58,7 +63,7 @@ struct ErrorCallbackInfo {
         : errorType_(errorType), errorMsg_(errorMsg), listener_(listener) {}
 };
 
-class CameraInputNapi : public ListenerNapiBase {
+class CameraInputNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateCameraInput(napi_env env, sptr<CameraInput> cameraInput);
@@ -73,19 +78,23 @@ public:
     static napi_value Open(napi_env env, napi_callback_info info);
     static napi_value Close(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
+    static napi_value On(napi_env env, napi_callback_info info);
+    static napi_value Off(napi_env env, napi_callback_info info);
+    static napi_value Once(napi_env env, napi_callback_info info);
     sptr<CameraInput> GetCameraInput();
     sptr<CameraInput> cameraInput_;
 private:
     static void CameraInputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value CameraInputNapiConstructor(napi_env env, napi_callback_info info);
 
-    napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value* argv, bool isOnce) override;
-    napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value* argv) override;
+    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
+        const std::string& eventType, napi_value* argv, bool isOnce);
+    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
+        const std::string& eventType, napi_value* argv);
     napi_env env_;
     napi_ref wrapper_;
     std::string cameraId_;
+    shared_ptr<ErrorCallbackListener> errorCallback_;
 
     static thread_local napi_ref sConstructor_;
     static thread_local std::string sCameraId_;

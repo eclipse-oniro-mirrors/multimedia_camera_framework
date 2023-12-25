@@ -1172,7 +1172,7 @@ declare namespace camera {
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 10
      */
-    on(type: 'error', callback: ErrorCallback): void;
+    on(type: 'error', camera: CameraDevice, callback: ErrorCallback): void;
 
     /**
      * Unsubscribes from error events.
@@ -1183,7 +1183,7 @@ declare namespace camera {
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 10
      */
-    off(type: 'error', callback?: ErrorCallback): void;
+    off(type: 'error', camera: CameraDevice, callback?: ErrorCallback): void;
   }
 
   /**

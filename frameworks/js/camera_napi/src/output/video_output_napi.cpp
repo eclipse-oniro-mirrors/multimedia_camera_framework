@@ -832,5 +832,20 @@ napi_value VideoOutputNapi::UnregisterCallback(napi_env env, napi_value jsThis,
     }
     return undefinedResult;
 }
+
+napi_value VideoOutputNapi::On(napi_env env, napi_callback_info info)
+{
+    return ListenerTemplate<VideoOutputNapi>::On(env, info);
+}
+
+napi_value VideoOutputNapi::Once(napi_env env, napi_callback_info info)
+{
+    return ListenerTemplate<VideoOutputNapi>::Once(env, info);
+}
+
+napi_value VideoOutputNapi::Off(napi_env env, napi_callback_info info)
+{
+    return ListenerTemplate<VideoOutputNapi>::Off(env, info);
+}
 } // namespace CameraStandard
 } // namespace OHOS

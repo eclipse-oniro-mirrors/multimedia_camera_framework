@@ -751,5 +751,20 @@ napi_value MetadataOutputNapi::RegisterCallback(napi_env env, napi_value jsThis,
     }
     return undefinedResult;
 }
+
+napi_value MetadataOutputNapi::On(napi_env env, napi_callback_info info)
+{
+    return ListenerTemplate<MetadataOutputNapi>::On(env, info);
+}
+
+napi_value MetadataOutputNapi::Once(napi_env env, napi_callback_info info)
+{
+    return ListenerTemplate<MetadataOutputNapi>::Once(env, info);
+}
+
+napi_value MetadataOutputNapi::Off(napi_env env, napi_callback_info info)
+{
+    return ListenerTemplate<MetadataOutputNapi>::Off(env, info);
+}
 } // namespace CameraStandard
 } // namespace OHOS

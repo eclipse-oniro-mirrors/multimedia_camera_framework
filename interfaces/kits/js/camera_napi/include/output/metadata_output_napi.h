@@ -66,7 +66,7 @@ struct MetadataStateCallbackInfo {
         : errorType_(errorType), listener_(listener) {}
 };
 
-class MetadataOutputNapi : public ListenerNapiBase{
+class MetadataOutputNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateMetadataOutput(napi_env env);
@@ -74,6 +74,13 @@ public:
     ~MetadataOutputNapi();
     sptr<MetadataOutput> GetMetadataOutput();
     static bool IsMetadataOutput(napi_env env, napi_value obj);
+    static napi_value On(napi_env env, napi_callback_info info);
+    static napi_value Once(napi_env env, napi_callback_info info);
+    static napi_value Off(napi_env env, napi_callback_info info);
+    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
+        const std::string &eventType, napi_value callback, bool isOnce);
+    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
+        const std::string &eventType, napi_value callback);
 
 private:
     static void MetadataOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
@@ -83,10 +90,6 @@ private:
     static napi_value SetCapturingMetadataObjectTypes(napi_env env, napi_callback_info info);
     static napi_value Start(napi_env env, napi_callback_info info);
     static napi_value Stop(napi_env env, napi_callback_info info);
-    napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value callback, bool isOnce) override;
-    napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value callback) override;
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<MetadataOutput> sMetadataOutput_;

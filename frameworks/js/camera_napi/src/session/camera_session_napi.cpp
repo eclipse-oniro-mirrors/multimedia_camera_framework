@@ -2585,5 +2585,20 @@ napi_value CameraSessionNapi::UnregisterCallback(
     }
     return undefinedResult;
 }
+
+napi_value CameraSessionNapi::On(napi_env env, napi_callback_info info)
+{
+    return ListenerTemplate<CameraSessionNapi>::On(env, info);
+}
+
+napi_value CameraSessionNapi::Once(napi_env env, napi_callback_info info)
+{
+    return ListenerTemplate<CameraSessionNapi>::Once(env, info);
+}
+
+napi_value CameraSessionNapi::Off(napi_env env, napi_callback_info info)
+{
+    return ListenerTemplate<CameraSessionNapi>::Off(env, info);
+}
 } // namespace CameraStandard
 } // namespace OHOS
