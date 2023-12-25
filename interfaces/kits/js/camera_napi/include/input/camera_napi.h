@@ -96,7 +96,7 @@ static const std::unordered_map<std::string, int32_t> mapConnectionType = {
     {"CAMERA_CONNECTION_BUILT_IN", 0},
     {"CAMERA_CONNECTION_USB_PLUGIN", 1},
     {"CAMERA_CONNECTION_REMOTE", 2},
-};S
+};
 
 static const std::unordered_map<std::string, int32_t> mapCameraFormat = {
     {"CAMERA_FORMAT_YUV_420_SP", CameraFormat::CAMERA_FORMAT_YUV_420_SP},
