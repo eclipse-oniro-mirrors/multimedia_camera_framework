@@ -729,6 +729,26 @@ std::shared_ptr<SessionCallback> CaptureSession::GetApplicationCallback()
     return appCallback_;
 }
 
+std::shared_ptr<ExposureCallback> CaptureSession::GetExposureCallback()
+{
+    return exposureCallback_;
+}
+
+std::shared_ptr<FocusCallback> CaptureSession::GetFocusCallback()
+{
+    return focusCallback_;
+}
+
+std::shared_ptr<MacroStatusCallback> CaptureSession::GetMacroStatusCallback()
+{
+    return macroStatusCallback_;
+}
+
+std::shared_ptr<SmoothZoomCallback> CaptureSession::GetSmoothZoomCallback()
+{
+    return smoothZoomCallback_;
+}
+
 int32_t CaptureSession::UpdateSetting(std::shared_ptr<Camera::CameraMetadata> changedMetadata)
 {
     CAMERA_SYNC_TRACE;

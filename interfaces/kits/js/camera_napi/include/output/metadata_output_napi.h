@@ -22,44 +22,33 @@
 #include "hilog/log.h"
 #include "camera_napi_utils.h"
 
+#include "listener_base.h"
+
 namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_METADATA_OUTPUT_NAPI_CLASS_NAME[] = "MetadataOutput";
 
-class MetadataOutputCallback : public MetadataObjectCallback,
+class MetadataOutputCallback : public MetadataObjectCallback, public ListenerBase,
     public std::enable_shared_from_this<MetadataOutputCallback> {
 public:
     explicit MetadataOutputCallback(napi_env env);
     virtual ~MetadataOutputCallback() = default;
 
     void OnMetadataObjectsAvailable(std::vector<sptr<MetadataObject>> metaObjects) const override;
-    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
-    void RemoveCallbackRef(napi_env env, napi_value callback);
-    void RemoveAllCallbacks();
-
 private:
     void OnMetadataObjectsAvailableCallback(const std::vector<sptr<MetadataObject>> metadataObjList) const;
-    std::mutex metadataOutputCbMutex_;
-    napi_env env_;
-    mutable std::vector<std::shared_ptr<AutoRef>> metadataOutputCbList_;
 };
 
-class MetadataStateCallbackNapi : public MetadataStateCallback,
+class MetadataStateCallbackNapi : public MetadataStateCallback, public ListenerBase,
     public std::enable_shared_from_this<MetadataStateCallbackNapi> {
 public:
     explicit MetadataStateCallbackNapi(napi_env env);
     virtual ~MetadataStateCallbackNapi() = default;
-    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
-    void RemoveCallbackRef(napi_env env, napi_value args);
-    void RemoveAllCallbacks();
     void OnError(const int32_t errorType) const override;
 
 private:
     void OnErrorCallback(const int32_t errorType) const;
     void OnErrorCallbackAsync(const int32_t errorType) const;
-    std::mutex metadataStateCbMutex_;
-    napi_env env_;
-    mutable std::vector<std::shared_ptr<AutoRef>> metadataStateCbList_;
 };
 
 struct MetadataOutputCallbackInfo {
@@ -85,6 +74,13 @@ public:
     ~MetadataOutputNapi();
     sptr<MetadataOutput> GetMetadataOutput();
     static bool IsMetadataOutput(napi_env env, napi_value obj);
+    static napi_value On(napi_env env, napi_callback_info info);
+    static napi_value Once(napi_env env, napi_callback_info info);
+    static napi_value Off(napi_env env, napi_callback_info info);
+    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
+        const std::string &eventType, napi_value callback, bool isOnce);
+    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
+        const std::string &eventType, napi_value callback);
 
 private:
     static void MetadataOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
@@ -94,13 +90,6 @@ private:
     static napi_value SetCapturingMetadataObjectTypes(napi_env env, napi_callback_info info);
     static napi_value Start(napi_env env, napi_callback_info info);
     static napi_value Stop(napi_env env, napi_callback_info info);
-    static napi_value On(napi_env env, napi_callback_info info);
-    static napi_value Off(napi_env env, napi_callback_info info);
-    static napi_value Once(napi_env env, napi_callback_info info);
-    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value callback, bool isOnce);
-    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value callback);
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<MetadataOutput> sMetadataOutput_;
@@ -108,8 +97,6 @@ private:
     napi_env env_;
     napi_ref wrapper_;
     sptr<MetadataOutput> metadataOutput_;
-    std::shared_ptr<MetadataOutputCallback> metadataOutputCallback_ = nullptr;
-    std::shared_ptr<MetadataStateCallbackNapi> metadataStateCallback_;
 };
 
 struct MetadataOutputAsyncContext : public AsyncContext {

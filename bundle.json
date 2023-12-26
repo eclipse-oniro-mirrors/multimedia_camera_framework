@@ -112,7 +112,6 @@
                 "header_files": [
                   "camera_info_napi.h",
                   "camera_input_napi.h",
-                  "camera_manager_callback_napi.h",
                   "camera_manager_napi.h",
                   "camera_napi.h",
                   "camera_size_napi.h",
@@ -122,6 +121,7 @@
                   "camera_session_napi.h",
                   "camera_napi_utils.h",
                   "native_module_ohos_camera.h",
+                  "listener_base.h",
                   "metadata_output_napi.h",
                   "metadata_object_napi.h"
                 ]

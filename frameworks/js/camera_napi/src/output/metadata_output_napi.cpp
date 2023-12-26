@@ -28,7 +28,7 @@ namespace {
 thread_local napi_ref MetadataOutputNapi::sConstructor_ = nullptr;
 thread_local sptr<MetadataOutput> MetadataOutputNapi::sMetadataOutput_ = nullptr;
 
-MetadataOutputCallback::MetadataOutputCallback(napi_env env) : env_(env) {}
+MetadataOutputCallback::MetadataOutputCallback(napi_env env) : ListenerBase(env) {}
 
 void MetadataOutputCallback::OnMetadataObjectsAvailable(const std::vector<sptr<MetadataObject>> metadataObjList) const
 {
@@ -104,7 +104,7 @@ void MetadataOutputCallback::OnMetadataObjectsAvailableCallback(
     napi_value callback = nullptr;
     napi_value retVal;
     CAMERA_NAPI_CHECK_AND_RETURN_LOG((metadataObjList.size() != 0), "callback metadataObjList is null");
-    for (auto it = metadataOutputCbList_.begin(); it != metadataOutputCbList_.end();) {
+    for (auto it = baseCbList_.begin(); it != baseCbList_.end();) {
         napi_env env = (*it)->env_;
         napi_get_undefined(env, &result[PARAM0]);
         napi_get_undefined(env, &result[PARAM1]);
@@ -123,67 +123,14 @@ void MetadataOutputCallback::OnMetadataObjectsAvailableCallback(
             napi_status status = napi_delete_reference((*it)->env_, (*it)->cb_);
             CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
             (*it)->cb_ = nullptr;
-            metadataOutputCbList_.erase(it);
+            baseCbList_.erase(it);
         } else {
             it++;
         }
     }
 }
 
-void MetadataOutputCallback::SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce)
-{
-    std::lock_guard<std::mutex> lock(metadataOutputCbMutex_);
-    for (auto it = metadataOutputCbList_.begin(); it != metadataOutputCbList_.end(); ++it) {
-        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
-        CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
-    }
-    napi_ref callbackRef = nullptr;
-    const int32_t refCount = 1;
-    napi_status status = napi_create_reference(env_, callback, refCount, &callbackRef);
-    CHECK_AND_RETURN_LOG(status == napi_ok && callbackRef != nullptr,
-                         "CameraManagerCallbackNapi: creating reference for callback fail");
-    std::shared_ptr<AutoRef> cb = std::make_shared<AutoRef>(env_, callbackRef, isOnce);
-    metadataOutputCbList_.push_back(cb);
-    MEDIA_INFO_LOG("Save callback reference success, metadataOutput callback list size [%{public}zu]",
-                   metadataOutputCbList_.size());
-}
-
-void MetadataOutputCallback::RemoveCallbackRef(napi_env env, napi_value callback)
-{
-    std::lock_guard<std::mutex> lock(metadataOutputCbMutex_);
-
-    if (callback == nullptr) {
-        MEDIA_INFO_LOG("RemoveCallbackReference: js callback is nullptr, remove all callback reference");
-        RemoveAllCallbacks();
-        return;
-    }
-    for (auto it = metadataOutputCbList_.begin(); it != metadataOutputCbList_.end(); ++it) {
-        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
-        if (isSameCallback) {
-            MEDIA_INFO_LOG("RemoveCallbackReference: find js callback, delete it");
-            napi_delete_reference(env, (*it)->cb_);
-            (*it)->cb_ = nullptr;
-            metadataOutputCbList_.erase(it);
-            return;
-        }
-    }
-    MEDIA_INFO_LOG("RemoveCallbackReference: js callback no find");
-}
-
-void MetadataOutputCallback::RemoveAllCallbacks()
-{
-    for (auto it = metadataOutputCbList_.begin(); it != metadataOutputCbList_.end(); ++it) {
-        napi_status ret = napi_delete_reference(env_, (*it)->cb_);
-        if (ret != napi_ok) {
-            MEDIA_ERR_LOG("RemoveAllCallbackReferences: napi_delete_reference err.");
-        }
-        (*it)->cb_ = nullptr;
-    }
-    metadataOutputCbList_.clear();
-    MEDIA_INFO_LOG("RemoveAllCallbacks: remove all js callbacks success");
-}
-
-MetadataStateCallbackNapi::MetadataStateCallbackNapi(napi_env env) : env_(env) {}
+MetadataStateCallbackNapi::MetadataStateCallbackNapi(napi_env env) : ListenerBase(env) {}
 
 void MetadataStateCallbackNapi::OnErrorCallbackAsync(const int32_t errorType) const
 {
@@ -229,7 +176,7 @@ void MetadataStateCallbackNapi::OnErrorCallback(const int32_t errorType) const
     napi_value retVal;
     napi_value propValue;
 
-    for (auto it = metadataStateCbList_.begin(); it != metadataStateCbList_.end();) {
+    for (auto it = baseCbList_.begin(); it != baseCbList_.end();) {
         napi_env env = (*it)->env_;
         napi_create_int32(env, errorType, &propValue);
         napi_create_object(env, &result);
@@ -240,7 +187,7 @@ void MetadataStateCallbackNapi::OnErrorCallback(const int32_t errorType) const
             napi_status status = napi_delete_reference((*it)->env_, (*it)->cb_);
             CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
             (*it)->cb_ = nullptr;
-            metadataStateCbList_.erase(it);
+            baseCbList_.erase(it);
         } else {
             it++;
         }
@@ -251,58 +198,6 @@ void MetadataStateCallbackNapi::OnError(const int32_t errorType) const
 {
     MEDIA_DEBUG_LOG("OnError is called!, errorType: %{public}d", errorType);
     OnErrorCallbackAsync(errorType);
-}
-
-void MetadataStateCallbackNapi::SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce)
-{
-    std::lock_guard<std::mutex> lock(metadataStateCbMutex_);
-    napi_ref callbackRef = nullptr;
-    const int32_t refCount = 1;
-
-    for (auto it = metadataStateCbList_.begin(); it != metadataStateCbList_.end(); ++it) {
-        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
-        CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
-    }
-    napi_status status = napi_create_reference(env_, callback, refCount, &callbackRef);
-    CHECK_AND_RETURN_LOG(status == napi_ok && callbackRef != nullptr,
-                         "metadataStateCb: creating reference for callback fail");
-    std::shared_ptr<AutoRef> cb = std::make_shared<AutoRef>(env_, callbackRef, isOnce);
-    metadataStateCbList_.push_back(cb);
-    MEDIA_INFO_LOG("Save callback reference success, metadataState callback list size [%{public}zu]",
-        metadataStateCbList_.size());
-}
-
-void MetadataStateCallbackNapi::RemoveCallbackRef(napi_env env, napi_value callback)
-{
-    std::lock_guard<std::mutex> lock(metadataStateCbMutex_);
-
-    if (callback == nullptr) {
-        MEDIA_INFO_LOG("RemoveCallbackReference: js callback is nullptr, remove all callback reference");
-        RemoveAllCallbacks();
-        return;
-    }
-    for (auto it = metadataStateCbList_.begin(); it != metadataStateCbList_.end(); ++it) {
-        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
-        if (isSameCallback) {
-            MEDIA_INFO_LOG("RemoveCallbackReference: find js callback, delete it");
-            napi_status status = napi_delete_reference(env, (*it)->cb_);
-            (*it)->cb_ = nullptr;
-            CHECK_AND_RETURN_LOG(status == napi_ok, "RemoveCallbackReference: delete reference for callback fail");
-            metadataStateCbList_.erase(it);
-            return;
-        }
-    }
-    MEDIA_INFO_LOG("RemoveCallbackReference: js callback no find");
-}
-
-void MetadataStateCallbackNapi::RemoveAllCallbacks()
-{
-    for (auto it = metadataStateCbList_.begin(); it != metadataStateCbList_.end(); ++it) {
-        napi_delete_reference(env_, (*it)->cb_);
-        (*it)->cb_ = nullptr;
-    }
-    metadataStateCbList_.clear();
-    MEDIA_INFO_LOG("RemoveAllCallbacks: remove all js callbacks success");
 }
 
 MetadataOutputNapi::MetadataOutputNapi() : env_(nullptr), wrapper_(nullptr)
@@ -317,14 +212,6 @@ MetadataOutputNapi::~MetadataOutputNapi()
     }
     if (metadataOutput_) {
         metadataOutput_ = nullptr;
-    }
-    if (metadataOutputCallback_) {
-        metadataOutputCallback_->RemoveCallbackRef(env_, nullptr);
-        metadataOutputCallback_ = nullptr;
-    }
-    if (metadataStateCallback_) {
-        metadataStateCallback_->RemoveCallbackRef(env_, nullptr);
-        metadataStateCallback_ = nullptr;
     }
 }
 
@@ -385,15 +272,6 @@ napi_value MetadataOutputNapi::MetadataOutputNapiConstructor(napi_env env, napi_
         std::unique_ptr<MetadataOutputNapi> obj = std::make_unique<MetadataOutputNapi>();
         obj->env_ = env;
         obj->metadataOutput_ = sMetadataOutput_;
-        std::shared_ptr<MetadataOutputCallback> metadataOutputCallback =
-            std::make_shared<MetadataOutputCallback>(env);
-        obj->metadataOutputCallback_ = metadataOutputCallback;
-        ((sptr<MetadataOutput> &)(obj->metadataOutput_))->SetCallback(metadataOutputCallback);
-        std::shared_ptr<MetadataStateCallbackNapi> metadataStateCallback =
-                std::make_shared<MetadataStateCallbackNapi>(env);
-        ((sptr<MetadataOutput> &)(obj->metadataOutput_))->SetCallback(metadataStateCallback);
-        obj->metadataStateCallback_ = metadataStateCallback;
-
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
                            MetadataOutputNapi::MetadataOutputNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
@@ -820,11 +698,23 @@ napi_value MetadataOutputNapi::UnregisterCallback(napi_env env, napi_value jsThi
     MetadataOutputNapi* metadataOutputNapi = nullptr;
     napi_status status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&metadataOutputNapi));
     NAPI_ASSERT(env, status == napi_ok && metadataOutputNapi != nullptr, "Failed to metadataOutput napi instance.");
-    NAPI_ASSERT(env, metadataOutputNapi->metadataOutputCallback_ != nullptr, "metadataOutputCallback is null.");
+    sptr<MetadataOutput> metadataOutput = metadataOutputNapi->metadataOutput_;
     if (eventType.compare("metadataObjectsAvailable") == 0) {
-        metadataOutputNapi->metadataOutputCallback_->RemoveCallbackRef(env, callback);
+        shared_ptr<MetadataOutputCallback> metadataOutputCallback =
+            std::static_pointer_cast<MetadataOutputCallback>(metadataOutput->GetAppObjectCallback());
+        if (metadataOutputCallback == nullptr) {
+            MEDIA_ERR_LOG("metadataOutputCallback is null");
+        } else {
+            metadataOutputCallback->RemoveCallbackRef(env, callback);
+        }
     } else if (eventType.compare("error") == 0) {
-        metadataOutputNapi->metadataStateCallback_->RemoveCallbackRef(env, callback);
+        shared_ptr<MetadataStateCallbackNapi> metadataStateCallback =
+            std::static_pointer_cast<MetadataStateCallbackNapi>(metadataOutput->GetAppStateCallback());
+        if (metadataStateCallback == nullptr) {
+            MEDIA_ERR_LOG("metadataStateCallback is null");
+        } else {
+            metadataStateCallback->RemoveCallbackRef(env, callback);
+        }
     } else {
         MEDIA_ERR_LOG("Failed to Unregister Callback");
     }
@@ -840,19 +730,24 @@ napi_value MetadataOutputNapi::RegisterCallback(napi_env env, napi_value jsThis,
     napi_status status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&metadataOutputNapi));
     NAPI_ASSERT(env, status == napi_ok && metadataOutputNapi != nullptr,
         "Failed to retrieve MetadataOutputNapi instance.");
-    NAPI_ASSERT(env, metadataOutputNapi->metadataOutput_ != nullptr, "metadataOutput instance is null.");
+    sptr<MetadataOutput> metadataOutput = metadataOutputNapi->metadataOutput_;
+    NAPI_ASSERT(env, metadataOutput != nullptr, "metadataOutput instance is null.");
     if (eventType.compare("metadataObjectsAvailable") == 0) {
-        if (metadataOutputNapi->metadataOutputCallback_ != nullptr) {
-            metadataOutputNapi->metadataOutputCallback_->SaveCallbackReference(eventType, callback, isOnce);
+        shared_ptr<MetadataOutputCallback> metadataOutputCallback =
+            std::static_pointer_cast<MetadataOutputCallback>(metadataOutput->GetAppObjectCallback());
+        if (metadataOutputCallback == nullptr) {
+            metadataOutputCallback = make_shared<MetadataOutputCallback>(env);
+            metadataOutput->SetCallback(metadataOutputCallback);
         }
+        metadataOutputCallback->SaveCallbackReference(callback, isOnce);
     } else if (eventType.compare("error") == 0) {
-        if (metadataOutputNapi->metadataStateCallback_ == nullptr) {
-            std::shared_ptr <MetadataStateCallbackNapi> callback =
-                    std::make_shared<MetadataStateCallbackNapi>(env);
-            metadataOutputNapi->metadataStateCallback_ = callback;
-            metadataOutputNapi->metadataOutput_->SetCallback(callback);
+        shared_ptr<MetadataStateCallbackNapi> metadataStateCallback =
+            std::static_pointer_cast<MetadataStateCallbackNapi>(metadataOutput->GetAppStateCallback());
+        if (metadataStateCallback == nullptr) {
+            metadataStateCallback = make_shared<MetadataStateCallbackNapi>(env);
+            metadataOutput->SetCallback(metadataStateCallback);
         }
-        metadataOutputNapi->metadataStateCallback_->SaveCallbackReference(eventType, callback, isOnce);
+        metadataStateCallback->SaveCallbackReference(callback, isOnce);
     } else {
         MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
     }
@@ -861,88 +756,17 @@ napi_value MetadataOutputNapi::RegisterCallback(napi_env env, napi_value jsThis,
 
 napi_value MetadataOutputNapi::On(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("On is called");
-    napi_value undefinedResult = nullptr;
-    size_t argCount = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {nullptr, nullptr};
-    napi_value thisVar = nullptr;
-
-    napi_get_undefined(env, &undefinedResult);
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argCount, argv, thisVar);
-    NAPI_ASSERT(env, argCount == ARGS_TWO, "requires 2 parameters");
-
-    if (thisVar == nullptr || argv[PARAM0] == nullptr || argv[PARAM1] == nullptr) {
-        MEDIA_ERR_LOG("Failed to retrieve details about the callback");
-        return undefinedResult;
-    }
-
-    napi_valuetype valueType = napi_undefined;
-    if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string
-        || napi_typeof(env, argv[PARAM1], &valueType) != napi_ok || valueType != napi_function) {
-        return undefinedResult;
-    }
-
-    std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[PARAM0]);
-    MEDIA_INFO_LOG("On eventType: %{public}s", eventType.c_str());
-    return RegisterCallback(env, thisVar, eventType, argv[PARAM1], false);
+    return ListenerTemplate<MetadataOutputNapi>::On(env, info);
 }
 
 napi_value MetadataOutputNapi::Once(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("Once is called");
-    napi_value undefinedResult = nullptr;
-    size_t argCount = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {nullptr, nullptr};
-    napi_value thisVar = nullptr;
-
-    napi_get_undefined(env, &undefinedResult);
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argCount, argv, thisVar);
-    NAPI_ASSERT(env, argCount == ARGS_TWO, "requires 2 parameters");
-
-    if (thisVar == nullptr || argv[PARAM0] == nullptr || argv[PARAM1] == nullptr) {
-        MEDIA_ERR_LOG("Failed to retrieve details about the callback");
-        return undefinedResult;
-    }
-
-    napi_valuetype valueType = napi_undefined;
-    if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string
-        || napi_typeof(env, argv[PARAM1], &valueType) != napi_ok || valueType != napi_function) {
-        return undefinedResult;
-    }
-
-    std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[PARAM0]);
-    MEDIA_INFO_LOG("Once eventType: %{public}s", eventType.c_str());
-    return RegisterCallback(env, thisVar, eventType, argv[PARAM1], true);
+    return ListenerTemplate<MetadataOutputNapi>::Once(env, info);
 }
 
 napi_value MetadataOutputNapi::Off(napi_env env, napi_callback_info info)
 {
-    napi_value undefinedResult = nullptr;
-    napi_get_undefined(env, &undefinedResult);
-    const size_t minArgCount = 1;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {nullptr, nullptr};
-    napi_value thisVar = nullptr;
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    if (argc < minArgCount) {
-        return undefinedResult;
-    }
-
-    napi_valuetype valueType = napi_undefined;
-    if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string) {
-        return undefinedResult;
-    }
-
-    napi_valuetype secondArgsType = napi_undefined;
-    if (argc > minArgCount &&
-        (napi_typeof(env, argv[PARAM1], &secondArgsType) != napi_ok || secondArgsType != napi_function)) {
-        return undefinedResult;
-    }
-    std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[0]);
-    MEDIA_INFO_LOG("Off eventType: %{public}s", eventType.c_str());
-    return UnregisterCallback(env, thisVar, eventType, argv[PARAM1]);
+    return ListenerTemplate<MetadataOutputNapi>::Off(env, info);
 }
 } // namespace CameraStandard
 } // namespace OHOS

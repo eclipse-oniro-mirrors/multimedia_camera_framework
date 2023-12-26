@@ -25,6 +25,8 @@
 #include "camera_napi_utils.h"
 #include "native_image.h"
 
+#include "listener_base.h"
+
 namespace OHOS {
 namespace CameraStandard {
 const std::string dataWidth = "dataWidth";
@@ -77,21 +79,15 @@ private:
     sptr<Surface> photoSurface_ = nullptr;
 };
 
-class PhotoListener : public IBufferConsumerListener {
+class PhotoListener : public IBufferConsumerListener, public ListenerBase {
 public:
     explicit PhotoListener(napi_env env, const sptr<Surface> photoSurface);
     ~PhotoListener() = default;
     void OnBufferAvailable() override;
-    void SaveCallbackReference(napi_value callback, bool isOnce);
-    void RemoveCallbackRef(napi_env env, napi_value callback);
-    void RemoveAllCallbacks();
 
 private:
-    std::mutex mutex_;
-    napi_env env_;
     sptr<Surface> photoSurface_;
     shared_ptr<PhotoBufferProcessor> bufferProcessor_;
-    mutable std::vector<std::shared_ptr<AutoRef>> photoListenerList_;
     void UpdateJSCallback(sptr<Surface> photoSurface) const;
     void UpdateJSCallbackAsync(sptr<Surface> photoSurface) const;
 };
@@ -125,20 +121,14 @@ private:
     mutable std::vector<std::shared_ptr<AutoRef>> errorCbList_;
 };
 
-class ThumbnailListener : public IBufferConsumerListener {
+class ThumbnailListener : public IBufferConsumerListener, public ListenerBase {
 public:
     explicit ThumbnailListener(napi_env env, const sptr<PhotoOutput> photoOutput);
     ~ThumbnailListener() = default;
     void OnBufferAvailable() override;
-    void SaveCallbackReference(napi_value callback, bool isOnce);
-    void RemoveCallbackRef(napi_env env, napi_value callback);
-    void RemoveAllCallbacks();
 
 private:
-    std::mutex mutex_;
-    napi_env env_;
     sptr<PhotoOutput> photoOutput_;
-    mutable std::vector<std::shared_ptr<AutoRef>> thumbnailListenerList_;
     void UpdateJSCallback(sptr<PhotoOutput> photoOutput) const;
     void UpdateJSCallbackAsync(sptr<PhotoOutput> photoOutput) const;
 };
@@ -179,10 +169,14 @@ public:
     static napi_value SetMirror(napi_env env, napi_callback_info info);
     static napi_value EnableQuickThumbnail(napi_env env, napi_callback_info info);
     static napi_value IsQuickThumbnailSupported(napi_env env, napi_callback_info info);
-    static napi_value On(napi_env env, napi_callback_info info);
-    static napi_value Off(napi_env env, napi_callback_info info);
-    static napi_value Once(napi_env env, napi_callback_info info);
     static bool IsPhotoOutput(napi_env env, napi_value obj);
+    static napi_value On(napi_env env, napi_callback_info info);
+    static napi_value Once(napi_env env, napi_callback_info info);
+    static napi_value Off(napi_env env, napi_callback_info info);
+    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
+        const std::string &eventType, napi_value callback, bool isOnce);
+    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
+        const std::string &eventType, napi_value callback);
     PhotoOutputNapi();
     ~PhotoOutputNapi();
 
@@ -191,10 +185,6 @@ public:
 private:
     static void PhotoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value PhotoOutputNapiConstructor(napi_env env, napi_callback_info info);
-    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string& callbackName, napi_value callback);
-    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string& callbackName, napi_value callback, bool isOnce);
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<PhotoOutput> sPhotoOutput_;
@@ -205,7 +195,6 @@ private:
     sptr<PhotoOutput> photoOutput_;
     Profile profile_;
     bool isQuickThumbnailEnabled_ = false;
-    std::shared_ptr<PhotoOutputCallback> photoCallback_ = nullptr;
     sptr<ThumbnailListener> thumbnailListener_;
     sptr<PhotoListener> photoListener_;
     static thread_local uint32_t photoOutputTaskId;

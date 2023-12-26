@@ -67,8 +67,14 @@ MetadataOutput::~MetadataOutput()
 
 std::shared_ptr<MetadataObjectCallback> MetadataOutput::GetAppObjectCallback()
 {
-    MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::GetResultCallback");
+    MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::GetAppObjectCallback");
     return appObjectCallback_;
+}
+
+std::shared_ptr<MetadataStateCallback> MetadataOutput::GetAppStateCallback()
+{
+    MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::GetAppStateCallback");
+    return appStateCallback_;
 }
 
 std::vector<MetadataObjectType> MetadataOutput::GetSupportedMetadataObjectTypes()

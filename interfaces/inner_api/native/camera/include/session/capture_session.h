@@ -279,6 +279,33 @@ public:
      * @return Returns the pointer to SessionCallback set by application.
      */
     std::shared_ptr<SessionCallback> GetApplicationCallback();
+    
+    /**
+     * @brief Get the ExposureCallback.
+     *
+     * @return Returns the pointer to ExposureCallback.
+     */
+    std::shared_ptr<ExposureCallback> GetExposureCallback();
+
+    /**
+     * @brief Get the FocusCallback.
+     *
+     * @return Returns the pointer to FocusCallback.
+     */
+    std::shared_ptr<FocusCallback> GetFocusCallback();
+
+    /**
+     * @brief Get the MacroStatusCallback.
+     *
+     * @return Returns the pointer to MacroStatusCallback.
+     */
+    std::shared_ptr<MacroStatusCallback> GetMacroStatusCallback();
+    /**
+     * @brief Get the SmoothZoomCallback.
+     *
+     * @return Returns the pointer to SmoothZoomCallback.
+     */
+    std::shared_ptr<SmoothZoomCallback> GetSmoothZoomCallback();
 
     /**
      * @brief Releases CaptureSession instance.
