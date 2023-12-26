@@ -445,10 +445,12 @@ void CaptureSession::ConfigureOutput(sptr<CaptureOutput>& output)
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::AddOutput");
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW) {
         MEDIA_INFO_LOG("CaptureSession::AddOutput PreviewOutput");
+        previewProfile_ = output->GetPreviewProfile();
         SetGuessMode(SceneMode::CAPTURE);
     }
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO) {
         MEDIA_INFO_LOG("CaptureSession::AddOutput PhotoOutput");
+        photoProfile_ = output->GetPhotoProfile();
         SetGuessMode(SceneMode::CAPTURE);
     }
     output->SetSession(this);
@@ -520,6 +522,10 @@ bool CaptureSession::CanAddOutput(sptr<CaptureOutput> &output)
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::CanAddOutput");
     if (!IsSessionConfiged() || output == nullptr) {
         MEDIA_ERR_LOG("CaptureSession::CanAddOutput operation Not allowed!");
+        return false;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::CanAddOutput Failed inputDevice_ is nullptr");
         return false;
     }
     int32_t normalMode = 0;

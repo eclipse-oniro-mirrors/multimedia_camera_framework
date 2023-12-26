@@ -46,12 +46,14 @@
 #include "refbase.h"
 #include "system_ability_definition.h"
 #include "v1_0/types.h"
+#include "display/composer/v1_1/display_composer_type.h"
 #include "smooth_zoom.h"
 #include "hcamera_restore_param.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
 namespace CameraStandard {
+using namespace OHOS::HDI::Display::Composer::V1_1;
 using HDI::Camera::V1_0::CamRetCode;
 namespace {
 static std::map<pid_t, sptr<HCaptureSession>> g_totalSessions;
@@ -643,8 +645,28 @@ int32_t HCaptureSession::CheckIfColorSpaceMatchesFormat(ColorSpace colorSpace)
         colorSpace == ColorSpace::BT2020_HLG_LIMIT || colorSpace == ColorSpace::BT2020_PQ_LIMIT)) {
         return CAMERA_OK;
     }
-    // 待为HDR VIVID增加逻辑
-    return CAMERA_OPERATION_NOT_ALLOWED;
+
+    // 选择BT2020，需要匹配10bit的format；若不匹配，返回error
+    auto streams = streamContainer_.GetAllStreams();
+    for (auto& curStream : streams) {
+        if (!curStream) {
+            continue;
+        }
+        // 当前拍照流不支持BT2020，无需校验format
+        if (curStream->GetStreamType() != StreamType::REPEAT) {
+            continue;
+        }
+        StreamInfo_V1_1 curStreamInfo;
+        curStream->SetStreamInfo(curStreamInfo);
+        MEDIA_INFO_LOG("HCaptureSession::CheckFormat, stream repeatType: %{public}d, format: %{public}d",
+            static_cast<HStreamRepeat*>(curStream.GetRefPtr())->GetRepeatStreamType(), curStreamInfo.v1_0.format_);
+        if (!(curStreamInfo.v1_0.format_ == OHOS::HDI::Display::Composer::V1_1::PIXEL_FMT_YCBCR_P010 ||
+            curStreamInfo.v1_0.format_ == OHOS::HDI::Display::Composer::V1_1::PIXEL_FMT_YCRCB_P010)) {
+            MEDIA_ERR_LOG("HCaptureSession::CheckFormat, stream format not match");
+            return CAMERA_OPERATION_NOT_ALLOWED;
+        }
+    }
+    return CAMERA_OK;
 }
 
 int32_t HCaptureSession::GetSessionState(CaptureSessionState& sessionState)

@@ -50,11 +50,19 @@ napi_value PortraitSessionNapi::Init(napi_env env, napi_value exports)
     std::vector<napi_property_descriptor> portrait_props = {
         DECLARE_NAPI_FUNCTION("getSupportedPortraitEffects", GetSupportedPortraitEffects),
         DECLARE_NAPI_FUNCTION("getPortraitEffect", GetPortraitEffect),
-        DECLARE_NAPI_FUNCTION("setPortraitEffect", SetPortraitEffect)
+        DECLARE_NAPI_FUNCTION("setPortraitEffect", SetPortraitEffect),
+
+        DECLARE_NAPI_FUNCTION("getSupportedVirtualApertures", GetSupportedVirtualApertures),
+        DECLARE_NAPI_FUNCTION("getVirtualAperture", GetVirtualAperture),
+        DECLARE_NAPI_FUNCTION("setVirtualAperture", SetVirtualAperture),
+
+        DECLARE_NAPI_FUNCTION("getSupportedPhysicalApertures", GetSupportedPhysicalApertures),
+        DECLARE_NAPI_FUNCTION("getPhysicalAperture", GetPhysicalAperture),
+        DECLARE_NAPI_FUNCTION("setPhysicalAperture", SetPhysicalAperture)
     };
     std::vector<std::vector<napi_property_descriptor>> descriptors = {camera_process_props,
         flash_props, auto_exposure_props, focus_props, zoom_props, filter_props, beauty_props,
-        color_effect_props, macro_props, portrait_props};
+        color_effect_props, macro_props, color_management_props, portrait_props};
     std::vector<napi_property_descriptor> portrait_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, PORTRAIT_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                PortraitSessionNapiConstructor, nullptr,
@@ -227,6 +235,212 @@ napi_value PortraitSessionNapi::SetPortraitEffect(napi_env env, napi_callback_in
         portraitSessionNapi->portraitSession_->UnlockForControl();
     } else {
         MEDIA_ERR_LOG("setPortraitEffect call Failed!");
+    }
+    return result;
+}
+
+napi_value PortraitSessionNapi::GetSupportedVirtualApertures(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetSupportedVirtualApertures is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    status = napi_create_array(env, &result);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("napi_create_array call Failed!");
+        return result;
+    }
+    PortraitSessionNapi* portraitSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&portraitSessionNapi));
+    if (status == napi_ok && portraitSessionNapi != nullptr && portraitSessionNapi->portraitSession_ != nullptr) {
+        std::vector<float> virtualApertures =
+            portraitSessionNapi->portraitSession_->GetSupportedVirtualApertures();
+        MEDIA_INFO_LOG("GetSupportedVirtualApertures virtualApertures len = %{public}zu",
+            virtualApertures.size());
+        if (!virtualApertures.empty()) {
+            for (size_t i = 0; i < virtualApertures.size(); i++) {
+                float virtualAperture = virtualApertures[i];
+                napi_value value;
+                napi_create_double(env, CameraNapiUtils::FloatToDouble(virtualAperture), &value);
+                napi_set_element(env, result, i, value);
+            }
+        }
+    } else {
+        MEDIA_ERR_LOG("GetSupportedVirtualApertures call Failed!");
+    }
+    return result;
+}
+
+napi_value PortraitSessionNapi::GetVirtualAperture(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetVirtualAperture is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    PortraitSessionNapi* portraitSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&portraitSessionNapi));
+    if (status == napi_ok && portraitSessionNapi != nullptr && portraitSessionNapi->portraitSession_ != nullptr) {
+        float virtualAperture = portraitSessionNapi->portraitSession_->GetVirtualAperture();
+        napi_create_double(env, CameraNapiUtils::FloatToDouble(virtualAperture), &result);
+    } else {
+        MEDIA_ERR_LOG("GetVirtualAperture call Failed!");
+    }
+    return result;
+}
+
+napi_value PortraitSessionNapi::SetVirtualAperture(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetVirtualAperture is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    PortraitSessionNapi* portraitSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&portraitSessionNapi));
+    if (status == napi_ok && portraitSessionNapi != nullptr && portraitSessionNapi->portraitSession_ != nullptr) {
+        double virtualAperture;
+        napi_get_value_double(env, argv[PARAM0], &virtualAperture);
+        portraitSessionNapi->portraitSession_->LockForControl();
+        portraitSessionNapi->portraitSession_->SetVirtualAperture((float)virtualAperture);
+        MEDIA_INFO_LOG("SetVirtualAperture set virtualAperture %{public}f!", virtualAperture);
+        portraitSessionNapi->portraitSession_->UnlockForControl();
+    } else {
+        MEDIA_ERR_LOG("SetVirtualAperture call Failed!");
+    }
+    return result;
+}
+
+napi_value PortraitSessionNapi::ProcessingPhysicalApertures(napi_env env,
+    std::vector<std::vector<float>> physicalApertures)
+{
+    napi_value result = nullptr;
+    napi_create_array(env, &result);
+    size_t zoomRangeSize = 2;
+    for (size_t i = 0; i < physicalApertures.size(); i++) {
+        if (physicalApertures[i].size() <= zoomRangeSize) {
+            continue;
+        }
+        napi_value zoomRange;
+        napi_create_array(env, &zoomRange);
+        napi_value physicalApertureRange;
+        napi_create_array(env, &physicalApertureRange);
+        for (size_t y = 0; y < physicalApertures[i].size(); y++) {
+            if (y < zoomRangeSize) {
+                napi_value value;
+                napi_create_double(env, CameraNapiUtils::FloatToDouble(physicalApertures[i][y]), &value);
+                napi_set_element(env, zoomRange, y, value);
+                continue;
+            }
+            napi_value value;
+            napi_create_double(env, CameraNapiUtils::FloatToDouble(physicalApertures[i][y]), &value);
+            napi_set_element(env, physicalApertureRange, y - zoomRangeSize, value);
+        }
+        napi_value obj;
+        napi_create_object(env, &obj);
+        napi_set_named_property(env, obj, "zoomRange", zoomRange);
+        napi_set_named_property(env, obj, "apertures", physicalApertureRange);
+        napi_set_element(env, result, i, obj);
+    }
+    return result;
+}
+
+napi_value PortraitSessionNapi::GetSupportedPhysicalApertures(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetSupportedPhysicalApertures is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    status = napi_create_array(env, &result);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("napi_create_array call Failed!");
+        return result;
+    }
+    PortraitSessionNapi* portraitSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&portraitSessionNapi));
+    if (status == napi_ok && portraitSessionNapi != nullptr && portraitSessionNapi->portraitSession_ != nullptr) {
+        std::vector<std::vector<float>> physicalApertures =
+            portraitSessionNapi->portraitSession_->GetSupportedPhysicalApertures();
+        MEDIA_INFO_LOG("GetSupportedPhysicalApertures len = %{public}zu", physicalApertures.size());
+        if (!physicalApertures.empty()) {
+            result = ProcessingPhysicalApertures(env, physicalApertures);
+        }
+    } else {
+        MEDIA_ERR_LOG("GetSupportedPhysicalApertures call Failed!");
+    }
+    return result;
+}
+
+napi_value PortraitSessionNapi::GetPhysicalAperture(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetPhysicalAperture is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    PortraitSessionNapi* portraitSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&portraitSessionNapi));
+    if (status == napi_ok && portraitSessionNapi != nullptr && portraitSessionNapi->portraitSession_ != nullptr) {
+        float physicalAperture = portraitSessionNapi->portraitSession_->GetPhysicalAperture();
+        napi_create_double(env, CameraNapiUtils::FloatToDouble(physicalAperture), &result);
+    } else {
+        MEDIA_ERR_LOG("GetPhysicalAperture call Failed!");
+    }
+    return result;
+}
+
+napi_value PortraitSessionNapi::SetPhysicalAperture(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetPhysicalAperture is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    PortraitSessionNapi* portraitSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&portraitSessionNapi));
+    if (status == napi_ok && portraitSessionNapi != nullptr && portraitSessionNapi->portraitSession_ != nullptr) {
+        double physicalAperture;
+        napi_get_value_double(env, argv[PARAM0], &physicalAperture);
+        portraitSessionNapi->portraitSession_->LockForControl();
+        portraitSessionNapi->portraitSession_->SetPhysicalAperture((float)physicalAperture);
+        MEDIA_INFO_LOG("SetPhysicalAperture set physicalAperture %{public}f!", physicalAperture);
+        portraitSessionNapi->portraitSession_->UnlockForControl();
+    } else {
+        MEDIA_ERR_LOG("SetPhysicalAperture call Failed!");
     }
     return result;
 }
