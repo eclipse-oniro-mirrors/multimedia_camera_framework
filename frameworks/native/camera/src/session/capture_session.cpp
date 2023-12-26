@@ -524,6 +524,10 @@ bool CaptureSession::CanAddOutput(sptr<CaptureOutput> &output)
         MEDIA_ERR_LOG("CaptureSession::CanAddOutput operation Not allowed!");
         return false;
     }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::CanAddOutput Failed inputDevice_ is nullptr");
+        return false;
+    }
     int32_t normalMode = 0;
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW) {
         std::vector<Profile> previewProfiles = inputDevice_->GetCameraDeviceInfo()->modePreviewProfiles_[normalMode];
