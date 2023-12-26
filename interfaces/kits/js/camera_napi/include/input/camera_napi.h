@@ -57,43 +57,68 @@ static const std::int32_t VIDEO_DEFAULT_WIDTH = 640;
 static const std::int32_t VIDEO_DEFAULT_HEIGHT = 360;
 
 static const std::int32_t SURFACE_QUEUE_SIZE = 10;
-
-static const std::vector<std::string> vecFlashMode {
-    "FLASH_MODE_CLOSE", "FLASH_MODE_OPEN", "FLASH_MODE_AUTO", "FLASH_MODE_ALWAYS_OPEN"
+ 
+static const std::unordered_map<std::string, int32_t> mapFlashMode = {
+    {"FLASH_MODE_CLOSE", 0},
+    {"FLASH_MODE_OPEN", 1},
+    {"FLASH_MODE_AUTO", 2},
+    {"FLASH_MODE_ALWAYS_OPEN", 3},
 };
 
-static const std::vector<std::string> vecExposureMode {
-    "EXPOSURE_MODE_LOCKED", "EXPOSURE_MODE_AUTO", "EXPOSURE_MODE_CONTINUOUS_AUTO"
+static const std::unordered_map<std::string, int32_t> mapExposureMode = {
+    {"EXPOSURE_MODE_LOCKED", 0},
+    {"EXPOSURE_MODE_AUTO", 1},
+    {"EXPOSURE_MODE_CONTINUOUS_AUTO", 2},
 };
 
-static const std::vector<std::string> vecFocusMode {
-    "FOCUS_MODE_MANUAL", "FOCUS_MODE_CONTINUOUS_AUTO", "FOCUS_MODE_AUTO", "FOCUS_MODE_LOCKED"
+static const std::unordered_map<std::string, int32_t> mapFocusMode = {
+    {"FOCUS_MODE_MANUAL", 0},
+    {"FOCUS_MODE_CONTINUOUS_AUTO", 1},
+    {"FOCUS_MODE_AUTO", 2},
+    {"FOCUS_MODE_LOCKED", 3},
 };
 
-static const std::vector<std::string> vecCameraPositionMode {
-    "CAMERA_POSITION_UNSPECIFIED", "CAMERA_POSITION_BACK", "CAMERA_POSITION_FRONT"
+static const std::unordered_map<std::string, int32_t> mapCameraPosition = {
+    {"CAMERA_POSITION_UNSPECIFIED", 0},
+    {"CAMERA_POSITION_BACK", 1},
+    {"CAMERA_POSITION_FRONT", 2},
 };
 
-static const std::vector<std::string> vecCameraTypeMode {
-    "CAMERA_TYPE_DEFAULT", "CAMERA_TYPE_WIDE_ANGLE", "CAMERA_TYPE_ULTRA_WIDE",
-    "CAMERA_TYPE_TELEPHOTO", "CAMERA_TYPE_TRUE_DEPTH"
+static const std::unordered_map<std::string, int32_t> mapCameraType = {
+    {"CAMERA_TYPE_DEFAULT", 0},
+    {"CAMERA_TYPE_WIDE_ANGLE", 1},
+    {"CAMERA_TYPE_ULTRA_WIDE", 2},
+    {"CAMERA_TYPE_TELEPHOTO", 3},
+    {"CAMERA_TYPE_TRUE_DEPTH", 4},
 };
 
-static const std::vector<std::string> vecConnectionTypeMode {
-    "CAMERA_CONNECTION_BUILT_IN", "CAMERA_CONNECTION_USB_PLUGIN", "CAMERA_CONNECTION_REMOTE"
+static const std::unordered_map<std::string, int32_t> mapConnectionType = {
+    {"CAMERA_CONNECTION_BUILT_IN", 0},
+    {"CAMERA_CONNECTION_USB_PLUGIN", 1},
+    {"CAMERA_CONNECTION_REMOTE", 2},
 };
 
-static const std::vector<std::string> vecCameraFormat {
-    "CAMERA_FORMAT_YUV_420_SP", "CAMERA_FORMAT_JPEG", "CAMERA_FORMAT_RGBA_8888", "CAMERA_FORMAT_YCBCR_P010",
-    "CAMERA_FORMAT_YCRCB_P010"
+static const std::unordered_map<std::string, int32_t> mapCameraFormat = {
+    {"CAMERA_FORMAT_YUV_420_SP", CameraFormat::CAMERA_FORMAT_YUV_420_SP},
+    {"CAMERA_FORMAT_JPEG", CameraFormat::CAMERA_FORMAT_JPEG},
+    {"CAMERA_FORMAT_RGBA_8888", CameraFormat::CAMERA_FORMAT_RGBA_8888},
+    {"CAMERA_FORMAT_YCBCR_P010", CameraFormat::CAMERA_FORMAT_YCBCR_P010},
+    {"CAMERA_FORMAT_YCRCB_P010", CameraFormat::CAMERA_FORMAT_YCRCB_P010},
 };
 
-static const std::vector<std::string> vecCameraStatus {
-    "CAMERA_STATUS_APPEAR", "CAMERA_STATUS_DISAPPEAR", "CAMERA_STATUS_AVAILABLE", "CAMERA_STATUS_UNAVAILABLE"
+static const std::unordered_map<std::string, int32_t> mapCameraStatus = {
+    {"CAMERA_STATUS_APPEAR", 0},
+    {"CAMERA_STATUS_DISAPPEAR", 1},
+    {"CAMERA_STATUS_AVAILABLE", 2},
+    {"CAMERA_STATUS_UNAVAILABLE", 3},
 };
 
-static const std::vector<std::string> vecVideoStabilizationMode {
-    "OFF", "LOW", "MIDDLE", "HIGH", "AUTO"
+static const std::unordered_map<std::string, int32_t> mapVideoStabilizationMode = {
+    {"OFF", 0},
+    {"LOW", 1},
+    {"MIDDLE", 2},
+    {"HIGH", 3},
+    {"AUTO", 4},
 };
 
 static const std::unordered_map<std::string, int32_t> mapImageRotation = {
@@ -166,6 +191,12 @@ static const std::unordered_map<std::string, int32_t> mapPortraitEffect = {
     {"THEATER", 5},
 };
 
+static const std::unordered_map<std::string, int32_t> mapTorchMode = {
+    {"OFF", 0},
+    {"ON", 1},
+    {"AUTO", 2},
+};
+
 static const std::unordered_map<std::string, int32_t> mapCameraErrorCode = {
     {"NO_SYSTEM_APP_PERMISSION", 202},
     {"INVALID_ARGUMENT", 7400101},
@@ -215,7 +246,7 @@ static const std::unordered_map<std::string, int32_t> mapMetadataObjectType = {
     {"FACE_DETECTION", 0}
 };
 
-static const std::unordered_map<std::string, int32_t> mapMetaOutputErrorCode = {
+static const std::unordered_map<std::string, int32_t> mapMetadataOutputErrorCode = {
     {"ERROR_UNKNOWN", -1},
     {"ERROR_INSUFFICIENT_RESOURCES", 0}
 };
@@ -240,33 +271,11 @@ public:
 
     static napi_value CreateCameraManagerInstance(napi_env env, napi_callback_info info);
     static napi_value CreateModeManagerInstance(napi_env env, napi_callback_info info);
-    static napi_value CreateFlashModeObject(napi_env env);
-    static napi_value CreateExposureModeObject(napi_env env);
-    static napi_value CreateFocusModeObject(napi_env env);
-    static napi_value CreateCameraPositionEnum(napi_env env);
-    static napi_value CreateCameraTypeEnum(napi_env env);
-    static napi_value CreateConnectionTypeEnum(napi_env env);
-    static napi_value CreateCameraStatusObject(napi_env env);
-    static napi_value CreateCameraFormatObject(napi_env env);
-    static napi_value CreateImageRotationEnum(napi_env env);
-    static napi_value CreateExposureStateEnum(napi_env env);
-    static napi_value CreateFocusStateEnum(napi_env env);
-    static napi_value CreateQualityLevelEnum(napi_env env);
-    static napi_value CreateVideoStabilizationModeObject(napi_env env);
-    static napi_value CreateHostNameType(napi_env env);
-    static napi_value CreateSceneMode(napi_env env);
-    static napi_value CreateFilterType(napi_env env);
-    static napi_value CreateBeautyType(napi_env env);
-    static napi_value CreatePortraitEffect(napi_env env);
 
-    static napi_value CreateCameraErrorCode(napi_env env);
-    static napi_value CreateCameraInputErrorCode(napi_env env);
-    static napi_value CreateCaptureSessionErrorCode(napi_env env);
-    static napi_value CreatePreviewOutputErrorCode(napi_env env);
-    static napi_value CreatePhotoOutputErrorCode(napi_env env);
-    static napi_value CreateVideoOutputErrorCode(napi_env env);
-    static napi_value CreateMetaOutputErrorCode(napi_env env);
-    static napi_value CreateMetadataObjectType(napi_env env);
+    static napi_value CreateObjectWithMap(napi_env env,
+                                          const std::string objectName,
+                                          const std::unordered_map<std::string, int32_t>& inputMap,
+                                          napi_ref& outputRef);
 
 private:
     static thread_local napi_ref sConstructor_;
@@ -289,14 +298,15 @@ private:
     static thread_local napi_ref filterTypeRef_;
     static thread_local napi_ref beautyTypeRef_;
     static thread_local napi_ref portraitEffectRef_;
-
+    static thread_local napi_ref torchModeRef_;
+    static thread_local napi_ref errorCameraRef_;
     static thread_local napi_ref errorCameraInputRef_;
     static thread_local napi_ref errorCaptureSessionRef_;
     static thread_local napi_ref errorPreviewOutputRef_;
     static thread_local napi_ref errorPhotoOutputRef_;
     static thread_local napi_ref errorVideoOutputRef_;
     static thread_local napi_ref metadataObjectTypeRef_;
-    static thread_local napi_ref errorMetaOutputRef_;
+    static thread_local napi_ref errorMetadataOutputRef_;
     napi_env env_;
     napi_ref wrapper_;
 };
