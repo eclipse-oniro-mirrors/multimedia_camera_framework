@@ -132,6 +132,8 @@ ohos_unittest("camera_framework_unittest_v1_1") {
     "sensor:sensor_interface_native",
   ]
 
+  defines = [ "private=public" ]
+
   cflags = [
     "-fPIC",
     "-Werror=unused",
@@ -215,6 +217,6 @@ ohos_unittest("camera_ndk_unittest_v1_1") {
     "${driver_peripheral_path}/interfaces/hdi_ipc/callback/operator/include",
     "${driver_peripheral_path}/interfaces/hdi_ipc/callback/host/include",
   ]
-
+  defines = [ "private=public" ]
   cflags_cc = cflags
 }

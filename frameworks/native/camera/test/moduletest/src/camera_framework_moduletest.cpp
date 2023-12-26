@@ -6576,6 +6576,620 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_090, TestSize.L
     EXPECT_EQ(session_->Release(), 0);
 }
 
+
+/*
+ * Feature: Framework
+ * Function: Test errorCode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test errorCode with abnormal branches
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_091, TestSize.Level0)
+{
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    ASSERT_NE(samgr, nullptr);
+    object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
+    HCameraServiceProxy *hCameraServiceProxy = new (std::nothrow) HCameraServiceProxy(object);
+    ASSERT_NE(hCameraServiceProxy, nullptr);
+    EffectParam effectParam = {0, 0, 0};
+
+    sptr<ICameraDeviceService> device = nullptr;
+    sptr<ITorchServiceCallback> torchSvcCallback = nullptr;
+    bool canOpenCamera = true;
+    EXPECT_EQ(hCameraServiceProxy->CreateCameraDevice(cameras_[0]->GetID(), device), -1);
+    hCameraServiceProxy->SetTorchCallback(torchSvcCallback);
+    torchSvcCallback = new(std::nothrow) TorchServiceCallback();
+    ASSERT_NE(torchSvcCallback, nullptr);
+    hCameraServiceProxy->SetTorchCallback(torchSvcCallback);
+    hCameraServiceProxy->MuteCamera(true);
+    hCameraServiceProxy->MuteCamera(false);
+    hCameraServiceProxy->PrelaunchCamera();
+    hCameraServiceProxy->SetPrelaunchConfig(cameras_[0]->GetID(), NO_NEED_RESTORE_PARAM_OHOS, 0, effectParam);
+    hCameraServiceProxy->SetTorchLevel(0);
+    hCameraServiceProxy->AllowOpenByOHSide(cameras_[0]->GetID(), 0, canOpenCamera);
+    hCameraServiceProxy->NotifyCameraState(cameras_[0]->GetID(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test errorCode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test errorCode with abnormal branches
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_092, TestSize.Level0)
+{
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    ASSERT_NE(samgr, nullptr);
+    object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    HCameraServiceCallbackProxy *hCameraServiceCallbackProxy = new (std::nothrow) HCameraServiceCallbackProxy(object);
+    ASSERT_NE(hCameraServiceCallbackProxy, nullptr);
+    HCameraMuteServiceCallbackProxy *hCameraMuteServiceCallbackProxy = new (std::nothrow) HCameraMuteServiceCallbackProxy(object);
+    ASSERT_NE(hCameraMuteServiceCallbackProxy, nullptr);
+    HTorchServiceCallbackProxy *hTorchServiceCallbackProxy = new (std::nothrow) HTorchServiceCallbackProxy(object);
+    ASSERT_NE(hTorchServiceCallbackProxy, nullptr);
+
+    hCameraServiceCallbackProxy->OnFlashlightStatusChanged(cameras_[0]->GetID(), FLASH_STATUS_OFF);
+    hCameraMuteServiceCallbackProxy->OnCameraMute(true);
+    hCameraMuteServiceCallbackProxy->OnCameraMute(false);
+    hTorchServiceCallbackProxy->OnTorchStatusChange(TORCH_STATUS_OFF);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test errorCode, width and height, if sketchRatio > SKETCH_RATIO_MAX_VALUE
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test errorCode, width and height, if sketchRatio > SKETCH_RATIO_MAX_VALUE with abnormal branches
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_093, TestSize.Level0)
+{
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    ASSERT_NE(samgr, nullptr);
+    object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    sptr<IStreamRepeat> repeat = iface_cast<IStreamRepeat>(object);
+    ASSERT_NE(repeat, nullptr);
+    HStreamRepeatProxy *hStreamRepeatProxy = new (std::nothrow) HStreamRepeatProxy(object);
+    ASSERT_NE(hStreamRepeatProxy, nullptr);
+
+    hStreamRepeatProxy->ForkSketchStreamRepeat(0, 0, repeat, 0);
+    hStreamRepeatProxy->ForkSketchStreamRepeat(1, 0, repeat, 0);
+    hStreamRepeatProxy->ForkSketchStreamRepeat(1, 1, repeat, 0);
+    hStreamRepeatProxy->UpdateSketchRatio(0.0f);
+    hStreamRepeatProxy->UpdateSketchRatio(200.0f);
+    hStreamRepeatProxy->UpdateSketchRatio(90.0f);
+    hStreamRepeatProxy->RemoveSketchStreamRepeat();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test errorCode, width and height, if sketchRatio > SKETCH_RATIO_MAX_VALUE
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test errorCode, width and height, if sketchRatio > SKETCH_RATIO_MAX_VALUE with abnormal branches
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_094, TestSize.Level0)
+{
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    ASSERT_NE(samgr, nullptr);
+    object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
+    sptr<IStreamRepeat> repeat = iface_cast<IStreamRepeat>(object);
+    ASSERT_NE(repeat, nullptr);
+    HStreamRepeatProxy *hStreamRepeatProxy = new (std::nothrow) HStreamRepeatProxy(object);
+    ASSERT_NE(hStreamRepeatProxy, nullptr);
+
+    hStreamRepeatProxy->UpdateSketchRatio(0.0f);
+    hStreamRepeatProxy->UpdateSketchRatio(200.0f);
+    hStreamRepeatProxy->UpdateSketchRatio(90.0f);
+    hStreamRepeatProxy->RemoveSketchStreamRepeat();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test errorCode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test errorCode with abnormal branches
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_095, TestSize.Level0)
+{
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    ASSERT_NE(samgr, nullptr);
+    object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    HStreamCaptureCallbackProxy *hStreamCaptureCallbackProxy = new (std::nothrow) HStreamCaptureCallbackProxy(object);
+    ASSERT_NE(hStreamCaptureCallbackProxy, nullptr);
+
+    hStreamCaptureCallbackProxy->OnCaptureStarted(0);
+    hStreamCaptureCallbackProxy->OnCaptureStarted(0, 0);
+    hStreamCaptureCallbackProxy->OnCaptureEnded(0, 0);
+    hStreamCaptureCallbackProxy->OnCaptureError(0, 0);
+    hStreamCaptureCallbackProxy->OnFrameShutter(0, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test errorCode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test errorCode with abnormal branches
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_096, TestSize.Level0)
+{
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    ASSERT_NE(samgr, nullptr);
+    object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    HStreamRepeatCallbackProxy *hStreamRepeatCallbackProxy = new (std::nothrow) HStreamRepeatCallbackProxy(object);
+    ASSERT_NE(hStreamRepeatCallbackProxy, nullptr);
+
+    hStreamRepeatCallbackProxy->OnSketchStatusChanged(SketchStatus::STOPED);
+    hStreamRepeatCallbackProxy->OnFrameStarted();
+    hStreamRepeatCallbackProxy->OnFrameEnded(0);
+    hStreamRepeatCallbackProxy->OnFrameError(0);
+}
+
+
+/*
+ * Feature: Framework
+ * Function: Test errorCode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test errorCode with abnormal branches
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_097, TestSize.Level0)
+{
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    ASSERT_NE(samgr, nullptr);
+    object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    HCaptureSessionCallbackProxy *hCaptureSessionCallbackProxy = new (std::nothrow) HCaptureSessionCallbackProxy(object);
+    ASSERT_NE(hCaptureSessionCallbackProxy, nullptr);
+    hCaptureSessionCallbackProxy->OnError(0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test errorCode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test IsSessionCommited() || IsSessionConfiged() with abnormal branches
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_098, TestSize.Level0)
+{
+    auto photoOutput1 = CreatePhotoOutput();
+    auto photoOutput = static_cast<PhotoOutput*>(photoOutput1.GetRefPtr());
+    photoOutput->ConfirmCapture();
+    photoOutput->SetSession(nullptr);
+    photoOutput->ConfirmCapture();
+    photoOutput->SetSession(session_);
+
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+    photoOutput->ConfirmCapture();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test errorCode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test IsSessionCommited() || IsSessionConfiged() with abnormal branches
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_099, TestSize.Level0)
+{
+    auto photoOutput1 = CreatePhotoOutput();
+    auto photoOutput = static_cast<PhotoOutput*>(photoOutput1.GetRefPtr());
+    photoOutput->~PhotoOutput();
+    photoOutput->ConfirmCapture();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test errorCode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test IsSessionCommited() || IsSessionConfiged() with abnormal branches
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_100, TestSize.Level0)
+{
+    std::shared_ptr<HStreamCaptureCallbackImpl> captureCallback = std::make_shared<HStreamCaptureCallbackImpl>();
+    int32_t captureId = 2001;
+    int32_t intResult = captureCallback->OnCaptureStarted(captureId, 0);
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetMetaSetting with existing metaTag.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_101, TestSize.Level0)
+{
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
+
+    std::shared_ptr<camera_metadata_item_t> metadataItem = nullptr;
+    metadataItem = camInput->GetMetaSetting(OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS);
+    ASSERT_NE(metadataItem, nullptr);
+
+    std::vector<vendorTag_t> infos = {};
+    EXPECT_EQ((camInput->GetCameraAllVendorTags(infos)), CAMERA_OK);
+
+    sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
+    ASSERT_NE(deviceObj, nullptr);
+
+    sptr<CameraDevice> camdeviceObj = nullptr;
+    sptr<CameraInput> camInput_1 = new (std::nothrow) CameraInput(deviceObj, camdeviceObj);
+    ASSERT_NE(camInput_1, nullptr);
+
+    metadataItem = camInput_1->GetMetaSetting(OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS);
+    EXPECT_EQ(metadataItem, nullptr);
+
+    metadataItem = camInput->GetMetaSetting(-1);
+    EXPECT_EQ(metadataItem, nullptr);
+
+    if (!IsSupportNow()) {
+        return;
+    }
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras_[1]->GetMetadata();
+
+    std::string cameraId = cameras_[1]->GetID();
+    sptr<CameraDevice> camdeviceObj_2 = new (std::nothrow) CameraDevice(cameraId, metadata);
+    ASSERT_NE(camdeviceObj_2, nullptr);
+
+    EXPECT_EQ(camdeviceObj_2->GetPosition(), CAMERA_POSITION_FRONT);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Torch with anomalous branch.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_102, TestSize.Level0)
+{
+    EXPECT_EQ(input_->Close(), 0);
+    
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+
+    if (!(manager_->IsTorchSupported())) {
+        return;
+    }
+
+    int32_t intResult = camManagerObj->SetTorchMode(TORCH_MODE_AUTO);
+    EXPECT_EQ(intResult, 7400102);
+
+    intResult = camManagerObj->SetTorchMode(TORCH_MODE_OFF);
+    EXPECT_EQ(intResult, 7400201);
+
+    camManagerObj->~CameraManager();
+    intResult = camManagerObj->SetTorchMode(TORCH_MODE_OFF);
+    EXPECT_EQ(intResult, 7400201);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Metadata
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Metadata
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_103, TestSize.Level0)
+{
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> metadatOutput = manager_->CreateMetadataOutput();
+    ASSERT_NE(metadatOutput, nullptr);
+
+    intResult = session_->AddOutput(metadatOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadatOutput;
+    std::vector<MetadataObjectType> metadataObjectTypes = metaOutput->GetSupportedMetadataObjectTypes();
+    if (metadataObjectTypes.size() == 0) {
+        return;
+    }
+
+    metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> { MetadataObjectType::FACE });
+
+    std::shared_ptr<MetadataObjectCallback> metadataObjectCallback = std::make_shared<AppMetadataCallback>();
+    metaOutput->SetCallback(metadataObjectCallback);
+    std::shared_ptr<MetadataStateCallback> metadataStateCallback = std::make_shared<AppMetadataCallback>();
+    metaOutput->SetCallback(metadataStateCallback);
+
+    pid_t pid = 0;
+    metaOutput->CameraServerDied(pid);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Metadata
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Metadata
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_104, TestSize.Level0)
+{
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> metadatOutput = manager_->CreateMetadataOutput();
+    ASSERT_NE(metadatOutput, nullptr);
+
+    intResult = session_->AddOutput(metadatOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadatOutput;
+    std::vector<MetadataObjectType> metadataObjectTypes = metaOutput->GetSupportedMetadataObjectTypes();
+    if (metadataObjectTypes.size() == 0) {
+        return;
+    }
+
+    metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> {});
+}
+
+/*
+ * Feature: Framework
+ * Function: Test errorCode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test errorCode with abnormal branches
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_105, TestSize.Level0)
+{
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    ASSERT_NE(samgr, nullptr);
+    object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    HCameraServiceProxy *hCameraServiceProxy = new (std::nothrow) HCameraServiceProxy(object);
+    ASSERT_NE(hCameraServiceProxy, nullptr);
+    EffectParam effectParam = {0, 0, 0};
+
+    sptr<ICameraDeviceService> device = nullptr;
+    sptr<ITorchServiceCallback> torchSvcCallback = nullptr;
+    bool canOpenCamera = true;
+    hCameraServiceProxy->CreateCameraDevice(cameras_[0]->GetID(), device);
+    hCameraServiceProxy->SetTorchCallback(torchSvcCallback);
+    torchSvcCallback = new(std::nothrow) TorchServiceCallback();
+    ASSERT_NE(torchSvcCallback, nullptr);
+    hCameraServiceProxy->SetTorchCallback(torchSvcCallback);
+    hCameraServiceProxy->MuteCamera(true);
+    hCameraServiceProxy->MuteCamera(false);
+    hCameraServiceProxy->PrelaunchCamera();
+    hCameraServiceProxy->SetPrelaunchConfig(cameras_[0]->GetID(), NO_NEED_RESTORE_PARAM_OHOS, 0, effectParam);
+    hCameraServiceProxy->SetTorchLevel(0);
+    hCameraServiceProxy->AllowOpenByOHSide(cameras_[0]->GetID(), 0, canOpenCamera);
+    hCameraServiceProxy->NotifyCameraState(cameras_[0]->GetID(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test errorCode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test errorCode with abnormal branches
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_106, TestSize.Level0)
+{
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    ASSERT_NE(samgr, nullptr);
+    object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
+    HCameraServiceCallbackProxy *hCameraServiceCallbackProxy = new (std::nothrow) HCameraServiceCallbackProxy(object);
+    ASSERT_NE(hCameraServiceCallbackProxy, nullptr);
+    HCameraMuteServiceCallbackProxy *hCameraMuteServiceCallbackProxy = new (std::nothrow) HCameraMuteServiceCallbackProxy(object);
+    ASSERT_NE(hCameraMuteServiceCallbackProxy, nullptr);
+    HTorchServiceCallbackProxy *hTorchServiceCallbackProxy = new (std::nothrow) HTorchServiceCallbackProxy(object);
+    ASSERT_NE(hTorchServiceCallbackProxy, nullptr);
+
+    hCameraServiceCallbackProxy->OnFlashlightStatusChanged(cameras_[0]->GetID(), FLASH_STATUS_OFF);
+    hCameraMuteServiceCallbackProxy->OnCameraMute(true);
+    hCameraMuteServiceCallbackProxy->OnCameraMute(false);
+    hTorchServiceCallbackProxy->OnTorchStatusChange(TORCH_STATUS_OFF);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test errorCode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test errorCode with abnormal branches
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_107, TestSize.Level0)
+{
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    ASSERT_NE(samgr, nullptr);
+    object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
+    HStreamCaptureCallbackProxy *hStreamCaptureCallbackProxy = new (std::nothrow) HStreamCaptureCallbackProxy(object);
+    ASSERT_NE(hStreamCaptureCallbackProxy, nullptr);
+
+    hStreamCaptureCallbackProxy->OnCaptureStarted(0);
+    hStreamCaptureCallbackProxy->OnCaptureStarted(0, 0);
+    hStreamCaptureCallbackProxy->OnCaptureEnded(0, 0);
+    hStreamCaptureCallbackProxy->OnCaptureError(0, 0);
+    hStreamCaptureCallbackProxy->OnFrameShutter(0, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test errorCode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test errorCode with abnormal branches
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_108, TestSize.Level0)
+{
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    ASSERT_NE(samgr, nullptr);
+    object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
+    HStreamRepeatCallbackProxy *hStreamRepeatCallbackProxy = new (std::nothrow) HStreamRepeatCallbackProxy(object);
+    ASSERT_NE(hStreamRepeatCallbackProxy, nullptr);
+
+    hStreamRepeatCallbackProxy->OnSketchStatusChanged(SketchStatus::STOPED);
+    hStreamRepeatCallbackProxy->OnFrameStarted();
+    hStreamRepeatCallbackProxy->OnFrameEnded(0);
+    hStreamRepeatCallbackProxy->OnFrameError(0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test errorCode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test errorCode with abnormal branches
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_109, TestSize.Level0)
+{
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    ASSERT_NE(samgr, nullptr);
+    object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
+    HCaptureSessionCallbackProxy *hCaptureSessionCallbackProxy = new (std::nothrow) HCaptureSessionCallbackProxy(object);
+    ASSERT_NE(hCaptureSessionCallbackProxy, nullptr);
+    hCaptureSessionCallbackProxy->OnError(0);
+}
+
+/* Feature: Framework
+ * Function: Test CreateCaptureSession
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateCaptureSession
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_110, TestSize.Level0)
+{
+    SceneMode mode = SceneMode::CAPTURE;
+    sptr<CameraManager> modeManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(modeManagerObj, nullptr);
+
+    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(mode);
+    ASSERT_NE(captureSession, nullptr);
+}
+
+/* Feature: Framework
+ * Function: Test CreateCaptureSession
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateCaptureSession
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_111, TestSize.Level0)
+{
+    SceneMode mode = SceneMode::SCAN;
+    sptr<CameraManager> modeManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(modeManagerObj, nullptr);
+
+    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(mode);
+    ASSERT_NE(captureSession, nullptr);
+}
+
+/* Feature: Framework
+ * Function: Test CreateCaptureSession
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateCaptureSession
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_112, TestSize.Level0)
+{
+    SceneMode mode = SceneMode::CAPTURE_MACRO;
+    sptr<CameraManager> modeManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(modeManagerObj, nullptr);
+
+    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(mode);
+    ASSERT_NE(captureSession, nullptr);
+}
+
+/* Feature: Framework
+ * Function: Test CreateCaptureSession
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateCaptureSession
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_113, TestSize.Level0)
+{
+    SceneMode mode = SceneMode::CAPTURE_MACRO;
+    sptr<CameraManager> modeManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(modeManagerObj, nullptr);
+
+    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(mode);
+    ASSERT_NE(captureSession, nullptr);
+}
+
+/* Feature: Framework
+ * Function: Test CreateCaptureSession
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateCaptureSession
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_114, TestSize.Level0)
+{
+    SceneMode mode = SceneMode::VIDEO;
+    sptr<CameraManager> modeManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(modeManagerObj, nullptr);
+
+    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(mode);
+    ASSERT_NE(captureSession, nullptr);
+}
+
 /*
  * Feature: Framework
  * Function: Test camera preempted.
