@@ -42,7 +42,6 @@ public:
     int32_t Capture(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureSettings) override;
     int32_t CancelCapture() override;
     int32_t ConfirmCapture() override;
-    int32_t ReleaseStream(bool isDelay) override;
     int32_t Release() override;
     int32_t SetCallback(sptr<IStreamCaptureCallback> &callback) override;
     int32_t OnCaptureStarted(int32_t captureId);

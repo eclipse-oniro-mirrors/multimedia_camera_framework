@@ -15,8 +15,6 @@
 
 #include "metadata_common_utils.h"
 
-#include <memory>
-
 #include "camera_log.h"
 
 namespace OHOS {
@@ -80,11 +78,11 @@ std::shared_ptr<vector<Size>> GetSupportedPreviewSizeRangeFromBasicConfig(
     }
     std::shared_ptr<vector<Size>> sizeList = std::make_shared<vector<Size>>();
 
-    const uint32_t widthOffset = 1;
-    const uint32_t heightOffset = 2;
-    const uint32_t unitStep = 3;
+    uint32_t widthOffset = 1;
+    uint32_t heightOffset = 2;
+    const uint8_t UNIT_STEP = 3;
 
-    for (uint32_t i = 0; i < item->count; i += unitStep) {
+    for (uint32_t i = 0; i < item->count; i += UNIT_STEP) {
         camera_format_t hdi_format = static_cast<camera_format_t>(item->data.i32[i]);
         if (hdi_format != targetFormat) {
             continue;
@@ -129,58 +127,6 @@ std::shared_ptr<vector<Size>> MetadataCommonUtils::GetSupportedPreviewSizeRange(
         sizeList->insert(sizeList->end(), basicList->begin(), basicList->end());
     }
     return sizeList;
-}
-
-std::shared_ptr<OHOS::Camera::CameraMetadata> MetadataCommonUtils::CopyMetadata(
-    const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata)
-{
-    if (srcMetadata == nullptr) {
-        MEDIA_ERR_LOG("CopyMetadata fail,src is null");
-        return nullptr;
-    }
-    auto metadataHeader = srcMetadata->get();
-    auto newMetadata =
-        std::make_shared<OHOS::Camera::CameraMetadata>(metadataHeader->item_capacity, metadataHeader->data_capacity);
-    MergeMetadata(srcMetadata, newMetadata);
-    return newMetadata;
-}
-
-bool MetadataCommonUtils::MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata,
-    std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata)
-{
-    if (srcMetadata == nullptr || dstMetadata == nullptr) {
-        return false;
-    }
-    auto srcHeader = srcMetadata->get();
-    if (srcHeader == nullptr) {
-        return false;
-    }
-    auto dstHeader = dstMetadata->get();
-    if (dstHeader == nullptr) {
-        return false;
-    }
-    auto srcItemCount = srcHeader->item_count;
-    camera_metadata_item_t srcItem;
-    for (uint32_t index = 0; index < srcItemCount; index++) {
-        int ret = OHOS::Camera::GetCameraMetadataItem(srcHeader, index, &srcItem);
-        if (ret != CAM_META_SUCCESS) {
-            MEDIA_ERR_LOG("Failed to get metadata item at index: %{public}d", index);
-            return false;
-        }
-        bool status = false;
-        uint32_t currentIndex;
-        ret = OHOS::Camera::FindCameraMetadataItemIndex(dstHeader, srcItem.item, &currentIndex);
-        if (ret == CAM_META_ITEM_NOT_FOUND) {
-            status = dstMetadata->addEntry(srcItem.item, srcItem.data.u8, srcItem.count);
-        } else if (ret == CAM_META_SUCCESS) {
-            status = dstMetadata->updateEntry(srcItem.item, srcItem.data.u8, srcItem.count);
-        }
-        if (!status) {
-            MEDIA_ERR_LOG("Failed to update metadata item: %{public}d", srcItem.item);
-            return false;
-        }
-    }
-    return true;
 }
 } // namespace CameraStandard
 } // namespace OHOS

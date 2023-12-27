@@ -24,6 +24,7 @@ namespace CameraStandard {
 class PhotoSession : public CaptureSession {
 public:
     explicit PhotoSession(sptr<ICaptureSession> &photoSession): CaptureSession(photoSession) {}
+    PhotoSession() {};
     ~PhotoSession();
 
     /**

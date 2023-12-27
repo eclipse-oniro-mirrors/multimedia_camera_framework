@@ -25,6 +25,7 @@ static const char* g_captureOutputTypeString[CAPTURE_OUTPUT_TYPE_MAX] = {"Previe
 CaptureOutput::CaptureOutput(CaptureOutputType outputType, StreamType streamType,
     sptr<IStreamCommon> stream) : outputType_(outputType), streamType_(streamType), stream_(stream)
 {
+    session_ = nullptr;
     sptr<IRemoteObject> object = stream_->AsObject();
     pid_t pid = 0;
     deathRecipient_ = new(std::nothrow) CameraDeathRecipient(pid);
@@ -40,6 +41,8 @@ CaptureOutput::CaptureOutput(CaptureOutputType outputType, StreamType streamType
 
 CaptureOutput::~CaptureOutput()
 {
+    stream_ = nullptr;
+    session_ = nullptr;
     if (GetStream() != nullptr) {
         (void)GetStream()->AsObject()->RemoveDeathRecipient(deathRecipient_);
     }
@@ -67,21 +70,19 @@ sptr<IStreamCommon> CaptureOutput::GetStream()
 
 sptr<CaptureSession> CaptureOutput::GetSession()
 {
-    std::lock_guard<std::mutex> lock(sessionMutex_);
     return session_.promote();
-}
-
-void CaptureOutput::SetSession(wptr<CaptureSession> captureSession)
-{
-    std::lock_guard<std::mutex> lock(sessionMutex_);
-    session_ = captureSession;
 }
 
 int32_t CaptureOutput::Release()
 {
     stream_ = nullptr;
-    SetSession(nullptr);
+    session_ = nullptr;
     return 0;
+}
+
+void CaptureOutput::SetSession(sptr<CaptureSession> captureSession)
+{
+    session_ = captureSession;
 }
 
 int32_t CaptureOutput::SetPhotoProfile(Profile &profile)

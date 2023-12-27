@@ -16,7 +16,6 @@
 #include "input/camera_input.h"
 
 #include <cinttypes>
-#include <mutex>
 #include <securec.h>
 #include "camera_device_ability_items.h"
 #include "camera_log.h"
@@ -120,6 +119,9 @@ CameraInput::~CameraInput()
         (void)deviceObj_->AsObject()->RemoveDeathRecipient(deathRecipient_);
         deviceObj_ = nullptr;
     }
+    cameraObj_ = nullptr;
+    CameraDeviceSvcCallback_ = nullptr;
+    CaptureInput::Release();
 }
 
 int CameraInput::Open()
@@ -154,6 +156,7 @@ int CameraInput::Close()
     cameraObj_ = nullptr;
     deviceObj_ = nullptr;
     CameraDeviceSvcCallback_ = nullptr;
+    CaptureInput::Release();
     return ServiceToCameraError(retCode);
 }
 
@@ -172,6 +175,7 @@ int CameraInput::Release()
     cameraObj_ = nullptr;
     deviceObj_ = nullptr;
     CameraDeviceSvcCallback_ = nullptr;
+    CaptureInput::Release();
     return ServiceToCameraError(retCode);
 }
 
@@ -217,14 +221,14 @@ sptr<CameraDevice> CameraInput::GetCameraDeviceInfo()
     return cameraObj_;
 }
 
-void CameraInput::ProcessCallbackUpdates(
-    const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
+void CameraInput::ProcessCallbackUpdates(const uint64_t timestamp,
+    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
-    auto metadataResultProcessor = GetMetadataResultProcessor();
-    if (metadataResultProcessor == nullptr) {
+    CaptureSession* captureSession = GetSession();
+    if (captureSession == nullptr) {
         return;
     }
-    metadataResultProcessor->ProcessCallbacks(timestamp, result);
+    captureSession->ProcessCallbacks(timestamp, result);
 }
 
 int32_t CameraInput::UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata)

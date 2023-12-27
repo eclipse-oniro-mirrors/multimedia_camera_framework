@@ -16,64 +16,48 @@
 #ifndef OHOS_CAMERA_CAPTURE_INPUT_H
 #define OHOS_CAMERA_CAPTURE_INPUT_H
 
-#include <memory>
 #include <refbase.h>
-
 #include "camera_device.h"
 #include "camera_info.h"
 
 namespace OHOS {
 namespace CameraStandard {
-class MetadataResultProcessor {
-public:
-    MetadataResultProcessor() = default;
-    virtual ~MetadataResultProcessor() = default;
-    virtual void ProcessCallbacks(
-        const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
-};
-
+class CaptureSession;
 class CaptureInput : public RefBase {
 public:
-    CaptureInput() = default;
-    virtual ~CaptureInput() = default;
+    CaptureInput();
+    virtual ~CaptureInput()
+    {
+        session_ = nullptr;
+    }
 
     /**
-     * @brief open camera.
-     */
+    * @brief open camera.
+    */
     virtual int Open() = 0;
 
     /**
-     * @brief close camera.
-     */
+    * @brief close camera.
+    */
     virtual int Close() = 0;
 
     /**
-     * @brief Release camera input.
-     */
+    * @brief Release camera input.
+    */
     virtual int Release() = 0;
 
     /**
-     * @brief get the camera info associated with the device.
-     *
-     * @return Returns camera info.
-     */
+    * @brief get the camera info associated with the device.
+    *
+    * @return Returns camera info.
+    */
     virtual sptr<CameraDevice> GetCameraDeviceInfo() = 0;
 
-    inline void SetMetadataResultProcessor(std::shared_ptr<MetadataResultProcessor> metadataResultProcessor)
-    {
-        std::lock_guard<std::mutex> lock(metadataResultProcessorMutex_);
-        metadataResultProcessor_ = metadataResultProcessor;
-    }
-
-    inline std::shared_ptr<MetadataResultProcessor> GetMetadataResultProcessor()
-    {
-        std::lock_guard<std::mutex> lock(metadataResultProcessorMutex_);
-        return metadataResultProcessor_.lock();
-    }
+    CaptureSession* GetSession();
+    void SetSession(CaptureSession* captureSession);
 
 private:
-    std::mutex metadataResultProcessorMutex_;
-    std::weak_ptr<MetadataResultProcessor> metadataResultProcessor_;
+    CaptureSession* session_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

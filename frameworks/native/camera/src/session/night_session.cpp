@@ -119,18 +119,12 @@ int32_t NightSession::GetExposure(uint32_t &exposureValue)
     return CameraErrorCode::SUCCESS;
 }
 
-void NightSession::NightSessionMetadataResultProcessor::ProcessCallbacks(
-    const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
+void NightSession::ProcessCallbacks(const uint64_t timestamp,
+    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
-    MEDIA_INFO_LOG("CaptureSession::NightSessionMetadataResultProcessor ProcessCallbacks");
-    auto session = session_.promote();
-    if (session == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::NightSessionMetadataResultProcessor ProcessCallbacks but session is null");
-        return;
-    }
-
-    session->ProcessFaceRecUpdates(timestamp, result);
-    session->ProcessAutoFocusUpdates(result);
+    MEDIA_INFO_LOG("ProcessCallbacks");
+    ProcessFaceRecUpdates(timestamp, result);
+    ProcessAutoFocusUpdates(result);
 }
 
 bool NightSession::CanAddOutput(sptr<CaptureOutput> &output)
