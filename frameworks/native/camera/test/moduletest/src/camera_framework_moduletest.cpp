@@ -505,6 +505,34 @@ void CameraFrameworkModuleTest::GetSupportedOutputCapability()
     return;
 }
 
+Profile CameraFrameworkModuleTest::GetProfile(sptr<CameraOutputCapability>& modeAbility,
+                                              float ratio, CameraFormat format)
+{
+    uint32_t width;
+    uint32_t height;
+    float profileRatio;
+    Profile profile;
+    std::vector<Profile> profiles;
+
+    if (format == photoFormat_) {
+        profiles = modeAbility->GetPhotoProfiles();
+    } else if (format == previewFormat_) {
+        profiles = modeAbility->GetPreviewProfiles();
+    }
+
+    for (int i = 0; i < profiles.size(); ++i) {
+        width = profiles[i].GetSize().width;
+        height = profiles[i].GetSize().height;
+        profileRatio = float(width) / float(height);
+
+        if (profileRatio == ratio) {
+            profile = profiles[i];
+            break;
+        }
+    }
+    return profile;
+}
+
 void CameraFrameworkModuleTest::ReleaseInput()
 {
     if (input_) {
