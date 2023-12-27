@@ -1054,9 +1054,10 @@ napi_value PreviewOutputNapi::AttachSketchSurface(napi_env env, napi_callback_in
 
     int32_t retCode = previewOutputNapi->previewOutput_->AttachSketchSurface(surface);
     if (retCode != 0 && !CameraNapiUtils::CheckError(env, retCode)) {
-        MEDIA_ERR_LOG("EnableSketch fail! %{public}d", retCode);
+        MEDIA_ERR_LOG("PreviewOutputNapi::AttachSketchSurface! %{public}d", retCode);
+        return result;
     }
-    MEDIA_DEBUG_LOG("PreviewOutputNapi::EnableSketch success");
+    MEDIA_DEBUG_LOG("PreviewOutputNapi::AttachSketchSurface success");
     return result;
 }
 

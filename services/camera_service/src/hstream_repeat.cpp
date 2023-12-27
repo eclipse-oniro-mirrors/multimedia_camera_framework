@@ -221,6 +221,11 @@ int32_t HStreamRepeat::Stop()
 
 int32_t HStreamRepeat::Release()
 {
+    return ReleaseStream(false);
+}
+
+int32_t HStreamRepeat::ReleaseStream(bool isDelay)
+{
     {
         std::lock_guard<std::mutex> lock(callbackLock_);
         streamRepeatCallback_ = nullptr;
@@ -232,7 +237,7 @@ int32_t HStreamRepeat::Release()
             sketchStreamRepeat_->Release();
         }
     }
-    return HStreamCommon::Release();
+    return HStreamCommon::ReleaseStream(isDelay);
 }
 
 int32_t HStreamRepeat::SetCallback(sptr<IStreamRepeatCallback>& callback)

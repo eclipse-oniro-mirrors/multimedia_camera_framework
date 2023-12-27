@@ -32,8 +32,20 @@ namespace CameraStandard {
 class CaptureOutput;
 class NightSession : public CaptureSession {
 public:
-    explicit NightSession(sptr<ICaptureSession> &nightSession): CaptureSession(nightSession) {}
-    NightSession() {};
+    class NightSessionMetadataResultProcessor : public MetadataResultProcessor {
+    public:
+        explicit NightSessionMetadataResultProcessor(wptr<NightSession> session) : session_(session) {}
+        void ProcessCallbacks(
+            const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result) override;
+
+    private:
+        wptr<NightSession> session_;
+    };
+
+    explicit NightSession(sptr<ICaptureSession>& nightSession) : CaptureSession(nightSession)
+    {
+        metadataResultProcessor_ = std::make_shared<NightSessionMetadataResultProcessor>(this);
+    }
     ~NightSession();
 
     /**
@@ -63,9 +75,6 @@ public:
      * @param CaptureOutput to be added to session.
      */
     bool CanAddOutput(sptr<CaptureOutput>& output) override;
-
-    void ProcessCallbacks(const uint64_t timestamp,
-        const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

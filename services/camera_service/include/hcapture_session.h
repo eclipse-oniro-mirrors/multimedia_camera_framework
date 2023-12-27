@@ -220,7 +220,7 @@ private:
 class PermissionStatusChangeCb : public Security::AccessToken::PermStateChangeCallbackCustomize {
 public:
     explicit PermissionStatusChangeCb(
-        sptr<HCaptureSession> session, const Security::AccessToken::PermStateChangeScope& scopeInfo)
+        wptr<HCaptureSession> session, const Security::AccessToken::PermStateChangeScope& scopeInfo)
         : PermStateChangeCallbackCustomize(scopeInfo), captureSession_(session)
     {}
     virtual ~PermissionStatusChangeCb() = default;
@@ -232,7 +232,7 @@ private:
 
 class CameraUseStateChangeCb : public Security::AccessToken::StateCustomizedCbk {
 public:
-    explicit CameraUseStateChangeCb(sptr<HCaptureSession> session) : captureSession_(session) {}
+    explicit CameraUseStateChangeCb(wptr<HCaptureSession> session) : captureSession_(session) {}
     virtual ~CameraUseStateChangeCb() = default;
     void StateChangeNotify(Security::AccessToken::AccessTokenID tokenId, bool isShowing) override;
 
