@@ -2824,7 +2824,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_073, TestSize.Level0
 
 /*
  * Feature: Framework
- * Function: Test previewoutput 
+ * Function: Test previewoutput
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
