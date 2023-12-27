@@ -29,12 +29,6 @@ public:
 
     static std::shared_ptr<vector<Size>> GetSupportedPreviewSizeRange(const int32_t modeName,
         camera_format_t targetFormat, const std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
-
-    static bool MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata,
-        std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata);
-
-    static std::shared_ptr<OHOS::Camera::CameraMetadata> CopyMetadata(
-        const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata);
 };
 } // namespace CameraStandard
 } // namespace OHOS

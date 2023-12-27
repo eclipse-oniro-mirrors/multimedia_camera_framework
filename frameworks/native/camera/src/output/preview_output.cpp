@@ -251,8 +251,6 @@ float PreviewOutput::GetSketchRatio()
 
 int32_t PreviewOutput::CreateSketchWrapper(Size sketchSize)
 {
-    MEDIA_DEBUG_LOG("PreviewOutput::CreateSketchWrapper enter sketchSize is:%{public}d x %{public}d", sketchSize.width,
-        sketchSize.height);
     auto session = GetSession();
     if (session == nullptr) {
         MEDIA_ERR_LOG("EnableSketch session null");
@@ -271,7 +269,7 @@ int32_t PreviewOutput::CreateSketchWrapper(Size sketchSize)
 
 int32_t PreviewOutput::EnableSketch(bool isEnable)
 {
-    MEDIA_DEBUG_LOG("Enter Into PreviewOutput::EnableSketch %{public}d", isEnable);
+    MEDIA_DEBUG_LOG("Enter Into PreviewOutput::EnableSketch");
     if (!IsSketchSupported()) {
         MEDIA_ERR_LOG("EnableSketch IsSketchSupported is false");
         return CameraErrorCode::OPERATION_NOT_ALLOWED;
@@ -303,7 +301,8 @@ int32_t PreviewOutput::EnableSketch(bool isEnable)
     if (sketchWrapper_ == nullptr) {
         return ServiceToCameraError(CAMERA_OPERATION_NOT_ALLOWED);
     }
-    errCode = sketchWrapper_->Destroy();
+    auto wrapper = static_pointer_cast<SketchWrapper>(sketchWrapper_);
+    errCode = wrapper->Destroy();
     sketchWrapper_ = nullptr;
     return ServiceToCameraError(errCode);
 }
@@ -316,12 +315,12 @@ int32_t PreviewOutput::AttachSketchSurface(sptr<Surface> sketchSurface)
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
     if (sketchWrapper_ == nullptr) {
-        return CameraErrorCode::INVALID_ARGUMENT;
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
     }
     if (sketchSurface == nullptr) {
         return CameraErrorCode::INVALID_ARGUMENT;
     }
-    int32_t errCode = sketchWrapper_->AttachSketchSurface(sketchSurface);
+    int32_t errCode = static_pointer_cast<SketchWrapper>(sketchWrapper_)->AttachSketchSurface(sketchSurface);
     return ServiceToCameraError(errCode);
 }
 
@@ -335,7 +334,7 @@ int32_t PreviewOutput::StartSketch()
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
     if (sketchWrapper_ != nullptr) {
-        errCode = sketchWrapper_->StartSketchStream();
+        errCode = static_pointer_cast<SketchWrapper>(sketchWrapper_)->StartSketchStream();
     }
     return ServiceToCameraError(errCode);
 }
@@ -351,7 +350,7 @@ int32_t PreviewOutput::StopSketch()
     }
 
     if (sketchWrapper_ != nullptr) {
-        errCode = sketchWrapper_->StopSketchStream();
+        errCode = static_pointer_cast<SketchWrapper>(sketchWrapper_)->StopSketchStream();
     }
     return ServiceToCameraError(errCode);
 }
@@ -521,12 +520,13 @@ void PreviewOutput::OnNativeRegisterCallback(const std::string& eventString)
         if (tagRatio <= 0) {
             return;
         }
-        float sketchRatio = sketchWrapper_->GetSketchEnableRatio(session->GetFeaturesMode());
+        auto sketchWrapper = static_pointer_cast<SketchWrapper>(sketchWrapper_);
+        float sketchRatio = sketchWrapper->GetSketchEnableRatio(session->GetFeaturesMode());
         MEDIA_DEBUG_LOG("PreviewOutput::OnMetadataChanged OHOS_CONTROL_ZOOM_RATIO >>> tagRatio:%{public}f -- "
                         "sketchRatio:%{public}f",
             tagRatio, sketchRatio);
-        sketchWrapper_->UpdateSketchRatio(sketchRatio);
-        sketchWrapper_->UpdateZoomRatio(tagRatio);
+        sketchWrapper->UpdateSketchRatio(sketchRatio);
+        sketchWrapper->UpdateZoomRatio(tagRatio);
     }
 }
 
@@ -537,7 +537,8 @@ void PreviewOutput::OnNativeUnregisterCallback(const std::string& eventString)
         if (sketchWrapper_ == nullptr) {
             return;
         }
-        sketchWrapper_->StopSketchStream();
+        auto sketchWrapper = static_pointer_cast<SketchWrapper>(sketchWrapper_);
+        sketchWrapper->StopSketchStream();
     }
 }
 

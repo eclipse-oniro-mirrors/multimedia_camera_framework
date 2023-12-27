@@ -17,7 +17,6 @@
 #define OHOS_CAMERA_CAMERA_INPUT_H
 
 #include <iostream>
-#include <memory>
 #include <unordered_map>
 #include <set>
 #include <vector>
@@ -45,6 +44,7 @@ public:
     virtual ~ResultCallback() = default;
     virtual void OnResult(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) const;
 };
+
 
 class CameraInput : public CaptureInput {
 public:
@@ -322,6 +322,7 @@ public:
 
     int32_t GetCameraAllVendorTags(std::vector<vendorTag_t> &infos);
 
+    void ProcessFaceRecUpdates(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
 private:
     sptr<ICameraDeviceService> deviceObj_;
     sptr<CameraDevice> cameraObj_;

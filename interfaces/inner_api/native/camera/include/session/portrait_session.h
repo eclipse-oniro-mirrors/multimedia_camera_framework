@@ -42,6 +42,7 @@ class CaptureOutput;
 class PortraitSession : public CaptureSession {
 public:
     explicit PortraitSession(sptr<ICaptureSession> &PortraitSession): CaptureSession(PortraitSession) {}
+    PortraitSession() {};
     ~PortraitSession();
 
     /**

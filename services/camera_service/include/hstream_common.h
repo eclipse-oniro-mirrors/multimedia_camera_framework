@@ -46,7 +46,7 @@ public:
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility);
     virtual int32_t UnlinkInput();
     virtual void SetStreamInfo(StreamInfo_V1_1& streamInfo) = 0;
-    virtual int32_t ReleaseStream(bool isDelay) = 0;
+    virtual int32_t Release() = 0;
     virtual void DumpStreamInfo(std::string& dumpString) = 0;
 
     virtual void SetColorSpace(ColorSpace colorSpace) final;

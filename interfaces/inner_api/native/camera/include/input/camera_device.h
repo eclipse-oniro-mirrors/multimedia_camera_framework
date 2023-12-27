@@ -70,10 +70,10 @@ typedef struct dmDeviceInfo {
 
 class CameraDevice : public RefBase {
 public:
-    explicit CameraDevice(std::string cameraID, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
-    explicit CameraDevice(
-        std::string cameraID, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, dmDeviceInfo deviceInfo);
-    virtual ~CameraDevice() = default;
+    CameraDevice() = default;
+    CameraDevice(std::string cameraID, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
+    CameraDevice(std::string cameraID, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, dmDeviceInfo deviceInfo);
+    ~CameraDevice();
     /**
     * @brief Get the camera Id.
     *
@@ -87,18 +87,6 @@ public:
     * @return Returns the metadata corresponding to current object.
     */
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetMetadata();
-
-    /**
-    * @brief Reset cachedMetadata_ to default status
-    */
-    void ResetMetadata();
-
-    /**
-    * @brief Get the current camera static abilities.
-    *
-    * @return Returns the current camera static abilities.
-    */
-    const std::shared_ptr<OHOS::Camera::CameraMetadata> GetCameraAbility();
 
     /**
     * @brief Get the position of the camera.
@@ -174,9 +162,7 @@ public:
     std::unordered_map<int32_t, std::vector<VideoProfile>> modeVideoProfiles_ = {};
 private:
     std::string cameraID_;
-    const std::shared_ptr<OHOS::Camera::CameraMetadata> baseAbility_;
-    std::mutex cachedMetadataMutex_;
-    std::shared_ptr<OHOS::Camera::CameraMetadata> cachedMetadata_;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata_;
     CameraPosition cameraPosition_ = CAMERA_POSITION_UNSPECIFIED;
     CameraType cameraType_ = CAMERA_TYPE_DEFAULT;
     ConnectionType connectionType_ = CAMERA_CONNECTION_BUILT_IN;
