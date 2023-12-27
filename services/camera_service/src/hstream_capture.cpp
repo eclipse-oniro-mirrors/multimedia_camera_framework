@@ -207,6 +207,7 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
 
 int32_t HStreamCapture::CancelCapture()
 {
+    CAMERA_SYNC_TRACE;
     // Cancel cature is dummy till continuous/burst mode is supported
     StopStream();
     return CAMERA_OK;
@@ -252,11 +253,16 @@ int32_t HStreamCapture::ConfirmCapture()
 
 int32_t HStreamCapture::Release()
 {
+    return ReleaseStream(false);
+}
+
+int32_t HStreamCapture::ReleaseStream(bool isDelay)
+{
     {
         std::lock_guard<std::mutex> lock(callbackLock_);
         streamCaptureCallback_ = nullptr;
     }
-    return HStreamCommon::Release();
+    return HStreamCommon::ReleaseStream(isDelay);
 }
 
 int32_t HStreamCapture::SetCallback(sptr<IStreamCaptureCallback> &callback)

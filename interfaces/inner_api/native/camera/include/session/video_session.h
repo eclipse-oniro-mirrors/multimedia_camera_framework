@@ -24,7 +24,6 @@ namespace CameraStandard {
 class VideoSession : public CaptureSession {
 public:
     explicit VideoSession(sptr<ICaptureSession> &videoSession): CaptureSession(videoSession) {}
-    VideoSession() {};
     ~VideoSession();
 };
 } // namespace CameraStandard

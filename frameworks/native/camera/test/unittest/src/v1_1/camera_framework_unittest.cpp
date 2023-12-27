@@ -3681,7 +3681,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_025, TestSize.Level
     camDevice->UpdateSetting(nullptr);
     sptr<ICameraDeviceServiceCallback> callback = nullptr;
     camDevice->SetCallback(callback);
-    camDevice->GetSettings();
+    camDevice->GetDeviceAbility();
     camDevice->SetCallback(callback1);
     camDevice->OnError(REQUEST_TIMEOUT, 0) ;
     camDevice->OnError(DEVICE_PREEMPT, 0) ;
@@ -3859,7 +3859,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_030, TestSize.Level
     EXPECT_EQ(ret, 0);
     camDevice->Open();
     g_getCameraAbilityerror = true;
-    camDevice->GetSettings();
+    camDevice->GetDeviceAbility();
     g_openCameraDevicerror = true;
     EXPECT_EQ(camDevice->OpenDevice(), 11);
 
