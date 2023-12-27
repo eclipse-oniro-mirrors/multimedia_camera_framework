@@ -26,6 +26,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+class SketchWrapper;
 class PreviewStateCallback {
 public:
     PreviewStateCallback() = default;
@@ -151,7 +152,7 @@ public:
 private:
     std::shared_ptr<PreviewStateCallback> appCallback_;
     sptr<IStreamRepeatCallback> svcCallback_;
-    std::shared_ptr<void> sketchWrapper_;
+    std::shared_ptr<SketchWrapper> sketchWrapper_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetDeviceMetadata();
     std::shared_ptr<Size> FindSketchSize();
     int32_t CreateSketchWrapper(Size sketchSize);
