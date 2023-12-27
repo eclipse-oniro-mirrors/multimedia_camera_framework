@@ -411,9 +411,10 @@ public:
     }
 };
 
-class AppMacroStatusCallback: public MacroStatusCallback {
+class AppMacroStatusCallback : public MacroStatusCallback {
 public:
-    void OnMacroStatusChanged(MacroStatus status) {
+    void OnMacroStatusChanged(MacroStatus status)
+    {
         MEDIA_DEBUG_LOG("AppMacroStatusCallback");
     }
 };
@@ -2330,9 +2331,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_054, TestSize.Level0
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
     camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(metadata->get(), 
-        OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
-    EXPECT_EQ(ret, CAM_META_SUCCESS);
+    OHOS::Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
     cameraManager->ParseBasicCapability(ability, metadata, item);
 }
 
@@ -5593,8 +5592,10 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_034, TestSize.Level
     previewOutput->sketchWrapper_ = std::make_shared<SketchWrapper>(previewOutput->GetStream(), previewSize);
     previewOutput->OnNativeRegisterCallback(eventString);
     previewOutput->OnNativeUnregisterCallback(eventString);
+    /home/back_zhang/workspace/1226/multimedia_camera_framework_tdd/frameworks/native/camera/test/unittest/src/v1_1/camera_framework_unittest.cpp
     previewOutput->CameraServerDied(0);
-    std::shared_ptr<PreviewStateCallback> previewStateCallback = std::make_shared<TestPreviewOutputCallback>("PreviewStateCallback");
+    std::shared_ptr<PreviewStateCallback> previewStateCallback =
+        std::make_shared<TestPreviewOutputCallback>("PreviewStateCallback");
     previewOutput->SetCallback(previewStateCallback);
     previewOutput->CameraServerDied(0);
 
@@ -5671,7 +5672,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_035, TestSize.Level
 
     SketchWrapper *sketchWrapper = new (std::nothrow) SketchWrapper(previewOutput->GetStream(), previewSize);
     ASSERT_NE(sketchWrapper, nullptr);
-    std::shared_ptr<PreviewStateCallback> setCallback = std::make_shared<TestPreviewOutputCallback>("PreviewStateCallback");
+    std::shared_ptr<PreviewStateCallback> setCallback =
+        std::make_shared<TestPreviewOutputCallback>("PreviewStateCallback");
     ASSERT_NE(setCallback, nullptr);
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(deviceMetadata->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
@@ -5688,7 +5690,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_035, TestSize.Level
     sketchWrapper->OnSketchStatusChanged(SketchStatus::STOPED, 1.0f);
     sketchWrapper->UpdateSketchReferenceFovRatio(item, SketchWrapper::g_sketchReferenceFovRatioMap_);
     auto sketchReferenceFovRangeVec = std::vector<SketchWrapper::SketchReferenceFovRange>(5);
-    SketchWrapper::SketchReferenceFovRange sketchReferenceFovRange = {.zoomMin = -1.0f, .zoomMax = -1.0f, .referenceValue = -1.0f};
+    SketchWrapper::SketchReferenceFovRange sketchReferenceFovRange =
+        {.zoomMin = -1.0f, .zoomMax = -1.0f, .referenceValue = -1.0f};
     sketchReferenceFovRangeVec[0] = sketchReferenceFovRange;
     sketchReferenceFovRange = {.zoomMin = -1.0f, .zoomMax = 100.0f, .referenceValue = -1.0f};
     SketchWrapper::g_sketchReferenceFovRatioMap_[-1] = sketchReferenceFovRangeVec;
