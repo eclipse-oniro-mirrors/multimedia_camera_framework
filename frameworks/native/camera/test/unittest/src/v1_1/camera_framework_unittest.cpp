@@ -5592,7 +5592,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_034, TestSize.Level
     previewOutput->sketchWrapper_ = std::make_shared<SketchWrapper>(previewOutput->GetStream(), previewSize);
     previewOutput->OnNativeRegisterCallback(eventString);
     previewOutput->OnNativeUnregisterCallback(eventString);
-    /home/back_zhang/workspace/1226/multimedia_camera_framework_tdd/frameworks/native/camera/test/unittest/src/v1_1/camera_framework_unittest.cpp
     previewOutput->CameraServerDied(0);
     std::shared_ptr<PreviewStateCallback> previewStateCallback =
         std::make_shared<TestPreviewOutputCallback>("PreviewStateCallback");
