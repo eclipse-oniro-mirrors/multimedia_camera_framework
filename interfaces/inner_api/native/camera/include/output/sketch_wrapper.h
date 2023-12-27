@@ -30,11 +30,11 @@ class SketchWrapper {
 public:
     static float GetSketchReferenceFovRatio(int32_t modeName, float zoomRatio);
     static float GetSketchEnableRatio(int32_t modeName);
-    static void UpdateSketchStaticInfo(std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata);
+    static void UpdateSketchStaticInfo(std::shared_ptr<Camera::CameraMetadata> deviceMetadata);
 
     explicit SketchWrapper(sptr<IStreamCommon> hostStream, const Size size);
     virtual ~SketchWrapper();
-    int32_t Init(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata, int32_t modeName);
+    int32_t Init(std::shared_ptr<Camera::CameraMetadata>& deviceMetadata, int32_t modeName);
     int32_t AttachSketchSurface(sptr<Surface> sketchSurface);
     int32_t StartSketchStream();
     int32_t StopSketchStream();
