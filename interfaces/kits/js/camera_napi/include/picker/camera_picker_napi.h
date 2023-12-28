@@ -15,13 +15,16 @@
 
 #ifndef CAMERA_PICKER_NAPI_H
 #define CAMERA_PICKER_NAPI_H
-#include "camera_log.h"
-#include "camera_napi_utils.h"
-#include "js_native_api_types.h"
+#include <atomic>
+#include <memory>
+#include <stdint.h>
+
 #include "ability.h"
 #include "ability_context.h"
 #include "ability_manager_client.h"
+#include "camera_napi_utils.h"
 #include "int_wrapper.h"
+#include "js_native_api_types.h"
 #include "modal_ui_extension_config.h"
 #include "napi_base_context.h"
 #include "string_wrapper.h"
@@ -32,38 +35,16 @@ namespace OHOS {
 namespace CameraStandard {
 
 typedef struct {
-    string saveUri;
+    std::string saveUri;
     CameraPosition cameraPosition;
     int videoDuration;
-} VideoProfileForPicker;
+} PickerProfile;
 
-typedef struct {
-    string saveUri;
-    CameraPosition cameraPosition;
-} PhotoProfileForPicker;
-
-struct CommonAsyncContext {
-    explicit CommonAsyncContext(napi_env napiEnv);
-    virtual ~CommonAsyncContext();
-    napi_env env = nullptr;
-    napi_status status = napi_invalid_arg;
-    int32_t errCode = 0;
-    napi_deferred deferred = nullptr;  // promise handle
-    napi_ref callbackRef = nullptr;    // callback handle
-    napi_async_work work = nullptr;    // work handle
-};
-
-struct UIExtensionRequestContext : public CommonAsyncContext {
-    explicit UIExtensionRequestContext(napi_env env) : CommonAsyncContext(env) {};
-    std::shared_ptr<OHOS::AbilityRuntime::AbilityContext> context = nullptr;
-    OHOS::AAFwk::Want requestWant;
-};
-
-static const char CAMERA_PICKER_NAPI_CLASS_NAME[] = "CameraPicker";
+enum class PickerMediaType : uint32_t { PHOTO, VIDEO };
 
 class UIExtensionCallback {
 public:
-    explicit UIExtensionCallback(std::shared_ptr<UIExtensionRequestContext>& reqContext);
+    explicit UIExtensionCallback(std::shared_ptr<OHOS::AbilityRuntime::AbilityContext> abilityContext);
     void SetSessionId(int32_t sessionId);
     void OnRelease(int32_t releaseCode);
     void OnResult(int32_t resultCode, const OHOS::AAFwk::Want& result);
@@ -73,25 +54,60 @@ public:
     void OnDestroy();
     void SendMessageBack();
 
+    inline void WaitResultLock()
+    {
+        std::unique_lock<std::mutex> lock(cbMutex_);
+        if (!isCallbackReturned_) {
+            cbFinishCondition_.wait(lock);
+        }
+    }
+
+    inline void NotifyResultLock()
+    {
+        std::unique_lock<std::mutex> lock(cbMutex_);
+        cbFinishCondition_.notify_one();
+    }
+
+    inline int32_t GetResultCode()
+    {
+        return resultCode_;
+    }
+
+    inline std::string GetResultUri()
+    {
+        return resultUri;
+    }
+
+    inline std::string GetResultMediaType()
+    {
+        if (resultMode == "VIDEO") {
+            return "video";
+        }
+        return "photo";
+    }
+
 private:
     bool SetErrorCode(int32_t code);
     int32_t sessionId_ = 0;
     int32_t resultCode_ = 0;
+    std::string resultUri = "";
+    std::string resultMode = "";
     OHOS::AAFwk::Want resultWant_;
-    std::shared_ptr<UIExtensionRequestContext> reqContext_ = nullptr;
-    bool alreadyCallback_ = false;
+    std::weak_ptr<OHOS::AbilityRuntime::AbilityContext> abilityContext_;
+    std::condition_variable cbFinishCondition_;
+    std::mutex cbMutex_;
+    bool isCallbackReturned_ = false;
 };
 
 class CameraPickerNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
-    static napi_value CreatePickerPhotoProfile(napi_env env);
-    static napi_value CreatePickerVideoProfile(napi_env env);
+    static napi_value CreatePickerMediaType(napi_env env);
+    static napi_value CreatePickerProfile(napi_env env);
     static napi_value CreatePickerResult(napi_env env);
-    static napi_status AddNamedProperty(napi_env env, napi_value object,
-                                        const std::string name, int32_t enumValue);
-    static napi_value TakePhoto(napi_env env, napi_callback_info info);
-    static napi_value RecordVideo(napi_env env, napi_callback_info info);
+
+    static napi_value Pick(napi_env env, napi_callback_info info);
+
     static napi_value CameraPickerNapiConstructor(napi_env env, napi_callback_info info);
     static void CameraPickerNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     CameraPickerNapi();
@@ -102,23 +118,18 @@ private:
     napi_ref wrapper_;
     static thread_local uint32_t cameraPickerTaskId;
     static thread_local napi_ref sConstructor_;
+    static thread_local napi_ref mediaTypeRef_;
 };
 
 struct CameraPickerAsyncContext : public AsyncContext {
-    CameraPickerNapi* objectInfo;
     std::string resultUri;
     std::string errorMsg;
-    Ace::UIContent* uiContent;
-    PhotoProfileForPicker photoProfile;
-    VideoProfileForPicker videoProfile;
+    PickerProfile pickerProfile;
     AAFwk::Want want;
     std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
+    std::shared_ptr<UIExtensionCallback> uiExtCallback;
     int32_t resultCode;
     bool bRetBool;
-    ~CameraPickerAsyncContext()
-    {
-        objectInfo = nullptr;
-    }
 };
 } // namespace CameraStandard
 } // namespace OHOS

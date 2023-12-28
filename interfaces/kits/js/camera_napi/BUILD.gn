@@ -27,10 +27,16 @@ ohos_copy("camera_declaration") {
   module_install_name = ""
 }
 
+config("camera_napi_public_config") {
+  visibility = [ ":*" ]
+  include_dirs = [ "${multimedia_camera_framework_path}/interfaces/kits/js/camera_napi/include" ]
+}
+
 ohos_shared_library("camera_napi") {
   branch_protector_ret = "pac_ret"
+
+  public_configs = [ ":camera_napi_public_config" ]
   include_dirs = [
-    "${multimedia_camera_framework_path}/interfaces/kits/js/camera_napi/include",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
     "${multimedia_camera_framework_path}/services/camera_service/include",
     "${multimedia_camera_framework_path}/frameworks/native/camera/include",
@@ -95,14 +101,14 @@ ohos_shared_library("camera_napi") {
   subsystem_name = "multimedia"
 }
 
-if (use_ace_engine) {
+if (gen_camera_picker) {
   js_declaration("camerapicker_js") {
     part_name = "camera_framework"
-    sources = [ "./@ohos.multimedia.camerapicker.d.ts" ]
+    sources = [ "./@ohos.multimedia.cameraPicker.d.ts" ]
   }
 
   ohos_copy("camerapicker_declaration") {
-    sources = [ "./@ohos.multimedia.camerapicker.d.ts" ]
+    sources = [ "./@ohos.multimedia.cameraPicker.d.ts" ]
     outputs = [ target_out_dir + "/$target_name/" ]
     module_source_dir = target_out_dir + "/$target_name"
     module_install_name = ""

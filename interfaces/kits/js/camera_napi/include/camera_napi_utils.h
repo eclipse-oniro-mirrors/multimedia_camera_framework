@@ -17,8 +17,10 @@
 #define CAMERA_NAPI_UTILS_H_
 
 #include <cinttypes>
+#include <map>
 #include <securec.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -31,6 +33,7 @@
 #include "camera_device_ability_items.h"
 #include "input/camera_input.h"
 #include "camera_log.h"
+#include "js_native_api.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "output/photo_output.h"
@@ -285,6 +288,12 @@ public:
 
     static std::vector<napi_property_descriptor> GetPropertyDescriptor(
         std::vector<std::vector<napi_property_descriptor>> descriptors);
+
+    static napi_status CreateObjectWithPropName(
+        napi_env env, napi_value* result, size_t property_count, const char** keys);
+
+    static napi_status CreateObjectWithPropNameAndValues(napi_env env, napi_value* result, size_t property_count,
+        const char** keys, const std::vector<std::string> values);
 };
 
 template <typename T>

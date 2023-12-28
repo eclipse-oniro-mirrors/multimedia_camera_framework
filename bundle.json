@@ -64,6 +64,7 @@
             "fwk_group": [
               "//foundation/multimedia/camera_framework/frameworks/native/camera:camera_framework",
               "//foundation/multimedia/camera_framework/frameworks/native/ndk:ohcamera",
+              "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camerapicker_napi",
               "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camera_napi",
               "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camera_js",
               "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi:camerapicker_js"
@@ -136,7 +137,6 @@
                     "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi/include/picker"
                 ],
                 "header_files": [
-                  "camera_napi_utils.h",
                   "camera_picker_napi.h"
                 ]
               }

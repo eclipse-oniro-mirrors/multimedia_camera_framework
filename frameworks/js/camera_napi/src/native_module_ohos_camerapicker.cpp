@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "camera_log.h"
 #include "picker/camera_picker_napi.h"
 
 namespace OHOS {
@@ -29,15 +30,13 @@ static napi_value Export(napi_env env, napi_value exports)
 /*
  * module define
  */
-static napi_module g_module = {
-    .nm_version = 1,
+static napi_module g_module = { .nm_version = 1,
     .nm_flags = 0,
     .nm_filename = nullptr,
     .nm_register_func = Export,
-    .nm_modname = "multimedia.camerapicker",
+    .nm_modname = "multimedia.cameraPicker",
     .nm_priv = (reinterpret_cast<void*>(0)),
-    .reserved = {0}
-};
+    .reserved = { 0 } };
 
 /*
  * module register
