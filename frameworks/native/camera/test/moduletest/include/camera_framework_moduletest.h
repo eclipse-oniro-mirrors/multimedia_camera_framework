@@ -22,6 +22,11 @@
 #include "input/camera_manager.h"
 #include "session/capture_session.h"
 #include "session/portrait_session.h"
+#include "hcamera_service_callback_proxy.h"
+#include "hstream_repeat_proxy.h"
+#include "hstream_capture_callback_proxy.h"
+#include "hstream_repeat_callback_proxy.h"
+#include "hcapture_session_callback_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {

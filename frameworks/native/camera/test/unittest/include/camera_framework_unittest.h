@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 #include "hcamera_service.h"
 #include "input/camera_manager.h"
+#include "output/sketch_wrapper.h"
 
 namespace OHOS {
 namespace CameraStandard {
