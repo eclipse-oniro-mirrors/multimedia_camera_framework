@@ -970,6 +970,12 @@ napi_value CameraManagerNapi::GetSupportedModes(napi_env env, napi_callback_info
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
     if (status == napi_ok && cameraManagerNapi != nullptr) {
         std::vector<SceneMode> modeObjList = cameraManagerNapi->cameraManager_->GetSupportedModes(cameraInfo);
+        for (auto it = modeObjList.begin(); it != modeObjList.end(); it++) {
+            if (*it == SCAN) {
+                modeObjList.erase(it);
+                break;
+            }
+        }
         MEDIA_INFO_LOG("CameraManagerNapi::GetSupportedModes size=[%{public}zu]", modeObjList.size());
         jsResult = CreateJSArray(env, status, modeObjList);
         if (status == napi_ok) {
