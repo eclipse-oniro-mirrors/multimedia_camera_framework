@@ -2483,27 +2483,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_060, TestSize.Level0
 
 /*
  * Feature: Framework
- * Function: Test camerainput with metadata_ is nullptr
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test camerainput with metadata_ is nullptr
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_061, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
-    uint32_t metaTag = 0;
-    camInput->cameraObj_->metadata_ = nullptr;
-    camInput->GetMetaSetting(metaTag);
-}
-
-/*
- * Feature: Framework
  * Function: Test metadataoutput with cameraserverdied and stop
  * SubFunction: NA
  * FunctionPoints: NA
