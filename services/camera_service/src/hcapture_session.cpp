@@ -1144,20 +1144,20 @@ int32_t StreamOperatorCallback::OnCaptureStarted(int32_t captureId, const std::v
     return CAMERA_OK;
 }
 
-int32_t StreamOperatorCallback::OnCaptureStartedV1_2(
+int32_t StreamOperatorCallback::OnCaptureStarted_V1_2(
     int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo>& infos)
 {
-    MEDIA_DEBUG_LOG("StreamOperatorCallback::OnCaptureStartedV1_2");
+    MEDIA_DEBUG_LOG("StreamOperatorCallback::OnCaptureStarted_V1_2");
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& captureInfo : infos) {
         sptr<HStreamCommon> curStream = GetStreamByStreamID(captureInfo.streamId_);
         if (curStream == nullptr) {
-            MEDIA_ERR_LOG("StreamOperatorCallback::OnCaptureStartedV1_2 StreamId: %{public}d not found."
+            MEDIA_ERR_LOG("StreamOperatorCallback::OnCaptureStarted_V1_2 StreamId: %{public}d not found."
                           " exposureTime: %{public}u",
                 captureInfo.streamId_, captureInfo.exposureTime_);
             return CAMERA_INVALID_ARG;
         } else if (curStream->GetStreamType() == StreamType::CAPTURE) {
-            MEDIA_DEBUG_LOG("StreamOperatorCallback::OnCaptureStartedV1_2 StreamId: %{public}d."
+            MEDIA_DEBUG_LOG("StreamOperatorCallback::OnCaptureStarted_V1_2 StreamId: %{public}d."
                             " exposureTime: %{public}u",
                 captureInfo.streamId_, captureInfo.exposureTime_);
             CastStream<HStreamCapture>(curStream)->OnCaptureStarted(captureId, captureInfo.exposureTime_);

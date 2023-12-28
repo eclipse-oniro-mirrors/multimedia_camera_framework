@@ -74,7 +74,7 @@ public:
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
 
     int32_t OnCaptureStarted(int32_t captureId, const std::vector<int32_t>& streamIds) override;
-    int32_t OnCaptureStartedV1_2(
+    int32_t OnCaptureStarted_V1_2(
         int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo>& infos) override;
     int32_t OnCaptureEnded(int32_t captureId, const std::vector<CaptureEndedInfo>& infos) override;
     int32_t OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos) override;
