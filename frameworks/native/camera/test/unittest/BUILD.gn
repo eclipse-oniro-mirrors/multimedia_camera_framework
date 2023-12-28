@@ -37,7 +37,6 @@ ohos_unittest("camera_framework_unittest_v1_0") {
   ]
 
   deps = [
-    "${graphic_2d_path}:libsurface",
     "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
     "${third_party_path}:gmock_main",
@@ -53,6 +52,7 @@ ohos_unittest("camera_framework_unittest_v1_0") {
     "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:metadata",
     "drivers_peripheral_display:hdi_gralloc_client",
+    "graphic_surface:surface",
     "hdf_core:libhdi",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
@@ -67,6 +67,11 @@ ohos_unittest("camera_framework_unittest_v1_0") {
     "-fPIC",
     "-Werror=unused",
   ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
 
   include_dirs += [
     "${driver_peripheral_path}/interfaces/include",
@@ -101,7 +106,6 @@ ohos_unittest("camera_framework_unittest_v1_1") {
   ]
 
   deps = [
-    "${graphic_2d_path}:libsurface",
     "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
     "${third_party_path}:gmock_main",
@@ -117,6 +121,7 @@ ohos_unittest("camera_framework_unittest_v1_1") {
     "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:metadata",
     "drivers_peripheral_display:hdi_gralloc_client",
+    "graphic_surface:surface",
     "hdf_core:libhdi",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
@@ -131,7 +136,11 @@ ohos_unittest("camera_framework_unittest_v1_1") {
     "-fPIC",
     "-Werror=unused",
   ]
-
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
   include_dirs += [
     "${driver_peripheral_path}/interfaces/include",
     "${driver_peripheral_path}/interfaces/hdi_ipc",
@@ -161,7 +170,6 @@ ohos_unittest("camera_ndk_unittest_v1_1") {
   ]
 
   deps = [
-    "${graphic_2d_path}:libsurface",
     "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
     "${multimedia_camera_framework_path}/frameworks/native/ndk:ohcamera",
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
@@ -178,6 +186,7 @@ ohos_unittest("camera_ndk_unittest_v1_1") {
     "drivers_interface_camera:libcamera_proxy_1.1",
     "drivers_interface_camera:metadata",
     "drivers_peripheral_display:hdi_gralloc_client",
+    "graphic_surface:surface",
     "hdf_core:libhdi",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
@@ -192,7 +201,11 @@ ohos_unittest("camera_ndk_unittest_v1_1") {
     "-fPIC",
     "-Werror=unused",
   ]
-
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
   include_dirs += [
     "${driver_peripheral_path}/interfaces/include",
     "${driver_peripheral_path}/interfaces/hdi_ipc",

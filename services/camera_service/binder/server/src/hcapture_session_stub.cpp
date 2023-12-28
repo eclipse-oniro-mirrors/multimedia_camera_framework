@@ -34,6 +34,9 @@ int HCaptureSessionStub::OnRemoteRequest(
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_BEGIN_CONFIG):
             errCode = BeginConfig();
             break;
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CAN_ADD_INPUT):
+            errCode = HCaptureSessionStub::HandleCanAddInput(data, reply);
+            break;
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_ADD_INPUT):
             errCode = HCaptureSessionStub::HandleAddInput(data);
             break;
@@ -91,6 +94,20 @@ int32_t HCaptureSessionStub::HandleAddInput(MessageParcel &data)
     sptr<ICameraDeviceService> cameraDevice = iface_cast<ICameraDeviceService>(remoteObj);
 
     return AddInput(cameraDevice);
+}
+
+int HCaptureSessionStub::HandleCanAddInput(MessageParcel &data, MessageParcel &reply)
+{
+    sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
+    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCaptureSessionStub HandleAddInput CameraDevice is null");
+    sptr<ICameraDeviceService> cameraDevice = iface_cast<ICameraDeviceService>(remoteObj);
+    bool result = false;
+    int32_t ret = CanAddInput(cameraDevice, result);
+    MEDIA_INFO_LOG("HandleCanAddInput ret: %{public}d, result: %{public}d", ret, result);
+    CHECK_AND_RETURN_RET_LOG(reply.WriteBool(result), IPC_STUB_WRITE_PARCEL_ERR,
+        "HCameraServiceStub HandleCanAddInput Write result failed");
+    return ret;
 }
 
 int32_t HCaptureSessionStub::HandleRemoveInput(MessageParcel &data)

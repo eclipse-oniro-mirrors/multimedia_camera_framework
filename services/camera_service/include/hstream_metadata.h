@@ -35,6 +35,7 @@ public:
     int32_t LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility) override;
     void SetStreamInfo(StreamInfo_V1_1& streamInfo) override;
+    int32_t ReleaseStream(bool isDelay) override;
     int32_t Release() override;
     int32_t Start() override;
     int32_t Stop() override;

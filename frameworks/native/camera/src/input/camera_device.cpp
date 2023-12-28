@@ -12,10 +12,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include <mutex>
 #include <securec.h>
 #include "camera_metadata_info.h"
 #include "camera_log.h"
 #include "input/camera_device.h"
+#include "metadata_common_utils.h"
 
 using namespace std;
 
@@ -49,27 +52,23 @@ const std::unordered_map<camera_foldscreen_enum_t, CameraFoldScreenType> CameraD
 };
 
 CameraDevice::CameraDevice(std::string cameraID, std::shared_ptr<Camera::CameraMetadata> metadata)
+    : cameraID_(cameraID), baseAbility_(MetadataCommonUtils::CopyMetadata(metadata)),
+      cachedMetadata_(MetadataCommonUtils::CopyMetadata(metadata))
 {
-    cameraID_ = cameraID;
-    metadata_ = metadata;
     init(metadata->get());
 }
-CameraDevice::CameraDevice(std::string cameraID, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata,
-                           dmDeviceInfo deviceInfo)
+
+CameraDevice::CameraDevice(
+    std::string cameraID, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, dmDeviceInfo deviceInfo)
+    : cameraID_(cameraID), baseAbility_(MetadataCommonUtils::CopyMetadata(metadata)),
+      cachedMetadata_(MetadataCommonUtils::CopyMetadata(metadata))
 {
-    cameraID_ = cameraID;
-    metadata_ = metadata;
     dmDeviceInfo_.deviceName = deviceInfo.deviceName;
     dmDeviceInfo_.deviceTypeId = deviceInfo.deviceTypeId;
     dmDeviceInfo_.networkId = deviceInfo.networkId;
-    MEDIA_INFO_LOG("camera cameraid = %{public}s, devicename: = %{public}s, networkId = %{public}s",
-                   cameraID_.c_str(), dmDeviceInfo_.deviceName.c_str(), dmDeviceInfo_.networkId.c_str());
+    MEDIA_INFO_LOG("camera cameraid = %{public}s, devicename: = %{public}s, networkId = %{public}s", cameraID_.c_str(),
+        dmDeviceInfo_.deviceName.c_str(), dmDeviceInfo_.networkId.c_str());
     init(metadata->get());
-}
-CameraDevice::~CameraDevice()
-{
-    metadata_.reset();
-    metadata_ = nullptr;
 }
 
 void CameraDevice::init(common_metadata_header_t* metadata)
@@ -125,7 +124,14 @@ std::string CameraDevice::GetID()
 
 std::shared_ptr<Camera::CameraMetadata> CameraDevice::GetMetadata()
 {
-    return metadata_;
+    std::lock_guard<std::mutex> lock(cachedMetadataMutex_);
+    return cachedMetadata_;
+}
+
+void CameraDevice::ResetMetadata()
+{
+    std::lock_guard<std::mutex> lock(cachedMetadataMutex_);
+    cachedMetadata_ = MetadataCommonUtils::CopyMetadata(baseAbility_);
 }
 
 CameraPosition CameraDevice::GetPosition()
@@ -185,7 +191,7 @@ std::vector<float> CameraDevice::GetZoomRatioRange()
     uint32_t zoomRangeCount = 2;
     camera_metadata_item_t item;
 
-    ret = Camera::FindCameraMetadataItem(metadata_->get(), OHOS_ABILITY_ZOOM_RATIO_RANGE, &item);
+    ret = Camera::FindCameraMetadataItem(baseAbility_->get(), OHOS_ABILITY_ZOOM_RATIO_RANGE, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("Failed to get zoom ratio range with return code %{public}d", ret);
         return {};
@@ -219,8 +225,8 @@ std::vector<float> CameraDevice::GetExposureBiasRange()
     int ret;
     uint32_t biasRangeCount = 2;
     camera_metadata_item_t item;
-
-    ret = Camera::FindCameraMetadataItem(metadata_->get(), OHOS_CONTROL_AE_COMPENSATION_RANGE, &item);
+    auto metadata = GetMetadata();
+    ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AE_COMPENSATION_RANGE, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("Failed to get exposure compensation range with return code %{public}d", ret);
         return {};
@@ -230,14 +236,14 @@ std::vector<float> CameraDevice::GetExposureBiasRange()
         return {};
     }
 
-    range = {item.data.i32[minIndex], item.data.i32[maxIndex]};
+    range = { item.data.i32[minIndex], item.data.i32[maxIndex] };
     if (range[minIndex] > range[maxIndex]) {
-        MEDIA_ERR_LOG("Invalid exposure compensation range. min: %{public}d, max: %{public}d",
-                      range[minIndex], range[maxIndex]);
+        MEDIA_ERR_LOG(
+            "Invalid exposure compensation range. min: %{public}d, max: %{public}d", range[minIndex], range[maxIndex]);
         return {};
     }
     MEDIA_DEBUG_LOG("Exposure hdi compensation min: %{public}d, max: %{public}d", range[minIndex], range[maxIndex]);
-    exposureBiasRange_ = {range[minIndex], range[maxIndex]};
+    exposureBiasRange_ = { range[minIndex], range[maxIndex] };
     return exposureBiasRange_;
 }
 } // namespace CameraStandard

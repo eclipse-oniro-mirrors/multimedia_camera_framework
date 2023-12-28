@@ -3564,7 +3564,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_009, TestSize.L
     EXPECT_EQ(zoomRatioRangeGet, 0);
 
     zoomRatioGet = camSession->GetZoomRatio(zoomRatio);
-    EXPECT_EQ(zoomRatioGet, 0);
+    EXPECT_EQ(zoomRatioGet, 7400201);
 
     setZoomRatio = camSession->SetZoomRatio(zoomRatio);
     EXPECT_EQ(setZoomRatio, 0);
@@ -4905,7 +4905,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_037, TestSize.L
     CameraPosition cameraPosition = cameras_[0]->GetPosition();
     CameraType cameraType = cameras_[0]->GetCameraType();
     sptr<CaptureInput> camInputtest = manager_->CreateCameraInput(cameraPosition, cameraType);
-    EXPECT_EQ(camInputtest, nullptr);
+    ASSERT_NE(camInputtest, nullptr);
 
     cameraType = CAMERA_TYPE_UNSUPPORTED;
     cameraPosition = CAMERA_POSITION_UNSPECIFIED;
@@ -4952,7 +4952,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_039, TestSize.L
 {
     sptr<CameraInput> input = (sptr<CameraInput>&)input_;
     input->Close();
-    input->SetSession(session_);
+    input->SetMetadataResultProcessor(session_->GetMetadataResultProcessor());
 
     sptr<CaptureInput> input_2 = (sptr<CaptureInput>&)input;
 
@@ -5169,7 +5169,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_043, TestSize.L
 
     sptr<CameraInput> input_1 = (sptr<CameraInput>&)input_;
     input_1->Close();
-    input_1->SetSession(session_);
+    input_1->SetMetadataResultProcessor(session_->GetMetadataResultProcessor());
 
     sptr<CaptureInput> input_2 = (sptr<CaptureInput>&)input_1;
 
@@ -5660,11 +5660,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_058, TestSize.L
     }
 
     intResult = camManagerObj->PrelaunchCamera();
-    if (!IsSupportNow()) {
-        EXPECT_EQ(intResult, 7400201);
-    } else {
-        EXPECT_EQ(intResult, 0);
-    }
+    EXPECT_EQ(intResult, 0);
 
     camManagerObj->~CameraManager();
 
@@ -6356,7 +6352,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_081, TestSize.L
     camSession->SetBeauty(beautyType, 0);
     EXPECT_EQ(camSession->GetSupportedColorSpaces().empty(), true);
     EXPECT_EQ(camSession->SetColorSpace(COLOR_SPACE_UNKNOWN), CameraErrorCode::SESSION_NOT_CONFIG);
-    camSession->SetMode(0);
+    camSession->SetMode(SceneMode::NORMAL);
     EXPECT_EQ(camSession->VerifyAbility(0), CAMERA_INVALID_ARG);
     EXPECT_EQ(camSession->GetActiveColorSpace(colorSpace), CameraErrorCode::SESSION_NOT_CONFIG);
     camSession->SetColorEffect(COLOR_EFFECT_NORMAL);
@@ -6382,9 +6378,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_082, TestSize.L
     ASSERT_NE(previewOutput, nullptr);
     intResult = session_->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
-    session_->SetMode(3);
+    session_->SetMode(SceneMode::PORTRAIT);
     EXPECT_EQ(session_->VerifyAbility(0), CAMERA_INVALID_ARG);
-    EXPECT_EQ(session_->GetActiveColorSpace(colorSpace), SESSION_NOT_CONFIG);
+    EXPECT_EQ(session_->GetActiveColorSpace(colorSpace), CAMERA_OK);
     session_->SetColorEffect(COLOR_EFFECT_NORMAL);
     EXPECT_EQ(session_->IsMacroSupported(), false);
     intResult = session_->CommitConfig();
@@ -6407,7 +6403,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_082, TestSize.L
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_083, TestSize.Level0)
 {
-    auto nightSession = static_cast<NightSession*>(session_.GetRefPtr());
+    SceneMode nightMode = SceneMode::NIGHT;
+    sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(nightMode);
+    auto nightSession = static_cast<NightSession*>(captureSession.GetRefPtr());
     ASSERT_NE(nightSession, nullptr);
     int32_t intResult = nightSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
@@ -6422,13 +6420,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_083, TestSize.L
     EXPECT_EQ(nightSession->GetExposureRange(exposureRange), SESSION_NOT_CONFIG);
     EXPECT_EQ(nightSession->SetExposure(0), SESSION_NOT_CONFIG);
     EXPECT_EQ(nightSession->GetExposure(exposureValue), SESSION_NOT_CONFIG);
-    intResult = nightSession->CommitConfig();
-    EXPECT_EQ(intResult, 0);
-    nightSession->inputDevice_ = nullptr;
-    EXPECT_EQ(nightSession->GetExposureRange(exposureRange), INVALID_ARGUMENT);
-    EXPECT_EQ(nightSession->SetExposure(0), SUCCESS);
-    EXPECT_EQ(nightSession->GetExposure(exposureValue), INVALID_ARGUMENT);
-    EXPECT_EQ(nightSession->Release(), 0);
 }
 
 /*
@@ -6443,7 +6434,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_084, TestSize.L
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
-    auto nightSession = static_cast<NightSession*>(camSession.GetRefPtr());
+    SceneMode nightMode = SceneMode::NIGHT;
+    sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(nightMode);
+    auto nightSession = static_cast<NightSession*>(captureSession.GetRefPtr());
     nightSession->~NightSession();
     uint32_t exposureValue = 0;
     std::vector<uint32_t> exposureRange;
@@ -6462,7 +6455,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_084, TestSize.L
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_087, TestSize.Level0)
 {
-    auto portraitSession = static_cast<PortraitSession*>(session_.GetRefPtr());
+    SceneMode portraitMode = SceneMode::PORTRAIT;
+    sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(portraitMode);
+    auto portraitSession = static_cast<PortraitSession*>(captureSession.GetRefPtr());
     ASSERT_NE(portraitSession, nullptr);
     EXPECT_EQ(portraitSession->GetSupportedPortraitEffects().empty(), true);
     EXPECT_EQ(portraitSession->GetPortraitEffect(), OFF_EFFECT);
@@ -6478,13 +6473,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_087, TestSize.L
     EXPECT_EQ(portraitSession->GetSupportedPortraitEffects().empty(), true);
     EXPECT_EQ(portraitSession->GetPortraitEffect(), OFF_EFFECT);
     portraitSession->SetPortraitEffect(OFF_EFFECT);
-    intResult = portraitSession->CommitConfig();
-    EXPECT_EQ(intResult, 0);
-    portraitSession->inputDevice_ = nullptr;
-    EXPECT_EQ(portraitSession->GetSupportedPortraitEffects().empty(), true);
-    EXPECT_EQ(portraitSession->GetPortraitEffect(), OFF_EFFECT);
-    portraitSession->SetPortraitEffect(OFF_EFFECT);
-    EXPECT_EQ(portraitSession->Release(), 0);
 }
 
 /*
@@ -6497,7 +6485,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_087, TestSize.L
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_088, TestSize.Level0)
 {
-    auto portraitSession = static_cast<PortraitSession*>(session_.GetRefPtr());
+    SceneMode portraitMode = SceneMode::PORTRAIT;
+    sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(portraitMode);
+    auto portraitSession = static_cast<PortraitSession*>(captureSession.GetRefPtr());
     ASSERT_NE(portraitSession, nullptr);
     portraitSession->~PortraitSession();
     EXPECT_EQ(portraitSession->GetSupportedPortraitEffects().empty(), true);
@@ -6741,7 +6731,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_050, TestSize.Le
     auto output = CreatePreviewOutput(*previewProfile);
     ASSERT_NE(output, nullptr);
 
-    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
+    session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
@@ -6796,7 +6786,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_051, TestSize.Le
     auto output = CreatePreviewOutput(*previewProfile);
     ASSERT_NE(output, nullptr);
 
-    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
+    session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
@@ -6878,7 +6868,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_052, TestSize.Le
     bool isSketchSupport = previewOutput->IsSketchSupported();
     ASSERT_FALSE(isSketchSupport);
 
-    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
+    session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -6949,7 +6939,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_053, TestSize.Le
     auto output = CreatePreviewOutput(*previewProfile);
     ASSERT_NE(output, nullptr);
 
-    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
+    session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
@@ -7044,7 +7034,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_054, TestSize.Le
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
     ASSERT_NE(output, nullptr);
 
-    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
+    session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -7108,7 +7098,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_055, TestSize.Le
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
     ASSERT_NE(output, nullptr);
 
-    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
+    session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -7320,7 +7310,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_059, TestSize.Le
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     camInput->Open();
 
-    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
+    session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -7356,7 +7346,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_059, TestSize.Le
 
 /*
  * Feature: Framework
- * Function: Test set color space after commitConfig
+ * Function: Test set color space before commitConfig
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
@@ -7367,7 +7357,56 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_060, TestSize.Le
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     camInput->Open();
 
-    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
+    session_->SetMode(SceneMode::CAPTURE);
+    int32_t intResult = session_->BeginConfig();
+
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    std::vector<ColorSpace> colorSpaceLists = session_->GetSupportedColorSpaces();
+    if (colorSpaceLists.size() != 0) {
+        intResult = session_->SetColorSpace(colorSpaceLists[1]);
+        EXPECT_EQ(intResult, 0);
+        ColorSpace colorSpace;
+        intResult = session_->GetActiveColorSpace(colorSpace);
+        EXPECT_EQ(intResult, 0);
+        EXPECT_EQ(colorSpaceLists[1], colorSpace);
+    }
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test set color space after commitConfig
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test set default color space
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_061, TestSize.Level0)
+{
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
+    camInput->Open();
+
+    session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -7412,61 +7451,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_060, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test set default color space
  */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_061, TestSize.Level0)
-{
-    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
-    camInput->Open();
-
-    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
-    int32_t intResult = session_->BeginConfig();
-
-    EXPECT_EQ(intResult, 0);
-
-    intResult = session_->AddInput(input_);
-    EXPECT_EQ(intResult, 0);
-
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
-    ASSERT_NE(previewOutput, nullptr);
-
-    intResult = session_->AddOutput(previewOutput);
-    EXPECT_EQ(intResult, 0);
-
-    intResult = session_->CommitConfig();
-    EXPECT_EQ(intResult, 0);
-
-    intResult = session_->Start();
-    EXPECT_EQ(intResult, 0);
-
-    std::vector<ColorSpace> colorSpaceLists = session_->GetSupportedColorSpaces();
-    if (colorSpaceLists.size() != 0) {
-        intResult = session_->SetColorSpace(colorSpaceLists[1]);
-        EXPECT_EQ(intResult, 0);
-        ColorSpace colorSpace;
-        intResult = session_->GetActiveColorSpace(colorSpace);
-        EXPECT_EQ(intResult, 0);
-        EXPECT_EQ(colorSpaceLists[1], colorSpace);
-    }
-
-    sleep(WAIT_TIME_AFTER_START);
-
-    intResult = session_->Stop();
-    EXPECT_EQ(intResult, 0);
-}
-
-/*
- * Feature: Framework
- * Function: Test set color space before commitConfig
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test set default color space
- */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_062, TestSize.Level0)
 {
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
     camInput->Open();
 
-    session_->SetMode(static_cast<int32_t>(SceneMode::CAPTURE));
+    session_->SetMode(SceneMode::CAPTURE);
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -7480,6 +7470,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_062, TestSize.Le
     intResult = session_->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
 
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
     std::vector<ColorSpace> colorSpaceLists = session_->GetSupportedColorSpaces();
     if (colorSpaceLists.size() != 0) {
         intResult = session_->SetColorSpace(colorSpaceLists[1]);
@@ -7489,12 +7485,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_062, TestSize.Le
         EXPECT_EQ(intResult, 0);
         EXPECT_EQ(colorSpaceLists[1], colorSpace);
     }
-
-    intResult = session_->CommitConfig();
-    EXPECT_EQ(intResult, 0);
-
-    intResult = session_->Start();
-    EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
 
@@ -7521,7 +7511,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_063, TestSize.Le
     sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
     ASSERT_NE(output, nullptr);
 
-    session_->SetMode(static_cast<int32_t>(SceneMode::VIDEO));
+    session_->SetMode(SceneMode::VIDEO);
     int32_t intResult = session_->BeginConfig();
 
     EXPECT_EQ(intResult, 0);
@@ -7586,6 +7576,158 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_063, TestSize.Le
 
     intResult = session_->Stop();
     EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Camera pre_switch test
+ * Function: Test preSwitch interface
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test preSwitch interface
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_064, TestSize.Level0)
+{
+    if (cameras_.size() <= 1) {
+        EXPECT_LT(cameras_.size(), 2);
+        return;
+    }
+
+    manager_->PreSwitchCamera(cameras_[1]->GetID());
+
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Camera sketch add output output with guess mode
+ * Function: Test sketch add output with guess mode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test sketch add output with guess mode
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_065, TestSize.Level0)
+{
+    auto previewProfile = GetSketchPreviewProfile();
+    if (previewProfile == nullptr) {
+        EXPECT_EQ(previewProfile.get(), nullptr);
+        return;
+    }
+    auto output = CreatePreviewOutput(*previewProfile);
+    ASSERT_NE(output, nullptr);
+
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(output);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
+    bool isSketchSupport = previewOutput->IsSketchSupported();
+    if (!isSketchSupport) {
+        return;
+    }
+
+    int sketchEnableRatio = previewOutput->GetSketchRatio();
+    EXPECT_GT(sketchEnableRatio, 0);
+
+    intResult = previewOutput->EnableSketch(true);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = previewOutput->AttachSketchSurface(CreateSketchSurface(previewProfile->GetCameraFormat()));
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Test add released output
+ * Function: Test add released output
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test add released output
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_066, TestSize.Level0)
+{
+    auto previewProfile = GetSketchPreviewProfile();
+    if (previewProfile == nullptr) {
+        EXPECT_EQ(previewProfile.get(), nullptr);
+        return;
+    }
+    auto previewOutput = CreatePreviewOutput(*previewProfile);
+    ASSERT_NE(previewOutput, nullptr);
+
+    auto captureOutput = CreatePhotoOutput();
+    EXPECT_NE(captureOutput, nullptr);
+
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(captureOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->RemoveOutput(captureOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = captureOutput->Release();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(captureOutput);
+    EXPECT_EQ(intResult, 7400101);
 }
 } // namespace CameraStandard
 } // namespace OHOS

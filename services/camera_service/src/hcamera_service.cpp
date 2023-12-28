@@ -15,6 +15,7 @@
 
 #include "hcamera_service.h"
 
+#include <algorithm>
 #include <memory>
 #include <mutex>
 #include <securec.h>
@@ -24,10 +25,10 @@
 #include "accesstoken_kit.h"
 #include "camera_log.h"
 #include "camera_util.h"
+#include "display_manager.h"
 #include "hcamera_device_manager.h"
 #include "ipc_skeleton.h"
 #include "system_ability_definition.h"
-#include "display_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -35,6 +36,7 @@ REGISTER_SYSTEM_ABILITY_BY_ID(HCameraService, CAMERA_SERVICE_ID, true)
 constexpr int32_t SENSOR_SUCCESS = 0;
 constexpr int32_t POSTURE_INTERVAL = 1000000;
 constexpr uint8_t POSITION_FOLD_INNER = 3;
+static const int32_t WAIT_FOR_A_CLOSE_CAMERA = 2;
 static std::mutex g_cameraServiceInstanceMutex;
 static HCameraService* g_cameraServiceInstance = nullptr;
 static sptr<HCameraService> g_cameraServiceHolder = nullptr;
@@ -146,6 +148,8 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<s
 {
     vector<shared_ptr<CameraMetaInfo>> choosedCameras;
     for (auto& camera : cameraInfos) {
+        MEDIA_INFO_LOG("ChooseDeFaultCameras camera ID:%s, Camera position:%{public}d, Connection Type:%{public}d",
+            camera->cameraId.c_str(), camera->position, camera->connectionType);
         if (any_of(choosedCameras.begin(), choosedCameras.end(),
             [camera](const auto& defaultCamera) {
                 return (camera->connectionType != OHOS_CAMERA_CONNECTION_TYPE_USB_PLUGIN &&
@@ -156,6 +160,7 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<s
             MEDIA_INFO_LOG("ChooseDeFaultCameras alreadly has default camera");
         } else {
             choosedCameras.emplace_back(camera);
+            MEDIA_INFO_LOG("add camera ID:%{public}s", camera->cameraId.c_str());
         }
     }
     return choosedCameras;
@@ -192,6 +197,7 @@ int32_t HCameraService::CreateCameraDevice(string cameraId, sptr<ICameraDeviceSe
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice MuteCamera not Supported");
     }
     device = cameraDevice;
+    
     RegisterSensorCallback();
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager_CreateCameraInput CameraId:%s", cameraId.c_str()));
     return CAMERA_OK;
@@ -597,6 +603,31 @@ int32_t HCameraService::PrelaunchCamera()
     return ret;
 }
 
+int32_t HCameraService::PreSwitchCamera(const std::string cameraId)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("HCameraService::PreSwitchCamera");
+    if (cameraId.empty()) {
+        return CAMERA_INVALID_ARG;
+    }
+    std::vector<std::string> cameraIds_;
+    cameraHostManager_->GetCameras(cameraIds_);
+    if (cameraIds_.empty()) {
+        return CAMERA_INVALID_STATE;
+    }
+
+    auto it = std::find(cameraIds_.begin(), cameraIds_.end(), cameraId);
+    if (it == cameraIds_.end()) {
+        return CAMERA_INVALID_ARG;
+    }
+    MEDIA_INFO_LOG("HCameraService::PreSwitchCamera cameraId is: %{public}s", cameraId.c_str());
+    int32_t ret = cameraHostManager_->PreSwitchCamera(cameraId);
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCameraService::Prelaunch failed");
+    }
+    return ret;
+}
+
 int32_t HCameraService::SetPrelaunchConfig(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
     EffectParam effectParam)
 {
@@ -636,6 +667,34 @@ int32_t HCameraService::SetTorchLevel(float level)
         MEDIA_DEBUG_LOG("Failed to SetTorchLevel");
     }
     return ret;
+}
+
+int32_t HCameraService::AllowOpenByOHSide(std::string cameraId, int32_t state, bool& canOpenCamera)
+{
+    MEDIA_INFO_LOG("HCameraService::AllowOpenByOHSide start");
+    pid_t activePid = HCameraDeviceManager::GetInstance()->GetActiveClient();
+    if (activePid == -1) {
+        MEDIA_INFO_LOG("AllowOpenByOHSide::Open allow open camera");
+        NotifyCameraState(cameraId, 0);
+        canOpenCamera = true;
+        return CAMERA_OK;
+    }
+    sptr<HCameraDevice> cameraNeedEvict = HCameraDeviceManager::GetInstance()->GetCameraByPid(activePid);
+    cameraNeedEvict->OnError(DEVICE_PREEMPT, 0);
+    cameraNeedEvict->CloseDevice();
+    sleep(WAIT_FOR_A_CLOSE_CAMERA);
+    NotifyCameraState(cameraId, 0);
+    canOpenCamera = true;
+    MEDIA_INFO_LOG("HCameraService::AllowOpenByOHSide end");
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::NotifyCameraState(std::string cameraId, int32_t state)
+{
+    // 把cameraId和前后台状态刷新给device manager
+    MEDIA_INFO_LOG("HCameraService::NotifyCameraState SetStateOfACamera");
+    HCameraDeviceManager::GetInstance()->SetStateOfACamera(cameraId, state);
+    return CAMERA_OK;
 }
 
 bool HCameraService::IsPrelaunchSupported(string cameraId)
@@ -1130,13 +1189,13 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
     std::vector<StreamInfo_V1_1> allStreamInfos;
 
     if (activeDevice != nullptr) {
-        CreateDefaultSettingForRestore();
-        cameraRestoreParam->SetSetting(defaultSettings_);
-        UpdateSkinSmoothSetting(defaultSettings_, effectParam.skinSmoothLevel);
-        UpdateFaceSlenderSetting(defaultSettings_, effectParam.faceSlender);
-        UpdateSkinToneSetting(defaultSettings_, effectParam.skinTone);
+        std::shared_ptr<OHOS::Camera::CameraMetadata> defaultSettings = CreateDefaultSettingForRestore(activeDevice);
+        UpdateSkinSmoothSetting(defaultSettings, effectParam.skinSmoothLevel);
+        UpdateFaceSlenderSetting(defaultSettings, effectParam.faceSlender);
+        UpdateSkinToneSetting(defaultSettings, effectParam.skinTone);
+        cameraRestoreParam->SetSetting(defaultSettings);
     }
-    if (activeDevice == nullptr || defaultSettings_ == nullptr) {
+    if (activeDevice == nullptr) {
         return CAMERA_UNKNOWN_ERROR;
     }
     MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore param %d", effectParam.skinSmoothLevel);
@@ -1145,6 +1204,9 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
         MEDIA_ERR_LOG("HCaptureSession::SaveCurrentParamForRestore() Failed to get streams info, %{public}d", rc);
         return rc;
     }
+    for (auto& info : allStreamInfos) {
+        MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore: streamId is:%{public}d", info.v1_0.streamId_);
+    }
     cameraRestoreParam->SetStreamInfo(allStreamInfos);
     cameraRestoreParam->SetCameraOpMode(captureSession->GetopMode());
     cameraHostManager_->SaveRestoreParam(cameraRestoreParam);
@@ -1152,23 +1214,33 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
     return rc;
 }
 
-void HCameraService::CreateDefaultSettingForRestore()
+std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSettingForRestore(
+    sptr<HCameraDevice> activeDevice)
 {
     constexpr int32_t DEFAULT_ITEMS = 1;
     constexpr int32_t DEFAULT_DATA_LENGTH = 1;
-    if (defaultSettings_ == nullptr) {
-        defaultSettings_ = std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
-    }
+    auto defaultSettings = std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
     float zoomRatio = 1.0f;
     int32_t count = 1;
     int32_t ret = 0;
     camera_metadata_item_t item;
-    ret = OHOS::Camera::FindCameraMetadataItem(defaultSettings_->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        defaultSettings_->addEntry(OHOS_CONTROL_ZOOM_RATIO, &zoomRatio, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        defaultSettings_->updateEntry(OHOS_CONTROL_ZOOM_RATIO, &zoomRatio, count);
+    defaultSettings->addEntry(OHOS_CONTROL_ZOOM_RATIO, &zoomRatio, count);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> currentSetting = activeDevice->CloneCachedSettings();
+    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_FPS_RANGES, &item);
+    if (ret == CAM_META_SUCCESS) {
+        uint32_t fpscount = item.count;
+        std::vector<int32_t> fpsRange;
+        for (uint32_t i = 0; i < fpscount; i++) {
+            fpsRange.push_back(*(item.data.i32 + i));
+        }
+        defaultSettings->addEntry(OHOS_CONTROL_FPS_RANGES, fpsRange.data(), fpscount);
     }
+    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        uint8_t stabilizationMode_ = item.data.u8[0];
+        defaultSettings->addEntry(OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &stabilizationMode_, count);
+    }
+    return defaultSettings;
 }
 
 int32_t HCameraService::UpdateSkinSmoothSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata,

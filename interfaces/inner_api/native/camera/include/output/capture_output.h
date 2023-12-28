@@ -72,12 +72,14 @@ public:
     StreamType GetStreamType();
     sptr<IStreamCommon> GetStream();
     sptr<CaptureSession> GetSession();
-    void SetSession(sptr<CaptureSession> captureSession);
+    void SetSession(wptr<CaptureSession> captureSession);
     std::mutex asyncOpMutex_;
     int32_t SetPhotoProfile(Profile& profile);
     Profile GetPhotoProfile();
     int32_t SetPreviewProfile(Profile& profile);
     Profile GetPreviewProfile();
+    int32_t SetVideoProfile(VideoProfile& videoProfile);
+    VideoProfile GetVideoProfile();
     virtual void CameraServerDied(pid_t pid) = 0;
 
 protected:
@@ -88,8 +90,10 @@ private:
     StreamType streamType_;
     sptr<IStreamCommon> stream_;
     wptr<CaptureSession> session_;
+    std::mutex sessionMutex_;
     Profile photoProfile_;
     Profile previewProfile_;
+    VideoProfile videoProfile_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

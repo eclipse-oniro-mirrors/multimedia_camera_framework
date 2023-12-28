@@ -19,6 +19,7 @@
 
 #include "camera_log.h"
 #include "camera_service_ipc_interface_code.h"
+#include "camera_util.h"
 #include "hcamera_service.h"
 #include "input/camera_death_recipient.h"
 #include "input/i_standard_camera_listener.h"
@@ -57,21 +58,18 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_CALLBACK):
             errCode = HCameraServiceStub::HandleSetCallback(data, reply);
             break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_MUTE_CALLBACK): {
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_MUTE_CALLBACK):
             errCode = HCameraServiceStub::HandleSetMuteCallback(data, reply);
             break;
-        }
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_CALLBACK): {
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_CALLBACK):
             errCode = HCameraServiceStub::HandleSetTorchCallback(data, reply);
             break;
-        }
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_CAMERAS):
             errCode = HCameraServiceStub::HandleGetCameras(data, reply);
             break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_CAPTURE_SESSION): {
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_CAPTURE_SESSION):
             errCode = HCameraServiceStub::HandleCreateCaptureSession(data, reply);
             break;
-        }
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_PHOTO_OUTPUT):
             errCode = HCameraServiceStub::HandleCreatePhotoOutput(data, reply);
             break;
@@ -105,6 +103,15 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
             break;
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_LEVEL):
             errCode = HCameraServiceStub::HandleSetTorchLevel(data, reply);
+            break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_PRE_SWITCH_CAMERA):
+            errCode = HCameraServiceStub::HandlePreSwitchCamera(data, reply);
+            break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_ALLOW_OPEN_BY_OHSIDE):
+            errCode = HCameraServiceStub::HandleAllowOpenByOHSide(data, reply);
+            break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_NOTIFY_CAMERA_STATE):
+            errCode = HCameraServiceStub::HandleNotifyCameraState(data);
             break;
         default:
             MEDIA_ERR_LOG("HCameraServiceStub request code %{public}d not handled", code);
@@ -171,6 +178,18 @@ int HCameraServiceStub::HandlePrelaunchCamera(MessageParcel& data, MessageParcel
     MEDIA_DEBUG_LOG("HCameraServiceStub HandlePrelaunchCamera enter");
     int32_t ret = PrelaunchCamera();
     MEDIA_INFO_LOG("HCameraServiceStub HandlePrelaunchCamera result: %{public}d", ret);
+    return ret;
+}
+
+int HCameraServiceStub::HandlePreSwitchCamera(MessageParcel& data, MessageParcel& reply)
+{
+    MEDIA_DEBUG_LOG("HCameraServiceStub HandlePreSwitchCamera enter");
+    auto cameraId = data.ReadString();
+    if (cameraId.empty() || cameraId.length() > PATH_MAX) {
+        return CAMERA_INVALID_ARG;
+    }
+    int32_t ret = PreSwitchCamera(cameraId);
+    MEDIA_INFO_LOG("HCameraServiceStub HandlePreSwitchCamera result: %{public}d", ret);
     return ret;
 }
 
@@ -443,6 +462,30 @@ int HCameraServiceStub::SetListenerObject(MessageParcel& data, MessageParcel& re
     int errCode = -1;
     sptr<IRemoteObject> object = data.ReadRemoteObject();
     (void)reply.WriteInt32(SetListenerObject(object));
+    return errCode;
+}
+
+int HCameraServiceStub::HandleAllowOpenByOHSide(MessageParcel& data, MessageParcel& reply)
+{
+    std::string cameraId = data.ReadString();
+    int32_t state = data.ReadInt32();
+    bool canOpenCamera = false;
+
+    int errCode = AllowOpenByOHSide(cameraId, state, canOpenCamera);
+    CHECK_AND_RETURN_RET_LOG(reply.WriteBool(canOpenCamera), IPC_STUB_WRITE_PARCEL_ERR,
+        "HCameraServiceStub HandleAllowOpenByOHSide get camera failed");
+    return errCode;
+}
+
+int HCameraServiceStub::HandleNotifyCameraState(MessageParcel& data)
+{
+    std::string cameraId = data.ReadString();
+    int32_t state = data.ReadInt32();
+
+    int errCode = NotifyCameraState(cameraId, state);
+    if (errCode != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceStub HandleNotifyCameraState failed : %{public}d", errCode);
+    }
     return errCode;
 }
 } // namespace CameraStandard

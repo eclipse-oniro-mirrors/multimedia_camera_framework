@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,28 +13,26 @@
  * limitations under the License.
  */
 
-#include "input/capture_input.h"
+#ifndef LISTENER_BASE_H_
+#define LISTENER_BASE_H_
 
+#include "camera_napi_utils.h"
 namespace OHOS {
 namespace CameraStandard {
-CaptureInput::CaptureInput() : session_(nullptr)
-{}
+class ListenerBase {
+public:
+    explicit ListenerBase(napi_env env);
+    virtual ~ListenerBase();
 
-CaptureSession* CaptureInput::GetSession()
-{
-    return session_;
-}
+    void SaveCallbackReference(napi_value callback, bool isOnce);
+    void RemoveCallbackRef(napi_env env, napi_value callback);
+    void RemoveAllCallbacks();
 
-void CaptureInput::SetSession(CaptureSession* captureSession)
-{
-    session_ = captureSession;
-}
-
-int CaptureInput::Release()
-{
-    session_ = nullptr;
-    return 0;
-}
-} // CameraStandard
-} // OHOS
-
+protected:
+    std::mutex mutex_;
+    napi_env env_ = nullptr;
+    mutable std::vector<std::shared_ptr<AutoRef>> baseCbList_;
+};
+} // namespace CameraStandard
+} // namespace OHOS
+#endif /* LISTENER_BASE_H_ */

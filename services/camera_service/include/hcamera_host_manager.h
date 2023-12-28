@@ -51,7 +51,7 @@ public:
     };
     class CameraHostDeadCallback {
     public:
-        explicit CameraHostDeadCallback(sptr<HCameraHostManager> hostManager) : hostManager_(hostManager) {};
+        explicit CameraHostDeadCallback(wptr<HCameraHostManager> hostManager) : hostManager_(hostManager) {};
         virtual ~CameraHostDeadCallback() = default;
         virtual void OnCameraHostDied(const std::string& hostName)
         {
@@ -83,6 +83,7 @@ public:
                                      sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> &pDevice);
     virtual int32_t SetFlashlight(const std::string& cameraId, bool isEnable);
     virtual int32_t Prelaunch(const std::string& cameraId, std::string clientName);
+    virtual int32_t PreSwitchCamera(const std::string& cameraId);
     virtual int32_t SetTorchLevel(float level);
     void NotifyDeviceStateChangeInfo(int notifyType, int deviceState);
 
@@ -100,6 +101,8 @@ public:
 
     // HDI::ServiceManager::V1_0::IServStatListener
     void OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status) override;
+
+    static const std::string LOCAL_SERVICE_NAME;
 
 private:
     struct CameraDeviceInfo;

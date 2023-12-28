@@ -25,6 +25,8 @@
 #include "output/preview_output.h"
 #include "surface_utils.h"
 
+#include "listener_base.h"
+
 namespace OHOS {
 namespace CameraStandard {
 struct PreviewOutputAsyncContext;
@@ -102,15 +104,18 @@ public:
     static napi_value Start(napi_env env, napi_callback_info info);
     static napi_value Stop(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
-    static napi_value On(napi_env env, napi_callback_info info);
-    static napi_value Once(napi_env env, napi_callback_info info);
-    static napi_value Off(napi_env env, napi_callback_info info);
     static napi_value IsSketchSupported(napi_env env, napi_callback_info info);
     static napi_value GetSketchRatio(napi_env env, napi_callback_info info);
     static napi_value EnableSketch(napi_env env, napi_callback_info info);
     static napi_value AttachSketchSurface(napi_env env, napi_callback_info info);
     sptr<PreviewOutput> GetPreviewOutput();
-
+    static napi_value On(napi_env env, napi_callback_info info);
+    static napi_value Once(napi_env env, napi_callback_info info);
+    static napi_value Off(napi_env env, napi_callback_info info);
+    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
+        const std::string &eventType, napi_value callback, bool isOnce);
+    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
+        const std::string &eventType, napi_value callback);
     PreviewOutputNapi();
     ~PreviewOutputNapi();
 
@@ -119,16 +124,12 @@ private:
     static napi_value PreviewOutputNapiConstructor(napi_env env, napi_callback_info info);
     static napi_status CreateAsyncTask(napi_env env, napi_value resource,
         std::unique_ptr<OHOS::CameraStandard::PreviewOutputAsyncContext>& asyncContext);
-    static napi_value RegisterCallback(
-        napi_env env, napi_value jsThis, const string& eventType, napi_value callback, bool isOnce);
-    static napi_value UnregisterCallback(napi_env env, napi_value jsThis, const string& eventType, napi_value callback);
     napi_env env_;
     napi_ref wrapper_;
     sptr<PreviewOutput> previewOutput_;
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<PreviewOutput> sPreviewOutput_;
-    std::shared_ptr<PreviewOutputCallback> previewCallback_;
     static thread_local uint32_t previewOutputTaskId;
 };
 

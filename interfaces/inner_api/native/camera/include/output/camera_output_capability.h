@@ -43,8 +43,8 @@ enum CameraFormat {
     CAMERA_FORMAT_RGBA_8888 = 3,
     CAMERA_FORMAT_YUV_420_SP = 1003,
     CAMERA_FORMAT_JPEG = 2000,
-    CAMERA_FORMAT_YCBCR_P010,
-    CAMERA_FORMAT_YCRCB_P010
+    CAMERA_FORMAT_YCBCR_P010 = 2001,
+    CAMERA_FORMAT_YCRCB_P010 = 2002
 };
 
 class Profile {
@@ -61,6 +61,11 @@ public:
             this->abilityId_ = profile.abilityId_;
         }
         return *this;
+    }
+    bool operator==(const Profile& profile)
+    {
+        return this->format_ == profile.format_ && this->size_.width == profile.size_.width &&
+            this->size_.height == profile.size_.height;
     }
     virtual ~Profile() = default;
 

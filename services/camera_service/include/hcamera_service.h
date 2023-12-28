@@ -77,11 +77,14 @@ public:
     int32_t SetTorchCallback(sptr<ITorchServiceCallback>& callback) override;
     int32_t MuteCamera(bool muteMode) override;
     int32_t PrelaunchCamera() override;
+    int32_t PreSwitchCamera(const std::string cameraId) override;
     int32_t SetPrelaunchConfig(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
         EffectParam effectParam) override;
 //    std::string GetClientBundle(int uid);
     int32_t IsCameraMuted(bool& muteMode) override;
     int32_t SetTorchLevel(float level) override;
+    int32_t AllowOpenByOHSide(std::string cameraId, int32_t state, bool &canOpenCamera) override;
+    int32_t NotifyCameraState(std::string cameraId, int32_t state) override;
     void OnDump() override;
     void OnStart() override;
     void OnStop() override;
@@ -144,7 +147,7 @@ private:
     bool IsCameraMuteSupported(string cameraId);
     bool IsPrelaunchSupported(string cameraId);
     int32_t UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool muteMode);
-    void CreateDefaultSettingForRestore();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> CreateDefaultSettingForRestore(sptr<HCameraDevice> activeDevice);
     int32_t UpdateSkinSmoothSetting(shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata, int skinSmoothValue);
     int32_t UpdateFaceSlenderSetting(shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata,
         int faceSlenderValue);
@@ -174,7 +177,6 @@ private:
     string preCameraId_;
     string preCameraClient_;
     bool isRegisterSensorSuccess;
-    std::shared_ptr<OHOS::Camera::CameraMetadata> defaultSettings_;
     SensorUser user;
     SafeMap<uint32_t, sptr<HCaptureSession>> captureSessionsManager_;
 };

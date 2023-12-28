@@ -10,7 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-graphic_2d_path = "//foundation/graphic/graphic_2d"
 graphic_surface_path = "//foundation/graphic/graphic_surface"
 multimedia_camera_framework_path = "//foundation/multimedia/camera_framework"
 multimedia_image_framework_path = "//foundation/multimedia/image_framework"
@@ -33,3 +32,5 @@ use_memmgr = false
 if (defined(global_parts_info.resourceschedule_memmgr)) {
   use_memmgr = true
 }
+
+use_ace_engine = true

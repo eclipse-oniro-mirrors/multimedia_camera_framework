@@ -35,14 +35,13 @@ enum PortraitEffect {
     HEART = 2,
     ROTATED = 3,
     STUDIO = 4,
-    THEATOR = 5,
+    THEATER = 5,
 };
 
 class CaptureOutput;
 class PortraitSession : public CaptureSession {
 public:
     explicit PortraitSession(sptr<ICaptureSession> &PortraitSession): CaptureSession(PortraitSession) {}
-    PortraitSession() {};
     ~PortraitSession();
 
     /**
@@ -64,7 +63,53 @@ public:
      */
     void SetPortraitEffect(PortraitEffect effect);
 
+    /**
+     * @brief Determine if the given Ouput can be added to session.
+     *
+     * @param CaptureOutput to be added to session.
+     */
+    bool CanAddOutput(sptr<CaptureOutput>& output) override;
+
+    /**
+     * @brief Get the supported virtual apertures.
+     *
+     * @return Returns the array of virtual aperture.
+     */
+    std::vector<float> GetSupportedVirtualApertures();
+
+    /**
+     * @brief Get the virtual aperture.
+     *
+     * @return Returns the current virtual aperture.
+     */
+    float GetVirtualAperture();
+
+    /**
+     * @brief Set the virtual aperture.
+     */
+    void SetVirtualAperture(const float virtualAperture);
+
+    /**
+     * @brief Get the supported physical apertures.
+     *
+     * @return Returns the array of physical aperture.
+     */
+    std::vector<std::vector<float>> GetSupportedPhysicalApertures();
+
+    /**
+     * @brief Get the physical aperture.
+     *
+     * @return Returns current physical aperture.
+     */
+    float GetPhysicalAperture();
+
+    /**
+     * @brief Set the physical aperture.
+     */
+    void SetPhysicalAperture(const float virtualAperture);
+
 private:
+    bool FloatIsEqual(float x, float y);
     static const std::unordered_map<camera_portrait_effect_type_t, PortraitEffect> metaToFwPortraitEffect_;
     static const std::unordered_map<PortraitEffect, camera_portrait_effect_type_t> fwToMetaPortraitEffect_;
 };

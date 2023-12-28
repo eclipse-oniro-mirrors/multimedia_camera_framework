@@ -24,21 +24,7 @@ namespace CameraStandard {
 class VideoSession : public CaptureSession {
 public:
     explicit VideoSession(sptr<ICaptureSession> &videoSession): CaptureSession(videoSession) {}
-    VideoSession() {};
     ~VideoSession();
-    /**
-     * @brief Determine if the given Input can be added to session.
-     *
-     * @param CaptureInput to be added to session.
-     */
-    bool CanAddInput(sptr<CaptureInput>& input) override;
-
-    /**
-     * @brief Determine if the given Ouput can be added to session.
-     *
-     * @param CaptureOutput to be added to session.
-     */
-    bool CanAddOutput(sptr<CaptureOutput>& output) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

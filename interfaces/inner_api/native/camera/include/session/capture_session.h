@@ -37,6 +37,19 @@
 
 namespace OHOS {
 namespace CameraStandard {
+enum SceneMode : int32_t {
+    NORMAL = 0,
+    CAPTURE = 1,
+    VIDEO = 2,
+    PORTRAIT = 3,
+    NIGHT = 4,
+    PROFESSIONAL = 5,
+    SLOW_MOTION = 6,
+    SCAN = 7,
+    CAPTURE_MACRO = 8,
+    VIDEO_MACRO = 9
+};
+
 enum ExposureMode {
     EXPOSURE_MODE_UNSUPPORTED = -1,
     EXPOSURE_MODE_LOCKED = 0,
@@ -183,12 +196,20 @@ enum VideoStabilizationMode {
     AUTO
 };
 
-class CaptureOutput;
 class CaptureSession : public RefBase {
 public:
+    class CaptureSessionMetadataResultProcessor : public MetadataResultProcessor {
+    public:
+        explicit CaptureSessionMetadataResultProcessor(wptr<CaptureSession> session) : session_(session) {}
+        void ProcessCallbacks(
+            const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result) override;
+
+    private:
+        wptr<CaptureSession> session_;
+    };
+
     sptr<CaptureInput> inputDevice_;
     explicit CaptureSession(sptr<ICaptureSession>& captureSession);
-    CaptureSession() {};
     virtual ~CaptureSession();
 
     /**
@@ -266,6 +287,33 @@ public:
      * @return Returns the pointer to SessionCallback set by application.
      */
     std::shared_ptr<SessionCallback> GetApplicationCallback();
+    
+    /**
+     * @brief Get the ExposureCallback.
+     *
+     * @return Returns the pointer to ExposureCallback.
+     */
+    std::shared_ptr<ExposureCallback> GetExposureCallback();
+
+    /**
+     * @brief Get the FocusCallback.
+     *
+     * @return Returns the pointer to FocusCallback.
+     */
+    std::shared_ptr<FocusCallback> GetFocusCallback();
+
+    /**
+     * @brief Get the MacroStatusCallback.
+     *
+     * @return Returns the pointer to MacroStatusCallback.
+     */
+    std::shared_ptr<MacroStatusCallback> GetMacroStatusCallback();
+    /**
+     * @brief Get the SmoothZoomCallback.
+     *
+     * @return Returns the pointer to SmoothZoomCallback.
+     */
+    std::shared_ptr<SmoothZoomCallback> GetSmoothZoomCallback();
 
     /**
      * @brief Releases CaptureSession instance.
@@ -832,23 +880,27 @@ public:
      * @return Returns whether or not commit config.
      */
     bool IsSessionConfiged();
-    void SetMode(int32_t modeName);
-    int32_t GetMode();
-    int32_t GetFeaturesMode();
+    void SetMode(SceneMode modeName);
+    SceneMode GetMode();
+    SceneMode GetFeaturesMode();
     std::vector<int32_t> GetSubFeatureMods();
     bool IsSetEnableMacro();
     sptr<CaptureOutput> GetMetaOutput();
     void ProcessFaceRecUpdates(const uint64_t timestamp,
                                     const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
-    virtual void ProcessCallbacks(const uint64_t timestamp,
-                                    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
+
+    inline std::shared_ptr<MetadataResultProcessor> GetMetadataResultProcessor()
+    {
+        return metadataResultProcessor_;
+    }
+
 protected:
     std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
     Profile photoProfile_;
     Profile previewProfile_;
     std::map<BeautyType, std::vector<int32_t>> beautyTypeAndRanges_;
     std::map<BeautyType, int32_t> beautyTypeAndLevels_;
-    int32_t modeName_;
+    std::shared_ptr<MetadataResultProcessor> metadataResultProcessor_ = nullptr;
 
 private:
     std::mutex changeMetaMutex_;
@@ -890,6 +942,11 @@ private:
     sptr<CaptureOutput> metaOutput_;
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
     bool isColorSpaceSetted_ = false;
+
+    // Make sure you know what you are doing, you'd better to use {GetMode()} function instead of this variable.
+    SceneMode currentMode_ = SceneMode::NORMAL;
+    SceneMode guessMode_ = SceneMode::NORMAL;
+    void SetGuessMode(SceneMode mode);
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
     void SetFrameRateRange(const std::vector<int32_t>& frameRateRange);
     Point CoordinateTransform(Point point);

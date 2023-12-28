@@ -38,6 +38,32 @@ int32_t HCaptureSessionProxy::BeginConfig()
     return error;
 }
 
+int32_t HCaptureSessionProxy::CanAddInput(sptr<ICameraDeviceService> cameraDevice, bool& result)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    if (cameraDevice == nullptr) {
+        MEDIA_ERR_LOG("HCaptureSessionProxy CanAddInput cameraDevice is null");
+        return IPC_PROXY_ERR;
+    }
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteRemoteObject(cameraDevice->AsObject());
+    (void)data.WriteBool(result);
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CAN_ADD_INPUT), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCaptureSessionProxy CanAddInput failed, error: %{public}d", error);
+        return error;
+    }
+    result = reply.ReadBool();
+    MEDIA_DEBUG_LOG("CanAddInput result is %{public}d", result);
+    return error;
+}
+
 int32_t HCaptureSessionProxy::AddInput(sptr<ICameraDeviceService> cameraDevice)
 {
     MessageParcel data;

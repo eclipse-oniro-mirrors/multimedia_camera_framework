@@ -22,6 +22,7 @@
 #include "input/camera_manager.h"
 #include "surface_utils.h"
 
+#include "listener_base.h"
 namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_VIDEO_OUTPUT_NAPI_CLASS_NAME[] = "VideoOutput";
@@ -77,6 +78,13 @@ public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateVideoOutput(napi_env env, VideoProfile &profile, std::string surfaceId);
     static bool IsVideoOutput(napi_env env, napi_value obj);
+    static napi_value On(napi_env env, napi_callback_info info);
+    static napi_value Once(napi_env env, napi_callback_info info);
+    static napi_value Off(napi_env env, napi_callback_info info);
+    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
+        const std::string &eventType, napi_value callback, bool isOnce);
+    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
+        const std::string &eventType, napi_value callback);
     VideoOutputNapi();
     ~VideoOutputNapi();
     sptr<VideoOutput> GetVideoOutput();
@@ -90,13 +98,6 @@ private:
     static napi_value GetFrameRateRange(napi_env env, napi_callback_info info);
     static napi_value SetFrameRateRange(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
-    static napi_value On(napi_env env, napi_callback_info info);
-    static napi_value Once(napi_env env, napi_callback_info info);
-    static napi_value Off(napi_env env, napi_callback_info info);
-    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value callback, bool isOnce);
-    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value callback);
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<VideoOutput> sVideoOutput_;
@@ -104,7 +105,6 @@ private:
     napi_env env_;
     napi_ref wrapper_;
     sptr<VideoOutput> videoOutput_;
-    std::shared_ptr<VideoCallbackListener> videoCallback_;
     static thread_local uint32_t videoOutputTaskId;
 };
 

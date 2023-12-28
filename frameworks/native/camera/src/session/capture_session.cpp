@@ -15,6 +15,7 @@
 
 #include "session/capture_session.h"
 #include <cstdint>
+#include <memory>
 #include <mutex>
 #include "camera_device_ability_items.h"
 #include "camera_metadata_operator.h"
@@ -230,8 +231,8 @@ CaptureSession::CaptureSession(sptr<ICaptureSession> &captureSession)
 {
     captureSession_ = captureSession;
     inputDevice_ = nullptr;
-    modeName_ = 0;
     metaOutput_ = nullptr;
+    metadataResultProcessor_ = std::make_shared<CaptureSessionMetadataResultProcessor>(this);
     sptr<IRemoteObject> object = captureSession_->AsObject();
     pid_t pid = 0;
     deathRecipient_ = new(std::nothrow) CameraDeathRecipient(pid);
@@ -392,9 +393,20 @@ void CaptureSession::SetDefaultColorSpace()
 
 bool CaptureSession::CanAddInput(sptr<CaptureInput> &input)
 {
-    // todo: get Profile passed to createOutput and compare with OutputCapability
-    // if present in capability return ok.
-    return true;
+    // can only add one cameraInput
+    CAMERA_SYNC_TRACE;
+    bool ret = false;
+    MEDIA_INFO_LOG("Enter Into CaptureSession::CanAddInput");
+    if (!IsSessionConfiged() || input == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::AddInput operation Not allowed!");
+        return ret;
+    }
+    if (captureSession_) {
+        captureSession_->CanAddInput(((sptr<CameraInput> &)input)->GetCameraDevice(), ret);
+    } else {
+        MEDIA_ERR_LOG("CaptureSession::CanAddInput() captureSession_ is nullptr");
+    }
+    return ret;
 }
 
 int32_t CaptureSession::AddInput(sptr<CaptureInput> &input)
@@ -409,25 +421,19 @@ int32_t CaptureSession::AddInput(sptr<CaptureInput> &input)
         MEDIA_ERR_LOG("CaptureSession::AddInput input is null");
         return ServiceToCameraError(CAMERA_INVALID_ARG);
     }
-    input->SetSession(this);
-    inputDevice_ = input;
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (captureSession_) {
         errCode = captureSession_->AddInput(((sptr<CameraInput> &)input)->GetCameraDevice());
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to AddInput!, %{public}d", errCode);
+        } else {
+            input->SetMetadataResultProcessor(GetMetadataResultProcessor());
+            inputDevice_ = input;
         }
     } else {
         MEDIA_ERR_LOG("CaptureSession::AddInput() captureSession_ is nullptr");
     }
     return ServiceToCameraError(errCode);
-}
-
-bool CaptureSession::CanAddOutput(sptr<CaptureOutput> &output)
-{
-    // todo: get Profile passed to createOutput and compare with OutputCapability
-    // if present in capability return ok.
-    return true;
 }
 
 sptr<CaptureOutput> CaptureSession::GetMetaOutput()
@@ -436,33 +442,24 @@ sptr<CaptureOutput> CaptureSession::GetMetaOutput()
     return metaOutput_;
 }
 
-void CaptureSession::ConfigureOutput(sptr<CaptureOutput> &output)
+void CaptureSession::ConfigureOutput(sptr<CaptureOutput>& output)
 {
-    const int32_t normalMode = 0;
-    const int32_t captureMode = 1;
-    const int32_t videoMode = 2;
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::AddOutput");
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW) {
         MEDIA_INFO_LOG("CaptureSession::AddOutput PreviewOutput");
         previewProfile_ = output->GetPreviewProfile();
-        if (GetMode() == normalMode) {
-            SetMode(videoMode);
-        }
+        SetGuessMode(SceneMode::CAPTURE);
     }
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO) {
         MEDIA_INFO_LOG("CaptureSession::AddOutput PhotoOutput");
         photoProfile_ = output->GetPhotoProfile();
-        if (GetMode() == normalMode) {
-            SetMode(captureMode);
-        }
+        SetGuessMode(SceneMode::CAPTURE);
     }
     output->SetSession(this);
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_VIDEO) {
         MEDIA_INFO_LOG("CaptureSession::AddOutput VideoOutput");
-        SetFrameRateRange(static_cast<VideoOutput *>(output.GetRefPtr())->GetFrameRateRange());
-        if (GetMode() == normalMode) {
-            SetMode(videoMode);
-        }
+        SetFrameRateRange(static_cast<VideoOutput*>(output.GetRefPtr())->GetFrameRateRange());
+        SetGuessMode(SceneMode::VIDEO);
     }
 }
 
@@ -502,6 +499,10 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
         metaOutput_ = output;
         return ServiceToCameraError(CAMERA_OK);
     }
+    if (!CanAddOutput(output)) {
+        MEDIA_ERR_LOG("CanAddOutput check failed!");
+        return ServiceToCameraError(CAMERA_INVALID_ARG);
+    }
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (captureSession_ == nullptr) {
         MEDIA_ERR_LOG("CaptureSession::AddOutput() captureSession_ is nullptr");
@@ -517,7 +518,51 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
     return ServiceToCameraError(errCode);
 }
 
-int32_t CaptureSession::RemoveInput(sptr<CaptureInput> &input)
+bool CaptureSession::CanAddOutput(sptr<CaptureOutput> &output)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter Into CaptureSession::CanAddOutput");
+    if (!IsSessionConfiged() || output == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::CanAddOutput operation Not allowed!");
+        return false;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::CanAddOutput Failed inputDevice_ is nullptr");
+        return false;
+    }
+    int32_t normalMode = 0;
+    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW) {
+        std::vector<Profile> previewProfiles = inputDevice_->GetCameraDeviceInfo()->modePreviewProfiles_[normalMode];
+        Profile vaildateProfile = output->GetPreviewProfile();
+        for (auto& previewProfile : previewProfiles) {
+            if (vaildateProfile == previewProfile) {
+                return true;
+            }
+        }
+    } else if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO) {
+        std::vector<Profile> photoProfiles = inputDevice_->GetCameraDeviceInfo()->modePhotoProfiles_[normalMode];
+        Profile vaildateProfile = output->GetPhotoProfile();
+        for (auto& photoProfile : photoProfiles) {
+            if (vaildateProfile == photoProfile) {
+                return true;
+            }
+        }
+    } else if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_VIDEO) {
+        std::vector<VideoProfile> videoProfiles = inputDevice_->GetCameraDeviceInfo()->modeVideoProfiles_[normalMode];
+        VideoProfile vaildateProfile = output->GetVideoProfile();
+        for (auto& videoProfile : videoProfiles) {
+            if (vaildateProfile == videoProfile) {
+                return true;
+            }
+        }
+    } else if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_METADATA) {
+        MEDIA_INFO_LOG("CaptureSession::CanAddOutput MetadataOutput");
+        return true;
+    }
+    return false;
+}
+
+int32_t CaptureSession::RemoveInput(sptr<CaptureInput>& input)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::RemoveInput");
@@ -525,7 +570,8 @@ int32_t CaptureSession::RemoveInput(sptr<CaptureInput> &input)
         MEDIA_ERR_LOG("CaptureSession::RemoveInput operation Not allowed!");
         return CameraErrorCode::OPERATION_NOT_ALLOWED;
     }
-    if (input == nullptr) {
+    auto device = ((sptr<CameraInput>&)input)->GetCameraDevice();
+    if (device == nullptr) {
         MEDIA_ERR_LOG("CaptureSession::RemoveInput input is null");
         return ServiceToCameraError(CAMERA_INVALID_ARG);
     }
@@ -534,7 +580,11 @@ int32_t CaptureSession::RemoveInput(sptr<CaptureInput> &input)
     }
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (captureSession_) {
-        errCode = captureSession_->RemoveInput(((sptr<CameraInput> &)input)->GetCameraDevice());
+        errCode = captureSession_->RemoveInput(device);
+        auto deviceInfo = input->GetCameraDeviceInfo();
+        if (deviceInfo != nullptr) {
+            deviceInfo->ResetMetadata();
+        }
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to RemoveInput!, %{public}d", errCode);
         }
@@ -686,45 +736,64 @@ std::shared_ptr<SessionCallback> CaptureSession::GetApplicationCallback()
     return appCallback_;
 }
 
+std::shared_ptr<ExposureCallback> CaptureSession::GetExposureCallback()
+{
+    return exposureCallback_;
+}
+
+std::shared_ptr<FocusCallback> CaptureSession::GetFocusCallback()
+{
+    return focusCallback_;
+}
+
+std::shared_ptr<MacroStatusCallback> CaptureSession::GetMacroStatusCallback()
+{
+    return macroStatusCallback_;
+}
+
+std::shared_ptr<SmoothZoomCallback> CaptureSession::GetSmoothZoomCallback()
+{
+    return smoothZoomCallback_;
+}
+
 int32_t CaptureSession::UpdateSetting(std::shared_ptr<Camera::CameraMetadata> changedMetadata)
 {
     CAMERA_SYNC_TRACE;
-    if (!Camera::GetCameraMetadataItemCount(changedMetadata->get())) {
+    auto metadataHeader = changedMetadata->get();
+    uint32_t count = Camera::GetCameraMetadataItemCount(metadataHeader);
+    if (count == 0) {
         MEDIA_INFO_LOG("CaptureSession::UpdateSetting No configuration to update");
         return CameraErrorCode::SUCCESS;
     }
 
-    if (!inputDevice_ || !((sptr<CameraInput> &)inputDevice_)->GetCameraDevice()) {
+    if (inputDevice_ == nullptr || ((sptr<CameraInput>&)inputDevice_)->GetCameraDevice() == nullptr) {
         MEDIA_ERR_LOG("CaptureSession::UpdateSetting Failed inputDevice_ is nullptr");
         return CameraErrorCode::SUCCESS;
     }
-    int32_t ret = ((sptr<CameraInput> &)inputDevice_)->GetCameraDevice()->UpdateSetting(changedMetadata);
+    int32_t ret = ((sptr<CameraInput>&)inputDevice_)->GetCameraDevice()->UpdateSetting(changedMetadata);
     if (ret != CAMERA_OK) {
         MEDIA_ERR_LOG("CaptureSession::UpdateSetting Failed to update settings, errCode = %{public}d", ret);
         return ServiceToCameraError(ret);
     }
 
-    uint32_t count = changedMetadata->get()->item_count;
-    uint8_t* data = Camera::GetMetadataData(changedMetadata->get());
-    camera_metadata_item_entry_t* itemEntry = Camera::GetMetadataItems(changedMetadata->get());
     std::shared_ptr<Camera::CameraMetadata> baseMetadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
-    for (uint32_t i = 0; i < count; i++, itemEntry++) {
+    for (uint32_t index = 0; index < count; index++) {
+        camera_metadata_item_t srcItem;
+        int ret = OHOS::Camera::GetCameraMetadataItem(metadataHeader, index, &srcItem);
+        if (ret != CAM_META_SUCCESS) {
+            MEDIA_ERR_LOG("CaptureSession::UpdateSetting Failed to get metadata item at index: %{public}d", index);
+            return CAMERA_INVALID_ARG;
+        }
         bool status = false;
-        camera_metadata_item_t item;
-        size_t length = Camera::CalculateCameraMetadataItemDataSize(itemEntry->data_type, itemEntry->count);
-        ret = Camera::FindCameraMetadataItem(baseMetadata->get(), itemEntry->item, &item);
+        uint32_t currentIndex;
+        ret = OHOS::Camera::FindCameraMetadataItemIndex(baseMetadata->get(), srcItem.item, &currentIndex);
         if (ret == CAM_META_SUCCESS) {
-            status = baseMetadata->updateEntry(itemEntry->item,
-                                               (length == 0) ? itemEntry->data.value : (data + itemEntry->data.offset),
-                                               itemEntry->count);
+            status = baseMetadata->updateEntry(srcItem.item, srcItem.data.u8, srcItem.count);
         } else if (ret == CAM_META_ITEM_NOT_FOUND) {
-            status = baseMetadata->addEntry(itemEntry->item,
-                                            (length == 0) ? itemEntry->data.value : (data + itemEntry->data.offset),
-                                            itemEntry->count);
+            status = baseMetadata->addEntry(srcItem.item, srcItem.data.u8, srcItem.count);
         }
         if (!status) {
-            MEDIA_ERR_LOG("CaptureSession::UpdateSetting Failed to add/update metadata item: %{public}d",
-                          itemEntry->item);
+            MEDIA_ERR_LOG("CaptureSession::UpdateSetting Failed to add/update metadata item: %{public}d", srcItem.item);
         }
     }
     OnSettingUpdated(changedMetadata);
@@ -1767,13 +1836,18 @@ void CaptureSession::ProcessFaceRecUpdates(const uint64_t timestamp,
     }
 }
 
-void CaptureSession::ProcessCallbacks(const uint64_t timestamp,
-    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
+void CaptureSession::CaptureSessionMetadataResultProcessor::ProcessCallbacks(
+    const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {
-    MEDIA_INFO_LOG("ProcessCallbacks");
-    ProcessFaceRecUpdates(timestamp, result);
-    ProcessAutoFocusUpdates(result);
-    ProcessMacroStatusChange(result);
+    MEDIA_INFO_LOG("CaptureSession::CaptureSessionMetadataResultProcessor ProcessCallbacks");
+    auto session = session_.promote();
+    if (session == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::CaptureSessionMetadataResultProcessor ProcessCallbacks but session is null");
+        return;
+    }
+    session->ProcessFaceRecUpdates(timestamp, result);
+    session->ProcessAutoFocusUpdates(result);
+    session->ProcessMacroStatusChange(result);
 }
 
 std::vector<FlashMode> CaptureSession::GetSupportedFlashModes()
@@ -2243,7 +2317,7 @@ int32_t CaptureSession::SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoom
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     float duration;
     if (captureSession_) {
-        errCode = captureSession_->SetSmoothZoom(smoothZoomType, modeName_, targetZoomRatio, duration);
+        errCode = captureSession_->SetSmoothZoom(smoothZoomType, GetMode(), targetZoomRatio, duration);
         MEDIA_DEBUG_LOG("CaptureSession::SetSmoothZoom duration: %{public}f ", duration);
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to SetSmoothZoom!, %{public}d", errCode);
@@ -2306,35 +2380,65 @@ void CaptureSession::SetCaptureMetadataObjectTypes(std::set<camera_face_detect_m
     this->UnlockForControl();
 }
 
-void CaptureSession::SetMode(int32_t modeName)
+void CaptureSession::SetGuessMode(SceneMode mode)
 {
-    modeName_ = modeName;
+    if (currentMode_ != SceneMode::NORMAL) {
+        return;
+    }
+    switch (mode) {
+        case CAPTURE:
+            if (guessMode_ == SceneMode::NORMAL) {
+                guessMode_ = CAPTURE;
+            }
+            break;
+        case VIDEO:
+            if (guessMode_ != SceneMode::VIDEO) {
+                guessMode_ = VIDEO;
+            }
+            break;
+        default:
+            MEDIA_WARNING_LOG("CaptureSession::SetGuessMode not support this guest mode:%{public}d", mode);
+            break;
+    }
+    MEDIA_INFO_LOG(
+        "CaptureSession::SetGuessMode currentMode_:%{public}d guessMode_:%{public}d", currentMode_, guessMode_);
+}
+
+void CaptureSession::SetMode(SceneMode modeName)
+{
+    currentMode_ = modeName;
     MEDIA_INFO_LOG("CaptureSession SetMode modeName = %{public}d", modeName);
 }
 
-int32_t CaptureSession::GetMode()
+SceneMode CaptureSession::GetMode()
 {
-    MEDIA_INFO_LOG("CaptureSession GetMode modeName = %{public}d", modeName_);
-    return modeName_;
+    MEDIA_INFO_LOG(
+        "CaptureSession GetMode currentMode_ = %{public}d, guestMode_ = %{public}d", currentMode_, guessMode_);
+    if (currentMode_ == SceneMode::NORMAL) {
+        return guessMode_;
+    }
+    return currentMode_;
 }
 
-int32_t CaptureSession::GetFeaturesMode()
+SceneMode CaptureSession::GetFeaturesMode()
 {
+    auto mode = GetMode();
     if (isSetMacroEnable_) {
-        if (modeName_ == SceneMode::CAPTURE) {
+        if (mode == SceneMode::CAPTURE) {
             return SceneMode::CAPTURE_MACRO;
-        } else if (modeName_ == SceneMode::VIDEO) {
+        } else if (mode == SceneMode::VIDEO) {
             return SceneMode::VIDEO_MACRO;
         }
     }
-    return modeName_;
+    return mode;
 }
 
 vector<int32_t> CaptureSession::GetSubFeatureMods()
 {
-    if (modeName_ == SceneMode::CAPTURE) {
+    auto mode = GetMode();
+    if (mode == SceneMode::CAPTURE) {
         return vector<int32_t> { SceneMode::CAPTURE_MACRO };
-    } else if (modeName_ == SceneMode::VIDEO) {
+    } else if (mode == SceneMode::VIDEO) {
         return vector<int32_t> { SceneMode::VIDEO_MACRO };
     }
     return vector<int32_t> {};
