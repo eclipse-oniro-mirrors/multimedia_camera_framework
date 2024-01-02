@@ -23,7 +23,6 @@
 namespace OHOS {
 namespace CameraStandard {
 static const int32_t SERVICE_ID_OF_DH = 66850;
-static const int32_t WAIT_FOR_A_CLOSE_CAMERA = 2;
 static const int32_t PRIORITY_OF_FOREGROUND = 0;
 static const int32_t PRIORITY_OF_BACKGROUND = 400;
 sptr<HCameraDeviceManager> HCameraDeviceManager::cameraDeviceManager_;
@@ -94,6 +93,11 @@ void HCameraDeviceManager::SetStateOfACamera(std::string cameraId, int32_t state
         stateOfACamera_.Clear();
     }
     MEDIA_INFO_LOG("HCameraDeviceManager::SetStateOfACamera end");
+}
+
+SafeMap<std::string, int32_t> &HCameraDeviceManager::GetCameraStateOfASide()
+{
+    return stateOfACamera_;
 }
 
 bool HCameraDeviceManager::GetConflictDevices(sptr<HCameraDevice> &cameraNeedEvict,
@@ -193,7 +197,6 @@ bool HCameraDeviceManager::isAllowOpen(pid_t pidOfOpenRequest)
             return false;
         }
         ancoCallback->NotifyCloseCamera(cameraId);
-        sleep(WAIT_FOR_A_CLOSE_CAMERA);
         return true;
     } else {
         MEDIA_ERR_LOG("HCameraDeviceManager::GetConflictDevices wrong pid of the process whitch is goning to turn on");
