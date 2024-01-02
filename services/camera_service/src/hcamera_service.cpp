@@ -586,6 +586,10 @@ int32_t HCameraService::PrelaunchCamera()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("HCameraService::PrelaunchCamera");
+    if (HCameraDeviceManager::GetInstance()->GetCameraStateOfASide().Size() != 0) {
+        MEDIA_INFO_LOG("HCameraService::PrelaunchCamera there is a device active in A side, abort!");
+        return CAMERA_DEVICE_CONFLICT;
+    }
     if (preCameraId_.empty()) {
         vector<string> cameraIds_;
         cameraHostManager_->GetCameras(cameraIds_);

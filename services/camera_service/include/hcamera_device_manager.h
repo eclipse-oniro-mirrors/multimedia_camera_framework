@@ -65,6 +65,8 @@ public:
 
     void SetStateOfACamera(std::string cameraId, int32_t state);
 
+    SafeMap<std::string, int32_t> &GetCameraStateOfASide();
+
     /**
     * @brief remove camera in camera device manager.
     *
