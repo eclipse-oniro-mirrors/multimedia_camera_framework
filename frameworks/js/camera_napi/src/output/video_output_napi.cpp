@@ -14,8 +14,11 @@
  */
 
 #include "output/video_output_napi.h"
+
 #include <uv.h>
-#include "hilog/log.h"
+
+#include "camera_napi_template_utils.h"
+#include "napi/native_api.h"
 
 namespace OHOS {
 namespace CameraStandard {

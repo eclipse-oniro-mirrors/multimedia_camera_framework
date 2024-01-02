@@ -15,6 +15,8 @@
 
 #include "input/camera_size_napi.h"
 
+#include "camera_log.h"
+
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;

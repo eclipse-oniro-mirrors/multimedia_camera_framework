@@ -13,16 +13,19 @@
  * limitations under the License.
  */
 
+#include "input/camera_manager_napi.h"
+
 #include <uv.h>
+
+#include "camera_napi_security_utils.h"
+#include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
 #include "input/camera_napi.h"
 #include "input/camera_pre_launch_config_napi.h"
-#include "mode/portrait_session_napi.h"
 #include "mode/night_session_napi.h"
 #include "mode/photo_session_napi.h"
+#include "mode/portrait_session_napi.h"
 #include "mode/video_session_napi.h"
-#include "input/camera_manager_napi.h"
-
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
@@ -731,7 +734,7 @@ napi_value CameraManagerNapi::CreatePreviewOutputInstance(napi_env env, napi_cal
 napi_value CameraManagerNapi::CreateDeferredPreviewOutputInstance(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CreateDeferredPreviewOutputInstance is called");
-    if (!CameraNapiUtils::CheckSystemApp(env)) {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi CreateDeferredPreviewOutputInstance is called!");
         return nullptr;
     }
@@ -1061,7 +1064,7 @@ napi_value CameraManagerNapi::IsCameraMuted(napi_env env, napi_callback_info inf
 
 napi_value CameraManagerNapi::IsCameraMuteSupported(napi_env env, napi_callback_info info)
 {
-    if (!CameraNapiUtils::CheckSystemApp(env)) {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi IsCameraMuteSupported is called!");
         return nullptr;
     }
@@ -1082,7 +1085,7 @@ napi_value CameraManagerNapi::IsCameraMuteSupported(napi_env env, napi_callback_
 
 napi_value CameraManagerNapi::MuteCamera(napi_env env, napi_callback_info info)
 {
-    if (!CameraNapiUtils::CheckSystemApp(env)) {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi MuteCamera is called!");
         return nullptr;
     }
@@ -1192,7 +1195,7 @@ napi_value CameraManagerNapi::RegisterCallback(napi_env env, napi_value jsThis,
         }
         cameraManagerCallback->SaveCallbackReference(callback, isOnce);
     } else if ((eventType.compare("cameraMute")==0)) {
-        if (!CameraNapiUtils::CheckSystemApp(env)) {
+        if (!CameraNapiSecurity::CheckSystemApp(env)) {
             MEDIA_ERR_LOG("SystemApi On cameraMute is called!");
             return undefinedResult;
         }
@@ -1240,7 +1243,7 @@ napi_value CameraManagerNapi::UnregisterCallback(napi_env env, napi_value jsThis
             cameraManagerCallback->RemoveCallbackRef(env, callback);
         }
     } else if (eventType.compare("cameraMute") == 0) {
-        if (!CameraNapiUtils::CheckSystemApp(env)) {
+        if (!CameraNapiSecurity::CheckSystemApp(env)) {
             MEDIA_ERR_LOG("SystemApi On cameraMute is called!");
             return undefinedResult;
         }
@@ -1268,7 +1271,7 @@ napi_value CameraManagerNapi::UnregisterCallback(napi_env env, napi_value jsThis
 napi_value CameraManagerNapi::IsPrelaunchSupported(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("IsPrelaunchSupported is called");
-    if (!CameraNapiUtils::CheckSystemApp(env)) {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi IsPrelaunchSupported is called!");
         return nullptr;
     }
@@ -1307,7 +1310,7 @@ napi_value CameraManagerNapi::IsPrelaunchSupported(napi_env env, napi_callback_i
 napi_value CameraManagerNapi::PrelaunchCamera(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("PrelaunchCamera is called");
-    if (!CameraNapiUtils::CheckSystemApp(env)) {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi PrelaunchCamera is called!");
         return nullptr;
     }
@@ -1324,7 +1327,7 @@ napi_value CameraManagerNapi::PrelaunchCamera(napi_env env, napi_callback_info i
 napi_value CameraManagerNapi::PreSwitchCamera(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("PreSwitchCamera is called");
-    if (!CameraNapiUtils::CheckSystemApp(env)) {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi PreSwitchCamera is called!");
         return nullptr;
     }
@@ -1349,7 +1352,7 @@ napi_value CameraManagerNapi::PreSwitchCamera(napi_env env, napi_callback_info i
 napi_value CameraManagerNapi::SetPrelaunchConfig(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("SetPrelaunchConfig is called");
-    if (!CameraNapiUtils::CheckSystemApp(env)) {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi SetPrelaunchConfig is called!");
         return nullptr;
     }

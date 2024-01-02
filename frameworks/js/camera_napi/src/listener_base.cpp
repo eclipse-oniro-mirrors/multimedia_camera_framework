@@ -12,8 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <uv.h>
 #include "listener_base.h"
+
+#include <uv.h>
+
+#include "camera_log.h"
 
 namespace OHOS {
 namespace CameraStandard {

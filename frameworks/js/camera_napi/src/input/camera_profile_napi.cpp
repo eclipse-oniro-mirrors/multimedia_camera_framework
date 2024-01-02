@@ -14,6 +14,8 @@
  */
 
 #include "input/camera_profile_napi.h"
+
+#include "camera_log.h"
 #include "input/camera_size_napi.h"
 
 namespace OHOS {

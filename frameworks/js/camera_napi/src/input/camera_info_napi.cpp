@@ -15,6 +15,8 @@
 
 #include "input/camera_info_napi.h"
 
+#include "camera_napi_security_utils.h"
+
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
@@ -268,7 +270,7 @@ napi_value CameraDeviceNapi::GetConnectionType(napi_env env, napi_callback_info 
 
 napi_value CameraDeviceNapi::GetHostDeviceName(napi_env env, napi_callback_info info)
 {
-    if (!CameraNapiUtils::CheckSystemApp(env)) {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi GetHostDeviceName is called!");
         return nullptr;
     }
@@ -301,7 +303,7 @@ napi_value CameraDeviceNapi::GetHostDeviceName(napi_env env, napi_callback_info 
 }
 napi_value CameraDeviceNapi::GetHostDeviceType(napi_env env, napi_callback_info info)
 {
-    if (!CameraNapiUtils::CheckSystemApp(env)) {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi GetHostDeviceType is called!");
         return nullptr;
     }

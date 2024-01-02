@@ -46,6 +46,7 @@ ohos_shared_library("camera_napi") {
     "${multimedia_image_framework_path}/interfaces/innerkits/include",
   ]
   sources = [
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_security_utils.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_utils.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_info_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_input_napi.cpp",
@@ -121,29 +122,25 @@ if (gen_camera_picker) {
       "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/native_module_ohos_camerapicker.cpp",
       "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/picker/camera_picker_napi.cpp",
     ]
-    deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
+    deps = [
+      ":camera_napi",
+      "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+    ]
+
+    # configuration.h <-- context.h <-- ability_context.h
+    # pixel_map.h <-- iability_callback.h <-- ability_context.h
     external_deps = [
       "ability_base:base",
-      "ability_base:configuration",
+      "ability_base:configuration",  # configuration.h
       "ability_base:want",
-      "ability_runtime:ability_context_native",
-      "ability_runtime:ability_manager",
-      "ability_runtime:abilitykit_native",
-      "ability_runtime:app_context",
-      "ability_runtime:extensionkit_native",
-      "ability_runtime:napi_base_context",
-      "ability_runtime:runtime",
-      "ability_runtime:service_extension",
-      "ability_runtime:ui_extension",
-      "access_token:libtokenid_sdk",
+      "ability_runtime:ability_context_native",  # ability_context.h
+      "ability_runtime:ability_manager",  # pixel_map.h
+      "ability_runtime:napi_base_context",  # napi_base_context.h
       "ace_engine:ace_uicontent",
       "c_utils:utils",
       "hilog:libhilog",
       "hitrace:hitrace_meter",
-      "image_framework:image",
-      "image_framework:image_native",
-      "ipc:ipc_core",
-      "napi:ace_napi",
+      "napi:ace_napi",  # native_reference <-- camera_napi_utils.h
     ]
     sanitize = {
       cfi = true

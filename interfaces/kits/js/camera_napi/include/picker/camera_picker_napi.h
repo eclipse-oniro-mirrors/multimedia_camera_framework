@@ -19,17 +19,10 @@
 #include <memory>
 #include <stdint.h>
 
-#include "ability.h"
 #include "ability_context.h"
-#include "ability_manager_client.h"
+#include "camera_device.h"
 #include "camera_napi_utils.h"
-#include "int_wrapper.h"
-#include "js_native_api_types.h"
-#include "modal_ui_extension_config.h"
-#include "napi_base_context.h"
-#include "string_wrapper.h"
 #include "ui_content.h"
-#include "want.h"
 
 namespace OHOS {
 namespace CameraStandard {

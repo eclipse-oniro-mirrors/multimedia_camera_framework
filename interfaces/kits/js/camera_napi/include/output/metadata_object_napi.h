@@ -16,11 +16,10 @@
 #ifndef METADATA_OBJECT_NAPI_H_
 #define METADATA_OBJECT_NAPI_H_
 
-#include "input/camera_manager.h"
-#include "input/camera_info.h"
-
-#include "hilog/log.h"
 #include "camera_napi_utils.h"
+#include "hilog/log.h"
+#include "input/camera_info.h"
+#include "input/camera_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -33,6 +32,9 @@ public:
     ~MetadataObjectNapi();
     sptr<MetadataObject> GetMetadataObject();
     static napi_value CreateMetaFaceObj(napi_env env, sptr<MetadataObject> metaObj);
+    static void MapMetadataObjSupportedTypesEnumFromJS(
+        int32_t jsMetadataObjType, MetadataObjectType& nativeMetadataObjType, bool& isValid);
+    static void MapMetadataObjSupportedTypesEnum(MetadataObjectType nativeMetadataObjType, int32_t& jsMetadataObjType);
 
 private:
     static void MetadataObjectNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
@@ -57,6 +59,7 @@ public:
 private:
     napi_env env_;
 };
+
 } // namespace CameraStandard
 } // namespace OHOS
 #endif /* METADATA_OBJECT_NAPI_H_ */

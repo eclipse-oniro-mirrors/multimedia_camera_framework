@@ -16,16 +16,13 @@
 #ifndef PHOTO_OUTPUT_NAPI_H_
 #define PHOTO_OUTPUT_NAPI_H_
 
-#include "input/camera_manager.h"
+#include "camera_napi_template_utils.h"
 #include "input/camera_device.h"
+#include "input/camera_manager.h"
+#include "listener_base.h"
+#include "native_image.h"
 #include "output/camera_output_capability.h"
 #include "output/photo_output.h"
-
-#include "hilog/log.h"
-#include "camera_napi_utils.h"
-#include "native_image.h"
-
-#include "listener_base.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -61,9 +58,7 @@ static EnumHelper<PhotoOutputEventType> PhotoOutputEventTypeHelper({
 
 class PhotoBufferProcessor : public Media::IBufferProcessor {
 public:
-    explicit PhotoBufferProcessor(sptr<Surface> photoSurface) : photoSurface_(photoSurface)
-    {
-    }
+    explicit PhotoBufferProcessor(sptr<Surface> photoSurface) : photoSurface_(photoSurface) {}
     ~PhotoBufferProcessor()
     {
         photoSurface_ = nullptr;
@@ -102,17 +97,17 @@ public:
     void OnCaptureEnded(const int32_t captureID, const int32_t frameCount) const override;
     void OnFrameShutter(const int32_t captureId, const uint64_t timestamp) const override;
     void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override;
-    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
-    void RemoveCallbackRef(napi_env env, napi_value callback, const std::string &eventType);
-    void RemoveAllCallbacks(const std::string &eventType);
+    void SaveCallbackReference(const std::string& eventType, napi_value callback, bool isOnce);
+    void RemoveCallbackRef(napi_env env, napi_value callback, const std::string& eventType);
+    void RemoveAllCallbacks(const std::string& eventType);
 
 private:
-    void UpdateJSCallback(PhotoOutputEventType eventType, const CallbackInfo &info) const;
-    void UpdateJSCallbackAsync(PhotoOutputEventType eventType, const CallbackInfo &info) const;
-    void ExecuteCaptureStartCb(const CallbackInfo &info) const;
-    void ExecuteCaptureEndCb(const CallbackInfo &info) const;
-    void ExecuteFrameShutterCb(const CallbackInfo &info) const;
-    void ExecuteCaptureErrorCb(const CallbackInfo &info) const;
+    void UpdateJSCallback(PhotoOutputEventType eventType, const CallbackInfo& info) const;
+    void UpdateJSCallbackAsync(PhotoOutputEventType eventType, const CallbackInfo& info) const;
+    void ExecuteCaptureStartCb(const CallbackInfo& info) const;
+    void ExecuteCaptureEndCb(const CallbackInfo& info) const;
+    void ExecuteFrameShutterCb(const CallbackInfo& info) const;
+    void ExecuteCaptureErrorCb(const CallbackInfo& info) const;
     std::mutex mutex_;
     napi_env env_;
     mutable std::vector<std::shared_ptr<AutoRef>> captureStartCbList_;
@@ -137,29 +132,32 @@ struct PhotoOutputCallbackInfo {
     PhotoOutputEventType eventType_;
     CallbackInfo info_;
     weak_ptr<const PhotoOutputCallback> listener_;
-    PhotoOutputCallbackInfo(PhotoOutputEventType eventType, CallbackInfo info,
-        shared_ptr<const PhotoOutputCallback> listener)
-        : eventType_(eventType), info_(info), listener_(listener) {}
+    PhotoOutputCallbackInfo(
+        PhotoOutputEventType eventType, CallbackInfo info, shared_ptr<const PhotoOutputCallback> listener)
+        : eventType_(eventType), info_(info), listener_(listener)
+    {}
 };
 
 struct ThumbnailListenerInfo {
     sptr<PhotoOutput> photoOutput_;
     const ThumbnailListener* listener_;
     ThumbnailListenerInfo(sptr<PhotoOutput> photoOutput, const ThumbnailListener* listener)
-        : photoOutput_(photoOutput), listener_(listener) {}
+        : photoOutput_(photoOutput), listener_(listener)
+    {}
 };
 
 struct PhotoListenerInfo {
     sptr<Surface> photoSurface_;
     const PhotoListener* listener_;
     PhotoListenerInfo(sptr<Surface> photoSurface, const PhotoListener* listener)
-        : photoSurface_(photoSurface), listener_(listener) {}
+        : photoSurface_(photoSurface), listener_(listener)
+    {}
 };
 
 class PhotoOutputNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
-    static napi_value CreatePhotoOutput(napi_env env, Profile &profile, std::string surfaceId);
+    static napi_value CreatePhotoOutput(napi_env env, Profile& profile, std::string surfaceId);
     static napi_value GetDefaultCaptureSetting(napi_env env, napi_callback_info info);
 
     static napi_value Capture(napi_env env, napi_callback_info info);
@@ -173,10 +171,13 @@ public:
     static napi_value On(napi_env env, napi_callback_info info);
     static napi_value Once(napi_env env, napi_callback_info info);
     static napi_value Off(napi_env env, napi_callback_info info);
-    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string &eventType, napi_value callback, bool isOnce);
-    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string &eventType, napi_value callback);
+    static napi_value RegisterCallback(
+        napi_env env, napi_value jsThis, const std::string& eventType, napi_value callback, bool isOnce);
+    static napi_value UnregisterCallback(
+        napi_env env, napi_value jsThis, const std::string& eventType, napi_value callback);
+    static int32_t MapQualityLevelFromJs(int32_t jsQuality, PhotoCaptureSetting::QualityLevel& nativeQuality);
+    static int32_t MapImageRotationFromJs(int32_t jsRotation, PhotoCaptureSetting::RotationConfig& nativeRotation);
+
     PhotoOutputNapi();
     ~PhotoOutputNapi();
 

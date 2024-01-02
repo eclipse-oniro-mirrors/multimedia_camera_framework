@@ -13,10 +13,14 @@
  * limitations under the License.
  */
 
-#include <uv.h>
-#include "hilog/log.h"
-#include "output/metadata_object_napi.h"
 #include "output/metadata_output_napi.h"
+
+#include <uv.h>
+
+#include "camera_napi_template_utils.h"
+#include "hilog/log.h"
+#include "napi/native_api.h"
+#include "output/metadata_object_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -396,7 +400,7 @@ static int32_t ConvertJSArrayToNative(napi_env env, size_t argc, const napi_valu
             int32_t metadataObjectTypeVal = 0;
             MetadataObjectType nativeMetadataObjType;
             napi_get_value_int32(env, metadataObjectType, &metadataObjectTypeVal);
-            CameraNapiUtils::MapMetadataObjSupportedTypesEnumFromJS(
+            MetadataObjectNapi::MapMetadataObjSupportedTypesEnumFromJS(
                 metadataObjectTypeVal, nativeMetadataObjType, isValid);
             if (!isValid) {
                 MEDIA_ERR_LOG("Unsupported metadata object type: napi object:%{public}d",
@@ -469,7 +473,7 @@ static void GetSupportedMetadataObjectTypesAsyncCallbackComplete(napi_env env, n
     size_t j = 0;
     for (i = 0; i < len; i++) {
         int32_t iProp;
-        CameraNapiUtils::MapMetadataObjSupportedTypesEnum(context->SupportedMetadataObjectTypes[i], iProp);
+        MetadataObjectNapi::MapMetadataObjSupportedTypesEnum(context->SupportedMetadataObjectTypes[i], iProp);
         napi_value value;
         if (iProp != -1 && napi_create_int32(env, iProp, &value) == napi_ok) {
             napi_set_element(env, metadataObjectTypes, j, value);
