@@ -608,11 +608,32 @@ int32_t HCameraHostManager::Init()
         MEDIA_ERR_LOG("%s: IServiceManager failed!", __func__);
         return CAMERA_UNKNOWN_ERROR;
     }
-    auto rt = svcMgr->RegisterServiceStatusListener(this, DEVICE_CLASS_CAMERA);
+
+    ::OHOS::sptr<IServStatListener> listener(
+        new RegisterServStatListener(RegisterServStatListener::StatusCallback([&](const ServiceStatus& status) {
+            using namespace OHOS::HDI::ServiceManager::V1_0;
+
+            switch (status.status) {
+                case SERVIE_STATUS_START:
+                    AddCameraHost(status.serviceName);
+                    break;
+                case SERVIE_STATUS_STOP:
+                    RemoveCameraHost(status.serviceName);
+                    break;
+                default:
+                    MEDIA_ERR_LOG("HCameraHostManager::OnReceive unexpected service status %{public}d", status.status);
+            }
+        })
+    ));
+
+    auto rt = svcMgr->RegisterServiceStatusListener(listener, DEVICE_CLASS_CAMERA);
     if (rt != 0) {
         MEDIA_ERR_LOG("%s: RegisterServiceStatusListener failed!", __func__);
         return CAMERA_UNKNOWN_ERROR;
     }
+
+    registerServStatListener_ = listener;
+
     return CAMERA_OK;
 }
 
@@ -624,10 +645,11 @@ void HCameraHostManager::DeInit()
         MEDIA_ERR_LOG("%s: IServiceManager failed", __func__);
         return;
     }
-    auto rt = svcMgr->UnregisterServiceStatusListener(this);
+    auto rt = svcMgr->UnregisterServiceStatusListener(registerServStatListener_);
     if (rt != 0) {
         MEDIA_ERR_LOG("%s: UnregisterServiceStatusListener failed!", __func__);
     }
+    registerServStatListener_ = nullptr;
 }
 
 void HCameraHostManager::AddCameraDevice(const std::string& cameraId, sptr<ICameraDeviceService> cameraDevice)
@@ -915,26 +937,6 @@ bool HCameraHostManager::CheckCameraId(sptr<HCameraRestoreParam> cameraRestorePa
     return false;
 }
 
-void HCameraHostManager::OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status)
-{
-    MEDIA_INFO_LOG("HCameraHostManager::OnReceive for camera host %{public}s, status %{public}d",
-        status.serviceName.c_str(), status.status);
-    if (status.deviceClass != DEVICE_CLASS_CAMERA || status.serviceName != "distributed_camera_service") {
-        MEDIA_ERR_LOG("HCameraHostManager::OnReceive invalid device class %{public}d", status.deviceClass);
-        return;
-    }
-    using namespace OHOS::HDI::ServiceManager::V1_0;
-    switch (status.status) {
-        case SERVIE_STATUS_START:
-            AddCameraHost(status.serviceName);
-            break;
-        case SERVIE_STATUS_STOP:
-            RemoveCameraHost(status.serviceName);
-            break;
-        default:
-            MEDIA_ERR_LOG("HCameraHostManager::OnReceive unexpected service status %{public}d", status.status);
-    }
-}
 
 void HCameraHostManager::AddCameraHost(const std::string& svcName)
 {
@@ -1013,6 +1015,18 @@ bool HCameraHostManager::IsCameraHostInfoAdded(const std::string& svcName)
     std::lock_guard<std::mutex> lock(mutex_);
     return std::any_of(cameraHostInfos_.begin(), cameraHostInfos_.end(),
                        [&svcName](const auto& camHost) {return camHost->GetName() == svcName; });
+}
+
+void RegisterServStatListener::OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status)
+{
+    MEDIA_INFO_LOG("HCameraHostManager::OnReceive for camerahost %{public}s, status %{public}d, deviceClass %{public}d",
+        status.serviceName.c_str(), status.status, status.deviceClass);
+
+    if (status.deviceClass != DEVICE_CLASS_CAMERA) {
+        MEDIA_ERR_LOG("HCameraHostManager::OnReceive invalid device class %{public}d", status.deviceClass);
+        return;
+    }
+    callback_(status);
 }
 } // namespace CameraStandard
 } // namespace OHOS
