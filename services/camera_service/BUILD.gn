@@ -59,7 +59,7 @@ ohos_shared_library("camera_service") {
 
   include_dirs = [
     "//drivers/peripheral/display/interfaces/include",
-    "//foundation/graphic/graphic_2d/frameworks/surface/include",
+    "${graphic_surface_path}/surface/include",
     "//foundation/multimedia/camera_framework/services/camera_service/include",
     "${multimedia_camera_framework_path}/services/camera_service/include/smooth_zoom",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/base/include",
@@ -89,7 +89,7 @@ ohos_shared_library("camera_service") {
     "drivers_interface_display:libdisplay_composer_hdi_impl",
     "drivers_interface_display:libdisplay_composer_hdi_impl_1.1",
     "graphic_2d:librender_service_client",
-    "graphic_2d:surface",
+    "graphic_surface:surface",
     "hdf_core:libhdi",
     "hicollie:libhicollie",
     "hilog:libhilog",
