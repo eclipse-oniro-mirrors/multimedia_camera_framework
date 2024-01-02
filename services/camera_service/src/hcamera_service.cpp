@@ -1226,6 +1226,10 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
     camera_metadata_item_t item;
     defaultSettings->addEntry(OHOS_CONTROL_ZOOM_RATIO, &zoomRatio, count);
     std::shared_ptr<OHOS::Camera::CameraMetadata> currentSetting = activeDevice->CloneCachedSettings();
+    if (currentSetting == nullptr) {
+        MEDIA_ERR_LOG("HCameraService::CreateDefaultSettingForRestore:currentSetting is null");
+        return defaultSettings;
+    }
     ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_FPS_RANGES, &item);
     if (ret == CAM_META_SUCCESS) {
         uint32_t fpscount = item.count;
