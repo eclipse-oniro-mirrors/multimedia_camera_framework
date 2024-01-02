@@ -570,9 +570,14 @@ int32_t CaptureSession::RemoveInput(sptr<CaptureInput>& input)
         MEDIA_ERR_LOG("CaptureSession::RemoveInput operation Not allowed!");
         return CameraErrorCode::OPERATION_NOT_ALLOWED;
     }
+
+    if (input == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::RemoveInput input is null");
+        return ServiceToCameraError(CAMERA_INVALID_ARG);
+    }
     auto device = ((sptr<CameraInput>&)input)->GetCameraDevice();
     if (device == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::RemoveInput input is null");
+        MEDIA_ERR_LOG("CaptureSession::RemoveInput device is null");
         return ServiceToCameraError(CAMERA_INVALID_ARG);
     }
     if (inputDevice_ != nullptr) {
