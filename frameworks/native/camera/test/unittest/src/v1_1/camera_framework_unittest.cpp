@@ -3289,7 +3289,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_088, TestSize.Level0
     std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo> captureStartedInfo = {};
     captureStartedInfo.push_back(it1);
     captureStartedInfo.push_back(it2);
-    camDevice->OnCaptureStartedV1_2(captureId, captureStartedInfo);
+    camDevice->OnCaptureStarted_V1_2(captureId, captureStartedInfo);
 }
 
 /*
@@ -3317,7 +3317,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_089, TestSize.Level0
     const std::vector<int32_t> streamIds = {1, 2};
     camDevice->OnCaptureStarted(captureId, streamIds);
     const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo> captureStartedInfo = {};
-    camDevice->OnCaptureStartedV1_2(captureId, captureStartedInfo);
+    camDevice->OnCaptureStarted_V1_2(captureId, captureStartedInfo);
 
     CaptureEndedInfo it1;
     it1.streamId_ = 1;
