@@ -91,7 +91,7 @@ public:
     // CameraHostCallbackStub
     int32_t OnCameraStatus(const std::string& cameraId, HDI::Camera::V1_0::CameraStatus status) override;
     int32_t OnFlashlightStatus(const std::string& cameraId, FlashlightStatus status) override;
-    int32_t OnFlashlightStatusV1_2(FlashlightStatus status) override;
+    int32_t OnFlashlightStatus_V1_2(FlashlightStatus status) override;
     int32_t OnCameraEvent(const std::string &cameraId, CameraEvent event) override;
 
 private:
@@ -159,7 +159,7 @@ bool HCameraHostManager::CameraHostInfo::Init()
 
     if (cameraHostProxyV1_2_ != nullptr && GetCameraHostVersion() > GetVersionId(1, 1)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::Init SetCallback ICameraHost V1_2");
-        cameraHostProxyV1_2_->SetCallbackV1_2(this);
+        cameraHostProxyV1_2_->SetCallback_V1_2(this);
     } else {
         MEDIA_DEBUG_LOG("CameraHostInfo::Init SetCallback ICameraHost V1_0");
         cameraHostProxy_->SetCallback(this);
@@ -272,7 +272,7 @@ int32_t HCameraHostManager::CameraHostInfo::OpenCamera(std::string& cameraId,
     sptr<OHOS::HDI::Camera::V1_2::ICameraDevice> hdiDevice_v1_2;
     if (cameraHostProxyV1_2_ != nullptr && GetCameraHostVersion() >= GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::OpenCamera ICameraDevice V1_2");
-        rc = (CamRetCode)(cameraHostProxyV1_2_->OpenCameraV1_2(cameraId, callback, hdiDevice_v1_2));
+        rc = (CamRetCode)(cameraHostProxyV1_2_->OpenCamera_V1_2(cameraId, callback, hdiDevice_v1_2));
         pDevice = hdiDevice_v1_2.GetRefPtr();
     } else if (cameraHostProxyV1_1_ != nullptr
         && GetCameraHostVersion() == GetVersionId(HDI_VERSION_1, HDI_VERSION_1)) {
@@ -313,7 +313,7 @@ int32_t HCameraHostManager::CameraHostInfo::SetTorchLevel(float level)
         MEDIA_ERR_LOG("CameraHostInfo::SetTorchLevel cameraHostProxyV1_2_ is null");
         return CAMERA_UNKNOWN_ERROR;
     }
-    HDI::Camera::V1_2::CamRetCode rc = (HDI::Camera::V1_2::CamRetCode)(cameraHostProxyV1_2_->SetFlashlightV1_2(level));
+    HDI::Camera::V1_2::CamRetCode rc = (HDI::Camera::V1_2::CamRetCode)(cameraHostProxyV1_2_->SetFlashlight_V1_2(level));
     if (rc != HDI::Camera::V1_2::NO_ERROR) {
         MEDIA_ERR_LOG("CameraHostInfo::SetTorchLevel failed with error Code:%{public}d", rc);
         return HdiToServiceErrorV1_2(rc);
@@ -476,33 +476,33 @@ int32_t HCameraHostManager::CameraHostInfo::OnFlashlightStatus(const std::string
     return CAMERA_OK;
 }
 
-int32_t HCameraHostManager::CameraHostInfo::OnFlashlightStatusV1_2(FlashlightStatus status)
+int32_t HCameraHostManager::CameraHostInfo::OnFlashlightStatus_V1_2(FlashlightStatus status)
 {
     auto statusCallback = statusCallback_.lock();
     if (statusCallback == nullptr) {
         MEDIA_WARNING_LOG(
-            "CameraHostInfo::OnFlashlightStatusV1_2 with status %{public}d failed due to no callback", status);
+            "CameraHostInfo::OnFlashlightStatus_V1_2 with status %{public}d failed due to no callback", status);
         return CAMERA_UNKNOWN_ERROR;
     }
     TorchStatus torchStatus = TORCH_STATUS_OFF;
     switch (status) {
         case FLASHLIGHT_OFF:
             torchStatus = TORCH_STATUS_OFF;
-            MEDIA_INFO_LOG("CameraHostInfo::OnFlashlightStatusV1_2, torch status is off");
+            MEDIA_INFO_LOG("CameraHostInfo::OnFlashlightStatus_V1_2, torch status is off");
             break;
 
         case FLASHLIGHT_ON:
             torchStatus = TORCH_STATUS_ON;
-            MEDIA_INFO_LOG("CameraHostInfo::OnFlashlightStatusV1_2, torch status is on");
+            MEDIA_INFO_LOG("CameraHostInfo::OnFlashlightStatus_V1_2, torch status is on");
             break;
 
         case FLASHLIGHT_UNAVAILABLE:
             torchStatus = TORCH_STATUS_UNAVAILABLE;
-            MEDIA_INFO_LOG("CameraHostInfo::OnFlashlightStatusV1_2, torch status is unavailable");
+            MEDIA_INFO_LOG("CameraHostInfo::OnFlashlightStatus_V1_2, torch status is unavailable");
             break;
 
         default:
-            MEDIA_ERR_LOG("CameraHostInfo::OnFlashlightStatusV1_2, Unknown flashlight status: %{public}d", status);
+            MEDIA_ERR_LOG("CameraHostInfo::OnFlashlightStatus_V1_2, Unknown flashlight status: %{public}d", status);
             return CAMERA_UNKNOWN_ERROR;
     }
     statusCallback->OnTorchStatus(torchStatus);

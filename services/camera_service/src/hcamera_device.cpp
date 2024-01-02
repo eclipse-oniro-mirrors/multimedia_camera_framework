@@ -1051,14 +1051,14 @@ int32_t HCameraDevice::OnCaptureStarted(int32_t captureId, const std::vector<int
     return streamOperatorCallback->OnCaptureStarted(captureId, streamIds);
 }
 
-int32_t HCameraDevice::OnCaptureStartedV1_2(
+int32_t HCameraDevice::OnCaptureStarted_V1_2(
     int32_t captureId, const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo>& infos)
 {
     auto streamOperatorCallback = GetStreamOperatorCallback();
     if (streamOperatorCallback == nullptr) {
         return CAMERA_INVALID_STATE;
     }
-    return streamOperatorCallback->OnCaptureStartedV1_2(captureId, infos);
+    return streamOperatorCallback->OnCaptureStarted_V1_2(captureId, infos);
 }
 
 int32_t HCameraDevice::OnCaptureEnded(int32_t captureId, const std::vector<CaptureEndedInfo>& infos)
