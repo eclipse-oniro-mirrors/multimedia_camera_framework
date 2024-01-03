@@ -4099,22 +4099,23 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_007, TestSize.Level
     camInput->GetCameraDevice()->Open();
 
     sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    cameraHostManager->Init();
     HDI::ServiceManager::V1_0::ServiceStatus status;
 
     status.serviceName = "1";
-    cameraHostManager->OnReceive(status);
+    cameraHostManager->registerServStatListener_->OnReceive(status);
 
     status.deviceClass = DEVICE_CLASS_CAMERA;
     status.serviceName = "distributed_camera_service";
     status.status = HDI::ServiceManager::V1_0::SERVIE_STATUS_START;
-    cameraHostManager->OnReceive(status);
-    cameraHostManager->OnReceive(status);
+    cameraHostManager->registerServStatListener_->OnReceive(status);
+    cameraHostManager->registerServStatListener_->OnReceive(status);
 
     status.status = HDI::ServiceManager::V1_0::SERVIE_STATUS_STOP;
-    cameraHostManager->OnReceive(status);
+    cameraHostManager->registerServStatListener_->OnReceive(status);
 
     status.status = 4;
-    cameraHostManager->OnReceive(status);
+    cameraHostManager->registerServStatListener_->OnReceive(status);
 
     input->Close();
 }
@@ -5361,6 +5362,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_031, TestSize.Level
 
     std::vector<std::string> cameraIds = {};
     sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    cameraHostManager->Init();
     ASSERT_NE(cameraHostManager, nullptr);
 
     std::string cameraId = cameras[0]->GetID();
@@ -5389,7 +5391,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_031, TestSize.Level
     status.deviceClass = DEVICE_CLASS_CAMERA;
     status.serviceName = "distributed_camera_service";
     status.status = HDI::ServiceManager::V1_0::SERVIE_STATUS_START;
-    cameraHostManager->HCameraHostManager::OnReceive(status);
+    cameraHostManager->registerServStatListener_->OnReceive(status);
 
     EXPECT_EQ(cameraHostManager->HCameraHostManager::SetFlashlight(cameraId, false), 2);
 

@@ -34,13 +34,14 @@
 #include "v1_2/icamera_host.h"
 #include "icamera_device_service.h"
 #include "icamera_service_callback.h"
+#include "iservmgr_hdi.h"
 #include "iservstat_listener_hdi.h"
 #include "hcamera_restore_param.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using OHOS::HDI::Camera::V1_0::ICameraDeviceCallback;
-class HCameraHostManager : public HDI::ServiceManager::V1_0::ServStatListenerStub {
+class HCameraHostManager : public RefBase {
 public:
     class StatusCallback {
     public:
@@ -99,8 +100,9 @@ public:
 
     bool CheckCameraId(sptr<HCameraRestoreParam> cameraRestoreParam, const std::string& cameraId);
 
-    // HDI::ServiceManager::V1_0::IServStatListener
-    void OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status) override;
+    void AddCameraHost(const std::string& svcName);
+
+    void RemoveCameraHost(const std::string& svcName);
 
     static const std::string LOCAL_SERVICE_NAME;
 
@@ -108,8 +110,6 @@ private:
     struct CameraDeviceInfo;
     class CameraHostInfo;
 
-    void AddCameraHost(const std::string& svcName);
-    void RemoveCameraHost(const std::string& svcName);
     sptr<CameraHostInfo> FindCameraHostInfo(const std::string& cameraId);
     sptr<CameraHostInfo> FindLocalCameraHostInfo();
     bool IsCameraHostInfoAdded(const std::string& svcName);
@@ -122,6 +122,22 @@ private:
     std::map<std::string, sptr<ICameraDeviceService>> cameraDevices_;
     std::map<std::string, std::map<std::string, sptr<HCameraRestoreParam>>> persistentParamMap_;
     std::map<std::string, sptr<HCameraRestoreParam>> transitentParamMap_;
+    ::OHOS::sptr<HDI::ServiceManager::V1_0::IServStatListener> registerServStatListener_;
+};
+
+class RegisterServStatListener : public HDI::ServiceManager::V1_0::ServStatListenerStub {
+public:
+    using StatusCallback = std::function<void(const HDI::ServiceManager::V1_0::ServiceStatus&)>;
+    
+    explicit RegisterServStatListener(StatusCallback callback) : callback_(std::move(callback)) {
+    }
+    
+    ~RegisterServStatListener() override = default;
+    
+    void OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status) override;
+
+private:
+    StatusCallback callback_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
