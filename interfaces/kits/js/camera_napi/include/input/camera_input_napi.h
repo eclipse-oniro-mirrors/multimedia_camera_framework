@@ -16,7 +16,6 @@
 #ifndef CAMERA_INPUT_NAPI_H_
 #define CAMERA_INPUT_NAPI_H_
 
-#include "display_type.h"
 #include "hilog/log.h"
 #include "camera_napi_utils.h"
 

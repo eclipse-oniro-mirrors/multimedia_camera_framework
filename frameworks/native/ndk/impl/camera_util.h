@@ -17,7 +17,6 @@
 #define OHOS_CAMERA_CAMERA_UTIL_H
 
 #include <climits>
-#include "display_type.h"
 #include "kits/native/include/camera/camera.h"
 
 namespace OHOS {

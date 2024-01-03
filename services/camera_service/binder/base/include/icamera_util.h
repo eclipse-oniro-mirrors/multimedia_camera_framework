@@ -18,8 +18,6 @@
 
 #include <limits.h>
 
-#include "display_type.h"
-
 namespace OHOS {
 namespace CameraStandard {
 int32_t ServiceToCameraError(int32_t ret);

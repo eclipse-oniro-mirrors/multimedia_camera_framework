@@ -32,8 +32,10 @@
 #include "privacy_kit.h"
 #include "refbase.h"
 #include "system_ability.h"
+#ifdef CAMERA_USE_SENSOR
 #include "sensor_agent.h"
 #include "sensor_agent_type.h"
+#endif
 
 namespace OHOS {
 namespace CameraStandard {

@@ -16,7 +16,6 @@
 #ifndef CAMERA_INFO_NAPI_H_
 #define CAMERA_INFO_NAPI_H_
 
-#include "display_type.h"
 #include "camera_log.h"
 #include "camera_napi_utils.h"
 #include "input/camera_manager.h"
