@@ -14,7 +14,11 @@
  */
 
 #include "output/photo_output_napi.h"
+
 #include <uv.h>
+
+#include "camera_napi_security_utils.h"
+#include "camera_napi_template_utils.h"
 #include "image_napi.h"
 #include "image_receiver.h"
 #include "pixel_map_napi.h"
@@ -25,7 +29,7 @@ using namespace std;
 using OHOS::HiviewDFX::HiLog;
 using OHOS::HiviewDFX::HiLogLabel;
 namespace {
-    constexpr HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "PhotoOutputNapi"};
+constexpr HiLogLabel LABEL = { LOG_CORE, LOG_DOMAIN, "PhotoOutputNapi" };
 }
 thread_local napi_ref PhotoOutputNapi::sConstructor_ = nullptr;
 thread_local sptr<PhotoOutput> PhotoOutputNapi::sPhotoOutput_ = nullptr;
@@ -33,12 +37,12 @@ thread_local sptr<Surface> PhotoOutputNapi::sPhotoSurface_ = nullptr;
 thread_local uint32_t PhotoOutputNapi::photoOutputTaskId = CAMERA_PHOTO_OUTPUT_TASKID;
 static uv_sem_t g_captureStartSem;
 static bool g_isSemInited;
-PhotoListener::PhotoListener(napi_env env, const sptr<Surface> photoSurface) : ListenerBase(env),
-    photoSurface_(photoSurface)
-    
+PhotoListener::PhotoListener(napi_env env, const sptr<Surface> photoSurface)
+    : ListenerBase(env), photoSurface_(photoSurface)
+
 {
     if (bufferProcessor_ == nullptr && photoSurface != nullptr) {
-        bufferProcessor_ = std::make_shared<PhotoBufferProcessor> (photoSurface);
+        bufferProcessor_ = std::make_shared<PhotoBufferProcessor>(photoSurface);
     }
 }
 
@@ -55,7 +59,7 @@ void PhotoListener::OnBufferAvailable()
 
 void PhotoListener::UpdateJSCallback(sptr<Surface> photoSurface) const
 {
-    napi_value result[ARGS_TWO] = {0};
+    napi_value result[ARGS_TWO] = { 0 };
     napi_get_undefined(env_, &result[0]);
     napi_get_undefined(env_, &result[1]);
     napi_value callback = nullptr;
@@ -99,25 +103,27 @@ void PhotoListener::UpdateJSCallbackAsync(sptr<Surface> photoSurface) const
         MEDIA_ERR_LOG("PhotoListener:UpdateJSCallbackAsync() failed to get event loop");
         return;
     }
-    uv_work_t* work = new(std::nothrow) uv_work_t;
+    uv_work_t* work = new (std::nothrow) uv_work_t;
     if (!work) {
         MEDIA_ERR_LOG("PhotoListener:UpdateJSCallbackAsync() failed to allocate work");
         return;
     }
-    std::unique_ptr<PhotoListenerInfo> callbackInfo =
-            std::make_unique<PhotoListenerInfo>(photoSurface, this);
+    std::unique_ptr<PhotoListenerInfo> callbackInfo = std::make_unique<PhotoListenerInfo>(photoSurface, this);
     work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        PhotoListenerInfo* callbackInfo = reinterpret_cast<PhotoListenerInfo *>(work->data);
-        if (callbackInfo) {
-            callbackInfo->listener_->UpdateJSCallback(callbackInfo->photoSurface_);
-            MEDIA_ERR_LOG("PhotoListener:UpdateJSCallbackAsync() complete");
-            callbackInfo->photoSurface_ =  nullptr;
-            callbackInfo->listener_ = nullptr;
-            delete callbackInfo;
-        }
-        delete work;
-    }, uv_qos_user_initiated);
+    int ret = uv_queue_work_with_qos(
+        loop, work, [](uv_work_t* work) {},
+        [](uv_work_t* work, int status) {
+            PhotoListenerInfo* callbackInfo = reinterpret_cast<PhotoListenerInfo*>(work->data);
+            if (callbackInfo) {
+                callbackInfo->listener_->UpdateJSCallback(callbackInfo->photoSurface_);
+                MEDIA_ERR_LOG("PhotoListener:UpdateJSCallbackAsync() complete");
+                callbackInfo->photoSurface_ = nullptr;
+                callbackInfo->listener_ = nullptr;
+                delete callbackInfo;
+            }
+            delete work;
+        },
+        uv_qos_user_initiated);
     if (ret) {
         MEDIA_ERR_LOG("PhotoListener:UpdateJSCallbackAsync() failed to execute work");
         delete work;
@@ -130,7 +136,7 @@ PhotoOutputCallback::PhotoOutputCallback(napi_env env) : env_(env) {}
 
 void UpdateJSExecute(uv_work_t* work)
 {
-    PhotoOutputCallbackInfo* callbackInfo = reinterpret_cast<PhotoOutputCallbackInfo *>(work->data);
+    PhotoOutputCallbackInfo* callbackInfo = reinterpret_cast<PhotoOutputCallbackInfo*>(work->data);
     if (callbackInfo) {
         if (callbackInfo->eventType_ == PhotoOutputEventType::CAPTURE_FRAME_SHUTTER) {
             uv_sem_wait(&g_captureStartSem);
@@ -204,8 +210,7 @@ void PhotoOutputCallback::OnCaptureStarted(const int32_t captureID, uint32_t exp
 void PhotoOutputCallback::OnCaptureEnded(const int32_t captureID, const int32_t frameCount) const
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_DEBUG_LOG("OnCaptureEnded is called!, captureID: %{public}d, frameCount: %{public}d",
-        captureID, frameCount);
+    MEDIA_DEBUG_LOG("OnCaptureEnded is called!, captureID: %{public}d, frameCount: %{public}d", captureID, frameCount);
     CallbackInfo info;
     info.captureID = captureID;
     info.frameCount = frameCount;
@@ -215,8 +220,8 @@ void PhotoOutputCallback::OnCaptureEnded(const int32_t captureID, const int32_t 
 void PhotoOutputCallback::OnFrameShutter(const int32_t captureId, const uint64_t timestamp) const
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_DEBUG_LOG("OnFrameShutter is called, captureID: %{public}d, timestamp: %{public}" PRIu64,
-        captureId, timestamp);
+    MEDIA_DEBUG_LOG(
+        "OnFrameShutter is called, captureID: %{public}d, timestamp: %{public}" PRIu64, captureId, timestamp);
     CallbackInfo info;
     info.captureID = captureId;
     info.timestamp = timestamp;
@@ -225,19 +230,18 @@ void PhotoOutputCallback::OnFrameShutter(const int32_t captureId, const uint64_t
 
 void PhotoOutputCallback::OnCaptureError(const int32_t captureId, const int32_t errorCode) const
 {
-    MEDIA_DEBUG_LOG("OnCaptureError is called!, captureID: %{public}d, errorCode: %{public}d",
-        captureId, errorCode);
+    MEDIA_DEBUG_LOG("OnCaptureError is called!, captureID: %{public}d, errorCode: %{public}d", captureId, errorCode);
     CallbackInfo info;
     info.captureID = captureId;
     info.errorCode = errorCode;
     UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_ERROR, info);
 }
 
-void PhotoOutputCallback::SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce)
+void PhotoOutputCallback::SaveCallbackReference(const std::string& eventType, napi_value callback, bool isOnce)
 {
     MEDIA_INFO_LOG("SaveCallbackReference is called");
     std::lock_guard<std::mutex> lock(mutex_);
-    std::vector<std::shared_ptr<AutoRef>> *callbackList;
+    std::vector<std::shared_ptr<AutoRef>>* callbackList;
     auto eventTypeEnum = PhotoOutputEventTypeHelper.ToEnum(eventType);
     switch (eventTypeEnum) {
         case PhotoOutputEventType::CAPTURE_START:
@@ -263,15 +267,14 @@ void PhotoOutputCallback::SaveCallbackReference(const std::string &eventType, na
     napi_ref callbackRef = nullptr;
     const int32_t refCount = 1;
     napi_status status = napi_create_reference(env_, callback, refCount, &callbackRef);
-    CHECK_AND_RETURN_LOG(status == napi_ok && callbackRef != nullptr,
-                         "creating reference for callback fail");
+    CHECK_AND_RETURN_LOG(status == napi_ok && callbackRef != nullptr, "creating reference for callback fail");
     std::shared_ptr<AutoRef> cb = std::make_shared<AutoRef>(env_, callbackRef, isOnce);
     callbackList->push_back(cb);
-    MEDIA_DEBUG_LOG("Save callback reference success, %{public}s callback list size [%{public}zu]",
-        eventType.c_str(), callbackList->size());
+    MEDIA_DEBUG_LOG("Save callback reference success, %{public}s callback list size [%{public}zu]", eventType.c_str(),
+        callbackList->size());
 }
 
-void PhotoOutputCallback::RemoveCallbackRef(napi_env env, napi_value callback, const std::string &eventType)
+void PhotoOutputCallback::RemoveCallbackRef(napi_env env, napi_value callback, const std::string& eventType)
 {
     MEDIA_INFO_LOG("RemoveCallbackRef is called");
     std::lock_guard<std::mutex> lock(mutex_);
@@ -280,7 +283,7 @@ void PhotoOutputCallback::RemoveCallbackRef(napi_env env, napi_value callback, c
         RemoveAllCallbacks(eventType);
         return;
     }
-    std::vector<std::shared_ptr<AutoRef>> *callbackList;
+    std::vector<std::shared_ptr<AutoRef>>* callbackList;
     auto eventTypeEnum = PhotoOutputEventTypeHelper.ToEnum(eventType);
     switch (eventTypeEnum) {
         case PhotoOutputEventType::CAPTURE_START:
@@ -310,13 +313,13 @@ void PhotoOutputCallback::RemoveCallbackRef(napi_env env, napi_value callback, c
             return;
         }
     }
-    MEDIA_DEBUG_LOG("RemoveCallbackRef success, %{public}s callback list size [%{public}zu]",
-        eventType.c_str(), callbackList->size());
+    MEDIA_DEBUG_LOG("RemoveCallbackRef success, %{public}s callback list size [%{public}zu]", eventType.c_str(),
+        callbackList->size());
 }
 
-void PhotoOutputCallback::RemoveAllCallbacks(const std::string &eventType)
+void PhotoOutputCallback::RemoveAllCallbacks(const std::string& eventType)
 {
-    std::vector<std::shared_ptr<AutoRef>> *callbackList;
+    std::vector<std::shared_ptr<AutoRef>>* callbackList;
     auto eventTypeEnum = PhotoOutputEventTypeHelper.ToEnum(eventType);
     switch (eventTypeEnum) {
         case PhotoOutputEventType::CAPTURE_START:
@@ -343,13 +346,13 @@ void PhotoOutputCallback::RemoveAllCallbacks(const std::string &eventType)
         (*it)->cb_ = nullptr;
     }
     callbackList->clear();
-    MEDIA_DEBUG_LOG("RemoveAllCallbacks success, %{public}s callback list size [%{public}zu]",
-        eventType.c_str(), callbackList->size());
+    MEDIA_DEBUG_LOG("RemoveAllCallbacks success, %{public}s callback list size [%{public}zu]", eventType.c_str(),
+        callbackList->size());
 }
 
-void PhotoOutputCallback::ExecuteCaptureStartCb(const CallbackInfo &info) const
+void PhotoOutputCallback::ExecuteCaptureStartCb(const CallbackInfo& info) const
 {
-    napi_value result[ARGS_TWO] = {nullptr, nullptr};
+    napi_value result[ARGS_TWO] = { nullptr, nullptr };
     napi_value callback = nullptr;
     napi_value retVal;
     napi_value propValue;
@@ -375,9 +378,9 @@ void PhotoOutputCallback::ExecuteCaptureStartCb(const CallbackInfo &info) const
     }
 }
 
-void PhotoOutputCallback::ExecuteCaptureEndCb(const CallbackInfo &info) const
+void PhotoOutputCallback::ExecuteCaptureEndCb(const CallbackInfo& info) const
 {
-    napi_value result[ARGS_TWO] = {nullptr, nullptr};
+    napi_value result[ARGS_TWO] = { nullptr, nullptr };
     napi_value callback = nullptr;
     napi_value retVal;
     napi_value propValue;
@@ -403,9 +406,9 @@ void PhotoOutputCallback::ExecuteCaptureEndCb(const CallbackInfo &info) const
     }
 }
 
-void PhotoOutputCallback::ExecuteFrameShutterCb(const CallbackInfo &info) const
+void PhotoOutputCallback::ExecuteFrameShutterCb(const CallbackInfo& info) const
 {
-    napi_value result[ARGS_TWO] = {nullptr, nullptr};
+    napi_value result[ARGS_TWO] = { nullptr, nullptr };
     napi_value callback = nullptr;
     napi_value retVal;
     napi_value propValue;
@@ -431,9 +434,9 @@ void PhotoOutputCallback::ExecuteFrameShutterCb(const CallbackInfo &info) const
     }
 }
 
-void PhotoOutputCallback::ExecuteCaptureErrorCb(const CallbackInfo &info) const
+void PhotoOutputCallback::ExecuteCaptureErrorCb(const CallbackInfo& info) const
 {
-    napi_value errJsResult[ARGS_ONE] = {nullptr};
+    napi_value errJsResult[ARGS_ONE] = { nullptr };
     napi_value callback = nullptr;
     napi_value retVal;
     napi_value propValue;
@@ -455,7 +458,7 @@ void PhotoOutputCallback::ExecuteCaptureErrorCb(const CallbackInfo &info) const
     }
 }
 
-void PhotoOutputCallback::UpdateJSCallback(PhotoOutputEventType eventType, const CallbackInfo &info) const
+void PhotoOutputCallback::UpdateJSCallback(PhotoOutputEventType eventType, const CallbackInfo& info) const
 {
     MEDIA_DEBUG_LOG("UpdateJSCallback is called");
     switch (eventType) {
@@ -477,7 +480,8 @@ void PhotoOutputCallback::UpdateJSCallback(PhotoOutputEventType eventType, const
 }
 
 ThumbnailListener::ThumbnailListener(napi_env env, const sptr<PhotoOutput> photoOutput)
-    : ListenerBase(env), photoOutput_(photoOutput) {}
+    : ListenerBase(env), photoOutput_(photoOutput)
+{}
 
 void ThumbnailListener::OnBufferAvailable()
 {
@@ -492,7 +496,7 @@ void ThumbnailListener::OnBufferAvailable()
 
 void ThumbnailListener::UpdateJSCallback(sptr<PhotoOutput> photoOutput) const
 {
-    napi_value result[ARGS_TWO] = {0};
+    napi_value result[ARGS_TWO] = { 0 };
     napi_get_undefined(env_, &result[0]);
     napi_get_undefined(env_, &result[1]);
     napi_value callback = nullptr;
@@ -514,13 +518,10 @@ void ThumbnailListener::UpdateJSCallback(sptr<PhotoOutput> photoOutput) const
     Media::InitializationOptions opts;
     opts.srcPixelFormat = Media::PixelFormat::RGBA_8888;
     opts.pixelFormat = Media::PixelFormat::RGBA_8888;
-    opts.size = {
-            .width = thumbnailWidth,
-            .height = thumbnailHeight
-    };
+    opts.size = { .width = thumbnailWidth, .height = thumbnailHeight };
     MEDIA_INFO_LOG("thumbnailWidth:%{public}d, thumbnailheight: %{public}d", thumbnailWidth, thumbnailHeight);
     const int32_t formatSize = 4;
-    auto pixelMap = Media::PixelMap::Create(static_cast<const uint32_t *>(thumbnailBuffer->GetVirAddr()),
+    auto pixelMap = Media::PixelMap::Create(static_cast<const uint32_t*>(thumbnailBuffer->GetVirAddr()),
         thumbnailWidth * thumbnailHeight * formatSize, 0, thumbnailWidth, opts, true);
     napi_value valueParam = Media::PixelMapNapi::CreatePixelMap(env_, std::move(pixelMap));
     if (valueParam == nullptr) {
@@ -552,25 +553,27 @@ void ThumbnailListener::UpdateJSCallbackAsync(sptr<PhotoOutput> photoOutput) con
         MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to get event loop");
         return;
     }
-    uv_work_t* work = new(std::nothrow) uv_work_t;
+    uv_work_t* work = new (std::nothrow) uv_work_t;
     if (!work) {
         MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to allocate work");
         return;
     }
-    std::unique_ptr<ThumbnailListenerInfo> callbackInfo =
-            std::make_unique<ThumbnailListenerInfo>(photoOutput, this);
+    std::unique_ptr<ThumbnailListenerInfo> callbackInfo = std::make_unique<ThumbnailListenerInfo>(photoOutput, this);
     work->data = callbackInfo.get();
-    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
-        ThumbnailListenerInfo* callbackInfo = reinterpret_cast<ThumbnailListenerInfo *>(work->data);
-        if (callbackInfo) {
-            callbackInfo->listener_->UpdateJSCallback(callbackInfo->photoOutput_);
-            MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() complete");
-            callbackInfo->photoOutput_ =  nullptr;
-            callbackInfo->listener_ = nullptr;
-            delete callbackInfo;
-        }
-        delete work;
-    }, uv_qos_user_initiated);
+    int ret = uv_queue_work_with_qos(
+        loop, work, [](uv_work_t* work) {},
+        [](uv_work_t* work, int status) {
+            ThumbnailListenerInfo* callbackInfo = reinterpret_cast<ThumbnailListenerInfo*>(work->data);
+            if (callbackInfo) {
+                callbackInfo->listener_->UpdateJSCallback(callbackInfo->photoOutput_);
+                MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() complete");
+                callbackInfo->photoOutput_ = nullptr;
+                callbackInfo->listener_ = nullptr;
+                delete callbackInfo;
+            }
+            delete work;
+        },
+        uv_qos_user_initiated);
     if (ret) {
         MEDIA_ERR_LOG("ThumbnailListener:UpdateJSCallbackAsync() failed to execute work");
         delete work;
@@ -579,9 +582,7 @@ void ThumbnailListener::UpdateJSCallbackAsync(sptr<PhotoOutput> photoOutput) con
     }
 }
 
-PhotoOutputNapi::PhotoOutputNapi() : env_(nullptr), wrapper_(nullptr)
-{
-}
+PhotoOutputNapi::PhotoOutputNapi() : env_(nullptr), wrapper_(nullptr) {}
 
 PhotoOutputNapi::~PhotoOutputNapi()
 {
@@ -612,23 +613,17 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
 
     napi_property_descriptor photo_output_props[] = {
         DECLARE_NAPI_FUNCTION("getDefaultCaptureSetting", GetDefaultCaptureSetting),
-        DECLARE_NAPI_FUNCTION("capture", Capture),
-        DECLARE_NAPI_FUNCTION("confirmCapture", ConfirmCapture),
-        DECLARE_NAPI_FUNCTION("release", Release),
-        DECLARE_NAPI_FUNCTION("isMirrorSupported", IsMirrorSupported),
+        DECLARE_NAPI_FUNCTION("capture", Capture), DECLARE_NAPI_FUNCTION("confirmCapture", ConfirmCapture),
+        DECLARE_NAPI_FUNCTION("release", Release), DECLARE_NAPI_FUNCTION("isMirrorSupported", IsMirrorSupported),
         DECLARE_NAPI_FUNCTION("setMirror", SetMirror),
         DECLARE_NAPI_FUNCTION("enableQuickThumbnail", EnableQuickThumbnail),
-        DECLARE_NAPI_FUNCTION("isQuickThumbnailSupported", IsQuickThumbnailSupported),
-        DECLARE_NAPI_FUNCTION("on", On),
-        DECLARE_NAPI_FUNCTION("once", Once),
-        DECLARE_NAPI_FUNCTION("off", Off)
+        DECLARE_NAPI_FUNCTION("isQuickThumbnailSupported", IsQuickThumbnailSupported), DECLARE_NAPI_FUNCTION("on", On),
+        DECLARE_NAPI_FUNCTION("once", Once), DECLARE_NAPI_FUNCTION("off", Off)
 
     };
 
-    status = napi_define_class(env, CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
-                               PhotoOutputNapiConstructor, nullptr,
-                               sizeof(photo_output_props) / sizeof(photo_output_props[PARAM0]),
-                               photo_output_props, &ctorObj);
+    status = napi_define_class(env, CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, PhotoOutputNapiConstructor,
+        nullptr, sizeof(photo_output_props) / sizeof(photo_output_props[PARAM0]), photo_output_props, &ctorObj);
     if (status == napi_ok) {
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
@@ -656,8 +651,8 @@ napi_value PhotoOutputNapi::PhotoOutputNapiConstructor(napi_env env, napi_callba
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<PhotoOutputNapi> obj = std::make_unique<PhotoOutputNapi>();
         obj->photoOutput_ = sPhotoOutput_;
-        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                           PhotoOutputNapi::PhotoOutputNapiDestructor, nullptr, nullptr);
+        status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()), PhotoOutputNapi::PhotoOutputNapiDestructor,
+            nullptr, nullptr);
         if (status == napi_ok) {
             obj.release();
             return thisVar;
@@ -691,7 +686,7 @@ bool PhotoOutputNapi::IsPhotoOutput(napi_env env, napi_value obj)
     return result;
 }
 
-napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile &profile, std::string surfaceId)
+napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile& profile, std::string surfaceId)
 {
     MEDIA_DEBUG_LOG("CreatePhotoOutput is called, profile CameraFormat= %{public}d", profile.GetCameraFormat());
     CAMERA_SYNC_TRACE;
@@ -717,7 +712,7 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile &profile, st
         }
 
         MEDIA_INFO_LOG("surface width: %{public}d, height: %{public}d", photoSurface->GetDefaultWidth(),
-                       photoSurface->GetDefaultHeight());
+            photoSurface->GetDefaultHeight());
         photoSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
         sptr<IBufferProducer> surfaceProducer = photoSurface->GetProducer();
         int retCode = CameraManager::GetInstance()->CreatePhotoOutput(profile, surfaceProducer, &sPhotoOutput_);
@@ -739,6 +734,51 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile &profile, st
     }
     MEDIA_ERR_LOG("CreatePhotoOutput call Failed!");
     return result;
+}
+
+int32_t PhotoOutputNapi::MapQualityLevelFromJs(int32_t jsQuality, PhotoCaptureSetting::QualityLevel& nativeQuality)
+{
+    MEDIA_INFO_LOG("js quality level = %{public}d", jsQuality);
+    switch (jsQuality) {
+        case QUALITY_LEVEL_HIGH:
+            nativeQuality = PhotoCaptureSetting::QUALITY_LEVEL_HIGH;
+            break;
+        case QUALITY_LEVEL_MEDIUM:
+            nativeQuality = PhotoCaptureSetting::QUALITY_LEVEL_MEDIUM;
+            break;
+        case QUALITY_LEVEL_LOW:
+            nativeQuality = PhotoCaptureSetting::QUALITY_LEVEL_LOW;
+            break;
+        default:
+            MEDIA_ERR_LOG("Invalid quality value received from application");
+            return -1;
+    }
+
+    return 0;
+}
+
+int32_t PhotoOutputNapi::MapImageRotationFromJs(int32_t jsRotation, PhotoCaptureSetting::RotationConfig& nativeRotation)
+{
+    MEDIA_INFO_LOG("js rotation = %{public}d", jsRotation);
+    switch (jsRotation) {
+        case ROTATION_0:
+            nativeRotation = PhotoCaptureSetting::Rotation_0;
+            break;
+        case ROTATION_90:
+            nativeRotation = PhotoCaptureSetting::Rotation_90;
+            break;
+        case ROTATION_180:
+            nativeRotation = PhotoCaptureSetting::Rotation_180;
+            break;
+        case ROTATION_270:
+            nativeRotation = PhotoCaptureSetting::Rotation_270;
+            break;
+        default:
+            MEDIA_ERR_LOG("Invalid rotation value received from application");
+            return -1;
+    }
+
+    return 0;
 }
 
 static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
@@ -771,30 +811,29 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
     }
 
     if (context->work != nullptr) {
-        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef,
-                                             context->work, *jsContext);
+        CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef, context->work, *jsContext);
     }
     delete context;
 }
 
-int32_t QueryAndGetProperty(napi_env env, napi_value arg, const string &propertyName, napi_value &property)
+int32_t QueryAndGetProperty(napi_env env, napi_value arg, const string& propertyName, napi_value& property)
 {
     MEDIA_DEBUG_LOG("QueryAndGetProperty is called");
     bool present = false;
     int32_t retval = 0;
-    if ((napi_has_named_property(env, arg, propertyName.c_str(), &present) != napi_ok)
-        || (!present) || (napi_get_named_property(env, arg, propertyName.c_str(), &property) != napi_ok)) {
-            MEDIA_ERR_LOG("Failed to obtain property: %{public}s", propertyName.c_str());
-            retval = -1;
+    if ((napi_has_named_property(env, arg, propertyName.c_str(), &present) != napi_ok) || (!present) ||
+        (napi_get_named_property(env, arg, propertyName.c_str(), &property) != napi_ok)) {
+        MEDIA_ERR_LOG("Failed to obtain property: %{public}s", propertyName.c_str());
+        retval = -1;
     }
 
     return retval;
 }
 
-int32_t GetLocationProperties(napi_env env, napi_value locationObj, const PhotoOutputAsyncContext &context)
+int32_t GetLocationProperties(napi_env env, napi_value locationObj, const PhotoOutputAsyncContext& context)
 {
     MEDIA_DEBUG_LOG("GetLocationProperties is called");
-    PhotoOutputAsyncContext* asyncContext = const_cast<PhotoOutputAsyncContext *>(&context);
+    PhotoOutputAsyncContext* asyncContext = const_cast<PhotoOutputAsyncContext*>(&context);
     napi_value latproperty = nullptr;
     napi_value lonproperty = nullptr;
     napi_value altproperty = nullptr;
@@ -822,10 +861,10 @@ int32_t GetLocationProperties(napi_env env, napi_value locationObj, const PhotoO
     return 0;
 }
 
-static void GetFetchOptionsParam(napi_env env, napi_value arg, const PhotoOutputAsyncContext &context, bool &err)
+static void GetFetchOptionsParam(napi_env env, napi_value arg, const PhotoOutputAsyncContext& context, bool& err)
 {
     MEDIA_DEBUG_LOG("GetFetchOptionsParam is called");
-    PhotoOutputAsyncContext* asyncContext = const_cast<PhotoOutputAsyncContext *>(&context);
+    PhotoOutputAsyncContext* asyncContext = const_cast<PhotoOutputAsyncContext*>(&context);
     int32_t intValue;
     std::string strValue;
     napi_value property = nullptr;
@@ -833,8 +872,8 @@ static void GetFetchOptionsParam(napi_env env, napi_value arg, const PhotoOutput
     PhotoCaptureSetting::RotationConfig rotation;
 
     if (QueryAndGetProperty(env, arg, "quality", property) == 0) {
-        if (napi_get_value_int32(env, property, &intValue) != napi_ok
-            || CameraNapiUtils::MapQualityLevelFromJs(intValue, quality) == -1) {
+        if (napi_get_value_int32(env, property, &intValue) != napi_ok ||
+            PhotoOutputNapi::MapQualityLevelFromJs(intValue, quality) == -1) {
             err = true;
             return;
         } else {
@@ -843,8 +882,8 @@ static void GetFetchOptionsParam(napi_env env, napi_value arg, const PhotoOutput
     }
 
     if (QueryAndGetProperty(env, arg, "rotation", property) == 0) {
-        if (napi_get_value_int32(env, property, &intValue) != napi_ok
-            || CameraNapiUtils::MapImageRotationFromJs(intValue, rotation) == -1) {
+        if (napi_get_value_int32(env, property, &intValue) != napi_ok ||
+            PhotoOutputNapi::MapImageRotationFromJs(intValue, rotation) == -1) {
             err = true;
             return;
         } else {
@@ -870,8 +909,8 @@ static void GetFetchOptionsParam(napi_env env, napi_value arg, const PhotoOutput
     }
 }
 
-static napi_value ConvertJSArgsToNative(napi_env env, size_t argc, const napi_value argv[],
-    PhotoOutputAsyncContext &asyncContext)
+static napi_value ConvertJSArgsToNative(
+    napi_env env, size_t argc, const napi_value argv[], PhotoOutputAsyncContext& asyncContext)
 {
     MEDIA_DEBUG_LOG("ConvertJSArgsToNative is called");
     const int32_t refCount = 1;
@@ -918,7 +957,7 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    napi_value argv[ARGS_TWO] = { 0 };
     napi_value thisVar = nullptr;
     napi_value resource = nullptr;
 
@@ -940,7 +979,8 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
         CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
         CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "Capture");
         status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
+            env, nullptr, resource,
+            [](napi_env env, void* data) {
                 PhotoOutputAsyncContext* context = static_cast<PhotoOutputAsyncContext*>(data);
                 // Start async trace
                 context->funcName = "PhotoOutputNapi::Capture";
@@ -956,18 +996,16 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
 
                 context->bRetBool = false;
                 context->status = true;
-                sptr<PhotoOutput> photoOutput = ((sptr<PhotoOutput> &)(context->objectInfo->photoOutput_));
+                sptr<PhotoOutput> photoOutput = ((sptr<PhotoOutput>&)(context->objectInfo->photoOutput_));
                 if ((context->hasPhotoSettings)) {
                     std::shared_ptr<PhotoCaptureSetting> capSettings = make_shared<PhotoCaptureSetting>();
 
                     if (context->quality != -1) {
-                        capSettings->SetQuality(
-                            static_cast<PhotoCaptureSetting::QualityLevel>(context->quality));
+                        capSettings->SetQuality(static_cast<PhotoCaptureSetting::QualityLevel>(context->quality));
                     }
 
                     if (context->rotation != -1) {
-                        capSettings->SetRotation(
-                            static_cast<PhotoCaptureSetting::RotationConfig>(context->rotation));
+                        capSettings->SetRotation(static_cast<PhotoCaptureSetting::RotationConfig>(context->rotation));
                     }
 
                     capSettings->SetMirror(context->isMirror);
@@ -981,7 +1019,8 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
                     context->errorCode = photoOutput->Capture();
                 }
                 context->status = context->errorCode == 0;
-            }, CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+            },
+            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for PhotoOutputNapi::Capture");
             napi_get_undefined(env, &result);
@@ -1026,7 +1065,7 @@ napi_value PhotoOutputNapi::Release(napi_env env, napi_callback_info info)
     const int32_t refCount = 1;
     napi_value resource = nullptr;
     size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    napi_value argv[ARGS_ONE] = { 0 };
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
@@ -1044,7 +1083,8 @@ napi_value PhotoOutputNapi::Release(napi_env env, napi_callback_info info)
         CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "Release");
 
         status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
+            env, nullptr, resource,
+            [](napi_env env, void* data) {
                 auto context = static_cast<PhotoOutputAsyncContext*>(data);
                 context->status = false;
                 // Start async trace
@@ -1054,7 +1094,7 @@ napi_value PhotoOutputNapi::Release(napi_env env, napi_callback_info info)
                 if (context->objectInfo != nullptr && context->objectInfo->photoOutput_ != nullptr) {
                     context->bRetBool = false;
                     context->status = true;
-                    ((sptr<PhotoOutput> &)(context->objectInfo->photoOutput_))->Release();
+                    ((sptr<PhotoOutput>&)(context->objectInfo->photoOutput_))->Release();
                 }
             },
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
@@ -1079,7 +1119,7 @@ napi_value PhotoOutputNapi::GetDefaultCaptureSetting(napi_env env, napi_callback
     const int32_t refCount = 1;
     napi_value resource = nullptr;
     size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    napi_value argv[ARGS_ONE] = { 0 };
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
@@ -1097,7 +1137,8 @@ napi_value PhotoOutputNapi::GetDefaultCaptureSetting(napi_env env, napi_callback
         CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "GetDefaultCaptureSetting");
 
         status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
+            env, nullptr, resource,
+            [](napi_env env, void* data) {
                 auto context = static_cast<PhotoOutputAsyncContext*>(data);
                 context->status = false;
                 // Start async trace
@@ -1148,7 +1189,7 @@ napi_value PhotoOutputNapi::IsMirrorSupported(napi_env env, napi_callback_info i
 
 napi_value PhotoOutputNapi::IsQuickThumbnailSupported(napi_env env, napi_callback_info info)
 {
-    if (!CameraNapiUtils::CheckSystemApp(env)) {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi IsQuickThumbnailSupported is called!");
         return nullptr;
     }
@@ -1182,7 +1223,7 @@ napi_value PhotoOutputNapi::SetMirror(napi_env env, napi_callback_info info)
     const int32_t refCount = 1;
     napi_value resource = nullptr;
     size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    napi_value argv[ARGS_TWO] = { 0 };
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
@@ -1201,7 +1242,8 @@ napi_value PhotoOutputNapi::SetMirror(napi_env env, napi_callback_info info)
         CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
         CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "SetMirror");
         status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
+            env, nullptr, resource,
+            [](napi_env env, void* data) {
                 auto context = static_cast<PhotoOutputAsyncContext*>(data);
                 context->status = false;
                 // Start async trace
@@ -1230,14 +1272,14 @@ napi_value PhotoOutputNapi::SetMirror(napi_env env, napi_callback_info info)
 
 napi_value PhotoOutputNapi::EnableQuickThumbnail(napi_env env, napi_callback_info info)
 {
-    if (!CameraNapiUtils::CheckSystemApp(env)) {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi EnableQuickThumbnail is called!");
         return nullptr;
     }
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    napi_value argv[ARGS_ONE] = { 0 };
     napi_value thisVar = nullptr;
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
     NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
@@ -1261,8 +1303,8 @@ napi_value PhotoOutputNapi::EnableQuickThumbnail(napi_env env, napi_callback_inf
     return result;
 }
 
-napi_value PhotoOutputNapi::RegisterCallback(napi_env env, napi_value jsThis,
-    const string &eventType, napi_value callback, bool isOnce)
+napi_value PhotoOutputNapi::RegisterCallback(
+    napi_env env, napi_value jsThis, const string& eventType, napi_value callback, bool isOnce)
 {
     MEDIA_INFO_LOG("RegisterCallback is called");
     napi_value undefinedResult = nullptr;
@@ -1270,13 +1312,12 @@ napi_value PhotoOutputNapi::RegisterCallback(napi_env env, napi_value jsThis,
     napi_status status;
     PhotoOutputNapi* photoOutputNapi = nullptr;
     status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&photoOutputNapi));
-    NAPI_ASSERT(env, status == napi_ok && photoOutputNapi != nullptr,
-                "Failed to retrieve photoOutputNapi instance.");
+    NAPI_ASSERT(env, status == napi_ok && photoOutputNapi != nullptr, "Failed to retrieve photoOutputNapi instance.");
     NAPI_ASSERT(env, photoOutputNapi->photoOutput_ != nullptr, "photoOutput is null.");
     if (eventType.compare(OHOS::CameraStandard::thumbnailRegisterName) == 0) {
         // Set callback for exposureStateChange
         if (photoOutputNapi->thumbnailListener_ == nullptr) {
-            if (!CameraNapiUtils::CheckSystemApp(env)) {
+            if (!CameraNapiSecurity::CheckSystemApp(env)) {
                 MEDIA_ERR_LOG("SystemApi quickThumbnail on is called!");
                 return nullptr;
             }
@@ -1293,7 +1334,7 @@ napi_value PhotoOutputNapi::RegisterCallback(napi_env env, napi_value jsThis,
     } else if (eventType.compare(OHOS::CameraStandard::captureRegisterName) == 0 && sPhotoSurface_) {
         if (photoOutputNapi->photoListener_ == nullptr) {
             sptr<PhotoListener> phtotListener = new PhotoListener(env, sPhotoSurface_);
-            SurfaceError ret = sPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)phtotListener);
+            SurfaceError ret = sPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)phtotListener);
             if (ret != SURFACE_ERROR_OK) {
                 MEDIA_ERR_LOG("PhotoOutputNapi RegisterCallback failed!");
             }
@@ -1304,29 +1345,29 @@ napi_value PhotoOutputNapi::RegisterCallback(napi_env env, napi_value jsThis,
         // Set callback for focusStateChange
         shared_ptr<PhotoOutputCallback> photoOutputCallback =
             std::static_pointer_cast<PhotoOutputCallback>(photoOutputNapi->photoOutput_->GetApplicationCallback());
-        if (photoOutputCallback== nullptr) {
+        if (photoOutputCallback == nullptr) {
             photoOutputCallback = make_shared<PhotoOutputCallback>(env);
             photoOutputNapi->photoOutput_->SetCallback(photoOutputCallback);
         }
         photoOutputCallback->SaveCallbackReference(eventType, callback, isOnce);
-    } else  {
+    } else {
         MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
     }
     return undefinedResult;
 }
 
-napi_value PhotoOutputNapi::UnregisterCallback(napi_env env, napi_value jsThis,
-    const std::string& eventType, napi_value callback)
+napi_value PhotoOutputNapi::UnregisterCallback(
+    napi_env env, napi_value jsThis, const std::string& eventType, napi_value callback)
 {
     MEDIA_INFO_LOG("UnregisterCallback is called");
     napi_value undefinedResult = nullptr;
     napi_get_undefined(env, &undefinedResult);
-    PhotoOutputNapi *photoOutputNapi = nullptr;
+    PhotoOutputNapi* photoOutputNapi = nullptr;
     napi_status status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&photoOutputNapi));
     NAPI_ASSERT(env, status == napi_ok && photoOutputNapi != nullptr, "Failed to photoOutputNapi instance.");
     NAPI_ASSERT(env, photoOutputNapi->photoOutput_ != nullptr, "photoOutput is null.");
     if (eventType == OHOS::CameraStandard::thumbnailRegisterName) {
-        if (!CameraNapiUtils::CheckSystemApp(env)) {
+        if (!CameraNapiSecurity::CheckSystemApp(env)) {
             MEDIA_ERR_LOG("SystemApi quickThumbnail off is called!");
             return undefinedResult;
         }

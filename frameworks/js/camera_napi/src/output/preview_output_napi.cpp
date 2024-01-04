@@ -20,13 +20,15 @@
 #include <unistd.h>
 #include <uv.h>
 
+#include "camera_napi_security_utils.h"
+#include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
 #include "camera_output_capability.h"
 #include "js_native_api.h"
 #include "js_native_api_types.h"
+#include "napi/native_api.h"
 #include "refbase.h"
 #include "surface_utils.h"
-
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
@@ -709,7 +711,7 @@ napi_status PreviewOutputNapi::CreateAsyncTask(
 napi_value PreviewOutputNapi::AddDeferredSurface(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("AddDeferredSurface is called");
-    if (!CameraNapiUtils::CheckSystemApp(env)) {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi AddDeferredSurface is called!");
         return nullptr;
     }
@@ -870,7 +872,8 @@ napi_value PreviewOutputNapi::RegisterCallback(
     sptr<PreviewOutput> previewOutput = previewOutputNapi->previewOutput_;
     if (!eventType.empty()) {
         auto eventTypeEnum = PreviewOutputEventTypeHelper.ToEnum(eventType);
-        if (eventTypeEnum == PreviewOutputEventType::SKETCH_STATUS_CHANGED && !CameraNapiUtils::CheckSystemApp(env)) {
+        if (eventTypeEnum == PreviewOutputEventType::SKETCH_STATUS_CHANGED &&
+            !CameraNapiSecurity::CheckSystemApp(env)) {
             MEDIA_ERR_LOG("SystemApi On sketchStatusChanged is called!");
             return undefinedResult;
         }
@@ -903,7 +906,8 @@ napi_value PreviewOutputNapi::UnregisterCallback(
     sptr<PreviewOutput> previewOutput = previewOutputNapi->previewOutput_;
     if (!eventType.empty()) {
         auto eventTypeEnum = PreviewOutputEventTypeHelper.ToEnum(eventType);
-        if (eventTypeEnum == PreviewOutputEventType::SKETCH_STATUS_CHANGED && !CameraNapiUtils::CheckSystemApp(env)) {
+        if (eventTypeEnum == PreviewOutputEventType::SKETCH_STATUS_CHANGED &&
+            !CameraNapiSecurity::CheckSystemApp(env)) {
             MEDIA_ERR_LOG("SystemApi Off sketchStatusChanged is called!");
             return undefinedResult;
         }
@@ -923,7 +927,7 @@ napi_value PreviewOutputNapi::UnregisterCallback(
 
 napi_value PreviewOutputNapi::IsSketchSupported(napi_env env, napi_callback_info info)
 {
-    if (!CameraNapiUtils::CheckSystemApp(env)) {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi IsSketchSupported is called!");
         return nullptr;
     }
@@ -950,7 +954,7 @@ napi_value PreviewOutputNapi::IsSketchSupported(napi_env env, napi_callback_info
 
 napi_value PreviewOutputNapi::GetSketchRatio(napi_env env, napi_callback_info info)
 {
-    if (!CameraNapiUtils::CheckSystemApp(env)) {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi GetSketchRatio is called!");
         return nullptr;
     }
@@ -978,7 +982,7 @@ napi_value PreviewOutputNapi::GetSketchRatio(napi_env env, napi_callback_info in
 napi_value PreviewOutputNapi::EnableSketch(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("PreviewOutputNapi::EnableSketch enter");
-    if (!CameraNapiUtils::CheckSystemApp(env)) {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi EnableSketch is called!");
         return nullptr;
     }
@@ -1019,7 +1023,7 @@ napi_value PreviewOutputNapi::EnableSketch(napi_env env, napi_callback_info info
 napi_value PreviewOutputNapi::AttachSketchSurface(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("PreviewOutputNapi::AttachSketchSurface enter");
-    if (!CameraNapiUtils::CheckSystemApp(env)) {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi AttachSketchSurface is called!");
         return nullptr;
     }

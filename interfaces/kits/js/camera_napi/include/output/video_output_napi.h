@@ -16,13 +16,13 @@
 #ifndef VIDEO_OUTPUT_NAPI_H_
 #define VIDEO_OUTPUT_NAPI_H_
 
-#include "output/video_output.h"
-#include "hilog/log.h"
+#include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
+#include "hilog/log.h"
 #include "input/camera_manager.h"
-#include "surface_utils.h"
-
 #include "listener_base.h"
+#include "output/video_output.h"
+#include "surface_utils.h"
 namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_VIDEO_OUTPUT_NAPI_CLASS_NAME[] = "VideoOutput";

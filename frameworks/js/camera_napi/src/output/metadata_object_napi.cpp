@@ -13,9 +13,10 @@
  * limitations under the License.
  */
 
-#include "hilog/log.h"
-#include "input/camera_input_napi.h"
 #include "output/metadata_object_napi.h"
+
+#include "camera_log.h"
+#include "input/camera_input_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -30,9 +31,8 @@ napi_value MetadataObjectNapi::CreateMetaFaceObj(napi_env env, sptr<MetadataObje
     napi_value constructor;
     MEDIA_INFO_LOG("MetadataObjectNapi::CreateMetaFaceObj metaObjInfo: Timestamp(%{public}f), Type(%{public}d), "
                    "Rect{x(%{pulic}f),y(%{pulic}f),w(%{pulic}f),d(%{pulic}f)}",
-                   metaObj->GetTimestamp(), metaObj->GetType(),
-                   metaObj->GetBoundingBox().topLeftX, metaObj->GetBoundingBox().topLeftY,
-                   metaObj->GetBoundingBox().width, metaObj->GetBoundingBox().height);
+        metaObj->GetTimestamp(), metaObj->GetType(), metaObj->GetBoundingBox().topLeftX,
+        metaObj->GetBoundingBox().topLeftY, metaObj->GetBoundingBox().width, metaObj->GetBoundingBox().height);
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
         g_metadataObject = metaObj;
@@ -49,9 +49,7 @@ napi_value MetadataObjectNapi::CreateMetaFaceObj(napi_env env, sptr<MetadataObje
     return result;
 }
 
-MetadataObjectNapi::MetadataObjectNapi() : env_(nullptr), wrapper_(nullptr)
-{
-}
+MetadataObjectNapi::MetadataObjectNapi() : env_(nullptr), wrapper_(nullptr) {}
 
 MetadataObjectNapi::~MetadataObjectNapi()
 {
@@ -87,9 +85,8 @@ napi_value MetadataObjectNapi::Init(napi_env env, napi_value exports)
     };
 
     status = napi_define_class(env, CAMERA_METADATA_OBJECT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
-                               MetadataObjectNapiConstructor, nullptr,
-                               sizeof(metadata_object_props) / sizeof(metadata_object_props[PARAM0]),
-                               metadata_object_props, &ctorObj);
+        MetadataObjectNapiConstructor, nullptr, sizeof(metadata_object_props) / sizeof(metadata_object_props[PARAM0]),
+        metadata_object_props, &ctorObj);
     if (status == napi_ok) {
         status = napi_create_reference(env, ctorObj, refCount, &sConstructor_);
         if (status == napi_ok) {
@@ -118,7 +115,7 @@ napi_value MetadataObjectNapi::MetadataObjectNapiConstructor(napi_env env, napi_
         obj->env_ = env;
         obj->metadataObject_ = g_metadataObject;
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
-                           MetadataObjectNapi::MetadataObjectNapiDestructor, nullptr, nullptr);
+            MetadataObjectNapi::MetadataObjectNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
             obj.release();
             return thisVar;
@@ -152,7 +149,7 @@ napi_value MetadataObjectNapi::GetType(napi_env env, napi_callback_info info)
     if (status == napi_ok && metadataObjectNapi != nullptr) {
         MetadataObjectType metadataObjType = metadataObjectNapi->metadataObject_->GetType();
         int32_t iProp;
-        CameraNapiUtils::MapMetadataObjSupportedTypesEnum(metadataObjType, iProp);
+        MapMetadataObjSupportedTypesEnum(metadataObjType, iProp);
         napi_create_int32(env, iProp, &result);
     }
     MEDIA_ERR_LOG("GetType call Failed");
@@ -216,6 +213,34 @@ napi_value MetadataObjectNapi::GetBoundingBox(napi_env env, napi_callback_info i
     }
     MEDIA_ERR_LOG("GetBoundingBox call Failed");
     return result;
+}
+
+void MetadataObjectNapi::MapMetadataObjSupportedTypesEnum(
+    MetadataObjectType nativeMetadataObjType, int32_t& jsMetadataObjType)
+{
+    MEDIA_INFO_LOG("native metadata Object Type = %{public}d", static_cast<int32_t>(nativeMetadataObjType));
+    switch (nativeMetadataObjType) {
+        case MetadataObjectType::FACE:
+            jsMetadataObjType = JSMetadataObjectType::FACE;
+            break;
+        default:
+            jsMetadataObjType = -1;
+            MEDIA_ERR_LOG("Native Metadata object type not supported with JS");
+    }
+}
+
+void MetadataObjectNapi::MapMetadataObjSupportedTypesEnumFromJS(
+    int32_t jsMetadataObjType, MetadataObjectType& nativeMetadataObjType, bool& isValid)
+{
+    MEDIA_INFO_LOG("JS metadata Object Type = %{public}d", jsMetadataObjType);
+    switch (jsMetadataObjType) {
+        case JSMetadataObjectType::FACE:
+            nativeMetadataObjType = MetadataObjectType::FACE;
+            break;
+        default:
+            isValid = false;
+            MEDIA_ERR_LOG("JS Metadata object type not supported with native");
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

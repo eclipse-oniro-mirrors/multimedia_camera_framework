@@ -16,16 +16,16 @@
 #ifndef PREVIEW_OUTPUT_NAPI_H_
 #define PREVIEW_OUTPUT_NAPI_H_
 
+#include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
 #include "camera_output_napi.h"
 #include "hilog/log.h"
 #include "image_receiver.h"
 #include "input/camera_manager.h"
+#include "listener_base.h"
 #include "output/camera_output_capability.h"
 #include "output/preview_output.h"
 #include "surface_utils.h"
-
-#include "listener_base.h"
 
 namespace OHOS {
 namespace CameraStandard {

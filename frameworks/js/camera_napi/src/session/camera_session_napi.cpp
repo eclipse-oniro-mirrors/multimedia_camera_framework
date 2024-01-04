@@ -13,9 +13,14 @@
  * limitations under the License.
  */
 
-#include <uv.h>
-#include "output/photo_output_napi.h"
 #include "session/camera_session_napi.h"
+
+#include <uv.h>
+
+#include "camera_napi_security_utils.h"
+#include "camera_napi_template_utils.h"
+#include "napi/native_api.h"
+#include "output/photo_output_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -2402,7 +2407,7 @@ napi_value CameraSessionNapi::SetColorEffect(napi_env env, napi_callback_info in
 
 napi_value CameraSessionNapi::IsMacroSupported(napi_env env, napi_callback_info info)
 {
-    if (!CameraNapiUtils::CheckSystemApp(env)) {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi IsMacroSupported is called!");
         return nullptr;
     }
@@ -2429,7 +2434,7 @@ napi_value CameraSessionNapi::IsMacroSupported(napi_env env, napi_callback_info 
 
 napi_value CameraSessionNapi::EnableMacro(napi_env env, napi_callback_info info)
 {
-    if (!CameraNapiUtils::CheckSystemApp(env)) {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi EnableMacro is called!");
         return nullptr;
     }
@@ -2492,7 +2497,7 @@ napi_value CameraSessionNapi::RegisterCallback(
         }
         focusCallback->SaveCallbackReference(callback, isOnce);
     } else if (eventType.compare("macroStatusChanged") == 0) {
-        if (!CameraNapiUtils::CheckSystemApp(env)) {
+        if (!CameraNapiSecurity::CheckSystemApp(env)) {
             MEDIA_ERR_LOG("SystemApi on macroStatusChanged is called!");
             return undefinedResult;
         }
@@ -2556,7 +2561,7 @@ napi_value CameraSessionNapi::UnregisterCallback(
             focusCallback->RemoveCallbackRef(env, callback);
         }
     } else if (eventType.compare("macroStatusChanged") == 0) {
-        if (!CameraNapiUtils::CheckSystemApp(env)) {
+        if (!CameraNapiSecurity::CheckSystemApp(env)) {
             MEDIA_ERR_LOG("SystemApi off macroStatusChanged is called!");
             return undefinedResult;
         }

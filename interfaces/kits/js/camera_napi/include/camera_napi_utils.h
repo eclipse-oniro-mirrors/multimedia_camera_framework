@@ -16,113 +16,90 @@
 #ifndef CAMERA_NAPI_UTILS_H_
 #define CAMERA_NAPI_UTILS_H_
 
-#include <cinttypes>
-#include <map>
-#include <securec.h>
-#include <fcntl.h>
-#include <stdint.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <vector>
-
-#include "camera_error_code.h"
-#include "camera_device_ability_items.h"
-#include "input/camera_input.h"
-#include "camera_log.h"
-#include "js_native_api.h"
-#include "napi/native_api.h"
 #include "napi/native_node_api.h"
-#include "output/photo_output.h"
-#include "input/camera_manager.h"
-#include "ipc_skeleton.h"
-#include "tokenid_kit.h"
 
-#define CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar)                 \
-    do {                                                                        \
-        void* data;                                                             \
-        napi_get_cb_info(env, info, &(argc), argv, &(thisVar), &data);          \
+#define CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar)        \
+    do {                                                               \
+        void* data;                                                    \
+        napi_get_cb_info(env, info, &(argc), argv, &(thisVar), &data); \
     } while (0)
 
-#define CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar)                       \
-    do {                                                                                        \
-        void* data;                                                                             \
-        status = napi_get_cb_info(env, info, nullptr, nullptr, &(thisVar), &data);              \
+#define CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar)          \
+    do {                                                                           \
+        void* data;                                                                \
+        status = napi_get_cb_info(env, info, nullptr, nullptr, &(thisVar), &data); \
     } while (0)
 
-#define CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, arg, count, cbRef)         \
-    do {                                                                \
-        napi_valuetype valueType = napi_undefined;                      \
-        napi_typeof(env, arg, &valueType);                              \
-        if (valueType == napi_function) {                               \
-            napi_create_reference(env, arg, count, &(cbRef));           \
-        } else {                                                        \
-            NAPI_ASSERT(env, false, "type mismatch");                   \
-        }                                                               \
+#define CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, arg, count, cbRef) \
+    do {                                                        \
+        napi_valuetype valueType = napi_undefined;              \
+        napi_typeof(env, arg, &valueType);                      \
+        if (valueType == napi_function) {                       \
+            napi_create_reference(env, arg, count, &(cbRef));   \
+        } else {                                                \
+            NAPI_ASSERT(env, false, "type mismatch");           \
+        }                                                       \
     } while (0);
 
-#define CAMERA_NAPI_ASSERT_NULLPTR_CHECK(env, result)       \
-    do {                                                    \
-        if ((result) == nullptr) {                          \
-            napi_get_undefined(env, &(result));             \
-            return result;                                  \
-        }                                                   \
+#define CAMERA_NAPI_ASSERT_NULLPTR_CHECK(env, result) \
+    do {                                              \
+        if ((result) == nullptr) {                    \
+            napi_get_undefined(env, &(result));       \
+            return result;                            \
+        }                                             \
     } while (0);
 
-#define CAMERA_NAPI_CREATE_PROMISE(env, callbackRef, deferred, result)      \
+#define CAMERA_NAPI_CREATE_PROMISE(env, callbackRef, deferred, result) \
+    do {                                                               \
+        if ((callbackRef) == nullptr) {                                \
+            napi_create_promise(env, &(deferred), &(result));          \
+        }                                                              \
+    } while (0);
+
+#define CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, resourceName)              \
+    do {                                                                           \
+        napi_create_string_utf8(env, resourceName, NAPI_AUTO_LENGTH, &(resource)); \
+    } while (0);
+
+#define CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, ptr, ret, message) \
     do {                                                                    \
-        if ((callbackRef) == nullptr) {                                     \
-            napi_create_promise(env, &(deferred), &(result));               \
+        if ((ptr) == nullptr) {                                             \
+            HiLog::Error(LABEL, message);                                   \
+            napi_get_undefined(env, &(ret));                                \
+            return ret;                                                     \
         }                                                                   \
-    } while (0);
-
-#define CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, resourceName)                       \
-    do {                                                                                    \
-        napi_create_string_utf8(env, resourceName, NAPI_AUTO_LENGTH, &(resource));          \
-    } while (0);
-
-#define CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, ptr, ret, message)     \
-    do {                                                            \
-        if ((ptr) == nullptr) {                                     \
-            HiLog::Error(LABEL, message);                           \
-            napi_get_undefined(env, &(ret));                        \
-            return ret;                                             \
-        }                                                           \
     } while (0)
 
-#define CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(ptr, message)   \
-    do {                                           \
-        if ((ptr) == nullptr) {                    \
-            HiLog::Error(LABEL, message);          \
-            return;                                \
-        }                                          \
+#define CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(ptr, message) \
+    do {                                                     \
+        if ((ptr) == nullptr) {                              \
+            HiLog::Error(LABEL, message);                    \
+            return;                                          \
+        }                                                    \
     } while (0)
 
-#define CAMERA_NAPI_ASSERT_EQUAL(condition, errMsg)     \
-    do {                                    \
-        if (!(condition)) {                 \
-            HiLog::Error(LABEL, errMsg);    \
-            return;                         \
-        }                                   \
+#define CAMERA_NAPI_ASSERT_EQUAL(condition, errMsg) \
+    do {                                            \
+        if (!(condition)) {                         \
+            HiLog::Error(LABEL, errMsg);            \
+            return;                                 \
+        }                                           \
     } while (0)
 
-#define CAMERA_NAPI_CHECK_AND_BREAK_LOG(cond, fmt, ...)            \
-    do {                                               \
-        if (!(cond)) {                                 \
-            MEDIA_ERR_LOG(fmt, ##__VA_ARGS__);         \
-            break;                                     \
-        }                                              \
+#define CAMERA_NAPI_CHECK_AND_BREAK_LOG(cond, fmt, ...) \
+    do {                                                \
+        if (!(cond)) {                                  \
+            MEDIA_ERR_LOG(fmt, ##__VA_ARGS__);          \
+            break;                                      \
+        }                                               \
     } while (0)
 
-#define CAMERA_NAPI_CHECK_AND_RETURN_LOG(cond, fmt, ...)           \
-    do {                                               \
-        if (!(cond)) {                                 \
-            MEDIA_ERR_LOG(fmt, ##__VA_ARGS__);         \
-            return;                                    \
-        }                                              \
+#define CAMERA_NAPI_CHECK_AND_RETURN_LOG(cond, fmt, ...) \
+    do {                                                 \
+        if (!(cond)) {                                   \
+            MEDIA_ERR_LOG(fmt, ##__VA_ARGS__);           \
+            return;                                      \
+        }                                                \
     } while (0)
 
 namespace OHOS {
@@ -161,9 +138,7 @@ struct JSAsyncContextOutput {
 };
 
 struct AutoRef {
-    AutoRef(napi_env env, napi_ref cb, bool isOnce) : isOnce_(isOnce), env_(env), cb_(cb)
-    {
-    }
+    AutoRef(napi_env env, napi_ref cb, bool isOnce) : isOnce_(isOnce), env_(env), cb_(cb) {}
     ~AutoRef()
     {
         if (env_ != nullptr && cb_ != nullptr) {
@@ -175,18 +150,9 @@ struct AutoRef {
     napi_ref cb_;
 };
 
-enum JSQualityLevel {
-    QUALITY_LEVEL_HIGH = 0,
-    QUALITY_LEVEL_MEDIUM,
-    QUALITY_LEVEL_LOW
-};
+enum JSQualityLevel { QUALITY_LEVEL_HIGH = 0, QUALITY_LEVEL_MEDIUM, QUALITY_LEVEL_LOW };
 
-enum JSImageRotation {
-    ROTATION_0 = 0,
-    ROTATION_90 = 90,
-    ROTATION_180 = 180,
-    ROTATION_270 = 270
-};
+enum JSImageRotation { ROTATION_0 = 0, ROTATION_90 = 90, ROTATION_180 = 180, ROTATION_270 = 270 };
 
 enum JSCameraStatus {
     JS_CAMERA_STATUS_APPEAR = 0,
@@ -206,9 +172,7 @@ enum CameraTaskId {
     CAMERA_PICKER_TASKID = 0x08000000,
 };
 
-enum JSMetadataObjectType {
-    FACE = 0
-};
+enum JSMetadataObjectType { FACE = 0 };
 
 enum CameraSteps {
     CREATE_CAMERA_INPUT_INSTANCE,
@@ -228,38 +192,6 @@ enum CameraSteps {
 /* Util class used by napi asynchronous methods for making call to js callback function */
 class CameraNapiUtils {
 public:
-    static int32_t MapExposureModeEnumFromJs(int32_t jsExposureMode, camera_exposure_mode_enum_t &nativeExposureMode);
-
-    static void MapExposureModeEnum(camera_exposure_mode_enum_t nativeExposureMode, int32_t &jsExposureMode);
-
-    static void MapFocusStateEnum(FocusCallback::FocusState nativeFocusState, int32_t &jsFocusState);
-
-    static void MapExposureStateEnum(ExposureCallback::ExposureState nativeExposureState, int32_t &jsExposureState);
-
-    static void MapCameraPositionEnum(camera_position_enum_t nativeCamPos, int32_t &jsCameraPosition);
-
-    static int32_t MapCameraPositionEnumFromJs(int32_t jsCameraPosition, camera_position_enum_t &nativeCamPos);
-
-    static void MapMetadataObjSupportedTypesEnum(MetadataObjectType nativeMetadataObjType, int32_t &jsMetadataObjType);
-
-    static void MapMetadataObjSupportedTypesEnumFromJS(int32_t jsMetadataObjType,
-        MetadataObjectType &nativeMetadataObjType, bool &isValid);
-
-    static void MapCameraTypeEnum(camera_type_enum_t nativeCamType, int32_t &jsCameraType);
-
-    static int32_t MapCameraTypeEnumFromJs(int32_t jsCameraType, camera_type_enum_t &nativeCamType);
-
-    static void MapCameraConnectionTypeEnum(camera_connection_type_t nativeCamConnType, int32_t &jsCameraConnType);
-
-    static int32_t MapQualityLevelFromJs(int32_t jsQuality, PhotoCaptureSetting::QualityLevel &nativeQuality);
-
-    static int32_t MapImageRotationFromJs(int32_t jsRotation, PhotoCaptureSetting::RotationConfig &nativeRotation);
-
-    static void MapCameraStatusEnum(CameraStatus deviceStatus, int32_t &jsCameraStatus);
-
-    static void VideoStabilizationModeEnum(
-        CameraVideoStabilizationMode nativeVideoStabilizationMode, int32_t &jsVideoStabilizationMode);
-
     static void CreateNapiErrorObject(napi_env env, int32_t errorCode, const char* errString,
         std::unique_ptr<JSAsyncContextOutput> &jsContext);
 
@@ -274,8 +206,6 @@ public:
     static bool CheckError(napi_env env, int32_t retCode);
 
     static double FloatToDouble(float val);
-
-    static bool CheckSystemApp(napi_env env);
 
     static std::string GetStringArgument(napi_env env, napi_value value);
 
@@ -294,121 +224,10 @@ public:
 
     static napi_status CreateObjectWithPropNameAndValues(napi_env env, napi_value* result, size_t property_count,
         const char** keys, const std::vector<std::string> values);
-};
 
-template <typename T>
-class EnumHelper {
-public:
-    EnumHelper(const std::map<T, std::string>&& origin, const T defaultValue)
-    {
-        _mapEnum2String = std::move(origin);
-        _mapString2Enum = GenString2EnumMap(_mapEnum2String);
-        _defaultValue = defaultValue;
-    }
-
-    T ToEnum(const std::string& str)
-    {
-        auto item = _mapString2Enum.find(str);
-        if (item != _mapString2Enum.end()) {
-            return item->second;
-        }
-        return _defaultValue;
-    }
 private:
-    std::map<T, std::string> _mapEnum2String;
-    std::map<std::string, T> _mapString2Enum;
-    T _defaultValue;
-
-    static std::map<std::string, T> GenString2EnumMap(std::map<T, std::string> enum2StringMap)
-    {
-        std::map<std::string, T> result;
-        for (const auto& item : enum2StringMap) {
-            result.emplace(std::make_pair(item.second, item.first));
-        }
-        return result;
-    };
-};
-
-template <class T>
-class ListenerTemplate {
-public:
-    static napi_value On(napi_env env, napi_callback_info info)
-    {
-        MEDIA_INFO_LOG("On is called");
-        CAMERA_SYNC_TRACE;
-        napi_value undefinedResult = nullptr;
-        size_t argCount = ARGS_TWO;
-        napi_value argv[ARGS_TWO] = {nullptr, nullptr};
-        napi_value thisVar = nullptr;
-
-        napi_get_undefined(env, &undefinedResult);
-
-        CAMERA_NAPI_GET_JS_ARGS(env, info, argCount, argv, thisVar);
-        NAPI_ASSERT(env, argCount == ARGS_TWO, "requires 2 parameters");
-
-        napi_valuetype valueType = napi_undefined;
-        if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string
-            || napi_typeof(env, argv[PARAM1], &valueType) != napi_ok || valueType != napi_function) {
-            return undefinedResult;
-        }
-        std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[PARAM0]);
-        MEDIA_INFO_LOG("On eventType: %{public}s", eventType.c_str());
-        return T::RegisterCallback(env, thisVar, eventType, argv[PARAM1], false);
-    }
-
-    static napi_value Once(napi_env env, napi_callback_info info)
-    {
-        MEDIA_INFO_LOG("Once is called");
-        CAMERA_SYNC_TRACE;
-        napi_value undefinedResult = nullptr;
-        size_t argCount = ARGS_TWO;
-        napi_value argv[ARGS_TWO] = {nullptr, nullptr};
-        napi_value thisVar = nullptr;
-
-        napi_get_undefined(env, &undefinedResult);
-
-        CAMERA_NAPI_GET_JS_ARGS(env, info, argCount, argv, thisVar);
-        NAPI_ASSERT(env, argCount == ARGS_TWO, "requires 2 parameters");
-
-        napi_valuetype valueType = napi_undefined;
-        if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string
-            || napi_typeof(env, argv[PARAM1], &valueType) != napi_ok || valueType != napi_function) {
-            return undefinedResult;
-        }
-        std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[PARAM0]);
-        MEDIA_INFO_LOG("Once eventType: %{public}s", eventType.c_str());
-        return T::RegisterCallback(env, thisVar, eventType, argv[PARAM1], true);
-    }
-
-    static napi_value Off(napi_env env, napi_callback_info info)
-    {
-        MEDIA_INFO_LOG("Off is called");
-        napi_value undefinedResult = nullptr;
-        napi_get_undefined(env, &undefinedResult);
-        const size_t minArgCount = 1;
-        size_t argc = ARGS_TWO;
-        napi_value argv[ARGS_TWO] = {nullptr, nullptr};
-        napi_value thisVar = nullptr;
-        CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-        if (argc < minArgCount) {
-            return undefinedResult;
-        }
-
-        napi_valuetype valueType = napi_undefined;
-        if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string) {
-            return undefinedResult;
-        }
-
-        napi_valuetype secondArgsType = napi_undefined;
-        if (argc > minArgCount &&
-            (napi_typeof(env, argv[PARAM1], &secondArgsType) != napi_ok || secondArgsType != napi_function)) {
-            return undefinedResult;
-        }
-        std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[0]);
-        MEDIA_INFO_LOG("Off eventType: %{public}s", eventType.c_str());
-        return T::UnregisterCallback(env, thisVar, eventType, argv[PARAM1]);
-    }
-};
+    explicit CameraNapiUtils() {};
+}; // namespace CameraNapiUtils
 } // namespace CameraStandard
 } // namespace OHOS
 #endif /* CAMERA_NAPI_UTILS_H_ */
