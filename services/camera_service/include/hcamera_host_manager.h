@@ -104,6 +104,8 @@ public:
 
     void RemoveCameraHost(const std::string& svcName);
 
+    ::OHOS::sptr<HDI::ServiceManager::V1_0::IServStatListener> GetRegisterServStatListener();
+
     static const std::string LOCAL_SERVICE_NAME;
 
 private:

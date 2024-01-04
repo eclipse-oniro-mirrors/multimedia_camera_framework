@@ -4103,19 +4103,19 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_007, TestSize.Level
     HDI::ServiceManager::V1_0::ServiceStatus status;
 
     status.serviceName = "1";
-    cameraHostManager->registerServStatListener_->OnReceive(status);
+    cameraHostManager->GetRegisterServStatListener()->OnReceive(status);
 
     status.deviceClass = DEVICE_CLASS_CAMERA;
     status.serviceName = "distributed_camera_service";
     status.status = HDI::ServiceManager::V1_0::SERVIE_STATUS_START;
-    cameraHostManager->registerServStatListener_->OnReceive(status);
-    cameraHostManager->registerServStatListener_->OnReceive(status);
+    cameraHostManager->GetRegisterServStatListener()->OnReceive(status);
+    cameraHostManager->GetRegisterServStatListener()->OnReceive(status);
 
     status.status = HDI::ServiceManager::V1_0::SERVIE_STATUS_STOP;
-    cameraHostManager->registerServStatListener_->OnReceive(status);
+    cameraHostManager->GetRegisterServStatListener()->OnReceive(status);
 
     status.status = 4;
-    cameraHostManager->registerServStatListener_->OnReceive(status);
+    cameraHostManager->GetRegisterServStatListener()->OnReceive(status);
 
     input->Close();
 }
@@ -5391,7 +5391,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_031, TestSize.Level
     status.deviceClass = DEVICE_CLASS_CAMERA;
     status.serviceName = "distributed_camera_service";
     status.status = HDI::ServiceManager::V1_0::SERVIE_STATUS_START;
-    cameraHostManager->registerServStatListener_->OnReceive(status);
+    cameraHostManager->GetRegisterServStatListener()->OnReceive(status);
 
     EXPECT_EQ(cameraHostManager->HCameraHostManager::SetFlashlight(cameraId, false), 2);
 
