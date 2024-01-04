@@ -14,10 +14,6 @@
 import("//build/ohos.gni")
 import("./../../../multimedia_camera_framework.gni")
 
-config("weak_sensor") {
-  defines = [ "CAMERA_USE_SENSOR" ]
-}
-
 config("camera_framework_public_config") {
   include_dirs = [
     "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include",
@@ -133,9 +129,10 @@ ohos_shared_library("camera_framework") {
     "window_manager:libdm",
   ]
 
+  defines = []
   if (use_sensor) {
-    weak_external_deps = "sensor:sensor_interface_native"
-    weak_config = weak_sensor
+    weak_external_deps += [ "sensor:sensor_interface_native" ]
+    defines += [ "CAMERA_USE_SENSOR" ]
   }
 
   cflags_cc = cflags

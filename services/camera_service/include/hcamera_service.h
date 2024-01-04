@@ -158,9 +158,11 @@ private:
     int32_t UnSetTorchCallback(pid_t pid);
     bool IsDeviceAlreadyOpen(pid_t& tempPid, string& tempCameraId, sptr<HCameraDevice>& tempDevice);
     int32_t DeviceClose(sptr<HCameraDevice> cameraDevice);
+#ifdef CAMERA_USE_SENSOR
     void RegisterSensorCallback();
     void UnRegisterSensorCallback();
     static void DropDetectionDataCallbackImpl(SensorEvent *event);
+#endif
     int32_t SaveCurrentParamForRestore(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
         EffectParam effectParam, sptr<HCaptureSession> captureSession);
     mutex mutex_;
@@ -179,7 +181,9 @@ private:
     string preCameraId_;
     string preCameraClient_;
     bool isRegisterSensorSuccess;
+#ifdef CAMERA_USE_SENSOR
     SensorUser user;
+#endif
     SafeMap<uint32_t, sptr<HCaptureSession>> captureSessionsManager_;
 };
 } // namespace CameraStandard

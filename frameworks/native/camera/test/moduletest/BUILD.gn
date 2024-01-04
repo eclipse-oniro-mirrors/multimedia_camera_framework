@@ -16,10 +16,6 @@ import("./../../../../../multimedia_camera_framework.gni")
 
 module_output_path = "camera_framework/camera_framework_moduletest"
 
-config("weak_sensor") {
-  defines = [ "CAMERA_USE_SENSOR" ]
-}
-
 ohos_moduletest("camera_framework_moduletest") {
   module_out_path = module_output_path
   include_dirs = [
@@ -66,12 +62,12 @@ ohos_moduletest("camera_framework_moduletest") {
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "sensor:sensor_interface_native",
   ]
 
+  defines = []
   if (use_sensor) {
-    weak_external_deps = "sensor:sensor_interface_native"
-    weak_config = weak_sensor
+    weak_external_deps += [ "sensor:sensor_interface_native" ]
+    defines += [ "CAMERA_USE_SENSOR" ]
   }
 
   include_dirs += [

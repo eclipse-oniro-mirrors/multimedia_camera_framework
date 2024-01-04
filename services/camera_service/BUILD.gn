@@ -14,10 +14,6 @@
 import("//build/ohos.gni")
 import("./../../multimedia_camera_framework.gni")
 
-config("weak_sensor") {
-  defines = [ "CAMERA_USE_SENSOR" ]
-}
-
 ohos_shared_library("camera_service") {
   branch_protector_ret = "pac_ret"
   install_enable = true
@@ -106,9 +102,10 @@ ohos_shared_library("camera_service") {
     "window_manager:libdm",
   ]
 
+  defines = []
   if (use_sensor) {
-    weak_external_deps = "sensor:sensor_interface_native"
-    weak_config = weak_sensor
+    weak_external_deps += [ "sensor:sensor_interface_native" ]
+    defines += [ "CAMERA_USE_SENSOR" ]
   }
 
   if (use_memmgr_plugin) {

@@ -33,8 +33,10 @@
 namespace OHOS {
 namespace CameraStandard {
 REGISTER_SYSTEM_ABILITY_BY_ID(HCameraService, CAMERA_SERVICE_ID, true)
+#ifdef CAMERA_USE_SENSOR
 constexpr int32_t SENSOR_SUCCESS = 0;
 constexpr int32_t POSTURE_INTERVAL = 1000000;
+#endif
 constexpr uint8_t POSITION_FOLD_INNER = 3;
 static std::mutex g_cameraServiceInstanceMutex;
 static HCameraService* g_cameraServiceInstance = nullptr;
@@ -72,7 +74,9 @@ void HCameraService::OnStart()
     if (res) {
         MEDIA_INFO_LOG("HCameraService OnStart res=%{public}d", res);
     }
+#ifdef CAMERA_USE_SENSOR
     RegisterSensorCallback();
+#endif
     MEDIA_INFO_LOG("HCameraService OnStart end");
 }
 
@@ -85,7 +89,9 @@ void HCameraService::OnStop()
 {
     MEDIA_INFO_LOG("HCameraService::OnStop called");
     cameraHostManager_->DeInit();
+#ifdef CAMERA_USE_SENSOR
     UnRegisterSensorCallback();
+#endif
 }
 
 int32_t HCameraService::GetCameras(
@@ -196,8 +202,9 @@ int32_t HCameraService::CreateCameraDevice(string cameraId, sptr<ICameraDeviceSe
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice MuteCamera not Supported");
     }
     device = cameraDevice;
-    
+#ifdef CAMERA_USE_SENSOR
     RegisterSensorCallback();
+#endif
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager_CreateCameraInput CameraId:%s", cameraId.c_str()));
     return CAMERA_OK;
 }
@@ -1107,6 +1114,7 @@ int32_t HCameraService::Dump(int fd, const vector<u16string>& args)
     return CAMERA_OK;
 }
 
+#ifdef CAMERA_USE_SENSOR
 void HCameraService::RegisterSensorCallback()
 {
     if (isRegisterSensorSuccess) {
@@ -1159,6 +1167,7 @@ void HCameraService::DropDetectionDataCallbackImpl(SensorEvent* event)
             DeviceType::FALLING_TYPE, FallingState::FALLING_STATE);
     }
 }
+#endif
 
 int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, RestoreParamTypeOhos restoreParamType,
     int activeTime, EffectParam effectParam, sptr<HCaptureSession> captureSession)
