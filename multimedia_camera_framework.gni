@@ -34,7 +34,7 @@ if (defined(global_parts_info) && defined(global_parts_info.resourceschedule_mem
 }
 
 use_sensor = false
-if (defined(global_parts_info) && defined(global_parts_info.sensor)) {
+if (defined(global_parts_info) && defined(global_parts_info.sensors_sensor)) {
   use_sensor = true
 }
 
