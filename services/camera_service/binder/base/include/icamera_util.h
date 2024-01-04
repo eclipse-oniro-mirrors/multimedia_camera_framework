@@ -17,6 +17,7 @@
 #define OHOS_CAMERA_ICAMERA_UTIL_H
 
 #include <limits.h>
+#include <stdint.h>
 
 namespace OHOS {
 namespace CameraStandard {
