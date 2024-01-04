@@ -64,7 +64,7 @@ ohos_moduletest("camera_framework_moduletest") {
     "samgr:samgr_proxy",
   ]
 
-  defines = []
+  defines = [ "private=public" ]
   if (use_sensor) {
     external_deps += [ "sensor:sensor_interface_native" ]
     defines += [ "CAMERA_USE_SENSOR" ]
@@ -79,7 +79,7 @@ ohos_moduletest("camera_framework_moduletest") {
     "${driver_peripheral_path}/interfaces/hdi_ipc/callback/operator/include",
     "${driver_peripheral_path}/interfaces/hdi_ipc/callback/host/include",
   ]
-  defines = [ "private=public" ]
+
   cflags = [ "-fPIC" ]
   cflags_cc = cflags
   sanitize = {
