@@ -1017,6 +1017,11 @@ bool HCameraHostManager::IsCameraHostInfoAdded(const std::string& svcName)
                        [&svcName](const auto& camHost) {return camHost->GetName() == svcName; });
 }
 
+::OHOS::sptr<HDI::ServiceManager::V1_0::IServStatListener> HCameraHostManager::GetRegisterServStatListener()
+{
+    return registerServStatListener_;
+}
+
 void RegisterServStatListener::OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status)
 {
     MEDIA_INFO_LOG("HCameraHostManager::OnReceive for camerahost %{public}s, status %{public}d, deviceClass %{public}d",
