@@ -1363,7 +1363,11 @@ napi_value CameraManagerNapi::SetPrelaunchConfig(napi_env env, napi_callback_inf
     EffectParam effectParam;
     napi_value result = nullptr;
 
-    ParsePrelaunchConfig(env, argv[PARAM0], &prelaunchConfig);
+    bool isConfigSuccess = ParsePrelaunchConfig(env, argv[PARAM0], &prelaunchConfig);
+    if (!isConfigSuccess) {
+        MEDIA_ERR_LOG("SetPrelaunchConfig failed");
+        return result;
+    }
     ParseSettingParam(env, argv[PARAM0], &effectParam);
     std::string cameraId = prelaunchConfig.GetCameraDevice()->GetID();
     MEDIA_INFO_LOG("SetPrelaunchConfig cameraId = %{public}s", cameraId.c_str());
