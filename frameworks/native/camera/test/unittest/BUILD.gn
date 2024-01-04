@@ -133,7 +133,7 @@ ohos_unittest("camera_framework_unittest_v1_1") {
 
   defines = []
   if (use_sensor) {
-    weak_external_deps += [ "sensor:sensor_interface_native" ]
+    external_deps += [ "sensor:sensor_interface_native" ]
     defines += [ "CAMERA_USE_SENSOR" ]
   }
 
