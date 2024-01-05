@@ -151,49 +151,15 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> MetadataCommonUtils::CopyMetadata(
         MEDIA_ERR_LOG("CopyMetadata fail,src is null");
         return nullptr;
     }
-    auto metadataHeader = srcMetadata->get();
-    auto newMetadata =
-        std::make_shared<OHOS::Camera::CameraMetadata>(metadataHeader->item_capacity, metadataHeader->data_capacity);
-    MergeMetadata(srcMetadata, newMetadata);
-    return newMetadata;
-}
-
-bool MetadataCommonUtils::MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata,
-    std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata)
-{
-    if (srcMetadata == nullptr || dstMetadata == nullptr) {
-        return false;
+    auto oldMetadata = srcMetadata->get();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> result =
+        std::make_shared<OHOS::Camera::CameraMetadata>(oldMetadata->item_capacity, oldMetadata->data_capacity);
+    auto newMetadata = result->get();
+    int32_t ret = OHOS::Camera::CopyCameraMetadataItems(newMetadata, oldMetadata);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("CopyCameraMetadataItems failed ret:%{public}d", ret);
     }
-    auto srcHeader = srcMetadata->get();
-    if (srcHeader == nullptr) {
-        return false;
-    }
-    auto dstHeader = dstMetadata->get();
-    if (dstHeader == nullptr) {
-        return false;
-    }
-    auto srcItemCount = srcHeader->item_count;
-    camera_metadata_item_t srcItem;
-    for (uint32_t index = 0; index < srcItemCount; index++) {
-        int ret = OHOS::Camera::GetCameraMetadataItem(srcHeader, index, &srcItem);
-        if (ret != CAM_META_SUCCESS) {
-            MEDIA_ERR_LOG("Failed to get metadata item at index: %{public}d", index);
-            return false;
-        }
-        bool status = false;
-        uint32_t currentIndex;
-        ret = OHOS::Camera::FindCameraMetadataItemIndex(dstHeader, srcItem.item, &currentIndex);
-        if (ret == CAM_META_ITEM_NOT_FOUND) {
-            status = dstMetadata->addEntry(srcItem.item, srcItem.data.u8, srcItem.count);
-        } else if (ret == CAM_META_SUCCESS) {
-            status = dstMetadata->updateEntry(srcItem.item, srcItem.data.u8, srcItem.count);
-        }
-        if (!status) {
-            MEDIA_ERR_LOG("Failed to update metadata item: %{public}d", srcItem.item);
-            return false;
-        }
-    }
-    return true;
+    return result;
 }
 } // namespace CameraStandard
 } // namespace OHOS

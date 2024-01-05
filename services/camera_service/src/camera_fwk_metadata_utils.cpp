@@ -24,6 +24,19 @@ namespace OHOS {
 namespace CameraStandard {
 namespace CameraFwkMetadataUtils {
 namespace {
+
+constexpr uint32_t ITEM_CAPACITY = 20;
+constexpr uint32_t DATA_CAPACITY = 200;
+
+std::vector<uint32_t> reportMetadataTag {
+    OHOS_CONTROL_FLASH_MODE,
+    OHOS_CONTROL_FLASH_STATE,
+    OHOS_CONTROL_FOCUS_MODE,
+    OHOS_CONTROL_FOCUS_STATE,
+    OHOS_STATISTICS_FACE_RECTANGLES,
+    OHOS_CAMERA_MACRO_STATUS
+};
+
 void ForEach(uint32_t iteratorCount, std::function<void(uint32_t)> fun)
 {
     for (uint32_t index = 0; index < iteratorCount; index++) {
@@ -174,6 +187,40 @@ void DumpMetadataItemInfo(const camera_metadata_item_t& metadataItem)
     } else {
         MEDIA_WARNING_LOG("DumpMetadataItemInfo get unknown dataType:%{public}d", dataType);
     }
+}
+
+std::shared_ptr<OHOS::Camera::CameraMetadata> RecreateMetadata(
+    const std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
+{
+    common_metadata_header_t* header = metadata->get();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> newMetadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(ITEM_CAPACITY, DATA_CAPACITY);
+
+    for (uint32_t metadataTag : reportMetadataTag) {
+        camera_metadata_item_t item;
+        int ret = Camera::FindCameraMetadataItem(header, metadataTag, &item);
+        if (ret == 0 && item.count != 0) {
+            newMetadata->addEntry(item.item, item.data.u8, item.count);
+        }
+    }
+    return newMetadata;
+}
+
+void LogFormatCameraMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
+{
+    if (metadata == nullptr) {
+        MEDIA_DEBUG_LOG("LogFormatCameraMetadata: Metadata pointer is null");
+        return;
+    }
+
+    auto header = metadata->get();
+    if (header == nullptr) {
+        MEDIA_DEBUG_LOG("LogFormatCameraMetadata: Metadata header is null");
+        return;
+    }
+
+    std::string metaStr = OHOS::Camera::FormatCameraMetadataToString(header);
+    MEDIA_DEBUG_LOG("LogFormatCameraMetadata: metaStr %{public}s", metaStr.c_str());
 }
 } // namespace CameraFwkMetadataUtils
 } // namespace CameraStandard
