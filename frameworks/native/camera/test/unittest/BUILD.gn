@@ -129,10 +129,13 @@ ohos_unittest("camera_framework_unittest_v1_1") {
     "image_framework:image_native",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
-    "sensor:sensor_interface_native",
   ]
 
   defines = [ "private=public" ]
+  if (use_sensor) {
+    external_deps += [ "sensor:sensor_interface_native" ]
+    defines += [ "CAMERA_USE_SENSOR" ]
+  }
 
   cflags = [
     "-fPIC",

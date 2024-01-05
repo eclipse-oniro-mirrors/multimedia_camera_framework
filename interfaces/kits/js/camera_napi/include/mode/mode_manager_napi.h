@@ -16,7 +16,6 @@
 #ifndef MODE_MANAGER_NAPI_H_
 #define MODE_MANAGER_NAPI_H_
 
-#include "display_type.h"
 #include "hilog/log.h"
 
 #include "input/camera_manager.h"

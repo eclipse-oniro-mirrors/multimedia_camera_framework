@@ -21,7 +21,6 @@
 #include <refbase.h>
 
 #include "camera_metadata_info.h"
-#include "display_type.h"
 #include "hstream_capture_stub.h"
 #include "hstream_common.h"
 #include "v1_0/istream_operator.h"

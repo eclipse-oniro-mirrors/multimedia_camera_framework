@@ -18,12 +18,14 @@
 
 #include <limits.h>
 #include <malloc.h>
+
+#include "camera_metadata_info.h"
+#include "display/graphic/common/v1_0/cm_color_space.h"
+#include "safe_map.h"
+#include "surface_type.h"
 #include "v1_0/types.h"
 #include "v1_1/types.h"
 #include "v1_2/types.h"
-#include "display/graphic/common/v1_0/cm_color_space.h"
-#include "camera_metadata_info.h"
-#include "safe_map.h"
 
 namespace OHOS {
 namespace CameraStandard {

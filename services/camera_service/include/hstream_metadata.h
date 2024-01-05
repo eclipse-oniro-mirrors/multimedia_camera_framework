@@ -17,7 +17,6 @@
 #define OHOS_CAMERA_H_STREAM_METADATA_H
 
 #include "camera_metadata_info.h"
-#include "display_type.h"
 #include "hstream_metadata_stub.h"
 #include "hstream_common.h"
 #include "v1_0/istream_operator.h"
