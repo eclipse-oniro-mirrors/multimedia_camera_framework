@@ -49,7 +49,6 @@
               "memmgr_plugin"
             ],
             "third_party": [
-              ""
             ]
         },
         "build": {
