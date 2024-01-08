@@ -108,7 +108,7 @@ void PhotoListener::ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) cons
     int32_t deferredProcessingType;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::imageId, imageId);
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredProcessingType, deferredProcessingType);
-    MEDIA_ERR_LOG("PhotoListener ExecuteDeferredPhoto imageId:%{public}ld, deferredProcessingType:%{public}d",
+    MEDIA_ERR_LOG("PhotoListener ExecuteDeferredPhoto imageId:%{public}lld, deferredProcessingType:%{public}d",
         imageId, deferredProcessingType);
 
     // create pixelMap to encode
@@ -156,7 +156,7 @@ void PhotoListener::ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) cons
     if (buffer == nullptr) {
         MEDIA_ERR_LOG("pack pixMap faild");
     }
-    MEDIA_INFO_LOG("pack pixMap success, packedSize=%{public}ld", packedSize);
+    MEDIA_INFO_LOG("pack pixMap success, packedSize=%{public}lld", packedSize);
 
     sptr<DeferredPhotoProxy> deferredPhotoProxy;
     std::string imageIdStr = std::to_string(imageId);
