@@ -94,9 +94,7 @@ ohos_shared_library("camera_service") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
   }
 
-  deps = [
-    "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
-  ]
+  deps = [ "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service" ]
 
   external_deps = [
     "ability_base:want",
@@ -121,11 +119,11 @@ ohos_shared_library("camera_service") {
     "hitrace:hitrace_meter",
     "ipc:ipc_core",
     "ipc:ipc_single",
+    "os_account:libaccountkits",
+    "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "window_manager:libdm",
-    "os_account:libaccountkits",
-    "os_account:os_account_innerkits",
   ]
 
   defines = []
