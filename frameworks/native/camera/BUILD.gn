@@ -20,6 +20,8 @@ config("camera_framework_public_config") {
     "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/input",
     "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/output",
     "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/session",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/deferred_proc_session",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/utils",
     "../interfaces/inner_api/native/camera/include/mode",
     "../../../interfaces/inner_api/native/camera/include/utils",
   ]
@@ -32,6 +34,14 @@ config("camera_framework_local_config") {
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/include",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/include",
     "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/photo_session",
   ]
 }
 
@@ -47,6 +57,10 @@ ohos_shared_library("camera_framework") {
   branch_protector_ret = "pac_ret"
   install_enable = true
   sources = [
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_photo_processing_session_callback_proxy.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/src/deferred_photo_processing_session_proxy.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_photo_processing_session_callback_stub.cpp",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/src/deferred_photo_processing_session_stub.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/base/src/icamera_util.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hcamera_device_proxy.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/src/hcamera_service_proxy.cpp",
@@ -60,12 +74,14 @@ ohos_shared_library("camera_framework") {
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hcapture_session_callback_stub.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hstream_capture_callback_stub.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hstream_repeat_callback_stub.cpp",
+    "src/deferred_proc_session/deferred_photo_proc_session.cpp",
     "src/input/camera_device.cpp",
     "src/input/camera_input.cpp",
     "src/input/camera_manager.cpp",
     "src/input/prelaunch_config.cpp",
     "src/output/camera_output_capability.cpp",
     "src/output/capture_output.cpp",
+    "src/output/deferred_photo_proxy.cpp",
     "src/output/metadata_output.cpp",
     "src/output/photo_output.cpp",
     "src/output/preview_output.cpp",
@@ -77,6 +93,7 @@ ohos_shared_library("camera_framework") {
     "src/session/portrait_session.cpp",
     "src/session/scan_session.cpp",
     "src/session/video_session.cpp",
+    "src/utils/dps_metadata_info.cpp",
     "src/utils/metadata_common_utils.cpp",
   ]
 
@@ -103,6 +120,7 @@ ohos_shared_library("camera_framework") {
 
   include_dirs = [
     "${graphic_surface_path}/surface/include",
+    "${graphic_2d_path}/utils/buffer_handle/export",
     "//utils/system/safwk/native/include",
     "${window_manager_path}/interfaces/innerkits/dm",
   ]
@@ -117,6 +135,7 @@ ohos_shared_library("camera_framework") {
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_camera:metadata",
     "drivers_interface_display:display_commontype_idl_headers",
+    "graphic_2d:librender_service_client",
     "graphic_surface:surface",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
@@ -124,6 +143,8 @@ ohos_shared_library("camera_framework") {
     "image_framework:image",
     "image_framework:image_native",
     "ipc:ipc_core",
+    "os_account:libaccountkits",
+    "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "window_manager:libdm",

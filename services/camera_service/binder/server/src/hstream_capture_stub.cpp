@@ -49,6 +49,15 @@ int HStreamCaptureStub::OnRemoteRequest(
         case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_SERVICE_SET_THUMBNAIL):
             errCode = HandleSetThumbnail(data);
             break;
+        case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_SERVICE_ENABLE_DEFERREDTYPE):
+            errCode = HandleEnableDeferredType(data);
+            break;
+        case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_GET_DEFERRED_PHOTO):
+            errCode = IsDeferredPhotoEnabled();
+            break;
+        case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_GET_DEFERRED_VIDEO):
+            errCode = IsDeferredVideoEnabled();
+            break;
         default:
             MEDIA_ERR_LOG("HStreamCaptureStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -77,6 +86,15 @@ int32_t HStreamCaptureStub::HandleSetThumbnail(MessageParcel &data)
     MEDIA_DEBUG_LOG("HCameraServiceStub HandleSetThumbnail result: %{public}d", ret);
     return ret;
 }
+
+int32_t HStreamCaptureStub::HandleEnableDeferredType(MessageParcel &data)
+{
+    int32_t type = data.ReadInt32();
+    int32_t ret = DeferImageDeliveryFor(type);
+    MEDIA_DEBUG_LOG("HCameraServiceStub HandleEnableDeferredType result: %{public}d", ret);
+    return ret;
+}
+
 
 int32_t HStreamCaptureStub::HandleSetCallback(MessageParcel &data)
 {

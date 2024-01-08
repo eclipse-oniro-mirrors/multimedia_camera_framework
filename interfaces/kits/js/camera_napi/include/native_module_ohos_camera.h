@@ -31,6 +31,8 @@
 #include "output/photo_output_napi.h"
 #include "output/preview_output_napi.h"
 #include "output/video_output_napi.h"
+#include "output/photo_napi.h"
+#include "output/deferred_photo_proxy_napi.h"
 #include "session/camera_session_napi.h"
 
 #endif /* NATIVE_MODULE_OHOS_CAMERA_H_ */

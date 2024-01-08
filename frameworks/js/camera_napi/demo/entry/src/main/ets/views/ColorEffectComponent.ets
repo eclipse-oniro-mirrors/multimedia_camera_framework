@@ -35,9 +35,7 @@ export struct ColorEffectComponent {
         Row() {
           Button(){
             Text(this.targetName)
-            .width('35vp')
-            .height('35vp')
-            .fontColor('#FFFFFF')
+            .fontColor('#FFFFFF').fontSize(12)
           }
           .backgroundColor('rgba(255,255,255,0.20)')
           .width('45vp')

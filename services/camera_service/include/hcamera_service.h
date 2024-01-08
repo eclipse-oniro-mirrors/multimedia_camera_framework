@@ -36,11 +36,14 @@
 #include "sensor_agent.h"
 #include "sensor_agent_type.h"
 #endif
+#include "ideferred_photo_processing_session_callback.h"
+#include "ideferred_photo_processing_session.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
 using namespace OHOS::HDI::Camera::V1_0;
+using namespace DeferredProcessing;
 struct CameraMetaInfo {
     string cameraId;
     uint8_t position;
@@ -62,6 +65,9 @@ public:
         vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList) override;
     int32_t CreateCameraDevice(string cameraId, sptr<ICameraDeviceService>& device) override;
     int32_t CreateCaptureSession(sptr<ICaptureSession>& session, int32_t opMode) override;
+    int32_t CreateDeferredPhotoProcessingSession(int32_t userId,
+        sptr<DeferredProcessing::IDeferredPhotoProcessingSessionCallback>& callback,
+        sptr<DeferredProcessing::IDeferredPhotoProcessingSession>& session) override;
     int32_t CreatePhotoOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
         int32_t height, sptr<IStreamCapture>& photoOutput) override;
     int32_t CreateDeferredPreviewOutput(

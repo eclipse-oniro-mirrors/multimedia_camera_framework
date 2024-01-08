@@ -27,6 +27,26 @@ ohos_fuzztest("CameraDeviceFuzzTest") {
     "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
     "${multimedia_camera_framework_path}/services/camera_service/binder/server/include",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/buffer_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer/core",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/dfx",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/photo_job_repository",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/strategy",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/photo_session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
     "${window_manager_path}/interfaces/innerkits/dm",
     "${base_security_path}/interfaces/innerkits/accesstoken/include",
     "${driver_peripheral_path}/interfaces/include",
@@ -49,7 +69,10 @@ ohos_fuzztest("CameraDeviceFuzzTest") {
 
   sources = [ "camera_device_fuzzer.cpp" ]
 
-  deps = [ "../../../services/camera_service:camera_service" ]
+  deps = [
+    "${multimedia_camera_framework_path}/services/camera_service:camera_service",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
+  ]
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",

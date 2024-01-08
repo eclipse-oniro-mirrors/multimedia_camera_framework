@@ -34,6 +34,10 @@
 #include "ipc_types.h"
 #include "metadata_utils.h"
 #include "v1_0/types.h"
+#include "os_account_manager.h"
+#include "deferred_processing_service.h"
+#include "iservice_registry.h"
+#include "system_ability_definition.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -271,6 +275,10 @@ int32_t HCameraDevice::OpenDevice()
         RegisterFoldStatusListener();
     }
     MEDIA_DEBUG_LOG("HCameraDevice::OpenDevice end");
+    int uid = IPCSkeleton::GetCallingUid();
+    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, clientUserId_);
+    clientName_ = GetClientBundle(uid);
+    NotifyCameraSessionStatus(true);
     return errorCode;
 }
 
@@ -305,13 +313,14 @@ int32_t HCameraDevice::CloseDevice()
     }
     if (cameraHostManager_) {
         cameraHostManager_->RemoveCameraDevice(cameraID_);
-        cameraHostManager_->UpdateRestoreParamCloseTime(GetClientBundle(IPCSkeleton::GetCallingUid()), cameraID_);
+        cameraHostManager_->UpdateRestoreParamCloseTime(clientName_, cameraID_);
     }
     {
         std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
         deviceSvcCallback_ = nullptr;
     }
     MEDIA_DEBUG_LOG("HCameraDevice::CloseDevice end");
+    NotifyCameraSessionStatus(false);
     return CAMERA_OK;
 }
 
@@ -1086,6 +1095,14 @@ int32_t HCameraDevice::OnFrameShutter(int32_t captureId, const std::vector<int32
         return CAMERA_INVALID_STATE;
     }
     return streamOperatorCallback->OnFrameShutter(captureId, streamIds, timestamp);
+}
+
+void HCameraDevice::NotifyCameraSessionStatus(bool running)
+{
+    bool isSystemCamera = (clientName_ == "com.huawei.hmos.camera") ? true : false;
+    DeferredProcessing::DeferredProcessingService::GetInstance().NotifyCameraSessionStatus(clientUserId_, cameraID_,
+        running, isSystemCamera);
+    return;
 }
 } // namespace CameraStandard
 } // namespace OHOS

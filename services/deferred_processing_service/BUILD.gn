@@ -1,0 +1,139 @@
+# Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("./../../multimedia_camera_framework.gni")
+
+ohos_shared_library("deferred_processing_service") {
+  install_enable = true
+  sources = [
+    "${multimedia_camera_framework_path}/frameworks/native/camera/src/utils/dps_metadata_info.cpp",
+    "binder/client/src/deferred_photo_processing_session_callback_proxy.cpp",
+    "binder/client/src/deferred_photo_processing_session_proxy.cpp",
+    "binder/server/src/deferred_photo_processing_session_callback_stub.cpp",
+    "binder/server/src/deferred_photo_processing_session_stub.cpp",
+    "src/base/buffer_info.cpp",
+    "src/base/task_manager/task_group/base_task_group.cpp",
+    "src/base/task_manager/task_group/delayed_task_group.cpp",
+    "src/base/task_manager/task_group/task_group.cpp",
+    "src/base/task_manager/task_manager.cpp",
+    "src/base/task_manager/task_registry.cpp",
+    "src/base/task_manager/thread_pool.cpp",
+    "src/base/task_manager/thread_utils.cpp",
+    "src/base/timer/core/timer_core.cpp",
+    "src/base/timer/steady_clock.cpp",
+    "src/base/timer/time_broker.cpp",
+    "src/base/timer/timer.cpp",
+    "src/deferred_processing_service.cpp",
+    "src/dfx/dps_event_report.cpp",
+    "src/event_monitor/events_monitor.cpp",
+    "src/post_processor/photo_post_processor.cpp",
+    "src/schedule/photo_processor/deferred_photo_controller.cpp",
+    "src/schedule/photo_processor/deferred_photo_processor.cpp",
+    "src/schedule/photo_processor/photo_job_repository/deferred_photo_job.cpp",
+    "src/schedule/photo_processor/photo_job_repository/photo_job_repository.cpp",
+    "src/schedule/photo_processor/strategy/background_strategy.cpp",
+    "src/schedule/photo_processor/strategy/user_initiated_strategy.cpp",
+    "src/schedule/scheduler_coordinator.cpp",
+    "src/schedule/scheduler_manager.cpp",
+    "src/session/photo_session/deferred_photo_processing_session.cpp",
+    "src/session/session_coordinator.cpp",
+    "src/session/session_info.cpp",
+    "src/session/session_manager.cpp",
+    "src/utils/dp_utils.cpp",
+  ]
+  cflags = [
+    "-fPIC",
+    "-Wall",
+  ]
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "../../cfi_blocklist.txt"
+  }
+
+  include_dirs = [
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/base/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/include",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/buffer_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/timer/core",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/dfx",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/event_monitor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/post_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/photo_job_repository",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/schedule/photo_processor/strategy",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/photo_session",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/utils",
+  ]
+
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+
+  external_deps = [
+    "ability_base:want",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libprivacy_sdk",
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
+    "c_utils:utils",
+    "common_event_service:cesfwk_innerkits",
+    "drivers_interface_camera:libcamera_proxy_1.0",
+    "drivers_interface_camera:libcamera_proxy_1.1",
+    "drivers_interface_camera:libcamera_proxy_1.2",
+    "drivers_interface_camera:metadata",
+    "graphic_2d:librender_service_client",
+    "graphic_2d:surface",
+    "hdf_core:libhdi",
+    "hicollie:libhicollie",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "ipc:ipc_core",
+    "ipc:ipc_single",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "window_manager:libdm",
+  ]
+
+  include_dirs += [
+    "${driver_peripheral_path}/interfaces/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/utils/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/device/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/operator/include",
+    "${driver_peripheral_path}/interfaces/hdi_ipc/callback/host/include",
+  ]
+
+  if (use_musl) {
+    if (use_jemalloc && use_jemalloc_dfx_intf) {
+      cflags += [ "-DCONFIG_USE_JEMALLOC_DFX_INTF" ]
+    }
+  }
+
+  cflags_cc = cflags
+
+  part_name = "camera_framework"
+  subsystem_name = "multimedia"
+}

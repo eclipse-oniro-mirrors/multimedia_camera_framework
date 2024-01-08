@@ -782,13 +782,13 @@ napi_value CameraManagerNapi::CreatePhotoOutputInstance(napi_env env, napi_callb
     CameraManagerNapi* cameraManagerNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
     if (status != napi_ok || cameraManagerNapi == nullptr) {
-        MEDIA_ERR_LOG("napi_unwrap failure!");
+        MEDIA_ERR_LOG("CreatePhotoOutputInstance napi_unwrap failure!");
         return nullptr;
     }
 
     Profile profile;
     ParseProfile(env, argv[PARAM0], &profile);
-    MEDIA_INFO_LOG("ParseProfile "
+    MEDIA_INFO_LOG("CreatePhotoOutputInstance ParseProfile "
                    "size.width = %{public}d, size.height = %{public}d, format = %{public}d",
                    profile.size_.width, profile.size_.height, profile.format_);
 
@@ -803,9 +803,9 @@ napi_value CameraManagerNapi::CreatePhotoOutputInstance(napi_env env, napi_callb
         MEDIA_INFO_LOG("surfaceId buffer --1  : %{public}s", buffer);
         std::string surfaceId = std::string(buffer);
         result = PhotoOutputNapi::CreatePhotoOutput(env, profile, surfaceId);
-        MEDIA_INFO_LOG("surfaceId after convert : %{public}s", surfaceId.c_str());
+        MEDIA_INFO_LOG("CreatePhotoOutputInstance surfaceId after convert : %{public}s", surfaceId.c_str());
     } else {
-        MEDIA_ERR_LOG("Could not able to read surfaceId argument!");
+        MEDIA_ERR_LOG("CreatePhotoOutputInstance Could not able to read surfaceId argument!");
     }
     return result;
 }

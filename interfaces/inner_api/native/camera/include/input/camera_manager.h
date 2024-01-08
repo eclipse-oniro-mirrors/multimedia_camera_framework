@@ -40,6 +40,7 @@
 #include "input/camera_death_recipient.h"
 #include "hcamera_service_callback_stub.h"
 #include "camera_stream_info_parse.h"
+#include "deferred_proc_session/deferred_photo_proc_session.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -273,6 +274,23 @@ public:
      * @return Returns pointer to photo output instance.
      */
     sptr<PhotoOutput> CreatePhotoOutput(Profile& profile, sptr<IBufferProducer>& surface);
+
+    /**
+    * @brief Create deferred photo processing session.
+    *
+    * @return Returns pointer to capture session.
+    */
+    sptr<DeferredPhotoProcSession> CreateDeferredPhotoProcessingSession(int userId,
+        std::shared_ptr<IDeferredPhotoProcSessionCallback> callback);
+
+    /**
+    * @brief Create deferred photo processing session.
+    *
+    * @param Returns pointer to capture session.
+    * @return Returns error code.
+    */
+    int CreateDeferredPhotoProcessingSession(int userId, std::shared_ptr<IDeferredPhotoProcSessionCallback> callback,
+        sptr<DeferredPhotoProcSession> *pDeferredPhotoProcSession);
 
     /**
      * @brief Create photo output instance using surface.

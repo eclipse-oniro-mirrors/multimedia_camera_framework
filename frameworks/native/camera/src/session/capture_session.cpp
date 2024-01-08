@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 
+#include "ipc_skeleton.h"
+#include "os_account_manager.h"
 #include "session/capture_session.h"
 #include <cstdint>
 #include <memory>
@@ -37,6 +39,7 @@ using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
 namespace {
     constexpr int32_t DEFAULT_ITEMS = 10;
     constexpr int32_t DEFAULT_DATA_LENGTH = 100;
+    constexpr int32_t DEFERRED_MODE_DATA_SIZE = 2;
 }
 
 static const std::map<CM_ColorSpaceType, ColorSpace> g_metaColorSpaceMap_ = {
@@ -231,6 +234,7 @@ CaptureSession::CaptureSession(sptr<ICaptureSession> &captureSession)
 {
     captureSession_ = captureSession;
     inputDevice_ = nullptr;
+    isImageDeferred_ = false;
     metaOutput_ = nullptr;
     metadataResultProcessor_ = std::make_shared<CaptureSessionMetadataResultProcessor>(this);
     sptr<IRemoteObject> object = captureSession_->AsObject();
@@ -429,11 +433,33 @@ int32_t CaptureSession::AddInput(sptr<CaptureInput> &input)
         } else {
             input->SetMetadataResultProcessor(GetMetadataResultProcessor());
             inputDevice_ = input;
+            if (inputDevice_ != nullptr) {
+                UpdateDeviceDeferredability();
+            }
         }
     } else {
         MEDIA_ERR_LOG("CaptureSession::AddInput() captureSession_ is nullptr");
     }
     return ServiceToCameraError(errCode);
+}
+
+void CaptureSession::UpdateDeviceDeferredability()
+{
+    MEDIA_DEBUG_LOG("UpdateDeviceDeferredability begin.");
+    inputDevice_->GetCameraDeviceInfo()->modeDeferredType_ = {};
+    camera_metadata_item_t item;
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_DEFERRED_IMAGE_DELIVERY, &item);
+    MEDIA_INFO_LOG("UpdateDeviceDeferredability get ret: %{public}d", ret);
+    MEDIA_DEBUG_LOG("UpdateDeviceDeferredability item: %{public}d count: %{public}d", item.item, item.count);
+    for (uint32_t i = 0; i < item.count; i++) {
+        if (i % DEFERRED_MODE_DATA_SIZE == 0) {
+            MEDIA_DEBUG_LOG("UpdateDeviceDeferredability mode index:%{public}d, deferredType:%{public}d",
+                item.data.u8[i], item.data.u8[i+1]);
+            inputDevice_->GetCameraDeviceInfo()->modeDeferredType_[item.data.u8[i]] =
+                static_cast<DeferredDeliveryImageType>(item.data.u8[i+1]);
+        }
+    }
 }
 
 sptr<CaptureOutput> CaptureSession::GetMetaOutput()
@@ -2412,6 +2438,8 @@ void CaptureSession::SetGuessMode(SceneMode mode)
 void CaptureSession::SetMode(SceneMode modeName)
 {
     currentMode_ = modeName;
+    // reset deferred enable status when reset mode
+    EnableDeferredType(DELIVERY_NONE);
     MEDIA_INFO_LOG("CaptureSession SetMode modeName = %{public}d", modeName);
 }
 
@@ -2423,6 +2451,12 @@ SceneMode CaptureSession::GetMode()
         return guessMode_;
     }
     return currentMode_;
+}
+
+bool CaptureSession::IsImageDeferred()
+{
+    MEDIA_INFO_LOG("CaptureSession IsImageDeferred");
+    return isImageDeferred_;
 }
 
 SceneMode CaptureSession::GetFeaturesMode()
@@ -3233,6 +3267,88 @@ void CaptureSession::ProcessMacroStatusChange(const std::shared_ptr<OHOS::Camera
 bool CaptureSession::IsSetEnableMacro()
 {
     return isSetMacroEnable_;
+}
+
+void CaptureSession::EnableDeferredType(DeferredDeliveryImageType type)
+{
+    MEDIA_INFO_LOG("CaptureSession::EnableDeferredType type:%{public}d", type);
+    if (IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::EnableDeferredType session has committed!");
+        return;
+    }
+    this->LockForControl();
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::EnableDeferredType changedMetadata_ is NULL");
+        return;
+    }
+
+    bool status = false;
+    camera_metadata_item_t item;
+    isImageDeferred_ = false;
+    uint8_t deferredType;
+    switch (type) {
+        case DELIVERY_NONE:
+            deferredType = HDI::Camera::V1_2::NONE;
+            break;
+        case DELIVERY_PHOTO:
+            deferredType = HDI::Camera::V1_2::STILL_IMAGE;
+            isImageDeferred_ = true;
+            break;
+        case DELIVERY_VIDEO:
+            deferredType = HDI::Camera::V1_2::MOVING_IMAGE;
+            break;
+        default:
+            deferredType= HDI::Camera::V1_2::NONE;
+            MEDIA_ERR_LOG("CaptureSession::EnableDeferredType not support yet.");
+            break;
+    }
+    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &deferredType, 1);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &deferredType, 1);
+    }
+    if (!status) {
+        MEDIA_ERR_LOG("CaptureSession::enableDeferredType Failed to set type!");
+    }
+    int32_t errCode = this->UnlockForControl();
+    if (errCode != CameraErrorCode::SUCCESS) {
+        MEDIA_DEBUG_LOG("CaptureSession::EnableDeferredType Failed");
+    }
+}
+
+void CaptureSession::SetUserId()
+{
+    MEDIA_INFO_LOG("CaptureSession::SetUserId");
+    if (IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::SetUserId session has committed!");
+        return;
+    }
+    this->LockForControl();
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::SetUserId changedMetadata_ is NULL");
+        return;
+    }
+    int32_t userId;
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, userId);
+    MEDIA_INFO_LOG("CaptureSession get uid:%{public}d userId:%{public}d", uid, userId);
+
+    bool status = false;
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CAMERA_USER_ID, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CAMERA_USER_ID, &userId, 1);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CAMERA_USER_ID, &userId, 1);
+    }
+    if (!status) {
+        MEDIA_ERR_LOG("CaptureSession::SetUserId Failed!");
+    }
+    int32_t errCode = this->UnlockForControl();
+    if (errCode != CameraErrorCode::SUCCESS) {
+        MEDIA_DEBUG_LOG("CaptureSession::SetUserId Failed");
+    }
 }
 } // CameraStandard
 } // OHOS

@@ -65,7 +65,8 @@
             "service_group": [
               "//foundation/multimedia/camera_framework/sa_profile:camera_service_sa_profile",
               "//foundation/multimedia/camera_framework/services/etc:camera_service.rc",
-              "//foundation/multimedia/camera_framework/services/camera_service:camera_service"
+              "//foundation/multimedia/camera_framework/services/camera_service:camera_service",
+              "//foundation/multimedia/camera_framework/services/deferred_processing_service:deferred_processing_service"
             ]
           },
 
@@ -77,7 +78,9 @@
                 "header_base": [
                     "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/input",
                     "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/output",
-                    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/session"
+                    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/session",
+                    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/deferred_proc_session",
+                    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/utils"
                 ],
                 "header_files": [
                   "camera_info.h",
@@ -89,7 +92,9 @@
                   "photo_output.h",
                   "preview_output.h",
                   "video_output.h",
-                  "capture_session.h"
+                  "capture_session.h",
+                  "deferred_photo_proc_session.h",
+                  "dps_metadata_info.h"
                 ]
               }
             },

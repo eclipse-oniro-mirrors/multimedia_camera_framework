@@ -14,7 +14,7 @@
  */
 
 // 反转摄像头_多机位_拍照_摄像
-
+//@ts-nocheck
 import { RecodeStopDialog } from '../Dialog/RecodeStopDialog';
 import { MultiCameraDialog } from '../Dialog/MultiCameraDialog';
 import DateTimeUtil from '../model/DateTimeUtil';
@@ -39,7 +39,7 @@ export struct ModeSwitchPage {
   @State countTimerInt: number = -1;
   @State countTimerOut: number = -1;
   // 拍照缩略图
-  @State imgThumbnail: string = undefined;
+  @StorageLink('proxyThumbnail') imgThumbnail: string|image.PixelMap = null;
   // 录制时间
   @State videoRecodeTime: number = 0;
   // 录制时间定时器
@@ -160,6 +160,7 @@ export struct ModeSwitchPage {
   }
 
   aboutToAppear(): void {
+    Logger.info(TAG, 'aboutToAppear');
     this.deviceType = AppStorage.get<string>('deviceType');
     CameraService.setTakePictureCallback(this.handleTakePicture.bind(this));
   }
@@ -170,7 +171,7 @@ export struct ModeSwitchPage {
   }
 
   build() {
-    Column(){
+    Column() {
       if (this.isModeBol) {
         Stack({ alignContent: Alignment.Bottom }) {
           Column({ space: 24 }) {

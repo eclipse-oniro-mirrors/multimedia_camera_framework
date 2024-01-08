@@ -51,6 +51,10 @@ public:
 
     int32_t CreateCaptureSession(sptr<ICaptureSession>& session, int32_t operationMode = 0) override;
 
+    int32_t CreateDeferredPhotoProcessingSession(int32_t userId,
+        sptr<DeferredProcessing::IDeferredPhotoProcessingSessionCallback>& callback,
+        sptr<DeferredProcessing::IDeferredPhotoProcessingSession>& session) override;
+                                                 
     int32_t CreatePhotoOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
                               int32_t width, int32_t height, sptr<IStreamCapture> &photoOutput) override;
 

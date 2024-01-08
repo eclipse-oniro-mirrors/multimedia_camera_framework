@@ -26,6 +26,8 @@
 #include "camera_error_code.h"
 #include "icamera_util.h"
 #include "device_manager_impl.h"
+#include "deferred_photo_proc_session.h"
+#include "dps_metadata_info.h"
 
 using namespace std;
 namespace OHOS {
@@ -39,9 +41,7 @@ const std::string CameraManager::surfaceFormat = "CAMERA_SURFACE_FORMAT";
 const std::unordered_map<camera_format_t, CameraFormat> CameraManager::metaToFwCameraFormat_ = {
     {OHOS_CAMERA_FORMAT_YCRCB_420_SP, CAMERA_FORMAT_YUV_420_SP},
     {OHOS_CAMERA_FORMAT_JPEG, CAMERA_FORMAT_JPEG},
-    {OHOS_CAMERA_FORMAT_RGBA_8888, CAMERA_FORMAT_RGBA_8888},
-    {OHOS_CAMERA_FORMAT_YCBCR_P010, CAMERA_FORMAT_YCBCR_P010},
-    {OHOS_CAMERA_FORMAT_YCRCB_P010, CAMERA_FORMAT_YCRCB_P010}
+    {OHOS_CAMERA_FORMAT_RGBA_8888, CAMERA_FORMAT_RGBA_8888}
 };
 
 const std::unordered_map<CameraFormat, camera_format_t> CameraManager::fwToMetaCameraFormat_ = {
@@ -265,6 +265,54 @@ int CameraManager::CreateCaptureSession(sptr<CaptureSession> *pCaptureSession)
 
     *pCaptureSession = captureSession;
 
+    return CameraErrorCode::SUCCESS;
+}
+
+sptr<DeferredPhotoProcSession> CameraManager::CreateDeferredPhotoProcessingSession(int userId,
+    std::shared_ptr<IDeferredPhotoProcSessionCallback> callback)
+{
+    CAMERA_SYNC_TRACE;
+    sptr<DeferredPhotoProcSession> deferredPhotoProcSession = nullptr;
+    int ret = CreateDeferredPhotoProcessingSession(userId, callback, &deferredPhotoProcSession);
+    if (ret != CameraErrorCode::SUCCESS) {
+        MEDIA_ERR_LOG("Failed to CreateDeferredPhotoProcessingSession with error code:%{public}d", ret);
+        return nullptr;
+    }
+    return deferredPhotoProcSession;
+}
+
+int CameraManager::CreateDeferredPhotoProcessingSession(int userId,
+    std::shared_ptr<IDeferredPhotoProcSessionCallback> callback,
+    sptr<DeferredPhotoProcSession> *pDeferredPhotoProcSession)
+{
+    CAMERA_SYNC_TRACE;
+    sptr<DeferredProcessing::IDeferredPhotoProcessingSession> session = nullptr;
+    sptr<DeferredProcessing::IDeferredPhotoProcessingSessionCallback> remoteCallback = nullptr;
+    sptr<DeferredPhotoProcSession> deferredPhotoProcSession = nullptr;
+    int32_t retCode = CAMERA_OK;
+
+    if (serviceProxy_ == nullptr) {
+        MEDIA_ERR_LOG("serviceProxy_ is null");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+
+    deferredPhotoProcSession = new(std::nothrow) DeferredPhotoProcSession(userId, callback);
+    remoteCallback = new(std::nothrow) DeferredPhotoProcessingSessionCallback(deferredPhotoProcSession);
+
+    retCode = serviceProxy_->CreateDeferredPhotoProcessingSession(userId, remoteCallback, session);
+    if (retCode == CAMERA_OK) {
+        if (session != nullptr) {
+            deferredPhotoProcSession->SetDeferredPhotoSession(session);
+        } else {
+            MEDIA_ERR_LOG("Failed to CreateDeferredPhotoProcessingSession as session is null");
+            return CameraErrorCode::SERVICE_FATL_ERROR;
+        }
+    } else {
+        MEDIA_ERR_LOG("Failed to get photo session!, %{public}d", retCode);
+        return ServiceToCameraError(retCode);
+    }
+
+    *pDeferredPhotoProcSession = deferredPhotoProcSession;
     return CameraErrorCode::SUCCESS;
 }
 

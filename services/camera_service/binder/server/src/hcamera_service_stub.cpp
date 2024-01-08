@@ -70,6 +70,9 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_CAPTURE_SESSION):
             errCode = HCameraServiceStub::HandleCreateCaptureSession(data, reply);
             break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEFERRED_PHOTO_PROCESSING_SESSION):
+            errCode = HCameraServiceStub::HandleCreateDeferredPhotoProcessingSession(data, reply);
+            break;
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_PHOTO_OUTPUT):
             errCode = HCameraServiceStub::HandleCreatePhotoOutput(data, reply);
             break;
@@ -264,6 +267,28 @@ int HCameraServiceStub::HandleCreateCaptureSession(MessageParcel& data, MessageP
 
     CHECK_AND_RETURN_RET_LOG(reply.WriteRemoteObject(session->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
         "HCameraServiceStub HandleCreateCaptureSession Write CaptureSession obj failed");
+
+    return errCode;
+}
+
+int HCameraServiceStub::HandleCreateDeferredPhotoProcessingSession(MessageParcel &data, MessageParcel &reply)
+{
+    sptr<DeferredProcessing::IDeferredPhotoProcessingSession> session = nullptr;
+
+    int32_t userId = data.ReadInt32();
+    auto remoteObject = data.ReadRemoteObject();
+    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HandleCreateDeferredPhotoProcessingSession DeferredPhotoProcessingSessionCallback is null");
+
+    auto callback = iface_cast<DeferredProcessing::IDeferredPhotoProcessingSessionCallback>(remoteObject);
+    int errCode = CreateDeferredPhotoProcessingSession(userId, callback, session);
+    if (errCode != ERR_NONE) {
+        MEDIA_ERR_LOG("HandleCreateDeferredPhotoProcessingSession create failed : %{public}d", errCode);
+        return errCode;
+    }
+
+    CHECK_AND_RETURN_RET_LOG(reply.WriteRemoteObject(session->AsObject()), IPC_STUB_WRITE_PARCEL_ERR,
+        " HandleCreateDeferredPhotoProcessingSession Write HandleCreateDeferredPhotoProcessingSession obj failed");
 
     return errCode;
 }

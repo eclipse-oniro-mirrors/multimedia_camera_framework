@@ -25,6 +25,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+
 class PhotoStateCallback {
 public:
     PhotoStateCallback() = default;
@@ -279,6 +280,26 @@ public:
     int32_t IsQuickThumbnailSupported();
 
     /**
+     * @brief Set the deferredImageDelivery type.
+     *
+     */
+    int32_t DeferImageDeliveryFor(DeferredDeliveryImageType type);
+
+    /**
+     * @brief To check the deferredImageDelivery capability is supported or not.
+     *
+     * @return Returns true/false if the deferredImageDelivery is supported/not-supported respectively.
+     */
+    int32_t IsDeferredImageDeliverySupported(DeferredDeliveryImageType type);
+
+    /**
+     * @brief To check the deferredImageDelivery capability is enable or not.
+     *
+     * @return Returns true/false if the deferredImageDelivery is enable/not-enable respectively.
+     */
+    int32_t IsDeferredImageDeliveryEnabled(DeferredDeliveryImageType type);
+
+    /**
      * @brief Get default photo capture setting.
      *
      * @return default photo capture setting.
@@ -300,6 +321,8 @@ public:
         const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem) override;
 
     sptr<Surface> thumbnailSurface_;
+    
+    sptr<Surface> deferredSurface_;
 
 private:
     std::shared_ptr<PhotoStateCallback> appCallback_;

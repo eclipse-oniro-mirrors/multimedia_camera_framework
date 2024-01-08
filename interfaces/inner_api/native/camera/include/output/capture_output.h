@@ -31,6 +31,11 @@
 
 namespace OHOS {
 namespace CameraStandard {
+enum DeferredDeliveryImageType {
+    DELIVERY_NONE = 0,
+    DELIVERY_PHOTO,
+    DELIVERY_VIDEO,
+};
 enum CaptureOutputType {
     CAPTURE_OUTPUT_TYPE_PREVIEW,
     CAPTURE_OUTPUT_TYPE_PHOTO,

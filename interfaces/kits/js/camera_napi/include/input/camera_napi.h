@@ -251,6 +251,12 @@ static const std::unordered_map<std::string, int32_t> mapMetadataOutputErrorCode
     {"ERROR_INSUFFICIENT_RESOURCES", 0}
 };
 
+static const std::unordered_map<std::string, int32_t> mapDeferredDeliveryImageType = {
+    {"NONE", 0},
+    {"PHOTO", 1},
+    {"VIDEO", 2},
+};
+
 enum CreateAsyncCallbackModes {
     CREATE_CAMERA_MANAGER_ASYNC_CALLBACK = 10,
 };
@@ -307,6 +313,7 @@ private:
     static thread_local napi_ref errorVideoOutputRef_;
     static thread_local napi_ref metadataObjectTypeRef_;
     static thread_local napi_ref errorMetadataOutputRef_;
+    static thread_local napi_ref deferredDeliveryImageTypeRef_;
     napi_env env_;
     napi_ref wrapper_;
 };

@@ -94,6 +94,8 @@ public:
         std::lock_guard<std::mutex> lock(proxyStreamOperatorCallbackMutex_);
         return proxyStreamOperatorCallback_.promote();
     }
+    
+    void NotifyCameraSessionStatus(bool running);
 
 private:
     class FoldScreenListener;
@@ -122,6 +124,9 @@ private:
 
     std::mutex deviceOpenLifeCycleMutex_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> deviceOpenLifeCycleSettings_;
+
+    std::string clientName_;
+    int clientUserId_;
 
     void UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings);
     void ResetDeviceOpenLifeCycleSettings();

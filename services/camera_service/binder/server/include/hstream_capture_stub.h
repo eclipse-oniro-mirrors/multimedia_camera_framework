@@ -32,6 +32,7 @@ public:
     int32_t HandleCapture(MessageParcel& data);
     int32_t HandleSetCallback(MessageParcel& data);
     int32_t HandleSetThumbnail(MessageParcel& data);
+    int32_t HandleEnableDeferredType(MessageParcel& data);
 };
 } // namespace CameraStandard
 } // namespace OHOS

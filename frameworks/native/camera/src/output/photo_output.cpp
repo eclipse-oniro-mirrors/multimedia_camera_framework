@@ -484,6 +484,74 @@ int32_t PhotoOutput::IsQuickThumbnailSupported()
     return isQuickThumbnailEnabled;
 }
 
+int32_t PhotoOutput::DeferImageDeliveryFor(DeferredDeliveryImageType type)
+{
+    MEDIA_INFO_LOG("PhotoOutput DeferImageDeliveryFor type:%{public}d!", type);
+    CAMERA_SYNC_TRACE;
+    sptr<CameraDevice> cameraObj;
+    auto captureSession = GetSession();
+    if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
+        MEDIA_ERR_LOG("PhotoOutput DeferImageDeliveryFor error!, captureSession or inputDevice_ is nullptr");
+        return SESSION_NOT_RUNNING;
+    }
+    cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
+    if (cameraObj == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput DeferImageDeliveryFor error!, cameraObj is nullptr");
+        return SESSION_NOT_RUNNING;
+    }
+    captureSession->EnableDeferredType(type);
+    captureSession->SetUserId();
+    return 0;
+}
+
+int32_t PhotoOutput::IsDeferredImageDeliverySupported(DeferredDeliveryImageType type)
+{
+    MEDIA_INFO_LOG("IsDeferredImageDeliverySupported type:%{public}d!", type);
+    int32_t isSupported = -1;
+    if (type == DELIVERY_NONE) {
+        return isSupported;
+    }
+    sptr<CameraDevice> cameraObj;
+    auto captureSession = GetSession();
+    if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
+        MEDIA_ERR_LOG("isDeferredImageDeliverySupported error!, captureSession or inputDevice_ is nullptr");
+        return SESSION_NOT_RUNNING;
+    }
+    cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
+    if (cameraObj == nullptr) {
+        MEDIA_ERR_LOG("isDeferredImageDeliverySupported error!, cameraObj is nullptr");
+        return SESSION_NOT_RUNNING;
+    }
+
+    int32_t curMode = captureSession->GetMode();
+    int32_t modeSupportType = cameraObj->modeDeferredType_[curMode];
+    MEDIA_INFO_LOG("IsDeferredImageDeliverySupported curMode:%{public}d, modeSupportType:%{public}d",
+        curMode, modeSupportType);
+    if (modeSupportType == type) {
+        isSupported = 0;
+    }
+    return isSupported;
+}
+
+int32_t PhotoOutput::IsDeferredImageDeliveryEnabled(DeferredDeliveryImageType type)
+{
+    MEDIA_INFO_LOG("PhotoOutput IsDeferredImageDeliveryEnabled type:%{public}d!", type);
+    int32_t isEnabled = -1;
+    sptr<CameraDevice> cameraObj;
+    auto captureSession = GetSession();
+    if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
+        MEDIA_ERR_LOG("PhotoOutput IsDeferredImageDeliveryEnabled error!, captureSession or inputDevice_ is nullptr");
+        return SESSION_NOT_RUNNING;
+    }
+    cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
+    if (cameraObj == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput IsDeferredImageDeliveryEnabled error!, cameraObj is nullptr");
+        return SESSION_NOT_RUNNING;
+    }
+    isEnabled = captureSession->IsImageDeferred() ? 0 : -1;
+    return isEnabled;
+}
+
 std::shared_ptr<PhotoCaptureSetting> PhotoOutput::GetDefaultCaptureSetting()
 {
     return defaultCaptureSetting_;

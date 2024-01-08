@@ -48,6 +48,7 @@ thread_local napi_ref CameraNapi::filterTypeRef_ = nullptr;
 thread_local napi_ref CameraNapi::beautyTypeRef_ = nullptr;
 thread_local napi_ref CameraNapi::portraitEffectRef_ = nullptr;
 thread_local napi_ref CameraNapi::torchModeRef_ = nullptr;
+thread_local napi_ref CameraNapi::deferredDeliveryImageTypeRef_ = nullptr;
 
 CameraNapi::CameraNapi() : env_(nullptr), wrapper_(nullptr)
 {
@@ -136,7 +137,8 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("QualityLevel",
             CreateObjectWithMap(env, "QualityLevel", mapQualityLevel, qualityLevelRef_)),
         DECLARE_NAPI_PROPERTY("VideoStabilizationMode",
-            CreateObjectWithMap(env, "VideoStabilizationMode", mapVideoStabilizationMode, videoStabilizationModeRef_)),
+            CreateObjectWithMap(env, "VideoStabilizationMode",
+                                mapVideoStabilizationMode, videoStabilizationModeRef_)),
         DECLARE_NAPI_PROPERTY("MetadataObjectType",
             CreateObjectWithMap(env, "MetadataObjectType", mapMetadataObjectType, metadataObjectTypeRef_)),
         DECLARE_NAPI_PROPERTY("HostNameType",
@@ -167,6 +169,9 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
             CreateObjectWithMap(env, "VideoOutputErrorCode", mapVideoOutputErrorCode, errorVideoOutputRef_)),
         DECLARE_NAPI_PROPERTY("MetadataOutputErrorCode",
             CreateObjectWithMap(env, "MetadataOutputErrorCode", mapMetadataOutputErrorCode, errorMetadataOutputRef_)),
+        DECLARE_NAPI_PROPERTY("DeferredDeliveryImageType",
+            CreateObjectWithMap(env, "DeferredDeliveryImageType",
+                                mapDeferredDeliveryImageType, deferredDeliveryImageTypeRef_)),
     };
 
     status = napi_define_class(env, CAMERA_LIB_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, CameraNapiConstructor,
