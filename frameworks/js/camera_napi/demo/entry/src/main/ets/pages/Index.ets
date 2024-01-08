@@ -27,6 +27,8 @@ import { ModeSwitchPage } from '../views/ModeSwitchPage';
 import { Constants } from '../common/Constants';
 import DisplayCalculator from '../common/DisplayCalculator';
 import { ColorEffectComponent } from '../views/ColorEffectComponent';
+import { DeferredPhotoComponent } from '../views/DeferredPhotoComponent';
+import image from '@ohos.multimedia.image';
 
 const TAG: string = 'indexPage';
 
@@ -71,6 +73,13 @@ struct Index {
   private deviceType: string;
   private screenHeight: number;
   private screenWidth: number;
+  @State @Watch('onDeferredNumChange') deferredNum: number = 0;
+  @StorageLink('proxyThumbnail') @Watch('proxyThumbnailUpdate') imgThumbnail2: image.PixelMap = null;
+
+  proxyThumbnailUpdate(): void {
+    Logger.info(TAG, 'proxyThumbnailUpdate');
+  }
+
   // 设置弹框
   private settingDialogController: CustomDialogController = new CustomDialogController({
     builder: SettingDialog({
@@ -101,6 +110,7 @@ struct Index {
     AppStorage.setOrCreate<boolean>('flashingBol', true);
     AppStorage.setOrCreate<boolean>('countdownBol', true);
     AppStorage.setOrCreate<boolean>('colorEffectComponentIsShow', true);
+    AppStorage.setOrCreate<boolean>('deferredPhotoComponentIsShow', true);
   }
 
   initXComponentSize(): void {
@@ -127,6 +137,16 @@ struct Index {
       await CameraService.stopVideo();
     }
     await CameraService.releaseCamera();
+  }
+
+  /**
+   * 监听二阶段拍照
+   */
+  onDeferredNumChange(): void {
+    Logger.info(TAG, `onDeferredNumChange deferredNum: ${this.deferredNum}`);
+    let code:number = this.deferredNum%2;
+    CameraService.isDeferredImageDeliverySupported(code);
+    // CameraService.isDeferredImageDeliveryEnabled(code);
   }
 
   build() {
@@ -216,8 +236,14 @@ struct Index {
         })
         // 闪光灯
         FlashingLightPage()
-
+        // 滤镜
         ColorEffectComponent()
+        // 分段式拍照
+        DeferredPhotoComponent({
+          surfaceId: this.surfaceId,
+          cameraDeviceIndex: this.cameraDeviceIndex,
+        })
+
       }
       .margin({ left: 24 })
       .alignItems(VerticalAlign.Top)

@@ -25,6 +25,8 @@
 #include "istream_metadata.h"
 #include "istream_repeat.h"
 #include "surface.h"
+#include "ideferred_photo_processing_session.h"
+#include "ideferred_photo_processing_session_callback.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -62,6 +64,10 @@ public:
 
     virtual int32_t CreateCaptureSession(sptr<ICaptureSession> &session, int32_t operationMode = 0) = 0;
 
+    virtual int32_t CreateDeferredPhotoProcessingSession(int32_t userId,
+        sptr<DeferredProcessing::IDeferredPhotoProcessingSessionCallback>& callback,
+        sptr<DeferredProcessing::IDeferredPhotoProcessingSession>& session) = 0;
+                                                         
     virtual int32_t CreatePhotoOutput(const sptr<OHOS::IBufferProducer> &producer, int32_t format,
                                       int32_t width, int32_t height, sptr<IStreamCapture> &photoOutput) = 0;
 

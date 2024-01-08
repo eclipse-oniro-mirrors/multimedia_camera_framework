@@ -14,6 +14,7 @@
  */
 
 #include "hcamera_service.h"
+#include "deferred_processing_service.h"
 
 #include <algorithm>
 #include <memory>
@@ -29,6 +30,8 @@
 #include "hcamera_device_manager.h"
 #include "ipc_skeleton.h"
 #include "system_ability_definition.h"
+#include "display_manager.h"
+#include "os_account_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -70,6 +73,11 @@ void HCameraService::OnStart()
     if (cameraHostManager_->Init() != CAMERA_OK) {
         MEDIA_ERR_LOG("HCameraService OnStart failed to init camera host manager.");
     }
+
+    // initialize deferred processing service.
+    DeferredProcessing::DeferredProcessingService::GetInstance().Initialize();
+    DeferredProcessing::DeferredProcessingService::GetInstance().Start();
+
     bool res = Publish(this);
     if (res) {
         MEDIA_INFO_LOG("HCameraService OnStart res=%{public}d", res);
@@ -92,6 +100,7 @@ void HCameraService::OnStop()
 #ifdef CAMERA_USE_SENSOR
     UnRegisterSensorCallback();
 #endif
+    DeferredProcessing::DeferredProcessingService::GetInstance().Stop();
 }
 
 int32_t HCameraService::GetCameras(
@@ -222,6 +231,23 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     session = captureSession;
     pid_t pid = IPCSkeleton::GetCallingPid();
     captureSessionsManager_.EnsureInsert(pid, captureSession);
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::CreateDeferredPhotoProcessingSession(int32_t userId,
+    sptr<DeferredProcessing::IDeferredPhotoProcessingSessionCallback>& callback,
+    sptr<DeferredProcessing::IDeferredPhotoProcessingSession>& session)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_ERR_LOG("HCameraService::CreateDeferredPhotoProcessingSession enter.");
+    sptr<DeferredProcessing::IDeferredPhotoProcessingSession> photoSession;
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, userId);
+    MEDIA_INFO_LOG("CreateDeferredPhotoProcessingSession get uid:%{public}d userId:%{public}d", uid, userId);
+    photoSession =
+        DeferredProcessing::DeferredProcessingService::GetInstance().CreateDeferredPhotoProcessingSession(userId,
+        callback);
+    session = photoSession;
     return CAMERA_OK;
 }
 
@@ -1228,6 +1254,7 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
 std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSettingForRestore(
     sptr<HCameraDevice> activeDevice)
 {
+    MEDIA_DEBUG_LOG("HCameraService::CreateDefaultSettingForRestore enter");
     constexpr int32_t DEFAULT_ITEMS = 1;
     constexpr int32_t DEFAULT_DATA_LENGTH = 1;
     auto defaultSettings = std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
@@ -1254,6 +1281,13 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
     if (ret == CAM_META_SUCCESS) {
         uint8_t stabilizationMode_ = item.data.u8[0];
         defaultSettings->addEntry(OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &stabilizationMode_, count);
+    }
+    
+    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &item);
+    MEDIA_DEBUG_LOG("CreateDefaultSettingForRestore ret: %{public}d", ret);
+    if (ret == CAM_META_SUCCESS) {
+        uint8_t deferredType = item.data.u8[0];
+        defaultSettings->addEntry(OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &deferredType, count);
     }
     return defaultSettings;
 }

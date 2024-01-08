@@ -30,6 +30,7 @@ const std::string dataWidth = "dataWidth";
 const std::string dataHeight = "dataHeight";
 const std::string thumbnailRegisterName = "quickThumbnail";
 const std::string captureRegisterName = "photoAvailable";
+const std::string deferredRegisterName = "deferredPhotoProxyAvailable";
 static const char CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME[] = "PhotoOutput";
 
 struct CallbackInfo {
@@ -44,14 +45,18 @@ enum PhotoOutputEventType {
     CAPTURE_END,
     CAPTURE_FRAME_SHUTTER,
     CAPTURE_ERROR,
-    CAPTURE_INVALID_TYPE
+    CAPTURE_INVALID_TYPE,
+    CAPTURE_PHOTO_AVAILABLE,
+    CAPTURE_DEFERRED_PHOTO_AVAILABLE
 };
 
 static EnumHelper<PhotoOutputEventType> PhotoOutputEventTypeHelper({
         {CAPTURE_START, "captureStart"},
         {CAPTURE_END, "captureEnd"},
         {CAPTURE_FRAME_SHUTTER, "frameShutter"},
-        {CAPTURE_ERROR, "error"}
+        {CAPTURE_ERROR, "error"},
+        {CAPTURE_PHOTO_AVAILABLE, "photoAvailable"},
+        {CAPTURE_DEFERRED_PHOTO_AVAILABLE, "deferredPhotoProxyAvailable"},
     },
     PhotoOutputEventType::CAPTURE_INVALID_TYPE
 );
@@ -74,17 +79,26 @@ private:
     sptr<Surface> photoSurface_ = nullptr;
 };
 
-class PhotoListener : public IBufferConsumerListener, public ListenerBase {
+class PhotoListener : public IBufferConsumerListener {
 public:
     explicit PhotoListener(napi_env env, const sptr<Surface> photoSurface);
     ~PhotoListener() = default;
     void OnBufferAvailable() override;
+    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
+    void RemoveCallbackRef(napi_env env, napi_value callback, const std::string &eventType);
+    void RemoveAllCallbacks(const std::string &eventType);
 
 private:
+    std::mutex mutex_;
+    napi_env env_;
     sptr<Surface> photoSurface_;
     shared_ptr<PhotoBufferProcessor> bufferProcessor_;
     void UpdateJSCallback(sptr<Surface> photoSurface) const;
     void UpdateJSCallbackAsync(sptr<Surface> photoSurface) const;
+    void ExecutePhoto(sptr<SurfaceBuffer> surfaceBfuffer) const;
+    void ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) const;
+    mutable std::vector<std::shared_ptr<AutoRef>> capturePhotoCbList_;
+    mutable std::vector<std::shared_ptr<AutoRef>> captureDeferredPhotoCbList_;
 };
 
 class PhotoOutputCallback : public PhotoStateCallback, public std::enable_shared_from_this<PhotoOutputCallback> {
@@ -167,6 +181,9 @@ public:
     static napi_value SetMirror(napi_env env, napi_callback_info info);
     static napi_value EnableQuickThumbnail(napi_env env, napi_callback_info info);
     static napi_value IsQuickThumbnailSupported(napi_env env, napi_callback_info info);
+    static napi_value DeferImageDeliveryFor(napi_env env, napi_callback_info info);
+    static napi_value IsDeferredImageDeliverySupported(napi_env env, napi_callback_info info);
+    static napi_value IsDeferredImageDeliveryEnabled(napi_env env, napi_callback_info info);
     static bool IsPhotoOutput(napi_env env, napi_value obj);
     static napi_value On(napi_env env, napi_callback_info info);
     static napi_value Once(napi_env env, napi_callback_info info);
@@ -196,6 +213,7 @@ private:
     sptr<PhotoOutput> photoOutput_;
     Profile profile_;
     bool isQuickThumbnailEnabled_ = false;
+    bool isDeferredPhotoEnabled_ = false;
     sptr<ThumbnailListener> thumbnailListener_;
     sptr<PhotoListener> photoListener_;
     static thread_local uint32_t photoOutputTaskId;

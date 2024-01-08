@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -56,7 +56,7 @@ BufferPool::~BufferPool()
     if (allocInProgress_.load()) {
         cvFinishAlloc_.wait(lock, [this] { return !allocInProgress_.load(); });
     }
-    for (auto it = decayingBuffers_.begin(); it != decayingBuffers_.end(); ++it) {
+    for (auto it = decayingBuffers_.begin(); it != decayingBuffers_.end(), ++it) {
         timeBroker_->DeregisterCallback(it->second);
     }
     decayingBuffers_.clear();

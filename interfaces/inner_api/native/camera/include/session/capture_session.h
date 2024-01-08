@@ -894,6 +894,9 @@ public:
         return metadataResultProcessor_;
     }
 
+    void EnableDeferredType(DeferredDeliveryImageType deferredType);
+    void SetUserId();
+    bool IsImageDeferred();
 protected:
     std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
     Profile photoProfile_;
@@ -901,6 +904,7 @@ protected:
     std::map<BeautyType, std::vector<int32_t>> beautyTypeAndRanges_;
     std::map<BeautyType, int32_t> beautyTypeAndLevels_;
     std::shared_ptr<MetadataResultProcessor> metadataResultProcessor_ = nullptr;
+    bool isImageDeferred_;
 
 private:
     std::mutex changeMetaMutex_;
@@ -961,6 +965,7 @@ private:
     bool IsModeWithVideoStream();
     void SetDefaultColorSpace();
     void ResetZoomTimer();
+    void UpdateDeviceDeferredability();
 };
 } // namespace CameraStandard
 } // namespace OHOS

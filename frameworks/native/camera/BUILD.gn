@@ -20,6 +20,8 @@ config("camera_framework_public_config") {
     "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/input",
     "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/output",
     "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/session",
+    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/deferred_proc_session",
+    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/utils",
     "../interfaces/inner_api/native/camera/include/mode",
     "../../../interfaces/inner_api/native/camera/include/utils",
   ]
@@ -32,6 +34,14 @@ config("camera_framework_local_config") {
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/include",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/include",
     "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/include",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/include/base",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/include/utils",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/binder/base/include",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/binder/client/include",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/binder/server/include",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/include/session",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/include/session/photo_session",
   ]
 }
 
@@ -60,6 +70,10 @@ ohos_shared_library("camera_framework") {
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hcapture_session_callback_stub.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hstream_capture_callback_stub.cpp",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/src/hstream_repeat_callback_stub.cpp",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/binder/client/src/deferred_photo_processing_session_proxy.cpp",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/binder/client/src/deferred_photo_processing_session_callback_proxy.cpp",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/binder/server/src/deferred_photo_processing_session_stub.cpp",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/binder/server/src/deferred_photo_processing_session_callback_stub.cpp",
     "src/input/camera_device.cpp",
     "src/input/camera_input.cpp",
     "src/input/camera_manager.cpp",
@@ -71,6 +85,7 @@ ohos_shared_library("camera_framework") {
     "src/output/preview_output.cpp",
     "src/output/sketch_wrapper.cpp",
     "src/output/video_output.cpp",
+    "src/output/deferred_photo_proxy.cpp",
     "src/session/capture_session.cpp",
     "src/session/night_session.cpp",
     "src/session/photo_session.cpp",
@@ -78,6 +93,8 @@ ohos_shared_library("camera_framework") {
     "src/session/scan_session.cpp",
     "src/session/video_session.cpp",
     "src/utils/metadata_common_utils.cpp",
+    "src/utils/dps_metadata_info.cpp",
+    "src/deferred_proc_session/deferred_photo_proc_session.cpp",
   ]
 
   cflags = [
@@ -103,6 +120,7 @@ ohos_shared_library("camera_framework") {
 
   include_dirs = [
     "${graphic_surface_path}/surface/include",
+    "${graphic_2d_path}/utils/buffer_handle/export",
     "//utils/system/safwk/native/include",
     "${window_manager_path}/interfaces/innerkits/dm",
   ]
@@ -118,12 +136,15 @@ ohos_shared_library("camera_framework") {
     "drivers_interface_camera:metadata",
     "drivers_interface_display:display_commontype_idl_headers",
     "graphic_surface:surface",
+    "graphic_2d:librender_service_client",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "image_framework:image",
     "image_framework:image_native",
     "ipc:ipc_core",
+    "os_account:libaccountkits",
+    "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "window_manager:libdm",

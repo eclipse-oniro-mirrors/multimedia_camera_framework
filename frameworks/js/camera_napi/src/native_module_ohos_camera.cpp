@@ -43,6 +43,8 @@ static napi_value Export(napi_env env, napi_value exports)
     PhotoSessionNapi::Init(env, exports);
     VideoSessionNapi::Init(env, exports);
     ModeManagerNapi::Init(env, exports);
+    PhotoNapi::Init(env, exports);
+    DeferredPhotoProxyNapi::Init(env, exports);
     return exports;
 }
 

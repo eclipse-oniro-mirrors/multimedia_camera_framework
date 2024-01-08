@@ -37,6 +37,12 @@ public:
 
     virtual int32_t SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer) = 0;
 
+    virtual int32_t DeferImageDeliveryFor(int32_t type) = 0;
+
+    virtual int32_t IsDeferredPhotoEnabled() = 0;
+    
+    virtual int32_t IsDeferredVideoEnabled() = 0;
+
     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamCapture");
 };
 } // namespace CameraStandard

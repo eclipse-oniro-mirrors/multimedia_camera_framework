@@ -29,10 +29,14 @@ using namespace OHOS::HDI::Camera::V1_0;
 static const int32_t CAPTURE_ROTATE_360 = 360;
 HStreamCapture::HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height)
     : HStreamCommon(StreamType::CAPTURE, producer, format, width, height)
-{}
+{
+    MEDIA_INFO_LOG("HStreamCapture::HStreamCapture!");
+}
 
 HStreamCapture::~HStreamCapture()
-{}
+{
+    MEDIA_INFO_LOG("HStreamCapture::~HStreamCapture!");
+}
 
 int32_t HStreamCapture::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
@@ -64,6 +68,24 @@ int32_t HStreamCapture::SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferPro
     } else {
         thumbnailSwitch_ = 0;
         thumbnailBufferQueue_ = nullptr;
+    }
+    return CAMERA_OK;
+}
+
+
+int32_t HStreamCapture::DeferImageDeliveryFor(int32_t type)
+{
+    MEDIA_INFO_LOG("HStreamCapture::DeferImageDeliveryFor type: %{public}d", type);
+    if (type == OHOS::HDI::Camera::V1_2::STILL_IMAGE) {
+        MEDIA_INFO_LOG("HStreamCapture STILL_IMAGE");
+        deferredPhotoSwitch_ = 1;
+    } else if (type == OHOS::HDI::Camera::V1_2::MOVING_IMAGE) {
+        MEDIA_INFO_LOG("HStreamCapture MOVING_IMAGE");
+        deferredVideoSwitch_ = 1;
+    } else {
+        MEDIA_INFO_LOG("HStreamCapture NONE");
+        deferredPhotoSwitch_ = 0;
+        deferredVideoSwitch_ = 0;
     }
     return CAMERA_OK;
 }
@@ -374,6 +396,25 @@ int32_t HStreamCapture::OperatePermissionCheck(uint32_t interfaceCode)
             break;
     }
     return CAMERA_OK;
+}
+
+int32_t HStreamCapture::IsDeferredPhotoEnabled()
+{
+    MEDIA_INFO_LOG("HStreamCapture IsDeferredPhotoEnabled  deferredPhotoSwitch_: %{public}d", deferredPhotoSwitch_);
+    if (deferredPhotoSwitch_ == 1) {
+        return 1;
+    }
+    MEDIA_INFO_LOG("HStreamCapture IsDeferredPhotoEnabled return 0");
+    return 0;
+}
+
+int32_t HStreamCapture::IsDeferredVideoEnabled()
+{
+    MEDIA_INFO_LOG("HStreamCapture IsDeferredVideoEnabled  deferredVideoSwitch_: %{public}d", deferredVideoSwitch_);
+    if (deferredVideoSwitch_ == 1) {
+        return 1;
+    }
+    return 0;
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -68,11 +68,36 @@ ohos_shared_library("camera_service") {
     "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include",
     "//foundation/window/window_manager/interfaces/innerkits/dm",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
+
+     "//foundation/multimedia/camera_framework/services/deferred_processing_service/include",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/include/base",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/binder/base/include",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/binder/client/include",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/binder/server/include",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/include/base/buffer_manager",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/include/base/task_manager",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/include/base/task_manager/task_group",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/include/base/timer",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/include/base/timer/core",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/include/dfx",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/include/event_monitor",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/include/post_processor",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/include/schedule",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/include/schedule/photo_processor",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/include/schedule/photo_processor/photo_job_repository",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/include/schedule/photo_processor/strategy",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/include/session",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/include/session/photo_session",
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service/include/utils",
   ]
 
   if (target_cpu == "arm") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
   }
+
+  deps = [
+    "//foundation/multimedia/camera_framework/services/deferred_processing_service:deferred_processing_service",
+  ]
 
   external_deps = [
     "ability_base:want",
@@ -100,6 +125,8 @@ ohos_shared_library("camera_service") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "window_manager:libdm",
+    "os_account:libaccountkits",
+    "os_account:os_account_innerkits",
   ]
 
   defines = []

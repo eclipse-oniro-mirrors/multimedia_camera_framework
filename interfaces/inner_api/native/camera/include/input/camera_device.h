@@ -22,6 +22,7 @@
 #include <vector>
 #include "camera_metadata_info.h"
 #include "output/camera_output_capability.h"
+#include "output/capture_output.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -172,6 +173,7 @@ public:
     std::unordered_map<int32_t, std::vector<Profile>> modePreviewProfiles_ = {};
     std::unordered_map<int32_t, std::vector<Profile>> modePhotoProfiles_ = {};
     std::unordered_map<int32_t, std::vector<VideoProfile>> modeVideoProfiles_ = {};
+    std::unordered_map<int32_t, DeferredDeliveryImageType> modeDeferredType_ = {};
 private:
     std::string cameraID_;
     const std::shared_ptr<OHOS::Camera::CameraMetadata> baseAbility_;

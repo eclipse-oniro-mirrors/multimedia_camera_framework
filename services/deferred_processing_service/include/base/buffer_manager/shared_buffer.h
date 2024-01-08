@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,6 +18,8 @@
 
 #include <memory>
 #include <string>
+#include <mutex>
+#include "ipc_file_descriptor.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -53,7 +55,7 @@ private:
     int64_t size_;
     void* addr_;
     std::atomic<bool> pinned_;
-}
+};
 using SharedBufferPtr = std::shared_ptr<SharedBuffer>;
 } // namespace DeferredProcessing
 } // namespace CameraStandard

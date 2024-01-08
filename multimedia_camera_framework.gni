@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 graphic_surface_path = "//foundation/graphic/graphic_surface"
+graphic_2d_path = "//foundation/graphic/graphic_2d"
 multimedia_camera_framework_path = "//foundation/multimedia/camera_framework"
 multimedia_image_framework_path = "//foundation/multimedia/image_framework"
 driver_camera_path = "//drivers/interface/camera"

@@ -37,6 +37,7 @@ enum PhotoOrientation {
 const TAG: string = 'CameraService';
 
 class CameraService {
+  private captureMode: number = 0;
   private mediaUtil: MediaUtils = MediaUtils.getInstance();
   private cameraManager: camera.CameraManager | undefined = undefined;
   private cameras: Array<camera.CameraDevice> | undefined = undefined;
@@ -884,9 +885,19 @@ class CameraService {
    * 创建photoOutPut输出对象
    */
   createPhotoOutputFn(photoProfileObj: camera.Profile, surfaceId: string): void {
-    Logger.info(TAG, `createPhotoOutputFn photoProfiles: ${JSON.stringify(photoProfileObj)}`);
-    // 获取image 拍照 的surfaceId
-    this.photoOutPut = this.cameraManager.createPhotoOutput(photoProfileObj, (surfaceId));
+    Logger.info(TAG, `createPhotoOutputFn photoProfiles: ${JSON.stringify(photoProfileObj)} ,captureMode: ${this.captureMode}`);
+    switch (this.captureMode) {
+      case 0:
+        this.photoOutPut = this.cameraManager.createPhotoOutput(photoProfileObj, surfaceId);
+        break;
+      case 1:
+      case 2:
+        this.photoOutPut = this.cameraManager.createPhotoOutput(photoProfileObj);
+        if (this.photoOutPut == null) {
+          Logger.error(TAG, 'createPhotoOutputFn createPhotoOutput faild');
+        }
+        break;
+    }
   }
 
   /**
@@ -929,9 +940,16 @@ class CameraService {
       this.captureSession.addOutput(this.previewOutput);
       // 把photoOutPut加入到会话
       this.captureSession.addOutput(this.photoOutPut);
+      if (AppStorage.get('deferredImage')) {
+        this.isDeferredImageDeliverySupported(1);
+        this.deferImageDeliveryFor(1);
+        this.isDeferredImageDeliveryEnabled(1);
+      }
+
       // 提交配置信息
       await this.captureSession.commitConfig();
       AppStorage.setOrCreate('colorEffectComponentIsHidden', this.getSupportedColorEffects().length > 0 ? false : true);
+      AppStorage.setOrCreate('deferredPhotoComponentIsHidden', false);
       if (this.colorEffect) {
         this.setColorEffect(this.colorEffect);
       }
@@ -961,6 +979,12 @@ class CameraService {
       this.portraitSession.addOutput(this.previewOutput);
       // 把photoOutPut加入到会话
       this.portraitSession.addOutput(this.photoOutPut);
+      if (AppStorage.get('deferredImage')) {
+        this.isDeferredImageDeliverySupported(1);
+        this.deferImageDeliveryFor(1);
+        this.isDeferredImageDeliveryEnabled(1);
+      }
+
       // 提交配置信息
       await this.portraitSession.commitConfig();
       this.setPortraitEffect();
@@ -1071,6 +1095,41 @@ class CameraService {
     this.photoOutPut.on('error', (data: BusinessError): void => {
       Logger.info(TAG, `photoOutPut data: ${JSON.stringify(data)}`);
     });
+    this.photoOutPut.on('photoAvailable', (err: BusinessError, photo: camera.Photo): void => {
+      Logger.info(TAG, 'photoOutPutCallBack photoAvailable 3');
+      if (err) {
+        Logger.info(TAG, `photoAvailable error: ${JSON.stringify(err)}.`);
+        return;
+      }
+      let mainImage: image.Image = photo.main;
+      AppStorage.setOrCreate('mainImage', mainImage);
+      mainImage.getComponent(image.ComponentType.JPEG, (errCode: BusinessError, component: image.Component): void => {
+        Logger.debug(TAG, 'getComponent start');
+        Logger.info(TAG, `err: ${JSON.stringify(errCode)}`);
+        if (errCode || component === undefined) {
+          Logger.info(TAG, 'getComponent failed');
+          return;
+        }
+        let buffer: ArrayBuffer;
+        if (component.byteBuffer) {
+          buffer = component.byteBuffer;
+        } else {
+          Logger.error(TAG, 'component byteBuffer is undefined');
+        }
+        this.savePicture(buffer, mainImage);
+      });
+      photo.release();
+    });
+    this.photoOutPut.on('deferredPhotoProxyAvailable', (err: BusinessError, proxyObj: camera.DeferredPhotoProxy): void => {
+      if (err) {
+        Logger.info(TAG, `deferredPhotoProxyAvailable error: ${JSON.stringify(err)}.`);
+        return;
+      }
+      Logger.info(TAG, 'photoOutPutCallBack deferredPhotoProxyAvailable');
+      proxyObj.getThumbnail().then((thumbnail: image.PixelMap) => {
+        AppStorage.setOrCreate('proxyThumbnail', thumbnail);
+      });
+    });
   }
 
   /**
@@ -1148,6 +1207,52 @@ class CameraService {
       Logger.info(TAG, 'onCaptureSessionErrorChange captureSession fail: ' + JSON.stringify(captureSessionError.code));
     });
 
+  }
+
+  setCaptureMode(mode: number): void {
+    this.captureMode = mode;
+  }
+
+  getCaptureMode(): boolean {
+    return this.captureMode;
+  }
+
+  /**
+   * 查询是否支持二阶段
+   */
+  isDeferredImageDeliverySupported(num: number): boolean {
+    let res: boolean = false;
+    Logger.info(TAG, `isDeferredImageDeliverySupported type: ${num % 2}`);
+    if (this.photoOutPut !== null && num % 2 === 0) {
+      res = this.photoOutPut.isDeferredImageDeliverySupported(camera.DeferredDeliveryImageType.NONE);
+    } else {
+      res = this.photoOutPut.isDeferredImageDeliverySupported(camera.DeferredDeliveryImageType.PHOTO);
+    }
+    Logger.info(TAG, `isDeferredImageDeliverySupported res: ${res}`);
+  }
+
+
+  /**
+   * 查询是否已使能二阶段
+   */
+  isDeferredImageDeliveryEnabled(num: number): boolean {
+    let res: boolean = false;
+    Logger.info(TAG, `IsDeferredImageDeliveryEnabled type: ${num % 2}`);
+    if (this.photoOutPut !== null && num % 2 === 0) {
+      res = this.photoOutPut.isDeferredImageDeliveryEnabled(camera.DeferredDeliveryImageType.NONE);
+    } else {
+      res = this.photoOutPut.isDeferredImageDeliveryEnabled(camera.DeferredDeliveryImageType.PHOTO);
+    }
+    Logger.info(TAG, `IsDeferredImageDeliveryEnabled res: ${res}`);
+    return res;
+  }
+
+  /**
+   * 使能二阶段
+   */
+  deferImageDeliveryFor(num: number): void {
+    Logger.info(TAG, `deferImageDeliveryFor type: ${num}`);
+    this.photoOutPut.deferImageDeliveryFor(camera.DeferredDeliveryImageType.PHOTO);
   }
 }
 
