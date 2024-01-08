@@ -35,10 +35,8 @@ public:
 
 private:
     napi_env env_;
-    // unique_ptr<CapturePhoto> capturePhoto_;
 
     static thread_local napi_ref sConstructor_;
-    // static thread_local unique_ptr<CapturePhoto> sCapturePhoto_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
