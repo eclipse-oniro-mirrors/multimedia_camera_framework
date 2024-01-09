@@ -849,7 +849,7 @@ void HCameraHostManager::UpdateRestoreParamCloseTime(const std::string& clientNa
             } else {
                 cameraRestoreParam->SetCloseCameraTime({0, 0});
             }
-            iter++;
+            ++iter;
         }
     }
 
@@ -906,7 +906,7 @@ void HCameraHostManager::UpdateRestoreParam(sptr<HCameraRestoreParam> &cameraRes
             }
             break;
         }
-        iter++;
+        ++iter;
     }
 }
 

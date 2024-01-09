@@ -560,27 +560,18 @@ bool CaptureSession::CanAddOutput(sptr<CaptureOutput> &output)
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW) {
         std::vector<Profile> previewProfiles = inputDevice_->GetCameraDeviceInfo()->modePreviewProfiles_[normalMode];
         Profile vaildateProfile = output->GetPreviewProfile();
-        for (auto& previewProfile : previewProfiles) {
-            if (vaildateProfile == previewProfile) {
-                return true;
-            }
-        }
+        return std::any_of(previewProfiles.begin(), previewProfiles.end(), [&vaildateProfile]
+                                       (const auto& previewProfile) { return vaildateProfile == previewProfile; });
     } else if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO) {
         std::vector<Profile> photoProfiles = inputDevice_->GetCameraDeviceInfo()->modePhotoProfiles_[normalMode];
         Profile vaildateProfile = output->GetPhotoProfile();
-        for (auto& photoProfile : photoProfiles) {
-            if (vaildateProfile == photoProfile) {
-                return true;
-            }
-        }
+        return std::any_of(photoProfiles.begin(), photoProfiles.end(), [&vaildateProfile]
+                                       (const auto& photoProfile) { return vaildateProfile == photoProfile; });
     } else if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_VIDEO) {
         std::vector<VideoProfile> videoProfiles = inputDevice_->GetCameraDeviceInfo()->modeVideoProfiles_[normalMode];
         VideoProfile vaildateProfile = output->GetVideoProfile();
-        for (auto& videoProfile : videoProfiles) {
-            if (vaildateProfile == videoProfile) {
-                return true;
-            }
-        }
+        return std::any_of(videoProfiles.begin(), videoProfiles.end(), [&vaildateProfile]
+                                       (const auto& profile) { return vaildateProfile == profile; });
     } else if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_METADATA) {
         MEDIA_INFO_LOG("CaptureSession::CanAddOutput MetadataOutput");
         return true;
