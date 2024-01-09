@@ -27,6 +27,7 @@
 
 #include "deferred_photo_job.h"
 #include "iphoto_job_repository_listener.h"
+#include <deferred_processing_service_ipc_interface_code.h>
 
 namespace OHOS {
 namespace CameraStandard {
