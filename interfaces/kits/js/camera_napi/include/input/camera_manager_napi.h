@@ -145,7 +145,9 @@ public:
 private:
     static void CameraManagerNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value CameraManagerNapiConstructor(napi_env env, napi_callback_info info);
-
+    std::shared_ptr<CameraManagerCallbackNapi> cameraManagerCallback_;
+    std::shared_ptr<CameraMuteListenerNapi> cameraMuteListener_;
+    std::shared_ptr<TorchListenerNapi> torchListener_;
     static thread_local napi_ref sConstructor_;
 
     napi_env env_;

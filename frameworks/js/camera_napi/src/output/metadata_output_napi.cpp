@@ -217,6 +217,12 @@ MetadataOutputNapi::~MetadataOutputNapi()
     if (metadataOutput_) {
         metadataOutput_ = nullptr;
     }
+    if (metadataOutputCallback_) {
+        metadataOutputCallback_ = nullptr;
+    }
+    if (metadataStateCallback_) {
+        metadataStateCallback_ = nullptr;
+    }
 }
 
 void MetadataOutputNapi::MetadataOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
@@ -704,20 +710,16 @@ napi_value MetadataOutputNapi::UnregisterCallback(napi_env env, napi_value jsThi
     NAPI_ASSERT(env, status == napi_ok && metadataOutputNapi != nullptr, "Failed to metadataOutput napi instance.");
     sptr<MetadataOutput> metadataOutput = metadataOutputNapi->metadataOutput_;
     if (eventType.compare("metadataObjectsAvailable") == 0) {
-        shared_ptr<MetadataOutputCallback> metadataOutputCallback =
-            std::static_pointer_cast<MetadataOutputCallback>(metadataOutput->GetAppObjectCallback());
-        if (metadataOutputCallback == nullptr) {
+        if (metadataOutputNapi->metadataOutputCallback_ == nullptr) {
             MEDIA_ERR_LOG("metadataOutputCallback is null");
         } else {
-            metadataOutputCallback->RemoveCallbackRef(env, callback);
+            metadataOutputNapi->metadataOutputCallback_->RemoveCallbackRef(env, callback);
         }
     } else if (eventType.compare("error") == 0) {
-        shared_ptr<MetadataStateCallbackNapi> metadataStateCallback =
-            std::static_pointer_cast<MetadataStateCallbackNapi>(metadataOutput->GetAppStateCallback());
-        if (metadataStateCallback == nullptr) {
+        if (metadataOutputNapi->metadataStateCallback_ == nullptr) {
             MEDIA_ERR_LOG("metadataStateCallback is null");
         } else {
-            metadataStateCallback->RemoveCallbackRef(env, callback);
+            metadataOutputNapi->metadataStateCallback_->RemoveCallbackRef(env, callback);
         }
     } else {
         MEDIA_ERR_LOG("Failed to Unregister Callback");
@@ -737,21 +739,19 @@ napi_value MetadataOutputNapi::RegisterCallback(napi_env env, napi_value jsThis,
     sptr<MetadataOutput> metadataOutput = metadataOutputNapi->metadataOutput_;
     NAPI_ASSERT(env, metadataOutput != nullptr, "metadataOutput instance is null.");
     if (eventType.compare("metadataObjectsAvailable") == 0) {
-        shared_ptr<MetadataOutputCallback> metadataOutputCallback =
-            std::static_pointer_cast<MetadataOutputCallback>(metadataOutput->GetAppObjectCallback());
-        if (metadataOutputCallback == nullptr) {
-            metadataOutputCallback = make_shared<MetadataOutputCallback>(env);
-            metadataOutput->SetCallback(metadataOutputCallback);
+        if (metadataOutputNapi->metadataOutputCallback_ == nullptr) {
+            shared_ptr<MetadataOutputCallback> metadataOutputCallback = make_shared<MetadataOutputCallback>(env);
+            metadataOutputNapi->metadataOutputCallback_ = metadataOutputCallback;
+            metadataOutputNapi->metadataOutput_->SetCallback(metadataOutputCallback);
         }
-        metadataOutputCallback->SaveCallbackReference(callback, isOnce);
+        metadataOutputNapi->metadataOutputCallback_->SaveCallbackReference(callback, isOnce);
     } else if (eventType.compare("error") == 0) {
-        shared_ptr<MetadataStateCallbackNapi> metadataStateCallback =
-            std::static_pointer_cast<MetadataStateCallbackNapi>(metadataOutput->GetAppStateCallback());
-        if (metadataStateCallback == nullptr) {
-            metadataStateCallback = make_shared<MetadataStateCallbackNapi>(env);
-            metadataOutput->SetCallback(metadataStateCallback);
+        if (metadataOutputNapi->metadataStateCallback_ == nullptr) {
+            shared_ptr<MetadataStateCallbackNapi> metadataStateCallback = make_shared<MetadataStateCallbackNapi>(env);
+            metadataOutputNapi->metadataStateCallback_ = metadataStateCallback;
+            metadataOutputNapi->metadataOutput_->SetCallback(metadataStateCallback);
         }
-        metadataStateCallback->SaveCallbackReference(callback, isOnce);
+        metadataOutputNapi->metadataStateCallback_->SaveCallbackReference(callback, isOnce);
     } else {
         MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
     }

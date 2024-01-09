@@ -456,6 +456,21 @@ CameraSessionNapi::~CameraSessionNapi()
     if (cameraSession_) {
         cameraSession_ = nullptr;
     }
+    if (focusCallback_) {
+        focusCallback_ = nullptr;
+    }
+    if (sessionCallback_) {
+        sessionCallback_ = nullptr;
+    }
+    if (exposureCallback_) {
+        exposureCallback_ = nullptr;
+    }
+    if (macroStatusCallback_) {
+        macroStatusCallback_ = nullptr;
+    }
+    if (smoothZoomCallback_) {
+        smoothZoomCallback_ = nullptr;
+    }
 }
 
 void CameraSessionNapi::CameraSessionNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
@@ -2481,49 +2496,44 @@ napi_value CameraSessionNapi::RegisterCallback(
     sptr<CaptureSession> cameraSession = cameraSessionNapi->cameraSession_;
     NAPI_ASSERT(env, cameraSession != nullptr, "cameraSession is null.");
     if (eventType.compare("exposureStateChange") == 0) {
-        shared_ptr<ExposureCallbackListener> exposureCallback =
-            std::static_pointer_cast<ExposureCallbackListener>(cameraSession->GetExposureCallback());
-        if (exposureCallback == nullptr) {
-            exposureCallback = make_shared<ExposureCallbackListener>(env);
-            cameraSession->SetExposureCallback(exposureCallback);
+        if (cameraSessionNapi->exposureCallback_ == nullptr) {
+            auto exposureCallback = std::make_shared<ExposureCallbackListener>(env);
+            cameraSessionNapi->exposureCallback_ = exposureCallback;
+            cameraSessionNapi->cameraSession_->SetExposureCallback(exposureCallback);
         }
-        exposureCallback->SaveCallbackReference(callback, isOnce);
+        cameraSessionNapi->exposureCallback_->SaveCallbackReference(callback, isOnce);
     } else if (eventType.compare("focusStateChange") == 0) {
-        shared_ptr<FocusCallbackListener> focusCallback =
-            std::static_pointer_cast<FocusCallbackListener>(cameraSession->GetFocusCallback());
-        if (focusCallback == nullptr) {
-            focusCallback = make_shared<FocusCallbackListener>(env);
-            cameraSession->SetFocusCallback(focusCallback);
+        if (cameraSessionNapi->focusCallback_ == nullptr) {
+            auto focusCallback = make_shared<FocusCallbackListener>(env);
+            cameraSessionNapi->focusCallback_ = focusCallback;
+            cameraSessionNapi->cameraSession_->SetFocusCallback(focusCallback);
         }
-        focusCallback->SaveCallbackReference(callback, isOnce);
+        cameraSessionNapi->focusCallback_->SaveCallbackReference(callback, isOnce);
     } else if (eventType.compare("macroStatusChanged") == 0) {
         if (!CameraNapiSecurity::CheckSystemApp(env)) {
             MEDIA_ERR_LOG("SystemApi on macroStatusChanged is called!");
             return undefinedResult;
         }
-        shared_ptr<MacroStatusCallbackListener> macroStatusCallback =
-            std::static_pointer_cast<MacroStatusCallbackListener>(cameraSession->GetMacroStatusCallback());
-        if (macroStatusCallback == nullptr) {
-            macroStatusCallback = make_shared<MacroStatusCallbackListener>(env);
-            cameraSession->SetMacroStatusCallback(macroStatusCallback);
+        if (cameraSessionNapi->macroStatusCallback_ == nullptr) {
+            auto macroStatusCallback = std::make_shared<MacroStatusCallbackListener>(env);
+            cameraSessionNapi->macroStatusCallback_ = macroStatusCallback;
+            cameraSessionNapi->cameraSession_->SetMacroStatusCallback(macroStatusCallback);
         }
-        macroStatusCallback->SaveCallbackReference(callback, isOnce);
+        cameraSessionNapi->macroStatusCallback_->SaveCallbackReference(callback, isOnce);
     } else if (eventType.compare("error") == 0) {
-        shared_ptr<SessionCallbackListener> sessionCallback =
-            std::static_pointer_cast<SessionCallbackListener>(cameraSession->GetApplicationCallback());
-        if (sessionCallback == nullptr) {
-            sessionCallback = make_shared<SessionCallbackListener>(env);
-            cameraSession->SetCallback(sessionCallback);
+        if (cameraSessionNapi->sessionCallback_ == nullptr) {
+            auto sessionCallback = std::make_shared<SessionCallbackListener>(env);
+            cameraSessionNapi->sessionCallback_ = sessionCallback;
+            cameraSessionNapi->cameraSession_->SetCallback(sessionCallback);
         }
-        sessionCallback->SaveCallbackReference(callback, isOnce);
+        cameraSessionNapi->sessionCallback_->SaveCallbackReference(callback, isOnce);
     } else if (eventType.compare("smoothZoomInfoAvailable") == 0) {
-        shared_ptr<SmoothZoomCallbackListener> smoothZoomCallback =
-            std::static_pointer_cast<SmoothZoomCallbackListener>(cameraSession->GetSmoothZoomCallback());
-        if (smoothZoomCallback == nullptr) {
-            smoothZoomCallback = make_shared<SmoothZoomCallbackListener>(env);
-            cameraSession->SetSmoothZoomCallback(smoothZoomCallback);
+        if (cameraSessionNapi->smoothZoomCallback_ == nullptr) {
+            auto smoothZoomCallback = std::make_shared<SmoothZoomCallbackListener>(env);
+            cameraSessionNapi->smoothZoomCallback_ = smoothZoomCallback;
+            cameraSessionNapi->cameraSession_->SetSmoothZoomCallback(smoothZoomCallback);
         }
-        smoothZoomCallback->SaveCallbackReference(callback, isOnce);
+        cameraSessionNapi->smoothZoomCallback_->SaveCallbackReference(callback, isOnce);
     } else {
         MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
     }
@@ -2543,50 +2553,38 @@ napi_value CameraSessionNapi::UnregisterCallback(
         env, status == napi_ok && cameraSessionNapi != nullptr, "Failed to retrieve cameraSessionNapi instance.");
     sptr<CaptureSession> cameraSession = cameraSessionNapi->cameraSession_;
     if (eventType.compare("exposureStateChange") == 0) {
-        // Set callback for exposureStateChange
-        shared_ptr<ExposureCallbackListener> exposureCallback =
-            std::static_pointer_cast<ExposureCallbackListener>(cameraSession->GetExposureCallback());
-        if (exposureCallback == nullptr) {
+        if (cameraSessionNapi->exposureCallback_ == nullptr) {
             MEDIA_ERR_LOG("exposureCallback is null");
         } else {
-            exposureCallback->RemoveCallbackRef(env, callback);
+            cameraSessionNapi->exposureCallback_->RemoveCallbackRef(env, callback);
         }
     } else if (eventType.compare("focusStateChange") == 0) {
-        // Set callback for focusStateChange
-        shared_ptr<FocusCallbackListener> focusCallback =
-            std::static_pointer_cast<FocusCallbackListener>(cameraSession->GetFocusCallback());
-        if (focusCallback == nullptr) {
+        if (cameraSessionNapi->focusCallback_ == nullptr) {
             MEDIA_ERR_LOG("focusCallback is null");
         } else {
-            focusCallback->RemoveCallbackRef(env, callback);
+            cameraSessionNapi->focusCallback_->RemoveCallbackRef(env, callback);
         }
     } else if (eventType.compare("macroStatusChanged") == 0) {
         if (!CameraNapiSecurity::CheckSystemApp(env)) {
             MEDIA_ERR_LOG("SystemApi off macroStatusChanged is called!");
             return undefinedResult;
         }
-        shared_ptr<MacroStatusCallbackListener> macroStatusCallback =
-            std::static_pointer_cast<MacroStatusCallbackListener>(cameraSession->GetMacroStatusCallback());
-        if (macroStatusCallback == nullptr) {
+        if (cameraSessionNapi->macroStatusCallback_ == nullptr) {
             MEDIA_ERR_LOG("macroStatusCallback is null");
         } else {
-            macroStatusCallback->RemoveCallbackRef(env, callback);
+            cameraSessionNapi->macroStatusCallback_->RemoveCallbackRef(env, callback);
         }
     } else if (eventType.compare("error") == 0) {
-        shared_ptr<SessionCallbackListener> sessionCallback =
-            std::static_pointer_cast<SessionCallbackListener>(cameraSession->GetApplicationCallback());
-        if (sessionCallback == nullptr) {
+        if (cameraSessionNapi->sessionCallback_ == nullptr) {
             MEDIA_ERR_LOG("sessionCallback is null");
         } else {
-            sessionCallback->RemoveCallbackRef(env, callback);
+            cameraSessionNapi->sessionCallback_->RemoveCallbackRef(env, callback);
         }
     } else if (eventType.compare("smoothZoomInfoAvailable") == 0) {
-        shared_ptr<SmoothZoomCallbackListener> smoothZoomCallback =
-            std::static_pointer_cast<SmoothZoomCallbackListener>(cameraSession->GetSmoothZoomCallback());
-        if (smoothZoomCallback == nullptr) {
+        if (cameraSessionNapi->smoothZoomCallback_ == nullptr) {
             MEDIA_ERR_LOG("smoothZoomCallback is null");
         } else {
-            smoothZoomCallback->RemoveCallbackRef(env, callback);
+            cameraSessionNapi->smoothZoomCallback_->RemoveCallbackRef(env, callback);
         }
     } else {
         MEDIA_ERR_LOG("Failed to Unregister Callback");

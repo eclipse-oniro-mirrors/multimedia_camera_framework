@@ -216,6 +216,7 @@ private:
     bool isDeferredPhotoEnabled_ = false;
     sptr<ThumbnailListener> thumbnailListener_;
     sptr<PhotoListener> photoListener_;
+    std::shared_ptr<PhotoOutputCallback> photoOutputCallback_;
     static thread_local uint32_t photoOutputTaskId;
 };
 
