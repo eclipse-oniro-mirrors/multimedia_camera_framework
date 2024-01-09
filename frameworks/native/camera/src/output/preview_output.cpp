@@ -466,13 +466,14 @@ void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
     return;
 }
 
-const std::set<camera_device_metadata_tag_t>& PreviewOutput::GetObserverTags()
+const std::set<camera_device_metadata_tag_t>& PreviewOutput::GetObserverControlTags()
 {
-    const static std::set<camera_device_metadata_tag_t> tags = { OHOS_CONTROL_ZOOM_RATIO, OHOS_CONTROL_CAMERA_MACRO };
+    const static std::set<camera_device_metadata_tag_t> tags = { OHOS_CONTROL_ZOOM_RATIO, OHOS_CONTROL_CAMERA_MACRO,
+        OHOS_CONTROL_SMOOTH_ZOOM_RATIOS };
     return tags;
 }
 
-int32_t PreviewOutput::OnMetadataChanged(
+int32_t PreviewOutput::OnControlMetadataChanged(
     const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem)
 {
     // Don't trust outer public interface passthrough data. Check the legitimacy of the data.
@@ -488,7 +489,27 @@ int32_t PreviewOutput::OnMetadataChanged(
     }
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     SketchWrapper* wrapper = reinterpret_cast<SketchWrapper*>(sketchWrapper_.get());
-    wrapper->OnControlMetadataDispatch(session->GetFeaturesMode(), tag, metadataItem);
+    wrapper->OnMetadataDispatch(session->GetFeaturesMode(), tag, metadataItem);
+    return CAM_META_SUCCESS;
+}
+
+int32_t PreviewOutput::OnResultMetadataChanged(
+    const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem)
+{
+    // Don't trust outer public interface passthrough data. Check the legitimacy of the data.
+    if (metadataItem.count <= 0) {
+        return CAM_META_INVALID_PARAM;
+    }
+    if (sketchWrapper_ == nullptr) {
+        return CAM_META_FAILURE;
+    }
+    auto session = GetSession();
+    if (session == nullptr) {
+        return CAM_META_FAILURE;
+    }
+    std::lock_guard<std::mutex> lock(asyncOpMutex_);
+    SketchWrapper* wrapper = reinterpret_cast<SketchWrapper*>(sketchWrapper_.get());
+    wrapper->OnMetadataDispatch(session->GetFeaturesMode(), tag, metadataItem);
     return CAM_META_SUCCESS;
 }
 
@@ -522,7 +543,7 @@ void PreviewOutput::OnNativeRegisterCallback(const std::string& eventString)
             return;
         }
         float sketchRatio = sketchWrapper_->GetSketchEnableRatio(session->GetFeaturesMode());
-        MEDIA_DEBUG_LOG("PreviewOutput::OnMetadataChanged OHOS_CONTROL_ZOOM_RATIO >>> tagRatio:%{public}f -- "
+        MEDIA_DEBUG_LOG("PreviewOutput::OnControlMetadataChanged OHOS_CONTROL_ZOOM_RATIO >>> tagRatio:%{public}f -- "
                         "sketchRatio:%{public}f",
             tagRatio, sketchRatio);
         sketchWrapper_->UpdateSketchRatio(sketchRatio);

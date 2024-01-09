@@ -132,16 +132,24 @@ public:
 
     /**
      * @brief Get Observed matadata tags
-     *        Register tags into capture session. If the tags data changes,{@link OnMetadataChanged} will be called.
+     *        Register tags into capture session. If the tags data changes,{@link OnControlMetadataChanged} will be
+     *        called.
      * @return Observed tags
      */
-    virtual const std::set<camera_device_metadata_tag_t>& GetObserverTags() override;
+    virtual const std::set<camera_device_metadata_tag_t>& GetObserverControlTags() override;
 
     /**
-     * @brief Callback of metadata change.
+     * @brief Callback of request metadata change.
      * @return Operate result
      */
-    int32_t OnMetadataChanged(
+    int32_t OnControlMetadataChanged(
+        const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem) override;
+
+    /**
+     * @brief Callback of result metadata change.
+     * @return Operate result
+     */
+    int32_t OnResultMetadataChanged(
         const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem) override;
 
     int32_t OnSketchStatusChanged(SketchStatus status);

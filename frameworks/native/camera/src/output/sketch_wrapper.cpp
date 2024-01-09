@@ -322,16 +322,19 @@ void SketchWrapper::AutoStream()
     }
 }
 
-int32_t SketchWrapper::OnControlMetadataDispatch(
+int32_t SketchWrapper::OnMetadataDispatch(
     int32_t modeName, const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem)
 {
     if (tag == OHOS_CONTROL_ZOOM_RATIO) {
+        MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataDispatch get tag:OHOS_CONTROL_ZOOM_RATIO");
+        return OnMetadataChangedZoomRatio(modeName, tag, metadataItem);
+    } else if (tag == OHOS_CONTROL_SMOOTH_ZOOM_RATIOS) {
+        MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataDispatch get tag:OHOS_CONTROL_SMOOTH_ZOOM_RATIOS");
         return OnMetadataChangedZoomRatio(modeName, tag, metadataItem);
     } else if (tag == OHOS_CONTROL_CAMERA_MACRO) {
         return OnMetadataChangedMacro(modeName, tag, metadataItem);
     } else {
-        MEDIA_DEBUG_LOG(
-            "SketchWrapper::OnControlMetadataDispatch get unhandled tag:%{public}d", static_cast<int32_t>(tag));
+        MEDIA_DEBUG_LOG("SketchWrapper::OnMetadataDispatch get unhandled tag:%{public}d", static_cast<int32_t>(tag));
     }
     return CAM_META_SUCCESS;
 }

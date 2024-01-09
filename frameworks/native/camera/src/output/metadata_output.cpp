@@ -196,20 +196,6 @@ int32_t MetadataOutput::Release()
     return ServiceToCameraError(errCode);
 }
 
-const std::set<camera_device_metadata_tag_t>& MetadataOutput::GetObserverTags()
-{
-    // Empty impl
-    const static std::set<camera_device_metadata_tag_t> tags = {};
-    return tags;
-}
-
-int32_t MetadataOutput::OnMetadataChanged(
-    const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem)
-{
-    // Empty impl
-    return CAM_META_SUCCESS;
-}
-
 void MetadataOutput::ProcessFaceRectangles(int64_t timestamp,
     const std::shared_ptr<OHOS::Camera::CameraMetadata>& result, std::vector<sptr<MetadataObject>>& metaObjects,
     bool isNeedMirror)

@@ -842,7 +842,7 @@ void CaptureSession::OnSettingUpdated(std::shared_ptr<OHOS::Camera::CameraMetada
             continue;
         }
         ++it;
-        auto filters = output->GetObserverTags();
+        auto filters = output->GetObserverControlTags();
         if (filters.empty()) {
             continue;
         }
@@ -852,7 +852,33 @@ void CaptureSession::OnSettingUpdated(std::shared_ptr<OHOS::Camera::CameraMetada
             if (ret != CAM_META_SUCCESS || item.count <= 0) {
                 continue;
             }
-            output->OnMetadataChanged(tag, item);
+            output->OnControlMetadataChanged(tag, item);
+        }
+    }
+}
+
+void CaptureSession::OnResultReceived(std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
+{
+    std::lock_guard<std::mutex> lock(captureOutputSetsMutex_);
+    auto it = captureOutputSets_.begin();
+    while (it != captureOutputSets_.end()) {
+        auto output = it->promote();
+        if (output == nullptr) {
+            it = captureOutputSets_.erase(it);
+            continue;
+        }
+        ++it;
+        auto filters = output->GetObserverResultTags();
+        if (filters.empty()) {
+            continue;
+        }
+        for (auto tag : filters) {
+            camera_metadata_item_t item;
+            int ret = Camera::FindCameraMetadataItem(metadata->get(), tag, &item);
+            if (ret != CAM_META_SUCCESS || item.count <= 0) {
+                continue;
+            }
+            output->OnResultMetadataChanged(tag, item);
         }
     }
 }
@@ -1876,6 +1902,7 @@ void CaptureSession::CaptureSessionMetadataResultProcessor::ProcessCallbacks(
         MEDIA_ERR_LOG("CaptureSession::CaptureSessionMetadataResultProcessor ProcessCallbacks but session is null");
         return;
     }
+    session->OnResultReceived(result);
     session->ProcessFaceRecUpdates(timestamp, result);
     session->ProcessAutoFocusUpdates(result);
     session->ProcessMacroStatusChange(result);
@@ -2352,6 +2379,11 @@ int32_t CaptureSession::SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoom
         MEDIA_DEBUG_LOG("CaptureSession::SetSmoothZoom duration: %{public}f ", duration);
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to SetSmoothZoom!, %{public}d", errCode);
+        } else {
+            std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
+                std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+            changedMetadata->addEntry(OHOS_CONTROL_SMOOTH_ZOOM_RATIOS, &targetZoomRatio, 1);
+            OnSettingUpdated(changedMetadata);
         }
         if (smoothZoomCallback_ != nullptr) {
             smoothZoomCallback_->OnSmoothZoom(duration);
