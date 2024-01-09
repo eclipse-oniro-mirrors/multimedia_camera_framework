@@ -2815,8 +2815,9 @@ void CaptureSession::SetBeauty(BeautyType beautyType, int value)
         } else if (ret == CAM_META_SUCCESS) {
             status = changedMetadata_->updateEntry(OHOS_CONTROL_BEAUTY_TYPE, &beauty, count);
         }
+        status = SetBeautyValue(beautyType, value);
         if (!status) {
-            MEDIA_ERR_LOG("Failed to set beautyType control");
+            MEDIA_ERR_LOG("CaptureSession::SetBeauty AUTO_TYPE Failed to set beauty value");
         }
         return;
     }
