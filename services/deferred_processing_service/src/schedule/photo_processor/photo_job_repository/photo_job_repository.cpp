@@ -16,6 +16,8 @@
 #include "photo_job_repository.h"
 #include "deferred_photo_job.h"
 #include "dp_log.h"
+#include "dps_event_report.h"
+#include "steady_clock.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -62,11 +64,13 @@ void PhotoJobRepository::AddDeferredJob(const std::string& imageId, bool discard
         offlineJobList_.push_back(jobPtr);
         offlineJobMap_.emplace(imageId, jobPtr);
     }
-
+    jobPtr->SetPhotoJobType(type);
     bool priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::NORMAL);
     bool statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::PENDING);
     UpdateRunningCountUnLocked(statusChanged, jobPtr);
     NotifyJobChangedUnLocked(priorityChanged, statusChanged, jobPtr);
+    
+    ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_ADD_IMAGE);
     return;
 }
 
@@ -106,6 +110,7 @@ void PhotoJobRepository::RemoveDeferredJob(const std::string& imageId, bool rest
     }
     UpdateRunningCountUnLocked(statusChanged, jobPtr);
     NotifyJobChangedUnLocked(priorityChanged, statusChanged, jobPtr);
+    ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_REMOVE_IMAGE);
     return;
 }
 
@@ -133,6 +138,7 @@ bool PhotoJobRepository::RequestJob(const std::string& imageId)
         statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::PENDING);
     }
     NotifyJobChangedUnLocked(priorityChanged, statusChanged, jobPtr);
+    ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_PROCESS_IMAGE);
     return true;
 }
 
@@ -152,6 +158,7 @@ void PhotoJobRepository::CancelJob(const std::string& imageId)
 
     priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::NORMAL);
     NotifyJobChangedUnLocked(priorityChanged, statusChanged, jobPtr);
+    ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_CANCEL_PROCESS_IMAGE);
     return;
 }
 
@@ -169,6 +176,7 @@ void PhotoJobRepository::RestoreJob(const std::string& imageId)
 
     priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::NORMAL);
     NotifyJobChangedUnLocked(priorityChanged, statusChanged, jobPtr);
+    ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_RESTORE_IMAGE);    
 }
 
 void PhotoJobRepository::SetJobPending(const std::string imageId)
@@ -360,6 +368,16 @@ void PhotoJobRepository::NotifyJobChangedUnLocked(bool priorityChanged, bool sta
             listenerSptr->OnPhotoJobChanged(priorityChanged, statusChanged, jobPtr);
         }
     }
+    if (priorityChanged) {
+        auto curJob = priotyToNum.find(jobPtr->GetCurPriority());
+        if (curJob != priotyToNum.end()) {
+            (curJob->second)++;
+        }
+        curJob = priotyToNum.find(jobPtr->GetPrePriority());
+        if (curJob != priotyToNum.end()) {
+            (curJob->second)--;
+        }
+    }    
 }
 
 void PhotoJobRepository::UpdateRunningCountUnLocked(bool statusChanged, DeferredPhotoJobPtr jobPtr)
@@ -449,6 +467,50 @@ bool PhotoJobRepository::HasUnCompletedBackgroundJob()
         return ptr.second->GetCurStatus() == PhotoJobStatus::PENDING;
     });
     return it != backgroundJobMap_.end();
+}
+
+
+void PhotoJobRepository::ReportEvent(DeferredPhotoJobPtr jobPtr, DeferredProcessingServiceInterfaceCode event)
+{
+    auto iter = priotyToNum.find(PhotoJobPriority::HIGH);
+    int highJobNum = iter->second;
+    iter = priotyToNum.find(PhotoJobPriority::NORMAL);
+    int normalJobNum = iter->second;
+    iter = priotyToNum.find(PhotoJobPriority::LOW);
+    int lowJobNum = iter->second;
+    std::string imageId = jobPtr->GetImageId();
+    DPSEventInfo dpsEventInfo;
+    dpsEventInfo.imageId = jobPtr->GetImageId();
+    dpsEventInfo.userId = userId_;
+    dpsEventInfo.lowJobNum = lowJobNum;
+    dpsEventInfo.normalJobNum = normalJobNum;
+    dpsEventInfo.highJobNum = highJobNum;
+    dpsEventInfo.discardable = jobPtr->GetDiscardable();
+    dpsEventInfo.photoJobType = static_cast<PhotoJobType>(jobPtr->GetPhotoJobType());
+    dpsEventInfo.operatorStage = event;
+    uint64_t endTime = SteadyClock::GetTimestampMilli();
+    switch (static_cast<int32_t>(event)) {
+        case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_ADD_IMAGE): {
+            dpsEventInfo.dispatchTimeEndTime = endTime;
+            break;
+        }
+        case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_REMOVE_IMAGE): {
+            dpsEventInfo.removeTimeEndTime = endTime;
+            break;
+        }
+        case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_RESTORE_IMAGE): {
+            dpsEventInfo.restoreTimeEndTime = endTime;
+            break;
+        }
+        case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_PROCESS_IMAGE): {
+            dpsEventInfo.processTimeEndTime = endTime;
+            break;
+        }
+    }
+    DPSEventReport::GetInstance().ReportOperateImage(imageId, userId_, dpsEventInfo);
+    if (event == DeferredProcessingServiceInterfaceCode::DPS_REMOVE_IMAGE) {
+        DPSEventReport::GetInstance().ReportImageProcessResult(imageId, userId_);
+    }
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

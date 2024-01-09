@@ -64,6 +64,7 @@ private:
     void UpdateRunningCountUnLocked(bool statusChanged, DeferredPhotoJobPtr jobPtr);
     void UpdateJobQueueUnLocked(bool saved, DeferredPhotoJobPtr jobPtr);
     DeferredPhotoJobPtr GetJobUnLocked(const std::string& imageId);
+    void ReportEvent(DeferredPhotoJobPtr jobPtr, DeferredProcessingServiceInterfaceCode event);
 
     std::recursive_mutex mutex_;
     int userId_;
@@ -73,6 +74,11 @@ private:
     std::list<DeferredPhotoJobPtr> offlineJobList_;
     std::deque<DeferredPhotoJobPtr> jobQueue_;
     std::vector<std::weak_ptr<IPhotoJobRepositoryListener>> jobListeners_;
+    std::map<PhotoJobPriority, int> priotyToNum = {^M
+        {PhotoJobPriority::HIGH, 0},^M
+        {PhotoJobPriority::LOW, 0},^M
+        {PhotoJobPriority::NORMAL, 0},^M
+    };
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

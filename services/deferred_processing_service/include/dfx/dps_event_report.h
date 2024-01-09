@@ -87,13 +87,13 @@ public:
         return instance;
     }
     void ReportOperateImage(const std::string& imageId, int32_t userId, DPSEventInfo& dpsEventInfo);
-    void ReportImageProcessResult(const std::string& imageId, int32_t userId, DPSEventInfo& dpsEventInfo);
+    void ReportImageProcessResult(const std::string& imageId, int32_t userId, uint64_t endTime = 0);
     void ReportImageModeChange(ExecutionMode executionMode);
     void ReportImageException(const std::string& imageId, int32_t userId);
     void SetEventInfo(const std::string& imageId, int32_t userId);
     void SetEventInfo(DPSEventInfo& dpsEventInfo);
     void RemoveEventInfo(const std::string& imageId, int32_t userId);
-    void UpdateEventInfo(const std::string& imageId, int32_t userId, const std::string& keyName, std::any value);
+    void UpdateEventInfo(const std::string& imageId, int32_t userId, const std::string keyName, uint64_t value);
     void UpdateJobNum(const std::string& imageId, int32_t userId, int lowJobNum,
         int normalJobNum, int highJobNum);
     void UpdateJobProperty(const std::string& imageId, int32_t userId, bool discardable,
