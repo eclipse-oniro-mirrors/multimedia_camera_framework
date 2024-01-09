@@ -17,6 +17,7 @@
 #include "dp_utils.h"
 #include "dp_log.h"
 #include "events_monitor.h"
+#include "dps_event_report.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -59,6 +60,7 @@ public:
             default:
                 break;
         }
+        DPSEventReport::GetInstance().SetEventType(event);
     }
 
 private:
