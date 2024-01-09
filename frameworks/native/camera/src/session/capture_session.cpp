@@ -1640,6 +1640,12 @@ int32_t CaptureSession::SetFocusPoint(Point focusPoint)
         MEDIA_ERR_LOG("CaptureSession::SetFocusPoint Need to call LockForControl() before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
+    FocusMode focusMode;
+    GetFocusMode(focusMode);
+    if (focusMode == FOCUS_MODE_CONTINUOUS_AUTO) {
+        MEDIA_ERR_LOG("The current mode does not support setting the focus point.");
+        return CameraErrorCode::SUCCESS;
+    }
     Point focusVerifyPoint = VerifyFocusCorrectness(focusPoint);
     Point unifyFocusPoint = CoordinateTransform(focusVerifyPoint);
     bool status = false;
@@ -1683,12 +1689,12 @@ Point CaptureSession::VerifyFocusCorrectness(Point point)
     float minPoint = 0.0000001;
     float maxPoint = 1;
     Point VerifyPoint = point;
-    if (VerifyPoint.x >= -minPoint && VerifyPoint.x <= minPoint) {
+    if (VerifyPoint.x <= minPoint) {
         VerifyPoint.x = minPoint;
     } else if (VerifyPoint.x > maxPoint) {
         VerifyPoint.x = maxPoint;
     }
-    if (VerifyPoint.y >= -minPoint && VerifyPoint.y <= minPoint) {
+    if (VerifyPoint.y <= minPoint) {
         VerifyPoint.y = minPoint;
     } else if (VerifyPoint.y > maxPoint) {
         VerifyPoint.y = maxPoint;
