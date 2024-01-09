@@ -149,32 +149,6 @@ void DPSEventReport::SetEventInfo(DPSEventInfo& dpsEventInfo)
     }
 }
 
-void DPSEventReport::UpdateEventInfo(const std::string& imageId, int32_t userId, const std::string keyName,
-    uint64_t value)
-{
-    std::unique_lock<std::mutex> lock(mutex_);
-    auto imageIdToEventInfo = userIdToImageIdEventInfo.find(userId);
-    if (imageIdToEventInfo != userIdToImageIdEventInfo.end()) {
-        std::map<std::string, DPSEventInfo>::iterator iter = (userIdToImageIdEventInfo[userId]).begin();
-        while (iter != (userIdToImageIdEventInfo[userId]).end()) {
-            if ((iter->second).imageId == imageId) {
-                auto iterFun = sysEventFuncMap_.find(keyName);
-                if (iterFun == sysEventFuncMap_.end()) {
-                    return;
-                }
-                iterFun->second(iter->second, value);
-                if (keyName == EVENT_KEY_IMAGEDONETIME || keyName == EVENT_KEY_REMOVETIME) {
-                    (iter->second).imageDoneTimeBeginTime = value;
-                    ReportImageProcessResult(imageId, userId);
-                    RemoveEventInfo(imageId, userId);
-                }
-                break;
-            }
-            iter++;
-        }
-    }
-}
-
 void DPSEventReport::UpdateJobProperty(const std::string& imageId, int32_t userId, bool discardable,
     PhotoJobType photoJobType, TrigerMode triggermode)
 {

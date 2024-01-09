@@ -93,7 +93,6 @@ public:
     void SetEventInfo(const std::string& imageId, int32_t userId);
     void SetEventInfo(DPSEventInfo& dpsEventInfo);
     void RemoveEventInfo(const std::string& imageId, int32_t userId);
-    void UpdateEventInfo(const std::string& imageId, int32_t userId, const std::string keyName, uint64_t value);
     void UpdateJobNum(const std::string& imageId, int32_t userId, int lowJobNum,
         int normalJobNum, int highJobNum);
     void UpdateJobProperty(const std::string& imageId, int32_t userId, bool discardable,

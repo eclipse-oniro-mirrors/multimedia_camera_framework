@@ -74,10 +74,10 @@ private:
     std::list<DeferredPhotoJobPtr> offlineJobList_;
     std::deque<DeferredPhotoJobPtr> jobQueue_;
     std::vector<std::weak_ptr<IPhotoJobRepositoryListener>> jobListeners_;
-    std::map<PhotoJobPriority, int> priotyToNum = {^M
-        {PhotoJobPriority::HIGH, 0},^M
-        {PhotoJobPriority::LOW, 0},^M
-        {PhotoJobPriority::NORMAL, 0},^M
+    std::map<PhotoJobPriority, int> priotyToNum = {
+        {PhotoJobPriority::HIGH, 0},
+        {PhotoJobPriority::LOW, 0},
+        {PhotoJobPriority::NORMAL, 0},
     };
 };
 } // namespace DeferredProcessing

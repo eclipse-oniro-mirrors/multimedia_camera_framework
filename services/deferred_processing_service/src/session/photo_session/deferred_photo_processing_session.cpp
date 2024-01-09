@@ -197,7 +197,7 @@ void DeferredPhotoProcessingSession::ReportEvent(const std::string& imageId, int
         }
         case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_END_SYNCHRONIZE): {
             dpsEventInfo.synchronizeTimeEndTime = beginTime;
-            DPSEventReport::GetInstance().ReportOperateImage(imageId, userId_, dpsEventInfo);           
+            DPSEventReport::GetInstance().ReportOperateImage(imageId, userId_, dpsEventInfo);          
             break;
         }
         case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_ADD_IMAGE): {

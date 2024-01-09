@@ -176,7 +176,7 @@ void PhotoJobRepository::RestoreJob(const std::string& imageId)
 
     priorityChanged = jobPtr->SetJobPriority(PhotoJobPriority::NORMAL);
     NotifyJobChangedUnLocked(priorityChanged, statusChanged, jobPtr);
-    ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_RESTORE_IMAGE);    
+    ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_RESTORE_IMAGE);
 }
 
 void PhotoJobRepository::SetJobPending(const std::string imageId)
@@ -377,7 +377,7 @@ void PhotoJobRepository::NotifyJobChangedUnLocked(bool priorityChanged, bool sta
         if (curJob != priotyToNum.end()) {
             (curJob->second)--;
         }
-    }    
+    }
 }
 
 void PhotoJobRepository::UpdateRunningCountUnLocked(bool statusChanged, DeferredPhotoJobPtr jobPtr)

@@ -115,11 +115,13 @@ bool DeferredPhotoJob::GetDiscardable()
     return discardable_;
 }
 
-void DeferredPhotoJob::SetPhotoJobType(int photoJobType) {
+void DeferredPhotoJob::SetPhotoJobType(int photoJobType)
+{
     photoJobType_ = photoJobType;
 }
 
-int DeferredPhotoJob::GetPhotoJobType() {
+int DeferredPhotoJob::GetPhotoJobType()
+{
     return photoJobType_;
 }
 
