@@ -249,6 +249,9 @@ VideoOutputNapi::~VideoOutputNapi()
     if (videoOutput_) {
         videoOutput_ = nullptr;
     }
+    if (videoCallback_) {
+        videoCallback_ = nullptr;
+    }
 }
 
 void VideoOutputNapi::VideoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
@@ -797,13 +800,12 @@ napi_value VideoOutputNapi::RegisterCallback(napi_env env, napi_value jsThis,
     NAPI_ASSERT(env, status == napi_ok && videoOutputNapi != nullptr,
                 "Failed to retrieve videoOutputNapi instance.");
     if (!eventType.empty()) {
-        std::shared_ptr<VideoCallbackListener> videoCallback =
-            std::static_pointer_cast<VideoCallbackListener>(videoOutputNapi->videoOutput_->GetApplicationCallback());
-        if (videoCallback== nullptr) {
-            videoCallback = std::make_shared<VideoCallbackListener>(env);
+        if (videoOutputNapi->videoCallback_ == nullptr) {
+            auto videoCallback = make_shared<VideoCallbackListener>(env);
+            videoOutputNapi->videoCallback_= videoCallback;
             videoOutputNapi->videoOutput_->SetCallback(videoCallback);
         }
-        videoCallback->SaveCallbackReference(eventType, callback, isOnce);
+        videoOutputNapi->videoCallback_->SaveCallbackReference(eventType, callback, isOnce);
     } else {
         MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
     }
@@ -823,12 +825,10 @@ napi_value VideoOutputNapi::UnregisterCallback(napi_env env, napi_value jsThis,
                 "Failed to retrieve videoOutputNapi instance.");
     if (!eventType.empty()) {
         // unset callback for error
-        std::shared_ptr<VideoCallbackListener> videoCallback =
-            std::static_pointer_cast<VideoCallbackListener>(videoOutputNapi->videoOutput_->GetApplicationCallback());
-        if (videoCallback == nullptr) {
+        if (videoOutputNapi->videoCallback_ == nullptr) {
             MEDIA_ERR_LOG("videoCallback is null");
         } else {
-            videoCallback->RemoveCallbackRef(env, callback, eventType);
+            videoOutputNapi->videoCallback_->RemoveCallbackRef(env, callback, eventType);
         }
     } else {
         MEDIA_ERR_LOG("Incorrect callback event type provided for camera input!");

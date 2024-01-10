@@ -806,6 +806,9 @@ PhotoOutputNapi::~PhotoOutputNapi()
     if (photoOutput_) {
         photoOutput_ = nullptr;
     }
+    if (photoOutputCallback_) {
+        photoOutputCallback_ = nullptr;
+    }
 }
 
 void PhotoOutputNapi::PhotoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
@@ -1648,14 +1651,12 @@ napi_value PhotoOutputNapi::RegisterCallback(
         }
         photoOutputNapi->photoListener_->SaveCallbackReference(eventType, callback, isOnce);
     } else if (!eventType.empty()) {
-        // Set callback for focusStateChange
-        shared_ptr<PhotoOutputCallback> photoOutputCallback =
-            std::static_pointer_cast<PhotoOutputCallback>(photoOutputNapi->photoOutput_->GetApplicationCallback());
-        if (photoOutputCallback == nullptr) {
-            photoOutputCallback = make_shared<PhotoOutputCallback>(env);
+        if (photoOutputNapi->photoOutputCallback_ == nullptr) {
+            std::shared_ptr<PhotoOutputCallback> photoOutputCallback = std::make_shared<PhotoOutputCallback>(env);
             photoOutputNapi->photoOutput_->SetCallback(photoOutputCallback);
+            photoOutputNapi->photoOutputCallback_ = photoOutputCallback;
         }
-        photoOutputCallback->SaveCallbackReference(eventType, callback, isOnce);
+        photoOutputNapi->photoOutputCallback_->SaveCallbackReference(eventType, callback, isOnce);
     } else {
         MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
     }
@@ -1691,12 +1692,10 @@ napi_value PhotoOutputNapi::UnregisterCallback(
             photoOutputNapi->thumbnailListener_->RemoveCallbackRef(env, callback);
         }
     } else if (!eventType.empty()) {
-        shared_ptr<PhotoOutputCallback> photoOutputCallback =
-            std::static_pointer_cast<PhotoOutputCallback>(photoOutputNapi->photoOutput_->GetApplicationCallback());
-        if (photoOutputCallback == nullptr) {
+        if (photoOutputNapi->photoOutputCallback_ == nullptr) {
             MEDIA_ERR_LOG("photoOutputCallback is null");
         } else {
-            photoOutputCallback->RemoveCallbackRef(env, callback, eventType);
+            photoOutputNapi->photoOutputCallback_->RemoveCallbackRef(env, callback, eventType);
         }
     } else {
         MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");

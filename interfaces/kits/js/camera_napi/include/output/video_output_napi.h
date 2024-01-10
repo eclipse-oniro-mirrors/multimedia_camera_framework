@@ -105,6 +105,7 @@ private:
     napi_env env_;
     napi_ref wrapper_;
     sptr<VideoOutput> videoOutput_;
+    std::shared_ptr<VideoCallbackListener> videoCallback_;
     static thread_local uint32_t videoOutputTaskId;
 };
 

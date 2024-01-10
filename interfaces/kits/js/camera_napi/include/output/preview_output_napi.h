@@ -127,6 +127,7 @@ private:
     napi_env env_;
     napi_ref wrapper_;
     sptr<PreviewOutput> previewOutput_;
+    std::shared_ptr<PreviewOutputCallback> previewCallback_;
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<PreviewOutput> sPreviewOutput_;
