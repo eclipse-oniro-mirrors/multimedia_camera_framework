@@ -110,6 +110,21 @@ int DeferredPhotoJob::GetDeferredProcType()
     return type;
 }
 
+bool DeferredPhotoJob::GetDiscardable()
+{
+    return discardable_;
+}
+
+void DeferredPhotoJob::SetPhotoJobType(int photoJobType)
+{
+    photoJobType_ = photoJobType;
+}
+
+int DeferredPhotoJob::GetPhotoJobType()
+{
+    return photoJobType_;
+}
+
 bool DeferredPhotoJob::SetJobStatus(PhotoJobStatus status)
 {
     DP_DEBUG_LOG("imageId: %s, current status: %d, previous status: %d, status to set: %d",

@@ -21,6 +21,7 @@
 #include <ipc_skeleton.h>
 #include <iservice_registry.h>
 #include <system_ability_definition.h>
+#include "dps_event_report.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -347,6 +348,7 @@ void ThermalLevelSubscriber::OnReceiveEvent(const OHOS::EventFwk::CommonEventDat
     if (action == OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED) {
         static const std::string THERMAL_EVENT_ID = "0";
         int level = data.GetWant().GetIntParam(THERMAL_EVENT_ID, 0);
+        DPSEventReport::GetInstance().SetTemperatureLevel(level);
         DP_INFO_LOG("OnThermalLevelChanged level:%d", static_cast<int>(level));
         EventsMonitor::GetInstance().NotifySystemPressureLevel(MapEventLevel(level));
         DP_INFO_LOG("ThermalLevelSubscriber SetThermalLevel: %{public}d.", level);

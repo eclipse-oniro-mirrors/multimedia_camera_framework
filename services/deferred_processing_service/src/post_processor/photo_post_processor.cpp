@@ -164,7 +164,7 @@ void PhotoPostProcessor::PhotoProcessListener::ReportEvent(const std::string& im
 {
     uint64_t endTime = SteadyClock::GetTimestampMilli();
     DPSEventReport::GetInstance()
-        .UpdateEventInfo(imageId, photoPostProcessor_->GetUserId(), EVENT_KEY_PROCESSTIME, endTime);
+        .ReportImageProcessResult(imageId, photoPostProcessor_->GetUserId(), endTime);
 }
 
 

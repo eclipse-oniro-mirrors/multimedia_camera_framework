@@ -23,14 +23,14 @@ namespace DeferredProcessing {
 static constexpr char CAMERA_FWK_UE[] = "CAMERA_FWK_UE";
 void DPSEventReport::ReportOperateImage(const std::string& imageId, int32_t userId, DPSEventInfo& dpsEventInfo)
 {
+    DP_DEBUG_LOG("ReportOperateImage enter.");
     SetEventInfo(dpsEventInfo);
-    DP_INFO_LOG("ReportOperateImage enter.");
     HiSysEventWrite(
         CAMERA_FWK_UE,
         "DPS_IMAGE_OPERATE",
         HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
-        EVENT_KEY_IMAGEID, dpsEventInfo.imageId,
-        EVENT_KEY_USERID, dpsEventInfo.userId,
+        EVENT_KEY_IMAGEID, imageId,
+        EVENT_KEY_USERID, userId,
         EVENT_KEY_DEFEVENTTYPE, dpsEventInfo.operatorStage,
         EVENT_KEY_DISCARDABLE, dpsEventInfo.discardable,
         EVENT_KEY_TRIGGERMODE, dpsEventInfo.triggerMode,
@@ -40,9 +40,13 @@ void DPSEventReport::ReportOperateImage(const std::string& imageId, int32_t user
         EVENT_KEY_TEMPERATURELEVEL, temperatureLevel_);
 }
 
-void DPSEventReport::ReportImageProcessResult(const std::string& imageId, int32_t userId, DPSEventInfo& dpsEventInfo)
+void DPSEventReport::ReportImageProcessResult(const std::string& imageId, int32_t userId, uint64_t endTime)
 {
-    DP_INFO_LOG("ReportImageProcessResult enter.");
+    DP_DEBUG_LOG("ReportImageProcessResult enter.");
+    DPSEventInfo dpsEventInfo = GetEventInfo(imageId, userId);
+    if (endTime != 0) {
+        dpsEventInfo.imageDoneTimeEndTime = endTime;
+    }
     HiSysEventWrite(
         CAMERA_FWK_UE,
         "DPS_IMAGE_PROCESS_RESULT",
@@ -61,6 +65,7 @@ void DPSEventReport::ReportImageProcessResult(const std::string& imageId, int32_
         EVENT_KEY_NORMALJOBNUM, dpsEventInfo.normalJobNum,
         EVENT_KEY_LOWJOBNUM, dpsEventInfo.lowJobNum,
         EVENT_KEY_TEMPERATURELEVEL, temperatureLevel_);
+    RemoveEventInfo(imageId, userId);
 }
 
 void DPSEventReport::ReportImageModeChange(ExecutionMode executionMode)
@@ -70,7 +75,7 @@ void DPSEventReport::ReportImageModeChange(ExecutionMode executionMode)
         CAMERA_FWK_UE,
         "DPS_IMAGE_MODE_CHANGE",
         HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
-        EVENT_KEY_EXCUTIONMODE, static_cast<int32_t>(executionMode_),
+        EVENT_KEY_EXCUTIONMODE, static_cast<int32_t>(executionMode),
         EVENT_KEY_CHANGEREASON, static_cast<int32_t>(eventType_),
         EVENT_KEY_TEMPERATURELEVEL, temperatureLevel_);
 }
@@ -133,9 +138,6 @@ void DPSEventReport::SetEventInfo(const std::string& imageId, int32_t userId)
 
 void DPSEventReport::SetEventInfo(DPSEventInfo& dpsEventInfo)
 {
-    if (dpsEventInfo.operatorStage != static_cast<uint32_t>(DeferredProcessingServiceInterfaceCode::DPS_ADD_IMAGE)) {
-        return;
-    }
     std::unique_lock<std::mutex> lock(mutex_);
     auto imageIdToEventInfoTemp = userIdToImageIdEventInfo.find(dpsEventInfo.userId);
     if (imageIdToEventInfoTemp != userIdToImageIdEventInfo.end()) {
@@ -144,34 +146,6 @@ void DPSEventReport::SetEventInfo(DPSEventInfo& dpsEventInfo)
         std::map<std::string, DPSEventInfo> imageIdToEventInfo;
         imageIdToEventInfo[dpsEventInfo.imageId] = dpsEventInfo;
         userIdToImageIdEventInfo[dpsEventInfo.userId] = imageIdToEventInfo;
-    }
-}
-
-void DPSEventReport::UpdateEventInfo(const std::string& imageId,
-                                     int32_t userId,
-                                     const std::string& keyName,
-                                     std::any value)
-{
-    std::unique_lock<std::mutex> lock(mutex_);
-    auto imageIdToEventInfo = userIdToImageIdEventInfo.find(userId);
-    if (imageIdToEventInfo != userIdToImageIdEventInfo.end()) {
-        std::map<std::string, DPSEventInfo>::iterator iter = (userIdToImageIdEventInfo[userId]).begin();
-        while (iter != (userIdToImageIdEventInfo[userId]).end()) {
-            if ((iter->second).imageId == imageId) {
-                auto iterFun = sysEventFuncMap_.find(keyName);
-                if (iterFun == sysEventFuncMap_.end()) {
-                    return;
-                }
-                iterFun->second(iter->second, value);
-                if (keyName == EVENT_KEY_IMAGEDONETIME || keyName == EVENT_KEY_REMOVETIME) {
-                    (iter->second).imageDoneTimeBeginTime = std::any_cast<uint64_t>(value);
-                    ReportImageProcessResult(imageId, userId, iter->second);
-                    RemoveEventInfo(imageId, userId);
-                }
-                break;
-            }
-            iter++;
-        }
     }
 }
 

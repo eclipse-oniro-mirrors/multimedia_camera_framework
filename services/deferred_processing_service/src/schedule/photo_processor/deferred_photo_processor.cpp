@@ -15,6 +15,7 @@
 
 #include "deferred_photo_processor.h"
 #include "dp_log.h"
+#include "dps_event_report.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -177,6 +178,7 @@ void DeferredPhotoProcessor::PostProcess(DeferredPhotoWorkPtr work)
     repository_->SetJobRunning(imageId);
     postProcessor_->SetExecutionMode(executionMode);
     postProcessor_->ProcessImage(imageId);
+    DPSEventReport::GetInstance().ReportImageModeChange(executionMode);
     return;
 }
 

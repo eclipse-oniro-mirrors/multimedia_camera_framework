@@ -186,14 +186,18 @@ void DeferredPhotoProcessingSession::ReportEvent(const std::string& imageId, int
 {
     DPSEventInfo dpsEventInfo;
     dpsEventInfo.operatorStage = event;
+    dpsEventInfo.imageId = imageId;
+    dpsEventInfo.userId = userId_;
     uint64_t beginTime = SteadyClock::GetTimestampMilli();
     switch (static_cast<int32_t>(event)) {
         case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_BEGIN_SYNCHRONIZE): {
             dpsEventInfo.synchronizeTimeBeginTime = beginTime;
+            DPSEventReport::GetInstance().ReportOperateImage(imageId, userId_, dpsEventInfo);
             break;
         }
         case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_END_SYNCHRONIZE): {
             dpsEventInfo.synchronizeTimeEndTime = beginTime;
+            DPSEventReport::GetInstance().ReportOperateImage(imageId, userId_, dpsEventInfo);
             break;
         }
         case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_ADD_IMAGE): {
@@ -213,9 +217,8 @@ void DeferredPhotoProcessingSession::ReportEvent(const std::string& imageId, int
             break;
         }
     }
-    DPSEventReport::GetInstance().ReportOperateImage(imageId, userId_, dpsEventInfo);
     if (event == DeferredProcessingServiceInterfaceCode::DPS_END_SYNCHRONIZE) {
-        DPSEventReport::GetInstance().ReportImageProcessResult(imageId, userId_, dpsEventInfo);
+        DPSEventReport::GetInstance().ReportImageProcessResult(imageId, userId_);
     }
 }
 } // namespace DeferredProcessing

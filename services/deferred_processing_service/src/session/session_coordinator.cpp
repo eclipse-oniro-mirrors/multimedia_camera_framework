@@ -165,8 +165,6 @@ void SessionCoordinator::OnProcessDone(int userId, const std::string& imageId,
         DP_INFO_LOG("callback is null, cache request, imageId: %s.", imageId.c_str());
         pendingImageResults_.push_back({CallbackType::ON_PROCESS_DONE, userId, imageId, ipcFd, dataSize});
     }
-    DPSEventReport::GetInstance().UpdateEventInfo(imageId, userId, EVENT_KEY_IMAGEDONETIME,
-        SteadyClock::GetTimestampMilli());
     return;
 }
 
