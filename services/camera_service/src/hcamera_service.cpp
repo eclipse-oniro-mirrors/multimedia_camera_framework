@@ -1289,6 +1289,18 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
         uint8_t deferredType = item.data.u8[0];
         defaultSettings->addEntry(OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &deferredType, count);
     }
+
+    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_SUPPORTED_COLOR_MODES, &item);
+    if (ret == CAM_META_SUCCESS) {
+        uint8_t colorEffectTemp = item.data.u8[0];
+        defaultSettings->addEntry(OHOS_CONTROL_SUPPORTED_COLOR_MODES, &colorEffectTemp, count);
+    }
+
+    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        uint8_t effect = item.data.u8[0];
+        defaultSettings->addEntry(OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &effect, count);
+    }
     return defaultSettings;
 }
 

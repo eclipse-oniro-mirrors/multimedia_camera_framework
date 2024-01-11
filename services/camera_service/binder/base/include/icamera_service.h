@@ -33,7 +33,7 @@ namespace CameraStandard {
 enum RestoreParamTypeOhos {
     NO_NEED_RESTORE_PARAM_OHOS = 0,
     PERSISTENT_DEFAULT_PARAM_OHOS = 1,
-    TRANSISTENT_ACTIVE_PARAM_OHOS = 2,
+    TRANSIENT_ACTIVE_PARAM_OHOS = 2,
 };
 
 struct EffectParam {

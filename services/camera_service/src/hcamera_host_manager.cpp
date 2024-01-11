@@ -786,7 +786,7 @@ int32_t HCameraHostManager::Prelaunch(const std::string& cameraId, std::string c
     }
     int32_t res = cameraHostInfo->Prelaunch(cameraRestoreParam);
     if (res == 0 && cameraRestoreParam->GetRestoreParamType() !=
-        RestoreParamTypeOhos::TRANSISTENT_ACTIVE_PARAM_OHOS) {
+        RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS) {
         return CAMERA_OK;
     }
     auto it = transitentParamMap_.find(clientName);
@@ -855,7 +855,7 @@ void HCameraHostManager::UpdateRestoreParamCloseTime(const std::string& clientNa
 
     auto itTransitent = transitentParamMap_.find(clientName);
     if (itTransitent != transitentParamMap_.end()) {
-        MEDIA_INFO_LOG("HCameraHostManager::Update transistent CloseTime ");
+        MEDIA_INFO_LOG("HCameraHostManager::Update transient CloseTime ");
         transitentParamMap_[clientName]->SetCloseCameraTime(closeTime);
     }
 }

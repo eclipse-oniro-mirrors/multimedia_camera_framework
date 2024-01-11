@@ -320,13 +320,13 @@ declare namespace camera {
     PRESISTENT_DEFAULT_PARAM = 1,
 
     /**
-     * Transistent active parameter, which has a higher priority than PRESISTENT_DEFAULT_PARAM when both exist.
+     * Transient active parameter, which has a higher priority than PRESISTENT_DEFAULT_PARAM when both exist.
      *
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 11
      */
-    TRANSISTENT_ACTIVE_PARAM = 2
+    TRANSIENT_ACTIVE_PARAM = 2
   }
 
   /**

@@ -2361,7 +2361,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_055, TestSize.Level0
     string cameraId = "";
     int activeTime = 0;
     EffectParam effectParam = {0, 0, 0};
-    cameraManager->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSISTENT_ACTIVE_PARAM_OHOS,
+    cameraManager->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS,
         activeTime, effectParam);
 
     cameraManager->cameraObjList = {};
@@ -4062,12 +4062,12 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_006, TestSize.Level
     int activeTime = 0;
     EffectParam effectParam = {0, 0, 0};
 
-    intResult = cameraService->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSISTENT_ACTIVE_PARAM_OHOS,
+    intResult = cameraService->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS,
         activeTime, effectParam);
     EXPECT_EQ(intResult, 2);
 
     cameraId = "";
-    intResult = cameraService->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSISTENT_ACTIVE_PARAM_OHOS,
+    intResult = cameraService->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS,
         activeTime, effectParam);
     EXPECT_EQ(intResult, 2);
 

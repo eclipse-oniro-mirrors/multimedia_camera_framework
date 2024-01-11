@@ -23,7 +23,7 @@ namespace CameraStandard {
 enum RestoreParamType {
     NO_NEED_RESTORE_PARAM = 0,
     PERSISTENT_DEFAULT_PARAM = 1,
-    TRANSISTENT_ACTIVE_PARAM = 2,
+    TRANSIENT_ACTIVE_PARAM = 2,
 };
 
 struct SettingParam {
