@@ -1290,7 +1290,6 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
         defaultSettings->addEntry(OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &deferredType, count);
     }
 
-    
     ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_SUPPORTED_COLOR_MODES, &item);
     if (ret == CAM_META_SUCCESS) {
         uint8_t colorEffectTemp = item.data.u8[0];
