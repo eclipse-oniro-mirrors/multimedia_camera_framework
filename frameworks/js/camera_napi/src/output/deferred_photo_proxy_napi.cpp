@@ -214,6 +214,8 @@ napi_value DeferredPhotoProxyNapi::Release(napi_env env, napi_callback_info info
                 auto context = static_cast<DeferredPhotoProxAsyncContext*>(data);
                 napi_resolve_deferred(env, context->deferred, nullptr);
                 napi_delete_async_work(env, context->work);
+                delete context->objectInfo;
+                delete context;
             }, static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for DeferredPhotoProxyNapi::Release");

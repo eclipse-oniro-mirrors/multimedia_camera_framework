@@ -68,12 +68,14 @@ DeferredPhotoProxy::DeferredPhotoProxy(const BufferHandle* bufferHandle,
 DeferredPhotoProxy::~DeferredPhotoProxy()
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    MEDIA_INFO_LOG("~DeferredPhotoProxy");
     if (isMmaped_) {
         munmap(fileDataAddr_, fileSize_);
     }
     fileDataAddr_ = nullptr;
     fileSize_ = 0;
-    MEDIA_INFO_LOG("~DeferredPhotoProxy");
+    delete [] buffer_;
+    buffer_ = nullptr;
 }
 
 void DeferredPhotoProxy::ReadFromParcel(MessageParcel &parcel)
