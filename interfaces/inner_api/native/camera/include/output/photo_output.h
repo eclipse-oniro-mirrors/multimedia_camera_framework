@@ -306,20 +306,6 @@ public:
      */
     std::shared_ptr<PhotoCaptureSetting> GetDefaultCaptureSetting();
 
-    /**
-     * @brief Get Observed matadata tags
-     *        Register tags into capture session. If the tags data changes,{@link OnMetadataChanged} will be called.
-     * @return Observed tags
-     */
-    virtual const std::set<camera_device_metadata_tag_t>& GetObserverTags() override;
-
-    /**
-     * @brief Callback of metadata change.
-     * @return Operate result
-     */
-    int32_t OnMetadataChanged(
-        const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem) override;
-
     sptr<Surface> thumbnailSurface_;
     
     sptr<Surface> deferredSurface_;

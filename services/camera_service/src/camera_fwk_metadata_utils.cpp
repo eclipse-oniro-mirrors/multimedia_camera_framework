@@ -14,6 +14,7 @@
  */
 
 #include "camera_fwk_metadata_utils.h"
+
 #include <cstdint>
 
 #include "camera_log.h"
@@ -22,6 +23,14 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace CameraFwkMetadataUtils {
+namespace {
+void ForEach(uint32_t iteratorCount, std::function<void(uint32_t)> fun)
+{
+    for (uint32_t index = 0; index < iteratorCount; index++) {
+        fun(index);
+    }
+}
+} // namespace
 bool MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata,
     std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata)
 {
@@ -93,6 +102,78 @@ bool UpdateMetadataTag(const camera_metadata_item_t& srcItem, std::shared_ptr<OH
         return false;
     }
     return true;
+}
+
+void DumpMetadataInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata)
+{
+    if (srcMetadata == nullptr) {
+        MEDIA_ERR_LOG("DumpMetadataInfo srcMetadata is null");
+        return;
+    }
+    auto metadataHeader = srcMetadata->get();
+    uint32_t version = metadataHeader->version;
+    uint32_t itemCount = metadataHeader->item_count;
+    uint32_t dataCount = metadataHeader->data_count;
+    uint32_t size = metadataHeader->size;
+    MEDIA_DEBUG_LOG("DumpMetadataInfo srcMetadata \
+    version:%{public}d, itemCount:%{public}d, dataCount:%{public}d, size:%{public}d",
+        version, itemCount, dataCount, size);
+
+    for (uint32_t i = 0; i < itemCount; i++) {
+        camera_metadata_item_t item;
+        Camera::GetCameraMetadataItem(metadataHeader, i, &item);
+        DumpMetadataItemInfo(item);
+    }
+}
+
+void DumpMetadataItemInfo(const camera_metadata_item_t& metadataItem)
+{
+    uint32_t dataType = metadataItem.data_type;
+    uint32_t dataCount = metadataItem.count;
+    const char* tagName = Camera::GetCameraMetadataItemName(metadataItem.item);
+    MEDIA_DEBUG_LOG("DumpMetadataItemInfo \
+    tag:%{public}d->%{public}s, dataType:%{public}d, dataCount:%{public}d",
+        metadataItem.item, tagName, dataType, dataCount);
+    if (dataType == META_TYPE_BYTE) {
+        ForEach(dataCount, [&metadataItem, &tagName](uint32_t index) {
+            MEDIA_DEBUG_LOG("DumpMetadataItemInfo:%{public}d->%{public}s, dataIndex:%{public}d, value:%{public}d",
+                metadataItem.item, tagName, index, metadataItem.data.u8[index]);
+        });
+    } else if (dataType == META_TYPE_INT32) {
+        ForEach(dataCount, [&metadataItem, &tagName](uint32_t index) {
+            MEDIA_DEBUG_LOG("DumpMetadataItemInfo:%{public}d->%{public}s, dataIndex:%{public}d, value:%{public}d",
+                metadataItem.item, tagName, index, metadataItem.data.i32[index]);
+        });
+    } else if (dataType == META_TYPE_UINT32) {
+        ForEach(dataCount, [&metadataItem, &tagName](uint32_t index) {
+            MEDIA_DEBUG_LOG("DumpMetadataItemInfo:%{public}d->%{public}s, dataIndex:%{public}d, value:%{public}d",
+                metadataItem.item, tagName, index, metadataItem.data.ui32[index]);
+        });
+    } else if (dataType == META_TYPE_FLOAT) {
+        ForEach(dataCount, [&metadataItem, &tagName](uint32_t index) {
+            MEDIA_DEBUG_LOG("DumpMetadataItemInfo:%{public}d->%{public}s, dataIndex:%{public}d, value:%{public}f",
+                metadataItem.item, tagName, index, metadataItem.data.f[index]);
+        });
+    } else if (dataType == META_TYPE_INT64) {
+        ForEach(dataCount, [&metadataItem, &tagName](uint32_t index) {
+            MEDIA_DEBUG_LOG("DumpMetadataItemInfo:%{public}d->%{public}s, dataIndex:%{public}d, value:%{public}lld",
+                metadataItem.item, tagName, index, static_cast<long long>(metadataItem.data.i64[index]));
+        });
+    } else if (dataType == META_TYPE_DOUBLE) {
+        ForEach(dataCount, [&metadataItem, &tagName](uint32_t index) {
+            MEDIA_DEBUG_LOG("DumpMetadataItemInfo:%{public}d->%{public}s, dataIndex:%{public}d, value:%{public}lf",
+                metadataItem.item, tagName, index, metadataItem.data.d[index]);
+        });
+    } else if (dataType == META_TYPE_RATIONAL) {
+        ForEach(dataCount, [&metadataItem, &tagName](uint32_t index) {
+            MEDIA_DEBUG_LOG("DumpMetadataItemInfo:%{public}d->%{public}s, dataIndex:%{public}d, numerator:%{public}d, "
+                            "denominator:%{public}d",
+                metadataItem.item, tagName, index, metadataItem.data.r[index].numerator,
+                metadataItem.data.r[index].denominator);
+        });
+    } else {
+        MEDIA_WARNING_LOG("DumpMetadataItemInfo get unknown dataType:%{public}d", dataType);
+    }
 }
 } // namespace CameraFwkMetadataUtils
 } // namespace CameraStandard

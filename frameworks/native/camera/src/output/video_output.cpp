@@ -223,20 +223,6 @@ const std::vector<int32_t>& VideoOutput::GetFrameRateRange()
     return videoFrameRateRange_;
 }
 
-const std::set<camera_device_metadata_tag_t>& VideoOutput::GetObserverTags()
-{
-    // Empty impl
-    const static std::set<camera_device_metadata_tag_t> tags = {};
-    return tags;
-}
-
-int32_t VideoOutput::OnMetadataChanged(
-    const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem)
-{
-    // Empty impl
-    return CAM_META_SUCCESS;
-}
-
 void VideoOutput::SetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate)
 {
     MEDIA_DEBUG_LOG("VideoOutput::SetFrameRateRange min = %{public}d and max = %{public}d", minFrameRate, maxFrameRate);

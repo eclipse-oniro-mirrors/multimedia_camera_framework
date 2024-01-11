@@ -571,19 +571,5 @@ void PhotoOutput::CameraServerDied(pid_t pid)
     }
     deathRecipient_ = nullptr;
 }
-
-const std::set<camera_device_metadata_tag_t>& PhotoOutput::GetObserverTags()
-{
-    // Empty impl
-    const static std::set<camera_device_metadata_tag_t> tags = {};
-    return tags;
-}
-
-int32_t PhotoOutput::OnMetadataChanged(
-    const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem)
-{
-    // Empty impl
-    return CAM_META_SUCCESS;
-}
 } // namespace CameraStandard
 } // namespace OHOS

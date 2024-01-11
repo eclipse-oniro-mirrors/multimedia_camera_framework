@@ -961,6 +961,7 @@ private:
     void InsertOutputIntoSet(sptr<CaptureOutput>& output);
     void RemoveOutputFromSet(sptr<CaptureOutput>& output);
     void OnSettingUpdated(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
+    void OnResultReceived(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
     ColorSpaceInfo GetSupportedColorSpaceInfo();
     bool IsModeWithVideoStream();
     void SetDefaultColorSpace();

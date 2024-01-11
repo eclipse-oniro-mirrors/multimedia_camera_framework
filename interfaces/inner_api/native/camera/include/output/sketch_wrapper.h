@@ -45,7 +45,7 @@ public:
     int32_t UpdateSketchRatio(float sketchRatio);
     void UpdateZoomRatio(float zoomRatio);
 
-    int32_t OnControlMetadataDispatch(
+    int32_t OnMetadataDispatch(
         int32_t modeName, const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem);
 
 private:

@@ -3000,9 +3000,9 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_078, TestSize.Level0
     camera_metadata_item_t item;
     OHOS::Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
     const camera_device_metadata_tag_t tag1 = OHOS_CONTROL_ZOOM_RATIO;
-    sketchWrapper->OnControlMetadataDispatch(modeName, tag1, item);
+    sketchWrapper->OnMetadataDispatch(modeName, tag1, item);
     const camera_device_metadata_tag_t tag2 = OHOS_CONTROL_CAMERA_MACRO;
-    sketchWrapper->OnControlMetadataDispatch(modeName, tag2, item);
+    sketchWrapper->OnMetadataDispatch(modeName, tag2, item);
 }
 
 /*
@@ -5798,16 +5798,16 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_037, TestSize.Level
     EXPECT_EQ(ret, 0);
 
     item.count = 0;
-    previewOutput->OnMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item);
+    previewOutput->OnControlMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item);
     item.count = 1;
-    previewOutput->OnMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item);
+    previewOutput->OnControlMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item);
     previewOutput->sketchWrapper_ = std::make_shared<SketchWrapper>(previewOutput->GetStream(), previewSize);
 
     previewOutput->SetSession(nullptr);
     previewOutput->OnSketchStatusChanged(SketchStatus::STOPED);
-    previewOutput->OnMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item);
+    previewOutput->OnControlMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item);
     previewOutput->SetSession(session);
-    previewOutput->OnMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item);
+    previewOutput->OnControlMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item);
     previewOutput->OnSketchStatusChanged(SketchStatus::STOPED);
     
     ret = session->CommitConfig();

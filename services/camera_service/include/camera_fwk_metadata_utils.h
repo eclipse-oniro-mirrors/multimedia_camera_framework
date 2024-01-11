@@ -32,6 +32,10 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> CopyMetadata(
 
 bool UpdateMetadataTag(
     const camera_metadata_item_t& srcItem, std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata);
+
+void DumpMetadataInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata);
+
+void DumpMetadataItemInfo(const camera_metadata_item_t& item);
 } // namespace CameraFwkMetadataUtils
 } // namespace CameraStandard
 } // namespace OHOS

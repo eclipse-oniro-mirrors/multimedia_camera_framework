@@ -8372,5 +8372,83 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_066, TestSize.Le
     intResult = session_->AddOutput(captureOutput);
     EXPECT_EQ(intResult, 7400101);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test smooth zoom and sketch functions callback.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test smooth zoom and sketch functions.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_067, TestSize.Level0)
+{
+    auto previewProfile = GetSketchPreviewProfile();
+    if (previewProfile == nullptr) {
+        EXPECT_EQ(previewProfile.get(), nullptr);
+        return;
+    }
+    auto output = CreatePreviewOutput(*previewProfile);
+    ASSERT_NE(output, nullptr);
+
+    session_->SetMode(SceneMode::CAPTURE);
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(output);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
+    bool isSketchSupport = previewOutput->IsSketchSupported();
+    if (!isSketchSupport) {
+        return;
+    }
+
+    previewOutput->SetCallback(std::make_shared<AppCallback>());
+
+    int sketchEnableRatio = previewOutput->GetSketchRatio();
+    EXPECT_GT(sketchEnableRatio, 0);
+
+    intResult = previewOutput->EnableSketch(true);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = previewOutput->AttachSketchSurface(CreateSketchSurface(previewProfile->GetCameraFormat()));
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 0);
+
+    session_->LockForControl();
+    intResult = session_->SetSmoothZoom(30.0f, 0);
+    EXPECT_EQ(intResult, 0);
+    session_->UnlockForControl();
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 1);
+    g_previewEvents.reset();
+
+    EXPECT_EQ(g_sketchStatus.size(), 2);
+    EXPECT_EQ(g_sketchStatus.front(), 3);
+    g_sketchStatus.pop_front();
+    EXPECT_EQ(g_sketchStatus.front(), 1);
+    g_sketchStatus.pop_front();
+
+    sleep(1);
+    EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 0);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
 } // namespace CameraStandard
 } // namespace OHOS

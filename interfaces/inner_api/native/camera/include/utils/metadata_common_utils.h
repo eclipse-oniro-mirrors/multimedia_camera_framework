@@ -23,6 +23,9 @@
 namespace OHOS {
 namespace CameraStandard {
 class MetadataCommonUtils {
+private:
+    explicit MetadataCommonUtils() = default;
+
 public:
     static std::shared_ptr<camera_metadata_item_t> GetCapabilityEntry(
         const std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, uint32_t metadataTag);

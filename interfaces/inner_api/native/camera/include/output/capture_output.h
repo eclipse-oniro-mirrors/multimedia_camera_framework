@@ -48,17 +48,51 @@ class MetadataObserver {
 public:
     /**
      * @brief Get Observed matadata tags
-     *        Register tags into capture session. If the tags data changes,{@link OnMetadataChanged} will be called.
+     *        Register tags into capture session. If the tags data changes,{@link OnControlMetadataChanged} will be
+     *        called.
      * @return Observed tags
      */
-    virtual const std::set<camera_device_metadata_tag_t>& GetObserverTags() = 0;
+    virtual const std::set<camera_device_metadata_tag_t>& GetObserverControlTags()
+    {
+        // Empty impl
+        const static std::set<camera_device_metadata_tag_t> tags = {};
+        return tags;
+    };
 
     /**
-     * @brief Callback of metadata change.
+     * @brief Get Observed matadata tags
+     *        Register tags into capture session. If the tags data changes,{@link OnResultMetadataChanged} will be
+     *        called.
+     * @return Observed tags
+     */
+    virtual const std::set<camera_device_metadata_tag_t>& GetObserverResultTags()
+    {
+        // Empty impl
+        const static std::set<camera_device_metadata_tag_t> tags = {};
+        return tags;
+    };
+
+    /**
+     * @brief Callback of request metadata change.
      * @return Operate result
      */
-    virtual int32_t OnMetadataChanged(
-        const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem) = 0;
+    virtual int32_t OnControlMetadataChanged(
+        const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem)
+    {
+        // Empty impl
+        return CAM_META_SUCCESS;
+    };
+
+    /**
+     * @brief Callback of result metadata change.
+     * @return Operate result
+     */
+    virtual int32_t OnResultMetadataChanged(
+        const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem)
+    {
+        // Empty impl
+        return CAM_META_SUCCESS;
+    };
 };
 
 class CaptureSession;
