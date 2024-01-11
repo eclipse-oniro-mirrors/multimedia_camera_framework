@@ -280,6 +280,7 @@ static std::shared_ptr<UIExtensionCallback> StartCameraAbility(
         MEDIA_ERR_LOG("StartCameraAbility CreateModalUIExtension fail");
         return nullptr;
     }
+    uiExtCallback->SetSessionId(sessionId);
     return uiExtCallback;
 }
 
@@ -483,12 +484,12 @@ void CameraPickerNapi::CameraPickerNapiDestructor(napi_env env, void* nativeObje
 
 UIExtensionCallback::UIExtensionCallback(std::shared_ptr<OHOS::AbilityRuntime::AbilityContext> abilityContext)
 {
-    this->abilityContext_ = abilityContext;
+    abilityContext_ = abilityContext;
 }
 
 void UIExtensionCallback::SetSessionId(int32_t sessionId)
 {
-    this->sessionId_ = sessionId;
+    sessionId_ = sessionId;
 }
 
 bool UIExtensionCallback::SetErrorCode(int32_t code)
@@ -569,7 +570,7 @@ void UIExtensionCallback::SendMessageBack()
         auto uiContent = abilityContext->GetUIContent();
         if (uiContent != nullptr) {
             MEDIA_INFO_LOG("CloseModalUIExtension");
-            uiContent->CloseModalUIExtension(this->sessionId_);
+            uiContent->CloseModalUIExtension(sessionId_);
         }
     }
 }
