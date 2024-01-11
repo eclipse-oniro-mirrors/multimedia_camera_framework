@@ -913,7 +913,7 @@ void CameraManager::SetProfile(sptr<CameraDevice>& cameraObj)
             cameraObj->modeVideoProfiles_[0] = capability->GetVideoProfiles();
         }
     } else {
-        for (auto &modeName : GetSupportedModes(cameraObj)) {
+        for (const auto &modeName : GetSupportedModes(cameraObj)) {
             int32_t mode = isTemplateMode_.count(modeName) ? SceneMode::NORMAL : modeName;
             capability = GetSupportedOutputCapability(cameraObj, mode);
             if (capability != nullptr) {

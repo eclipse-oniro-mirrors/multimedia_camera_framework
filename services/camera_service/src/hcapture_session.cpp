@@ -1243,12 +1243,9 @@ StateMachine::StateMachine()
 bool StateMachine::CheckTransfer(CaptureSessionState targetState)
 {
     std::lock_guard<std::recursive_mutex> lock(sessionStateLock_);
-    for (auto& state : stateTransferMap_[static_cast<uint32_t>(currentState_)]) {
-        if (state == targetState) {
-            return true;
-        }
-    }
-    return false;
+    return any_of(stateTransferMap_[static_cast<uint32_t>(currentState_)].begin(),
+        stateTransferMap_[static_cast<uint32_t>(currentState_)].end(),
+        [&targetState](const auto& state) {return state == targetState; });
 }
 
 bool StateMachine::Transfer(CaptureSessionState targetState)
