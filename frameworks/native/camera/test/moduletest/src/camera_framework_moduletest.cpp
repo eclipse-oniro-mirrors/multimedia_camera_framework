@@ -505,8 +505,8 @@ void CameraFrameworkModuleTest::GetSupportedOutputCapability()
     return;
 }
 
-Profile CameraFrameworkModuleTest::GetProfile(sptr<CameraOutputCapability>& modeAbility,
-                                              float ratio, CameraFormat format)
+Profile CameraFrameworkModuleTest::SelectProfileByRatioAndFormat(sptr<CameraOutputCapability>& modeAbility,
+                                                                 float ratio, CameraFormat format)
 {
     uint32_t width;
     uint32_t height;
@@ -2459,13 +2459,22 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_045, TestSize.Le
     intResult = portraitSession->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    float ratioWidth = 16;
+    float ratioHeight = 9;
+    float ratio = ratioWidth / ratioHeight;
+    Profile profile = SelectProfileByRatioAndFormat(modeAbility, ratio, photoFormat_);
+    ASSERT_NE(profile.format_, -1);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput(profile);
     ASSERT_NE(photoOutput, nullptr);
 
     intResult = portraitSession->AddOutput(photoOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    profile = SelectProfileByRatioAndFormat(modeAbility, ratio, previewFormat_);
+    ASSERT_NE(profile.format_, -1);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profile);
     ASSERT_NE(previewOutput, nullptr);
 
     intResult = portraitSession->AddOutput(previewOutput);
@@ -2533,13 +2542,22 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_046, TestSize.Le
     intResult = portraitSession->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    float ratioWidth = 4;
+    float ratioHeight = 3;
+    float ratio = ratioWidth / ratioHeight;
+    Profile profile = SelectProfileByRatioAndFormat(modeAbility, ratio, photoFormat_);
+    ASSERT_NE(profile.format_, -1);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput(profile);
     ASSERT_NE(photoOutput, nullptr);
 
     intResult = portraitSession->AddOutput(photoOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    profile = SelectProfileByRatioAndFormat(modeAbility, ratio, previewFormat_);
+    ASSERT_NE(profile.format_, -1);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profile);
     ASSERT_NE(previewOutput, nullptr);
 
     intResult = portraitSession->AddOutput(previewOutput);
@@ -2604,12 +2622,19 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_047, TestSize.Le
 
     EXPECT_EQ(portraitSession->AddInput(input_), 0);
 
-    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    float ratio = 1;
+    Profile profile = SelectProfileByRatioAndFormat(modeAbility, ratio, photoFormat_);
+    ASSERT_NE(profile.format_, -1);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput(profile);
     ASSERT_NE(photoOutput, nullptr);
 
     EXPECT_EQ(portraitSession->AddOutput(photoOutput), 0);
 
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    profile = SelectProfileByRatioAndFormat(modeAbility, ratio, previewFormat_);
+    ASSERT_NE(profile.format_, -1);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profile);
     ASSERT_NE(previewOutput, nullptr);
 
     EXPECT_EQ(portraitSession->AddOutput(previewOutput), 0);
@@ -2679,13 +2704,22 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_048, TestSize.Le
     intResult = portraitSession->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    float ratioWidth = 4;
+    float ratioHeight = 3;
+    float ratio = ratioWidth / ratioHeight;
+    Profile profile = SelectProfileByRatioAndFormat(modeAbility, ratio, photoFormat_);
+    ASSERT_NE(profile.format_, -1);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput(profile);
     ASSERT_NE(photoOutput, nullptr);
 
     intResult = portraitSession->AddOutput(photoOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    profile = SelectProfileByRatioAndFormat(modeAbility, ratio, previewFormat_);
+    ASSERT_NE(profile.format_, -1);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profile);
     ASSERT_NE(previewOutput, nullptr);
 
     intResult = portraitSession->AddOutput(previewOutput);
@@ -7854,7 +7888,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_057, TestSize.Le
     intResult = portraitSession->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    float ratioWidth = 16;
+    float ratioHeight = 9;
+    float ratio = ratioWidth / ratioHeight;
+    Profile profile = SelectProfileByRatioAndFormat(modeAbility, ratio, photoFormat_);
+    ASSERT_NE(profile.format_, -1);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput(profile);
     ASSERT_NE(photoOutput, nullptr);
 
     intResult = portraitSession->AddOutput(photoOutput);

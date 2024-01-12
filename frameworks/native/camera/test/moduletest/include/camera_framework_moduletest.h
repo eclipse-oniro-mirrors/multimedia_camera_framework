@@ -87,7 +87,8 @@ public:
     sptr<CaptureOutput> CreateVideoOutput();
     sptr<CaptureOutput> CreatePhotoOutput(Profile profile);
     void GetSupportedOutputCapability();
-    Profile GetProfile(sptr<CameraOutputCapability>& modeAbility, float ratio, CameraFormat format);
+    Profile SelectProfileByRatioAndFormat(sptr<CameraOutputCapability>& modeAbility,
+                                          float ratio, CameraFormat format);
     void ConfigScanSession(sptr<CaptureOutput> &previewOutput_1, sptr<CaptureOutput> &previewOutput_2);
     void ReleaseInput();
 
