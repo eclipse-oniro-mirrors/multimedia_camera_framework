@@ -20,8 +20,8 @@ namespace OHOS {
 namespace CameraStandard {
 CameraTimer *CameraTimer::GetInstance()
 {
-     static CameraTimer instance;
-     return &instance;
+    static CameraTimer instance;
+    return &instance;
 }
 
 CameraTimer::CameraTimer()
@@ -65,18 +65,18 @@ void CameraTimer::DecreaseUserCount()
 }
 
 uint32_t CameraTimer::Register(const TimerCallback& callback, uint32_t interval, bool once)
- {
-     if (timer_ == nullptr) {
-         MEDIA_ERR_LOG("timer is nullptr");
-         return 0;
-     }
+{
+    if (timer_ == nullptr) {
+        MEDIA_ERR_LOG("timer is nullptr");
+        return 0;
+    }
 
-     uint32_t timerId = timer_->Register(callback, interval, once);
-     MEDIA_DEBUG_LOG("timerId: %{public}u", timerId);
-     return timerId;
- }
+    uint32_t timerId = timer_->Register(callback, interval, once);
+    MEDIA_DEBUG_LOG("timerId: %{public}u", timerId);
+    return timerId;
+}
 
- void CameraTimer::Unregister(uint32_t timerId)
+void CameraTimer::Unregister(uint32_t timerId)
 {
     MEDIA_DEBUG_LOG("timerId: %{public}d", timerId);
     if (timer_) {
