@@ -38,6 +38,7 @@
 #include "deferred_processing_service.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
+#include "camera_timer.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -85,10 +86,14 @@ HCameraDevice::HCameraDevice(
 {
     MEDIA_INFO_LOG("HCameraDevice::HCameraDevice Contructor Camera: %{public}s", cameraID.c_str());
     isOpenedCameraDevice_.store(false);
+    CameraTimer::GetInstance()->IncreaseUserCount();
 }
 
 HCameraDevice::~HCameraDevice()
 {
+    UnPrepareZoom();
+    CameraTimer::GetInstance()->Unregister(zoomTimerId_);
+    CameraTimer::GetInstance()->DecreaseUserCount();
     MEDIA_INFO_LOG("HCameraDevice::~HCameraDevice Destructor Camera: %{public}s", cameraID_.c_str());
 }
 
@@ -346,6 +351,57 @@ int32_t HCameraDevice::GetEnabledResults(std::vector<int32_t> &results)
     return CAMERA_OK;
 }
 
+void HCameraDevice::CheckZoomChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
+{
+    int32_t ret;
+    camera_metadata_item_t item;
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_PREPARE_ZOOM, &item);
+    if (ret == CAM_META_SUCCESS) {
+        if (item.data.u8[0] == OHOS_CAMERA_ZOOMSMOOTH_PREPARE_ENABLE) {
+            MEDIA_ERR_LOG("OHOS_CAMERA_ZOOMSMOOTH_PREPARE_ENABLE");
+            inPrepareZoom_ = true;
+            ResetZoomTimer();
+        } else if (item.data.u8[0] == OHOS_CAMERA_ZOOMSMOOTH_PREPARE_DISABLE) {
+            MEDIA_ERR_LOG("OHOS_CAMERA_ZOOMSMOOTH_PREPARE_DISABLE");
+            inPrepareZoom_ = false;
+            ResetZoomTimer();
+        }
+        return;
+    }
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
+    if (ret != CAM_META_SUCCESS) {
+        ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_SMOOTH_ZOOM_RATIOS, &item);
+    }
+    if (ret == CAM_META_SUCCESS && inPrepareZoom_) {
+        ResetZoomTimer();
+    }
+    return;
+}
+
+void HCameraDevice::ResetZoomTimer()
+{
+    CameraTimer::GetInstance()->Unregister(zoomTimerId_);
+    if (!inPrepareZoom_) {
+        return;
+    }
+    MEDIA_INFO_LOG("register zoom timer callback");
+    uint32_t waitMs = 5 * 1000;
+    zoomTimerId_ = CameraTimer::GetInstance()->Register([this]() { UnPrepareZoom(); }, waitMs, true);
+}
+
+void HCameraDevice::UnPrepareZoom()
+{
+    MEDIA_INFO_LOG("entered.");
+    if (inPrepareZoom_) {
+        inPrepareZoom_ = false;
+        uint32_t count = 1;
+        uint32_t prepareZoomType = OHOS_CAMERA_ZOOMSMOOTH_PREPARE_DISABLE;
+        std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
+        metadata->addEntry(OHOS_CONTROL_PREPARE_ZOOM, &prepareZoomType, count);
+        UpdateSetting(metadata);
+    }
+}
+
 int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
 {
     CAMERA_SYNC_TRACE;
@@ -353,6 +409,7 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
         MEDIA_ERR_LOG("settings is null");
         return CAMERA_INVALID_ARG;
     }
+    CheckZoomChange(settings);
 
     uint32_t count = OHOS::Camera::GetCameraMetadataItemCount(settings->get());
     if (!count) {
@@ -397,6 +454,7 @@ int32_t HCameraDevice::UpdateSettingOnce(const std::shared_ptr<OHOS::Camera::Cam
         MEDIA_ERR_LOG("settings is null");
         return CAMERA_INVALID_ARG;
     }
+    CheckZoomChange(settings);
 
     uint32_t count = OHOS::Camera::GetCameraMetadataItemCount(settings->get());
     if (!count) {

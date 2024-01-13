@@ -242,9 +242,6 @@ CaptureSession::CaptureSession(sptr<ICaptureSession> &captureSession)
     deathRecipient_ = new(std::nothrow) CameraDeathRecipient(pid);
     CHECK_AND_RETURN_LOG(deathRecipient_ != nullptr, "failed to new CameraDeathRecipient.");
 
-    zoomTimer_ = std::make_shared<OHOS::Utils::Timer>("ZoomTimer");
-    zoomTimer_->Setup();
-    inPrepareZoom_ = false;
     deathRecipient_->SetNotifyCb(std::bind(&CaptureSession::CameraServerDied, this, std::placeholders::_1));
     bool result = object->AddDeathRecipient(deathRecipient_);
     if (!result) {
@@ -280,9 +277,6 @@ CaptureSession::~CaptureSession()
     focusCallback_ = nullptr;
     macroStatusCallback_ = nullptr;
     smoothZoomCallback_ = nullptr;
-    zoomTimer_->Shutdown();
-    zoomTimer_ = nullptr;
-    inPrepareZoom_ = false;
 }
 
 int32_t CaptureSession::BeginConfig()
@@ -2239,7 +2233,6 @@ int32_t CaptureSession::SetZoomRatio(float zoomRatio)
         MEDIA_ERR_LOG("CaptureSession::SetZoomRatio Need to call LockForControl() before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
-    ResetZoomTimer();
     bool status = false;
     int32_t ret;
     int32_t minIndex = 0;
@@ -2292,8 +2285,6 @@ int32_t CaptureSession::PrepareZoom()
         MEDIA_ERR_LOG("CaptureSession::PrepareZoom Need to call LockForControl() before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
-    inPrepareZoom_ = true;
-    ResetZoomTimer();
     bool status = false;
     int32_t ret;
     uint32_t count = 1;
@@ -2323,8 +2314,6 @@ int32_t CaptureSession::UnPrepareZoom()
         MEDIA_ERR_LOG("CaptureSession::UnPrepareZoom Need to call LockForControl() before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
-    inPrepareZoom_ = false;
-    ResetZoomTimer();
     bool status = false;
     int32_t ret;
     uint32_t count = 1;
@@ -2351,7 +2340,6 @@ int32_t CaptureSession::SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoom
         MEDIA_ERR_LOG("CaptureSession::SetSmoothZoom Session is not commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    ResetZoomTimer();
     int32_t minIndex = 0;
     int32_t maxIndex = 1;
     std::vector<float> zoomRange = GetZoomRatioRange();
@@ -2396,28 +2384,6 @@ void CaptureSession::SetSmoothZoomCallback(std::shared_ptr<SmoothZoomCallback> s
     MEDIA_ERR_LOG("CaptureSession::SetSmoothZoomCallback() set smooth zoom callback");
     smoothZoomCallback_ = smoothZoomCallback;
     return;
-}
-
-void CaptureSession::ResetZoomTimer()
-{
-    if (zoomTimer_) {
-        zoomTimer_->Unregister(zoomTimerId_);
-        if (!inPrepareZoom_) {
-            return;
-        }
-        MEDIA_ERR_LOG("CaptureSession::ResetZoomTimer");
-        uint32_t waitMs = 10 * 1000;
-        bool once = true;
-        wptr<CaptureSession> sessionWptr = this;
-        zoomTimerId_ = zoomTimer_->Register([sessionWptr]() {
-            sptr<CaptureSession> sessionSptr = sessionWptr.promote();
-            if (sessionSptr) {
-                sessionSptr->LockForControl();
-                sessionSptr->UnPrepareZoom();
-                sessionSptr->UnlockForControl();
-            }
-        }, waitMs, once);
-    }
 }
 
 void CaptureSession::SetCaptureMetadataObjectTypes(std::set<camera_face_detect_mode_t> metadataObjectTypes)

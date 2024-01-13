@@ -21,7 +21,6 @@
 #include <memory>
 #include <set>
 #include <vector>
-#include <commonlibrary/c_utils/base/include/timer.h>
 
 #include "camera_error_code.h"
 #include "hcapture_session_callback_stub.h"
@@ -915,9 +914,6 @@ private:
     std::shared_ptr<FocusCallback> focusCallback_;
     std::shared_ptr<MacroStatusCallback> macroStatusCallback_;
     std::shared_ptr<SmoothZoomCallback> smoothZoomCallback_;
-    std::shared_ptr<OHOS::Utils::Timer> zoomTimer_;
-    uint32_t zoomTimerId_;
-    bool inPrepareZoom_;
     std::vector<int32_t> skinSmoothBeautyRange_;
     std::vector<int32_t> faceSlendorBeautyRange_;
     std::vector<int32_t> skinToneBeautyRange_;
@@ -965,7 +961,6 @@ private:
     ColorSpaceInfo GetSupportedColorSpaceInfo();
     bool IsModeWithVideoStream();
     void SetDefaultColorSpace();
-    void ResetZoomTimer();
     void UpdateDeviceDeferredability();
 };
 } // namespace CameraStandard
