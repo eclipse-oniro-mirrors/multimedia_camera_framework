@@ -35,7 +35,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-static constexpr int32_t SKETCH_MIN_WIDTH = 600;
+static constexpr int32_t SKETCH_MIN_WIDTH = 480;
 PreviewOutput::PreviewOutput(sptr<IStreamRepeat>& streamRepeat)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PREVIEW, StreamType::REPEAT, streamRepeat)
 {}
