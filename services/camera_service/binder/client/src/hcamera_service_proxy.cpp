@@ -33,7 +33,7 @@ int32_t HCameraProxy::NotifyCloseCamera(std::string cameraId)
     data.WriteString(cameraId);
     option.SetFlags(option.TF_SYNC);
     int error = Remote()->SendRequest(
-        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_NOTIFY_CLOSE_CAMERA), data, reply, option);
+        static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_NOTIFY_CLOSE_CAMERA), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceProxy notifyCloseCamera failed, error: %{public}d", error);
     }
@@ -545,7 +545,7 @@ int32_t HCameraServiceProxy::AllowOpenByOHSide(std::string cameraId, int32_t sta
     (void)data.WriteBool(canOpenCamera);
 
     int32_t error = Remote()->SendRequest(
-        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_ALLOW_OPEN_BY_OHSIDE), data, reply, option);
+        static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_ALLOW_OPEN_BY_OHSIDE), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceProxy::AllowOpenByOHSide failed, error: %{public}d", error);
     }
@@ -567,7 +567,7 @@ int32_t HCameraServiceProxy::NotifyCameraState(std::string cameraId, int32_t sta
     option.SetFlags(option.TF_ASYNC);
 
     int32_t error = Remote()->SendRequest(
-        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_ALLOW_OPEN_BY_OHSIDE), data, reply, option);
+        static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_NOTIFY_CAMERA_STATE), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceProxy::NotifyCameraState failed, error: %{public}d", error);
     }

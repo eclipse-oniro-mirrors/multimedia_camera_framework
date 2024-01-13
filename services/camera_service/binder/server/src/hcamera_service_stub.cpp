@@ -110,10 +110,10 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_PRE_SWITCH_CAMERA):
             errCode = HCameraServiceStub::HandlePreSwitchCamera(data, reply);
             break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_ALLOW_OPEN_BY_OHSIDE):
+        case static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_ALLOW_OPEN_BY_OHSIDE):
             errCode = HCameraServiceStub::HandleAllowOpenByOHSide(data, reply);
             break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_NOTIFY_CAMERA_STATE):
+        case static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_NOTIFY_CAMERA_STATE):
             errCode = HCameraServiceStub::HandleNotifyCameraState(data);
             break;
         default:
