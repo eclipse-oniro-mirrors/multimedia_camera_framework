@@ -359,6 +359,7 @@ void PhotoPostProcessor::OnError(const std::string& imageId, DpsError errorCode)
         consecutiveTimeoutCount_++;
         if (consecutiveTimeoutCount_ >= static_cast<int>(MAX_CONSECUTIVE_TIMEOUT_COUNT)) {
             Reset();
+            consecutiveTimeoutCount_ = 0;
         }
     } else {
         consecutiveTimeoutCount_ = 0;
