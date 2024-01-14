@@ -127,6 +127,8 @@ private:
 
     std::string clientName_;
     int clientUserId_;
+    uint32_t zoomTimerId_;
+    std::atomic<bool> inPrepareZoom_;
 
     void UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings);
     void ResetDeviceOpenLifeCycleSettings();
@@ -142,6 +144,9 @@ private:
     int32_t CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V1_1>& streamInfos);
     int32_t CommitStreams(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, int32_t operationMode);
     bool CanOpenCamera();
+    void ResetZoomTimer();
+    void CheckZoomChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
+    void UnPrepareZoom();
 };
 } // namespace CameraStandard
 } // namespace OHOS
