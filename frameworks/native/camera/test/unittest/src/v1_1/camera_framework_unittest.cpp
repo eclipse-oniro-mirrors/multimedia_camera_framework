@@ -39,7 +39,7 @@ using ::testing::_;
 bool g_mockFlagWithoutAbt = false;
 bool g_getCameraAbilityerror = false;
 bool g_openCameraDevicerror = false;
-int utNum = 0;
+int g_num = 0;
 
 namespace OHOS {
 namespace CameraStandard {
@@ -644,8 +644,8 @@ void CameraFrameworkUnitTest::TearDownTestCase(void) {}
 void CameraFrameworkUnitTest::SetUp()
 {
     // set native token
-    utNum++;
-    MEDIA_ERR_LOG("CameraFrameworkUnitTest::SetUp num:%{public}d", utNum);
+    g_num++;
+    MEDIA_ERR_LOG("CameraFrameworkUnitTest::SetUp num:%{public}d", g_num);
     uint64_t tokenId;
     const char *perms[2];
     perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
@@ -676,7 +676,7 @@ void CameraFrameworkUnitTest::TearDown()
     Mock::AllowLeak(mockCameraHostManager);
     Mock::AllowLeak(mockCameraDevice);
     Mock::AllowLeak(mockStreamOperator);
-    MEDIA_ERR_LOG("CameraFrameworkUnitTest::TearDown num:%{public}d", utNum);
+    MEDIA_ERR_LOG("CameraFrameworkUnitTest::TearDown num:%{public}d", g_num);
 }
 
 MATCHER_P(matchCaptureSetting, captureSetting, "Match Capture Setting")
