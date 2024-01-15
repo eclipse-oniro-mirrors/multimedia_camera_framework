@@ -422,11 +422,6 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_004, TestSize.Level0)
     ret = OH_CaptureSession_BeginConfig(captureSession);
     EXPECT_EQ(ret, 0);
 
-    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
-    EXPECT_NE(previewOutput, nullptr);
-    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
-    EXPECT_EQ(ret, 0);
-
     Camera_Input *cameraInput = nullptr;
     ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
     EXPECT_EQ(ret, CAMERA_OK);
@@ -434,6 +429,12 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_004, TestSize.Level0)
 
     EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
     EXPECT_EQ(OH_CaptureSession_AddInput(captureSession, cameraInput), 0);
+
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    EXPECT_NE(previewOutput, nullptr);
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    EXPECT_EQ(ret, 0);
+
     EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), 0);
 
     EXPECT_EQ(OH_PreviewOutput_Start(previewOutput), 0);
@@ -925,11 +926,11 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_027, TestSize.Level0)
     Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
     EXPECT_NE(photoOutput, nullptr);
     ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(ret, 7400201);
     ret = OH_CaptureSession_CommitConfig(captureSession);
     EXPECT_NE(ret, 0);
     ret = OH_CaptureSession_RemovePhotoOutput(captureSession, photoOutput);
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(ret, 7400201);
     ret = OH_PhotoOutput_Release(photoOutput);
     EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_Release(captureSession);
@@ -1613,9 +1614,9 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_053, TestSize.Level0)
 
     Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
     EXPECT_NE(previewOutput, nullptr);
-    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
-    EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
     EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_AddPhotoOutput(captureSession, PhotoOutput);
     EXPECT_EQ(ret, 0);
@@ -1671,9 +1672,9 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_054, TestSize.Level0)
     EXPECT_EQ(ret, 0);
     Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
     EXPECT_NE(previewOutput, nullptr);
-    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
-    EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, 0);
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
     EXPECT_EQ(ret, 0);
     ret = OH_CaptureSession_AddPhotoOutput(captureSession, PhotoOutput);
     EXPECT_EQ(ret, 0);
