@@ -43,7 +43,7 @@ CameraTimer::~CameraTimer()
 void CameraTimer::IncreaseUserCount()
 {
     MEDIA_INFO_LOG("entered, num of user: %d + 1", static_cast<int>(userCount_.load()));
-    if (userCount_.load() == 0) {
+    if (timer_ == nullptr) {
         timer_ = std::make_unique<OHOS::Utils::Timer>("CameraServiceTimer");
         timer_->Setup();
         MEDIA_INFO_LOG("create timer thread");
@@ -57,8 +57,6 @@ void CameraTimer::DecreaseUserCount()
     MEDIA_INFO_LOG("entered, num of user: %u - 1", userCount_.load());
     --userCount_;
     if (userCount_.load() == 0 && timer_ != nullptr) {
-        timer_->Shutdown(false);
-        timer_ = nullptr;
         MEDIA_INFO_LOG("delete timer thread");
     }
     return;

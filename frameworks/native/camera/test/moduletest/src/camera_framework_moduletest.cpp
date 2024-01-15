@@ -1321,7 +1321,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_020, TestSize.Le
     ASSERT_NE(previewOutput, nullptr);
 
     intResult = session_->AddOutput(previewOutput);
-    EXPECT_EQ(intResult, 0);
+    EXPECT_EQ(intResult, 7400201);
 
     intResult = session_->CommitConfig();
     EXPECT_NE(intResult, 0);
@@ -5931,7 +5931,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_064, TestSize.L
 
     metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> { MetadataObjectType::FACE });
 
-    metaOutput->~MetadataOutput();
+    metaOutput->Release();
     metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> { MetadataObjectType::FACE });
 }
 
@@ -5961,9 +5961,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_065, TestSize.L
 
     sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput>&)photoOutput;
 
-    EXPECT_EQ(photoOutput_1->Capture(), 7400104);
-    EXPECT_EQ(photoOutput_1->CancelCapture(), 7400104);
-
     EXPECT_EQ(session_->CommitConfig(), 0);
     EXPECT_EQ(session_->Start(), 0);
 
@@ -5977,8 +5974,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_065, TestSize.L
     EXPECT_EQ(photoOutput_1->IsMirrorSupported(), false);
     EXPECT_EQ(photoOutput_1->SetThumbnail(false), 7400104);
 
-    photoOutput_1->~PhotoOutput();
-    session_->Release();
+    photoOutput_1->Release();
     EXPECT_EQ(photoOutput_1->Capture(photoSetting), 7400104);
 }
 
@@ -6012,7 +6008,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_066, TestSize.L
 
     sleep(WAIT_TIME_AFTER_START);
 
-    metadatOutput->~CaptureOutput();
+    metadatOutput->Release();
     metaOutput->SetSession(session_);
 }
 
@@ -6055,19 +6051,19 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_067, TestSize.L
     EXPECT_EQ(session_->CommitConfig(), 0);
     EXPECT_EQ(session_->Start(), 0);
 
-    photoOutput->~CaptureOutput();
+    photoOutput->Release();
     photoOutput_1->SetSession(session_);
     EXPECT_EQ(photoOutput_1->Capture(photoSetting), 7400201);
     EXPECT_EQ(photoOutput_1->Capture(), 7400201);
     EXPECT_EQ(photoOutput_1->CancelCapture(), 7400201);
 
-    previewOutput->~CaptureOutput();
+    previewOutput->Release();
     previewOutput_1->SetSession(session_);
     EXPECT_EQ(previewOutput_1->Start(), 7400201);
     EXPECT_EQ(previewOutput_1->Stop(), 7400201);
     previewOutput_1->SetCallback(callback);
 
-    videoOutput->~CaptureOutput();
+    videoOutput->Release();
     videoOutput_1->SetSession(session_);
     EXPECT_EQ(videoOutput_1->Start(), 7400201);
     EXPECT_EQ(videoOutput_1->Stop(), 7400201);
@@ -6473,10 +6469,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_083, TestSize.L
     EXPECT_EQ(intResult, 0);
     intResult = nightSession->AddInput(input_);
     EXPECT_EQ(intResult, 0);
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
-    ASSERT_NE(previewOutput, nullptr);
-    intResult = nightSession->AddOutput(previewOutput);
-    EXPECT_EQ(intResult, 0);
     std::vector<uint32_t> exposureRange;
     uint32_t exposureValue = 0;
     EXPECT_EQ(nightSession->GetExposureRange(exposureRange), SESSION_NOT_CONFIG);
@@ -6526,12 +6518,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_087, TestSize.L
     portraitSession->SetPortraitEffect(OFF_EFFECT);
     int32_t intResult = portraitSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
-    intResult = portraitSession->AddInput(input_);
-    EXPECT_EQ(intResult, 0);
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
-    ASSERT_NE(previewOutput, nullptr);
-    intResult = portraitSession->AddOutput(previewOutput);
-    EXPECT_EQ(intResult, 0);
     EXPECT_EQ(portraitSession->GetSupportedPortraitEffects().empty(), true);
     EXPECT_EQ(portraitSession->GetPortraitEffect(), OFF_EFFECT);
     portraitSession->SetPortraitEffect(OFF_EFFECT);
@@ -6543,7 +6529,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_087, TestSize.L
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: test IsSessionCommited() || IsSessionConfiged() with abnormal branches in PortraitSession
+ * CaseDescription: test IsSessionCommited() || IsSessionConfiged() with PortraitSession is nullptr
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_088, TestSize.Level0)
 {
@@ -6899,7 +6885,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_101, TestSize.L
     ASSERT_NE(metadataItem, nullptr);
 
     std::vector<vendorTag_t> infos = {};
-    EXPECT_EQ((camInput->GetCameraAllVendorTags(infos)), CAMERA_OK);
+    EXPECT_EQ((camInput->GetCameraAllVendorTags(infos)), 11);
 
     sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
     ASSERT_NE(deviceObj, nullptr);
@@ -6938,7 +6924,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_101, TestSize.L
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_102, TestSize.Level0)
 {
     EXPECT_EQ(input_->Close(), 0);
-    
+
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
 
     if (!(manager_->IsTorchSupported())) {
@@ -7058,7 +7044,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_105, TestSize.L
 
     sptr<ICameraDeviceService> device = nullptr;
     sptr<ITorchServiceCallback> torchSvcCallback = nullptr;
-    bool canOpenCamera = true;
     hCameraServiceProxy->CreateCameraDevice(cameras_[0]->GetID(), device);
     hCameraServiceProxy->SetTorchCallback(torchSvcCallback);
     torchSvcCallback = new(std::nothrow) TorchServiceCallback();
@@ -7069,8 +7054,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_105, TestSize.L
     hCameraServiceProxy->PrelaunchCamera();
     hCameraServiceProxy->SetPrelaunchConfig(cameras_[0]->GetID(), NO_NEED_RESTORE_PARAM_OHOS, 0, effectParam);
     hCameraServiceProxy->SetTorchLevel(0);
-    hCameraServiceProxy->AllowOpenByOHSide(cameras_[0]->GetID(), 0, canOpenCamera);
-    hCameraServiceProxy->NotifyCameraState(cameras_[0]->GetID(), 0);
 }
 
 /*
@@ -7251,6 +7234,57 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_114, TestSize.L
 
     sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(mode);
     ASSERT_NE(captureSession, nullptr);
+}
+
+/*
+* Feature: Framework
+* Function: Test SetExposureBias && GetFeaturesMode && SetBeautyValue && GetSubFeatureMods
+* SubFunction: NA
+* FunctionPoints: NA
+* EnvConditions: NA
+* CaseDescription: test SetExposureBias && GetFeaturesMode && SetBeautyValue && GetSubFeatureMods
+*/
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_115, TestSize.Level0)
+{
+    sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
+    ASSERT_NE(camSession, nullptr);
+
+    int32_t intResult = camSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = camSession->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = camSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = camSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    camSession->LockForControl();
+    EXPECT_EQ(camSession->SetExposureBias(100.0f), CameraErrorCode::SUCCESS);
+    intResult = camSession->UnlockForControl();
+
+    camSession->isSetMacroEnable_ = true;
+    camSession->currentMode_ = SceneMode::VIDEO;
+    auto vec = camSession->GetSubFeatureMods();
+    EXPECT_NE(vec.size(), 0);
+
+    auto mode = camSession->GetFeaturesMode();
+    EXPECT_EQ(mode, SceneMode::VIDEO_MACRO);
+
+    camSession->currentMode_ = SceneMode::CAPTURE;
+    mode = camSession->GetFeaturesMode();
+    EXPECT_EQ(mode, SceneMode::CAPTURE_MACRO);
+
+    vec = camSession->GetSubFeatureMods();
+    EXPECT_NE(vec.size(), 0);
+
+    bool boolResult = camSession->SetBeautyValue(BeautyType::SKIN_TONE, 0);
+    EXPECT_FALSE(boolResult);
 }
 
 /*

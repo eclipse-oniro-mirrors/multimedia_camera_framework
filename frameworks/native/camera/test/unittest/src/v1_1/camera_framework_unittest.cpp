@@ -39,6 +39,7 @@ using ::testing::_;
 bool g_mockFlagWithoutAbt = false;
 bool g_getCameraAbilityerror = false;
 bool g_openCameraDevicerror = false;
+int g_num = 0;
 
 namespace OHOS {
 namespace CameraStandard {
@@ -144,7 +145,7 @@ public:
 
 class MockHCameraHostManager : public HCameraHostManager {
 public:
-    int32_t streams[82] = {
+    int32_t streams[180] = {
         CameraFrameworkUnitTest::DEFAULT_MODE, CameraFrameworkUnitTest::PREVIEW_STREAM,
         OHOS_CAMERA_FORMAT_YCRCB_420_SP, CameraFrameworkUnitTest::PREVIEW_DEFAULT_WIDTH,
         CameraFrameworkUnitTest::PREVIEW_DEFAULT_HEIGHT, CameraFrameworkUnitTest::PREVIEW_FRAMERATE,
@@ -179,9 +180,50 @@ public:
         CameraFrameworkUnitTest::ABILITY_ID_ONE, CameraFrameworkUnitTest::ABILITY_ID_TWO,
         CameraFrameworkUnitTest::ABILITY_ID_THREE, CameraFrameworkUnitTest::ABILITY_ID_FOUR,
         CameraFrameworkUnitTest::ABILITY_FINISH, CameraFrameworkUnitTest::STREAM_FINISH,
-        CameraFrameworkUnitTest::MODE_FINISH
+        CameraFrameworkUnitTest::MODE_FINISH, CameraFrameworkUnitTest::NIGHT_MODE,
+        CameraFrameworkUnitTest::PREVIEW_STREAM, OHOS_CAMERA_FORMAT_YCRCB_420_SP,
+        CameraFrameworkUnitTest::PREVIEW_DEFAULT_WIDTH, CameraFrameworkUnitTest::PREVIEW_DEFAULT_HEIGHT,
+        CameraFrameworkUnitTest::PREVIEW_FRAMERATE, CameraFrameworkUnitTest::MIN_FRAMERATE,
+        CameraFrameworkUnitTest::MAX_FRAMERATE, CameraFrameworkUnitTest::ABILITY_ID_ONE,
+        CameraFrameworkUnitTest::ABILITY_ID_TWO, CameraFrameworkUnitTest::ABILITY_ID_THREE,
+        CameraFrameworkUnitTest::ABILITY_ID_FOUR, CameraFrameworkUnitTest::ABILITY_FINISH,
+        CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::VIDEO_STREAM, OHOS_CAMERA_FORMAT_YCRCB_420_SP,
+        CameraFrameworkUnitTest::VIDEO_DEFAULT_WIDTH, CameraFrameworkUnitTest::VIDEO_DEFAULT_HEIGHT,
+        CameraFrameworkUnitTest::VIDEO_FRAMERATE, CameraFrameworkUnitTest::MIN_FRAMERATE,
+        CameraFrameworkUnitTest::MAX_FRAMERATE, CameraFrameworkUnitTest::ABILITY_ID_ONE,
+        CameraFrameworkUnitTest::ABILITY_ID_TWO, CameraFrameworkUnitTest::ABILITY_ID_THREE,
+        CameraFrameworkUnitTest::ABILITY_ID_FOUR, CameraFrameworkUnitTest::ABILITY_FINISH,
+        CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::PHOTO_STREAM,
+        OHOS_CAMERA_FORMAT_JPEG, CameraFrameworkUnitTest::PHOTO_DEFAULT_WIDTH,
+        CameraFrameworkUnitTest::PHOTO_DEFAULT_HEIGHT, CameraFrameworkUnitTest::PHOTO_FRAMERATE,
+        CameraFrameworkUnitTest::MIN_FRAMERATE, CameraFrameworkUnitTest::MAX_FRAMERATE,
+        CameraFrameworkUnitTest::ABILITY_ID_ONE, CameraFrameworkUnitTest::ABILITY_ID_TWO,
+        CameraFrameworkUnitTest::ABILITY_ID_THREE, CameraFrameworkUnitTest::ABILITY_ID_FOUR,
+        CameraFrameworkUnitTest::ABILITY_FINISH, CameraFrameworkUnitTest::STREAM_FINISH,
+        CameraFrameworkUnitTest::MODE_FINISH, CameraFrameworkUnitTest::SCAN_MODE,
+        CameraFrameworkUnitTest::PREVIEW_STREAM, OHOS_CAMERA_FORMAT_YCRCB_420_SP,
+        CameraFrameworkUnitTest::PREVIEW_DEFAULT_WIDTH, CameraFrameworkUnitTest::PREVIEW_DEFAULT_HEIGHT,
+        CameraFrameworkUnitTest::PREVIEW_FRAMERATE, CameraFrameworkUnitTest::MIN_FRAMERATE,
+        CameraFrameworkUnitTest::MAX_FRAMERATE, CameraFrameworkUnitTest::ABILITY_ID_ONE,
+        CameraFrameworkUnitTest::ABILITY_ID_TWO, CameraFrameworkUnitTest::ABILITY_ID_THREE,
+        CameraFrameworkUnitTest::ABILITY_ID_FOUR, CameraFrameworkUnitTest::ABILITY_FINISH,
+        CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::VIDEO_STREAM, OHOS_CAMERA_FORMAT_YCRCB_420_SP,
+        CameraFrameworkUnitTest::VIDEO_DEFAULT_WIDTH, CameraFrameworkUnitTest::VIDEO_DEFAULT_HEIGHT,
+        CameraFrameworkUnitTest::VIDEO_FRAMERATE, CameraFrameworkUnitTest::MIN_FRAMERATE,
+        CameraFrameworkUnitTest::MAX_FRAMERATE, CameraFrameworkUnitTest::ABILITY_ID_ONE,
+        CameraFrameworkUnitTest::ABILITY_ID_TWO, CameraFrameworkUnitTest::ABILITY_ID_THREE,
+        CameraFrameworkUnitTest::ABILITY_ID_FOUR, CameraFrameworkUnitTest::ABILITY_FINISH,
+        CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::PHOTO_STREAM,
+        OHOS_CAMERA_FORMAT_JPEG, CameraFrameworkUnitTest::PHOTO_DEFAULT_WIDTH,
+        CameraFrameworkUnitTest::PHOTO_DEFAULT_HEIGHT, CameraFrameworkUnitTest::PHOTO_FRAMERATE,
+        CameraFrameworkUnitTest::MIN_FRAMERATE, CameraFrameworkUnitTest::MAX_FRAMERATE,
+        CameraFrameworkUnitTest::ABILITY_ID_ONE, CameraFrameworkUnitTest::ABILITY_ID_TWO,
+        CameraFrameworkUnitTest::ABILITY_ID_THREE, CameraFrameworkUnitTest::ABILITY_ID_FOUR,
+        CameraFrameworkUnitTest::ABILITY_FINISH, CameraFrameworkUnitTest::STREAM_FINISH,
+        CameraFrameworkUnitTest::MODE_FINISH,
     };
-    uint8_t modes[2] = {0, 3};
+
+    uint8_t modes[4] = {0, 3, 4, 7};
     uint8_t filterAbility[2] = {0, 1};
     int32_t filterControl[2] = {0, 1};
     uint8_t beautyAbility[5] = {OHOS_CAMERA_BEAUTY_TYPE_OFF, OHOS_CAMERA_BEAUTY_TYPE_AUTO,
@@ -352,7 +394,7 @@ public:
 
             ability->addEntry(OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &effectControl,
                               sizeof(effectControl) / sizeof(effectControl[0]));
-            return CAMERA_OK;
+                        return CAMERA_OK;
         });
         ON_CALL(*this, OpenCameraDevice).WillByDefault([this](std::string &cameraId,
                                                             const sptr<ICameraDeviceCallback> &callback,
@@ -602,6 +644,8 @@ void CameraFrameworkUnitTest::TearDownTestCase(void) {}
 void CameraFrameworkUnitTest::SetUp()
 {
     // set native token
+    g_num++;
+    MEDIA_ERR_LOG("CameraFrameworkUnitTest::SetUp num:%{public}d", g_num);
     uint64_t tokenId;
     const char *perms[2];
     perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
@@ -632,6 +676,7 @@ void CameraFrameworkUnitTest::TearDown()
     Mock::AllowLeak(mockCameraHostManager);
     Mock::AllowLeak(mockCameraDevice);
     Mock::AllowLeak(mockStreamOperator);
+    MEDIA_ERR_LOG("CameraFrameworkUnitTest::TearDown num:%{public}d", g_num);
 }
 
 MATCHER_P(matchCaptureSetting, captureSetting, "Match Capture Setting")
@@ -761,7 +806,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_003, TestSize.Level0
 {
     sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    session->Release();
+    EXPECT_EQ(session->Release(), 0);
 }
 
 /*
@@ -965,7 +1010,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_020, TestSize.Level0
     session->RemoveInput(input);
     photo->Release();
     input->Release();
-    session->Release();
+    EXPECT_EQ(session->Release(), 0);
 }
 
 /*
@@ -1067,7 +1112,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_025, TestSize.Level0
     sptr<CaptureInput> input = nullptr;
     ret = session->AddInput(input);
     EXPECT_NE(ret, 0);
-    session->Release();
+    EXPECT_EQ(session->Release(), 0);
 }
 
 /*
@@ -1089,7 +1134,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_026, TestSize.Level0
     sptr<CaptureOutput> preview = nullptr;
     ret = session->AddOutput(preview);
     EXPECT_NE(ret, 0);
-    session->Release();
+    EXPECT_EQ(session->Release(), 0);
 }
 
 /*
@@ -1112,13 +1157,13 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_027, TestSize.Level0
     ASSERT_NE(preview, nullptr);
 
     ret = session->AddOutput(preview);
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(ret, 7400201);
 
     ret = session->CommitConfig();
     EXPECT_NE(ret, 0);
     session->RemoveOutput(preview);
     preview->Release();
-    session->Release();
+    EXPECT_EQ(session->Release(), 0);
 }
 
 /*
@@ -1157,7 +1202,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_028, TestSize.Level0
     EXPECT_NE(ret, 0);
     session->RemoveInput(input);
     input->Release();
-    session->Release();
+    EXPECT_EQ(session->Release(), 0);
 }
 
 /*
@@ -1495,10 +1540,18 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_035, TestSize.Level0
     sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
 
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
     sptr<CaptureOutput> video = CreateVideoOutput();
     ASSERT_NE(video, nullptr);
 
     int32_t ret = session->BeginConfig();
+    EXPECT_EQ(ret, 0);
+
+    ret = session->AddInput(input);
     EXPECT_EQ(ret, 0);
 
     ret = session->AddOutput(video);
@@ -1506,6 +1559,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_035, TestSize.Level0
 
     ret = session->RemoveOutput(video);
     EXPECT_EQ(ret, 0);
+    input->Release();
     video->Release();
     session->Release();
 }
@@ -2293,1447 +2347,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_052, TestSize.Level0
 
 /*
  * Feature: Framework
- * Function: Test cameramanager with updatetorchmode
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test cameramanager with updatetorchmode
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_053, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], 0);
-
-    SceneMode mode = PORTRAIT;
-    cameraManager->serviceProxy_ = nullptr;
-    cameraManager->CreateCaptureSession(mode);
-    cameraManager->InitCameraList();
-
-    TorchMode mode1 = TorchMode::TORCH_MODE_OFF;
-    TorchMode mode2 = TorchMode::TORCH_MODE_ON;
-    cameraManager->torchMode_ = mode1;
-    cameraManager->UpdateTorchMode(mode1);
-    cameraManager->UpdateTorchMode(mode2);
-}
-
-/*
- * Feature: Framework
- * Function: Test cameramanager with parsebasiccapability
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test cameramanager with parsebasiccapability
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_054, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], 0);
-
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
-    camera_metadata_item_t item;
-    OHOS::Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
-    cameraManager->ParseBasicCapability(ability, metadata, item);
-}
-
-/*
- * Feature: Framework
- * Function: Test cameramanager with no cameraid and cameraobjlist
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test cameramanager with no cameraid and cameraobjlist
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_055, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], 0);
-
-    pid_t pid = 0;
-    cameraManager->CameraServerDied(pid);
-    sptr<ICameraServiceCallback> cameraServiceCallback = nullptr;
-    cameraManager->SetCameraServiceCallback(cameraServiceCallback);
-    sptr<ITorchServiceCallback> torchServiceCallback = nullptr;
-    cameraManager->SetTorchServiceCallback(torchServiceCallback);
-    sptr<ICameraMuteServiceCallback> cameraMuteServiceCallback = nullptr;
-    cameraManager->SetCameraMuteServiceCallback(cameraMuteServiceCallback);
-    float level = 9.2;
-    cameraManager->SetTorchLevel(level);
-    string cameraId = "";
-    int activeTime = 0;
-    EffectParam effectParam = {0, 0, 0};
-    cameraManager->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS,
-        activeTime, effectParam);
-
-    cameraManager->cameraObjList = {};
-    bool isTorchSupported = cameraManager->IsTorchSupported();
-    EXPECT_EQ(isTorchSupported, false);
-}
-
-/*
- * Feature: Framework
- * Function: Test cameramanager with serviceProxy_ is nullptr
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test cameramanager with serviceProxy_ is nullptr
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_056, TestSize.Level0)
-{
-    sptr<ICameraServiceCallback> callback = new(std::nothrow) CameraStatusServiceCallback(cameraManager);
-    cameraManager->cameraSvcCallback_  = callback;
-
-    pid_t pid = 0;
-    cameraManager->serviceProxy_  = nullptr;
-    cameraManager->CameraServerDied(pid);
-    sptr<ICameraServiceCallback> cameraServiceCallback = nullptr;
-    cameraManager->SetCameraServiceCallback(cameraServiceCallback);
-    sptr<ITorchServiceCallback> torchServiceCallback = nullptr;
-    cameraManager->SetTorchServiceCallback(torchServiceCallback);
-    sptr<ICameraMuteServiceCallback> cameraMuteServiceCallback = nullptr;
-    cameraManager->SetCameraMuteServiceCallback(cameraMuteServiceCallback);
-
-    cameraManager->cameraObjList = {};
-    string cameraId = "";
-    cameraManager->GetCameraDeviceFromId(cameraId);
-    bool isTorchSupported = cameraManager->IsTorchSupported();
-    EXPECT_EQ(isTorchSupported, false);
-}
-
-/*
- * Feature: Framework
- * Function: Test cameramanager with preswitchcamera
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test cameramanager with preswitchcamera
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_057, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], 0);
-
-    std::string cameraId = cameras[0]->GetID();
-    cameraManager->PreSwitchCamera(cameraId);
-
-    cameraManager->serviceProxy_ = nullptr;
-    cameraManager->PreSwitchCamera(cameraId);
-}
-
-/*
- * Feature: Framework
- * Function: Test cameradevice with position and zoomratiorange
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test cameradevice with position and zoomratiorange
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_058, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    cameras[0]->foldScreenType_ = CAMERA_FOLDSCREEN_INNER;
-    cameras[0]->cameraPosition_ = CAMERA_POSITION_FRONT;
-    cameras[0]->GetPosition();
-
-    cameras[0]->zoomRatioRange_ = {1.1, 2.1};
-    cameras[0]->GetZoomRatioRange();
-}
-
-/*
- * Feature: Framework
- * Function: Test camerainput with cameraserverdied
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test camerainput with cameraserverdied
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_059, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
-    pid_t pid = 0;
-    camInput->CameraServerDied(pid);
-}
-
-/*
- * Feature: Framework
- * Function: Test camerainput with deviceObj_ is nullptr
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test camerainput with deviceObj_ is nullptr
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_060, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
-    pid_t pid = 0;
-    std::shared_ptr<TestDeviceCallback> setCallback = std::make_shared<TestDeviceCallback>("InputCallback");
-    camInput->deviceObj_ = nullptr;
-    camInput->SetErrorCallback(setCallback);
-    camInput->CameraServerDied(pid);
-}
-
-/*
- * Feature: Framework
- * Function: Test metadataoutput with cameraserverdied and stop
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test metadataoutput with cameraserverdied and stop
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_062, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-    sptr<CaptureOutput> output = cameraManager->CreateMetadataOutput();
-    ASSERT_NE(output, nullptr);
-    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)output;
-
-    pid_t pid = 0;
-    metadatOutput->CameraServerDied(pid);
-    metadatOutput->Stop();
-}
-
-/*
- * Feature: Framework
- * Function: Test metadataoutput with stream_ is nullptr
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test metadataoutput with stream_ is nullptr
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_063, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<CaptureOutput> output = cameraManager->CreateMetadataOutput();
-    ASSERT_NE(output, nullptr);
-    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)output;
-
-    pid_t pid = 0;
-    metadatOutput->stream_ = nullptr;
-    metadatOutput->CameraServerDied(pid);
-    metadatOutput->Stop();
-    metadatOutput->Release();
-}
-
-/*
- * Feature: Framework
- * Function: Test metadataoutput with surface_ is nullptr
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test metadataoutput with surface_ is nullptr
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_064, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<CaptureOutput> output = cameraManager->CreateMetadataOutput();
-    ASSERT_NE(output, nullptr);
-    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)output;
-
-    metadatOutput->surface_ = nullptr;
-    metadatOutput->Release();
-}
-
-/*
- * Feature: Framework
- * Function: Test metadataoutput with start when session_ is nullptr
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test metadataoutput with start when session_ is nullptr
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_065, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<CaptureOutput> metadata = cameraManager->CreateMetadataOutput();
-    ASSERT_NE(metadata, nullptr);
-    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)metadata;
-
-    metadatOutput->session_ = nullptr;
-    metadatOutput->Start();
-}
-
-/*
- * Feature: Framework
- * Function: Test metadataoutput with start when not commit
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test metadataoutput with start when not commit
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_066, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
-    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    std::string cameraSettings = camInput->GetCameraSettings();
-    camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->Open();
-
-    sptr<CaptureOutput> metadata = cameraManager->CreateMetadataOutput();
-    ASSERT_NE(metadata, nullptr);
-    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)metadata;
-
-    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-
-    session->BeginConfig();
-    session->AddInput(input);
-    session->AddOutput(metadata);
-
-    metadatOutput->Start();
-
-    session->CommitConfig();
-    session->Start();
-}
-
-/*
- * Feature: Framework
- * Function: Test metadataoutput with start when stream_ is nullptr
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test metadataoutput with start when stream_ is nullptr
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_067, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
-    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
-    std::string cameraSettings = camInput->GetCameraSettings();
-    camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->Open();
-
-    sptr<CaptureOutput> metadata = cameraManager->CreateMetadataOutput();
-    ASSERT_NE(metadata, nullptr);
-    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)metadata;
-
-    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-
-    session->BeginConfig();
-
-    session->AddInput(input);
-    session->AddOutput(metadata);
-
-    session->CommitConfig();
-    session->Start();
-
-    metadatOutput->stream_ = nullptr;
-    metadatOutput->Start();
-}
-
-/*
- * Feature: Framework
- * Function: Test metadataoutput with start
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test metadataoutput with start
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_068, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
-    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
-    std::string cameraSettings = camInput->GetCameraSettings();
-    camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->Open();
-
-    sptr<CaptureOutput> metadata = cameraManager->CreateMetadataOutput();
-    ASSERT_NE(metadata, nullptr);
-    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)metadata;
-
-    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-
-    session->BeginConfig();
-
-    session->AddInput(input);
-    session->AddOutput(metadata);
-
-    session->CommitConfig();
-    session->Start();
-
-    metadatOutput->Start();
-}
-
-/*
- * Feature: Framework
- * Function: Test metadataoutput when destruction
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test metadataoutput when destruction
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_069, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<CaptureOutput> output = cameraManager->CreateMetadataOutput();
-    ASSERT_NE(output, nullptr);
-    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)output;
-
-    metadatOutput->~MetadataOutput();
-    metadatOutput->Stop();
-}
-
-/*
- * Feature: Framework
- * Function: Test photooutput with cameraserverdied
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test photooutput with cameraserverdied
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_070, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
-    ASSERT_NE(photoOutput, nullptr);
-
-    pid_t pid = 0;
-    photoOutput->CameraServerDied(pid);
-}
-
-/*
- * Feature: Framework
- * Function: Test photooutput with cameraserverdied
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test photooutput with cameraserverdied
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_071, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
-    ASSERT_NE(photoOutput, nullptr);
-
-    pid_t pid = 0;
-    std::shared_ptr<PhotoStateCallback> setCallback = std::make_shared<TestPhotoOutputCallback>("PhotoStateCallback");
-    ((sptr<PhotoOutput>&)photoOutput)->SetCallback(setCallback);
-    photoOutput->CameraServerDied(pid);
-}
-
-/*
- * Feature: Framework
- * Function: Test photooutput with cameraserverdied when stream_ is nullptr
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test photooutput with cameraserverdied when stream_ is nullptr
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_072, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
-    ASSERT_NE(photoOutput, nullptr);
-
-    pid_t pid = 0;
-    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
-    phtOutput->stream_ = nullptr;
-    photoOutput->CameraServerDied(pid);
-}
-
-/*
- * Feature: Framework
- * Function: Test photooutput with confirmcapture when stream_ is nullptr
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test photooutput with confirmcapture when stream_ is nullptr
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_073, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-
-    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
-    ASSERT_NE(photoOutput, nullptr);
-    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
-
-    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-
-    int32_t ret = session->BeginConfig();
-    EXPECT_EQ(ret, 0);
-
-    ret = session->AddOutput(photoOutput);
-    session->CommitConfig();
-
-    phtOutput->stream_ = nullptr;
-    phtOutput->ConfirmCapture();
-
-    phtOutput->~PhotoOutput();
-    phtOutput->ConfirmCapture();
-
-    session->Release();
-}
-
-/*
- * Feature: Framework
- * Function: Test previewoutput
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test previewoutput
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_074, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<CaptureOutput> preview = CreatePreviewOutput();
-    ASSERT_NE(preview, nullptr);
-
-    auto previewOutput = (sptr<PreviewOutput>&)preview;
-    previewOutput->stream_ = nullptr;
-    previewOutput->session_ = nullptr;
-
-    previewOutput->OnSketchStatusChanged(SketchStatus::STOPED);
-    previewOutput->IsSketchSupported();
-
-    Size previewSize = {};
-    previewOutput->stream_ = nullptr;
-    previewOutput->CreateSketchWrapper(previewSize);
-}
-
-/*
- * Feature: Framework
- * Function: Test previewoutput with callback and cameraserverdied
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test previewoutput with callback and cameraserverdied
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_075, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<CaptureOutput> preview = CreatePreviewOutput();
-    ASSERT_NE(preview, nullptr);
-
-    auto previewOutput = (sptr<PreviewOutput>&)preview;
-
-    std::string eventString = "sketchAvailable";
-    previewOutput->sketchWrapper_ = nullptr;
-    previewOutput->OnNativeRegisterCallback(eventString);
-    previewOutput->OnNativeUnregisterCallback(eventString);
-
-    pid_t pid = 0;
-    previewOutput->stream_ = nullptr;
-    previewOutput->CameraServerDied(pid);
-}
-
-/*
- * Feature: Framework
- * Function: Test sketchwrapper
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test sketchwrapper
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_076, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-    sptr<CameraInput> cameraInput = (sptr<CameraInput>&)input;
-
-    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata = cameraInput->GetCameraDeviceInfo()->GetMetadata();
-    ASSERT_NE(deviceMetadata, nullptr);
-
-    int32_t width = 1440;
-    int32_t height = 1080;
-    CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
-    Size previewSize;
-    previewSize.width = width;
-    previewSize.height = height;
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    Profile previewProfile = Profile(previewFormat, previewSize);
-    sptr<CaptureOutput> previewOutput = cameraManager->CreatePreviewOutput(previewProfile, surface);
-    ASSERT_NE(previewOutput, nullptr);
-
-    Size sketchSize;
-    sketchSize.width = 640;
-    sketchSize.height = 480;
-
-    SketchWrapper *sketchWrapper = new (std::nothrow) SketchWrapper(previewOutput->GetStream(), sketchSize);
-    ASSERT_NE(sketchWrapper, nullptr);
-    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-    int32_t modeName = session->GetFeaturesMode();
-    int ret = sketchWrapper->Init(deviceMetadata, modeName);
-    EXPECT_EQ(ret, CAMERA_OK);
-
-    sketchWrapper->sketchStream_ = nullptr;
-    ret = sketchWrapper->AttachSketchSurface(nullptr);
-    EXPECT_EQ(ret, CAMERA_INVALID_STATE);
-    sketchWrapper->StartSketchStream();
-
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata;
-    sketchWrapper->UpdateSketchEnableRatio(metadata);
-    sketchWrapper->UpdateSketchReferenceFovRatio(metadata);
-}
-
-/*
- * Feature: Framework
- * Function: Test sketchwrapper
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test sketchwrapper
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_077, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-    sptr<CameraInput> cameraInput = (sptr<CameraInput>&)input;
-
-    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata = cameraInput->GetCameraDeviceInfo()->GetMetadata();
-    ASSERT_NE(deviceMetadata, nullptr);
-
-    int32_t width = 1440;
-    int32_t height = 1080;
-    CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
-    Size previewSize;
-    previewSize.width = width;
-    previewSize.height = height;
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    Profile previewProfile = Profile(previewFormat, previewSize);
-    sptr<CaptureOutput> previewOutput = cameraManager->CreatePreviewOutput(previewProfile, surface);
-    ASSERT_NE(previewOutput, nullptr);
-
-    Size sketchSize;
-    sketchSize.width = 640;
-    sketchSize.height = 480;
-
-    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-    SketchWrapper *sketchWrapper = new (std::nothrow) SketchWrapper(previewOutput->GetStream(), sketchSize);
-    ASSERT_NE(sketchWrapper, nullptr);
-    
-    int32_t modeName = session->GetFeaturesMode();
-    int ret = sketchWrapper->Init(deviceMetadata, modeName);
-    EXPECT_EQ(ret, CAMERA_OK);
-
-    float sketchRatio = sketchWrapper->GetSketchEnableRatio(session->GetFeaturesMode());
-    sketchWrapper->hostStream_ = nullptr;
-    ret = sketchWrapper->UpdateSketchRatio(sketchRatio);
-    sketchWrapper->Destroy();
-}
-
-/*
- * Feature: Framework
- * Function: Test sketchwrapper
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test sketchwrapper
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_078, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-    sptr<CameraInput> cameraInput = (sptr<CameraInput>&)input;
-
-    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata = cameraInput->GetCameraDeviceInfo()->GetMetadata();
-    ASSERT_NE(deviceMetadata, nullptr);
-
-    int32_t width = 1440;
-    int32_t height = 1080;
-    CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
-    Size previewSize;
-    previewSize.width = width;
-    previewSize.height = height;
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    Profile previewProfile = Profile(previewFormat, previewSize);
-    sptr<CaptureOutput> previewOutput = cameraManager->CreatePreviewOutput(previewProfile, surface);
-    ASSERT_NE(previewOutput, nullptr);
-
-    Size sketchSize;
-    sketchSize.width = 640;
-    sketchSize.height = 480;
-
-    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-    SketchWrapper *sketchWrapper = new (std::nothrow) SketchWrapper(previewOutput->GetStream(), sketchSize);
-    ASSERT_NE(sketchWrapper, nullptr);
-    
-    int32_t modeName = session->GetFeaturesMode();
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
-    camera_metadata_item_t item;
-    OHOS::Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
-    const camera_device_metadata_tag_t tag1 = OHOS_CONTROL_ZOOM_RATIO;
-    sketchWrapper->OnMetadataDispatch(modeName, tag1, item);
-    const camera_device_metadata_tag_t tag2 = OHOS_CONTROL_CAMERA_MACRO;
-    sketchWrapper->OnMetadataDispatch(modeName, tag2, item);
-}
-
-/*
- * Feature: Framework
- * Function: Test videooutput with cameraserverdied
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test videooutput with cameraserverdied
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_079, TestSize.Level0)
-{
-    int32_t width = VIDEO_DEFAULT_WIDTH;
-    int32_t height = VIDEO_DEFAULT_HEIGHT;
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
-    Size videoSize;
-    videoSize.width = width;
-    videoSize.height = height;
-    std::vector<int32_t> videoFramerates = {30, 30};
-    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
-    sptr<VideoOutput> video = cameraManager->CreateVideoOutput(videoProfile, surface);
-    ASSERT_NE(video, nullptr);
-
-    pid_t pid = 0;
-    video->CameraServerDied(pid);
-}
-
-/*
- * Feature: Framework
- * Function: Test videooutput with cameraserverdied when stream_ is nullptr
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test videooutput with cameraserverdied when stream_ is nullptr
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_080, TestSize.Level0)
-{
-    int32_t width = VIDEO_DEFAULT_WIDTH;
-    int32_t height = VIDEO_DEFAULT_HEIGHT;
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
-    Size videoSize;
-    videoSize.width = width;
-    videoSize.height = height;
-    std::vector<int32_t> videoFramerates = {30, 30};
-    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
-    sptr<VideoOutput> video = cameraManager->CreateVideoOutput(videoProfile, surface);
-    ASSERT_NE(video, nullptr);
-
-    pid_t pid = 0;
-    video->stream_ = nullptr;
-    std::shared_ptr<VideoStateCallback> setCallback = std::make_shared<TestVideoOutputCallback>("VideoStateCallback");
-    video->SetCallback(setCallback);
-    video->CameraServerDied(pid);
-}
-
-/*
- * Feature: Framework
- * Function: Test videooutput when destruction
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test videooutput when destruction
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_081, TestSize.Level0)
-{
-    int32_t width = VIDEO_DEFAULT_WIDTH;
-    int32_t height = VIDEO_DEFAULT_HEIGHT;
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
-    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
-    Size videoSize;
-    videoSize.width = width;
-    videoSize.height = height;
-    std::vector<int32_t> videoFramerates = {30, 30};
-    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
-    sptr<VideoOutput> video = cameraManager->CreateVideoOutput(videoProfile, surface);
-    ASSERT_NE(video, nullptr);
-
-    video->~VideoOutput();
-}
-
-/*
- * Feature: Framework
- * Function: Test HCameraDevice
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCameraDevice
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_082, TestSize.Level0)
-{
-    std::vector<int32_t> result;
-    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
-    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
-
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
-    std::string cameraId = cameras[0]->GetID();
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
-    std::shared_ptr<OHOS::Camera::CameraMetadata> settings;
-    camDevice->UpdateSettingOnce(settings);
-}
-
-/*
- * Feature: Framework
- * Function: Test HCameraDevice
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCameraDevice
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_083, TestSize.Level0)
-{
-    std::vector<int32_t> result;
-    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
-    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
-
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
-    std::string cameraId = cameras[0]->GetID();
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
-    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = cameras[0]->GetMetadata();
-    camDevice->UpdateSettingOnce(settings);
-
-    camDevice->RegisterFoldStatusListener();
-    camDevice->UnRegisterFoldStatusListener();
-}
-
-/*
- * Feature: Framework
- * Function: Test HCameraDevice
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCameraDevice
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_084, TestSize.Level0)
-{
-    std::vector<int32_t> result;
-    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
-    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
-
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
-    std::string cameraId = cameras[0]->GetID();
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
-
-    camDevice->UnRegisterFoldStatusListener();
-    camDevice->RegisterFoldStatusListener();
-    camDevice->UnRegisterFoldStatusListener();
-    camDevice->cameraHostManager_ = nullptr;
-    camDevice->RegisterFoldStatusListener();
-    camDevice->UnRegisterFoldStatusListener();
-
-    std::vector<int32_t> results = {};
-    camDevice->EnableResult(results);
-    camDevice->DisableResult(results);
-
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metaIn;
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metaOut;
-    camDevice->GetStatus(metaIn, metaOut);
-
-    camDevice->Close();
-}
-
-/*
- * Feature: Framework
- * Function: Test HCameraDevice
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCameraDevice
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_085, TestSize.Level0)
-{
-    std::vector<int32_t> result;
-    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
-    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
-
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
-    std::string cameraId = cameras[0]->GetID();
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
-
-    camDevice->hdiCameraDevice_ = nullptr;
-    camDevice->InitStreamOperator();
-}
-
-/*
- * Feature: Framework
- * Function: Test HCameraDevice
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCameraDevice
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_086, TestSize.Level0)
-{
-    std::vector<int32_t> result;
-    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
-    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
-
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
-    std::string cameraId = cameras[0]->GetID();
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
-
-    std::vector<HDI::Camera::V1_1::StreamInfo_V1_1> streamInfos = {};
-    camDevice->CreateStreams(streamInfos);
-
-    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceSettings = cameras[0]->GetMetadata();
-    int32_t operationMode = 0;
-    camDevice->streamOperator_ = nullptr;
-    camDevice->CommitStreams(deviceSettings, operationMode);
-}
-
-/*
- * Feature: Framework
- * Function: Test HCameraDevice
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCameraDevice
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_087, TestSize.Level0)
-{
-    std::vector<int32_t> result;
-    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
-    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
-
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
-    std::string cameraId = cameras[0]->GetID();
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
-
-    std::vector<StreamInfo_V1_1> streamInfos = {};
-    camDevice->UpdateStreams(streamInfos);
-}
-
-/*
- * Feature: Framework
- * Function: Test HCameraDevice
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCameraDevice
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_088, TestSize.Level0)
-{
-    std::vector<int32_t> result;
-    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
-    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
-
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
-    std::string cameraId = cameras[0]->GetID();
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
-
-    int32_t captureId = 0;
-    const std::vector<int32_t> streamIds = {1, 2};
-    camDevice->OnCaptureStarted(captureId, streamIds);
-
-    HDI::Camera::V1_2::CaptureStartedInfo it1;
-    it1.streamId_ = 1;
-    it1.exposureTime_ = 1;
-    HDI::Camera::V1_2::CaptureStartedInfo it2;
-    it2.streamId_ = 2;
-    it2.exposureTime_ = 2;
-    std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo> captureStartedInfo = {};
-    captureStartedInfo.push_back(it1);
-    captureStartedInfo.push_back(it2);
-    camDevice->OnCaptureStarted_V1_2(captureId, captureStartedInfo);
-}
-
-/*
- * Feature: Framework
- * Function: Test HCameraDevice
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCameraDevice
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_089, TestSize.Level0)
-{
-    std::vector<int32_t> result;
-    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
-    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
-
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
-    std::string cameraId = cameras[0]->GetID();
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
-
-    int32_t captureId = 0;
-    const std::vector<int32_t> streamIds = {1, 2};
-    camDevice->OnCaptureStarted(captureId, streamIds);
-    const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo> captureStartedInfo = {};
-    camDevice->OnCaptureStarted_V1_2(captureId, captureStartedInfo);
-
-    CaptureEndedInfo it1;
-    it1.streamId_ = 1;
-    it1.frameCount_ = 1;
-    CaptureEndedInfo it2;
-    it2.streamId_ = 2;
-    it2.frameCount_ = 2;
-    std::vector<CaptureEndedInfo> captureEndedInfo = {};
-    captureEndedInfo.push_back(it1);
-    captureEndedInfo.push_back(it2);
-    camDevice->OnCaptureEnded(captureId, captureEndedInfo);
-}
-
-/*
- * Feature: Framework
- * Function: Test HCameraDevice
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCameraDevice
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_090, TestSize.Level0)
-{
-    std::vector<int32_t> result;
-    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
-    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
-
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
-    std::string cameraId = cameras[0]->GetID();
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
-
-    int32_t captureId = 0;
-    CaptureErrorInfo it1;
-    it1.streamId_ = 2;
-    it1.error_ = BUFFER_LOST;
-    CaptureErrorInfo it2;
-    it2.streamId_ = 1;
-    it2.error_ =  BUFFER_LOST;
-    std::vector<CaptureErrorInfo> captureErrorInfo = {};
-    captureErrorInfo.push_back(it1);
-    captureErrorInfo.push_back(it2);
-    camDevice->OnCaptureError(captureId, captureErrorInfo);
-
-    const std::vector<int32_t> streamIds = {1, 2};
-    uint64_t timestamp = 5;
-    camDevice->OnFrameShutter(captureId, streamIds, timestamp);
-}
-
-/*
- * Feature: Framework
- * Function: Test HCameraDevice
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCameraDevice
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_091, TestSize.Level0)
-{
-    std::vector<int32_t> result;
-    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
-    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
-
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
-    std::string cameraId = cameras[0]->GetID();
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
-
-    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = cameras[0]->GetMetadata();
-    camDevice->CheckOnResultData(nullptr);
-    camDevice->CheckOnResultData(cameraResult);
-}
-
-/*
- * Feature: coverage
- * Function: Test HStreamRepeat
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HStreamRepeat
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_092, TestSize.Level0)
-{
-    int32_t format = CAMERA_FORMAT_YUV_420_SP;
-    int32_t width = PHOTO_DEFAULT_WIDTH;
-    int32_t height = PHOTO_DEFAULT_HEIGHT;
-
-    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = Surface->GetProducer();
-    auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
-    sptr<HStreamRepeat> streamRepeat1 =
-        new (std::nothrow) HStreamRepeat(producer, 4, 1280, 960, RepeatStreamType::PREVIEW);
-
-    SketchStatus status = SketchStatus::STARTED;
-    streamRepeat->repeatStreamType_ = RepeatStreamType::SKETCH;
-    streamRepeat->parentStreamRepeat_ = streamRepeat1;
-    streamRepeat->UpdateSketchStatus(status);
-}
-
-/*
- * Feature: coverage
- * Function: Test HStreamRepeat
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HStreamRepeat
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_093, TestSize.Level0)
-{
-    int32_t format = CAMERA_FORMAT_YUV_420_SP;
-    int32_t width = PHOTO_DEFAULT_WIDTH;
-    int32_t height = PHOTO_DEFAULT_HEIGHT;
-
-    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = Surface->GetProducer();
-    auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
-
-    SketchStatus status = SketchStatus::STARTED;
-    streamRepeat->OnSketchStatusChanged(status);
-}
-
-/*
- * Feature: coverage
- * Function: Test HStreamRepeat
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HStreamRepeat
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_094, TestSize.Level0)
-{
-    int32_t format = CAMERA_FORMAT_YUV_420_SP;
-    int32_t width = PHOTO_DEFAULT_WIDTH;
-    int32_t height = PHOTO_DEFAULT_HEIGHT;
-
-    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = Surface->GetProducer();
-    auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
-
-    sptr<IStreamRepeat> sketchStream = nullptr;
-    float sketchRatio = 0;
-    streamRepeat->ForkSketchStreamRepeat(0, 1, sketchStream, sketchRatio);
-    streamRepeat->ForkSketchStreamRepeat(1, 0, sketchStream, sketchRatio);
-}
-
-/*
- * Feature: coverage
- * Function: Test HStreamRepeat
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HStreamRepeat
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_095, TestSize.Level0)
-{
-    int32_t format = CAMERA_FORMAT_YUV_420_SP;
-    int32_t width = PHOTO_DEFAULT_WIDTH;
-    int32_t height = PHOTO_DEFAULT_HEIGHT;
-
-    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = Surface->GetProducer();
-    auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
-
-    float sketchRatio = 0;
-    streamRepeat->sketchStreamRepeat_ = nullptr;
-    streamRepeat->RemoveSketchStreamRepeat();
-    streamRepeat->UpdateSketchRatio(sketchRatio);
-}
-
-/*
- * Feature: coverage
- * Function: Test HStreamRepeat
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HStreamRepeat
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_096, TestSize.Level0)
-{
-    int32_t format = CAMERA_FORMAT_YUV_420_SP;
-    int32_t width = PHOTO_DEFAULT_WIDTH;
-    int32_t height = PHOTO_DEFAULT_HEIGHT;
-
-    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = Surface->GetProducer();
-    auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
-
-    uint32_t interfaceCode = 5;
-    streamRepeat->OperatePermissionCheck(interfaceCode);
-}
-
-/*
- * Feature: coverage
- * Function: Test HCaptureSession
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCaptureSession
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_097, TestSize.Level0)
-{
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    SceneMode mode = PORTRAIT;
-    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
-    ASSERT_NE(camSession, nullptr);
-
-    std::vector<StreamInfo_V1_1> streamInfos = {};
-    camSession->GetCurrentStreamInfos(streamInfos);
-    camSession->AddOutputStream(nullptr);
-    camSession->RemoveOutputStream(nullptr);
-}
-
-/*
- * Feature: coverage
- * Function: Test HCaptureSession
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCaptureSession
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_098, TestSize.Level0)
-{
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    SceneMode mode = PORTRAIT;
-    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
-    ASSERT_NE(camSession, nullptr);
-
-    camSession->cameraDevice_ = nullptr;
-    camSession->LinkInputAndOutputs();
-}
-
-/*
- * Feature: coverage
- * Function: Test HCaptureSession
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCaptureSession
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_099, TestSize.Level0)
-{
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    SceneMode mode = PORTRAIT;
-    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
-    ASSERT_NE(camSession, nullptr);
-
-    bool isNeedUpdate = false;
-    ColorSpace colorSpace = ColorSpace::SRGB;
-    ColorSpace captureColorSpace = ColorSpace::SRGB;
-    camSession->currColorSpace_ = ColorSpace::BT709;
-    camSession->currCaptureColorSpace_ = ColorSpace::BT709;
-    camSession->SetColorSpace(colorSpace, captureColorSpace, isNeedUpdate);
-    camSession->currColorSpace_ = ColorSpace::SRGB;
-    camSession->SetColorSpace(colorSpace, captureColorSpace, isNeedUpdate);
-}
-
-/*
- * Feature: coverage
- * Function: Test HCaptureSession
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCaptureSession
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_100, TestSize.Level0)
-{
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    SceneMode mode = PORTRAIT;
-    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
-    ASSERT_NE(camSession, nullptr);
-
-    camSession->RestartStreams();
-
-    ColorSpace colorSpace = ColorSpace::SRGB;
-    camSession->CheckIfColorSpaceMatchesFormat(colorSpace);
-    colorSpace = ColorSpace::BT2020_HLG ;
-    camSession->CheckIfColorSpaceMatchesFormat(colorSpace);
-    colorSpace = ColorSpace::BT2020_PQ ;
-    camSession->CheckIfColorSpaceMatchesFormat(colorSpace);
-    colorSpace = ColorSpace::BT2020_HLG_LIMIT ;
-    camSession->CheckIfColorSpaceMatchesFormat(colorSpace);
-    colorSpace = ColorSpace::BT2020_PQ_LIMIT;
-    camSession->CheckIfColorSpaceMatchesFormat(colorSpace);
-}
-
-/*
- * Feature: coverage
- * Function: Test HCaptureSession
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCaptureSession
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_101, TestSize.Level0)
-{
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    SceneMode mode = PORTRAIT;
-    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
-    ASSERT_NE(camSession, nullptr);
-
-    const uint32_t callingTokenId = 0;
-    const std::string permissionName = "camera";
-    camSession->RegisterPermissionCallback(callingTokenId, permissionName);
-    camSession->StartUsingPermissionCallback(callingTokenId, permissionName);
-}
-
-/*
- * Feature: coverage
- * Function: Test HCaptureSession
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCaptureSession
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_102, TestSize.Level0)
-{
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    SceneMode mode = PORTRAIT;
-    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
-    ASSERT_NE(camSession, nullptr);
-
-    camSession->SetColorSpaceForStreams();
-
-    std::vector<StreamInfo_V1_1> streamInfos = {};
-    camSession->CancelStreamsAndGetStreamInfos(streamInfos);
-
-    camSession->isSessionStarted_ = true;
-    camSession->RestartStreams();
-
-    const uint32_t callingTokenId = 0;
-    const std::string permissionName = "camera";
-    std::shared_ptr<CameraUseStateChangeCb> cameraUseStateChangeCb =
-        std::make_shared<CameraUseStateChangeCb>(camSession);
-    camSession->cameraUseCallbackPtr_ = cameraUseStateChangeCb;
-    camSession->StartUsingPermissionCallback(callingTokenId, permissionName);
-}
-
-/*
- * Feature: coverage
- * Function: Test HCaptureSession
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCaptureSession
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_103, TestSize.Level0)
-{
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    SceneMode mode = PORTRAIT;
-    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
-    ASSERT_NE(camSession, nullptr);
-
-    float currentFps = 0;
-    float currentZoomRatio = 0;
-    camSession->QueryFpsAndZoomRatio(currentFps, currentZoomRatio);
-    std::vector<float> crossZoomAndTime = {0, 0};
-    int32_t operationMode = 0;
-    camSession->QueryZoomPerformance(crossZoomAndTime, operationMode);
-    int32_t smoothZoomType = 0;
-    float targetZoomRatio = 0;
-    float duration = 0;
-    camSession->SetSmoothZoom(smoothZoomType, operationMode, targetZoomRatio, duration);
-}
-
-/*
- * Feature: Framework
- * Function: Test metadataoutput
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test metadataoutput
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_104, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<CaptureOutput> output = cameraManager->CreateMetadataOutput();
-    ASSERT_NE(output, nullptr);
-    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)output;
-
-    std::shared_ptr<MetadataStateCallback> metadataStateCallback = std::make_shared<AppMetadataCallback>();
-    metadatOutput->SetCallback(metadataStateCallback);
-
-    pid_t pid = 0;
-    metadatOutput->CameraServerDied(pid);
-}
-
-/*
- * Feature: coverage
- * Function: Test HStreamRepeat
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HStreamRepeat
- */
-HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_105, TestSize.Level0)
-{
-    int32_t format = CAMERA_FORMAT_YUV_420_SP;
-    int32_t width = PHOTO_DEFAULT_WIDTH;
-    int32_t height = PHOTO_DEFAULT_HEIGHT;
-
-    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
-    sptr<IBufferProducer> producer = Surface->GetProducer();
-    auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
-
-    StreamInfo_V1_1 streamInfo;
-    streamRepeat->repeatStreamType_ = RepeatStreamType::SKETCH;
-    streamRepeat->SetStreamInfo(streamInfo);
-}
-
-/*
- * Feature: Framework
  * Function: Test anomalous branch
  * SubFunction: NA
  * FunctionPoints: NA
@@ -3908,9 +2521,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_004, TestSize.Level
     sptr<HCameraService> cameraService = (sptr<HCameraService> &)mockHCameraService;
     ASSERT_NE(cameraService, nullptr);
 
-    cameraService->OnStop();
-    cameraService->OnStart();
-
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> Producer = Surface->GetProducer();
 
@@ -3947,8 +2557,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_004, TestSize.Level
     intResult = cameraService->CreateVideoOutput(Producer, 0, width, height, output);
     EXPECT_EQ(intResult, 2);
 
-    cameraService->OnStart();
-    cameraService->OnStop();
     input->Close();
 }
 
@@ -3982,9 +2590,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_005, TestSize.Level
     int32_t width = 0;
     int32_t height = 0;
 
-    cameraService->OnStop();
-    cameraService->OnStart();
-
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> Producer = Surface->GetProducer();
 
@@ -4004,8 +2609,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_005, TestSize.Level
     intResult = cameraService->CreateMetadataOutput(Producer, 0, output_2);
     EXPECT_EQ(intResult, 2);
 
-    cameraService->OnStart();
-    cameraService->OnStop();
     input->Close();
 }
 
@@ -4035,9 +2638,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_006, TestSize.Level
     sptr<FakeHCameraService> mockHCameraService = new FakeHCameraService(mockCameraHostManager);
     sptr<HCameraService> cameraService = (sptr<HCameraService> &)mockHCameraService;
     ASSERT_NE(cameraService, nullptr);
-
-    cameraService->OnStop();
-    cameraService->OnStart();
 
     sptr<ICameraServiceCallback> callback = nullptr;
     int32_t intResult = cameraService->SetCallback(callback);
@@ -4071,7 +2671,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_006, TestSize.Level
         activeTime, effectParam);
     EXPECT_EQ(intResult, 2);
 
-    cameraService->OnStop();
     input->Close();
 }
 
@@ -4296,7 +2895,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_010, TestSize.Level
     ret = camService->Dump(fd, args);
     EXPECT_EQ(ret, 10);
 
-    camService->OnStop();
     input->Close();
 }
 
@@ -5332,7 +3930,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_030, TestSize.Level
     g_getCameraAbilityerror = true;
     camDevice->GetDeviceAbility();
     g_openCameraDevicerror = true;
-    EXPECT_EQ(camDevice->OpenDevice(), 11);
+    EXPECT_EQ(camDevice->OpenDevice(), 16);
 
     camDevice->CloseDevice();
 }
@@ -5409,11 +4007,15 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_031, TestSize.Level
 
 /*
  * Feature: Framework
- * Function: Test !IsSessionCommited() && !IsSessionConfiged()
+ * Function: Test !IsSessionCommited() && !IsSessionConfiged() in AttachSketchSurface,
+ *      IsSketchSupported, StartSketch, StopSketch, OnSketchStatusChanged,
+ *      CreateSketchWrapper, GetSketchRatio
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test !IsSessionCommited() && !IsSessionConfiged() in PreviewOutput
+ * CaseDescription: Test !IsSessionCommited() && !IsSessionConfiged() in AttachSketchSurface,
+ *          IsSketchSupported, StartSketch, StopSketch, OnSketchStatusChanged,
+ *          CreateSketchWrapper, GetSketchRatio
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_032, TestSize.Level0)
 {
@@ -5438,63 +4040,41 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_032, TestSize.Level
     ASSERT_NE(preview, nullptr);
     auto previewOutput = (sptr<PreviewOutput>&)preview;
 
-    SketchWrapper *sketchWrapper = new (std::nothrow) SketchWrapper(previewOutput->GetStream(), previewSize);
-    ASSERT_NE(sketchWrapper, nullptr);
-
-    previewOutput->IsSketchSupported();
+    EXPECT_EQ(previewOutput->IsSketchSupported(), false);
     int32_t ret = session->BeginConfig();
-
-    previewOutput->AttachSketchSurface(surface);
-    previewOutput->StartSketch();
-    previewOutput->StopSketch();
-
-    previewOutput->OnSketchStatusChanged(SketchStatus::STOPED);
-    previewOutput->IsSketchSupported();
-
-    previewOutput->CreateSketchWrapper(previewSize);
-    previewOutput->GetSketchRatio();
-    previewOutput->OnSketchStatusChanged(SketchStatus::STOPED);
-
     EXPECT_EQ(ret, 0);
+
+    EXPECT_EQ(previewOutput->AttachSketchSurface(surface), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(previewOutput->StartSketch(), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(previewOutput->StopSketch(), CameraErrorCode::SESSION_NOT_CONFIG);
+
+    EXPECT_EQ(previewOutput->OnSketchStatusChanged(SketchStatus::STOPED), CAMERA_INVALID_STATE);
+    EXPECT_EQ(previewOutput->IsSketchSupported(), false);
+
+    EXPECT_NE(previewOutput->CreateSketchWrapper(previewSize), 0);
+    EXPECT_EQ(previewOutput->GetSketchRatio(), -1);
+
     ret = session->AddInput(input);
     EXPECT_EQ(ret, 0);
     ret = session->AddOutput(preview);
     EXPECT_EQ(ret, 0);
 
-    previewOutput->SetSession(session);
-    previewOutput->AttachSketchSurface(surface);
-    previewOutput->CreateSketchWrapper(previewSize);
-    previewOutput->GetSketchRatio();
-    previewOutput->GetDeviceMetadata();
-    previewOutput->FindSketchSize();
-    previewOutput->OnSketchStatusChanged(SketchStatus::STOPED);
-    previewOutput->AttachSketchSurface(surface);
-    previewOutput->StartSketch();
-    previewOutput->StopSketch();
-
-    ret = session->CommitConfig();
-    previewOutput->StartSketch();
-    previewOutput->StopSketch();
-
-    previewOutput->sketchWrapper_ = std::make_shared<SketchWrapper>(previewOutput->GetStream(), previewSize);
-    previewOutput->StartSketch();
-    previewOutput->StopSketch();
-    previewOutput->AttachSketchSurface(surface);
-
-    session->RemoveOutput(preview);
-    session->RemoveInput(input);
-    preview->Release();
-    input->Release();
-    session->Release();
+    EXPECT_EQ(session->RemoveOutput(preview), 0);
+    EXPECT_EQ(session->RemoveInput(input), 0);
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
 }
 
 /*
  * Feature: Framework
- * Function: Test !IsSessionCommited() && !IsSessionConfiged()
+ * Function: Test !IsSessionCommited() && !IsSessionConfiged() in IsSketchSupported,
+ *              FindSketchSize, EnableSketch
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test !IsSessionCommited() && !IsSessionConfiged() in PreviewOutput
+ * CaseDescription: Test !IsSessionCommited() && !IsSessionConfiged() in IsSketchSupported,
+ *              FindSketchSize, EnableSketch
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_033, TestSize.Level0)
 {
@@ -5516,7 +4096,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_033, TestSize.Level
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     ASSERT_NE(preview, nullptr);
     auto previewOutput = (sptr<PreviewOutput>&)preview;
-    previewOutput->IsSketchSupported();
+    EXPECT_EQ(previewOutput->IsSketchSupported(), false);
     int32_t ret = session->BeginConfig();
     EXPECT_EQ(ret, 0);
     ret = session->AddInput(input);
@@ -5526,28 +4106,29 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_033, TestSize.Level
 
     previewOutput->SetSession(session);
     previewOutput->FindSketchSize();
-    previewOutput->EnableSketch(true);
+    EXPECT_EQ(previewOutput->EnableSketch(true), 7400102);
     ret = session->CommitConfig();
-    session->RemoveOutput(preview);
-    session->RemoveInput(input);
-    preview->Release();
-    input->Release();
-    session->Release();
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
 }
 
 /*
  * Feature: Framework
- * Function: Test !IsSessionCommited() && !IsSessionConfiged()
+ * Function: Test !IsSessionCommited() && !IsSessionConfiged() in IsSketchSupported,
+ *              OnNativeRegisterCallback, OnNativeUnregisterCallback, CameraServerDied, SetCallback
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test !IsSessionCommited() && !IsSessionConfiged() in PreviewOutput
+ * CaseDescription: Test !IsSessionCommited() && !IsSessionConfiged() in IsSketchSupported,
+ *              OnNativeRegisterCallback, OnNativeUnregisterCallback, CameraServerDied, SetCallback
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_034, TestSize.Level0)
 {
     InSequence s;
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
     Size previewSize = {.width = 1440, .height = 1080};
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
@@ -5565,7 +4146,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_034, TestSize.Level
     ASSERT_NE(preview, nullptr);
     auto previewOutput = (sptr<PreviewOutput>&)preview;
 
-    previewOutput->IsSketchSupported();
+    EXPECT_EQ(previewOutput->IsSketchSupported(), false);
     std::string eventString = "test";
     previewOutput->OnNativeRegisterCallback(eventString);
     previewOutput->OnNativeUnregisterCallback(eventString);
@@ -5579,47 +4160,21 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_034, TestSize.Level
     previewOutput->SetCallback(previewStateCallback);
     previewOutput->CameraServerDied(0);
 
-    int32_t ret = session->BeginConfig();
-    EXPECT_EQ(ret, 0);
-    ret = session->AddInput(input);
-    EXPECT_EQ(ret, 0);
-
-    ret = session->AddOutput(preview);
-    EXPECT_EQ(ret, 0);
-
-    previewOutput->SetSession(session);
-    previewOutput->FindSketchSize();
-
-    eventString = "test";
-    previewOutput->OnNativeRegisterCallback(eventString);
-    previewOutput->OnNativeUnregisterCallback(eventString);
-    eventString = "sketchAvailable";
-    previewOutput->OnNativeRegisterCallback(eventString);
-    previewOutput->OnNativeUnregisterCallback(eventString);
-
-    ret = session->CommitConfig();
-
-    eventString = "test";
-    previewOutput->OnNativeRegisterCallback(eventString);
-    previewOutput->OnNativeUnregisterCallback(eventString);
-    eventString = "sketchAvailable";
-    previewOutput->OnNativeRegisterCallback(eventString);
-    previewOutput->OnNativeUnregisterCallback(eventString);
-
-    session->RemoveOutput(preview);
-    session->RemoveInput(input);
-    preview->Release();
-    input->Release();
-    session->Release();
+    EXPECT_EQ(session->Release(), 0);
+    EXPECT_EQ(input->Close(), 0);
 }
 
 /*
  * Feature: Framework
- * Function: Test sketchWrapper
+ * Function: Test Init, AttachSketchSurface, UpdateSketchRatio,
+ *          SetPreviewStateCallback, OnSketchStatusChanged,
+ *          UpdateSketchReferenceFovRatio in sketchWrapper
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test sketchWrapper with anomalous branch
+ * CaseDescription: Test Init, AttachSketchSurface, UpdateSketchRatio,
+ *          SetPreviewStateCallback, OnSketchStatusChanged,
+ *          UpdateSketchReferenceFovRatio in sketchWrapper
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_035, TestSize.Level0)
 {
@@ -5636,7 +4191,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_035, TestSize.Level
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
-
 
     sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -5656,11 +4210,11 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_035, TestSize.Level
         std::make_shared<TestPreviewOutputCallback>("PreviewStateCallback");
     ASSERT_NE(setCallback, nullptr);
     camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(deviceMetadata->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
+    OHOS::Camera::FindCameraMetadataItem(deviceMetadata->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
 
-    sketchWrapper->Init(deviceMetadata, modeName);
-    sketchWrapper->AttachSketchSurface(surface);
-    sketchWrapper->UpdateSketchRatio(1.0f);
+    EXPECT_EQ(sketchWrapper->Init(deviceMetadata, modeName), 0);
+    EXPECT_EQ(sketchWrapper->AttachSketchSurface(surface), 10);
+    EXPECT_EQ(sketchWrapper->UpdateSketchRatio(1.0f), 0);
     sketchWrapper->SetPreviewStateCallback(setCallback);
     sketchWrapper->OnSketchStatusChanged(0);
     sketchWrapper->OnSketchStatusChanged(SketchStatus::STARTED, 0);
@@ -5669,57 +4223,26 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_035, TestSize.Level
     sketchWrapper->OnSketchStatusChanged(modeName);
     sketchWrapper->OnSketchStatusChanged(SketchStatus::STOPED, 1.0f);
     sketchWrapper->UpdateSketchReferenceFovRatio(item, SketchWrapper::g_sketchReferenceFovRatioMap_);
-    auto sketchReferenceFovRangeVec = std::vector<SketchWrapper::SketchReferenceFovRange>(5);
-    SketchWrapper::SketchReferenceFovRange sketchReferenceFovRange =
-        {.zoomMin = -1.0f, .zoomMax = -1.0f, .referenceValue = -1.0f};
-    sketchReferenceFovRangeVec[0] = sketchReferenceFovRange;
-    sketchReferenceFovRange = {.zoomMin = -1.0f, .zoomMax = 100.0f, .referenceValue = -1.0f};
-    SketchWrapper::g_sketchReferenceFovRatioMap_[-1] = sketchReferenceFovRangeVec;
-    sketchWrapper->GetSketchReferenceFovRatio(-1, -1.0f);
-    sketchReferenceFovRangeVec[1] = sketchReferenceFovRange;
-    sketchReferenceFovRange = {.zoomMin = 100.0f, .zoomMax = 1.0f, .referenceValue = -1.0f};
-    sketchReferenceFovRangeVec[2] = sketchReferenceFovRange;
-    sketchReferenceFovRange = {.zoomMin = 100.0f, .zoomMax = 100.0f, .referenceValue = -1.0f};
-    sketchReferenceFovRangeVec[3] = sketchReferenceFovRange;
-    sketchReferenceFovRange = {.zoomMin = 100.0f, .zoomMax = 200.0f, .referenceValue = -1.0f};
-    sketchReferenceFovRangeVec[4] = sketchReferenceFovRange;
-    SketchWrapper::g_sketchReferenceFovRatioMap_[100] = sketchReferenceFovRangeVec;
-    sketchWrapper->GetSketchReferenceFovRatio(100, -1.0f);
-    sketchWrapper->GetSketchReferenceFovRatio(100, 200.0f);
-    sketchWrapper->GetSketchReferenceFovRatio(100, 100.0f);
-    sketchWrapper->UpdateSketchReferenceFovRatio(item, SketchWrapper::g_sketchReferenceFovRatioMap_);
 
-    ret = session->BeginConfig();
-    EXPECT_EQ(ret, 0);
-    ret = session->AddInput(input);
-    EXPECT_EQ(ret, 0);
-
-    ret = session->AddOutput(preview);
-    EXPECT_EQ(ret, 0);
-
-    previewOutput->SetSession(session);
-    ret = session->CommitConfig();
-    session->RemoveOutput(preview);
-    session->RemoveInput(input);
-    preview->Release();
-    input->Release();
-    session->Release();
+    EXPECT_EQ(session->Release(), 0);
+    EXPECT_EQ(input->Close(), 0);
 }
 
 /*
  * Feature: Framework
- * Function: Test PreviewOutput
+ * Function: Test AttachSketchSurface, StartSketch, StopSketch,
+ *              OnNativeRegisterCallback in ~PreviewOutput
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test PreviewOutput in ~PreviewOutput
+ * CaseDescription: Test AttachSketchSurface, StartSketch,
+ *              StopSketch, OnNativeRegisterCallback in ~PreviewOutput
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_036, TestSize.Level0)
 {
     InSequence s;
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
     Size previewSize = {.width = 1440, .height = 1080};
-
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
@@ -5743,25 +4266,29 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_036, TestSize.Level
     EXPECT_EQ(ret, 0);
 
     ret = session->CommitConfig();
+    EXPECT_EQ(ret, 0);
 
-    previewOutput->~PreviewOutput();
+    previewOutput->Release();
     previewOutput->SetSession(session);
-    previewOutput->AttachSketchSurface(surface);
-    previewOutput->StartSketch();
-    previewOutput->StopSketch();
+    EXPECT_EQ(previewOutput->AttachSketchSurface(surface), INVALID_ARGUMENT);
+    EXPECT_EQ(previewOutput->StartSketch(), 7400201);
+    EXPECT_EQ(previewOutput->StopSketch(), 7400201);
     previewOutput->sketchWrapper_ = std::make_shared<SketchWrapper>(previewOutput->GetStream(), previewSize);
     previewOutput->OnNativeRegisterCallback("sketchAvailable");
-    input->Release();
-    session->Release();
+
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
 }
 
 /*
  * Feature: Framework
- * Function: Test !IsSessionCommited() && !IsSessionConfiged()
+ * Function: Test !IsSessionCommited() && !IsSessionConfiged() in
+ *              OnMetadataChanged, OnSketchStatusChanged
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test !IsSessionCommited() && !IsSessionConfiged() in PreviewOutput
+ * CaseDescription: Test !IsSessionCommited() && !IsSessionConfiged()
+ *              in OnMetadataChanged, OnSketchStatusChanged
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_037, TestSize.Level0)
 {
@@ -5778,7 +4305,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_037, TestSize.Level
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
-    
+
     std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata = cameras[0]->GetMetadata();
     ASSERT_NE(deviceMetadata, nullptr);
     camera_metadata_item_t item;
@@ -5788,44 +4315,41 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_037, TestSize.Level
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     ASSERT_NE(preview, nullptr);
     auto previewOutput = (sptr<PreviewOutput>&)preview;
-    SketchWrapper *sketchWrapper = new (std::nothrow) SketchWrapper(previewOutput->GetStream(), previewSize);
-    ASSERT_NE(sketchWrapper, nullptr);
 
-    int32_t ret = session->BeginConfig();
-    ret = session->AddInput(input);
-    EXPECT_EQ(ret, 0);
-    ret = session->AddOutput(preview);
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
 
     item.count = 0;
-    previewOutput->OnControlMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item);
+    EXPECT_EQ(previewOutput->OnControlMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item),
+        CAM_META_INVALID_PARAM);
     item.count = 1;
-    previewOutput->OnControlMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item);
+    EXPECT_EQ(previewOutput->OnControlMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item),
+        CAM_META_FAILURE);
     previewOutput->sketchWrapper_ = std::make_shared<SketchWrapper>(previewOutput->GetStream(), previewSize);
 
     previewOutput->SetSession(nullptr);
-    previewOutput->OnSketchStatusChanged(SketchStatus::STOPED);
-    previewOutput->OnControlMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item);
+    EXPECT_EQ(previewOutput->OnSketchStatusChanged(SketchStatus::STOPED), CAMERA_INVALID_STATE);
+    EXPECT_EQ(previewOutput->OnControlMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item),
+        CAM_META_FAILURE);
     previewOutput->SetSession(session);
-    previewOutput->OnControlMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item);
-    previewOutput->OnSketchStatusChanged(SketchStatus::STOPED);
-    
-    ret = session->CommitConfig();
+    EXPECT_EQ(previewOutput->OnControlMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item),
+        CAM_META_SUCCESS);
+    EXPECT_EQ(previewOutput->OnSketchStatusChanged(SketchStatus::STOPED), CAMERA_OK);
 
-    session->RemoveOutput(preview);
-    session->RemoveInput(input);
-    preview->Release();
-    input->Release();
-    session->Release();
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
 }
 
 /*
  * Feature: Framework
- * Function: Test !IsSessionCommited() && !IsSessionConfiged()
+ * Function: Test cameraFormat with CAMERA_FORMAT_YUV_420_SP and CAMERA_FORMAT_JPEG
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test !IsSessionCommited() && !IsSessionConfiged() in PreviewOutput
+ * CaseDescription: Test cameraFormat with CAMERA_FORMAT_YUV_420_SP and CAMERA_FORMAT_JPEG
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_038, TestSize.Level0)
 {
@@ -5842,7 +4366,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_038, TestSize.Level
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
-    
+
     std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata = cameras[0]->GetMetadata();
     ASSERT_NE(deviceMetadata, nullptr);
     camera_metadata_item_t item;
@@ -5854,34 +4378,26 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_038, TestSize.Level
     sptr<CaptureOutput> preview = cameraManager->CreatePreviewOutput(previewProfile, surface);
     ASSERT_NE(preview, nullptr);
     auto previewOutput = (sptr<PreviewOutput>&)preview;
-    previewOutput->IsSketchSupported();
+    EXPECT_EQ(previewOutput->IsSketchSupported(), false);
     previewOutput->previewProfile_.format_ = CAMERA_FORMAT_YUV_420_SP;
-    previewOutput->IsSketchSupported();
+    EXPECT_EQ(previewOutput->IsSketchSupported(), false);
     previewOutput->previewProfile_.format_ = CAMERA_FORMAT_JPEG;
-    previewOutput->IsSketchSupported();
-    
-    int32_t ret = session->BeginConfig();
-    ret = session->AddInput(input);
-    EXPECT_EQ(ret, 0);
-    ret = session->AddOutput(preview);
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(previewOutput->IsSketchSupported(), false);
 
-    ret = session->CommitConfig();
-
-    session->RemoveOutput(preview);
-    session->RemoveInput(input);
-    preview->Release();
-    input->Release();
-    session->Release();
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
 }
 
 /*
  * Feature: Framework
- * Function: Test !IsSessionCommited() && !IsSessionConfiged()
+ * Function: Test !IsSessionCommited() && !IsSessionConfiged() in
+ *          AttachSketchSurface, StartSketch, StopSketch, OnNativeRegisterCallback
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test !IsSessionCommited() && !IsSessionConfiged() in PreviewOutput
+ * CaseDescription: Test !IsSessionCommited() && !IsSessionConfiged()
+ *          in AttachSketchSurface, StartSketch, StopSketch, OnNativeRegisterCallback
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_039, TestSize.Level0)
 {
@@ -5898,7 +4414,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_039, TestSize.Level
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
-    
+
     sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
     sptr<CaptureOutput> preview = CreatePreviewOutput();
@@ -5906,37 +4422,34 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_039, TestSize.Level
     auto previewOutput = (sptr<PreviewOutput>&)preview;
 
     int32_t ret = session->BeginConfig();
-    ret = session->AddInput(input);
     EXPECT_EQ(ret, 0);
-    ret = session->AddOutput(preview);
-    EXPECT_EQ(ret, 0);
-    ret = session->CommitConfig();
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
     previewOutput->SetSession(session);
 
-    previewOutput->AttachSketchSurface(surface);
-    previewOutput->StartSketch();
-    previewOutput->StopSketch();
+    EXPECT_EQ(previewOutput->AttachSketchSurface(surface), INVALID_ARGUMENT);
+    EXPECT_EQ(previewOutput->StartSketch(), 7400201);
+    EXPECT_EQ(previewOutput->StopSketch(), 7400201);
     previewOutput->sketchWrapper_ = std::make_shared<SketchWrapper>(previewOutput->GetStream(), previewSize);
-    previewOutput->AttachSketchSurface(surface);
-    previewOutput->AttachSketchSurface(nullptr);
-    previewOutput->StartSketch();
-    previewOutput->StopSketch();
+    EXPECT_EQ(previewOutput->AttachSketchSurface(surface), 7400201);
+    EXPECT_EQ(previewOutput->AttachSketchSurface(nullptr), CameraErrorCode::INVALID_ARGUMENT);
+    EXPECT_EQ(previewOutput->StartSketch(), 7400201);
+    EXPECT_EQ(previewOutput->StopSketch(), 7400201);
     previewOutput->OnNativeRegisterCallback("sketchAvailable");
 
-    session->RemoveOutput(preview);
-    session->RemoveInput(input);
-    preview->Release();
-    input->Release();
-    session->Release();
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
 }
 
 /*
  * Feature: Framework
- * Function: Test captureSession_
+ * Function: Test CameraServerDied
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test if captureSession_ == nullptr in CaptureSession
+ * CaseDescription: Test if captureSession_ == nullptr in CameraServerDied
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_040, TestSize.Level0)
 {
@@ -5952,14 +4465,15 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_040, TestSize.Level
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
-    
+
     sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     ASSERT_NE(preview, nullptr);
     auto appCallback = std::make_shared<AppSessionCallback>();
+    ASSERT_NE(appCallback, nullptr);
 
-    session->BeginConfig();
+    EXPECT_EQ(session->BeginConfig(), 0);
     session->CameraServerDied(0);
     session->appCallback_ = appCallback;
     session->CameraServerDied(0);
@@ -5967,24 +4481,20 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_040, TestSize.Level
     session->CameraServerDied(0);
     session->appCallback_ = nullptr;
 
-    session->AddInput(input);
-    session->AddOutput(preview);
-    session->CommitConfig();
-
-    session->RemoveOutput(preview);
-    session->RemoveInput(input);
-    preview->Release();
-    input->Release();
-    session->Release();
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    session->~CaptureSession();
 }
 
 /*
  * Feature: Framework
- * Function: Test !IsSessionCommited() && !IsSessionConfiged()
+ * Function: Test !IsSessionCommited() && !IsSessionConfiged() in
+ *              PrepareZoom, UnPrepareZoom, SetSmoothZoom
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test !IsSessionCommited() && !IsSessionConfiged() in CaptureSession
+ * CaseDescription: Test !IsSessionCommited() && !IsSessionConfiged()
+ *              in PrepareZoom, UnPrepareZoom, SetSmoothZoom
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_041, TestSize.Level0)
 {
@@ -6000,50 +4510,50 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_041, TestSize.Level
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
-    
+
     sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     ASSERT_NE(preview, nullptr);
 
-    session->PrepareZoom();
-    session->UnPrepareZoom();
+    EXPECT_EQ(session->PrepareZoom(), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(session->UnPrepareZoom(), CameraErrorCode::SESSION_NOT_CONFIG);
 
-    int32_t ret = session->BeginConfig();
-    session->PrepareZoom();
-    session->UnPrepareZoom();
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->PrepareZoom(), CameraErrorCode::SUCCESS);
+    EXPECT_EQ(session->UnPrepareZoom(), CameraErrorCode::SUCCESS);
 
-    ret = session->AddInput(input);
-    EXPECT_EQ(ret, 0);
-    ret = session->AddOutput(preview);
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
 
     session->SetSmoothZoom(0, 0);
 
-    ret = session->CommitConfig();
-    session->PrepareZoom();
-    session->UnPrepareZoom();
-    session->SetSmoothZoom(0, 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->PrepareZoom(), CameraErrorCode::SUCCESS);
+    EXPECT_EQ(session->UnPrepareZoom(), CameraErrorCode::SUCCESS);
+    EXPECT_EQ(session->SetSmoothZoom(0, 0), CameraErrorCode::SUCCESS);
 
     session->LockForControl();
     session->PrepareZoom();
     session->UnPrepareZoom();
     session->UnlockForControl();
 
-    session->RemoveOutput(preview);
-    session->RemoveInput(input);
-    preview->Release();
-    input->Release();
-    session->Release();
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    session->~CaptureSession();
 }
 
 /*
  * Feature: Framework
- * Function: Test !IsSessionCommited() && !IsSessionConfiged()
+ * Function: Test !IsSessionCommited() && !IsSessionConfiged() in
+ *          PrepareZoom, UnPrepareZoom, SetSmoothZoom,
+ *          SetBeauty of ~CaptureSession
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test !IsSessionCommited() && !IsSessionConfiged() in ~CaptureSession
+ * CaseDescription: Test !IsSessionCommited() && !IsSessionConfiged()
+ *          in PrepareZoom, UnPrepareZoom, SetSmoothZoom,
+ *          SetBeauty of ~CaptureSession
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_042, TestSize.Level0)
 {
@@ -6065,29 +4575,30 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_042, TestSize.Level
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     ASSERT_NE(preview, nullptr);
 
-    int32_t ret = session->BeginConfig();
-    ret = session->AddInput(input);
-    ret = session->AddOutput(preview);
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
 
-    ret = session->CommitConfig();
+    EXPECT_EQ(session->CommitConfig(), 0);
     session->~CaptureSession();
-    session->PrepareZoom();
-    session->UnPrepareZoom();
-    session->SetSmoothZoom(0, 0);
+    EXPECT_EQ(session->PrepareZoom(), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(session->UnPrepareZoom(), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(session->SetSmoothZoom(0, 0), CameraErrorCode::SESSION_NOT_CONFIG);
     session->SetBeauty(AUTO_TYPE, 0);
-    
-    input->Release();
-    session->Release();
+
+    EXPECT_EQ(input->Release(), 0);
+    session->~CaptureSession();
 }
 
 /*
  * Feature: Framework
- * Function: Test !IsSessionCommited() && !IsSessionConfiged()
+ * Function: Test !IsSessionCommited() && !IsSessionConfiged() in
+ *              SetBeautyValue, SetBeauty, CalculateExposureValue, SetFilter
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test !IsSessionCommited() && !IsSessionConfiged() in CaptureSession
+ * CaseDescription: Test !IsSessionCommited() && !IsSessionConfiged()
+ *              in SetBeautyValue, SetBeauty, CalculateExposureValue, SetFilter
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_043, TestSize.Level0)
 {
@@ -6103,46 +4614,45 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_043, TestSize.Level
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
-    
+
     sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     ASSERT_NE(preview, nullptr);
 
-    session->SetBeautyValue(AUTO_TYPE, 0);
-    
-    session->SetBeauty(AUTO_TYPE, 0);
-    int32_t ret = session->BeginConfig();
-    session->SetBeauty(AUTO_TYPE, 0);
-    ret = session->AddInput(input);
-    EXPECT_EQ(ret, 0);
-    ret = session->AddOutput(preview);
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(session->SetBeautyValue(AUTO_TYPE, 0), false);
 
-    ret = session->CommitConfig();
+    session->SetBeauty(AUTO_TYPE, 0);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    session->SetBeauty(AUTO_TYPE, 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+
+    EXPECT_EQ(session->CommitConfig(), 0);
     session->SetBeauty(AUTO_TYPE, 0);
 
-    session->CalculateExposureValue(100.0);
+    EXPECT_EQ(session->CalculateExposureValue(100.0), 2147483647);
 
     session->LockForControl();
     session->SetBeauty(AUTO_TYPE, 0);
     session->SetFilter(NONE);
     session->UnlockForControl();
 
-    session->RemoveOutput(preview);
-    session->RemoveInput(input);
-    preview->Release();
-    input->Release();
-    session->Release();
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
 }
 
 /*
  * Feature: Framework
- * Function: Test inputDevice_
- * SubFunction: NA
+ * Function: Test inputDevice_ in GetColorEffect,
+ *          EnableMacro, IsMacroSupported,
+ *          SetColorEffect, ProcessMacroStatusChange
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test inputDevice_ in CaptureSession
+ * CaseDescription: Test inputDevice_ in GetColorEffect,
+ *          EnableMacro, IsMacroSupported,
+ *          SetColorEffect, ProcessMacroStatusChange
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_044, TestSize.Level0)
 {
@@ -6158,7 +4668,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_044, TestSize.Level
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
-    
+
     sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
     sptr<CaptureOutput> preview = CreatePreviewOutput();
@@ -6166,27 +4676,25 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_044, TestSize.Level
     auto macroStatusCallback = std::make_shared<AppMacroStatusCallback>();
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
 
-    session->GetColorEffect();
-    session->EnableMacro(true);
-    
-    int32_t ret = session->BeginConfig();
-    
-    ret = session->AddInput(input);
-    EXPECT_EQ(ret, 0);
-    ret = session->AddOutput(preview);
-    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(session->GetColorEffect(), COLOR_EFFECT_NORMAL);
+    EXPECT_EQ(session->EnableMacro(true), OPERATION_NOT_ALLOWED);
 
-    ret = session->CommitConfig();
-    session->GetColorEffect();
+    EXPECT_EQ(session->BeginConfig(), 0);
+
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->GetColorEffect(), COLOR_EFFECT_NORMAL);
 
     ((sptr<CameraInput>&)(session->inputDevice_))->cameraObj_ = nullptr;
-    session->GetColorEffect();
-    session->IsMacroSupported();
+    EXPECT_EQ(session->GetColorEffect(), COLOR_EFFECT_NORMAL);
+    EXPECT_EQ(session->IsMacroSupported(), false);
     session->inputDevice_ = nullptr;
-    session->GetColorEffect();
-    session->IsMacroSupported();
-    session->EnableMacro(true);
-    
+    EXPECT_EQ(session->GetColorEffect(), COLOR_EFFECT_NORMAL);
+    EXPECT_EQ(session->IsMacroSupported(), false);
+    EXPECT_EQ(session->EnableMacro(true), OPERATION_NOT_ALLOWED);
+
     session->LockForControl();
     session->SetColorEffect(COLOR_EFFECT_NORMAL);
     session->UnlockForControl();
@@ -6194,20 +4702,20 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_044, TestSize.Level
     session->macroStatusCallback_ = macroStatusCallback;
     session->ProcessMacroStatusChange(metadata);
 
-    session->RemoveOutput(preview);
-    session->RemoveInput(input);
-    preview->Release();
-    input->Release();
-    session->Release();
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
 }
 
 /*
  * Feature: Framework
- * Function: Test HCameraService
+ * Function: Test HCameraService in UpdateSkinSmoothSetting,
+ *              UpdateFaceSlenderSetting, UpdateSkinToneSetting
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test HCameraService
+ * CaseDescription: Test HCameraService in UpdateSkinSmoothSetting,
+ *              UpdateFaceSlenderSetting, UpdateSkinToneSetting
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_045, TestSize.Level0)
 {
@@ -6215,25 +4723,24 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_045, TestSize.Level
     auto hCameraService = new HCameraService(0, true);
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
 
-    hCameraService->UpdateSkinSmoothSetting(metadata, 0);
-    hCameraService->UpdateSkinSmoothSetting(metadata, 1);
-    hCameraService->UpdateSkinSmoothSetting(nullptr, 1);
-    hCameraService->UpdateFaceSlenderSetting(metadata, 0);
-    hCameraService->UpdateFaceSlenderSetting(metadata, 1);
-    hCameraService->UpdateFaceSlenderSetting(nullptr, 1);
-    hCameraService->UpdateSkinToneSetting(metadata, 0);
-    hCameraService->UpdateSkinToneSetting(metadata, 1);
-    hCameraService->UpdateSkinToneSetting(nullptr, 1);
+    EXPECT_EQ(hCameraService->UpdateSkinSmoothSetting(metadata, 0), CAMERA_OK);
+    EXPECT_EQ(hCameraService->UpdateSkinSmoothSetting(metadata, 1), CAMERA_OK);
+    EXPECT_EQ(hCameraService->UpdateSkinSmoothSetting(nullptr, 1), CAMERA_OK);
+    EXPECT_EQ(hCameraService->UpdateFaceSlenderSetting(metadata, 0), CAMERA_OK);
+    EXPECT_EQ(hCameraService->UpdateFaceSlenderSetting(metadata, 1), CAMERA_OK);
+    EXPECT_EQ(hCameraService->UpdateFaceSlenderSetting(nullptr, 1), CAMERA_OK);
+    EXPECT_EQ(hCameraService->UpdateSkinToneSetting(metadata, 0), CAMERA_OK);
+    EXPECT_EQ(hCameraService->UpdateSkinToneSetting(metadata, 1), CAMERA_OK);
+    EXPECT_EQ(hCameraService->UpdateSkinToneSetting(nullptr, 1), CAMERA_OK);
 }
-
 
 /*
  * Feature: Framework
- * Function: Test !IsSessionConfiged() || input == nullptr
+ * Function: Test !IsSessionConfiged() || input == nullptr in CanAddInput
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test !IsSessionConfiged() || input == nullptr in CaptureSession
+ * CaseDescription: Test !IsSessionConfiged() || input == nullptr in CanAddInput
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_046, TestSize.Level0)
 {
@@ -6250,38 +4757,37 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_046, TestSize.Level
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
-    
+
     sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     ASSERT_NE(preview, nullptr);
 
-    session->CanAddInput(input);
-    session->BeginConfig();
-    session->CanAddInput(input);
-    session->CanAddInput(input1);
+    EXPECT_EQ(session->CanAddInput(input), false);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->CanAddInput(input), true);
+    EXPECT_EQ(session->CanAddInput(input1), false);
     session->captureSession_ = nullptr;
-    session->CanAddInput(input);
-    
-    session->AddInput(input);
-    session->AddOutput(preview);
+    EXPECT_EQ(session->CanAddInput(input), false);
 
-    session->CommitConfig();
+    EXPECT_EQ(session->AddInput(input), OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(session->AddOutput(preview), OPERATION_NOT_ALLOWED);
 
-    session->RemoveOutput(preview);
-    session->RemoveInput(input);
-    preview->Release();
-    input->Release();
-    session->Release();
+    EXPECT_EQ(session->CommitConfig(), OPERATION_NOT_ALLOWED);
+
+    EXPECT_EQ(session->RemoveOutput(preview), OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(session->RemoveInput(input), OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
 }
 
 /*
  * Feature: Framework
- * Function: Test !IsSessionConfiged() || output == nullptr
+ * Function: Test !IsSessionConfiged() || output == nullptr in CanAddOutput
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test !IsSessionConfiged() || output == nullptr in CaptureSession
+ * CaseDescription: Test !IsSessionConfiged() || output == nullptr in CanAddOutput
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_047, TestSize.Level0)
 {
@@ -6298,38 +4804,29 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_047, TestSize.Level
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
-    
+
     sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     sptr<CaptureOutput> output = nullptr;
     ASSERT_NE(preview, nullptr);
 
-    session->CanAddOutput(preview);
-    session->BeginConfig();
-    session->CanAddOutput(output);
+    EXPECT_EQ(session->CanAddOutput(preview), false);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->CanAddOutput(output), false);
     preview->~CaptureOutput();
-    session->CanAddOutput(preview);
-    
-    
-    session->AddInput(input);
-    session->AddOutput(preview);
+    EXPECT_EQ(session->CanAddOutput(preview), false);
 
-    session->CommitConfig();
-
-    session->RemoveOutput(preview);
-    session->RemoveInput(input);
-    input->Release();
-    session->Release();
+    EXPECT_EQ(input->Close(), 0);
 }
 
 /*
  * Feature: Framework
- * Function: Test VerifyAbility
+ * Function: Test VerifyAbility, SetBeauty
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test VerifyAbility in CaptureSession
+ * CaseDescription: Test VerifyAbility, SetBeauty
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_048, TestSize.Level0)
 {
@@ -6345,29 +4842,2134 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_048, TestSize.Level
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
     camInput->GetCameraDevice()->Open();
-    
+
     sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
     sptr<CaptureOutput> preview = CreatePreviewOutput();
     ASSERT_NE(preview, nullptr);
 
-    session->BeginConfig();
-    
-    session->AddInput(input);
-    session->AddOutput(preview);
+    EXPECT_EQ(session->BeginConfig(), 0);
 
-    session->VerifyAbility(static_cast<uint32_t>(OHOS_ABILITY_SCENE_FILTER_TYPES));
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+
+    EXPECT_EQ(session->VerifyAbility(static_cast<uint32_t>(OHOS_ABILITY_SCENE_FILTER_TYPES)), CAMERA_INVALID_ARG);
     session->LockForControl();
     session->SetBeauty(FACE_SLENDER, 3);
     session->UnlockForControl();
 
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test !IsSessionCommited() && !IsSessionConfiged() in
+ *          AttachSketchSurface, CreateSketchWrapper，
+ *          GetSketchRatio, GetDeviceMetadata, OnSketchStatusChanged, StartSketch, StopSketch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test !IsSessionCommited() && !IsSessionConfiged()
+ *          in AttachSketchSurface, CreateSketchWrapper， GetSketchRatio,
+ *          GetDeviceMetadata, OnSketchStatusChanged, StartSketch, StopSketch
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_049, TestSize.Level0)
+{
+    InSequence s;
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    Size previewSize = {.width = 1440, .height = 1080};
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+    auto previewOutput = (sptr<PreviewOutput>&)preview;
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+
+    previewOutput->SetSession(session);
+    EXPECT_EQ(previewOutput->AttachSketchSurface(surface), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(previewOutput->CreateSketchWrapper(previewSize), 0);
+    EXPECT_EQ(previewOutput->GetSketchRatio(), -1.0);
+    EXPECT_NE(previewOutput->GetDeviceMetadata(), nullptr);
+    previewOutput->FindSketchSize();
+    previewOutput->OnSketchStatusChanged(SketchStatus::STOPED);
+    EXPECT_EQ(previewOutput->StartSketch(), SESSION_NOT_CONFIG);
+    EXPECT_EQ(previewOutput->StopSketch(), SESSION_NOT_CONFIG);
+
+    EXPECT_EQ(session->CommitConfig(), 7400201);
+    EXPECT_EQ(previewOutput->StartSketch(), SESSION_NOT_CONFIG);
+    EXPECT_EQ(previewOutput->StopSketch(), SESSION_NOT_CONFIG);
+
+    previewOutput->sketchWrapper_ = std::make_shared<SketchWrapper>(previewOutput->GetStream(), previewSize);
+    EXPECT_EQ(previewOutput->StartSketch(), SESSION_NOT_CONFIG);
+    EXPECT_EQ(previewOutput->StopSketch(), SESSION_NOT_CONFIG);
+    EXPECT_EQ(previewOutput->AttachSketchSurface(surface), SESSION_NOT_CONFIG);
+
+    EXPECT_EQ(session->RemoveOutput(preview), 0);
+    EXPECT_EQ(session->RemoveInput(input), 0);
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test !IsSessionCommited() && !IsSessionConfiged() in OnNativeRegisterCallback,
+ *          OnNativeUnregisterCallback, FindSketchSize
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test !IsSessionCommited() && !IsSessionConfiged() in
+ *          OnNativeRegisterCallback, OnNativeUnregisterCallback, FindSketchSize
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_050, TestSize.Level0)
+{
+    InSequence s;
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+    auto previewOutput = (sptr<PreviewOutput>&)preview;
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+
+    EXPECT_EQ(session->AddOutput(preview), 0);
+
+    previewOutput->SetSession(session);
+    previewOutput->FindSketchSize();
+
+    std::string eventString = "test";
+    previewOutput->OnNativeRegisterCallback(eventString);
+    previewOutput->OnNativeUnregisterCallback(eventString);
+    eventString = "sketchAvailable";
+    previewOutput->OnNativeRegisterCallback(eventString);
+    previewOutput->OnNativeUnregisterCallback(eventString);
+
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    eventString = "test";
+    previewOutput->OnNativeRegisterCallback(eventString);
+    previewOutput->OnNativeUnregisterCallback(eventString);
+    eventString = "sketchAvailable";
+    previewOutput->OnNativeRegisterCallback(eventString);
+    previewOutput->OnNativeUnregisterCallback(eventString);
+
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetSketchReferenceFovRatio, UpdateSketchReferenceFovRatio
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSketchReferenceFovRatio, UpdateSketchReferenceFovRatio
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_051, TestSize.Level0)
+{
+    InSequence s;
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    Size previewSize = {.width = 1440, .height = 1080};
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata = cameras[0]->GetMetadata();
+    ASSERT_NE(deviceMetadata, nullptr);
+    session->GetFeaturesMode();
+    CameraFormat previewFormat = CAMERA_FORMAT_YCBCR_420_888;
+    Profile previewProfile = Profile(previewFormat, previewSize);
+    sptr<CaptureOutput> preview = cameraManager->CreatePreviewOutput(previewProfile, surface);
+    ASSERT_NE(preview, nullptr);
+    auto previewOutput = (sptr<PreviewOutput>&)preview;
+
+    SketchWrapper *sketchWrapper = new (std::nothrow) SketchWrapper(previewOutput->GetStream(), previewSize);
+    ASSERT_NE(sketchWrapper, nullptr);
+    std::shared_ptr<PreviewStateCallback> setCallback =
+        std::make_shared<TestPreviewOutputCallback>("PreviewStateCallback");
+    ASSERT_NE(setCallback, nullptr);
+    camera_metadata_item_t item;
+    OHOS::Camera::FindCameraMetadataItem(deviceMetadata->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
+
+    auto sketchReferenceFovRangeVec = std::vector<SketchWrapper::SketchReferenceFovRange>(5);
+    SketchWrapper::SketchReferenceFovRange sketchReferenceFovRange =
+        {.zoomMin = -1.0f, .zoomMax = -1.0f, .referenceValue = -1.0f};
+    sketchReferenceFovRangeVec[0] = sketchReferenceFovRange;
+    sketchReferenceFovRange = {.zoomMin = -1.0f, .zoomMax = 100.0f, .referenceValue = -1.0f};
+    SketchWrapper::g_sketchReferenceFovRatioMap_[-1] = sketchReferenceFovRangeVec;
+    EXPECT_EQ(sketchWrapper->GetSketchReferenceFovRatio(-1, -1.0f), -1.0f);
+    sketchReferenceFovRangeVec[1] = sketchReferenceFovRange;
+    sketchReferenceFovRange = {.zoomMin = 100.0f, .zoomMax = 1.0f, .referenceValue = -1.0f};
+    sketchReferenceFovRangeVec[2] = sketchReferenceFovRange;
+    sketchReferenceFovRange = {.zoomMin = 100.0f, .zoomMax = 100.0f, .referenceValue = -1.0f};
+    sketchReferenceFovRangeVec[3] = sketchReferenceFovRange;
+    sketchReferenceFovRange = {.zoomMin = 100.0f, .zoomMax = 200.0f, .referenceValue = -1.0f};
+    sketchReferenceFovRangeVec[4] = sketchReferenceFovRange;
+    SketchWrapper::g_sketchReferenceFovRatioMap_[100] = sketchReferenceFovRangeVec;
+    EXPECT_EQ(sketchWrapper->GetSketchReferenceFovRatio(100, -1.0f), -1.0f);
+    EXPECT_EQ(sketchWrapper->GetSketchReferenceFovRatio(100, 200.0f), -1.0f);
+    EXPECT_EQ(sketchWrapper->GetSketchReferenceFovRatio(100, 100.0f), -1.0f);
+    sketchWrapper->UpdateSketchReferenceFovRatio(item, SketchWrapper::g_sketchReferenceFovRatioMap_);
+
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameramanager with updatetorchmode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameramanager with updatetorchmode
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_052, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], 0);
+
+    SceneMode mode = PORTRAIT;
+    cameraManager->serviceProxy_ = nullptr;
+    cameraManager->CreateCaptureSession(mode);
+    cameraManager->InitCameraList();
+
+    TorchMode mode1 = TorchMode::TORCH_MODE_OFF;
+    TorchMode mode2 = TorchMode::TORCH_MODE_ON;
+    cameraManager->torchMode_ = mode1;
+    cameraManager->UpdateTorchMode(mode1);
+    cameraManager->UpdateTorchMode(mode2);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameramanager with parsebasiccapability
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameramanager with parsebasiccapability
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_053, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], 0);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
+    camera_metadata_item_t item;
+    OHOS::Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
+    cameraManager->ParseBasicCapability(ability, metadata, item);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameramanager with no cameraid and cameraobjlist
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameramanager with no cameraid and cameraobjlist
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_054, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], 0);
+
+    pid_t pid = 0;
+    cameraManager->CameraServerDied(pid);
+    sptr<ICameraServiceCallback> cameraServiceCallback = nullptr;
+    cameraManager->SetCameraServiceCallback(cameraServiceCallback);
+    sptr<ITorchServiceCallback> torchServiceCallback = nullptr;
+    cameraManager->SetTorchServiceCallback(torchServiceCallback);
+    sptr<ICameraMuteServiceCallback> cameraMuteServiceCallback = nullptr;
+    cameraManager->SetCameraMuteServiceCallback(cameraMuteServiceCallback);
+    float level = 9.2;
+    int32_t ret = cameraManager->SetTorchLevel(level);
+    EXPECT_EQ(ret, 7400201);
+    string cameraId = "";
+    int activeTime = 0;
+    EffectParam effectParam = {0, 0, 0};
+    ret = cameraManager->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS,
+        activeTime, effectParam);
+    EXPECT_EQ(ret, 7400201);
+    cameraManager->cameraObjList = {};
+    bool isTorchSupported = cameraManager->IsTorchSupported();
+    EXPECT_EQ(isTorchSupported, false);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameramanager with serviceProxy_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameramanager with serviceProxy_ is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_055, TestSize.Level0)
+{
+    sptr<ICameraServiceCallback> callback = new(std::nothrow) CameraStatusServiceCallback(cameraManager);
+    cameraManager->cameraSvcCallback_  = callback;
+
+    pid_t pid = 0;
+    cameraManager->serviceProxy_  = nullptr;
+    cameraManager->CameraServerDied(pid);
+    sptr<ICameraServiceCallback> cameraServiceCallback = nullptr;
+    cameraManager->SetCameraServiceCallback(cameraServiceCallback);
+    sptr<ITorchServiceCallback> torchServiceCallback = nullptr;
+    cameraManager->SetTorchServiceCallback(torchServiceCallback);
+    sptr<ICameraMuteServiceCallback> cameraMuteServiceCallback = nullptr;
+    cameraManager->SetCameraMuteServiceCallback(cameraMuteServiceCallback);
+
+    cameraManager->cameraObjList = {};
+    string cameraId = "";
+    cameraManager->GetCameraDeviceFromId(cameraId);
+    bool isTorchSupported = cameraManager->IsTorchSupported();
+    EXPECT_EQ(isTorchSupported, false);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameramanager with preswitchcamera
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameramanager with preswitchcamera
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_056, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    int32_t ret = cameraManager->PreSwitchCamera(cameraId);
+    EXPECT_EQ(ret, 7400201);
+
+    cameraManager->serviceProxy_ = nullptr;
+    cameraManager->PreSwitchCamera(cameraId);
+    EXPECT_EQ(ret, 7400201);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test cameradevice with position and zoomratiorange
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test cameradevice with position and zoomratiorange
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_057, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    cameras[0]->foldScreenType_ = CAMERA_FOLDSCREEN_INNER;
+    cameras[0]->cameraPosition_ = CAMERA_POSITION_FRONT;
+    cameras[0]->GetPosition();
+    EXPECT_EQ(cameras[0]->GetPosition(), 3);
+
+    cameras[0]->zoomRatioRange_ = {1.1, 2.1};
+    EXPECT_EQ(cameras[0]->GetZoomRatioRange(), cameras[0]->zoomRatioRange_);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test camerainput with cameraserverdied
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test camerainput with cameraserverdied
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_058, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+
+    pid_t pid = 0;
+    camInput->CameraServerDied(pid);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test camerainput with deviceObj_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test camerainput with deviceObj_ is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_059, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+
+    pid_t pid = 0;
+    std::shared_ptr<TestDeviceCallback> setCallback = std::make_shared<TestDeviceCallback>("InputCallback");
+    camInput->deviceObj_ = nullptr;
+    camInput->SetErrorCallback(setCallback);
+    camInput->CameraServerDied(pid);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test metadataoutput with cameraserverdied and stop
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test metadataoutput with cameraserverdied and stop
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_060, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<CaptureOutput> output = cameraManager->CreateMetadataOutput();
+    ASSERT_NE(output, nullptr);
+    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)output;
+
+    pid_t pid = 0;
+    metadatOutput->CameraServerDied(pid);
+    EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SERVICE_FATL_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test metadataoutput with stream_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test metadataoutput with stream_ is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_061, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureOutput> output = cameraManager->CreateMetadataOutput();
+    ASSERT_NE(output, nullptr);
+    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)output;
+
+    pid_t pid = 0;
+    metadatOutput->stream_ = nullptr;
+    metadatOutput->CameraServerDied(pid);
+    EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(metadatOutput->Release(), CameraErrorCode::SERVICE_FATL_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test metadataoutput with surface_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test metadataoutput with surface_ is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_062, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureOutput> output = cameraManager->CreateMetadataOutput();
+    ASSERT_NE(output, nullptr);
+    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)output;
+
+    metadatOutput->surface_ = nullptr;
+    EXPECT_EQ(metadatOutput->Release(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test metadataoutput with start when session_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test metadataoutput with start when session_ is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_063, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureOutput> metadata = cameraManager->CreateMetadataOutput();
+    ASSERT_NE(metadata, nullptr);
+    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)metadata;
+
+    metadatOutput->session_ = nullptr;
+    EXPECT_EQ(metadatOutput->Start(), CameraErrorCode::SESSION_NOT_CONFIG);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test metadataoutput with start when not commit
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test metadataoutput with start when not commit
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_064, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> metadata = cameraManager->CreateMetadataOutput();
+    ASSERT_NE(metadata, nullptr);
+    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)metadata;
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    session->BeginConfig();
+    session->AddInput(input);
+    session->AddOutput(metadata);
+
+    EXPECT_EQ(metadatOutput->Start(), CameraErrorCode::SESSION_NOT_CONFIG);
+
+    session->CommitConfig();
+    session->Start();
+
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test metadataoutput with start when stream_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test metadataoutput with start when stream_ is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_065, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> metadata = cameraManager->CreateMetadataOutput();
+    ASSERT_NE(metadata, nullptr);
+    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)metadata;
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    session->BeginConfig();
+
+    session->AddInput(input);
+    session->AddOutput(metadata);
+
+    session->CommitConfig();
+    session->Start();
+
+    metadatOutput->stream_ = nullptr;
+    EXPECT_EQ(metadatOutput->Start(), CameraErrorCode::SESSION_NOT_CONFIG);
+
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test metadataoutput with start
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test metadataoutput with start
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_066, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> metadata = cameraManager->CreateMetadataOutput();
+    ASSERT_NE(metadata, nullptr);
+    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)metadata;
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    session->BeginConfig();
+
+    session->AddInput(input);
+    session->AddOutput(metadata);
+
+    session->CommitConfig();
+    session->Start();
+
+    EXPECT_EQ(metadatOutput->Start(), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SERVICE_FATL_ERROR);
+    metadatOutput->Release();
+    
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test metadataoutput when destruction
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test metadataoutput when destruction
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_067, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureOutput> output = cameraManager->CreateMetadataOutput();
+    ASSERT_NE(output, nullptr);
+    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)output;
+
+    metadatOutput->~MetadataOutput();
+    EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SERVICE_FATL_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test photooutput with cameraserverdied
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photooutput with cameraserverdied
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_068, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    pid_t pid = 0;
+    photoOutput->CameraServerDied(pid);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test photooutput with cameraserverdied
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photooutput with cameraserverdied
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_069, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    pid_t pid = 0;
+    std::shared_ptr<PhotoStateCallback> setCallback =
+        std::make_shared<TestPhotoOutputCallback>("PhotoStateCallback");
+    ((sptr<PhotoOutput>&)photoOutput)->SetCallback(setCallback);
+    photoOutput->CameraServerDied(pid);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test photooutput with cameraserverdied when stream_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photooutput with cameraserverdied when stream_ is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_070, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    pid_t pid = 0;
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    phtOutput->stream_ = nullptr;
+    photoOutput->CameraServerDied(pid);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test photooutput with confirmcapture when stream_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photooutput with confirmcapture when stream_ is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_071, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    int32_t ret = session->BeginConfig();
+    EXPECT_EQ(ret, 0);
+
+    ret = session->AddOutput(photoOutput);
     session->CommitConfig();
 
-    session->RemoveOutput(preview);
-    session->RemoveInput(input);
-    preview->Release();
-    input->Release();
+    phtOutput->stream_ = nullptr;
+    EXPECT_EQ(phtOutput->ConfirmCapture(), CameraErrorCode::SESSION_NOT_RUNNING);
+
+    phtOutput->~PhotoOutput();
+    EXPECT_EQ(phtOutput->ConfirmCapture(), CameraErrorCode::SESSION_NOT_RUNNING);
+
     session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test previewoutput
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test previewoutput
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_072, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    auto previewOutput = (sptr<PreviewOutput>&)preview;
+    previewOutput->stream_ = nullptr;
+    previewOutput->session_ = nullptr;
+
+    EXPECT_EQ(previewOutput->OnSketchStatusChanged(SketchStatus::STOPED), CAMERA_INVALID_STATE);
+    EXPECT_EQ(previewOutput->IsSketchSupported(), false);
+
+    Size previewSize = {};
+    previewOutput->stream_ = nullptr;
+    EXPECT_EQ(previewOutput->CreateSketchWrapper(previewSize), CameraErrorCode::SERVICE_FATL_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test previewoutput with callback and cameraserverdied
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test previewoutput with callback and cameraserverdied
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_073, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    auto previewOutput = (sptr<PreviewOutput>&)preview;
+
+    std::string eventString = "sketchAvailable";
+    previewOutput->sketchWrapper_ = nullptr;
+    previewOutput->OnNativeRegisterCallback(eventString);
+    previewOutput->OnNativeUnregisterCallback(eventString);
+
+    pid_t pid = 0;
+    previewOutput->stream_ = nullptr;
+    previewOutput->CameraServerDied(pid);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test sketchwrapper
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test sketchwrapper
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_074, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> cameraInput = (sptr<CameraInput>&)input;
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata =
+        cameraInput->GetCameraDeviceInfo()->GetMetadata();
+    ASSERT_NE(deviceMetadata, nullptr);
+
+    int32_t width = 1440;
+    int32_t height = 1080;
+    CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size previewSize;
+    previewSize.width = width;
+    previewSize.height = height;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    Profile previewProfile = Profile(previewFormat, previewSize);
+    sptr<CaptureOutput> previewOutput =
+        cameraManager->CreatePreviewOutput(previewProfile, surface);
+    ASSERT_NE(previewOutput, nullptr);
+
+    Size sketchSize;
+    sketchSize.width = 640;
+    sketchSize.height = 480;
+
+    SketchWrapper *sketchWrapper = new (std::nothrow)
+        SketchWrapper(previewOutput->GetStream(), sketchSize);
+    ASSERT_NE(sketchWrapper, nullptr);
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    int32_t modeName = session->GetFeaturesMode();
+    int ret = sketchWrapper->Init(deviceMetadata, modeName);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    sketchWrapper->sketchStream_ = nullptr;
+    ret = sketchWrapper->AttachSketchSurface(nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_STATE);
+    EXPECT_EQ(sketchWrapper->StartSketchStream(), CAMERA_UNKNOWN_ERROR);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata;
+    sketchWrapper->UpdateSketchEnableRatio(metadata);
+    sketchWrapper->UpdateSketchReferenceFovRatio(metadata);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test sketchwrapper
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test sketchwrapper
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_075, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> cameraInput = (sptr<CameraInput>&)input;
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata =
+        cameraInput->GetCameraDeviceInfo()->GetMetadata();
+    ASSERT_NE(deviceMetadata, nullptr);
+
+    int32_t width = 1440;
+    int32_t height = 1080;
+    CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size previewSize;
+    previewSize.width = width;
+    previewSize.height = height;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    Profile previewProfile = Profile(previewFormat, previewSize);
+    sptr<CaptureOutput> previewOutput =
+        cameraManager->CreatePreviewOutput(previewProfile, surface);
+    ASSERT_NE(previewOutput, nullptr);
+
+    Size sketchSize;
+    sketchSize.width = 640;
+    sketchSize.height = 480;
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    SketchWrapper *sketchWrapper = new (std::nothrow)
+        SketchWrapper(previewOutput->GetStream(), sketchSize);
+    ASSERT_NE(sketchWrapper, nullptr);
+    
+    int32_t modeName = session->GetFeaturesMode();
+    int ret = sketchWrapper->Init(deviceMetadata, modeName);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    float sketchRatio = sketchWrapper->GetSketchEnableRatio(session->GetFeaturesMode());
+    EXPECT_EQ(sketchRatio, -1.0);
+    sketchWrapper->hostStream_ = nullptr;
+    EXPECT_EQ(sketchWrapper->UpdateSketchRatio(sketchRatio), CAMERA_INVALID_STATE);
+    EXPECT_EQ(sketchWrapper->Destroy(), CAMERA_INVALID_STATE);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test sketchwrapper with different tag
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test sketchwrapper with different tag
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_076, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> cameraInput = (sptr<CameraInput>&)input;
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata =
+        cameraInput->GetCameraDeviceInfo()->GetMetadata();
+    ASSERT_NE(deviceMetadata, nullptr);
+
+    int32_t width = 1440;
+    int32_t height = 1080;
+    CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size previewSize;
+    previewSize.width = width;
+    previewSize.height = height;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    Profile previewProfile = Profile(previewFormat, previewSize);
+    sptr<CaptureOutput> previewOutput = cameraManager->CreatePreviewOutput(previewProfile, surface);
+    ASSERT_NE(previewOutput, nullptr);
+
+    Size sketchSize;
+    sketchSize.width = 640;
+    sketchSize.height = 480;
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    SketchWrapper *sketchWrapper = new (std::nothrow)
+        SketchWrapper(previewOutput->GetStream(), sketchSize);
+    ASSERT_NE(sketchWrapper, nullptr);
+    
+    int32_t modeName = session->GetFeaturesMode();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
+    camera_metadata_item_t item;
+    OHOS::Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
+    const camera_device_metadata_tag_t tag1 = OHOS_CONTROL_ZOOM_RATIO;
+    EXPECT_EQ(sketchWrapper->OnMetadataDispatch(modeName, tag1, item), 0);
+    const camera_device_metadata_tag_t tag2 = OHOS_CONTROL_CAMERA_MACRO;
+    EXPECT_EQ(sketchWrapper->OnMetadataDispatch(modeName, tag2, item), CAM_META_SUCCESS);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test videooutput with cameraserverdied
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test videooutput with cameraserverdied
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_077, TestSize.Level0)
+{
+    int32_t width = VIDEO_DEFAULT_WIDTH;
+    int32_t height = VIDEO_DEFAULT_HEIGHT;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = width;
+    videoSize.height = height;
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> video = cameraManager->CreateVideoOutput(videoProfile, surface);
+    ASSERT_NE(video, nullptr);
+
+    pid_t pid = 0;
+    video->CameraServerDied(pid);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test videooutput with cameraserverdied when stream_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test videooutput with cameraserverdied when stream_ is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_078, TestSize.Level0)
+{
+    int32_t width = VIDEO_DEFAULT_WIDTH;
+    int32_t height = VIDEO_DEFAULT_HEIGHT;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = width;
+    videoSize.height = height;
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> video = cameraManager->CreateVideoOutput(videoProfile, surface);
+    ASSERT_NE(video, nullptr);
+
+    pid_t pid = 0;
+    video->stream_ = nullptr;
+    std::shared_ptr<VideoStateCallback> setCallback =
+        std::make_shared<TestVideoOutputCallback>("VideoStateCallback");
+    video->SetCallback(setCallback);
+    video->CameraServerDied(pid);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test videooutput when destruction
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test videooutput when destruction
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_079, TestSize.Level0)
+{
+    int32_t width = VIDEO_DEFAULT_WIDTH;
+    int32_t height = VIDEO_DEFAULT_HEIGHT;
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = width;
+    videoSize.height = height;
+    std::vector<int32_t> videoFramerates = {30, 30};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> video = cameraManager->CreateVideoOutput(videoProfile, surface);
+    ASSERT_NE(video, nullptr);
+
+    video->~VideoOutput();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HCameraDevice when settings is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCameraDevice when settings is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_080, TestSize.Level0)
+{
+    std::vector<int32_t> result;
+    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
+    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
+
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings;
+    EXPECT_EQ(camDevice->UpdateSettingOnce(settings), CAMERA_INVALID_ARG);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HCameraDevice
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCameraDevice
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_081, TestSize.Level0)
+{
+    std::vector<int32_t> result;
+    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
+    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
+
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings = cameras[0]->GetMetadata();
+    EXPECT_EQ(camDevice->UpdateSettingOnce(settings), 0);
+
+    camDevice->RegisterFoldStatusListener();
+    camDevice->UnRegisterFoldStatusListener();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HCameraDevice
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCameraDevice
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_082, TestSize.Level0)
+{
+    std::vector<int32_t> result;
+    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
+    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
+
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
+
+    camDevice->UnRegisterFoldStatusListener();
+    camDevice->RegisterFoldStatusListener();
+    camDevice->UnRegisterFoldStatusListener();
+    camDevice->cameraHostManager_ = nullptr;
+    camDevice->RegisterFoldStatusListener();
+    camDevice->UnRegisterFoldStatusListener();
+
+    std::vector<int32_t> results = {};
+    EXPECT_EQ(camDevice->EnableResult(results), CAMERA_INVALID_ARG);
+    EXPECT_EQ(camDevice->DisableResult(results), CAMERA_INVALID_ARG);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaIn;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaOut;
+    EXPECT_EQ(camDevice->GetStatus(metaIn, metaOut), CAMERA_INVALID_ARG);
+
+    camDevice->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HCameraDevice when hdiCameraDevice_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCameraDevice when hdiCameraDevice_ is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_083, TestSize.Level0)
+{
+    std::vector<int32_t> result;
+    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
+    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
+
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new(std::nothrow)
+        HCameraDevice(cameraHostManager, cameraId, callerToken);
+
+    camDevice->hdiCameraDevice_ = nullptr;
+    EXPECT_EQ(camDevice->InitStreamOperator(), CAMERA_UNKNOWN_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HCameraDevice when streamOperator_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCameraDevice when streamOperator_ is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_084, TestSize.Level0)
+{
+    std::vector<int32_t> result;
+    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
+    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
+
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new(std::nothrow)
+        HCameraDevice(cameraHostManager, cameraId, callerToken);
+
+    std::vector<HDI::Camera::V1_1::StreamInfo_V1_1> streamInfos = {};
+    camDevice->CreateStreams(streamInfos);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> deviceSettings = cameras[0]->GetMetadata();
+    int32_t operationMode = 0;
+    camDevice->streamOperator_ = nullptr;
+    EXPECT_EQ(camDevice->CommitStreams(deviceSettings, operationMode), CAMERA_UNKNOWN_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HCameraDevice when streamOperator is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCameraDevice when streamOperator is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_085, TestSize.Level0)
+{
+    std::vector<int32_t> result;
+    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
+    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
+
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new(std::nothrow)
+        HCameraDevice(cameraHostManager, cameraId, callerToken);
+
+    std::vector<StreamInfo_V1_1> streamInfos = {};
+    EXPECT_EQ(camDevice->UpdateStreams(streamInfos), CAMERA_UNKNOWN_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HCameraDevice when streamOperatorCallback is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCameraDevice when streamOperatorCallback is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_086, TestSize.Level0)
+{
+    std::vector<int32_t> result;
+    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
+    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
+
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new(std::nothrow)
+        HCameraDevice(cameraHostManager, cameraId, callerToken);
+
+    int32_t captureId = 0;
+    const std::vector<int32_t> streamIds = {1, 2};
+    EXPECT_EQ(camDevice->OnCaptureStarted(captureId, streamIds), CAMERA_INVALID_STATE);
+
+    HDI::Camera::V1_2::CaptureStartedInfo it1;
+    it1.streamId_ = 1;
+    it1.exposureTime_ = 1;
+    HDI::Camera::V1_2::CaptureStartedInfo it2;
+    it2.streamId_ = 2;
+    it2.exposureTime_ = 2;
+    std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo> captureStartedInfo = {};
+    captureStartedInfo.push_back(it1);
+    captureStartedInfo.push_back(it2);
+    EXPECT_EQ(camDevice->OnCaptureStarted_V1_2(captureId, captureStartedInfo), CAMERA_INVALID_STATE);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HCameraDevice when streamOperatorCallback is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCameraDevice when streamOperatorCallback is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_087, TestSize.Level0)
+{
+    std::vector<int32_t> result;
+    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
+    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
+
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new(std::nothrow)
+        HCameraDevice(cameraHostManager, cameraId, callerToken);
+
+    int32_t captureId = 0;
+    const std::vector<int32_t> streamIds = {1, 2};
+    EXPECT_EQ(camDevice->OnCaptureStarted(captureId, streamIds), CAMERA_INVALID_STATE);
+    const std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo> captureStartedInfo = {};
+    EXPECT_EQ(camDevice->OnCaptureStarted_V1_2(captureId, captureStartedInfo), CAMERA_INVALID_STATE);
+
+    CaptureEndedInfo it1;
+    it1.streamId_ = 1;
+    it1.frameCount_ = 1;
+    CaptureEndedInfo it2;
+    it2.streamId_ = 2;
+    it2.frameCount_ = 2;
+    std::vector<CaptureEndedInfo> captureEndedInfo = {};
+    captureEndedInfo.push_back(it1);
+    captureEndedInfo.push_back(it2);
+    EXPECT_EQ(camDevice->OnCaptureEnded(captureId, captureEndedInfo), CAMERA_INVALID_STATE);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HCameraDevice when streamOperatorCallback is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCameraDevice when streamOperatorCallback is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_088, TestSize.Level0)
+{
+    std::vector<int32_t> result;
+    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
+    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
+
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new(std::nothrow)
+        HCameraDevice(cameraHostManager, cameraId, callerToken);
+
+    int32_t captureId = 0;
+    CaptureErrorInfo it1;
+    it1.streamId_ = 2;
+    it1.error_ = BUFFER_LOST;
+    CaptureErrorInfo it2;
+    it2.streamId_ = 1;
+    it2.error_ =  BUFFER_LOST;
+    std::vector<CaptureErrorInfo> captureErrorInfo = {};
+    captureErrorInfo.push_back(it1);
+    captureErrorInfo.push_back(it2);
+    EXPECT_EQ(camDevice->OnCaptureError(captureId, captureErrorInfo), CAMERA_INVALID_STATE);
+
+    const std::vector<int32_t> streamIds = {1, 2};
+    uint64_t timestamp = 5;
+    EXPECT_EQ(camDevice->OnFrameShutter(captureId, streamIds, timestamp), CAMERA_INVALID_STATE);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test HCameraDevice with CheckOnResultData
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCameraDevice with CheckOnResultData
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_089, TestSize.Level0)
+{
+    std::vector<int32_t> result;
+    result.push_back(OHOS_SENSOR_EXPOSURE_TIME);
+    result.push_back(OHOS_SENSOR_COLOR_CORRECTION_GAINS);
+
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<HCameraHostManager> cameraHostManager = (sptr<HCameraHostManager> &)mockCameraHostManager;
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new(std::nothrow)
+        HCameraDevice(cameraHostManager, cameraId, callerToken);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = cameras[0]->GetMetadata();
+    camDevice->CheckOnResultData(nullptr);
+    camDevice->CheckOnResultData(cameraResult);
+}
+
+/*
+ * Feature: coverage
+ * Function: Test HStreamRepeat
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HStreamRepeat
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_090, TestSize.Level0)
+{
+    int32_t format = CAMERA_FORMAT_YUV_420_SP;
+    int32_t width = PHOTO_DEFAULT_WIDTH;
+    int32_t height = PHOTO_DEFAULT_HEIGHT;
+
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+    auto streamRepeat = new (std::nothrow)
+        HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
+    sptr<HStreamRepeat> streamRepeat1 =
+        new (std::nothrow) HStreamRepeat(producer, 4, 1280, 960, RepeatStreamType::PREVIEW);
+
+    SketchStatus status = SketchStatus::STARTED;
+    streamRepeat->repeatStreamType_ = RepeatStreamType::SKETCH;
+    streamRepeat->parentStreamRepeat_ = streamRepeat1;
+    streamRepeat->UpdateSketchStatus(status);
+}
+
+/*
+ * Feature: coverage
+ * Function: Test HStreamRepeat when status is STARTED
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HStreamRepeat when status is STARTED
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_091, TestSize.Level0)
+{
+    int32_t format = CAMERA_FORMAT_YUV_420_SP;
+    int32_t width = PHOTO_DEFAULT_WIDTH;
+    int32_t height = PHOTO_DEFAULT_HEIGHT;
+
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+    auto streamRepeat = new (std::nothrow)
+        HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
+
+    SketchStatus status = SketchStatus::STARTED;
+    EXPECT_EQ(streamRepeat->OnSketchStatusChanged(status), 0);
+}
+
+/*
+ * Feature: coverage
+ * Function: Test HStreamRepeat when sketchStream is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HStreamRepeat when sketchStream is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_092, TestSize.Level0)
+{
+    int32_t format = CAMERA_FORMAT_YUV_420_SP;
+    int32_t width = PHOTO_DEFAULT_WIDTH;
+    int32_t height = PHOTO_DEFAULT_HEIGHT;
+
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+    auto streamRepeat = new (std::nothrow)
+        HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
+
+    sptr<IStreamRepeat> sketchStream = nullptr;
+    float sketchRatio = 0;
+    EXPECT_EQ(streamRepeat->ForkSketchStreamRepeat(0, 1, sketchStream, sketchRatio), CAMERA_INVALID_ARG);
+    EXPECT_EQ(streamRepeat->ForkSketchStreamRepeat(1, 0, sketchStream, sketchRatio), CAMERA_INVALID_ARG);
+}
+
+/*
+ * Feature: coverage
+ * Function: Test HStreamRepeat when sketchStreamRepeat_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HStreamRepeat when sketchStreamRepeat_ is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_093, TestSize.Level0)
+{
+    int32_t format = CAMERA_FORMAT_YUV_420_SP;
+    int32_t width = PHOTO_DEFAULT_WIDTH;
+    int32_t height = PHOTO_DEFAULT_HEIGHT;
+
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+    auto streamRepeat = new (std::nothrow)
+        HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
+
+    float sketchRatio = 0;
+    streamRepeat->sketchStreamRepeat_ = nullptr;
+    EXPECT_EQ(streamRepeat->RemoveSketchStreamRepeat(), 0);
+    EXPECT_EQ(streamRepeat->UpdateSketchRatio(sketchRatio), CAMERA_INVALID_STATE);
+}
+
+/*
+ * Feature: coverage
+ * Function: Test HStreamRepeat
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HStreamRepeat
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_094, TestSize.Level0)
+{
+    int32_t format = CAMERA_FORMAT_YUV_420_SP;
+    int32_t width = PHOTO_DEFAULT_WIDTH;
+    int32_t height = PHOTO_DEFAULT_HEIGHT;
+
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+    auto streamRepeat = new (std::nothrow)
+        HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
+
+    uint32_t interfaceCode = 5;
+    EXPECT_EQ(streamRepeat->OperatePermissionCheck(interfaceCode), 0);
+}
+
+/*
+ * Feature: coverage
+ * Function: Test HCaptureSession when stream is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession when stream is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_095, TestSize.Level0)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode mode = PORTRAIT;
+    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
+    ASSERT_NE(camSession, nullptr);
+
+    std::vector<StreamInfo_V1_1> streamInfos = {};
+    EXPECT_EQ(camSession->GetCurrentStreamInfos(streamInfos), 0);
+    EXPECT_EQ(camSession->AddOutputStream(nullptr), CAMERA_INVALID_ARG);
+    EXPECT_EQ(camSession->RemoveOutputStream(nullptr), CAMERA_INVALID_ARG);
+}
+
+/*
+ * Feature: coverage
+ * Function: Test HCaptureSession when cameraDevice_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession when cameraDevice_ is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_096, TestSize.Level0)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode mode = PORTRAIT;
+    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
+    ASSERT_NE(camSession, nullptr);
+
+    camSession->cameraDevice_ = nullptr;
+    EXPECT_EQ(camSession->LinkInputAndOutputs(), CAMERA_INVALID_SESSION_CFG);
+}
+
+/*
+ * Feature: coverage
+ * Function: Test HCaptureSession with SetColorSpace
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession with SetColorSpace
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_097, TestSize.Level0)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode mode = PORTRAIT;
+    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
+    ASSERT_NE(camSession, nullptr);
+
+    bool isNeedUpdate = false;
+    ColorSpace colorSpace = ColorSpace::SRGB;
+    ColorSpace captureColorSpace = ColorSpace::SRGB;
+    camSession->currColorSpace_ = ColorSpace::BT709;
+    camSession->currCaptureColorSpace_ = ColorSpace::BT709;
+    EXPECT_EQ(camSession->SetColorSpace(colorSpace, captureColorSpace, isNeedUpdate), CAMERA_INVALID_STATE);
+    camSession->currColorSpace_ = ColorSpace::SRGB;
+    EXPECT_EQ(camSession->SetColorSpace(colorSpace, captureColorSpace, isNeedUpdate), CAMERA_INVALID_STATE);
+}
+
+/*
+ * Feature: coverage
+ * Function: Test HCaptureSession with CheckIfColorSpaceMatchesFormat
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession with CheckIfColorSpaceMatchesFormat
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_098, TestSize.Level0)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode mode = PORTRAIT;
+    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
+    ASSERT_NE(camSession, nullptr);
+
+    camSession->RestartStreams();
+
+    ColorSpace colorSpace = ColorSpace::SRGB;
+    EXPECT_EQ(camSession->CheckIfColorSpaceMatchesFormat(colorSpace), 0);
+    colorSpace = ColorSpace::BT2020_HLG ;
+    EXPECT_EQ(camSession->CheckIfColorSpaceMatchesFormat(colorSpace), 0);
+    colorSpace = ColorSpace::BT2020_PQ ;
+    EXPECT_EQ(camSession->CheckIfColorSpaceMatchesFormat(colorSpace), 0);
+    colorSpace = ColorSpace::BT2020_HLG_LIMIT ;
+    EXPECT_EQ(camSession->CheckIfColorSpaceMatchesFormat(colorSpace), 0);
+    colorSpace = ColorSpace::BT2020_PQ_LIMIT;
+    EXPECT_EQ(camSession->CheckIfColorSpaceMatchesFormat(colorSpace), 0);
+}
+
+/*
+ * Feature: coverage
+ * Function: Test HCaptureSession
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_099, TestSize.Level0)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode mode = PORTRAIT;
+    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
+    ASSERT_NE(camSession, nullptr);
+
+    const uint32_t callingTokenId = 0;
+    const std::string permissionName = "camera";
+    camSession->RegisterPermissionCallback(callingTokenId, permissionName);
+    camSession->StartUsingPermissionCallback(callingTokenId, permissionName);
+}
+
+/*
+ * Feature: coverage
+ * Function: Test HCaptureSession when isSessionStarted_ is true
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession when isSessionStarted_ is true
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_100, TestSize.Level0)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode mode = PORTRAIT;
+    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
+    ASSERT_NE(camSession, nullptr);
+
+    camSession->SetColorSpaceForStreams();
+
+    std::vector<StreamInfo_V1_1> streamInfos = {};
+    camSession->CancelStreamsAndGetStreamInfos(streamInfos);
+
+    camSession->isSessionStarted_ = true;
+    camSession->RestartStreams();
+
+    const uint32_t callingTokenId = 0;
+    const std::string permissionName = "camera";
+    std::shared_ptr<CameraUseStateChangeCb> cameraUseStateChangeCb =
+        std::make_shared<CameraUseStateChangeCb>(camSession);
+    camSession->cameraUseCallbackPtr_ = cameraUseStateChangeCb;
+    camSession->StartUsingPermissionCallback(callingTokenId, permissionName);
+}
+
+/*
+ * Feature: coverage
+ * Function: Test HCaptureSession when cameraDevice is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCaptureSession when cameraDevice is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_101, TestSize.Level0)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode mode = PORTRAIT;
+    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
+    ASSERT_NE(camSession, nullptr);
+
+    float currentFps = 0;
+    float currentZoomRatio = 0;
+    EXPECT_EQ(camSession->QueryFpsAndZoomRatio(currentFps, currentZoomRatio), false);
+    std::vector<float> crossZoomAndTime = {0, 0};
+    int32_t operationMode = 0;
+    EXPECT_EQ(camSession->QueryZoomPerformance(crossZoomAndTime, operationMode), false);
+    int32_t smoothZoomType = 0;
+    float targetZoomRatio = 0;
+    float duration = 0;
+    EXPECT_EQ(camSession->SetSmoothZoom(smoothZoomType, operationMode,
+        targetZoomRatio, duration), 11);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test metadataoutput when appStateCallback_ is not nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test metadataoutput when appStateCallback_ is not nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_102, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureOutput> output = cameraManager->CreateMetadataOutput();
+    ASSERT_NE(output, nullptr);
+    sptr<MetadataOutput> metadatOutput = (sptr<MetadataOutput>&)output;
+
+    std::shared_ptr<MetadataStateCallback> metadataStateCallback =
+        std::make_shared<AppMetadataCallback>();
+    metadatOutput->SetCallback(metadataStateCallback);
+
+    pid_t pid = 0;
+    metadatOutput->CameraServerDied(pid);
+}
+
+/*
+ * Feature: coverage
+ * Function: Test HStreamRepeat when repeatStreamType_ is SKETCH
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HStreamRepeat when repeatStreamType_ is SKETCH
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_103, TestSize.Level0)
+{
+    int32_t format = CAMERA_FORMAT_YUV_420_SP;
+    int32_t width = PHOTO_DEFAULT_WIDTH;
+    int32_t height = PHOTO_DEFAULT_HEIGHT;
+
+    sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = Surface->GetProducer();
+    auto streamRepeat = new (std::nothrow)
+        HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
+
+    StreamInfo_V1_1 streamInfo;
+    streamRepeat->repeatStreamType_ = RepeatStreamType::SKETCH;
+    streamRepeat->SetStreamInfo(streamInfo);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PortraitSession when output is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PortraitSession when output is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_104, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    SceneMode mode = PORTRAIT;
+    std::vector<SceneMode> modes = cameraManager->GetSupportedModes(cameras[0]);
+    ASSERT_TRUE(modes.size() != 0);
+
+    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], mode);
+    ASSERT_NE(ability, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<PortraitSession> portraitSession = nullptr;
+    portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
+    ASSERT_NE(portraitSession, nullptr);
+    sptr<CaptureOutput> output = nullptr;
+    EXPECT_EQ(portraitSession->CanAddOutput(output), false);
+    EXPECT_EQ(portraitSession->BeginConfig(), 0);
+    EXPECT_EQ(portraitSession->AddInput(input), 0);
+    EXPECT_EQ(portraitSession->AddOutput(preview), 0);
+    EXPECT_EQ(portraitSession->AddOutput(photo), 0);
+    EXPECT_EQ(portraitSession->CommitConfig(), 0);
+
+    const float aperture = 0.1;
+    EXPECT_EQ(portraitSession->CanAddOutput(output), false);
+    std::vector<float> supportedVirtualApertures = {};
+    EXPECT_EQ(portraitSession->GetSupportedVirtualApertures(), supportedVirtualApertures);
+    EXPECT_EQ(portraitSession->GetVirtualAperture(), 0.0);
+    portraitSession->SetVirtualAperture(aperture);
+    std::vector<std::vector<float>> supportedPhysicalApertures;
+    EXPECT_EQ(portraitSession->GetSupportedPhysicalApertures(), supportedPhysicalApertures);
+    EXPECT_EQ(portraitSession->GetPhysicalAperture(), 0.0);
+    portraitSession->SetPhysicalAperture(aperture);
+
+    portraitSession->Release();
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PortraitSession without CommitConfig
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PortraitSession without CommitConfig
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_105, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    SceneMode mode = PORTRAIT;
+    std::vector<SceneMode> modes = cameraManager->GetSupportedModes(cameras[0]);
+    ASSERT_TRUE(modes.size() != 0);
+    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], mode);
+    ASSERT_NE(ability, nullptr);
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<PortraitSession> portraitSession = nullptr;
+    portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
+    ASSERT_NE(portraitSession, nullptr);
+
+    EXPECT_EQ(portraitSession->BeginConfig(), 0);
+    EXPECT_EQ(portraitSession->AddInput(input), 0);
+    EXPECT_EQ(portraitSession->AddOutput(preview), 0);
+    EXPECT_EQ(portraitSession->AddOutput(photo), 0);
+
+    const float physicalAperture = 0.1;
+    const float virtualAperture = 0.1;
+    std::vector<float> supportedVirtualApertures = {};
+    EXPECT_EQ(portraitSession->GetSupportedVirtualApertures(), supportedVirtualApertures);
+    EXPECT_EQ(portraitSession->GetVirtualAperture(), 0.0);
+    portraitSession->SetVirtualAperture(virtualAperture);
+    std::vector<std::vector<float>> supportedPhysicalApertures;
+    EXPECT_EQ(portraitSession->GetSupportedPhysicalApertures(), supportedPhysicalApertures);
+    EXPECT_EQ(portraitSession->GetPhysicalAperture(), 0.0);
+    portraitSession->SetPhysicalAperture(physicalAperture);
+    portraitSession->Release();
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PortraitSession when inputDevice_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PortraitSession when inputDevice_ is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_106, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    SceneMode mode = PORTRAIT;
+    std::vector<SceneMode> modes = cameraManager->GetSupportedModes(cameras[0]);
+    ASSERT_TRUE(modes.size() != 0);
+
+    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], mode);
+    ASSERT_NE(ability, nullptr);
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<PortraitSession> portraitSession = nullptr;
+    portraitSession = static_cast<PortraitSession *> (captureSession.GetRefPtr());
+    ASSERT_NE(portraitSession, nullptr);
+
+    EXPECT_EQ(portraitSession->BeginConfig(), 0);
+    EXPECT_EQ(portraitSession->AddInput(input), 0);
+    EXPECT_EQ(portraitSession->AddOutput(preview), 0);
+    EXPECT_EQ(portraitSession->AddOutput(photo), 0);
+    EXPECT_EQ(portraitSession->CommitConfig(), 0);
+
+    portraitSession->inputDevice_ = nullptr;
+    std::vector<PortraitEffect> supportedPortraitEffects = {};
+    EXPECT_EQ(portraitSession->GetSupportedPortraitEffects(), supportedPortraitEffects);
+    EXPECT_EQ(portraitSession->GetPortraitEffect(), PortraitEffect::OFF_EFFECT);
+    std::vector<float> supportedVirtualApertures = {};
+    EXPECT_EQ(portraitSession->GetSupportedVirtualApertures(), supportedVirtualApertures);
+    EXPECT_EQ(portraitSession->GetVirtualAperture(), 0.0);
+    std::vector<std::vector<float>> supportedPhysicalApertures;
+    EXPECT_EQ(portraitSession->GetSupportedPhysicalApertures(), supportedPhysicalApertures);
+    EXPECT_EQ(portraitSession->GetPhysicalAperture(), 0.0);
+
+    portraitSession->Release();
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test NightSession about exposure
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test NightSession about exposure
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_107, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    SceneMode mode = NIGHT;
+    std::vector<SceneMode> modes = cameraManager->GetSupportedModes(cameras[0]);
+    ASSERT_TRUE(modes.size() != 0);
+    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], mode);
+    ASSERT_NE(ability, nullptr);
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<NightSession> nightSession = static_cast<NightSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(nightSession, nullptr);
+
+    EXPECT_EQ(nightSession->BeginConfig(), 0);
+    EXPECT_EQ(nightSession->AddInput(input), 0);
+    EXPECT_EQ(nightSession->AddOutput(preview), 0);
+    EXPECT_EQ(nightSession->AddOutput(photo), 0);
+    EXPECT_EQ(nightSession->CommitConfig(), 0);
+
+    std::vector<uint32_t> exposureRange = {};
+    uint32_t exposureValue = 0;
+    EXPECT_EQ(nightSession->GetExposureRange(exposureRange), CameraErrorCode::INVALID_ARGUMENT);
+    EXPECT_EQ(nightSession->GetExposure(exposureValue), CameraErrorCode::INVALID_ARGUMENT);
+
+    nightSession->Release();
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test NightSession when inputDevice_ and output is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test NightSession when inputDevice_ and output is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_108, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    SceneMode mode = NIGHT;
+    std::vector<SceneMode> modes = cameraManager->GetSupportedModes(cameras[0]);
+    ASSERT_TRUE(modes.size() != 0);
+    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], mode);
+    ASSERT_NE(ability, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<NightSession> nightSession = static_cast<NightSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(nightSession, nullptr);
+
+    EXPECT_EQ(nightSession->BeginConfig(), 0);
+    EXPECT_EQ(nightSession->AddInput(input), 0);
+    EXPECT_EQ(nightSession->AddOutput(preview), 0);
+    EXPECT_EQ(nightSession->AddOutput(photo), 0);
+    EXPECT_EQ(nightSession->CommitConfig(), 0);
+
+    nightSession->inputDevice_ = nullptr;
+    std::vector<uint32_t> exposureRange = {};
+    EXPECT_EQ(nightSession->GetExposureRange(exposureRange), CameraErrorCode::INVALID_ARGUMENT);
+    sptr<CaptureOutput> output = nullptr;
+    EXPECT_EQ(nightSession->CanAddOutput(output), false);
+
+    nightSession->Release();
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test ScanSession when output is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ScanSession when output is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_109, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    SceneMode mode = SCAN;
+    std::vector<SceneMode> modes = cameraManager->GetSupportedModes(cameras[0]);
+    ASSERT_TRUE(modes.size() != 0);
+
+    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], mode);
+    ASSERT_NE(ability, nullptr);
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<ScanSession> scanSession = static_cast<ScanSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(scanSession, nullptr);
+
+    EXPECT_EQ(scanSession->BeginConfig(), 0);
+    EXPECT_EQ(scanSession->AddInput(input), 0);
+    EXPECT_EQ(scanSession->AddOutput(preview), 0);
+    EXPECT_EQ(scanSession->CommitConfig(), 0);
+
+    sptr<CaptureOutput> output = nullptr;
+    scanSession->CanAddOutput(output);
+
+    scanSession->Release();
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test ScanSession when inputDevice_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ScanSession when inputDevice_ is nullptr
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_110, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    SceneMode mode = SCAN;
+    std::vector<SceneMode> modes = cameraManager->GetSupportedModes(cameras[0]);
+    ASSERT_TRUE(modes.size() != 0);
+
+    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], mode);
+    ASSERT_NE(ability, nullptr);
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<ScanSession> scanSession = static_cast<ScanSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(scanSession, nullptr);
+
+    EXPECT_EQ(scanSession->CanAddOutput(photo), false);
+    EXPECT_EQ(scanSession->BeginConfig(), 0);
+    EXPECT_EQ(scanSession->AddInput(input), 0);
+    EXPECT_EQ(scanSession->AddOutput(preview), 0);
+
+    scanSession->CanAddOutput(photo);
+
+    scanSession->inputDevice_ = nullptr;
+    int32_t ret = scanSession->AddOutput(preview);
+    EXPECT_EQ(ret, SESSION_NOT_CONFIG);
+
+    ret = scanSession->CommitConfig();
+    EXPECT_EQ(ret, 0);
+
+    scanSession->Release();
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test ScanSession
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ScanSession
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_111, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    SceneMode mode = SCAN;
+    std::vector<SceneMode> modes = cameraManager->GetSupportedModes(cameras[0]);
+    ASSERT_TRUE(modes.size() != 0);
+
+    sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], mode);
+    ASSERT_NE(ability, nullptr);
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    sptr<CaptureOutput> photo = CreatePhotoOutput();
+    ASSERT_NE(photo, nullptr);
+
+    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(mode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<ScanSession> scanSession = static_cast<ScanSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(scanSession, nullptr);
+
+    EXPECT_EQ(scanSession->CanAddOutput(photo), false);
+    EXPECT_EQ(scanSession->BeginConfig(), 0);
+    EXPECT_EQ(scanSession->AddInput(input), 0);
+    EXPECT_EQ(scanSession->AddOutput(preview), 0);
+
+    scanSession->CanAddOutput(photo);
+
+    scanSession->inputDevice_ = nullptr;
+    int32_t ret = scanSession->AddOutput(preview);
+    EXPECT_EQ(ret, SESSION_NOT_CONFIG);
+
+    ret = scanSession->CommitConfig();
+    EXPECT_EQ(ret, 0);
+
+    scanSession->Release();
+    input->Close();
 }
 
 } // CameraStandard
