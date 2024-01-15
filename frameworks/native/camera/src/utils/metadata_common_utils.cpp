@@ -18,6 +18,7 @@
 #include <memory>
 
 #include "camera_log.h"
+#include "capture_session.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -121,11 +122,23 @@ std::shared_ptr<vector<Size>> MetadataCommonUtils::GetSupportedPreviewSizeRange(
         modeName, targetFormat);
     std::shared_ptr<vector<Size>> sizeList = std::make_shared<vector<Size>>();
     auto extendList = GetSupportedPreviewSizeRangeFromExtendConfig(modeName, targetFormat, metadata);
-    if (extendList != nullptr) {
+    if (modeName == SceneMode::CAPTURE && extendList != nullptr && extendList->empty()) {
+        extendList = GetSupportedPreviewSizeRangeFromExtendConfig(SceneMode::NORMAL, targetFormat, metadata);
+    }
+    if (extendList != nullptr && !extendList->empty()) {
+        for (auto& size : *extendList) {
+            MEDIA_DEBUG_LOG("MetadataCommonUtils::GetSupportedPreviewSizeRange extend info:%{public}dx%{public}d",
+                size.width, size.height);
+        }
         sizeList->insert(sizeList->end(), extendList->begin(), extendList->end());
+        return sizeList;
     }
     auto basicList = GetSupportedPreviewSizeRangeFromBasicConfig(targetFormat, metadata);
-    if (basicList != nullptr) {
+    if (basicList != nullptr && !basicList->empty()) {
+        for (auto& size : *basicList) {
+            MEDIA_DEBUG_LOG("MetadataCommonUtils::GetSupportedPreviewSizeRange basic info:%{public}dx%{public}d",
+                size.width, size.height);
+        }
         sizeList->insert(sizeList->end(), basicList->begin(), basicList->end());
     }
     return sizeList;
