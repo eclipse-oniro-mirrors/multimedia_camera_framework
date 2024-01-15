@@ -6518,12 +6518,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_087, TestSize.L
     portraitSession->SetPortraitEffect(OFF_EFFECT);
     int32_t intResult = portraitSession->BeginConfig();
     EXPECT_EQ(intResult, 0);
-    // intResult = portraitSession->AddInput(input_);
-    // EXPECT_EQ(intResult, 0);
-    // sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
-    // ASSERT_NE(previewOutput, nullptr);
-    // intResult = portraitSession->AddOutput(previewOutput);
-    // EXPECT_EQ(intResult, 0);
     EXPECT_EQ(portraitSession->GetSupportedPortraitEffects().empty(), true);
     EXPECT_EQ(portraitSession->GetPortraitEffect(), OFF_EFFECT);
     portraitSession->SetPortraitEffect(OFF_EFFECT);

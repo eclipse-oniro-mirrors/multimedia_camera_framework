@@ -222,40 +222,7 @@ public:
         CameraFrameworkUnitTest::ABILITY_FINISH, CameraFrameworkUnitTest::STREAM_FINISH,
         CameraFrameworkUnitTest::MODE_FINISH,
     };
-    // int32_t colorStreams[80] = {
-    //     CameraFrameworkUnitTest::DEFAULT_MODE, CameraFrameworkUnitTest::CM_P3_FULL,
-    //     CameraFrameworkUnitTest::CM_SRGB_FULL, CameraFrameworkUnitTest::STREAM_FINISH,
-    //     CameraFrameworkUnitTest::MODE_FINISH,
-    //     CameraFrameworkUnitTest::PHOTO_MODE, CameraFrameworkUnitTest::CM_P3_FULL,
-    //     CameraFrameworkUnitTest::CM_SRGB_FULL, CameraFrameworkUnitTest::STREAM_FINISH,
-    //     CameraFrameworkUnitTest::MODE_FINISH,
-    //     CameraFrameworkUnitTest::VIDEO_MODE, CameraFrameworkUnitTest::CM_BT2020_HLG_FULL,
-    //     CameraFrameworkUnitTest::CM_BT709_FULL, CameraFrameworkUnitTest::CM_BT2020_PQ_FULL,
-    //     CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::STILL_CAPTURE,
-    //     CameraFrameworkUnitTest::CM_P3_FULL, CameraFrameworkUnitTest::CM_SRGB_FULL,
-    //     CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::MODE_FINISH,
-    //     CameraFrameworkUnitTest::PORTRAIT_MODE, CameraFrameworkUnitTest::CM_P3_FULL,
-    //     CameraFrameworkUnitTest::CM_SRGB_FULL, CameraFrameworkUnitTest::STREAM_FINISH,
-    //     CameraFrameworkUnitTest::MODE_FINISH,
-    //     CameraFrameworkUnitTest::NIGHT_MODE, CameraFrameworkUnitTest::CM_P3_FULL,
-    //     CameraFrameworkUnitTest::CM_SRGB_FULL, CameraFrameworkUnitTest::STREAM_FINISH,
-    //     CameraFrameworkUnitTest::MODE_FINISH,
-    //     CameraFrameworkUnitTest::PROFESSION_MODE, CameraFrameworkUnitTest::CM_P3_FULL,
-    //     CameraFrameworkUnitTest::CM_SRGB_FULL, CameraFrameworkUnitTest::STREAM_FINISH,
-    //     CameraFrameworkUnitTest::MODE_FINISH,
-    //     CameraFrameworkUnitTest::SLOWMOTION_MODE, CameraFrameworkUnitTest::CM_P3_FULL,
-    //     CameraFrameworkUnitTest::CM_SRGB_FULL, CameraFrameworkUnitTest::STREAM_FINISH,
-    //     CameraFrameworkUnitTest::MODE_FINISH,
-    //     CameraFrameworkUnitTest::SCAN_MODE, CameraFrameworkUnitTest::CM_P3_FULL,
-    //     CameraFrameworkUnitTest::CM_SRGB_FULL, CameraFrameworkUnitTest::STREAM_FINISH,
-    //     CameraFrameworkUnitTest::MODE_FINISH,
-    //     CameraFrameworkUnitTest::CAPTUREMACRO_MODE, CameraFrameworkUnitTest::CM_P3_FULL,
-    //     CameraFrameworkUnitTest::CM_SRGB_FULL, CameraFrameworkUnitTest::STREAM_FINISH,
-    //     CameraFrameworkUnitTest::MODE_FINISH,
-    //     CameraFrameworkUnitTest::VIDEOMACRO_MODE, CameraFrameworkUnitTest::CM_P3_FULL,
-    //     CameraFrameworkUnitTest::CM_SRGB_FULL, CameraFrameworkUnitTest::STREAM_FINISH,
-    //     CameraFrameworkUnitTest::MODE_FINISH,
-    // };
+
     uint8_t modes[4] = {0, 3, 4, 7};
     uint8_t filterAbility[2] = {0, 1};
     int32_t filterControl[2] = {0, 1};
@@ -839,7 +806,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_003, TestSize.Level0
 {
     sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
-    // session->Release();
     EXPECT_EQ(session->Release(), 0);
 }
 
@@ -2555,9 +2521,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_004, TestSize.Level
     sptr<HCameraService> cameraService = (sptr<HCameraService> &)mockHCameraService;
     ASSERT_NE(cameraService, nullptr);
 
-    // cameraService->OnStop();
-    // cameraService->OnStart();
-
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> Producer = Surface->GetProducer();
 
@@ -2594,8 +2557,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_004, TestSize.Level
     intResult = cameraService->CreateVideoOutput(Producer, 0, width, height, output);
     EXPECT_EQ(intResult, 2);
 
-    // cameraService->OnStart();
-    // cameraService->OnStop();
     input->Close();
 }
 
@@ -2629,9 +2590,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_005, TestSize.Level
     int32_t width = 0;
     int32_t height = 0;
 
-    // cameraService->OnStop();
-    // cameraService->OnStart();
-
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> Producer = Surface->GetProducer();
 
@@ -2651,8 +2609,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_005, TestSize.Level
     intResult = cameraService->CreateMetadataOutput(Producer, 0, output_2);
     EXPECT_EQ(intResult, 2);
 
-    // cameraService->OnStart();
-    // cameraService->OnStop();
     input->Close();
 }
 
@@ -2682,9 +2638,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_006, TestSize.Level
     sptr<FakeHCameraService> mockHCameraService = new FakeHCameraService(mockCameraHostManager);
     sptr<HCameraService> cameraService = (sptr<HCameraService> &)mockHCameraService;
     ASSERT_NE(cameraService, nullptr);
-
-    // cameraService->OnStop();
-    // cameraService->OnStart();
 
     sptr<ICameraServiceCallback> callback = nullptr;
     int32_t intResult = cameraService->SetCallback(callback);
@@ -2718,7 +2671,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_006, TestSize.Level
         activeTime, effectParam);
     EXPECT_EQ(intResult, 2);
 
-    // cameraService->OnStop();
     input->Close();
 }
 
@@ -2943,7 +2895,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_010, TestSize.Level
     ret = camService->Dump(fd, args);
     EXPECT_EQ(ret, 10);
 
-    // camService->OnStop();
     input->Close();
 }
 
@@ -4370,16 +4321,20 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_037, TestSize.Level
     EXPECT_EQ(session->AddOutput(preview), 0);
 
     item.count = 0;
-    EXPECT_EQ(previewOutput->OnControlMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item), CAM_META_INVALID_PARAM);
+    EXPECT_EQ(previewOutput->OnControlMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item),
+        CAM_META_INVALID_PARAM);
     item.count = 1;
-    EXPECT_EQ(previewOutput->OnControlMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item), CAM_META_FAILURE);
+    EXPECT_EQ(previewOutput->OnControlMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item),
+        CAM_META_FAILURE);
     previewOutput->sketchWrapper_ = std::make_shared<SketchWrapper>(previewOutput->GetStream(), previewSize);
 
     previewOutput->SetSession(nullptr);
     EXPECT_EQ(previewOutput->OnSketchStatusChanged(SketchStatus::STOPED), CAMERA_INVALID_STATE);
-    EXPECT_EQ(previewOutput->OnControlMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item), CAM_META_FAILURE);
+    EXPECT_EQ(previewOutput->OnControlMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item),
+        CAM_META_FAILURE);
     previewOutput->SetSession(session);
-    EXPECT_EQ(previewOutput->OnControlMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item), CAM_META_SUCCESS);
+    EXPECT_EQ(previewOutput->OnControlMetadataChanged(OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES, item),
+        CAM_META_SUCCESS);
     EXPECT_EQ(previewOutput->OnSketchStatusChanged(SketchStatus::STOPED), CAMERA_OK);
 
     EXPECT_EQ(session->CommitConfig(), 0);
