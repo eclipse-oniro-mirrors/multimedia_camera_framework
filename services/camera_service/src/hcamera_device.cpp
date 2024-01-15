@@ -294,7 +294,7 @@ int32_t HCameraDevice::CloseDevice()
     {
         std::lock_guard<std::mutex> lock(opMutex_);
         if (!isOpenedCameraDevice_.load()) {
-            MEDIA_DEBUG_LOG("HCameraDevice::CloseDevice device has benn closed");
+            MEDIA_INFO_LOG("HCameraDevice::CloseDevice device has benn closed");
             return CAMERA_OK;
         }
         bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
@@ -310,6 +310,8 @@ int32_t HCameraDevice::CloseDevice()
             HCameraDeviceManager::GetInstance()->RemoveDevice();
             MEDIA_INFO_LOG("Closing camera device: %{public}s end", cameraID_.c_str());
             hdiCameraDevice_ = nullptr;
+        } else {
+            MEDIA_INFO_LOG("hdiCameraDevice is null");
         }
         if (streamOperator_) {
             streamOperator_ = nullptr;
