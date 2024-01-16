@@ -29,25 +29,25 @@ TaskManager::TaskManager(const std::string& name, uint32_t  numThreads)
       defaultTaskHandle_(INVALID_TASK_GROUP_HANDLE),
       delayedTaskHandle_(INVALID_TASK_GROUP_HANDLE)
 {
-    DP_DEBUG_LOG("name: %s, maxThreads: %d.", name.c_str(), numThreads);
+    DP_INFO_LOG("name: %s, maxThreads: %d.", name.c_str(), numThreads);
     Initialize();
 }
 
 void TaskManager::Initialize()
 {
-    DP_DEBUG_LOG("entered.");
+    DP_INFO_LOG("entered.");
     pool_ = ThreadPool::Create(name_, numThreads_);
     taskRegistry_ = std::make_unique<TaskRegistry>(name_, pool_.get());
     auto ret = RegisterTaskGroup("defaultTaskGroup",
         [this](std::any param) { DoDefaultWorks(std::move(param)); }, true, false, defaultTaskHandle_);
-    DP_DEBUG_LOG("register default task group: %d, handle: %d", ret, static_cast<int>(defaultTaskHandle_));
+    DP_INFO_LOG("register default task group: %d, handle: %d", ret, static_cast<int>(defaultTaskHandle_));
     (void)(ret);
     return;
 }
 
 TaskManager::~TaskManager()
 {
-    DP_DEBUG_LOG("name: %s.", name_.c_str());
+    DP_INFO_LOG("name: %s.", name_.c_str());
     DeregisterTaskGroup("defaultTaskGroup", defaultTaskHandle_);
     defaultTaskHandle_ = INVALID_TASK_GROUP_HANDLE;
     if (delayedTaskHandle_ != INVALID_TASK_GROUP_HANDLE) {
@@ -71,12 +71,12 @@ void TaskManager::CreateDelayedTaskGroupIfNeed()
 
 void TaskManager::BeginBackgroundTasks()
 {
-    DP_DEBUG_LOG("name: %s.", name_.c_str());
+    DP_INFO_LOG("name: %s.", name_.c_str());
 }
 
 void TaskManager::EndBackgroundTasks()
 {
-    DP_DEBUG_LOG("name: %s.", name_.c_str());
+    DP_INFO_LOG("name: %s.", name_.c_str());
 }
 
 bool TaskManager::RegisterTaskGroup(const std::string& name, TaskFunc func, bool serial, TaskGroupHandle& handle)
@@ -89,9 +89,9 @@ bool TaskManager::DeregisterTaskGroup(const std::string& name, TaskGroupHandle& 
     bool ret = false;
     if (taskRegistry_) {
         ret = taskRegistry_->DeregisterTaskGroup(name, handle);
-        DP_DEBUG_LOG("deregister task group: %s, ret: %d", name.c_str(), ret);
+        DP_INFO_LOG("deregister task group: %s, ret: %d", name.c_str(), ret);
     } else {
-        DP_DEBUG_LOG("invalid ptr");
+        DP_INFO_LOG("invalid ptr");
     }
     return ret;
 }
@@ -109,7 +109,7 @@ bool TaskManager::SubmitTask(std::function<void()> task, uint32_t delayMilli)
 
 bool TaskManager::SubmitTask(TaskGroupHandle handle, std::any param)
 {
-    DP_DEBUG_LOG("submit task to handle: %d", static_cast<int>(handle));
+    DP_INFO_LOG("submit task to handle: %d", static_cast<int>(handle));
     if (taskRegistry_ == nullptr) {
         DP_ERR_LOG("invalid ptr");
         return false;

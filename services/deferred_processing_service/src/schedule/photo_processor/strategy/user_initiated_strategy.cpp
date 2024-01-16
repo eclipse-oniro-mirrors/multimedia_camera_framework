@@ -36,7 +36,7 @@ UserInitiatedStrategy::~UserInitiatedStrategy()
 
 DeferredPhotoWorkPtr UserInitiatedStrategy::GetWork()
 {
-    DP_DEBUG_LOG("entered");
+    DP_INFO_LOG("entered");
     DeferredPhotoJobPtr jobPtr = GetJob();
     ExecutionMode mode = GetExecutionMode();
     if ((jobPtr != nullptr) && (mode != ExecutionMode::DUMMY)) {

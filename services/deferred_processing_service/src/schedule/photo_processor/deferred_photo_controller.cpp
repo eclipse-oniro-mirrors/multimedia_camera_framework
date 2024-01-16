@@ -43,7 +43,7 @@ public:
 
     void OnEventChange(EventType event, int value) override
     {
-        DP_DEBUG_LOG("entered, event: %d", event);
+        DP_INFO_LOG("entered, event: %d", event);
         switch (event) {
             case EventType::CAMERA_SESSION_STATUS_EVENT:
                 controller_->NotifyCameraStatusChanged(static_cast<CameraSessionStatus>(value));
@@ -133,18 +133,18 @@ void DeferredPhotoController::Initialize()
 
 void DeferredPhotoController::TryDoSchedule()
 {
-    DP_DEBUG_LOG("entered");
+    DP_INFO_LOG("entered");
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     auto work = userInitiatedStrategy_->GetWork();
-    DP_DEBUG_LOG("userInitiatedStrategy_ get work: %d", work != nullptr);
+    DP_INFO_LOG("userInitiatedStrategy_ get work: %d", work != nullptr);
     if (work != nullptr) {
         StopWaitForUser();
     }
     if (work == nullptr && !isWaitForUser_) {
         work = backgroundStrategy_->GetWork();
-        DP_DEBUG_LOG("backgroundStrategy_ get work: %d", work != nullptr);
+        DP_INFO_LOG("backgroundStrategy_ get work: %d", work != nullptr);
     }
-    DP_DEBUG_LOG("all strategy get work: %d", work != nullptr);
+    DP_INFO_LOG("all strategy get work: %d", work != nullptr);
     NotifyScheduleState(work != nullptr);
     if (work == nullptr) {
         return;
@@ -199,7 +199,7 @@ void DeferredPhotoController::NotifyCameraStatusChanged(CameraSessionStatus stat
 //来自任务仓库的事件
 void DeferredPhotoController::OnPhotoJobChanged(bool priorityChanged, bool statusChanged, DeferredPhotoJobPtr jobPtr)
 {
-    DP_DEBUG_LOG("entered, priorityChanged: %d, statusChanged: %d , imageId: %s",
+    DP_INFO_LOG("entered, priorityChanged: %d, statusChanged: %d , imageId: %s",
         priorityChanged, statusChanged, jobPtr->GetImageId().c_str());
     if (priorityChanged && statusChanged) {
         if (jobPtr->GetPrePriority() == PhotoJobPriority::HIGH && jobPtr->GetPreStatus() == PhotoJobStatus::RUNNING) {
@@ -212,27 +212,27 @@ void DeferredPhotoController::OnPhotoJobChanged(bool priorityChanged, bool statu
 
 void DeferredPhotoController::StartWaitForUser()
 {
-    DP_DEBUG_LOG("entered");
+    DP_INFO_LOG("entered");
     isWaitForUser_ = true;
     GetGlobalWatchdog().StartMonitor(callbackHandle_, DURATIONMS_500, [this](uint32_t handle) {
         isWaitForUser_ = false;
-        DP_DEBUG_LOG("DeferredPhotoController, wait for user ended, handle: %d, try do schedule",
+        DP_INFO_LOG("DeferredPhotoController, wait for user ended, handle: %d, try do schedule",
             static_cast<int>(handle));
         TryDoSchedule();
     });
-    DP_DEBUG_LOG("DeferredPhotoController, wait for user started, handle: %d", static_cast<int>(callbackHandle_));
+    DP_INFO_LOG("DeferredPhotoController, wait for user started, handle: %d", static_cast<int>(callbackHandle_));
 }
 
 void DeferredPhotoController::StopWaitForUser()
 {
-    DP_DEBUG_LOG("entered");
+    DP_INFO_LOG("entered");
     isWaitForUser_ = false;
     GetGlobalWatchdog().StopMonitor(callbackHandle_);
 }
 
 void DeferredPhotoController::NotifyScheduleState(bool workAvailable)
 {
-    DP_DEBUG_LOG("entered, workAvailable: %d", workAvailable);
+    DP_INFO_LOG("entered, workAvailable: %d", workAvailable);
     DpsStatus scheduleState = DpsStatus::DPS_SESSION_STATE_IDLE;
     if (workAvailable || photoJobRepository_->GetRunningJobCounts() > 0) {
         scheduleState =  DpsStatus::DPS_SESSION_STATE_RUNNING;
@@ -247,7 +247,7 @@ void DeferredPhotoController::NotifyScheduleState(bool workAvailable)
             }
         }
     }
-    DP_DEBUG_LOG("entered, scheduleState_: %d, scheduleState: %d", scheduleState_, scheduleState);
+    DP_INFO_LOG("entered, scheduleState_: %d, scheduleState: %d", scheduleState_, scheduleState);
     if (scheduleState != scheduleState_) {
         scheduleState_ = scheduleState;
         photoProcessor_->NotifyScheduleState(scheduleState_);

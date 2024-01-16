@@ -46,7 +46,7 @@ void SchedulerManager::Initialize()
 std::shared_ptr<DeferredPhotoProcessor> SchedulerManager::GetPhotoProcessor(int userId, TaskManager* taskManager,
     std::shared_ptr<IImageProcessCallbacks> callbacks)
 {
-    DP_DEBUG_LOG("entered");
+    DP_INFO_LOG("entered");
     if (photoProcessors_.count(userId) == 0) {
         CreatePhotoProcessor(userId, taskManager, callbacks);
     }
@@ -57,7 +57,7 @@ std::shared_ptr<DeferredPhotoProcessor> SchedulerManager::GetPhotoProcessor(int 
 void SchedulerManager::CreatePhotoProcessor(int userId, TaskManager* taskManager,
     std::shared_ptr<IImageProcessCallbacks> callbacks)
 {
-    DP_DEBUG_LOG("entered");
+    DP_INFO_LOG("entered");
     auto photoRepository = std::make_shared<PhotoJobRepository>(userId);
     auto photoProcessor = std::make_shared<DeferredPhotoProcessor>(userId, taskManager, photoRepository, callbacks);
     auto photoController = std::make_shared<DeferredPhotoController>(userId, photoRepository, photoProcessor);

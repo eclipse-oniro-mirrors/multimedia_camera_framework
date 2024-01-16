@@ -46,7 +46,7 @@ BackgroundStrategy::~BackgroundStrategy()
 
 DeferredPhotoWorkPtr BackgroundStrategy::GetWork()
 {
-    DP_DEBUG_LOG("entered");
+    DP_INFO_LOG("entered");
     ExecutionMode mode = GetExecutionMode();
     if (mode == ExecutionMode::DUMMY) {
         return nullptr;
@@ -60,7 +60,7 @@ DeferredPhotoWorkPtr BackgroundStrategy::GetWork()
 
 DeferredPhotoJobPtr BackgroundStrategy::GetJob()
 {
-    DP_DEBUG_LOG("entered");
+    DP_INFO_LOG("entered");
     DeferredPhotoJobPtr jobPtr = nullptr;
     jobPtr = jobRepository_->GetNormalPriorityJob();
     if (jobPtr == nullptr) {
@@ -71,21 +71,21 @@ DeferredPhotoJobPtr BackgroundStrategy::GetJob()
 
 ExecutionMode BackgroundStrategy::GetExecutionMode()
 {
-    DP_DEBUG_LOG("entered");
+    DP_INFO_LOG("entered");
     if (cameraSessionStatus_ == CameraSessionStatus::SYSTEM_CAMERA_OPEN
         || cameraSessionStatus_ == CameraSessionStatus::NORMAL_CAMERA_OPEN
         || hdiStatus_ != HdiStatus::HDI_READY
         || mediaLibraryStatus_ != MediaLibraryStatus::MEDIA_LIBRARY_AVAILABLE) {
-        DP_DEBUG_LOG("cameraSessionStatus_: %d, hdiStatus_: %d, mediaLibraryStatus_: %d, ",
+        DP_INFO_LOG("cameraSessionStatus_: %d, hdiStatus_: %d, mediaLibraryStatus_: %d, ",
             cameraSessionStatus_, hdiStatus_, mediaLibraryStatus_);
         return ExecutionMode::DUMMY;
     }
     FlashTrailingState();
-    DP_DEBUG_LOG("isInTrailing_: %d", isInTrailing_);
+    DP_INFO_LOG("isInTrailing_: %d", isInTrailing_);
     if (isInTrailing_) {
         return ExecutionMode::LOAD_BALANCE;
     }
-    DP_DEBUG_LOG("systemPressureLevel_: %d", systemPressureLevel_);
+    DP_INFO_LOG("systemPressureLevel_: %d", systemPressureLevel_);
     if (systemPressureLevel_ == SystemPressureLevel::NOMINAL) {
         return ExecutionMode::LOAD_BALANCE;
     }
@@ -94,34 +94,34 @@ ExecutionMode BackgroundStrategy::GetExecutionMode()
 
 HdiStatus BackgroundStrategy::GetHdiStatus()
 {
-    DP_DEBUG_LOG("hdiStatus_: %d", hdiStatus_);
+    DP_INFO_LOG("hdiStatus_: %d", hdiStatus_);
     return hdiStatus_;
 }
 
 void BackgroundStrategy::NotifyPressureLevelChanged(SystemPressureLevel level)
 {
-    DP_DEBUG_LOG("previous system pressure level: %d, new level: %d", systemPressureLevel_, level);
+    DP_INFO_LOG("previous system pressure level: %d, new level: %d", systemPressureLevel_, level);
     systemPressureLevel_ = level;
     return;
 }
 
 void BackgroundStrategy::NotifyHdiStatusChanged(HdiStatus status)
 {
-    DP_DEBUG_LOG("previous hdi status %d, new status: %d", hdiStatus_, status);
+    DP_INFO_LOG("previous hdi status %d, new status: %d", hdiStatus_, status);
     hdiStatus_ = status;
     return;
 }
 
 void BackgroundStrategy::NotifyMediaLibStatusChanged(MediaLibraryStatus status)
 {
-    DP_DEBUG_LOG("previous media lib status %d, new status: %d", mediaLibraryStatus_, status);
+    DP_INFO_LOG("previous media lib status %d, new status: %d", mediaLibraryStatus_, status);
     mediaLibraryStatus_ = status;
     return;
 }
 
 void BackgroundStrategy::NotifyCameraStatusChanged(CameraSessionStatus status)
 {
-    DP_DEBUG_LOG("previous camera session status %d, new status: %d", cameraSessionStatus_, status);
+    DP_INFO_LOG("previous camera session status %d, new status: %d", cameraSessionStatus_, status);
     cameraSessionStatus_ = status;
     switch (status) {
         case CameraSessionStatus::SYSTEM_CAMERA_CLOSED:
@@ -142,7 +142,7 @@ void BackgroundStrategy::NotifyCameraStatusChanged(CameraSessionStatus status)
 
 void BackgroundStrategy::StartTrailing(uint64_t duration)
 {
-    DP_DEBUG_LOG("entered, is in trailing: %d", isInTrailing_);
+    DP_INFO_LOG("entered, is in trailing: %d", isInTrailing_);
     if (duration <= 0) {
         return;
     }
@@ -162,7 +162,7 @@ void BackgroundStrategy::StartTrailing(uint64_t duration)
 
 void BackgroundStrategy::StopTrailing()
 {
-    DP_DEBUG_LOG("entered, is in trailing: %d", isInTrailing_);
+    DP_INFO_LOG("entered, is in trailing: %d", isInTrailing_);
     if (isInTrailing_) {
         auto passedTime = SteadyClock::GetTimestampMilli() - trailingStartTimeStamp_;
         if (passedTime >= remainingTrailingTime_) {
@@ -177,7 +177,7 @@ void BackgroundStrategy::StopTrailing()
 
 void BackgroundStrategy::FlashTrailingState()
 {
-    DP_DEBUG_LOG("entered, is in trailing: %d", isInTrailing_);
+    DP_INFO_LOG("entered, is in trailing: %d", isInTrailing_);
     if (isInTrailing_) {
         auto passedTime = SteadyClock::GetTimestampMilli() - trailingStartTimeStamp_;
         if (passedTime >= remainingTrailingTime_) {

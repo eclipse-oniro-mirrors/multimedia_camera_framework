@@ -50,7 +50,7 @@ int DeferredPhotoProcessingSessionCallbackStub::OnRemoteRequest(
 
 int DeferredPhotoProcessingSessionCallbackStub::HandleOnProcessImageDone(MessageParcel& data)
 {
-    DP_DEBUG_LOG("DeferredPhotoProcessingSessionCallbackStub HandleOnProcessImageDone enter");
+    DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleOnProcessImageDone enter");
     std::string imageId = data.ReadString();
     sptr<IPCFileDescriptor> ipcFd = data.ReadObject<IPCFileDescriptor>();
     long bytes = data.ReadInt64();
@@ -61,7 +61,7 @@ int DeferredPhotoProcessingSessionCallbackStub::HandleOnProcessImageDone(Message
 
 int DeferredPhotoProcessingSessionCallbackStub::HandleOnError(MessageParcel& data)
 {
-    DP_DEBUG_LOG("DeferredPhotoProcessingSessionCallbackStub HandleOnError enter");
+    DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleOnError enter");
     std::string imageId = data.ReadString();
     int32_t errorCode = data.ReadInt32();
 
@@ -72,7 +72,7 @@ int DeferredPhotoProcessingSessionCallbackStub::HandleOnError(MessageParcel& dat
 
 int DeferredPhotoProcessingSessionCallbackStub::HandleOnStateChanged(MessageParcel& data)
 {
-    DP_DEBUG_LOG("DeferredPhotoProcessingSessionCallbackStub HandleOnStateChanged enter");
+    DP_INFO_LOG("DeferredPhotoProcessingSessionCallbackStub HandleOnStateChanged enter");
     int32_t status = data.ReadInt32();
 
     int32_t ret = OnStateChanged((StatusCode)status);
