@@ -88,7 +88,7 @@ void EventsMonitor::Initialize()
 void EventsMonitor::RegisterEventsListener(int userId, const std::vector<EventType> &events,
                                            const std::shared_ptr<IEventsListener> &listener)
 {
-    DP_DEBUG_LOG("RegisterEventsListener enter.");
+    DP_INFO_LOG("RegisterEventsListener enter.");
     std::lock_guard<std::mutex> lock(mutex_);
     std::map<EventType, std::vector<std::weak_ptr<IEventsListener>>> eventListeners_;
     if (userIdToeventListeners_.count(userId) > 0) {
@@ -102,7 +102,7 @@ void EventsMonitor::RegisterEventsListener(int userId, const std::vector<EventTy
 
 void EventsMonitor::RegisterTaskManager(int userId, TaskManager *taskManager)
 {
-    DP_DEBUG_LOG("RegisterTaskManager enter.");
+    DP_INFO_LOG("RegisterTaskManager enter.");
     auto taskIter = userIdToTaskManager.find(userId);
     if (taskIter != userIdToTaskManager.end()) {
         (taskIter->second).push_back(taskManager);
@@ -120,7 +120,7 @@ void EventsMonitor::SetRegisterThermalStatus(bool isHasRegistered)
 
 void EventsMonitor::UnRegisterListener(int userId, TaskManager *taskManager)
 {
-    DP_DEBUG_LOG("UnRegisterListener enter.");
+    DP_INFO_LOG("UnRegisterListener enter.");
     auto taskIter = userIdToTaskManager.find(userId);
     if (taskIter != userIdToTaskManager.end()) {
         std::vector<TaskManager*>::iterator itVect = (taskIter->second).begin();
@@ -139,9 +139,9 @@ void EventsMonitor::UnRegisterListener(int userId, TaskManager *taskManager)
 void EventsMonitor::NotifyThermalLevel(int level)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_DEBUG_LOG("notify : %d.", level);
+    DP_INFO_LOG("notify : %d.", level);
     if (!initialized_) {
-        DP_DEBUG_LOG("uninitialized events monitor!");
+        DP_INFO_LOG("uninitialized events monitor!");
         return;
     }
     for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
@@ -152,7 +152,7 @@ void EventsMonitor::NotifyThermalLevel(int level)
 void EventsMonitor::NotifyCameraSessionStatus(int userId,
     const std::string &cameraId, bool running, bool isSystemCamera)
 {
-    DP_DEBUG_LOG("entered, userId: %d, cameraId: %s, running: %d, isSystemCamera: %d: ",
+    DP_INFO_LOG("entered, userId: %d, cameraId: %s, running: %d, isSystemCamera: %d: ",
         userId, cameraId.c_str(), running, isSystemCamera);
     std::lock_guard<std::mutex> lock(mutex_);
     if (!initialized_) {
@@ -176,9 +176,9 @@ void EventsMonitor::NotifyCameraSessionStatus(int userId,
 void EventsMonitor::NotifyMediaLibraryStatus(bool available)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_DEBUG_LOG("mediaLibrary available: %d.", available);
+    DP_INFO_LOG("mediaLibrary available: %d.", available);
     if (!initialized_) {
-        DP_DEBUG_LOG("uninitialized events monitor!");
+        DP_INFO_LOG("uninitialized events monitor!");
         return;
     }
     for (auto it = userIdToeventListeners_.begin(); it != userIdToeventListeners_.end(); ++it) {
@@ -188,10 +188,10 @@ void EventsMonitor::NotifyMediaLibraryStatus(bool available)
 
 void EventsMonitor::NotifyImageEnhanceStatus(int32_t status)
 {
-    DP_DEBUG_LOG("entered: %d.", status);
+    DP_INFO_LOG("entered: %d.", status);
     std::lock_guard<std::mutex> lock(mutex_);
     if (!initialized_) {
-        DP_DEBUG_LOG("uninitialized events monitor!");
+        DP_INFO_LOG("uninitialized events monitor!");
         return;
     }
 
@@ -216,7 +216,7 @@ void EventsMonitor::NotifySystemPressureLevel(SystemPressureLevel level)
 
 void EventsMonitor::NotifyObserversUnlocked(int userId, EventType event, int value)
 {
-    DP_DEBUG_LOG("entered.");
+    DP_INFO_LOG("entered.");
     auto taskIter = userIdToTaskManager.find(userId);
     if (taskIter != userIdToTaskManager.end()) {
         std::vector<TaskManager*> taskvect = userIdToTaskManager[userId];
@@ -233,7 +233,7 @@ void EventsMonitor::NotifyObserversUnlocked(int userId, EventType event, int val
 
 void EventsMonitor::NotifyEventToObervers(int userId, EventType event, int value)
 {
-    DP_DEBUG_LOG("entered.");
+    DP_INFO_LOG("entered.");
     auto eventListeners = userIdToeventListeners_.find(userId);
     if (eventListeners != userIdToeventListeners_.end()) {
         std::map<EventType, std::vector<std::weak_ptr<IEventsListener>>> eventListenersVect;
@@ -253,11 +253,11 @@ void EventsMonitor::NotifyEventToObervers(int userId, EventType event, int value
 
 void EventsMonitor::ScheduleRegisterThermalListener()
 {
-    DP_DEBUG_LOG("entered.");
+    DP_INFO_LOG("entered.");
     uint32_t callbackHandle;
     constexpr uint32_t delayMilli = 10 * 1000;
     GetGlobalWatchdog().StartMonitor(callbackHandle, delayMilli, [this](uint32_t handle) {
-        DP_DEBUG_LOG("PhotoPostProcessor-ProcessImage-Watchdog executed, handle: %d", static_cast<int>(handle));
+        DP_INFO_LOG("PhotoPostProcessor-ProcessImage-Watchdog executed, handle: %d", static_cast<int>(handle));
         this->RegisterThermalLevel();
     });
 }

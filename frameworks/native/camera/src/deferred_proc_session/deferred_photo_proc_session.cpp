@@ -28,7 +28,7 @@ namespace CameraStandard {
 int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::string &imageId,
     const sptr<IPCFileDescriptor> ipcFileDescriptor, const long bytes)
 {
-    MEDIA_ERR_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is called!");
+    MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is called!");
     int fd = ipcFileDescriptor->GetFd();
     void* addr = mmap(nullptr, bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     uint8_t* addr_ = static_cast<uint8_t *>(addr);
@@ -43,7 +43,7 @@ int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::st
 int32_t DeferredPhotoProcessingSessionCallback::OnError(const std::string &imageId,
     const DeferredProcessing::ErrorCode errorCode)
 {
-    MEDIA_ERR_LOG("DeferredPhotoProcessingSessionCallback::OnError() is called, errorCode: %{public}d", errorCode);
+    MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnError() is called, errorCode: %{public}d", errorCode);
     if (deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr) {
         deferredPhotoProcSession_->GetCallback()->OnError(imageId, DpsErrorCode(errorCode));
     } else {
@@ -54,7 +54,7 @@ int32_t DeferredPhotoProcessingSessionCallback::OnError(const std::string &image
 
 int32_t DeferredPhotoProcessingSessionCallback::OnStateChanged(const DeferredProcessing::StatusCode status)
 {
-    MEDIA_ERR_LOG("DeferredPhotoProcessingSessionCallback::OnStateChanged() is called, status:%{public}d", status);
+    MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnStateChanged() is called, status:%{public}d", status);
     if (deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr) {
         deferredPhotoProcSession_->GetCallback()->OnStateChanged(DpsStatusCode(status));
     } else {
@@ -87,7 +87,7 @@ void DeferredPhotoProcSession::EndSynchronize()
     if (remoteSession_ == nullptr) {
         MEDIA_ERR_LOG("DeferredPhotoProcSession::EndSynchronize failed due to binder died.");
     } else {
-        MEDIA_INFO_LOG("DeferredPhotoProcSession:EndSynchronize() enter.");
+        MEDIA_INFO_LOG("DeferredPhotoProcSession::EndSynchronize() enter.");
         remoteSession_->EndSynchronize();
     }
     return;
@@ -95,11 +95,10 @@ void DeferredPhotoProcSession::EndSynchronize()
 
 void DeferredPhotoProcSession::AddImage(const std::string& imageId, DpsMetadata& metadata, const bool discardable)
 {
-    MEDIA_ERR_LOG("DeferredPhotoProcSession addImage enter.");
     if (remoteSession_ == nullptr) {
         MEDIA_ERR_LOG("DeferredPhotoProcSession::AddImage failed due to binder died.");
     } else {
-        MEDIA_ERR_LOG("DeferredPhotoProcSession addImage enter, session is not null.");
+        MEDIA_INFO_LOG("DeferredPhotoProcSession::AddImage() enter.");
         remoteSession_->AddImage(imageId, metadata, discardable);
     }
     return;
@@ -110,7 +109,7 @@ void DeferredPhotoProcSession::RemoveImage(const std::string& imageId, const boo
     if (remoteSession_ == nullptr) {
         MEDIA_ERR_LOG("DeferredPhotoProcSession::RemoveImage failed due to binder died.");
     } else {
-        MEDIA_ERR_LOG("DeferredPhotoProcSession RemoveImage() enter.");
+        MEDIA_INFO_LOG("DeferredPhotoProcSession RemoveImage() enter.");
         remoteSession_->RemoveImage(imageId, restorable);
     }
     return;
@@ -121,7 +120,7 @@ void DeferredPhotoProcSession::RestoreImage(const std::string& imageId)
     if (remoteSession_ == nullptr) {
         MEDIA_ERR_LOG("DeferredPhotoProcSession::RestoreImage failed due to binder died.");
     } else {
-        MEDIA_ERR_LOG("DeferredPhotoProcSession RestoreImage() enter.");
+        MEDIA_INFO_LOG("DeferredPhotoProcSession RestoreImage() enter.");
         remoteSession_->RestoreImage(imageId);
     }
     return;
@@ -132,7 +131,7 @@ void DeferredPhotoProcSession::ProcessImage(const std::string& appName, const st
     if (remoteSession_ == nullptr) {
         MEDIA_ERR_LOG("DeferredPhotoProcSession::ProcessImage failed due to binder died.");
     } else {
-        MEDIA_ERR_LOG("DeferredPhotoProcSession::ProcessImage() enter.");
+        MEDIA_INFO_LOG("DeferredPhotoProcSession::ProcessImage() enter.");
         remoteSession_->ProcessImage(appName, imageId);
     }
     return;
@@ -144,7 +143,7 @@ bool DeferredPhotoProcSession::CancelProcessImage(const std::string& imageId)
         MEDIA_ERR_LOG("DeferredPhotoProcSession::CancelProcessImage failed due to binder died.");
         return false;
     }
-    MEDIA_ERR_LOG("DeferredPhotoProcSession:CancelProcessImage() enter.");
+    MEDIA_INFO_LOG("DeferredPhotoProcSession:CancelProcessImage() enter.");
     remoteSession_->CancelProcessImage(imageId);
     return true;
 }
@@ -169,11 +168,11 @@ int32_t DeferredPhotoProcSession::SetDeferredPhotoSession(
 
 void DeferredPhotoProcSession::CameraServerDied(pid_t pid)
 {
-    MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
+    MEDIA_INFO_LOG("camera server has died, pid:%{public}d!", pid);
     remoteSession_ = nullptr;
     ReconnectDeferredProcessingSession();
     if (callback_ != nullptr) {
-        MEDIA_ERR_LOG("Reconnect session successful, send sync requestion.");
+        MEDIA_INFO_LOG("Reconnect session successful, send sync requestion.");
         callback_->OnError("", DpsErrorCode::ERROR_SESSION_SYNC_NEEDED);
     }
     return;
@@ -194,7 +193,7 @@ void DeferredPhotoProcSession::ConnectDeferredProcessingSession()
 {
     MEDIA_INFO_LOG("DeferredPhotoProcSession::ConnectDeferredProcessingSession, enter.");
     if (remoteSession_ != nullptr) {
-        MEDIA_ERR_LOG("remoteSession_ is not null");
+        MEDIA_INFO_LOG("remoteSession_ is not null");
         return;
     }
     sptr<IRemoteObject> object = nullptr;

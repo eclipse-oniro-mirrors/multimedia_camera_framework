@@ -59,6 +59,7 @@ private:
     std::shared_ptr<PhotoPostProcessor> postProcessor_;
     std::shared_ptr<IImageProcessCallbacks> callbacks_;
     std::set<std::string> requestedImages_;
+    std::string postedImageId_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

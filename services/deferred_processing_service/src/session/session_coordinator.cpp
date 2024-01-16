@@ -124,12 +124,12 @@ SessionCoordinator::SessionCoordinator()
       remoteImageCallbacksMap_(),
       pendingImageResults_()
 {
-    DP_INFO_LOG("entered.");
+    DP_DEBUG_LOG("entered.");
 }
 
 SessionCoordinator::~SessionCoordinator()
 {
-    DP_INFO_LOG("entered.");
+    DP_DEBUG_LOG("entered.");
 }
 
 void SessionCoordinator::Initialize()

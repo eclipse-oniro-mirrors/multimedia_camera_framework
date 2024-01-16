@@ -28,7 +28,7 @@ namespace DeferredProcessing {
 
 std::shared_ptr<SessionManager> SessionManager::Create()
 {
-    DP_INFO_LOG("entered.");
+    DP_DEBUG_LOG("entered.");
     auto sessionManager = CreateShared<SessionManager>();
     if (sessionManager) {
         sessionManager->Initialize();
@@ -41,12 +41,12 @@ SessionManager::SessionManager()
       photoSessionInfos_(),
       coordinator_(std::make_unique<SessionCoordinator>())
 {
-    DP_INFO_LOG("entered.");
+    DP_DEBUG_LOG("entered.");
 }
 
 SessionManager::~SessionManager()
 {
-    DP_ERR_LOG("entered.");
+    DP_DEBUG_LOG("entered.");
     initialized_ = false;
     coordinator_ = nullptr;
     photoSessionInfos_.clear();
@@ -75,12 +75,12 @@ sptr<IDeferredPhotoProcessingSession> SessionManager::CreateDeferredPhotoProcess
     const sptr<IDeferredPhotoProcessingSessionCallback> callback, std::shared_ptr<DeferredPhotoProcessor> processor,
     TaskManager* taskManager)
 {
-    DP_ERR_LOG("SessionManager::CreateDeferredPhotoProcessingSession create session for userId: %d", userId);
+    DP_INFO_LOG("SessionManager::CreateDeferredPhotoProcessingSession create session for userId: %d", userId);
     if (initialized_.load() == false) {
         DP_ERR_LOG("failed due to uninitialized.");
         return nullptr;
     }
-    
+
     auto iter = photoSessionInfos_.find(userId);
     if (iter != photoSessionInfos_.end()) {
         DP_INFO_LOG("SessionManager::CreateDeferredPhotoProcessorSession failed due to photoSession already existed");

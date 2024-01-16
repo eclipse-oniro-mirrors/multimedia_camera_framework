@@ -58,14 +58,14 @@ SessionInfo::SessionInfo(int userId, const sptr<IDeferredPhotoProcessingSessionC
       callback_(callback),
       sessionManager_(sessionManager)
 {
-    DP_INFO_LOG("userId: %d.", userId_);
+    DP_DEBUG_LOG("userId: %d.", userId_);
     callbackDeathRecipient_ = sptr<CallbackDeathRecipient>::MakeSptr(this);
     SetCallback(callback);
 }
 
 SessionInfo::~SessionInfo()
 {
-    DP_ERR_LOG("entered.");
+    DP_DEBUG_LOG("entered.");
     callback_ = nullptr;
     sessionManager_ = nullptr;
 }
@@ -74,7 +74,7 @@ sptr<IDeferredPhotoProcessingSession> SessionInfo::CreateDeferredPhotoProcessing
     std::shared_ptr<DeferredPhotoProcessor> processor, TaskManager* taskManager,
     sptr<IDeferredPhotoProcessingSessionCallback> callback)
 {
-    DP_ERR_LOG("SessionInfo::CreateDeferredPhotoProcessingSession enter.");
+    DP_INFO_LOG("SessionInfo::CreateDeferredPhotoProcessingSession enter.");
     session_ = CreateDeferredProcessingSession(userId, processor, taskManager, callback);
     return session_;
 }

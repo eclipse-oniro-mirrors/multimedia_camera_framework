@@ -63,35 +63,35 @@ DeferredPhotoJob::~DeferredPhotoJob()
 
 PhotoJobPriority DeferredPhotoJob::GetCurPriority()
 {
-    DP_DEBUG_LOG("imageId: %s, current priority: %d, previous priority: %d",
+    DP_INFO_LOG("imageId: %s, current priority: %d, previous priority: %d",
         imageId_.c_str(), curPriority_, prePriority_);
     return curPriority_;
 }
 
 PhotoJobPriority DeferredPhotoJob::GetPrePriority()
 {
-    DP_DEBUG_LOG("imageId: %s, current priority: %d, previous priority: %d",
+    DP_INFO_LOG("imageId: %s, current priority: %d, previous priority: %d",
         imageId_.c_str(), curPriority_, prePriority_);
     return prePriority_;
 }
 
 PhotoJobPriority DeferredPhotoJob::GetRunningPriority()
 {
-    DP_DEBUG_LOG("imageId: %s, current priority: %d, previous priority: %d, running priority: %d",
+    DP_INFO_LOG("imageId: %s, current priority: %d, previous priority: %d, running priority: %d",
         imageId_.c_str(), curPriority_, prePriority_, runningPriority_);
     return runningPriority_;
 }
 
 PhotoJobStatus DeferredPhotoJob::GetCurStatus()
 {
-    DP_DEBUG_LOG("imageId: %s, current status: %d, previous status: %d",
+    DP_INFO_LOG("imageId: %s, current status: %d, previous status: %d",
         imageId_.c_str(), curStatus_, preStatus_);
     return curStatus_;
 }
 
 PhotoJobStatus DeferredPhotoJob::GetPreStatus()
 {
-    DP_DEBUG_LOG("imageId: %s, current status: %d, previous status: %d",
+    DP_INFO_LOG("imageId: %s, current status: %d, previous status: %d",
         imageId_.c_str(), curStatus_, preStatus_);
     return preStatus_;
 }
@@ -106,7 +106,7 @@ int DeferredPhotoJob::GetDeferredProcType()
 {
     int type;
     metadata_.Get(DEFERRED_PROCESSING_TYPE_KEY, type);
-    DP_DEBUG_LOG("imageId: %s, deferred proc type: %d", imageId_.c_str(), type);
+    DP_INFO_LOG("imageId: %s, deferred proc type: %d", imageId_.c_str(), type);
     return type;
 }
 
@@ -127,7 +127,7 @@ int DeferredPhotoJob::GetPhotoJobType()
 
 bool DeferredPhotoJob::SetJobStatus(PhotoJobStatus status)
 {
-    DP_DEBUG_LOG("imageId: %s, current status: %d, previous status: %d, status to set: %d",
+    DP_INFO_LOG("imageId: %s, current status: %d, previous status: %d, status to set: %d",
         imageId_.c_str(), curStatus_, preStatus_, status);
     if (curStatus_ == status) {
         return false;
@@ -140,7 +140,7 @@ bool DeferredPhotoJob::SetJobStatus(PhotoJobStatus status)
 
 bool DeferredPhotoJob::SetJobPriority(PhotoJobPriority priority)
 {
-    DP_DEBUG_LOG("imageId: %s, current priority: %d, previous priority: %d, priority to set: %d",
+    DP_INFO_LOG("imageId: %s, current priority: %d, previous priority: %d, priority to set: %d",
         imageId_.c_str(), curPriority_, prePriority_, priority);
     if (curPriority_ == priority) {
         return false;
@@ -153,7 +153,7 @@ bool DeferredPhotoJob::SetJobPriority(PhotoJobPriority priority)
 
 void DeferredPhotoJob::RecordJobRunningPriority()
 {
-    DP_DEBUG_LOG("imageId: %s, priority recorded: %d, current priority: %d, previous priority: %d",
+    DP_INFO_LOG("imageId: %s, priority recorded: %d, current priority: %d, previous priority: %d",
         imageId_.c_str(), curPriority_, prePriority_, curPriority_);
     runningPriority_ = curPriority_;
     return;

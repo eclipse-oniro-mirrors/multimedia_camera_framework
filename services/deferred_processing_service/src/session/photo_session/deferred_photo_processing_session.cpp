@@ -37,20 +37,20 @@ DeferredPhotoProcessingSession::DeferredPhotoProcessingSession(int userId,
       callback_(callback),
       imageIds_()
 {
-    DP_ERR_LOG("DeferredPhotoProcessingSession enter.");
+    DP_DEBUG_LOG("DeferredPhotoProcessingSession enter.");
     (void)(userId_);
 }
 
 DeferredPhotoProcessingSession::~DeferredPhotoProcessingSession()
 {
-    DP_ERR_LOG("~DeferredPhotoProcessingSession enter.");
+    DP_DEBUG_LOG("~DeferredPhotoProcessingSession enter.");
     processor_ = nullptr;
     taskManager_ = nullptr;
 }
 
 int32_t DeferredPhotoProcessingSession::BeginSynchronize()
 {
-    DP_ERR_LOG("BeginSynchronize enter.");
+    DP_INFO_LOG("BeginSynchronize enter.");
     inSync_ = true;
     const std::string imageId = "default";
     ReportEvent(imageId, DeferredProcessingServiceInterfaceCode::DPS_BEGIN_SYNCHRONIZE);
@@ -59,7 +59,7 @@ int32_t DeferredPhotoProcessingSession::BeginSynchronize()
 
 int32_t DeferredPhotoProcessingSession::EndSynchronize()
 {
-    DP_ERR_LOG("EndSynchronize enter.");
+    DP_INFO_LOG("EndSynchronize enter.");
 
     inSync_ = false;
     std::vector<std::string> pendingImages;
@@ -98,10 +98,10 @@ int32_t DeferredPhotoProcessingSession::EndSynchronize()
 int32_t DeferredPhotoProcessingSession::AddImage(const std::string imageId, DpsMetadata& metadata, bool discardable)
 {
     if (inSync_) {
-        DP_ERR_LOG("AddImage error, inSync!");
+        DP_INFO_LOG("AddImage error, inSync!");
         imageIds_[imageId] = std::make_shared<PhotoInfo>(discardable, metadata);
     } else {
-        DP_ERR_LOG("AddImage enter.");
+        DP_INFO_LOG("AddImage enter.");
         taskManager_->SubmitTask([this, imageId, discardable, metadata]() {
             processor_->AddImage(imageId, discardable, const_cast<DpsMetadata&>(metadata));
         });
@@ -114,10 +114,9 @@ int32_t DeferredPhotoProcessingSession::AddImage(const std::string imageId, DpsM
 int32_t DeferredPhotoProcessingSession::RemoveImage(const std::string imageId, bool restorable)
 {
     if (inSync_) {
-        DP_ERR_LOG("RemoveImage error, inSync!");
-        return -1;
+        DP_INFO_LOG("RemoveImage error, inSync!");
     } else {
-        DP_ERR_LOG("RemoveImage enter.");
+        DP_INFO_LOG("RemoveImage enter.");
         taskManager_->SubmitTask([this, imageId, restorable]() {
             processor_->RemoveImage(imageId, restorable);
         });
@@ -130,9 +129,9 @@ int32_t DeferredPhotoProcessingSession::RemoveImage(const std::string imageId, b
 int32_t DeferredPhotoProcessingSession::RestoreImage(const std::string imageId)
 {
     if (inSync_) {
-        return -1;
+        DP_INFO_LOG("RestoreImage error, inSync!");
     } else {
-        DP_ERR_LOG("RestoreImage enter.");
+        DP_INFO_LOG("RestoreImage enter.");
         taskManager_->SubmitTask([this, imageId]() {
             processor_->RestoreImage(imageId);
         });
@@ -145,9 +144,9 @@ int32_t DeferredPhotoProcessingSession::RestoreImage(const std::string imageId)
 int32_t DeferredPhotoProcessingSession::ProcessImage(const std::string appName, const std::string imageId)
 {
     if (inSync_) {
-        return -1;
+        DP_INFO_LOG("ProcessImage error, inSync!");
     } else {
-        DP_ERR_LOG("ProcessImage enter.");
+        DP_INFO_LOG("ProcessImage enter.");
         taskManager_->SubmitTask([this, appName, imageId]() {
             processor_->ProcessImage(appName, imageId);
         });
@@ -160,9 +159,9 @@ int32_t DeferredPhotoProcessingSession::ProcessImage(const std::string appName, 
 int32_t DeferredPhotoProcessingSession::CancelProcessImage(const std::string imageId)
 {
     if (inSync_) {
-        return -1;
+        DP_INFO_LOG("CancelProcessImage error, inSync!");
     } else {
-        DP_ERR_LOG("CancelProcessImage enter.");
+        DP_INFO_LOG("CancelProcessImage enter.");
         taskManager_->SubmitTask([this, imageId]() {
             processor_->CancelProcessImage(imageId);
         });
@@ -176,7 +175,7 @@ sptr<IDeferredPhotoProcessingSession> CreateDeferredProcessingSession(int userId
     std::shared_ptr<DeferredPhotoProcessor> processor, TaskManager* taskManager,
     sptr<IDeferredPhotoProcessingSessionCallback> callback)
 {
-    DP_ERR_LOG("CreateDeferredProcessingSession successful.");
+    DP_INFO_LOG("CreateDeferredProcessingSession successful.");
     sptr<IDeferredPhotoProcessingSession> session(new DeferredPhotoProcessingSession(userId, processor,
         taskManager, callback));
     return session;

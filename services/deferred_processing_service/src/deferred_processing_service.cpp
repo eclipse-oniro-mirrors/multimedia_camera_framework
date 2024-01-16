@@ -52,10 +52,10 @@ DeferredProcessingService::~DeferredProcessingService()
 void DeferredProcessingService::Initialize()
 {
     if (initialized_) {
-        DP_INFO_LOG("already initialized.");
+        DP_DEBUG_LOG("already initialized.");
         return;
     }
-    DP_INFO_LOG("entered.");
+    DP_DEBUG_LOG("entered.");
     sessionManager_ = SessionManager::Create();
     schedulerManager_ = std::make_unique<SchedulerManager>();
     schedulerManager_->Initialize();
@@ -76,7 +76,7 @@ void DeferredProcessingService::Stop()
 sptr<IDeferredPhotoProcessingSession> DeferredProcessingService::CreateDeferredPhotoProcessingSession(
     int userId, const sptr<IDeferredPhotoProcessingSessionCallback> callbacks)
 {
-    DP_ERR_LOG("DeferredProcessingService::CreateDeferredPhotoProcessingSession create session, userId: %d", userId);
+    DP_INFO_LOG("DeferredProcessingService::CreateDeferredPhotoProcessingSession create session, userId: %d", userId);
     TaskManager* taskManager = GetPhotoTaskManager(userId);
     std::shared_ptr<IImageProcessCallbacks> sessionImageProcCallbacks = sessionManager_->GetImageProcCallbacks();
     auto processor = schedulerManager_->GetPhotoProcessor(userId, taskManager, sessionImageProcCallbacks);
@@ -87,7 +87,7 @@ sptr<IDeferredPhotoProcessingSession> DeferredProcessingService::CreateDeferredP
 
 TaskManager* DeferredProcessingService::GetPhotoTaskManager(int userId)
 {
-    DP_DEBUG_LOG("entered, userId: %d", userId);
+    DP_INFO_LOG("entered, userId: %d", userId);
     if (photoTaskManagerMap_.count(userId) == 0) {
         constexpr uint32_t numThreads = 1;
         std::shared_ptr<TaskManager> taskManager =
@@ -101,7 +101,7 @@ TaskManager* DeferredProcessingService::GetPhotoTaskManager(int userId)
 void DeferredProcessingService::NotifyCameraSessionStatus(int userId, const std::string& cameraId,
     bool running, bool isSystemCamera)
 {
-    DP_DEBUG_LOG("entered, userId: %d, cameraId: %s, running: %d, isSystemCamera: %d: ",
+    DP_INFO_LOG("entered, userId: %d, cameraId: %s, running: %d, isSystemCamera: %d: ",
         userId, cameraId.c_str(), running, isSystemCamera);
     EventsMonitor::GetInstance().NotifyCameraSessionStatus(userId, cameraId, running, isSystemCamera);
 }
