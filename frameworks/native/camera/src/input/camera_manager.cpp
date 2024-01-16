@@ -106,12 +106,22 @@ CameraManager::~CameraManager()
     deathRecipient_ = nullptr;
     cameraSvcCallback_ = nullptr;
     cameraMuteSvcCallback_ = nullptr;
-    {
-        std::lock_guard<std::mutex> lock(cameraMngrCallbackMutex_);
-        cameraMngrCallback_ = nullptr;
-    }
-    cameraMuteListener = nullptr;
-    torchListener = nullptr;
+    torchSvcCallback_ = nullptr;
+    cameraMngrCallbackMap_.Iterate([&](std::thread::id threadId,
+        std::shared_ptr<CameraManagerCallback> cameraMngrCallback) {
+        cameraMngrCallback = nullptr;
+    });
+    cameraMngrCallbackMap_.Clear();
+    cameraMuteListenerMap_.Iterate([&](std::thread::id threadId,
+        std::shared_ptr<CameraMuteListener> cameraMuteListener) {
+        cameraMuteListener = nullptr;
+    });
+    cameraMuteListenerMap_.Clear();
+    torchListenerMap_.Iterate([&](std::thread::id threadId,
+        std::shared_ptr<TorchListener> torcheListener) {
+        torcheListener = nullptr;
+    });
+    torchListenerMap_.Clear();
     std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
     for (unsigned int i = 0; i < cameraObjList.size(); i++) {
         cameraObjList[i] = nullptr;
@@ -145,25 +155,36 @@ int32_t CameraManager::CreateListenerObject()
 int32_t CameraStatusServiceCallback::OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status)
 {
     MEDIA_INFO_LOG("cameraId: %{public}s, status: %{public}d", cameraId.c_str(), status);
+    if (camMngr_ == nullptr) {
+        MEDIA_INFO_LOG("camMngr_ is nullptr");
+        return CAMERA_OK;
+    }
+
+    auto listenerMap = camMngr_->GetCameraMngrCallbackMap();
+    MEDIA_INFO_LOG("CameraMngrCallbackMap size %{public}d", listenerMap.Size());
+    if (listenerMap.Size() == 0) {
+        return CAMERA_OK;
+    }
+
     CameraStatusInfo cameraStatusInfo;
-    if (camMngr_ != nullptr && camMngr_->GetApplicationCallback() != nullptr) {
-        if (status == CAMERA_STATUS_APPEAR) {
-            camMngr_->InitCameraList();
-        }
-        cameraStatusInfo.cameraDevice = camMngr_->GetCameraDeviceFromId(cameraId);
-        if (status == CAMERA_STATUS_DISAPPEAR) {
-            camMngr_->InitCameraList();
-        }
-        cameraStatusInfo.cameraStatus = status;
-        if (cameraStatusInfo.cameraDevice) {
-            std::shared_ptr<CameraManagerCallback> cameraManagerCallback = camMngr_->GetApplicationCallback();
+    if (status == CAMERA_STATUS_APPEAR) {
+        camMngr_->InitCameraList();
+    }
+    cameraStatusInfo.cameraDevice = camMngr_->GetCameraDeviceFromId(cameraId);
+    if (status == CAMERA_STATUS_DISAPPEAR) {
+        camMngr_->InitCameraList();
+    }
+    cameraStatusInfo.cameraStatus = status;
+    if (cameraStatusInfo.cameraDevice) {
+        listenerMap.Iterate([&](std::thread::id threadId,
+            std::shared_ptr<CameraManagerCallback> cameraManagerCallback) {
             if (cameraManagerCallback != nullptr) {
                 MEDIA_INFO_LOG("Callback cameraStatus");
                 cameraManagerCallback->OnCameraStatusChanged(cameraStatusInfo);
+            } else {
+                MEDIA_INFO_LOG("Callback not registered!, Ignore the callback");
             }
-        }
-    } else {
-        MEDIA_INFO_LOG("Callback not registered!, Ignore the callback");
+        });
     }
     return CAMERA_OK;
 }
@@ -171,11 +192,24 @@ int32_t CameraStatusServiceCallback::OnCameraStatusChanged(const std::string& ca
 int32_t CameraStatusServiceCallback::OnFlashlightStatusChanged(const std::string& cameraId, const FlashStatus status)
 {
     MEDIA_INFO_LOG("cameraId: %{public}s, status: %{public}d", cameraId.c_str(), status);
-    if (camMngr_ != nullptr && camMngr_->GetApplicationCallback() != nullptr) {
-        camMngr_->GetApplicationCallback()->OnFlashlightStatusChanged(cameraId, status);
-    } else {
-        MEDIA_INFO_LOG("Callback not registered!, Ignore the callback");
+    if (camMngr_ == nullptr) {
+        MEDIA_INFO_LOG("camMngr_ is nullptr");
+        return CAMERA_OK;
     }
+    auto listenerMap = camMngr_->GetCameraMngrCallbackMap();
+    MEDIA_INFO_LOG("CameraMngrCallbackMap size %{public}d", listenerMap.Size());
+    if (listenerMap.Size() == 0) {
+        return CAMERA_OK;
+    }
+
+    listenerMap.Iterate([&](std::thread::id threadId, std::shared_ptr<CameraManagerCallback> cameraManagerCallback) {
+        if (cameraManagerCallback != nullptr) {
+            MEDIA_INFO_LOG("Callback cameraStatus");
+            cameraManagerCallback->OnFlashlightStatusChanged(cameraId, status);
+        } else {
+            MEDIA_INFO_LOG("Callback not registered!, Ignore the callback");
+        }
+    });
     return CAMERA_OK;
 }
 
@@ -609,7 +643,6 @@ void CameraManager::Init()
 {
     CAMERA_SYNC_TRACE;
     sptr<IRemoteObject> object = nullptr;
-    cameraMngrCallback_ = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (samgr == nullptr) {
         MEDIA_ERR_LOG("Failed to get System ability manager");
@@ -658,11 +691,12 @@ void CameraManager::CameraServerDied(pid_t pid)
             CameraStatusInfo cameraStatusInfo;
             cameraStatusInfo.cameraDevice = cameraObjList[i];
             cameraStatusInfo.cameraStatus = CAMERA_SERVER_UNAVAILABLE;
-            std::shared_ptr<CameraManagerCallback> cameraManagerCallback = GetApplicationCallback();
-            if (cameraManagerCallback != nullptr) {
+            auto listenerMap = GetCameraMngrCallbackMap();
+            listenerMap.Iterate([&](std::thread::id threadId,
+                std::shared_ptr<CameraManagerCallback> cameraManagerCallback) {
                 MEDIA_INFO_LOG("Callback cameraStatus");
                 cameraManagerCallback->OnCameraStatusChanged(cameraStatusInfo);
-            }
+            });
         }
     }
     std::lock_guard<std::mutex> lock(mutex_);
@@ -697,19 +731,57 @@ int CameraManager::CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceSe
 
 void CameraManager::SetCallback(std::shared_ptr<CameraManagerCallback> callback)
 {
-    if (callback == nullptr) {
-        MEDIA_INFO_LOG("Application unregistering the callback");
-    }
-    std::lock_guard<std::mutex> lock(cameraMngrCallbackMutex_);
-    cameraMngrCallback_ = callback;
+    std::thread::id threadId = std::this_thread::get_id();
+    cameraMngrCallbackMap_.EnsureInsert(threadId, callback);
 }
 
 std::shared_ptr<CameraManagerCallback> CameraManager::GetApplicationCallback()
 {
-    std::lock_guard<std::mutex> lock(cameraMngrCallbackMutex_);
-    MEDIA_INFO_LOG("callback! isExist = %{public}d",
-                   cameraMngrCallback_ != nullptr);
-    return cameraMngrCallback_;
+    std::thread::id threadId = std::this_thread::get_id();
+    std::shared_ptr<CameraManagerCallback> callback = nullptr;
+    cameraMngrCallbackMap_.Find(threadId, callback);
+    return callback;
+}
+
+void CameraManager::RegisterCameraMuteListener(std::shared_ptr<CameraMuteListener> listener)
+{
+    std::thread::id threadId = std::this_thread::get_id();
+    cameraMuteListenerMap_.EnsureInsert(threadId, listener);
+}
+
+shared_ptr<CameraMuteListener> CameraManager::GetCameraMuteListener()
+{
+    std::thread::id threadId = std::this_thread::get_id();
+    std::shared_ptr<CameraMuteListener> listener = nullptr;
+    cameraMuteListenerMap_.Find(threadId, listener);
+    return listener;
+}
+
+void CameraManager::RegisterTorchListener(shared_ptr<TorchListener> listener)
+{
+    std::thread::id threadId = std::this_thread::get_id();
+    torchListenerMap_.EnsureInsert(threadId, listener);
+}
+
+shared_ptr<TorchListener> CameraManager::GetTorchListener()
+{
+    std::thread::id threadId = std::this_thread::get_id();
+    std::shared_ptr<TorchListener> listener = nullptr;
+    torchListenerMap_.Find(threadId, listener);
+    return listener;
+}
+
+SafeMap<std::thread::id, std::shared_ptr<CameraManagerCallback>> CameraManager::GetCameraMngrCallbackMap()
+{
+    return cameraMngrCallbackMap_;
+}
+SafeMap<std::thread::id, std::shared_ptr<CameraMuteListener>> CameraManager::GetCameraMuteListenerMap()
+{
+    return cameraMuteListenerMap_;
+}
+SafeMap<std::thread::id, std::shared_ptr<TorchListener>> CameraManager::GetTorchListenerMap()
+{
+    return torchListenerMap_;
 }
 
 sptr<CameraDevice> CameraManager::GetCameraDeviceFromId(std::string cameraId)
@@ -1202,45 +1274,42 @@ camera_format_t CameraManager::GetCameraMetadataFormat(CameraFormat format)
 
 int32_t TorchServiceCallback::OnTorchStatusChange(const TorchStatus status)
 {
-    MEDIA_DEBUG_LOG("status is %{public}d", status);
+    MEDIA_DEBUG_LOG("TorchStatus is %{public}d", status);
     if (camMngr_ == nullptr) {
         MEDIA_INFO_LOG("camMngr_ is nullptr");
         return CAMERA_OK;
     }
-    shared_ptr<TorchListener> torcheListener = camMngr_->GetTorchListener();
-    if (torcheListener != nullptr) {
-        TorchStatusInfo torchStatusInfo;
-        if (status == TorchStatus::TORCH_STATUS_UNAVAILABLE) {
-            torchStatusInfo.isTorchAvailable=false;
-            torchStatusInfo.isTorchActive=false;
-            torchStatusInfo.torchLevel=0;
-            camMngr_->UpdateTorchMode(TORCH_MODE_OFF);
-        } else if (status == TorchStatus::TORCH_STATUS_ON) {
-            torchStatusInfo.isTorchAvailable=true;
-            torchStatusInfo.isTorchActive=true;
-            torchStatusInfo.torchLevel=1;
-            camMngr_->UpdateTorchMode(TORCH_MODE_ON);
-        } else if (status == TorchStatus::TORCH_STATUS_OFF) {
-            torchStatusInfo.isTorchAvailable=true;
-            torchStatusInfo.isTorchActive=false;
-            torchStatusInfo.torchLevel=0;
-            camMngr_->UpdateTorchMode(TORCH_MODE_OFF);
-        }
-        torcheListener->OnTorchStatusChange(torchStatusInfo);
-    } else {
-        MEDIA_INFO_LOG("OnTorchStatusChange not registered!, Ignore the callback");
+
+    auto listenerMap = camMngr_->GetTorchListenerMap();
+    MEDIA_INFO_LOG("TorchListenerMap size %{public}d", listenerMap.Size());
+    if (listenerMap.Size() == 0) {
+        return CAMERA_OK;
     }
+    TorchStatusInfo torchStatusInfo;
+    if (status == TorchStatus::TORCH_STATUS_UNAVAILABLE) {
+        torchStatusInfo.isTorchAvailable=false;
+        torchStatusInfo.isTorchActive=false;
+        torchStatusInfo.torchLevel=0;
+        camMngr_->UpdateTorchMode(TORCH_MODE_OFF);
+    } else if (status == TorchStatus::TORCH_STATUS_ON) {
+        torchStatusInfo.isTorchAvailable=true;
+        torchStatusInfo.isTorchActive=true;
+        torchStatusInfo.torchLevel=1;
+        camMngr_->UpdateTorchMode(TORCH_MODE_ON);
+    } else if (status == TorchStatus::TORCH_STATUS_OFF) {
+        torchStatusInfo.isTorchAvailable=true;
+        torchStatusInfo.isTorchActive=false;
+        torchStatusInfo.torchLevel=0;
+        camMngr_->UpdateTorchMode(TORCH_MODE_OFF);
+    }
+    listenerMap.Iterate([&](std::thread::id threadId, std::shared_ptr<TorchListener> torcheListener) {
+        if (torcheListener != nullptr) {
+            torcheListener->OnTorchStatusChange(torchStatusInfo);
+        } else {
+            MEDIA_INFO_LOG("OnTorchStatusChange not registered!, Ignore the callback");
+        }
+    });
     return CAMERA_OK;
-}
-
-void CameraManager::RegisterTorchListener(std::shared_ptr<TorchListener> listener)
-{
-    torchListener = listener;
-}
-
-shared_ptr<TorchListener> CameraManager::GetTorchListener()
-{
-    return torchListener;
 }
 
 void CameraManager::SetTorchServiceCallback(sptr<ITorchServiceCallback>& callback)
@@ -1265,18 +1334,19 @@ int32_t CameraMuteServiceCallback::OnCameraMute(bool muteMode)
         MEDIA_INFO_LOG("camMngr_ is nullptr");
         return CAMERA_OK;
     }
-    shared_ptr<CameraMuteListener> cameraMuteListener = camMngr_->GetCameraMuteListener();
-    if (cameraMuteListener != nullptr) {
-        cameraMuteListener->OnCameraMute(muteMode);
-    } else {
-        MEDIA_INFO_LOG("OnCameraMute not registered!, Ignore the callback");
+    auto listenerMap = camMngr_->GetCameraMuteListenerMap();
+    MEDIA_INFO_LOG("CameraMuteListenerMap size %{public}d", listenerMap.Size());
+    if (listenerMap.Size() == 0) {
+        return CAMERA_OK;
     }
+    listenerMap.Iterate([&](std::thread::id threadId, std::shared_ptr<CameraMuteListener> cameraMuteListener) {
+        if (cameraMuteListener != nullptr) {
+            cameraMuteListener->OnCameraMute(muteMode);
+        } else {
+            MEDIA_INFO_LOG("OnCameraMute not registered!, Ignore the callback");
+        }
+    });
     return CAMERA_OK;
-}
-
-void CameraManager::RegisterCameraMuteListener(std::shared_ptr<CameraMuteListener> listener)
-{
-    cameraMuteListener = listener;
 }
 
 void CameraManager::SetCameraMuteServiceCallback(sptr<ICameraMuteServiceCallback>& callback)
@@ -1292,11 +1362,6 @@ void CameraManager::SetCameraMuteServiceCallback(sptr<ICameraMuteServiceCallback
         MEDIA_ERR_LOG("Set Mute service Callback failed, retCode: %{public}d", retCode);
     }
     return;
-}
-
-shared_ptr<CameraMuteListener> CameraManager::GetCameraMuteListener()
-{
-    return cameraMuteListener;
 }
 
 bool CameraManager::IsCameraMuteSupported()
