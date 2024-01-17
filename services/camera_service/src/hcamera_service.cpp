@@ -1254,7 +1254,6 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
 std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSettingForRestore(
     sptr<HCameraDevice> activeDevice)
 {
-    MEDIA_DEBUG_LOG("HCameraService::CreateDefaultSettingForRestore enter");
     constexpr int32_t DEFAULT_ITEMS = 1;
     constexpr int32_t DEFAULT_DATA_LENGTH = 1;
     auto defaultSettings = std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
@@ -1284,7 +1283,6 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
     }
     
     ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &item);
-    MEDIA_DEBUG_LOG("CreateDefaultSettingForRestore ret: %{public}d", ret);
     if (ret == CAM_META_SUCCESS) {
         uint8_t deferredType = item.data.u8[0];
         defaultSettings->addEntry(OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &deferredType, count);
@@ -1300,6 +1298,12 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
     if (ret == CAM_META_SUCCESS) {
         uint8_t effect = item.data.u8[0];
         defaultSettings->addEntry(OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &effect, count);
+    }
+
+    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_FILTER_TYPE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        uint8_t filterValue = item.data.u8[0];
+        defaultSettings->addEntry(OHOS_CONTROL_FILTER_TYPE, &filterValue, count);
     }
     return defaultSettings;
 }
