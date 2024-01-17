@@ -162,9 +162,8 @@ int32_t PhotoPostProcessor::PhotoProcessListener::OnProcessDone(const std::strin
 
 void PhotoPostProcessor::PhotoProcessListener::ReportEvent(const std::string& imageId)
 {
-    uint64_t endTime = SteadyClock::GetTimestampMilli();
     DPSEventReport::GetInstance()
-        .ReportImageProcessResult(imageId, photoPostProcessor_->GetUserId(), endTime);
+        .UpdateProcessDoneTime(imageId, photoPostProcessor_->GetUserId());
 }
 
 
@@ -310,6 +309,7 @@ void PhotoPostProcessor::RemoveImage(std::string imageId)
     if (imageProcessSession_) {
         int32_t ret = imageProcessSession_->RemoveImage(imageId);
         DP_INFO_LOG("removeImage, imageId: %s, ret: %d", imageId.c_str(), ret);
+        DPSEventReport::GetInstance().UpdateRemoveTime(imageId, userId_);
     }
 }
 
