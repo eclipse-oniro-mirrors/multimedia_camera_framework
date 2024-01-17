@@ -73,7 +73,7 @@ private:
     sptr<IRemoteObject::DeathRecipient> deathRecipient_ = nullptr;
     std::shared_ptr<ThermalLevelSubscriber> thermalLevelSubscriber_ = nullptr;
     std::mutex thermalEventMutex;
-    sptr<OHOS::PowerMgr::IThermalSrv> thermalSrv_ = nullptr;  
+    sptr<OHOS::PowerMgr::IThermalSrv> thermalSrv_ = nullptr;
 };
 }
 } // namespace CameraStandard
