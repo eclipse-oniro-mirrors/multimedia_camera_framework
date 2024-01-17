@@ -18,6 +18,7 @@
 
 #include <refbase.h>
 #include <iostream>
+#include <thread>
 #include <vector>
 #include <mutex>
 #include "input/camera_input.h"
@@ -25,6 +26,7 @@
 #include "input/camera_device.h"
 #include "hcamera_service_proxy.h"
 #include "icamera_device_service.h"
+#include "safe_map.h"
 #include "session/capture_session.h"
 #include "session/portrait_session.h"
 #include "session/night_session.h"
@@ -552,6 +554,9 @@ public:
      */
     std::shared_ptr<TorchListener> GetTorchListener();
 
+    SafeMap<std::thread::id, std::shared_ptr<CameraManagerCallback>> GetCameraMngrCallbackMap();
+    SafeMap<std::thread::id, std::shared_ptr<CameraMuteListener>> GetCameraMuteListenerMap();
+    SafeMap<std::thread::id, std::shared_ptr<TorchListener>> GetTorchListenerMap();
     /**
      * @brief check device if support torch
      *
@@ -622,7 +627,6 @@ private:
     std::mutex mutex_;
     std::recursive_mutex cameraListMutex_;
     std::mutex vectorMutex_;
-    std::mutex cameraMngrCallbackMutex_;
     int CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> *pICameraDeviceService);
     camera_format_t GetCameraMetadataFormat(CameraFormat format);
     bool GetDmDeviceInfo();
@@ -634,12 +638,13 @@ private:
     static sptr<CameraManager> cameraManager_;
     static std::mutex instanceMutex_;
     sptr<ICameraServiceCallback> cameraSvcCallback_;
-    std::shared_ptr<CameraManagerCallback> cameraMngrCallback_;
-
     sptr<ICameraMuteServiceCallback> cameraMuteSvcCallback_;
-    std::shared_ptr<CameraMuteListener> cameraMuteListener;
     sptr<ITorchServiceCallback> torchSvcCallback_;
-    std::shared_ptr<TorchListener> torchListener;
+
+    SafeMap<std::thread::id, std::shared_ptr<CameraManagerCallback>> cameraMngrCallbackMap_;
+    SafeMap<std::thread::id, std::shared_ptr<CameraMuteListener>> cameraMuteListenerMap_;
+    SafeMap<std::thread::id, std::shared_ptr<TorchListener>> torchListenerMap_;
+
     std::vector<sptr<CameraDevice>> cameraObjList;
     std::vector<sptr<CameraInfo>> dcameraObjList;
     std::vector<dmDeviceInfo> distributedCamInfo_;
