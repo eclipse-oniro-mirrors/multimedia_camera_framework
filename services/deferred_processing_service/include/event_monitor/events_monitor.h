@@ -70,10 +70,10 @@ private:
     std::map<int, std::vector<TaskManager*>> userIdToTaskManager;
     std::map<int, std::map<EventType, std::vector<std::weak_ptr<IEventsListener>>>> userIdToeventListeners_;
     bool mIsRegistered;
-    sptr<IRemoteObject::DeathRecipient> deathRecipient_ {nullptr};
+    sptr<IRemoteObject::DeathRecipient> deathRecipient_ = nullptr;
     std::shared_ptr<ThermalLevelSubscriber> thermalLevelSubscriber_ = nullptr;
     std::mutex thermalEventMutex;
-    sptr<OHOS::PowerMgr::IThermalSrv> thermalSrv_ {nullptr};    
+    sptr<OHOS::PowerMgr::IThermalSrv> thermalSrv_ = nullptr;  
 };
 }
 } // namespace CameraStandard
