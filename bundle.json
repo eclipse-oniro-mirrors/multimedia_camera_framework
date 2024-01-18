@@ -44,7 +44,6 @@
               "safwk",
               "samgr",
               "sensor",
-              "thermal_manager",
               "window_manager",
               "memmgr",
               "memmgr_plugin"

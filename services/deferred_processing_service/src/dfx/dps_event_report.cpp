@@ -16,6 +16,7 @@
 #include "dps_event_report.h"
 #include "hisysevent.h"
 #include "dp_log.h"
+#include "steady_clock.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -24,7 +25,7 @@ static constexpr char CAMERA_FWK_UE[] = "CAMERA_FWK_UE";
 void DPSEventReport::ReportOperateImage(const std::string& imageId, int32_t userId, DPSEventInfo& dpsEventInfo)
 {
     DP_DEBUG_LOG("ReportOperateImage enter.");
-    SetEventInfo(dpsEventInfo);
+    UpdateEventInfo(dpsEventInfo);
     HiSysEventWrite(
         CAMERA_FWK_UE,
         "DPS_IMAGE_OPERATE",
@@ -44,7 +45,7 @@ void DPSEventReport::ReportImageProcessResult(const std::string& imageId, int32_
 {
     DP_DEBUG_LOG("ReportImageProcessResult enter.");
     DPSEventInfo dpsEventInfo = GetEventInfo(imageId, userId);
-    if (endTime != 0) {
+    if (endTime > 0) {
         dpsEventInfo.imageDoneTimeEndTime = endTime;
     }
     HiSysEventWrite(
@@ -53,19 +54,28 @@ void DPSEventReport::ReportImageProcessResult(const std::string& imageId, int32_
         HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
         EVENT_KEY_IMAGEID, dpsEventInfo.imageId,
         EVENT_KEY_USERID, dpsEventInfo.userId,
-        EVENT_KEY_SYNCHRONIZETIME, (dpsEventInfo.synchronizeTimeEndTime - dpsEventInfo.synchronizeTimeBeginTime),
-        EVENT_KEY_DISPATCHTIME, (dpsEventInfo.dispatchTimeEndTime - dpsEventInfo.dispatchTimeBeginTime),
-        EVENT_KEY_PROCESSTIME, (dpsEventInfo.processTimeEndTime - dpsEventInfo.processTimeBeginTime),
-        EVENT_KEY_IMAGEDONETIME, (dpsEventInfo.imageDoneTimeEndTime - dpsEventInfo.imageDoneTimeBeginTime),
-        EVENT_KEY_RESTORETIME, (dpsEventInfo.restoreTimeEndTime - dpsEventInfo.restoreTimeBeginTime),
-        EVENT_KEY_REMOVETIME, (dpsEventInfo.removeTimeEndTime - dpsEventInfo.removeTimeBeginTime),
-        EVENT_KEY_TRAILINGTIME, (dpsEventInfo.trailingTimeEndTime - dpsEventInfo.trailingTimeBeginTime),
+        EVENT_KEY_SYNCHRONIZETIME, GetTotalTime(dpsEventInfo.synchronizeTimeBeginTime,
+            dpsEventInfo.synchronizeTimeEndTime),
+        EVENT_KEY_DISPATCHTIME, GetTotalTime(dpsEventInfo.dispatchTimeBeginTime, dpsEventInfo.dispatchTimeEndTime),
+        EVENT_KEY_PROCESSTIME, GetTotalTime(dpsEventInfo.processTimeBeginTime, dpsEventInfo.processTimeEndTime),
+        EVENT_KEY_IMAGEDONETIME, GetTotalTime(dpsEventInfo.imageDoneTimeBeginTime, dpsEventInfo.imageDoneTimeEndTime),
+        EVENT_KEY_RESTORETIME, GetTotalTime(dpsEventInfo.restoreTimeBeginTime, dpsEventInfo.restoreTimeEndTime),
+        EVENT_KEY_REMOVETIME, GetTotalTime(dpsEventInfo.removeTimeBeginTime, dpsEventInfo.removeTimeEndTime),
+        EVENT_KEY_TRAILINGTIME, GetTotalTime(dpsEventInfo.trailingTimeBeginTime, dpsEventInfo.trailingTimeEndTime),
         EVENT_KEY_PHOTOJOBTYPE, static_cast<int32_t>(dpsEventInfo.photoJobType),
         EVENT_KEY_HIGHJOBNUM, dpsEventInfo.highJobNum,
         EVENT_KEY_NORMALJOBNUM, dpsEventInfo.normalJobNum,
         EVENT_KEY_LOWJOBNUM, dpsEventInfo.lowJobNum,
         EVENT_KEY_TEMPERATURELEVEL, temperatureLevel_);
     RemoveEventInfo(imageId, userId);
+}
+
+int DPSEventReport::GetTotalTime (uint64_t beginTime, uint64_t endTime)
+{
+    if (beginTime < endTime) {
+        return endTime - beginTime;
+    }
+    return 0;
 }
 
 void DPSEventReport::ReportImageModeChange(ExecutionMode executionMode)
@@ -149,23 +159,26 @@ void DPSEventReport::SetEventInfo(DPSEventInfo& dpsEventInfo)
     }
 }
 
-void DPSEventReport::UpdateJobProperty(const std::string& imageId, int32_t userId, bool discardable,
-    PhotoJobType photoJobType, TrigerMode triggermode)
+void DPSEventReport::UpdateEventInfo(DPSEventInfo& dpsEventInfo)
 {
     std::unique_lock<std::mutex> lock(mutex_);
-    auto imageIdToEventInfo = userIdToImageIdEventInfo.find(userId);
-    if (imageIdToEventInfo != userIdToImageIdEventInfo.end()) {
-        std::map<std::string, DPSEventInfo>::iterator iter = (userIdToImageIdEventInfo[userId]).begin();
-        while (iter != (userIdToImageIdEventInfo[userId]).end()) {
-            if ((iter->second).imageId == imageId) {
-                UpdateDiscardable(iter->second, discardable);
-                UpdatePhotoJobType(iter->second, discardable);
-                UpdateTriggerMode(iter->second, discardable);
-                break;
-            }
-            iter++;
-        }
+    auto imageIdToEventInfoTemp = userIdToImageIdEventInfo.find(dpsEventInfo.userId);
+    if (imageIdToEventInfoTemp == userIdToImageIdEventInfo.end()) {
+        std::map<std::string, DPSEventInfo> imageIdToEventInfo;
+        imageIdToEventInfo[dpsEventInfo.imageId] = dpsEventInfo;
+        userIdToImageIdEventInfo[dpsEventInfo.userId] = imageIdToEventInfo;
+        return;
     }
+    DPSEventInfo dpsEventInfoTemp = (imageIdToEventInfoTemp->second)[dpsEventInfo.imageId];
+    UpdateDispatchTime(dpsEventInfo, dpsEventInfoTemp);
+    UpdateProcessTime(dpsEventInfo, dpsEventInfoTemp);
+    UpdateRestoreTime(dpsEventInfo, dpsEventInfoTemp);
+    UpdateImageDoneTime(dpsEventInfo, dpsEventInfoTemp);
+    UpdateRemoveTime(dpsEventInfo, dpsEventInfoTemp);
+    UpdateTrailingTime(dpsEventInfo, dpsEventInfoTemp);
+    UpdateSynchronizeTime(dpsEventInfo, dpsEventInfoTemp);
+
+    (imageIdToEventInfoTemp->second)[dpsEventInfo.imageId] = dpsEventInfo;
 }
 
 void DPSEventReport::SetTemperatureLevel(int temperatureLevel)
@@ -219,99 +232,95 @@ void DPSEventReport::RemoveEventInfo(const std::string& imageId, int32_t userId)
     return;
 }
 
-void DPSEventReport::UpdateOperatorStage(DPSEventInfo& dpsEventInfo, std::any value)
+void DPSEventReport::UpdateProcessDoneTime(const std::string& imageId, int32_t userId)
 {
-    dpsEventInfo.operatorStage = std::any_cast<DeferredProcessingServiceInterfaceCode>(value);
+    std::unique_lock<std::mutex> lock(mutex_);
+    auto imageIdToEventInfoTemp = userIdToImageIdEventInfo.find(userId);
+    if (imageIdToEventInfoTemp != userIdToImageIdEventInfo.end()) {
+        uint64_t currentTime = SteadyClock::GetTimestampMilli();
+        (imageIdToEventInfoTemp->second)[imageId].imageDoneTimeBeginTime = currentTime;
+        (imageIdToEventInfoTemp->second)[imageId].processTimeEndTime = currentTime;
+    }
 }
 
-void DPSEventReport::UpdateDiscardable(DPSEventInfo& dpsEventInfo, std::any value)
+void DPSEventReport::UpdateSynchronizeTime(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc)
 {
-    dpsEventInfo.discardable = std::any_cast<bool>(value);
+    if (dpsEventInfoSrc.synchronizeTimeEndTime > 0) {
+        dpsEventInfo.synchronizeTimeEndTime = dpsEventInfoSrc.synchronizeTimeEndTime;
+    }
+    if (dpsEventInfoSrc.synchronizeTimeBeginTime > 0) {
+        dpsEventInfo.synchronizeTimeBeginTime = dpsEventInfoSrc.synchronizeTimeBeginTime;
+    }
 }
 
-void DPSEventReport::UpdateTriggerMode(DPSEventInfo& dpsEventInfo, std::any value)
+void DPSEventReport::UpdateDispatchTime(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc)
 {
-    dpsEventInfo.triggerMode = std::any_cast<TrigerMode>(value);
+    if (dpsEventInfoSrc.dispatchTimeBeginTime > 0) {
+        dpsEventInfo.dispatchTimeBeginTime = dpsEventInfoSrc.dispatchTimeBeginTime;
+    }
+    if (dpsEventInfoSrc.dispatchTimeEndTime > 0) {
+        dpsEventInfo.dispatchTimeEndTime = dpsEventInfoSrc.dispatchTimeEndTime;
+    }
 }
 
-void DPSEventReport::UpdateHighJobNum(DPSEventInfo& dpsEventInfo, std::any value)
+void DPSEventReport::UpdateProcessTime(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc)
 {
-    dpsEventInfo.highJobNum = std::any_cast<int>(value);
+    if (dpsEventInfoSrc.processTimeBeginTime > 0) {
+        dpsEventInfo.processTimeBeginTime = dpsEventInfoSrc.processTimeBeginTime;
+    }
+    if (dpsEventInfoSrc.processTimeEndTime > 0) {
+        dpsEventInfo.processTimeEndTime = dpsEventInfoSrc.processTimeEndTime;
+    }
 }
 
-void DPSEventReport::UpdateNormalJobNum(DPSEventInfo& dpsEventInfo, std::any value)
+void DPSEventReport::UpdateImageDoneTime(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc)
 {
-    dpsEventInfo.normalJobNum = std::any_cast<int>(value);
+    if (dpsEventInfoSrc.imageDoneTimeBeginTime > 0) {
+        dpsEventInfo.imageDoneTimeBeginTime = dpsEventInfoSrc.imageDoneTimeBeginTime;
+    }
+    if (dpsEventInfoSrc.imageDoneTimeEndTime > 0) {
+        dpsEventInfo.imageDoneTimeEndTime = dpsEventInfoSrc.imageDoneTimeEndTime;
+    }
 }
 
-void DPSEventReport::UpdateLowJobNum(DPSEventInfo& dpsEventInfo, std::any value)
+void DPSEventReport::UpdateRestoreTime(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc)
 {
-    dpsEventInfo.lowJobNum = std::any_cast<int>(value);
+    if (dpsEventInfoSrc.restoreTimeBeginTime > 0) {
+        dpsEventInfo.restoreTimeBeginTime = dpsEventInfoSrc.restoreTimeBeginTime;
+    }
+    if (dpsEventInfoSrc.restoreTimeEndTime > 0) {
+        dpsEventInfo.restoreTimeEndTime = dpsEventInfoSrc.restoreTimeEndTime;
+    }
 }
 
-void DPSEventReport::UpdateTemperatureLevel(DPSEventInfo& dpsEventInfo, std::any value)
+void DPSEventReport::UpdateRemoveTime(const std::string& imageId, int32_t userId)
 {
-    dpsEventInfo.temperatureLevel = std::any_cast<int>(value);
+    auto imageIdToEventInfoTemp = userIdToImageIdEventInfo.find(userId);
+    if (imageIdToEventInfoTemp != userIdToImageIdEventInfo.end()) {
+        uint64_t currentTime = SteadyClock::GetTimestampMilli();
+        (imageIdToEventInfoTemp->second)[imageId].removeTimeEndTime = currentTime;
+        ReportImageProcessResult(imageId, userId);
+    }
 }
 
-void DPSEventReport::UpdateSynchronizeTime(DPSEventInfo& dpsEventInfo, std::any value)
+void DPSEventReport::UpdateRemoveTime(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc)
 {
-    dpsEventInfo.synchronizeTimeEndTime = std::any_cast<int64_t>(value);
+    if (dpsEventInfoSrc.removeTimeBeginTime > 0) {
+        dpsEventInfo.removeTimeBeginTime = dpsEventInfoSrc.removeTimeBeginTime;
+    }
+    if (dpsEventInfoSrc.removeTimeEndTime > 0) {
+        dpsEventInfo.removeTimeEndTime = dpsEventInfoSrc.removeTimeEndTime;
+    }
 }
 
-void DPSEventReport::UpdateDispatchTime(DPSEventInfo& dpsEventInfo, std::any value)
+void DPSEventReport::UpdateTrailingTime(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc)
 {
-    dpsEventInfo.dispatchTimeEndTime  = std::any_cast<int64_t>(value);
-}
-
-void DPSEventReport::UpdateProcessTime(DPSEventInfo& dpsEventInfo, std::any value)
-{
-    dpsEventInfo.processTimeEndTime = std::any_cast<int64_t>(value);
-}
-
-void DPSEventReport::UpdateImageDoneTime(DPSEventInfo& dpsEventInfo, std::any value)
-{
-    dpsEventInfo.imageDoneTimeEndTime = std::any_cast<int64_t>(value);
-}
-
-void DPSEventReport::UpdateRestoreTime(DPSEventInfo& dpsEventInfo, std::any value)
-{
-    dpsEventInfo.restoreTimeEndTime = std::any_cast<int64_t>(value);
-}
-
-void DPSEventReport::UpdateRemoveTime(DPSEventInfo& dpsEventInfo, std::any value)
-{
-    dpsEventInfo.removeTimeEndTime = std::any_cast<int64_t>(value);
-}
-
-void DPSEventReport::UpdateTrailingTime(DPSEventInfo& dpsEventInfo, std::any value)
-{
-    dpsEventInfo.trailingTimeEndTime = std::any_cast<int64_t>(value);
-}
-
-void DPSEventReport::UpdatePhotoJobType(DPSEventInfo& dpsEventInfo, std::any value)
-{
-    dpsEventInfo.photoJobType = std::any_cast<PhotoJobType>(value);
-}
-
-void DPSEventReport::UpdateExcutionMode(DPSEventInfo& dpsEventInfo, std::any value)
-{
-    dpsEventInfo.executionMode = std::any_cast<ExecutionMode>(value);
-}
-
-void DPSEventReport::UpdateChangeReason(DPSEventInfo& dpsEventInfo, std::any value)
-{
-    dpsEventInfo.changeReason = std::any_cast<EventType>(value);
-}
-
-void DPSEventReport::UpdateExceptionSource(DPSEventInfo& dpsEventInfo, std::any value)
-{
-    dpsEventInfo.exceptionSource = std::any_cast<ExceptionSource>(value);
-}
-
-void DPSEventReport::UpdateExceptionCause(DPSEventInfo& dpsEventInfo, std::any value)
-{
-    dpsEventInfo.exceptionCause = std::any_cast<ExceptionCause>(value);
+    if (dpsEventInfoSrc.trailingTimeBeginTime > 0) {
+        dpsEventInfo.trailingTimeBeginTime = dpsEventInfoSrc.trailingTimeBeginTime;
+    }
+    if (dpsEventInfoSrc.trailingTimeEndTime > 0) {
+        dpsEventInfo.trailingTimeEndTime = dpsEventInfoSrc.trailingTimeEndTime;
+    }
 }
 } // namsespace DeferredProcessingService
 } // namespace CameraStandard

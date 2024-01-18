@@ -69,6 +69,8 @@ int32_t DeferredPhotoProcessingSession::EndSynchronize()
             AddImage(it->first, it->second->metadata_, it->second->discardable_);
             it = imageIds_.erase(it);
         }
+        const std::string imageId = "default";
+        ReportEvent(imageId, DeferredProcessingServiceInterfaceCode::DPS_END_SYNCHRONIZE);
         return 0;
     }
     std::set<std::string> hdiImageIds(pendingImages.begin(), pendingImages.end());
@@ -216,8 +218,13 @@ void DeferredPhotoProcessingSession::ReportEvent(const std::string& imageId, int
             break;
         }
     }
-    if (event == DeferredProcessingServiceInterfaceCode::DPS_END_SYNCHRONIZE) {
+
+    if (event == DeferredProcessingServiceInterfaceCode::DPS_BEGIN_SYNCHRONIZE) {
+        return;
+    } else if (event == DeferredProcessingServiceInterfaceCode::DPS_END_SYNCHRONIZE) {
         DPSEventReport::GetInstance().ReportImageProcessResult(imageId, userId_);
+    } else {
+        DPSEventReport::GetInstance().SetEventInfo(dpsEventInfo);
     }
 }
 } // namespace DeferredProcessing

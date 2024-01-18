@@ -101,85 +101,20 @@ public:
     void SetTemperatureLevel(int temperatureLevel);
     void SetExecutionMode(ExecutionMode executionMode);
     void SetEventType(EventType eventType_);
+    void UpdateEventInfo(DPSEventInfo& dpsEventInfo);
+    void UpdateProcessDoneTime(const std::string& imageId, int32_t userId);
+    void UpdateRemoveTime(const std::string& imageId, int32_t userId);
 
 private:
     DPSEventInfo GetEventInfo(const std::string& imageId, int32_t userId);
-    static void UpdateOperatorStage(DPSEventInfo& dpsEventInfo, std::any value);
-    static void UpdateDiscardable(DPSEventInfo& dpsEventInfo, std::any value);
-    static void UpdateTriggerMode(DPSEventInfo& dpsEventInfo, std::any value);
-    static void UpdateHighJobNum(DPSEventInfo& dpsEventInfo, std::any value);
-    static void UpdateNormalJobNum(DPSEventInfo& dpsEventInfo, std::any value);
-    static void UpdateLowJobNum(DPSEventInfo& dpsEventInfo, std::any value);
-    static void UpdateTemperatureLevel(DPSEventInfo& dpsEventInfo, std::any value);
-    static void UpdateSynchronizeTime(DPSEventInfo& dpsEventInfo, std::any value);
-    static void UpdateDispatchTime(DPSEventInfo& dpsEventInfo, std::any value);
-    static void UpdateProcessTime(DPSEventInfo& dpsEventInfo, std::any value);
-    static void UpdateImageDoneTime(DPSEventInfo& dpsEventInfo, std::any value);
-    static void UpdateRestoreTime(DPSEventInfo& dpsEventInfo, std::any value);
-    static void UpdateRemoveTime(DPSEventInfo& dpsEventInfo, std::any value);
-    static void UpdateTrailingTime(DPSEventInfo& dpsEventInfo, std::any value);
-    static void UpdatePhotoJobType(DPSEventInfo& dpsEventInfo, std::any value);
-    static void UpdateExcutionMode(DPSEventInfo& dpsEventInfo, std::any value);
-    static void UpdateChangeReason(DPSEventInfo& dpsEventInfo, std::any value);
-    static void UpdateExceptionSource(DPSEventInfo& dpsEventInfo, std::any value);
-    static void UpdateExceptionCause(DPSEventInfo& dpsEventInfo, std::any value);
-    std::unordered_map<std::string,
-    void (*)(DPSEventInfo& dpsEventInfo, std::any value)> sysEventFuncMap_ = {
-        {EVENT_KEY_DEFEVENTTYPE, [](DPSEventInfo& dpsEventInfo, std::any value) {
-            UpdateOperatorStage(dpsEventInfo, value);
-        }},
-        {EVENT_KEY_DISCARDABLE, [](DPSEventInfo& dpsEventInfo, std::any value) {
-            UpdateDiscardable(dpsEventInfo, value);
-        }},
-        {EVENT_KEY_TRIGGERMODE, [](DPSEventInfo& dpsEventInfo, std::any value) {
-            UpdateTriggerMode(dpsEventInfo, value);
-        }},
-        {EVENT_KEY_NORMALJOBNUM, [](DPSEventInfo& dpsEventInfo, std::any value) {
-            UpdateNormalJobNum(dpsEventInfo, value);
-        }},
-        {EVENT_KEY_LOWJOBNUM, [](DPSEventInfo& dpsEventInfo, std::any value) {
-            UpdateLowJobNum(dpsEventInfo, value);
-        }},
-        {EVENT_KEY_TEMPERATURELEVEL, [](DPSEventInfo& dpsEventInfo, std::any value) {
-            UpdateTemperatureLevel(dpsEventInfo, value);
-        }},
-        {EVENT_KEY_SYNCHRONIZETIME, [](DPSEventInfo& dpsEventInfo, std::any value) {
-            UpdateSynchronizeTime(dpsEventInfo, value);
-        }},
-        {EVENT_KEY_DISPATCHTIME, [](DPSEventInfo& dpsEventInfo, std::any value) {
-            UpdateDispatchTime(dpsEventInfo, value);
-        }},
-        {EVENT_KEY_PROCESSTIME, [](DPSEventInfo& dpsEventInfo, std::any value) {
-            UpdateProcessTime(dpsEventInfo, value);
-        }},
-        {EVENT_KEY_IMAGEDONETIME, [](DPSEventInfo& dpsEventInfo, std::any value) {
-            UpdateImageDoneTime(dpsEventInfo, value);
-        }},
-        {EVENT_KEY_RESTORETIME, [](DPSEventInfo& dpsEventInfo, std::any value) {
-            UpdateRestoreTime(dpsEventInfo, value);
-        }},
-        {EVENT_KEY_REMOVETIME, [](DPSEventInfo& dpsEventInfo, std::any value) {
-            UpdateRemoveTime(dpsEventInfo, value);
-        }},
-        {EVENT_KEY_TRAILINGTIME, [](DPSEventInfo& dpsEventInfo, std::any value) {
-            UpdateTrailingTime(dpsEventInfo, value);
-        }},
-        {EVENT_KEY_PHOTOJOBTYPE, [](DPSEventInfo& dpsEventInfo, std::any value) {
-            UpdatePhotoJobType(dpsEventInfo, value);
-        }},
-        {EVENT_KEY_EXCUTIONMODE,  [](DPSEventInfo& dpsEventInfo, std::any value) {
-            UpdateExcutionMode(dpsEventInfo, value);
-        }},
-        {EVENT_KEY_CHANGEREASON, [](DPSEventInfo& dpsEventInfo, std::any value) {
-            UpdateChangeReason(dpsEventInfo, value);
-        }},
-        {EVENT_KEY_EXCEPTIONSOURCE, [](DPSEventInfo& dpsEventInfo, std::any value) {
-            UpdateExceptionSource(dpsEventInfo, value);
-        }},
-        {EVENT_KEY_EXCEPTIONCAUSE, [](DPSEventInfo& dpsEventInfo, std::any value) {
-            UpdateExceptionCause(dpsEventInfo, value);
-        }},
-    };
+    void UpdateSynchronizeTime(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc);
+    void UpdateDispatchTime(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc);
+    void UpdateProcessTime(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc);
+    void UpdateImageDoneTime(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc);
+    void UpdateRestoreTime(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc);
+    void UpdateRemoveTime(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc);
+    void UpdateTrailingTime(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc);
+    int GetTotalTime (uint64_t beginTime, uint64_t endTime);
     std::mutex mutex_;
     std::map<int32_t, std::map<std::string, DPSEventInfo>> userIdToImageIdEventInfo; //userid--imageid--eventinfo
     ExecutionMode executionMode_;

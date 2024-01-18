@@ -138,7 +138,6 @@ bool PhotoJobRepository::RequestJob(const std::string& imageId)
         statusChanged = jobPtr->SetJobStatus(PhotoJobStatus::PENDING);
     }
     NotifyJobChangedUnLocked(priorityChanged, statusChanged, jobPtr);
-    ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_PROCESS_IMAGE);
     return true;
 }
 
@@ -212,6 +211,7 @@ void PhotoJobRepository::SetJobRunning(const std::string imageId)
     jobPtr->RecordJobRunningPriority();
     UpdateRunningCountUnLocked(statusChanged, jobPtr);
     NotifyJobChangedUnLocked(priorityChanged, statusChanged, jobPtr);
+    ReportEvent(jobPtr, DeferredProcessingServiceInterfaceCode::DPS_PROCESS_IMAGE);
 }
 
 void PhotoJobRepository::SetJobCompleted(const std::string imageId)
@@ -469,7 +469,6 @@ bool PhotoJobRepository::HasUnCompletedBackgroundJob()
     return it != backgroundJobMap_.end();
 }
 
-
 void PhotoJobRepository::ReportEvent(DeferredPhotoJobPtr jobPtr, DeferredProcessingServiceInterfaceCode event)
 {
     auto iter = priotyToNum.find(PhotoJobPriority::HIGH);
@@ -480,7 +479,7 @@ void PhotoJobRepository::ReportEvent(DeferredPhotoJobPtr jobPtr, DeferredProcess
     int lowJobNum = iter->second;
     std::string imageId = jobPtr->GetImageId();
     DPSEventInfo dpsEventInfo;
-    dpsEventInfo.imageId = jobPtr->GetImageId();
+    dpsEventInfo.imageId = imageId;
     dpsEventInfo.userId = userId_;
     dpsEventInfo.lowJobNum = lowJobNum;
     dpsEventInfo.normalJobNum = normalJobNum;
@@ -495,22 +494,19 @@ void PhotoJobRepository::ReportEvent(DeferredPhotoJobPtr jobPtr, DeferredProcess
             break;
         }
         case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_REMOVE_IMAGE): {
-            dpsEventInfo.removeTimeEndTime = endTime;
+            dpsEventInfo.removeTimeBeginTime = endTime;
             break;
         }
         case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_RESTORE_IMAGE): {
-            dpsEventInfo.restoreTimeEndTime = endTime;
+            dpsEventInfo.restoreTimeBeginTime = endTime;
             break;
         }
         case static_cast<int32_t>(DeferredProcessingServiceInterfaceCode::DPS_PROCESS_IMAGE): {
-            dpsEventInfo.processTimeEndTime = endTime;
+            dpsEventInfo.processTimeBeginTime = endTime;
             break;
         }
     }
     DPSEventReport::GetInstance().ReportOperateImage(imageId, userId_, dpsEventInfo);
-    if (event == DeferredProcessingServiceInterfaceCode::DPS_REMOVE_IMAGE) {
-        DPSEventReport::GetInstance().ReportImageProcessResult(imageId, userId_);
-    }
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard
