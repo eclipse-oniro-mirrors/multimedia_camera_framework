@@ -1280,11 +1280,6 @@ int32_t TorchServiceCallback::OnTorchStatusChange(const TorchStatus status)
         return CAMERA_OK;
     }
 
-    auto listenerMap = camMngr_->GetTorchListenerMap();
-    MEDIA_INFO_LOG("TorchListenerMap size %{public}d", listenerMap.Size());
-    if (listenerMap.Size() == 0) {
-        return CAMERA_OK;
-    }
     TorchStatusInfo torchStatusInfo;
     if (status == TorchStatus::TORCH_STATUS_UNAVAILABLE) {
         torchStatusInfo.isTorchAvailable=false;
@@ -1302,6 +1297,13 @@ int32_t TorchServiceCallback::OnTorchStatusChange(const TorchStatus status)
         torchStatusInfo.torchLevel=0;
         camMngr_->UpdateTorchMode(TORCH_MODE_OFF);
     }
+
+    auto listenerMap = camMngr_->GetTorchListenerMap();
+    MEDIA_INFO_LOG("TorchListenerMap size %{public}d", listenerMap.Size());
+    if (listenerMap.Size() == 0) {
+        return CAMERA_OK;
+    }
+
     listenerMap.Iterate([&](std::thread::id threadId, std::shared_ptr<TorchListener> torcheListener) {
         if (torcheListener != nullptr) {
             torcheListener->OnTorchStatusChange(torchStatusInfo);

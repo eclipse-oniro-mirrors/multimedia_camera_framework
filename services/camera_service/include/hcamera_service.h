@@ -174,7 +174,8 @@ private:
     mutex mutex_;
     mutex cbMutex_;
     mutex muteCbMutex_;
-    mutex torchCbMutex_;
+    recursive_mutex torchCbMutex_;
+    TorchStatus torchStatus_ = TorchStatus::TORCH_STATUS_UNAVAILABLE;
     sptr<HCameraHostManager> cameraHostManager_;
     std::shared_ptr<StatusCallback> statusCallback_;
     map<uint32_t, sptr<ITorchServiceCallback>> torchServiceCallbacks_;
