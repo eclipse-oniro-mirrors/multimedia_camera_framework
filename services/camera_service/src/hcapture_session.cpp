@@ -801,7 +801,7 @@ int32_t HCaptureSession::SetSmoothZoom(
         }
         float waitMs = crossZoomAndTime[i + indexAdded];
         for (int j = 0; j < static_cast<int>(array.size()); j++) {
-            if ((array[j] - crossZoom) * (array[0] - crossZoom) < 0) {
+            if (static_cast<int>(array[j] - crossZoom) * static_cast<int>(array[0] - crossZoom) < 0) {
                 waitTime = fmax(waitMs - frameIntervalMs * j, waitTime);
                 break;
             }
