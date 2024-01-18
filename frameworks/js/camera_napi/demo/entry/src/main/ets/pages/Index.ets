@@ -29,10 +29,12 @@ import DisplayCalculator from '../common/DisplayCalculator';
 import { ColorEffectComponent } from '../views/ColorEffectComponent';
 import { DeferredPhotoComponent } from '../views/DeferredPhotoComponent';
 import image from '@ohos.multimedia.image';
+import { CameraConfig } from '../common/CameraConfig';
+import { GlobalContext } from '../common/GlobalContext';
 
 const TAG: string = 'indexPage';
 
-globalThis.settingDataObj = {
+let cameraConfig: CameraConfig = {
   mirrorBol: false, // 镜像使能 -> 关闭
   videoStabilizationMode: 0, // 视频防抖 -> 关闭
   exposureMode: 1, // 曝光模式 -> 自动
@@ -45,7 +47,8 @@ globalThis.settingDataObj = {
   videoResolution: 0, // 照片分辨率 -> 1920 * 1080
   videoFrame: 1, // 录像帧率 -> 30
   referenceLineBol: false // 分割线 -> 关闭
-};
+}
+GlobalContext.get().setObject('cameraConfig', cameraConfig);
 
 @Entry
 @Component
@@ -70,7 +73,7 @@ struct Index {
   @State cameraDeviceIndex: number = 0;
   @State xComponentWidth: number = 384;
   @State xComponentHeight: number = 450;
-  private deviceType: string;
+  private deviceType: string | undefined;
   private screenHeight: number;
   private screenWidth: number;
   @State @Watch('onDeferredNumChange') deferredNum: number = 0;
@@ -93,7 +96,10 @@ struct Index {
   // 参考线
   @State referenceLineBol: boolean = false;
   @StorageLink('defaultAspectRatio') @Watch('initXComponentSize') defaultAspectRatio: number = Constants.MIN_ASPECT_RATIO;
+  // 主页面是否显示
   @StorageLink('isShow') isShow: boolean = false;
+  // 变焦条是否隐藏
+  @StorageLink('isHiddenSlide') isHiddenSlide: boolean = false;
 
   aboutToAppear(): void {
     let mDisplay = display.getDefaultDisplaySync();
@@ -134,7 +140,7 @@ struct Index {
     Logger.info(TAG, 'onPageHide');
     let isRecorder: boolean = AppStorage.get<boolean>('isRecorder');
     if (isRecorder) {
-      await CameraService.stopVideo();
+      GlobalContext.get().apply('stopVideoFun');
     }
     await CameraService.releaseCamera();
   }
@@ -144,7 +150,7 @@ struct Index {
    */
   onDeferredNumChange(): void {
     Logger.info(TAG, `onDeferredNumChange deferredNum: ${this.deferredNum}`);
-    let code:number = this.deferredNum%2;
+    let code: number = this.deferredNum % 2;
     CameraService.isDeferredImageDeliverySupported(code);
     // CameraService.isDeferredImageDeliveryEnabled(code);
   }
@@ -164,8 +170,8 @@ struct Index {
               this.surfaceId = this.mXComponentController.getXComponentSurfaceId();
               Logger.info(TAG, `onLoad surfaceId: ${this.surfaceId}`);
               await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
-              globalThis.surfaceId = this.surfaceId;
-              globalThis.cameraDeviceIndex = this.cameraDeviceIndex;
+              GlobalContext.get().setObject('surfaceId', this.surfaceId);
+              GlobalContext.get().setObject('cameraDeviceIndex', this.cameraDeviceIndex);
             })
             .size({
               width: this.xComponentWidth.toString(),
@@ -197,7 +203,9 @@ struct Index {
           })
 
           // slide
-          SlidePage()
+          if (!this.isHiddenSlide) {
+            SlidePage()
+          }
 
           // 反转摄像头_多机位_拍照_摄像
           ModeSwitchPage({

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,6 +22,7 @@ import { BusinessError } from '@ohos.base';
 import Logger from '../model/Logger';
 import { Constants } from '../common/Constants';
 import UIAbility from '@ohos.app.ability.UIAbility';
+import { GlobalContext } from '../common/GlobalContext';
 
 const TAG: string = 'EntryAbility';
 
@@ -31,7 +32,8 @@ export default class EntryAbility extends UIAbility {
     Logger.info(TAG, 'Ability onCreate');
     Logger.debug(TAG, `want param: ${JSON.stringify(want)}`);
     Logger.debug(TAG, `launchParam: ${JSON.stringify(launchParam)}`);
-    globalThis.abilityContext = this.context;
+    GlobalContext.get().setCameraSettingContext(this.context);
+    GlobalContext.get().getCameraSettingContext();
   }
 
   onDestroy(): void {
@@ -47,7 +49,7 @@ export default class EntryAbility extends UIAbility {
     this.requestPermissionsFn();
     AppStorage.setOrCreate<string>('deviceType', deviceInfo.deviceType);
     windowStage.getMainWindow().then((win: window.Window): void => {
-      globalThis.promptAction = win.getUIContext().getPromptAction();
+      GlobalContext.get().setPromptAction(win.getUIContext().getPromptAction());
       Logger.debug(TAG, 'Succeeded get promptAction.');
       if (deviceInfo.deviceType === Constants.TABLET) {
         win.setWindowLayoutFullScreen(true).then((): void => {
@@ -69,11 +71,13 @@ export default class EntryAbility extends UIAbility {
    */
   requestPermissionsFn(): void {
     let atManager = abilityAccessCtrl.createAtManager();
-    atManager.requestPermissionsFromUser(globalThis.abilityContext, [
+    atManager.requestPermissionsFromUser(this.context, [
       'ohos.permission.CAMERA',
       'ohos.permission.MICROPHONE',
       'ohos.permission.READ_MEDIA',
-      'ohos.permission.WRITE_MEDIA'
+      'ohos.permission.WRITE_MEDIA',
+      'ohos.permission.READ_IMAGEVIDEO',
+      'ohos.permission.WRITE_IMAGEVIDEO'
     ]).then((): void => {
       AppStorage.setOrCreate<boolean>('isShow', true);
       Logger.info(TAG, 'request Permissions success!');

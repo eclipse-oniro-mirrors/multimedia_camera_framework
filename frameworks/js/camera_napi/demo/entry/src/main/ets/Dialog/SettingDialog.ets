@@ -12,6 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { CameraConfig } from '../common/CameraConfig';
+import { GlobalContext } from '../common/GlobalContext';
 
 import { SettingPublicLayout } from '../common/SettingPublicLayout';
 import CameraService from '../model/CameraService';
@@ -32,21 +34,27 @@ export struct SettingDialog {
    * 镜像持久化，再次进入，确定开关是否开启
    */
   getMirrorBol(bol): void {
-    globalThis.settingDataObj.mirrorBol = bol;
+    let cameraConfig: CameraConfig = GlobalContext.get().getObject('cameraConfig') as CameraConfig;
+    cameraConfig.mirrorBol = bol;
+    GlobalContext.get().setObject('cameraConfig', cameraConfig);
   }
 
   /**
    * 地理位置持久化，再次进入，确定开关是否开启
    */
   getLocationBol(bol): void {
-    globalThis.settingDataObj.locationBol = bol;
+    let cameraConfig: CameraConfig = GlobalContext.get().getObject('cameraConfig') as CameraConfig;
+    cameraConfig.locationBol = bol;
+    GlobalContext.get().setObject('cameraConfig', cameraConfig);
   }
 
   /**
    * 参考线持久化，再次进入，确定开关是否开启
    */
   getReferenceLineBol(bol): void {
-    globalThis.settingDataObj.referenceLineBol = bol;
+    let cameraConfig: CameraConfig = GlobalContext.get().getObject('cameraConfig') as CameraConfig;
+    cameraConfig.referenceLineBol = bol;
+    GlobalContext.get().setObject('cameraConfig', cameraConfig);
     this.referenceLineBol = bol;
   }
 
@@ -58,9 +66,9 @@ export struct SettingDialog {
           direction: FlexDirection.Column,
           alignItems: ItemAlign.Center
         }) {
-          Row({space: 24}) {
+          Row({ space: 24 }) {
             Image($r('app.media.ic_public_back'))
-              .size({width: 24, height: 24})
+              .size({ width: 24, height: 24 })
               .zIndex(1)
               .onClick(() => {
                 Logger.info(TAG, 'back onClick');
@@ -75,7 +83,7 @@ export struct SettingDialog {
                 this.controller.close();
               })
           }
-          .margin({ top: '24vp', bottom: '24vp', left: '24vp'})
+          .margin({ top: '24vp', bottom: '24vp', left: '24vp' })
 
           Column() {
             SettingPublicLayout({
@@ -86,7 +94,7 @@ export struct SettingDialog {
               modeMessage: '自拍镜像',
               backNum: 1,
               leftSliderIndex: $leftSliderIndex,
-              setModeBol: globalThis.settingDataObj.mirrorBol,
+              setModeBol: (GlobalContext.get().getObject('cameraConfig') as CameraConfig).mirrorBol,
               getModeBol: this.getMirrorBol.bind(this)
             })
           }
@@ -145,7 +153,7 @@ export struct SettingDialog {
               borderBole: false,
               iconModeBol: true,
               modeMessage: '拍摄时显示地理位置',
-              setModeBol: globalThis.settingDataObj.locationBol,
+              setModeBol: (GlobalContext.get().getObject('cameraConfig') as CameraConfig).locationBol,
               getModeBol: this.getLocationBol.bind(this)
             })
           }
@@ -222,7 +230,7 @@ export struct SettingDialog {
               isModeBol: true,
               borderBol: false,
               iconModeBol: true,
-              setModeBol: globalThis.settingDataObj.referenceLineBol,
+              setModeBol: (GlobalContext.get().getObject('cameraConfig') as CameraConfig).referenceLineBol,
               getModeBol: this.getReferenceLineBol.bind(this)
             })
               .margin({ top: 15 })
@@ -231,9 +239,9 @@ export struct SettingDialog {
         }
         .width('100%')
       }
-      .size({width: '96%', height: '100%'})
+      .size({ width: '96%', height: '100%' })
     }
-    .size({width: '100%', height: '100%'})
+    .size({ width: '100%', height: '100%' })
     .backgroundColor('#F1F3F5')
   }
 }

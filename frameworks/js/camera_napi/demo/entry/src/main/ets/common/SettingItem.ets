@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,6 +16,9 @@
 import CameraService from '../model/CameraService';
 import Logger from '../model/Logger';
 import { BusinessError } from '@ohos.base';
+import { CameraConfig } from './CameraConfig';
+import { GlobalContext } from './GlobalContext';
+import { PromptAction } from '@ohos.arkui.UIContext';
 
 const TAG: string = "SettingItem";
 
@@ -32,20 +35,48 @@ export struct SettingItem {
    */
   selectMode(): void {
     Logger.info(TAG, `selectMode settingMessageNum: ${this.settingMessageNum}`);
+    let globalContext: GlobalContext = GlobalContext.get();
+    let cameraConfig: CameraConfig = globalContext.getObject('cameraConfig') as CameraConfig;
     switch (this.settingMessageNum) {
       case 2:
-        globalThis.settingDataObj.videoStabilizationMode = this.index;
-        CameraService.isVideoStabilizationModeSupportedFn(globalThis.settingDataObj.videoStabilizationMode);
+        cameraConfig.videoStabilizationMode = this.index;
+        let isVideoStabSupported = CameraService.isVideoStabilizationModeSupportedFn(cameraConfig.videoStabilizationMode);
+        try {
+          (globalContext.getPromptAction() as PromptAction).showToast({
+            message: isVideoStabSupported ? '支持此模式' : '不支持此模式',
+            duration: 2000,
+            bottom: '50%'
+          });
+        } catch (error) {
+          let err = error as BusinessError;
+          Logger.error(TAG, `showToast err: ${JSON.stringify(err)}`);
+        }
+        if (isVideoStabSupported) {
+          CameraService.setVideoStabilizationMode(cameraConfig.videoStabilizationMode);
+        }
         break;
       case 3:
-        globalThis.settingDataObj.exposureMode = this.index;
-        CameraService.isExposureModeSupportedFn(globalThis.settingDataObj.exposureMode);
+        cameraConfig.exposureMode = this.index;
+        let isExposureModeSupported = CameraService.isExposureModeSupportedFn(cameraConfig.exposureMode);
+        try {
+          (globalContext.getPromptAction() as PromptAction).showToast({
+            message: isExposureModeSupported ? '支持此模式' : '不支持此模式',
+            duration: 2000,
+            bottom: '50%'
+          });
+        } catch (error) {
+          let err = error as BusinessError;
+          Logger.error(TAG, `showToast err: ${JSON.stringify(err)}`);
+        }
+        if (isExposureModeSupported) {
+          CameraService.setExposureMode(cameraConfig.exposureMode)
+        }
         break;
       case 4:
-        globalThis.settingDataObj.focusMode = this.index;
-        let isFocusModeSupported = CameraService.isFocusModeSupported(globalThis.settingDataObj.focusMode);
+        cameraConfig.focusMode = this.index;
+        let isFocusModeSupported = CameraService.isFocusModeSupported(cameraConfig.focusMode);
         try {
-          globalThis.promptAction.showToast({
+          (globalContext.getPromptAction() as PromptAction).showToast({
             message: isFocusModeSupported ? '支持此模式' : '不支持此模式',
             duration: 2000,
             bottom: '50%'
@@ -56,37 +87,41 @@ export struct SettingItem {
         }
         break;
       case 5:
-        globalThis.settingDataObj.photoQuality = this.index;
+        cameraConfig.photoQuality = this.index;
         break;
       case 7:
-        globalThis.settingDataObj.photoFormat = this.index;
+        cameraConfig.photoFormat = this.index;
         break;
       case 8:
-        globalThis.settingDataObj.photoOrientation = this.index;
+        cameraConfig.photoOrientation = this.index;
         break;
       case 9:
       // 照片分辨率
-        globalThis.settingDataObj.photoResolution = this.index;
+        cameraConfig.photoResolution = this.index;
         let ind = this.itemData.indexOf('*');
-        globalThis.photoResolutionWidth = Number(this.itemData.substring(0, ind));
-        globalThis.photoResolutionHeight = Number(this.itemData.substring(ind + 1));
-        AppStorage.set<number>('defaultAspectRatio', globalThis.photoResolutionWidth/globalThis.photoResolutionHeight);
+        let photoResolutionWidth = Number(this.itemData.substring(0, ind));
+        let photoResolutionHeight = Number(this.itemData.substring(ind + 1));
+        globalContext.setObject('photoResolutionWidth', photoResolutionWidth);
+        globalContext.setObject('photoResolutionHeight', photoResolutionHeight);
+        AppStorage.set<number>('defaultAspectRatio', photoResolutionWidth / photoResolutionHeight);
         break;
       case 10:
       // 视频分辨率
-        globalThis.settingDataObj.videoResolution = this.index;
+        cameraConfig.videoResolution = this.index;
         let index = this.itemData.indexOf('*');
-        globalThis.videoResolutionWidth = Number(this.itemData.substring(0, index));
-        globalThis.videoResolutionHeight = Number(this.itemData.substring(index + 1));
+        let videoResolutionWidth = Number(this.itemData.substring(0, index));
+        let videoResolutionHeight = Number(this.itemData.substring(index + 1));
+        globalContext.setObject('photoResolutionWidth', videoResolutionWidth);
+        globalContext.setObject('photoResolutionHeight', videoResolutionHeight);
         break;
       case 11:
         let isSupported = CameraService.isVideoFrameSupportedFn(Number(this.itemData));
         if (isSupported) {
-          globalThis.settingDataObj.videoFrame = this.index;
-          globalThis.videoFrame = this.itemData;
+          cameraConfig.videoFrame = this.index;
+          globalContext.setObject('videoFrame', this.itemData);
         }
         try {
-          globalThis.promptAction.showToast({
+          (globalContext.getPromptAction() as PromptAction).showToast({
             message: isSupported ? '支持此模式' : '不支持此模式',
             duration: 2000,
             bottom: '50%'
@@ -97,13 +132,15 @@ export struct SettingItem {
         }
         break;
     }
+    GlobalContext.get().setObject('cameraConfig', cameraConfig);
   }
 
   async resetSession(): Promise<void> {
     await CameraService.releaseCamera().then((): void => {
       Logger.debug(TAG, 'releaseCamera success');
     });
-    await CameraService.initCamera(globalThis.surfaceId, globalThis.cameraDeviceIndex).then((): void => {
+    await CameraService.initCamera(GlobalContext.get().getObject('surfaceId') as string, GlobalContext.get()
+      .getObject('cameraDeviceIndex') as number).then((): void => {
       Logger.debug(TAG, 'initCamera success');
     });
   }

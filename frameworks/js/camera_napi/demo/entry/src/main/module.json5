@@ -69,6 +69,9 @@
       },
       {
         "name": "ohos.permission.WRITE_IMAGEVIDEO"
+      },
+      {
+        "name": "ohos.permission.READ_IMAGEVIDEO"
       }
     ]
   }
