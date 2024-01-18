@@ -72,8 +72,7 @@ void DPSEventReport::ReportImageProcessResult(const std::string& imageId, int32_
 
 int DPSEventReport::GetTotalTime (uint64_t beginTime, uint64_t endTime)
 {
-    if (beginTime < endTime)
-    {
+    if (beginTime < endTime) {
         return endTime - beginTime;
     }
     return 0;
@@ -164,8 +163,6 @@ void DPSEventReport::UpdateEventInfo(DPSEventInfo& dpsEventInfo)
 {
     std::unique_lock<std::mutex> lock(mutex_);
     auto imageIdToEventInfoTemp = userIdToImageIdEventInfo.find(dpsEventInfo.userId);
-    DP_INFO_LOG("dpsEventInfo.dispatchTime befor begin %d, end %d userId %d",
-                static_cast<int>(dpsEventInfo.processTimeBeginTime), static_cast<int>(dpsEventInfo.processTimeEndTime), dpsEventInfo.userId);
     if (imageIdToEventInfoTemp == userIdToImageIdEventInfo.end()) {
         std::map<std::string, DPSEventInfo> imageIdToEventInfo;
         imageIdToEventInfo[dpsEventInfo.imageId] = dpsEventInfo;
