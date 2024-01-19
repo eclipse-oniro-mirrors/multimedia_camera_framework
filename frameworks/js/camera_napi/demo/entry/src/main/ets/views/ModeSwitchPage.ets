@@ -21,9 +21,12 @@ import DateTimeUtil from '../model/DateTimeUtil';
 import Logger from '../model/Logger';
 import CameraService from '../model/CameraService';
 import image from '@ohos.multimedia.image';
-import mediaLibrary from '@ohos.multimedia.mediaLibrary';
 import { BusinessError } from '@ohos.base';
 import { Constants } from '../common/Constants';
+import { GlobalContext } from '../common/GlobalContext';
+import camera from '@ohos.multimedia.camera';
+import { PromptAction } from '@ohos.arkui.UIContext';
+import photoAccessHelper from '@ohos.file.photoAccessHelper';
 
 const TAG: string = 'ModeSwitchPage';
 
@@ -39,7 +42,7 @@ export struct ModeSwitchPage {
   @State countTimerInt: number = -1;
   @State countTimerOut: number = -1;
   // 拍照缩略图
-  @StorageLink('proxyThumbnail') imgThumbnail: string|image.PixelMap = null;
+  @StorageLink('proxyThumbnail') imgThumbnail: string | image.PixelMap = null;
   // 录制时间
   @State videoRecodeTime: number = 0;
   // 录制时间定时器
@@ -55,7 +58,7 @@ export struct ModeSwitchPage {
   // 视频缩略图
   @State videoThumbnail: image.PixelMap = undefined;
   private videoUri: string;
-  private deviceType: string;
+  private deviceType: string | undefined;
   // 确定是否停止录制的弹框
   private recodeStopDialogController: CustomDialogController = new CustomDialogController({
     builder: RecodeStopDialog({
@@ -144,7 +147,7 @@ export struct ModeSwitchPage {
   isVideoPhotoFn(): void {
     if (this.modelBagCol == 'photo' || this.modelBagCol == 'portrait') {
       CameraService.takePicture();
-    } else if (this.modelBagCol == 'video') {
+    } else if (this.modelBagCol == 'video' || this.modelBagCol == 'superStab') {
       this.isModeBol = false;
       if (this.timer !== undefined) {
         clearInterval(this.timer);
@@ -159,8 +162,18 @@ export struct ModeSwitchPage {
     }
   }
 
+  stopVideo(): void {
+    if (this.timer !== undefined) {
+      clearInterval(this.timer);
+      Logger.debug(TAG, `onChangeRecord clear timer success`);
+    }
+    this.isModeBol = true;
+    this.videoRecodeTime = 0;
+  }
+
   aboutToAppear(): void {
     Logger.info(TAG, 'aboutToAppear');
+    GlobalContext.get().setObject('stopVideoFun', this.stopVideo.bind(this));
     this.deviceType = AppStorage.get<string>('deviceType');
     CameraService.setTakePictureCallback(this.handleTakePicture.bind(this));
   }
@@ -176,6 +189,31 @@ export struct ModeSwitchPage {
         Stack({ alignContent: Alignment.Bottom }) {
           Column({ space: 24 }) {
             Row() {
+              // 超级防抖
+              Column() {
+                Text('超级防抖')
+                  .fontSize(14)
+                  .fontColor(Color.White)
+              }
+              .width(70)
+              .backgroundColor(this.modelBagCol === 'superStab' ? $r('app.color.theme_color') : '')
+              .borderRadius(14)
+              .onClick(async () => {
+                this.modelBagCol = 'superStab';
+                AppStorage.setOrCreate('isHiddenSlide', true);
+                CameraService.setCameraMode(3);
+                await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
+                let isSupported = CameraService.isVideoStabilizationModeSupportedFn(camera.VideoStabilizationMode.HIGH);
+                if (!isSupported) {
+                  (GlobalContext.get().getPromptAction() as PromptAction).showToast({
+                    message: '当前不支持超级防抖模式，显示为普通模式',
+                    duration: 2000,
+                    bottom: '50%'
+                  })
+                }
+              })
+              .visibility(this.deviceType === Constants.DEFAULT ? Visibility.Hidden : Visibility.Visible)
+
               // 人像
               Column() {
                 Text('人像')
@@ -187,7 +225,8 @@ export struct ModeSwitchPage {
               .borderRadius(14)
               .onClick(async () => {
                 this.modelBagCol = 'portrait';
-                CameraService.setIsPortraitMode(true);
+                AppStorage.setOrCreate('isHiddenSlide', false);
+                CameraService.setCameraMode(2);
                 await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
               })
               .visibility(this.deviceType === Constants.DEFAULT ? Visibility.Hidden : Visibility.Visible)
@@ -203,10 +242,9 @@ export struct ModeSwitchPage {
               .borderRadius(14)
               .onClick(async () => {
                 this.modelBagCol = 'photo';
-                if (CameraService.getIsPortraitMode()) {
-                  CameraService.setIsPortraitMode(false);
-                  await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
-                }
+                AppStorage.setOrCreate('isHiddenSlide', false);
+                CameraService.setCameraMode(0);
+                await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
               })
 
               // 录像
@@ -220,10 +258,9 @@ export struct ModeSwitchPage {
               .borderRadius(14)
               .onClick(async () => {
                 this.modelBagCol = 'video';
-                if (CameraService.getIsPortraitMode()) {
-                  CameraService.setIsPortraitMode(false);
-                  await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
-                }
+                AppStorage.setOrCreate('isHiddenSlide', false);
+                CameraService.setCameraMode(1);
+                await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
               })
 
               // 多机位
@@ -237,15 +274,13 @@ export struct ModeSwitchPage {
               .borderRadius(14)
               .onClick(async () => {
                 this.modelBagCol = 'multi';
-                if (CameraService.getIsPortraitMode()) {
-                  CameraService.setIsPortraitMode(false);
-                  await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
-                }
+                CameraService.setCameraMode(0);
+                await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
                 this.MultiCameraDialogController.open();
               })
             }
             .height(28)
-            .width('50%')
+            .width('100%')
             .justifyContent(FlexAlign.SpaceBetween)
             .alignItems(VerticalAlign.Center)
 
@@ -275,7 +310,7 @@ export struct ModeSwitchPage {
                   } else {
                     uri = this.imgThumbnail;
                   }
-                  globalThis.abilityContext.startAbility({
+                  GlobalContext.get().getCameraSettingContext().startAbility({
                     parameters: { uri: uri },
                     action: 'ohos.want.action.viewData',
                     bundleName: 'com.huawei.hmos.photos',
@@ -292,7 +327,8 @@ export struct ModeSwitchPage {
                       .width('120px')
                       .height('120px')
                       .borderRadius('40px')
-                      .backgroundColor(this.modelBagCol == 'video' ? $r('app.color.theme_color') : Color.White)
+                      .backgroundColor(this.modelBagCol == 'video' || this.modelBagCol === 'superStab' ?
+                      $r('app.color.theme_color') : Color.White)
                   }
                   .border({ width: 3, color: 0xFFFFFF, radius: 70 })
                   .width('200px')
@@ -319,7 +355,7 @@ export struct ModeSwitchPage {
                   .onClick(async () => {
                     // 切换摄像头
                     this.cameraDeviceIndex ? this.cameraDeviceIndex = 0 : this.cameraDeviceIndex = 1;
-                    globalThis.cameraDeviceIndex = this.cameraDeviceIndex;
+                    GlobalContext.get().setObject('cameraDeviceIndex', this.cameraDeviceIndex);
                     // 开始预览
                     await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
                   })
@@ -380,7 +416,7 @@ export struct ModeSwitchPage {
                         Logger.debug(TAG, `onChangeRecord clear timer success`);
                       }
                       this.isRecording = !this.isRecording;
-                      CameraService.stopVideo().then(async (fileAsset: mediaLibrary.FileAsset): Promise<void> => {
+                      CameraService.stopVideo().then(async (fileAsset: photoAccessHelper.PhotoAsset): Promise<void> => {
                         try {
                           // 获取录制缩略图
                           this.videoThumbnail = await fileAsset.getThumbnail();

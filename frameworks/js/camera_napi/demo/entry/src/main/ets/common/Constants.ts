@@ -28,6 +28,7 @@ export class Constants {
   static readonly PHONE = 'phone';
 
   // video frame
+  static readonly VIDEO_FRAME_60 = 60;
   static readonly VIDEO_FRAME_30 = 30;
   static readonly VIDEO_FRAME_15 = 15;
 }

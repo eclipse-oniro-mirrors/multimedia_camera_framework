@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,6 +15,8 @@
 
 import { SettingRightLayout } from '../common/SettingRightLayout';
 import Logger from '../model/Logger';
+import { CameraConfig } from './CameraConfig';
+import { GlobalContext } from './GlobalContext';
 
 const TAG = 'SettingList';
 
@@ -30,33 +32,34 @@ export default struct SettingList {
 
   onSettingMessageFn(): void {
     Logger.info(TAG, `onSettingMessageFn settingMessageNum: ${this.leftSliderIndex}`);
+    let cameraConfig: CameraConfig = GlobalContext.get().getObject('cameraConfig') as CameraConfig;
     switch (this.leftSliderIndex) {
       case 2:
-        this.isIndex = globalThis.settingDataObj.videoStabilizationMode;
+        this.isIndex = cameraConfig.videoStabilizationMode;
         break;
       case 3:
-        this.isIndex = globalThis.settingDataObj.exposureMode;
+        this.isIndex = cameraConfig.exposureMode;
         break;
       case 4:
-        this.isIndex = globalThis.settingDataObj.focusMode;
+        this.isIndex = cameraConfig.focusMode;
         break;
       case 5:
-        this.isIndex = globalThis.settingDataObj.photoQuality;
+        this.isIndex = cameraConfig.photoQuality;
         break;
       case 7:
-        this.isIndex = globalThis.settingDataObj.photoFormat;
+        this.isIndex = cameraConfig.photoFormat;
         break;
       case 8:
-        this.isIndex = globalThis.settingDataObj.photoOrientation;
+        this.isIndex = cameraConfig.photoOrientation;
         break;
       case 9:
-        this.isIndex = globalThis.settingDataObj.photoResolution;
+        this.isIndex = cameraConfig.photoResolution;
         break;
       case 10:
-        this.isIndex = globalThis.settingDataObj.videoResolution;
+        this.isIndex = cameraConfig.videoResolution;
         break;
       case 11:
-        this.isIndex = globalThis.settingDataObj.videoFrame;
+        this.isIndex = cameraConfig.videoFrame;
         break;
     }
   }

@@ -26,7 +26,6 @@ export default class MainAbility extends Ability {
     Logger.info(TAG, 'Ability onCreate');
     Logger.debug(TAG, `want param: ${JSON.stringify(want)}`);
     Logger.debug(TAG, `launchParam: ${JSON.stringify(launchParam)}`);
-    globalThis.abilityContext = this.context;
   }
 
   onDestroy(): void {
