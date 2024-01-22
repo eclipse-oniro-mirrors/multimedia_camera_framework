@@ -136,7 +136,6 @@ private:
     sptr<ICameraDeviceServiceCallback> GetDeviceServiceCallback();
     void ResetCachedSettings();
     int32_t InitStreamOperator();
-    void ReportFlashEvent(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void RegisterFoldStatusListener();
     void UnRegisterFoldStatusListener();

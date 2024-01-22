@@ -262,7 +262,6 @@ int32_t HCameraService::CreatePhotoOutput(const sptr<OHOS::IBufferProducer>& pro
     sptr<HStreamCapture> streamCapture = new (nothrow) HStreamCapture(producer, format, width, height);
     CHECK_AND_RETURN_RET_LOG(streamCapture != nullptr, CAMERA_ALLOC_ERROR,
         "HCameraService::CreatePhotoOutput HStreamCapture allocation failed");
-    POWERMGR_SYSEVENT_CAMERA_CONFIG(PHOTO, producer->GetDefaultWidth(), producer->GetDefaultHeight());
     photoOutput = streamCapture;
     return CAMERA_OK;
 }
@@ -297,7 +296,6 @@ int32_t HCameraService::CreatePreviewOutput(const sptr<OHOS::IBufferProducer>& p
     streamRepeatPreview = new (nothrow) HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
     CHECK_AND_RETURN_RET_LOG(streamRepeatPreview != nullptr, CAMERA_ALLOC_ERROR,
         "HCameraService::CreatePreviewOutput HStreamRepeat allocation failed");
-    POWERMGR_SYSEVENT_CAMERA_CONFIG(PREVIEW, width, height);
     previewOutput = streamRepeatPreview;
     return CAMERA_OK;
 }
@@ -316,7 +314,6 @@ int32_t HCameraService::CreateMetadataOutput(
     CHECK_AND_RETURN_RET_LOG(streamMetadata != nullptr, CAMERA_ALLOC_ERROR,
         "HCameraService::CreateMetadataOutput HStreamMetadata allocation failed");
 
-    POWERMGR_SYSEVENT_CAMERA_CONFIG(METADATA, producer->GetDefaultWidth(), producer->GetDefaultHeight());
     metadataOutput = streamMetadata;
     return CAMERA_OK;
 }
@@ -335,7 +332,6 @@ int32_t HCameraService::CreateVideoOutput(const sptr<OHOS::IBufferProducer>& pro
     CHECK_AND_RETURN_RET_LOG(streamRepeatVideo != nullptr, CAMERA_ALLOC_ERROR,
         "HCameraService::CreateVideoOutput HStreamRepeat allocation failed");
 
-    POWERMGR_SYSEVENT_CAMERA_CONFIG(VIDEO, producer->GetDefaultWidth(), producer->GetDefaultHeight());
     videoOutput = streamRepeatVideo;
     return CAMERA_OK;
 }

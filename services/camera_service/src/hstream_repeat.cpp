@@ -352,7 +352,6 @@ int32_t HStreamRepeat::ForkSketchStreamRepeat(
     auto streamRepeat = new (std::nothrow) HStreamRepeat(nullptr, format_, width, height, RepeatStreamType::SKETCH);
     CHECK_AND_RETURN_RET_LOG(streamRepeat != nullptr, CAMERA_ALLOC_ERROR,
         "HStreamRepeat::ForkSketchStreamRepeat HStreamRepeat allocation failed");
-    POWERMGR_SYSEVENT_CAMERA_CONFIG(SKETCH, width, height);
     MEDIA_DEBUG_LOG(
         "HStreamRepeat::ForkSketchStreamRepeat para is:%{public}dx%{public}d,%{public}f", width, height, sketchRatio);
     sketchStream = streamRepeat;

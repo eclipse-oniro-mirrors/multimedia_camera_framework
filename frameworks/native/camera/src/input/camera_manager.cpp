@@ -396,8 +396,6 @@ int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &su
                                                profile.GetSize().height, streamCapture);
     if (retCode == CAMERA_OK) {
         photoOutput = new(std::nothrow) PhotoOutput(streamCapture);
-        POWERMGR_SYSEVENT_CAMERA_CONFIG(PHOTO, profile.GetSize().width,
-                                        profile.GetSize().height);
     } else {
         MEDIA_ERR_LOG("Failed to get stream capture object from hcamera service!, %{public}d", retCode);
         return ServiceToCameraError(retCode);
@@ -445,9 +443,6 @@ int CameraManager::CreatePreviewOutput(Profile &profile, sptr<Surface> surface, 
                                                  profile.GetSize().width, profile.GetSize().height, streamRepeat);
     if (retCode == CAMERA_OK) {
         previewOutput = new(std::nothrow) PreviewOutput(streamRepeat);
-        POWERMGR_SYSEVENT_CAMERA_CONFIG(PREVIEW,
-                                        profile.GetSize().width,
-                                        profile.GetSize().height);
     } else {
         MEDIA_ERR_LOG("Failed to get stream repeat object from hcamera service! %{public}d", retCode);
         return ServiceToCameraError(retCode);
@@ -496,9 +491,6 @@ int CameraManager::CreateDeferredPreviewOutput(Profile &profile, sptr<PreviewOut
                                                          profile.GetSize().height, streamRepeat);
     if (retCode == CAMERA_OK) {
         previewOutput = new(std::nothrow) PreviewOutput(streamRepeat);
-        POWERMGR_SYSEVENT_CAMERA_CONFIG(PREVIEW,
-                                        profile.GetSize().width,
-                                        profile.GetSize().height);
     } else {
         MEDIA_ERR_LOG("Failed to get stream repeat object from hcamera service!, %{public}d", retCode);
         return ServiceToCameraError(retCode);
@@ -626,9 +618,6 @@ int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surfa
             videoOutput->SetFrameRateRange(videoFrameRates[0], videoFrameRates[1]);
         }
         videoOutput->SetVideoProfile(profile);
-        POWERMGR_SYSEVENT_CAMERA_CONFIG(VIDEO,
-                                        profile.GetSize().width,
-                                        profile.GetSize().height);
     } else {
         MEDIA_ERR_LOG("Failed to get stream repeat object from hcamera service! %{public}d", retCode);
         return ServiceToCameraError(retCode);
@@ -1511,6 +1500,9 @@ int32_t CameraManager::SetTorchMode(TorchMode mode)
     }
     if (retCode == CAMERA_OK) {
         UpdateTorchMode(mode);
+        int32_t pid = IPCSkeleton::GetCallingPid();
+        int32_t uid = IPCSkeleton::GetCallingUid();
+        POWERMGR_SYSEVENT_TORCH_STATE(pid, uid, mode);
     }
     return ServiceToCameraError(retCode);
 }

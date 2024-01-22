@@ -438,7 +438,6 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
             return HdiToServiceError(rc);
         }
         UpdateDeviceOpenLifeCycleSettings(updateSettings_);
-        ReportFlashEvent(updateSettings_);
         {
             std::lock_guard<std::mutex> cachedLock(cachedSettingsMutex_);
             CameraFwkMetadataUtils::MergeMetadata(settings, cachedSettings_);
@@ -670,24 +669,6 @@ void HCameraDevice::UnRegisterFoldStatusListener()
     auto ret = OHOS::Rosen::DisplayManager::GetInstance().UnregisterFoldStatusListener(listener);
     if (ret != OHOS::Rosen::DMError::DM_OK) {
         MEDIA_DEBUG_LOG("HCameraDevice::UnRegisterFoldStatusListener failed");
-    }
-}
-
-void HCameraDevice::ReportFlashEvent(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings)
-{
-    camera_metadata_item_t item;
-    camera_flash_mode_enum_t flashMode = OHOS_CAMERA_FLASH_MODE_ALWAYS_OPEN;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_FLASH_MODE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        flashMode = static_cast<camera_flash_mode_enum_t>(item.data.u8[0]);
-    } else {
-        MEDIA_ERR_LOG("CameraInput::GetFlashMode Failed with return code %{public}d", ret);
-    }
-
-    if (flashMode == OHOS_CAMERA_FLASH_MODE_CLOSE) {
-        POWERMGR_SYSEVENT_FLASH_OFF();
-    } else {
-        POWERMGR_SYSEVENT_FLASH_ON();
     }
 }
 

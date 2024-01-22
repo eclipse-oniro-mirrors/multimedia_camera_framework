@@ -2038,12 +2038,6 @@ int32_t CaptureSession::SetFlashMode(FlashMode flashMode)
         MEDIA_ERR_LOG("CaptureSession::SetFlashMode Failed to set flash mode");
         return CameraErrorCode::SUCCESS;
     }
-
-    if (flashMode == FLASH_MODE_CLOSE) {
-        POWERMGR_SYSEVENT_FLASH_OFF();
-    } else {
-        POWERMGR_SYSEVENT_FLASH_ON();
-    }
     return CameraErrorCode::SUCCESS;
 }
 
