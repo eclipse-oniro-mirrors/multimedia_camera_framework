@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -33,7 +33,7 @@ export struct SettingDialog {
   /**
    * 镜像持久化，再次进入，确定开关是否开启
    */
-  getMirrorBol(bol): void {
+  getMirrorBol(bol: boolean): void {
     let cameraConfig: CameraConfig = GlobalContext.get().getObject('cameraConfig') as CameraConfig;
     cameraConfig.mirrorBol = bol;
     GlobalContext.get().setObject('cameraConfig', cameraConfig);
@@ -42,7 +42,7 @@ export struct SettingDialog {
   /**
    * 地理位置持久化，再次进入，确定开关是否开启
    */
-  getLocationBol(bol): void {
+  getLocationBol(bol: boolean): void {
     let cameraConfig: CameraConfig = GlobalContext.get().getObject('cameraConfig') as CameraConfig;
     cameraConfig.locationBol = bol;
     GlobalContext.get().setObject('cameraConfig', cameraConfig);
@@ -51,7 +51,7 @@ export struct SettingDialog {
   /**
    * 参考线持久化，再次进入，确定开关是否开启
    */
-  getReferenceLineBol(bol): void {
+  getReferenceLineBol(bol: boolean): void {
     let cameraConfig: CameraConfig = GlobalContext.get().getObject('cameraConfig') as CameraConfig;
     cameraConfig.referenceLineBol = bol;
     GlobalContext.get().setObject('cameraConfig', cameraConfig);
@@ -95,7 +95,7 @@ export struct SettingDialog {
               backNum: 1,
               leftSliderIndex: $leftSliderIndex,
               setModeBol: (GlobalContext.get().getObject('cameraConfig') as CameraConfig).mirrorBol,
-              getModeBol: this.getMirrorBol.bind(this)
+              getModeBol: this.getMirrorBol
             })
           }
           .width('97%')
@@ -154,7 +154,7 @@ export struct SettingDialog {
               iconModeBol: true,
               modeMessage: '拍摄时显示地理位置',
               setModeBol: (GlobalContext.get().getObject('cameraConfig') as CameraConfig).locationBol,
-              getModeBol: this.getLocationBol.bind(this)
+              getModeBol: this.getLocationBol
             })
           }
           .width('97%')
@@ -231,7 +231,7 @@ export struct SettingDialog {
               borderBol: false,
               iconModeBol: true,
               setModeBol: (GlobalContext.get().getObject('cameraConfig') as CameraConfig).referenceLineBol,
-              getModeBol: this.getReferenceLineBol.bind(this)
+              getModeBol: this.getReferenceLineBol
             })
               .margin({ top: 15 })
           }

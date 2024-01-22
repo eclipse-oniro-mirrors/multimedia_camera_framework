@@ -17,9 +17,11 @@ import display from '@ohos.display';
 import type common from '@ohos.app.ability.common';
 import type Want from '@ohos.app.ability.Want';
 import type window from '@ohos.window';
+import { PromptAction } from '@ohos.arkui.UIContext';
+
+const TAG: string = 'GlobalContext';
 
 export class GlobalContext {
-  private static TAG: string = '[GlobalContext]:';
 
   private constructor() {
   }
@@ -28,7 +30,7 @@ export class GlobalContext {
   private _objects = new Map<string, Object>();
   private mDisplay: display.Display | undefined = undefined;
   private mCutoutInfo: display.CutoutInfo | undefined = undefined;
-  private cameraAbilityContext;
+  private cameraAbilityContext: common.UIAbilityContext;
   private cameraAbilityStageContext: common.AbilityStageContext;
   private cameraAbilityWant: Want;
   private cameraNewWant: Want;
@@ -36,9 +38,8 @@ export class GlobalContext {
   private cameraWinClass: window.Window;
   private cameraSettingContext: common.UIAbilityContext;
   private cameraWindowStageEvent: window.WindowStageEventType;
-  private xComponentController;
-  private cameraFormParam;
-  private promptAction;
+  private xComponentController: XComponentController;
+  private promptAction: PromptAction;
 
   public static get(): GlobalContext {
     if (!Boolean(GlobalContext.instance).valueOf()) {
@@ -81,11 +82,11 @@ export class GlobalContext {
     return this.mCutoutInfo;
   }
 
-  public getCameraAbilityContext() {
+  public getCameraAbilityContext(): common.UIAbilityContext {
     return this.cameraAbilityContext;
   }
 
-  public setCameraAbilityContext(context): void {
+  public setCameraAbilityContext(context: common.UIAbilityContext): void {
     this.cameraAbilityContext = context;
   }
 
@@ -137,11 +138,11 @@ export class GlobalContext {
     this.cameraSettingContext = context;
   }
 
-  public setPromptAction(promptAction): void {
+  public setPromptAction(promptAction: PromptAction): void {
     this.promptAction = promptAction;
   }
 
-  public getPromptAction() {
+  public getPromptAction(): PromptAction {
     return this.promptAction;
   }
 
@@ -159,13 +160,5 @@ export class GlobalContext {
 
   public setXComponentController(controller): void {
     this.xComponentController = controller;
-  }
-
-  public getCameraFormParam() {
-    return this.cameraFormParam;
-  }
-
-  public setCameraFormParam(cameraParam): void {
-    this.cameraFormParam = cameraParam;
   }
 }

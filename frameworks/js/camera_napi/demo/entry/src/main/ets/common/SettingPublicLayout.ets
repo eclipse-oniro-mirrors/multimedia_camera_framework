@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,10 +20,10 @@ const TAG: string = "SettingPublicLayout";
 
 @Component
 export struct SettingPublicLayout {
-  private icon: Resource;
-  private modeMessage: string;
-  private getModeBol: (mirrorBol: boolean) => void;
-  private setModeBol: boolean;
+  private icon: Resource | string = '';
+  private modeMessage: string = '';
+  private getModeBol: (bol: boolean) => void = (bol: boolean) => {};
+  private setModeBol: boolean = false;
   private isModeBol: boolean = false;
   private borderBol: boolean = false;
   private borderBole: boolean = false;
@@ -58,12 +58,7 @@ export struct SettingPublicLayout {
    * isModeBol = true  borderBol= true  borderBole = false 下左下右圆角
    * isModeBol = true  borderBol= true  borderBole = true 上左上右圆角
    */
-  isBorderFn(): {
-    topLeft?: number,
-    topRight?: number,
-    bottomLeft?: number,
-    bottomRight?: number
-  } {
+  isBorderFn(): BorderRadiuses {
     if (this.isModeBol) {
       if (this.borderBol) {
         if (this.borderBole) {

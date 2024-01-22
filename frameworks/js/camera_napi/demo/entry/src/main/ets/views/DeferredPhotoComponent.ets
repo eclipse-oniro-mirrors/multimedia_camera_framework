@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -27,7 +27,7 @@ export struct DeferredPhotoComponent {
   @StorageLink('deferredPhotoComponentIsShow') isShow: boolean = true;
   @StorageLink('deferredPhotoComponentIsHidden') isHidden: boolean = true;
   @State targetName: string = '分段式';
-  colorEffectList = [
+  colorEffectList: Array<Record<string, Object>> = [
     { 'colorEffect': 0, 'name': '老拍照' },
     { 'colorEffect': 1, 'name': '原图' },
     { 'colorEffect': 2, 'name': '低质量图' }
@@ -52,16 +52,13 @@ export struct DeferredPhotoComponent {
         }
       } else {
         Flex({ justifyContent: FlexAlign.SpaceEvenly, alignItems: ItemAlign.Center, direction: FlexDirection.Column }) {
-          ForEach(this.colorEffectList, (item: {
-            colorEffect: number,
-            name: string
-          }, index: number) => {
-            Text(item.name)
+          ForEach(this.colorEffectList, (item: Record<string, Object>, index: number) => {
+            Text(item.name as string)
               .fontSize(10)
               .height('50vp')
               .onClick(() => {
                 Logger.debug(TAG, 'onClick');
-                this.targetName = item.name;
+                this.targetName = item.name as string;
                 this.isShow = true;
                 CameraService.setCaptureMode(index);
                 CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);

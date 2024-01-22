@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,7 +23,7 @@ export struct ColorEffectComponent {
   @StorageLink('colorEffectComponentIsShow') isShow: boolean = true;
   @StorageLink('colorEffectComponentIsHidden') isHidden: boolean = true;
   @State targetName: string = '滤镜';
-  colorEffectList = [
+  colorEffectList: Array<Record<string, Object>> = [
     {'colorEffect': 0, 'name': '原色'},
     {'colorEffect': 1, 'name': '鲜艳'},
     {'colorEffect': 2, 'name': '明快'}
@@ -48,17 +48,16 @@ export struct ColorEffectComponent {
         }
       } else {
         Flex({ justifyContent: FlexAlign.SpaceEvenly, alignItems: ItemAlign.Center, direction: FlexDirection.Column }) {
-          ForEach(this.colorEffectList, (item: {colorEffect: number, name: string}) => {
-            Text(item.name)
+          ForEach(this.colorEffectList, (item: Record<string, Object>) => {
+            Text(item.name as string)
               .width('35vp')
               .height('50vp')
               .onClick(() => {
                 Logger.debug(TAG, 'onClick');
-                this.targetName = item.name;
+                this.targetName = item.name as string;
                 this.isShow = true;
-                CameraService.setColorEffect(item.colorEffect);
-                let colorEffect = CameraService.getColorEffect();
-                Logger.info(TAG, 'onClick colorEffect: ' + colorEffect);
+                CameraService.setColorEffect(item.colorEffect as number);
+                Logger.info(TAG, 'onClick colorEffect: ' + CameraService.getColorEffect());
               })
           })
         }

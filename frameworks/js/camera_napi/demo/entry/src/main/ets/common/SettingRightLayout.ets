@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,12 +16,19 @@
 import { SettingItem } from './SettingItem';
 import Logger from '../model/Logger';
 
+interface ResourceObj {
+  icon: Resource | string | undefined,
+  message: string | undefined
+}
+
 const TAG: string = "SettingRightLayout";
 
 @Component
 export struct SettingRightLayout {
   @Link isIndex: number;
-  private controller: CustomDialogController;
+  private controller: CustomDialogController = new CustomDialogController({
+    builder: null
+  });
   @Link settingMessageNum: number; // 传进来的点击设置
   private title: Array<string> = ['', '自拍镜像', '视频防抖', '曝光模式', '对焦模式', '拍摄质量', '拍摄时显示地理位置', '照片格式', '照片方向配置', '照片分辨率', '视频分辨率', '录像帧率', '参考线',];
   private settingItemDataList: Array<Array<string>> = [
@@ -38,10 +45,7 @@ export struct SettingRightLayout {
     ['15', '30'],
   ];
 
-  getModeIconObj(): {
-    icon: Resource,
-    message: string
-  } {
+  getModeIconObj(): ResourceObj {
     if (this.settingMessageNum == 1) {
       return { icon: $r('app.media.pic_camera_mirror'), message: '自拍镜像功能只能在前置摄像头打开时可使用。' };
     } else if (this.settingMessageNum == 6) {
@@ -49,7 +53,7 @@ export struct SettingRightLayout {
     } else if (this.settingMessageNum == 12) {
       return { icon: $r('app.media.pic_camera_line'), message: '打开相机参考线，可以帮你创造出构图更出色的画面。' };
     } else {
-      return { icon: null, message: null };
+      return { icon: undefined, message: undefined };
     }
   }
 
@@ -88,7 +92,7 @@ export struct SettingRightLayout {
         .margin({ top: 90 })
       } else {
         Column() {
-          ForEach(this.settingItemDataList[this.settingMessageNum], (item, index) => {
+          ForEach(this.settingItemDataList[this.settingMessageNum], (item: string, index: number) => {
             SettingItem({
               itemData: item,
               index: index,
