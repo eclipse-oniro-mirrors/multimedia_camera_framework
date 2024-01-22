@@ -964,7 +964,7 @@ void HCameraHostManager::AddCameraHost(const std::string& svcName)
             statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_AVAILABLE);
         }
     }
-    if (svcName == LOCAL_SERVICE_NAME) {
+    if (statusCallback && svcName == LOCAL_SERVICE_NAME) {
         statusCallback->OnTorchStatus(TORCH_STATUS_OFF);
     }
 }
@@ -990,7 +990,7 @@ void HCameraHostManager::RemoveCameraHost(const std::string& svcName)
     *it = nullptr;
     cameraHostInfos_.erase(it);
     auto statusCallback = statusCallback_.lock();
-    if (svcName == LOCAL_SERVICE_NAME) {
+    if (statusCallback && svcName == LOCAL_SERVICE_NAME) {
         statusCallback->OnTorchStatus(TORCH_STATUS_UNAVAILABLE);
     }
 }
