@@ -21,9 +21,8 @@
 #include "camera_log.h"
 #include "camera_metadata_operator.h"
 #include "camera_service_ipc_interface_code.h"
-#include "camera_util.h"
-#include "display.h"
 #include "display_manager.h"
+#include "camera_util.h"
 #include "hstream_common.h"
 #include "ipc_skeleton.h"
 #include "istream_repeat_callback.h"
@@ -433,16 +432,12 @@ void HStreamRepeat::SetStreamTransform()
     }
 
     std::lock_guard<std::mutex> lock(producerLock_);
-    if (producer_ == nullptr) {
-        MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed because producer is null");
+    if (producer_ == nullptr || OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay() == nullptr) {
+        MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed, producer is null or GetDefaultDisplay failed");
         return;
     }
-    auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
-    if (display == nullptr) {
-        MEDIA_INFO_LOG("GetDefaultDisplay failed");
-        return;
-    }
-    if (display->GetWidth() < display->GetHeight()) {
+
+    if (IsVerticalDevice()) {
         ret = SurfaceError::SURFACE_ERROR_OK;
         int32_t streamRotation = sensorOrientation;
         if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
