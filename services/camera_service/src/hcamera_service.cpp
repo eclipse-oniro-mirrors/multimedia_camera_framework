@@ -374,7 +374,8 @@ void HCameraService::OnFlashlightStatus(const string& cameraId, FlashStatus stat
 
 void HCameraService::OnTorchStatus(TorchStatus status)
 {
-    lock_guard<mutex> lock(torchCbMutex_);
+    lock_guard<recursive_mutex> lock(torchCbMutex_);
+    torchStatus_ = status;
     MEDIA_INFO_LOG("HCameraService::OnTorchtStatus "
                    "callbacks.size = %{public}zu,  status = %{public}d, pid = %{public}d",
         torchServiceCallbacks_.size(), status, IPCSkeleton::GetCallingPid());
@@ -471,19 +472,20 @@ int32_t HCameraService::SetMuteCallback(sptr<ICameraMuteServiceCallback>& callba
 
 int32_t HCameraService::SetTorchCallback(sptr<ITorchServiceCallback>& callback)
 {
-    lock_guard<mutex> lock(torchCbMutex_);
+    lock_guard<recursive_mutex> lock(torchCbMutex_);
     pid_t pid = IPCSkeleton::GetCallingPid();
     if (callback == nullptr) {
         MEDIA_ERR_LOG("HCameraService::SetTorchCallback callback is null");
         return CAMERA_INVALID_ARG;
     }
     torchServiceCallbacks_.insert(make_pair(pid, callback));
+    OnTorchStatus(torchStatus_);
     return CAMERA_OK;
 }
 
 int32_t HCameraService::UnSetTorchCallback(pid_t pid)
 {
-    lock_guard<mutex> lock(torchCbMutex_);
+    lock_guard<recursive_mutex> lock(torchCbMutex_);
     MEDIA_INFO_LOG("HCameraService::UnSetTorchCallback pid = %{public}d, size = %{public}zu", pid,
         torchServiceCallbacks_.size());
     if (!torchServiceCallbacks_.empty()) {
