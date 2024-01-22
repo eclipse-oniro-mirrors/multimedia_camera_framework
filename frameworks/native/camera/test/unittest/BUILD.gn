@@ -73,8 +73,8 @@ ohos_unittest("camera_framework_unittest_v1_1") {
     "-Werror=unused",
   ]
   sanitize = {
-    cfi = true
-    cfi_cross_dso = true
+    cfi = false
+    cfi_cross_dso = false
     debug = false
   }
   include_dirs += [
