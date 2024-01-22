@@ -149,6 +149,7 @@ sptr<T> CastStream(sptr<HStreamCommon> streamCommon)
     }
     return static_cast<T*>(streamCommon.GetRefPtr());
 }
+bool IsVerticalDevice();
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_UTIL_H
