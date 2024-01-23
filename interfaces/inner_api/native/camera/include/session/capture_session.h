@@ -907,6 +907,7 @@ protected:
 
 private:
     std::mutex changeMetaMutex_;
+    std::mutex sessionCallbackMutex_;
     sptr<ICaptureSession> captureSession_;
     std::shared_ptr<SessionCallback> appCallback_;
     sptr<ICaptureSessionCallback> captureSessionCallback_;

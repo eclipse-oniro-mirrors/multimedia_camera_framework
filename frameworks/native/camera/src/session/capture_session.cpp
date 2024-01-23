@@ -253,10 +253,13 @@ CaptureSession::CaptureSession(sptr<ICaptureSession> &captureSession)
 void CaptureSession::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
-    if (appCallback_ != nullptr) {
-        MEDIA_DEBUG_LOG("appCallback not nullptr");
-        int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
-        appCallback_->OnError(serviceErrorType);
+    {
+        std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+        if (appCallback_ != nullptr) {
+            MEDIA_DEBUG_LOG("appCallback not nullptr");
+            int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
+            appCallback_->OnError(serviceErrorType);
+        }
     }
     if (captureSession_ != nullptr) {
         (void)captureSession_->AsObject()->RemoveDeathRecipient(deathRecipient_);
@@ -271,12 +274,6 @@ CaptureSession::~CaptureSession()
     inputDevice_ = nullptr;
     captureSession_ = nullptr;
     changedMetadata_ = nullptr;
-    appCallback_ = nullptr;
-    captureSessionCallback_ = nullptr;
-    exposureCallback_ = nullptr;
-    focusCallback_ = nullptr;
-    macroStatusCallback_ = nullptr;
-    smoothZoomCallback_ = nullptr;
 }
 
 int32_t CaptureSession::BeginConfig()
@@ -712,8 +709,9 @@ int32_t CaptureSession::Release()
     }
     inputDevice_ = nullptr;
     captureSession_ = nullptr;
-    captureSessionCallback_ = nullptr;
     changedMetadata_ = nullptr;
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    captureSessionCallback_ = nullptr;
     appCallback_ = nullptr;
     exposureCallback_ = nullptr;
     focusCallback_ = nullptr;
@@ -728,7 +726,7 @@ void CaptureSession::SetCallback(std::shared_ptr<SessionCallback> callback)
         MEDIA_ERR_LOG("CaptureSession::SetCallback: Unregistering application callback!");
     }
     int32_t errorCode = CAMERA_OK;
-
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     appCallback_ = callback;
     if (appCallback_ != nullptr && captureSession_ != nullptr) {
         if (captureSessionCallback_ == nullptr) {
@@ -749,26 +747,31 @@ void CaptureSession::SetCallback(std::shared_ptr<SessionCallback> callback)
 
 std::shared_ptr<SessionCallback> CaptureSession::GetApplicationCallback()
 {
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     return appCallback_;
 }
 
 std::shared_ptr<ExposureCallback> CaptureSession::GetExposureCallback()
 {
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     return exposureCallback_;
 }
 
 std::shared_ptr<FocusCallback> CaptureSession::GetFocusCallback()
 {
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     return focusCallback_;
 }
 
 std::shared_ptr<MacroStatusCallback> CaptureSession::GetMacroStatusCallback()
 {
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     return macroStatusCallback_;
 }
 
 std::shared_ptr<SmoothZoomCallback> CaptureSession::GetSmoothZoomCallback()
 {
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     return smoothZoomCallback_;
 }
 
@@ -1465,6 +1468,7 @@ int32_t CaptureSession::GetExposureValue(float &exposureValue)
 
 void CaptureSession::SetExposureCallback(std::shared_ptr<ExposureCallback> exposureCallback)
 {
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     exposureCallback_ = exposureCallback;
 }
 
@@ -1481,6 +1485,7 @@ void CaptureSession::ProcessAutoExposureUpdates(const std::shared_ptr<Camera::Ca
     ret = Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_EXPOSURE_STATE, &item);
     if (ret == CAM_META_SUCCESS) {
         MEDIA_INFO_LOG("Exposure state: %{public}d", item.data.u8[0]);
+        std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
         if (exposureCallback_ != nullptr) {
             auto itr = metaExposureStateMap_.find(static_cast<camera_exposure_state_t>(item.data.u8[0]));
             if (itr != metaExposureStateMap_.end()) {
@@ -1546,6 +1551,7 @@ int32_t CaptureSession::GetSupportedFocusModes(std::vector<FocusMode> &supported
 
 void CaptureSession::SetFocusCallback(std::shared_ptr<FocusCallback> focusCallback)
 {
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     focusCallback_ = focusCallback;
     return;
 }
@@ -1850,6 +1856,7 @@ void CaptureSession::ProcessAutoFocusUpdates(const std::shared_ptr<Camera::Camer
     ret = Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_FOCUS_STATE, &item);
     if (ret == CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("Focus state: %{public}d", item.data.u8[0]);
+        std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
         if (focusCallback_ != nullptr) {
             auto itr = metaFocusStateMap_.find(static_cast<camera_focus_state_t>(item.data.u8[0]));
             if (itr != metaFocusStateMap_.end() && itr->second != focusCallback_->currentState) {
@@ -2364,6 +2371,7 @@ int32_t CaptureSession::SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoom
             changedMetadata->addEntry(OHOS_CONTROL_SMOOTH_ZOOM_RATIOS, &targetZoomRatio, 1);
             OnSettingUpdated(changedMetadata);
         }
+        std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
         if (smoothZoomCallback_ != nullptr) {
             smoothZoomCallback_->OnSmoothZoom(duration);
         }
@@ -2376,6 +2384,7 @@ int32_t CaptureSession::SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoom
 void CaptureSession::SetSmoothZoomCallback(std::shared_ptr<SmoothZoomCallback> smoothZoomCallback)
 {
     MEDIA_ERR_LOG("CaptureSession::SetSmoothZoomCallback() set smooth zoom callback");
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     smoothZoomCallback_ = smoothZoomCallback;
     return;
 }
@@ -3220,6 +3229,7 @@ int32_t CaptureSession::EnableMacro(bool isEnable)
 
 void CaptureSession::SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback)
 {
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     macroStatusCallback_ = callback;
     return;
 }

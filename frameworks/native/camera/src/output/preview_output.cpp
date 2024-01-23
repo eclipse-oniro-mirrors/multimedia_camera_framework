@@ -42,12 +42,15 @@ PreviewOutput::PreviewOutput(sptr<IStreamRepeat>& streamRepeat)
 
 PreviewOutput::~PreviewOutput()
 {
-    svcCallback_ = nullptr;
-    appCallback_ = nullptr;
 }
 
 int32_t PreviewOutput::Release()
 {
+    {
+        std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+        svcCallback_ = nullptr;
+        appCallback_ = nullptr;
+    }
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into PreviewOutput::Release");
     if (GetStream() == nullptr) {
@@ -64,8 +67,6 @@ int32_t PreviewOutput::Release()
     } else {
         MEDIA_ERR_LOG("PreviewOutput::Release() itemStream is nullptr");
     }
-    svcCallback_ = nullptr;
-    appCallback_ = nullptr;
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);
 }
@@ -432,6 +433,7 @@ std::shared_ptr<Size> PreviewOutput::FindSketchSize()
 
 void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
 {
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     appCallback_ = callback;
     if (appCallback_ != nullptr) {
         if (svcCallback_ == nullptr) {
@@ -515,6 +517,7 @@ int32_t PreviewOutput::OnResultMetadataChanged(
 
 std::shared_ptr<PreviewStateCallback> PreviewOutput::GetApplicationCallback()
 {
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     return appCallback_;
 }
 
@@ -565,10 +568,13 @@ void PreviewOutput::OnNativeUnregisterCallback(const std::string& eventString)
 void PreviewOutput::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
-    if (appCallback_ != nullptr) {
-        MEDIA_DEBUG_LOG("appCallback not nullptr");
-        int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
-        appCallback_->OnError(serviceErrorType);
+    {
+        std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+        if (appCallback_ != nullptr) {
+            MEDIA_DEBUG_LOG("appCallback not nullptr");
+            int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
+            appCallback_->OnError(serviceErrorType);
+        }
     }
     if (GetStream() != nullptr) {
         (void)GetStream()->AsObject()->RemoveDeathRecipient(deathRecipient_);

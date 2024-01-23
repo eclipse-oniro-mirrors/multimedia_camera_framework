@@ -61,19 +61,19 @@ MetadataOutput::~MetadataOutput()
         }
         surface_ = nullptr;
     }
-    appObjectCallback_ = nullptr;
-    appStateCallback_ = nullptr;
 }
 
 std::shared_ptr<MetadataObjectCallback> MetadataOutput::GetAppObjectCallback()
 {
     MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::GetAppObjectCallback");
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     return appObjectCallback_;
 }
 
 std::shared_ptr<MetadataStateCallback> MetadataOutput::GetAppStateCallback()
 {
     MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::GetAppStateCallback");
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     return appStateCallback_;
 }
 
@@ -120,11 +120,13 @@ void MetadataOutput::SetCapturingMetadataObjectTypes(std::vector<MetadataObjectT
 
 void MetadataOutput::SetCallback(std::shared_ptr<MetadataObjectCallback> metadataObjectCallback)
 {
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     appObjectCallback_ = metadataObjectCallback;
 }
 
 void MetadataOutput::SetCallback(std::shared_ptr<MetadataStateCallback> metadataStateCallback)
 {
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     appStateCallback_ = metadataStateCallback;
 }
 
@@ -149,10 +151,13 @@ int32_t MetadataOutput::Start()
 void MetadataOutput::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
-    if (appStateCallback_ != nullptr) {
-        MEDIA_DEBUG_LOG("appCallback not nullptr");
-        int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
-        appStateCallback_->OnError(serviceErrorType);
+    {
+        std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+        if (appStateCallback_ != nullptr) {
+            MEDIA_DEBUG_LOG("appCallback not nullptr");
+            int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
+            appStateCallback_->OnError(serviceErrorType);
+        }
     }
     if (GetStream() != nullptr) {
         (void)GetStream()->AsObject()->RemoveDeathRecipient(deathRecipient_);
@@ -175,6 +180,11 @@ int32_t MetadataOutput::Stop()
 
 int32_t MetadataOutput::Release()
 {
+    {
+        std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+        appObjectCallback_ = nullptr;
+        appStateCallback_ = nullptr;
+    }
     if (GetStream() == nullptr) {
         MEDIA_ERR_LOG("MetadataOutput Failed to Release!, GetStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;
@@ -190,8 +200,6 @@ int32_t MetadataOutput::Release()
         }
         surface_ = nullptr;
     }
-    appObjectCallback_ = nullptr;
-    appStateCallback_ = nullptr;
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);
 }
@@ -303,7 +311,7 @@ void MetadataObjectListener::OnBufferAvailable()
     }
     int32_t ret = ProcessMetadataBuffer(buffer->GetVirAddr(), timestamp);
     if (ret) {
-        std::shared_ptr<MetadataStateCallback> appStateCallback = metadata_->appStateCallback_;
+        std::shared_ptr<MetadataStateCallback> appStateCallback = metadata_->GetAppStateCallback();
         if (appStateCallback) {
             appStateCallback->OnError(ret);
         }

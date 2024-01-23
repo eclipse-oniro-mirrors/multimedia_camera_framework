@@ -113,6 +113,7 @@ public:
     sptr<CaptureSession> GetSession();
     void SetSession(wptr<CaptureSession> captureSession);
     std::mutex asyncOpMutex_;
+    std::mutex outputCallbackMutex_;
     int32_t SetPhotoProfile(Profile& profile);
     Profile GetPhotoProfile();
     int32_t SetPreviewProfile(Profile& profile);

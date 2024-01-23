@@ -97,11 +97,14 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
 void CameraInput::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
-    if (errorCallback_ != nullptr) {
-        MEDIA_DEBUG_LOG("appCallback not nullptr");
-        int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
-        int32_t serviceErrorMsg = 0;
-        errorCallback_->OnError(serviceErrorType, serviceErrorMsg);
+    {
+        std::lock_guard<std::mutex> lock(errorCallbackMutex_);
+        if (errorCallback_ != nullptr) {
+            MEDIA_DEBUG_LOG("appCallback not nullptr");
+            int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
+            int32_t serviceErrorMsg = 0;
+            errorCallback_->OnError(serviceErrorType, serviceErrorMsg);
+        }
     }
     if (deviceObj_ != nullptr) {
         (void)deviceObj_->AsObject()->RemoveDeathRecipient(deathRecipient_);
@@ -180,6 +183,7 @@ void CameraInput::SetErrorCallback(std::shared_ptr<ErrorCallback> errorCallback)
     if (errorCallback == nullptr) {
         MEDIA_ERR_LOG("SetErrorCallback: Unregistering error callback");
     }
+    std::lock_guard<std::mutex> lock(errorCallbackMutex_);
     errorCallback_ = errorCallback;
     return;
 }
@@ -205,6 +209,7 @@ sptr<ICameraDeviceService> CameraInput::GetCameraDevice()
 
 std::shared_ptr<ErrorCallback> CameraInput::GetErrorCallback()
 {
+    std::lock_guard<std::mutex> lock(errorCallbackMutex_);
     return errorCallback_;
 }
 std::shared_ptr<ResultCallback> CameraInput::GetResultCallback()

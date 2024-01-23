@@ -323,6 +323,7 @@ public:
     int32_t GetCameraAllVendorTags(std::vector<vendorTag_t> &infos);
 
 private:
+    std::mutex errorCallbackMutex_;
     sptr<ICameraDeviceService> deviceObj_;
     sptr<CameraDevice> cameraObj_;
     std::shared_ptr<ResultCallback> resultCallback_;

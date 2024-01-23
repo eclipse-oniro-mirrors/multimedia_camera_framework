@@ -231,13 +231,12 @@ PhotoOutput::PhotoOutput(sptr<IStreamCapture>& streamCapture)
 PhotoOutput::~PhotoOutput()
 {
     MEDIA_DEBUG_LOG("Enter Into PhotoOutput::~PhotoOutput()");
-    cameraSvcCallback_ = nullptr;
-    appCallback_ = nullptr;
     defaultCaptureSetting_ = nullptr;
 }
 
 void PhotoOutput::SetCallback(std::shared_ptr<PhotoStateCallback> callback)
 {
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     appCallback_ = callback;
     if (appCallback_ != nullptr) {
         if (cameraSvcCallback_ == nullptr) {
@@ -300,6 +299,7 @@ int32_t PhotoOutput::SetThumbnail(bool isEnabled)
 
 std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
 {
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     return appCallback_;
 }
 
@@ -410,6 +410,11 @@ int32_t PhotoOutput::ConfirmCapture()
 
 int32_t PhotoOutput::Release()
 {
+    {
+        std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+        cameraSvcCallback_ = nullptr;
+        appCallback_ = nullptr;
+    }
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into PhotoOutput::Release");
     if (GetStream() == nullptr) {
@@ -426,8 +431,6 @@ int32_t PhotoOutput::Release()
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("PhotoOutput Failed to release!, errCode: %{public}d", errCode);
     }
-    cameraSvcCallback_ = nullptr;
-    appCallback_ = nullptr;
     defaultCaptureSetting_ = nullptr;
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);
@@ -560,11 +563,14 @@ std::shared_ptr<PhotoCaptureSetting> PhotoOutput::GetDefaultCaptureSetting()
 void PhotoOutput::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
-    if (appCallback_ != nullptr) {
-        MEDIA_DEBUG_LOG("appCallback not nullptr");
-        int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
-        int32_t captureId = -1;
-        appCallback_->OnCaptureError(captureId, serviceErrorType);
+    {
+        std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+        if (appCallback_ != nullptr) {
+            MEDIA_DEBUG_LOG("appCallback not nullptr");
+            int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
+            int32_t captureId = -1;
+            appCallback_->OnCaptureError(captureId, serviceErrorType);
+        }
     }
     if (GetStream() != nullptr) {
         (void)GetStream()->AsObject()->RemoveDeathRecipient(deathRecipient_);
