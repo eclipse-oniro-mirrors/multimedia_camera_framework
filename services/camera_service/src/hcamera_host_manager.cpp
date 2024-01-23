@@ -831,7 +831,7 @@ void HCameraHostManager::SaveRestoreParam(sptr<HCameraRestoreParam> cameraRestor
     } else if (cameraRestoreParam->GetRestoreParamType() == RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS) {
         auto itTransitent = transitentParamMap_.find(clientName);
         if (itTransitent != transitentParamMap_.end()) {
-            transitentParamMap_.erase(clientName);;
+            transitentParamMap_.erase(clientName);
         }
         transitentParamMap_[clientName] = cameraRestoreParam;
         MEDIA_DEBUG_LOG("HCameraHostManager::SaveRestoreParam save transist param");
@@ -887,7 +887,7 @@ sptr<HCameraRestoreParam> HCameraHostManager::GetRestoreParam(const std::string&
     const std::string& cameraId)
 {
     MEDIA_DEBUG_LOG("HCameraHostManager::GetRestoreParam enter");
-    std::lock_guard<std::mutex> lock(saveRestoreMutex_);    
+    std::lock_guard<std::mutex> lock(saveRestoreMutex_); 
     std::vector<StreamInfo_V1_1> streamInfos;
     RestoreParamTypeOhos restoreParamType = RestoreParamTypeOhos::NO_NEED_RESTORE_PARAM_OHOS;
     sptr<HCameraRestoreParam> cameraRestoreParam = new HCameraRestoreParam(clientName, cameraId,
