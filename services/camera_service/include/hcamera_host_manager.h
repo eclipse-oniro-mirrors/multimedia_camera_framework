@@ -98,6 +98,8 @@ public:
 
     void UpdateRestoreParam(sptr<HCameraRestoreParam> &cameraRestoreParam);
 
+    void DeleteRestoreParam(const std::string& clientName, const std::string& cameraId);
+
     bool CheckCameraId(sptr<HCameraRestoreParam> cameraRestoreParam, const std::string& cameraId);
 
     void AddCameraHost(const std::string& svcName);
@@ -118,6 +120,7 @@ private:
 
     std::mutex mutex_;
     std::mutex deviceMutex_;
+    std::mutex saveRestoreMutex_;
     std::weak_ptr<StatusCallback> statusCallback_;
     std::shared_ptr<CameraHostDeadCallback> cameraHostDeadCallback_;
     std::vector<sptr<CameraHostInfo>> cameraHostInfos_;

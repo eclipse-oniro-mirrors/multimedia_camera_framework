@@ -41,4 +41,10 @@ if (defined(global_parts_info) && defined(global_parts_info.sensors_sensor)) {
   use_sensor = true
 }
 
+use_thermal_manager = false
+if (defined(global_parts_info) &&
+    defined(global_parts_info.powermgr_thermal_manager)) {
+  use_thermal_manager = true
+}
+
 gen_camera_picker = true

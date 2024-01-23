@@ -327,6 +327,14 @@ void EventsMonitor::ConnectThermalSvr()
         DP_INFO_LOG("Add death recipient to PowerMgr service failed.");
         return;
     }
+#ifdef CAMERA_USE_THERMAL
+    thermalSrv_ = iface_cast<OHOS::PowerMgr::IThermalSrv>(remoteObject_);
+    if (thermalSrv_ != nullptr) {
+        OHOS::PowerMgr::ThermalLevel level = OHOS::PowerMgr::ThermalLevel::COOL;
+        thermalSrv_->GetThermalLevel(level);
+        DPSEventReport::GetInstance().SetTemperatureLevel(static_cast<int>(level));
+    }
+#endif
 
     DP_INFO_LOG("Connecting ThermalMgrService success.");
 }

@@ -24,6 +24,9 @@
 #include "task_manager.h"
 #include "common_event_manager.h"
 #include "common_event_support.h"
+#ifdef CAMERA_USE_THERMAL
+#include "ithermal_srv.h"
+#endif
 
 namespace OHOS {
 namespace CameraStandard {
@@ -72,6 +75,9 @@ private:
     sptr<IRemoteObject::DeathRecipient> deathRecipient_ = nullptr;
     std::shared_ptr<ThermalLevelSubscriber> thermalLevelSubscriber_ = nullptr;
     std::mutex thermalEventMutex;
+#ifdef CAMERA_USE_THERMAL
+    sptr<OHOS::PowerMgr::IThermalSrv> thermalSrv_ = nullptr;
+#endif
 };
 }
 } // namespace CameraStandard

@@ -818,17 +818,25 @@ void HCameraHostManager::NotifyDeviceStateChangeInfo(int notifyType, int deviceS
 
 void HCameraHostManager::SaveRestoreParam(sptr<HCameraRestoreParam> cameraRestoreParam)
 {
+    std::lock_guard<std::mutex> lock(saveRestoreMutex_);
     if (cameraRestoreParam == nullptr) {
         MEDIA_ERR_LOG("HCameraRestoreParam is nullptr");
         return;
     }
     std::string clientName = cameraRestoreParam->GetClientName();
     if (cameraRestoreParam->GetRestoreParamType() == RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS) {
+        DeleteRestoreParam(clientName, cameraRestoreParam->GetCameraId());
         (persistentParamMap_[clientName])[cameraRestoreParam->GetCameraId()] = cameraRestoreParam;
         MEDIA_DEBUG_LOG("HCameraHostManager::SaveRestoreParam save persistent param");
-    } else {
+    } else if (cameraRestoreParam->GetRestoreParamType() == RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS) {
+        auto itTransitent = transitentParamMap_.find(clientName);
+        if (itTransitent != transitentParamMap_.end()) {
+            transitentParamMap_.erase(clientName);
+        }
         transitentParamMap_[clientName] = cameraRestoreParam;
         MEDIA_DEBUG_LOG("HCameraHostManager::SaveRestoreParam save transist param");
+    } else {
+        MEDIA_DEBUG_LOG("No need save param");
     }
 }
 
@@ -860,10 +868,26 @@ void HCameraHostManager::UpdateRestoreParamCloseTime(const std::string& clientNa
     }
 }
 
+void HCameraHostManager::DeleteRestoreParam(const std::string& clientName, const std::string& cameraId)
+{
+    MEDIA_DEBUG_LOG("HCameraHostManager::UpdateRestoreParamCloseTime enter");
+    auto itPersistent = persistentParamMap_.find(clientName);
+    if (itPersistent != persistentParamMap_.end()) {
+        std::map<std::string, sptr<HCameraRestoreParam>>::iterator iterParamMap = (itPersistent->second).begin();
+        for (; iterParamMap != (itPersistent->second).end(); iterParamMap++) {
+            if (cameraId == (iterParamMap->second)->GetCameraId()) {
+                break;
+            }
+        }
+        (itPersistent->second).erase(iterParamMap);
+    }
+}
+
 sptr<HCameraRestoreParam> HCameraHostManager::GetRestoreParam(const std::string& clientName,
     const std::string& cameraId)
 {
     MEDIA_DEBUG_LOG("HCameraHostManager::GetRestoreParam enter");
+    std::lock_guard<std::mutex> lock(saveRestoreMutex_);
     std::vector<StreamInfo_V1_1> streamInfos;
     RestoreParamTypeOhos restoreParamType = RestoreParamTypeOhos::NO_NEED_RESTORE_PARAM_OHOS;
     sptr<HCameraRestoreParam> cameraRestoreParam = new HCameraRestoreParam(clientName, cameraId,
