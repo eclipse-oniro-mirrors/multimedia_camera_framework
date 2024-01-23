@@ -1128,7 +1128,7 @@ class CameraService {
       for (let i = 0; i < res.length; i++) {
         if (res[i] === colorEffect) {
           Logger.info(TAG, 'setColorEffect success.');
-          // session.setColorEffect(colorEffect);
+          session.setColorEffect(colorEffect);
           this.colorEffect = colorEffect;
           return;
         }
@@ -1146,7 +1146,7 @@ class CameraService {
         return colorEffect;
       }
       try {
-        // colorEffect = session.getColorEffect();
+        colorEffect = session.getColorEffect();
       } catch (error) {
         let err = error as BusinessError;
         Logger.error(TAG, `setColorEffect fail: error code ${err.code}`);
@@ -1163,7 +1163,7 @@ class CameraService {
       if (!session) {
         return res;
       }
-      // res = session.getSupportedColorEffects();
+      res = session.getSupportedColorEffects();
       Logger.info(TAG, `getSupportedColorEffects length: ${res.length}`);
     }
     return res;
