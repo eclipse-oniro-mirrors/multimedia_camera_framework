@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -75,19 +75,21 @@ export struct CountdownPage {
               this.countdownBol = true;
               AppStorage.setOrCreate<boolean>('flashingBol', true);
             })
-          ForEach(this.countdownListData, (item) => {
+          ForEach(this.countdownListData, (item: string) => {
             Text(item)
               .fontSize(21)
               .fontWeight(500)
               .margin({
                 top: 10
               })
-              .fontColor(this.countdownNum == item ? $r('app.color.theme_color') : '#182431')
+              .fontColor(this.countdownNum == Number(item) ? $r('app.color.theme_color') : '#182431')
               .onClick(() => {
-                this.countdownNum = item;
+                this.countdownNum = Number(item);
                 this.countdownBol = true;
               })
-          }, item => item)
+          }, (item: string) => {
+            return item;
+          })
           Text('OFF')
             .fontSize(18)
             .fontWeight(500)

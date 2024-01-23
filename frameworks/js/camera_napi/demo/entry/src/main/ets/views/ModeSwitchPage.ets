@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,7 +14,7 @@
  */
 
 // 反转摄像头_多机位_拍照_摄像
-//@ts-nocheck
+
 import { RecodeStopDialog } from '../Dialog/RecodeStopDialog';
 import { MultiCameraDialog } from '../Dialog/MultiCameraDialog';
 import DateTimeUtil from '../model/DateTimeUtil';
@@ -42,11 +42,11 @@ export struct ModeSwitchPage {
   @State countTimerInt: number = -1;
   @State countTimerOut: number = -1;
   // 拍照缩略图
-  @StorageLink('proxyThumbnail') imgThumbnail: string | image.PixelMap = null;
+  @StorageLink('proxyThumbnail') imgThumbnail: string | image.PixelMap = '';
   // 录制时间
   @State videoRecodeTime: number = 0;
   // 录制时间定时器
-  @State timer: number = undefined;
+  @State timer: number = 0;
   // 时间管理器
   @State dateTimeUtil: DateTimeUtil = new DateTimeUtil();
   // 选择模式
@@ -56,9 +56,9 @@ export struct ModeSwitchPage {
   // 录像开始暂停
   @State isRecording: boolean = false;
   // 视频缩略图
-  @State videoThumbnail: image.PixelMap = undefined;
-  private videoUri: string;
-  private deviceType: string | undefined;
+  @State videoThumbnail: image.PixelMap | undefined = undefined;
+  private videoUri: string = '';
+  private deviceType: string | undefined = '';
   // 确定是否停止录制的弹框
   private recodeStopDialogController: CustomDialogController = new CustomDialogController({
     builder: RecodeStopDialog({
@@ -173,9 +173,9 @@ export struct ModeSwitchPage {
 
   aboutToAppear(): void {
     Logger.info(TAG, 'aboutToAppear');
-    GlobalContext.get().setObject('stopVideoFun', this.stopVideo.bind(this));
+    GlobalContext.get().setObject('stopVideoFun', this.stopVideo);
     this.deviceType = AppStorage.get<string>('deviceType');
-    CameraService.setTakePictureCallback(this.handleTakePicture.bind(this));
+    CameraService.setTakePictureCallback(this.handleTakePicture);
   }
 
   handleTakePicture = (thumbnail: string) => {
@@ -304,7 +304,7 @@ export struct ModeSwitchPage {
                       .height('200px')
                   }
                 }.onClick(() => {
-                  let uri: string;
+                  let uri: string | PixelMap;
                   if (this.modelBagCol === 'video') {
                     uri = this.videoUri;
                   } else {

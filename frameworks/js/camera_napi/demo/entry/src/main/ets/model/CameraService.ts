@@ -22,7 +22,7 @@ import { Constants } from '../common/Constants';
 import photoAccessHelper from '@ohos.file.photoAccessHelper';
 import fs from '@ohos.file.fs';
 import { GlobalContext } from '../common/GlobalContext';
-import { CameraConfig } from '../common/CameraConfig';
+import type { CameraConfig } from '../common/CameraConfig';
 
 const cameraSize = {
   width: 1280,
@@ -172,8 +172,8 @@ class CameraService {
   async savePicture(buffer: ArrayBuffer, img: image.Image): Promise<void> {
     try {
       Logger.info(TAG, 'savePicture start');
-      let testFileName = Date.now() + ".jpg";
-      let fileAsset = await this.accessHelper.createAsset(testFileName);
+      let fileName = `${Date.now()}.jpg`;
+      let fileAsset = await this.accessHelper.createAsset(fileName);
       let imgPhotoUri: string = fileAsset.uri;
       const fd = await fileAsset.open('rw');
       await fs.write(fd, buffer);
@@ -210,37 +210,37 @@ class CameraService {
       return;
     }
     let defaultAspectRatio: number = AppStorage.get<number>('defaultAspectRatio');
-    let previewProfile: camera.Profile;
-    let photoProfile: camera.Profile;
+    let previewProfileObj: camera.Profile;
+    let photoProfileObj: camera.Profile;
     const deviceType = AppStorage.get<string>('deviceType');
     switch (this.cameraMode) {
       case CameraMode.PORTRAIT:
-        previewProfile = previewProfiles.find((profile: camera.Profile) => {
+        previewProfileObj = previewProfiles.find((profile: camera.Profile) => {
           return profile.size.height === this.defaultProfile.size.height &&
             profile.size.width === this.defaultProfile.size.width;
-        })
-        Logger.info(`previewProfile: ${JSON.stringify(previewProfile)}`);
-        this.previewProfileObj = previewProfile;
-        photoProfile = photoProfiles.find((profile: camera.Profile) => {
+        });
+        Logger.info(`previewProfileObj: ${JSON.stringify(previewProfileObj)}`);
+        this.previewProfileObj = previewProfileObj;
+        photoProfileObj = photoProfiles.find((profile: camera.Profile) => {
           return profile.size.height === this.defaultProfile.size.height &&
             profile.size.width === this.defaultProfile.size.width;
-        })
-        Logger.info(`photoProfile: ${JSON.stringify(photoProfile)}`);
-        this.photoProfileObj = photoProfile;
+        });
+        Logger.info(`photoProfileObj: ${JSON.stringify(photoProfileObj)}`);
+        this.photoProfileObj = photoProfileObj;
         break;
       case CameraMode.SUPER_STAB:
-        previewProfile = previewProfiles.find((profile: camera.Profile) => {
+        previewProfileObj = previewProfiles.find((profile: camera.Profile) => {
           return profile.size.height === this.defaultProfile.size.height &&
             profile.size.width === this.defaultProfile.size.width;
-        })
-        Logger.info(`previewProfile: ${JSON.stringify(previewProfile)}`);
-        this.previewProfileObj = previewProfile;
-        photoProfile = photoProfiles.find((profile: camera.Profile) => {
+        });
+        Logger.info(`previewProfileObj: ${JSON.stringify(previewProfileObj)}`);
+        this.previewProfileObj = previewProfileObj;
+        photoProfileObj = photoProfiles.find((profile: camera.Profile) => {
           return profile.size.height === this.defaultProfile.size.height &&
             profile.size.width === this.defaultProfile.size.width;
-        })
-        Logger.info(`photoProfile: ${JSON.stringify(photoProfile)}`);
-        this.photoProfileObj = photoProfile;
+        });
+        Logger.info(`photoProfileObj: ${JSON.stringify(photoProfileObj)}`);
+        this.photoProfileObj = photoProfileObj;
         this.videoProfileObj = {
           format: 1003,
           size: {
@@ -251,21 +251,21 @@ class CameraService {
             min: 60,
             max: 60
           }
-        }
-        let videoProfile = videoProfiles.find((profile: camera.VideoProfile) => {
+        };
+        let videoProfileObj = videoProfiles.find((profile: camera.VideoProfile) => {
           return profile.size.height === this.videoProfileObj.size.height &&
             profile.size.width === this.videoProfileObj.size.width &&
             profile.frameRateRange.min === this.videoProfileObj.frameRateRange.min &&
             profile.frameRateRange.max === this.videoProfileObj.frameRateRange.max;
-        })
-        Logger.info(`videoProfile: ${JSON.stringify(videoProfile)}`);
-        if (!videoProfile) {
-          Logger.error('videoProfileObj not supported')
+        });
+        Logger.info(`videoProfileObj: ${JSON.stringify(videoProfileObj)}`);
+        if (!videoProfileObj) {
+          Logger.error('videoProfileObj not supported');
         }
         break;
       case CameraMode.NORMAL:
       case CameraMode.VIDEO:
-      case DEFAULT:
+      default:
         for (let index = profiles.previewProfiles.length - 1; index >= 0; index--) {
           const previewProfile = profiles.previewProfiles[index];
           if (this.withinErrorMargin(defaultAspectRatio, previewProfile.size.width / previewProfile.size.height)) {
@@ -306,15 +306,15 @@ class CameraService {
     if (deviceType === Constants.DEFAULT) {
       let cameraConfig = this.globalContext.getObject('cameraConfig') as CameraConfig;
       for (let index = this.videoProfiles.length - 1; index >= 0; index--) {
-        const videoProfile = this.videoProfiles[index];
-        if (this.withinErrorMargin(defaultAspectRatio, videoProfile.size.width / videoProfile.size.height)) {
-          if (videoProfile.size.width <= Constants.VIDEO_MAX_WIDTH &&
-            videoProfile.size.height <= Constants.VIDEO_MAX_WIDTH) {
+        const videoProfileObj = this.videoProfiles[index];
+        if (this.withinErrorMargin(defaultAspectRatio, videoProfileObj.size.width / videoProfileObj.size.height)) {
+          if (videoProfileObj.size.width <= Constants.VIDEO_MAX_WIDTH &&
+            videoProfileObj.size.height <= Constants.VIDEO_MAX_WIDTH) {
             let videoProfileTemp = {
-              format: videoProfile.format,
+              format: videoProfileObj.format,
               size: {
-                width: videoProfile.size.width,
-                height: videoProfile.size.height
+                width: videoProfileObj.size.width,
+                height: videoProfileObj.size.height
               },
               frameRateRange: {
                 min: Constants.VIDEO_FRAME_30,
@@ -322,9 +322,9 @@ class CameraService {
               }
             };
             if ((cameraConfig.videoFrame === 0 ? Constants.VIDEO_FRAME_15 : Constants.VIDEO_FRAME_30) ===
-            videoProfile.frameRateRange.min) {
-              videoProfileTemp.frameRateRange.min = videoProfile.frameRateRange.min;
-              videoProfileTemp.frameRateRange.max = videoProfile.frameRateRange.max;
+            videoProfileObj.frameRateRange.min) {
+              videoProfileTemp.frameRateRange.min = videoProfileObj.frameRateRange.min;
+              videoProfileTemp.frameRateRange.max = videoProfileObj.frameRateRange.max;
               this.videoProfileObj = videoProfileTemp;
               Logger.info(TAG, `videoProfileObj: ${JSON.stringify(this.videoProfileObj)}`);
               break;
@@ -418,11 +418,11 @@ class CameraService {
    */
   isExposureModeSupportedFn(aeMode: camera.ExposureMode): boolean {
     // 检测曝光模式是否支持
+    let isSupported: boolean = false;
     let session: camera.PortraitPhotoSession | camera.CaptureSession = this.getSession();
     if (!session) {
-      return;
+      return isSupported;
     }
-    let isSupported: boolean = false;
     isSupported = session.isExposureModeSupported(aeMode);
     Logger.info(TAG, `isExposureModeSupported success, isSupported: ${isSupported}`);
     return isSupported;
@@ -751,7 +751,7 @@ class CameraService {
    * 初始化录制适配地址
    */
   async initUrl(): Promise<void> {
-    let fileName = Date.now() + ".mp4";
+    let fileName = `${Date.now()}.mp4`;
     this.fileAsset = await this.accessHelper.createAsset(fileName);
     this.fd = await this.fileAsset.open('rw');
     this.videoConfig.url = `fd://${this.fd.toString()}`;
@@ -1128,7 +1128,7 @@ class CameraService {
       for (let i = 0; i < res.length; i++) {
         if (res[i] === colorEffect) {
           Logger.info(TAG, 'setColorEffect success.');
-          session.setColorEffect(colorEffect);
+          // session.setColorEffect(colorEffect);
           this.colorEffect = colorEffect;
           return;
         }
@@ -1146,7 +1146,7 @@ class CameraService {
         return colorEffect;
       }
       try {
-        colorEffect = session.getColorEffect();
+        // colorEffect = session.getColorEffect();
       } catch (error) {
         let err = error as BusinessError;
         Logger.error(TAG, `setColorEffect fail: error code ${err.code}`);
@@ -1163,7 +1163,7 @@ class CameraService {
       if (!session) {
         return res;
       }
-      res = session.getSupportedColorEffects();
+      // res = session.getSupportedColorEffects();
       Logger.info(TAG, `getSupportedColorEffects length: ${res.length}`);
     }
     return res;
@@ -1307,7 +1307,7 @@ class CameraService {
     this.captureMode = mode;
   }
 
-  getCaptureMode(): boolean {
+  getCaptureMode(): number {
     return this.captureMode;
   }
 
@@ -1323,6 +1323,7 @@ class CameraService {
       res = this.photoOutPut.isDeferredImageDeliverySupported(camera.DeferredDeliveryImageType.PHOTO);
     }
     Logger.info(TAG, `isDeferredImageDeliverySupported res: ${res}`);
+    return res;
   }
 
 
@@ -1346,9 +1347,8 @@ class CameraService {
    */
   deferImageDeliveryFor(num: number): void {
     Logger.info(TAG, `deferImageDeliveryFor type: ${num}`);
-    this.photoOutPut.deferImageDeliveryFor(camera.DeferredDeliveryImageType.PHOTO);
+    this.photoOutPut.deferImageDelivery(camera.DeferredDeliveryImageType.PHOTO);
   }
 }
 
 export default new CameraService();
-

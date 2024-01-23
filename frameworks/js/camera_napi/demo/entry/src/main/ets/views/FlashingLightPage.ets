@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,6 +16,11 @@
 import CameraService from '../model/CameraService';
 import Logger from '../model/Logger';
 
+interface ResObj {
+  num: number;
+  resource: Resource
+}
+
 const TAG: string = 'FlashingLightPage';
 
 // 闪关灯页面
@@ -26,7 +31,7 @@ export struct FlashingLightPage {
   // 闪光灯模式
   @State flashingNum: number = 0;
   // 返回选中图片
-  getImageDefault(): Resource {
+  getImageDefault(): Resource | undefined {
     if (this.flashingNum == 0) {
       return $r('app.media.ic_camera_public_flash_off');
     }
@@ -39,8 +44,9 @@ export struct FlashingLightPage {
     if (this.flashingNum == 3) {
       return $r('app.media.flash_always_on');
     }
+    return undefined;
   }
-  private flashLightInfo = [
+  private flashLightInfo: Array<ResObj> = [
     {
       num: 0,
       resource: $r('app.media.ic_camera_public_flash_off')
@@ -78,14 +84,14 @@ export struct FlashingLightPage {
         }
       } else {
         Flex({ justifyContent: FlexAlign.SpaceEvenly, alignItems: ItemAlign.Center, direction: FlexDirection.Column }) {
-          ForEach(this.flashLightInfo, (item: {num: number, resource: Resource}) => {
-            Image(item.resource)
+          ForEach(this.flashLightInfo, (item: Record<string, Object>) => {
+            Image(item.resource as Resource)
               .width('35vp')
               .height('35vp')
               .fillColor(this.flashingNum == item.num ? $r('app.color.theme_color') : '')
               .onClick(() => {
                 Logger.debug(TAG, 'onClick');
-                this.flashingNum = item.num;
+                this.flashingNum = item.num as number;
                 this.flashingBol = true;
                 CameraService.hasFlashFn(this.flashingNum);
               })

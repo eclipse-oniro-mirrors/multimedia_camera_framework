@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -73,11 +73,11 @@ struct Index {
   @State cameraDeviceIndex: number = 0;
   @State xComponentWidth: number = 384;
   @State xComponentHeight: number = 450;
-  private deviceType: string | undefined;
-  private screenHeight: number;
-  private screenWidth: number;
+  private deviceType: string | undefined = '';
+  private screenHeight: number = 0;
+  private screenWidth: number = 0;
   @State @Watch('onDeferredNumChange') deferredNum: number = 0;
-  @StorageLink('proxyThumbnail') @Watch('proxyThumbnailUpdate') imgThumbnail2: image.PixelMap = null;
+  @StorageLink('proxyThumbnail') @Watch('proxyThumbnailUpdate') imgThumbnail: image.PixelMap | string = '';
 
   proxyThumbnailUpdate(): void {
     Logger.info(TAG, 'proxyThumbnailUpdate');
@@ -138,7 +138,7 @@ struct Index {
 
   async onPageHide(): Promise<void> {
     Logger.info(TAG, 'onPageHide');
-    let isRecorder: boolean = AppStorage.get<boolean>('isRecorder');
+    let isRecorder: boolean | undefined = AppStorage.get<boolean>('isRecorder');
     if (isRecorder) {
       GlobalContext.get().apply('stopVideoFun');
     }
