@@ -887,7 +887,7 @@ sptr<HCameraRestoreParam> HCameraHostManager::GetRestoreParam(const std::string&
     const std::string& cameraId)
 {
     MEDIA_DEBUG_LOG("HCameraHostManager::GetRestoreParam enter");
-    std::lock_guard<std::mutex> lock(saveRestoreMutex_); 
+    std::lock_guard<std::mutex> lock(saveRestoreMutex_);
     std::vector<StreamInfo_V1_1> streamInfos;
     RestoreParamTypeOhos restoreParamType = RestoreParamTypeOhos::NO_NEED_RESTORE_PARAM_OHOS;
     sptr<HCameraRestoreParam> cameraRestoreParam = new HCameraRestoreParam(clientName, cameraId,
