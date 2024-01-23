@@ -291,7 +291,8 @@ public:
     * @param Returns pointer to capture session.
     * @return Returns error code.
     */
-    static int CreateDeferredPhotoProcessingSession(int userId, std::shared_ptr<IDeferredPhotoProcSessionCallback> callback,
+    static int CreateDeferredPhotoProcessingSession(int userId,
+        std::shared_ptr<IDeferredPhotoProcSessionCallback> callback,
         sptr<DeferredPhotoProcSession> *pDeferredPhotoProcSession);
 
     /**
