@@ -327,15 +327,28 @@ int CameraManager::CreateDeferredPhotoProcessingSession(int userId,
     sptr<DeferredPhotoProcSession> deferredPhotoProcSession = nullptr;
     int32_t retCode = CAMERA_OK;
 
-    if (serviceProxy_ == nullptr) {
-        MEDIA_ERR_LOG("serviceProxy_ is null");
-        return CameraErrorCode::INVALID_ARGUMENT;
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (samgr == nullptr) {
+        MEDIA_ERR_LOG("Failed to get System ability manager");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
+    object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    if (object == nullptr) {
+        MEDIA_ERR_LOG("object is null");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
+    sptr<ICameraService> serviceProxy = iface_cast<ICameraService>(object);
+
+    if (serviceProxy == nullptr) {
+        MEDIA_ERR_LOG("serviceProxy is null");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
     }
 
     deferredPhotoProcSession = new(std::nothrow) DeferredPhotoProcSession(userId, callback);
     remoteCallback = new(std::nothrow) DeferredPhotoProcessingSessionCallback(deferredPhotoProcSession);
 
-    retCode = serviceProxy_->CreateDeferredPhotoProcessingSession(userId, remoteCallback, session);
+    retCode = serviceProxy->CreateDeferredPhotoProcessingSession(userId, remoteCallback, session);
     if (retCode == CAMERA_OK) {
         if (session != nullptr) {
             deferredPhotoProcSession->SetDeferredPhotoSession(session);
