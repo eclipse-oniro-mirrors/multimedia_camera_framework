@@ -17,7 +17,7 @@ import display from '@ohos.display';
 import type common from '@ohos.app.ability.common';
 import type Want from '@ohos.app.ability.Want';
 import type window from '@ohos.window';
-import { PromptAction } from '@ohos.arkui.UIContext';
+import type { PromptAction } from '@ohos.arkui.UIContext';
 
 const TAG: string = 'GlobalContext';
 
@@ -154,7 +154,7 @@ export class GlobalContext {
     this.cameraWindowStageEvent = event;
   }
 
-  public getXComponentController() {
+  public getXComponentController(): XComponentController {
     return this.xComponentController;
   }
 
