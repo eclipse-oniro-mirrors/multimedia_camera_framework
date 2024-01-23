@@ -20,6 +20,7 @@
 using namespace std;
 using namespace OHOS;
 using namespace OHOS::CameraStandard;
+const int32_t ARGS_TWO = 2;
 
 class InnerCaptureSessionCallback : public SessionCallback, public FocusCallback {
 public:
@@ -381,9 +382,12 @@ Camera_ErrorCode Camera_CaptureSession::GetExposureBiasRange(float* minExposureB
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetExposureBiasRange is called");
 
     std::vector<float> vecExposureBiasList = innerCaptureSession_->GetExposureBiasRange();
-    *minExposureBias = vecExposureBiasList[0];
-    *maxExposureBias = vecExposureBiasList[1];
-
+    if (!vecExposureBiasList.empty() && vecExposureBiasList.size() >= ARGS_TWO) {
+        *minExposureBias = vecExposureBiasList[0];
+        *maxExposureBias = vecExposureBiasList[1];
+    } else {
+        MEDIA_ERR_LOG("Camera_CaptureSession::GetExposureBiasRange vecZoomRatioList illegal.");
+    }
     return CAMERA_OK;
 }
 
