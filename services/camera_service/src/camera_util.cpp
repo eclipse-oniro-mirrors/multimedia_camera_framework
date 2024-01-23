@@ -191,12 +191,14 @@ int32_t SetOpMode(int32_t opMode)
     return 0;
 }
 
-bool IsValidMode(
-    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
+bool IsValidMode(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
+    if (g_operationMode == 0) { // 0 is normal mode
+        MEDIA_INFO_LOG("operationMode:%{public}d", g_operationMode);
+        return true;
+    }
     camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(cameraAbility->get(),
-                                             OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, &item);
+    int ret = Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_ABILITY_CAMERA_MODES, &item);
     if (ret != CAM_META_SUCCESS || item.count == 0) {
         MEDIA_ERR_LOG("Failed to find stream extend configuration in camera ability with return code %{public}d", ret);
         ret = Camera::FindCameraMetadataItem(cameraAbility->get(),
@@ -208,24 +210,13 @@ bool IsValidMode(
         return false;
     }
 
-    if (g_operationMode == item.data.i32[0]) {
-        MEDIA_INFO_LOG("operationMode:%{public}d first found in supported streams", g_operationMode);
-        return true;
-    }
-
-    const uint32_t twoStep = 2;
-    const int32_t finish = -1;
-    for (uint32_t index = twoStep; index < item.count; index++) {
-        if (item.data.i32[index - twoStep] == finish && item.data.i32[index - 1] == finish &&
-            item.data.i32[index] == finish && ((index + 1) < item.count) &&
-            (g_operationMode == item.data.i32[index + 1])) {
+    for (uint32_t i = 0; i < item.count; i++) {
+        if (g_operationMode == item.data.u8[i]) {
             MEDIA_INFO_LOG("operationMode:%{public}d found in supported streams", g_operationMode);
             return true;
-        } else {
-            continue;
         }
     }
-
+    MEDIA_ERR_LOG("operationMode:%{public}d not found in supported streams", g_operationMode);
     return false;
 }
 
