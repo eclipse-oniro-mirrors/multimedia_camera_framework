@@ -24,6 +24,7 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace CameraFwkMetadataUtils {
+
 bool MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata,
     std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata);
 
@@ -36,6 +37,11 @@ bool UpdateMetadataTag(
 void DumpMetadataInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata);
 
 void DumpMetadataItemInfo(const camera_metadata_item_t& item);
+
+std::shared_ptr<OHOS::Camera::CameraMetadata> RecreateMetadata(
+    const std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
+
+void LogFormatCameraMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
 } // namespace CameraFwkMetadataUtils
 } // namespace CameraStandard
 } // namespace OHOS
