@@ -299,7 +299,7 @@ static napi_status StartAsyncWork(napi_env env, CameraPickerAsyncContext* picker
             context->bRetBool = false;
 
             context->uiExtCallback->WaitResultLock();
-            context->status = (context->uiExtCallback->GetResultCode() == 0);
+            context->status = true;
         },
         CommonCompleteCallback, static_cast<void*>(pickerAsyncCtx), &pickerAsyncCtx->work);
 }
@@ -521,12 +521,9 @@ void UIExtensionCallback::OnResult(int32_t resultCode, const OHOS::AAFwk::Want& 
     std::string resourceMode = wantParams.GetStringParam("mode");
     MEDIA_INFO_LOG("OnResult is called,resultCode = %{public}d, uri = %{public}s ,CaptureMode:%{public}s", resultCode,
         uri.c_str(), resourceMode.c_str());
-
-    resultUri = uri;
-    resultMode = resourceMode;
-    resultCode_ = resultCode;
-    resultWant_ = result;
-    if (SetErrorCode(0)) {
+    resultUri_ = uri;
+    resultMode_ = resourceMode;
+    if (SetErrorCode(resultCode)) {
         SendMessageBack();
     }
 }
