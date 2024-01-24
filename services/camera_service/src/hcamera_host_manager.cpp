@@ -870,16 +870,14 @@ void HCameraHostManager::UpdateRestoreParamCloseTime(const std::string& clientNa
 
 void HCameraHostManager::DeleteRestoreParam(const std::string& clientName, const std::string& cameraId)
 {
-    MEDIA_DEBUG_LOG("HCameraHostManager::UpdateRestoreParamCloseTime enter");
+    MEDIA_DEBUG_LOG("HCameraHostManager::DeleteRestoreParam enter");
     auto itPersistent = persistentParamMap_.find(clientName);
     if (itPersistent != persistentParamMap_.end()) {
-        std::map<std::string, sptr<HCameraRestoreParam>>::iterator iterParamMap = (itPersistent->second).begin();
-        for (; iterParamMap != (itPersistent->second).end(); iterParamMap++) {
-            if (cameraId == (iterParamMap->second)->GetCameraId()) {
-                break;
-            }
+        auto iterParamMap = (itPersistent->second).find(cameraId);
+        if (iterParamMap != (itPersistent->second).end()) {
+            iterParamMap->second = nullptr;
+            (itPersistent->second).erase(cameraId);
         }
-        (itPersistent->second).erase(iterParamMap);
     }
 }
 
