@@ -68,12 +68,12 @@ public:
 
     inline std::string GetResultUri()
     {
-        return resultUri;
+        return resultUri_;
     }
 
     inline std::string GetResultMediaType()
     {
-        if (resultMode == "VIDEO") {
+        if (resultMode_ == "VIDEO") {
             return "video";
         }
         return "photo";
@@ -83,9 +83,8 @@ private:
     bool SetErrorCode(int32_t code);
     int32_t sessionId_ = 0;
     int32_t resultCode_ = 0;
-    std::string resultUri = "";
-    std::string resultMode = "";
-    OHOS::AAFwk::Want resultWant_;
+    std::string resultUri_ = "";
+    std::string resultMode_ = "";
     std::weak_ptr<OHOS::AbilityRuntime::AbilityContext> abilityContext_;
     std::condition_variable cbFinishCondition_;
     std::mutex cbMutex_;

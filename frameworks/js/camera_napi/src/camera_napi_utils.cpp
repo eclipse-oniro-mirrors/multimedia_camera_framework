@@ -300,7 +300,7 @@ napi_status CameraNapiUtils::CreateObjectWithPropNameAndValues(
 {
     napi_value napiValues[property_count];
     for (size_t i = 0; i < property_count; i++) {
-        napi_create_string_utf8(env, values[i].data(), values[i].size() + 1, &napiValues[i]);
+        napi_create_string_utf8(env, values[i].data(), values[i].size(), &napiValues[i]);
     }
     return napi_create_object_with_named_properties(env, result, property_count, keys, napiValues);
 }
