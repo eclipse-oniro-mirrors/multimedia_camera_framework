@@ -480,6 +480,7 @@ private:
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, const camera_metadata_item_t &item);
 
     std::mutex mutex_;
+    std::mutex cameraMngrCbMutex_;
     int CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> *pICameraDeviceService);
     camera_format_t GetCameraMetadataFormat(CameraFormat format);
     bool GetDmDeviceInfo();

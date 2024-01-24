@@ -150,6 +150,7 @@ int CameraInput::Release()
 
 void CameraInput::SetErrorCallback(std::shared_ptr<ErrorCallback> errorCallback)
 {
+    std::lock_guard<std::mutex> lock(errorCallbackMutex_);
     if (errorCallback == nullptr) {
         MEDIA_ERR_LOG("SetErrorCallback: Unregistering error callback");
     }
@@ -178,6 +179,7 @@ sptr<ICameraDeviceService> CameraInput::GetCameraDevice()
 
 std::shared_ptr<ErrorCallback> CameraInput::GetErrorCallback()
 {
+    std::lock_guard<std::mutex> lock(errorCallbackMutex_);
     return errorCallback_;
 }
 std::shared_ptr<ResultCallback> CameraInput::GetResultCallback()
