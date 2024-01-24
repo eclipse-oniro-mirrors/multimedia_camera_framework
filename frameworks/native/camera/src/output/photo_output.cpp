@@ -227,12 +227,12 @@ PhotoOutput::PhotoOutput(sptr<IStreamCapture> &streamCapture)
 PhotoOutput::~PhotoOutput()
 {
     cameraSvcCallback_ = nullptr;
-    appCallback_ = nullptr;
     defaultCaptureSetting_ = nullptr;
 }
 
 void PhotoOutput::SetCallback(std::shared_ptr<PhotoStateCallback> callback)
 {
+    std::lock_guard<std::mutex> lock(photoCallbackMutex_);
     appCallback_ = callback;
     if (appCallback_ != nullptr) {
         if (cameraSvcCallback_ == nullptr) {
@@ -260,6 +260,7 @@ void PhotoOutput::SetCallback(std::shared_ptr<PhotoStateCallback> callback)
 
 std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
 {
+    std::lock_guard<std::mutex> lock(photoCallbackMutex_);
     return appCallback_;
 }
 
@@ -361,7 +362,10 @@ int32_t PhotoOutput::Release()
         MEDIA_ERR_LOG("PhotoOutput Failed to release!, errCode: %{public}d", errCode);
     }
     cameraSvcCallback_ = nullptr;
-    appCallback_ = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(photoCallbackMutex_);
+        appCallback_ = nullptr;
+    }
     defaultCaptureSetting_ = nullptr;
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);

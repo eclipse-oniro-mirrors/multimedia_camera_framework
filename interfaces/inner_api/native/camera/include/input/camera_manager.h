@@ -422,6 +422,7 @@ private:
     static const std::unordered_map<CameraFormat, camera_format_t> fwToMetaCameraFormat_;
 
     std::mutex mutex_;
+    std::mutex cameraMngrCallbackMutex_;
     int CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> *pICameraDeviceService);
     camera_format_t GetCameraMetadataFormat(CameraFormat format);
     sptr<ICameraService> serviceProxy_;

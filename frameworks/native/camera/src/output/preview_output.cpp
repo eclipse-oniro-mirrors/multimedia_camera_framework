@@ -27,7 +27,6 @@ PreviewOutput::PreviewOutput(sptr<IStreamRepeat> &streamRepeat)
 PreviewOutput::~PreviewOutput()
 {
     svcCallback_ = nullptr;
-    appCallback_ = nullptr;
 }
 
 int32_t PreviewOutput::Release()
@@ -48,7 +47,10 @@ int32_t PreviewOutput::Release()
         MEDIA_ERR_LOG("PreviewOutput::Release() itemStream is nullptr");
     }
     svcCallback_ = nullptr;
-    appCallback_ = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(previewCallbackMutex_);
+        appCallback_ = nullptr;
+    }
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);
 }
@@ -161,6 +163,7 @@ int32_t PreviewOutput::Stop()
 
 void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
 {
+    std::lock_guard<std::mutex> lock(previewCallbackMutex_);
     appCallback_ = callback;
     if (appCallback_ != nullptr) {
         if (svcCallback_ == nullptr) {
@@ -193,6 +196,7 @@ void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
 
 std::shared_ptr<PreviewStateCallback> PreviewOutput::GetApplicationCallback()
 {
+    std::lock_guard<std::mutex> lock(previewCallbackMutex_);
     return appCallback_;
 }
 } // CameraStandard

@@ -112,6 +112,7 @@ public:
     void SetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate);
 
 private:
+    std::mutex videoCallbackMutex_;
     std::shared_ptr<VideoStateCallback> appCallback_;
     sptr<IStreamRepeatCallback> svcCallback_;
     std::vector<int32_t> videoFrameRateRange_;

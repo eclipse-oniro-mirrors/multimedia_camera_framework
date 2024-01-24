@@ -89,6 +89,7 @@ public:
     std::shared_ptr<PreviewStateCallback> GetApplicationCallback();
 
 private:
+    std::mutex previewCallbackMutex_;
     std::shared_ptr<PreviewStateCallback> appCallback_;
     sptr<IStreamRepeatCallback> svcCallback_;
 };

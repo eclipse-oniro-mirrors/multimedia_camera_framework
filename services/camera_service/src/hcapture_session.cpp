@@ -745,7 +745,10 @@ int32_t HCaptureSession::Release(pid_t pid)
     }
     tempStreams_.clear();
     ClearCaptureSession(pid);
-    sessionCallback_ = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(sessionCbMutex_);
+        sessionCallback_ = nullptr;
+    }
     cameraHostManager_ = nullptr;
     return CAMERA_OK;
 }
@@ -802,7 +805,7 @@ int32_t HCaptureSession::SetCallback(sptr<ICaptureSessionCallback> &callback)
         MEDIA_ERR_LOG("HCaptureSession::SetCallback callback is null");
         return CAMERA_INVALID_ARG;
     }
-
+    std::lock_guard<std::mutex> lock(sessionCbMutex_);
     sessionCallback_ = callback;
     return CAMERA_OK;
 }

@@ -292,6 +292,7 @@ public:
     int32_t SetCameraSettings(std::string setting);
 
 private:
+    std::mutex cameraInputCallbackMutex_;
     sptr<CameraDevice> cameraObj_;
     sptr<ICameraDeviceService> deviceObj_;
     std::shared_ptr<ErrorCallback> errorCallback_;
