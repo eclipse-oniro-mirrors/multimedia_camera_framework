@@ -29,8 +29,6 @@ VideoOutput::VideoOutput(sptr<IStreamRepeat>& streamRepeat)
 
 VideoOutput::~VideoOutput()
 {
-    svcCallback_ = nullptr;
-    appCallback_ = nullptr;
 }
 
 int32_t VideoOutputCallbackImpl::OnFrameStarted()
@@ -76,6 +74,7 @@ int32_t VideoOutputCallbackImpl::OnSketchStatusChanged(SketchStatus status)
 
 void VideoOutput::SetCallback(std::shared_ptr<VideoStateCallback> callback)
 {
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     appCallback_ = callback;
     if (appCallback_ != nullptr) {
         if (svcCallback_ == nullptr) {
@@ -191,6 +190,11 @@ int32_t VideoOutput::Pause()
 
 int32_t VideoOutput::Release()
 {
+    {
+        std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+        svcCallback_ = nullptr;
+        appCallback_ = nullptr;
+    }
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into VideoOutput::Release");
     if (GetStream() == nullptr) {
@@ -207,14 +211,13 @@ int32_t VideoOutput::Release()
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to release VideoOutput!, errCode: %{public}d", errCode);
     }
-    svcCallback_ = nullptr;
-    appCallback_ = nullptr;
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);
 }
 
 std::shared_ptr<VideoStateCallback> VideoOutput::GetApplicationCallback()
 {
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     return appCallback_;
 }
 
@@ -233,10 +236,13 @@ void VideoOutput::SetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate)
 void VideoOutput::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
-    if (appCallback_ != nullptr) {
-        MEDIA_DEBUG_LOG("appCallback not nullptr");
-        int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
-        appCallback_->OnError(serviceErrorType);
+    {
+        std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+        if (appCallback_ != nullptr) {
+            MEDIA_DEBUG_LOG("appCallback not nullptr");
+            int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
+            appCallback_->OnError(serviceErrorType);
+        }
     }
     if (GetStream() != nullptr) {
         (void)GetStream()->AsObject()->RemoveDeathRecipient(deathRecipient_);
