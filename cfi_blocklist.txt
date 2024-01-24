@@ -1,3 +1,4 @@
 fun:*_ZN4OHOS14CameraStandard25HStreamRepeatCallbackImpl14OnFrameStartedEv*
 fun:*_ZN4OHOS14CameraStandard25HStreamRepeatCallbackImpl12OnFrameEndedEi*
 fun:*_ZN4OHOS14CameraStandard25HStreamRepeatCallbackImpl12OnFrameErrorEi*
+src:*/frameworks/native/camera/test/unittest/src/v1_1/camera_framework_unittest.cpp

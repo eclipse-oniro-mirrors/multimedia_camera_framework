@@ -73,9 +73,10 @@ ohos_unittest("camera_framework_unittest_v1_1") {
     "-Werror=unused",
   ]
   sanitize = {
-    cfi = false
-    cfi_cross_dso = false
+    cfi = true
+    cfi_cross_dso = true
     debug = false
+    blocklist = "../../../../../cfi_blocklist.txt"
   }
   include_dirs += [
     "${driver_peripheral_path}/interfaces/include",
