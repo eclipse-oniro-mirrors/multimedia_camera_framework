@@ -613,6 +613,7 @@ public:
     */
     bool IsSessionConfiged();
 private:
+    std::mutex sessionCallbackMutex_;
     std::mutex changeMetaMutex_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
     sptr<ICaptureSession> captureSession_;

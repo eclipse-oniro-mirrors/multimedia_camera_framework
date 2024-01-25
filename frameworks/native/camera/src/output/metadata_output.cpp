@@ -60,8 +60,20 @@ MetadataOutput::~MetadataOutput()
         }
         surface_ = nullptr;
     }
-    appObjectCallback_ = nullptr;
-    appStateCallback_ = nullptr;
+}
+
+std::shared_ptr<MetadataObjectCallback> MetadataOutput::GetAppObjectCallback()
+{
+    MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::GetAppObjectCallback");
+    std::lock_guard<std::mutex> lock(metadataCallbackMutex_);
+    return appObjectCallback_;
+}
+
+std::shared_ptr<MetadataStateCallback> MetadataOutput::GetAppStateCallback()
+{
+    MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::GetAppStateCallback");
+    std::lock_guard<std::mutex> lock(metadataCallbackMutex_);
+    return appStateCallback_;
 }
 
 std::vector<MetadataObjectType> MetadataOutput::GetSupportedMetadataObjectTypes()
@@ -107,11 +119,13 @@ void MetadataOutput::SetCapturingMetadataObjectTypes(std::vector<MetadataObjectT
 
 void MetadataOutput::SetCallback(std::shared_ptr<MetadataObjectCallback> metadataObjectCallback)
 {
+    std::lock_guard<std::mutex> lock(metadataCallbackMutex_);
     appObjectCallback_ = metadataObjectCallback;
 }
 
 void MetadataOutput::SetCallback(std::shared_ptr<MetadataStateCallback> metadataStateCallback)
 {
+    std::lock_guard<std::mutex> lock(metadataCallbackMutex_);
     appStateCallback_ = metadataStateCallback;
 }
 
@@ -163,8 +177,11 @@ int32_t MetadataOutput::Release()
         }
         surface_ = nullptr;
     }
-    appObjectCallback_ = nullptr;
-    appStateCallback_ = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(metadataCallbackMutex_);
+        appObjectCallback_ = nullptr;
+        appStateCallback_ = nullptr;
+    }
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);
 }
@@ -220,7 +237,7 @@ int32_t MetadataObjectListener::ProcessMetadataBuffer(void* buffer, int64_t time
             }
         }
     }
-    std::shared_ptr<MetadataObjectCallback> appObjectCallback = metadata_->appObjectCallback_;
+    std::shared_ptr<MetadataObjectCallback> appObjectCallback = metadata_->GetAppObjectCallback();
     if (!metaObjects.empty() && appObjectCallback) {
         appObjectCallback->OnMetadataObjectsAvailable(metaObjects);
     }
@@ -249,7 +266,7 @@ void MetadataObjectListener::OnBufferAvailable()
     }
     int32_t ret = ProcessMetadataBuffer(buffer->GetVirAddr(), timestamp);
     if (ret) {
-        std::shared_ptr<MetadataStateCallback> appStateCallback = metadata_->appStateCallback_;
+        std::shared_ptr<MetadataStateCallback> appStateCallback = metadata_->GetAppStateCallback();
         if (appStateCallback) {
             appStateCallback->OnError(ret);
         }

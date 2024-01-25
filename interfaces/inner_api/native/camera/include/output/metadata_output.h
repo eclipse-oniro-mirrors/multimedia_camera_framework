@@ -123,8 +123,12 @@ public:
      */
     int32_t Release() override;
 
+    std::shared_ptr<MetadataObjectCallback> GetAppObjectCallback();
+    std::shared_ptr<MetadataStateCallback> GetAppStateCallback();
+
     friend class MetadataObjectListener;
 private:
+    std::mutex metadataCallbackMutex_;
     sptr<Surface> surface_;
     std::shared_ptr<MetadataObjectCallback> appObjectCallback_;
     std::shared_ptr<MetadataStateCallback> appStateCallback_;

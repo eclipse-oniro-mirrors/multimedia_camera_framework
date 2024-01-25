@@ -29,7 +29,6 @@ VideoOutput::VideoOutput(sptr<IStreamRepeat> &streamRepeat)
 VideoOutput::~VideoOutput()
 {
     svcCallback_ = nullptr;
-    appCallback_ = nullptr;
 }
 
 class HStreamRepeatCallbackImpl : public HStreamRepeatCallbackStub {
@@ -81,6 +80,7 @@ public:
 
 void VideoOutput::SetCallback(std::shared_ptr<VideoStateCallback> callback)
 {
+    std::lock_guard<std::mutex> lock(videoCallbackMutex_);
     appCallback_ = callback;
     if (appCallback_ != nullptr) {
         if (svcCallback_ == nullptr) {
@@ -208,13 +208,17 @@ int32_t VideoOutput::Release()
         MEDIA_ERR_LOG("Failed to release VideoOutput!, errCode: %{public}d", errCode);
     }
     svcCallback_ = nullptr;
-    appCallback_ = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(videoCallbackMutex_);
+        appCallback_ = nullptr;
+    }
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);
 }
 
 std::shared_ptr<VideoStateCallback> VideoOutput::GetApplicationCallback()
 {
+    std::lock_guard<std::mutex> lock(videoCallbackMutex_);
     return appCallback_;
 }
 

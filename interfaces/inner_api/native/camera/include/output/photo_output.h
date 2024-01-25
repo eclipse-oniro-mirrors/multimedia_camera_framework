@@ -256,6 +256,7 @@ public:
     std::shared_ptr<PhotoCaptureSetting> GetDefaultCaptureSetting();
 
 private:
+    std::mutex photoCallbackMutex_;
     std::shared_ptr<PhotoStateCallback> appCallback_;
     sptr<IStreamCaptureCallback> cameraSvcCallback_;
     std::shared_ptr<PhotoCaptureSetting> defaultCaptureSetting_;

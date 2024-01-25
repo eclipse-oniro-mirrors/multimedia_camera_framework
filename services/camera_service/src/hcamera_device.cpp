@@ -42,8 +42,6 @@ HCameraDevice::~HCameraDevice()
         cameraHostManager_ = nullptr;
     }
     deviceHDICallback_ = nullptr;
-    std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
-    deviceSvcCallback_ = nullptr;
 }
 
 std::string HCameraDevice::GetCameraId()
@@ -493,9 +491,11 @@ int32_t HCameraDevice::OnCameraStatus(const std::string& cameraId, CameraStatus 
 int32_t HCameraDevice::OnResult(const uint64_t timestamp,
                                 const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
-    std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
-    if (deviceSvcCallback_ != nullptr) {
-        deviceSvcCallback_->OnResult(timestamp, result);
+    {
+        std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
+        if (deviceSvcCallback_ != nullptr) {
+            deviceSvcCallback_->OnResult(timestamp, result);
+        }
     }
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = result->get();
