@@ -212,13 +212,12 @@ PhotoOutput::PhotoOutput(sptr<IStreamCapture> &streamCapture)
 PhotoOutput::~PhotoOutput()
 {
     MEDIA_DEBUG_LOG("Enter Into PhotoOutput::~PhotoOutput()");
-    cameraSvcCallback_ = nullptr;
-    appCallback_ = nullptr;
     defaultCaptureSetting_ = nullptr;
 }
 
 void PhotoOutput::SetCallback(std::shared_ptr<PhotoStateCallback> callback)
 {
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     appCallback_ = callback;
     if (appCallback_ != nullptr) {
         if (cameraSvcCallback_ == nullptr) {
@@ -283,6 +282,7 @@ int32_t PhotoOutput::SetThumbnail(bool isEnabled)
 
 std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
 {
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     return appCallback_;
 }
 
@@ -368,6 +368,11 @@ int32_t PhotoOutput::CancelCapture()
 
 int32_t PhotoOutput::Release()
 {
+    {
+        std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+        cameraSvcCallback_ = nullptr;
+        appCallback_ = nullptr;
+    }
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into PhotoOutput::Release");
     if (GetStream() == nullptr) {
@@ -384,8 +389,6 @@ int32_t PhotoOutput::Release()
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("PhotoOutput Failed to release!, errCode: %{public}d", errCode);
     }
-    cameraSvcCallback_ = nullptr;
-    appCallback_ = nullptr;
     defaultCaptureSetting_ = nullptr;
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);

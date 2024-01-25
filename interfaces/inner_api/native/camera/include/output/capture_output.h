@@ -56,6 +56,7 @@ public:
     CaptureSession* GetSession();
     void SetSession(CaptureSession* captureSession);
     std::mutex asyncOpMutex_;
+    std::mutex outputCallbackMutex_;
 private:
     CaptureOutputType outputType_;
     StreamType streamType_;

@@ -28,8 +28,6 @@ VideoOutput::VideoOutput(sptr<IStreamRepeat> &streamRepeat)
 
 VideoOutput::~VideoOutput()
 {
-    svcCallback_ = nullptr;
-    appCallback_ = nullptr;
 }
 
 int32_t VideoOutputCallbackImpl::OnFrameStarted()
@@ -66,6 +64,7 @@ int32_t VideoOutputCallbackImpl::OnFrameError(const int32_t errorCode)
 
 void VideoOutput::SetCallback(std::shared_ptr<VideoStateCallback> callback)
 {
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     appCallback_ = callback;
     if (appCallback_ != nullptr) {
         if (svcCallback_ == nullptr) {
@@ -181,6 +180,11 @@ int32_t VideoOutput::Pause()
 
 int32_t VideoOutput::Release()
 {
+    {
+        std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+        svcCallback_ = nullptr;
+        appCallback_ = nullptr;
+    }
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into VideoOutput::Release");
     if (GetStream() == nullptr) {
@@ -197,14 +201,13 @@ int32_t VideoOutput::Release()
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to release VideoOutput!, errCode: %{public}d", errCode);
     }
-    svcCallback_ = nullptr;
-    appCallback_ = nullptr;
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);
 }
 
 std::shared_ptr<VideoStateCallback> VideoOutput::GetApplicationCallback()
 {
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     return appCallback_;
 }
 

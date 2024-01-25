@@ -123,7 +123,8 @@ public:
      * @brief Releases a instance of the MetadataOutput.
      */
     int32_t Release() override;
-
+    std::shared_ptr<MetadataObjectCallback> GetAppObjectCallback();
+    std::shared_ptr<MetadataStateCallback> GetAppStateCallback();
     friend class MetadataObjectListener;
 private:
     sptr<IConsumerSurface> surface_;
