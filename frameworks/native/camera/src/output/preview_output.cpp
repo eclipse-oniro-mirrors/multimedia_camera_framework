@@ -35,6 +35,24 @@
 
 namespace OHOS {
 namespace CameraStandard {
+namespace {
+camera_format_t GetHdiFormatFromCameraFormat(CameraFormat cameraFormat)
+{
+    switch (cameraFormat) {
+        case CAMERA_FORMAT_YCBCR_420_888:
+            return OHOS_CAMERA_FORMAT_YCBCR_420_888;
+        case CAMERA_FORMAT_YUV_420_SP:
+            return OHOS_CAMERA_FORMAT_YCRCB_420_SP;
+        case CAMERA_FORMAT_YCBCR_P010:
+            return OHOS_CAMERA_FORMAT_YCBCR_P010;
+        case CAMERA_FORMAT_YCRCB_P010:
+            return OHOS_CAMERA_FORMAT_YCRCB_P010;
+        default:
+            return OHOS_CAMERA_FORMAT_IMPLEMENTATION_DEFINED;
+    }
+    return OHOS_CAMERA_FORMAT_IMPLEMENTATION_DEFINED;
+}
+} // namespace
 static constexpr int32_t SKETCH_MIN_WIDTH = 480;
 PreviewOutput::PreviewOutput(sptr<IStreamRepeat>& streamRepeat)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PREVIEW, StreamType::REPEAT, streamRepeat)
@@ -195,14 +213,6 @@ int32_t PreviewOutput::Stop()
 bool PreviewOutput::IsSketchSupported()
 {
     MEDIA_DEBUG_LOG("Enter Into PreviewOutput::IsSketchSupported");
-
-    Profile profile = GetPreviewProfile();
-    CameraFormat cameraFormat = profile.GetCameraFormat();
-    if (cameraFormat != CAMERA_FORMAT_YUV_420_SP && cameraFormat != CAMERA_FORMAT_YCBCR_420_888) {
-        MEDIA_ERR_LOG("PreviewOutput::IsSketchSupported preview format is illegal:%{public}d",
-            static_cast<int32_t>(cameraFormat));
-        return false;
-    }
 
     auto sketchSize = FindSketchSize();
     if (sketchSize == nullptr) {
@@ -391,13 +401,9 @@ std::shared_ptr<Size> PreviewOutput::FindSketchSize()
         return nullptr;
     }
     Profile profile = GetPreviewProfile();
-    camera_format_t hdi_format = OHOS_CAMERA_FORMAT_IMPLEMENTATION_DEFINED;
     CameraFormat cameraFormat = profile.GetCameraFormat();
-    if (cameraFormat == CAMERA_FORMAT_YUV_420_SP) {
-        hdi_format = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
-    } else if (cameraFormat == CAMERA_FORMAT_YCBCR_420_888) {
-        hdi_format = OHOS_CAMERA_FORMAT_YCBCR_420_888;
-    } else {
+    camera_format_t hdi_format = GetHdiFormatFromCameraFormat(cameraFormat);
+    if (hdi_format == OHOS_CAMERA_FORMAT_IMPLEMENTATION_DEFINED) {
         MEDIA_ERR_LOG("PreviewOutput::FindSketchSize preview format is illegal");
         return nullptr;
     }
