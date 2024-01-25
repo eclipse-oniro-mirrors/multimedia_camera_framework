@@ -1485,6 +1485,9 @@ TorchMode CameraManager::GetTorchMode()
 int32_t CameraManager::SetTorchMode(TorchMode mode)
 {
     int32_t retCode = CAMERA_OPERATION_NOT_ALLOWED;
+    int32_t pid = IPCSkeleton::GetCallingPid();
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    POWERMGR_SYSEVENT_TORCH_STATE(pid, uid, mode);
     switch (mode) {
         case TorchMode::TORCH_MODE_OFF:
             retCode = SetTorchLevel(0);
@@ -1500,9 +1503,6 @@ int32_t CameraManager::SetTorchMode(TorchMode mode)
     }
     if (retCode == CAMERA_OK) {
         UpdateTorchMode(mode);
-        int32_t pid = IPCSkeleton::GetCallingPid();
-        int32_t uid = IPCSkeleton::GetCallingUid();
-        POWERMGR_SYSEVENT_TORCH_STATE(pid, uid, mode);
     }
     return ServiceToCameraError(retCode);
 }
