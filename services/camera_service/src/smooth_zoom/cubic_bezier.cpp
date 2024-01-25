@@ -31,6 +31,7 @@ constexpr float CONTROL_POINT_Y2 = 1.0;
 constexpr float DURATION_SLOP = 55.0;
 constexpr float DURATION_BASE = 450.0;
 constexpr float DURATION_POWER = 1.2;
+constexpr int MAX_ZOOM_ARRAY_SIZE = 100;
 }
 
 std::vector<float> CubicBezier::GetZoomArray(const float& currentZoom, const float& targetZoom,
@@ -43,6 +44,10 @@ std::vector<float> CubicBezier::GetZoomArray(const float& currentZoom, const flo
         return result;
     }
     int arraySize = static_cast<int>(duration / frameInterval);
+    if (arraySize > MAX_ZOOM_ARRAY_SIZE) {
+        MEDIA_ERR_LOG("Error size, duration is:%{public}f, interval is:%{public}f", duration, frameInterval);
+        return result;
+    }
     for (int i = 1; i <= arraySize; i++) {
         float time = frameInterval * i / duration;
         float zoom = (currentZoom + (targetZoom - currentZoom) * GetInterpolation(time));
