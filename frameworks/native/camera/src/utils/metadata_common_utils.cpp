@@ -122,7 +122,8 @@ std::shared_ptr<vector<Size>> MetadataCommonUtils::GetSupportedPreviewSizeRange(
         modeName, targetFormat);
     std::shared_ptr<vector<Size>> sizeList = std::make_shared<vector<Size>>();
     auto extendList = GetSupportedPreviewSizeRangeFromExtendConfig(modeName, targetFormat, metadata);
-    if (modeName == SceneMode::CAPTURE && extendList != nullptr && extendList->empty()) {
+    if (extendList != nullptr && extendList->empty() &&
+        (modeName == SceneMode::CAPTURE || modeName == SceneMode::VIDEO)) {
         extendList = GetSupportedPreviewSizeRangeFromExtendConfig(SceneMode::NORMAL, targetFormat, metadata);
     }
     if (extendList != nullptr && !extendList->empty()) {
