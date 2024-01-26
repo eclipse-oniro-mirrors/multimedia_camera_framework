@@ -1242,6 +1242,40 @@ int32_t StreamOperatorCallback::OnFrameShutter(
     return CAMERA_OK;
 }
 
+int32_t StreamOperatorCallback::OnFrameShutterEnd(
+    int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
+{
+    MEDIA_DEBUG_LOG("StreamOperatorCallback::OnFrameShutterEnd");
+    std::lock_guard<std::mutex> lock(cbMutex_);
+    for (auto& streamId : streamIds) {
+        sptr<HStreamCommon> curStream = GetStreamByStreamID(streamId);
+        if ((curStream != nullptr) && (curStream->GetStreamType() == StreamType::CAPTURE)) {
+            CastStream<HStreamCapture>(curStream)->OnFrameShutterEnd(captureId, timestamp);
+        } else {
+            MEDIA_ERR_LOG("StreamOperatorCallback::OnFrameShutterEnd StreamId: %{public}d not found", streamId);
+            return CAMERA_INVALID_ARG;
+        }
+    }
+    return CAMERA_OK;
+}
+
+int32_t StreamOperatorCallback::OnCaptureReady(
+    int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
+{
+    MEDIA_DEBUG_LOG("StreamOperatorCallback::OnCaptureReady");
+    std::lock_guard<std::mutex> lock(cbMutex_);
+    for (auto& streamId : streamIds) {
+        sptr<HStreamCommon> curStream = GetStreamByStreamID(streamId);
+        if ((curStream != nullptr) && (curStream->GetStreamType() == StreamType::CAPTURE)) {
+            CastStream<HStreamCapture>(curStream)->OnCaptureReady(captureId, timestamp);
+        } else {
+            MEDIA_ERR_LOG("StreamOperatorCallback::OnCaptureReady StreamId: %{public}d not found", streamId);
+            return CAMERA_INVALID_ARG;
+        }
+    }
+    return CAMERA_OK;
+}
+
 StateMachine::StateMachine()
 {
     stateTransferMap_[static_cast<uint32_t>(CaptureSessionState::SESSION_INIT)] = {

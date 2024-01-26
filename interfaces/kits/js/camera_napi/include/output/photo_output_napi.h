@@ -38,16 +38,20 @@ struct CallbackInfo {
     uint64_t timestamp = 0;
     int32_t frameCount = 0;
     int32_t errorCode;
+    int32_t duration;
 };
 
 enum PhotoOutputEventType {
     CAPTURE_START,
     CAPTURE_END,
     CAPTURE_FRAME_SHUTTER,
+    CAPTURE_FRAME_SHUTTER_END,
+    CAPTURE_READY,
     CAPTURE_ERROR,
     CAPTURE_INVALID_TYPE,
     CAPTURE_PHOTO_AVAILABLE,
-    CAPTURE_DEFERRED_PHOTO_AVAILABLE
+    CAPTURE_DEFERRED_PHOTO_AVAILABLE,
+    CAPTURE_ESTIMATED_CAPTURE_DURATION
 };
 
 static EnumHelper<PhotoOutputEventType> PhotoOutputEventTypeHelper({
@@ -57,6 +61,9 @@ static EnumHelper<PhotoOutputEventType> PhotoOutputEventTypeHelper({
         {CAPTURE_ERROR, "error"},
         {CAPTURE_PHOTO_AVAILABLE, "photoAvailable"},
         {CAPTURE_DEFERRED_PHOTO_AVAILABLE, "deferredPhotoProxyAvailable"},
+        {CAPTURE_FRAME_SHUTTER_END, "frameShutterEnd"},
+        {CAPTURE_READY, "captureReady"},
+        {CAPTURE_ESTIMATED_CAPTURE_DURATION, "estimatedCaptureDuration"},
     },
     PhotoOutputEventType::CAPTURE_INVALID_TYPE
 );
@@ -110,7 +117,11 @@ public:
     void OnCaptureStarted(const int32_t captureID, uint32_t exposureTime) const override;
     void OnCaptureEnded(const int32_t captureID, const int32_t frameCount) const override;
     void OnFrameShutter(const int32_t captureId, const uint64_t timestamp) const override;
+    void OnFrameShutterEnd(const int32_t captureId, const uint64_t timestamp) const override;
+    void OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const override;
     void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override;
+    void OnEstimatedCaptureDuration(const int32_t duration) const override;
+
     void SaveCallbackReference(const std::string& eventType, napi_value callback, bool isOnce);
     void RemoveCallbackRef(napi_env env, napi_value callback, const std::string& eventType);
     void RemoveAllCallbacks(const std::string& eventType);
@@ -122,12 +133,19 @@ private:
     void ExecuteCaptureEndCb(const CallbackInfo& info) const;
     void ExecuteFrameShutterCb(const CallbackInfo& info) const;
     void ExecuteCaptureErrorCb(const CallbackInfo& info) const;
+    void ExecuteFrameShutterEndCb(const CallbackInfo& info) const;
+    void ExecuteCaptureReadyCb(const CallbackInfo& info) const;
+    void ExecuteEstimatedCaptureDurationCb(const CallbackInfo& info) const;
+
     std::mutex mutex_;
     napi_env env_;
     mutable std::vector<std::shared_ptr<AutoRef>> captureStartCbList_;
     mutable std::vector<std::shared_ptr<AutoRef>> captureEndCbList_;
     mutable std::vector<std::shared_ptr<AutoRef>> frameShutterCbList_;
+    mutable std::vector<std::shared_ptr<AutoRef>> frameShutterEndCbList_;
+    mutable std::vector<std::shared_ptr<AutoRef>> captureReadyCbList_;
     mutable std::vector<std::shared_ptr<AutoRef>> errorCbList_;
+    mutable std::vector<std::shared_ptr<AutoRef>> estimatedCaptureDurationCbList_;
 };
 
 class ThumbnailListener : public IBufferConsumerListener, public ListenerBase {

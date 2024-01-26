@@ -54,12 +54,35 @@ public:
     virtual void OnCaptureEnded(const int32_t captureID, const int32_t frameCount) const = 0;
 
     /**
-     * @brief Called when camera capture ended.
+     * @brief Called when frame Shutter.
      *
      * @param captureId Obtain the constant capture id for the photo capture callback.
      * @param timestamp Represents timestamp information for the photo capture callback
      */
     virtual void OnFrameShutter(const int32_t captureId, const uint64_t timestamp) const = 0;
+
+    /**
+     * @brief Called when frame Shutter end.
+     *
+     * @param captureId Obtain the constant capture id for the photo capture callback.
+     * @param timestamp Represents timestamp information for the photo capture callback
+     */
+    virtual void OnFrameShutterEnd(const int32_t captureId, const uint64_t timestamp) const = 0;
+
+    /**
+     * @brief Called when capture ready end.
+     *
+     * @param captureId Obtain the constant capture id for the photo capture callback.
+     * @param timestamp Represents timestamp information for the photo capture callback
+     */
+    virtual void OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const = 0;
+
+    /**
+     * @brief Called when EstimatedCaptureDuration.
+     *
+     * @param duration Obtain the duration for the photo capture callback.
+     */
+    virtual void OnEstimatedCaptureDuration(const int32_t duration) const = 0;
 
     /**
      * @brief Called when error occured during camera capture.
@@ -299,6 +322,8 @@ public:
      */
     int32_t IsDeferredImageDeliveryEnabled(DeferredDeliveryImageType type);
 
+    void ProcessSnapshotDurationUpdates(int32_t snapshotDuration);
+
     /**
      * @brief Get default photo capture setting.
      *
@@ -364,6 +389,22 @@ public:
      * @param timestamp Represents timestamp information for the photo capture callback
      */
     int32_t OnFrameShutter(const int32_t captureId, const uint64_t timestamp) override;
+
+    /**
+     * @brief Called when camera capture ended.
+     *
+     * @param captureId Obtain the constant capture id for the photo capture callback.
+     * @param timestamp Represents timestamp information for the photo capture callback
+     */
+    int32_t OnFrameShutterEnd(const int32_t captureId, const uint64_t timestamp) override;
+
+    /**
+     * @brief Called when camera capture ended.
+     *
+     * @param captureId Obtain the constant capture id for the photo capture callback.
+     * @param timestamp Represents timestamp information for the photo capture callback
+     */
+    int32_t OnCaptureReady(const int32_t captureId, const uint64_t timestamp) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

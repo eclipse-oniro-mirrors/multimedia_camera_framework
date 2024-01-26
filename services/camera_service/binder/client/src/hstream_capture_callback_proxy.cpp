@@ -122,5 +122,45 @@ int32_t HStreamCaptureCallbackProxy::OnFrameShutter(int32_t captureId, uint64_t 
 
     return error;
 }
+
+int32_t HStreamCaptureCallbackProxy::OnFrameShutterEnd(int32_t captureId, uint64_t timestamp)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    option.SetFlags(option.TF_ASYNC);
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(captureId);
+    data.WriteUint64(timestamp);
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_FRAME_SHUTTER_END),
+        data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnFrameShutterEnd failed, error: %{public}d", error);
+    }
+    return error;
+}
+    
+int32_t HStreamCaptureCallbackProxy::OnCaptureReady(int32_t captureId, uint64_t timestamp)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    option.SetFlags(option.TF_ASYNC);
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(captureId);
+    data.WriteUint64(timestamp);
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_CAPTURE_READY),
+        data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamCaptureCallbackProxy OnCaptureReady failed, error: %{public}d", error);
+    }
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS

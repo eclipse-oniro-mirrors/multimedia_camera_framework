@@ -104,6 +104,11 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         return CAMERA_INVALID_STATE;
     }
 
+    if (isCaptureReady_ == false) {
+        MEDIA_ERR_LOG("HStreamCapture::Capture failed due to capture not ready");
+        return CAMERA_OPERATION_NOT_ALLOWED;
+    }
+
     auto preparedCaptureId = GetPreparedCaptureId();
     if (preparedCaptureId != CAPTURE_ID_UNSET) {
         MEDIA_ERR_LOG("HStreamCapture::Capture, Already started with captureID: %{public}d", preparedCaptureId);
@@ -165,6 +170,16 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         return ret;
     }
     ResetCaptureId();
+
+    uint32_t major;
+    uint32_t minor;
+    streamOperator->GetVersion(major, minor);
+    MEDIA_INFO_LOG("streamOperator GetVersion major:%{public}d, minor:%{public}d", major, minor);
+    // intercept when streamOperatorCallback support onCaptureReady
+    if (major >= HDI_VERSION_1 && minor >= HDI_VERSION_2) {
+        MEDIA_INFO_LOG("HStreamCapture::Capture set capture not ready");
+        isCaptureReady_ = false;
+    }
     return ret;
 }
 
@@ -389,6 +404,29 @@ int32_t HStreamCapture::OnFrameShutter(int32_t captureId, uint64_t timestamp)
     std::lock_guard<std::mutex> lock(callbackLock_);
     if (streamCaptureCallback_ != nullptr) {
         streamCaptureCallback_->OnFrameShutter(captureId, timestamp);
+    }
+    return CAMERA_OK;
+}
+
+int32_t HStreamCapture::OnFrameShutterEnd(int32_t captureId, uint64_t timestamp)
+{
+    CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(callbackLock_);
+    if (streamCaptureCallback_ != nullptr) {
+        streamCaptureCallback_->OnFrameShutterEnd(captureId, timestamp);
+    }
+    return CAMERA_OK;
+}
+
+
+int32_t HStreamCapture::OnCaptureReady(int32_t captureId, uint64_t timestamp)
+{
+    CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(callbackLock_);
+    MEDIA_INFO_LOG("HStreamCapture::Capture, notify OnCaptureReady with capture ID: %{public}d", captureId);
+    isCaptureReady_ = true;
+    if (streamCaptureCallback_ != nullptr) {
+        streamCaptureCallback_->OnCaptureReady(captureId, timestamp);
     }
     return CAMERA_OK;
 }

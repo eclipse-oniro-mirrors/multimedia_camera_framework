@@ -54,7 +54,10 @@ enum class CAM_PHOTO_EVENTS {
     CAM_PHOTO_CAPTURE_END,
     CAM_PHOTO_CAPTURE_ERR,
     CAM_PHOTO_FRAME_SHUTTER,
-    CAM_PHOTO_MAX_EVENT
+    CAM_PHOTO_MAX_EVENT,
+    CAM_PHOTO_FRAME_SHUTTER_END,
+    CAM_PHOTO_CAPTURE_READY,
+    CAM_PHOTO_ESTIMATED_CAPTURE_DURATION
 };
 
 enum class CAM_PREVIEW_EVENTS {
@@ -234,6 +237,29 @@ public:
         MEDIA_DEBUG_LOG(
             "AppCallback::OnFrameShutter captureId: %{public}d, timestamp: %{public}" PRIu64, captureId, timestamp);
         g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_FRAME_SHUTTER)] = 1;
+        return;
+    }
+
+    void OnFrameShutterEnd(const int32_t captureId, const uint64_t timestamp) const override
+    {
+        MEDIA_DEBUG_LOG(
+            "AppCallback::OnFrameShutterEnd captureId: %{public}d, timestamp: %{public}" PRIu64, captureId, timestamp);
+        g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_FRAME_SHUTTER_END)] = 1;
+        return;
+    }
+
+    void OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const override
+    {
+        MEDIA_DEBUG_LOG(
+            "AppCallback::OnCaptureReady captureId: %{public}d, timestamp: %{public}" PRIu64, captureId, timestamp);
+        g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_READY)] = 1;
+        return;
+    }
+
+    void OnEstimatedCaptureDuration(const int32_t duration) const override
+    {
+        MEDIA_DEBUG_LOG("AppCallback::OnEstimatedCaptureDuration duration: %{public}d", duration);
+        g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_ESTIMATED_CAPTURE_DURATION)] = 1;
         return;
     }
 
@@ -6292,6 +6318,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_072, TestSize.L
     EXPECT_EQ(streamCapture->OnCaptureError(captureId, frameCount), CAMERA_OK);
     EXPECT_EQ(streamCapture->OnCaptureError(captureId, BUFFER_LOST), CAMERA_OK);
     EXPECT_EQ(streamCapture->OnFrameShutter(captureId, timestamp), CAMERA_OK);
+    EXPECT_EQ(streamCapture->OnFrameShutterEnd(captureId, timestamp), CAMERA_OK);
+    EXPECT_EQ(streamCapture->OnCaptureReady(captureId, timestamp), CAMERA_OK);
 }
 
 
@@ -6305,6 +6333,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_072, TestSize.L
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_078, TestSize.Level0)
 {
+    EXPECT_EQ((session_->GetSupportedColorEffects()).empty(), true);
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
     intResult = session_->AddInput(input_);
@@ -6317,7 +6346,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_078, TestSize.L
     std::shared_ptr<OHOS::Camera::CameraMetadata> result = nullptr;
     session_->ProcessFaceRecUpdates(timestamp, result);
     EXPECT_EQ(session_->VerifyAbility(0), CAMERA_INVALID_ARG);
-    EXPECT_EQ((session_->GetSupportedColorEffects()).empty(), true);
     session_->inputDevice_ = nullptr;
     session_->ProcessFaceRecUpdates(timestamp, result);
     EXPECT_EQ(session_->GetFilter(), FilterType::NONE);
@@ -6635,8 +6663,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_090, TestSize.L
     EXPECT_EQ(session_->GetSupportedBeautyRange(beautyType).empty(), true);
     EXPECT_EQ(session_->GetBeauty(beautyType), -1);
     EXPECT_EQ(session_->GetColorEffect(), COLOR_EFFECT_NORMAL);
-    EXPECT_EQ(session_->GetSupportedColorEffects().empty(), true);
-    EXPECT_EQ(session_->GetSupportedColorSpaces().empty(), true);
     session_->SetBeauty(beautyType, 0);
     session_->SetFilter(NONE);
     EXPECT_EQ(session_->SetColorSpace(COLOR_SPACE_UNKNOWN), CAMERA_OK);
@@ -6791,6 +6817,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_095, TestSize.L
     hStreamCaptureCallbackProxy->OnCaptureEnded(0, 0);
     hStreamCaptureCallbackProxy->OnCaptureError(0, 0);
     hStreamCaptureCallbackProxy->OnFrameShutter(0, 0);
+    hStreamCaptureCallbackProxy->OnFrameShutterEnd(0, 0);
+    hStreamCaptureCallbackProxy->OnCaptureReady(0, 0);
 }
 
 /*
@@ -7137,6 +7165,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_107, TestSize.L
     hStreamCaptureCallbackProxy->OnCaptureEnded(0, 0);
     hStreamCaptureCallbackProxy->OnCaptureError(0, 0);
     hStreamCaptureCallbackProxy->OnFrameShutter(0, 0);
+    hStreamCaptureCallbackProxy->OnFrameShutterEnd(0, 0);
+    hStreamCaptureCallbackProxy->OnCaptureReady(0, 0);
 }
 
 /*
@@ -7333,6 +7363,64 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_115, TestSize.L
 
     bool boolResult = camSession->SetBeautyValue(BeautyType::SKIN_TONE, 0);
     EXPECT_FALSE(boolResult);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test captureCallback with anomalous branch.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_116, TestSize.Level0)
+{
+    std::shared_ptr<HStreamCaptureCallbackImpl> captureCallback = std::make_shared<HStreamCaptureCallbackImpl>();
+
+    int32_t captureId = 2001;
+    uint64_t timestamp = 10;
+
+    int32_t intResult = captureCallback->OnFrameShutterEnd(captureId, timestamp);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = captureCallback->OnCaptureReady(captureId, timestamp);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
+    ASSERT_NE(camSession, nullptr);
+
+    intResult = camSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureInput> input = (sptr<CaptureInput>&)input_;
+    ASSERT_NE(input, nullptr);
+
+    intResult = camSession->AddInput(input);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    intResult = camSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    intResult = camSession->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<PhotoOutput> photoOutput_1 = (sptr<PhotoOutput>&)photoOutput;
+
+    intResult = camSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
+    photoOutput_1->SetCallback(callback);
+
+    sptr<HStreamCaptureCallbackImpl> captureCallback_2 = new (std::nothrow) HStreamCaptureCallbackImpl(photoOutput_1);
+
+    intResult = captureCallback_2->OnFrameShutterEnd(captureId, timestamp);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = captureCallback_2->OnCaptureReady(captureId, timestamp);
+    EXPECT_EQ(intResult, 0);
 }
 
 /*

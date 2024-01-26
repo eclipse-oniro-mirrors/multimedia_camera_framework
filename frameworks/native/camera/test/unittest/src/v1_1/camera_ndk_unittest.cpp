@@ -1629,7 +1629,7 @@ HWTEST_F(CameraNdkUnitTest, camera_frameworkndk_unittest_053, TestSize.Level0)
     capSettings.location = &location;
     ret = OH_PhotoOutput_Capture_WithCaptureSetting(PhotoOutput, capSettings);
     EXPECT_EQ(ret, 0);
-
+    sleep(WAIT_TIME_AFTER_CAPTURE);
     location = {0, 0, 0};
     capSettings.location = &location;
     ret = OH_PhotoOutput_Capture_WithCaptureSetting(PhotoOutput, capSettings);

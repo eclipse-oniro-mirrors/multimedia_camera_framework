@@ -3442,6 +3442,7 @@ declare namespace camera {
      * Start capture output.
      *
      * @param { AsyncCallback<void> } callback - Callback used to return the result.
+     * @throws { BusinessError } 7400102 - Operation not allowed.
      * @throws { BusinessError } 7400104 - Session not running.
      * @throws { BusinessError } 7400201 - Camera service fatal error.
      * @syscap SystemCapability.Multimedia.Camera.Core
@@ -3453,6 +3454,7 @@ declare namespace camera {
      * Start capture output.
      *
      * @returns { Promise<void> } Promise used to return the result.
+     * @throws { BusinessError } 7400102 - Operation not allowed.
      * @throws { BusinessError } 7400104 - Session not running.
      * @throws { BusinessError } 7400201 - Camera service fatal error.
      * @syscap SystemCapability.Multimedia.Camera.Core
@@ -3466,6 +3468,7 @@ declare namespace camera {
      * @param { PhotoCaptureSetting } setting - Photo capture settings.
      * @param { AsyncCallback<void> } callback - Callback used to return the result.
      * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @throws { BusinessError } 7400102 - Operation not allowed.
      * @throws { BusinessError } 7400104 - Session not running.
      * @throws { BusinessError } 7400201 - Camera service fatal error.
      * @syscap SystemCapability.Multimedia.Camera.Core
@@ -3479,6 +3482,7 @@ declare namespace camera {
      * @param { PhotoCaptureSetting } setting - Photo capture settings.
      * @returns { Promise<void> } Promise used to return the result.
      * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @throws { BusinessError } 7400102 - Operation not allowed.
      * @throws { BusinessError } 7400104 - Session not running.
      * @throws { BusinessError } 7400201 - Camera service fatal error.
      * @syscap SystemCapability.Multimedia.Camera.Core
@@ -3652,6 +3656,26 @@ declare namespace camera {
     off(type: 'frameShutter', callback?: AsyncCallback<FrameShutterInfo>): void;
 
     /**
+     * Subscribes frame shutter end event callback.
+     *
+     * @param { 'frameShutterEnd' } type - Event type.
+     * @param { AsyncCallback<FrameShutterEndInfo> } callback - Callback used to get the frame shutter end information.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    on(type: 'frameShutterEnd', callback: AsyncCallback<FrameShutterEndInfo>): void;
+
+    /**
+     * Unsubscribes from frame shutter end event callback.
+     *
+     * @param { 'frameShutterEnd' } type - Event type.
+     * @param { AsyncCallback<FrameShutterEndInfo> } callback - Callback used to get the frame shutter end information.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    off(type: 'frameShutterEnd', callback?: AsyncCallback<FrameShutterEndInfo>): void;
+
+    /**
      * Subscribes capture end event callback.
      *
      * @param { 'captureEnd' } type - Event type.
@@ -3671,6 +3695,46 @@ declare namespace camera {
      */
     off(type: 'captureEnd', callback?: AsyncCallback<CaptureEndInfo>): void;
 
+    /**
+     * Subscribes capture ready event callback. After receiving the callback, can proceed to the next capture.
+     *
+     * @param { 'captureReady' } type - Event type.
+     * @param { AsyncCallback<void> } callback - Callback used to notice capture ready.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    on(type: 'captureReady', callback: AsyncCallback<void>): void;
+
+    /**
+     * Unsubscribes from capture ready event callback.
+     *
+     * @param { 'captureReady' } type - Event type.
+     * @param { AsyncCallback<void> } callback - Callback used to notice capture ready.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    off(type: 'captureReady', callback?: AsyncCallback<void>): void;
+
+    /**
+     * Subscribes estimated capture duration event callback.
+     *
+     * @param { 'estimatedCaptureDuration' } type - Event type.
+     * @param { AsyncCallback<number> } callback - Callback used to notify the estimated capture duration (in milliseconds).
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    on(type: 'estimatedCaptureDuration', callback: AsyncCallback<number>): void;
+
+    /**
+     * Unsubscribes from estimated capture duration event callback.
+     *
+     * @param { 'estimatedCaptureDuration' } type - Event type.
+     * @param { AsyncCallback<number> } callback - Callback used to notify the estimated capture duration (in milliseconds).
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    off(type: 'estimatedCaptureDuration', callback?: AsyncCallback<number>): void;
+    
     /**
      * Subscribes to error events.
      *
@@ -3768,6 +3832,23 @@ declare namespace camera {
     timestamp: number;
   }
 
+  /**
+   * Frame shutter end callback info.
+   *
+   * @typedef FrameShutterEndInfo
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 12
+   */
+  interface FrameShutterEndInfo {
+    /**
+     * Capture id.
+     *
+     * @type { number }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    captureId: number;
+  }
   /**
    * Capture start info.
    *

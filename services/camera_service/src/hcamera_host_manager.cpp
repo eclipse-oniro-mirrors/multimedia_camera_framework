@@ -99,6 +99,7 @@ private:
     void NotifyCameraHostDied();
     void AddDevice(const std::string& cameraId);
     void RemoveDevice(const std::string& cameraId);
+    void Cast2MultiVersionCameraHost();
 
     std::weak_ptr<StatusCallback> statusCallback_;
     std::weak_ptr<CameraHostDeadCallback> cameraHostDeadCallback_;
@@ -108,6 +109,7 @@ private:
     sptr<OHOS::HDI::Camera::V1_0::ICameraHost> cameraHostProxy_;
     sptr<OHOS::HDI::Camera::V1_1::ICameraHost> cameraHostProxyV1_1_;
     sptr<OHOS::HDI::Camera::V1_2::ICameraHost> cameraHostProxyV1_2_;
+    sptr<OHOS::HDI::Camera::V1_3::ICameraHost> cameraHostProxyV1_3_;
 
     std::mutex mutex_;
     std::vector<std::string> cameraIds_;
@@ -121,11 +123,39 @@ HCameraHostManager::CameraHostInfo::~CameraHostInfo()
     cameraHostProxy_ = nullptr;
     cameraHostProxyV1_1_ = nullptr;
     cameraHostProxyV1_2_ = nullptr;
+    cameraHostProxyV1_3_ = nullptr;
     for (unsigned i = 0; i < devices_.size(); i++) {
         devices_.at(i) = nullptr;
     }
     cameraIds_.clear();
     devices_.clear();
+}
+
+void HCameraHostManager::CameraHostInfo::Cast2MultiVersionCameraHost()
+{
+    cameraHostProxy_->GetVersion(majorVer_, minorVer_);
+    MEDIA_INFO_LOG("CameraHostInfo::Init cameraHostProxy_version %{public}u _ %{public}u", majorVer_, minorVer_);
+    if (GetCameraHostVersion() > GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
+        MEDIA_DEBUG_LOG("CameraHostInfo::Init ICameraHost cast to V1_3");
+        auto castResult_V1_3 = OHOS::HDI::Camera::V1_3::ICameraHost::CastFrom(cameraHostProxy_);
+        if (castResult_V1_3 != nullptr) {
+            cameraHostProxyV1_3_ = castResult_V1_3;
+        }
+    }
+    if (GetCameraHostVersion() > GetVersionId(1, 1)) {
+        MEDIA_DEBUG_LOG("CameraHostInfo::Init ICameraHost cast to V1_2");
+        auto castResult_V1_2 = OHOS::HDI::Camera::V1_2::ICameraHost::CastFrom(cameraHostProxy_);
+        if (castResult_V1_2 != nullptr) {
+            cameraHostProxyV1_2_ = castResult_V1_2;
+        }
+    }
+    if (GetCameraHostVersion() > GetVersionId(1, 0)) {
+        MEDIA_DEBUG_LOG("CameraHostInfo::Init ICameraHost cast to V1_1");
+        auto castResult_V1_1 = OHOS::HDI::Camera::V1_1::ICameraHost::CastFrom(cameraHostProxy_);
+        if (castResult_V1_1 != nullptr) {
+            cameraHostProxyV1_1_ = castResult_V1_1;
+        }
+    }
 }
 
 bool HCameraHostManager::CameraHostInfo::Init()
@@ -139,23 +169,8 @@ bool HCameraHostManager::CameraHostInfo::Init()
         MEDIA_ERR_LOG("Failed to get ICameraHost");
         return false;
     }
-    // Get cameraHost veresion
-    cameraHostProxy_->GetVersion(majorVer_, minorVer_);
-    MEDIA_INFO_LOG("CameraHostInfo::Init GetVersion majorVer_: %{public}u, minorVers_: %{public}u",
-        majorVer_, minorVer_);
-    if (GetCameraHostVersion() > GetVersionId(1, 1)) {
-        MEDIA_DEBUG_LOG("CameraHostInfo::Init ICameraHost cast to V1_2");
-        auto castResult_V1_2 = OHOS::HDI::Camera::V1_2::ICameraHost::CastFrom(cameraHostProxy_);
-        if (castResult_V1_2 != nullptr) {
-            cameraHostProxyV1_2_ = castResult_V1_2;
-        }
-    } else if (GetCameraHostVersion() == GetVersionId(1, 1)) {
-        MEDIA_DEBUG_LOG("CameraHostInfo::Init ICameraHost cast to V1_1");
-        auto castResult_V1_1 = OHOS::HDI::Camera::V1_1::ICameraHost::CastFrom(cameraHostProxy_);
-        if (castResult_V1_1 != nullptr) {
-            cameraHostProxyV1_1_ = castResult_V1_1;
-        }
-    }
+
+    Cast2MultiVersionCameraHost();
 
     if (cameraHostProxyV1_2_ != nullptr && GetCameraHostVersion() > GetVersionId(1, 1)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::Init SetCallback ICameraHost V1_2");
@@ -164,14 +179,11 @@ bool HCameraHostManager::CameraHostInfo::Init()
         MEDIA_DEBUG_LOG("CameraHostInfo::Init SetCallback ICameraHost V1_0");
         cameraHostProxy_->SetCallback(this);
     }
-
     sptr<CameraHostDeathRecipient> cameraHostDeathRecipient = new CameraHostDeathRecipient(this);
     const sptr<IRemoteObject> &remote = OHOS::HDI::hdi_objcast<ICameraHost>(cameraHostProxy_);
-    bool result = remote->AddDeathRecipient(cameraHostDeathRecipient);
-    if (!result) {
+    if (!remote->AddDeathRecipient(cameraHostDeathRecipient)) {
         MEDIA_ERR_LOG("AddDeathRecipient for CameraHost failed.");
     }
-
     std::lock_guard<std::mutex> lock(mutex_);
     CamRetCode ret = (CamRetCode)(cameraHostProxy_->GetCameraIds(cameraIds_));
     if (ret != HDI::Camera::V1_0::NO_ERROR) {
@@ -270,7 +282,13 @@ int32_t HCameraHostManager::CameraHostInfo::OpenCamera(std::string& cameraId,
     // try to get higher version
     sptr<OHOS::HDI::Camera::V1_1::ICameraDevice> hdiDevice_v1_1;
     sptr<OHOS::HDI::Camera::V1_2::ICameraDevice> hdiDevice_v1_2;
-    if (cameraHostProxyV1_2_ != nullptr && GetCameraHostVersion() >= GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
+    sptr<OHOS::HDI::Camera::V1_3::ICameraDevice> hdiDevice_v1_3;
+    if (cameraHostProxyV1_3_ != nullptr && GetCameraHostVersion() >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
+        MEDIA_DEBUG_LOG("CameraHostInfo::OpenCamera ICameraDevice V1_3");
+        rc = (CamRetCode)(cameraHostProxyV1_3_->OpenCamera_V1_3(cameraId, callback, hdiDevice_v1_3));
+        pDevice = hdiDevice_v1_3.GetRefPtr();
+    } else if (cameraHostProxyV1_2_ != nullptr
+        && GetCameraHostVersion() >= GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::OpenCamera ICameraDevice V1_2");
         rc = (CamRetCode)(cameraHostProxyV1_2_->OpenCamera_V1_2(cameraId, callback, hdiDevice_v1_2));
         pDevice = hdiDevice_v1_2.GetRefPtr();

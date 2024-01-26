@@ -39,7 +39,7 @@
 #include "v1_0/istream_operator.h"
 #include "v1_1/istream_operator.h"
 #include "v1_2/istream_operator.h"
-#include "v1_2/istream_operator_callback.h"
+#include "v1_3/istream_operator_callback.h"
 #include "hcamera_restore_param.h"
 
 namespace OHOS {
@@ -103,7 +103,7 @@ private:
     std::map<const StreamType, std::list<sptr<HStreamCommon>>> streams_;
 };
 
-class StreamOperatorCallback : public OHOS::HDI::Camera::V1_2::IStreamOperatorCallback {
+class StreamOperatorCallback : public OHOS::HDI::Camera::V1_3::IStreamOperatorCallback {
 public:
     StreamOperatorCallback() = default;
     virtual ~StreamOperatorCallback() = default;
@@ -114,6 +114,8 @@ public:
     int32_t OnCaptureEnded(int32_t captureId, const std::vector<CaptureEndedInfo>& infos) override;
     int32_t OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos) override;
     int32_t OnFrameShutter(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
+    int32_t OnFrameShutterEnd(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
+    int32_t OnCaptureReady(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
 
     virtual const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) = 0;
 

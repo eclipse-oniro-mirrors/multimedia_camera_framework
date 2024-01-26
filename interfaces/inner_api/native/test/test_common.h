@@ -105,6 +105,9 @@ public:
     void OnCaptureEnded(const int32_t captureID, const int32_t frameCount) const override;
     void OnFrameShutter(const int32_t captureId, const uint64_t timestamp) const override;
     void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override;
+    void OnFrameShutterEnd(const int32_t captureId, const uint64_t timestamp) const override;
+    void OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const override;
+    void OnEstimatedCaptureDuration(const int32_t duration) const override;
 
 private:
     const char* testName_;
