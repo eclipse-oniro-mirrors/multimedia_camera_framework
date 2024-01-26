@@ -20,12 +20,15 @@
 #include "camera_napi_security_utils.h"
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
+#include "camera_napi_security_utils.h"
 #include "input/camera_napi.h"
 #include "input/camera_pre_launch_config_napi.h"
 #include "mode/night_session_napi.h"
 #include "mode/photo_session_napi.h"
+#include "mode/photo_session_for_sys_napi.h"
 #include "mode/portrait_session_napi.h"
 #include "mode/video_session_napi.h"
+#include "mode/video_session_for_sys_napi.h"
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
@@ -554,10 +557,12 @@ napi_value CameraManagerNapi::CreateSessionInstance(napi_env env, napi_callback_
     MEDIA_INFO_LOG("CameraManagerNapi::CreateSessionInstance mode = %{public}d", jsModeName);
     switch (jsModeName) {
         case JS_CAPTURE:
-            result = PhotoSessionNapi::CreateCameraSession(env);
+            result = CameraNapiSecurity::CheckSystemApp(env, false) ?
+                PhotoSessionForSysNapi::CreateCameraSession(env) : PhotoSessionNapi::CreateCameraSession(env);
             break;
         case JS_VIDEO:
-            result = VideoSessionNapi::CreateCameraSession(env);
+            result = CameraNapiSecurity::CheckSystemApp(env, false) ?
+                VideoSessionForSysNapi::CreateCameraSession(env) : VideoSessionNapi::CreateCameraSession(env);
             break;
         case JS_PORTRAIT:
             result = PortraitSessionNapi::CreateCameraSession(env);
