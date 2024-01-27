@@ -82,6 +82,7 @@ static const std::unordered_map<std::string, int32_t> mapCameraPosition = {
     {"CAMERA_POSITION_UNSPECIFIED", 0},
     {"CAMERA_POSITION_BACK", 1},
     {"CAMERA_POSITION_FRONT", 2},
+    {"CAMERA_POSITION_FOLD_INNER", 3},
 };
 
 static const std::unordered_map<std::string, int32_t> mapCameraType = {
