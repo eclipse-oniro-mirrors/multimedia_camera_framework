@@ -545,7 +545,7 @@ napi_value VideoOutputNapi::Stop(napi_env env, napi_callback_info info)
                 if (context->objectInfo != nullptr && context->objectInfo->videoOutput_ != nullptr) {
                     context->bRetBool = false;
                     context->errorCode = ((sptr<VideoOutput> &)(context->objectInfo->videoOutput_))->Stop();
-                    context->status = context->errorCode == 0;
+                    context->status = true;
                 }
             },
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
