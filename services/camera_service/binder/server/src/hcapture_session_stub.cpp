@@ -109,8 +109,14 @@ int HCaptureSessionStub::HandleAddOutput(MessageParcel &data)
         MEDIA_ERR_LOG("HCaptureSessionStub HandleAddOutput remoteObj is null");
         return IPC_STUB_INVALID_DATA_ERR;
     }
-
-    sptr<IStreamCommon> stream = iface_cast<IStreamCommon>(remoteObj);
+    sptr<IStreamCommon> stream = nullptr;
+    if (streamType == StreamType::CAPTURE) {
+        stream = iface_cast<IStreamCapture>(remoteObj);
+    } else if (streamType == StreamType::REPEAT) {
+        stream = iface_cast<IStreamRepeat>(remoteObj);
+    }  else if (streamType == StreamType::METADATA) {
+        stream = iface_cast<IStreamMetadata>(remoteObj);
+    }
 
     return AddOutput(streamType, stream);
 }
@@ -123,9 +129,14 @@ int HCaptureSessionStub::HandleRemoveOutput(MessageParcel &data)
         MEDIA_ERR_LOG("HCaptureSessionStub HandleRemoveOutput remoteObj is null");
         return IPC_STUB_INVALID_DATA_ERR;
     }
-
-    sptr<IStreamCommon> stream = iface_cast<IStreamCommon>(remoteObj);
-
+    sptr<IStreamCommon> stream = nullptr;
+    if (streamType == StreamType::CAPTURE) {
+        stream = iface_cast<IStreamCapture>(remoteObj);
+    } else if (streamType == StreamType::REPEAT) {
+        stream = iface_cast<IStreamRepeat>(remoteObj);
+    }  else if (streamType == StreamType::METADATA) {
+        stream = iface_cast<IStreamMetadata>(remoteObj);
+    }
     return RemoveOutput(streamType, stream);
 }
 
