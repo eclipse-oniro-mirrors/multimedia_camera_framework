@@ -793,7 +793,6 @@ int32_t HCaptureSession::SetSmoothZoom(
     int indexAdded = targetZoomRatio > currentZoomRatio ? 1 : 2;
     auto zoomAlgorithm = SmoothZoom::GetZoomAlgorithm(static_cast<SmoothZoomType>(smoothZoomType));
     auto array = zoomAlgorithm->GetZoomArray(currentZoomRatio, targetZoomRatio, frameIntervalMs);
-
     if (array.empty()) {
         MEDIA_ERR_LOG("HCaptureSession::SetSmoothZoom array is empty");
         return CAMERA_UNKNOWN_ERROR;
