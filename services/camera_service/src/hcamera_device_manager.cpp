@@ -49,37 +49,37 @@ sptr<HCameraDeviceManager> &HCameraDeviceManager::GetInstance()
 
 void HCameraDeviceManager::AddDevice(pid_t pid, sptr<HCameraDevice> device)
 {
-    MEDIA_DEBUG_LOG("HCameraDeviceManager::AddDevice start");
+    MEDIA_INFO_LOG("HCameraDeviceManager::AddDevice start");
     pidToCameras_.EnsureInsert(pid, device);
-    MEDIA_DEBUG_LOG("HCameraDeviceManager::AddDevice end");
+    MEDIA_INFO_LOG("HCameraDeviceManager::AddDevice end");
 }
 
 void HCameraDeviceManager::RemoveDevice()
 {
-    MEDIA_DEBUG_LOG("HCameraDeviceManager::RemoveDevice start");
+    MEDIA_INFO_LOG("HCameraDeviceManager::RemoveDevice start");
     pidToCameras_.Clear();
-    MEDIA_DEBUG_LOG("HCameraDeviceManager::RemoveDevice end");
+    MEDIA_INFO_LOG("HCameraDeviceManager::RemoveDevice end");
 }
 
 sptr<HCameraDevice> HCameraDeviceManager::GetCameraByPid(pid_t pidRequest)
 {
-    MEDIA_DEBUG_LOG("HCameraDeviceManager::GetCameraByPid start");
+    MEDIA_INFO_LOG("HCameraDeviceManager::GetCameraByPid start");
     sptr<HCameraDevice> camera = nullptr;
     pidToCameras_.Find(pidRequest, camera);
-    MEDIA_DEBUG_LOG("HCameraDeviceManager::GetCameraByPid end");
+    MEDIA_INFO_LOG("HCameraDeviceManager::GetCameraByPid end");
     return camera;
 }
 
 pid_t HCameraDeviceManager::GetActiveClient()
 {
-    MEDIA_DEBUG_LOG("HCameraDeviceManager::GetActiveClient start");
+    MEDIA_INFO_LOG("HCameraDeviceManager::GetActiveClient start");
     pid_t activeClientPid = -1;
     if (!pidToCameras_.IsEmpty()) {
         pidToCameras_.Iterate([&](pid_t pid, sptr<HCameraDevice> cameras) {
             activeClientPid = pid;
         });
     }
-    MEDIA_DEBUG_LOG("HCameraDeviceManager::GetActiveClient end");
+    MEDIA_INFO_LOG("HCameraDeviceManager::GetActiveClient end");
     return activeClientPid;
 }
 

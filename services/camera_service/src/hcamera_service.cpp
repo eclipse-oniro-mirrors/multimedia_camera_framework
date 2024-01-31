@@ -184,10 +184,12 @@ int32_t HCameraService::CreateCameraDevice(string cameraId, sptr<ICameraDeviceSe
 {
     CAMERA_SYNC_TRACE;
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
+    MEDIA_INFO_LOG("HCameraService::CreateCameraDevice prepare execute, cameraId:%{public}s", cameraId.c_str());
 
     string permissionName = OHOS_PERMISSION_CAMERA;
     int32_t ret = CheckPermission(permissionName, callerToken);
     if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCameraService::CreateCameraDevice Check OHOS_PERMISSION_CAMERA fail %{public}d", ret);
         return ret;
     }
     // if callerToken is invalid, will not call IsAllowedUsingPermission
@@ -215,6 +217,7 @@ int32_t HCameraService::CreateCameraDevice(string cameraId, sptr<ICameraDeviceSe
     RegisterSensorCallback();
 #endif
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager_CreateCameraInput CameraId:%s", cameraId.c_str()));
+    MEDIA_INFO_LOG("HCameraService::CreateCameraDevice execute success");
     return CAMERA_OK;
 }
 
@@ -239,7 +242,7 @@ int32_t HCameraService::CreateDeferredPhotoProcessingSession(int32_t userId,
     sptr<DeferredProcessing::IDeferredPhotoProcessingSession>& session)
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_ERR_LOG("HCameraService::CreateDeferredPhotoProcessingSession enter.");
+    MEDIA_INFO_LOG("HCameraService::CreateDeferredPhotoProcessingSession enter.");
     sptr<DeferredProcessing::IDeferredPhotoProcessingSession> photoSession;
     int32_t uid = IPCSkeleton::GetCallingUid();
     AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, userId);
@@ -255,6 +258,7 @@ int32_t HCameraService::CreatePhotoOutput(const sptr<OHOS::IBufferProducer>& pro
     int32_t height, sptr<IStreamCapture>& photoOutput)
 {
     CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("HCameraService::CreatePhotoOutput prepare execute");
     if ((producer == nullptr) || (width == 0) || (height == 0)) {
         MEDIA_ERR_LOG("HCameraService::CreatePhotoOutput producer is null");
         return CAMERA_INVALID_ARG;
@@ -263,6 +267,7 @@ int32_t HCameraService::CreatePhotoOutput(const sptr<OHOS::IBufferProducer>& pro
     CHECK_AND_RETURN_RET_LOG(streamCapture != nullptr, CAMERA_ALLOC_ERROR,
         "HCameraService::CreatePhotoOutput HStreamCapture allocation failed");
     photoOutput = streamCapture;
+    MEDIA_INFO_LOG("HCameraService::CreatePhotoOutput execute success");
     return CAMERA_OK;
 }
 
@@ -271,6 +276,7 @@ int32_t HCameraService::CreateDeferredPreviewOutput(
 {
     CAMERA_SYNC_TRACE;
     sptr<HStreamRepeat> streamDeferredPreview;
+    MEDIA_INFO_LOG("HCameraService::CreateDeferredPreviewOutput prepare execute");
 
     if ((width == 0) || (height == 0)) {
         MEDIA_ERR_LOG("HCameraService::CreateDeferredPreviewOutput producer is null");
@@ -280,6 +286,7 @@ int32_t HCameraService::CreateDeferredPreviewOutput(
     CHECK_AND_RETURN_RET_LOG(streamDeferredPreview != nullptr, CAMERA_ALLOC_ERROR,
         "HCameraService::CreateDeferredPreviewOutput HStreamRepeat allocation failed");
     previewOutput = streamDeferredPreview;
+    MEDIA_INFO_LOG("HCameraService::CreateDeferredPreviewOutput execute success");
     return CAMERA_OK;
 }
 
@@ -288,6 +295,7 @@ int32_t HCameraService::CreatePreviewOutput(const sptr<OHOS::IBufferProducer>& p
 {
     CAMERA_SYNC_TRACE;
     sptr<HStreamRepeat> streamRepeatPreview;
+    MEDIA_INFO_LOG("HCameraService::CreatePreviewOutput prepare execute");
 
     if ((producer == nullptr) || (width == 0) || (height == 0)) {
         MEDIA_ERR_LOG("HCameraService::CreatePreviewOutput producer is null");
@@ -297,6 +305,7 @@ int32_t HCameraService::CreatePreviewOutput(const sptr<OHOS::IBufferProducer>& p
     CHECK_AND_RETURN_RET_LOG(streamRepeatPreview != nullptr, CAMERA_ALLOC_ERROR,
         "HCameraService::CreatePreviewOutput HStreamRepeat allocation failed");
     previewOutput = streamRepeatPreview;
+    MEDIA_INFO_LOG("HCameraService::CreatePreviewOutput execute success");
     return CAMERA_OK;
 }
 
@@ -305,6 +314,7 @@ int32_t HCameraService::CreateMetadataOutput(
 {
     CAMERA_SYNC_TRACE;
     sptr<HStreamMetadata> streamMetadata;
+    MEDIA_INFO_LOG("HCameraService::CreateMetadataOutput prepare execute");
 
     if (producer == nullptr) {
         MEDIA_ERR_LOG("HCameraService::CreateMetadataOutput producer is null");
@@ -315,6 +325,7 @@ int32_t HCameraService::CreateMetadataOutput(
         "HCameraService::CreateMetadataOutput HStreamMetadata allocation failed");
 
     metadataOutput = streamMetadata;
+    MEDIA_INFO_LOG("HCameraService::CreateMetadataOutput execute success");
     return CAMERA_OK;
 }
 
@@ -323,6 +334,7 @@ int32_t HCameraService::CreateVideoOutput(const sptr<OHOS::IBufferProducer>& pro
 {
     CAMERA_SYNC_TRACE;
     sptr<HStreamRepeat> streamRepeatVideo;
+    MEDIA_INFO_LOG("HCameraService::CreateVideoOutput prepare execute");
 
     if ((producer == nullptr) || (width == 0) || (height == 0)) {
         MEDIA_ERR_LOG("HCameraService::CreateVideoOutput producer is null");
@@ -333,6 +345,7 @@ int32_t HCameraService::CreateVideoOutput(const sptr<OHOS::IBufferProducer>& pro
         "HCameraService::CreateVideoOutput HStreamRepeat allocation failed");
 
     videoOutput = streamRepeatVideo;
+    MEDIA_INFO_LOG("HCameraService::CreateVideoOutput execute success");
     return CAMERA_OK;
 }
 
@@ -725,7 +738,8 @@ int32_t HCameraService::AllowOpenByOHSide(std::string cameraId, int32_t state, b
 int32_t HCameraService::NotifyCameraState(std::string cameraId, int32_t state)
 {
     // 把cameraId和前后台状态刷新给device manager
-    MEDIA_INFO_LOG("HCameraService::NotifyCameraState SetStateOfACamera");
+    MEDIA_INFO_LOG(
+        "HCameraService::NotifyCameraState SetStateOfACamera %{public}s:%{public}d", cameraId.c_str(), state);
     HCameraDeviceManager::GetInstance()->SetStateOfACamera(cameraId, state);
     return CAMERA_OK;
 }
@@ -1172,7 +1186,7 @@ void HCameraService::UnRegisterSensorCallback()
 
 void HCameraService::DropDetectionDataCallbackImpl(SensorEvent* event)
 {
-    MEDIA_INFO_LOG("HCameraService::DropDetectionDataCallbackImpl entry");
+    MEDIA_INFO_LOG("HCameraService::DropDetectionDataCallbackImpl prepare execute");
     if (event == nullptr) {
         MEDIA_INFO_LOG("SensorEvent is nullptr.");
         return;
@@ -1196,7 +1210,7 @@ void HCameraService::DropDetectionDataCallbackImpl(SensorEvent* event)
 int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, RestoreParamTypeOhos restoreParamType,
     int activeTime, EffectParam effectParam, sptr<HCaptureSession> captureSession)
 {
-    MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore enter");
+    MEDIA_INFO_LOG("HCameraService::SaveCurrentParamForRestore enter");
     int32_t rc = CAMERA_OK;
     preCameraClient_ = GetClientBundle(IPCSkeleton::GetCallingUid());
     sptr<HCameraRestoreParam> cameraRestoreParam = new HCameraRestoreParam(
@@ -1233,19 +1247,19 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
     if (activeDevice == nullptr) {
         return CAMERA_UNKNOWN_ERROR;
     }
-    MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore param %d", effectParam.skinSmoothLevel);
+    MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore param %{public}d", effectParam.skinSmoothLevel);
     rc = captureSession->GetCurrentStreamInfos(allStreamInfos);
     if (rc != CAMERA_OK) {
         MEDIA_ERR_LOG("HCaptureSession::SaveCurrentParamForRestore() Failed to get streams info, %{public}d", rc);
         return rc;
     }
     for (auto& info : allStreamInfos) {
-        MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore: streamId is:%{public}d", info.v1_0.streamId_);
+        MEDIA_INFO_LOG("HCameraService::SaveCurrentParamForRestore: streamId is:%{public}d", info.v1_0.streamId_);
     }
     cameraRestoreParam->SetStreamInfo(allStreamInfos);
     cameraRestoreParam->SetCameraOpMode(captureSession->GetopMode());
     cameraHostManager_->SaveRestoreParam(cameraRestoreParam);
-    MEDIA_DEBUG_LOG("HCameraService::SaveCurrentParamForRestore end");
+    MEDIA_INFO_LOG("HCameraService::SaveCurrentParamForRestore end");
     return rc;
 }
 

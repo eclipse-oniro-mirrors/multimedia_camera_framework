@@ -139,7 +139,7 @@ void CameraManager::DeviceInitCallBack::OnRemoteDied()
 }
 int32_t CameraManager::CreateListenerObject()
 {
-    MEDIA_DEBUG_LOG("CreateListenerObject entry");
+    MEDIA_DEBUG_LOG("CameraManager::CreateListenerObject prepare execute");
     listenerStub_ = new(std::nothrow) CameraListenerStub();
     CHECK_AND_RETURN_RET_LOG(listenerStub_ != nullptr, CAMERA_ALLOC_ERROR,
         "failed to new CameraListenerStub object");
@@ -242,9 +242,9 @@ sptr<CaptureSession> CameraManager::CreateCaptureSession(SceneMode mode)
             opMode = itr->second;
         }
     }
-    MEDIA_ERR_LOG("CameraManager CreateCaptureSession E");
+    MEDIA_INFO_LOG("CameraManager::CreateCaptureSession prepare proxy execute");
     retCode = serviceProxy_->CreateCaptureSession(session, opMode);
-    MEDIA_ERR_LOG("CameraManager CreateCaptureSession X, %{public}d", retCode);
+    MEDIA_INFO_LOG("CameraManager::CreateCaptureSession proxy execute end, %{public}d", retCode);
     if (retCode == CAMERA_OK && session != nullptr) {
         switch (mode) {
             case SceneMode::VIDEO:

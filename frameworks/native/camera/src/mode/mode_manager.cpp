@@ -124,9 +124,9 @@ sptr<CaptureSession> ModeManager::CreateCaptureSession(CameraMode mode)
             opMode = itr->second;
         }
     }
-    MEDIA_ERR_LOG("ModeManager CreateCaptureSession E");
+    MEDIA_INFO_LOG("ModeManager::CreateCaptureSession prepare proxy execute");
     retCode = serviceProxy_->CreateCaptureSession(session, opMode);
-    MEDIA_ERR_LOG("ModeManager CreateCaptureSession X, %{public}d", retCode);
+    MEDIA_INFO_LOG("ModeManager::CreateCaptureSession proxy execute end, %{public}d", retCode);
     if (retCode == CAMERA_OK && session != nullptr) {
         switch (mode) {
             case CameraMode::PORTRAIT:

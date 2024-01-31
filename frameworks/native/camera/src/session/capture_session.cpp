@@ -1894,7 +1894,7 @@ void CaptureSession::ProcessFaceRecUpdates(const uint64_t timestamp,
 void CaptureSession::CaptureSessionMetadataResultProcessor::ProcessCallbacks(
     const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {
-    MEDIA_INFO_LOG("CaptureSession::CaptureSessionMetadataResultProcessor ProcessCallbacks");
+    MEDIA_DEBUG_LOG("CaptureSession::CaptureSessionMetadataResultProcessor ProcessCallbacks");
     auto session = session_.promote();
     if (session == nullptr) {
         MEDIA_ERR_LOG("CaptureSession::CaptureSessionMetadataResultProcessor ProcessCallbacks but session is null");
