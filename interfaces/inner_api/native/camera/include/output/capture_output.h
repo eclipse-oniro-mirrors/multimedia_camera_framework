@@ -131,7 +131,6 @@ private:
     sptr<IStreamCommon> stream_;
     wptr<CaptureSession> session_;
     std::mutex sessionMutex_;
-    std::mutex streamMutex_;
     Profile photoProfile_;
     Profile previewProfile_;
     VideoProfile videoProfile_;

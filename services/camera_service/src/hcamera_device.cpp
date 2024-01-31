@@ -397,7 +397,6 @@ void HCameraDevice::ResetZoomTimer()
 void HCameraDevice::UnPrepareZoom()
 {
     MEDIA_INFO_LOG("entered.");
-    std::lock_guard<std::mutex> lock(unPrepareZoomMutex_);
     if (inPrepareZoom_) {
         inPrepareZoom_ = false;
         uint32_t count = 1;

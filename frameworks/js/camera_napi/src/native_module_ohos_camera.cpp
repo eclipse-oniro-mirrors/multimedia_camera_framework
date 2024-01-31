@@ -41,9 +41,7 @@ static napi_value Export(napi_env env, napi_value exports)
     PortraitSessionNapi::Init(env, exports);
     NightSessionNapi::Init(env, exports);
     PhotoSessionNapi::Init(env, exports);
-    PhotoSessionForSysNapi::Init(env, exports);
     VideoSessionNapi::Init(env, exports);
-    VideoSessionForSysNapi::Init(env, exports);
     ModeManagerNapi::Init(env, exports);
     PhotoNapi::Init(env, exports);
     DeferredPhotoProxyNapi::Init(env, exports);
