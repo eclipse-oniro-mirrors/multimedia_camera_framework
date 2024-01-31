@@ -12,9 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include <unistd.h>
-
 #include "buffer_info.h"
 
 namespace OHOS {
@@ -45,14 +42,6 @@ long BufferInfo::GetDataSize()
 bool BufferInfo::IsHighQuality()
 {
     return isHighQuality_;
-}
-
-void BufferInfo::ReleaseBuffer()
-{
-    if (ipcFileDescriptor_) {
-        close(ipcFileDescriptor_->GetFd());
-    }
-    return;
 }
 } //namespace DeferredProcessing
 } // namespace CameraStandard
