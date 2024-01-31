@@ -121,6 +121,7 @@ void DeferredPhotoProcessor::OnProcessDone(int userId, const std::string& imageI
             DP_INFO_LOG("not high quality, but high priority, and process as normal job before, need retry");
             if (repository_->GetJobRunningPriority(imageId) != PhotoJobPriority::HIGH) {
                 repository_->SetJobPending(imageId);
+                bufferInfo->ReleaseBuffer();
                 return;
             }
         }
