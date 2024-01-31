@@ -62,6 +62,7 @@ StreamType CaptureOutput::GetStreamType()
 
 sptr<IStreamCommon> CaptureOutput::GetStream()
 {
+    std::lock_guard<std::mutex> lock(streamMutex_);
     return stream_;
 }
 
@@ -79,7 +80,10 @@ void CaptureOutput::SetSession(wptr<CaptureSession> captureSession)
 
 int32_t CaptureOutput::Release()
 {
-    stream_ = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(streamMutex_);
+        stream_ = nullptr;
+    }
     SetSession(nullptr);
     return 0;
 }
