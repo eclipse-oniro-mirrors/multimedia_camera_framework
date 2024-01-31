@@ -280,9 +280,11 @@ int32_t HCameraDevice::OpenDevice()
         RegisterFoldStatusListener();
     }
     MEDIA_DEBUG_LOG("HCameraDevice::OpenDevice end");
+    int pid = IPCSkeleton::GetCallingPid();
     int uid = IPCSkeleton::GetCallingUid();
     AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, clientUserId_);
     clientName_ = GetClientBundle(uid);
+    POWERMGR_SYSEVENT_CAMERA_CONNECT(pid, uid, cameraID_.c_str(), clientName_);
     NotifyCameraSessionStatus(true);
     return errorCode;
 }
@@ -326,6 +328,7 @@ int32_t HCameraDevice::CloseDevice()
         std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
         deviceSvcCallback_ = nullptr;
     }
+    POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str());
     MEDIA_DEBUG_LOG("HCameraDevice::CloseDevice end");
     NotifyCameraSessionStatus(false);
     return CAMERA_OK;
@@ -903,7 +906,7 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> newMetadata = CameraFwkMetadataUtils::RecreateMetadata(cameraResult);
     CameraFwkMetadataUtils::LogFormatCameraMetadata(newMetadata);
-    
+
     auto callback = GetDeviceServiceCallback();
     if (callback != nullptr) {
         callback->OnResult(timestamp, newMetadata);

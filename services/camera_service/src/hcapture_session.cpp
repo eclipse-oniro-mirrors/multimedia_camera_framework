@@ -522,11 +522,6 @@ int32_t HCaptureSession::CommitConfig()
             MEDIA_ERR_LOG("HCaptureSession::CommitConfig() Failed to commit config. rc: %{public}d", errorCode);
             return;
         }
-        if (device != nullptr) {
-            int32_t pid = IPCSkeleton::GetCallingPid();
-            int32_t uid = IPCSkeleton::GetCallingUid();
-            POWERMGR_SYSEVENT_CAMERA_CONNECT(pid, uid, device->GetCameraId().c_str(), GetClientBundle(uid));
-        }
         stateMachine_.Transfer(CaptureSessionState::SESSION_CONFIG_COMMITTED);
     });
     MEDIA_INFO_LOG("HCaptureSession::CommitConfig end");
@@ -952,7 +947,6 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         auto cameraDevice = GetCameraDevice();
         if (cameraDevice != nullptr) {
             cameraDevice->Release();
-            POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraDevice->GetCameraId().c_str());
             SetCameraDevice(nullptr);
         }
         StopUsingPermissionCallback(callerToken_, OHOS_PERMISSION_CAMERA);
