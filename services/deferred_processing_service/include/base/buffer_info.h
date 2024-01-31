@@ -31,6 +31,7 @@ public:
     sptr<IPCFileDescriptor> GetIPCFileDescriptor();
     long GetDataSize();
     bool IsHighQuality();
+    void ReleaseBuffer();
 
 private:
     sptr<IPCFileDescriptor> ipcFileDescriptor_;

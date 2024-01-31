@@ -794,6 +794,10 @@ int32_t HCaptureSession::SetSmoothZoom(
     auto zoomAlgorithm = SmoothZoom::GetZoomAlgorithm(static_cast<SmoothZoomType>(smoothZoomType));
     auto array = zoomAlgorithm->GetZoomArray(currentZoomRatio, targetZoomRatio, frameIntervalMs);
 
+    if (array.empty()) {
+        MEDIA_ERR_LOG("HCaptureSession::SetSmoothZoom array is empty");
+        return CAMERA_UNKNOWN_ERROR;
+    }
     for (int i = 0; i < static_cast<int>(crossZoomAndTime.size()); i = i + dataLenPerPoint) {
         float crossZoom = crossZoomAndTime[i];
         if ((crossZoom - currentZoomRatio) * (crossZoom - targetZoomRatio) > 0) {
