@@ -251,6 +251,10 @@ napi_value CameraOutputCapabilityNapi::CreateCameraOutputCapability(napi_env env
     status = napi_get_reference_value(env, sCapabilityConstructor_, &constructor);
     if (status == napi_ok) {
         sCameraOutputCapability_ = CameraManager::GetInstance()->GetSupportedOutputCapability(camera);
+        if (sCameraOutputCapability_ == nullptr) {
+            MEDIA_ERR_LOG("failed to create CreateCameraOutputCapability");
+            return result;
+        }
         if (camera && camera->GetPosition() == CAMERA_POSITION_FRONT) {
             uint32_t normalMode = 0;
             if (camera->modeVideoProfiles_[normalMode].size()) {
@@ -260,10 +264,6 @@ napi_value CameraOutputCapabilityNapi::CreateCameraOutputCapability(napi_env env
             }
         }
 
-        if (sCameraOutputCapability_ == nullptr) {
-            MEDIA_ERR_LOG("failed to create CreateCameraOutputCapability");
-            return result;
-        }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sCameraOutputCapability_ = nullptr;
         if (status == napi_ok && result != nullptr) {

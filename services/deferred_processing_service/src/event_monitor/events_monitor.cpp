@@ -124,7 +124,7 @@ void EventsMonitor::UnRegisterListener(int userId, TaskManager *taskManager)
     auto taskIter = userIdToTaskManager.find(userId);
     if (taskIter != userIdToTaskManager.end()) {
         std::vector<TaskManager*>::iterator itVect = (taskIter->second).begin();
-        for (; itVect != (taskIter->second).end(); itVect++) {
+        for (; itVect != (taskIter->second).end(); ++itVect) {
             if (*itVect == taskManager) {
                 break;
             }

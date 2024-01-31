@@ -59,6 +59,7 @@ public:
             auto hostManager = hostManager_.promote();
             if (hostManager == nullptr) {
                 MEDIA_ERR_LOG("HCameraHostManager OnCameraHostDied, but manager is nullptr");
+                return;
             }
             hostManager->RemoveCameraHost(hostName);
         };

@@ -80,7 +80,6 @@ int32_t DeferredPhotoProcessingSessionCallbackProxy::OnStateChanged(StatusCode s
         DP_ERR_LOG("DeferredPhotoProcessingSessionCallbackProxy OnStateChanged failed, error: %{public}d", error);
     }
     return error;
-    return 0;
 }
 } //namespace DeferredProcessing
 } // namespace CameraStandard

@@ -158,7 +158,7 @@ std::string HCameraDeviceManager::GetACameraId()
     MEDIA_INFO_LOG("HCameraDeviceManager::GetActiveClient start");
     std::string cameraId;
     if (!stateOfACamera_.IsEmpty()) {
-        stateOfACamera_.Iterate([&](std::string pid, int32_t state) {
+        stateOfACamera_.Iterate([&](const std::string pid, int32_t state) {
             cameraId = pid;
         });
     }

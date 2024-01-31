@@ -80,6 +80,7 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
         deviceObj_->SetCallback(CameraDeviceSvcCallback_);
     } else {
         MEDIA_ERR_LOG("CameraInput::CameraInput() deviceObj_ is nullptr");
+        return;
     }
     sptr<IRemoteObject> object = deviceObj_->AsObject();
     pid_t pid = 0;

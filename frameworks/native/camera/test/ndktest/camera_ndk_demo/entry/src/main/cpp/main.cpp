@@ -151,9 +151,9 @@ static napi_value ReleaseCamera(napi_env env, napi_callback_info info)
 
     napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
-    g_ndkCamera->ReleaseCamera();
     if (g_ndkCamera) {
         OH_LOG_ERROR(LOG_APP, "g_ndkCamera is not null");
+        g_ndkCamera->ReleaseCamera();
         delete g_ndkCamera;
         g_ndkCamera = nullptr;
     }
@@ -449,6 +449,7 @@ static void SetConfig(Capture_Setting settings, Camera_PhotoCaptureSetting* phot
 {
     if (photoSetting == nullptr || location == nullptr) {
         OH_LOG_INFO(LOG_APP, "photoSetting is null");
+        return;
     }
     photoSetting->quality = static_cast<Camera_QualityLevel>(settings.quality);
     photoSetting->rotation = static_cast<Camera_ImageRotation>(settings.rotation);
