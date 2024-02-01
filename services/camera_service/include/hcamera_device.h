@@ -127,6 +127,8 @@ private:
 
     std::string clientName_;
     int clientUserId_;
+
+    std::mutex unPrepareZoomMutex_;
     uint32_t zoomTimerId_;
     std::atomic<bool> inPrepareZoom_;
 

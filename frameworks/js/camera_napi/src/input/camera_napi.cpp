@@ -49,6 +49,7 @@ thread_local napi_ref CameraNapi::beautyTypeRef_ = nullptr;
 thread_local napi_ref CameraNapi::portraitEffectRef_ = nullptr;
 thread_local napi_ref CameraNapi::torchModeRef_ = nullptr;
 thread_local napi_ref CameraNapi::deferredDeliveryImageTypeRef_ = nullptr;
+thread_local napi_ref CameraNapi::SmoothZoomModeRef_ = nullptr;
 
 CameraNapi::CameraNapi() : env_(nullptr), wrapper_(nullptr)
 {
@@ -172,6 +173,8 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("DeferredDeliveryImageType",
             CreateObjectWithMap(env, "DeferredDeliveryImageType",
                                 mapDeferredDeliveryImageType, deferredDeliveryImageTypeRef_)),
+        DECLARE_NAPI_PROPERTY("SmoothZoomMode",
+            CreateObjectWithMap(env, "SmoothZoomMode", mapSmoothZoomMode, SmoothZoomModeRef_)),
     };
 
     status = napi_define_class(env, CAMERA_LIB_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, CameraNapiConstructor,
