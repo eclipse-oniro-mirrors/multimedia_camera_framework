@@ -146,10 +146,15 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     }
     camera_metadata_item_t item;
     camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_FRONT;
-    int32_t result = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_ABILITY_CAMERA_POSITION, &item);
-    if (result == CAM_META_SUCCESS && item.count > 0) {
-        cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
+    {
+        std::lock_guard<std::mutex> lock(cameraAbilityLock_);
+        int32_t result = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_ABILITY_CAMERA_POSITION,
+                                                              &item);
+        if (result == CAM_META_SUCCESS && item.count > 0) {
+            cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
+        }
     }
+    
     int32_t NightMode = 4;
     if (GetMode() == NightMode && cameraPosition == OHOS_CAMERA_POSITION_BACK) {
         return ret;
