@@ -107,7 +107,8 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, ui
     }
     Camera_Device *outCameras = new Camera_Device[cameraSize];
     for (int i = 0; i < cameraSize; i++) {
-        const char* src = cameraObjList[i]->GetID().c_str();
+        const string cameraGetID = cameraObjList[i]->GetID();
+        const char* src = cameraGetID.c_str();
         size_t dstSize = strlen(src) + 1;
         char* dst = new char[dstSize];
         if (!dst) {
@@ -129,7 +130,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, ui
 Camera_ErrorCode Camera_Manager::DeleteSupportedCameras(Camera_Device* cameras, uint32_t size)
 {
     if (cameras != nullptr) {
-        for (int i = 0; i < size; i++) {
+        for (uint32_t i = 0; i < size; i++) {
             if (&cameras[i] != nullptr) {
                 delete[] cameras[i].cameraId;
             }
@@ -300,7 +301,7 @@ Camera_ErrorCode Camera_Manager::DeleteSupportedCameraOutputCapability(Camera_Ou
 {
     if (cameraOutputCapability != nullptr) {
         if (cameraOutputCapability->previewProfiles != nullptr) {
-            for (int i = 0; i < cameraOutputCapability->previewProfilesSize; i++) {
+            for (uint32_t i = 0; i < cameraOutputCapability->previewProfilesSize; i++) {
                 if (cameraOutputCapability->previewProfiles[i] != nullptr) {
                     delete cameraOutputCapability->previewProfiles[i];
                 }
@@ -309,7 +310,7 @@ Camera_ErrorCode Camera_Manager::DeleteSupportedCameraOutputCapability(Camera_Ou
         }
 
         if (cameraOutputCapability->photoProfiles != nullptr) {
-            for (int i = 0; i < cameraOutputCapability->photoProfilesSize; i++) {
+            for (uint32_t i = 0; i < cameraOutputCapability->photoProfilesSize; i++) {
                 if (cameraOutputCapability->photoProfiles[i] != nullptr) {
                     delete cameraOutputCapability->photoProfiles[i];
                 }
@@ -318,7 +319,7 @@ Camera_ErrorCode Camera_Manager::DeleteSupportedCameraOutputCapability(Camera_Ou
         }
 
         if (cameraOutputCapability->videoProfiles != nullptr) {
-            for (int i = 0; i < cameraOutputCapability->videoProfilesSize; i++) {
+            for (uint32_t i = 0; i < cameraOutputCapability->videoProfilesSize; i++) {
                 if (cameraOutputCapability->videoProfiles[i] != nullptr) {
                     delete cameraOutputCapability->videoProfiles[i];
                 }
