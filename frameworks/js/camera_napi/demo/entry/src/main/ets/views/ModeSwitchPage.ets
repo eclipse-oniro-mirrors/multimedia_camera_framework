@@ -145,7 +145,7 @@ export struct ModeSwitchPage {
    * 判断录像或者照片模式
    */
   isVideoPhotoFn(): void {
-    if (this.modelBagCol == 'photo' || this.modelBagCol == 'portrait') {
+    if (this.modelBagCol == 'photo' || this.modelBagCol == 'portrait' || this.modelBagCol == 'night') {
       CameraService.takePicture();
     } else if (this.modelBagCol == 'video' || this.modelBagCol == 'superStab') {
       this.isModeBol = false;
@@ -228,6 +228,39 @@ export struct ModeSwitchPage {
                 AppStorage.setOrCreate('isHiddenSlide', false);
                 CameraService.setCameraMode(2);
                 await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
+                let isSupported = CameraService.isPortraitModeSupportedFn();
+                if (!isSupported) {
+                  (GlobalContext.get().getPromptAction() as PromptAction).showToast({
+                    message: '当前不支持人像模式，请切换其他模式',
+                    duration: 2000,
+                    bottom: '50%'
+                  })
+                }
+              })
+              .visibility(this.deviceType === Constants.DEFAULT ? Visibility.Hidden : Visibility.Visible)
+
+              // 夜景
+              Column() {
+                Text('夜景')
+                  .fontSize(14)
+                  .fontColor(Color.White)
+              }
+              .width(50)
+              .backgroundColor(this.modelBagCol === 'night' ? $r('app.color.theme_color') : '')
+              .borderRadius(14)
+              .onClick(async () => {
+                this.modelBagCol = 'night';
+                AppStorage.setOrCreate('isHiddenSlide', true);
+                CameraService.setCameraMode(4);
+                await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
+                let isSupported = CameraService.isNightModeSupportedFn();
+                if (!isSupported) {
+                  (GlobalContext.get().getPromptAction() as PromptAction).showToast({
+                    message: '当前不支持夜景模式，请切换其他模式',
+                    duration: 2000,
+                    bottom: '50%'
+                  })
+                }
               })
               .visibility(this.deviceType === Constants.DEFAULT ? Visibility.Hidden : Visibility.Visible)
 

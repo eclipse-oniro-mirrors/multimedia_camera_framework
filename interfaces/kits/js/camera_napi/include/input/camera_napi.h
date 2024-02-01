@@ -82,6 +82,7 @@ static const std::unordered_map<std::string, int32_t> mapCameraPosition = {
     {"CAMERA_POSITION_UNSPECIFIED", 0},
     {"CAMERA_POSITION_BACK", 1},
     {"CAMERA_POSITION_FRONT", 2},
+    {"CAMERA_POSITION_FOLD_INNER", 3},
 };
 
 static const std::unordered_map<std::string, int32_t> mapCameraType = {
@@ -257,6 +258,10 @@ static const std::unordered_map<std::string, int32_t> mapDeferredDeliveryImageTy
     {"VIDEO", 2},
 };
 
+static const std::unordered_map<std::string, int32_t> mapSmoothZoomMode = {
+    {"NORMAL", 0},
+};
+
 enum CreateAsyncCallbackModes {
     CREATE_CAMERA_MANAGER_ASYNC_CALLBACK = 10,
 };
@@ -314,6 +319,7 @@ private:
     static thread_local napi_ref metadataObjectTypeRef_;
     static thread_local napi_ref errorMetadataOutputRef_;
     static thread_local napi_ref deferredDeliveryImageTypeRef_;
+    static thread_local napi_ref SmoothZoomModeRef_;
     napi_env env_;
     napi_ref wrapper_;
 };
