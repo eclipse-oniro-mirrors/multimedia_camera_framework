@@ -71,7 +71,7 @@ public:
     explicit CameraHostInfo(std::shared_ptr<StatusCallback> statusCallback,
         std::shared_ptr<CameraHostDeadCallback> cameraHostDeadCallback, std::string name)
         : statusCallback_(statusCallback), cameraHostDeadCallback_(cameraHostDeadCallback), name_(std::move(name)),
-          cameraHostProxy_(nullptr) {};
+          majorVer_(0), minorVer_(0), cameraHostProxy_(nullptr) {};
     ~CameraHostInfo();
     bool Init();
     void CameraHostDied();

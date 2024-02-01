@@ -168,7 +168,7 @@ static bool GetPickerProfile(napi_env env, napi_value napiPickerProfile, PickerP
 }
 
 static void SetPickerWantParams(AAFwk::Want& want, std::shared_ptr<AbilityRuntime::AbilityContext>& abilityContext,
-    vector<PickerMediaType>& mediaTypes, PickerProfile& pickerProfile)
+    const vector<PickerMediaType>& mediaTypes, PickerProfile& pickerProfile)
 {
     MEDIA_DEBUG_LOG("SetPickerWantParams enter");
     AAFwk::WantParams wantParam;

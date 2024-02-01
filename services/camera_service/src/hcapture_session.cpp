@@ -638,6 +638,10 @@ int32_t HCaptureSession::UpdateStreamInfos()
     CancelStreamsAndGetStreamInfos(streamInfos);
 
     auto cameraDevice = GetCameraDevice();
+    if (cameraDevice == nullptr) {
+        MEDIA_ERR_LOG("HCaptureSession::UpdateStreamInfos() cameraDevice is null");
+        return CAMERA_UNKNOWN_ERROR;
+    }
     int errorCode = cameraDevice->UpdateStreams(streamInfos);
     if (errorCode == CAMERA_OK) {
         RestartStreams();

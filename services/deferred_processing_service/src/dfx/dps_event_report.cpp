@@ -208,7 +208,7 @@ DPSEventInfo DPSEventReport::GetEventInfo(const std::string& imageId, int32_t us
             if (eventInfo.imageId == imageId) {
                 return eventInfo;
             }
-            iter++;
+            ++iter;
         }
     }
     return dpsEventInfo;
@@ -226,7 +226,7 @@ void DPSEventReport::RemoveEventInfo(const std::string& imageId, int32_t userId)
                 (imageIdToEventInfo->second).erase(imageId);
                 return;
             }
-            iter++;
+            ++iter;
         }
     }
     return;

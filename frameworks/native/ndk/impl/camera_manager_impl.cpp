@@ -112,6 +112,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, ui
         char* dst = new char[dstSize];
         if (!dst) {
             MEDIA_ERR_LOG("Allocate memory for cameraId failed!");
+            delete[] outCameras;
             return CAMERA_SERVICE_FATAL_ERROR;
         }
         strlcpy(dst, src, dstSize);
@@ -170,6 +171,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
         CameraManager::GetInstance()->GetSupportedOutputCapability(cameraDevice);
     if (innerCameraOutputCapability == nullptr) {
         MEDIA_ERR_LOG("GetSupportedCameraOutputCapability innerCameraOutputCapability == null");
+        return CAMERA_INVALID_ARGUMENT;
     }
     MEDIA_ERR_LOG("GetSupportedCameraOutputCapability innerCameraOutputCapability !- null");
     std::vector<Profile> previewProfiles = innerCameraOutputCapability->GetPreviewProfiles();
@@ -416,6 +418,7 @@ Camera_ErrorCode Camera_Manager::CreatePreviewOutput(const Camera_Profile* profi
     }
     if (surface == nullptr) {
         MEDIA_ERR_LOG("failed to get previewOutput surface");
+        return CAMERA_INVALID_ARGUMENT;
     }
 
     surface->SetUserData(CameraManager::surfaceFormat, std::to_string(innerProfile.GetCameraFormat()));
@@ -442,6 +445,7 @@ Camera_ErrorCode Camera_Manager::CreatePhotoOutput(const Camera_Profile* profile
     sptr<Surface> surface = Media::ImageReceiver::getSurfaceById(surfaceId);
     if (surface == nullptr) {
         MEDIA_ERR_LOG("failed to get photoOutput surface");
+        return CAMERA_INVALID_ARGUMENT;
     }
 
     surface->SetUserData(CameraManager::surfaceFormat, std::to_string(innerProfile.GetCameraFormat()));
@@ -474,6 +478,7 @@ Camera_ErrorCode Camera_Manager::CreateVideoOutput(const Camera_VideoProfile* pr
     }
     if (surface == nullptr) {
         MEDIA_ERR_LOG("failed to get videoOutput surface");
+        return CAMERA_INVALID_ARGUMENT;
     }
 
     surface->SetUserData(CameraManager::surfaceFormat, std::to_string(innerProfile.GetCameraFormat()));

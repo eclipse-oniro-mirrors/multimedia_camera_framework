@@ -100,7 +100,7 @@ void PhotoJobRepository::RemoveDeferredJob(const std::string& imageId, bool rest
             DP_INFO_LOG("background job removed, imageId: %s: ", imageId.c_str());
         } else if (offlineJobMap_.count(imageId) == 1) {
             auto it = std::find_if(offlineJobList_.begin(), offlineJobList_.end(),
-                [jobPtr](auto& ptr) { return ptr == jobPtr; });
+                [jobPtr](const auto& ptr) { return ptr == jobPtr; });
             if (it != offlineJobList_.end()) {
                 offlineJobList_.erase(it);
             }
@@ -395,7 +395,7 @@ void PhotoJobRepository::UpdateRunningCountUnLocked(bool statusChanged, Deferred
 void PhotoJobRepository::UpdateJobQueueUnLocked(bool saved, DeferredPhotoJobPtr jobPtr)
 {
     if (saved) {
-        auto it = std::find_if(jobQueue_.begin(), jobQueue_.end(), [jobPtr](auto& ptr) { return ptr == jobPtr; });
+        auto it = std::find_if(jobQueue_.begin(), jobQueue_.end(), [jobPtr](const auto& ptr) { return ptr == jobPtr; });
         if (it != jobQueue_.end()) {
             jobQueue_.erase(it);
             DP_INFO_LOG("already existed, move to front, imageId: %s", jobPtr->GetImageId().c_str());
@@ -403,7 +403,7 @@ void PhotoJobRepository::UpdateJobQueueUnLocked(bool saved, DeferredPhotoJobPtr 
         //最新的请求最先处理，所以要放到队首。GetHighPriorityJob取任务从队首取。如果确认是这样顺序，则应该用栈保存
         jobQueue_.push_front(jobPtr);
     } else {
-        auto it = std::find_if(jobQueue_.begin(), jobQueue_.end(), [jobPtr](auto& ptr) { return ptr == jobPtr; });
+        auto it = std::find_if(jobQueue_.begin(), jobQueue_.end(), [jobPtr](const auto& ptr) { return ptr == jobPtr; });
         if (it != jobQueue_.end()) {
             DP_INFO_LOG("erase high priority, imageId: %s", jobPtr->GetImageId().c_str());
             jobQueue_.erase(it);

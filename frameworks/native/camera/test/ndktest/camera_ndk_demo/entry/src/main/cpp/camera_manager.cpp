@@ -33,7 +33,8 @@ NDKCamera::NDKCamera(char* str, uint32_t focusMode, uint32_t cameraDeviceIndex)
       photoSurfaceId_(nullptr), previewOutput_(nullptr), photoOutput_(nullptr),
       metaDataObjectType_(nullptr), metadataOutput_(nullptr), isExposureModeSupported_(false),
       isFocusModeSupported_(false), exposureMode_(EXPOSURE_MODE_LOCKED),
-      minExposureBias_(0), maxExposureBias_(0), step_(0), ret_(CAMERA_OK)
+      minExposureBias_(0), maxExposureBias_(0), step_(0), ret_(CAMERA_OK),
+      videoProfile_(nullptr), videoOutput_(nullptr)
 {
     valid_ = false;
     ReleaseCamera();
