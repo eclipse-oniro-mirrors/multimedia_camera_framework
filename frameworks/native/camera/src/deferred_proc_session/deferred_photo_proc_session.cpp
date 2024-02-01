@@ -73,6 +73,15 @@ DeferredPhotoProcSession::DeferredPhotoProcSession(int userId,
     callback_ = callback;
 }
 
+DeferredPhotoProcSession::~DeferredPhotoProcSession()
+{
+    MEDIA_INFO_LOG("DeferredPhotoProcSession::DeferredPhotoProcSession Destructor!");
+    if (remoteSession_ != nullptr) {
+        (void)remoteSession_->AsObject()->RemoveDeathRecipient(deathRecipient_);
+        remoteSession_ = nullptr;
+    }
+}
+
 void DeferredPhotoProcSession::BeginSynchronize()
 {
     if (remoteSession_ == nullptr) {
@@ -170,8 +179,12 @@ int32_t DeferredPhotoProcSession::SetDeferredPhotoSession(
 
 void DeferredPhotoProcSession::CameraServerDied(pid_t pid)
 {
-    MEDIA_INFO_LOG("camera server has died, pid:%{public}d!", pid);
-    remoteSession_ = nullptr;
+    MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
+    if (remoteSession_ != nullptr) {
+        (void)remoteSession_->AsObject()->RemoveDeathRecipient(deathRecipient_);
+        remoteSession_ = nullptr;
+    }
+    deathRecipient_ = nullptr;
     ReconnectDeferredProcessingSession();
     if (callback_ != nullptr) {
         MEDIA_INFO_LOG("Reconnect session successful, send sync requestion.");
