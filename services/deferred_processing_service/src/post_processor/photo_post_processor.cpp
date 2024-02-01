@@ -249,7 +249,6 @@ int PhotoPostProcessor::GetUserId()
 
 int PhotoPostProcessor::GetConcurrency(ExecutionMode mode)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     int count = 1;
     if (imageProcessSession_) {
         int32_t ret = imageProcessSession_->GetCoucurrency(OHOS::HDI::Camera::V1_2::ExecutionMode::BALANCED, count);
@@ -261,7 +260,6 @@ int PhotoPostProcessor::GetConcurrency(ExecutionMode mode)
 
 bool PhotoPostProcessor::GetPendingImages(std::vector<std::string>& pendingImages)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     DP_INFO_LOG("entered");
     if (imageProcessSession_) {
         int32_t ret = imageProcessSession_->GetPendingImages(pendingImages);
@@ -275,7 +273,6 @@ bool PhotoPostProcessor::GetPendingImages(std::vector<std::string>& pendingImage
 
 void PhotoPostProcessor::SetExecutionMode(ExecutionMode executionMode)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     DP_INFO_LOG("entered, executionMode: %d", executionMode);
     if (imageProcessSession_) {
         int32_t ret = imageProcessSession_->SetExecutionMode(MapToHdiExecutionMode(executionMode));
@@ -291,7 +288,6 @@ void PhotoPostProcessor::ProcessImage(std::string imageId)
         OnError(imageId, DpsError::DPS_ERROR_SESSION_NOT_READY_TEMPORARILY);
         return;
     }
-    std::lock_guard<std::mutex> lock(mutex_);
     int32_t ret = imageProcessSession_->ProcessImage(imageId);
     DP_INFO_LOG("processImage, ret: %d", ret);
     uint32_t callbackHandle;
@@ -309,7 +305,6 @@ void PhotoPostProcessor::ProcessImage(std::string imageId)
 
 void PhotoPostProcessor::RemoveImage(std::string imageId)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     DP_INFO_LOG("entered, imageId: %s", imageId.c_str());
     if (imageProcessSession_) {
         int32_t ret = imageProcessSession_->RemoveImage(imageId);
@@ -320,7 +315,6 @@ void PhotoPostProcessor::RemoveImage(std::string imageId)
 
 void PhotoPostProcessor::Interrupt()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     DP_INFO_LOG("entered");
     if (imageProcessSession_) {
         int32_t ret = imageProcessSession_->Interrupt();
@@ -330,7 +324,6 @@ void PhotoPostProcessor::Interrupt()
 
 void PhotoPostProcessor::Reset()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     DP_INFO_LOG("entered");
     if (imageProcessSession_) {
         int32_t ret = imageProcessSession_->Reset();
@@ -389,7 +382,6 @@ void PhotoPostProcessor::OnSessionDied()
     DP_INFO_LOG("entered, session died!");
     std::lock_guard<std::mutex> lock(mutex_);
     imageProcessSession_ = nullptr;
-    consecutiveTimeoutCount_ = 0;
     OnStateChanged(HdiStatus::HDI_DISCONNECTED);
     ScheduleConnectService();
 }

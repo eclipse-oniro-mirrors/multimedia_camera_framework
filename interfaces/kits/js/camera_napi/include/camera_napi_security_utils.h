@@ -24,7 +24,7 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace CameraNapiSecurity {
-bool CheckSystemApp(napi_env env, bool enableThrowError = true);
+bool CheckSystemApp(napi_env env);
 }
 } // namespace CameraStandard
 } // namespace OHOS
