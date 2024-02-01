@@ -1092,6 +1092,14 @@ void HCaptureSession::StartUsingPermissionCallback(const uint32_t callingTokenId
     if (res != CAMERA_OK) {
         MEDIA_ERR_LOG("StartUsingPermissionCallback failed.");
     }
+    int32_t successCount = 1;
+    int32_t failCount = 0;
+    res = Security::AccessToken::PrivacyKit::AddPermissionUsedRecord(callingTokenId, permissionName,
+        successCount, failCount);
+    MEDIA_INFO_LOG("AddPermissionUsedRecord tokenId:%{public}d", callingTokenId);
+    if (res != CAMERA_OK) {
+        MEDIA_ERR_LOG("AddPermissionUsedRecord failed.");
+    }
 }
 
 void HCaptureSession::StopUsingPermissionCallback(const uint32_t callingTokenId, const std::string permissionName)
