@@ -35,8 +35,8 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace {
-constexpr char CAMERA_PICKER_BUNDLE_HAP_NAME[] = "com.huawei.hmos.camera";
-constexpr char CAMERA_PICKER_BUNDLE_ABILITY_NAME[] = "com.huawei.hmos.camera.ExtensionPickerAbility";
+constexpr char CAMERA_PICKER_BUNDLE_HAP_NAME[] = "com.ohos.camera";
+constexpr char CAMERA_PICKER_BUNDLE_ABILITY_NAME[] = "com.ohos.camera.ExtensionPickerAbility";
 constexpr char CAMERA_PICKER_ABILITY_ACTION_PHOTO[] = "ohos.want.action.imageCapture";
 constexpr char CAMERA_PICKER_ABILITY_ACTION_VIDEO[] = "ohos.want.action.videoCapture";
 const std::map<std::string, PickerMediaType> PICKER_MEDIA_TYPE_MAP = {
@@ -288,9 +288,11 @@ static napi_status StartAsyncWork(napi_env env, CameraPickerAsyncContext* picker
 {
     napi_value resource = nullptr;
     CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "Pick");
+    MEDIA_INFO_LOG("CameraPicker StartAsyncWork E");
     return napi_create_async_work(
         env, nullptr, resource,
         [](napi_env env, void* data) {
+            MEDIA_INFO_LOG("CameraPicker wait result begin");
             auto context = static_cast<CameraPickerAsyncContext*>(data);
             context->status = false;
             // Start async trace
@@ -299,6 +301,7 @@ static napi_status StartAsyncWork(napi_env env, CameraPickerAsyncContext* picker
             context->bRetBool = false;
 
             context->uiExtCallback->WaitResultLock();
+            MEDIA_INFO_LOG("CameraPicker wait result end");
             context->status = true;
         },
         CommonCompleteCallback, static_cast<void*>(pickerAsyncCtx), &pickerAsyncCtx->work);
