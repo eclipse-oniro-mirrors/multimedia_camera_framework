@@ -93,6 +93,7 @@ ohos_shared_library("camera_framework") {
     "src/session/portrait_session.cpp",
     "src/session/scan_session.cpp",
     "src/session/video_session.cpp",
+    "src/utils/camera_buffer_handle_utils.cpp",
     "src/utils/dps_metadata_info.cpp",
     "src/utils/metadata_common_utils.cpp",
   ]

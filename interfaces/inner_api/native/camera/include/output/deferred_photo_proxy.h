@@ -31,6 +31,8 @@ public:
     DeferredPhotoProxy();
     DeferredPhotoProxy(const BufferHandle* bufferHandle, std::string imageId, int32_t deferredProcType);
     DeferredPhotoProxy(const BufferHandle* bufferHandle, std::string imageId, int32_t deferredProcType,
+        int32_t thumbnailWidth, int32_t thumbnailHeight);
+    DeferredPhotoProxy(const BufferHandle* bufferHandle, std::string imageId, int32_t deferredProcType,
         uint8_t* buffer, size_t fileSize);
     virtual ~DeferredPhotoProxy();
     void ReadFromParcel(MessageParcel &parcel);
@@ -39,12 +41,16 @@ public:
     DeferredProcType GetDeferredProcType();
     void* GetFileDataAddr();
     size_t GetFileSize();
+    int32_t GetWidth();
+    int32_t GetHeight();
 
 private:
     uint8_t* buffer_;
     const BufferHandle* bufferHandle_;
     std::string photoId_;
     int32_t deferredProcType_;
+    int32_t thumbnailWidth_;
+    int32_t thumbnailHeight_;
     void* fileDataAddr_;
     size_t fileSize_;
     bool isMmaped_;

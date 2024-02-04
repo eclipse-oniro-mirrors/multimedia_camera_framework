@@ -18,6 +18,7 @@
 
 #include <buffer_handle_parcel.h>
 
+#include "camera_buffer_handle_utils.h"
 #include "camera_log.h"
 #include "output/deferred_photo_proxy.h"
 
@@ -28,6 +29,8 @@ DeferredPhotoProxy::DeferredPhotoProxy()
 {
     photoId_ = "";
     deferredProcType_ = 0;
+    thumbnailWidth_ = 0;
+    thumbnailHeight_ = 0;
     bufferHandle_ = nullptr;
     fileDataAddr_ = nullptr;
     fileSize_ = 0;
@@ -48,6 +51,23 @@ DeferredPhotoProxy::DeferredPhotoProxy(const BufferHandle* bufferHandle,
     buffer_ = nullptr;
     MEDIA_INFO_LOG("DeferredPhotoProxy imageId: = %{public}s, deferredProcType = %{public}d",
         imageId.c_str(), deferredProcType);
+}
+
+DeferredPhotoProxy::DeferredPhotoProxy(const BufferHandle* bufferHandle,
+    std::string imageId, int32_t deferredProcType, int32_t thumbnailWidth, int32_t thumbnailHeight)
+{
+    MEDIA_INFO_LOG("DeferredPhotoProxy");
+    photoId_ = imageId;
+    deferredProcType_ = deferredProcType;
+    thumbnailWidth_ = thumbnailWidth;
+    thumbnailHeight_ = thumbnailHeight;
+    bufferHandle_ = bufferHandle;
+    fileDataAddr_ = nullptr;
+    fileSize_ = 0;
+    isMmaped_ = false;
+    buffer_ = nullptr;
+    MEDIA_INFO_LOG("imageId: = %{public}s, deferredProcType = %{public}d, width = %{public}d, height = %{public}d",
+        imageId.c_str(), deferredProcType, thumbnailWidth, thumbnailHeight);
 }
 
 DeferredPhotoProxy::DeferredPhotoProxy(const BufferHandle* bufferHandle,
@@ -72,6 +92,7 @@ DeferredPhotoProxy::~DeferredPhotoProxy()
     if (isMmaped_) {
         munmap(fileDataAddr_, fileSize_);
     }
+    CameraFreeBufferHandle(const_cast<BufferHandle*>(bufferHandle_));
     fileDataAddr_ = nullptr;
     fileSize_ = 0;
     delete [] buffer_;
@@ -83,6 +104,8 @@ void DeferredPhotoProxy::ReadFromParcel(MessageParcel &parcel)
     std::lock_guard<std::mutex> lock(mutex_);
     photoId_ = parcel.ReadString();
     deferredProcType_ = parcel.ReadInt32();
+    thumbnailWidth_ = parcel.ReadInt32();
+    thumbnailHeight_ = parcel.ReadInt32();
     bufferHandle_ = ReadBufferHandle(parcel);
     MEDIA_INFO_LOG("DeferredPhotoProxy::ReadFromParcel");
 }
@@ -92,6 +115,8 @@ void DeferredPhotoProxy::WriteToParcel(MessageParcel &parcel)
     std::lock_guard<std::mutex> lock(mutex_);
     parcel.WriteString(photoId_);
     parcel.WriteInt32(deferredProcType_);
+    parcel.WriteInt32(thumbnailWidth_);
+    parcel.WriteInt32(thumbnailHeight_);
     WriteBufferHandle(parcel, *bufferHandle_);
     MEDIA_INFO_LOG("DeferredPhotoProxy::WriteToParcel");
 }
@@ -141,6 +166,16 @@ size_t DeferredPhotoProxy::GetFileSize()
 
     fileSize_ = bufferHandle_->size;
     return fileSize_;
+}
+
+int32_t DeferredPhotoProxy::GetWidth()
+{
+    return thumbnailWidth_;
+}
+
+int32_t DeferredPhotoProxy::GetHeight()
+{
+    return thumbnailHeight_;
 }
 } // namespace CameraStandard
 } // namespace OHOS
