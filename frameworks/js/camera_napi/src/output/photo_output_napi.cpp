@@ -15,6 +15,7 @@
 
 #include <uv.h>
 #include <unistd.h>
+#include "camera_buffer_handle_utils.h"
 #include "camera_napi_security_utils.h"
 #include "camera_napi_template_utils.h"
 #include "image_napi.h"
@@ -69,30 +70,19 @@ void PhotoListener::ExecutePhoto(sptr<SurfaceBuffer> surfaceBuffer) const
 
     std::shared_ptr<Media::NativeImage> image = std::make_shared<Media::NativeImage>(surfaceBuffer, bufferProcessor_);
 
-    for (auto it = capturePhotoCbList_.begin(); it != capturePhotoCbList_.end();) {
-        napi_env env = (*it)->env_;
-        napi_get_undefined(env_, &result[PARAM0]);
-        napi_get_undefined(env_, &result[PARAM1]);
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_get_undefined(env_, &result[PARAM1]);
 
-        mainImage = Media::ImageNapi::Create(env_, image);
-        if (mainImage == nullptr) {
-            MEDIA_ERR_LOG("ImageNapi Create failed");
-            napi_get_undefined(env_, &mainImage);
-        }
-
-        result[PARAM1] = PhotoNapi::CreatePhoto(env, mainImage);
-
-        napi_get_reference_value((*it)->env_, (*it)->cb_, &callback);
-        napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
-        if ((*it)->isOnce_) {
-            napi_status status = napi_delete_reference((*it)->env_, (*it)->cb_);
-            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
-            (*it)->cb_ = nullptr;
-            capturePhotoCbList_.erase(it);
-        } else {
-            it++;
-        }
+    mainImage = Media::ImageNapi::Create(env_, image);
+    if (mainImage == nullptr) {
+        MEDIA_ERR_LOG("ImageNapi Create failed");
+        napi_get_undefined(env_, &mainImage);
     }
+
+    result[PARAM1] = PhotoNapi::CreatePhoto(env_, mainImage);
+
+    napi_get_reference_value(env_, capturePhotoCb_, &callback);
+    napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
     photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
 }
 
@@ -112,7 +102,6 @@ void PhotoListener::ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) cons
         imageId, deferredProcessingType);
 
     // create pixelMap to encode
-    napi_value thumbnailPixelMap = nullptr;
     int32_t thumbnailWidth;
     int32_t thumbnailHeight;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataWidth, thumbnailWidth);
@@ -128,71 +117,45 @@ void PhotoListener::ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) cons
     MEDIA_DEBUG_LOG("w:%{public}d, h:%{public}d, s:%{public}d, fd:%{public}d, size: %{public}d, format: %{public}d",
         width, height, stride, fd, size, format);
 
-    Media::InitializationOptions opts;
-    opts.pixelFormat = Media::PixelFormat::RGBA_8888;
-    opts.size = {
-            .width = thumbnailWidth,
-            .height = thumbnailHeight
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_get_undefined(env_, &result[PARAM1]);
+
+    // deep copy buffer
+    sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
+    BufferRequestConfig requestConfig = {
+        .width = surfaceBuffer->GetWidth(),
+        .height = surfaceBuffer->GetHeight(),
+        .strideAlignment = 0x8, // default stride is 8 Bytes.
+        .format = surfaceBuffer->GetFormat(),
+        .usage = surfaceBuffer->GetUsage(),
+        .timeout = 0,
+        .colorGamut = surfaceBuffer->GetSurfaceBufferColorGamut(),
+        .transform = surfaceBuffer->GetSurfaceBufferTransform(),
     };
-    auto pixelMap = Media::PixelMap::Create(opts);
-    if (pixelMap == nullptr) {
-        MEDIA_ERR_LOG("Create pixelMap faild");
-        return;
+    auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
+    MEDIA_INFO_LOG("SurfaceBuffer alloc ret: %d", allocErrorCode);
+    if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
+        surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK) {
+        MEDIA_ERR_LOG("PhotoListener memcpy_s failed");
     }
-    pixelMap->SetPixelsAddr(surfaceBuffer->GetVirAddr(), nullptr, surfaceBuffer->GetSize(),
-        Media::AllocatorType::HEAP_ALLOC, nullptr);
-    auto pixlSize = static_cast<uint32_t>(pixelMap->GetByteCount());
-    MEDIA_INFO_LOG("size of pixelMap : %{public}u", pixlSize);
-
-    // encode rgba to jpeg
-    auto buffer = new (std::nothrow) uint8_t [pixlSize];
-    int64_t packedSize = 0;
-    Media::ImagePacker imagePacker;
-    Media::PackOption packOption;
-    packOption.format = "image/jpeg";
-    imagePacker.StartPacking(buffer, pixlSize, packOption);
-    imagePacker.AddImage(*pixelMap);
-    imagePacker.FinalizePacking(packedSize);
-    if (buffer == nullptr) {
-        MEDIA_ERR_LOG("pack pixMap faild");
+    BufferHandle *newBufferHandle = CameraCloneBufferHandle(newSurfaceBuffer->GetBufferHandle());
+    if (newBufferHandle == nullptr) {
+        napi_value errorCode;
+        napi_create_int32(env_, CameraErrorCode::INVALID_ARGUMENT, &errorCode);
+        result[PARAM0] = errorCode;
+        MEDIA_ERR_LOG("invalid bufferHandle");
     }
-    MEDIA_INFO_LOG("pack pixMap success, packedSize=%{public}lld", packedSize);
 
+    // call js function
     sptr<DeferredPhotoProxy> deferredPhotoProxy;
     std::string imageIdStr = std::to_string(imageId);
-    deferredPhotoProxy = new(std::nothrow) DeferredPhotoProxy(bufferHandle, imageIdStr, deferredProcessingType, buffer,
-        static_cast<size_t>(packedSize));
-    std::string imageIdFrom = deferredPhotoProxy->GetPhotoId();
-    int32_t deferredProcTypeFrom = deferredPhotoProxy->GetDeferredProcType();
-    void* fdAddr = deferredPhotoProxy->GetFileDataAddr();
-    size_t fileSize = deferredPhotoProxy->GetFileSize();
-    MEDIA_INFO_LOG("imageIdFrom:%{public}s, deferredProcTypeFrom: %{public}d, fdAddr:%{public}p, fileSize:%{public}zu",
-        imageIdFrom.c_str(), deferredProcTypeFrom, fdAddr, fileSize);
+    deferredPhotoProxy = new(std::nothrow) DeferredPhotoProxy(newBufferHandle, imageIdStr, deferredProcessingType,
+        thumbnailWidth, thumbnailHeight);
+    result[PARAM1] = DeferredPhotoProxyNapi::CreateDeferredPhotoProxy(env_, deferredPhotoProxy);
+    napi_get_reference_value(env_, captureDeferredPhotoCb_, &callback);
+    napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
 
-    MEDIA_DEBUG_LOG("ExecuteDeferredPhoto captureDeferredPhotoCbList_ size [%{public}zu]",
-        captureDeferredPhotoCbList_.size());
-    for (auto it = captureDeferredPhotoCbList_.begin(); it != captureDeferredPhotoCbList_.end();) {
-        napi_env env = (*it)->env_;
-        napi_get_undefined(env_, &result[PARAM0]);
-        napi_get_undefined(env_, &result[PARAM1]);
-
-        thumbnailPixelMap = Media::PixelMapNapi::CreatePixelMap(env, std::move(pixelMap));
-        if (thumbnailPixelMap == nullptr) {
-            MEDIA_ERR_LOG("PixelMap Create failed");
-        }
-        result[PARAM1] = DeferredPhotoProxyNapi::CreateDeferredPhotoProxy(env, deferredPhotoProxy, thumbnailPixelMap);
-
-        napi_get_reference_value(env, (*it)->cb_, &callback);
-        napi_call_function(env, nullptr, callback, ARGS_TWO, result, &retVal);
-        if ((*it)->isOnce_) {
-            napi_status status = napi_delete_reference(env, (*it)->cb_);
-            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
-            (*it)->cb_ = nullptr;
-            captureDeferredPhotoCbList_.erase(it);
-        } else {
-            it++;
-        }
-    }
+    // return buffer to buffer queue
     photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
 }
 
@@ -256,92 +219,45 @@ void PhotoListener::UpdateJSCallbackAsync(sptr<Surface> photoSurface) const
     }
 }
 
-void PhotoListener::SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce)
+void PhotoListener::SaveCallbackReference(const std::string &eventType, napi_value callback)
 {
     MEDIA_INFO_LOG("PhotoListener SaveCallbackReference is called eventType:%{public}s", eventType.c_str());
     std::lock_guard<std::mutex> lock(mutex_);
-    std::vector<std::shared_ptr<AutoRef>> *callbackList;
+    napi_ref *curCallbackRef;
     auto eventTypeEnum = PhotoOutputEventTypeHelper.ToEnum(eventType);
     switch (eventTypeEnum) {
         case PhotoOutputEventType::CAPTURE_PHOTO_AVAILABLE:
-            callbackList = &capturePhotoCbList_;
+            curCallbackRef = &capturePhotoCb_;
             break;
         case PhotoOutputEventType::CAPTURE_DEFERRED_PHOTO_AVAILABLE:
-            callbackList = &captureDeferredPhotoCbList_;
+            curCallbackRef = &captureDeferredPhotoCb_;
             break;
         default:
             MEDIA_ERR_LOG("Incorrect photo callback event type received from JS");
             return;
     }
-    for (auto it = callbackList->begin(); it != callbackList->end(); ++it) {
-        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
-        CHECK_AND_RETURN_LOG(!isSameCallback, "UpdateList: has same callback, nothing to do");
-    }
+
     napi_ref callbackRef = nullptr;
     const int32_t refCount = 1;
     napi_status status = napi_create_reference(env_, callback, refCount, &callbackRef);
     CHECK_AND_RETURN_LOG(status == napi_ok && callbackRef != nullptr,
                          "creating reference for callback fail");
-    std::shared_ptr<AutoRef> cb = std::make_shared<AutoRef>(env_, callbackRef, isOnce);
-    callbackList->push_back(cb);
-    MEDIA_DEBUG_LOG("Save callback reference success, %{public}s callback list size [%{public}zu]",
-        eventType.c_str(), callbackList->size());
+    *curCallbackRef = callbackRef;
 }
 
 void PhotoListener::RemoveCallbackRef(napi_env env, napi_value callback, const std::string &eventType)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    if (callback == nullptr) {
-        MEDIA_INFO_LOG("RemoveCallbackReference: js callback is nullptr, remove all callback reference");
-        RemoveAllCallbacks(eventType);
-        return;
-    }
     if (eventType == OHOS::CameraStandard::captureRegisterName) {
-        for (auto it = capturePhotoCbList_.begin(); it != capturePhotoCbList_.end(); ++it) {
-            bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
-            if (isSameCallback) {
-                MEDIA_INFO_LOG("RemoveCallbackReference: find js callback, delete it");
-                napi_status status = napi_delete_reference(env, (*it)->cb_);
-                (*it)->cb_ = nullptr;
-                CHECK_AND_RETURN_LOG(status == napi_ok, "RemoveCallbackReference: delete reference for callback fail");
-                capturePhotoCbList_.erase(it);
-                return;
-            }
-        }
+        napi_delete_reference(env_, capturePhotoCb_);
+        capturePhotoCb_ = nullptr;
     } else if (eventType == OHOS::CameraStandard::deferredRegisterName) {
-        for (auto it = captureDeferredPhotoCbList_.begin(); it != captureDeferredPhotoCbList_.end(); ++it) {
-            bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
-            if (isSameCallback) {
-                MEDIA_INFO_LOG("RemoveCallbackReference: find js callback, delete it");
-                napi_status status = napi_delete_reference(env, (*it)->cb_);
-                (*it)->cb_ = nullptr;
-                CHECK_AND_RETURN_LOG(status == napi_ok, "RemoveCallbackReference: delete reference for callback fail");
-                captureDeferredPhotoCbList_.erase(it);
-                return;
-            }
-        }
+        napi_delete_reference(env_, captureDeferredPhotoCb_);
+        captureDeferredPhotoCb_ = nullptr;
     }
 
     MEDIA_INFO_LOG("RemoveCallbackReference: js callback no find");
-}
-
-void PhotoListener::RemoveAllCallbacks(const std::string &eventType)
-{
-    MEDIA_INFO_LOG("RemoveAllCallbacks eventType:%{public}s", eventType.c_str());
-    if (eventType == OHOS::CameraStandard::captureRegisterName) {
-        for (auto it = capturePhotoCbList_.begin(); it != capturePhotoCbList_.end(); ++it) {
-            napi_delete_reference(env_, (*it)->cb_);
-            (*it)->cb_ = nullptr;
-        }
-        capturePhotoCbList_.clear();
-    } else if (eventType == OHOS::CameraStandard::deferredRegisterName) {
-        for (auto it = captureDeferredPhotoCbList_.begin(); it != captureDeferredPhotoCbList_.end(); ++it) {
-            napi_delete_reference(env_, (*it)->cb_);
-            (*it)->cb_ = nullptr;
-        }
-        captureDeferredPhotoCbList_.clear();
-    }
 }
 
 PhotoOutputCallback::PhotoOutputCallback(napi_env env) : env_(env) {}
@@ -1649,7 +1565,7 @@ napi_value PhotoOutputNapi::RegisterCallback(
             }
             photoOutputNapi->photoListener_ = phtotListener;
         }
-        photoOutputNapi->photoListener_->SaveCallbackReference(eventType, callback, isOnce);
+        photoOutputNapi->photoListener_->SaveCallbackReference(eventType, callback);
     } else if (!eventType.empty()) {
         if (photoOutputNapi->photoOutputCallback_ == nullptr) {
             std::shared_ptr<PhotoOutputCallback> photoOutputCallback = std::make_shared<PhotoOutputCallback>(env);

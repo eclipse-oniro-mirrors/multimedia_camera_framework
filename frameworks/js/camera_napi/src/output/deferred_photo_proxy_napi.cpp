@@ -54,7 +54,6 @@ napi_value DeferredPhotoProxyNapi::DeferredPhotoProxyNapiConstructor(napi_env en
         std::unique_ptr<DeferredPhotoProxyNapi> obj = std::make_unique<DeferredPhotoProxyNapi>();
         obj->env_ = env;
         obj->deferredPhotoProxy_ = sDeferredPhotoProxy_;
-        obj->thumbnailPixelMap_ = sThumbnailPixelMap_;
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
                            DeferredPhotoProxyNapi::DeferredPhotoProxyNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
@@ -106,8 +105,7 @@ napi_value DeferredPhotoProxyNapi::Init(napi_env env, napi_value exports)
     return nullptr;
 }
 
-napi_value DeferredPhotoProxyNapi::CreateDeferredPhotoProxy(napi_env env, sptr<DeferredPhotoProxy> deferredPhotoProxy,
-    napi_value thumbnailPixelMap)
+napi_value DeferredPhotoProxyNapi::CreateDeferredPhotoProxy(napi_env env, sptr<DeferredPhotoProxy> deferredPhotoProxy)
 {
     MEDIA_DEBUG_LOG("CreateDeferredPhotoProxy is called");
     CAMERA_SYNC_TRACE;
@@ -117,11 +115,9 @@ napi_value DeferredPhotoProxyNapi::CreateDeferredPhotoProxy(napi_env env, sptr<D
     napi_get_undefined(env, &result);
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
-        sThumbnailPixelMap_ = thumbnailPixelMap;
         sDeferredPhotoProxy_ = deferredPhotoProxy;
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sDeferredPhotoProxy_ = nullptr;
-        sThumbnailPixelMap_ = nullptr;
         if (status == napi_ok && result != nullptr) {
             return result;
         } else {
@@ -164,7 +160,18 @@ napi_value DeferredPhotoProxyNapi::GetThumbnail(napi_env env, napi_callback_info
             },
             [](napi_env env, napi_status status, void* data) {
                 auto context = static_cast<DeferredPhotoProxAsyncContext*>(data);
-                napi_value thumbnail = context->objectInfo->thumbnailPixelMap_;
+                void* fdAddr = context->objectInfo->deferredPhotoProxy_->GetFileDataAddr();
+                int32_t thumbnailWidth = context->objectInfo->deferredPhotoProxy_->GetWidth();
+                int32_t thumbnailHeight = context->objectInfo->deferredPhotoProxy_->GetHeight();
+                Media::InitializationOptions opts;
+                opts.srcPixelFormat = Media::PixelFormat::RGBA_8888;
+                opts.pixelFormat = Media::PixelFormat::RGBA_8888;
+                opts.size = { .width = thumbnailWidth, .height = thumbnailHeight };
+                MEDIA_INFO_LOG("thumbnailWidth:%{public}d, thumbnailheight: %{public}d",
+                    thumbnailWidth, thumbnailHeight);
+                auto pixelMap = Media::PixelMap::Create(static_cast<const uint32_t*>(fdAddr),
+                    thumbnailWidth * thumbnailHeight * 4, 0, thumbnailWidth, opts, true);
+                napi_value thumbnail = Media::PixelMapNapi::CreatePixelMap(env, std::move(pixelMap));
                 napi_resolve_deferred(env, context->deferred, thumbnail);
                 napi_delete_async_work(env, context->work);
             }, static_cast<void*>(asyncContext.get()), &asyncContext->work);

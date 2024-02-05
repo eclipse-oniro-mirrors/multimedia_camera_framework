@@ -84,7 +84,7 @@ public:
     explicit PhotoListener(napi_env env, const sptr<Surface> photoSurface);
     ~PhotoListener() = default;
     void OnBufferAvailable() override;
-    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
+    void SaveCallbackReference(const std::string &eventType, napi_value callback);
     void RemoveCallbackRef(napi_env env, napi_value callback, const std::string &eventType);
     void RemoveAllCallbacks(const std::string &eventType);
 
@@ -97,8 +97,8 @@ private:
     void UpdateJSCallbackAsync(sptr<Surface> photoSurface) const;
     void ExecutePhoto(sptr<SurfaceBuffer> surfaceBfuffer) const;
     void ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) const;
-    mutable std::vector<std::shared_ptr<AutoRef>> capturePhotoCbList_;
-    mutable std::vector<std::shared_ptr<AutoRef>> captureDeferredPhotoCbList_;
+    napi_ref capturePhotoCb_;
+    napi_ref captureDeferredPhotoCb_;
 };
 
 class PhotoOutputCallback : public PhotoStateCallback, public std::enable_shared_from_this<PhotoOutputCallback> {
