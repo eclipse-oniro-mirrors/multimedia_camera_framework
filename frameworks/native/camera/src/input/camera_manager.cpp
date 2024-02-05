@@ -1479,9 +1479,12 @@ bool CameraManager::IsTorchSupported()
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         std::shared_ptr<Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
         camera_metadata_item_t item;
-        int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_MODES, &item);
+        int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_AVAILABLE, &item);
         if (ret == CAM_META_SUCCESS) {
-            return true;
+            MEDIA_INFO_LOG("OHOS_ABILITY_FLASH_AVAILABLE is %{public}d", item.data.u8[0]);
+            if (item.data.u8[0] == 1) {
+                return true;
+            }
         }
     }
     return false;
