@@ -26,8 +26,7 @@ static const char DEFERRED_PHOTO_NAPI_CLASS_NAME[] = "DeferredPhotoProxy";
 class DeferredPhotoProxyNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
-    static napi_value CreateDeferredPhotoProxy(napi_env env, sptr<DeferredPhotoProxy> deferredPhotoProxy,
-        napi_value thumbnailPixelMap);
+    static napi_value CreateDeferredPhotoProxy(napi_env env, sptr<DeferredPhotoProxy> deferredPhotoProxy);
     DeferredPhotoProxyNapi();
     ~DeferredPhotoProxyNapi();
 
