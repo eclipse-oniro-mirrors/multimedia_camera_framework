@@ -79,7 +79,7 @@ void PhotoListener::ExecutePhoto(sptr<SurfaceBuffer> surfaceBuffer) const
         napi_get_undefined(env_, &mainImage);
     }
 
-    result[PARAM1] = PhotoNapi::CreatePhoto(env, mainImage);
+    result[PARAM1] = PhotoNapi::CreatePhoto(env_, mainImage);
 
     napi_get_reference_value(env_, capturePhotoCb_, &callback);
     napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
