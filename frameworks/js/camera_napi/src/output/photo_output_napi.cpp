@@ -117,8 +117,9 @@ void PhotoListener::ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) cons
     MEDIA_DEBUG_LOG("w:%{public}d, h:%{public}d, s:%{public}d, fd:%{public}d, size: %{public}d, format: %{public}d",
         width, height, stride, fd, size, format);
 
-    sptr<DeferredPhotoProxy> deferredPhotoProxy;
-    std::string imageIdStr = std::to_string(imageId);
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_get_undefined(env_, &result[PARAM1]);
+
     // deep copy buffer
     sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
     BufferRequestConfig requestConfig = {
@@ -133,24 +134,28 @@ void PhotoListener::ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) cons
     };
     auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
     MEDIA_INFO_LOG("SurfaceBuffer alloc ret: %d", allocErrorCode);
-    memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(), surfaceBuffer->GetVirAddr(),
-        surfaceBuffer->GetSize());
+    if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
+        surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK) {
+        MEDIA_ERR_LOG("PhotoListener memcpy_s failed");
+    }
     BufferHandle *newBufferHandle = CameraCloneBufferHandle(newSurfaceBuffer->GetBufferHandle());
-    
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_get_undefined(env_, &result[PARAM1]);
     if (newBufferHandle == nullptr) {
         napi_value errorCode;
         napi_create_int32(env_, CameraErrorCode::INVALID_ARGUMENT, &errorCode);
         result[PARAM0] = errorCode;
         MEDIA_ERR_LOG("invalid bufferHandle");
-     }
+    }
+
+    // call js function
+    sptr<DeferredPhotoProxy> deferredPhotoProxy;
+    std::string imageIdStr = std::to_string(imageId);
     deferredPhotoProxy = new(std::nothrow) DeferredPhotoProxy(newBufferHandle, imageIdStr, deferredProcessingType,
         thumbnailWidth, thumbnailHeight);
     result[PARAM1] = DeferredPhotoProxyNapi::CreateDeferredPhotoProxy(env_, deferredPhotoProxy);
-
     napi_get_reference_value(env_, captureDeferredPhotoCb_, &callback);
     napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
+
+    // return buffer to buffer queue
     photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
 }
 
