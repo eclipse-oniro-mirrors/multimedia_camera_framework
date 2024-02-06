@@ -43,7 +43,7 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
-std::mutex HCameraDevice::deviceOpenMutex_;
+std::recursive_mutex HCameraDevice::g_deviceOpenCloseMutex_;
 static const int32_t DEFAULT_SETTING_ITEM_COUNT = 100;
 static const int32_t DEFAULT_SETTING_ITEM_LENGTH = 100;
 static const std::vector<camera_device_metadata_tag> DEVICE_OPEN_LIFECYCLE_TAGS = { OHOS_CONTROL_MUTE_MODE };
@@ -238,7 +238,7 @@ int32_t HCameraDevice::OpenDevice()
     MEDIA_INFO_LOG("HCameraDevice::OpenDevice Opening camera device: %{public}s", cameraID_.c_str());
 
     {
-        std::lock_guard<std::mutex> lock(deviceOpenMutex_);
+        std::lock_guard<std::recursive_mutex> lock(g_deviceOpenCloseMutex_);
         sptr<HCameraDevice> cameraNeedEvict;
         bool canOpenDevice = CanOpenCamera();
         if (!canOpenDevice) {
@@ -302,6 +302,7 @@ int32_t HCameraDevice::CloseDevice()
             UnRegisterFoldStatusListener();
         }
         if (hdiCameraDevice_ != nullptr) {
+            std::lock_guard<std::recursive_mutex> lock(g_deviceOpenCloseMutex_);
             isOpenedCameraDevice_.store(false);
             MEDIA_INFO_LOG("Closing camera device: %{public}s start", cameraID_.c_str());
             hdiCameraDevice_->Close();

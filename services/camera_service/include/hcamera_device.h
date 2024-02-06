@@ -110,7 +110,7 @@ private:
     std::atomic<bool> isOpenedCameraDevice_;
     std::mutex deviceSvcCbMutex_;
     std::mutex cachedSettingsMutex_;
-    static std::mutex deviceOpenMutex_;
+    static std::recursive_mutex g_deviceOpenCloseMutex_;
     sptr<ICameraDeviceServiceCallback> deviceSvcCallback_;
     std::map<int32_t, wptr<ICameraServiceCallback>> statusSvcCallbacks_;
 
