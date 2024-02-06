@@ -60,6 +60,7 @@ public:
 class DeferredPhotoProcSession : public RefBase {
 public:
     DeferredPhotoProcSession(int userId, std::shared_ptr<IDeferredPhotoProcSessionCallback> callback);
+    virtual ~DeferredPhotoProcSession();
     void BeginSynchronize();
     void EndSynchronize();
     void AddImage(const std::string& imageId, DpsMetadata& metadata, const bool discardable = false);
