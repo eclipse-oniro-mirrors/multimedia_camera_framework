@@ -26,5 +26,10 @@ namespace CameraStandard {
 VideoSession::~VideoSession()
 {
 }
+bool VideoSession::CanAddOutput(sptr<CaptureOutput> &output, SceneMode modeName)
+{
+    MEDIA_DEBUG_LOG("Enter Into VideoSession::CanAddOutput");
+    return CaptureSession::CanAddOutput(output, SceneMode::VIDEO);
+}
 } // namespace CameraStandard
 } // namespace OHOS

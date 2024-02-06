@@ -1008,7 +1008,7 @@ int32_t HCameraDevice::CommitStreams(
             static_cast<OHOS::HDI::Camera::V1_1::OperationMode_V1_1>(operationMode), setting));
     } else {
         MEDIA_DEBUG_LOG("HCameraDevice::CommitStreams IStreamOperator V1_0");
-        OperationMode opMode = static_cast<OperationMode>(operationMode);
+        OperationMode opMode = OperationMode::NORMAL;
         hdiRc = (CamRetCode)(streamOperator->CommitStreams(opMode, setting));
     }
     MEDIA_DEBUG_LOG("HCameraDevice::CommitStreams end");
