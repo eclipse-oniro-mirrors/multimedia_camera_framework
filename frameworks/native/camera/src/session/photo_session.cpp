@@ -27,11 +27,11 @@ PhotoSession::~PhotoSession()
 {
 }
 
-bool PhotoSession::CanAddOutput(sptr<CaptureOutput> &output)
+bool PhotoSession::CanAddOutput(sptr<CaptureOutput> &output, SceneMode modeName)
 {
-    CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into PhotoSession::CanAddOutput");
-    return output->GetOutputType() != CAPTURE_OUTPUT_TYPE_VIDEO && CaptureSession::CanAddOutput(output);
+    return output->GetOutputType() != CAPTURE_OUTPUT_TYPE_VIDEO &&
+        CaptureSession::CanAddOutput(output, SceneMode::CAPTURE);
 }
 } // namespace CameraStandard
 } // namespace OHOS

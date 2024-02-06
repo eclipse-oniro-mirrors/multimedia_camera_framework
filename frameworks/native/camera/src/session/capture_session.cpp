@@ -535,7 +535,7 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
     return ServiceToCameraError(errCode);
 }
 
-bool CaptureSession::CanAddOutput(sptr<CaptureOutput> &output)
+bool CaptureSession::CanAddOutput(sptr<CaptureOutput> &output, SceneMode modeName)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::CanAddOutput");
@@ -547,19 +547,18 @@ bool CaptureSession::CanAddOutput(sptr<CaptureOutput> &output)
         MEDIA_ERR_LOG("CaptureSession::CanAddOutput Failed inputDevice_ is nullptr");
         return false;
     }
-    int32_t normalMode = 0;
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW) {
-        std::vector<Profile> previewProfiles = inputDevice_->GetCameraDeviceInfo()->modePreviewProfiles_[normalMode];
+        std::vector<Profile> previewProfiles = inputDevice_->GetCameraDeviceInfo()->modePreviewProfiles_[modeName];
         Profile vaildateProfile = output->GetPreviewProfile();
         return std::any_of(previewProfiles.begin(), previewProfiles.end(), [&vaildateProfile]
                                        (const auto& previewProfile) { return vaildateProfile == previewProfile; });
     } else if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO) {
-        std::vector<Profile> photoProfiles = inputDevice_->GetCameraDeviceInfo()->modePhotoProfiles_[normalMode];
+        std::vector<Profile> photoProfiles = inputDevice_->GetCameraDeviceInfo()->modePhotoProfiles_[modeName];
         Profile vaildateProfile = output->GetPhotoProfile();
         return std::any_of(photoProfiles.begin(), photoProfiles.end(), [&vaildateProfile]
                                        (const auto& photoProfile) { return vaildateProfile == photoProfile; });
     } else if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_VIDEO) {
-        std::vector<VideoProfile> videoProfiles = inputDevice_->GetCameraDeviceInfo()->modeVideoProfiles_[normalMode];
+        std::vector<VideoProfile> videoProfiles = inputDevice_->GetCameraDeviceInfo()->modeVideoProfiles_[modeName];
         VideoProfile vaildateProfile = output->GetVideoProfile();
         return std::any_of(videoProfiles.begin(), videoProfiles.end(), [&vaildateProfile]
                                        (const auto& profile) { return vaildateProfile == profile; });
