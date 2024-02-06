@@ -751,6 +751,7 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("enableQuickThumbnail", EnableQuickThumbnail),
         DECLARE_NAPI_FUNCTION("isQuickThumbnailSupported", IsQuickThumbnailSupported), DECLARE_NAPI_FUNCTION("on", On),
         DECLARE_NAPI_FUNCTION("once", Once), DECLARE_NAPI_FUNCTION("off", Off),
+        DECLARE_NAPI_FUNCTION("deferImageDelivery", DeferImageDeliveryFor),
         DECLARE_NAPI_FUNCTION("deferImageDeliveryFor", DeferImageDeliveryFor),
         DECLARE_NAPI_FUNCTION("isDeferredImageDeliverySupported", IsDeferredImageDeliverySupported),
         DECLARE_NAPI_FUNCTION("isDeferredImageDeliveryEnabled", IsDeferredImageDeliveryEnabled)
