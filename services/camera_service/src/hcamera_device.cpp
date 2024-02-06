@@ -904,16 +904,12 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint
     if (IsCameraDebugOn()) {
         CameraFwkMetadataUtils::DumpMetadataInfo(cameraResult);
     }
-
-    std::shared_ptr<OHOS::Camera::CameraMetadata> newMetadata = CameraFwkMetadataUtils::RecreateMetadata(cameraResult);
-    CameraFwkMetadataUtils::LogFormatCameraMetadata(newMetadata);
-
     auto callback = GetDeviceServiceCallback();
     if (callback != nullptr) {
-        callback->OnResult(timestamp, newMetadata);
+        callback->OnResult(timestamp, cameraResult);
     }
     if (IsCameraDebugOn()) {
-        CheckOnResultData(newMetadata);
+        CheckOnResultData(cameraResult);
     }
     return CAMERA_OK;
 }
