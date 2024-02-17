@@ -3080,7 +3080,7 @@ bool CaptureSession::IsModeWithVideoStream()
 std::vector<ColorEffect> CaptureSession::GetSupportedColorEffects()
 {
     std::vector<ColorEffect> supportedColorEffects = {};
-    if (!IsSessionCommited()) {
+    if (!(IsSessionCommited() || IsSessionConfiged())) {
         MEDIA_ERR_LOG("CaptureSession::GetSupportedColorEffects Session is not Commited");
         return supportedColorEffects;
     }
@@ -3107,7 +3107,7 @@ std::vector<ColorEffect> CaptureSession::GetSupportedColorEffects()
 ColorEffect CaptureSession::GetColorEffect()
 {
     ColorEffect colorEffect = ColorEffect::COLOR_EFFECT_NORMAL;
-    if (!IsSessionCommited()) {
+    if (!(IsSessionCommited() || IsSessionConfiged())) {
         MEDIA_ERR_LOG("CaptureSession::GetColorEffect Session is not Commited");
         return colorEffect;
     }
@@ -3132,7 +3132,7 @@ ColorEffect CaptureSession::GetColorEffect()
 void CaptureSession::SetColorEffect(ColorEffect colorEffect)
 {
     CAMERA_SYNC_TRACE;
-    if (!IsSessionCommited()) {
+    if (!(IsSessionCommited() || IsSessionConfiged())) {
         MEDIA_ERR_LOG("CaptureSession::SetColorEffect Session is not Commited");
         return;
     }
