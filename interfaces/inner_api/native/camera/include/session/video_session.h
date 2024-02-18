@@ -25,6 +25,13 @@ class VideoSession : public CaptureSession {
 public:
     explicit VideoSession(sptr<ICaptureSession> &videoSession): CaptureSession(videoSession) {}
     ~VideoSession();
+
+    /**
+     * @brief Determine if the given Ouput can be added to session.
+     *
+     * @param CaptureOutput to be added to session.
+     */
+    bool CanAddOutput(sptr<CaptureOutput>& output, SceneMode modeName = SceneMode::VIDEO) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

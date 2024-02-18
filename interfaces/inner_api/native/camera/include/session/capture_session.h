@@ -240,7 +240,7 @@ public:
      *
      * @param CaptureOutput to be added to session.
      */
-    virtual bool CanAddOutput(sptr<CaptureOutput>& output);
+    virtual bool CanAddOutput(sptr<CaptureOutput>& output, SceneMode modeName = SceneMode::NORMAL);
 
     /**
      * @brief Add CaptureOutput for the capture session.

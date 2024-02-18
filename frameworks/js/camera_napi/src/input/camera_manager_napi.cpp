@@ -993,6 +993,10 @@ napi_value CameraManagerNapi::GetSupportedModes(napi_env env, napi_callback_info
                 break;
             }
         }
+        if (modeObjList.empty()) {
+            modeObjList.emplace_back(CAPTURE);
+            modeObjList.emplace_back(VIDEO);
+        }
         MEDIA_INFO_LOG("CameraManagerNapi::GetSupportedModes size=[%{public}zu]", modeObjList.size());
         jsResult = CreateJSArray(env, status, modeObjList);
         if (status == napi_ok) {

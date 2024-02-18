@@ -147,30 +147,12 @@ void PortraitSession::SetPortraitEffect(PortraitEffect portraitEffect)
     }
     return;
 }
-bool PortraitSession::CanAddOutput(sptr<CaptureOutput> &output)
+bool PortraitSession::CanAddOutput(sptr<CaptureOutput> &output, SceneMode modeName)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into PortraitSession::CanAddOutput");
-    if (!IsSessionConfiged() || output == nullptr) {
-        MEDIA_ERR_LOG("PortraitSession::CanAddOutput operation Not allowed!");
-        return false;
-    }
-    int32_t portrait = 3;
-    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW) {
-        std::vector<Profile> previewProfiles = inputDevice_->GetCameraDeviceInfo()->modePreviewProfiles_[portrait];
-        Profile vaildateProfile = output->GetPreviewProfile();
-        return std::any_of(previewProfiles.begin(), previewProfiles.end(), [&vaildateProfile]
-                                       (const auto& previewProfile) { return vaildateProfile == previewProfile; });
-    } else if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO) {
-        std::vector<Profile> photoProfiles = inputDevice_->GetCameraDeviceInfo()->modePhotoProfiles_[portrait];
-        Profile vaildateProfile = output->GetPhotoProfile();
-        return std::any_of(photoProfiles.begin(), photoProfiles.end(), [&vaildateProfile]
-                                       (const auto& photoProfile) { return vaildateProfile == photoProfile; });
-    } else if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_METADATA) {
-        MEDIA_INFO_LOG("PortraitSession::CanAddOutput MetadataOutput");
-        return true;
-    }
-    return false;
+    return output->GetOutputType() != CAPTURE_OUTPUT_TYPE_VIDEO &&
+           CaptureSession::CanAddOutput(output, SceneMode::PORTRAIT);
 }
 
 std::vector<float> PortraitSession::GetSupportedVirtualApertures()
