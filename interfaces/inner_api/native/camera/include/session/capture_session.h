@@ -231,6 +231,21 @@ public:
     virtual void OnAbilityChange() = 0;
 };
 
+struct ARStatusInfo {
+    std::vector<int32_t> laserData;
+    float lensFocusDistance;
+    int32_t sensorSensitivity;
+    uint32_t exposureDurationValue;
+    int64_t timestamp;
+};
+
+class ARCallback {
+public:
+    ARCallback() = default;
+    virtual ~ARCallback() = default;
+    virtual void OnResult(const ARStatusInfo &arStatusInfo) const = 0;
+};
+
 enum VideoStabilizationMode {
     OFF = 0,
     LOW,
@@ -1025,6 +1040,78 @@ public:
      * @return Returns whether or not commit config.
      */
     bool IsSessionConfiged();
+
+    /**
+     * @brief Set FrameRate Range.
+     *
+     * @return Returns whether or not commit config.
+     */
+    void SetFrameRateRange(const std::vector<int32_t>& frameRateRange);
+
+    /**
+    * @brief Set camera sensor sensitivity.
+    * @param sensitivity sensitivity value to be set.
+    * @return errCode.
+    */
+    int32_t SetSensorSensitivity(uint32_t sensitivity);
+    
+    /**
+    * @brief Get camera sensor sensitivity.
+    * @param sensitivity current sensitivity value.
+    * @return Returns errCode.
+    */
+    int32_t GetSensorSensitivityRange(std::vector<int32_t> &sensitivityRange);
+
+    /**
+    * @brief Get exposure time range.
+    * @param vector of exposure time range.
+    * @return errCode.
+    */
+    int32_t GetSensorExposureTimeRange(std::vector<uint32_t> &sensorExposureTimeRange);
+
+    /**
+    * @brief Set exposure time value.
+    * @param exposure compensation value to be set.
+    * @return errCode.
+    */
+    int32_t SetSensorExposureTime(uint32_t sensorExposureTime);
+
+    /**
+    * @brief Get exposure time value.
+    * @param exposure current exposure time value .
+    * @return Returns errCode.
+    */
+    int32_t GetSensorExposureTime(uint32_t &sensorExposureTime);
+
+    /**
+    * @brief Get sensor module type
+    * @param moduleType sensor module type.
+    * @return Returns errCode.
+    */
+    int32_t GetModuleType(uint32_t &moduleType);
+
+    /**
+     * @brief Set ar mode.
+     * @param isEnable switch to control ar mode.
+     * @return errCode
+     */
+    int32_t SetARMode(bool isEnable);
+
+    /**
+     * @brief Set the ar callback.
+     * which will be called when there is ar info update.
+     *
+     * @param arCallback ARCallback pointer.
+     */
+    void SetARCallback(std::shared_ptr<ARCallback> arCallback);
+
+    /**
+     * @brief Get the ARCallback.
+     *
+     * @return Returns the pointer to ARCallback.
+     */
+    std::shared_ptr<ARCallback> GetARCallback();
+
     void SetMode(SceneMode modeName);
     SceneMode GetMode();
     SceneFeaturesMode GetFeaturesMode();
@@ -1040,6 +1127,8 @@ public:
 
     void ExecuteAbilityChangeCallback();
     void SetAbilityCallback(std::shared_ptr<AbilityCallback> abilityCallback);
+    void ProcessAREngineUpdates(const uint64_t timestamp,
+                                    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
 
     inline std::shared_ptr<MetadataResultProcessor> GetMetadataResultProcessor()
     {
@@ -1071,6 +1160,7 @@ protected:
 
 protected:
     std::shared_ptr<AbilityCallback> abilityCallback_;
+    std::atomic<uint32_t> exposureDurationValue_ = 0;
 private:
     std::mutex changeMetaMutex_;
     std::mutex sessionCallbackMutex_;
@@ -1083,6 +1173,7 @@ private:
     std::shared_ptr<MoonCaptureBoostStatusCallback> moonCaptureBoostStatusCallback_;
     std::shared_ptr<FeatureDetectionStatusCallback> featureDetectionStatusCallback_;
     std::shared_ptr<SmoothZoomCallback> smoothZoomCallback_;
+    std::shared_ptr<ARCallback> arCallback_;
     std::vector<int32_t> skinSmoothBeautyRange_;
     std::vector<int32_t> faceSlendorBeautyRange_;
     std::vector<int32_t> skinToneBeautyRange_;
@@ -1106,10 +1197,14 @@ private:
     sptr<CaptureOutput> metaOutput_;
     sptr<CaptureOutput> photoOutput_;
     std::atomic<int32_t> prevDuration_ = 0;
-
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
     bool isColorSpaceSetted_ = false;
-
+    // private tag
+    uint32_t HAL_CUSTOM_AR_MODE = 0;
+    uint32_t HAL_CUSTOM_LASER_DATA = 0;
+    uint32_t HAL_CUSTOM_SENSOR_MODULE_TYPE = 0;
+    uint32_t HAL_CUSTOM_LENS_FOCUS_DISTANCE = 0;
+    uint32_t HAL_CUSTOM_SENSOR_SENSITIVITY = 0;
     // Make sure you know what you are doing, you'd better to use {GetMode()} function instead of this variable.
     SceneMode currentMode_ = SceneMode::NORMAL;
     SceneMode guessMode_ = SceneMode::NORMAL;
@@ -1118,7 +1213,6 @@ private:
     std::shared_ptr<MoonCaptureBoostFeature> GetMoonCaptureBoostFeature();
     void SetGuessMode(SceneMode mode);
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
-    void SetFrameRateRange(const std::vector<int32_t>& frameRateRange);
     Point CoordinateTransform(Point point);
     int32_t CalculateExposureValue(float exposureValue);
     Point VerifyFocusCorrectness(Point point);
@@ -1134,6 +1228,7 @@ private:
     void UpdateDeviceDeferredability();
     void ProcessProfilesAbilityId(const int32_t portraitMode);
     int32_t ProcessCaptureColorSpace(ColorSpaceInfo colorSpaceInfo, ColorSpace& fwkCaptureColorSpace);
+    void FindTagId();
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -75,6 +75,22 @@ CameraDevice::CameraDevice(
     }
 }
 
+bool CameraDevice::isFindModuleTypeTag(uint32_t &tagId)
+{
+    std::vector<vendorTag_t> infos;
+    int32_t ret = OHOS::Camera::GetAllVendorTags(infos);
+    if (ret == CAM_META_SUCCESS) {
+        for (auto info : infos) {
+            std::string tagName = info.tagName;
+            if (tagName == "hwSensorName") {
+                tagId = info.tagId;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void CameraDevice::init(common_metadata_header_t* metadata)
 {
     camera_metadata_item_t item;
@@ -120,10 +136,19 @@ void CameraDevice::init(common_metadata_header_t* metadata)
     if (ret == CAM_META_SUCCESS) {
         cameraOrientation_ = item.data.i32[0];
     }
+
+    uint32_t moduleTypeTagId;
+    if (isFindModuleTypeTag(moduleTypeTagId)) {
+        ret = Camera::FindCameraMetadataItem(metadata, moduleTypeTagId, &item);
+        if (ret == CAM_META_SUCCESS) {
+            moduleType_ = item.data.ui32[0];
+        }
+    }
+
     MEDIA_INFO_LOG("camera position: %{public}d, camera type: %{public}d, camera connection type: %{public}d, "
-                   "Mirror Supported: %{public}d, camera foldScreen type: %{public}d, camera orientation: %{public}d",
-                   cameraPosition_, cameraType_, connectionType_, isMirrorSupported_, foldScreenType_,
-                   cameraOrientation_);
+                   "Mirror Supported: %{public}d, camera foldScreen type: %{public}d, camera orientation: %{public}d, "
+                   "moduleType: %{public}u", cameraPosition_, cameraType_, connectionType_, isMirrorSupported_,
+                   foldScreenType_, cameraOrientation_, moduleType_);
 }
 
 std::string CameraDevice::GetID()
@@ -194,6 +219,11 @@ uint32_t CameraDevice::GetCameraOrientation()
 bool CameraDevice::IsMirrorSupported()
 {
     return isMirrorSupported_;
+}
+
+uint32_t CameraDevice::GetModuleType()
+{
+    return moduleType_;
 }
 
 std::vector<float> CameraDevice::GetZoomRatioRange()

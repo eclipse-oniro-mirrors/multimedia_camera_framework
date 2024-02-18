@@ -178,6 +178,13 @@ public:
     * @return Returns vector<int32_t> of supported exposure compensation range.
     */
     std::vector<float> GetExposureBiasRange();
+
+    /**
+    * @brief Get sensor module type
+    *
+    * @return moduleType sensor module type.
+    */
+    uint32_t GetModuleType();
     std::unordered_map<int32_t, std::vector<Profile>> modePreviewProfiles_ = {};
     std::unordered_map<int32_t, std::vector<Profile>> modePhotoProfiles_ = {};
     std::unordered_map<int32_t, std::vector<VideoProfile>> modeVideoProfiles_ = {};
@@ -193,6 +200,7 @@ private:
     CameraFoldScreenType foldScreenType_ = CAMERA_FOLDSCREEN_UNSPECIFIED;
     uint32_t cameraOrientation_ = 0;
     bool isMirrorSupported_ = false;
+    uint32_t moduleType_ = 0;
     dmDeviceInfo dmDeviceInfo_ = {};
     std::vector<float> zoomRatioRange_;
     std::vector<float> exposureBiasRange_;
@@ -201,6 +209,7 @@ private:
     static const std::unordered_map<camera_connection_type_t, ConnectionType> metaToFwConnectionType_;
     static const std::unordered_map<camera_foldscreen_enum_t, CameraFoldScreenType> metaToFwCameraFoldScreenType_;
     void init(common_metadata_header_t* metadataHeader);
+    bool isFindModuleTypeTag(uint32_t &tagId);
 };
 } // namespace CameraStandard
 } // namespace OHOS

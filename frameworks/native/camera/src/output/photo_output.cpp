@@ -625,8 +625,10 @@ int32_t PhotoOutput::IsDeferredImageDeliveryEnabled(DeferredDeliveryImageType ty
 
 void PhotoOutput::ProcessSnapshotDurationUpdates(int32_t snapshotDuration)
 {
-    if (GetApplicationCallback() != nullptr) {
-        GetApplicationCallback()->OnEstimatedCaptureDuration(snapshotDuration);
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+    if (appCallback_ != nullptr) {
+        MEDIA_DEBUG_LOG("appCallback not nullptr");
+        appCallback_->OnEstimatedCaptureDuration(snapshotDuration);
     }
 }
 
