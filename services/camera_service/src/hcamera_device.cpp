@@ -412,6 +412,7 @@ void HCameraDevice::UnPrepareZoom()
 int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
 {
     CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("HCameraDevice::UpdateSetting prepare execute");
     if (settings == nullptr) {
         MEDIA_ERR_LOG("settings is null");
         return CAMERA_INVALID_ARG;
@@ -432,7 +433,7 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
     } else {
         updateSettings_ = settings;
     }
-    MEDIA_DEBUG_LOG("Updated device settings  hdiCameraDevice_(%{public}d)", hdiCameraDevice_ != nullptr);
+    MEDIA_INFO_LOG("Updated device settings  hdiCameraDevice_(%{public}d)", hdiCameraDevice_ != nullptr);
     if (hdiCameraDevice_ != nullptr) {
         std::vector<uint8_t> hdiSettings;
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(updateSettings_, hdiSettings);
@@ -449,13 +450,14 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
         }
         updateSettings_ = nullptr;
     }
-    MEDIA_DEBUG_LOG("Updated device settings");
+    MEDIA_INFO_LOG("HCameraDevice::UpdateSetting execute success");
     return CAMERA_OK;
 }
 
 int32_t HCameraDevice::UpdateSettingOnce(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
 {
     CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("HCameraDevice::UpdateSettingOnce prepare execute");
     if (settings == nullptr) {
         MEDIA_ERR_LOG("settings is null");
         return CAMERA_INVALID_ARG;
@@ -468,7 +470,7 @@ int32_t HCameraDevice::UpdateSettingOnce(const std::shared_ptr<OHOS::Camera::Cam
         return CAMERA_OK;
     }
     std::lock_guard<std::mutex> lock(opMutex_);
-    MEDIA_DEBUG_LOG("Updated device settings once hdiCameraDevice_(%{public}d)", hdiCameraDevice_ != nullptr);
+    MEDIA_INFO_LOG("Updated device settings once hdiCameraDevice_(%{public}d)", hdiCameraDevice_ != nullptr);
     if (hdiCameraDevice_ != nullptr) {
         std::vector<uint8_t> hdiSettings;
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(settings, hdiSettings);
@@ -478,7 +480,7 @@ int32_t HCameraDevice::UpdateSettingOnce(const std::shared_ptr<OHOS::Camera::Cam
             return HdiToServiceError(rc);
         }
     }
-    MEDIA_DEBUG_LOG("Updated device settings once");
+    MEDIA_INFO_LOG("HCameraDevice::UpdateSettingOnce execute success");
     return CAMERA_OK;
 }
 
@@ -946,10 +948,10 @@ int32_t HCameraDevice::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V
         }
     }
     if (streamOperatorV1_1 != nullptr) {
-        MEDIA_DEBUG_LOG("HCameraDevice::CreateStreams streamOperator V1_1");
+        MEDIA_INFO_LOG("HCameraDevice::CreateStreams streamOperator V1_1");
         hdiRc = (CamRetCode)(streamOperatorV1_1->CreateStreams_V1_1(streamInfos));
     } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::CreateStreams streamOperator V1_0");
+        MEDIA_INFO_LOG("HCameraDevice::CreateStreams streamOperator V1_0");
         std::vector<StreamInfo> streamInfos_V1_0;
         for (auto streamInfo : streamInfos) {
             streamInfos_V1_0.emplace_back(streamInfo.v1_0);
@@ -967,7 +969,7 @@ int32_t HCameraDevice::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V
         }
     }
     for (auto& info : streamInfos) {
-        MEDIA_DEBUG_LOG("HCameraDevice::CreateStreams stream id is:%{public}d", info.v1_0.streamId_);
+        MEDIA_INFO_LOG("HCameraDevice::CreateStreams stream id is:%{public}d", info.v1_0.streamId_);
     }
     return HdiToServiceError(hdiRc);
 }

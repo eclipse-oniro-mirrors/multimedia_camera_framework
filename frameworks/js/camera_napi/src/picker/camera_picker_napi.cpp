@@ -288,7 +288,7 @@ static napi_status StartAsyncWork(napi_env env, CameraPickerAsyncContext* picker
 {
     napi_value resource = nullptr;
     CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "Pick");
-    MEDIA_INFO_LOG("CameraPicker StartAsyncWork E");
+    MEDIA_INFO_LOG("CameraPicker StartAsyncWork");
     return napi_create_async_work(
         env, nullptr, resource,
         [](napi_env env, void* data) {

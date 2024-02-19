@@ -16,8 +16,10 @@
 #ifndef OHOS_CAMERA_UTIL_H
 #define OHOS_CAMERA_UTIL_H
 
+#include <iterator>
 #include <limits.h>
 #include <malloc.h>
+#include <sstream>
 
 #include "camera_metadata_info.h"
 #include "display/graphic/common/v1_0/cm_color_space.h"
@@ -148,6 +150,31 @@ sptr<T> CastStream(sptr<HStreamCommon> streamCommon)
         return nullptr;
     }
     return static_cast<T*>(streamCommon.GetRefPtr());
+}
+
+template<typename Iter>
+using return_container_iter_string_value =
+    typename std::enable_if<std::is_convertible<typename std::iterator_traits<Iter>::value_type,
+                                typename std::iterator_traits<Iter>::value_type>::value,
+        std::string>::type;
+
+template<typename Iter>
+return_container_iter_string_value<Iter> Container2String(Iter first, Iter last)
+{
+    std::stringstream stringStream;
+    stringStream << "[";
+    bool isFirstElement = true;
+    while (first != last) {
+        if (isFirstElement) {
+            stringStream << *first;
+            isFirstElement = false;
+        } else {
+            stringStream << "," << *first;
+        }
+        first++;
+    }
+    stringStream << "]";
+    return stringStream.str();
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -30,17 +30,22 @@ static const int32_t CAPTURE_ROTATE_360 = 360;
 HStreamCapture::HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height)
     : HStreamCommon(StreamType::CAPTURE, producer, format, width, height)
 {
-    MEDIA_INFO_LOG("HStreamCapture::HStreamCapture!");
+    MEDIA_INFO_LOG(
+        "HStreamCapture::HStreamCapture construct, format:%{public}d size:%{public}dx%{public}d streamId:%{public}d",
+        format, width, height, GetStreamId());
 }
 
 HStreamCapture::~HStreamCapture()
 {
-    MEDIA_INFO_LOG("HStreamCapture::~HStreamCapture!");
+    MEDIA_INFO_LOG(
+        "HStreamCapture::~HStreamCapture deconstruct, format:%{public}d size:%{public}dx%{public}d streamId:%{public}d",
+        format_, width_, height_, GetStreamId());
 }
 
 int32_t HStreamCapture::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
+    MEDIA_INFO_LOG("HStreamCapture::LinkInput streamId:%{public}d", GetStreamId());
     return HStreamCommon::LinkInput(streamOperator, cameraAbility);
 }
 
@@ -93,6 +98,7 @@ int32_t HStreamCapture::DeferImageDeliveryFor(int32_t type)
 int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings)
 {
     CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("HStreamCapture::Capture Entry, streamId:%{public}d", GetStreamId());
     auto streamOperator = GetStreamOperator();
     if (streamOperator == nullptr) {
         return CAMERA_INVALID_STATE;
@@ -112,14 +118,11 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     }
     CaptureInfo captureInfoPhoto;
     captureInfoPhoto.streamIds_ = { GetStreamId() };
-    std::vector<uint8_t> setting;
     if (!OHOS::Camera::GetCameraMetadataItemCount(captureSettings->get())) {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
-        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, setting);
-        captureInfoPhoto.captureSetting_ = setting;
+        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, captureInfoPhoto.captureSetting_);
     } else {
-        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(captureSettings, setting);
-        captureInfoPhoto.captureSetting_ = setting;
+        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(captureSettings, captureInfoPhoto.captureSetting_);
     }
     captureInfoPhoto.enableShutterCallback_ = true;
     // debug log for jpeg quality
@@ -242,7 +245,7 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
 int32_t HStreamCapture::CancelCapture()
 {
     CAMERA_SYNC_TRACE;
-    // Cancel cature is dummy till continuous/burst mode is supported
+    // Cancel capture is dummy till continuous/burst mode is supported
     StopStream();
     return CAMERA_OK;
 }

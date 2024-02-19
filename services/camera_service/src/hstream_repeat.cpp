@@ -40,15 +40,27 @@ static const int32_t STREAM_ROTATE_360 = 360;
 HStreamRepeat::HStreamRepeat(
     sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height, RepeatStreamType type)
     : HStreamCommon(StreamType::REPEAT, producer, format, width, height), repeatStreamType_(type)
-{}
+{
+    MEDIA_INFO_LOG("HStreamRepeat::HStreamRepeat construct, format:%{public}d size:%{public}dx%{public}d "
+                   "repeatType:%{public}d, streamId:%{public}d",
+        format, width, height, type, GetStreamId());
+}
 
-HStreamRepeat::~HStreamRepeat() {}
+HStreamRepeat::~HStreamRepeat()
+{
+    MEDIA_INFO_LOG("HStreamRepeat::~HStreamRepeat deconstruct, format:%{public}d size:%{public}dx%{public}d "
+                   "repeatType:%{public}d, streamId:%{public}d",
+        format_, width_, height_, repeatStreamType_, GetStreamId());
+}
 
 int32_t HStreamRepeat::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
+    MEDIA_INFO_LOG(
+        "HStreamRepeat::LinkInput streamId:%{public}d ,repeatStreamType:%{public}d", GetStreamId(), repeatStreamType_);
     int32_t ret = HStreamCommon::LinkInput(streamOperator, cameraAbility);
     if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("HStreamRepeat::LinkInput err, streamId:%{public}d ,err:%{public}d", GetStreamId(), ret);
         return ret;
     }
     if (repeatStreamType_ != RepeatStreamType::VIDEO) {

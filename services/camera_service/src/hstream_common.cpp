@@ -222,7 +222,7 @@ void HStreamCommon::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
 
 int32_t HStreamCommon::ReleaseStream(bool isDelay)
 {
-    MEDIA_DEBUG_LOG(
+    MEDIA_INFO_LOG(
         "Enter Into HStreamCommon::Release streamId is:%{public}d, streamType is:%{public}d, isDelay:%{public}d",
         streamId_, streamType_, isDelay);
     StopStream();
