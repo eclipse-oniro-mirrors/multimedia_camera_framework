@@ -79,6 +79,7 @@ enum class CAM_MACRO_DETECT_EVENTS {
 const int32_t WAIT_TIME_AFTER_CAPTURE = 1;
 const int32_t WAIT_TIME_AFTER_START = 2;
 const int32_t WAIT_TIME_BEFORE_STOP = 1;
+const int32_t WAIT_TIME_AFTER_CLOSE = 1;
 const int32_t CAMERA_NUMBER = 2;
 const int32_t SKETCH_PREVIEW_MIN_HEIGHT = 720;
 const int32_t SKETCH_PREVIEW_MAX_WIDTH = 3000;
@@ -6924,6 +6925,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_101, TestSize.L
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_102, TestSize.Level0)
 {
     EXPECT_EQ(input_->Close(), 0);
+    sleep(WAIT_TIME_AFTER_CLOSE);
 
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
 
