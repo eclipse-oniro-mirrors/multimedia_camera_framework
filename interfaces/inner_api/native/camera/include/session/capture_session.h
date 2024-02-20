@@ -103,7 +103,8 @@ enum BeautyType {
 enum ColorEffect {
     COLOR_EFFECT_NORMAL = 0,
     COLOR_EFFECT_BRIGHT,
-    COLOR_EFFECT_SOFT
+    COLOR_EFFECT_SOFT,
+    COLOR_EFFECT_BLACK_WHITE,
 };
 
 typedef struct {
