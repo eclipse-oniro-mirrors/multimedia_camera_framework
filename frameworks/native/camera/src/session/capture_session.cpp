@@ -125,7 +125,8 @@ const std::unordered_map<camera_xmage_color_type_t, ColorEffect> CaptureSession:
 const std::unordered_map<ColorEffect, camera_xmage_color_type_t> CaptureSession::fwkColorEffectMap_ = {
     {COLOR_EFFECT_NORMAL, CAMERA_CUSTOM_COLOR_NORMAL},
     {COLOR_EFFECT_BRIGHT, CAMERA_CUSTOM_COLOR_BRIGHT},
-    {COLOR_EFFECT_SOFT, CAMERA_CUSTOM_COLOR_SOFT}
+    {COLOR_EFFECT_SOFT, CAMERA_CUSTOM_COLOR_SOFT},
+    {COLOR_EFFECT_BLACK_WHITE, CAMERA_CUSTOM_COLOR_NORMAL}
 };
 
 const std::unordered_map<camera_flash_mode_enum_t, FlashMode> CaptureSession::metaFlashModeMap_ = {
