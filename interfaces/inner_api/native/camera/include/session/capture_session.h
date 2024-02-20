@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_CAPTURE_SESSION_H
 #define OHOS_CAMERA_CAPTURE_SESSION_H
 
+#include <cstdint>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -23,6 +24,7 @@
 #include <vector>
 
 #include "camera_error_code.h"
+#include "features/moon_capture_boost_feature.h"
 #include "hcapture_session_callback_stub.h"
 #include "icamera_util.h"
 #include "icapture_session.h"
@@ -33,21 +35,10 @@
 #include "output/capture_output.h"
 #include "refbase.h"
 #include "color_space_info_parse.h"
+#include "capture_scene_const.h"
 
 namespace OHOS {
 namespace CameraStandard {
-enum SceneMode : int32_t {
-    NORMAL = 0,
-    CAPTURE = 1,
-    VIDEO = 2,
-    PORTRAIT = 3,
-    NIGHT = 4,
-    PROFESSIONAL = 5,
-    SLOW_MOTION = 6,
-    SCAN = 7,
-    CAPTURE_MACRO = 8,
-    VIDEO_MACRO = 9
-};
 
 enum ExposureMode {
     EXPOSURE_MODE_UNSUPPORTED = -1,
@@ -164,6 +155,15 @@ public:
     virtual ~MacroStatusCallback() = default;
     virtual void OnMacroStatusChanged(MacroStatus status) = 0;
     MacroStatus currentStatus = UNKNOWN;
+};
+
+class MoonCaptureBoostStatusCallback {
+public:
+    enum MoonCaptureBoostStatus { IDLE = 0, ACTIVE, UNKNOWN };
+    MoonCaptureBoostStatusCallback() = default;
+    virtual ~MoonCaptureBoostStatusCallback() = default;
+    virtual void OnMoonCaptureBoostStatusChanged(MoonCaptureBoostStatus status) = 0;
+    MoonCaptureBoostStatus currentStatus = UNKNOWN;
 };
 
 class CaptureSessionCallback : public HCaptureSessionCallbackStub {
@@ -308,6 +308,14 @@ public:
      * @return Returns the pointer to MacroStatusCallback.
      */
     std::shared_ptr<MacroStatusCallback> GetMacroStatusCallback();
+
+    /**
+     * @brief Get the MoonCaptureBoostStatusCallback.
+     *
+     * @return Returns the pointer to MoonCaptureBoostStatusCallback.
+     */
+    std::shared_ptr<MoonCaptureBoostStatusCallback> GetMoonCaptureBoostStatusCallback();
+
     /**
      * @brief Get the SmoothZoomCallback.
      *
@@ -852,6 +860,16 @@ public:
     int32_t EnableMacro(bool isEnable);
 
     /**
+     * @brief Check current status is support moon capture boost or not.
+     */
+    bool IsMoonCaptureBoostSupported();
+
+    /**
+     * @brief Enable moon capture boost ability.
+     */
+    int32_t EnableMoonCaptureBoost(bool isEnable);
+
+    /**
      * @brief Set the macro status callback.
      * which will be called when there is macro state change.
      *
@@ -860,12 +878,28 @@ public:
     void SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback);
 
     /**
+     * @brief Set the moon detect status callback.
+     * which will be called when there is moon detect state change.
+     *
+     * @param The MoonCaptureBoostStatusCallback pointer.
+     */
+    void SetMoonCaptureBoostStatusCallback(std::shared_ptr<MoonCaptureBoostStatusCallback> callback);
+
+    /**
      * @brief This function is called when there is macro status change
      * and process the macro status callback.
      *
      * @param result Metadata got from callback from service layer.
      */
     void ProcessMacroStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+
+    /**
+     * @brief This function is called when there is moon detect status change
+     * and process the moon detect status callback.
+     *
+     * @param result Metadata got from callback from service layer.
+     */
+    void ProcessMoonCaptureBoostStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
 
     /**
      * @brief Get whether or not commit config.
@@ -882,8 +916,8 @@ public:
     bool IsSessionConfiged();
     void SetMode(SceneMode modeName);
     SceneMode GetMode();
-    SceneMode GetFeaturesMode();
-    std::vector<int32_t> GetSubFeatureMods();
+    SceneFeaturesMode GetFeaturesMode();
+    std::vector<SceneFeaturesMode> GetSubFeatureMods();
     bool IsSetEnableMacro();
     sptr<CaptureOutput> GetMetaOutput();
     void ProcessFaceRecUpdates(const uint64_t timestamp,
@@ -915,6 +949,7 @@ private:
     std::shared_ptr<ExposureCallback> exposureCallback_;
     std::shared_ptr<FocusCallback> focusCallback_;
     std::shared_ptr<MacroStatusCallback> macroStatusCallback_;
+    std::shared_ptr<MoonCaptureBoostStatusCallback> moonCaptureBoostStatusCallback_;
     std::shared_ptr<SmoothZoomCallback> smoothZoomCallback_;
     std::vector<int32_t> skinSmoothBeautyRange_;
     std::vector<int32_t> faceSlendorBeautyRange_;
@@ -922,6 +957,7 @@ private:
     std::mutex captureOutputSetsMutex_;
     std::set<wptr<CaptureOutput>, RefBaseCompare<CaptureOutput>> captureOutputSets_;
     volatile bool isSetMacroEnable_ = false;
+    volatile bool isSetMoonCaptureBoostEnable_ = false;
     static const std::unordered_map<camera_focus_state_t, FocusCallback::FocusState> metaFocusStateMap_;
     static const std::unordered_map<camera_exposure_state_t, ExposureCallback::ExposureState> metaExposureStateMap_;
     static const std::unordered_map<camera_exposure_mode_enum_t, ExposureMode> metaExposureModeMap_;
@@ -948,6 +984,9 @@ private:
     // Make sure you know what you are doing, you'd better to use {GetMode()} function instead of this variable.
     SceneMode currentMode_ = SceneMode::NORMAL;
     SceneMode guessMode_ = SceneMode::NORMAL;
+    std::mutex moonCaptureBoostFeatureMutex_;
+    std::shared_ptr<MoonCaptureBoostFeature> moonCaptureBoostFeature_ = nullptr;
+    std::shared_ptr<MoonCaptureBoostFeature> GetMoonCaptureBoostFeature();
     void SetGuessMode(SceneMode mode);
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
     void SetFrameRateRange(const std::vector<int32_t>& frameRateRange);

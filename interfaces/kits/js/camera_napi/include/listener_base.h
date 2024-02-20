@@ -24,13 +24,23 @@ public:
     explicit ListenerBase(napi_env env);
     virtual ~ListenerBase();
 
+    struct ExecuteCallbackNapiPara {
+        napi_value recv;
+        size_t argc;
+        const napi_value* argv;
+        napi_value* result;
+    };
+
     void SaveCallbackReference(napi_value callback, bool isOnce);
+    void ExecuteCallback(const ExecuteCallbackNapiPara& callbackPara) const;
     void RemoveCallbackRef(napi_env env, napi_value callback);
     void RemoveAllCallbacks();
 
 protected:
-    std::mutex mutex_;
     napi_env env_ = nullptr;
+
+private:
+    mutable std::mutex baseCbListMutex_;
     mutable std::vector<std::shared_ptr<AutoRef>> baseCbList_;
 };
 } // namespace CameraStandard

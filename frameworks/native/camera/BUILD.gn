@@ -88,6 +88,7 @@ ohos_shared_library("camera_framework") {
     "src/output/sketch_wrapper.cpp",
     "src/output/video_output.cpp",
     "src/session/capture_session.cpp",
+    "src/session/features/moon_capture_boost_feature.cpp",
     "src/session/night_session.cpp",
     "src/session/photo_session.cpp",
     "src/session/portrait_session.cpp",

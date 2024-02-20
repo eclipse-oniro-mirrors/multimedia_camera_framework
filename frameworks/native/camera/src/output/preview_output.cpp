@@ -234,8 +234,8 @@ bool PreviewOutput::IsSketchSupported()
     for (auto subModeName : subModeNames) {
         float ratio = SketchWrapper::GetSketchEnableRatio(subModeName);
         if (ratio > 0) {
-            MEDIA_DEBUG_LOG("IsSketchSupported GetSketchEnableRatio success,mode:%{public}d, ratio:%{public}f ",
-                subModeName, ratio);
+            MEDIA_DEBUG_LOG("IsSketchSupported GetSketchEnableRatio success,subMode:%{public}s, ratio:%{public}f ",
+                subModeName.Dump().c_str(), ratio);
             return true;
         }
     }
@@ -251,11 +251,13 @@ float PreviewOutput::GetSketchRatio()
         MEDIA_WARNING_LOG("PreviewOutput::GetSketchRatio session is null");
         return -1.0f;
     }
-    int32_t currentMode = session->GetFeaturesMode();
+    auto currentMode = session->GetFeaturesMode();
     SketchWrapper::UpdateSketchStaticInfo(GetDeviceMetadata());
     float ratio = SketchWrapper::GetSketchEnableRatio(currentMode);
     if (ratio <= 0) {
-        MEDIA_WARNING_LOG("PreviewOutput::GetSketchRatio %{public}d mode", currentMode);
+        auto modeFeatures = currentMode.GetFeatures();
+        MEDIA_WARNING_LOG("PreviewOutput::GetSketchRatio mode:%{public}d ,features:%{public}s",
+            currentMode.GetSceneMode(), Container2String(modeFeatures.begin(), modeFeatures.end()).c_str());
     }
     return ratio;
 }
@@ -407,7 +409,8 @@ std::shared_ptr<Size> PreviewOutput::FindSketchSize()
         MEDIA_ERR_LOG("PreviewOutput::FindSketchSize preview format is illegal");
         return nullptr;
     }
-    auto sizeList = MetadataCommonUtils::GetSupportedPreviewSizeRange(session->GetFeaturesMode(), hdi_format, metaData);
+    auto sizeList = MetadataCommonUtils::GetSupportedPreviewSizeRange(
+        session->GetFeaturesMode().GetSceneMode(), hdi_format, metaData);
     if (sizeList == nullptr || sizeList->size() == 0) {
         return nullptr;
     }
@@ -477,7 +480,7 @@ void PreviewOutput::SetCallback(std::shared_ptr<PreviewStateCallback> callback)
 const std::set<camera_device_metadata_tag_t>& PreviewOutput::GetObserverControlTags()
 {
     const static std::set<camera_device_metadata_tag_t> tags = { OHOS_CONTROL_ZOOM_RATIO, OHOS_CONTROL_CAMERA_MACRO,
-        OHOS_CONTROL_SMOOTH_ZOOM_RATIOS };
+        OHOS_CONTROL_MOON_CAPTURE_BOOST, OHOS_CONTROL_SMOOTH_ZOOM_RATIOS };
     return tags;
 }
 

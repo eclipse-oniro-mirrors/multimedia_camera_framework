@@ -17,10 +17,11 @@
 #include <uv.h>
 
 #include "camera_log.h"
+#include "js_native_api.h"
 
 namespace OHOS {
 namespace CameraStandard {
-ListenerBase::ListenerBase(napi_env env): env_(env)
+ListenerBase::ListenerBase(napi_env env) : env_(env)
 {
     MEDIA_DEBUG_LOG("ListenerBase is called.");
 }
@@ -32,10 +33,9 @@ ListenerBase::~ListenerBase()
 
 void ListenerBase::SaveCallbackReference(napi_value callback, bool isOnce)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     napi_ref callbackRef = nullptr;
     const int32_t refCount = 1;
-
+    std::lock_guard<std::mutex> lock(baseCbListMutex_);
     for (auto it = baseCbList_.begin(); it != baseCbList_.end(); ++it) {
         bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
         CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
@@ -49,13 +49,12 @@ void ListenerBase::SaveCallbackReference(napi_value callback, bool isOnce)
 
 void ListenerBase::RemoveCallbackRef(napi_env env, napi_value callback)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-
     if (callback == nullptr) {
         MEDIA_INFO_LOG("RemoveCallbackReference: js callback is nullptr, remove all callback reference");
         RemoveAllCallbacks();
         return;
     }
+    std::lock_guard<std::mutex> lock(baseCbListMutex_);
     for (auto it = baseCbList_.begin(); it != baseCbList_.end(); ++it) {
         bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
         if (isSameCallback) {
@@ -70,8 +69,31 @@ void ListenerBase::RemoveCallbackRef(napi_env env, napi_value callback)
     MEDIA_INFO_LOG("RemoveCallbackReference: js callback no find");
 }
 
+void ListenerBase::ExecuteCallback(const ExecuteCallbackNapiPara& callbackPara) const
+{
+    std::lock_guard<std::mutex> lock(baseCbListMutex_);
+    MEDIA_DEBUG_LOG("ListenerBase::ExecuteCallback is called");
+    napi_value callback = nullptr;
+    for (auto it = baseCbList_.begin(); it != baseCbList_.end();) {
+        napi_env env = (*it)->env_;
+        napi_get_reference_value(env, (*it)->cb_, &callback);
+        napi_call_function(
+            env_, callbackPara.recv, callback, callbackPara.argc, callbackPara.argv, callbackPara.result);
+        if ((*it)->isOnce_) {
+            napi_status status = napi_delete_reference(env, (*it)->cb_);
+            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
+            (*it)->cb_ = nullptr;
+            baseCbList_.erase(it);
+        } else {
+            it++;
+        }
+    }
+    MEDIA_DEBUG_LOG("ListenerBase::ExecuteCallback list size [%{public}zu]", baseCbList_.size());
+}
+
 void ListenerBase::RemoveAllCallbacks()
 {
+    std::lock_guard<std::mutex> lock(baseCbListMutex_);
     for (auto it = baseCbList_.begin(); it != baseCbList_.end(); ++it) {
         napi_delete_reference(env_, (*it)->cb_);
         (*it)->cb_ = nullptr;

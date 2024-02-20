@@ -16,6 +16,9 @@
 #ifndef CAMERA_SESSION_NAPI_H_
 #define CAMERA_SESSION_NAPI_H_
 
+#include <memory>
+#include <mutex>
+#include <type_traits>
 #include "hilog/log.h"
 #include "camera_napi_utils.h"
 
@@ -95,6 +98,26 @@ struct MacroStatusCallbackInfo {
     MacroStatusCallback::MacroStatus status_;
     const MacroStatusCallbackListener* listener_;
     MacroStatusCallbackInfo(MacroStatusCallback::MacroStatus status, const MacroStatusCallbackListener* listener)
+        : status_(status), listener_(listener)
+    {}
+};
+
+class MoonCaptureBoostCallbackListener : public MoonCaptureBoostStatusCallback, public ListenerBase {
+public:
+    MoonCaptureBoostCallbackListener(napi_env env) : ListenerBase(env) {}
+    ~MoonCaptureBoostCallbackListener() = default;
+    void OnMoonCaptureBoostStatusChanged(MoonCaptureBoostStatus status) override;
+
+private:
+    void OnMoonCaptureBoostStatusCallback(MoonCaptureBoostStatus status) const;
+    void OnMoonCaptureBoostStatusCallbackAsync(MoonCaptureBoostStatus status) const;
+};
+
+struct MoonCaptureBoostStatusCallbackInfo {
+    MoonCaptureBoostStatusCallback::MoonCaptureBoostStatus status_;
+    const MoonCaptureBoostCallbackListener* listener_;
+    MoonCaptureBoostStatusCallbackInfo(
+        MoonCaptureBoostStatusCallback::MoonCaptureBoostStatus status, const MoonCaptureBoostCallbackListener* listener)
         : status_(status), listener_(listener)
     {}
 };
@@ -185,6 +208,9 @@ public:
     static napi_value IsMacroSupported(napi_env env, napi_callback_info info);
     static napi_value EnableMacro(napi_env env, napi_callback_info info);
 
+    static napi_value IsMoonCaptureBoostSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableMoonCaptureBoost(napi_env env, napi_callback_info info);
+
     static napi_value BeginConfig(napi_env env, napi_callback_info info);
     static napi_value CommitConfig(napi_env env, napi_callback_info info);
 
@@ -222,6 +248,7 @@ public:
     std::shared_ptr<SessionCallbackListener> sessionCallback_;
     std::shared_ptr<ExposureCallbackListener> exposureCallback_;
     std::shared_ptr<MacroStatusCallbackListener> macroStatusCallback_;
+    std::shared_ptr<MoonCaptureBoostCallbackListener> moonCaptureBoostCallback_;
     std::shared_ptr<SmoothZoomCallbackListener> smoothZoomCallback_;
 
     static thread_local napi_ref sConstructor_;
@@ -237,6 +264,7 @@ public:
     static const std::vector<napi_property_descriptor> beauty_props;
     static const std::vector<napi_property_descriptor> color_effect_props;
     static const std::vector<napi_property_descriptor> macro_props;
+    static const std::vector<napi_property_descriptor> moon_capture_boost_props;
     static const std::vector<napi_property_descriptor> color_management_props;
 };
 

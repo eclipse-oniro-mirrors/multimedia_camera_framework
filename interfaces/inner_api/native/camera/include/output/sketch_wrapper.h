@@ -20,6 +20,8 @@
 #include <memory>
 #include <mutex>
 
+#include "abilities/sketch_ability.h"
+#include "capture_scene_const.h"
 #include "image_receiver.h"
 #include "preview_output.h"
 #include "refbase.h"
@@ -28,38 +30,33 @@ namespace OHOS {
 namespace CameraStandard {
 class SketchWrapper {
 public:
-    static float GetSketchReferenceFovRatio(int32_t modeName, float zoomRatio);
-    static float GetSketchEnableRatio(int32_t modeName);
+    static float GetSketchReferenceFovRatio(const SceneFeaturesMode& sceneFeaturesMode, float zoomRatio);
+    static float GetSketchEnableRatio(const SceneFeaturesMode& sceneFeaturesMode);
     static void UpdateSketchStaticInfo(std::shared_ptr<OHOS::Camera::CameraMetadata> deviceMetadata);
 
     explicit SketchWrapper(sptr<IStreamCommon> hostStream, const Size size);
     virtual ~SketchWrapper();
-    int32_t Init(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata, int32_t modeName);
+    int32_t Init(
+        std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata, const SceneFeaturesMode& sceneFeaturesMode);
     int32_t AttachSketchSurface(sptr<Surface> sketchSurface);
     int32_t StartSketchStream();
     int32_t StopSketchStream();
     int32_t Destroy();
 
-    void OnSketchStatusChanged(SketchStatus sketchStatus, int32_t modeName);
+    void OnSketchStatusChanged(SketchStatus sketchStatus, const SceneFeaturesMode& sceneFeaturesMode);
     void SetPreviewStateCallback(std::shared_ptr<PreviewStateCallback> callback);
     int32_t UpdateSketchRatio(float sketchRatio);
     void UpdateZoomRatio(float zoomRatio);
 
-    int32_t OnMetadataDispatch(
-        int32_t modeName, const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem);
+    int32_t OnMetadataDispatch(const SceneFeaturesMode& sceneFeaturesMode, const camera_device_metadata_tag_t tag,
+        const camera_metadata_item_t& metadataItem);
 
 private:
-    struct SketchReferenceFovRange {
-        float zoomMin = -1.0f;
-        float zoomMax = -1.0f;
-        float referenceValue = -1.0f;
-    };
-
     // Cache device info
     static std::mutex g_sketchReferenceFovRatioMutex_;
-    static std::map<int32_t, std::vector<SketchReferenceFovRange>> g_sketchReferenceFovRatioMap_;
+    static std::map<SceneFeaturesMode, std::vector<SketchReferenceFovRange>> g_sketchReferenceFovRatioMap_;
     static std::mutex g_sketchEnableRatioMutex_;
-    static std::map<int32_t, float> g_sketchEnableRatioMap_;
+    static std::map<SceneFeaturesMode, float> g_sketchEnableRatioMap_;
 
     wptr<IStreamCommon> hostStream_;
     Size sketchSize_;
@@ -73,15 +70,23 @@ private:
     volatile float currentZoomRatio_ = 1.0f;
     SketchStatusData currentSketchStatusData_ = { .status = SketchStatus::STOPED, .sketchRatio = -1.0f };
 
+    static SceneFeaturesMode GetSceneFeaturesModeFromModeData(float floatModeData);
+    static void InsertSketchReferenceFovRatioMapValue(
+        SceneFeaturesMode& sceneFeaturesMode, SketchReferenceFovRange& sketchReferenceFovRange);
     static void UpdateSketchEnableRatio(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata);
     static void UpdateSketchReferenceFovRatio(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata);
-    static void UpdateSketchReferenceFovRatio(camera_metadata_item_t& metadataItem,
-        std::map<int32_t, std::vector<SketchWrapper::SketchReferenceFovRange>>& referenceMap);
-    void OnSketchStatusChanged(int32_t modeName);
-    int32_t OnMetadataChangedZoomRatio(
-        int32_t modeName, const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem);
-    int32_t OnMetadataChangedMacro(
-        int32_t modeName, const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem);
+    static void UpdateSketchReferenceFovRatio(camera_metadata_item_t& metadataItem);
+    static bool GetMoonCaptureBoostAbilityItem(
+        std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata, camera_metadata_item_t& metadataItem);
+    static void UpdateSketchConfigFromMoonCaptureBoostConfig(
+        std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata);
+    void OnSketchStatusChanged(const SceneFeaturesMode& sceneFeaturesMode);
+    int32_t OnMetadataChangedZoomRatio(const SceneFeaturesMode& sceneFeaturesMode,
+        const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem);
+    int32_t OnMetadataChangedMacro(const SceneFeaturesMode& sceneFeaturesMode, const camera_device_metadata_tag_t tag,
+        const camera_metadata_item_t& metadataItem);
+    int32_t OnMetadataChangedMoonCaptureBoost(const SceneFeaturesMode& sceneFeaturesMode,
+        const camera_device_metadata_tag_t tag, const camera_metadata_item_t& metadataItem);
 
     void AutoStream();
 };
