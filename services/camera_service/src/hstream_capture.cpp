@@ -225,15 +225,6 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
     if (rotation >= CAPTURE_ROTATE_360) {
         rotation = rotation - CAPTURE_ROTATE_360;
     }
-    uint8_t connectType = 0;
-    result = OHOS::Camera::FindCameraMetadataItem(
-        captureMetadataSetting_->get(), OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
-    if (result == CAM_META_SUCCESS && item.count > 0) {
-        connectType = item.data.u8[0];
-    }
-    if (connectType == OHOS_CAMERA_CONNECTION_TYPE_REMOTE) {
-        rotation = rotationValue;
-    }
     MEDIA_INFO_LOG("set rotation camera real rotation %{public}d", rotation);
 
     bool status = false;
