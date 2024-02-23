@@ -57,7 +57,7 @@ int32_t ScanSession::AddOutput(sptr<CaptureOutput> &output)
 bool ScanSession::CanAddOutput(sptr<CaptureOutput> &output, SceneMode modeName)
 {
     MEDIA_DEBUG_LOG("Enter Into ScanSession::CanAddOutput");
-    if(!IsSessionConfiged() || output == nullptr) {
+    if (!IsSessionConfiged() || output == nullptr) {
         MEDIA_ERR_LOG("ScanSession::CanAddOutput operation is Not allowed!");
         return false;
     }
