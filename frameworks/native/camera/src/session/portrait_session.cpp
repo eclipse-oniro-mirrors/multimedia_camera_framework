@@ -151,7 +151,7 @@ bool PortraitSession::CanAddOutput(sptr<CaptureOutput> &output, SceneMode modeNa
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into PortraitSession::CanAddOutput");
-    if(!IsSessionConfiged() || output == nullptr) {
+    if (!IsSessionConfiged() || output == nullptr) {
         MEDIA_ERR_LOG("PortraitSession::CanAddOutput operation is Not allowed!");
         return false;
     }
