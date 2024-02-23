@@ -137,7 +137,7 @@ bool NightSession::CanAddOutput(sptr<CaptureOutput> &output, SceneMode modeName)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into NightSession::CanAddOutput");
-    if(!IsSessionConfiged() || output == nullptr) {
+    if (!IsSessionConfiged() || output == nullptr) {
         MEDIA_ERR_LOG("NightSession::CanAddOutput operation is Not allowed!");
         return false;
     }
