@@ -74,7 +74,7 @@ ExecutionMode BackgroundStrategy::GetExecutionMode()
     DP_INFO_LOG("entered");
     if (cameraSessionStatus_ == CameraSessionStatus::SYSTEM_CAMERA_OPEN
         || cameraSessionStatus_ == CameraSessionStatus::NORMAL_CAMERA_OPEN
-        || hdiStatus_ != HdiStatus::HDI_READY
+        || !(hdiStatus_ == HdiStatus::HDI_READY || hdiStatus_ == HdiStatus::HDI_READY_SPACE_LIMIT_REACHED)
         || mediaLibraryStatus_ != MediaLibraryStatus::MEDIA_LIBRARY_AVAILABLE) {
         DP_INFO_LOG("cameraSessionStatus_: %d, hdiStatus_: %d, mediaLibraryStatus_: %d, ",
             cameraSessionStatus_, hdiStatus_, mediaLibraryStatus_);
