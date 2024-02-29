@@ -209,11 +209,14 @@ void HStreamCommon::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
     streamInfo.v1_0.format_ = pixelFormat;
     streamInfo.v1_0.minFrameDuration_ = 0;
     streamInfo.v1_0.tunneledMode_ = true;
-    if (producer_ != nullptr) {
-        MEDIA_INFO_LOG("HStreamCommon:producer is not null");
-        streamInfo.v1_0.bufferQueue_ = new BufferProducerSequenceable(producer_);
-    } else {
-        streamInfo.v1_0.bufferQueue_ = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(producerLock_);
+        if (producer_ != nullptr) {
+            MEDIA_INFO_LOG("HStreamCommon:producer is not null");
+            streamInfo.v1_0.bufferQueue_ = new BufferProducerSequenceable(producer_);
+        } else {
+            streamInfo.v1_0.bufferQueue_ = nullptr;
+        }
     }
     MEDIA_DEBUG_LOG("HStreamCommon::SetStreamInfo type %{public}d, dataSpace %{public}d", streamType_, dataSpace_);
     streamInfo.v1_0.dataspace_ = dataSpace_;
@@ -252,10 +255,13 @@ void HStreamCommon::DumpStreamInfo(std::string& dumpString)
     SetStreamInfo(curStreamInfo);
     dumpString += "stream info: \n";
     std::string bufferProducerId = "    Buffer producer Id:[";
-    if (curStreamInfo.v1_0.bufferQueue_ && curStreamInfo.v1_0.bufferQueue_->producer_) {
-        bufferProducerId += std::to_string(curStreamInfo.v1_0.bufferQueue_->producer_->GetUniqueId());
-    } else {
-        bufferProducerId += "empty";
+    {
+        std::lock_guard<std::mutex> lock(producerLock_);
+        if (curStreamInfo.v1_0.bufferQueue_ && curStreamInfo.v1_0.bufferQueue_->producer_) {
+            bufferProducerId += std::to_string(curStreamInfo.v1_0.bufferQueue_->producer_->GetUniqueId());
+        } else {
+            bufferProducerId += "empty";
+        }
     }
     dumpString += bufferProducerId;
     dumpString += "]    stream Id:[" + std::to_string(curStreamInfo.v1_0.streamId_);
