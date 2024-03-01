@@ -65,6 +65,7 @@ public:
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
 
 private:
+    void OpenVideoDfxSwitch(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
     void SetStreamTransform();
     void StartSketchStream(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
     void UpdateSketchStatus(SketchStatus status);
