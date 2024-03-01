@@ -549,7 +549,7 @@ void HStreamRepeat::OpenVideoDfxSwitch(std::shared_ptr<OHOS::Camera::CameraMetad
     uint8_t dfxSwitch = true;
     if (settings == nullptr) {
         MEDIA_ERR_LOG("HStreamRepeat::OpenVideoDfxSwitch fail, setting is null!");
-        return
+        return;
     }
     int32_t ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_VIDEO_DEBUG_SWITCH, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
