@@ -173,23 +173,23 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     }
     UpdateSketchStatus(SketchStatus::STARTING);
 
-    std::vector<uint8_t> tempVector;
+    std::vector<uint8_t> ability;
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
-        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, tempVector);
+        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
     }
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metaAddSettings = nullptr;
-    OHOS::Camera::MetadataUtils::ConvertVecToMetadata(tempVector, metaAddSettings);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> dynamicSetting = nullptr;
+    OHOS::Camera::MetadataUtils::ConvertVecToMetadata(ability, dynamicSetting);
     // open video dfx switch for hal, no need close
     if (repeatStreamType_ == RepeatStreamType::PREVIEW) {
-        OpenVideoDfxSwitch(metaAddSettings);
+        OpenVideoDfxSwitch(dynamicSetting);
     }
-    std::vector<uint8_t> finalVector;
-    OHOS::Camera::MetadataUtils::ConvertMetadataToVec(metaAddSettings, finalVector);
+    std::vector<uint8_t> captureSetting;
+    OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, captureSetting);
 
     CaptureInfo captureInfo;
     captureInfo.streamIds_ = { GetStreamId() };
-    captureInfo.captureSetting_ = finalVector;
+    captureInfo.captureSetting_ = captureSetting;
     captureInfo.enableShutterCallback_ = false;
     MEDIA_INFO_LOG("HStreamRepeat::Start stream:%{public}d With capture ID: %{public}d, repeatStreamType:%{public}d",
         GetStreamId(), preparedCaptureId, repeatStreamType_);
