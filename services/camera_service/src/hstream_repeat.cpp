@@ -172,14 +172,24 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
         return ret;
     }
     UpdateSketchStatus(SketchStatus::STARTING);
+
     std::vector<uint8_t> ability;
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
     }
+    std::shared_ptr<OHOS::Camera::CameraMetadata> dynamicSetting = nullptr;
+    OHOS::Camera::MetadataUtils::ConvertVecToMetadata(ability, dynamicSetting);
+    // open video dfx switch for hal, no need close
+    if (repeatStreamType_ == RepeatStreamType::PREVIEW) {
+        OpenVideoDfxSwitch(dynamicSetting);
+    }
+    std::vector<uint8_t> captureSetting;
+    OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, captureSetting);
+
     CaptureInfo captureInfo;
     captureInfo.streamIds_ = { GetStreamId() };
-    captureInfo.captureSetting_ = ability;
+    captureInfo.captureSetting_ = captureSetting;
     captureInfo.enableShutterCallback_ = false;
     MEDIA_INFO_LOG("HStreamRepeat::Start stream:%{public}d With capture ID: %{public}d, repeatStreamType:%{public}d",
         GetStreamId(), preparedCaptureId, repeatStreamType_);
@@ -531,5 +541,27 @@ int32_t HStreamRepeat::OperatePermissionCheck(uint32_t interfaceCode)
     }
     return CAMERA_OK;
 }
+
+void HStreamRepeat::OpenVideoDfxSwitch(std::shared_ptr<OHOS::Camera::CameraMetadata> settings)
+{
+    bool status = false;
+    camera_metadata_item_t item;
+    uint8_t dfxSwitch = true;
+    if (settings == nullptr) {
+        MEDIA_ERR_LOG("HStreamRepeat::OpenVideoDfxSwitch fail, setting is null!");
+        return;
+    }
+    int32_t ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_VIDEO_DEBUG_SWITCH, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = settings->addEntry(OHOS_CONTROL_VIDEO_DEBUG_SWITCH, &dfxSwitch, 1);
+        MEDIA_INFO_LOG("HStreamRepeat::OpenVideoDfxSwitch success!");
+    } else {
+        status = true;
+    }
+    if (!status) {
+        MEDIA_ERR_LOG("HStreamRepeat::OpenVideoDfxSwitch fail!");
+    }
+}
+
 } // namespace CameraStandard
 } // namespace OHOS
