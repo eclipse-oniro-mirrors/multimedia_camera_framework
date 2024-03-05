@@ -829,7 +829,7 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     cameraOutputCapability = new(std::nothrow) CameraOutputCapability();
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = camera->GetMetadata();
     camera_metadata_item_t item;
-
+    std::lock_guard<std::mutex> lock(vectorMutex_);
     if (g_IsCapabilitySupported(metadata, item, OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS)) {
         ParseExtendCapability(cameraOutputCapability, modeName, item);
     } else if (g_IsCapabilitySupported(metadata, item, OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS)) {
