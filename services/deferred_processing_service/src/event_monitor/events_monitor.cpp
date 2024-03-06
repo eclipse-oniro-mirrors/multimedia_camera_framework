@@ -21,7 +21,6 @@
 #include <ipc_skeleton.h>
 #include <iservice_registry.h>
 #include <system_ability_definition.h>
-#include "thermal_mgr_client.h"
 #include "dps_event_report.h"
 
 namespace OHOS {
@@ -172,7 +171,6 @@ void EventsMonitor::NotifyCameraSessionStatus(int userId,
             CameraSessionStatus::NORMAL_CAMERA_CLOSED;
     }
     NotifyObserversUnlocked(userId, EventType::CAMERA_SESSION_STATUS_EVENT, cameraSessionStatus);
-    ConnectThermalSvr();
 }
 
 void EventsMonitor::NotifyMediaLibraryStatus(bool available)
@@ -304,12 +302,38 @@ void EventsMonitor::UnRegisterThermalLevel()
 
 void EventsMonitor::ConnectThermalSvr()
 {
+    if (deathRecipient_ != nullptr) {
+        return;
+    }
+
+    sptr<ISystemAbilityManager> sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (sam == nullptr) {
+        return;
+    }
+
+    sptr<IRemoteObject> remoteObject_ = sam->CheckSystemAbility(POWER_MANAGER_THERMAL_SERVICE_ID);
+    if (remoteObject_ == nullptr) {
+        DP_INFO_LOG("GetSystemAbility failed!");
+        return;
+    }
+
+    deathRecipient_ =  new(std::nothrow) ThermalMgrDeathRecipient(this);
+    if (deathRecipient_ == nullptr) {
+        DP_INFO_LOG("Failed to create ThermalMgrDeathRecipient!");
+        return;
+    }
+
+    if ((remoteObject_->IsProxyObject()) && (!remoteObject_->AddDeathRecipient(deathRecipient_))) {
+        DP_INFO_LOG("Add death recipient to PowerMgr service failed.");
+        return;
+    }
 #ifdef CAMERA_USE_THERMAL
-    DP_INFO_LOG("thermalSrv_ enter");
-    auto& thermalMgrClient = OHOS::PowerMgr::ThermalMgrClient::GetInstance();
-    OHOS::PowerMgr::ThermalLevel level = thermalMgrClient.GetThermalLevel();
-    DP_DEBUG_LOG("ThermalMgrClient is level %{public}d", level);
-    DPSEventReport::GetInstance().SetTemperatureLevel(static_cast<int>(level));
+    thermalSrv_ = iface_cast<OHOS::PowerMgr::IThermalSrv>(remoteObject_);
+    if (thermalSrv_ != nullptr) {
+        OHOS::PowerMgr::ThermalLevel level = OHOS::PowerMgr::ThermalLevel::COOL;
+        thermalSrv_->GetThermalLevel(level);
+        DPSEventReport::GetInstance().SetTemperatureLevel(static_cast<int>(level));
+    }
 #endif
 
     DP_INFO_LOG("Connecting ThermalMgrService success.");

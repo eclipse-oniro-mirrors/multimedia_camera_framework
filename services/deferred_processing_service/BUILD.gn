@@ -132,12 +132,6 @@ ohos_shared_library("deferred_processing_service") {
     }
   }
 
-  defines = []
-  if (use_thermal_manager) {
-    external_deps += [ "thermal_manager:thermalsrv_client" ]
-    defines += [ "CAMERA_USE_THERMAL" ]
-  }
-
   cflags_cc = cflags
 
   part_name = "camera_framework"
