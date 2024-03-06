@@ -21,7 +21,9 @@
 #include <ipc_skeleton.h>
 #include <iservice_registry.h>
 #include <system_ability_definition.h>
+#ifdef CAMERA_USE_THERMAL
 #include "thermal_mgr_client.h"
+#endif
 #include "dps_event_report.h"
 
 namespace OHOS {
