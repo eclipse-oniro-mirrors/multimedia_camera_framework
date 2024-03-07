@@ -64,8 +64,6 @@ public:
     std::shared_ptr<OHOS::Camera::CameraMetadata> CloneCachedSettings();
     std::string GetCameraId();
     bool IsOpenedCameraDevice();
-    int32_t OpenDevice();
-    int32_t CloseDevice();
     int32_t GetCallerToken();
     int32_t CreateAndCommitStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V1_1>& streamInfos,
         std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, int32_t operationMode);
@@ -110,7 +108,7 @@ private:
     std::atomic<bool> isOpenedCameraDevice_;
     std::mutex deviceSvcCbMutex_;
     std::mutex cachedSettingsMutex_;
-    static std::recursive_mutex g_deviceOpenCloseMutex_;
+    static std::mutex g_deviceOpenCloseMutex_;
     sptr<ICameraDeviceServiceCallback> deviceSvcCallback_;
     std::map<int32_t, wptr<ICameraServiceCallback>> statusSvcCallbacks_;
 
@@ -148,6 +146,8 @@ private:
     void ResetZoomTimer();
     void CheckZoomChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void UnPrepareZoom();
+    int32_t OpenDevice();
+    int32_t CloseDevice();
 };
 } // namespace CameraStandard
 } // namespace OHOS
