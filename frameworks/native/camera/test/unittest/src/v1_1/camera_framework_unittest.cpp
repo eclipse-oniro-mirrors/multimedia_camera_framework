@@ -2372,7 +2372,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_001, TestSize.Level
     sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
     ASSERT_NE(camDevice, nullptr);
 
-    int32_t ret = camDevice->HCameraDevice::OpenDevice();
+    int32_t ret = camDevice->HCameraDevice::Open();
     EXPECT_EQ(ret, 0);
 
     std::vector<int32_t> result;
@@ -2390,7 +2390,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_001, TestSize.Level
     ret = camDevice->HCameraDevice::OnError(REQUEST_TIMEOUT, 0);
     EXPECT_EQ(ret, 0);
 
-    ret = camDevice->HCameraDevice::CloseDevice();
+    ret = camDevice->HCameraDevice::Close();
     EXPECT_EQ(ret, 0);
 }
 
@@ -3745,7 +3745,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_025, TestSize.Level
     camDevice->EnableResult(result);
     camDevice->DisableResult(result);
 
-    int32_t ret = camDevice->OpenDevice();
+    int32_t ret = camDevice->Open();
     EXPECT_EQ(ret, 0);
     camDevice->UpdateSetting(nullptr);
     sptr<ICameraDeviceServiceCallback> callback = nullptr;
@@ -3756,9 +3756,9 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_025, TestSize.Level
     camDevice->OnError(DEVICE_PREEMPT, 0) ;
     camDevice->OnError(DRIVER_ERROR, 0) ;
 
-    EXPECT_EQ(camDevice->CloseDevice(), 0);
+    EXPECT_EQ(camDevice->Close(), 0);
     EXPECT_EQ(camDevice->GetEnabledResults(result), 11);
-    EXPECT_EQ(camDevice->CloseDevice(), 0);
+    EXPECT_EQ(camDevice->Close(), 0);
     camDevice->~HCameraDevice();
 }
 
@@ -3924,15 +3924,15 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_030, TestSize.Level
     camDevice->EnableResult(result);
     camDevice->DisableResult(result);
 
-    int32_t ret = camDevice->OpenDevice();
+    int32_t ret = camDevice->Open();
     EXPECT_EQ(ret, 0);
     camDevice->Open();
     g_getCameraAbilityerror = true;
     camDevice->GetDeviceAbility();
     g_openCameraDevicerror = true;
-    EXPECT_EQ(camDevice->OpenDevice(), 16);
+    EXPECT_EQ(camDevice->Open(), 16);
 
-    camDevice->CloseDevice();
+    camDevice->Close();
 }
 
 /*

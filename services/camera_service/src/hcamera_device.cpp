@@ -43,7 +43,7 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
-std::recursive_mutex HCameraDevice::g_deviceOpenCloseMutex_;
+std::mutex HCameraDevice::g_deviceOpenCloseMutex_;
 static const int32_t DEFAULT_SETTING_ITEM_COUNT = 100;
 static const int32_t DEFAULT_SETTING_ITEM_LENGTH = 100;
 static const std::vector<camera_device_metadata_tag> DEVICE_OPEN_LIFECYCLE_TAGS = { OHOS_CONTROL_MUTE_MODE };
@@ -207,6 +207,7 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraDevice::GetDeviceAbility()
 int32_t HCameraDevice::Open()
 {
     CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(g_deviceOpenCloseMutex_);
     if (isOpenedCameraDevice_.load()) {
         MEDIA_ERR_LOG("HCameraDevice::Open failed, camera is busy");
     }
@@ -220,14 +221,17 @@ int32_t HCameraDevice::Open()
     }
 
     MEDIA_INFO_LOG("HCameraDevice::Open Camera:[%{public}s", cameraID_.c_str());
-    return OpenDevice();
+    int32_t result = OpenDevice();
+    return result;
 }
 
 int32_t HCameraDevice::Close()
 {
     CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(g_deviceOpenCloseMutex_);
     MEDIA_INFO_LOG("HCameraDevice::Close Closing camera device: %{public}s", cameraID_.c_str());
-    return CloseDevice();
+    int32_t result = CloseDevice();
+    return result;
 }
 
 int32_t HCameraDevice::OpenDevice()
@@ -237,23 +241,18 @@ int32_t HCameraDevice::OpenDevice()
     int32_t errorCode;
     MEDIA_INFO_LOG("HCameraDevice::OpenDevice Opening camera device: %{public}s", cameraID_.c_str());
 
-    {
-        std::lock_guard<std::recursive_mutex> lock(g_deviceOpenCloseMutex_);
-        sptr<HCameraDevice> cameraNeedEvict;
-        bool canOpenDevice = CanOpenCamera();
-        if (!canOpenDevice) {
-            MEDIA_ERR_LOG("refuse to turning on the camera");
-            return CAMERA_DEVICE_CONFLICT;
-        }
-        errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_);
-        if (errorCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");
-        } else {
-            isOpenedCameraDevice_.store(true);
-            HCameraDeviceManager::GetInstance()->AddDevice(IPCSkeleton::GetCallingPid(), this);
-        }
+    bool canOpenDevice = CanOpenCamera();
+    if (!canOpenDevice) {
+        MEDIA_ERR_LOG("refuse to turning on the camera");
+        return CAMERA_DEVICE_CONFLICT;
     }
-
+    errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_);
+    if (errorCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");
+    } else {
+        isOpenedCameraDevice_.store(true);
+        HCameraDeviceManager::GetInstance()->AddDevice(IPCSkeleton::GetCallingPid(), this);
+    }
     errorCode = InitStreamOperator();
     if (errorCode != CAMERA_OK) {
         MEDIA_ERR_LOG("HCameraDevice::OpenDevice InitStreamOperator fail err code is:%{public}d", errorCode);
@@ -302,7 +301,6 @@ int32_t HCameraDevice::CloseDevice()
             UnRegisterFoldStatusListener();
         }
         if (hdiCameraDevice_ != nullptr) {
-            std::lock_guard<std::recursive_mutex> lock(g_deviceOpenCloseMutex_);
             isOpenedCameraDevice_.store(false);
             MEDIA_INFO_LOG("Closing camera device: %{public}s start", cameraID_.c_str());
             hdiCameraDevice_->Close();
@@ -1029,7 +1027,7 @@ bool HCameraDevice::CanOpenCamera()
     if (cameraNeedEvict != nullptr) {
         MEDIA_DEBUG_LOG("HCameraDevice::CanOpenCamera open current device need to close other devices");
         cameraNeedEvict->OnError(DEVICE_PREEMPT, 0);
-        cameraNeedEvict->CloseDevice();  // 2
+        cameraNeedEvict->CloseDevice();
     }
     return ret;
 }
