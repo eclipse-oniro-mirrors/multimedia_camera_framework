@@ -426,7 +426,7 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
     sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
     sptr<HCameraDevice> deviceNeedClose = deviceManager->GetCameraByPid(pid);
     if (deviceNeedClose != nullptr) {
-        deviceNeedClose->CloseDevice();
+        deviceNeedClose->Close();
     }
     return CAMERA_OK;
 }
@@ -728,7 +728,7 @@ int32_t HCameraService::AllowOpenByOHSide(std::string cameraId, int32_t state, b
     }
     sptr<HCameraDevice> cameraNeedEvict = HCameraDeviceManager::GetInstance()->GetCameraByPid(activePid);
     cameraNeedEvict->OnError(DEVICE_PREEMPT, 0);
-    cameraNeedEvict->CloseDevice();
+    cameraNeedEvict->Close();
     NotifyCameraState(cameraId, 0);
     canOpenCamera = true;
     MEDIA_INFO_LOG("HCameraService::AllowOpenByOHSide end");
