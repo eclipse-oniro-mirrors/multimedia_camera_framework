@@ -35,8 +35,6 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace {
-constexpr char CAMERA_PICKER_BUNDLE_HAP_NAME[] = "com.ohos.camera";
-constexpr char CAMERA_PICKER_BUNDLE_ABILITY_NAME[] = "com.ohos.camera.ExtensionPickerAbility";
 constexpr char CAMERA_PICKER_ABILITY_ACTION_PHOTO[] = "ohos.want.action.imageCapture";
 constexpr char CAMERA_PICKER_ABILITY_ACTION_VIDEO[] = "ohos.want.action.videoCapture";
 const std::map<std::string, PickerMediaType> PICKER_MEDIA_TYPE_MAP = {
@@ -186,10 +184,9 @@ static void SetPickerWantParams(AAFwk::Want& want, std::shared_ptr<AbilityRuntim
         }
     }
 
-    want.SetElementName(CAMERA_PICKER_BUNDLE_HAP_NAME, CAMERA_PICKER_BUNDLE_ABILITY_NAME);
     want.SetUri(pickerProfile.saveUri);
     want.SetFlags(AAFwk::Want::FLAG_AUTH_READ_URI_PERMISSION | AAFwk::Want::FLAG_AUTH_WRITE_URI_PERMISSION);
-    wantParam.SetParam("ability.want.params.uiExtensionType", AAFwk::String::Box("sys/commonUI"));
+    wantParam.SetParam("ability.want.params.uiExtensionTargetType", AAFwk::String::Box("cameraPicker"));
     wantParam.SetParam("callBundleName", AAFwk::String::Box(abilityContext->GetAbilityInfo()->bundleName.c_str()));
     wantParam.SetParam("cameraPosition", AAFwk::Integer::Box(pickerProfile.cameraPosition));
     wantParam.SetParam("videoDuration", AAFwk::Integer::Box(pickerProfile.videoDuration));
