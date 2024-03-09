@@ -134,6 +134,11 @@ void CameraDevice::ResetMetadata()
     cachedMetadata_ = MetadataCommonUtils::CopyMetadata(baseAbility_);
 }
 
+const std::shared_ptr<OHOS::Camera::CameraMetadata> CameraDevice::GetCameraAbility()
+{
+    return baseAbility_;
+}
+
 CameraPosition CameraDevice::GetPosition()
 {
     if (cameraPosition_ == CAMERA_POSITION_FRONT && foldScreenType_ == CAMERA_FOLDSCREEN_INNER) {

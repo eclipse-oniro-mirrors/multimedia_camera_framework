@@ -93,12 +93,12 @@ void PhotoListener::ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) cons
     napi_value callback = nullptr;
     napi_value retVal;
 
-    BufferHandle *bufferHandle = surfaceBuffer->GetBufferHandle();
+    BufferHandle* bufferHandle = surfaceBuffer->GetBufferHandle();
     int64_t imageId;
     int32_t deferredProcessingType;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::imageId, imageId);
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredProcessingType, deferredProcessingType);
-    MEDIA_ERR_LOG("PhotoListener ExecuteDeferredPhoto imageId:%{public}lld, deferredProcessingType:%{public}d",
+    MEDIA_ERR_LOG("PhotoListener ExecuteDeferredPhoto imageId:%{public}" PRId64 ", deferredProcessingType:%{public}d",
         imageId, deferredProcessingType);
 
     // create pixelMap to encode
@@ -628,7 +628,6 @@ void ThumbnailListener::UpdateJSCallback(sptr<PhotoOutput> photoOutput) const
     napi_value result[ARGS_TWO] = { 0 };
     napi_get_undefined(env_, &result[0]);
     napi_get_undefined(env_, &result[1]);
-    napi_value callback = nullptr;
     napi_value retVal;
     MEDIA_INFO_LOG("enter ImageNapi::Create start");
     int32_t fence = -1;
@@ -659,18 +658,9 @@ void ThumbnailListener::UpdateJSCallback(sptr<PhotoOutput> photoOutput) const
     }
     MEDIA_INFO_LOG("enter ImageNapi::Create end");
     result[1] = valueParam;
-    for (auto it = baseCbList_.begin(); it != baseCbList_.end();) {
-        napi_get_reference_value((*it)->env_, (*it)->cb_, &callback);
-        napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
-        if ((*it)->isOnce_) {
-            napi_status status = napi_delete_reference((*it)->env_, (*it)->cb_);
-            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
-            (*it)->cb_ = nullptr;
-            baseCbList_.erase(it);
-        } else {
-            it++;
-        }
-    }
+
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback(callbackNapiPara);
     photoOutput_->thumbnailSurface_->ReleaseBuffer(thumbnailBuffer, -1);
 }
 

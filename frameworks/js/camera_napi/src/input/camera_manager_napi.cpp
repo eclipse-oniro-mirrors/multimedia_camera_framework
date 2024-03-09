@@ -83,50 +83,37 @@ void CameraManagerCallbackNapi::OnCameraStatusCallbackAsync(const CameraStatusIn
     }
 }
 
-void CameraManagerCallbackNapi::OnCameraStatusCallback(const CameraStatusInfo &cameraStatusInfo) const
+void CameraManagerCallbackNapi::OnCameraStatusCallback(const CameraStatusInfo& cameraStatusInfo) const
 {
     MEDIA_DEBUG_LOG("OnCameraStatusCallback is called");
     napi_value result[ARGS_TWO];
-    napi_value callback = nullptr;
     napi_value retVal;
     napi_value propValue;
     napi_value undefinedResult;
-    for (auto it = baseCbList_.begin(); it != baseCbList_.end();) {
-        napi_env env = (*it)->env_;
-        napi_get_undefined(env, &result[PARAM0]);
-        napi_get_undefined(env, &result[PARAM1]);
-        napi_get_undefined(env, &undefinedResult);
 
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(cameraStatusInfo.cameraDevice, "callback cameraDevice is null");
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_get_undefined(env_, &result[PARAM1]);
+    napi_get_undefined(env_, &undefinedResult);
+    CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(cameraStatusInfo.cameraDevice, "callback cameraDevice is null");
+    napi_create_object(env_, &result[PARAM1]);
 
-        napi_create_object(env, &result[PARAM1]);
-
-        if (cameraStatusInfo.cameraDevice != nullptr) {
-            napi_value cameraDeviceNapi = CameraDeviceNapi::CreateCameraObj(env, cameraStatusInfo.cameraDevice);
-            napi_set_named_property(env, result[PARAM1], "camera", cameraDeviceNapi);
-        } else {
-            MEDIA_ERR_LOG("Camera info is null");
-            napi_set_named_property(env, result[PARAM1], "camera", undefinedResult);
-        }
-
-        int32_t jsCameraStatus = -1;
-        jsCameraStatus = cameraStatusInfo.cameraStatus;
-        napi_create_int64(env, jsCameraStatus, &propValue);
-        napi_set_named_property(env, result[PARAM1], "status", propValue);
-
-        napi_get_reference_value(env, (*it)->cb_, &callback);
-        MEDIA_INFO_LOG("CameraId: %{public}s, CameraStatus: %{public}d",
-                       cameraStatusInfo.cameraDevice->GetID().c_str(), cameraStatusInfo.cameraStatus);
-        napi_call_function(env, nullptr, callback, ARGS_TWO, result, &retVal);
-        if ((*it)->isOnce_) {
-            napi_status status = napi_delete_reference((*it)->env_, (*it)->cb_);
-            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
-            (*it)->cb_ = nullptr;
-            baseCbList_.erase(it);
-        } else {
-            it++;
-        }
+    if (cameraStatusInfo.cameraDevice != nullptr) {
+        napi_value cameraDeviceNapi = CameraDeviceNapi::CreateCameraObj(env_, cameraStatusInfo.cameraDevice);
+        napi_set_named_property(env_, result[PARAM1], "camera", cameraDeviceNapi);
+    } else {
+        MEDIA_ERR_LOG("Camera info is null");
+        napi_set_named_property(env_, result[PARAM1], "camera", undefinedResult);
     }
+
+    int32_t jsCameraStatus = -1;
+    jsCameraStatus = cameraStatusInfo.cameraStatus;
+    napi_create_int64(env_, jsCameraStatus, &propValue);
+    napi_set_named_property(env_, result[PARAM1], "status", propValue);
+    MEDIA_INFO_LOG("CameraId: %{public}s, CameraStatus: %{public}d", cameraStatusInfo.cameraDevice->GetID().c_str(),
+        cameraStatusInfo.cameraStatus);
+
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback(callbackNapiPara);
 }
 
 void CameraManagerCallbackNapi::OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const
@@ -188,24 +175,13 @@ void CameraMuteListenerNapi::OnCameraMuteCallback(bool muteMode) const
 {
     MEDIA_DEBUG_LOG("OnCameraMuteCallback is called, muteMode: %{public}d", muteMode);
     napi_value result[ARGS_TWO];
-    napi_value callback;
     napi_value retVal;
-    for (auto it = baseCbList_.begin(); it != baseCbList_.end();) {
-        napi_env env = (*it)->env_;
-        napi_get_undefined(env, &result[PARAM0]);
-        napi_get_undefined(env, &result[PARAM1]);
-        napi_get_reference_value(env, (*it)->cb_, &callback);
-        napi_get_boolean(env, muteMode, &result[PARAM1]);
-        napi_call_function(env, nullptr, callback, ARGS_TWO, result, &retVal);
-        if ((*it)->isOnce_) {
-            napi_status status = napi_delete_reference((*it)->env_, (*it)->cb_);
-            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
-            (*it)->cb_ = nullptr;
-            baseCbList_.erase(it);
-        } else {
-            it++;
-        }
-    }
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_get_undefined(env_, &result[PARAM1]);
+    napi_get_boolean(env_, muteMode, &result[PARAM1]);
+
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback(callbackNapiPara);
 }
 
 void CameraMuteListenerNapi::OnCameraMute(bool muteMode) const
@@ -257,7 +233,7 @@ void TorchListenerNapi::OnTorchStatusChangeCallbackAsync(const TorchStatusInfo &
     }
 }
 
-void TorchListenerNapi::OnTorchStatusChangeCallback(const TorchStatusInfo &torchStatusInfo) const
+void TorchListenerNapi::OnTorchStatusChangeCallback(const TorchStatusInfo& torchStatusInfo) const
 {
     MEDIA_DEBUG_LOG("OnTorchStatusChangeCallback is called");
     napi_handle_scope scope = nullptr;
@@ -266,34 +242,23 @@ void TorchListenerNapi::OnTorchStatusChangeCallback(const TorchStatusInfo &torch
         return;
     }
     napi_value result[ARGS_TWO];
-    napi_value callback;
     napi_value retVal;
     napi_value propValue;
-    for (auto it = baseCbList_.begin(); it != baseCbList_.end();) {
-        napi_env env = (*it)->env_;
-        napi_get_undefined(env, &result[PARAM0]);
-        napi_get_undefined(env, &result[PARAM1]);
 
-        napi_create_object(env, &result[PARAM1]);
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_get_undefined(env_, &result[PARAM1]);
 
-        napi_get_boolean(env,  torchStatusInfo.isTorchAvailable, &propValue);
-        napi_set_named_property(env, result[PARAM1], "isTorchAvailable", propValue);
-        napi_get_boolean(env,  torchStatusInfo.isTorchActive, &propValue);
-        napi_set_named_property(env, result[PARAM1], "isTorchActive", propValue);
-        napi_create_double(env,  torchStatusInfo.torchLevel, &propValue);
-        napi_set_named_property(env, result[PARAM1], "torchLevel", propValue);
+    napi_create_object(env_, &result[PARAM1]);
 
-        napi_get_reference_value(env, (*it)->cb_, &callback);
-        napi_call_function(env, nullptr, callback, ARGS_TWO, result, &retVal);
-        if ((*it)->isOnce_) {
-            napi_status status = napi_delete_reference((*it)->env_, (*it)->cb_);
-            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
-            (*it)->cb_ = nullptr;
-            baseCbList_.erase(it);
-        } else {
-            it++;
-        }
-    }
+    napi_get_boolean(env_, torchStatusInfo.isTorchAvailable, &propValue);
+    napi_set_named_property(env_, result[PARAM1], "isTorchAvailable", propValue);
+    napi_get_boolean(env_, torchStatusInfo.isTorchActive, &propValue);
+    napi_set_named_property(env_, result[PARAM1], "isTorchActive", propValue);
+    napi_create_double(env_, torchStatusInfo.torchLevel, &propValue);
+    napi_set_named_property(env_, result[PARAM1], "torchLevel", propValue);
+
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback(callbackNapiPara);
     napi_close_handle_scope(env_, scope);
 }
 

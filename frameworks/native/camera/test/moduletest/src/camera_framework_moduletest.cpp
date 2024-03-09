@@ -24,6 +24,8 @@
 #include "camera_log.h"
 #include "camera_output_capability.h"
 #include "camera_util.h"
+#include "capture_scene_const.h"
+#include "capture_session.h"
 #include "hap_token_info.h"
 #include "hcamera_device.h"
 #include "hcamera_device_callback_proxy.h"
@@ -76,6 +78,12 @@ enum class CAM_MACRO_DETECT_EVENTS {
     CAM_MACRO_EVENT_MAX_EVENT
 };
 
+enum class CAM_MOON_CAPTURE_BOOST_EVENTS {
+    CAM_MOON_CAPTURE_BOOST_EVENT_IDLE = 0,
+    CAM_MOON_CAPTURE_BOOST_EVENT_ACTIVE,
+    CAM_MOON_CAPTURE_BOOST_EVENT_MAX_EVENT
+};
+
 const int32_t WAIT_TIME_AFTER_CAPTURE = 1;
 const int32_t WAIT_TIME_AFTER_START = 2;
 const int32_t WAIT_TIME_BEFORE_STOP = 1;
@@ -96,6 +104,8 @@ std::bitset<static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_MAX_EVENT)> g_photoEven
 std::bitset<static_cast<unsigned int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_MAX_EVENT)> g_previewEvents;
 std::bitset<static_cast<unsigned int>(CAM_VIDEO_EVENTS::CAM_VIDEO_MAX_EVENT)> g_videoEvents;
 std::bitset<static_cast<unsigned int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_MAX_EVENT)> g_macroEvents;
+std::bitset<static_cast<unsigned int>(CAM_MOON_CAPTURE_BOOST_EVENTS::CAM_MOON_CAPTURE_BOOST_EVENT_MAX_EVENT)>
+    g_moonCaptureBoostEvents;
 std::list<int32_t> g_sketchStatus;
 std::unordered_map<std::string, int> g_camStatusMap;
 std::unordered_map<std::string, bool> g_camFlashMap;
@@ -105,7 +115,8 @@ class AppCallback : public CameraManagerCallback,
                     public PhotoStateCallback,
                     public PreviewStateCallback,
                     public ResultCallback,
-                    public MacroStatusCallback {
+                    public MacroStatusCallback,
+                    public MoonCaptureBoostStatusCallback {
 public:
     void OnCameraStatusChanged(const CameraStatusInfo& cameraDeviceInfo) const override
     {
@@ -262,14 +273,30 @@ public:
     void OnMacroStatusChanged(MacroStatus status) override
     {
         MEDIA_DEBUG_LOG("AppCallback::OnMacroStatusChanged");
-        if (status == IDLE) {
+        if (status == MacroStatus::IDLE) {
             g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_IDLE)] = 1;
             g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_ACTIVE)] = 0;
-        } else if (status == ACTIVE) {
+        } else if (status == MacroStatus::ACTIVE) {
             g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_ACTIVE)] = 1;
             g_macroEvents[static_cast<int>(CAM_MACRO_DETECT_EVENTS::CAM_MACRO_EVENT_IDLE)] = 0;
         }
         return;
+    }
+
+    void OnMoonCaptureBoostStatusChanged(MoonCaptureBoostStatus status) override
+    {
+        MEDIA_DEBUG_LOG("AppCallback::OnMacroStatusChanged");
+        if (status == MoonCaptureBoostStatus::IDLE) {
+            g_moonCaptureBoostEvents[static_cast<int>(
+                CAM_MOON_CAPTURE_BOOST_EVENTS::CAM_MOON_CAPTURE_BOOST_EVENT_IDLE)] = 1;
+            g_moonCaptureBoostEvents[static_cast<int>(
+                CAM_MOON_CAPTURE_BOOST_EVENTS::CAM_MOON_CAPTURE_BOOST_EVENT_ACTIVE)] = 0;
+        } else if (status == MoonCaptureBoostStatus::ACTIVE) {
+            g_moonCaptureBoostEvents[static_cast<int>(
+                CAM_MOON_CAPTURE_BOOST_EVENTS::CAM_MOON_CAPTURE_BOOST_EVENT_ACTIVE)] = 1;
+            g_moonCaptureBoostEvents[static_cast<int>(
+                CAM_MOON_CAPTURE_BOOST_EVENTS::CAM_MOON_CAPTURE_BOOST_EVENT_IDLE)] = 0;
+        }
     }
 };
 
@@ -747,6 +774,8 @@ void CameraFrameworkModuleTest::SetUpInit()
     g_photoEvents.reset();
     g_previewEvents.reset();
     g_videoEvents.reset();
+    g_moonCaptureBoostEvents.reset();
+    g_macroEvents.reset();
     g_camStatusMap.clear();
     g_camFlashMap.clear();
     g_sketchStatus.clear();
@@ -7272,18 +7301,35 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_115, TestSize.L
 
     camSession->isSetMacroEnable_ = true;
     camSession->currentMode_ = SceneMode::VIDEO;
+
+    SceneFeaturesMode videoMacroMode(SceneMode::VIDEO, { SceneFeature::MACRO });
+    bool isMatchSubFeatureMode = false;
     auto vec = camSession->GetSubFeatureMods();
-    EXPECT_NE(vec.size(), 0);
+    for (auto& sceneFeaturesMode : vec) {
+        if (sceneFeaturesMode == videoMacroMode) {
+            isMatchSubFeatureMode = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(isMatchSubFeatureMode);
 
     auto mode = camSession->GetFeaturesMode();
-    EXPECT_EQ(mode, SceneMode::VIDEO_MACRO);
+    EXPECT_TRUE(mode == videoMacroMode);
 
     camSession->currentMode_ = SceneMode::CAPTURE;
     mode = camSession->GetFeaturesMode();
-    EXPECT_EQ(mode, SceneMode::CAPTURE_MACRO);
+    SceneFeaturesMode captureMacroMode(SceneMode::CAPTURE, { SceneFeature::MACRO });
+    EXPECT_TRUE(mode == captureMacroMode);
 
+    isMatchSubFeatureMode = false;
     vec = camSession->GetSubFeatureMods();
-    EXPECT_NE(vec.size(), 0);
+    for (auto& sceneFeaturesMode : vec) {
+        if (sceneFeaturesMode == captureMacroMode) {
+            isMatchSubFeatureMode = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(isMatchSubFeatureMode);
 
     bool boolResult = camSession->SetBeautyValue(BeautyType::SKIN_TONE, 0);
     EXPECT_FALSE(boolResult);
@@ -8522,6 +8568,230 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_067, TestSize.Le
 
     sleep(1);
     EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 0);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
+
+
+/*
+ * Feature: Framework
+ * Function: Test moon capture boost function.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test moon capture boost function.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_068, TestSize.Level0)
+{
+    auto previewProfile = GetSketchPreviewProfile();
+    if (previewProfile == nullptr) {
+        EXPECT_EQ(previewProfile.get(), nullptr);
+        return;
+    }
+    auto output = CreatePreviewOutput(*previewProfile);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
+    ASSERT_NE(output, nullptr);
+
+    session_->SetMode(SceneMode::CAPTURE);
+    int32_t intResult = session_->BeginConfig();
+
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(output);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    session_->SetMoonCaptureBoostStatusCallback(std::make_shared<AppCallback>());
+
+    g_moonCaptureBoostEvents.reset();
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    bool isMoonCaptureBoostSupported = session_->IsMoonCaptureBoostSupported();
+    if (isMoonCaptureBoostSupported) {
+        EXPECT_EQ(g_moonCaptureBoostEvents.count(), 1);
+        if (g_moonCaptureBoostEvents[static_cast<int>(
+                CAM_MOON_CAPTURE_BOOST_EVENTS::CAM_MOON_CAPTURE_BOOST_EVENT_ACTIVE)] == 1) {
+            session_->LockForControl();
+            intResult = session_->EnableMoonCaptureBoost(true);
+            EXPECT_EQ(intResult, 0);
+            session_->UnlockForControl();
+        }
+        if (g_moonCaptureBoostEvents[static_cast<int>(
+                CAM_MOON_CAPTURE_BOOST_EVENTS::CAM_MOON_CAPTURE_BOOST_EVENT_IDLE)] == 1) {
+            session_->LockForControl();
+            intResult = session_->EnableMoonCaptureBoost(false);
+            EXPECT_EQ(intResult, 0);
+            session_->UnlockForControl();
+        }
+    }
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test moon capture boost function anomalous branch..
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test moon capture boost function anomalous branch..
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_069, TestSize.Level0)
+{
+    auto previewProfile = GetSketchPreviewProfile();
+    if (previewProfile == nullptr) {
+        EXPECT_EQ(previewProfile.get(), nullptr);
+        return;
+    }
+    auto output = CreatePreviewOutput(*previewProfile);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
+    ASSERT_NE(output, nullptr);
+
+    session_->SetMode(SceneMode::VIDEO);
+    int32_t intResult = session_->BeginConfig();
+
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(output);
+    EXPECT_EQ(intResult, 0);
+
+    bool isMoonCaptureBoostSupported = session_->IsMoonCaptureBoostSupported();
+    EXPECT_FALSE(isMoonCaptureBoostSupported);
+
+    session_->LockForControl();
+    intResult = session_->EnableMoonCaptureBoost(true);
+    EXPECT_EQ(intResult, 7400102);
+    session_->UnlockForControl();
+
+    session_->LockForControl();
+    intResult = session_->EnableMoonCaptureBoost(false);
+    EXPECT_EQ(intResult, 7400102);
+    session_->UnlockForControl();
+
+    session_->SetMode(SceneMode::CAPTURE);
+    isMoonCaptureBoostSupported = session_->IsMoonCaptureBoostSupported();
+    if (isMoonCaptureBoostSupported) {
+        session_->LockForControl();
+        intResult = session_->EnableMoonCaptureBoost(true);
+        EXPECT_EQ(intResult, 7400103);
+        session_->UnlockForControl();
+    }
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    isMoonCaptureBoostSupported = session_->IsMoonCaptureBoostSupported();
+    if (!isMoonCaptureBoostSupported) {
+        session_->LockForControl();
+        intResult = session_->EnableMoonCaptureBoost(true);
+        EXPECT_EQ(intResult, 7400102);
+        session_->UnlockForControl();
+    }
+
+    session_->SetMoonCaptureBoostStatusCallback(std::make_shared<AppCallback>());
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test moon capture boost and sketch function.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test moon capture boost and sketch function.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_070, TestSize.Level0)
+{
+    auto previewProfile = GetSketchPreviewProfile();
+    if (previewProfile == nullptr) {
+        EXPECT_EQ(previewProfile.get(), nullptr);
+        return;
+    }
+    auto output = CreatePreviewOutput(*previewProfile);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
+    ASSERT_NE(output, nullptr);
+
+    session_->SetMode(SceneMode::NORMAL);
+    int32_t intResult = session_->BeginConfig();
+
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(output);
+    EXPECT_EQ(intResult, 0);
+
+    bool isSketchSupported = previewOutput->IsSketchSupported();
+    if (!isSketchSupported) {
+        return;
+    }
+
+    previewOutput->EnableSketch(true);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    bool isMoonCaptureBoostSupported = session_->IsMoonCaptureBoostSupported();
+    if (!isMoonCaptureBoostSupported) {
+        return;
+    }
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    float sketchRatio = previewOutput->GetSketchRatio();
+    EXPECT_GT(sketchRatio, 0);
+
+    intResult = previewOutput->AttachSketchSurface(CreateSketchSurface(previewProfile->GetCameraFormat()));
+    EXPECT_EQ(intResult, 0);
+
+    session_->LockForControl();
+    intResult = session_->EnableMoonCaptureBoost(true);
+    session_->UnlockForControl();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    sketchRatio = previewOutput->GetSketchRatio();
+    EXPECT_GT(sketchRatio, 0);
+
+    session_->LockForControl();
+    intResult = session_->EnableMoonCaptureBoost(false);
+    session_->UnlockForControl();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    sketchRatio = previewOutput->GetSketchRatio();
+    EXPECT_GT(sketchRatio, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
 
     intResult = session_->Stop();
     EXPECT_EQ(intResult, 0);

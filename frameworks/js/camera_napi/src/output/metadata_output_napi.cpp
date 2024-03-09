@@ -105,33 +105,20 @@ void MetadataOutputCallback::OnMetadataObjectsAvailableCallback(
 {
     MEDIA_DEBUG_LOG("OnMetadataObjectsAvailableCallback is called");
     napi_value result[ARGS_TWO];
-    napi_value callback = nullptr;
     napi_value retVal;
     CAMERA_NAPI_CHECK_AND_RETURN_LOG((metadataObjList.size() != 0), "callback metadataObjList is null");
-    for (auto it = baseCbList_.begin(); it != baseCbList_.end();) {
-        napi_env env = (*it)->env_;
-        napi_get_undefined(env, &result[PARAM0]);
-        napi_get_undefined(env, &result[PARAM1]);
-        result[PARAM1] = CreateMetadataObjJSArray(env, metadataObjList);
-        MEDIA_INFO_LOG("OnMetadataObjectsAvailableCallback metadataObjList size = %{public}zu", metadataObjList.size());
-        if (result[PARAM1] == nullptr) {
-            MEDIA_ERR_LOG("invoke CreateMetadataObjJSArray failed");
-            return;
-        }
 
-        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID((*it)->cb_,
-                                               "metadataObjectsAvailable callback is not registered by JS");
-        napi_get_reference_value(env, (*it)->cb_, &callback);
-        napi_call_function(env, nullptr, callback, ARGS_TWO, result, &retVal);
-        if ((*it)->isOnce_) {
-            napi_status status = napi_delete_reference((*it)->env_, (*it)->cb_);
-            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
-            (*it)->cb_ = nullptr;
-            baseCbList_.erase(it);
-        } else {
-            it++;
-        }
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_get_undefined(env_, &result[PARAM1]);
+    result[PARAM1] = CreateMetadataObjJSArray(env_, metadataObjList);
+    MEDIA_INFO_LOG("OnMetadataObjectsAvailableCallback metadataObjList size = %{public}zu", metadataObjList.size());
+    if (result[PARAM1] == nullptr) {
+        MEDIA_ERR_LOG("invoke CreateMetadataObjJSArray failed");
+        return;
     }
+
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback(callbackNapiPara);
 }
 
 MetadataStateCallbackNapi::MetadataStateCallbackNapi(napi_env env) : ListenerBase(env) {}
@@ -176,26 +163,14 @@ void MetadataStateCallbackNapi::OnErrorCallback(const int32_t errorType) const
 {
     MEDIA_DEBUG_LOG("OnErrorCallback is called");
     napi_value result;
-    napi_value callback = nullptr;
     napi_value retVal;
     napi_value propValue;
 
-    for (auto it = baseCbList_.begin(); it != baseCbList_.end();) {
-        napi_env env = (*it)->env_;
-        napi_create_int32(env, errorType, &propValue);
-        napi_create_object(env, &result);
-        napi_set_named_property(env, result, "code", propValue);
-        napi_get_reference_value(env, (*it)->cb_, &callback);
-        napi_call_function(env, nullptr, callback, ARGS_ONE, &result, &retVal);
-        if ((*it)->isOnce_) {
-            napi_status status = napi_delete_reference((*it)->env_, (*it)->cb_);
-            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
-            (*it)->cb_ = nullptr;
-            baseCbList_.erase(it);
-        } else {
-            it++;
-        }
-    }
+    napi_create_int32(env_, errorType, &propValue);
+    napi_create_object(env_, &result);
+    napi_set_named_property(env_, result, "code", propValue);
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_ONE, .argv = &result, .result = &retVal };
+    ExecuteCallback(callbackNapiPara);
 }
 
 void MetadataStateCallbackNapi::OnError(const int32_t errorType) const
