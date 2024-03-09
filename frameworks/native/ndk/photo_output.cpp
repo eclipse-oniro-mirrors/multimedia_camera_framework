@@ -29,17 +29,17 @@ extern "C" {
 Camera_ErrorCode OH_PhotoOutput_RegisterCallback(Camera_PhotoOutput* photoOutput, PhotoOutput_Callbacks* callback)
 {
     CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! photoOutput is null!");
+        "Invaild argument, photoOutput is null!");
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback is null!");
+        "Invaild argument, callback is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onFrameStart!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback onFrameStart is null!");
+        "Invaild argument, callback onFrameStart is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onFrameEnd!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback onFrameEnd is null!");
+        "Invaild argument, callback onFrameEnd is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onFrameShutter!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback onFrameShutter is null!");
+        "Invaild argument, callback onFrameShutter is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onError!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback onError is null!");
+        "Invaild argument, callback onError is null!");
 
     photoOutput->RegisterCallback(callback);
     return CAMERA_OK;
@@ -52,15 +52,15 @@ Camera_ErrorCode OH_PhotoOutput_RegisterCallback(Camera_PhotoOutput* photoOutput
 Camera_ErrorCode OH_PhotoOutput_UnregisterCallback(Camera_PhotoOutput* photoOutput, PhotoOutput_Callbacks* callback)
 {
     CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! photoOutput is null!");
+        "Invaild argument, photoOutput is null!");
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback is null!");
+        "Invaild argument, callback is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onFrameStart!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback onFrameStart is null!");
+        "Invaild argument, callback onFrameStart is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onFrameEnd!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback onFrameEnd is null!");
+        "Invaild argument, callback onFrameEnd is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onError!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback onError is null!");
+        "Invaild argument, callback onError is null!");
 
     photoOutput->UnregisterCallback(callback);
     return CAMERA_OK;
@@ -73,7 +73,7 @@ Camera_ErrorCode OH_PhotoOutput_UnregisterCallback(Camera_PhotoOutput* photoOutp
 Camera_ErrorCode OH_PhotoOutput_Capture(Camera_PhotoOutput* photoOutput)
 {
     CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! photoOutput is null!");
+        "Invaild argument, photoOutput is null!");
 
     return photoOutput->Capture();
 }
@@ -86,7 +86,7 @@ Camera_ErrorCode OH_PhotoOutput_Capture_WithCaptureSetting(Camera_PhotoOutput* p
     Camera_PhotoCaptureSetting setting)
 {
     CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! photoOutput is null!");
+        "Invaild argument, photoOutput is null!");
 
     return photoOutput->Capture_WithCaptureSetting(setting);
 }
@@ -98,7 +98,7 @@ Camera_ErrorCode OH_PhotoOutput_Capture_WithCaptureSetting(Camera_PhotoOutput* p
 Camera_ErrorCode OH_PhotoOutput_Release(Camera_PhotoOutput* photoOutput)
 {
     CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! photoOutput is null!");
+        "Invaild argument, photoOutput is null!");
 
     Camera_ErrorCode retCode = photoOutput->Release();
     if (photoOutput != nullptr) {
@@ -114,9 +114,9 @@ Camera_ErrorCode OH_PhotoOutput_Release(Camera_PhotoOutput* photoOutput)
 Camera_ErrorCode OH_PhotoOutput_IsMirrorSupported(Camera_PhotoOutput* photoOutput, bool* isSupported)
 {
     CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! photoOutput is null!");
+        "Invaild argument, photoOutput is null!");
     CHECK_AND_RETURN_RET_LOG(isSupported != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! isSupported is null!");
+        "Invaild argument, isSupported is null!");
 
     return photoOutput->IsMirrorSupported(isSupported);
 }

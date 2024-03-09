@@ -100,27 +100,26 @@ Camera_ErrorCode Camera_Manager::UnregisterCallback(CameraManager_Callbacks* cal
 Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, uint32_t* size)
 {
     std::vector<sptr<CameraDevice>> cameraObjList = CameraManager::GetInstance()->GetSupportedCameras();
-    int cameraSize = cameraObjList.size();
-    if (cameraSize <= 0) {
-        MEDIA_ERR_LOG("camera size <= 0");
+    if (cameraObjList.size() <= 0) {
+        MEDIA_ERR_LOG("Invalid camera size.");
         return CAMERA_INVALID_ARGUMENT;
     }
-    Camera_Device *outCameras = new Camera_Device[cameraSize];
-    for (int i = 0; i < cameraSize; i++) {
-        const string cameraGetID = cameraObjList[i]->GetID();
+    Camera_Device* outCameras = new Camera_Device[cameraSize];
+    for (size_t index = 0; index < cameraSize; index++) {
+        const string cameraGetID = cameraObjList[index]->GetID();
         const char* src = cameraGetID.c_str();
         size_t dstSize = strlen(src) + 1;
         char* dst = new char[dstSize];
         if (!dst) {
-            MEDIA_ERR_LOG("Allocate memory for cameraId failed!");
+            MEDIA_ERR_LOG("Allocate memory for cameraId Failed!");
             delete[] outCameras;
             return CAMERA_SERVICE_FATAL_ERROR;
         }
         strlcpy(dst, src, dstSize);
-        outCameras[i].cameraId = dst;
-        outCameras[i].cameraPosition = static_cast<Camera_Position>(cameraObjList[i]->GetPosition());
-        outCameras[i].cameraType = static_cast<Camera_Type>(cameraObjList[i]->GetCameraType());
-        outCameras[i].connectionType = static_cast<Camera_Connection>(cameraObjList[i]->GetConnectionType());
+        outCameras[index].cameraId = dst;
+        outCameras[index].cameraPosition = static_cast<Camera_Position>(cameraObjList[index]->GetPosition());
+        outCameras[index].cameraType = static_cast<Camera_Type>(cameraObjList[index]->GetCameraType());
+        outCameras[index].connectionType = static_cast<Camera_Connection>(cameraObjList[index]->GetConnectionType());
     }
     *size = cameraSize;
     *cameras = outCameras;
@@ -130,9 +129,9 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, ui
 Camera_ErrorCode Camera_Manager::DeleteSupportedCameras(Camera_Device* cameras, uint32_t size)
 {
     if (cameras != nullptr) {
-        for (uint32_t i = 0; i < size; i++) {
-            if (&cameras[i] != nullptr) {
-                delete[] cameras[i].cameraId;
+        for (size_t index = 0; index < size; index++) {
+            if (&cameras[iindex] != nullptr) {
+                delete[] cameras[index].cameraId;
             }
         }
         delete[] cameras;
@@ -151,9 +150,9 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
     std::vector<sptr<CameraDevice>> cameraObjList = CameraManager::GetInstance()->GetSupportedCameras();
         MEDIA_ERR_LOG("GetSupportedCameraOutputCapability cameraInfo is null, the cameraObjList size is %{public}zu",
             cameraObjList.size());
-        for (size_t i = 0; i < cameraObjList.size(); i++) {
+        for (size_t index = 0; index < cameraObjList.size(); index++) {
             MEDIA_ERR_LOG("GetSupportedCameraOutputCapability for");
-            sptr<CameraDevice> innerCameraDevice = cameraObjList[i];
+            sptr<CameraDevice> innerCameraDevice = cameraObjList[index];
             if (innerCameraDevice == nullptr) {
                 MEDIA_ERR_LOG("GetSupportedCameraOutputCapability innerCameraDevice == null");
                 continue;
@@ -167,14 +166,12 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
                 break;
             }
         }
-    MEDIA_ERR_LOG("GetSupportedCameraOutputCapability  test");
     sptr<CameraOutputCapability> innerCameraOutputCapability =
         CameraManager::GetInstance()->GetSupportedOutputCapability(cameraDevice);
     if (innerCameraOutputCapability == nullptr) {
-        MEDIA_ERR_LOG("GetSupportedCameraOutputCapability innerCameraOutputCapability == null");
+        MEDIA_ERR_LOG("GetSupportedCameraOutputCapability innerCameraOutputCapability is null");
         return CAMERA_INVALID_ARGUMENT;
     }
-    MEDIA_ERR_LOG("GetSupportedCameraOutputCapability innerCameraOutputCapability !- null");
     std::vector<Profile> previewProfiles = innerCameraOutputCapability->GetPreviewProfiles();
     std::vector<Profile> photoProfiles = innerCameraOutputCapability->GetPhotoProfiles();
     std::vector<VideoProfile> videoProfiles = innerCameraOutputCapability->GetVideoProfiles();
@@ -187,62 +184,60 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
     GetSupportedMetadataTypeList(outCapability, metadataTypeList);
 
     *cameraOutputCapability = outCapability;
-    MEDIA_ERR_LOG("GetSupportedCameraOutputCapability previewOutputSize return");
+    MEDIA_INFO_LOG("GetSupportedCameraOutputCapability success.");
     return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_Manager::GetSupportedPreviewProfiles(Camera_OutputCapability* outCapability,
     std::vector<Profile> &previewProfiles)
-{
-    int previewOutputSize = previewProfiles.size();
-    outCapability->previewProfilesSize = previewOutputSize;
-    if (previewOutputSize <= 0) {
-        MEDIA_ERR_LOG("alloc size <= 0");
+{    
+    if (previewProfiles.size() <= 0) {
+        MEDIA_ERR_LOG("Invalid preview profiles size.");
         outCapability->previewProfiles = nullptr;
         return CAMERA_INVALID_ARGUMENT;
     }
-    outCapability->previewProfiles = new Camera_Profile* [previewOutputSize];
+    outCapability->previewProfilesSize = previewProfiles.size();
+    outCapability->previewProfiles = new Camera_Profile* [previewProfiles.size()];
     if (!outCapability->previewProfiles) {
-        MEDIA_ERR_LOG("Failed to allocate memory for previewProfiles");
+        MEDIA_ERR_LOG("Failed to allocate memory for preview profiles");
     }
-    for (int i = 0; i < previewOutputSize; i++) {
+    MEDIA_DEBUG_LOG("GetSupportedCameraOutputCapability previewOutput size enter");
+    for (size_t index = 0; index < previewProfiles.size(); index++) {
         Camera_Profile* outPreviewProfile = new Camera_Profile;
         if (!outPreviewProfile) {
-            MEDIA_ERR_LOG("Failed to allocate memory for outPreviewProfile");
+            MEDIA_ERR_LOG("Failed to allocate memory for PreviewProfile");
         }
-        outPreviewProfile->format = static_cast<Camera_Format>(previewProfiles[i].GetCameraFormat());
-        outPreviewProfile->size.width = previewProfiles[i].GetSize().width;
-        outPreviewProfile->size.height = previewProfiles[i].GetSize().height;
-        outCapability->previewProfiles[i] = outPreviewProfile;
-        MEDIA_ERR_LOG("GetSupportedCameraOutputCapability previewOutputSize enter");
+        outPreviewProfile->format = static_cast<Camera_Format>(previewProfiles[index].GetCameraFormat());
+        outPreviewProfile->size.width = previewProfiles[index].GetSize().width;
+        outPreviewProfile->size.height = previewProfiles[index].GetSize().height;
+        outCapability->previewProfiles[index] = outPreviewProfile;
     }
-    MEDIA_ERR_LOG("GetSupportedCameraOutputCapability previewOutputSize exit");
+    MEDIA_DEBUG_LOG("GetSupportedCameraOutputCapability previewOutput size exit");
     return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_Manager::GetSupportedPhotoProfiles(Camera_OutputCapability* outCapability,
     std::vector<Profile> &photoProfiles)
 {
-    int photoOutputSize = photoProfiles.size();
-    outCapability->photoProfilesSize = photoOutputSize;
-    if (photoOutputSize <= 0) {
-        MEDIA_ERR_LOG("alloc size <= 0");
+    if (photoProfiles.size() <= 0) {
+        MEDIA_ERR_LOG("Invalid photo profiles size.");
         outCapability->photoProfiles = nullptr;
         return CAMERA_INVALID_ARGUMENT;
     }
-    outCapability->photoProfiles = new Camera_Profile* [photoOutputSize];
+    outCapability->photoProfilesSize = photoProfiles.size();
+    outCapability->photoProfiles = new Camera_Profile* [photoProfiles.size()];
     if (!outCapability->photoProfiles) {
-        MEDIA_ERR_LOG("Failed to allocate memory for photoProfiles");
+        MEDIA_ERR_LOG("Failed to allocate memory for photo profiles");
     }
-    for (int i = 0; i < photoOutputSize; i++) {
+    for (size_t index = 0; index < photoProfiles.size(); index++) {
         Camera_Profile* outPhotoProfile = new Camera_Profile;
         if (!outPhotoProfile) {
-            MEDIA_ERR_LOG("Failed to allocate memory for outPhotoProfile");
+            MEDIA_ERR_LOG("Failed to allocate memory for PhotoProfile");
         }
-        outPhotoProfile->format = static_cast<Camera_Format>(photoProfiles[i].GetCameraFormat());
-        outPhotoProfile->size.width = photoProfiles[i].GetSize().width;
-        outPhotoProfile->size.height = photoProfiles[i].GetSize().height;
-        outCapability->photoProfiles[i] = outPhotoProfile;
+        outPhotoProfile->format = static_cast<Camera_Format>(photoProfiles[index].GetCameraFormat());
+        outPhotoProfile->size.width = photoProfiles[index].GetSize().width;
+        outPhotoProfile->size.height = photoProfiles[index].GetSize().height;
+        outCapability->photoProfiles[index] = outPhotoProfile;
     }
     return CAMERA_OK;
 }
@@ -250,49 +245,47 @@ Camera_ErrorCode Camera_Manager::GetSupportedPhotoProfiles(Camera_OutputCapabili
 Camera_ErrorCode Camera_Manager::GetSupportedVideoProfiles(Camera_OutputCapability* outCapability,
     std::vector<VideoProfile> &videoProfiles)
 {
-    int videoOutputSize = videoProfiles.size();
-    outCapability->videoProfilesSize = videoOutputSize;
-    if (videoOutputSize <= 0) {
-        MEDIA_ERR_LOG("alloc size <= 0");
+    if (videoProfiles.size() <= 0) {
+        MEDIA_ERR_LOG("Invalid video profiles size.");
         outCapability->videoProfiles = nullptr;
         return CAMERA_INVALID_ARGUMENT;
     }
-    outCapability->videoProfiles = new Camera_VideoProfile* [videoOutputSize];
+    outCapability->videoProfilesSize = videoOutputSize;
+    outCapability->videoProfiles = new Camera_VideoProfile* [videoProfiles.size()];
     if (!outCapability->videoProfiles) {
-        MEDIA_ERR_LOG("Failed to allocate memory for videoProfiles");
+        MEDIA_ERR_LOG("Failed to allocate memory for video profiles");
     }
-    for (int i = 0; i < videoOutputSize; i++) {
+    for (size_t index = 0; index < videoProfiles.size(); index++) {
         Camera_VideoProfile* outVideoProfile = new Camera_VideoProfile;
         if (!outVideoProfile) {
-            MEDIA_ERR_LOG("Failed to allocate memory for outVideoProfile");
+            MEDIA_ERR_LOG("Failed to allocate memory for VideoProfile");
         }
-        outVideoProfile->format = static_cast<Camera_Format>(videoProfiles[i].GetCameraFormat());
-        outVideoProfile->size.width = videoProfiles[i].GetSize().width;
-        outVideoProfile->size.height = videoProfiles[i].GetSize().height;
-        outVideoProfile->range.min  = videoProfiles[i].framerates_[0];
-        outVideoProfile->range.max  = videoProfiles[i].framerates_[1];
-        outCapability->videoProfiles[i] = outVideoProfile;
+        outVideoProfile->format = static_cast<Camera_Format>(videoProfiles[index].GetCameraFormat());
+        outVideoProfile->size.width = videoProfiles[index].GetSize().width;
+        outVideoProfile->size.height = videoProfiles[index].GetSize().height;
+        outVideoProfile->range.min  = videoProfiles[index].framerates_[0];
+        outVideoProfile->range.max  = videoProfiles[index].framerates_[1];
+        outCapability->videoProfiles[index] = outVideoProfile;
     }
     return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_Manager::GetSupportedMetadataTypeList(Camera_OutputCapability* outCapability,
     std::vector<MetadataObjectType> &metadataTypeList)
-{
-    int metadataOutputSize = metadataTypeList.size();
-    outCapability->metadataProfilesSize = metadataOutputSize;
-    if (metadataOutputSize <= 0) {
-        MEDIA_ERR_LOG("alloc size <= 0");
+{    
+    if (metadataTypeList.size() <= 0) {
+        MEDIA_ERR_LOG("Invalid metadata type size.");
         outCapability->supportedMetadataObjectTypes = nullptr;
         return CAMERA_INVALID_ARGUMENT;
     }
-    outCapability->supportedMetadataObjectTypes = new Camera_MetadataObjectType* [metadataOutputSize];
+    outCapability->metadataProfilesSize = metadataTypeList.size();
+    outCapability->supportedMetadataObjectTypes = new Camera_MetadataObjectType* [metadataTypeList.size()];
     if (!outCapability->supportedMetadataObjectTypes) {
         MEDIA_ERR_LOG("Failed to allocate memory for supportedMetadataObjectTypes");
     }
-    for (int i = 0; i < metadataOutputSize; i++) {
-        Camera_MetadataObjectType outmetadataObject = static_cast<Camera_MetadataObjectType>(metadataTypeList[i]);
-        outCapability->supportedMetadataObjectTypes[i] = &outmetadataObject;
+    for (size_t index = 0; index < metadataTypeList.size(); index++) {
+        Camera_MetadataObjectType outmetadataObject = static_cast<Camera_MetadataObjectType>(metadataTypeList[index]);
+        outCapability->supportedMetadataObjectTypes[index] = &outmetadataObject;
     }
     return CAMERA_OK;
 }
@@ -301,27 +294,27 @@ Camera_ErrorCode Camera_Manager::DeleteSupportedCameraOutputCapability(Camera_Ou
 {
     if (cameraOutputCapability != nullptr) {
         if (cameraOutputCapability->previewProfiles != nullptr) {
-            for (uint32_t i = 0; i < cameraOutputCapability->previewProfilesSize; i++) {
-                if (cameraOutputCapability->previewProfiles[i] != nullptr) {
-                    delete cameraOutputCapability->previewProfiles[i];
+            for (size_t index = 0; index < cameraOutputCapability->previewProfilesSize; index++) {
+                if (cameraOutputCapability->previewProfiles[index] != nullptr) {
+                    delete cameraOutputCapability->previewProfiles[index];
                 }
             }
             delete[] cameraOutputCapability->previewProfiles;
         }
 
         if (cameraOutputCapability->photoProfiles != nullptr) {
-            for (uint32_t i = 0; i < cameraOutputCapability->photoProfilesSize; i++) {
-                if (cameraOutputCapability->photoProfiles[i] != nullptr) {
-                    delete cameraOutputCapability->photoProfiles[i];
+            for (size_t index = 0; index < cameraOutputCapability->photoProfilesSize; index++) {
+                if (cameraOutputCapability->photoProfiles[index] != nullptr) {
+                    delete cameraOutputCapability->photoProfiles[index];
                 }
             }
             delete[] cameraOutputCapability->photoProfiles;
         }
 
         if (cameraOutputCapability->videoProfiles != nullptr) {
-            for (uint32_t i = 0; i < cameraOutputCapability->videoProfilesSize; i++) {
-                if (cameraOutputCapability->videoProfiles[i] != nullptr) {
-                    delete cameraOutputCapability->videoProfiles[i];
+            for (size_t index = 0; index < cameraOutputCapability->videoProfilesSize; index++) {
+                if (cameraOutputCapability->videoProfiles[index] != nullptr) {
+                    delete cameraOutputCapability->videoProfiles[index];
                 }
             }
             delete[] cameraOutputCapability->videoProfiles;
@@ -346,7 +339,7 @@ Camera_ErrorCode Camera_Manager::IsCameraMuted(bool* isCameraMuted)
 Camera_ErrorCode Camera_Manager::CreateCaptureSession(Camera_CaptureSession** captureSession)
 {
     sptr<CaptureSession> innerCaptureSession = nullptr;
-    int retCode = CameraManager::GetInstance()->CreateCaptureSession(&innerCaptureSession);
+    int32_t retCode = CameraManager::GetInstance()->CreateCaptureSession(&innerCaptureSession);
     if (retCode != CameraErrorCode::SUCCESS) {
         return CAMERA_SERVICE_FATAL_ERROR;
     }
@@ -361,8 +354,8 @@ Camera_ErrorCode Camera_Manager::CreateCameraInput(const Camera_Device* camera, 
     std::vector<sptr<CameraDevice>> cameraObjList = CameraManager::GetInstance()->GetSupportedCameras();
         MEDIA_DEBUG_LOG("cameraInfo is null, the cameraObjList size is %{public}zu",
             cameraObjList.size());
-        for (size_t i = 0; i < cameraObjList.size(); i++) {
-            sptr<CameraDevice> innerCameraDevice = cameraObjList[i];
+        for (size_t index = 0; index < cameraObjList.size(); index++) {
+            sptr<CameraDevice> innerCameraDevice = cameraObjList[index];
             if (innerCameraDevice == nullptr) {
                 continue;
             }
@@ -374,7 +367,7 @@ Camera_ErrorCode Camera_Manager::CreateCameraInput(const Camera_Device* camera, 
         }
 
     sptr<CameraInput> innerCameraInput = nullptr;
-    int retCode = CameraManager::GetInstance()->CreateCameraInput(cameraDevice, &innerCameraInput);
+    int32_t retCode = CameraManager::GetInstance()->CreateCameraInput(cameraDevice, &innerCameraInput);
     if (retCode != CameraErrorCode::SUCCESS) {
         return CAMERA_SERVICE_FATAL_ERROR;
     }
@@ -393,7 +386,7 @@ Camera_ErrorCode Camera_Manager::CreateCameraInputWithPositionAndType(Camera_Pos
 
     innerCameraInput = CameraManager::GetInstance()->CreateCameraInput(innerPosition, innerType);
     if (innerCameraInput == nullptr) {
-        MEDIA_ERR_LOG("failed to CreateCameraInputWithPositionAndType");
+        MEDIA_ERR_LOG("Failed to CreateCameraInputWithPositionAndType");
     }
 
     Camera_Input* outInput = new Camera_Input(innerCameraInput);
@@ -418,12 +411,12 @@ Camera_ErrorCode Camera_Manager::CreatePreviewOutput(const Camera_Profile* profi
         surface = Media::ImageReceiver::getSurfaceById(surfaceId);
     }
     if (surface == nullptr) {
-        MEDIA_ERR_LOG("failed to get previewOutput surface");
+        MEDIA_ERR_LOG("Failed to get previewOutput surface");
         return CAMERA_INVALID_ARGUMENT;
     }
 
     surface->SetUserData(CameraManager::surfaceFormat, std::to_string(innerProfile.GetCameraFormat()));
-    int retCode = CameraManager::GetInstance()->CreatePreviewOutput(innerProfile, surface, &innerPreviewOutput);
+    int32_t retCode = CameraManager::GetInstance()->CreatePreviewOutput(innerProfile, surface, &innerPreviewOutput);
     if (retCode != CameraErrorCode::SUCCESS) {
         return CAMERA_SERVICE_FATAL_ERROR;
     }
@@ -445,13 +438,13 @@ Camera_ErrorCode Camera_Manager::CreatePhotoOutput(const Camera_Profile* profile
 
     sptr<Surface> surface = Media::ImageReceiver::getSurfaceById(surfaceId);
     if (surface == nullptr) {
-        MEDIA_ERR_LOG("failed to get photoOutput surface");
+        MEDIA_ERR_LOG("Failed to get photoOutput surface");
         return CAMERA_INVALID_ARGUMENT;
     }
 
     surface->SetUserData(CameraManager::surfaceFormat, std::to_string(innerProfile.GetCameraFormat()));
     sptr<IBufferProducer> surfaceProducer = surface->GetProducer();
-    int retCode = CameraManager::GetInstance()->CreatePhotoOutput(innerProfile, surfaceProducer, &innerPhotoOutput);
+    int32_t retCode = CameraManager::GetInstance()->CreatePhotoOutput(innerProfile, surfaceProducer, &innerPhotoOutput);
     if (retCode != CameraErrorCode::SUCCESS) {
         return CAMERA_SERVICE_FATAL_ERROR;
     }
@@ -478,12 +471,12 @@ Camera_ErrorCode Camera_Manager::CreateVideoOutput(const Camera_VideoProfile* pr
         surface = Media::ImageReceiver::getSurfaceById(surfaceId);
     }
     if (surface == nullptr) {
-        MEDIA_ERR_LOG("failed to get videoOutput surface");
+        MEDIA_ERR_LOG("Failed to get videoOutput surface");
         return CAMERA_INVALID_ARGUMENT;
     }
 
     surface->SetUserData(CameraManager::surfaceFormat, std::to_string(innerProfile.GetCameraFormat()));
-    int retCode = CameraManager::GetInstance()->CreateVideoOutput(innerProfile, surface, &innerVideoOutput);
+    int32_t retCode = CameraManager::GetInstance()->CreateVideoOutput(innerProfile, surface, &innerVideoOutput);
     if (retCode != CameraErrorCode::SUCCESS) {
         return CAMERA_SERVICE_FATAL_ERROR;
     }
@@ -498,7 +491,7 @@ Camera_ErrorCode Camera_Manager::CreateMetadataOutput(const Camera_MetadataObjec
     MEDIA_ERR_LOG("Camera_Manager CreateMetadataOutput is called");
     sptr<MetadataOutput> innerMetadataOutput = nullptr;
 
-    int retCode = CameraManager::GetInstance()->CreateMetadataOutput(&innerMetadataOutput);
+    int32_t retCode = CameraManager::GetInstance()->CreateMetadataOutput(&innerMetadataOutput);
     if (retCode != CameraErrorCode::SUCCESS) {
         return CAMERA_SERVICE_FATAL_ERROR;
     }

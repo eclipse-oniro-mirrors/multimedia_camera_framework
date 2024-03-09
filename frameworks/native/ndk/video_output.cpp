@@ -29,15 +29,15 @@ extern "C" {
 Camera_ErrorCode OH_VideoOutput_RegisterCallback(Camera_VideoOutput* videoOutput, VideoOutput_Callbacks* callback)
 {
     CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! videoOutput is null!");
+        "Invaild argument, videoOutput is null!");
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback is null!");
+        "Invaild argument, callback is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onFrameStart!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback onFrameStart is null!");
+        "Invaild argument, callback onFrameStart is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onFrameEnd!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback onFrameEnd is null!");
+        "Invaild argument, callback onFrameEnd is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onError!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback onError is null!");
+        "Invaild argument, callback onError is null!");
 
     videoOutput->RegisterCallback(callback);
     return CAMERA_OK;
@@ -50,15 +50,15 @@ Camera_ErrorCode OH_VideoOutput_RegisterCallback(Camera_VideoOutput* videoOutput
 Camera_ErrorCode OH_VideoOutput_UnregisterCallback(Camera_VideoOutput* videoOutput, VideoOutput_Callbacks* callback)
 {
     CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! videoOutput is null!");
+        "Invaild argument, videoOutput is null!");
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback is null!");
+        "Invaild argument, callback is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onFrameStart!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback onFrameStart is null!");
+        "Invaild argument, callback onFrameStart is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onFrameEnd!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback onFrameEnd is null!");
+        "Invaild argument, callback onFrameEnd is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onError!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback onError is null!");
+        "Invaild argument, callback onError is null!");
 
     videoOutput->UnregisterCallback(callback);
     return CAMERA_OK;
@@ -71,7 +71,7 @@ Camera_ErrorCode OH_VideoOutput_UnregisterCallback(Camera_VideoOutput* videoOutp
 Camera_ErrorCode OH_VideoOutput_Start(Camera_VideoOutput* videoOutput)
 {
     CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! videoOutput is null!");
+        "Invaild argument, videoOutput is null!");
 
     return videoOutput->Start();
 }
@@ -83,7 +83,7 @@ Camera_ErrorCode OH_VideoOutput_Start(Camera_VideoOutput* videoOutput)
 Camera_ErrorCode OH_VideoOutput_Stop(Camera_VideoOutput* videoOutput)
 {
     CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! videoOutput is null!");
+        "Invaild argument, videoOutput is null!");
 
     return videoOutput->Stop();
 }
@@ -95,7 +95,7 @@ Camera_ErrorCode OH_VideoOutput_Stop(Camera_VideoOutput* videoOutput)
 Camera_ErrorCode OH_VideoOutput_Release(Camera_VideoOutput* videoOutput)
 {
     CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! videoOutput is null!");
+        "Invaild argument, videoOutput is null!");
 
     Camera_ErrorCode retCode = videoOutput->Release();
     if (videoOutput != nullptr) {
