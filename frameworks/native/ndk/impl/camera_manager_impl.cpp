@@ -44,7 +44,6 @@ public:
         Camera_StatusInfo statusInfo;
         statusInfo.camera = camera_;
         MEDIA_INFO_LOG("cameraId is %{public}s", cameraStatusInfo.cameraDevice->GetID().data());
-        MEDIA_INFO_LOG("statusInfo.camera is %{public}p", statusInfo.camera);
         statusInfo.camera->cameraId = cameraStatusInfo.cameraDevice->GetID().data();
         statusInfo.camera->cameraPosition = static_cast<Camera_Position>(cameraStatusInfo.cameraDevice->GetPosition());
         statusInfo.camera->cameraType = static_cast<Camera_Type>(cameraStatusInfo.cameraDevice->GetCameraType());
@@ -100,7 +99,8 @@ Camera_ErrorCode Camera_Manager::UnregisterCallback(CameraManager_Callbacks* cal
 Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, uint32_t* size)
 {
     std::vector<sptr<CameraDevice>> cameraObjList = CameraManager::GetInstance()->GetSupportedCameras();
-    if (cameraObjList.size() <= 0) {
+    int32_t cameraSize = cameraObjList.size();
+    if (cameraSize <= 0) {
         MEDIA_ERR_LOG("Invalid camera size.");
         return CAMERA_INVALID_ARGUMENT;
     }
@@ -130,7 +130,7 @@ Camera_ErrorCode Camera_Manager::DeleteSupportedCameras(Camera_Device* cameras, 
 {
     if (cameras != nullptr) {
         for (size_t index = 0; index < size; index++) {
-            if (&cameras[iindex] != nullptr) {
+            if (&cameras[index] != nullptr) {
                 delete[] cameras[index].cameraId;
             }
         }
@@ -190,7 +190,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
 
 Camera_ErrorCode Camera_Manager::GetSupportedPreviewProfiles(Camera_OutputCapability* outCapability,
     std::vector<Profile> &previewProfiles)
-{    
+{
     if (previewProfiles.size() <= 0) {
         MEDIA_ERR_LOG("Invalid preview profiles size.");
         outCapability->previewProfiles = nullptr;
@@ -250,7 +250,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedVideoProfiles(Camera_OutputCapabili
         outCapability->videoProfiles = nullptr;
         return CAMERA_INVALID_ARGUMENT;
     }
-    outCapability->videoProfilesSize = videoOutputSize;
+    outCapability->videoProfilesSize = videoProfiles.size();
     outCapability->videoProfiles = new Camera_VideoProfile* [videoProfiles.size()];
     if (!outCapability->videoProfiles) {
         MEDIA_ERR_LOG("Failed to allocate memory for video profiles");
@@ -272,7 +272,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedVideoProfiles(Camera_OutputCapabili
 
 Camera_ErrorCode Camera_Manager::GetSupportedMetadataTypeList(Camera_OutputCapability* outCapability,
     std::vector<MetadataObjectType> &metadataTypeList)
-{    
+{
     if (metadataTypeList.size() <= 0) {
         MEDIA_ERR_LOG("Invalid metadata type size.");
         outCapability->supportedMetadataObjectTypes = nullptr;

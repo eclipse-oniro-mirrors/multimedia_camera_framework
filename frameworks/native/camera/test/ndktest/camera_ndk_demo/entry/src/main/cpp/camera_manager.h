@@ -136,7 +136,6 @@ private:
     Camera_Type type_;
     char* previewSurfaceId_;
     char* photoSurfaceId_;
-    Camera_ErrorCode ret_;
     uint32_t takePictureTimes = 0;
     Camera_ExposureMode exposureMode_;
     bool isExposureModeSupported_;
