@@ -52,23 +52,23 @@ public:
         if (metaObjects.empty()) {
             MEDIA_ERR_LOG("OnMetadataObjectsAvailable: metaObjects is empty");
         }
-        uint32_t size = metaObjects.size();
+        size_t size = metaObjects.size();
         if (size <= 0) {
-            MEDIA_ERR_LOG("metaObjects size <= 0");
+            MEDIA_ERR_LOG("Invalid metadata objects size.");
         }
         Camera_MetadataObject* object = new Camera_MetadataObject[size];
         Camera_Rect boundingBox;
         if (metadataOutput_ != nullptr && callback_.onMetadataObjectAvailable != nullptr) {
-            for (size_t i = 0; i < metaObjects.size(); i++) {
-                if (MetadataObjectType::FACE == metaObjects[i]->GetType()) {
-                    object[i].type = Camera_MetadataObjectType::FACE_DETECTION;
+            for (size_t index = 0; index < size; index++) {
+                if (MetadataObjectType::FACE == metaObjects[index]->GetType()) {
+                    object[index].type = Camera_MetadataObjectType::FACE_DETECTION;
                 }
-                object[i].timestamp = metaObjects[i]->GetTimestamp();
-                boundingBox.topLeftX = metaObjects[i]->GetBoundingBox().topLeftX;
-                boundingBox.topLeftY = metaObjects[i]->GetBoundingBox().topLeftY;
-                boundingBox.width = metaObjects[i]->GetBoundingBox().width;
-                boundingBox.height = metaObjects[i]->GetBoundingBox().height;
-                object[i].boundingBox = &boundingBox;
+                object[index].timestamp = metaObjects[index]->GetTimestamp();
+                boundingBox.topLeftX = metaObjects[index]->GetBoundingBox().topLeftX;
+                boundingBox.topLeftY = metaObjects[index]->GetBoundingBox().topLeftY;
+                boundingBox.width = metaObjects[index]->GetBoundingBox().width;
+                boundingBox.height = metaObjects[index]->GetBoundingBox().height;
+                object[index].boundingBox = &boundingBox;
             }
             callback_.onMetadataObjectAvailable(metadataOutput_, object, size);
         }

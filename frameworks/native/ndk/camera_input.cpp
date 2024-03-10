@@ -25,11 +25,11 @@ extern "C" {
 Camera_ErrorCode OH_CameraInput_RegisterCallback(Camera_Input* cameraInput, CameraInput_Callbacks* callback)
 {
     CHECK_AND_RETURN_RET_LOG(cameraInput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! cameraInput is null!");
+        "Invaild argument, cameraInput is null!");
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback is null!");
+        "Invaild argument, callback is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onError!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback onError is null!");
+        "Invaild argument, callback onError is null!");
     cameraInput->RegisterCallback(callback);
     return CAMERA_OK;
 }
@@ -37,11 +37,11 @@ Camera_ErrorCode OH_CameraInput_RegisterCallback(Camera_Input* cameraInput, Came
 Camera_ErrorCode OH_CameraInput_UnregisterCallback(Camera_Input* cameraInput, CameraInput_Callbacks* callback)
 {
     CHECK_AND_RETURN_RET_LOG(cameraInput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! cameraInput is null!");
+        "Invaild argument, cameraInput is null!");
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback is null!");
+        "Invaild argument, callback is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onError!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback onError is null!");
+        "Invaild argument, callback onError is null!");
     cameraInput->UnregisterCallback(callback);
     return CAMERA_OK;
 }
@@ -49,7 +49,7 @@ Camera_ErrorCode OH_CameraInput_UnregisterCallback(Camera_Input* cameraInput, Ca
 Camera_ErrorCode OH_CameraInput_Open(Camera_Input* cameraInput)
 {
     CHECK_AND_RETURN_RET_LOG(cameraInput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! cameraInput is null!");
+        "Invaild argument, cameraInput is null!");
 
     return cameraInput->Open();
 }
@@ -57,7 +57,7 @@ Camera_ErrorCode OH_CameraInput_Open(Camera_Input* cameraInput)
 Camera_ErrorCode OH_CameraInput_Close(Camera_Input* cameraInput)
 {
     CHECK_AND_RETURN_RET_LOG(cameraInput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! cameraInput is null!");
+        "Invaild argument, cameraInput is null!");
 
     return cameraInput->Close();
 }
@@ -65,7 +65,7 @@ Camera_ErrorCode OH_CameraInput_Close(Camera_Input* cameraInput)
 Camera_ErrorCode OH_CameraInput_Release(Camera_Input* cameraInput)
 {
     CHECK_AND_RETURN_RET_LOG(cameraInput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! cameraInput is null!");
+        "Invaild argument, cameraInput is null!");
 
     Camera_ErrorCode retCode = cameraInput->Release();
     if (cameraInput != nullptr) {

@@ -30,15 +30,15 @@ Camera_ErrorCode OH_PreviewOutput_RegisterCallback(Camera_PreviewOutput* preview
     PreviewOutput_Callbacks* callback)
 {
     CHECK_AND_RETURN_RET_LOG(previewOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! previewOutput is null!");
+        "Invaild argument, previewOutput is null!");
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback is null!");
+        "Invaild argument, callback is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onFrameStart!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback onFrameStart is null!");
+        "Invaild argument, callback onFrameStart is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onFrameEnd!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback onFrameEnd is null!");
+        "Invaild argument, callback onFrameEnd is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onError!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback onError is null!");
+        "Invaild argument, callback onError is null!");
 
     previewOutput->RegisterCallback(callback);
     return CAMERA_OK;
@@ -52,15 +52,15 @@ Camera_ErrorCode OH_PreviewOutput_UnregisterCallback(Camera_PreviewOutput* previ
     PreviewOutput_Callbacks* callback)
 {
     CHECK_AND_RETURN_RET_LOG(previewOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! previewOutput is null!");
+        "Invaild argument, previewOutput is null!");
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback is null!");
+        "Invaild argument, callback is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onFrameStart!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback onFrameStart is null!");
+        "Invaild argument, callback onFrameStart is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onFrameEnd!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback onFrameEnd is null!");
+        "Invaild argument, callback onFrameEnd is null!");
     CHECK_AND_RETURN_RET_LOG(callback->onError!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! callback onError is null!");
+        "Invaild argument, callback onError is null!");
 
     previewOutput->UnregisterCallback(callback);
     return CAMERA_OK;
@@ -73,7 +73,7 @@ Camera_ErrorCode OH_PreviewOutput_UnregisterCallback(Camera_PreviewOutput* previ
 Camera_ErrorCode OH_PreviewOutput_Start(Camera_PreviewOutput* previewOutput)
 {
     CHECK_AND_RETURN_RET_LOG(previewOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! previewOutput is null!");
+        "Invaild argument, previewOutput is null!");
 
     return previewOutput->Start();
 }
@@ -85,7 +85,7 @@ Camera_ErrorCode OH_PreviewOutput_Start(Camera_PreviewOutput* previewOutput)
 Camera_ErrorCode OH_PreviewOutput_Stop(Camera_PreviewOutput* previewOutput)
 {
     CHECK_AND_RETURN_RET_LOG(previewOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! previewOutput is null!");
+        "Invaild argument, previewOutput is null!");
 
     return previewOutput->Stop();
 }
@@ -97,7 +97,7 @@ Camera_ErrorCode OH_PreviewOutput_Stop(Camera_PreviewOutput* previewOutput)
 Camera_ErrorCode OH_PreviewOutput_Release(Camera_PreviewOutput* previewOutput)
 {
     CHECK_AND_RETURN_RET_LOG(previewOutput != nullptr, CAMERA_INVALID_ARGUMENT,
-        "invaild argument! previewOutput is null!");
+        "Invaild argument, previewOutput is null!");
 
     Camera_ErrorCode retCode = previewOutput->Release();
     if (previewOutput != nullptr) {
