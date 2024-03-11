@@ -744,6 +744,16 @@ int32_t HCameraService::NotifyCameraState(std::string cameraId, int32_t state)
     return CAMERA_OK;
 }
 
+int32_t HCameraService::SetPeerCallback(sptr<ICameraBroker>& callback)
+{
+    MEDIA_INFO_LOG("SetPeerCallback get callback");
+    if (callback == nullptr) {
+        return CAMERA_INVALID_ARG;
+    }
+    HCameraDeviceManager::GetInstance()->SetPeerCallback(callback);
+    return CAMERA_OK;
+}
+
 bool HCameraService::IsPrelaunchSupported(string cameraId)
 {
     bool isPrelaunchSupported = false;

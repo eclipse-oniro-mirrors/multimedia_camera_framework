@@ -116,6 +116,9 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_NOTIFY_CAMERA_STATE):
             errCode = HCameraServiceStub::HandleNotifyCameraState(data);
             break;
+        case static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_SET_PEER_CALLBACK):
+            errCode = HCameraServiceStub::HandleSetPeerCallback(data);
+            break;
         default:
             MEDIA_ERR_LOG("HCameraServiceStub request code %{public}d not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -512,6 +515,23 @@ int HCameraServiceStub::HandleNotifyCameraState(MessageParcel& data)
         MEDIA_ERR_LOG("HCameraServiceStub HandleNotifyCameraState failed : %{public}d", errCode);
     }
     return errCode;
+}
+ 
+int HCameraServiceStub::HandleSetPeerCallback(MessageParcel& data)
+{
+    auto remoteObject = data.ReadRemoteObject();
+    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCameraServiceStub HandleSetPeerCallback Callback is null");
+ 
+    MEDIA_INFO_LOG("HandleSetPeerCallback get callback");
+    if (remoteObject == nullptr) {
+        MEDIA_ERR_LOG("HandleSetPeerCallback get null callback");
+    }
+    auto callback = iface_cast<ICameraBroker>(remoteObject);
+    if (callback == nullptr) {
+        MEDIA_ERR_LOG("HandleSetPeerCallback get null callback");
+    }
+    return SetPeerCallback(callback);
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -22,7 +22,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class HCameraProxy : public IRemoteProxy<ICameraProxy> {
+class HCameraProxy : public IRemoteProxy<ICameraBroker> {
 public:
     explicit HCameraProxy(const sptr<IRemoteObject> &impl);
     ~HCameraProxy() = default;
@@ -88,6 +88,8 @@ public:
     int32_t AllowOpenByOHSide(std::string cameraId, int32_t state, bool &canOpenCamera) override;
 
     int32_t NotifyCameraState(std::string cameraId, int32_t state) override;
+
+    int32_t SetPeerCallback(sptr<ICameraBroker>& callback) override;
 
 private:
     static inline BrokerDelegator<HCameraServiceProxy> delegator_;
