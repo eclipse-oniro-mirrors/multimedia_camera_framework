@@ -42,7 +42,7 @@ struct EffectParam {
     int skinTone;
 };
 
-class ICameraProxy : public IRemoteBroker {
+class ICameraBroker : public IRemoteBroker {
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"OHOS.Anco.Service.Camera");
 
@@ -101,6 +101,8 @@ public:
     virtual int32_t AllowOpenByOHSide(std::string cameraId, int32_t state, bool &canOpenCamera) = 0;
 
     virtual int32_t NotifyCameraState(std::string cameraId, int32_t state) = 0;
+
+    virtual int32_t SetPeerCallback(sptr<ICameraBroker>& callback) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ICameraService");
 };

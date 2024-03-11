@@ -65,6 +65,8 @@ public:
 
     void SetStateOfACamera(std::string cameraId, int32_t state);
 
+    void SetPeerCallback(sptr<ICameraBroker>& callback);
+
     SafeMap<std::string, int32_t> &GetCameraStateOfASide();
 
     /**
@@ -76,11 +78,12 @@ public:
     bool GetConflictDevices(sptr<HCameraDevice> &camerasNeedEvict, sptr<HCameraDevice> cameraIdRequestOpen);
 private:
     HCameraDeviceManager();
-    SafeMap<pid_t, sptr<HCameraDevice>> pidToCameras_;
-    SafeMap<std::string, int32_t> stateOfACamera_;
     static sptr<HCameraDeviceManager> cameraDeviceManager_;
     static std::mutex instanceMutex_;
+    SafeMap<pid_t, sptr<HCameraDevice>> pidToCameras_;
+    SafeMap<std::string, int32_t> stateOfACamera_;
     std::mutex mapMutex_;
+    sptr<ICameraBroker> PeerCallback_;
     std::string GetACameraId();
     int32_t GetAdjForCameraState(std::string cameraId);
     bool isAllowOpen(pid_t activeClient);

@@ -93,6 +93,7 @@ public:
     int32_t SetTorchLevel(float level) override;
     int32_t AllowOpenByOHSide(std::string cameraId, int32_t state, bool &canOpenCamera) override;
     int32_t NotifyCameraState(std::string cameraId, int32_t state) override;
+    int32_t SetPeerCallback(sptr<ICameraBroker>& callback) override;
     void OnDump() override;
     void OnStart() override;
     void OnStop() override;

@@ -21,7 +21,7 @@
 namespace OHOS {
 namespace CameraStandard {
 HCameraProxy::HCameraProxy(const sptr<IRemoteObject> &impl)
-    : IRemoteProxy<ICameraProxy>(impl) { }
+    : IRemoteProxy<ICameraBroker>(impl) { }
 
 int32_t HCameraProxy::NotifyCloseCamera(std::string cameraId)
 {
@@ -571,6 +571,29 @@ int32_t HCameraServiceProxy::NotifyCameraState(std::string cameraId, int32_t sta
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceProxy::NotifyCameraState failed, error: %{public}d", error);
     }
+    return error;
+}
+
+int32_t HCameraServiceProxy::SetPeerCallback(sptr<ICameraBroker>& callback)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+ 
+    if (callback == nullptr) {
+        MEDIA_ERR_LOG("HCameraServiceProxy SetCallback callback is null");
+        return IPC_PROXY_ERR;
+    }
+ 
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteRemoteObject(callback->AsObject());
+ 
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_SET_PEER_CALLBACK), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy SetCallback failed, error: %{public}d", error);
+    }
+ 
     return error;
 }
 } // namespace CameraStandard

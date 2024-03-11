@@ -22,7 +22,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-static const int32_t SERVICE_ID_OF_DH = 66850;
 static const int32_t PRIORITY_OF_FOREGROUND = 0;
 static const int32_t PRIORITY_OF_BACKGROUND = 400;
 sptr<HCameraDeviceManager> HCameraDeviceManager::cameraDeviceManager_;
@@ -98,6 +97,15 @@ void HCameraDeviceManager::SetStateOfACamera(std::string cameraId, int32_t state
 SafeMap<std::string, int32_t> &HCameraDeviceManager::GetCameraStateOfASide()
 {
     return stateOfACamera_;
+}
+
+void HCameraDeviceManager::SetPeerCallback(sptr<ICameraBroker>& callback)
+{
+    if (callback == nullptr) {
+        MEDIA_ERR_LOG("HCameraDeviceManager::SetPeerCallback failed to set peer callback");
+        return;
+    }
+    PeerCallback_ = callback;
 }
 
 bool HCameraDeviceManager::GetConflictDevices(sptr<HCameraDevice> &cameraNeedEvict,
@@ -180,23 +188,13 @@ bool HCameraDeviceManager::isAllowOpen(pid_t pidOfOpenRequest)
     MEDIA_INFO_LOG("HCameraDeviceManager::isAllowOpen has a client open in A proxy");
     if (pidOfOpenRequest != -1) {
         std::string cameraId = GetACameraId();
-        sptr<IRemoteObject> object = nullptr;
-        auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-        if (samgr == nullptr) {
-            MEDIA_ERR_LOG("Failed to get System ability manager");
+        if (PeerCallback_ == nullptr) {
+            MEDIA_ERR_LOG("HCameraDeviceManager::isAllowOpen falied to close peer device");
             return false;
+        } else {
+            PeerCallback_->NotifyCloseCamera(cameraId);
+            MEDIA_ERR_LOG("HCameraDeviceManager::isAllowOpen success to close peer device");
         }
-        object = samgr->GetSystemAbility(SERVICE_ID_OF_DH);
-        if (object == nullptr) {
-            MEDIA_ERR_LOG("object is null");
-            return false;
-        }
-        sptr<ICameraProxy> ancoCallback = iface_cast<ICameraProxy>(object);
-        if (ancoCallback == nullptr) {
-            MEDIA_ERR_LOG("serviceProxy_ is null.");
-            return false;
-        }
-        ancoCallback->NotifyCloseCamera(cameraId);
         return true;
     } else {
         MEDIA_ERR_LOG("HCameraDeviceManager::GetConflictDevices wrong pid of the process whitch is goning to turn on");
