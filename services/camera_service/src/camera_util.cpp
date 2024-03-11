@@ -401,5 +401,17 @@ int32_t GetVersionId(uint32_t major, uint32_t minor)
     const uint32_t offset = 8;
     return static_cast<int32_t>((major << offset) | minor);
 }
+
+void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::string permissionName)
+{
+    int32_t successCout = 1;
+    int32_t failCount = 0;
+    int32_t ret = Security::AccessToken::PrivacyKit::AddPermissionUsedRecord(callingTokenId, permissionName,
+        successCout, failCount);
+    MEDIA_INFO_LOG("AddPermissionUsedRecord tokenId:%{public}d", callingTokenId);
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("AddPermissionUsedRecord failed.");
+    }
+}
 } // namespace CameraStandard
 } // namespace OHOS
