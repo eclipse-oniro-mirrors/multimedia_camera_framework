@@ -36,7 +36,10 @@ int32_t HStreamMetadata::LinkInput(sptr<OHOS::HDI::Camera::V1_1::IStreamOperator
         return CAMERA_INVALID_ARG;
     }
     streamId_ = streamId;
-    streamOperator_ = streamOperator;
+    {
+        std::lock_guard<std::mutex> lock(streamOperatorLock_);
+        streamOperator_ = streamOperator;
+    }
     std::lock_guard<std::mutex> lock(cameraAbilityLock_);
     cameraAbility_ = cameraAbility;
     return CAMERA_OK;
@@ -51,9 +54,11 @@ void HStreamMetadata::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
 int32_t HStreamMetadata::Start()
 {
     CAMERA_SYNC_TRACE;
-
-    if (streamOperator_ == nullptr) {
-        return CAMERA_INVALID_STATE;
+    {
+        std::lock_guard<std::mutex> lock(streamOperatorLock_);
+        if (streamOperator_ == nullptr) {
+            return CAMERA_INVALID_STATE;
+        }
     }
     if (curCaptureID_ != 0) {
         MEDIA_ERR_LOG("HStreamMetadata::Start, Already started with captureID: %{public}d", curCaptureID_);
@@ -74,7 +79,11 @@ int32_t HStreamMetadata::Start()
     captureInfo.captureSetting_ = ability;
     captureInfo.enableShutterCallback_ = false;
     MEDIA_INFO_LOG("HStreamMetadata::Start Starting with capture ID: %{public}d", curCaptureID_);
-    CamRetCode rc = (CamRetCode)(streamOperator_->Capture(curCaptureID_, captureInfo, true));
+    CamRetCode rc;
+    {
+        std::lock_guard<std::mutex> lock(streamOperatorLock_);
+        rc = (CamRetCode)(streamOperator_->Capture(curCaptureID_, captureInfo, true));
+    }
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         ReleaseCaptureId(curCaptureID_);
         curCaptureID_ = 0;
@@ -87,16 +96,23 @@ int32_t HStreamMetadata::Start()
 int32_t HStreamMetadata::Stop()
 {
     CAMERA_SYNC_TRACE;
-
-    if (streamOperator_ == nullptr) {
-        return CAMERA_INVALID_STATE;
+    {
+        std::lock_guard<std::mutex> lock(streamOperatorLock_);
+        if (streamOperator_ == nullptr) {
+            return CAMERA_INVALID_STATE;
+        }
     }
     if (curCaptureID_ == 0) {
         MEDIA_ERR_LOG("HStreamMetadata::Stop, Stream not started yet");
         return CAMERA_INVALID_STATE;
     }
     int32_t ret = CAMERA_OK;
-    CamRetCode rc = (CamRetCode)(streamOperator_->CancelCapture(curCaptureID_));
+    CamRetCode rc;
+    {
+        std::lock_guard<std::mutex> lock(streamOperatorLock_);
+        rc = (CamRetCode)(streamOperator_->CancelCapture(curCaptureID_));
+    }
+
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         MEDIA_ERR_LOG("HStreamMetadata::Stop Failed with errorCode:%{public}d, curCaptureID_: %{public}d",
                       rc, curCaptureID_);

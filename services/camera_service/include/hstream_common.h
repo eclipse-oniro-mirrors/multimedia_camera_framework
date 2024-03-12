@@ -55,6 +55,7 @@ public:
 protected:
     std::mutex producerLock_;
     std::mutex cameraAbilityLock_;
+    std::mutex streamOperatorLock_;
 
 private:
     StreamType streamType_;

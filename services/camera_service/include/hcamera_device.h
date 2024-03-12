@@ -70,7 +70,7 @@ private:
     bool isOpenedCameraDevice_;
     std::mutex deviceSvcCbMutex_;
     std::mutex videoFrameRangeMutex_;
-    std::mutex settingsMutex_;
+    std::mutex opMutex_;
     sptr<ICameraDeviceServiceCallback> deviceSvcCallback_;
     std::map<int32_t, wptr<ICameraServiceCallback>> statusSvcCallbacks_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> updateSettings_;
