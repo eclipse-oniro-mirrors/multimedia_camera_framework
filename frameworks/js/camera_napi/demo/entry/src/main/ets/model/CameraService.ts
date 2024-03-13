@@ -36,6 +36,12 @@ enum PhotoOrientation {
   ORIENTATION_3
 }
 
+enum CaptureMode {
+  OLD_CAPTURE = 0,
+  NEW_CAPTURE,
+  NEW_DEFERRED_PHOTO
+}
+
 enum CameraMode {
   NORMAL = 0,
   VIDEO,
@@ -47,7 +53,7 @@ enum CameraMode {
 const TAG: string = 'CameraService';
 
 class CameraService {
-  private captureMode: number = 0;
+  private captureMode: CaptureMode = CaptureMode.OLD_CAPTURE;
   private cameraManager: camera.CameraManager | undefined = undefined;
   private cameras: Array<camera.CameraDevice> | undefined = undefined;
   private sceneModes: Array<camera.SceneMode> | undefined = undefined;
@@ -563,7 +569,7 @@ class CameraService {
     let session: camera.PortraitPhotoSession | camera.CaptureSession | camera.NightPhotoSession = undefined;
     if (this.cameraMode === CameraMode.PORTRAIT) {
       session = this.portraitSession;
-    } else if(this.cameraMode === CameraMode.NIGHT) {
+    } else if (this.cameraMode === CameraMode.NIGHT) {
       session = this.nightSession;
     } else {
       session = this.captureSession;
@@ -682,7 +688,8 @@ class CameraService {
   } {
     let cameraConfig = (this.globalContext.getObject('cameraConfig') as CameraConfig);
     if (cameraConfig.locationBol) {
-      return { // 位置信息，经纬度
+      return {
+        // 位置信息，经纬度
         latitude: 12.9698,
         longitude: 77.7500,
         altitude: 1000
@@ -1018,14 +1025,14 @@ class CameraService {
   createPhotoOutputFn(photoProfileObj: camera.Profile, surfaceId: string): void {
     Logger.info(TAG, `createPhotoOutputFn photoProfiles: ${JSON.stringify(photoProfileObj)} ,captureMode: ${this.captureMode}, surfaceId: ${surfaceId}`);
     switch (this.captureMode) {
-      case 0:
+      case CaptureMode.OLD_CAPTURE:
         this.photoOutPut = this.cameraManager.createPhotoOutput(photoProfileObj, surfaceId);
         break;
-      case 1:
-      case 2:
+      case CaptureMode.NEW_CAPTURE:
+      case CaptureMode.NEW_DEFERRED_PHOTO:
         this.photoOutPut = this.cameraManager.createPhotoOutput(photoProfileObj);
         if (this.photoOutPut == null) {
-          Logger.error(TAG, 'createPhotoOutputFn createPhotoOutput faild');
+          Logger.error(TAG, 'createPhotoOutputFn createPhotoOutput failed');
         }
         break;
     }
@@ -1036,7 +1043,11 @@ class CameraService {
    */
   createCameraInputFn(cameraDevice: camera.CameraDevice): void {
     Logger.info(TAG, 'createCameraInputFn is called.');
-    this.cameraInput = this.cameraManager.createCameraInput(cameraDevice);
+    try {
+      this.cameraInput = this.cameraManager.createCameraInput(cameraDevice);
+    } catch (err) {
+
+    }
   }
 
   /**
@@ -1074,10 +1085,11 @@ class CameraService {
       }
       // 把photoOutPut加入到会话
       this.captureSession.addOutput(this.photoOutPut);
-      if (AppStorage.get('deferredImage')) {
-        this.isDeferredImageDeliverySupported(1);
-        this.deferImageDeliveryFor(1);
-        this.isDeferredImageDeliveryEnabled(1);
+      if (this.captureMode === CaptureMode.NEW_DEFERRED_PHOTO) {
+        if (this.isDeferredImageDeliverySupported(camera.DeferredDeliveryImageType.PHOTO)) {
+          this.deferImageDeliveryFor(camera.DeferredDeliveryImageType.PHOTO);
+          this.isDeferredImageDeliveryEnabled(camera.DeferredDeliveryImageType.PHOTO);
+        }
       }
       // 提交配置信息
       await this.captureSession.commitConfig();
@@ -1118,10 +1130,11 @@ class CameraService {
       this.portraitSession.addOutput(this.previewOutput);
       // 把photoOutPut加入到会话
       this.portraitSession.addOutput(this.photoOutPut);
-      if (AppStorage.get('deferredImage')) {
-        this.isDeferredImageDeliverySupported(1);
-        this.deferImageDeliveryFor(1);
-        this.isDeferredImageDeliveryEnabled(1);
+      if (this.captureMode === CaptureMode.NEW_DEFERRED_PHOTO) {
+        if (this.isDeferredImageDeliverySupported(camera.DeferredDeliveryImageType.PHOTO)) {
+          this.deferImageDeliveryFor(camera.DeferredDeliveryImageType.PHOTO);
+          this.isDeferredImageDeliveryEnabled(camera.DeferredDeliveryImageType.PHOTO);
+        }
       }
 
       // 提交配置信息
@@ -1160,10 +1173,11 @@ class CameraService {
       this.nightSession.addOutput(this.previewOutput);
       // 把photoOutPut加入到会话
       this.nightSession.addOutput(this.photoOutPut);
-      if (AppStorage.get('deferredImage')) {
-        this.isDeferredImageDeliverySupported(1);
-        this.deferImageDeliveryFor(1);
-        this.isDeferredImageDeliveryEnabled(1);
+      if (this.captureMode === CaptureMode.NEW_DEFERRED_PHOTO) {
+        if (this.isDeferredImageDeliverySupported(camera.DeferredDeliveryImageType.PHOTO)) {
+          this.deferImageDeliveryFor(camera.DeferredDeliveryImageType.PHOTO);
+          this.isDeferredImageDeliveryEnabled(camera.DeferredDeliveryImageType.PHOTO);
+        }
       }
 
       // 提交配置信息
@@ -1312,7 +1326,29 @@ class CameraService {
       proxyObj.getThumbnail().then((thumbnail: image.PixelMap) => {
         AppStorage.setOrCreate('proxyThumbnail', thumbnail);
       });
+      this.saveDeferredPhoto(proxyObj);
     });
+  }
+
+  /**
+   * 调用媒体库方式落盘缩略图
+   */
+  async saveDeferredPhoto(proxyObj: camera.DeferredPhotoProxy): Promise<void> {
+    try {
+      // 创建 photoAsset
+      let photoHelper = photoAccessHelper.getPhotoAccessHelper(this.globalContext.getCameraSettingContext());
+      let fileName = Date.now() + '.jpg';
+      let photoAsset = await photoHelper.createAsset(fileName);
+      let imgPhotoUri: string = photoAsset.uri;
+      // 将缩略图代理类传递给媒体库
+      let mediaRequest: photoAccessHelper.MediaAssetChangeRequest = new photoAccessHelper.MediaAssetChangeRequest(photoAsset);
+      mediaRequest.addResource(photoAccessHelper.ResourceType.PHOTO_PROXY, proxyObj);
+      let res = await photoHelper.applyChanges(mediaRequest);
+      this.handleTakePicture(imgPhotoUri);
+      Logger.info(TAG, `saveDeferredPhoto res:${res}.`);
+    } catch (err) {
+      Logger.error(TAG, `Failed to saveDeferredPhoto. error: ${JSON.stringify(err)}`);
+    }
   }
 
   /**
@@ -1403,40 +1439,26 @@ class CameraService {
   /**
    * 查询是否支持二阶段
    */
-  isDeferredImageDeliverySupported(num: number): boolean {
-    let res: boolean = false;
-    Logger.info(TAG, `isDeferredImageDeliverySupported type: ${num % 2}`);
-    if (this.photoOutPut !== null && num % 2 === 0) {
-      res = this.photoOutPut.isDeferredImageDeliverySupported(camera.DeferredDeliveryImageType.NONE);
-    } else {
-      res = this.photoOutPut.isDeferredImageDeliverySupported(camera.DeferredDeliveryImageType.PHOTO);
-    }
-    Logger.info(TAG, `isDeferredImageDeliverySupported res: ${res}`);
+  isDeferredImageDeliverySupported(deferredType: camera.DeferredDeliveryImageType): boolean {
+    let res: boolean = this.photoOutPut.isDeferredImageDeliverySupported(deferredType);
+    Logger.info(TAG, `isDeferredImageDeliverySupported deferredType:${deferredType} res: ${res}`);
     return res;
   }
-
 
   /**
    * 查询是否已使能二阶段
    */
-  isDeferredImageDeliveryEnabled(num: number): boolean {
-    let res: boolean = false;
-    Logger.info(TAG, `IsDeferredImageDeliveryEnabled type: ${num % 2}`);
-    if (this.photoOutPut !== null && num % 2 === 0) {
-      res = this.photoOutPut.isDeferredImageDeliveryEnabled(camera.DeferredDeliveryImageType.NONE);
-    } else {
-      res = this.photoOutPut.isDeferredImageDeliveryEnabled(camera.DeferredDeliveryImageType.PHOTO);
-    }
-    Logger.info(TAG, `IsDeferredImageDeliveryEnabled res: ${res}`);
-    return res;
+  isDeferredImageDeliveryEnabled(deferredType: camera.DeferredDeliveryImageType): boolean {
+    let res: boolean = this.photoOutPut.isDeferredImageDeliveryEnabled(deferredType);
+    Logger.info(TAG, `isDeferredImageDeliveryEnabled deferredType:${deferredType} res: ${res}`);
   }
 
   /**
    * 使能二阶段
    */
-  deferImageDeliveryFor(num: number): void {
-    Logger.info(TAG, `deferImageDeliveryFor type: ${num}`);
-    this.photoOutPut.deferImageDelivery(camera.DeferredDeliveryImageType.PHOTO);
+  deferImageDeliveryFor(deferredType: camera.DeferredDeliveryImageType): void {
+    Logger.info(TAG, `deferImageDeliveryFor type: ${deferredType}`);
+    this.photoOutPut.deferImageDelivery(deferredType);
   }
 }
 

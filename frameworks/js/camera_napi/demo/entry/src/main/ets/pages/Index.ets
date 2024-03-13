@@ -76,12 +76,6 @@ struct Index {
   private deviceType: string | undefined = '';
   private screenHeight: number = 0;
   private screenWidth: number = 0;
-  @State @Watch('onDeferredNumChange') deferredNum: number = 0;
-  @StorageLink('proxyThumbnail') @Watch('proxyThumbnailUpdate') imgThumbnail: image.PixelMap | string = '';
-
-  proxyThumbnailUpdate(): void {
-    Logger.info(TAG, 'proxyThumbnailUpdate');
-  }
 
   // 设置弹框
   private settingDialogController: CustomDialogController = new CustomDialogController({
@@ -143,16 +137,6 @@ struct Index {
       GlobalContext.get().apply('stopVideoFun');
     }
     await CameraService.releaseCamera();
-  }
-
-  /**
-   * 监听二阶段拍照
-   */
-  onDeferredNumChange(): void {
-    Logger.info(TAG, `onDeferredNumChange deferredNum: ${this.deferredNum}`);
-    let code: number = this.deferredNum % 2;
-    CameraService.isDeferredImageDeliverySupported(code);
-    // CameraService.isDeferredImageDeliveryEnabled(code);
   }
 
   build() {

@@ -26,11 +26,11 @@ export struct DeferredPhotoComponent {
   @Prop surfaceId: string;
   @StorageLink('deferredPhotoComponentIsShow') isShow: boolean = true;
   @StorageLink('deferredPhotoComponentIsHidden') isHidden: boolean = true;
-  @State targetName: string = '分段式';
+  @State targetName: string = '老拍照';
   colorEffectList: Array<Record<string, Object>> = [
     { 'colorEffect': 0, 'name': '老拍照' },
-    { 'colorEffect': 1, 'name': '原图' },
-    { 'colorEffect': 2, 'name': '低质量图' }
+    { 'colorEffect': 1, 'name': '普通拍照' },
+    { 'colorEffect': 2, 'name': '分段式拍照' }
   ];
 
   build() {
@@ -62,12 +62,6 @@ export struct DeferredPhotoComponent {
                 this.isShow = true;
                 CameraService.setCaptureMode(index);
                 CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
-                if (index == 2) {
-                  AppStorage.setOrCreate('deferredImage', true);
-                  Logger.debug(TAG, 'Enabled DeferredImage!');
-                } else {
-                  AppStorage.setOrCreate('deferredImage', false);
-                }
               })
           })
         }

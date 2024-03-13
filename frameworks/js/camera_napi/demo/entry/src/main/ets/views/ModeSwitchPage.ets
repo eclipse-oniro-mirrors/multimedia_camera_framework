@@ -42,7 +42,7 @@ export struct ModeSwitchPage {
   @State countTimerInt: number = -1;
   @State countTimerOut: number = -1;
   // 拍照缩略图
-  @StorageLink('proxyThumbnail') imgThumbnail: string | image.PixelMap = '';
+  @StorageLink('proxyThumbnail') imgThumbnail: string = '';
   // 录制时间
   @State videoRecodeTime: number = 0;
   // 录制时间定时器
