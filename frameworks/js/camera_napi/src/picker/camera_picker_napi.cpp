@@ -186,7 +186,7 @@ static void SetPickerWantParams(AAFwk::Want& want, std::shared_ptr<AbilityRuntim
 
     want.SetUri(pickerProfile.saveUri);
     want.SetFlags(AAFwk::Want::FLAG_AUTH_READ_URI_PERMISSION | AAFwk::Want::FLAG_AUTH_WRITE_URI_PERMISSION);
-    wantParam.SetParam("ability.want.params.uiExtensionType", AAFwk::String::Box("sys/commonUI"));
+    wantParam.SetParam("ability.want.params.uiExtensionTargetType", AAFwk::String::Box("cameraPicker"));
     wantParam.SetParam("callBundleName", AAFwk::String::Box(abilityContext->GetAbilityInfo()->bundleName.c_str()));
     wantParam.SetParam("cameraPosition", AAFwk::Integer::Box(pickerProfile.cameraPosition));
     wantParam.SetParam("videoDuration", AAFwk::Integer::Box(pickerProfile.videoDuration));
