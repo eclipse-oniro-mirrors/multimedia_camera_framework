@@ -550,7 +550,7 @@ std::shared_ptr<PreviewStateCallback> PreviewOutput::GetApplicationCallback()
 
 void PreviewOutput::OnNativeRegisterCallback(const std::string& eventString)
 {
-    if (eventString == "sketchAvailable") {
+    if (eventString == CONST_SKETCH_STATUS_CHANGED) {
         std::lock_guard<std::mutex> lock(asyncOpMutex_);
         if (sketchWrapper_ == nullptr) {
             return;
@@ -573,7 +573,7 @@ void PreviewOutput::OnNativeRegisterCallback(const std::string& eventString)
             return;
         }
         float sketchRatio = sketchWrapper_->GetSketchEnableRatio(session->GetFeaturesMode());
-        MEDIA_DEBUG_LOG("PreviewOutput::OnControlMetadataChanged OHOS_CONTROL_ZOOM_RATIO >>> tagRatio:%{public}f -- "
+        MEDIA_DEBUG_LOG("PreviewOutput::OnNativeRegisterCallback OHOS_CONTROL_ZOOM_RATIO >>> tagRatio:%{public}f -- "
                         "sketchRatio:%{public}f",
             tagRatio, sketchRatio);
         sketchWrapper_->UpdateSketchRatio(sketchRatio);
@@ -583,7 +583,7 @@ void PreviewOutput::OnNativeRegisterCallback(const std::string& eventString)
 
 void PreviewOutput::OnNativeUnregisterCallback(const std::string& eventString)
 {
-    if (eventString == "sketchAvailable") {
+    if (eventString == CONST_SKETCH_STATUS_CHANGED) {
         std::lock_guard<std::mutex> lock(asyncOpMutex_);
         if (sketchWrapper_ == nullptr) {
             return;

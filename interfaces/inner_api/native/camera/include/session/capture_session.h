@@ -20,7 +20,9 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <set>
+#include <unordered_map>
 #include <vector>
 
 #include "camera_error_code.h"
@@ -164,6 +166,34 @@ public:
     virtual ~MoonCaptureBoostStatusCallback() = default;
     virtual void OnMoonCaptureBoostStatusChanged(MoonCaptureBoostStatus status) = 0;
     MoonCaptureBoostStatus currentStatus = UNKNOWN;
+};
+
+class FeatureDetectionStatusCallback {
+public:
+    enum FeatureDetectionStatus { IDLE = 0, ACTIVE, UNKNOWN };
+
+    FeatureDetectionStatusCallback() = default;
+    virtual ~FeatureDetectionStatusCallback() = default;
+    virtual void OnFeatureDetectionStatusChanged(SceneFeature feature, FeatureDetectionStatus status) = 0;
+    virtual bool IsFeatureSubscribed(SceneFeature feature) = 0;
+
+    inline bool UpdateStatus(SceneFeature feature, FeatureDetectionStatus status)
+    {
+        std::lock_guard<std::mutex> lock(featureStatusMapMutex_);
+        auto it = featureStatusMap_.find(feature);
+        if (it == featureStatusMap_.end()) {
+            featureStatusMap_[feature] = status;
+            return true;
+        } else if (it->second != status) {
+            it->second = status;
+            return true;
+        }
+        return false;
+    }
+
+private:
+    std::mutex featureStatusMapMutex_;
+    std::unordered_map<SceneFeature, FeatureDetectionStatus> featureStatusMap_;
 };
 
 class CaptureSessionCallback : public HCaptureSessionCallbackStub {
@@ -315,6 +345,13 @@ public:
      * @return Returns the pointer to MoonCaptureBoostStatusCallback.
      */
     std::shared_ptr<MoonCaptureBoostStatusCallback> GetMoonCaptureBoostStatusCallback();
+
+    /**
+     * @brief Get the FeatureDetectionStatusCallback.
+     *
+     * @return Returns the pointer to FeatureDetectionStatusCallback.
+     */
+    std::shared_ptr<FeatureDetectionStatusCallback> GetFeatureDetectionStatusCallback();
 
     /**
      * @brief Get the SmoothZoomCallback.
@@ -865,9 +902,19 @@ public:
     bool IsMoonCaptureBoostSupported();
 
     /**
-     * @brief Enable moon capture boost ability.
+     * @brief Enable or disable moon capture boost ability.
      */
     int32_t EnableMoonCaptureBoost(bool isEnable);
+
+    /**
+     * @brief Check current status is support target feature or not.
+     */
+    bool IsFeatureSupported(SceneFeature feature);
+
+    /**
+     * @brief Enable or disable target feature ability.
+     */
+    int32_t EnableFeature(SceneFeature feature, bool isEnable);
 
     /**
      * @brief Set the macro status callback.
@@ -884,6 +931,14 @@ public:
      * @param The MoonCaptureBoostStatusCallback pointer.
      */
     void SetMoonCaptureBoostStatusCallback(std::shared_ptr<MoonCaptureBoostStatusCallback> callback);
+
+    /**
+     * @brief Set the feature detection status callback.
+     * which will be called when there is feature detection state change.
+     *
+     * @param The FeatureDetectionStatusCallback pointer.
+     */
+    void SetFeatureDetectionStatusCallback(std::shared_ptr<FeatureDetectionStatusCallback> callback);
 
     /**
      * @brief This function is called when there is macro status change
@@ -950,6 +1005,7 @@ private:
     std::shared_ptr<FocusCallback> focusCallback_;
     std::shared_ptr<MacroStatusCallback> macroStatusCallback_;
     std::shared_ptr<MoonCaptureBoostStatusCallback> moonCaptureBoostStatusCallback_;
+    std::shared_ptr<FeatureDetectionStatusCallback> featureDetectionStatusCallback_;
     std::shared_ptr<SmoothZoomCallback> smoothZoomCallback_;
     std::vector<int32_t> skinSmoothBeautyRange_;
     std::vector<int32_t> faceSlendorBeautyRange_;

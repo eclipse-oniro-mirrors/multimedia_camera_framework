@@ -16,6 +16,7 @@
 #ifndef CAMERA_ERROR_CODE_H
 #define CAMERA_ERROR_CODE_H
 
+#include <cstdint>
 namespace OHOS {
 namespace CameraStandard {
 /**
@@ -24,7 +25,7 @@ namespace CameraStandard {
  * @since 1.0
  * @version 1.0
  */
-enum CameraErrorCode {
+enum CameraErrorCode : int32_t {
     SUCCESS = 0,
     NO_SYSTEM_APP_PERMISSION = 202,
     INVALID_ARGUMENT = 7400101,

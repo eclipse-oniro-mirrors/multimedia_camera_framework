@@ -16,6 +16,11 @@
 #ifndef CAMERA_NAPI_UTILS_H_
 #define CAMERA_NAPI_UTILS_H_
 
+#include <stdbool.h>
+
+#include "camera_error_code.h"
+#include "camera_napi_const.h"
+#include "js_native_api_types.h"
 #include "napi/native_node_api.h"
 
 #define CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar)        \
@@ -104,114 +109,24 @@
 
 namespace OHOS {
 namespace CameraStandard {
-/* Constants for array index */
-const int32_t PARAM0 = 0;
-const int32_t PARAM1 = 1;
-const int32_t PARAM2 = 2;
-
-/* Constants for array size */
-const int32_t ARGS_ZERO = 0;
-const int32_t ARGS_ONE = 1;
-const int32_t ARGS_TWO = 2;
-const int32_t ARGS_THREE = 3;
-const int32_t SIZE = 100;
-
-struct AsyncContext {
-    napi_env env;
-    napi_async_work work;
-    napi_deferred deferred;
-    napi_ref callbackRef;
-    bool status;
-    int32_t taskId;
-    int32_t errorCode;
-    std::string errorMsg;
-    std::string funcName;
-    bool isInvalidArgument;
-};
-
-struct JSAsyncContextOutput {
-    napi_value error;
-    napi_value data;
-    bool status;
-    bool bRetBool;
-    std::string funcName;
-};
-
-struct AutoRef {
-    AutoRef(napi_env env, napi_ref cb, bool isOnce) : isOnce_(isOnce), env_(env), cb_(cb) {}
-    ~AutoRef()
-    {
-        if (env_ != nullptr && cb_ != nullptr) {
-            (void)napi_delete_reference(env_, cb_);
-        }
-    }
-    bool isOnce_ = false;
-    napi_env env_;
-    napi_ref cb_;
-};
-
-enum JSQualityLevel { QUALITY_LEVEL_HIGH = 0, QUALITY_LEVEL_MEDIUM, QUALITY_LEVEL_LOW };
-
-enum JSImageRotation { ROTATION_0 = 0, ROTATION_90 = 90, ROTATION_180 = 180, ROTATION_270 = 270 };
-
-enum JSCameraStatus {
-    JS_CAMERA_STATUS_APPEAR = 0,
-    JS_CAMERA_STATUS_DISAPPEAR = 1,
-    JS_CAMERA_STATUS_AVAILABLE = 2,
-    JS_CAMERA_STATUS_UNAVAILABLE = 3
-};
-
-enum CameraTaskId {
-    CAMERA_MANAGER_TASKID = 0x01000000,
-    CAMERA_INPUT_TASKID = 0x02000000,
-    CAMERA_PHOTO_OUTPUT_TASKID = 0x03000000,
-    CAMERA_PREVIEW_OUTPUT_TASKID = 0x04000000,
-    CAMERA_VIDEO_OUTPUT_TASKID = 0x05000000,
-    CAMERA_SESSION_TASKID = 0x06000000,
-    MODE_MANAGER_TASKID = 0x07000000,
-    CAMERA_PICKER_TASKID = 0x08000000,
-    PHOTO_TASKID = 0x09000000,
-    DEFERRED_PHOTO_PROXY_TASKID = 0x0A000000,
-};
-
-enum JSMetadataObjectType { FACE = 0 };
-
-enum CameraSteps {
-    CREATE_CAMERA_INPUT_INSTANCE,
-    CREATE_PREVIEW_OUTPUT_INSTANCE,
-    CREATE_PHOTO_OUTPUT_INSTANCE,
-    CREATE_VIDEO_OUTPUT_INSTANCE,
-    CREATE_METADATA_OUTPUT_INSTANCE,
-    ADD_INPUT,
-    REMOVE_INPUT,
-    ADD_OUTPUT,
-    REMOVE_OUTPUT,
-    PHOTO_OUT_CAPTURE,
-    ADD_DEFERRED_SURFACE,
-    CREATE_DEFERRED_PREVIEW_OUTPUT
-};
-
 /* Util class used by napi asynchronous methods for making call to js callback function */
 class CameraNapiUtils {
 public:
-    static void CreateNapiErrorObject(napi_env env, int32_t errorCode, const char* errString,
-        std::unique_ptr<JSAsyncContextOutput> &jsContext);
+    static void CreateNapiErrorObject(
+        napi_env env, int32_t errorCode, const char* errString, std::unique_ptr<JSAsyncContextOutput>& jsContext);
 
-    static void InvokeJSAsyncMethod(napi_env env, napi_deferred deferred,
-        napi_ref callbackRef, napi_async_work work, const JSAsyncContextOutput &asyncContext);
+    static void InvokeJSAsyncMethod(napi_env env, napi_deferred deferred, napi_ref callbackRef, napi_async_work work,
+        const JSAsyncContextOutput& asyncContext);
 
-    static int32_t IncreamentAndGet(uint32_t &num);
+    static int32_t IncreamentAndGet(uint32_t& num);
 
-    static bool CheckInvalidArgument(napi_env env, size_t argc, int32_t length,
-                                     napi_value *argv, CameraSteps step);
+    static bool CheckInvalidArgument(napi_env env, size_t argc, int32_t length, napi_value* argv, CameraSteps step);
 
     static bool CheckError(napi_env env, int32_t retCode);
 
     static double FloatToDouble(float val);
 
     static std::string GetStringArgument(napi_env env, napi_value value);
-
-    static void ThrowError(napi_env env, int32_t code);
 
     static bool IsSameCallback(napi_env env, napi_value callback, napi_ref refCallback);
 
@@ -226,6 +141,19 @@ public:
 
     static napi_status CreateObjectWithPropNameAndValues(napi_env env, napi_value* result, size_t property_count,
         const char** keys, const std::vector<std::string> values);
+
+    inline static napi_value GetUndefinedValue(napi_env env)
+    {
+        napi_value result = nullptr;
+        napi_get_undefined(env, &result);
+        return result;
+    }
+
+    inline static void ThrowError(napi_env env, int32_t code, const char* message)
+    {
+        std::string errorCode = std::to_string(code);
+        napi_throw_error(env, errorCode.c_str(), message);
+    }
 
 private:
     explicit CameraNapiUtils() {};

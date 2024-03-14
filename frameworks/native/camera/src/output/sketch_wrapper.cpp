@@ -197,10 +197,10 @@ SceneFeaturesMode SketchWrapper::GetSceneFeaturesModeFromModeData(float modeFloa
     auto sceneMode = static_cast<SceneMode>(round(modeFloatData));
     if (sceneMode == CAPTURE_MACRO) {
         currentSceneFeaturesMode.SetSceneMode(CAPTURE);
-        currentSceneFeaturesMode.SwitchFeature(MACRO, true);
+        currentSceneFeaturesMode.SwitchFeature(FEATURE_MACRO, true);
     } else if (sceneMode == VIDEO_MACRO) {
         currentSceneFeaturesMode.SetSceneMode(VIDEO);
-        currentSceneFeaturesMode.SwitchFeature(MACRO, true);
+        currentSceneFeaturesMode.SwitchFeature(FEATURE_MACRO, true);
     } else {
         currentSceneFeaturesMode.SetSceneMode(sceneMode);
     }
@@ -341,7 +341,8 @@ void SketchWrapper::UpdateSketchConfigFromMoonCaptureBoostConfig(
     for (uint32_t i = 0; i < item.count; i++) {
         if (currentMode == INVALID_MODE) {
             currentMode = static_cast<SceneMode>(item.data.ui32[i]);
-            currentSceneFeaturesMode = SceneFeaturesMode(static_cast<SceneMode>(currentMode), { MOON_CAPTURE_BOOST });
+            currentSceneFeaturesMode =
+                SceneFeaturesMode(static_cast<SceneMode>(currentMode), { FEATURE_MOON_CAPTURE_BOOST });
             continue;
         }
         if (currentMinRatio == INVALID_ZOOM_RATIO) {

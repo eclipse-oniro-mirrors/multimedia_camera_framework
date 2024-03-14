@@ -43,7 +43,7 @@ export struct SlidePage {
         .fontSize(14)
         .textAlign(TextAlign.Center)
         .margin({ left: this.sliderTextPos })
-        .padding("3px")
+        .padding('3px')
         .alignSelf(ItemAlign.Start)
 
       Row() {

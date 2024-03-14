@@ -16,8 +16,10 @@
 #include <uv.h>
 #include <unistd.h>
 #include "camera_buffer_handle_utils.h"
+#include "camera_error_code.h"
 #include "camera_napi_security_utils.h"
 #include "camera_napi_template_utils.h"
+#include "camera_napi_utils.h"
 #include "image_napi.h"
 #include "image_receiver.h"
 #include "pixel_map_napi.h"
@@ -244,10 +246,10 @@ void PhotoListener::RemoveCallbackRef(napi_env env, napi_value callback, const s
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    if (eventType == OHOS::CameraStandard::captureRegisterName) {
+    if (eventType == CONST_CAPTURE_PHOTO_AVAILABLE) {
         napi_delete_reference(env_, capturePhotoCb_);
         capturePhotoCb_ = nullptr;
-    } else if (eventType == OHOS::CameraStandard::deferredRegisterName) {
+    } else if (eventType == CONST_CAPTURE_DEFERRED_PHOTO_AVAILABLE) {
         napi_delete_reference(env_, captureDeferredPhotoCb_);
         captureDeferredPhotoCb_ = nullptr;
     }
@@ -382,6 +384,7 @@ void PhotoOutputCallback::SaveCallbackReference(const std::string& eventType, na
             break;
         default:
             MEDIA_ERR_LOG("Incorrect photo callback event type received from JS");
+            CameraNapiUtils::ThrowError(env_, INVALID_ARGUMENT, "Incorrect photo callback event type received from JS");
             return;
     }
     for (auto it = callbackList->begin(); it != callbackList->end(); ++it) {
@@ -424,6 +427,7 @@ void PhotoOutputCallback::RemoveCallbackRef(napi_env env, napi_value callback, c
             break;
         default:
             MEDIA_ERR_LOG("Incorrect photo callback event type received from JS");
+            CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "Incorrect photo callback event type received from JS");
             return;
     }
     for (auto it = callbackList->begin(); it != callbackList->end(); ++it) {
@@ -703,12 +707,6 @@ PhotoOutputNapi::~PhotoOutputNapi()
     MEDIA_DEBUG_LOG("~PhotoOutputNapi is called");
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
-    }
-    if (photoOutput_) {
-        photoOutput_ = nullptr;
-    }
-    if (photoOutputCallback_) {
-        photoOutputCallback_ = nullptr;
     }
 }
 
@@ -1211,7 +1209,7 @@ napi_value PhotoOutputNapi::Release(napi_env env, napi_callback_info info)
                 context->funcName = "PhotoOutputNapi::Release";
                 context->taskId = CameraNapiUtils::IncreamentAndGet(photoOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr && context->objectInfo->photoOutput_ != nullptr) {
+                if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
                     context->status = true;
                     ((sptr<PhotoOutput>&)(context->objectInfo->photoOutput_))->Release();
@@ -1508,101 +1506,203 @@ napi_value PhotoOutputNapi::EnableQuickThumbnail(napi_env env, napi_callback_inf
     return result;
 }
 
-napi_value PhotoOutputNapi::RegisterCallback(
-    napi_env env, napi_value jsThis, const string& eventType, napi_value callback, bool isOnce)
+void PhotoOutputNapi::RegisterQuickThumbnailCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    MEDIA_INFO_LOG("RegisterCallback is called");
-    napi_value undefinedResult = nullptr;
-    napi_get_undefined(env, &undefinedResult);
-    napi_status status;
-    PhotoOutputNapi* photoOutputNapi = nullptr;
-    status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&photoOutputNapi));
-    NAPI_ASSERT(env, status == napi_ok && photoOutputNapi != nullptr, "Failed to retrieve photoOutputNapi instance.");
-    NAPI_ASSERT(env, photoOutputNapi->photoOutput_ != nullptr, "photoOutput is null.");
-    if (eventType.compare(OHOS::CameraStandard::thumbnailRegisterName) == 0) {
-        // Set callback for exposureStateChange
-        if (photoOutputNapi->thumbnailListener_ == nullptr) {
-            if (!CameraNapiSecurity::CheckSystemApp(env)) {
-                MEDIA_ERR_LOG("SystemApi quickThumbnail on is called!");
-                return nullptr;
-            }
-            if (!photoOutputNapi->isQuickThumbnailEnabled_) {
-                MEDIA_ERR_LOG("quickThumbnail is not enabled!");
-                napi_throw_error(env, std::to_string(SESSION_NOT_RUNNING).c_str(), "");
-                return undefinedResult;
-            }
-            sptr<ThumbnailListener> listener = new ThumbnailListener(env, photoOutputNapi->photoOutput_);
-            photoOutputNapi->thumbnailListener_ = listener;
-            photoOutputNapi->photoOutput_->SetThumbnailListener((sptr<IBufferConsumerListener>&)listener);
-        }
-        photoOutputNapi->thumbnailListener_->SaveCallbackReference(callback, isOnce);
-    } else if (((eventType.compare(OHOS::CameraStandard::captureRegisterName) == 0) ||
-                (eventType.compare(OHOS::CameraStandard::deferredRegisterName) == 0))) {
-        if (sPhotoSurface_ == nullptr) {
-            MEDIA_ERR_LOG("sPhotoSurface_ is null!");
-            return undefinedResult;
-        }
-        if (photoOutputNapi->photoListener_ == nullptr) {
-            MEDIA_INFO_LOG("new photoListener and register surface consumer listener");
-            sptr<PhotoListener> phtotListener = new PhotoListener(env, sPhotoSurface_);
-            SurfaceError ret = sPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)phtotListener);
-            if (ret != SURFACE_ERROR_OK) {
-                MEDIA_ERR_LOG("register surface consumer listener failed!");
-            }
-            photoOutputNapi->photoListener_ = phtotListener;
-        }
-        photoOutputNapi->photoListener_->SaveCallbackReference(eventType, callback);
-    } else if (!eventType.empty()) {
-        if (photoOutputNapi->photoOutputCallback_ == nullptr) {
-            std::shared_ptr<PhotoOutputCallback> photoOutputCallback = std::make_shared<PhotoOutputCallback>(env);
-            photoOutputNapi->photoOutput_->SetCallback(photoOutputCallback);
-            photoOutputNapi->photoOutputCallback_ = photoOutputCallback;
-        }
-        photoOutputNapi->photoOutputCallback_->SaveCallbackReference(eventType, callback, isOnce);
-    } else {
-        MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi quickThumbnail on is called!");
+        return;
     }
-    return undefinedResult;
-}
 
-napi_value PhotoOutputNapi::UnregisterCallback(
-    napi_env env, napi_value jsThis, const std::string& eventType, napi_value callback)
-{
-    MEDIA_INFO_LOG("UnregisterCallback is called");
-    napi_value undefinedResult = nullptr;
-    napi_get_undefined(env, &undefinedResult);
-    PhotoOutputNapi* photoOutputNapi = nullptr;
-    napi_status status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&photoOutputNapi));
-    NAPI_ASSERT(env, status == napi_ok && photoOutputNapi != nullptr, "Failed to photoOutputNapi instance.");
-    NAPI_ASSERT(env, photoOutputNapi->photoOutput_ != nullptr, "photoOutput is null.");
-    if (eventType == OHOS::CameraStandard::captureRegisterName ||
-        eventType == OHOS::CameraStandard::deferredRegisterName) {
-        if (photoOutputNapi->photoListener_ != nullptr) {
-            photoOutputNapi->photoListener_->RemoveCallbackRef(env, callback, eventType);
-        }
-    } else if (eventType == OHOS::CameraStandard::thumbnailRegisterName) {
-        if (!CameraNapiSecurity::CheckSystemApp(env)) {
-            MEDIA_ERR_LOG("SystemApi quickThumbnail off is called!");
-            return undefinedResult;
-        }
-        if (!photoOutputNapi->isQuickThumbnailEnabled_) {
+    // Set callback for exposureStateChange
+    if (thumbnailListener_ == nullptr) {
+        if (!isQuickThumbnailEnabled_) {
             MEDIA_ERR_LOG("quickThumbnail is not enabled!");
             napi_throw_error(env, std::to_string(SESSION_NOT_RUNNING).c_str(), "");
-            return undefinedResult;
+            return;
         }
-        if (photoOutputNapi->thumbnailListener_ != nullptr) {
-            photoOutputNapi->thumbnailListener_->RemoveCallbackRef(env, callback);
-        }
-    } else if (!eventType.empty()) {
-        if (photoOutputNapi->photoOutputCallback_ == nullptr) {
-            MEDIA_ERR_LOG("photoOutputCallback is null");
-        } else {
-            photoOutputNapi->photoOutputCallback_->RemoveCallbackRef(env, callback, eventType);
-        }
-    } else {
-        MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
+        thumbnailListener_ = new ThumbnailListener(env, photoOutput_);
+        photoOutput_->SetThumbnailListener((sptr<IBufferConsumerListener>&)thumbnailListener_);
     }
-    return undefinedResult;
+    thumbnailListener_->SaveCallbackReference(callback, isOnce);
+}
+
+void PhotoOutputNapi::UnregisterQuickThumbnailCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi quickThumbnail off is called!");
+        return;
+    }
+    if (!isQuickThumbnailEnabled_) {
+        MEDIA_ERR_LOG("quickThumbnail is not enabled!");
+        napi_throw_error(env, std::to_string(SESSION_NOT_RUNNING).c_str(), "");
+        return;
+    }
+    if (thumbnailListener_ != nullptr) {
+        thumbnailListener_->RemoveCallbackRef(env, callback);
+    }
+}
+
+void PhotoOutputNapi::RegisterPhotoAvailableCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (sPhotoSurface_ == nullptr) {
+        MEDIA_ERR_LOG("sPhotoSurface_ is null!");
+        return;
+    }
+    if (photoListener_ == nullptr) {
+        MEDIA_INFO_LOG("new photoListener and register surface consumer listener");
+        sptr<PhotoListener> photoListener = new (std::nothrow) PhotoListener(env, sPhotoSurface_);
+        SurfaceError ret = sPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener);
+        if (ret != SURFACE_ERROR_OK) {
+            MEDIA_ERR_LOG("register surface consumer listener failed!");
+        }
+        photoListener_ = photoListener;
+    }
+    photoListener_->SaveCallbackReference(CONST_CAPTURE_PHOTO_AVAILABLE, callback);
+}
+
+void PhotoOutputNapi::UnregisterPhotoAvailableCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (photoListener_ != nullptr) {
+        photoListener_->RemoveCallbackRef(env, callback, CONST_CAPTURE_PHOTO_AVAILABLE);
+    }
+}
+
+void PhotoOutputNapi::RegisterDeferredPhotoProxyAvailableCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (sPhotoSurface_ == nullptr) {
+        MEDIA_ERR_LOG("sPhotoSurface_ is null!");
+        return;
+    }
+    if (photoListener_ == nullptr) {
+        MEDIA_INFO_LOG("new photoListener and register surface consumer listener");
+        sptr<PhotoListener> photoListener = new (std::nothrow) PhotoListener(env, sPhotoSurface_);
+        SurfaceError ret = sPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener);
+        if (ret != SURFACE_ERROR_OK) {
+            MEDIA_ERR_LOG("register surface consumer listener failed!");
+        }
+        photoListener_ = photoListener;
+    }
+    photoListener_->SaveCallbackReference(CONST_CAPTURE_DEFERRED_PHOTO_AVAILABLE, callback);
+}
+
+void PhotoOutputNapi::UnregisterDeferredPhotoProxyAvailableCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (photoListener_ != nullptr) {
+        photoListener_->RemoveCallbackRef(env, callback, CONST_CAPTURE_DEFERRED_PHOTO_AVAILABLE);
+    }
+}
+
+void PhotoOutputNapi::RegisterCaptureStartCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (photoOutputCallback_ == nullptr) {
+        photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
+        photoOutput_->SetCallback(photoOutputCallback_);
+    }
+    photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_START, callback, isOnce);
+}
+
+void PhotoOutputNapi::UnregisterCaptureStartCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (photoOutputCallback_ == nullptr) {
+        MEDIA_ERR_LOG("photoOutputCallback is null");
+        return;
+    }
+    photoOutputCallback_->RemoveCallbackRef(env, callback, CONST_CAPTURE_START);
+}
+
+void PhotoOutputNapi::RegisterCaptureEndCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (photoOutputCallback_ == nullptr) {
+        photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
+        photoOutput_->SetCallback(photoOutputCallback_);
+    }
+    photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_END, callback, isOnce);
+}
+
+void PhotoOutputNapi::UnregisterCaptureEndCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (photoOutputCallback_ == nullptr) {
+        MEDIA_ERR_LOG("photoOutputCallback is null");
+        return;
+    }
+    photoOutputCallback_->RemoveCallbackRef(env, callback, CONST_CAPTURE_END);
+}
+
+void PhotoOutputNapi::RegisterFrameShutterCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (photoOutputCallback_ == nullptr) {
+        photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
+        photoOutput_->SetCallback(photoOutputCallback_);
+    }
+    photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_FRAME_SHUTTER, callback, isOnce);
+}
+
+void PhotoOutputNapi::UnregisterFrameShutterCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (photoOutputCallback_ == nullptr) {
+        MEDIA_ERR_LOG("photoOutputCallback is null");
+        return;
+    }
+    photoOutputCallback_->RemoveCallbackRef(env, callback, CONST_CAPTURE_FRAME_SHUTTER);
+}
+
+void PhotoOutputNapi::RegisterErrorCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (photoOutputCallback_ == nullptr) {
+        photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
+        photoOutput_->SetCallback(photoOutputCallback_);
+    }
+    photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_ERROR, callback, isOnce);
+}
+
+void PhotoOutputNapi::UnregisterErrorCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (photoOutputCallback_ == nullptr) {
+        MEDIA_ERR_LOG("photoOutputCallback is null");
+        return;
+    }
+    photoOutputCallback_->RemoveCallbackRef(env, callback, CONST_CAPTURE_ERROR);
+}
+
+const PhotoOutputNapi::EmitterFunctions& PhotoOutputNapi::GetEmitterFunctions()
+{
+    static const EmitterFunctions funMap = {
+        { CONST_CAPTURE_QUICK_THUMBNAIL, {
+            &PhotoOutputNapi::RegisterQuickThumbnailCallbackListener,
+            &PhotoOutputNapi::UnregisterQuickThumbnailCallbackListener } },
+        { CONST_CAPTURE_PHOTO_AVAILABLE, {
+            &PhotoOutputNapi::RegisterPhotoAvailableCallbackListener,
+            &PhotoOutputNapi::UnregisterPhotoAvailableCallbackListener } },
+        { CONST_CAPTURE_DEFERRED_PHOTO_AVAILABLE, {
+            &PhotoOutputNapi::RegisterDeferredPhotoProxyAvailableCallbackListener,
+            &PhotoOutputNapi::UnregisterDeferredPhotoProxyAvailableCallbackListener } },
+        { CONST_CAPTURE_START, {
+            &PhotoOutputNapi::RegisterCaptureStartCallbackListener,
+            &PhotoOutputNapi::UnregisterCaptureStartCallbackListener } },
+        { CONST_CAPTURE_END, {
+            &PhotoOutputNapi::RegisterCaptureEndCallbackListener,
+            &PhotoOutputNapi::UnregisterCaptureEndCallbackListener } },
+        { CONST_CAPTURE_FRAME_SHUTTER, {
+            &PhotoOutputNapi::RegisterFrameShutterCallbackListener,
+            &PhotoOutputNapi::UnregisterFrameShutterCallbackListener } },
+        { CONST_CAPTURE_ERROR, {
+            &PhotoOutputNapi::RegisterErrorCallbackListener,
+            &PhotoOutputNapi::UnregisterErrorCallbackListener } } };
+    return funMap;
 }
 
 napi_value PhotoOutputNapi::On(napi_env env, napi_callback_info info)

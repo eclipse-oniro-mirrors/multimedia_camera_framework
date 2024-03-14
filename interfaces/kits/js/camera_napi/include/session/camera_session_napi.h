@@ -19,6 +19,9 @@
 #include <memory>
 #include <mutex>
 #include <type_traits>
+#include <unordered_map>
+#include <unordered_set>
+#include "capture_scene_const.h"
 #include "hilog/log.h"
 #include "camera_napi_utils.h"
 
@@ -122,6 +125,37 @@ struct MoonCaptureBoostStatusCallbackInfo {
     {}
 };
 
+class FeatureDetectionStatusCallbackListener : public FeatureDetectionStatusCallback {
+public:
+    FeatureDetectionStatusCallbackListener(napi_env env) : env_(env) {};
+    ~FeatureDetectionStatusCallbackListener() = default;
+    void OnFeatureDetectionStatusChanged(SceneFeature feature, FeatureDetectionStatus status) override;
+    bool IsFeatureSubscribed(SceneFeature feature) override;
+
+    void SaveCallbackReference(SceneFeature feature, napi_value callback, bool isOnce);
+
+    void RemoveCallbackRef(SceneFeature feature, napi_value callback);
+
+private:
+    void OnFeatureDetectionStatusChangedCallback(SceneFeature feature, FeatureDetectionStatus status) const;
+    void OnFeatureDetectionStatusChangedCallbackAsync(SceneFeature feature, FeatureDetectionStatus status) const;
+
+    napi_env env_;
+    mutable std::mutex featureListenerMapMutex_;
+    std::unordered_map<SceneFeature, shared_ptr<ListenerBase>> featureListenerMap_;
+};
+
+struct FeatureDetectionStatusCallbackInfo {
+    SceneFeature feature_;
+    FeatureDetectionStatusCallback::FeatureDetectionStatus status_;
+    const FeatureDetectionStatusCallbackListener* listener_;
+    FeatureDetectionStatusCallbackInfo(SceneFeature feature,
+        FeatureDetectionStatusCallback::FeatureDetectionStatus status,
+        const FeatureDetectionStatusCallbackListener* listener)
+        : feature_(feature), status_(status), listener_(listener)
+    {}
+};
+
 class SessionCallbackListener : public SessionCallback, public ListenerBase {
 public:
     SessionCallbackListener(napi_env env) : ListenerBase(env) {}
@@ -158,12 +192,12 @@ struct SmoothZoomCallbackInfo {
         : duration_(duration), listener_(listener) {}
 };
 
-class CameraSessionNapi {
+class CameraSessionNapi : public CameraNapiEventEmitter<CameraSessionNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateCameraSession(napi_env env);
     CameraSessionNapi();
-    ~CameraSessionNapi();
+    ~CameraSessionNapi() override;
 
     static void CameraSessionNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value CameraSessionNapiConstructor(napi_env env, napi_callback_info info);
@@ -211,6 +245,9 @@ public:
     static napi_value IsMoonCaptureBoostSupported(napi_env env, napi_callback_info info);
     static napi_value EnableMoonCaptureBoost(napi_env env, napi_callback_info info);
 
+    static napi_value IsFeatureSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableFeature(napi_env env, napi_callback_info info);
+
     static napi_value BeginConfig(napi_env env, napi_callback_info info);
     static napi_value CommitConfig(napi_env env, napi_callback_info info);
 
@@ -236,10 +273,7 @@ public:
     static napi_value Once(napi_env env, napi_callback_info info);
     static napi_value Off(napi_env env, napi_callback_info info);
 
-    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string &eventType, napi_value callback, bool isOnce);
-    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string &eventType, napi_value callback);
+    const EmitterFunctions& GetEmitterFunctions() override;
 
     napi_env env_;
     napi_ref wrapper_;
@@ -249,6 +283,7 @@ public:
     std::shared_ptr<ExposureCallbackListener> exposureCallback_;
     std::shared_ptr<MacroStatusCallbackListener> macroStatusCallback_;
     std::shared_ptr<MoonCaptureBoostCallbackListener> moonCaptureBoostCallback_;
+    std::shared_ptr<FeatureDetectionStatusCallbackListener> featureDetectionStatusCallback_;
     std::shared_ptr<SmoothZoomCallbackListener> smoothZoomCallback_;
 
     static thread_local napi_ref sConstructor_;
@@ -265,7 +300,33 @@ public:
     static const std::vector<napi_property_descriptor> color_effect_props;
     static const std::vector<napi_property_descriptor> macro_props;
     static const std::vector<napi_property_descriptor> moon_capture_boost_props;
+    static const std::vector<napi_property_descriptor> features_props;
     static const std::vector<napi_property_descriptor> color_management_props;
+
+private:
+    void RegisterExposureCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterExposureCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterFocusCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterFocusCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterMacroStatusCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterMacroStatusCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterMoonCaptureBoostCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterMoonCaptureBoostCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterFeatureDetectionStatusListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterFeatureDetectionStatusListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterSessionErrorCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterSessionErrorCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterSmoothZoomCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterSmoothZoomCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
 };
 
 struct CameraSessionAsyncContext : public AsyncContext {

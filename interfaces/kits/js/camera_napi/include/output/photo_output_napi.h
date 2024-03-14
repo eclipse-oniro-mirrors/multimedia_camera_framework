@@ -17,6 +17,7 @@
 #define PHOTO_OUTPUT_NAPI_H_
 
 #include "camera_napi_template_utils.h"
+#include "camera_napi_event_emitter.h"
 #include "input/camera_device.h"
 #include "input/camera_manager.h"
 #include "listener_base.h"
@@ -28,11 +29,14 @@ namespace OHOS {
 namespace CameraStandard {
 const std::string dataWidth = "dataWidth";
 const std::string dataHeight = "dataHeight";
-const std::string thumbnailRegisterName = "quickThumbnail";
-const std::string captureRegisterName = "photoAvailable";
-const std::string deferredRegisterName = "deferredPhotoProxyAvailable";
+static const std::string CONST_CAPTURE_START = "captureStart";
+static const std::string CONST_CAPTURE_END = "captureEnd";
+static const std::string CONST_CAPTURE_FRAME_SHUTTER = "frameShutter";
+static const std::string CONST_CAPTURE_ERROR = "error";
+static const std::string CONST_CAPTURE_PHOTO_AVAILABLE = "photoAvailable";
+static const std::string CONST_CAPTURE_DEFERRED_PHOTO_AVAILABLE = "deferredPhotoProxyAvailable";
+static const std::string CONST_CAPTURE_QUICK_THUMBNAIL = "quickThumbnail";
 static const char CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME[] = "PhotoOutput";
-
 struct CallbackInfo {
     int32_t captureID;
     uint64_t timestamp = 0;
@@ -168,7 +172,7 @@ struct PhotoListenerInfo {
     {}
 };
 
-class PhotoOutputNapi {
+class PhotoOutputNapi : public CameraNapiEventEmitter<PhotoOutputNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreatePhotoOutput(napi_env env, Profile& profile, std::string surfaceId);
@@ -188,21 +192,44 @@ public:
     static napi_value On(napi_env env, napi_callback_info info);
     static napi_value Once(napi_env env, napi_callback_info info);
     static napi_value Off(napi_env env, napi_callback_info info);
-    static napi_value RegisterCallback(
-        napi_env env, napi_value jsThis, const std::string& eventType, napi_value callback, bool isOnce);
-    static napi_value UnregisterCallback(
-        napi_env env, napi_value jsThis, const std::string& eventType, napi_value callback);
     static int32_t MapQualityLevelFromJs(int32_t jsQuality, PhotoCaptureSetting::QualityLevel& nativeQuality);
     static int32_t MapImageRotationFromJs(int32_t jsRotation, PhotoCaptureSetting::RotationConfig& nativeRotation);
 
     PhotoOutputNapi();
-    ~PhotoOutputNapi();
+    ~PhotoOutputNapi() override;
 
     sptr<PhotoOutput> GetPhotoOutput();
+
+    const EmitterFunctions& GetEmitterFunctions() override;
 
 private:
     static void PhotoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value PhotoOutputNapiConstructor(napi_env env, napi_callback_info info);
+
+    void RegisterQuickThumbnailCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterQuickThumbnailCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterPhotoAvailableCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterPhotoAvailableCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterDeferredPhotoProxyAvailableCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterDeferredPhotoProxyAvailableCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterCaptureStartCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterCaptureStartCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterCaptureEndCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterCaptureEndCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterFrameShutterCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterFrameShutterCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterErrorCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterErrorCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<PhotoOutput> sPhotoOutput_;

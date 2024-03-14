@@ -781,6 +781,12 @@ std::shared_ptr<MoonCaptureBoostStatusCallback> CaptureSession::GetMoonCaptureBo
     return moonCaptureBoostStatusCallback_;
 }
 
+std::shared_ptr<FeatureDetectionStatusCallback> CaptureSession::GetFeatureDetectionStatusCallback()
+{
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    return featureDetectionStatusCallback_;
+}
+
 std::shared_ptr<SmoothZoomCallback> CaptureSession::GetSmoothZoomCallback()
 {
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
@@ -2471,8 +2477,8 @@ SceneFeaturesMode CaptureSession::GetFeaturesMode()
 {
     SceneFeaturesMode sceneFeaturesMode;
     sceneFeaturesMode.SetSceneMode(GetMode());
-    sceneFeaturesMode.SwitchFeature(MACRO, isSetMacroEnable_);
-    sceneFeaturesMode.SwitchFeature(MOON_CAPTURE_BOOST, isSetMoonCaptureBoostEnable_);
+    sceneFeaturesMode.SwitchFeature(FEATURE_MACRO, isSetMacroEnable_);
+    sceneFeaturesMode.SwitchFeature(FEATURE_MOON_CAPTURE_BOOST, isSetMoonCaptureBoostEnable_);
     return sceneFeaturesMode;
 }
 
@@ -2482,11 +2488,12 @@ vector<SceneFeaturesMode> CaptureSession::GetSubFeatureMods()
     auto mode = GetMode();
     sceneFeaturesModes.emplace_back(SceneFeaturesMode(mode, {}));
     if (mode == SceneMode::CAPTURE) {
-        sceneFeaturesModes.emplace_back(SceneFeaturesMode(SceneMode::CAPTURE, { SceneFeature::MACRO }));
-        sceneFeaturesModes.emplace_back(SceneFeaturesMode(SceneMode::CAPTURE, { SceneFeature::MOON_CAPTURE_BOOST }));
+        sceneFeaturesModes.emplace_back(SceneFeaturesMode(SceneMode::CAPTURE, { SceneFeature::FEATURE_MACRO }));
+        sceneFeaturesModes.emplace_back(
+            SceneFeaturesMode(SceneMode::CAPTURE, { SceneFeature::FEATURE_MOON_CAPTURE_BOOST }));
     } else if (mode == SceneMode::VIDEO) {
         sceneFeaturesModes.emplace_back(
-            SceneFeaturesMode(SceneMode::VIDEO, std::set<SceneFeature> { SceneFeature::MACRO }));
+            SceneFeaturesMode(SceneMode::VIDEO, std::set<SceneFeature> { SceneFeature::FEATURE_MACRO }));
     }
     return sceneFeaturesModes;
 }
@@ -3304,6 +3311,40 @@ int32_t CaptureSession::EnableMoonCaptureBoost(bool isEnable)
     return CameraErrorCode::SUCCESS;
 }
 
+bool CaptureSession::IsFeatureSupported(SceneFeature feature)
+{
+    switch (static_cast<SceneFeature>(feature)) {
+        case FEATURE_MACRO:
+            return IsMacroSupported();
+            break;
+        case FEATURE_MOON_CAPTURE_BOOST:
+            return IsMoonCaptureBoostSupported();
+            break;
+        default:
+            MEDIA_ERR_LOG("CaptureSession::IsFeatureSupported sceneFeature is unhandled %{public}d", feature);
+            break;
+    }
+    return false;
+}
+
+int32_t CaptureSession::EnableFeature(SceneFeature feature, bool isEnable)
+{
+    LockForControl();
+    int32_t retCode;
+    switch (static_cast<SceneFeature>(feature)) {
+        case FEATURE_MACRO:
+            retCode = EnableMacro(isEnable);
+            break;
+        case FEATURE_MOON_CAPTURE_BOOST:
+            retCode = EnableMoonCaptureBoost(isEnable);
+            break;
+        default:
+            retCode = INVALID_ARGUMENT;
+    }
+    UnlockForControl();
+    return retCode;
+}
+
 void CaptureSession::SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback)
 {
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
@@ -3315,6 +3356,13 @@ void CaptureSession::SetMoonCaptureBoostStatusCallback(std::shared_ptr<MoonCaptu
 {
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     moonCaptureBoostStatusCallback_ = callback;
+    return;
+}
+
+void CaptureSession::SetFeatureDetectionStatusCallback(std::shared_ptr<FeatureDetectionStatusCallback> callback)
+{
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    featureDetectionStatusCallback_ = callback;
     return;
 }
 
@@ -3354,8 +3402,12 @@ void CaptureSession::ProcessMoonCaptureBoostStatusChange(const std::shared_ptr<O
     MEDIA_DEBUG_LOG("Entry ProcessMoonCaptureBoostStatusChange");
 
     auto statusCallback = GetMoonCaptureBoostStatusCallback();
-    if (statusCallback == nullptr) {
-        MEDIA_DEBUG_LOG("CaptureSession::ProcessMoonCaptureBoostStatusChange statusCallback is null");
+    auto featureStatusCallback = GetFeatureDetectionStatusCallback();
+    if (statusCallback == nullptr &&
+        (featureStatusCallback == nullptr ||
+            !featureStatusCallback->IsFeatureSubscribed(SceneFeature::FEATURE_MOON_CAPTURE_BOOST))) {
+        MEDIA_DEBUG_LOG("CaptureSession::ProcessMoonCaptureBoostStatusChange statusCallback and "
+                        "featureDetectionStatusChangedCallback are null");
         return;
     }
 
@@ -3368,14 +3420,27 @@ void CaptureSession::ProcessMoonCaptureBoostStatusChange(const std::shared_ptr<O
     }
     auto isMoonActive = static_cast<bool>(item.data.u8[0]);
     MEDIA_DEBUG_LOG("Moon active: %{public}d", isMoonActive);
-    auto moonCaptureBoostStatus = isMoonActive ? MoonCaptureBoostStatusCallback::MoonCaptureBoostStatus::ACTIVE
-                                               : MoonCaptureBoostStatusCallback::MoonCaptureBoostStatus::IDLE;
-    if (moonCaptureBoostStatus == statusCallback->currentStatus) {
-        MEDIA_DEBUG_LOG("Moon mode: no change");
-        return;
+
+    if (statusCallback != nullptr) {
+        auto moonCaptureBoostStatus = isMoonActive ? MoonCaptureBoostStatusCallback::MoonCaptureBoostStatus::ACTIVE
+                                                   : MoonCaptureBoostStatusCallback::MoonCaptureBoostStatus::IDLE;
+        if (moonCaptureBoostStatus == statusCallback->currentStatus) {
+            MEDIA_DEBUG_LOG("Moon mode: no change");
+            return;
+        }
+        statusCallback->currentStatus = moonCaptureBoostStatus;
+        statusCallback->OnMoonCaptureBoostStatusChanged(moonCaptureBoostStatus);
     }
-    statusCallback->currentStatus = moonCaptureBoostStatus;
-    statusCallback->OnMoonCaptureBoostStatusChanged(moonCaptureBoostStatus);
+    if (featureStatusCallback != nullptr &&
+        featureStatusCallback->IsFeatureSubscribed(SceneFeature::FEATURE_MOON_CAPTURE_BOOST)) {
+        auto detectStatus = isMoonActive ? FeatureDetectionStatusCallback::FeatureDetectionStatus::ACTIVE
+                                         : FeatureDetectionStatusCallback::FeatureDetectionStatus::IDLE;
+        if (!featureStatusCallback->UpdateStatus(SceneFeature::FEATURE_MOON_CAPTURE_BOOST, detectStatus)) {
+            MEDIA_DEBUG_LOG("Feature detect Moon mode: no change");
+            return;
+        }
+        featureStatusCallback->OnFeatureDetectionStatusChanged(SceneFeature::FEATURE_MOON_CAPTURE_BOOST, detectStatus);
+    }
 }
 
 bool CaptureSession::IsSetEnableMacro()

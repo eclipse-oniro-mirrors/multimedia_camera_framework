@@ -16,6 +16,7 @@
 #ifndef CAMERA_INPUT_NAPI_H_
 #define CAMERA_INPUT_NAPI_H_
 
+#include "camera_napi_event_emitter.h"
 #include "hilog/log.h"
 #include "camera_napi_utils.h"
 
@@ -62,17 +63,17 @@ struct ErrorCallbackInfo {
         : errorType_(errorType), errorMsg_(errorMsg), listener_(listener) {}
 };
 
-class CameraInputNapi {
+class CameraInputNapi : public CameraNapiEventEmitter<CameraInputNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateCameraInput(napi_env env, sptr<CameraInput> cameraInput);
     CameraInputNapi();
-    ~CameraInputNapi();
+    ~CameraInputNapi() override;
 
     static void NapiCreateInt32Logs(
-        napi_env env, int32_t contextMode, std::unique_ptr<JSAsyncContextOutput> &jsContext);
+        napi_env env, int32_t contextMode, std::unique_ptr<JSAsyncContextOutput>& jsContext);
     static void NapiCreateDoubleLogs(
-        napi_env env, double contextMode, std::unique_ptr<JSAsyncContextOutput> &jsContext);
+        napi_env env, double contextMode, std::unique_ptr<JSAsyncContextOutput>& jsContext);
 
     static napi_value Open(napi_env env, napi_callback_info info);
     static napi_value Close(napi_env env, napi_callback_info info);
@@ -80,16 +81,20 @@ public:
     static napi_value On(napi_env env, napi_callback_info info);
     static napi_value Off(napi_env env, napi_callback_info info);
     static napi_value Once(napi_env env, napi_callback_info info);
+
+    const EmitterFunctions& GetEmitterFunctions() override;
+
     sptr<CameraInput> GetCameraInput();
     sptr<CameraInput> cameraInput_;
+
 private:
     static void CameraInputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value CameraInputNapiConstructor(napi_env env, napi_callback_info info);
 
-    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value* argv, bool isOnce);
-    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string& eventType, napi_value* argv);
+    void RegisterErrorCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterErrorCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+
     napi_env env_;
     napi_ref wrapper_;
     std::string cameraId_;
