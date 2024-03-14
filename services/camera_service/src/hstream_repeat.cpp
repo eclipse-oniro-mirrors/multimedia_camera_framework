@@ -193,6 +193,11 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     captureInfo.enableShutterCallback_ = false;
     MEDIA_INFO_LOG("HStreamRepeat::Start stream:%{public}d With capture ID: %{public}d, repeatStreamType:%{public}d",
         GetStreamId(), preparedCaptureId, repeatStreamType_);
+    if (repeatStreamType_ == RepeatStreamType::VIDEO) {
+        auto callingTokenId = IPCSkeleton::GetCallingTokenID();
+        const std::string permissionName = "ohos.permission.CAMERA";
+        AddCameraPermissionUsedRecord(callingTokenId, permissionName);
+    }
     CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfo, true));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         ResetCaptureId();

@@ -139,7 +139,9 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(captureMetadataSetting_, finalSetting);
         captureInfoPhoto.captureSetting_ = finalSetting;
     }
-
+    auto callingTokenId = IPCSkeleton::GetCallingTokenID();
+    const std::string permissionName = "ohos.permission.CAMERA";
+    AddCameraPermissionUsedRecord(callingTokenId, permissionName);
     MEDIA_INFO_LOG("HStreamCapture::Capture Starting photo capture with capture ID: %{public}d", preparedCaptureId);
     CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfoPhoto, false));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
