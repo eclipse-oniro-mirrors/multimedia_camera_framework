@@ -191,7 +191,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
 Camera_ErrorCode Camera_Manager::GetSupportedPreviewProfiles(Camera_OutputCapability* outCapability,
     std::vector<Profile> &previewProfiles)
 {
-    if (previewProfiles.size() <= 0) {
+    if (previewProfiles.size() == 0) {
         MEDIA_ERR_LOG("Invalid preview profiles size.");
         outCapability->previewProfiles = nullptr;
         return CAMERA_INVALID_ARGUMENT;
@@ -219,7 +219,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedPreviewProfiles(Camera_OutputCapabi
 Camera_ErrorCode Camera_Manager::GetSupportedPhotoProfiles(Camera_OutputCapability* outCapability,
     std::vector<Profile> &photoProfiles)
 {
-    if (photoProfiles.size() <= 0) {
+    if (photoProfiles.size() == 0) {
         MEDIA_ERR_LOG("Invalid photo profiles size.");
         outCapability->photoProfiles = nullptr;
         return CAMERA_INVALID_ARGUMENT;
@@ -245,7 +245,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedPhotoProfiles(Camera_OutputCapabili
 Camera_ErrorCode Camera_Manager::GetSupportedVideoProfiles(Camera_OutputCapability* outCapability,
     std::vector<VideoProfile> &videoProfiles)
 {
-    if (videoProfiles.size() <= 0) {
+    if (videoProfiles.size() == 0) {
         MEDIA_ERR_LOG("Invalid video profiles size.");
         outCapability->videoProfiles = nullptr;
         return CAMERA_INVALID_ARGUMENT;
@@ -273,7 +273,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedVideoProfiles(Camera_OutputCapabili
 Camera_ErrorCode Camera_Manager::GetSupportedMetadataTypeList(Camera_OutputCapability* outCapability,
     std::vector<MetadataObjectType> &metadataTypeList)
 {
-    if (metadataTypeList.size() <= 0) {
+    if (metadataTypeList.size() == 0) {
         MEDIA_ERR_LOG("Invalid metadata type size.");
         outCapability->supportedMetadataObjectTypes = nullptr;
         return CAMERA_INVALID_ARGUMENT;
