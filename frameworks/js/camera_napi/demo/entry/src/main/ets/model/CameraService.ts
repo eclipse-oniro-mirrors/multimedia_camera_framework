@@ -133,6 +133,7 @@ class CameraService {
   private accessHelper: photoAccessHelper.PhotoAccessHelper;
   private globalContext: GlobalContext = GlobalContext.get();
   private isFirstRecord = true;
+  private isMoonCaptureBoostSupported: Boolean = false;
 
   constructor() {
     this.accessHelper = photoAccessHelper.getPhotoAccessHelper(this.globalContext.getCameraSettingContext());
@@ -1091,10 +1092,44 @@ class CameraService {
           this.isDeferredImageDeliveryEnabled(camera.DeferredDeliveryImageType.PHOTO);
         }
       }
+
       // 提交配置信息
       await this.captureSession.commitConfig();
+
+      // 处理变焦条信息
+      try {
+        let range: Array<number> = this.captureSession.getZoomRatioRange();
+        Logger.info(TAG, `getZoomRatioRange:${range}`);
+        if (range) {
+          AppStorage.setOrCreate('zoomRatioMin', range[0]);
+          AppStorage.setOrCreate('zoomRatioMax', range[1]);
+        }
+      } catch (error) {
+        let err = error as BusinessError;
+        Logger.error(TAG, `getZoomRatioRange fail: error code ${err.code}`);
+      }
+
+      // 处理望月信息
+      try {
+        this.isMoonCaptureBoostSupported = this.captureSession.isMoonCaptureBoostSupported();
+        if (this.isMoonCaptureBoostSupported) {
+          this.captureSession.on('moonCaptureBoostStatus', (error, status) => {
+            Logger.info(TAG, `on moonCaptureBoostStatus change:${status}`);
+            AppStorage.setOrCreate('moonCaptureComponentIsShow', status);
+            if (!status) {
+              this.setMoonCaptureBoostEnable(status);
+            }
+          });
+        }
+      } catch (error) {
+        let err = error as BusinessError;
+        Logger.error(TAG, `isMoonCaptureBoostSupported fail: error code ${err.code}`);
+      }
+
       AppStorage.setOrCreate('colorEffectComponentIsHidden', this.getSupportedColorEffects().length > 0 ? false : true);
       AppStorage.setOrCreate('deferredPhotoComponentIsHidden', false);
+      AppStorage.setOrCreate('moonCaptureComponentIsShow', false);
+
       if (this.colorEffect) {
         this.setColorEffect(this.colorEffect);
       }
@@ -1139,6 +1174,20 @@ class CameraService {
 
       // 提交配置信息
       await this.portraitSession.commitConfig();
+
+      // 处理变焦条信息
+      try {
+        let range: Array<number> = this.portraitSession.getZoomRatioRange();
+        Logger.info(TAG, `getZoomRatioRange:${range}`);
+        if (range) {
+          AppStorage.setOrCreate('zoomRatioMin', range[0]);
+          AppStorage.setOrCreate('zoomRatioMax', range[1]);
+        }
+      } catch (error) {
+        let err = error as BusinessError;
+        Logger.error(TAG, `getZoomRatioRange fail: error code ${err.code}`);
+      }
+
       this.setPortraitEffect();
       const deviceType = AppStorage.get<string>('deviceType');
       if (deviceType !== Constants.DEFAULT) {
@@ -1182,6 +1231,20 @@ class CameraService {
 
       // 提交配置信息
       await this.nightSession.commitConfig();
+
+      // 处理变焦条信息
+      try {
+        let range: Array<number> = this.nightSession.getZoomRatioRange();
+        Logger.info(TAG, `getZoomRatioRange:${range}`);
+        if (range) {
+          AppStorage.setOrCreate('zoomRatioMin', range[0]);
+          AppStorage.setOrCreate('zoomRatioMax', range[1]);
+        }
+      } catch (error) {
+        let err = error as BusinessError;
+        Logger.error(TAG, `getZoomRatioRange fail: error code ${err.code}`);
+      }
+
       const deviceType = AppStorage.get<string>('deviceType');
       if (deviceType !== Constants.DEFAULT) {
         AppStorage.setOrCreate('colorEffectComponentIsHidden', this.getSupportedColorEffects().length > 0 ? false : true);
@@ -1217,6 +1280,23 @@ class CameraService {
       let err = error as BusinessError;
       Logger.error(TAG, `setPortraitEffect error code: ${err.code}`);
     }
+  }
+
+  setMoonCaptureBoostEnable(moonCaptureBoostEnable: Boolean): boolean {
+    Logger.info(TAG, 'moonCaptureBoostEnable is called.');
+    let session: camera.CaptureSession = this.getSession();
+    if (!session) {
+      return false;
+    }
+    try {
+      session.enableMoonCaptureBoost(moonCaptureBoostEnable);
+      AppStorage.setOrCreate<boolean>('moonCaptureComponentEnable', moonCaptureBoostEnable);
+    } catch (error) {
+      let err = error as BusinessError;
+      Logger.error(TAG, `setMoonCaptureBoostEnable fail: error code ${err.code}`);
+      return false;
+    }
+    return true;
   }
 
   setColorEffect(colorEffect: camera.ColorEffectType): void {

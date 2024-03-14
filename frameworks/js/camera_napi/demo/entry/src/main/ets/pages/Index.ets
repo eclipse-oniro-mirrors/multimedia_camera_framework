@@ -27,6 +27,7 @@ import { ModeSwitchPage } from '../views/ModeSwitchPage';
 import { Constants } from '../common/Constants';
 import DisplayCalculator from '../common/DisplayCalculator';
 import { ColorEffectComponent } from '../views/ColorEffectComponent';
+import { MoonCaptureBoostComponent } from '../views/MoonCaptureBoostComponent';
 import { DeferredPhotoComponent } from '../views/DeferredPhotoComponent';
 import image from '@ohos.multimedia.image';
 import { CameraConfig } from '../common/CameraConfig';
@@ -230,6 +231,10 @@ struct Index {
         FlashingLightPage()
         // 滤镜
         ColorEffectComponent()
+
+        // 月亮模式
+        MoonCaptureBoostComponent();
+
         // 分段式拍照
         DeferredPhotoComponent({
           surfaceId: this.surfaceId,
