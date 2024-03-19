@@ -372,7 +372,7 @@ bool IsCameraNeedClose(const uint32_t callerToken, const pid_t& pid, const pid_t
     return needClose;
 }
 
-int32_t CheckPermission(std::string permissionName, uint32_t callerToken)
+int32_t CheckPermission(const std::string permissionName, uint32_t callerToken)
 {
     int permissionResult
         = OHOS::Security::AccessToken::TypePermissionState::PERMISSION_DENIED;
