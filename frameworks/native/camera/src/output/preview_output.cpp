@@ -93,10 +93,16 @@ int32_t PreviewOutputCallbackImpl::OnFrameStarted()
 {
     CAMERA_SYNC_TRACE;
     auto item = previewOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnFrameStarted();
+    if (item != nullptr) {
+        item->LockForControl();
+        if (item->GetApplicationCallback() != nullptr) {
+            item->GetApplicationCallback()->OnFrameStarted();
+        } else {
+            MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameStarted callback in preview");
+        }
+        item->UnlockForControl();
     } else {
-        MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameStarted callback in preview");
+        MEDIA_INFO_LOG("PreviewOutputCallbackImpl::PreviewOutput is nullptr");
     }
     return CAMERA_OK;
 }
@@ -105,21 +111,34 @@ int32_t PreviewOutputCallbackImpl::OnFrameEnded(int32_t frameCount)
 {
     CAMERA_SYNC_TRACE;
     auto item = previewOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnFrameEnded(frameCount);
+    if (item != nullptr) {
+        item->LockForControl();
+        if (item->GetApplicationCallback() != nullptr) {
+            item->GetApplicationCallback()->OnFrameEnded(frameCount);
+        } else {
+            MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameEnded callback in preview");
+        }
+        item->UnlockForControl();
     } else {
-        MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameEnded callback in preview");
+        MEDIA_INFO_LOG("PreviewOutputCallbackImpl::PreviewOutput is nullptr");
     }
     return CAMERA_OK;
 }
 
 int32_t PreviewOutputCallbackImpl::OnFrameError(int32_t errorCode)
 {
+    CAMERA_SYNC_TRACE;
     auto item = previewOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnError(errorCode);
+    if (item != nullptr) {
+        item->LockForControl();
+        if (item->GetApplicationCallback() != nullptr) {
+            item->GetApplicationCallback()->OnError(errorCode);
+        } else {
+            MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameError callback in preview");
+        }
+        item->UnlockForControl();
     } else {
-        MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameError callback in preview");
+        MEDIA_INFO_LOG("PreviewOutputCallbackImpl::PreviewOutput is nullptr");
     }
     return CAMERA_OK;
 }
@@ -526,7 +545,6 @@ int32_t PreviewOutput::OnResultMetadataChanged(
 
 std::shared_ptr<PreviewStateCallback> PreviewOutput::GetApplicationCallback()
 {
-    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     return appCallback_;
 }
 
@@ -572,6 +590,18 @@ void PreviewOutput::OnNativeUnregisterCallback(const std::string& eventString)
         }
         sketchWrapper_->StopSketchStream();
     }
+}
+
+void PreviewOutput::LockForControl()
+{
+    MEDIA_DEBUG_LOG("PreviewOutput::LockForControl Called");
+    outputCallbackMutex_.lock();
+}
+
+void PreviewOutput::UnlockForControl()
+{
+    MEDIA_DEBUG_LOG("PreviewOutput::UnlockForControl Called");
+    outputCallbackMutex_.unlock();
 }
 
 void PreviewOutput::CameraServerDied(pid_t pid)
