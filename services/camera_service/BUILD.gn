@@ -34,6 +34,7 @@ ohos_shared_library("camera_service") {
     "src/camera_fwk_metadata_utils.cpp",
     "src/camera_timer.cpp",
     "src/camera_util.cpp",
+    "src/dfx/camera_report_uitls.cpp",
     "src/hcamera_device.cpp",
     "src/hcamera_device_manager.cpp",
     "src/hcamera_host_manager.cpp",
@@ -46,7 +47,6 @@ ohos_shared_library("camera_service") {
     "src/hstream_repeat.cpp",
     "src/smooth_zoom/cubic_bezier.cpp",
     "src/smooth_zoom/smooth_zoom.cpp",
-    "src/dfx/camera_report_uitls.cpp",
   ]
   cflags = [
     "-fPIC",
