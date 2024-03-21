@@ -121,7 +121,7 @@ bool IsValidSize(
 
 void DumpMetadata(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraSettings);
 
-std::string  GetClientBundle(int uid);
+std::string GetClientBundle(int uid);
 
 int32_t JudgmentPriority(const pid_t& pid, const pid_t& pidCompared);
 

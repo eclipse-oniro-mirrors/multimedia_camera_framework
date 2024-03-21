@@ -46,6 +46,7 @@ ohos_shared_library("camera_service") {
     "src/hstream_repeat.cpp",
     "src/smooth_zoom/cubic_bezier.cpp",
     "src/smooth_zoom/smooth_zoom.cpp",
+    "src/dfx/camera_report_uitls.cpp",
   ]
   cflags = [
     "-fPIC",
@@ -62,6 +63,7 @@ ohos_shared_library("camera_service") {
     "//drivers/peripheral/display/interfaces/include",
     "${graphic_surface_path}/surface/include",
     "//foundation/multimedia/camera_framework/services/camera_service/include",
+    "${multimedia_camera_framework_path}/services/camera_service/include/dfx",
     "${multimedia_camera_framework_path}/services/camera_service/include/smooth_zoom",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/base/include",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/include",

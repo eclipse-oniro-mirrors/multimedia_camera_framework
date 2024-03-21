@@ -32,6 +32,7 @@
 #include "system_ability_definition.h"
 #include "display_manager.h"
 #include "os_account_manager.h"
+#include "camera_report_uitls.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -643,6 +644,7 @@ int32_t HCameraService::PrelaunchCamera()
     }
     MEDIA_INFO_LOG("HCameraService::PrelaunchCamera preCameraId_ is: %{public}s", preCameraId_.c_str());
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("Camera Prelaunch CameraId:%s", preCameraId_.c_str()));
+    CameraReportUtils::GetInstance().SetOpenCamPerfPreInfo(preCameraId_.c_str(), CameraReportUtils::GetCallerInfo());
     int32_t ret = cameraHostManager_->Prelaunch(preCameraId_, preCameraClient_);
     if (ret != CAMERA_OK) {
         MEDIA_ERR_LOG("HCameraService::Prelaunch failed");
@@ -668,6 +670,7 @@ int32_t HCameraService::PreSwitchCamera(const std::string cameraId)
         return CAMERA_INVALID_ARG;
     }
     MEDIA_INFO_LOG("HCameraService::PreSwitchCamera cameraId is: %{public}s", cameraId.c_str());
+    CameraReportUtils::GetInstance().SetSwitchCamPerfStartInfo(CameraReportUtils::GetCallerInfo());
     int32_t ret = cameraHostManager_->PreSwitchCamera(cameraId);
     if (ret != CAMERA_OK) {
         MEDIA_ERR_LOG("HCameraService::Prelaunch failed");

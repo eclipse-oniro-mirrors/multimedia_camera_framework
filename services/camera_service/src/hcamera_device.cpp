@@ -39,6 +39,7 @@
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 #include "camera_timer.h"
+#include "camera_report_uitls.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -246,6 +247,7 @@ int32_t HCameraDevice::OpenDevice()
         MEDIA_ERR_LOG("refuse to turning on the camera");
         return CAMERA_DEVICE_CONFLICT;
     }
+    CameraReportUtils::GetInstance().SetOpenCamPerfStartInfo(cameraID_.c_str(), CameraReportUtils::GetCallerInfo());
     errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_);
     if (errorCode != CAMERA_OK) {
         MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");

@@ -22,6 +22,7 @@
 #include "hstream_common.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
+#include "camera_report_uitls.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -142,6 +143,12 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     auto callingTokenId = IPCSkeleton::GetCallingTokenID();
     const std::string permissionName = "ohos.permission.CAMERA";
     AddCameraPermissionUsedRecord(callingTokenId, permissionName);
+
+    // report capture performance dfx
+    DfxCaptureInfo captureInfo;
+    captureInfo.captureId = preparedCaptureId;
+    captureInfo.caller = CameraReportUtils::GetCallerInfo();
+    CameraReportUtils::GetInstance().SetCapturePerfStartInfo(captureInfo);
     MEDIA_INFO_LOG("HStreamCapture::Capture Starting photo capture with capture ID: %{public}d", preparedCaptureId);
     CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfoPhoto, false));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
@@ -351,6 +358,7 @@ int32_t HStreamCapture::OnCaptureEnded(int32_t captureId, int32_t frameCount)
     if (streamCaptureCallback_ != nullptr) {
         streamCaptureCallback_->OnCaptureEnded(captureId, frameCount);
     }
+    CameraReportUtils::GetInstance().SetCapturePerfEndInfo(captureId);
     auto preparedCaptureId = GetPreparedCaptureId();
     if (preparedCaptureId != CAPTURE_ID_UNSET) {
         MEDIA_INFO_LOG("HStreamCapture::OnCaptureEnded capturId = %{public}d already used, need release",

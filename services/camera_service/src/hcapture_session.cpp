@@ -49,6 +49,7 @@
 #include "display/composer/v1_1/display_composer_type.h"
 #include "smooth_zoom.h"
 #include "hcamera_restore_param.h"
+#include "camera_report_uitls.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -126,6 +127,7 @@ HCaptureSession::HCaptureSession(const uint32_t callingTokenId, int32_t opMode)
     callerToken_ = callingTokenId;
     opMode_ = opMode;
     SetOpMode(opMode_);
+    CameraReportUtils::GetInstance().updateModeChangePerfInfo(opMode, CameraReportUtils::GetCallerInfo());
     MEDIA_INFO_LOG(
         "HCaptureSession: camera stub services(%{public}zu). opMode_= %{public}d", TotalSessionSize(), opMode_);
 }
@@ -989,6 +991,7 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
 int32_t HCaptureSession::Release()
 {
     MEDIA_INFO_LOG("HCaptureSession::Release()");
+    CameraReportUtils::GetInstance().SetModeChangePerfStartInfo(opMode_, CameraReportUtils::GetCallerInfo());
     return Release(CaptureSessionReleaseType::RELEASE_TYPE_CLIENT);
 }
 
@@ -1156,6 +1159,9 @@ int32_t StreamOperatorCallback::OnCaptureStarted(int32_t captureId, const std::v
             return CAMERA_INVALID_ARG;
         } else if (curStream->GetStreamType() == StreamType::REPEAT) {
             CastStream<HStreamRepeat>(curStream)->OnFrameStarted();
+            CameraReportUtils::GetInstance().SetOpenCamPerfEndInfo();
+            CameraReportUtils::GetInstance().SetModeChangePerfEndInfo();
+            CameraReportUtils::GetInstance().SetSwitchCamPerfEndInfo();
         } else if (curStream->GetStreamType() == StreamType::CAPTURE) {
             CastStream<HStreamCapture>(curStream)->OnCaptureStarted(captureId);
         }

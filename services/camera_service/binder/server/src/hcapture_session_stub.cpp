@@ -106,7 +106,7 @@ int HCaptureSessionStub::HandleCanAddInput(MessageParcel &data, MessageParcel &r
     int32_t ret = CanAddInput(cameraDevice, result);
     MEDIA_INFO_LOG("HandleCanAddInput ret: %{public}d, result: %{public}d", ret, result);
     CHECK_AND_RETURN_RET_LOG(reply.WriteBool(result), IPC_STUB_WRITE_PARCEL_ERR,
-        "HCameraServiceStub HandleCanAddInput Write result failed");
+        "HCaptureSessionStub HandleCanAddInput Write result failed");
     return ret;
 }
 
