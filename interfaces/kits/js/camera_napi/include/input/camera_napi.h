@@ -269,6 +269,12 @@ static const std::unordered_map<std::string, int32_t> mapColorEffectType = {
     {"BLACK_WHITE", 3},
 };
 
+static const std::unordered_map<std::string, int32_t> mapRestoreParamType = {
+    {"NO_NEED_RESTORE_PARAM", 0},
+    {"PERSISTENT_DEFAULT_PARAM", 1},
+    {"TRANSIENT_ACTIVE_PARAM", 2},
+};
+
 enum CreateAsyncCallbackModes {
     CREATE_CAMERA_MANAGER_ASYNC_CALLBACK = 10,
 };
@@ -328,6 +334,7 @@ private:
     static thread_local napi_ref deferredDeliveryImageTypeRef_;
     static thread_local napi_ref SmoothZoomModeRef_;
     static thread_local napi_ref colorEffectTypeRef_;
+    static thread_local napi_ref restoreParamTypeRef_;
     napi_env env_;
     napi_ref wrapper_;
 };
