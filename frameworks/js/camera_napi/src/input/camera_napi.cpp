@@ -180,7 +180,7 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("ColorEffectType",
             CreateObjectWithMap(env, "ColorEffectType", mapColorEffectType, colorEffectTypeRef_)),
         DECLARE_NAPI_PROPERTY("RestoreParamType",
-            CreateObjectWithMap(env, "RestoreParamType", mapRestoreParamType, restoreParamTypeRef_)),                                                                                                                               estoreParamTypeRef_)),
+            CreateObjectWithMap(env, "RestoreParamType", mapRestoreParamType, restoreParamTypeRef_)),
     };
 
     status = napi_define_class(env, CAMERA_LIB_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, CameraNapiConstructor,
