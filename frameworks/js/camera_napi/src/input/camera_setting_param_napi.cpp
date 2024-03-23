@@ -18,8 +18,6 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
-using OHOS::HiviewDFX::HiLog;
-using OHOS::HiviewDFX::HiLogLabel;
 
 thread_local napi_ref CameraSettingParamNapi::sConstructor_ = nullptr;
 thread_local SettingParam* CameraSettingParamNapi::sCameraSettingParam_ = nullptr;

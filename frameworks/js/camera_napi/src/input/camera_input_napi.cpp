@@ -20,13 +20,6 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
-using OHOS::HiviewDFX::HiLog;
-using OHOS::HiviewDFX::HiLogLabel;
-
-namespace {
-    constexpr HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "CameraNapi"};
-}
-
 thread_local napi_ref CameraInputNapi::sConstructor_ = nullptr;
 thread_local sptr<CameraInput> CameraInputNapi::sCameraInput_ = nullptr;
 thread_local uint32_t CameraInputNapi::cameraInputTaskId = CAMERA_INPUT_TASKID;

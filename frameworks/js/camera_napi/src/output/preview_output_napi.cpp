@@ -32,10 +32,7 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
-using OHOS::HiviewDFX::HiLog;
-using OHOS::HiviewDFX::HiLogLabel;
 namespace {
-constexpr HiLogLabel LABEL = { LOG_CORE, LOG_DOMAIN, "PreviewOutputNapi" };
 sptr<Surface> GetSurfaceFromSurfaceId(napi_env env, napi_value napi_surfaceId)
 {
     MEDIA_DEBUG_LOG("GetSurfaceFromSurfaceId enter");
