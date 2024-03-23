@@ -20,8 +20,6 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
-using OHOS::HiviewDFX::HiLog;
-using OHOS::HiviewDFX::HiLogLabel;
 
 thread_local napi_ref CameraSizeNapi::sConstructor_ = nullptr;
 thread_local Size* CameraSizeNapi::sCameraPicSize_ = nullptr;

@@ -22,11 +22,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-using OHOS::HiviewDFX::HiLog;
-using OHOS::HiviewDFX::HiLogLabel;
-namespace {
-    constexpr HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "VideoOutputNapi"};
-}
 thread_local napi_ref VideoOutputNapi::sConstructor_ = nullptr;
 thread_local sptr<VideoOutput> VideoOutputNapi::sVideoOutput_ = nullptr;
 thread_local uint32_t VideoOutputNapi::videoOutputTaskId = CAMERA_VIDEO_OUTPUT_TASKID;

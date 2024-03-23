@@ -24,11 +24,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-using OHOS::HiviewDFX::HiLog;
-using OHOS::HiviewDFX::HiLogLabel;
-namespace {
-    constexpr HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN, "MetadataOutputNapi"};
-}
 thread_local napi_ref MetadataOutputNapi::sConstructor_ = nullptr;
 thread_local sptr<MetadataOutput> MetadataOutputNapi::sMetadataOutput_ = nullptr;
 

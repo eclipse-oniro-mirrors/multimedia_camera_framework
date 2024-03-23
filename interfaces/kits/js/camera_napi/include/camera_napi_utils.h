@@ -61,29 +61,29 @@
         napi_create_string_utf8(env, resourceName, NAPI_AUTO_LENGTH, &(resource)); \
     } while (0);
 
-#define CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, ptr, ret, message) \
-    do {                                                                    \
-        if ((ptr) == nullptr) {                                             \
-            HiLog::Error(LABEL, message);                                   \
-            napi_get_undefined(env, &(ret));                                \
-            return ret;                                                     \
-        }                                                                   \
+#define CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, ptr, ret, message, ...) \
+    do {                                                                         \
+        if ((ptr) == nullptr) {                                                  \
+            MEDIA_ERR_LOG(message, ##__VA_ARGS__);                               \
+            napi_get_undefined(env, &(ret));                                     \
+            return ret;                                                          \
+        }                                                                        \
     } while (0)
 
-#define CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(ptr, message) \
-    do {                                                     \
-        if ((ptr) == nullptr) {                              \
-            HiLog::Error(LABEL, message);                    \
-            return;                                          \
-        }                                                    \
+#define CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(ptr, message, ...) \
+    do {                                                          \
+        if ((ptr) == nullptr) {                                   \
+            MEDIA_ERR_LOG(message, ##__VA_ARGS__);                \
+            return;                                               \
+        }                                                         \
     } while (0)
 
-#define CAMERA_NAPI_ASSERT_EQUAL(condition, errMsg) \
-    do {                                            \
-        if (!(condition)) {                         \
-            HiLog::Error(LABEL, errMsg);            \
-            return;                                 \
-        }                                           \
+#define CAMERA_NAPI_ASSERT_EQUAL(condition, errMsg, ...) \
+    do {                                                 \
+        if (!(condition)) {                              \
+            MEDIA_ERR_LOG(errMsg, ##__VA_ARGS__);        \
+            return;                                      \
+        }                                                \
     } while (0)
 
 #define CAMERA_NAPI_CHECK_AND_BREAK_LOG(cond, fmt, ...) \

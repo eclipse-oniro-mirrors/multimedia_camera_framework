@@ -30,11 +30,6 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
-using OHOS::HiviewDFX::HiLog;
-using OHOS::HiviewDFX::HiLogLabel;
-namespace {
-constexpr HiLogLabel LABEL = { LOG_CORE, LOG_DOMAIN, "PhotoOutputNapi" };
-}
 thread_local napi_ref PhotoOutputNapi::sConstructor_ = nullptr;
 thread_local sptr<PhotoOutput> PhotoOutputNapi::sPhotoOutput_ = nullptr;
 thread_local sptr<Surface> PhotoOutputNapi::sPhotoSurface_ = nullptr;
