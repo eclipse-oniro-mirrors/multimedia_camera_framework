@@ -156,8 +156,6 @@ public:
 
     void OnNativeRegisterCallback(const std::string& eventString);
     void OnNativeUnregisterCallback(const std::string& eventString);
-    void LockForControl();
-    void UnlockForControl();
 
 private:
     std::shared_ptr<PreviewStateCallback> appCallback_;
