@@ -31,10 +31,12 @@ CaptureOutput::CaptureOutput(CaptureOutputType outputType, StreamType streamType
     CHECK_AND_RETURN_LOG(deathRecipient_ != nullptr, "failed to new CameraDeathRecipient.");
 
     deathRecipient_->SetNotifyCb(std::bind(&CaptureOutput::CameraServerDied, this, std::placeholders::_1));
-    bool result = object->AddDeathRecipient(deathRecipient_);
-    if (!result) {
-        MEDIA_ERR_LOG("failed to add deathRecipient");
-        return;
+    if (object) {
+        bool result = object->AddDeathRecipient(deathRecipient_);
+        if (!result) {
+            MEDIA_ERR_LOG("failed to add deathRecipient");
+            return;
+        }
     }
 }
 

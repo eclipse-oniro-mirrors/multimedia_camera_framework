@@ -91,8 +91,8 @@ std::shared_ptr<vector<Size>> GetSupportedPreviewSizeRangeFromBasicConfig(
             continue;
         }
         Size size;
-        size.width = item->data.i32[i + widthOffset];
-        size.height = item->data.i32[i + heightOffset];
+        size.width = static_cast<uint32_t>(item->data.i32[i + widthOffset]);
+        size.height = static_cast<uint32_t>(item->data.i32[i + heightOffset]);
         sizeList->emplace_back(size);
     }
     MEDIA_INFO_LOG("MetadataCommonUtils::GetSupportedPreviewSizeRangeFromBasicConfig listSize: %{public}d",
@@ -153,6 +153,9 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> MetadataCommonUtils::CopyMetadata(
         return nullptr;
     }
     auto oldMetadata = srcMetadata->get();
+    if (oldMetadata == nullptr) {
+        return nullptr;
+    }
     std::shared_ptr<OHOS::Camera::CameraMetadata> result =
         std::make_shared<OHOS::Camera::CameraMetadata>(oldMetadata->item_capacity, oldMetadata->data_capacity);
     auto newMetadata = result->get();

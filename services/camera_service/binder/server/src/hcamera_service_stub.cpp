@@ -204,11 +204,11 @@ int HCameraServiceStub::HandleSetPrelaunchConfig(MessageParcel& data, MessagePar
     MEDIA_DEBUG_LOG("HCameraServiceStub HandleSetPrelaunchConfig enter");
     std::string cameraId = data.ReadString();
     RestoreParamTypeOhos restoreTypeParam = static_cast<RestoreParamTypeOhos>(data.ReadUint32());
-    int32_t activeTime = data.ReadUint32();
+    int32_t activeTime = static_cast<int32_t>(data.ReadUint32());
     EffectParam effectParam;
-    effectParam.skinSmoothLevel = data.ReadUint32();
-    effectParam.faceSlender = data.ReadUint32();
-    effectParam.skinTone = data.ReadUint32();
+    effectParam.skinSmoothLevel = static_cast<int>(data.ReadUint32());
+    effectParam.faceSlender = static_cast<int32_t>(data.ReadUint32());
+    effectParam.skinTone = static_cast<int32_t>(data.ReadUint32());
     int32_t ret = SetPrelaunchConfig(cameraId, restoreTypeParam, activeTime, effectParam);
     MEDIA_INFO_LOG("HCameraServiceStub HandleSetPrelaunchConfig result: %{public}d", ret);
     return ret;
@@ -231,7 +231,8 @@ int HCameraServiceStub::HandleSetCallback(MessageParcel& data, MessageParcel& re
         "HCameraServiceStub HandleSetCallback CameraServiceCallback is null");
 
     auto callback = iface_cast<ICameraServiceCallback>(remoteObject);
-
+    CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCameraServiceStub HandleSetCallback callback is null");
     return SetCallback(callback);
 }
 
@@ -242,7 +243,8 @@ int HCameraServiceStub::HandleSetMuteCallback(MessageParcel& data, MessageParcel
         "HCameraServiceStub HandleSetMuteCallback CameraMuteServiceCallback is null");
 
     auto callback = iface_cast<ICameraMuteServiceCallback>(remoteObject);
-
+    CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCameraServiceStub HandleSetMuteCallback callback is null");
     return SetMuteCallback(callback);
 }
 
@@ -253,7 +255,8 @@ int HCameraServiceStub::HandleSetTorchCallback(MessageParcel& data, MessageParce
         "HCameraServiceStub HandleSetTorchCallback TorchServiceCallback is null");
 
     auto callback = iface_cast<ITorchServiceCallback>(remoteObject);
-
+    CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCameraServiceStub HandleSetTorchCallback callback is null");
     return SetTorchCallback(callback);
 }
 
@@ -284,6 +287,8 @@ int HCameraServiceStub::HandleCreateDeferredPhotoProcessingSession(MessageParcel
         "HandleCreateDeferredPhotoProcessingSession DeferredPhotoProcessingSessionCallback is null");
 
     auto callback = iface_cast<DeferredProcessing::IDeferredPhotoProcessingSessionCallback>(remoteObject);
+    CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCameraServiceStub HandleCreateDeferredPhotoProcessingSession callback is null");
     int errCode = CreateDeferredPhotoProcessingSession(userId, callback, session);
     if (errCode != ERR_NONE) {
         MEDIA_ERR_LOG("HandleCreateDeferredPhotoProcessingSession create failed : %{public}d", errCode);
@@ -305,6 +310,8 @@ int HCameraServiceStub::HandleCreatePhotoOutput(MessageParcel& data, MessageParc
         "HCameraServiceStub HandleCreatePhotoOutput BufferProducer is null");
 
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
+    CHECK_AND_RETURN_RET_LOG(producer != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCameraServiceStub HandleCreatePhotoOutput producer is null");
     int32_t format = data.ReadInt32();
     int32_t width = data.ReadInt32();
     int32_t height = data.ReadInt32();
@@ -333,6 +340,8 @@ int HCameraServiceStub::HandleCreatePreviewOutput(MessageParcel& data, MessagePa
     MEDIA_INFO_LOG(
         "CreatePreviewOutput, format: %{public}d, width: %{public}d, height: %{public}d", format, width, height);
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
+    CHECK_AND_RETURN_RET_LOG(producer != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCameraServiceStub HandleCreatePreviewOutput producer is null");
     int errCode = CreatePreviewOutput(producer, format, width, height, previewOutput);
     if (errCode != ERR_NONE) {
         MEDIA_ERR_LOG("HandleCreatePreviewOutput CreatePreviewOutput failed : %{public}d", errCode);
@@ -371,6 +380,8 @@ int HCameraServiceStub::HandleCreateMetadataOutput(MessageParcel& data, MessageP
     CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HCameraServiceStub HandleCreateMetadataOutput BufferProducer is null");
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
+    CHECK_AND_RETURN_RET_LOG(producer != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCameraServiceStub HandleCreateMetadataOutput producer is null");
     int32_t format = data.ReadInt32();
     int errCode = CreateMetadataOutput(producer, format, metadataOutput);
     if (errCode != ERR_NONE) {
@@ -392,6 +403,8 @@ int HCameraServiceStub::HandleCreateVideoOutput(MessageParcel& data, MessageParc
         "HCameraServiceStub HandleCreateVideoOutput BufferProducer is null");
 
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
+    CHECK_AND_RETURN_RET_LOG(producer != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCameraServiceStub HandleCreateVideoOutput producer is null");
     int32_t format = data.ReadInt32();
     int32_t width = data.ReadInt32();
     int32_t height = data.ReadInt32();

@@ -33,6 +33,10 @@ HStreamCapture::HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t for
     MEDIA_INFO_LOG(
         "HStreamCapture::HStreamCapture construct, format:%{public}d size:%{public}dx%{public}d streamId:%{public}d",
         format, width, height, GetStreamId());
+    thumbnailSwitch_ = 0;
+    modeName_ = 0;
+    deferredPhotoSwitch_ = 0;
+    deferredVideoSwitch_ = 0;
 }
 
 HStreamCapture::~HStreamCapture()

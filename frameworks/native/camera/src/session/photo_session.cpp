@@ -30,6 +30,9 @@ PhotoSession::~PhotoSession()
 bool PhotoSession::CanAddOutput(sptr<CaptureOutput> &output, SceneMode modeName)
 {
     MEDIA_DEBUG_LOG("Enter Into PhotoSession::CanAddOutput");
+    if (output == nullptr) {
+        return false;
+    }
     return output->GetOutputType() != CAPTURE_OUTPUT_TYPE_VIDEO &&
         CaptureSession::CanAddOutput(output, SceneMode::CAPTURE);
 }

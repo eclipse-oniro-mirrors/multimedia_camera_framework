@@ -409,6 +409,9 @@ int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &su
                                                profile.GetSize().height, streamCapture);
     if (retCode == CAMERA_OK) {
         photoOutput = new(std::nothrow) PhotoOutput(streamCapture);
+        if (photoOutput == nullptr) {
+            return CameraErrorCode::SERVICE_FATL_ERROR;
+        }
     } else {
         MEDIA_ERR_LOG("Failed to get stream capture object from hcamera service!, %{public}d", retCode);
         return ServiceToCameraError(retCode);
@@ -456,6 +459,9 @@ int CameraManager::CreatePreviewOutput(Profile &profile, sptr<Surface> surface, 
                                                  profile.GetSize().width, profile.GetSize().height, streamRepeat);
     if (retCode == CAMERA_OK) {
         previewOutput = new(std::nothrow) PreviewOutput(streamRepeat);
+        if (previewOutput == nullptr) {
+            return CameraErrorCode::SERVICE_FATL_ERROR;
+        }
     } else {
         MEDIA_ERR_LOG("Failed to get stream repeat object from hcamera service! %{public}d", retCode);
         return ServiceToCameraError(retCode);
@@ -504,6 +510,9 @@ int CameraManager::CreateDeferredPreviewOutput(Profile &profile, sptr<PreviewOut
                                                          profile.GetSize().height, streamRepeat);
     if (retCode == CAMERA_OK) {
         previewOutput = new(std::nothrow) PreviewOutput(streamRepeat);
+        if (previewOutput == nullptr) {
+            return CameraErrorCode::SERVICE_FATL_ERROR;
+        }
     } else {
         MEDIA_ERR_LOG("Failed to get stream repeat object from hcamera service!, %{public}d", retCode);
         return ServiceToCameraError(retCode);
@@ -626,6 +635,9 @@ int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surfa
                                                profile.GetSize().width, profile.GetSize().height, streamRepeat);
     if (retCode == CAMERA_OK) {
         videoOutput = new(std::nothrow) VideoOutput(streamRepeat);
+        if (videoOutput == nullptr) {
+            return CameraErrorCode::SERVICE_FATL_ERROR;
+        }
         std::vector<int32_t> videoFrameRates = profile.GetFrameRates();
         if (videoFrameRates.size() >= 2) { // vaild frame rate range length is 2
             videoOutput->SetFrameRateRange(videoFrameRates[0], videoFrameRates[1]);
@@ -911,6 +923,9 @@ std::vector<SceneMode> CameraManager::GetSupportedModes(sptr<CameraDevice>& came
     std::vector<SceneMode> supportedModes = {};
 
     std::shared_ptr<Camera::CameraMetadata> metadata = camera->GetMetadata();
+    if (metadata == nullptr) {
+        return supportedModes;
+    }
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAMERA_MODES, &item);
     if (ret != CAM_META_SUCCESS || item.count == 0) {
@@ -979,6 +994,9 @@ void CameraManager::AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& camera
 
 void CameraManager::SetProfile(sptr<CameraDevice>& cameraObj)
 {
+    if (cameraObj == nullptr) {
+        return;
+    }
     std::vector<SceneMode> supportedModes = GetSupportedModes(cameraObj);
     sptr<CameraOutputCapability> capability = nullptr;
     if (supportedModes.empty()) {
@@ -1085,6 +1103,9 @@ int CameraManager::CreateCameraInput(CameraPosition position, CameraType cameraT
 bool g_isCapabilitySupported(std::shared_ptr<OHOS::Camera::CameraMetadata> metadata,
     camera_metadata_item_t &item, uint32_t metadataTag)
 {
+    if (metadata == nullptr) {
+        return false;
+    }
     bool isSupport = true;
     int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), metadataTag, &item);
     if (retCode != CAM_META_SUCCESS || item.count == 0) {
@@ -1098,6 +1119,9 @@ bool g_isCapabilitySupported(std::shared_ptr<OHOS::Camera::CameraMetadata> metad
 void CameraManager::ParseBasicCapability(sptr<CameraOutputCapability> cameraOutputCapability,
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, const camera_metadata_item_t &item)
 {
+    if (metadata == nullptr) {
+        return;
+    }
     uint32_t widthOffset = 1;
     uint32_t heightOffset = 2;
     const uint8_t UNIT_STEP = 3;
@@ -1114,8 +1138,8 @@ void CameraManager::ParseBasicCapability(sptr<CameraOutputCapability> cameraOutp
             MEDIA_ERR_LOG("format %{public}d is not supported now", item.data.i32[i]);
             continue;
         }
-        size.width = item.data.i32[i + widthOffset];
-        size.height = item.data.i32[i + heightOffset];
+        size.width = static_cast<uint32_t>(item.data.i32[i + widthOffset]);
+        size.height = static_cast<uint32_t>(item.data.i32[i + heightOffset]);
         Profile profile = Profile(format, size);
         if (format == CAMERA_FORMAT_JPEG) {
             photoProfiles_.push_back(profile);
@@ -1158,7 +1182,13 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
 {
     sptr<CameraOutputCapability> cameraOutputCapability = nullptr;
     cameraOutputCapability = new(std::nothrow) CameraOutputCapability();
+    if (camera == nullptr || cameraOutputCapability == nullptr) {
+        return nullptr;
+    }
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = camera->GetMetadata();
+    if (metadata == nullptr) {
+        return nullptr;
+    }
     camera_metadata_item_t item;
     std::lock_guard<std::mutex> lock(vectorMutex_);
     photoProfiles_.clear();
@@ -1213,12 +1243,17 @@ void CameraManager::CreateProfile4StreamType(OutputCapStreamType streamType, uin
             continue;
         }
         Size size;
-        size.width = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].width;
-        size.height = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].height;
+        size.width = static_cast<uint32_t>
+            (extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].width);
+        size.height = static_cast<uint32_t>
+            (extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].height);
         Fps fps;
-        fps.fixedFps = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].fixedFps;
-        fps.minFps = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].minFps;
-        fps.maxFps = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].maxFps;
+        fps.fixedFps = static_cast<uint32_t>
+            (extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].fixedFps);
+        fps.minFps = static_cast<uint32_t>
+            (extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].minFps);
+        fps.maxFps = static_cast<uint32_t>
+            (extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].maxFps);
         std::vector<uint32_t> abilityId;
         abilityId = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].abilityId;
         std::string abilityIds = "";
@@ -1379,6 +1414,9 @@ bool CameraManager::IsCameraMuteSupported()
     std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
+        if (metadata == nullptr) {
+            return false;
+        }
         camera_metadata_item_t item;
         int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_MUTE_MODES, &item);
         if (ret != 0) {
@@ -1461,8 +1499,14 @@ int32_t CameraManager::PreSwitchCamera(const std::string cameraId)
 
 bool CameraManager::IsPrelaunchSupported(sptr<CameraDevice> camera)
 {
+    if (camera == nullptr) {
+        return false;
+    }
     bool isPrelaunch = false;
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = camera->GetMetadata();
+    if (metadata == nullptr) {
+        return false;
+    }
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_PRELAUNCH_AVAILABLE, &item);
     if (ret == 0) {
@@ -1483,6 +1527,9 @@ bool CameraManager::IsTorchSupported()
     }
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         std::shared_ptr<Camera::CameraMetadata> metadata = cameraObjList[i]->GetMetadata();
+        if (metadata == nullptr) {
+        return false;
+    }
         camera_metadata_item_t item;
         int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_AVAILABLE, &item);
         if (ret == CAM_META_SUCCESS) {

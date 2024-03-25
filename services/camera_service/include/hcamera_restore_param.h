@@ -61,8 +61,8 @@ private:
     std::shared_ptr<OHOS::Camera::CameraMetadata> mSettings;
     timeval mCloseCameraTime;
     RestoreParamTypeOhos mRestoreParamType;
-    int mStartActiveTime;
-    int32_t mOpMode;
+    int mStartActiveTime = 0;
+    int32_t mOpMode = 0;
     int mFoldStatus = 0;
 };
 } // namespace CameraStandard

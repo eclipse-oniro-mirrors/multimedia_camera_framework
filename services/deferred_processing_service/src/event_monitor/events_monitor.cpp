@@ -63,7 +63,7 @@ EventsMonitor &EventsMonitor::GetInstance()
     return instance;
 }
 
-EventsMonitor::EventsMonitor() : initialized_(false), numActiveSessions_(0)
+EventsMonitor::EventsMonitor() : initialized_(false), numActiveSessions_(0), mIsRegistered(false)
 {
     DP_DEBUG_LOG("EventsMonitor enter.");
 }

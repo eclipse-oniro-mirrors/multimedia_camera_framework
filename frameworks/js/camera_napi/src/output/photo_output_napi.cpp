@@ -41,6 +41,8 @@ PhotoListener::PhotoListener(napi_env env, const sptr<Surface> photoSurface) : e
     if (bufferProcessor_ == nullptr && photoSurface != nullptr) {
         bufferProcessor_ = std::make_shared<PhotoBufferProcessor> (photoSurface);
     }
+    capturePhotoCb_ = nullptr;
+    captureDeferredPhotoCb_ = nullptr;
 }
 
 void PhotoListener::OnBufferAvailable()

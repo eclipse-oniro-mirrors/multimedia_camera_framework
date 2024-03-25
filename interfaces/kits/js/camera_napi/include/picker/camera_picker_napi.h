@@ -50,7 +50,7 @@ public:
     inline void WaitResultLock()
     {
         std::unique_lock<std::mutex> lock(cbMutex_);
-        if (!isCallbackReturned_) {
+        while (!isCallbackReturned_) {
             cbFinishCondition_.wait(lock);
         }
     }

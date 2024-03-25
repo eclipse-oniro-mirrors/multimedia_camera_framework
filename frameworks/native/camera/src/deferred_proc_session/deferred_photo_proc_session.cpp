@@ -29,6 +29,9 @@ int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::st
     const sptr<IPCFileDescriptor> ipcFileDescriptor, const long bytes)
 {
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is called!");
+    if (ipcFileDescriptor == nullptr) {
+        return CAMERA_INVALID_ARG;
+    }
     int fd = ipcFileDescriptor->GetFd();
     void* addr = mmap(nullptr, bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     uint8_t* addr_ = static_cast<uint8_t *>(addr);
@@ -232,6 +235,9 @@ void DeferredPhotoProcSession::ConnectDeferredProcessingSession()
     sptr<DeferredPhotoProcSession> deferredPhotoProcSession = nullptr;
     deferredPhotoProcSession = new(std::nothrow) DeferredPhotoProcSession(userId_, callback_);
     remoteCallback = new(std::nothrow) DeferredPhotoProcessingSessionCallback(deferredPhotoProcSession);
+    if (!deferredPhotoProcSession || !remoteCallback) {
+        return;
+    }
     serviceProxy_->CreateDeferredPhotoProcessingSession(userId_, remoteCallback, session);
     if (session) {
         SetDeferredPhotoSession(session);

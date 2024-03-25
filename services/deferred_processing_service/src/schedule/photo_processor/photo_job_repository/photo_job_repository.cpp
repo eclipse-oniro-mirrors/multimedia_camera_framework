@@ -437,7 +437,7 @@ DeferredPhotoJobPtr PhotoJobRepository::GetJobUnLocked(const std::string& imageI
 int PhotoJobRepository::GetBackgroundJobSize()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    int size = backgroundJobMap_.size();
+    int size = static_cast<int>(backgroundJobMap_.size());
     DP_DEBUG_LOG("background job size: %d", size);
     return size;
 }
@@ -445,7 +445,7 @@ int PhotoJobRepository::GetBackgroundJobSize()
 int PhotoJobRepository::GetOfflineJobSize()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    int size = offlineJobMap_.size();
+    int size = static_cast<int>(offlineJobMap_.size());
     DP_DEBUG_LOG("offline job size: %d", size);
     return size;
 }

@@ -81,6 +81,8 @@ int32_t HStreamCaptureStub::HandleSetThumbnail(MessageParcel &data)
     CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
                              "HCameraServiceStub HandleCreatePhotoOutput BufferProducer is null");
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
+    CHECK_AND_RETURN_RET_LOG(producer != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HStreamCaptureStub HandleSetThumbnail producer is null");
     bool isEnabled = data.ReadBool();
     int32_t ret = SetThumbnail(isEnabled, producer);
     MEDIA_DEBUG_LOG("HCameraServiceStub HandleSetThumbnail result: %{public}d", ret);
@@ -103,7 +105,8 @@ int32_t HStreamCaptureStub::HandleSetCallback(MessageParcel &data)
                              "HStreamCaptureStub HandleSetCallback StreamCaptureCallback is null");
 
     auto callback = iface_cast<IStreamCaptureCallback>(remoteObject);
-
+    CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HStreamCaptureStub HandleSetCallback callback is null");
     return SetCallback(callback);
 }
 } // namespace CameraStandard

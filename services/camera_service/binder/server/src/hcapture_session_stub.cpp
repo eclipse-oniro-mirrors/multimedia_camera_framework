@@ -92,7 +92,8 @@ int32_t HCaptureSessionStub::HandleAddInput(MessageParcel &data)
                              "HCaptureSessionStub HandleAddInput CameraDevice is null");
 
     sptr<ICameraDeviceService> cameraDevice = iface_cast<ICameraDeviceService>(remoteObj);
-
+    CHECK_AND_RETURN_RET_LOG(cameraDevice != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCaptureSessionStub HandleAddInput Device is null");
     return AddInput(cameraDevice);
 }
 
@@ -102,6 +103,8 @@ int HCaptureSessionStub::HandleCanAddInput(MessageParcel &data, MessageParcel &r
     CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
                              "HCaptureSessionStub HandleAddInput CameraDevice is null");
     sptr<ICameraDeviceService> cameraDevice = iface_cast<ICameraDeviceService>(remoteObj);
+    CHECK_AND_RETURN_RET_LOG(cameraDevice != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCaptureSessionStub HandleCanAddInput CameraDevice is null");
     bool result = false;
     int32_t ret = CanAddInput(cameraDevice, result);
     MEDIA_INFO_LOG("HandleCanAddInput ret: %{public}d, result: %{public}d", ret, result);
@@ -117,7 +120,8 @@ int32_t HCaptureSessionStub::HandleRemoveInput(MessageParcel &data)
                              "HCaptureSessionStub HandleRemoveInput CameraDevice is null");
 
     sptr<ICameraDeviceService> cameraDevice = iface_cast<ICameraDeviceService>(remoteObj);
-
+    CHECK_AND_RETURN_RET_LOG(cameraDevice != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCaptureSessionStub HandleRemoveInput CameraDevice is null");
     return RemoveInput(cameraDevice);
 }
 
@@ -163,7 +167,8 @@ int32_t HCaptureSessionStub::HandleSetCallback(MessageParcel &data)
                              "HCaptureSessionStub HandleSetCallback CaptureSessionCallback is null");
 
     auto callback = iface_cast<ICaptureSessionCallback>(remoteObject);
-
+    CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCaptureSessionStub HandleSetCallback callback is null");
     return SetCallback(callback);
 }
 
@@ -195,8 +200,8 @@ int HCaptureSessionStub::HandleSetColorSpace(MessageParcel &data)
 
 int HCaptureSessionStub::HandleSetSmoothZoom(MessageParcel &data, MessageParcel &reply)
 {
-    int smoothZoomType = data.ReadUint32();
-    int operationMode = data.ReadUint32();
+    int smoothZoomType = static_cast<int32_t>(data.ReadUint32());
+    int operationMode = static_cast<int32_t>(data.ReadUint32());
     float targetZoomRatio = data.ReadFloat();
     float duration;
     int32_t ret = SetSmoothZoom(smoothZoomType, operationMode, targetZoomRatio, duration);

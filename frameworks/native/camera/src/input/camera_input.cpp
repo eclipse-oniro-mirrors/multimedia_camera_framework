@@ -83,6 +83,9 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
         return;
     }
     sptr<IRemoteObject> object = deviceObj_->AsObject();
+    if (object == nullptr) {
+        return;
+    }
     pid_t pid = 0;
     deathRecipient_ = new(std::nothrow) CameraDeathRecipient(pid);
     CHECK_AND_RETURN_LOG(deathRecipient_ != nullptr, "failed to new CameraDeathRecipient.");
@@ -237,6 +240,9 @@ int32_t CameraInput::UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>
 {
     CAMERA_SYNC_TRACE;
     int32_t ret = CAMERA_OK;
+    if (changedMetadata == nullptr) {
+        return CAMERA_INVALID_ARG;
+    }
     if (!OHOS::Camera::GetCameraMetadataItemCount(changedMetadata->get())) {
         MEDIA_INFO_LOG("CameraInput::UpdateSetting No configuration to update");
         return ret;
@@ -257,6 +263,10 @@ int32_t CameraInput::UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>
     uint8_t* data = OHOS::Camera::GetMetadataData(changedMetadata->get());
     camera_metadata_item_entry_t* itemEntry = OHOS::Camera::GetMetadataItems(changedMetadata->get());
     std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObj_->GetMetadata();
+    if (baseMetadata == nullptr || itemEntry == nullptr) {
+        MEDIA_ERR_LOG("CameraInput::UpdateSetting() baseMetadata or itemEntry is nullptr");
+        return CAMERA_INVALID_ARG;
+    }
     for (uint32_t i = 0; i < count; i++, itemEntry++) {
         bool status = false;
         camera_metadata_item_t item;
