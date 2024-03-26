@@ -32,6 +32,10 @@ public:
 
     virtual int32_t OnFrameShutter(int32_t captureId, uint64_t timestamp) = 0;
 
+    virtual int32_t OnFrameShutterEnd(int32_t captureId, uint64_t timestamp) = 0;
+
+    virtual int32_t OnCaptureReady(int32_t captureId, uint64_t timestamp) = 0;
+
     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamCaptureCallback");
 };
 } // namespace CameraStandard

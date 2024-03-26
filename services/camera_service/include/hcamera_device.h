@@ -31,6 +31,7 @@
 #include "v1_0/icamera_device.h"
 #include "v1_1/icamera_device.h"
 #include "v1_2/icamera_device.h"
+#include "v1_3/icamera_device.h"
 #include "v1_0/icamera_host.h"
 
 namespace OHOS {
@@ -38,7 +39,7 @@ namespace CameraStandard {
 using OHOS::HDI::Camera::V1_0::CaptureEndedInfo;
 using OHOS::HDI::Camera::V1_0::CaptureErrorInfo;
 using OHOS::HDI::Camera::V1_0::ICameraDeviceCallback;
-using OHOS::HDI::Camera::V1_2::IStreamOperatorCallback;
+using OHOS::HDI::Camera::V1_3::IStreamOperatorCallback;
 class HCameraDevice : public HCameraDeviceStub, public ICameraDeviceCallback, public IStreamOperatorCallback {
 public:
     explicit HCameraDevice(
@@ -77,7 +78,8 @@ public:
     int32_t OnCaptureEnded(int32_t captureId, const std::vector<CaptureEndedInfo>& infos) override;
     int32_t OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos) override;
     int32_t OnFrameShutter(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
-
+    int32_t OnFrameShutterEnd(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
+    int32_t OnCaptureReady(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
     int32_t ResetDeviceSettings();
     int32_t DispatchDefaultSettingToHdi();
 

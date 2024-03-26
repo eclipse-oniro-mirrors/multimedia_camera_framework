@@ -217,6 +217,21 @@ void TestPhotoOutputCallback::OnFrameShutter(const int32_t captureId, const uint
     MEDIA_INFO_LOG("OnFrameShutter(), testName_: %{public}s, captureID: %{public}d", testName_, captureId);
 }
 
+void TestPhotoOutputCallback::OnFrameShutterEnd(const int32_t captureId, const uint64_t timestamp) const
+{
+    MEDIA_INFO_LOG("OnFrameShutterEnd(), testName_: %{public}s, captureID: %{public}d", testName_, captureId);
+}
+
+void TestPhotoOutputCallback::OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const
+{
+    MEDIA_INFO_LOG("OnCaptureReady(), testName_: %{public}s, captureID: %{public}d", testName_, captureId);
+}
+
+void TestPhotoOutputCallback::OnEstimatedCaptureDuration(const int32_t duration) const
+{
+    MEDIA_INFO_LOG("OnEstimatedCaptureDuration(), duration: %{public}d", duration);
+}
+
 void TestPhotoOutputCallback::OnCaptureError(const int32_t captureId, const int32_t errorCode) const
 {
     MEDIA_INFO_LOG("OnCaptureError(), testName_: %{public}s, captureID: %{public}d, errorCode: %{public}d",

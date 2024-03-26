@@ -58,6 +58,24 @@ public:
     }
 
 // need fix
+    void OnFrameShutterEnd(const int32_t captureId, const uint64_t timestamp) const override
+    {
+        MEDIA_DEBUG_LOG("OnFrameShutterEnd is called!, captureId: %{public}d", captureId);
+    }
+
+// need fix
+    void OnCaptureReady(const int32_t captureId, const uint64_t timestamp) const override
+    {
+        MEDIA_DEBUG_LOG("OnCaptureReady is called!, captureId: %{public}d", captureId);
+    }
+
+// need fix
+    void OnEstimatedCaptureDuration(const int32_t duration) const override
+    {
+        MEDIA_DEBUG_LOG("OnEstimatedCaptureDuration is called!, duration: %{public}d", duration);
+    }
+
+// need fix
     void OnCaptureEnded(const int32_t captureID, const int32_t frameCount) const override
     {
         MEDIA_DEBUG_LOG("OnCaptureEnded is called! captureID: %{public}d", captureID);

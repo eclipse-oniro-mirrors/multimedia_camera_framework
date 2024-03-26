@@ -532,6 +532,9 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
         return ServiceToCameraError(errCode);
     }
     errCode = captureSession_->AddOutput(output->GetStreamType(), output->GetStream());
+    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO) {
+        photoOutput_ = output;
+    }
     MEDIA_INFO_LOG("CaptureSession::AddOutput StreamType = %{public}d", output->GetStreamType());
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to AddOutput!, %{public}d", errCode);
@@ -1900,6 +1903,25 @@ void CaptureSession::ProcessFaceRecUpdates(
     }
 }
 
+void CaptureSession::ProcessSnapshotDurationUpdates(const uint64_t timestamp,
+    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
+{
+    MEDIA_DEBUG_LOG("Entry ProcessSnapShotDurationUpdates");
+    if (photoOutput_ != nullptr) {
+        camera_metadata_item_t metadataItem;
+        common_metadata_header_t* metadata = result->get();
+        int ret = Camera::FindCameraMetadataItem(metadata, OHOS_CAMERA_CUSTOM_SNAPSHOT_DURATION, &metadataItem);
+        if (ret != CAM_META_SUCCESS || metadataItem.count <= 0) {
+            return;
+        }
+        int32_t duration = static_cast<int32_t>(metadataItem.data.ui32[0]);
+        if (duration != prevDuration_.load()) {
+            ((sptr<PhotoOutput> &)photoOutput_)->ProcessSnapshotDurationUpdates(duration);
+        }
+        prevDuration_ = duration;
+    }
+}
+
 void CaptureSession::CaptureSessionMetadataResultProcessor::ProcessCallbacks(
     const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {
@@ -1909,11 +1931,13 @@ void CaptureSession::CaptureSessionMetadataResultProcessor::ProcessCallbacks(
         MEDIA_ERR_LOG("CaptureSession::CaptureSessionMetadataResultProcessor ProcessCallbacks but session is null");
         return;
     }
+
     session->OnResultReceived(result);
     session->ProcessFaceRecUpdates(timestamp, result);
     session->ProcessAutoFocusUpdates(result);
     session->ProcessMacroStatusChange(result);
     session->ProcessMoonCaptureBoostStatusChange(result);
+    session->ProcessSnapshotDurationUpdates(timestamp, result);
 }
 
 std::vector<FlashMode> CaptureSession::GetSupportedFlashModes()

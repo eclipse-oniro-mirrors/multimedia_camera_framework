@@ -222,6 +222,30 @@ int32_t HStreamCaptureCallbackImpl::OnFrameShutter(const int32_t captureId, cons
     return CAMERA_OK;
 }
 
+int32_t HStreamCaptureCallbackImpl::OnFrameShutterEnd(const int32_t captureId, const uint64_t timestamp)
+{
+    CAMERA_SYNC_TRACE;
+    auto item = photoOutput_.promote();
+    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
+        item->GetApplicationCallback()->OnFrameShutterEnd(captureId, timestamp);
+    } else {
+        MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnFrameShutterEnd callback");
+    }
+    return CAMERA_OK;
+}
+
+int32_t HStreamCaptureCallbackImpl::OnCaptureReady(const int32_t captureId, const uint64_t timestamp)
+{
+    CAMERA_SYNC_TRACE;
+    auto item = photoOutput_.promote();
+    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
+        item->GetApplicationCallback()->OnCaptureReady(captureId, timestamp);
+    } else {
+        MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnCaptureReady callback");
+    }
+    return CAMERA_OK;
+}
+
 PhotoOutput::PhotoOutput(sptr<IStreamCapture>& streamCapture)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PHOTO, StreamType::CAPTURE, streamCapture)
 {
@@ -553,6 +577,13 @@ int32_t PhotoOutput::IsDeferredImageDeliveryEnabled(DeferredDeliveryImageType ty
     }
     isEnabled = captureSession->IsImageDeferred() ? 0 : -1;
     return isEnabled;
+}
+
+void PhotoOutput::ProcessSnapshotDurationUpdates(int32_t snapshotDuration)
+{
+    if (GetApplicationCallback() != nullptr) {
+        GetApplicationCallback()->OnEstimatedCaptureDuration(snapshotDuration);
+    }
 }
 
 std::shared_ptr<PhotoCaptureSetting> PhotoOutput::GetDefaultCaptureSetting()

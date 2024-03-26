@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_CAPTURE_SESSION_H
 #define OHOS_CAMERA_CAPTURE_SESSION_H
 
+#include <atomic>
 #include <cstdint>
 #include <iostream>
 #include <map>
@@ -922,7 +923,8 @@ public:
     sptr<CaptureOutput> GetMetaOutput();
     void ProcessFaceRecUpdates(const uint64_t timestamp,
                                     const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
-
+    void ProcessSnapshotDurationUpdates(const uint64_t timestamp,
+                                    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
     inline std::shared_ptr<MetadataResultProcessor> GetMetadataResultProcessor()
     {
         return metadataResultProcessor_;
@@ -978,6 +980,9 @@ private:
     static const std::unordered_map<camera_xmage_color_type_t, ColorEffect> metaColorEffectMap_;
     static const std::unordered_map<ColorEffect, camera_xmage_color_type_t> fwkColorEffectMap_;
     sptr<CaptureOutput> metaOutput_;
+    sptr<CaptureOutput> photoOutput_;
+    std::atomic<int32_t> prevDuration_ = 0;
+
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
     bool isColorSpaceSetted_ = false;
 

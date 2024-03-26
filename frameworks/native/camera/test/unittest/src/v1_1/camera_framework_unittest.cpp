@@ -3145,7 +3145,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_014, TestSize.Level
 
     std::vector<int32_t> streamIds = {1, 2};
     camSession->OnFrameShutter(0, streamIds, 0);
-
+    camSession->OnFrameShutterEnd(0, streamIds, 0);
+    camSession->OnCaptureReady(0, streamIds, 0);
     input->Close();
     camSession->Release();
 }
@@ -3206,6 +3207,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_015, TestSize.Level
 
     std::vector<int32_t> streamIds = {1, 2};
     camSession->OnFrameShutter(0, streamIds, 0);
+    camSession->OnFrameShutterEnd(0, streamIds, 0);
+    camSession->OnCaptureReady(0, streamIds, 0);
 
     input->Close();
     camSession->Release();
@@ -3264,6 +3267,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_016, TestSize.Level
 
     std::vector<int32_t> streamIds = {0, 1, 2};
     camSession->OnFrameShutter(0, streamIds, 0);
+    camSession->OnFrameShutterEnd(0, streamIds, 0);
+    camSession->OnCaptureReady(0, streamIds, 0);
     camSession->BeginConfig();
 
     input->Close();
@@ -3891,6 +3896,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_029, TestSize.Level
     EXPECT_EQ(streamCapture->OnCaptureError(captureId, frameCount), CAMERA_OK);
     EXPECT_EQ(streamCapture->OnCaptureError(captureId, BUFFER_LOST), CAMERA_OK);
     EXPECT_EQ(streamCapture->OnFrameShutter(captureId, timestamp), CAMERA_OK);
+    EXPECT_EQ(streamCapture->OnFrameShutterEnd(captureId, timestamp), CAMERA_OK);
+    EXPECT_EQ(streamCapture->OnCaptureReady(captureId, timestamp), CAMERA_OK);
     streamCapture->DumpStreamInfo(dumpString);
 
     EXPECT_EQ(streamCapture->Release(),  0);
@@ -6166,6 +6173,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_088, TestSize.Level
     const std::vector<int32_t> streamIds = {1, 2};
     uint64_t timestamp = 5;
     EXPECT_EQ(camDevice->OnFrameShutter(captureId, streamIds, timestamp), CAMERA_INVALID_STATE);
+    EXPECT_EQ(camDevice->OnFrameShutterEnd(captureId, streamIds, timestamp), CAMERA_INVALID_STATE);
+    EXPECT_EQ(camDevice->OnCaptureReady(captureId, streamIds, timestamp), CAMERA_INVALID_STATE);
 }
 
 /*

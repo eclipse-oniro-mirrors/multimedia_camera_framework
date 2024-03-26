@@ -32,6 +32,8 @@ private:
     int HandleOnCaptureEnded(MessageParcel& data);
     int HandleOnCaptureError(MessageParcel& data);
     int HandleOnFrameShutter(MessageParcel& data);
+    int HandleOnFrameShutterEnd(MessageParcel& data);
+    int HandleOnCaptureReady(MessageParcel& data);
 };
 } // namespace CameraStandard
 } // namespace OHOS
