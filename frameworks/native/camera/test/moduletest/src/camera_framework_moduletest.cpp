@@ -7433,6 +7433,119 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_116, TestSize.L
 
 /*
  * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test prelaunch the camera with PERSISTENT_DEFAULT_PARAM_OHOS anomalous branch
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_117, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
+    std::string cameraId = camInput->GetCameraId();
+    int activeTime = 0;
+    EffectParam effectParam = {0, 0, 0};
+
+    int32_t intResult = camManagerObj->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS,
+        activeTime, effectParam);
+    if (!IsSupportNow()) {
+        EXPECT_EQ(intResult, 7400201);
+    } else {
+        EXPECT_EQ(intResult, 0);
+    }
+
+    intResult = camManagerObj->PrelaunchCamera();
+    EXPECT_EQ(intResult, 0);
+
+    camManagerObj->~CameraManager();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test prelaunch the camera with NO_NEED_RESTORE_PARAM_OHOS anomalous branch
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_118, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
+    std::string cameraId = camInput->GetCameraId();
+    int activeTime = 15;
+    EffectParam effectParam = {5, 0, 0};
+
+    int32_t intResult = camManagerObj->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::NO_NEED_RESTORE_PARAM_OHOS,
+        activeTime, effectParam);
+    if (!IsSupportNow()) {
+        EXPECT_EQ(intResult, 7400201);
+    } else {
+        EXPECT_EQ(intResult, 0);
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test prelaunch the camera with abnormal cameraid branch
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_119, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
+    std::string cameraId = camInput->GetCameraId();
+    int activeTime = 15;
+    EffectParam effectParam = {0, 0, 0};
+
+    cameraId = "";
+    int32_t intResult = camManagerObj->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS,
+        activeTime, effectParam);
+    if (!IsSupportNow()) {
+        EXPECT_EQ(intResult, 7400201);
+    } else {
+        EXPECT_EQ(intResult, 0);
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test prelaunch the camera with abnormal setting branch
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_120, TestSize.Level0)
+{
+    sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(camManagerObj, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
+    std::string cameraId = camInput->GetCameraId();
+    int activeTime = 15;
+    EffectParam effectParam = {-1, -1, -1};
+    int32_t intResult = camManagerObj->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::NO_NEED_RESTORE_PARAM_OHOS,
+        activeTime, effectParam);
+    if (!IsSupportNow()) {
+        EXPECT_EQ(intResult, 7400201);
+    } else {
+        EXPECT_EQ(intResult, 0);
+    }
+}
+
+/*
+ * Feature: Framework
  * Function: Test camera preempted.
  * SubFunction: NA
  * FunctionPoints: NA

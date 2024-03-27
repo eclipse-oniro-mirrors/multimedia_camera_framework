@@ -2662,13 +2662,17 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_006, TestSize.Level
     std::string cameraId = camInput->GetCameraId();
     int activeTime = 0;
     EffectParam effectParam = {0, 0, 0};
-
-    intResult = cameraService->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS,
+    intResult = cameraService->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS,
         activeTime, effectParam);
     EXPECT_EQ(intResult, 2);
 
     cameraId = "";
     intResult = cameraService->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS,
+        activeTime, effectParam);
+    EXPECT_EQ(intResult, 2);
+
+    cameraId = "";
+    intResult = cameraService->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS,
         activeTime, effectParam);
     EXPECT_EQ(intResult, 2);
 
@@ -6980,6 +6984,66 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_111, TestSize.Level
     EXPECT_EQ(ret, 0);
 
     scanSession->Release();
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test HCameraService with anomalous branch
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_112, TestSize.Level0)
+{
+    InSequence s;
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<FakeHCameraService> mockHCameraService = new FakeHCameraService(mockCameraHostManager);
+    sptr<HCameraService> cameraService = (sptr<HCameraService> &)mockHCameraService;
+    ASSERT_NE(cameraService, nullptr);
+
+    sptr<ICameraServiceCallback> callback = nullptr;
+    int32_t intResult = cameraService->SetCallback(callback);
+    EXPECT_EQ(intResult, 2);
+
+    callback = new(std::nothrow) CameraStatusServiceCallback(cameraManager);
+    intResult = cameraService->SetCallback(callback);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
+    ASSERT_NE(deviceObj, nullptr);
+
+    sptr<ICameraMuteServiceCallback> callback_2 = nullptr;
+    intResult = cameraService->SetMuteCallback(callback_2);
+    EXPECT_EQ(intResult, 2);
+
+    callback_2 = new(std::nothrow) CameraMuteServiceCallback(cameraManager);
+    intResult = cameraService->SetMuteCallback(callback_2);
+    EXPECT_EQ(intResult, 0);
+
+    std::string cameraId = camInput->GetCameraId();
+    int activeTime = 0;
+    EffectParam effectParam = {0, 0, 0};
+    intResult = cameraService->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS,
+        activeTime, effectParam);
+    EXPECT_EQ(intResult, 2);
+
+    intResult = cameraService->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS,
+    activeTime, effectParam);
+    EXPECT_EQ(intResult, 2);
+
     input->Close();
 }
 
