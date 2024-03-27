@@ -7953,7 +7953,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_053, TestSize.Le
 
     auto statusSize = g_sketchStatus.size();
     EXPECT_EQ(statusSize, 3);
-    if(statusSize == 3) {
+    if (statusSize == 3) {
         EXPECT_EQ(g_sketchStatus.front(), 0);
         g_sketchStatus.pop_front();
         EXPECT_EQ(g_sketchStatus.front(), 3);
@@ -7977,7 +7977,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_053, TestSize.Le
 
     statusSize = g_sketchStatus.size();
     EXPECT_EQ(statusSize, 2);
-    if(statusSize == 2) {
+    if (statusSize == 2) {
         EXPECT_EQ(g_sketchStatus.front(), 2);
         g_sketchStatus.pop_front();
         EXPECT_EQ(g_sketchStatus.front(), 0);

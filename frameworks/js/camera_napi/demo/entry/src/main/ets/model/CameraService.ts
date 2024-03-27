@@ -50,9 +50,9 @@ enum CameraMode {
   NIGHT
 }
 
-function mockInterface() {
+function mockInterface(): void {
   if (!camera.FeatureType) {
-    camera.FeatureType = { FEATURE_MOON_CAPTURE_BOOST: 0 }
+    camera.FeatureType = { FEATURE_MOON_CAPTURE_BOOST: 0 };
   }
   if (!camera.SceneMode) {
     camera.SceneMode = {
@@ -60,7 +60,7 @@ function mockInterface() {
       NORMAL_VIDEO: 2,
       PORTRAIT_PHOTO: 3,
       NIGHT_PHOTO: 4
-    }
+    };
   }
 }
 
@@ -390,7 +390,7 @@ class CameraService {
 
   initProfile(cameraDeviceIndex: number): void {
     let profiles;
-    if (this.cameraMode == CameraMode.PORTRAIT) {
+    if (this.cameraMode === CameraMode.PORTRAIT) {
       profiles = this.cameraManager.getSupportedOutputCapability(this.cameras[cameraDeviceIndex], camera.SceneMode.PORTRAIT_PHOTO);
     } else {
       profiles = this.cameraManager.getSupportedOutputCapability(this.cameras[cameraDeviceIndex]);
@@ -1105,7 +1105,7 @@ class CameraService {
           (error, statusObject) => {
             Logger.info(TAG,
               `on featureDetectionStatus featureType:${statusObject.featureType} detected:${statusObject.detected}`);
-            if (statusObject.featureType == camera.FeatureType.FEATURE_MOON_CAPTURE_BOOST) {
+            if (statusObject.featureType === camera.FeatureType.FEATURE_MOON_CAPTURE_BOOST) {
               let status = statusObject.detected;
               Logger.info(TAG, `on moonCaptureBoostStatus change:${status}`);
               AppStorage.setOrCreate('moonCaptureComponentIsShow', status);
