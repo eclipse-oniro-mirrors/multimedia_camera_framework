@@ -1,55 +1,101 @@
-#  Copyright (c) 2022 Huawei Device Co., Ltd.
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
+# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-#      http://www.apache.org/licenses/LICENSE-2.0
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 domain: CAMERA
 
+CAMERA_CONFIG:
+  __BASE: {type: STATISTIC, level: MINOR, tag: PowerStats, desc: camera config, preserve: true}
+  WIDTH: {type: INT32, desc: image width}
+  HEIGHT: {type: INT32, desc: image height}
+  TYPE: {type: STRING, desc: stream type}
+
+CAMERA_CONNECT:
+  __BASE: {type: STATISTIC, level: MINOR, tag: PowerStats, desc: camera connect, preserve: true}
+  NAME: {type: STRING, desc: package name}
+  UID: {type: INT32, desc: uid}
+  ID: {type: STRING, desc: camera id}
+  PID: {type: INT32, desc: pid}
+
+CAMERA_DISCONNECT:
+  __BASE: {type: STATISTIC, level: MINOR, tag: PowerStats, desc: camera disconnect, preserve: true}
+  ID: {type: STRING, desc: camera id}
+
 CAMERA_ERR:
-  __BASE: {type: FAULT, level: CRITICAL, desc: camera error}
+  __BASE: {type: FAULT, level: CRITICAL, desc: camera error, preserve: true}
   MSG: {type: STRING, desc: message}
 
 CAMERA_STATE:
-  __BASE: {type: BEHAVIOR, level: MINOR, desc: state change}
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: state change, preserve: true}
   MSG: {type: STRING, desc: message}
 
 CAMERA_STATISTIC:
-  __BASE: {type: STATISTIC, level: MINOR, desc: camera stats}
+  __BASE: {type: STATISTIC, level: MINOR, desc: camera stats, preserve: true}
   MSG: {type: STRING, desc: message}
 
-CAMERA_CONNECT:
-  __BASE: {type: STATISTIC, level: MINOR, tag: PowerStats, desc: camera connect}
-  PID: {type: INT32, desc: pid}
-  UID: {type: INT32, desc: uid}
-  ID: {type: STRING, desc: camera id}
-  NAME: {type: STRING, desc: package name}
-
-CAMERA_DISCONNECT:
-  __BASE: {type: STATISTIC, level: MINOR, tag: PowerStats, desc: camera disconnect}
-  ID: {type: STRING, desc: camera id}
-
-TORCH_STATE:
-  __BASE: {type: STATISTIC, level: MINOR, tag: PowerStats, desc: torch state}
-  PID: {type: INT32, desc: pid}
-  UID: {type: INT32, desc: uid}
-  STATE: {type: INT32, desc: status}
-
-CAMERA_CONFIG:
-  __BASE: {type: STATISTIC, level: MINOR, tag: PowerStats, desc: camera config}
-  TYPE: {type: STRING, desc: stream type}
-  WIDTH: {type: INT32, desc: image width}
-  HEIGHT: {type: INT32, desc: image height}
+FLASHLIGHT_OFF:
+  __BASE: {type: STATISTIC, level: MINOR, tag: PowerStats, desc: flashlight off, preserve: true}
 
 FLASHLIGHT_ON:
-  __BASE: {type: STATISTIC, level: MINOR, tag: PowerStats, desc: flashlight on}
+  __BASE: {type: STATISTIC, level: MINOR, tag: PowerStats, desc: flashlight on, preserve: true}
 
-FLASHLIGHT_OFF:
-  __BASE: {type: STATISTIC, level: MINOR, tag: PowerStats, desc: flashlight off}
+PERFORMANCE_CAPTURE:
+  __BASE: {type: STATISTIC, level: MINOR, desc: Report camera capture performance Start from camera service capture End with HAL capture end callback, preserve: true}
+  CALLER_PID: {type: INT32, desc: caller pid}
+  CALLER_UID: {type: INT32, desc: caller uid}
+  CALLER_TOKENID: {type: UINT32, desc: caller tokenId}
+  CALLER_BUNDLE_NAME: {type: STRING, desc: caller bundle name}
+  COST_TIME: {type: UINT64, desc: capture cost time}
+  CAPTURE_ID: {type: STRING, desc: camera capture id}
+  CUR_MODE: {type: INT32, desc: curent mode}
+  CUR_CAMERA_ID: {type: STRING, desc: curent camera id}
+
+PERFORMANCE_MODE_CHANGE:
+  __BASE: {type: STATISTIC, level: MINOR, desc: Report camera mode change performance Start from camera service release session End with preview on first frame, preserve: true}
+  CALLER_PID: {type: INT32, desc: caller pid}
+  CALLER_UID: {type: INT32, desc: caller uid}
+  CALLER_TOKENID: {type: UINT32, desc: caller tokenId}
+  CALLER_BUNDLE_NAME: {type: STRING, desc: caller bundle name}
+  COST_TIME: {type: UINT64, desc: mode change cost time}
+  PRE_MODE: {type: INT32, desc: previous Mode}
+  CUR_MODE: {type: INT32, desc: curent mode}
+  PRE_CAMERA_ID: {type: STRING, desc: previous camera id}
+  CUR_CAMERA_ID: {type: STRING, desc: curent camera id}
+
+PERFORMANCE_START:
+  __BASE: {type: STATISTIC, level: MINOR, desc: Report camera startup performance Start from camera service open device End with preview on first frame, preserve: true}
+  CALLER_PID: {type: INT32, desc: caller pid}
+  CALLER_UID: {type: INT32, desc: caller uid}
+  CALLER_TOKENID: {type: UINT32, desc: caller tokenId}
+  CALLER_BUNDLE_NAME: {type: STRING, desc: caller bundle name}
+  COST_TIME: {type: UINT64, desc: start camera cost time}
+  CUR_CAMERA_ID: {type: STRING, desc: curent camera id}
+  START_TYPE: {type: STRING, desc: start camera type}
+  CUR_MODE: {type: INT32, desc: curent mode}
+
+PERFORMANCE_SWITCH_CAMERA:
+  __BASE: {type: STATISTIC, level: MINOR, desc: Report camera switch camera performance Start from camera service preSwitchCamera End with preview on first frame, preserve: true}
+  CALLER_PID: {type: INT32, desc: caller pid}
+  CALLER_UID: {type: INT32, desc: caller uid}
+  CALLER_TOKENID: {type: UINT32, desc: caller tokenId}
+  CALLER_BUNDLE_NAME: {type: STRING, desc: caller bundle name}
+  COST_TIME: {type: UINT64, desc: switch camera cost time}
+  PRE_MODE: {type: INT32, desc: previous Mode}
+  CUR_MODE: {type: INT32, desc: curent mode}
+  PRE_CAMERA_ID: {type: STRING, desc: previous camera id}
+  CUR_CAMERA_ID: {type: STRING, desc: curent camera id}
+
+TORCH_STATE:
+  __BASE: {type: STATISTIC, level: MINOR, tag: PowerStats, desc: torch state, preserve: true}
+  STATE: {type: INT32, desc: status}
+  PID: {type: INT32, desc: pid}
+  UID: {type: INT32, desc: uid}

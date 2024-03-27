@@ -79,11 +79,11 @@ int32_t HStreamCaptureStub::HandleSetThumbnail(MessageParcel &data)
 {
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
     CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HCameraServiceStub HandleCreatePhotoOutput BufferProducer is null");
+        "HStreamCaptureStub HandleCreatePhotoOutput BufferProducer is null");
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
     bool isEnabled = data.ReadBool();
     int32_t ret = SetThumbnail(isEnabled, producer);
-    MEDIA_DEBUG_LOG("HCameraServiceStub HandleSetThumbnail result: %{public}d", ret);
+    MEDIA_DEBUG_LOG("HStreamCaptureStub HandleSetThumbnail result: %{public}d", ret);
     return ret;
 }
 
@@ -91,7 +91,7 @@ int32_t HStreamCaptureStub::HandleEnableDeferredType(MessageParcel &data)
 {
     int32_t type = data.ReadInt32();
     int32_t ret = DeferImageDeliveryFor(type);
-    MEDIA_DEBUG_LOG("HCameraServiceStub HandleEnableDeferredType result: %{public}d", ret);
+    MEDIA_DEBUG_LOG("HStreamCaptureStub HandleEnableDeferredType result: %{public}d", ret);
     return ret;
 }
 
