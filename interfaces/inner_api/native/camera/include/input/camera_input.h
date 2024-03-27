@@ -36,14 +36,15 @@ class ErrorCallback {
 public:
     ErrorCallback() = default;
     virtual ~ErrorCallback() = default;
-    virtual void OnError(const int32_t errorType, const int32_t errorMsg) const;
+    virtual void OnError(const int32_t errorType, const int32_t errorMsg) const = 0;
 };
 
 class ResultCallback {
 public:
     ResultCallback() = default;
     virtual ~ResultCallback() = default;
-    virtual void OnResult(const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) const;
+    virtual void OnResult(const uint64_t timestamp,
+        const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) const = 0;
 };
 
 class CameraInput : public CaptureInput {
