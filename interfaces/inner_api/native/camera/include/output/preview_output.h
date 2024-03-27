@@ -26,6 +26,10 @@
 
 namespace OHOS {
 namespace CameraStandard {
+static const std::string CONST_PREVIEW_FRAME_START = "frameStart";
+static const std::string CONST_PREVIEW_FRAME_END = "frameEnd";
+static const std::string CONST_PREVIEW_FRAME_ERROR = "error";
+static const std::string CONST_SKETCH_STATUS_CHANGED = "sketchStatusChanged";
 class SketchWrapper;
 class PreviewStateCallback {
 public:

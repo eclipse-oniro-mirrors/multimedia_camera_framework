@@ -15,11 +15,19 @@
 
 #include "session/camera_session_napi.h"
 
+#include <cstdint>
+#include <mutex>
 #include <unordered_map>
 #include <uv.h>
+#include <vector>
 
+#include "camera_error_code.h"
+#include "camera_napi_param_parser.h"
 #include "camera_napi_security_utils.h"
 #include "camera_napi_template_utils.h"
+#include "camera_napi_utils.h"
+#include "capture_scene_const.h"
+#include "js_native_api.h"
 #include "js_native_api_types.h"
 #include "listener_base.h"
 #include "napi/native_api.h"
@@ -126,6 +134,11 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::macro_props = {
 const std::vector<napi_property_descriptor> CameraSessionNapi::moon_capture_boost_props = {
     DECLARE_NAPI_FUNCTION("isMoonCaptureBoostSupported", CameraSessionNapi::IsMoonCaptureBoostSupported),
     DECLARE_NAPI_FUNCTION("enableMoonCaptureBoost", CameraSessionNapi::EnableMoonCaptureBoost)
+};
+
+const std::vector<napi_property_descriptor> CameraSessionNapi::features_props = {
+    DECLARE_NAPI_FUNCTION("isFeatureSupported", CameraSessionNapi::IsFeatureSupported),
+    DECLARE_NAPI_FUNCTION("enableFeature", CameraSessionNapi::EnableFeature)
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::color_management_props = {
@@ -337,6 +350,119 @@ void MoonCaptureBoostCallbackListener::OnMoonCaptureBoostStatusChanged(MoonCaptu
     OnMoonCaptureBoostStatusCallbackAsync(status);
 }
 
+void FeatureDetectionStatusCallbackListener::OnFeatureDetectionStatusChangedCallbackAsync(
+    SceneFeature feature, FeatureDetectionStatus status) const
+{
+    MEDIA_DEBUG_LOG("OnFeatureDetectionStatusChangedCallbackAsync is called");
+    uv_loop_s* loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (!loop) {
+        MEDIA_ERR_LOG("failed to get event loop");
+        return;
+    }
+    uv_work_t* work = new (std::nothrow) uv_work_t;
+    if (!work) {
+        MEDIA_ERR_LOG("failed to allocate work");
+        return;
+    }
+    auto callbackInfo = std::make_unique<FeatureDetectionStatusCallbackInfo>(feature, status, this);
+    work->data = callbackInfo.get();
+    int ret = uv_queue_work_with_qos(
+        loop, work, [](uv_work_t* work) {},
+        [](uv_work_t* work, int status) {
+            auto callbackInfo = reinterpret_cast<FeatureDetectionStatusCallbackInfo*>(work->data);
+            if (callbackInfo) {
+                callbackInfo->listener_->OnFeatureDetectionStatusChangedCallback(
+                    callbackInfo->feature_, callbackInfo->status_);
+                delete callbackInfo;
+            }
+            delete work;
+        },
+        uv_qos_user_initiated);
+    if (ret) {
+        MEDIA_ERR_LOG("failed to execute work");
+        delete work;
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void FeatureDetectionStatusCallbackListener::OnFeatureDetectionStatusChangedCallback(
+    SceneFeature feature, FeatureDetectionStatus status) const
+{
+    MEDIA_DEBUG_LOG("OnFeatureDetectionStatusChangedCallback is called");
+    std::lock_guard<std::mutex> lock(featureListenerMapMutex_);
+    auto it = featureListenerMap_.find(feature);
+    if (it == featureListenerMap_.end()) {
+        return;
+    }
+
+    napi_value result[ARGS_TWO] = { nullptr, nullptr };
+    napi_value retVal;
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_create_object(env_, &result[PARAM1]);
+
+    napi_value featureNapiValue;
+    napi_create_int32(env_, feature, &featureNapiValue);
+    napi_set_named_property(env_, result[PARAM1], "featureType", featureNapiValue);
+
+    napi_value statusValue;
+    napi_get_boolean(env_, status == FeatureDetectionStatus::ACTIVE, &statusValue);
+    napi_set_named_property(env_, result[PARAM1], "detected", statusValue);
+
+    ListenerBase::ExecuteCallbackNapiPara callbackNapiPara {
+        .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal
+    };
+    it->second->ExecuteCallback(callbackNapiPara);
+}
+
+void FeatureDetectionStatusCallbackListener::OnFeatureDetectionStatusChanged(
+    SceneFeature feature, FeatureDetectionStatus status)
+{
+    MEDIA_DEBUG_LOG(
+        "OnFeatureDetectionStatusChanged is called,feature:%{public}d, status: %{public}d", feature, status);
+    OnFeatureDetectionStatusChangedCallbackAsync(feature, status);
+}
+
+bool FeatureDetectionStatusCallbackListener::IsFeatureSubscribed(SceneFeature feature)
+{
+    std::lock_guard<std::mutex> lock(featureListenerMapMutex_);
+    auto it = featureListenerMap_.find(feature);
+    if (it == featureListenerMap_.end()) {
+        return false;
+    }
+    if (it->second == nullptr) {
+        return false;
+    }
+    return !it->second->IsEmpty();
+}
+
+void FeatureDetectionStatusCallbackListener::SaveCallbackReference(
+    SceneFeature feature, napi_value callback, bool isOnce)
+{
+    std::lock_guard<std::mutex> lock(featureListenerMapMutex_);
+    shared_ptr<ListenerBase> listenerBase = nullptr;
+    auto it = featureListenerMap_.find(feature);
+    if (it == featureListenerMap_.end()) {
+        listenerBase = std::make_shared<ListenerBase>(env_);
+        featureListenerMap_.emplace(feature, listenerBase);
+    } else {
+        listenerBase = it->second;
+    }
+    listenerBase->SaveCallbackReference(callback, isOnce);
+}
+
+void FeatureDetectionStatusCallbackListener::RemoveCallbackRef(SceneFeature feature, napi_value callback)
+{
+    std::lock_guard<std::mutex> lock(featureListenerMapMutex_);
+    auto it = featureListenerMap_.find(feature);
+    if (it == featureListenerMap_.end()) {
+        return;
+    }
+    auto listenerBase = it->second;
+    listenerBase->RemoveCallbackRef(env_, callback);
+}
+
 void SessionCallbackListener::OnErrorCallbackAsync(int32_t errorCode) const
 {
     MEDIA_DEBUG_LOG("OnErrorCallbackAsync is called");
@@ -468,7 +594,7 @@ napi_value CameraSessionNapi::Init(napi_env env, napi_value exports)
     int32_t refCount = 1;
     std::vector<std::vector<napi_property_descriptor>> descriptors = { camera_process_props, stabilization_props,
         flash_props, auto_exposure_props, focus_props, zoom_props, filter_props, beauty_props, color_effect_props,
-        macro_props, moon_capture_boost_props, color_management_props };
+        macro_props, moon_capture_boost_props, features_props, color_management_props };
     std::vector<napi_property_descriptor> camera_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, CAMERA_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                CameraSessionNapiConstructor, nullptr,
@@ -2408,23 +2534,21 @@ napi_value CameraSessionNapi::IsMacroSupported(napi_env env, napi_callback_info 
         MEDIA_ERR_LOG("SystemApi IsMacroSupported is called!");
         return nullptr;
     }
-    MEDIA_DEBUG_LOG("IsMacroSupported is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
+    MEDIA_DEBUG_LOG("CameraSessionNapi::IsMacroSupported is called");
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::IsMacroSupported parse parameter occur error");
+        return nullptr;
+    }
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
         bool isSupported = cameraSessionNapi->cameraSession_->IsMacroSupported();
         napi_get_boolean(env, isSupported, &result);
     } else {
-        MEDIA_ERR_LOG("IsMacroSupported call Failed!");
+        MEDIA_ERR_LOG("CameraSessionNapi::IsMacroSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return nullptr;
     }
     return result;
 }
@@ -2435,34 +2559,30 @@ napi_value CameraSessionNapi::EnableMacro(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("SystemApi EnableMacro is called!");
         return nullptr;
     }
-    MEDIA_DEBUG_LOG("EnableMacro is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = { 0 };
-    napi_value thisVar = nullptr;
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
-    napi_valuetype valueType = napi_undefined;
-    napi_typeof(env, argv[0], &valueType);
-    if (valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
-        return result;
-    }
-    napi_get_undefined(env, &result);
+    MEDIA_DEBUG_LOG("CameraSessionNapi::EnableMacro is called");
+    bool isEnableMacro;
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
-        bool isEnableMacro;
-        napi_get_value_bool(env, argv[PARAM0], &isEnableMacro);
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, isEnableMacro);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::EnableMacro parse parameter occur error");
+        return nullptr;
+    }
+
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
         MEDIA_INFO_LOG("CameraSessionNapi::EnableMacro:%{public}d", isEnableMacro);
         cameraSessionNapi->cameraSession_->LockForControl();
         int32_t retCode = cameraSessionNapi->cameraSession_->EnableMacro(isEnableMacro);
         cameraSessionNapi->cameraSession_->UnlockForControl();
-        if (retCode != 0 && !CameraNapiUtils::CheckError(env, retCode)) {
-            return result;
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            MEDIA_ERR_LOG("CameraSessionNapi::EnableMacro fail %{public}d", retCode);
+            return nullptr;
         }
+    } else {
+        MEDIA_ERR_LOG("CameraSessionNapi::EnableMacro get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return nullptr;
     }
-    return result;
+    return CameraNapiUtils::GetUndefinedValue(env);
 }
 
 napi_value CameraSessionNapi::IsMoonCaptureBoostSupported(napi_env env, napi_callback_info info)
@@ -2528,204 +2648,266 @@ napi_value CameraSessionNapi::EnableMoonCaptureBoost(napi_env env, napi_callback
     return result;
 }
 
-namespace {
-typedef void (*RegisterFun)(CameraSessionNapi*, napi_env, napi_value, bool);
-typedef void (*UnregisterFun)(CameraSessionNapi*, napi_env, napi_value);
-void RegisterExposureCallbackListener(
-    CameraSessionNapi* cameraSessionNapi, napi_env env, napi_value callback, bool isOnce)
+napi_value CameraSessionNapi::IsFeatureSupported(napi_env env, napi_callback_info info)
 {
-    if (cameraSessionNapi->exposureCallback_ == nullptr) {
-        auto exposureCallback = std::make_shared<ExposureCallbackListener>(env);
-        cameraSessionNapi->exposureCallback_ = exposureCallback;
-        cameraSessionNapi->cameraSession_->SetExposureCallback(exposureCallback);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsFeatureSupported is called!");
+        return nullptr;
     }
-    cameraSessionNapi->exposureCallback_->SaveCallbackReference(callback, isOnce);
+    MEDIA_DEBUG_LOG("IsFeatureSupported is called");
+    int32_t sceneFeature;
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, sceneFeature);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::IsFeatureSupported parse parameter occur error");
+        return nullptr;
+    }
+
+    napi_value result = nullptr;
+    napi_get_boolean(
+        env, cameraSessionNapi->cameraSession_->IsFeatureSupported(static_cast<SceneFeature>(sceneFeature)), &result);
+    return result;
 }
 
-void UnregisterExposureCallbackListener(CameraSessionNapi* cameraSessionNapi, napi_env env, napi_value callback)
+napi_value CameraSessionNapi::EnableFeature(napi_env env, napi_callback_info info)
 {
-    if (cameraSessionNapi->exposureCallback_ == nullptr) {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi EnableFeature is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("EnableFeature is called");
+    int32_t sceneFeature;
+    bool isEnable;
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, sceneFeature, isEnable);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::EnableFeature parse parameter occur error");
+        return nullptr;
+    }
+
+    MEDIA_INFO_LOG("CameraSessionNapi::EnableFeature:%{public}d", isEnable);
+    int32_t retCode =
+        cameraSessionNapi->cameraSession_->EnableFeature(static_cast<SceneFeature>(sceneFeature), isEnable);
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
+        return nullptr;
+    }
+
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+void CameraSessionNapi::RegisterExposureCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (exposureCallback_ == nullptr) {
+        exposureCallback_ = std::make_shared<ExposureCallbackListener>(env);
+        cameraSession_->SetExposureCallback(exposureCallback_);
+    }
+    exposureCallback_->SaveCallbackReference(callback, isOnce);
+}
+
+void CameraSessionNapi::UnregisterExposureCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (exposureCallback_ == nullptr) {
         MEDIA_ERR_LOG("exposureCallback is null");
-    } else {
-        cameraSessionNapi->exposureCallback_->RemoveCallbackRef(env, callback);
+        return;
     }
+    exposureCallback_->RemoveCallbackRef(env, callback);
 }
 
-void RegisterFocusCallbackListener(CameraSessionNapi* cameraSessionNapi, napi_env env, napi_value callback, bool isOnce)
+void CameraSessionNapi::RegisterFocusCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    if (cameraSessionNapi->focusCallback_ == nullptr) {
-        auto focusCallback = make_shared<FocusCallbackListener>(env);
-        cameraSessionNapi->focusCallback_ = focusCallback;
-        cameraSessionNapi->cameraSession_->SetFocusCallback(focusCallback);
+    if (focusCallback_ == nullptr) {
+        focusCallback_ = make_shared<FocusCallbackListener>(env);
+        cameraSession_->SetFocusCallback(focusCallback_);
     }
-    cameraSessionNapi->focusCallback_->SaveCallbackReference(callback, isOnce);
+    focusCallback_->SaveCallbackReference(callback, isOnce);
 }
 
-void UnregisterFocusCallbackListener(CameraSessionNapi* cameraSessionNapi, napi_env env, napi_value callback)
+void CameraSessionNapi::UnregisterFocusCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    if (cameraSessionNapi->focusCallback_ == nullptr) {
+    if (focusCallback_ == nullptr) {
         MEDIA_ERR_LOG("focusCallback is null");
-    } else {
-        cameraSessionNapi->focusCallback_->RemoveCallbackRef(env, callback);
+        return;
     }
+    focusCallback_->RemoveCallbackRef(env, callback);
 }
 
-void RegisterMacroStatusCallbackListener(
-    CameraSessionNapi* cameraSessionNapi, napi_env env, napi_value callback, bool isOnce)
+void CameraSessionNapi::RegisterMacroStatusCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi on macroStatusChanged is called!");
         return;
     }
-    if (cameraSessionNapi->macroStatusCallback_ == nullptr) {
-        auto macroStatusCallback = std::make_shared<MacroStatusCallbackListener>(env);
-        cameraSessionNapi->macroStatusCallback_ = macroStatusCallback;
-        cameraSessionNapi->cameraSession_->SetMacroStatusCallback(macroStatusCallback);
+    if (macroStatusCallback_ == nullptr) {
+        macroStatusCallback_ = std::make_shared<MacroStatusCallbackListener>(env);
+        cameraSession_->SetMacroStatusCallback(macroStatusCallback_);
     }
-    cameraSessionNapi->macroStatusCallback_->SaveCallbackReference(callback, isOnce);
+    macroStatusCallback_->SaveCallbackReference(callback, isOnce);
 }
 
-void UnregisterMacroStatusCallbackListener(CameraSessionNapi* cameraSessionNapi, napi_env env, napi_value callback)
+void CameraSessionNapi::UnregisterMacroStatusCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi off macroStatusChanged is called!");
         return;
     }
-    if (cameraSessionNapi->macroStatusCallback_ == nullptr) {
+    if (macroStatusCallback_ == nullptr) {
         MEDIA_ERR_LOG("macroStatusCallback is null");
-    } else {
-        cameraSessionNapi->macroStatusCallback_->RemoveCallbackRef(env, callback);
+        return;
     }
+    macroStatusCallback_->RemoveCallbackRef(env, callback);
 }
 
-void RegisterMoonCaptureBoostCallbackListener(
-    CameraSessionNapi* cameraSessionNapi, napi_env env, napi_value callback, bool isOnce)
+void CameraSessionNapi::RegisterMoonCaptureBoostCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi on moonCaptureBoostStatus is called!");
         return;
     }
-    if (cameraSessionNapi->moonCaptureBoostCallback_ == nullptr) {
-        auto moonCaptureBoostStatusCallback = std::make_shared<MoonCaptureBoostCallbackListener>(env);
-        cameraSessionNapi->moonCaptureBoostCallback_ = moonCaptureBoostStatusCallback;
-        cameraSessionNapi->cameraSession_->SetMoonCaptureBoostStatusCallback(moonCaptureBoostStatusCallback);
+    if (moonCaptureBoostCallback_ == nullptr) {
+        moonCaptureBoostCallback_ = std::make_shared<MoonCaptureBoostCallbackListener>(env);
+        cameraSession_->SetMoonCaptureBoostStatusCallback(moonCaptureBoostCallback_);
     }
-    cameraSessionNapi->moonCaptureBoostCallback_->SaveCallbackReference(callback, isOnce);
+    moonCaptureBoostCallback_->SaveCallbackReference(callback, isOnce);
 }
 
-void UnregisterMoonCaptureBoostCallbackListener(CameraSessionNapi* cameraSessionNapi, napi_env env, napi_value callback)
+void CameraSessionNapi::UnregisterMoonCaptureBoostCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi off moonCaptureBoostStatus is called!");
         return;
     }
-    if (cameraSessionNapi->moonCaptureBoostCallback_ == nullptr) {
+    if (moonCaptureBoostCallback_ == nullptr) {
         MEDIA_ERR_LOG("macroStatusCallback is null");
-    } else {
-        cameraSessionNapi->moonCaptureBoostCallback_->RemoveCallbackRef(env, callback);
+        return;
     }
+    moonCaptureBoostCallback_->RemoveCallbackRef(env, callback);
 }
 
-void RegisterSessionCallbackListener(
-    CameraSessionNapi* cameraSessionNapi, napi_env env, napi_value callback, bool isOnce)
+void CameraSessionNapi::RegisterFeatureDetectionStatusListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    if (cameraSessionNapi->sessionCallback_ == nullptr) {
-        auto sessionCallback = std::make_shared<SessionCallbackListener>(env);
-        cameraSessionNapi->sessionCallback_ = sessionCallback;
-        cameraSessionNapi->cameraSession_->SetCallback(sessionCallback);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi on featureDetectionStatus is called!");
+        return;
     }
-    cameraSessionNapi->sessionCallback_->SaveCallbackReference(callback, isOnce);
+    int32_t featureType = SceneFeature::FEATURE_ENUM_MAX;
+    CameraNapiParamParser jsParamParser(env, args, featureType);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "Invalid feature type")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::RegisterFeatureDetectionStatusListener Invalid feature type");
+        return;
+    }
+    if (featureType < SceneFeature::FEATURE_ENUM_MIN || featureType >= SceneFeature::FEATURE_ENUM_MAX) {
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "scene feature invalid");
+        MEDIA_ERR_LOG("CameraSessionNapi::RegisterFeatureDetectionStatusListener scene feature invalid");
+        return;
+    }
+
+    if (featureDetectionStatusCallback_ == nullptr) {
+        featureDetectionStatusCallback_ = std::make_shared<FeatureDetectionStatusCallbackListener>(env);
+        cameraSession_->SetFeatureDetectionStatusCallback(featureDetectionStatusCallback_);
+    }
+    featureDetectionStatusCallback_->SaveCallbackReference(static_cast<SceneFeature>(featureType), callback, isOnce);
 }
 
-void UnregisterSessionCallbackListener(CameraSessionNapi* cameraSessionNapi, napi_env env, napi_value callback)
+void CameraSessionNapi::UnregisterFeatureDetectionStatusListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    if (cameraSessionNapi->sessionCallback_ == nullptr) {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi off featureDetectionStatus is called!");
+        return;
+    }
+    if (featureDetectionStatusCallback_ == nullptr) {
+        MEDIA_WARNING_LOG("featureDetectionStatusCallback_ is null");
+        return;
+    }
+    int32_t featureType = SceneFeature::FEATURE_ENUM_MAX;
+    CameraNapiParamParser jsParamParser(env, args, featureType);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "Invalid feature type")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::RegisterFeatureDetectionStatusListener Invalid feature type");
+        return;
+    }
+    if (featureType < SceneFeature::FEATURE_ENUM_MIN || featureType >= SceneFeature::FEATURE_ENUM_MAX) {
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "scene feature invalid");
+        MEDIA_ERR_LOG("CameraSessionNapi::RegisterFeatureDetectionStatusListener scene feature invalid");
+        return;
+    }
+
+    featureDetectionStatusCallback_->RemoveCallbackRef(static_cast<SceneFeature>(featureType), callback);
+}
+
+void CameraSessionNapi::RegisterSessionErrorCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (sessionCallback_ == nullptr) {
+        sessionCallback_ = std::make_shared<SessionCallbackListener>(env);
+        cameraSession_->SetCallback(sessionCallback_);
+    }
+    sessionCallback_->SaveCallbackReference(callback, isOnce);
+}
+
+void CameraSessionNapi::UnregisterSessionErrorCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (sessionCallback_ == nullptr) {
         MEDIA_ERR_LOG("sessionCallback is null");
-    } else {
-        cameraSessionNapi->sessionCallback_->RemoveCallbackRef(env, callback);
+        return;
     }
+    sessionCallback_->RemoveCallbackRef(env, callback);
 }
 
-void RegisterSmoothZoomCallbackListener(
-    CameraSessionNapi* cameraSessionNapi, napi_env env, napi_value callback, bool isOnce)
+void CameraSessionNapi::RegisterSmoothZoomCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    if (cameraSessionNapi->smoothZoomCallback_ == nullptr) {
-        auto smoothZoomCallback = std::make_shared<SmoothZoomCallbackListener>(env);
-        cameraSessionNapi->smoothZoomCallback_ = smoothZoomCallback;
-        cameraSessionNapi->cameraSession_->SetSmoothZoomCallback(smoothZoomCallback);
+    if (smoothZoomCallback_ == nullptr) {
+        smoothZoomCallback_ = std::make_shared<SmoothZoomCallbackListener>(env);
+        cameraSession_->SetSmoothZoomCallback(smoothZoomCallback_);
     }
-    cameraSessionNapi->smoothZoomCallback_->SaveCallbackReference(callback, isOnce);
+    smoothZoomCallback_->SaveCallbackReference(callback, isOnce);
 }
 
-void UnregisterSmoothZoomCallbackListener(CameraSessionNapi* cameraSessionNapi, napi_env env, napi_value callback)
+void CameraSessionNapi::UnregisterSmoothZoomCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    if (cameraSessionNapi->smoothZoomCallback_ == nullptr) {
+    if (smoothZoomCallback_ == nullptr) {
         MEDIA_ERR_LOG("smoothZoomCallback is null");
-    } else {
-        cameraSessionNapi->smoothZoomCallback_->RemoveCallbackRef(env, callback);
+        return;
     }
-}
-} // namespace
-
-napi_value CameraSessionNapi::RegisterCallback(
-    napi_env env, napi_value jsThis, const string& eventType, napi_value callback, bool isOnce)
-{
-    MEDIA_INFO_LOG("RegisterCallback is called event is:%{public}s", eventType.c_str());
-    napi_value undefinedResult = nullptr;
-    napi_get_undefined(env, &undefinedResult);
-    napi_status status;
-    CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&cameraSessionNapi));
-    NAPI_ASSERT(
-        env, status == napi_ok && cameraSessionNapi != nullptr, "Failed to retrieve cameraSessionNapi instance.");
-    sptr<CaptureSession> cameraSession = cameraSessionNapi->cameraSession_;
-    NAPI_ASSERT(env, cameraSession != nullptr, "cameraSession is null.");
-
-    static const std::unordered_map<std::string, RegisterFun> registerCallbackMap = {
-        { "exposureStateChange", RegisterExposureCallbackListener },
-        { "focusStateChange", RegisterFocusCallbackListener },
-        { "macroStatusChanged", RegisterMacroStatusCallbackListener },
-        { "moonCaptureBoostStatus", RegisterMoonCaptureBoostCallbackListener },
-        { "error", RegisterSessionCallbackListener },
-        { "smoothZoomInfoAvailable", RegisterSmoothZoomCallbackListener }
-    };
-    auto it = registerCallbackMap.find(eventType);
-    if (it != registerCallbackMap.end()) {
-        it->second(cameraSessionNapi, env, callback, isOnce);
-    } else {
-        MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
-    }
-    return undefinedResult;
+    smoothZoomCallback_->RemoveCallbackRef(env, callback);
 }
 
-napi_value CameraSessionNapi::UnregisterCallback(
-    napi_env env, napi_value jsThis, const std::string& eventType, napi_value callback)
+const CameraSessionNapi::EmitterFunctions& CameraSessionNapi::GetEmitterFunctions()
 {
-    MEDIA_INFO_LOG("UnregisterCallback is called event is:%{public}s", eventType.c_str());
-    napi_value undefinedResult = nullptr;
-    napi_get_undefined(env, &undefinedResult);
-    napi_status status;
-    CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&cameraSessionNapi));
-    NAPI_ASSERT(
-        env, status == napi_ok && cameraSessionNapi != nullptr, "Failed to retrieve cameraSessionNapi instance.");
-    sptr<CaptureSession> cameraSession = cameraSessionNapi->cameraSession_;
-
-    static const std::unordered_map<std::string, UnregisterFun> unregisterCallbackMap = {
-        { "exposureStateChange", UnregisterExposureCallbackListener },
-        { "focusStateChange", UnregisterFocusCallbackListener },
-        { "macroStatusChanged", UnregisterMacroStatusCallbackListener },
-        { "moonCaptureBoostStatus", UnregisterMoonCaptureBoostCallbackListener },
-        { "error", UnregisterSessionCallbackListener },
-        { "smoothZoomInfoAvailable", UnregisterSmoothZoomCallbackListener }
-    };
-    auto it = unregisterCallbackMap.find(eventType);
-    if (it != unregisterCallbackMap.end()) {
-        it->second(cameraSessionNapi, env, callback);
-    } else {
-        MEDIA_ERR_LOG("Failed to Unregister Callback");
-    }
-    return undefinedResult;
+    static const EmitterFunctions funMap = {
+        { "exposureStateChange", {
+            &CameraSessionNapi::RegisterExposureCallbackListener,
+            &CameraSessionNapi::UnregisterExposureCallbackListener} },
+        { "focusStateChange", {
+            &CameraSessionNapi::RegisterFocusCallbackListener,
+            &CameraSessionNapi::UnregisterFocusCallbackListener } },
+        { "macroStatusChanged", {
+            &CameraSessionNapi::RegisterMacroStatusCallbackListener,
+            &CameraSessionNapi::UnregisterMacroStatusCallbackListener } },
+        { "moonCaptureBoostStatus", {
+            &CameraSessionNapi::RegisterMoonCaptureBoostCallbackListener,
+            &CameraSessionNapi::UnregisterMoonCaptureBoostCallbackListener } },
+        { "featureDetectionStatus", {
+            &CameraSessionNapi::RegisterFeatureDetectionStatusListener,
+            &CameraSessionNapi::UnregisterFeatureDetectionStatusListener } },
+        { "error", {
+            &CameraSessionNapi::RegisterSessionErrorCallbackListener,
+            &CameraSessionNapi::UnregisterSessionErrorCallbackListener } },
+        { "smoothZoomInfoAvailable", {
+            &CameraSessionNapi::RegisterSmoothZoomCallbackListener,
+            &CameraSessionNapi::UnregisterSmoothZoomCallbackListener } } };
+    return funMap;
 }
 
 napi_value CameraSessionNapi::On(napi_env env, napi_callback_info info)

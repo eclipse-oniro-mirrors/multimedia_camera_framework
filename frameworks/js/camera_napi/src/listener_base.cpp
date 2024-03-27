@@ -101,5 +101,11 @@ void ListenerBase::RemoveAllCallbacks()
     baseCbList_.clear();
     MEDIA_INFO_LOG("RemoveAllCallbacks: remove all js callbacks success");
 }
+
+size_t ListenerBase::IsEmpty()
+{
+    std::lock_guard<std::mutex> lock(baseCbListMutex_);
+    return baseCbList_.empty();
+}
 } // namespace CameraStandard
 } // namespace OHOS

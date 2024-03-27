@@ -18,6 +18,7 @@
 #include <uv.h>
 
 #include "camera_napi_template_utils.h"
+#include "camera_napi_utils.h"
 #include "hilog/log.h"
 #include "napi/native_api.h"
 #include "output/metadata_object_napi.h"
@@ -183,15 +184,6 @@ MetadataOutputNapi::~MetadataOutputNapi()
     MEDIA_DEBUG_LOG("~MetadataOutputNapi is called");
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
-    }
-    if (metadataOutput_) {
-        metadataOutput_ = nullptr;
-    }
-    if (metadataOutputCallback_) {
-        metadataOutputCallback_ = nullptr;
-    }
-    if (metadataStateCallback_) {
-        metadataStateCallback_ = nullptr;
     }
 }
 
@@ -497,7 +489,7 @@ napi_value MetadataOutputNapi::GetSupportedMetadataObjectTypes(napi_env env, nap
             env, nullptr, resource, [](napi_env env, void* data) {
                 auto context = static_cast<MetadataOutputAsyncContext*>(data);
                 context->status = false;
-                if (context->objectInfo != nullptr && context->objectInfo->metadataOutput_ != nullptr) {
+                if (context->objectInfo != nullptr) {
                     context->funcName = "MetadataOutputNapi::GetSupportedMetadataObjectTypes";
                     context->SupportedMetadataObjectTypes =
                         context->objectInfo->metadataOutput_->GetSupportedMetadataObjectTypes();
@@ -545,7 +537,7 @@ napi_value MetadataOutputNapi::SetCapturingMetadataObjectTypes(napi_env env, nap
             env, nullptr, resource, [](napi_env env, void* data) {
                 auto context = static_cast<MetadataOutputAsyncContext*>(data);
                 context->status = false;
-                if (context->objectInfo != nullptr && context->objectInfo->metadataOutput_ != nullptr) {
+                if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
                     context->status = true;
                     context->funcName = "MetadataOutputNapi::SetCapturingMetadataObjectTypes";
@@ -598,7 +590,7 @@ napi_value MetadataOutputNapi::Start(napi_env env, napi_callback_info info)
             env, nullptr, resource, [](napi_env env, void* data) {
                 auto context = static_cast<MetadataOutputAsyncContext*>(data);
                 context->status = false;
-                if (context->objectInfo != nullptr && context->objectInfo->metadataOutput_ != nullptr) {
+                if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
                     context->funcName = "MetadataOutputNapi::Start";
                     context->errorCode = 0;
@@ -648,7 +640,7 @@ napi_value MetadataOutputNapi::Stop(napi_env env, napi_callback_info info)
             env, nullptr, resource, [](napi_env env, void* data) {
                 auto context = static_cast<MetadataOutputAsyncContext*>(data);
                 context->status = false;
-                if (context->objectInfo != nullptr && context->objectInfo->metadataOutput_ != nullptr) {
+                if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
                     context->status = true;
                     context->funcName = "MetadataOutputNapi::Stop";
@@ -670,62 +662,56 @@ napi_value MetadataOutputNapi::Stop(napi_env env, napi_callback_info info)
     return result;
 }
 
-napi_value MetadataOutputNapi::UnregisterCallback(napi_env env, napi_value jsThis,
-    const std::string& eventType, napi_value callback)
+void MetadataOutputNapi::RegisterMetadataObjectsAvailableCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    napi_value undefinedResult = nullptr;
-    napi_get_undefined(env, &undefinedResult);
-    MetadataOutputNapi* metadataOutputNapi = nullptr;
-    napi_status status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&metadataOutputNapi));
-    NAPI_ASSERT(env, status == napi_ok && metadataOutputNapi != nullptr, "Failed to metadataOutput napi instance.");
-    sptr<MetadataOutput> metadataOutput = metadataOutputNapi->metadataOutput_;
-    if (eventType.compare("metadataObjectsAvailable") == 0) {
-        if (metadataOutputNapi->metadataOutputCallback_ == nullptr) {
-            MEDIA_ERR_LOG("metadataOutputCallback is null");
-        } else {
-            metadataOutputNapi->metadataOutputCallback_->RemoveCallbackRef(env, callback);
-        }
-    } else if (eventType.compare("error") == 0) {
-        if (metadataOutputNapi->metadataStateCallback_ == nullptr) {
-            MEDIA_ERR_LOG("metadataStateCallback is null");
-        } else {
-            metadataOutputNapi->metadataStateCallback_->RemoveCallbackRef(env, callback);
-        }
-    } else {
-        MEDIA_ERR_LOG("Failed to Unregister Callback");
+    if (metadataOutputCallback_ == nullptr) {
+        metadataOutputCallback_ = make_shared<MetadataOutputCallback>(env);
+        metadataOutput_->SetCallback(metadataOutputCallback_);
     }
-    return undefinedResult;
+    metadataOutputCallback_->SaveCallbackReference(callback, isOnce);
 }
 
-napi_value MetadataOutputNapi::RegisterCallback(napi_env env, napi_value jsThis,
-    const string &eventType, napi_value callback, bool isOnce)
+void MetadataOutputNapi::UnregisterMetadataObjectsAvailableCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    napi_value undefinedResult = nullptr;
-    napi_get_undefined(env, &undefinedResult);
-    MetadataOutputNapi* metadataOutputNapi = nullptr;
-    napi_status status = napi_unwrap(env, jsThis, reinterpret_cast<void**>(&metadataOutputNapi));
-    NAPI_ASSERT(env, status == napi_ok && metadataOutputNapi != nullptr,
-        "Failed to retrieve MetadataOutputNapi instance.");
-    sptr<MetadataOutput> metadataOutput = metadataOutputNapi->metadataOutput_;
-    NAPI_ASSERT(env, metadataOutput != nullptr, "metadataOutput instance is null.");
-    if (eventType.compare("metadataObjectsAvailable") == 0) {
-        if (metadataOutputNapi->metadataOutputCallback_ == nullptr) {
-            shared_ptr<MetadataOutputCallback> metadataOutputCallback = make_shared<MetadataOutputCallback>(env);
-            metadataOutputNapi->metadataOutputCallback_ = metadataOutputCallback;
-            metadataOutputNapi->metadataOutput_->SetCallback(metadataOutputCallback);
-        }
-        metadataOutputNapi->metadataOutputCallback_->SaveCallbackReference(callback, isOnce);
-    } else if (eventType.compare("error") == 0) {
-        if (metadataOutputNapi->metadataStateCallback_ == nullptr) {
-            shared_ptr<MetadataStateCallbackNapi> metadataStateCallback = make_shared<MetadataStateCallbackNapi>(env);
-            metadataOutputNapi->metadataStateCallback_ = metadataStateCallback;
-            metadataOutputNapi->metadataOutput_->SetCallback(metadataStateCallback);
-        }
-        metadataOutputNapi->metadataStateCallback_->SaveCallbackReference(callback, isOnce);
+    if (metadataOutputCallback_ == nullptr) {
+        MEDIA_ERR_LOG("metadataOutputCallback is null");
     } else {
-        MEDIA_ERR_LOG("Failed to Register Callback: event type is empty!");
+        metadataOutputCallback_->RemoveCallbackRef(env, callback);
     }
-    return undefinedResult;
+}
+
+void MetadataOutputNapi::RegisterErrorCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (metadataStateCallback_ == nullptr) {
+        metadataStateCallback_ = make_shared<MetadataStateCallbackNapi>(env);
+        metadataOutput_->SetCallback(metadataStateCallback_);
+    }
+    metadataStateCallback_->SaveCallbackReference(callback, isOnce);
+}
+
+void MetadataOutputNapi::UnregisterErrorCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (metadataStateCallback_ == nullptr) {
+        MEDIA_ERR_LOG("metadataStateCallback is null");
+    } else {
+        metadataStateCallback_->RemoveCallbackRef(env, callback);
+    }
+}
+
+const MetadataOutputNapi::EmitterFunctions& MetadataOutputNapi::GetEmitterFunctions()
+{
+    const static EmitterFunctions funMap = {
+        { "metadataObjectsAvailable", {
+            &MetadataOutputNapi::RegisterMetadataObjectsAvailableCallbackListener,
+            &MetadataOutputNapi::UnregisterMetadataObjectsAvailableCallbackListener } },
+        { "error", {
+            &MetadataOutputNapi::RegisterErrorCallbackListener,
+            &MetadataOutputNapi::UnregisterErrorCallbackListener } } };
+    return funMap;
 }
 
 napi_value MetadataOutputNapi::On(napi_env env, napi_callback_info info)

@@ -50,6 +50,20 @@ enum CameraMode {
   NIGHT
 }
 
+function mockInterface() {
+  if (!camera.FeatureType) {
+    camera.FeatureType = { FEATURE_MOON_CAPTURE_BOOST: 0 }
+  }
+  if (!camera.SceneMode) {
+    camera.SceneMode = {
+      NORMAL_PHOTO: 1,
+      NORMAL_VIDEO: 2,
+      PORTRAIT_PHOTO: 3,
+      NIGHT_PHOTO: 4
+    }
+  }
+}
+
 const TAG: string = 'CameraService';
 
 class CameraService {
@@ -136,6 +150,7 @@ class CameraService {
   private isMoonCaptureBoostSupported: Boolean = false;
 
   constructor() {
+    mockInterface();
     this.accessHelper = photoAccessHelper.getPhotoAccessHelper(this.globalContext.getCameraSettingContext());
     // image capacity
     let imageCapacity = 8;
@@ -213,9 +228,18 @@ class CameraService {
     let previewProfiles: Array<camera.Profile> = profiles.previewProfiles;
     let videoProfiles: Array<camera.Profile> = profiles.videoProfiles;
     let photoProfiles: Array<camera.Profile> = profiles.photoProfiles;
-    if ((!previewProfiles || previewProfiles.length < 1) || (!videoProfiles || videoProfiles.length < 1) ||
-      (!photoProfiles || photoProfiles.length < 1)) {
-      Logger.error('Profile is null');
+    let isValidProfiles = true;
+    if (!previewProfiles || previewProfiles.length < 1) {
+      isValidProfiles = false;
+    }
+    if (isValidProfiles && (!photoProfiles || photoProfiles.length < 1)) {
+      isValidProfiles = false;
+    }
+    if (isValidProfiles && this.cameraMode !== CameraMode.PORTRAIT && (!videoProfiles || videoProfiles.length < 1)) {
+      isValidProfiles = false;
+    }
+    if (!isValidProfiles) {
+      Logger.error('Profile is invalid');
       return;
     }
     let defaultAspectRatio: number = AppStorage.get<number>('defaultAspectRatio');
@@ -365,7 +389,12 @@ class CameraService {
   }
 
   initProfile(cameraDeviceIndex: number): void {
-    let profiles = this.cameraManager.getSupportedOutputCapability(this.cameras[cameraDeviceIndex]);
+    let profiles;
+    if (this.cameraMode == CameraMode.PORTRAIT) {
+      profiles = this.cameraManager.getSupportedOutputCapability(this.cameras[cameraDeviceIndex], camera.SceneMode.PORTRAIT_PHOTO);
+    } else {
+      profiles = this.cameraManager.getSupportedOutputCapability(this.cameras[cameraDeviceIndex]);
+    }
     this.videoProfiles = profiles.videoProfiles;
     this.switchProfiles(profiles);
   }
@@ -1065,6 +1094,34 @@ class CameraService {
   }
 
   /**
+   * 处理望月信息
+   */
+  configMoonCaptureBoost(): void {
+    try {
+      this.isMoonCaptureBoostSupported =
+        this.captureSession.isFeatureSupported(camera.FeatureType.FEATURE_MOON_CAPTURE_BOOST);
+      if (this.isMoonCaptureBoostSupported) {
+        this.captureSession.on('featureDetectionStatus', camera.FeatureType.FEATURE_MOON_CAPTURE_BOOST,
+          (error, statusObject) => {
+            Logger.info(TAG,
+              `on featureDetectionStatus featureType:${statusObject.featureType} detected:${statusObject.detected}`);
+            if (statusObject.featureType == camera.FeatureType.FEATURE_MOON_CAPTURE_BOOST) {
+              let status = statusObject.detected;
+              Logger.info(TAG, `on moonCaptureBoostStatus change:${status}`);
+              AppStorage.setOrCreate('moonCaptureComponentIsShow', status);
+              if (!status) {
+                this.setMoonCaptureBoostEnable(status);
+              }
+            }
+          });
+      }
+    } catch (error) {
+      let err = error as BusinessError;
+      Logger.error(TAG, `isMoonCaptureBoostSupported fail: error code ${err.code}`);
+    }
+  }
+
+  /**
    * 会话流程
    */
   async sessionFlowFn(): Promise<void> {
@@ -1109,22 +1166,7 @@ class CameraService {
         Logger.error(TAG, `getZoomRatioRange fail: error code ${err.code}`);
       }
 
-      // 处理望月信息
-      try {
-        this.isMoonCaptureBoostSupported = this.captureSession.isMoonCaptureBoostSupported();
-        if (this.isMoonCaptureBoostSupported) {
-          this.captureSession.on('moonCaptureBoostStatus', (error, status) => {
-            Logger.info(TAG, `on moonCaptureBoostStatus change:${status}`);
-            AppStorage.setOrCreate('moonCaptureComponentIsShow', status);
-            if (!status) {
-              this.setMoonCaptureBoostEnable(status);
-            }
-          });
-        }
-      } catch (error) {
-        let err = error as BusinessError;
-        Logger.error(TAG, `isMoonCaptureBoostSupported fail: error code ${err.code}`);
-      }
+      this.configMoonCaptureBoost();
 
       AppStorage.setOrCreate('colorEffectComponentIsHidden', this.getSupportedColorEffects().length > 0 ? false : true);
       AppStorage.setOrCreate('deferredPhotoComponentIsHidden', false);
@@ -1289,7 +1331,7 @@ class CameraService {
       return false;
     }
     try {
-      session.enableMoonCaptureBoost(moonCaptureBoostEnable);
+      session.enableFeature(camera.FeatureType.FEATURE_MOON_CAPTURE_BOOST, moonCaptureBoostEnable);
       AppStorage.setOrCreate<boolean>('moonCaptureComponentEnable', moonCaptureBoostEnable);
     } catch (error) {
       let err = error as BusinessError;
@@ -1476,9 +1518,13 @@ class CameraService {
    * 监听CameraInput的错误事件
    */
   onCameraInputChange(): void {
-    this.cameraInput.on('error', this.cameras[(this.globalContext.getObject('cameraDeviceIndex') as number)], (cameraInputError: BusinessError): void => {
-      Logger.info(TAG, `onCameraInputChange cameraInput error code: ${cameraInputError.code}`);
-    });
+    try {
+      this.cameraInput.on('error', this.cameras[(this.globalContext.getObject('cameraDeviceIndex') as number)], (cameraInputError: BusinessError): void => {
+        Logger.info(TAG, `onCameraInputChange cameraInput error code: ${cameraInputError.code}`);
+      });
+    } catch (error) {
+      Logger.info(TAG, `onCameraInputChange cameraInput occur error: error`);
+    }
   }
 
   /**

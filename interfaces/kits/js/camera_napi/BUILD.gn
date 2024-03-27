@@ -46,6 +46,8 @@ ohos_shared_library("camera_napi") {
     "${multimedia_image_framework_path}/interfaces/innerkits/include",
   ]
   sources = [
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_callback_param_parser.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_param_parser.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_security_utils.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_utils.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_info_napi.cpp",

@@ -106,7 +106,7 @@ struct TorchStatusChangeCallbackInfo {
     }
 };
 
-class CameraManagerNapi {
+class CameraManagerNapi : public CameraNapiEventEmitter<CameraManagerNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateCameraManager(napi_env env);
@@ -135,16 +135,26 @@ public:
     static napi_value On(napi_env env, napi_callback_info info);
     static napi_value Once(napi_env env, napi_callback_info info);
     static napi_value Off(napi_env env, napi_callback_info info);
-    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string &eventType, napi_value callback, bool isOnce);
-    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string &eventType, napi_value callback);
+
     CameraManagerNapi();
-    ~CameraManagerNapi();
+    ~CameraManagerNapi() override;
+
+    virtual const EmitterFunctions& GetEmitterFunctions() override;
 
 private:
     static void CameraManagerNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value CameraManagerNapiConstructor(napi_env env, napi_callback_info info);
+
+    void RegisterCameraStatusCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterCameraStatusCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterCameraMuteCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterCameraMuteCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterTorchStatusCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterTorchStatusCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+
     std::shared_ptr<CameraManagerCallbackNapi> cameraManagerCallback_;
     std::shared_ptr<CameraMuteListenerNapi> cameraMuteListener_;
     std::shared_ptr<TorchListenerNapi> torchListener_;

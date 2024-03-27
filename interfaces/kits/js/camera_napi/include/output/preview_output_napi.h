@@ -16,6 +16,7 @@
 #ifndef PREVIEW_OUTPUT_NAPI_H_
 #define PREVIEW_OUTPUT_NAPI_H_
 
+#include "camera_napi_event_emitter.h"
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
 #include "camera_output_napi.h"
@@ -41,10 +42,10 @@ enum PreviewOutputEventType {
 };
 
 static EnumHelper<PreviewOutputEventType> PreviewOutputEventTypeHelper({
-        {PREVIEW_FRAME_START, "frameStart"},
-        {PREVIEW_FRAME_END, "frameEnd"},
-        {PREVIEW_FRAME_ERROR, "error"},
-        {SKETCH_STATUS_CHANGED, "sketchStatusChanged"}
+        {PREVIEW_FRAME_START, CONST_PREVIEW_FRAME_START},
+        {PREVIEW_FRAME_END, CONST_PREVIEW_FRAME_END},
+        {PREVIEW_FRAME_ERROR, CONST_PREVIEW_FRAME_ERROR},
+        {SKETCH_STATUS_CHANGED, CONST_SKETCH_STATUS_CHANGED}
     },
     PreviewOutputEventType::PREVIEW_INVALID_TYPE
 );
@@ -94,7 +95,7 @@ struct SketchStatusCallbackInfo {
     {}
 };
 
-class PreviewOutputNapi : public CameraOutputNapi {
+class PreviewOutputNapi : public CameraOutputNapi, public CameraNapiEventEmitter<PreviewOutputNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreatePreviewOutput(napi_env env, Profile& profile, std::string surfaceId);
@@ -112,18 +113,32 @@ public:
     static napi_value On(napi_env env, napi_callback_info info);
     static napi_value Once(napi_env env, napi_callback_info info);
     static napi_value Off(napi_env env, napi_callback_info info);
-    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string &eventType, napi_value callback, bool isOnce);
-    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string &eventType, napi_value callback);
+
+    const EmitterFunctions& GetEmitterFunctions() override;
+
     PreviewOutputNapi();
-    ~PreviewOutputNapi();
+    ~PreviewOutputNapi() override;
 
 private:
     static void PreviewOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value PreviewOutputNapiConstructor(napi_env env, napi_callback_info info);
     static napi_status CreateAsyncTask(napi_env env, napi_value resource,
         std::unique_ptr<OHOS::CameraStandard::PreviewOutputAsyncContext>& asyncContext);
+
+    void RegisterFrameStartCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterFrameStartCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterFrameEndCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterFrameEndCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterErrorCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterErrorCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterSketchStatusChangedCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterSketchStatusChangedCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+
     napi_env env_;
     napi_ref wrapper_;
     sptr<PreviewOutput> previewOutput_;

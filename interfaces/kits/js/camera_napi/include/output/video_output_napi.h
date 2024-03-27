@@ -26,6 +26,9 @@
 namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_VIDEO_OUTPUT_NAPI_CLASS_NAME[] = "VideoOutput";
+static const std::string CONST_VIDEO_FRAME_START = "frameStart";
+static const std::string CONST_VIDEO_FRAME_END = "frameEnd";
+static const std::string CONST_VIDEO_FRAME_ERROR = "error";
 
 enum VideoOutputEventType {
     VIDEO_FRAME_START,
@@ -35,9 +38,9 @@ enum VideoOutputEventType {
 };
 
 static EnumHelper<VideoOutputEventType> VideoOutputEventTypeHelper({
-        {VIDEO_FRAME_START, "frameStart"},
-        {VIDEO_FRAME_END, "frameEnd"},
-        {VIDEO_FRAME_ERROR, "error"},
+        {VIDEO_FRAME_START, CONST_VIDEO_FRAME_START},
+        {VIDEO_FRAME_END, CONST_VIDEO_FRAME_END},
+        {VIDEO_FRAME_ERROR, CONST_VIDEO_FRAME_ERROR},
     },
     VideoOutputEventType::VIDEO_INVALID_TYPE
 );
@@ -73,7 +76,7 @@ struct VideoOutputCallbackInfo {
         : eventType_(eventType), value_(value), listener_(listener) {}
 };
 
-class VideoOutputNapi {
+class VideoOutputNapi : public CameraNapiEventEmitter<VideoOutputNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateVideoOutput(napi_env env, VideoProfile &profile, std::string surfaceId);
@@ -81,13 +84,10 @@ public:
     static napi_value On(napi_env env, napi_callback_info info);
     static napi_value Once(napi_env env, napi_callback_info info);
     static napi_value Off(napi_env env, napi_callback_info info);
-    static napi_value RegisterCallback(napi_env env, napi_value jsThis,
-        const std::string &eventType, napi_value callback, bool isOnce);
-    static napi_value UnregisterCallback(napi_env env, napi_value jsThis,
-        const std::string &eventType, napi_value callback);
     VideoOutputNapi();
-    ~VideoOutputNapi();
+    ~VideoOutputNapi() override;
     sptr<VideoOutput> GetVideoOutput();
+    const EmitterFunctions& GetEmitterFunctions() override;
 
 private:
     static void VideoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
@@ -98,6 +98,16 @@ private:
     static napi_value GetFrameRateRange(napi_env env, napi_callback_info info);
     static napi_value SetFrameRateRange(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
+
+    void RegisterFrameStartCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterFrameStartCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterFrameEndCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterFrameEndCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterErrorCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterErrorCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<VideoOutput> sVideoOutput_;

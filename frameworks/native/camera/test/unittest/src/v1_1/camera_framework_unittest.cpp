@@ -4158,7 +4158,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_034, TestSize.Level
     std::string eventString = "test";
     previewOutput->OnNativeRegisterCallback(eventString);
     previewOutput->OnNativeUnregisterCallback(eventString);
-    eventString = "sketchAvailable";
+    eventString = "sketchStatusChanged";
     previewOutput->sketchWrapper_ = std::make_shared<SketchWrapper>(previewOutput->GetStream(), previewSize);
     previewOutput->OnNativeRegisterCallback(eventString);
     previewOutput->OnNativeUnregisterCallback(eventString);
@@ -4283,7 +4283,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_036, TestSize.Level
     EXPECT_EQ(previewOutput->StartSketch(), 7400201);
     EXPECT_EQ(previewOutput->StopSketch(), 7400201);
     previewOutput->sketchWrapper_ = std::make_shared<SketchWrapper>(previewOutput->GetStream(), previewSize);
-    previewOutput->OnNativeRegisterCallback("sketchAvailable");
+    previewOutput->OnNativeRegisterCallback("sketchStatusChanged");
 
     EXPECT_EQ(input->Release(), 0);
     EXPECT_EQ(session->Release(), 0);
@@ -4445,7 +4445,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_039, TestSize.Level
     EXPECT_EQ(previewOutput->AttachSketchSurface(nullptr), CameraErrorCode::INVALID_ARGUMENT);
     EXPECT_EQ(previewOutput->StartSketch(), 7400201);
     EXPECT_EQ(previewOutput->StopSketch(), 7400201);
-    previewOutput->OnNativeRegisterCallback("sketchAvailable");
+    previewOutput->OnNativeRegisterCallback("sketchStatusChanged");
 
     EXPECT_EQ(preview->Release(), 0);
     EXPECT_EQ(input->Release(), 0);
@@ -4981,7 +4981,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_050, TestSize.Level
     std::string eventString = "test";
     previewOutput->OnNativeRegisterCallback(eventString);
     previewOutput->OnNativeUnregisterCallback(eventString);
-    eventString = "sketchAvailable";
+    eventString = "sketchStatusChanged";
     previewOutput->OnNativeRegisterCallback(eventString);
     previewOutput->OnNativeUnregisterCallback(eventString);
 
@@ -4990,7 +4990,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_050, TestSize.Level
     eventString = "test";
     previewOutput->OnNativeRegisterCallback(eventString);
     previewOutput->OnNativeUnregisterCallback(eventString);
-    eventString = "sketchAvailable";
+    eventString = "sketchStatusChanged";
     previewOutput->OnNativeRegisterCallback(eventString);
     previewOutput->OnNativeUnregisterCallback(eventString);
 
@@ -5637,7 +5637,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_073, TestSize.Level
 
     auto previewOutput = (sptr<PreviewOutput>&)preview;
 
-    std::string eventString = "sketchAvailable";
+    std::string eventString = "sketchStatusChanged";
     previewOutput->sketchWrapper_ = nullptr;
     previewOutput->OnNativeRegisterCallback(eventString);
     previewOutput->OnNativeUnregisterCallback(eventString);

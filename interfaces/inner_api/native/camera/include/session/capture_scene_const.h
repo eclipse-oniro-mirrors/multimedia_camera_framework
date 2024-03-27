@@ -35,7 +35,13 @@ enum SceneMode : int32_t {
     VIDEO_MACRO = 9,
 };
 
-enum SceneFeature : int32_t { MACRO = 1, MOON_CAPTURE_BOOST = 2 };
+enum SceneFeature : int32_t {
+    FEATURE_ENUM_MIN = 0,
+    FEATURE_MOON_CAPTURE_BOOST = 0,
+    FEATURE_TRIPOD_DETECTION,
+    FEATURE_MACRO,
+    FEATURE_ENUM_MAX
+};
 
 struct SceneFeaturesMode {
 public:
@@ -76,7 +82,7 @@ public:
 
     SceneMode GetFeaturedMode() const
     {
-        if (IsEnableFeature(MACRO)) {
+        if (IsEnableFeature(FEATURE_MACRO)) {
             if (sceneMode_ == CAPTURE) {
                 return CAPTURE_MACRO;
             } else if (sceneMode_ == VIDEO) {

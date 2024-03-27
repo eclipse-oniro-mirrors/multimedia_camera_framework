@@ -18,7 +18,10 @@
 
 #include <map>
 
+#include "camera_error_code.h"
 #include "camera_log.h"
+#include "camera_napi_const.h"
+#include "camera_napi_event_emitter.h"
 #include "camera_napi_utils.h"
 
 namespace OHOS {
@@ -42,6 +45,16 @@ public:
         return _defaultValue;
     }
 
+    const std::string& GetKeyString(T enumValue)
+    {
+        const static std::string EMPTY_STRING = "";
+        auto item = _mapEnum2String.find(enumValue);
+        if (item == _mapEnum2String.end()) {
+            return EMPTY_STRING;
+        }
+        return item->second;
+    }
+
 private:
     std::map<T, std::string> _mapEnum2String;
     std::map<std::string, T> _mapString2Enum;
@@ -57,84 +70,52 @@ private:
     };
 };
 
-template<class T>
+template<typename T, typename = std::enable_if_t<std::is_base_of_v<CameraNapiEventEmitter<T>, T>>>
 class ListenerTemplate {
 public:
     static napi_value On(napi_env env, napi_callback_info info)
     {
         MEDIA_INFO_LOG("On is called");
         CAMERA_SYNC_TRACE;
-        napi_value undefinedResult = nullptr;
-        size_t argCount = ARGS_TWO;
-        napi_value argv[ARGS_TWO] = { nullptr, nullptr };
-        napi_value thisVar = nullptr;
 
-        napi_get_undefined(env, &undefinedResult);
-
-        CAMERA_NAPI_GET_JS_ARGS(env, info, argCount, argv, thisVar);
-        NAPI_ASSERT(env, argCount == ARGS_TWO, "requires 2 parameters");
-
-        napi_valuetype valueType = napi_undefined;
-        if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string ||
-            napi_typeof(env, argv[PARAM1], &valueType) != napi_ok || valueType != napi_function) {
-            return undefinedResult;
+        T* targetInstance = nullptr;
+        CameraNapiCallbackParamParser jsCallbackParamParser(env, info, targetInstance);
+        if (!jsCallbackParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
+            MEDIA_ERR_LOG("On get invalid argument");
+            return nullptr;
         }
-        std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[PARAM0]);
-        MEDIA_INFO_LOG("On eventType: %{public}s", eventType.c_str());
-        return T::RegisterCallback(env, thisVar, eventType, argv[PARAM1], false);
+        MEDIA_INFO_LOG("On eventType: %{public}s", jsCallbackParamParser.GetCallbackName().c_str());
+
+        return targetInstance->RegisterCallback(env, jsCallbackParamParser, false);
     }
 
     static napi_value Once(napi_env env, napi_callback_info info)
     {
         MEDIA_INFO_LOG("Once is called");
         CAMERA_SYNC_TRACE;
-        napi_value undefinedResult = nullptr;
-        size_t argCount = ARGS_TWO;
-        napi_value argv[ARGS_TWO] = { nullptr, nullptr };
-        napi_value thisVar = nullptr;
-
-        napi_get_undefined(env, &undefinedResult);
-
-        CAMERA_NAPI_GET_JS_ARGS(env, info, argCount, argv, thisVar);
-        NAPI_ASSERT(env, argCount == ARGS_TWO, "requires 2 parameters");
-
-        napi_valuetype valueType = napi_undefined;
-        if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string ||
-            napi_typeof(env, argv[PARAM1], &valueType) != napi_ok || valueType != napi_function) {
-            return undefinedResult;
+        T* targetInstance = nullptr;
+        CameraNapiCallbackParamParser jsCallbackParamParser(env, info, targetInstance);
+        if (!jsCallbackParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
+            MEDIA_ERR_LOG("On get invalid argument");
+            return nullptr;
         }
-        std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[PARAM0]);
-        MEDIA_INFO_LOG("Once eventType: %{public}s", eventType.c_str());
-        return T::RegisterCallback(env, thisVar, eventType, argv[PARAM1], true);
+
+        MEDIA_INFO_LOG("Once eventType: %{public}s", jsCallbackParamParser.GetCallbackName().c_str());
+        return targetInstance->RegisterCallback(env, jsCallbackParamParser, true);
     }
 
     static napi_value Off(napi_env env, napi_callback_info info)
     {
         MEDIA_INFO_LOG("Off is called");
-        napi_value undefinedResult = nullptr;
-        napi_get_undefined(env, &undefinedResult);
-        const size_t minArgCount = 1;
-        size_t argc = ARGS_TWO;
-        napi_value argv[ARGS_TWO] = { nullptr, nullptr };
-        napi_value thisVar = nullptr;
-        CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-        if (argc < minArgCount) {
-            return undefinedResult;
+        CAMERA_SYNC_TRACE;
+        T* targetInstance = nullptr;
+        CameraNapiCallbackParamParser jsCallbackParamParser(env, info, targetInstance);
+        if (!jsCallbackParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
+            MEDIA_ERR_LOG("On get invalid argument");
+            return nullptr;
         }
-
-        napi_valuetype valueType = napi_undefined;
-        if (napi_typeof(env, argv[PARAM0], &valueType) != napi_ok || valueType != napi_string) {
-            return undefinedResult;
-        }
-
-        napi_valuetype secondArgsType = napi_undefined;
-        if (argc > minArgCount &&
-            (napi_typeof(env, argv[PARAM1], &secondArgsType) != napi_ok || secondArgsType != napi_function)) {
-            return undefinedResult;
-        }
-        std::string eventType = CameraNapiUtils::GetStringArgument(env, argv[0]);
-        MEDIA_INFO_LOG("Off eventType: %{public}s", eventType.c_str());
-        return T::UnregisterCallback(env, thisVar, eventType, argv[PARAM1]);
+        MEDIA_INFO_LOG("Off eventType: %{public}s", jsCallbackParamParser.GetCallbackName().c_str());
+        return targetInstance->UnregisterCallback(env, jsCallbackParamParser);
     }
 };
 } // namespace CameraStandard
