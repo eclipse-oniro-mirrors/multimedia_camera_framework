@@ -51,8 +51,8 @@ enum CameraMode {
 }
 
 function mockInterface(): void {
-  if (!camera.FeatureType) {
-    camera.FeatureType = { FEATURE_MOON_CAPTURE_BOOST: 0 };
+  if (!camera.SceneFeatureType) {
+    camera.SceneFeatureType = { MOON_CAPTURE_BOOST: 0 };
   }
   if (!camera.SceneMode) {
     camera.SceneMode = {
@@ -1099,13 +1099,13 @@ class CameraService {
   configMoonCaptureBoost(): void {
     try {
       this.isMoonCaptureBoostSupported =
-        this.captureSession.isFeatureSupported(camera.FeatureType.FEATURE_MOON_CAPTURE_BOOST);
+        this.captureSession.isSceneFeatureSupported(camera.SceneFeatureType.MOON_CAPTURE_BOOST);
       if (this.isMoonCaptureBoostSupported) {
-        this.captureSession.on('featureDetectionStatus', camera.FeatureType.FEATURE_MOON_CAPTURE_BOOST,
+        this.captureSession.on('featureDetectionStatus', camera.SceneFeatureType.MOON_CAPTURE_BOOST,
           (error, statusObject) => {
             Logger.info(TAG,
               `on featureDetectionStatus featureType:${statusObject.featureType} detected:${statusObject.detected}`);
-            if (statusObject.featureType === camera.FeatureType.FEATURE_MOON_CAPTURE_BOOST) {
+            if (statusObject.featureType === camera.SceneFeatureType.MOON_CAPTURE_BOOST) {
               let status = statusObject.detected;
               Logger.info(TAG, `on moonCaptureBoostStatus change:${status}`);
               AppStorage.setOrCreate('moonCaptureComponentIsShow', status);
@@ -1331,7 +1331,7 @@ class CameraService {
       return false;
     }
     try {
-      session.enableFeature(camera.FeatureType.FEATURE_MOON_CAPTURE_BOOST, moonCaptureBoostEnable);
+      session.enableSceneFeature(camera.SceneFeatureType.MOON_CAPTURE_BOOST, moonCaptureBoostEnable);
       AppStorage.setOrCreate<boolean>('moonCaptureComponentEnable', moonCaptureBoostEnable);
     } catch (error) {
       let err = error as BusinessError;

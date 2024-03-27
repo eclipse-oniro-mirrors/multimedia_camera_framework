@@ -137,8 +137,8 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::moon_capture_boos
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::features_props = {
-    DECLARE_NAPI_FUNCTION("isFeatureSupported", CameraSessionNapi::IsFeatureSupported),
-    DECLARE_NAPI_FUNCTION("enableFeature", CameraSessionNapi::EnableFeature)
+    DECLARE_NAPI_FUNCTION("isSceneFeatureSupported", CameraSessionNapi::IsFeatureSupported),
+    DECLARE_NAPI_FUNCTION("enableSceneFeature", CameraSessionNapi::EnableFeature)
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::color_management_props = {
