@@ -1814,6 +1814,66 @@ void PhotoOutputNapi::UnregisterErrorCallbackListener(
     photoOutputCallback_->RemoveCallbackRef(env, callback, CONST_CAPTURE_ERROR);
 }
 
+void PhotoOutputNapi::RegisterFrameShutterEndCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (photoOutputCallback_ == nullptr) {
+        photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
+        photoOutput_->SetCallback(photoOutputCallback_);
+    }
+    photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_FRAME_SHUTTER_END, callback, isOnce);
+}
+
+void PhotoOutputNapi::UnregisterFrameShutterEndCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (photoOutputCallback_ == nullptr) {
+        MEDIA_ERR_LOG("photoOutputCallback is null");
+        return;
+    }
+    photoOutputCallback_->RemoveCallbackRef(env, callback, CONST_CAPTURE_FRAME_SHUTTER_END);
+}
+
+void PhotoOutputNapi::RegisterReadyCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (photoOutputCallback_ == nullptr) {
+        photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
+        photoOutput_->SetCallback(photoOutputCallback_);
+    }
+    photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_READY, callback, isOnce);
+}
+
+void PhotoOutputNapi::UnregisterReadyCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (photoOutputCallback_ == nullptr) {
+        MEDIA_ERR_LOG("photoOutputCallback is null");
+        return;
+    }
+    photoOutputCallback_->RemoveCallbackRef(env, callback, CONST_CAPTURE_READY);
+}
+
+void PhotoOutputNapi::RegisterEstimatedCaptureDurationCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (photoOutputCallback_ == nullptr) {
+        photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
+        photoOutput_->SetCallback(photoOutputCallback_);
+    }
+    photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION, callback, isOnce);
+}
+
+void PhotoOutputNapi::UnregisterEstimatedCaptureDurationCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (photoOutputCallback_ == nullptr) {
+        MEDIA_ERR_LOG("photoOutputCallback is null");
+        return;
+    }
+    photoOutputCallback_->RemoveCallbackRef(env, callback, CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION);
+}
+
 const PhotoOutputNapi::EmitterFunctions& PhotoOutputNapi::GetEmitterFunctions()
 {
     static const EmitterFunctions funMap = {
@@ -1837,7 +1897,16 @@ const PhotoOutputNapi::EmitterFunctions& PhotoOutputNapi::GetEmitterFunctions()
             &PhotoOutputNapi::UnregisterFrameShutterCallbackListener } },
         { CONST_CAPTURE_ERROR, {
             &PhotoOutputNapi::RegisterErrorCallbackListener,
-            &PhotoOutputNapi::UnregisterErrorCallbackListener } } };
+            &PhotoOutputNapi::UnregisterErrorCallbackListener } },
+        { CONST_CAPTURE_FRAME_SHUTTER_END, {
+            &PhotoOutputNapi::RegisterFrameShutterEndCallbackListener,
+            &PhotoOutputNapi::UnregisterFrameShutterEndCallbackListener } },
+        { CONST_CAPTURE_READY, {
+            &PhotoOutputNapi::RegisterReadyCallbackListener,
+            &PhotoOutputNapi::UnregisterReadyCallbackListener } },
+        { CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION, {
+            &PhotoOutputNapi::RegisterEstimatedCaptureDurationCallbackListener,
+            &PhotoOutputNapi::UnregisterEstimatedCaptureDurationCallbackListener } } };
     return funMap;
 }
 
