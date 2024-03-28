@@ -83,7 +83,7 @@ HCameraDevice::HCameraDevice(
           std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_SETTING_ITEM_COUNT, DEFAULT_SETTING_ITEM_LENGTH)),
       cameraHostManager_(cameraHostManager), cameraID_(cameraID), callerToken_(callingTokenId),
       deviceOpenLifeCycleSettings_(std::make_shared<OHOS::Camera::CameraMetadata>(
-          DEVICE_OPEN_LIFECYCLE_TAGS.size(), DEFAULT_SETTING_ITEM_LENGTH))
+      DEVICE_OPEN_LIFECYCLE_TAGS.size(), DEFAULT_SETTING_ITEM_LENGTH)), clientUserId_(0), zoomTimerId_(0)
 {
     MEDIA_INFO_LOG("HCameraDevice::HCameraDevice Contructor Camera: %{public}s", cameraID.c_str());
     isOpenedCameraDevice_.store(false);

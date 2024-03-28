@@ -55,7 +55,9 @@ CameraDevice::CameraDevice(std::string cameraID, std::shared_ptr<Camera::CameraM
     : cameraID_(cameraID), baseAbility_(MetadataCommonUtils::CopyMetadata(metadata)),
       cachedMetadata_(MetadataCommonUtils::CopyMetadata(metadata))
 {
-    init(metadata->get());
+    if (metadata != nullptr) {
+        init(metadata->get());
+    }
 }
 
 CameraDevice::CameraDevice(
@@ -68,7 +70,9 @@ CameraDevice::CameraDevice(
     dmDeviceInfo_.networkId = deviceInfo.networkId;
     MEDIA_INFO_LOG("camera cameraid = %{public}s, devicename: = %{public}s, networkId = %{public}s", cameraID_.c_str(),
         dmDeviceInfo_.deviceName.c_str(), dmDeviceInfo_.networkId.c_str());
-    init(metadata->get());
+    if (metadata != nullptr) {
+        init(metadata->get());
+    }
 }
 
 void CameraDevice::init(common_metadata_header_t* metadata)

@@ -64,6 +64,9 @@ std::vector<PortraitEffect> PortraitSession::GetSupportedPortraitEffects()
         return supportedPortraitEffects;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    if (metadata == nullptr) {
+        return supportedPortraitEffects;
+    }
     camera_metadata_item_t item;
     ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SCENE_PORTRAIT_EFFECT_TYPES, &item);
     if (ret != CAM_META_SUCCESS || item.count == 0) {
@@ -90,6 +93,9 @@ PortraitEffect PortraitSession::GetPortraitEffect()
         return PortraitEffect::OFF_EFFECT;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    if (metadata == nullptr) {
+        return PortraitEffect::OFF_EFFECT;
+    }
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &item);
     if (ret != CAM_META_SUCCESS || item.count == 0) {
@@ -172,6 +178,9 @@ std::vector<float> PortraitSession::GetSupportedVirtualApertures()
     }
 
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    if (metadata == nullptr) {
+        return supportedVirtualApertures;
+    }
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAMERA_VIRTUAL_APERTURE_RANGE, &item);
     if (ret != CAM_META_SUCCESS || item.count == 0) {
@@ -196,6 +205,9 @@ float PortraitSession::GetVirtualAperture()
         return virtualAperture;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    if (metadata == nullptr) {
+        return virtualAperture;
+    }
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_CAMERA_VIRTUAL_APERTURE_VALUE, &item);
     if (ret != CAM_META_SUCCESS || item.count == 0) {
@@ -264,6 +276,9 @@ std::vector<std::vector<float>> PortraitSession::GetSupportedPhysicalApertures()
     }
 
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    if (metadata == nullptr) {
+        return supportedPhysicalApertures;
+    }
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAMERA_PHYSICAL_APERTURE_RANGE, &item);
     if (ret != CAM_META_SUCCESS || item.count == 0) {
@@ -298,6 +313,9 @@ float PortraitSession::GetPhysicalAperture()
         return physicalAperture;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    if (metadata == nullptr) {
+        return physicalAperture;
+    }
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE, &item);
     if (ret != CAM_META_SUCCESS || item.count == 0) {

@@ -21,7 +21,7 @@ namespace CameraStandard {
 thread_local napi_ref CameraPrelaunchConfigNapi::sConstructor_ = nullptr;
 thread_local PrelaunchConfig* CameraPrelaunchConfigNapi::sPrelaunchConfig_ = nullptr;
 
-CameraPrelaunchConfigNapi::CameraPrelaunchConfigNapi() : env_(nullptr), wrapper_(nullptr)
+CameraPrelaunchConfigNapi::CameraPrelaunchConfigNapi() : prelaunchConfig_(nullptr), env_(nullptr), wrapper_(nullptr)
 {
 }
 

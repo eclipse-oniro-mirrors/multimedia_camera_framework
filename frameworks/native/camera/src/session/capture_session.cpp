@@ -2162,8 +2162,8 @@ std::vector<float> CaptureSession::GetZoomRatioRange()
         return {};
     }
     const uint32_t step = 3;
-    int32_t minIndex = 1;
-    int32_t maxIndex = 2;
+    uint32_t minIndex = 1;
+    uint32_t maxIndex = 2;
     constexpr float factor = 100.0;
     float minZoom = 0.0;
     float maxZoom = 0.0;
@@ -2200,8 +2200,8 @@ int32_t CaptureSession::GetZoomRatioRange(std::vector<float>& zoomRatioRange)
         return 0;
     }
     const uint32_t step = 3;
-    int32_t minIndex = 1;
-    int32_t maxIndex = 2;
+    uint32_t minIndex = 1;
+    uint32_t maxIndex = 2;
     constexpr float factor = 100.0;
     float minZoom = 0.0;
     float maxZoom = 0.0;

@@ -44,6 +44,8 @@ DeferredPhotoProxy::DeferredPhotoProxy(const BufferHandle* bufferHandle,
     MEDIA_INFO_LOG("DeferredPhotoProxy");
     photoId_ = imageId;
     deferredProcType_ = deferredProcType;
+    thumbnailWidth_ = 0;
+    thumbnailHeight_ = 0;
     bufferHandle_ = bufferHandle;
     fileDataAddr_ = nullptr;
     fileSize_ = 0;
@@ -76,6 +78,8 @@ DeferredPhotoProxy::DeferredPhotoProxy(const BufferHandle* bufferHandle,
     MEDIA_INFO_LOG("DeferredPhotoProxy");
     photoId_ = imageId;
     deferredProcType_ = deferredProcType;
+    thumbnailWidth_ = 0;
+    thumbnailHeight_ = 0;
     bufferHandle_ = bufferHandle;
     fileDataAddr_ = nullptr;
     fileSize_ = fileSize;

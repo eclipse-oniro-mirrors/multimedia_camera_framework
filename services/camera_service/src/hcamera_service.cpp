@@ -1339,7 +1339,7 @@ int32_t HCameraService::UpdateSkinSmoothSetting(std::shared_ptr<OHOS::Camera::Ca
     if (skinSmoothValue <= 0 || changedMetadata == nullptr) {
         return CAMERA_OK;
     }
-    bool status;
+    bool status = false;
     int32_t count = 1;
     int ret;
     camera_metadata_item_t item;
@@ -1372,7 +1372,7 @@ int32_t HCameraService::UpdateFaceSlenderSetting(std::shared_ptr<OHOS::Camera::C
     if (faceSlenderValue <= 0 || changedMetadata == nullptr) {
         return CAMERA_OK;
     }
-    bool status;
+    bool status = false;
     int32_t count = 1;
     int ret;
     camera_metadata_item_t item;
@@ -1405,7 +1405,7 @@ int32_t HCameraService::UpdateSkinToneSetting(std::shared_ptr<OHOS::Camera::Came
     if (skinToneValue <= 0 || changedMetadata == nullptr) {
         return CAMERA_OK;
     }
-    bool status;
+    bool status = false;
     int32_t count = 1;
     int ret;
     camera_metadata_item_t item;

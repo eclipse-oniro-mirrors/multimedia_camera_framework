@@ -66,7 +66,7 @@ private:
 
     std::weak_ptr<PreviewStateCallback> previewStateCallback_;
 
-    volatile float sketchEnableRatio_;
+    volatile float sketchEnableRatio_ = -1.0f;
     volatile float currentZoomRatio_ = 1.0f;
     SketchStatusData currentSketchStatusData_ = { .status = SketchStatus::STOPED, .sketchRatio = -1.0f };
 

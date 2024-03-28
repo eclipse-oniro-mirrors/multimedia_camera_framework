@@ -91,7 +91,7 @@ TaskGroupHandle BaseTaskGroup::GenerateHandle()
 {
     static std::atomic<uint64_t> counter = 0;
     DP_DEBUG_LOG("(%s) entered.", name_.c_str());
-    uint32_t prefix = std::hash<std::string>{}(name_);
+    uint64_t prefix = std::hash<std::string>{}(name_);
     uint64_t handle = ++counter;
     return prefix | handle;
 }

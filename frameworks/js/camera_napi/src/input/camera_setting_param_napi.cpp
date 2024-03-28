@@ -22,7 +22,7 @@ using namespace std;
 thread_local napi_ref CameraSettingParamNapi::sConstructor_ = nullptr;
 thread_local SettingParam* CameraSettingParamNapi::sCameraSettingParam_ = nullptr;
 
-CameraSettingParamNapi::CameraSettingParamNapi() : env_(nullptr), wrapper_(nullptr)
+CameraSettingParamNapi::CameraSettingParamNapi() : cameraSettingParam_(nullptr), env_(nullptr), wrapper_(nullptr)
 {
 }
 
@@ -157,7 +157,7 @@ napi_value CameraSettingParamNapi::GetCameraSmoothLevel(napi_env env, napi_callb
 
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
-        cameraSkinSmoothLevel = obj->cameraSettingParam_->skinSmoothLevel;
+        cameraSkinSmoothLevel = static_cast<uint32_t>(obj->cameraSettingParam_->skinSmoothLevel);
         MEDIA_INFO_LOG("GetCameraSettingParam skinSmoothLevel = %{public}d",
             obj->cameraSettingParam_->skinSmoothLevel);
         status = napi_create_uint32(env, cameraSkinSmoothLevel, &jsResult);
@@ -191,7 +191,7 @@ napi_value CameraSettingParamNapi::GetCameraFaceSlender(napi_env env, napi_callb
 
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
-        cameraFaceSlender = obj->cameraSettingParam_->faceSlender;
+        cameraFaceSlender = static_cast<uint32_t>(obj->cameraSettingParam_->faceSlender);
         MEDIA_INFO_LOG("GetCameraColorEffect cameraFaceSlender = %{public}d",
             obj->cameraSettingParam_->faceSlender);
         status = napi_create_uint32(env, cameraFaceSlender, &jsResult);
@@ -225,7 +225,7 @@ napi_value CameraSettingParamNapi::GetCameraSkinTone(napi_env env, napi_callback
 
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
-        cameraSkinTone = obj->cameraSettingParam_->skinTone;
+        cameraSkinTone = static_cast<uint32_t>(obj->cameraSettingParam_->skinTone);
         MEDIA_INFO_LOG("GetCameraColorEffect skinTone = %{public}d", obj->cameraSettingParam_->skinTone);
         status = napi_create_uint32(env, cameraSkinTone, &jsResult);
         if (status == napi_ok) {

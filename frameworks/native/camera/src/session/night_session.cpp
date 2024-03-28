@@ -40,6 +40,9 @@ int32_t NightSession::GetExposureRange(std::vector<uint32_t> &exposureRange)
         return CameraErrorCode::INVALID_ARGUMENT;
     }
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    if (metadata == nullptr) {
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_NIGHT_MODE_SUPPORTED_EXPOSURE_TIME, &item);
     if (ret != CAM_META_SUCCESS || item.count == 0) {
@@ -108,6 +111,9 @@ int32_t NightSession::GetExposure(uint32_t &exposureValue)
         return CameraErrorCode::INVALID_ARGUMENT;
     }
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    if (metadata == nullptr) {
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_MANUAL_EXPOSURE_TIME, &item);
     if (ret != CAM_META_SUCCESS) {

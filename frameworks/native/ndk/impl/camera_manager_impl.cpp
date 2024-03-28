@@ -99,8 +99,9 @@ Camera_ErrorCode Camera_Manager::UnregisterCallback(CameraManager_Callbacks* cal
 Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, uint32_t* size)
 {
     std::vector<sptr<CameraDevice>> cameraObjList = CameraManager::GetInstance()->GetSupportedCameras();
-    int32_t cameraSize = cameraObjList.size();
-    if (cameraSize <= 0) {
+    uint32_t cameraSize = cameraObjList.size();
+    uint32_t cameraMaxSize = 32;
+    if (cameraSize == 0 || cameraSize > cameraMaxSize) {
         MEDIA_ERR_LOG("Invalid camera size.");
         return CAMERA_INVALID_ARGUMENT;
     }
@@ -145,6 +146,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
     Camera_OutputCapability* outCapability = new Camera_OutputCapability;
     if (!outCapability) {
         MEDIA_ERR_LOG("Failed to allocate memory for Camera_OutputCapability！");
+        return CAMERA_SERVICE_FATAL_ERROR;
     }
     sptr<CameraDevice> cameraDevice = nullptr;
     std::vector<sptr<CameraDevice>> cameraObjList = CameraManager::GetInstance()->GetSupportedCameras();
@@ -263,8 +265,8 @@ Camera_ErrorCode Camera_Manager::GetSupportedVideoProfiles(Camera_OutputCapabili
         outVideoProfile->format = static_cast<Camera_Format>(videoProfiles[index].GetCameraFormat());
         outVideoProfile->size.width = videoProfiles[index].GetSize().width;
         outVideoProfile->size.height = videoProfiles[index].GetSize().height;
-        outVideoProfile->range.min  = videoProfiles[index].framerates_[0];
-        outVideoProfile->range.max  = videoProfiles[index].framerates_[1];
+        outVideoProfile->range.min  = static_cast<uint32_t>(videoProfiles[index].framerates_[0]);
+        outVideoProfile->range.max  = static_cast<uint32_t>(videoProfiles[index].framerates_[1]);
         outCapability->videoProfiles[index] = outVideoProfile;
     }
     return CAMERA_OK;

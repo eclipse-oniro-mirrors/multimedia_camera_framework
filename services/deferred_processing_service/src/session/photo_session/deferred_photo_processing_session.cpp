@@ -186,7 +186,7 @@ sptr<IDeferredPhotoProcessingSession> CreateDeferredProcessingSession(int userId
 void DeferredPhotoProcessingSession::ReportEvent(const std::string& imageId, int32_t event)
 {
     DPSEventInfo dpsEventInfo;
-    dpsEventInfo.operatorStage = event;
+    dpsEventInfo.operatorStage = static_cast<uint32_t>(event);
     dpsEventInfo.imageId = imageId;
     dpsEventInfo.userId = userId_;
     uint64_t beginTime = SteadyClock::GetTimestampMilli();

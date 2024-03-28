@@ -110,6 +110,9 @@ void PhotoCaptureSetting::SetRotation(PhotoCaptureSetting::RotationConfig rotati
 void PhotoCaptureSetting::SetGpsLocation(double latitude, double longitude)
 {
     std::unique_ptr<Location> location = std::make_unique<Location>();
+    if (location == nullptr) {
+        return;
+    }
     location->latitude = latitude;
     location->longitude = longitude;
     location->altitude = 0;
@@ -118,6 +121,9 @@ void PhotoCaptureSetting::SetGpsLocation(double latitude, double longitude)
 
 void PhotoCaptureSetting::SetLocation(std::unique_ptr<Location>& location)
 {
+    if (location == nullptr) {
+        return;
+    }
     double gpsCoordinates[3] = {location->latitude, location->longitude, location->altitude};
     bool status = false;
     camera_metadata_item_t item;
@@ -318,6 +324,9 @@ int32_t PhotoOutput::SetThumbnail(bool isEnabled)
         return SERVICE_FATL_ERROR;
     }
     auto streamCapturePtr = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
+    if (streamCapturePtr == nullptr) {
+        return SERVICE_FATL_ERROR;
+    }
     return streamCapturePtr->SetThumbnail(isEnabled, thumbnailSurface_->GetProducer());
 }
 
@@ -476,7 +485,9 @@ bool PhotoOutput::IsMirrorSupported()
         return isMirrorEnabled;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
-
+    if (metadata == nullptr) {
+        return isMirrorEnabled;
+    }
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
     if (ret == CAM_META_SUCCESS) {
         isMirrorEnabled = ((item.data.u8[0] == 1) || (item.data.u8[0] == 0));
@@ -500,6 +511,9 @@ int32_t PhotoOutput::IsQuickThumbnailSupported()
         return SESSION_NOT_RUNNING;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+    if (metadata == nullptr) {
+        return SESSION_NOT_RUNNING;
+    }
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_QUICK_THUMBNAIL_AVAILABLE, &item);
     if (ret == CAM_META_SUCCESS) {
         isQuickThumbnailEnabled = (item.data.u8[0] == 1) ? 0 : -1;

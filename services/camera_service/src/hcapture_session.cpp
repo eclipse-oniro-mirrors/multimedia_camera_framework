@@ -112,7 +112,7 @@ static const std::map<CaptureSessionState, std::string> SESSION_STATE_STRING_MAP
 HCaptureSession::HCaptureSession(const uint32_t callingTokenId, int32_t opMode)
 {
     pid_ = IPCSkeleton::GetCallingPid();
-    uid_ = IPCSkeleton::GetCallingUid();
+    uid_ = static_cast<uint32_t>(IPCSkeleton::GetCallingUid());
     MEDIA_DEBUG_LOG("HCaptureSession: camera stub services(%{public}zu) pid(%{public}d).", TotalSessionSize(), pid_);
     auto pidSession = TotalSessionsGet(pid_);
     if (pidSession != nullptr) {
@@ -770,8 +770,8 @@ bool HCaptureSession::QueryZoomPerformance(std::vector<float>& crossZoomAndTime,
     MEDIA_DEBUG_LOG("HCaptureSession::QueryZoomPerformance() operationMode %{public}d.",
         static_cast<OHOS::HDI::Camera::V1_2::OperationMode_V1_2>(operationMode));
     for (int i = 0; i < static_cast<int>(zoomItem.count);) {
-        int sceneMode = zoomItem.data.ui32[i];
-        int zoomPointsNum = zoomItem.data.ui32[i + 1];
+        int sceneMode = static_cast<int>(zoomItem.data.ui32[i]);
+        int zoomPointsNum = static_cast<int>(zoomItem.data.ui32[i + 1]);
         if (static_cast<OHOS::HDI::Camera::V1_2::OperationMode_V1_2>(operationMode) == sceneMode) {
             for (int j = 0; j < dataLenPerPoint * zoomPointsNum; j++) {
                 crossZoomAndTime.push_back(zoomItem.data.ui32[i + headLenPerMode + j]);
@@ -795,8 +795,8 @@ int32_t HCaptureSession::SetSmoothZoom(
         MEDIA_ERR_LOG("HCaptureSession::SetSmoothZoom device is null");
         return CAMERA_UNKNOWN_ERROR;
     }
-    float currentFps;
-    float currentZoomRatio;
+    float currentFps = 30.0f;
+    float currentZoomRatio = 1.0f;
     QueryFpsAndZoomRatio(currentFps, currentZoomRatio);
     std::vector<float> crossZoomAndTime {};
     QueryZoomPerformance(crossZoomAndTime, operationMode);

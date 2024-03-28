@@ -71,7 +71,8 @@ int32_t HStreamRepeatStub::HandleSetCallback(MessageParcel& data)
         "HStreamRepeatStub HandleSetCallback StreamRepeatCallback is null");
 
     auto callback = iface_cast<IStreamRepeatCallback>(remoteObject);
-
+    CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HStreamRepeatStub HandleSetCallback callback is null");
     return SetCallback(callback);
 }
 
@@ -83,6 +84,8 @@ int32_t HStreamRepeatStub::HandleAddDeferredSurface(MessageParcel& data)
         "HStreamRepeatStub HandleAddDeferredSurface BufferProducer is null");
 
     sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
+    CHECK_AND_RETURN_RET_LOG(producer != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HStreamRepeatStub HandleAddDeferredSurface producer is null");
     int errCode = AddDeferredSurface(producer);
     if (errCode != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamRepeatStub::HandleAddDeferredSurface add deferred surface failed : %{public}d", errCode);

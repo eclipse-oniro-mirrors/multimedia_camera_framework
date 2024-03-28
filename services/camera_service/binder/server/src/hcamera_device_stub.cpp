@@ -75,6 +75,8 @@ int32_t HCameraDeviceStub::HandleSetCallback(MessageParcel &data)
                              "HCameraDeviceStub HandleSetCallback CameraDeviceServiceCallback is null");
 
     auto callback = iface_cast<ICameraDeviceServiceCallback>(remoteObject);
+    CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCameraDeviceStub HandleSetCallback callback is null");
 
     return SetCallback(callback);
 }

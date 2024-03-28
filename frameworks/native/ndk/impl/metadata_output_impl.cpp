@@ -71,6 +71,8 @@ public:
                 object[index].boundingBox = &boundingBox;
             }
             callback_.onMetadataObjectAvailable(metadataOutput_, object, size);
+        } else {
+            delete[] object;
         }
     }
 

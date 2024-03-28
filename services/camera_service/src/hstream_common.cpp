@@ -105,6 +105,7 @@ HStreamCommon::HStreamCommon(
     producer_ = producer;
     width_ = width;
     height_ = height;
+    dataSpace_ = 0;
     format_ = format;
     streamType_ = streamType;
     MEDIA_DEBUG_LOG("HStreamCommon Create streamId_ is %{public}d, streamType is:%{public}d", streamId_, streamType_);

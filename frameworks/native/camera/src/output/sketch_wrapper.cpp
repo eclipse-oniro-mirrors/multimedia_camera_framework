@@ -273,12 +273,12 @@ void SketchWrapper::UpdateSketchReferenceFovRatio(std::shared_ptr<Camera::Camera
 
 void SketchWrapper::UpdateSketchReferenceFovRatio(camera_metadata_item_t& metadataItem)
 {
-    int32_t dataCount = metadataItem.count;
+    uint32_t dataCount = metadataItem.count;
     float currentMode = INVALID_MODE_FLOAT;
     float currentMinRatio = INVALID_ZOOM_RATIO;
     float currentMaxRatio = INVALID_ZOOM_RATIO;
     SceneFeaturesMode currentSceneFeaturesMode;
-    for (int32_t i = 0; i < dataCount; i++) {
+    for (uint32_t i = 0; i < dataCount; i++) {
         if (currentMode == INVALID_MODE_FLOAT) {
             currentMode = metadataItem.data.f[i];
             currentSceneFeaturesMode = GetSceneFeaturesModeFromModeData(metadataItem.data.f[i]);

@@ -84,7 +84,13 @@ std::vector<MetadataObjectType> MetadataOutput::GetSupportedMetadataObjectTypes(
         return {};
     }
     sptr<CameraDevice> cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
+    if (cameraObj == nullptr) {
+        return {};
+    }
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+    if (metadata == nullptr) {
+        return {};
+    }
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_STATISTICS_FACE_DETECT_MODE, &item);
     if (ret) {
@@ -208,6 +214,9 @@ void MetadataOutput::ProcessFaceRectangles(int64_t timestamp,
     const std::shared_ptr<OHOS::Camera::CameraMetadata>& result, std::vector<sptr<MetadataObject>>& metaObjects,
     bool isNeedMirror)
 {
+    if (result == nullptr) {
+        return;
+    }
     camera_metadata_item_t metadataItem;
     common_metadata_header_t* metadata = result->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATISTICS_FACE_RECTANGLES, &metadataItem);

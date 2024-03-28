@@ -51,7 +51,8 @@ DeferredPhotoJob::DeferredPhotoJob(const std::string& imageId, bool discardable,
       curPriority_(PhotoJobPriority::NONE),
       runningPriority_(PhotoJobPriority::NONE),
       preStatus_(PhotoJobStatus::NONE),
-      curStatus_(PhotoJobStatus::NONE)
+      curStatus_(PhotoJobStatus::NONE),
+      photoJobType_(0)
 {
     //DPS_LOG
 }
