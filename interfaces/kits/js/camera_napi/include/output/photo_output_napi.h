@@ -35,6 +35,10 @@ static const std::string CONST_CAPTURE_FRAME_SHUTTER = "frameShutter";
 static const std::string CONST_CAPTURE_ERROR = "error";
 static const std::string CONST_CAPTURE_PHOTO_AVAILABLE = "photoAvailable";
 static const std::string CONST_CAPTURE_DEFERRED_PHOTO_AVAILABLE = "deferredPhotoProxyAvailable";
+static const std::string CONST_CAPTURE_FRAME_SHUTTER_END = "frameShutterEnd";
+static const std::string CONST_CAPTURE_READY = "captureReady";
+static const std::string CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION = "estimatedCaptureDuration";
+
 static const std::string CONST_CAPTURE_QUICK_THUMBNAIL = "quickThumbnail";
 static const char CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME[] = "PhotoOutput";
 struct CallbackInfo {
@@ -59,15 +63,15 @@ enum PhotoOutputEventType {
 };
 
 static EnumHelper<PhotoOutputEventType> PhotoOutputEventTypeHelper({
-        {CAPTURE_START, "captureStart"},
-        {CAPTURE_END, "captureEnd"},
-        {CAPTURE_FRAME_SHUTTER, "frameShutter"},
-        {CAPTURE_ERROR, "error"},
-        {CAPTURE_PHOTO_AVAILABLE, "photoAvailable"},
-        {CAPTURE_DEFERRED_PHOTO_AVAILABLE, "deferredPhotoProxyAvailable"},
-        {CAPTURE_FRAME_SHUTTER_END, "frameShutterEnd"},
-        {CAPTURE_READY, "captureReady"},
-        {CAPTURE_ESTIMATED_CAPTURE_DURATION, "estimatedCaptureDuration"},
+        {CAPTURE_START, CONST_CAPTURE_START},
+        {CAPTURE_END, CONST_CAPTURE_END},
+        {CAPTURE_FRAME_SHUTTER, CONST_CAPTURE_FRAME_SHUTTER},
+        {CAPTURE_ERROR, CONST_CAPTURE_ERROR},
+        {CAPTURE_PHOTO_AVAILABLE, CONST_CAPTURE_PHOTO_AVAILABLE},
+        {CAPTURE_DEFERRED_PHOTO_AVAILABLE, CONST_CAPTURE_DEFERRED_PHOTO_AVAILABLE},
+        {CAPTURE_FRAME_SHUTTER_END, CONST_CAPTURE_FRAME_SHUTTER_END},
+        {CAPTURE_READY, CONST_CAPTURE_READY},
+        {CAPTURE_ESTIMATED_CAPTURE_DURATION, CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION},
     },
     PhotoOutputEventType::CAPTURE_INVALID_TYPE
 );
@@ -248,6 +252,17 @@ private:
     void RegisterErrorCallbackListener(
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
     void UnregisterErrorCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterFrameShutterEndCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterFrameShutterEndCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterReadyCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterReadyCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterEstimatedCaptureDurationCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterEstimatedCaptureDurationCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<PhotoOutput> sPhotoOutput_;
