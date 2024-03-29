@@ -163,6 +163,7 @@ public:
 
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
     const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) override;
+    int32_t SetFeatureMode(int32_t featureMode) override;
 
 private:
     inline void SetCameraDevice(sptr<HCameraDevice> device)
@@ -214,6 +215,7 @@ private:
     std::shared_ptr<PermissionStatusChangeCb> callbackPtr_;
     std::shared_ptr<CameraUseStateChangeCb> cameraUseCallbackPtr_;
     int32_t opMode_;
+    int32_t featureMode_;
     ColorSpace currColorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
     ColorSpace currCaptureColorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
     bool isSessionStarted_ = false;

@@ -83,6 +83,8 @@ public:
 
     virtual int32_t SetColorSpace(ColorSpace colorSpace, ColorSpace captureColorSpace, bool isNeedUpdate) = 0;
 
+    virtual int32_t SetFeatureMode(int32_t featureMode) = 0;
+
     DECLARE_INTERFACE_DESCRIPTOR(u"ICaptureSession");
 };
 } // namespace CameraStandard

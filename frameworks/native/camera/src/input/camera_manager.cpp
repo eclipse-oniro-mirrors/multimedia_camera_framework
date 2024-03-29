@@ -32,7 +32,7 @@
 using namespace std;
 namespace OHOS {
 namespace CameraStandard {
-using OHOS::HDI::Camera::V1_2::OperationMode_V1_2;
+using OHOS::HDI::Camera::V1_3::OperationMode;
 sptr<CameraManager> CameraManager::cameraManager_;
 std::mutex CameraManager::instanceMutex_;
 
@@ -54,26 +54,28 @@ const std::unordered_map<CameraFormat, camera_format_t> CameraManager::fwToMetaC
     {CAMERA_FORMAT_YCRCB_P010, OHOS_CAMERA_FORMAT_YCRCB_P010}
 };
 
-const std::unordered_map<OperationMode_V1_2, SceneMode> g_metaToFwSupportedMode_ = {
-    {OperationMode_V1_2::NORMAL, NORMAL},
-    {OperationMode_V1_2::CAPTURE, CAPTURE},
-    {OperationMode_V1_2::VIDEO, VIDEO},
-    {OperationMode_V1_2::PORTRAIT, PORTRAIT},
-    {OperationMode_V1_2::NIGHT, NIGHT},
-    {OperationMode_V1_2::PROFESSIONAL, PROFESSIONAL},
-    {OperationMode_V1_2::SLOW_MOTION, SLOW_MOTION},
-    {OperationMode_V1_2::SCAN_CODE, SCAN}
+const std::unordered_map<OperationMode, SceneMode> g_metaToFwSupportedMode_ = {
+    {OperationMode::NORMAL, NORMAL},
+    {OperationMode::CAPTURE, CAPTURE},
+    {OperationMode::VIDEO, VIDEO},
+    {OperationMode::PORTRAIT, PORTRAIT},
+    {OperationMode::NIGHT, NIGHT},
+    {OperationMode::PROFESSIONAL, PROFESSIONAL},
+    {OperationMode::SLOW_MOTION, SLOW_MOTION},
+    {OperationMode::SCAN_CODE, SCAN},
+    {OperationMode::HIGH_FRAME_RATE, HIGH_FRAME_RATE}
 };
 
-const std::unordered_map<SceneMode, OperationMode_V1_2> g_fwToMetaSupportedMode_ = {
-    {NORMAL, OperationMode_V1_2::NORMAL},
-    {CAPTURE,  OperationMode_V1_2::CAPTURE},
-    {VIDEO,  OperationMode_V1_2::VIDEO},
-    {PORTRAIT,  OperationMode_V1_2::PORTRAIT},
-    {NIGHT,  OperationMode_V1_2::NIGHT},
-    {PROFESSIONAL,  OperationMode_V1_2::PROFESSIONAL},
-    {SLOW_MOTION,  OperationMode_V1_2::SLOW_MOTION},
-    {SCAN, OperationMode_V1_2::SCAN_CODE}
+const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
+    {NORMAL, OperationMode::NORMAL},
+    {CAPTURE,  OperationMode::CAPTURE},
+    {VIDEO,  OperationMode::VIDEO},
+    {PORTRAIT,  OperationMode::PORTRAIT},
+    {NIGHT,  OperationMode::NIGHT},
+    {PROFESSIONAL,  OperationMode::PROFESSIONAL},
+    {SLOW_MOTION,  OperationMode::SLOW_MOTION},
+    {SCAN, OperationMode::SCAN_CODE},
+    {HIGH_FRAME_RATE, OperationMode::HIGH_FRAME_RATE}
 };
 
 const std::set<int32_t> isTemplateMode_ = {
@@ -236,7 +238,7 @@ sptr<CaptureSession> CameraManager::CreateCaptureSession(SceneMode mode)
         MEDIA_ERR_LOG("serviceProxy_ is null");
         return nullptr;
     }
-    OperationMode_V1_2 opMode = OperationMode_V1_2::NORMAL;
+    OperationMode opMode = OperationMode::NORMAL;
     for (auto itr = g_fwToMetaSupportedMode_.cbegin(); itr != g_fwToMetaSupportedMode_.cend(); itr++) {
         if (mode == itr->first) {
             opMode = itr->second;
@@ -933,7 +935,7 @@ std::vector<SceneMode> CameraManager::GetSupportedModes(sptr<CameraDevice>& came
         return supportedModes;
     }
     for (uint32_t i = 0; i < item.count; i++) {
-        auto itr = g_metaToFwSupportedMode_.find(static_cast<OperationMode_V1_2>(item.data.u8[i]));
+        auto itr = g_metaToFwSupportedMode_.find(static_cast<OperationMode>(item.data.u8[i]));
         if (itr != g_metaToFwSupportedMode_.end()) {
             supportedModes.emplace_back(itr->second);
         }

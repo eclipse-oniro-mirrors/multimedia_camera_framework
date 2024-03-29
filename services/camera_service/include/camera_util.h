@@ -28,6 +28,7 @@
 #include "v1_0/types.h"
 #include "v1_1/types.h"
 #include "v1_2/types.h"
+#include "v1_3/types.h"
 
 namespace OHOS {
 namespace CameraStandard {

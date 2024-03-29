@@ -76,6 +76,9 @@ int HCaptureSessionStub::OnRemoteRequest(
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SET_COLOR_SPACE):
             errCode = HandleSetColorSpace(data);
             break;
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_FEATURE_MODE):
+            errCode = HandleSetFeatureMode(data);
+            break;
         default:
             MEDIA_ERR_LOG("HCaptureSessionStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -208,6 +211,12 @@ int HCaptureSessionStub::HandleSetSmoothZoom(MessageParcel &data, MessageParcel 
     CHECK_AND_RETURN_RET_LOG(reply.WriteFloat(duration), IPC_STUB_WRITE_PARCEL_ERR,
                              "HCaptureSessionStub HandleSetSmoothZoom Write duration failed");
     return ret;
+}
+
+int HCaptureSessionStub::HandleSetFeatureMode(MessageParcel &data)
+{
+    int featureMode = data.ReadUint32();
+    return SetFeatureMode(featureMode);
 }
 } // namespace CameraStandard
 } // namespace OHOS
