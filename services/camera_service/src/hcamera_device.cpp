@@ -1178,5 +1178,23 @@ void HCameraDevice::NotifyCameraSessionStatus(bool running)
         running, isSystemCamera);
     return;
 }
+
+void HCameraDevice::RemoveResourceWhenHostDied()
+{
+    MEDIA_DEBUG_LOG("HCameraDevice::RemoveResourceWhenHostDied start");
+    CAMERA_SYNC_TRACE;
+    bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
+    if (isFoldable) {
+        UnRegisterFoldStatusListener();
+    }
+    HCameraDeviceManager::GetInstance()->RemoveDevice();
+    if (cameraHostManager_) {
+        cameraHostManager_->RemoveCameraDevice(cameraID_);
+        cameraHostManager_->UpdateRestoreParamCloseTime(clientName_, cameraID_);
+    }
+    POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str());
+    NotifyCameraSessionStatus(false);
+    MEDIA_DEBUG_LOG("HCameraDevice::RemoveResourceWhenHostDied end");
+}
 } // namespace CameraStandard
 } // namespace OHOS

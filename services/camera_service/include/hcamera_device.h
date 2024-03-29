@@ -97,6 +97,8 @@ public:
     
     void NotifyCameraSessionStatus(bool running);
 
+    void RemoveResourceWhenHostDied();
+
 private:
     class FoldScreenListener;
     std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.
