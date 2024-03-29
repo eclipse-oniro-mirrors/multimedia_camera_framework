@@ -58,6 +58,8 @@ public:
 
     int32_t SetColorSpace(ColorSpace colorSpace, ColorSpace captureColorSpace, bool isNeedUpdate) override;
 
+    int32_t SetFeatureMode(int32_t featureMode) override;
+
 private:
     static inline BrokerDelegator<HCaptureSessionProxy> delegator_;
 };

@@ -33,6 +33,7 @@ enum SceneMode : int32_t {
     SCAN = 7,
     CAPTURE_MACRO = 8,
     VIDEO_MACRO = 9,
+    HIGH_FRAME_RATE = 13
 };
 
 enum SceneFeature : int32_t {

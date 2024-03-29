@@ -144,6 +144,9 @@ pid_t HCaptureSession::GetPid()
 
 int32_t HCaptureSession::GetopMode()
 {
+    if (featureMode_) {
+        return featureMode_;
+    }
     return opMode_;
 }
 
@@ -421,7 +424,7 @@ int32_t HCaptureSession::LinkInputAndOutputs()
         allStreamInfos.push_back(curStreamInfo);
     }
 
-    rc = device->CreateAndCommitStreams(allStreamInfos, settings, opMode_);
+    rc = device->CreateAndCommitStreams(allStreamInfos, settings, GetopMode());
     MEDIA_INFO_LOG("HCaptureSession::LinkInputAndOutputs execute success");
     return rc;
 }
@@ -768,11 +771,11 @@ bool HCaptureSession::QueryZoomPerformance(std::vector<float>& crossZoomAndTime,
     int dataLenPerPoint = 3;
     int headLenPerMode = 2;
     MEDIA_DEBUG_LOG("HCaptureSession::QueryZoomPerformance() operationMode %{public}d.",
-        static_cast<OHOS::HDI::Camera::V1_2::OperationMode_V1_2>(operationMode));
+        static_cast<OHOS::HDI::Camera::V1_3::OperationMode>(operationMode));
     for (int i = 0; i < static_cast<int>(zoomItem.count);) {
         int sceneMode = static_cast<int>(zoomItem.data.ui32[i]);
         int zoomPointsNum = static_cast<int>(zoomItem.data.ui32[i + 1]);
-        if (static_cast<OHOS::HDI::Camera::V1_2::OperationMode_V1_2>(operationMode) == sceneMode) {
+        if (static_cast<OHOS::HDI::Camera::V1_3::OperationMode>(operationMode) == sceneMode) {
             for (int j = 0; j < dataLenPerPoint * zoomPointsNum; j++) {
                 crossZoomAndTime.push_back(zoomItem.data.ui32[i + headLenPerMode + j]);
                 MEDIA_DEBUG_LOG("HCaptureSession::QueryZoomPerformance()  crossZoomAndTime %{public}d.",
@@ -1136,6 +1139,13 @@ void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::Pe
     if ((result.permStateChangeType == 0) && (item != nullptr)) {
         item->Release(CaptureSessionReleaseType::RELEASE_TYPE_SECURE);
     }
+}
+
+int32_t HCaptureSession::SetFeatureMode(int32_t featureMode)
+{
+    MEDIA_INFO_LOG("SetFeatureMode is called!");
+    featureMode_ = featureMode;
+    return CAMERA_OK;
 }
 
 void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessTokenID tokenId, bool isShowing)

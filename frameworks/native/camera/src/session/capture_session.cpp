@@ -522,6 +522,18 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
         metaOutput_ = output;
         return ServiceToCameraError(CAMERA_OK);
     }
+    if (GetMode() == SceneMode::VIDEO && output->GetOutputType() == CAPTURE_OUTPUT_TYPE_VIDEO) {
+        std::vector<int32_t> videoFrameRates = output->GetVideoProfile().GetFrameRates();
+        if (videoFrameRates.empty()) {
+            MEDIA_ERR_LOG("videoFrameRates is empty!");
+            return ServiceToCameraError(CAMERA_INVALID_ARG);
+        }
+        const int frameRate120 = 120;
+        const int frameRate240 = 240;
+        if (videoFrameRates[0] == frameRate120 || videoFrameRates[0] == frameRate240) {
+            captureSession_->SetFeatureMode(SceneMode::HIGH_FRAME_RATE);
+        }
+    }
     if (!CanAddOutput(output)) {
         MEDIA_ERR_LOG("CanAddOutput check failed!");
         return ServiceToCameraError(CAMERA_INVALID_ARG);

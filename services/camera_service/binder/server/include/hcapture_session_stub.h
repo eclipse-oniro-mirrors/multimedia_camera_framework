@@ -40,6 +40,7 @@ private:
     int32_t HandleGetActiveColorSpace(MessageParcel& reply);
     int32_t HandleSetColorSpace(MessageParcel& data);
     int32_t HandleSetSmoothZoom(MessageParcel& data, MessageParcel& reply);
+    int32_t HandleSetFeatureMode(MessageParcel& data);
 };
 } // namespace CameraStandard
 } // namespace OHOS
