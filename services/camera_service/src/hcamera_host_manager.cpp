@@ -16,6 +16,7 @@
 #include "hcamera_host_manager.h"
 #include <memory>
 
+#include "hcamera_device.h"
 #include "v1_2/icamera_host_callback.h"
 #include "metadata_utils.h"
 #include "camera_util.h"
@@ -712,7 +713,9 @@ void HCameraHostManager::CloseCameraDevice(const std::string& cameraId)
         }
     }
     if (deviceToDisconnect) {
-        deviceToDisconnect->Close();
+        MEDIA_DEBUG_LOG("HCameraDevice::CloseCameraDevice should clean %{public}s device", cameraId.c_str());
+        HCameraDevice* devicePtr = static_cast<HCameraDevice*>(deviceToDisconnect.GetRefPtr());
+        devicePtr->RemoveResourceWhenHostDied();
     }
 }
 
