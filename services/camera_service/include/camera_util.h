@@ -137,6 +137,8 @@ int32_t CheckPermission(std::string permissionName, uint32_t callerToken);
 
 void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::string permissionName);
 
+bool IsVerticalDevice();
+
 inline bool IsCameraDebugOn()
 {
     return g_cameraDebugOn;
