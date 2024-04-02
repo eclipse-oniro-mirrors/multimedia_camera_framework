@@ -17,12 +17,9 @@
 #define CAMERA_INPUT_NAPI_H_
 
 #include "camera_napi_event_emitter.h"
-#include "hilog/log.h"
 #include "camera_napi_utils.h"
-
-#include "input/camera_manager.h"
 #include "input/camera_input.h"
-
+#include "input/camera_manager.h"
 #include "input/camera_size_napi.h"
 
 namespace OHOS {

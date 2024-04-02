@@ -15,24 +15,19 @@
 #ifndef CAMERA_SETTING_PARAM_NAPI_H
 #define CAMERA_SETTING_PARAM_NAPI_H
 
-#include "camera_log.h"
-#include "napi/native_api.h"
-#include "napi/native_node_api.h"
-
-#include "hilog/log.h"
-#include "camera_napi_utils.h"
-#include "input/camera_input.h"
-#include "input/prelaunch_config.h"
-
+#include <fcntl.h>
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <vector>
-
-#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <vector>
+
+#include "camera_napi_utils.h"
+#include "input/camera_input.h"
+#include "input/prelaunch_config.h"
+#include "napi/native_api.h"
 
 namespace OHOS {
 namespace CameraStandard {

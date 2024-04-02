@@ -13,14 +13,19 @@
  * limitations under the License.
  */
 
+#include "output/photo_output_napi.h"
+
 #include <cstdint>
 #include <mutex>
+#include <unistd.h>
 #include <string>
 #include <uv.h>
+
 #include <unistd.h>
 #include "output/deferred_photo_proxy_napi.h"
 #include "camera_buffer_handle_utils.h"
 #include "camera_error_code.h"
+#include "camera_napi_param_parser.h"
 #include "camera_log.h"
 #include "camera_napi_const.h"
 #include "camera_napi_security_utils.h"
@@ -29,7 +34,11 @@
 #include "camera_napi_param_parser.h"
 #include "camera_output_capability.h"
 #include "image_napi.h"
+#include "image_packer.h"
 #include "image_receiver.h"
+#include "input/camera_profile_napi.h"
+#include "output/deferred_photo_proxy_napi.h"
+#include "output/photo_napi.h"
 #include "js_native_api.h"
 #include "pixel_map_napi.h"
 #include "image_packer.h"
@@ -1143,8 +1152,10 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isMovingPhotoSupported", IsMovingPhotoSupported),
         DECLARE_NAPI_FUNCTION("enableMovingPhoto", EnableMovingPhoto),
         DECLARE_NAPI_FUNCTION("getDefaultCaptureSetting", GetDefaultCaptureSetting),
-        DECLARE_NAPI_FUNCTION("capture", Capture), DECLARE_NAPI_FUNCTION("confirmCapture", ConfirmCapture),
-        DECLARE_NAPI_FUNCTION("release", Release), DECLARE_NAPI_FUNCTION("isMirrorSupported", IsMirrorSupported),
+        DECLARE_NAPI_FUNCTION("capture", Capture),
+        DECLARE_NAPI_FUNCTION("confirmCapture", ConfirmCapture),
+        DECLARE_NAPI_FUNCTION("release", Release),
+        DECLARE_NAPI_FUNCTION("isMirrorSupported", IsMirrorSupported),
         DECLARE_NAPI_FUNCTION("setMirror", SetMirror),
         DECLARE_NAPI_FUNCTION("enableQuickThumbnail", EnableQuickThumbnail),
         DECLARE_NAPI_FUNCTION("isQuickThumbnailSupported", IsQuickThumbnailSupported),
@@ -1156,7 +1167,8 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isDeferredImageDeliverySupported", IsDeferredImageDeliverySupported),
         DECLARE_NAPI_FUNCTION("isDeferredImageDeliveryEnabled", IsDeferredImageDeliveryEnabled),
         DECLARE_NAPI_FUNCTION("isAutoHighQualityPhotoSupported", IsAutoHighQualityPhotoSupported),
-        DECLARE_NAPI_FUNCTION("enableAutoHighQualityPhoto", EnableAutoHighQualityPhoto)
+        DECLARE_NAPI_FUNCTION("enableAutoHighQualityPhoto", EnableAutoHighQualityPhoto),
+        DECLARE_NAPI_FUNCTION("getActiveProfile", GetActiveProfile)
     };
 
     status = napi_define_class(env, CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, PhotoOutputNapiConstructor,
@@ -1262,6 +1274,51 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile& profile, st
         if (profile.GetCameraFormat() == CAMERA_FORMAT_DNG) {
             sptr<Surface> rawPhotoSurface = Surface::CreateSurfaceAsConsumer("rawPhotoOutput");
             sPhotoOutput_->SetRawPhotoInfo(rawPhotoSurface);
+        }
+        status = napi_new_instance(env, constructor, 0, nullptr, &result);
+        sPhotoOutput_ = nullptr;
+        if (status == napi_ok && result != nullptr) {
+            MEDIA_DEBUG_LOG("Success to create photo output instance");
+            return result;
+        } else {
+            MEDIA_ERR_LOG("Failed to create photo output instance");
+        }
+    }
+    MEDIA_ERR_LOG("CreatePhotoOutput call Failed!");
+    return result;
+}
+
+napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, std::string surfaceId)
+{
+    MEDIA_INFO_LOG("CreatePhotoOutput with only surfaceId is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+    napi_value constructor;
+    napi_get_undefined(env, &result);
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (status == napi_ok) {
+        MEDIA_INFO_LOG("CreatePhotoOutput surfaceId: %{public}s", surfaceId.c_str());
+        sptr<Surface> photoSurface;
+        if (surfaceId == "") {
+            MEDIA_INFO_LOG("create surface as consumer");
+            photoSurface = Surface::CreateSurfaceAsConsumer("photoOutput");
+            sPhotoSurface_ = photoSurface;
+        } else {
+            MEDIA_INFO_LOG("get surface by surfaceId");
+            photoSurface = Media::ImageReceiver::getSurfaceById(surfaceId);
+        }
+        if (photoSurface == nullptr) {
+            MEDIA_ERR_LOG("failed to get surface");
+            return result;
+        }
+        sptr<IBufferProducer> surfaceProducer = photoSurface->GetProducer();
+        MEDIA_INFO_LOG("surface width: %{public}d, height: %{public}d", photoSurface->GetDefaultWidth(),
+            photoSurface->GetDefaultHeight());
+        int retCode = CameraManager::GetInstance()->CreatePhotoOutputWithoutProfile(surfaceProducer, &sPhotoOutput_);
+        if (!CameraNapiUtils::CheckError(env, retCode) || sPhotoOutput_ == nullptr) {
+            MEDIA_ERR_LOG("failed to create CreatePhotoOutput");
+            return result;
         }
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sPhotoOutput_ = nullptr;
@@ -1995,6 +2052,22 @@ napi_value PhotoOutputNapi::EnableQuickThumbnail(napi_env env, napi_callback_inf
     return result;
 }
 
+napi_value PhotoOutputNapi::GetActiveProfile(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::GetActiveProfile is called");
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, photoOutputNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::GetActiveProfile parse parameter occur error");
+        return nullptr;
+    }
+    auto profile = photoOutputNapi->photoOutput_->GetPhotoProfile();
+    if (profile == nullptr) {
+        return CameraNapiUtils::GetUndefinedValue(env);
+    }
+    return CameraProfileNapi::CreateCameraProfile(env, *profile);
+}
+
 void PhotoOutputNapi::RegisterQuickThumbnailCallbackListener(
     napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
@@ -2050,7 +2123,10 @@ void PhotoOutputNapi::RegisterPhotoAvailableCallbackListener(
         photoListener_ = photoListener;
     }
     photoListener_->SaveCallbackReference(CONST_CAPTURE_PHOTO_AVAILABLE, callback);
-    if (photoOutput_ != nullptr && rawPhotoListener_ == nullptr && profile_.GetCameraFormat() == CAMERA_FORMAT_DNG) {
+
+    // Preconfig can't support rawPhotoListener.
+    if (photoOutput_ != nullptr && rawPhotoListener_ == nullptr && profile_ != nullptr &&
+        profile_->GetCameraFormat() == CAMERA_FORMAT_DNG) {
         MEDIA_INFO_LOG("new rawPhotoListener and register surface consumer listener");
         if (photoOutput_->rawPhotoSurface_ == nullptr) {
             MEDIA_ERR_LOG("rawPhotoSurface_ is null!");
@@ -2058,8 +2134,8 @@ void PhotoOutputNapi::RegisterPhotoAvailableCallbackListener(
         }
         sptr<RawPhotoListener> rawPhotoListener =
             new (std::nothrow) RawPhotoListener(env, photoOutput_->rawPhotoSurface_);
-        SurfaceError ret = photoOutput_->rawPhotoSurface_->RegisterConsumerListener(
-            (sptr<IBufferConsumerListener>&)rawPhotoListener);
+        SurfaceError ret =
+            photoOutput_->rawPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)rawPhotoListener);
         if (ret != SURFACE_ERROR_OK) {
             MEDIA_ERR_LOG("register surface consumer listener failed!");
         }

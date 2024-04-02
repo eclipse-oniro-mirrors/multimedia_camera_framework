@@ -15,6 +15,9 @@
 
 #include "input/camera_setting_param_napi.h"
 
+#include "camera_log.h"
+#include "napi/native_common.h"
+
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;

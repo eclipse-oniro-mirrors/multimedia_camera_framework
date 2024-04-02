@@ -5671,7 +5671,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_035, TestSize.L
 
     manager_->MuteCamera(cameraMuted);
 
-    sptr<CameraMuteServiceCallback> muteService = new (std::nothrow) CameraMuteServiceCallback();
+    sptr<CameraMuteServiceCallback> muteService = new (std::nothrow) CameraMuteServiceCallback(nullptr);
     ASSERT_NE(muteService, nullptr);
 
     int32_t muteCameraState = muteService->OnCameraMute(cameraMuted);
@@ -5700,7 +5700,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_036, TestSize.L
     std::string cameraIdtest = "";
     FlashStatus status = FLASH_STATUS_OFF;
 
-    sptr<CameraStatusServiceCallback> camServiceCallback = new (std::nothrow) CameraStatusServiceCallback();
+    sptr<CameraStatusServiceCallback> camServiceCallback = new (std::nothrow) CameraStatusServiceCallback(nullptr);
     int32_t cameraStatusChanged = camServiceCallback->OnFlashlightStatusChanged(cameraIdtest, status);
     EXPECT_EQ(cameraStatusChanged, 0);
 
@@ -7442,7 +7442,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_091, TestSize.L
     bool canOpenCamera = true;
     EXPECT_EQ(hCameraServiceProxy->CreateCameraDevice(cameras_[0]->GetID(), device), -1);
     hCameraServiceProxy->SetTorchCallback(torchSvcCallback);
-    torchSvcCallback = new(std::nothrow) TorchServiceCallback();
+    torchSvcCallback = new(std::nothrow) TorchServiceCallback(nullptr);
     ASSERT_NE(torchSvcCallback, nullptr);
     hCameraServiceProxy->SetTorchCallback(torchSvcCallback);
     hCameraServiceProxy->MuteCamera(true);
@@ -7844,7 +7844,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_105, TestSize.L
     sptr<ITorchServiceCallback> torchSvcCallback = nullptr;
     hCameraServiceProxy->CreateCameraDevice(cameras_[0]->GetID(), device);
     hCameraServiceProxy->SetTorchCallback(torchSvcCallback);
-    torchSvcCallback = new(std::nothrow) TorchServiceCallback();
+    torchSvcCallback = new(std::nothrow) TorchServiceCallback(nullptr);
     ASSERT_NE(torchSvcCallback, nullptr);
     hCameraServiceProxy->SetTorchCallback(torchSvcCallback);
     hCameraServiceProxy->MuteCamera(true);

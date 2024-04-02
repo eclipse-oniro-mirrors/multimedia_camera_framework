@@ -16,27 +16,323 @@
 #ifndef CAMERA_NAPI_PARAM_PARSER_H
 #define CAMERA_NAPI_PARAM_PARSER_H
 
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
+#include <set>
+#include <stdint.h>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <variant>
 
 #include "camera_error_code.h"
 #include "camera_napi_const.h"
 #include "js_native_api.h"
 #include "js_native_api_types.h"
-#include "napi/native_node_api.h"
+#include "napi/native_api.h"
 
 namespace OHOS {
 namespace CameraStandard {
+enum CameraNapiAsyncFunctionType : int32_t { ASYNC_FUN_TYPE_NONE, ASYNC_FUN_TYPE_CALLBACK, ASYNC_FUN_TYPE_PROMISE };
+struct CameraNapiAsyncFunction {
+public:
+    CameraNapiAsyncFunction(napi_env env, const char* resourceName, napi_ref& callbackRef, napi_deferred& deferred)
+    {
+        env_ = env;
+        status_ = napi_create_string_utf8(env, resourceName, NAPI_AUTO_LENGTH, &(resourceName_));
+        if (status_ != napi_ok) {
+            return;
+        }
+        callbackRefPtr_ = &callbackRef;
+        deferred_ = &deferred;
+    }
+
+    inline napi_value GetResourceName()
+    {
+        return resourceName_;
+    }
+
+    inline bool IsStatusOk()
+    {
+        return status_ == napi_ok;
+    }
+
+    inline napi_value GetPromise()
+    {
+        if (status_ != napi_ok) {
+            return nullptr;
+        }
+        return promise_;
+    }
+
+    inline CameraNapiAsyncFunctionType GetAsyncFunctionType()
+    {
+        return asyncFunctionType_;
+    }
+
+    inline bool AssertStatus(CameraErrorCode errorCode, const char* message)
+    {
+        if (status_ != napi_ok) {
+            napi_throw_error(env_, std::to_string(errorCode).c_str(), message);
+        }
+        return status_ == napi_ok;
+    }
+
+private:
+    napi_status CreatePromise()
+    {
+        if (status_ != napi_ok) {
+            return status_;
+        }
+        status_ = napi_create_promise(env_, deferred_, &promise_);
+        if (status_ == napi_ok) {
+            asyncFunctionType_ = ASYNC_FUN_TYPE_PROMISE;
+        }
+        return status_;
+    }
+
+    inline napi_status CreateCallback(napi_value callback)
+    {
+        if (status_ != napi_ok) {
+            return status_;
+        }
+        status_ = napi_create_reference(env_, callback, 1, callbackRefPtr_);
+        if (status_ == napi_ok) {
+            asyncFunctionType_ = ASYNC_FUN_TYPE_CALLBACK;
+        }
+        return status_;
+    }
+
+    napi_env env_ = nullptr;
+    napi_status status_ = napi_invalid_arg;
+    napi_value resourceName_ = nullptr;
+    napi_ref* callbackRefPtr_ = nullptr;
+    napi_deferred* deferred_ = nullptr;
+    napi_value promise_ = nullptr;
+    CameraNapiAsyncFunctionType asyncFunctionType_ = ASYNC_FUN_TYPE_NONE;
+
+    friend class CameraNapiParamParser;
+};
+
+struct CameraNapiObjectField;
+
+struct CameraNapiObject {
+public:
+    typedef std::variant<bool*, int32_t*, uint32_t*, int64_t*, float*, double*, std::string*, CameraNapiObject*>
+        NapiVariantBindAddr;
+
+    struct CameraNapiObjectField {
+    public:
+        CameraNapiObjectField(const std::string key, NapiVariantBindAddr targetAddr) : key_(key), bindAddr_(targetAddr)
+        {}
+        CameraNapiObjectField(const char* key, NapiVariantBindAddr targetAddr) : key_(key), bindAddr_(targetAddr) {}
+
+    private:
+        const std::string key_;
+        NapiVariantBindAddr bindAddr_;
+        friend CameraNapiObject;
+    };
+
+    typedef std::unordered_map<std::string, NapiVariantBindAddr> CameraNapiObjFieldMap;
+
+    CameraNapiObject(CameraNapiObjFieldMap fieldMap) : fieldMap_(fieldMap) {}
+
+    napi_status ParseNapiObjectToMap(napi_env env, napi_value napiObject)
+    {
+        napi_valuetype type = napi_undefined;
+        napi_typeof(env, napiObject, &type);
+        if (type != napi_object) {
+            return napi_invalid_arg;
+        }
+        for (auto& it : fieldMap_) {
+            NapiVariantBindAddr& bindAddr = it.second;
+            napi_value napiObjValue = nullptr;
+            napi_status res = napi_get_named_property(env, napiObject, it.first.c_str(), &napiObjValue);
+            if (res != napi_ok) {
+                return res;
+            }
+            if (std::holds_alternative<bool*>(bindAddr)) {
+                res = GetVariantBoolFromNapiValue(env, napiObjValue, bindAddr);
+            } else if (std::holds_alternative<int32_t*>(bindAddr)) {
+                res = GetVariantInt32FromNapiValue(env, napiObjValue, bindAddr);
+            } else if (std::holds_alternative<uint32_t*>(bindAddr)) {
+                res = GetVariantUint32FromNapiValue(env, napiObjValue, bindAddr);
+            } else if (std::holds_alternative<int64_t*>(bindAddr)) {
+                res = GetVariantInt64FromNapiValue(env, napiObjValue, bindAddr);
+            } else if (std::holds_alternative<float*>(bindAddr)) {
+                res = GetVariantFloatFromNapiValue(env, napiObjValue, bindAddr);
+            } else if (std::holds_alternative<double*>(bindAddr)) {
+                res = GetVariantDoubleFromNapiValue(env, napiObjValue, bindAddr);
+            } else if (std::holds_alternative<std::string*>(bindAddr)) {
+                res = GetVariantStringFromNapiValue(env, napiObjValue, bindAddr);
+            } else if (std::holds_alternative<CameraNapiObject*>(bindAddr)) {
+                res = GetVariantCameraNapiObjectFromNapiValue(env, napiObjValue, bindAddr);
+            } else {
+                res = napi_invalid_arg;
+            }
+            if (res != napi_ok) {
+                return res;
+            }
+        }
+        return napi_ok;
+    };
+
+private:
+    napi_status GetVariantBoolFromNapiValue(napi_env env, napi_value napiValue, NapiVariantBindAddr& variantAddr)
+    {
+        if (!ValidNapiType(env, napiValue, napi_boolean)) {
+            return napi_invalid_arg;
+        }
+        auto variantAddrPointer = std::get_if<bool*>(&variantAddr);
+        if (variantAddrPointer == nullptr) {
+            return napi_invalid_arg;
+        }
+        return napi_get_value_bool(env, napiValue, *variantAddrPointer);
+    };
+
+    napi_status GetVariantInt32FromNapiValue(napi_env env, napi_value napiValue, NapiVariantBindAddr& variantAddr)
+    {
+        if (!ValidNapiType(env, napiValue, napi_number)) {
+            return napi_invalid_arg;
+        }
+        auto variantAddrPointer = std::get_if<int32_t*>(&variantAddr);
+        if (variantAddrPointer == nullptr) {
+            return napi_invalid_arg;
+        }
+        return napi_get_value_int32(env, napiValue, *variantAddrPointer);
+    };
+
+    napi_status GetVariantUint32FromNapiValue(napi_env env, napi_value napiValue, NapiVariantBindAddr& variantAddr)
+    {
+        if (!ValidNapiType(env, napiValue, napi_number)) {
+            return napi_invalid_arg;
+        }
+        auto variantAddrPointer = std::get_if<uint32_t*>(&variantAddr);
+        if (variantAddrPointer == nullptr) {
+            return napi_invalid_arg;
+        }
+        return napi_get_value_uint32(env, napiValue, *variantAddrPointer);
+    };
+
+    napi_status GetVariantInt64FromNapiValue(napi_env env, napi_value napiValue, NapiVariantBindAddr& variantAddr)
+    {
+        if (!ValidNapiType(env, napiValue, napi_number)) {
+            return napi_invalid_arg;
+        }
+        auto variantAddrPointer = std::get_if<int64_t*>(&variantAddr);
+        if (variantAddrPointer == nullptr) {
+            return napi_invalid_arg;
+        }
+        return napi_get_value_int64(env, napiValue, *variantAddrPointer);
+    };
+
+    napi_status GetVariantFloatFromNapiValue(napi_env env, napi_value napiValue, NapiVariantBindAddr& variantAddr)
+    {
+        if (!ValidNapiType(env, napiValue, napi_number)) {
+            return napi_invalid_arg;
+        }
+        auto variantAddrPointer = std::get_if<float*>(&variantAddr);
+        if (variantAddrPointer == nullptr) {
+            return napi_invalid_arg;
+        }
+        double tmpData = 0;
+        napi_status res = napi_get_value_double(env, napiValue, &tmpData);
+        **variantAddrPointer = tmpData;
+        return res;
+    };
+
+    napi_status GetVariantDoubleFromNapiValue(napi_env env, napi_value napiValue, NapiVariantBindAddr& variantAddr)
+    {
+        if (!ValidNapiType(env, napiValue, napi_number)) {
+            return napi_invalid_arg;
+        }
+        auto variantAddrPointer = std::get_if<double*>(&variantAddr);
+        if (variantAddrPointer == nullptr) {
+            return napi_invalid_arg;
+        }
+        return napi_get_value_double(env, napiValue, *variantAddrPointer);
+    };
+
+    napi_status GetVariantStringFromNapiValue(napi_env env, napi_value napiValue, NapiVariantBindAddr& variantAddr)
+    {
+        if (!ValidNapiType(env, napiValue, napi_string)) {
+            return napi_invalid_arg;
+        }
+
+        auto variantAddrPointer = std::get_if<std::string*>(&variantAddr);
+        if (variantAddrPointer == nullptr) {
+            return napi_invalid_arg;
+        }
+
+        size_t stringSize = 0;
+        napi_status res = napi_get_value_string_utf8(env, napiValue, nullptr, 0, &stringSize);
+        if (res != napi_ok) {
+            return res;
+        }
+        auto stringValue = **variantAddrPointer;
+        stringValue.resize(stringSize);
+        res = napi_get_value_string_utf8(env, napiValue, stringValue.data(), stringSize + 1, &stringSize);
+        return res;
+    };
+
+    napi_status GetVariantCameraNapiObjectFromNapiValue(
+        napi_env env, napi_value napiValue, NapiVariantBindAddr& variantAddr)
+    {
+        if (!ValidNapiType(env, napiValue, napi_object)) {
+            return napi_invalid_arg;
+        }
+        auto variantAddrPointer = std::get_if<CameraNapiObject*>(&variantAddr);
+        if (variantAddrPointer == nullptr) {
+            return napi_invalid_arg;
+        }
+        return (*variantAddrPointer)->ParseNapiObjectToMap(env, napiValue);
+    }
+
+    bool ValidNapiType(napi_env env, napi_value napiObjValue, napi_valuetype valueType)
+    {
+        napi_valuetype objValueType = napi_undefined;
+        napi_status res = napi_typeof(env, napiObjValue, &objValueType);
+        if (res != napi_ok) {
+            return false;
+        }
+        return objValueType == valueType;
+    }
+
+    CameraNapiObjFieldMap fieldMap_;
+};
+
 class CameraNapiParamParser {
 public:
     template<typename T>
     explicit CameraNapiParamParser(napi_env env, napi_callback_info info, T*& nativeObjPointer)
-        : CameraNapiParamParser(env, info, 0, nativeObjPointer)
+        : CameraNapiParamParser(env, info, 0, nativeObjPointer, nullptr)
+    {}
+
+    template<typename T>
+    explicit CameraNapiParamParser(napi_env env, napi_callback_info info, T*& nativeObjPointer,
+        std::shared_ptr<CameraNapiAsyncFunction> asyncFunction)
+        : CameraNapiParamParser(env, info, 0, nativeObjPointer, asyncFunction)
     {}
 
     template<typename T, typename... Args>
     explicit CameraNapiParamParser(napi_env env, napi_callback_info info, T*& nativeObjPointer, Args&... args)
-        : CameraNapiParamParser(env, info, sizeof...(args), nativeObjPointer)
+        : CameraNapiParamParser(env, info, sizeof...(args), nativeObjPointer, nullptr)
+    {
+        if (napiError != napi_ok) {
+            return;
+        }
+        if (paramSize_ > 0) {
+            Next(args...);
+        }
+    }
+
+    template<typename T, typename... Args>
+    explicit CameraNapiParamParser(napi_env env, napi_callback_info info, T*& nativeObjPointer,
+        std::shared_ptr<CameraNapiAsyncFunction> asyncFunction, Args&... args)
+        : CameraNapiParamParser(env, info, sizeof...(args), nativeObjPointer, asyncFunction)
     {
         if (napiError != napi_ok) {
             return;
@@ -60,18 +356,54 @@ public:
         }
     }
 
-    bool AssertStatus(CameraErrorCode errorCode, const char* message);
+    inline bool AssertStatus(CameraErrorCode errorCode, const char* message)
+    {
+        if (napiError != napi_ok) {
+            napi_throw_error(env_, std::to_string(errorCode).c_str(), message);
+        }
+        return napiError == napi_ok;
+    }
+
+    inline bool IsStatusOk()
+    {
+        return napiError == napi_ok;
+    }
 
 private:
     template<typename T>
-    explicit CameraNapiParamParser(napi_env env, napi_callback_info info, size_t napiParamSize, T*& nativeObjPointer)
-        : env_(env), paramSize_(napiParamSize)
+    explicit CameraNapiParamParser(napi_env env, napi_callback_info info, size_t napiParamSize, T*& nativeObjPointer,
+        std::shared_ptr<CameraNapiAsyncFunction> asyncFunction)
+        : env_(env), asyncFunction_(asyncFunction)
     {
+        size_t paramSizeIncludeAsyncFun = napiParamSize + (asyncFunction_ == nullptr ? 0 : 1);
+        paramSize_ = paramSizeIncludeAsyncFun;
         paramValue_.resize(paramSize_, nullptr);
         napi_value thisVar = nullptr;
         napiError = napi_get_cb_info(env_, info, &paramSize_, paramValue_.data(), &thisVar, nullptr);
-        if (napiError == napi_ok && paramSize_ != napiParamSize) {
+        if (napiError != napi_ok) {
+            return;
+        }
+        if (asyncFunction_ != nullptr) {
+            // Check callback function
+            if (paramSize_ == paramSizeIncludeAsyncFun) {
+                napi_valuetype napiType = napi_undefined;
+                napi_typeof(env, paramValue_[paramSize_ - 1], &napiType);
+                if (napiType == napi_function) {
+                    napiError = asyncFunction_->CreateCallback(paramValue_[paramSize_ - 1]);
+                } else {
+                    napiError = napi_status::napi_invalid_arg;
+                }
+            } else if (paramSize_ == paramSizeIncludeAsyncFun - 1) {
+                napiError = asyncFunction_->CreatePromise();
+            } else {
+                napiError = napi_status::napi_invalid_arg;
+            }
+            if (napiError != napi_ok) {
+                return;
+            }
+        } else if (paramSize_ != napiParamSize) {
             napiError = napi_status::napi_invalid_arg;
+            return;
         }
         UnwrapThisVarToAddr(thisVar, nativeObjPointer);
     }
@@ -90,6 +422,20 @@ private:
         if (napiError == napi_ok && dataPointAddr == nullptr) {
             napiError = napi_invalid_arg;
         }
+    }
+
+    CameraNapiParamParser& Next(CameraNapiObject& cameraNapiOjbect)
+    {
+        if (napiError != napi_status::napi_ok) {
+            return *this;
+        }
+        if (paraIndex_ >= paramSize_) {
+            napiError = napi_status::napi_invalid_arg;
+            return *this;
+        }
+        napiError = cameraNapiOjbect.ParseNapiObjectToMap(env_, paramValue_[paraIndex_]);
+        paraIndex_++;
+        return *this;
     }
 
     template<typename T>
@@ -177,6 +523,7 @@ private:
 
     size_t paraIndex_ = 0;
     std::vector<napi_value> paramValue_ {};
+    std::shared_ptr<CameraNapiAsyncFunction> asyncFunction_ = nullptr;
     napi_status napiError = napi_status::napi_invalid_arg;
 };
 } // namespace CameraStandard

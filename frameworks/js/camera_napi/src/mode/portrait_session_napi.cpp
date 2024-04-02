@@ -15,6 +15,9 @@
 
 #include "mode/portrait_session_napi.h"
 
+#include "napi/native_common.h"
+
+
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;

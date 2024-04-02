@@ -65,7 +65,8 @@ public:
 
 class PreviewOutput : public CaptureOutput {
 public:
-    explicit PreviewOutput(sptr<IStreamRepeat>& streamRepeat);
+    explicit PreviewOutput(sptr<IBufferProducer> bufferProducer);
+    explicit PreviewOutput();
     virtual ~PreviewOutput();
 
     /**
@@ -74,6 +75,8 @@ public:
      * @param PreviewStateCallback to be triggered.
      */
     void SetCallback(std::shared_ptr<PreviewStateCallback> callback);
+
+    int32_t CreateStream() override;
 
     /**
      * @brief Releases a instance of the preview output.
@@ -204,7 +207,6 @@ public:
 
     void OnNativeRegisterCallback(const std::string& eventString);
     void OnNativeUnregisterCallback(const std::string& eventString);
-
 private:
     int32_t PreviewFormat_;
     Size PreviewSize_;
@@ -227,11 +229,6 @@ public:
     PreviewOutputCallbackImpl() : previewOutput_(nullptr) {}
 
     explicit PreviewOutputCallbackImpl(PreviewOutput* previewOutput) : previewOutput_(previewOutput) {}
-
-    ~PreviewOutputCallbackImpl()
-    {
-        previewOutput_ = nullptr;
-    }
 
     /**
      * @brief Called when preview frame is started rendering.

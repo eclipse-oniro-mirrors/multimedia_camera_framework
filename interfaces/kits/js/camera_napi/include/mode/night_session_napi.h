@@ -17,9 +17,9 @@
 #define NIGHT_SESSION_NAPI_H_
 
 #include "napi/native_api.h"
-#include "napi/native_node_api.h"
-#include "session/camera_session_napi.h"
 #include "night_session.h"
+#include "session/camera_session_napi.h"
+
 
 namespace OHOS {
 namespace CameraStandard {

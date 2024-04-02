@@ -4494,9 +4494,10 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_038, TestSize.Level
     ASSERT_NE(preview, nullptr);
     auto previewOutput = (sptr<PreviewOutput>&)preview;
     EXPECT_EQ(previewOutput->IsSketchSupported(), false);
-    previewOutput->previewProfile_.format_ = CAMERA_FORMAT_YUV_420_SP;
+    auto currentPreviewProfile = previewOutput->GetPreviewProfile();
+    currentPreviewProfile->format_ = CAMERA_FORMAT_YUV_420_SP;
     EXPECT_EQ(previewOutput->IsSketchSupported(), false);
-    previewOutput->previewProfile_.format_ = CAMERA_FORMAT_JPEG;
+    currentPreviewProfile->format_ = CAMERA_FORMAT_JPEG;
     EXPECT_EQ(previewOutput->IsSketchSupported(), false);
 
     EXPECT_EQ(preview->Release(), 0);
@@ -5190,7 +5191,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_052, TestSize.Level
     sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], 0);
 
     SceneMode mode = PORTRAIT;
-    cameraManager->serviceProxy_ = nullptr;
+    cameraManager->SetServiceProxy(nullptr);
     cameraManager->CreateCaptureSession(mode);
     cameraManager->InitCameraList();
 
@@ -5250,7 +5251,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_054, TestSize.Level
     ret = cameraManager->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS,
         activeTime, effectParam);
     EXPECT_EQ(ret, 7400201);
-    cameraManager->cameraObjList = {};
+    cameraManager->cameraObjList_ = {};
     bool isTorchSupported = cameraManager->IsTorchSupported();
     EXPECT_EQ(isTorchSupported, false);
 }
@@ -5269,7 +5270,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_055, TestSize.Level
     cameraManager->cameraSvcCallback_  = callback;
 
     pid_t pid = 0;
-    cameraManager->serviceProxy_  = nullptr;
+    cameraManager->SetServiceProxy(nullptr);
     cameraManager->CameraServerDied(pid);
     sptr<ICameraServiceCallback> cameraServiceCallback = nullptr;
     cameraManager->SetCameraServiceCallback(cameraServiceCallback);
@@ -5278,7 +5279,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_055, TestSize.Level
     sptr<ICameraMuteServiceCallback> cameraMuteServiceCallback = nullptr;
     cameraManager->SetCameraMuteServiceCallback(cameraMuteServiceCallback);
 
-    cameraManager->cameraObjList = {};
+    cameraManager->cameraObjList_ = {};
     string cameraId = "";
     cameraManager->GetCameraDeviceFromId(cameraId);
     bool isTorchSupported = cameraManager->IsTorchSupported();
@@ -5302,7 +5303,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_056, TestSize.Level
     int32_t ret = cameraManager->PreSwitchCamera(cameraId);
     EXPECT_EQ(ret, 7400201);
 
-    cameraManager->serviceProxy_ = nullptr;
+    cameraManager->SetServiceProxy(nullptr);
     cameraManager->PreSwitchCamera(cameraId);
     EXPECT_EQ(ret, 7400201);
 }

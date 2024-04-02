@@ -13,32 +13,16 @@
  * limitations under the License.
  */
 
-#ifndef CAMERA_OUTPUT_NAPI_H_
-#define CAMERA_OUTPUT_NAPI_H_
+#ifndef CAMERA_OUTPUT_CAPABILITY_NAPI_H
+#define CAMERA_OUTPUT_CAPABILITY_NAPI_H
 
-#include "input/camera_manager.h"
-#include "input/camera_device.h"
-#include "input/camera_profile_napi.h"
-#include "output/camera_output_capability.h"
-#include "output/capture_output.h"
-#include "output/photo_output.h"
-
-#include "hilog/log.h"
-#include "camera_napi_utils.h"
-
-#include "image_receiver.h"
+#include "camera_device.h"
+#include "capture_scene_const.h"
+#include "napi/native_api.h"
 
 namespace OHOS {
 namespace CameraStandard {
-static const char CAMERA_OUTPUT_NAPI_CLASS_NAME[] = "CameraOutput";
 static const char CAMERA_OUTPUT_CAPABILITY_NAPI_CLASS_NAME[] = "CameraOutputCapability";
-
-class CameraOutputNapi {
-public:
-    CameraOutputNapi() = default;
-    ~CameraOutputNapi() = default;
-    static napi_value Release(napi_env env, napi_callback_info info);
-};
 
 class CameraOutputCapabilityNapi {
 public:
@@ -51,6 +35,7 @@ public:
 
     sptr<CameraOutputCapability> cameraOutputCapability_;
     static thread_local sptr<CameraOutputCapability> sCameraOutputCapability_;
+
 private:
     static void CameraOutputCapabilityNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value CameraOutputCapabilityNapiConstructor(napi_env env, napi_callback_info info);
@@ -66,4 +51,4 @@ private:
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif /* CAMERA_OUTPUT_NAPI_H_ */
+#endif /* CAMERA_OUTPUT_CAPABILITY_NAPI_H */

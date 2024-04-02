@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_PHOTO_SESSION_H
 #define OHOS_CAMERA_PHOTO_SESSION_H
  
+#include <cstdint>
 #include "capture_session.h"
 #include "icapture_session.h"
  
@@ -32,6 +33,27 @@ public:
      * @param CaptureOutput to be added to session.
      */
     bool CanAddOutput(sptr<CaptureOutput>& output) override;
+
+    /**
+     * @brief Check the preconfig type is supported or not.
+     *
+     * @param preconfigType The target preconfig type.
+     *
+     * @return True if the preconfig type is supported, false otherwise.
+     */
+    bool CanPreconfig(PreconfigType preconfigType) override;
+
+    /**
+     * @brief Set the preconfig type.
+     *
+     * @param preconfigType The target preconfig type.
+     *
+     * @return Camera error code.
+     */
+    int32_t Preconfig(PreconfigType preconfigType) override;
+
+protected:
+    std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles(PreconfigType preconfigType) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

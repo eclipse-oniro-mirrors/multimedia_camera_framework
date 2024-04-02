@@ -16,7 +16,6 @@
 #ifndef CAMERA_PRE_LAUNCH_CONFIG_NAPI_H
 #define CAMERA_PRE_LAUNCH_CONFIG_NAPI_H
 
-#include "hilog/log.h"
 #include "camera_napi_utils.h"
 #include "input/camera_setting_param_napi.h"
 #include "input/prelaunch_config.h"

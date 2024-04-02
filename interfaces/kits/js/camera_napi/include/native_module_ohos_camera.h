@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,34 +13,7 @@
  * limitations under the License.
  */
 
-#ifndef NATIVE_MODULE_OHOS_CAMERA_H_
-#define NATIVE_MODULE_OHOS_CAMERA_H_
+#ifndef NATIVE_MODULE_OHOS_CAMERA_H
+#define NATIVE_MODULE_OHOS_CAMERA_H
 
-#include "input/camera_info_napi.h"
-#include "input/camera_input_napi.h"
-#include "input/camera_manager_napi.h"
-#include "input/camera_napi.h"
-#include "input/camera_pre_launch_config_napi.h"
-#include "input/camera_setting_param_napi.h"
-#include "mode/macro_photo_session_napi.h"
-#include "mode/macro_video_session_napi.h"
-#include "mode/mode_manager_napi.h"
-#include "mode/night_session_napi.h"
-#include "mode/photo_session_for_sys_napi.h"
-#include "mode/photo_session_napi.h"
-#include "mode/portrait_session_napi.h"
-#include "mode/profession_session_napi.h"
-#include "mode/slow_motion_session_napi.h"
-#include "mode/video_session_for_sys_napi.h"
-#include "mode/secure_camera_session_napi.h"
-#include "mode/video_session_napi.h"
-#include "mode/high_res_photo_session_napi.h"
-#include "output/deferred_photo_proxy_napi.h"
-#include "output/metadata_object_napi.h"
-#include "output/photo_napi.h"
-#include "output/photo_output_napi.h"
-#include "output/preview_output_napi.h"
-#include "output/video_output_napi.h"
-#include "session/camera_session_napi.h"
-
-#endif /* NATIVE_MODULE_OHOS_CAMERA_H_ */
+#endif /* NATIVE_MODULE_OHOS_CAMERA_H */

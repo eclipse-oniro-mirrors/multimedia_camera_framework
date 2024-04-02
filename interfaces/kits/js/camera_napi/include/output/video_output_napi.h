@@ -18,11 +18,11 @@
 
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
-#include "hilog/log.h"
 #include "input/camera_manager.h"
 #include "listener_base.h"
 #include "output/video_output.h"
 #include "surface_utils.h"
+
 namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_VIDEO_OUTPUT_NAPI_CLASS_NAME[] = "VideoOutput";
@@ -79,8 +79,10 @@ struct VideoOutputCallbackInfo {
 class VideoOutputNapi : public CameraNapiEventEmitter<VideoOutputNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
-    static napi_value CreateVideoOutput(napi_env env, VideoProfile &profile, std::string surfaceId);
+    static napi_value CreateVideoOutput(napi_env env, VideoProfile& profile, std::string surfaceId);
+    static napi_value CreateVideoOutput(napi_env env, std::string surfaceId);
     static bool IsVideoOutput(napi_env env, napi_value obj);
+    static napi_value GetActiveProfile(napi_env env, napi_callback_info info);
     static napi_value SetFrameRate(napi_env env, napi_callback_info info);
     static napi_value GetActiveFrameRate(napi_env env, napi_callback_info info);
     static napi_value GetSupportedFrameRates(napi_env, napi_callback_info info);

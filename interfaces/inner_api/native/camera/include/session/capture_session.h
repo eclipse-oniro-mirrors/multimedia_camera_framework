@@ -23,10 +23,13 @@
 #include <memory>
 #include <mutex>
 #include <set>
+#include <stdint.h>
 #include <unordered_map>
 #include <vector>
 
 #include "camera_error_code.h"
+#include "capture_scene_const.h"
+#include "color_space_info_parse.h"
 #include "features/moon_capture_boost_feature.h"
 #include "hcapture_session_callback_stub.h"
 #include "icamera_util.h"
@@ -100,6 +103,19 @@ enum ColorEffect {
     COLOR_EFFECT_BRIGHT,
     COLOR_EFFECT_SOFT,
     COLOR_EFFECT_BLACK_WHITE,
+};
+
+enum PreconfigType : int32_t {
+    PRECONFIG_720P = 0,
+    PRECONFIG_1080P = 1,
+    PRECONFIG_4K = 2,
+    PRECONFIG_HIGH_QUALITY = 3
+};
+
+struct PreconfigProfiles {
+    Profile previewProfile;
+    Profile photoProfile;
+    VideoProfile videoProfile;
 };
 
 typedef struct {
@@ -1053,6 +1069,34 @@ public:
     void ProcessMoonCaptureBoostStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
 
     /**
+     * @brief Verify that the output configuration is legitimate.
+     *
+     * @param outputProfile The target profile.
+     * @param outputType The type of output profile.
+     *
+     * @return True if the profile is supported, false otherwise.
+     */
+    bool ValidateOutputProfile(Profile& outputProfile, CaptureOutputType outputType);
+
+    /**
+     * @brief Check the preconfig type is supported or not.
+     *
+     * @param preconfigType The target preconfig type.
+     *
+     * @return True if the preconfig type is supported, false otherwise.
+     */
+    virtual bool CanPreconfig(PreconfigType preconfigType);
+
+    /**
+     * @brief Set the preconfig type.
+     *
+     * @param preconfigType The target preconfig type.
+     *
+     * @return Camera error code.
+     */
+    virtual int32_t Preconfig(PreconfigType preconfigType);
+
+    /**
      * @brief Get whether or not commit config.
      *
      * @return Returns whether or not commit config.
@@ -1171,14 +1215,6 @@ public:
     bool CanSetFrameRateRangeForOutput(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
     int32_t AddSecureOutput(sptr<CaptureOutput> &output);
 protected:
-    std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
-    Profile photoProfile_;
-    Profile previewProfile_;
-    std::map<BeautyType, std::vector<int32_t>> beautyTypeAndRanges_;
-    std::map<BeautyType, int32_t> beautyTypeAndLevels_;
-    std::shared_ptr<MetadataResultProcessor> metadataResultProcessor_ = nullptr;
-    bool isImageDeferred_;
-    std::atomic<bool> isMovingPhotoEnabled_ { false };
     static const std::unordered_map<camera_exposure_mode_enum_t, ExposureMode> metaExposureModeMap_;
     static const std::unordered_map<ExposureMode, camera_exposure_mode_enum_t> fwkExposureModeMap_;
 
@@ -1190,10 +1226,38 @@ protected:
 
     static const std::unordered_map<camera_xmage_color_type_t, ColorEffect> metaColorEffectMap_;
     static const std::unordered_map<ColorEffect, camera_xmage_color_type_t> fwkColorEffectMap_;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
+    Profile photoProfile_;
+    Profile previewProfile_;
+    std::map<BeautyType, std::vector<int32_t>> beautyTypeAndRanges_;
+    std::map<BeautyType, int32_t> beautyTypeAndLevels_;
+    std::shared_ptr<MetadataResultProcessor> metadataResultProcessor_ = nullptr;
+    bool isImageDeferred_;
+    std::atomic<bool> isMovingPhotoEnabled_ { false };
 
-protected:
     std::shared_ptr<AbilityCallback> abilityCallback_;
     std::atomic<uint32_t> exposureDurationValue_ = 0;
+
+    inline void ClearPreconfigProfiles()
+    {
+        std::lock_guard<std::mutex> lock(preconfigProfilesMutex_);
+        preconfigProfiles_ = nullptr;
+    }
+
+    inline void SetPreconfigProfiles(std::shared_ptr<PreconfigProfiles> preconfigProfiles)
+    {
+        std::lock_guard<std::mutex> lock(preconfigProfilesMutex_);
+        preconfigProfiles_ = preconfigProfiles;
+    }
+
+    inline std::shared_ptr<PreconfigProfiles> GetPreconfigProfiles()
+    {
+        std::lock_guard<std::mutex> lock(preconfigProfilesMutex_);
+        return preconfigProfiles_;
+    }
+
+    virtual std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles(PreconfigType preconfigType);
+
 private:
     std::mutex changeMetaMutex_;
     std::mutex sessionCallbackMutex_;
@@ -1233,12 +1297,17 @@ private:
     std::atomic<int32_t> prevDuration_ = 0;
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
     bool isColorSpaceSetted_ = false;
+
+    std::mutex preconfigProfilesMutex_;
+    std::shared_ptr<PreconfigProfiles> preconfigProfiles_ = nullptr;
+
     // private tag
     uint32_t HAL_CUSTOM_AR_MODE = 0;
     uint32_t HAL_CUSTOM_LASER_DATA = 0;
     uint32_t HAL_CUSTOM_SENSOR_MODULE_TYPE = 0;
     uint32_t HAL_CUSTOM_LENS_FOCUS_DISTANCE = 0;
     uint32_t HAL_CUSTOM_SENSOR_SENSITIVITY = 0;
+
     // Make sure you know what you are doing, you'd better to use {GetMode()} function instead of this variable.
     SceneMode currentMode_ = SceneMode::NORMAL;
     SceneMode guessMode_ = SceneMode::NORMAL;
@@ -1250,7 +1319,10 @@ private:
     Point CoordinateTransform(Point point);
     int32_t CalculateExposureValue(float exposureValue);
     Point VerifyFocusCorrectness(Point point);
-    void ConfigureOutput(sptr<CaptureOutput>& output);
+    int32_t ConfigureOutput(sptr<CaptureOutput>& output);
+    int32_t ConfigurePreviewOutput(sptr<CaptureOutput>& output);
+    int32_t ConfigurePhotoOutput(sptr<CaptureOutput>& output);
+    int32_t ConfigureVideoOutput(sptr<CaptureOutput>& output);
     void CameraServerDied(pid_t pid);
     void InsertOutputIntoSet(sptr<CaptureOutput>& output);
     void RemoveOutputFromSet(sptr<CaptureOutput>& output);

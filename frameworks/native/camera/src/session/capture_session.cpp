@@ -21,6 +21,7 @@
 #include <sys/types.h>
 
 #include "camera_device_ability_items.h"
+#include "camera_error_code.h"
 #include "camera_log.h"
 #include "camera_metadata_operator.h"
 #include "camera_util.h"
@@ -48,7 +49,8 @@ constexpr int32_t DEFAULT_ITEMS = 10;
 constexpr int32_t DEFAULT_DATA_LENGTH = 100;
 constexpr int32_t DEFERRED_MODE_DATA_SIZE = 2;
 constexpr float DEFAULT_EQUIVALENT_ZOOM = 100.0f;
-
+constexpr int32_t FRAMERATE_120 = 120;
+constexpr int32_t FRAMERATE_240 = 240;
 } // namespace
 
 static const std::map<CM_ColorSpaceType, ColorSpace> g_metaColorSpaceMap_ = {
@@ -516,29 +518,114 @@ sptr<CaptureOutput> CaptureSession::GetMetaOutput()
     return metaOutput_;
 }
 
-void CaptureSession::ConfigureOutput(sptr<CaptureOutput>& output)
+int32_t CaptureSession::ConfigurePreviewOutput(sptr<CaptureOutput>& output)
 {
-    MEDIA_DEBUG_LOG("Enter Into CaptureSession::AddOutput");
-    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW) {
-        MEDIA_INFO_LOG("CaptureSession::AddOutput PreviewOutput");
-        previewProfile_ = output->GetPreviewProfile();
-        SetGuessMode(SceneMode::CAPTURE);
-    }
-    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO) {
-        MEDIA_INFO_LOG("CaptureSession::AddOutput PhotoOutput");
-        photoProfile_ = output->GetPhotoProfile();
-        SetGuessMode(SceneMode::CAPTURE);
-    }
-    output->SetSession(this);
-    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_VIDEO) {
-        MEDIA_INFO_LOG("CaptureSession::AddOutput VideoOutput");
-        std::vector<int32_t> frameRateRange = output->GetVideoProfile().GetFrameRates();
-        const size_t minFpsRangeSize = 2;
-        if (frameRateRange.size() >= minFpsRangeSize) {
-            SetFrameRateRange(frameRateRange);
+    MEDIA_INFO_LOG("CaptureSession::ConfigurePreviewOutput enter");
+    auto previewProfile = output->GetPreviewProfile();
+    if (output->IsTagSetted(CaptureOutput::DYNAMIC_PROFILE)) {
+        if (previewProfile != nullptr) {
+            MEDIA_ERR_LOG("CaptureSession::ConfigurePreviewOutput previewProfile is not null, is that output in use?");
+            return CameraErrorCode::SERVICE_FATL_ERROR;
         }
-        SetGuessMode(SceneMode::VIDEO);
+        auto preconfigProfiles = GetPreconfigProfiles();
+        if (preconfigProfiles == nullptr) {
+            MEDIA_ERR_LOG("CaptureSession::ConfigurePreviewOutput profile is nullptr, preconfig profile is nullptr");
+            return CameraErrorCode::SERVICE_FATL_ERROR;
+        }
+        output->SetPreviewProfile(preconfigProfiles->previewProfile);
+        int32_t res = output->CreateStream();
+        if (res != CameraErrorCode::SUCCESS) {
+            MEDIA_ERR_LOG("CaptureSession::ConfigurePreviewOutput createStream from preconfig fail! %{public}d", res);
+            return res;
+        }
+        MEDIA_INFO_LOG("CaptureSession::ConfigurePreviewOutput createStream from preconfig success");
+        previewProfile_ = preconfigProfiles->previewProfile;
+    } else {
+        previewProfile_ = *previewProfile;
     }
+    SetGuessMode(SceneMode::CAPTURE);
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::ConfigurePhotoOutput(sptr<CaptureOutput>& output)
+{
+    MEDIA_INFO_LOG("CaptureSession::ConfigurePhotoOutput enter");
+    auto photoProfile = output->GetPhotoProfile();
+    if (output->IsTagSetted(CaptureOutput::DYNAMIC_PROFILE)) {
+        if (photoProfile != nullptr) {
+            MEDIA_ERR_LOG("CaptureSession::ConfigurePhotoOutput photoProfile is not null, is that output in use?");
+            return CameraErrorCode::SERVICE_FATL_ERROR;
+        }
+        auto preconfigProfiles = GetPreconfigProfiles();
+        if (preconfigProfiles == nullptr) {
+            MEDIA_INFO_LOG("CaptureSession::ConfigurePhotoOutput profile is nullptr, preconfig profile is nullptr");
+            return CameraErrorCode::SERVICE_FATL_ERROR;
+        }
+        output->SetPhotoProfile(preconfigProfiles->photoProfile);
+        int32_t res = output->CreateStream();
+        if (res != CameraErrorCode::SUCCESS) {
+            MEDIA_ERR_LOG("CaptureSession::ConfigurePhotoOutput createStream from preconfig fail! %{public}d", res);
+            return res;
+        }
+        MEDIA_INFO_LOG("CaptureSession::ConfigurePhotoOutput createStream from preconfig success");
+        photoProfile_ = preconfigProfiles->photoProfile;
+    } else {
+        photoProfile_ = *photoProfile;
+    }
+    SetGuessMode(SceneMode::CAPTURE);
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::ConfigureVideoOutput(sptr<CaptureOutput>& output)
+{
+    MEDIA_INFO_LOG("CaptureSession::ConfigureVideoOutput enter");
+    auto videoProfile = output->GetVideoProfile();
+    if (output->IsTagSetted(CaptureOutput::DYNAMIC_PROFILE)) {
+        if (videoProfile != nullptr) {
+            MEDIA_ERR_LOG("CaptureSession::ConfigureVideoOutput videoProfile is not null, is that output in use?");
+            return CameraErrorCode::SERVICE_FATL_ERROR;
+        }
+        auto preconfigProfiles = GetPreconfigProfiles();
+        if (preconfigProfiles == nullptr) {
+            MEDIA_INFO_LOG("CaptureSession::ConfigureVideoOutput profile is nullptr, preconfig profile is nullptr");
+            return CameraErrorCode::SERVICE_FATL_ERROR;
+        }
+        videoProfile = std::make_shared<VideoProfile>(preconfigProfiles->videoProfile);
+        output->SetVideoProfile(preconfigProfiles->videoProfile);
+        int32_t res = output->CreateStream();
+        if (res != CameraErrorCode::SUCCESS) {
+            MEDIA_ERR_LOG("CaptureSession::ConfigureVideoOutput createStream from preconfig fail! %{public}d", res);
+            return res;
+        }
+        MEDIA_INFO_LOG("CaptureSession::ConfigureVideoOutput createStream from preconfig success");
+    }
+    std::vector<int32_t> frameRateRange = videoProfile->GetFrameRates();
+    const size_t minFpsRangeSize = 2;
+    if (frameRateRange.size() >= minFpsRangeSize) {
+        SetFrameRateRange(frameRateRange);
+    }
+    SetGuessMode(SceneMode::VIDEO);
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::ConfigureOutput(sptr<CaptureOutput>& output)
+{
+    MEDIA_INFO_LOG("Enter Into CaptureSession::ConfigureOutput");
+    output->SetSession(this);
+    auto type = output->GetOutputType();
+    MEDIA_INFO_LOG("CaptureSession::ConfigureOutput outputType is:%{public}d", type);
+    switch (type) {
+        case CAPTURE_OUTPUT_TYPE_PREVIEW:
+            return ConfigurePreviewOutput(output);
+        case CAPTURE_OUTPUT_TYPE_PHOTO:
+            return ConfigurePhotoOutput(output);
+        case CAPTURE_OUTPUT_TYPE_VIDEO:
+            return ConfigureVideoOutput(output);
+        default:
+            // do nothing.
+            break;
+    }
+    return CameraErrorCode::SUCCESS;
 }
 
 void CaptureSession::InsertOutputIntoSet(sptr<CaptureOutput>& output)
@@ -571,34 +658,35 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
         MEDIA_ERR_LOG("CaptureSession::AddOutput output is null");
         return ServiceToCameraError(CAMERA_INVALID_ARG);
     }
-    ConfigureOutput(output);
+
+    if (ConfigureOutput(output) != CameraErrorCode::SUCCESS) {
+        MEDIA_ERR_LOG("CaptureSession::AddOutput ConfigureOutput fail!");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_METADATA) {
         MEDIA_INFO_LOG("CaptureSession::AddOutput MetadataOutput");
         metaOutput_ = output;
         return ServiceToCameraError(CAMERA_OK);
     }
-    if (GetMode() == SceneMode::VIDEO && output->GetOutputType() == CAPTURE_OUTPUT_TYPE_VIDEO) {
-        std::vector<int32_t> videoFrameRates = output->GetVideoProfile().GetFrameRates();
-        if (videoFrameRates.empty()) {
-            MEDIA_ERR_LOG("videoFrameRates is empty!");
-            return ServiceToCameraError(CAMERA_INVALID_ARG);
-        }
-        const int frameRate120 = 120;
-        const int frameRate240 = 240;
-        if (videoFrameRates[0] == frameRate120 || videoFrameRates[0] == frameRate240) {
-            captureSession_->SetFeatureMode(SceneMode::HIGH_FRAME_RATE);
-        }
-    }
     if (!CanAddOutput(output)) {
         MEDIA_ERR_LOG("CanAddOutput check failed!");
         return ServiceToCameraError(CAMERA_INVALID_ARG);
     }
-    int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (captureSession_ == nullptr) {
         MEDIA_ERR_LOG("CaptureSession::AddOutput() captureSession_ is nullptr");
-        return ServiceToCameraError(errCode);
+        return ServiceToCameraError(CAMERA_UNKNOWN_ERROR);
     }
-    errCode = captureSession_->AddOutput(output->GetStreamType(), output->GetStream());
+    if (GetMode() == SceneMode::VIDEO && output->GetOutputType() == CAPTURE_OUTPUT_TYPE_VIDEO) {
+        std::vector<int32_t> videoFrameRates = output->GetVideoProfile()->GetFrameRates();
+        if (videoFrameRates.empty()) {
+            MEDIA_ERR_LOG("videoFrameRates is empty!");
+            return ServiceToCameraError(CAMERA_INVALID_ARG);
+        }
+        if (videoFrameRates[0] == FRAMERATE_120 || videoFrameRates[0] == FRAMERATE_240) {
+            captureSession_->SetFeatureMode(SceneMode::HIGH_FRAME_RATE);
+        }
+    }
+    int32_t errCode = captureSession_->AddOutput(output->GetStreamType(), output->GetStream());
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO) {
         photoOutput_ = output;
     }
@@ -641,43 +729,26 @@ bool CaptureSession::CanAddOutput(sptr<CaptureOutput>& output)
         MEDIA_ERR_LOG("CaptureSession::CanAddOutput Failed inputDevice_ is nullptr");
         return false;
     }
-    auto modeName = GetMode();
-    auto validateOutputFunc = [modeName](auto& vaildateProfile, auto& profiles, std::string&& outputType) -> bool {
-        bool result = std::any_of(profiles.begin(), profiles.end(),
-            [&vaildateProfile](const auto& profile) { return vaildateProfile == profile; });
-        Size invalidSize = vaildateProfile.GetSize();
-        if (result == false) {
-            MEDIA_ERR_LOG("CaptureSession::CanAddOutput profile invalid in "
-                          "%{public}s_output, mode(%{public}d): w(%{public}d),h(%{public}d),f(%{public}d)",
-                          outputType.c_str(), static_cast<int32_t>(modeName),
-                          invalidSize.width, invalidSize.height, vaildateProfile.GetCameraFormat());
-        } else {
-            MEDIA_DEBUG_LOG("CaptureSession::CanAddOutput profile pass in "
-                            "%{public}s_output, mode(%{public}d): w(%{public}d),h(%{public}d),f(%{public}d)",
-                            outputType.c_str(), static_cast<int32_t>(modeName),
-                            invalidSize.width, invalidSize.height, vaildateProfile.GetCameraFormat());
-        }
-        return result;
-    };
-    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW) {
-        std::vector<Profile> profiles = inputDevice_->GetCameraDeviceInfo()->modePreviewProfiles_[modeName];
-        Profile vaildateProfile = output->GetPreviewProfile();
-        return validateOutputFunc(vaildateProfile, profiles, std::move("preview"));
-    } else if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO) {
-        std::vector<Profile> profiles = inputDevice_->GetCameraDeviceInfo()->modePhotoProfiles_[modeName];
-        Profile vaildateProfile = output->GetPhotoProfile();
-        return validateOutputFunc(vaildateProfile, profiles, std::move("photo"));
-    } else if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_VIDEO) {
-        std::vector<VideoProfile> profiles = inputDevice_->GetCameraDeviceInfo()->modeVideoProfiles_[modeName];
-        VideoProfile vaildateProfile = output->GetVideoProfile();
-        return validateOutputFunc(vaildateProfile, profiles, std::move("video"));
-    } else if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_METADATA) {
-        MEDIA_INFO_LOG("CaptureSession::CanAddOutput MetadataOutput");
-        return true;
+    auto outputType = output->GetOutputType();
+    std::shared_ptr<Profile> profilePtr = nullptr;
+    switch (outputType) {
+        case CAPTURE_OUTPUT_TYPE_PREVIEW:
+            profilePtr = output->GetPreviewProfile();
+            break;
+        case CAPTURE_OUTPUT_TYPE_PHOTO:
+            profilePtr = output->GetPhotoProfile();
+            break;
+        case CAPTURE_OUTPUT_TYPE_VIDEO:
+            profilePtr = output->GetVideoProfile();
+            break;
+        default:
+            MEDIA_ERR_LOG("CaptureSession::CanAddOutput CaptureOutputType unknown");
+            return false;
     }
-    MEDIA_ERR_LOG("CaptureSession::CanAddOutput check fail,modeName:%{public}d, outputType:%{public}d", modeName,
-        output->GetOutputType());
-    return false;
+    if (profilePtr == nullptr) {
+        return false;
+    }
+    return ValidateOutputProfile(*profilePtr, outputType);
 }
 
 int32_t CaptureSession::RemoveInput(sptr<CaptureInput>& input)
@@ -768,6 +839,9 @@ int32_t CaptureSession::RemoveOutput(sptr<CaptureOutput>& output)
         MEDIA_ERR_LOG("CaptureSession::RemoveOutput() captureSession_ is nullptr");
     }
     RemoveOutputFromSet(output);
+    if (output->IsTagSetted(CaptureOutput::DYNAMIC_PROFILE)) {
+        output->ClearProfiles();
+    }
     return ServiceToCameraError(errCode);
 }
 
@@ -4077,6 +4151,76 @@ void CaptureSession::ProcessMoonCaptureBoostStatusChange(const std::shared_ptr<O
 bool CaptureSession::IsSetEnableMacro()
 {
     return isSetMacroEnable_;
+}
+
+bool CaptureSession::ValidateOutputProfile(Profile& outputProfile, CaptureOutputType outputType)
+{
+    MEDIA_INFO_LOG(
+        "CaptureSession::ValidateOutputProfile profile:w(%{public}d),h(%{public}d),f(%{public}d) outputType:%{public}d",
+        outputProfile.size_.width, outputProfile.size_.height, outputProfile.format_, outputType);
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::ValidateOutputProfile Failed inputDevice_ is nullptr");
+        return false;
+    }
+    if (outputType == CAPTURE_OUTPUT_TYPE_METADATA) {
+        MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile MetadataOutput");
+        return true;
+    }
+    auto modeName = GetMode();
+    auto validateOutputProfileFunc = [modeName](auto validateProfile, auto& profiles) -> bool {
+        MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile in mode(%{public}d): "
+                       "w(%{public}d),h(%{public}d),f(%{public}d), profiles size is:%{public}zu",
+            static_cast<int32_t>(modeName), validateProfile.size_.width, validateProfile.size_.height,
+            validateProfile.format_, profiles.size());
+        bool result = std::any_of(profiles.begin(), profiles.end(), [&validateProfile](const auto& profile) {
+            MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile outType iterator "
+                            "profile::w(%{public}d),h(%{public}d),f(%{public}d)",
+                profile.size_.width, profile.size_.height, profile.format_);
+            return validateProfile == profile;
+        });
+        if (!result) {
+            MEDIA_ERR_LOG("CaptureSession::ValidateOutputProfile fail!");
+        }
+        return result;
+    };
+    switch (outputType) {
+        case CAPTURE_OUTPUT_TYPE_PREVIEW: {
+            std::vector<Profile> profiles = inputDevice_->GetCameraDeviceInfo()->modePreviewProfiles_[modeName];
+            return validateOutputProfileFunc(outputProfile, profiles);
+        }
+        case CAPTURE_OUTPUT_TYPE_PHOTO: {
+            std::vector<Profile> profiles = inputDevice_->GetCameraDeviceInfo()->modePhotoProfiles_[modeName];
+            return validateOutputProfileFunc(outputProfile, profiles);
+        }
+        case CAPTURE_OUTPUT_TYPE_VIDEO: {
+            std::vector<VideoProfile> profiles = inputDevice_->GetCameraDeviceInfo()->modeVideoProfiles_[modeName];
+            return validateOutputProfileFunc(outputProfile, profiles);
+        }
+        default:
+            MEDIA_ERR_LOG("CaptureSession::ValidateOutputProfile CaptureOutputType unknown");
+            return false;
+    }
+}
+
+bool CaptureSession::CanPreconfig(PreconfigType preconfigType)
+{
+    // Default implementation return false. Only photo session and video session override this method.
+    MEDIA_ERR_LOG("CaptureSession::CanPreconfig is not valid! Did you set the correct mode?");
+    return false;
+}
+
+int32_t CaptureSession::Preconfig(PreconfigType preconfigType)
+{
+    // Default implementation throw error. Only photo session and video session override this method.
+    MEDIA_ERR_LOG("CaptureSession::Preconfig is not valid! Did you set the correct mode?");
+    return CAMERA_UNSUPPORTED;
+}
+
+std::shared_ptr<PreconfigProfiles> CaptureSession::GeneratePreconfigProfiles(PreconfigType preconfigType)
+{
+    // Default implementation return nullptr. Only photo session and video session override this method.
+    MEDIA_ERR_LOG("CaptureSession::GeneratePreconfigProfiles is not valid! Did you set the correct mode?");
+    return nullptr;
 }
 
 void CaptureSession::EnableDeferredType(DeferredDeliveryImageType type)

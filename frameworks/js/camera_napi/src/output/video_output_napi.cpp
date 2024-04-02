@@ -17,9 +17,13 @@
 
 #include <uv.h>
 
+#include "camera_napi_param_parser.h"
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
+#include "camera_output_capability.h"
+#include "input/camera_profile_napi.h"
 #include "napi/native_api.h"
+#include "napi/native_common.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -278,7 +282,8 @@ napi_value VideoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("release", Release),
         DECLARE_NAPI_FUNCTION("on", On),
         DECLARE_NAPI_FUNCTION("once", Once),
-        DECLARE_NAPI_FUNCTION("off", Off)
+        DECLARE_NAPI_FUNCTION("off", Off),
+        DECLARE_NAPI_FUNCTION("getActiveProfile", GetActiveProfile)
     };
 
     status = napi_define_class(env, CAMERA_VIDEO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -420,6 +425,22 @@ bool VideoOutputNapi::IsVideoOutput(napi_env env, napi_value obj)
     return result;
 }
 
+napi_value VideoOutputNapi::GetActiveProfile(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("VideoOutputNapi::GetActiveProfile is called");
+    VideoOutputNapi* videoOutputNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, videoOutputNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("VideoOutputNapi::GetActiveProfile parse parameter occur error");
+        return nullptr;
+    }
+    auto profile = videoOutputNapi->videoOutput_->GetVideoProfile();
+    if (profile == nullptr) {
+        return CameraNapiUtils::GetUndefinedValue(env);
+    }
+    return CameraVideoProfileNapi::CreateCameraVideoProfile(env, *profile);
+}
+
 napi_value VideoOutputNapi::CreateVideoOutput(napi_env env, VideoProfile &profile, std::string surfaceId)
 {
     MEDIA_DEBUG_LOG("CreateVideoOutput is called");
@@ -440,6 +461,45 @@ napi_value VideoOutputNapi::CreateVideoOutput(napi_env env, VideoProfile &profil
         }
         surface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
         int retCode = CameraManager::GetInstance()->CreateVideoOutput(profile, surface, &sVideoOutput_);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        if (sVideoOutput_ == nullptr) {
+            MEDIA_ERR_LOG("failed to create VideoOutput");
+            return result;
+        }
+        status = napi_new_instance(env, constructor, 0, nullptr, &result);
+        sVideoOutput_ = nullptr;
+        if (status == napi_ok && result != nullptr) {
+            return result;
+        } else {
+            MEDIA_ERR_LOG("Failed to create video output instance");
+        }
+    }
+    napi_get_undefined(env, &result);
+    MEDIA_ERR_LOG("CreateVideoOutput call Failed!");
+    return result;
+}
+
+napi_value VideoOutputNapi::CreateVideoOutput(napi_env env, std::string surfaceId)
+{
+    MEDIA_DEBUG_LOG("VideoOutputNapi::CreateVideoOutput is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+    napi_value constructor;
+
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (status == napi_ok) {
+        uint64_t iSurfaceId;
+        std::istringstream iss(surfaceId);
+        iss >> iSurfaceId;
+        sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
+        if (surface == nullptr) {
+            MEDIA_ERR_LOG("failed to get surface from SurfaceUtils");
+            return result;
+        }
+        int retCode = CameraManager::GetInstance()->CreateVideoOutputWithoutProfile(surface, &sVideoOutput_);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
         }

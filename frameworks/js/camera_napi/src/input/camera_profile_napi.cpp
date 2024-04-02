@@ -17,6 +17,7 @@
 
 #include "camera_log.h"
 #include "input/camera_size_napi.h"
+#include "napi/native_common.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -129,6 +130,7 @@ napi_value CameraProfileNapi::CreateCameraProfile(napi_env env, Profile &profile
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         if (status == napi_ok && result != nullptr) {
             MEDIA_INFO_LOG("CreateCameraProfile napi_new_instance success");
+            (void)profilePtr.release();
             return result;
         } else {
             MEDIA_ERR_LOG("Failed to create Camera obj instance");

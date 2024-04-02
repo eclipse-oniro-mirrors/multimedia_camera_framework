@@ -16,12 +16,10 @@
 #ifndef CAMERA_PROFILE_NAPI_H_
 #define CAMERA_PROFILE_NAPI_H_
 
-#include "hilog/log.h"
 #include "camera_napi_utils.h"
+#include "camera_size_napi.h"
 #include "input/camera_input.h"
 #include "output/camera_output_capability.h"
-
-#include "camera_size_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {

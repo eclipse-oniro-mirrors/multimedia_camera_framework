@@ -16,10 +16,14 @@
 #include "output/metadata_output.h"
 
 #include <cinttypes>
+#include <mutex>
+#include <new>
 #include <set>
 
+#include "camera_error_code.h"
 #include "camera_log.h"
 #include "camera_util.h"
+#include "foundation/multimedia/camera_framework/interfaces/kits/native/include/camera/camera.h"
 #include "input/camera_input.h"
 #include "session/capture_session.h"
 #include "camera_error_code.h"
@@ -48,20 +52,15 @@ Rect MetadataObject::GetBoundingBox()
 }
 
 MetadataOutput::MetadataOutput(sptr<IConsumerSurface> surface, sptr<IStreamMetadata>& streamMetadata)
-    : CaptureOutput(CAPTURE_OUTPUT_TYPE_METADATA, StreamType::METADATA, streamMetadata)
+    : CaptureOutput(CAPTURE_OUTPUT_TYPE_METADATA, StreamType::METADATA, surface->GetProducer(), nullptr),
+      surface_(surface)
 {
-    surface_ = surface;
+    MEDIA_DEBUG_LOG("MetadataOutput::MetadataOutput construct enter");
 }
 
 MetadataOutput::~MetadataOutput()
 {
-    if (surface_) {
-        SurfaceError ret = surface_->UnregisterConsumerListener();
-        if (ret != SURFACE_ERROR_OK) {
-            MEDIA_ERR_LOG("Failed to unregister surface consumer listener");
-        }
-        surface_ = nullptr;
-    }
+    ReleaseSurface();
 }
 
 std::shared_ptr<MetadataObjectCallback> MetadataOutput::GetAppObjectCallback()
@@ -137,6 +136,11 @@ void MetadataOutput::SetCallback(std::shared_ptr<MetadataStateCallback> metadata
     appStateCallback_ = metadataStateCallback;
 }
 
+int32_t MetadataOutput::CreateStream()
+{
+    return CameraErrorCode::SUCCESS;
+}
+
 int32_t MetadataOutput::Start()
 {
     auto captureSession = GetSession();
@@ -144,11 +148,12 @@ int32_t MetadataOutput::Start()
         MEDIA_ERR_LOG("MetadataOutput Failed to Start!, session not config");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (GetStream() == nullptr) {
+    auto stream = GetStream();
+    if (stream == nullptr) {
         MEDIA_ERR_LOG("MetadataOutput Failed to Start!, GetStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
-    int32_t errCode = static_cast<IStreamMetadata*>(GetStream().GetRefPtr())->Start();
+    int32_t errCode = static_cast<IStreamMetadata*>(stream.GetRefPtr())->Start();
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to Start MetadataOutput!, errCode: %{public}d", errCode);
     }
@@ -158,27 +163,22 @@ int32_t MetadataOutput::Start()
 void MetadataOutput::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
-    {
-        std::lock_guard<std::mutex> lock(outputCallbackMutex_);
-        if (appStateCallback_ != nullptr) {
-            MEDIA_DEBUG_LOG("appCallback not nullptr");
-            int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
-            appStateCallback_->OnError(serviceErrorType);
-        }
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+    if (appStateCallback_ != nullptr) {
+        MEDIA_DEBUG_LOG("appCallback not nullptr");
+        int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
+        appStateCallback_->OnError(serviceErrorType);
     }
-    if (GetStream() != nullptr) {
-        (void)GetStream()->AsObject()->RemoveDeathRecipient(deathRecipient_);
-    }
-    deathRecipient_ = nullptr;
 }
 
 int32_t MetadataOutput::Stop()
 {
-    if (GetStream() == nullptr) {
+    auto stream = GetStream();
+    if (stream == nullptr) {
         MEDIA_ERR_LOG("MetadataOutput Failed to Stop!, GetStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
-    int32_t errCode = static_cast<IStreamMetadata*>(GetStream().GetRefPtr())->Stop();
+    int32_t errCode = static_cast<IStreamMetadata*>(stream.GetRefPtr())->Stop();
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to Stop MetadataOutput!, errCode: %{public}d", errCode);
     }
@@ -192,23 +192,36 @@ int32_t MetadataOutput::Release()
         appObjectCallback_ = nullptr;
         appStateCallback_ = nullptr;
     }
-    if (GetStream() == nullptr) {
+    auto stream = GetStream();
+    if (stream == nullptr) {
         MEDIA_ERR_LOG("MetadataOutput Failed to Release!, GetStream is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
-    int32_t errCode = static_cast<IStreamMetadata*>(GetStream().GetRefPtr())->Release();
+    int32_t errCode = static_cast<IStreamMetadata*>(stream.GetRefPtr())->Release();
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to release MetadataOutput!, errCode: %{public}d", errCode);
     }
-    if (surface_) {
+    ReleaseSurface();
+    CaptureOutput::Release();
+    return ServiceToCameraError(errCode);
+}
+
+void MetadataOutput::ReleaseSurface()
+{
+    std::lock_guard<std::mutex> lock(surfaceMutex_);
+    if (surface_ != nullptr) {
         SurfaceError ret = surface_->UnregisterConsumerListener();
         if (ret != SURFACE_ERROR_OK) {
             MEDIA_ERR_LOG("Failed to unregister surface consumer listener");
         }
         surface_ = nullptr;
     }
-    CaptureOutput::Release();
-    return ServiceToCameraError(errCode);
+}
+
+sptr<IConsumerSurface> MetadataOutput::GetSurface()
+{
+    std::lock_guard<std::mutex> lock(surfaceMutex_);
+    return surface_;
 }
 
 void MetadataOutput::ProcessFaceRectangles(int64_t timestamp,
@@ -296,31 +309,26 @@ int32_t MetadataOutput::ProcessMetaObjects(int64_t timestamp, std::vector<sptr<M
 
 MetadataObjectListener::MetadataObjectListener(sptr<MetadataOutput> metadata) : metadata_(metadata) {}
 
-int32_t MetadataObjectListener::ProcessFaceRectangles(
-    int64_t timestamp, const camera_metadata_item_t& metadataItem, std::vector<sptr<MetadataObject>>& metaObjects)
-{
-    return CAMERA_OK;
-}
-
 int32_t MetadataObjectListener::ProcessMetadataBuffer(void* buffer, int64_t timestamp)
 {
-    return CAMERA_OK;
+    return CameraErrorCode::SUCCESS;
 }
 
 void MetadataObjectListener::OnBufferAvailable()
 {
-    MEDIA_INFO_LOG("MetadataObjectListener::OnBufferAvailable() is Called");
+    MEDIA_INFO_LOG("MetadataOutput::OnBufferAvailable() is Called");
     // metaoutput adapte later
     bool adapterLater = true;
     if (adapterLater) {
         return;
     }
-    if (!metadata_) {
-        MEDIA_ERR_LOG("Metadata is null");
+    auto metadataOutput = metadata_.promote();
+    if (metadataOutput == nullptr) {
+        MEDIA_ERR_LOG("metadataOutput is null");
         return;
     }
-    sptr<IConsumerSurface> surface = metadata_->surface_;
-    if (!surface) {
+    auto surface = metadataOutput->GetSurface();
+    if (surface == nullptr) {
         MEDIA_ERR_LOG("Metadata surface is null");
         return;
     }
@@ -335,12 +343,11 @@ void MetadataObjectListener::OnBufferAvailable()
     }
     int32_t ret = ProcessMetadataBuffer(buffer->GetVirAddr(), timestamp);
     if (ret) {
-        std::shared_ptr<MetadataStateCallback> appStateCallback = metadata_->GetAppStateCallback();
+        std::shared_ptr<MetadataStateCallback> appStateCallback = metadataOutput->GetAppStateCallback();
         if (appStateCallback) {
             appStateCallback->OnError(ret);
         }
     }
-
     surface->ReleaseBuffer(buffer, -1);
 }
 } // namespace CameraStandard

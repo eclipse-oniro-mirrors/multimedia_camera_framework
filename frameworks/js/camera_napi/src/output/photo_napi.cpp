@@ -13,10 +13,12 @@
  * limitations under the License.
  */
 
-#include "image_napi.h"
-#include "hilog/log.h"
-#include "camera_log.h"
 #include "output/photo_napi.h"
+
+#include "camera_log.h"
+#include "hilog/log.h"
+#include "image_napi.h"
+#include "napi/native_common.h"
 
 namespace OHOS {
 namespace CameraStandard {

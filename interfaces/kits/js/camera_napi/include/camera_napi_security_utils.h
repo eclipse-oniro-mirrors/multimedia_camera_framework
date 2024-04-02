@@ -18,7 +18,6 @@
 
 #include <map>
 
-#include "camera_log.h"
 #include "camera_napi_utils.h"
 
 namespace OHOS {

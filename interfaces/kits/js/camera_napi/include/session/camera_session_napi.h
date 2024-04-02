@@ -21,21 +21,18 @@
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
-#include "capture_scene_const.h"
-#include "hilog/log.h"
+
 #include "camera_napi_utils.h"
-
-#include "input/camera_manager.h"
+#include "capture_scene_const.h"
 #include "input/camera_device.h"
-#include "js_native_api_types.h"
-#include "session/capture_session.h"
-
 #include "input/camera_input_napi.h"
+#include "input/camera_manager.h"
+#include "listener_base.h"
+#include "output/metadata_output_napi.h"
 #include "output/preview_output_napi.h"
 #include "output/video_output_napi.h"
-#include "output/metadata_output_napi.h"
+#include "session/capture_session.h"
 
-#include "listener_base.h"
 namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_SESSION_NAPI_CLASS_NAME[] = "CaptureSession";
@@ -262,6 +259,8 @@ public:
     static napi_value SetFocusDistance(napi_env env, napi_callback_info info);
     static napi_value IsMacroSupported(napi_env env, napi_callback_info info);
     static napi_value EnableMacro(napi_env env, napi_callback_info info);
+    static napi_value CanPreconfig(napi_env env, napi_callback_info info);
+    static napi_value Preconfig(napi_env env, napi_callback_info info);
 
     static napi_value IsMoonCaptureBoostSupported(napi_env env, napi_callback_info info);
     static napi_value EnableMoonCaptureBoost(napi_env env, napi_callback_info info);
@@ -325,6 +324,8 @@ public:
     static const std::vector<napi_property_descriptor> moon_capture_boost_props;
     static const std::vector<napi_property_descriptor> features_props;
     static const std::vector<napi_property_descriptor> color_management_props;
+    static const std::vector<napi_property_descriptor> preconfig_props;
+
 protected:
     virtual void RegisterSlowMotionStateCb(
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);

@@ -40,6 +40,27 @@ public:
      * @param minFps Max frame rate of range.
      */
     bool CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput) override;
+
+    /**
+     * @brief Check the preconfig type is supported or not.
+     *
+     * @param preconfigType The target preconfig type.
+     *
+     * @return True if the preconfig type is supported, false otherwise.
+     */
+    bool CanPreconfig(PreconfigType preconfigType) override;
+
+    /**
+     * @brief Set the preconfig type.
+     *
+     * @param preconfigType The target preconfig type.
+     *
+     * @return Camera error code.
+     */
+    int32_t Preconfig(PreconfigType preconfigType) override;
+
+protected:
+    std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles(PreconfigType preconfigType) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

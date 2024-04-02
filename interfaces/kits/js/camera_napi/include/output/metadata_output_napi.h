@@ -18,7 +18,6 @@
 
 #include "camera_napi_event_emitter.h"
 #include "camera_napi_utils.h"
-#include "hilog/log.h"
 #include "input/camera_info.h"
 #include "input/camera_manager.h"
 #include "listener_base.h"

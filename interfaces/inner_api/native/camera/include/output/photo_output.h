@@ -222,7 +222,7 @@ private:
 
 class PhotoOutput : public CaptureOutput {
 public:
-    explicit PhotoOutput(sptr<IStreamCapture>& streamCapture);
+    explicit PhotoOutput(sptr<IBufferProducer> bufferProducer);
     virtual ~PhotoOutput();
 
     /**
@@ -282,6 +282,8 @@ public:
      * @brief cancelling the photo capture. Applicable only for burst/ continuous capture.
      */
     int32_t ConfirmCapture();
+
+    int32_t CreateStream() override;
 
     /**
      * @brief Releases the instance of PhotoOutput.

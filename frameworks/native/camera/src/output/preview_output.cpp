@@ -22,6 +22,7 @@
 #include <variant>
 
 #include "camera_device_ability_items.h"
+#include "camera_error_code.h"
 #include "camera_log.h"
 #include "camera_manager.h"
 #include "camera_metadata_operator.h"
@@ -58,10 +59,13 @@ camera_format_t GetHdiFormatFromCameraFormat(CameraFormat cameraFormat)
     return OHOS_CAMERA_FORMAT_IMPLEMENTATION_DEFINED;
 }
 } // namespace
+
 static constexpr int32_t SKETCH_MIN_WIDTH = 480;
-PreviewOutput::PreviewOutput(sptr<IStreamRepeat>& streamRepeat)
-    : CaptureOutput(CAPTURE_OUTPUT_TYPE_PREVIEW, StreamType::REPEAT, streamRepeat)
+PreviewOutput::PreviewOutput(sptr<IBufferProducer> bufferProducer)
+    : CaptureOutput(CAPTURE_OUTPUT_TYPE_PREVIEW, StreamType::REPEAT, bufferProducer, nullptr)
 {}
+
+PreviewOutput::PreviewOutput() : PreviewOutput(nullptr) {}
 
 PreviewOutput::~PreviewOutput()
 {
@@ -147,8 +151,9 @@ int32_t PreviewOutputCallbackImpl::OnFrameError(int32_t errorCode)
 
 int32_t PreviewOutputCallbackImpl::OnSketchStatusChanged(SketchStatus status)
 {
-    if (previewOutput_ != nullptr) {
-        previewOutput_->OnSketchStatusChanged(status);
+    auto previewOutput = previewOutput_.promote();
+    if (previewOutput != nullptr) {
+        previewOutput->OnSketchStatusChanged(status);
     } else {
         MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameError callback in preview");
     }
@@ -357,6 +362,31 @@ int32_t PreviewOutput::AttachSketchSurface(sptr<Surface> sketchSurface)
     return ServiceToCameraError(errCode);
 }
 
+int32_t PreviewOutput::CreateStream()
+{
+    auto stream = GetStream();
+    if (stream != nullptr) {
+        MEDIA_ERR_LOG("PreviewOutput::CreateStream stream is not null");
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
+    }
+    auto producer = GetBufferProducer();
+    if (producer == nullptr) {
+        MEDIA_ERR_LOG("PreviewOutput::CreateStream producer is null");
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
+    }
+
+    sptr<IStreamRepeat> streamPtr = nullptr;
+    auto previewProfile = GetPreviewProfile();
+    if (previewProfile == nullptr) {
+        MEDIA_ERR_LOG("PreviewOutput::CreateStream previewProfile is null");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
+    int32_t res =
+        CameraManager::GetInstance()->CreatePreviewOutputStream(streamPtr, *previewProfile, GetBufferProducer());
+    SetStream(streamPtr);
+    return res;
+}
+
 const std::vector<int32_t>& PreviewOutput::GetFrameRateRange()
 {
     return previewFrameRateRange_;
@@ -408,7 +438,7 @@ std::vector<std::vector<int32_t>> PreviewOutput::GetSupportedFrameRates()
 {
     MEDIA_DEBUG_LOG("PreviewOutput::GetSupportedFrameRates called.");
     sptr<CameraDevice> camera = GetSession()->inputDevice_->GetCameraDeviceInfo();
- 
+
     sptr<CameraOutputCapability> cameraOutputCapability = CameraManager::GetInstance()->
                                                           GetSupportedOutputCapability(camera, SceneMode::VIDEO);
     std::vector<Profile> supportedProfiles = cameraOutputCapability->GetPreviewProfiles();
@@ -495,9 +525,12 @@ std::shared_ptr<Size> PreviewOutput::FindSketchSize()
         MEDIA_ERR_LOG("PreviewOutput::FindSketchSize GetDeviceMetadata is fail");
         return nullptr;
     }
-    Profile profile = GetPreviewProfile();
-    CameraFormat cameraFormat = profile.GetCameraFormat();
-    camera_format_t hdi_format = GetHdiFormatFromCameraFormat(cameraFormat);
+    auto profile = GetPreviewProfile();
+    if (profile == nullptr) {
+        MEDIA_ERR_LOG("PreviewOutput::FindSketchSize profile is nullptr");
+        return nullptr;
+    }
+    camera_format_t hdi_format = GetHdiFormatFromCameraFormat(profile->GetCameraFormat());
     if (hdi_format == OHOS_CAMERA_FORMAT_IMPLEMENTATION_DEFINED) {
         MEDIA_ERR_LOG("PreviewOutput::FindSketchSize preview format is illegal");
         return nullptr;
@@ -507,7 +540,7 @@ std::shared_ptr<Size> PreviewOutput::FindSketchSize()
     if (sizeList == nullptr || sizeList->size() == 0) {
         return nullptr;
     }
-    Size previewSize = profile.GetSize();
+    Size previewSize = profile->GetSize();
     if (previewSize.width <= 0 || previewSize.height <= 0) {
         return nullptr;
     }
@@ -670,18 +703,12 @@ void PreviewOutput::OnNativeUnregisterCallback(const std::string& eventString)
 void PreviewOutput::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
-    {
-        std::lock_guard<std::mutex> lock(outputCallbackMutex_);
-        if (appCallback_ != nullptr) {
-            MEDIA_DEBUG_LOG("appCallback not nullptr");
-            int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
-            appCallback_->OnError(serviceErrorType);
-        }
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+    if (appCallback_ != nullptr) {
+        MEDIA_DEBUG_LOG("appCallback not nullptr");
+        int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
+        appCallback_->OnError(serviceErrorType);
     }
-    if (GetStream() != nullptr) {
-        (void)GetStream()->AsObject()->RemoveDeathRecipient(deathRecipient_);
-    }
-    deathRecipient_ = nullptr;
 }
 
 int32_t PreviewOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate)

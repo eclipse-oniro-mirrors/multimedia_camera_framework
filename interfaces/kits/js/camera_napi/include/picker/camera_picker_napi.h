@@ -15,6 +15,7 @@
 
 #ifndef CAMERA_PICKER_NAPI_H
 #define CAMERA_PICKER_NAPI_H
+
 #include <atomic>
 #include <memory>
 #include <stdint.h>

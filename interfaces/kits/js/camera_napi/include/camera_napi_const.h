@@ -18,9 +18,9 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 
-#include "js_native_api.h"
-#include "napi/native_node_api.h"
+#include "napi/native_api.h"
 
 namespace OHOS {
 namespace CameraStandard {

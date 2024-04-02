@@ -17,7 +17,6 @@
 
 #include "camera_error_code.h"
 #include "camera_log.h"
-#include "js_native_api_types.h"
 #include "napi/native_api.h"
 
 namespace OHOS {
@@ -316,13 +315,20 @@ napi_status CameraNapiUtils::CreateObjectWithPropNameAndValues(
     return napi_create_object_with_named_properties(env, result, property_count, keys, napiValues);
 }
 
+size_t CameraNapiUtils::GetNapiArgs(napi_env env, napi_callback_info callbackInfo)
+{
+    size_t argsSize = 0;
+    napi_get_cb_info(env, callbackInfo, &argsSize, nullptr, nullptr, nullptr);
+    return argsSize;
+}
+
 void CameraNapiUtils::CreateFrameRateJSArray(napi_env env, std::vector<int32_t> frameRateRange, napi_value &result)
 {
     MEDIA_DEBUG_LOG("CreateFrameRateJSArray called");
     if (frameRateRange.empty()) {
         MEDIA_ERR_LOG("frameRateRange is empty");
     }
- 
+
     napi_status status = napi_create_object(env, &result);
     if (status == napi_ok) {
         napi_value minRate;
@@ -335,7 +341,7 @@ void CameraNapiUtils::CreateFrameRateJSArray(napi_env env, std::vector<int32_t> 
         }
     }
 }
- 
+
 napi_value CameraNapiUtils::CreateSupportFrameRatesJSArray(
     napi_env env, std::vector<std::vector<int32_t>> supportedFrameRatesRange)
 {
@@ -344,7 +350,7 @@ napi_value CameraNapiUtils::CreateSupportFrameRatesJSArray(
     if (supportedFrameRatesRange.empty()) {
         MEDIA_ERR_LOG("frameRateRange is empty");
     }
- 
+
     napi_status status = napi_create_array(env, &supportedFrameRateArray);
     if (status == napi_ok) {
         for (size_t i = 0; i < supportedFrameRatesRange.size(); i++) {

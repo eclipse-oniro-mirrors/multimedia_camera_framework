@@ -16,27 +16,31 @@
 #ifndef OHOS_CAMERA_CAMERA_MANAGER_H
 #define OHOS_CAMERA_CAMERA_MANAGER_H
 
-#include <refbase.h>
+#include <cstdint>
 #include <iostream>
+#include <mutex>
+#include <refbase.h>
 #include <thread>
 #include <vector>
-#include <mutex>
-#include "input/camera_input.h"
-#include "input/camera_info.h"
-#include "input/camera_device.h"
+
+#include "camera_stream_info_parse.h"
+#include "deferred_proc_session/deferred_photo_proc_session.h"
+#include "hcamera_listener_stub.h"
+#include "hcamera_service_callback_stub.h"
 #include "hcamera_service_proxy.h"
 #include "icamera_device_service.h"
-#include "safe_map.h"
+#include "input/camera_death_recipient.h"
+#include "input/camera_device.h"
+#include "input/camera_info.h"
+#include "input/camera_input.h"
+#include "istream_common.h"
+#include "istream_repeat.h"
 #include "output/camera_output_capability.h"
 #include "output/metadata_output.h"
 #include "output/photo_output.h"
-#include "output/video_output.h"
 #include "output/preview_output.h"
-#include "hcamera_listener_stub.h"
-#include "input/camera_death_recipient.h"
-#include "hcamera_service_callback_stub.h"
-#include "camera_stream_info_parse.h"
-#include "deferred_proc_session/deferred_photo_proc_session.h"
+#include "output/video_output.h"
+#include "safe_map.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -105,63 +109,9 @@ public:
     virtual void OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) const = 0;
 };
 
-class CameraManager;
-class CameraMuteServiceCallback : public HCameraMuteServiceCallbackStub {
-public:
-    sptr<CameraManager> camMngr_ = nullptr;
-    CameraMuteServiceCallback() : camMngr_(nullptr) {
-    }
-
-    explicit CameraMuteServiceCallback(const sptr<CameraManager>& cameraManager) : camMngr_(cameraManager) {
-    }
-
-    ~CameraMuteServiceCallback()
-    {
-        camMngr_ = nullptr;
-    }
-
-    int32_t OnCameraMute(bool muteMode) override;
-};
-
-class CameraStatusServiceCallback : public HCameraServiceCallbackStub {
-public:
-    sptr<CameraManager> camMngr_ = nullptr;
-    CameraStatusServiceCallback() : camMngr_(nullptr) {
-    }
-
-    explicit CameraStatusServiceCallback(const sptr<CameraManager>& cameraManager) : camMngr_(cameraManager) {
-    }
-
-    ~CameraStatusServiceCallback()
-    {
-        camMngr_ = nullptr;
-    }
-
-    int32_t OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status) override;
-
-    int32_t OnFlashlightStatusChanged(const std::string& cameraId, const FlashStatus status) override;
-};
-
-class TorchServiceCallback : public HTorchServiceCallbackStub {
-public:
-    sptr<CameraManager> camMngr_ = nullptr;
-    TorchServiceCallback() : camMngr_(nullptr) {
-    }
-
-    explicit TorchServiceCallback(const sptr<CameraManager>& cameraManager) : camMngr_(cameraManager) {
-    }
-
-    ~TorchServiceCallback()
-    {
-        camMngr_ = nullptr;
-    }
-
-    int32_t OnTorchStatusChange(const TorchStatus status) override;
-};
-
 class CameraManager : public RefBase {
 public:
-    ~CameraManager();
+    virtual ~CameraManager();
     /**
      * @brief Get camera manager instance.
      *
@@ -290,13 +240,23 @@ public:
         sptr<DeferredPhotoProcSession> *pDeferredPhotoProcSession);
 
     /**
-     * @brief Create photo output instance using surface.
+     * @brief Create photo output instance.
      *
-     * @param The surface to be used for photo output.
-     * @param Returns pointer to photo output instance.
+     * @param profile photo profile.
+     * @param surface photo buffer surface.
+     * @param pPhotoOutput pointer to photo output instance.
      * @return Returns error code.
      */
     int CreatePhotoOutput(Profile& profile, sptr<IBufferProducer>& surface, sptr<PhotoOutput>* pPhotoOutput);
+
+    /**
+     * @brief Create photo output instance without profile.
+     *
+     * @param surface photo buffer surface.
+     * @param pPhotoOutput pointer to photo output instance.
+     * @return Returns error code.
+     */
+    int CreatePhotoOutputWithoutProfile(sptr<IBufferProducer>& surface, sptr<PhotoOutput>* pPhotoOutput);
 
     /**
      * @brief Create photo output instance using surface.
@@ -333,6 +293,15 @@ public:
     int CreateVideoOutput(VideoProfile& profile, sptr<Surface>& surface, sptr<VideoOutput>* pVideoOutput);
 
     /**
+     * @brief Create video output instance without profile.
+     *
+     * @param surface video buffer surface.
+     * @param pVideoOutput pointer to video output instance.
+     * @return Returns error code.
+     */
+    int CreateVideoOutputWithoutProfile(sptr<Surface>& surface, sptr<VideoOutput>* pVideoOutput);
+
+    /**
      * @brief Create video output instance using surface.
      *
      * @param The surface to be used for video output.
@@ -358,13 +327,23 @@ public:
     sptr<PreviewOutput> CreatePreviewOutput(Profile& profile, sptr<Surface> surface);
 
     /**
-     * @brief Create preview output instance using surface.
+     * @brief Create preview output instance.
      *
-     * @param The surface to be used for preview.
-     * @param Returns pointer to camera preview output instance.
+     * @param profile preview profile.
+     * @param surface preview buffer surface.
+     * @param pPhotoOutput pointer to photo preview instance.
      * @return Returns error code.
      */
     int CreatePreviewOutput(Profile& profile, sptr<Surface> surface, sptr<PreviewOutput>* pPreviewOutput);
+
+    /**
+     * @brief Create preview output instance without profile.
+     *
+     * @param surface preview buffer surface.
+     * @param pPhotoOutput pointer to photo preview instance.
+     * @return Returns error code.
+     */
+    int CreatePreviewOutputWithoutProfile(sptr<Surface> surface, sptr<PreviewOutput>* pPreviewOutput);
 
     /**
      * @brief Create preview output instance using surface.
@@ -437,7 +416,7 @@ public:
      * @param Returns pointer to metadata output instance.
      * @return Returns error code.
      */
-    int CreateMetadataOutput(sptr<MetadataOutput>* pMetadataOutput);
+    int CreateMetadataOutput(sptr<MetadataOutput>& pMetadataOutput);
 
     /**
      * @brief Set camera manager callback.
@@ -592,23 +571,36 @@ public:
     */
     void InitCameraList();
 
+    int32_t CreatePreviewOutputStream(
+        sptr<IStreamRepeat>& streamPtr, Profile& profile, const sptr<OHOS::IBufferProducer>& producer);
+
+    int32_t CreateVideoOutputStream(
+        sptr<IStreamRepeat>& streamPtr, Profile& profile, const sptr<OHOS::IBufferProducer>& producer);
+
+    int32_t CreatePhotoOutputStream(
+        sptr<IStreamCapture>& streamPtr, Profile& profile, const sptr<OHOS::IBufferProducer>& producer);
+
     static const std::string surfaceFormat;
 
 protected:
-    explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxy_(serviceProxy)
+    // Only for UT
+    explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
     {
         InitCameraList();
     }
 
 private:
-    CameraManager();
-    void Init();
+    explicit CameraManager();
+    void InitCameraManager();
     void SetCameraServiceCallback(sptr<ICameraServiceCallback>& callback);
     void SetCameraMuteServiceCallback(sptr<ICameraMuteServiceCallback>& callback);
     void SetTorchServiceCallback(sptr<ITorchServiceCallback>& callback);
     sptr<CaptureSession> CreateCaptureSessionImpl(SceneMode mode, sptr<ICaptureSession> session);
-    int32_t CreateListenerObject();
+    int32_t CreateListenerObject(sptr<ICameraService>& serviceProxy);
     void CameraServerDied(pid_t pid);
+
+    int32_t CreateCameraServerDeathRecipient(sptr<ICameraService>& serviceProxy);
+    void RemoveCameraServerDeathRecipient();
 
     void CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
         uint32_t streamIndex, ExtendInfo extendInfo);
@@ -622,7 +614,6 @@ private:
     SceneMode GetFallbackConfigMode(SceneMode profileMode);
     void ParseCapability(sptr<CameraDevice>& camera, const int32_t modeName, camera_metadata_item_t& item,
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
-    std::mutex mutex_;
     std::recursive_mutex cameraListMutex_;
     std::mutex vectorMutex_;
     int CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> *pICameraDeviceService);
@@ -630,11 +621,29 @@ private:
     bool GetDmDeviceInfo();
     bool isDistributeCamera(std::string cameraId, dmDeviceInfo& deviceInfo);
     int32_t SetTorchLevel(float level);
-    sptr<ICameraService> serviceProxy_;
-    sptr<CameraListenerStub> listenerStub_ = nullptr;
+
+    int32_t ValidCreateOutputStream(Profile& profile, const sptr<OHOS::IBufferProducer>& producer);
+
+    inline sptr<ICameraService> GetServiceProxy()
+    {
+        std::lock_guard<std::mutex> lock(serviceProxyMutex_);
+        return serviceProxyPrivate_;
+    }
+
+    inline void SetServiceProxy(sptr<ICameraService> proxy)
+    {
+        std::lock_guard<std::mutex> lock(serviceProxyMutex_);
+        serviceProxyPrivate_ = proxy;
+    }
+
+    std::mutex serviceProxyMutex_;
+    sptr<ICameraService> serviceProxyPrivate_;
+
+    std::mutex deathRecipientMutex_;
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
-    static sptr<CameraManager> cameraManager_;
-    static std::mutex instanceMutex_;
+
+    static sptr<CameraManager> g_cameraManager;
+    static std::mutex g_instanceMutex;
     sptr<ICameraServiceCallback> cameraSvcCallback_;
     sptr<ICameraMuteServiceCallback> cameraMuteSvcCallback_;
     sptr<ITorchServiceCallback> torchSvcCallback_;
@@ -643,8 +652,8 @@ private:
     SafeMap<std::thread::id, std::shared_ptr<CameraMuteListener>> cameraMuteListenerMap_;
     SafeMap<std::thread::id, std::shared_ptr<TorchListener>> torchListenerMap_;
 
-    std::vector<sptr<CameraDevice>> cameraObjList;
-    std::vector<sptr<CameraInfo>> dcameraObjList;
+    std::vector<sptr<CameraDevice>> cameraObjList_ = {};
+    std::vector<sptr<CameraInfo>> dcameraObjList_ = {};
     std::vector<dmDeviceInfo> distributedCamInfo_;
     std::map<std::string, dmDeviceInfo> distributedCamInfoAndId_;
     class DeviceInitCallBack;
@@ -656,6 +665,34 @@ private:
     std::vector<VideoProfile> vidProfiles_ = {};
     sptr<CameraInput> cameraInput_;
     TorchMode torchMode_ = TorchMode::TORCH_MODE_OFF;
+};
+
+class CameraMuteServiceCallback : public HCameraMuteServiceCallbackStub {
+public:
+    explicit CameraMuteServiceCallback(sptr<CameraManager> cameraManager) : cameraManager_(cameraManager) {}
+    int32_t OnCameraMute(bool muteMode) override;
+
+private:
+    wptr<CameraManager> cameraManager_ = nullptr;
+};
+
+class CameraStatusServiceCallback : public HCameraServiceCallbackStub {
+public:
+    explicit CameraStatusServiceCallback(sptr<CameraManager> cameraManager) : cameraManager_(cameraManager) {}
+    int32_t OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status) override;
+    int32_t OnFlashlightStatusChanged(const std::string& cameraId, const FlashStatus status) override;
+
+private:
+    wptr<CameraManager> cameraManager_ = nullptr;
+};
+
+class TorchServiceCallback : public HTorchServiceCallbackStub {
+public:
+    explicit TorchServiceCallback(sptr<CameraManager> cameraManager) : cameraManager_(cameraManager) {}
+    int32_t OnTorchStatusChange(const TorchStatus status) override;
+
+private:
+    wptr<CameraManager> cameraManager_ = nullptr;
 };
 } // namespace CameraStandard
 } // namespace OHOS

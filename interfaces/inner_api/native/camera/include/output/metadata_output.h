@@ -17,6 +17,7 @@
 #define OHOS_CAMERA_METADATA_OUTPUT_H
 
 #include <iostream>
+#include <mutex>
 
 #include "camera_metadata_info.h"
 #include "camera_metadata_operator.h"
@@ -107,6 +108,8 @@ public:
      */
     void SetCallback(std::shared_ptr<MetadataStateCallback> metadataStateCallback);
 
+    int32_t CreateStream() override;
+
     /**
      * @brief Start the metadata capture.
      */
@@ -130,28 +133,25 @@ public:
     std::shared_ptr<MetadataStateCallback> GetAppStateCallback();
 
     friend class MetadataObjectListener;
-
 private:
+    void CameraServerDied(pid_t pid) override;
+    void ReleaseSurface();
+    sptr<IConsumerSurface> GetSurface();
+
+    std::mutex surfaceMutex_;
     sptr<IConsumerSurface> surface_;
     std::shared_ptr<MetadataObjectCallback> appObjectCallback_;
     std::shared_ptr<MetadataStateCallback> appStateCallback_;
-    void CameraServerDied(pid_t pid) override;
 };
 
 class MetadataObjectListener : public IBufferConsumerListener {
 public:
     MetadataObjectListener(sptr<MetadataOutput> metadata);
-    virtual ~MetadataObjectListener()
-    {
-        metadata_ = nullptr;
-    }
     void OnBufferAvailable() override;
 
 private:
     int32_t ProcessMetadataBuffer(void* buffer, int64_t timestamp);
-    int32_t ProcessFaceRectangles(
-        int64_t timestamp, const camera_metadata_item_t& metadataItem, std::vector<sptr<MetadataObject>>& metaObjects);
-    sptr<MetadataOutput> metadata_;
+    wptr<MetadataOutput> metadata_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

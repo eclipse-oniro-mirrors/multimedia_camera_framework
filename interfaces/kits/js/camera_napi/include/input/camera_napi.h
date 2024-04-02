@@ -168,6 +168,13 @@ static const std::unordered_map<std::string, int32_t> mapSceneMode = {
     {"SECURE_PHOTO", JS_SECURE_CAMERA},
 };
 
+static const std::unordered_map<std::string, int32_t> mapPreconfigType = {
+    {"PRECONFIG_720P", PRECONFIG_720P},
+    {"PRECONFIG_1080P", PRECONFIG_1080P},
+    {"PRECONFIG_4K", PRECONFIG_4K},
+    {"PRECONFIG_HIGH_QUALITY", PRECONFIG_HIGH_QUALITY},
+};
+
 static const std::unordered_map<std::string, int32_t> mapFilterType = {
     {"NONE", 0},
     {"CLASSIC", 1},
@@ -329,6 +336,7 @@ private:
     static thread_local napi_ref videoStabilizationModeRef_;
     static thread_local napi_ref hostNameTypeRef_;
     static thread_local napi_ref sceneModeRef_;
+    static thread_local napi_ref preconfigTypeRef_;
     static thread_local napi_ref filterTypeRef_;
     static thread_local napi_ref beautyTypeRef_;
     static thread_local napi_ref portraitEffectRef_;

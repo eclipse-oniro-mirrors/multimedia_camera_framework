@@ -17,7 +17,6 @@
 #define METADATA_OBJECT_NAPI_H_
 
 #include "camera_napi_utils.h"
-#include "hilog/log.h"
 #include "input/camera_info.h"
 #include "input/camera_manager.h"
 
