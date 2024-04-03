@@ -748,9 +748,9 @@ void CameraFrameworkModuleTest::TestCallbacks(sptr<CameraDevice>& cameraInfo, bo
 
     if (photoOutput != nullptr) {
         if (IsSupportNow()) {
-            EXPECT_TRUE(g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_START)] == 0);
-        } else {
             EXPECT_TRUE(g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_START)] == 1);
+        } else {
+            EXPECT_TRUE(g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_START)] == 0);
         }
         ((sptr<PhotoOutput>&)photoOutput)->Release();
     }
@@ -7511,11 +7511,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_119, TestSize.L
     cameraId = "";
     int32_t intResult = camManagerObj->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS,
         activeTime, effectParam);
-    if (!IsSupportNow()) {
-        EXPECT_EQ(intResult, 7400201);
-    } else {
-        EXPECT_EQ(intResult, 0);
-    }
+    EXPECT_EQ(intResult, 7400201);
 }
 
 /*
