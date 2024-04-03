@@ -128,7 +128,6 @@ void DeferredPhotoProcessor::OnProcessDone(int userId, const std::string& imageI
     }
     repository_->SetJobCompleted(imageId);
     callbacks_->OnProcessDone(userId, imageId, bufferInfo);
-    RemoveImage(imageId, false);
     return;
 }
 
