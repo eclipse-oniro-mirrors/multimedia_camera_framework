@@ -107,6 +107,8 @@ void CameraInput::CameraServerDied(pid_t pid)
             MEDIA_DEBUG_LOG("appCallback not nullptr");
             int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
             int32_t serviceErrorMsg = 0;
+            MEDIA_INFO_LOG("serviceErrorType:%{public}d!, serviceErrorMsg:%{public}d!", serviceErrorType,
+                           serviceErrorMsg);
             errorCallback_->OnError(serviceErrorType, serviceErrorMsg);
         }
     }
