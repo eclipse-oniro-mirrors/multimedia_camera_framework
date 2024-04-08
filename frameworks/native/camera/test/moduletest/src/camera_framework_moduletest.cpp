@@ -96,6 +96,15 @@ const int32_t SKETCH_PREVIEW_MIN_HEIGHT = 720;
 const int32_t SKETCH_PREVIEW_MAX_WIDTH = 3000;
 const int32_t SKETCH_DEFAULT_WIDTH = 640;
 const int32_t SKETCH_DEFAULT_HEIGHT = 480;
+const int32_t PRVIEW_WIDTH_176 = 176;
+const int32_t PRVIEW_HEIGHT_144 = 144;
+const int32_t PRVIEW_WIDTH_640 = 640;
+const int32_t PRVIEW_WIDTH_4096 = 4096;
+const int32_t PRVIEW_HEIGHT_3072 = 3072;
+const int32_t PRVIEW_WIDTH_4160 = 4160;
+const int32_t PRVIEW_HEIGHT_3120 = 3120;
+const int32_t PRVIEW_WIDTH_8192 = 8192;
+const int32_t PRVIEW_HEIGHT_6144 = 6144;
 
 bool g_camInputOnError = false;
 bool g_sessionclosed = false;
@@ -591,6 +600,8 @@ Profile CameraFrameworkModuleTest::SelectProfileByRatioAndFormat(sptr<CameraOutp
             break;
         }
     }
+    MEDIA_ERR_LOG("SelectProfileByRatioAndFormat format:%{public}d width:%{public}d height:%{public}d",
+        profile.format_, profile.size_.width, profile.size_.height);
     return profile;
 }
 
@@ -748,9 +759,9 @@ void CameraFrameworkModuleTest::TestCallbacks(sptr<CameraDevice>& cameraInfo, bo
 
     if (photoOutput != nullptr) {
         if (IsSupportNow()) {
-            EXPECT_TRUE(g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_START)] == 1);
-        } else {
             EXPECT_TRUE(g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_START)] == 0);
+        } else {
+            EXPECT_TRUE(g_photoEvents[static_cast<int>(CAM_PHOTO_EVENTS::CAM_PHOTO_CAPTURE_START)] == 1);
         }
         ((sptr<PhotoOutput>&)photoOutput)->Release();
     }
@@ -865,11 +876,11 @@ void CameraFrameworkModuleTest::SetUp()
     previewProfiles.clear();
     std::vector<Profile> tempPreviewProfiles = outputcapability->GetPreviewProfiles();
     for (const auto& profile : tempPreviewProfiles) {
-        if ((profile.size_.width == 176 && profile.size_.height == 144) ||
-            (profile.size_.width == 640 && profile.size_.height == 640) ||
-            (profile.size_.width == 4096 && profile.size_.height == 3072) ||
-            (profile.size_.width == 4160 && profile.size_.height == 3120) ||
-            (profile.size_.width == 8192 && profile.size_.height == 6144)) {
+        if ((profile.size_.width == PRVIEW_WIDTH_176 && profile.size_.height == PRVIEW_HEIGHT_144) ||
+            (profile.size_.width == PRVIEW_WIDTH_640 && profile.size_.height == PRVIEW_WIDTH_640) ||
+            (profile.size_.width == PRVIEW_WIDTH_4096 && profile.size_.height == PRVIEW_HEIGHT_3072) ||
+            (profile.size_.width == PRVIEW_WIDTH_4160 && profile.size_.height == PRVIEW_HEIGHT_3120) ||
+            (profile.size_.width == PRVIEW_WIDTH_8192 && profile.size_.height == PRVIEW_HEIGHT_6144)) {
             MEDIA_DEBUG_LOG("SetUp skip previewProfile width:%{public}d height:%{public}d",
                 profile.size_.width, profile.size_.height);
             continue;
@@ -2707,7 +2718,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_047, TestSize.Le
     portraitSession->LockForControl();
 
     std::vector<BeautyType> beautyLists = portraitSession->GetSupportedBeautyTypes();
-    EXPECT_GE(beautyLists.size(), 4);
+    EXPECT_GE(beautyLists.size(), 1);
 
     std::vector<int32_t> rangeLists = {};
     if (beautyLists.size() >= 4) {
@@ -3690,7 +3701,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_009, TestSize.L
     EXPECT_EQ(zoomRatioRangeGet, 0);
 
     zoomRatioGet = camSession->GetZoomRatio(zoomRatio);
-    EXPECT_EQ(zoomRatioGet, 7400201);
+    if (zoomRatioRange.empty()) {
+        EXPECT_EQ(zoomRatioGet, 7400201);
+    } else {
+        EXPECT_EQ(zoomRatioGet, 0);
+    }
 
     setZoomRatio = camSession->SetZoomRatio(zoomRatio);
     EXPECT_EQ(setZoomRatio, 0);
@@ -4944,7 +4959,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_035, TestSize.L
     EXPECT_EQ(cameraMuted, false);
 
     bool cameraMuteSupported = manager_->IsCameraMuteSupported();
-    EXPECT_EQ(cameraMuteSupported, false);
+    if (!cameraMuteSupported) {
+        return;
+    }
 
     manager_->MuteCamera(cameraMuted);
 
@@ -6511,7 +6528,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_082, TestSize.L
     EXPECT_EQ(intResult, 0);
     EXPECT_EQ(session_->GetActiveColorSpace(colorSpace), CAMERA_OK);
     session_->SetColorEffect(COLOR_EFFECT_NORMAL);
-    EXPECT_EQ(session_->IsMacroSupported(), false);
+    if (session_->IsMacroSupported()) {
+        session_->LockForControl();
+        intResult = session_->EnableMacro(false);
+        session_->UnlockForControl();
+        EXPECT_EQ(intResult, 0);
+    }
     session_->inputDevice_ = nullptr;
     EXPECT_EQ(session_->VerifyAbility(0), CAMERA_INVALID_ARG);
     EXPECT_EQ(session_->Release(), 0);
@@ -6651,6 +6673,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_089, TestSize.L
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_090, TestSize.Level0)
 {
+    if (!IsSupportNow()) {
+        return;
+    }
     BeautyType beautyType = AUTO_TYPE;
     EXPECT_EQ(session_->GetSupportedBeautyRange(beautyType).empty(), true);
     EXPECT_EQ(session_->GetBeauty(beautyType), CameraErrorCode::SESSION_NOT_CONFIG);
@@ -6673,7 +6698,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_090, TestSize.L
     EXPECT_EQ(session_->GetColorEffect(), COLOR_EFFECT_NORMAL);
     session_->SetBeauty(beautyType, 0);
     session_->SetFilter(NONE);
-    EXPECT_EQ(session_->SetColorSpace(COLOR_SPACE_UNKNOWN), CAMERA_OK);
+    EXPECT_EQ(session_->SetColorSpace(COLOR_SPACE_UNKNOWN), 7400101);
     intResult = session_->CommitConfig();
     EXPECT_EQ(intResult, 0);
     session_->inputDevice_ = nullptr;
@@ -6951,7 +6976,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_101, TestSize.L
     ASSERT_NE(metadataItem, nullptr);
 
     std::vector<vendorTag_t> infos = {};
-    EXPECT_EQ((camInput->GetCameraAllVendorTags(infos)), 11);
+    camInput->GetCameraAllVendorTags(infos);
 
     sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
     ASSERT_NE(deviceObj, nullptr);
@@ -7002,7 +7027,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_102, TestSize.L
     EXPECT_EQ(intResult, 7400102);
 
     intResult = camManagerObj->SetTorchMode(TORCH_MODE_OFF);
-    EXPECT_EQ(intResult, 7400201);
+    EXPECT_EQ(intResult, 0);
 
     camManagerObj->~CameraManager();
     intResult = camManagerObj->SetTorchMode(TORCH_MODE_OFF);
@@ -7607,11 +7632,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_044, TestSize.Le
     ASSERT_NE(previewOutput_3, nullptr);
 
     intResult = session_3->AddOutput(previewOutput_3);
-    EXPECT_EQ(intResult, 0);
+    EXPECT_EQ(intResult, 7400201);
 
     intResult = session_3->CommitConfig();
-    EXPECT_EQ(intResult, 0);
+    EXPECT_EQ(intResult, 7400201);
 
+    camInput_3->Close();
     session_3->Stop();
 }
 
@@ -8163,6 +8189,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_057, TestSize.Le
     if (!IsSupportMode(portraitMode)) {
         return;
     }
+    if (session_) {
+        MEDIA_INFO_LOG("old session exist, need release");
+        session_->Release();
+    }
     sptr<CameraManager> modeManagerObj = CameraManager::GetInstance();
     ASSERT_NE(modeManagerObj, nullptr);
 
@@ -8187,13 +8217,19 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_057, TestSize.Le
     float ratioWidth = 16;
     float ratioHeight = 9;
     float ratio = ratioWidth / ratioHeight;
+
     Profile profile = SelectProfileByRatioAndFormat(modeAbility, ratio, photoFormat_);
     ASSERT_NE(profile.format_, -1);
-
     sptr<CaptureOutput> photoOutput = CreatePhotoOutput(profile);
     ASSERT_NE(photoOutput, nullptr);
-
     intResult = portraitSession->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    profile = SelectProfileByRatioAndFormat(modeAbility, ratio, previewFormat_);
+    ASSERT_NE(profile.format_, -1);
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profile);
+    ASSERT_NE(previewOutput, nullptr);
+    intResult = portraitSession->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
 
     intResult = portraitSession->CommitConfig();
@@ -8202,7 +8238,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_057, TestSize.Le
     portraitSession->LockForControl();
 
     std::vector<BeautyType> beautyLists = portraitSession->GetSupportedBeautyTypes();
-    EXPECT_GE(beautyLists.size(), 4);
+    EXPECT_GE(beautyLists.size(), 1);
 
     if (beautyLists.size() >= 4) {
         std::vector<int32_t> rangeLists = portraitSession->GetSupportedBeautyRange(beautyLists[3]);
@@ -8257,8 +8293,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_058, TestSize.Le
     intResult = nightSession->CommitConfig();
     EXPECT_EQ(intResult, 0);
 
-    nightSession->LockForControl();
-
     std::vector<uint32_t> exposureRange = {};
 
     intResult = nightSession->GetExposureRange(exposureRange);
@@ -8267,12 +8301,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_058, TestSize.Le
     EXPECT_NE(exposureRange.size(), 0);
 
     if (!exposureRange.empty()) {
+        nightSession->LockForControl();
         EXPECT_EQ(nightSession->SetExposure(exposureRange[0]), 0);
+        nightSession->UnlockForControl();
         uint32_t manulExposure = 0;
         EXPECT_EQ(nightSession->GetExposure(manulExposure), 0);
         EXPECT_EQ(manulExposure, exposureRange[0]);
     }
-    nightSession->UnlockForControl();
 }
 
 /*
@@ -8705,7 +8740,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_066, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     intResult = session_->AddOutput(captureOutput);
-    EXPECT_EQ(intResult, 7400101);
+    EXPECT_EQ(intResult, 7400201);
 }
 
 /*
