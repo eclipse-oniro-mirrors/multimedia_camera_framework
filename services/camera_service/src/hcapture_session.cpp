@@ -126,6 +126,7 @@ HCaptureSession::HCaptureSession(const uint32_t callingTokenId, int32_t opMode)
     TotalSessionsInsert(pid_, this);
     callerToken_ = callingTokenId;
     opMode_ = opMode;
+    featureMode_ = 0;
     SetOpMode(opMode_);
     CameraReportUtils::GetInstance().updateModeChangePerfInfo(opMode, CameraReportUtils::GetCallerInfo());
     MEDIA_INFO_LOG(

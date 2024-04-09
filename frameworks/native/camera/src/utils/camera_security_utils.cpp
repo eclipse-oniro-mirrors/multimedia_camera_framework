@@ -13,29 +13,21 @@
  * limitations under the License.
  */
 
-#include "camera_napi_security_utils.h"
-
-#include "camera_error_code.h"
 #include "camera_security_utils.h"
+#include "ipc_skeleton.h"
+#include "tokenid_kit.h"
 
 namespace OHOS {
 namespace CameraStandard {
-namespace CameraNapiSecurity {
-bool CheckSystemApp(napi_env env, bool enableThrowError)
+namespace CameraSecurity {
+bool CheckSystemApp()
 {
-    int32_t errorCode = CameraErrorCode::NO_SYSTEM_APP_PERMISSION;
-    bool isSystemApp = CameraSecurity::CheckSystemApp();
-    if (!isSystemApp) {
-        if (enableThrowError) {
-            std::string errorMessage = "System api can be invoked only by system applications";
-            if (napi_throw_error(env, std::to_string(errorCode).c_str(), errorMessage.c_str()) != napi_ok) {
-                MEDIA_ERR_LOG("failed to throw err, code=%{public}d, msg=%{public}s.", errorCode, errorMessage.c_str());
-            }
-        }
+    uint64_t tokenId = IPCSkeleton::GetSelfTokenID();
+    if (!Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(tokenId)) {
         return false;
     }
     return true;
 }
-} // namespace CameraNapiSecurity
+} // namespace CameraSecurity
 } // namespace CameraStandard
 } // namespace OHOS

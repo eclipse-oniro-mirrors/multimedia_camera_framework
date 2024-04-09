@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,6 +24,7 @@
 #include "camera_log.h"
 #include "system_ability_definition.h"
 #include "camera_error_code.h"
+#include "camera_security_utils.h"
 #include "icamera_util.h"
 #include "device_manager_impl.h"
 #include "deferred_photo_proc_session.h"
@@ -1238,30 +1239,28 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
 void CameraManager::CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
     uint32_t streamIndex, ExtendInfo extendInfo) __attribute__((no_sanitize("cfi")))
 {
+    const int frameRate120 = 120;
+    const int frameRate240 = 240;
     for (uint32_t k = 0; k < extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfoCount; k++) {
+        const auto& detailInfo = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k];
+        // Skip profiles with unsupported frame rates for non-system apps
+        if (!CameraSecurity::CheckSystemApp() && streamType == OutputCapStreamType::VIDEO_STREAM &&
+            (detailInfo.fixedFps == frameRate120 || detailInfo.fixedFps == frameRate240)) {
+            continue;
+        }
         CameraFormat format;
-        auto itr = metaToFwCameraFormat_.find(static_cast<camera_format_t>(
-            extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].format));
+        auto itr = metaToFwCameraFormat_.find(static_cast<camera_format_t>(detailInfo.format));
         if (itr != metaToFwCameraFormat_.end()) {
             format = itr->second;
         } else {
             format = CAMERA_FORMAT_INVALID;
             continue;
         }
-        Size size;
-        size.width = static_cast<uint32_t>
-            (extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].width);
-        size.height = static_cast<uint32_t>
-            (extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].height);
-        Fps fps;
-        fps.fixedFps = static_cast<uint32_t>
-            (extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].fixedFps);
-        fps.minFps = static_cast<uint32_t>
-            (extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].minFps);
-        fps.maxFps = static_cast<uint32_t>
-            (extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].maxFps);
+        Size size{static_cast<uint32_t>(detailInfo.width), static_cast<uint32_t>(detailInfo.height)};
+        Fps fps{static_cast<uint32_t>(detailInfo.fixedFps), static_cast<uint32_t>(detailInfo.minFps),
+            static_cast<uint32_t>(detailInfo.maxFps)};
         std::vector<uint32_t> abilityId;
-        abilityId = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].abilityId;
+        abilityId = detailInfo.abilityId;
         std::string abilityIds = "";
         for (auto id : abilityId) {
             abilityIds += std::to_string(id) + ",";
