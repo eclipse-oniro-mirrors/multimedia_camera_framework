@@ -43,6 +43,8 @@ public:
         return instance;
     }
     static CallerInfo GetCallerInfo();
+    static void ReportCameraError(
+        std::string funcName, int32_t errCode, bool isHdiErr, CallerInfo callerInfo);
     
     void SetOpenCamPerfPreInfo(const std::string& cameraId, CallerInfo caller);
     void SetOpenCamPerfStartInfo(const std::string& cameraId, CallerInfo caller);
@@ -89,4 +91,4 @@ private:
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_REPORT_UITLS_H
+#endif // OHOS_CAMERA_REPORT_UITLS_H

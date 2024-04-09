@@ -25,6 +25,7 @@
 #include "iservmgr_hdi.h"
 #include "camera_log.h"
 #include "display_manager.h"
+#include "camera_report_uitls.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -189,6 +190,8 @@ bool HCameraHostManager::CameraHostInfo::Init()
     CamRetCode ret = (CamRetCode)(cameraHostProxy_->GetCameraIds(cameraIds_));
     if (ret != HDI::Camera::V1_0::NO_ERROR) {
         MEDIA_ERR_LOG("Init, GetCameraIds failed, ret = %{public}d", ret);
+        CameraReportUtils::ReportCameraError(
+            "CameraHostInfo::Init", ret, true, CameraReportUtils::GetCallerInfo());
         return false;
     }
     for (const auto& cameraId : cameraIds_) {
@@ -254,6 +257,8 @@ int32_t HCameraHostManager::CameraHostInfo::GetCameraAbility(std::string& camera
             CamRetCode rc = (CamRetCode)(cameraHostProxy_->GetCameraAbility(cameraId, cameraAbility));
             if (rc != HDI::Camera::V1_0::NO_ERROR) {
                 MEDIA_ERR_LOG("CameraHostInfo::GetCameraAbility failed with error Code:%{public}d", rc);
+                CameraReportUtils::ReportCameraError(
+                    "CameraHostInfo::GetCameraAbility", rc, true, CameraReportUtils::GetCallerInfo());
                 return HdiToServiceError(rc);
             }
             OHOS::Camera::MetadataUtils::ConvertVecToMetadata(cameraAbility, ability);
@@ -304,6 +309,8 @@ int32_t HCameraHostManager::CameraHostInfo::OpenCamera(std::string& cameraId,
     }
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         MEDIA_ERR_LOG("CameraHostInfo::OpenCamera failed with error Code:%{public}d", rc);
+        CameraReportUtils::ReportCameraError(
+            "CameraHostInfo::OpenCamera", rc, true, CameraReportUtils::GetCallerInfo());
         pDevice = nullptr;
         return HdiToServiceError(rc);
     }
@@ -320,6 +327,8 @@ int32_t HCameraHostManager::CameraHostInfo::SetFlashlight(const std::string& cam
     CamRetCode rc = (CamRetCode)(cameraHostProxy_->SetFlashlight(cameraId, isEnable));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         MEDIA_ERR_LOG("CameraHostInfo::SetFlashlight failed with error Code:%{public}d", rc);
+        CameraReportUtils::ReportCameraError(
+            "CameraHostInfo::SetFlashlight", rc, true, CameraReportUtils::GetCallerInfo());
         return HdiToServiceError(rc);
     }
     return CAMERA_OK;
@@ -335,6 +344,8 @@ int32_t HCameraHostManager::CameraHostInfo::SetTorchLevel(float level)
     HDI::Camera::V1_2::CamRetCode rc = (HDI::Camera::V1_2::CamRetCode)(cameraHostProxyV1_2_->SetFlashlight_V1_2(level));
     if (rc != HDI::Camera::V1_2::NO_ERROR) {
         MEDIA_ERR_LOG("CameraHostInfo::SetTorchLevel failed with error Code:%{public}d", rc);
+        CameraReportUtils::ReportCameraError(
+            "CameraHostInfo::SetTorchLevel", rc, true, CameraReportUtils::GetCallerInfo());
         return HdiToServiceErrorV1_2(rc);
     }
     return CAMERA_OK;

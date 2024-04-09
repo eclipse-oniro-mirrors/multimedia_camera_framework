@@ -172,6 +172,8 @@ int32_t HCameraDevice::DispatchDefaultSettingToHdi()
     CamRetCode rc = (CamRetCode)hdiCameraDevice_->UpdateSettings(hdiMetadata);
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         MEDIA_ERR_LOG("HCameraDevice::DispatchDefaultSettingToHdi UpdateSettings error: %{public}d", rc);
+        CameraReportUtils::ReportCameraError(
+            "HCameraDevice::DispatchDefaultSettingToHdi", rc, true, CameraReportUtils::GetCallerInfo());
         return HdiToServiceError(rc);
     }
     return CAMERA_OK;
@@ -811,6 +813,8 @@ int32_t HCameraDevice::InitStreamOperator()
     }
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         MEDIA_ERR_LOG("HCameraDevice::InitStreamOperator failed with error Code:%{public}d", rc);
+        CameraReportUtils::ReportCameraError(
+            "HCameraDevice::InitStreamOperator", rc, true, CameraReportUtils::GetCallerInfo());
         streamOperator_ = nullptr;
         return HdiToServiceError(rc);
     }
@@ -825,6 +829,8 @@ int32_t HCameraDevice::ReleaseStreams(std::vector<int32_t>& releaseStreamIds)
         int32_t rc = streamOperator_->ReleaseStreams(releaseStreamIds);
         if (rc != HDI::Camera::V1_0::NO_ERROR) {
             MEDIA_ERR_LOG("HCameraDevice::ClearStreamOperator ReleaseStreams fail, error Code:%{public}d", rc);
+            CameraReportUtils::ReportCameraError(
+                "HCameraDevice::ReleaseStreams", rc, true, CameraReportUtils::GetCallerInfo());
         }
     }
     return CAMERA_OK;
@@ -966,6 +972,8 @@ int32_t HCameraDevice::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V
     }
     if (hdiRc != HDI::Camera::V1_0::NO_ERROR) {
         MEDIA_ERR_LOG("HCameraDevice::CreateStreams(), Failed to commit %{public}d", hdiRc);
+        CameraReportUtils::ReportCameraError(
+            "HCameraDevice::CreateStreams", hdiRc, true, CameraReportUtils::GetCallerInfo());
         std::vector<int32_t> streamIds;
         for (auto& streamInfo : streamInfos) {
             streamIds.emplace_back(streamInfo.v1_0.streamId_);
@@ -1018,6 +1026,11 @@ int32_t HCameraDevice::CommitStreams(
         MEDIA_DEBUG_LOG("HCameraDevice::CommitStreams IStreamOperator V1_0");
         OperationMode opMode = OperationMode::NORMAL;
         hdiRc = (CamRetCode)(streamOperator->CommitStreams(opMode, setting));
+    }
+    if (hdiRc != HDI::Camera::V1_0::NO_ERROR) {
+        MEDIA_ERR_LOG("HCameraDevice::CommitStreams failed with error Code:%d", hdiRc);
+        CameraReportUtils::ReportCameraError(
+            "HCameraDevice::CommitStreams", hdiRc, true, CameraReportUtils::GetCallerInfo());
     }
     MEDIA_DEBUG_LOG("HCameraDevice::CommitStreams end");
     return HdiToServiceError(hdiRc);

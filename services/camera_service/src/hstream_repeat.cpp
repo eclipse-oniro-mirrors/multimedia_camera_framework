@@ -27,6 +27,7 @@
 #include "ipc_skeleton.h"
 #include "istream_repeat_callback.h"
 #include "metadata_utils.h"
+#include "camera_report_uitls.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -201,6 +202,8 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         ResetCaptureId();
         MEDIA_ERR_LOG("HStreamRepeat::Start Failed with error Code:%{public}d", rc);
+        CameraReportUtils::ReportCameraError(
+            "HStreamRepeat::Start", rc, true, CameraReportUtils::GetCallerInfo());
         ret = HdiToServiceError(rc);
         UpdateSketchStatus(SketchStatus::STOPED);
     }

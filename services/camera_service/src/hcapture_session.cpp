@@ -178,7 +178,12 @@ int32_t HCaptureSession::BeginConfig()
         UnlinkInputAndOutputs();
         ClearSketchRepeatStream();
     });
-    MEDIA_INFO_LOG("HCaptureSession::BeginConfig execute success");
+    if (errCode == CAMERA_OK) {
+        MEDIA_INFO_LOG("HCaptureSession::BeginConfig execute success");
+    } else {
+        CameraReportUtils::ReportCameraError(
+            "HCaptureSession::BeginConfig", errCode, false, CameraReportUtils::GetCallerInfo());
+    }
     return errCode;
 }
 
@@ -209,11 +214,14 @@ int32_t HCaptureSession::CanAddInput(sptr<ICameraDeviceService> cameraDevice, bo
 int32_t HCaptureSession::AddInput(sptr<ICameraDeviceService> cameraDevice)
 {
     CAMERA_SYNC_TRACE;
-    if (cameraDevice == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSession::AddInput cameraDevice is null");
-        return CAMERA_INVALID_ARG;
-    }
     int32_t errorCode = CAMERA_OK;
+    if (cameraDevice == nullptr) {
+        errorCode = CAMERA_INVALID_ARG;
+        MEDIA_ERR_LOG("HCaptureSession::AddInput cameraDevice is null");
+        CameraReportUtils::ReportCameraError(
+            "HCaptureSession::AddInput", errorCode, false, CameraReportUtils::GetCallerInfo());
+        return errorCode;
+    }
     MEDIA_INFO_LOG("HCaptureSession::AddInput prepare execute");
     stateMachine_.StateGuard([this, &errorCode, &cameraDevice](const CaptureSessionState currentState) {
         if (currentState != CaptureSessionState::SESSION_CONFIG_INPROGRESS) {
@@ -234,6 +242,9 @@ int32_t HCaptureSession::AddInput(sptr<ICameraDeviceService> cameraDevice)
     });
     if (errorCode == CAMERA_OK) {
         CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::AddInput"));
+    } else {
+        CameraReportUtils::ReportCameraError(
+            "HCaptureSession::AddInput", errorCode, false, CameraReportUtils::GetCallerInfo());
     }
     MEDIA_INFO_LOG("HCaptureSession::AddInput execute success");
     return errorCode;
@@ -271,6 +282,8 @@ int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> st
     int32_t errorCode = CAMERA_INVALID_ARG;
     if (stream == nullptr) {
         MEDIA_ERR_LOG("HCaptureSession::AddOutput stream is null");
+        CameraReportUtils::ReportCameraError(
+            "HCaptureSession::AddOutput", errorCode, false, CameraReportUtils::GetCallerInfo());
         return errorCode;
     }
     stateMachine_.StateGuard([this, &errorCode, streamType, &stream](const CaptureSessionState currentState) {
@@ -291,6 +304,9 @@ int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> st
     });
     if (errorCode == CAMERA_OK) {
         CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::AddOutput with %d", streamType));
+    } else {
+        CameraReportUtils::ReportCameraError(
+            "HCaptureSession::AddOutput", errorCode, false, CameraReportUtils::GetCallerInfo());
     }
     MEDIA_INFO_LOG("CaptureSession::AddOutput with with %{public}d, rc = %{public}d", streamType, errorCode);
     return errorCode;
@@ -298,11 +314,14 @@ int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> st
 
 int32_t HCaptureSession::RemoveInput(sptr<ICameraDeviceService> cameraDevice)
 {
-    if (cameraDevice == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSession::RemoveInput cameraDevice is null");
-        return CAMERA_INVALID_ARG;
-    }
     int32_t errorCode = CAMERA_OK;
+    if (cameraDevice == nullptr) {
+        errorCode = CAMERA_INVALID_ARG;
+        MEDIA_ERR_LOG("HCaptureSession::RemoveInput cameraDevice is null");
+        CameraReportUtils::ReportCameraError(
+            "HCaptureSession::RemoveInput", errorCode, false, CameraReportUtils::GetCallerInfo());
+        return errorCode;
+    }
     MEDIA_INFO_LOG("HCaptureSession::RemoveInput prepare execute");
     stateMachine_.StateGuard([this, &errorCode, &cameraDevice](const CaptureSessionState currentState) {
         if (currentState != CaptureSessionState::SESSION_CONFIG_INPROGRESS) {
@@ -324,6 +343,9 @@ int32_t HCaptureSession::RemoveInput(sptr<ICameraDeviceService> cameraDevice)
     });
     if (errorCode == CAMERA_OK) {
         CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::RemoveInput"));
+    } else {
+        CameraReportUtils::ReportCameraError(
+            "HCaptureSession::RemoveInput", errorCode, false, CameraReportUtils::GetCallerInfo());
     }
     MEDIA_INFO_LOG("HCaptureSession::RemoveInput execute success");
     return errorCode;
@@ -350,6 +372,8 @@ int32_t HCaptureSession::RemoveOutput(StreamType streamType, sptr<IStreamCommon>
     int32_t errorCode = CAMERA_INVALID_ARG;
     if (stream == nullptr) {
         MEDIA_ERR_LOG("HCaptureSession::RemoveOutput stream is null");
+        CameraReportUtils::ReportCameraError(
+            "HCaptureSession::RemoveOutput", errorCode, false, CameraReportUtils::GetCallerInfo());
         return errorCode;
     }
     MEDIA_INFO_LOG("HCaptureSession::RemoveOutput prepare execute");
@@ -369,6 +393,9 @@ int32_t HCaptureSession::RemoveOutput(StreamType streamType, sptr<IStreamCommon>
     });
     if (errorCode == CAMERA_OK) {
         CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::RemoveOutput with %d", streamType));
+    } else {
+        CameraReportUtils::ReportCameraError(
+            "HCaptureSession::RemoveOutput", errorCode, false, CameraReportUtils::GetCallerInfo());
     }
     MEDIA_INFO_LOG("HCaptureSession::RemoveOutput execute success");
     return errorCode;
@@ -542,6 +569,10 @@ int32_t HCaptureSession::CommitConfig()
         }
         stateMachine_.Transfer(CaptureSessionState::SESSION_CONFIG_COMMITTED);
     });
+    if (errorCode != CAMERA_OK) {
+        CameraReportUtils::ReportCameraError(
+            "HCaptureSession::CommitConfig", errorCode, false, CameraReportUtils::GetCallerInfo());
+    }
     MEDIA_INFO_LOG("HCaptureSession::CommitConfig end");
     return errorCode;
 }
