@@ -276,5 +276,27 @@ bool CameraReportUtils::IsCallerChanged(CallerInfo preCaller, CallerInfo curCall
     }
     return false;
 }
+
+void CameraReportUtils::ReportCameraError(std::string funcName,
+                                          int32_t errCode,
+                                          bool isHdiErr,
+                                          CallerInfo callerInfo)
+{
+    std::string str = funcName;
+    if (isHdiErr) {
+        str += " faild, hdi errCode:" + std::to_string(errCode);
+    } else {
+        str += " faild, errCode:" + std::to_string(errCode);
+    }
+    str += " caller pid:" + std::to_string(callerInfo.pid)
+        + " uid:" + std::to_string(callerInfo.uid)
+        + " tokenID:" + std::to_string(callerInfo.tokenID)
+        + " bundleName:" + callerInfo.bundleName;
+    HiSysEventWrite(
+        HiviewDFX::HiSysEvent::Domain::CAMERA,
+        "CAMERA_ERR",
+        HiviewDFX::HiSysEvent::EventType::FAULT,
+        "MSG", str);
+}
 } // namespace CameraStandard
 } // namespace OHOS

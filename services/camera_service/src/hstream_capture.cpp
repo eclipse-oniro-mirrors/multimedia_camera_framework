@@ -163,6 +163,8 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         ResetCaptureId();
         MEDIA_ERR_LOG("HStreamCapture::Capture failed with error Code: %{public}d", rc);
+        CameraReportUtils::ReportCameraError(
+            "HStreamCapture::Capture", rc, true, CameraReportUtils::GetCallerInfo());
         ret = HdiToServiceError(rc);
     }
     camera_metadata_item_t item;

@@ -21,6 +21,7 @@
 #include "hstream_common.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
+#include "camera_report_uitls.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -83,6 +84,8 @@ int32_t HStreamMetadata::Start()
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         ResetCaptureId();
         MEDIA_ERR_LOG("HStreamMetadata::Start Failed with error Code:%{public}d", rc);
+        CameraReportUtils::ReportCameraError(
+            "HStreamMetadata::SetStreamInfo", rc, true, CameraReportUtils::GetCallerInfo());
         ret = HdiToServiceError(rc);
     }
     return ret;
