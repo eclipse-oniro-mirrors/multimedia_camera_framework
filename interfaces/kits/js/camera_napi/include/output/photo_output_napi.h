@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -38,6 +38,7 @@ static const std::string CONST_CAPTURE_DEFERRED_PHOTO_AVAILABLE = "deferredPhoto
 static const std::string CONST_CAPTURE_FRAME_SHUTTER_END = "frameShutterEnd";
 static const std::string CONST_CAPTURE_READY = "captureReady";
 static const std::string CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION = "estimatedCaptureDuration";
+static const std::string CONST_CAPTURE_START_WITH_INFO = "captureStartWithInfo";
 
 static const std::string CONST_CAPTURE_QUICK_THUMBNAIL = "quickThumbnail";
 static const char CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME[] = "PhotoOutput";
@@ -59,7 +60,8 @@ enum PhotoOutputEventType {
     CAPTURE_INVALID_TYPE,
     CAPTURE_PHOTO_AVAILABLE,
     CAPTURE_DEFERRED_PHOTO_AVAILABLE,
-    CAPTURE_ESTIMATED_CAPTURE_DURATION
+    CAPTURE_ESTIMATED_CAPTURE_DURATION,
+    CAPTURE_START_WITH_INFO
 };
 
 static EnumHelper<PhotoOutputEventType> PhotoOutputEventTypeHelper({
@@ -72,6 +74,7 @@ static EnumHelper<PhotoOutputEventType> PhotoOutputEventTypeHelper({
         {CAPTURE_FRAME_SHUTTER_END, CONST_CAPTURE_FRAME_SHUTTER_END},
         {CAPTURE_READY, CONST_CAPTURE_READY},
         {CAPTURE_ESTIMATED_CAPTURE_DURATION, CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION},
+        {CAPTURE_START_WITH_INFO, CONST_CAPTURE_START_WITH_INFO}
     },
     PhotoOutputEventType::CAPTURE_INVALID_TYPE
 );
@@ -138,6 +141,7 @@ private:
     void UpdateJSCallback(PhotoOutputEventType eventType, const CallbackInfo& info) const;
     void UpdateJSCallbackAsync(PhotoOutputEventType eventType, const CallbackInfo& info) const;
     void ExecuteCaptureStartCb(const CallbackInfo& info) const;
+    void ExecuteCaptureStartWithInfoCb(const CallbackInfo& info) const;
     void ExecuteCaptureEndCb(const CallbackInfo& info) const;
     void ExecuteFrameShutterCb(const CallbackInfo& info) const;
     void ExecuteCaptureErrorCb(const CallbackInfo& info) const;
@@ -148,6 +152,7 @@ private:
     std::mutex mutex_;
     napi_env env_;
     mutable std::vector<std::shared_ptr<AutoRef>> captureStartCbList_;
+    mutable std::vector<std::shared_ptr<AutoRef>> captureStartWithInfoCbList_;
     mutable std::vector<std::shared_ptr<AutoRef>> captureEndCbList_;
     mutable std::vector<std::shared_ptr<AutoRef>> frameShutterCbList_;
     mutable std::vector<std::shared_ptr<AutoRef>> frameShutterEndCbList_;
@@ -262,6 +267,10 @@ private:
     void RegisterEstimatedCaptureDurationCallbackListener(
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
     void UnregisterEstimatedCaptureDurationCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterCaptureStartWithInfoCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterCaptureStartWithInfoCallbackListener(
         napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
     static thread_local napi_ref sConstructor_;

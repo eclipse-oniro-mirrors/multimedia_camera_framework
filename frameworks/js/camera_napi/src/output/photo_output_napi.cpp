@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -97,7 +97,7 @@ void PhotoListener::ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) cons
     int32_t deferredProcessingType;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::imageId, imageId);
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredProcessingType, deferredProcessingType);
-    MEDIA_ERR_LOG("PhotoListener ExecuteDeferredPhoto imageId:%{public}" PRId64 ", deferredProcessingType:%{public}d",
+    MEDIA_INFO_LOG("PhotoListener ExecuteDeferredPhoto imageId:%{public}" PRId64 ", deferredProcessingType:%{public}d",
         imageId, deferredProcessingType);
 
     // create pixelMap to encode
@@ -202,7 +202,7 @@ void PhotoListener::UpdateJSCallbackAsync(sptr<Surface> photoSurface) const
             PhotoListenerInfo* callbackInfo = reinterpret_cast<PhotoListenerInfo*>(work->data);
             if (callbackInfo) {
                 callbackInfo->listener_->UpdateJSCallback(callbackInfo->photoSurface_);
-                MEDIA_ERR_LOG("PhotoListener:UpdateJSCallbackAsync() complete");
+                MEDIA_INFO_LOG("PhotoListener:UpdateJSCallbackAsync() complete");
                 callbackInfo->photoSurface_ = nullptr;
                 callbackInfo->listener_ = nullptr;
                 delete callbackInfo;
@@ -294,7 +294,8 @@ void PhotoOutputCallback::UpdateJSCallbackAsync(PhotoOutputEventType eventType, 
             auto listener = callbackInfo->listener_.lock();
             if (listener) {
                 listener->UpdateJSCallback(callbackInfo->eventType_, callbackInfo->info_);
-                if (callbackInfo->eventType_ == PhotoOutputEventType::CAPTURE_START) {
+                if (callbackInfo->eventType_ == PhotoOutputEventType::CAPTURE_START ||
+                    callbackInfo->eventType_ == PhotoOutputEventType::CAPTURE_START_WITH_INFO) {
                     MEDIA_DEBUG_LOG("PhotoOutputEventType::CAPTURE_START work done execute!");
                     uv_sem_post(&g_captureStartSem);
                 } else if (callbackInfo->eventType_ == PhotoOutputEventType::CAPTURE_FRAME_SHUTTER) {
@@ -321,7 +322,7 @@ void PhotoOutputCallback::OnCaptureStarted(const int32_t captureID) const
     MEDIA_DEBUG_LOG("OnCaptureStarted is called!, captureID: %{public}d", captureID);
     CallbackInfo info;
     info.captureID = captureID;
-    UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_START, info);
+    UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_START_WITH_INFO, info);
 }
 
 void PhotoOutputCallback::OnCaptureStarted(const int32_t captureID, uint32_t exposureTime) const
@@ -423,6 +424,9 @@ void PhotoOutputCallback::SaveCallbackReference(const std::string& eventType, na
         case PhotoOutputEventType::CAPTURE_ESTIMATED_CAPTURE_DURATION:
             callbackList = &estimatedCaptureDurationCbList_;
             break;
+        case PhotoOutputEventType::CAPTURE_START_WITH_INFO:
+            callbackList = &captureStartCbList_;
+            break;
         default:
             MEDIA_ERR_LOG("Incorrect photo callback event type received from JS");
             CameraNapiUtils::ThrowError(env_, INVALID_ARGUMENT, "Incorrect photo callback event type received from JS");
@@ -451,48 +455,38 @@ void PhotoOutputCallback::RemoveCallbackRef(napi_env env, napi_value callback, c
         RemoveAllCallbacks(eventType);
         return;
     }
-    std::vector<std::shared_ptr<AutoRef>>* callbackList;
+    std::map<PhotoOutputEventType, std::vector<std::shared_ptr<AutoRef>>*> callbackLists = {
+        {PhotoOutputEventType::CAPTURE_START, &captureStartCbList_},
+        {PhotoOutputEventType::CAPTURE_END, &captureEndCbList_},
+        {PhotoOutputEventType::CAPTURE_FRAME_SHUTTER, &frameShutterCbList_},
+        {PhotoOutputEventType::CAPTURE_ERROR, &errorCbList_},
+        {PhotoOutputEventType::CAPTURE_FRAME_SHUTTER_END, &frameShutterEndCbList_},
+        {PhotoOutputEventType::CAPTURE_READY, &captureReadyCbList_},
+        {PhotoOutputEventType::CAPTURE_ESTIMATED_CAPTURE_DURATION, &estimatedCaptureDurationCbList_},
+        {PhotoOutputEventType::CAPTURE_START_WITH_INFO, &captureStartCbList_}
+    };
     auto eventTypeEnum = PhotoOutputEventTypeHelper.ToEnum(eventType);
-    switch (eventTypeEnum) {
-        case PhotoOutputEventType::CAPTURE_START:
-            callbackList = &captureStartCbList_;
-            break;
-        case PhotoOutputEventType::CAPTURE_END:
-            callbackList = &captureEndCbList_;
-            break;
-        case PhotoOutputEventType::CAPTURE_FRAME_SHUTTER:
-            callbackList = &frameShutterCbList_;
-            break;
-        case PhotoOutputEventType::CAPTURE_ERROR:
-            callbackList = &errorCbList_;
-            break;
-        case PhotoOutputEventType::CAPTURE_FRAME_SHUTTER_END:
-            callbackList = &frameShutterEndCbList_;
-            break;
-        case PhotoOutputEventType::CAPTURE_READY:
-            callbackList = &captureReadyCbList_;
-            break;
-        case PhotoOutputEventType::CAPTURE_ESTIMATED_CAPTURE_DURATION:
-            callbackList = &estimatedCaptureDurationCbList_;
-            break;
-        default:
-            MEDIA_ERR_LOG("Incorrect photo callback event type received from JS");
-            CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "Incorrect photo callback event type received from JS");
-            return;
+    auto callbackListIt = callbackLists.find(eventTypeEnum);
+    if (callbackListIt == callbackLists.end()) {
+        MEDIA_ERR_LOG("Incorrect photo callback event type received from JS");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "Incorrect photo callback event type received from JS");
+        return;
     }
-    for (auto it = callbackList->begin(); it != callbackList->end(); ++it) {
-        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
-        if (isSameCallback) {
+    auto& callbackList = *(callbackListIt->second);
+    for (auto it = callbackList.begin(); it != callbackList.end(); ++it) {
+        if (CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_)) {
             MEDIA_INFO_LOG("RemoveCallbackRef: find js callback, delete it");
             napi_status status = napi_delete_reference(env_, (*it)->cb_);
             (*it)->cb_ = nullptr;
             CHECK_AND_RETURN_LOG(status == napi_ok, "RemoveCallbackRef: delete reference for callback fail");
-            callbackList->erase(it);
+            callbackList.erase(it);
+            MEDIA_DEBUG_LOG("RemoveCallbackRef success, %{public}s callback list size [%{public}zu]",
+                eventType.c_str(), callbackList.size());
             return;
         }
     }
-    MEDIA_DEBUG_LOG("RemoveCallbackRef success, %{public}s callback list size [%{public}zu]", eventType.c_str(),
-        callbackList->size());
+    MEDIA_DEBUG_LOG("Callback not found, %{public}s callback list size [%{public}zu]",
+        eventType.c_str(), callbackList.size());
 }
 
 void PhotoOutputCallback::RemoveAllCallbacks(const std::string& eventType)
@@ -521,6 +515,9 @@ void PhotoOutputCallback::RemoveAllCallbacks(const std::string& eventType)
         case PhotoOutputEventType::CAPTURE_ESTIMATED_CAPTURE_DURATION:
             callbackList = &estimatedCaptureDurationCbList_;
             break;
+        case PhotoOutputEventType::CAPTURE_START_WITH_INFO:
+            callbackList = &captureStartCbList_;
+            break;
         default:
             MEDIA_ERR_LOG("Incorrect photo callback event type received from JS");
             return;
@@ -538,6 +535,34 @@ void PhotoOutputCallback::RemoveAllCallbacks(const std::string& eventType)
 }
 
 void PhotoOutputCallback::ExecuteCaptureStartCb(const CallbackInfo& info) const
+{
+    napi_value result[ARGS_TWO] = { nullptr, nullptr };
+    napi_value callback = nullptr;
+    napi_value retVal;
+    napi_value propValue;
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_get_undefined(env_, &result[PARAM1]);
+    for (auto it = captureStartCbList_.begin(); it != captureStartCbList_.end();) {
+        napi_env env = (*it)->env_;
+        napi_create_object(env, &result[PARAM1]);
+        napi_create_int32(env, info.captureID, &propValue);
+        napi_set_named_property(env, result[PARAM1], "captureId", propValue);
+        napi_create_int32(env, info.timestamp, &propValue);
+        napi_set_named_property(env, result[PARAM1], "time", propValue);
+        napi_get_reference_value(env, (*it)->cb_, &callback);
+        napi_call_function(env, nullptr, callback, ARGS_TWO, result, &retVal);
+        if ((*it)->isOnce_) {
+            napi_status status = napi_delete_reference(env, (*it)->cb_);
+            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
+            (*it)->cb_ = nullptr;
+            captureStartCbList_.erase(it);
+        } else {
+            it++;
+        }
+    }
+}
+
+void PhotoOutputCallback::ExecuteCaptureStartWithInfoCb(const CallbackInfo& info) const
 {
     napi_value result[ARGS_TWO] = { nullptr, nullptr };
     napi_value callback = nullptr;
@@ -739,6 +764,9 @@ void PhotoOutputCallback::UpdateJSCallback(PhotoOutputEventType eventType, const
             break;
         case PhotoOutputEventType::CAPTURE_ESTIMATED_CAPTURE_DURATION:
             ExecuteEstimatedCaptureDurationCb(info);
+            break;
+        case PhotoOutputEventType::CAPTURE_START_WITH_INFO:
+            ExecuteCaptureStartWithInfoCb(info);
             break;
         default:
             MEDIA_ERR_LOG("Incorrect photo callback event type received from JS");
@@ -1756,6 +1784,26 @@ void PhotoOutputNapi::UnregisterCaptureStartCallbackListener(
     photoOutputCallback_->RemoveCallbackRef(env, callback, CONST_CAPTURE_START);
 }
 
+void PhotoOutputNapi::RegisterCaptureStartWithInfoCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (photoOutputCallback_ == nullptr) {
+        photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
+        photoOutput_->SetCallback(photoOutputCallback_);
+    }
+    photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_START_WITH_INFO, callback, isOnce);
+}
+
+void PhotoOutputNapi::UnregisterCaptureStartWithInfoCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (photoOutputCallback_ == nullptr) {
+        MEDIA_ERR_LOG("photoOutputCallback is null");
+        return;
+    }
+    photoOutputCallback_->RemoveCallbackRef(env, callback, CONST_CAPTURE_START_WITH_INFO);
+}
+
 void PhotoOutputNapi::RegisterCaptureEndCallbackListener(
     napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
@@ -1908,7 +1956,10 @@ const PhotoOutputNapi::EmitterFunctions& PhotoOutputNapi::GetEmitterFunctions()
             &PhotoOutputNapi::UnregisterReadyCallbackListener } },
         { CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION, {
             &PhotoOutputNapi::RegisterEstimatedCaptureDurationCallbackListener,
-            &PhotoOutputNapi::UnregisterEstimatedCaptureDurationCallbackListener } } };
+            &PhotoOutputNapi::UnregisterEstimatedCaptureDurationCallbackListener } },
+        { CONST_CAPTURE_START_WITH_INFO, {
+            &PhotoOutputNapi::RegisterCaptureStartWithInfoCallbackListener,
+            &PhotoOutputNapi::UnregisterCaptureStartWithInfoCallbackListener } } };
     return funMap;
 }
 
