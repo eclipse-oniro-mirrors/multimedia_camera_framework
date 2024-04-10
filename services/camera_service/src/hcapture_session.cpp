@@ -868,11 +868,17 @@ int32_t HCaptureSession::SetSmoothZoom(
     }
     duration = (static_cast<int>(array.size()) - 1) * frameIntervalMs + waitTime;
     MEDIA_DEBUG_LOG("HCaptureSession::SetSmoothZoom() duration %{public}f", duration);
+    ProcessMetaZoomArray(zoomAndTimeArray, cameraDevice);
+    return CAMERA_OK;
+}
+
+void HCaptureSession::ProcessMetaZoomArray(
+    std::vector<uint32_t>& zoomAndTimeArray, sptr<HCameraDevice>& cameraDevice)
+{
     std::shared_ptr<OHOS::Camera::CameraMetadata> metaZoomArray = std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
     uint32_t zoomCount = static_cast<uint32_t>(zoomAndTimeArray.size());
     metaZoomArray->addEntry(OHOS_CONTROL_SMOOTH_ZOOM_RATIOS, zoomAndTimeArray.data(), zoomCount);
     cameraDevice->UpdateSettingOnce(metaZoomArray);
-    return CAMERA_OK;
 }
 
 int32_t HCaptureSession::Start()

@@ -104,6 +104,13 @@ public:
     bool IsSupportMode(SceneMode mode);
 
     std::shared_ptr<Profile> GetSketchPreviewProfile();
+
+private:
+    void RegisterErrorCallback();
+    void SetNativeToken();
+    void ProcessPreviewProfiles(sptr<CameraOutputCapability>& outputcapability);
+    void ProcessSize();
+    void ProcessPortraitSession(sptr<PortraitSession>& portraitSession, sptr<CaptureOutput>& previewOutput);
 };
 } // CameraStandard
 } // OHOS

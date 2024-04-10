@@ -707,11 +707,7 @@ void CameraFrameworkModuleTest::TestCallbacks(sptr<CameraDevice>& cameraInfo, bo
     EXPECT_EQ(intResult, 0);
 
     // Register error callback
-    std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
-    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
-    camInput->SetErrorCallback(callback);
-
-    EXPECT_EQ(g_camInputOnError, false);
+    RegisterErrorCallback();
 
     intResult = session_->AddInput(input_);
     EXPECT_EQ(intResult, 0);
@@ -780,6 +776,15 @@ void CameraFrameworkModuleTest::TestCallbacks(sptr<CameraDevice>& cameraInfo, bo
     ((sptr<PreviewOutput>&)previewOutput)->Release();
 }
 
+void CameraFrameworkModuleTest::RegisterErrorCallback()
+{
+    std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
+    camInput->SetErrorCallback(callback);
+
+    EXPECT_EQ(g_camInputOnError, false);
+}
+
 bool CameraFrameworkModuleTest::IsSupportNow()
 {
     const char* deviveTypeString = GetDeviceType();
@@ -841,23 +846,7 @@ void CameraFrameworkModuleTest::SetUp()
 {
     SetUpInit();
     // set native token
-    uint64_t tokenId;
-    const char* perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
+    SetNativeToken();
 
     manager_ = CameraManager::GetInstance();
     ASSERT_NE(manager_, nullptr);
@@ -873,26 +862,7 @@ void CameraFrameworkModuleTest::SetUp()
     std::vector<sptr<CameraDevice>> cameraObjList = camManagerObj->GetSupportedCameras();
     sptr<CameraOutputCapability> outputcapability = camManagerObj->GetSupportedOutputCapability(cameraObjList[0]);
 
-    previewProfiles.clear();
-    std::vector<Profile> tempPreviewProfiles = outputcapability->GetPreviewProfiles();
-    for (const auto& profile : tempPreviewProfiles) {
-        if ((profile.size_.width == PRVIEW_WIDTH_176 && profile.size_.height == PRVIEW_HEIGHT_144) ||
-            (profile.size_.width == PRVIEW_WIDTH_640 && profile.size_.height == PRVIEW_WIDTH_640) ||
-            (profile.size_.width == PRVIEW_WIDTH_4096 && profile.size_.height == PRVIEW_HEIGHT_3072) ||
-            (profile.size_.width == PRVIEW_WIDTH_4160 && profile.size_.height == PRVIEW_HEIGHT_3120) ||
-            (profile.size_.width == PRVIEW_WIDTH_8192 && profile.size_.height == PRVIEW_HEIGHT_6144)) {
-            MEDIA_DEBUG_LOG("SetUp skip previewProfile width:%{public}d height:%{public}d",
-                profile.size_.width, profile.size_.height);
-            continue;
-        }
-        previewProfiles.push_back(profile);
-    }
-
-    for (auto i : previewProfiles) {
-        MEDIA_DEBUG_LOG("SetUp previewProfiles width:%{public}d height:%{public}d", i.size_.width, i.size_.height);
-        previewFormats_.push_back(i.GetCameraFormat());
-        previewSizes_.push_back(i.GetSize());
-    }
+    ProcessPreviewProfiles(outputcapability);
     ASSERT_TRUE(!previewFormats_.empty());
     ASSERT_TRUE(!previewSizes_.empty());
     if (std::find(previewFormats_.begin(), previewFormats_.end(), CAMERA_FORMAT_YUV_420_SP) != previewFormats_.end()) {
@@ -924,20 +894,7 @@ void CameraFrameworkModuleTest::SetUp()
     } else {
         videoFormat_ = videoFormats_[0];
     }
-    Size size = previewSizes_.back();
-    previewWidth_ = size.width;
-    previewHeight_ = size.height;
-    size = photoSizes_.back();
-    photoWidth_ = size.width;
-    photoHeight_ = size.height;
-    size = videoSizes_.back();
-    videoWidth_ = size.width;
-    videoHeight_ = size.height;
-
-    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
-    camInput->Open();
-    session_ = manager_->CreateCaptureSession();
-    ASSERT_NE(session_, nullptr);
+    ProcessSize();
 }
 
 void CameraFrameworkModuleTest::TearDown()
@@ -954,6 +911,92 @@ void CameraFrameworkModuleTest::TearDown()
         input_->Release();
     }
     MEDIA_DEBUG_LOG("End of camera test case");
+}
+
+void CameraFrameworkModuleTest::SetNativeToken()
+{
+    uint64_t tokenId;
+    const char* perms[2];
+    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
+    perms[1] = "ohos.permission.CAMERA";
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 2,
+        .aclsNum = 0,
+        .dcaps = NULL,
+        .perms = perms,
+        .acls = NULL,
+        .processName = "native_camera_tdd",
+        .aplStr = "system_basic",
+    };
+    tokenId = GetAccessTokenId(&infoInstance);
+    SetSelfTokenID(tokenId);
+    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
+}
+
+void CameraFrameworkModuleTest::ProcessPreviewProfiles(sptr<CameraOutputCapability>& outputcapability)
+{
+    previewProfiles.clear();
+    std::vector<Profile> tempPreviewProfiles = outputcapability->GetPreviewProfiles();
+    for (const auto& profile : tempPreviewProfiles) {
+        if ((profile.size_.width == PRVIEW_WIDTH_176 && profile.size_.height == PRVIEW_HEIGHT_144) ||
+            (profile.size_.width == PRVIEW_WIDTH_640 && profile.size_.height == PRVIEW_WIDTH_640) ||
+            (profile.size_.width == PRVIEW_WIDTH_4096 && profile.size_.height == PRVIEW_HEIGHT_3072) ||
+            (profile.size_.width == PRVIEW_WIDTH_4160 && profile.size_.height == PRVIEW_HEIGHT_3120) ||
+            (profile.size_.width == PRVIEW_WIDTH_8192 && profile.size_.height == PRVIEW_HEIGHT_6144)) {
+            MEDIA_DEBUG_LOG("SetUp skip previewProfile width:%{public}d height:%{public}d",
+                profile.size_.width, profile.size_.height);
+            continue;
+        }
+        previewProfiles.push_back(profile);
+    }
+
+    for (auto i : previewProfiles) {
+        MEDIA_DEBUG_LOG("SetUp previewProfiles width:%{public}d height:%{public}d", i.size_.width, i.size_.height);
+        previewFormats_.push_back(i.GetCameraFormat());
+        previewSizes_.push_back(i.GetSize());
+    }
+}
+
+void CameraFrameworkModuleTest::ProcessSize()
+{
+    Size size = previewSizes_.back();
+    previewWidth_ = size.width;
+    previewHeight_ = size.height;
+    size = photoSizes_.back();
+    photoWidth_ = size.width;
+    photoHeight_ = size.height;
+    size = videoSizes_.back();
+    videoWidth_ = size.width;
+    videoHeight_ = size.height;
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
+    camInput->Open();
+    session_ = manager_->CreateCaptureSession();
+    ASSERT_NE(session_, nullptr);
+}
+
+void CameraFrameworkModuleTest::ProcessPortraitSession(sptr<PortraitSession>& portraitSession,
+    sptr<CaptureOutput>& previewOutput)
+{
+    int32_t intResult = portraitSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = portraitSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    portraitSession->LockForControl();
+
+    std::vector<PortraitEffect> effects = portraitSession->GetSupportedPortraitEffects();
+    if (!effects.empty()) {
+        portraitSession->SetPortraitEffect(effects[0]);
+    }
+
+    portraitSession->UnlockForControl();
+
+    if (!effects.empty()) {
+        EXPECT_EQ(portraitSession->GetPortraitEffect(), effects[0]);
+    }
 }
 
 /*
@@ -2551,24 +2594,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_045, TestSize.Le
     sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profile);
     ASSERT_NE(previewOutput, nullptr);
 
-    intResult = portraitSession->AddOutput(previewOutput);
-    EXPECT_EQ(intResult, 0);
-
-    intResult = portraitSession->CommitConfig();
-    EXPECT_EQ(intResult, 0);
-
-    portraitSession->LockForControl();
-
-    std::vector<PortraitEffect> effects = portraitSession->GetSupportedPortraitEffects();
-    if (!effects.empty()) {
-        portraitSession->SetPortraitEffect(effects[0]);
-    }
-
-    portraitSession->UnlockForControl();
-
-    if (!effects.empty()) {
-        EXPECT_EQ(portraitSession->GetPortraitEffect(), effects[0]);
-    }
+    ProcessPortraitSession(portraitSession, previewOutput);
 
     intResult = portraitSession->Start();
     EXPECT_EQ(intResult, 0);

@@ -123,12 +123,20 @@ static int32_t SwitchMode(std::shared_ptr<CameraCaptureVideo> testObj, State sta
     return result;
 }
 
+static void ProcessResult(int32_t result, std::shared_ptr<CameraCaptureVideo> testObj)
+{
+    if (result != CAMERA_OK) {
+        std::cout << "Operation Failed!, Check logs for more details!, result: " << result << std::endl;
+        testObj->Release();
+        exit(EXIT_SUCCESS);
+    }
+}
+
 static void DisplayMenu(std::shared_ptr<CameraCaptureVideo> testObj)
 {
     char c = 'h';
     int32_t result = CAMERA_OK;
-
-    while (1  && (result == CAMERA_OK)) {
+    while (result == CAMERA_OK) {
         switch (c) {
             case 'h':
                 c = PutMenuAndGetChr(testObj);
@@ -188,11 +196,7 @@ static void DisplayMenu(std::shared_ptr<CameraCaptureVideo> testObj)
                 break;
         }
     }
-    if (result != CAMERA_OK) {
-        std::cout << "Operation Failed!, Check logs for more details!, result: " << result << std::endl;
-        testObj->Release();
-        exit(EXIT_SUCCESS);
-    }
+    ProcessResult(result, testObj);
 }
 
 CameraCaptureVideo::CameraCaptureVideo()

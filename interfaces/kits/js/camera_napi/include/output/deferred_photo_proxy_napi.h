@@ -38,6 +38,7 @@ public:
 private:
     static void DeferredPhotoProxyNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value DeferredPhotoProxyNapiConstructor(napi_env env, napi_callback_info info);
+    static void DeferredPhotoAsyncTaskComplete(napi_env env, napi_status status, void* data);
 
     static thread_local napi_ref sConstructor_;
     static thread_local napi_value sThumbnailPixelMap_;

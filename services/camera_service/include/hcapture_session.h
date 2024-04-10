@@ -199,6 +199,8 @@ private:
     int32_t UpdateStreamInfos();
     void SetColorSpaceForStreams();
 
+    void ProcessMetaZoomArray(std::vector<uint32_t>& zoomAndTimeArray, sptr<HCameraDevice>& cameraDevice);
+
     std::string GetSessionState();
 
     StateMachine stateMachine_;

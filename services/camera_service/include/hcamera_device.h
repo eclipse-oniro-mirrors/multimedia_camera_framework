@@ -152,6 +152,22 @@ private:
     void UnPrepareZoom();
     int32_t OpenDevice();
     int32_t CloseDevice();
+    void OpenDeviceNext();
+    void DebugLogForFocusMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForAfRegions(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForVideoStabilizationMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
+        uint32_t tag);
+    void DebugLogForExposureMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForExposureTime(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForAeRegions(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForAeExposureCompensation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
+        uint32_t tag);
+    void DebugLogForPortraitEffect(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForFilterType(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForBeautyAuto(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForSkinSmooth(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForBeautyFaceSlender(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForSkinTone(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
 };
 } // namespace CameraStandard
 } // namespace OHOS

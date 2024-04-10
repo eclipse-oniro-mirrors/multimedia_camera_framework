@@ -98,6 +98,7 @@ private:
     static napi_value GetFrameRateRange(napi_env env, napi_callback_info info);
     static napi_value SetFrameRateRange(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
+    static void SetFrameRateRangeAsyncTask(napi_env env, void* data);
 
     void RegisterFrameStartCallbackListener(
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);

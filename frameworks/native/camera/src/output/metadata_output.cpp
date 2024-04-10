@@ -22,6 +22,7 @@
 #include "camera_util.h"
 #include "input/camera_input.h"
 #include "session/capture_session.h"
+#include "camera_error_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -231,6 +232,20 @@ void MetadataOutput::ProcessFaceRectangles(int64_t timestamp,
         return;
     }
     metaObjects.reserve(metadataItem.count / rectangleUnitLen);
+    
+    ret = ProcessMetaObjects(timestamp, metaObjects, metadataItem, metadata, isNeedMirror);
+    if (ret != CameraErrorCode::SUCCESS) {
+        MEDIA_ERR_LOG("MetadataOutput::ProcessFaceRectangles() is failed.");
+        return;
+    }
+    
+    MEDIA_INFO_LOG("ProcessFaceRectangles: metaObjects size: %{public}zu", metaObjects.size());
+    return;
+}
+
+int32_t MetadataOutput::ProcessMetaObjects(int64_t timestamp, std::vector<sptr<MetadataObject>>& metaObjects,
+    camera_metadata_item_t& metadataItem, common_metadata_header_t* metadata, bool isNeedMirror)
+{
     float* start = metadataItem.data.f;
     float* end = metadataItem.data.f + metadataItem.count;
     const int32_t offsetTopLeftX = 0;
@@ -243,6 +258,7 @@ void MetadataOutput::ProcessFaceRectangles(int64_t timestamp,
     float topLeftY = 0;
     float width = 0;
     float height = 0;
+    constexpr int32_t rectangleUnitLen = 4;
     std::string positionStr = isNeedMirror ? "FrontCamera" : "BackCamera";
     for (; start < end; start += rectangleUnitLen) {
         if (isNeedMirror) {
@@ -262,21 +278,20 @@ void MetadataOutput::ProcessFaceRectangles(int64_t timestamp,
         topLeftY = topLeftY > 1 ? 1 : topLeftY;
         sptr<MetadataObject> metadataObject = new(std::nothrow) MetadataFaceObject(formatTimestamp,
             (Rect) {topLeftX, topLeftY, width, height});
-            MEDIA_INFO_LOG("ProcessFaceRectangles Metadata coordination: topleftX(%{public}f),topleftY(%{public}f),"
-                           "BottomRightX(%{public}f),BottomRightY(%{public}f), timestamp: %{public}" PRId64,
-                           start[offsetTopLeftX], start[offsetTopLeftY],
-                           start[offsetBottomRightX], start[offsetBottomRightY], formatTimestamp);
-            MEDIA_INFO_LOG("ProcessFaceRectangles Postion: %{public}s App coordination: "
-                           "topleftX(%{public}f),topleftY(%{public}f),width(%{public}f),height(%{public}f)",
-                           positionStr.c_str(), topLeftX, topLeftY, width, height);
+        MEDIA_INFO_LOG("ProcessFaceRectangles Metadata coordination: topleftX(%{public}f),topleftY(%{public}f),"
+                        "BottomRightX(%{public}f),BottomRightY(%{public}f), timestamp: %{public}" PRId64,
+                        start[offsetTopLeftX], start[offsetTopLeftY],
+                        start[offsetBottomRightX], start[offsetBottomRightY], formatTimestamp);
+        MEDIA_INFO_LOG("ProcessFaceRectangles Postion: %{public}s App coordination: "
+                        "topleftX(%{public}f),topleftY(%{public}f),width(%{public}f),height(%{public}f)",
+                        positionStr.c_str(), topLeftX, topLeftY, width, height);
         if (!metadataObject) {
             MEDIA_ERR_LOG("Failed to allocate MetadataFaceObject");
-            return;
+            return CameraErrorCode::SERVICE_FATL_ERROR;
         }
         metaObjects.emplace_back(metadataObject);
     }
-    MEDIA_INFO_LOG("ProcessFaceRectangles: metaObjects size: %{public}zu", metaObjects.size());
-    return;
+    return CameraErrorCode::SUCCESS;
 }
 
 MetadataObjectListener::MetadataObjectListener(sptr<MetadataOutput> metadata) : metadata_(metadata) {}

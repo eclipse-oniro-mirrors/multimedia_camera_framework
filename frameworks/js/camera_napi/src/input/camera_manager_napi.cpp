@@ -1113,20 +1113,7 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
         napi_get_value_int32(env, argv[PARAM1], &numValue);
         CameraType cameraType = static_cast<CameraType>(numValue);
 
-        std::vector<sptr<CameraDevice>> cameraObjList = cameraManagerNapi->cameraManager_->GetSupportedCameras();
-        MEDIA_DEBUG_LOG("cameraInfo is null, the cameraObjList size is %{public}zu",
-                        cameraObjList.size());
-        for (size_t i = 0; i < cameraObjList.size(); i++) {
-            sptr<CameraDevice> cameraDevice = cameraObjList[i];
-            if (cameraDevice == nullptr) {
-                continue;
-            }
-            if (cameraDevice->GetPosition() == cameraPosition &&
-                cameraDevice->GetCameraType() == cameraType) {
-                cameraInfo = cameraDevice;
-                break;
-            }
-        }
+        ProcessCameraInfo(cameraManagerNapi->cameraManager_, cameraPosition, cameraType, cameraInfo);
     }
     if (cameraInfo != nullptr) {
         sptr<CameraInput> cameraInput = nullptr;
@@ -1139,6 +1126,25 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
         MEDIA_ERR_LOG("cameraInfo is null");
     }
     return result;
+}
+
+void CameraManagerNapi::ProcessCameraInfo(sptr<CameraManager>& cameraManager, const CameraPosition cameraPosition,
+    const CameraType cameraType, sptr<CameraDevice>& cameraInfo)
+{
+    std::vector<sptr<CameraDevice>> cameraObjList = cameraManager->GetSupportedCameras();
+    MEDIA_DEBUG_LOG("cameraInfo is null, the cameraObjList size is %{public}zu",
+                    cameraObjList.size());
+    for (size_t i = 0; i < cameraObjList.size(); i++) {
+        sptr<CameraDevice> cameraDevice = cameraObjList[i];
+        if (cameraDevice == nullptr) {
+            continue;
+        }
+        if (cameraDevice->GetPosition() == cameraPosition &&
+            cameraDevice->GetCameraType() == cameraType) {
+            cameraInfo = cameraDevice;
+            break;
+        }
+    }
 }
 
 void CameraManagerNapi::RegisterCameraStatusCallbackListener(

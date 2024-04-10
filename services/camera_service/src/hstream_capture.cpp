@@ -128,27 +128,8 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     }
     CaptureInfo captureInfoPhoto;
     captureInfoPhoto.streamIds_ = { GetStreamId() };
-    if (!OHOS::Camera::GetCameraMetadataItemCount(captureSettings->get())) {
-        std::lock_guard<std::mutex> lock(cameraAbilityLock_);
-        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, captureInfoPhoto.captureSetting_);
-    } else {
-        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(captureSettings, captureInfoPhoto.captureSetting_);
-    }
-    captureInfoPhoto.enableShutterCallback_ = true;
-    // debug log for jpeg quality
-    std::shared_ptr<OHOS::Camera::CameraMetadata> captureMetadataSetting_ = nullptr;
-    OHOS::Camera::MetadataUtils::ConvertVecToMetadata(captureInfoPhoto.captureSetting_, captureMetadataSetting_);
-    if (captureMetadataSetting_ != nullptr) {
-        // print quality, mirror log
-        PrintDebugLog(captureMetadataSetting_);
-        // convert rotation with application set rotation
-        SetRotation(captureMetadataSetting_);
-
-        // update settings
-        std::vector<uint8_t> finalSetting;
-        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(captureMetadataSetting_, finalSetting);
-        captureInfoPhoto.captureSetting_ = finalSetting;
-    }
+    ProcessCaptureInfoPhoto(captureInfoPhoto, captureSettings);
+    
     auto callingTokenId = IPCSkeleton::GetCallingTokenID();
     const std::string permissionName = "ohos.permission.CAMERA";
     AddCameraPermissionUsedRecord(callingTokenId, permissionName);
@@ -194,6 +175,32 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         isCaptureReady_ = false;
     }
     return ret;
+}
+
+void HStreamCapture::ProcessCaptureInfoPhoto(CaptureInfo& captureInfoPhoto,
+    const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings)
+{
+    if (!OHOS::Camera::GetCameraMetadataItemCount(captureSettings->get())) {
+        std::lock_guard<std::mutex> lock(cameraAbilityLock_);
+        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, captureInfoPhoto.captureSetting_);
+    } else {
+        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(captureSettings, captureInfoPhoto.captureSetting_);
+    }
+    captureInfoPhoto.enableShutterCallback_ = true;
+    // debug log for jpeg quality
+    std::shared_ptr<OHOS::Camera::CameraMetadata> captureMetadataSetting_ = nullptr;
+    OHOS::Camera::MetadataUtils::ConvertVecToMetadata(captureInfoPhoto.captureSetting_, captureMetadataSetting_);
+    if (captureMetadataSetting_ != nullptr) {
+        // print quality, mirror log
+        PrintDebugLog(captureMetadataSetting_);
+        // convert rotation with application set rotation
+        SetRotation(captureMetadataSetting_);
+
+        // update settings
+        std::vector<uint8_t> finalSetting;
+        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(captureMetadataSetting_, finalSetting);
+        captureInfoPhoto.captureSetting_ = finalSetting;
+    }
 }
 
 void HStreamCapture::PrintDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_)

@@ -69,6 +69,8 @@ private:
     void SetStreamTransform();
     void StartSketchStream(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
     void UpdateSketchStatus(SketchStatus status);
+    void ProcessCameraPosition(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
+
     RepeatStreamType repeatStreamType_;
     sptr<IStreamRepeatCallback> streamRepeatCallback_;
     std::mutex callbackLock_;

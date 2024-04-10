@@ -121,22 +121,7 @@ void PhotoListener::ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) cons
 
     // deep copy buffer
     sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
-    BufferRequestConfig requestConfig = {
-        .width = surfaceBuffer->GetWidth(),
-        .height = surfaceBuffer->GetHeight(),
-        .strideAlignment = 0x8, // default stride is 8 Bytes.
-        .format = surfaceBuffer->GetFormat(),
-        .usage = surfaceBuffer->GetUsage(),
-        .timeout = 0,
-        .colorGamut = surfaceBuffer->GetSurfaceBufferColorGamut(),
-        .transform = surfaceBuffer->GetSurfaceBufferTransform(),
-    };
-    auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
-    MEDIA_INFO_LOG("SurfaceBuffer alloc ret: %d", allocErrorCode);
-    if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
-        surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK) {
-        MEDIA_ERR_LOG("PhotoListener memcpy_s failed");
-    }
+    DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer);
     BufferHandle *newBufferHandle = CameraCloneBufferHandle(newSurfaceBuffer->GetBufferHandle());
     if (newBufferHandle == nullptr) {
         napi_value errorCode;
@@ -156,6 +141,26 @@ void PhotoListener::ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) cons
 
     // return buffer to buffer queue
     photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
+}
+
+void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const
+{
+    BufferRequestConfig requestConfig = {
+        .width = surfaceBuffer->GetWidth(),
+        .height = surfaceBuffer->GetHeight(),
+        .strideAlignment = 0x8, // default stride is 8 Bytes.
+        .format = surfaceBuffer->GetFormat(),
+        .usage = surfaceBuffer->GetUsage(),
+        .timeout = 0,
+        .colorGamut = surfaceBuffer->GetSurfaceBufferColorGamut(),
+        .transform = surfaceBuffer->GetSurfaceBufferTransform(),
+    };
+    auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
+    MEDIA_INFO_LOG("SurfaceBuffer alloc ret: %d", allocErrorCode);
+    if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
+        surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK) {
+        MEDIA_ERR_LOG("PhotoListener memcpy_s failed");
+    }
 }
 
 void PhotoListener::UpdateJSCallback(sptr<Surface> photoSurface) const
@@ -1278,44 +1283,55 @@ napi_value PhotoOutputNapi::Capture(napi_env env, napi_callback_info info)
                     return;
                 }
 
-                context->bRetBool = false;
-                context->status = true;
-                sptr<PhotoOutput> photoOutput = ((sptr<PhotoOutput>&)(context->objectInfo->photoOutput_));
-                if ((context->hasPhotoSettings)) {
-                    std::shared_ptr<PhotoCaptureSetting> capSettings = make_shared<PhotoCaptureSetting>();
-
-                    if (context->quality != -1) {
-                        capSettings->SetQuality(static_cast<PhotoCaptureSetting::QualityLevel>(context->quality));
-                    }
-
-                    if (context->rotation != -1) {
-                        capSettings->SetRotation(static_cast<PhotoCaptureSetting::RotationConfig>(context->rotation));
-                    }
-
-                    capSettings->SetMirror(context->isMirror);
-
-                    if (context->location != nullptr) {
-                        capSettings->SetLocation(context->location);
-                    }
-
-                    context->errorCode = photoOutput->Capture(capSettings);
-                } else {
-                    context->errorCode = photoOutput->Capture();
-                }
-                context->status = context->errorCode == 0;
+                ProcessContext(context);
             },
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for PhotoOutputNapi::Capture");
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
-            asyncContext.release();
-        }
+        ProcessAsyncContext(status, env, result, std::move(asyncContext));
     } else {
         MEDIA_ERR_LOG("Capture call Failed!");
     }
     return result;
+}
+
+void PhotoOutputNapi::ProcessContext(PhotoOutputAsyncContext* context)
+{
+    context->bRetBool = false;
+    context->status = true;
+    sptr<PhotoOutput> photoOutput = ((sptr<PhotoOutput>&)(context->objectInfo->photoOutput_));
+    if ((context->hasPhotoSettings)) {
+        std::shared_ptr<PhotoCaptureSetting> capSettings = make_shared<PhotoCaptureSetting>();
+
+        if (context->quality != -1) {
+            capSettings->SetQuality(static_cast<PhotoCaptureSetting::QualityLevel>(context->quality));
+        }
+
+        if (context->rotation != -1) {
+            capSettings->SetRotation(static_cast<PhotoCaptureSetting::RotationConfig>(context->rotation));
+        }
+
+        capSettings->SetMirror(context->isMirror);
+
+        if (context->location != nullptr) {
+            capSettings->SetLocation(context->location);
+        }
+
+        context->errorCode = photoOutput->Capture(capSettings);
+    } else {
+        context->errorCode = photoOutput->Capture();
+    }
+    context->status = context->errorCode == 0;
+}
+
+void PhotoOutputNapi::ProcessAsyncContext(napi_status status, napi_env env, napi_value result,
+    unique_ptr<PhotoOutputAsyncContext> asyncContext)
+{
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("Failed to create napi_create_async_work for PhotoOutputNapi::Capture");
+        napi_get_undefined(env, &result);
+    } else {
+        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
+        asyncContext.release();
+    }
 }
 
 napi_value PhotoOutputNapi::ConfirmCapture(napi_env env, napi_callback_info info)
