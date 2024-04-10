@@ -612,6 +612,8 @@ int32_t HCameraService::MuteCamera(bool muteMode)
         MEDIA_ERR_LOG("CheckPermission is failed!");
         return ret;
     }
+    CameraReportUtils::GetInstance().ReportUserBehavior(
+        "MuteCamera", to_string(muteMode), CameraReportUtils::GetCallerInfo());
 
     bool oldMuteMode = muteMode_;
     if (muteMode == oldMuteMode) {
