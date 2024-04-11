@@ -33,7 +33,7 @@ public:
     template<typename T>
     explicit CameraNapiCallbackParamParser(napi_env env, napi_callback_info info, T*& nativeObjPointer) : env_(env)
     {
-        static const size_t CALLBACK_ARGS_MIN = 2;
+        static const size_t CALLBACK_ARGS_MIN = 1;
         napi_value thisVar;
         size_t paramSize = ARGS_MAX_SIZE;
         std::vector<napi_value> paramValue(paramSize, nullptr);
@@ -56,12 +56,18 @@ public:
             napiError = napi_status::napi_invalid_arg;
             return;
         }
-        napi_typeof(env_, paramValue[paramSize - 1], &valueNapiType);
-        if (valueNapiType != napi_function) {
-            napiError = napi_status::napi_invalid_arg;
-            return;
+        if (paramSize > 1) {
+            napi_typeof(env_, paramValue[paramSize - 1], &valueNapiType);
+            if (valueNapiType != napi_function) {
+                napiError = napi_status::napi_invalid_arg;
+                return;
+            }
+            callbackFunction_ = paramValue[paramSize - 1];
+            if (paramSize > CALLBACK_ARGS_MIN + 1) {
+                callbackFunctionParameters_ =
+                    std::vector<napi_value>(paramValue.begin() + 1, paramValue.begin() + paramSize - 1);
+            }
         }
-
         size_t stringSize = 0;
         napiError = napi_get_value_string_utf8(env_, paramValue[ARGS_ZERO], nullptr, 0, &stringSize);
         if (napiError != napi_ok) {
@@ -70,12 +76,6 @@ public:
         callbackName_.resize(stringSize);
         napiError =
             napi_get_value_string_utf8(env_, paramValue[ARGS_ZERO], callbackName_.data(), stringSize + 1, &stringSize);
-
-        callbackFunction_ = paramValue[paramSize - 1];
-        if (paramSize > CALLBACK_ARGS_MIN) {
-            callbackFunctionParameters_ =
-                std::vector<napi_value>(paramValue.begin() + 1, paramValue.begin() + paramSize - 1);
-        }
     }
 
     bool AssertStatus(CameraErrorCode errorCode, const char* message);
