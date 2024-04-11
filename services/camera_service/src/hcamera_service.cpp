@@ -614,7 +614,6 @@ int32_t HCameraService::MuteCamera(bool muteMode)
     }
     CameraReportUtils::GetInstance().ReportUserBehavior(
         "MuteCamera", to_string(muteMode), CameraReportUtils::GetCallerInfo());
-
     bool oldMuteMode = muteMode_;
     if (muteMode == oldMuteMode) {
         return CAMERA_OK;

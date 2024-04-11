@@ -564,7 +564,8 @@ void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::C
     if (ret != CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_VIDEO_STABILIZATION_MODE tag");
     } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_VIDEO_STABILIZATION_MODE value = %{public}d", item.data.u8[0]);
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_VIDEO_STABILIZATION_MODE value = %{public}d",
+            item.data.u8[0]);
         CameraReportUtils::GetInstance().ReportUserBehavior(
             "SetVideoStabilizationMode", std::to_string(item.data.u8[0]), CameraReportUtils::GetCallerInfo());
     }
@@ -584,7 +585,8 @@ void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::C
     if (ret != CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE tag");
     } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE value = %{public}d", item.data.u8[0]);
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE value = %{public}d",
+            item.data.u8[0]);
         CameraReportUtils::GetInstance().ReportUserBehavior(
             "setBeautySkinSmooth", std::to_string(item.data.u8[0]), CameraReportUtils::GetCallerInfo());
     }
@@ -594,7 +596,8 @@ void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::C
     if (ret != CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE tag");
     } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE value = %{public}d", item.data.u8[0]);
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE value = %{public}d",
+            item.data.u8[0]);
         CameraReportUtils::GetInstance().ReportUserBehavior(
             "setBeautyFaceSlender", std::to_string(item.data.u8[0]), CameraReportUtils::GetCallerInfo());
     }
@@ -604,7 +607,7 @@ void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::C
     if (ret != CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE tag");
     } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE value = %{public}d", item.data.u8[0]);
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE value=%{public}d", item.data.u8[0]);
         CameraReportUtils::GetInstance().ReportUserBehavior(
             "setBeautySkinTone", std::to_string(item.data.u8[0]), CameraReportUtils::GetCallerInfo());
     }
@@ -692,7 +695,7 @@ void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::C
         MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_AE_EXPOSURE_COMPENSATION value = %{public}d",
             item.data.u8[0]);
         CameraReportUtils::GetInstance().ReportUserBehavior(
-            "SetExposureBias", std::to_string(item.data.u8[0]), CameraReportUtils::GetCallerInfo());    
+            "SetExposureBias", std::to_string(item.data.u8[0]), CameraReportUtils::GetCallerInfo());
     }
 
     // debug log for portrait Effect
