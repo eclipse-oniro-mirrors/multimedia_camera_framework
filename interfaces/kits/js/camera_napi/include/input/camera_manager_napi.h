@@ -144,6 +144,8 @@ public:
 private:
     static void CameraManagerNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value CameraManagerNapiConstructor(napi_env env, napi_callback_info info);
+    static void ProcessCameraInfo(sptr<CameraManager>& cameraManager, const CameraPosition cameraPosition,
+        const CameraType cameraType, sptr<CameraDevice>& cameraInfo);
 
     void RegisterCameraStatusCallbackListener(
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);

@@ -1064,6 +1064,8 @@ private:
     bool IsModeWithVideoStream();
     void SetDefaultColorSpace();
     void UpdateDeviceDeferredability();
+    void ProcessProfilesAbilityId(const int32_t portraitMode);
+    int32_t ProcessCaptureColorSpace(ColorSpaceInfo colorSpaceInfo, ColorSpace& fwkCaptureColorSpace);
 };
 } // namespace CameraStandard
 } // namespace OHOS

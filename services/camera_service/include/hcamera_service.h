@@ -138,6 +138,10 @@ private:
         wptr<HCameraService> cameraService_;
     };
 
+    void FillCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos,
+        vector<string>& cameraIds, vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList);
+    void CheckCameraMute(bool muteMode);
+
     void CameraSummary(vector<string> cameraIds, string& dumpString);
     void CameraDumpCameraInfo(std::string& dumpString, std::vector<std::string>& cameraIds,
         std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList);

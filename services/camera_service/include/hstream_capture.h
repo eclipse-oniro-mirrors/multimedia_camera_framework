@@ -30,6 +30,7 @@
 namespace OHOS {
 namespace CameraStandard {
 using OHOS::HDI::Camera::V1_0::BufferProducerSequenceable;
+using namespace OHOS::HDI::Camera::V1_0;
 class HStreamCapture : public HStreamCaptureStub, public HStreamCommon {
 public:
     HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height);
@@ -64,6 +65,9 @@ public:
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
 
 private:
+    void ProcessCaptureInfoPhoto(CaptureInfo& captureInfoPhoto,
+        const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings);
+
     sptr<IStreamCaptureCallback> streamCaptureCallback_;
     std::mutex callbackLock_;
     int32_t thumbnailSwitch_;

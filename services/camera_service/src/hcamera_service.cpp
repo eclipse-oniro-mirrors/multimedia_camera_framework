@@ -149,6 +149,13 @@ int32_t HCameraService::GetCameras(
             id.c_str(), cameraPosition, cameraType, connectionType, isMirrorSupported));
         cameraInfos.emplace_back(make_shared<CameraMetaInfo>(id, cameraPosition, connectionType, cameraAbility));
     }
+    FillCameras(cameraInfos, cameraIds, cameraAbilityList);
+    return ret;
+}
+
+void HCameraService::FillCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos,
+    vector<string>& cameraIds, vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList)
+{
     vector<shared_ptr<CameraMetaInfo>> choosedCameras = ChooseDeFaultCameras(cameraInfos);
     cameraIds.clear();
     cameraAbilityList.clear();
@@ -156,7 +163,6 @@ int32_t HCameraService::GetCameras(
         cameraIds.emplace_back(camera->cameraId);
         cameraAbilityList.emplace_back(camera->cameraAbility);
     }
-    return ret;
 }
 
 vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<shared_ptr<CameraMetaInfo>> cameraInfos)
@@ -620,12 +626,7 @@ int32_t HCameraService::MuteCamera(bool muteMode)
     pid_t activeClient = deviceManager->GetActiveClient();
     if (activeClient == -1) {
         lock_guard<mutex> lock(muteCbMutex_);
-        if (!cameraMuteServiceCallbacks_.empty()) {
-            for (auto cb : cameraMuteServiceCallbacks_) {
-                cb.second->OnCameraMute(muteMode);
-                CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraMute! current Camera muteMode:%d", muteMode));
-            }
-        }
+        CheckCameraMute(muteMode);
         return CAMERA_OK;
     }
     sptr<HCameraDevice> activeDevice = deviceManager->GetCameraByPid(activeClient);
@@ -653,6 +654,16 @@ int32_t HCameraService::MuteCamera(bool muteMode)
         }
     }
     return ret;
+}
+
+void HCameraService::CheckCameraMute(bool muteMode)
+{
+    if (!cameraMuteServiceCallbacks_.empty()) {
+        for (auto cb : cameraMuteServiceCallbacks_) {
+            cb.second->OnCameraMute(muteMode);
+            CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraMute! current Camera muteMode:%d", muteMode));
+        }
+    }
 }
 
 int32_t HCameraService::PrelaunchCamera()

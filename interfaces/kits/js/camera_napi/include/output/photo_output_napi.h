@@ -115,6 +115,7 @@ private:
     void UpdateJSCallbackAsync(sptr<Surface> photoSurface) const;
     void ExecutePhoto(sptr<SurfaceBuffer> surfaceBfuffer) const;
     void ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) const;
+    void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const;
     napi_ref capturePhotoCb_;
     napi_ref captureDeferredPhotoCb_;
 };
@@ -199,6 +200,8 @@ struct PhotoListenerInfo {
     {}
 };
 
+struct PhotoOutputAsyncContext;
+
 class PhotoOutputNapi : public CameraNapiEventEmitter<PhotoOutputNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
@@ -232,6 +235,10 @@ public:
 private:
     static void PhotoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value PhotoOutputNapiConstructor(napi_env env, napi_callback_info info);
+
+    static void ProcessContext(PhotoOutputAsyncContext* context);
+    static void ProcessAsyncContext(napi_status status, napi_env env, napi_value result,
+        unique_ptr<PhotoOutputAsyncContext> asyncContext);
 
     void RegisterQuickThumbnailCallbackListener(
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);

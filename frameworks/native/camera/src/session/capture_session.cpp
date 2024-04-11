@@ -36,6 +36,7 @@
 #include "output/photo_output.h"
 #include "output/preview_output.h"
 #include "output/video_output.h"
+#include "camera_error_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -2546,6 +2547,22 @@ int32_t CaptureSession::VerifyAbility(uint32_t ability)
         return CAMERA_INVALID_ARG;
     }
 
+    ProcessProfilesAbilityId(portraitMode);
+    
+    std::vector<uint32_t> photoAbilityId = previewProfile_.GetAbilityId();
+    std::vector<uint32_t> previewAbilityId = previewProfile_.GetAbilityId();
+
+    auto itrPhoto = std::find(photoAbilityId.begin(), photoAbilityId.end(), ability);
+    auto itrPreview = std::find(previewAbilityId.begin(), previewAbilityId.end(), ability);
+    if (itrPhoto == photoAbilityId.end() || itrPreview == previewAbilityId.end()) {
+        MEDIA_ERR_LOG("CaptureSession::VerifyAbility abilityId is NULL");
+        return CAMERA_INVALID_ARG;
+    }
+    return CAMERA_OK;
+}
+
+void CaptureSession::ProcessProfilesAbilityId(const int32_t portraitMode)
+{
     std::vector<Profile> photoProfiles = inputDevice_->GetCameraDeviceInfo()->modePhotoProfiles_[portraitMode];
     std::vector<Profile> previewProfiles = inputDevice_->GetCameraDeviceInfo()->modePreviewProfiles_[portraitMode];
     for (auto i : photoProfiles) {
@@ -2582,16 +2599,6 @@ int32_t CaptureSession::VerifyAbility(uint32_t ability)
             break;
         }
     }
-    std::vector<uint32_t> photoAbilityId = previewProfile_.GetAbilityId();
-    std::vector<uint32_t> previewAbilityId = previewProfile_.GetAbilityId();
-
-    auto itrPhoto = std::find(photoAbilityId.begin(), photoAbilityId.end(), ability);
-    auto itrPreview = std::find(previewAbilityId.begin(), previewAbilityId.end(), ability);
-    if (itrPhoto == photoAbilityId.end() || itrPreview == previewAbilityId.end()) {
-        MEDIA_ERR_LOG("CaptureSession::VerifyAbility abilityId is NULL");
-        return CAMERA_INVALID_ARG;
-    }
-    return CAMERA_OK;
 }
 
 std::vector<FilterType> CaptureSession::GetSupportedFilters()
@@ -3076,9 +3083,49 @@ int32_t CaptureSession::SetColorSpace(ColorSpace colorSpace)
 
     CM_ColorSpaceType captureColorSpace = metaColorSpace;
     ColorSpaceInfo colorSpaceInfo = GetSupportedColorSpaceInfo();
+    
+    ColorSpace fwkCaptureColorSpace;
+    auto it = g_metaColorSpaceMap_.find(captureColorSpace);
+    if (it != g_metaColorSpaceMap_.end()) {
+        fwkCaptureColorSpace = it->second;
+    } else {
+        MEDIA_ERR_LOG("CaptureSession::SetColorSpace, %{public}d map failed", static_cast<int32_t>(captureColorSpace));
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+
+    if (ProcessCaptureColorSpace(colorSpaceInfo, fwkCaptureColorSpace) != CameraErrorCode::SUCCESS) {
+        MEDIA_ERR_LOG("CaptureSession::SetDefaultColorSpace() is failed.");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+
+    if (IsSessionConfiged()) {
+        isColorSpaceSetted_ = true;
+    }
+    // 若session还未commit，则后续createStreams会把色域带下去；否则，SetColorSpace要走updateStreams
+    MEDIA_DEBUG_LOG("CaptureSession::SetColorSpace, IsSessionCommited %{public}d", IsSessionCommited());
+    int32_t errCode = captureSession_->SetColorSpace(colorSpace, fwkCaptureColorSpace, IsSessionCommited());
+    if (errCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("Failed to SetColorSpace!, %{public}d", errCode);
+    }
+    return ServiceToCameraError(errCode);
+}
+
+int32_t CaptureSession::ProcessCaptureColorSpace(ColorSpaceInfo colorSpaceInfo, ColorSpace& fwkCaptureColorSpace)
+{
+    CM_ColorSpaceType metaColorSpace;
+    CM_ColorSpaceType captureColorSpace;
     for (uint32_t i = 0; i < colorSpaceInfo.modeCount; i++) {
         if (GetMode() != colorSpaceInfo.modeInfo[i].modeType) {
             continue;
+        }
+ 
+        auto it = g_fwkColorSpaceMap_.find(fwkCaptureColorSpace);
+        if (it != g_fwkColorSpaceMap_.end()) {
+            metaColorSpace = it->second;
+        } else {
+            MEDIA_ERR_LOG("CaptureSession::SetColorSpace, %{public}d map failed",
+                static_cast<int32_t>(fwkCaptureColorSpace));
+            return CameraErrorCode::INVALID_ARGUMENT;
         }
 
         MEDIA_DEBUG_LOG("CaptureSession::SetColorSpace mode %{public}d, color %{public}d.", GetMode(), metaColorSpace);
@@ -3094,6 +3141,7 @@ int32_t CaptureSession::SetColorSpace(ColorSpace colorSpace)
             break;
         }
 
+        captureColorSpace = metaColorSpace;
         for (uint32_t j = 0; j < colorSpaceInfo.modeInfo[i].streamTypeCount; j++) {
             if (colorSpaceInfo.modeInfo[i].streamInfo[j].streamType == OutputCapStreamType::STILL_CAPTURE) {
                 captureColorSpace =
@@ -3105,7 +3153,6 @@ int32_t CaptureSession::SetColorSpace(ColorSpace colorSpace)
         break;
     }
 
-    ColorSpace fwkCaptureColorSpace;
     auto it = g_metaColorSpaceMap_.find(captureColorSpace);
     if (it != g_metaColorSpaceMap_.end()) {
         fwkCaptureColorSpace = it->second;
@@ -3113,17 +3160,7 @@ int32_t CaptureSession::SetColorSpace(ColorSpace colorSpace)
         MEDIA_ERR_LOG("CaptureSession::SetColorSpace, %{public}d map failed", static_cast<int32_t>(captureColorSpace));
         return CameraErrorCode::INVALID_ARGUMENT;
     }
-
-    if (IsSessionConfiged()) {
-        isColorSpaceSetted_ = true;
-    }
-    // 若session还未commit，则后续createStreams会把色域带下去；否则，SetColorSpace要走updateStreams
-    MEDIA_DEBUG_LOG("CaptureSession::SetColorSpace, IsSessionCommited %{public}d", IsSessionCommited());
-    int32_t errCode = captureSession_->SetColorSpace(colorSpace, fwkCaptureColorSpace, IsSessionCommited());
-    if (errCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("Failed to SetColorSpace!, %{public}d", errCode);
-    }
-    return ServiceToCameraError(errCode);
+    return CameraErrorCode::SUCCESS;
 }
 
 bool CaptureSession::IsModeWithVideoStream()
