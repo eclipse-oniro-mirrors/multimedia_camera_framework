@@ -27,10 +27,10 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace std;
 
-void CameraReportUtils::SetOpenCamPerfPreInfo(const std::string& cameraId, CallerInfo caller)
+void CameraReportUtils::SetOpenCamPerfPreInfo(const string& cameraId, CallerInfo caller)
 {
     MEDIA_INFO_LOG("CameraReportUtils::SetOpenCamPerfPreInfo");
-    std::unique_lock<std::mutex> lock(mutex_);
+    unique_lock<mutex> lock(mutex_);
     {
         if (IsCallerChanged(caller_, caller)) {
             MEDIA_INFO_LOG("CameraReportUtils::SetOpenCamPerfPreInfo caller changed");
@@ -43,10 +43,10 @@ void CameraReportUtils::SetOpenCamPerfPreInfo(const std::string& cameraId, Calle
     }
 }
 
-void CameraReportUtils::SetOpenCamPerfStartInfo(const std::string& cameraId, CallerInfo caller)
+void CameraReportUtils::SetOpenCamPerfStartInfo(const string& cameraId, CallerInfo caller)
 {
     MEDIA_INFO_LOG("CameraReportUtils::SetOpenCamPerfStartInfo");
-    std::unique_lock<std::mutex> lock(mutex_);
+    unique_lock<mutex> lock(mutex_);
     {
         if (IsCallerChanged(caller_, caller)) {
             MEDIA_INFO_LOG("CameraReportUtils::SetOpenCamPerfStartInfo caller changed");
@@ -66,7 +66,7 @@ void CameraReportUtils::SetOpenCamPerfStartInfo(const std::string& cameraId, Cal
 void CameraReportUtils::SetOpenCamPerfEndInfo()
 {
     MEDIA_INFO_LOG("CameraReportUtils::SetOpenCamPerfEndInfo");
-    std::unique_lock<std::mutex> lock(mutex_);
+    unique_lock<mutex> lock(mutex_);
     {
         if (!isPrelaunching_ && !isOpening_) {
             MEDIA_INFO_LOG("CameraReportUtils::SetOpenCamPerfEndInfo not ready");
@@ -79,14 +79,14 @@ void CameraReportUtils::SetOpenCamPerfEndInfo()
             return;
         }
         openCamPerfEndTime_ = DeferredProcessing::SteadyClock::GetTimestampMilli();
-        std::string startType = isPrelaunching_ ? "preLaunch" : "open";
+        string startType = isPrelaunching_ ? "preLaunch" : "open";
         isOpening_ = false;
         isPrelaunching_ = false;
         ReportOpenCameraPerf(openCamPerfEndTime_ - openCamPerfStartTime_, startType);
     }
 }
 
-void CameraReportUtils::ReportOpenCameraPerf(uint64_t costTime, const std::string& startType)
+void CameraReportUtils::ReportOpenCameraPerf(uint64_t costTime, const string& startType)
 {
     MEDIA_INFO_LOG("CameraReportUtils::ReportOpenCameraPerf costTime: %{public}" PRIu64 "", costTime);
     HiSysEventWrite(
@@ -106,7 +106,7 @@ void CameraReportUtils::ReportOpenCameraPerf(uint64_t costTime, const std::strin
 void CameraReportUtils::SetModeChangePerfStartInfo(int32_t preMode, CallerInfo caller)
 {
     MEDIA_INFO_LOG("CameraReportUtils::SetModeChangePerfStartInfo");
-    std::unique_lock<std::mutex> lock(mutex_);
+    unique_lock<mutex> lock(mutex_);
     {
         modeChangeStartTime_ = DeferredProcessing::SteadyClock::GetTimestampMilli();
         isModeChanging_ = true;
@@ -118,7 +118,7 @@ void CameraReportUtils::SetModeChangePerfStartInfo(int32_t preMode, CallerInfo c
 void CameraReportUtils::updateModeChangePerfInfo(int32_t curMode, CallerInfo caller)
 {
     MEDIA_INFO_LOG("CameraReportUtils::updateModeChangePerfInfo");
-    std::unique_lock<std::mutex> lock(mutex_);
+    unique_lock<mutex> lock(mutex_);
     {
         if (IsCallerChanged(caller_, caller)) {
             MEDIA_INFO_LOG("updateModeChangePerfInfo caller changed, cancle mode change report");
@@ -132,7 +132,7 @@ void CameraReportUtils::updateModeChangePerfInfo(int32_t curMode, CallerInfo cal
 void CameraReportUtils::SetModeChangePerfEndInfo()
 {
     MEDIA_INFO_LOG("CameraReportUtils::SetModeChangePerfEndInfo");
-    std::unique_lock<std::mutex> lock(mutex_);
+    unique_lock<mutex> lock(mutex_);
     {
         if (!isModeChanging_) {
             MEDIA_INFO_LOG("CameraReportUtils::SetModeChangePerfEndInfo cancel report");
@@ -172,16 +172,16 @@ void CameraReportUtils::SetCapturePerfStartInfo(DfxCaptureInfo captureInfo)
 {
     MEDIA_INFO_LOG("CameraReportUtils::SetCapturePerfStartInfo captureID: %{public}d", captureInfo.captureId);
     captureInfo.captureStartTime = DeferredProcessing::SteadyClock::GetTimestampMilli();
-    std::unique_lock<std::mutex> lock(mutex_);
-    captureList_.insert(std::pair<int32_t, DfxCaptureInfo>(captureInfo.captureId, captureInfo));
+    unique_lock<mutex> lock(mutex_);
+    captureList_.insert(pair<int32_t, DfxCaptureInfo>(captureInfo.captureId, captureInfo));
 }
 
 void CameraReportUtils::SetCapturePerfEndInfo(int32_t captureId)
 {
     MEDIA_INFO_LOG("CameraReportUtils::SetCapturePerfEndInfo start");
-    std::unique_lock<std::mutex> lock(mutex_);
+    unique_lock<mutex> lock(mutex_);
     {
-        std::map<int32_t, DfxCaptureInfo>::iterator iter = captureList_.find(captureId);
+        map<int32_t, DfxCaptureInfo>::iterator iter = captureList_.find(captureId);
         if (iter != captureList_.end()) {
             MEDIA_INFO_LOG("CameraReportUtils::SetCapturePerfEndInfo");
             auto dfxCaptureInfo = iter->second;
@@ -207,12 +207,18 @@ void CameraReportUtils::ReportCapturePerf(DfxCaptureInfo captureInfo)
         "CAPTURE_ID", captureInfo.captureId,
         "CUR_MODE", curMode_,
         "CUR_CAMERA_ID", cameraId_);
+
+    HiSysEventWrite(
+        HiviewDFX::HiSysEvent::Domain::CAMERA,
+        "IMAGING_INFO",
+        HiviewDFX::HiSysEvent::EventType::STATISTIC,
+        "MSG", "Capture");
 }
 
 void CameraReportUtils::SetSwitchCamPerfStartInfo(CallerInfo caller)
 {
     MEDIA_INFO_LOG("CameraReportUtils::SetSwitchCamPerfStartInfo");
-    std::unique_lock<std::mutex> lock(mutex_);
+    unique_lock<mutex> lock(mutex_);
     {
         switchCamPerfStartTime_ = DeferredProcessing::SteadyClock::GetTimestampMilli();
         isSwitching_ = true;
@@ -223,7 +229,7 @@ void CameraReportUtils::SetSwitchCamPerfStartInfo(CallerInfo caller)
 void CameraReportUtils::SetSwitchCamPerfEndInfo()
 {
     MEDIA_INFO_LOG("CameraReportUtils::SetSwitchCamPerfEndInfo");
-    std::unique_lock<std::mutex> lock(mutex_);
+    unique_lock<mutex> lock(mutex_);
     {
         if (!isSwitching_) {
             MEDIA_INFO_LOG("CameraReportUtils::SetSwitchCamPerfEndInfo cancel report");
@@ -277,26 +283,56 @@ bool CameraReportUtils::IsCallerChanged(CallerInfo preCaller, CallerInfo curCall
     return false;
 }
 
-void CameraReportUtils::ReportCameraError(std::string funcName,
+void CameraReportUtils::ReportCameraError(string funcName,
                                           int32_t errCode,
                                           bool isHdiErr,
                                           CallerInfo callerInfo)
 {
-    std::string str = funcName;
+    string str = funcName;
     if (isHdiErr) {
-        str += " faild, hdi errCode:" + std::to_string(errCode);
+        str += " faild, hdi errCode:" + to_string(errCode);
     } else {
-        str += " faild, errCode:" + std::to_string(errCode);
+        str += " faild, errCode:" + to_string(errCode);
     }
-    str += " caller pid:" + std::to_string(callerInfo.pid)
-        + " uid:" + std::to_string(callerInfo.uid)
-        + " tokenID:" + std::to_string(callerInfo.tokenID)
+    str += " caller pid:" + to_string(callerInfo.pid)
+        + " uid:" + to_string(callerInfo.uid)
+        + " tokenID:" + to_string(callerInfo.tokenID)
         + " bundleName:" + callerInfo.bundleName;
     HiSysEventWrite(
         HiviewDFX::HiSysEvent::Domain::CAMERA,
         "CAMERA_ERR",
         HiviewDFX::HiSysEvent::EventType::FAULT,
         "MSG", str);
+}
+
+void CameraReportUtils::ReportUserBehavior(string behaviorName,
+                                           string value,
+                                           CallerInfo callerInfo)
+{
+    MEDIA_INFO_LOG("CameraReportUtils::ReportUserBehavior");
+    static const string S_BEHAVIORNAME = "behaviorName:";
+    static const string S_VALUE = ",value:";
+    static const string S_CUR_MODE = ",curMode:";
+    static const string S_CUR_CAMERAID = ",curCameraId:";
+    static const string S_CPID = ",cPid:";
+    static const string S_CUID = ",cUid:";
+    static const string S_CTOKENID = ",cTokenID:";
+    static const string S_CBUNDLENAME = ",cBundleName:";
+    stringstream ss;
+    ss << S_BEHAVIORNAME << behaviorName
+       << S_VALUE << value
+       << S_CUR_MODE << curMode_
+       << S_CUR_CAMERAID << cameraId_
+       << S_CPID << callerInfo.pid
+       << S_CUID << callerInfo.uid
+       << S_CTOKENID << callerInfo.tokenID
+       << S_CBUNDLENAME << callerInfo.bundleName;
+
+    HiSysEventWrite(
+        HiviewDFX::HiSysEvent::Domain::CAMERA,
+        "USER_BEHAVIOR",
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
+        "MSG", ss.str());
 }
 } // namespace CameraStandard
 } // namespace OHOS

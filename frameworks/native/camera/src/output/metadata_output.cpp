@@ -279,15 +279,15 @@ int32_t MetadataOutput::ProcessMetaObjects(int64_t timestamp, std::vector<sptr<M
         sptr<MetadataObject> metadataObject = new(std::nothrow) MetadataFaceObject(formatTimestamp,
             (Rect) {topLeftX, topLeftY, width, height});
         MEDIA_INFO_LOG("ProcessFaceRectangles Metadata coordination: topleftX(%{public}f),topleftY(%{public}f),"
-                        "BottomRightX(%{public}f),BottomRightY(%{public}f), timestamp: %{public}" PRId64,
-                        start[offsetTopLeftX], start[offsetTopLeftY],
-                        start[offsetBottomRightX], start[offsetBottomRightY], formatTimestamp);
+                       "BottomRightX(%{public}f),BottomRightY(%{public}f), timestamp: %{public}" PRId64,
+                       start[offsetTopLeftX], start[offsetTopLeftY],
+                       start[offsetBottomRightX], start[offsetBottomRightY], formatTimestamp);
         MEDIA_INFO_LOG("ProcessFaceRectangles Postion: %{public}s App coordination: "
-                        "topleftX(%{public}f),topleftY(%{public}f),width(%{public}f),height(%{public}f)",
-                        positionStr.c_str(), topLeftX, topLeftY, width, height);
+                       "topleftX(%{public}f),topleftY(%{public}f),width(%{public}f),height(%{public}f)",
+                       positionStr.c_str(), topLeftX, topLeftY, width, height);
         if (!metadataObject) {
             MEDIA_ERR_LOG("Failed to allocate MetadataFaceObject");
-            return CameraErrorCode::SERVICE_FATL_ERROR;
+            return CameraErrorCode::OPERATION_NOT_ALLOWED;
         }
         metaObjects.emplace_back(metadataObject);
     }

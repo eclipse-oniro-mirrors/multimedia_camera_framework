@@ -1132,8 +1132,7 @@ void CameraManagerNapi::ProcessCameraInfo(sptr<CameraManager>& cameraManager, co
     const CameraType cameraType, sptr<CameraDevice>& cameraInfo)
 {
     std::vector<sptr<CameraDevice>> cameraObjList = cameraManager->GetSupportedCameras();
-    MEDIA_DEBUG_LOG("cameraInfo is null, the cameraObjList size is %{public}zu",
-                    cameraObjList.size());
+    MEDIA_DEBUG_LOG("cameraInfo is null, the cameraObjList size is %{public}zu", cameraObjList.size());
     for (size_t i = 0; i < cameraObjList.size(); i++) {
         sptr<CameraDevice> cameraDevice = cameraObjList[i];
         if (cameraDevice == nullptr) {
