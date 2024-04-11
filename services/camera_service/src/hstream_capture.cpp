@@ -152,6 +152,10 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_FRONT;
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
+        if (cameraAbility_ == nullptr) {
+            MEDIA_ERR_LOG("HStreamCapture::cameraAbility_ is null");
+            return CAMERA_INVALID_STATE;
+        }
         int32_t result = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_ABILITY_CAMERA_POSITION,
                                                               &item);
         if (result == CAM_META_SUCCESS && item.count > 0) {
