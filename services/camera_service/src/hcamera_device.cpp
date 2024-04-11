@@ -47,6 +47,7 @@ using namespace OHOS::HDI::Camera::V1_0;
 std::mutex HCameraDevice::g_deviceOpenCloseMutex_;
 static const int32_t DEFAULT_SETTING_ITEM_COUNT = 100;
 static const int32_t DEFAULT_SETTING_ITEM_LENGTH = 100;
+static const float SMOOTH_ZOOM_DIVISOR = 100.0f;
 static const std::vector<camera_device_metadata_tag> DEVICE_OPEN_LIFECYCLE_TAGS = { OHOS_CONTROL_MUTE_MODE };
 sptr<OHOS::Rosen::DisplayManager::IFoldStatusListener> listener;
 class HCameraDevice::FoldScreenListener : public OHOS::Rosen::DisplayManager::IFoldStatusListener {
@@ -169,6 +170,7 @@ int32_t HCameraDevice::DispatchDefaultSettingToHdi()
         MEDIA_ERR_LOG("HCameraDevice::DispatchDefaultSettingToHdi metadata ConvertMetadataToVec fail");
         return CAMERA_UNKNOWN_ERROR;
     }
+    ReportMetadataDebugLog(lifeCycleSettings);
     CamRetCode rc = (CamRetCode)hdiCameraDevice_->UpdateSettings(hdiMetadata);
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         MEDIA_ERR_LOG("HCameraDevice::DispatchDefaultSettingToHdi UpdateSettings error: %{public}d", rc);
@@ -267,6 +269,7 @@ int32_t HCameraDevice::OpenDevice()
         if (updateSettings_ != nullptr) {
             std::vector<uint8_t> setting;
             OHOS::Camera::MetadataUtils::ConvertMetadataToVec(updateSettings_, setting);
+            ReportMetadataDebugLog(updateSettings_);
             CamRetCode rc = (CamRetCode)(hdiCameraDevice_->UpdateSettings(setting));
             if (rc != HDI::Camera::V1_0::NO_ERROR) {
                 MEDIA_ERR_LOG("HCameraDevice::OpenDevice Update setting failed with error Code: %{public}d", rc);
@@ -476,6 +479,7 @@ int32_t HCameraDevice::UpdateSettingOnce(const std::shared_ptr<OHOS::Camera::Cam
     if (hdiCameraDevice_ != nullptr) {
         std::vector<uint8_t> hdiSettings;
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(settings, hdiSettings);
+        ReportMetadataDebugLog(settings);
         CamRetCode rc = (CamRetCode)(hdiCameraDevice_->UpdateSettings(hdiSettings));
         if (rc != HDI::Camera::V1_0::NO_ERROR) {
             MEDIA_ERR_LOG("Failed with error Code: %{public}d", rc);
@@ -529,13 +533,103 @@ int32_t HCameraDevice::GetStatus(std::shared_ptr<OHOS::Camera::CameraMetadata> &
 
 void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings)
 {
-    // debug log for focus mode
+    // debug log for zoom
     camera_metadata_item_t item;
-    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_FOCUS_MODE, &item);
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_ZOOM_RATIO, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_ZOOM_RATIO tag");
+    } else {
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_ZOOM_RATIO value = %{public}f", item.data.f[0]);
+        CameraReportUtils::GetInstance().ReportUserBehavior(
+            "SetZoomRatio", std::to_string(item.data.f[0]), CameraReportUtils::GetCallerInfo());
+    }
+
+    // debug log for smooth zoom
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_SMOOTH_ZOOM_RATIOS, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_SMOOTH_ZOOM_RATIOS tag");
+    } else {
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_SMOOTH_ZOOM_RATIOS count = %{public}d", item.count);
+        if (item.count > 1) {
+            uint32_t targetZoom = item.data.ui32[item.count - 2];
+            float zoomRatio = targetZoom / SMOOTH_ZOOM_DIVISOR;
+            MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_SMOOTH_ZOOM_RATIOS value = %{public}f", zoomRatio);
+            CameraReportUtils::GetInstance().ReportUserBehavior(
+                "SetSmoothZoom", std::to_string(zoomRatio), CameraReportUtils::GetCallerInfo());
+        }
+    }
+
+    // debug log for videoStabilization mode
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_VIDEO_STABILIZATION_MODE tag");
+    } else {
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_VIDEO_STABILIZATION_MODE value = %{public}d",
+            item.data.u8[0]);
+        CameraReportUtils::GetInstance().ReportUserBehavior(
+            "SetVideoStabilizationMode", std::to_string(item.data.u8[0]), CameraReportUtils::GetCallerInfo());
+    }
+
+    // debug log for filter
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_FILTER_TYPE, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_FILTER_TYPE tag");
+    } else {
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_FILTER_TYPE value = %{public}d", item.data.u8[0]);
+        CameraReportUtils::GetInstance().ReportUserBehavior(
+            "SetFilter", std::to_string(item.data.u8[0]), CameraReportUtils::GetCallerInfo());
+    }
+
+    // debug log for beauty skin smooth
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE tag");
+    } else {
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE value = %{public}d",
+            item.data.u8[0]);
+        CameraReportUtils::GetInstance().ReportUserBehavior(
+            "setBeautySkinSmooth", std::to_string(item.data.u8[0]), CameraReportUtils::GetCallerInfo());
+    }
+
+    // debug log for beauty face slender
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE tag");
+    } else {
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE value = %{public}d",
+            item.data.u8[0]);
+        CameraReportUtils::GetInstance().ReportUserBehavior(
+            "setBeautyFaceSlender", std::to_string(item.data.u8[0]), CameraReportUtils::GetCallerInfo());
+    }
+
+    // debug log for beauty skin tone
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE tag");
+    } else {
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE value=%{public}d", item.data.u8[0]);
+        CameraReportUtils::GetInstance().ReportUserBehavior(
+            "setBeautySkinTone", std::to_string(item.data.u8[0]), CameraReportUtils::GetCallerInfo());
+    }
+
+    // debug log for portrait effect
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_PORTRAIT_EFFECT_TYPE tag");
+    } else {
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_PORTRAIT_EFFECT_TYPE value = %{public}d", item.data.u8[0]);
+        CameraReportUtils::GetInstance().ReportUserBehavior(
+            "setPortraitEffect", std::to_string(item.data.u8[0]), CameraReportUtils::GetCallerInfo());
+    }
+
+    // debug log for focus mode
+    ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_FOCUS_MODE, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_FOCUS_MODE tag");
     } else {
         MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_FOCUS_MODE value = %{public}d", item.data.u8[0]);
+        CameraReportUtils::GetInstance().ReportUserBehavior(
+            "SetFocusMode", std::to_string(item.data.u8[0]), CameraReportUtils::GetCallerInfo());
     }
 
     // debug log for af regions
@@ -543,8 +637,12 @@ void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::C
     if (ret != CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_AF_REGIONS tag");
     } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_AF_REGIONS x = %{public}f, y = %{public}f",
-            item.data.f[0], item.data.f[1]);
+        std::stringstream ss;
+        ss << "x=" << item.data.f[0] << " y=" << item.data.f[1];
+        std::string str = ss.str();
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_AF_REGIONS %{public}s", str.c_str());
+        CameraReportUtils::GetInstance().ReportUserBehavior(
+            "SetFocusPoint", str, CameraReportUtils::GetCallerInfo());
     }
 
     // debug log for af regions
@@ -563,6 +661,8 @@ void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::C
         MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_EXPOSURE_MODE tag");
     } else {
         MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_EXPOSURE_MODE value = %{public}d", item.data.u8[0]);
+        CameraReportUtils::GetInstance().ReportUserBehavior(
+            "SetExposureMode", std::to_string(item.data.u8[0]), CameraReportUtils::GetCallerInfo());
     }
 
     // debug log for exposure mode
@@ -578,8 +678,12 @@ void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::C
     if (ret != CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_AE_REGIONS tag");
     } else {
-        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_AE_REGIONS x = %{public}f, y = %{public}f",
-            item.data.f[0], item.data.f[1]);
+        std::stringstream ss;
+        ss << "x=" << item.data.f[0] << " y=" << item.data.f[1];
+        std::string str = ss.str();
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_AE_REGIONS %{public}s", str.c_str());
+        CameraReportUtils::GetInstance().ReportUserBehavior(
+            "SetMeteringPoint", str, CameraReportUtils::GetCallerInfo());
     }
 
     // debug log for ae exposure compensation
@@ -590,6 +694,8 @@ void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::C
     } else {
         MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_AE_EXPOSURE_COMPENSATION value = %{public}d",
             item.data.u8[0]);
+        CameraReportUtils::GetInstance().ReportUserBehavior(
+            "SetExposureBias", std::to_string(item.data.u8[0]), CameraReportUtils::GetCallerInfo());
     }
 
     // debug log for portrait Effect

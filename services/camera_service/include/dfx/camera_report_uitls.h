@@ -45,7 +45,10 @@ public:
     static CallerInfo GetCallerInfo();
     static void ReportCameraError(
         std::string funcName, int32_t errCode, bool isHdiErr, CallerInfo callerInfo);
-    
+    void ReportUserBehavior(std::string behaviorName,
+                                   std::string value,
+                                   CallerInfo callerInfo);
+
     void SetOpenCamPerfPreInfo(const std::string& cameraId, CallerInfo caller);
     void SetOpenCamPerfStartInfo(const std::string& cameraId, CallerInfo caller);
     void SetOpenCamPerfEndInfo();

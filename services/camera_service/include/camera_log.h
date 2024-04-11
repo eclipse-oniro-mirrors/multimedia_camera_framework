@@ -90,7 +90,7 @@
 
 #define CAMERA_SYSEVENT_SECURITY(str)                                              \
     do {                                                                           \
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::CAMERA, "CAMERA_SECURITY",   \
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::CAMERA, "CAMERA_SECURITY",  \
                                      HiviewDFX::HiSysEvent::EventType::SECURITY,   \
                                      "MSG", str);                                  \
     } while (0)
