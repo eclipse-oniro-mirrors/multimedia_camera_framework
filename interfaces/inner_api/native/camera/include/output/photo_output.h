@@ -323,6 +323,20 @@ public:
     int32_t IsDeferredImageDeliveryEnabled(DeferredDeliveryImageType type);
 
     void ProcessSnapshotDurationUpdates(int32_t snapshotDuration);
+    
+    /**
+     * @brief To check the auto high quality photo is supported or not.
+     *
+     * @return Returns true/false if the auto high quality photo is supported/not-supported respectively.
+     */
+    int32_t IsAutoHighQualityPhotoSupported();
+
+    /**
+     * @brief To enable the auto high quality photo.
+     *
+     * @return Returns the result of the auto high quality photo enable.
+     */
+    int32_t EnableAutoHighQualityPhoto(bool enabled);
 
     /**
      * @brief Get default photo capture setting.
