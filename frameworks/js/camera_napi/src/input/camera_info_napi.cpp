@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,6 +16,7 @@
 #include "input/camera_info_napi.h"
 
 #include "camera_napi_security_utils.h"
+#include "camera_napi_param_parser.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -61,7 +62,8 @@ napi_value CameraDeviceNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_GETTER("cameraType", GetCameraType),
         DECLARE_NAPI_GETTER("connectionType", GetConnectionType),
         DECLARE_NAPI_GETTER("hostDeviceName", GetHostDeviceName),
-        DECLARE_NAPI_GETTER("hostDeviceType", GetHostDeviceType)
+        DECLARE_NAPI_GETTER("hostDeviceType", GetHostDeviceType),
+        DECLARE_NAPI_GETTER("cameraOrientation", GetCameraOrientation)
     };
 
     status = napi_define_class(env, CAMERA_OBJECT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -340,6 +342,28 @@ napi_value CameraDeviceNapi::GetHostDeviceType(napi_env env, napi_callback_info 
         }
     }
     return undefinedResult;
+}
+
+napi_value CameraDeviceNapi::GetCameraOrientation(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetCameraOrientation enter");
+
+    CameraDeviceNapi* obj = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, obj);
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("GetCameraOrientation parse parameter occur error");
+        return result;
+    }
+    auto cameraDevice = obj->cameraDevice_;
+    if (cameraDevice != nullptr) {
+        int32_t cameraOrientation = cameraDevice->GetCameraOrientation();
+        napi_create_int32(env, cameraOrientation, &result);
+    } else {
+        MEDIA_ERR_LOG("GetCameraOrientation get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+    }
+    return result;
 }
 } // namespace CameraStandard
 } // namespace OHOS

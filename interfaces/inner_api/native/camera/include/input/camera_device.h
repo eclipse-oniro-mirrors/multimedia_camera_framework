@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -149,6 +149,14 @@ public:
     * @return Returns the networkId of the Distributed camera.
     */
     std::string GetNetWorkId();
+
+    /**
+    * @brief Get the camera orientation.
+    *
+    * @return Returns the camera orientation.
+    */
+    int32_t GetCameraOrientation();
+
     /**
     * @brief Check if mirror mode supported.
     *
@@ -183,6 +191,7 @@ private:
     CameraType cameraType_ = CAMERA_TYPE_DEFAULT;
     ConnectionType connectionType_ = CAMERA_CONNECTION_BUILT_IN;
     CameraFoldScreenType foldScreenType_ = CAMERA_FOLDSCREEN_UNSPECIFIED;
+    int32_t cameraOrientation_ = 0;
     bool isMirrorSupported_ = false;
     dmDeviceInfo dmDeviceInfo_ = {};
     std::vector<float> zoomRatioRange_;

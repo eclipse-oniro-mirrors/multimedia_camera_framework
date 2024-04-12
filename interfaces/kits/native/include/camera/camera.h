@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -599,6 +599,11 @@ typedef struct Camera_Device {
      * Camera connection type attribute.
      */
     Camera_Connection connectionType;
+
+    /**
+     * Camera orientation.
+     */
+    int32_t cameraOrientation;
 } Camera_Device;
 
 /**
