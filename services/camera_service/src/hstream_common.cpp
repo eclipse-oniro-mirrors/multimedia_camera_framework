@@ -295,8 +295,7 @@ void HStreamCommon::PrintCaptureDebugLog(const std::shared_ptr<OHOS::Camera::Cam
     }
 
     // debug log for capture mirror
-    result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(),
-                                                   OHOS_CONTROL_CAPTURE_MIRROR, &item);
+    result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_CONTROL_CAPTURE_MIRROR, &item);
     if (result != CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_CAPTURE_MIRROR tag");
     } else {
@@ -310,7 +309,8 @@ void HStreamCommon::PrintCaptureDebugLog(const std::shared_ptr<OHOS::Camera::Cam
         MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_JPEG_ORIENTATION tag");
     } else {
         MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_JPEG_ORIENTATION value = %{public}d", item.data.i32[0]);
-        CameraReportUtils::GetInstance().UpdateImagingInfo(DFX_PHOTO_SETTING_ROTATION, std::to_string(item.data.i32[0]));
+        CameraReportUtils::GetInstance().UpdateImagingInfo(DFX_PHOTO_SETTING_ROTATION,
+            std::to_string(item.data.i32[0]));
     }
 }
 } // namespace CameraStandard

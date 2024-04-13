@@ -402,7 +402,8 @@ void CameraReportUtils::SetVideoEndInfo(int32_t captureId)
             MEDIA_INFO_LOG("CameraReportUtils::SetVideoEndInfo");
             auto dfxCaptureInfo = iter->second;
             dfxCaptureInfo.captureEndTime = DeferredProcessing::SteadyClock::GetTimestampMilli();
-            imagingValueList_.emplace("VideoDuration", to_string(dfxCaptureInfo.captureEndTime - dfxCaptureInfo.captureStartTime));
+            imagingValueList_.emplace("VideoDuration",
+                to_string(dfxCaptureInfo.captureEndTime - dfxCaptureInfo.captureStartTime));
             ReportImagingInfo(dfxCaptureInfo);
             captureList_.erase(captureId);
         }
