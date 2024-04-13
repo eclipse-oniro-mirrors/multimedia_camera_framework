@@ -135,6 +135,8 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     AddCameraPermissionUsedRecord(callingTokenId, permissionName);
 
     // report capture performance dfx
+    std::shared_ptr<OHOS::Camera::CameraMetadata> captureMetadataSetting_ = nullptr;
+    OHOS::Camera::MetadataUtils::ConvertVecToMetadata(captureInfoPhoto.captureSetting_, captureMetadataSetting_);
     DfxCaptureInfo captureInfo;
     captureInfo.captureId = preparedCaptureId;
     captureInfo.caller = CameraReportUtils::GetCallerInfo();

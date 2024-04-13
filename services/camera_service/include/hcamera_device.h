@@ -26,7 +26,6 @@
 #include "v1_0/icamera_device_callback.h"
 #include "camera_metadata_info.h"
 #include "camera_util.h"
-#include "camera_report_uitls.h"
 #include "hcamera_device_stub.h"
 #include "hcamera_host_manager.h"
 #include "v1_0/icamera_device.h"
@@ -134,8 +133,6 @@ private:
     std::mutex unPrepareZoomMutex_;
     uint32_t zoomTimerId_;
     std::atomic<bool> inPrepareZoom_;
-
-    CallerInfo caller_;
 
     void UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings);
     void ResetDeviceOpenLifeCycleSettings();

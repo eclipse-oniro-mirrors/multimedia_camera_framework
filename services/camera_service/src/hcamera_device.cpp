@@ -50,6 +50,7 @@ static const int32_t DEFAULT_SETTING_ITEM_LENGTH = 100;
 static const float SMOOTH_ZOOM_DIVISOR = 100.0f;
 static const std::vector<camera_device_metadata_tag> DEVICE_OPEN_LIFECYCLE_TAGS = { OHOS_CONTROL_MUTE_MODE };
 sptr<OHOS::Rosen::DisplayManager::IFoldStatusListener> listener;
+CallerInfo caller_;
 class HCameraDevice::FoldScreenListener : public OHOS::Rosen::DisplayManager::IFoldStatusListener {
 public:
     explicit FoldScreenListener(sptr<HCameraHostManager> &cameraHostManager, const std::string cameraId)
