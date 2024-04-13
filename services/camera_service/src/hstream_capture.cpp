@@ -140,6 +140,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     captureInfo.caller = CameraReportUtils::GetCallerInfo();
     CameraReportUtils::GetInstance().SetCapturePerfStartInfo(captureInfo);
     MEDIA_INFO_LOG("HStreamCapture::Capture Starting photo capture with capture ID: %{public}d", preparedCaptureId);
+    HStreamCommon::PrintCaptureDebugLog(captureMetadataSetting_);
     CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfoPhoto, false));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         ResetCaptureId();
@@ -191,12 +192,9 @@ void HStreamCapture::ProcessCaptureInfoPhoto(CaptureInfo& captureInfoPhoto,
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(captureSettings, captureInfoPhoto.captureSetting_);
     }
     captureInfoPhoto.enableShutterCallback_ = true;
-    // debug log for jpeg quality
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureMetadataSetting_ = nullptr;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(captureInfoPhoto.captureSetting_, captureMetadataSetting_);
     if (captureMetadataSetting_ != nullptr) {
-        // print quality, mirror log
-        PrintDebugLog(captureMetadataSetting_);
         // convert rotation with application set rotation
         SetRotation(captureMetadataSetting_);
 
@@ -204,26 +202,6 @@ void HStreamCapture::ProcessCaptureInfoPhoto(CaptureInfo& captureInfoPhoto,
         std::vector<uint8_t> finalSetting;
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(captureMetadataSetting_, finalSetting);
         captureInfoPhoto.captureSetting_ = finalSetting;
-    }
-}
-
-void HStreamCapture::PrintDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_)
-{
-    camera_metadata_item_t item;
-    int result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_QUALITY, &item);
-    if (result != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_JPEG_QUALITY tag");
-    } else {
-        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_JPEG_QUALITY value = %{public}d", item.data.u8[0]);
-    }
-
-    // debug log for capture mirror
-    result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(),
-                                                   OHOS_CONTROL_CAPTURE_MIRROR, &item);
-    if (result != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_CAPTURE_MIRROR tag");
-    } else {
-        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_CAPTURE_MIRROR value = %{public}d", item.data.u8[0]);
     }
 }
 

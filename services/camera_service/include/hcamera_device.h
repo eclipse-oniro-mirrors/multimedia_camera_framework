@@ -26,6 +26,7 @@
 #include "v1_0/icamera_device_callback.h"
 #include "camera_metadata_info.h"
 #include "camera_util.h"
+#include "camera_report_uitls.h"
 #include "hcamera_device_stub.h"
 #include "hcamera_host_manager.h"
 #include "v1_0/icamera_device.h"
@@ -134,6 +135,8 @@ private:
     uint32_t zoomTimerId_;
     std::atomic<bool> inPrepareZoom_;
 
+    CallerInfo caller_;
+
     void UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings);
     void ResetDeviceOpenLifeCycleSettings();
 
@@ -165,23 +168,12 @@ private:
 
     void DebugLogForFocusMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForAfRegions(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
-    void DebugLogForVideoStabilizationModeNoReport(uint32_t tag,
-        const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings);
     void DebugLogForExposureMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForExposureTime(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForAeRegions(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForAeExposureCompensation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
         uint32_t tag);
-    void DebugLogForPortraitEffectNoReport(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
-        uint32_t tag);
-    void DebugLogForFilterNoReport(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForBeautyAuto(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
-    void DebugLogForBeautySkinSmoothNoReport(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
-        uint32_t tag);
-    void DebugLogForBeautyFaceSlenderNoReport(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
-        uint32_t tag);
-    void DebugLogForBeautySkinToneNoReport(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
-        uint32_t tag);
 };
 } // namespace CameraStandard
 } // namespace OHOS

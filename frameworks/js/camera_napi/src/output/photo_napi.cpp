@@ -193,6 +193,7 @@ napi_value PhotoNapi::Release(napi_env env, napi_callback_info info)
                 napi_delete_async_work(env, context->work);
                 delete context->objectInfo;
                 delete context;
+                CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
             }, static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for PhotoNapi::Release");

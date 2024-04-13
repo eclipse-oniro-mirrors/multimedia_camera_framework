@@ -56,7 +56,6 @@ public:
     int32_t OnCaptureReady(int32_t captureId, uint64_t timestamp);
     void DumpStreamInfo(std::string& dumpString) override;
     void SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_);
-    void PrintDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_);
     void SetMode(int32_t modeName);
     int32_t GetMode();
     int32_t IsDeferredPhotoEnabled() override;

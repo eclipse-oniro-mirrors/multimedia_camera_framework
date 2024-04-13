@@ -25,6 +25,7 @@
 #include "display/graphic/common/v1_0/cm_color_space.h"
 #include "display/composer/v1_1/display_composer_type.h"
 #include "ipc_skeleton.h"
+#include "camera_report_uitls.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -279,6 +280,37 @@ void HStreamCommon::DumpStreamInfo(std::string& dumpString)
     dumpString += "]    Encoding Type:[" + std::to_string(curStreamInfo.v1_0.encodeType_) + "]:\n";
     if (curStreamInfo.v1_0.bufferQueue_) {
         delete curStreamInfo.v1_0.bufferQueue_;
+    }
+}
+
+void HStreamCommon::PrintCaptureDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_)
+{
+    camera_metadata_item_t item;
+    int result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_QUALITY, &item);
+    if (result != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_JPEG_QUALITY tag");
+    } else {
+        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_JPEG_QUALITY value = %{public}d", item.data.u8[0]);
+        CameraReportUtils::GetInstance().UpdateImagingInfo(DFX_PHOTO_SETTING_QUALITY, std::to_string(item.data.u8[0]));
+    }
+
+    // debug log for capture mirror
+    result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(),
+                                                   OHOS_CONTROL_CAPTURE_MIRROR, &item);
+    if (result != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_CAPTURE_MIRROR tag");
+    } else {
+        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_CAPTURE_MIRROR value = %{public}d", item.data.u8[0]);
+        CameraReportUtils::GetInstance().UpdateImagingInfo(DFX_PHOTO_SETTING_MIRROR, std::to_string(item.data.u8[0]));
+    }
+
+    // debug log for image rotation
+    result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_ORIENTATION, &item);
+    if (result != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_JPEG_ORIENTATION tag");
+    } else {
+        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_JPEG_ORIENTATION value = %{public}d", item.data.i32[0]);
+        CameraReportUtils::GetInstance().UpdateImagingInfo(DFX_PHOTO_SETTING_ROTATION, std::to_string(item.data.i32[0]));
     }
 }
 } // namespace CameraStandard
