@@ -26,6 +26,7 @@
 #include "camera_util.h"
 #include "capture_scene_const.h"
 #include "capture_session.h"
+#include "scan_session.h"
 #include "hap_token_info.h"
 #include "hcamera_device.h"
 #include "hcamera_device_callback_proxy.h"
@@ -108,6 +109,7 @@ const int32_t PRVIEW_HEIGHT_6144 = 6144;
 
 bool g_camInputOnError = false;
 bool g_sessionclosed = false;
+bool g_brightnessStatusChanged = false;
 std::shared_ptr<OHOS::Camera::CameraMetadata> g_metaResult = nullptr;
 int32_t g_videoFd = -1;
 int32_t g_previewFd = -1;
@@ -128,7 +130,8 @@ class AppCallback : public CameraManagerCallback,
                     public PreviewStateCallback,
                     public ResultCallback,
                     public MacroStatusCallback,
-                    public FeatureDetectionStatusCallback {
+                    public FeatureDetectionStatusCallback,
+                    public BrightnessStatusCallback {
 public:
     void OnCameraStatusChanged(const CameraStatusInfo& cameraDeviceInfo) const override
     {
@@ -339,6 +342,12 @@ public:
     bool IsFeatureSubscribed(SceneFeature feature) override
     {
         return true;
+    }
+
+    void OnBrightnessStatusChanged(bool state) override
+    {
+        MEDIA_DEBUG_LOG("AppCallback::OnBrightnessStatusChanged");
+        g_brightnessStatusChanged = true;
     }
 };
 
@@ -3072,6 +3081,45 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_054, TestSi
     float zoomRatio = scanSession_->GetZoomRatio();
     int32_t zoomRatioGet = scanSession_->GetZoomRatio(zoomRatio);
     EXPECT_EQ(zoomRatioGet, 0);
+
+    ((sptr<PreviewOutput> &) previewOutput_1)->Release();
+    ((sptr<PreviewOutput> &) previewOutput_2)->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test scan session report brightness status
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test scan session report brightness status
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_055, TestSize.Level0)
+{
+    if (!IsSupportNow()) {
+        return;
+    }
+    sptr<CaptureOutput> previewOutput_1;
+    sptr<CaptureOutput> previewOutput_2;
+    ConfigScanSession(previewOutput_1, previewOutput_2);
+
+    auto scanSession = static_cast<ScanSession*>(scanSession_.GetRefPtr());
+    bool isSupported = scanSession->IsBrightnessStatusSupported();
+    EXPECT_EQ(isSupported, true);
+
+    std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
+    scanSession->RegisterBrightnessStatusCallback(callback);
+
+    int32_t intResult = scanSession->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    EXPECT_EQ(g_brightnessStatusChanged, true);
+
+    scanSession->UnRegisterBrightnessStatusCallback();
+    intResult = scanSession->Stop();
+    EXPECT_EQ(intResult, 0);
 
     ((sptr<PreviewOutput> &) previewOutput_1)->Release();
     ((sptr<PreviewOutput> &) previewOutput_2)->Release();
