@@ -20,6 +20,71 @@
 
 namespace OHOS {
 namespace CameraStandard {
+static const std::string S_BEHAVIORNAME = "behaviorName:";
+static const std::string S_VALUE = ",value:";
+static const std::string S_CUR_MODE = ",curMode:";
+static const std::string S_CUR_CAMERAID = ",curCameraId:";
+static const std::string S_CPID = ",cPid:";
+static const std::string S_CUID = ",cUid:";
+static const std::string S_CTOKENID = ",cTokenID:";
+static const std::string S_CBUNDLENAME = ",cBundleName:";
+
+static const std::string DFX_PROFILE = "Profile";
+static const std::string DFX_PHOTO_SETTING_QUALITY = "Quality";
+static const std::string DFX_PHOTO_SETTING_MIRROR = "Mirror";
+static const std::string DFX_PHOTO_SETTING_ROTATION = "Rotation";
+
+static const std::string DFX_ZOOMRATIO = "ZoomRatio";
+static const std::string DFX_VIDEOSTABILIZATIONMODE = "VideoStabilizationMode";
+static const std::string DFX_FILTERTYPE = "FilterType";
+static const std::string DFX_PORTRAITEFFECT = "PortraitEffect";
+static const std::string DFX_BEAUTY_AUTOVALUE = "BeautyValue";
+static const std::string DFX_BEAUTY_SKINSMOOTH = "SkinSmooth";
+static const std::string DFX_BEAUTY_FACESLENDER = "FaceSlender";
+static const std::string DFX_BEAUTY_SKINTONE = "SkinTone";
+static const std::string DFX_FOCUSMODE = "FocusMode";
+static const std::string DFX_FOCUSPOINT = "FocusPoint";
+static const std::string DFX_EXPOSUREMODE = "ExposureMode";
+static const std::string DFX_EXPOSUREBIAS = "ExposureBias";
+static const std::string DFX_METERINGPOINT = "MeteringPoint";
+static const std::string DFX_FLASHMODE = "FlashMode";
+static const std::string DFX_FRAMERATERANGE = "FrameRateRange";
+
+static const std::string DFX_UB_SET_ZOOMRATIO = "SetZoomRatio";
+static const std::string DFX_UB_SET_SMOOTHZOOM = "SetSmoothZoom";
+static const std::string DFX_UB_SET_VIDEOSTABILIZATIONMODE = "SetVideoStabilizationMode";
+static const std::string DFX_UB_SET_FILTER = "SetFilter";
+static const std::string DFX_UB_SET_PORTRAITEFFECT = "SetPortraitEffect";
+static const std::string DFX_UB_SET_BEAUTY_AUTOVALUE = "SetBeautyaAutoValue";
+static const std::string DFX_UB_SET_BEAUTY_SKINSMOOTH = "SetBeautySkinSmooth";
+static const std::string DFX_UB_SET_BEAUTY_FACESLENDER = "SetBeautyFaceSlender";
+static const std::string DFX_UB_SET_BEAUTY_SKINTONE = "SetBeautySkinTone";
+static const std::string DFX_UB_SET_FOCUSMODE = "SetFocusMode";
+static const std::string DFX_UB_SET_FOCUSPOINT = "SetFocusPoint";
+static const std::string DFX_UB_SET_EXPOSUREMODE = "SetExposureMode";
+static const std::string DFX_UB_SET_EXPOSUREBIAS = "SetExposureBias";
+static const std::string DFX_UB_SET_METERINGPOINT = "SetMeteringPoint";
+static const std::string DFX_UB_SET_FLASHMODE = "setFlashMode";
+static const std::string DFX_UB_SET_FRAMERATERANGE = "SetFrameRateRange";
+
+static const std::unordered_map<std::string, std::string> mapBehaviorImagingKey = {
+    {DFX_UB_SET_ZOOMRATIO, DFX_ZOOMRATIO},
+    {DFX_UB_SET_SMOOTHZOOM, DFX_ZOOMRATIO},
+    {DFX_UB_SET_VIDEOSTABILIZATIONMODE, DFX_VIDEOSTABILIZATIONMODE},
+    {DFX_UB_SET_FILTER, DFX_FILTERTYPE},
+    {DFX_UB_SET_PORTRAITEFFECT, DFX_PORTRAITEFFECT},
+    {DFX_UB_SET_BEAUTY_AUTOVALUE, DFX_BEAUTY_AUTOVALUE},
+    {DFX_UB_SET_BEAUTY_SKINSMOOTH, DFX_BEAUTY_SKINSMOOTH},
+    {DFX_UB_SET_BEAUTY_FACESLENDER, DFX_BEAUTY_FACESLENDER},
+    {DFX_UB_SET_BEAUTY_SKINTONE, DFX_BEAUTY_SKINTONE},
+    {DFX_UB_SET_FOCUSMODE, DFX_FOCUSMODE},
+    {DFX_UB_SET_FOCUSPOINT, DFX_FOCUSPOINT},
+    {DFX_UB_SET_EXPOSUREMODE, DFX_EXPOSUREMODE},
+    {DFX_UB_SET_EXPOSUREBIAS, DFX_EXPOSUREBIAS},
+    {DFX_UB_SET_METERINGPOINT, DFX_METERINGPOINT},
+    {DFX_UB_SET_FLASHMODE, DFX_FLASHMODE},
+    {DFX_UB_SET_FRAMERATERANGE, DFX_FRAMERATERANGE}
+};
 
 struct CallerInfo {
     int32_t pid;
@@ -63,6 +128,11 @@ public:
     void SetSwitchCamPerfStartInfo(CallerInfo caller);
     void SetSwitchCamPerfEndInfo();
 
+    void UpdateProfileInfo(const std::string& profileStr);
+    void UpdateImagingInfo(const std::string& imagingKey, const std::string& value);
+    void SetVideoStartInfo(DfxCaptureInfo captureInfo);
+    void SetVideoEndInfo(int32_t captureId);
+
 private:
     std::mutex mutex_;
     CallerInfo caller_;
@@ -70,6 +140,8 @@ private:
     std::string cameraId_;
     int32_t preMode_;
     int32_t curMode_;
+
+    std::string profile_;
 
     uint64_t openCamPerfStartTime_;
     uint64_t openCamPerfEndTime_;
@@ -85,12 +157,17 @@ private:
     bool isSwitching_;
 
     std::map<int32_t, DfxCaptureInfo> captureList_;
+    std::unordered_map<std::string, std::string> imagingValueList_;
 
     bool IsCallerChanged(CallerInfo preCaller, CallerInfo curCaller);
+    bool IsBehaviorNeedReport(const std::string& behaviorName, const std::string& value);
+
     void ReportOpenCameraPerf(uint64_t costTime, const std::string& startType);
     void ReportModeChangePerf(uint64_t costTime);
     void ReportCapturePerf(DfxCaptureInfo captureInfo);
     void ReportSwitchCameraPerf(uint64_t costTime);
+    void ReportImagingInfo(DfxCaptureInfo captureInfo);
+    void ResetImagingValue();
 };
 } // namespace CameraStandard
 } // namespace OHOS

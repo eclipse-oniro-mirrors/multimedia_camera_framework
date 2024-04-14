@@ -3894,7 +3894,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_029, TestSize.Level
     mockStreamOperator = nullptr;
     streamCapture->LinkInput(mockStreamOperator, metadata);
     EXPECT_EQ(streamCapture->Capture(metadata),  CAMERA_INVALID_STATE);
-    streamCapture->PrintDebugLog(metadata);
     EXPECT_EQ(streamCapture->SetCallback(callback), CAMERA_INVALID_ARG);
     EXPECT_EQ(streamCapture->OnCaptureEnded(captureId, frameCount), CAMERA_OK);
     EXPECT_EQ(streamCapture->OnCaptureError(captureId, frameCount), CAMERA_OK);

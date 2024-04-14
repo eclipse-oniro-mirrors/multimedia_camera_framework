@@ -80,6 +80,7 @@ int32_t HStreamMetadata::Start()
     captureInfo.captureSetting_ = ability;
     captureInfo.enableShutterCallback_ = false;
     MEDIA_INFO_LOG("HStreamMetadata::Start Starting with capture ID: %{public}d", preparedCaptureId);
+    HStreamCommon::PrintCaptureDebugLog(cameraAbility_);
     CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfo, true));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         ResetCaptureId();

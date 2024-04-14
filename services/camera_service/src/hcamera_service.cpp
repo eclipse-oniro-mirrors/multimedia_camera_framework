@@ -288,6 +288,10 @@ int32_t HCameraService::CreatePhotoOutput(const sptr<OHOS::IBufferProducer>& pro
             "HCameraService::CreatePhotoOutput", rc, false, CameraReportUtils::GetCallerInfo());
         return rc;
     }
+
+    stringstream ss;
+    ss << "format=" << format << " width=" << width << " height=" << height;
+    CameraReportUtils::GetInstance().UpdateProfileInfo(ss.str());
     photoOutput = streamCapture;
     MEDIA_INFO_LOG("HCameraService::CreatePhotoOutput execute success");
     return rc;
@@ -383,6 +387,9 @@ int32_t HCameraService::CreateVideoOutput(const sptr<OHOS::IBufferProducer>& pro
             "HCameraService::CreateVideoOutput", rc, false, CameraReportUtils::GetCallerInfo());
         return rc;
     }
+    stringstream ss;
+    ss << "format=" << format << " width=" << width << " height=" << height;
+    CameraReportUtils::GetInstance().UpdateProfileInfo(ss.str());
     videoOutput = streamRepeatVideo;
     MEDIA_INFO_LOG("HCameraService::CreateVideoOutput execute success");
     return rc;

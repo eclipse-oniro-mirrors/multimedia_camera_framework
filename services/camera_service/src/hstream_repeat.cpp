@@ -198,6 +198,7 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
         const std::string permissionName = "ohos.permission.CAMERA";
         AddCameraPermissionUsedRecord(callingTokenId, permissionName);
     }
+    HStreamCommon::PrintCaptureDebugLog(dynamicSetting);
     CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfo, true));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         ResetCaptureId();
@@ -289,6 +290,14 @@ int32_t HStreamRepeat::OnFrameStarted()
             streamRepeatCallback_->OnFrameStarted();
         }
     }
+    if (repeatStreamType_ == RepeatStreamType::VIDEO) {
+        // report video start dfx
+        DfxCaptureInfo captureInfo;
+        captureInfo.captureId = 1;
+        captureInfo.caller = CameraReportUtils::GetCallerInfo();
+        CameraReportUtils::GetInstance().SetVideoStartInfo(captureInfo);
+    }
+
     UpdateSketchStatus(SketchStatus::STARTED);
     return CAMERA_OK;
 }
@@ -301,6 +310,10 @@ int32_t HStreamRepeat::OnFrameEnded(int32_t frameCount)
         if (streamRepeatCallback_ != nullptr) {
             streamRepeatCallback_->OnFrameEnded(frameCount);
         }
+    }
+    if (repeatStreamType_ == RepeatStreamType::VIDEO) {
+        // report video end dfx
+        CameraReportUtils::GetInstance().SetVideoEndInfo(1);
     }
     UpdateSketchStatus(SketchStatus::STOPED);
     return CAMERA_OK;

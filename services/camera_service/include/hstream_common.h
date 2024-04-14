@@ -54,6 +54,8 @@ public:
 
     virtual int32_t GetPreparedCaptureId() final;
 
+    void PrintCaptureDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_);
+
     inline int32_t GetStreamId()
     {
         return streamId_;
