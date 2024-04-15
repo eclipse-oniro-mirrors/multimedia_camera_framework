@@ -329,7 +329,7 @@ public:
      *
      * @return Returns true/false if the auto high quality photo is supported/not-supported respectively.
      */
-    int32_t IsAutoHighQualityPhotoSupported();
+    int32_t IsAutoHighQualityPhotoSupported(int32_t &isAutoHighQualityPhotoSupported);
 
     /**
      * @brief To enable the auto high quality photo.

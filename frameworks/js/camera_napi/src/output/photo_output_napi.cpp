@@ -20,6 +20,7 @@
 #include "camera_napi_security_utils.h"
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
+#include "camera_napi_param_parser.h"
 #include "image_napi.h"
 #include "image_receiver.h"
 #include "pixel_map_napi.h"
@@ -903,7 +904,9 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("deferImageDelivery", DeferImageDeliveryFor),
         DECLARE_NAPI_FUNCTION("deferImageDeliveryFor", DeferImageDeliveryFor),
         DECLARE_NAPI_FUNCTION("isDeferredImageDeliverySupported", IsDeferredImageDeliverySupported),
-        DECLARE_NAPI_FUNCTION("isDeferredImageDeliveryEnabled", IsDeferredImageDeliveryEnabled)
+        DECLARE_NAPI_FUNCTION("isDeferredImageDeliveryEnabled", IsDeferredImageDeliveryEnabled),
+        DECLARE_NAPI_FUNCTION("isAutoHighQualityPhotoSupported", IsAutoHighQualityPhotoSupported),
+        DECLARE_NAPI_FUNCTION("enableAutoHighQualityPhoto", EnableAutoHighQualityPhoto)
     };
 
     status = napi_define_class(env, CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, PhotoOutputNapiConstructor,
@@ -1976,6 +1979,65 @@ napi_value PhotoOutputNapi::Once(napi_env env, napi_callback_info info)
 napi_value PhotoOutputNapi::Off(napi_env env, napi_callback_info info)
 {
     return ListenerTemplate<PhotoOutputNapi>::Off(env, info);
+}
+
+napi_value PhotoOutputNapi::IsAutoHighQualityPhotoSupported(napi_env env, napi_callback_info info)
+{
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsAutoHighQualityPhotoSupported is called!");
+        return result;
+    }
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::IsAutoHighQualityPhotoSupported is called");
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, photoOutputNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::IsAutoHighQualityPhotoSupported parse parameter occur error");
+        return result;
+    }
+    if (photoOutputNapi->photoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::IsAutoHighQualityPhotoSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return result;
+    }
+
+    int32_t isAutoHighQualityPhotoSupported;
+    int32_t retCode = photoOutputNapi->photoOutput_->IsAutoHighQualityPhotoSupported(isAutoHighQualityPhotoSupported);
+    if (retCode == 0 && isAutoHighQualityPhotoSupported != -1) {
+        napi_get_boolean(env, true, &result);
+        return result;
+    }
+    MEDIA_ERR_LOG("PhotoOutputNapi::IsAutoHighQualityPhotoSupported is not supported");
+    napi_get_boolean(env, false, &result);
+    return result;
+}
+
+napi_value PhotoOutputNapi::EnableAutoHighQualityPhoto(napi_env env, napi_callback_info info)
+{
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi EnableAutoHighQualityPhoto is called!");
+        return result;
+    }
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::EnableAutoHighQualityPhoto is called");
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    bool isEnable;
+    CameraNapiParamParser jsParamParser(env, info, photoOutputNapi, isEnable);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoHighQualityPhoto parse parameter occur error");
+        return result;
+    }
+    if (photoOutputNapi->photoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoHighQualityPhoto get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return result;
+    }
+
+    int32_t retCode = photoOutputNapi->photoOutput_->EnableAutoHighQualityPhoto(isEnable);
+    if (CameraNapiUtils::CheckError(env, retCode)) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoHighQualityPhoto fail %{public}d", retCode);
+    }
+    return result;
 }
 } // namespace CameraStandard
 } // namespace OHOS

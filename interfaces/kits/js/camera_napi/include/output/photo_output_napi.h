@@ -219,6 +219,8 @@ public:
     static napi_value On(napi_env env, napi_callback_info info);
     static napi_value Once(napi_env env, napi_callback_info info);
     static napi_value Off(napi_env env, napi_callback_info info);
+    static napi_value IsAutoHighQualityPhotoSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableAutoHighQualityPhoto(napi_env env, napi_callback_info info);
     static int32_t MapQualityLevelFromJs(int32_t jsQuality, PhotoCaptureSetting::QualityLevel& nativeQuality);
     static int32_t MapImageRotationFromJs(int32_t jsRotation, PhotoCaptureSetting::RotationConfig& nativeRotation);
 

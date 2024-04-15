@@ -594,9 +594,10 @@ int32_t PhotoOutput::IsDeferredImageDeliveryEnabled(DeferredDeliveryImageType ty
     return isEnabled;
 }
 
-int32_t PhotoOutput::IsAutoHighQualityPhotoSupported()
+int32_t PhotoOutput::IsAutoHighQualityPhotoSupported(int32_t &isAutoHighQualityPhotoSupported)
 {
-    int32_t isAutoHighQualityPhotoSupported = -1;
+    MEDIA_INFO_LOG("PhotoOutput IsAutoHighQualityPhotoSupported is called");
+    isAutoHighQualityPhotoSupported = -1;
     camera_metadata_item_t item;
     sptr<CameraDevice> cameraObj;
     auto captureSession = GetSession();
@@ -627,21 +628,28 @@ int32_t PhotoOutput::IsAutoHighQualityPhotoSupported()
     }
     MEDIA_INFO_LOG("PhotoOutput IsAutoHighQualityPhotoSupported curMode:%{public}d, modeSupportType:%{public}d",
         currentSceneMode, isAutoHighQualityPhotoSupported);
-    return isAutoHighQualityPhotoSupported;
+    return CAMERA_OK;
 }
 
 int32_t PhotoOutput::EnableAutoHighQualityPhoto(bool enabled)
 {
-    MEDIA_DEBUG_LOG("CaptureSession::EnableAutoHighQualityPhoto");
+    MEDIA_DEBUG_LOG("PhotoOutput EnableAutoHighQualityPhoto");
     auto captureSession = GetSession();
     if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
         MEDIA_ERR_LOG("PhotoOutput IsAutoHighQualityPhotoSupported error!, captureSession or inputDevice_ is nullptr");
         return SESSION_NOT_RUNNING;
     }
-    if ((!IsAutoHighQualityPhotoSupported()) {
-        MEDIA_ERR_LOG("CaptureSession::EnableAutoHighQualityPhoto not supported");
-        return INVALID_ARGUMENT;
+    int32_t isAutoHighQualityPhotoSupported;
+    int32_t ret = IsAutoHighQualityPhotoSupported(isAutoHighQualityPhotoSupported);
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("PhotoOutput EnableAutoHighQualityPhoto error");
+        return OPERATION_NOT_ALLOWED;
     }
+    
+    if (isAutoHighQualityPhotoSupported == -1) {
+        MEDIA_ERR_LOG("PhotoOutput EnableAutoHighQualityPhoto not supported");
+        return INVALID_ARGUMENT;
+    } 
 
     int32_t res = captureSession->EnableAutoHighQualityPhoto(enabled);
     return res;
