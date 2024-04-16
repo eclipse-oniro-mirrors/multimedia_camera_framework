@@ -49,6 +49,7 @@ static const std::string DFX_EXPOSUREBIAS = "ExposureBias";
 static const std::string DFX_METERINGPOINT = "MeteringPoint";
 static const std::string DFX_FLASHMODE = "FlashMode";
 static const std::string DFX_FRAMERATERANGE = "FrameRateRange";
+static const std::string DFX_MUTE_CAMERA = "MuteCamera";
 
 static const std::string DFX_UB_SET_ZOOMRATIO = "SetZoomRatio";
 static const std::string DFX_UB_SET_SMOOTHZOOM = "SetSmoothZoom";
@@ -66,6 +67,7 @@ static const std::string DFX_UB_SET_EXPOSUREBIAS = "SetExposureBias";
 static const std::string DFX_UB_SET_METERINGPOINT = "SetMeteringPoint";
 static const std::string DFX_UB_SET_FLASHMODE = "setFlashMode";
 static const std::string DFX_UB_SET_FRAMERATERANGE = "SetFrameRateRange";
+static const std::string DFX_UB_MUTE_CAMERA = "MuteCamera";
 
 static const std::unordered_map<std::string, std::string> mapBehaviorImagingKey = {
     {DFX_UB_SET_ZOOMRATIO, DFX_ZOOMRATIO},
@@ -83,7 +85,8 @@ static const std::unordered_map<std::string, std::string> mapBehaviorImagingKey 
     {DFX_UB_SET_EXPOSUREBIAS, DFX_EXPOSUREBIAS},
     {DFX_UB_SET_METERINGPOINT, DFX_METERINGPOINT},
     {DFX_UB_SET_FLASHMODE, DFX_FLASHMODE},
-    {DFX_UB_SET_FRAMERATERANGE, DFX_FRAMERATERANGE}
+    {DFX_UB_SET_FRAMERATERANGE, DFX_FRAMERATERANGE},
+    {DFX_UB_MUTE_CAMERA, DFX_MUTE_CAMERA}
 };
 
 struct CallerInfo {

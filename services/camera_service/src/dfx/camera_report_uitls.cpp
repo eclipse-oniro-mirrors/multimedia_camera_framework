@@ -364,7 +364,13 @@ void CameraReportUtils::UpdateImagingInfo(const string& imagingKey, const string
 
 bool CameraReportUtils::IsBehaviorNeedReport(const string& behaviorName, const string& value)
 {
-    const string& imagingKey = mapBehaviorImagingKey.at(behaviorName);
+    const string& imagingKey;
+    try {
+        imagingKey = mapBehaviorImagingKey.at(behaviorName);
+    } catch(const exception& e) {
+        MEDIA_ERR_LOG("IsBehaviorNeedReport error imagingKey not found.");
+        return true;
+    }
     auto it = imagingValueList_.find(imagingKey);
     if (it != imagingValueList_.end()) {
         if (it->second == value) {
