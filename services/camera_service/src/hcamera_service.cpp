@@ -622,8 +622,8 @@ int32_t HCameraService::MuteCamera(bool muteMode)
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
     int32_t ret = CheckPermission(OHOS_PERMISSION_MANAGE_CAMERA_CONFIG, callerToken);
     CHECK_AND_RETURN_RET_LOG(ret == CAMERA_OK, ret, "CheckPermission argumentis failed!");
-    CameraReportUtils::GetInstance().ReportUserBehavior(
-        "MuteCamera", to_string(muteMode), CameraReportUtils::GetCallerInfo());
+    CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_MUTE_CAMERA,
+        to_string(muteMode), CameraReportUtils::GetCallerInfo());
     bool oldMuteMode = muteMode_;
     if (muteMode == oldMuteMode) {
         return CAMERA_OK;
