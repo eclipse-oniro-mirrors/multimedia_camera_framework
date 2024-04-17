@@ -220,6 +220,7 @@ int32_t HCameraService::CreateCameraDevice(string cameraId, sptr<ICameraDeviceSe
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice MuteCamera not Supported");
     }
     device = cameraDevice;
+    cameraDevice->SetDeviceMuteMode(muteMode_);
 #ifdef CAMERA_USE_SENSOR
     RegisterSensorCallback();
 #endif
@@ -624,6 +625,7 @@ int32_t HCameraService::MuteCamera(bool muteMode)
     CHECK_AND_RETURN_RET_LOG(ret == CAMERA_OK, ret, "CheckPermission argumentis failed!");
     CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_MUTE_CAMERA,
         to_string(muteMode), CameraReportUtils::GetCallerInfo());
+    cameraHostManager_->SetMuteMode(muteMode);
     bool oldMuteMode = muteMode_;
     if (muteMode == oldMuteMode) {
         return CAMERA_OK;
@@ -660,6 +662,7 @@ int32_t HCameraService::MuteCamera(bool muteMode)
             CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraMute! current Camera muteMode:%d", muteMode));
         }
     }
+    activeDevice->SetDeviceMuteMode(muteMode_);
     return ret;
 }
 

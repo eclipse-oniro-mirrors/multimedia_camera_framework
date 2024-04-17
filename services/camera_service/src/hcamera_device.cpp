@@ -85,7 +85,8 @@ HCameraDevice::HCameraDevice(
           std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_SETTING_ITEM_COUNT, DEFAULT_SETTING_ITEM_LENGTH)),
       cameraHostManager_(cameraHostManager), cameraID_(cameraID), callerToken_(callingTokenId),
       deviceOpenLifeCycleSettings_(std::make_shared<OHOS::Camera::CameraMetadata>(
-      DEVICE_OPEN_LIFECYCLE_TAGS.size(), DEFAULT_SETTING_ITEM_LENGTH)), clientUserId_(0), zoomTimerId_(0)
+      DEVICE_OPEN_LIFECYCLE_TAGS.size(), DEFAULT_SETTING_ITEM_LENGTH)), clientUserId_(0), zoomTimerId_(0),
+      deviceMuteMode_(false)
 {
     MEDIA_INFO_LOG("HCameraDevice::HCameraDevice Contructor Camera: %{public}s", cameraID.c_str());
     isOpenedCameraDevice_.store(false);
@@ -110,13 +111,32 @@ bool HCameraDevice::IsOpenedCameraDevice()
     return isOpenedCameraDevice_.load();
 }
 
+void HCameraDevice::SetDeviceMuteMode(bool muteMode)
+{
+    deviceMuteMode_ = muteMode;
+}
+
+void HCameraDevice::UpdateMuteSetting()
+{
+    constexpr int32_t DEFAULT_ITEMS = 1;
+    constexpr int32_t DEFAULT_DATA_LENGTH = 1;
+    int32_t count = 1;
+    uint8_t mode = OHOS_CAMERA_MUTE_MODE_SOLID_COLOR_BLACK;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> stashMetadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    stashMetadata->addEntry(OHOS_CONTROL_MUTE_MODE, &mode, count);
+    UpdateSetting(stashMetadata);
+}
+
 int32_t HCameraDevice::ResetDeviceSettings()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("HCameraDevice::ResetDeviceSettings enter");
-    std::lock_guard<std::mutex> lock(opMutex_);
-    if (hdiCameraDevice_ == nullptr) {
-        return CAMERA_OK;
+    {
+        std::lock_guard<std::mutex> lock(opMutex_);
+        if (hdiCameraDevice_ == nullptr) {
+            return CAMERA_OK;
+        }
     }
     auto hdiCameraDeviceV1_2 = HDI::Camera::V1_2::ICameraDevice::CastFrom(hdiCameraDevice_);
     if (hdiCameraDeviceV1_2 != nullptr) {
@@ -126,6 +146,9 @@ int32_t HCameraDevice::ResetDeviceSettings()
             return CAMERA_UNKNOWN_ERROR;
         } else {
             ResetCachedSettings();
+            if (deviceMuteMode_) {
+                UpdateMuteSetting();
+            }
         }
     }
     MEDIA_INFO_LOG("HCameraDevice::ResetDeviceSettings end");

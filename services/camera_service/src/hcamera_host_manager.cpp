@@ -86,7 +86,7 @@ public:
                        sptr<OHOS::HDI::Camera::V1_0::ICameraDevice>& pDevice);
     int32_t SetFlashlight(const std::string& cameraId, bool isEnable);
     int32_t SetTorchLevel(float level);
-    int32_t Prelaunch(sptr<HCameraRestoreParam> cameraRestoreParam);
+    int32_t Prelaunch(sptr<HCameraRestoreParam> cameraRestoreParam, bool muteMode);
     int32_t PreCameraSwitch(const std::string& cameraId);
     void NotifyDeviceStateChangeInfo(int notifyType, int deviceState);
 
@@ -102,6 +102,7 @@ private:
     void AddDevice(const std::string& cameraId);
     void RemoveDevice(const std::string& cameraId);
     void Cast2MultiVersionCameraHost();
+    void UpdataMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> setting, bool muteMode);
 
     std::weak_ptr<StatusCallback> statusCallback_;
     std::weak_ptr<CameraHostDeadCallback> cameraHostDeadCallback_;
@@ -351,7 +352,16 @@ int32_t HCameraHostManager::CameraHostInfo::SetTorchLevel(float level)
     return CAMERA_OK;
 }
 
-int32_t HCameraHostManager::CameraHostInfo::Prelaunch(sptr<HCameraRestoreParam> cameraRestoreParam)
+void HCameraHostManager::CameraHostInfo::UpdataMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> setting,
+    bool muteMode)
+{
+    MEDIA_INFO_LOG("CameraHostInfo::UpdataMuteSetting muteMode is %{public}d", muteMode);
+    int32_t count = 1;
+    uint8_t mode = muteMode ? OHOS_CAMERA_MUTE_MODE_SOLID_COLOR_BLACK : OHOS_CAMERA_MUTE_MODE_OFF;
+    setting->addEntry(OHOS_CONTROL_MUTE_MODE, &mode, count);
+}
+
+int32_t HCameraHostManager::CameraHostInfo::Prelaunch(sptr<HCameraRestoreParam> cameraRestoreParam, bool muteMode)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (cameraHostProxy_ == nullptr) {
@@ -372,6 +382,7 @@ int32_t HCameraHostManager::CameraHostInfo::Prelaunch(sptr<HCameraRestoreParam> 
     prelaunchConfig.setting = {};
     prelaunchConfig.streamInfos_V1_1 = cameraRestoreParam->GetStreamInfo();
     DumpMetadata(cameraRestoreParam->GetSetting());
+    UpdataMuteSetting(cameraRestoreParam->GetSetting(), muteMode);
     OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraRestoreParam->GetSetting(), settings);
     prelaunchConfig.setting = settings;
     int32_t opMode = cameraRestoreParam->GetCameraOpMode();
@@ -607,7 +618,7 @@ void HCameraHostManager::CameraHostInfo::RemoveDevice(const std::string& cameraI
 }
 
 HCameraHostManager::HCameraHostManager(std::shared_ptr<StatusCallback> statusCallback)
-    : statusCallback_(statusCallback), cameraHostInfos_()
+    : statusCallback_(statusCallback), cameraHostInfos_(), muteMode_(false)
 {
     MEDIA_INFO_LOG("HCameraHostManager construct called");
 }
@@ -816,7 +827,7 @@ int32_t HCameraHostManager::Prelaunch(const std::string& cameraId, std::string c
         MEDIA_DEBUG_LOG("HCameraHostManager::SaveRestoreParam %d", foldStatus);
         return 0;
     }
-    int32_t res = cameraHostInfo->Prelaunch(cameraRestoreParam);
+    int32_t res = cameraHostInfo->Prelaunch(cameraRestoreParam, muteMode_);
     if (res == 0 && cameraRestoreParam->GetRestoreParamType() !=
         RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS) {
         return CAMERA_OK;
@@ -1081,6 +1092,11 @@ bool HCameraHostManager::IsCameraHostInfoAdded(const std::string& svcName)
 ::OHOS::sptr<HDI::ServiceManager::V1_0::IServStatListener> HCameraHostManager::GetRegisterServStatListener()
 {
     return registerServStatListener_;
+}
+
+void HCameraHostManager::SetMuteMode(bool muteMode)
+{
+    muteMode_ = muteMode;
 }
 
 void RegisterServStatListener::OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status)
