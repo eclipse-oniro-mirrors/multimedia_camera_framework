@@ -172,6 +172,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
         CameraManager::GetInstance()->GetSupportedOutputCapability(cameraDevice);
     if (innerCameraOutputCapability == nullptr) {
         MEDIA_ERR_LOG("GetSupportedCameraOutputCapability innerCameraOutputCapability is null");
+        delete outCapability;
         return CAMERA_INVALID_ARGUMENT;
     }
     std::vector<Profile> previewProfiles = innerCameraOutputCapability->GetPreviewProfiles();

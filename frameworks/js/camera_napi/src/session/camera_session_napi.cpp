@@ -396,7 +396,6 @@ void FeatureDetectionStatusCallbackListener::OnFeatureDetectionStatusChangedCall
     if (it == featureListenerMap_.end()) {
         return;
     }
-
     napi_value result[ARGS_TWO] = { nullptr, nullptr };
     napi_value retVal;
     napi_get_undefined(env_, &result[PARAM0]);

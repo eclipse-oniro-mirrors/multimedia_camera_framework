@@ -322,10 +322,11 @@ bool IsValidSize(
         }
     }
     MEDIA_INFO_LOG("Success to find stream configuration isExtendConfig = %{public}d", isExtendConfig);
+    uint32_t param2 = 2;
     for (uint32_t index = 0; index < item.count; index++) {
         if (item.data.i32[index] == format) {
-            if (((index + 1) < item.count) && ((index + 2) < item.count) &&
-                item.data.i32[index + 1] == width && item.data.i32[index + 2] == height) {
+            if (((index + 1) < item.count) && ((index + param2) < item.count) &&
+                item.data.i32[index + 1] == width && item.data.i32[index + param2] == height) {
                 MEDIA_INFO_LOG("Format:%{public}d, width:%{public}d, height:%{public}d found in supported streams",
                                format, width, height);
                 return true;

@@ -281,9 +281,13 @@ void PhotoOutputCallback::UpdateJSCallbackAsync(PhotoOutputEventType eventType, 
     MEDIA_DEBUG_LOG("UpdateJSCallbackAsync is called");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
-    uv_work_t* work = new(std::nothrow) uv_work_t;
-    if (!loop || !work) {
+    if (loop == nullptr) {
         MEDIA_ERR_LOG("failed to get event loop or failed to allocate work");
+        return;
+    }
+    uv_work_t* work = new(std::nothrow) uv_work_t;
+    if (work == nullptr) {
+        MEDIA_ERR_LOG("UpdateJSCallbackAsync work is null");
         return;
     }
     if (!g_isSemInited) {

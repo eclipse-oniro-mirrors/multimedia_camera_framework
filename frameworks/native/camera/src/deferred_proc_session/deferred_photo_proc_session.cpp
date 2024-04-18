@@ -234,8 +234,11 @@ void DeferredPhotoProcSession::ConnectDeferredProcessingSession()
     sptr<DeferredProcessing::IDeferredPhotoProcessingSessionCallback> remoteCallback = nullptr;
     sptr<DeferredPhotoProcSession> deferredPhotoProcSession = nullptr;
     deferredPhotoProcSession = new(std::nothrow) DeferredPhotoProcSession(userId_, callback_);
+    if (deferredPhotoProcSession == nullptr) {
+        return;
+    }
     remoteCallback = new(std::nothrow) DeferredPhotoProcessingSessionCallback(deferredPhotoProcSession);
-    if (!deferredPhotoProcSession || !remoteCallback) {
+    if (remoteCallback == nullptr) {
         return;
     }
     serviceProxy_->CreateDeferredPhotoProcessingSession(userId_, remoteCallback, session);
