@@ -82,6 +82,7 @@ public:
     int32_t OnCaptureReady(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
     int32_t ResetDeviceSettings();
     int32_t DispatchDefaultSettingToHdi();
+    void SetDeviceMuteMode(bool muteMode);
 
     inline void SetStreamOperatorCallback(wptr<IStreamOperatorCallback> operatorCallback)
     {
@@ -133,6 +134,7 @@ private:
     std::mutex unPrepareZoomMutex_;
     uint32_t zoomTimerId_;
     std::atomic<bool> inPrepareZoom_;
+    std::atomic<bool> deviceMuteMode_;
 
     void UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings);
     void ResetDeviceOpenLifeCycleSettings();
@@ -171,6 +173,7 @@ private:
     void DebugLogForAeExposureCompensation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
         uint32_t tag);
     void DebugLogForBeautyAuto(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void UpdateMuteSetting();
 };
 } // namespace CameraStandard
 } // namespace OHOS
