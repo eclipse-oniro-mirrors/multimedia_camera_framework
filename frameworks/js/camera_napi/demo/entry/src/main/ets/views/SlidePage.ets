@@ -23,6 +23,7 @@ const TAG: string = 'SlidePage';
 export struct SlidePage {
   @StorageLink('zoomRatioMin') zoomMin: number = 1;
   @StorageLink('zoomRatioMax') zoomMax: number = 6;
+  @StorageLink('equivalentFocalLength') equivalentFocalLength: number = 0;
   // slide滑块
   @State outSetValueOne: number = 1;
   // slide滑块移动值
@@ -35,6 +36,9 @@ export struct SlidePage {
 
   build() {
     Column() {
+      Text('等效焦距：' + this.equivalentFocalLength).fontColor(Color.White)
+        .fontSize(10)
+
       Text(this.outSetValueOne + 'x')
         .fontColor('#182431')
         .height('50px')
@@ -50,7 +54,6 @@ export struct SlidePage {
         Text(this.zoomMin + 'x').fontColor(Color.White)
         Text(this.zoomMax + 'x').fontColor(Color.White)
       }.justifyContent(FlexAlign.SpaceBetween).width('95%')
-
 
       Row() {
         Slider({

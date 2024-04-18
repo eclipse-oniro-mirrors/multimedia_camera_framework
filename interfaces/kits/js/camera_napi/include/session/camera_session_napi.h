@@ -226,6 +226,7 @@ public:
     static napi_value PrepareZoom(napi_env env, napi_callback_info info);
     static napi_value UnPrepareZoom(napi_env env, napi_callback_info info);
     static napi_value SetSmoothZoom(napi_env env, napi_callback_info info);
+    static napi_value GetZoomPointInfo(napi_env env, napi_callback_info info);
     static napi_value GetSupportedFilters(napi_env env, napi_callback_info info);
     static napi_value GetFilter(napi_env env, napi_callback_info info);
     static napi_value SetFilter(napi_env env, napi_callback_info info);

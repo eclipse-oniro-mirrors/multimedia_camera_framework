@@ -106,6 +106,11 @@ typedef struct {
     float y;
 } Point;
 
+typedef struct {
+    float zoomRatio;
+    int32_t equivalentFocalLength;
+} ZoomPointInfo;
+
 template<class T>
 struct RefBaseCompare {
 public:
@@ -792,6 +797,14 @@ public:
      * @return Returns errCode.
      */
     int32_t SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoomType);
+
+    /**
+     * @brief Get the supported Zoom point info.
+     *
+     * @param vector<ZoomPointInfo> of supported ZoomPointInfo.
+     * @return Returns errCode.
+     */
+    int32_t GetZoomPointInfo(std::vector<ZoomPointInfo>& zoomPointInfoList);
 
     /**
      * @brief Set Metadata Object types.
