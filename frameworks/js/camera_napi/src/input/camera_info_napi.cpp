@@ -357,7 +357,7 @@ napi_value CameraDeviceNapi::GetCameraOrientation(napi_env env, napi_callback_in
     }
     auto cameraDevice = obj->cameraDevice_;
     if (cameraDevice != nullptr) {
-        int32_t cameraOrientation = cameraDevice->GetCameraOrientation();
+        uint32_t cameraOrientation = cameraDevice->GetCameraOrientation();
         napi_create_int32(env, cameraOrientation, &result);
     } else {
         MEDIA_ERR_LOG("GetCameraOrientation get native object fail");

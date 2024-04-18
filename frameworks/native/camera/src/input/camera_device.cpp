@@ -186,7 +186,7 @@ std::string CameraDevice::GetNetWorkId()
     return dmDeviceInfo_.networkId;
 }
 
-int32_t CameraDevice::GetCameraOrientation()
+uint32_t CameraDevice::GetCameraOrientation()
 {
     return cameraOrientation_;
 }

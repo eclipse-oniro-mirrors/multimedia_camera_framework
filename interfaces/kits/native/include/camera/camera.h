@@ -603,7 +603,7 @@ typedef struct Camera_Device {
     /**
      * Camera orientation.
      */
-    int32_t cameraOrientation;
+    uint32_t cameraOrientation;
 } Camera_Device;
 
 /**

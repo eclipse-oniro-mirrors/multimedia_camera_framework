@@ -155,7 +155,7 @@ public:
     *
     * @return Returns the camera orientation.
     */
-    int32_t GetCameraOrientation();
+    uint32_t GetCameraOrientation();
 
     /**
     * @brief Check if mirror mode supported.
@@ -191,7 +191,7 @@ private:
     CameraType cameraType_ = CAMERA_TYPE_DEFAULT;
     ConnectionType connectionType_ = CAMERA_CONNECTION_BUILT_IN;
     CameraFoldScreenType foldScreenType_ = CAMERA_FOLDSCREEN_UNSPECIFIED;
-    int32_t cameraOrientation_ = 0;
+    uint32_t cameraOrientation_ = 0;
     bool isMirrorSupported_ = false;
     dmDeviceInfo dmDeviceInfo_ = {};
     std::vector<float> zoomRatioRange_;
