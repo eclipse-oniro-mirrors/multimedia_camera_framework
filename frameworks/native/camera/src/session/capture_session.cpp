@@ -2463,7 +2463,7 @@ int32_t CaptureSession::GetZoomPointInfo(std::vector<ZoomPointInfo>& zoomPointIn
         MEDIA_ERR_LOG(
             "CaptureSession::GetZoomPointInfo Failed with return code:%{public}d, item.count:%{public}d",
             ret, item.count);
-        return CameraErrorCode::SUCCESS;    
+        return CameraErrorCode::SUCCESS;
     }
     SceneMode mode = GetMode();
     int32_t defaultLen = 0;
@@ -2483,7 +2483,7 @@ int32_t CaptureSession::GetZoomPointInfo(std::vector<ZoomPointInfo>& zoomPointIn
     }
     // only return 1x zoomPointInfo
     ZoomPointInfo zoomPointInfo;
-    zoomPointInfo.zoomRatio = DEFAULT_EQUIVALENT_ZOOM;    
+    zoomPointInfo.zoomRatio = DEFAULT_EQUIVALENT_ZOOM;
     zoomPointInfo.equivalentFocalLength = (modeLen != 0) ? modeLen : defaultLen;
     zoomPointInfoList.emplace_back(zoomPointInfo);
     return CameraErrorCode::SUCCESS;
