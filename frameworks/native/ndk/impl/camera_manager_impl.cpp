@@ -49,6 +49,7 @@ public:
         statusInfo.camera->cameraType = static_cast<Camera_Type>(cameraStatusInfo.cameraDevice->GetCameraType());
         statusInfo.camera->connectionType =
             static_cast<Camera_Connection>(cameraStatusInfo.cameraDevice->GetConnectionType());
+        statusInfo.camera->cameraOrientation = cameraStatusInfo.cameraDevice->GetCameraOrientation();
         statusInfo.status = static_cast<Camera_Status>(cameraStatusInfo.cameraStatus);
         if (cameraManager_ != nullptr && callback_.onCameraStatus != nullptr) {
             callback_.onCameraStatus(cameraManager_, &statusInfo);
@@ -121,6 +122,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, ui
         outCameras[index].cameraPosition = static_cast<Camera_Position>(cameraObjList[index]->GetPosition());
         outCameras[index].cameraType = static_cast<Camera_Type>(cameraObjList[index]->GetCameraType());
         outCameras[index].connectionType = static_cast<Camera_Connection>(cameraObjList[index]->GetConnectionType());
+        outCameras[index].cameraOrientation = cameraObjList[index]->GetCameraOrientation();
     }
     *size = cameraSize;
     *cameras = outCameras;

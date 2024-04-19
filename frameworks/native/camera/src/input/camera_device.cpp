@@ -116,9 +116,14 @@ void CameraDevice::init(common_metadata_header_t* metadata)
         }
     }
 
+    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_SENSOR_ORIENTATION, &item);
+    if (ret == CAM_META_SUCCESS) {
+        cameraOrientation_ = item.data.i32[0];
+    }
     MEDIA_INFO_LOG("camera position: %{public}d, camera type: %{public}d, camera connection type: %{public}d, "
-                    "Mirror Supported: %{public}d , camera foldScreen type: %{public}d",
-                   cameraPosition_, cameraType_, connectionType_, isMirrorSupported_, foldScreenType_);
+                    "Mirror Supported: %{public}d , camera foldScreen type: %{public}d, camera orientation: %{public}d",
+                   cameraPosition_, cameraType_, connectionType_, isMirrorSupported_, foldScreenType_,
+                   cameraOrientation_);
 }
 
 std::string CameraDevice::GetID()
@@ -179,6 +184,11 @@ uint16_t CameraDevice::GetDeviceType()
 std::string CameraDevice::GetNetWorkId()
 {
     return dmDeviceInfo_.networkId;
+}
+
+uint32_t CameraDevice::GetCameraOrientation()
+{
+    return cameraOrientation_;
 }
 
 bool CameraDevice::IsMirrorSupported()
