@@ -76,7 +76,7 @@ int32_t HStreamMetadata::Start()
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
     }
     CaptureInfo captureInfo;
-    captureInfo.streamIds_ = { GetStreamId() };
+    captureInfo.streamIds_ = { GetHdiStreamId() };
     captureInfo.captureSetting_ = ability;
     captureInfo.enableShutterCallback_ = false;
     MEDIA_INFO_LOG("HStreamMetadata::Start Starting with capture ID: %{public}d", preparedCaptureId);
