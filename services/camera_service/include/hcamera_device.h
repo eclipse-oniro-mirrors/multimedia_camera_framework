@@ -36,6 +36,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+constexpr int32_t HDI_STREAM_ID_INIT = 1;
 using OHOS::HDI::Camera::V1_0::CaptureEndedInfo;
 using OHOS::HDI::Camera::V1_0::CaptureErrorInfo;
 using OHOS::HDI::Camera::V1_0::ICameraDeviceCallback;
@@ -95,6 +96,16 @@ public:
         std::lock_guard<std::mutex> lock(proxyStreamOperatorCallbackMutex_);
         return proxyStreamOperatorCallback_.promote();
     }
+
+    inline int32_t GenerateHdiStreamId()
+    {
+        return hdiStreamIdGenerator_.fetch_add(1);
+    }
+
+    inline void ResetHdiStreamId()
+    {
+        hdiStreamIdGenerator_ = HDI_STREAM_ID_INIT;
+    }
     
     void NotifyCameraSessionStatus(bool running);
 
@@ -136,6 +147,7 @@ private:
     std::atomic<bool> inPrepareZoom_;
     std::atomic<bool> deviceMuteMode_;
 
+    std::atomic<int32_t> hdiStreamIdGenerator_ = HDI_STREAM_ID_INIT;
     void UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings);
     void ResetDeviceOpenLifeCycleSettings();
 

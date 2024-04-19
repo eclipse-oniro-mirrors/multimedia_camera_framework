@@ -280,6 +280,7 @@ int32_t HCameraDevice::OpenDevice()
     if (errorCode != CAMERA_OK) {
         MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");
     } else {
+        ResetHdiStreamId();
         isOpenedCameraDevice_.store(true);
         HCameraDeviceManager::GetInstance()->AddDevice(IPCSkeleton::GetCallingPid(), this);
     }
@@ -981,6 +982,8 @@ int32_t HCameraDevice::ReleaseStreams(std::vector<int32_t>& releaseStreamIds)
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(opMutex_);
     if (streamOperator_ != nullptr && !releaseStreamIds.empty()) {
+        MEDIA_INFO_LOG("HCameraDevice::ReleaseStreams %{public}s",
+            Container2String(releaseStreamIds.begin(), releaseStreamIds.end()).c_str());
         int32_t rc = streamOperator_->ReleaseStreams(releaseStreamIds);
         if (rc != HDI::Camera::V1_0::NO_ERROR) {
             MEDIA_ERR_LOG("HCameraDevice::ClearStreamOperator ReleaseStreams fail, error Code:%{public}d", rc);

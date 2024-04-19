@@ -88,6 +88,8 @@ public:
     int32_t SetTorchLevel(float level);
     int32_t Prelaunch(sptr<HCameraRestoreParam> cameraRestoreParam, bool muteMode);
     int32_t PreCameraSwitch(const std::string& cameraId);
+    bool IsNeedRestore(int32_t opMode,
+        std::shared_ptr<OHOS::Camera::CameraMetadata> cameraSettings, std::string& cameraId);
     void NotifyDeviceStateChangeInfo(int notifyType, int deviceState);
 
     // CameraHostCallbackStub
@@ -363,7 +365,6 @@ void HCameraHostManager::CameraHostInfo::UpdataMuteSetting(std::shared_ptr<OHOS:
 
 int32_t HCameraHostManager::CameraHostInfo::Prelaunch(sptr<HCameraRestoreParam> cameraRestoreParam, bool muteMode)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     if (cameraHostProxy_ == nullptr) {
         MEDIA_ERR_LOG("CameraHostInfo::Prelaunch cameraHostProxy_ is null");
         return CAMERA_UNKNOWN_ERROR;
@@ -379,17 +380,22 @@ int32_t HCameraHostManager::CameraHostInfo::Prelaunch(sptr<HCameraRestoreParam> 
     OHOS::HDI::Camera::V1_1::PrelaunchConfig prelaunchConfig;
     std::vector<uint8_t> settings;
     prelaunchConfig.cameraId = cameraRestoreParam->GetCameraId();
-    prelaunchConfig.setting = {};
     prelaunchConfig.streamInfos_V1_1 = cameraRestoreParam->GetStreamInfo();
     DumpMetadata(cameraRestoreParam->GetSetting());
     UpdataMuteSetting(cameraRestoreParam->GetSetting(), muteMode);
     OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraRestoreParam->GetSetting(), settings);
     prelaunchConfig.setting = settings;
     int32_t opMode = cameraRestoreParam->GetCameraOpMode();
+    bool isNeedRestore = IsNeedRestore(opMode, cameraRestoreParam->GetSetting(), prelaunchConfig.cameraId);
     CamRetCode rc;
     if (cameraHostProxyV1_2_ != nullptr && GetCameraHostVersion() > GetVersionId(1, 1)) {
-        MEDIA_DEBUG_LOG("CameraHostInfo::PrelaunchWithOpMode ICameraHost V1_2 %{public}d", opMode);
-        rc = (CamRetCode)(cameraHostProxyV1_2_->PrelaunchWithOpMode(prelaunchConfig, opMode));
+        if (isNeedRestore) {
+            MEDIA_INFO_LOG("CameraHostInfo::PrelaunchWithOpMode ICameraHost V1_2 %{public}d", opMode);
+            rc = (CamRetCode)(cameraHostProxyV1_2_->PrelaunchWithOpMode(prelaunchConfig, opMode));
+        } else {
+            MEDIA_INFO_LOG("CameraHostInfo::Prelaunch ICameraHost V1_2 %{public}d", opMode);
+            rc = (CamRetCode)(cameraHostProxyV1_2_->Prelaunch(prelaunchConfig));
+        }
     } else if (cameraHostProxyV1_1_ != nullptr && GetCameraHostVersion() == GetVersionId(1, 1)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::Prelaunch ICameraHost V1_1");
         rc = (CamRetCode)(cameraHostProxyV1_1_->Prelaunch(prelaunchConfig));
@@ -403,6 +409,44 @@ int32_t HCameraHostManager::CameraHostInfo::Prelaunch(sptr<HCameraRestoreParam> 
     return CAMERA_OK;
 }
 
+bool HCameraHostManager::CameraHostInfo::IsNeedRestore(int32_t opMode,
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraSettings, std::string& cameraId)
+{
+    if (cameraSettings == nullptr) {
+        return false;
+    }
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
+    int32_t ret = GetCameraAbility(cameraId, cameraAbility);
+    if (ret != CAMERA_OK || cameraAbility == nullptr) {
+        MEDIA_ERR_LOG("CameraHostInfo::IsNeedRestore failed");
+        return false;
+    }
+    if (opMode == 0) { // 0 is normal mode
+        MEDIA_INFO_LOG("operationMode:%{public}d", opMode);
+        return true;
+    }
+    camera_metadata_item_t item;
+    ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_ABILITY_CAMERA_MODES, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("Failed to find stream extend configuration return code %{public}d", ret);
+        ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(),
+            OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
+        if (ret == CAM_META_SUCCESS && item.count != 0) {
+            MEDIA_INFO_LOG("basic config no need valid mode");
+            return true;
+        }
+        return false;
+    }
+
+    for (uint32_t i = 0; i < item.count; i++) {
+        if (opMode == item.data.u8[i]) {
+            MEDIA_DEBUG_LOG("operationMode:%{public}d found in supported streams", opMode);
+            return true;
+        }
+    }
+    MEDIA_ERR_LOG("operationMode:%{public}d not found in supported streams", opMode);
+    return false;
+}
 int32_t HCameraHostManager::CameraHostInfo::PreCameraSwitch(const std::string& cameraId)
 {
     std::lock_guard<std::mutex> lock(mutex_);

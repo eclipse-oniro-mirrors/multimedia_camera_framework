@@ -92,6 +92,7 @@ public:
     bool AddStream(sptr<HStreamCommon> stream);
     bool RemoveStream(sptr<HStreamCommon> stream);
     sptr<HStreamCommon> GetStream(int32_t streamId);
+    sptr<HStreamCommon> GetHdiStream(int32_t streamId);
     void Clear();
     size_t Size();
 
@@ -118,6 +119,8 @@ public:
     int32_t OnCaptureReady(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
 
     virtual const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) = 0;
+
+    virtual const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId) = 0;
 
 private:
     std::mutex cbMutex_;
@@ -163,6 +166,7 @@ public:
 
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
     const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) override;
+    const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId) override;
     int32_t SetFeatureMode(int32_t featureMode) override;
 
 private:

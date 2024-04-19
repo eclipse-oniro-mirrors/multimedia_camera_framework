@@ -257,9 +257,9 @@ int32_t HCaptureSession::AddOutputStream(sptr<HStreamCommon> stream)
         MEDIA_ERR_LOG("HCaptureSession::AddOutputStream stream is null");
         return CAMERA_INVALID_ARG;
     }
-    MEDIA_INFO_LOG("HCaptureSession::AddOutputStream streamId:%{public}d streamType:%{public}d", stream->GetStreamId(),
-        stream->GetStreamType());
-    if (stream->GetStreamId() == STREAM_ID_UNSET) {
+    MEDIA_INFO_LOG("HCaptureSession::AddOutputStream streamId:%{public}d streamType:%{public}d",
+        stream->GetFwkStreamId(), stream->GetStreamType());
+    if (stream->GetFwkStreamId() == STREAM_ID_UNSET) {
         MEDIA_ERR_LOG("HCaptureSession::AddOutputStream stream is released!");
         return CAMERA_INVALID_ARG;
     }
@@ -359,7 +359,7 @@ int32_t HCaptureSession::RemoveOutputStream(sptr<HStreamCommon> stream)
         return CAMERA_INVALID_ARG;
     }
     MEDIA_INFO_LOG("HCaptureSession::RemoveOutputStream,streamType:%{public}d, streamId:%{public}d",
-        stream->GetStreamType(), stream->GetStreamId());
+        stream->GetStreamType(), stream->GetFwkStreamId());
     bool isRemoveSuccess = streamContainer_.RemoveStream(stream);
     if (!isRemoveSuccess) {
         MEDIA_ERR_LOG("HCaptureSession::RemoveOutputStream Invalid output");
@@ -441,8 +441,12 @@ int32_t HCaptureSession::LinkInputAndOutputs()
     MEDIA_INFO_LOG("HCaptureSession::LinkInputAndOutputs allStream size:%{public}zu", allStream.size());
     for (auto& stream : allStream) {
         rc = stream->LinkInput(streamOperator, settings);
-        MEDIA_INFO_LOG("HCaptureSession::LinkInputAndOutputs streamType:%{public}d, streamId:%{public}d",
-            stream->GetStreamType(), stream->GetStreamId());
+        if (rc == CAMERA_OK) {
+            stream->SetHdiStreamId(device->GenerateHdiStreamId());
+        }
+        MEDIA_INFO_LOG(
+            "HCaptureSession::LinkInputAndOutputs streamType:%{public}d, streamId:%{public}d ,hdiStreamId:%{public}d",
+            stream->GetStreamType(), stream->GetFwkStreamId(), stream->GetHdiStreamId());
         if (rc != CAMERA_OK) {
             MEDIA_ERR_LOG("HCaptureSession::LinkInputAndOutputs() Failed to link Output, %{public}d", rc);
             return rc;
@@ -461,21 +465,26 @@ int32_t HCaptureSession::UnlinkInputAndOutputs()
 {
     CAMERA_SYNC_TRACE;
     int32_t rc = CAMERA_UNKNOWN_ERROR;
-    std::vector<int32_t> streamIds;
+    std::vector<int32_t> fwkStreamIds;
+    std::vector<int32_t> hdiStreamIds;
     auto allStream = streamContainer_.GetAllStreams();
     for (auto& stream : allStream) {
-        streamIds.emplace_back(stream->GetStreamId());
+        fwkStreamIds.emplace_back(stream->GetFwkStreamId());
+        hdiStreamIds.emplace_back(stream->GetHdiStreamId());
         stream->UnlinkInput();
     }
-    MEDIA_INFO_LOG("HCaptureSession::UnlinkInputAndOutputs() streamIds size() = %{public}zu, streamIds:%{public}s",
-        streamIds.size(), Container2String(streamIds.begin(), streamIds.end()).c_str());
+    MEDIA_INFO_LOG("HCaptureSession::UnlinkInputAndOutputs() streamIds size() = %{public}zu, streamIds:%{public}s, "
+                   "hdiStreamIds:%{public}s",
+        fwkStreamIds.size(), Container2String(fwkStreamIds.begin(), fwkStreamIds.end()).c_str(),
+        Container2String(hdiStreamIds.begin(), hdiStreamIds.end()).c_str());
 
     // HDI release streams, do not clear streamContainer_
     auto cameraDevice = GetCameraDevice();
     if ((cameraDevice != nullptr)) {
-        cameraDevice->ReleaseStreams(streamIds);
+        cameraDevice->ReleaseStreams(hdiStreamIds);
         std::vector<StreamInfo_V1_1> emptyStreams;
         cameraDevice->UpdateStreams(emptyStreams);
+        cameraDevice->ResetHdiStreamId();
     }
     return rc;
 }
@@ -515,6 +524,15 @@ const sptr<HStreamCommon> HCaptureSession::GetStreamByStreamID(int32_t streamId)
     return stream;
 }
 
+const sptr<HStreamCommon> HCaptureSession::GetHdiStreamByStreamID(int32_t streamId)
+{
+    auto stream = streamContainer_.GetHdiStream(streamId);
+    if (stream == nullptr) {
+        MEDIA_ERR_LOG("HCaptureSession::GetHdiStreamByStreamID get stream fail, streamId is:%{public}d", streamId);
+    }
+    return stream;
+}
+
 void HCaptureSession::ClearSketchRepeatStream()
 {
     MEDIA_DEBUG_LOG("Enter HCaptureSession::ClearSketchRepeatStream()");
@@ -530,7 +548,7 @@ void HCaptureSession::ClearSketchRepeatStream()
             continue;
         }
         MEDIA_DEBUG_LOG(
-            "HCaptureSession::ClearSketchRepeatStream() stream id is:%{public}d", sketchStream->GetStreamId());
+            "HCaptureSession::ClearSketchRepeatStream() stream id is:%{public}d", sketchStream->GetFwkStreamId());
         RemoveOutputStream(repeatStream);
     }
     MEDIA_DEBUG_LOG("Exit HCaptureSession::ClearSketchRepeatStream()");
@@ -603,8 +621,7 @@ int32_t HCaptureSession::SetColorSpace(ColorSpace colorSpace, ColorSpace capture
             currColorSpace_ = colorSpace;
             currCaptureColorSpace_ = captureColorSpace;
             MEDIA_INFO_LOG("HCaptureSession::SetColorSpace() colorSpace %{public}d, captureColorSpace %{public}d, "
-                           "isNeedUpdate %{public}d",
-                colorSpace, captureColorSpace, isNeedUpdate);
+                "isNeedUpdate %{public}d", colorSpace, captureColorSpace, isNeedUpdate);
 
             result = CheckIfColorSpaceMatchesFormat(colorSpace);
             if (result != CAMERA_OK && isNeedUpdate) {
@@ -955,11 +972,11 @@ int32_t HCaptureSession::Stop()
                 CastStream<HStreamCapture>(item)->CancelCapture();
             } else {
                 MEDIA_ERR_LOG("HCaptureSession::Stop(), get unknow stream, streamType: %{public}d, streamId:%{public}d",
-                    item->GetStreamType(), item->GetStreamId());
+                    item->GetStreamType(), item->GetFwkStreamId());
             }
             if (errorCode != CAMERA_OK) {
                 MEDIA_ERR_LOG("HCaptureSession::Stop(), Failed to stop stream, rc: %{public}d, streamId:%{public}d",
-                    errorCode, item->GetStreamId());
+                    errorCode, item->GetFwkStreamId());
             }
         }
         if (errorCode == CAMERA_OK) {
@@ -973,18 +990,28 @@ int32_t HCaptureSession::Stop()
 void HCaptureSession::ReleaseStreams()
 {
     CAMERA_SYNC_TRACE;
-    std::vector<int32_t> streamIds;
+    std::vector<int32_t> fwkStreamIds;
+    std::vector<int32_t> hdiStreamIds;
     auto allStream = streamContainer_.GetAllStreams();
     for (auto& stream : allStream) {
-        streamIds.emplace_back(stream->GetStreamId());
+        auto fwkStreamId = stream->GetFwkStreamId();
+        if (fwkStreamId != STREAM_ID_UNSET) {
+            fwkStreamIds.emplace_back(fwkStreamId);
+        }
+        auto hdiStreamId = stream->GetHdiStreamId();
+        if (hdiStreamId != STREAM_ID_UNSET) {
+            hdiStreamIds.emplace_back(hdiStreamId);
+        }
         stream->ReleaseStream(true);
     }
     streamContainer_.Clear();
-    MEDIA_INFO_LOG("HCaptureSession::ReleaseStreams() streamIds size() = %{public}zu, values:%{public}s",
-        streamIds.size(), Container2String(streamIds.begin(), streamIds.end()).c_str());
+    MEDIA_INFO_LOG("HCaptureSession::ReleaseStreams() streamIds size() = %{public}zu, fwkStreamIds:%{public}s, "
+        "hdiStreamIds:%{public}s,",
+        fwkStreamIds.size(), Container2String(fwkStreamIds.begin(), fwkStreamIds.end()).c_str(),
+        Container2String(hdiStreamIds.begin(), hdiStreamIds.end()).c_str());
     auto cameraDevice = GetCameraDevice();
-    if ((cameraDevice != nullptr) && !streamIds.empty()) {
-        cameraDevice->ReleaseStreams(streamIds);
+    if ((cameraDevice != nullptr) && !hdiStreamIds.empty()) {
+        cameraDevice->ReleaseStreams(hdiStreamIds);
     }
 }
 
@@ -1201,7 +1228,7 @@ int32_t StreamOperatorCallback::OnCaptureStarted(int32_t captureId, const std::v
         Container2String(streamIds.begin(), streamIds.end()).c_str());
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& streamId : streamIds) {
-        sptr<HStreamCommon> curStream = GetStreamByStreamID(streamId);
+        sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);
         if (curStream == nullptr) {
             MEDIA_ERR_LOG("StreamOperatorCallback::OnCaptureStarted StreamId: %{public}d not found", streamId);
             return CAMERA_INVALID_ARG;
@@ -1223,7 +1250,7 @@ int32_t StreamOperatorCallback::OnCaptureStarted_V1_2(
     MEDIA_INFO_LOG("StreamOperatorCallback::OnCaptureStarted_V1_2 captureId:%{public}d", captureId);
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& captureInfo : infos) {
-        sptr<HStreamCommon> curStream = GetStreamByStreamID(captureInfo.streamId_);
+        sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(captureInfo.streamId_);
         if (curStream == nullptr) {
             MEDIA_ERR_LOG("StreamOperatorCallback::OnCaptureStarted_V1_2 StreamId: %{public}d not found."
                           " exposureTime: %{public}u",
@@ -1244,7 +1271,7 @@ int32_t StreamOperatorCallback::OnCaptureEnded(int32_t captureId, const std::vec
     MEDIA_INFO_LOG("StreamOperatorCallback::OnCaptureEnded");
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& captureInfo : infos) {
-        sptr<HStreamCommon> curStream = GetStreamByStreamID(captureInfo.streamId_);
+        sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(captureInfo.streamId_);
         if (curStream == nullptr) {
             MEDIA_ERR_LOG("StreamOperatorCallback::OnCaptureEnded StreamId: %{public}d not found."
                           " Framecount: %{public}d",
@@ -1264,7 +1291,7 @@ int32_t StreamOperatorCallback::OnCaptureError(int32_t captureId, const std::vec
     MEDIA_INFO_LOG("StreamOperatorCallback::OnCaptureError");
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& errInfo : infos) {
-        sptr<HStreamCommon> curStream = GetStreamByStreamID(errInfo.streamId_);
+        sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(errInfo.streamId_);
         if (curStream == nullptr) {
             MEDIA_ERR_LOG("StreamOperatorCallback::OnCaptureError StreamId: %{public}d not found."
                           " Error: %{public}d",
@@ -1285,7 +1312,7 @@ int32_t StreamOperatorCallback::OnFrameShutter(
     MEDIA_INFO_LOG("StreamOperatorCallback::OnFrameShutter");
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& streamId : streamIds) {
-        sptr<HStreamCommon> curStream = GetStreamByStreamID(streamId);
+        sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);
         if ((curStream != nullptr) && (curStream->GetStreamType() == StreamType::CAPTURE)) {
             CastStream<HStreamCapture>(curStream)->OnFrameShutter(captureId, timestamp);
         } else {
@@ -1302,7 +1329,7 @@ int32_t StreamOperatorCallback::OnFrameShutterEnd(
     MEDIA_DEBUG_LOG("StreamOperatorCallback::OnFrameShutterEnd");
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& streamId : streamIds) {
-        sptr<HStreamCommon> curStream = GetStreamByStreamID(streamId);
+        sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);
         if ((curStream != nullptr) && (curStream->GetStreamType() == StreamType::CAPTURE)) {
             CastStream<HStreamCapture>(curStream)->OnFrameShutterEnd(captureId, timestamp);
         } else {
@@ -1319,7 +1346,7 @@ int32_t StreamOperatorCallback::OnCaptureReady(
     MEDIA_DEBUG_LOG("StreamOperatorCallback::OnCaptureReady");
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& streamId : streamIds) {
-        sptr<HStreamCommon> curStream = GetStreamByStreamID(streamId);
+        sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);
         if ((curStream != nullptr) && (curStream->GetStreamType() == StreamType::CAPTURE)) {
             CastStream<HStreamCapture>(curStream)->OnCaptureReady(captureId, timestamp);
         } else {
@@ -1394,7 +1421,20 @@ sptr<HStreamCommon> StreamContainer::GetStream(int32_t streamId)
     std::lock_guard<std::mutex> lock(streamsLock_);
     for (auto& pair : streams_) {
         for (auto& stream : pair.second) {
-            if (stream->GetStreamId() == streamId) {
+            if (stream->GetFwkStreamId() == streamId) {
+                return stream;
+            }
+        }
+    }
+    return nullptr;
+}
+
+sptr<HStreamCommon> StreamContainer::GetHdiStream(int32_t streamId)
+{
+    std::lock_guard<std::mutex> lock(streamsLock_);
+    for (auto& pair : streams_) {
+        for (auto& stream : pair.second) {
+            if (stream->GetHdiStreamId() == streamId) {
                 return stream;
             }
         }
@@ -1424,7 +1464,7 @@ std::list<sptr<HStreamCommon>> StreamContainer::GetStreams(const StreamType stre
     std::list<sptr<HStreamCommon>> totalOrderedStreams;
     for (auto& stream : streams_[streamType]) {
         auto insertPos = std::find_if(totalOrderedStreams.begin(), totalOrderedStreams.end(),
-            [&stream](auto& it) { return stream->GetStreamId() <= it->GetStreamId(); });
+            [&stream](auto& it) { return stream->GetFwkStreamId() <= it->GetFwkStreamId(); });
         totalOrderedStreams.emplace(insertPos, stream);
     }
     return totalOrderedStreams;
@@ -1437,7 +1477,7 @@ std::list<sptr<HStreamCommon>> StreamContainer::GetAllStreams()
     for (auto& pair : streams_) {
         for (auto& stream : pair.second) {
             auto insertPos = std::find_if(totalOrderedStreams.begin(), totalOrderedStreams.end(),
-                [&stream](auto& it) { return stream->GetStreamId() <= it->GetStreamId(); });
+                [&stream](auto& it) { return stream->GetFwkStreamId() <= it->GetFwkStreamId(); });
             totalOrderedStreams.emplace(insertPos, stream);
         }
     }
