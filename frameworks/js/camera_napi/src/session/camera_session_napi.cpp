@@ -2137,6 +2137,10 @@ napi_value CameraSessionNapi::SetSmoothZoom(napi_env env, napi_callback_info inf
 
 napi_value CameraSessionNapi::GetZoomPointInfos(napi_env env, napi_callback_info info)
 {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi GetZoomPointInfos is called!");
+        return nullptr;
+    }
     MEDIA_DEBUG_LOG("GetZoomPointInfos is called");
     napi_status status;
     napi_value result = nullptr;
