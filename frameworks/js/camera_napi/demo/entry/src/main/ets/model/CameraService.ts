@@ -1168,14 +1168,14 @@ class CameraService {
       
       // 获取当前模式等效焦距
       try {
-        let zoomPointInfo: Array<ZoomPointInfo> = this.captureSession.getZoomPointInfo();
+        let zoomPointInfo: Array<ZoomPointInfo> = this.captureSession.getZoomPointInfos();
         if (zoomPointInfo) {
-          Logger.info(TAG, `getZoomPointInfo zoomRatio:${zoomPointInfo[0].zoomRatio} equivalentFocalLength:${zoomPointInfo[0].equivalentFocalLength}`);
+          Logger.info(TAG, `getZoomPointInfos zoomRatio:${zoomPointInfo[0].zoomRatio} equivalentFocalLength:${zoomPointInfo[0].equivalentFocalLength}`);
           AppStorage.setOrCreate('equivalentFocalLength', zoomPointInfo[0].equivalentFocalLength);
         }
       } catch (error) {
         let err = error as BusinessError;
-        Logger.error(TAG, `getZoomPointInfo fail: error code ${err.code}`);
+        Logger.error(TAG, `getZoomPointInfos fail: error code ${err.code}`);
       }
 
       this.configMoonCaptureBoost();

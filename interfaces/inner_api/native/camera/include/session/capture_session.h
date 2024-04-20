@@ -804,7 +804,7 @@ public:
      * @param vector<ZoomPointInfo> of supported ZoomPointInfo.
      * @return Returns errCode.
      */
-    int32_t GetZoomPointInfo(std::vector<ZoomPointInfo>& zoomPointInfoList);
+    int32_t GetZoomPointInfos(std::vector<ZoomPointInfo>& zoomPointInfoList);
 
     /**
      * @brief Set Metadata Object types.

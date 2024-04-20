@@ -2444,16 +2444,16 @@ void CaptureSession::SetSmoothZoomCallback(std::shared_ptr<SmoothZoomCallback> s
     return;
 }
 
-int32_t CaptureSession::GetZoomPointInfo(std::vector<ZoomPointInfo>& zoomPointInfoList)
+int32_t CaptureSession::GetZoomPointInfos(std::vector<ZoomPointInfo>& zoomPointInfoList)
 {
-    MEDIA_INFO_LOG("CaptureSession::GetZoomPointInfo is Called");
+    MEDIA_INFO_LOG("CaptureSession::GetZoomPointInfos is Called");
     zoomPointInfoList.clear();
     if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("CaptureSession::GetZoomPointInfo Session is not Commited");
+        MEDIA_ERR_LOG("CaptureSession::GetZoomPointInfos Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
     if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
-        MEDIA_ERR_LOG("CaptureSession::GetZoomPointInfo camera device is null");
+        MEDIA_ERR_LOG("CaptureSession::GetZoomPointInfos camera device is null");
         return CameraErrorCode::SUCCESS;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
@@ -2461,17 +2461,17 @@ int32_t CaptureSession::GetZoomPointInfo(std::vector<ZoomPointInfo>& zoomPointIn
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_EQUIVALENT_FOCUS, &item);
     if (ret != CAM_META_SUCCESS || item.count == 0) {
         MEDIA_ERR_LOG(
-            "CaptureSession::GetZoomPointInfo Failed with return code:%{public}d, item.count:%{public}d",
+            "CaptureSession::GetZoomPointInfos Failed with return code:%{public}d, item.count:%{public}d",
             ret, item.count);
         return CameraErrorCode::SUCCESS;
     }
     SceneMode mode = GetMode();
     int32_t defaultLen = 0;
     int32_t modeLen = 0;
-    MEDIA_INFO_LOG("CaptureSession::GetZoomPointInfo mode:%{public}d", mode);
+    MEDIA_INFO_LOG("CaptureSession::GetZoomPointInfos mode:%{public}d", mode);
     for (uint32_t i = 0; i < item.count; i++) {
         if ((i & 1) == 0) {
-            MEDIA_DEBUG_LOG("CaptureSession::GetZoomPointInfo mode:%{public}d, equivalentFocus:%{public}d",
+            MEDIA_DEBUG_LOG("CaptureSession::GetZoomPointInfos mode:%{public}d, equivalentFocus:%{public}d",
                 item.data.i32[i], item.data.i32[i + 1]);
             if (SceneMode::NORMAL == item.data.i32[i]) {
                 defaultLen = item.data.i32[i + 1];

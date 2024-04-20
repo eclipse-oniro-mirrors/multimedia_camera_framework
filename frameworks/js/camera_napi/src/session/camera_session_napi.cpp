@@ -105,7 +105,7 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::zoom_props = {
     DECLARE_NAPI_FUNCTION("prepareZoom", PrepareZoom),
     DECLARE_NAPI_FUNCTION("unprepareZoom", UnPrepareZoom),
     DECLARE_NAPI_FUNCTION("setSmoothZoom", SetSmoothZoom),
-    DECLARE_NAPI_FUNCTION("getZoomPointInfo", CameraSessionNapi::GetZoomPointInfo)
+    DECLARE_NAPI_FUNCTION("getZoomPointInfos", CameraSessionNapi::GetZoomPointInfos)
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::filter_props = {
@@ -2135,9 +2135,9 @@ napi_value CameraSessionNapi::SetSmoothZoom(napi_env env, napi_callback_info inf
     return result;
 }
 
-napi_value CameraSessionNapi::GetZoomPointInfo(napi_env env, napi_callback_info info)
+napi_value CameraSessionNapi::GetZoomPointInfos(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("GetZoomPointInfo is called");
+    MEDIA_DEBUG_LOG("GetZoomPointInfos is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -2152,11 +2152,11 @@ napi_value CameraSessionNapi::GetZoomPointInfo(napi_env env, napi_callback_info 
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
         std::vector<ZoomPointInfo> vecZoomPointInfoList;
-        int32_t retCode = cameraSessionNapi->cameraSession_->GetZoomPointInfo(vecZoomPointInfoList);
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetZoomPointInfos(vecZoomPointInfoList);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
         }
-        MEDIA_INFO_LOG("CameraSessionNapi::GetZoomPointInfo len = %{public}zu",
+        MEDIA_INFO_LOG("CameraSessionNapi::GetZoomPointInfos len = %{public}zu",
             vecZoomPointInfoList.size());
 
         if (!vecZoomPointInfoList.empty() && napi_create_array(env, &result) == napi_ok) {
@@ -2176,7 +2176,7 @@ napi_value CameraSessionNapi::GetZoomPointInfo(napi_env env, napi_callback_info 
             MEDIA_ERR_LOG("vecSupportedZoomRatioList is empty or failed to create array!");
         }
     } else {
-        MEDIA_ERR_LOG("GetZoomPointInfo call Failed!");
+        MEDIA_ERR_LOG("GetZoomPointInfos call Failed!");
     }
     return result;
 }
