@@ -46,6 +46,8 @@ namespace {
 constexpr int32_t DEFAULT_ITEMS = 10;
 constexpr int32_t DEFAULT_DATA_LENGTH = 100;
 constexpr int32_t DEFERRED_MODE_DATA_SIZE = 2;
+constexpr float DEFAULT_EQUIVALENT_ZOOM = 100.0f;
+
 } // namespace
 
 static const std::map<CM_ColorSpaceType, ColorSpace> g_metaColorSpaceMap_ = {
@@ -2440,6 +2442,51 @@ void CaptureSession::SetSmoothZoomCallback(std::shared_ptr<SmoothZoomCallback> s
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     smoothZoomCallback_ = smoothZoomCallback;
     return;
+}
+
+int32_t CaptureSession::GetZoomPointInfos(std::vector<ZoomPointInfo>& zoomPointInfoList)
+{
+    MEDIA_INFO_LOG("CaptureSession::GetZoomPointInfos is Called");
+    zoomPointInfoList.clear();
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::GetZoomPointInfos Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetZoomPointInfos camera device is null");
+        return CameraErrorCode::SUCCESS;
+    }
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_EQUIVALENT_FOCUS, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG(
+            "CaptureSession::GetZoomPointInfos Failed with return code:%{public}d, item.count:%{public}d",
+            ret, item.count);
+        return CameraErrorCode::SUCCESS;
+    }
+    SceneMode mode = GetMode();
+    int32_t defaultLen = 0;
+    int32_t modeLen = 0;
+    MEDIA_INFO_LOG("CaptureSession::GetZoomPointInfos mode:%{public}d", mode);
+    for (uint32_t i = 0; i < item.count; i++) {
+        if ((i & 1) == 0) {
+            MEDIA_DEBUG_LOG("CaptureSession::GetZoomPointInfos mode:%{public}d, equivalentFocus:%{public}d",
+                item.data.i32[i], item.data.i32[i + 1]);
+            if (SceneMode::NORMAL == item.data.i32[i]) {
+                defaultLen = item.data.i32[i + 1];
+            }
+            if (mode == item.data.i32[i]) {
+                modeLen = item.data.i32[i + 1];
+            }
+        }
+    }
+    // only return 1x zoomPointInfo
+    ZoomPointInfo zoomPointInfo;
+    zoomPointInfo.zoomRatio = DEFAULT_EQUIVALENT_ZOOM;
+    zoomPointInfo.equivalentFocalLength = (modeLen != 0) ? modeLen : defaultLen;
+    zoomPointInfoList.emplace_back(zoomPointInfo);
+    return CameraErrorCode::SUCCESS;
 }
 
 void CaptureSession::SetCaptureMetadataObjectTypes(std::set<camera_face_detect_mode_t> metadataObjectTypes)

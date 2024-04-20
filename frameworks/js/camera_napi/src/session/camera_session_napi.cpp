@@ -104,7 +104,8 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::zoom_props = {
     DECLARE_NAPI_FUNCTION("setZoomRatio", CameraSessionNapi::SetZoomRatio),
     DECLARE_NAPI_FUNCTION("prepareZoom", PrepareZoom),
     DECLARE_NAPI_FUNCTION("unprepareZoom", UnPrepareZoom),
-    DECLARE_NAPI_FUNCTION("setSmoothZoom", SetSmoothZoom)
+    DECLARE_NAPI_FUNCTION("setSmoothZoom", SetSmoothZoom),
+    DECLARE_NAPI_FUNCTION("getZoomPointInfos", CameraSessionNapi::GetZoomPointInfos)
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::filter_props = {
@@ -2130,6 +2131,56 @@ napi_value CameraSessionNapi::SetSmoothZoom(napi_env env, napi_callback_info inf
         cameraSessionNapi->cameraSession_->SetSmoothZoom((float)targetZoomRatio, smoothZoomType);
     } else {
         MEDIA_ERR_LOG("SetSmoothZoom call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetZoomPointInfos(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi GetZoomPointInfos is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("GetZoomPointInfos is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        std::vector<ZoomPointInfo> vecZoomPointInfoList;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetZoomPointInfos(vecZoomPointInfoList);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        MEDIA_INFO_LOG("CameraSessionNapi::GetZoomPointInfos len = %{public}zu",
+            vecZoomPointInfoList.size());
+
+        if (!vecZoomPointInfoList.empty() && napi_create_array(env, &result) == napi_ok) {
+            for (size_t i = 0; i < vecZoomPointInfoList.size(); i++) {
+                ZoomPointInfo zoomPointInfo = vecZoomPointInfoList[i];
+                napi_value value;
+                napi_value zoomRatio;
+                napi_value equivalentFocus;
+                napi_create_object(env, &value);
+                napi_create_double(env, CameraNapiUtils::FloatToDouble(zoomPointInfo.zoomRatio), &zoomRatio);
+                napi_set_named_property(env, value, "zoomRatio", zoomRatio);
+                napi_create_double(env, zoomPointInfo.equivalentFocalLength, &equivalentFocus);
+                napi_set_named_property(env, value, "equivalentFocalLength", equivalentFocus);
+                napi_set_element(env, result, i, value);
+            }
+        } else {
+            MEDIA_ERR_LOG("vecSupportedZoomRatioList is empty or failed to create array!");
+        }
+    } else {
+        MEDIA_ERR_LOG("GetZoomPointInfos call Failed!");
     }
     return result;
 }
