@@ -102,6 +102,10 @@ void CameraInput::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
     {
+        if (this == nullptr) {
+            MEDIA_ERR_LOG("CameraInput has been destructed.");
+            return;
+        }
         std::lock_guard<std::mutex> lock(errorCallbackMutex_);
         if (errorCallback_ != nullptr) {
             MEDIA_DEBUG_LOG("appCallback not nullptr");
@@ -127,6 +131,7 @@ CameraInput::~CameraInput()
     }
     if (deviceObj_ != nullptr) {
         (void)deviceObj_->AsObject()->RemoveDeathRecipient(deathRecipient_);
+        deathRecipient_->SetNotifyCb(nullptr);
         deviceObj_ = nullptr;
     }
 }
