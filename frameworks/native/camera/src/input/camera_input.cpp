@@ -115,9 +115,6 @@ void CameraInput::CameraServerDied(pid_t pid)
                             serviceErrorMsg);
             errorCallback_->OnError(serviceErrorType, serviceErrorMsg);
         }
-    } else {
-        MEDIA_ERR_LOG("CameraInput has been destructed.");
-        return;
     }
     if (deviceObj_ != nullptr) {
         (void)deviceObj_->AsObject()->RemoveDeathRecipient(deathRecipient_);
