@@ -68,8 +68,8 @@ int32_t CameraDeviceServiceCallback::OnResult(const uint64_t timestamp,
 }
 
 
-CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
-                         sptr<CameraDevice> &cameraObj) : deviceObj_(deviceObj), cameraObj_(cameraObj)
+CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj, sptr<CameraDevice> &cameraObj) :
+    deviceObj_(deviceObj), cameraObj_(cameraObj), isDestructing_(false)
 {
     MEDIA_INFO_LOG("CameraInput::CameraInput Contructor!");
     if (cameraObj_) {
@@ -101,8 +101,12 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
 void CameraInput::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
-    if (errorCallbackMutex_.try_lock()) {
-        errorCallbackMutex_.unlock();
+    {
+        if (isDestructing_.load()) {
+            MEDIA_ERR_LOG("CameraInput is destructing");
+            return;
+        }
+        std::lock_guard<std::mutex> lock(errorCallbackMutex_);
         if (errorCallback_ != nullptr) {
             MEDIA_DEBUG_LOG("appCallback not nullptr");
             int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
@@ -125,6 +129,7 @@ void CameraInput::CameraServerDied(pid_t pid)
 CameraInput::~CameraInput()
 {
     MEDIA_INFO_LOG("CameraInput::CameraInput Destructor!");
+    isDestructing_.store(true);
     if (cameraObj_) {
         MEDIA_INFO_LOG("CameraInput::CameraInput Destructor Camera: %{public}s", cameraObj_->GetID().c_str());
     }
