@@ -104,7 +104,7 @@ private:
     void AddDevice(const std::string& cameraId);
     void RemoveDevice(const std::string& cameraId);
     void Cast2MultiVersionCameraHost();
-    void UpdataMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> setting, bool muteMode);
+    void UpdateMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> setting);
 
     std::weak_ptr<StatusCallback> statusCallback_;
     std::weak_ptr<CameraHostDeadCallback> cameraHostDeadCallback_;
@@ -354,12 +354,17 @@ int32_t HCameraHostManager::CameraHostInfo::SetTorchLevel(float level)
     return CAMERA_OK;
 }
 
-void HCameraHostManager::CameraHostInfo::UpdataMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> setting,
-    bool muteMode)
+void HCameraHostManager::CameraHostInfo::UpdateMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> setting)
 {
-    MEDIA_INFO_LOG("CameraHostInfo::UpdataMuteSetting muteMode is %{public}d", muteMode);
+    MEDIA_DEBUG_LOG("CameraHostInfo::UpdateMuteSetting enter");
     int32_t count = 1;
-    uint8_t mode = muteMode ? OHOS_CAMERA_MUTE_MODE_SOLID_COLOR_BLACK : OHOS_CAMERA_MUTE_MODE_OFF;
+    uint8_t mode = OHOS_CAMERA_MUTE_MODE_SOLID_COLOR_BLACK;
+    if (setting == nullptr) {
+        MEDIA_DEBUG_LOG("CameraHostInfo::UpdateMuteSetting setting is null");
+        constexpr int32_t DEFAULT_ITEMS = 1;
+        constexpr int32_t DEFAULT_DATA_LENGTH = 1;
+        setting = std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    }
     setting->addEntry(OHOS_CONTROL_MUTE_MODE, &mode, count);
 }
 
@@ -382,7 +387,9 @@ int32_t HCameraHostManager::CameraHostInfo::Prelaunch(sptr<HCameraRestoreParam> 
     prelaunchConfig.cameraId = cameraRestoreParam->GetCameraId();
     prelaunchConfig.streamInfos_V1_1 = cameraRestoreParam->GetStreamInfo();
     DumpMetadata(cameraRestoreParam->GetSetting());
-    UpdataMuteSetting(cameraRestoreParam->GetSetting(), muteMode);
+    if (muteMode) {
+        UpdateMuteSetting(cameraRestoreParam->GetSetting());
+    }
     OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraRestoreParam->GetSetting(), settings);
     prelaunchConfig.setting = settings;
     int32_t opMode = cameraRestoreParam->GetCameraOpMode();
