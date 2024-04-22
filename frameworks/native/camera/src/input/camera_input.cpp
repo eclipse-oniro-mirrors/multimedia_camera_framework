@@ -101,12 +101,8 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
 void CameraInput::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
-    {
-        if (this == nullptr) {
-            MEDIA_ERR_LOG("CameraInput has been destructed.");
-            return;
-        }
-        std::lock_guard<std::mutex> lock(errorCallbackMutex_);
+    if (errorCallbackMutex_.try_lock()) {
+        errorCallbackMutex_.unlock();
         if (errorCallback_ != nullptr) {
             MEDIA_DEBUG_LOG("appCallback not nullptr");
             int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
@@ -115,6 +111,9 @@ void CameraInput::CameraServerDied(pid_t pid)
                             serviceErrorMsg);
             errorCallback_->OnError(serviceErrorType, serviceErrorMsg);
         }
+    } else {
+        MEDIA_ERR_LOG("CameraInput has been destructed.");
+        return;
     }
     if (deviceObj_ != nullptr) {
         (void)deviceObj_->AsObject()->RemoveDeathRecipient(deathRecipient_);
