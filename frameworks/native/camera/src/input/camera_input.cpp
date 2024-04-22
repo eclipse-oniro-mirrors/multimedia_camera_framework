@@ -68,8 +68,10 @@ int32_t CameraDeviceServiceCallback::OnResult(const uint64_t timestamp,
 }
 
 
-CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj, sptr<CameraDevice> &cameraObj) :
-    deviceObj_(deviceObj), cameraObj_(cameraObj), isDestructing_(false)
+CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
+                         sptr<CameraDevice> &cameraObj) : deviceObj_(deviceObj),
+                         cameraObj_(cameraObj),
+                         isDestructing_(false)
 {
     MEDIA_INFO_LOG("CameraInput::CameraInput Contructor!");
     if (cameraObj_) {
