@@ -130,7 +130,6 @@ CameraInput::~CameraInput()
     }
     if (deviceObj_ != nullptr) {
         (void)deviceObj_->AsObject()->RemoveDeathRecipient(deathRecipient_);
-        deathRecipient_->SetNotifyCb(nullptr);
         deviceObj_ = nullptr;
     }
 }
