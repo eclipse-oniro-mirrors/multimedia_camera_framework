@@ -69,9 +69,7 @@ int32_t CameraDeviceServiceCallback::OnResult(const uint64_t timestamp,
 
 
 CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
-                         sptr<CameraDevice> &cameraObj) : deviceObj_(deviceObj),
-                         cameraObj_(cameraObj),
-                         isDestructing_(false)
+                         sptr<CameraDevice> &cameraObj) : deviceObj_(deviceObj), cameraObj_(cameraObj)
 {
     MEDIA_INFO_LOG("CameraInput::CameraInput Contructor!");
     if (cameraObj_) {
@@ -103,12 +101,8 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
 void CameraInput::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
+    std::lock_guard<std::mutex> lock(errorCallbackMutex_);
     {
-        if (isDestructing_.load()) {
-            MEDIA_ERR_LOG("CameraInput is destructing");
-            return;
-        }
-        std::lock_guard<std::mutex> lock(errorCallbackMutex_);
         if (errorCallback_ != nullptr) {
             MEDIA_DEBUG_LOG("appCallback not nullptr");
             int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
@@ -118,17 +112,19 @@ void CameraInput::CameraServerDied(pid_t pid)
             errorCallback_->OnError(serviceErrorType, serviceErrorMsg);
         }
     }
-    if (deviceObj_ != nullptr) {
-        (void)deviceObj_->AsObject()->RemoveDeathRecipient(deathRecipient_);
-        deviceObj_ = nullptr;
+    std::lock_guard<std::mutex> lock(interfaceMutex_);
+    {
+        if (deviceObj_ != nullptr) {
+            (void)deviceObj_->AsObject()->RemoveDeathRecipient(deathRecipient_);
+            deviceObj_ = nullptr;
+        }
+        deathRecipient_ = nullptr;
     }
-    deathRecipient_ = nullptr;
 }
 
 CameraInput::~CameraInput()
 {
     MEDIA_INFO_LOG("CameraInput::CameraInput Destructor!");
-    isDestructing_.store(true);
     if (cameraObj_) {
         MEDIA_INFO_LOG("CameraInput::CameraInput Destructor Camera: %{public}s", cameraObj_->GetID().c_str());
     }
@@ -176,6 +172,7 @@ int CameraInput::Close()
 
 int CameraInput::Release()
 {
+    std::lock_guard<std::mutex> lock(interfaceMutex_);
     MEDIA_DEBUG_LOG("Enter Into CameraInput::Release");
     int32_t retCode = CAMERA_UNKNOWN_ERROR;
     if (deviceObj_) {
