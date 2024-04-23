@@ -125,6 +125,7 @@ void CameraInput::CameraServerDied(pid_t pid)
 CameraInput::~CameraInput()
 {
     MEDIA_INFO_LOG("CameraInput::CameraInput Destructor!");
+    std::lock_guard<std::mutex> lock(interfaceMutex_);
     if (cameraObj_) {
         MEDIA_INFO_LOG("CameraInput::CameraInput Destructor Camera: %{public}s", cameraObj_->GetID().c_str());
     }
