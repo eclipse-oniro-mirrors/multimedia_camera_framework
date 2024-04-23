@@ -101,7 +101,7 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
 void CameraInput::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
-    std::lock_guard<std::mutex> lock(errorCallbackMutex_);
+    std::lock_guard<std::mutex> errLock(errorCallbackMutex_);
     {
         if (errorCallback_ != nullptr) {
             MEDIA_DEBUG_LOG("appCallback not nullptr");
@@ -112,7 +112,7 @@ void CameraInput::CameraServerDied(pid_t pid)
             errorCallback_->OnError(serviceErrorType, serviceErrorMsg);
         }
     }
-    std::lock_guard<std::mutex> lock(interfaceMutex_);
+    std::lock_guard<std::mutex> interfaceLock(interfaceMutex_);
     {
         if (deviceObj_ != nullptr) {
             (void)deviceObj_->AsObject()->RemoveDeathRecipient(deathRecipient_);
