@@ -373,13 +373,13 @@ int32_t ProfessionSession::GetSensorExposureTimeRange(std::vector<uint32_t> &sen
     for (uint32_t i = 0; i < item.count; i++) {
         numerator = item.data.r[i].numerator;
         denominator = item.data.r[i].denominator;
-        value = numerator / (denominator / timeUnit);
-        MEDIA_DEBUG_LOG("ProfessionSession::GetSensorExposureTimeRange numerator=%{public}d, denominator=%{public}d,"
-                        " value=%{public}d", numerator, denominator, value);
         if (denominator == 0) {
             MEDIA_ERR_LOG("ProfessionSession::GetSensorExposureTimeRange divide by 0! numerator=%{public}d", numerator);
             return CameraErrorCode::INVALID_ARGUMENT;
         }
+        value = numerator / (denominator / timeUnit);
+        MEDIA_DEBUG_LOG("ProfessionSession::GetSensorExposureTimeRange numerator=%{public}d, denominator=%{public}d,"
+                        " value=%{public}d", numerator, denominator, value);
         sensorExposureTimeRange.emplace_back(value);
     }
     MEDIA_INFO_LOG("ProfessionSessionNapi::GetSensorExposureTimeRange range=%{public}s, len = %{public}zu",

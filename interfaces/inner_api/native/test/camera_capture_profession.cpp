@@ -42,8 +42,6 @@ std::map<uint32_t, std::string> g_abilityIdStr_ = {
 int main(int argc, char **argv)
 {
     cout<<"-----------------version:20240322-----------------"<<endl;
-    // ProfessionSessionStub stub;
-    // stub.ExecuteMock();
     const int32_t previewWidthIndex = 1;
     const int32_t previewHeightIndex = 2;
     const int32_t photoWidthIndex = 3;

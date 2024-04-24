@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef PROFESSION_SESSION_NAPI_H_
-#define PROFESSION_SESSION_NAPI_H_
+#ifndef PROFESSION_SESSION_NAPI_H
+#define PROFESSION_SESSION_NAPI_H
 
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
@@ -188,4 +188,4 @@ protected:
 };
 }
 }
-#endif /* PROFESSION_SESSION_NAPI_H_ */
+#endif /* PROFESSION_SESSION_NAPI_H */

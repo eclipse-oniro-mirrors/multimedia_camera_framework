@@ -99,8 +99,8 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::focus_props = {
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::manual_focus_props = {
-        DECLARE_NAPI_FUNCTION("getFocusDistance", CameraSessionNapi::GetFocusDistance),
-        DECLARE_NAPI_FUNCTION("setFocusDistance", CameraSessionNapi::SetFocusDistance),
+    DECLARE_NAPI_FUNCTION("getFocusDistance", CameraSessionNapi::GetFocusDistance),
+    DECLARE_NAPI_FUNCTION("setFocusDistance", CameraSessionNapi::SetFocusDistance),
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::zoom_props = {

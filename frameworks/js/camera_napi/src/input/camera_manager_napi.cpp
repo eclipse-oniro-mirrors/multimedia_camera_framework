@@ -502,24 +502,24 @@ napi_value CameraManagerNapi::CreateSessionInstance(napi_env env, napi_callback_
     napi_get_value_int32(env, argv[PARAM0], &jsModeName);
     MEDIA_INFO_LOG("CameraManagerNapi::CreateSessionInstance mode = %{public}d", jsModeName);
     switch (jsModeName) {
-        case SceneMode::CAPTURE:
+        case JsSceneMode::JS_CAPTURE:
             result = CameraNapiSecurity::CheckSystemApp(env, false) ?
                 PhotoSessionForSysNapi::CreateCameraSession(env) : PhotoSessionNapi::CreateCameraSession(env);
             break;
-        case SceneMode::VIDEO:
+        case JsSceneMode::JS_VIDEO:
             result = CameraNapiSecurity::CheckSystemApp(env, false) ?
                 VideoSessionForSysNapi::CreateCameraSession(env) : VideoSessionNapi::CreateCameraSession(env);
             break;
-        case SceneMode::PORTRAIT:
+        case JsSceneMode::JS_PORTRAIT:
             result = PortraitSessionNapi::CreateCameraSession(env);
             break;
-        case SceneMode::NIGHT:
+        case JsSceneMode::JS_NIGHT:
             result = NightSessionNapi::CreateCameraSession(env);
             break;
-        case SceneMode::PROFESSIONAL_PHOTO:
+        case JsSceneMode::JS_PROFESSIONAL_PHOTO:
             result = ProfessionSessionNapi::CreateCameraSession(env, SceneMode::PROFESSIONAL_PHOTO);
             break;
-        case SceneMode::PROFESSIONAL_VIDEO:
+        case JsSceneMode::JS_PROFESSIONAL_VIDEO:
             result = ProfessionSessionNapi::CreateCameraSession(env, SceneMode::PROFESSIONAL_VIDEO);
             break;
         default:

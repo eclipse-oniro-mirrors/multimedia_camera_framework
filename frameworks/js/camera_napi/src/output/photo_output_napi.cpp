@@ -1891,8 +1891,12 @@ void PhotoOutputNapi::RegisterPhotoAvailableCallbackListener(
         photoListener_ = photoListener;
     }
     photoListener_->SaveCallbackReference(CONST_CAPTURE_PHOTO_AVAILABLE, callback);
-    if (rawPhotoListener_ == nullptr && profile_.GetCameraFormat() == CAMERA_FORMAT_DNG) {
+    if (photoOutput_ != nullptr && rawPhotoListener_ == nullptr && profile_.GetCameraFormat() == CAMERA_FORMAT_DNG) {
         MEDIA_INFO_LOG("new rawPhotoListener and register surface consumer listener");
+        if (photoOutput_->rawPhotoSurface_ == nullptr) {
+            MEDIA_ERR_LOG("rawPhotoSurface_ is null!");
+            return;
+        }
         sptr<RawPhotoListener> rawPhotoListener =
             new (std::nothrow) RawPhotoListener(env, photoOutput_->rawPhotoSurface_);
         SurfaceError ret = photoOutput_->rawPhotoSurface_->RegisterConsumerListener(

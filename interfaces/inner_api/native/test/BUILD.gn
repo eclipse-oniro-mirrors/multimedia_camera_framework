@@ -51,7 +51,11 @@ ohos_executable("camera_video") {
   ]
   cflags += [ "-Wall" ]
   cflags_cc = cflags
-
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
   configs = [ ":camera_config" ]
 
   deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
@@ -89,7 +93,11 @@ ohos_executable("camera_capture") {
   ]
   cflags += [ "-Wall" ]
   cflags_cc = cflags
-
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
   configs = [ ":camera_config" ]
 
   deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
@@ -124,7 +132,11 @@ ohos_executable("camera_capture_video") {
   ]
   cflags += [ "-Wall" ]
   cflags_cc = cflags
-
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
   configs = [ ":camera_config" ]
 
   deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
@@ -159,7 +171,11 @@ ohos_executable("camera_capture_mode") {
   ]
   cflags += [ "-Wall" ]
   cflags_cc = cflags
-
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
   configs = [ ":camera_config" ]
 
   deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
@@ -192,7 +208,11 @@ ohos_executable("camera_capture_profession") {
     "-fPIC",
     "-g",
   ]
-
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
   cflags += [ "-Wall" ]
   cflags_cc = cflags
 

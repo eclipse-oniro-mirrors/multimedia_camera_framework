@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -197,7 +197,7 @@ napi_value ProfessionSessionNapi::ProfessionSessionNapiConstructor(napi_env env,
             ProfessionSessionNapi::ProfessionSessionNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
             obj.release();
-                        return thisVar;
+            return thisVar;
         } else {
             MEDIA_ERR_LOG("ProfessionSessionNapi Failure wrapping js to native napi");
         }

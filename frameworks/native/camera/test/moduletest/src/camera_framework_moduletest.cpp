@@ -636,8 +636,9 @@ SelectProfiles CameraFrameworkModuleTest::SelectWantedProfiles(
     sptr<CameraOutputCapability>& modeAbility, const SelectProfiles wanted)
 {
     SelectProfiles ret;
-    const auto& preview = std::find_if(modeAbility->GetPreviewProfiles().begin(), modeAbility->GetPreviewProfiles().end(),
-        [&wanted](auto& profile) { return profile == wanted.preview; });
+    const auto& preview = std::find_if(modeAbility->GetPreviewProfiles().begin(),
+                                       modeAbility->GetPreviewProfiles().end(),
+                                       [&wanted](auto& profile) { return profile == wanted.preview; });
     if (preview != modeAbility->GetPreviewProfiles().end()) {
         ret.preview = *preview;
     }
@@ -3237,12 +3238,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_075, 
     ASSERT_NE(modeAbility, nullptr);
 
     SelectProfiles wanted;
-    wanted.preview.size_ = {640,480};
+    wanted.preview.size_ = {640, 480};
     wanted.preview.format_ = CAMERA_FORMAT_RGBA_8888;
 
-    wanted.video.size_ = {640,480};
+    wanted.video.size_ = {640, 480};
     wanted.video.format_ = CAMERA_FORMAT_RGBA_8888;
-    wanted.video.framerates_ = {30,30};
+    wanted.video.framerates_ = {30, 30};
 
     SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
     ASSERT_NE(profiles.preview.format_, -1);
