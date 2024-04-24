@@ -46,7 +46,8 @@ const std::unordered_map<camera_format_t, CameraFormat> CameraManager::metaToFwC
     {OHOS_CAMERA_FORMAT_YCBCR_P010, CAMERA_FORMAT_YCBCR_P010},
     {OHOS_CAMERA_FORMAT_YCRCB_P010, CAMERA_FORMAT_YCRCB_P010},
     {OHOS_CAMERA_FORMAT_YCBCR_420_SP, CAMERA_FORMAT_NV12},
-    {OHOS_CAMERA_FORMAT_422_YUYV, CAMERA_FORMAT_YUV_422_YUYV}
+    {OHOS_CAMERA_FORMAT_422_YUYV, CAMERA_FORMAT_YUV_422_YUYV},
+    {OHOS_CAMERA_FORMAT_DNG, CAMERA_FORMAT_DNG},
 };
 
 const std::unordered_map<CameraFormat, camera_format_t> CameraManager::fwToMetaCameraFormat_ = {
@@ -56,7 +57,9 @@ const std::unordered_map<CameraFormat, camera_format_t> CameraManager::fwToMetaC
     {CAMERA_FORMAT_YCBCR_P010, OHOS_CAMERA_FORMAT_YCBCR_P010},
     {CAMERA_FORMAT_YCRCB_P010, OHOS_CAMERA_FORMAT_YCRCB_P010},
     {CAMERA_FORMAT_NV12, OHOS_CAMERA_FORMAT_YCBCR_420_SP},
-    {CAMERA_FORMAT_YUV_422_YUYV, OHOS_CAMERA_FORMAT_422_YUYV}
+    {CAMERA_FORMAT_YUV_422_YUYV, OHOS_CAMERA_FORMAT_422_YUYV},
+    {CAMERA_FORMAT_DNG, OHOS_CAMERA_FORMAT_DNG},
+
 };
 
 const std::unordered_map<OperationMode, SceneMode> g_metaToFwSupportedMode_ = {
@@ -65,7 +68,8 @@ const std::unordered_map<OperationMode, SceneMode> g_metaToFwSupportedMode_ = {
     {OperationMode::VIDEO, VIDEO},
     {OperationMode::PORTRAIT, PORTRAIT},
     {OperationMode::NIGHT, NIGHT},
-    {OperationMode::PROFESSIONAL, PROFESSIONAL},
+    {OperationMode::PROFESSIONAL_PHOTO, PROFESSIONAL_PHOTO},
+    {OperationMode::PROFESSIONAL_VIDEO, PROFESSIONAL_VIDEO},
     {OperationMode::SLOW_MOTION, SLOW_MOTION},
     {OperationMode::SCAN_CODE, SCAN},
     {OperationMode::HIGH_FRAME_RATE, HIGH_FRAME_RATE}
@@ -77,7 +81,8 @@ const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
     {VIDEO,  OperationMode::VIDEO},
     {PORTRAIT,  OperationMode::PORTRAIT},
     {NIGHT,  OperationMode::NIGHT},
-    {PROFESSIONAL,  OperationMode::PROFESSIONAL},
+    {PROFESSIONAL_PHOTO,  OperationMode::PROFESSIONAL_PHOTO},
+    {PROFESSIONAL_VIDEO,  OperationMode::PROFESSIONAL_VIDEO},
     {SLOW_MOTION,  OperationMode::SLOW_MOTION},
     {SCAN, OperationMode::SCAN_CODE},
     {HIGH_FRAME_RATE, OperationMode::HIGH_FRAME_RATE}
@@ -262,6 +267,12 @@ sptr<CaptureSession> CameraManager::CreateCaptureSession(SceneMode mode)
                 break;
             case SceneMode::PORTRAIT:
                 captureSession = new(std::nothrow) PortraitSession(session);
+                break;
+            case SceneMode::PROFESSIONAL_VIDEO:
+                captureSession = new(std::nothrow) ProfessionSession(session, cameraObjList);
+                break;
+            case SceneMode::PROFESSIONAL_PHOTO:
+                captureSession = new(std::nothrow) ProfessionSession(session, cameraObjList);
                 break;
             case SceneMode::SCAN:
                 captureSession = new(std::nothrow) ScanSession(session);
@@ -638,6 +649,7 @@ int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surfa
 
     // todo: need to set FPS range passed in video profile.
     metaFormat = GetCameraMetadataFormat(profile.GetCameraFormat());
+    MEDIA_DEBUG_LOG("metaFormat = %{public}d", static_cast<int32_t>(metaFormat));
     retCode = serviceProxy_->CreateVideoOutput(surface->GetProducer(), metaFormat,
                                                profile.GetSize().width, profile.GetSize().height, streamRepeat);
     if (retCode == CAMERA_OK) {
@@ -818,7 +830,7 @@ sptr<CameraDevice> CameraManager::GetCameraDeviceFromId(std::string cameraId)
     return cameraObj;
 }
 
-sptr<CameraManager> &CameraManager::GetInstance()
+sptr<CameraManager> &CameraManager::GetInstance() __attribute__((no_sanitize("cfi")))
 {
     if (CameraManager::cameraManager_ == nullptr) {
         std::unique_lock<std::mutex> lock(instanceMutex_);
@@ -1203,8 +1215,10 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     vidProfiles_.clear();
 
     if (g_isCapabilitySupported(metadata, item, OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS)) {
-        int32_t mode = isTemplateMode_.count(modeName) ? SceneMode::NORMAL : modeName;
-        MEDIA_INFO_LOG("GetSupportedOutputCapability by mode = %{public}d", mode);
+        std::vector<SceneMode> supportedModes = GetSupportedModes(camera);
+        int32_t mode = (supportedModes.empty() && isTemplateMode_.count(modeName)) ? SceneMode::NORMAL : modeName;
+        MEDIA_INFO_LOG("GetSupportedOutputCapability by device = %{public}s, mode = %{public}d",
+                       camera->GetID().c_str(), mode);
         ParseExtendCapability(cameraOutputCapability, mode, item);
     } else if (g_isCapabilitySupported(metadata, item, OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS)) {
         ParseBasicCapability(cameraOutputCapability, metadata, item);
@@ -1248,11 +1262,13 @@ void CameraManager::CreateProfile4StreamType(OutputCapStreamType streamType, uin
             (detailInfo.fixedFps == frameRate120 || detailInfo.fixedFps == frameRate240)) {
             continue;
         }
-        CameraFormat format;
+        CameraFormat format = CAMERA_FORMAT_INVALID;
         auto itr = metaToFwCameraFormat_.find(static_cast<camera_format_t>(detailInfo.format));
         if (itr != metaToFwCameraFormat_.end()) {
             format = itr->second;
         } else {
+            MEDIA_ERR_LOG("CreateProfile4StreamType failed format = %{public}d",
+                extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k].format);
             format = CAMERA_FORMAT_INVALID;
             continue;
         }
@@ -1309,12 +1325,13 @@ void CameraManager::SetCameraServiceCallback(sptr<ICameraServiceCallback>& callb
 camera_format_t CameraManager::GetCameraMetadataFormat(CameraFormat format)
 {
     camera_format_t metaFormat = OHOS_CAMERA_FORMAT_YCRCB_420_SP;
+    MEDIA_DEBUG_LOG("format = %{public}d", static_cast<int32_t>(format));
 
     auto itr = fwToMetaCameraFormat_.find(format);
     if (itr != fwToMetaCameraFormat_.end()) {
         metaFormat = itr->second;
     }
-
+    MEDIA_DEBUG_LOG("metaFormat = %{public}d", static_cast<int32_t>(metaFormat));
     return metaFormat;
 }
 

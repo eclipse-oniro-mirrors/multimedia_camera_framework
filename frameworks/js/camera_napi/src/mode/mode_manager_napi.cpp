@@ -128,13 +128,6 @@ napi_value ModeManagerNapi::CreateModeManager(napi_env env)
     return result;
 }
 
-enum JsSceneMode {
-    JS_CAPTURE = 1,
-    JS_VIDEO = 2,
-    JS_PORTRAIT = 3,
-    JS_NIGHT = 4,
-};
-
 napi_value ModeManagerNapi::CreateCameraSessionInstance(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CreateCameraSessionInstance is called");

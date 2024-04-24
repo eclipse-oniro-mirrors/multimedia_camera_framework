@@ -30,6 +30,12 @@
 
 namespace OHOS {
 namespace CameraStandard {
+typedef struct {
+    Profile preview;
+    Profile photo;
+    VideoProfile video;
+} SelectProfiles;
+
 class CameraFrameworkModuleTest : public testing::Test {
 public:
     static const int32_t PHOTO_DEFAULT_WIDTH = 1280;
@@ -85,10 +91,12 @@ public:
     sptr<CaptureOutput> CreatePhotoOutput();
     sptr<CaptureOutput> CreateVideoOutput(int32_t width, int32_t height);
     sptr<CaptureOutput> CreateVideoOutput();
+    sptr<CaptureOutput> CreateVideoOutput(VideoProfile& profile);
     sptr<CaptureOutput> CreatePhotoOutput(Profile profile);
     void GetSupportedOutputCapability();
     Profile SelectProfileByRatioAndFormat(sptr<CameraOutputCapability>& modeAbility,
                                           float ratio, CameraFormat format);
+    SelectProfiles SelectWantedProfiles(sptr<CameraOutputCapability>& modeAbility, const SelectProfiles wanted);
     void ConfigScanSession(sptr<CaptureOutput> &previewOutput_1, sptr<CaptureOutput> &previewOutput_2);
     void ReleaseInput();
 

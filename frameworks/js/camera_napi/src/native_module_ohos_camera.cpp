@@ -39,6 +39,7 @@ static napi_value Export(napi_env env, napi_value exports)
     MetadataOutputNapi::Init(env, exports);
     MetadataObjectNapi::Init(env, exports);
     PortraitSessionNapi::Init(env, exports);
+    ProfessionSessionNapi::Init(env, exports);
     NightSessionNapi::Init(env, exports);
     PhotoSessionNapi::Init(env, exports);
     PhotoSessionForSysNapi::Init(env, exports);

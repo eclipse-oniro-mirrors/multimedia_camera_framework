@@ -218,12 +218,6 @@ float PortraitSession::GetVirtualAperture()
     return virtualAperture;
 }
 
-bool PortraitSession::FloatIsEqual(float x, float y)
-{
-    const float EPSILON = 0.000001;
-    return std::fabs(x - y) < EPSILON;
-}
-
 void PortraitSession::SetVirtualAperture(const float virtualAperture)
 {
     CAMERA_SYNC_TRACE;
@@ -237,7 +231,7 @@ void PortraitSession::SetVirtualAperture(const float virtualAperture)
     }
     std::vector<float> supportedVirtualApertures = GetSupportedVirtualApertures();
     auto res = std::find_if(supportedVirtualApertures.begin(), supportedVirtualApertures.end(),
-        [&virtualAperture, this](const float item) {return FloatIsEqual(virtualAperture, item);});
+        [&virtualAperture](const float item) {return FloatIsEqual(virtualAperture, item);});
     if (res == supportedVirtualApertures.end()) {
         MEDIA_ERR_LOG("current virtualAperture is not supported");
         return;
@@ -351,7 +345,7 @@ void PortraitSession::SetPhysicalAperture(const float physicalAperture)
     }
     int physicalAperturesIndex = 2;
     auto res = std::find_if(std::next((*it).begin(), physicalAperturesIndex), (*it).end(),
-        [&physicalAperture, this](const float physicalApertureTemp) {
+        [&physicalAperture](const float physicalApertureTemp) {
             return FloatIsEqual(physicalAperture, physicalApertureTemp);
         });
     if (res == (*it).end()) {

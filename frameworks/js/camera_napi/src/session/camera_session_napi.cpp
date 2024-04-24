@@ -98,6 +98,11 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::focus_props = {
     DECLARE_NAPI_FUNCTION("getFocalLength", CameraSessionNapi::GetFocalLength)
 };
 
+const std::vector<napi_property_descriptor> CameraSessionNapi::manual_focus_props = {
+        DECLARE_NAPI_FUNCTION("getFocusDistance", CameraSessionNapi::GetFocusDistance),
+        DECLARE_NAPI_FUNCTION("setFocusDistance", CameraSessionNapi::SetFocusDistance),
+};
+
 const std::vector<napi_property_descriptor> CameraSessionNapi::zoom_props = {
     DECLARE_NAPI_FUNCTION("getZoomRatioRange", CameraSessionNapi::GetZoomRatioRange),
     DECLARE_NAPI_FUNCTION("getZoomRatio", CameraSessionNapi::GetZoomRatio),
@@ -570,6 +575,56 @@ void SmoothZoomCallbackListener::OnSmoothZoom(int32_t duration)
     OnSmoothZoomCallbackAsync(duration);
 }
 
+void AbilityCallbackListener::OnAbilityChangeCallbackAsync() const
+{
+    MEDIA_DEBUG_LOG("OnAbilityChangeCallbackAsync is called");
+    uv_loop_s* loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (!loop) {
+        MEDIA_ERR_LOG("failed to get event loop");
+        return;
+    }
+    uv_work_t* work = new(std::nothrow) uv_work_t;
+    if (!work) {
+        MEDIA_ERR_LOG("failed to allocate work");
+        return;
+    }
+    std::unique_ptr<AbilityCallbackInfo> callbackInfo = std::make_unique<AbilityCallbackInfo>(this);
+    work->data = callbackInfo.get();
+    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+        AbilityCallbackInfo* callbackInfo = reinterpret_cast<AbilityCallbackInfo *>(work->data);
+        if (callbackInfo) {
+            callbackInfo->listener_->OnAbilityChangeCallback();
+            delete callbackInfo;
+        }
+        delete work;
+    }, uv_qos_user_initiated);
+    if (ret) {
+        MEDIA_ERR_LOG("failed to execute work");
+        delete work;
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void AbilityCallbackListener::OnAbilityChangeCallback() const
+{
+    MEDIA_DEBUG_LOG("OnAbilityChangeCallback is called");
+    napi_value result[ARGS_TWO];
+    napi_value retVal;
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_get_undefined(env_, &result[PARAM1]);
+
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback(callbackNapiPara);
+}
+
+void AbilityCallbackListener::OnAbilityChange()
+{
+    MEDIA_DEBUG_LOG("OnAbilityChange is called");
+    OnAbilityChangeCallbackAsync();
+}
+
 CameraSessionNapi::CameraSessionNapi() : env_(nullptr), wrapper_(nullptr)
 {
 }
@@ -595,7 +650,7 @@ napi_value CameraSessionNapi::Init(napi_env env, napi_value exports)
     int32_t refCount = 1;
     std::vector<std::vector<napi_property_descriptor>> descriptors = { camera_process_props, stabilization_props,
         flash_props, auto_exposure_props, focus_props, zoom_props, filter_props, beauty_props, color_effect_props,
-        macro_props, moon_capture_boost_props, features_props, color_management_props };
+        macro_props, moon_capture_boost_props, features_props, color_management_props, manual_focus_props};
     std::vector<napi_property_descriptor> camera_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, CAMERA_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                CameraSessionNapiConstructor, nullptr,
@@ -2579,6 +2634,62 @@ napi_value CameraSessionNapi::SetColorEffect(napi_env env, napi_callback_info in
     return result;
 }
 
+napi_value CameraSessionNapi::GetFocusDistance(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetFocusDistance is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        float distance;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetFocusDistance(distance);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        napi_create_double(env, distance, &result);
+    } else {
+        MEDIA_ERR_LOG("GetFocusDistance call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::SetFocusDistance(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetFocusDistance is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        double value;
+        napi_get_value_double(env, argv[PARAM0], &value);
+        float distance = static_cast<float>(value);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        cameraSessionNapi->cameraSession_->SetFocusDistance(distance);
+        MEDIA_INFO_LOG("CameraSessionNapi::SetFocusDistance set focusDistance:%{public}f!", distance);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+    } else {
+        MEDIA_ERR_LOG("SetFocusDistance call Failed!");
+    }
+    return result;
+}
+
 napi_value CameraSessionNapi::IsMacroSupported(napi_env env, napi_callback_info info)
 {
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
@@ -2914,6 +3025,27 @@ void CameraSessionNapi::UnregisterSessionErrorCallbackListener(
     sessionCallback_->RemoveCallbackRef(env, callback);
 }
 
+void CameraSessionNapi::RegisterAbilityChangeCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (abilityCallback_ == nullptr) {
+        auto abilityCallback = std::make_shared<AbilityCallbackListener>(env);
+        abilityCallback_ = abilityCallback;
+        cameraSession_->SetAbilityCallback(abilityCallback);
+    }
+    abilityCallback_->SaveCallbackReference(callback, isOnce);
+}
+
+void CameraSessionNapi::UnregisterAbilityChangeCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (abilityCallback_ == nullptr) {
+        MEDIA_ERR_LOG("abilityCallback is null");
+    } else {
+        abilityCallback_->RemoveCallbackRef(env, callback);
+    }
+}
+
 void CameraSessionNapi::RegisterSmoothZoomCallbackListener(
     napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
@@ -2932,6 +3064,62 @@ void CameraSessionNapi::UnregisterSmoothZoomCallbackListener(
         return;
     }
     smoothZoomCallback_->RemoveCallbackRef(env, callback);
+}
+
+void CameraSessionNapi::RegisterExposureInfoCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be registered in current session!");
+}
+
+void CameraSessionNapi::UnregisterExposureInfoCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be unregistered in current session!");
+}
+
+void CameraSessionNapi::RegisterIsoInfoCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be registered in current session!");
+}
+
+void CameraSessionNapi::UnregisterIsoInfoCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be unregistered in current session!");
+}
+
+void CameraSessionNapi::RegisterApertureInfoCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be registered in current session!");
+}
+
+void CameraSessionNapi::UnregisterApertureInfoCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be unregistered in current session!");
+}
+
+void CameraSessionNapi::RegisterLuminationInfoCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be registered in current session!");
+}
+
+void CameraSessionNapi::UnregisterLuminationInfoCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be unregistered in current session!");
 }
 
 const CameraSessionNapi::EmitterFunctions& CameraSessionNapi::GetEmitterFunctions()
@@ -2957,7 +3145,22 @@ const CameraSessionNapi::EmitterFunctions& CameraSessionNapi::GetEmitterFunction
             &CameraSessionNapi::UnregisterSessionErrorCallbackListener } },
         { "smoothZoomInfoAvailable", {
             &CameraSessionNapi::RegisterSmoothZoomCallbackListener,
-            &CameraSessionNapi::UnregisterSmoothZoomCallbackListener } } };
+            &CameraSessionNapi::UnregisterSmoothZoomCallbackListener } },
+        { "exposureInfo", {
+            &CameraSessionNapi::RegisterExposureInfoCallbackListener,
+            &CameraSessionNapi::UnregisterExposureInfoCallbackListener} },
+        { "isoInfo", {
+            &CameraSessionNapi::RegisterIsoInfoCallbackListener,
+            &CameraSessionNapi::UnregisterIsoInfoCallbackListener } },
+        { "apertureInfo", {
+            &CameraSessionNapi::RegisterApertureInfoCallbackListener,
+            &CameraSessionNapi::UnregisterApertureInfoCallbackListener } },
+        { "luminationInfo", {
+            &CameraSessionNapi::RegisterLuminationInfoCallbackListener,
+            &CameraSessionNapi::UnregisterLuminationInfoCallbackListener } },
+        { "abilityChange", {
+            &CameraSessionNapi::RegisterAbilityChangeCallbackListener,
+            &CameraSessionNapi::UnregisterAbilityChangeCallbackListener } } };
     return funMap;
 }
 

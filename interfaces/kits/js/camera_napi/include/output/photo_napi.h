@@ -26,10 +26,12 @@ class PhotoNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreatePhoto(napi_env env, napi_value mainImage);
+    static napi_value CreateRawPhoto(napi_env env, napi_value mainImage);
     PhotoNapi();
     ~PhotoNapi();
-    
+
     static napi_value GetMain(napi_env env, napi_callback_info info);
+    static napi_value GetRaw(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
 
 private:
@@ -38,11 +40,13 @@ private:
 
     static thread_local napi_ref sConstructor_;
     static thread_local napi_value sMainImage_;
+    static thread_local napi_value sRawImage_;
     static thread_local uint32_t photoTaskId;
 
     napi_env env_;
     napi_ref wrapper_;
     napi_value mainImage_;
+    napi_value rawImage_;
 };
 
 struct PhotoAsyncContext : public AsyncContext {

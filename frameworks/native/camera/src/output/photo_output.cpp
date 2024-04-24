@@ -330,6 +330,18 @@ int32_t PhotoOutput::SetThumbnail(bool isEnabled)
     return streamCapturePtr->SetThumbnail(isEnabled, thumbnailSurface_->GetProducer());
 }
 
+int32_t PhotoOutput::SetRawPhotoInfo(sptr<Surface> &surface)
+{
+    CAMERA_SYNC_TRACE;
+    auto streamCapturePtr = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
+    if (streamCapturePtr == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput::SetThumbnail Failed to create surface");
+        return SERVICE_FATL_ERROR;
+    }
+    rawPhotoSurface_ = surface;
+    return streamCapturePtr->SetRawPhotoStreamInfo(rawPhotoSurface_->GetProducer());
+}
+
 std::shared_ptr<PhotoStateCallback> PhotoOutput::GetApplicationCallback()
 {
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);

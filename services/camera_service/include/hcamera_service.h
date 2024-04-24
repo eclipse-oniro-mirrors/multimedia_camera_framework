@@ -19,6 +19,7 @@
 #include <memory>
 #include <set>
 #include <shared_mutex>
+#include <vector>
 
 #include "camera_util.h"
 #include "hcamera_device.h"
@@ -46,12 +47,15 @@ using namespace OHOS::HDI::Camera::V1_0;
 using namespace DeferredProcessing;
 struct CameraMetaInfo {
     string cameraId;
+    uint8_t cameraType;
     uint8_t position;
     uint8_t connectionType;
+    std::vector<uint8_t> supportModes;
     shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
-    CameraMetaInfo(string cameraId, uint8_t position, uint8_t connectionType,
-        shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
-        : cameraId(cameraId), position(position), connectionType (connectionType), cameraAbility(cameraAbility) {}
+    CameraMetaInfo(string cameraId, uint8_t cameraType, uint8_t position, uint8_t connectionType,
+        std::vector<uint8_t> supportModes, shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
+        : cameraId(cameraId), cameraType(cameraType), position(position),
+          connectionType(connectionType), supportModes(supportModes), cameraAbility(cameraAbility) {}
 };
 class HCameraService : public SystemAbility, public HCameraServiceStub, public HCameraHostManager::StatusCallback {
     DECLARE_SYSTEM_ABILITY(HCameraService);
@@ -157,6 +161,8 @@ private:
     void CameraDumpPrelaunch(common_metadata_header_t* metadataEntry, string& dumpString);
     void CameraDumpThumbnail(common_metadata_header_t* metadataEntry, string& dumpString);
     vector<shared_ptr<CameraMetaInfo>> ChooseDeFaultCameras(vector<shared_ptr<CameraMetaInfo>> cameraInfos);
+    vector<shared_ptr<CameraMetaInfo>> ChoosePhysicalCameras(const vector<shared_ptr<CameraMetaInfo>>& cameraInfos,
+        const vector<shared_ptr<CameraMetaInfo>>& choosedCameras);
     bool IsCameraMuteSupported(string cameraId);
     bool IsPrelaunchSupported(string cameraId);
     int32_t UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool muteMode);

@@ -22,9 +22,10 @@ namespace OHOS {
 namespace CameraStandard {
 thread_local napi_ref PhotoNapi::sConstructor_ = nullptr;
 thread_local napi_value PhotoNapi::sMainImage_ = nullptr;
+thread_local napi_value PhotoNapi::sRawImage_ = nullptr;
 thread_local uint32_t PhotoNapi::photoTaskId = PHOTO_TASKID;
 
-PhotoNapi::PhotoNapi() : env_(nullptr), wrapper_(nullptr), mainImage_(nullptr)
+PhotoNapi::PhotoNapi() : env_(nullptr), wrapper_(nullptr), mainImage_(nullptr), rawImage_(nullptr)
 {
 }
 
@@ -36,6 +37,9 @@ PhotoNapi::~PhotoNapi()
     }
     if (mainImage_) {
         mainImage_ = nullptr;
+    }
+    if (rawImage_) {
+        rawImage_ = nullptr;
     }
 }
 
@@ -54,6 +58,7 @@ napi_value PhotoNapi::PhotoNapiConstructor(napi_env env, napi_callback_info info
         std::unique_ptr<PhotoNapi> obj = std::make_unique<PhotoNapi>();
         obj->env_ = env;
         obj->mainImage_ = sMainImage_;
+        obj->rawImage_ = sRawImage_;
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
                            PhotoNapi::PhotoNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
@@ -86,6 +91,7 @@ napi_value PhotoNapi::Init(napi_env env, napi_value exports)
     napi_property_descriptor photo_properties[] = {
         // Photo
         DECLARE_NAPI_GETTER("main", GetMain),
+        DECLARE_NAPI_GETTER("rawImage", GetRaw),
         DECLARE_NAPI_FUNCTION("release", Release),
     };
 
@@ -138,7 +144,7 @@ napi_value PhotoNapi::GetMain(napi_env env, napi_callback_info info)
     size_t argc = ARGS_ZERO;
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
-    
+
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
@@ -154,6 +160,55 @@ napi_value PhotoNapi::GetMain(napi_env env, napi_callback_info info)
     return result;
 }
 
+napi_value PhotoNapi::CreateRawPhoto(napi_env env, napi_value rawImage)
+{
+    MEDIA_DEBUG_LOG("CreateRawPhoto is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+    napi_value constructor;
+    napi_get_undefined(env, &result);
+
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (status == napi_ok) {
+        sRawImage_ = rawImage;
+        status = napi_new_instance(env, constructor, 0, nullptr, &result);
+        sRawImage_ = nullptr;
+        if (status == napi_ok && result != nullptr) {
+            return result;
+        } else {
+            MEDIA_ERR_LOG("Failed to create photo obj instance");
+        }
+    }
+    napi_get_undefined(env, &result);
+    MEDIA_ERR_LOG("CreateRawPhoto call Failed");
+    return result;
+}
+
+napi_value PhotoNapi::GetRaw(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("GetRaw is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    PhotoNapi* photoNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoNapi));
+    if (status == napi_ok && photoNapi != nullptr) {
+        result = photoNapi->rawImage_;
+        MEDIA_DEBUG_LOG("PhotoNapi::GetRaw Success");
+        return result;
+    }
+    napi_get_undefined(env, &result);
+    MEDIA_ERR_LOG("PhotoNapi::GetRaw call Failed");
+    return result;
+}
+
 napi_value PhotoNapi::Release(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("Release is called");
@@ -163,7 +218,7 @@ napi_value PhotoNapi::Release(napi_env env, napi_callback_info info)
     size_t argc = ARGS_ZERO;
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
-    
+
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
@@ -185,6 +240,7 @@ napi_value PhotoNapi::Release(napi_env env, napi_callback_info info)
                 if (context->objectInfo != nullptr) {
                     context->status = true;
                     context->objectInfo->mainImage_ = nullptr;
+                    context->objectInfo->rawImage_ = nullptr;
                 }
             },
             [](napi_env env, napi_status status, void* data) {
@@ -193,7 +249,6 @@ napi_value PhotoNapi::Release(napi_env env, napi_callback_info info)
                 napi_delete_async_work(env, context->work);
                 delete context->objectInfo;
                 delete context;
-                CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
             }, static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for PhotoNapi::Release");

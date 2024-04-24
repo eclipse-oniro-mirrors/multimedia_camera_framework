@@ -22,6 +22,17 @@
 
 namespace OHOS {
 namespace CameraStandard {
+enum JsSceneMode : int32_t {
+    JS_NORMAL = 0,
+    JS_CAPTURE = 1,
+    JS_VIDEO = 2,
+    JS_PORTRAIT = 3,
+    JS_NIGHT = 4,
+    JS_SLOW_MOTION = 7,
+    JS_PROFESSIONAL_PHOTO = 11,
+    JS_PROFESSIONAL_VIDEO = 12,
+};
+
 enum SceneMode : int32_t {
     NORMAL = 0,
     CAPTURE = 1,
@@ -33,6 +44,8 @@ enum SceneMode : int32_t {
     SCAN = 7,
     CAPTURE_MACRO = 8,
     VIDEO_MACRO = 9,
+    PROFESSIONAL_PHOTO = 11,
+    PROFESSIONAL_VIDEO = 12,
     HIGH_FRAME_RATE = 13
 };
 

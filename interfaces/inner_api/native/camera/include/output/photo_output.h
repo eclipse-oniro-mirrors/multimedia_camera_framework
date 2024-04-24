@@ -247,6 +247,13 @@ public:
     int32_t SetThumbnail(bool isEnabled);
 
     /**
+     * @brief Set the Thumbnail profile.
+     *
+     * @param isEnabled quickThumbnail is enabled.
+     */
+    int32_t SetRawPhotoInfo(sptr<Surface> &surface);
+
+    /**
      * @brief Set the photo callback.
      *
      * @param callback Requested for the pointer where photo callback is present.
@@ -332,7 +339,9 @@ public:
     std::shared_ptr<PhotoCaptureSetting> GetDefaultCaptureSetting();
 
     sptr<Surface> thumbnailSurface_;
-    
+
+    sptr<Surface> rawPhotoSurface_;
+
     sptr<Surface> deferredSurface_;
 
 private:
