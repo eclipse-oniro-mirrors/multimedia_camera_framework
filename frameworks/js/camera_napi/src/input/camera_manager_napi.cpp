@@ -886,7 +886,7 @@ napi_value CameraManagerNapi::GetSupportedCameras(napi_env env, napi_callback_in
     if (status == napi_ok && cameraManagerNapi != nullptr) {
         std::vector<sptr<CameraDevice>> cameraObjList = cameraManagerNapi->cameraManager_->GetSupportedCameras();
         std::vector<sptr<CameraDevice>> selectedCameraList;
-        if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        if (!CameraNapiSecurity::CheckSystemApp(env, false)) {
             std::copy_if(cameraObjList.begin(), cameraObjList.end(),
                 std::back_inserter(selectedCameraList), [](const auto& it) {
                     return it->GetCameraType() == CAMERA_TYPE_UNSUPPORTED || it->GetCameraType() == CAMERA_TYPE_DEFAULT;

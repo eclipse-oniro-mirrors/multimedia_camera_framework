@@ -3012,7 +3012,7 @@ float CaptureSession::GetMinimumFocusDistance()
 
 int32_t CaptureSession::GetFocusDistance(float& focusDistance)
 {
-    focusDistance = 0;
+    focusDistance = 0.0;
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetFocusDistance Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
@@ -3033,7 +3033,7 @@ int32_t CaptureSession::GetFocusDistance(float& focusDistance)
         MEDIA_ERR_LOG("CaptureSession::GetFocusDistance minimum distance is 0");
         return CameraErrorCode::SUCCESS;
     }
-    focusDistance = 1- (item.data.f[0] / GetMinimumFocusDistance());
+    focusDistance = 1.0 - (item.data.f[0] / GetMinimumFocusDistance());
     MEDIA_DEBUG_LOG("CaptureSession::GetFocusDistance focusDistance = %{public}f", focusDistance);
     return CameraErrorCode::SUCCESS;
 }
@@ -3056,9 +3056,9 @@ int32_t CaptureSession::SetFocusDistance(float focusDistance)
     MEDIA_DEBUG_LOG("CaptureSession::GetFocusDistance app set focusDistance = %{public}f", focusDistance);
     camera_metadata_item_t item;
     if (focusDistance < 0) {
-        focusDistance = 0;
+        focusDistance = 0.0;
     } else if (focusDistance > 1) {
-        focusDistance = 1;
+        focusDistance = 1.0;
     }
     float value = (1 - focusDistance) * GetMinimumFocusDistance();
     MEDIA_DEBUG_LOG("CaptureSession::GetFocusDistance meta set focusDistance = %{public}f", value);
