@@ -31,6 +31,7 @@ namespace OHOS {
 namespace CameraStandard {
 
 const std::string HCameraHostManager::LOCAL_SERVICE_NAME = "camera_service";
+const std::string HCameraHostManager::DISTRIBUTED_SERVICE_NAME = "distributed_camera_provider_service";
 
 using namespace OHOS::HDI::Camera::V1_0;
 struct HCameraHostManager::CameraDeviceInfo {
@@ -116,6 +117,8 @@ private:
     sptr<OHOS::HDI::Camera::V1_2::ICameraHost> cameraHostProxyV1_2_;
     sptr<OHOS::HDI::Camera::V1_3::ICameraHost> cameraHostProxyV1_3_;
 
+    sptr<CameraHostDeathRecipient> cameraHostDeathRecipient_ = nullptr;
+
     std::mutex mutex_;
     std::vector<std::string> cameraIds_;
     std::vector<std::shared_ptr<CameraDeviceInfo>> devices_;
@@ -125,6 +128,11 @@ HCameraHostManager::CameraHostInfo::~CameraHostInfo()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("CameraHostInfo ~CameraHostInfo");
+
+    const sptr<IRemoteObject>& remote = OHOS::HDI::hdi_objcast<ICameraHost>(cameraHostProxy_);
+    remote->RemoveDeathRecipient(cameraHostDeathRecipient_);
+    cameraHostDeathRecipient_ = nullptr;
+
     cameraHostProxy_ = nullptr;
     cameraHostProxyV1_1_ = nullptr;
     cameraHostProxyV1_2_ = nullptr;
@@ -184,9 +192,9 @@ bool HCameraHostManager::CameraHostInfo::Init()
         MEDIA_DEBUG_LOG("CameraHostInfo::Init SetCallback ICameraHost V1_0");
         cameraHostProxy_->SetCallback(this);
     }
-    sptr<CameraHostDeathRecipient> cameraHostDeathRecipient = new CameraHostDeathRecipient(this);
+    cameraHostDeathRecipient_ = new CameraHostDeathRecipient(this);
     const sptr<IRemoteObject> &remote = OHOS::HDI::hdi_objcast<ICameraHost>(cameraHostProxy_);
-    if (!remote->AddDeathRecipient(cameraHostDeathRecipient)) {
+    if (!remote->AddDeathRecipient(cameraHostDeathRecipient_)) {
         MEDIA_ERR_LOG("AddDeathRecipient for CameraHost failed.");
     }
     std::lock_guard<std::mutex> lock(mutex_);
@@ -707,6 +715,10 @@ int32_t HCameraHostManager::Init()
 
             switch (status.status) {
                 case SERVIE_STATUS_START:
+                    if (status.serviceName == DISTRIBUTED_SERVICE_NAME) {
+                        MEDIA_ERR_LOG("HCameraHostManager::service no need to add");
+                        return;
+                    }
                     AddCameraHost(status.serviceName);
                     break;
                 case SERVIE_STATUS_STOP:
