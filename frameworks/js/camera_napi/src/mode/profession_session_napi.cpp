@@ -64,7 +64,8 @@ const std::vector<napi_property_descriptor> ProfessionSessionNapi::manual_exposu
 };
 
 const std::vector<napi_property_descriptor> ProfessionSessionNapi::manual_focus_funcs = {
-    DECLARE_NAPI_FUNCTION("getSupportedFocusAssistFlashModes", ProfessionSessionNapi::GetSupportedFocusAssistFlashModes),
+    DECLARE_NAPI_FUNCTION("getSupportedFocusAssistFlashModes",
+        ProfessionSessionNapi::GetSupportedFocusAssistFlashModes),
     DECLARE_NAPI_FUNCTION("isFocusAssistSupported", ProfessionSessionNapi::IsFocusAssistFlashModeSupported),
     DECLARE_NAPI_FUNCTION("getFocusAssistFlashMode", ProfessionSessionNapi::GetFocusAssistFlashMode),
     DECLARE_NAPI_FUNCTION("setFocusAssist", ProfessionSessionNapi::SetFocusAssistFlashMode),
@@ -113,7 +114,7 @@ napi_value ProfessionSessionNapi::Init(napi_env env, napi_value exports)
     manual_exposure_props.insert(manual_exposure_props.end(), ProfessionSessionNapi::manual_exposure_funcs.begin(),
                                  ProfessionSessionNapi::manual_exposure_funcs.end());
     std::vector<napi_property_descriptor> pro_manual_focus_props = CameraSessionNapi::manual_focus_props;
-    pro_manual_focus_props.insert(pro_manual_focus_props.end(), ProfessionSessionNapi::manual_focus_funcs.begin(), 
+    pro_manual_focus_props.insert(pro_manual_focus_props.end(), ProfessionSessionNapi::manual_focus_funcs.begin(),
                                   ProfessionSessionNapi::manual_focus_funcs.end());
     std::vector<std::vector<napi_property_descriptor>> descriptors = {
         CameraSessionNapi::camera_process_props, CameraSessionNapi::zoom_props,

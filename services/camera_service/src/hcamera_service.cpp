@@ -196,9 +196,8 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChoosePhysicalCameras(
     vector<shared_ptr<CameraMetaInfo>> physicalCameras = {};
     for (auto& camera : physicalCameraInfos) {
         MEDIA_INFO_LOG("ChoosePhysicalCameras camera ID:%s, CameraType: %{public}d, Camera position:%{public}d, "
-                        "Connection Type:%{public}d",
-                        camera->cameraId.c_str(), camera->cameraType, camera->position, camera->connectionType);
-
+                       "Connection Type:%{public}d",
+                       camera->cameraId.c_str(), camera->cameraType, camera->position, camera->connectionType);
         bool isSupportPhysicalCamera = std::any_of(camera->supportModes.begin(), camera->supportModes.end(),
             [&supportedPhysicalCamerasModes](auto mode) -> bool {
                 return any_of(supportedPhysicalCamerasModes.begin(), supportedPhysicalCamerasModes.end(),
