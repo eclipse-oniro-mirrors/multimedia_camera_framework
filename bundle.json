@@ -48,7 +48,7 @@
               "thermal_manager",              
               "window_manager",
               "memmgr",
-              "memmgr_plugin"
+              "memmgr_override"
             ],
             "third_party": [
             ]
