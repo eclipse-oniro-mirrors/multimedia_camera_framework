@@ -34,6 +34,7 @@
 #include "session/scan_session.h"
 #include "session/video_session.h"
 #include "session/photo_session.h"
+#include "session/slow_motion_session.h"
 #include "output/camera_output_capability.h"
 #include "output/metadata_output.h"
 #include "output/photo_output.h"
@@ -613,6 +614,7 @@ private:
     void SetCameraServiceCallback(sptr<ICameraServiceCallback>& callback);
     void SetCameraMuteServiceCallback(sptr<ICameraMuteServiceCallback>& callback);
     void SetTorchServiceCallback(sptr<ITorchServiceCallback>& callback);
+    sptr<CaptureSession> CreateCaptureSessionImpl(SceneMode mode, sptr<ICaptureSession> session);
     int32_t CreateListenerObject();
     void CameraServerDied(pid_t pid);
 

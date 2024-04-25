@@ -323,7 +323,11 @@ public:
     static const std::vector<napi_property_descriptor> moon_capture_boost_props;
     static const std::vector<napi_property_descriptor> features_props;
     static const std::vector<napi_property_descriptor> color_management_props;
-
+protected:
+    virtual void RegisterSlowMotionStateCb(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterSlowMotionStateCb(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
 private:
     void RegisterExposureCallbackListener(
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
