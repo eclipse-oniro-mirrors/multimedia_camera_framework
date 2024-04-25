@@ -109,7 +109,6 @@ public:
     void SetPhysicalAperture(const float virtualAperture);
 
 private:
-    bool FloatIsEqual(float x, float y);
     static const std::unordered_map<camera_portrait_effect_type_t, PortraitEffect> metaToFwPortraitEffect_;
     static const std::unordered_map<PortraitEffect, camera_portrait_effect_type_t> fwToMetaPortraitEffect_;
 };

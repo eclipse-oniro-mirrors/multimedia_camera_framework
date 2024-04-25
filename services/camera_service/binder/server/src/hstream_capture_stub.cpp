@@ -58,6 +58,9 @@ int HStreamCaptureStub::OnRemoteRequest(
         case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_GET_DEFERRED_VIDEO):
             errCode = IsDeferredVideoEnabled();
             break;
+        case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_SET_RAW_PHOTO_INFO):
+            errCode = HandleSetRawPhotoInfo(data);
+            break;
         default:
             MEDIA_ERR_LOG("HStreamCaptureStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -85,6 +88,17 @@ int32_t HStreamCaptureStub::HandleSetThumbnail(MessageParcel &data)
                              "HStreamCaptureStub HandleSetThumbnail producer is null");
     bool isEnabled = data.ReadBool();
     int32_t ret = SetThumbnail(isEnabled, producer);
+    MEDIA_DEBUG_LOG("HStreamCaptureStub HandleSetThumbnail result: %{public}d", ret);
+    return ret;
+}
+
+int32_t HStreamCaptureStub::HandleSetRawPhotoInfo(MessageParcel &data)
+{
+    sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
+    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HStreamCaptureStub HandleCreatePhotoOutput BufferProducer is null");
+    sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
+    int32_t ret = SetRawPhotoStreamInfo(producer);
     MEDIA_DEBUG_LOG("HStreamCaptureStub HandleSetThumbnail result: %{public}d", ret);
     return ret;
 }

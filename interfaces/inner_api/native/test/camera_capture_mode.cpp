@@ -30,7 +30,6 @@
 #include "accesstoken_kit.h"
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
-#include "camera_utils_stub.h"
 using namespace std;
 using namespace OHOS;
 using namespace OHOS::CameraStandard;
@@ -259,8 +258,6 @@ std::vector<FilterType> GetSupportedFiltersStub()
 int main(int argc, char **argv)
 {
     cout<<"-----------------version:20230822-----------------"<<endl;
-    Stub stub;
-    stub.set(ADDR(NightSession, GetExposureRange), GetExposureRangeStub);
     const int32_t previewWidthIndex = 1;
     const int32_t previewHeightIndex = 2;
     const int32_t photoWidthIndex = 3;

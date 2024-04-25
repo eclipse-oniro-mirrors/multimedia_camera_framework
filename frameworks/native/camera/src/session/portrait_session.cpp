@@ -14,10 +14,11 @@
  */
 
 #include "session/portrait_session.h"
+#include "camera_log.h"
 #include "camera_util.h"
 #include "hcapture_session_callback_stub.h"
 #include "input/camera_input.h"
-#include "camera_log.h"
+#include "metadata_common_utils.h"
 #include "output/photo_output.h"
 #include "output/preview_output.h"
 #include "output/video_output.h"
@@ -218,12 +219,6 @@ float PortraitSession::GetVirtualAperture()
     return virtualAperture;
 }
 
-bool PortraitSession::FloatIsEqual(float x, float y)
-{
-    const float EPSILON = 0.000001;
-    return std::fabs(x - y) < EPSILON;
-}
-
 void PortraitSession::SetVirtualAperture(const float virtualAperture)
 {
     CAMERA_SYNC_TRACE;
@@ -237,7 +232,7 @@ void PortraitSession::SetVirtualAperture(const float virtualAperture)
     }
     std::vector<float> supportedVirtualApertures = GetSupportedVirtualApertures();
     auto res = std::find_if(supportedVirtualApertures.begin(), supportedVirtualApertures.end(),
-        [&virtualAperture, this](const float item) {return FloatIsEqual(virtualAperture, item);});
+        [&virtualAperture](const float item) {return FloatIsEqual(virtualAperture, item);});
     if (res == supportedVirtualApertures.end()) {
         MEDIA_ERR_LOG("current virtualAperture is not supported");
         return;
@@ -265,7 +260,7 @@ std::vector<std::vector<float>> PortraitSession::GetSupportedPhysicalApertures()
 {
     // The data structure of the supportedPhysicalApertures object is { {zoomMin, zoomMax,
     // physicalAperture1, physicalAperture2···}, }.
-    std::vector<std::vector<float>> supportedPhysicalApertures;
+    std::vector<std::vector<float>> supportedPhysicalApertures = {};
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("GetSupportedPhysicalApertures Session is not Commited");
         return supportedPhysicalApertures;
@@ -285,18 +280,21 @@ std::vector<std::vector<float>> PortraitSession::GetSupportedPhysicalApertures()
         MEDIA_ERR_LOG("GetSupportedPhysicalApertures Failed with return code %{public}d", ret);
         return supportedPhysicalApertures;
     }
-    int32_t supportedDeviceCount = static_cast<int32_t>(item.data.f[0]);
+    std::vector<float> chooseModeRange = ParsePhysicalApertureRangeByMode(item, GetMode());
+    int32_t deviceCntPos = 1;
+    int32_t supportedDeviceCount = static_cast<int32_t>(chooseModeRange[deviceCntPos]);
     if (supportedDeviceCount == 0) {
+        MEDIA_ERR_LOG("GetSupportedPhysicalApertures Failed meta device count is 0");
         return supportedPhysicalApertures;
     }
     std::vector<float> tempPhysicalApertures = {};
-    for (uint32_t i = 1; i < item.count; i++) {
-        if (static_cast<int32_t>(item.data.f[i]) == -1) {
+    for (uint32_t i = 2; i < chooseModeRange.size(); i++) {
+        if (chooseModeRange[i] == -1) {
             supportedPhysicalApertures.emplace_back(tempPhysicalApertures);
             vector<float>().swap(tempPhysicalApertures);
             continue;
         }
-        tempPhysicalApertures.emplace_back(item.data.f[i]);
+        tempPhysicalApertures.emplace_back(chooseModeRange[i]);
     }
     return supportedPhysicalApertures;
 }
@@ -343,7 +341,7 @@ void PortraitSession::SetPhysicalAperture(const float physicalAperture)
     int zoomMaxIndex = 1;
     auto it = std::find_if(physicalApertures.begin(), physicalApertures.end(),
         [&currentZoomRatio, &zoomMinIndex, &zoomMaxIndex](const std::vector<float> physicalApertureRange) {
-            return physicalApertureRange[zoomMaxIndex] >= currentZoomRatio >= physicalApertureRange[zoomMinIndex];
+            return physicalApertureRange[zoomMaxIndex] > currentZoomRatio >= physicalApertureRange[zoomMinIndex];
         });
     if (it == physicalApertures.end()) {
         MEDIA_ERR_LOG("current zoomRatio not supported in physical apertures zoom ratio");
@@ -351,7 +349,7 @@ void PortraitSession::SetPhysicalAperture(const float physicalAperture)
     }
     int physicalAperturesIndex = 2;
     auto res = std::find_if(std::next((*it).begin(), physicalAperturesIndex), (*it).end(),
-        [&physicalAperture, this](const float physicalApertureTemp) {
+        [&physicalAperture](const float physicalApertureTemp) {
             return FloatIsEqual(physicalAperture, physicalApertureTemp);
         });
     if (res == (*it).end()) {

@@ -138,6 +138,28 @@ int32_t HStreamCaptureProxy::SetThumbnail(bool isEnabled, const sptr<OHOS::IBuff
     return error;
 }
 
+int32_t HStreamCaptureProxy::SetRawPhotoStreamInfo(const sptr<OHOS::IBufferProducer> &producer)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    if (producer == nullptr) {
+        MEDIA_ERR_LOG("HStreamCaptureProxy SetRawPhotoStreamInfo producer is null");
+        return IPC_PROXY_ERR;
+    }
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteRemoteObject(producer->AsObject());
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_SET_RAW_PHOTO_INFO), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamCaptureProxy SetRawPhotoStreamInfo failed, error: %{public}d", error);
+    }
+    return error;
+}
+
 int32_t HStreamCaptureProxy::DeferImageDeliveryFor(int32_t type)
 {
     MessageParcel data;

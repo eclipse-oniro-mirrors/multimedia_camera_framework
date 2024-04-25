@@ -60,13 +60,23 @@ void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
     streamInfo.v1_0.intent_ = STILL_CAPTURE;
     streamInfo.v1_0.encodeType_ = ENCODE_TYPE_JPEG;
     HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo;
-    extendedStreamInfo.type = HDI::Camera::V1_1::EXTENDED_STREAM_INFO_QUICK_THUMBNAIL;
-    extendedStreamInfo.bufferQueue = thumbnailBufferQueue_;
     // quickThumbnial do not need these param
     extendedStreamInfo.width = 0;
     extendedStreamInfo.height = 0;
     extendedStreamInfo.format = 0;
     extendedStreamInfo.dataspace = 0;
+    if (format_ == OHOS_CAMERA_FORMAT_DNG) {
+        MEDIA_INFO_LOG("HStreamCapture::SetStreamInfo Set DNG info, streamId:%{public}d", GetFwkStreamId());
+        extendedStreamInfo.type =
+            static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_RAW);
+        extendedStreamInfo.bufferQueue = rawBufferQueue_;
+        extendedStreamInfo.width = width_;
+        extendedStreamInfo.height = height_;
+        extendedStreamInfo.format = format_;
+    } else {
+        extendedStreamInfo.type = HDI::Camera::V1_1::EXTENDED_STREAM_INFO_QUICK_THUMBNAIL;
+        extendedStreamInfo.bufferQueue = thumbnailBufferQueue_;
+    }
     streamInfo.extendedStreamInfos = {extendedStreamInfo};
 }
 
@@ -82,6 +92,18 @@ int32_t HStreamCapture::SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferPro
     return CAMERA_OK;
 }
 
+
+int32_t HStreamCapture::SetRawPhotoStreamInfo(const sptr<OHOS::IBufferProducer> &producer)
+{
+    if (producer != nullptr) {
+        rawBufferQueue_ = new BufferProducerSequenceable(producer);
+    } else {
+        rawBufferQueue_ = nullptr;
+    }
+    MEDIA_DEBUG_LOG("HStreamCapture::SetRawPhotoStreamInfo rawBufferQueue whether is nullptr: %{public}d",
+        rawBufferQueue_ == nullptr);
+    return CAMERA_OK;
+}
 
 int32_t HStreamCapture::DeferImageDeliveryFor(int32_t type)
 {
@@ -165,7 +187,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
             cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
         }
     }
-    
+
     int32_t NightMode = 4;
     if (GetMode() == NightMode && cameraPosition == OHOS_CAMERA_POSITION_BACK) {
         return ret;

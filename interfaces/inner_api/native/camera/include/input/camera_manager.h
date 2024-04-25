@@ -29,6 +29,7 @@
 #include "safe_map.h"
 #include "session/capture_session.h"
 #include "session/portrait_session.h"
+#include "session/profession_session.h"
 #include "session/night_session.h"
 #include "session/scan_session.h"
 #include "session/video_session.h"

@@ -437,7 +437,7 @@ napi_value PortraitSessionNapi::SetPhysicalAperture(napi_env env, napi_callback_
         napi_get_value_double(env, argv[PARAM0], &physicalAperture);
         portraitSessionNapi->portraitSession_->LockForControl();
         portraitSessionNapi->portraitSession_->SetPhysicalAperture((float)physicalAperture);
-        MEDIA_INFO_LOG("SetPhysicalAperture set physicalAperture %{public}f!", physicalAperture);
+        MEDIA_INFO_LOG("SetPhysicalAperture set physicalAperture %{public}f!", ConfusingNumber(physicalAperture));
         portraitSessionNapi->portraitSession_->UnlockForControl();
     } else {
         MEDIA_ERR_LOG("SetPhysicalAperture call Failed!");

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -47,7 +47,6 @@ private:
     static napi_value GetHostDeviceName(napi_env env, napi_callback_info info);
     static napi_value GetHostDeviceType(napi_env env, napi_callback_info info);
     static napi_value GetCameraOrientation(napi_env env, napi_callback_info info);
-
     napi_env env_;
     napi_ref wrapper_;
 

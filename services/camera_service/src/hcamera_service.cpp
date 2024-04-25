@@ -21,6 +21,7 @@
 #include <mutex>
 #include <securec.h>
 #include <unordered_set>
+#include <vector>
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
@@ -125,7 +126,7 @@ int32_t HCameraService::GetCameras(
         }
         camera_metadata_item_t item;
         common_metadata_header_t* metadata = cameraAbility->get();
-        int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_POSITION, &item);
+        ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_POSITION, &item);
         uint8_t cameraPosition = (ret == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_POSITION_OTHER;
         ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLDSCREEN_TYPE, &item);
         uint8_t foldType = (ret == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLDSCREEN_OTHER;
@@ -136,18 +137,22 @@ int32_t HCameraService::GetCameras(
             cameraPosition = POSITION_FOLD_INNER;
         }
         ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_TYPE, &item);
-        camera_type_enum_t cameraType = (ret == CAM_META_SUCCESS) ?
-            static_cast<camera_type_enum_t>(item.data.u8[0]) : OHOS_CAMERA_TYPE_UNSPECIFIED;
+        uint8_t cameraType = (ret == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_TYPE_UNSPECIFIED;
         ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
-        camera_connection_type_t connectionType = (ret == CAM_META_SUCCESS) ?
-            static_cast<camera_connection_type_t>(item.data.u8[0]) : OHOS_CAMERA_CONNECTION_TYPE_BUILTIN;
+        uint8_t connectionType = (ret == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_CONNECTION_TYPE_BUILTIN;
         ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
         bool isMirrorSupported = (ret == CAM_META_SUCCESS) ?
             ((item.data.u8[0] == 1) || (item.data.u8[0] == 0)) : false;
-        CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager GetCameras camera ID:%s, Camera position:%d,"
-                                            " Camera Type:%d, Connection Type:%d, Mirror support:%d",
+        ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_MODES, &item);
+        std::vector<uint8_t> supportModes = {};
+        for (uint32_t i = 0; i < item.count; i++) {
+            supportModes.push_back(item.data.u8[i]);
+        }
+        CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager GetCameras camera ID:%s, Camera position:%d, "
+                                            "Camera Type:%d, Connection Type:%d, Mirror support:%d",
             id.c_str(), cameraPosition, cameraType, connectionType, isMirrorSupported));
-        cameraInfos.emplace_back(make_shared<CameraMetaInfo>(id, cameraPosition, connectionType, cameraAbility));
+        cameraInfos.emplace_back(make_shared<CameraMetaInfo>(id, cameraType, cameraPosition,
+            connectionType, supportModes, cameraAbility));
     }
     FillCameras(cameraInfos, cameraIds, cameraAbilityList);
     return ret;
@@ -157,12 +162,53 @@ void HCameraService::FillCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos
     vector<string>& cameraIds, vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList)
 {
     vector<shared_ptr<CameraMetaInfo>> choosedCameras = ChooseDeFaultCameras(cameraInfos);
+    vector<shared_ptr<CameraMetaInfo>> physicalCameras = ChoosePhysicalCameras(cameraInfos, choosedCameras);
     cameraIds.clear();
     cameraAbilityList.clear();
     for (const auto& camera: choosedCameras) {
         cameraIds.emplace_back(camera->cameraId);
         cameraAbilityList.emplace_back(camera->cameraAbility);
     }
+    for (const auto& camera: physicalCameras) {
+        cameraIds.emplace_back(camera->cameraId);
+        cameraAbilityList.emplace_back(camera->cameraAbility);
+    }
+}
+
+vector<shared_ptr<CameraMetaInfo>> HCameraService::ChoosePhysicalCameras(
+    const vector<shared_ptr<CameraMetaInfo>>& cameraInfos, const vector<shared_ptr<CameraMetaInfo>>& choosedCameras)
+{
+    std::vector<OHOS::HDI::Camera::V1_3::OperationMode> supportedPhysicalCamerasModes = {
+        OHOS::HDI::Camera::V1_3::OperationMode::PROFESSIONAL_PHOTO,
+        OHOS::HDI::Camera::V1_3::OperationMode::PROFESSIONAL_VIDEO,
+    };
+    vector<shared_ptr<CameraMetaInfo>> physicalCameraInfos = {};
+    for (auto& camera : cameraInfos) {
+        if (std::any_of(choosedCameras.begin(), choosedCameras.end(), [camera](const auto& defaultCamera) {
+                return camera->cameraId == defaultCamera->cameraId;
+            })
+        ) {
+            MEDIA_INFO_LOG("ChoosePhysicalCameras alreadly has default camera: %{public}s", camera->cameraId.c_str());
+        } else {
+            physicalCameraInfos.push_back(camera);
+        }
+    }
+    vector<shared_ptr<CameraMetaInfo>> physicalCameras = {};
+    for (auto& camera : physicalCameraInfos) {
+        MEDIA_INFO_LOG("ChoosePhysicalCameras camera ID:%s, CameraType: %{public}d, Camera position:%{public}d, "
+                       "Connection Type:%{public}d",
+                       camera->cameraId.c_str(), camera->cameraType, camera->position, camera->connectionType);
+        bool isSupportPhysicalCamera = std::any_of(camera->supportModes.begin(), camera->supportModes.end(),
+            [&supportedPhysicalCamerasModes](auto mode) -> bool {
+                return any_of(supportedPhysicalCamerasModes.begin(), supportedPhysicalCamerasModes.end(),
+                    [mode](auto it)-> bool { return it == mode; });
+            });
+        if (camera->cameraType != camera_type_enum_t::OHOS_CAMERA_TYPE_UNSPECIFIED && isSupportPhysicalCamera) {
+            physicalCameras.emplace_back(camera);
+            MEDIA_INFO_LOG("ChoosePhysicalCameras add camera ID:%{public}s", camera->cameraId.c_str());
+        }
+    }
+    return physicalCameras;
 }
 
 vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<shared_ptr<CameraMetaInfo>> cameraInfos)
@@ -1356,7 +1402,7 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
         uint8_t stabilizationMode_ = item.data.u8[0];
         defaultSettings->addEntry(OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &stabilizationMode_, count);
     }
-    
+
     ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_DEFERRED_IMAGE_DELIVERY, &item);
     if (ret == CAM_META_SUCCESS) {
         uint8_t deferredType = item.data.u8[0];

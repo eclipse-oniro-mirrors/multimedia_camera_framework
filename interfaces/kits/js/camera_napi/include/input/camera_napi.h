@@ -16,6 +16,7 @@
 #ifndef CAMERA_NAPI_H_
 #define CAMERA_NAPI_H_
 
+#include "capture_scene_const.h"
 #include "hilog/log.h"
 #include "camera_napi_utils.h"
 #include "output/camera_output_capability.h"
@@ -57,7 +58,7 @@ static const std::int32_t VIDEO_DEFAULT_WIDTH = 640;
 static const std::int32_t VIDEO_DEFAULT_HEIGHT = 360;
 
 static const std::int32_t SURFACE_QUEUE_SIZE = 10;
- 
+
 static const std::unordered_map<std::string, int32_t> mapFlashMode = {
     {"FLASH_MODE_CLOSE", 0},
     {"FLASH_MODE_OPEN", 1},
@@ -103,6 +104,7 @@ static const std::unordered_map<std::string, int32_t> mapCameraFormat = {
     {"CAMERA_FORMAT_YUV_420_SP", CameraFormat::CAMERA_FORMAT_YUV_420_SP},
     {"CAMERA_FORMAT_JPEG", CameraFormat::CAMERA_FORMAT_JPEG},
     {"CAMERA_FORMAT_RGBA_8888", CameraFormat::CAMERA_FORMAT_RGBA_8888},
+    {"CAMERA_FORMAT_DNG", CameraFormat::CAMERA_FORMAT_DNG},
     {"CAMERA_FORMAT_YCBCR_P010", CameraFormat::CAMERA_FORMAT_YCBCR_P010},
     {"CAMERA_FORMAT_YCRCB_P010", CameraFormat::CAMERA_FORMAT_YCRCB_P010},
 };
@@ -153,15 +155,16 @@ static const std::unordered_map<std::string, int32_t> mapExposureState = {
 };
 
 static const std::unordered_map<std::string, int32_t> mapSceneMode = {
-    {"NORMAL", 0},
-    {"NORMAL_PHOTO", 1},
-    {"NORMAL_VIDEO", 2},
-    {"PORTRAIT", 3},
-    {"PORTRAIT_PHOTO", 3},
-    {"NIGHT", 4},
-    {"NIGHT_PHOTO", 4},
-    {"PROFESSIONAL", 5},
-    {"SLOW_MOTION", 6},
+    {"NORMAL", JS_NORMAL},
+    {"NORMAL_PHOTO", JS_CAPTURE},
+    {"NORMAL_VIDEO", JS_VIDEO},
+    {"PORTRAIT", JS_PORTRAIT},
+    {"PORTRAIT_PHOTO", JS_PORTRAIT},
+    {"NIGHT", JS_NIGHT},
+    {"NIGHT_PHOTO", JS_NIGHT},
+    {"PROFESSIONAL_PHOTO", JS_PROFESSIONAL_PHOTO},
+    {"PROFESSIONAL_VIDEO", JS_PROFESSIONAL_VIDEO},
+    {"SLOW_MOTION", JS_SLOW_MOTION},
 };
 
 static const std::unordered_map<std::string, int32_t> mapFilterType = {
@@ -275,6 +278,12 @@ static const std::unordered_map<std::string, int32_t> mapRestoreParamType = {
     {"TRANSIENT_ACTIVE_PARAM", 2},
 };
 
+static const std::unordered_map<std::string, int32_t> mapExposureMeteringMode = {
+    {"MATRIX", 0},
+    {"CENTER", 1},
+    {"SPOT", 2},
+};
+
 enum CreateAsyncCallbackModes {
     CREATE_CAMERA_MANAGER_ASYNC_CALLBACK = 10,
 };
@@ -335,6 +344,7 @@ private:
     static thread_local napi_ref SmoothZoomModeRef_;
     static thread_local napi_ref colorEffectTypeRef_;
     static thread_local napi_ref restoreParamTypeRef_;
+    static thread_local napi_ref exposureMeteringModeRef_;
     napi_env env_;
     napi_ref wrapper_;
 };
