@@ -36,6 +36,23 @@ public:
     static std::shared_ptr<OHOS::Camera::CameraMetadata> CopyMetadata(
         const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata);
 };
+
+template<typename T>
+bool AddOrUpdateMetadata(std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, uint32_t tag, T value)
+{
+    uint32_t count = 1;
+    bool status = false;
+    camera_metadata_item_t item;
+    int32_t ret = OHOS::Camera::FindCameraMetadataItem(metadata->get(), tag, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = metadata->addEntry(tag, &value, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = metadata->updateEntry(tag, &value, count);
+    }
+    return status;
+}
+
+std::vector<float> ParsePhysicalApertureRangeByMode(const camera_metadata_item_t &item, const int32_t modeName);
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_METADATA_COMMON_UTILS_H

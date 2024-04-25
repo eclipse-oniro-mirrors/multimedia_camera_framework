@@ -498,6 +498,7 @@ protected:
     static const std::unordered_map<camera_exposure_hint_mode_enum_t, ExposureHintMode> metaExposureHintModeMap_;
     static const std::unordered_map<ExposureHintMode, camera_exposure_hint_mode_enum_t> fwkExposureHintModeMap_;
 private:
+    std::vector<float> ParsePhysicalApertureRangeFromMeta(const camera_metadata_item_t &item);
     std::mutex sessionCallbackMutex_;
     std::shared_ptr<ExposureInfoCallback> exposureInfoCallback_ = nullptr;
     std::shared_ptr<IsoInfoCallback> isoInfoCallback_ = nullptr;

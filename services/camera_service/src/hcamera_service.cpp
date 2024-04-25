@@ -126,7 +126,7 @@ int32_t HCameraService::GetCameras(
         }
         camera_metadata_item_t item;
         common_metadata_header_t* metadata = cameraAbility->get();
-        int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_POSITION, &item);
+        ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_POSITION, &item);
         uint8_t cameraPosition = (ret == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_POSITION_OTHER;
         ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLDSCREEN_TYPE, &item);
         uint8_t foldType = (ret == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLDSCREEN_OTHER;
@@ -137,11 +137,9 @@ int32_t HCameraService::GetCameras(
             cameraPosition = POSITION_FOLD_INNER;
         }
         ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_TYPE, &item);
-        camera_type_enum_t cameraType = (ret == CAM_META_SUCCESS) ?
-            static_cast<camera_type_enum_t>(item.data.u8[0]) : OHOS_CAMERA_TYPE_UNSPECIFIED;
+        uint8_t cameraType = (ret == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_TYPE_UNSPECIFIED;
         ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
-        camera_connection_type_t connectionType = (ret == CAM_META_SUCCESS) ?
-            static_cast<camera_connection_type_t>(item.data.u8[0]) : OHOS_CAMERA_CONNECTION_TYPE_BUILTIN;
+        uint8_t connectionType = (ret == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_CONNECTION_TYPE_BUILTIN;
         ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
         bool isMirrorSupported = (ret == CAM_META_SUCCESS) ?
             ((item.data.u8[0] == 1) || (item.data.u8[0] == 0)) : false;
@@ -150,8 +148,8 @@ int32_t HCameraService::GetCameras(
         for (uint32_t i = 0; i < item.count; i++) {
             supportModes.push_back(item.data.u8[i]);
         }
-        CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager GetCameras camera ID:%s, Camera position:%d,"
-                                            " Camera Type:%d, Connection Type:%d, Mirror support:%d",
+        CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager GetCameras camera ID:%s, Camera position:%d, "
+                                            "Camera Type:%d, Connection Type:%d, Mirror support:%d",
             id.c_str(), cameraPosition, cameraType, connectionType, isMirrorSupported));
         cameraInfos.emplace_back(make_shared<CameraMetaInfo>(id, cameraType, cameraPosition,
             connectionType, supportModes, cameraAbility));

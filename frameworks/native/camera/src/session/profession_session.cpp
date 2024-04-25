@@ -14,11 +14,12 @@
  */
 
 #include "session/profession_session.h"
+#include "camera_log.h"
 #include "camera_metadata_operator.h"
 #include "camera_util.h"
 #include "hcapture_session_callback_stub.h"
+#include "metadata_common_utils.h"
 #include "input/camera_input.h"
-#include "camera_log.h"
 #include "output/photo_output.h"
 #include "output/preview_output.h"
 #include "output/video_output.h"
@@ -399,9 +400,6 @@ int32_t ProfessionSession::SetSensorExposureTime(uint32_t exposureTime)
             "before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
-    bool status = false;
-    int32_t count = 1;
-    camera_metadata_item_t item;
     MEDIA_DEBUG_LOG("ProfessionSession::SetSensorExposureTime exposure: %{public}d", exposureTime);
     if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::SetSensorExposureTime camera device is null");
@@ -429,13 +427,7 @@ int32_t ProfessionSession::SetSensorExposureTime(uint32_t exposureTime)
     }
     constexpr int32_t timeUnit = 1000000;
     camera_rational_t value = {.numerator = exposureTime, .denominator = timeUnit};
-    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_SENSOR_EXPOSURE_TIME, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_SENSOR_EXPOSURE_TIME, &value, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_SENSOR_EXPOSURE_TIME, &value, count);
-    }
-    if (!status) {
+    if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_SENSOR_EXPOSURE_TIME, value)) {
         MEDIA_ERR_LOG("ProfessionSession::SetSensorExposureTime Failed to set exposure compensation");
     }
     exposureDurationValue_ = exposureTime;
@@ -637,22 +629,12 @@ int32_t ProfessionSession::SetWhiteBalanceMode(WhiteBalanceMode mode)
     } else {
         whiteBalanceMode = itr->second;
     }
-    bool status = false;
-    int32_t ret;
-    uint32_t count = 1;
-    camera_metadata_item_t item;
     MEDIA_DEBUG_LOG("ProfessionSession::SetWhiteBalanceMode WhiteBalance mode: %{public}d", whiteBalanceMode);
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_AWB_MODE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_AWB_MODE, &whiteBalanceMode, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_AWB_MODE, &whiteBalanceMode, count);
-    }
     // no manual wb mode need set maunual value to 0
     if (mode != AWB_MODE_OFF) {
         SetManualWhiteBalance(0);
     }
-    if (!status) {
+    if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_AWB_MODE, whiteBalanceMode)) {
         MEDIA_ERR_LOG("ProfessionSession::SetWhiteBalanceMode Failed to set WhiteBalance mode");
     }
     return CameraErrorCode::SUCCESS;
@@ -740,11 +722,8 @@ int32_t ProfessionSession::SetManualWhiteBalance(int32_t wbValue)
         MEDIA_ERR_LOG("ProfessionSession::SetManualWhiteBalance Need to set WhiteBalanceMode off");
         return CameraErrorCode::OPERATION_NOT_ALLOWED;
     }
-    bool status = false;
     int32_t minIndex = 0;
     int32_t maxIndex = 1;
-    int32_t count = 1;
-    camera_metadata_item_t item;
     MEDIA_DEBUG_LOG("ProfessionSession::SetManualWhiteBalance white balance: %{public}d", wbValue);
     if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::SetManualWhiteBalance camera device is null");
@@ -766,14 +745,7 @@ int32_t ProfessionSession::SetManualWhiteBalance(int32_t wbValue)
                         "%{public}d is greater than maximum wbValue: %{public}d", wbValue, whiteBalanceRange[maxIndex]);
         wbValue = whiteBalanceRange[maxIndex];
     }
-
-    int32_t ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_SENSOR_WB_VALUE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_SENSOR_WB_VALUE, &wbValue, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_SENSOR_WB_VALUE, &wbValue, count);
-    }
-    if (!status) {
+    if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_SENSOR_WB_VALUE, wbValue)) {
         MEDIA_ERR_LOG("SetManualWhiteBalance Failed to SetManualWhiteBalance");
     }
     return CameraErrorCode::SUCCESS;
@@ -1199,12 +1171,12 @@ int32_t ProfessionSession::SetColorEffect(ColorEffect colorEffect)
     } else {
         colorEffectTemp = itr->second;
     }
+    MEDIA_DEBUG_LOG("ProfessionSession::SetColorEffect: %{public}d", colorEffect);
 
     bool status = false;
     int32_t ret;
     uint32_t count = 1;
     camera_metadata_item_t item;
-    MEDIA_DEBUG_LOG("ProfessionSession::SetColorEffect: %{public}d", colorEffect);
     ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_SUPPORTED_COLOR_MODES, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
         status = changedMetadata_->addEntry(OHOS_CONTROL_SUPPORTED_COLOR_MODES, &colorEffectTemp, count);
@@ -1256,34 +1228,8 @@ int32_t ProfessionSession::GetSupportedPhysicalApertures(std::vector<std::vector
         allRange.push_back(ConfusingNumber(item.data.f[i]));
     }
     MEDIA_DEBUG_LOG("ProfessionSession::GetSupportedPhysicalApertures mode %{public}d, allRange=%{public}s",
-                    GetMode(), Container2String(allRange.begin(), allRange.end()).c_str());
-    float npos = -1.0;
-    std::vector<std::vector<float>> modeRanges = {};
-
-    std::vector<float> modeRange = {};
-
-    for (uint32_t i = 0; i < item.count - 1; i++) {
-        if (item.data.f[i] == npos && item.data.f[i + 1] == npos) {
-            modeRange.emplace_back(npos);
-            modeRanges.emplace_back(std::move(modeRange));
-            modeRange.clear();
-            i++;
-            continue;
-        }
-        modeRange.emplace_back(item.data.f[i]);
-    }
-    float currentMode = static_cast<float>(GetMode());
-    auto it = std::find_if(modeRanges.begin(), modeRanges.end(),
-        [currentMode](auto value) -> bool {
-            return currentMode == value[0];
-        });
-    if (it == modeRanges.end()) {
-        MEDIA_ERR_LOG("ProfessionSession::GetSupportedPhysicalApertures Failed meta not support mode:%{public}d",
-                      GetMode());
-        return CameraErrorCode::SUCCESS;
-    }
-
-    auto chooseModeRange = *it;
+                    GetMode(), Container2String(allRange.begin(), allRange.end()).c_str());    
+    std::vector<float> chooseModeRange = ParsePhysicalApertureRangeByMode(item, GetMode());
     int32_t deviceCntPos = 1;
     int32_t supportedDeviceCount = static_cast<int32_t>(chooseModeRange[deviceCntPos]);
     if (supportedDeviceCount == 0) {
@@ -1366,22 +1312,14 @@ int32_t ProfessionSession::SetPhysicalAperture(float physicalAperture)
         MEDIA_ERR_LOG("current physicalAperture is not supported");
         return CameraErrorCode::SUCCESS;
     }
-    uint32_t count = 1;
-    bool status = false;
-    camera_metadata_item_t item;
-    int32_t ret = Camera::FindCameraMetadataItem(changedMetadata_->get(),
-        OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE, &item);
-    if (ret == CAM_META_ITEM_NOT_FOUND) {
-        status = changedMetadata_->addEntry(OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE, &physicalAperture, count);
-    } else if (ret == CAM_META_SUCCESS) {
-        status = changedMetadata_->updateEntry(OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE, &physicalAperture, count);
-    }
-    if (!status) {
+    if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE, physicalAperture)) {
         MEDIA_ERR_LOG("SetPhysicalAperture Failed to set physical aperture");
+        return CameraErrorCode::SUCCESS;
     }
     apertureValue_ = physicalAperture;
     return CameraErrorCode::SUCCESS;
 }
+
 //callbacks
 void ProfessionSession::SetExposureInfoCallback(std::shared_ptr<ExposureInfoCallback> callback)
 {

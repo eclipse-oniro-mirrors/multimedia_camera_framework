@@ -269,8 +269,6 @@ sptr<CaptureSession> CameraManager::CreateCaptureSession(SceneMode mode)
                 captureSession = new(std::nothrow) PortraitSession(session);
                 break;
             case SceneMode::PROFESSIONAL_VIDEO:
-                captureSession = new(std::nothrow) ProfessionSession(session, cameraObjList);
-                break;
             case SceneMode::PROFESSIONAL_PHOTO:
                 captureSession = new(std::nothrow) ProfessionSession(session, cameraObjList);
                 break;
@@ -1275,12 +1273,8 @@ void CameraManager::CreateProfile4StreamType(OutputCapStreamType streamType, uin
         Size size{static_cast<uint32_t>(detailInfo.width), static_cast<uint32_t>(detailInfo.height)};
         Fps fps{static_cast<uint32_t>(detailInfo.fixedFps), static_cast<uint32_t>(detailInfo.minFps),
             static_cast<uint32_t>(detailInfo.maxFps)};
-        std::vector<uint32_t> abilityId;
-        abilityId = detailInfo.abilityId;
-        std::string abilityIds = "";
-        for (auto id : abilityId) {
-            abilityIds += std::to_string(id) + ",";
-        }
+        std::vector<uint32_t> abilityId = detailInfo.abilityId;
+        std::string abilityIds = Container2String(abilityId.begin(), abilityId.end());
         if (streamType == OutputCapStreamType::PREVIEW) {
             Profile previewProfile = Profile(format, size, fps, abilityId);
             MEDIA_DEBUG_LOG("preview format : %{public}d, width: %{public}d, height: %{public}d"

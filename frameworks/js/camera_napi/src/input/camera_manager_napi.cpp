@@ -977,61 +977,51 @@ napi_value CameraManagerNapi::GetSupportedOutputCapability(napi_env env, napi_ca
 {
     MEDIA_INFO_LOG("GetSupportedOutputCapability is called");
     napi_status status;
-
     napi_value result = nullptr;
     size_t argc = ARGS_TWO;
     napi_value argv[ARGS_TWO] = {0};
     napi_value thisVar = nullptr;
     CameraDeviceNapi* cameraDeviceNapi = nullptr;
-    CameraManagerNapi* cameraManagerNapi = nullptr;
-
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
     napi_get_undefined(env, &result);
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
-    if (status != napi_ok || cameraManagerNapi == nullptr) {
-        MEDIA_ERR_LOG("napi_unwrap( ) failure!");
-        return result;
-    }
     status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void**>(&cameraDeviceNapi));
     if (status != napi_ok || cameraDeviceNapi == nullptr) {
-        MEDIA_ERR_LOG("Could not able to read cameraId argument!");
+        MEDIA_ERR_LOG("napi_unwrap failure!");
         return result;
     }
     sptr<CameraDevice> cameraInfo = cameraDeviceNapi->cameraDevice_;
     if (argc == ARGS_ONE) {
         result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo);
     } else if (argc == ARGS_TWO) {
-        int32_t sceneMode;
-        napi_get_value_int32(env, argv[PARAM1], &sceneMode);
-        MEDIA_INFO_LOG("CameraManagerNapi::GetSupportedOutputCapability mode = %{public}d", sceneMode);
-        switch (sceneMode) {
-            case SceneMode::CAPTURE:
+        int32_t jsSceneMode;
+        napi_get_value_int32(env, argv[PARAM1], &jsSceneMode);
+        MEDIA_INFO_LOG("CameraManagerNapi::GetSupportedOutputCapability mode = %{public}d", jsSceneMode);
+        switch (jsSceneMode) {
+            case JsSceneMode::JS_CAPTURE:
                 result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, SceneMode::CAPTURE);
                 break;
-            case SceneMode::VIDEO:
+            case JsSceneMode::JS_VIDEO:
                 result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, SceneMode::VIDEO);
                 break;
-            case SceneMode::PORTRAIT:
+            case JsSceneMode::JS_PORTRAIT:
                 result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, SceneMode::PORTRAIT);
                 break;
-            case SceneMode::NIGHT:
+            case JsSceneMode::JS_NIGHT:
                 result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, SceneMode::NIGHT);
                 break;
-            case SceneMode::PROFESSIONAL_PHOTO:
+            case JsSceneMode::JS_PROFESSIONAL_PHOTO:
                 result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo,
                     SceneMode::PROFESSIONAL_PHOTO);
                 break;
-            case SceneMode::PROFESSIONAL_VIDEO:
+            case JsSceneMode::JS_PROFESSIONAL_VIDEO:
                 result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo,
                     SceneMode::PROFESSIONAL_VIDEO);
                 break;
             default:
-                MEDIA_ERR_LOG("CreateCameraSessionInstance mode = %{public}d not supported", sceneMode);
+                MEDIA_ERR_LOG("CreateCameraSessionInstance mode = %{public}d not supported", jsSceneMode);
                 break;
         }
     }
-
     return result;
 }
 
