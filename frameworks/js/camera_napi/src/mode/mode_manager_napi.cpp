@@ -152,16 +152,16 @@ napi_value ModeManagerNapi::CreateCameraSessionInstance(napi_env env, napi_callb
     napi_get_value_int32(env, argv[PARAM0], &jsModeName);
     MEDIA_INFO_LOG("ModeManagerNapi::CreateCameraSessionInstance mode = %{public}d", jsModeName);
     switch (jsModeName) {
-        case JS_CAPTURE:
+        case JsSceneMode::JS_CAPTURE:
             result = PhotoSessionNapi::CreateCameraSession(env);
             break;
-        case JS_VIDEO:
+        case JsSceneMode::JS_VIDEO:
             result = VideoSessionNapi::CreateCameraSession(env);
             break;
-        case JS_PORTRAIT:
+        case JsSceneMode::JS_PORTRAIT:
             result = PortraitSessionNapi::CreateCameraSession(env);
             break;
-        case JS_NIGHT:
+        case JsSceneMode::JS_NIGHT:
             result = NightSessionNapi::CreateCameraSession(env);
             break;
         default:

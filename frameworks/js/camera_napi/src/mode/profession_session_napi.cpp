@@ -51,76 +51,76 @@ void ProfessionSessionNapi::ProfessionSessionNapiDestructor(napi_env env, void* 
         delete cameraObj;
     }
 }
+
+const std::vector<napi_property_descriptor> ProfessionSessionNapi::manual_exposure_funcs = {
+    DECLARE_NAPI_FUNCTION("getSupportedMeteringModes", ProfessionSessionNapi::GetSupportedMeteringModes),
+    DECLARE_NAPI_FUNCTION("isExposureMeteringModeSupported", ProfessionSessionNapi::IsMeteringModeSupported),
+    DECLARE_NAPI_FUNCTION("getExposureMeteringMode", ProfessionSessionNapi::GetMeteringMode),
+    DECLARE_NAPI_FUNCTION("setExposureMeteringMode", ProfessionSessionNapi::SetMeteringMode),
+
+    DECLARE_NAPI_FUNCTION("getExposureDurationRange", ProfessionSessionNapi::GetExposureDurationRange),
+    DECLARE_NAPI_FUNCTION("getExposureDuration", ProfessionSessionNapi::GetExposureDuration),
+    DECLARE_NAPI_FUNCTION("setExposureDuration", ProfessionSessionNapi::SetExposureDuration),
+};
+
+const std::vector<napi_property_descriptor> ProfessionSessionNapi::manual_focus_funcs = {
+    DECLARE_NAPI_FUNCTION("getSupportedFocusAssistFlashModes", ProfessionSessionNapi::GetSupportedFocusAssistFlashModes),
+    DECLARE_NAPI_FUNCTION("isFocusAssistSupported", ProfessionSessionNapi::IsFocusAssistFlashModeSupported),
+    DECLARE_NAPI_FUNCTION("getFocusAssistFlashMode", ProfessionSessionNapi::GetFocusAssistFlashMode),
+    DECLARE_NAPI_FUNCTION("setFocusAssist", ProfessionSessionNapi::SetFocusAssistFlashMode),
+};
+
+const std::vector<napi_property_descriptor> ProfessionSessionNapi::manual_iso_props = {
+    DECLARE_NAPI_FUNCTION("getISORange", ProfessionSessionNapi::GetIsoRange),
+    DECLARE_NAPI_FUNCTION("isManualISOSupported", ProfessionSessionNapi::IsManualIsoSupported),
+    DECLARE_NAPI_FUNCTION("getISO", ProfessionSessionNapi::GetISO),
+    DECLARE_NAPI_FUNCTION("setISO", ProfessionSessionNapi::SetISO),
+};
+
+const std::vector<napi_property_descriptor> ProfessionSessionNapi::auto_wb_props = {
+    DECLARE_NAPI_FUNCTION("getSupportedWhiteBalanceModes", ProfessionSessionNapi::GetSupportedWhiteBalanceModes),
+    DECLARE_NAPI_FUNCTION("isWhiteBalanceModeSupported", ProfessionSessionNapi::IsWhiteBalanceModeSupported),
+    DECLARE_NAPI_FUNCTION("getWhiteBalanceMode", ProfessionSessionNapi::GetWhiteBalanceMode),
+    DECLARE_NAPI_FUNCTION("setWhiteBalanceMode", ProfessionSessionNapi::SetWhiteBalanceMode),
+};
+
+const std::vector<napi_property_descriptor> ProfessionSessionNapi::manual_wb_props = {
+    DECLARE_NAPI_FUNCTION("getWhiteBalanceRange", ProfessionSessionNapi::GetManualWhiteBalanceRange),
+    DECLARE_NAPI_FUNCTION("isManualWhiteBalanceSupported", ProfessionSessionNapi::IsManualWhiteBalanceSupported),
+    DECLARE_NAPI_FUNCTION("getWhiteBalance", ProfessionSessionNapi::GetManualWhiteBalance),
+    DECLARE_NAPI_FUNCTION("setWhiteBalance", ProfessionSessionNapi::SetManualWhiteBalance),
+};
+
+const std::vector<napi_property_descriptor> ProfessionSessionNapi::pro_session_props = {
+    DECLARE_NAPI_FUNCTION("getSupportedExposureHintModes", ProfessionSessionNapi::GetSupportedExposureHintModes),
+    DECLARE_NAPI_FUNCTION("getExposureHintMode", ProfessionSessionNapi::GetExposureHintMode),
+    DECLARE_NAPI_FUNCTION("setExposureHintMode", ProfessionSessionNapi::SetExposureHintMode),
+
+    DECLARE_NAPI_FUNCTION("getSupportedPhysicalApertures", ProfessionSessionNapi::GetSupportedPhysicalApertures),
+    DECLARE_NAPI_FUNCTION("getPhysicalAperture", ProfessionSessionNapi::GetPhysicalAperture),
+    DECLARE_NAPI_FUNCTION("setPhysicalAperture", ProfessionSessionNapi::SetPhysicalAperture),
+    DECLARE_NAPI_FUNCTION("on", ProfessionSessionNapi::On),
+    DECLARE_NAPI_FUNCTION("once", ProfessionSessionNapi::Once),
+    DECLARE_NAPI_FUNCTION("off", ProfessionSessionNapi::Off),
+};
+
 napi_value ProfessionSessionNapi::Init(napi_env env, napi_value exports)
 {
     MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
     std::vector<napi_property_descriptor> manual_exposure_props = CameraSessionNapi::auto_exposure_props;
-    std::vector<napi_property_descriptor> manual_exposure_funcs = {
-        DECLARE_NAPI_FUNCTION("getSupportedMeteringModes", GetSupportedMeteringModes),
-        DECLARE_NAPI_FUNCTION("isExposureMeteringModeSupported", IsMeteringModeSupported),
-        DECLARE_NAPI_FUNCTION("getExposureMeteringMode", GetMeteringMode),
-        DECLARE_NAPI_FUNCTION("setExposureMeteringMode", SetMeteringMode),
-
-        DECLARE_NAPI_FUNCTION("getExposureDurationRange", GetExposureDurationRange),
-        DECLARE_NAPI_FUNCTION("getExposureDuration", GetExposureDuration),
-        DECLARE_NAPI_FUNCTION("setExposureDuration", SetExposureDuration),
-    };
-    manual_exposure_props.insert(manual_exposure_props.end(),
-                                 manual_exposure_funcs.begin(), manual_exposure_funcs.end());
-
+    manual_exposure_props.insert(manual_exposure_props.end(), ProfessionSessionNapi::manual_exposure_funcs.begin(),
+                                 ProfessionSessionNapi::manual_exposure_funcs.end());
     std::vector<napi_property_descriptor> pro_manual_focus_props = CameraSessionNapi::manual_focus_props;
-    std::vector<napi_property_descriptor> manual_focus_funcs = {
-        DECLARE_NAPI_FUNCTION("getSupportedFocusAssistFlashModes", GetSupportedFocusAssistFlashModes),
-        DECLARE_NAPI_FUNCTION("isFocusAssistSupported", IsFocusAssistFlashModeSupported),
-        DECLARE_NAPI_FUNCTION("getFocusAssistFlashMode", GetFocusAssistFlashMode),
-        DECLARE_NAPI_FUNCTION("setFocusAssist", SetFocusAssistFlashMode),
-    };
-
-    pro_manual_focus_props.insert(pro_manual_focus_props.end(),
-        manual_focus_funcs.begin(), manual_focus_funcs.end());
-
-    std::vector<napi_property_descriptor> manual_iso_props = {
-        DECLARE_NAPI_FUNCTION("getISORange", GetIsoRange),
-        DECLARE_NAPI_FUNCTION("isManualISOSupported", IsManualIsoSupported),
-        DECLARE_NAPI_FUNCTION("getISO", GetISO),
-        DECLARE_NAPI_FUNCTION("setISO", SetISO),
-    };
-
-    std::vector<napi_property_descriptor> auto_wb_props = {
-        DECLARE_NAPI_FUNCTION("getSupportedWhiteBalanceModes", GetSupportedWhiteBalanceModes),
-        DECLARE_NAPI_FUNCTION("isWhiteBalanceModeSupported", IsWhiteBalanceModeSupported),
-        DECLARE_NAPI_FUNCTION("getWhiteBalanceMode", GetWhiteBalanceMode),
-        DECLARE_NAPI_FUNCTION("setWhiteBalanceMode", SetWhiteBalanceMode),
-    };
-
-    std::vector<napi_property_descriptor> manual_wb_props = {
-        DECLARE_NAPI_FUNCTION("getWhiteBalanceRange", GetManualWhiteBalanceRange),
-        DECLARE_NAPI_FUNCTION("isManualWhiteBalanceSupported", IsManualWhiteBalanceSupported),
-        DECLARE_NAPI_FUNCTION("getWhiteBalance", GetManualWhiteBalance),
-        DECLARE_NAPI_FUNCTION("setWhiteBalance", SetManualWhiteBalance),
-    };
-
-    std::vector<napi_property_descriptor> pro_session_props = {
-        DECLARE_NAPI_FUNCTION("getSupportedExposureHintModes", GetSupportedExposureHintModes),
-        DECLARE_NAPI_FUNCTION("getExposureHintMode", GetExposureHintMode),
-        DECLARE_NAPI_FUNCTION("setExposureHintMode", SetExposureHintMode),
-
-        DECLARE_NAPI_FUNCTION("getSupportedPhysicalApertures", GetSupportedPhysicalApertures),
-        DECLARE_NAPI_FUNCTION("getPhysicalAperture", GetPhysicalAperture),
-        DECLARE_NAPI_FUNCTION("setPhysicalAperture", SetPhysicalAperture),
-        DECLARE_NAPI_FUNCTION("on", On),
-        DECLARE_NAPI_FUNCTION("once", Once),
-        DECLARE_NAPI_FUNCTION("off", Off),
-    };
-
+    pro_manual_focus_props.insert(pro_manual_focus_props.end(), ProfessionSessionNapi::manual_focus_funcs.begin(), 
+                                  ProfessionSessionNapi::manual_focus_funcs.end());
     std::vector<std::vector<napi_property_descriptor>> descriptors = {
         CameraSessionNapi::camera_process_props, CameraSessionNapi::zoom_props,
         CameraSessionNapi::color_effect_props, CameraSessionNapi::flash_props,
-        CameraSessionNapi::focus_props, manual_iso_props, auto_wb_props, manual_wb_props,
-        manual_exposure_props, pro_manual_focus_props, pro_session_props};
-
+        CameraSessionNapi::focus_props, ProfessionSessionNapi::manual_iso_props,
+        ProfessionSessionNapi::auto_wb_props, ProfessionSessionNapi::manual_wb_props,
+        ProfessionSessionNapi::pro_session_props, manual_exposure_props, pro_manual_focus_props};
     std::vector<napi_property_descriptor> professional_session_props =
         CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, PROFESSIONAL_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,

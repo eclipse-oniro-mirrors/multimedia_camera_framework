@@ -150,6 +150,13 @@ public:
     static napi_value Once(napi_env env, napi_callback_info info);
     static napi_value Off(napi_env env, napi_callback_info info);
 
+    static const std::vector<napi_property_descriptor> manual_exposure_funcs;
+    static const std::vector<napi_property_descriptor> manual_focus_funcs;
+    static const std::vector<napi_property_descriptor> manual_iso_props;
+    static const std::vector<napi_property_descriptor> auto_wb_props;
+    static const std::vector<napi_property_descriptor> manual_wb_props;
+    static const std::vector<napi_property_descriptor> pro_session_props;
+
     std::shared_ptr<ExposureInfoCallbackListener> exposureInfoCallback_ = nullptr;
     std::shared_ptr<IsoInfoCallbackListener> isoInfoCallback_ = nullptr;
     std::shared_ptr<ApertureInfoCallbackListener> apertureInfoCallback_ = nullptr;

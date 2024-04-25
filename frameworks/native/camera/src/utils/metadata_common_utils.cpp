@@ -182,7 +182,7 @@ std::vector<float> ParsePhysicalApertureRangeByMode(const camera_metadata_item_t
         if (item.data.f[i] == npos && item.data.f[i + 1] == npos) {
             modeRange.emplace_back(npos);
             MEDIA_DEBUG_LOG("ParsePhysicalApertureRangeByMode mode %{public}d, modeRange=%{public}s",
-                            modeName, Container2String(modeRange.begin(), modeRange.end()).c_str());            
+                            modeName, Container2String(modeRange.begin(), modeRange.end()).c_str());
             modeRanges.emplace_back(std::move(modeRange));
             modeRange.clear();
             i++;
@@ -196,7 +196,7 @@ std::vector<float> ParsePhysicalApertureRangeByMode(const camera_metadata_item_t
             return currentMode == value[0];
         });
     if (it == modeRanges.end()) {
-        MEDIA_ERR_LOG("ParsePhysicalApertureRangeByMode Failed meta not support mode:%{public}d", modeName);        
+        MEDIA_ERR_LOG("ParsePhysicalApertureRangeByMode Failed meta not support mode:%{public}d", modeName);
         return {};
     }
 

@@ -828,7 +828,7 @@ sptr<CameraDevice> CameraManager::GetCameraDeviceFromId(std::string cameraId)
     return cameraObj;
 }
 
-sptr<CameraManager> &CameraManager::GetInstance() __attribute__((no_sanitize("cfi")))
+sptr<CameraManager> &CameraManager::GetInstance()
 {
     if (CameraManager::cameraManager_ == nullptr) {
         std::unique_lock<std::mutex> lock(instanceMutex_);

@@ -182,27 +182,31 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChoosePhysicalCameras(
         OHOS::HDI::Camera::V1_3::OperationMode::PROFESSIONAL_PHOTO,
         OHOS::HDI::Camera::V1_3::OperationMode::PROFESSIONAL_VIDEO,
     };
-    vector<shared_ptr<CameraMetaInfo>> physicalCameras;
+    vector<shared_ptr<CameraMetaInfo>> physicalCameraInfos = {};
     for (auto& camera : cameraInfos) {
         if (std::any_of(choosedCameras.begin(), choosedCameras.end(), [camera](const auto& defaultCamera) {
                 return camera->cameraId == defaultCamera->cameraId;
             })
         ) {
-            MEDIA_INFO_LOG("ChoosePhysicalCameras alreadly has default camera");
+            MEDIA_INFO_LOG("ChoosePhysicalCameras alreadly has default camera: %{public}s", camera->cameraId.c_str());
         } else {
-            MEDIA_INFO_LOG("ChoosePhysicalCameras camera ID:%s, CameraType: %{public}d, Camera position:%{public}d, "
-                           "Connection Type:%{public}d",
-                           camera->cameraId.c_str(), camera->cameraType, camera->position, camera->connectionType);
+            physicalCameraInfos.push_back(camera);
+        }
+    }
+    vector<shared_ptr<CameraMetaInfo>> physicalCameras = {};
+    for (auto& camera : physicalCameraInfos) {
+        MEDIA_INFO_LOG("ChoosePhysicalCameras camera ID:%s, CameraType: %{public}d, Camera position:%{public}d, "
+                        "Connection Type:%{public}d",
+                        camera->cameraId.c_str(), camera->cameraType, camera->position, camera->connectionType);
 
-            bool isSupportPhysicalCamera = std::any_of(camera->supportModes.begin(), camera->supportModes.end(),
-                [&supportedPhysicalCamerasModes](auto mode) -> bool {
-                    return any_of(supportedPhysicalCamerasModes.begin(), supportedPhysicalCamerasModes.end(),
-                        [mode](auto it)-> bool { return it == mode; });
-                });
-            if (camera->cameraType != camera_type_enum_t::OHOS_CAMERA_TYPE_UNSPECIFIED && isSupportPhysicalCamera) {
-                physicalCameras.emplace_back(camera);
-                MEDIA_INFO_LOG("ChoosePhysicalCameras add camera ID:%{public}s", camera->cameraId.c_str());
-            }
+        bool isSupportPhysicalCamera = std::any_of(camera->supportModes.begin(), camera->supportModes.end(),
+            [&supportedPhysicalCamerasModes](auto mode) -> bool {
+                return any_of(supportedPhysicalCamerasModes.begin(), supportedPhysicalCamerasModes.end(),
+                    [mode](auto it)-> bool { return it == mode; });
+            });
+        if (camera->cameraType != camera_type_enum_t::OHOS_CAMERA_TYPE_UNSPECIFIED && isSupportPhysicalCamera) {
+            physicalCameras.emplace_back(camera);
+            MEDIA_INFO_LOG("ChoosePhysicalCameras add camera ID:%{public}s", camera->cameraId.c_str());
         }
     }
     return physicalCameras;

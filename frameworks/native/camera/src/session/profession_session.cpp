@@ -1223,12 +1223,6 @@ int32_t ProfessionSession::GetSupportedPhysicalApertures(std::vector<std::vector
         MEDIA_ERR_LOG("GetSupportedPhysicalApertures Failed with return code %{public}d", ret);
         return CameraErrorCode::SUCCESS;
     }
-    std::vector<float> allRange = {};
-    for (uint32_t i = 0; i < item.count; i++) {
-        allRange.push_back(ConfusingNumber(item.data.f[i]));
-    }
-    MEDIA_DEBUG_LOG("ProfessionSession::GetSupportedPhysicalApertures mode %{public}d, allRange=%{public}s",
-                    GetMode(), Container2String(allRange.begin(), allRange.end()).c_str());    
     std::vector<float> chooseModeRange = ParsePhysicalApertureRangeByMode(item, GetMode());
     int32_t deviceCntPos = 1;
     int32_t supportedDeviceCount = static_cast<int32_t>(chooseModeRange[deviceCntPos]);
