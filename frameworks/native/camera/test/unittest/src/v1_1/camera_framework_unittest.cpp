@@ -14,21 +14,23 @@
  */
 
 #include "camera_framework_unittest.h"
-#include "camera_util.h"
+
+#include "access_token.h"
+#include "accesstoken_kit.h"
 #include "camera_log.h"
+#include "camera_util.h"
 #include "capture_scene_const.h"
 #include "gmock/gmock.h"
-#include "input/camera_input.h"
-#include "surface.h"
-#include "test_common.h"
-
-#include "ipc_skeleton.h"
-#include "access_token.h"
 #include "hap_token_info.h"
-#include "accesstoken_kit.h"
-#include "token_setproc.h"
+#include "input/camera_input.h"
+#include "ipc_skeleton.h"
 #include "metadata_utils.h"
 #include "nativetoken_kit.h"
+#include "night_session.h"
+#include "scan_session.h"
+#include "surface.h"
+#include "test_common.h"
+#include "token_setproc.h"
 
 using namespace testing::ext;
 using ::testing::A;
@@ -5114,7 +5116,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_053, TestSize.Level
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
     camera_metadata_item_t item;
     OHOS::Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
-    cameraManager->ParseBasicCapability(ability, metadata, item);
+    cameraManager->ParseBasicCapability(metadata, item);
 }
 
 /*

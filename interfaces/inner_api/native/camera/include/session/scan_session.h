@@ -36,11 +36,11 @@ public:
         explicit ScanSessionMetadataResultProcessor(wptr<ScanSession> session) : session_(session) {}
         void ProcessCallbacks(
             const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result) override;
- 
+
     private:
         wptr<ScanSession> session_;
     };
- 
+
     explicit ScanSession(sptr<ICaptureSession> &ScanSession): CaptureSession(ScanSession)
     {
         metadataResultProcessor_ = std::make_shared<ScanSessionMetadataResultProcessor>(this);
@@ -54,19 +54,19 @@ public:
      *
      * @param CaptureOutput to be added to session.
      */
-    bool CanAddOutput(sptr<CaptureOutput>& output, SceneMode modeName = SceneMode::SCAN) override;
+    bool CanAddOutput(sptr<CaptureOutput>& output) override;
 
     bool IsBrightnessStatusSupported();
- 
+
     void RegisterBrightnessStatusCallback(std::shared_ptr<BrightnessStatusCallback> brightnessStatusCallback);
- 
+
     void UnRegisterBrightnessStatusCallback();
- 
+
 private:
     void SetBrightnessStatusReport(uint8_t state);
- 
+
     void ProcessBrightnessStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
- 
+
 private:
     std::shared_ptr<BrightnessStatusCallback> brightnessStatusCallback_;
     bool lastBrightnessStatus_ = false;

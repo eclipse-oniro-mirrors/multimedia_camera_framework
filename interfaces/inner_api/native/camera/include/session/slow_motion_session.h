@@ -15,12 +15,12 @@
  
 #ifndef OHOS_CAMERA_SLOW_MOTION_SESSION_H
 #define OHOS_CAMERA_SLOW_MOTION_SESSION_H
- 
+
 #include "capture_session.h"
 #include "icapture_session.h"
 #include "input/capture_input.h"
 #include "output/metadata_output.h"
- 
+
 namespace OHOS {
 namespace CameraStandard {
 enum SlowMotionState {
@@ -76,7 +76,7 @@ public:
      *
      * @param CaptureOutput to be added to session.
      */
-    bool CanAddOutput(sptr<CaptureOutput>& output, SceneMode modeName = SceneMode::SLOW_MOTION) override;
+    bool CanAddOutput(sptr<CaptureOutput>& output) override;
 
     /**
      * @brief Checks if motion detection is supported.

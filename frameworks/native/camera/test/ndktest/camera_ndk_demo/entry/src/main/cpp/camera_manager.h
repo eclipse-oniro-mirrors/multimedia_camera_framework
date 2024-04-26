@@ -24,6 +24,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include "surface_buffer.h"
 #include <native_buffer/native_buffer.h>
 #include "iostream"
 #include "mutex"

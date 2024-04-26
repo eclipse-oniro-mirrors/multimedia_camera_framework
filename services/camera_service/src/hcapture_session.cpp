@@ -127,7 +127,6 @@ HCaptureSession::HCaptureSession(const uint32_t callingTokenId, int32_t opMode)
     callerToken_ = callingTokenId;
     opMode_ = opMode;
     featureMode_ = 0;
-    SetOpMode(opMode_);
     CameraReportUtils::GetInstance().updateModeChangePerfInfo(opMode, CameraReportUtils::GetCallerInfo());
     MEDIA_INFO_LOG(
         "HCaptureSession: camera stub services(%{public}zu). opMode_= %{public}d", TotalSessionSize(), opMode_);
@@ -439,6 +438,10 @@ int32_t HCaptureSession::LinkInputAndOutputs()
     streamOperator = device->GetStreamOperator();
     auto allStream = streamContainer_.GetAllStreams();
     MEDIA_INFO_LOG("HCaptureSession::LinkInputAndOutputs allStream size:%{public}zu", allStream.size());
+    if (!IsValidMode(opMode_, settings)) {
+        MEDIA_ERR_LOG("HCaptureSession::LinkInputAndOutputs IsValidMode false");
+        return CAMERA_INVALID_SESSION_CFG;
+    }
     for (auto& stream : allStream) {
         rc = stream->LinkInput(streamOperator, settings);
         if (rc == CAMERA_OK) {

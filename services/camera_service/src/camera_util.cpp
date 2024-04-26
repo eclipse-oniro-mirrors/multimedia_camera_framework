@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include "camera_util.h"
+#include <cstdint>
 #include <securec.h>
 #include "camera_log.h"
 #include "access_token.h"
@@ -107,7 +108,6 @@ std::map<int, std::string> g_cameraQuickThumbnailAvailable = {
     {1, "True"},
 };
 
-int32_t g_operationMode;
 bool g_cameraDebugOn = false;
 
 int32_t HdiToServiceError(OHOS::HDI::Camera::V1_0::CamRetCode ret)
@@ -187,16 +187,10 @@ bool IsValidTokenId(uint32_t tokenId)
         Security::AccessToken::ATokenTypeEnum::TOKEN_HAP;
 }
 
-int32_t SetOpMode(int32_t opMode)
+bool IsValidMode(int32_t opMode, std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
-    g_operationMode = opMode;
-    return 0;
-}
-
-bool IsValidMode(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
-{
-    if (g_operationMode == 0) { // 0 is normal mode
-        MEDIA_INFO_LOG("operationMode:%{public}d", g_operationMode);
+    if (opMode == 0) { // 0 is normal mode
+        MEDIA_INFO_LOG("operationMode:%{public}d", opMode);
         return true;
     }
     camera_metadata_item_t item;
@@ -213,12 +207,12 @@ bool IsValidMode(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
     }
 
     for (uint32_t i = 0; i < item.count; i++) {
-        if (g_operationMode == item.data.u8[i]) {
-            MEDIA_INFO_LOG("operationMode:%{public}d found in supported streams", g_operationMode);
+        if (opMode == item.data.u8[i]) {
+            MEDIA_INFO_LOG("operationMode:%{public}d found in supported streams", opMode);
             return true;
         }
     }
-    MEDIA_ERR_LOG("operationMode:%{public}d not found in supported streams", g_operationMode);
+    MEDIA_ERR_LOG("operationMode:%{public}d not found in supported streams", opMode);
     return false;
 }
 

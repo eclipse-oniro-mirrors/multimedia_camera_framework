@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,21 +13,35 @@
  * limitations under the License.
  */
 
-#include "session/video_session.h"
+#include "session/macro_video_session.h"
 
+#include "camera_error_code.h"
 #include "camera_log.h"
 
 namespace OHOS {
 namespace CameraStandard {
-VideoSession::~VideoSession() {}
-bool VideoSession::CanAddOutput(sptr<CaptureOutput>& output)
+MacroVideoSession::MacroVideoSession(sptr<ICaptureSession>& captureSession) : CaptureSession(captureSession) {}
+
+bool MacroVideoSession::CanAddOutput(sptr<CaptureOutput>& output)
 {
-    MEDIA_DEBUG_LOG("Enter Into VideoSession::CanAddOutput");
+    MEDIA_DEBUG_LOG("Enter Into MacroVideoSession::CanAddOutput");
     if (!IsSessionConfiged() || output == nullptr) {
-        MEDIA_ERR_LOG("VideoSession::CanAddOutput operation is Not allowed!");
+        MEDIA_ERR_LOG("MacroVideoSession::CanAddOutput operation is Not allowed!");
         return false;
     }
     return CaptureSession::CanAddOutput(output);
+}
+
+int32_t MacroVideoSession::CommitConfig()
+{
+    int32_t ret = CaptureSession::CommitConfig();
+    if (ret != CameraErrorCode::SUCCESS) {
+        return ret;
+    }
+    LockForControl();
+    ret = EnableMacro(true);
+    UnlockForControl();
+    return ret;
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -13,22 +13,33 @@
  * limitations under the License.
  */
 
-#include <cstdint>
-#include <cstring>
 #include "input/camera_manager.h"
 
+#include <cstdint>
+#include <cstring>
 
+#include "camera_error_code.h"
+#include "camera_log.h"
+#include "camera_security_utils.h"
 #include "camera_util.h"
+#include "capture_scene_const.h"
+#include "deferred_photo_proc_session.h"
+#include "device_manager_impl.h"
+#include "dps_metadata_info.h"
+#include "icamera_util.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
-#include "camera_log.h"
+#include "session/capture_session.h"
+#include "session/macro_photo_session.h"
+#include "session/macro_video_session.h"
+#include "session/night_session.h"
+#include "session/photo_session.h"
+#include "session/portrait_session.h"
+#include "session/profession_session.h"
+#include "session/scan_session.h"
+#include "session/slow_motion_session.h"
+#include "session/video_session.h"
 #include "system_ability_definition.h"
-#include "camera_error_code.h"
-#include "camera_security_utils.h"
-#include "icamera_util.h"
-#include "device_manager_impl.h"
-#include "deferred_photo_proc_session.h"
-#include "dps_metadata_info.h"
 
 using namespace std;
 namespace OHOS {
@@ -72,6 +83,8 @@ const std::unordered_map<OperationMode, SceneMode> g_metaToFwSupportedMode_ = {
     {OperationMode::PROFESSIONAL_VIDEO, PROFESSIONAL_VIDEO},
     {OperationMode::SLOW_MOTION, SLOW_MOTION},
     {OperationMode::SCAN_CODE, SCAN},
+    {OperationMode::CAPTURE_MACRO, CAPTURE_MACRO},
+    {OperationMode::VIDEO_MACRO, VIDEO_MACRO},
     {OperationMode::HIGH_FRAME_RATE, HIGH_FRAME_RATE}
 };
 
@@ -85,6 +98,8 @@ const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
     {PROFESSIONAL_VIDEO,  OperationMode::PROFESSIONAL_VIDEO},
     {SLOW_MOTION,  OperationMode::SLOW_MOTION},
     {SCAN, OperationMode::SCAN_CODE},
+    {CAPTURE_MACRO, OperationMode::CAPTURE_MACRO},
+    {VIDEO_MACRO, OperationMode::VIDEO_MACRO},
     {HIGH_FRAME_RATE, OperationMode::HIGH_FRAME_RATE}
 };
 
@@ -241,22 +256,26 @@ sptr<CaptureSession> CameraManager::CreateCaptureSessionImpl(SceneMode mode, spt
 {
     switch (mode) {
         case SceneMode::VIDEO:
-            return new(std::nothrow) VideoSession(session);
+            return new (std::nothrow) VideoSession(session);
         case SceneMode::CAPTURE:
-            return new(std::nothrow) PhotoSession(session);
+            return new (std::nothrow) PhotoSession(session);
         case SceneMode::PORTRAIT:
-            return new(std::nothrow) PortraitSession(session);
+            return new (std::nothrow) PortraitSession(session);
         case SceneMode::PROFESSIONAL_VIDEO:
         case SceneMode::PROFESSIONAL_PHOTO:
-            return new(std::nothrow) ProfessionSession(session, cameraObjList);
+            return new (std::nothrow) ProfessionSession(session, cameraObjList);
         case SceneMode::SCAN:
-            return new(std::nothrow) ScanSession(session);
+            return new (std::nothrow) ScanSession(session);
         case SceneMode::NIGHT:
-            return new(std::nothrow) NightSession(session);
+            return new (std::nothrow) NightSession(session);
+        case SceneMode::CAPTURE_MACRO:
+            return new (std::nothrow) MacroPhotoSession(session);
+        case SceneMode::VIDEO_MACRO:
+            return new (std::nothrow) MacroVideoSession(session);
         case SceneMode::SLOW_MOTION:
-            return new(std::nothrow) SlowMotionSession(session);
+            return new (std::nothrow) SlowMotionSession(session);
         default:
-            return new(std::nothrow) CaptureSession(session);
+            return new (std::nothrow) CaptureSession(session);
     }
 }
 
@@ -264,7 +283,6 @@ sptr<CaptureSession> CameraManager::CreateCaptureSession(SceneMode mode)
 {
     CAMERA_SYNC_TRACE;
     sptr<ICaptureSession> session = nullptr;
-    sptr<CaptureSession> captureSession = nullptr;
 
     int32_t retCode = CAMERA_OK;
     if (serviceProxy_ == nullptr) {
@@ -281,13 +299,12 @@ sptr<CaptureSession> CameraManager::CreateCaptureSession(SceneMode mode)
     retCode = serviceProxy_->CreateCaptureSession(session, opMode);
     MEDIA_INFO_LOG("CameraManager::CreateCaptureSession proxy execute end, %{public}d", retCode);
     if (retCode == CAMERA_OK && session != nullptr) {
-        captureSession = CreateCaptureSessionImpl(mode, session);
+        sptr<CaptureSession> captureSession = CreateCaptureSessionImpl(mode, session);
         captureSession->SetMode(mode);
-    } else {
-        MEDIA_ERR_LOG("Failed to get capture session object from hcamera service!, %{public}d", retCode);
-        return nullptr;
+        return captureSession;
     }
-    return captureSession;
+    MEDIA_ERR_LOG("Failed to get capture session object from hcamera service!, %{public}d", retCode);
+    return nullptr;
 }
 
 int CameraManager::CreateCaptureSession(sptr<CaptureSession> *pCaptureSession)
@@ -1041,6 +1058,22 @@ void CameraManager::SetProfile(sptr<CameraDevice>& cameraObj)
     }
 }
 
+SceneMode CameraManager::GetFallbackConfigMode(SceneMode profileMode)
+{
+    MEDIA_INFO_LOG("CameraManager::GetFallbackConfigMode profileMode:%{public}d", profileMode);
+    if (photoProfiles_.empty() && previewProfiles_.empty() && vidProfiles_.empty()) {
+        switch (profileMode) {
+            case CAPTURE_MACRO:
+                return CAPTURE;
+            case VIDEO_MACRO:
+                return VIDEO;
+            default:
+                return profileMode;
+        }
+    }
+    return profileMode;
+}
+
 sptr<CameraInput> CameraManager::CreateCameraInput(sptr<CameraInfo> &camera)
 {
     CAMERA_SYNC_TRACE;
@@ -1133,8 +1166,8 @@ bool g_isCapabilitySupported(std::shared_ptr<OHOS::Camera::CameraMetadata> metad
     return isSupport;
 }
 
-void CameraManager::ParseBasicCapability(sptr<CameraOutputCapability> cameraOutputCapability,
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, const camera_metadata_item_t &item)
+void CameraManager::ParseBasicCapability(
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, const camera_metadata_item_t& item)
 {
     if (metadata == nullptr) {
         return;
@@ -1176,8 +1209,8 @@ void CameraManager::ParseBasicCapability(sptr<CameraOutputCapability> cameraOutp
     }
 }
 
-void CameraManager::ParseExtendCapability(sptr<CameraOutputCapability> cameraOutputCapability,
-    const int32_t modeName, const camera_metadata_item_t &item) __attribute__((no_sanitize("cfi")))
+void CameraManager::ParseExtendCapability(const int32_t modeName, const camera_metadata_item_t& item)
+    __attribute__((no_sanitize("cfi")))
 {
     ExtendInfo extendInfo = {};
     std::shared_ptr<CameraStreamInfoParse> modeStreamParse = std::make_shared<CameraStreamInfoParse>();
@@ -1191,6 +1224,22 @@ void CameraManager::ParseExtendCapability(sptr<CameraOutputCapability> cameraOut
             }
             break;
         }
+    }
+}
+
+void CameraManager::ParseCapability(sptr<CameraDevice>& camera, const int32_t modeName, camera_metadata_item_t& item,
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
+{
+    if (g_isCapabilitySupported(metadata, item, OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS)) {
+        std::vector<SceneMode> supportedModes = GetSupportedModes(camera);
+        int32_t mode = (supportedModes.empty() && isTemplateMode_.count(modeName)) ? SceneMode::NORMAL : modeName;
+        MEDIA_INFO_LOG(
+            "GetSupportedOutputCapability by device = %{public}s, mode = %{public}d", camera->GetID().c_str(), mode);
+        ParseExtendCapability(mode, item);
+    } else if (g_isCapabilitySupported(metadata, item, OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS)) {
+        ParseBasicCapability(metadata, item);
+    } else {
+        MEDIA_ERR_LOG("Failed get stream info");
     }
 }
 
@@ -1212,17 +1261,12 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     previewProfiles_.clear();
     vidProfiles_.clear();
 
-    if (g_isCapabilitySupported(metadata, item, OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS)) {
-        std::vector<SceneMode> supportedModes = GetSupportedModes(camera);
-        int32_t mode = (supportedModes.empty() && isTemplateMode_.count(modeName)) ? SceneMode::NORMAL : modeName;
-        MEDIA_INFO_LOG("GetSupportedOutputCapability by device = %{public}s, mode = %{public}d",
-                       camera->GetID().c_str(), mode);
-        ParseExtendCapability(cameraOutputCapability, mode, item);
-    } else if (g_isCapabilitySupported(metadata, item, OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS)) {
-        ParseBasicCapability(cameraOutputCapability, metadata, item);
-    } else {
-        MEDIA_ERR_LOG("Failed get stream info");
-        return nullptr;
+    ParseCapability(camera, modeName, item, metadata);
+
+    SceneMode profileMode = static_cast<SceneMode>(modeName);
+    auto fallbackMode = GetFallbackConfigMode(profileMode);
+    if (profileMode != fallbackMode) {
+        ParseCapability(camera, fallbackMode, item, metadata);
     }
 
     cameraOutputCapability->SetPhotoProfiles(photoProfiles_);

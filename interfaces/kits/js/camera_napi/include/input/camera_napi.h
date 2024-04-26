@@ -16,25 +16,22 @@
 #ifndef CAMERA_NAPI_H_
 #define CAMERA_NAPI_H_
 
+#include "camera_napi_utils.h"
 #include "capture_scene_const.h"
 #include "hilog/log.h"
-#include "camera_napi_utils.h"
-#include "output/camera_output_capability.h"
-#include "output/metadata_output_napi.h"
-
-#include "input/camera_manager.h"
-#include "output/capture_output.h"
-#include "session/capture_session.h"
-#include "input/capture_input.h"
-
 #include "input/camera_input_napi.h"
+#include "input/camera_manager.h"
 #include "input/camera_manager_napi.h"
+#include "input/capture_input.h"
 #include "mode/mode_manager_napi.h"
-#include "output/preview_output_napi.h"
+#include "output/camera_output_capability.h"
+#include "output/capture_output.h"
+#include "output/metadata_output_napi.h"
 #include "output/photo_output_napi.h"
+#include "output/preview_output_napi.h"
 #include "output/video_output_napi.h"
 #include "session/camera_session_napi.h"
-#include "output/metadata_output_napi.h"
+#include "session/capture_session.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -165,6 +162,8 @@ static const std::unordered_map<std::string, int32_t> mapSceneMode = {
     {"PROFESSIONAL_PHOTO", JS_PROFESSIONAL_PHOTO},
     {"PROFESSIONAL_VIDEO", JS_PROFESSIONAL_VIDEO},
     {"SLOW_MOTION", JS_SLOW_MOTION},
+    {"MACRO_PHOTO", 8},
+    {"MACRO_VIDEO", 9},
 };
 
 static const std::unordered_map<std::string, int32_t> mapFilterType = {

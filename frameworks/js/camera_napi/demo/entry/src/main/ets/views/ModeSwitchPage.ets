@@ -264,6 +264,31 @@ export struct ModeSwitchPage {
               })
               .visibility(this.deviceType === Constants.DEFAULT ? Visibility.Hidden : Visibility.Visible)
 
+              // 夜景
+              Column() {
+                Text('微距')
+                  .fontSize(14)
+                  .fontColor(Color.White)
+              }
+              .width(50)
+              .backgroundColor(this.modelBagCol === 'macro' ? $r('app.color.theme_color') : '')
+              .borderRadius(14)
+              .onClick(async () => {
+                this.modelBagCol = 'macro';
+                AppStorage.setOrCreate('isHiddenSlide', false);
+                CameraService.setCameraMode(8);
+                await CameraService.initCamera(this.surfaceId, this.cameraDeviceIndex);
+                let isSupported = CameraService.isMacroPhotoModeSupportedFn();
+                if (!isSupported) {
+                  (GlobalContext.get().getPromptAction() as PromptAction).showToast({
+                    message: '当前不支持超级微距模式，请切换其他模式',
+                    duration: 2000,
+                    bottom: '50%'
+                  })
+                }
+              })
+              .visibility(this.deviceType === Constants.DEFAULT ? Visibility.Hidden : Visibility.Visible)
+
               // 拍照
               Column() {
                 Text('拍照')

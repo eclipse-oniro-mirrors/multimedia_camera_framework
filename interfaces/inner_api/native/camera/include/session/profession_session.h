@@ -480,7 +480,7 @@ public:
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetMetadata() override;
 
-    bool CanAddOutput(sptr<CaptureOutput>& output, SceneMode modeName = SceneMode::PROFESSIONAL_VIDEO) override;
+    bool CanAddOutput(sptr<CaptureOutput>& output) override;
 protected:
     static const std::unordered_map<camera_meter_mode_t, MeteringMode> metaMeteringModeMap_;
     static const std::unordered_map<MeteringMode, camera_meter_mode_t> fwkMeteringModeMap_;

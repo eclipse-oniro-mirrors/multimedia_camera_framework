@@ -19,6 +19,7 @@
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "session/camera_session_napi.h"
+#include "session/profession_session.h"
 
 namespace OHOS {
 namespace CameraStandard {
