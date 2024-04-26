@@ -3122,6 +3122,20 @@ void CameraSessionNapi::UnregisterLuminationInfoCallbackListener(
         "this type callback can not be unregistered in current session!");
 }
 
+void CameraSessionNapi::RegisterSlowMotionStateCb(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be unregistered in current session!");
+}
+
+void CameraSessionNapi::UnregisterSlowMotionStateCb(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be unregistered in current session!");
+}
+
 const CameraSessionNapi::EmitterFunctions& CameraSessionNapi::GetEmitterFunctions()
 {
     static const EmitterFunctions funMap = {
@@ -3146,6 +3160,9 @@ const CameraSessionNapi::EmitterFunctions& CameraSessionNapi::GetEmitterFunction
         { "smoothZoomInfoAvailable", {
             &CameraSessionNapi::RegisterSmoothZoomCallbackListener,
             &CameraSessionNapi::UnregisterSmoothZoomCallbackListener } },
+        { "slowMotionStateChange", {
+            &CameraSessionNapi::RegisterSlowMotionStateCb,
+            &CameraSessionNapi::UnregisterSlowMotionStateCb } },
         { "exposureInfo", {
             &CameraSessionNapi::RegisterExposureInfoCallbackListener,
             &CameraSessionNapi::UnregisterExposureInfoCallbackListener} },

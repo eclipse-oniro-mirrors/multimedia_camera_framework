@@ -237,6 +237,29 @@ sptr<CaptureSession> CameraManager::CreateCaptureSession()
     return captureSession;
 }
 
+sptr<CaptureSession> CameraManager::CreateCaptureSessionImpl(SceneMode mode, sptr<ICaptureSession> session)
+{
+    switch (mode) {
+        case SceneMode::VIDEO:
+            return new(std::nothrow) VideoSession(session);
+        case SceneMode::CAPTURE:
+            return new(std::nothrow) PhotoSession(session);
+        case SceneMode::PORTRAIT:
+            return new(std::nothrow) PortraitSession(session);
+        case SceneMode::PROFESSIONAL_VIDEO:
+        case SceneMode::PROFESSIONAL_PHOTO:
+            return new(std::nothrow) ProfessionSession(session, cameraObjList);
+        case SceneMode::SCAN:
+            return new(std::nothrow) ScanSession(session);
+        case SceneMode::NIGHT:
+            return new(std::nothrow) NightSession(session);
+        case SceneMode::SLOW_MOTION:
+            return new(std::nothrow) SlowMotionSession(session);
+        default:
+            return new(std::nothrow) CaptureSession(session);
+    }
+}
+
 sptr<CaptureSession> CameraManager::CreateCaptureSession(SceneMode mode)
 {
     CAMERA_SYNC_TRACE;
@@ -258,35 +281,12 @@ sptr<CaptureSession> CameraManager::CreateCaptureSession(SceneMode mode)
     retCode = serviceProxy_->CreateCaptureSession(session, opMode);
     MEDIA_INFO_LOG("CameraManager::CreateCaptureSession proxy execute end, %{public}d", retCode);
     if (retCode == CAMERA_OK && session != nullptr) {
-        switch (mode) {
-            case SceneMode::VIDEO:
-                captureSession = new(std::nothrow) VideoSession(session);
-                break;
-            case SceneMode::CAPTURE:
-                captureSession = new(std::nothrow) PhotoSession(session);
-                break;
-            case SceneMode::PORTRAIT:
-                captureSession = new(std::nothrow) PortraitSession(session);
-                break;
-            case SceneMode::PROFESSIONAL_VIDEO:
-            case SceneMode::PROFESSIONAL_PHOTO:
-                captureSession = new(std::nothrow) ProfessionSession(session, cameraObjList);
-                break;
-            case SceneMode::SCAN:
-                captureSession = new(std::nothrow) ScanSession(session);
-                break;
-            case SceneMode::NIGHT:
-                captureSession = new(std::nothrow) NightSession(session);
-                break;
-            default:
-                captureSession = new(std::nothrow) CaptureSession(session);
-                break;
-        }
+        captureSession = CreateCaptureSessionImpl(mode, session);
+        captureSession->SetMode(mode);
     } else {
         MEDIA_ERR_LOG("Failed to get capture session object from hcamera service!, %{public}d", retCode);
         return nullptr;
     }
-    captureSession->SetMode(mode);
     return captureSession;
 }
 

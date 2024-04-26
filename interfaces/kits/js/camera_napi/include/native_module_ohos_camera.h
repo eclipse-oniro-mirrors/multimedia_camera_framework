@@ -30,6 +30,7 @@
 #include "mode/photo_session_for_sys_napi.h"
 #include "mode/video_session_napi.h"
 #include "mode/video_session_for_sys_napi.h"
+#include "mode/slow_motion_session_napi.h"
 #include "output/metadata_object_napi.h"
 #include "output/photo_output_napi.h"
 #include "output/preview_output_napi.h"

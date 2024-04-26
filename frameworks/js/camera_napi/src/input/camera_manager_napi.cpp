@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -32,6 +32,7 @@
 #include "mode/photo_session_for_sys_napi.h"
 #include "mode/portrait_session_napi.h"
 #include "mode/profession_session_napi.h"
+#include "mode/slow_motion_session_napi.h"
 #include "mode/video_session_napi.h"
 #include "mode/video_session_for_sys_napi.h"
 namespace OHOS {
@@ -267,6 +268,16 @@ void TorchListenerNapi::OnTorchStatusChange(const TorchStatusInfo &torchStatusIn
     MEDIA_DEBUG_LOG("OnTorchStatusChange is called");
     OnTorchStatusChangeCallbackAsync(torchStatusInfo);
 }
+
+const std::unordered_map<JsSceneMode, SceneMode> g_jsToFwMode_ = {
+    {JsSceneMode::JS_CAPTURE, SceneMode::CAPTURE},
+    {JsSceneMode::JS_VIDEO, SceneMode::VIDEO},
+    {JsSceneMode::JS_PORTRAIT, SceneMode::PORTRAIT},
+    {JsSceneMode::JS_NIGHT, SceneMode::NIGHT},
+    {JsSceneMode::JS_SLOW_MOTION, SceneMode::SLOW_MOTION},
+    {JsSceneMode::JS_PROFESSIONAL_PHOTO, SceneMode::PROFESSIONAL_PHOTO},
+    {JsSceneMode::JS_PROFESSIONAL_VIDEO, SceneMode::PROFESSIONAL_VIDEO}
+};
 
 CameraManagerNapi::CameraManagerNapi() : env_(nullptr), wrapper_(nullptr)
 {
@@ -515,6 +526,9 @@ napi_value CameraManagerNapi::CreateSessionInstance(napi_env env, napi_callback_
             break;
         case JsSceneMode::JS_NIGHT:
             result = NightSessionNapi::CreateCameraSession(env);
+            break;
+        case JS_SLOW_MOTION:
+            result = SlowMotionSessionNapi::CreateCameraSession(env);
             break;
         case JsSceneMode::JS_PROFESSIONAL_PHOTO:
             result = ProfessionSessionNapi::CreateCameraSession(env, SceneMode::PROFESSIONAL_PHOTO);
@@ -996,30 +1010,11 @@ napi_value CameraManagerNapi::GetSupportedOutputCapability(napi_env env, napi_ca
         int32_t jsSceneMode;
         napi_get_value_int32(env, argv[PARAM1], &jsSceneMode);
         MEDIA_INFO_LOG("CameraManagerNapi::GetSupportedOutputCapability mode = %{public}d", jsSceneMode);
-        switch (jsSceneMode) {
-            case JsSceneMode::JS_CAPTURE:
-                result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, SceneMode::CAPTURE);
-                break;
-            case JsSceneMode::JS_VIDEO:
-                result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, SceneMode::VIDEO);
-                break;
-            case JsSceneMode::JS_PORTRAIT:
-                result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, SceneMode::PORTRAIT);
-                break;
-            case JsSceneMode::JS_NIGHT:
-                result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, SceneMode::NIGHT);
-                break;
-            case JsSceneMode::JS_PROFESSIONAL_PHOTO:
-                result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo,
-                    SceneMode::PROFESSIONAL_PHOTO);
-                break;
-            case JsSceneMode::JS_PROFESSIONAL_VIDEO:
-                result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo,
-                    SceneMode::PROFESSIONAL_VIDEO);
-                break;
-            default:
-                MEDIA_ERR_LOG("CreateCameraSessionInstance mode = %{public}d not supported", jsSceneMode);
-                break;
+        auto itr = g_jsToFwMode_.find(static_cast<JsSceneMode>(jsSceneMode));
+        if (itr != g_jsToFwMode_.end()) {
+            result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, itr->second);
+        } else {
+            MEDIA_ERR_LOG("CreateCameraSessionInstance mode = %{public}d not supported", jsSceneMode);
         }
     }
     return result;
