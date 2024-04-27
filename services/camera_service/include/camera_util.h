@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_UTIL_H
 #define OHOS_CAMERA_UTIL_H
 
+#include <cstdint>
 #include <iterator>
 #include <limits.h>
 #include <malloc.h>
@@ -103,8 +104,6 @@ inline void DisableJeMalloc()
 #endif
 }
 
-int32_t SetOpMode(int32_t opMode);
-
 int32_t HdiToServiceError(OHOS::HDI::Camera::V1_0::CamRetCode ret);
 
 int32_t HdiToServiceErrorV1_2(HDI::Camera::V1_2::CamRetCode ret);
@@ -115,8 +114,7 @@ bool IsValidTokenId(uint32_t tokenId);
 
 int32_t GetVersionId(uint32_t major, uint32_t minor);
 
-bool IsValidMode(
-    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility);
+bool IsValidMode(int32_t opMode, std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility);
 
 bool IsValidSize(
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t format, int32_t width, int32_t height);

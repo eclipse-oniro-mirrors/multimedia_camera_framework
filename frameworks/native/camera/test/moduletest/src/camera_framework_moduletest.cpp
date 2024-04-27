@@ -26,7 +26,6 @@
 #include "camera_util.h"
 #include "capture_scene_const.h"
 #include "capture_session.h"
-#include "scan_session.h"
 #include "hap_token_info.h"
 #include "hcamera_device.h"
 #include "hcamera_device_callback_proxy.h"
@@ -38,7 +37,10 @@
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
 #include "nativetoken_kit.h"
+#include "night_session.h"
 #include "parameter.h"
+#include "scan_session.h"
+#include "session/profession_session.h"
 #include "surface.h"
 #include "system_ability_definition.h"
 #include "test_common.h"
@@ -9578,6 +9580,130 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_070, TestSize.Le
 
     sketchRatio = previewOutput->GetSketchRatio();
     EXPECT_GT(sketchRatio, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test super macro photo session.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test super macro photo session.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_071, TestSize.Level0)
+{
+    auto previewProfile = GetSketchPreviewProfile();
+    if (previewProfile == nullptr) {
+        EXPECT_EQ(previewProfile.get(), nullptr);
+        return;
+    }
+    auto output = CreatePreviewOutput(*previewProfile);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
+    ASSERT_NE(output, nullptr);
+
+    session_ = manager_->CreateCaptureSession(SceneMode::CAPTURE_MACRO);
+    int32_t intResult = session_->BeginConfig();
+
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(output);
+    EXPECT_EQ(intResult, 0);
+
+    bool isSketchSupported = previewOutput->IsSketchSupported();
+    EXPECT_TRUE(isSketchSupported);
+    if (!isSketchSupported) {
+        return;
+    }
+
+    previewOutput->EnableSketch(true);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    float sketchRatio = previewOutput->GetSketchRatio();
+    EXPECT_GT(sketchRatio, 0);
+
+    intResult = previewOutput->AttachSketchSurface(CreateSketchSurface(previewProfile->GetCameraFormat()));
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test super macro video session.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test super macro video session.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_072, TestSize.Level0)
+{
+    auto previewProfile = GetSketchPreviewProfile();
+    if (previewProfile == nullptr) {
+        EXPECT_EQ(previewProfile.get(), nullptr);
+        return;
+    }
+    auto output = CreatePreviewOutput(*previewProfile);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
+    ASSERT_NE(output, nullptr);
+
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+
+    session_ = manager_->CreateCaptureSession(SceneMode::VIDEO_MACRO);
+    int32_t intResult = session_->BeginConfig();
+
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(output);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(videoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    bool isSketchSupported = previewOutput->IsSketchSupported();
+    EXPECT_TRUE(isSketchSupported);
+    if (!isSketchSupported) {
+        return;
+    }
+
+    previewOutput->EnableSketch(true);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    float sketchRatio = previewOutput->GetSketchRatio();
+    EXPECT_GT(sketchRatio, 0);
+
+    intResult = previewOutput->AttachSketchSurface(CreateSketchSurface(previewProfile->GetCameraFormat()));
+    EXPECT_EQ(intResult, 0);
 
     sleep(WAIT_TIME_AFTER_START);
 

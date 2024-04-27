@@ -559,7 +559,7 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
     return ServiceToCameraError(errCode);
 }
 
-bool CaptureSession::CanAddOutput(sptr<CaptureOutput>& output, SceneMode modeName)
+bool CaptureSession::CanAddOutput(sptr<CaptureOutput>& output)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::CanAddOutput");
@@ -571,6 +571,7 @@ bool CaptureSession::CanAddOutput(sptr<CaptureOutput>& output, SceneMode modeNam
         MEDIA_ERR_LOG("CaptureSession::CanAddOutput Failed inputDevice_ is nullptr");
         return false;
     }
+    auto modeName = GetMode();
     auto validateOutputFunc = [modeName](auto& vaildateProfile, auto& profiles, std::string&& outputType) -> bool {
         bool result = std::any_of(profiles.begin(), profiles.end(),
             [&vaildateProfile](const auto& profile) { return vaildateProfile == profile; });
@@ -604,6 +605,8 @@ bool CaptureSession::CanAddOutput(sptr<CaptureOutput>& output, SceneMode modeNam
         MEDIA_INFO_LOG("CaptureSession::CanAddOutput MetadataOutput");
         return true;
     }
+    MEDIA_ERR_LOG("CaptureSession::CanAddOutput check fail,modeName:%{public}d, outputType:%{public}d", modeName,
+        output->GetOutputType());
     return false;
 }
 

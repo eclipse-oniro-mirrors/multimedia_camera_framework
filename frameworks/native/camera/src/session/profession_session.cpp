@@ -1190,7 +1190,7 @@ int32_t ProfessionSession::SetColorEffect(ColorEffect colorEffect)
     return CameraErrorCode::SUCCESS;
 }
 
-bool ProfessionSession::CanAddOutput(sptr<CaptureOutput> &output, SceneMode modeName)
+bool ProfessionSession::CanAddOutput(sptr<CaptureOutput> &output)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into ProfessionSession::CanAddOutput");

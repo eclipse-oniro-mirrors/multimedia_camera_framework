@@ -275,9 +275,7 @@ float PreviewOutput::GetSketchRatio()
     SketchWrapper::UpdateSketchStaticInfo(GetDeviceMetadata());
     float ratio = SketchWrapper::GetSketchEnableRatio(currentMode);
     if (ratio <= 0) {
-        auto modeFeatures = currentMode.GetFeatures();
-        MEDIA_WARNING_LOG("PreviewOutput::GetSketchRatio mode:%{public}d ,features:%{public}s",
-            currentMode.GetSceneMode(), Container2String(modeFeatures.begin(), modeFeatures.end()).c_str());
+        MEDIA_WARNING_LOG("PreviewOutput::GetSketchRatio mode:%{public}s", currentMode.Dump().c_str());
     }
     return ratio;
 }

@@ -154,7 +154,7 @@ void PortraitSession::SetPortraitEffect(PortraitEffect portraitEffect)
     }
     return;
 }
-bool PortraitSession::CanAddOutput(sptr<CaptureOutput> &output, SceneMode modeName)
+bool PortraitSession::CanAddOutput(sptr<CaptureOutput> &output)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into PortraitSession::CanAddOutput");
@@ -162,8 +162,7 @@ bool PortraitSession::CanAddOutput(sptr<CaptureOutput> &output, SceneMode modeNa
         MEDIA_ERR_LOG("PortraitSession::CanAddOutput operation is Not allowed!");
         return false;
     }
-    return output->GetOutputType() != CAPTURE_OUTPUT_TYPE_VIDEO &&
-           CaptureSession::CanAddOutput(output, SceneMode::PORTRAIT);
+    return output->GetOutputType() != CAPTURE_OUTPUT_TYPE_VIDEO && CaptureSession::CanAddOutput(output);
 }
 
 std::vector<float> PortraitSession::GetSupportedVirtualApertures()

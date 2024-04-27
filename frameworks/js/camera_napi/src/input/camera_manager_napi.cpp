@@ -21,23 +21,28 @@
 #include "camera_log.h"
 #include "camera_napi_const.h"
 #include "camera_napi_event_emitter.h"
+#include "camera_napi_param_parser.h"
 #include "camera_napi_security_utils.h"
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
-#include "camera_napi_security_utils.h"
 #include "input/camera_napi.h"
 #include "input/camera_pre_launch_config_napi.h"
+#include "js_native_api_types.h"
+#include "mode/macro_photo_session_napi.h"
+#include "mode/macro_video_session_napi.h"
 #include "mode/night_session_napi.h"
-#include "mode/photo_session_napi.h"
 #include "mode/photo_session_for_sys_napi.h"
+#include "mode/photo_session_napi.h"
 #include "mode/portrait_session_napi.h"
 #include "mode/profession_session_napi.h"
 #include "mode/slow_motion_session_napi.h"
-#include "mode/video_session_napi.h"
 #include "mode/video_session_for_sys_napi.h"
+#include "mode/video_session_napi.h"
+
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
+using namespace CameraNapiSecurity;
 thread_local napi_ref CameraManagerNapi::sConstructor_ = nullptr;
 thread_local uint32_t CameraManagerNapi::cameraManagerTaskId = CAMERA_MANAGER_TASKID;
 
@@ -275,6 +280,8 @@ const std::unordered_map<JsSceneMode, SceneMode> g_jsToFwMode_ = {
     {JsSceneMode::JS_PORTRAIT, SceneMode::PORTRAIT},
     {JsSceneMode::JS_NIGHT, SceneMode::NIGHT},
     {JsSceneMode::JS_SLOW_MOTION, SceneMode::SLOW_MOTION},
+    {JsSceneMode::JS_CAPTURE_MARCO, SceneMode::CAPTURE_MACRO},
+    {JsSceneMode::JS_VIDEO_MARCO, SceneMode::VIDEO_MACRO},
     {JsSceneMode::JS_PROFESSIONAL_PHOTO, SceneMode::PROFESSIONAL_PHOTO},
     {JsSceneMode::JS_PROFESSIONAL_VIDEO, SceneMode::PROFESSIONAL_VIDEO}
 };
@@ -492,33 +499,21 @@ napi_value CameraManagerNapi::CreateCameraSessionInstance(napi_env env, napi_cal
 napi_value CameraManagerNapi::CreateSessionInstance(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CreateSessionInstance is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
-
     CameraManagerNapi* cameraManagerNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
-    if (status != napi_ok || cameraManagerNapi == nullptr) {
-        MEDIA_ERR_LOG("napi_unwrap failure!");
-        return nullptr;
+    int32_t jsModeName = -1;
+    CameraNapiParamParser jsParamParser(env, info, cameraManagerNapi, jsModeName);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "Create session invalid argument!")) {
+        MEDIA_ERR_LOG("CameraManagerNapi::CreateSessionInstance invalid argument: %{public}d", jsModeName);
     }
-
-    int32_t jsModeName;
-    napi_get_value_int32(env, argv[PARAM0], &jsModeName);
     MEDIA_INFO_LOG("CameraManagerNapi::CreateSessionInstance mode = %{public}d", jsModeName);
+    napi_value result = nullptr;
     switch (jsModeName) {
         case JsSceneMode::JS_CAPTURE:
-            result = CameraNapiSecurity::CheckSystemApp(env, false) ?
+            result = CheckSystemApp(env, false) ?
                 PhotoSessionForSysNapi::CreateCameraSession(env) : PhotoSessionNapi::CreateCameraSession(env);
             break;
         case JsSceneMode::JS_VIDEO:
-            result = CameraNapiSecurity::CheckSystemApp(env, false) ?
+            result = CheckSystemApp(env, false) ?
                 VideoSessionForSysNapi::CreateCameraSession(env) : VideoSessionNapi::CreateCameraSession(env);
             break;
         case JsSceneMode::JS_PORTRAIT:
@@ -527,7 +522,7 @@ napi_value CameraManagerNapi::CreateSessionInstance(napi_env env, napi_callback_
         case JsSceneMode::JS_NIGHT:
             result = NightSessionNapi::CreateCameraSession(env);
             break;
-        case JS_SLOW_MOTION:
+        case JsSceneMode::JS_SLOW_MOTION:
             result = SlowMotionSessionNapi::CreateCameraSession(env);
             break;
         case JsSceneMode::JS_PROFESSIONAL_PHOTO:
@@ -536,7 +531,15 @@ napi_value CameraManagerNapi::CreateSessionInstance(napi_env env, napi_callback_
         case JsSceneMode::JS_PROFESSIONAL_VIDEO:
             result = ProfessionSessionNapi::CreateCameraSession(env, SceneMode::PROFESSIONAL_VIDEO);
             break;
+        case JsSceneMode::JS_CAPTURE_MARCO:
+            result = CheckSystemApp(env, true) ? MacroPhotoSessionNapi::CreateCameraSession(env) : nullptr;
+            break;
+        case JsSceneMode::JS_VIDEO_MARCO: {
+            result = CheckSystemApp(env, true) ? MacroVideoSessionNapi::CreateCameraSession(env) : nullptr;
+            break;
+        }
         default:
+            result = CameraNapiUtils::GetUndefinedValue(env);
             MEDIA_ERR_LOG("CameraManagerNapi::CreateSessionInstance mode = %{public}d not supported", jsModeName);
             break;
     }

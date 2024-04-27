@@ -109,9 +109,6 @@ int32_t HStreamCommon::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> 
         MEDIA_ERR_LOG("HStreamCommon::LinkInput streamOperator is null");
         return CAMERA_INVALID_ARG;
     }
-    if (!IsValidMode(cameraAbility)) {
-        return CAMERA_INVALID_SESSION_CFG;
-    }
     if (!IsValidSize(cameraAbility, format_, width_, height_)) {
         return CAMERA_INVALID_SESSION_CFG;
     }

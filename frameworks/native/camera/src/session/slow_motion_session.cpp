@@ -49,10 +49,10 @@ SlowMotionSession::~SlowMotionSession()
 {
 }
 
-bool SlowMotionSession::CanAddOutput(sptr<CaptureOutput> &output, SceneMode modeName)
+bool SlowMotionSession::CanAddOutput(sptr<CaptureOutput> &output)
 {
     MEDIA_DEBUG_LOG("Enter Into CanAddOutput");
-    return CaptureSession::CanAddOutput(output, SceneMode::SLOW_MOTION);
+    return CaptureSession::CanAddOutput(output);
 }
 
 bool SlowMotionSession::IsMotionDetectionSupported()

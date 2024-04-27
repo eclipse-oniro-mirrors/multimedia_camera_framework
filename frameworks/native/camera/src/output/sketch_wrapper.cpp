@@ -53,9 +53,12 @@ int32_t SketchWrapper::Init(
     }
     UpdateSketchStaticInfo(deviceMetadata);
     sketchEnableRatio_ = GetSketchEnableRatio(sceneFeaturesMode);
-    IStreamRepeat* repeatStream = static_cast<IStreamRepeat*>(hostStream.GetRefPtr());
-    return repeatStream->ForkSketchStreamRepeat(
-        sketchSize_.width, sketchSize_.height, sketchStream_, sketchEnableRatio_);
+        SceneFeaturesMode dumpSceneFeaturesMode = sceneFeaturesMode;
+        MEDIA_DEBUG_LOG("SketchWrapper::Init sceneFeaturesMode:%{public}s, sketchEnableRatio_:%{public}f",
+            dumpSceneFeaturesMode.Dump().c_str(), sketchEnableRatio_);
+        IStreamRepeat* repeatStream = static_cast<IStreamRepeat*>(hostStream.GetRefPtr());
+        return repeatStream->ForkSketchStreamRepeat(
+            sketchSize_.width, sketchSize_.height, sketchStream_, sketchEnableRatio_);
 }
 
 int32_t SketchWrapper::AttachSketchSurface(sptr<Surface> sketchSurface)
@@ -195,15 +198,7 @@ SceneFeaturesMode SketchWrapper::GetSceneFeaturesModeFromModeData(float modeFloa
 {
     SceneFeaturesMode currentSceneFeaturesMode {};
     auto sceneMode = static_cast<SceneMode>(round(modeFloatData));
-    if (sceneMode == CAPTURE_MACRO) {
-        currentSceneFeaturesMode.SetSceneMode(CAPTURE);
-        currentSceneFeaturesMode.SwitchFeature(FEATURE_MACRO, true);
-    } else if (sceneMode == VIDEO_MACRO) {
-        currentSceneFeaturesMode.SetSceneMode(VIDEO);
-        currentSceneFeaturesMode.SwitchFeature(FEATURE_MACRO, true);
-    } else {
-        currentSceneFeaturesMode.SetSceneMode(sceneMode);
-    }
+    currentSceneFeaturesMode.SetSceneMode(sceneMode);
     return currentSceneFeaturesMode;
 }
 
@@ -233,25 +228,43 @@ void SketchWrapper::UpdateSketchEnableRatio(std::shared_ptr<Camera::CameraMetada
         MEDIA_DEBUG_LOG("SketchWrapper::UpdateSketchEnableRatio get sketch enable ratio "
                         "%{public}f:%{public}f",
             key, value);
-        {
-            std::lock_guard<std::mutex> lock(g_sketchEnableRatioMutex_);
-            g_sketchEnableRatioMap_[GetSceneFeaturesModeFromModeData(key)] = value;
-        }
+        auto sceneFeaturesMode = GetSceneFeaturesModeFromModeData(key);
+        InsertSketchEnableRatioMapValue(sceneFeaturesMode, value);
     }
 }
 
 void SketchWrapper::InsertSketchReferenceFovRatioMapValue(
     SceneFeaturesMode& sceneFeaturesMode, SketchReferenceFovRange& sketchReferenceFovRange)
 {
-    {
-        std::lock_guard<std::mutex> lock(g_sketchReferenceFovRatioMutex_);
-        auto it = g_sketchReferenceFovRatioMap_.find(sceneFeaturesMode);
-        std::vector<SketchReferenceFovRange> rangeFov;
-        if (it != g_sketchReferenceFovRatioMap_.end()) {
-            rangeFov = std::move(it->second);
-        }
-        rangeFov.emplace_back(sketchReferenceFovRange);
-        g_sketchReferenceFovRatioMap_[sceneFeaturesMode] = rangeFov;
+    std::lock_guard<std::mutex> lock(g_sketchReferenceFovRatioMutex_);
+    auto it = g_sketchReferenceFovRatioMap_.find(sceneFeaturesMode);
+    std::vector<SketchReferenceFovRange> rangeFov;
+    if (it != g_sketchReferenceFovRatioMap_.end()) {
+        rangeFov = std::move(it->second);
+    }
+    rangeFov.emplace_back(sketchReferenceFovRange);
+    g_sketchReferenceFovRatioMap_[sceneFeaturesMode] = rangeFov;
+    if (sceneFeaturesMode.GetSceneMode() == CAPTURE_MACRO) {
+        g_sketchReferenceFovRatioMap_[{ CAPTURE, { FEATURE_MACRO } }] = rangeFov;
+        g_sketchReferenceFovRatioMap_[{ CAPTURE_MACRO, { FEATURE_MACRO } }] = rangeFov;
+    } else if (sceneFeaturesMode.GetSceneMode() == VIDEO_MACRO) {
+        g_sketchReferenceFovRatioMap_[{ VIDEO, { FEATURE_MACRO } }] = rangeFov;
+        g_sketchReferenceFovRatioMap_[{ VIDEO_MACRO, { FEATURE_MACRO } }] = rangeFov;
+    }
+}
+
+void SketchWrapper::InsertSketchEnableRatioMapValue(SceneFeaturesMode& sceneFeaturesMode, float ratioValue)
+{
+    MEDIA_DEBUG_LOG("SketchWrapper::InsertSketchEnableRatioMapValue %{public}s : %{public}f",
+        sceneFeaturesMode.Dump().c_str(), ratioValue);
+    std::lock_guard<std::mutex> lock(g_sketchEnableRatioMutex_);
+    g_sketchEnableRatioMap_[sceneFeaturesMode] = ratioValue;
+    if (sceneFeaturesMode.GetSceneMode() == CAPTURE_MACRO) {
+        g_sketchEnableRatioMap_[{ CAPTURE, { FEATURE_MACRO } }] = ratioValue;
+        g_sketchEnableRatioMap_[{ CAPTURE_MACRO, { FEATURE_MACRO } }] = ratioValue;
+    } else if (sceneFeaturesMode.GetSceneMode() == VIDEO_MACRO) {
+        g_sketchEnableRatioMap_[{ VIDEO, { FEATURE_MACRO } }] = ratioValue;
+        g_sketchEnableRatioMap_[{ VIDEO_MACRO, { FEATURE_MACRO } }] = ratioValue;
     }
 }
 
@@ -363,10 +376,7 @@ void SketchWrapper::UpdateSketchConfigFromMoonCaptureBoostConfig(
                         "ratio:mode->%{public}d %{public}f-%{public}f value->%{public}f",
             currentMode, fovRange.zoomMin, fovRange.zoomMax, fovRange.referenceValue);
         if (fovRange.zoomMax - currentMaxRatio >= -std::numeric_limits<float>::epsilon()) {
-            {
-                std::lock_guard<std::mutex> lock(g_sketchEnableRatioMutex_);
-                g_sketchEnableRatioMap_[currentSceneFeaturesMode] = currentMinRatio;
-            }
+            InsertSketchEnableRatioMapValue(currentSceneFeaturesMode, currentMinRatio);
             currentMode = INVALID_MODE;
             currentMinRatio = INVALID_ZOOM_RATIO;
             currentMaxRatio = INVALID_ZOOM_RATIO;

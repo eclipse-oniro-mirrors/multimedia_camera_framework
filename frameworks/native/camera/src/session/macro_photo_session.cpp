@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,28 +12,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
-#include "session/photo_session.h"
-#include "input/camera_input.h"
-#include "input/camera_manager.h"
-#include "output/camera_output_capability.h"
+
+#include "session/macro_photo_session.h"
+
 #include "camera_log.h"
-#include "camera_error_code.h"
-#include "camera_util.h"
- 
+
 namespace OHOS {
 namespace CameraStandard {
-PhotoSession::~PhotoSession()
-{
-}
+MacroPhotoSession::MacroPhotoSession(sptr<ICaptureSession>& captureSession) : CaptureSession(captureSession) {}
 
-bool PhotoSession::CanAddOutput(sptr<CaptureOutput>& output)
+bool MacroPhotoSession::CanAddOutput(sptr<CaptureOutput>& output)
 {
-    MEDIA_DEBUG_LOG("Enter Into PhotoSession::CanAddOutput");
-    if (output == nullptr) {
+    MEDIA_DEBUG_LOG("Enter Into MacroPhotoSession::CanAddOutput");
+    if (!IsSessionConfiged() || output == nullptr) {
+        MEDIA_ERR_LOG("MacroPhotoSession::CanAddOutput operation is Not allowed!");
         return false;
     }
     return output->GetOutputType() != CAPTURE_OUTPUT_TYPE_VIDEO && CaptureSession::CanAddOutput(output);
+}
+
+int32_t MacroPhotoSession::CommitConfig()
+{
+    int32_t ret = CaptureSession::CommitConfig();
+    if (ret != CameraErrorCode::SUCCESS) {
+        return ret;
+    }
+    LockForControl();
+    ret = EnableMacro(true);
+    UnlockForControl();
+    return ret;
 }
 } // namespace CameraStandard
 } // namespace OHOS

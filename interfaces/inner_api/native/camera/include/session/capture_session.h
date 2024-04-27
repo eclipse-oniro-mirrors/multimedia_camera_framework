@@ -275,7 +275,7 @@ public:
     /**
      * @brief Commit the capture session config.
      */
-    int32_t CommitConfig();
+    virtual int32_t CommitConfig();
 
     /**
      * @brief Determine if the given Input can be added to session.
@@ -296,7 +296,7 @@ public:
      *
      * @param CaptureOutput to be added to session.
      */
-    virtual bool CanAddOutput(sptr<CaptureOutput>& output, SceneMode modeName = SceneMode::NORMAL);
+    virtual bool CanAddOutput(sptr<CaptureOutput>& output);
 
     /**
      * @brief Add CaptureOutput for the capture session.

@@ -139,7 +139,7 @@ void NightSession::NightSessionMetadataResultProcessor::ProcessCallbacks(
     session->ProcessAutoFocusUpdates(result);
 }
 
-bool NightSession::CanAddOutput(sptr<CaptureOutput> &output, SceneMode modeName)
+bool NightSession::CanAddOutput(sptr<CaptureOutput>& output)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into NightSession::CanAddOutput");
@@ -147,8 +147,7 @@ bool NightSession::CanAddOutput(sptr<CaptureOutput> &output, SceneMode modeName)
         MEDIA_ERR_LOG("NightSession::CanAddOutput operation is Not allowed!");
         return false;
     }
-    return output->GetOutputType() != CAPTURE_OUTPUT_TYPE_VIDEO &&
-           CaptureSession::CanAddOutput(output, SceneMode::NIGHT);
+    return output->GetOutputType() != CAPTURE_OUTPUT_TYPE_VIDEO && CaptureSession::CanAddOutput(output);
 }
 } // CameraStandard
 } // OHOS

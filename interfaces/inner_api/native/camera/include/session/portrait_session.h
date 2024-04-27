@@ -68,7 +68,7 @@ public:
      *
      * @param CaptureOutput to be added to session.
      */
-    bool CanAddOutput(sptr<CaptureOutput>& output, SceneMode modeName = SceneMode::PORTRAIT) override;
+    bool CanAddOutput(sptr<CaptureOutput>& output) override;
 
     /**
      * @brief Get the supported virtual apertures.
