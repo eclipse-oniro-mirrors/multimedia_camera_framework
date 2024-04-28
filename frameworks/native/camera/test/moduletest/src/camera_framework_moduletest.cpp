@@ -587,6 +587,89 @@ void CameraFrameworkModuleTest::ConfigScanSession(sptr<CaptureOutput> &previewOu
     EXPECT_EQ(intResult, 0);
 }
 
+void CameraFrameworkModuleTest::ConfigHighResSession(sptr<CaptureOutput> &previewOutput,
+                                                     sptr<CaptureOutput> &photoOutput)
+{
+    if (session_) {
+        MEDIA_INFO_LOG("old session exist, need release");
+        session_->Release();
+        input_->Close();
+    }
+
+    cameras_ = manager_->GetSupportedCameras();
+    ASSERT_TRUE(cameras_.size() != 0);
+
+    std::cout<<std::endl;
+
+    sptr<CameraDevice> device;
+    for (auto deviceEach : cameras_) {
+        if (deviceEach->GetPosition() == 1 && deviceEach->GetCameraType() == CameraType::CAMERA_TYPE_WIDE_ANGLE) {
+            device = deviceEach;
+            break;
+        }
+    }
+    sptr<CaptureInput> input = manager_->CreateCameraInput(device);
+    ASSERT_NE(input, nullptr);
+
+    int32_t intResult = input->Open();
+    EXPECT_EQ(intResult, 0);
+
+    highResSession_ = manager_ -> CreateCaptureSession(SceneMode::HIGH_RES_PHOTO);
+    ASSERT_NE(highResSession_, nullptr);
+
+    intResult = highResSession_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = highResSession_->AddInput(input);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CameraOutputCapability> capability =
+        manager_->GetSupportedOutputCapability(device, SceneMode::HIGH_RES_PHOTO);
+
+    CreateHighResPhotoOutput(previewOutput, photoOutput,
+                             capability->previewProfiles_[0], capability->photoProfiles_[0]);
+    ASSERT_NE(previewOutput, nullptr);
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = highResSession_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+    
+    intResult = highResSession_->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = highResSession_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    std::vector<float> zoomRatioRange = highResSession_->GetZoomRatioRange();
+    ASSERT_NE(zoomRatioRange.size(), 0);
+}
+
+void CameraFrameworkModuleTest::CreateHighResPhotoOutput(sptr<CaptureOutput> &previewOutput,
+                                                         sptr<CaptureOutput> &photoOutput,
+                                                         Profile previewProfile,
+                                                         Profile photoProfile)
+{
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, g_previewFd, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    Size previewSize;
+    previewSize.width = previewProfile.GetSize().width;
+    previewSize.height = previewProfile.GetSize().height;
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfile.GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewSize.width, previewSize.height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> consumerInPreview = Surface::CreateSurfaceAsProducer(bp);
+    previewOutput = manager_->CreatePreviewOutput(previewProfile, consumerInPreview);
+
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    Size photoSize;
+    photoSize.width = photoProfile.GetSize().width;
+    photoSize.height = photoProfile.GetSize().height;
+    sptr<IBufferProducer> surfaceProducerOfPhoto = photoSurface->GetProducer();
+    photoOutput = manager_->CreatePhotoOutput(photoProfile, surfaceProducerOfPhoto);
+}
+
 void CameraFrameworkModuleTest::GetSupportedOutputCapability()
 {
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
@@ -9708,6 +9791,84 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_072, TestSize.Le
     sleep(WAIT_TIME_AFTER_START);
 
     intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test high-res photo session.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test high-res photo session capture.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_073, TestSize.Level0)
+{
+    if (!IsSupportNow()) {
+        return;
+    }
+    sptr<CaptureOutput> previewOutput;
+    sptr<CaptureOutput> photoOutput;
+    ConfigHighResSession(previewOutput, photoOutput);
+ 
+    int32_t intResult = ((sptr<PreviewOutput>&)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+ 
+    sleep(WAIT_TIME_AFTER_START);
+ 
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
+    EXPECT_EQ(intResult, 0);
+ 
+    sleep(WAIT_TIME_AFTER_START);
+ 
+    intResult = ((sptr<PreviewOutput>&)previewOutput)->Stop();
+    EXPECT_EQ(intResult, 0);
+ 
+    intResult = highResSession_->Release();
+    EXPECT_EQ(intResult, 0);
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test high-res photo session.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test high-res photo session setFocusPoint.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_074, TestSize.Level0)
+{
+    if (!IsSupportNow()) {
+        return;
+    }
+    sptr<CaptureOutput> previewOutput;
+    sptr<CaptureOutput> photoOutput;
+    ConfigHighResSession(previewOutput, photoOutput);
+ 
+    Point point = { 1, 1 };
+    highResSession_->LockForControl();
+    int32_t setFocusMode = highResSession_->SetFocusPoint(point);
+    EXPECT_EQ(setFocusMode, 0);
+    highResSession_->UnlockForControl();
+ 
+    Point focusPointGet = highResSession_->GetFocusPoint();
+    EXPECT_EQ(focusPointGet.x, 1);
+    EXPECT_EQ(focusPointGet.y, 1);
+ 
+    int32_t intResult = ((sptr<PreviewOutput>&)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+ 
+    sleep(WAIT_TIME_AFTER_START);
+ 
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
+    EXPECT_EQ(intResult, 0);
+ 
+    sleep(WAIT_TIME_AFTER_START);
+ 
+    intResult = ((sptr<PreviewOutput>&)previewOutput)->Stop();
+    EXPECT_EQ(intResult, 0);
+ 
+    intResult = highResSession_->Release();
     EXPECT_EQ(intResult, 0);
 }
 } // namespace CameraStandard

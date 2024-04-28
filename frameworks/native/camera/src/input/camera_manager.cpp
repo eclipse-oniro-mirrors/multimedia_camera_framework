@@ -30,6 +30,7 @@
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
 #include "session/capture_session.h"
+#include "session/high_res_photo_session.h"
 #include "session/macro_photo_session.h"
 #include "session/macro_video_session.h"
 #include "session/night_session.h"
@@ -85,7 +86,8 @@ const std::unordered_map<OperationMode, SceneMode> g_metaToFwSupportedMode_ = {
     {OperationMode::SCAN_CODE, SCAN},
     {OperationMode::CAPTURE_MACRO, CAPTURE_MACRO},
     {OperationMode::VIDEO_MACRO, VIDEO_MACRO},
-    {OperationMode::HIGH_FRAME_RATE, HIGH_FRAME_RATE}
+    {OperationMode::HIGH_FRAME_RATE, HIGH_FRAME_RATE},
+    {OperationMode::HIGH_RESOLUTION_PHOTO, HIGH_RES_PHOTO}
 };
 
 const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
@@ -100,7 +102,8 @@ const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
     {SCAN, OperationMode::SCAN_CODE},
     {CAPTURE_MACRO, OperationMode::CAPTURE_MACRO},
     {VIDEO_MACRO, OperationMode::VIDEO_MACRO},
-    {HIGH_FRAME_RATE, OperationMode::HIGH_FRAME_RATE}
+    {HIGH_FRAME_RATE, OperationMode::HIGH_FRAME_RATE},
+    {HIGH_RES_PHOTO, OperationMode::HIGH_RESOLUTION_PHOTO}
 };
 
 const std::set<int32_t> isTemplateMode_ = {
@@ -274,6 +277,8 @@ sptr<CaptureSession> CameraManager::CreateCaptureSessionImpl(SceneMode mode, spt
             return new (std::nothrow) MacroVideoSession(session);
         case SceneMode::SLOW_MOTION:
             return new (std::nothrow) SlowMotionSession(session);
+        case SceneMode::HIGH_RES_PHOTO:
+            return new (std::nothrow) HighResPhotoSession(session);
         default:
             return new (std::nothrow) CaptureSession(session);
     }
@@ -1246,6 +1251,7 @@ void CameraManager::ParseCapability(sptr<CameraDevice>& camera, const int32_t mo
 sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<CameraDevice>& camera,
     int32_t modeName) __attribute__((no_sanitize("cfi")))
 {
+    MEDIA_DEBUG_LOG("GetSupportedOutputCapability mode = %{public}d", modeName);
     sptr<CameraOutputCapability> cameraOutputCapability = nullptr;
     cameraOutputCapability = new(std::nothrow) CameraOutputCapability();
     if (camera == nullptr || cameraOutputCapability == nullptr) {

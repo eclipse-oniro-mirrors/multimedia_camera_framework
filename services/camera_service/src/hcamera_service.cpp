@@ -181,6 +181,7 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChoosePhysicalCameras(
     std::vector<OHOS::HDI::Camera::V1_3::OperationMode> supportedPhysicalCamerasModes = {
         OHOS::HDI::Camera::V1_3::OperationMode::PROFESSIONAL_PHOTO,
         OHOS::HDI::Camera::V1_3::OperationMode::PROFESSIONAL_VIDEO,
+        OHOS::HDI::Camera::V1_3::OperationMode::HIGH_RESOLUTION_PHOTO,
     };
     vector<shared_ptr<CameraMetaInfo>> physicalCameraInfos = {};
     for (auto& camera : cameraInfos) {
