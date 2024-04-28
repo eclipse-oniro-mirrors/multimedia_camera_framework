@@ -435,6 +435,7 @@ int32_t CaptureSession::AddInput(sptr<CaptureInput>& input)
             inputDevice_ = input;
             if (inputDevice_ != nullptr) {
                 UpdateDeviceDeferredability();
+                FindTagId();
             }
         }
     } else {
@@ -458,6 +459,35 @@ void CaptureSession::UpdateDeviceDeferredability()
                 item.data.u8[i], item.data.u8[i + 1]);
             inputDevice_->GetCameraDeviceInfo()->modeDeferredType_[item.data.u8[i]] =
                 static_cast<DeferredDeliveryImageType>(item.data.u8[i + 1]);
+        }
+    }
+}
+
+void CaptureSession::FindTagId()
+{
+    MEDIA_INFO_LOG("Enter Into CaptureSession::FindTagId");
+    if (inputDevice_ != nullptr) {
+        MEDIA_DEBUG_LOG("CaptureSession::FindTagId inputDevice_ not nullptr");
+        std::vector<vendorTag_t> vendorTagInfos;
+        sptr<CameraInput> camInput = (sptr<CameraInput>&)inputDevice_;
+        int32_t ret = camInput->GetCameraAllVendorTags(vendorTagInfos);
+        if (ret != CAMERA_OK) {
+            MEDIA_ERR_LOG("Failed to GetCameraAllVendorTags");
+            return;
+        }
+        for (auto info : vendorTagInfos) {
+            std::string tagName = info.tagName;
+            if (tagName == "hwSensorName") {
+                HAL_CUSTOM_SENSOR_MODULE_TYPE = info.tagId;
+            } else if (tagName == "lensFocusDistance") {
+                HAL_CUSTOM_LENS_FOCUS_DISTANCE = info.tagId;
+            } else if (tagName == "sensorSensitivity") {
+                HAL_CUSTOM_SENSOR_SENSITIVITY = info.tagId;
+            } else if (tagName == "cameraLaserData") {
+                HAL_CUSTOM_LASER_DATA = info.tagId;
+            } else if (tagName == "cameraArMode") {
+                HAL_CUSTOM_AR_MODE = info.tagId;
+            }
         }
     }
 }
@@ -759,6 +789,7 @@ int32_t CaptureSession::Release()
     moonCaptureBoostStatusCallback_ = nullptr;
     smoothZoomCallback_ = nullptr;
     abilityCallback_ = nullptr;
+    arCallback_ = nullptr;
     return ServiceToCameraError(errCode);
 }
 
@@ -827,6 +858,12 @@ std::shared_ptr<SmoothZoomCallback> CaptureSession::GetSmoothZoomCallback()
 {
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     return smoothZoomCallback_;
+}
+
+std::shared_ptr<ARCallback> CaptureSession::GetARCallback()
+{
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    return arCallback_;
 }
 
 int32_t CaptureSession::UpdateSetting(std::shared_ptr<Camera::CameraMetadata> changedMetadata)
@@ -1957,6 +1994,57 @@ void CaptureSession::ProcessSnapshotDurationUpdates(const uint64_t timestamp,
     }
 }
 
+void CaptureSession::ProcessAREngineUpdates(const uint64_t timestamp,
+    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
+{
+    camera_metadata_item_t item;
+    common_metadata_header_t* metadata = result->get();
+    ARStatusInfo arStatusInfo;
+
+    int ret = Camera::FindCameraMetadataItem(metadata, HAL_CUSTOM_LASER_DATA, &item);
+    if (ret == CAM_META_SUCCESS) {
+        std::vector<int32_t> laserData;
+        for (uint32_t i = 0; i < item.count; i++) {
+            laserData.emplace_back(item.data.i32[i]);
+        }
+        arStatusInfo.laserData = laserData;
+    }
+
+    ret = Camera::FindCameraMetadataItem(metadata, HAL_CUSTOM_LENS_FOCUS_DISTANCE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        arStatusInfo.lensFocusDistance = item.data.f[0];
+    }
+
+    ret = Camera::FindCameraMetadataItem(metadata, HAL_CUSTOM_SENSOR_SENSITIVITY, &item);
+    if (ret == CAM_META_SUCCESS) {
+        arStatusInfo.sensorSensitivity = item.data.i32[0];
+    }
+
+    ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_SENSOR_EXPOSURE_TIME, &item);
+    if (ret == CAM_META_SUCCESS) {
+        int32_t numerator = item.data.r->numerator;
+        int32_t denominator = item.data.r->denominator;
+        MEDIA_DEBUG_LOG("SensorExposureTime: %{public}d/%{public}d", numerator, denominator);
+        if (denominator == 0) {
+            MEDIA_ERR_LOG("ProcessSensorExposureTimeChange error! divide by zero");
+            return;
+        }
+        uint32_t value = numerator / (denominator/1000000);
+        MEDIA_DEBUG_LOG("SensorExposureTime: %{public}u", value);
+        arStatusInfo.exposureDurationValue = value;
+    }
+
+    ret = Camera::FindCameraMetadataItem(metadata, OHOS_SENSOR_INFO_TIMESTAMP, &item);
+    if (ret == CAM_META_SUCCESS) {
+        arStatusInfo.timestamp = item.data.i64[0];
+    }
+
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    if (arCallback_ != nullptr) {
+        arCallback_->OnResult(arStatusInfo);
+    }
+}
+
 void CaptureSession::CaptureSessionMetadataResultProcessor::ProcessCallbacks(
     const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {
@@ -1973,6 +2061,7 @@ void CaptureSession::CaptureSessionMetadataResultProcessor::ProcessCallbacks(
     session->ProcessMacroStatusChange(result);
     session->ProcessMoonCaptureBoostStatusChange(result);
     session->ProcessSnapshotDurationUpdates(timestamp, result);
+    session->ProcessAREngineUpdates(timestamp, result);
 }
 
 std::vector<FlashMode> CaptureSession::GetSupportedFlashModes()
@@ -3408,6 +3497,114 @@ void CaptureSession::SetColorEffect(ColorEffect colorEffect)
     return;
 }
 
+int32_t CaptureSession::GetSensorExposureTimeRange(std::vector<uint32_t> &sensorExposureTimeRange)
+{
+    sensorExposureTimeRange.clear();
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSensorExposureTimeRange Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSensorExposureTimeRange camera device is null");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SENSOR_EXPOSURE_TIME_RANGE, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("CaptureSession::GetSensorExposureTimeRange Failed with return code %{public}d", ret);
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+
+    int32_t numerator = 0;
+    int32_t denominator = 0;
+    uint32_t value = 0;
+    constexpr int32_t timeUnit = 1000000;
+    for (uint32_t i = 0; i < item.count; i++) {
+        numerator = item.data.r[i].numerator;
+        denominator = item.data.r[i].denominator;
+        if (denominator == 0) {
+            MEDIA_ERR_LOG("CaptureSession::GetSensorExposureTimeRange divide by 0! numerator=%{public}d", numerator);
+            return CameraErrorCode::INVALID_ARGUMENT;
+        }
+        value = numerator / (denominator / timeUnit);
+        MEDIA_DEBUG_LOG("CaptureSession::GetSensorExposureTimeRange numerator=%{public}d, denominator=%{public}d,"
+                        " value=%{public}d", numerator, denominator, value);
+        sensorExposureTimeRange.emplace_back(value);
+    }
+    MEDIA_INFO_LOG("CaptureSession::GetSensorExposureTimeRange range=%{public}s, len = %{public}zu",
+                   Container2String(sensorExposureTimeRange.begin(), sensorExposureTimeRange.end()).c_str(),
+                   sensorExposureTimeRange.size());
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::SetSensorExposureTime(uint32_t exposureTime)
+{
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::SetSensorExposureTime Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::SetSensorExposureTime Need to call LockForControl() "
+            "before setting camera properties");
+        return CameraErrorCode::SUCCESS;
+    }
+    MEDIA_DEBUG_LOG("CaptureSession::SetSensorExposureTime exposure: %{public}d", exposureTime);
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::SetSensorExposureTime camera device is null");
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
+    }
+    std::vector<uint32_t> sensorExposureTimeRange;
+    if ((GetSensorExposureTimeRange(sensorExposureTimeRange) != CameraErrorCode::SUCCESS) &&
+        sensorExposureTimeRange.empty()) {
+        MEDIA_ERR_LOG("CaptureSession::SetSensorExposureTime range is empty");
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
+    }
+    const uint32_t autoLongExposure = 0;
+    int32_t minIndex = 0;
+    int32_t maxIndex = 1;
+    if (exposureTime != autoLongExposure && exposureTime < sensorExposureTimeRange[minIndex]) {
+        MEDIA_DEBUG_LOG("CaptureSession::SetSensorExposureTime exposureTime:"
+                        "%{public}d is lesser than minimum exposureTime: %{public}d",
+                        exposureTime, sensorExposureTimeRange[minIndex]);
+        exposureTime = sensorExposureTimeRange[minIndex];
+    } else if (exposureTime > sensorExposureTimeRange[maxIndex]) {
+        MEDIA_DEBUG_LOG("CaptureSession::SetSensorExposureTime exposureTime: "
+                        "%{public}d is greater than maximum exposureTime: %{public}d",
+                        exposureTime, sensorExposureTimeRange[maxIndex]);
+        exposureTime = sensorExposureTimeRange[maxIndex];
+    }
+    constexpr int32_t timeUnit = 1000000;
+    camera_rational_t value = {.numerator = exposureTime, .denominator = timeUnit};
+    if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_SENSOR_EXPOSURE_TIME, value)) {
+        MEDIA_ERR_LOG("ProfessionSession::SetSensorExposureTime Failed to set exposure compensation");
+    }
+    exposureDurationValue_ = exposureTime;
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::GetSensorExposureTime(uint32_t &exposureTime)
+{
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSensorExposureTime Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSensorExposureTime camera device is null");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_SENSOR_EXPOSURE_TIME, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("CaptureSession::GetSensorExposureTime Failed with return code %{public}d", ret);
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+    exposureTime = item.data.ui32[0];
+    MEDIA_DEBUG_LOG("CaptureSession::GetSensorExposureTime exposureTime: %{public}d", exposureTime);
+    return CameraErrorCode::SUCCESS;
+}
+
 bool CaptureSession::IsMacroSupported()
 {
     CAMERA_SYNC_TRACE;
@@ -3771,5 +3968,123 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> CaptureSession::GetMetadata()
 {
     return inputDevice_->GetCameraDeviceInfo()->GetMetadata();
 }
-} // CameraStandard
-} // OHOS
+
+int32_t CaptureSession::SetARMode(bool isEnable)
+{
+    MEDIA_INFO_LOG("CaptureSession::SetARMode");
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::SetARMode Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::SetARMode Need to call LockForControl() before setting camera properties");
+        return CameraErrorCode::SUCCESS;
+    }
+
+    bool status = false;
+    uint32_t count = 1;
+    camera_metadata_item_t item;
+    uint8_t value = isEnable ? 1 : 0;
+    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), HAL_CUSTOM_AR_MODE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(HAL_CUSTOM_AR_MODE, &value, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(HAL_CUSTOM_AR_MODE, &value, count);
+    }
+
+    if (!status) {
+        MEDIA_ERR_LOG("CaptureSession::SetARMode Failed to set ar mode");
+        return CameraErrorCode::SUCCESS;
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::GetSensorSensitivityRange(std::vector<int32_t> &sensitivityRange)
+{
+    MEDIA_INFO_LOG("CaptureSession::GetSensorSensitivityRange");
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSensorSensitivity fail due to Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSensorSensitivity fail due to camera device is null");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_SENSOR_INFO_SENSITIVITY_RANGE, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("CaptureSession::GetSensorSensitivity Failed with return code %{public}d", ret);
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+
+    for (uint32_t i = 0; i < item.count; i++) {
+        sensitivityRange.emplace_back(item.data.i32[i]);
+    }
+
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::SetSensorSensitivity(uint32_t sensitivity)
+{
+    MEDIA_INFO_LOG("CaptureSession::SetSensorSensitivity");
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::SetSensorSensitivity Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::SetSensorSensitivity Need to call LockForControl() "
+            "before setting camera properties");
+        return CameraErrorCode::SUCCESS;
+    }
+    bool status = false;
+    int32_t count = 1;
+    camera_metadata_item_t item;
+    MEDIA_DEBUG_LOG("CaptureSession::SetSensorSensitivity sensitivity: %{public}d", sensitivity);
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::SetSensorSensitivity camera device is null");
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
+    }
+
+    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), HAL_CUSTOM_SENSOR_SENSITIVITY, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(HAL_CUSTOM_SENSOR_SENSITIVITY, &sensitivity, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(HAL_CUSTOM_SENSOR_SENSITIVITY, &sensitivity, count);
+    }
+    if (!status) {
+        MEDIA_ERR_LOG("CaptureSession::SetSensorSensitivity Failed to set sensitivity");
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::GetModuleType(uint32_t &moduleType)
+{
+    MEDIA_INFO_LOG("CaptureSession::GetModuleType");
+    if (!(IsSessionCommited() || IsSessionConfiged())) {
+        MEDIA_ERR_LOG("CaptureSession::GetModuleType fail due to Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetModuleType fail due to camera device is null");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), HAL_CUSTOM_SENSOR_MODULE_TYPE, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("CaptureSession::GetModuleType Failed with return code %{public}d", ret);
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+    moduleType = item.data.ui32[0];
+    MEDIA_DEBUG_LOG("moduleType: %{public}d", moduleType);
+    return CameraErrorCode::SUCCESS;
+}
+
+void CaptureSession::SetARCallback(std::shared_ptr<ARCallback> arCallback)
+{
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    arCallback_ = arCallback;
+}
+} // namespace CameraStandard
+} // namespace OHOS

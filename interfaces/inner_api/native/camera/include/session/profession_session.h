@@ -151,28 +151,6 @@ public:
      */
     bool IsManualIsoSupported();
 
-// SensorExposureTime
-    /**
-    * @brief Get exposure time range.
-    * @param vector of exposure time range.
-    * @return errCode.
-    */
-    int32_t GetSensorExposureTimeRange(std::vector<uint32_t> &sensorExposureTimeRange);
-
-    /**
-    * @brief Set exposure time value.
-    * @param exposure compensation value to be set.
-    * @return errCode.
-    */
-    int32_t SetSensorExposureTime(uint32_t sensorExposureTime);
-
-    /**
-    * @brief Get exposure time value.
-    * @param exposure current exposure time value .
-    * @return Returns errCode.
-    */
-    int32_t GetSensorExposureTime(uint32_t &sensorExposureTime);
-
 //Apertures
     /**
      * @brief Get the supported physical apertures.
@@ -505,7 +483,6 @@ private:
     std::shared_ptr<ApertureInfoCallback> apertureInfoCallback_ = nullptr;
     std::shared_ptr<LuminationInfoCallback> luminationInfoCallback_ = nullptr;
     std::atomic<uint8_t> physicalCameraId_ = 0;
-    uint32_t exposureDurationValue_ = 0;
     uint32_t isoValue_ = 0;
     float luminationValue_ = 0.0;
     float apertureValue_ = 0.0;

@@ -9871,5 +9871,73 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_074, TestSize.Le
     intResult = highResSession_->Release();
     EXPECT_EQ(intResult, 0);
 }
+
+/* Feature: Framework
+ * Function: Test AR Mode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test AR Mode
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_075, TestSize.Level0)
+{
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = session_->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    uint32_t moduleType;
+    intResult = session_->GetModuleType(moduleType);
+    EXPECT_EQ(intResult, 0);
+
+    uint32_t cam0ModuleType = cameras_[0]->GetModuleType();
+    EXPECT_EQ(moduleType, cam0ModuleType);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    float minimumFocusDistance = session_->GetMinimumFocusDistance();
+    MEDIA_INFO_LOG("minimumFocusDistance=%{public}f", minimumFocusDistance);
+
+    std::vector<uint32_t> exposureTimeRange;
+    intResult = session_->GetSensorExposureTimeRange(exposureTimeRange);
+    EXPECT_EQ(intResult, 0);
+
+    std::vector<int32_t> sensitivityRange;
+    intResult = session_->GetSensorSensitivityRange(sensitivityRange);
+    EXPECT_EQ(intResult, 0);
+
+    session_->LockForControl();
+
+    intResult = session_->SetARMode(true);
+    EXPECT_EQ(intResult, 0);
+
+    float num = 1.0f;
+    intResult = session_->SetFocusDistance(num);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->SetSensorSensitivity(sensitivityRange[0]);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->SetSensorExposureTime(exposureTimeRange[0]);
+    EXPECT_EQ(intResult, 0);
+
+    session_->UnlockForControl();
+    
+    float recnum;
+    intResult = session_->GetFocusDistance(recnum);
+    EXPECT_EQ(intResult, 0);
+
+    uint32_t recSensorExposureTime;
+    intResult = session_->GetSensorExposureTime(recSensorExposureTime);
+    EXPECT_EQ(intResult, 0);
+}
 } // namespace CameraStandard
 } // namespace OHOS
