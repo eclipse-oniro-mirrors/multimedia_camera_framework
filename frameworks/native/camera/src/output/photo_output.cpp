@@ -679,7 +679,7 @@ int32_t PhotoOutput::EnableAutoHighQualityPhoto(bool enabled)
     if (isAutoHighQualityPhotoSupported == -1) {
         MEDIA_ERR_LOG("PhotoOutput EnableAutoHighQualityPhoto not supported");
         return INVALID_ARGUMENT;
-    } 
+    }
 
     int32_t res = captureSession->EnableAutoHighQualityPhoto(enabled);
     return res;
