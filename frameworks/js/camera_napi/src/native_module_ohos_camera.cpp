@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -38,6 +38,7 @@ static napi_value Export(napi_env env, napi_value exports)
     CameraPrelaunchConfigNapi::Init(env, exports);
     MetadataOutputNapi::Init(env, exports);
     MetadataObjectNapi::Init(env, exports);
+    HighResPhotoSessionNapi::Init(env, exports);
     PortraitSessionNapi::Init(env, exports);
     ProfessionSessionNapi::Init(env, exports);
     NightSessionNapi::Init(env, exports);

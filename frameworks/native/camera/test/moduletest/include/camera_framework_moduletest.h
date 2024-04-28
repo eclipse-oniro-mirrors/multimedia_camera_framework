@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -57,6 +57,7 @@ public:
     sptr<PortraitSession> portraitSession_;
     sptr<CaptureSession> session_;
     sptr<CaptureSession> scanSession_;
+    sptr<CaptureSession> highResSession_;
     sptr<CaptureInput> input_;
     std::vector<sptr<CameraDevice>> cameras_;
     std::vector<CameraFormat> previewFormats_;
@@ -98,6 +99,9 @@ public:
                                           float ratio, CameraFormat format);
     SelectProfiles SelectWantedProfiles(sptr<CameraOutputCapability>& modeAbility, const SelectProfiles wanted);
     void ConfigScanSession(sptr<CaptureOutput> &previewOutput_1, sptr<CaptureOutput> &previewOutput_2);
+    void ConfigHighResSession(sptr<CaptureOutput> &previewOutput_1, sptr<CaptureOutput> &previewOutput_2);
+    void CreateHighResPhotoOutput(sptr<CaptureOutput> &previewOutput, sptr<CaptureOutput> &photoOutput,
+                                  Profile previewProfile, Profile photoProfile);
     void ReleaseInput();
 
     void SetCameraParameters(sptr<CaptureSession> &session, bool video);

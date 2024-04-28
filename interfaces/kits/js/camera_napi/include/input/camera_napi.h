@@ -161,6 +161,7 @@ static const std::unordered_map<std::string, int32_t> mapSceneMode = {
     {"NIGHT_PHOTO", JS_NIGHT},
     {"PROFESSIONAL_PHOTO", JS_PROFESSIONAL_PHOTO},
     {"PROFESSIONAL_VIDEO", JS_PROFESSIONAL_VIDEO},
+    {"HIGH_RES_PHOTO", JS_HIGH_RES_PHOTO},
     {"SLOW_MOTION", JS_SLOW_MOTION},
     {"MACRO_PHOTO", 8},
     {"MACRO_VIDEO", 9},

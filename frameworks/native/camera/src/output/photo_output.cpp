@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -174,7 +174,25 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId)
     CAMERA_SYNC_TRACE;
     auto item = photoOutput_.promote();
     if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnCaptureStarted(captureId);
+        sptr<CaptureSession> captureSession = item->GetSession();
+        switch (captureSession->GetMode()) {
+            case SceneMode::HIGH_RES_PHOTO: {
+                sptr<CameraDevice> cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
+                std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+                camera_metadata_item_t meta;
+                int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAPTURE_EXPECT_TIME, &meta);
+                if (ret == CAM_META_SUCCESS) {
+                    item->GetApplicationCallback()->OnCaptureStarted(captureId, meta.data.ui32[1]);
+                } else {
+                    MEDIA_WARNING_LOG("Discarding OnCaptureStarted callback, mode:%{public}d."
+                        "exposureTime is not found", meta.data.ui32[0]);
+                }
+                break;
+            }
+            default:
+                item->GetApplicationCallback()->OnCaptureStarted(captureId);
+                break;
+        }
     } else {
         MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnCaptureStarted callback");
     }

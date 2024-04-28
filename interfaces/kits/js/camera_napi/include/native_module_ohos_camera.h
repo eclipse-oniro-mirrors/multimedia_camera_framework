@@ -33,6 +33,7 @@
 #include "mode/slow_motion_session_napi.h"
 #include "mode/video_session_for_sys_napi.h"
 #include "mode/video_session_napi.h"
+#include "mode/high_res_photo_session_napi.h"
 #include "output/deferred_photo_proxy_napi.h"
 #include "output/metadata_object_napi.h"
 #include "output/photo_napi.h"
