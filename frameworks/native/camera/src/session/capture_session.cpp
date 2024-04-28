@@ -3773,10 +3773,10 @@ int32_t CaptureSession::EnableAutoHighQualityPhoto(bool enabled)
     }
     if (!status) {
         MEDIA_ERR_LOG("CaptureSession::EnableAutoHighQualityPhoto Failed to set type!");
-        res = INVALID_ARGUMENT
+        res = INVALID_ARGUMENT;
     }
     res = this->UnlockForControl();
-    if (errCode != CameraErrorCode::SUCCESS) {
+    if (res != CameraErrorCode::SUCCESS) {
         MEDIA_DEBUG_LOG("CaptureSession::EnableAutoHighQualityPhoto Failed");
     }
     return res;
