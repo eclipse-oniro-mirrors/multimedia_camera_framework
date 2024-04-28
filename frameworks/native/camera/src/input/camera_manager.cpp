@@ -1220,6 +1220,18 @@ void CameraManager::ParseExtendCapability(const int32_t modeName, const camera_m
     ExtendInfo extendInfo = {};
     std::shared_ptr<CameraStreamInfoParse> modeStreamParse = std::make_shared<CameraStreamInfoParse>();
     modeStreamParse->getModeInfo(item.data.i32, item.count, extendInfo); // 解析tag中带的数据信息意义
+    if (modeName == SceneMode::VIDEO) {
+        for (uint32_t i = 0; i < extendInfo.modeCount; i++) {
+            if (SceneMode::HIGH_FRAME_RATE == extendInfo.modeInfo[i].modeName) {
+                for (uint32_t j = 0; j < extendInfo.modeInfo[i].streamTypeCount; j++) {
+                    OutputCapStreamType streamType =
+                        static_cast<OutputCapStreamType>(extendInfo.modeInfo[i].streamInfo[j].streamType);
+                    CreateProfile4StreamType(streamType, i, j, extendInfo);
+                }
+                break;
+            }
+        }
+    }
     for (uint32_t i = 0; i < extendInfo.modeCount; i++) {
         if (modeName == extendInfo.modeInfo[i].modeName) {
             for (uint32_t j = 0; j < extendInfo.modeInfo[i].streamTypeCount; j++) {
