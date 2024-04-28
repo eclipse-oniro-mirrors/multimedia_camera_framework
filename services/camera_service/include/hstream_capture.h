@@ -30,6 +30,7 @@
 namespace OHOS {
 namespace CameraStandard {
 using OHOS::HDI::Camera::V1_0::BufferProducerSequenceable;
+using namespace OHOS::HDI::Camera::V1_0;
 class HStreamCapture : public HStreamCaptureStub, public HStreamCommon {
 public:
     HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height);
@@ -39,6 +40,7 @@ public:
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility) override;
     void SetStreamInfo(StreamInfo_V1_1 &streamInfo) override;
     int32_t SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer) override;
+    int32_t SetRawPhotoStreamInfo(const sptr<OHOS::IBufferProducer> &producer) override;
     int32_t DeferImageDeliveryFor(int32_t type) override;
     int32_t Capture(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureSettings) override;
     int32_t CancelCapture() override;
@@ -55,7 +57,6 @@ public:
     int32_t OnCaptureReady(int32_t captureId, uint64_t timestamp);
     void DumpStreamInfo(std::string& dumpString) override;
     void SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_);
-    void PrintDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_);
     void SetMode(int32_t modeName);
     int32_t GetMode();
     int32_t IsDeferredPhotoEnabled() override;
@@ -64,10 +65,14 @@ public:
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
 
 private:
+    void ProcessCaptureInfoPhoto(CaptureInfo& captureInfoPhoto,
+        const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings);
+
     sptr<IStreamCaptureCallback> streamCaptureCallback_;
     std::mutex callbackLock_;
     int32_t thumbnailSwitch_;
     sptr<BufferProducerSequenceable> thumbnailBufferQueue_;
+    sptr<BufferProducerSequenceable> rawBufferQueue_;
     int32_t modeName_;
     int32_t deferredPhotoSwitch_;
     int32_t deferredVideoSwitch_;

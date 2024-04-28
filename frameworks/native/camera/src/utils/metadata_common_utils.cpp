@@ -14,7 +14,7 @@
  */
 
 #include "metadata_common_utils.h"
-
+#include "camera_util.h"
 #include <memory>
 
 #include "camera_log.h"
@@ -164,6 +164,43 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> MetadataCommonUtils::CopyMetadata(
         MEDIA_ERR_LOG("CopyCameraMetadataItems failed ret:%{public}d", ret);
     }
     return result;
+}
+
+std::vector<float> ParsePhysicalApertureRangeByMode(const camera_metadata_item_t &item, const int32_t modeName)
+{
+    const float factor = 20.0;
+    std::vector<float> allRange = {};
+    for (uint32_t i = 0; i < item.count; i++) {
+        allRange.push_back(item.data.f[i] * factor);
+    }
+    MEDIA_DEBUG_LOG("ParsePhysicalApertureRangeByMode allRange=%{public}s",
+                    Container2String(allRange.begin(), allRange.end()).c_str());
+    float npos = -1.0;
+    std::vector<std::vector<float>> modeRanges = {};
+    std::vector<float> modeRange = {};
+    for (uint32_t i = 0; i < item.count - 1; i++) {
+        if (item.data.f[i] == npos && item.data.f[i + 1] == npos) {
+            modeRange.emplace_back(npos);
+            MEDIA_DEBUG_LOG("ParsePhysicalApertureRangeByMode mode %{public}d, modeRange=%{public}s",
+                            modeName, Container2String(modeRange.begin(), modeRange.end()).c_str());
+            modeRanges.emplace_back(std::move(modeRange));
+            modeRange.clear();
+            i++;
+            continue;
+        }
+        modeRange.emplace_back(item.data.f[i]);
+    }
+    float currentMode = static_cast<float>(modeName);
+    auto it = std::find_if(modeRanges.begin(), modeRanges.end(),
+        [currentMode](auto value) -> bool {
+            return currentMode == value[0];
+        });
+    if (it == modeRanges.end()) {
+        MEDIA_ERR_LOG("ParsePhysicalApertureRangeByMode Failed meta not support mode:%{public}d", modeName);
+        return {};
+    }
+
+    return *it;
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -47,7 +47,9 @@ enum CameraMode {
   VIDEO,
   PORTRAIT,
   SUPER_STAB,
-  NIGHT
+  NIGHT,
+  MACRO_PHOTO = 8,
+  MACRO_VIDEO = 9
 }
 
 function mockInterface(): void {
@@ -78,6 +80,7 @@ class CameraService {
   private captureSession: camera.CaptureSession | undefined = undefined;
   private portraitSession: camera.PortraitPhotoSession | undefined = undefined;
   private nightSession: camera.NightPhotoSession | undefined = undefined;
+  private macroPhotoSession: camera.MacroPhotoSession | undefined = undefined;
   private mReceiver: image.ImageReceiver | undefined = undefined;
   private fileAsset: photoAccessHelper.PhotoAsset | undefined = undefined;
   private fd: number = -1;
@@ -410,12 +413,14 @@ class CameraService {
       await this.releaseCamera();
       // 获取相机管理器实例
       this.getCameraManagerFn();
-      if (this.cameraMode === CameraMode.PORTRAIT || this.cameraMode === CameraMode.NIGHT) {
+      let newModes = [CameraMode.PORTRAIT, CameraMode.NIGHT, CameraMode.MACRO_PHOTO, CameraMode.MACRO_VIDEO];
+
+      if (newModes.indexOf(this.cameraMode) >= 0) {
         this.getModeManagerFn();
       }
       // 获取支持指定的相机设备对象
       this.getSupportedCamerasFn();
-      if (this.cameraMode === CameraMode.PORTRAIT || this.cameraMode === CameraMode.NIGHT) {
+      if (newModes.indexOf(this.cameraMode) >= 0) {
         this.getSupportedModeFn(cameraDeviceIndex);
       }
       this.initProfile(cameraDeviceIndex);
@@ -443,12 +448,18 @@ class CameraService {
       // 监听CameraInput的错误事件
       this.onCameraInputChange();
       // 会话流程
-      if (this.cameraMode === CameraMode.PORTRAIT) {
-        await this.portraitSessionFlowFn();
-      } else if (this.cameraMode === CameraMode.NIGHT) {
-        await this.nightSessionFlowFn();
-      } else {
-        await this.sessionFlowFn();
+      switch (this.cameraMode) {
+        case CameraMode.PORTRAIT:
+          await this.portraitSessionFlowFn(); break;
+        case CameraMode.NIGHT:
+          await this.nightSessionFlowFn(); break;
+        case CameraMode.MACRO_PHOTO:
+          await this.macroPhotoSessionFlowFn(); break;
+        case CameraMode.MACRO_VIDEO:
+          break;
+        default:
+          await this.sessionFlowFn();
+          break;
       }
     } catch (error) {
       let err = error as BusinessError;
@@ -597,14 +608,16 @@ class CameraService {
 
   getSession(): camera.PortraitPhotoSession | camera.CaptureSession | camera.NightPhotoSession | undefined {
     let session: camera.PortraitPhotoSession | camera.CaptureSession | camera.NightPhotoSession = undefined;
-    if (this.cameraMode === CameraMode.PORTRAIT) {
-      session = this.portraitSession;
-    } else if (this.cameraMode === CameraMode.NIGHT) {
-      session = this.nightSession;
-    } else {
-      session = this.captureSession;
+    switch (this.cameraMode) {
+      case CameraMode.PORTRAIT:
+        return this.portraitSession;
+      case CameraMode.NIGHT:
+        return this.nightSession;
+      case CameraMode.MACRO_PHOTO:
+        return this.macroPhotoSession;
+      default:
+        return this.captureSession;
     }
-    return session;
   }
 
   /**
@@ -676,6 +689,15 @@ class CameraService {
     let isSupportPortraitMode: boolean = this.sceneModes.indexOf(CameraMode.PORTRAIT) >= 0;
     Logger.info(TAG, `isSupportPortraitMode success: ${JSON.stringify(isSupportPortraitMode)}`);
     return isSupportPortraitMode;
+  }
+
+  /**
+   * 是否支持微距模式
+   */
+  isMacroPhotoModeSupportedFn(): boolean {
+    let isSupportMacroMode: boolean = this.sceneModes.indexOf(CameraMode.MACRO_PHOTO) >= 0;
+    Logger.info(TAG, `isSupportMacroMode success: ${JSON.stringify(isSupportMacroMode)}`);
+    return isSupportMacroMode;
   }
 
   /**
@@ -1165,6 +1187,18 @@ class CameraService {
         let err = error as BusinessError;
         Logger.error(TAG, `getZoomRatioRange fail: error code ${err.code}`);
       }
+      
+      // 获取当前模式等效焦距
+      try {
+        let zoomPointInfo: Array<ZoomPointInfo> = this.captureSession.getZoomPointInfos();
+        if (zoomPointInfo) {
+          Logger.info(TAG, `getZoomPointInfos zoomRatio:${zoomPointInfo[0].zoomRatio} equivalentFocalLength:${zoomPointInfo[0].equivalentFocalLength}`);
+          AppStorage.setOrCreate('equivalentFocalLength', zoomPointInfo[0].equivalentFocalLength);
+        }
+      } catch (error) {
+        let err = error as BusinessError;
+        Logger.error(TAG, `getZoomPointInfos fail: error code ${err.code}`);
+      }
 
       this.configMoonCaptureBoost();
 
@@ -1301,6 +1335,67 @@ class CameraService {
     } catch (error) {
       let err = error as BusinessError;
       Logger.error(TAG, `nightSessionFlowFn fail : ${JSON.stringify(err)}`);
+    }
+  }
+
+  async macroPhotoSessionFlowFn(sceneModeIndex?: number): Promise<void> {
+    Logger.info(TAG, `macroPhotoSessionFlowFn enter`);
+    try {
+      // 创建MacroPhotoSession实例
+      this.macroPhotoSession = this.cameraManager.createSession(camera.SceneMode.MACRO_PHOTO);
+      // 监听焦距的状态变化
+      this.onFocusStateChange();
+      // 监听拍照会话的错误事件
+      this.onCaptureSessionErrorChange();
+      // 开始配置会话
+      this.macroPhotoSession.beginConfig();
+      // 把CameraInput加入到会话
+      this.macroPhotoSession.addInput(this.cameraInput);
+      // 把previewOutput加入到会话
+      this.macroPhotoSession.addOutput(this.previewOutput);
+      // 把photoOutPut加入到会话
+      this.macroPhotoSession.addOutput(this.photoOutPut);
+      if (this.captureMode === CaptureMode.NEW_DEFERRED_PHOTO) {
+        if (this.isDeferredImageDeliverySupported(camera.DeferredDeliveryImageType.PHOTO)) {
+          this.deferImageDeliveryFor(camera.DeferredDeliveryImageType.PHOTO);
+          this.isDeferredImageDeliveryEnabled(camera.DeferredDeliveryImageType.PHOTO);
+        }
+      }
+
+      let isSketchSupported = this.previewOutput.isSketchSupported();;
+      Logger.info(TAG, `isSketchSupported:${isSketchSupported}`);
+
+      // 提交配置信息
+      await this.macroPhotoSession.commitConfig();
+
+      // 处理变焦条信息
+      try {
+        let range: Array<number> = this.macroPhotoSession.getZoomRatioRange();
+        Logger.info(TAG, `getZoomRatioRange:${range}`);
+        if (range) {
+          AppStorage.setOrCreate('zoomRatioMin', range[0]);
+          AppStorage.setOrCreate('zoomRatioMax', range[1]);
+        }
+      } catch (error) {
+        let err = error as BusinessError;
+        Logger.error(TAG, `getZoomRatioRange fail: error code ${err.code}`);
+      }
+
+      const deviceType = AppStorage.get<string>('deviceType');
+      if (deviceType !== Constants.DEFAULT) {
+        AppStorage.setOrCreate('colorEffectComponentIsHidden', this.getSupportedColorEffects().length > 0 ? false : true);
+        if (this.colorEffect) {
+          this.setColorEffect(this.colorEffect);
+        }
+      }
+
+      // 开始会话工作
+      await this.macroPhotoSession.start();
+      this.isFocusMode((this.globalContext.getObject('cameraConfig') as CameraConfig).focusMode);
+      Logger.info(TAG, 'macroPhotoSessionFlowFn success');
+    } catch (error) {
+      let err = error as BusinessError;
+      Logger.error(TAG, `macroPhotoSessionFlowFn fail : ${JSON.stringify(err)}`);
     }
   }
 

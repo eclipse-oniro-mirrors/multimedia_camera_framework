@@ -68,7 +68,7 @@ public:
      *
      * @param CaptureOutput to be added to session.
      */
-    bool CanAddOutput(sptr<CaptureOutput>& output, SceneMode modeName = SceneMode::PORTRAIT) override;
+    bool CanAddOutput(sptr<CaptureOutput>& output) override;
 
     /**
      * @brief Get the supported virtual apertures.
@@ -109,7 +109,6 @@ public:
     void SetPhysicalAperture(const float virtualAperture);
 
 private:
-    bool FloatIsEqual(float x, float y);
     static const std::unordered_map<camera_portrait_effect_type_t, PortraitEffect> metaToFwPortraitEffect_;
     static const std::unordered_map<PortraitEffect, camera_portrait_effect_type_t> fwToMetaPortraitEffect_;
 };

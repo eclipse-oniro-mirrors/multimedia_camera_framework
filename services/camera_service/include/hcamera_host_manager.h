@@ -113,6 +113,8 @@ public:
 
     static const std::string LOCAL_SERVICE_NAME;
 
+    void SetMuteMode(bool muteMode);
+
 private:
     struct CameraDeviceInfo;
     class CameraHostInfo;
@@ -131,6 +133,7 @@ private:
     std::map<std::string, std::map<std::string, sptr<HCameraRestoreParam>>> persistentParamMap_;
     std::map<std::string, sptr<HCameraRestoreParam>> transitentParamMap_;
     ::OHOS::sptr<HDI::ServiceManager::V1_0::IServStatListener> registerServStatListener_;
+    bool muteMode_;
 };
 
 class RegisterServStatListener : public HDI::ServiceManager::V1_0::ServStatListenerStub {

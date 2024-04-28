@@ -41,6 +41,7 @@ enum CameraFormat {
     CAMERA_FORMAT_INVALID = -1,
     CAMERA_FORMAT_YCBCR_420_888 = 2,
     CAMERA_FORMAT_RGBA_8888 = 3,
+    CAMERA_FORMAT_DNG = 4,
     CAMERA_FORMAT_YUV_420_SP = 1003,
     CAMERA_FORMAT_NV12 = 1004,
     CAMERA_FORMAT_YUV_422_YUYV = 1005,
@@ -97,7 +98,12 @@ public:
     VideoProfile(CameraFormat format, Size size, std::vector<int32_t> framerates);
     VideoProfile() = default;
     virtual ~VideoProfile() = default;
-
+    VideoProfile& operator=(const VideoProfile& rhs)
+    {
+        Profile::operator=(rhs);
+        this->framerates_ = rhs.framerates_;
+        return *this;
+    }
     /**
      * @brief Get supported framerates of the profile.
      *

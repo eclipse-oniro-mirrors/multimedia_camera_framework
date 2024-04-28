@@ -27,12 +27,6 @@
 #include "hcamera_service_proxy.h"
 #include "icamera_device_service.h"
 #include "safe_map.h"
-#include "session/capture_session.h"
-#include "session/portrait_session.h"
-#include "session/night_session.h"
-#include "session/scan_session.h"
-#include "session/video_session.h"
-#include "session/photo_session.h"
 #include "output/camera_output_capability.h"
 #include "output/metadata_output.h"
 #include "output/photo_output.h"
@@ -612,6 +606,7 @@ private:
     void SetCameraServiceCallback(sptr<ICameraServiceCallback>& callback);
     void SetCameraMuteServiceCallback(sptr<ICameraMuteServiceCallback>& callback);
     void SetTorchServiceCallback(sptr<ITorchServiceCallback>& callback);
+    sptr<CaptureSession> CreateCaptureSessionImpl(SceneMode mode, sptr<ICaptureSession> session);
     int32_t CreateListenerObject();
     void CameraServerDied(pid_t pid);
 
@@ -619,12 +614,14 @@ private:
         uint32_t streamIndex, ExtendInfo extendInfo);
     static const std::unordered_map<camera_format_t, CameraFormat> metaToFwCameraFormat_;
     static const std::unordered_map<CameraFormat, camera_format_t> fwToMetaCameraFormat_;
-    void ParseExtendCapability(sptr<CameraOutputCapability> cameraOutputCapability,
-        const int32_t modeName, const camera_metadata_item_t &item);
-    void ParseBasicCapability(sptr<CameraOutputCapability> cameraOutputCapability,
-        std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, const camera_metadata_item_t &item);
+    void ParseExtendCapability(const int32_t modeName, const camera_metadata_item_t& item);
+    void ParseBasicCapability(
+        std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, const camera_metadata_item_t& item);
     void AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& cameraObjList);
     void SetProfile(sptr<CameraDevice>& cameraObj);
+    SceneMode GetFallbackConfigMode(SceneMode profileMode);
+    void ParseCapability(sptr<CameraDevice>& camera, const int32_t modeName, camera_metadata_item_t& item,
+        std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
     std::mutex mutex_;
     std::recursive_mutex cameraListMutex_;
     std::mutex vectorMutex_;

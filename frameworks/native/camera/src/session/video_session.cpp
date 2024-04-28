@@ -12,24 +12,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 #include "session/video_session.h"
-#include "input/camera_input.h"
-#include "input/camera_manager.h"
-#include "output/camera_output_capability.h"
+
 #include "camera_log.h"
-#include "camera_error_code.h"
-#include "camera_util.h"
- 
+
 namespace OHOS {
 namespace CameraStandard {
-VideoSession::~VideoSession()
-{
-}
-bool VideoSession::CanAddOutput(sptr<CaptureOutput> &output, SceneMode modeName)
+VideoSession::~VideoSession() {}
+bool VideoSession::CanAddOutput(sptr<CaptureOutput>& output)
 {
     MEDIA_DEBUG_LOG("Enter Into VideoSession::CanAddOutput");
-    return CaptureSession::CanAddOutput(output, SceneMode::VIDEO);
+    if (!IsSessionConfiged() || output == nullptr) {
+        MEDIA_ERR_LOG("VideoSession::CanAddOutput operation is Not allowed!");
+        return false;
+    }
+    return CaptureSession::CanAddOutput(output);
 }
 } // namespace CameraStandard
 } // namespace OHOS

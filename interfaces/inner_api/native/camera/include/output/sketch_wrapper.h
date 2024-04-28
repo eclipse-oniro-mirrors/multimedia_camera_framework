@@ -73,6 +73,7 @@ private:
     static SceneFeaturesMode GetSceneFeaturesModeFromModeData(float floatModeData);
     static void InsertSketchReferenceFovRatioMapValue(
         SceneFeaturesMode& sceneFeaturesMode, SketchReferenceFovRange& sketchReferenceFovRange);
+    static void InsertSketchEnableRatioMapValue(SceneFeaturesMode& sceneFeaturesMode, float ratioValue);
     static void UpdateSketchEnableRatio(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata);
     static void UpdateSketchReferenceFovRatio(std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceMetadata);
     static void UpdateSketchReferenceFovRatio(camera_metadata_item_t& metadataItem);

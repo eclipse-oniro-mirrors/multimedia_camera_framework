@@ -15,6 +15,7 @@
 
 #include <mutex>
 #include <cinttypes>
+#include <unordered_map>
 #include "camera_report_uitls.h"
 
 #include "camera_util.h"
@@ -112,6 +113,7 @@ void CameraReportUtils::SetModeChangePerfStartInfo(int32_t preMode, CallerInfo c
         isModeChanging_ = true;
         preMode_ = preMode;
         caller_ = caller;
+        ResetImagingValue();
     }
 }
 
@@ -187,6 +189,7 @@ void CameraReportUtils::SetCapturePerfEndInfo(int32_t captureId)
             auto dfxCaptureInfo = iter->second;
             dfxCaptureInfo.captureEndTime = DeferredProcessing::SteadyClock::GetTimestampMilli();
             ReportCapturePerf(dfxCaptureInfo);
+            ReportImagingInfo(dfxCaptureInfo);
             captureList_.erase(captureId);
         }
     }
@@ -207,12 +210,6 @@ void CameraReportUtils::ReportCapturePerf(DfxCaptureInfo captureInfo)
         "CAPTURE_ID", captureInfo.captureId,
         "CUR_MODE", curMode_,
         "CUR_CAMERA_ID", cameraId_);
-
-    HiSysEventWrite(
-        HiviewDFX::HiSysEvent::Domain::CAMERA,
-        "IMAGING_INFO",
-        HiviewDFX::HiSysEvent::EventType::STATISTIC,
-        "MSG", "Capture");
 }
 
 void CameraReportUtils::SetSwitchCamPerfStartInfo(CallerInfo caller)
@@ -309,30 +306,114 @@ void CameraReportUtils::ReportUserBehavior(string behaviorName,
                                            string value,
                                            CallerInfo callerInfo)
 {
-    MEDIA_INFO_LOG("CameraReportUtils::ReportUserBehavior");
-    static const string S_BEHAVIORNAME = "behaviorName:";
-    static const string S_VALUE = ",value:";
-    static const string S_CUR_MODE = ",curMode:";
-    static const string S_CUR_CAMERAID = ",curCameraId:";
-    static const string S_CPID = ",cPid:";
-    static const string S_CUID = ",cUid:";
-    static const string S_CTOKENID = ",cTokenID:";
-    static const string S_CBUNDLENAME = ",cBundleName:";
+    unique_lock<mutex> lock(mutex_);
+    {
+        if (!IsBehaviorNeedReport(behaviorName, value)) {
+            MEDIA_INFO_LOG("CameraReportUtils::ReportUserBehavior cancle");
+            return;
+        }
+        MEDIA_INFO_LOG("CameraReportUtils::ReportUserBehavior");
+        stringstream ss;
+        ss << S_BEHAVIORNAME << behaviorName
+        << S_VALUE << value
+        << S_CUR_MODE << curMode_
+        << S_CUR_CAMERAID << cameraId_
+        << S_CPID << callerInfo.pid
+        << S_CUID << callerInfo.uid
+        << S_CTOKENID << callerInfo.tokenID
+        << S_CBUNDLENAME << callerInfo.bundleName;
+        
+        HiSysEventWrite(
+            HiviewDFX::HiSysEvent::Domain::CAMERA,
+            "USER_BEHAVIOR",
+            HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
+            "MSG", ss.str());
+    }
+}
+
+void CameraReportUtils::ReportImagingInfo(DfxCaptureInfo dfxCaptureInfo)
+{
+    MEDIA_INFO_LOG("CameraReportUtils::ReportImagingInfo");
     stringstream ss;
-    ss << S_BEHAVIORNAME << behaviorName
-       << S_VALUE << value
-       << S_CUR_MODE << curMode_
-       << S_CUR_CAMERAID << cameraId_
-       << S_CPID << callerInfo.pid
-       << S_CUID << callerInfo.uid
-       << S_CTOKENID << callerInfo.tokenID
-       << S_CBUNDLENAME << callerInfo.bundleName;
+    ss << "CurMode:" << curMode_ << ",CameraId:" << cameraId_ << ",Profile:" << profile_;
+    for (auto it = imagingValueList_.begin(); it != imagingValueList_.end(); it++) {
+        ss << "," << it->first << ":" << it->second;
+    }
 
     HiSysEventWrite(
         HiviewDFX::HiSysEvent::Domain::CAMERA,
-        "USER_BEHAVIOR",
-        HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
+        "IMAGING_INFO",
+        HiviewDFX::HiSysEvent::EventType::STATISTIC,
         "MSG", ss.str());
+}
+
+void CameraReportUtils::UpdateProfileInfo(const string& profileStr)
+{
+    profile_ = profileStr;
+}
+
+void CameraReportUtils::UpdateImagingInfo(const string& imagingKey, const string& value)
+{
+    auto it = imagingValueList_.find(imagingKey);
+    if (it != imagingValueList_.end()) {
+        it->second = value;
+    } else {
+        imagingValueList_.emplace(imagingKey, value);
+    }
+}
+
+bool CameraReportUtils::IsBehaviorNeedReport(const string& behaviorName, const string& value)
+{
+    string imagingKey;
+    try {
+        imagingKey = mapBehaviorImagingKey.at(behaviorName);
+    } catch(const exception& e) {
+        MEDIA_ERR_LOG("IsBehaviorNeedReport error imagingKey not found.");
+        return true;
+    }
+    auto it = imagingValueList_.find(imagingKey);
+    if (it != imagingValueList_.end()) {
+        if (it->second == value) {
+            return false;
+        } else {
+            it->second = value;
+            return true;
+        }
+    } else {
+        imagingValueList_.emplace(imagingKey, value);
+        return true;
+    }
+}
+
+void CameraReportUtils::ResetImagingValue()
+{
+    imagingValueList_.clear();
+}
+
+void CameraReportUtils::SetVideoStartInfo(DfxCaptureInfo captureInfo)
+{
+    MEDIA_INFO_LOG("CameraReportUtils::SetVideoStartInfo captureID: %{public}d", captureInfo.captureId);
+    captureInfo.captureStartTime = DeferredProcessing::SteadyClock::GetTimestampMilli();
+    unique_lock<mutex> lock(mutex_);
+    captureList_.insert(pair<int32_t, DfxCaptureInfo>(captureInfo.captureId, captureInfo));
+}
+
+void CameraReportUtils::SetVideoEndInfo(int32_t captureId)
+{
+    MEDIA_INFO_LOG("CameraReportUtils::SetVideoEndInfo start");
+    unique_lock<mutex> lock(mutex_);
+    {
+        map<int32_t, DfxCaptureInfo>::iterator iter = captureList_.find(captureId);
+        if (iter != captureList_.end()) {
+            MEDIA_INFO_LOG("CameraReportUtils::SetVideoEndInfo");
+            auto dfxCaptureInfo = iter->second;
+            dfxCaptureInfo.captureEndTime = DeferredProcessing::SteadyClock::GetTimestampMilli();
+            imagingValueList_.emplace("VideoDuration",
+                to_string(dfxCaptureInfo.captureEndTime - dfxCaptureInfo.captureStartTime));
+            ReportImagingInfo(dfxCaptureInfo);
+            captureList_.erase(captureId);
+        }
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -36,6 +36,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+constexpr int32_t HDI_STREAM_ID_INIT = 1;
 using OHOS::HDI::Camera::V1_0::CaptureEndedInfo;
 using OHOS::HDI::Camera::V1_0::CaptureErrorInfo;
 using OHOS::HDI::Camera::V1_0::ICameraDeviceCallback;
@@ -82,6 +83,7 @@ public:
     int32_t OnCaptureReady(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
     int32_t ResetDeviceSettings();
     int32_t DispatchDefaultSettingToHdi();
+    void SetDeviceMuteMode(bool muteMode);
 
     inline void SetStreamOperatorCallback(wptr<IStreamOperatorCallback> operatorCallback)
     {
@@ -93,6 +95,16 @@ public:
     {
         std::lock_guard<std::mutex> lock(proxyStreamOperatorCallbackMutex_);
         return proxyStreamOperatorCallback_.promote();
+    }
+
+    inline int32_t GenerateHdiStreamId()
+    {
+        return hdiStreamIdGenerator_.fetch_add(1);
+    }
+
+    inline void ResetHdiStreamId()
+    {
+        hdiStreamIdGenerator_ = HDI_STREAM_ID_INIT;
     }
     
     void NotifyCameraSessionStatus(bool running);
@@ -133,7 +145,9 @@ private:
     std::mutex unPrepareZoomMutex_;
     uint32_t zoomTimerId_;
     std::atomic<bool> inPrepareZoom_;
+    std::atomic<bool> deviceMuteMode_;
 
+    std::atomic<int32_t> hdiStreamIdGenerator_ = HDI_STREAM_ID_INIT;
     void UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings);
     void ResetDeviceOpenLifeCycleSettings();
 
@@ -152,6 +166,26 @@ private:
     void UnPrepareZoom();
     int32_t OpenDevice();
     int32_t CloseDevice();
+    void OpenDeviceNext();
+    void DebugLogForZoom(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForSmoothZoom(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForVideoStabilizationMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
+        uint32_t tag);
+    void DebugLogForFilter(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForBeautySkinSmooth(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForBeautyFaceSlender(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForBeautySkinTone(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForPortraitEffect(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+
+    void DebugLogForFocusMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForAfRegions(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForExposureMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForExposureTime(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForAeRegions(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForAeExposureCompensation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
+        uint32_t tag);
+    void DebugLogForBeautyAuto(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void UpdateMuteSetting();
 };
 } // namespace CameraStandard
 } // namespace OHOS

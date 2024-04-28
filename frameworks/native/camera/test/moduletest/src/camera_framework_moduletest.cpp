@@ -37,7 +37,10 @@
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
 #include "nativetoken_kit.h"
+#include "night_session.h"
 #include "parameter.h"
+#include "scan_session.h"
+#include "session/profession_session.h"
 #include "surface.h"
 #include "system_ability_definition.h"
 #include "test_common.h"
@@ -88,6 +91,7 @@ enum class CAM_MOON_CAPTURE_BOOST_EVENTS {
 };
 
 const int32_t WAIT_TIME_AFTER_CAPTURE = 1;
+const int32_t WAIT_TIME_AFTER_RECORDING = 3;
 const int32_t WAIT_TIME_AFTER_START = 2;
 const int32_t WAIT_TIME_BEFORE_STOP = 1;
 const int32_t WAIT_TIME_AFTER_CLOSE = 1;
@@ -108,6 +112,7 @@ const int32_t PRVIEW_HEIGHT_6144 = 6144;
 
 bool g_camInputOnError = false;
 bool g_sessionclosed = false;
+bool g_brightnessStatusChanged = false;
 std::shared_ptr<OHOS::Camera::CameraMetadata> g_metaResult = nullptr;
 int32_t g_videoFd = -1;
 int32_t g_previewFd = -1;
@@ -128,7 +133,8 @@ class AppCallback : public CameraManagerCallback,
                     public PreviewStateCallback,
                     public ResultCallback,
                     public MacroStatusCallback,
-                    public FeatureDetectionStatusCallback {
+                    public FeatureDetectionStatusCallback,
+                    public BrightnessStatusCallback {
 public:
     void OnCameraStatusChanged(const CameraStatusInfo& cameraDeviceInfo) const override
     {
@@ -340,6 +346,12 @@ public:
     {
         return true;
     }
+
+    void OnBrightnessStatusChanged(bool state) override
+    {
+        MEDIA_DEBUG_LOG("AppCallback::OnBrightnessStatusChanged");
+        g_brightnessStatusChanged = true;
+    }
 };
 
 class AppVideoCallback : public VideoStateCallback {
@@ -508,6 +520,23 @@ sptr<CaptureOutput> CameraFrameworkModuleTest::CreateVideoOutput(int32_t width, 
     return videoOutput;
 }
 
+sptr<CaptureOutput> CameraFrameworkModuleTest::CreateVideoOutput(VideoProfile& videoProfile)
+{
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<SurfaceListener> videoSurfaceListener =
+        new (std::nothrow) SurfaceListener("Video", SurfaceType::VIDEO, g_videoFd, surface);
+    surface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)videoSurfaceListener);
+    if (videoSurfaceListener == nullptr) {
+        MEDIA_ERR_LOG("Failed to create new SurfaceListener");
+        return nullptr;
+    }
+    sptr<IBufferProducer> videoProducer = surface->GetProducer();
+    sptr<Surface> videoSurface = Surface::CreateSurfaceAsProducer(videoProducer);
+    sptr<CaptureOutput> videoOutput = nullptr;
+    videoOutput = manager_->CreateVideoOutput(videoProfile, videoSurface);
+    return videoOutput;
+}
+
 sptr<CaptureOutput> CameraFrameworkModuleTest::CreateVideoOutput()
 {
     sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoWidth_, videoHeight_);
@@ -558,6 +587,89 @@ void CameraFrameworkModuleTest::ConfigScanSession(sptr<CaptureOutput> &previewOu
     EXPECT_EQ(intResult, 0);
 }
 
+void CameraFrameworkModuleTest::ConfigHighResSession(sptr<CaptureOutput> &previewOutput,
+                                                     sptr<CaptureOutput> &photoOutput)
+{
+    if (session_) {
+        MEDIA_INFO_LOG("old session exist, need release");
+        session_->Release();
+        input_->Close();
+    }
+
+    cameras_ = manager_->GetSupportedCameras();
+    ASSERT_TRUE(cameras_.size() != 0);
+
+    std::cout<<std::endl;
+
+    sptr<CameraDevice> device;
+    for (auto deviceEach : cameras_) {
+        if (deviceEach->GetPosition() == 1 && deviceEach->GetCameraType() == CameraType::CAMERA_TYPE_WIDE_ANGLE) {
+            device = deviceEach;
+            break;
+        }
+    }
+    sptr<CaptureInput> input = manager_->CreateCameraInput(device);
+    ASSERT_NE(input, nullptr);
+
+    int32_t intResult = input->Open();
+    EXPECT_EQ(intResult, 0);
+
+    highResSession_ = manager_ -> CreateCaptureSession(SceneMode::HIGH_RES_PHOTO);
+    ASSERT_NE(highResSession_, nullptr);
+
+    intResult = highResSession_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = highResSession_->AddInput(input);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CameraOutputCapability> capability =
+        manager_->GetSupportedOutputCapability(device, SceneMode::HIGH_RES_PHOTO);
+
+    CreateHighResPhotoOutput(previewOutput, photoOutput,
+                             capability->previewProfiles_[0], capability->photoProfiles_[0]);
+    ASSERT_NE(previewOutput, nullptr);
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = highResSession_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+    
+    intResult = highResSession_->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = highResSession_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    std::vector<float> zoomRatioRange = highResSession_->GetZoomRatioRange();
+    ASSERT_NE(zoomRatioRange.size(), 0);
+}
+
+void CameraFrameworkModuleTest::CreateHighResPhotoOutput(sptr<CaptureOutput> &previewOutput,
+                                                         sptr<CaptureOutput> &photoOutput,
+                                                         Profile previewProfile,
+                                                         Profile photoProfile)
+{
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, g_previewFd, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    Size previewSize;
+    previewSize.width = previewProfile.GetSize().width;
+    previewSize.height = previewProfile.GetSize().height;
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfile.GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewSize.width, previewSize.height);
+
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> consumerInPreview = Surface::CreateSurfaceAsProducer(bp);
+    previewOutput = manager_->CreatePreviewOutput(previewProfile, consumerInPreview);
+
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    Size photoSize;
+    photoSize.width = photoProfile.GetSize().width;
+    photoSize.height = photoProfile.GetSize().height;
+    sptr<IBufferProducer> surfaceProducerOfPhoto = photoSurface->GetProducer();
+    photoOutput = manager_->CreatePhotoOutput(photoProfile, surfaceProducerOfPhoto);
+}
+
 void CameraFrameworkModuleTest::GetSupportedOutputCapability()
 {
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
@@ -603,6 +715,29 @@ Profile CameraFrameworkModuleTest::SelectProfileByRatioAndFormat(sptr<CameraOutp
     MEDIA_ERR_LOG("SelectProfileByRatioAndFormat format:%{public}d width:%{public}d height:%{public}d",
         profile.format_, profile.size_.width, profile.size_.height);
     return profile;
+}
+
+SelectProfiles CameraFrameworkModuleTest::SelectWantedProfiles(
+    sptr<CameraOutputCapability>& modeAbility, const SelectProfiles wanted)
+{
+    SelectProfiles ret;
+    const auto& preview = std::find_if(modeAbility->GetPreviewProfiles().begin(),
+                                       modeAbility->GetPreviewProfiles().end(),
+                                       [&wanted](auto& profile) { return profile == wanted.preview; });
+    if (preview != modeAbility->GetPreviewProfiles().end()) {
+        ret.preview = *preview;
+    }
+    const auto& photo = std::find_if(modeAbility->GetPhotoProfiles().begin(), modeAbility->GetPhotoProfiles().end(),
+        [&wanted](auto& profile) { return profile == wanted.photo; });
+    if (photo != modeAbility->GetPhotoProfiles().end()) {
+        ret.photo = *photo;
+    }
+    const auto& video = std::find_if(modeAbility->GetVideoProfiles().begin(), modeAbility->GetVideoProfiles().end(),
+        [&wanted](auto& profile) { return profile == wanted.video; });
+    if (video != modeAbility->GetVideoProfiles().end()) {
+        ret.video = *video;
+    }
+    return ret;
 }
 
 void CameraFrameworkModuleTest::ReleaseInput()
@@ -707,11 +842,7 @@ void CameraFrameworkModuleTest::TestCallbacks(sptr<CameraDevice>& cameraInfo, bo
     EXPECT_EQ(intResult, 0);
 
     // Register error callback
-    std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
-    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
-    camInput->SetErrorCallback(callback);
-
-    EXPECT_EQ(g_camInputOnError, false);
+    RegisterErrorCallback();
 
     intResult = session_->AddInput(input_);
     EXPECT_EQ(intResult, 0);
@@ -780,6 +911,15 @@ void CameraFrameworkModuleTest::TestCallbacks(sptr<CameraDevice>& cameraInfo, bo
     ((sptr<PreviewOutput>&)previewOutput)->Release();
 }
 
+void CameraFrameworkModuleTest::RegisterErrorCallback()
+{
+    std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
+    camInput->SetErrorCallback(callback);
+
+    EXPECT_EQ(g_camInputOnError, false);
+}
+
 bool CameraFrameworkModuleTest::IsSupportNow()
 {
     const char* deviveTypeString = GetDeviceType();
@@ -841,23 +981,7 @@ void CameraFrameworkModuleTest::SetUp()
 {
     SetUpInit();
     // set native token
-    uint64_t tokenId;
-    const char* perms[2];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.CAMERA";
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 2,
-        .aclsNum = 0,
-        .dcaps = NULL,
-        .perms = perms,
-        .acls = NULL,
-        .processName = "native_camera_tdd",
-        .aplStr = "system_basic",
-    };
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
-    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
+    SetNativeToken();
 
     manager_ = CameraManager::GetInstance();
     ASSERT_NE(manager_, nullptr);
@@ -873,26 +997,7 @@ void CameraFrameworkModuleTest::SetUp()
     std::vector<sptr<CameraDevice>> cameraObjList = camManagerObj->GetSupportedCameras();
     sptr<CameraOutputCapability> outputcapability = camManagerObj->GetSupportedOutputCapability(cameraObjList[0]);
 
-    previewProfiles.clear();
-    std::vector<Profile> tempPreviewProfiles = outputcapability->GetPreviewProfiles();
-    for (const auto& profile : tempPreviewProfiles) {
-        if ((profile.size_.width == PRVIEW_WIDTH_176 && profile.size_.height == PRVIEW_HEIGHT_144) ||
-            (profile.size_.width == PRVIEW_WIDTH_640 && profile.size_.height == PRVIEW_WIDTH_640) ||
-            (profile.size_.width == PRVIEW_WIDTH_4096 && profile.size_.height == PRVIEW_HEIGHT_3072) ||
-            (profile.size_.width == PRVIEW_WIDTH_4160 && profile.size_.height == PRVIEW_HEIGHT_3120) ||
-            (profile.size_.width == PRVIEW_WIDTH_8192 && profile.size_.height == PRVIEW_HEIGHT_6144)) {
-            MEDIA_DEBUG_LOG("SetUp skip previewProfile width:%{public}d height:%{public}d",
-                profile.size_.width, profile.size_.height);
-            continue;
-        }
-        previewProfiles.push_back(profile);
-    }
-
-    for (auto i : previewProfiles) {
-        MEDIA_DEBUG_LOG("SetUp previewProfiles width:%{public}d height:%{public}d", i.size_.width, i.size_.height);
-        previewFormats_.push_back(i.GetCameraFormat());
-        previewSizes_.push_back(i.GetSize());
-    }
+    ProcessPreviewProfiles(outputcapability);
     ASSERT_TRUE(!previewFormats_.empty());
     ASSERT_TRUE(!previewSizes_.empty());
     if (std::find(previewFormats_.begin(), previewFormats_.end(), CAMERA_FORMAT_YUV_420_SP) != previewFormats_.end()) {
@@ -924,20 +1029,7 @@ void CameraFrameworkModuleTest::SetUp()
     } else {
         videoFormat_ = videoFormats_[0];
     }
-    Size size = previewSizes_.back();
-    previewWidth_ = size.width;
-    previewHeight_ = size.height;
-    size = photoSizes_.back();
-    photoWidth_ = size.width;
-    photoHeight_ = size.height;
-    size = videoSizes_.back();
-    videoWidth_ = size.width;
-    videoHeight_ = size.height;
-
-    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
-    camInput->Open();
-    session_ = manager_->CreateCaptureSession();
-    ASSERT_NE(session_, nullptr);
+    ProcessSize();
 }
 
 void CameraFrameworkModuleTest::TearDown()
@@ -954,6 +1046,92 @@ void CameraFrameworkModuleTest::TearDown()
         input_->Release();
     }
     MEDIA_DEBUG_LOG("End of camera test case");
+}
+
+void CameraFrameworkModuleTest::SetNativeToken()
+{
+    uint64_t tokenId;
+    const char* perms[2];
+    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
+    perms[1] = "ohos.permission.CAMERA";
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 2,
+        .aclsNum = 0,
+        .dcaps = NULL,
+        .perms = perms,
+        .acls = NULL,
+        .processName = "native_camera_tdd",
+        .aplStr = "system_basic",
+    };
+    tokenId = GetAccessTokenId(&infoInstance);
+    SetSelfTokenID(tokenId);
+    OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
+}
+
+void CameraFrameworkModuleTest::ProcessPreviewProfiles(sptr<CameraOutputCapability>& outputcapability)
+{
+    previewProfiles.clear();
+    std::vector<Profile> tempPreviewProfiles = outputcapability->GetPreviewProfiles();
+    for (const auto& profile : tempPreviewProfiles) {
+        if ((profile.size_.width == PRVIEW_WIDTH_176 && profile.size_.height == PRVIEW_HEIGHT_144) ||
+            (profile.size_.width == PRVIEW_WIDTH_640 && profile.size_.height == PRVIEW_WIDTH_640) ||
+            (profile.size_.width == PRVIEW_WIDTH_4096 && profile.size_.height == PRVIEW_HEIGHT_3072) ||
+            (profile.size_.width == PRVIEW_WIDTH_4160 && profile.size_.height == PRVIEW_HEIGHT_3120) ||
+            (profile.size_.width == PRVIEW_WIDTH_8192 && profile.size_.height == PRVIEW_HEIGHT_6144)) {
+            MEDIA_DEBUG_LOG("SetUp skip previewProfile width:%{public}d height:%{public}d",
+                profile.size_.width, profile.size_.height);
+            continue;
+        }
+        previewProfiles.push_back(profile);
+    }
+
+    for (auto i : previewProfiles) {
+        MEDIA_DEBUG_LOG("SetUp previewProfiles width:%{public}d height:%{public}d", i.size_.width, i.size_.height);
+        previewFormats_.push_back(i.GetCameraFormat());
+        previewSizes_.push_back(i.GetSize());
+    }
+}
+
+void CameraFrameworkModuleTest::ProcessSize()
+{
+    Size size = previewSizes_.back();
+    previewWidth_ = size.width;
+    previewHeight_ = size.height;
+    size = photoSizes_.back();
+    photoWidth_ = size.width;
+    photoHeight_ = size.height;
+    size = videoSizes_.back();
+    videoWidth_ = size.width;
+    videoHeight_ = size.height;
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
+    camInput->Open();
+    session_ = manager_->CreateCaptureSession();
+    ASSERT_NE(session_, nullptr);
+}
+
+void CameraFrameworkModuleTest::ProcessPortraitSession(sptr<PortraitSession>& portraitSession,
+    sptr<CaptureOutput>& previewOutput)
+{
+    int32_t intResult = portraitSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = portraitSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    portraitSession->LockForControl();
+
+    std::vector<PortraitEffect> effects = portraitSession->GetSupportedPortraitEffects();
+    if (!effects.empty()) {
+        portraitSession->SetPortraitEffect(effects[0]);
+    }
+
+    portraitSession->UnlockForControl();
+
+    if (!effects.empty()) {
+        EXPECT_EQ(portraitSession->GetPortraitEffect(), effects[0]);
+    }
 }
 
 /*
@@ -2551,24 +2729,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_045, TestSize.Le
     sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profile);
     ASSERT_NE(previewOutput, nullptr);
 
-    intResult = portraitSession->AddOutput(previewOutput);
-    EXPECT_EQ(intResult, 0);
-
-    intResult = portraitSession->CommitConfig();
-    EXPECT_EQ(intResult, 0);
-
-    portraitSession->LockForControl();
-
-    std::vector<PortraitEffect> effects = portraitSession->GetSupportedPortraitEffects();
-    if (!effects.empty()) {
-        portraitSession->SetPortraitEffect(effects[0]);
-    }
-
-    portraitSession->UnlockForControl();
-
-    if (!effects.empty()) {
-        EXPECT_EQ(portraitSession->GetPortraitEffect(), effects[0]);
-    }
+    ProcessPortraitSession(portraitSession, previewOutput);
 
     intResult = portraitSession->Start();
     EXPECT_EQ(intResult, 0);
@@ -2814,6 +2975,445 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_048, TestSize.Le
     portraitSession->Stop();
 }
 
+/* Feature: Framework
+ * Function: Test preview/video with profession session
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test preview/video with profession session
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_071, TestSize.Level0)
+{
+    SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
+    if (!IsSupportMode(sceneMode)) {
+        return;
+    }
+    sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(cameraManagerObj, nullptr);
+
+    std::vector<SceneMode> sceneModes = cameraManagerObj->GetSupportedModes(cameras_[0]);
+    ASSERT_TRUE(sceneModes.size() != 0);
+
+    sptr<CameraOutputCapability> modeAbility =
+        cameraManagerObj->GetSupportedOutputCapability(cameras_[0], sceneMode);
+    ASSERT_NE(modeAbility, nullptr);
+
+    SelectProfiles wanted;
+    wanted.preview.size_ = {640, 480};
+    wanted.preview.format_ = CAMERA_FORMAT_RGBA_8888;
+    wanted.video.size_ = {640, 480};
+    wanted.video.format_ = CAMERA_FORMAT_RGBA_8888;
+    wanted.video.framerates_ = {30, 30};
+
+    SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
+    ASSERT_NE(profiles.preview.format_, -1);
+    ASSERT_NE(profiles.video.format_, -1);
+
+    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(session, nullptr);
+
+    int32_t intResult = session->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profiles.preview);
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(profiles.video);
+    ASSERT_NE(videoOutput, nullptr);
+
+    intResult = session->AddOutput(videoOutput);
+    EXPECT_EQ(intResult, 0);
+
+
+    intResult = session->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_RECORDING);
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Stop();
+    session->Stop();
+}
+
+/* Feature: Framework
+ * Function: Test profession session metering mode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test profession session metering mode
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_072, TestSize.Level0)
+{
+    SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
+    if (!IsSupportMode(sceneMode)) {
+        return;
+    }
+    sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(cameraManagerObj, nullptr);
+
+    std::vector<SceneMode> sceneModes = cameraManagerObj->GetSupportedModes(cameras_[0]);
+    ASSERT_TRUE(sceneModes.size() != 0);
+
+    sptr<CameraOutputCapability> modeAbility =
+        cameraManagerObj->GetSupportedOutputCapability(cameras_[0], sceneMode);
+    ASSERT_NE(modeAbility, nullptr);
+
+    SelectProfiles wanted;
+    wanted.preview.size_ = {640, 480};
+    wanted.preview.format_ = CAMERA_FORMAT_RGBA_8888;
+    wanted.video.size_ = {640, 480};
+    wanted.video.format_ = CAMERA_FORMAT_RGBA_8888;
+    wanted.video.framerates_ = {30, 30};
+
+    SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
+    ASSERT_NE(profiles.preview.format_, -1);
+    ASSERT_NE(profiles.video.format_, -1);
+
+    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(session, nullptr);
+
+    int32_t intResult = session->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profiles.preview);
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(profiles.video);
+    ASSERT_NE(videoOutput, nullptr);
+
+    intResult = session->AddOutput(videoOutput);
+    EXPECT_EQ(intResult, 0);
+
+
+    intResult = session->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+    std::vector<MeteringMode> modes = {};
+    intResult = session->GetSupportedMeteringModes(modes);
+    EXPECT_EQ(intResult, 0);
+    EXPECT_NE(modes.size(), 0);
+
+    intResult = session->SetMeteringMode(modes[0]);
+    EXPECT_EQ(intResult, 0);
+    MeteringMode meteringMode = METERING_MODE_CENTER_WEIGHTED;
+    intResult = session->GetMeteringMode(meteringMode);
+    EXPECT_EQ(intResult, 0);
+
+    EXPECT_EQ(meteringMode, modes[0]);
+    intResult = session->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_RECORDING);
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Stop();
+    session->Stop();
+}
+
+/* Feature: Framework
+ * Function: Test profession session focus Assist flash mode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test profession session focus Assist flash mode
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_073, TestSize.Level0)
+{
+    SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
+    if (!IsSupportMode(sceneMode)) {
+        return;
+    }
+    sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(cameraManagerObj, nullptr);
+
+    std::vector<SceneMode> sceneModes = cameraManagerObj->GetSupportedModes(cameras_[0]);
+    ASSERT_TRUE(sceneModes.size() != 0);
+
+    sptr<CameraOutputCapability> modeAbility =
+        cameraManagerObj->GetSupportedOutputCapability(cameras_[0], sceneMode);
+    ASSERT_NE(modeAbility, nullptr);
+
+    SelectProfiles wanted;
+    wanted.preview.size_ = {640, 480};
+    wanted.preview.format_ = CAMERA_FORMAT_RGBA_8888;
+    wanted.video.size_ = {640, 480};
+    wanted.video.format_ = CAMERA_FORMAT_RGBA_8888;
+    wanted.video.framerates_ = {30, 30};
+
+    SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
+    ASSERT_NE(profiles.preview.format_, -1);
+    ASSERT_NE(profiles.video.format_, -1);
+
+    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(session, nullptr);
+
+    int32_t intResult = session->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profiles.preview);
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(profiles.video);
+    ASSERT_NE(videoOutput, nullptr);
+
+    intResult = session->AddOutput(videoOutput);
+    EXPECT_EQ(intResult, 0);
+
+
+    intResult = session->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+    std::vector<FocusAssistFlashMode> modes = {};
+    intResult = session->GetSupportedFocusAssistFlashModes(modes);
+    EXPECT_EQ(intResult, 0);
+    EXPECT_NE(modes.size(), 0);
+
+    intResult = session->SetFocusAssistFlashMode(modes[0]);
+    EXPECT_EQ(intResult, 0);
+    FocusAssistFlashMode mode;
+    intResult = session->GetFocusAssistFlashMode(mode);
+    EXPECT_EQ(intResult, 0);
+
+    EXPECT_EQ(mode, modes[0]);
+    intResult = session->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_RECORDING);
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Stop();
+    session->Stop();
+}
+
+/* Feature: Framework
+ * Function: Test profession session exposure hint mode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test profession session exposure hint mode
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_074, TestSize.Level0)
+{
+    SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
+    if (!IsSupportMode(sceneMode)) {
+        return;
+    }
+    sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(cameraManagerObj, nullptr);
+
+    std::vector<SceneMode> sceneModes = cameraManagerObj->GetSupportedModes(cameras_[0]);
+    ASSERT_TRUE(sceneModes.size() != 0);
+
+    sptr<CameraOutputCapability> modeAbility =
+        cameraManagerObj->GetSupportedOutputCapability(cameras_[0], sceneMode);
+    ASSERT_NE(modeAbility, nullptr);
+
+    SelectProfiles wanted;
+    wanted.preview.size_ = {640, 480};
+    wanted.preview.format_ = CAMERA_FORMAT_RGBA_8888;
+    wanted.video.size_ = {640, 480};
+    wanted.video.format_ = CAMERA_FORMAT_RGBA_8888;
+    wanted.video.framerates_ = {30, 30};
+
+    SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
+    ASSERT_NE(profiles.preview.format_, -1);
+    ASSERT_NE(profiles.video.format_, -1);
+
+    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(session, nullptr);
+
+    int32_t intResult = session->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profiles.preview);
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(profiles.video);
+    ASSERT_NE(videoOutput, nullptr);
+
+    intResult = session->AddOutput(videoOutput);
+    EXPECT_EQ(intResult, 0);
+
+
+    intResult = session->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+    std::vector<ExposureHintMode> modes = {};
+    intResult = session->GetSupportedExposureHintModes(modes);
+    EXPECT_EQ(intResult, 0);
+    EXPECT_NE(modes.size(), 0);
+
+    session->LockForControl();
+    intResult = session->SetExposureHintMode(modes[0]);
+    EXPECT_EQ(intResult, 0);
+    session->UnlockForControl();
+
+    ExposureHintMode mode;
+    intResult = session->GetExposureHintMode(mode);
+    EXPECT_EQ(intResult, 0);
+
+    EXPECT_EQ(mode, modes[0]);
+    intResult = session->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_RECORDING);
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Stop();
+    session->Stop();
+}
+/*
+* Feature: Framework
+* Function: Test manual_iso_props && auto_awb_props && manual_awb_props
+* SubFunction: NA
+* FunctionPoints: NA
+* EnvConditions: NA
+* CaseDescription: test manual_iso_props && auto_awb_props && manual_awb_props
+*/
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_075, TestSize.Level0)
+{
+    SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
+    if (!IsSupportMode(sceneMode)) {
+        return;
+    }
+    sptr<CameraManager> modeManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(modeManagerObj, nullptr);
+
+    std::vector<SceneMode> sceneModes = modeManagerObj->GetSupportedModes(cameras_[0]);
+    ASSERT_TRUE(sceneModes.size() != 0);
+
+    sptr<CameraOutputCapability> modeAbility =
+        modeManagerObj->GetSupportedOutputCapability(cameras_[0], sceneMode);
+    ASSERT_NE(modeAbility, nullptr);
+
+    SelectProfiles wanted;
+    wanted.preview.size_ = {640, 480};
+    wanted.preview.format_ = CAMERA_FORMAT_RGBA_8888;
+
+    wanted.video.size_ = {640, 480};
+    wanted.video.format_ = CAMERA_FORMAT_RGBA_8888;
+    wanted.video.framerates_ = {30, 30};
+
+    SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
+    ASSERT_NE(profiles.preview.format_, -1);
+    ASSERT_NE(profiles.video.format_, -1);
+
+    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(sceneMode);
+    ASSERT_NE(captureSession, nullptr);
+
+    sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(session, nullptr);
+
+    int32_t intResult = session->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profiles.preview);
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(profiles.video);
+    ASSERT_NE(videoOutput, nullptr);
+
+    intResult = session->AddOutput(videoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    bool isSupported = session->IsManualIsoSupported();
+    if (isSupported) {
+        std::vector<int32_t> isoRange;
+        session->GetIsoRange(isoRange);
+        ASSERT_EQ(isoRange.empty(), false);
+        session->LockForControl();
+        intResult = session->SetISO(isoRange[1]+1);
+        EXPECT_NE(intResult, 0);
+        session->UnlockForControl();
+
+        session->LockForControl();
+        intResult = session->SetISO(isoRange[1]);
+        EXPECT_EQ(intResult, 0);
+        session->UnlockForControl();
+
+        int32_t iso;
+        session->GetISO(iso);
+        EXPECT_EQ(isoRange[1], iso);
+    }
+
+    std::vector<WhiteBalanceMode> supportedWhiteBalanceModes;
+    session->GetSupportedWhiteBalanceModes(supportedWhiteBalanceModes);
+    if (!supportedWhiteBalanceModes.empty()) {
+        session->IsWhiteBalanceModeSupported(supportedWhiteBalanceModes[0], isSupported);
+        ASSERT_EQ(isSupported, true);
+        session->LockForControl();
+        intResult = session->SetWhiteBalanceMode(supportedWhiteBalanceModes[0]);
+        ASSERT_EQ(isSupported, 0);
+        session->UnlockForControl();
+        WhiteBalanceMode currentMode;
+        session->GetWhiteBalanceMode(currentMode);
+        ASSERT_EQ(currentMode, supportedWhiteBalanceModes[0]);
+    }
+
+    session->IsManualWhiteBalanceSupported(isSupported);
+    std::vector<int32_t> whiteBalanceRange;
+    if (isSupported) {
+        session->GetManualWhiteBalanceRange(whiteBalanceRange);
+        ASSERT_EQ(whiteBalanceRange.size() == 2, true);
+
+        session->LockForControl();
+        intResult = session->SetManualWhiteBalance(whiteBalanceRange[0] - 1);
+        session->UnlockForControl();
+
+        int32_t wbValue;
+        session->GetManualWhiteBalance(wbValue);
+        ASSERT_EQ(wbValue, whiteBalanceRange[0]);
+    } else {
+        session->GetManualWhiteBalanceRange(whiteBalanceRange);
+        ASSERT_EQ(whiteBalanceRange.size() < 2, true);
+    }
+}
+
 /*
  * Feature: Framework
  * Function: Test Scan Session add output
@@ -3046,6 +3646,45 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_054, TestSi
     float zoomRatio = scanSession_->GetZoomRatio();
     int32_t zoomRatioGet = scanSession_->GetZoomRatio(zoomRatio);
     EXPECT_EQ(zoomRatioGet, 0);
+
+    ((sptr<PreviewOutput> &) previewOutput_1)->Release();
+    ((sptr<PreviewOutput> &) previewOutput_2)->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test scan session report brightness status
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test scan session report brightness status
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_055, TestSize.Level0)
+{
+    if (!IsSupportNow()) {
+        return;
+    }
+    sptr<CaptureOutput> previewOutput_1;
+    sptr<CaptureOutput> previewOutput_2;
+    ConfigScanSession(previewOutput_1, previewOutput_2);
+
+    auto scanSession = static_cast<ScanSession*>(scanSession_.GetRefPtr());
+    bool isSupported = scanSession->IsBrightnessStatusSupported();
+    EXPECT_EQ(isSupported, true);
+
+    std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
+    scanSession->RegisterBrightnessStatusCallback(callback);
+
+    int32_t intResult = scanSession->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    EXPECT_EQ(g_brightnessStatusChanged, true);
+
+    scanSession->UnRegisterBrightnessStatusCallback();
+    intResult = scanSession->Stop();
+    EXPECT_EQ(intResult, 0);
 
     ((sptr<PreviewOutput> &) previewOutput_1)->Release();
     ((sptr<PreviewOutput> &) previewOutput_2)->Release();
@@ -9028,6 +9667,208 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_070, TestSize.Le
     sleep(WAIT_TIME_AFTER_START);
 
     intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test super macro photo session.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test super macro photo session.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_071, TestSize.Level0)
+{
+    auto previewProfile = GetSketchPreviewProfile();
+    if (previewProfile == nullptr) {
+        EXPECT_EQ(previewProfile.get(), nullptr);
+        return;
+    }
+    auto output = CreatePreviewOutput(*previewProfile);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
+    ASSERT_NE(output, nullptr);
+
+    session_ = manager_->CreateCaptureSession(SceneMode::CAPTURE_MACRO);
+    int32_t intResult = session_->BeginConfig();
+
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(output);
+    EXPECT_EQ(intResult, 0);
+
+    bool isSketchSupported = previewOutput->IsSketchSupported();
+    EXPECT_TRUE(isSketchSupported);
+    if (!isSketchSupported) {
+        return;
+    }
+
+    previewOutput->EnableSketch(true);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    float sketchRatio = previewOutput->GetSketchRatio();
+    EXPECT_GT(sketchRatio, 0);
+
+    intResult = previewOutput->AttachSketchSurface(CreateSketchSurface(previewProfile->GetCameraFormat()));
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test super macro video session.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test super macro video session.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_072, TestSize.Level0)
+{
+    auto previewProfile = GetSketchPreviewProfile();
+    if (previewProfile == nullptr) {
+        EXPECT_EQ(previewProfile.get(), nullptr);
+        return;
+    }
+    auto output = CreatePreviewOutput(*previewProfile);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)output;
+    ASSERT_NE(output, nullptr);
+
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+
+    session_ = manager_->CreateCaptureSession(SceneMode::VIDEO_MACRO);
+    int32_t intResult = session_->BeginConfig();
+
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(output);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddOutput(videoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    bool isSketchSupported = previewOutput->IsSketchSupported();
+    EXPECT_TRUE(isSketchSupported);
+    if (!isSketchSupported) {
+        return;
+    }
+
+    previewOutput->EnableSketch(true);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    float sketchRatio = previewOutput->GetSketchRatio();
+    EXPECT_GT(sketchRatio, 0);
+
+    intResult = previewOutput->AttachSketchSurface(CreateSketchSurface(previewProfile->GetCameraFormat()));
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test high-res photo session.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test high-res photo session capture.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_073, TestSize.Level0)
+{
+    if (!IsSupportNow()) {
+        return;
+    }
+    sptr<CaptureOutput> previewOutput;
+    sptr<CaptureOutput> photoOutput;
+    ConfigHighResSession(previewOutput, photoOutput);
+ 
+    int32_t intResult = ((sptr<PreviewOutput>&)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+ 
+    sleep(WAIT_TIME_AFTER_START);
+ 
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
+    EXPECT_EQ(intResult, 0);
+ 
+    sleep(WAIT_TIME_AFTER_START);
+ 
+    intResult = ((sptr<PreviewOutput>&)previewOutput)->Stop();
+    EXPECT_EQ(intResult, 0);
+ 
+    intResult = highResSession_->Release();
+    EXPECT_EQ(intResult, 0);
+}
+ 
+/*
+ * Feature: Framework
+ * Function: Test high-res photo session.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test high-res photo session setFocusPoint.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_074, TestSize.Level0)
+{
+    if (!IsSupportNow()) {
+        return;
+    }
+    sptr<CaptureOutput> previewOutput;
+    sptr<CaptureOutput> photoOutput;
+    ConfigHighResSession(previewOutput, photoOutput);
+ 
+    Point point = { 1, 1 };
+    highResSession_->LockForControl();
+    int32_t setFocusMode = highResSession_->SetFocusPoint(point);
+    EXPECT_EQ(setFocusMode, 0);
+    highResSession_->UnlockForControl();
+ 
+    Point focusPointGet = highResSession_->GetFocusPoint();
+    EXPECT_EQ(focusPointGet.x, 1);
+    EXPECT_EQ(focusPointGet.y, 1);
+ 
+    int32_t intResult = ((sptr<PreviewOutput>&)previewOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+ 
+    sleep(WAIT_TIME_AFTER_START);
+ 
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
+    EXPECT_EQ(intResult, 0);
+ 
+    sleep(WAIT_TIME_AFTER_START);
+ 
+    intResult = ((sptr<PreviewOutput>&)previewOutput)->Stop();
+    EXPECT_EQ(intResult, 0);
+ 
+    intResult = highResSession_->Release();
     EXPECT_EQ(intResult, 0);
 }
 } // namespace CameraStandard

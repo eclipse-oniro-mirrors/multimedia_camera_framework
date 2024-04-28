@@ -40,7 +40,6 @@ int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::st
     } else {
         MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone not set!, Discarding callback");
     }
-    close(fd);
     munmap(addr, bytes);
     return 0;
 }

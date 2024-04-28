@@ -20,6 +20,7 @@
 #include "hcamera_service.h"
 #include "input/camera_manager.h"
 #include "output/sketch_wrapper.h"
+#include "portrait_session.h"
 
 namespace OHOS {
 namespace CameraStandard {

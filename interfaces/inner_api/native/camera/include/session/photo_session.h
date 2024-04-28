@@ -31,7 +31,7 @@ public:
      *
      * @param CaptureOutput to be added to session.
      */
-    bool CanAddOutput(sptr<CaptureOutput>& output, SceneMode modeName = SceneMode::CAPTURE) override;
+    bool CanAddOutput(sptr<CaptureOutput>& output) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

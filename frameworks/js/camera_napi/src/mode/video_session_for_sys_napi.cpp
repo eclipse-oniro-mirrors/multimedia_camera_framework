@@ -134,4 +134,4 @@ napi_value VideoSessionForSysNapi::VideoSessionForSysNapiConstructor(napi_env en
     return result;
 }
 } // namespace CameraStandard
-} // namespace OHOS
+} // namespace OHOS

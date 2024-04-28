@@ -158,23 +158,7 @@ napi_value DeferredPhotoProxyNapi::GetThumbnail(napi_env env, napi_callback_info
                     context->status = true;
                 }
             },
-            [](napi_env env, napi_status status, void* data) {
-                auto context = static_cast<DeferredPhotoProxAsyncContext*>(data);
-                void* fdAddr = context->objectInfo->deferredPhotoProxy_->GetFileDataAddr();
-                int32_t thumbnailWidth = context->objectInfo->deferredPhotoProxy_->GetWidth();
-                int32_t thumbnailHeight = context->objectInfo->deferredPhotoProxy_->GetHeight();
-                Media::InitializationOptions opts;
-                opts.srcPixelFormat = Media::PixelFormat::RGBA_8888;
-                opts.pixelFormat = Media::PixelFormat::RGBA_8888;
-                opts.size = { .width = thumbnailWidth, .height = thumbnailHeight };
-                MEDIA_INFO_LOG("thumbnailWidth:%{public}d, thumbnailheight: %{public}d",
-                    thumbnailWidth, thumbnailHeight);
-                auto pixelMap = Media::PixelMap::Create(static_cast<const uint32_t*>(fdAddr),
-                    thumbnailWidth * thumbnailHeight * 4, 0, thumbnailWidth, opts, true);
-                napi_value thumbnail = Media::PixelMapNapi::CreatePixelMap(env, std::move(pixelMap));
-                napi_resolve_deferred(env, context->deferred, thumbnail);
-                napi_delete_async_work(env, context->work);
-            }, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+            DeferredPhotoAsyncTaskComplete, static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for DeferredPhotoProxyNapi::GetThumbnail");
             napi_get_undefined(env, &result);
@@ -186,6 +170,25 @@ napi_value DeferredPhotoProxyNapi::GetThumbnail(napi_env env, napi_callback_info
         MEDIA_ERR_LOG("GetThumbnail call Failed!");
     }
     return result;
+}
+
+void DeferredPhotoProxyNapi::DeferredPhotoAsyncTaskComplete(napi_env env, napi_status status, void* data)
+{
+    auto context = static_cast<DeferredPhotoProxAsyncContext*>(data);
+    void* fdAddr = context->objectInfo->deferredPhotoProxy_->GetFileDataAddr();
+    int32_t thumbnailWidth = context->objectInfo->deferredPhotoProxy_->GetWidth();
+    int32_t thumbnailHeight = context->objectInfo->deferredPhotoProxy_->GetHeight();
+    Media::InitializationOptions opts;
+    opts.srcPixelFormat = Media::PixelFormat::RGBA_8888;
+    opts.pixelFormat = Media::PixelFormat::RGBA_8888;
+    opts.size = { .width = thumbnailWidth, .height = thumbnailHeight };
+    MEDIA_INFO_LOG("thumbnailWidth:%{public}d, thumbnailheight: %{public}d",
+        thumbnailWidth, thumbnailHeight);
+    auto pixelMap = Media::PixelMap::Create(static_cast<const uint32_t*>(fdAddr),
+        thumbnailWidth * thumbnailHeight * 4, 0, thumbnailWidth, opts, true);
+    napi_value thumbnail = Media::PixelMapNapi::CreatePixelMap(env, std::move(pixelMap));
+    napi_resolve_deferred(env, context->deferred, thumbnail);
+    napi_delete_async_work(env, context->work);
 }
 
 napi_value DeferredPhotoProxyNapi::Release(napi_env env, napi_callback_info info)

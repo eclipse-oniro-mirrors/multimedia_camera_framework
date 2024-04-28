@@ -60,7 +60,6 @@ ohos_shared_library("deferred_processing_service") {
     cfi = true
     cfi_cross_dso = true
     debug = false
-    blocklist = "../../cfi_blocklist.txt"
   }
 
   include_dirs = [

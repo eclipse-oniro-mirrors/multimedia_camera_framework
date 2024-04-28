@@ -116,9 +116,14 @@ void CameraDevice::init(common_metadata_header_t* metadata)
         }
     }
 
+    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_SENSOR_ORIENTATION, &item);
+    if (ret == CAM_META_SUCCESS) {
+        cameraOrientation_ = item.data.i32[0];
+    }
     MEDIA_INFO_LOG("camera position: %{public}d, camera type: %{public}d, camera connection type: %{public}d, "
-                    "Mirror Supported: %{public}d , camera foldScreen type: %{public}d",
-                   cameraPosition_, cameraType_, connectionType_, isMirrorSupported_, foldScreenType_);
+                   "Mirror Supported: %{public}d, camera foldScreen type: %{public}d, camera orientation: %{public}d",
+                   cameraPosition_, cameraType_, connectionType_, isMirrorSupported_, foldScreenType_,
+                   cameraOrientation_);
 }
 
 std::string CameraDevice::GetID()
@@ -181,6 +186,11 @@ std::string CameraDevice::GetNetWorkId()
     return dmDeviceInfo_.networkId;
 }
 
+uint32_t CameraDevice::GetCameraOrientation()
+{
+    return cameraOrientation_;
+}
+
 bool CameraDevice::IsMirrorSupported()
 {
     return isMirrorSupported_;
@@ -235,7 +245,7 @@ std::vector<float> CameraDevice::GetExposureBiasRange()
     uint32_t biasRangeCount = 2;
     camera_metadata_item_t item;
     auto metadata = GetMetadata();
-    ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AE_COMPENSATION_RANGE, &item);
+    ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AE_COMPENSATION_RANGE, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("Failed to get exposure compensation range with return code %{public}d", ret);
         return {};

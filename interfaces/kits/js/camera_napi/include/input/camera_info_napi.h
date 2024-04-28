@@ -46,7 +46,7 @@ private:
     static napi_value GetConnectionType(napi_env env, napi_callback_info info);
     static napi_value GetHostDeviceName(napi_env env, napi_callback_info info);
     static napi_value GetHostDeviceType(napi_env env, napi_callback_info info);
-
+    static napi_value GetCameraOrientation(napi_env env, napi_callback_info info);
     napi_env env_;
     napi_ref wrapper_;
 

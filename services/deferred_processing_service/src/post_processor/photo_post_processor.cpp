@@ -410,6 +410,11 @@ bool PhotoPostProcessor::ConnectServiceIfNecessary()
         return false;
     }
     imageProcessServiceProxy->CreateImageProcessSession(userId_, listener_, imageProcessSession_);
+    if (imageProcessSession_ == nullptr) {
+        DP_INFO_LOG("Failed to CreateImageProcessSession");
+        ScheduleConnectService();
+        return false;
+    }
     const sptr<IRemoteObject> &remote =
         OHOS::HDI::hdi_objcast<OHOS::HDI::Camera::V1_2::IImageProcessSession>(imageProcessSession_);
     bool result = remote->AddDeathRecipient(sessionDeathRecipient_);

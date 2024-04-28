@@ -701,24 +701,7 @@ napi_value VideoOutputNapi::SetFrameRateRange(napi_env env, napi_callback_info i
         CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "SetFrameRateRange");
         status = napi_create_async_work(
             env, nullptr, resource,
-            [](napi_env env, void* data) {
-                auto context = static_cast<VideoOutputAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "VideoOutputNapi::SetFrameRateRange";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(videoOutputTaskId);
-                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
-                    context->bRetBool = false;
-                    bool isValidRange = isFrameRateRangeAvailable(env, data);
-                    if (!isValidRange) {
-                        context->status = true;
-                    } else {
-                        MEDIA_ERR_LOG("Failed to get range values for SetFrameRateRange");
-                        context->errorMsg = "Failed to get range values for SetFrameRateRange";
-                    }
-                }
-            },
+            SetFrameRateRangeAsyncTask,
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for SetFrameRateRange");
@@ -731,6 +714,26 @@ napi_value VideoOutputNapi::SetFrameRateRange(napi_env env, napi_callback_info i
         MEDIA_ERR_LOG("SetFrameRateRange call Failed!");
     }
     return result;
+}
+
+void VideoOutputNapi::SetFrameRateRangeAsyncTask(napi_env env, void* data)
+{
+    auto context = static_cast<VideoOutputAsyncContext*>(data);
+    context->status = false;
+    // Start async trace
+    context->funcName = "VideoOutputNapi::SetFrameRateRange";
+    context->taskId = CameraNapiUtils::IncreamentAndGet(videoOutputTaskId);
+    CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
+    if (context->objectInfo != nullptr) {
+        context->bRetBool = false;
+        bool isValidRange = isFrameRateRangeAvailable(env, data);
+        if (!isValidRange) {
+            context->status = true;
+        } else {
+            MEDIA_ERR_LOG("Failed to get range values for SetFrameRateRange");
+            context->errorMsg = "Failed to get range values for SetFrameRateRange";
+        }
+    }
 }
 
 napi_value VideoOutputNapi::Release(napi_env env, napi_callback_info info)

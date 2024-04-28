@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,9 +21,30 @@
  
 namespace OHOS {
 namespace CameraStandard {
+
+class BrightnessStatusCallback {
+public:
+    BrightnessStatusCallback() = default;
+    virtual ~BrightnessStatusCallback() = default;
+    virtual void OnBrightnessStatusChanged(bool state) = 0;
+};
+
 class ScanSession : public CaptureSession {
 public:
-    explicit ScanSession(sptr<ICaptureSession> &ScanSession): CaptureSession(ScanSession) {}
+    class ScanSessionMetadataResultProcessor : public MetadataResultProcessor {
+    public:
+        explicit ScanSessionMetadataResultProcessor(wptr<ScanSession> session) : session_(session) {}
+        void ProcessCallbacks(
+            const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result) override;
+
+    private:
+        wptr<ScanSession> session_;
+    };
+
+    explicit ScanSession(sptr<ICaptureSession> &ScanSession): CaptureSession(ScanSession)
+    {
+        metadataResultProcessor_ = std::make_shared<ScanSessionMetadataResultProcessor>(this);
+    }
     ~ScanSession();
  
     int32_t AddOutput(sptr<CaptureOutput> &output) override;
@@ -33,7 +54,23 @@ public:
      *
      * @param CaptureOutput to be added to session.
      */
-    bool CanAddOutput(sptr<CaptureOutput>& output, SceneMode modeName = SceneMode::SCAN) override;
+    bool CanAddOutput(sptr<CaptureOutput>& output) override;
+
+    bool IsBrightnessStatusSupported();
+
+    void RegisterBrightnessStatusCallback(std::shared_ptr<BrightnessStatusCallback> brightnessStatusCallback);
+
+    void UnRegisterBrightnessStatusCallback();
+
+private:
+    void SetBrightnessStatusReport(uint8_t state);
+
+    void ProcessBrightnessStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+
+private:
+    std::shared_ptr<BrightnessStatusCallback> brightnessStatusCallback_;
+    bool lastBrightnessStatus_ = false;
+    bool firstBrightnessStatusCome_ = false;
 };
 } // namespace CameraStandard
 } // namespace OHOS

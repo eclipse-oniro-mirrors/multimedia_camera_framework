@@ -33,7 +33,7 @@ HStreamCapture::HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t for
 {
     MEDIA_INFO_LOG(
         "HStreamCapture::HStreamCapture construct, format:%{public}d size:%{public}dx%{public}d streamId:%{public}d",
-        format, width, height, GetStreamId());
+        format, width, height, GetFwkStreamId());
     thumbnailSwitch_ = 0;
     modeName_ = 0;
     deferredPhotoSwitch_ = 0;
@@ -44,13 +44,13 @@ HStreamCapture::~HStreamCapture()
 {
     MEDIA_INFO_LOG(
         "HStreamCapture::~HStreamCapture deconstruct, format:%{public}d size:%{public}dx%{public}d streamId:%{public}d",
-        format_, width_, height_, GetStreamId());
+        format_, width_, height_, GetFwkStreamId());
 }
 
 int32_t HStreamCapture::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
-    MEDIA_INFO_LOG("HStreamCapture::LinkInput streamId:%{public}d", GetStreamId());
+    MEDIA_INFO_LOG("HStreamCapture::LinkInput streamId:%{public}d", GetFwkStreamId());
     return HStreamCommon::LinkInput(streamOperator, cameraAbility);
 }
 
@@ -60,13 +60,23 @@ void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
     streamInfo.v1_0.intent_ = STILL_CAPTURE;
     streamInfo.v1_0.encodeType_ = ENCODE_TYPE_JPEG;
     HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo;
-    extendedStreamInfo.type = HDI::Camera::V1_1::EXTENDED_STREAM_INFO_QUICK_THUMBNAIL;
-    extendedStreamInfo.bufferQueue = thumbnailBufferQueue_;
     // quickThumbnial do not need these param
     extendedStreamInfo.width = 0;
     extendedStreamInfo.height = 0;
     extendedStreamInfo.format = 0;
     extendedStreamInfo.dataspace = 0;
+    if (format_ == OHOS_CAMERA_FORMAT_DNG) {
+        MEDIA_INFO_LOG("HStreamCapture::SetStreamInfo Set DNG info, streamId:%{public}d", GetFwkStreamId());
+        extendedStreamInfo.type =
+            static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_RAW);
+        extendedStreamInfo.bufferQueue = rawBufferQueue_;
+        extendedStreamInfo.width = width_;
+        extendedStreamInfo.height = height_;
+        extendedStreamInfo.format = format_;
+    } else {
+        extendedStreamInfo.type = HDI::Camera::V1_1::EXTENDED_STREAM_INFO_QUICK_THUMBNAIL;
+        extendedStreamInfo.bufferQueue = thumbnailBufferQueue_;
+    }
     streamInfo.extendedStreamInfos = {extendedStreamInfo};
 }
 
@@ -82,6 +92,18 @@ int32_t HStreamCapture::SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferPro
     return CAMERA_OK;
 }
 
+
+int32_t HStreamCapture::SetRawPhotoStreamInfo(const sptr<OHOS::IBufferProducer> &producer)
+{
+    if (producer != nullptr) {
+        rawBufferQueue_ = new BufferProducerSequenceable(producer);
+    } else {
+        rawBufferQueue_ = nullptr;
+    }
+    MEDIA_DEBUG_LOG("HStreamCapture::SetRawPhotoStreamInfo rawBufferQueue whether is nullptr: %{public}d",
+        rawBufferQueue_ == nullptr);
+    return CAMERA_OK;
+}
 
 int32_t HStreamCapture::DeferImageDeliveryFor(int32_t type)
 {
@@ -103,7 +125,7 @@ int32_t HStreamCapture::DeferImageDeliveryFor(int32_t type)
 int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings)
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("HStreamCapture::Capture Entry, streamId:%{public}d", GetStreamId());
+    MEDIA_INFO_LOG("HStreamCapture::Capture Entry, streamId:%{public}d", GetFwkStreamId());
     auto streamOperator = GetStreamOperator();
     if (streamOperator == nullptr) {
         return CAMERA_INVALID_STATE;
@@ -127,38 +149,22 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         return ret;
     }
     CaptureInfo captureInfoPhoto;
-    captureInfoPhoto.streamIds_ = { GetStreamId() };
-    if (!OHOS::Camera::GetCameraMetadataItemCount(captureSettings->get())) {
-        std::lock_guard<std::mutex> lock(cameraAbilityLock_);
-        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, captureInfoPhoto.captureSetting_);
-    } else {
-        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(captureSettings, captureInfoPhoto.captureSetting_);
-    }
-    captureInfoPhoto.enableShutterCallback_ = true;
-    // debug log for jpeg quality
-    std::shared_ptr<OHOS::Camera::CameraMetadata> captureMetadataSetting_ = nullptr;
-    OHOS::Camera::MetadataUtils::ConvertVecToMetadata(captureInfoPhoto.captureSetting_, captureMetadataSetting_);
-    if (captureMetadataSetting_ != nullptr) {
-        // print quality, mirror log
-        PrintDebugLog(captureMetadataSetting_);
-        // convert rotation with application set rotation
-        SetRotation(captureMetadataSetting_);
-
-        // update settings
-        std::vector<uint8_t> finalSetting;
-        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(captureMetadataSetting_, finalSetting);
-        captureInfoPhoto.captureSetting_ = finalSetting;
-    }
+    captureInfoPhoto.streamIds_ = { GetHdiStreamId() };
+    ProcessCaptureInfoPhoto(captureInfoPhoto, captureSettings);
+    
     auto callingTokenId = IPCSkeleton::GetCallingTokenID();
     const std::string permissionName = "ohos.permission.CAMERA";
     AddCameraPermissionUsedRecord(callingTokenId, permissionName);
 
     // report capture performance dfx
+    std::shared_ptr<OHOS::Camera::CameraMetadata> captureMetadataSetting_ = nullptr;
+    OHOS::Camera::MetadataUtils::ConvertVecToMetadata(captureInfoPhoto.captureSetting_, captureMetadataSetting_);
     DfxCaptureInfo captureInfo;
     captureInfo.captureId = preparedCaptureId;
     captureInfo.caller = CameraReportUtils::GetCallerInfo();
     CameraReportUtils::GetInstance().SetCapturePerfStartInfo(captureInfo);
     MEDIA_INFO_LOG("HStreamCapture::Capture Starting photo capture with capture ID: %{public}d", preparedCaptureId);
+    HStreamCommon::PrintCaptureDebugLog(captureMetadataSetting_);
     CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfoPhoto, false));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         ResetCaptureId();
@@ -171,13 +177,17 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     camera_position_enum_t cameraPosition = OHOS_CAMERA_POSITION_FRONT;
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
+        if (cameraAbility_ == nullptr) {
+            MEDIA_ERR_LOG("HStreamCapture::cameraAbility_ is null");
+            return CAMERA_INVALID_STATE;
+        }
         int32_t result = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_ABILITY_CAMERA_POSITION,
                                                               &item);
         if (result == CAM_META_SUCCESS && item.count > 0) {
             cameraPosition = static_cast<camera_position_enum_t>(item.data.u8[0]);
         }
     }
-    
+
     int32_t NightMode = 4;
     if (GetMode() == NightMode && cameraPosition == OHOS_CAMERA_POSITION_BACK) {
         return ret;
@@ -196,23 +206,26 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     return ret;
 }
 
-void HStreamCapture::PrintDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_)
+void HStreamCapture::ProcessCaptureInfoPhoto(CaptureInfo& captureInfoPhoto,
+    const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings)
 {
-    camera_metadata_item_t item;
-    int result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_QUALITY, &item);
-    if (result != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_JPEG_QUALITY tag");
+    if (!OHOS::Camera::GetCameraMetadataItemCount(captureSettings->get())) {
+        std::lock_guard<std::mutex> lock(cameraAbilityLock_);
+        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, captureInfoPhoto.captureSetting_);
     } else {
-        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_JPEG_QUALITY value = %{public}d", item.data.u8[0]);
+        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(captureSettings, captureInfoPhoto.captureSetting_);
     }
+    captureInfoPhoto.enableShutterCallback_ = true;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> captureMetadataSetting_ = nullptr;
+    OHOS::Camera::MetadataUtils::ConvertVecToMetadata(captureInfoPhoto.captureSetting_, captureMetadataSetting_);
+    if (captureMetadataSetting_ != nullptr) {
+        // convert rotation with application set rotation
+        SetRotation(captureMetadataSetting_);
 
-    // debug log for capture mirror
-    result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(),
-                                                   OHOS_CONTROL_CAPTURE_MIRROR, &item);
-    if (result != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_CAPTURE_MIRROR tag");
-    } else {
-        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_CAPTURE_MIRROR value = %{public}d", item.data.u8[0]);
+        // update settings
+        std::vector<uint8_t> finalSetting;
+        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(captureMetadataSetting_, finalSetting);
+        captureInfoPhoto.captureSetting_ = finalSetting;
     }
 }
 

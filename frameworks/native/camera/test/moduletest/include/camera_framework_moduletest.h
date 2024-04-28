@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -30,6 +30,12 @@
 
 namespace OHOS {
 namespace CameraStandard {
+typedef struct {
+    Profile preview;
+    Profile photo;
+    VideoProfile video;
+} SelectProfiles;
+
 class CameraFrameworkModuleTest : public testing::Test {
 public:
     static const int32_t PHOTO_DEFAULT_WIDTH = 1280;
@@ -51,6 +57,7 @@ public:
     sptr<PortraitSession> portraitSession_;
     sptr<CaptureSession> session_;
     sptr<CaptureSession> scanSession_;
+    sptr<CaptureSession> highResSession_;
     sptr<CaptureInput> input_;
     std::vector<sptr<CameraDevice>> cameras_;
     std::vector<CameraFormat> previewFormats_;
@@ -85,11 +92,16 @@ public:
     sptr<CaptureOutput> CreatePhotoOutput();
     sptr<CaptureOutput> CreateVideoOutput(int32_t width, int32_t height);
     sptr<CaptureOutput> CreateVideoOutput();
+    sptr<CaptureOutput> CreateVideoOutput(VideoProfile& profile);
     sptr<CaptureOutput> CreatePhotoOutput(Profile profile);
     void GetSupportedOutputCapability();
     Profile SelectProfileByRatioAndFormat(sptr<CameraOutputCapability>& modeAbility,
                                           float ratio, CameraFormat format);
+    SelectProfiles SelectWantedProfiles(sptr<CameraOutputCapability>& modeAbility, const SelectProfiles wanted);
     void ConfigScanSession(sptr<CaptureOutput> &previewOutput_1, sptr<CaptureOutput> &previewOutput_2);
+    void ConfigHighResSession(sptr<CaptureOutput> &previewOutput_1, sptr<CaptureOutput> &previewOutput_2);
+    void CreateHighResPhotoOutput(sptr<CaptureOutput> &previewOutput, sptr<CaptureOutput> &photoOutput,
+                                  Profile previewProfile, Profile photoProfile);
     void ReleaseInput();
 
     void SetCameraParameters(sptr<CaptureSession> &session, bool video);
@@ -104,6 +116,13 @@ public:
     bool IsSupportMode(SceneMode mode);
 
     std::shared_ptr<Profile> GetSketchPreviewProfile();
+
+private:
+    void RegisterErrorCallback();
+    void SetNativeToken();
+    void ProcessPreviewProfiles(sptr<CameraOutputCapability>& outputcapability);
+    void ProcessSize();
+    void ProcessPortraitSession(sptr<PortraitSession>& portraitSession, sptr<CaptureOutput>& previewOutput);
 };
 } // CameraStandard
 } // OHOS

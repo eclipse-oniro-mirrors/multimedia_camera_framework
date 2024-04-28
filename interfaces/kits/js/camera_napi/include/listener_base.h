@@ -40,7 +40,7 @@ public:
 protected:
     napi_env env_ = nullptr;
 
-private:
+protected:
     mutable std::mutex baseCbListMutex_;
     mutable std::vector<std::shared_ptr<AutoRef>> baseCbList_;
 };

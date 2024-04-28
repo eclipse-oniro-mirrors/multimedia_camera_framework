@@ -115,8 +115,29 @@ private:
     void UpdateJSCallbackAsync(sptr<Surface> photoSurface) const;
     void ExecutePhoto(sptr<SurfaceBuffer> surfaceBfuffer) const;
     void ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) const;
+    void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const;
     napi_ref capturePhotoCb_;
     napi_ref captureDeferredPhotoCb_;
+};
+
+class RawPhotoListener : public IBufferConsumerListener {
+public:
+    explicit RawPhotoListener(napi_env env, const sptr<Surface> rawPhotoSurface);
+    ~RawPhotoListener() = default;
+    void OnBufferAvailable() override;
+    void SaveCallbackReference(const std::string &eventType, napi_value callback);
+    void RemoveCallbackRef(napi_env env, napi_value callback, const std::string &eventType);
+    void RemoveAllCallbacks(const std::string &eventType);
+
+private:
+    std::mutex mutex_;
+    napi_env env_;
+    sptr<Surface> rawPhotoSurface_;
+    shared_ptr<PhotoBufferProcessor> bufferProcessor_;
+    void UpdateJSCallback(sptr<Surface> rawPhotoSurface) const;
+    void UpdateJSCallbackAsync(sptr<Surface> rawPhotoSurface) const;
+    void ExecuteRawPhoto(sptr<SurfaceBuffer> rawPhotoSurface) const;
+    napi_ref captureRawPhotoCb_;
 };
 
 class PhotoOutputCallback : public PhotoStateCallback, public std::enable_shared_from_this<PhotoOutputCallback> {
@@ -199,6 +220,16 @@ struct PhotoListenerInfo {
     {}
 };
 
+struct RawPhotoListenerInfo {
+    sptr<Surface> rawPhotoSurface_;
+    const RawPhotoListener* listener_;
+    RawPhotoListenerInfo(sptr<Surface> rawPhotoSurface, const RawPhotoListener* listener)
+        : rawPhotoSurface_(rawPhotoSurface), listener_(listener)
+    {}
+};
+
+struct PhotoOutputAsyncContext;
+
 class PhotoOutputNapi : public CameraNapiEventEmitter<PhotoOutputNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
@@ -234,6 +265,10 @@ public:
 private:
     static void PhotoOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value PhotoOutputNapiConstructor(napi_env env, napi_callback_info info);
+
+    static void ProcessContext(PhotoOutputAsyncContext* context);
+    static void ProcessAsyncContext(napi_status status, napi_env env, napi_value result,
+        unique_ptr<PhotoOutputAsyncContext> asyncContext);
 
     void RegisterQuickThumbnailCallbackListener(
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
@@ -287,6 +322,7 @@ private:
     bool isDeferredPhotoEnabled_ = false;
     sptr<ThumbnailListener> thumbnailListener_;
     sptr<PhotoListener> photoListener_;
+    sptr<RawPhotoListener> rawPhotoListener_;
     std::shared_ptr<PhotoOutputCallback> photoOutputCallback_;
     static thread_local uint32_t photoOutputTaskId;
 };

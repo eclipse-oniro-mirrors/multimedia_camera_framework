@@ -43,24 +43,25 @@ HStreamRepeat::HStreamRepeat(
 {
     MEDIA_INFO_LOG("HStreamRepeat::HStreamRepeat construct, format:%{public}d size:%{public}dx%{public}d "
                    "repeatType:%{public}d, streamId:%{public}d",
-        format, width, height, type, GetStreamId());
+        format, width, height, type, GetFwkStreamId());
 }
 
 HStreamRepeat::~HStreamRepeat()
 {
     MEDIA_INFO_LOG("HStreamRepeat::~HStreamRepeat deconstruct, format:%{public}d size:%{public}dx%{public}d "
-                   "repeatType:%{public}d, streamId:%{public}d",
-        format_, width_, height_, repeatStreamType_, GetStreamId());
+                   "repeatType:%{public}d, streamId:%{public}d, hdiStreamId:%{public}d",
+        format_, width_, height_, repeatStreamType_, GetFwkStreamId(), GetHdiStreamId());
 }
 
 int32_t HStreamRepeat::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
     MEDIA_INFO_LOG(
-        "HStreamRepeat::LinkInput streamId:%{public}d ,repeatStreamType:%{public}d", GetStreamId(), repeatStreamType_);
+        "HStreamRepeat::LinkInput streamId:%{public}d ,repeatStreamType:%{public}d",
+        GetFwkStreamId(), repeatStreamType_);
     int32_t ret = HStreamCommon::LinkInput(streamOperator, cameraAbility);
     if (ret != CAMERA_OK) {
-        MEDIA_ERR_LOG("HStreamRepeat::LinkInput err, streamId:%{public}d ,err:%{public}d", GetStreamId(), ret);
+        MEDIA_ERR_LOG("HStreamRepeat::LinkInput err, streamId:%{public}d ,err:%{public}d", GetFwkStreamId(), ret);
         return ret;
     }
     if (repeatStreamType_ != RepeatStreamType::VIDEO) {
@@ -188,16 +189,18 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, captureSetting);
 
     CaptureInfo captureInfo;
-    captureInfo.streamIds_ = { GetStreamId() };
+    captureInfo.streamIds_ = { GetHdiStreamId() };
     captureInfo.captureSetting_ = captureSetting;
     captureInfo.enableShutterCallback_ = false;
-    MEDIA_INFO_LOG("HStreamRepeat::Start stream:%{public}d With capture ID: %{public}d, repeatStreamType:%{public}d",
-        GetStreamId(), preparedCaptureId, repeatStreamType_);
+    MEDIA_INFO_LOG("HStreamRepeat::Start streamId:%{public}d hdiStreamId:%{public}d With capture ID: %{public}d, "
+        "repeatStreamType:%{public}d",
+        GetFwkStreamId(), GetHdiStreamId(), preparedCaptureId, repeatStreamType_);
     if (repeatStreamType_ == RepeatStreamType::VIDEO) {
         auto callingTokenId = IPCSkeleton::GetCallingTokenID();
         const std::string permissionName = "ohos.permission.CAMERA";
         AddCameraPermissionUsedRecord(callingTokenId, permissionName);
     }
+    HStreamCommon::PrintCaptureDebugLog(dynamicSetting);
     CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfo, true));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         ResetCaptureId();
@@ -227,8 +230,9 @@ int32_t HStreamRepeat::Stop()
         return CAMERA_INVALID_STATE;
     }
     auto preparedCaptureId = GetPreparedCaptureId();
-    MEDIA_INFO_LOG("HStreamRepeat::Stop stream:%{public}d With capture ID: %{public}d, repeatStreamType:%{public}d",
-        GetStreamId(), preparedCaptureId, repeatStreamType_);
+    MEDIA_INFO_LOG("HStreamRepeat::Start streamId:%{public}d hdiStreamId:%{public}d With capture ID: %{public}d, "
+                   "repeatStreamType:%{public}d",
+        GetFwkStreamId(), GetHdiStreamId(), preparedCaptureId, repeatStreamType_);
     if (preparedCaptureId == CAPTURE_ID_UNSET) {
         MEDIA_ERR_LOG("HStreamRepeat::Stop, Stream not started yet");
         return CAMERA_INVALID_STATE;
@@ -289,6 +293,14 @@ int32_t HStreamRepeat::OnFrameStarted()
             streamRepeatCallback_->OnFrameStarted();
         }
     }
+    if (repeatStreamType_ == RepeatStreamType::VIDEO) {
+        // report video start dfx
+        DfxCaptureInfo captureInfo;
+        captureInfo.captureId = 1;
+        captureInfo.caller = CameraReportUtils::GetCallerInfo();
+        CameraReportUtils::GetInstance().SetVideoStartInfo(captureInfo);
+    }
+
     UpdateSketchStatus(SketchStatus::STARTED);
     return CAMERA_OK;
 }
@@ -301,6 +313,10 @@ int32_t HStreamRepeat::OnFrameEnded(int32_t frameCount)
         if (streamRepeatCallback_ != nullptr) {
             streamRepeatCallback_->OnFrameEnded(frameCount);
         }
+    }
+    if (repeatStreamType_ == RepeatStreamType::VIDEO) {
+        // report video end dfx
+        CameraReportUtils::GetInstance().SetVideoEndInfo(1);
     }
     UpdateSketchStatus(SketchStatus::STOPED);
     return CAMERA_OK;
@@ -349,14 +365,15 @@ int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& pro
         MEDIA_ERR_LOG("HStreamRepeat::CreateAndHandleDeferredStreams(), streamOperator_ == null");
         return CAMERA_INVALID_STATE;
     }
-    MEDIA_INFO_LOG("HStreamRepeat::AttachBufferQueue start");
+    MEDIA_INFO_LOG("HStreamRepeat::AttachBufferQueue start streamId:%{public}d, hdiStreamId:%{public}d",
+        GetFwkStreamId(), GetHdiStreamId());
     sptr<BufferProducerSequenceable> bufferProducerSequenceable;
     CamRetCode rc;
     {
         std::lock_guard<std::mutex> lock(producerLock_);
         bufferProducerSequenceable = new BufferProducerSequenceable(producer_);
     }
-    rc = (CamRetCode)(streamOperator->AttachBufferQueue(GetStreamId(), bufferProducerSequenceable));
+    rc = (CamRetCode)(streamOperator->AttachBufferQueue(GetHdiStreamId(), bufferProducerSequenceable));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         MEDIA_ERR_LOG("HStreamRepeat::AttachBufferQueue(), Failed to AttachBufferQueue %{public}d", rc);
     }
@@ -468,51 +485,7 @@ void HStreamRepeat::SetStreamTransform()
     }
 
     if (IsVerticalDevice()) {
-        ret = SurfaceError::SURFACE_ERROR_OK;
-        int32_t streamRotation = sensorOrientation;
-        if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
-            switch (streamRotation) {
-                case STREAM_ROTATE_90: {
-                    ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT90);
-                    break;
-                }
-                case STREAM_ROTATE_180: {
-                    ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT180);
-                    break;
-                }
-                case STREAM_ROTATE_270: {
-                    ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT270);
-                    break;
-                }
-                default: {
-                    break;
-                }
-            }
-            MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform filp rotate %{public}d", streamRotation);
-        } else {
-            streamRotation = STREAM_ROTATE_360 - sensorOrientation;
-            switch (streamRotation) {
-                case STREAM_ROTATE_90: {
-                    ret = producer_->SetTransform(GRAPHIC_ROTATE_90);
-                    break;
-                }
-                case STREAM_ROTATE_180: {
-                    ret = producer_->SetTransform(GRAPHIC_ROTATE_180);
-                    break;
-                }
-                case STREAM_ROTATE_270: {
-                    ret = producer_->SetTransform(GRAPHIC_ROTATE_270);
-                    break;
-                }
-                default: {
-                    break;
-                }
-            }
-            MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform not flip rotate %{public}d", streamRotation);
-        }
-        if (ret != SurfaceError::SURFACE_ERROR_OK) {
-            MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed %{public}d", ret);
-        }
+        ProcessCameraPosition(sensorOrientation, cameraPosition);
     } else {
         ret = SurfaceError::SURFACE_ERROR_OK;
         if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
@@ -522,6 +495,55 @@ void HStreamRepeat::SetStreamTransform()
             ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
             MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform none rotate");
         }
+    }
+}
+
+void HStreamRepeat::ProcessCameraPosition(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition)
+{
+    int ret = SurfaceError::SURFACE_ERROR_OK;
+    int32_t streamRotation = sensorOrientation;
+    if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
+        switch (streamRotation) {
+            case STREAM_ROTATE_90: {
+                ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT90);
+                break;
+            }
+            case STREAM_ROTATE_180: {
+                ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT180);
+                break;
+            }
+            case STREAM_ROTATE_270: {
+                ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT270);
+                break;
+            }
+            default: {
+                break;
+            }
+        }
+        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform filp rotate %{public}d", streamRotation);
+    } else {
+        streamRotation = STREAM_ROTATE_360 - sensorOrientation;
+        switch (streamRotation) {
+            case STREAM_ROTATE_90: {
+                ret = producer_->SetTransform(GRAPHIC_ROTATE_90);
+                break;
+            }
+            case STREAM_ROTATE_180: {
+                ret = producer_->SetTransform(GRAPHIC_ROTATE_180);
+                break;
+            }
+            case STREAM_ROTATE_270: {
+                ret = producer_->SetTransform(GRAPHIC_ROTATE_270);
+                break;
+            }
+            default: {
+                break;
+            }
+        }
+        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform not flip rotate %{public}d", streamRotation);
+    }
+    if (ret != SurfaceError::SURFACE_ERROR_OK) {
+        MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed %{public}d", ret);
     }
 }
 

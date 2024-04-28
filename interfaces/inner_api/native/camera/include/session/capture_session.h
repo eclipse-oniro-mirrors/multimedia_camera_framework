@@ -106,6 +106,11 @@ typedef struct {
     float y;
 } Point;
 
+typedef struct {
+    float zoomRatio;
+    int32_t equivalentFocalLength;
+} ZoomPointInfo;
+
 template<class T>
 struct RefBaseCompare {
 public:
@@ -219,6 +224,13 @@ public:
     virtual void OnSmoothZoom(int32_t duration) = 0;
 };
 
+class AbilityCallback {
+public:
+    AbilityCallback() = default;
+    virtual ~AbilityCallback() = default;
+    virtual void OnAbilityChange() = 0;
+};
+
 enum VideoStabilizationMode {
     OFF = 0,
     LOW,
@@ -226,6 +238,18 @@ enum VideoStabilizationMode {
     HIGH,
     AUTO
 };
+
+inline bool FloatIsEqual(float x, float y)
+{
+    const float EPSILON = 0.000001;
+    return std::fabs(x - y) < EPSILON;
+}
+
+inline float ConfusingNumber(float data)
+{
+    const float factor = 20;
+    return data * factor;
+}
 
 class CaptureSession : public RefBase {
 public:
@@ -251,7 +275,7 @@ public:
     /**
      * @brief Commit the capture session config.
      */
-    int32_t CommitConfig();
+    virtual int32_t CommitConfig();
 
     /**
      * @brief Determine if the given Input can be added to session.
@@ -272,7 +296,7 @@ public:
      *
      * @param CaptureOutput to be added to session.
      */
-    virtual bool CanAddOutput(sptr<CaptureOutput>& output, SceneMode modeName = SceneMode::NORMAL);
+    virtual bool CanAddOutput(sptr<CaptureOutput>& output);
 
     /**
      * @brief Add CaptureOutput for the capture session.
@@ -318,7 +342,7 @@ public:
      * @return Returns the pointer to SessionCallback set by application.
      */
     std::shared_ptr<SessionCallback> GetApplicationCallback();
-    
+
     /**
      * @brief Get the ExposureCallback.
      *
@@ -794,6 +818,14 @@ public:
     int32_t SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoomType);
 
     /**
+     * @brief Get the supported Zoom point info.
+     *
+     * @param vector<ZoomPointInfo> of supported ZoomPointInfo.
+     * @return Returns errCode.
+     */
+    int32_t GetZoomPointInfos(std::vector<ZoomPointInfo>& zoomPointInfoList);
+
+    /**
      * @brief Set Metadata Object types.
      *
      * @param set of camera_face_detect_mode_t types.
@@ -886,6 +918,29 @@ public:
      * @brief Set the color effect.
      */
     void SetColorEffect(ColorEffect colorEffect);
+
+// Focus Distance
+    /**
+     * @brief Get the current FocusDistance.
+     * @param distance current Focus Distance.
+     * @return Returns errCode.
+     */
+    int32_t GetFocusDistance(float& distance);
+
+    /**
+     * @brief Set Focus istance.
+     *
+     * @param distance to be set.
+     * @return Returns errCode.
+     */
+    int32_t SetFocusDistance(float distance);
+
+    /**
+     * @brief Get the current FocusDistance.
+     * @param distance current Focus Distance.
+     * @return Returns errCode.
+     */
+    float GetMinimumFocusDistance();
 
     /**
      * @brief Check current status is support macro or not.
@@ -980,6 +1035,12 @@ public:
                                     const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
     void ProcessSnapshotDurationUpdates(const uint64_t timestamp,
                                     const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
+
+    virtual std::shared_ptr<OHOS::Camera::CameraMetadata> GetMetadata();
+
+    void ExecuteAbilityChangeCallback();
+    void SetAbilityCallback(std::shared_ptr<AbilityCallback> abilityCallback);
+
     inline std::shared_ptr<MetadataResultProcessor> GetMetadataResultProcessor()
     {
         return metadataResultProcessor_;
@@ -999,7 +1060,20 @@ protected:
     std::map<BeautyType, int32_t> beautyTypeAndLevels_;
     std::shared_ptr<MetadataResultProcessor> metadataResultProcessor_ = nullptr;
     bool isImageDeferred_;
+    static const std::unordered_map<camera_exposure_mode_enum_t, ExposureMode> metaExposureModeMap_;
+    static const std::unordered_map<ExposureMode, camera_exposure_mode_enum_t> fwkExposureModeMap_;
 
+    static const std::unordered_map<camera_focus_mode_enum_t, FocusMode> metaFocusModeMap_;
+    static const std::unordered_map<FocusMode, camera_focus_mode_enum_t> fwkFocusModeMap_;
+
+    static const std::unordered_map<camera_flash_mode_enum_t, FlashMode> metaFlashModeMap_;
+    static const std::unordered_map<FlashMode, camera_flash_mode_enum_t> fwkFlashModeMap_;
+
+    static const std::unordered_map<camera_xmage_color_type_t, ColorEffect> metaColorEffectMap_;
+    static const std::unordered_map<ColorEffect, camera_xmage_color_type_t> fwkColorEffectMap_;
+
+protected:
+    std::shared_ptr<AbilityCallback> abilityCallback_;
 private:
     std::mutex changeMetaMutex_;
     std::mutex sessionCallbackMutex_;
@@ -1021,12 +1095,7 @@ private:
     volatile bool isSetMoonCaptureBoostEnable_ = false;
     static const std::unordered_map<camera_focus_state_t, FocusCallback::FocusState> metaFocusStateMap_;
     static const std::unordered_map<camera_exposure_state_t, ExposureCallback::ExposureState> metaExposureStateMap_;
-    static const std::unordered_map<camera_exposure_mode_enum_t, ExposureMode> metaExposureModeMap_;
-    static const std::unordered_map<ExposureMode, camera_exposure_mode_enum_t> fwkExposureModeMap_;
-    static const std::unordered_map<camera_focus_mode_enum_t, FocusMode> metaFocusModeMap_;
-    static const std::unordered_map<FocusMode, camera_focus_mode_enum_t> fwkFocusModeMap_;
-    static const std::unordered_map<camera_flash_mode_enum_t, FlashMode> metaFlashModeMap_;
-    static const std::unordered_map<FlashMode, camera_flash_mode_enum_t> fwkFlashModeMap_;
+
     static const std::unordered_map<camera_filter_type_t, FilterType> metaFilterTypeMap_;
     static const std::unordered_map<FilterType, camera_filter_type_t> fwkFilterTypeMap_;
     static const std::unordered_map<camera_beauty_type_t, BeautyType> metaBeautyTypeMap_;
@@ -1036,8 +1105,7 @@ private:
     static const std::unordered_map<camera_device_metadata_tag_t, BeautyType> metaBeautyControlMap_;
     static const std::unordered_map<CameraVideoStabilizationMode, VideoStabilizationMode> metaVideoStabModesMap_;
     static const std::unordered_map<VideoStabilizationMode, CameraVideoStabilizationMode> fwkVideoStabModesMap_;
-    static const std::unordered_map<camera_xmage_color_type_t, ColorEffect> metaColorEffectMap_;
-    static const std::unordered_map<ColorEffect, camera_xmage_color_type_t> fwkColorEffectMap_;
+
     sptr<CaptureOutput> metaOutput_;
     sptr<CaptureOutput> photoOutput_;
     std::atomic<int32_t> prevDuration_ = 0;
@@ -1067,6 +1135,8 @@ private:
     bool IsModeWithVideoStream();
     void SetDefaultColorSpace();
     void UpdateDeviceDeferredability();
+    void ProcessProfilesAbilityId(const int32_t portraitMode);
+    int32_t ProcessCaptureColorSpace(ColorSpaceInfo colorSpaceInfo, ColorSpace& fwkCaptureColorSpace);
 };
 } // namespace CameraStandard
 } // namespace OHOS

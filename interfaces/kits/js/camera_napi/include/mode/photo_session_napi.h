@@ -18,11 +18,12 @@
 
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
+#include "photo_session.h"
 #include "session/camera_session_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
-static const char PHOTO_SESSION_NAPI_CLASS_NAME[] = "PohtoSession";
+static const char PHOTO_SESSION_NAPI_CLASS_NAME[] = "PhotoSession";
 class PhotoSessionNapi : public CameraSessionNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);

@@ -89,10 +89,15 @@ ohos_shared_library("camera_framework") {
     "src/output/video_output.cpp",
     "src/session/capture_session.cpp",
     "src/session/features/moon_capture_boost_feature.cpp",
+    "src/session/high_res_photo_session.cpp",
+    "src/session/macro_photo_session.cpp",
+    "src/session/macro_video_session.cpp",
     "src/session/night_session.cpp",
     "src/session/photo_session.cpp",
     "src/session/portrait_session.cpp",
+    "src/session/profession_session.cpp",
     "src/session/scan_session.cpp",
+    "src/session/slow_motion_session.cpp",
     "src/session/video_session.cpp",
     "src/utils/camera_buffer_handle_utils.cpp",
     "src/utils/camera_security_utils.cpp",
@@ -112,7 +117,6 @@ ohos_shared_library("camera_framework") {
     cfi = true
     cfi_cross_dso = true
     debug = false
-    blocklist = "../../../cfi_blocklist.txt"
   }
 
   public_configs = [

@@ -224,7 +224,7 @@ std::vector<float> CameraInfo::GetExposureBiasRange()
     uint32_t biasRangeCount = 2;
     camera_metadata_item_t item;
 
-    ret = Camera::FindCameraMetadataItem(metadata_->get(), OHOS_CONTROL_AE_COMPENSATION_RANGE, &item);
+    ret = Camera::FindCameraMetadataItem(metadata_->get(), OHOS_ABILITY_AE_COMPENSATION_RANGE, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("Failed to get exposure compensation range with return code %{public}d", ret);
         return {};
@@ -242,7 +242,7 @@ std::vector<float> CameraInfo::GetExposureBiasRange()
     }
     MEDIA_DEBUG_LOG("Exposure hdi compensation min: %{public}d, max: %{public}d", range[minIndex], range[maxIndex]);
 
-    ret = Camera::FindCameraMetadataItem(metadata_->get(), OHOS_CONTROL_AE_COMPENSATION_STEP, &item);
+    ret = Camera::FindCameraMetadataItem(metadata_->get(), OHOS_ABILITY_AE_COMPENSATION_STEP, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("Failed to get exposure compensation step with return code %{public}d", ret);
         return {};
