@@ -48,7 +48,6 @@ thread_local napi_ref CameraManagerNapi::sConstructor_ = nullptr;
 thread_local uint32_t CameraManagerNapi::cameraManagerTaskId = CAMERA_MANAGER_TASKID;
 
 const std::unordered_map<SceneMode, JsSceneMode> g_nativeToNapiSupportedModeForSystem_ = {
-    {SceneMode::NORMAL, JS_NORMAL},
     {SceneMode::CAPTURE,  JsSceneMode::JS_CAPTURE},
     {SceneMode::VIDEO,  JsSceneMode::JS_VIDEO},
     {SceneMode::PORTRAIT,  JsSceneMode::JS_PORTRAIT},
@@ -62,11 +61,8 @@ const std::unordered_map<SceneMode, JsSceneMode> g_nativeToNapiSupportedModeForS
 };
  
 const std::unordered_map<SceneMode, JsSceneMode> g_nativeToNapiSupportedMode_ = {
-    {SceneMode::NORMAL, JS_NORMAL},
     {SceneMode::CAPTURE,  JsSceneMode::JS_CAPTURE},
-    {SceneMode::VIDEO,  JsSceneMode::JS_VIDEO},
-    {SceneMode::PORTRAIT,  JsSceneMode::JS_PORTRAIT},
-    {SceneMode::NIGHT,  JsSceneMode::JS_NIGHT},
+    {SceneMode::VIDEO,  JsSceneMode::JS_VIDEO}
 };
 
 CameraManagerCallbackNapi::CameraManagerCallbackNapi(napi_env env): ListenerBase(env)
