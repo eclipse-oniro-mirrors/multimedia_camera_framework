@@ -1138,6 +1138,9 @@ public:
     void EnableDeferredType(DeferredDeliveryImageType deferredType);
     void SetUserId();
     bool IsImageDeferred();
+
+    int32_t EnableAutoHighQualityPhoto(bool enabled);
+
 protected:
     std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
     Profile photoProfile_;

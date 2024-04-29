@@ -19,6 +19,7 @@
 
 #include "camera_log.h"
 #include "camera_util.h"
+#include "capture_scene_const.h"
 #include "hstream_capture_callback_stub.h"
 #include "input/camera_device.h"
 #include "session/capture_session.h"
@@ -621,6 +622,67 @@ int32_t PhotoOutput::IsDeferredImageDeliveryEnabled(DeferredDeliveryImageType ty
     }
     isEnabled = captureSession->IsImageDeferred() ? 0 : -1;
     return isEnabled;
+}
+
+int32_t PhotoOutput::IsAutoHighQualityPhotoSupported(int32_t &isAutoHighQualityPhotoSupported)
+{
+    MEDIA_INFO_LOG("PhotoOutput IsAutoHighQualityPhotoSupported is called");
+    isAutoHighQualityPhotoSupported = -1;
+    camera_metadata_item_t item;
+    sptr<CameraDevice> cameraObj;
+    auto captureSession = GetSession();
+    if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
+        MEDIA_ERR_LOG("PhotoOutput IsAutoHighQualityPhotoSupported error!, captureSession or inputDevice_ is nullptr");
+        return SESSION_NOT_RUNNING;
+    }
+    cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
+    if (cameraObj == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput IsAutoHighQualityPhotoSupported error!, cameraObj is nullptr");
+        return SESSION_NOT_RUNNING;
+    }
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+    if (metadata == nullptr) {
+        return SESSION_NOT_RUNNING;
+    }
+    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_HIGH_QUALITY_SUPPORT, &item);
+    if (ret == CAM_META_SUCCESS) {
+        isAutoHighQualityPhotoSupported = (item.data.u8[1] == 1) ? 0 : -1; // default mode
+    }
+
+    int headLenPerMode = 2;
+    SceneMode currentSceneMode = captureSession->GetMode();
+    for (int i = 0; i < static_cast<int>(item.count); i += headLenPerMode) {
+        if (currentSceneMode == static_cast<int>(item.data.u8[i])) {
+            isAutoHighQualityPhotoSupported = (item.data.u8[i + 1] == 1) ? 0 : -1;
+        }
+    }
+    MEDIA_INFO_LOG("PhotoOutput IsAutoHighQualityPhotoSupported curMode:%{public}d, modeSupportType:%{public}d",
+        currentSceneMode, isAutoHighQualityPhotoSupported);
+    return CAMERA_OK;
+}
+
+int32_t PhotoOutput::EnableAutoHighQualityPhoto(bool enabled)
+{
+    MEDIA_DEBUG_LOG("PhotoOutput EnableAutoHighQualityPhoto");
+    auto captureSession = GetSession();
+    if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
+        MEDIA_ERR_LOG("PhotoOutput IsAutoHighQualityPhotoSupported error!, captureSession or inputDevice_ is nullptr");
+        return SESSION_NOT_RUNNING;
+    }
+    int32_t isAutoHighQualityPhotoSupported;
+    int32_t ret = IsAutoHighQualityPhotoSupported(isAutoHighQualityPhotoSupported);
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("PhotoOutput EnableAutoHighQualityPhoto error");
+        return OPERATION_NOT_ALLOWED;
+    }
+    
+    if (isAutoHighQualityPhotoSupported == -1) {
+        MEDIA_ERR_LOG("PhotoOutput EnableAutoHighQualityPhoto not supported");
+        return INVALID_ARGUMENT;
+    }
+
+    int32_t res = captureSession->EnableAutoHighQualityPhoto(enabled);
+    return res;
 }
 
 void PhotoOutput::ProcessSnapshotDurationUpdates(int32_t snapshotDuration)

@@ -3948,6 +3948,37 @@ void CaptureSession::SetUserId()
     }
 }
 
+int32_t CaptureSession::EnableAutoHighQualityPhoto(bool enabled)
+{
+    MEDIA_INFO_LOG("CaptureSession::EnableAutoHighQualityPhoto enabled:%{public}d", enabled);
+
+    this->LockForControl();
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::EnableAutoHighQualityPhoto changedMetadata_ is NULL");
+        return INVALID_ARGUMENT;
+    }
+
+    int32_t res = CameraErrorCode::SUCCESS;
+    bool status = false;
+    camera_metadata_item_t item;
+    uint8_t hightQualityEnable = static_cast<uint8_t>(enabled);
+    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_HIGH_QUALITY_MODE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_HIGH_QUALITY_MODE, &hightQualityEnable, 1);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_HIGH_QUALITY_MODE, &hightQualityEnable, 1);
+    }
+    if (!status) {
+        MEDIA_ERR_LOG("CaptureSession::EnableAutoHighQualityPhoto Failed to set type!");
+        res = INVALID_ARGUMENT;
+    }
+    res = this->UnlockForControl();
+    if (res != CameraErrorCode::SUCCESS) {
+        MEDIA_DEBUG_LOG("CaptureSession::EnableAutoHighQualityPhoto Failed");
+    }
+    return res;
+}
+
 void CaptureSession::ExecuteAbilityChangeCallback()
 {
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
