@@ -29,5 +29,10 @@ bool VideoSession::CanAddOutput(sptr<CaptureOutput>& output)
     }
     return CaptureSession::CanAddOutput(output);
 }
+
+bool VideoSession::CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput)
+{
+    return CanSetFrameRateRangeForOutput(minFps, maxFps, curOutput) ? true : false;
+}
 } // namespace CameraStandard
 } // namespace OHOS

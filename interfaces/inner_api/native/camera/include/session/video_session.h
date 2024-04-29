@@ -32,6 +32,14 @@ public:
      * @param CaptureOutput to be added to session.
      */
     bool CanAddOutput(sptr<CaptureOutput>& output) override;
+
+    /**
+     * @brief Only Video-Session can set frame rate range.
+     *
+     * @param minFps Min frame rate of range.
+     * @param minFps Max frame rate of range.
+     */
+    bool CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -98,9 +98,9 @@ public:
     std::shared_ptr<VideoStateCallback> GetApplicationCallback();
 
     /**
-     * @brief Get the supported video frame rate range.
+     * @brief Get the active video frame rate range.
      *
-     * @return Returns vector<int32_t> of supported exposure compensation range.
+     * @return Returns vector<int32_t> of active exposure compensation range.
      */
     const std::vector<int32_t>& GetFrameRateRange();
 
@@ -112,11 +112,42 @@ public:
      * @param max frame rate value of range.
      */
     void SetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate);
+
+    /**
+     * @brief Set the format
+     *
+     * @param format format of the videoOutput.
+     */
+    void SetOutputFormat(int32_t format);
+ 
+    /**
+     * @brief Set the size
+     *
+     * @param size size of the videoOutput.
+     */
+    void SetSize(Size size);
+ 
+    /**
+     * @brief Set the Video fps.
+     *
+     * @param frameRate value of frame rate.
+     */
+    int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate);
+ 
+    /**
+     * @brief Get supported frame rate ranges from device.
+     *
+     * @return Returns vector<int32_t> supported frame rate ranges.
+     */
+    std::vector<std::vector<int32_t>> GetSupportedFrameRates();
 private:
+    int32_t videoFormat_;
+    Size videoSize_;
     std::shared_ptr<VideoStateCallback> appCallback_;
     sptr<IStreamRepeatCallback> svcCallback_;
-    std::vector<int32_t> videoFrameRateRange_;
+    std::vector<int32_t> videoFrameRateRange_{0, 0};
     void CameraServerDied(pid_t pid) override;
+    int32_t canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate);
 };
 
 class VideoOutputCallbackImpl : public HStreamRepeatCallbackStub {

@@ -55,6 +55,9 @@ int HStreamRepeatStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Messa
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_UPDATE_SKETCH_RATIO):
             errCode = HandleUpdateSketchRatio(data);
             break;
+        case static_cast<uint32_t>(StreamRepeatInterfaceCode::STREAM_FRAME_RANGE_SET):
+            errCode = HandleSetFrameRate(data);
+            break;
         default:
             MEDIA_ERR_LOG("HStreamRepeatStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -118,6 +121,18 @@ int32_t HStreamRepeatStub::HandleUpdateSketchRatio(MessageParcel& data)
     CHECK_AND_RETURN_RET_LOG(sketchRatio <= SKETCH_RATIO_MAX_VALUE, IPC_STUB_INVALID_DATA_ERR,
         "HStreamRepeatStub HandleUpdateSketchRatio sketchRatio value is illegal %{public}f", sketchRatio);
     return UpdateSketchRatio(sketchRatio);
+}
+
+int32_t HStreamRepeatStub::HandleSetFrameRate(MessageParcel& data)
+{
+    int32_t minFrameRate = data.ReadInt32();
+    int32_t maxFrameRate = data.ReadInt32();
+ 
+    int error = SetFrameRate(minFrameRate, maxFrameRate);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamRepeatStub::HandleSetFrameRate failed : %{public}d", error);
+    }
+    return error;
 }
 } // namespace CameraStandard
 } // namespace OHOS

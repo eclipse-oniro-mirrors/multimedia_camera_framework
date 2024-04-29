@@ -304,5 +304,48 @@ napi_status CameraNapiUtils::CreateObjectWithPropNameAndValues(
     }
     return napi_create_object_with_named_properties(env, result, property_count, keys, napiValues);
 }
+
+void CameraNapiUtils::CreateFrameRateJSArray(napi_env env, std::vector<int32_t> frameRateRange, napi_value &result)
+{
+    MEDIA_DEBUG_LOG("CreateFrameRateJSArray called");
+    if (frameRateRange.empty()) {
+        MEDIA_ERR_LOG("frameRateRange is empty");
+    }
+ 
+    napi_status status = napi_create_object(env, &result);
+    if (status == napi_ok) {
+        napi_value minRate;
+        status = napi_create_int32(env, frameRateRange[0], &minRate);
+        napi_value maxRate;
+        status = napi_create_int32(env, frameRateRange[1], &maxRate);
+        if (status != napi_ok || napi_set_named_property(env, result, "min", minRate) != napi_ok ||
+            napi_set_named_property(env, result, "max", maxRate) != napi_ok) {
+            MEDIA_ERR_LOG("Failed to create frameRateArray with napi wrapper object.");
+        }
+    }
+}
+ 
+napi_value CameraNapiUtils::CreateSupportFrameRatesJSArray(
+    napi_env env, std::vector<std::vector<int32_t>> supportedFrameRatesRange)
+{
+    MEDIA_DEBUG_LOG("CreateFrameRateJSArray called");
+    napi_value supportedFrameRateArray = nullptr;
+    if (supportedFrameRatesRange.empty()) {
+        MEDIA_ERR_LOG("frameRateRange is empty");
+    }
+ 
+    napi_status status = napi_create_array(env, &supportedFrameRateArray);
+    if (status == napi_ok) {
+        for (size_t i = 0; i < supportedFrameRatesRange.size(); i++) {
+            napi_value supportedFrameRateItem;
+            CreateFrameRateJSArray(env, supportedFrameRatesRange[i], supportedFrameRateItem);
+            if (napi_set_element(env, supportedFrameRateArray, i, supportedFrameRateItem) != napi_ok) {
+                MEDIA_ERR_LOG("Failed to create supportedFrameRateArray with napi wrapper object.");
+                return nullptr;
+            }
+        }
+    }
+    return supportedFrameRateArray;
+}
 } // namespace CameraStandard
 } // namespace OHOS

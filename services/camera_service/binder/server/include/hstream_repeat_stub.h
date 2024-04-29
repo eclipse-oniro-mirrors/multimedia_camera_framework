@@ -33,6 +33,7 @@ private:
     int32_t HandleAddDeferredSurface(MessageParcel& data);
     int32_t HandleForkSketchStreamRepeat(MessageParcel& data, MessageParcel& reply);
     int32_t HandleUpdateSketchRatio(MessageParcel& data);
+    int32_t HandleSetFrameRate(MessageParcel& data);
 };
 } // namespace CameraStandard
 } // namespace OHOS

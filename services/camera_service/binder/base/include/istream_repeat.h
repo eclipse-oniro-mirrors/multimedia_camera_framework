@@ -42,6 +42,8 @@ public:
 
     virtual int32_t RemoveSketchStreamRepeat() = 0;
 
+    virtual int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate) = 0;
+
     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamRepeat");
 };
 } // namespace CameraStandard

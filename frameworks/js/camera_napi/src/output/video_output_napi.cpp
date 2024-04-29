@@ -272,6 +272,9 @@ napi_value VideoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("stop", Stop),
         DECLARE_NAPI_FUNCTION("getFrameRateRange", GetFrameRateRange),
         DECLARE_NAPI_FUNCTION("setFrameRateRange", SetFrameRateRange),
+        DECLARE_NAPI_FUNCTION("setFrameRate", SetFrameRate),
+        DECLARE_NAPI_FUNCTION("getActiveFrameRate", GetActiveFrameRate),
+        DECLARE_NAPI_FUNCTION("getSupportedFrameRates", GetSupportedFrameRates),
         DECLARE_NAPI_FUNCTION("release", Release),
         DECLARE_NAPI_FUNCTION("on", On),
         DECLARE_NAPI_FUNCTION("once", Once),
@@ -598,6 +601,89 @@ void GetFrameRateRangeAsyncCallbackComplete(napi_env env, napi_status status, vo
                                              context->work, *jsContext);
     }
     delete context;
+}
+
+napi_value VideoOutputNapi::SetFrameRate(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetFrameRate is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result;
+    size_t argc = ARGS_TWO;
+    napi_value argv[ARGS_TWO] = {0};
+    napi_value thisVar = nullptr;
+ 
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, (argc == ARGS_TWO), "requires 2 parameters maximum.");
+ 
+    napi_get_undefined(env, &result);
+    VideoOutputNapi* videoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&videoOutputNapi));
+    if (status == napi_ok && videoOutputNapi != nullptr) {
+        int32_t minFrameRate;
+        napi_get_value_int32(env, argv[PARAM0], &minFrameRate);
+        int32_t maxFrameRate;
+        napi_get_value_int32(env, argv[PARAM1], &maxFrameRate);
+        int32_t retCode = videoOutputNapi->videoOutput_->SetFrameRate(minFrameRate, maxFrameRate);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            MEDIA_ERR_LOG("PreviewOutputNapi::SetFrameRate! %{public}d", retCode);
+            return result;
+        }
+    } else {
+        MEDIA_ERR_LOG("SetFrameRate call Failed!");
+    }
+    return result;
+}
+ 
+napi_value VideoOutputNapi::GetActiveFrameRate(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetFrameRate is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+ 
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, (argc == ARGS_ZERO), "requires no parameter.");
+ 
+    napi_get_undefined(env, &result);
+    VideoOutputNapi* videoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&videoOutputNapi));
+    if (status == napi_ok && videoOutputNapi != nullptr) {
+        std::vector<int32_t> frameRateRange = videoOutputNapi->videoOutput_->GetFrameRateRange();
+        CameraNapiUtils::CreateFrameRateJSArray(env, frameRateRange, result);
+    } else {
+        MEDIA_ERR_LOG("GetFrameRate call failed!");
+    }
+    return result;
+}
+ 
+napi_value VideoOutputNapi::GetSupportedFrameRates(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetSupportedFrameRates is called");
+ 
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+ 
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, (argc == ARGS_ZERO), "requires no parameter.");
+    napi_get_undefined(env, &result);
+    VideoOutputNapi* videoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&videoOutputNapi));
+    if (status == napi_ok && videoOutputNapi != nullptr) {
+        std::vector<std::vector<int32_t>> supportedFrameRatesRange =
+                                          videoOutputNapi->videoOutput_->GetSupportedFrameRates();
+        result = CameraNapiUtils::CreateSupportFrameRatesJSArray(env, supportedFrameRatesRange);
+    } else {
+        MEDIA_ERR_LOG("GetSupportedFrameRates call failed!");
+    }
+    return result;
 }
 
 napi_value VideoOutputNapi::GetFrameRateRange(napi_env env, napi_callback_info info)
