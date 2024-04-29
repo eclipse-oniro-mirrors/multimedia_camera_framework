@@ -191,7 +191,7 @@ int32_t CameraStatusServiceCallback::OnCameraStatusChanged(const std::string& ca
     }
 
     auto listenerMap = camMngr_->GetCameraMngrCallbackMap();
-    MEDIA_INFO_LOG("CameraMngrCallbackMap size %{public}d", listenerMap.Size());
+    MEDIA_DEBUG_LOG("CameraMngrCallbackMap size %{public}d", listenerMap.Size());
     if (listenerMap.Size() == 0) {
         return CAMERA_OK;
     }
@@ -227,7 +227,7 @@ int32_t CameraStatusServiceCallback::OnFlashlightStatusChanged(const std::string
         return CAMERA_OK;
     }
     auto listenerMap = camMngr_->GetCameraMngrCallbackMap();
-    MEDIA_INFO_LOG("CameraMngrCallbackMap size %{public}d", listenerMap.Size());
+    MEDIA_DEBUG_LOG("CameraMngrCallbackMap size %{public}d", listenerMap.Size());
     if (listenerMap.Size() == 0) {
         return CAMERA_OK;
     }
@@ -1419,7 +1419,7 @@ int32_t TorchServiceCallback::OnTorchStatusChange(const TorchStatus status)
     }
 
     auto listenerMap = camMngr_->GetTorchListenerMap();
-    MEDIA_INFO_LOG("TorchListenerMap size %{public}d", listenerMap.Size());
+    MEDIA_DEBUG_LOG("TorchListenerMap size %{public}d", listenerMap.Size());
     if (listenerMap.Size() == 0) {
         return CAMERA_OK;
     }
@@ -1457,7 +1457,7 @@ int32_t CameraMuteServiceCallback::OnCameraMute(bool muteMode)
         return CAMERA_OK;
     }
     auto listenerMap = camMngr_->GetCameraMuteListenerMap();
-    MEDIA_INFO_LOG("CameraMuteListenerMap size %{public}d", listenerMap.Size());
+    MEDIA_DEBUG_LOG("CameraMuteListenerMap size %{public}d", listenerMap.Size());
     if (listenerMap.Size() == 0) {
         return CAMERA_OK;
     }
