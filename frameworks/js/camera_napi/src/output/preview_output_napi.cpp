@@ -405,7 +405,10 @@ napi_value PreviewOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isSketchSupported", IsSketchSupported),
         DECLARE_NAPI_FUNCTION("getSketchRatio", GetSketchRatio),
         DECLARE_NAPI_FUNCTION("enableSketch", EnableSketch),
-        DECLARE_NAPI_FUNCTION("attachSketchSurface", AttachSketchSurface)
+        DECLARE_NAPI_FUNCTION("attachSketchSurface", AttachSketchSurface),
+        DECLARE_NAPI_FUNCTION("setFrameRate", SetFrameRate),
+        DECLARE_NAPI_FUNCTION("getActiveFrameRate", GetActiveFrameRate),
+        DECLARE_NAPI_FUNCTION("getSupportedFrameRates", GetSupportedFrameRates)
     };
 
     status = napi_define_class(env, CAMERA_PREVIEW_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -1080,6 +1083,88 @@ napi_value PreviewOutputNapi::AttachSketchSurface(napi_env env, napi_callback_in
     }
     MEDIA_DEBUG_LOG("PreviewOutputNapi::AttachSketchSurface success");
     return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value PreviewOutputNapi::SetFrameRate(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetFrameRate is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result;
+    size_t argc = ARGS_TWO;
+    napi_value argv[ARGS_TWO] = {0};
+    napi_value thisVar = nullptr;
+ 
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+ 
+    napi_get_undefined(env, &result);
+    PreviewOutputNapi* previewOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&previewOutputNapi));
+    if (status == napi_ok && previewOutputNapi != nullptr) {
+        int32_t minFrameRate;
+        napi_get_value_int32(env, argv[PARAM0], &minFrameRate);
+        int32_t maxFrameRate;
+        napi_get_value_int32(env, argv[PARAM1], &maxFrameRate);
+        int32_t retCode = previewOutputNapi->previewOutput_->SetFrameRate(minFrameRate, maxFrameRate);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            MEDIA_ERR_LOG("PreviewOutputNapi::SetFrameRate! %{public}d", retCode);
+            return result;
+        }
+    } else {
+        MEDIA_ERR_LOG("SetFrameRate call Failed!");
+    }
+    return result;
+}
+ 
+napi_value PreviewOutputNapi::GetActiveFrameRate(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetFrameRate is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+ 
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, (argc == ARGS_ZERO), "requires no parameter.");
+ 
+    napi_get_undefined(env, &result);
+    PreviewOutputNapi* previewOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&previewOutputNapi));
+    if (status == napi_ok && previewOutputNapi != nullptr) {
+        std::vector<int32_t> frameRateRange = previewOutputNapi->previewOutput_->GetFrameRateRange();
+        CameraNapiUtils::CreateFrameRateJSArray(env, frameRateRange, result);
+    } else {
+        MEDIA_ERR_LOG("GetFrameRate call failed!");
+    }
+    return result;
+}
+ 
+napi_value PreviewOutputNapi::GetSupportedFrameRates(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetSupportedFrameRates is called");
+ 
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+ 
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, (argc == ARGS_ZERO), "requires no parameter.");
+    napi_get_undefined(env, &result);
+    PreviewOutputNapi* previewOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&previewOutputNapi));
+    if (status == napi_ok && previewOutputNapi != nullptr) {
+        std::vector<std::vector<int32_t>> supportedFrameRatesRange =
+                                          previewOutputNapi->previewOutput_->GetSupportedFrameRates();
+        result = CameraNapiUtils::CreateSupportFrameRatesJSArray(env, supportedFrameRatesRange);
+    } else {
+        MEDIA_ERR_LOG("GetSupportedFrameRates call failed!");
+    }
+    return result;
 }
 
 napi_value PreviewOutputNapi::On(napi_env env, napi_callback_info info)

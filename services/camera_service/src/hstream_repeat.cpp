@@ -200,15 +200,20 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
         const std::string permissionName = "ohos.permission.CAMERA";
         AddCameraPermissionUsedRecord(callingTokenId, permissionName);
     }
-    HStreamCommon::PrintCaptureDebugLog(dynamicSetting);
-    CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfo, true));
-    if (rc != HDI::Camera::V1_0::NO_ERROR) {
-        ResetCaptureId();
-        MEDIA_ERR_LOG("HStreamRepeat::Start Failed with error Code:%{public}d", rc);
-        CameraReportUtils::ReportCameraError(
-            "HStreamRepeat::Start", rc, true, CameraReportUtils::GetCallerInfo());
-        ret = HdiToServiceError(rc);
-        UpdateSketchStatus(SketchStatus::STOPED);
+    {
+        std::lock_guard<std::mutex> startStopLock(streamStartStopLock_);
+        HStreamCommon::PrintCaptureDebugLog(dynamicSetting);
+        CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfo, true));
+        if (rc != HDI::Camera::V1_0::NO_ERROR) {
+            ResetCaptureId();
+            MEDIA_ERR_LOG("HStreamRepeat::Start Failed with error Code:%{public}d", rc);
+            CameraReportUtils::ReportCameraError(
+                "HStreamRepeat::Start", rc, true, CameraReportUtils::GetCallerInfo());
+            ret = HdiToServiceError(rc);
+            UpdateSketchStatus(SketchStatus::STOPED);
+        } else {
+            repeatStreamStatus_ = RepeatStreamStatus::STARTED;
+        }
     }
     if (settings != nullptr) {
         StartSketchStream(settings);
@@ -238,10 +243,16 @@ int32_t HStreamRepeat::Stop()
         return CAMERA_INVALID_STATE;
     }
     UpdateSketchStatus(SketchStatus::STOPPING);
-    int32_t ret = StopStream();
-    if (ret != CAMERA_OK) {
-        MEDIA_ERR_LOG(
-            "HStreamRepeat::Stop Failed with errorCode:%{public}d, curCaptureID_: %{public}d", ret, preparedCaptureId);
+    int32_t ret = CAMERA_OK;
+    {
+        std::lock_guard<std::mutex> startStopLock(streamStartStopLock_);
+        ret = StopStream();
+        if (ret != CAMERA_OK) {
+            MEDIA_ERR_LOG("HStreamRepeat::Stop Failed with errorCode:%{public}d, curCaptureID_: %{public}d",
+                          ret, preparedCaptureId);
+        } else {
+            repeatStreamStatus_ = RepeatStreamStatus::STOPED;
+        }
     }
     {
         std::lock_guard<std::mutex> lock(sketchStreamLock_);
@@ -420,6 +431,55 @@ int32_t HStreamRepeat::RemoveSketchStreamRepeat()
     sketchStreamRepeat_ = nullptr;
 
     return CAMERA_OK;
+}
+
+int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
+{
+    std::vector<uint8_t> repeatSettings;
+    {
+        std::lock_guard<std::mutex> lock(cameraAbilityLock_);
+        std::vector<int32_t> streamFrameRateRange = {minFrameRate, maxFrameRate};
+        std::shared_ptr<OHOS::Camera::CameraMetadata> dynamicSetting = cameraAbility_;
+        camera_metadata_item_t item;
+        int ret = OHOS::Camera::FindCameraMetadataItem(dynamicSetting->get(), OHOS_CONTROL_FPS_RANGES, &item);
+        bool status = false;
+        if (ret == CAM_META_ITEM_NOT_FOUND) {
+            MEDIA_DEBUG_LOG("CaptureSession::SetFrameRate Failed to find frame range");
+            status = dynamicSetting->addEntry(OHOS_CONTROL_FPS_RANGES, streamFrameRateRange.data(),
+                                              streamFrameRateRange.size());
+        } else if (ret == CAM_META_SUCCESS) {
+            MEDIA_DEBUG_LOG("CaptureSession::SetFrameRate success to find frame range");
+            status = dynamicSetting->updateEntry(
+                OHOS_CONTROL_FPS_RANGES, streamFrameRateRange.data(), streamFrameRateRange.size());
+        }
+        if (!status) {
+            MEDIA_ERR_LOG("CaptureSession::SetFrameRate Failed to set frame range");
+        }
+        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, repeatSettings);
+    }
+ 
+    auto streamOperator = GetStreamOperator();
+ 
+    CamRetCode rc = HDI::Camera::V1_0::NO_ERROR;
+    if (streamOperator != nullptr) {
+        std::lock_guard<std::mutex> startStopLock(streamStartStopLock_);
+        if (repeatStreamStatus_ == RepeatStreamStatus::STARTED) {
+            CaptureInfo captureInfo;
+            captureInfo.streamIds_ = {GetFwkStreamId()};
+            captureInfo.captureSetting_ = repeatSettings;
+            captureInfo.enableShutterCallback_ = false;
+            int32_t currentCaptureId = GetPreparedCaptureId();
+            MEDIA_INFO_LOG("HStreamRepeat::SetFramRate stream:%{public}d, with settingCapture ID:%{public}d",
+                           GetFwkStreamId(), currentCaptureId);
+            rc = (CamRetCode)(streamOperator->Capture(currentCaptureId, captureInfo, true));
+        } else {
+            MEDIA_INFO_LOG("HStreamRepeat::SetFramRate stream The stream is not started. Save the parameters.");
+        }
+        if (rc != HDI::Camera::V1_0::NO_ERROR) {
+            MEDIA_ERR_LOG("HStreamRepeat::SetFrameRate Failed with error Code:%{public}d", rc);
+        }
+    }
+    return rc;
 }
 
 int32_t HStreamRepeat::UpdateSketchRatio(float sketchRatio)

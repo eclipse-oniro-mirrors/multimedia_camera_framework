@@ -16,6 +16,7 @@
 #include "output/video_output.h"
 
 #include "camera_log.h"
+#include "camera_manager.h"
 #include "camera_util.h"
 #include "hstream_repeat_callback_stub.h"
 #include "input/camera_device.h"
@@ -233,6 +234,65 @@ void VideoOutput::SetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate)
     videoFrameRateRange_ = { minFrameRate, maxFrameRate };
 }
 
+void VideoOutput::SetOutputFormat(int32_t format)
+{
+    MEDIA_DEBUG_LOG("VideoOutput::SetOutputFormat set format %{public}d", format);
+    videoFormat_ = format;
+}
+
+void VideoOutput::SetSize(Size size)
+{
+    videoSize_ = size;
+}
+ 
+int32_t VideoOutput::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
+{
+    int32_t result = canSetFrameRateRange(minFrameRate, maxFrameRate);
+    if (result != CameraErrorCode::SUCCESS) {
+        return result;
+    }
+
+    if (minFrameRate == videoFrameRateRange_[0] && maxFrameRate == videoFrameRateRange_[1]) {
+        MEDIA_WARNING_LOG("The frame rate does not need to be set.");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    if (itemStream) {
+        int32_t ret = itemStream->SetFrameRate(minFrameRate, maxFrameRate);
+        if (ret != CAMERA_OK) {
+            MEDIA_ERR_LOG("VideoOutput::setFrameRate failed to set stream frame rate");
+            return ServiceToCameraError(ret);
+        }
+        SetFrameRateRange(minFrameRate, maxFrameRate);
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+std::vector<std::vector<int32_t>> VideoOutput::GetSupportedFrameRates()
+{
+    MEDIA_DEBUG_LOG("VideoOutput::GetSupportedFrameRates called.");
+    sptr<CameraDevice> camera = GetSession()->inputDevice_->GetCameraDeviceInfo();
+    sptr<CameraOutputCapability> cameraOutputCapability =
+                                 CameraManager::GetInstance()->GetSupportedOutputCapability(camera, SceneMode::VIDEO);
+    std::vector<VideoProfile> supportedProfiles = cameraOutputCapability->GetVideoProfiles();
+    supportedProfiles.erase(std::remove_if(
+        supportedProfiles.begin(), supportedProfiles.end(),
+        [&](Profile& profile) {
+            return profile.format_ != videoFormat_ ||
+                   profile.GetSize().height != videoSize_.height ||
+                   profile.GetSize().width != videoSize_.width;
+        }), supportedProfiles.end());
+    std::vector<std::vector<int32_t>> supportedFrameRatesRange;
+    for (auto item : supportedProfiles) {
+        supportedFrameRatesRange.emplace_back(item.GetFrameRates());
+    }
+    std::set<std::vector<int>> set(supportedFrameRatesRange.begin(), supportedFrameRatesRange.end());
+    supportedFrameRatesRange.assign(set.begin(), set.end());
+    MEDIA_DEBUG_LOG("VideoOutput::GetSupportedFrameRates frameRateRange size:%{public}zu",
+                    supportedFrameRatesRange.size());
+    return supportedFrameRatesRange;
+}
+
 void VideoOutput::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
@@ -248,6 +308,29 @@ void VideoOutput::CameraServerDied(pid_t pid)
         (void)GetStream()->AsObject()->RemoveDeathRecipient(deathRecipient_);
     }
     deathRecipient_ = nullptr;
+}
+
+int32_t VideoOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate)
+{
+    auto session = GetSession();
+        if (session == nullptr) {
+            MEDIA_WARNING_LOG("Can not set frame rate range without commit session");
+            return CameraErrorCode::SESSION_NOT_CONFIG;
+        }
+    if (!session->CanSetFrameRateRange(minFrameRate, maxFrameRate, this)) {
+        MEDIA_WARNING_LOG("Can not set frame rate range with wrong state of output");
+        return CameraErrorCode::UNRESOLVED_CONFLICTS_BETWEEN_STREAMS;
+    }
+    int32_t minIndex = 0;
+    int32_t maxIndex = 1;
+    std::vector<std::vector<int32_t>> supportedFrameRange = GetSupportedFrameRates();
+    for (auto item : supportedFrameRange) {
+        if (item[minIndex] <= minFrameRate && item[maxIndex] >= maxFrameRate) {
+            return CameraErrorCode::SUCCESS;
+        }
+    }
+    MEDIA_WARNING_LOG("Can not set frame rate range with invalid parameters");
+    return CameraErrorCode::INVALID_ARGUMENT;
 }
 } // namespace CameraStandard
 } // namespace OHOS

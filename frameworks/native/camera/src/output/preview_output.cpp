@@ -23,6 +23,7 @@
 
 #include "camera_device_ability_items.h"
 #include "camera_log.h"
+#include "camera_manager.h"
 #include "camera_metadata_operator.h"
 #include "camera_output_capability.h"
 #include "camera_util.h"
@@ -356,6 +357,80 @@ int32_t PreviewOutput::AttachSketchSurface(sptr<Surface> sketchSurface)
     return ServiceToCameraError(errCode);
 }
 
+const std::vector<int32_t>& PreviewOutput::GetFrameRateRange()
+{
+    return previewFrameRateRange_;
+}
+
+void PreviewOutput::SetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate)
+{
+    MEDIA_DEBUG_LOG("PreviewOutput::SetFrameRateRange min = %{public}d and max = %{public}d",
+                    minFrameRate, maxFrameRate);
+    previewFrameRateRange_ = { minFrameRate, maxFrameRate };
+}
+
+void PreviewOutput::SetOutputFormat(int32_t format)
+{
+    MEDIA_DEBUG_LOG("PreviewOutput::SetOutputFormat set format %{public}d", format);
+    PreviewFormat_ = format;
+}
+
+void PreviewOutput::SetSize(Size size)
+{
+    MEDIA_DEBUG_LOG("PreviewOutput::SetSize set size %{public}d, %{public}d", size.width, size.height);
+    PreviewSize_ = size;
+}
+
+int32_t PreviewOutput::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
+{
+    int32_t result = canSetFrameRateRange(minFrameRate, maxFrameRate);
+    if (result != CameraErrorCode::SUCCESS) {
+        return result;
+    }
+    if (minFrameRate == previewFrameRateRange_[0] && maxFrameRate == previewFrameRateRange_[1]) {
+        MEDIA_WARNING_LOG("The frame rate does not need to be set.");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+    std::vector<int32_t> frameRateRange = {minFrameRate, maxFrameRate};
+    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    if (itemStream) {
+        int32_t ret = itemStream->SetFrameRate(minFrameRate, maxFrameRate);
+        if (ret != CAMERA_OK) {
+            MEDIA_ERR_LOG("PreviewOutput::setFrameRate failed to set stream frame rate");
+            return ServiceToCameraError(ret);
+        }
+        SetFrameRateRange(minFrameRate, maxFrameRate);
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+std::vector<std::vector<int32_t>> PreviewOutput::GetSupportedFrameRates()
+{
+    MEDIA_DEBUG_LOG("PreviewOutput::GetSupportedFrameRates called.");
+    sptr<CameraDevice> camera = GetSession()->inputDevice_->GetCameraDeviceInfo();
+ 
+    sptr<CameraOutputCapability> cameraOutputCapability = CameraManager::GetInstance()->
+                                                          GetSupportedOutputCapability(camera, SceneMode::VIDEO);
+    std::vector<Profile> supportedProfiles = cameraOutputCapability->GetPreviewProfiles();
+    supportedProfiles.erase(std::remove_if(
+        supportedProfiles.begin(), supportedProfiles.end(),
+        [&](Profile& profile) {
+            return profile.format_ != PreviewFormat_ ||
+                   profile.GetSize().height != PreviewSize_.height ||
+                   profile.GetSize().width != PreviewSize_.width;
+        }), supportedProfiles.end());
+    std::vector<std::vector<int32_t>> supportedFrameRatesRange;
+    for (auto item : supportedProfiles) {
+        std::vector<int32_t> supportedFrameRatesItem = {item.fps_.minFps, item.fps_.maxFps};
+        supportedFrameRatesRange.emplace_back(supportedFrameRatesItem);
+    }
+    std::set<std::vector<int>> set(supportedFrameRatesRange.begin(), supportedFrameRatesRange.end());
+    supportedFrameRatesRange.assign(set.begin(), set.end());
+    MEDIA_DEBUG_LOG("PreviewOutput::GetSupportedFrameRates frameRateRange size:%{public}zu",
+                    supportedFrameRatesRange.size());
+    return supportedFrameRatesRange;
+}
+
 int32_t PreviewOutput::StartSketch()
 {
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
@@ -607,6 +682,29 @@ void PreviewOutput::CameraServerDied(pid_t pid)
         (void)GetStream()->AsObject()->RemoveDeathRecipient(deathRecipient_);
     }
     deathRecipient_ = nullptr;
+}
+
+int32_t PreviewOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate)
+{
+    auto session = GetSession();
+    if (session == nullptr) {
+            MEDIA_WARNING_LOG("Can not set frame rate range without commit session");
+            return CameraErrorCode::SESSION_NOT_CONFIG;
+        }
+    if (!session->CanSetFrameRateRange(minFrameRate, maxFrameRate, this)) {
+        MEDIA_WARNING_LOG("Can not set frame rate range with wrong state of output");
+        return CameraErrorCode::UNRESOLVED_CONFLICTS_BETWEEN_STREAMS;
+    }
+    int32_t minIndex = 0;
+    int32_t maxIndex = 1;
+    std::vector<std::vector<int32_t>> supportedFrameRange = GetSupportedFrameRates();
+    for (auto item : supportedFrameRange) {
+        if (item[minIndex] <= minFrameRate && item[maxIndex] >= maxFrameRate) {
+            return CameraErrorCode::SUCCESS;
+        }
+    }
+    MEDIA_WARNING_LOG("Can not set frame rate range with invalid parameters");
+    return CameraErrorCode::INVALID_ARGUMENT;
 }
 } // namespace CameraStandard
 } // namespace OHOS

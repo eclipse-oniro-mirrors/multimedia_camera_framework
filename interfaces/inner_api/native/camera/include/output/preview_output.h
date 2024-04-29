@@ -128,6 +128,50 @@ public:
     int32_t AttachSketchSurface(sptr<Surface> sketchSurface);
 
     /**
+     * @brief Set the preview fps.
+     *
+     * @param frameRate value of frame rate.
+     */
+    int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate);
+ 
+    /**
+     * @brief Get the active preview frame rate range.
+     *
+     * @return Returns vector<int32_t> of active exposure compensation range.
+     */
+    const std::vector<int32_t>& GetFrameRateRange();
+ 
+    /**
+     * @brief Set the preview fps range. If fixed frame rate
+     * to be set the both min and max framerate should be same.
+     *
+     * @param minFrameRate min frame rate value of range.
+     * @param maxFrameRate max frame rate value of range.
+     */
+    void SetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate);
+ 
+    /**
+     * @brief Set the format
+     *
+     * @param format format of the previewOutput.
+     */
+    void SetOutputFormat(int32_t format);
+ 
+    /**
+     * @brief Set the size
+     *
+     * @param size size of the previewOutput.
+     */
+    void SetSize(Size size);
+ 
+    /**
+     * @brief Get the supported preview frame rate range.
+     *
+     * @return Returns vector<int32_t> of supported exposure compensation range.
+     */
+    std::vector<std::vector<int32_t>> GetSupportedFrameRates();
+
+    /**
      * @brief Get the application callback information.
      *
      * @return Returns the pointer application callback.
@@ -162,15 +206,19 @@ public:
     void OnNativeUnregisterCallback(const std::string& eventString);
 
 private:
+    int32_t PreviewFormat_;
+    Size PreviewSize_;
     std::shared_ptr<PreviewStateCallback> appCallback_;
     sptr<IStreamRepeatCallback> svcCallback_;
     std::shared_ptr<SketchWrapper> sketchWrapper_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetDeviceMetadata();
     std::shared_ptr<Size> FindSketchSize();
+    std::vector<int32_t> previewFrameRateRange_{0, 0};
     int32_t CreateSketchWrapper(Size sketchSize);
     int32_t StartSketch();
     int32_t StopSketch();
     void CameraServerDied(pid_t pid) override;
+    int32_t canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate);
 };
 
 class PreviewOutputCallbackImpl : public HStreamRepeatCallbackStub {

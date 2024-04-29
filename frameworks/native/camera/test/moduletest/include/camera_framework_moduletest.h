@@ -58,6 +58,7 @@ public:
     sptr<CaptureSession> session_;
     sptr<CaptureSession> scanSession_;
     sptr<CaptureSession> highResSession_;
+    sptr<CaptureSession> videoSession_;
     sptr<CaptureInput> input_;
     std::vector<sptr<CameraDevice>> cameras_;
     std::vector<CameraFormat> previewFormats_;
@@ -102,6 +103,7 @@ public:
     void ConfigHighResSession(sptr<CaptureOutput> &previewOutput_1, sptr<CaptureOutput> &previewOutput_2);
     void CreateHighResPhotoOutput(sptr<CaptureOutput> &previewOutput, sptr<CaptureOutput> &photoOutput,
                                   Profile previewProfile, Profile photoProfile);
+    void ConfigVideoSession(sptr<CaptureOutput> &previewOutput, sptr<CaptureOutput> &videoOutput);
     void ReleaseInput();
 
     void SetCameraParameters(sptr<CaptureSession> &session, bool video);

@@ -186,5 +186,23 @@ int32_t HStreamRepeatProxy::RemoveSketchStreamRepeat()
     }
     return error;
 }
+
+int32_t HStreamRepeatProxy::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+ 
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(minFrameRate);
+    data.WriteInt32(maxFrameRate);
+ 
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamRepeatInterfaceCode::STREAM_FRAME_RANGE_SET), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamRepeatProxy SetFrameRate failed, error: %{public}d", error);
+    }
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS

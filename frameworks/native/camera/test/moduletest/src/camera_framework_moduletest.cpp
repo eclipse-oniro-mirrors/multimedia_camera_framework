@@ -670,6 +670,64 @@ void CameraFrameworkModuleTest::CreateHighResPhotoOutput(sptr<CaptureOutput> &pr
     photoOutput = manager_->CreatePhotoOutput(photoProfile, surfaceProducerOfPhoto);
 }
 
+void CameraFrameworkModuleTest::ConfigVideoSession(sptr<CaptureOutput> &previewOutput_frame,
+                                                   sptr<CaptureOutput> &videoOutput_frame)
+{
+    if (session_) {
+        MEDIA_INFO_LOG("old session exist, need release");
+        session_->Release();
+    }
+    videoSession_ = manager_ -> CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(videoSession_, nullptr);
+ 
+    int32_t intResult = videoSession_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+ 
+    intResult = videoSession_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+ 
+    Profile previewProfile = previewProfiles[0];
+    const int32_t sizeOfWidth = 1920;
+    const int32_t sizeOfHeight = 1080;
+    for (auto item : previewProfiles) {
+        if (item.GetSize().width == sizeOfWidth && item.GetSize().height == sizeOfHeight) {
+            previewProfile = item;
+            break;
+        }
+    }
+    sptr<IConsumerSurface> previewSurface = IConsumerSurface::Create();
+    sptr<SurfaceListener> listener = new SurfaceListener("Preview", SurfaceType::PREVIEW, g_previewFd, previewSurface);
+    previewSurface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)listener);
+    Size previewSize;
+    previewSize.width = previewProfile.GetSize().width;
+    previewSize.height = previewProfile.GetSize().height;
+    previewSurface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfile.GetCameraFormat()));
+    previewSurface->SetDefaultWidthAndHeight(previewSize.width, previewSize.height);
+    sptr<IBufferProducer> bp = previewSurface->GetProducer();
+    sptr<Surface> pSurface = Surface::CreateSurfaceAsProducer(bp);
+    sptr<CaptureOutput> previewOutput = nullptr;
+    previewOutput_frame = manager_->CreatePreviewOutput(previewProfile, pSurface);
+    ASSERT_NE(previewOutput_frame, nullptr);
+ 
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    sptr<SurfaceListener> videoSurfaceListener =
+        new (std::nothrow) SurfaceListener("Video", SurfaceType::VIDEO, g_videoFd, surface);
+    surface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)videoSurfaceListener);
+    ASSERT_NE(videoSurfaceListener, nullptr);
+ 
+    sptr<IBufferProducer> videoProducer = surface->GetProducer();
+    sptr<Surface> videoSurface = Surface::CreateSurfaceAsProducer(videoProducer);
+    VideoProfile videoProfile = videoProfiles[0];
+    for (auto item : videoProfiles) {
+        if (item.GetSize().width == sizeOfWidth && item.GetSize().height == sizeOfHeight) {
+            videoProfile = item;
+            break;
+        }
+    }
+    videoOutput_frame = manager_->CreateVideoOutput(videoProfile, videoSurface);
+    ASSERT_NE(videoOutput_frame, nullptr);
+}
+
 void CameraFrameworkModuleTest::GetSupportedOutputCapability()
 {
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
@@ -9937,6 +9995,71 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_075, TestSize.Le
 
     uint32_t recSensorExposureTime;
     intResult = session_->GetSensorExposureTime(recSensorExposureTime);
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test set preview frame rate range dynamical
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test set preview frame rate range dynamical
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_076, TestSize.Level0)
+{
+    sptr<CaptureOutput> previewOutput;
+    sptr<CaptureOutput> videoOutput;
+    ConfigVideoSession(previewOutput, videoOutput);
+    ASSERT_NE(previewOutput, nullptr);
+    ASSERT_NE(videoOutput, nullptr);
+  
+    int32_t intResult = videoSession_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+ 
+    intResult = videoSession_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+ 
+    sptr<PreviewOutput> previewOutputTrans = ((sptr<PreviewOutput>&)previewOutput);
+    intResult = previewOutputTrans->Start();
+    EXPECT_EQ(intResult, 0);
+ 
+    sleep(WAIT_TIME_AFTER_START);
+ 
+    std::vector<std::vector<int32_t>> supportedFrameRateArray = previewOutputTrans->GetSupportedFrameRates();
+    ASSERT_NE(supportedFrameRateArray.size(), 0);
+    int32_t maxFpsTobeSet = 0;
+    for (auto item : supportedFrameRateArray) {
+        if (item[1] != 0) {
+            maxFpsTobeSet = item[1];
+        }
+        cout << "supported: " << item[0] << item[1] <<endl;
+    }
+ 
+    std::vector<int32_t> activeFrameRateRange = previewOutputTrans->GetFrameRateRange();
+    ASSERT_NE(activeFrameRateRange.size(), 0);
+    EXPECT_EQ(activeFrameRateRange[0], 0);
+    EXPECT_EQ(activeFrameRateRange[1], 0);
+ 
+    intResult = previewOutputTrans->SetFrameRate(maxFpsTobeSet, maxFpsTobeSet);
+    EXPECT_EQ(intResult, 0);
+ 
+    std::cout<< "set: "<<maxFpsTobeSet<<maxFpsTobeSet<<std::endl;
+    std::vector<int32_t> currentFrameRateRange = previewOutputTrans->GetFrameRateRange();
+    EXPECT_EQ(currentFrameRateRange[0], maxFpsTobeSet);
+    EXPECT_EQ(currentFrameRateRange[1], maxFpsTobeSet);
+    sleep(WAIT_TIME_AFTER_START);
+ 
+    intResult = previewOutputTrans->SetFrameRate(15, 15);
+    EXPECT_EQ(intResult, 0);
+ 
+    std::cout<< "set: "<<15<<15<<std::endl;
+    currentFrameRateRange = previewOutputTrans->GetFrameRateRange();
+    EXPECT_EQ(currentFrameRateRange[0], 15);
+    EXPECT_EQ(currentFrameRateRange[1], 15);
+    sleep(WAIT_TIME_AFTER_START);
+ 
+    intResult = previewOutputTrans->Stop();
     EXPECT_EQ(intResult, 0);
 }
 } // namespace CameraStandard

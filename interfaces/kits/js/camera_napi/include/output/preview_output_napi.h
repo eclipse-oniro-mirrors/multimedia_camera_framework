@@ -109,6 +109,9 @@ public:
     static napi_value GetSketchRatio(napi_env env, napi_callback_info info);
     static napi_value EnableSketch(napi_env env, napi_callback_info info);
     static napi_value AttachSketchSurface(napi_env env, napi_callback_info info);
+    static napi_value SetFrameRate(napi_env env, napi_callback_info info);
+    static napi_value GetActiveFrameRate(napi_env env, napi_callback_info info);
+    static napi_value GetSupportedFrameRates(napi_env env, napi_callback_info info);
     sptr<PreviewOutput> GetPreviewOutput();
     static napi_value On(napi_env env, napi_callback_info info);
     static napi_value Once(napi_env env, napi_callback_info info);

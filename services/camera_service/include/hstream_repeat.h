@@ -34,6 +34,11 @@ enum class RepeatStreamType {
     SKETCH
 };
 
+enum class RepeatStreamStatus {
+    STOPED,
+    STARTED
+};
+
 class HStreamRepeat : public HStreamRepeatStub, public HStreamCommon {
 public:
     HStreamRepeat(
@@ -61,8 +66,8 @@ public:
     sptr<HStreamRepeat> GetSketchStream();
     RepeatStreamType GetRepeatStreamType();
     void DumpStreamInfo(std::string& dumpString) override;
-
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
+    int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate) override;
 
 private:
     void OpenVideoDfxSwitch(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
@@ -75,10 +80,12 @@ private:
     sptr<IStreamRepeatCallback> streamRepeatCallback_;
     std::mutex callbackLock_;
     std::mutex sketchStreamLock_; // Guard sketchStreamRepeat_
+    std::mutex streamStartStopLock_;
     sptr<HStreamRepeat> sketchStreamRepeat_;
     wptr<HStreamRepeat> parentStreamRepeat_;
     float sketchRatio_ = -1.0f;
     SketchStatus sketchStatus_ = SketchStatus::STOPED;
+    RepeatStreamStatus repeatStreamStatus_ = RepeatStreamStatus::STOPED;
 };
 } // namespace CameraStandard
 } // namespace OHOS

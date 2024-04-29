@@ -500,6 +500,8 @@ int CameraManager::CreatePreviewOutput(Profile &profile, sptr<Surface> surface, 
         if (previewOutput == nullptr) {
             return CameraErrorCode::SERVICE_FATL_ERROR;
         }
+        previewOutput->SetOutputFormat(profile.GetCameraFormat());
+        previewOutput->SetSize(profile.GetSize());
     } else {
         MEDIA_ERR_LOG("Failed to get stream repeat object from hcamera service! %{public}d", retCode);
         return ServiceToCameraError(retCode);
@@ -667,7 +669,6 @@ int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surfa
         return CameraErrorCode::INVALID_ARGUMENT;
     }
 
-    // todo: need to set FPS range passed in video profile.
     metaFormat = GetCameraMetadataFormat(profile.GetCameraFormat());
     MEDIA_DEBUG_LOG("metaFormat = %{public}d", static_cast<int32_t>(metaFormat));
     retCode = serviceProxy_->CreateVideoOutput(surface->GetProducer(), metaFormat,
@@ -677,10 +678,8 @@ int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surfa
         if (videoOutput == nullptr) {
             return CameraErrorCode::SERVICE_FATL_ERROR;
         }
-        std::vector<int32_t> videoFrameRates = profile.GetFrameRates();
-        if (videoFrameRates.size() >= 2) { // vaild frame rate range length is 2
-            videoOutput->SetFrameRateRange(videoFrameRates[0], videoFrameRates[1]);
-        }
+        videoOutput->SetOutputFormat(profile.GetCameraFormat());
+        videoOutput->SetSize(profile.GetSize());
         videoOutput->SetVideoProfile(profile);
     } else {
         MEDIA_ERR_LOG("Failed to get stream repeat object from hcamera service! %{public}d", retCode);
@@ -1340,9 +1339,14 @@ void CameraManager::CreateProfile4StreamType(OutputCapStreamType streamType, uin
         if (streamType == OutputCapStreamType::PREVIEW) {
             Profile previewProfile = Profile(format, size, fps, abilityId);
             MEDIA_DEBUG_LOG("preview format : %{public}d, width: %{public}d, height: %{public}d"
-                            "support ability: %{public}s",
+                            "support ability: %{public}s, streamType: %{public}d, fixedFps: %{public}d,"
+                            " minFps: %{public}d, maxFps: %{public}d",
                             previewProfile.GetCameraFormat(), previewProfile.GetSize().width,
-                            previewProfile.GetSize().height, abilityIds.c_str());
+                            previewProfile.GetSize().height, abilityIds.c_str(), streamType, fps.fixedFps, fps.minFps,
+                            fps.maxFps);
+            previewProfile.fps_.fixedFps = fps.fixedFps;
+            previewProfile.fps_.minFps = fps.minFps;
+            previewProfile.fps_.maxFps = fps.maxFps;
             previewProfiles_.push_back(previewProfile);
         } else if (streamType == OutputCapStreamType::STILL_CAPTURE) {
             Profile snapProfile = Profile(format, size, fps, abilityId);
@@ -1352,7 +1356,7 @@ void CameraManager::CreateProfile4StreamType(OutputCapStreamType streamType, uin
                             snapProfile.GetSize().height, abilityIds.c_str());
             photoProfiles_.push_back(snapProfile);
         } else if (streamType == OutputCapStreamType::VIDEO_STREAM) {
-            std::vector<int32_t> frameRates = {fps.fixedFps, fps.fixedFps};
+            std::vector<int32_t> frameRates = {fps.minFps, fps.maxFps};
             VideoProfile vidProfile = VideoProfile(format, size, frameRates);
             MEDIA_DEBUG_LOG("video format : %{public}d, width: %{public}d, height: %{public}d"
                             "support ability: %{public}s",

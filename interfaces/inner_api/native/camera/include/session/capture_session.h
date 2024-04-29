@@ -1141,6 +1141,8 @@ public:
 
     int32_t EnableAutoHighQualityPhoto(bool enabled);
 
+    virtual bool CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
+    bool CanSetFrameRateRangeForOutput(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
 protected:
     std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
     Profile photoProfile_;
@@ -1232,6 +1234,7 @@ private:
     void ProcessProfilesAbilityId(const int32_t portraitMode);
     int32_t ProcessCaptureColorSpace(ColorSpaceInfo colorSpaceInfo, ColorSpace& fwkCaptureColorSpace);
     void FindTagId();
+    bool CheckFrameRateRangeWithCurrentFps(int32_t curMinFps, int32_t curMaxFps, int32_t minFps, int32_t maxFps);
 };
 } // namespace CameraStandard
 } // namespace OHOS

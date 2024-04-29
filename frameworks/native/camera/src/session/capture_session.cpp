@@ -492,6 +492,23 @@ void CaptureSession::FindTagId()
     }
 }
 
+bool CaptureSession::CheckFrameRateRangeWithCurrentFps(int32_t curMinFps, int32_t curMaxFps,
+                                                       int32_t minFps, int32_t maxFps)
+{
+    if (minFps == 0 || curMinFps == 0) {
+        MEDIA_WARNING_LOG("CaptureSession::CheckFrameRateRangeWithCurrentFps can not set zero!");
+        return false;
+    }
+    if (curMinFps == curMaxFps && minFps == maxFps &&
+        (minFps % curMinFps == 0 || curMinFps % minFps == 0)) {
+        return true;
+    } else if (curMinFps != curMaxFps && curMinFps == minFps && curMaxFps == maxFps) {
+        return true;
+    }
+    MEDIA_WARNING_LOG("CaptureSession::CheckFrameRateRangeWithCurrentFps check is not pass!");
+    return false;
+}
+
 sptr<CaptureOutput> CaptureSession::GetMetaOutput()
 {
     MEDIA_DEBUG_LOG("CaptureSession::GetMetadataOutput metaOuput(%{public}d)", metaOutput_ != nullptr);
@@ -514,7 +531,11 @@ void CaptureSession::ConfigureOutput(sptr<CaptureOutput>& output)
     output->SetSession(this);
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_VIDEO) {
         MEDIA_INFO_LOG("CaptureSession::AddOutput VideoOutput");
-        SetFrameRateRange(static_cast<VideoOutput*>(output.GetRefPtr())->GetFrameRateRange());
+        std::vector<int32_t> frameRateRange = output->GetVideoProfile().GetFrameRates();
+        const size_t minFpsRangeSize = 2;
+        if (frameRateRange.size() >= minFpsRangeSize) {
+            SetFrameRateRange(frameRateRange);
+        }
         SetGuessMode(SceneMode::VIDEO);
     }
 }
@@ -3179,6 +3200,52 @@ void CaptureSession::SetFrameRateRange(const std::vector<int32_t>& frameRateRang
         MEDIA_DEBUG_LOG("CaptureSession::SetFrameRateRange:index:%{public}zu->%{public}d", i, frameRateRange[i]);
     }
     this->UnlockForControl();
+}
+
+bool CaptureSession::CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput)
+{
+    MEDIA_WARNING_LOG("CaptureSession::CanSetFrameRateRange can not set frame rate range for %{public}d mode",
+                      GetMode());
+    return false;
+}
+ 
+bool CaptureSession::CanSetFrameRateRangeForOutput(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput)
+{
+    std::lock_guard<std::mutex> lock(captureOutputSetsMutex_);
+    int32_t defaultFpsNumber = 0;
+    int32_t minFpsIndex = 0;
+    int32_t maxFpsIndex = 1;
+    for (auto output : captureOutputSets_) {
+        auto item = output.promote();
+        if (static_cast<CaptureOutput*>(item.GetRefPtr()) == curOutput) {
+            continue;
+        }
+        std::vector<int32_t> currentFrameRange = {defaultFpsNumber, defaultFpsNumber};
+        switch (output->GetOutputType()) {
+            case CaptureOutputType::CAPTURE_OUTPUT_TYPE_VIDEO: {
+                sptr<VideoOutput> videoOutput = (sptr<VideoOutput>&)item;
+                currentFrameRange = videoOutput->GetFrameRateRange();
+                break;
+            }
+            case CaptureOutputType::CAPTURE_OUTPUT_TYPE_PREVIEW: {
+                sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)item;
+                currentFrameRange = previewOutput->GetFrameRateRange();
+                break;
+            }
+            default:
+                continue;
+        }
+        if (currentFrameRange[minFpsIndex] != defaultFpsNumber &&
+            currentFrameRange[maxFpsIndex] != defaultFpsNumber) {
+            MEDIA_DEBUG_LOG("The frame rate range conflict needs to be checked.");
+            if (!CheckFrameRateRangeWithCurrentFps(currentFrameRange[minFpsIndex],
+                                                   currentFrameRange[maxFpsIndex],
+                                                   minFps, maxFps)) {
+                return false;
+            };
+        }
+    }
+    return true;
 }
 
 bool CaptureSession::IsSessionConfiged()
