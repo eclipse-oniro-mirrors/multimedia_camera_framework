@@ -49,7 +49,6 @@ public:
         statusInfo.camera->cameraType = static_cast<Camera_Type>(cameraStatusInfo.cameraDevice->GetCameraType());
         statusInfo.camera->connectionType =
             static_cast<Camera_Connection>(cameraStatusInfo.cameraDevice->GetConnectionType());
-        statusInfo.camera->cameraOrientation = cameraStatusInfo.cameraDevice->GetCameraOrientation();
         statusInfo.status = static_cast<Camera_Status>(cameraStatusInfo.cameraStatus);
         if (cameraManager_ != nullptr && callback_.onCameraStatus != nullptr) {
             callback_.onCameraStatus(cameraManager_, &statusInfo);
@@ -122,7 +121,6 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, ui
         outCameras[index].cameraPosition = static_cast<Camera_Position>(cameraObjList[index]->GetPosition());
         outCameras[index].cameraType = static_cast<Camera_Type>(cameraObjList[index]->GetCameraType());
         outCameras[index].connectionType = static_cast<Camera_Connection>(cameraObjList[index]->GetConnectionType());
-        outCameras[index].cameraOrientation = cameraObjList[index]->GetCameraOrientation();
     }
     *size = cameraSize;
     *cameras = outCameras;
@@ -502,4 +500,31 @@ Camera_ErrorCode Camera_Manager::CreateMetadataOutput(const Camera_MetadataObjec
     Camera_MetadataOutput* out = new Camera_MetadataOutput(innerMetadataOutput);
     *metadataOutput = out;
     return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::GetCameraOrientation(Camera_Device* camera, uint32_t* orientation)
+{
+    sptr<CameraDevice> cameraDevice = nullptr;
+    std::vector<sptr<CameraDevice>> cameraObjList = CameraManager::GetInstance()->GetSupportedCameras();
+    MEDIA_DEBUG_LOG("the cameraObjList size is %{public}zu",
+        cameraObjList.size());
+    for (size_t index = 0; index < cameraObjList.size(); index++) {
+        sptr<CameraDevice> innerCameraDevice = cameraObjList[index];
+        if (innerCameraDevice == nullptr) {
+            continue;
+        }
+        if (innerCameraDevice->GetPosition() == static_cast<CameraPosition>(camera->cameraPosition) &&
+            innerCameraDevice->GetCameraType() == static_cast<CameraType>(camera->cameraType) &&
+            innerCameraDevice->GetID() == camera->cameraId) {
+            cameraDevice = innerCameraDevice;
+            break;
+        }
+    }
+
+    if (cameraDevice == nullptr) {
+        return CAMERA_SERVICE_FATAL_ERROR;
+    } else {
+        *orientation = cameraDevice->GetCameraOrientation();
+        return CAMERA_OK;
+    }
 }

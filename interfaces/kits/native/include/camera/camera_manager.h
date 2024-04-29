@@ -42,6 +42,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "camera.h"
+#include "camera_device.h"
 #include "camera_input.h"
 #include "capture_session.h"
 #include "preview_output.h"

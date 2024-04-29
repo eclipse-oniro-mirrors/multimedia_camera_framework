@@ -65,6 +65,8 @@ public:
     Camera_ErrorCode CreateMetadataOutput(const Camera_MetadataObjectType* type,
         Camera_MetadataOutput** metadataOutput);
 
+    static Camera_ErrorCode GetCameraOrientation(Camera_Device* cameras, uint32_t* orientation);
+
 private:
     Camera_ErrorCode GetSupportedPreviewProfiles(Camera_OutputCapability* outCapability,
         std::vector<OHOS::CameraStandard::Profile> &previewProfiles);
