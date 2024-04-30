@@ -586,7 +586,9 @@ int32_t HCameraService::SetTorchCallback(sptr<ITorchServiceCallback>& callback)
         return CAMERA_INVALID_ARG;
     }
     torchServiceCallbacks_.insert(make_pair(pid, callback));
-    OnTorchStatus(torchStatus_);
+
+    MEDIA_INFO_LOG("HCameraService::SetTorchCallback notify pid = %{public}d", pid);
+    callback->OnTorchStatusChange(torchStatus_);
     return CAMERA_OK;
 }
 
