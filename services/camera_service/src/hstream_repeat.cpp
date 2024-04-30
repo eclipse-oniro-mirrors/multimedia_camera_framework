@@ -465,7 +465,7 @@ int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
         std::lock_guard<std::mutex> startStopLock(streamStartStopLock_);
         if (repeatStreamStatus_ == RepeatStreamStatus::STARTED) {
             CaptureInfo captureInfo;
-            captureInfo.streamIds_ = {GetFwkStreamId()};
+            captureInfo.streamIds_ = {GetHdiStreamId()};
             captureInfo.captureSetting_ = repeatSettings;
             captureInfo.enableShutterCallback_ = false;
             int32_t currentCaptureId = GetPreparedCaptureId();
