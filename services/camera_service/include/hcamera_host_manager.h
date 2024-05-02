@@ -112,6 +112,7 @@ public:
     ::OHOS::sptr<HDI::ServiceManager::V1_0::IServStatListener> GetRegisterServStatListener();
 
     static const std::string LOCAL_SERVICE_NAME;
+    static const std::string DISTRIBUTED_SERVICE_NAME;
 
     void SetMuteMode(bool muteMode);
 
