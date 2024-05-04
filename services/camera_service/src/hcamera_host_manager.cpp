@@ -128,11 +128,11 @@ HCameraHostManager::CameraHostInfo::~CameraHostInfo()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("CameraHostInfo ~CameraHostInfo");
-
-    const sptr<IRemoteObject>& remote = OHOS::HDI::hdi_objcast<ICameraHost>(cameraHostProxy_);
-    remote->RemoveDeathRecipient(cameraHostDeathRecipient_);
-    cameraHostDeathRecipient_ = nullptr;
-
+    if (cameraHostProxy_ && cameraHostDeathRecipient_) {
+        const sptr<IRemoteObject>& remote = OHOS::HDI::hdi_objcast<ICameraHost>(cameraHostProxy_);
+        remote->RemoveDeathRecipient(cameraHostDeathRecipient_);
+        cameraHostDeathRecipient_ = nullptr;
+    }
     cameraHostProxy_ = nullptr;
     cameraHostProxyV1_1_ = nullptr;
     cameraHostProxyV1_2_ = nullptr;
