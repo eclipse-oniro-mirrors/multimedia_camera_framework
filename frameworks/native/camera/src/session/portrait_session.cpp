@@ -280,6 +280,11 @@ std::vector<std::vector<float>> PortraitSession::GetSupportedPhysicalApertures()
         return supportedPhysicalApertures;
     }
     std::vector<float> chooseModeRange = ParsePhysicalApertureRangeByMode(item, GetMode());
+    constexpr int32_t minPhysicalApertureMetaSize = 3;
+    if (chooseModeRange.size() < minPhysicalApertureMetaSize) {
+        MEDIA_ERR_LOG("GetSupportedPhysicalApertures Failed meta format error");
+        return supportedPhysicalApertures;
+    }
     int32_t deviceCntPos = 1;
     int32_t supportedDeviceCount = static_cast<int32_t>(chooseModeRange[deviceCntPos]);
     if (supportedDeviceCount == 0) {
