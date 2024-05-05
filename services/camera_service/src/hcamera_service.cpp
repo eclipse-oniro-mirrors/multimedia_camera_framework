@@ -170,13 +170,14 @@ void HCameraService::FillCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos
         cameraIds.emplace_back(camera->cameraId);
         cameraAbilityList.emplace_back(camera->cameraAbility);
     }
-    OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
-    if (OHOS::Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(callerToken)) {
+    if (OHOS::Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(IPCSkeleton::GetCallingFullTokenID())) {
         vector<shared_ptr<CameraMetaInfo>> physicalCameras = ChoosePhysicalCameras(cameraInfos, choosedCameras);
         for (const auto& camera: physicalCameras) {
             cameraIds.emplace_back(camera->cameraId);
             cameraAbilityList.emplace_back(camera->cameraAbility);
         }
+    } else {
+        MEDIA_INFO_LOG("current token id not support physical camera");
     }
 }
 
