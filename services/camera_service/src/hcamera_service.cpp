@@ -25,6 +25,8 @@
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
+#include "tokenid_kit.h"
+
 #include "camera_log.h"
 #include "camera_util.h"
 #include "display_manager.h"
@@ -162,16 +164,19 @@ void HCameraService::FillCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos
     vector<string>& cameraIds, vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList)
 {
     vector<shared_ptr<CameraMetaInfo>> choosedCameras = ChooseDeFaultCameras(cameraInfos);
-    vector<shared_ptr<CameraMetaInfo>> physicalCameras = ChoosePhysicalCameras(cameraInfos, choosedCameras);
     cameraIds.clear();
     cameraAbilityList.clear();
     for (const auto& camera: choosedCameras) {
         cameraIds.emplace_back(camera->cameraId);
         cameraAbilityList.emplace_back(camera->cameraAbility);
     }
-    for (const auto& camera: physicalCameras) {
-        cameraIds.emplace_back(camera->cameraId);
-        cameraAbilityList.emplace_back(camera->cameraAbility);
+    OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
+    if (OHOS::Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(callerToken)) {
+        vector<shared_ptr<CameraMetaInfo>> physicalCameras = ChoosePhysicalCameras(cameraInfos, choosedCameras);
+        for (const auto& camera: physicalCameras) {
+            cameraIds.emplace_back(camera->cameraId);
+            cameraAbilityList.emplace_back(camera->cameraAbility);
+        }
     }
 }
 

@@ -59,7 +59,7 @@ const std::unordered_map<SceneMode, JsSceneMode> g_nativeToNapiSupportedModeForS
     {SceneMode::PROFESSIONAL_VIDEO,  JsSceneMode::JS_PROFESSIONAL_VIDEO},
     {SceneMode::HIGH_RES_PHOTO, JsSceneMode::JS_HIGH_RES_PHOTO}
 };
- 
+
 const std::unordered_map<SceneMode, JsSceneMode> g_nativeToNapiSupportedMode_ = {
     {SceneMode::CAPTURE,  JsSceneMode::JS_CAPTURE},
     {SceneMode::VIDEO,  JsSceneMode::JS_VIDEO}
@@ -913,18 +913,8 @@ napi_value CameraManagerNapi::GetSupportedCameras(napi_env env, napi_callback_in
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
     if (status == napi_ok && cameraManagerNapi != nullptr) {
         std::vector<sptr<CameraDevice>> cameraObjList = cameraManagerNapi->cameraManager_->GetSupportedCameras();
-        std::vector<sptr<CameraDevice>> selectedCameraList;
-        if (!CameraNapiSecurity::CheckSystemApp(env, false)) {
-            std::copy_if(cameraObjList.begin(), cameraObjList.end(),
-                std::back_inserter(selectedCameraList), [](const auto& it) {
-                    return it->GetCameraType() == CAMERA_TYPE_UNSUPPORTED || it->GetCameraType() == CAMERA_TYPE_DEFAULT;
-                });
-            MEDIA_DEBUG_LOG("CameraManagerNapi::GetSupportedCameras size=[%{public}zu]", selectedCameraList.size());
-            result = CreateCameraJSArray(env, status, selectedCameraList);
-        } else {
-            result = CreateCameraJSArray(env, status, cameraObjList);
-            MEDIA_DEBUG_LOG("CameraManagerNapi::GetSupportedCameras size=[%{public}zu]", cameraObjList.size());
-        }
+        result = CreateCameraJSArray(env, status, cameraObjList);
+        MEDIA_DEBUG_LOG("CameraManagerNapi::GetSupportedCameras size=[%{public}zu]", cameraObjList.size());
     } else {
         MEDIA_ERR_LOG("GetSupportedCameras call Failed!");
     }
