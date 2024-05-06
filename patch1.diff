@@ -1,0 +1,1440 @@
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -4423,7 +4429,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_039, TestSize.Level
+     ASSERT_NE(input, nullptr);
+     Size previewSize = {.width = 1440, .height = 1080};
+ 
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -4474,7 +4480,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_040, TestSize.Level
+     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+     ASSERT_NE(input, nullptr);
+ 
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -4519,7 +4525,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_041, TestSize.Level
+     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+     ASSERT_NE(input, nullptr);
+ 
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -4578,7 +4584,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_042, TestSize.Level
+     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+     ASSERT_NE(input, nullptr);
+ 
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -4623,7 +4629,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_043, TestSize.Level
+     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+     ASSERT_NE(input, nullptr);
+ 
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -4677,7 +4683,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_044, TestSize.Level
+     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+     ASSERT_NE(input, nullptr);
+ 
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -4766,7 +4772,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_046, TestSize.Level
+     sptr<CaptureInput> input1 = nullptr;
+     ASSERT_NE(input, nullptr);
+ 
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -4813,7 +4819,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_047, TestSize.Level
+ 
+     ASSERT_NE(input, nullptr);
+ 
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -4851,7 +4857,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_048, TestSize.Level
+     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+     ASSERT_NE(input, nullptr);
+ 
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -4902,7 +4908,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_049, TestSize.Level
+     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+     ASSERT_NE(input, nullptr);
+ 
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -4963,7 +4969,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_050, TestSize.Level
+     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+     ASSERT_NE(input, nullptr);
+ 
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -5022,7 +5028,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_051, TestSize.Level
+     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+     ASSERT_NE(input, nullptr);
+ 
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -5368,7 +5374,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_064, TestSize.Level
+     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+     ASSERT_NE(input, nullptr);
+ 
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -5410,7 +5416,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_065, TestSize.Level
+     ASSERT_NE(input, nullptr);
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+ 
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     std::string cameraSettings = camInput->GetCameraSettings();
+     camInput->SetCameraSettings(cameraSettings);
+@@ -5453,7 +5459,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_066, TestSize.Level
+     ASSERT_NE(input, nullptr);
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+ 
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     std::string cameraSettings = camInput->GetCameraSettings();
+     camInput->SetCameraSettings(cameraSettings);
+@@ -6575,7 +6581,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_104, TestSize.Level
+     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
+     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+     ASSERT_NE(input, nullptr);
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -6632,7 +6638,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_105, TestSize.Level
+     ASSERT_NE(ability, nullptr);
+     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+     ASSERT_NE(input, nullptr);
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -6687,7 +6693,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_106, TestSize.Level
+     ASSERT_NE(ability, nullptr);
+     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+     ASSERT_NE(input, nullptr);
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -6744,7 +6750,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_107, TestSize.Level
+     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+     ASSERT_NE(input, nullptr);
+ 
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -6795,7 +6801,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_108, TestSize.Level
+     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+     ASSERT_NE(input, nullptr);
+ 
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -6848,7 +6854,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_109, TestSize.Level
+     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+     ASSERT_NE(input, nullptr);
+ 
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -6896,7 +6902,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_110, TestSize.Level
+     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+     ASSERT_NE(input, nullptr);
+ 
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -6953,7 +6959,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_111, TestSize.Level
+     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+     ASSERT_NE(input, nullptr);
+ 
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -7004,8 +7010,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_112, TestSize.Level
+ 
+     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+     ASSERT_NE(input, nullptr);
+-
+-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
++    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+     std::string cameraSettings = camInput->GetCameraSettings();
+@@ -7048,6 +7053,5 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_112, TestSize.Level
+ 
+     input->Close();
+ }
+-
+ } // CameraStandard
+ } // OHOS
+diff --git a/frameworks/native/ndk/camera_input.cpp b/frameworks/native/ndk/camera_input.cpp
+index 1aa1d541..ae775127 100644
+--- a/frameworks/native/ndk/camera_input.cpp
++++ b/frameworks/native/ndk/camera_input.cpp
+@@ -54,6 +54,15 @@ Camera_ErrorCode OH_CameraInput_Open(Camera_Input* cameraInput)
+     return cameraInput->Open();
+ }
+ 
++Camera_ErrorCode OH_CameraInput_OpenSecureCamera(Camera_Input* cameraInput, uint64_t* secureSeqId)
++{
++    CHECK_AND_RETURN_RET_LOG(cameraInput != nullptr, CAMERA_INVALID_ARGUMENT,
++        "Invaild argument, cameraInput is null!");
++    Camera_ErrorCode errorCode = cameraInput->OpenSecureCamera(secureSeqId);
++    MEDIA_INFO_LOG("Camera_Input::OpenSecureCamera secureSeqId = %{public}" PRIu64 "", *secureSeqId);
++    return errorCode;
++}
++
+ Camera_ErrorCode OH_CameraInput_Close(Camera_Input* cameraInput)
+ {
+     CHECK_AND_RETURN_RET_LOG(cameraInput != nullptr, CAMERA_INVALID_ARGUMENT,
+diff --git a/frameworks/native/ndk/capture_session.cpp b/frameworks/native/ndk/capture_session.cpp
+index d8c9ff5c..8a9a9087 100644
+--- a/frameworks/native/ndk/capture_session.cpp
++++ b/frameworks/native/ndk/capture_session.cpp
+@@ -48,6 +48,19 @@ Camera_ErrorCode OH_CaptureSession_UnregisterCallback(Camera_CaptureSession* ses
+     session->UnregisterCallback(callback);
+     return CAMERA_OK;
+ }
++Camera_ErrorCode OH_CaptureSession_SetSessionMode(Camera_CaptureSession* session, Camera_SceneMode sceneMode)
++{
++    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT, "Invaild argument, session is null!");
++    session->SetSessionMode(sceneMode);
++    return CAMERA_OK;
++}
++
++Camera_ErrorCode OH_CaptureSession_AddSecureOutput(Camera_CaptureSession* session, Camera_PreviewOutput* previewOutput)
++{
++    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT, "Invaild argument, session is null!");
++    session->AddSecureOutput(previewOutput);
++    return CAMERA_OK;
++}
+ 
+ Camera_ErrorCode OH_CaptureSession_BeginConfig(Camera_CaptureSession* session)
+ {
+diff --git a/frameworks/native/ndk/impl/camera_input_impl.cpp b/frameworks/native/ndk/impl/camera_input_impl.cpp
+index 79bedd25..1cb824f8 100644
+--- a/frameworks/native/ndk/impl/camera_input_impl.cpp
++++ b/frameworks/native/ndk/impl/camera_input_impl.cpp
+@@ -72,6 +72,13 @@ Camera_ErrorCode Camera_Input::Open()
+     return FrameworkToNdkCameraError(ret);
+ }
+ 
++Camera_ErrorCode Camera_Input::OpenSecureCamera(uint64_t* secureSeqId)
++{
++    int32_t ret = innerCameraInput_->Open(true, secureSeqId);
++    MEDIA_INFO_LOG("Camera_Input::OpenSecureCamera secureSeqId = %{public}" PRIu64 "", *secureSeqId);
++    return FrameworkToNdkCameraError(ret);
++}
++
+ Camera_ErrorCode Camera_Input::Close()
+ {
+     int32_t ret = innerCameraInput_->Close();
+diff --git a/frameworks/native/ndk/impl/camera_input_impl.h b/frameworks/native/ndk/impl/camera_input_impl.h
+index 91d8777f..31ed642b 100644
+--- a/frameworks/native/ndk/impl/camera_input_impl.h
++++ b/frameworks/native/ndk/impl/camera_input_impl.h
+@@ -31,6 +31,8 @@ public:
+ 
+     Camera_ErrorCode Open();
+ 
++    Camera_ErrorCode OpenSecureCamera(uint64_t* secureSeqId);
++
+     Camera_ErrorCode Close();
+ 
+     Camera_ErrorCode Release();
+diff --git a/frameworks/native/ndk/impl/capture_session_impl.cpp b/frameworks/native/ndk/impl/capture_session_impl.cpp
+index fe09b54a..01d984f7 100644
+--- a/frameworks/native/ndk/impl/capture_session_impl.cpp
++++ b/frameworks/native/ndk/impl/capture_session_impl.cpp
+@@ -79,6 +79,20 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterCallback(CaptureSession_Callba
+     return CAMERA_OK;
+ }
+ 
++Camera_ErrorCode Camera_CaptureSession::SetSessionMode(Camera_SceneMode sceneMode)
++{
++    SceneMode innerSceneMode = static_cast<SceneMode>(sceneMode);
++    innerCaptureSession_->SetMode(innerSceneMode);
++    return CAMERA_OK;
++}
++
++Camera_ErrorCode Camera_CaptureSession::AddSecureOutput(Camera_PreviewOutput* previewOutput)
++{
++    sptr<CaptureOutput> innerPreviewOutput = previewOutput->GetInnerPreviewOutput();
++    int32_t ret = innerCaptureSession_->AddSecureOutput(innerPreviewOutput);
++    return FrameworkToNdkCameraError(ret);
++}
++
+ Camera_ErrorCode Camera_CaptureSession::BeginConfig()
+ {
+     int32_t ret = innerCaptureSession_->BeginConfig();
+diff --git a/frameworks/native/ndk/impl/capture_session_impl.h b/frameworks/native/ndk/impl/capture_session_impl.h
+index 8b8e5db0..92eee9ef 100644
+--- a/frameworks/native/ndk/impl/capture_session_impl.h
++++ b/frameworks/native/ndk/impl/capture_session_impl.h
+@@ -34,6 +34,10 @@ public:
+ 
+     Camera_ErrorCode UnregisterCallback(CaptureSession_Callbacks* callback);
+ 
++    Camera_ErrorCode SetSessionMode(Camera_SceneMode sceneMode);
++
++    Camera_ErrorCode AddSecureOutput(Camera_PreviewOutput* previewOutput);
++
+     Camera_ErrorCode BeginConfig();
+ 
+     Camera_ErrorCode CommitConfig();
+diff --git a/interfaces/inner_api/native/camera/include/input/camera_input.h b/interfaces/inner_api/native/camera/include/input/camera_input.h
+index f64c036b..833e085c 100644
+--- a/interfaces/inner_api/native/camera/include/input/camera_input.h
++++ b/interfaces/inner_api/native/camera/include/input/camera_input.h
+@@ -58,6 +58,11 @@ public:
+     */
+     int Open() override;
+ 
++    /**
++    * @brief open secure camera.
++    */
++    int Open(bool isEnableSecureCamera, uint64_t* secureSeqId) override;
++
+     /**
+     * @brief close camera.
+     */
+diff --git a/interfaces/inner_api/native/camera/include/input/capture_input.h b/interfaces/inner_api/native/camera/include/input/capture_input.h
+index 77417cfb..63c95792 100644
+--- a/interfaces/inner_api/native/camera/include/input/capture_input.h
++++ b/interfaces/inner_api/native/camera/include/input/capture_input.h
+@@ -42,6 +42,11 @@ public:
+      */
+     virtual int Open() = 0;
+ 
++    /**
++     * @brief open camera.
++     */
++    virtual int Open(bool isEnableSecureCamera, uint64_t* secureSeqId) = 0;
++
+     /**
+      * @brief close camera.
+      */
+diff --git a/interfaces/inner_api/native/camera/include/session/capture_scene_const.h b/interfaces/inner_api/native/camera/include/session/capture_scene_const.h
+index 0b83a86e..de1dd68f 100644
+--- a/interfaces/inner_api/native/camera/include/session/capture_scene_const.h
++++ b/interfaces/inner_api/native/camera/include/session/capture_scene_const.h
+@@ -34,6 +34,7 @@ enum JsSceneMode : int32_t {
+     JS_CAPTURE_MARCO = 8,
+     JS_VIDEO_MARCO = 9,
+     JS_HIGH_RES_PHOTO = 11,
++    JS_SECURE_CAMERA = 15,
+ };
+ 
+ enum SceneMode : int32_t {
+@@ -51,6 +52,7 @@ enum SceneMode : int32_t {
+     PROFESSIONAL_VIDEO = 12,
+     HIGH_FRAME_RATE = 13,
+     HIGH_RES_PHOTO = 14,
++    SECURE = 15
+ };
+ 
+ enum SceneFeature : int32_t {
+diff --git a/interfaces/inner_api/native/camera/include/session/capture_session.h b/interfaces/inner_api/native/camera/include/session/capture_session.h
+index 2ec31d56..ee51dd8e 100644
+--- a/interfaces/inner_api/native/camera/include/session/capture_session.h
++++ b/interfaces/inner_api/native/camera/include/session/capture_session.h
+@@ -1158,6 +1158,7 @@ public:
+     bool IsMovingPhotoEnabled();
+     virtual bool CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
+     bool CanSetFrameRateRangeForOutput(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
++    int32_t AddSecureOutput(sptr<CaptureOutput> &output);
+ protected:
+     std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
+     Profile photoProfile_;
+@@ -1201,6 +1202,7 @@ private:
+     std::set<wptr<CaptureOutput>, RefBaseCompare<CaptureOutput>> captureOutputSets_;
+     volatile bool isSetMacroEnable_ = false;
+     volatile bool isSetMoonCaptureBoostEnable_ = false;
++    volatile bool isSetSecureOutput_ = false;
+     static const std::unordered_map<camera_focus_state_t, FocusCallback::FocusState> metaFocusStateMap_;
+     static const std::unordered_map<camera_exposure_state_t, ExposureCallback::ExposureState> metaExposureStateMap_;
+ 
+diff --git a/interfaces/inner_api/native/camera/include/session/secure_camera_session.h b/interfaces/inner_api/native/camera/include/session/secure_camera_session.h
+new file mode 100755
+index 00000000..24460b4a
+--- /dev/null
++++ b/interfaces/inner_api/native/camera/include/session/secure_camera_session.h
+@@ -0,0 +1,39 @@
++/*
++ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef MULTIMEDIA_CAMERA_FRAMEWORK_MASTER_SECURE_CAMERA_SESSION_H
++#define MULTIMEDIA_CAMERA_FRAMEWORK_MASTER_SECURE_CAMERA_SESSION_H
++
++#include "capture_session.h"
++#include "icapture_session.h"
++
++namespace OHOS {
++namespace CameraStandard {
++class SecureCameraSession : public CaptureSession {
++public:
++    explicit SecureCameraSession(sptr<ICaptureSession> &secureCameraSession): CaptureSession(secureCameraSession) {}
++
++    ~SecureCameraSession();
++
++    /**
++     * @brief the given Ouput for secure-stream can be added to session.
++     *
++     * @param CaptureOutput to be added to session.
++     */
++    int32_t AddSecureOutput(sptr<CaptureOutput>& output);
++};
++} // namespace CameraStandard
++} // namespace OHOS
++#endif //MULTIMEDIA_CAMERA_FRAMEWORK_MASTER_SECURE_CAMERA_SESSION_H
+\ No newline at end of file
+diff --git a/interfaces/kits/js/camera_napi/@ohos.multimedia.camera.d.ts b/interfaces/kits/js/camera_napi/@ohos.multimedia.camera.d.ts
+index 520f6872..87836b6d 100644
+--- a/interfaces/kits/js/camera_napi/@ohos.multimedia.camera.d.ts
++++ b/interfaces/kits/js/camera_napi/@ohos.multimedia.camera.d.ts
+@@ -760,7 +760,6 @@ declare namespace camera {
+      * @since 11
+      */
+     off(type: 'torchStatusChange', callback?: AsyncCallback<TorchStatusInfo>): void;
+-  }
+ 
+   /**
+    * Torch status info.
+@@ -1143,6 +1142,19 @@ declare namespace camera {
+      */
+     open(): Promise<void>;
+ 
++    /**
++     * Open camera.
++     *
++     * @returns { Promise<number> } Promise used to return the result.
++     * @param { boolean } isSecureEnabled - Enable secure camera.
++     * @throws { BusinessError } 7400107 - Can not use camera cause of conflict.
++     * @throws { BusinessError } 7400108 - Camera disabled cause of security reason.
++     * @throws { BusinessError } 7400201 - Camera service fatal error.
++     * @syscap SystemCapability.Multimedia.Camera.Core
++     * @since 12
++     */
++    open(isSecureEnabled: boolean): Promise<bigint>;
++
+     /**
+      * Close camera.
+      *
+@@ -1245,6 +1257,14 @@ declare namespace camera {
+      * @since 12
+      */
+     MACRO_VIDEO = 9
++
++     /**
++     * Secure camera mode.
++     *
++     * @syscap SystemCapability.Multimedia.Camera.Core
++     * @since 12
++     */
++    SECURE = 15,
+   }
+ 
+   /**
+@@ -2095,6 +2115,86 @@ declare namespace camera {
+     enableMacro(enabled: boolean): void;
+   }
+ 
++  /**
++   * Secure camera session object.
++   *
++   * @interface Secure Camera Session
++   * @syscap SystemCapability.Multimedia.Camera.Core
++   * @since 12
++   */
++  interface SecureSession extends Session, Flash, AutoExposure, Focus, Zoom {
++    /**
++     * Add Secure output for camera.
++     *
++     * @param { CameraOutput } cameraOutput - Specify the output as a secure flow.
++     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
++     * @throws { BusinessError } 7400103 - Session not config.
++     * @syscap SystemCapability.Multimedia.Camera.Core
++     * @since 12
++     */
++    addSecureOutput(previewOutput: PreviewOutput): void;
++
++    /**
++     * Subscribes to error events.
++     *
++     * @param { 'error' } type - Event type.
++     * @param { ErrorCallback } callback - Callback used to get the capture session errors.
++     * @syscap SystemCapability.Multimedia.Camera.Core
++     * @since 10
++     */
++    on(type: 'error', callback: ErrorCallback): void;
++
++    /**
++     * Unsubscribes from error events.
++     *
++     * @param { 'error' } type - Event type.
++     * @param { ErrorCallback } callback - Callback used to get the capture session errors.
++     * @syscap SystemCapability.Multimedia.Camera.Core
++     * @since 10
++     */
++    off(type: 'error', callback?: ErrorCallback): void;
++
++    /**
++     * Subscribes focus status change event callback.
++     *
++     * @param { 'focusStateChange' } type - Event type.
++     * @param { AsyncCallback<FocusState> } callback - Callback used to get the focus state change.
++     * @syscap SystemCapability.Multimedia.Camera.Core
++     * @since 10
++     */
++    on(type: 'focusStateChange', callback: AsyncCallback<FocusState>): void;
++
++    /**
++     * Unsubscribes from focus status change event callback.
++     *
++     * @param { 'focusStateChange' } type - Event type.
++     * @param { AsyncCallback<FocusState> } callback - Callback used to get the focus state change.
++     * @syscap SystemCapability.Multimedia.Camera.Core
++     * @since 10
++     */
++    off(type: 'focusStateChange', callback?: AsyncCallback<FocusState>): void;
++
++    /**
++     * Subscribes zoom info event callback.
++     *
++     * @param { 'smoothZoomInfoAvailable' } type - Event type.
++     * @param { AsyncCallback<SmoothZoomInfo> } callback - Callback used to get the zoom info.
++     * @syscap SystemCapability.Multimedia.Camera.Core
++     * @since 11
++     */
++    on(type: 'smoothZoomInfoAvailable', callback: AsyncCallback<SmoothZoomInfo>): void;
++
++    /**
++     * Unsubscribes from zoom info event callback.
++     *
++     * @param { 'smoothZoomInfoAvailable' } type - Event type.
++     * @param { AsyncCallback<SmoothZoomInfo> } callback - Callback used to get the zoom info.
++     * @syscap SystemCapability.Multimedia.Camera.Core
++     * @since 11
++     */
++    off(type: 'smoothZoomInfoAvailable', callback?: AsyncCallback<SmoothZoomInfo>): void;
++  }
++
+   /**
+    * Session object.
+    *
+diff --git a/interfaces/kits/js/camera_napi/BUILD.gn b/interfaces/kits/js/camera_napi/BUILD.gn
+index 30179379..cec42bdd 100644
+--- a/interfaces/kits/js/camera_napi/BUILD.gn
++++ b/interfaces/kits/js/camera_napi/BUILD.gn
+@@ -71,6 +71,7 @@ ohos_shared_library("camera_napi") {
+     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/portrait_session_napi.cpp",
+     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/profession_session_napi.cpp",
+     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/slow_motion_session_napi.cpp",
++    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/secure_camera_session_napi.cpp",
+     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/video_session_for_sys_napi.cpp",
+     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/video_session_napi.cpp",
+     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/native_module_ohos_camera.cpp",
+diff --git a/interfaces/kits/js/camera_napi/include/camera_napi_utils.h b/interfaces/kits/js/camera_napi/include/camera_napi_utils.h
+index 48c2431c..75c0179d 100644
+--- a/interfaces/kits/js/camera_napi/include/camera_napi_utils.h
++++ b/interfaces/kits/js/camera_napi/include/camera_napi_utils.h
+@@ -120,7 +120,12 @@ public:
+ 
+     static int32_t IncreamentAndGet(uint32_t& num);
+ 
+-    static bool CheckInvalidArgument(napi_env env, size_t argc, int32_t length, napi_value* argv, CameraSteps step);
++    static void IsEnableSecureCamera(bool isEnable);
++
++    static bool GetEnableSecureCamera();
++
++    static bool CheckInvalidArgument(napi_env env, size_t argc, int32_t length,
++                                     napi_value *argv, CameraSteps step);
+ 
+     static bool CheckError(napi_env env, int32_t retCode);
+ 
+@@ -162,6 +167,8 @@ public:
+ 
+ private:
+     explicit CameraNapiUtils() {};
++
++    static bool mEnableSecure;
+ }; // namespace CameraNapiUtils
+ } // namespace CameraStandard
+ } // namespace OHOS
+diff --git a/interfaces/kits/js/camera_napi/include/input/camera_input_napi.h b/interfaces/kits/js/camera_napi/include/input/camera_input_napi.h
+index a38d7cf0..6e95cddc 100644
+--- a/interfaces/kits/js/camera_napi/include/input/camera_input_napi.h
++++ b/interfaces/kits/js/camera_napi/include/input/camera_input_napi.h
+@@ -113,6 +113,7 @@ struct CameraInputAsyncContext :public AsyncContext {
+     InputAsyncCallbackModes modeForAsync;
+     std::string cameraId;
+     std::string enumType;
++    bool isEnableSecCam;
+     std::vector<CameraFormat> vecList;
+     ~CameraInputAsyncContext()
+     {
+diff --git a/interfaces/kits/js/camera_napi/include/input/camera_napi.h b/interfaces/kits/js/camera_napi/include/input/camera_napi.h
+index 1d4a1f8c..80116553 100644
+--- a/interfaces/kits/js/camera_napi/include/input/camera_napi.h
++++ b/interfaces/kits/js/camera_napi/include/input/camera_napi.h
+@@ -168,6 +168,7 @@ static const std::unordered_map<std::string, int32_t> mapSceneMode = {
+     {"SLOW_MOTION", JS_SLOW_MOTION},
+     {"MACRO_PHOTO", JS_CAPTURE_MARCO},
+     {"MACRO_VIDEO", JS_VIDEO_MARCO},
++    {"SECURE", JS_SECURE_CAMERA},
+ };
+ 
+ static const std::unordered_map<std::string, int32_t> mapFilterType = {
+diff --git a/interfaces/kits/js/camera_napi/include/mode/secure_camera_session_napi.h b/interfaces/kits/js/camera_napi/include/mode/secure_camera_session_napi.h
+new file mode 100755
+index 00000000..baea7f1e
+--- /dev/null
++++ b/interfaces/kits/js/camera_napi/include/mode/secure_camera_session_napi.h
+@@ -0,0 +1,45 @@
++/*
++ * Copyright (c) 2024-2024 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++#ifndef SECURE_CAMERA_SESSION_NAPI_H
++#define SECURE_CAMERA_SESSION_NAPI_H
++
++
++#include "napi/native_api.h"
++#include "napi/native_node_api.h"
++#include "secure_camera_session.h"
++#include "session/camera_session_napi.h"
++#include "night_session.h"
++
++namespace OHOS {
++namespace CameraStandard {
++static const char SECURE_CAMERA_SESSION_NAPI_CLASS_NAME[] = "SecureCameraSession";
++class SecureCameraSessionNapi : public CameraSessionNapi {
++public:
++    static napi_value Init(napi_env env, napi_value exports);
++    static napi_value CreateCameraSession(napi_env env);
++    SecureCameraSessionNapi();
++    ~SecureCameraSessionNapi();
++
++    static void SecureCameraSessionNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
++    static napi_value SecureCameraSessionNapiConstructor(napi_env env, napi_callback_info info);
++    static napi_value AddSecureOutput(napi_env env, napi_callback_info info);
++    napi_env env_;
++    napi_ref wrapper_;
++    sptr<SecureCameraSession> secureCameraSession_;
++    static thread_local napi_ref sConstructor_;
++};
++}
++}
++#endif //MULTIMEDIA_CAMERA_FRAMEWORK_MASTER_SECURE_CAMERA_SESSION_NAPI_H
+diff --git a/interfaces/kits/js/camera_napi/include/native_module_ohos_camera.h b/interfaces/kits/js/camera_napi/include/native_module_ohos_camera.h
+index d6998e67..3c0e2316 100644
+--- a/interfaces/kits/js/camera_napi/include/native_module_ohos_camera.h
++++ b/interfaces/kits/js/camera_napi/include/native_module_ohos_camera.h
+@@ -30,6 +30,8 @@
+ #include "mode/photo_session_for_sys_napi.h"
+ #include "mode/photo_session_napi.h"
+ #include "mode/portrait_session_napi.h"
++#include "mode/secure_camera_session_napi.h"
++#include "mode/video_session_napi.h"
+ #include "mode/video_session_for_sys_napi.h"
+ #include "mode/video_session_napi.h"
+ #include "mode/slow_motion_session_napi.h"
+diff --git a/interfaces/kits/js/camera_napi/include/session/camera_session_napi.h b/interfaces/kits/js/camera_napi/include/session/camera_session_napi.h
+index 40880174..9854cff5 100644
+--- a/interfaces/kits/js/camera_napi/include/session/camera_session_napi.h
++++ b/interfaces/kits/js/camera_napi/include/session/camera_session_napi.h
+@@ -227,6 +227,8 @@ public:
+     static napi_value SetExposureMode(napi_env env, napi_callback_info info);
+     static napi_value SetMeteringPoint(napi_env env, napi_callback_info info);
+     static napi_value GetMeteringPoint(napi_env env, napi_callback_info info);
++    static napi_value GetJSArgsForCameraOutput(napi_env env, size_t argc, const napi_value argv[],
++        sptr<CaptureOutput> &cameraOutput);
+     static napi_value GetExposureBiasRange(napi_env env, napi_callback_info info);
+     static napi_value SetExposureBias(napi_env env, napi_callback_info info);
+     static napi_value GetExposureValue(napi_env env, napi_callback_info info);
+diff --git a/interfaces/kits/native/include/camera/camera.h b/interfaces/kits/native/include/camera/camera.h
+index 24a55aad..57623697 100644
+--- a/interfaces/kits/native/include/camera/camera.h
++++ b/interfaces/kits/native/include/camera/camera.h
+@@ -147,6 +147,32 @@ typedef enum Camera_Status {
+     CAMERA_STATUS_UNAVAILABLE = 3
+ } Camera_Status;
+ 
++/**
++ * @brief Enum for scence mode.
++ *
++ * @since 12
++ * @version 1.0
++ */
++typedef enum Camera_SceneMode {
++    /**
++    * Normal photo mode.
++    * @since 12
++    */
++    NORMAL_PHOTO = 1,
++
++    /**
++     * Normal video mode.
++     * @since 12
++     */
++    NORMAL_VIDEO = 2,
++
++    /**
++     * Secure camera mode..
++     * @since 12
++     */
++    SECURE = 14,
++} Camera_SceneMode;
++
+ /**
+  * @brief Enum for camera position.
+  *
+diff --git a/interfaces/kits/native/include/camera/camera.ndk.json b/interfaces/kits/native/include/camera/camera.ndk.json
+index 6d9ddb99..d55400c5 100644
+--- a/interfaces/kits/native/include/camera/camera.ndk.json
++++ b/interfaces/kits/native/include/camera/camera.ndk.json
+@@ -2,6 +2,7 @@
+     { "name": "OH_CameraInput_RegisterCallback" },
+     { "name": "OH_CameraInput_UnregisterCallback" },
+     { "name": "OH_CameraInput_Open" },
++    { "name": "OH_CameraInput_OpenSecureCamera" },
+     { "name": "OH_CameraInput_Close" },
+     { "name": "OH_CameraInput_Release" },
+     { "name": "OH_CameraManager_RegisterCallback" },
+@@ -19,6 +20,8 @@
+     { "name": "OH_Camera_GetCameraManager" },
+     { "name": "OH_CaptureSession_RegisterCallback" },
+     { "name": "OH_CaptureSession_UnregisterCallback" },
++    { "name": "OH_CaptureSession_SetSessionMode" },
++    { "name": "OH_CaptureSession_AddSecureOutput" },
+     { "name": "OH_CaptureSession_BeginConfig" },
+     { "name": "OH_CaptureSession_CommitConfig" },
+     { "name": "OH_CaptureSession_AddInput" },
+diff --git a/interfaces/kits/native/include/camera/camera_input.h b/interfaces/kits/native/include/camera/camera_input.h
+index 30e255c3..daf2cdd7 100644
+--- a/interfaces/kits/native/include/camera/camera_input.h
++++ b/interfaces/kits/native/include/camera/camera_input.h
+@@ -120,6 +120,21 @@ Camera_ErrorCode OH_CameraInput_UnregisterCallback(Camera_Input* cameraInput, Ca
+  */
+ Camera_ErrorCode OH_CameraInput_Open(Camera_Input* cameraInput);
+ 
++
++/**
++ * @brief Open camera.
++ *
++ * @param cameraInput the {@link Camera_Input} instance to be opened.
++ * @param isEnableSecureCamera whether is enable secure camera
++ * @return {@link #CAMERA_OK} if the method call succeeds.
++ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
++ *         {@link #CAMERA_CONFLICT_CAMERA} if can not use camera cause of conflict.
++ *         {@link #CAMERA_DEVICE_DISABLED} if camera disabled cause of security reason.
++ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
++ * @since 12
++ */
++Camera_ErrorCode OH_CameraInput_OpenSecureCamera(Camera_Input* cameraInput, uint64_t* secureSeqId);
++
+ /**
+  * @brief Close camera.
+  *
+diff --git a/interfaces/kits/native/include/camera/capture_session.h b/interfaces/kits/native/include/camera/capture_session.h
+index 5d0e21d0..25ff6df7 100644
+--- a/interfaces/kits/native/include/camera/capture_session.h
++++ b/interfaces/kits/native/include/camera/capture_session.h
+@@ -125,6 +125,30 @@ Camera_ErrorCode OH_CaptureSession_RegisterCallback(Camera_CaptureSession* sessi
+ Camera_ErrorCode OH_CaptureSession_UnregisterCallback(Camera_CaptureSession* session,
+     CaptureSession_Callbacks* callback);
+ 
++/**
++ * @brief Specifies the specific mode. The default mode is the photomode.
++ *
++ * @param session the {@link Camera_CaptureSession} instance.
++ * @param sceneMode the {@link CaptureSession_SceneMode} instance.
++ * @return {@link #CAMERA_OK} if the method call succeeds.
++ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
++ *         {@link #CAMERA_SESSION_CONFIG_LOCKED} if session config locked.
++ * @since 12
++ */
++Camera_ErrorCode OH_CaptureSession_SetSessionMode(Camera_CaptureSession* session, Camera_SceneMode sceneMode);
++
++/**
++ * @brief Specifies the specific mode. The default mode is the photomode.
++ *
++ * @param session the {@link Camera_CaptureSession} instance.
++ * @param previewOutput the target {@link Camera_PreviewOutput} to Set as a secure flow.
++ * @return {@link #CAMERA_OK} if the method call succeeds.
++ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
++ *         {@link #CAMERA_SESSION_CONFIG_LOCKED} if session config locked.
++ * @since 12
++ */
++Camera_ErrorCode OH_CaptureSession_AddSecureOutput(Camera_CaptureSession* session, Camera_PreviewOutput* previewOutput);
++
+ /**
+  * @brief Begin capture session config.
+  *
+diff --git a/services/camera_service/binder/base/include/camera_service_ipc_interface_code.h b/services/camera_service/binder/base/include/camera_service_ipc_interface_code.h
+index b1151e29..9a813859 100644
+--- a/services/camera_service/binder/base/include/camera_service_ipc_interface_code.h
++++ b/services/camera_service/binder/base/include/camera_service_ipc_interface_code.h
+@@ -171,7 +171,8 @@ enum StreamRepeatInterfaceCode {
+     CAMERA_FORK_SKETCH_STREAM_REPEAT,
+     CAMERA_REMOVE_SKETCH_STREAM_REPEAT,
+     CAMERA_UPDATE_SKETCH_RATIO,
+-    STREAM_FRAME_RANGE_SET
++    STREAM_FRAME_RANGE_SET,
++    CAMERA_ENABLE_SECURE_STREAM
+ };
+ 
+ /**
+diff --git a/services/camera_service/binder/base/include/icamera_device_service.h b/services/camera_service/binder/base/include/icamera_device_service.h
+index ce49b15e..06e1dda7 100644
+--- a/services/camera_service/binder/base/include/icamera_device_service.h
++++ b/services/camera_service/binder/base/include/icamera_device_service.h
+@@ -26,6 +26,8 @@ class ICameraDeviceService : public IRemoteBroker {
+ public:
+     virtual int32_t Open() = 0;
+ 
++    virtual int32_t OpenSecureCamera(uint64_t* secureSeqId) = 0;
++
+     virtual int32_t Close() = 0;
+ 
+     virtual int32_t Release() = 0;
+diff --git a/services/camera_service/binder/base/include/istream_repeat.h b/services/camera_service/binder/base/include/istream_repeat.h
+index abd194ee..8d48796a 100644
+--- a/services/camera_service/binder/base/include/istream_repeat.h
++++ b/services/camera_service/binder/base/include/istream_repeat.h
+@@ -44,6 +44,8 @@ public:
+ 
+     virtual int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate) = 0;
+ 
++    virtual int32_t EnableSecure(bool isEnable = false) = 0;
++
+     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamRepeat");
+ };
+ } // namespace CameraStandard
+diff --git a/services/camera_service/binder/client/include/hcamera_device_proxy.h b/services/camera_service/binder/client/include/hcamera_device_proxy.h
+index aa06ac13..b742284e 100644
+--- a/services/camera_service/binder/client/include/hcamera_device_proxy.h
++++ b/services/camera_service/binder/client/include/hcamera_device_proxy.h
+@@ -29,6 +29,8 @@ public:
+ 
+     int32_t Open() override;
+ 
++    int32_t OpenSecureCamera(uint64_t* secureSeqId) override;
++
+     int32_t Close() override;
+ 
+     int32_t Release() override;
+diff --git a/services/camera_service/binder/client/include/hstream_repeat_proxy.h b/services/camera_service/binder/client/include/hstream_repeat_proxy.h
+index ba023c98..7776b1f9 100644
+--- a/services/camera_service/binder/client/include/hstream_repeat_proxy.h
++++ b/services/camera_service/binder/client/include/hstream_repeat_proxy.h
+@@ -45,6 +45,8 @@ public:
+ 
+     int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate) override;
+ 
++    int32_t EnableSecure(bool isEnable = false) override;
++
+ private:
+     static inline BrokerDelegator<HStreamRepeatProxy> delegator_;
+ };
+diff --git a/services/camera_service/binder/client/src/hcamera_device_proxy.cpp b/services/camera_service/binder/client/src/hcamera_device_proxy.cpp
+index 38a21e34..473b7041 100644
+--- a/services/camera_service/binder/client/src/hcamera_device_proxy.cpp
++++ b/services/camera_service/binder/client/src/hcamera_device_proxy.cpp
+@@ -35,6 +35,7 @@ int32_t HCameraDeviceProxy::Open()
+     MessageOption option;
+ 
+     data.WriteInterfaceToken(GetDescriptor());
++    data.WriteBool(false);
+     int error = Remote()->SendRequest(
+         static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_OPEN), data, reply, option);
+     if (error != ERR_NONE) {
+@@ -43,6 +44,23 @@ int32_t HCameraDeviceProxy::Open()
+     return error;
+ }
+ 
++int32_t HCameraDeviceProxy::OpenSecureCamera(uint64_t* secureSeqId)
++{
++    MessageParcel data;
++    MessageParcel reply;
++    MessageOption option;
++
++    data.WriteInterfaceToken(GetDescriptor());
++    data.WriteBool(true);
++    int error = Remote()->SendRequest(
++            static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_OPEN), data, reply, option);
++    if (error != ERR_NONE) {
++        MEDIA_ERR_LOG("HCameraDeviceProxy Open failed, error: %{public}d", error);
++    }
++    *secureSeqId = reply.ReadInt64();
++    return error;
++}
++
+ int32_t HCameraDeviceProxy::Close()
+ {
+     MessageParcel data;
+diff --git a/services/camera_service/binder/client/src/hstream_repeat_proxy.cpp b/services/camera_service/binder/client/src/hstream_repeat_proxy.cpp
+index 15b0b700..7db163c2 100644
+--- a/services/camera_service/binder/client/src/hstream_repeat_proxy.cpp
++++ b/services/camera_service/binder/client/src/hstream_repeat_proxy.cpp
+@@ -203,5 +203,21 @@ int32_t HStreamRepeatProxy::SetFrameRate(int32_t minFrameRate, int32_t maxFrameR
+     }
+     return error;
+ }
++
++int32_t HStreamRepeatProxy::EnableSecure(bool isEnable)
++{
++    MessageParcel data;
++    MessageParcel reply;
++    MessageOption option;
++
++    data.WriteInterfaceToken(GetDescriptor());
++    data.WriteBool(isEnable);
++    int error = Remote()->SendRequest(
++            static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ENABLE_SECURE_STREAM), data, reply, option);
++    if (error != ERR_NONE) {
++        MEDIA_ERR_LOG("HStreamRepeatProxy Stop failed, error: %{public}d", error);
++    }
++    return error;
++}
+ } // namespace CameraStandard
+ } // namespace OHOS
+diff --git a/services/camera_service/binder/server/include/hcamera_device_stub.h b/services/camera_service/binder/server/include/hcamera_device_stub.h
+index 5435f144..bd9b3c8d 100644
+--- a/services/camera_service/binder/server/include/hcamera_device_stub.h
++++ b/services/camera_service/binder/server/include/hcamera_device_stub.h
+@@ -33,6 +33,7 @@ private:
+     int32_t HandleGetEnabledResults(MessageParcel& reply);
+     int32_t HandleEnableResult(MessageParcel& data);
+     int32_t HandleDisableResult(MessageParcel& data);
++    int32_t HandleOpenSecureCameraResults(MessageParcel& data, MessageParcel& reply);
+ };
+ } // namespace CameraStandard
+ } // namespace OHOS
+diff --git a/services/camera_service/binder/server/src/hcamera_device_stub.cpp b/services/camera_service/binder/server/src/hcamera_device_stub.cpp
+index 17ab7e8a..df7c20c3 100644
+--- a/services/camera_service/binder/server/src/hcamera_device_stub.cpp
++++ b/services/camera_service/binder/server/src/hcamera_device_stub.cpp
+@@ -32,7 +32,7 @@ int HCameraDeviceStub::OnRemoteRequest(
+     CHECK_AND_RETURN_RET(errCode == CAMERA_OK, errCode);
+     switch (code) {
+         case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_OPEN): {
+-            errCode = Open();
++            errCode =HCameraDeviceStub::HandleOpenSecureCameraResults(data, reply);
+             break;
+         }
+         case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_CLOSE):
+@@ -148,5 +148,25 @@ int32_t HCameraDeviceStub::HandleDisableResult(MessageParcel &data)
+ 
+     return ret;
+ }
++
++int32_t HCameraDeviceStub::HandleOpenSecureCameraResults(MessageParcel &data, MessageParcel &reply)
++{
++    int32_t errorCode;
++    if (data.ReadBool()) {
++        uint64_t secureSeqId = 0L;
++        errorCode = OpenSecureCamera(&secureSeqId);
++        if (errorCode != ERR_NONE) {
++            MEDIA_ERR_LOG("CameraDeviceStub::HandleGetEnabledResults GetEnabledResults failed : %{public}d", errorCode);
++            return errorCode;
++        }
++        CHECK_AND_RETURN_RET_LOG(reply.WriteInt64(secureSeqId), IPC_STUB_WRITE_PARCEL_ERR,
++            "HCameraDeviceStub::openSecureCamera write results failed");
++
++    } else {
++        errorCode = Open();
++    }
++
++    return errorCode;
++}
+ } // namespace CameraStandard
+ } // namespace OHOS
+diff --git a/services/camera_service/binder/server/src/hstream_repeat_stub.cpp b/services/camera_service/binder/server/src/hstream_repeat_stub.cpp
+index f81ad8e4..558e3a8b 100644
+--- a/services/camera_service/binder/server/src/hstream_repeat_stub.cpp
++++ b/services/camera_service/binder/server/src/hstream_repeat_stub.cpp
+@@ -57,6 +57,8 @@ int HStreamRepeatStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Messa
+             break;
+         case static_cast<uint32_t>(StreamRepeatInterfaceCode::STREAM_FRAME_RANGE_SET):
+             errCode = HandleSetFrameRate(data);
++        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ENABLE_SECURE_STREAM):
++            errCode = EnableSecure(data.ReadBool());
+             break;
+         default:
+             MEDIA_ERR_LOG("HStreamRepeatStub request code %{public}u not handled", code);
+diff --git a/services/camera_service/include/camera_log.h b/services/camera_service/include/camera_log.h
+index 401ad126..bcfd78d2 100644
+--- a/services/camera_service/include/camera_log.h
++++ b/services/camera_service/include/camera_log.h
+@@ -17,7 +17,7 @@
+ #define OHOS_CAMERA_LOG_H
+ 
+ #include <stdio.h>
+-
++#include <cinttypes>
+ #include "hilog/log.h"
+ #include "hisysevent.h"
+ #include "hitrace_meter.h"
+diff --git a/services/camera_service/include/hcamera_device.h b/services/camera_service/include/hcamera_device.h
+index 169c3fe4..95ec6ea2 100644
+--- a/services/camera_service/include/hcamera_device.h
++++ b/services/camera_service/include/hcamera_device.h
+@@ -48,6 +48,7 @@ public:
+     ~HCameraDevice();
+ 
+     int32_t Open() override;
++    int32_t OpenSecureCamera(uint64_t* secureSeqId) override;
+     int32_t Close() override;
+     int32_t Release() override;
+     int32_t UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings) override;
+@@ -113,6 +114,8 @@ public:
+ 
+     bool CheckMovingPhotoSupported(int32_t mode);
+ 
++    int64_t GetSecureCameraSeq(uint64_t* secureSeqId);
++
+ private:
+     class FoldScreenListener;
+     std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.
+@@ -148,6 +151,8 @@ private:
+     uint32_t zoomTimerId_;
+     std::atomic<bool> inPrepareZoom_;
+     std::atomic<bool> deviceMuteMode_;
++    bool isHasOpenSecure = false;
++    uint64_t mSecureCameraSeqId = 0L;
+ 
+     std::atomic<int32_t> hdiStreamIdGenerator_ = HDI_STREAM_ID_INIT;
+     void UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings);
+@@ -166,7 +171,7 @@ private:
+     void ResetZoomTimer();
+     void CheckZoomChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
+     void UnPrepareZoom();
+-    int32_t OpenDevice();
++    int32_t OpenDevice(bool isEnableSecCam = false);
+     int32_t CloseDevice();
+     void OpenDeviceNext();
+     void DebugLogForZoom(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+diff --git a/services/camera_service/include/hcamera_host_manager.h b/services/camera_service/include/hcamera_host_manager.h
+index 7fd76efe..262885b8 100644
+--- a/services/camera_service/include/hcamera_host_manager.h
++++ b/services/camera_service/include/hcamera_host_manager.h
+@@ -84,7 +84,8 @@ public:
+     virtual int32_t GetCameraAbility(std::string &cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata> &ability);
+     virtual int32_t OpenCameraDevice(std::string &cameraId,
+                                      const sptr<ICameraDeviceCallback> &callback,
+-                                     sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> &pDevice);
++                                     sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> &pDevice,
++                                     bool isEnableSecCam = false);
+     virtual int32_t SetFlashlight(const std::string& cameraId, bool isEnable);
+     virtual int32_t Prelaunch(const std::string& cameraId, std::string clientName);
+     virtual int32_t PreSwitchCamera(const std::string& cameraId);
+diff --git a/services/camera_service/include/hstream_common.h b/services/camera_service/include/hstream_common.h
+index 4252076e..35554ba3 100644
+--- a/services/camera_service/include/hstream_common.h
++++ b/services/camera_service/include/hstream_common.h
+@@ -23,6 +23,7 @@
+ #include <refbase.h>
+ 
+ #include "camera/v1_2/types.h"
++#include "camera/v1_3/types.h"
+ #include "camera_metadata_info.h"
+ #include "icapture_session.h"
+ #include "istream_common.h"
+diff --git a/services/camera_service/include/hstream_repeat.h b/services/camera_service/include/hstream_repeat.h
+index e287a858..788cbfca 100644
+--- a/services/camera_service/include/hstream_repeat.h
++++ b/services/camera_service/include/hstream_repeat.h
+@@ -64,6 +64,7 @@ public:
+     int32_t ForkSketchStreamRepeat(
+         int32_t width, int32_t height, sptr<IStreamRepeat>& sketchStream, float sketchRatio) override;
+     int32_t RemoveSketchStreamRepeat() override;
++    int32_t EnableSecure(bool isEnable = false) override;
+     int32_t UpdateSketchRatio(float sketchRatio) override;
+     sptr<HStreamRepeat> GetSketchStream();
+     RepeatStreamType GetRepeatStreamType();
+@@ -93,6 +94,7 @@ private:
+     std::mutex movingPhotoCallbackLock_;
+     std::function<void()> startMovingPhotoCallback_;
+     RepeatStreamStatus repeatStreamStatus_ = RepeatStreamStatus::STOPED;
++    bool mEnableSecure = false;
+ };
+ } // namespace CameraStandard
+ } // namespace OHOS
+diff --git a/services/camera_service/src/hcamera_device.cpp b/services/camera_service/src/hcamera_device.cpp
+index 3034d5db..a0d9509f 100644
+--- a/services/camera_service/src/hcamera_device.cpp
++++ b/services/camera_service/src/hcamera_device.cpp
+@@ -85,7 +85,7 @@ HCameraDevice::HCameraDevice(
+       cameraHostManager_(cameraHostManager), cameraID_(cameraID), callerToken_(callingTokenId),
+       deviceOpenLifeCycleSettings_(std::make_shared<OHOS::Camera::CameraMetadata>(
+       DEVICE_OPEN_LIFECYCLE_TAGS.size(), DEFAULT_SETTING_ITEM_LENGTH)), clientUserId_(0), zoomTimerId_(0),
+-      deviceMuteMode_(false)
++      deviceMuteMode_(false), isHasOpenSecure(false)
+ {
+     MEDIA_INFO_LOG("HCameraDevice::HCameraDevice Contructor Camera: %{public}s", cameraID.c_str());
+     isOpenedCameraDevice_.store(false);
+@@ -253,6 +253,55 @@ int32_t HCameraDevice::Open()
+     return result;
+ }
+ 
++int32_t HCameraDevice::OpenSecureCamera(uint64_t* secureSeqId)
++{
++    CAMERA_SYNC_TRACE;
++    if (isOpenedCameraDevice_.load()) {
++        MEDIA_ERR_LOG("HCameraDevice::Open failed, camera is busy");
++    }
++    bool isAllowed = true;
++    if (IsValidTokenId(callerToken_)) {
++        isAllowed = Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA);
++    }
++    if (!isAllowed) {
++        MEDIA_ERR_LOG("HCameraDevice::Open IsAllowedUsingPermission failed");
++        return CAMERA_ALLOC_ERROR;
++    }
++
++    MEDIA_INFO_LOG("HCameraDevice::OpenSecureCamera Camera:[%{public}s", cameraID_.c_str());
++    int32_t errCode = OpenDevice(true);
++    auto hdiCameraDeviceV1_3 = HDI::Camera::V1_3::ICameraDevice::CastFrom(hdiCameraDevice_);
++    if (hdiCameraDeviceV1_3 != nullptr) {
++        errCode = hdiCameraDeviceV1_3->GetSecureCameraSeq(*secureSeqId);
++        if (errCode != HDI::Camera::V1_0::CamRetCode::NO_ERROR) {
++            MEDIA_ERR_LOG("HCameraDevice::GetSecureCameraSeq occur error");
++            return CAMERA_UNKNOWN_ERROR;
++        }
++        mSecureCameraSeqId = *secureSeqId;
++        isHasOpenSecure = true;
++    }  else {
++        MEDIA_INFO_LOG("V1_3::ICameraDevice::CastFrom failed");
++    }
++    MEDIA_INFO_LOG("CaptureSession::OpenSecureCamera secureSeqId = %{public}" PRIu64, *secureSeqId);
++    return errCode;
++}
++
++int64_t HCameraDevice::GetSecureCameraSeq(uint64_t* secureSeqId) {
++    if (!isHasOpenSecure) {
++        *secureSeqId = 0;
++        return CAMERA_OK;
++    }
++    auto hdiCameraDeviceV1_3 = HDI::Camera::V1_3::ICameraDevice::CastFrom(hdiCameraDevice_);
++    if (hdiCameraDeviceV1_3 != nullptr) {
++        *secureSeqId = mSecureCameraSeqId;
++        MEDIA_DEBUG_LOG("CaptureSession::GetSecureCameraSeq secureSeqId = %{public}" PRId64, *secureSeqId);
++        return CAMERA_UNKNOWN_ERROR;
++    }  else {
++        MEDIA_INFO_LOG("V1_3::ICameraDevice::CastFrom failed");
++    }
++    return CAMERA_OK;
++}
++
+ int32_t HCameraDevice::Close()
+ {
+     CAMERA_SYNC_TRACE;
+@@ -262,26 +311,28 @@ int32_t HCameraDevice::Close()
+     return result;
+ }
+ 
+-int32_t HCameraDevice::OpenDevice()
++int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
+ {
+     MEDIA_DEBUG_LOG("HCameraDevice::OpenDevice start");
+     CAMERA_SYNC_TRACE;
+     int32_t errorCode;
+     MEDIA_INFO_LOG("HCameraDevice::OpenDevice Opening camera device: %{public}s", cameraID_.c_str());
+ 
+-    bool canOpenDevice = CanOpenCamera();
+-    if (!canOpenDevice) {
+-        MEDIA_ERR_LOG("refuse to turning on the camera");
+-        return CAMERA_DEVICE_CONFLICT;
+-    }
+-    CameraReportUtils::GetInstance().SetOpenCamPerfStartInfo(cameraID_.c_str(), CameraReportUtils::GetCallerInfo());
+-    errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_);
+-    if (errorCode != CAMERA_OK) {
+-        MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");
+-    } else {
+-        ResetHdiStreamId();
+-        isOpenedCameraDevice_.store(true);
+-        HCameraDeviceManager::GetInstance()->AddDevice(IPCSkeleton::GetCallingPid(), this);
++    {
++        bool canOpenDevice = CanOpenCamera();
++        if (!canOpenDevice) {
++            MEDIA_ERR_LOG("refuse to turning on the camera");
++            return CAMERA_DEVICE_CONFLICT;
++        }
++        CameraReportUtils::GetInstance().SetOpenCamPerfStartInfo(cameraID_.c_str(), CameraReportUtils::GetCallerInfo());
++        errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_, isEnableSecCam);
++        if (errorCode != CAMERA_OK) {
++            MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");
++        } else {
++			ResetHdiStreamId();
++            isOpenedCameraDevice_.store(true);
++            HCameraDeviceManager::GetInstance()->AddDevice(IPCSkeleton::GetCallingPid(), this);
++        }
+     }
+     errorCode = InitStreamOperator();
+     if (errorCode != CAMERA_OK) {
+@@ -1070,6 +1121,7 @@ int32_t HCameraDevice::InitStreamOperator()
+             hdiCameraDeviceV1_1 = static_cast<OHOS::HDI::Camera::V1_1::ICameraDevice*>(hdiCameraDevice_.GetRefPtr());
+         }
+     }
++
+     if (hdiCameraDeviceV1_3 != nullptr && versionRes >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
+         sptr<OHOS::HDI::Camera::V1_2::IStreamOperator> streamOperator_v1_2;
+         rc = (CamRetCode)(hdiCameraDeviceV1_3->GetStreamOperator_V1_3(this, streamOperator_v1_2));
+@@ -1240,6 +1292,11 @@ int32_t HCameraDevice::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V
+     }
+     if (streamOperatorV1_1 != nullptr) {
+         MEDIA_INFO_LOG("HCameraDevice::CreateStreams streamOperator V1_1");
++        for (auto streamInfo : streamInfos) {
++            if (streamInfo.extendedStreamInfos.size() > 0) {
++                MEDIA_INFO_LOG("HCameraDevice::CreateStreams streamOperator V1_1 type %{public}d", streamInfo.extendedStreamInfos[0].type);
++            }
++        }
+         hdiRc = (CamRetCode)(streamOperatorV1_1->CreateStreams_V1_1(streamInfos));
+     } else {
+         MEDIA_INFO_LOG("HCameraDevice::CreateStreams streamOperator V1_0");
+diff --git a/services/camera_service/src/hcamera_host_manager.cpp b/services/camera_service/src/hcamera_host_manager.cpp
+index 97bc54bd..bea0438d 100644
+--- a/services/camera_service/src/hcamera_host_manager.cpp
++++ b/services/camera_service/src/hcamera_host_manager.cpp
+@@ -83,7 +83,7 @@ public:
+     int32_t GetCameras(std::vector<std::string>& cameraIds);
+     int32_t GetCameraAbility(std::string& cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata>& ability);
+     int32_t OpenCamera(std::string& cameraId, const sptr<ICameraDeviceCallback>& callback,
+-                       sptr<OHOS::HDI::Camera::V1_0::ICameraDevice>& pDevice);
++                       sptr<OHOS::HDI::Camera::V1_0::ICameraDevice>& pDevice, bool isEnableSecCam = false);
+     int32_t SetFlashlight(const std::string& cameraId, bool isEnable);
+     int32_t SetTorchLevel(float level);
+     int32_t Prelaunch(sptr<HCameraRestoreParam> cameraRestoreParam, bool muteMode);
+@@ -177,7 +177,10 @@ bool HCameraHostManager::CameraHostInfo::Init()
+ 
+     Cast2MultiVersionCameraHost();
+ 
+-    if (cameraHostProxyV1_2_ != nullptr && GetCameraHostVersion() > GetVersionId(1, 1)) {
++    if (cameraHostProxyV1_3_ != nullptr && GetCameraHostVersion() >= GetVersionId(1, 3)) {
++        MEDIA_DEBUG_LOG("CameraHostInfo::Init SetCallback ICameraHost V1_3");
++        cameraHostProxyV1_3_->SetCallback_V1_2(this);
++    } else if (cameraHostProxyV1_2_ != nullptr && GetCameraHostVersion() >= GetVersionId(1, 2)) {
+         MEDIA_DEBUG_LOG("CameraHostInfo::Init SetCallback ICameraHost V1_2");
+         cameraHostProxyV1_2_->SetCallback_V1_2(this);
+     } else {
+@@ -273,7 +276,8 @@ int32_t HCameraHostManager::CameraHostInfo::GetCameraAbility(std::string& camera
+ 
+ int32_t HCameraHostManager::CameraHostInfo::OpenCamera(std::string& cameraId,
+     const sptr<ICameraDeviceCallback>& callback,
+-    sptr<OHOS::HDI::Camera::V1_0::ICameraDevice>& pDevice)
++    sptr<OHOS::HDI::Camera::V1_0::ICameraDevice>& pDevice,
++    bool isEnableSecCam)
+ {
+     MEDIA_INFO_LOG("CameraHostInfo::OpenCamera %{public}s", cameraId.c_str());
+     auto deviceInfo = FindCameraDeviceInfo(cameraId);
+@@ -292,12 +296,17 @@ int32_t HCameraHostManager::CameraHostInfo::OpenCamera(std::string& cameraId,
+     sptr<OHOS::HDI::Camera::V1_1::ICameraDevice> hdiDevice_v1_1;
+     sptr<OHOS::HDI::Camera::V1_2::ICameraDevice> hdiDevice_v1_2;
+     sptr<OHOS::HDI::Camera::V1_3::ICameraDevice> hdiDevice_v1_3;
+-    if (cameraHostProxyV1_3_ != nullptr && GetCameraHostVersion() >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
++    if (cameraHostProxyV1_3_ != nullptr && GetCameraHostVersion() >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3) ) {
+         MEDIA_DEBUG_LOG("CameraHostInfo::OpenCamera ICameraDevice V1_3");
+-        rc = (CamRetCode)(cameraHostProxyV1_3_->OpenCamera_V1_3(cameraId, callback, hdiDevice_v1_3));
++        if (isEnableSecCam) {
++            MEDIA_INFO_LOG("CameraHostInfo::OpenCamera OpenSecureCamera");
++            rc = (CamRetCode)(cameraHostProxyV1_3_->OpenSecureCamera(cameraId, callback, hdiDevice_v1_3));
++        } else {
++            rc = (CamRetCode)(cameraHostProxyV1_3_->OpenCamera_V1_3(cameraId, callback, hdiDevice_v1_3));
++        }
+         pDevice = hdiDevice_v1_3.GetRefPtr();
+-    } else if (cameraHostProxyV1_2_ != nullptr
+-        && GetCameraHostVersion() >= GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
++    } else if (cameraHostProxyV1_2_ != nullptr && GetCameraHostVersion() >=
++        GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
+         MEDIA_DEBUG_LOG("CameraHostInfo::OpenCamera ICameraDevice V1_2");
+         rc = (CamRetCode)(cameraHostProxyV1_2_->OpenCamera_V1_2(cameraId, callback, hdiDevice_v1_2));
+         pDevice = hdiDevice_v1_2.GetRefPtr();
+@@ -483,7 +492,10 @@ void HCameraHostManager::CameraHostInfo::NotifyDeviceStateChangeInfo(int notifyT
+     }
+     MEDIA_DEBUG_LOG("CameraHostInfo::NotifyDeviceStateChangeInfo notifyType = %{public}d, deviceState = %{public}d",
+         notifyType, deviceState);
+-    if (cameraHostProxyV1_2_ != nullptr && GetCameraHostVersion() > GetVersionId(1, 1)) {
++    if (cameraHostProxyV1_3_ != nullptr && GetCameraHostVersion() > GetVersionId(1, 1)) {
++        MEDIA_DEBUG_LOG("CameraHostInfo::NotifyDeviceStateChangeInfo ICameraHost V1_2");
++        cameraHostProxyV1_3_->NotifyDeviceStateChangeInfo(notifyType, deviceState);
++    } else if (cameraHostProxyV1_2_ != nullptr && GetCameraHostVersion() > GetVersionId(1, 1)) {
+         MEDIA_DEBUG_LOG("CameraHostInfo::NotifyDeviceStateChangeInfo ICameraHost V1_2");
+         cameraHostProxyV1_2_->NotifyDeviceStateChangeInfo(notifyType, deviceState);
+     }
+@@ -828,8 +840,9 @@ int32_t HCameraHostManager::GetVersionByCamera(const std::string& cameraId)
+ }
+ 
+ int32_t HCameraHostManager::OpenCameraDevice(std::string &cameraId,
+-                                             const sptr<ICameraDeviceCallback> &callback,
+-                                             sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> &pDevice)
++    const sptr<ICameraDeviceCallback> &callback,
++    sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> &pDevice,
++    bool isEnableSecCam)
+ {
+     MEDIA_INFO_LOG("HCameraHostManager::OpenCameraDevice try to open camera = %{public}s", cameraId.c_str());
+     auto cameraHostInfo = FindCameraHostInfo(cameraId);
+@@ -837,7 +850,7 @@ int32_t HCameraHostManager::OpenCameraDevice(std::string &cameraId,
+         MEDIA_ERR_LOG("HCameraHostManager::OpenCameraDevice failed with invalid device info");
+         return CAMERA_INVALID_ARG;
+     }
+-    return cameraHostInfo->OpenCamera(cameraId, callback, pDevice);
++    return cameraHostInfo->OpenCamera(cameraId, callback, pDevice, isEnableSecCam);
+ }
+ 
+ int32_t HCameraHostManager::SetTorchLevel(float level)
+@@ -881,6 +894,7 @@ int32_t HCameraHostManager::Prelaunch(const std::string& cameraId, std::string c
+         RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS) {
+         return CAMERA_OK;
+     }
++    // 使用后删除存储的动态数据
+     auto it = transitentParamMap_.find(clientName);
+     if (it != transitentParamMap_.end() && CheckCameraId(it->second, cameraId)) {
+         transitentParamMap_.erase(clientName);
+diff --git a/services/camera_service/src/hcapture_session.cpp b/services/camera_service/src/hcapture_session.cpp
+index 37ee5e08..960e4317 100644
+--- a/services/camera_service/src/hcapture_session.cpp
++++ b/services/camera_service/src/hcapture_session.cpp
+@@ -747,6 +747,18 @@ int32_t HCaptureSession::CommitConfig()
+             errorCode = CAMERA_INVALID_STATE;
+             return;
+         }
++        const int32_t secureMode = 15;
++        uint64_t secureSeqId = 0L;
++        device ->GetSecureCameraSeq(&secureSeqId);
++        MEDIA_INFO_LOG("CaptureSession::CommitConfig opMode_ =  %{public}d", GetopMode());
++        if (((GetopMode() == secureMode) ^ (secureSeqId != 0))) {
++            MEDIA_ERR_LOG("CaptureSession::CommitConfig is not allowed commit mode = %{public}d."
++                "secureCamera is should be consistent with secureMode", GetopMode());
++            errorCode = CAMERA_INVALID_ARG;
++            return;
++        }
++
++        MEDIA_INFO_LOG("HCaptureSession::CommitConfig secureSeqId = %{public}" PRIu64 "", secureSeqId);
+         errorCode = LinkInputAndOutputs();
+         if (errorCode != CAMERA_OK) {
+             MEDIA_ERR_LOG("HCaptureSession::CommitConfig() Failed to commit config. rc: %{public}d", errorCode);
+diff --git a/services/camera_service/src/hstream_repeat.cpp b/services/camera_service/src/hstream_repeat.cpp
+index 27092a14..8804cc7b 100644
+--- a/services/camera_service/src/hstream_repeat.cpp
++++ b/services/camera_service/src/hstream_repeat.cpp
+@@ -98,6 +98,20 @@ void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
+         case RepeatStreamType::PREVIEW:
+             streamInfo.v1_0.intent_ = StreamIntent::PREVIEW;
+             streamInfo.v1_0.encodeType_ = ENCODE_TYPE_NULL;
++            if (mEnableSecure) {
++                MEDIA_INFO_LOG("HStreamRepeat::SetStreamInfo Enter");
++                HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo {
++                        .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(
++                            HDI::Camera::V1_3::ExtendedStreamInfoType::EXTENDED_STREAM_INFO_SECURE),
++                        .width = 0,
++                        .height = 0,
++                        .format = 0,
++                        .dataspace = 0,
++                        .bufferQueue = nullptr
++                };
++                MEDIA_INFO_LOG("HStreamRepeat::SetStreamInfo end");
++                streamInfo.extendedStreamInfos = { extendedStreamInfo };
++            }
+             break;
+         case RepeatStreamType::SKETCH:
+             streamInfo.v1_0.intent_ = StreamIntent::PREVIEW;
+@@ -112,6 +126,7 @@ void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
+                 .bufferQueue = nullptr
+             };
+             streamInfo.extendedStreamInfos = { extendedStreamInfo };
++            break;
+     }
+ }
+ 
+@@ -669,5 +684,10 @@ void HStreamRepeat::OpenVideoDfxSwitch(std::shared_ptr<OHOS::Camera::CameraMetad
+     }
+ }
+ 
++int32_t HStreamRepeat::EnableSecure(bool isEnabled)
++{
++    mEnableSecure = isEnabled;
++    return CAMERA_OK;
++}
+ } // namespace CameraStandard
+ } // namespace OHOS
+-- 
+2.40.1.huawei.3
