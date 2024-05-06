@@ -106,7 +106,7 @@ int32_t PreviewOutputCallbackImpl::OnFrameStarted()
             MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameStarted callback in preview");
         }
     } else {
-        MEDIA_INFO_LOG("PreviewOutputCallbackImpl::PreviewOutput is nullptr");
+        MEDIA_INFO_LOG("PreviewOutputCallbackImpl::OnFrameStarted PreviewOutput is nullptr");
     }
     return CAMERA_OK;
 }
@@ -123,7 +123,7 @@ int32_t PreviewOutputCallbackImpl::OnFrameEnded(int32_t frameCount)
             MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameEnded callback in preview");
         }
     } else {
-        MEDIA_INFO_LOG("PreviewOutputCallbackImpl::PreviewOutput is nullptr");
+        MEDIA_INFO_LOG("PreviewOutputCallbackImpl::OnFrameEnded PreviewOutput is nullptr");
     }
     return CAMERA_OK;
 }
@@ -140,7 +140,7 @@ int32_t PreviewOutputCallbackImpl::OnFrameError(int32_t errorCode)
             MEDIA_INFO_LOG("Discarding PreviewOutputCallbackImpl::OnFrameError callback in preview");
         }
     } else {
-        MEDIA_INFO_LOG("PreviewOutputCallbackImpl::PreviewOutput is nullptr");
+        MEDIA_INFO_LOG("PreviewOutputCallbackImpl::OnFrameError PreviewOutput is nullptr");
     }
     return CAMERA_OK;
 }
