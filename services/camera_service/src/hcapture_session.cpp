@@ -587,7 +587,6 @@ int32_t HCaptureSession::CommitConfig()
         const int32_t secureMode = 15;
         uint64_t secureSeqId = 0L;
         device ->GetSecureCameraSeq(&secureSeqId);
-        MEDIA_INFO_LOG("CaptureSession::CommitConfig opMode_ =  %{public}d", GetopMode());
         if (((GetopMode() == secureMode) ^ (secureSeqId != 0))) {
             MEDIA_ERR_LOG("CaptureSession::CommitConfig is not allowed commit mode = %{public}d."
                 "secureCamera is should be consistent with secureMode", GetopMode());

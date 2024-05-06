@@ -287,7 +287,7 @@ void CommonCompleteCallback(napi_env env, napi_status status, void* data)
                 if (context->isEnableSecCam) {
                     context->errorCode = context->objectInfo->GetCameraInput()->Open(true, &secureCameraSeqId);
                     MEDIA_INFO_LOG("%{public}s, SeqId = %{public}" PRIu64 "",
-                                   context->funcName.c_str(), secureCameraSeqId);
+                        context->funcName.c_str(), secureCameraSeqId);
                 } else {
                     context->errorCode = context->objectInfo->GetCameraInput()->Open();
                 }

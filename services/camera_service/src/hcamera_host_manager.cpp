@@ -188,7 +188,8 @@ bool HCameraHostManager::CameraHostInfo::Init()
     if (cameraHostProxyV1_3_ != nullptr && GetCameraHostVersion() >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::Init SetCallback ICameraHost V1_3");
         cameraHostProxyV1_3_->SetCallback_V1_2(this);
-    } else if (cameraHostProxyV1_2_ != nullptr && GetCameraHostVersion() >= GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
+    } else if (cameraHostProxyV1_2_ != nullptr &&
+        GetCameraHostVersion() >= GetVersionId(HDI_VERSION_1, HDI_VERSION_2)) {
         MEDIA_DEBUG_LOG("CameraHostInfo::Init SetCallback ICameraHost V1_2");
         cameraHostProxyV1_2_->SetCallback_V1_2(this);
     } else {
