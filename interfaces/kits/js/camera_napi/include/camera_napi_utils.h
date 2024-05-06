@@ -44,7 +44,7 @@
         } else {                                                \
             NAPI_ASSERT(env, false, "type mismatch");           \
         }                                                       \
-    } while (0);
+    } while (0)
 
 #define CAMERA_NAPI_ASSERT_NULLPTR_CHECK(env, result) \
     do {                                              \
@@ -52,19 +52,19 @@
             napi_get_undefined(env, &(result));       \
             return result;                            \
         }                                             \
-    } while (0);
+    } while (0)
 
 #define CAMERA_NAPI_CREATE_PROMISE(env, callbackRef, deferred, result) \
     do {                                                               \
         if ((callbackRef) == nullptr) {                                \
             napi_create_promise(env, &(deferred), &(result));          \
         }                                                              \
-    } while (0);
+    } while (0)
 
 #define CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, resourceName)              \
     do {                                                                           \
         napi_create_string_utf8(env, resourceName, NAPI_AUTO_LENGTH, &(resource)); \
-    } while (0);
+    } while (0)
 
 #define CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, ptr, ret, message, ...) \
     do {                                                                         \

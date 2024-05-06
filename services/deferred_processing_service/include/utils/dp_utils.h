@@ -38,7 +38,7 @@ struct MakeSharedHelper : public T {
 template <typename T, typename... Args>
 std::shared_ptr<T> CreateShared(Args&&... args)
 {
-    return std::move(std::make_shared<MakeSharedHelper<T, Args&&...>>(std::forward<Args>(args)...));
+    return std::move(std::make_shared<MakeSharedHelper<T, Args &&...>>(std::forward<Args>(args)...));
 }
 
 template <typename T, typename... Args>
@@ -51,7 +51,7 @@ struct MakeUniqueHelper : public T {
 template <typename T, typename... Args>
 std::unique_ptr<T> CreateUnique(Args&&... args)
 {
-    return std::move(std::make_unique<MakeUniqueHelper<T, Args&&...>>(std::forward<Args>(args)...));
+    return std::move(std::make_unique<MakeUniqueHelper<T, Args &&...>>(std::forward<Args>(args)...));
 }
 
 Watchdog& GetGlobalWatchdog();

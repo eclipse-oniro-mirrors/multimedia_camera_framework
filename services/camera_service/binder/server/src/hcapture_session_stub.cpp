@@ -215,7 +215,7 @@ int HCaptureSessionStub::HandleSetSmoothZoom(MessageParcel &data, MessageParcel 
 
 int HCaptureSessionStub::HandleSetFeatureMode(MessageParcel &data)
 {
-    int featureMode = data.ReadUint32();
+    int featureMode = static_cast<int>(data.ReadUint32());
     return SetFeatureMode(featureMode);
 }
 } // namespace CameraStandard
