@@ -204,5 +204,21 @@ int32_t HStreamRepeatProxy::SetFrameRate(int32_t minFrameRate, int32_t maxFrameR
     }
     return error;
 }
+
+int32_t HStreamRepeatProxy::EnableSecure(bool isEnable)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteBool(isEnable);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ENABLE_SECURE_STREAM), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamRepeatProxy Stop failed, error: %{public}d", error);
+    }
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS

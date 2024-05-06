@@ -280,12 +280,20 @@ void CommonCompleteCallback(napi_env env, napi_status status, void* data)
 
     MEDIA_INFO_LOG("%{public}s, modeForAsync = %{public}d, status = %{public}d",
         context->funcName.c_str(), context->modeForAsync, context->status);
+    uint64_t secureCameraSeqId = 0L;
     switch (context->modeForAsync) {
         case OPEN_ASYNC_CALLBACK:
             if (context->objectInfo && context->objectInfo->GetCameraInput()) {
-                context->errorCode = context->objectInfo->GetCameraInput()->Open();
+                if (context->isEnableSecCam) {
+                    context->errorCode = context->objectInfo->GetCameraInput()->Open(true, &secureCameraSeqId);
+                    MEDIA_INFO_LOG("%{public}s, SeqId = %{public}" PRIu64 "",
+                                   context->funcName.c_str(), secureCameraSeqId);
+                } else {
+                    context->errorCode = context->objectInfo->GetCameraInput()->Open();
+                }
                 context->status = context->errorCode == 0;
                 jsContext->status = context->status;
+                CameraNapiUtils::IsEnableSecureCamera(false);
             }
             break;
         case CLOSE_ASYNC_CALLBACK:
@@ -293,6 +301,7 @@ void CommonCompleteCallback(napi_env env, napi_status status, void* data)
                 context->errorCode = context->objectInfo->GetCameraInput()->Close();
                 context->status = context->errorCode == 0;
                 jsContext->status = context->status;
+                CameraNapiUtils::IsEnableSecureCamera(false);
             }
             break;
         case RELEASE_ASYNC_CALLBACK:
@@ -308,7 +317,11 @@ void CommonCompleteCallback(napi_env env, napi_status status, void* data)
     if (!context->status) {
         CameraNapiUtils::CreateNapiErrorObject(env, context->errorCode, context->errorMsg.c_str(), jsContext);
     } else {
-        napi_get_undefined(env, &jsContext->data);
+        if (context->isEnableSecCam) {
+            napi_create_bigint_uint64(env, secureCameraSeqId, &jsContext->data);
+        } else {
+            napi_get_undefined(env, &jsContext->data);
+        }
     }
 
     if (!context->funcName.empty() && context->taskId > 0) {
@@ -331,7 +344,7 @@ napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
     const int32_t refCount = 1;
     napi_value resource = nullptr;
     size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
+    napi_value argv[ARGS_TWO] = {0};
     napi_value thisVar = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
@@ -342,7 +355,16 @@ napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
     if (status == napi_ok && asyncContext->objectInfo != nullptr) {
         if (argc == ARGS_ONE) {
-            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
+            bool isEnableSecureCamera = false;
+            napi_valuetype valuetype;
+            status = napi_typeof(env, argv[PARAM0], &valuetype);
+            if (status ==napi_ok && valuetype == napi_boolean) {
+                napi_get_value_bool(env, argv[PARAM0], &isEnableSecureCamera);
+                CameraNapiUtils::IsEnableSecureCamera(isEnableSecureCamera);
+                MEDIA_DEBUG_LOG("set  EnableSecureCamera CameraInputNapi::Open");
+            } else {
+                CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
+            }
         }
 
         CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
@@ -359,6 +381,8 @@ napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
                 if (context->objectInfo != nullptr) {
                     context->status = true;
                     context->modeForAsync = OPEN_ASYNC_CALLBACK;
+                    context->isEnableSecCam = CameraNapiUtils::GetEnableSecureCamera();
+                    MEDIA_DEBUG_LOG("set  context->isEnableSecCam CameraInputNapi::Open");
                 }
             },
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);

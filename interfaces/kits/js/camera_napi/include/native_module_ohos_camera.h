@@ -32,6 +32,7 @@
 #include "mode/profession_session_napi.h"
 #include "mode/slow_motion_session_napi.h"
 #include "mode/video_session_for_sys_napi.h"
+#include "mode/secure_camera_session_napi.h"
 #include "mode/video_session_napi.h"
 #include "mode/high_res_photo_session_napi.h"
 #include "output/deferred_photo_proxy_napi.h"

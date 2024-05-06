@@ -32,7 +32,7 @@ int HCameraDeviceStub::OnRemoteRequest(
     CHECK_AND_RETURN_RET(errCode == CAMERA_OK, errCode);
     switch (code) {
         case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_OPEN): {
-            errCode = Open();
+            errCode =HCameraDeviceStub::HandleOpenSecureCameraResults(data, reply);
             break;
         }
         case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_CLOSE):
@@ -147,6 +147,25 @@ int32_t HCameraDeviceStub::HandleDisableResult(MessageParcel &data)
     }
 
     return ret;
+}
+
+int32_t HCameraDeviceStub::HandleOpenSecureCameraResults(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t errorCode;
+    if (data.ReadBool()) {
+        uint64_t secureSeqId = 0L;
+        errorCode = OpenSecureCamera(&secureSeqId);
+        if (errorCode != ERR_NONE) {
+            MEDIA_ERR_LOG("CameraDeviceStub::HandleGetEnabledResults GetEnabledResults failed : %{public}d", errorCode);
+            return errorCode;
+        }
+        CHECK_AND_RETURN_RET_LOG(reply.WriteInt64(secureSeqId), IPC_STUB_WRITE_PARCEL_ERR,
+            "HCameraDeviceStub::openSecureCamera write results failed");
+    } else {
+        errorCode = Open();
+    }
+
+    return errorCode;
 }
 } // namespace CameraStandard
 } // namespace OHOS

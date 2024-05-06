@@ -81,6 +81,20 @@ void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
         case RepeatStreamType::PREVIEW:
             streamInfo.v1_0.intent_ = StreamIntent::PREVIEW;
             streamInfo.v1_0.encodeType_ = ENCODE_TYPE_NULL;
+            if (mEnableSecure) {
+                MEDIA_INFO_LOG("HStreamRepeat::SetStreamInfo Enter");
+                HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo {
+                        .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(
+                            HDI::Camera::V1_3::ExtendedStreamInfoType::EXTENDED_STREAM_INFO_SECURE),
+                        .width = 0,
+                        .height = 0,
+                        .format = 0,
+                        .dataspace = 0,
+                        .bufferQueue = nullptr
+                };
+                MEDIA_INFO_LOG("HStreamRepeat::SetStreamInfo end");
+                streamInfo.extendedStreamInfos = { extendedStreamInfo };
+            }
             break;
         case RepeatStreamType::SKETCH:
             streamInfo.v1_0.intent_ = StreamIntent::PREVIEW;
@@ -95,6 +109,7 @@ void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
                 .bufferQueue = nullptr
             };
             streamInfo.extendedStreamInfos = { extendedStreamInfo };
+            break;
     }
 }
 
@@ -648,5 +663,10 @@ void HStreamRepeat::OpenVideoDfxSwitch(std::shared_ptr<OHOS::Camera::CameraMetad
     }
 }
 
+int32_t HStreamRepeat::EnableSecure(bool isEnabled)
+{
+    mEnableSecure = isEnabled;
+    return CAMERA_OK;
+}
 } // namespace CameraStandard
 } // namespace OHOS

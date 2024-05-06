@@ -33,6 +33,7 @@ private:
     int32_t HandleGetEnabledResults(MessageParcel& reply);
     int32_t HandleEnableResult(MessageParcel& data);
     int32_t HandleDisableResult(MessageParcel& data);
+    int32_t HandleOpenSecureCameraResults(MessageParcel& data, MessageParcel& reply);
 };
 } // namespace CameraStandard
 } // namespace OHOS

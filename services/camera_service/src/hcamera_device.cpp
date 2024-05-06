@@ -86,7 +86,7 @@ HCameraDevice::HCameraDevice(
       cameraHostManager_(cameraHostManager), cameraID_(cameraID), callerToken_(callingTokenId),
       deviceOpenLifeCycleSettings_(std::make_shared<OHOS::Camera::CameraMetadata>(
       DEVICE_OPEN_LIFECYCLE_TAGS.size(), DEFAULT_SETTING_ITEM_LENGTH)), clientUserId_(0), zoomTimerId_(0),
-      deviceMuteMode_(false)
+      deviceMuteMode_(false), isHasOpenSecure(false)
 {
     MEDIA_INFO_LOG("HCameraDevice::HCameraDevice Contructor Camera: %{public}s", cameraID.c_str());
     isOpenedCameraDevice_.store(false);
@@ -254,6 +254,56 @@ int32_t HCameraDevice::Open()
     return result;
 }
 
+int32_t HCameraDevice::OpenSecureCamera(uint64_t* secureSeqId)
+{
+    CAMERA_SYNC_TRACE;
+    if (isOpenedCameraDevice_.load()) {
+        MEDIA_ERR_LOG("HCameraDevice::Open failed, camera is busy");
+    }
+    bool isAllowed = true;
+    if (IsValidTokenId(callerToken_)) {
+        isAllowed = Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA);
+    }
+    if (!isAllowed) {
+        MEDIA_ERR_LOG("HCameraDevice::Open IsAllowedUsingPermission failed");
+        return CAMERA_ALLOC_ERROR;
+    }
+
+    MEDIA_INFO_LOG("HCameraDevice::OpenSecureCamera Camera:[%{public}s", cameraID_.c_str());
+    int32_t errCode = OpenDevice(true);
+    auto hdiCameraDeviceV1_3 = HDI::Camera::V1_3::ICameraDevice::CastFrom(hdiCameraDevice_);
+    if (hdiCameraDeviceV1_3 != nullptr) {
+        errCode = hdiCameraDeviceV1_3->GetSecureCameraSeq(*secureSeqId);
+        if (errCode != HDI::Camera::V1_0::CamRetCode::NO_ERROR) {
+            MEDIA_ERR_LOG("HCameraDevice::GetSecureCameraSeq occur error");
+            return CAMERA_UNKNOWN_ERROR;
+        }
+        mSecureCameraSeqId = *secureSeqId;
+        isHasOpenSecure = true;
+    }  else {
+        MEDIA_INFO_LOG("V1_3::ICameraDevice::CastFrom failed");
+    }
+    MEDIA_INFO_LOG("CaptureSession::OpenSecureCamera secureSeqId = %{public}" PRIu64, *secureSeqId);
+    return errCode;
+}
+
+int64_t HCameraDevice::GetSecureCameraSeq(uint64_t* secureSeqId)
+{
+    if (!isHasOpenSecure) {
+        *secureSeqId = 0;
+        return CAMERA_OK;
+    }
+    auto hdiCameraDeviceV1_3 = HDI::Camera::V1_3::ICameraDevice::CastFrom(hdiCameraDevice_);
+    if (hdiCameraDeviceV1_3 != nullptr) {
+        *secureSeqId = mSecureCameraSeqId;
+        MEDIA_DEBUG_LOG("CaptureSession::GetSecureCameraSeq secureSeqId = %{public}" PRId64, *secureSeqId);
+        return CAMERA_UNKNOWN_ERROR;
+    }  else {
+        MEDIA_INFO_LOG("V1_3::ICameraDevice::CastFrom failed");
+    }
+    return CAMERA_OK;
+}
+
 int32_t HCameraDevice::Close()
 {
     CAMERA_SYNC_TRACE;
@@ -263,26 +313,28 @@ int32_t HCameraDevice::Close()
     return result;
 }
 
-int32_t HCameraDevice::OpenDevice()
+int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
 {
     MEDIA_DEBUG_LOG("HCameraDevice::OpenDevice start");
     CAMERA_SYNC_TRACE;
     int32_t errorCode;
     MEDIA_INFO_LOG("HCameraDevice::OpenDevice Opening camera device: %{public}s", cameraID_.c_str());
 
-    bool canOpenDevice = CanOpenCamera();
-    if (!canOpenDevice) {
-        MEDIA_ERR_LOG("refuse to turning on the camera");
-        return CAMERA_DEVICE_CONFLICT;
-    }
-    CameraReportUtils::GetInstance().SetOpenCamPerfStartInfo(cameraID_.c_str(), CameraReportUtils::GetCallerInfo());
-    errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_);
-    if (errorCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");
-    } else {
-        ResetHdiStreamId();
-        isOpenedCameraDevice_.store(true);
-        HCameraDeviceManager::GetInstance()->AddDevice(IPCSkeleton::GetCallingPid(), this);
+    {
+        bool canOpenDevice = CanOpenCamera();
+        if (!canOpenDevice) {
+            MEDIA_ERR_LOG("refuse to turning on the camera");
+            return CAMERA_DEVICE_CONFLICT;
+        }
+        CameraReportUtils::GetInstance().SetOpenCamPerfStartInfo(cameraID_.c_str(), CameraReportUtils::GetCallerInfo());
+        errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_, isEnableSecCam);
+        if (errorCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");
+        } else {
+            ResetHdiStreamId();
+            isOpenedCameraDevice_.store(true);
+            HCameraDeviceManager::GetInstance()->AddDevice(IPCSkeleton::GetCallingPid(), this);
+        }
     }
     errorCode = InitStreamOperator();
     if (errorCode != CAMERA_OK) {
@@ -949,6 +1001,7 @@ int32_t HCameraDevice::InitStreamOperator()
             hdiCameraDeviceV1_1 = static_cast<OHOS::HDI::Camera::V1_1::ICameraDevice*>(hdiCameraDevice_.GetRefPtr());
         }
     }
+
     if (hdiCameraDeviceV1_3 != nullptr && versionRes >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
         sptr<OHOS::HDI::Camera::V1_2::IStreamOperator> streamOperator_v1_2;
         rc = (CamRetCode)(hdiCameraDeviceV1_3->GetStreamOperator_V1_3(this, streamOperator_v1_2));
@@ -1119,6 +1172,12 @@ int32_t HCameraDevice::CreateStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V
     }
     if (streamOperatorV1_1 != nullptr) {
         MEDIA_INFO_LOG("HCameraDevice::CreateStreams streamOperator V1_1");
+        for (auto streamInfo : streamInfos) {
+            if (streamInfo.extendedStreamInfos.size() > 0) {
+                MEDIA_INFO_LOG("HCameraDevice::CreateStreams streamOperator V1_1 type %{public}d",
+                    streamInfo.extendedStreamInfos[0].type);
+            }
+        }
         hdiRc = (CamRetCode)(streamOperatorV1_1->CreateStreams_V1_1(streamInfos));
     } else {
         MEDIA_INFO_LOG("HCameraDevice::CreateStreams streamOperator V1_0");

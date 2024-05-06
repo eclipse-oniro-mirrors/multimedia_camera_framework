@@ -17,7 +17,7 @@
 #define OHOS_CAMERA_LOG_H
 
 #include <stdio.h>
-
+#include <cinttypes>
 #include "hilog/log.h"
 #include "hisysevent.h"
 #include "hitrace_meter.h"

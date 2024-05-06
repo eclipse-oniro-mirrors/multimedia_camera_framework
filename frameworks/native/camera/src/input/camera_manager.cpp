@@ -40,6 +40,7 @@
 #include "session/scan_session.h"
 #include "session/slow_motion_session.h"
 #include "session/video_session.h"
+#include "session/secure_camera_session.h"
 #include "system_ability_definition.h"
 
 using namespace std;
@@ -87,7 +88,8 @@ const std::unordered_map<OperationMode, SceneMode> g_metaToFwSupportedMode_ = {
     {OperationMode::CAPTURE_MACRO, CAPTURE_MACRO},
     {OperationMode::VIDEO_MACRO, VIDEO_MACRO},
     {OperationMode::HIGH_FRAME_RATE, HIGH_FRAME_RATE},
-    {OperationMode::HIGH_RESOLUTION_PHOTO, HIGH_RES_PHOTO}
+    {OperationMode::HIGH_RESOLUTION_PHOTO, HIGH_RES_PHOTO},
+    {OperationMode::SECURE, SECURE}
 };
 
 const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
@@ -103,7 +105,8 @@ const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
     {CAPTURE_MACRO, OperationMode::CAPTURE_MACRO},
     {VIDEO_MACRO, OperationMode::VIDEO_MACRO},
     {HIGH_FRAME_RATE, OperationMode::HIGH_FRAME_RATE},
-    {HIGH_RES_PHOTO, OperationMode::HIGH_RESOLUTION_PHOTO}
+    {HIGH_RES_PHOTO, OperationMode::HIGH_RESOLUTION_PHOTO},
+    {SECURE, OperationMode::SECURE}
 };
 
 const std::set<int32_t> isTemplateMode_ = {

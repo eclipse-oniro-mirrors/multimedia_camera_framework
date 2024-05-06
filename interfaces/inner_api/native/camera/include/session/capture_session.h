@@ -1143,6 +1143,7 @@ public:
 
     virtual bool CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
     bool CanSetFrameRateRangeForOutput(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
+    int32_t AddSecureOutput(sptr<CaptureOutput> &output);
 protected:
     std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
     Profile photoProfile_;
@@ -1186,6 +1187,7 @@ private:
     std::set<wptr<CaptureOutput>, RefBaseCompare<CaptureOutput>> captureOutputSets_;
     volatile bool isSetMacroEnable_ = false;
     volatile bool isSetMoonCaptureBoostEnable_ = false;
+    volatile bool isSetSecureOutput_ = false;
     static const std::unordered_map<camera_focus_state_t, FocusCallback::FocusState> metaFocusStateMap_;
     static const std::unordered_map<camera_exposure_state_t, ExposureCallback::ExposureState> metaExposureStateMap_;
 

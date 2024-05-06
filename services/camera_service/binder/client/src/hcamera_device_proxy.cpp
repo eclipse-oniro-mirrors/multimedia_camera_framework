@@ -35,11 +35,29 @@ int32_t HCameraDeviceProxy::Open()
     MessageOption option;
 
     data.WriteInterfaceToken(GetDescriptor());
+    data.WriteBool(false);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_OPEN), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraDeviceProxy Open failed, error: %{public}d", error);
     }
+    return error;
+}
+
+int32_t HCameraDeviceProxy::OpenSecureCamera(uint64_t* secureSeqId)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteBool(true);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_OPEN), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraDeviceProxy Open failed, error: %{public}d", error);
+    }
+    *secureSeqId = reply.ReadInt64();
     return error;
 }
 

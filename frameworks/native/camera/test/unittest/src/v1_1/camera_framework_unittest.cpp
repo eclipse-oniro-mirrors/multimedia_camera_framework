@@ -401,7 +401,8 @@ public:
         });
         ON_CALL(*this, OpenCameraDevice).WillByDefault([this](std::string &cameraId,
                                                             const sptr<ICameraDeviceCallback> &callback,
-                                                            sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> &pDevice) {
+                                                            sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> &pDevice,
+                                                            bool isEnableSecCam) {
             pDevice = cameraDevice;
             return CAMERA_OK;
         });
@@ -415,8 +416,9 @@ public:
     MOCK_METHOD2(GetCameraAbility, int32_t(std::string &cameraId,
         std::shared_ptr<OHOS::Camera::CameraMetadata> &ability));
     MOCK_METHOD2(SetFlashlight, int32_t(const std::string &cameraId, bool isEnable));
-    MOCK_METHOD3(OpenCameraDevice, int32_t(std::string &cameraId,
-        const sptr<ICameraDeviceCallback> &callback, sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> &pDevice));
+    MOCK_METHOD4(OpenCameraDevice, int32_t(std::string &cameraId,
+        const sptr<ICameraDeviceCallback> &callback, sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> &pDevice,
+        bool isEnableSecCam));
     sptr<MockCameraDevice> cameraDevice;
 };
 
@@ -983,7 +985,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_020, TestSize.Level0
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -1185,7 +1187,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_028, TestSize.Level0
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -1284,7 +1286,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_030, TestSize.Level0
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -1338,7 +1340,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_031, TestSize.Level0
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -1401,7 +1403,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_032, TestSize.Level0
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -1461,7 +1463,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_033, TestSize.Level0
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -1605,7 +1607,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_037, TestSize.Level0
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -1643,7 +1645,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_038, TestSize.Level0
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -1699,7 +1701,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_040, TestSize.Level0
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -1751,7 +1753,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_041, TestSize.Level0
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -1807,7 +1809,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_042, TestSize.Level0
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -1862,7 +1864,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_043, TestSize.Level0
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -1918,7 +1920,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_044, TestSize.Level0
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -1975,7 +1977,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_045, TestSize.Level0
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -2032,7 +2034,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_046, TestSize.Level0
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -2128,7 +2130,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_049, TestSize.Level0
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -2187,7 +2189,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_050, TestSize.Level0
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -2248,7 +2250,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_051, TestSize.Level0
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -2308,7 +2310,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_052, TestSize.Level0
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -2364,7 +2366,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_001, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
@@ -2413,7 +2415,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_002, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -2452,7 +2454,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_003, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -2513,7 +2515,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_004, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -2579,7 +2581,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_005, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -2631,7 +2633,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_006, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -2662,7 +2664,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_006, TestSize.Level
     EXPECT_EQ(intResult, 0);
 
     std::string cameraId = camInput->GetCameraId();
-    int activeTime = 0;
+    int activeTime = 15;
     EffectParam effectParam = {0, 0, 0};
     intResult = cameraService->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS,
         activeTime, effectParam);
@@ -2670,6 +2672,10 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_006, TestSize.Level
 
     cameraId = "";
     intResult = cameraService->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS,
+        activeTime, effectParam);
+    EXPECT_EQ(intResult, 2);
+
+    intResult = cameraService->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS,
         activeTime, effectParam);
     EXPECT_EQ(intResult, 2);
 
@@ -2697,7 +2703,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_007, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -2743,7 +2749,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_008, TestSize.Level
     sptr<CaptureInput> input = camManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -2807,7 +2813,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_009, TestSize.Level
     sptr<CaptureInput> input = camManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -2875,7 +2881,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_010, TestSize.Level
     sptr<CaptureInput> input = camManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -2922,7 +2928,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_011, TestSize.Level
     sptr<CaptureInput> input = camManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -2984,7 +2990,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_012, TestSize.Level
     sptr<CaptureInput> input = camManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -3048,7 +3054,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_013, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -3109,7 +3115,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_014, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -3172,7 +3178,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_015, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -3236,7 +3242,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_016, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -3297,7 +3303,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_017, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -3358,7 +3364,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_018, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -3420,7 +3426,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_019, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -3478,7 +3484,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_020, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -3537,7 +3543,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_021, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -3593,7 +3599,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_022, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -3649,7 +3655,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_023, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -3964,7 +3970,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_031, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -4040,7 +4046,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_032, TestSize.Level
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -4097,7 +4103,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_033, TestSize.Level
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -4146,7 +4152,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_034, TestSize.Level
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -4198,7 +4204,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_035, TestSize.Level
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -4261,7 +4267,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_036, TestSize.Level
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -4313,7 +4319,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_037, TestSize.Level
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -4374,7 +4380,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_038, TestSize.Level
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -4422,7 +4428,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_039, TestSize.Level
     ASSERT_NE(input, nullptr);
     Size previewSize = {.width = 1440, .height = 1080};
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -4473,7 +4479,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_040, TestSize.Level
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -4518,7 +4524,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_041, TestSize.Level
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -4577,7 +4583,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_042, TestSize.Level
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -4622,7 +4628,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_043, TestSize.Level
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -4676,7 +4682,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_044, TestSize.Level
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -4765,7 +4771,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_046, TestSize.Level
     sptr<CaptureInput> input1 = nullptr;
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -4812,7 +4818,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_047, TestSize.Level
 
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -4850,7 +4856,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_048, TestSize.Level
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -4901,7 +4907,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_049, TestSize.Level
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -4962,7 +4968,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_050, TestSize.Level
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -5021,7 +5027,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_051, TestSize.Level
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -5367,7 +5373,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_064, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -5409,7 +5415,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_065, TestSize.Level
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
@@ -5452,7 +5458,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_066, TestSize.Level
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     std::string cameraSettings = camInput->GetCameraSettings();
     camInput->SetCameraSettings(cameraSettings);
@@ -6574,7 +6580,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_104, TestSize.Level
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -6631,7 +6637,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_105, TestSize.Level
     ASSERT_NE(ability, nullptr);
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -6686,7 +6692,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_106, TestSize.Level
     ASSERT_NE(ability, nullptr);
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -6742,8 +6748,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_107, TestSize.Level
     ASSERT_NE(ability, nullptr);
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
-
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -6794,7 +6799,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_108, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -6847,7 +6852,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_109, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -6895,7 +6900,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_110, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -6952,7 +6957,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_111, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -7004,7 +7009,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_112, TestSize.Level
     sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
     ASSERT_NE(input, nullptr);
 
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _));
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
     EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
     sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
     std::string cameraSettings = camInput->GetCameraSettings();
@@ -7047,6 +7052,5 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_112, TestSize.Level
 
     input->Close();
 }
-
 } // CameraStandard
 } // OHOS

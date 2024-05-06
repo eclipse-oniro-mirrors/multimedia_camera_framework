@@ -1094,7 +1094,7 @@ napi_value CameraSessionNapi::RemoveInput(napi_env env, napi_callback_info info)
     return result;
 }
 
-napi_value GetJSArgsForCameraOutput(napi_env env, size_t argc, const napi_value argv[],
+napi_value CameraSessionNapi::GetJSArgsForCameraOutput(napi_env env, size_t argc, const napi_value argv[],
     sptr<CaptureOutput> &cameraOutput)
 {
     MEDIA_DEBUG_LOG("GetJSArgsForCameraOutput is called");

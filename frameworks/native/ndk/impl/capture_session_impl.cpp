@@ -79,6 +79,20 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterCallback(CaptureSession_Callba
     return CAMERA_OK;
 }
 
+Camera_ErrorCode Camera_CaptureSession::SetSessionMode(Camera_SceneMode sceneMode)
+{
+    SceneMode innerSceneMode = static_cast<SceneMode>(sceneMode);
+    innerCaptureSession_->SetMode(innerSceneMode);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::AddSecureOutput(Camera_PreviewOutput* previewOutput)
+{
+    sptr<CaptureOutput> innerPreviewOutput = previewOutput->GetInnerPreviewOutput();
+    int32_t ret = innerCaptureSession_->AddSecureOutput(innerPreviewOutput);
+    return FrameworkToNdkCameraError(ret);
+}
+
 Camera_ErrorCode Camera_CaptureSession::BeginConfig()
 {
     int32_t ret = innerCaptureSession_->BeginConfig();

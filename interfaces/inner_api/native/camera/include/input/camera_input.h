@@ -59,6 +59,11 @@ public:
     int Open() override;
 
     /**
+    * @brief open secure camera.
+    */
+    int Open(bool isEnableSecureCamera, uint64_t* secureSeqId) override;
+
+    /**
     * @brief close camera.
     */
     int Close() override;

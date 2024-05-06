@@ -227,6 +227,8 @@ public:
     static napi_value SetExposureMode(napi_env env, napi_callback_info info);
     static napi_value SetMeteringPoint(napi_env env, napi_callback_info info);
     static napi_value GetMeteringPoint(napi_env env, napi_callback_info info);
+    static napi_value GetJSArgsForCameraOutput(napi_env env, size_t argc, const napi_value argv[],
+        sptr<CaptureOutput> &cameraOutput);
     static napi_value GetExposureBiasRange(napi_env env, napi_callback_info info);
     static napi_value SetExposureBias(napi_env env, napi_callback_info info);
     static napi_value GetExposureValue(napi_env env, napi_callback_info info);

@@ -32,6 +32,7 @@
 #include "photo_session_napi.h"
 #include "night_session_napi.h"
 #include "video_session_napi.h"
+#include "secure_camera_session_napi.h"
 #include "session/camera_session_napi.h"
 #include "camera_napi_utils.h"
 

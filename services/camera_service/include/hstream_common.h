@@ -23,6 +23,7 @@
 #include <refbase.h>
 
 #include "camera/v1_2/types.h"
+#include "camera/v1_3/types.h"
 #include "camera_metadata_info.h"
 #include "icapture_session.h"
 #include "istream_common.h"

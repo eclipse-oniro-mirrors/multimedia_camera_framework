@@ -31,6 +31,8 @@ public:
 
     Camera_ErrorCode Open();
 
+    Camera_ErrorCode OpenSecureCamera(uint64_t* secureSeqId);
+
     Camera_ErrorCode Close();
 
     Camera_ErrorCode Release();

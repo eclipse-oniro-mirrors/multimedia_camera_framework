@@ -120,7 +120,12 @@ public:
 
     static int32_t IncreamentAndGet(uint32_t& num);
 
-    static bool CheckInvalidArgument(napi_env env, size_t argc, int32_t length, napi_value* argv, CameraSteps step);
+    static void IsEnableSecureCamera(bool isEnable);
+
+    static bool GetEnableSecureCamera();
+
+    static bool CheckInvalidArgument(napi_env env, size_t argc, int32_t length,
+                                     napi_value *argv, CameraSteps step);
 
     static bool CheckError(napi_env env, int32_t retCode);
 
@@ -162,6 +167,8 @@ public:
 
 private:
     explicit CameraNapiUtils() {};
+
+    static bool mEnableSecure;
 }; // namespace CameraNapiUtils
 } // namespace CameraStandard
 } // namespace OHOS
