@@ -717,7 +717,9 @@ int32_t HCameraService::MuteCamera(bool muteMode)
             CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraMute! current Camera muteMode:%d", muteMode));
         }
     }
-    activeDevice->SetDeviceMuteMode(muteMode_);
+    if (activeDevice != nullptr) {
+        activeDevice->SetDeviceMuteMode(muteMode_);
+    }
     return ret;
 }
 
