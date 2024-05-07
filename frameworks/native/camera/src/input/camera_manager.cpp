@@ -927,7 +927,13 @@ void CameraManager::InitCameraList()
     GetDmDeviceInfo();
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        retCode = serviceProxy_->GetCameras(cameraIds, cameraAbilityList);
+        MEDIA_DEBUG_LOG("CameraManager::GetCameras one by one");
+        retCode = serviceProxy_->GetCameraIds(cameraIds);
+        for (auto cameraId : cameraIds) {
+            std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
+            retCode = retCode | serviceProxy_->GetCameraAbility(cameraId, cameraAbility);
+            cameraAbilityList.push_back(cameraAbility);
+        }
     }
     if (retCode == CAMERA_OK) {
         for (auto& it : cameraIds) {

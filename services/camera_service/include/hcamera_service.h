@@ -67,6 +67,9 @@ public:
     ~HCameraService() override;
     int32_t GetCameras(vector<string>& cameraIds,
         vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList) override;
+    int32_t GetCameraIds(std::vector<std::string>& cameraIds) override;
+    int32_t GetCameraAbility(std::string& cameraId,
+        std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility) override;
     int32_t CreateCameraDevice(string cameraId, sptr<ICameraDeviceService>& device) override;
     int32_t CreateCaptureSession(sptr<ICaptureSession>& session, int32_t opMode) override;
     int32_t CreateDeferredPhotoProcessingSession(int32_t userId,

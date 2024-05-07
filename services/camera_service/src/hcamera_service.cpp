@@ -218,6 +218,24 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChoosePhysicalCameras(
     return physicalCameras;
 }
 
+
+int32_t HCameraService::GetCameraIds(std::vector<std::string>& cameraIds)
+{
+    CAMERA_SYNC_TRACE;
+    int32_t ret = CAMERA_OK;
+    MEDIA_DEBUG_LOG("HCameraService::GetCameraIds");
+    return ret;
+}
+
+int32_t HCameraService::GetCameraAbility(std::string& cameraId,
+    std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility)
+{
+    CAMERA_SYNC_TRACE;
+    int32_t ret = CAMERA_OK;
+    MEDIA_DEBUG_LOG("HCameraService::GetCameraAbility");
+    return ret;
+}
+
 vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<shared_ptr<CameraMetaInfo>> cameraInfos)
 {
     vector<shared_ptr<CameraMetaInfo>> choosedCameras;
