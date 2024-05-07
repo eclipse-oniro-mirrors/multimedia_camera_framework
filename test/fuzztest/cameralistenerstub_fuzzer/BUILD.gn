@@ -49,7 +49,10 @@ ohos_fuzztest("CameraListenerStubFuzzTest") {
 
   sources = [ "camera_listener_stub_fuzzer.cpp" ]
 
-  deps = [ "../../../frameworks/native/camera:camera_framework" ]
+  deps = [
+    "../../../frameworks/native/camera:camera_framework",
+    "../../../services/camera_service:camera_service",
+  ]
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",
