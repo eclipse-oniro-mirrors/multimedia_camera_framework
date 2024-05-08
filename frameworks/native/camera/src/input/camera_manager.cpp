@@ -282,6 +282,8 @@ sptr<CaptureSession> CameraManager::CreateCaptureSessionImpl(SceneMode mode, spt
             return new (std::nothrow) SlowMotionSession(session);
         case SceneMode::HIGH_RES_PHOTO:
             return new (std::nothrow) HighResPhotoSession(session);
+        case SceneMode::SECURE:
+            return new(std::nothrow) SecureCameraSession(session);
         default:
             return new (std::nothrow) CaptureSession(session);
     }

@@ -2129,6 +2129,7 @@ declare namespace camera {
      * @param { CameraOutput } cameraOutput - Specify the output as a secure flow.
      * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
      * @throws { BusinessError } 7400102 - Operation not allowed.
+     * @throws { BusinessError } 7400102 - Operation not allowed.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 12
      */
