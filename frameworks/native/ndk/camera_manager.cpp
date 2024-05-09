@@ -210,6 +210,15 @@ Camera_ErrorCode OH_CameraManager_CreateMetadataOutput(Camera_Manager* cameraMan
     return cameraManager->CreateMetadataOutput(type, metadataOutput);
 }
 
+Camera_ErrorCode OH_CameraDevice_GetCameraOrientation(Camera_Device* camera, uint32_t* orientation)
+{
+    CHECK_AND_RETURN_RET_LOG(camera != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, cameraDevice is null!");
+    CHECK_AND_RETURN_RET_LOG(orientation!= nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, orientation is null!");
+    return Camera_Manager::GetCameraOrientation(camera, orientation);
+}
+
 #ifdef __cplusplus
 }
 #endif

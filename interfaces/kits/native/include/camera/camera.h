@@ -599,11 +599,6 @@ typedef struct Camera_Device {
      * Camera connection type attribute.
      */
     Camera_Connection connectionType;
-
-    /**
-     * Camera orientation.
-     */
-    uint32_t cameraOrientation;
 } Camera_Device;
 
 /**
@@ -802,7 +797,6 @@ Camera_ErrorCode OH_Camera_GetCameraManager(Camera_Manager** cameraManager);
  * @since 11
  */
 Camera_ErrorCode OH_Camera_DeleteCameraManager(Camera_Manager* cameraManager);
-
 
 #ifdef __cplusplus
 }
