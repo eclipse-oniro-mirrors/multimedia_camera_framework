@@ -2669,6 +2669,11 @@ SceneMode CaptureSession::GetMode()
 {
     MEDIA_INFO_LOG(
         "CaptureSession GetMode currentMode_ = %{public}d, guestMode_ = %{public}d", currentMode_, guessMode_);
+    if (inputDevice_ && inputDevice_->GetCameraDeviceInfo() &&
+        inputDevice_->GetCameraDeviceInfo()->GetConnectionType() == ConnectionType::CAMERA_CONNECTION_REMOTE) {
+        MEDIA_INFO_LOG("The current camera device connection mode is remote connection.");
+        return currentMode_;
+    }
     if (currentMode_ == SceneMode::NORMAL) {
         return guessMode_;
     }
