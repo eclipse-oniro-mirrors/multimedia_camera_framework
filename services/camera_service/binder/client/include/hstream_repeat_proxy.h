@@ -45,6 +45,8 @@ public:
 
     int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate) override;
 
+    int32_t EnableSecure(bool isEnable = false) override;
+
 private:
     static inline BrokerDelegator<HStreamRepeatProxy> delegator_;
 };

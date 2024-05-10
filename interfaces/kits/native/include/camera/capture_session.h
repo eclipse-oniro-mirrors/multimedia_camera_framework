@@ -126,6 +126,30 @@ Camera_ErrorCode OH_CaptureSession_UnregisterCallback(Camera_CaptureSession* ses
     CaptureSession_Callbacks* callback);
 
 /**
+ * @brief Specifies the specific mode. The default mode is the photomode.
+ *
+ * @param session the {@link Camera_CaptureSession} instance.
+ * @param sceneMode the {@link CaptureSession_SceneMode} instance.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SESSION_CONFIG_LOCKED} if session config locked.
+ * @since 12
+ */
+Camera_ErrorCode OH_CaptureSession_SetSessionMode(Camera_CaptureSession* session, Camera_SceneMode sceneMode);
+
+/**
+ * @brief Specifies the specific mode. The default mode is the photomode.
+ *
+ * @param session the {@link Camera_CaptureSession} instance.
+ * @param previewOutput the target {@link Camera_PreviewOutput} to Set as a secure flow.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SESSION_CONFIG_LOCKED} if session config locked.
+ * @since 12
+ */
+Camera_ErrorCode OH_CaptureSession_AddSecureOutput(Camera_CaptureSession* session, Camera_PreviewOutput* previewOutput);
+
+/**
  * @brief Begin capture session config.
  *
  * @param session the {@link Camera_CaptureSession} instance.

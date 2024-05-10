@@ -57,6 +57,8 @@ int HStreamRepeatStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Messa
             break;
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::STREAM_FRAME_RANGE_SET):
             errCode = HandleSetFrameRate(data);
+        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ENABLE_SECURE_STREAM):
+            errCode = EnableSecure(data.ReadBool());
             break;
         default:
             MEDIA_ERR_LOG("HStreamRepeatStub request code %{public}u not handled", code);

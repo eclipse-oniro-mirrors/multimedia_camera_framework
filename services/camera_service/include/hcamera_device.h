@@ -48,6 +48,7 @@ public:
     ~HCameraDevice();
 
     int32_t Open() override;
+    int32_t OpenSecureCamera(uint64_t* secureSeqId) override;
     int32_t Close() override;
     int32_t Release() override;
     int32_t UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings) override;
@@ -111,6 +112,8 @@ public:
 
     void RemoveResourceWhenHostDied();
 
+    int64_t GetSecureCameraSeq(uint64_t* secureSeqId);
+
 private:
     class FoldScreenListener;
     std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.
@@ -146,6 +149,8 @@ private:
     uint32_t zoomTimerId_;
     std::atomic<bool> inPrepareZoom_;
     std::atomic<bool> deviceMuteMode_;
+    bool isHasOpenSecure = false;
+    uint64_t mSecureCameraSeqId = 0L;
 
     std::atomic<int32_t> hdiStreamIdGenerator_ = HDI_STREAM_ID_INIT;
     void UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings);
@@ -164,7 +169,7 @@ private:
     void ResetZoomTimer();
     void CheckZoomChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void UnPrepareZoom();
-    int32_t OpenDevice();
+    int32_t OpenDevice(bool isEnableSecCam = false);
     int32_t CloseDevice();
     void OpenDeviceNext();
     void DebugLogForZoom(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);

@@ -120,6 +120,21 @@ Camera_ErrorCode OH_CameraInput_UnregisterCallback(Camera_Input* cameraInput, Ca
  */
 Camera_ErrorCode OH_CameraInput_Open(Camera_Input* cameraInput);
 
+
+/**
+ * @brief Open camera.
+ *
+ * @param cameraInput the {@link Camera_Input} instance to be opened.
+ * @param isEnableSecureCamera whether is enable secure camera
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_CONFLICT_CAMERA} if can not use camera cause of conflict.
+ *         {@link #CAMERA_DEVICE_DISABLED} if camera disabled cause of security reason.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 12
+ */
+Camera_ErrorCode OH_CameraInput_OpenSecureCamera(Camera_Input* cameraInput, uint64_t* secureSeqId);
+
 /**
  * @brief Close camera.
  *

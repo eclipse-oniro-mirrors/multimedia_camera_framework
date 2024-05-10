@@ -148,6 +148,20 @@ typedef enum Camera_Status {
 } Camera_Status;
 
 /**
+ * @brief Enum for scence mode.
+ *
+ * @since 12
+ * @version 1.0
+ */
+typedef enum Camera_SceneMode {
+    /**
+     * Secure camera mode..
+     * @since 12
+     */
+    SECURE_PHOTO = 12,
+} Camera_SceneMode;
+
+/**
  * @brief Enum for camera position.
  *
  * @since 11

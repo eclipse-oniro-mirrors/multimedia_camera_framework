@@ -22,6 +22,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+bool CameraNapiUtils::mEnableSecure = false;
 void CameraNapiUtils::CreateNapiErrorObject(napi_env env, int32_t errorCode, const char* errString,
     std::unique_ptr<JSAsyncContextOutput> &jsContext)
 {
@@ -80,6 +81,16 @@ int32_t CameraNapiUtils::IncreamentAndGet(uint32_t &num)
     }
     num++;
     return num;
+}
+
+bool CameraNapiUtils::GetEnableSecureCamera()
+{
+    return mEnableSecure;
+}
+
+void CameraNapiUtils::IsEnableSecureCamera(bool isEnable)
+{
+    mEnableSecure = isEnable;
 }
 
 bool CameraNapiUtils::CheckInvalidArgument(napi_env env, size_t argc, int32_t length,

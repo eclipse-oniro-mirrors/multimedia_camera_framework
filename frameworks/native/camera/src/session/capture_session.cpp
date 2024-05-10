@@ -610,6 +610,24 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
     return ServiceToCameraError(errCode);
 }
 
+int32_t CaptureSession::AddSecureOutput(sptr<CaptureOutput> &output)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("Enter Into SecureCameraSession::AddSecureOutput");
+    if (currentMode_ != SceneMode::SECURE) {
+        return CAMERA_UNSUPPORTED;
+    }
+    if (!IsSessionConfiged() || output == nullptr || isSetSecureOutput_) {
+        MEDIA_ERR_LOG("SecureCameraSession::AddSecureOutput operation is Not allowed!");
+        return CAMERA_OK;
+    }
+    sptr<IStreamCommon> stream = output->GetStream();
+    IStreamRepeat* repeatStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
+    repeatStream->EnableSecure(true);
+    isSetSecureOutput_ = true;
+    return CAMERA_OK;
+}
+
 bool CaptureSession::CanAddOutput(sptr<CaptureOutput>& output)
 {
     CAMERA_SYNC_TRACE;
@@ -2659,9 +2677,17 @@ void CaptureSession::SetGuessMode(SceneMode mode)
 
 void CaptureSession::SetMode(SceneMode modeName)
 {
+    if (IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::SetMode Session has been Commited");
+        return;
+    }
     currentMode_ = modeName;
     // reset deferred enable status when reset mode
     EnableDeferredType(DELIVERY_NONE);
+    if (captureSession_) {
+        captureSession_->SetFeatureMode(modeName);
+        MEDIA_INFO_LOG("CaptureSession::SetSceneMode  SceneMode = %{public}d", modeName);
+    }
     MEDIA_INFO_LOG("CaptureSession SetMode modeName = %{public}d", modeName);
 }
 

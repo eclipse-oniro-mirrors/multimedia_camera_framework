@@ -584,6 +584,17 @@ int32_t HCaptureSession::CommitConfig()
             errorCode = CAMERA_INVALID_STATE;
             return;
         }
+        const int32_t secureMode = 15;
+        uint64_t secureSeqId = 0L;
+        device ->GetSecureCameraSeq(&secureSeqId);
+        if (((GetopMode() == secureMode) ^ (secureSeqId != 0))) {
+            MEDIA_ERR_LOG("CaptureSession::CommitConfig is not allowed commit mode = %{public}d."
+                "secureCamera is should be consistent with secureMode", GetopMode());
+            errorCode = CAMERA_INVALID_ARG;
+            return;
+        }
+
+        MEDIA_INFO_LOG("HCaptureSession::CommitConfig secureSeqId = %{public}" PRIu64 "", secureSeqId);
         errorCode = LinkInputAndOutputs();
         if (errorCode != CAMERA_OK) {
             MEDIA_ERR_LOG("HCaptureSession::CommitConfig() Failed to commit config. rc: %{public}d", errorCode);

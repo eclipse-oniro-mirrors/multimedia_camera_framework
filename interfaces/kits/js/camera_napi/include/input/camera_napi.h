@@ -165,6 +165,7 @@ static const std::unordered_map<std::string, int32_t> mapSceneMode = {
     {"SLOW_MOTION", JS_SLOW_MOTION},
     {"MACRO_PHOTO", JS_CAPTURE_MARCO},
     {"MACRO_VIDEO", JS_VIDEO_MARCO},
+    {"SECURE_PHOTO", JS_SECURE_CAMERA},
 };
 
 static const std::unordered_map<std::string, int32_t> mapFilterType = {

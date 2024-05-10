@@ -43,6 +43,11 @@ public:
     virtual int Open() = 0;
 
     /**
+     * @brief open camera.
+     */
+    virtual int Open(bool isEnableSecureCamera, uint64_t* secureSeqId) = 0;
+
+    /**
      * @brief close camera.
      */
     virtual int Close() = 0;

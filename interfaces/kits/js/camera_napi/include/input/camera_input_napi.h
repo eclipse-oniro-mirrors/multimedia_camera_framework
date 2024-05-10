@@ -113,6 +113,7 @@ struct CameraInputAsyncContext :public AsyncContext {
     InputAsyncCallbackModes modeForAsync;
     std::string cameraId;
     std::string enumType;
+    bool isEnableSecCam;
     std::vector<CameraFormat> vecList;
     ~CameraInputAsyncContext()
     {

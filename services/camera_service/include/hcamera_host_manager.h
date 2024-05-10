@@ -84,7 +84,8 @@ public:
     virtual int32_t GetCameraAbility(std::string &cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata> &ability);
     virtual int32_t OpenCameraDevice(std::string &cameraId,
                                      const sptr<ICameraDeviceCallback> &callback,
-                                     sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> &pDevice);
+                                     sptr<OHOS::HDI::Camera::V1_0::ICameraDevice> &pDevice,
+                                     bool isEnableSecCam = false);
     virtual int32_t SetFlashlight(const std::string& cameraId, bool isEnable);
     virtual int32_t Prelaunch(const std::string& cameraId, std::string clientName);
     virtual int32_t PreSwitchCamera(const std::string& cameraId);

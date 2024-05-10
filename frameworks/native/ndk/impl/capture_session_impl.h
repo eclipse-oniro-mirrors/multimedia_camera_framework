@@ -34,6 +34,10 @@ public:
 
     Camera_ErrorCode UnregisterCallback(CaptureSession_Callbacks* callback);
 
+    Camera_ErrorCode SetSessionMode(Camera_SceneMode sceneMode);
+
+    Camera_ErrorCode AddSecureOutput(Camera_PreviewOutput* previewOutput);
+
     Camera_ErrorCode BeginConfig();
 
     Camera_ErrorCode CommitConfig();

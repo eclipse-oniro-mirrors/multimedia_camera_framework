@@ -54,6 +54,15 @@ Camera_ErrorCode OH_CameraInput_Open(Camera_Input* cameraInput)
     return cameraInput->Open();
 }
 
+Camera_ErrorCode OH_CameraInput_OpenSecureCamera(Camera_Input* cameraInput, uint64_t* secureSeqId)
+{
+    CHECK_AND_RETURN_RET_LOG(cameraInput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, cameraInput is null!");
+    Camera_ErrorCode errorCode = cameraInput->OpenSecureCamera(secureSeqId);
+    MEDIA_INFO_LOG("Camera_Input::OpenSecureCamera secureSeqId = %{public}" PRIu64 "", *secureSeqId);
+    return errorCode;
+}
+
 Camera_ErrorCode OH_CameraInput_Close(Camera_Input* cameraInput)
 {
     CHECK_AND_RETURN_RET_LOG(cameraInput != nullptr, CAMERA_INVALID_ARGUMENT,

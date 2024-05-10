@@ -48,6 +48,19 @@ Camera_ErrorCode OH_CaptureSession_UnregisterCallback(Camera_CaptureSession* ses
     session->UnregisterCallback(callback);
     return CAMERA_OK;
 }
+Camera_ErrorCode OH_CaptureSession_SetSessionMode(Camera_CaptureSession* session, Camera_SceneMode sceneMode)
+{
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT, "Invaild argument, session is null!");
+    session->SetSessionMode(sceneMode);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode OH_CaptureSession_AddSecureOutput(Camera_CaptureSession* session, Camera_PreviewOutput* previewOutput)
+{
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT, "Invaild argument, session is null!");
+    session->AddSecureOutput(previewOutput);
+    return CAMERA_OK;
+}
 
 Camera_ErrorCode OH_CaptureSession_BeginConfig(Camera_CaptureSession* session)
 {

@@ -34,6 +34,7 @@ enum JsSceneMode : int32_t {
     JS_CAPTURE_MARCO = 8,
     JS_VIDEO_MARCO = 9,
     JS_HIGH_RES_PHOTO = 11,
+    JS_SECURE_CAMERA = 15,
 };
 
 enum SceneMode : int32_t {
@@ -51,6 +52,7 @@ enum SceneMode : int32_t {
     PROFESSIONAL_VIDEO = 12,
     HIGH_FRAME_RATE = 13,
     HIGH_RES_PHOTO = 14,
+    SECURE = 15
 };
 
 enum SceneFeature : int32_t {

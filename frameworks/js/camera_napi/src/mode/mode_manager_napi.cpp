@@ -164,6 +164,9 @@ napi_value ModeManagerNapi::CreateCameraSessionInstance(napi_env env, napi_callb
         case JsSceneMode::JS_NIGHT:
             result = NightSessionNapi::CreateCameraSession(env);
             break;
+        case JS_SECURE_CAMERA:
+            result = SecureCameraSessionNapi::CreateCameraSession(env);
+            break;
         default:
             MEDIA_ERR_LOG("ModeManagerNapi::CreateCameraSessionInstance mode = %{public}d not supported", jsModeName);
             break;
@@ -272,6 +275,9 @@ napi_value ModeManagerNapi::GetSupportedOutputCapability(napi_env env, napi_call
             break;
         case JS_NIGHT:
             result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, SceneMode::NIGHT);
+            break;
+        case JS_SECURE_CAMERA:
+            result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, SceneMode::SECURE);
             break;
         default:
             MEDIA_ERR_LOG("ModeManagerNapi::CreateCameraSessionInstance mode = %{public}d not supported", sceneMode);

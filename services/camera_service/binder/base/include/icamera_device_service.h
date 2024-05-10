@@ -26,6 +26,8 @@ class ICameraDeviceService : public IRemoteBroker {
 public:
     virtual int32_t Open() = 0;
 
+    virtual int32_t OpenSecureCamera(uint64_t* secureSeqId) = 0;
+
     virtual int32_t Close() = 0;
 
     virtual int32_t Release() = 0;

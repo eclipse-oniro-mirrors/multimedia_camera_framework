@@ -29,6 +29,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+using OHOS::HDI::Camera::V1_3::OperationMode;
 int32_t CameraDeviceServiceCallback::OnError(const int32_t errorType, const int32_t errorMsg)
 {
     std::lock_guard<std::mutex> lock(deviceCallbackMutex_);
@@ -148,6 +149,40 @@ int CameraInput::Open()
     } else {
         MEDIA_ERR_LOG("CameraInput::Open() deviceObj_ is nullptr");
     }
+    return ServiceToCameraError(retCode);
+}
+
+int CameraInput::Open(bool isEnableSecureCamera, uint64_t* secureSeqId)
+{
+    std::lock_guard<std::mutex> lock(interfaceMutex_);
+    MEDIA_DEBUG_LOG("Enter Into CameraInput::OpenSecureCamera");
+    int32_t retCode = CAMERA_UNKNOWN_ERROR;
+    bool isSupportSecCamera = false;
+    if (isEnableSecureCamera) {
+        std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObj_->GetMetadata();
+        camera_metadata_item_t item;
+        retCode = OHOS::Camera::FindCameraMetadataItem(baseMetadata->get(), OHOS_ABILITY_CAMERA_MODES, &item);
+        if (retCode != CAM_META_SUCCESS || item.count == 0) {
+            MEDIA_ERR_LOG("CaptureSession::GetSupportedModes Failed with return code %{public}d", retCode);
+            return retCode;
+        }
+        for (uint32_t i = 0; i < item.count; i++) {
+            if (item.data.u8[i] == SECURE) {
+                isSupportSecCamera = true;
+            }
+        }
+    }
+
+    if (deviceObj_) {
+        retCode = isSupportSecCamera ? (deviceObj_->OpenSecureCamera(secureSeqId)) : (deviceObj_->Open());
+        if (retCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("Failed to open Camera Input, retCode: %{public}d, isSupportSecCamera is %{public}d",
+                retCode, isSupportSecCamera);
+        }
+    } else {
+        MEDIA_ERR_LOG("CameraInput::OpenSecureCamera() deviceObj_ is nullptr");
+    }
+    MEDIA_INFO_LOG("Enter Into CameraInput::OpenSecureCamera secureSeqId = %{public}" PRIu64, *secureSeqId);
     return ServiceToCameraError(retCode);
 }
 
