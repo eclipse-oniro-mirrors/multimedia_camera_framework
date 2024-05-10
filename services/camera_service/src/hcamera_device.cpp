@@ -116,16 +116,14 @@ void HCameraDevice::SetDeviceMuteMode(bool muteMode)
     deviceMuteMode_ = muteMode;
 }
 
-void HCameraDevice::UpdateMuteSetting()
+void HCameraDevice::CreateMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
 {
     constexpr int32_t DEFAULT_ITEMS = 1;
     constexpr int32_t DEFAULT_DATA_LENGTH = 1;
     int32_t count = 1;
     uint8_t mode = OHOS_CAMERA_MUTE_MODE_SOLID_COLOR_BLACK;
-    std::shared_ptr<OHOS::Camera::CameraMetadata> stashMetadata =
-        std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
-    stashMetadata->addEntry(OHOS_CONTROL_MUTE_MODE, &mode, count);
-    UpdateSetting(stashMetadata);
+    settings = std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    settings->addEntry(OHOS_CONTROL_MUTE_MODE, &mode, count);
 }
 
 int32_t HCameraDevice::ResetDeviceSettings()
@@ -147,7 +145,9 @@ int32_t HCameraDevice::ResetDeviceSettings()
         } else {
             ResetCachedSettings();
             if (deviceMuteMode_) {
-                UpdateMuteSetting();
+                std::shared_ptr<OHOS::Camera::CameraMetadata> settings = nullptr;
+                CreateMuteSetting(settings);
+                UpdateSetting(settings);
             }
         }
     }
@@ -344,21 +344,39 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
     if (hdiCameraDevice_ != nullptr) {
         cameraHostManager_->AddCameraDevice(cameraID_, this);
         if (updateSettings_ != nullptr) {
-            std::vector<uint8_t> setting;
-            OHOS::Camera::MetadataUtils::ConvertMetadataToVec(updateSettings_, setting);
-            ReportMetadataDebugLog(updateSettings_);
-            CamRetCode rc = (CamRetCode)(hdiCameraDevice_->UpdateSettings(setting));
-            if (rc != HDI::Camera::V1_0::NO_ERROR) {
-                MEDIA_ERR_LOG("HCameraDevice::OpenDevice Update setting failed with error Code: %{public}d", rc);
-                return HdiToServiceError(rc);
+            errorCode = UpdateDeviceSetting();
+            if (errorCode != CAMERA_OK) {
+                return errorCode;
             }
-            updateSettings_ = nullptr;
-            MEDIA_DEBUG_LOG("HCameraDevice::Open Updated device settings");
             errorCode = HdiToServiceError((CamRetCode)(hdiCameraDevice_->SetResultMode(ON_CHANGED)));
+        } else {
+            if (deviceMuteMode_) {
+                CreateMuteSetting(updateSettings_);
+                errorCode = UpdateDeviceSetting();
+                if (errorCode != CAMERA_OK) {
+                    return errorCode;
+                }
+                errorCode = HdiToServiceError((CamRetCode)(hdiCameraDevice_->SetResultMode(ON_CHANGED)));
+            }
         }
     }
     OpenDeviceNext();
     return errorCode;
+}
+
+int32_t HCameraDevice::UpdateDeviceSetting()
+{
+    std::vector<uint8_t> setting;
+    OHOS::Camera::MetadataUtils::ConvertMetadataToVec(updateSettings_, setting);
+    ReportMetadataDebugLog(updateSettings_);
+    CamRetCode rc = (CamRetCode)(hdiCameraDevice_->UpdateSettings(setting));
+    if (rc != HDI::Camera::V1_0::NO_ERROR) {
+        MEDIA_ERR_LOG("HCameraDevice::OpenDevice Update setting failed with error Code: %{public}d", rc);
+        return HdiToServiceError(rc);
+    }
+    updateSettings_ = nullptr;
+    MEDIA_DEBUG_LOG("HCameraDevice::Open Updated device settings");
+    return CAMERA_OK;
 }
 
 void HCameraDevice::OpenDeviceNext()
