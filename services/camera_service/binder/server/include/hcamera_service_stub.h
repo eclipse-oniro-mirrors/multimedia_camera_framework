@@ -33,6 +33,8 @@ public:
 
 private:
     int HandleGetCameras(MessageParcel &data, MessageParcel &reply);
+    int HandleGetCameraIds(MessageParcel &data, MessageParcel &reply);
+    int HandleGetCameraAbility(MessageParcel &data, MessageParcel &reply);
     int HandleCreateCameraDevice(MessageParcel &data, MessageParcel &reply);
     int HandleSetCallback(MessageParcel &data, MessageParcel &reply);
     int HandleSetMuteCallback(MessageParcel &data, MessageParcel &reply);

@@ -76,6 +76,50 @@ int32_t HCameraServiceProxy::GetCameras(std::vector<std::string> &cameraIds,
     return error;
 }
 
+int32_t HCameraServiceProxy::GetCameraIds(std::vector<std::string> &cameraIds)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    constexpr int32_t MAX_SUPPORTED_CAMERAS = 100;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_CAMERA_IDS), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy GetCameraIds failed, error: %{public}d", error);
+        return error;
+    }
+
+    reply.ReadStringVector(&cameraIds);
+    int32_t count = reply.ReadInt32();
+    if ((cameraIds.size() != static_cast<uint32_t>(count)) || (count > MAX_SUPPORTED_CAMERAS)) {
+        MEDIA_ERR_LOG("HCameraServiceProxy GetCameraIds Malformed camera count value");
+        return IPC_PROXY_ERR;
+    }
+    return error;
+}
+
+int32_t HCameraServiceProxy::GetCameraAbility(std::string &cameraId,
+    std::shared_ptr<Camera::CameraMetadata> &cameraAbility)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteString(cameraId);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_CAMERA_ABILITY), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy GetCameraAbility failed, error: %{public}d", error);
+        return error;
+    }
+
+    Camera::MetadataUtils::DecodeCameraMetadata(reply, cameraAbility);
+    return error;
+}
+
 int32_t HCameraServiceProxy::CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> &device)
 {
     MessageParcel data;
@@ -579,21 +623,21 @@ int32_t HCameraServiceProxy::SetPeerCallback(sptr<ICameraBroker>& callback)
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
- 
+
     if (callback == nullptr) {
         MEDIA_ERR_LOG("HCameraServiceProxy SetCallback callback is null");
         return IPC_PROXY_ERR;
     }
- 
+
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteRemoteObject(callback->AsObject());
- 
+
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_SET_PEER_CALLBACK), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceProxy SetCallback failed, error: %{public}d", error);
     }
- 
+
     return error;
 }
 } // namespace CameraStandard
