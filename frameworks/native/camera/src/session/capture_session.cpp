@@ -745,6 +745,18 @@ int32_t CaptureSession::RemoveOutput(sptr<CaptureOutput>& output)
         return ServiceToCameraError(CAMERA_INVALID_ARG);
     }
     output->SetSession(nullptr);
+    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_METADATA) {
+        sptr<MetadataOutput> metaOutput = static_cast<MetadataOutput*>(output.GetRefPtr());
+        if (!metaOutput) {
+            MEDIA_ERR_LOG("CaptureSession::metaOutput is null");
+            return ServiceToCameraError(CAMERA_INVALID_ARG);
+        }
+        std::vector<MetadataObjectType> metadataObjectTypes = {};
+        MEDIA_DEBUG_LOG("CaptureSession::RemoveOutput SetCapturingMetadataObjectTypes off");
+        metaOutput->SetCapturingMetadataObjectTypes(metadataObjectTypes);
+        MEDIA_DEBUG_LOG("CaptureSession::RemoveOutput remove metaOutput");
+        return ServiceToCameraError(CAMERA_OK);
+    }
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (captureSession_) {
         errCode = captureSession_->RemoveOutput(output->GetStreamType(), output->GetStream());
@@ -3239,7 +3251,7 @@ bool CaptureSession::CanSetFrameRateRange(int32_t minFps, int32_t maxFps, Captur
                       GetMode());
     return false;
 }
- 
+
 bool CaptureSession::CanSetFrameRateRangeForOutput(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput)
 {
     std::lock_guard<std::mutex> lock(captureOutputSetsMutex_);

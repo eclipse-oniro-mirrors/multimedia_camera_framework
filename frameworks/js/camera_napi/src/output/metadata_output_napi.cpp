@@ -208,6 +208,7 @@ napi_value MetadataOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("setCapturingMetadataObjectTypes", SetCapturingMetadataObjectTypes),
         DECLARE_NAPI_FUNCTION("start", Start),
         DECLARE_NAPI_FUNCTION("stop", Stop),
+        DECLARE_NAPI_FUNCTION("release", Release),
         DECLARE_NAPI_FUNCTION("on", On),
         DECLARE_NAPI_FUNCTION("once", Once),
         DECLARE_NAPI_FUNCTION("off", Off)
@@ -499,7 +500,7 @@ napi_value MetadataOutputNapi::GetSupportedMetadataObjectTypes(napi_env env, nap
             GetSupportedMetadataObjectTypesAsyncCallbackComplete,
             static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for PhotoOutputNapi::Release");
+            MEDIA_ERR_LOG("Failed to create napi_create_async_work for GetSupportedMetadataObjectTypes");
             napi_get_undefined(env, &result);
         } else {
             napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
@@ -658,6 +659,58 @@ napi_value MetadataOutputNapi::Stop(napi_env env, napi_callback_info info)
         }
     } else {
         MEDIA_ERR_LOG("Stop call Failed!");
+    }
+    return result;
+}
+
+napi_value MetadataOutputNapi::Release(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("Release is called");
+    napi_status status;
+    napi_value result = nullptr;
+    const int32_t refCount = 1;
+    napi_value resource = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = { 0 };
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
+
+    napi_get_undefined(env, &result);
+    std::unique_ptr<MetadataOutputAsyncContext> asyncContext = std::make_unique<MetadataOutputAsyncContext>();
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
+    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
+        if (argc == ARGS_ONE) {
+            CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
+        }
+
+        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
+        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "Release");
+
+        status = napi_create_async_work(
+            env, nullptr, resource,
+            [](napi_env env, void* data) {
+                auto context = static_cast<MetadataOutputAsyncContext*>(data);
+                context->status = false;
+                context->funcName = "MetadataOutputNapi::Release";
+                if (context->objectInfo != nullptr) {
+                    context->bRetBool = false;
+                    context->status = true;
+                    context->errorCode = 0;
+                    context->status = context->errorCode == 0;
+                }
+            },
+            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+        if (status != napi_ok) {
+            MEDIA_ERR_LOG("Failed to create napi_create_async_work for MetadataOutputNapi::Release");
+            napi_get_undefined(env, &result);
+        } else {
+            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
+            asyncContext.release();
+        }
+    } else {
+        MEDIA_ERR_LOG("Release call Failed!");
     }
     return result;
 }
