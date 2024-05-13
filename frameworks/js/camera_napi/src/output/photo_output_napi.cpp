@@ -580,7 +580,7 @@ void PhotoOutputCallback::SaveCallbackReference(const std::string& eventType, na
             callbackList = &estimatedCaptureDurationCbList_;
             break;
         case PhotoOutputEventType::CAPTURE_START_WITH_INFO:
-            callbackList = &captureStartCbList_;
+            callbackList = &captureStartWithInfoCbList_;
             break;
         default:
             MEDIA_ERR_LOG("Incorrect photo callback event type received from JS");
@@ -618,7 +618,7 @@ void PhotoOutputCallback::RemoveCallbackRef(napi_env env, napi_value callback, c
         {PhotoOutputEventType::CAPTURE_FRAME_SHUTTER_END, &frameShutterEndCbList_},
         {PhotoOutputEventType::CAPTURE_READY, &captureReadyCbList_},
         {PhotoOutputEventType::CAPTURE_ESTIMATED_CAPTURE_DURATION, &estimatedCaptureDurationCbList_},
-        {PhotoOutputEventType::CAPTURE_START_WITH_INFO, &captureStartCbList_}
+        {PhotoOutputEventType::CAPTURE_START_WITH_INFO, &captureStartWithInfoCbList_}
     };
     auto eventTypeEnum = PhotoOutputEventTypeHelper.ToEnum(eventType);
     auto callbackListIt = callbackLists.find(eventTypeEnum);
@@ -671,7 +671,7 @@ void PhotoOutputCallback::RemoveAllCallbacks(const std::string& eventType)
             callbackList = &estimatedCaptureDurationCbList_;
             break;
         case PhotoOutputEventType::CAPTURE_START_WITH_INFO:
-            callbackList = &captureStartCbList_;
+            callbackList = &captureStartWithInfoCbList_;
             break;
         default:
             MEDIA_ERR_LOG("Incorrect photo callback event type received from JS");
@@ -694,16 +694,11 @@ void PhotoOutputCallback::ExecuteCaptureStartCb(const CallbackInfo& info) const
     napi_value result[ARGS_TWO] = { nullptr, nullptr };
     napi_value callback = nullptr;
     napi_value retVal;
-    napi_value propValue;
     napi_get_undefined(env_, &result[PARAM0]);
     napi_get_undefined(env_, &result[PARAM1]);
     for (auto it = captureStartCbList_.begin(); it != captureStartCbList_.end();) {
         napi_env env = (*it)->env_;
-        napi_create_object(env, &result[PARAM1]);
-        napi_create_int32(env, info.captureID, &propValue);
-        napi_set_named_property(env, result[PARAM1], "captureId", propValue);
-        napi_create_int32(env, info.timestamp, &propValue);
-        napi_set_named_property(env, result[PARAM1], "time", propValue);
+        napi_create_int32(env, info.captureID, &result[PARAM1]);
         napi_get_reference_value(env, (*it)->cb_, &callback);
         napi_call_function(env, nullptr, callback, ARGS_TWO, result, &retVal);
         if ((*it)->isOnce_) {
@@ -725,7 +720,7 @@ void PhotoOutputCallback::ExecuteCaptureStartWithInfoCb(const CallbackInfo& info
     napi_value propValue;
     napi_get_undefined(env_, &result[PARAM0]);
     napi_get_undefined(env_, &result[PARAM1]);
-    for (auto it = captureStartCbList_.begin(); it != captureStartCbList_.end();) {
+    for (auto it = captureStartWithInfoCbList_.begin(); it != captureStartWithInfoCbList_.end();) {
         napi_env env = (*it)->env_;
         napi_create_object(env, &result[PARAM1]);
         napi_create_int32(env, info.captureID, &propValue);
@@ -738,7 +733,7 @@ void PhotoOutputCallback::ExecuteCaptureStartWithInfoCb(const CallbackInfo& info
             napi_status status = napi_delete_reference(env, (*it)->cb_);
             CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
             (*it)->cb_ = nullptr;
-            captureStartCbList_.erase(it);
+            captureStartWithInfoCbList_.erase(it);
         } else {
             it++;
         }
