@@ -21,6 +21,7 @@
 #include "camera_buffer_handle_utils.h"
 #include "camera_log.h"
 #include "output/deferred_photo_proxy.h"
+#include "photo_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -29,8 +30,8 @@ DeferredPhotoProxy::DeferredPhotoProxy()
 {
     photoId_ = "";
     deferredProcType_ = 0;
-    thumbnailWidth_ = 0;
-    thumbnailHeight_ = 0;
+    photoWidth_ = 0;
+    photoHeight_ = 0;
     bufferHandle_ = nullptr;
     fileDataAddr_ = nullptr;
     fileSize_ = 0;
@@ -44,8 +45,6 @@ DeferredPhotoProxy::DeferredPhotoProxy(const BufferHandle* bufferHandle,
     MEDIA_INFO_LOG("DeferredPhotoProxy");
     photoId_ = imageId;
     deferredProcType_ = deferredProcType;
-    thumbnailWidth_ = 0;
-    thumbnailHeight_ = 0;
     bufferHandle_ = bufferHandle;
     fileDataAddr_ = nullptr;
     fileSize_ = 0;
@@ -56,20 +55,20 @@ DeferredPhotoProxy::DeferredPhotoProxy(const BufferHandle* bufferHandle,
 }
 
 DeferredPhotoProxy::DeferredPhotoProxy(const BufferHandle* bufferHandle,
-    std::string imageId, int32_t deferredProcType, int32_t thumbnailWidth, int32_t thumbnailHeight)
+    std::string imageId, int32_t deferredProcType, int32_t photoWidth, int32_t photoHeight)
 {
     MEDIA_INFO_LOG("DeferredPhotoProxy");
     photoId_ = imageId;
     deferredProcType_ = deferredProcType;
-    thumbnailWidth_ = thumbnailWidth;
-    thumbnailHeight_ = thumbnailHeight;
+    photoWidth_ = photoWidth;
+    photoHeight_ = photoHeight;
     bufferHandle_ = bufferHandle;
     fileDataAddr_ = nullptr;
     fileSize_ = 0;
     isMmaped_ = false;
     buffer_ = nullptr;
     MEDIA_INFO_LOG("imageId: = %{public}s, deferredProcType = %{public}d, width = %{public}d, height = %{public}d",
-        imageId.c_str(), deferredProcType, thumbnailWidth, thumbnailHeight);
+        imageId.c_str(), deferredProcType, photoWidth, photoHeight);
 }
 
 DeferredPhotoProxy::DeferredPhotoProxy(const BufferHandle* bufferHandle,
@@ -78,8 +77,6 @@ DeferredPhotoProxy::DeferredPhotoProxy(const BufferHandle* bufferHandle,
     MEDIA_INFO_LOG("DeferredPhotoProxy");
     photoId_ = imageId;
     deferredProcType_ = deferredProcType;
-    thumbnailWidth_ = 0;
-    thumbnailHeight_ = 0;
     bufferHandle_ = bufferHandle;
     fileDataAddr_ = nullptr;
     fileSize_ = fileSize;
@@ -108,8 +105,8 @@ void DeferredPhotoProxy::ReadFromParcel(MessageParcel &parcel)
     std::lock_guard<std::mutex> lock(mutex_);
     photoId_ = parcel.ReadString();
     deferredProcType_ = parcel.ReadInt32();
-    thumbnailWidth_ = parcel.ReadInt32();
-    thumbnailHeight_ = parcel.ReadInt32();
+    photoWidth_ = parcel.ReadInt32();
+    photoHeight_ = parcel.ReadInt32();
     bufferHandle_ = ReadBufferHandle(parcel);
     MEDIA_INFO_LOG("DeferredPhotoProxy::ReadFromParcel");
 }
@@ -119,8 +116,8 @@ void DeferredPhotoProxy::WriteToParcel(MessageParcel &parcel)
     std::lock_guard<std::mutex> lock(mutex_);
     parcel.WriteString(photoId_);
     parcel.WriteInt32(deferredProcType_);
-    parcel.WriteInt32(thumbnailWidth_);
-    parcel.WriteInt32(thumbnailHeight_);
+    parcel.WriteInt32(photoWidth_);
+    parcel.WriteInt32(photoHeight_);
     WriteBufferHandle(parcel, *bufferHandle_);
     MEDIA_INFO_LOG("DeferredPhotoProxy::WriteToParcel");
 }
@@ -132,14 +129,14 @@ std::string DeferredPhotoProxy::GetPhotoId()
     return photoId_;
 }
 
-DeferredProcType DeferredPhotoProxy::GetDeferredProcType()
+Media::DeferredProcType DeferredPhotoProxy::GetDeferredProcType()
 {
     MEDIA_INFO_LOG("DeferredPhotoProxy::GetDeferredProcType");
     std::lock_guard<std::mutex> lock(mutex_);
     if (deferredProcType_ == 0) {
-        return BACKGROUND;
+        return Media::DeferredProcType::BACKGROUND;
     } else {
-        return OFFLINE;
+        return Media::DeferredProcType::OFFLINE;
     }
 }
 
@@ -159,6 +156,16 @@ void* DeferredPhotoProxy::GetFileDataAddr()
     return fileDataAddr_;
 }
 
+Media::PhotoFormat DeferredPhotoProxy::GetFormat()
+{
+    return Media::PhotoFormat::RGBA;
+}
+
+Media::PhotoQuality DeferredPhotoProxy::GetPhotoQuality()
+{
+    return Media::PhotoQuality::LOW;
+}
+
 size_t DeferredPhotoProxy::GetFileSize()
 {
     MEDIA_INFO_LOG("DeferredPhotoProxy::GetFileSize");
@@ -174,12 +181,27 @@ size_t DeferredPhotoProxy::GetFileSize()
 
 int32_t DeferredPhotoProxy::GetWidth()
 {
-    return thumbnailWidth_;
+    return photoWidth_;
 }
 
 int32_t DeferredPhotoProxy::GetHeight()
 {
-    return thumbnailHeight_;
+    return photoHeight_;
+}
+
+void DeferredPhotoProxy::Release()
+{
+    MEDIA_INFO_LOG("CameraPhotoProxy release start");
+}
+
+std::string DeferredPhotoProxy::GetDisplayName()
+{
+    return "";
+}
+
+std::string DeferredPhotoProxy::GetExtension()
+{
+    return "";
 }
 } // namespace CameraStandard
 } // namespace OHOS

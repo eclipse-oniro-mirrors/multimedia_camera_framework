@@ -86,6 +86,8 @@ ohos_shared_library("camera_napi") {
   deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
   external_deps = [
     "c_utils:utils",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
     "graphic_surface:surface",
@@ -95,6 +97,9 @@ ohos_shared_library("camera_napi") {
     "image_framework:image",
     "image_framework:image_native",
     "ipc:ipc_core",
+    "media_library:media_library",
+    "media_library:media_library_manager",
+    "media_library:medialibrary_nutils",
     "napi:ace_napi",
   ]
   sanitize = {

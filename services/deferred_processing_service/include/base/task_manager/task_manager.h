@@ -29,7 +29,7 @@ namespace CameraStandard {
 namespace DeferredProcessing {
 class TaskManager {
 public:
-    TaskManager(const std::string& name, uint32_t  numThreads);
+    TaskManager(const std::string& name, uint32_t  numThreads, bool serial);
     ~TaskManager();
     void CreateDelayedTaskGroupIfNeed();
     void BeginBackgroundTasks();
@@ -48,6 +48,7 @@ private:
 
     const std::string name_;
     const uint32_t numThreads_;
+    bool serial_ = true;
     std::unique_ptr<ThreadPool> pool_;
     std::unique_ptr<TaskRegistry> taskRegistry_;
     TaskGroupHandle defaultTaskHandle_;

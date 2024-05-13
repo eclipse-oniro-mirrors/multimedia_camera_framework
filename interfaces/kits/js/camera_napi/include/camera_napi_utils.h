@@ -23,6 +23,12 @@
 #include "js_native_api_types.h"
 #include "napi/native_node_api.h"
 
+#ifdef NAPI_ASSERT
+#undef NAPI_ASSERT
+#endif
+
+#define NAPI_ASSERT(env, assertion, message) NAPI_ASSERT_BASE(env, assertion, message, nullptr)
+
 #define CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar)        \
     do {                                                               \
         void* data;                                                    \

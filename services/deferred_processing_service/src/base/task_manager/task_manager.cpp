@@ -21,9 +21,10 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-TaskManager::TaskManager(const std::string& name, uint32_t  numThreads)
+TaskManager::TaskManager(const std::string& name, uint32_t  numThreads, bool serial)
     : name_(name),
       numThreads_(numThreads),
+      serial_(serial),
       pool_(nullptr),
       taskRegistry_(nullptr),
       defaultTaskHandle_(INVALID_TASK_GROUP_HANDLE),
@@ -39,7 +40,7 @@ void TaskManager::Initialize()
     pool_ = ThreadPool::Create(name_, numThreads_);
     taskRegistry_ = std::make_unique<TaskRegistry>(name_, pool_.get());
     auto ret = RegisterTaskGroup("defaultTaskGroup",
-        [this](std::any param) { DoDefaultWorks(std::move(param)); }, true, false, defaultTaskHandle_);
+        [this](std::any param) { DoDefaultWorks(std::move(param)); }, serial_, false, defaultTaskHandle_);
     DP_INFO_LOG("register default task group: %d, handle: %d", ret, static_cast<int>(defaultTaskHandle_));
     (void)(ret);
     return;

@@ -37,6 +37,7 @@
 #include "output/preview_output.h"
 #include "output/video_output.h"
 #include "camera_error_code.h"
+#include "media_photo_asset_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -867,6 +868,18 @@ void CaptureSession::SetCallback(std::shared_ptr<SessionCallback> callback)
         }
     }
     return;
+}
+
+void CaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType)
+{
+    int32_t errorCode = CAMERA_OK;
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    if (captureSession_) {
+        errorCode = captureSession_->CreateMediaLibrary(photoProxy, uri, cameraShotType);
+        if (errorCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("Failed to create media library, errorCode: %{public}d", errorCode);
+        }
+    }
 }
 
 std::shared_ptr<SessionCallback> CaptureSession::GetApplicationCallback()
@@ -2037,7 +2050,7 @@ void CaptureSession::ProcessSnapshotDurationUpdates(const uint64_t timestamp,
         if (ret != CAM_META_SUCCESS || metadataItem.count <= 0) {
             return;
         }
-        int32_t duration = static_cast<int32_t>(metadataItem.data.ui32[0]);
+        const int32_t duration = static_cast<int32_t>(metadataItem.data.ui32[0]);
         if (duration != prevDuration_.load()) {
             ((sptr<PhotoOutput> &)photoOutput_)->ProcessSnapshotDurationUpdates(duration);
         }
@@ -3871,6 +3884,96 @@ int32_t CaptureSession::EnableFeature(SceneFeature feature, bool isEnable)
     }
     UnlockForControl();
     return retCode;
+}
+
+bool CaptureSession::IsMovingPhotoSupported()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter IsMovingPhotoSupported");
+    if (inputDevice_ == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::IsMovingPhotoSupported camera device is null");
+        return false;
+    }
+    auto deviceInfo = inputDevice_->GetCameraDeviceInfo();
+    if (deviceInfo == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::IsMovingPhotoSupported camera deviceInfo is null");
+        return false;
+    }
+    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
+    camera_metadata_item_t metadataItem;
+    vector<int32_t> modes = {};
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_MOVING_PHOTO, &metadataItem);
+    if (ret == CAM_META_SUCCESS) {
+        uint32_t step = 3;
+        for (uint32_t index = 0; index < metadataItem.count - 1;) {
+            if (metadataItem.data.i32[index + 1] == 1) {
+                modes.push_back(metadataItem.data.i32[index]);
+            }
+            MEDIA_DEBUG_LOG("IsMovingPhotoSupported mode:%{public}d", metadataItem.data.i32[index]);
+            index += step;
+        }
+    }
+    return std::find(modes.begin(), modes.end(), GetMode()) != modes.end();
+}
+
+int32_t CaptureSession::EnableMovingPhoto(bool isEnable)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("Enter EnableMovingPhoto, isEnable:%{public}d", isEnable);
+    if (!IsMovingPhotoSupported()) {
+        MEDIA_ERR_LOG("IsMovingPhotoSupported is false");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
+    if (!(IsSessionConfiged() || IsSessionCommited())) {
+        MEDIA_ERR_LOG("CaptureSession Failed EnableMovingPhoto!, session not configed");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
+    bool status = false;
+    int32_t ret;
+    camera_metadata_item_t item;
+    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_MOVING_PHOTO, &item);
+    uint8_t enableValue = static_cast<uint8_t>(isEnable ? OHOS_CAMERA_MOVING_PHOTO_ON : OHOS_CAMERA_MOVING_PHOTO_OFF);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_MOVING_PHOTO, &enableValue, 1);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_MOVING_PHOTO, &enableValue, 1);
+    }
+    if (!status) {
+        MEDIA_ERR_LOG("CaptureSession::EnableMovingPhoto Failed to enable");
+    }
+    if (captureSession_) {
+        int32_t errCode = captureSession_->EnableMovingPhoto(isEnable);
+        if (errCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("Failed to EnableMovingPhoto!, %{public}d", errCode);
+            return errCode;
+        }
+    } else {
+        MEDIA_ERR_LOG("CaptureSession::EnableMovingPhoto() captureSession_ is nullptr");
+    }
+    isMovingPhotoEnabled_ = isEnable;
+    return CameraErrorCode::SUCCESS;
+}
+
+bool CaptureSession::IsMovingPhotoEnabled()
+{
+    return isMovingPhotoEnabled_;
+}
+
+int32_t CaptureSession::StartMovingPhotoCapture()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("StartMovingPhotoCapture");
+    if (!IsMovingPhotoSupported()) {
+        MEDIA_ERR_LOG("IsMovingPhotoSupported is false");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
+    if (captureSession_) {
+        int32_t errCode = captureSession_->StartMovingPhotoCapture();
+        if (errCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("Failed to StartMovingPhotoCapture!, %{public}d", errCode);
+        }
+    }
+    return CameraErrorCode::SUCCESS;
 }
 
 void CaptureSession::SetMacroStatusCallback(std::shared_ptr<MacroStatusCallback> callback)

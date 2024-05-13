@@ -4253,7 +4253,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_007, TestSize.L
     bool isSupported = true;
 
     int32_t flashModeSupported = camSession->IsFlashModeSupported(flashMode, isSupported);
-    EXPECT_EQ(setFlashMode, 7400103);
+    EXPECT_EQ(flashModeSupported, 7400103);
 
     std::vector<FlashMode> getSupportedFlashModes = camSession->GetSupportedFlashModes();
     EXPECT_EQ(getSupportedFlashModes.empty(), true);

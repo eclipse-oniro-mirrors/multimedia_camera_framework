@@ -13,7 +13,9 @@
  * limitations under the License.
  */
 
+#include "deferred_photo_proxy.h"
 #include "image_napi.h"
+#include "photo_proxy.h"
 #include "pixel_map_napi.h"
 #include "hilog/log.h"
 #include "camera_log.h"
@@ -23,7 +25,6 @@ namespace OHOS {
 namespace CameraStandard {
 thread_local napi_ref DeferredPhotoProxyNapi::sConstructor_ = nullptr;
 thread_local napi_value DeferredPhotoProxyNapi::sThumbnailPixelMap_ = nullptr;
-thread_local sptr<DeferredPhotoProxy> DeferredPhotoProxyNapi::sDeferredPhotoProxy_ = nullptr;
 thread_local uint32_t DeferredPhotoProxyNapi::deferredPhotoProxyTaskId = DEFERRED_PHOTO_PROXY_TASKID;
 DeferredPhotoProxyNapi::DeferredPhotoProxyNapi() : env_(nullptr), wrapper_(nullptr), thumbnailPixelMap_(nullptr)
 {
@@ -53,7 +54,9 @@ napi_value DeferredPhotoProxyNapi::DeferredPhotoProxyNapiConstructor(napi_env en
     if (status == napi_ok && thisVar != nullptr) {
         std::unique_ptr<DeferredPhotoProxyNapi> obj = std::make_unique<DeferredPhotoProxyNapi>();
         obj->env_ = env;
-        obj->deferredPhotoProxy_ = sDeferredPhotoProxy_;
+
+        obj->deferredPhotoProxy_ = static_cast<DeferredPhotoProxy*>(sPhotoProxy_.GetRefPtr());
+        obj->photoProxy_ = obj->deferredPhotoProxy_;
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
                            DeferredPhotoProxyNapi::DeferredPhotoProxyNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
@@ -115,9 +118,9 @@ napi_value DeferredPhotoProxyNapi::CreateDeferredPhotoProxy(napi_env env, sptr<D
     napi_get_undefined(env, &result);
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
-        sDeferredPhotoProxy_ = deferredPhotoProxy;
+        sPhotoProxy_ = deferredPhotoProxy;
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
-        sDeferredPhotoProxy_ = nullptr;
+        sPhotoProxy_ = nullptr;
         if (status == napi_ok && result != nullptr) {
             return result;
         } else {

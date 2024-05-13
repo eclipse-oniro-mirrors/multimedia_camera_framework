@@ -114,6 +114,8 @@ public:
 
     int64_t GetSecureCameraSeq(uint64_t* secureSeqId);
 
+    bool CheckMovingPhotoSupported(int32_t mode);
+
 private:
     class FoldScreenListener;
     std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.

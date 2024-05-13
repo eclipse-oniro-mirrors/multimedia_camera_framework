@@ -15,9 +15,11 @@
 
 #include "hcapture_session_stub.h"
 #include "camera_log.h"
+#include "camera_server_photo_proxy.h"
 #include "camera_util.h"
 #include "ipc_skeleton.h"
 #include "camera_service_ipc_interface_code.h"
+#include "camera_photo_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -78,6 +80,15 @@ int HCaptureSessionStub::OnRemoteRequest(
             break;
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_FEATURE_MODE):
             errCode = HandleSetFeatureMode(data);
+            break;
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_ENABLE_MOTION_PHOTO):
+            errCode = HandleEnableMovingPhoto(data);
+            break;
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_START_MOVING_PHOTO_CAPTURE):
+            errCode = HandleStartMovingPhotoCapture();
+            break;
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER):
+            errCode = HandleCreateMediaLibrary(data, reply);
             break;
         default:
             MEDIA_ERR_LOG("HCaptureSessionStub request code %{public}u not handled", code);
@@ -218,5 +229,31 @@ int HCaptureSessionStub::HandleSetFeatureMode(MessageParcel &data)
     int featureMode = static_cast<int>(data.ReadUint32());
     return SetFeatureMode(featureMode);
 }
+
+int32_t HCaptureSessionStub::HandleEnableMovingPhoto(MessageParcel &data)
+{
+    bool isEnabled = data.ReadBool();
+    return EnableMovingPhoto(isEnabled);
+}
+
+int32_t HCaptureSessionStub::HandleStartMovingPhotoCapture()
+{
+    return StartMovingPhotoCapture();
+}
+
+int32_t HCaptureSessionStub::HandleCreateMediaLibrary(MessageParcel& data, MessageParcel &reply)
+{
+    sptr<CameraPhotoProxy> photoProxy = new CameraPhotoProxy();
+    photoProxy->ReadFromParcel(data);
+    CHECK_AND_RETURN_RET_LOG(photoProxy != nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCaptureSessionStub HandleCreateMediaLibrary photoProxy is null");
+    std::string uri;
+    int32_t cameraShotType = 0;
+    int32_t ret = CreateMediaLibrary(photoProxy, uri, cameraShotType);
+    CHECK_AND_RETURN_RET_LOG(reply.WriteString(uri) && reply.WriteInt32(cameraShotType), IPC_STUB_WRITE_PARCEL_ERR,
+        "HCaptureSessionStub HandleCreateMediaLibrary Write uri and cameraShotType failed");
+    return ret;
+}
+
 } // namespace CameraStandard
 } // namespace OHOS

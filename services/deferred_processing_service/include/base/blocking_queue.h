@@ -17,11 +17,11 @@
 #define OHOS_DEFERRED_PROCESSING_SERVICE_BLOCKING_QUEUE_H
 
 #include <atomic>
-#include <atomic>
 #include <condition_variable>
 #include <mutex>
 #include <queue>
 #include <string>
+#include <vector>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -130,6 +130,17 @@ public:
             ClearUnlocked();
             cvEmpty_.notify_one();
         }
+    }
+    std::vector<T> GetAllElements()
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        std::vector<T> elements;
+        std::queue<T> tempQueue = que_;
+        while (!tempQueue.empty()) {
+            elements.push_back(tempQueue.front());
+            tempQueue.pop();
+        }
+        return std::move(elements);
     }
 
 private:

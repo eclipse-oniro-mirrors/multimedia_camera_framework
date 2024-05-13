@@ -73,7 +73,17 @@ int32_t HStreamRepeat::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> 
 void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
 {
     HStreamCommon::SetStreamInfo(streamInfo);
+    sptr<BufferProducerSequenceable> bufferProducerSequenceable = new BufferProducerSequenceable(metaProducer_);
+    HDI::Camera::V1_1::ExtendedStreamInfo metaExtendedStreamInfo {
+        .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(4), .width = 0, .height = 0, .format = 0,
+        .dataspace = 0, .bufferQueue = bufferProducerSequenceable
+    };
     switch (repeatStreamType_) {
+        case RepeatStreamType::LIVEPHOTO:
+            streamInfo.v1_0.intent_ = StreamIntent::VIDEO;
+            streamInfo.v1_0.encodeType_ = ENCODE_TYPE_H264;
+            streamInfo.extendedStreamInfos = { metaExtendedStreamInfo };
+            break;
         case RepeatStreamType::VIDEO:
             streamInfo.v1_0.intent_ = StreamIntent::VIDEO;
             streamInfo.v1_0.encodeType_ = ENCODE_TYPE_H264;
@@ -84,13 +94,9 @@ void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
             if (mEnableSecure) {
                 MEDIA_INFO_LOG("HStreamRepeat::SetStreamInfo Enter");
                 HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo {
-                        .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(
-                            HDI::Camera::V1_3::ExtendedStreamInfoType::EXTENDED_STREAM_INFO_SECURE),
-                        .width = 0,
-                        .height = 0,
-                        .format = 0,
-                        .dataspace = 0,
-                        .bufferQueue = nullptr
+                    .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(
+                        HDI::Camera::V1_3::ExtendedStreamInfoType::EXTENDED_STREAM_INFO_SECURE),
+                    .width = 0, .height = 0, .format = 0, .dataspace = 0, .bufferQueue = nullptr
                 };
                 MEDIA_INFO_LOG("HStreamRepeat::SetStreamInfo end");
                 streamInfo.extendedStreamInfos = { extendedStreamInfo };
@@ -102,15 +108,23 @@ void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
             HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo {
                 .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(
                     HDI::Camera::V1_2::EXTENDED_STREAM_INFO_SKETCH),
-                .width = 0,
-                .height = 0,
-                .format = 0,
-                .dataspace = 0,
-                .bufferQueue = nullptr
+                .width = 0, .height = 0, .format = 0, .dataspace = 0, .bufferQueue = nullptr
             };
             streamInfo.extendedStreamInfos = { extendedStreamInfo };
             break;
     }
+}
+
+void HStreamRepeat::SetMetaProducer(sptr<OHOS::IBufferProducer> metaProducer)
+{
+    std::lock_guard<std::mutex> lock(producerLock_);
+    metaProducer_ = metaProducer;
+}
+
+void HStreamRepeat::SetMovingPhotoStartCallback(std::function<void()> callback)
+{
+    std::lock_guard<std::mutex> lock(movingPhotoCallbackLock_);
+    startMovingPhotoCallback_ = callback;
 }
 
 void HStreamRepeat::UpdateSketchStatus(SketchStatus status)
@@ -404,6 +418,11 @@ int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& pro
         MEDIA_ERR_LOG("HStreamRepeat::AttachBufferQueue(), Failed to AttachBufferQueue %{public}d", rc);
     }
     MEDIA_INFO_LOG("HStreamRepeat::AddDeferredSurface end %{public}d", rc);
+    std::lock_guard<std::mutex> lock(movingPhotoCallbackLock_);
+    if (startMovingPhotoCallback_) {
+        startMovingPhotoCallback_();
+        startMovingPhotoCallback_ = nullptr;
+    }
     return CAMERA_OK;
 }
 
@@ -472,9 +491,9 @@ int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
         }
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, repeatSettings);
     }
- 
+
     auto streamOperator = GetStreamOperator();
- 
+
     CamRetCode rc = HDI::Camera::V1_0::NO_ERROR;
     if (streamOperator != nullptr) {
         std::lock_guard<std::mutex> startStopLock(streamStartStopLock_);

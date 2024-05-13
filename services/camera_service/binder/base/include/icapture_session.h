@@ -21,6 +21,7 @@
 #include "icapture_session_callback.h"
 #include "iremote_broker.h"
 #include "istream_common.h"
+#include "camera_photo_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -84,6 +85,13 @@ public:
     virtual int32_t SetColorSpace(ColorSpace colorSpace, ColorSpace captureColorSpace, bool isNeedUpdate) = 0;
 
     virtual int32_t SetFeatureMode(int32_t featureMode) = 0;
+
+    virtual int32_t EnableMovingPhoto(bool isEnable) = 0;
+
+    virtual int32_t StartMovingPhotoCapture() = 0;
+
+    virtual int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
+        std::string &uri, int32_t &cameraShotType) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ICaptureSession");
 };

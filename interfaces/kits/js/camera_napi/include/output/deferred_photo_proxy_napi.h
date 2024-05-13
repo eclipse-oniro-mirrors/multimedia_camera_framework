@@ -16,14 +16,15 @@
 #ifndef DEFERRED_PHOTO_PROXY_NAPI_H_
 #define DEFERRED_PHOTO_PROXY_NAPI_H_
 
-#include "camera_napi_utils.h"
 #include "deferred_photo_proxy.h"
+#include "photo_proxy_napi.h"
+#include "camera_napi_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
 static const char DEFERRED_PHOTO_NAPI_CLASS_NAME[] = "DeferredPhotoProxy";
 
-class DeferredPhotoProxyNapi {
+class DeferredPhotoProxyNapi : public Media::PhotoProxyNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateDeferredPhotoProxy(napi_env env, sptr<DeferredPhotoProxy> deferredPhotoProxy);
@@ -42,7 +43,6 @@ private:
 
     static thread_local napi_ref sConstructor_;
     static thread_local napi_value sThumbnailPixelMap_;
-    static thread_local sptr<DeferredPhotoProxy> sDeferredPhotoProxy_;
     static thread_local uint32_t deferredPhotoProxyTaskId;
 
     napi_env env_;

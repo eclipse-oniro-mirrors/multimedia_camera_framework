@@ -71,8 +71,10 @@ void ThreadPool::WorkerLoop(const std::string& threadName)
 {
     DP_DEBUG_LOG("(%s) entered.", threadName.c_str());
     while (!isStopped_.load()) {
+        DP_DEBUG_LOG("(%s) task excute start entered.", threadName.c_str());
         auto task = GetTask();
         if (task) {
+            DP_DEBUG_LOG("(%s) task excuting entered.", threadName.c_str());
             task();
         } else {
             DP_DEBUG_LOG("empty task.");

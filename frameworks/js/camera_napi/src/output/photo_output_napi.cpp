@@ -13,11 +13,16 @@
  * limitations under the License.
  */
 
+#include <cstdint>
 #include <mutex>
+#include <string>
 #include <uv.h>
 #include <unistd.h>
+#include "output/deferred_photo_proxy_napi.h"
 #include "camera_buffer_handle_utils.h"
 #include "camera_error_code.h"
+#include "camera_log.h"
+#include "camera_napi_const.h"
 #include "camera_napi_security_utils.h"
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
@@ -25,12 +30,17 @@
 #include "camera_output_capability.h"
 #include "image_napi.h"
 #include "image_receiver.h"
+#include "js_native_api.h"
 #include "pixel_map_napi.h"
 #include "image_packer.h"
+#include "refbase.h"
 #include "video_key_info.h"
 #include "output/photo_output_napi.h"
 #include "output/photo_napi.h"
-#include "output/deferred_photo_proxy_napi.h"
+#include "camera_photo_proxy.h"
+#include "ipc_skeleton.h"
+#include "media_library_manager.h"
+#include "media_library_comm_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -42,7 +52,9 @@ thread_local uint32_t PhotoOutputNapi::photoOutputTaskId = CAMERA_PHOTO_OUTPUT_T
 static uv_sem_t g_captureStartSem;
 static bool g_isSemInited;
 static std::mutex g_photoImageMutex;
-PhotoListener::PhotoListener(napi_env env, const sptr<Surface> photoSurface) : env_(env), photoSurface_(photoSurface)
+
+PhotoListener::PhotoListener(napi_env env, const sptr<Surface> photoSurface, wptr<PhotoOutput> photoOutput)
+    : env_(env), photoSurface_(photoSurface), photoOutput_(photoOutput)
 {
     if (bufferProcessor_ == nullptr && photoSurface != nullptr) {
         bufferProcessor_ = std::make_shared<PhotoBufferProcessor> (photoSurface);
@@ -175,8 +187,67 @@ void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Su
     }
 }
 
+void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality) const
+{
+    MEDIA_INFO_LOG("ExecutePhotoAsset");
+    napi_value result[ARGS_TWO] = {nullptr, nullptr};
+    napi_value callback = nullptr;
+    napi_value retVal;
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_get_undefined(env_, &result[PARAM1]);
+    // deep copy buffer
+    sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
+    DeepCopyBuffer(newSurfaceBuffer, surfaceBuffer);
+    BufferHandle *bufferHandle = newSurfaceBuffer->GetBufferHandle();
+    if (bufferHandle == nullptr) {
+        napi_value errorCode;
+        napi_create_int32(env_, CameraErrorCode::INVALID_ARGUMENT, &errorCode);
+        result[PARAM0] = errorCode;
+        MEDIA_ERR_LOG("invalid bufferHandle");
+    }
+    newSurfaceBuffer->Map();
+    auto photoOutput = photoOutput_.promote();
+    string uri = "";
+    int32_t cameraShotType = 0;
+    CreateMediaLibrary(surfaceBuffer, bufferHandle, isHighQuality, uri, cameraShotType);
+    MEDIA_INFO_LOG("CreateMediaLibrary result %{public}s, type %{public}d", uri.c_str(), cameraShotType);
+    result[PARAM1] = Media::MediaLibraryCommNapi::CreatePhotoAssetNapi(env_, uri, cameraShotType);
+    napi_get_reference_value(env_, capturePhotoAssetCb_, &callback);
+    napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
+    // return buffer to buffer queue
+    photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
+    newSurfaceBuffer->Unmap();
+}
+
+void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle *bufferHandle,
+    bool isHighQuality, std::string &uri, int32_t &cameraShotType) const
+{
+    int64_t imageId = 0;
+    int32_t deferredProcessingType;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::imageId, imageId);
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredProcessingType, deferredProcessingType);
+    MEDIA_ERR_LOG("PhotoListener ExecutePhotoAsset imageId:%{public}" PRId64 ", deferredProcessingType:%{public}d",
+                  imageId, deferredProcessingType);
+    // get buffer handle and photo info
+    int32_t photoWidth;
+    int32_t photoHeight;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataWidth, photoWidth);
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataHeight, photoHeight);
+    MEDIA_INFO_LOG("photoWidth:%{public}d, photoHeight: %{public}d", photoWidth, photoHeight);
+    int32_t format = bufferHandle->format;
+    sptr<CameraPhotoProxy> photoProxy;
+    std::string imageIdStr = std::to_string(imageId);
+    photoProxy = new(std::nothrow) CameraPhotoProxy(bufferHandle, format, photoWidth, photoHeight, isHighQuality);
+    photoProxy->SetDeferredAttrs(imageIdStr, deferredProcessingType);
+    auto photoOutput = photoOutput_.promote();
+    if (photoOutput && photoOutput->GetSession()) {
+        photoOutput->GetSession()->CreateMediaLibrary(photoProxy, uri, cameraShotType);
+    }
+}
+
 void PhotoListener::UpdateJSCallback(sptr<Surface> photoSurface) const
 {
+    MEDIA_DEBUG_LOG("PhotoListener UpdateJSCallback enter");
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
     int64_t timestamp;
@@ -190,18 +261,23 @@ void PhotoListener::UpdateJSCallback(sptr<Surface> photoSurface) const
     int32_t isDegradedImage;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::isDegradedImage, isDegradedImage);
     MEDIA_INFO_LOG("PhotoListener UpdateJSCallback isDegradedImage:%{public}d", isDegradedImage);
-
-    if (isDegradedImage == 0) {
+    if ((callbackFlag & CAPTURE_PHOTO_ASSET) != 0) {
+        ExecutePhotoAsset(surfaceBuffer, isDegradedImage == 0);
+    } else if (isDegradedImage == 0 && (callbackFlag & CAPTURE_PHOTO) != 0) {
         ExecutePhoto(surfaceBuffer);
-    } else {
+    } else if (isDegradedImage != 0 && (callbackFlag & CAPTURE_DEFERRED_PHOTO) != 0) {
         ExecuteDeferredPhoto(surfaceBuffer);
+    } else {
+        MEDIA_INFO_LOG("PhotoListener on error callback");
     }
 }
 
 void PhotoListener::UpdateJSCallbackAsync(sptr<Surface> photoSurface) const
 {
+    MEDIA_DEBUG_LOG("PhotoListener UpdateJSCallbackAsync enter");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
+    MEDIA_INFO_LOG("PhotoListener UpdateJSCallbackAsync get loop");
     if (!loop) {
         MEDIA_ERR_LOG("PhotoListener:UpdateJSCallbackAsync() failed to get event loop");
         return;
@@ -213,6 +289,7 @@ void PhotoListener::UpdateJSCallbackAsync(sptr<Surface> photoSurface) const
     }
     std::unique_ptr<PhotoListenerInfo> callbackInfo = std::make_unique<PhotoListenerInfo>(photoSurface, this);
     work->data = callbackInfo.get();
+    MEDIA_DEBUG_LOG("PhotoListener UpdateJSCallbackAsync uv_queue_work_with_qos start");
     int ret = uv_queue_work_with_qos(
         loop, work, [](uv_work_t* work) {},
         [](uv_work_t* work, int status) {
@@ -244,15 +321,28 @@ void PhotoListener::SaveCallbackReference(const std::string &eventType, napi_val
     switch (eventTypeEnum) {
         case PhotoOutputEventType::CAPTURE_PHOTO_AVAILABLE:
             curCallbackRef = &capturePhotoCb_;
+            callbackFlag |= CAPTURE_PHOTO;
             break;
         case PhotoOutputEventType::CAPTURE_DEFERRED_PHOTO_AVAILABLE:
             curCallbackRef = &captureDeferredPhotoCb_;
+            callbackFlag |= CAPTURE_DEFERRED_PHOTO;
+            break;
+        case PhotoOutputEventType::CAPTURE_PHOTO_ASSET_AVAILABLE:
+            curCallbackRef = &capturePhotoAssetCb_;
+            callbackFlag |= CAPTURE_PHOTO_ASSET;
             break;
         default:
             MEDIA_ERR_LOG("Incorrect photo callback event type received from JS");
             return;
     }
-
+    if (eventTypeEnum == PhotoOutputEventType::CAPTURE_PHOTO_ASSET_AVAILABLE) {
+        auto photoOutput = photoOutput_.promote();
+        if (photoOutput) {
+            photoOutput->AddDeferType(DeferredDeliveryImageType::DELIVERY_PHOTO);
+        } else {
+            MEDIA_ERR_LOG("cannot get photoOutput");
+        }
+    }
     napi_ref callbackRef = nullptr;
     const int32_t refCount = 1;
     napi_status status = napi_create_reference(env_, callback, refCount, &callbackRef);
@@ -268,9 +358,16 @@ void PhotoListener::RemoveCallbackRef(napi_env env, napi_value callback, const s
     if (eventType == CONST_CAPTURE_PHOTO_AVAILABLE) {
         napi_delete_reference(env_, capturePhotoCb_);
         capturePhotoCb_ = nullptr;
+        callbackFlag &= ~CAPTURE_PHOTO;
     } else if (eventType == CONST_CAPTURE_DEFERRED_PHOTO_AVAILABLE) {
         napi_delete_reference(env_, captureDeferredPhotoCb_);
         captureDeferredPhotoCb_ = nullptr;
+        callbackFlag &= ~CAPTURE_DEFERRED_PHOTO;
+    } else if (eventType == CONST_CAPTURE_PHOTO_ASSET_AVAILABLE) {
+        napi_delete_reference(env_, capturePhotoAssetCb_);
+        photoOutput_->DeferImageDeliveryFor(DeferredDeliveryImageType::DELIVERY_NONE);
+        callbackFlag &= ~CAPTURE_PHOTO_ASSET;
+        capturePhotoAssetCb_ = nullptr;
     }
 
     MEDIA_INFO_LOG("RemoveCallbackReference: js callback no find");
@@ -1048,13 +1145,17 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
     int32_t refCount = 1;
 
     napi_property_descriptor photo_output_props[] = {
+        DECLARE_NAPI_FUNCTION("isMovingPhotoSupported", IsMovingPhotoSupported),
+        DECLARE_NAPI_FUNCTION("enableMovingPhoto", EnableMovingPhoto),
         DECLARE_NAPI_FUNCTION("getDefaultCaptureSetting", GetDefaultCaptureSetting),
         DECLARE_NAPI_FUNCTION("capture", Capture), DECLARE_NAPI_FUNCTION("confirmCapture", ConfirmCapture),
         DECLARE_NAPI_FUNCTION("release", Release), DECLARE_NAPI_FUNCTION("isMirrorSupported", IsMirrorSupported),
         DECLARE_NAPI_FUNCTION("setMirror", SetMirror),
         DECLARE_NAPI_FUNCTION("enableQuickThumbnail", EnableQuickThumbnail),
-        DECLARE_NAPI_FUNCTION("isQuickThumbnailSupported", IsQuickThumbnailSupported), DECLARE_NAPI_FUNCTION("on", On),
-        DECLARE_NAPI_FUNCTION("once", Once), DECLARE_NAPI_FUNCTION("off", Off),
+        DECLARE_NAPI_FUNCTION("isQuickThumbnailSupported", IsQuickThumbnailSupported),
+        DECLARE_NAPI_FUNCTION("on", On),
+        DECLARE_NAPI_FUNCTION("once", Once),
+        DECLARE_NAPI_FUNCTION("off", Off),
         DECLARE_NAPI_FUNCTION("deferImageDelivery", DeferImageDeliveryFor),
         DECLARE_NAPI_FUNCTION("deferImageDeliveryFor", DeferImageDeliveryFor),
         DECLARE_NAPI_FUNCTION("isDeferredImageDeliverySupported", IsDeferredImageDeliverySupported),
@@ -1806,7 +1907,63 @@ napi_value PhotoOutputNapi::SetMirror(napi_env env, napi_callback_info info)
     } else {
         MEDIA_ERR_LOG("SetMirror call Failed!");
     }
+    return result;
+}
 
+napi_value PhotoOutputNapi::IsMovingPhotoSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("IsMotionPhotoSupported is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
+    auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
+    if (status == napi_ok && photoOutputNapi != nullptr && session != nullptr) {
+        bool isSupported = session->IsMovingPhotoSupported();
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        napi_get_boolean(env, false, &result);
+        MEDIA_ERR_LOG("IsMotionPhotoSupported call Failed!");
+    }
+    return result;
+}
+
+napi_value PhotoOutputNapi::EnableMovingPhoto(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("enableMovingPhoto is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = { 0 };
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[0], &valueType);
+    if (valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
+        return result;
+    }
+    napi_get_undefined(env, &result);
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
+    auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
+    if (status == napi_ok && photoOutputNapi != nullptr && session != nullptr) {
+        bool isEnableMovingPhoto;
+        napi_get_value_bool(env, argv[PARAM0], &isEnableMovingPhoto);
+        session->LockForControl();
+        int32_t retCode = session->EnableMovingPhoto(isEnableMovingPhoto);
+        session->UnlockForControl();
+        if (retCode != 0 && !CameraNapiUtils::CheckError(env, retCode)) {
+            return result;
+        }
+    }
     return result;
 }
 
@@ -1890,7 +2047,7 @@ void PhotoOutputNapi::RegisterPhotoAvailableCallbackListener(
     }
     if (photoListener_ == nullptr) {
         MEDIA_INFO_LOG("new photoListener and register surface consumer listener");
-        sptr<PhotoListener> photoListener = new (std::nothrow) PhotoListener(env, sPhotoSurface_);
+        sptr<PhotoListener> photoListener = new (std::nothrow) PhotoListener(env, sPhotoSurface_, photoOutput_);
         SurfaceError ret = sPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener);
         if (ret != SURFACE_ERROR_OK) {
             MEDIA_ERR_LOG("register surface consumer listener failed!");
@@ -1936,7 +2093,7 @@ void PhotoOutputNapi::RegisterDeferredPhotoProxyAvailableCallbackListener(
     }
     if (photoListener_ == nullptr) {
         MEDIA_INFO_LOG("new deferred photoListener and register surface consumer listener");
-        sptr<PhotoListener> photoListener = new (std::nothrow) PhotoListener(env, sPhotoSurface_);
+        sptr<PhotoListener> photoListener = new (std::nothrow) PhotoListener(env, sPhotoSurface_, photoOutput_);
         SurfaceError ret = sPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener);
         if (ret != SURFACE_ERROR_OK) {
             MEDIA_ERR_LOG("register surface consumer listener failed!");
@@ -1951,6 +2108,33 @@ void PhotoOutputNapi::UnregisterDeferredPhotoProxyAvailableCallbackListener(
 {
     if (photoListener_ != nullptr) {
         photoListener_->RemoveCallbackRef(env, callback, CONST_CAPTURE_DEFERRED_PHOTO_AVAILABLE);
+    }
+}
+
+void PhotoOutputNapi::RegisterPhotoAssetAvailableCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (sPhotoSurface_ == nullptr) {
+        MEDIA_ERR_LOG("sPhotoSurface_ is null!");
+        return;
+    }
+    if (photoListener_ == nullptr) {
+        MEDIA_INFO_LOG("new photoListener and register surface consumer listener");
+        sptr<PhotoListener> photoListener = new (std::nothrow) PhotoListener(env, sPhotoSurface_, photoOutput_);
+        SurfaceError ret = sPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener);
+        if (ret != SURFACE_ERROR_OK) {
+            MEDIA_ERR_LOG("register surface consumer listener failed!");
+        }
+        photoListener_ = photoListener;
+    }
+    photoListener_->SaveCallbackReference(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callback);
+}
+
+void PhotoOutputNapi::UnregisterPhotoAssetAvailableCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (photoListener_ != nullptr) {
+        photoListener_->RemoveCallbackRef(env, callback, CONST_CAPTURE_PHOTO_ASSET_AVAILABLE);
     }
 }
 
@@ -2126,6 +2310,9 @@ const PhotoOutputNapi::EmitterFunctions& PhotoOutputNapi::GetEmitterFunctions()
         { CONST_CAPTURE_DEFERRED_PHOTO_AVAILABLE, {
             &PhotoOutputNapi::RegisterDeferredPhotoProxyAvailableCallbackListener,
             &PhotoOutputNapi::UnregisterDeferredPhotoProxyAvailableCallbackListener } },
+        { CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, {
+            &PhotoOutputNapi::RegisterPhotoAssetAvailableCallbackListener,
+            &PhotoOutputNapi::UnregisterPhotoAssetAvailableCallbackListener } },
         { CONST_CAPTURE_START, {
             &PhotoOutputNapi::RegisterCaptureStartCallbackListener,
             &PhotoOutputNapi::UnregisterCaptureStartCallbackListener } },

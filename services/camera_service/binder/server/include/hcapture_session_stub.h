@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_HCAPTURE_SESSION_STUB_H
 #define OHOS_CAMERA_HCAPTURE_SESSION_STUB_H
 
+#include "camera_photo_proxy.h"
 #include "icamera_ipc_checker.h"
 #include "icapture_session.h"
 #include "iremote_stub.h"
@@ -41,6 +42,9 @@ private:
     int32_t HandleSetColorSpace(MessageParcel& data);
     int32_t HandleSetSmoothZoom(MessageParcel& data, MessageParcel& reply);
     int32_t HandleSetFeatureMode(MessageParcel& data);
+    int32_t HandleEnableMovingPhoto(MessageParcel& data);
+    int32_t HandleStartMovingPhotoCapture();
+    int32_t HandleCreateMediaLibrary(MessageParcel& data, MessageParcel &reply);
 };
 } // namespace CameraStandard
 } // namespace OHOS

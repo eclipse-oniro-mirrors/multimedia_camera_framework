@@ -19,15 +19,19 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <cerrno>
+#include <functional>
 #include <mutex>
 #include <new>
 #include <sched.h>
+#include <sync_fence.h>
 #include <utility>
 #include <vector>
-#include <algorithm>
-
+#include <cinttypes>
+#include "avcodec_task_manager.h"
 #include "bundle_mgr_interface.h"
 #include "camera_log.h"
+#include "camera_server_photo_proxy.h"
 #include "camera_service_ipc_interface_code.h"
 #include "camera_util.h"
 #include "errors.h"
@@ -43,13 +47,17 @@
 #include "iservice_registry.h"
 #include "istream_common.h"
 #include "metadata_utils.h"
+#include "moving_photo_video_cache.h"
+#include "datetime_ex.h"
 #include "refbase.h"
+#include "surface.h"
 #include "system_ability_definition.h"
 #include "v1_0/types.h"
 #include "display/composer/v1_1/display_composer_type.h"
 #include "smooth_zoom.h"
 #include "hcamera_restore_param.h"
 #include "camera_report_uitls.h"
+#include "media_library_manager.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -177,6 +185,7 @@ int32_t HCaptureSession::BeginConfig()
         }
         UnlinkInputAndOutputs();
         ClearSketchRepeatStream();
+        ClearMovingPhotoRepeatStream();
     });
     if (errCode == CAMERA_OK) {
         MEDIA_INFO_LOG("HCaptureSession::BeginConfig execute success");
@@ -275,6 +284,58 @@ int32_t HCaptureSession::AddOutputStream(sptr<HStreamCommon> stream)
         stream->SetColorSpace(currColorSpace_);
     }
     return CAMERA_OK;
+}
+
+void HCaptureSession::StartMovingPhotoStream()
+{
+    int32_t errorCode = 0;
+    stateMachine_.StateGuard([&errorCode, this](CaptureSessionState currentState) {
+        if (currentState != CaptureSessionState::SESSION_CONFIG_COMMITTED) {
+            MEDIA_ERR_LOG("EnableMovingPhoto, invalid session state: %{public}d, start after preview", currentState);
+            errorCode = CAMERA_INVALID_STATE;
+            return;
+        }
+        auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
+        bool isPreviewStarted = false;
+        for (auto& item : repeatStreams) {
+            auto curStreamRepeat = CastStream<HStreamRepeat>(item);
+            auto repeatType = curStreamRepeat->GetRepeatStreamType();
+            if (repeatType != RepeatStreamType::PREVIEW) {
+                continue;
+            }
+            if (curStreamRepeat->GetPreparedCaptureId() != CAPTURE_ID_UNSET && curStreamRepeat->producer_ != nullptr) {
+                isPreviewStarted = true;
+                break;
+            }
+        }
+        if (!isPreviewStarted) {
+            MEDIA_ERR_LOG("EnableMovingPhoto, preview is not streaming");
+            return;
+        }
+        std::shared_ptr<OHOS::Camera::CameraMetadata> settings = nullptr;
+        auto cameraDevice = GetCameraDevice();
+        if (cameraDevice != nullptr) {
+            settings = cameraDevice->CloneCachedSettings();
+            DumpMetadata(settings);
+        }
+        for (auto& item : repeatStreams) {
+            auto curStreamRepeat = CastStream<HStreamRepeat>(item);
+            auto repeatType = curStreamRepeat->GetRepeatStreamType();
+            if (repeatType != RepeatStreamType::LIVEPHOTO) {
+                continue;
+            }
+            if (isSetMotionPhoto_) {
+                errorCode = curStreamRepeat->Start(settings);
+                std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
+                audioCapturerSession_ != nullptr && audioCapturerSession_->StartAudioCapture();
+            } else {
+                errorCode = curStreamRepeat->Stop();
+                StopMovingPhoto();
+            }
+            break;
+        }
+    });
+    MEDIA_INFO_LOG("HCaptureSession::StartMovingPhotoStream result:%{public}d", errorCode);
 }
 
 int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> stream)
@@ -518,6 +579,69 @@ void HCaptureSession::ExpandSketchRepeatStream()
     MEDIA_DEBUG_LOG("Exit HCaptureSession::ExpandSketchRepeatStream()");
 }
 
+void HCaptureSession::ExpandMovingPhotoRepeatStream()
+{
+    if (!GetCameraDevice()->CheckMovingPhotoSupported(GetopMode())) {
+        MEDIA_DEBUG_LOG("movingPhoto is not supported");
+        return;
+    }
+    MEDIA_DEBUG_LOG("Enter HCaptureSession::ExpandMovingPhotoRepeatStream()");
+    auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
+    for (auto& stream : repeatStreams) {
+        if (stream == nullptr) {
+            continue;
+        }
+        auto streamRepeat = CastStream<HStreamRepeat>(stream);
+        if (streamRepeat->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
+            std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
+            if (surface_) {
+                continue;
+            }
+            surface_ = Surface::CreateSurfaceAsConsumer("movingPhoto");
+            surface_->SetDefaultUsage(BUFFER_USAGE_VIDEO_ENCODER);
+            livephotoListener_ = new(std::nothrow) MovingPhotoListener(surface_);
+            metaSurface_ = Surface::CreateSurfaceAsConsumer("movingPhotoMeta");
+            surface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)livephotoListener_);
+            surface_->SetDefaultWidthAndHeight(streamRepeat->width_, streamRepeat->height_);
+            CreateMovingPhotoStreamRepeat(streamRepeat->format_, streamRepeat->width_,
+                streamRepeat->height_, surface_->GetProducer());
+            std::lock_guard<std::mutex> streamLock(livePhotoStreamLock_);
+            livePhotoStreamRepeat_->SetMetaProducer(metaSurface_->GetProducer());
+            AddOutputStream(livePhotoStreamRepeat_);
+            if (!audioCapturerSession_) {
+                audioCapturerSession_ = new AudioCapturerSession();
+            }
+            if (!taskManager_ && audioCapturerSession_) {
+                taskManager_ = new AvcodecTaskManager(audioCapturerSession_);
+            }
+            if (!videoCache_ && taskManager_) {
+                videoCache_ = new MovingPhotoVideoCache(taskManager_);
+            }
+        }
+    }
+    MEDIA_DEBUG_LOG("Exit HCaptureSession::ExpandMovingPhotoRepeatStream()");
+}
+
+int32_t HCaptureSession::CreateMovingPhotoStreamRepeat(
+    int32_t format, int32_t width, int32_t height, sptr<OHOS::IBufferProducer> producer)
+{
+    CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(livePhotoStreamLock_);
+    if (width <= 0 || height <= 0) {
+        MEDIA_ERR_LOG("HCameraService::CreateLivePhotoStreamRepeat args is illegal");
+        return CAMERA_INVALID_ARG;
+    }
+    if (livePhotoStreamRepeat_ != nullptr) {
+        livePhotoStreamRepeat_->Release();
+    }
+    auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, format, width, height, RepeatStreamType::LIVEPHOTO);
+    CHECK_AND_RETURN_RET_LOG(streamRepeat != nullptr, CAMERA_ALLOC_ERROR, "HStreamRepeat allocation failed");
+    MEDIA_DEBUG_LOG("para is:%{public}dx%{public}d,%{public}d", width, height, format);
+    livePhotoStreamRepeat_ = streamRepeat;
+    MEDIA_INFO_LOG("HCameraService::CreateLivePhotoStreamRepeat end");
+    return CAMERA_OK;
+}
+
 const sptr<HStreamCommon> HCaptureSession::GetStreamByStreamID(int32_t streamId)
 {
     auto stream = streamContainer_.GetStream(streamId);
@@ -557,6 +681,55 @@ void HCaptureSession::ClearSketchRepeatStream()
     MEDIA_DEBUG_LOG("Exit HCaptureSession::ClearSketchRepeatStream()");
 }
 
+void HCaptureSession::ClearMovingPhotoRepeatStream()
+{
+    MEDIA_DEBUG_LOG("Enter HCaptureSession::ClearMovingPhotoRepeatStream()");
+    // Already added session lock in BeginConfig()
+    auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
+    for (auto& repeatStream : repeatStreams) {
+        if (repeatStream == nullptr) {
+            continue;
+        }
+        auto movingPhotoStream = CastStream<HStreamRepeat>(repeatStream);
+        if (movingPhotoStream->GetRepeatStreamType() != RepeatStreamType::LIVEPHOTO) {
+            continue;
+        }
+        StopMovingPhoto();
+        std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
+        if (surface_) {
+            surface_->UnregisterConsumerListener();
+            surface_ = nullptr;
+        }
+        metaSurface_ = nullptr;
+        livephotoListener_ = nullptr;
+        videoCache_ = nullptr;
+        taskManager_ = nullptr;
+        audioCapturerSession_ = nullptr;
+        MEDIA_DEBUG_LOG("HCaptureSession::ClearLivePhotoRepeatStream() stream id is:%{public}d",
+            movingPhotoStream->GetFwkStreamId());
+        RemoveOutputStream(repeatStream);
+    }
+    MEDIA_DEBUG_LOG("Exit HCaptureSession::ClearLivePhotoRepeatStream()");
+}
+
+void HCaptureSession::StopMovingPhoto() __attribute__((no_sanitize("cfi")))
+{
+    MEDIA_DEBUG_LOG("Enter HCaptureSession::StopMovingPhoto");
+    std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
+    if (livephotoListener_) {
+        livephotoListener_->StopDrainOut();
+    }
+    if (videoCache_) {
+        videoCache_->ClearCache();
+    }
+    if (audioCapturerSession_) {
+        audioCapturerSession_->Stop();
+    }
+    if (taskManager_) {
+        taskManager_->Stop();
+    }
+}
+
 int32_t HCaptureSession::CommitConfig()
 {
     CAMERA_SYNC_TRACE;
@@ -577,6 +750,8 @@ int32_t HCaptureSession::CommitConfig()
         if (errorCode != CAMERA_OK) {
             return;
         }
+        // expand moving photo always
+        ExpandMovingPhotoRepeatStream();
         ExpandSketchRepeatStream();
         auto device = GetCameraDevice();
         if (device == nullptr) {
@@ -588,8 +763,7 @@ int32_t HCaptureSession::CommitConfig()
         uint64_t secureSeqId = 0L;
         device ->GetSecureCameraSeq(&secureSeqId);
         if (((GetopMode() == secureMode) ^ (secureSeqId != 0))) {
-            MEDIA_ERR_LOG("CaptureSession::CommitConfig is not allowed commit mode = %{public}d."
-                "secureCamera is should be consistent with secureMode", GetopMode());
+            MEDIA_ERR_LOG("secureCamera is not allowed commit mode = %{public}d.", GetopMode());
             errorCode = CAMERA_INVALID_ARG;
             return;
         }
@@ -912,6 +1086,13 @@ void HCaptureSession::ProcessMetaZoomArray(
     cameraDevice->UpdateSettingOnce(metaZoomArray);
 }
 
+int32_t HCaptureSession::EnableMovingPhoto(bool isEnable)
+{
+    isSetMotionPhoto_ = isEnable;
+    StartMovingPhotoStream();
+    return CAMERA_OK;
+}
+
 int32_t HCaptureSession::Start()
 {
     CAMERA_SYNC_TRACE;
@@ -939,25 +1120,58 @@ int32_t HCaptureSession::Start()
             settings = cameraDevice->CloneCachedSettings();
             DumpMetadata(settings);
         }
-
-        auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
-        for (auto& item : repeatStreams) {
-            auto curStreamRepeat = CastStream<HStreamRepeat>(item);
-            auto repeatType = curStreamRepeat->GetRepeatStreamType();
-            if (repeatType != RepeatStreamType::PREVIEW) {
-                continue;
-            }
-            errorCode = curStreamRepeat->Start(settings);
-            if (errorCode != CAMERA_OK) {
-                MEDIA_ERR_LOG("HCaptureSession::Start(), Failed to start preview, rc: %{public}d", errorCode);
-                break;
-            }
-        }
+        errorCode = StartPreviewStream(settings);
         if (errorCode == CAMERA_OK) {
             isSessionStarted_ = true;
         }
     });
     MEDIA_INFO_LOG("HCaptureSession::Start execute success");
+    return errorCode;
+}
+
+int32_t HCaptureSession::StartPreviewStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
+{
+    int32_t errorCode = CAMERA_OK;
+    auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
+    bool hasDerferedPreview = false;
+    // start preview
+    for (auto& item : repeatStreams) {
+        auto curStreamRepeat = CastStream<HStreamRepeat>(item);
+        auto repeatType = curStreamRepeat->GetRepeatStreamType();
+        if (repeatType != RepeatStreamType::PREVIEW) {
+            continue;
+        }
+        errorCode = curStreamRepeat->Start(settings);
+        hasDerferedPreview = curStreamRepeat->producer_ == nullptr;
+        if (isSetMotionPhoto_ && hasDerferedPreview) {
+            curStreamRepeat->SetMovingPhotoStartCallback([this]() {
+                MEDIA_INFO_LOG("StartMovingPhotoStream when addDeferedSurface");
+                this->StartMovingPhotoStream();
+            });
+        }
+        if (errorCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("HCaptureSession::Start(), Failed to start preview, rc: %{public}d", errorCode);
+            break;
+        }
+    }
+    // start movingPhoto
+    for (auto& item : repeatStreams) {
+        auto curStreamRepeat = CastStream<HStreamRepeat>(item);
+        auto repeatType = curStreamRepeat->GetRepeatStreamType();
+        if (repeatType != RepeatStreamType::LIVEPHOTO) {
+            continue;
+        }
+        int32_t movingPhotoErrorCode = CAMERA_OK;
+        if (isSetMotionPhoto_ && !hasDerferedPreview) {
+            movingPhotoErrorCode = curStreamRepeat->Start(settings);
+            std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
+            audioCapturerSession_ != nullptr && audioCapturerSession_->StartAudioCapture();
+        }
+        if (movingPhotoErrorCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("Failed to start movingPhoto, rc: %{public}d", movingPhotoErrorCode);
+            break;
+        }
+    }
     return errorCode;
 }
 
@@ -977,6 +1191,9 @@ int32_t HCaptureSession::Stop()
                 auto repeatStream = CastStream<HStreamRepeat>(item);
                 if (repeatStream->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
                     errorCode = repeatStream->Stop();
+                } else if (repeatStream->GetRepeatStreamType() == RepeatStreamType::LIVEPHOTO) {
+                    repeatStream->Stop();
+                    StopMovingPhoto();
                 } else {
                     repeatStream->Stop();
                 }
@@ -1042,6 +1259,8 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
             errorCode = CAMERA_INVALID_STATE;
             return;
         }
+        // stop movingPhoto
+        StopMovingPhoto();
 
         // Clear outputs
         ReleaseStreams();
@@ -1065,6 +1284,16 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         SetCallback(emptyCallback);
         stateMachine_.Transfer(CaptureSessionState::SESSION_RELEASED);
         isSessionStarted_ = false;
+        std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
+        if (surface_) {
+            surface_->UnregisterConsumerListener();
+        }
+        surface_ = nullptr;
+        metaSurface_ = nullptr;
+        livephotoListener_ = nullptr;
+        videoCache_ = nullptr;
+        taskManager_ = nullptr;
+        audioCapturerSession_ = nullptr;
     });
     MEDIA_INFO_LOG("HCaptureSession::Release execute success");
     return errorCode;
@@ -1212,6 +1441,91 @@ void HCaptureSession::StopUsingPermissionCallback(const uint32_t callingTokenId,
     }
 }
 
+int32_t HCaptureSession::StartMovingPhotoCapture()
+{
+    auto timestamp = high_resolution_clock::now().time_since_epoch();
+    StartRecord(std::to_string(timestamp.count()));
+    return CAMERA_OK;
+}
+
+std::string HCaptureSession::CreateDisplayName()
+{
+    struct tm currentTime;
+    std::string formattedTime = "";
+    if (GetSystemCurrentTime(&currentTime)) {
+        std::stringstream ss;
+        ss << prefix << std::setw(yearWidth) << std::setfill(placeholder) << currentTime.tm_year + startYear
+           << std::setw(otherWidth) << std::setfill(placeholder) << (currentTime.tm_mon + 1)
+           << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_mday
+           << connector << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_hour
+           << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_min
+           << std::setw(otherWidth) << std::setfill(placeholder) << currentTime.tm_sec;
+        formattedTime = ss.str();
+    } else {
+        MEDIA_ERR_LOG("Failed to get current time.");
+    }
+    if (lastDisplayName_ == formattedTime) {
+        saveIndex++;
+        formattedTime = formattedTime + connector + std::to_string(saveIndex) + suffix;
+        MEDIA_INFO_LOG("GetDisplayName is %{private}s", formattedTime.c_str());
+        return formattedTime;
+    }
+    lastDisplayName_ = formattedTime;
+    formattedTime = formattedTime + suffix;
+    saveIndex = 0;
+    MEDIA_INFO_LOG("GetDisplayName is %{private}s", formattedTime.c_str());
+    return formattedTime;
+}
+
+int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
+    std::string &uri, int32_t &cameraShotType)
+{
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (samgr == nullptr) {
+        MEDIA_ERR_LOG("Failed to get System ability manager");
+        return CAMERA_UNKNOWN_ERROR;
+    }
+    object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    if (object == nullptr) {
+        MEDIA_ERR_LOG("object is null");
+        return CAMERA_UNKNOWN_ERROR;
+    }
+    auto mediaLibraryManager = Media::MediaLibraryManager::GetMediaLibraryManager();
+    if (mediaLibraryManager == nullptr) {
+        MEDIA_ERR_LOG("Error to init mediaLibraryManager");
+        return CAMERA_UNKNOWN_ERROR;
+    }
+    mediaLibraryManager->InitMediaLibraryManager(object);
+    const static int32_t INVALID_UID = -1;
+    const static int32_t BASE_USER_RANGE = 200000;
+    int uid = IPCSkeleton::GetCallingUid();
+    if (uid <= INVALID_UID) {
+        MEDIA_ERR_LOG("Get INVALID_UID UID %{public}d", uid);
+    }
+    int32_t userId = uid / BASE_USER_RANGE;
+    MEDIA_DEBUG_LOG("get uid:%{public}d, userId:%{public}d, tokenId:%{public}d", uid, userId,
+        IPCSkeleton::GetCallingTokenID());
+    auto type = isSetMotionPhoto_ ? CameraShotType::MOVING_PHOTO : CameraShotType::IMAGE;
+    cameraShotType = static_cast<int32_t>(type);
+    auto photoAssetProxy = mediaLibraryManager->CreatePhotoAssetProxy(type, uid, userId);
+    MessageParcel data;
+    photoProxy->WriteToParcel(data);
+    sptr<CameraServerPhotoProxy> cameraServerPhotoProxy = new CameraServerPhotoProxy();
+    cameraServerPhotoProxy->ReadFromParcel(data);
+    cameraServerPhotoProxy->SetDisplayName(CreateDisplayName());
+    photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraServerPhotoProxy);
+    uri = photoAssetProxy->GetPhotoAssetUri();
+    if (isSetMotionPhoto_) {
+        int32_t videoFd = photoAssetProxy->GetVideoFd();
+        MEDIA_DEBUG_LOG("videFd:%{public}d", videoFd);
+        if (taskManager_) {
+            taskManager_->SetVideoFd(videoFd, photoAssetProxy);
+        }
+    }
+    return CAMERA_OK;
+}
+
 void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result)
 {
     auto item = captureSession_.promote();
@@ -1256,6 +1570,66 @@ int32_t StreamOperatorCallback::OnCaptureStarted(int32_t captureId, const std::v
         }
     }
     return CAMERA_OK;
+}
+
+void HCaptureSession::StartRecord(const std::string taskName)
+{
+    if (isSetMotionPhoto_) {
+        taskManager_->SubmitTask([this, taskName]() {
+            this->StartOnceRecord(taskName);
+        });
+    }
+}
+
+SessionDrainImageCallback::SessionDrainImageCallback(std::vector<sptr<FrameRecord>>& frameCacheList,
+                                                     wptr<MovingPhotoListener> listener,
+                                                     wptr<MovingPhotoVideoCache> cache,
+                                                     std::string taskName)
+    : frameCacheList_(frameCacheList), listener_(listener), videoCache_(cache), taskName_(taskName)
+{
+}
+
+SessionDrainImageCallback::~SessionDrainImageCallback()
+{
+    MEDIA_INFO_LOG("~SessionDrainImageCallback enter");
+}
+
+void SessionDrainImageCallback::OnDrainImage(sptr<FrameRecord> frame)
+{
+    MEDIA_INFO_LOG("OnDrainImage enter");
+    frameCacheList_.push_back(frame);
+    auto videoCache = videoCache_.promote();
+    if (frame->IsIdle() && videoCache) {
+        videoCache_->CacheFrame(frame);
+    } else if (frame->IsFinishCache() && videoCache) {
+        videoCache_->OnImageEncoded(frame, true);
+    } else {
+        MEDIA_INFO_LOG("videoCache and frame is not useful");
+    }
+}
+
+void SessionDrainImageCallback::OnDrainImageFinish(bool isFinished)
+{
+    MEDIA_INFO_LOG("OnDrainImageFinish enter");
+    auto videoCache = videoCache_.promote();
+    videoCache_->GetFrameCachedResult(frameCacheList_,
+        std::bind(&MovingPhotoVideoCache::DoMuxerVideo, videoCache,
+        std::placeholders::_1, std::placeholders::_2), taskName_);
+    auto listener = listener_.promote();
+    if (listener && isFinished)  {
+        listener->RemoveDrainImageManager(this);
+    }
+}
+
+void HCaptureSession::StartOnceRecord(string taskName)
+{
+    MEDIA_INFO_LOG("StartOnceRecord enter %{public}s", taskName.c_str());
+    // frameCacheList only used by now thread
+    std::vector<sptr<FrameRecord>> frameCacheList;
+    sptr<SessionDrainImageCallback> imageCallback = new SessionDrainImageCallback(frameCacheList,
+        livephotoListener_, videoCache_, taskName);
+    livephotoListener_->DrainOutImage(imageCallback);
+    MEDIA_INFO_LOG("StartOnceRecord end");
 }
 
 int32_t StreamOperatorCallback::OnCaptureStarted_V1_2(
@@ -1323,7 +1697,7 @@ int32_t StreamOperatorCallback::OnCaptureError(int32_t captureId, const std::vec
 int32_t StreamOperatorCallback::OnFrameShutter(
     int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
 {
-    MEDIA_INFO_LOG("StreamOperatorCallback::OnFrameShutter");
+    MEDIA_INFO_LOG("StreamOperatorCallback::OnFrameShutter ts is:%{public}" PRId64, timestamp);
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& streamId : streamIds) {
         sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);
@@ -1496,6 +1870,101 @@ std::list<sptr<HStreamCommon>> StreamContainer::GetAllStreams()
         }
     }
     return totalOrderedStreams;
+}
+MovingPhotoListener::MovingPhotoListener(sptr<Surface> surface)
+    : surface_(surface), recorderBufferQueue_("videoBuffer", CACHE_FRAME_COUNT)
+{
+}
+
+MovingPhotoListener::~MovingPhotoListener()
+{
+    while (!recorderBufferQueue_.Empty()) {
+        MEDIA_ERR_LOG("surface_ release surface buffer");
+        sptr<FrameRecord> popFrame= recorderBufferQueue_.Pop();
+        popFrame->ReleaseSurfaceBuffer(surface_);
+    }
+    surface_ = nullptr;
+    recorderBufferQueue_.SetActive(false);
+    recorderBufferQueue_.Clear();
+    MEDIA_ERR_LOG("HStreamRepeat::LivePhotoListener ~ end");
+}
+
+void MovingPhotoListener::RemoveDrainImageManager(sptr<SessionDrainImageCallback> callback)
+{
+    callbackMap_.Erase(callback);
+    MEDIA_INFO_LOG("RemoveDrainImageManager drainImageManagerVec_ Start %d", callbackMap_.Size());
+}
+
+void MovingPhotoListener::StopDrainOut()
+{
+    MEDIA_INFO_LOG("StopDrainOut drainImageManagerVec_ Start %d", callbackMap_.Size());
+    callbackMap_.Iterate([](const sptr<SessionDrainImageCallback> callback, sptr<DrainImageManager> manager) {
+        manager->DrainFinish(false);
+    });
+    callbackMap_.Clear();
+}
+
+void MovingPhotoListener::OnBufferAvailable()
+{
+    MEDIA_DEBUG_LOG("surface_ OnBufferAvailable %{public}u, transform %{public}d",
+        surface_->GetQueueSize(), surface_->GetTransform());
+
+    if (!surface_) {
+        MEDIA_ERR_LOG("streamRepeat surface is null");
+        return;
+    }
+    int64_t timestamp;
+    OHOS::Rect damage;
+    sptr<SurfaceBuffer> buffer;
+    sptr<SyncFence> syncFence = SyncFence::INVALID_FENCE;
+    SurfaceError surfaceRet = surface_->AcquireBuffer(buffer, syncFence, timestamp, damage);
+    if (surfaceRet != SURFACE_ERROR_OK) {
+        MEDIA_ERR_LOG("Failed to acquire surface buffer");
+        return;
+    }
+    surfaceRet = surface_->DetachBufferFromQueue(buffer);
+    if (surfaceRet != SURFACE_ERROR_OK) {
+        MEDIA_ERR_LOG("Failed to detach buffer. %{public}d", surfaceRet);
+        return;
+    }
+    if (recorderBufferQueue_.Full()) {
+        MEDIA_DEBUG_LOG("surface_ release surface buffer");
+        sptr<FrameRecord> popFrame= recorderBufferQueue_.Pop();
+        popFrame->ReleaseSurfaceBuffer(surface_);
+        MEDIA_DEBUG_LOG("surface_ release surface buffer: %{public}s, refCount: %{public}d",
+            popFrame->GetFrameId().c_str(), popFrame->GetSptrRefCount());
+    }
+    MEDIA_DEBUG_LOG("surface_ push buffer %{public}d x %{public}d, stride is %{public}d",
+        buffer->GetSurfaceBufferWidth(), buffer->GetSurfaceBufferHeight(), buffer->GetStride());
+    sptr<FrameRecord> frameRecord = new FrameRecord(buffer, NanosecToMillisec(timestamp), surface_->GetTransform());
+    recorderBufferQueue_.Push(frameRecord);
+    vector<sptr<SessionDrainImageCallback>> callbacks;
+    callbackMap_.Iterate([frameRecord, &callbacks](const sptr<SessionDrainImageCallback> callback,
+        sptr<DrainImageManager> manager) {
+        callbacks.push_back(callback);
+    });
+    for (sptr<SessionDrainImageCallback> drainImageCallback : callbacks) {
+        sptr<DrainImageManager> drainImageManager;
+        if (callbackMap_.Find(drainImageCallback, drainImageManager)) {
+            drainImageManager->DrainImage(frameRecord);
+        }
+    }
+}
+
+void MovingPhotoListener::DrainOutImage(sptr<SessionDrainImageCallback> drainImageCallback)
+{
+    sptr<DrainImageManager> drainImageManager =
+        new DrainImageManager(drainImageCallback, recorderBufferQueue_.Size() + CACHE_FRAME_COUNT);
+    {
+        MEDIA_INFO_LOG("DrainOutImage enter %{public}zu", recorderBufferQueue_.Size());
+        callbackMap_.Insert(drainImageCallback, drainImageManager);
+    }
+    // Convert recorderBufferQueue_ to a vector
+    std::vector<sptr<FrameRecord>> frameList = recorderBufferQueue_.GetAllElements();
+    for (const auto& frame : frameList) {
+        MEDIA_ERR_LOG("DrainOutImage enter DrainImage");
+        drainImageManager->DrainImage(frame);
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

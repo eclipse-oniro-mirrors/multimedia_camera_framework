@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_H_CAPTURE_SESSION_H
 #define OHOS_CAMERA_H_CAPTURE_SESSION_H
 
+#include <atomic>
 #include <cstdint>
 #include <functional>
 #include <iostream>
@@ -23,7 +24,7 @@
 #include <mutex>
 #include <refbase.h>
 #include <unordered_map>
-
+#include <unordered_set>
 #include "accesstoken_kit.h"
 #include "camera_util.h"
 #include "hcamera_device.h"
@@ -33,20 +34,35 @@
 #include "hstream_repeat.h"
 #include "icapture_session.h"
 #include "istream_common.h"
+#include "camera_photo_proxy.h"
 #include "perm_state_change_callback_customize.h"
 #include "privacy_kit.h"
 #include "state_customized_cbk.h"
+#include "surface.h"
 #include "v1_0/istream_operator.h"
 #include "v1_1/istream_operator.h"
 #include "v1_2/istream_operator.h"
 #include "v1_3/istream_operator_callback.h"
 #include "hcamera_restore_param.h"
+#include "iconsumer_surface.h"
+#include "blocking_queue.h"
+#include "audio_capturer.h"
+#include "audio_info.h"
+#include "avcodec_task_manager.h"
+#include "moving_photo_video_cache.h"
+#include "drain_manager.h"
+#include "audio_capturer_session.h"
+#include "safe_map.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using OHOS::HDI::Camera::V1_0::CaptureEndedInfo;
 using OHOS::HDI::Camera::V1_0::CaptureErrorInfo;
 using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
+using namespace AudioStandard;
+using namespace std::chrono;
+using namespace DeferredProcessing;
+using namespace Media;
 class PermissionStatusChangeCb;
 class CameraUseStateChangeCb;
 
@@ -119,12 +135,46 @@ public:
     int32_t OnCaptureReady(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
 
     virtual const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) = 0;
+    virtual void StartRecord(const std::string taskName) = 0;
 
     virtual const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId) = 0;
 
 private:
     std::mutex cbMutex_;
 };
+
+class SessionDrainImageCallback;
+class MovingPhotoListener : public IBufferConsumerListener {
+public:
+    explicit MovingPhotoListener(sptr<Surface> surface);
+    ~MovingPhotoListener();
+    void OnBufferAvailable() override;
+    void DrainOutImage(sptr<SessionDrainImageCallback> drainImageCallback);
+    void RemoveDrainImageManager(sptr<SessionDrainImageCallback> drainImageCallback);
+    void StopDrainOut();
+private:
+    sptr<Surface> surface_;
+    BlockingQueue<sptr<FrameRecord>> recorderBufferQueue_;
+    SafeMap<sptr<SessionDrainImageCallback>, sptr<DrainImageManager>> callbackMap_;
+};
+
+class SessionDrainImageCallback : public DrainImageCallback {
+public:
+    explicit SessionDrainImageCallback(std::vector<sptr<FrameRecord>>& frameCacheList,
+                                       wptr<MovingPhotoListener> listener,
+                                       wptr<MovingPhotoVideoCache> cache,
+                                       string taskName);
+    ~SessionDrainImageCallback();
+    void OnDrainImage(sptr<FrameRecord> frame) override;
+    void OnDrainImageFinish(bool isFinished) override;
+
+private:
+    std::vector<sptr<FrameRecord>> frameCacheList_;
+    wptr<MovingPhotoListener> listener_;
+    wptr<MovingPhotoVideoCache> videoCache_;
+    string taskName_;
+};
+
 
 class HCaptureSession : public HCaptureSessionStub, public StreamOperatorCallback {
 public:
@@ -156,7 +206,7 @@ public:
     bool QueryZoomPerformance(std::vector<float>& crossZoomAndTime, int32_t operationMode);
     int32_t SetSmoothZoom(int32_t smoothZoomType, int32_t operationMode, float targetZoomRatio,
         float &duration) override;
-
+    int32_t EnableMovingPhoto(bool isEnable) override;
     static void dumpSessions(std::string& dumpString);
     void dumpSessionInfo(std::string& dumpString);
     static void CameraSessionSummary(std::string& dumpString);
@@ -165,11 +215,19 @@ public:
     int32_t GetopMode();
 
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
+    int32_t StartMovingPhotoCapture() override;
+    int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy, std::string &uri, int32_t &cameraShotType) override;
     const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) override;
     const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId) override;
     int32_t SetFeatureMode(int32_t featureMode) override;
+    void StartRecord(const std::string taskName) override;
 
 private:
+    string lastDisplayName_ = "";
+    int32_t saveIndex = 0;
+    volatile bool isSetMotionPhoto_ = false;
+    std::mutex livePhotoStreamLock_; // Guard livePhotoStreamRepeat_
+    sptr<HStreamRepeat> livePhotoStreamRepeat_;
     inline void SetCameraDevice(sptr<HCameraDevice> device)
     {
         std::lock_guard<std::mutex> lock(cameraDeviceLock_);
@@ -181,7 +239,7 @@ private:
         std::lock_guard<std::mutex> lock(cameraDeviceLock_);
         return cameraDevice_;
     }
-
+    string CreateDisplayName();
     int32_t ValidateSessionInputs();
     int32_t ValidateSessionOutputs();
     int32_t AddOutputStream(sptr<HStreamCommon> stream);
@@ -197,6 +255,11 @@ private:
 
     void ClearSketchRepeatStream();
     void ExpandSketchRepeatStream();
+    void ExpandMovingPhotoRepeatStream();
+    void ClearMovingPhotoRepeatStream();
+    void StopMovingPhoto();
+    int32_t CreateMovingPhotoStreamRepeat(int32_t format, int32_t width, int32_t height,
+        sptr<OHOS::IBufferProducer> producer);
     int32_t CheckIfColorSpaceMatchesFormat(ColorSpace colorSpace);
     void CancelStreamsAndGetStreamInfos(std::vector<StreamInfo_V1_1>& streamInfos);
     void RestartStreams();
@@ -204,6 +267,12 @@ private:
     void SetColorSpaceForStreams();
 
     void ProcessMetaZoomArray(std::vector<uint32_t>& zoomAndTimeArray, sptr<HCameraDevice>& cameraDevice);
+    void StartMovingPhotoStream();
+    bool InitAudioCapture();
+    bool StartAudioCapture();
+    void ProcessAudioBuffer();
+    void StartOnceRecord(std::string taskName);
+    int32_t StartPreviewStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
 
     std::string GetSessionState();
 
@@ -225,6 +294,14 @@ private:
     ColorSpace currColorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
     ColorSpace currCaptureColorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
     bool isSessionStarted_ = false;
+
+    std::mutex movingPhotoStatusLock_; // Guard movingPhotoStatus
+    sptr<Surface> surface_;
+    sptr<MovingPhotoListener> livephotoListener_;
+    sptr<AudioCapturerSession> audioCapturerSession_;
+    sptr<Surface> metaSurface_;
+    sptr<MovingPhotoVideoCache> videoCache_;
+    sptr<AvcodecTaskManager> taskManager_;
 };
 
 class PermissionStatusChangeCb : public Security::AccessToken::PermStateChangeCallbackCustomize {
