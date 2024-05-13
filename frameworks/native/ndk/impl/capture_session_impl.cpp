@@ -16,11 +16,15 @@
 #include "capture_session_impl.h"
 #include "camera_log.h"
 #include "camera_util.h"
+#include "capture_scene_const.h"
 
 using namespace std;
 using namespace OHOS;
 using namespace OHOS::CameraStandard;
 const int32_t ARGS_TWO = 2;
+const std::unordered_map<Camera_SceneMode, SceneMode> g_ndkToFwMode_ = {
+    {Camera_SceneMode::SECURE_PHOTO, SECURE},
+};
 
 class InnerCaptureSessionCallback : public SessionCallback, public FocusCallback {
 public:
@@ -81,15 +85,22 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterCallback(CaptureSession_Callba
 
 Camera_ErrorCode Camera_CaptureSession::SetSessionMode(Camera_SceneMode sceneMode)
 {
-    SceneMode innerSceneMode = static_cast<SceneMode>(sceneMode);
-    innerCaptureSession_->SetMode(innerSceneMode);
+    auto itr = g_ndkToFwMode_.find(static_cast<Camera_SceneMode>(sceneMode));
+    if (itr != g_ndkToFwMode_.end()) {
+        SceneMode innerSceneMode = static_cast<SceneMode>(itr->second);
+        innerCaptureSession_->SetMode(innerSceneMode);
+    } else {
+        MEDIA_ERR_LOG("Camera_CaptureSession::SetSessionMode not found");
+    }
     return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_CaptureSession::AddSecureOutput(Camera_PreviewOutput* previewOutput)
 {
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::AddSecureOutput is called");
+    int ret = CAMERA_OK;
     sptr<CaptureOutput> innerPreviewOutput = previewOutput->GetInnerPreviewOutput();
-    int32_t ret = innerCaptureSession_->AddSecureOutput(innerPreviewOutput);
+    ret = innerCaptureSession_->AddSecureOutput(innerPreviewOutput);
     return FrameworkToNdkCameraError(ret);
 }
 
