@@ -163,7 +163,8 @@ void EventsMonitor::NotifyCameraSessionStatus(int userId,
     }
     CameraSessionStatus cameraSessionStatus;
     running ? numActiveSessions_++ : numActiveSessions_--;
-    bool currSessionRunning = numActiveSessions_.load() > 0;
+    DP_INFO_LOG("numActiveSessions_: %d", static_cast<int>(numActiveSessions_.load()));
+    bool currSessionRunning = running;
     if (currSessionRunning) {
         cameraSessionStatus = isSystemCamera ?
             CameraSessionStatus::SYSTEM_CAMERA_OPEN :
