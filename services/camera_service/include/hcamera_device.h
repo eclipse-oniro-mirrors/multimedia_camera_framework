@@ -190,7 +190,8 @@ private:
     void DebugLogForAeExposureCompensation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
         uint32_t tag);
     void DebugLogForBeautyAuto(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
-    void UpdateMuteSetting();
+    void CreateMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
+    int32_t UpdateDeviceSetting();
 };
 } // namespace CameraStandard
 } // namespace OHOS
