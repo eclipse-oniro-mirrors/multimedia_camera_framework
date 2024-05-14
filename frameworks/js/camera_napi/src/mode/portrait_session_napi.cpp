@@ -17,7 +17,6 @@
 
 #include "napi/native_common.h"
 
-
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;

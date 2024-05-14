@@ -14,7 +14,9 @@
  */
 
 #include "camera_framework_unittest.h"
-#include <stdint.h>
+
+#include <cstdint>
+#include <vector>
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
