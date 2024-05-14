@@ -36,6 +36,8 @@ public:
     static const int32_t VIDEO_DEFAULT_WIDTH = 640;
     static const int32_t VIDEO_DEFAULT_HEIGHT = 360;
     static const int32_t DEFAULT_MODE = 0;
+    static const int32_t PHOTO_MODE = 1;
+    static const int32_t VIDEO_MODE = 2;
     static const int32_t PORTRAIT_MODE = 3;
     static const int32_t NIGHT_MODE = 4;
     static const int32_t SCAN_MODE = 7;
