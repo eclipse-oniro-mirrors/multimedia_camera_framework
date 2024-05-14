@@ -341,9 +341,17 @@ napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("Open is called");
     std::unique_ptr<CameraInputAsyncContext> asyncContext = std::make_unique<CameraInputAsyncContext>();
+    bool isEnableSecureCamera = false;
     auto asyncFunction =
         std::make_shared<CameraNapiAsyncFunction>(env, "Open", asyncContext->callbackRef, asyncContext->deferred);
-    CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction);
+    CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction, isEnableSecureCamera);
+    if (jsParamParser.IsStatusOk()) {
+        CameraNapiUtils::IsEnableSecureCamera(isEnableSecureCamera);
+        MEDIA_DEBUG_LOG("set  EnableSecureCamera CameraInputNapi::Open");
+    } else {
+        MEDIA_WARNING_LOG("CameraInputNapi::Open check secure parameter fail, try open without secure flag");
+        jsParamParser = CameraNapiParamParser(env, info, asyncContext->objectInfo, asyncFunction);
+    }
     if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
         MEDIA_ERR_LOG("CameraInputNapi::Open invalid argument");
         return nullptr;
@@ -360,6 +368,8 @@ napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
             if (context->objectInfo != nullptr) {
                 context->status = true;
                 context->modeForAsync = OPEN_ASYNC_CALLBACK;
+                context->isEnableSecCam = CameraNapiUtils::GetEnableSecureCamera();
+                MEDIA_DEBUG_LOG("set  context->isEnableSecCam CameraInputNapi::Open");
             }
         },
         CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);

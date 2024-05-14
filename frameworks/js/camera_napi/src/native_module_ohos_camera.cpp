@@ -31,6 +31,7 @@
 #include "mode/photo_session_napi.h"
 #include "mode/portrait_session_napi.h"
 #include "mode/profession_session_napi.h"
+#include "mode/secure_camera_session_napi.h"
 #include "mode/slow_motion_session_napi.h"
 #include "mode/video_session_for_sys_napi.h"
 #include "mode/video_session_napi.h"

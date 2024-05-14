@@ -586,6 +586,8 @@ protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
     {
+        // Construct method add mutex lock is not necessary. Ignore g_instanceMutex.
+        CameraManager::g_cameraManager = this;
         InitCameraList();
     }
 
