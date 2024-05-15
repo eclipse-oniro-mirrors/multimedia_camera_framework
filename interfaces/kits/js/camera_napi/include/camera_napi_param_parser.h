@@ -106,6 +106,20 @@ private:
         return status_;
     }
 
+    void Reset()
+    {
+        if (*callbackRefPtr_ != nullptr) {
+            napi_delete_reference(env_, *callbackRefPtr_);
+            *callbackRefPtr_ = nullptr;
+        }
+        if (*deferred_ != nullptr) {
+            napi_value rejection = nullptr;
+            napi_get_undefined(env_, &rejection);
+            napi_reject_deferred(env_, *deferred_, rejection);
+            *deferred_ = nullptr;
+        }
+    }
+
     napi_env env_ = nullptr;
     napi_status status_ = napi_invalid_arg;
     napi_value resourceName_ = nullptr;
@@ -384,6 +398,7 @@ private:
             return;
         }
         if (asyncFunction_ != nullptr) {
+            asyncFunction->Reset();
             // Check callback function
             if (paramSize_ == paramSizeIncludeAsyncFun) {
                 napi_valuetype napiType = napi_undefined;
