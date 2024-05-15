@@ -17,6 +17,7 @@
 #define OHOS_CAMERA_H_STREAM_REPEAT_H
 
 #include <cstdint>
+#include <functional>
 #include <iostream>
 #include <refbase.h>
 
@@ -31,7 +32,8 @@ namespace CameraStandard {
 enum class RepeatStreamType {
     PREVIEW,
     VIDEO,
-    SKETCH
+    SKETCH,
+    LIVEPHOTO
 };
 
 enum class RepeatStreamStatus {
@@ -66,6 +68,8 @@ public:
     int32_t UpdateSketchRatio(float sketchRatio) override;
     sptr<HStreamRepeat> GetSketchStream();
     RepeatStreamType GetRepeatStreamType();
+    void SetMetaProducer(sptr<OHOS::IBufferProducer> metaProducer);
+    void SetMovingPhotoStartCallback(std::function<void()> callback);
     void DumpStreamInfo(std::string& dumpString) override;
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
     int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate) override;
@@ -88,6 +92,9 @@ private:
     SketchStatus sketchStatus_ = SketchStatus::STOPED;
     RepeatStreamStatus repeatStreamStatus_ = RepeatStreamStatus::STOPED;
     bool mEnableSecure = false;
+    sptr<OHOS::IBufferProducer> metaProducer_;
+    std::mutex movingPhotoCallbackLock_;
+    std::function<void()> startMovingPhotoCallback_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

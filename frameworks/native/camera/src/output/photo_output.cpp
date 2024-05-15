@@ -383,7 +383,10 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
     auto itemStream = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
+        MEDIA_DEBUG_LOG("Capture start");
+        captureSession->StartMovingPhotoCapture();
         errCode = itemStream->Capture(photoCaptureSettings->GetCaptureMetadataSetting());
+        MEDIA_DEBUG_LOG("Capture End");
     } else {
         MEDIA_ERR_LOG("PhotoOutput::Capture() itemStream is nullptr");
     }
@@ -412,7 +415,10 @@ int32_t PhotoOutput::Capture()
     auto itemStream = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
+        MEDIA_DEBUG_LOG("Capture start");
+        captureSession->StartMovingPhotoCapture();
         errCode = itemStream->Capture(captureMetadataSetting);
+        MEDIA_DEBUG_LOG("Capture end");
     } else {
         MEDIA_ERR_LOG("PhotoOutput::Capture() itemStream is nullptr");
     }
@@ -576,6 +582,23 @@ int32_t PhotoOutput::DeferImageDeliveryFor(DeferredDeliveryImageType type)
     return 0;
 }
 
+int32_t PhotoOutput::AddDeferType(DeferredDeliveryImageType type)
+{
+    MEDIA_INFO_LOG("PhotoOutput AddDeferType type:%{public}d!", type);
+    deferredType_ = type;
+    return 0;
+}
+
+void PhotoOutput::SetSession(wptr<CaptureSession> captureSession)
+{
+    MEDIA_INFO_LOG("PhotoOutput SetSession");
+    CaptureOutput::SetSession(captureSession);
+    if (deferredType_ == DeferredDeliveryImageType::DELIVERY_NONE) {
+        return;
+    }
+    DeferImageDeliveryFor(deferredType_);
+}
+
 int32_t PhotoOutput::IsDeferredImageDeliverySupported(DeferredDeliveryImageType type)
 {
     MEDIA_INFO_LOG("IsDeferredImageDeliverySupported type:%{public}d!", type);
@@ -675,7 +698,7 @@ int32_t PhotoOutput::EnableAutoHighQualityPhoto(bool enabled)
         MEDIA_ERR_LOG("PhotoOutput EnableAutoHighQualityPhoto error");
         return OPERATION_NOT_ALLOWED;
     }
-    
+
     if (isAutoHighQualityPhotoSupported == -1) {
         MEDIA_ERR_LOG("PhotoOutput EnableAutoHighQualityPhoto not supported");
         return INVALID_ARGUMENT;
@@ -685,7 +708,7 @@ int32_t PhotoOutput::EnableAutoHighQualityPhoto(bool enabled)
     return res;
 }
 
-void PhotoOutput::ProcessSnapshotDurationUpdates(int32_t snapshotDuration)
+void PhotoOutput::ProcessSnapshotDurationUpdates(int32_t snapshotDuration) __attribute__((no_sanitize("cfi")))
 {
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
     if (appCallback_ != nullptr) {

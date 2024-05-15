@@ -39,6 +39,7 @@
 #include "refbase.h"
 #include "color_space_info_parse.h"
 #include "capture_scene_const.h"
+#include "camera_photo_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -350,6 +351,15 @@ public:
      * @param SessionCallback pointer to be triggered.
      */
     void SetCallback(std::shared_ptr<SessionCallback> callback);
+
+    /**
+     * @brief Set the moving photo callback.
+     *
+     * @param photoProxy Requested for the pointer where moving photo callback is present.
+     * @param uri get uri for medialibary.
+     * @param cameraShotType get cameraShotType for medialibary.
+     */
+    void CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType);
 
     /**
      * @brief Get the application callback information.
@@ -968,6 +978,21 @@ public:
     int32_t EnableMacro(bool isEnable);
 
     /**
+    * @brief Check current status is support motion photo.
+    */
+    bool IsMovingPhotoSupported();
+
+    /**
+     * @brief Enable motion photo.
+     */
+    int32_t EnableMovingPhoto(bool isEnable);
+
+    /**
+     * @brief startMotionPhotoCapture.
+     */
+    int32_t StartMovingPhotoCapture();
+
+    /**
      * @brief Check current status is support moon capture boost or not.
      */
     bool IsMoonCaptureBoostSupported();
@@ -1054,7 +1079,7 @@ public:
     * @return errCode.
     */
     int32_t SetSensorSensitivity(uint32_t sensitivity);
-    
+
     /**
     * @brief Get camera sensor sensitivity.
     * @param sensitivity current sensitivity value.
@@ -1137,6 +1162,7 @@ public:
 
     void EnableDeferredType(DeferredDeliveryImageType deferredType);
     void SetUserId();
+    bool IsMovingPhotoEnabled();
     bool IsImageDeferred();
 
     int32_t EnableAutoHighQualityPhoto(bool enabled);
@@ -1152,6 +1178,7 @@ protected:
     std::map<BeautyType, int32_t> beautyTypeAndLevels_;
     std::shared_ptr<MetadataResultProcessor> metadataResultProcessor_ = nullptr;
     bool isImageDeferred_;
+    std::atomic<bool> isMovingPhotoEnabled_ { false };
     static const std::unordered_map<camera_exposure_mode_enum_t, ExposureMode> metaExposureModeMap_;
     static const std::unordered_map<ExposureMode, camera_exposure_mode_enum_t> fwkExposureModeMap_;
 

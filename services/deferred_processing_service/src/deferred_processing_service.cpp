@@ -91,7 +91,8 @@ TaskManager* DeferredProcessingService::GetPhotoTaskManager(int userId)
     if (photoTaskManagerMap_.count(userId) == 0) {
         constexpr uint32_t numThreads = 1;
         std::shared_ptr<TaskManager> taskManager =
-            std::make_shared<TaskManager>("PhotoProcTaskManager_userid_" + std::to_string(userId), numThreads);
+            std::make_shared<TaskManager>("PhotoProcTaskManager_userid_" + std::to_string(userId),
+            numThreads, true);
         EventsMonitor::GetInstance().RegisterTaskManager(userId, taskManager.get());
         photoTaskManagerMap_[userId] = taskManager;
     }

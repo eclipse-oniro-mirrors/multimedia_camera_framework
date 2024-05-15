@@ -16,6 +16,7 @@
 #include "hcapture_session_proxy.h"
 #include "camera_log.h"
 #include "camera_service_ipc_interface_code.h"
+#include <cstdint>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -331,6 +332,62 @@ int32_t HCaptureSessionProxy::SetFeatureMode(int32_t featureMode)
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("SetFeatureMode failed, error: %{public}d", error);
     }
+    return error;
+}
+
+int32_t HCaptureSessionProxy::EnableMovingPhoto(bool isEnable)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteBool(isEnable);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_ENABLE_MOTION_PHOTO),
+        data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCaptureSessionProxy enable moving photo failed, error: %{public}d", error);
+    }
+    return error;
+}
+
+int32_t HCaptureSessionProxy::StartMovingPhotoCapture()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_START_MOVING_PHOTO_CAPTURE),
+        data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCaptureSessionProxy start moving capture, error: %{public}d", error);
+    }
+    return error;
+}
+
+int32_t HCaptureSessionProxy::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
+    std::string &uri, int32_t &cameraShotType)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    if (photoProxy == nullptr) {
+        MEDIA_ERR_LOG("HCaptureSessionProxy CreateMediaLibrary photoProxy is null");
+        return IPC_PROXY_ERR;
+    }
+    data.WriteInterfaceToken(GetDescriptor());
+    photoProxy->WriteToParcel(data);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER),
+        data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCaptureSessionProxy CreateMediaLibrary failed, error: %{public}d", error);
+    }
+    uri = reply.ReadString();
+    cameraShotType = reply.ReadInt32();
     return error;
 }
 } // namespace CameraStandard

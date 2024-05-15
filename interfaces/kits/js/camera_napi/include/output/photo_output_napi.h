@@ -35,6 +35,7 @@ static const std::string CONST_CAPTURE_FRAME_SHUTTER = "frameShutter";
 static const std::string CONST_CAPTURE_ERROR = "error";
 static const std::string CONST_CAPTURE_PHOTO_AVAILABLE = "photoAvailable";
 static const std::string CONST_CAPTURE_DEFERRED_PHOTO_AVAILABLE = "deferredPhotoProxyAvailable";
+static const std::string CONST_CAPTURE_PHOTO_ASSET_AVAILABLE = "photoAssetAvailable";
 static const std::string CONST_CAPTURE_FRAME_SHUTTER_END = "frameShutterEnd";
 static const std::string CONST_CAPTURE_READY = "captureReady";
 static const std::string CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION = "estimatedCaptureDuration";
@@ -60,6 +61,7 @@ enum PhotoOutputEventType {
     CAPTURE_INVALID_TYPE,
     CAPTURE_PHOTO_AVAILABLE,
     CAPTURE_DEFERRED_PHOTO_AVAILABLE,
+    CAPTURE_PHOTO_ASSET_AVAILABLE,
     CAPTURE_ESTIMATED_CAPTURE_DURATION,
     CAPTURE_START_WITH_INFO
 };
@@ -71,6 +73,7 @@ static EnumHelper<PhotoOutputEventType> PhotoOutputEventTypeHelper({
         {CAPTURE_ERROR, CONST_CAPTURE_ERROR},
         {CAPTURE_PHOTO_AVAILABLE, CONST_CAPTURE_PHOTO_AVAILABLE},
         {CAPTURE_DEFERRED_PHOTO_AVAILABLE, CONST_CAPTURE_DEFERRED_PHOTO_AVAILABLE},
+        {CAPTURE_PHOTO_ASSET_AVAILABLE, CONST_CAPTURE_PHOTO_ASSET_AVAILABLE},
         {CAPTURE_FRAME_SHUTTER_END, CONST_CAPTURE_FRAME_SHUTTER_END},
         {CAPTURE_READY, CONST_CAPTURE_READY},
         {CAPTURE_ESTIMATED_CAPTURE_DURATION, CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION},
@@ -97,9 +100,13 @@ private:
     sptr<Surface> photoSurface_ = nullptr;
 };
 
+constexpr int32_t CAPTURE_PHOTO = 1 << 0;
+constexpr int32_t CAPTURE_DEFERRED_PHOTO = 1 << 1;
+constexpr int32_t CAPTURE_PHOTO_ASSET = 1 << 2;
+
 class PhotoListener : public IBufferConsumerListener {
 public:
-    explicit PhotoListener(napi_env env, const sptr<Surface> photoSurface);
+    explicit PhotoListener(napi_env env, const sptr<Surface> photoSurface, wptr<PhotoOutput> photoOutput);
     ~PhotoListener() = default;
     void OnBufferAvailable() override;
     void SaveCallbackReference(const std::string &eventType, napi_value callback);
@@ -110,14 +117,20 @@ private:
     std::mutex mutex_;
     napi_env env_;
     sptr<Surface> photoSurface_;
+    wptr<PhotoOutput> photoOutput_;
     shared_ptr<PhotoBufferProcessor> bufferProcessor_;
     void UpdateJSCallback(sptr<Surface> photoSurface) const;
     void UpdateJSCallbackAsync(sptr<Surface> photoSurface) const;
     void ExecutePhoto(sptr<SurfaceBuffer> surfaceBfuffer) const;
     void ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) const;
     void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const;
+    void ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality) const;
+    void CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle *bufferHandle,
+        bool isHighQuality, std::string &uri, int32_t &cameraShotType) const;
     napi_ref capturePhotoCb_;
     napi_ref captureDeferredPhotoCb_;
+    napi_ref capturePhotoAssetCb_;
+    int32_t callbackFlag = 0;
 };
 
 class RawPhotoListener : public IBufferConsumerListener {
@@ -254,6 +267,8 @@ public:
     static napi_value EnableAutoHighQualityPhoto(napi_env env, napi_callback_info info);
     static int32_t MapQualityLevelFromJs(int32_t jsQuality, PhotoCaptureSetting::QualityLevel& nativeQuality);
     static int32_t MapImageRotationFromJs(int32_t jsRotation, PhotoCaptureSetting::RotationConfig& nativeRotation);
+    static napi_value IsMovingPhotoSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableMovingPhoto(napi_env env, napi_callback_info info);
 
     PhotoOutputNapi();
     ~PhotoOutputNapi() override;
@@ -281,6 +296,10 @@ private:
     void RegisterDeferredPhotoProxyAvailableCallbackListener(
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
     void UnregisterDeferredPhotoProxyAvailableCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterPhotoAssetAvailableCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterPhotoAssetAvailableCallbackListener(
         napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterCaptureStartCallbackListener(
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);

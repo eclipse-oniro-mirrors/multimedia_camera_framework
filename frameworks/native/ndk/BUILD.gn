@@ -68,6 +68,8 @@ ohos_shared_library("ohcamera") {
 
   external_deps = [
     "c_utils:utils",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
     "graphic_surface:surface",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
@@ -75,6 +77,8 @@ ohos_shared_library("ohcamera") {
     "image_framework:image",
     "image_framework:image_native",
     "ipc:ipc_core",
+    "media_library:media_library",
+    "media_library:media_library_manager",
   ]
 
   innerapi_tags = [ "ndk" ]

@@ -24,9 +24,12 @@
               "ability_runtime",
               "access_token",
               "ace_engine",
+              "audio_framework",
+              "av_codec",
               "bundle_framework",
               "c_utils",
               "common_event_service",
+              "data_share",
               "device_manager",
               "drivers_interface_camera",
               "drivers_interface_display",
@@ -39,6 +42,8 @@
               "hitrace",
               "ipc",
               "image_framework",
+              "media_foundation",
+              "media_library",
               "napi",
               "os_account",
               "player_framework",
@@ -47,8 +52,7 @@
               "sensor",
               "thermal_manager",              
               "window_manager",
-              "memmgr",
-              "memmgr_override"
+              "memmgr"
             ],
             "third_party": [
             ]

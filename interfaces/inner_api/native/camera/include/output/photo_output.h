@@ -323,6 +323,18 @@ public:
     int32_t IsDeferredImageDeliverySupported(DeferredDeliveryImageType type);
 
     /**
+     * @brief Add the deferredImageDelivery type when on photoAssetAvailable.
+     *
+     */
+    int32_t AddDeferType(DeferredDeliveryImageType type);
+
+    /**
+     * @brief Set the captureSession.
+     *
+     */
+    void SetSession(wptr<CaptureSession> captureSession) override;
+
+    /**
      * @brief To check the deferredImageDelivery capability is enable or not.
      *
      * @return Returns true/false if the deferredImageDelivery is enable/not-enable respectively.
@@ -330,7 +342,7 @@ public:
     int32_t IsDeferredImageDeliveryEnabled(DeferredDeliveryImageType type);
 
     void ProcessSnapshotDurationUpdates(int32_t snapshotDuration);
-    
+
     /**
      * @brief To check the auto high quality photo is supported or not.
      *
@@ -359,6 +371,7 @@ public:
     sptr<Surface> deferredSurface_;
 
 private:
+    DeferredDeliveryImageType deferredType_ = DeferredDeliveryImageType::DELIVERY_NONE;
     std::shared_ptr<PhotoStateCallback> appCallback_;
     sptr<IStreamCaptureCallback> cameraSvcCallback_;
     std::shared_ptr<PhotoCaptureSetting> defaultCaptureSetting_;

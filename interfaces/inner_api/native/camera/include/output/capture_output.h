@@ -111,7 +111,7 @@ public:
     StreamType GetStreamType();
     sptr<IStreamCommon> GetStream();
     sptr<CaptureSession> GetSession();
-    void SetSession(wptr<CaptureSession> captureSession);
+    virtual void SetSession(wptr<CaptureSession> captureSession);
     std::mutex asyncOpMutex_;
     std::mutex outputCallbackMutex_;
     int32_t SetPhotoProfile(Profile& profile);

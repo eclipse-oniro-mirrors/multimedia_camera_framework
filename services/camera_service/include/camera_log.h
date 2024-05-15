@@ -77,6 +77,22 @@
         }                                              \
     } while (0)
 
+#define CHECK_AND_BREAK_LOG(cond, fmt, ...)                                 \
+    if (1) {                                                                \
+        if (!(cond)) {                                                      \
+            MEDIA_WARNING_LOG(fmt, ##__VA_ARGS__);                               \
+            break;                                                          \
+        }                                                                   \
+    } else void (0)
+
+#define CHECK_AND_CONTINUE_LOG(cond, fmt, ...)                              \
+    if (1) {                                                                \
+        if (!(cond)) {                                                      \
+            MEDIA_WARNING_LOG(fmt, ##__VA_ARGS__);                               \
+            continue;                                                       \
+        }                                                                   \
+    } else void (0)
+
 #define POINTER_MASK 0x00FFFFFF
 
 #define CAMERA_SYNC_TRACE HITRACE_METER_NAME(HITRACE_TAG_ZCAMERA, __PRETTY_FUNCTION__)

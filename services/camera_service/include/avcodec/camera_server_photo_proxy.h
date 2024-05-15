@@ -13,29 +13,28 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_CAMERA_DEFERRED_PHOTO_PROXY_H
-#define OHOS_CAMERA_DEFERRED_PHOTO_PROXY_H
+#ifndef OHOS_CAMERA_SERVER_PHOTO_PROXY_H
+#define OHOS_CAMERA_SERVER_PHOTO_PROXY_H
 
-#include <refbase.h>
 #include "message_parcel.h"
-#include "buffer_handle.h"
+#include "surface.h"
 #include "photo_proxy.h"
-#include <mutex>
 
 namespace OHOS {
 namespace CameraStandard {
-
-class DeferredPhotoProxy : public Media::PhotoProxy {
+using namespace Media;
+static const std::string prefix = "IMG_";
+static const std::string suffix = ".jpg";
+static const std::string connector = "_";
+static const char placeholder = '0';
+static const int yearWidth = 4;
+static const int otherWidth = 2;
+static const int startYear = 1900;
+class CameraServerPhotoProxy : public PhotoProxy {
 public:
-    DeferredPhotoProxy();
-    DeferredPhotoProxy(const BufferHandle* bufferHandle, std::string imageId, int32_t deferredProcType);
-    DeferredPhotoProxy(const BufferHandle* bufferHandle, std::string imageId, int32_t deferredProcType,
-        int32_t photoWidth, int32_t photoHeight);
-    DeferredPhotoProxy(const BufferHandle* bufferHandle, std::string imageId, int32_t deferredProcType,
-        uint8_t* buffer, size_t fileSize);
-    virtual ~DeferredPhotoProxy();
+    CameraServerPhotoProxy();
+    virtual ~CameraServerPhotoProxy();
     void ReadFromParcel(MessageParcel &parcel);
-    void WriteToParcel(MessageParcel &parcel);
     std::string GetDisplayName() override;
     std::string GetExtension() override;
     std::string GetPhotoId() override;
@@ -44,22 +43,28 @@ public:
     size_t GetFileSize() override;
     int32_t GetWidth() override;
     int32_t GetHeight() override;
-    Media::PhotoFormat GetFormat() override;
-    Media::PhotoQuality GetPhotoQuality() override;
+    PhotoFormat GetFormat() override;
+    PhotoQuality GetPhotoQuality() override;
+    void SetDisplayName(std::string displayName);
     void Release() override;
 
 private:
-    uint8_t* buffer_;
     const BufferHandle* bufferHandle_;
-    std::string photoId_;
-    int32_t deferredProcType_;
+    int32_t format_;
     int32_t photoWidth_;
     int32_t photoHeight_;
     void* fileDataAddr_;
     size_t fileSize_;
     bool isMmaped_;
     std::mutex mutex_;
+    std::string photoId_;
+    int32_t deferredProcType_;
+    int32_t isDeferredPhoto_;
+    sptr<Surface> photoSurface_;
+    std::string displayName_;
+    bool isHighQuality_;
+    int32_t CameraFreeBufferHandle(BufferHandle *handle);
 };
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_DEFERRED_PHOTO_PROXY_H
+#endif // OHOS_CAMERA_SERVER_PHOTO_PROXY_H

@@ -60,6 +60,11 @@ public:
 
     int32_t SetFeatureMode(int32_t featureMode) override;
 
+    int32_t EnableMovingPhoto(bool isEnable) override;
+
+    int32_t StartMovingPhotoCapture() override;
+
+    int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy, std::string &uri, int32_t &cameraShotType) override;
 private:
     static inline BrokerDelegator<HCaptureSessionProxy> delegator_;
 };

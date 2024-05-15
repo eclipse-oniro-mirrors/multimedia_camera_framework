@@ -489,6 +489,30 @@ void HCameraDevice::CheckZoomChange(const std::shared_ptr<OHOS::Camera::CameraMe
     return;
 }
 
+bool HCameraDevice::CheckMovingPhotoSupported(int32_t mode)
+{
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
+    int32_t ret = cameraHostManager_->GetCameraAbility(cameraID_, cameraAbility);
+    if (cameraAbility == nullptr) {
+        return false;
+    }
+    camera_metadata_item_t metadataItem;
+    std::vector<int32_t> modes = {};
+    ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_ABILITY_MOVING_PHOTO,
+        &metadataItem);
+    if (ret == CAM_META_SUCCESS) {
+        uint32_t step = 3;
+        for (uint32_t index = 0; index < metadataItem.count - 1;) {
+            if (metadataItem.data.i32[index + 1] == 1) {
+                modes.push_back(metadataItem.data.i32[index]);
+            }
+            MEDIA_DEBUG_LOG("IsMovingPhotoSupported mode:%{public}d", metadataItem.data.i32[index]);
+            index += step;
+        }
+    }
+    return std::find(modes.begin(), modes.end(), mode) != modes.end();
+}
+
 void HCameraDevice::ResetZoomTimer()
 {
     CameraTimer::GetInstance()->Unregister(zoomTimerId_);
