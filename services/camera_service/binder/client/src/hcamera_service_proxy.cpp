@@ -94,7 +94,7 @@ int32_t HCameraServiceProxy::GetCameraIds(std::vector<std::string> &cameraIds)
     reply.ReadStringVector(&cameraIds);
     int32_t count = reply.ReadInt32();
     if ((cameraIds.size() != static_cast<uint32_t>(count)) || (count > MAX_SUPPORTED_CAMERAS)) {
-        MEDIA_ERR_LOG("HCameraServiceProxy GetCameraIds Malformed camera count value");
+        MEDIA_ERR_LOG("HCameraServiceProxy GetCameraIds Malformed camera count: %{public}d", count);
         return IPC_PROXY_ERR;
     }
     return error;

@@ -633,7 +633,7 @@ void CameraFrameworkModuleTest::ConfigHighResSession(sptr<CaptureOutput> &previe
 
     intResult = highResSession_->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
-    
+
     intResult = highResSession_->AddOutput(photoOutput);
     EXPECT_EQ(intResult, 0);
 
@@ -679,13 +679,13 @@ void CameraFrameworkModuleTest::ConfigVideoSession(sptr<CaptureOutput> &previewO
     }
     videoSession_ = manager_ -> CreateCaptureSession(SceneMode::VIDEO);
     ASSERT_NE(videoSession_, nullptr);
- 
+
     int32_t intResult = videoSession_->BeginConfig();
     EXPECT_EQ(intResult, 0);
- 
+
     intResult = videoSession_->AddInput(input_);
     EXPECT_EQ(intResult, 0);
- 
+
     Profile previewProfile = previewProfiles[0];
     const int32_t sizeOfWidth = 1920;
     const int32_t sizeOfHeight = 1080;
@@ -708,13 +708,13 @@ void CameraFrameworkModuleTest::ConfigVideoSession(sptr<CaptureOutput> &previewO
     sptr<CaptureOutput> previewOutput = nullptr;
     previewOutput_frame = manager_->CreatePreviewOutput(previewProfile, pSurface);
     ASSERT_NE(previewOutput_frame, nullptr);
- 
+
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     sptr<SurfaceListener> videoSurfaceListener =
         new (std::nothrow) SurfaceListener("Video", SurfaceType::VIDEO, g_videoFd, surface);
     surface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)videoSurfaceListener);
     ASSERT_NE(videoSurfaceListener, nullptr);
- 
+
     sptr<IBufferProducer> videoProducer = surface->GetProducer();
     sptr<Surface> videoSurface = Surface::CreateSurfaceAsProducer(videoProducer);
     VideoProfile videoProfile = videoProfiles[0];
@@ -3058,9 +3058,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_071, 
 
     SelectProfiles wanted;
     wanted.preview.size_ = {640, 480};
-    wanted.preview.format_ = CAMERA_FORMAT_RGBA_8888;
+    wanted.preview.format_ = CAMERA_FORMAT_YUV_420_SP;
+    wanted.photo.size_ = {640, 480};
+    wanted.photo.format_ = CAMERA_FORMAT_JPEG;
     wanted.video.size_ = {640, 480};
-    wanted.video.format_ = CAMERA_FORMAT_RGBA_8888;
+    wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
     SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
@@ -3130,9 +3132,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_072, 
 
     SelectProfiles wanted;
     wanted.preview.size_ = {640, 480};
-    wanted.preview.format_ = CAMERA_FORMAT_RGBA_8888;
+    wanted.preview.format_ = CAMERA_FORMAT_YUV_420_SP;
+    wanted.photo.size_ = {640, 480};
+    wanted.photo.format_ = CAMERA_FORMAT_JPEG;
     wanted.video.size_ = {640, 480};
-    wanted.video.format_ = CAMERA_FORMAT_RGBA_8888;
+    wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
     SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
@@ -3213,9 +3217,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_073, 
 
     SelectProfiles wanted;
     wanted.preview.size_ = {640, 480};
-    wanted.preview.format_ = CAMERA_FORMAT_RGBA_8888;
+    wanted.preview.format_ = CAMERA_FORMAT_YUV_420_SP;
+    wanted.photo.size_ = {640, 480};
+    wanted.photo.format_ = CAMERA_FORMAT_JPEG;
     wanted.video.size_ = {640, 480};
-    wanted.video.format_ = CAMERA_FORMAT_RGBA_8888;
+    wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
     SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
@@ -3296,9 +3302,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_074, 
 
     SelectProfiles wanted;
     wanted.preview.size_ = {640, 480};
-    wanted.preview.format_ = CAMERA_FORMAT_RGBA_8888;
+    wanted.preview.format_ = CAMERA_FORMAT_YUV_420_SP;
+    wanted.photo.size_ = {640, 480};
+    wanted.photo.format_ = CAMERA_FORMAT_JPEG;
     wanted.video.size_ = {640, 480};
-    wanted.video.format_ = CAMERA_FORMAT_RGBA_8888;
+    wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
     SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
@@ -3382,10 +3390,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_075, 
 
     SelectProfiles wanted;
     wanted.preview.size_ = {640, 480};
-    wanted.preview.format_ = CAMERA_FORMAT_RGBA_8888;
-
+    wanted.preview.format_ = CAMERA_FORMAT_YUV_420_SP;
+    wanted.photo.size_ = {640, 480};
+    wanted.photo.format_ = CAMERA_FORMAT_JPEG;
     wanted.video.size_ = {640, 480};
-    wanted.video.format_ = CAMERA_FORMAT_RGBA_8888;
+    wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
     SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
@@ -9868,24 +9877,24 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_073, TestSize.Le
     sptr<CaptureOutput> previewOutput;
     sptr<CaptureOutput> photoOutput;
     ConfigHighResSession(previewOutput, photoOutput);
- 
+
     int32_t intResult = ((sptr<PreviewOutput>&)previewOutput)->Start();
     EXPECT_EQ(intResult, 0);
- 
+
     sleep(WAIT_TIME_AFTER_START);
- 
+
     intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
     EXPECT_EQ(intResult, 0);
- 
+
     sleep(WAIT_TIME_AFTER_START);
- 
+
     intResult = ((sptr<PreviewOutput>&)previewOutput)->Stop();
     EXPECT_EQ(intResult, 0);
- 
+
     intResult = highResSession_->Release();
     EXPECT_EQ(intResult, 0);
 }
- 
+
 /*
  * Feature: Framework
  * Function: Test high-res photo session.
@@ -9902,30 +9911,30 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_074, TestSize.Le
     sptr<CaptureOutput> previewOutput;
     sptr<CaptureOutput> photoOutput;
     ConfigHighResSession(previewOutput, photoOutput);
- 
+
     Point point = { 1, 1 };
     highResSession_->LockForControl();
     int32_t setFocusMode = highResSession_->SetFocusPoint(point);
     EXPECT_EQ(setFocusMode, 0);
     highResSession_->UnlockForControl();
- 
+
     Point focusPointGet = highResSession_->GetFocusPoint();
     EXPECT_EQ(focusPointGet.x, 1);
     EXPECT_EQ(focusPointGet.y, 1);
- 
+
     int32_t intResult = ((sptr<PreviewOutput>&)previewOutput)->Start();
     EXPECT_EQ(intResult, 0);
- 
+
     sleep(WAIT_TIME_AFTER_START);
- 
+
     intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
     EXPECT_EQ(intResult, 0);
- 
+
     sleep(WAIT_TIME_AFTER_START);
- 
+
     intResult = ((sptr<PreviewOutput>&)previewOutput)->Stop();
     EXPECT_EQ(intResult, 0);
- 
+
     intResult = highResSession_->Release();
     EXPECT_EQ(intResult, 0);
 }
@@ -10019,19 +10028,19 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_076, TestSize.Le
     ConfigVideoSession(previewOutput, videoOutput);
     ASSERT_NE(previewOutput, nullptr);
     ASSERT_NE(videoOutput, nullptr);
-  
+
     int32_t intResult = videoSession_->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
- 
+
     intResult = videoSession_->CommitConfig();
     EXPECT_EQ(intResult, 0);
- 
+
     sptr<PreviewOutput> previewOutputTrans = ((sptr<PreviewOutput>&)previewOutput);
     intResult = previewOutputTrans->Start();
     EXPECT_EQ(intResult, 0);
- 
+
     sleep(WAIT_TIME_AFTER_START);
- 
+
     std::vector<std::vector<int32_t>> supportedFrameRateArray = previewOutputTrans->GetSupportedFrameRates();
     ASSERT_NE(supportedFrameRateArray.size(), 0);
     int32_t maxFpsTobeSet = 0;
@@ -10041,30 +10050,30 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_076, TestSize.Le
         }
         cout << "supported: " << item[0] << item[1] <<endl;
     }
- 
+
     std::vector<int32_t> activeFrameRateRange = previewOutputTrans->GetFrameRateRange();
     ASSERT_NE(activeFrameRateRange.size(), 0);
     EXPECT_EQ(activeFrameRateRange[0], 0);
     EXPECT_EQ(activeFrameRateRange[1], 0);
- 
+
     intResult = previewOutputTrans->SetFrameRate(maxFpsTobeSet, maxFpsTobeSet);
     EXPECT_EQ(intResult, 0);
- 
+
     std::cout<< "set: "<<maxFpsTobeSet<<maxFpsTobeSet<<std::endl;
     std::vector<int32_t> currentFrameRateRange = previewOutputTrans->GetFrameRateRange();
     EXPECT_EQ(currentFrameRateRange[0], maxFpsTobeSet);
     EXPECT_EQ(currentFrameRateRange[1], maxFpsTobeSet);
     sleep(WAIT_TIME_AFTER_START);
- 
+
     intResult = previewOutputTrans->SetFrameRate(15, 15);
     EXPECT_EQ(intResult, 0);
- 
+
     std::cout<< "set: "<<15<<15<<std::endl;
     currentFrameRateRange = previewOutputTrans->GetFrameRateRange();
     EXPECT_EQ(currentFrameRateRange[0], 15);
     EXPECT_EQ(currentFrameRateRange[1], 15);
     sleep(WAIT_TIME_AFTER_START);
- 
+
     intResult = previewOutputTrans->Stop();
     EXPECT_EQ(intResult, 0);
 }
