@@ -18,6 +18,7 @@
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "camera_log.h"
+#include "camera_output_capability.h"
 #include "camera_util.h"
 #include "capture_scene_const.h"
 #include "gmock/gmock.h"
@@ -148,85 +149,179 @@ public:
 
 class MockHCameraHostManager : public HCameraHostManager {
 public:
-    int32_t streams[180] = {
-        CameraFrameworkUnitTest::DEFAULT_MODE, CameraFrameworkUnitTest::PREVIEW_STREAM,
-        OHOS_CAMERA_FORMAT_YCRCB_420_SP, CameraFrameworkUnitTest::PREVIEW_DEFAULT_WIDTH,
-        CameraFrameworkUnitTest::PREVIEW_DEFAULT_HEIGHT, CameraFrameworkUnitTest::PREVIEW_FRAMERATE,
-        CameraFrameworkUnitTest::MIN_FRAMERATE, CameraFrameworkUnitTest::MAX_FRAMERATE,
-        CameraFrameworkUnitTest::ABILITY_FINISH, CameraFrameworkUnitTest::STREAM_FINISH,
-        CameraFrameworkUnitTest::VIDEO_STREAM, OHOS_CAMERA_FORMAT_YCRCB_420_SP,
-        CameraFrameworkUnitTest::VIDEO_DEFAULT_WIDTH, CameraFrameworkUnitTest::VIDEO_DEFAULT_HEIGHT,
-        CameraFrameworkUnitTest::VIDEO_FRAMERATE, CameraFrameworkUnitTest::MIN_FRAMERATE,
-        CameraFrameworkUnitTest::MAX_FRAMERATE, CameraFrameworkUnitTest::ABILITY_FINISH,
-        CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::PHOTO_STREAM,
-        OHOS_CAMERA_FORMAT_JPEG, CameraFrameworkUnitTest::PHOTO_DEFAULT_WIDTH,
-        CameraFrameworkUnitTest::PHOTO_DEFAULT_HEIGHT, CameraFrameworkUnitTest::PHOTO_FRAMERATE,
-        CameraFrameworkUnitTest::MIN_FRAMERATE, CameraFrameworkUnitTest::MAX_FRAMERATE,
-        CameraFrameworkUnitTest::ABILITY_FINISH, CameraFrameworkUnitTest::STREAM_FINISH,
-        CameraFrameworkUnitTest::MODE_FINISH, CameraFrameworkUnitTest::PORTRAIT_MODE,
-        CameraFrameworkUnitTest::PREVIEW_STREAM, OHOS_CAMERA_FORMAT_YCRCB_420_SP,
-        CameraFrameworkUnitTest::PREVIEW_DEFAULT_WIDTH, CameraFrameworkUnitTest::PREVIEW_DEFAULT_HEIGHT,
-        CameraFrameworkUnitTest::PREVIEW_FRAMERATE, CameraFrameworkUnitTest::MIN_FRAMERATE,
-        CameraFrameworkUnitTest::MAX_FRAMERATE, CameraFrameworkUnitTest::ABILITY_ID_ONE,
-        CameraFrameworkUnitTest::ABILITY_ID_TWO, CameraFrameworkUnitTest::ABILITY_ID_THREE,
-        CameraFrameworkUnitTest::ABILITY_ID_FOUR, CameraFrameworkUnitTest::ABILITY_FINISH,
-        CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::VIDEO_STREAM, OHOS_CAMERA_FORMAT_YCRCB_420_SP,
-        CameraFrameworkUnitTest::VIDEO_DEFAULT_WIDTH, CameraFrameworkUnitTest::VIDEO_DEFAULT_HEIGHT,
-        CameraFrameworkUnitTest::VIDEO_FRAMERATE, CameraFrameworkUnitTest::MIN_FRAMERATE,
-        CameraFrameworkUnitTest::MAX_FRAMERATE, CameraFrameworkUnitTest::ABILITY_ID_ONE,
-        CameraFrameworkUnitTest::ABILITY_ID_TWO, CameraFrameworkUnitTest::ABILITY_ID_THREE,
-        CameraFrameworkUnitTest::ABILITY_ID_FOUR, CameraFrameworkUnitTest::ABILITY_FINISH,
-        CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::PHOTO_STREAM,
-        OHOS_CAMERA_FORMAT_JPEG, CameraFrameworkUnitTest::PHOTO_DEFAULT_WIDTH,
-        CameraFrameworkUnitTest::PHOTO_DEFAULT_HEIGHT, CameraFrameworkUnitTest::PHOTO_FRAMERATE,
-        CameraFrameworkUnitTest::MIN_FRAMERATE, CameraFrameworkUnitTest::MAX_FRAMERATE,
-        CameraFrameworkUnitTest::ABILITY_ID_ONE, CameraFrameworkUnitTest::ABILITY_ID_TWO,
-        CameraFrameworkUnitTest::ABILITY_ID_THREE, CameraFrameworkUnitTest::ABILITY_ID_FOUR,
-        CameraFrameworkUnitTest::ABILITY_FINISH, CameraFrameworkUnitTest::STREAM_FINISH,
-        CameraFrameworkUnitTest::MODE_FINISH, CameraFrameworkUnitTest::NIGHT_MODE,
-        CameraFrameworkUnitTest::PREVIEW_STREAM, OHOS_CAMERA_FORMAT_YCRCB_420_SP,
-        CameraFrameworkUnitTest::PREVIEW_DEFAULT_WIDTH, CameraFrameworkUnitTest::PREVIEW_DEFAULT_HEIGHT,
-        CameraFrameworkUnitTest::PREVIEW_FRAMERATE, CameraFrameworkUnitTest::MIN_FRAMERATE,
-        CameraFrameworkUnitTest::MAX_FRAMERATE, CameraFrameworkUnitTest::ABILITY_ID_ONE,
-        CameraFrameworkUnitTest::ABILITY_ID_TWO, CameraFrameworkUnitTest::ABILITY_ID_THREE,
-        CameraFrameworkUnitTest::ABILITY_ID_FOUR, CameraFrameworkUnitTest::ABILITY_FINISH,
-        CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::VIDEO_STREAM, OHOS_CAMERA_FORMAT_YCRCB_420_SP,
-        CameraFrameworkUnitTest::VIDEO_DEFAULT_WIDTH, CameraFrameworkUnitTest::VIDEO_DEFAULT_HEIGHT,
-        CameraFrameworkUnitTest::VIDEO_FRAMERATE, CameraFrameworkUnitTest::MIN_FRAMERATE,
-        CameraFrameworkUnitTest::MAX_FRAMERATE, CameraFrameworkUnitTest::ABILITY_ID_ONE,
-        CameraFrameworkUnitTest::ABILITY_ID_TWO, CameraFrameworkUnitTest::ABILITY_ID_THREE,
-        CameraFrameworkUnitTest::ABILITY_ID_FOUR, CameraFrameworkUnitTest::ABILITY_FINISH,
-        CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::PHOTO_STREAM,
-        OHOS_CAMERA_FORMAT_JPEG, CameraFrameworkUnitTest::PHOTO_DEFAULT_WIDTH,
-        CameraFrameworkUnitTest::PHOTO_DEFAULT_HEIGHT, CameraFrameworkUnitTest::PHOTO_FRAMERATE,
-        CameraFrameworkUnitTest::MIN_FRAMERATE, CameraFrameworkUnitTest::MAX_FRAMERATE,
-        CameraFrameworkUnitTest::ABILITY_ID_ONE, CameraFrameworkUnitTest::ABILITY_ID_TWO,
-        CameraFrameworkUnitTest::ABILITY_ID_THREE, CameraFrameworkUnitTest::ABILITY_ID_FOUR,
-        CameraFrameworkUnitTest::ABILITY_FINISH, CameraFrameworkUnitTest::STREAM_FINISH,
-        CameraFrameworkUnitTest::MODE_FINISH, CameraFrameworkUnitTest::SCAN_MODE,
-        CameraFrameworkUnitTest::PREVIEW_STREAM, OHOS_CAMERA_FORMAT_YCRCB_420_SP,
-        CameraFrameworkUnitTest::PREVIEW_DEFAULT_WIDTH, CameraFrameworkUnitTest::PREVIEW_DEFAULT_HEIGHT,
-        CameraFrameworkUnitTest::PREVIEW_FRAMERATE, CameraFrameworkUnitTest::MIN_FRAMERATE,
-        CameraFrameworkUnitTest::MAX_FRAMERATE, CameraFrameworkUnitTest::ABILITY_ID_ONE,
-        CameraFrameworkUnitTest::ABILITY_ID_TWO, CameraFrameworkUnitTest::ABILITY_ID_THREE,
-        CameraFrameworkUnitTest::ABILITY_ID_FOUR, CameraFrameworkUnitTest::ABILITY_FINISH,
-        CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::VIDEO_STREAM, OHOS_CAMERA_FORMAT_YCRCB_420_SP,
-        CameraFrameworkUnitTest::VIDEO_DEFAULT_WIDTH, CameraFrameworkUnitTest::VIDEO_DEFAULT_HEIGHT,
-        CameraFrameworkUnitTest::VIDEO_FRAMERATE, CameraFrameworkUnitTest::MIN_FRAMERATE,
-        CameraFrameworkUnitTest::MAX_FRAMERATE, CameraFrameworkUnitTest::ABILITY_ID_ONE,
-        CameraFrameworkUnitTest::ABILITY_ID_TWO, CameraFrameworkUnitTest::ABILITY_ID_THREE,
-        CameraFrameworkUnitTest::ABILITY_ID_FOUR, CameraFrameworkUnitTest::ABILITY_FINISH,
-        CameraFrameworkUnitTest::STREAM_FINISH, CameraFrameworkUnitTest::PHOTO_STREAM,
-        OHOS_CAMERA_FORMAT_JPEG, CameraFrameworkUnitTest::PHOTO_DEFAULT_WIDTH,
-        CameraFrameworkUnitTest::PHOTO_DEFAULT_HEIGHT, CameraFrameworkUnitTest::PHOTO_FRAMERATE,
-        CameraFrameworkUnitTest::MIN_FRAMERATE, CameraFrameworkUnitTest::MAX_FRAMERATE,
-        CameraFrameworkUnitTest::ABILITY_ID_ONE, CameraFrameworkUnitTest::ABILITY_ID_TWO,
-        CameraFrameworkUnitTest::ABILITY_ID_THREE, CameraFrameworkUnitTest::ABILITY_ID_FOUR,
-        CameraFrameworkUnitTest::ABILITY_FINISH, CameraFrameworkUnitTest::STREAM_FINISH,
-        CameraFrameworkUnitTest::MODE_FINISH,
+    struct StreamFormatConfig {
+        camera_format_t cameraFormat;
+        int32_t streamWidth;
+        int32_t streamHeight;
+        int32_t fixedFrameRate;
+        int32_t minFrameRate;
+        int32_t maxFrameRate;
+        std::vector<int32_t> streamAbilities = {};
+        void IntoVector(std::vector<int32_t>& vector) const
+        {
+            vector.emplace_back(cameraFormat);
+            vector.emplace_back(streamWidth);
+            vector.emplace_back(streamHeight);
+            vector.emplace_back(fixedFrameRate);
+            vector.emplace_back(minFrameRate);
+            vector.emplace_back(maxFrameRate);
+            vector.insert(vector.end(), streamAbilities.begin(), streamAbilities.end());
+            vector.emplace_back(CameraFrameworkUnitTest::ABILITY_FINISH);
+        }
     };
 
-    uint8_t modes[4] = {0, 3, 4, 7};
+    struct StreamConfig {
+        int32_t streamType;
+        std::vector<StreamFormatConfig> streamFormatConfigs;
+
+        void IntoVector(std::vector<int32_t>& vector) const
+        {
+            vector.emplace_back(streamType);
+            for (auto& formatConfig : streamFormatConfigs) {
+                formatConfig.IntoVector(vector);
+            }
+            vector.emplace_back(CameraFrameworkUnitTest::STREAM_FINISH);
+        }
+    };
+    
+    struct ModeConfig {
+        int32_t modeName;
+        std::vector<StreamConfig> streams = {};
+        void IntoVector(std::vector<int32_t>& vector) const
+        {
+            vector.emplace_back(modeName);
+            for (auto& stream : streams) {
+                stream.IntoVector(vector);
+            }
+            vector.emplace_back(CameraFrameworkUnitTest::MODE_FINISH);
+        }
+    };
+
+    struct ModeConfigs {
+        std::vector<ModeConfig> configs = {};
+        explicit ModeConfigs(std::vector<ModeConfig> modeConfigs) : configs(std::move(modeConfigs)) {}
+
+        std::vector<uint8_t> GetModes() const
+        {
+            std::vector<uint8_t> modes = {};
+            for (auto& config : configs) {
+                modes.emplace_back(config.modeName);
+            }
+            return modes;
+        }
+
+        std::vector<int32_t> GetDatas() const
+        {
+            std::vector<int32_t> datas = {};
+            for (auto& config : configs) {
+                config.IntoVector(datas);
+            }
+            return datas;
+        }
+    };
+
+    const ModeConfig DEFAULT_MODE_CONFIG = { CameraFrameworkUnitTest::DEFAULT_MODE, {
+        { CameraFrameworkUnitTest::PREVIEW_STREAM, { { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 640, 480, 0, 0, 0 } } },
+        { CameraFrameworkUnitTest::VIDEO_STREAM, { { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 640, 360, 30, 0, 0 } } },
+        { CameraFrameworkUnitTest::PHOTO_STREAM, { { OHOS_CAMERA_FORMAT_JPEG, 1280, 960, 0, 0, 0 } } } } };
+
+    const ModeConfig PHOTO_MODE_CONFIG = { CameraFrameworkUnitTest::PHOTO_MODE, {
+        { CameraFrameworkUnitTest::PREVIEW_STREAM, {
+            { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 640, 480, 0, 0, 0 },
+            { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 1280, 720, 0, 0, 0 },
+            { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 1920, 1080, 0, 0, 0 },
+            { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 1920, 1440, 0, 0, 0 } } },
+        { CameraFrameworkUnitTest::PHOTO_STREAM, {
+            { OHOS_CAMERA_FORMAT_JPEG, 1280, 960, 0, 0, 0 },
+            { OHOS_CAMERA_FORMAT_JPEG, 1280, 720, 0, 0, 0 },
+            { OHOS_CAMERA_FORMAT_JPEG, 1920, 1080, 0, 0, 0 },
+            { OHOS_CAMERA_FORMAT_JPEG, 3840, 2160, 0, 0, 0 },
+            { OHOS_CAMERA_FORMAT_JPEG, 4096, 3072, 0, 0, 0 } } } } };
+
+    const ModeConfig VIDEO_MODE_CONFIG = { CameraFrameworkUnitTest::VIDEO_MODE, {
+        { CameraFrameworkUnitTest::PREVIEW_STREAM, {
+            { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 640, 480, 0, 0, 0 },
+            { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 1280, 720, 0, 0, 0 },
+            { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 1920, 1080, 0, 0, 0 },
+            { OHOS_CAMERA_FORMAT_YCRCB_P010, 1280, 720, 0, 0, 0 },
+            { OHOS_CAMERA_FORMAT_YCRCB_P010, 1920, 1080, 0, 0, 0 } } },
+        { CameraFrameworkUnitTest::VIDEO_STREAM, {
+            { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 640, 360, 30, 0, 0 },
+            { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 1280, 720, 30, 1, 30 },
+            { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 1920, 1080, 30, 1, 30 },
+            { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 3840, 2160, 30, 1, 30 },
+            { OHOS_CAMERA_FORMAT_YCRCB_P010, 1280, 720, 30, 1, 30 },
+            { OHOS_CAMERA_FORMAT_YCRCB_P010, 1920, 1080, 30, 1, 30 },
+            { OHOS_CAMERA_FORMAT_YCRCB_P010, 3840, 2160, 30, 1, 30 } } },
+        { CameraFrameworkUnitTest::PHOTO_STREAM, {
+            { OHOS_CAMERA_FORMAT_JPEG, 1280, 960, 0, 0, 0 },
+            { OHOS_CAMERA_FORMAT_JPEG, 1280, 720, 0, 0, 0 },
+            { OHOS_CAMERA_FORMAT_JPEG, 1920, 1080, 0, 0, 0 },
+            { OHOS_CAMERA_FORMAT_JPEG, 3840, 2160, 0, 0, 0 } } } } };
+
+    const ModeConfig PORTRAIT_MODE_CONFIG = { CameraFrameworkUnitTest::PORTRAIT_MODE, {
+        { CameraFrameworkUnitTest::PREVIEW_STREAM, {
+            { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 640, 480, 0, 0, 0, {
+                CameraFrameworkUnitTest::ABILITY_ID_ONE,
+                CameraFrameworkUnitTest::ABILITY_ID_TWO,
+                CameraFrameworkUnitTest::ABILITY_ID_THREE,
+                CameraFrameworkUnitTest::ABILITY_ID_FOUR } } } },
+        { CameraFrameworkUnitTest::VIDEO_STREAM, {
+            { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 640, 360, 30, 0, 0, {
+                CameraFrameworkUnitTest::ABILITY_ID_ONE,
+                CameraFrameworkUnitTest::ABILITY_ID_TWO,
+                CameraFrameworkUnitTest::ABILITY_ID_THREE,
+                CameraFrameworkUnitTest::ABILITY_ID_FOUR } } } },
+        { CameraFrameworkUnitTest::PHOTO_STREAM, {
+            { OHOS_CAMERA_FORMAT_JPEG, 1280, 960, 0, 0, 0, {
+                CameraFrameworkUnitTest::ABILITY_ID_ONE,
+                CameraFrameworkUnitTest::ABILITY_ID_TWO,
+                CameraFrameworkUnitTest::ABILITY_ID_THREE,
+                CameraFrameworkUnitTest::ABILITY_ID_FOUR } } } } } };
+
+    const ModeConfig NIGHT_MODE_CONFIG = { CameraFrameworkUnitTest::NIGHT_MODE, {
+        { CameraFrameworkUnitTest::PREVIEW_STREAM, {
+            { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 640, 480, 0, 0, 0, {
+                CameraFrameworkUnitTest::ABILITY_ID_ONE,
+                CameraFrameworkUnitTest::ABILITY_ID_TWO,
+                CameraFrameworkUnitTest::ABILITY_ID_THREE,
+                CameraFrameworkUnitTest::ABILITY_ID_FOUR } } } },
+        { CameraFrameworkUnitTest::VIDEO_STREAM, {
+            { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 640, 360, 30, 0, 0, {
+                CameraFrameworkUnitTest::ABILITY_ID_ONE,
+                CameraFrameworkUnitTest::ABILITY_ID_TWO,
+                CameraFrameworkUnitTest::ABILITY_ID_THREE,
+                CameraFrameworkUnitTest::ABILITY_ID_FOUR } } } },
+        { CameraFrameworkUnitTest::PHOTO_STREAM, {
+            { OHOS_CAMERA_FORMAT_JPEG, 1280, 960, 0, 0, 0, {
+                CameraFrameworkUnitTest::ABILITY_ID_ONE,
+                CameraFrameworkUnitTest::ABILITY_ID_TWO,
+                CameraFrameworkUnitTest::ABILITY_ID_THREE,
+                CameraFrameworkUnitTest::ABILITY_ID_FOUR } } } } } };
+
+    const ModeConfig SCAN_MODE_CONFIG = { CameraFrameworkUnitTest::SCAN_MODE, {
+        { CameraFrameworkUnitTest::PREVIEW_STREAM, {
+            { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 640, 480, 0, 0, 0, {
+                CameraFrameworkUnitTest::ABILITY_ID_ONE,
+                CameraFrameworkUnitTest::ABILITY_ID_TWO,
+                CameraFrameworkUnitTest::ABILITY_ID_THREE,
+                CameraFrameworkUnitTest::ABILITY_ID_FOUR } } } },
+        { CameraFrameworkUnitTest::VIDEO_STREAM, {
+            { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 640, 360, 30, 0, 0, {
+                CameraFrameworkUnitTest::ABILITY_ID_ONE,
+                CameraFrameworkUnitTest::ABILITY_ID_TWO,
+                CameraFrameworkUnitTest::ABILITY_ID_THREE,
+                CameraFrameworkUnitTest::ABILITY_ID_FOUR } } } },
+        { CameraFrameworkUnitTest::PHOTO_STREAM, {
+            { OHOS_CAMERA_FORMAT_JPEG, 1280, 960, 0, 0, 0, {
+                CameraFrameworkUnitTest::ABILITY_ID_ONE,
+                CameraFrameworkUnitTest::ABILITY_ID_TWO,
+                CameraFrameworkUnitTest::ABILITY_ID_THREE,
+                CameraFrameworkUnitTest::ABILITY_ID_FOUR, } } } } } };
+
+    const ModeConfigs ABILITY_MODE_CONFIGS = ModeConfigs(std::vector<ModeConfig> { DEFAULT_MODE_CONFIG,
+        PHOTO_MODE_CONFIG, VIDEO_MODE_CONFIG, PORTRAIT_MODE_CONFIG, NIGHT_MODE_CONFIG, SCAN_MODE_CONFIG });
+
     uint8_t filterAbility[2] = {0, 1};
     int32_t filterControl[2] = {0, 1};
     uint8_t beautyAbility[5] = {OHOS_CAMERA_BEAUTY_TYPE_OFF, OHOS_CAMERA_BEAUTY_TYPE_AUTO,
@@ -272,13 +367,12 @@ public:
                                                             std::shared_ptr<OHOS::Camera::CameraMetadata> &ability) {
             int32_t itemCount = 10;
             int32_t dataSize = 100;
+            auto streamsInfo = ABILITY_MODE_CONFIGS.GetDatas();
             ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
-            ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, streams,
-                              sizeof(streams) / sizeof(streams[0]));
-
-            ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams,
-                              sizeof(streams) / sizeof(streams[0]));
-
+            ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS,
+                streamsInfo.data(), streamsInfo.size());
+            ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS,
+                streamsInfo.data(), streamsInfo.size());
             if (g_mockFlagWithoutAbt) {
                 return CAMERA_OK;
             }
@@ -288,7 +382,7 @@ public:
             }
 
             int32_t compensationRange[2] = {0, 0};
-            ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
+            ability->addEntry(OHOS_ABILITY_AE_COMPENSATION_RANGE, compensationRange,
                               sizeof(compensationRange) / sizeof(compensationRange[0]));
             float focalLength = 1.5;
             ability->addEntry(OHOS_ABILITY_FOCAL_LENGTH, &focalLength, sizeof(float));
@@ -300,7 +394,7 @@ public:
             ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, sizeof(int32_t));
 
             const camera_rational_t aeCompensationStep[] = {{0, 1}};
-            ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
+            ability->addEntry(OHOS_ABILITY_AE_COMPENSATION_STEP, &aeCompensationStep,
                               sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
 
             int32_t zoomCap[2] = {0, 10};
@@ -375,7 +469,8 @@ public:
             int32_t orientation = OHOS_CAMERA_JPEG_ROTATION_0;
             ability->addEntry(OHOS_JPEG_ORIENTATION, &orientation, sizeof(int32_t));
 
-            ability->addEntry(OHOS_ABILITY_CAMERA_MODES, &modes, sizeof(modes) / sizeof(modes[0]));
+            std::vector<uint8_t> modes = ABILITY_MODE_CONFIGS.GetModes();
+            ability->addEntry(OHOS_ABILITY_CAMERA_MODES, modes.data(), modes.size());
 
             ability->addEntry(OHOS_ABILITY_SCENE_FILTER_TYPES, &filterAbility,
                               sizeof(filterAbility) / sizeof(filterAbility[0]));
@@ -1986,8 +2081,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_framework_unittest_045, TestSize.Level0
 
     sptr<CaptureOutput> photo = CreatePhotoOutput();
     ASSERT_NE(photo, nullptr);
-
-    sptr<CaptureSession> session = cameraManager->CreateCaptureSession();
+    SceneMode mode = CAPTURE;
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession(mode);
     ASSERT_NE(session, nullptr);
 
     int32_t ret = session->BeginConfig();
