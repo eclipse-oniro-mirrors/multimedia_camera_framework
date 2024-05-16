@@ -9948,6 +9948,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_074, TestSize.Le
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_075, TestSize.Level0)
 {
+    if (!IsSupportNow()) {
+        return;
+    }
     int32_t intResult = session_->BeginConfig();
     EXPECT_EQ(intResult, 0);
 
@@ -10017,6 +10020,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_075, TestSize.Le
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_076, TestSize.Level0)
 {
+    if (!IsSupportNow()) {
+        return;
+    }
     sptr<CaptureOutput> previewOutput;
     sptr<CaptureOutput> videoOutput;
     ConfigVideoSession(previewOutput, videoOutput);
