@@ -17,39 +17,34 @@
 
 #include <cstdint>
 #include <mutex>
-#include <unistd.h>
 #include <string>
+#include <unistd.h>
 #include <uv.h>
 
-#include <unistd.h>
-#include "output/deferred_photo_proxy_napi.h"
 #include "camera_buffer_handle_utils.h"
 #include "camera_error_code.h"
-#include "camera_napi_param_parser.h"
 #include "camera_log.h"
 #include "camera_napi_const.h"
+#include "camera_napi_param_parser.h"
 #include "camera_napi_security_utils.h"
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
-#include "camera_napi_param_parser.h"
 #include "camera_output_capability.h"
+#include "camera_photo_proxy.h"
 #include "image_napi.h"
 #include "image_packer.h"
 #include "image_receiver.h"
 #include "input/camera_profile_napi.h"
+#include "ipc_skeleton.h"
+#include "js_native_api.h"
+#include "media_library_comm_napi.h"
+#include "media_library_manager.h"
 #include "output/deferred_photo_proxy_napi.h"
 #include "output/photo_napi.h"
-#include "js_native_api.h"
+#include "output/photo_output_napi.h"
 #include "pixel_map_napi.h"
-#include "image_packer.h"
 #include "refbase.h"
 #include "video_key_info.h"
-#include "output/photo_output_napi.h"
-#include "output/photo_napi.h"
-#include "camera_photo_proxy.h"
-#include "ipc_skeleton.h"
-#include "media_library_manager.h"
-#include "media_library_comm_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {

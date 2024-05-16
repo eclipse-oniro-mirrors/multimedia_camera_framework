@@ -28,6 +28,7 @@
 #include <vector>
 
 #include "camera_error_code.h"
+#include "camera_photo_proxy.h"
 #include "capture_scene_const.h"
 #include "color_space_info_parse.h"
 #include "features/moon_capture_boost_feature.h"
@@ -40,9 +41,6 @@
 #include "output/camera_output_capability.h"
 #include "output/capture_output.h"
 #include "refbase.h"
-#include "color_space_info_parse.h"
-#include "capture_scene_const.h"
-#include "camera_photo_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {

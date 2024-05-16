@@ -20,10 +20,9 @@
 #include <mutex>
 #include <refbase.h>
 
-#include "message_parcel.h"
 #include "buffer_handle.h"
+#include "message_parcel.h"
 #include "photo_proxy.h"
-#include <mutex>
 
 namespace OHOS {
 namespace CameraStandard {
