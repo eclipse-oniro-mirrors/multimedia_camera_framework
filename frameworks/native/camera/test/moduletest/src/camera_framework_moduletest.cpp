@@ -6970,7 +6970,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_069, TestSize.L
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_070, TestSize.Level0)
 {
-    session_->~CaptureSession();
+    session_->captureSession_ = nullptr;
 
     EXPECT_EQ(session_->CommitConfig(), 7400102);
 
