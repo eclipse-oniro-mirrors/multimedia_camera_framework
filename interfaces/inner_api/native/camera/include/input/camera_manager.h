@@ -579,6 +579,11 @@ public:
 
     int32_t CreatePhotoOutputStream(
         sptr<IStreamCapture>& streamPtr, Profile& profile, const sptr<OHOS::IBufferProducer>& producer);
+    /**
+    * @brief clear remote stub obj.
+    *
+    */
+    int32_t DestroyStubObj();
 
     static const std::string surfaceFormat;
 
@@ -597,6 +602,10 @@ private:
     void SetCameraServiceCallback(sptr<ICameraServiceCallback>& callback);
     void SetCameraMuteServiceCallback(sptr<ICameraMuteServiceCallback>& callback);
     void SetTorchServiceCallback(sptr<ITorchServiceCallback>& callback);
+    void CreateAndSetCameraServiceCallback();
+    void CreateAndSetCameraMuteServiceCallback();
+    void CreateAndSetTorchServiceCallback();
+
     sptr<CaptureSession> CreateCaptureSessionImpl(SceneMode mode, sptr<ICaptureSession> session);
     int32_t CreateListenerObject(sptr<ICameraService>& serviceProxy);
     void CameraServerDied(pid_t pid);

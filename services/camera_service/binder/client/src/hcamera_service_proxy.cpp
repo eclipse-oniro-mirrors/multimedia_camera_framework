@@ -640,5 +640,21 @@ int32_t HCameraServiceProxy::SetPeerCallback(sptr<ICameraBroker>& callback)
 
     return error;
 }
+
+int32_t HCameraServiceProxy::DestroyStubObj()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_DESTROY_STUB_OBJ), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy DestroyStubObj failed, error: %{public}d", error);
+    }
+
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS

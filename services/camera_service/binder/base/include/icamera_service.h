@@ -109,6 +109,8 @@ public:
 
     virtual int32_t SetPeerCallback(sptr<ICameraBroker>& callback) = 0;
 
+    virtual int32_t DestroyStubObj() = 0;
+
     DECLARE_INTERFACE_DESCRIPTOR(u"ICameraService");
 };
 } // namespace CameraStandard

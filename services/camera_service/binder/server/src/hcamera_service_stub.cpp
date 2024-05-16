@@ -116,6 +116,9 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_PRE_SWITCH_CAMERA):
             errCode = HCameraServiceStub::HandlePreSwitchCamera(data, reply);
             break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_DESTROY_STUB_OBJ):
+            errCode = HCameraServiceStub::DestroyStubObj();
+            break;
         case static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_ALLOW_OPEN_BY_OHSIDE):
             errCode = HCameraServiceStub::HandleAllowOpenByOHSide(data, reply);
             break;
@@ -550,6 +553,14 @@ int HCameraServiceStub::HandleAllowOpenByOHSide(MessageParcel& data, MessageParc
     CHECK_AND_RETURN_RET_LOG(reply.WriteBool(canOpenCamera), IPC_STUB_WRITE_PARCEL_ERR,
         "HCameraServiceStub HandleAllowOpenByOHSide get camera failed");
     return errCode;
+}
+
+int HCameraServiceStub::DestroyStubObj()
+{
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    MEDIA_DEBUG_LOG("DestroyStubObj client pid:%{public}d", pid);
+    (void)DestroyStubForPid(pid);
+    return CAMERA_OK;
 }
 
 int HCameraServiceStub::HandleNotifyCameraState(MessageParcel& data)

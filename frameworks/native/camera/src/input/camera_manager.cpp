@@ -842,18 +842,6 @@ void CameraManager::InitCameraManager()
         return;
     }
     SetServiceProxy(serviceProxy);
-    auto refcount = GetSptrRefCount();
-    if (refcount > 0) {
-        cameraSvcCallback_ = new (std::nothrow) CameraStatusServiceCallback(this);
-        SetCameraServiceCallback(cameraSvcCallback_);
-        cameraMuteSvcCallback_ = new (std::nothrow) CameraMuteServiceCallback(this);
-        SetCameraMuteServiceCallback(cameraMuteSvcCallback_);
-        torchSvcCallback_ = new (std::nothrow) TorchServiceCallback(this);
-        SetTorchServiceCallback(torchSvcCallback_);
-    } else {
-        MEDIA_WARNING_LOG("CameraManager refCount is:%{public}d, can't set callbacks", refcount);
-    }
-
     int32_t ret = CreateCameraServerDeathRecipient(serviceProxy);
     CHECK_AND_RETURN_LOG(
         ret == CameraErrorCode::SUCCESS, "CreateCameraServerDeathRecipient fail , ret = %{public}d", ret);
@@ -861,6 +849,22 @@ void CameraManager::InitCameraManager()
     CHECK_AND_RETURN_LOG(ret == CAMERA_OK, "failed to new CameraListenerStub, ret = %{public}d", ret);
 
     InitCameraList();
+}
+
+int32_t CameraManager::DestroyStubObj()
+{
+    MEDIA_INFO_LOG("Enter Into CameraManager::DestroyStubObj");
+    int32_t retCode = CAMERA_UNKNOWN_ERROR;
+    auto serviceProxy = GetServiceProxy();
+    if (serviceProxy == nullptr) {
+        MEDIA_ERR_LOG("serviceProxy is null");
+    } else {
+        retCode = serviceProxy->DestroyStubObj();
+        if (retCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("Failed to DestroyStubObj, retCode: %{public}d", retCode);
+        }
+    }
+    return ServiceToCameraError(retCode);
 }
 
 void CameraManager::CameraServerDied(pid_t pid)
@@ -936,6 +940,9 @@ int CameraManager::CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceSe
 
 void CameraManager::SetCallback(std::shared_ptr<CameraManagerCallback> callback)
 {
+    if (cameraSvcCallback_ == nullptr) {
+        CreateAndSetCameraServiceCallback();
+    }
     std::thread::id threadId = std::this_thread::get_id();
     cameraMngrCallbackMap_.EnsureInsert(threadId, callback);
 }
@@ -950,6 +957,9 @@ std::shared_ptr<CameraManagerCallback> CameraManager::GetApplicationCallback()
 
 void CameraManager::RegisterCameraMuteListener(std::shared_ptr<CameraMuteListener> listener)
 {
+    if (cameraMuteSvcCallback_ == nullptr) {
+        CreateAndSetCameraMuteServiceCallback();
+    }
     std::thread::id threadId = std::this_thread::get_id();
     cameraMuteListenerMap_.EnsureInsert(threadId, listener);
 }
@@ -964,6 +974,9 @@ shared_ptr<CameraMuteListener> CameraManager::GetCameraMuteListener()
 
 void CameraManager::RegisterTorchListener(shared_ptr<TorchListener> listener)
 {
+    if (torchSvcCallback_ == nullptr) {
+        CreateAndSetTorchServiceCallback();
+    }
     std::thread::id threadId = std::this_thread::get_id();
     torchListenerMap_.EnsureInsert(threadId, listener);
 }
@@ -1522,6 +1535,25 @@ void CameraManager::CreateProfile4StreamType(OutputCapStreamType streamType, uin
     }
 }
 
+void CameraManager::CreateAndSetCameraServiceCallback()
+{
+    if (cameraSvcCallback_ != nullptr) {
+        MEDIA_ERR_LOG("cameraSvcCallback_ is not nullptr");
+        return;
+    }
+    auto serviceProxy = GetServiceProxy();
+    if (serviceProxy == nullptr) {
+        MEDIA_ERR_LOG("serviceProxy is null");
+        return;
+    }
+    int32_t retCode = CAMERA_OK;
+    cameraSvcCallback_ = new(std::nothrow) CameraStatusServiceCallback(this);
+    retCode = serviceProxy->SetCallback(cameraSvcCallback_);
+    if (retCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("Set CameraStatus service Callback failed, retCode: %{public}d", retCode);
+    }
+}
+
 void CameraManager::SetCameraServiceCallback(sptr<ICameraServiceCallback>& callback)
 {
     int32_t retCode = CAMERA_OK;
@@ -1611,6 +1643,25 @@ void CameraManager::SetTorchServiceCallback(sptr<ITorchServiceCallback>& callbac
     return;
 }
 
+void CameraManager::CreateAndSetTorchServiceCallback()
+{
+    if (torchSvcCallback_ != nullptr) {
+        MEDIA_ERR_LOG("torchSvcCallback_ is not nullptr");
+        return;
+    }
+    auto serviceProxy = GetServiceProxy();
+    if (serviceProxy == nullptr) {
+        MEDIA_ERR_LOG("serviceProxy is null");
+        return;
+    }
+    int32_t retCode = CAMERA_OK;
+    torchSvcCallback_ = new(std::nothrow) TorchServiceCallback(this);
+    retCode = serviceProxy->SetTorchCallback(torchSvcCallback_);
+    if (retCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("Set Torch service Callback failed, retCode: %{public}d", retCode);
+    }
+}
+
 int32_t CameraMuteServiceCallback::OnCameraMute(bool muteMode)
 {
     MEDIA_DEBUG_LOG("muteMode is %{public}d", muteMode);
@@ -1634,6 +1685,25 @@ int32_t CameraMuteServiceCallback::OnCameraMute(bool muteMode)
         }
     });
     return CAMERA_OK;
+}
+
+void CameraManager::CreateAndSetCameraMuteServiceCallback()
+{
+    if (cameraMuteSvcCallback_ != nullptr) {
+        MEDIA_ERR_LOG("cameraMuteSvcCallback_ is not nullptr");
+        return;
+    }
+    auto serviceProxy = GetServiceProxy();
+    if (serviceProxy == nullptr) {
+        MEDIA_ERR_LOG("serviceProxy is null");
+        return;
+    }
+    int32_t retCode = CAMERA_OK;
+    cameraMuteSvcCallback_ = new(std::nothrow) CameraMuteServiceCallback(this);
+    retCode = serviceProxy->SetMuteCallback(cameraMuteSvcCallback_);
+    if (retCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("Set Mute service Callback failed, retCode: %{public}d", retCode);
+    }
 }
 
 void CameraManager::SetCameraMuteServiceCallback(sptr<ICameraMuteServiceCallback>& callback)
