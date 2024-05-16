@@ -41,6 +41,9 @@
 #include "output/camera_output_capability.h"
 #include "output/capture_output.h"
 #include "refbase.h"
+#include "color_space_info_parse.h"
+#include "effect_suggestion_info_parse.h"
+#include "capture_scene_const.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -114,6 +117,14 @@ struct PreconfigProfiles {
     Profile previewProfile;
     Profile photoProfile;
     VideoProfile videoProfile;
+};
+
+enum EffectSuggestionType {
+    EFFECT_SUGGESTION_NONE = 0,
+    EFFECT_SUGGESTION_PORTRAIT,
+    EFFECT_SUGGESTION_FOOD,
+    EFFECT_SUGGESTION_SKY,
+    EFFECT_SUGGESTION_SUNRISE_SUNSET
 };
 
 typedef struct {
@@ -259,6 +270,20 @@ public:
     ARCallback() = default;
     virtual ~ARCallback() = default;
     virtual void OnResult(const ARStatusInfo &arStatusInfo) const = 0;
+};
+
+class EffectSuggestionCallback {
+public:
+    EffectSuggestionCallback() = default;
+    virtual ~EffectSuggestionCallback() = default;
+    virtual void OnEffectSuggestionChange(EffectSuggestionType effectSuggestionType) = 0;
+    bool isFirstReport = true;
+    EffectSuggestionType currentType = EffectSuggestionType::EFFECT_SUGGESTION_NONE;
+};
+
+struct EffectSuggestionStatus {
+    EffectSuggestionType type;
+    bool status;
 };
 
 enum VideoStabilizationMode {
@@ -1050,6 +1075,8 @@ public:
      */
     void SetFeatureDetectionStatusCallback(std::shared_ptr<FeatureDetectionStatusCallback> callback);
 
+    void SetEffectSuggestionCallback(std::shared_ptr<EffectSuggestionCallback> effectSuggestionCallback);
+
     /**
      * @brief This function is called when there is macro status change
      * and process the macro status callback.
@@ -1186,6 +1213,55 @@ public:
      */
     std::shared_ptr<ARCallback> GetARCallback();
 
+     /**
+     * @brief Get whether effectSuggestion Supported.
+     *
+     * @return True if supported false otherwise.
+     */
+    bool IsEffectSuggestionSupported();
+
+    /**
+     * @brief Enable EffectSuggestion.
+     * @param isEnable switch to control Effect Suggestion.
+     * @return errCode
+     */
+    int32_t EnableEffectSuggestion(bool isEnable);
+
+    /**
+     * @brief Get supported EffectSuggestionInfo.
+     * @return EffectSuggestionInfo parsed from tag
+     */
+    EffectSuggestionInfo GetSupportedEffectSuggestionInfo();
+
+    /**
+     * @brief Get supported effectSuggestionType.
+     * @return EffectSuggestionTypeList which current mode supported.
+     */
+    std::vector<EffectSuggestionType> GetSupportedEffectSuggestionType();
+
+    /**
+     * @brief Batch set effect suggestion status.
+     * @param effectSuggestionStatusList effect suggestion status list to be set.
+     * @return errCode
+     */
+    int32_t SetEffectSuggestionStatus(std::vector<EffectSuggestionStatus> effectSuggestionStatusList);
+
+    /**
+     * @brief Set ar mode.
+     * @param effectSuggestionType switch to control effect suggestion.
+     * @param isEnable switch to control effect suggestion status.
+     * @return errCode
+     */
+    int32_t UpdateEffectSuggestion(EffectSuggestionType effectSuggestionType, bool isEnable);
+
+    /**
+     * @brief This function is called when there is effect suggestion type change
+     * and process the effect suggestion callback.
+     *
+     * @param result metadata got from callback from service layer.
+     */
+    void ProcessEffectSuggestionTypeUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
+
     void SetMode(SceneMode modeName);
     SceneMode GetMode();
     SceneFeaturesMode GetFeaturesMode();
@@ -1276,6 +1352,7 @@ private:
     std::shared_ptr<FeatureDetectionStatusCallback> featureDetectionStatusCallback_;
     std::shared_ptr<SmoothZoomCallback> smoothZoomCallback_;
     std::shared_ptr<ARCallback> arCallback_;
+    std::shared_ptr<EffectSuggestionCallback> effectSuggestionCallback_;
     std::vector<int32_t> skinSmoothBeautyRange_;
     std::vector<int32_t> faceSlendorBeautyRange_;
     std::vector<int32_t> skinToneBeautyRange_;
@@ -1296,7 +1373,8 @@ private:
     static const std::unordered_map<camera_device_metadata_tag_t, BeautyType> metaBeautyControlMap_;
     static const std::unordered_map<CameraVideoStabilizationMode, VideoStabilizationMode> metaVideoStabModesMap_;
     static const std::unordered_map<VideoStabilizationMode, CameraVideoStabilizationMode> fwkVideoStabModesMap_;
-
+    static const std::unordered_map<CameraEffectSuggestionType, EffectSuggestionType> metaEffectSuggestionTypeMap_;
+    static const std::unordered_map<EffectSuggestionType, CameraEffectSuggestionType> fwkEffectSuggestionTypeMap_;
     sptr<CaptureOutput> metaOutput_;
     sptr<CaptureOutput> photoOutput_;
     std::atomic<int32_t> prevDuration_ = 0;
