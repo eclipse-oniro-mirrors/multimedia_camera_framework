@@ -662,6 +662,7 @@ void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::C
     DebugLogForSmoothZoom(settings, OHOS_CONTROL_SMOOTH_ZOOM_RATIOS);
     DebugLogForVideoStabilizationMode(settings, OHOS_CONTROL_VIDEO_STABILIZATION_MODE);
     DebugLogForFilter(settings, OHOS_CONTROL_FILTER_TYPE);
+    DebugLogForBeautyAuto(settings, OHOS_CONTROL_BEAUTY_AUTO_VALUE);
     DebugLogForBeautySkinSmooth(settings, OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE);
     DebugLogForBeautyFaceSlender(settings, OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE);
     DebugLogForBeautySkinTone(settings, OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE);
@@ -672,7 +673,7 @@ void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::C
     DebugLogForExposureTime(settings, OHOS_CONTROL_MANUAL_EXPOSURE_TIME);
     DebugLogForAeRegions(settings, OHOS_CONTROL_AE_REGIONS);
     DebugLogForAeExposureCompensation(settings, OHOS_CONTROL_AE_EXPOSURE_COMPENSATION);
-    DebugLogForBeautyAuto(settings, OHOS_CONTROL_BEAUTY_AUTO_VALUE);
+    DebugLogForFlashMode(settings, OHOS_CONTROL_FLASH_MODE);
 }
 
 void HCameraDevice::DebugLogForZoom(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
@@ -735,6 +736,19 @@ void HCameraDevice::DebugLogForFilter(const std::shared_ptr<OHOS::Camera::Camera
         MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_FILTER_TYPE value = %{public}d", item.data.u8[0]);
         CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FILTER,
             std::to_string(item.data.u8[0]), caller_);
+    }
+}
+
+void HCameraDevice::DebugLogForBeautyAuto(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
+{
+    // debug log for beauty auto value
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_BEAUTY_AUTO_VALUE portraitEffect tag");
+    } else {
+        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_BEAUTY_AUTOVALUE,
+            std::to_string(item.data.i32[0]), caller_);
     }
 }
 
@@ -890,16 +904,16 @@ void HCameraDevice::DebugLogForAeExposureCompensation(const std::shared_ptr<OHOS
     }
 }
 
-void HCameraDevice::DebugLogForBeautyAuto(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
+void HCameraDevice::DebugLogForFlashMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
 {
-    // debug log for beauty auto value
+    // debug log for flash mode
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
     if (ret != CAM_META_SUCCESS) {
-        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_BEAUTY_AUTO_VALUE portraitEffect tag");
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_FLASH_MODE tag");
     } else {
-        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_BEAUTY_AUTOVALUE,
-            std::to_string(item.data.i32[0]), caller_);
+        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FLASHMODE,
+            std::to_string(item.data.u8[0]), caller_);
     }
 }
 
