@@ -161,13 +161,11 @@ int HCameraServiceStub::HandleGetCameras(MessageParcel& data, MessageParcel& rep
 int HCameraServiceStub::HandleGetCameraIds(MessageParcel& data, MessageParcel& reply)
 {
     std::vector<std::string> cameraIds;
-    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
-
-    int errCode = GetCameras(cameraIds, cameraAbilityList);
+    int errCode = GetCameraIds(cameraIds);
     CHECK_AND_RETURN_RET_LOG(reply.WriteStringVector(cameraIds), IPC_STUB_WRITE_PARCEL_ERR,
         "HCameraServiceStub HandleGetCameras WriteStringVector failed");
 
-    int count = static_cast<int>(cameraAbilityList.size());
+    int count = static_cast<int>(cameraIds.size());
     CHECK_AND_RETURN_RET_LOG(reply.WriteInt32(count), IPC_STUB_WRITE_PARCEL_ERR,
         "HCameraServiceStub HandleGetCameras Write vector size failed");
 
@@ -176,33 +174,13 @@ int HCameraServiceStub::HandleGetCameraIds(MessageParcel& data, MessageParcel& r
 
 int HCameraServiceStub::HandleGetCameraAbility(MessageParcel& data, MessageParcel& reply)
 {
-    std::vector<std::string> cameraIds;
-    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
-
-    int errCode = GetCameras(cameraIds, cameraAbilityList);
     std::string cameraId = data.ReadString();
-
-    CHECK_AND_RETURN_RET_LOG(cameraIds.size() == cameraAbilityList.size(), IPC_STUB_WRITE_PARCEL_ERR,
-        "HCameraServiceStub HandleGetCameras WriteStringVector failed");
-    int32_t index = 0;
-    for (auto id: cameraIds) {
-        if (id.compare(cameraId) == 0) {
-            break;
-        }
-        index++;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
+    int errCode = GetCameraAbility(cameraId, cameraAbility);
+    if (!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(cameraAbility, reply))) {
+        MEDIA_ERR_LOG("HCameraServiceStub HandleGetCameras write ability failed");
+        return IPC_STUB_WRITE_PARCEL_ERR;
     }
-    int32_t abilityIndex = 0;
-    for (auto cameraAbility : cameraAbilityList) {
-        if (abilityIndex == index) {
-            if (!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(cameraAbility, reply))) {
-                MEDIA_ERR_LOG("HCameraServiceStub HandleGetCameras write ability failed");
-                return IPC_STUB_WRITE_PARCEL_ERR;
-            }
-            break;
-        }
-        abilityIndex++;
-    }
-
     return errCode;
 }
 

@@ -128,24 +128,24 @@ int32_t HCameraService::GetCameras(
         }
         camera_metadata_item_t item;
         common_metadata_header_t* metadata = cameraAbility->get();
-        ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_POSITION, &item);
-        uint8_t cameraPosition = (ret == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_POSITION_OTHER;
-        ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLDSCREEN_TYPE, &item);
-        uint8_t foldType = (ret == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLDSCREEN_OTHER;
+        int32_t res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_POSITION, &item);
+        uint8_t cameraPosition = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_POSITION_OTHER;
+        res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLDSCREEN_TYPE, &item);
+        uint8_t foldType = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLDSCREEN_OTHER;
         if (isFoldable && cameraPosition == OHOS_CAMERA_POSITION_FRONT && foldType == OHOS_CAMERA_FOLDSCREEN_OTHER) {
             continue;
         }
         if (isFoldable && cameraPosition == OHOS_CAMERA_POSITION_FRONT && foldType == OHOS_CAMERA_FOLDSCREEN_INNER) {
             cameraPosition = POSITION_FOLD_INNER;
         }
-        ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_TYPE, &item);
-        uint8_t cameraType = (ret == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_TYPE_UNSPECIFIED;
-        ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
-        uint8_t connectionType = (ret == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_CONNECTION_TYPE_BUILTIN;
-        ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
-        bool isMirrorSupported = (ret == CAM_META_SUCCESS) ?
+        res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_TYPE, &item);
+        uint8_t cameraType = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_TYPE_UNSPECIFIED;
+        res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
+        uint8_t connectionType = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_CONNECTION_TYPE_BUILTIN;
+        res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
+        bool isMirrorSupported = (res == CAM_META_SUCCESS) ?
             ((item.data.u8[0] == 1) || (item.data.u8[0] == 0)) : false;
-        ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_MODES, &item);
+        res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_MODES, &item);
         std::vector<uint8_t> supportModes = {};
         for (uint32_t i = 0; i < item.count; i++) {
             supportModes.push_back(item.data.u8[i]);
@@ -170,7 +170,8 @@ void HCameraService::FillCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos
         cameraIds.emplace_back(camera->cameraId);
         cameraAbilityList.emplace_back(camera->cameraAbility);
     }
-    if (OHOS::Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(IPCSkeleton::GetCallingFullTokenID())) {
+    if (IPCSkeleton::GetCallingUid() == 0 ||
+        OHOS::Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(IPCSkeleton::GetCallingFullTokenID())) {
         vector<shared_ptr<CameraMetaInfo>> physicalCameras = ChoosePhysicalCameras(cameraInfos, choosedCameras);
         for (const auto& camera: physicalCameras) {
             cameraIds.emplace_back(camera->cameraId);
@@ -224,6 +225,11 @@ int32_t HCameraService::GetCameraIds(std::vector<std::string>& cameraIds)
     CAMERA_SYNC_TRACE;
     int32_t ret = CAMERA_OK;
     MEDIA_DEBUG_LOG("HCameraService::GetCameraIds");
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
+    ret = GetCameras(cameraIds, cameraAbilityList);
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCameraService::GetCameraIds failed");
+    }
     return ret;
 }
 
@@ -233,6 +239,30 @@ int32_t HCameraService::GetCameraAbility(std::string& cameraId,
     CAMERA_SYNC_TRACE;
     int32_t ret = CAMERA_OK;
     MEDIA_DEBUG_LOG("HCameraService::GetCameraAbility");
+
+    std::vector<std::string> cameraIds;
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
+    ret = GetCameras(cameraIds, cameraAbilityList);
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCameraService::GetCameraAbility failed");
+        return ret;
+    }
+
+    int32_t index = 0;
+    for (auto id : cameraIds) {
+        if (id.compare(cameraId) == 0) {
+            break;
+        }
+        index++;
+    }
+    int32_t abilityIndex = 0;
+    for (auto it : cameraAbilityList) {
+        if (abilityIndex == index) {
+            cameraAbility = it;
+            break;
+        }
+        abilityIndex++;
+    }
     return ret;
 }
 
