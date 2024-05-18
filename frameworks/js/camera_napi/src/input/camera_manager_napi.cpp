@@ -15,6 +15,7 @@
 
 #include "input/camera_manager_napi.h"
 
+#include <cstddef>
 #include <uv.h>
 
 #include "camera_error_code.h"
@@ -25,21 +26,25 @@
 #include "camera_napi_security_utils.h"
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
+#include "camera_output_capability.h"
 #include "input/camera_napi.h"
 #include "input/camera_pre_launch_config_napi.h"
 #include "js_native_api_types.h"
+#include "mode/high_res_photo_session_napi.h"
 #include "mode/macro_photo_session_napi.h"
 #include "mode/macro_video_session_napi.h"
-#include "mode/high_res_photo_session_napi.h"
 #include "mode/night_session_napi.h"
 #include "mode/photo_session_for_sys_napi.h"
 #include "mode/photo_session_napi.h"
 #include "mode/portrait_session_napi.h"
 #include "mode/profession_session_napi.h"
+#include "mode/secure_camera_session_napi.h"
 #include "mode/slow_motion_session_napi.h"
 #include "mode/video_session_for_sys_napi.h"
 #include "mode/video_session_napi.h"
-#include "mode/secure_camera_session_napi.h"
+#include "napi/native_common.h"
+#include "output/camera_output_capability_napi.h"
+
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
@@ -562,40 +567,6 @@ napi_value CameraManagerNapi::CreateSessionInstance(napi_env env, napi_callback_
     return result;
 }
 
-bool ParseSize(napi_env env, napi_value root, Size* size)
-{
-    MEDIA_DEBUG_LOG("ParseSize is called");
-    napi_value tempValue = nullptr;
-
-    if (napi_get_named_property(env, root, "width", &tempValue) == napi_ok) {
-        napi_get_value_uint32(env, tempValue, &size->width);
-    }
-
-    if (napi_get_named_property(env, root, "height", &tempValue) == napi_ok) {
-        napi_get_value_uint32(env, tempValue, &(size->height));
-    }
-
-    return true;
-}
-
-bool ParseProfile(napi_env env, napi_value root, Profile* profile)
-{
-    MEDIA_DEBUG_LOG("ParseProfile is called");
-    napi_value res = nullptr;
-
-    if (napi_get_named_property(env, root, "size", &res) == napi_ok) {
-        ParseSize(env, res, &(profile->size_));
-    }
-
-    int32_t intValue = {0};
-    if (napi_get_named_property(env, root, "format", &res) == napi_ok) {
-        napi_get_value_int32(env, res, &intValue);
-        profile->format_ = static_cast<CameraFormat>(intValue);
-    }
-
-    return true;
-}
-
 bool ParsePrelaunchConfig(napi_env env, napi_value root, PrelaunchConfig* prelaunchConfig)
 {
     napi_value res = nullptr;
@@ -652,82 +623,44 @@ bool ParseSettingParam(napi_env env, napi_value root, EffectParam* effectParam)
     return true;
 }
 
-bool ParseVideoProfile(napi_env env, napi_value root, VideoProfile* profile)
-{
-    MEDIA_DEBUG_LOG("ParseVideoProfile is called");
-    napi_value res = nullptr;
-
-    if (napi_get_named_property(env, root, "size", &res) == napi_ok) {
-        ParseSize(env, res, &(profile->size_));
-    }
-    int32_t intValue = {0};
-    if (napi_get_named_property(env, root, "format", &res) == napi_ok) {
-        napi_get_value_int32(env, res, &intValue);
-        profile->format_ = static_cast<CameraFormat>(intValue);
-    }
-
-    if (napi_get_named_property(env, root, "frameRateRange", &res) == napi_ok) {
-        const static int32_t LENGTH = 2;
-        std::vector<int32_t> rateRanges(LENGTH);
-
-        int32_t intValue = {0};
-        const static uint32_t MIN_INDEX = 0;
-        const static uint32_t MAX_INDEX = 1;
-
-        napi_value value;
-        if (napi_get_named_property(env, res, "min", &value) == napi_ok) {
-            napi_get_value_int32(env, value, &intValue);
-            rateRanges[MIN_INDEX] = intValue;
-        }
-        if (napi_get_named_property(env, res, "max", &value) == napi_ok) {
-            napi_get_value_int32(env, value, &intValue);
-            rateRanges[MAX_INDEX] = intValue;
-        }
-        profile->framerates_ = rateRanges;
-    }
-
-    return true;
-}
-
 napi_value CameraManagerNapi::CreatePreviewOutputInstance(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CreatePreviewOutputInstance is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_TWO, argv, CREATE_PREVIEW_OUTPUT_INSTANCE)) {
-        MEDIA_INFO_LOG("CheckInvalidArgument napi_throw_type_error ");
-        return result;
-    }
-    MEDIA_INFO_LOG("CheckInvalidArgument pass");
-    napi_get_undefined(env, &result);
+    std::string surfaceId;
     CameraManagerNapi* cameraManagerNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
-    if (status != napi_ok || cameraManagerNapi == nullptr) {
-        MEDIA_ERR_LOG("napi_unwrap failure!");
+    size_t napiArgsSize = CameraNapiUtils::GetNapiArgs(env, info);
+    MEDIA_INFO_LOG("CameraManagerNapi::CreatePreviewOutputInstance napi args size is %{public}zu", napiArgsSize);
+
+    // Check two parameters
+    if (napiArgsSize == 2) { // 2 parameters condition
+        Profile profile;
+        CameraNapiObject profileSizeObj {{
+            { "width", &profile.size_.width },
+            { "height", &profile.size_.height }
+        }};
+        CameraNapiObject profileNapiOjbect {{
+            { "size", &profileSizeObj },
+            { "format", reinterpret_cast<int32_t*>(&profile.format_) }
+        }};
+        CameraNapiParamParser jsParamParser(env, info, cameraManagerNapi, profileNapiOjbect, surfaceId);
+        if (!jsParamParser.AssertStatus(
+            INVALID_ARGUMENT, "CameraManagerNapi::CreatePreviewOutputInstance 2 args parse error")) {
+            return nullptr;
+        }
+        MEDIA_INFO_LOG("CameraManagerNapi::CreatePreviewOutputInstance ParseProfile "
+                       "size.width = %{public}d, size.height = %{public}d, format = %{public}d, surfaceId = %{public}s",
+            profile.size_.width, profile.size_.height, profile.format_, surfaceId.c_str());
+        return PreviewOutputNapi::CreatePreviewOutput(env, profile, surfaceId);
+    }
+
+    // Check one parameters
+    CameraNapiParamParser jsParamParser = CameraNapiParamParser(env, info, cameraManagerNapi, surfaceId);
+    if (!jsParamParser.AssertStatus(
+        INVALID_ARGUMENT, "CameraManagerNapi::CreatePreviewOutputInstance 1 args parse error")) {
         return nullptr;
     }
-    Profile profile;
-    ParseProfile(env, argv[PARAM0], &profile);
-    MEDIA_INFO_LOG("ParseProfile "
-                   "size.width = %{public}d, size.height = %{public}d, format = %{public}d",
-                   profile.size_.width, profile.size_.height, profile.format_);
-
-    char buffer[PATH_MAX];
-    size_t length = 0;
-    if (napi_get_value_string_utf8(env, argv[PARAM1], buffer, PATH_MAX, &length) == napi_ok) {
-        MEDIA_INFO_LOG("surfaceId buffer --1  : %{public}s", buffer);
-        std::string surfaceId = std::string(buffer);
-        result = PreviewOutputNapi::CreatePreviewOutput(env, profile, surfaceId);
-        MEDIA_INFO_LOG("surfaceId after convert : %{public}s", surfaceId.c_str());
-    } else {
-        MEDIA_ERR_LOG("Could not able to read surfaceId argument!");
-    }
-    return result;
+    MEDIA_INFO_LOG("CameraManagerNapi::CreatePreviewOutputInstance surfaceId : %{public}s", surfaceId.c_str());
+    return PreviewOutputNapi::CreatePreviewOutput(env, surfaceId);
 }
 
 napi_value CameraManagerNapi::CreateDeferredPreviewOutputInstance(napi_env env, napi_callback_info info)
@@ -737,119 +670,130 @@ napi_value CameraManagerNapi::CreateDeferredPreviewOutputInstance(napi_env env, 
         MEDIA_ERR_LOG("SystemApi CreateDeferredPreviewOutputInstance is called!");
         return nullptr;
     }
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, CREATE_DEFERRED_PREVIEW_OUTPUT)) {
-        return result;
-    }
-    MEDIA_INFO_LOG("CheckInvalidArgument pass");
-    napi_get_undefined(env, &result);
+
     CameraManagerNapi* cameraManagerNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
-    if (status != napi_ok || cameraManagerNapi == nullptr) {
-        MEDIA_ERR_LOG("napi_unwrap failure!");
+    Profile profile;
+    CameraNapiObject profileSizeObj {{
+        { "width", &profile.size_.width },
+        { "height", &profile.size_.height }
+    }};
+    CameraNapiObject profileNapiOjbect {{
+        { "size", &profileSizeObj },
+        { "format", reinterpret_cast<int32_t*>(&profile.format_) }
+    }};
+
+    CameraNapiParamParser jsParamParser(env, info, cameraManagerNapi, profileNapiOjbect);
+    if (!jsParamParser.AssertStatus(
+        INVALID_ARGUMENT, "CameraManagerNapi::CreateDeferredPreviewOutput args parse error")) {
         return nullptr;
     }
-    Profile profile;
-    ParseProfile(env, argv[PARAM0], &profile);
-    MEDIA_INFO_LOG("ParseProfile "
+    MEDIA_INFO_LOG("CameraManagerNapi::CreateDeferredPreviewOutput ParseProfile "
                    "size.width = %{public}d, size.height = %{public}d, format = %{public}d",
-                   profile.size_.width, profile.size_.height, profile.format_);
-    result = PreviewOutputNapi::CreateDeferredPreviewOutput(env, profile);
-    return result;
+        profile.size_.width, profile.size_.height, profile.format_);
+    return PreviewOutputNapi::CreateDeferredPreviewOutput(env, profile);
 }
 
 napi_value CameraManagerNapi::CreatePhotoOutputInstance(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CreatePhotoOutputInstance is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    if (!CameraNapiUtils::CheckInvalidArgument(env, argc, argc, argv, CREATE_PHOTO_OUTPUT_INSTANCE)) {
-        return result;
-    }
-
-    napi_get_undefined(env, &result);
+    std::string surfaceId;
     CameraManagerNapi* cameraManagerNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
-    if (status != napi_ok || cameraManagerNapi == nullptr) {
-        MEDIA_ERR_LOG("CreatePhotoOutputInstance napi_unwrap failure!");
-        return nullptr;
-    }
+    size_t napiArgsSize = CameraNapiUtils::GetNapiArgs(env, info);
+    MEDIA_INFO_LOG("CameraManagerNapi::CreatePhotoOutputInstance napi args size is %{public}zu", napiArgsSize);
 
     Profile profile;
-    ParseProfile(env, argv[PARAM0], &profile);
-    MEDIA_INFO_LOG("CreatePhotoOutputInstance ParseProfile "
-                   "size.width = %{public}d, size.height = %{public}d, format = %{public}d",
-                   profile.size_.width, profile.size_.height, profile.format_);
+    CameraNapiObject profileSizeObj {{
+        { "width", &profile.size_.width },
+        { "height", &profile.size_.height }
+    }};
+    CameraNapiObject profileNapiOjbect {{
+        { "size", &profileSizeObj },
+        { "format", reinterpret_cast<int32_t*>(&profile.format_) }
+    }};
 
-    // API10
-    char buffer[PATH_MAX];
-    size_t length = 0;
-    if (argc == ARGS_ONE) {
-        MEDIA_INFO_LOG("surface will be create locally");
-        result = PhotoOutputNapi::CreatePhotoOutput(env, profile, "");
-    } else if (argc == ARGS_TWO &&
-               napi_get_value_string_utf8(env, argv[PARAM1], buffer, PATH_MAX, &length) == napi_ok) {
-        MEDIA_INFO_LOG("surfaceId buffer --1  : %{public}s", buffer);
-        std::string surfaceId = std::string(buffer);
-        result = PhotoOutputNapi::CreatePhotoOutput(env, profile, surfaceId);
-        MEDIA_INFO_LOG("CreatePhotoOutputInstance surfaceId after convert : %{public}s", surfaceId.c_str());
-    } else {
-        MEDIA_ERR_LOG("CreatePhotoOutputInstance Could not able to read surfaceId argument!");
+    if (napiArgsSize == 2) { // 2 parameters condition
+        if (!CameraNapiParamParser(env, info, cameraManagerNapi, profileNapiOjbect, surfaceId)
+                 .AssertStatus(INVALID_ARGUMENT, "CameraManagerNapi::CreatePhotoOutputInstance 2 args parse error")) {
+            return nullptr;
+        }
+        MEDIA_INFO_LOG("CameraManagerNapi::CreatePhotoOutputInstance ParseProfile "
+                       "size.width = %{public}d, size.height = %{public}d, format = %{public}d, surfaceId = %{public}s",
+            profile.size_.width, profile.size_.height, profile.format_, surfaceId.c_str());
+        return PhotoOutputNapi::CreatePhotoOutput(env, profile, surfaceId);
+    } else if (napiArgsSize == 1) { // 1 parameters condition
+        // Check one parameter only profile
+        if (CameraNapiParamParser(env, info, cameraManagerNapi, profileNapiOjbect).IsStatusOk()) {
+            MEDIA_INFO_LOG(
+                "CameraManagerNapi::CreatePhotoOutputInstance ParseProfile "
+                "size.width = %{public}d, size.height = %{public}d, format = %{public}d, surfaceId = %{public}s",
+                profile.size_.width, profile.size_.height, profile.format_, surfaceId.c_str());
+            return PhotoOutputNapi::CreatePhotoOutput(env, profile, "");
+        }
+
+        // Check one parameter only surfaceId
+        if (!CameraNapiParamParser(env, info, cameraManagerNapi, surfaceId)
+                 .AssertStatus(INVALID_ARGUMENT, "CameraManagerNapi::CreatePhotoOutputInstance 1 args parse error")) {
+            return nullptr;
+        }
+        MEDIA_INFO_LOG("CameraManagerNapi::CreatePhotoOutputInstance surfaceId : %{public}s", surfaceId.c_str());
+        return PhotoOutputNapi::CreatePhotoOutput(env, surfaceId);
     }
-    return result;
+
+    MEDIA_WARNING_LOG("CameraManagerNapi::CreatePhotoOutputInstance with none parameter");
+    // Check none parameter
+    if (!CameraNapiParamParser(env, info, cameraManagerNapi)
+             .AssertStatus(INVALID_ARGUMENT, "CameraManagerNapi::CreatePhotoOutputInstance args parse error")) {
+        return nullptr;
+    }
+    return PhotoOutputNapi::CreatePhotoOutput(env, "");
 }
 
 napi_value CameraManagerNapi::CreateVideoOutputInstance(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CreateVideoOutputInstance is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
-    napi_value thisVar = nullptr;
+    std::string surfaceId;
+    CameraManagerNapi* cameraManagerNapi = nullptr;
+    size_t napiArgsSize = CameraNapiUtils::GetNapiArgs(env, info);
+    MEDIA_INFO_LOG("CameraManagerNapi::CreateVideoOutputInstance napi args size is %{public}zu", napiArgsSize);
 
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_TWO, argv, CREATE_VIDEO_OUTPUT_INSTANCE)) {
-        return result;
+    if (napiArgsSize == 2) { // 2 parameters condition
+        VideoProfile videoProfile;
+        videoProfile.framerates_.resize(2); // framerate size is 2
+        CameraNapiObject profileSizeObj {{
+            { "width", &videoProfile.size_.width },
+            { "height", &videoProfile.size_.height }
+        }};
+        CameraNapiObject profileFrameRateObj {{
+            { "min", &videoProfile.framerates_[0] },
+            { "max", &videoProfile.framerates_[1] }
+        }};
+        CameraNapiObject profileNapiOjbect {{
+            { "size", &profileSizeObj },
+            { "frameRateRange", &profileFrameRateObj },
+            { "format", reinterpret_cast<int32_t*>(&videoProfile.format_) }
+        }};
+
+        if (!CameraNapiParamParser(env, info, cameraManagerNapi, profileNapiOjbect, surfaceId)
+                 .AssertStatus(INVALID_ARGUMENT, "CameraManagerNapi::CreateVideoOutputInstance 2 args parse error")) {
+            return nullptr;
+        }
+        MEDIA_INFO_LOG(
+            "CameraManagerNapi::CreateVideoOutputInstance ParseVideoProfile "
+            "size.width = %{public}d, size.height = %{public}d, format = %{public}d, frameRateMin = %{public}d, "
+            "frameRateMax = %{public}d, surfaceId = %{public}s",
+            videoProfile.size_.width, videoProfile.size_.height, videoProfile.format_, videoProfile.framerates_[0],
+            videoProfile.framerates_[1], surfaceId.c_str());
+        return VideoOutputNapi::CreateVideoOutput(env, videoProfile, surfaceId);
     }
 
-    CameraManagerNapi* cameraManagerNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
-    if (status != napi_ok || cameraManagerNapi == nullptr) {
-        MEDIA_ERR_LOG("napi_unwrap failure!");
+    MEDIA_WARNING_LOG("CameraManagerNapi::CreateVideoOutputInstance with only surfaceId");
+    // Check one parameters only surfaceId
+    if (!CameraNapiParamParser(env, info, cameraManagerNapi, surfaceId)
+             .AssertStatus(INVALID_ARGUMENT, "CameraManagerNapi::CreateVideoOutputInstance args parse error")) {
         return nullptr;
     }
-    VideoProfile vidProfile;
-    ParseVideoProfile(env, argv[0], &(vidProfile));
-                MEDIA_INFO_LOG("ParseVideoProfile "
-                    "size.width = %{public}d, size.height = %{public}d, format = %{public}d, "
-                    "frameRateRange : min = %{public}d, max = %{public}d",
-                    vidProfile.size_.width,
-                    vidProfile.size_.height,
-                    vidProfile.format_,
-                    vidProfile.framerates_[0],
-                    vidProfile.framerates_[1]);
-    char buffer[PATH_MAX];
-    size_t length = 0;
-    if (napi_get_value_string_utf8(env, argv[PARAM1], buffer, PATH_MAX, &length) == napi_ok) {
-        MEDIA_INFO_LOG("surfaceId buffer --1  : %{public}s", buffer);
-        std::string surfaceId = std::string(buffer);
-        result = VideoOutputNapi::CreateVideoOutput(env, vidProfile, surfaceId);
-        MEDIA_INFO_LOG("surfaceId after convert : %{public}s", surfaceId.c_str());
-    } else {
-        MEDIA_ERR_LOG("Could not able to read surfaceId argument!");
-    }
-    return result;
+    MEDIA_INFO_LOG("CameraManagerNapi::CreateVideoOutputInstance surfaceId : %{public}s", surfaceId.c_str());
+    return VideoOutputNapi::CreateVideoOutput(env, surfaceId);
 }
 
 napi_value ParseMetadataObjectTypes(napi_env env, napi_value arrayParam,

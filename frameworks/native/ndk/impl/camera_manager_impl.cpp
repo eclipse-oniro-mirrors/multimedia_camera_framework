@@ -494,7 +494,7 @@ Camera_ErrorCode Camera_Manager::CreateMetadataOutput(const Camera_MetadataObjec
     MEDIA_ERR_LOG("Camera_Manager CreateMetadataOutput is called");
     sptr<MetadataOutput> innerMetadataOutput = nullptr;
 
-    int32_t retCode = CameraManager::GetInstance()->CreateMetadataOutput(&innerMetadataOutput);
+    int32_t retCode = CameraManager::GetInstance()->CreateMetadataOutput(innerMetadataOutput);
     if (retCode != CameraErrorCode::SUCCESS) {
         return CAMERA_SERVICE_FATAL_ERROR;
     }

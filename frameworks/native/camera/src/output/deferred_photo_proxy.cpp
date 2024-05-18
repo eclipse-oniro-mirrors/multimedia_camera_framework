@@ -13,10 +13,10 @@
  * limitations under the License.
  */
 
-#include <unistd.h>
-#include <sys/mman.h>
+#include "output/deferred_photo_proxy.h"
 
-#include <buffer_handle_parcel.h>
+#include <sys/mman.h>
+#include <unistd.h>
 
 #include "camera_buffer_handle_utils.h"
 #include "camera_log.h"

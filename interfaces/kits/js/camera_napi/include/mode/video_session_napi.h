@@ -17,7 +17,6 @@
 #define VIDEO_SESSION_NAPI_H
 
 #include "napi/native_api.h"
-#include "napi/native_node_api.h"
 #include "session/camera_session_napi.h"
 #include "video_session.h"
 

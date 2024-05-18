@@ -14,37 +14,77 @@
  */
 
 #include "output/capture_output.h"
+#include <memory>
+#include <mutex>
 
+#include "camera_error_code.h"
 #include "camera_log.h"
+#include "camera_manager.h"
 #include "capture_session.h"
 
 namespace OHOS {
 namespace CameraStandard {
 static const char* g_captureOutputTypeString[CAPTURE_OUTPUT_TYPE_MAX] = {"Preview", "Photo", "Video", "Metadata"};
 
-CaptureOutput::CaptureOutput(CaptureOutputType outputType, StreamType streamType,
-    sptr<IStreamCommon> stream) : outputType_(outputType), streamType_(streamType), stream_(stream)
+CaptureOutput::CaptureOutput(CaptureOutputType outputType, StreamType streamType, sptr<IBufferProducer> bufferProducer,
+    sptr<IStreamCommon> stream)
+    : outputType_(outputType), streamType_(streamType), stream_(stream), bufferProducer_(bufferProducer)
 {
-    sptr<IRemoteObject> object = stream_->AsObject();
-    pid_t pid = 0;
-    deathRecipient_ = new(std::nothrow) CameraDeathRecipient(pid);
-    CHECK_AND_RETURN_LOG(deathRecipient_ != nullptr, "failed to new CameraDeathRecipient.");
+    RegisterStreamBinderDied();
+}
 
-    deathRecipient_->SetNotifyCb(std::bind(&CaptureOutput::CameraServerDied, this, std::placeholders::_1));
-    if (object) {
-        bool result = object->AddDeathRecipient(deathRecipient_);
-        if (!result) {
-            MEDIA_ERR_LOG("failed to add deathRecipient");
-            return;
-        }
+void CaptureOutput::RegisterStreamBinderDied()
+{
+    auto stream = GetStream();
+    if (stream == nullptr) {
+        return;
     }
+    sptr<IRemoteObject> object = stream->AsObject();
+    if (object == nullptr) {
+        return;
+    }
+    std::lock_guard<std::mutex> lock(deathRecipientMutex_);
+    if (deathRecipient_ == nullptr) {
+        deathRecipient_ = new (std::nothrow) CameraDeathRecipient(0);
+        CHECK_AND_RETURN_LOG(deathRecipient_ != nullptr, "failed to new CameraDeathRecipient.");
+        deathRecipient_->SetNotifyCb(std::bind(&CaptureOutput::OnCameraServerDied, this, std::placeholders::_1));
+    }
+
+    bool result = object->AddDeathRecipient(deathRecipient_);
+    if (!result) {
+        MEDIA_ERR_LOG("failed to add deathRecipient");
+        return;
+    }
+}
+
+sptr<IBufferProducer> CaptureOutput::GetBufferProducer()
+{
+    std::lock_guard<std::mutex> lock(bufferProducerMutex_);
+    return bufferProducer_;
+}
+
+void CaptureOutput::UnregisterStreamBinderDied()
+{
+    std::lock_guard<std::mutex> lock(deathRecipientMutex_);
+    if (deathRecipient_ == nullptr) {
+        return;
+    }
+    auto stream = GetStream();
+    if (stream != nullptr) {
+        stream->AsObject()->RemoveDeathRecipient(deathRecipient_);
+        deathRecipient_ = nullptr;
+    }
+}
+
+void CaptureOutput::OnCameraServerDied(pid_t pid)
+{
+    CameraServerDied(pid);
+    UnregisterStreamBinderDied();
 }
 
 CaptureOutput::~CaptureOutput()
 {
-    if (GetStream() != nullptr) {
-        (void)GetStream()->AsObject()->RemoveDeathRecipient(deathRecipient_);
-    }
+    UnregisterStreamBinderDied();
 }
 
 CaptureOutputType CaptureOutput::GetOutputType()
@@ -62,10 +102,22 @@ StreamType CaptureOutput::GetStreamType()
     return streamType_;
 }
 
+bool CaptureOutput::IsStreamCreated()
+{
+    std::lock_guard<std::mutex> lock(streamMutex_);
+    return stream_ != nullptr;
+}
+
 sptr<IStreamCommon> CaptureOutput::GetStream()
 {
     std::lock_guard<std::mutex> lock(streamMutex_);
     return stream_;
+}
+
+void CaptureOutput::SetStream(sptr<IStreamCommon> stream)
+{
+    std::lock_guard<std::mutex> lock(streamMutex_);
+    stream_ = stream;
 }
 
 sptr<CaptureSession> CaptureOutput::GetSession()
@@ -90,37 +142,75 @@ int32_t CaptureOutput::Release()
     return 0;
 }
 
-int32_t CaptureOutput::SetPhotoProfile(Profile &profile)
+void CaptureOutput::SetPhotoProfile(Profile& profile)
 {
-    photoProfile_ = profile;
-    return 0;
+    std::lock_guard<std::mutex> lock(photoProfileMutex_);
+    photoProfile_ = std::make_shared<Profile>(profile);
 }
 
-Profile CaptureOutput::GetPhotoProfile()
+std::shared_ptr<Profile> CaptureOutput::GetPhotoProfile()
 {
+    std::lock_guard<std::mutex> lock(photoProfileMutex_);
     return photoProfile_;
 }
 
-int32_t CaptureOutput::SetPreviewProfile(Profile &profile)
+void CaptureOutput::SetPreviewProfile(Profile& profile)
 {
-    previewProfile_ = profile;
-    return 0;
+    std::lock_guard<std::mutex> lock(previewProfileMutex_);
+    previewProfile_ = std::make_shared<Profile>(profile);
 }
 
-Profile CaptureOutput::GetPreviewProfile()
+std::shared_ptr<Profile> CaptureOutput::GetPreviewProfile()
 {
+    std::lock_guard<std::mutex> lock(previewProfileMutex_);
     return previewProfile_;
 }
 
-int32_t CaptureOutput::SetVideoProfile(VideoProfile &videoProfile)
+void CaptureOutput::SetVideoProfile(VideoProfile& videoProfile)
 {
-    videoProfile_ = videoProfile;
-    return 0;
+    std::lock_guard<std::mutex> lock(videoProfileMutex_);
+    videoProfile_ = std::make_shared<VideoProfile>(videoProfile);
 }
 
-VideoProfile CaptureOutput::GetVideoProfile()
+std::shared_ptr<VideoProfile> CaptureOutput::GetVideoProfile()
 {
+    std::lock_guard<std::mutex> lock(videoProfileMutex_);
     return videoProfile_;
 }
+
+void CaptureOutput::ClearProfiles()
+{
+    {
+        std::lock_guard<std::mutex> lock(previewProfileMutex_);
+        previewProfile_ = nullptr;
+    }
+    {
+        std::lock_guard<std::mutex> lock(photoProfileMutex_);
+        photoProfile_ = nullptr;
+    }
+    {
+        std::lock_guard<std::mutex> lock(videoProfileMutex_);
+        videoProfile_ = nullptr;
+    }
+}
+
+void CaptureOutput::AddTag(Tag tag)
+{
+    std::lock_guard<std::mutex> lock(tagsMutex_);
+    tags_.insert(tag);
+}
+
+void CaptureOutput::RemoveTag(Tag tag)
+{
+    std::lock_guard<std::mutex> lock(tagsMutex_);
+    tags_.erase(tag);
+}
+
+bool CaptureOutput::IsTagSetted(Tag tag)
+{
+    std::lock_guard<std::mutex> lock(tagsMutex_);
+    return tags_.find(tag) != tags_.end();
+}
+
 } // CameraStandard
 } // OHOS

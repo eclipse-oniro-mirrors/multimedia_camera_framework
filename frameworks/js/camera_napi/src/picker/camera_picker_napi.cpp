@@ -27,7 +27,6 @@
 #include "camera_log.h"
 #include "int_wrapper.h"
 #include "js_native_api.h"
-#include "js_native_api_types.h"
 #include "string_wrapper.h"
 
 #include "napi_base_context.h"

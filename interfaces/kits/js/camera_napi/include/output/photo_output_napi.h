@@ -16,8 +16,9 @@
 #ifndef PHOTO_OUTPUT_NAPI_H_
 #define PHOTO_OUTPUT_NAPI_H_
 
-#include "camera_napi_template_utils.h"
+#include <memory>
 #include "camera_napi_event_emitter.h"
+#include "camera_napi_template_utils.h"
 #include "input/camera_device.h"
 #include "input/camera_manager.h"
 #include "listener_base.h"
@@ -242,11 +243,11 @@ struct RawPhotoListenerInfo {
 };
 
 struct PhotoOutputAsyncContext;
-
 class PhotoOutputNapi : public CameraNapiEventEmitter<PhotoOutputNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreatePhotoOutput(napi_env env, Profile& profile, std::string surfaceId);
+    static napi_value CreatePhotoOutput(napi_env env, std::string surfaceId);
     static napi_value GetDefaultCaptureSetting(napi_env env, napi_callback_info info);
 
     static napi_value Capture(napi_env env, napi_callback_info info);
@@ -260,6 +261,7 @@ public:
     static napi_value IsDeferredImageDeliverySupported(napi_env env, napi_callback_info info);
     static napi_value IsDeferredImageDeliveryEnabled(napi_env env, napi_callback_info info);
     static bool IsPhotoOutput(napi_env env, napi_value obj);
+    static napi_value GetActiveProfile(napi_env env, napi_callback_info info);
     static napi_value On(napi_env env, napi_callback_info info);
     static napi_value Once(napi_env env, napi_callback_info info);
     static napi_value Off(napi_env env, napi_callback_info info);
@@ -336,7 +338,7 @@ private:
     napi_env env_;
     napi_ref wrapper_;
     sptr<PhotoOutput> photoOutput_;
-    Profile profile_;
+    std::shared_ptr<Profile> profile_;
     bool isQuickThumbnailEnabled_ = false;
     bool isDeferredPhotoEnabled_ = false;
     sptr<ThumbnailListener> thumbnailListener_;

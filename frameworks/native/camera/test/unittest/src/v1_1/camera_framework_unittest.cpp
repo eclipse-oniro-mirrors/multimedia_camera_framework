@@ -15,12 +15,18 @@
 
 #include "camera_framework_unittest.h"
 
+#include <cstdint>
+#include <vector>
+
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "camera_log.h"
+#include "camera_manager.h"
 #include "camera_output_capability.h"
 #include "camera_util.h"
+#include "capture_output.h"
 #include "capture_scene_const.h"
+#include "capture_session.h"
 #include "gmock/gmock.h"
 #include "hap_token_info.h"
 #include "input/camera_input.h"
@@ -28,10 +34,14 @@
 #include "metadata_utils.h"
 #include "nativetoken_kit.h"
 #include "night_session.h"
+#include "photo_output.h"
+#include "photo_session.h"
+#include "preview_output.h"
 #include "scan_session.h"
 #include "surface.h"
 #include "test_common.h"
 #include "token_setproc.h"
+#include "video_session.h"
 
 using namespace testing::ext;
 using ::testing::A;
@@ -183,7 +193,7 @@ public:
             vector.emplace_back(CameraFrameworkUnitTest::STREAM_FINISH);
         }
     };
-    
+
     struct ModeConfig {
         int32_t modeName;
         std::vector<StreamConfig> streams = {};
@@ -369,10 +379,12 @@ public:
             int32_t dataSize = 100;
             auto streamsInfo = ABILITY_MODE_CONFIGS.GetDatas();
             ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
-            ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS,
-                streamsInfo.data(), streamsInfo.size());
-            ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS,
-                streamsInfo.data(), streamsInfo.size());
+            ability->addEntry(
+                OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, streamsInfo.data(), streamsInfo.size());
+
+            ability->addEntry(
+                OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streamsInfo.data(), streamsInfo.size());
+
             if (g_mockFlagWithoutAbt) {
                 return CAMERA_OK;
             }
@@ -4494,9 +4506,10 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_038, TestSize.Level
     ASSERT_NE(preview, nullptr);
     auto previewOutput = (sptr<PreviewOutput>&)preview;
     EXPECT_EQ(previewOutput->IsSketchSupported(), false);
-    previewOutput->previewProfile_.format_ = CAMERA_FORMAT_YUV_420_SP;
+    auto currentPreviewProfile = previewOutput->GetPreviewProfile();
+    currentPreviewProfile->format_ = CAMERA_FORMAT_YUV_420_SP;
     EXPECT_EQ(previewOutput->IsSketchSupported(), false);
-    previewOutput->previewProfile_.format_ = CAMERA_FORMAT_JPEG;
+    currentPreviewProfile->format_ = CAMERA_FORMAT_JPEG;
     EXPECT_EQ(previewOutput->IsSketchSupported(), false);
 
     EXPECT_EQ(preview->Release(), 0);
@@ -5190,7 +5203,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_052, TestSize.Level
     sptr<CameraOutputCapability> ability = cameraManager->GetSupportedOutputCapability(cameras[0], 0);
 
     SceneMode mode = PORTRAIT;
-    cameraManager->serviceProxy_ = nullptr;
+    cameraManager->SetServiceProxy(nullptr);
     cameraManager->CreateCaptureSession(mode);
     cameraManager->InitCameraList();
 
@@ -5250,7 +5263,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_054, TestSize.Level
     ret = cameraManager->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS,
         activeTime, effectParam);
     EXPECT_EQ(ret, 7400201);
-    cameraManager->cameraObjList = {};
+    cameraManager->cameraObjList_ = {};
     bool isTorchSupported = cameraManager->IsTorchSupported();
     EXPECT_EQ(isTorchSupported, false);
 }
@@ -5269,7 +5282,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_055, TestSize.Level
     cameraManager->cameraSvcCallback_  = callback;
 
     pid_t pid = 0;
-    cameraManager->serviceProxy_  = nullptr;
+    cameraManager->SetServiceProxy(nullptr);
     cameraManager->CameraServerDied(pid);
     sptr<ICameraServiceCallback> cameraServiceCallback = nullptr;
     cameraManager->SetCameraServiceCallback(cameraServiceCallback);
@@ -5278,7 +5291,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_055, TestSize.Level
     sptr<ICameraMuteServiceCallback> cameraMuteServiceCallback = nullptr;
     cameraManager->SetCameraMuteServiceCallback(cameraMuteServiceCallback);
 
-    cameraManager->cameraObjList = {};
+    cameraManager->cameraObjList_ = {};
     string cameraId = "";
     cameraManager->GetCameraDeviceFromId(cameraId);
     bool isTorchSupported = cameraManager->IsTorchSupported();
@@ -5302,7 +5315,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_056, TestSize.Level
     int32_t ret = cameraManager->PreSwitchCamera(cameraId);
     EXPECT_EQ(ret, 7400201);
 
-    cameraManager->serviceProxy_ = nullptr;
+    cameraManager->SetServiceProxy(nullptr);
     cameraManager->PreSwitchCamera(cameraId);
     EXPECT_EQ(ret, 7400201);
 }
@@ -7145,6 +7158,686 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_112, TestSize.Level
     activeTime, effectParam);
     EXPECT_EQ(intResult, 2);
 
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test preconfig
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test preconfig PhotoSession PRECONFIG_720P
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_113, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<FakeHCameraService> mockHCameraService = new FakeHCameraService(mockCameraHostManager);
+    sptr<HCameraService> cameraService = (sptr<HCameraService>&)mockHCameraService;
+    ASSERT_NE(cameraService, nullptr);
+
+    sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
+    int32_t intResult = cameraService->SetCallback(callback);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
+    ASSERT_NE(deviceObj, nullptr);
+
+    sptr<CaptureSession> photoSession = cameraManager->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(photoSession, nullptr);
+    if (photoSession->CanPreconfig(PRECONFIG_720P)) {
+        intResult = photoSession->Preconfig(PRECONFIG_720P);
+        EXPECT_EQ(intResult, 0);
+
+        sptr<Surface> preivewSurface = Surface::CreateSurfaceAsConsumer();
+        ASSERT_NE(preivewSurface, nullptr);
+
+        sptr<PreviewOutput> previewOutput = nullptr;
+        intResult = cameraManager->CreatePreviewOutputWithoutProfile(preivewSurface, &previewOutput);
+        EXPECT_EQ(intResult, 0);
+        ASSERT_NE(previewOutput, nullptr);
+
+        sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+        ASSERT_NE(photoSurface, nullptr);
+        auto photoProducer = photoSurface->GetProducer();
+        ASSERT_NE(photoProducer, nullptr);
+        sptr<PhotoOutput> photoOutput = nullptr;
+        intResult = cameraManager->CreatePhotoOutputWithoutProfile(photoProducer, &photoOutput);
+        EXPECT_EQ(intResult, 0);
+        ASSERT_NE(photoOutput, nullptr);
+
+        intResult = photoSession->BeginConfig();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = photoSession->AddInput(input);
+        EXPECT_EQ(intResult, 0);
+
+        sptr<CaptureOutput> previewOutputCaptureUpper = previewOutput;
+        intResult = photoSession->AddOutput(previewOutputCaptureUpper);
+        EXPECT_EQ(intResult, 0);
+        sptr<CaptureOutput> photoOutputCaptureUpper = photoOutput;
+        intResult = photoSession->AddOutput(photoOutputCaptureUpper);
+        EXPECT_EQ(intResult, 0);
+
+        intResult = photoSession->CommitConfig();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = photoSession->Start();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = photoSession->Release();
+        EXPECT_EQ(intResult, 0);
+    }
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test preconfig PhotoSession
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test preconfig PhotoSession PRECONFIG_1080P
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_114, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<FakeHCameraService> mockHCameraService = new FakeHCameraService(mockCameraHostManager);
+    sptr<HCameraService> cameraService = (sptr<HCameraService>&)mockHCameraService;
+    ASSERT_NE(cameraService, nullptr);
+
+    sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
+    int32_t intResult = cameraService->SetCallback(callback);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
+    ASSERT_NE(deviceObj, nullptr);
+
+    sptr<CaptureSession> photoSession = cameraManager->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(photoSession, nullptr);
+    if (photoSession->CanPreconfig(PRECONFIG_1080P)) {
+        intResult = photoSession->Preconfig(PRECONFIG_1080P);
+        EXPECT_EQ(intResult, 0);
+
+        sptr<Surface> preivewSurface = Surface::CreateSurfaceAsConsumer();
+        ASSERT_NE(preivewSurface, nullptr);
+
+        sptr<PreviewOutput> previewOutput = nullptr;
+        intResult = cameraManager->CreatePreviewOutputWithoutProfile(preivewSurface, &previewOutput);
+        EXPECT_EQ(intResult, 0);
+        ASSERT_NE(previewOutput, nullptr);
+
+        sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+        ASSERT_NE(photoSurface, nullptr);
+        auto photoProducer = photoSurface->GetProducer();
+        ASSERT_NE(photoProducer, nullptr);
+        sptr<PhotoOutput> photoOutput = nullptr;
+        intResult = cameraManager->CreatePhotoOutputWithoutProfile(photoProducer, &photoOutput);
+        EXPECT_EQ(intResult, 0);
+        ASSERT_NE(photoOutput, nullptr);
+
+        intResult = photoSession->BeginConfig();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = photoSession->AddInput(input);
+        EXPECT_EQ(intResult, 0);
+
+        sptr<CaptureOutput> previewOutputCaptureUpper = previewOutput;
+        intResult = photoSession->AddOutput(previewOutputCaptureUpper);
+        EXPECT_EQ(intResult, 0);
+        sptr<CaptureOutput> photoOutputCaptureUpper = photoOutput;
+        intResult = photoSession->AddOutput(photoOutputCaptureUpper);
+        EXPECT_EQ(intResult, 0);
+
+        intResult = photoSession->CommitConfig();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = photoSession->Start();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = photoSession->Release();
+        EXPECT_EQ(intResult, 0);
+    }
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test preconfig PhotoSession
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test preconfig PhotoSession PRECONFIG_4K
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_115, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<FakeHCameraService> mockHCameraService = new FakeHCameraService(mockCameraHostManager);
+    sptr<HCameraService> cameraService = (sptr<HCameraService>&)mockHCameraService;
+    ASSERT_NE(cameraService, nullptr);
+
+    sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
+    int32_t intResult = cameraService->SetCallback(callback);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
+    ASSERT_NE(deviceObj, nullptr);
+
+    sptr<CaptureSession> photoSession = cameraManager->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(photoSession, nullptr);
+    if (photoSession->CanPreconfig(PRECONFIG_4K)) {
+        intResult = photoSession->Preconfig(PRECONFIG_4K);
+        EXPECT_EQ(intResult, 0);
+
+        sptr<Surface> preivewSurface = Surface::CreateSurfaceAsConsumer();
+        ASSERT_NE(preivewSurface, nullptr);
+
+        sptr<PreviewOutput> previewOutput = nullptr;
+        intResult = cameraManager->CreatePreviewOutputWithoutProfile(preivewSurface, &previewOutput);
+        EXPECT_EQ(intResult, 0);
+        ASSERT_NE(previewOutput, nullptr);
+
+        sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+        ASSERT_NE(photoSurface, nullptr);
+        auto photoProducer = photoSurface->GetProducer();
+        ASSERT_NE(photoProducer, nullptr);
+        sptr<PhotoOutput> photoOutput = nullptr;
+        intResult = cameraManager->CreatePhotoOutputWithoutProfile(photoProducer, &photoOutput);
+        EXPECT_EQ(intResult, 0);
+        ASSERT_NE(photoOutput, nullptr);
+
+        intResult = photoSession->BeginConfig();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = photoSession->AddInput(input);
+        EXPECT_EQ(intResult, 0);
+
+        sptr<CaptureOutput> previewOutputCaptureUpper = previewOutput;
+        intResult = photoSession->AddOutput(previewOutputCaptureUpper);
+        EXPECT_EQ(intResult, 0);
+        sptr<CaptureOutput> photoOutputCaptureUpper = photoOutput;
+        intResult = photoSession->AddOutput(photoOutputCaptureUpper);
+        EXPECT_EQ(intResult, 0);
+
+        intResult = photoSession->CommitConfig();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = photoSession->Start();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = photoSession->Release();
+        EXPECT_EQ(intResult, 0);
+    }
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test preconfig PhotoSession
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test preconfig PhotoSession PRECONFIG_HIGH_QUALITY
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_116, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<FakeHCameraService> mockHCameraService = new FakeHCameraService(mockCameraHostManager);
+    sptr<HCameraService> cameraService = (sptr<HCameraService>&)mockHCameraService;
+    ASSERT_NE(cameraService, nullptr);
+
+    sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
+    int32_t intResult = cameraService->SetCallback(callback);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
+    ASSERT_NE(deviceObj, nullptr);
+
+    sptr<CaptureSession> photoSession = cameraManager->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(photoSession, nullptr);
+    if (photoSession->CanPreconfig(PRECONFIG_HIGH_QUALITY)) {
+        intResult = photoSession->Preconfig(PRECONFIG_HIGH_QUALITY);
+        EXPECT_EQ(intResult, 0);
+
+        sptr<Surface> preivewSurface = Surface::CreateSurfaceAsConsumer();
+        ASSERT_NE(preivewSurface, nullptr);
+
+        sptr<PreviewOutput> previewOutput = nullptr;
+        intResult = cameraManager->CreatePreviewOutputWithoutProfile(preivewSurface, &previewOutput);
+        EXPECT_EQ(intResult, 0);
+        ASSERT_NE(previewOutput, nullptr);
+
+        sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+        ASSERT_NE(photoSurface, nullptr);
+        auto photoProducer = photoSurface->GetProducer();
+        ASSERT_NE(photoProducer, nullptr);
+        sptr<PhotoOutput> photoOutput = nullptr;
+        intResult = cameraManager->CreatePhotoOutputWithoutProfile(photoProducer, &photoOutput);
+        EXPECT_EQ(intResult, 0);
+        ASSERT_NE(photoOutput, nullptr);
+
+        intResult = photoSession->BeginConfig();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = photoSession->AddInput(input);
+        EXPECT_EQ(intResult, 0);
+
+        sptr<CaptureOutput> previewOutputCaptureUpper = previewOutput;
+        intResult = photoSession->AddOutput(previewOutputCaptureUpper);
+        EXPECT_EQ(intResult, 0);
+        sptr<CaptureOutput> photoOutputCaptureUpper = photoOutput;
+        intResult = photoSession->AddOutput(photoOutputCaptureUpper);
+        EXPECT_EQ(intResult, 0);
+
+        intResult = photoSession->CommitConfig();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = photoSession->Start();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = photoSession->Release();
+        EXPECT_EQ(intResult, 0);
+    }
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test preconfig
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test preconfig VideoSession PRECONFIG_720P
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_117, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<FakeHCameraService> mockHCameraService = new FakeHCameraService(mockCameraHostManager);
+    sptr<HCameraService> cameraService = (sptr<HCameraService>&)mockHCameraService;
+    ASSERT_NE(cameraService, nullptr);
+
+    sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
+    int32_t intResult = cameraService->SetCallback(callback);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
+    ASSERT_NE(deviceObj, nullptr);
+
+    sptr<CaptureSession> videoSession = cameraManager->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(videoSession, nullptr);
+    if (videoSession->CanPreconfig(PRECONFIG_720P)) {
+        intResult = videoSession->Preconfig(PRECONFIG_720P);
+        EXPECT_EQ(intResult, 0);
+
+        sptr<Surface> preivewSurface = Surface::CreateSurfaceAsConsumer();
+        ASSERT_NE(preivewSurface, nullptr);
+
+        sptr<PreviewOutput> previewOutput = nullptr;
+        intResult = cameraManager->CreatePreviewOutputWithoutProfile(preivewSurface, &previewOutput);
+        EXPECT_EQ(intResult, 0);
+        ASSERT_NE(previewOutput, nullptr);
+
+        sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+        ASSERT_NE(photoSurface, nullptr);
+        auto photoProducer = photoSurface->GetProducer();
+        ASSERT_NE(photoProducer, nullptr);
+        sptr<PhotoOutput> photoOutput = nullptr;
+        intResult = cameraManager->CreatePhotoOutputWithoutProfile(photoProducer, &photoOutput);
+        EXPECT_EQ(intResult, 0);
+        ASSERT_NE(photoOutput, nullptr);
+
+        sptr<Surface> videoSurface = Surface::CreateSurfaceAsConsumer();
+        ASSERT_NE(videoSurface, nullptr);
+        sptr<VideoOutput> videoOutput = nullptr;
+        intResult = cameraManager->CreateVideoOutputWithoutProfile(videoSurface, &videoOutput);
+        EXPECT_EQ(intResult, 0);
+        ASSERT_NE(videoOutput, nullptr);
+
+        intResult = videoSession->BeginConfig();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = videoSession->AddInput(input);
+        EXPECT_EQ(intResult, 0);
+
+        sptr<CaptureOutput> previewOutputCaptureUpper = previewOutput;
+        intResult = videoSession->AddOutput(previewOutputCaptureUpper);
+        EXPECT_EQ(intResult, 0);
+        sptr<CaptureOutput> photoOutputCaptureUpper = photoOutput;
+        intResult = videoSession->AddOutput(photoOutputCaptureUpper);
+        EXPECT_EQ(intResult, 0);
+        sptr<CaptureOutput> videoOutputCaptureUpper = videoOutput;
+        intResult = videoSession->AddOutput(videoOutputCaptureUpper);
+        EXPECT_EQ(intResult, 0);
+
+        intResult = videoSession->CommitConfig();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = videoSession->Start();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = videoSession->Release();
+        EXPECT_EQ(intResult, 0);
+    }
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test preconfig
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test preconfig VideoSession PRECONFIG_1080P
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_118, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<FakeHCameraService> mockHCameraService = new FakeHCameraService(mockCameraHostManager);
+    sptr<HCameraService> cameraService = (sptr<HCameraService>&)mockHCameraService;
+    ASSERT_NE(cameraService, nullptr);
+
+    sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
+    int32_t intResult = cameraService->SetCallback(callback);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
+    ASSERT_NE(deviceObj, nullptr);
+
+    sptr<CaptureSession> videoSession = cameraManager->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(videoSession, nullptr);
+    if (videoSession->CanPreconfig(PRECONFIG_1080P)) {
+        intResult = videoSession->Preconfig(PRECONFIG_1080P);
+        EXPECT_EQ(intResult, 0);
+
+        sptr<Surface> preivewSurface = Surface::CreateSurfaceAsConsumer();
+        ASSERT_NE(preivewSurface, nullptr);
+
+        sptr<PreviewOutput> previewOutput = nullptr;
+        intResult = cameraManager->CreatePreviewOutputWithoutProfile(preivewSurface, &previewOutput);
+        EXPECT_EQ(intResult, 0);
+        ASSERT_NE(previewOutput, nullptr);
+
+        sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+        ASSERT_NE(photoSurface, nullptr);
+        auto photoProducer = photoSurface->GetProducer();
+        ASSERT_NE(photoProducer, nullptr);
+        sptr<PhotoOutput> photoOutput = nullptr;
+        intResult = cameraManager->CreatePhotoOutputWithoutProfile(photoProducer, &photoOutput);
+        EXPECT_EQ(intResult, 0);
+        ASSERT_NE(photoOutput, nullptr);
+
+        sptr<Surface> videoSurface = Surface::CreateSurfaceAsConsumer();
+        ASSERT_NE(videoSurface, nullptr);
+        sptr<VideoOutput> videoOutput = nullptr;
+        intResult = cameraManager->CreateVideoOutputWithoutProfile(videoSurface, &videoOutput);
+        EXPECT_EQ(intResult, 0);
+        ASSERT_NE(videoOutput, nullptr);
+
+        intResult = videoSession->BeginConfig();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = videoSession->AddInput(input);
+        EXPECT_EQ(intResult, 0);
+
+        sptr<CaptureOutput> previewOutputCaptureUpper = previewOutput;
+        intResult = videoSession->AddOutput(previewOutputCaptureUpper);
+        EXPECT_EQ(intResult, 0);
+        sptr<CaptureOutput> photoOutputCaptureUpper = photoOutput;
+        intResult = videoSession->AddOutput(photoOutputCaptureUpper);
+        EXPECT_EQ(intResult, 0);
+        sptr<CaptureOutput> videoOutputCaptureUpper = videoOutput;
+        intResult = videoSession->AddOutput(videoOutputCaptureUpper);
+        EXPECT_EQ(intResult, 0);
+
+        intResult = videoSession->CommitConfig();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = videoSession->Start();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = videoSession->Release();
+        EXPECT_EQ(intResult, 0);
+    }
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test preconfig
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test preconfig VideoSession PRECONFIG_4K
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_119, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<FakeHCameraService> mockHCameraService = new FakeHCameraService(mockCameraHostManager);
+    sptr<HCameraService> cameraService = (sptr<HCameraService>&)mockHCameraService;
+    ASSERT_NE(cameraService, nullptr);
+
+    sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
+    int32_t intResult = cameraService->SetCallback(callback);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
+    ASSERT_NE(deviceObj, nullptr);
+
+    sptr<CaptureSession> videoSession = cameraManager->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(videoSession, nullptr);
+    if (videoSession->CanPreconfig(PRECONFIG_4K)) {
+        intResult = videoSession->Preconfig(PRECONFIG_4K);
+        EXPECT_EQ(intResult, 0);
+
+        sptr<Surface> preivewSurface = Surface::CreateSurfaceAsConsumer();
+        ASSERT_NE(preivewSurface, nullptr);
+
+        sptr<PreviewOutput> previewOutput = nullptr;
+        intResult = cameraManager->CreatePreviewOutputWithoutProfile(preivewSurface, &previewOutput);
+        EXPECT_EQ(intResult, 0);
+        ASSERT_NE(previewOutput, nullptr);
+
+        sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+        ASSERT_NE(photoSurface, nullptr);
+        auto photoProducer = photoSurface->GetProducer();
+        ASSERT_NE(photoProducer, nullptr);
+        sptr<PhotoOutput> photoOutput = nullptr;
+        intResult = cameraManager->CreatePhotoOutputWithoutProfile(photoProducer, &photoOutput);
+        EXPECT_EQ(intResult, 0);
+        ASSERT_NE(photoOutput, nullptr);
+
+        sptr<Surface> videoSurface = Surface::CreateSurfaceAsConsumer();
+        ASSERT_NE(videoSurface, nullptr);
+        sptr<VideoOutput> videoOutput = nullptr;
+        intResult = cameraManager->CreateVideoOutputWithoutProfile(videoSurface, &videoOutput);
+        EXPECT_EQ(intResult, 0);
+        ASSERT_NE(videoOutput, nullptr);
+
+        intResult = videoSession->BeginConfig();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = videoSession->AddInput(input);
+        EXPECT_EQ(intResult, 0);
+
+        sptr<CaptureOutput> previewOutputCaptureUpper = previewOutput;
+        intResult = videoSession->AddOutput(previewOutputCaptureUpper);
+        EXPECT_EQ(intResult, 0);
+        sptr<CaptureOutput> photoOutputCaptureUpper = photoOutput;
+        intResult = videoSession->AddOutput(photoOutputCaptureUpper);
+        EXPECT_EQ(intResult, 0);
+        sptr<CaptureOutput> videoOutputCaptureUpper = videoOutput;
+        intResult = videoSession->AddOutput(videoOutputCaptureUpper);
+        EXPECT_EQ(intResult, 0);
+
+        intResult = videoSession->CommitConfig();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = videoSession->Start();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = videoSession->Release();
+        EXPECT_EQ(intResult, 0);
+    }
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test preconfig
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test preconfig VideoSession PRECONFIG_4K
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_120, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<FakeHCameraService> mockHCameraService = new FakeHCameraService(mockCameraHostManager);
+    sptr<HCameraService> cameraService = (sptr<HCameraService>&)mockHCameraService;
+    ASSERT_NE(cameraService, nullptr);
+
+    sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
+    int32_t intResult = cameraService->SetCallback(callback);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
+    ASSERT_NE(deviceObj, nullptr);
+
+    sptr<CaptureSession> videoSession = cameraManager->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(videoSession, nullptr);
+    if (videoSession->CanPreconfig(PRECONFIG_HIGH_QUALITY)) {
+        intResult = videoSession->Preconfig(PRECONFIG_HIGH_QUALITY);
+        EXPECT_EQ(intResult, 0);
+
+        sptr<Surface> preivewSurface = Surface::CreateSurfaceAsConsumer();
+        ASSERT_NE(preivewSurface, nullptr);
+
+        sptr<PreviewOutput> previewOutput = nullptr;
+        intResult = cameraManager->CreatePreviewOutputWithoutProfile(preivewSurface, &previewOutput);
+        EXPECT_EQ(intResult, 0);
+        ASSERT_NE(previewOutput, nullptr);
+
+        sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+        ASSERT_NE(photoSurface, nullptr);
+        auto photoProducer = photoSurface->GetProducer();
+        ASSERT_NE(photoProducer, nullptr);
+        sptr<PhotoOutput> photoOutput = nullptr;
+        intResult = cameraManager->CreatePhotoOutputWithoutProfile(photoProducer, &photoOutput);
+        EXPECT_EQ(intResult, 0);
+        ASSERT_NE(photoOutput, nullptr);
+
+        sptr<Surface> videoSurface = Surface::CreateSurfaceAsConsumer();
+        ASSERT_NE(videoSurface, nullptr);
+        sptr<VideoOutput> videoOutput = nullptr;
+        intResult = cameraManager->CreateVideoOutputWithoutProfile(videoSurface, &videoOutput);
+        EXPECT_EQ(intResult, 0);
+        ASSERT_NE(videoOutput, nullptr);
+
+        intResult = videoSession->BeginConfig();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = videoSession->AddInput(input);
+        EXPECT_EQ(intResult, 0);
+
+        sptr<CaptureOutput> previewOutputCaptureUpper = previewOutput;
+        intResult = videoSession->AddOutput(previewOutputCaptureUpper);
+        EXPECT_EQ(intResult, 0);
+        sptr<CaptureOutput> photoOutputCaptureUpper = photoOutput;
+        intResult = videoSession->AddOutput(photoOutputCaptureUpper);
+        EXPECT_EQ(intResult, 0);
+        sptr<CaptureOutput> videoOutputCaptureUpper = videoOutput;
+        intResult = videoSession->AddOutput(videoOutputCaptureUpper);
+        EXPECT_EQ(intResult, 0);
+
+        intResult = videoSession->CommitConfig();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = videoSession->Start();
+        EXPECT_EQ(intResult, 0);
+
+        intResult = videoSession->Release();
+        EXPECT_EQ(intResult, 0);
+    }
     input->Close();
 }
 } // CameraStandard

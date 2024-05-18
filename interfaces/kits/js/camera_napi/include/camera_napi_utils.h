@@ -16,12 +16,12 @@
 #ifndef CAMERA_NAPI_UTILS_H_
 #define CAMERA_NAPI_UTILS_H_
 
-#include <stdbool.h>
-
+#include <cstddef>
 #include "camera_error_code.h"
 #include "camera_napi_const.h"
+#include "js_native_api.h"
 #include "js_native_api_types.h"
-#include "napi/native_node_api.h"
+#include "napi/native_api.h"
 
 #ifdef NAPI_ASSERT
 #undef NAPI_ASSERT
@@ -153,10 +153,19 @@ public:
     static napi_status CreateObjectWithPropNameAndValues(napi_env env, napi_value* result, size_t property_count,
         const char** keys, const std::vector<std::string> values);
 
+    static size_t GetNapiArgs(napi_env env, napi_callback_info callbackInfo);
+
     inline static napi_value GetUndefinedValue(napi_env env)
     {
         napi_value result = nullptr;
         napi_get_undefined(env, &result);
+        return result;
+    }
+
+    inline static napi_value GetBooleanValue(napi_env env, bool value)
+    {
+        napi_value result = nullptr;
+        napi_get_boolean(env, value, &result);
         return result;
     }
 

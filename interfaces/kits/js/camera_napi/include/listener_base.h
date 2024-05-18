@@ -16,6 +16,8 @@
 #ifndef LISTENER_BASE_H_
 #define LISTENER_BASE_H_
 
+#include <mutex>
+
 #include "camera_napi_utils.h"
 namespace OHOS {
 namespace CameraStandard {

@@ -27,10 +27,11 @@
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
 #include "capture_scene_const.h"
+#include "capture_session.h"
 #include "js_native_api.h"
-#include "js_native_api_types.h"
 #include "listener_base.h"
 #include "napi/native_api.h"
+#include "napi/native_common.h"
 #include "output/photo_output_napi.h"
 
 namespace OHOS {
@@ -151,6 +152,11 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::color_management_
     DECLARE_NAPI_FUNCTION("getSupportedColorSpaces", CameraSessionNapi::GetSupportedColorSpaces),
     DECLARE_NAPI_FUNCTION("getActiveColorSpace", CameraSessionNapi::GetActiveColorSpace),
     DECLARE_NAPI_FUNCTION("setColorSpace", CameraSessionNapi::SetColorSpace)
+};
+
+const std::vector<napi_property_descriptor> CameraSessionNapi::preconfig_props = {
+    DECLARE_NAPI_FUNCTION("canPreconfig", CameraSessionNapi::CanPreconfig),
+    DECLARE_NAPI_FUNCTION("preconfig", CameraSessionNapi::Preconfig)
 };
 
 void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state) const
@@ -649,7 +655,8 @@ napi_value CameraSessionNapi::Init(napi_env env, napi_value exports)
     int32_t refCount = 1;
     std::vector<std::vector<napi_property_descriptor>> descriptors = { camera_process_props, stabilization_props,
         flash_props, auto_exposure_props, focus_props, zoom_props, filter_props, beauty_props, color_effect_props,
-        macro_props, moon_capture_boost_props, features_props, color_management_props, manual_focus_props};
+        macro_props, moon_capture_boost_props, features_props, color_management_props, manual_focus_props,
+        preconfig_props };
     std::vector<napi_property_descriptor> camera_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, CAMERA_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                CameraSessionNapiConstructor, nullptr,
@@ -2849,6 +2856,39 @@ napi_value CameraSessionNapi::EnableFeature(napi_env env, napi_callback_info inf
     MEDIA_INFO_LOG("CameraSessionNapi::EnableFeature:%{public}d", isEnable);
     int32_t retCode =
         cameraSessionNapi->cameraSession_->EnableFeature(static_cast<SceneFeature>(sceneFeature), isEnable);
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
+        return nullptr;
+    }
+
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value CameraSessionNapi::CanPreconfig(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("CanPreconfig is called");
+    int32_t configType;
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, configType);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::CanPreconfig parse parameter occur error");
+        return nullptr;
+    }
+    MEDIA_INFO_LOG("CameraSessionNapi::CanPreconfig: %{public}d", configType);
+    bool result = cameraSessionNapi->cameraSession_->CanPreconfig(static_cast<PreconfigType>(configType));
+    return CameraNapiUtils::GetBooleanValue(env, result);
+}
+
+napi_value CameraSessionNapi::Preconfig(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("Preconfig is called");
+    int32_t configType;
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, configType);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::Preconfig parse parameter occur error");
+        return nullptr;
+    }
+    int32_t retCode = cameraSessionNapi->cameraSession_->Preconfig(static_cast<PreconfigType>(configType));
     if (!CameraNapiUtils::CheckError(env, retCode)) {
         return nullptr;
     }

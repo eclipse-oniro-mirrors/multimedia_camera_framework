@@ -16,9 +16,12 @@
 #ifndef OHOS_CAMERA_CAPTURE_OUTPUT_H
 #define OHOS_CAMERA_CAPTURE_OUTPUT_H
 
+#include <cstdint>
 #include <mutex>
 #include <refbase.h>
 #include <set>
+#include <type_traits>
+#include <unordered_set>
 #include <vector>
 
 #include "camera_device_ability_items.h"
@@ -30,6 +33,7 @@
 #include "istream_common.h"
 
 namespace OHOS {
+class IBufferProducer;
 namespace CameraStandard {
 enum DeferredDeliveryImageType {
     DELIVERY_NONE = 0,
@@ -96,9 +100,12 @@ public:
 };
 
 class CaptureSession;
-class CaptureOutput : public RefBase, public MetadataObserver {
+class CaptureOutput : virtual public RefBase, public MetadataObserver {
 public:
-    explicit CaptureOutput(CaptureOutputType OutputType, StreamType streamType, sptr<IStreamCommon> stream);
+    enum Tag { DYNAMIC_PROFILE };
+
+    explicit CaptureOutput(CaptureOutputType outputType, StreamType streamType, sptr<IBufferProducer> bufferProducer,
+        sptr<IStreamCommon> stream);
     virtual ~CaptureOutput();
 
     /**
@@ -110,31 +117,58 @@ public:
     const char* GetOutputTypeString();
     StreamType GetStreamType();
     sptr<IStreamCommon> GetStream();
+    void SetStream(sptr<IStreamCommon> stream);
+    bool IsStreamCreated();
     sptr<CaptureSession> GetSession();
     virtual void SetSession(wptr<CaptureSession> captureSession);
     std::mutex asyncOpMutex_;
     std::mutex outputCallbackMutex_;
-    int32_t SetPhotoProfile(Profile& profile);
-    Profile GetPhotoProfile();
-    int32_t SetPreviewProfile(Profile& profile);
-    Profile GetPreviewProfile();
-    int32_t SetVideoProfile(VideoProfile& videoProfile);
-    VideoProfile GetVideoProfile();
+    void SetPhotoProfile(Profile& profile);
+    std::shared_ptr<Profile> GetPhotoProfile();
+    void SetPreviewProfile(Profile& profile);
+    std::shared_ptr<Profile> GetPreviewProfile();
+    void SetVideoProfile(VideoProfile& videoProfile);
+    std::shared_ptr<VideoProfile> GetVideoProfile();
+    void ClearProfiles();
     virtual void CameraServerDied(pid_t pid) = 0;
 
+    virtual int32_t CreateStream() = 0;
+
+    virtual void AddTag(Tag tag) final;
+    virtual void RemoveTag(Tag tag) final;
+    virtual bool IsTagSetted(Tag tag) final;
+
 protected:
-    sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
+    virtual sptr<IBufferProducer> GetBufferProducer() final;
 
 private:
+    void OnCameraServerDied(pid_t pid);
+    void RegisterStreamBinderDied();
+    void UnregisterStreamBinderDied();
+
+    std::mutex deathRecipientMutex_;
+    sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
+
     CaptureOutputType outputType_;
     StreamType streamType_;
     sptr<IStreamCommon> stream_;
     wptr<CaptureSession> session_;
     std::mutex sessionMutex_;
     std::mutex streamMutex_;
-    Profile photoProfile_;
-    Profile previewProfile_;
-    VideoProfile videoProfile_;
+
+    // Multithread add same output,set profile may cause problems, let's add mutex guard.
+    std::mutex photoProfileMutex_;
+    std::shared_ptr<Profile> photoProfile_;
+    std::mutex previewProfileMutex_;
+    std::shared_ptr<Profile> previewProfile_;
+    std::mutex videoProfileMutex_;
+    std::shared_ptr<VideoProfile> videoProfile_;
+
+    std::mutex bufferProducerMutex_;
+    sptr<IBufferProducer> bufferProducer_;
+
+    std::mutex tagsMutex_;
+    std::unordered_set<Tag> tags_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

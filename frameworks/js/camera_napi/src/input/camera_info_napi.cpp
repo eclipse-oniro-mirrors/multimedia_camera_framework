@@ -15,8 +15,10 @@
 
 #include "input/camera_info_napi.h"
 
-#include "camera_napi_security_utils.h"
+#include "camera_log.h"
 #include "camera_napi_param_parser.h"
+#include "camera_napi_security_utils.h"
+#include "napi/native_common.h"
 
 namespace OHOS {
 namespace CameraStandard {

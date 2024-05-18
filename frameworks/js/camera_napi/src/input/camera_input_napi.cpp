@@ -16,6 +16,7 @@
 #include "input/camera_input_napi.h"
 
 #include <cstdint>
+#include <memory>
 #include <uv.h>
 
 #include "camera_error_code.h"
@@ -25,7 +26,7 @@
 #include "input/camera_info_napi.h"
 #include "input/camera_napi.h"
 #include "js_native_api.h"
-#include "js_native_api_types.h"
+#include "napi/native_common.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -339,67 +340,53 @@ void CommonCompleteCallback(napi_env env, napi_status status, void* data)
 napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("Open is called");
-    napi_status status;
-    napi_value result = nullptr;
-    const int32_t refCount = 1;
-    napi_value resource = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_TWO] = {0};
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-    NAPI_ASSERT(env, argc <= ARGS_ONE, "requires 1 parameter maximum");
-    napi_get_boolean(env, true, &result);
-    CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
     std::unique_ptr<CameraInputAsyncContext> asyncContext = std::make_unique<CameraInputAsyncContext>();
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
-    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
-        if (argc == ARGS_ONE) {
-            bool isEnableSecureCamera = false;
-            napi_valuetype valuetype;
-            status = napi_typeof(env, argv[PARAM0], &valuetype);
-            if (status ==napi_ok && valuetype == napi_boolean) {
-                napi_get_value_bool(env, argv[PARAM0], &isEnableSecureCamera);
-                CameraNapiUtils::IsEnableSecureCamera(isEnableSecureCamera);
-                MEDIA_DEBUG_LOG("set  EnableSecureCamera CameraInputNapi::Open");
-            } else {
-                CAMERA_NAPI_GET_JS_ASYNC_CB_REF(env, argv[PARAM0], refCount, asyncContext->callbackRef);
-            }
-        }
-
-        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
-        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "Open");
-
-        status = napi_create_async_work(
-            env, nullptr, resource, [](napi_env env, void* data) {
-                auto context = static_cast<CameraInputAsyncContext*>(data);
-                context->status = false;
-                // Start async trace
-                context->funcName = "CameraInputNapi::Open";
-                context->taskId = CameraNapiUtils::IncreamentAndGet(cameraInputTaskId);
-                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr) {
-                    context->status = true;
-                    context->modeForAsync = OPEN_ASYNC_CALLBACK;
-                    context->isEnableSecCam = CameraNapiUtils::GetEnableSecureCamera();
-                    MEDIA_DEBUG_LOG("set  context->isEnableSecCam CameraInputNapi::Open");
-                }
-            },
-            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
-        if (status != napi_ok) {
-            MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraInputNapi::Open");
-            if (asyncContext->callbackRef != nullptr) {
-                napi_delete_reference(env, asyncContext->callbackRef);
-            }
-            napi_get_undefined(env, &result);
-        } else {
-            napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
-            asyncContext.release();
-        }
+    bool isEnableSecureCamera = false;
+    auto asyncFunction =
+        std::make_shared<CameraNapiAsyncFunction>(env, "Open", asyncContext->callbackRef, asyncContext->deferred);
+    CameraNapiParamParser jsParamParser(env, info, asyncContext->objectInfo, asyncFunction, isEnableSecureCamera);
+    if (jsParamParser.IsStatusOk()) {
+        CameraNapiUtils::IsEnableSecureCamera(isEnableSecureCamera);
+        MEDIA_DEBUG_LOG("set  EnableSecureCamera CameraInputNapi::Open");
     } else {
-        MEDIA_ERR_LOG("Open call Failed!");
+        MEDIA_WARNING_LOG("CameraInputNapi::Open check secure parameter fail, try open without secure flag");
+        jsParamParser = CameraNapiParamParser(env, info, asyncContext->objectInfo, asyncFunction);
     }
-    return result;
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
+        MEDIA_ERR_LOG("CameraInputNapi::Open invalid argument");
+        return nullptr;
+    }
+    napi_status status = napi_create_async_work(
+        env, nullptr, asyncFunction->GetResourceName(),
+        [](napi_env env, void* data) {
+            auto context = static_cast<CameraInputAsyncContext*>(data);
+            context->status = false;
+            // Start async trace
+            context->funcName = "CameraInputNapi::Open";
+            context->taskId = CameraNapiUtils::IncreamentAndGet(cameraInputTaskId);
+            CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
+            if (context->objectInfo != nullptr) {
+                context->status = true;
+                context->modeForAsync = OPEN_ASYNC_CALLBACK;
+                context->isEnableSecCam = CameraNapiUtils::GetEnableSecureCamera();
+                MEDIA_DEBUG_LOG("set  context->isEnableSecCam CameraInputNapi::Open");
+            }
+        },
+        CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("Failed to create napi_create_async_work for CameraInputNapi::Open");
+        if (asyncContext->callbackRef != nullptr) {
+            napi_delete_reference(env, asyncContext->callbackRef);
+        }
+        return CameraNapiUtils::GetUndefinedValue(env);
+    } else {
+        napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
+        asyncContext.release();
+    }
+    if (asyncFunction->GetAsyncFunctionType() == ASYNC_FUN_TYPE_PROMISE) {
+        return asyncFunction->GetPromise();
+    }
+    return CameraNapiUtils::GetBooleanValue(env, true);
 }
 
 napi_value CameraInputNapi::Close(napi_env env, napi_callback_info info)

@@ -17,8 +17,9 @@
 #define OHOS_CAMERA_CAMERA_INFO_H
 
 #include <iostream>
-#include <vector>
 #include <refbase.h>
+#include <vector>
+
 #include "camera_metadata_info.h"
 
 namespace OHOS {

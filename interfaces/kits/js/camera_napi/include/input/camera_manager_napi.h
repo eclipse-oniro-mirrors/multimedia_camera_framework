@@ -16,21 +16,18 @@
 #ifndef CAMERA_MANAGER_NAPI_H_
 #define CAMERA_MANAGER_NAPI_H_
 
-#include "hilog/log.h"
-
-#include "input/camera_manager.h"
+#include "camera_napi_utils.h"
 #include "input/camera_device.h"
-#include "output/capture_output.h"
-
-#include "input/camera_input_napi.h"
 #include "input/camera_info_napi.h"
+#include "input/camera_input_napi.h"
+#include "input/camera_manager.h"
+#include "listener_base.h"
 #include "output/camera_output_capability.h"
-#include "output/preview_output_napi.h"
+#include "output/capture_output.h"
 #include "output/photo_output_napi.h"
+#include "output/preview_output_napi.h"
 #include "output/video_output_napi.h"
 #include "session/camera_session_napi.h"
-#include "camera_napi_utils.h"
-#include "listener_base.h"
 
 namespace OHOS {
 namespace CameraStandard {

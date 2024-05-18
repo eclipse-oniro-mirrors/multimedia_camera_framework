@@ -526,13 +526,24 @@ declare namespace camera {
      * Creates a PreviewOutput instance.
      *
      * @param { Profile } profile - Preview output profile.
-     * @param { string } surfaceId - Surface object id used in camera photo output.
+     * @param { string } surfaceId - Surface object id used in camera preview output.
      * @returns { PreviewOutput } The PreviewOutput instance.
      * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 10
      */
     createPreviewOutput(profile: Profile, surfaceId: string): PreviewOutput;
+
+    /**
+     * Creates a PreviewOutput instance.
+     *
+     * @param { string } surfaceId - Surface object id used in camera preview output.
+     * @returns { PreviewOutput } The PreviewOutput instance.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    createPreviewOutput(surfaceId: string): PreviewOutput;
 
     /**
      * Creates a PhotoOutput instance.

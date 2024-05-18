@@ -17,7 +17,6 @@
 #define PHOTO_SESSION_NAPI_H
 
 #include "napi/native_api.h"
-#include "napi/native_node_api.h"
 #include "photo_session.h"
 #include "session/camera_session_napi.h"
 

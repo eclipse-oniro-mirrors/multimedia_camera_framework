@@ -15,6 +15,8 @@
 
 #include "input/camera_napi.h"
 
+#include "napi/native_common.h"
+
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
@@ -44,6 +46,7 @@ thread_local napi_ref CameraNapi::qualityLevelRef_ = nullptr;
 thread_local napi_ref CameraNapi::videoStabilizationModeRef_ = nullptr;
 thread_local napi_ref CameraNapi::hostNameTypeRef_ = nullptr;
 thread_local napi_ref CameraNapi::sceneModeRef_ = nullptr;
+thread_local napi_ref CameraNapi::preconfigTypeRef_ = nullptr;
 thread_local napi_ref CameraNapi::filterTypeRef_ = nullptr;
 thread_local napi_ref CameraNapi::beautyTypeRef_ = nullptr;
 thread_local napi_ref CameraNapi::portraitEffectRef_ = nullptr;
@@ -150,6 +153,8 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
             CreateObjectWithMap(env, "SceneMode", mapSceneMode, sceneModeRef_)),
         DECLARE_NAPI_PROPERTY("SceneMode",
             CreateObjectWithMap(env, "SceneMode", mapSceneMode, sceneModeRef_)),
+        DECLARE_NAPI_PROPERTY("PreconfigType",
+            CreateObjectWithMap(env, "PreconfigType", mapPreconfigType, preconfigTypeRef_)),
         DECLARE_NAPI_PROPERTY("FilterType",
             CreateObjectWithMap(env, "FilterType", mapFilterType, filterTypeRef_)),
         DECLARE_NAPI_PROPERTY("BeautyType",

@@ -16,10 +16,11 @@
 #ifndef OHOS_CAMERA_CAMERA_DEVICE_H
 #define OHOS_CAMERA_CAMERA_DEVICE_H
 
-#include <refbase.h>
 #include <iostream>
+#include <refbase.h>
 #include <unordered_map>
 #include <vector>
+
 #include "camera_metadata_info.h"
 #include "output/camera_output_capability.h"
 #include "output/capture_output.h"

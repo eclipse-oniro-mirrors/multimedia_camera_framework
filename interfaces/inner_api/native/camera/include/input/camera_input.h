@@ -18,17 +18,18 @@
 
 #include <iostream>
 #include <memory>
-#include <unordered_map>
 #include <set>
+#include <unordered_map>
 #include <vector>
-#include "camera_info.h"
-#include "camera_device.h"
-#include "capture_input.h"
-#include "icamera_device_service.h"
-#include "metadata_common_utils.h"
-#include "icamera_device_service_callback.h"
-#include "hcamera_device_callback_stub.h"
+
 #include "camera_death_recipient.h"
+#include "camera_device.h"
+#include "camera_info.h"
+#include "capture_input.h"
+#include "hcamera_device_callback_stub.h"
+#include "icamera_device_service.h"
+#include "icamera_device_service_callback.h"
+#include "metadata_common_utils.h"
 #include "output/camera_output_capability.h"
 namespace OHOS {
 namespace CameraStandard {

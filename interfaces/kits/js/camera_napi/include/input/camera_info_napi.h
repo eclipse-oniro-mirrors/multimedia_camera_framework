@@ -16,14 +16,11 @@
 #ifndef CAMERA_INFO_NAPI_H_
 #define CAMERA_INFO_NAPI_H_
 
-#include "camera_log.h"
 #include "camera_napi_utils.h"
-#include "input/camera_manager.h"
 #include "input/camera_device.h"
+#include "input/camera_manager.h"
 #include "napi/native_api.h"
-#include "napi/native_node_api.h"
 #include "output/capture_output.h"
-#include "hilog/log.h"
 namespace OHOS {
 namespace CameraStandard {
 static const char CAMERA_OBJECT_NAPI_CLASS_NAME[] = "Camera";

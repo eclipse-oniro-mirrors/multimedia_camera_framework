@@ -14,7 +14,10 @@
  */
 
 #include "mode/night_session_napi.h"
+
+#include "napi/native_common.h"
 #include "uv.h"
+
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;

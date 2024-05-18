@@ -22,8 +22,7 @@
 #include "camera_error_code.h"
 #include "camera_napi_const.h"
 #include "js_native_api.h"
-#include "js_native_api_types.h"
-#include "napi/native_node_api.h"
+#include "napi/native_api.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -78,7 +77,13 @@ public:
             napi_get_value_string_utf8(env_, paramValue[ARGS_ZERO], callbackName_.data(), stringSize + 1, &stringSize);
     }
 
-    bool AssertStatus(CameraErrorCode errorCode, const char* message);
+    inline bool AssertStatus(CameraErrorCode errorCode, const char* message)
+    {
+        if (napiError != napi_ok) {
+            napi_throw_error(env_, std::to_string(errorCode).c_str(), message);
+        }
+        return napiError == napi_ok;
+    }
 
     inline const std::string& GetCallbackName()
     {

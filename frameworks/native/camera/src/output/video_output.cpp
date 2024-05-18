@@ -21,11 +21,12 @@
 #include "hstream_repeat_callback_stub.h"
 #include "input/camera_device.h"
 #include "input/camera_input.h"
+#include "istream_repeat.h"
 
 namespace OHOS {
 namespace CameraStandard {
-VideoOutput::VideoOutput(sptr<IStreamRepeat>& streamRepeat)
-    : CaptureOutput(CAPTURE_OUTPUT_TYPE_VIDEO, StreamType::REPEAT, streamRepeat)
+VideoOutput::VideoOutput(sptr<IBufferProducer> bufferProducer)
+    : CaptureOutput(CAPTURE_OUTPUT_TYPE_VIDEO, StreamType::REPEAT, bufferProducer, nullptr)
 {}
 
 VideoOutput::~VideoOutput()
@@ -189,6 +190,34 @@ int32_t VideoOutput::Pause()
     return errCode;
 }
 
+int32_t VideoOutput::CreateStream()
+{
+    auto stream = GetStream();
+    if (stream != nullptr) {
+        MEDIA_ERR_LOG("VideoOutput::CreateStream stream is not null");
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
+    }
+    auto producer = GetBufferProducer();
+    if (producer == nullptr) {
+        MEDIA_ERR_LOG("VideoOutput::CreateStream producer is null");
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
+    }
+
+    sptr<IStreamRepeat> streamPtr = nullptr;
+    auto videoProfile = GetVideoProfile();
+    if (videoProfile == nullptr) {
+        MEDIA_ERR_LOG("VideoOutput::CreateStream photoProfile is null");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
+
+    int32_t res = CameraManager::GetInstance()->CreateVideoOutputStream(streamPtr, *videoProfile, GetBufferProducer());
+    if (res != CameraErrorCode::SUCCESS) {
+        MEDIA_ERR_LOG("VideoOutput::CreateStream fail! error code :%{public}d", res);
+    }
+    SetStream(streamPtr);
+    return res;
+}
+
 int32_t VideoOutput::Release()
 {
     {
@@ -296,18 +325,12 @@ std::vector<std::vector<int32_t>> VideoOutput::GetSupportedFrameRates()
 void VideoOutput::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
-    {
-        std::lock_guard<std::mutex> lock(outputCallbackMutex_);
-        if (appCallback_ != nullptr) {
-            MEDIA_DEBUG_LOG("appCallback not nullptr");
-            int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
-            appCallback_->OnError(serviceErrorType);
-        }
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+    if (appCallback_ != nullptr) {
+        MEDIA_DEBUG_LOG("appCallback not nullptr");
+        int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
+        appCallback_->OnError(serviceErrorType);
     }
-    if (GetStream() != nullptr) {
-        (void)GetStream()->AsObject()->RemoveDeathRecipient(deathRecipient_);
-    }
-    deathRecipient_ = nullptr;
 }
 
 int32_t VideoOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate)

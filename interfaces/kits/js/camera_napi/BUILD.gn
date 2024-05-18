@@ -46,8 +46,6 @@ ohos_shared_library("camera_napi") {
     "${multimedia_image_framework_path}/interfaces/innerkits/include",
   ]
   sources = [
-    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_callback_param_parser.cpp",
-    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_param_parser.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_security_utils.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_utils.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/input/camera_info_napi.cpp",
@@ -73,7 +71,7 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/video_session_for_sys_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/video_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/native_module_ohos_camera.cpp",
-    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/camera_output_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/camera_output_capability_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/deferred_photo_proxy_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/metadata_object_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/metadata_output_napi.cpp",

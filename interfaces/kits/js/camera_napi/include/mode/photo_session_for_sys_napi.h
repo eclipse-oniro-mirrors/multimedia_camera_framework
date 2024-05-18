@@ -16,15 +16,15 @@
 #ifndef PHOTO_SESSION_FOR_SYS_NAPI_H
 #define PHOTO_SESSION_FOR_SYS_NAPI_H
 
+#include "mode/photo_session_napi.h"
 #include "napi/native_api.h"
-#include "napi/native_node_api.h"
 #include "photo_session.h"
 #include "session/camera_session_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
 static const char PHOTO_SESSION_FOR_SYS_NAPI_CLASS_NAME[] = "PhotoSessionForSys";
-class PhotoSessionForSysNapi : public CameraSessionNapi {
+class PhotoSessionForSysNapi : public PhotoSessionNapi {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreateCameraSession(napi_env env);

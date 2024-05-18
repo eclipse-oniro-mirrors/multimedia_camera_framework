@@ -29,7 +29,6 @@
 #include "iostream"
 #include "mutex"
 
-#include "hilog/log.h"
 #include "multimedia/camera_framework/camera.h"
 #include "multimedia/camera_framework/camera_input.h"
 #include "multimedia/camera_framework/capture_session.h"

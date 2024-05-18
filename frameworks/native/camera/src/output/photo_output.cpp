@@ -17,7 +17,9 @@
 
 #include <securec.h>
 
+#include "camera_error_code.h"
 #include "camera_log.h"
+#include "camera_manager.h"
 #include "camera_util.h"
 #include "capture_scene_const.h"
 #include "hstream_capture_callback_stub.h"
@@ -271,8 +273,8 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureReady(const int32_t captureId, cons
     return CAMERA_OK;
 }
 
-PhotoOutput::PhotoOutput(sptr<IStreamCapture>& streamCapture)
-    : CaptureOutput(CAPTURE_OUTPUT_TYPE_PHOTO, StreamType::CAPTURE, streamCapture)
+PhotoOutput::PhotoOutput(sptr<IBufferProducer> bufferProducer)
+    : CaptureOutput(CAPTURE_OUTPUT_TYPE_PHOTO, StreamType::CAPTURE, bufferProducer, nullptr)
 {
     defaultCaptureSetting_ = nullptr;
 }
@@ -476,6 +478,34 @@ int32_t PhotoOutput::ConfirmCapture()
         MEDIA_ERR_LOG("PhotoOutput Failed to ConfirmCapture!, errCode: %{public}d", errCode);
     }
     return ServiceToCameraError(errCode);
+}
+
+int32_t PhotoOutput::CreateStream()
+{
+    auto stream = GetStream();
+    if (stream != nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput::CreateStream stream is not null");
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
+    }
+    auto producer = GetBufferProducer();
+    if (producer == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput::CreateStream producer is null");
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
+    }
+
+    sptr<IStreamCapture> streamPtr = nullptr;
+    auto photoProfile = GetPhotoProfile();
+    if (photoProfile == nullptr) {
+        MEDIA_ERR_LOG("PreviewOutput::CreateStream photoProfile is null");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
+
+    int32_t res = CameraManager::GetInstance()->CreatePhotoOutputStream(streamPtr, *photoProfile, GetBufferProducer());
+    if (res != CameraErrorCode::SUCCESS) {
+        MEDIA_ERR_LOG("PhotoOutput::CreateStream fail! error code :%{public}d", res);
+    }
+    SetStream(streamPtr);
+    return res;
 }
 
 int32_t PhotoOutput::Release()
@@ -725,19 +755,13 @@ std::shared_ptr<PhotoCaptureSetting> PhotoOutput::GetDefaultCaptureSetting()
 void PhotoOutput::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
-    {
-        std::lock_guard<std::mutex> lock(outputCallbackMutex_);
-        if (appCallback_ != nullptr) {
-            MEDIA_DEBUG_LOG("appCallback not nullptr");
-            int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
-            int32_t captureId = -1;
-            appCallback_->OnCaptureError(captureId, serviceErrorType);
-        }
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+    if (appCallback_ != nullptr) {
+        MEDIA_DEBUG_LOG("appCallback not nullptr");
+        int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
+        int32_t captureId = -1;
+        appCallback_->OnCaptureError(captureId, serviceErrorType);
     }
-    if (GetStream() != nullptr) {
-        (void)GetStream()->AsObject()->RemoveDeathRecipient(deathRecipient_);
-    }
-    deathRecipient_ = nullptr;
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -13,9 +13,13 @@
  * limitations under the License.
  */
 
-#include "input/camera_napi.h"
-#include "input/camera_manager_napi.h"
 #include "mode/mode_manager_napi.h"
+
+#include "input/camera_manager_napi.h"
+#include "input/camera_napi.h"
+#include "napi/native_common.h"
+#include "output/camera_output_capability_napi.h"
+
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;

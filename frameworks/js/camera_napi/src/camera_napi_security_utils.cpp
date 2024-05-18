@@ -16,6 +16,7 @@
 #include "camera_napi_security_utils.h"
 
 #include "camera_error_code.h"
+#include "camera_log.h"
 #include "camera_security_utils.h"
 
 namespace OHOS {

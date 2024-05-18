@@ -55,8 +55,10 @@ public:
 
 class VideoOutput : public CaptureOutput {
 public:
-    explicit VideoOutput(sptr<IStreamRepeat>& streamRepeat);
+    explicit VideoOutput(sptr<IBufferProducer> bufferProducer);
     virtual ~VideoOutput();
+
+    int32_t CreateStream() override;
 
     /**
      * @brief Releases a instance of the VideoOutput.

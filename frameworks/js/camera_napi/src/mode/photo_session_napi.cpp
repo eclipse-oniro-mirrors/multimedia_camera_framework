@@ -47,8 +47,8 @@ napi_value PhotoSessionNapi::Init(napi_env env, napi_value exports)
     MEDIA_DEBUG_LOG("Init is called");
     napi_status status;
     napi_value ctorObj;
-    std::vector<std::vector<napi_property_descriptor>> descriptors = {camera_process_props,
-        flash_props, auto_exposure_props, focus_props, zoom_props, filter_props, color_management_props};
+    std::vector<std::vector<napi_property_descriptor>> descriptors = {camera_process_props, flash_props,
+        auto_exposure_props, focus_props, zoom_props, filter_props, preconfig_props, color_management_props};
     std::vector<napi_property_descriptor> photo_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, PHOTO_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                PhotoSessionNapiConstructor, nullptr,

@@ -13,13 +13,15 @@
  * limitations under the License.
  */
 
+#include "output/deferred_photo_proxy_napi.h"
+
+#include "camera_log.h"
 #include "deferred_photo_proxy.h"
+#include "hilog/log.h"
 #include "image_napi.h"
+#include "napi/native_common.h"
 #include "photo_proxy.h"
 #include "pixel_map_napi.h"
-#include "hilog/log.h"
-#include "camera_log.h"
-#include "output/deferred_photo_proxy_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {

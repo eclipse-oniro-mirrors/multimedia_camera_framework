@@ -19,8 +19,6 @@
 #include "camera_napi_event_emitter.h"
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
-#include "camera_output_napi.h"
-#include "hilog/log.h"
 #include "image_receiver.h"
 #include "input/camera_manager.h"
 #include "listener_base.h"
@@ -95,10 +93,11 @@ struct SketchStatusCallbackInfo {
     {}
 };
 
-class PreviewOutputNapi : public CameraOutputNapi, public CameraNapiEventEmitter<PreviewOutputNapi> {
+class PreviewOutputNapi : public CameraNapiEventEmitter<PreviewOutputNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value CreatePreviewOutput(napi_env env, Profile& profile, std::string surfaceId);
+    static napi_value CreatePreviewOutput(napi_env env, std::string surfaceId);
     static napi_value CreateDeferredPreviewOutput(napi_env env, Profile& profile);
     static bool IsPreviewOutput(napi_env env, napi_value obj);
     static napi_value AddDeferredSurface(napi_env env, napi_callback_info info);
@@ -113,6 +112,7 @@ public:
     static napi_value GetActiveFrameRate(napi_env env, napi_callback_info info);
     static napi_value GetSupportedFrameRates(napi_env env, napi_callback_info info);
     sptr<PreviewOutput> GetPreviewOutput();
+    static napi_value GetActiveProfile(napi_env env, napi_callback_info info);
     static napi_value On(napi_env env, napi_callback_info info);
     static napi_value Once(napi_env env, napi_callback_info info);
     static napi_value Off(napi_env env, napi_callback_info info);

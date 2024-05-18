@@ -16,7 +16,6 @@
 #ifndef CAMERA_SIZE_NAPI_H_
 #define CAMERA_SIZE_NAPI_H_
 
-#include "hilog/log.h"
 #include "camera_napi_utils.h"
 #include "input/camera_input.h"
 

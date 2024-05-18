@@ -16,11 +16,13 @@
 #ifndef OHOS_CAMERA_DEFERRED_PHOTO_PROXY_H
 #define OHOS_CAMERA_DEFERRED_PHOTO_PROXY_H
 
-#include <refbase.h>
-#include "message_parcel.h"
-#include "buffer_handle.h"
-#include "photo_proxy.h"
+#include <buffer_handle_parcel.h>
 #include <mutex>
+#include <refbase.h>
+
+#include "buffer_handle.h"
+#include "message_parcel.h"
+#include "photo_proxy.h"
 
 namespace OHOS {
 namespace CameraStandard {

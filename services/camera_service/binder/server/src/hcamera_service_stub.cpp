@@ -501,7 +501,7 @@ void HCameraServiceStub::ClientDied(pid_t pid)
 
 int HCameraServiceStub::SetListenerObject(const sptr<IRemoteObject>& object)
 {
-    int errCode = -1;
+    int errCode = CAMERA_OK;
     sptr<CameraDeathRecipient> deathRecipientTmp = nullptr;
     sptr<IStandardCameraListener> cameraListenerTmp = nullptr;
     pid_t pid = IPCSkeleton::GetCallingPid();
@@ -532,10 +532,12 @@ int HCameraServiceStub::SetListenerObject(const sptr<IRemoteObject>& object)
 
 int HCameraServiceStub::SetListenerObject(MessageParcel& data, MessageParcel& reply)
 {
-    int errCode = -1;
     sptr<IRemoteObject> object = data.ReadRemoteObject();
+    if (object == nullptr) {
+        return ERR_NULL_OBJECT;
+    }
     (void)reply.WriteInt32(SetListenerObject(object));
-    return errCode;
+    return ERR_NONE;
 }
 
 int HCameraServiceStub::HandleAllowOpenByOHSide(MessageParcel& data, MessageParcel& reply)

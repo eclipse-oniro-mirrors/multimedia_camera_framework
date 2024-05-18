@@ -27,12 +27,15 @@
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
 #include "camera_output_capability.h"
+#include "input/camera_profile_napi.h"
 #include "js_native_api.h"
 #include "js_native_api_types.h"
 #include "napi/native_api.h"
+#include "napi/native_common.h"
 #include "preview_output.h"
 #include "refbase.h"
 #include "surface_utils.h"
+
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
@@ -370,12 +373,6 @@ PreviewOutputNapi::~PreviewOutputNapi()
     if (wrapper_ != nullptr) {
         napi_delete_reference(env_, wrapper_);
     }
-    if (previewOutput_) {
-        previewOutput_ = nullptr;
-    }
-    if (previewCallback_) {
-        previewCallback_ = nullptr;
-    }
 }
 
 void PreviewOutputNapi::PreviewOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
@@ -408,7 +405,8 @@ napi_value PreviewOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("attachSketchSurface", AttachSketchSurface),
         DECLARE_NAPI_FUNCTION("setFrameRate", SetFrameRate),
         DECLARE_NAPI_FUNCTION("getActiveFrameRate", GetActiveFrameRate),
-        DECLARE_NAPI_FUNCTION("getSupportedFrameRates", GetSupportedFrameRates)
+        DECLARE_NAPI_FUNCTION("getSupportedFrameRates", GetSupportedFrameRates),
+        DECLARE_NAPI_FUNCTION("getActiveProfile", GetActiveProfile)
     };
 
     status = napi_define_class(env, CAMERA_PREVIEW_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -567,6 +565,49 @@ napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, Profile& profile
     return result;
 }
 
+napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, std::string surfaceId)
+{
+    MEDIA_INFO_LOG("CreatePreviewOutput with only surfaceId is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+    napi_value constructor;
+
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (status == napi_ok) {
+        uint64_t iSurfaceId;
+        std::istringstream iss(surfaceId);
+        iss >> iSurfaceId;
+        sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
+        if (!surface) {
+            surface = Media::ImageReceiver::getSurfaceById(surfaceId);
+        }
+        if (surface == nullptr) {
+            MEDIA_ERR_LOG("failed to get surface");
+            return result;
+        }
+        int retCode = CameraManager::GetInstance()->CreatePreviewOutputWithoutProfile(surface, &sPreviewOutput_);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        if (sPreviewOutput_ == nullptr) {
+            MEDIA_ERR_LOG("failed to create previewOutput");
+            return result;
+        }
+        status = napi_new_instance(env, constructor, 0, nullptr, &result);
+        sPreviewOutput_ = nullptr;
+
+        if (status == napi_ok && result != nullptr) {
+            return result;
+        } else {
+            MEDIA_ERR_LOG("Failed to create preview output instance");
+        }
+    }
+    MEDIA_ERR_LOG("CreatePreviewOutput call Failed!");
+    napi_get_undefined(env, &result);
+    return result;
+}
+
 sptr<PreviewOutput> PreviewOutputNapi::GetPreviewOutput()
 {
     return previewOutput_;
@@ -587,6 +628,22 @@ bool PreviewOutputNapi::IsPreviewOutput(napi_env env, napi_value obj)
         }
     }
     return result;
+}
+
+napi_value PreviewOutputNapi::GetActiveProfile(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PreviewOutputNapi::GetActiveProfile is called");
+    PreviewOutputNapi* previewOutputNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, previewOutputNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("PreviewOutputNapi::GetActiveProfile parse parameter occur error");
+        return nullptr;
+    }
+    auto profile = previewOutputNapi->previewOutput_->GetPreviewProfile();
+    if (profile == nullptr) {
+        return CameraNapiUtils::GetUndefinedValue(env);
+    }
+    return CameraProfileNapi::CreateCameraProfile(env, *profile);
 }
 
 napi_value PreviewOutputNapi::Release(napi_env env, napi_callback_info info)
@@ -622,7 +679,7 @@ napi_value PreviewOutputNapi::Release(napi_env env, napi_callback_info info)
                 context->funcName = "PreviewOutputNapi::Release";
                 context->taskId = CameraNapiUtils::IncreamentAndGet(previewOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr && context->objectInfo->previewOutput_ != nullptr) {
+                if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
                     context->status = true;
                     ((sptr<PreviewOutput>&)(context->objectInfo->previewOutput_))->Release();
@@ -687,7 +744,7 @@ napi_status PreviewOutputNapi::CreateAsyncTask(
         context->funcName = "PreviewOutputNapi::AddDeferredSurface";
         context->taskId = CameraNapiUtils::IncreamentAndGet(previewOutputTaskId);
         CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-        if (context->objectInfo != nullptr && context->objectInfo->previewOutput_ != nullptr) {
+        if (context->objectInfo != nullptr) {
             context->bRetBool = false;
             context->status = true;
             uint64_t iSurfaceId;
@@ -701,10 +758,11 @@ napi_status PreviewOutputNapi::CreateAsyncTask(
                 MEDIA_ERR_LOG("failed to get surface");
                 return;
             }
-            CameraFormat format =
-                ((sptr<PreviewOutput>&)(context->objectInfo->previewOutput_))->GetPreviewProfile().format_;
-            surface->SetUserData(CameraManager::surfaceFormat, std::to_string(format));
-            ((sptr<PreviewOutput> &)(context->objectInfo->previewOutput_))->AddDeferredSurface(surface);
+            auto previewProfile =  context->objectInfo->previewOutput_->GetPreviewProfile();
+            if (previewProfile != nullptr) {
+                surface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfile->GetCameraFormat()));
+            }
+            context->objectInfo->previewOutput_->AddDeferredSurface(surface);
         }
     },
     CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
@@ -788,7 +846,7 @@ napi_value PreviewOutputNapi::Start(napi_env env, napi_callback_info info)
                 context->funcName = "PreviewOutputNapi::Start";
                 context->taskId = CameraNapiUtils::IncreamentAndGet(previewOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr && context->objectInfo->previewOutput_ != nullptr) {
+                if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
                     context->errorCode = context->objectInfo->previewOutput_->Start();
                     context->status = context->errorCode == 0;
@@ -842,7 +900,7 @@ napi_value PreviewOutputNapi::Stop(napi_env env, napi_callback_info info)
                 context->funcName = "PreviewOutputNapi::Stop";
                 context->taskId = CameraNapiUtils::IncreamentAndGet(previewOutputTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                if (context->objectInfo != nullptr && context->objectInfo->previewOutput_ != nullptr) {
+                if (context->objectInfo != nullptr) {
                     context->bRetBool = false;
                     context->errorCode = context->objectInfo->previewOutput_->Stop();
                     context->status = context->errorCode == 0;
@@ -982,15 +1040,9 @@ napi_value PreviewOutputNapi::IsSketchSupported(napi_env env, napi_callback_info
         MEDIA_ERR_LOG("PreviewOutputNapi::IsSketchSupported parse parameter occur error");
         return nullptr;
     }
-    auto result = CameraNapiUtils::GetUndefinedValue(env);
-    if (previewOutputNapi->previewOutput_ != nullptr) {
-        bool isSupported = previewOutputNapi->previewOutput_->IsSketchSupported();
-        napi_get_boolean(env, isSupported, &result);
-    } else {
-        MEDIA_ERR_LOG("PreviewOutputNapi::IsSketchSupported get native object fail");
-        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
-    }
-    return result;
+
+    bool isSupported = previewOutputNapi->previewOutput_->IsSketchSupported();
+    return CameraNapiUtils::GetBooleanValue(env, isSupported);
 }
 
 napi_value PreviewOutputNapi::GetSketchRatio(napi_env env, napi_callback_info info)
@@ -1007,13 +1059,8 @@ napi_value PreviewOutputNapi::GetSketchRatio(napi_env env, napi_callback_info in
         return nullptr;
     }
     auto result = CameraNapiUtils::GetUndefinedValue(env);
-    if (previewOutputNapi->previewOutput_ != nullptr) {
-        float ratio = previewOutputNapi->previewOutput_->GetSketchRatio();
-        napi_create_double(env, ratio, &result);
-    } else {
-        MEDIA_ERR_LOG("PreviewOutputNapi::GetSketchRatio get native object fail");
-        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
-    }
+    float ratio = previewOutputNapi->previewOutput_->GetSketchRatio();
+    napi_create_double(env, ratio, &result);
     return result;
 }
 
@@ -1030,12 +1077,6 @@ napi_value PreviewOutputNapi::EnableSketch(napi_env env, napi_callback_info info
     CameraNapiParamParser jsParamParser(env, info, previewOutputNapi, isEnableSketch);
     if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
         MEDIA_ERR_LOG("PreviewOutputNapi::EnableSketch parse parameter occur error");
-        return nullptr;
-    }
-
-    if (previewOutputNapi->previewOutput_ == nullptr) {
-        MEDIA_ERR_LOG("PreviewOutputNapi::EnableSketch get native object fail");
-        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
         return nullptr;
     }
 
@@ -1068,11 +1109,6 @@ napi_value PreviewOutputNapi::AttachSketchSurface(napi_env env, napi_callback_in
     if (surface == nullptr) {
         MEDIA_ERR_LOG("PreviewOutputNapi::AttachSketchSurface get surface is null");
         CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "input surface convert fail");
-        return nullptr;
-    }
-    if (previewOutputNapi->previewOutput_ == nullptr) {
-        MEDIA_ERR_LOG("PreviewOutputNapi::AttachSketchSurface get native object fail");
-        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
         return nullptr;
     }
 

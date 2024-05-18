@@ -21,6 +21,7 @@
 #include "camera_napi_utils.h"
 #include "hilog/log.h"
 #include "napi/native_api.h"
+#include "napi/native_common.h"
 #include "output/metadata_object_napi.h"
 
 namespace OHOS {
@@ -291,7 +292,7 @@ napi_value MetadataOutputNapi::CreateMetadataOutput(napi_env env)
 
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
-        int retCode = CameraManager::GetInstance()->CreateMetadataOutput(&sMetadataOutput_);
+        int retCode = CameraManager::GetInstance()->CreateMetadataOutput(sMetadataOutput_);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
         }

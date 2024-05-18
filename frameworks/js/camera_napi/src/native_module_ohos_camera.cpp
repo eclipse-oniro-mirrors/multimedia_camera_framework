@@ -15,6 +15,35 @@
 
 #include "native_module_ohos_camera.h"
 
+#include "input/camera_info_napi.h"
+#include "input/camera_input_napi.h"
+#include "input/camera_manager_napi.h"
+#include "input/camera_napi.h"
+#include "input/camera_pre_launch_config_napi.h"
+#include "input/camera_profile_napi.h"
+#include "input/camera_setting_param_napi.h"
+#include "mode/high_res_photo_session_napi.h"
+#include "mode/macro_photo_session_napi.h"
+#include "mode/macro_video_session_napi.h"
+#include "mode/mode_manager_napi.h"
+#include "mode/night_session_napi.h"
+#include "mode/photo_session_for_sys_napi.h"
+#include "mode/photo_session_napi.h"
+#include "mode/portrait_session_napi.h"
+#include "mode/profession_session_napi.h"
+#include "mode/secure_camera_session_napi.h"
+#include "mode/slow_motion_session_napi.h"
+#include "mode/video_session_for_sys_napi.h"
+#include "mode/video_session_napi.h"
+#include "output/camera_output_capability_napi.h"
+#include "output/deferred_photo_proxy_napi.h"
+#include "output/metadata_object_napi.h"
+#include "output/photo_napi.h"
+#include "output/photo_output_napi.h"
+#include "output/preview_output_napi.h"
+#include "output/video_output_napi.h"
+#include "session/camera_session_napi.h"
+
 namespace OHOS {
 namespace CameraStandard {
 /*
@@ -32,6 +61,7 @@ static napi_value Export(napi_env env, napi_value exports)
     CameraManagerNapi::Init(env, exports);
     CameraNapi::Init(env, exports);
     CameraOutputCapabilityNapi::Init(env, exports);
+    CameraProfileNapi::Init(env, exports);
     CameraSizeNapi::Init(env, exports);
     CameraVideoProfileNapi::Init(env, exports);
     CameraSettingParamNapi::Init(env, exports);
@@ -66,7 +96,7 @@ static napi_module g_module = {
     .nm_register_func = Export,
     .nm_modname = "multimedia.camera",
     .nm_priv = (reinterpret_cast<void*>(0)),
-    .reserved = {0}
+    .reserved = { 0 }
 };
 
 /*
