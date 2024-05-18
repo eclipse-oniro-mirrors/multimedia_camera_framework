@@ -764,7 +764,7 @@ int32_t HCaptureSession::CommitConfig()
         device ->GetSecureCameraSeq(&secureSeqId);
         if (((GetopMode() == secureMode) ^ (secureSeqId != 0))) {
             MEDIA_ERR_LOG("secureCamera is not allowed commit mode = %{public}d.", GetopMode());
-            errorCode = CAMERA_INVALID_ARG;
+            errorCode = CAMERA_OPERATION_NOT_ALLOWED;
             return;
         }
 

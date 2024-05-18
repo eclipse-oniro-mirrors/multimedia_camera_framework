@@ -38,6 +38,7 @@
 #include "photo_session.h"
 #include "preview_output.h"
 #include "scan_session.h"
+#include "secure_camera_session.h"
 #include "surface.h"
 #include "test_common.h"
 #include "token_setproc.h"
@@ -7839,6 +7840,430 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_120, TestSize.Level
         EXPECT_EQ(intResult, 0);
     }
     input->Close();
+}
+/*
+* Feature: Framework
+* Function: Test normal branch that is support secure camera for open camera
+* SubFunction: NA
+* FunctionPoints: NA
+* EnvConditions: NA
+* CaseDescription: Test normal branch for open camera
+*/
+HWTEST_F(CameraFrameworkUnitTest, camera_opencamera_unittest_001, TestSize.Level0)
+{
+    InSequence s;
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    for (sptr<CameraDevice> camDevice : cameras) {
+        std::vector<SceneMode> modes = cameraManager->GetSupportedModes(camDevice);
+        ASSERT_TRUE(modes.size() != 0);
+
+        if (find(modes.begin(), modes.end(), SceneMode::SECURE) != modes.end()) {
+            sptr<CaptureInput> input = cameraManager->CreateCameraInput(camDevice);
+            ASSERT_NE(input, nullptr);
+            EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+            EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+            sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+            std::string cameraSettings = camInput->GetCameraSettings();
+            camInput->SetCameraSettings(cameraSettings);
+
+            uint64_t secureSeqId = 0;
+            sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
+            ASSERT_NE(deviceObj, nullptr);
+
+            int intResult = camInput->Open(true, &secureSeqId);
+            EXPECT_EQ(intResult, 0);
+            EXPECT_NE(secureSeqId, 0);
+            input->Close();
+            break;
+        }
+    }
+}
+
+/*
+* Feature: Framework
+* Function: Test anomalous branch that is not support secure camera for open camera
+* SubFunction: NA
+* FunctionPoints: NA
+* EnvConditions: NA
+* CaseDescription: Test anomalous branch for open camera
+*/
+HWTEST_F(CameraFrameworkUnitTest, camera_opencamera_unittest_002, TestSize.Level0)
+{
+    InSequence s;
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    for (sptr<CameraDevice> camDevice : cameras) {
+        std::vector<SceneMode> modes = cameraManager->GetSupportedModes(camDevice);
+        ASSERT_TRUE(modes.size() != 0);
+
+        if (find(modes.begin(), modes.end(), SceneMode::SECURE) == modes.end()) {
+            sptr<CaptureInput> input = cameraManager->CreateCameraInput(camDevice);
+            ASSERT_NE(input, nullptr);
+            EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+            EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+            sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+            std::string cameraSettings = camInput->GetCameraSettings();
+            camInput->SetCameraSettings(cameraSettings);
+
+            uint64_t secureSeqId = 0;
+            sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
+            ASSERT_NE(deviceObj, nullptr);
+
+            int intResult = camInput->Open(true, &secureSeqId);
+            EXPECT_EQ(intResult, 0);
+            EXPECT_EQ(secureSeqId, 0);
+            input->Close();
+            break;
+        }
+    }
+}
+
+/*
+* Feature: Framework
+* Function: Test anomalous branch when open secure camera that seq is null
+* SubFunction: NA
+* FunctionPoints: NA
+* EnvConditions: NA
+* CaseDescription: Test anomalous branch for open camera
+*/
+HWTEST_F(CameraFrameworkUnitTest, camera_opencamera_unittest_003, TestSize.Level0)
+{
+    InSequence s;
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    for (sptr<CameraDevice> camDevice : cameras) {
+        std::vector<SceneMode> modes = cameraManager->GetSupportedModes(camDevice);
+        ASSERT_TRUE(modes.size() != 0);
+
+        if (find(modes.begin(), modes.end(), SceneMode::SECURE) != modes.end()) {
+            sptr<CaptureInput> input = cameraManager->CreateCameraInput(camDevice);
+            ASSERT_NE(input, nullptr);
+            EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+            EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+            sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+            std::string cameraSettings = camInput->GetCameraSettings();
+            camInput->SetCameraSettings(cameraSettings);
+
+            sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
+            ASSERT_NE(deviceObj, nullptr);
+
+            uint64_t* secureSeqId = nullptr;
+            int intResult = camInput->Open(true, secureSeqId);
+            EXPECT_EQ(intResult, CAMERA_INVALID_ARG);
+            input->Close();
+            break;
+        }
+    }
+}
+
+/*
+* Feature: Framework
+* Function: Test normal branch that is open non-secure camera
+* SubFunction: NA
+* FunctionPoints: NA
+* EnvConditions: NA
+* CaseDescription: Test normal branch that is open non-secure camera
+*/
+HWTEST_F(CameraFrameworkUnitTest, camera_opencamera_unittest_004, TestSize.Level0)
+{
+    InSequence s;
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    for (sptr<CameraDevice> camDevice : cameras) {
+        std::vector<SceneMode> modes = cameraManager->GetSupportedModes(camDevice);
+        ASSERT_TRUE(modes.size() != 0);
+
+        if (find(modes.begin(), modes.end(), SceneMode::SECURE) == modes.end()) {
+            sptr<CaptureInput> input = cameraManager->CreateCameraInput(camDevice);
+            ASSERT_NE(input, nullptr);
+            EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+            EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+            sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+            std::string cameraSettings = camInput->GetCameraSettings();
+            camInput->SetCameraSettings(cameraSettings);
+
+            sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
+            ASSERT_NE(deviceObj, nullptr);
+
+            uint64_t secureSeqId = 0;
+            int intResult = camInput->Open(false, &secureSeqId);
+            EXPECT_EQ(intResult, CAMERA_OK);
+            EXPECT_EQ(secureSeqId, 0);
+            input->Close();
+            break;
+        }
+    }
+}
+
+/*
+* Feature: Framework
+* Function: Test normal branch that is add secure output flag
+* SubFunction: NA
+* FunctionPoints: NA
+* EnvConditions: NA
+* CaseDescription: Test normal branch that is add secure output flag
+*/
+HWTEST_F(CameraFrameworkUnitTest, camera_securecamera_unittest_001, TestSize.Level0)
+{
+    InSequence s;
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    for (sptr<CameraDevice> camDevice : cameras) {
+        std::vector<SceneMode> modes = cameraManager->GetSupportedModes(camDevice);
+        ASSERT_TRUE(modes.size() != 0);
+
+        if (find(modes.begin(), modes.end(), SceneMode::SECURE) != modes.end()) {
+            sptr<CameraOutputCapability> ability = cameraManager->
+                GetSupportedOutputCapability(camDevice, SceneMode::SECURE);
+            ASSERT_NE(ability, nullptr);
+            sptr<CaptureInput> input = cameraManager->CreateCameraInput(camDevice);
+            ASSERT_NE(input, nullptr);
+            EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+            EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+            sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+            std::string cameraSettings = camInput->GetCameraSettings();
+            camInput->SetCameraSettings(cameraSettings);
+            uint64_t secureSeqId = 0;
+            int intResult = camInput->Open(true, &secureSeqId);
+            EXPECT_EQ(intResult, CAMERA_OK);
+            EXPECT_NE(secureSeqId, 0);
+
+            sptr<CaptureOutput> preview = CreatePreviewOutput();
+            ASSERT_NE(preview, nullptr);
+            sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(SceneMode::SECURE);
+            ASSERT_NE(captureSession, nullptr);
+            sptr<SecureCameraSession> secureSession = nullptr;
+            secureSession = static_cast<SecureCameraSession *> (captureSession.GetRefPtr());
+            ASSERT_NE(secureSession, nullptr);
+
+            EXPECT_EQ(secureSession->BeginConfig(), 0);
+            EXPECT_EQ(secureSession->AddInput(input), 0);
+            EXPECT_EQ(secureSession->AddOutput(preview), 0);
+            EXPECT_EQ(secureSession->AddSecureOutput(preview), 0);
+            EXPECT_EQ(secureSession->CommitConfig(), 0);
+            secureSession->Release();
+            input->Close();
+            break;
+        }
+    }
+}
+
+/*
+* Feature: Framework
+* Function: Test normal branch that is add secure output flag
+* SubFunction: NA
+* FunctionPoints: NA
+* EnvConditions: NA
+* CaseDescription: Test normal branch that is add secure output flag
+*/
+HWTEST_F(CameraFrameworkUnitTest, camera_securecamera_unittest_002, TestSize.Level0)
+{
+    InSequence s;
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    for (sptr<CameraDevice> camDevice : cameras) {
+        std::vector<SceneMode> modes = cameraManager->GetSupportedModes(camDevice);
+        ASSERT_TRUE(modes.size() != 0);
+
+        if (find(modes.begin(), modes.end(), SceneMode::SECURE) != modes.end()) {
+            sptr<CameraOutputCapability> ability = cameraManager->
+                GetSupportedOutputCapability(camDevice, SceneMode::SECURE);
+            ASSERT_NE(ability, nullptr);
+            sptr<CaptureInput> input = cameraManager->CreateCameraInput(camDevice);
+            ASSERT_NE(input, nullptr);
+            EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+            EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+            sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+            std::string cameraSettings = camInput->GetCameraSettings();
+            camInput->SetCameraSettings(cameraSettings);
+            uint64_t secureSeqId = 0;
+            int intResult = camInput->Open(false, &secureSeqId);
+            EXPECT_EQ(intResult, CAMERA_OK);
+            EXPECT_NE(secureSeqId, 0);
+            sptr<CaptureOutput> preview = CreatePreviewOutput();
+            ASSERT_NE(preview, nullptr);
+            sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(SceneMode::SECURE);
+            ASSERT_NE(captureSession, nullptr);
+            sptr<SecureCameraSession> secureSession = nullptr;
+            secureSession = static_cast<SecureCameraSession *> (captureSession.GetRefPtr());
+            ASSERT_NE(secureSession, nullptr);
+
+            EXPECT_EQ(secureSession->BeginConfig(), 0);
+            EXPECT_EQ(secureSession->AddInput(input), 0);
+            EXPECT_EQ(secureSession->AddOutput(preview), 0);
+            EXPECT_EQ(secureSession->AddSecureOutput(preview), 0);
+            EXPECT_EQ(secureSession->CommitConfig(), 0);
+            secureSession->Release();
+            input->Close();
+            break;
+        }
+    }
+}
+
+/*
+* Feature: Framework
+* Function: Test abnormal branch that is add secure output flag twice
+* SubFunction: NA
+* FunctionPoints: NA
+* EnvConditions: NA
+* CaseDescription: Test abnormal branch that is add secure output flag twice
+*/
+HWTEST_F(CameraFrameworkUnitTest, camera_securecamera_unittest_003, TestSize.Level0)
+{
+    InSequence s;
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    for (sptr<CameraDevice> camDevice : cameras) {
+        std::vector<SceneMode> modes = cameraManager->GetSupportedModes(camDevice);
+        ASSERT_TRUE(modes.size() != 0);
+
+        if (find(modes.begin(), modes.end(), SceneMode::SECURE) != modes.end()) {
+            sptr<CameraOutputCapability> ability = cameraManager->
+                GetSupportedOutputCapability(camDevice, SceneMode::SECURE);
+            ASSERT_NE(ability, nullptr);
+            sptr<CaptureInput> input = cameraManager->CreateCameraInput(camDevice);
+            ASSERT_NE(input, nullptr);
+            EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+            EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+            sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+            std::string cameraSettings = camInput->GetCameraSettings();
+            camInput->SetCameraSettings(cameraSettings);
+            uint64_t secureSeqId = 0;
+            int intResult = camInput->Open(false, &secureSeqId);
+            EXPECT_EQ(intResult, CAMERA_OK);
+            EXPECT_NE(secureSeqId, 0);
+
+            sptr<CaptureOutput> preview1 = CreatePreviewOutput();
+            ASSERT_NE(preview1, nullptr);
+            sptr<CaptureOutput> preview2 = CreatePreviewOutput();
+            ASSERT_NE(preview2, nullptr);
+            sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(SceneMode::SECURE);
+            ASSERT_NE(captureSession, nullptr);
+            sptr<SecureCameraSession> secureSession = nullptr;
+            secureSession = static_cast<SecureCameraSession *> (captureSession.GetRefPtr());
+            ASSERT_NE(secureSession, nullptr);
+
+            EXPECT_EQ(secureSession->BeginConfig(), 0);
+            EXPECT_EQ(secureSession->AddInput(input), 0);
+            EXPECT_EQ(secureSession->AddOutput(preview1), 0);
+            EXPECT_EQ(secureSession->AddOutput(preview2), 0);
+            EXPECT_EQ(secureSession->AddSecureOutput(preview1), 0);
+            EXPECT_EQ(secureSession->AddSecureOutput(preview2), OPERATION_NOT_ALLOWED);
+            EXPECT_EQ(secureSession->CommitConfig(), 0);
+            secureSession->Release();
+            input->Close();
+            break;
+        }
+    }
+}
+
+/*
+* Feature: Framework
+* Function: Test abnormal branch that is add secure output flag twice
+* SubFunction: NA
+* FunctionPoints: NA
+* EnvConditions: NA
+* CaseDescription: Test abnormal branch that is add secure output flag twice
+*/
+HWTEST_F(CameraFrameworkUnitTest, camera_securecamera_unittest_004, TestSize.Level0)
+{
+    InSequence s;
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    for (sptr<CameraDevice> camDevice : cameras) {
+        std::vector<SceneMode> modes = cameraManager->GetSupportedModes(camDevice);
+        ASSERT_TRUE(modes.size() != 0);
+
+        if (find(modes.begin(), modes.end(), SceneMode::SECURE) != modes.end()) {
+            sptr<CameraOutputCapability> ability = cameraManager->
+                GetSupportedOutputCapability(camDevice, SceneMode::SECURE);
+            ASSERT_NE(ability, nullptr);
+            sptr<CaptureInput> input = cameraManager->CreateCameraInput(camDevice);
+            ASSERT_NE(input, nullptr);
+            EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+            EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+            sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+            std::string cameraSettings = camInput->GetCameraSettings();
+            camInput->SetCameraSettings(cameraSettings);
+            uint64_t secureSeqId = 0;
+            int intResult = camInput->Open(false, &secureSeqId);
+            EXPECT_EQ(intResult, CAMERA_OK);
+            EXPECT_NE(secureSeqId, 0);
+            sptr<CaptureOutput> preview1 = CreatePreviewOutput();
+            ASSERT_NE(preview1, nullptr);
+            sptr<CaptureOutput> preview2 = CreatePreviewOutput();
+            ASSERT_NE(preview2, nullptr);
+            sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(SceneMode::SECURE);
+            ASSERT_NE(captureSession, nullptr);
+            sptr<SecureCameraSession> secureSession = nullptr;
+            secureSession = static_cast<SecureCameraSession *> (captureSession.GetRefPtr());
+            ASSERT_NE(secureSession, nullptr);
+
+            EXPECT_EQ(secureSession->BeginConfig(), 0);
+            EXPECT_EQ(secureSession->AddInput(input), 0);
+            EXPECT_EQ(secureSession->AddOutput(preview1), 0);
+            EXPECT_EQ(secureSession->AddOutput(preview2), 0);
+            EXPECT_EQ(secureSession->AddSecureOutput(preview1), 0);
+            EXPECT_EQ(secureSession->AddSecureOutput(preview2), OPERATION_NOT_ALLOWED);
+            EXPECT_EQ(secureSession->CommitConfig(), 0);
+            secureSession->Release();
+            input->Close();
+            break;
+        }
+    }
+}
+
+/*
+* Feature: Framework
+* Function: Test abnormal branch that secure output is added after commiting
+* SubFunction: NA
+* FunctionPoints: NA
+* EnvConditions: NA
+* CaseDescription: Test abnormal branch that secure output is added after commiting
+*/
+HWTEST_F(CameraFrameworkUnitTest, camera_securecamera_unittest_005, TestSize.Level0)
+{
+    InSequence s;
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+
+    for (sptr<CameraDevice> camDevice : cameras) {
+        std::vector<SceneMode> modes = cameraManager->GetSupportedModes(camDevice);
+        ASSERT_TRUE(modes.size() != 0);
+
+        if (find(modes.begin(), modes.end(), SceneMode::SECURE) != modes.end()) {
+            sptr<CameraOutputCapability> ability = cameraManager->
+                GetSupportedOutputCapability(camDevice, SceneMode::SECURE);
+            ASSERT_NE(ability, nullptr);
+            sptr<CaptureInput> input = cameraManager->CreateCameraInput(camDevice);
+            ASSERT_NE(input, nullptr);
+            EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
+            EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
+            sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+            std::string cameraSettings = camInput->GetCameraSettings();
+            camInput->SetCameraSettings(cameraSettings);
+            uint64_t secureSeqId = 0;
+            int intResult = camInput->Open(false, &secureSeqId);
+            EXPECT_EQ(intResult, CAMERA_OK);
+            EXPECT_NE(secureSeqId, 0);
+            sptr<CaptureOutput> preview = CreatePreviewOutput();
+            ASSERT_NE(preview, nullptr);
+            sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(SceneMode::SECURE);
+            ASSERT_NE(captureSession, nullptr);
+            sptr<SecureCameraSession> secureSession = nullptr;
+            secureSession = static_cast<SecureCameraSession *> (captureSession.GetRefPtr());
+            ASSERT_NE(secureSession, nullptr);
+
+            EXPECT_EQ(secureSession->BeginConfig(), 0);
+            EXPECT_EQ(secureSession->AddInput(input), 0);
+            EXPECT_EQ(secureSession->AddOutput(preview), 0);
+            EXPECT_EQ(secureSession->CommitConfig(), 0);
+            EXPECT_EQ(secureSession->AddSecureOutput(preview), OPERATION_NOT_ALLOWED);
+            secureSession->Release();
+            input->Close();
+            break;
+        }
+    }
 }
 } // CameraStandard
 } // OHOS
