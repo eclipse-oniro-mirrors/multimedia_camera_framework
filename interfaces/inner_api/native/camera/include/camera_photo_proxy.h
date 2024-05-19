@@ -25,20 +25,19 @@ namespace CameraStandard {
 class CameraPhotoProxy : public RefBase {
 public:
     CameraPhotoProxy();
-    CameraPhotoProxy(const BufferHandle* bufferHandle, int32_t format, int32_t photoWidth,
+    CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format, int32_t photoWidth,
         int32_t photoHeight, bool isHighQuality);
     virtual ~CameraPhotoProxy();
     void ReadFromParcel(MessageParcel &parcel);
     void WriteToParcel(MessageParcel &parcel);
     void SetDeferredAttrs(std::string photoId, int32_t deferredProcType);
+    int32_t CameraFreeBufferHandle();
 
 private:
-    int32_t CameraFreeBufferHandle(BufferHandle *handle);
-    const BufferHandle* bufferHandle_;
+    BufferHandle* bufferHandle_;
     int32_t format_;
     int32_t photoWidth_;
     int32_t photoHeight_;
-    void* fileDataAddr_;
     size_t fileSize_;
     bool isHighQuality_;
     std::mutex mutex_;

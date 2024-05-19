@@ -34,7 +34,7 @@ CameraPhotoProxy::CameraPhotoProxy()
     fileSize_ = 0;
 }
 
-CameraPhotoProxy::CameraPhotoProxy(const BufferHandle* bufferHandle, int32_t format,
+CameraPhotoProxy::CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format,
     int32_t photoWidth, int32_t photoHeight, bool isHighQuality)
 {
     MEDIA_INFO_LOG("CameraPhotoProxy");
@@ -67,6 +67,28 @@ void CameraPhotoProxy::ReadFromParcel(MessageParcel &parcel)
     isHighQuality_ = parcel.ReadBool();
     bufferHandle_ = ReadBufferHandle(parcel);
     MEDIA_INFO_LOG("PhotoProxy::ReadFromParcel");
+}
+
+int32_t CameraPhotoProxy::CameraFreeBufferHandle()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (bufferHandle_ == nullptr) {
+        MEDIA_ERR_LOG("CameraFreeBufferHandle with nullptr handle");
+        return 0;
+    }
+    if (bufferHandle_->fd >= 0) {
+        close(bufferHandle_->fd);
+        bufferHandle_->fd = -1;
+    }
+    const uint32_t reserveFds = bufferHandle_->reserveFds;
+    for (uint32_t i = 0; i < reserveFds; i++) {
+        if (bufferHandle_->reserve[i] >= 0) {
+            close(bufferHandle_->reserve[i]);
+            bufferHandle_->reserve[i] = -1;
+        }
+    }
+    free(bufferHandle_);
+    return 0;
 }
 
 void CameraPhotoProxy::WriteToParcel(MessageParcel &parcel)
