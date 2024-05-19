@@ -1511,6 +1511,7 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
     auto photoAssetProxy = mediaLibraryManager->CreatePhotoAssetProxy(type, uid, userId);
     MessageParcel data;
     photoProxy->WriteToParcel(data);
+    photoProxy->CameraFreeBufferHandle();
     sptr<CameraServerPhotoProxy> cameraServerPhotoProxy = new CameraServerPhotoProxy();
     cameraServerPhotoProxy->ReadFromParcel(data);
     cameraServerPhotoProxy->SetDisplayName(CreateDisplayName());
