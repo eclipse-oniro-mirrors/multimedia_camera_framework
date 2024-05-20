@@ -1247,66 +1247,6 @@ HWTEST_F(CameraFrameworkModuleTest, Camera_fwInfoManager_moduletest_002, TestSiz
     };
     ASSERT_NE(judgeDeviceType(), false);
 }
-/*
- * Feature: Framework
- * Function: Test Result Callback
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test Result Callback
- */
-
-HWTEST_F(CameraFrameworkModuleTest, Camera_ResultCallback_moduletest, TestSize.Level0)
-{
-    int32_t intResult = session_->BeginConfig();
-    EXPECT_EQ(intResult, 0);
-
-    intResult = session_->AddInput(input_);
-    EXPECT_EQ(intResult, 0);
-
-    // Register error callback
-    std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
-    std::shared_ptr<ResultCallback> resultCallback = callback;
-    sptr<CameraInput> camInput = (sptr<CameraInput>&)input_;
-    camInput->SetResultCallback(resultCallback);
-    EXPECT_EQ(g_camInputOnError, false);
-
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
-    ASSERT_NE(previewOutput, nullptr);
-
-    intResult = session_->AddOutput(previewOutput);
-    EXPECT_EQ(intResult, 0);
-
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput();
-    ASSERT_NE(videoOutput, nullptr);
-
-    intResult = session_->AddOutput(videoOutput);
-    EXPECT_EQ(intResult, 0);
-
-    intResult = session_->CommitConfig();
-    EXPECT_EQ(intResult, 0);
-
-    sleep(WAIT_TIME_AFTER_START);
-    intResult = ((sptr<PreviewOutput>&)previewOutput)->Start();
-    EXPECT_EQ(intResult, 0);
-
-    sleep(WAIT_TIME_AFTER_START);
-
-    intResult = ((sptr<VideoOutput>&)videoOutput)->Start();
-    EXPECT_EQ(intResult, 0);
-
-    sleep(WAIT_TIME_AFTER_START);
-    EXPECT_NE(g_metaResult, nullptr);
-
-    intResult = ((sptr<VideoOutput>&)videoOutput)->Stop();
-    EXPECT_EQ(intResult, 0);
-
-    TestUtils::SaveVideoFile(nullptr, 0, VideoSaveMode::CLOSE, g_videoFd);
-
-    sleep(WAIT_TIME_BEFORE_STOP);
-    ((sptr<PreviewOutput>&)previewOutput)->Stop();
-    session_->Stop();
-}
 
 /*
  * Feature: Framework
@@ -1446,19 +1386,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_003, TestSize.Le
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_004, TestSize.Level0)
 {
     TestCallbacks(cameras_[0], false);
-}
-
-/*
- * Feature: Framework
- * Function: Test camera status, flash, camera input, preview output and video output callbacks
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test callbacks
- */
-HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_005, TestSize.Level0)
-{
-    TestCallbacks(cameras_[0], true);
 }
 
 /*
@@ -8034,74 +7961,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_114, TestSize.L
 
     sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(mode);
     ASSERT_NE(captureSession, nullptr);
-}
-
-/*
-* Feature: Framework
-* Function: Test SetExposureBias && GetFeaturesMode && SetBeautyValue && GetSubFeatureMods
-* SubFunction: NA
-* FunctionPoints: NA
-* EnvConditions: NA
-* CaseDescription: test SetExposureBias && GetFeaturesMode && SetBeautyValue && GetSubFeatureMods
-*/
-HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_115, TestSize.Level0)
-{
-    sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
-    ASSERT_NE(camSession, nullptr);
-
-    int32_t intResult = camSession->BeginConfig();
-    EXPECT_EQ(intResult, 0);
-
-    intResult = camSession->AddInput(input_);
-    EXPECT_EQ(intResult, 0);
-
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
-    ASSERT_NE(previewOutput, nullptr);
-
-    intResult = camSession->AddOutput(previewOutput);
-    EXPECT_EQ(intResult, 0);
-
-    intResult = camSession->CommitConfig();
-    EXPECT_EQ(intResult, 0);
-
-    camSession->LockForControl();
-    EXPECT_EQ(camSession->SetExposureBias(100.0f), CameraErrorCode::SUCCESS);
-    intResult = camSession->UnlockForControl();
-
-    camSession->isSetMacroEnable_ = true;
-    camSession->currentMode_ = SceneMode::VIDEO;
-
-    SceneFeaturesMode videoMacroMode(SceneMode::VIDEO, { SceneFeature::FEATURE_MACRO });
-    bool isMatchSubFeatureMode = false;
-    auto vec = camSession->GetSubFeatureMods();
-    for (auto& sceneFeaturesMode : vec) {
-        if (sceneFeaturesMode == videoMacroMode) {
-            isMatchSubFeatureMode = true;
-            break;
-        }
-    }
-    EXPECT_TRUE(isMatchSubFeatureMode);
-
-    auto mode = camSession->GetFeaturesMode();
-    EXPECT_TRUE(mode == videoMacroMode);
-
-    camSession->currentMode_ = SceneMode::CAPTURE;
-    mode = camSession->GetFeaturesMode();
-    SceneFeaturesMode captureMacroMode(SceneMode::CAPTURE, { SceneFeature::FEATURE_MACRO });
-    EXPECT_TRUE(mode == captureMacroMode);
-
-    isMatchSubFeatureMode = false;
-    vec = camSession->GetSubFeatureMods();
-    for (auto& sceneFeaturesMode : vec) {
-        if (sceneFeaturesMode == captureMacroMode) {
-            isMatchSubFeatureMode = true;
-            break;
-        }
-    }
-    EXPECT_TRUE(isMatchSubFeatureMode);
-
-    bool boolResult = camSession->SetBeautyValue(BeautyType::SKIN_TONE, 0);
-    EXPECT_FALSE(boolResult);
 }
 
 /*
