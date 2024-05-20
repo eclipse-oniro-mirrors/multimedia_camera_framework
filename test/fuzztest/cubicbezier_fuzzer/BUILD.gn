@@ -17,7 +17,7 @@ import("./../../../multimedia_camera_framework.gni")
 
 ohos_fuzztest("CubicBezierFuzzTest") {
   module_out_path = "camera_framework/camera_framework"
-  fuzz_config_file = "../streamcapturestub_fuzzer"
+  fuzz_config_file = "../cubicbezier_fuzzer"
 
   include_dirs = [
     "${driver_disply_path}/interfaces/include",
