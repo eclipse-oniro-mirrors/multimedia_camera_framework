@@ -20,16 +20,14 @@
 
 namespace OHOS {
 namespace CameraStandard {
+namespace StreamRepeatStubFuzzer {
 
-class StreamRepeatStubFuzzer {
-public:
-static bool hasPermission;
-static HStreamRepeatStub *fuzz;
+void Test(uint8_t *rawData, size_t size);
+void Test_OnRemoteRequest(uint8_t *rawData, size_t size);
 
-static void Test(uint8_t *rawData, size_t size);
-static void CheckPermission();
-};
+void CheckPermission();
 
+}
 }
 }
 #endif

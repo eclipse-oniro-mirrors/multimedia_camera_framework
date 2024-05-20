@@ -21,12 +21,14 @@
 #include "camera_metadata_info.h"
 #include "iconsumer_surface.h"
 #include "metadata_utils.h"
+#include "camera_service_ipc_interface_code.h"
 
 namespace {
 
 const int32_t LIMITSIZE = 2;
 const size_t LIMITCOUNT = 4;
 const int32_t PHOTO_FORMAT = 2000;
+const uint32_t INVALID_CODE = 9999;
 const std::u16string FORMMGR_INTERFACE_TOKEN = u"IStreamCapture";
 
 std::shared_ptr<OHOS::Camera::CameraMetadata> MakeMetadata(uint8_t *rawData, size_t size)
@@ -59,13 +61,14 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> MakeMetadata(uint8_t *rawData, siz
 
 namespace OHOS {
 namespace CameraStandard {
+namespace StreamMetadataStubFuzzer {
 
-bool StreamMetadataStubFuzzer::hasPermission = false;
-HStreamMetadataStub *StreamMetadataStubFuzzer::fuzz = nullptr;
+bool g_hasPermission = false;
+HStreamMetadataStub *fuzz = nullptr;
 
-void StreamMetadataStubFuzzer::CheckPermission()
+void CheckPermission()
 {
-    if (!hasPermission) {
+    if (!g_hasPermission) {
         uint64_t tokenId;
         const char *perms[0];
         perms[0] = "ohos.permission.CAMERA";
@@ -75,11 +78,11 @@ void StreamMetadataStubFuzzer::CheckPermission()
         tokenId = GetAccessTokenId(&infoInstance);
         SetSelfTokenID(tokenId);
         OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-        hasPermission = true;
+        g_hasPermission = true;
     }
 }
 
-void StreamMetadataStubFuzzer::Test(uint8_t *rawData, size_t size)
+void Test(uint8_t *rawData, size_t size)
 {
     if (rawData == nullptr || size < LIMITSIZE) {
         return;
@@ -95,43 +98,38 @@ void StreamMetadataStubFuzzer::Test(uint8_t *rawData, size_t size)
         fuzz = new HStreamMetadata(producer, PHOTO_FORMAT);
     }
 
+    Test_OnRemoteRequest(rawData, size);
+}
+
+void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
+{
     MessageParcel data;
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
     auto metadata = MakeMetadata(rawData, size);
     if (!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(metadata, data))) {
         return;
     }
-    data.RewindRead(0);
-    uint32_t code = 0;
+    uint32_t code;
     MessageParcel reply;
     MessageOption option;
+    code  = static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_START);
+    data.RewindRead(0);
     fuzz->OnRemoteRequest(code, data, reply, option);
 
+    code = static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_STOP);
     data.RewindRead(0);
-    fuzz->AddAuthInfo(data, reply, code);
+    fuzz->OnRemoteRequest(code, data, reply, option);
 
+    code = static_cast<uint32_t>(StreamMetadataInterfaceCode::CAMERA_STREAM_META_RELEASE);
     data.RewindRead(0);
-    fuzz->InvokerDataBusThread(data, reply);
+    fuzz->OnRemoteRequest(code, data, reply, option);
 
+    code = INVALID_CODE;
     data.RewindRead(0);
-    fuzz->InvokerThread(code, data, reply, option);
-
-    data.RewindRead(0);
-    fuzz->Marshalling(data);
-
-    data.RewindRead(0);
-    fuzz->NoticeServiceDie(data, reply, option);
-
-    data.RewindRead(0);
-    fuzz->SendRequest(code, data, reply, option);
-
-    data.RewindRead(0);
-    fuzz->ProcessProto(code, data, reply, option);
-
-    data.RewindRead(0);
-    fuzz->OnRemoteDump(code, data, reply, option);
+    fuzz->OnRemoteRequest(code, data, reply, option);
 }
 
+} // namespace StreamMetadataStubFuzzer
 } // namespace CameraStandard
 } // namespace OHOS
 

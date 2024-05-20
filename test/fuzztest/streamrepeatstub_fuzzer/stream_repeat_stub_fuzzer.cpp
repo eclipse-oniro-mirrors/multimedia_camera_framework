@@ -20,6 +20,8 @@
 #include "hstream_repeat.h"
 #include "iconsumer_surface.h"
 #include "metadata_utils.h"
+#include "camera_service_ipc_interface_code.h"
+#include <cstdint>
 
 namespace {
 
@@ -28,6 +30,8 @@ const size_t LIMITCOUNT = 4;
 const int32_t PHOTO_WIDTH = 1280;
 const int32_t PHOTO_HEIGHT = 960;
 const int32_t PHOTO_FORMAT = 2000;
+const uint32_t INVALID_CODE = 9999;
+const uint32_t CAMERA_ADD_DEFERRED = 4;
 const std::u16string FORMMGR_INTERFACE_TOKEN = u"IStreamCapture";
 
 std::shared_ptr<OHOS::Camera::CameraMetadata> MakeMetadata(uint8_t *rawData, size_t size)
@@ -60,13 +64,14 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> MakeMetadata(uint8_t *rawData, siz
 
 namespace OHOS {
 namespace CameraStandard {
+namespace StreamRepeatStubFuzzer {
 
-bool StreamRepeatStubFuzzer::hasPermission = false;
-HStreamRepeatStub *StreamRepeatStubFuzzer::fuzz = nullptr;
+bool g_hasPermission = false;
+HStreamRepeatStub *fuzz = nullptr;
 
-void StreamRepeatStubFuzzer::CheckPermission()
+void CheckPermission()
 {
-    if (!hasPermission) {
+    if (!g_hasPermission) {
         uint64_t tokenId;
         const char *perms[0];
         perms[0] = "ohos.permission.CAMERA";
@@ -76,11 +81,11 @@ void StreamRepeatStubFuzzer::CheckPermission()
         tokenId = GetAccessTokenId(&infoInstance);
         SetSelfTokenID(tokenId);
         OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-        hasPermission = true;
+        g_hasPermission = true;
     }
 }
 
-void StreamRepeatStubFuzzer::Test(uint8_t *rawData, size_t size)
+void Test(uint8_t *rawData, size_t size)
 {
     if (rawData == nullptr || size < LIMITSIZE) {
         return;
@@ -97,43 +102,66 @@ void StreamRepeatStubFuzzer::Test(uint8_t *rawData, size_t size)
             PHOTO_WIDTH, PHOTO_HEIGHT, RepeatStreamType::PREVIEW);
     }
 
+    Test_OnRemoteRequest(rawData, size);
+}
+
+void RunCase(MessageParcel &data, StreamRepeatInterfaceCode sric)
+{
+    MessageParcel reply;
+    MessageOption option;
+    data.RewindRead(0);
+    fuzz->OnRemoteRequest(static_cast<uint32_t>(sric), data, reply, option);
+}
+
+void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
+{
     MessageParcel data;
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
     auto metadata = MakeMetadata(rawData, size);
     if (!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(metadata, data))) {
         return;
     }
-    data.RewindRead(0);
-    uint32_t code = 0;
+    RunCase(data, StreamRepeatInterfaceCode::CAMERA_START_VIDEO_RECORDING);
+    RunCase(data, StreamRepeatInterfaceCode::CAMERA_STOP_VIDEO_RECORDING);
+    RunCase(data, StreamRepeatInterfaceCode::CAMERA_STREAM_REPEAT_RELEASE);
+    RunCase(data, StreamRepeatInterfaceCode::CAMERA_REMOVE_SKETCH_STREAM_REPEAT);
+    RunCase(data, StreamRepeatInterfaceCode::CAMERA_UPDATE_SKETCH_RATIO);
+    RunCase(data, StreamRepeatInterfaceCode::STREAM_FRAME_RANGE_SET);
+
+    uint32_t code;
     MessageParcel reply;
     MessageOption option;
+
+    code = static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_STREAM_REPEAT_SET_CALLBACK);
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    data.WriteRawData(rawData, size);
+    data.RewindRead(0);
     fuzz->OnRemoteRequest(code, data, reply, option);
 
+    code = static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_FORK_SKETCH_STREAM_REPEAT);
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    data.WriteInt32(PHOTO_WIDTH);
+    data.WriteInt32(PHOTO_HEIGHT);
+    data.WriteFloat(1.0f);
+    data.WriteRawData(rawData, size);
     data.RewindRead(0);
-    fuzz->AddAuthInfo(data, reply, code);
+    fuzz->OnRemoteRequest(code, data, reply, option);
 
+    code = CAMERA_ADD_DEFERRED;
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    data.WriteRawData(rawData, size);
     data.RewindRead(0);
-    fuzz->InvokerDataBusThread(data, reply);
+    fuzz->OnRemoteRequest(code, data, reply, option);
 
+    code = INVALID_CODE;
     data.RewindRead(0);
-    fuzz->InvokerThread(code, data, reply, option);
-
-    data.RewindRead(0);
-    fuzz->Marshalling(data);
-
-    data.RewindRead(0);
-    fuzz->NoticeServiceDie(data, reply, option);
-
-    data.RewindRead(0);
-    fuzz->SendRequest(code, data, reply, option);
-
-    data.RewindRead(0);
-    fuzz->ProcessProto(code, data, reply, option);
-
-    data.RewindRead(0);
-    fuzz->OnRemoteDump(code, data, reply, option);
+    fuzz->OnRemoteRequest(code, data, reply, option);
 }
 
+} // namespace StreamRepeatStubFuzzer
 } // namespace CameraStandard
 } // namespace OHOS
 
