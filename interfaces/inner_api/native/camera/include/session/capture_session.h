@@ -1311,6 +1311,7 @@ private:
     SceneMode guessMode_ = SceneMode::NORMAL;
     std::mutex moonCaptureBoostFeatureMutex_;
     std::shared_ptr<MoonCaptureBoostFeature> moonCaptureBoostFeature_ = nullptr;
+    float focusDistance_ = 0.0;
     std::shared_ptr<MoonCaptureBoostFeature> GetMoonCaptureBoostFeature();
     void SetGuessMode(SceneMode mode);
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
@@ -1332,6 +1333,7 @@ private:
     void UpdateDeviceDeferredability();
     void ProcessProfilesAbilityId(const int32_t portraitMode);
     int32_t ProcessCaptureColorSpace(ColorSpaceInfo colorSpaceInfo, ColorSpace& fwkCaptureColorSpace);
+    void ProcessFocusDistanceUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
     void FindTagId();
     bool CheckFrameRateRangeWithCurrentFps(int32_t curMinFps, int32_t curMaxFps, int32_t minFps, int32_t maxFps);
 };
