@@ -29,6 +29,7 @@ namespace CameraStandard {
 
 CameraServerPhotoProxy::CameraServerPhotoProxy()
 {
+    format_ = 0;
     photoId_ = "";
     deferredProcType_ = 0;
     photoWidth_ = 0;
@@ -37,6 +38,8 @@ CameraServerPhotoProxy::CameraServerPhotoProxy()
     fileDataAddr_ = nullptr;
     fileSize_ = 0;
     isMmaped_ = false;
+    isDeferredPhoto_ = 0;
+    isHighQuality_ = false;
 }
 
 CameraServerPhotoProxy::~CameraServerPhotoProxy()
