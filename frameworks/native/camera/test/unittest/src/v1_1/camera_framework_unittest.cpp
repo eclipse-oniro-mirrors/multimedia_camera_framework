@@ -169,6 +169,7 @@ public:
         std::vector<int32_t> streamAbilities = {};
         void IntoVector(std::vector<int32_t>& vector) const
         {
+            static const int32_t ABILITY_FINISH = -1;
             vector.emplace_back(cameraFormat);
             vector.emplace_back(streamWidth);
             vector.emplace_back(streamHeight);
@@ -176,7 +177,7 @@ public:
             vector.emplace_back(minFrameRate);
             vector.emplace_back(maxFrameRate);
             vector.insert(vector.end(), streamAbilities.begin(), streamAbilities.end());
-            vector.emplace_back(CameraFrameworkUnitTest::ABILITY_FINISH);
+            vector.emplace_back(ABILITY_FINISH);
         }
     };
 
@@ -186,11 +187,12 @@ public:
 
         void IntoVector(std::vector<int32_t>& vector) const
         {
+            static const int32_t STREAM_FINISH = -1;
             vector.emplace_back(streamType);
             for (auto& formatConfig : streamFormatConfigs) {
                 formatConfig.IntoVector(vector);
             }
-            vector.emplace_back(CameraFrameworkUnitTest::STREAM_FINISH);
+            vector.emplace_back(STREAM_FINISH);
         }
     };
 
@@ -199,11 +201,12 @@ public:
         std::vector<StreamConfig> streams = {};
         void IntoVector(std::vector<int32_t>& vector) const
         {
+            static const int32_t MODE_FINISH = -1;
             vector.emplace_back(modeName);
             for (auto& stream : streams) {
                 stream.IntoVector(vector);
             }
-            vector.emplace_back(CameraFrameworkUnitTest::MODE_FINISH);
+            vector.emplace_back(MODE_FINISH);
         }
     };
 
