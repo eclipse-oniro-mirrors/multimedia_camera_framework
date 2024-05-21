@@ -585,7 +585,7 @@ int32_t HCameraService::UnSetMuteCallback(pid_t pid)
     MEDIA_INFO_LOG("HCameraService::UnSetMuteCallback pid = %{public}d, size = %{public}zu", pid,
         cameraMuteServiceCallbacks_.size());
     if (!cameraMuteServiceCallbacks_.empty()) {
-        MEDIA_INFO_LOG("HCameraDevice::UnSetMuteCallback cameraMuteServiceCallbacks_ is not empty, reset it");
+        MEDIA_INFO_LOG("HCameraService::UnSetMuteCallback cameraMuteServiceCallbacks_ is not empty, reset it");
         auto it = cameraMuteServiceCallbacks_.find(pid);
         if ((it != cameraMuteServiceCallbacks_.end()) && (it->second)) {
             it->second = nullptr;
@@ -604,7 +604,7 @@ int32_t HCameraService::UnSetCallback(pid_t pid)
     MEDIA_INFO_LOG(
         "HCameraService::UnSetCallback pid = %{public}d, size = %{public}zu", pid, cameraServiceCallbacks_.size());
     if (!cameraServiceCallbacks_.empty()) {
-        MEDIA_INFO_LOG("HCameraDevice::SetStatusCallback statusSvcCallbacks_ is not empty, reset it");
+        MEDIA_INFO_LOG("HCameraService::SetStatusCallback statusSvcCallbacks_ is not empty, reset it");
         auto it = cameraServiceCallbacks_.find(pid);
         if ((it != cameraServiceCallbacks_.end()) && (it->second != nullptr)) {
             it->second = nullptr;
@@ -652,7 +652,7 @@ int32_t HCameraService::UnSetTorchCallback(pid_t pid)
     MEDIA_INFO_LOG("HCameraService::UnSetTorchCallback pid = %{public}d, size = %{public}zu", pid,
         torchServiceCallbacks_.size());
     if (!torchServiceCallbacks_.empty()) {
-        MEDIA_INFO_LOG("HCameraDevice::UnSetTorchCallback torchServiceCallbacks_ is not empty, reset it");
+        MEDIA_INFO_LOG("HCameraService::UnSetTorchCallback torchServiceCallbacks_ is not empty, reset it");
         auto it = torchServiceCallbacks_.find(pid);
         if ((it != torchServiceCallbacks_.end()) && (it->second)) {
             it->second = nullptr;

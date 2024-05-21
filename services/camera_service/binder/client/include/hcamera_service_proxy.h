@@ -96,6 +96,7 @@ public:
 
     int32_t SetPeerCallback(sptr<ICameraBroker>& callback) override;
 
+    int32_t DestroyStubObj() override;
 private:
     static inline BrokerDelegator<HCameraServiceProxy> delegator_;
 };
