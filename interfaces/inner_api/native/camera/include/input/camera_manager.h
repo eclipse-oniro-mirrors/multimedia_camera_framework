@@ -571,6 +571,12 @@ public:
     */
     void InitCameraList();
 
+    /**
+    * @brief set cameramanager null
+    *
+    */
+    void SetCameraManagerNull();
+
     int32_t CreatePreviewOutputStream(
         sptr<IStreamRepeat>& streamPtr, Profile& profile, const sptr<OHOS::IBufferProducer>& producer);
 
