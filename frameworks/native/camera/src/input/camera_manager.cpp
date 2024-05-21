@@ -1927,5 +1927,11 @@ int32_t CameraManager::SetPrelaunchConfig(
     }
     return ServiceToCameraError(retCode);
 }
+
+void CameraManager::SetCameraManagerNull()
+{
+    MEDIA_INFO_LOG("CameraManager::SetCameraManagerNull() called");
+    g_cameraManager = nullptr;
+}
 } // namespace CameraStandard
 } // namespace OHOS
