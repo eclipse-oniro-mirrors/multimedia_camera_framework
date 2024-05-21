@@ -27,12 +27,15 @@ namespace CameraStandard {
 
 CameraPhotoProxy::CameraPhotoProxy()
 {
+    format_ = 0;
     photoId_ = "";
     deferredProcType_ = 0;
     photoWidth_ = 0;
     photoHeight_ = 0;
+    isHighQuality_ = false;
     bufferHandle_ = nullptr;
     fileSize_ = 0;
+    isDeferredPhoto_ = 0;
 }
 
 CameraPhotoProxy::CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format,
@@ -45,6 +48,8 @@ CameraPhotoProxy::CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format,
     photoHeight_ = photoHeight;
     fileSize_ = 0;
     isHighQuality_ = isHighQuality;
+    deferredProcType_ = 0;
+    isDeferredPhoto_ = 0;
     MEDIA_INFO_LOG("format = %{public}d, width = %{public}d, height = %{public}d",
         format_, photoWidth, photoHeight);
 }

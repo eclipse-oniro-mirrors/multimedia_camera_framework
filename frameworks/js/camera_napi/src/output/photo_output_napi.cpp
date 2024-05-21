@@ -64,6 +64,7 @@ PhotoListener::PhotoListener(napi_env env, const sptr<Surface> photoSurface, wpt
         bufferProcessor_ = std::make_shared<PhotoBufferProcessor> (photoSurface);
     }
     capturePhotoCb_ = nullptr;
+    capturePhotoAssetCb_ = nullptr;
     captureDeferredPhotoCb_ = nullptr;
 }
 RawPhotoListener::RawPhotoListener(napi_env env,

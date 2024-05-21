@@ -35,6 +35,7 @@ public:
     explicit AudioRecord(int64_t timestamp) : timestamp_(timestamp)
     {
         frameId_ = std::to_string(timestamp);
+        bufferSize = 0;
     }
     ~AudioRecord() = default;
     OH_AVBuffer *encodedBuffer = nullptr;
