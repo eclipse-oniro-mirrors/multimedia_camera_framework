@@ -222,6 +222,12 @@ void MetadataOutput::ProcessFaceRectangles(int64_t timestamp,
     common_metadata_header_t* metadata = result->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATISTICS_FACE_RECTANGLES, &metadataItem);
     if (ret != CAM_META_SUCCESS) {
+        reportLastFaceResults_ = false;
+        if (reportFaceResults_) {
+            reportLastFaceResults_ = true;
+            reportFaceResults_ = false;
+        }
+        metaObjects.clear();
         MEDIA_DEBUG_LOG("Camera not ProcessFaceRectangles");
         return;
     }
@@ -232,13 +238,13 @@ void MetadataOutput::ProcessFaceRectangles(int64_t timestamp,
         return;
     }
     metaObjects.reserve(metadataItem.count / rectangleUnitLen);
-    
+
     ret = ProcessMetaObjects(timestamp, metaObjects, metadataItem, metadata, isNeedMirror);
+    reportFaceResults_ = true;
     if (ret != CameraErrorCode::SUCCESS) {
         MEDIA_ERR_LOG("MetadataOutput::ProcessFaceRectangles() is failed.");
         return;
     }
-    
     MEDIA_INFO_LOG("ProcessFaceRectangles: metaObjects size: %{public}zu", metaObjects.size());
     return;
 }

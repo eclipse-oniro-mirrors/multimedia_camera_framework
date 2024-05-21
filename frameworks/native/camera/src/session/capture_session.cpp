@@ -2019,7 +2019,7 @@ void CaptureSession::ProcessFaceRecUpdates(
         std::vector<sptr<MetadataObject>> metaObjects;
         metaOutput->ProcessFaceRectangles(timestamp, result, metaObjects, isNeedMirror);
         std::shared_ptr<MetadataObjectCallback> appObjectCallback = metaOutput->GetAppObjectCallback();
-        if (!metaObjects.empty() && appObjectCallback) {
+        if ((metaOutput->reportFaceResults_ || metaOutput->reportLastFaceResults_) && appObjectCallback) {
             MEDIA_DEBUG_LOG("OnMetadataObjectsAvailable");
             appObjectCallback->OnMetadataObjectsAvailable(metaObjects);
         }
