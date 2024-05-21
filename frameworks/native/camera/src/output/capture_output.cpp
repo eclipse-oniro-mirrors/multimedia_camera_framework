@@ -29,9 +29,7 @@ static const char* g_captureOutputTypeString[CAPTURE_OUTPUT_TYPE_MAX] = {"Previe
 CaptureOutput::CaptureOutput(CaptureOutputType outputType, StreamType streamType, sptr<IBufferProducer> bufferProducer,
     sptr<IStreamCommon> stream)
     : outputType_(outputType), streamType_(streamType), stream_(stream), bufferProducer_(bufferProducer)
-{
-    RegisterStreamBinderDied();
-}
+{}
 
 void CaptureOutput::RegisterStreamBinderDied()
 {
@@ -116,8 +114,11 @@ sptr<IStreamCommon> CaptureOutput::GetStream()
 
 void CaptureOutput::SetStream(sptr<IStreamCommon> stream)
 {
-    std::lock_guard<std::mutex> lock(streamMutex_);
-    stream_ = stream;
+    {
+        std::lock_guard<std::mutex> lock(streamMutex_);
+        stream_ = stream;
+    }
+    RegisterStreamBinderDied();
 }
 
 sptr<CaptureSession> CaptureOutput::GetSession()
