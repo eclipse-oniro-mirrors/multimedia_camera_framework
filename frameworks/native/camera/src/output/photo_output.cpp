@@ -15,6 +15,7 @@
 
 #include "output/photo_output.h"
 
+#include <mutex>
 #include <securec.h>
 
 #include "camera_error_code.h"
@@ -283,6 +284,34 @@ PhotoOutput::~PhotoOutput()
 {
     MEDIA_DEBUG_LOG("Enter Into PhotoOutput::~PhotoOutput()");
     defaultCaptureSetting_ = nullptr;
+}
+
+void PhotoOutput::SetCallbackFlag(uint8_t callbackFlag)
+{
+    std::lock_guard<std::mutex> lock(callbackMutex_);
+    bool beforeStatus = IsEnableDeferred();
+    callbackFlag_ = callbackFlag;
+    bool afterStatus = IsEnableDeferred();
+    // if session is commit or start, and isEnableDeferred is oppsite, need to restart session config
+    auto session = GetSession();
+    if (beforeStatus != afterStatus && session) {
+        if (session->IsSessionStarted()) {
+            MEDIA_INFO_LOG("session restart when callback status changed");
+            session->BeginConfig();
+            session->CommitConfig();
+            session->Start();
+        } else if (session->IsSessionCommited()) {
+            MEDIA_INFO_LOG("session recommit when callback status changed");
+            session->BeginConfig();
+            session->CommitConfig();
+        }
+    }
+}
+
+bool PhotoOutput::IsEnableDeferred()
+{
+    MEDIA_DEBUG_LOG("Enter Into PhotoOutput::IsEnableDeferred()");
+    return (callbackFlag_ & CAPTURE_PHOTO_ASSET) != 0 || (callbackFlag_ & CAPTURE_PHOTO) == 0;
 }
 
 void PhotoOutput::SetCallback(std::shared_ptr<PhotoStateCallback> callback)
@@ -607,26 +636,9 @@ int32_t PhotoOutput::DeferImageDeliveryFor(DeferredDeliveryImageType type)
         MEDIA_ERR_LOG("PhotoOutput DeferImageDeliveryFor error!, cameraObj is nullptr");
         return SESSION_NOT_RUNNING;
     }
-    captureSession->EnableDeferredType(type);
+    captureSession->EnableDeferredType(type, true);
     captureSession->SetUserId();
     return 0;
-}
-
-int32_t PhotoOutput::AddDeferType(DeferredDeliveryImageType type)
-{
-    MEDIA_INFO_LOG("PhotoOutput AddDeferType type:%{public}d!", type);
-    deferredType_ = type;
-    return 0;
-}
-
-void PhotoOutput::SetSession(wptr<CaptureSession> captureSession)
-{
-    MEDIA_INFO_LOG("PhotoOutput SetSession");
-    CaptureOutput::SetSession(captureSession);
-    if (deferredType_ == DeferredDeliveryImageType::DELIVERY_NONE) {
-        return;
-    }
-    DeferImageDeliveryFor(deferredType_);
 }
 
 int32_t PhotoOutput::IsDeferredImageDeliverySupported(DeferredDeliveryImageType type)

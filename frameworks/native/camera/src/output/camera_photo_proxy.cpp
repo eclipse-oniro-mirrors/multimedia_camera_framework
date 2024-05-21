@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include <cstdint>
 #include <unistd.h>
 #include <sys/mman.h>
 #include <iomanip>
@@ -65,6 +66,7 @@ void CameraPhotoProxy::ReadFromParcel(MessageParcel &parcel)
     photoWidth_ = parcel.ReadInt32();
     photoHeight_ = parcel.ReadInt32();
     isHighQuality_ = parcel.ReadBool();
+    fileSize_ = parcel.ReadUint64();
     bufferHandle_ = ReadBufferHandle(parcel);
     MEDIA_INFO_LOG("PhotoProxy::ReadFromParcel");
 }
@@ -101,6 +103,7 @@ void CameraPhotoProxy::WriteToParcel(MessageParcel &parcel)
     parcel.WriteInt32(photoWidth_);
     parcel.WriteInt32(photoHeight_);
     parcel.WriteBool(isHighQuality_);
+    parcel.WriteUint64(fileSize_);
     if (bufferHandle_) {
         MEDIA_DEBUG_LOG("PhotoProxy::WriteToParcel %{public}d", bufferHandle_->fd);
         bool ret = WriteBufferHandle(parcel, *bufferHandle_);
@@ -113,11 +116,13 @@ void CameraPhotoProxy::WriteToParcel(MessageParcel &parcel)
     MEDIA_INFO_LOG("PhotoProxy::WriteToParcel");
 }
 
-void CameraPhotoProxy::SetDeferredAttrs(std::string photoId, int32_t deferredProcType)
+void CameraPhotoProxy::SetDeferredAttrs(std::string photoId, int32_t deferredProcType, uint64_t fileSize)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     isDeferredPhoto_ = 1;
     photoId_ = photoId;
     deferredProcType_ = deferredProcType;
+    fileSize_ = fileSize;
 }
 } // namespace CameraStandard
 } // namespace OHOS

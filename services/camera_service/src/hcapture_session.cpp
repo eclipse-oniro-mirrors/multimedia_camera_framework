@@ -1099,8 +1099,9 @@ int32_t HCaptureSession::Start()
     int32_t errorCode = CAMERA_OK;
     MEDIA_INFO_LOG("HCaptureSession::Start prepare execute");
     stateMachine_.StateGuard([&errorCode, this](CaptureSessionState currentState) {
-        if (currentState != CaptureSessionState::SESSION_CONFIG_COMMITTED) {
-            MEDIA_ERR_LOG("HCaptureSession::Start(), Invalid session state: %{public}d", currentState);
+        bool isTransferSupport = stateMachine_.CheckTransfer(CaptureSessionState::SESSION_STARTED);
+        if (!isTransferSupport) {
+            MEDIA_ERR_LOG("HCaptureSession::Start() Need to call after committing configuration");
             errorCode = CAMERA_INVALID_STATE;
             return;
         }
@@ -1124,6 +1125,7 @@ int32_t HCaptureSession::Start()
         if (errorCode == CAMERA_OK) {
             isSessionStarted_ = true;
         }
+        stateMachine_.Transfer(CaptureSessionState::SESSION_STARTED);
     });
     MEDIA_INFO_LOG("HCaptureSession::Start execute success");
     return errorCode;
@@ -1181,7 +1183,9 @@ int32_t HCaptureSession::Stop()
     int32_t errorCode = CAMERA_OK;
     MEDIA_INFO_LOG("HCaptureSession::Stop prepare execute");
     stateMachine_.StateGuard([&errorCode, this](CaptureSessionState currentState) {
-        if (currentState != CaptureSessionState::SESSION_CONFIG_COMMITTED) {
+        bool isTransferSupport = stateMachine_.CheckTransfer(CaptureSessionState::SESSION_CONFIG_COMMITTED);
+        if (!isTransferSupport) {
+            MEDIA_ERR_LOG("HCaptureSession::Stop() Need to call after Start");
             errorCode = CAMERA_INVALID_STATE;
             return;
         }
@@ -1213,6 +1217,7 @@ int32_t HCaptureSession::Stop()
         if (errorCode == CAMERA_OK) {
             isSessionStarted_ = false;
         }
+        stateMachine_.Transfer(CaptureSessionState::SESSION_CONFIG_COMMITTED);
     });
     MEDIA_INFO_LOG("HCaptureSession::Stop execute success");
     return errorCode;
@@ -1757,9 +1762,15 @@ StateMachine::StateMachine()
     };
 
     stateTransferMap_[static_cast<uint32_t>(CaptureSessionState::SESSION_CONFIG_COMMITTED)] = {
-        CaptureSessionState::SESSION_CONFIG_INPROGRESS, CaptureSessionState::SESSION_RELEASED
+        CaptureSessionState::SESSION_CONFIG_INPROGRESS, CaptureSessionState::SESSION_STARTED,
+        CaptureSessionState::SESSION_RELEASED
     };
-
+    
+    stateTransferMap_[static_cast<uint32_t>(CaptureSessionState::SESSION_STARTED)] = {
+        CaptureSessionState::SESSION_CONFIG_INPROGRESS, CaptureSessionState::SESSION_CONFIG_COMMITTED,
+        CaptureSessionState::SESSION_RELEASED
+    };
+    
     stateTransferMap_[static_cast<uint32_t>(CaptureSessionState::SESSION_RELEASED)] = {};
 }
 

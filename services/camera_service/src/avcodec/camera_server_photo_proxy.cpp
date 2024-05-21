@@ -44,7 +44,7 @@ CameraServerPhotoProxy::~CameraServerPhotoProxy()
     std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("~CameraServerPhotoProxy");
     if (isMmaped_) {
-        munmap(fileDataAddr_, fileSize_);
+        munmap(fileDataAddr_, bufferHandle_->size);
     }
     CameraFreeBufferHandle(const_cast<BufferHandle*>(bufferHandle_));
     fileDataAddr_ = nullptr;
@@ -87,6 +87,7 @@ void CameraServerPhotoProxy::ReadFromParcel(MessageParcel &parcel)
     photoWidth_ = parcel.ReadInt32();
     photoHeight_ = parcel.ReadInt32();
     isHighQuality_ = parcel.ReadBool();
+    fileSize_ = parcel.ReadUint64();
     bufferHandle_ = ReadBufferHandle(parcel);
     MEDIA_INFO_LOG("PhotoProxy::ReadFromParcel");
 }
@@ -125,8 +126,6 @@ size_t CameraServerPhotoProxy::GetFileSize()
 {
     MEDIA_INFO_LOG("PhotoProxy::GetFileSize");
     std::lock_guard<std::mutex> lock(mutex_);
-
-    fileSize_ = bufferHandle_->size;
     return fileSize_;
 }
 

@@ -322,6 +322,12 @@ int32_t CaptureSession::CommitConfig()
     if (!isColorSpaceSetted_) {
         SetDefaultColorSpace();
     }
+    // DELIVERY_PHOTO for default when commit
+    if (photoOutput_ && !isDeferTypeSetted_) {
+        EnableDeferredType(((sptr<PhotoOutput> &)photoOutput_)->IsEnableDeferred() ? DELIVERY_PHOTO
+            : DELIVERY_NONE, false);
+        SetUserId();
+    }
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (captureSession_) {
         errCode = captureSession_->CommitConfig();
@@ -2784,7 +2790,7 @@ void CaptureSession::SetMode(SceneMode modeName)
     }
     currentMode_ = modeName;
     // reset deferred enable status when reset mode
-    EnableDeferredType(DELIVERY_NONE);
+    EnableDeferredType(DELIVERY_NONE, false);
     if (captureSession_) {
         captureSession_->SetFeatureMode(modeName);
         MEDIA_INFO_LOG("CaptureSession::SetSceneMode  SceneMode = %{public}d", modeName);
@@ -3407,9 +3413,21 @@ bool CaptureSession::IsSessionCommited()
     if (captureSession_) {
         CaptureSessionState currentState;
         captureSession_->GetSessionState(currentState);
-        isCommitConfig = (currentState == CaptureSessionState::SESSION_CONFIG_COMMITTED);
+        isCommitConfig = (currentState == CaptureSessionState::SESSION_CONFIG_COMMITTED)
+            || (currentState == CaptureSessionState::SESSION_STARTED);
     }
     return isCommitConfig;
+}
+
+bool CaptureSession::IsSessionStarted()
+{
+    bool isStarted = false;
+    if (captureSession_) {
+        CaptureSessionState currentState;
+        captureSession_->GetSessionState(currentState);
+        isStarted = (currentState == CaptureSessionState::SESSION_STARTED);
+    }
+    return isStarted;
 }
 
 int32_t CaptureSession::CalculateExposureValue(float exposureValue)
@@ -4235,7 +4253,7 @@ std::shared_ptr<PreconfigProfiles> CaptureSession::GeneratePreconfigProfiles(Pre
     return nullptr;
 }
 
-void CaptureSession::EnableDeferredType(DeferredDeliveryImageType type)
+void CaptureSession::EnableDeferredType(DeferredDeliveryImageType type, bool isEnableByUser)
 {
     MEDIA_INFO_LOG("CaptureSession::EnableDeferredType type:%{public}d", type);
     if (IsSessionCommited()) {
@@ -4280,7 +4298,9 @@ void CaptureSession::EnableDeferredType(DeferredDeliveryImageType type)
     int32_t errCode = this->UnlockForControl();
     if (errCode != CameraErrorCode::SUCCESS) {
         MEDIA_DEBUG_LOG("CaptureSession::EnableDeferredType Failed");
+        return;
     }
+    isDeferTypeSetted_ = isEnableByUser;
 }
 
 void CaptureSession::SetUserId()

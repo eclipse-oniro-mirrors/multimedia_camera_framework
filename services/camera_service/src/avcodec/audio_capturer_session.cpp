@@ -122,12 +122,6 @@ void AudioCapturerSession::ProcessAudioBuffer()
         MEDIA_DEBUG_LOG("audio push buffer frameId: %{public}s", audioRecord->GetFrameId().c_str());
         buffer.release();
         audioBufferQueue_.Push(audioRecord);
-        if (bytesRead < 0) {
-            MEDIA_ERR_LOG("Bytes read failed. error code %{public}zu", bytesRead);
-            break;
-        } else if (bytesRead == 0) {
-            continue;
-        }
     }
 }
 

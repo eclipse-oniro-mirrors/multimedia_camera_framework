@@ -1108,6 +1108,13 @@ public:
      */
     bool IsSessionConfiged();
 
+     /**
+     * @brief Get whether or not start session.
+     *
+     * @return Returns whether or not start session.
+     */
+    bool IsSessionStarted();
+
     /**
      * @brief Set FrameRate Range.
      *
@@ -1202,7 +1209,7 @@ public:
         return metadataResultProcessor_;
     }
 
-    void EnableDeferredType(DeferredDeliveryImageType deferredType);
+    void EnableDeferredType(DeferredDeliveryImageType deferredType, bool isEnableByUser);
     void SetUserId();
     bool IsMovingPhotoEnabled();
     bool IsImageDeferred();
@@ -1295,6 +1302,7 @@ private:
     std::atomic<int32_t> prevDuration_ = 0;
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
     bool isColorSpaceSetted_ = false;
+    atomic<bool> isDeferTypeSetted_ = false;
 
     std::mutex preconfigProfilesMutex_;
     std::shared_ptr<PreconfigProfiles> preconfigProfiles_ = nullptr;

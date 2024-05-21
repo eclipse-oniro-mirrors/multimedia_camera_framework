@@ -101,10 +101,6 @@ private:
     sptr<Surface> photoSurface_ = nullptr;
 };
 
-constexpr int32_t CAPTURE_PHOTO = 1 << 0;
-constexpr int32_t CAPTURE_DEFERRED_PHOTO = 1 << 1;
-constexpr int32_t CAPTURE_PHOTO_ASSET = 1 << 2;
-
 class PhotoListener : public IBufferConsumerListener {
 public:
     explicit PhotoListener(napi_env env, const sptr<Surface> photoSurface, wptr<PhotoOutput> photoOutput);
@@ -131,7 +127,7 @@ private:
     napi_ref capturePhotoCb_;
     napi_ref captureDeferredPhotoCb_;
     napi_ref capturePhotoAssetCb_;
-    int32_t callbackFlag = 0;
+    uint8_t callbackFlag_ = 0;
 };
 
 class RawPhotoListener : public IBufferConsumerListener {
