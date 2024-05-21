@@ -39,8 +39,8 @@ public:
     {
         frameId_ = std::to_string(timestamp);
         size = make_shared<Size>();
-        size->width = videoBuffer->GetSurfaceBufferWidth();
-        size->height = videoBuffer->GetSurfaceBufferHeight();
+        size->width = static_cast<uint32_t>(videoBuffer->GetSurfaceBufferWidth());
+        size->height = static_cast<uint32_t>(videoBuffer->GetSurfaceBufferHeight());
         bufferSize = videoBuffer->GetSize();
     }
 

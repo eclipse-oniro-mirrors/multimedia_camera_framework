@@ -195,7 +195,7 @@ void AvcodecTaskManager::CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecor
         OH_AVCodecBufferAttr attr = {0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE};
         OH_AVBuffer *buffer = audioRecordVec[index]->encodedBuffer;
         OH_AVBuffer_GetBufferAttr(buffer, &attr);
-        attr.pts = index * AUDIO_FRAME_INTERVAL;
+        attr.pts = static_cast<int64_t>(index * AUDIO_FRAME_INTERVAL);
         if (index == audioRecordVec.size() - 1) {
             attr.flags = AVCODEC_BUFFER_FLAGS_EOS;
         }
