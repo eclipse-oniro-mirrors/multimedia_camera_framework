@@ -160,7 +160,6 @@ public:
 class MockHCameraHostManager : public HCameraHostManager {
 public:
     struct StreamFormatConfig {
-        static const int32_t ABILITY_FINISH = -1;
         camera_format_t cameraFormat;
         int32_t streamWidth;
         int32_t streamHeight;
@@ -170,6 +169,7 @@ public:
         std::vector<int32_t> streamAbilities = {};
         void IntoVector(std::vector<int32_t>& vector) const
         {
+            static const int32_t ABILITY_FINISH = -1;
             vector.emplace_back(cameraFormat);
             vector.emplace_back(streamWidth);
             vector.emplace_back(streamHeight);
@@ -182,12 +182,12 @@ public:
     };
 
     struct StreamConfig {
-        static const int32_t STREAM_FINISH = -1;
         int32_t streamType;
         std::vector<StreamFormatConfig> streamFormatConfigs;
 
         void IntoVector(std::vector<int32_t>& vector) const
         {
+            static const int32_t STREAM_FINISH = -1;
             vector.emplace_back(streamType);
             for (auto& formatConfig : streamFormatConfigs) {
                 formatConfig.IntoVector(vector);
@@ -197,11 +197,11 @@ public:
     };
 
     struct ModeConfig {
-        static const int32_t MODE_FINISH = -1;
         int32_t modeName;
         std::vector<StreamConfig> streams = {};
         void IntoVector(std::vector<int32_t>& vector) const
         {
+            static const int32_t MODE_FINISH = -1;
             vector.emplace_back(modeName);
             for (auto& stream : streams) {
                 stream.IntoVector(vector);
