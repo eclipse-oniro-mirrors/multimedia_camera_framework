@@ -703,6 +703,7 @@ int CameraManager::CreateMetadataOutput(sptr<MetadataOutput>& pMetadataOutput)
         return ServiceToCameraError(retCode);
     }
     pMetadataOutput = new (std::nothrow) MetadataOutput(surface, streamMetadata);
+    pMetadataOutput->SetStream(streamMetadata);
     sptr<IBufferConsumerListener> bufferConsumerListener = new (std::nothrow) MetadataObjectListener(pMetadataOutput);
     SurfaceError ret = surface->RegisterConsumerListener(bufferConsumerListener);
     if (ret != SURFACE_ERROR_OK) {
