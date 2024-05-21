@@ -220,7 +220,6 @@ void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool is
     napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
     // return buffer to buffer queue
     photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
-    newSurfaceBuffer->Unmap();
 }
 
 void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle *bufferHandle,
@@ -237,12 +236,26 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
     int32_t photoHeight;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataWidth, photoWidth);
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataHeight, photoHeight);
-    MEDIA_INFO_LOG("photoWidth:%{public}d, photoHeight: %{public}d", photoWidth, photoHeight);
+    uint64_t size = static_cast<uint64_t>(surfaceBuffer->GetSize());
+    int32_t extraDataSize = 0;
+    auto res = surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::dataSize, extraDataSize);
+    if (res != 0) {
+        MEDIA_INFO_LOG("ExtraGet dataSize error %{public}d", res);
+    } else if (extraDataSize <= 0) {
+        MEDIA_INFO_LOG("ExtraGet dataSize Ok, but size <= 0");
+    } else if (static_cast<uint64_t>(extraDataSize) > size) {
+        MEDIA_INFO_LOG("ExtraGet dataSize Ok,but dataSize %{public}d is bigger than bufferSize %{public}" PRIu64,
+            extraDataSize, size);
+    } else {
+        MEDIA_INFO_LOG("ExtraGet dataSize %{public}d", extraDataSize);
+        size = extraDataSize;
+    }
+    MEDIA_INFO_LOG("width:%{public}d, height:%{public}d, size:%{public}" PRId64, photoWidth, photoHeight, size);
     int32_t format = bufferHandle->format;
     sptr<CameraPhotoProxy> photoProxy;
     std::string imageIdStr = std::to_string(imageId);
     photoProxy = new(std::nothrow) CameraPhotoProxy(bufferHandle, format, photoWidth, photoHeight, isHighQuality);
-    photoProxy->SetDeferredAttrs(imageIdStr, deferredProcessingType);
+    photoProxy->SetDeferredAttrs(imageIdStr, deferredProcessingType, size);
     auto photoOutput = photoOutput_.promote();
     if (photoOutput && photoOutput->GetSession()) {
         photoOutput->GetSession()->CreateMediaLibrary(photoProxy, uri, cameraShotType);
@@ -265,11 +278,11 @@ void PhotoListener::UpdateJSCallback(sptr<Surface> photoSurface) const
     int32_t isDegradedImage;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::isDegradedImage, isDegradedImage);
     MEDIA_INFO_LOG("PhotoListener UpdateJSCallback isDegradedImage:%{public}d", isDegradedImage);
-    if ((callbackFlag & CAPTURE_PHOTO_ASSET) != 0) {
+    if ((callbackFlag_ & CAPTURE_PHOTO_ASSET) != 0) {
         ExecutePhotoAsset(surfaceBuffer, isDegradedImage == 0);
-    } else if (isDegradedImage == 0 && (callbackFlag & CAPTURE_PHOTO) != 0) {
+    } else if (isDegradedImage == 0 && (callbackFlag_ & CAPTURE_PHOTO) != 0) {
         ExecutePhoto(surfaceBuffer);
-    } else if (isDegradedImage != 0 && (callbackFlag & CAPTURE_DEFERRED_PHOTO) != 0) {
+    } else if (isDegradedImage != 0 && (callbackFlag_ & CAPTURE_DEFERRED_PHOTO) != 0) {
         ExecuteDeferredPhoto(surfaceBuffer);
     } else {
         MEDIA_INFO_LOG("PhotoListener on error callback");
@@ -325,27 +338,25 @@ void PhotoListener::SaveCallbackReference(const std::string &eventType, napi_val
     switch (eventTypeEnum) {
         case PhotoOutputEventType::CAPTURE_PHOTO_AVAILABLE:
             curCallbackRef = &capturePhotoCb_;
-            callbackFlag |= CAPTURE_PHOTO;
+            callbackFlag_ |= CAPTURE_PHOTO;
             break;
         case PhotoOutputEventType::CAPTURE_DEFERRED_PHOTO_AVAILABLE:
             curCallbackRef = &captureDeferredPhotoCb_;
-            callbackFlag |= CAPTURE_DEFERRED_PHOTO;
+            callbackFlag_ |= CAPTURE_DEFERRED_PHOTO;
             break;
         case PhotoOutputEventType::CAPTURE_PHOTO_ASSET_AVAILABLE:
             curCallbackRef = &capturePhotoAssetCb_;
-            callbackFlag |= CAPTURE_PHOTO_ASSET;
+            callbackFlag_ |= CAPTURE_PHOTO_ASSET;
             break;
         default:
             MEDIA_ERR_LOG("Incorrect photo callback event type received from JS");
             return;
     }
-    if (eventTypeEnum == PhotoOutputEventType::CAPTURE_PHOTO_ASSET_AVAILABLE) {
-        auto photoOutput = photoOutput_.promote();
-        if (photoOutput) {
-            photoOutput->AddDeferType(DeferredDeliveryImageType::DELIVERY_PHOTO);
-        } else {
-            MEDIA_ERR_LOG("cannot get photoOutput");
-        }
+    auto photoOutput = photoOutput_.promote();
+    if (photoOutput) {
+        photoOutput->SetCallbackFlag(callbackFlag_);
+    } else {
+        MEDIA_ERR_LOG("cannot get photoOutput");
     }
     napi_ref callbackRef = nullptr;
     const int32_t refCount = 1;
@@ -362,15 +373,15 @@ void PhotoListener::RemoveCallbackRef(napi_env env, napi_value callback, const s
     if (eventType == CONST_CAPTURE_PHOTO_AVAILABLE) {
         napi_delete_reference(env_, capturePhotoCb_);
         capturePhotoCb_ = nullptr;
-        callbackFlag &= ~CAPTURE_PHOTO;
+        callbackFlag_ &= ~CAPTURE_PHOTO;
     } else if (eventType == CONST_CAPTURE_DEFERRED_PHOTO_AVAILABLE) {
         napi_delete_reference(env_, captureDeferredPhotoCb_);
         captureDeferredPhotoCb_ = nullptr;
-        callbackFlag &= ~CAPTURE_DEFERRED_PHOTO;
+        callbackFlag_ &= ~CAPTURE_DEFERRED_PHOTO;
     } else if (eventType == CONST_CAPTURE_PHOTO_ASSET_AVAILABLE) {
         napi_delete_reference(env_, capturePhotoAssetCb_);
         photoOutput_->DeferImageDeliveryFor(DeferredDeliveryImageType::DELIVERY_NONE);
-        callbackFlag &= ~CAPTURE_PHOTO_ASSET;
+        callbackFlag_ &= ~CAPTURE_PHOTO_ASSET;
         capturePhotoAssetCb_ = nullptr;
     }
 

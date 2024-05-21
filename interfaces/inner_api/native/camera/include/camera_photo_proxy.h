@@ -30,7 +30,7 @@ public:
     virtual ~CameraPhotoProxy();
     void ReadFromParcel(MessageParcel &parcel);
     void WriteToParcel(MessageParcel &parcel);
-    void SetDeferredAttrs(std::string photoId, int32_t deferredProcType);
+    void SetDeferredAttrs(std::string photoId, int32_t deferredProcType, uint64_t fileSize);
     int32_t CameraFreeBufferHandle();
 
 private:

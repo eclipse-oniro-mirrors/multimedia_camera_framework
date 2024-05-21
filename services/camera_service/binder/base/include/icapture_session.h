@@ -30,7 +30,8 @@ enum class CaptureSessionState : uint32_t {
     SESSION_CONFIG_INPROGRESS = 1,
     SESSION_CONFIG_COMMITTED = 2,
     SESSION_RELEASED = 3,
-    SESSION_STATE_MAX = 4
+    SESSION_STARTED = 4,
+    SESSION_STATE_MAX = 5
 };
 
 enum ColorSpace {

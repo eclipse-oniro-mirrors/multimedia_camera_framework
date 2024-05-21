@@ -16,7 +16,9 @@
 #ifndef OHOS_CAMERA_PHOTO_OUTPUT_H
 #define OHOS_CAMERA_PHOTO_OUTPUT_H
 
+#include <cstdint>
 #include <iostream>
+#include <mutex>
 
 #include "camera_metadata_info.h"
 #include "capture_output.h"
@@ -220,6 +222,10 @@ private:
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureMetadataSetting_;
 };
 
+constexpr uint8_t CAPTURE_PHOTO = 1 << 0;
+constexpr uint8_t CAPTURE_DEFERRED_PHOTO = 1 << 1;
+constexpr uint8_t CAPTURE_PHOTO_ASSET = 1 << 2;
+
 class PhotoOutput : public CaptureOutput {
 public:
     explicit PhotoOutput(sptr<IBufferProducer> bufferProducer);
@@ -325,16 +331,9 @@ public:
     int32_t IsDeferredImageDeliverySupported(DeferredDeliveryImageType type);
 
     /**
-     * @brief Add the deferredImageDelivery type when on photoAssetAvailable.
-     *
+     * @brief Set the callbackFlag when on photoAssetAvailable.
      */
-    int32_t AddDeferType(DeferredDeliveryImageType type);
-
-    /**
-     * @brief Set the captureSession.
-     *
-     */
-    void SetSession(wptr<CaptureSession> captureSession) override;
+    void SetCallbackFlag(uint8_t callbackFlag);
 
     /**
      * @brief To check the deferredImageDelivery capability is enable or not.
@@ -358,6 +357,13 @@ public:
      * @return Returns the result of the auto high quality photo enable.
      */
     int32_t EnableAutoHighQualityPhoto(bool enabled);
+    
+    /**
+     * @brief To get status by callbackFlags.
+     *
+     * @return Returns the result to check enable deferred.
+     */
+    bool IsEnableDeferred();
 
     /**
      * @brief Get default photo capture setting.
@@ -371,14 +377,17 @@ public:
     sptr<Surface> rawPhotoSurface_;
 
     sptr<Surface> deferredSurface_;
-
+    
 private:
+    std::mutex callbackMutex_;
+    uint8_t callbackFlag_ = CAPTURE_DEFERRED_PHOTO;
     DeferredDeliveryImageType deferredType_ = DeferredDeliveryImageType::DELIVERY_NONE;
     std::shared_ptr<PhotoStateCallback> appCallback_;
     sptr<IStreamCaptureCallback> cameraSvcCallback_;
     std::shared_ptr<PhotoCaptureSetting> defaultCaptureSetting_;
     void CameraServerDied(pid_t pid) override;
 };
+
 class HStreamCaptureCallbackImpl : public HStreamCaptureCallbackStub {
 public:
     wptr<PhotoOutput> photoOutput_ = nullptr;

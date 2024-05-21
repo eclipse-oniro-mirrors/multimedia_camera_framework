@@ -120,7 +120,7 @@ public:
     void SetStream(sptr<IStreamCommon> stream);
     bool IsStreamCreated();
     sptr<CaptureSession> GetSession();
-    virtual void SetSession(wptr<CaptureSession> captureSession);
+    void SetSession(wptr<CaptureSession> captureSession);
     std::mutex asyncOpMutex_;
     std::mutex outputCallbackMutex_;
     void SetPhotoProfile(Profile& profile);
