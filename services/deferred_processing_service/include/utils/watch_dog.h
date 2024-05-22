@@ -54,9 +54,9 @@ public:
         bool ret = timeBroker_->RegisterCallback(durationMs,
         [callback = std::move(callback)](uint32_t handle) {callback(handle); }, handle);
         if (ret) {
-            DP_INFO_LOG("(%s) handle = %d", name_.c_str(), handle);
+            DP_INFO_LOG("(%s) handle = %{public}d", name_.c_str(), handle);
         } else {
-            DP_ERR_LOG("(%s) timerBroker_ RegisterCallback failed, status = %d.", name_.c_str(), ret);
+            DP_ERR_LOG("(%s) timerBroker_ RegisterCallback failed, status = %{public}d.", name_.c_str(), ret);
         }
     }
 
@@ -64,7 +64,7 @@ public:
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if (timeBroker_) {
-            DP_INFO_LOG("(%s) handle = %d", name_.c_str(), handle);
+            DP_INFO_LOG("(%s) handle = %{public}d", name_.c_str(), handle);
             timeBroker_->DeregisterCallback(handle);
         } else {
             DP_ERR_LOG("(%s) failed", name_.c_str());

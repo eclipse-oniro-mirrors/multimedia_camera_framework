@@ -106,10 +106,10 @@ void ThreadPool::PrintThreadInfo()
     for (auto& workerInfo : workers_) {
         int ret = pthread_getschedparam(workerInfo.thread.native_handle(), &policy, &sch);
         if (ret == 0) {
-            DP_DEBUG_LOG("thread (%s) priority: %d, policy = %d(0:OTHER, 1:FIFO, 2:RR)", workerInfo.name.c_str(),
-                         sch.sched_priority, policy);
+            DP_DEBUG_LOG("thread (%s) priority: %{public}d, policy = %{public}d(0:OTHER, 1:FIFO, 2:RR)",
+                workerInfo.name.c_str(), sch.sched_priority, policy);
         } else {
-            DP_DEBUG_LOG("thread (%s) pthread_getschedparam failed, ret = %d.", workerInfo.name.c_str(), ret);
+            DP_DEBUG_LOG("thread (%s) pthread_getschedparam failed, ret = %{public}d.", workerInfo.name.c_str(), ret);
         }
     }
 }

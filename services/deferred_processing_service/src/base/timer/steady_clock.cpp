@@ -39,7 +39,7 @@ uint64_t SteadyClock::GetElapsedTimeMs(uint64_t startMs)
     if (currTime > startMs) {
         diff = currTime - startMs;
     } else {
-        DP_ERR_LOG("invalid parameter, startMs: %d, currTime: %d", static_cast<int>(startMs),
+        DP_ERR_LOG("invalid parameter, startMs: %{public}d, currTime: %{public}d", static_cast<int>(startMs),
             static_cast<int>(currTime));
     }
     return diff;
@@ -49,7 +49,7 @@ std::chrono::milliseconds SteadyClock::GetRemainingTimeMs(uint64_t expirationTim
 {
     auto currTime = SteadyClock::GetTimestampMilli();
     uint64_t remainingTimeMs = (expirationTimeMs > currTime) ? (expirationTimeMs - currTime) : 0;
-    DP_DEBUG_LOG("expirationTimeMs: %d, currTime: %d, remainingTime: %d",
+    DP_DEBUG_LOG("expirationTimeMs: %{public}d, currTime: %{public}d, remainingTime: %{public}d",
         static_cast<int>(expirationTimeMs), static_cast<int>(currTime), static_cast<int>(remainingTimeMs));
     return std::chrono::milliseconds(remainingTimeMs);
 }

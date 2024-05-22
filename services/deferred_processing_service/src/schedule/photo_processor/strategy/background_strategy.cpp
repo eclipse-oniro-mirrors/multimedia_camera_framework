@@ -76,16 +76,16 @@ ExecutionMode BackgroundStrategy::GetExecutionMode()
         || cameraSessionStatus_ == CameraSessionStatus::NORMAL_CAMERA_OPEN
         || !(hdiStatus_ == HdiStatus::HDI_READY || hdiStatus_ == HdiStatus::HDI_READY_SPACE_LIMIT_REACHED)
         || mediaLibraryStatus_ != MediaLibraryStatus::MEDIA_LIBRARY_AVAILABLE) {
-        DP_INFO_LOG("cameraSessionStatus_: %d, hdiStatus_: %d, mediaLibraryStatus_: %d, ",
+        DP_INFO_LOG("cameraSessionStatus_: %{public}d, hdiStatus_: %{public}d, mediaLibraryStatus_: %{public}d, ",
             cameraSessionStatus_, hdiStatus_, mediaLibraryStatus_);
         return ExecutionMode::DUMMY;
     }
     FlashTrailingState();
-    DP_INFO_LOG("isInTrailing_: %d", isInTrailing_);
+    DP_INFO_LOG("isInTrailing_: %{public}d", isInTrailing_);
     if (isInTrailing_) {
         return ExecutionMode::LOAD_BALANCE;
     }
-    DP_INFO_LOG("systemPressureLevel_: %d", systemPressureLevel_);
+    DP_INFO_LOG("systemPressureLevel_: %{public}d", systemPressureLevel_);
     if (systemPressureLevel_ == SystemPressureLevel::NOMINAL) {
         return ExecutionMode::LOAD_BALANCE;
     }
@@ -94,34 +94,34 @@ ExecutionMode BackgroundStrategy::GetExecutionMode()
 
 HdiStatus BackgroundStrategy::GetHdiStatus()
 {
-    DP_INFO_LOG("hdiStatus_: %d", hdiStatus_);
+    DP_INFO_LOG("hdiStatus_: %{public}d", hdiStatus_);
     return hdiStatus_;
 }
 
 void BackgroundStrategy::NotifyPressureLevelChanged(SystemPressureLevel level)
 {
-    DP_INFO_LOG("previous system pressure level: %d, new level: %d", systemPressureLevel_, level);
+    DP_INFO_LOG("previous system pressure level: %{public}d, new level: %{public}d", systemPressureLevel_, level);
     systemPressureLevel_ = level;
     return;
 }
 
 void BackgroundStrategy::NotifyHdiStatusChanged(HdiStatus status)
 {
-    DP_INFO_LOG("previous hdi status %d, new status: %d", hdiStatus_, status);
+    DP_INFO_LOG("previous hdi status %{public}d, new status: %{public}d", hdiStatus_, status);
     hdiStatus_ = status;
     return;
 }
 
 void BackgroundStrategy::NotifyMediaLibStatusChanged(MediaLibraryStatus status)
 {
-    DP_INFO_LOG("previous media lib status %d, new status: %d", mediaLibraryStatus_, status);
+    DP_INFO_LOG("previous media lib status %{public}d, new status: %{public}d", mediaLibraryStatus_, status);
     mediaLibraryStatus_ = status;
     return;
 }
 
 void BackgroundStrategy::NotifyCameraStatusChanged(CameraSessionStatus status)
 {
-    DP_INFO_LOG("previous camera session status %d, new status: %d", cameraSessionStatus_, status);
+    DP_INFO_LOG("previous camera session status %{public}d, new status: %{public}d", cameraSessionStatus_, status);
     cameraSessionStatus_ = status;
     switch (status) {
         case CameraSessionStatus::SYSTEM_CAMERA_CLOSED:
@@ -142,7 +142,7 @@ void BackgroundStrategy::NotifyCameraStatusChanged(CameraSessionStatus status)
 
 void BackgroundStrategy::StartTrailing(uint64_t duration)
 {
-    DP_INFO_LOG("entered, is in trailing: %d", isInTrailing_);
+    DP_INFO_LOG("entered, is in trailing: %{public}d", isInTrailing_);
     if (duration <= 0) {
         return;
     }
@@ -162,7 +162,7 @@ void BackgroundStrategy::StartTrailing(uint64_t duration)
 
 void BackgroundStrategy::StopTrailing()
 {
-    DP_INFO_LOG("entered, is in trailing: %d", isInTrailing_);
+    DP_INFO_LOG("entered, is in trailing: %{public}d", isInTrailing_);
     if (isInTrailing_) {
         auto passedTime = SteadyClock::GetTimestampMilli() - trailingStartTimeStamp_;
         if (passedTime >= remainingTrailingTime_) {
@@ -177,7 +177,7 @@ void BackgroundStrategy::StopTrailing()
 
 void BackgroundStrategy::FlashTrailingState()
 {
-    DP_INFO_LOG("entered, is in trailing: %d", isInTrailing_);
+    DP_INFO_LOG("entered, is in trailing: %{public}d", isInTrailing_);
     if (isInTrailing_) {
         auto passedTime = SteadyClock::GetTimestampMilli() - trailingStartTimeStamp_;
         if (passedTime >= remainingTrailingTime_) {

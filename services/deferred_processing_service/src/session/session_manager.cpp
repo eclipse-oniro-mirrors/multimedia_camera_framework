@@ -75,7 +75,7 @@ sptr<IDeferredPhotoProcessingSession> SessionManager::CreateDeferredPhotoProcess
     const sptr<IDeferredPhotoProcessingSessionCallback> callback, std::shared_ptr<DeferredPhotoProcessor> processor,
     TaskManager* taskManager)
 {
-    DP_INFO_LOG("SessionManager::CreateDeferredPhotoProcessingSession create session for userId: %d", userId);
+    DP_INFO_LOG("SessionManager::CreateDeferredPhotoProcessingSession create session for userId: %{public}d", userId);
     if (initialized_.load() == false) {
         DP_ERR_LOG("failed due to uninitialized.");
         return nullptr;

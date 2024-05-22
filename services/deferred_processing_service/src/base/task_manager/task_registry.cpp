@@ -37,7 +37,7 @@ TaskRegistry::~TaskRegistry()
 bool TaskRegistry::RegisterTaskGroup(const std::string& name, TaskFunc func, bool serial, bool delayTask,
     TaskGroupHandle& handle)
 {
-    DP_DEBUG_LOG("name: %s, serial: %d, delayTask: %d.", name.c_str(), serial, delayTask);
+    DP_DEBUG_LOG("name: %s, serial: %{public}d, delayTask: %{public}d.", name.c_str(), serial, delayTask);
     if (IsTaskGroupAlreadyRegistered(name)) {
         DP_DEBUG_LOG("failed, task group (%s) already existed!", name.c_str());
         return false;
@@ -61,14 +61,14 @@ bool TaskRegistry::DeregisterTaskGroup(const std::string& name, TaskGroupHandle&
 {
     DP_DEBUG_LOG("name: %s.", name.c_str());
     if (!IsTaskGroupAlreadyRegistered(name)) {
-        DP_DEBUG_LOG("name: %s, with handle:%d, failed due to non exist task group!",
+        DP_DEBUG_LOG("name: %s, with handle:%{public}d, failed due to non exist task group!",
             name.c_str(), static_cast<int>(handle));
         return false;
     }
     std::lock_guard<std::mutex> lock(mutex_);
     auto it = registry_.find(handle);
     if (it == registry_.end()) {
-        DP_DEBUG_LOG("name: %s, handle:%d failed due to non-existent task group!",
+        DP_DEBUG_LOG("name: %s, handle:%{public}d failed due to non-existent task group!",
             name.c_str(), static_cast<int>(handle));
         return false;
     }
@@ -78,11 +78,11 @@ bool TaskRegistry::DeregisterTaskGroup(const std::string& name, TaskGroupHandle&
 
 bool TaskRegistry::SubmitTask(TaskGroupHandle handle, std::any param)
 {
-    DP_DEBUG_LOG("submit one task to %d", static_cast<int>(handle));
+    DP_DEBUG_LOG("submit one task to %{public}d", static_cast<int>(handle));
     std::lock_guard<std::mutex> lock(mutex_);
     auto it = registry_.find(handle);
     if (it == registry_.end()) {
-        DP_DEBUG_LOG("failed due to task group %d non-exist!", static_cast<int>(handle));
+        DP_DEBUG_LOG("failed due to task group %{public}d non-exist!", static_cast<int>(handle));
         return false;
     }
     return it->second->SubmitTask(std::move(param));

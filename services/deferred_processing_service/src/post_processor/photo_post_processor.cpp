@@ -56,7 +56,7 @@ DpsError MapHdiError(OHOS::HDI::Camera::V1_2::ErrorCode errorCode)
             code = DpsError::DPS_ERROR_IMAGE_PROC_INTERRUPTED;
             break;
         default:
-            DP_ERR_LOG("unexpected error code: %d.", errorCode);
+            DP_ERR_LOG("unexpected error code: %{public}d.", errorCode);
             break;
     }
     return code;
@@ -82,7 +82,7 @@ HdiStatus MapHdiStatus(OHOS::HDI::Camera::V1_2::SessionStatus statusCode)
             code = HdiStatus::HDI_NOT_READY_PREEMPTED;
             break;
         default:
-            DP_ERR_LOG("unexpected error code: %d.", statusCode);
+            DP_ERR_LOG("unexpected error code: %{public}d.", statusCode);
             break;
     }
     return code;
@@ -102,7 +102,7 @@ OHOS::HDI::Camera::V1_2::ExecutionMode MapToHdiExecutionMode(ExecutionMode execu
             mode = OHOS::HDI::Camera::V1_2::ExecutionMode::LOW_POWER;
             break;
         default:
-            DP_ERR_LOG("unexpected error code: %d.", executionMode);
+            DP_ERR_LOG("unexpected error code: %{public}d.", executionMode);
             break;
     }
     return mode;
@@ -137,9 +137,9 @@ int32_t PhotoPostProcessor::PhotoProcessListener::OnProcessDone(const std::strin
     DP_INFO_LOG("entered");
     auto bufferHandle = buffer.imageHandle->GetBufferHandle();
     int hdiFd = bufferHandle->fd;
-    DP_DEBUG_LOG("entered, hdiFd: %d", hdiFd);
+    DP_DEBUG_LOG("entered, hdiFd: %{public}d", hdiFd);
     int fd = dup(hdiFd);
-    DP_DEBUG_LOG("entered, dup fd: %d", fd);
+    DP_DEBUG_LOG("entered, dup fd: %{public}d", fd);
     close(hdiFd);
     int size = bufferHandle->size;
     int32_t isDegradedImage = 0;
@@ -147,11 +147,11 @@ int32_t PhotoPostProcessor::PhotoProcessListener::OnProcessDone(const std::strin
     if (buffer.metadata) {
         int32_t retImageQuality = buffer.metadata->Get("isDegradedImage", isDegradedImage);
         int32_t retDataSize = buffer.metadata->Get("dataSize", dataSize);
-        DP_INFO_LOG("retImageQuality: %d, retDataSize: %d", static_cast<int>(retImageQuality),
+        DP_INFO_LOG("retImageQuality: %{public}d, retDataSize: %{public}d", static_cast<int>(retImageQuality),
             static_cast<int>(retDataSize));
     }
-    DP_INFO_LOG("bufferHandle param, size: %d, dataSize: %d, isDegradedImage: %d", size, static_cast<int>(dataSize),
-        isDegradedImage);
+    DP_INFO_LOG("bufferHandle param, size: %{public}d, dataSize: %{public}d, isDegradedImage: %{public}d",
+        size, static_cast<int>(dataSize), isDegradedImage);
     sptr<IPCFileDescriptor> ipcFileDescriptor = sptr<IPCFileDescriptor>::MakeSptr(fd);
     std::shared_ptr<BufferInfo> bufferInfo = std::make_shared<BufferInfo>(ipcFileDescriptor, dataSize,
         isDegradedImage == 0);
@@ -253,9 +253,9 @@ int PhotoPostProcessor::GetConcurrency(ExecutionMode mode)
     int count = 1;
     if (imageProcessSession_) {
         int32_t ret = imageProcessSession_->GetCoucurrency(OHOS::HDI::Camera::V1_2::ExecutionMode::BALANCED, count);
-        DP_INFO_LOG("getConcurrency, ret: %d", ret);
+        DP_INFO_LOG("getConcurrency, ret: %{public}d", ret);
     }
-    DP_INFO_LOG("entered, count: %d", count);
+    DP_INFO_LOG("entered, count: %{public}d", count);
     return count;
 }
 
@@ -265,7 +265,7 @@ bool PhotoPostProcessor::GetPendingImages(std::vector<std::string>& pendingImage
     DP_INFO_LOG("entered");
     if (imageProcessSession_) {
         int32_t ret = imageProcessSession_->GetPendingImages(pendingImages);
-        DP_INFO_LOG("getPendingImages, ret: %d", ret);
+        DP_INFO_LOG("getPendingImages, ret: %{public}d", ret);
         if (ret == 0) {
         return true;
         }
@@ -276,10 +276,10 @@ bool PhotoPostProcessor::GetPendingImages(std::vector<std::string>& pendingImage
 void PhotoPostProcessor::SetExecutionMode(ExecutionMode executionMode)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("entered, executionMode: %d", executionMode);
+    DP_INFO_LOG("entered, executionMode: %{public}d", executionMode);
     if (imageProcessSession_) {
         int32_t ret = imageProcessSession_->SetExecutionMode(MapToHdiExecutionMode(executionMode));
-        DP_INFO_LOG("setExecutionMode, ret: %d", ret);
+        DP_INFO_LOG("setExecutionMode, ret: %{public}d", ret);
     }
 }
 
@@ -293,16 +293,16 @@ void PhotoPostProcessor::ProcessImage(std::string imageId)
     }
     std::lock_guard<std::mutex> lock(mutex_);
     int32_t ret = imageProcessSession_->ProcessImage(imageId);
-    DP_INFO_LOG("processImage, ret: %d", ret);
+    DP_INFO_LOG("processImage, ret: %{public}d", ret);
     uint32_t callbackHandle;
     int userId = userId_;
     constexpr uint32_t maxProcessingTimeMs = 11 * 1000;
     GetGlobalWatchdog().StartMonitor(callbackHandle, maxProcessingTimeMs, [this, &userId, imageId](uint32_t handle) {
-        DP_INFO_LOG("PhotoPostProcessor-ProcessImage-Watchdog executed, userId: %d, handle: %d",
+        DP_INFO_LOG("PhotoPostProcessor-ProcessImage-Watchdog executed, userId: %{public}d, handle: %{public}d",
             userId, static_cast<int>(handle));
         OnError(imageId, DpsError::DPS_ERROR_IMAGE_PROC_TIMEOUT);
     });
-    DP_INFO_LOG("PhotoPostProcessor-ProcessImage-Watchdog registered, userId: %d, handle: %d",
+    DP_INFO_LOG("PhotoPostProcessor-ProcessImage-Watchdog registered, userId: %{public}d, handle: %{public}d",
         userId, static_cast<int>(callbackHandle));
     imageId2Handle_.emplace(imageId, callbackHandle);
 }
@@ -313,7 +313,7 @@ void PhotoPostProcessor::RemoveImage(std::string imageId)
     DP_INFO_LOG("entered, imageId: %s", imageId.c_str());
     if (imageProcessSession_) {
         int32_t ret = imageProcessSession_->RemoveImage(imageId);
-        DP_INFO_LOG("removeImage, imageId: %s, ret: %d", imageId.c_str(), ret);
+        DP_INFO_LOG("removeImage, imageId: %s, ret: %{public}d", imageId.c_str(), ret);
         DPSEventReport::GetInstance().UpdateRemoveTime(imageId, userId_);
     }
 }
@@ -324,7 +324,7 @@ void PhotoPostProcessor::Interrupt()
     DP_INFO_LOG("entered");
     if (imageProcessSession_) {
         int32_t ret = imageProcessSession_->Interrupt();
-        DP_INFO_LOG("interrupt, ret: %d", ret);
+        DP_INFO_LOG("interrupt, ret: %{public}d", ret);
     }
 }
 
@@ -334,7 +334,7 @@ void PhotoPostProcessor::Reset()
     DP_INFO_LOG("entered");
     if (imageProcessSession_) {
         int32_t ret = imageProcessSession_->Reset();
-        DP_INFO_LOG("reset, ret: %d", ret);
+        DP_INFO_LOG("reset, ret: %{public}d", ret);
     }
 }
 
@@ -380,7 +380,7 @@ void PhotoPostProcessor::OnError(const std::string& imageId, DpsError errorCode)
 
 void PhotoPostProcessor::OnStateChanged(HdiStatus hdiStatus)
 {
-    DP_INFO_LOG("entered, HdiStatus: %d", hdiStatus);
+    DP_INFO_LOG("entered, HdiStatus: %{public}d", hdiStatus);
     EventsMonitor::GetInstance().NotifyImageEnhanceStatus(hdiStatus);
 }
 
@@ -446,10 +446,10 @@ void PhotoPostProcessor::ScheduleConnectService()
         constexpr uint32_t delayMilli = 10 * 1000;
         uint32_t callbackHandle;
         GetGlobalWatchdog().StartMonitor(callbackHandle, delayMilli, [this](uint32_t handle) {
-            DP_INFO_LOG("PhotoPostProcessor Watchdog executed, handle: %d", static_cast<int>(handle));
+            DP_INFO_LOG("PhotoPostProcessor Watchdog executed, handle: %{public}d", static_cast<int>(handle));
             ConnectServiceIfNecessary();
         });
-        DP_INFO_LOG("PhotoPostProcessor Watchdog registered, handle: %d", static_cast<int>(callbackHandle));
+        DP_INFO_LOG("PhotoPostProcessor Watchdog registered, handle: %{public}d", static_cast<int>(callbackHandle));
     } else {
         DP_INFO_LOG("already connected.");
     }

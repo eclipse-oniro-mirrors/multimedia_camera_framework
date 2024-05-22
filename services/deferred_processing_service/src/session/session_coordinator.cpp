@@ -51,7 +51,7 @@ ErrorCode MapDpsErrorCode(DpsError errorCode)
             code = ErrorCode::ERROR_IMAGE_PROC_INTERRUPTED;
             break;
         default:
-            DP_WARNING_LOG("unexpected error code: %d.", errorCode);
+            DP_WARNING_LOG("unexpected error code: %{public}d.", errorCode);
             break;
     }
     return code;
@@ -74,7 +74,7 @@ StatusCode MapDpsStatus(DpsStatus statusCode)
             code = StatusCode::SESSION_STATE_SUSPENDED;
             break;
         default:
-            DP_WARNING_LOG("unexpected error code: %d.", statusCode);
+            DP_WARNING_LOG("unexpected error code: %{public}d.", statusCode);
             break;
     }
     return code;
@@ -174,10 +174,10 @@ void SessionCoordinator::OnError(int userId, const std::string& imageId, DpsErro
     if (iter != remoteImageCallbacksMap_.end()) {
         auto wpCallback = iter->second;
         sptr<IDeferredPhotoProcessingSessionCallback> spCallback = wpCallback.promote();
-        DP_INFO_LOG("entered, userId: %d", userId);
+        DP_INFO_LOG("entered, userId: %{public}d", userId);
         spCallback->OnError(imageId, MapDpsErrorCode(errorCode));
     } else {
-        DP_INFO_LOG("callback is null, cache request, imageId: %s, errorCode: %d.", imageId.c_str(), errorCode);
+        DP_INFO_LOG("callback is null, cache request, imageId: %s, errorCode: %{public}d.", imageId.c_str(), errorCode);
         pendingImageResults_.push_back({CallbackType::ON_ERROR, userId, imageId, nullptr, 0, errorCode});
     }
 }
@@ -188,10 +188,10 @@ void SessionCoordinator::OnStateChanged(int userId, DpsStatus statusCode)
     if (iter != remoteImageCallbacksMap_.end()) {
         auto wpCallback = iter->second;
         sptr<IDeferredPhotoProcessingSessionCallback> spCallback = wpCallback.promote();
-        DP_INFO_LOG("entered, userId: %d", userId);
+        DP_INFO_LOG("entered, userId: %{public}d", userId);
         spCallback->OnStateChanged(MapDpsStatus(statusCode));
     } else {
-        DP_INFO_LOG("cache request, statusCode: %d.", statusCode);
+        DP_INFO_LOG("cache request, statusCode: %{public}d.", statusCode);
         pendingImageResults_.push_back({CallbackType::ON_STATE_CHANGED, userId, "", nullptr, 0,
             DpsError::DPS_ERROR_IMAGE_PROC_ABNORMAL, statusCode});
     }
@@ -229,7 +229,7 @@ void SessionCoordinator::ProcessPendingResults(sptr<IDeferredPhotoProcessingSess
 void SessionCoordinator::NotifyCallbackDestroyed(int userId)
 {
     if (remoteImageCallbacksMap_.count(userId) != 0) {
-        DP_INFO_LOG("session userId: %d destroyed.", userId);
+        DP_INFO_LOG("session userId: %{public}d destroyed.", userId);
         remoteImageCallbacksMap_.erase(userId);
     }
 }

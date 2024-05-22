@@ -107,6 +107,7 @@ Camera_ErrorCode Camera_CaptureSession::AddSecureOutput(Camera_PreviewOutput* pr
 Camera_ErrorCode Camera_CaptureSession::BeginConfig()
 {
     int32_t ret = innerCaptureSession_->BeginConfig();
+    innerCaptureSession_->EnableDeferredType(DELIVERY_NONE, true);
     return FrameworkToNdkCameraError(ret);
 }
 
