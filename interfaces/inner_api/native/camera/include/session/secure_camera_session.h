@@ -33,6 +33,8 @@ public:
      * @param CaptureOutput to be added to session.
      */
     int32_t AddSecureOutput(sptr<CaptureOutput>& output);
+private:
+    volatile bool isSetSecureOutput_ = false;
 };
 } // namespace CameraStandard
 } // namespace OHOS

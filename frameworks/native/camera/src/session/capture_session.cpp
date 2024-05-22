@@ -709,11 +709,11 @@ int32_t CaptureSession::AddSecureOutput(sptr<CaptureOutput> &output)
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("Enter Into SecureCameraSession::AddSecureOutput");
     if (currentMode_ != SceneMode::SECURE) {
-        return CAMERA_UNSUPPORTED;
+        return CAMERA_OPERATION_NOT_ALLOWED;
     }
     if (!IsSessionConfiged() || output == nullptr || isSetSecureOutput_) {
         MEDIA_ERR_LOG("SecureCameraSession::AddSecureOutput operation is Not allowed!");
-        return CAMERA_OK;
+        return CAMERA_OPERATION_NOT_ALLOWED;
     }
     sptr<IStreamCommon> stream = output->GetStream();
     IStreamRepeat* repeatStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
