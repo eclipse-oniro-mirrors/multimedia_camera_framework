@@ -62,7 +62,7 @@ bool TimeBroker::RegisterCallback(uint32_t delayTimeMs, std::function<void(uint3
     uint32_t& handle)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_DEBUG_LOG("(%s) register callback with delayTimeMs (%d).", name_.c_str(), static_cast<int>(delayTimeMs));
+    DP_DEBUG_LOG("(%s) register callback with delayTimeMs (%{public}d).", name_.c_str(), static_cast<int>(delayTimeMs));
     auto ret = GetNextHandle(handle);
     if (ret) {
         auto timestamp = SteadyClock::GetTimestampMilli() + delayTimeMs;
@@ -80,7 +80,7 @@ void TimeBroker::DeregisterCallback(uint32_t handle)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (handle == 0) {
-        DP_DEBUG_LOG("(%s) invalid handle (%d).", name_.c_str(), static_cast<int>(handle));
+        DP_DEBUG_LOG("(%s) invalid handle (%{public}d).", name_.c_str(), static_cast<int>(handle));
         return;
     }
     timerInfos_.erase(handle);
@@ -129,7 +129,7 @@ void TimeBroker::TimerExpired()
         expiringTimers_.erase(timestamp);
         auto ret = RestartTimer(timestamp);
         if (!ret) {
-            DP_DEBUG_LOG("(%s) RestartTimer failed (%d)", name_.c_str(), ret);
+            DP_DEBUG_LOG("(%s) RestartTimer failed (%{public}d)", name_.c_str(), ret);
         }
     }
     for (auto &timerInfo : timerInfos) {
@@ -144,7 +144,7 @@ bool TimeBroker::RestartTimer(bool force)
         return true;
     }
     auto timestamp = timeline_.top();
-    DP_DEBUG_LOG("(%s) restart timer, expiring timestamp: %d", name_.c_str(), static_cast<int>(timestamp));
+    DP_DEBUG_LOG("(%s) restart timer, expiring timestamp: %{public}d", name_.c_str(), static_cast<int>(timestamp));
     return timer_->StartAt(timestamp);
 }
 } //namespace DeferredProcessing

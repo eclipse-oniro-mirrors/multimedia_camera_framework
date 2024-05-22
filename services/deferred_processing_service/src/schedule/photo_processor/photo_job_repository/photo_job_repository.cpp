@@ -32,12 +32,12 @@ PhotoJobRepository::PhotoJobRepository(int userId)
       jobQueue_(),
       jobListeners_()
 {
-    DP_DEBUG_LOG("entered, userid: %d", userId_);
+    DP_DEBUG_LOG("entered, userid: %{public}d", userId_);
 }
 
 PhotoJobRepository::~PhotoJobRepository()
 {
-    DP_DEBUG_LOG("entered, userid: %d", userId_);
+    DP_DEBUG_LOG("entered, userid: %{public}d", userId_);
     offlineJobMap_.clear();
     backgroundJobMap_.clear();
     offlineJobList_.clear();
@@ -76,7 +76,7 @@ void PhotoJobRepository::AddDeferredJob(const std::string& imageId, bool discard
 
 void PhotoJobRepository::RemoveDeferredJob(const std::string& imageId, bool restorable)
 {
-    DP_INFO_LOG("entered, imageId: %s, restorable: %d", imageId.c_str(), restorable);
+    DP_INFO_LOG("entered, imageId: %s, restorable: %{public}d", imageId.c_str(), restorable);
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     DeferredPhotoJobPtr jobPtr = GetJobUnLocked(imageId);
     if (jobPtr == nullptr) {
@@ -121,9 +121,6 @@ bool PhotoJobRepository::RequestJob(const std::string& imageId)
     DeferredPhotoJobPtr jobPtr = GetJobUnLocked(imageId);
     if (jobPtr == nullptr) {
         DP_INFO_LOG("does not existed, imageId: %s: ", imageId.c_str());
-        return false;
-    }
-    if (jobPtr->GetDeferredProcType() == DeferredProcessingType::DPS_BACKGROUND) {
         return false;
     }
     bool priorityChanged = false;
@@ -269,7 +266,8 @@ PhotoJobStatus PhotoJobRepository::GetJobStatus(const std::string& imageId)
 
 DeferredPhotoJobPtr PhotoJobRepository::GetLowPriorityJob()
 {
-    DP_INFO_LOG("entered, job queue size: %d, offline job list size: %d, background job size: %d, running num: %d",
+    DP_INFO_LOG("entered, job queue size: %{public}d, offline job list size: %{public}d,"
+        "background job size: %{public}d, running num: %{public}d",
         static_cast<int>(jobQueue_.size()), static_cast<int>(offlineJobList_.size()),
         static_cast<int>(backgroundJobMap_.size()), runningNum_);
     std::lock_guard<std::recursive_mutex> lock(mutex_);
@@ -289,7 +287,8 @@ DeferredPhotoJobPtr PhotoJobRepository::GetLowPriorityJob()
 
 DeferredPhotoJobPtr PhotoJobRepository::GetNormalPriorityJob()
 {
-    DP_INFO_LOG("entered, job queue size: %d, offline job list size: %d, background job size: %d, running num: %d",
+    DP_INFO_LOG("entered, job queue size: %{public}d, offline job list size: %{public}d,"
+        "background job size: %{public}d, running num: %{public}d",
         static_cast<int>(jobQueue_.size()), static_cast<int>(offlineJobList_.size()),
         static_cast<int>(backgroundJobMap_.size()), runningNum_);
     std::lock_guard<std::recursive_mutex> lock(mutex_);
@@ -316,7 +315,8 @@ DeferredPhotoJobPtr PhotoJobRepository::GetNormalPriorityJob()
 
 DeferredPhotoJobPtr PhotoJobRepository::GetHighPriorityJob()
 {
-    DP_INFO_LOG("entered, job queue size: %d, offline job list size: %d, background job size: %d, running num: %d",
+    DP_INFO_LOG("entered, job queue size: %{public}d, offline job list size: %{public}d,"
+        "background job size: %{public}d, running num: %{public}d",
         static_cast<int>(jobQueue_.size()), static_cast<int>(offlineJobList_.size()),
         static_cast<int>(backgroundJobMap_.size()), runningNum_);
     std::lock_guard<std::recursive_mutex> lock(mutex_);
@@ -329,7 +329,7 @@ DeferredPhotoJobPtr PhotoJobRepository::GetHighPriorityJob()
 int PhotoJobRepository::GetRunningJobCounts()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    DP_DEBUG_LOG("running jobs num: %d", runningNum_);
+    DP_DEBUG_LOG("running jobs num: %{public}d", runningNum_);
     return runningNum_;
 }
 
@@ -361,7 +361,7 @@ PhotoJobPriority PhotoJobRepository::GetJobRunningPriority(std::string imageId)
 
 void PhotoJobRepository::NotifyJobChangedUnLocked(bool priorityChanged, bool statusChanged, DeferredPhotoJobPtr jobPtr)
 {
-    DP_INFO_LOG("entered, priorityChanged: %d, statusChanged: %d, imageId: %s: ",
+    DP_INFO_LOG("entered, priorityChanged: %{public}d, statusChanged: %{public}d, imageId: %s: ",
         priorityChanged, statusChanged, jobPtr->GetImageId().c_str());
     for (auto& listenerWptr : jobListeners_) {
         if (auto listenerSptr = listenerWptr.lock()) {
@@ -388,7 +388,7 @@ void PhotoJobRepository::UpdateRunningCountUnLocked(bool statusChanged, Deferred
     if (statusChanged && (jobPtr->GetCurStatus() == PhotoJobStatus::RUNNING)) {
         runningNum_ = runningNum_ + 1;
     }
-    DP_INFO_LOG("running jobs num: %d, imageId: %s", runningNum_, jobPtr->GetImageId().c_str());
+    DP_INFO_LOG("running jobs num: %{public}d, imageId: %s", runningNum_, jobPtr->GetImageId().c_str());
     return;
 }
 
@@ -438,7 +438,7 @@ int PhotoJobRepository::GetBackgroundJobSize()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     int size = static_cast<int>(backgroundJobMap_.size());
-    DP_DEBUG_LOG("background job size: %d", size);
+    DP_DEBUG_LOG("background job size: %{public}d", size);
     return size;
 }
 
@@ -446,7 +446,7 @@ int PhotoJobRepository::GetOfflineJobSize()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     int size = static_cast<int>(offlineJobMap_.size());
-    DP_DEBUG_LOG("offline job size: %d", size);
+    DP_DEBUG_LOG("offline job size: %{public}d", size);
     return size;
 }
 

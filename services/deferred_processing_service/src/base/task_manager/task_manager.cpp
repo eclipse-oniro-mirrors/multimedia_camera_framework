@@ -30,7 +30,7 @@ TaskManager::TaskManager(const std::string& name, uint32_t  numThreads, bool ser
       defaultTaskHandle_(INVALID_TASK_GROUP_HANDLE),
       delayedTaskHandle_(INVALID_TASK_GROUP_HANDLE)
 {
-    DP_INFO_LOG("name: %s, maxThreads: %d.", name.c_str(), numThreads);
+    DP_INFO_LOG("name: %s, maxThreads: %{public}d.", name.c_str(), numThreads);
     Initialize();
 }
 
@@ -41,7 +41,8 @@ void TaskManager::Initialize()
     taskRegistry_ = std::make_unique<TaskRegistry>(name_, pool_.get());
     auto ret = RegisterTaskGroup("defaultTaskGroup",
         [this](std::any param) { DoDefaultWorks(std::move(param)); }, serial_, false, defaultTaskHandle_);
-    DP_INFO_LOG("register default task group: %d, handle: %d", ret, static_cast<int>(defaultTaskHandle_));
+    DP_INFO_LOG("register default task group: %{public}d, handle: %{public}d", ret,
+        static_cast<int>(defaultTaskHandle_));
     (void)(ret);
     return;
 }
@@ -90,7 +91,7 @@ bool TaskManager::DeregisterTaskGroup(const std::string& name, TaskGroupHandle& 
     bool ret = false;
     if (taskRegistry_) {
         ret = taskRegistry_->DeregisterTaskGroup(name, handle);
-        DP_INFO_LOG("deregister task group: %s, ret: %d", name.c_str(), ret);
+        DP_INFO_LOG("deregister task group: %s, ret: %{public}d", name.c_str(), ret);
     } else {
         DP_INFO_LOG("invalid ptr");
     }
@@ -110,7 +111,7 @@ bool TaskManager::SubmitTask(std::function<void()> task, uint32_t delayMilli)
 
 bool TaskManager::SubmitTask(TaskGroupHandle handle, std::any param)
 {
-    DP_INFO_LOG("submit task to handle: %d", static_cast<int>(handle));
+    DP_INFO_LOG("submit task to handle: %{public}d", static_cast<int>(handle));
     if (taskRegistry_ == nullptr) {
         DP_ERR_LOG("invalid ptr");
         return false;

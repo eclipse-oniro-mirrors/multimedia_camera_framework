@@ -33,7 +33,7 @@ BaseTaskGroup::BaseTaskGroup(const std::string& name, TaskFunc func, bool serial
 
 BaseTaskGroup::~BaseTaskGroup()
 {
-    DP_DEBUG_LOG("task group name: %s, handle: %d", name_.c_str(), static_cast<int>(handle_));
+    DP_DEBUG_LOG("task group name: %s, handle: %{public}d", name_.c_str(), static_cast<int>(handle_));
     que_.SetActive(false);
     que_.Clear();
 }
@@ -42,7 +42,7 @@ void BaseTaskGroup::Initialize()
 {
     handle_ = GenerateHandle();
     que_.SetActive(true);
-    DP_DEBUG_LOG("task group (%s), handle: %d", name_.c_str(), static_cast<int>(handle_));
+    DP_DEBUG_LOG("task group (%s), handle: %{public}d", name_.c_str(), static_cast<int>(handle_));
 }
 
 const std::string& BaseTaskGroup::GetName()
@@ -59,9 +59,9 @@ bool BaseTaskGroup::SubmitTask(std::any param)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (que_.Full()) {
-        DP_WARNING_LOG("Submit task (%s), handle: %d, que is full!", name_.c_str(), static_cast<int>(handle_));
+        DP_WARNING_LOG("Submit task (%s), handle: %{public}d, que is full!", name_.c_str(), static_cast<int>(handle_));
     } else {
-        DP_DEBUG_LOG("Submit task (%s), handle: %d, size: %zu.", name_.c_str(),
+        DP_DEBUG_LOG("Submit task (%s), handle: %{public}d, size: %zu.", name_.c_str(),
             static_cast<int>(handle_), que_.Size());
     }
     que_.Push(std::move(param));
@@ -83,7 +83,8 @@ std::function<void()> BaseTaskGroup::GetTaskUnlocked()
             thiz->OnTaskComplete();
         }
     };
-    DP_DEBUG_LOG("return one task %s, handle:%d, size: %zu.", name_.c_str(), static_cast<int>(handle_), que_.Size());
+    DP_DEBUG_LOG("return one task %s, handle:%{public}d, size: %zu.", name_.c_str(), static_cast<int>(handle_),
+        que_.Size());
     return task;
 }
 
@@ -108,7 +109,7 @@ void BaseTaskGroup::DispatchTaskUnlocked()
         inflight_ = true;
         threadPool_->Submit([task = std::move(task)] { task(); });
     } else {
-        DP_DEBUG_LOG("all tasks have completed for %s handle:%d.", name_.c_str(), static_cast<int>(handle_));
+        DP_DEBUG_LOG("all tasks have completed for %s handle:%{public}d.", name_.c_str(), static_cast<int>(handle_));
     }
 }
 void BaseTaskGroup::OnTaskComplete()

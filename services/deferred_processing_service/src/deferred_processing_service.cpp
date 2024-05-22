@@ -76,7 +76,8 @@ void DeferredProcessingService::Stop()
 sptr<IDeferredPhotoProcessingSession> DeferredProcessingService::CreateDeferredPhotoProcessingSession(
     int userId, const sptr<IDeferredPhotoProcessingSessionCallback> callbacks)
 {
-    DP_INFO_LOG("DeferredProcessingService::CreateDeferredPhotoProcessingSession create session, userId: %d", userId);
+    DP_INFO_LOG("DeferredProcessingService::CreateDeferredPhotoProcessingSession create session, userId: %{public}d",
+        userId);
     TaskManager* taskManager = GetPhotoTaskManager(userId);
     std::shared_ptr<IImageProcessCallbacks> sessionImageProcCallbacks = sessionManager_->GetImageProcCallbacks();
     auto processor = schedulerManager_->GetPhotoProcessor(userId, taskManager, sessionImageProcCallbacks);
@@ -87,7 +88,7 @@ sptr<IDeferredPhotoProcessingSession> DeferredProcessingService::CreateDeferredP
 
 TaskManager* DeferredProcessingService::GetPhotoTaskManager(int userId)
 {
-    DP_INFO_LOG("entered, userId: %d", userId);
+    DP_INFO_LOG("entered, userId: %{public}d", userId);
     if (photoTaskManagerMap_.count(userId) == 0) {
         constexpr uint32_t numThreads = 1;
         std::shared_ptr<TaskManager> taskManager =
@@ -102,7 +103,7 @@ TaskManager* DeferredProcessingService::GetPhotoTaskManager(int userId)
 void DeferredProcessingService::NotifyCameraSessionStatus(int userId, const std::string& cameraId,
     bool running, bool isSystemCamera)
 {
-    DP_INFO_LOG("entered, userId: %d, cameraId: %s, running: %d, isSystemCamera: %d: ",
+    DP_INFO_LOG("entered, userId: %{public}d, cameraId: %s, running: %{public}d, isSystemCamera: %{public}d: ",
         userId, cameraId.c_str(), running, isSystemCamera);
     EventsMonitor::GetInstance().NotifyCameraSessionStatus(userId, cameraId, running, isSystemCamera);
 }

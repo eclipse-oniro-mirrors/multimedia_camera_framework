@@ -142,7 +142,7 @@ void EventsMonitor::UnRegisterListener(int userId, TaskManager *taskManager)
 void EventsMonitor::NotifyThermalLevel(int level)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("notify : %d.", level);
+    DP_INFO_LOG("notify : %{public}d.", level);
     if (!initialized_) {
         DP_INFO_LOG("uninitialized events monitor!");
         return;
@@ -155,7 +155,7 @@ void EventsMonitor::NotifyThermalLevel(int level)
 void EventsMonitor::NotifyCameraSessionStatus(int userId,
     const std::string &cameraId, bool running, bool isSystemCamera)
 {
-    DP_INFO_LOG("entered, userId: %d, cameraId: %s, running: %d, isSystemCamera: %d: ",
+    DP_INFO_LOG("entered, userId: %{public}d, cameraId: %s, running: %{public}d, isSystemCamera: %{public}d: ",
         userId, cameraId.c_str(), running, isSystemCamera);
     std::lock_guard<std::mutex> lock(mutex_);
     if (!initialized_) {
@@ -163,7 +163,7 @@ void EventsMonitor::NotifyCameraSessionStatus(int userId,
     }
     CameraSessionStatus cameraSessionStatus;
     running ? numActiveSessions_++ : numActiveSessions_--;
-    DP_INFO_LOG("numActiveSessions_: %d", static_cast<int>(numActiveSessions_.load()));
+    DP_INFO_LOG("numActiveSessions_: %{public}d", static_cast<int>(numActiveSessions_.load()));
     bool currSessionRunning = running;
     if (currSessionRunning) {
         cameraSessionStatus = isSystemCamera ?
@@ -181,7 +181,7 @@ void EventsMonitor::NotifyCameraSessionStatus(int userId,
 void EventsMonitor::NotifyMediaLibraryStatus(bool available)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("mediaLibrary available: %d.", available);
+    DP_INFO_LOG("mediaLibrary available: %{public}d.", available);
     if (!initialized_) {
         DP_INFO_LOG("uninitialized events monitor!");
         return;
@@ -193,7 +193,7 @@ void EventsMonitor::NotifyMediaLibraryStatus(bool available)
 
 void EventsMonitor::NotifyImageEnhanceStatus(int32_t status)
 {
-    DP_INFO_LOG("entered: %d.", status);
+    DP_INFO_LOG("entered: %{public}d.", status);
     std::lock_guard<std::mutex> lock(mutex_);
     if (!initialized_) {
         DP_INFO_LOG("uninitialized events monitor!");
@@ -207,7 +207,7 @@ void EventsMonitor::NotifyImageEnhanceStatus(int32_t status)
 
 void EventsMonitor::NotifySystemPressureLevel(SystemPressureLevel level)
 {
-    DP_INFO_LOG("entered: %d.", level);
+    DP_INFO_LOG("entered: %{public}d.", level);
     std::lock_guard<std::mutex> lock(mutex_);
     if (!initialized_) {
         DP_INFO_LOG("uninitialized events monitor!");
@@ -262,7 +262,7 @@ void EventsMonitor::ScheduleRegisterThermalListener()
     uint32_t callbackHandle;
     constexpr uint32_t delayMilli = 10 * 1000;
     GetGlobalWatchdog().StartMonitor(callbackHandle, delayMilli, [this](uint32_t handle) {
-        DP_INFO_LOG("PhotoPostProcessor-ProcessImage-Watchdog executed, handle: %d", static_cast<int>(handle));
+        DP_INFO_LOG("PhotoPostProcessor-ProcessImage-Watchdog executed, handle: %{public}d", static_cast<int>(handle));
         this->RegisterThermalLevel();
     });
 }
@@ -337,7 +337,7 @@ void ThermalLevelSubscriber::OnReceiveEvent(const OHOS::EventFwk::CommonEventDat
         static const std::string THERMAL_EVENT_ID = "0";
         int level = data.GetWant().GetIntParam(THERMAL_EVENT_ID, 0);
         DPSEventReport::GetInstance().SetTemperatureLevel(level);
-        DP_INFO_LOG("OnThermalLevelChanged level:%d", static_cast<int>(level));
+        DP_INFO_LOG("OnThermalLevelChanged level:%{public}d", static_cast<int>(level));
         EventsMonitor::GetInstance().NotifySystemPressureLevel(MapEventLevel(level));
         DP_INFO_LOG("ThermalLevelSubscriber SetThermalLevel: %{public}d.", level);
     }

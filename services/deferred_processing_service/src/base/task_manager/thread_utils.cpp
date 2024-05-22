@@ -27,10 +27,10 @@ void SetThreadName(pthread_t tid, const std::string& name)
     constexpr int threadNameMaxSize = 15;
     auto threadName = name.size() > threadNameMaxSize ? name.substr(0, threadNameMaxSize).c_str() : name;
     if (name.size() > threadNameMaxSize) {
-        DP_DEBUG_LOG("task name %s exceed max size: %d", name.c_str(), threadNameMaxSize);
+        DP_DEBUG_LOG("task name %s exceed max size: %{public}d", name.c_str(), threadNameMaxSize);
     }
     int ret = pthread_setname_np(tid, threadName.c_str());
-    DP_DEBUG_LOG("threadId: %ld, threadName: %s, pthread_setname_np ret = %d.",
+    DP_DEBUG_LOG("threadId: %ld, threadName: %s, pthread_setname_np ret = %{public}d.",
         static_cast<long>(pthread_gettid_np(tid)), threadName.c_str(), ret);
 }
 
@@ -43,9 +43,10 @@ void SetThreadPriority(pthread_t handle, int priority)
     }
     int ret = setpriority(PRIO_PROCESS, tid, priority);
     if (ret == 0) {
-        DP_DEBUG_LOG("succeed for tid (%ld) with priority (%d).", static_cast<long>(tid), priority);
+        DP_DEBUG_LOG("succeed for tid (%ld) with priority (%{public}d).", static_cast<long>(tid), priority);
     } else {
-        DP_DEBUG_LOG("failed for tid (%ld) with priority (%d), ret = %d.", static_cast<long>(tid), priority, ret);
+        DP_DEBUG_LOG("failed for tid (%ld) with priority (%{public}d), ret = %{public}d.",
+            static_cast<long>(tid), priority, ret);
     }
 }
 } //namespace DeferredProcessing

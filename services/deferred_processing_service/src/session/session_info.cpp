@@ -58,7 +58,7 @@ SessionInfo::SessionInfo(int userId, const sptr<IDeferredPhotoProcessingSessionC
       callback_(callback),
       sessionManager_(sessionManager)
 {
-    DP_DEBUG_LOG("userId: %d.", userId_);
+    DP_DEBUG_LOG("userId: %{public}d.", userId_);
     callbackDeathRecipient_ = sptr<CallbackDeathRecipient>::MakeSptr(this);
     SetCallback(callback);
 }

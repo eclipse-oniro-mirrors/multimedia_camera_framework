@@ -85,7 +85,7 @@ bool TimerCore::RegisterTimer(uint64_t timestampMs, const std::shared_ptr<Timer>
         }
     }
     registeredTimers_[timestampMs].push_back(timer);
-    DP_DEBUG_LOG("register timer (%s), timestamp: %d, timeline.top: %d", timer->GetName().c_str(),
+    DP_DEBUG_LOG("register timer (%s), timestamp: %{public}d, timeline.top: %{public}d", timer->GetName().c_str(),
         static_cast<int>(timestampMs), static_cast<int>(timeline_.top()));
     return true;
 }
@@ -99,7 +99,7 @@ bool TimerCore::DeregisterTimer(uint64_t timestampMs, const std::shared_ptr<Time
         DP_ERR_LOG("failed due to nullptr.");
         return false;
     }
-    DP_DEBUG_LOG("(%s, %d) entered.", timer->GetName().c_str(), static_cast<int>(timestampMs));
+    DP_DEBUG_LOG("(%s, %{public}d) entered.", timer->GetName().c_str(), static_cast<int>(timestampMs));
     std::unique_lock<std::mutex> lock(mutex_);
     if (registeredTimers_.count(timestampMs)) {
         auto& timers = registeredTimers_[timestampMs];
@@ -154,10 +154,10 @@ void TimerCore::DoTimeout()
         auto timestamp = timeline_.top();
         timeline_.pop();
         if (registeredTimers_.count(timestamp) == 0) {
-            DP_DEBUG_LOG("timer for timestamp %d hasn't been registered.", static_cast<int>(timestamp));
+            DP_DEBUG_LOG("timer for timestamp %{public}d hasn't been registered.", static_cast<int>(timestamp));
             return;
         }
-        DP_DEBUG_LOG("expired timestamp: %d", static_cast<int>(timestamp));
+        DP_DEBUG_LOG("expired timestamp: %{public}d", static_cast<int>(timestamp));
         timers = std::move(registeredTimers_[timestamp]);
         registeredTimers_.erase(timestamp);
     }

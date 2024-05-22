@@ -81,6 +81,10 @@ void DeferredPhotoProcessor::RestoreImage(const std::string& imageId)
 void DeferredPhotoProcessor::ProcessImage(const std::string& appName, const std::string& imageId)
 {
     DP_INFO_LOG("entered");
+    if (!repository_->IsOfflineJob(imageId)) {
+        DP_INFO_LOG("imageId is not offlineJob %{public}s", imageId.c_str());
+        return;
+    }
     requestedImages_.insert(imageId);
     bool isImageIdValid = repository_->RequestJob(imageId);
     if (!isImageIdValid) {
@@ -211,7 +215,7 @@ bool DeferredPhotoProcessor::GetPendingImages(std::vector<std::string>& pendingI
 
 bool DeferredPhotoProcessor::IsFatalError(DpsError errorCode)
 {
-    DP_INFO_LOG("entered, code: %d", errorCode);
+    DP_INFO_LOG("entered, code: %{public}d", errorCode);
     if (errorCode == DpsError::DPS_ERROR_IMAGE_PROC_FAILED ||
         errorCode == DpsError::DPS_ERROR_IMAGE_PROC_INVALID_PHOTO_ID) {
         return true;

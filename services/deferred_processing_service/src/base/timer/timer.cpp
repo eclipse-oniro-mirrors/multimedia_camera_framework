@@ -25,7 +25,8 @@ namespace DeferredProcessing {
 std::shared_ptr<Timer> Timer::Create(const std::string& name, TimerType timerType,
     uint32_t intervalMs, TimerCallback callback)
 {
-    DP_DEBUG_LOG("name: %s, timer type: %d(0: once, 1: periodic), intervalMs: %u", name.c_str(), timerType, intervalMs);
+    DP_DEBUG_LOG("name: %s, timer type: %{public}d(0: once, 1: periodic), intervalMs: %u",
+        name.c_str(), timerType, intervalMs);
     struct MakeSharedHelper : public Timer {
         MakeSharedHelper(const std::string& name, TimerType timerType, uint32_t intervalMs, TimerCallback callback)
             : Timer(name, timerType, intervalMs, std::move(callback))
@@ -42,13 +43,13 @@ std::shared_ptr<Timer> Timer::Create(const std::string& name, TimerType timerTyp
 Timer::Timer(const std::string& name, TimerType timerType, uint32_t intervalMs, TimerCallback callback)
     : name_(name), timerType_(timerType), intervalMs_(intervalMs), callback_(std::move(callback)), expiredTimeMs_(0)
 {
-    DP_DEBUG_LOG("name: %s, timer type: %d(0: once, 1: periodic), intervalMs: %u",
+    DP_DEBUG_LOG("name: %s, timer type: %{public}d(0: once, 1: periodic), intervalMs: %u",
         name_.c_str(), timerType, intervalMs);
 }
 
 Timer::~Timer()
 {
-    DP_DEBUG_LOG("name: %s, timer type: %d(0: once, 1: periodic), intervalMs: %u",
+    DP_DEBUG_LOG("name: %s, timer type: %{public}d(0: once, 1: periodic), intervalMs: %u",
         name_.c_str(), timerType_, intervalMs_);
     std::lock_guard<std::mutex> lock(mutex_);
     active_ = false;
@@ -79,7 +80,7 @@ bool Timer::StartAt(uint64_t timestampMs)
 bool Timer::Stop()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_DEBUG_LOG("stop timer (%s), timer type: %d(0: once, 1: periodic), intervalMs: %u",
+    DP_DEBUG_LOG("stop timer (%s), timer type: %{public}d(0: once, 1: periodic), intervalMs: %u",
         name_.c_str(), timerType_, intervalMs_);
     if (!active_) {
         return true;
@@ -92,7 +93,7 @@ bool Timer::StartUnlocked(uint32_t delayTimeMs)
 {
     auto curTimeMs = SteadyClock::GetTimestampMilli();
     auto timestampMs = curTimeMs + (delayTimeMs == 0 ? intervalMs_ : delayTimeMs);
-    DP_DEBUG_LOG("timer (%s), type: %d(0: once, 1: periodic), curTime: %d, expiredTime: %d",
+    DP_DEBUG_LOG("timer (%s), type: %{public}d(0: once, 1: periodic), curTime: %{public}d, expiredTime: %{public}d",
         name_.c_str(), timerType_, static_cast<int>(curTimeMs), static_cast<int>(timestampMs));
     return StartAtUnlocked(timestampMs);
 }
@@ -118,8 +119,8 @@ void Timer::TimerExpired()
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if (!active_) {
-            DP_DEBUG_LOG("inactive timer (%s) expired, type: %d(0: once, 1: periodic), intervalMs: %u", name_.c_str(),
-                timerType_, intervalMs_);
+            DP_DEBUG_LOG("inactive timer (%s) expired, type: %{public}d(0: once, 1: periodic), intervalMs: %u",
+                name_.c_str(), timerType_, intervalMs_);
             return;
         }
         if (timerType_ == TimerType::PERIODIC) {
@@ -128,8 +129,8 @@ void Timer::TimerExpired()
             active_ = false;
         }
     }
-    DP_DEBUG_LOG("timer (%s) expired, type: %d(0: once, 1: periodic), expiredTimeMs at %d", name_.c_str(),
-        timerType_, static_cast<int>(expiredTimeMs_));
+    DP_DEBUG_LOG("timer (%s) expired, type: %{public}d(0: once, 1: periodic), expiredTimeMs at %{public}d",
+        name_.c_str(), timerType_, static_cast<int>(expiredTimeMs_));
     if (callback_) {
         callback_();
     }
