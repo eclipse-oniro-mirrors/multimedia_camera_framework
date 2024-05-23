@@ -195,6 +195,11 @@ void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Su
 void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality) const
 {
     MEDIA_INFO_LOG("ExecutePhotoAsset");
+    napi_handle_scope scope = nullptr;
+    napi_open_handle_scope(env_, &scope);
+    if (scope == nullptr) {
+        return;
+    }
     napi_value result[ARGS_TWO] = {nullptr, nullptr};
     napi_value callback = nullptr;
     napi_value retVal;
@@ -221,6 +226,7 @@ void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool is
     napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
     // return buffer to buffer queue
     photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
+    napi_close_handle_scope(env_, scope);
 }
 
 void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle *bufferHandle,
@@ -1985,8 +1991,12 @@ napi_value PhotoOutputNapi::IsMovingPhotoSupported(napi_env env, napi_callback_i
     napi_get_undefined(env, &result);
     PhotoOutputNapi* photoOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
+    if (status != napi_ok || photoOutputNapi == nullptr) {
+        MEDIA_ERR_LOG("IsMotionPhotoSupported photoOutputNapi is null!");
+        return result;
+    }
     auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
-    if (status == napi_ok && photoOutputNapi != nullptr && session != nullptr) {
+    if (session != nullptr) {
         bool isSupported = session->IsMovingPhotoSupported();
         napi_get_boolean(env, isSupported, &result);
     } else {
@@ -2014,8 +2024,12 @@ napi_value PhotoOutputNapi::EnableMovingPhoto(napi_env env, napi_callback_info i
     napi_get_undefined(env, &result);
     PhotoOutputNapi* photoOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
+    if (status != napi_ok || photoOutputNapi == nullptr) {
+        MEDIA_ERR_LOG("EnableMovingPhoto photoOutputNapi is null!");
+        return result;
+    }
     auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
-    if (status == napi_ok && photoOutputNapi != nullptr && session != nullptr) {
+    if (session != nullptr) {
         bool isEnableMovingPhoto;
         napi_get_value_bool(env, argv[PARAM0], &isEnableMovingPhoto);
         session->LockForControl();

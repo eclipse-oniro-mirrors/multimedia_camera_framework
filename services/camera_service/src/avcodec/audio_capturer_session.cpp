@@ -105,9 +105,9 @@ void AudioCapturerSession::ProcessAudioBuffer()
         while (bytesRead < bufferLen) {
             int32_t len = audioCapturer_->Read(*(buffer.get() + bytesRead), bufferLen - bytesRead, true);
             if (len >= 0) {
-                bytesRead += len;
+                bytesRead += static_cast<size_t>(len);
             } else {
-                bytesRead = len;
+                bytesRead = static_cast<size_t>(len);
                 break;
             }
         }

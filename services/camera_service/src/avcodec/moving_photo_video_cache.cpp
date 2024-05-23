@@ -50,7 +50,6 @@ MovingPhotoVideoCache::MovingPhotoVideoCache(sptr<AvcodecTaskManager> taskManage
 void MovingPhotoVideoCache::CacheFrame(sptr<FrameRecord> frameRecord)
 {
     MEDIA_DEBUG_LOG("CacheFrame enter");
-    const std::string imgId = frameRecord->GetFrameId();
     frameRecord->SetStatusReadyConvertStatus();
     std::lock_guard<std::mutex> lock(taskManagerLock_);
     if (taskManager_) {
