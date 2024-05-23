@@ -336,6 +336,11 @@ public:
     void SetCallbackFlag(uint8_t callbackFlag);
 
     /**
+     * @brief Set the flag when on native surface.
+     */
+    void SetNativeSurface(bool isNativeSurface);
+
+    /**
      * @brief To check the deferredImageDelivery capability is enable or not.
      *
      * @return Returns true/false if the deferredImageDelivery is enable/not-enable respectively.
@@ -381,6 +386,7 @@ public:
 private:
     std::mutex callbackMutex_;
     uint8_t callbackFlag_ = CAPTURE_DEFERRED_PHOTO;
+    bool isNativeSurface_ = false;
     DeferredDeliveryImageType deferredType_ = DeferredDeliveryImageType::DELIVERY_NONE;
     std::shared_ptr<PhotoStateCallback> appCallback_;
     sptr<IStreamCaptureCallback> cameraSvcCallback_;

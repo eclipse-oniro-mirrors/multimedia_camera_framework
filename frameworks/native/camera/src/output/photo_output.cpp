@@ -286,9 +286,19 @@ PhotoOutput::~PhotoOutput()
     defaultCaptureSetting_ = nullptr;
 }
 
+void PhotoOutput::SetNativeSurface(bool isNativeSurface)
+{
+    MEDIA_INFO_LOG("Enter Into SetNativeSurface: %{public}d", isNativeSurface);
+    isNativeSurface_ = isNativeSurface;
+}
+
 void PhotoOutput::SetCallbackFlag(uint8_t callbackFlag)
 {
     std::lock_guard<std::mutex> lock(callbackMutex_);
+    if (!isNativeSurface_) {
+        MEDIA_INFO_LOG("SetCallbackFlag when register imageReciver");
+        return;
+    }
     bool beforeStatus = IsEnableDeferred();
     callbackFlag_ = callbackFlag;
     bool afterStatus = IsEnableDeferred();
@@ -310,8 +320,12 @@ void PhotoOutput::SetCallbackFlag(uint8_t callbackFlag)
 
 bool PhotoOutput::IsEnableDeferred()
 {
-    MEDIA_DEBUG_LOG("Enter Into PhotoOutput::IsEnableDeferred()");
-    return (callbackFlag_ & CAPTURE_PHOTO_ASSET) != 0 || (callbackFlag_ & CAPTURE_PHOTO) == 0;
+    if (!isNativeSurface_) {
+        return false;
+    }
+    bool isEnabled = (callbackFlag_ & CAPTURE_PHOTO_ASSET) != 0 || (callbackFlag_ & CAPTURE_PHOTO) == 0;
+    MEDIA_INFO_LOG("Enter Into PhotoOutput::IsEnableDeferred %{public}d", isEnabled);
+    return isEnabled;
 }
 
 void PhotoOutput::SetCallback(std::shared_ptr<PhotoStateCallback> callback)
