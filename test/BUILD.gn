@@ -17,6 +17,7 @@ group("camera_fuzz_test") {
   deps = [
     "fuzztest/cameradevice_fuzzer:fuzztest",
     "fuzztest/cameralistenerstub_fuzzer:fuzztest",
+    "fuzztest/deferredprocessingstub_fuzzer:fuzztest",
     "fuzztest/streamcapture_fuzzer:fuzztest",
     "fuzztest/streamcapturestub_fuzzer:fuzztest",
     "fuzztest/streammetadatastub_fuzzer:fuzztest",
