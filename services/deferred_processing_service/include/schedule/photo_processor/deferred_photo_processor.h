@@ -46,6 +46,7 @@ public:
     void NotifyScheduleState(DpsStatus status);
 
     void PostProcess(DeferredPhotoWorkPtr work);
+    void SetDefaultExecutionMode();
     void Interrupt();
     int GetConcurrency(ExecutionMode mode);
     bool GetPendingImages(std::vector<std::string>& pendingImages);

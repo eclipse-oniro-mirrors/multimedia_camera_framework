@@ -147,6 +147,10 @@ void DeferredPhotoController::TryDoSchedule()
     DP_INFO_LOG("all strategy get work: %{public}d", work != nullptr);
     NotifyScheduleState(work != nullptr);
     if (work == nullptr) {
+        if (photoJobRepository_->GetRunningJobCounts() == 0) {
+            // 重置底层性能模式，避免功耗增加
+            SetDefaultExecutionMode();
+        }
         return;
     }
     if ((photoJobRepository_->GetRunningJobCounts()) < (photoProcessor_->GetConcurrency(work->GetExecutionMode()))) {
@@ -159,6 +163,12 @@ void DeferredPhotoController::PostProcess(std::shared_ptr<DeferredPhotoWork> wor
 {
     DP_DEBUG_LOG("entered");
     photoProcessor_->PostProcess(work);
+}
+
+void DeferredPhotoController::SetDefaultExecutionMode()
+{
+    DP_DEBUG_LOG("entered");
+    photoProcessor_->SetDefaultExecutionMode();
 }
 
 void DeferredPhotoController::NotifyPressureLevelChanged(SystemPressureLevel level)

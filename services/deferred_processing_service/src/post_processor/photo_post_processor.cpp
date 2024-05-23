@@ -18,6 +18,8 @@
 #include <iostream>
 #include <refbase.h>
 
+#include "v1_3/types.h"
+
 #include "deferred_photo_job.h"
 #include "photo_post_processor.h"
 #include "iproxy_broker.h"
@@ -280,6 +282,18 @@ void PhotoPostProcessor::SetExecutionMode(ExecutionMode executionMode)
     if (imageProcessSession_) {
         int32_t ret = imageProcessSession_->SetExecutionMode(MapToHdiExecutionMode(executionMode));
         DP_INFO_LOG("setExecutionMode, ret: %{public}d", ret);
+    }
+}
+
+void PhotoPostProcessor::SetDefaultExecutionMode()
+{
+    // 采用直接新增方法，不适配1_2 和 1_3 模式的差异点
+    std::lock_guard<std::mutex> lock(mutex_);
+    DP_INFO_LOG("entered.");
+    if (imageProcessSession_) {
+        int32_t ret = imageProcessSession_->SetExecutionMode(
+            static_cast<OHOS::HDI::Camera::V1_2::ExecutionMode>(OHOS::HDI::Camera::V1_3::ExecutionMode::DEFAULT));
+        DP_INFO_LOG("setExecutionMode, ret: %d", ret);
     }
 }
 

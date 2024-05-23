@@ -190,6 +190,12 @@ void DeferredPhotoProcessor::PostProcess(DeferredPhotoWorkPtr work)
     return;
 }
 
+void DeferredPhotoProcessor::SetDefaultExecutionMode()
+{
+    DP_INFO_LOG("entered");
+    postProcessor_->SetDefaultExecutionMode();
+}
+
 void DeferredPhotoProcessor::Interrupt()
 {
     DP_INFO_LOG("entered");

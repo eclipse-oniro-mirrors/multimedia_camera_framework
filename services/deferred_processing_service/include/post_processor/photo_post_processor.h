@@ -54,6 +54,7 @@ public:
     int GetConcurrency(ExecutionMode mode);
     bool GetPendingImages(std::vector<std::string>& pendingImages);
     void SetExecutionMode(ExecutionMode executionMode);
+    void SetDefaultExecutionMode();
     void ProcessImage(std::string imageId);
     void RemoveImage(std::string imageId);
     void Interrupt();

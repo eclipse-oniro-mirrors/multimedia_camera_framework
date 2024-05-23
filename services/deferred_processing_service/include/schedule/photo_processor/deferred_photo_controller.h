@@ -43,6 +43,7 @@ private:
     class PhotoJobRepositoryListener;
     void TryDoSchedule();
     void PostProcess(DeferredPhotoWorkPtr work);
+    void SetDefaultExecutionMode();
     void NotifyPressureLevelChanged(SystemPressureLevel level);
     void NotifyHdiStatusChanged(HdiStatus status);
     void NotifyMediaLibStatusChanged(MediaLibraryStatus status);
