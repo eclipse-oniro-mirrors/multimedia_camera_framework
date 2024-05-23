@@ -83,7 +83,7 @@ public:
      *
      * @return true if motion detection is supported, false otherwise.
      */
-    bool IsMotionDetectionSupported();
+    bool IsSlowMotionDetectionSupported();
 
     /**
      * @brief Starts motion monitoring within the specified rectangle.
@@ -92,7 +92,7 @@ public:
      *             It consists of the coordinates of the top-left corner (topLeftX, topLeftY),
      *             width, and height.
      */
-    void StartMotionMonitoring(Rect rect);
+    void SetSlowMotionDetectionArea(Rect rect);
 
     /**
      * @brief Callback function invoked when there is a change in slow motion state.
