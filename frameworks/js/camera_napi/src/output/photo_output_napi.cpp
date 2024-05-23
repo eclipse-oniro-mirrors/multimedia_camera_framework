@@ -255,7 +255,7 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
             extraDataSize, size);
     } else {
         MEDIA_INFO_LOG("ExtraGet dataSize %{public}d", extraDataSize);
-        size = extraDataSize;
+        size = static_cast<uint64_t>(extraDataSize);
     }
     MEDIA_INFO_LOG("width:%{public}d, height:%{public}d, size:%{public}" PRId64, photoWidth, photoHeight, size);
     int32_t format = bufferHandle->format;
