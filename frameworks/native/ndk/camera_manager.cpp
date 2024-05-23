@@ -24,6 +24,8 @@ extern "C" {
 
 Camera_ErrorCode OH_Camera_GetCameraManager(Camera_Manager** cameraManager)
 {
+    CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, cameraManager is null!");
     *cameraManager = new Camera_Manager();
     return CAMERA_OK;
 }
@@ -81,6 +83,9 @@ Camera_ErrorCode OH_CameraManager_DeleteSupportedCameras(Camera_Manager* cameraM
         "Invaild argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(cameras != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, cameras is null!");
+    uint32_t sizeMax = 10;
+    CHECK_AND_RETURN_RET_LOG(size <= sizeMax, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument,size is invaild");
 
     return cameraManager->DeleteSupportedCameras(cameras, size);
 }
@@ -92,6 +97,8 @@ Camera_ErrorCode OH_CameraManager_GetSupportedCameraOutputCapability(Camera_Mana
         "Invaild argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(cameraOutputCapability != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, cameraOutputCapability is null!");
+    CHECK_AND_RETURN_RET_LOG(camera != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument,camera is null!");
 
     return cameraManager->GetSupportedCameraOutputCapability(camera, cameraOutputCapability);
 }
