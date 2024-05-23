@@ -283,6 +283,18 @@ void PhotoPostProcessor::SetExecutionMode(ExecutionMode executionMode)
     }
 }
 
+void PhotoPostProcessor::SetDefaultExecutionMode()
+{
+    // 采用直接新增方法，不适配1_2 和 1_3 模式的差异点
+    std::lock_guard<std::mutex> lock(mutex_);
+    DP_INFO_LOG("entered.");
+    if (imageProcessSession_) {
+        int32_t ret = imageProcessSession_->SetExecutionMode(
+            static_cast<OHOS::HDI::Camera::V1_2::ExecutionMode>(OHOS::HDI::Camera::V1_3::ExecutionMode::DEFAULT));
+        DP_INFO_LOG("setExecutionMode, ret: %d", ret);
+    }
+}
+
 void PhotoPostProcessor::ProcessImage(std::string imageId)
 {
     DP_INFO_LOG("entered, imageId: %s", imageId.c_str());
