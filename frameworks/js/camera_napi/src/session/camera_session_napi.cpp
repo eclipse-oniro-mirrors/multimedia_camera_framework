@@ -3193,6 +3193,9 @@ const CameraSessionNapi::EmitterFunctions& CameraSessionNapi::GetEmitterFunction
         { "featureDetectionStatus", {
             &CameraSessionNapi::RegisterFeatureDetectionStatusListener,
             &CameraSessionNapi::UnregisterFeatureDetectionStatusListener } },
+        { "featureDetection", {
+            &CameraSessionNapi::RegisterFeatureDetectionStatusListener,
+            &CameraSessionNapi::UnregisterFeatureDetectionStatusListener } },
         { "error", {
             &CameraSessionNapi::RegisterSessionErrorCallbackListener,
             &CameraSessionNapi::UnregisterSessionErrorCallbackListener } },
