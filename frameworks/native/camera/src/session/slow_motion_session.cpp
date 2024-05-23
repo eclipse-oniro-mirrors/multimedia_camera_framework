@@ -55,26 +55,26 @@ bool SlowMotionSession::CanAddOutput(sptr<CaptureOutput> &output)
     return CaptureSession::CanAddOutput(output);
 }
 
-bool SlowMotionSession::IsMotionDetectionSupported()
+bool SlowMotionSession::IsSlowMotionDetectionSupported()
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_DEBUG_LOG("IsMotionDetectionSupported is called");
+    MEDIA_DEBUG_LOG("IsSlowMotionDetectionSupported is called");
     if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("IsMotionDetectionSupported Session is not Commited");
+        MEDIA_ERR_LOG("IsSlowMotionDetectionSupported Session is not Commited");
         return false;
     }
     if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
-        MEDIA_ERR_LOG("IsMotionDetectionSupported camera device is null");
+        MEDIA_ERR_LOG("IsSlowMotionDetectionSupported camera device is null");
         return false;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_MOTION_DETECTION_SUPPORT, &item);
     if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("IsMotionDetectionSupported Failed with return code %{public}d", ret);
+        MEDIA_ERR_LOG("IsSlowMotionDetectionSupported Failed with return code %{public}d", ret);
         return false;
     }
-    MEDIA_INFO_LOG("IsMotionDetectionSupported value: %{public}u", item.data.u8[0]);
+    MEDIA_INFO_LOG("IsSlowMotionDetectionSupported value: %{public}u", item.data.u8[0]);
     if (item.data.u8[0] == 0) {
         return false;
     } else if (item.data.u8[0] == 1) {
@@ -94,17 +94,22 @@ void SlowMotionSession::NormalizeRect(Rect& rect)
     rect.height = std::max(0.0, std::min(1.0, rect.height));
 }
 
-void SlowMotionSession::StartMotionMonitoring(Rect rect)
+void SlowMotionSession::SetSlowMotionDetectionArea(Rect rect)
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_DEBUG_LOG("StartMotionMonitoring is called");
+    MEDIA_DEBUG_LOG("SetSlowMotionDetectionArea is called");
     if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("StartMotionMonitoring Session is not Commited");
+        MEDIA_ERR_LOG("SetSlowMotionDetectionArea Session is not Commited");
         return;
     }
     this->LockForControl();
     if (changedMetadata_ == nullptr) {
-        MEDIA_ERR_LOG("StartMotionMonitoring changedMetadata is null");
+        MEDIA_ERR_LOG("SetSlowMotionDetectionArea changedMetadata is null");
+        return;
+    }
+    int32_t retCode = EnableMotionDetection(true);
+    if (retCode != CameraErrorCode::SUCCESS) {
+        MEDIA_ERR_LOG("EnableMotionDetection call failed");
         return;
     }
     MEDIA_INFO_LOG("topLeftX: %{public}f, topLeftY: %{public}f, width: %{public}f, height: %{public}f",
@@ -124,7 +129,7 @@ void SlowMotionSession::StartMotionMonitoring(Rect rect)
     }
     this->UnlockForControl();
     if (!status) {
-        MEDIA_ERR_LOG("StartMotionMonitoring failed to set motion rect");
+        MEDIA_ERR_LOG("SetSlowMotionDetectionArea failed to set motion rect");
     }
     return;
 }
@@ -181,10 +186,6 @@ int32_t SlowMotionSession::EnableMotionDetection(bool isEnable)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter EnableMotionDetection, isEnable:%{public}d", isEnable);
-    if (!IsMacroSupported()) {
-        MEDIA_ERR_LOG("EnableMotionDetection IsMotionDetectionSupported is false");
-        return CameraErrorCode::OPERATION_NOT_ALLOWED;
-    }
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("EnableMotionDetection session not commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;

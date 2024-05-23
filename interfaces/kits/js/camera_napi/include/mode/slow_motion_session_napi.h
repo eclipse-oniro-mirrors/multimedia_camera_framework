@@ -54,8 +54,8 @@ public:
 
     static void SlowMotionSessionNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value SlowMotionSessionNapiConstructor(napi_env env, napi_callback_info info);
-    static napi_value IsMotionDetectionSupported(napi_env env, napi_callback_info info);
-    static napi_value StartMotionMonitoring(napi_env env, napi_callback_info info);
+    static napi_value IsSlowMotionDetectionSupported(napi_env env, napi_callback_info info);
+    static napi_value SetSlowMotionDetectionArea(napi_env env, napi_callback_info info);
     static napi_value EnableMotionDetection(napi_env env, napi_callback_info info);
     napi_env env_;
     napi_ref wrapper_;

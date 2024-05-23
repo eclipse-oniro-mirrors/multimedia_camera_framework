@@ -103,9 +103,11 @@ napi_value SlowMotionSessionNapi::Init(napi_env env, napi_value exports)
     napi_status status;
     napi_value ctorObj;
     std::vector<napi_property_descriptor> slow_motion_props = {
-        DECLARE_NAPI_FUNCTION("isMotionDetectionSupported", IsMotionDetectionSupported),
-        DECLARE_NAPI_FUNCTION("startMotionMonitoring", StartMotionMonitoring),
-        DECLARE_NAPI_FUNCTION("enableMotionDetection", EnableMotionDetection)
+        DECLARE_NAPI_FUNCTION("isMotionDetectionSupported", IsSlowMotionDetectionSupported),
+        DECLARE_NAPI_FUNCTION("startMotionMonitoring", SetSlowMotionDetectionArea),
+        DECLARE_NAPI_FUNCTION("enableMotionDetection", EnableMotionDetection),
+        DECLARE_NAPI_FUNCTION("isSlowMotionDetectionSupported", IsSlowMotionDetectionSupported),
+        DECLARE_NAPI_FUNCTION("setSlowMotionDetectionArea", SetSlowMotionDetectionArea)
     };
     std::vector<std::vector<napi_property_descriptor>> descriptors = {camera_process_props, flash_props,
         auto_exposure_props, focus_props, zoom_props, filter_props, slow_motion_props};
@@ -196,25 +198,25 @@ napi_value SlowMotionSessionNapi::SlowMotionSessionNapiConstructor(napi_env env,
     return result;
 }
 
-napi_value SlowMotionSessionNapi::IsMotionDetectionSupported(napi_env env, napi_callback_info info)
+napi_value SlowMotionSessionNapi::IsSlowMotionDetectionSupported(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("IsMotionDetectionSupported is called");
+    MEDIA_INFO_LOG("IsSlowMotionDetectionSupported is called");
     napi_value result = CameraNapiUtils::GetUndefinedValue(env);
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi IsMotionDetectionSupported is called!");
+        MEDIA_ERR_LOG("SystemApi IsSlowMotionDetectionSupported is called!");
         return result;
     }
     SlowMotionSessionNapi* slowMotionSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, slowMotionSessionNapi);
     if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("IsMotionDetectionSupported parse parameter occur error");
+        MEDIA_ERR_LOG("IsSlowMotionDetectionSupported parse parameter occur error");
         return result;
     }
     if (slowMotionSessionNapi != nullptr && slowMotionSessionNapi->slowMotionSession_ != nullptr) {
-        bool isSupported = slowMotionSessionNapi->slowMotionSession_->IsMotionDetectionSupported();
+        bool isSupported = slowMotionSessionNapi->slowMotionSession_->IsSlowMotionDetectionSupported();
         napi_get_boolean(env, isSupported, &result);
     } else {
-        MEDIA_ERR_LOG("IsMotionDetectionSupported call Failed!");
+        MEDIA_ERR_LOG("IsSlowMotionDetectionSupported call Failed!");
     }
     return result;
 }
@@ -235,12 +237,12 @@ napi_value SlowMotionSessionNapi::GetDoubleProperty(napi_env env, napi_value par
     return property;
 }
 
-napi_value SlowMotionSessionNapi::StartMotionMonitoring(napi_env env, napi_callback_info info)
+napi_value SlowMotionSessionNapi::SetSlowMotionDetectionArea(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("StartMotionMonitoring is called");
+    MEDIA_INFO_LOG("SetSlowMotionDetectionArea is called");
     napi_value result = CameraNapiUtils::GetUndefinedValue(env);
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi StartMotionMonitoring is called!");
+        MEDIA_ERR_LOG("SystemApi SetSlowMotionDetectionArea is called!");
         return result;
     }
     SlowMotionSessionNapi* slowMotionSessionNapi = nullptr;
@@ -266,9 +268,9 @@ napi_value SlowMotionSessionNapi::StartMotionMonitoring(napi_env env, napi_callb
     napi_get_undefined(env, &result);
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&slowMotionSessionNapi));
     if (status == napi_ok && slowMotionSessionNapi != nullptr && slowMotionSessionNapi->slowMotionSession_ != nullptr) {
-        slowMotionSessionNapi->slowMotionSession_->StartMotionMonitoring(rect);
+        slowMotionSessionNapi->slowMotionSession_->SetSlowMotionDetectionArea(rect);
     } else {
-        MEDIA_ERR_LOG("StartMotionMonitoring call Failed!");
+        MEDIA_ERR_LOG("SetSlowMotionDetectionArea call Failed!");
     }
     return result;
 }
