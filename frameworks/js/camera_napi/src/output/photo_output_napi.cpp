@@ -1278,6 +1278,10 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile& profile, st
             MEDIA_ERR_LOG("failed to create CreatePhotoOutput");
             return result;
         }
+        // imageReciver register
+        if (surfaceId == "") {
+            sPhotoOutput_->SetNativeSurface(true);
+        }
         if (profile.GetCameraFormat() == CAMERA_FORMAT_DNG) {
             sptr<Surface> rawPhotoSurface = Surface::CreateSurfaceAsConsumer("rawPhotoOutput");
             sPhotoOutput_->SetRawPhotoInfo(rawPhotoSurface);
@@ -1285,10 +1289,8 @@ napi_value PhotoOutputNapi::CreatePhotoOutput(napi_env env, Profile& profile, st
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sPhotoOutput_ = nullptr;
         if (status == napi_ok && result != nullptr) {
-            MEDIA_DEBUG_LOG("Success to create photo output instance");
+            MEDIA_INFO_LOG("Success to create photo output instance");
             return result;
-        } else {
-            MEDIA_ERR_LOG("Failed to create photo output instance");
         }
     }
     MEDIA_ERR_LOG("CreatePhotoOutput call Failed!");
