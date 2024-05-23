@@ -18,6 +18,8 @@
 #include <iostream>
 #include <refbase.h>
 
+#include "v1_3/types.h"
+
 #include "deferred_photo_job.h"
 #include "photo_post_processor.h"
 #include "iproxy_broker.h"
