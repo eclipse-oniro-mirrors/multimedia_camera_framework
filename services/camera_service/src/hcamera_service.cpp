@@ -25,6 +25,8 @@
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
+#include <parameter.h>
+#include <parameters.h>
 #include "tokenid_kit.h"
 
 #include "camera_log.h"
@@ -48,6 +50,7 @@ constexpr uint8_t POSITION_FOLD_INNER = 3;
 static std::mutex g_cameraServiceInstanceMutex;
 static HCameraService* g_cameraServiceInstance = nullptr;
 static sptr<HCameraService> g_cameraServiceHolder = nullptr;
+static bool g_isFoldScreen = system::GetParameter("const.window.foldscreen.type", "") != "";
 
 HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
     : SystemAbility(systemAbilityId, runOnCreate), muteMode_(false), isRegisterSensorSuccess(false)
@@ -111,7 +114,7 @@ int32_t HCameraService::GetCameras(
     vector<string>& cameraIds, vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList)
 {
     CAMERA_SYNC_TRACE;
-    isFoldable = isFoldableInit ? isFoldable : OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
+    isFoldable = isFoldableInit ? isFoldable : g_isFoldScreen;
     isFoldableInit = true;
     int32_t ret = cameraHostManager_->GetCameras(cameraIds);
     if (ret != CAMERA_OK) {

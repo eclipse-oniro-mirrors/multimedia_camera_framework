@@ -37,6 +37,7 @@
               "hilog",
               "hisysevent",
               "hitrace",
+              "init",
               "ipc",
               "image_framework",
               "napi",
@@ -45,7 +46,7 @@
               "safwk",
               "samgr",
               "sensor",
-              "thermal_manager",              
+              "thermal_manager",
               "window_manager",
               "memmgr",
               "memmgr_override"
