@@ -158,8 +158,12 @@ int CameraInput::Open(bool isEnableSecureCamera, uint64_t* secureSeqId)
     MEDIA_DEBUG_LOG("Enter Into CameraInput::OpenSecureCamera");
     int32_t retCode = CAMERA_UNKNOWN_ERROR;
     bool isSupportSecCamera = false;
-    if (isEnableSecureCamera) {
+    if (isEnableSecureCamera && cameraObj_) {
         std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObj_->GetMetadata();
+        if (baseMetadata == nullptr) {
+            MEDIA_ERR_LOG("CameraInput::GetMetaSetting Failed to find baseMetadata");
+            return retCode;
+        }
         camera_metadata_item_t item;
         retCode = OHOS::Camera::FindCameraMetadataItem(baseMetadata->get(), OHOS_ABILITY_CAMERA_MODES, &item);
         if (retCode != CAM_META_SUCCESS || item.count == 0) {
