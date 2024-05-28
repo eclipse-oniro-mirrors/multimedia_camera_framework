@@ -3057,11 +3057,10 @@ napi_value CameraSessionNapi::GetSupportedEffectSuggestionType(napi_env env, nap
     return result;
 }
 
-napi_value ParseEffectSuggestionStatus(napi_env env, napi_value arrayParam,
+static void ParseEffectSuggestionStatus(napi_env env, napi_value arrayParam,
     std::vector<EffectSuggestionStatus> &effectSuggestionStatusList)
 {
     MEDIA_DEBUG_LOG("ParseEffectSuggestionStatus is called");
-    napi_value result;
     uint32_t length = 0;
     napi_value value;
     napi_get_array_length(env, arrayParam, &length);
@@ -3081,8 +3080,6 @@ napi_value ParseEffectSuggestionStatus(napi_env env, napi_value arrayParam,
         }
         effectSuggestionStatusList.push_back(effectSuggestionStatus);
     }
-    napi_get_boolean(env, true, &result);
-    return result;
 }
 
 napi_value CameraSessionNapi::SetEffectSuggestionStatus(napi_env env, napi_callback_info info)

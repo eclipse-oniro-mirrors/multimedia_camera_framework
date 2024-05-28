@@ -39,6 +39,9 @@ class EffectSuggestionInfoParse {
 public:
     void GetEffectSuggestionInfo(int32_t* originInfo, uint32_t count, EffectSuggestionInfo& effectSuggestionInfo)
     {
+        if (count <= 0 || originInfo == nullptr) {
+            return;
+        }
         ResizeModeInfo(originInfo, count, effectSuggestionInfo);
         ResizeEffectSuggestionList(originInfo, effectSuggestionInfo);
     }
@@ -49,11 +52,11 @@ private:
         uint32_t j = i + 1;
         while (j < count) {
             if (originInfo[j] == MODE_END) {
-                std::pair<uint32_t, uint32_t> indexPair(i, j-1);
+                std::pair<uint32_t, uint32_t> indexPair(i, j - 1);
                 modeInfoIndexRange_.push_back(indexPair);
                 effectSuggestionInfo.modeCount++;
-                i = j+1;
-                j = i+1;
+                i = j + 1;
+                j = i + 1;
             } else {
                 j++;
             }
@@ -66,14 +69,14 @@ private:
         for (auto it = modeInfoIndexRange_.begin(); it != modeInfoIndexRange_.end(); ++it) {
             uint32_t start = it->first;
             int modeInfoIndex = std::distance(modeInfoIndexRange_.begin(), it);
-            EffectSuggestionModeInfo& modeInfo = effectSuggestionInfo.modeInfo[modeInfoIndex];
+            EffectSuggestionModeInfo &modeInfo = effectSuggestionInfo.modeInfo[modeInfoIndex];
             int32_t mode = originInfo[start];
-            int32_t typeNum = originInfo[start+1];
+            int32_t typeNum = originInfo[start + 1];
             modeInfo.modeType = mode;
             modeInfo.effectSuggestionList.resize(typeNum);
             uint32_t effectStartIndex = start + 2;
             for (int i = 0; i < typeNum; i++) {
-                modeInfo.effectSuggestionList[i]=originInfo[effectStartIndex+i];
+                modeInfo.effectSuggestionList[i] = originInfo[effectStartIndex + i];
             }
         }
     }
