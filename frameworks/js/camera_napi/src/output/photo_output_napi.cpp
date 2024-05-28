@@ -195,11 +195,6 @@ void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Su
 void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality) const
 {
     MEDIA_INFO_LOG("ExecutePhotoAsset");
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env_, &scope);
-    if (scope == nullptr) {
-        return;
-    }
     napi_value result[ARGS_TWO] = {nullptr, nullptr};
     napi_value callback = nullptr;
     napi_value retVal;
@@ -226,7 +221,6 @@ void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool is
     napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
     // return buffer to buffer queue
     photoSurface_->ReleaseBuffer(surfaceBuffer, -1);
-    napi_close_handle_scope(env_, scope);
 }
 
 void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle *bufferHandle,
