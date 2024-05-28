@@ -83,7 +83,8 @@ Camera_ErrorCode OH_CameraManager_DeleteSupportedCameras(Camera_Manager* cameraM
         "Invaild argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(cameras != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, cameras is null!");
-    uint32_t sizeMax = 10;
+    uint32_t sizeMax = 0;
+    cameraManager->GetSupportedCameras(&cameras, &sizeMax);
     CHECK_AND_RETURN_RET_LOG(size <= sizeMax, CAMERA_INVALID_ARGUMENT,
         "Invaild argument,size is invaild");
 
