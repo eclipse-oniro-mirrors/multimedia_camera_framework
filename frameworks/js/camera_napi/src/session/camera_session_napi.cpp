@@ -3205,6 +3205,9 @@ const CameraSessionNapi::EmitterFunctions& CameraSessionNapi::GetEmitterFunction
         { "slowMotionStateChange", {
             &CameraSessionNapi::RegisterSlowMotionStateCb,
             &CameraSessionNapi::UnregisterSlowMotionStateCb } },
+        { "slowMotionStatus", {
+            &CameraSessionNapi::RegisterSlowMotionStateCb,
+            &CameraSessionNapi::UnregisterSlowMotionStateCb } },
         { "exposureInfo", {
             &CameraSessionNapi::RegisterExposureInfoCallbackListener,
             &CameraSessionNapi::UnregisterExposureInfoCallbackListener} },
