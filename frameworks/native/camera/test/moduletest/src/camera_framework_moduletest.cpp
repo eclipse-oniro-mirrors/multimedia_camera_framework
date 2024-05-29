@@ -1009,14 +1009,16 @@ bool CameraFrameworkModuleTest::IsSupportMode(SceneMode mode)
     return supportMode;
 }
 
-void CameraFrameworkModuleTest::SetUpTestCase(void) {
+void CameraFrameworkModuleTest::SetUpTestCase(void)
+{
     MEDIA_ERR_LOG("SetUpTestCase of camera test case!");
     // set native token
     SetNativeToken();
     // set hap token please use SetHapToken();
 }
 
-void CameraFrameworkModuleTest::TearDownTestCase(void) {
+void CameraFrameworkModuleTest::TearDownTestCase(void)
+{
     MEDIA_ERR_LOG("TearDownTestCase of camera test case!");
 }
 
