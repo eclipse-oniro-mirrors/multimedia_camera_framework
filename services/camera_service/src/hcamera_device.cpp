@@ -257,7 +257,7 @@ int32_t HCameraDevice::OpenSecureCamera(uint64_t* secureSeqId)
         MEDIA_ERR_LOG("HCameraDevice::Open failed, camera is busy");
     }
     if (!IsInForeGround(callerToken_)) {
-         MEDIA_ERR_LOG("HCameraDevice::Open IsAllowedUsingPermission failed");
+        MEDIA_ERR_LOG("HCameraDevice::Open IsAllowedUsingPermission failed");
         return CAMERA_ALLOC_ERROR;
     }
 

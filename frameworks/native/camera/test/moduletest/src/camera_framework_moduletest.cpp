@@ -1009,13 +1009,13 @@ bool CameraFrameworkModuleTest::IsSupportMode(SceneMode mode)
     return supportMode;
 }
 
-
 void CameraFrameworkModuleTest::SetUpTestCase(void) {
     MEDIA_ERR_LOG("SetUpTestCase of camera test case!");
     // set native token
     SetNativeToken();
     // set hap token please use SetHapToken();
 }
+
 void CameraFrameworkModuleTest::TearDownTestCase(void) {
     MEDIA_ERR_LOG("TearDownTestCase of camera test case!");
 }
@@ -10412,7 +10412,8 @@ HWTEST_F(CameraFrameworkModuleTest, deferred_photo_enable, TestSize.Level0)
     intResult = session_->AddOutput(photoOutput);
     EXPECT_EQ(intResult, 0);
 
-    intResult = ((sptr<PhotoOutput>&)photoOutput)->IsDeferredImageDeliverySupported(DeferredDeliveryImageType::DELIVERY_PHOTO);
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->IsDeferredImageDeliverySupported(
+        DeferredDeliveryImageType::DELIVERY_PHOTO);
     if (!intResult) {
         MEDIA_DEBUG_LOG("device not support deferred_photo");
         return;
@@ -10421,7 +10422,8 @@ HWTEST_F(CameraFrameworkModuleTest, deferred_photo_enable, TestSize.Level0)
 
     ((sptr<PhotoOutput>&)photoOutput)->DeferImageDeliveryFor(DeferredDeliveryImageType::DELIVERY_PHOTO);
     
-    intResult = ((sptr<PhotoOutput>&)photoOutput)->IsDeferredImageDeliveryEnabled(DeferredDeliveryImageType::DELIVERY_PHOTO);
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->IsDeferredImageDeliveryEnabled(
+        DeferredDeliveryImageType::DELIVERY_PHOTO);
     EXPECT_EQ(intResult, 0);
 
     intResult = session_->CommitConfig();
