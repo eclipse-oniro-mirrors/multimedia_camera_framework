@@ -147,6 +147,13 @@ private:
     const char* testName_;
 };
 
+class TestDeferredPhotoProcSessionCallback : public IDeferredPhotoProcSessionCallback {
+public:
+    void OnProcessImageDone(const std::string& imageId, const uint8_t* addr, const long bytes);
+    void OnError(const std::string& imageId, const DpsErrorCode errorCode);
+    void OnStateChanged(const DpsStatusCode status);
+};
+
 class SurfaceListener : public IBufferConsumerListener {
 public:
     SurfaceListener(const char* testName, SurfaceType surfaceType, int32_t &fd, sptr<IConsumerSurface> surface);

@@ -73,6 +73,7 @@ ohos_unittest("camera_framework_unittest_v1_1") {
     "media_library:media_library",
     "media_library:media_library_manager",
     "safwk:system_ability_fwk",
+    "os_account:os_account_innerkits",
   ]
 
   defines = [ "private=public" ]

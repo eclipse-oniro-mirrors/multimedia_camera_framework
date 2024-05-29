@@ -121,7 +121,8 @@ public:
 
 private:
     void RegisterErrorCallback();
-    void SetNativeToken();
+    static void SetNativeToken();
+    void SetHapToken();
     void ProcessPreviewProfiles(sptr<CameraOutputCapability>& outputcapability);
     void ProcessSize();
     void ProcessPortraitSession(sptr<PortraitSession>& portraitSession, sptr<CaptureOutput>& previewOutput);

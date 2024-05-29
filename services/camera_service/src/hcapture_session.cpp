@@ -1106,7 +1106,7 @@ int32_t HCaptureSession::Start()
             return;
         }
 
-        if (IsValidTokenId(callerToken_)) {
+        if (IsHapTokenId(callerToken_)) {
             if (!Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA)) {
                 MEDIA_ERR_LOG("Start session is not allowed!");
                 errorCode = CAMERA_OPERATION_NOT_ALLOWED;

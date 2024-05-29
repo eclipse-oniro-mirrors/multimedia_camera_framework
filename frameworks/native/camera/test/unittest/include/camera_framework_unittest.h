@@ -56,6 +56,9 @@ public:
     static const int32_t PREVIEW_FRAMERATE = 0;
     static const int32_t VIDEO_FRAMERATE = 30;
     static const int32_t PHOTO_FRAMERATE = 0;
+    uint64_t g_tokenId_;
+    int32_t g_uid_;
+    int32_t g_userId_;
     sptr<MockStreamOperator> mockStreamOperator;
     sptr<MockCameraDevice> mockCameraDevice;
     sptr<MockHCameraHostManager> mockCameraHostManager;
@@ -71,6 +74,7 @@ public:
 
     /* TearDown:Execute after each test case */
     void TearDown();
+    void NativeAuthorization();
     void SessionCommit(sptr<CaptureSession> session);
     void SessionControlParams(sptr<CaptureSession> session);
     void PortraitSessionControlParams(sptr<PortraitSession> portraitSession);

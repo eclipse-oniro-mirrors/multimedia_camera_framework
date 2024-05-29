@@ -240,11 +240,7 @@ int32_t HCameraDevice::Open()
     if (isOpenedCameraDevice_.load()) {
         MEDIA_ERR_LOG("HCameraDevice::Open failed, camera is busy");
     }
-    bool isAllowed = true;
-    if (IsValidTokenId(callerToken_)) {
-        isAllowed = Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA);
-    }
-    if (!isAllowed) {
+    if (!IsInForeGround(callerToken_)) {
         MEDIA_ERR_LOG("HCameraDevice::Open IsAllowedUsingPermission failed");
         return CAMERA_ALLOC_ERROR;
     }
@@ -260,12 +256,8 @@ int32_t HCameraDevice::OpenSecureCamera(uint64_t* secureSeqId)
     if (isOpenedCameraDevice_.load()) {
         MEDIA_ERR_LOG("HCameraDevice::Open failed, camera is busy");
     }
-    bool isAllowed = true;
-    if (IsValidTokenId(callerToken_)) {
-        isAllowed = Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA);
-    }
-    if (!isAllowed) {
-        MEDIA_ERR_LOG("HCameraDevice::Open IsAllowedUsingPermission failed");
+    if (!IsInForeGround(callerToken_)) {
+         MEDIA_ERR_LOG("HCameraDevice::Open IsAllowedUsingPermission failed");
         return CAMERA_ALLOC_ERROR;
     }
 
