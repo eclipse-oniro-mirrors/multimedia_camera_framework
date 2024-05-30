@@ -150,9 +150,9 @@ typedef struct {
 class PhotoCaptureSetting {
 public:
     enum QualityLevel {
-        QUALITY_LEVEL_LOW = 0,
+        QUALITY_LEVEL_HIGH = 0,
         QUALITY_LEVEL_MEDIUM,
-        QUALITY_LEVEL_HIGH,
+        QUALITY_LEVEL_LOW,
         HIGH_QUALITY [[deprecated]] = 0,
         NORMAL_QUALITY [[deprecated]],
         LOW_QUALITY [[deprecated]]
