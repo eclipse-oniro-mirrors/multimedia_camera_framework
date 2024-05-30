@@ -1,0 +1,2 @@
+[cfi]
+src:*/foundation/communication/ipc/interfaces/innerkits/ipc_core/include/iremote_broker.h
