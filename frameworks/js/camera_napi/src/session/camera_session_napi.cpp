@@ -159,6 +159,14 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::preconfig_props =
     DECLARE_NAPI_FUNCTION("preconfig", CameraSessionNapi::Preconfig)
 };
 
+const std::vector<napi_property_descriptor> CameraSessionNapi::effect_suggestion_props = {
+    DECLARE_NAPI_FUNCTION("isEffectSuggestionSupported", CameraSessionNapi::IsEffectSuggestionSupported),
+    DECLARE_NAPI_FUNCTION("enableEffectSuggestion", CameraSessionNapi::EnableEffectSuggestion),
+    DECLARE_NAPI_FUNCTION("getSupportedEffectSuggestionType", CameraSessionNapi::GetSupportedEffectSuggestionType),
+    DECLARE_NAPI_FUNCTION("setEffectSuggestionStatus", CameraSessionNapi::SetEffectSuggestionStatus),
+    DECLARE_NAPI_FUNCTION("updateEffectSuggestion", CameraSessionNapi::UpdateEffectSuggestion)
+};
+
 void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state) const
 {
     MEDIA_DEBUG_LOG("OnExposureStateCallbackAsync is called");
@@ -628,6 +636,56 @@ void AbilityCallbackListener::OnAbilityChange()
 {
     MEDIA_DEBUG_LOG("OnAbilityChange is called");
     OnAbilityChangeCallbackAsync();
+}
+
+void EffectSuggestionCallbackListener::OnEffectSuggestionCallbackAsync(EffectSuggestionType effectSuggestionType) const
+{
+    MEDIA_DEBUG_LOG("OnEffectSuggestionCallbackAsync is called");
+    uv_loop_s* loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (!loop) {
+        MEDIA_ERR_LOG("failed to get event loop");
+        return;
+    }
+    uv_work_t* work = new(std::nothrow) uv_work_t;
+    if (!work) {
+        MEDIA_ERR_LOG("failed to allocate work");
+        return;
+    }
+    std::unique_ptr<EffectSuggestionCallbackInfo> callbackInfo =
+        std::make_unique<EffectSuggestionCallbackInfo>(effectSuggestionType, this);
+    work->data = callbackInfo.get();
+    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+        EffectSuggestionCallbackInfo* callbackInfo = reinterpret_cast<EffectSuggestionCallbackInfo *>(work->data);
+        if (callbackInfo) {
+            callbackInfo->listener_->OnEffectSuggestionCallback(callbackInfo->effectSuggestionType_);
+            delete callbackInfo;
+        }
+        delete work;
+    }, uv_qos_user_initiated);
+    if (ret) {
+        MEDIA_ERR_LOG("failed to execute work");
+        delete work;
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void EffectSuggestionCallbackListener::OnEffectSuggestionCallback(EffectSuggestionType effectSuggestionType) const
+{
+    MEDIA_DEBUG_LOG("OnEffectSuggestionCallback is called");
+    napi_value result[ARGS_TWO] = {nullptr, nullptr};
+    napi_value retVal;
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_create_int32(env_, effectSuggestionType, &result[PARAM1]);
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback(callbackNapiPara);
+}
+
+void EffectSuggestionCallbackListener::OnEffectSuggestionChange(EffectSuggestionType effectSuggestionType)
+{
+    MEDIA_DEBUG_LOG("OnEffectSuggestionChange is called, effectSuggestionType: %{public}d", effectSuggestionType);
+    OnEffectSuggestionCallbackAsync(effectSuggestionType);
 }
 
 CameraSessionNapi::CameraSessionNapi() : env_(nullptr), wrapper_(nullptr)
@@ -2896,6 +2954,212 @@ napi_value CameraSessionNapi::Preconfig(napi_env env, napi_callback_info info)
     return CameraNapiUtils::GetUndefinedValue(env);
 }
 
+napi_value CameraSessionNapi::IsEffectSuggestionSupported(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env, false)) {
+        MEDIA_ERR_LOG("SystemApi IsEffectSuggestionSupported is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("IsEffectSuggestionSupported is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        bool isEffectSuggestionSupported = cameraSessionNapi->cameraSession_->IsEffectSuggestionSupported();
+        napi_get_boolean(env, isEffectSuggestionSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("IsEffectSuggestionSupported call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::EnableEffectSuggestion(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env, false)) {
+        MEDIA_ERR_LOG("SystemApi EnableEffectSuggestion is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("EnableEffectSuggestion is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = { 0 };
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[0], &valueType);
+    if (valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
+        return result;
+    }
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        bool enabled;
+        napi_get_value_bool(env, argv[PARAM0], &enabled);
+        MEDIA_INFO_LOG("CameraSessionNapi::EnableEffectSuggestion:%{public}d", enabled);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int32_t retCode = cameraSessionNapi->cameraSession_->EnableEffectSuggestion(enabled);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        if (retCode != 0 && !CameraNapiUtils::CheckError(env, retCode)) {
+            return result;
+        }
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetSupportedEffectSuggestionType(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env, false)) {
+        MEDIA_ERR_LOG("SystemApi GetSupportedEffectSuggestionType is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("GetSupportedEffectSuggestionType is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    status = napi_create_array(env, &result);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("napi_create_array call Failed!");
+        return result;
+    }
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        std::vector<EffectSuggestionType> effectSuggestionTypeList =
+            cameraSessionNapi->cameraSession_->GetSupportedEffectSuggestionType();
+        if (!effectSuggestionTypeList.empty()) {
+            for (size_t i = 0; i < effectSuggestionTypeList.size(); i++) {
+                int type = effectSuggestionTypeList[i];
+                napi_value value;
+                napi_create_int32(env, type, &value);
+                napi_set_element(env, result, i, value);
+            }
+        }
+    } else {
+        MEDIA_ERR_LOG("GetSupportedEffectSuggestionType call Failed!");
+    }
+    return result;
+}
+
+static void ParseEffectSuggestionStatus(napi_env env, napi_value arrayParam,
+    std::vector<EffectSuggestionStatus> &effectSuggestionStatusList)
+{
+    MEDIA_DEBUG_LOG("ParseEffectSuggestionStatus is called");
+    uint32_t length = 0;
+    napi_value value;
+    napi_get_array_length(env, arrayParam, &length);
+    for (uint32_t i = 0; i < length; i++) {
+        napi_get_element(env, arrayParam, i, &value);
+        napi_value res = nullptr;
+        EffectSuggestionStatus effectSuggestionStatus;
+        int32_t intValue = 0;
+        if (napi_get_named_property(env, value, "type", &res) == napi_ok) {
+            napi_get_value_int32(env, res, &intValue);
+            effectSuggestionStatus.type = static_cast<EffectSuggestionType>(intValue);
+        }
+        bool enabled = false;
+        if (napi_get_named_property(env, value, "status", &res) == napi_ok) {
+            napi_get_value_bool(env, res, &enabled);
+            effectSuggestionStatus.status = enabled;
+        }
+        effectSuggestionStatusList.push_back(effectSuggestionStatus);
+    }
+}
+
+napi_value CameraSessionNapi::SetEffectSuggestionStatus(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env, false)) {
+        MEDIA_ERR_LOG("SystemApi SetEffectSuggestionStatus is called!");
+        return nullptr;
+    }
+    MEDIA_INFO_LOG("SetEffectSuggestionStatus is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    std::vector<EffectSuggestionStatus> effectSuggestionStatusList;
+    ParseEffectSuggestionStatus(env, argv[PARAM0], effectSuggestionStatusList);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int32_t retCode = cameraSessionNapi->cameraSession_->SetEffectSuggestionStatus(effectSuggestionStatusList);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        if (retCode != 0 && !CameraNapiUtils::CheckError(env, retCode)) {
+            return result;
+        }
+    }
+    return result;
+}
+
+
+napi_value CameraSessionNapi::UpdateEffectSuggestion(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env, false)) {
+        MEDIA_ERR_LOG("SystemApi UpdateEffectSuggestion is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("UpdateEffectSuggestion is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_TWO;
+    napi_value argv[ARGS_TWO] = { 0, 0 };
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc == ARGS_TWO, "requires two parameter");
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[PARAM0], &valueType);
+    if (valueType != napi_number && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
+        return result;
+    }
+    napi_typeof(env, argv[PARAM1], &valueType);
+    if (valueType != napi_boolean && !CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
+        return result;
+    }
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        int32_t value;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        auto effectSuggestionType = (EffectSuggestionType)value;
+        bool enabled;
+        napi_get_value_bool(env, argv[PARAM1], &enabled);
+        MEDIA_INFO_LOG("CameraSessionNapi::UpdateEffectSuggestion:%{public}d enabled:%{public}d",
+            effectSuggestionType, enabled);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int32_t retCode = cameraSessionNapi->cameraSession_->UpdateEffectSuggestion(effectSuggestionType, enabled);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        if (retCode != 0 && !CameraNapiUtils::CheckError(env, retCode)) {
+            return result;
+        }
+    }
+    return result;
+}
+
 void CameraSessionNapi::RegisterExposureCallbackListener(
     napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
@@ -3064,6 +3328,27 @@ void CameraSessionNapi::UnregisterSessionErrorCallbackListener(
     sessionCallback_->RemoveCallbackRef(env, callback);
 }
 
+void CameraSessionNapi::RegisterEffectSuggestionCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (effectSuggestionCallback_ == nullptr) {
+        auto effectSuggestionCallback = std::make_shared<EffectSuggestionCallbackListener>(env);
+        effectSuggestionCallback_ = effectSuggestionCallback;
+        cameraSession_->SetEffectSuggestionCallback(effectSuggestionCallback);
+    }
+    effectSuggestionCallback_->SaveCallbackReference(callback, isOnce);
+}
+
+void CameraSessionNapi::UnregisterEffectSuggestionCallbackListener(
+    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (effectSuggestionCallback_ == nullptr) {
+        MEDIA_ERR_LOG("effectSuggestionCallback is null");
+    } else {
+        effectSuggestionCallback_->RemoveCallbackRef(env, callback);
+    }
+}
+
 void CameraSessionNapi::RegisterAbilityChangeCallbackListener(
     napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
@@ -3222,7 +3507,10 @@ const CameraSessionNapi::EmitterFunctions& CameraSessionNapi::GetEmitterFunction
             &CameraSessionNapi::UnregisterLuminationInfoCallbackListener } },
         { "abilityChange", {
             &CameraSessionNapi::RegisterAbilityChangeCallbackListener,
-            &CameraSessionNapi::UnregisterAbilityChangeCallbackListener } } };
+            &CameraSessionNapi::UnregisterAbilityChangeCallbackListener } },
+        { "effectSuggestionChange", {
+            &CameraSessionNapi::RegisterEffectSuggestionCallbackListener,
+            &CameraSessionNapi::UnregisterEffectSuggestionCallbackListener } } };
     return funMap;
 }
 

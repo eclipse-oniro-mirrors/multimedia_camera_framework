@@ -16,6 +16,7 @@
 #include "session/capture_session.h"
 
 #include <cstdint>
+#include <iterator>
 #include <memory>
 #include <mutex>
 #include <sys/types.h>
@@ -228,6 +229,24 @@ CameraVideoStabilizationMode> CaptureSession::fwkVideoStabModesMap_ = {
     {MIDDLE, OHOS_CAMERA_VIDEO_STABILIZATION_MIDDLE},
     {HIGH, OHOS_CAMERA_VIDEO_STABILIZATION_HIGH},
     {AUTO, OHOS_CAMERA_VIDEO_STABILIZATION_AUTO}
+};
+
+const std::unordered_map<CameraEffectSuggestionType, EffectSuggestionType>
+    CaptureSession::metaEffectSuggestionTypeMap_ = {
+    {OHOS_CAMERA_EFFECT_SUGGESTION_NONE, EFFECT_SUGGESTION_NONE},
+    {OHOS_CAMERA_EFFECT_SUGGESTION_PORTRAIT, EFFECT_SUGGESTION_PORTRAIT},
+    {OHOS_CAMERA_EFFECT_SUGGESTION_FOOD, EFFECT_SUGGESTION_FOOD},
+    {OHOS_CAMERA_EFFECT_SUGGESTION_SKY, EFFECT_SUGGESTION_SKY},
+    {OHOS_CAMERA_EFFECT_SUGGESTION_SUNRISE_SUNSET, EFFECT_SUGGESTION_SUNRISE_SUNSET}
+};
+    
+const std::unordered_map<EffectSuggestionType, CameraEffectSuggestionType>
+    CaptureSession::fwkEffectSuggestionTypeMap_ = {
+    {EFFECT_SUGGESTION_NONE, OHOS_CAMERA_EFFECT_SUGGESTION_NONE},
+    {EFFECT_SUGGESTION_PORTRAIT, OHOS_CAMERA_EFFECT_SUGGESTION_PORTRAIT},
+    {EFFECT_SUGGESTION_FOOD, OHOS_CAMERA_EFFECT_SUGGESTION_FOOD},
+    {EFFECT_SUGGESTION_SKY, OHOS_CAMERA_EFFECT_SUGGESTION_SKY},
+    {EFFECT_SUGGESTION_SUNRISE_SUNSET, OHOS_CAMERA_EFFECT_SUGGESTION_SUNRISE_SUNSET}
 };
 
 int32_t CaptureSessionCallback::OnError(int32_t errorCode)
@@ -921,6 +940,7 @@ int32_t CaptureSession::Release()
     smoothZoomCallback_ = nullptr;
     abilityCallback_ = nullptr;
     arCallback_ = nullptr;
+    effectSuggestionCallback_ = nullptr;
     return ServiceToCameraError(errCode);
 }
 
@@ -2140,6 +2160,31 @@ void CaptureSession::ProcessSnapshotDurationUpdates(const uint64_t timestamp,
     }
 }
 
+void CaptureSession::ProcessEffectSuggestionTypeUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
+{
+    camera_metadata_item_t item;
+    common_metadata_header_t* metadata = result->get();
+    int ret = Camera::FindCameraMetadataItem(metadata, OHOS_CAMERA_EFFECT_SUGGESTION_TYPE, &item);
+    if (ret != CAM_META_SUCCESS) {
+        return;
+    }
+    MEDIA_DEBUG_LOG("ProcessEffectSuggestionTypeUpdates EffectSuggestionType: %{public}d", item.data.u8[0]);
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    if (effectSuggestionCallback_ != nullptr) {
+        auto itr = metaEffectSuggestionTypeMap_.find(static_cast<CameraEffectSuggestionType>(item.data.u8[0]));
+        if (itr != metaEffectSuggestionTypeMap_.end()) {
+            EffectSuggestionType type = itr->second;
+            if (!effectSuggestionCallback_->isFirstReport && type == effectSuggestionCallback_->currentType) {
+                MEDIA_DEBUG_LOG("EffectSuggestion type: no change");
+                return;
+            }
+            effectSuggestionCallback_->isFirstReport = false;
+            effectSuggestionCallback_->currentType = type;
+            effectSuggestionCallback_->OnEffectSuggestionChange(type);
+        }
+    }
+}
+
 void CaptureSession::ProcessAREngineUpdates(const uint64_t timestamp,
     const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
@@ -2208,6 +2253,7 @@ void CaptureSession::CaptureSessionMetadataResultProcessor::ProcessCallbacks(
     session->ProcessMoonCaptureBoostStatusChange(result);
     session->ProcessSnapshotDurationUpdates(timestamp, result);
     session->ProcessAREngineUpdates(timestamp, result);
+    session->ProcessEffectSuggestionTypeUpdates(result);
 }
 
 std::vector<FlashMode> CaptureSession::GetSupportedFlashModes()
@@ -4378,10 +4424,14 @@ void CaptureSession::ExecuteAbilityChangeCallback()
 
 void CaptureSession::SetAbilityCallback(std::shared_ptr<AbilityCallback> abilityCallback)
 {
-    MEDIA_ERR_LOG("CaptureSession::SetAbilityCallback() set ability callback");
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     abilityCallback_ = abilityCallback;
-    return;
+}
+
+void CaptureSession::SetEffectSuggestionCallback(std::shared_ptr<EffectSuggestionCallback> effectSuggestionCallback)
+{
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    effectSuggestionCallback_ = effectSuggestionCallback;
 }
 
 std::shared_ptr<OHOS::Camera::CameraMetadata> CaptureSession::GetMetadata()
@@ -4505,6 +4555,174 @@ void CaptureSession::SetARCallback(std::shared_ptr<ARCallback> arCallback)
 {
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     arCallback_ = arCallback;
+}
+
+bool CaptureSession::IsEffectSuggestionSupported()
+{
+    MEDIA_DEBUG_LOG("Enter IsEffectSuggestionSupported");
+    return !this->GetSupportedEffectSuggestionType().empty();
+}
+
+int32_t CaptureSession::EnableEffectSuggestion(bool isEnable)
+{
+    MEDIA_DEBUG_LOG("Enter EnableEffectSuggestion, isEnable:%{public}d", isEnable);
+    if (!IsEffectSuggestionSupported()) {
+        MEDIA_ERR_LOG("EnableEffectSuggestion IsEffectSuggestionSupported is false");
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
+    }
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession Failed EnableEffectSuggestion!, session not commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    bool status = false;
+    int32_t ret;
+    camera_metadata_item_t item;
+    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_EFFECT_SUGGESTION, &item);
+    uint8_t enableValue = static_cast<uint8_t>(isEnable);
+    MEDIA_DEBUG_LOG("EnableEffectSuggestion enableValue:%{public}d", enableValue);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_EFFECT_SUGGESTION, &enableValue, 1);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_EFFECT_SUGGESTION, &enableValue, 1);
+    }
+    if (!status) {
+        MEDIA_ERR_LOG("CaptureSession::EnableEffectSuggestion Failed to enable effectSuggestion");
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+EffectSuggestionInfo CaptureSession::GetSupportedEffectSuggestionInfo()
+{
+    EffectSuggestionInfo effectSuggestionInfo = {};
+    if (!(IsSessionCommited() || IsSessionConfiged())) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedEffectSuggestionInfo Session is not Commited");
+        return effectSuggestionInfo;
+    }
+    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedEffectSuggestionInfo camera device is null");
+        return effectSuggestionInfo;
+    }
+    std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedEffectSuggestionInfo Failed, return code %{public}d", ret);
+        return effectSuggestionInfo;
+    }
+
+    std::shared_ptr<EffectSuggestionInfoParse> infoParse = std::make_shared<EffectSuggestionInfoParse>();
+    MEDIA_INFO_LOG("CaptureSession::GetSupportedEffectSuggestionInfo item.count %{public}d", item.count);
+    infoParse->GetEffectSuggestionInfo(item.data.i32, item.count, effectSuggestionInfo);
+    return effectSuggestionInfo;
+}
+
+std::vector<EffectSuggestionType> CaptureSession::GetSupportedEffectSuggestionType()
+{
+    std::vector<EffectSuggestionType> supportedEffectSuggestionList = {};
+    EffectSuggestionInfo effectSuggestionInfo = this->GetSupportedEffectSuggestionInfo();
+    if (effectSuggestionInfo.modeCount == 0) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedEffectSuggestionType Failed, effectSuggestionInfo is null");
+        return supportedEffectSuggestionList;
+    }
+
+    for (uint32_t i = 0; i < effectSuggestionInfo.modeCount; i++) {
+        if (GetMode() != effectSuggestionInfo.modeInfo[i].modeType) {
+            continue;
+        }
+        MEDIA_DEBUG_LOG("CaptureSession::GetSupportedEffectSuggestionType modeType %{public}d found.", GetMode());
+        std::vector<int32_t> effectSuggestionList = effectSuggestionInfo.modeInfo[i].effectSuggestionList;
+        supportedEffectSuggestionList.reserve(effectSuggestionList.size());
+        for (uint32_t j = 0; j < effectSuggestionList.size(); j++) {
+            auto itr = metaEffectSuggestionTypeMap_.find(
+                static_cast<CameraEffectSuggestionType>(effectSuggestionList[j]));
+            if (itr != metaEffectSuggestionTypeMap_.end()) {
+                supportedEffectSuggestionList.emplace_back(itr->second);
+            }
+        }
+        return supportedEffectSuggestionList;
+    }
+    MEDIA_ERR_LOG("no effectSuggestionInfo for mode %{public}d", GetMode());
+    return supportedEffectSuggestionList;
+}
+
+int32_t CaptureSession::SetEffectSuggestionStatus(std::vector<EffectSuggestionStatus> effectSuggestionStatusList)
+{
+    MEDIA_DEBUG_LOG("Enter SetEffectSuggestionStatus");
+    if (!IsEffectSuggestionSupported()) {
+        MEDIA_ERR_LOG("SetEffectSuggestionStatus IsEffectSuggestionSupported is false");
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
+    }
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession Failed SetEffectSuggestionStatus!, session not commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    bool status = false;
+    int32_t ret;
+    camera_metadata_item_t item;
+    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_EFFECT_SUGGESTION_DETECTION, &item);
+
+    std::vector<uint8_t> vec = {};
+    for (auto effectSuggestionStatus : effectSuggestionStatusList) {
+        uint8_t type = fwkEffectSuggestionTypeMap_.at(EffectSuggestionType::EFFECT_SUGGESTION_NONE);
+        auto itr = fwkEffectSuggestionTypeMap_.find(effectSuggestionStatus.type);
+        if (itr == fwkEffectSuggestionTypeMap_.end()) {
+            MEDIA_ERR_LOG("CaptureSession::SetEffectSuggestionStatus Unknown effectSuggestionType");
+        } else {
+            type = itr->second;
+        }
+        vec.emplace_back(type);
+        vec.emplace_back(static_cast<uint8_t>(effectSuggestionStatus.status));
+        MEDIA_DEBUG_LOG("CaptureSession::SetEffectSuggestionStatus type:%{public}u,status:%{public}u",
+            type, static_cast<uint8_t>(effectSuggestionStatus.status));
+    }
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_EFFECT_SUGGESTION_DETECTION, vec.data(), vec.size());
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_EFFECT_SUGGESTION_DETECTION, vec.data(), vec.size());
+    }
+    if (!status) {
+        MEDIA_ERR_LOG("CaptureSession::SetEffectSuggestionStatus Failed to Set effectSuggestionStatus");
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::UpdateEffectSuggestion(EffectSuggestionType effectSuggestionType, bool isEnable)
+{
+    CAMERA_SYNC_TRACE;
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::UpdateEffectSuggestion Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::UpdateEffectSuggestion Need to call LockForControl()"
+            "before setting camera properties");
+        return CameraErrorCode::SUCCESS;
+    }
+    uint8_t type = fwkEffectSuggestionTypeMap_.at(EffectSuggestionType::EFFECT_SUGGESTION_NONE);
+    auto itr = fwkEffectSuggestionTypeMap_.find(effectSuggestionType);
+    if (itr == fwkEffectSuggestionTypeMap_.end()) {
+        MEDIA_ERR_LOG("CaptureSession::UpdateEffectSuggestion Unknown effectSuggestionType");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    } else {
+        type = itr->second;
+    }
+
+    bool status = false;
+    std::vector<uint8_t> vec = {type, isEnable};
+    camera_metadata_item_t item;
+    MEDIA_DEBUG_LOG("CaptureSession::UpdateEffectSuggestion type:%{public}u,isEnable:%{public}u", type, isEnable);
+    int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_EFFECT_SUGGESTION_TYPE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_EFFECT_SUGGESTION_TYPE, vec.data(), vec.size());
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_EFFECT_SUGGESTION_TYPE, vec.data(), vec.size());
+    }
+
+    if (!status) {
+        MEDIA_ERR_LOG("CaptureSession::UpdateEffectSuggestion Failed to set effectSuggestionType");
+        return CameraErrorCode::SUCCESS;
+    }
+    return CameraErrorCode::SUCCESS;
 }
 } // namespace CameraStandard
 } // namespace OHOS

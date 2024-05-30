@@ -771,6 +771,7 @@ declare namespace camera {
      * @since 11
      */
     off(type: 'torchStatusChange', callback?: AsyncCallback<TorchStatusInfo>): void;
+  }
 
   /**
    * Torch status info.
@@ -1973,6 +1974,72 @@ declare namespace camera {
   }
 
   /**
+   * EffectSuggestion object.
+   *
+   * @interface EffectSuggestion
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @since 12
+   */
+  interface EffectSuggestion {
+
+    /**
+     * Checks whether effect suggestion is supported.
+     *
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    isEffectSuggestionSupported(): boolean;
+
+    /**
+     * Enable effect suggestion for session.
+     *
+     * @param { boolean } enabled enable effect suggestion for session if TRUE..
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    enableEffectSuggestion(enabled: boolean): void;
+
+    /**
+     * Gets supported effect suggestion type.
+     *
+     * @returns { Array<EffectSuggestionType> } The array of the effect suggestion type.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    getSupportedEffectSuggestionType(): Array<EffectSuggestionType>;
+
+    /**
+     * Update effectsuggestion.
+     *
+     * @param { Array<EffectSuggestionType> } status - The array of the effect suggestion status.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    setEffectSuggestionStatus(status: Array<EffectSuggestionStatus>): void;
+  
+    /**
+     * Update effectsuggestion.
+     *
+     * @param { EffectSuggestionType } type - The type of effect suggestion.
+     * @param { boolean } enabled The status of effect suggestion type.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    updateEffectSuggestion(type: EffectSuggestionType, enabled: boolean): void;
+  }
+
+  /**
    * Enumerates the camera color effect types.
    *
    * @enum { number }
@@ -2460,7 +2527,7 @@ declare namespace camera {
    * @syscap SystemCapability.Multimedia.Camera.Core
    * @since 11
    */
-  interface PhotoSession extends Session, Flash, AutoExposure, Focus, Zoom, Beauty, ColorEffect, ColorManagement, Macro {
+  interface PhotoSession extends Session, Flash, AutoExposure, Focus, Zoom, Beauty, ColorEffect, ColorManagement, Macro, EffectSuggestion {
     /**
      * Subscribes to error events.
      *
@@ -2542,6 +2609,28 @@ declare namespace camera {
      * @since 11
      */
     off(type: 'macroStatusChanged', callback?: AsyncCallback<boolean>): void;
+
+    /**
+     * Subscribes to effect suggestion event callback.
+     *
+     * @param { 'effectSuggestionChange' } type - Event type.
+     * @param { AsyncCallback<EffectSuggestionType> } callback - Callback used to return the result.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    on(type: 'effectSuggestionChange', callback: AsyncCallback<EffectSuggestionType>): void;
+
+    /**
+     * Unsubscribes from effect suggestion event callback.
+     *
+     * @param { 'effectSuggestionChange' } type - Event type.
+     * @param { AsyncCallback<EffectSuggestionType> } callback - Callback used to return the result.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 12
+     */
+    off(type: 'effectSuggestionChange', callback?: AsyncCallback<EffectSuggestionType>): void;
   }
 
   /**
@@ -3402,6 +3491,78 @@ declare namespace camera {
     off(type: 'sketchStatusChanged', callback?: AsyncCallback<SketchStatusData>): void;
   }
 
+  /**
+   * Enum for effect suggestion.
+   *
+   * @enum { number }
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 12
+   */
+  enum EffectSuggestionType {
+    /**
+     * None.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    EFFECT_SUGGESTION_NONE = 0,
+    /**
+     * Portrait.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    EFFECT_SUGGESTION_PORTRAIT = 1,
+    /**
+     * Food.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    EFFECT_SUGGESTION_FOOD = 2,
+  
+    /**
+     * Sky.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 10
+     */
+    EFFECT_SUGGESTION_SKY = 3,
+
+    /**
+     * Sunrise and sunset.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    EFFECT_SUGGESTION_SUNRISE_SUNSET = 4
+  }
+
+  /**
+   * Effect suggestion status
+   *
+   * @typedef EffectSuggestionStatus
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 12
+   */
+  class EffectSuggestionStatus {
+    /**
+     * Effect Suggestion type.
+     *
+     * @type { EffectSuggestionType }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    type: EffectSuggestionType;
+    /**
+     * Effect Suggestion type status.
+     *
+     * @type { boolean }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    status: boolean;
+  }
   /**
    * Enumerates the image rotation angles.
    *

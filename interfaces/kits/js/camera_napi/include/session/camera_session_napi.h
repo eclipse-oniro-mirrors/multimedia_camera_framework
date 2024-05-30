@@ -205,6 +205,25 @@ struct AbilityCallbackInfo {
     AbilityCallbackInfo(const AbilityCallbackListener* listener) : listener_(listener) {}
 };
 
+class EffectSuggestionCallbackListener : public EffectSuggestionCallback, public ListenerBase {
+public:
+    EffectSuggestionCallbackListener(napi_env env) : ListenerBase(env) {}
+    ~EffectSuggestionCallbackListener() = default;
+    void OnEffectSuggestionChange(EffectSuggestionType effectSuggestionType) override;
+
+private:
+    void OnEffectSuggestionCallback(EffectSuggestionType effectSuggestionType) const;
+    void OnEffectSuggestionCallbackAsync(EffectSuggestionType effectSuggestionType) const;
+};
+
+struct EffectSuggestionCallbackInfo {
+    EffectSuggestionType effectSuggestionType_;
+    const EffectSuggestionCallbackListener* listener_;
+    EffectSuggestionCallbackInfo(EffectSuggestionType effectSuggestionType,
+    const EffectSuggestionCallbackListener* listener)
+        : effectSuggestionType_(effectSuggestionType), listener_(listener) {}
+};
+
 class CameraSessionNapi : public CameraNapiEventEmitter<CameraSessionNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
@@ -261,6 +280,11 @@ public:
     static napi_value EnableMacro(napi_env env, napi_callback_info info);
     static napi_value CanPreconfig(napi_env env, napi_callback_info info);
     static napi_value Preconfig(napi_env env, napi_callback_info info);
+    static napi_value IsEffectSuggestionSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableEffectSuggestion(napi_env env, napi_callback_info info);
+    static napi_value GetSupportedEffectSuggestionType(napi_env env, napi_callback_info info);
+    static napi_value SetEffectSuggestionStatus(napi_env env, napi_callback_info info);
+    static napi_value UpdateEffectSuggestion(napi_env env, napi_callback_info info);
 
     static napi_value IsMoonCaptureBoostSupported(napi_env env, napi_callback_info info);
     static napi_value EnableMoonCaptureBoost(napi_env env, napi_callback_info info);
@@ -306,6 +330,7 @@ public:
     std::shared_ptr<FeatureDetectionStatusCallbackListener> featureDetectionStatusCallback_;
     std::shared_ptr<SmoothZoomCallbackListener> smoothZoomCallback_;
     std::shared_ptr<AbilityCallbackListener> abilityCallback_;
+    std::shared_ptr<EffectSuggestionCallbackListener> effectSuggestionCallback_;
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<CaptureSession> sCameraSession_;
@@ -325,7 +350,7 @@ public:
     static const std::vector<napi_property_descriptor> features_props;
     static const std::vector<napi_property_descriptor> color_management_props;
     static const std::vector<napi_property_descriptor> preconfig_props;
-
+    static const std::vector<napi_property_descriptor> effect_suggestion_props;
 protected:
     virtual void RegisterSlowMotionStateCb(
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
@@ -359,6 +384,10 @@ private:
     void RegisterSmoothZoomCallbackListener(
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
     void UnregisterSmoothZoomCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterEffectSuggestionCallbackListener(
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterEffectSuggestionCallbackListener(
         napi_env env, napi_value callback, const std::vector<napi_value>& args);
 protected:
     virtual void RegisterExposureInfoCallbackListener(
