@@ -390,6 +390,7 @@ Camera_ErrorCode Camera_Manager::CreateCameraInputWithPositionAndType(Camera_Pos
     innerCameraInput = CameraManager::GetInstance()->CreateCameraInput(innerPosition, innerType);
     if (innerCameraInput == nullptr) {
         MEDIA_ERR_LOG("Failed to CreateCameraInputWithPositionAndType");
+        return CAMERA_SERVICE_FATAL_ERROR;
     }
 
     Camera_Input* outInput = new Camera_Input(innerCameraInput);
