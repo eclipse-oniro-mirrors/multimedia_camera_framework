@@ -1422,6 +1422,7 @@ private:
     void ProcessFocusDistanceUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
     void FindTagId();
     bool CheckFrameRateRangeWithCurrentFps(int32_t curMinFps, int32_t curMaxFps, int32_t minFps, int32_t maxFps);
+    void SessionRemoveDeathRecipient();
 };
 } // namespace CameraStandard
 } // namespace OHOS

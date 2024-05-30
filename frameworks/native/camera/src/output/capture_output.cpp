@@ -136,6 +136,7 @@ void CaptureOutput::SetSession(wptr<CaptureSession> captureSession)
 int32_t CaptureOutput::Release()
 {
     {
+        UnregisterStreamBinderDied();
         std::lock_guard<std::mutex> lock(streamMutex_);
         stream_ = nullptr;
     }
