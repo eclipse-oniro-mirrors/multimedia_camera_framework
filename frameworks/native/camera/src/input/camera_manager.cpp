@@ -15,6 +15,7 @@
 
 #include "input/camera_manager.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <mutex>
@@ -131,6 +132,7 @@ CameraManager::~CameraManager()
 {
     MEDIA_INFO_LOG("CameraManager::~CameraManager() called");
     RemoveCameraServerDeathRecipient();
+    UnSubscribeSystemAbility();
 }
 
 class CameraManager::DeviceInitCallBack : public DistributedHardware::DmInitCallback {
@@ -217,6 +219,17 @@ int32_t CameraStatusServiceCallback::OnFlashlightStatusChanged(const std::string
         }
     });
     return CAMERA_OK;
+}
+
+void CameraServiceSystemAbilityListener::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
+{
+    MEDIA_INFO_LOG("OnAddSystemAbility,id: %{public}d", systemAbilityId);
+    CameraManager::GetInstance()->OnCameraServerAlive();
+}
+
+void CameraServiceSystemAbilityListener::OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
+{
+    MEDIA_INFO_LOG("OnRemoveSystemAbility,id: %{public}d", systemAbilityId);
 }
 
 sptr<CaptureSession> CameraManager::CreateCaptureSession()
@@ -848,13 +861,80 @@ void CameraManager::InitCameraManager()
         ret == CameraErrorCode::SUCCESS, "CreateCameraServerDeathRecipient fail , ret = %{public}d", ret);
     ret = CreateListenerObject(serviceProxy);
     CHECK_AND_RETURN_LOG(ret == CAMERA_OK, "failed to new CameraListenerStub, ret = %{public}d", ret);
-
+    ret = SubscribeSystemAbility();
+    CHECK_AND_RETURN_LOG(ret == CameraErrorCode::SUCCESS, "failed to SubscribeSystemAbilityd");
     InitCameraList();
+}
+
+int32_t CameraManager::SubscribeSystemAbility()
+{
+    MEDIA_INFO_LOG("Enter Into CameraManager::SubscribeSystemAbility");
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (samgr == nullptr) {
+        MEDIA_ERR_LOG("Failed to get System ability manager");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
+    saListener_ = new CameraServiceSystemAbilityListener();
+    if (saListener_ == nullptr) {
+        MEDIA_ERR_LOG("saListener_ is null");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
+    int32_t ret = samgr->SubscribeSystemAbility(CAMERA_SERVICE_ID, saListener_);
+    MEDIA_INFO_LOG("SubscribeSystemAbility ret = %{public}d", ret);
+    return ret == 0 ? CameraErrorCode::SUCCESS : CameraErrorCode::SERVICE_FATL_ERROR;
+}
+
+int32_t CameraManager::UnSubscribeSystemAbility()
+{
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (samgr == nullptr) {
+        MEDIA_ERR_LOG("Failed to get System ability manager");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
+    if (saListener_ == nullptr) {
+        return CameraErrorCode::SUCCESS;
+    }
+    int32_t ret = samgr->UnSubscribeSystemAbility(CAMERA_SERVICE_ID, saListener_);
+    MEDIA_INFO_LOG("UnSubscribeSystemAbility ret = %{public}d", ret);
+    saListener_ = nullptr;
+    return ret == 0 ? CameraErrorCode::SUCCESS : CameraErrorCode::SERVICE_FATL_ERROR;
+}
+
+void CameraManager::OnCameraServerAlive()
+{
+    sptr<IRemoteObject> object = nullptr;
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (samgr == nullptr) {
+        MEDIA_ERR_LOG("Failed to get System ability manager");
+        return;
+    }
+    object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    if (object == nullptr) {
+        MEDIA_ERR_LOG("CameraManager::Init GetSystemAbility %{public}d is null", CAMERA_SERVICE_ID);
+        return;
+    }
+    auto serviceProxy = iface_cast<ICameraService>(object);
+    if (serviceProxy == nullptr) {
+        MEDIA_ERR_LOG("serviceProxy is null.");
+        return;
+    }
+    SetServiceProxy(serviceProxy);
+
+    if (cameraSvcCallback_ != nullptr) {
+        SetCameraServiceCallback(cameraSvcCallback_);
+    }
+    if (cameraMuteSvcCallback_ != nullptr) {
+        SetCameraMuteServiceCallback(cameraMuteSvcCallback_);
+    }
+    if (torchSvcCallback_ != nullptr) {
+        SetTorchServiceCallback(torchSvcCallback_);
+    }
 }
 
 int32_t CameraManager::DestroyStubObj()
 {
     MEDIA_INFO_LOG("Enter Into CameraManager::DestroyStubObj");
+    UnSubscribeSystemAbility();
     int32_t retCode = CAMERA_UNKNOWN_ERROR;
     auto serviceProxy = GetServiceProxy();
     if (serviceProxy == nullptr) {

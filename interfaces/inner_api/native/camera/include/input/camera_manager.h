@@ -41,6 +41,7 @@
 #include "output/preview_output.h"
 #include "output/video_output.h"
 #include "safe_map.h"
+#include "system_ability_status_change_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -109,6 +110,11 @@ public:
     virtual void OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) const = 0;
 };
 
+class CameraServiceSystemAbilityListener : public SystemAbilityStatusChangeStub {
+public:
+    void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
+    void OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
+};
 class CameraManager : public RefBase {
 public:
     virtual ~CameraManager();
@@ -593,6 +599,7 @@ public:
 
     static const std::string surfaceFormat;
 
+    void OnCameraServerAlive();
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
@@ -640,7 +647,8 @@ private:
     int32_t SetTorchLevel(float level);
 
     int32_t ValidCreateOutputStream(Profile& profile, const sptr<OHOS::IBufferProducer>& producer);
-
+    int32_t SubscribeSystemAbility();
+    int32_t UnSubscribeSystemAbility();
     inline sptr<ICameraService> GetServiceProxy()
     {
         std::lock_guard<std::mutex> lock(serviceProxyMutex_);
@@ -682,6 +690,7 @@ private:
     std::vector<VideoProfile> vidProfiles_ = {};
     sptr<CameraInput> cameraInput_;
     TorchMode torchMode_ = TorchMode::TORCH_MODE_OFF;
+    sptr<CameraServiceSystemAbilityListener> saListener_ = nullptr;
 };
 
 class CameraMuteServiceCallback : public HCameraMuteServiceCallbackStub {
