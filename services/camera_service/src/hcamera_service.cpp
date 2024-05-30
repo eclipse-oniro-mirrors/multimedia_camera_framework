@@ -304,8 +304,7 @@ int32_t HCameraService::CreateCameraDevice(string cameraId, sptr<ICameraDeviceSe
         return ret;
     }
     // if callerToken is invalid, will not call IsAllowedUsingPermission
-    if (IsValidTokenId(callerToken) &&
-        !Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken, permissionName)) {
+    if (!IsInForeGround(callerToken)) {
         MEDIA_ERR_LOG("HCameraService::CreateCameraDevice is not allowed!");
         return CAMERA_ALLOC_ERROR;
     }

@@ -93,6 +93,7 @@ enum class CAM_MOON_CAPTURE_BOOST_EVENTS {
 };
 
 const int32_t WAIT_TIME_AFTER_CAPTURE = 1;
+const int32_t WAIT_TIME_AFTER_DEFERRED_CAPTURE = 2;
 const int32_t WAIT_TIME_AFTER_RECORDING = 3;
 const int32_t WAIT_TIME_AFTER_START = 2;
 const int32_t WAIT_TIME_BEFORE_STOP = 1;
@@ -1008,13 +1009,22 @@ bool CameraFrameworkModuleTest::IsSupportMode(SceneMode mode)
     return supportMode;
 }
 
+void CameraFrameworkModuleTest::SetUpTestCase(void)
+{
+    MEDIA_ERR_LOG("SetUpTestCase of camera test case!");
+    // set native token
+    SetNativeToken();
+    // set hap token please use SetHapToken();
+}
 
-void CameraFrameworkModuleTest::SetUpTestCase(void) {}
-void CameraFrameworkModuleTest::TearDownTestCase(void) {}
+void CameraFrameworkModuleTest::TearDownTestCase(void)
+{
+    MEDIA_ERR_LOG("TearDownTestCase of camera test case!");
+}
 
 void CameraFrameworkModuleTest::SetUpInit()
 {
-    MEDIA_DEBUG_LOG("Beginning of camera test case!");
+    MEDIA_ERR_LOG("SetUpInit of camera test case!");
     g_photoEvents.reset();
     g_previewEvents.reset();
     g_videoEvents.reset();
@@ -1039,10 +1049,10 @@ void CameraFrameworkModuleTest::SetUpInit()
 
 void CameraFrameworkModuleTest::SetUp()
 {
+    MEDIA_ERR_LOG("SetUp testName:%{public}s",
+        ::testing::UnitTest::GetInstance()->current_test_info()->name());
     SetUpInit();
-    // set native token
-    SetNativeToken();
-
+    // set hap token please use SetHapToken();
     manager_ = CameraManager::GetInstance();
     ASSERT_NE(manager_, nullptr);
     manager_->SetCallback(std::make_shared<AppCallback>());
@@ -1094,6 +1104,8 @@ void CameraFrameworkModuleTest::SetUp()
 
 void CameraFrameworkModuleTest::TearDown()
 {
+    MEDIA_ERR_LOG("TearDown start testName:%{public}s",
+        ::testing::UnitTest::GetInstance()->current_test_info()->name());
     if (session_) {
         session_->Release();
     }
@@ -1105,7 +1117,8 @@ void CameraFrameworkModuleTest::TearDown()
         camInput->Close();
         input_->Release();
     }
-    MEDIA_DEBUG_LOG("End of camera test case");
+    MEDIA_ERR_LOG("TearDown end testName:%{public}s",
+        ::testing::UnitTest::GetInstance()->current_test_info()->name());
 }
 
 void CameraFrameworkModuleTest::SetNativeToken()
@@ -1127,6 +1140,49 @@ void CameraFrameworkModuleTest::SetNativeToken()
     tokenId = GetAccessTokenId(&infoInstance);
     SetSelfTokenID(tokenId);
     OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
+}
+
+void CameraFrameworkModuleTest::SetHapToken()
+{
+    static Security::AccessToken::PermissionStateFull cameraPermission = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {Security::AccessToken::PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {1}
+    };
+
+    static Security::AccessToken::PermissionStateFull distributePermission = {
+        .permissionName = "ohos.permission.DISTRIBUTED_DATASYNC",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {Security::AccessToken::PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {1}
+    };
+
+    static Security::AccessToken::HapPolicyParams cameraFwkMstPolicy = {
+        .apl = Security::AccessToken::APL_SYSTEM_BASIC,
+        .domain = "test.domain",
+        // 权限定义，为空即可
+        .permList = {},
+        // 要授予的权限
+        .permStateList = { cameraPermission, distributePermission },
+    };
+
+    // 模拟应用的参数
+    Security::AccessToken::HapInfoParams hapInfo = {
+    .userID = 0,
+    .bundleName = "com.ohos.cameraFwk.Mst",
+    .instIndex = 0,
+    .appIDDesc = "com.ohos.cameraFwk.Mst",
+    .apiVersion = 0,
+    .isSystemApp = true
+};
+    Security::AccessToken::AccessTokenIDEx tokenIdEx = {0};
+    // 获取模拟hap的tokenID
+    tokenIdEx = Security::AccessToken::AccessTokenKit::AllocHapToken(hapInfo, cameraFwkMstPolicy);
+    // 将模拟的应用tokenID设置给本测试进程
+    SetSelfTokenID(tokenIdEx.tokenIDEx);
 }
 
 void CameraFrameworkModuleTest::ProcessPreviewProfiles(sptr<CameraOutputCapability>& outputcapability)
@@ -1196,61 +1252,6 @@ void CameraFrameworkModuleTest::ProcessPortraitSession(sptr<PortraitSession>& po
 
 /*
  * Feature: Framework
- * Function: Test get distributed camera hostname
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test get distributed camera hostname
- */
-HWTEST_F(CameraFrameworkModuleTest, Camera_fwInfoManager_moduletest_001, TestSize.Level0)
-{
-    std::string hostName;
-    for (size_t i = 0; i < cameras_.size(); i++) {
-        hostName = cameras_[i]->GetHostName();
-        std::string cameraId = cameras_[i]->GetID();
-        std::string networkId = cameras_[i]->GetNetWorkId();
-        if (networkId != "") {
-            ASSERT_NE(hostName, "");
-        } else {
-            ASSERT_EQ(hostName, "");
-        }
-    }
-}
-/*
- * Feature: Framework
- * Function: Test get DeviceType
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test get DeviceType
- */
-HWTEST_F(CameraFrameworkModuleTest, Camera_fwInfoManager_moduletest_002, TestSize.Level0)
-{
-    std::vector<sptr<CameraDevice>> cameras = manager_->GetSupportedCameras();
-    auto judgeDeviceType = [&cameras]() -> bool {
-        bool isOk = false;
-        for (size_t i = 0; i < cameras.size(); i++) {
-            uint16_t deviceType = cameras[i]->GetDeviceType();
-            switch (deviceType) {
-                case HostDeviceType::UNKNOWN:
-                case HostDeviceType::PHONE:
-                case HostDeviceType::TABLET:
-                    isOk = true;
-                    break;
-                default:
-                    isOk = false;
-                    break;
-            }
-            if (isOk == false) {
-                break;
-            }
-        }
-        return isOk;
-    };
-    ASSERT_NE(judgeDeviceType(), false);
-}
-/*
- * Feature: Framework
  * Function: Test Result Callback
  * SubFunction: NA
  * FunctionPoints: NA
@@ -1308,6 +1309,62 @@ HWTEST_F(CameraFrameworkModuleTest, Camera_ResultCallback_moduletest, TestSize.L
     sleep(WAIT_TIME_BEFORE_STOP);
     ((sptr<PreviewOutput>&)previewOutput)->Stop();
     session_->Stop();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test get distributed camera hostname
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test get distributed camera hostname
+ */
+HWTEST_F(CameraFrameworkModuleTest, Camera_fwInfoManager_moduletest_001, TestSize.Level0)
+{
+    std::string hostName;
+    for (size_t i = 0; i < cameras_.size(); i++) {
+        hostName = cameras_[i]->GetHostName();
+        std::string cameraId = cameras_[i]->GetID();
+        std::string networkId = cameras_[i]->GetNetWorkId();
+        if (networkId != "") {
+            ASSERT_NE(hostName, "");
+        } else {
+            ASSERT_EQ(hostName, "");
+        }
+    }
+}
+/*
+ * Feature: Framework
+ * Function: Test get DeviceType
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test get DeviceType
+ */
+HWTEST_F(CameraFrameworkModuleTest, Camera_fwInfoManager_moduletest_002, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = manager_->GetSupportedCameras();
+    auto judgeDeviceType = [&cameras]() -> bool {
+        bool isOk = false;
+        for (size_t i = 0; i < cameras.size(); i++) {
+            uint16_t deviceType = cameras[i]->GetDeviceType();
+            switch (deviceType) {
+                case HostDeviceType::UNKNOWN:
+                case HostDeviceType::PHONE:
+                case HostDeviceType::TABLET:
+                    isOk = true;
+                    break;
+                default:
+                    isOk = false;
+                    break;
+            }
+            if (isOk == false) {
+                break;
+            }
+        }
+        return isOk;
+    };
+    ASSERT_NE(judgeDeviceType(), false);
 }
 
 /*
@@ -2901,11 +2958,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_047, TestSize.Le
     sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
     ASSERT_NE(cameraManagerObj, nullptr);
 
-    std::vector<SceneMode> modes = cameraManagerObj->GetSupportedModes(cameras_[0]);
+    std::vector<SceneMode> modes = cameraManagerObj->GetSupportedModes(cameras_[1]);
     ASSERT_TRUE(modes.size() != 0);
 
     sptr<CameraOutputCapability> modeAbility =
-        cameraManagerObj->GetSupportedOutputCapability(cameras_[0], portraitMode);
+        cameraManagerObj->GetSupportedOutputCapability(cameras_[1], portraitMode);
     ASSERT_NE(modeAbility, nullptr);
 
     sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(portraitMode);
@@ -2915,6 +2972,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_047, TestSize.Le
 
     EXPECT_EQ(portraitSession->BeginConfig(), 0);
 
+    if (input_) {
+        input_->Close();
+        input_->Release();
+    }
+    input_ = cameraManagerObj->CreateCameraInput(cameras_[1]);
+    int32_t intResult = input_->Open();
+    EXPECT_EQ(intResult, 0);
     EXPECT_EQ(portraitSession->AddInput(input_), 0);
 
     float ratio = 1;
@@ -2959,7 +3023,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_047, TestSize.Le
     EXPECT_EQ(portraitSession->Start(), 0);
     sleep(WAIT_TIME_AFTER_START);
 
-    int32_t intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
@@ -4673,7 +4737,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_016, TestSize.L
 
     sptr<MetadataOutput> metaOutput_2 = (sptr<MetadataOutput>&)metadatOutput_2;
 
-    delete metaOutput_2;
+    metaOutput_2->Release();
 
     metadataObjectTypes = metaOutput_2->GetSupportedMetadataObjectTypes();
     EXPECT_EQ(metadataObjectTypes.empty(), true);
@@ -4760,8 +4824,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_017, TestSize.L
 
     intResult = photoOutput_1->Release();
     EXPECT_EQ(intResult, 7400201);
-
-    delete photoOutput_1;
 
     cancelCapture = photoOutput_1->CancelCapture();
     EXPECT_EQ(cancelCapture, 7400104);
@@ -5625,8 +5687,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_033, TestSize.L
 
     intResult = photoOutput_1->Release();
     EXPECT_EQ(intResult, 0);
-
-    photoOutput_1->~PhotoOutput();
 
     intResult = photoOutput_1->IsQuickThumbnailSupported();
     EXPECT_EQ(intResult, 7400104);
@@ -6512,8 +6572,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_058, TestSize.L
 
     intResult = camManagerObj->PrelaunchCamera();
     EXPECT_EQ(intResult, 0);
-
-    camManagerObj->~CameraManager();
+    // CameraManager instance has been changed, need recover
+    camManagerObj->SetServiceProxy(nullptr);
 
     intResult = camManagerObj->PrelaunchCamera();
     EXPECT_EQ(intResult, 7400201);
@@ -6528,6 +6588,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_058, TestSize.L
     intResult = camManagerObj->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS,
         activeTime, effectParam);
     EXPECT_EQ(intResult, 7400201);
+    // CameraManager recovered
+    camManagerObj->InitCameraManager();
 }
 
 /*
@@ -6546,10 +6608,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_059, TestSize.L
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     ASSERT_NE(camManagerObj, nullptr);
 
-    camManagerObj->~CameraManager();
+    // CameraManager instance has been changed, need recover
+    camManagerObj->cameraObjList_.clear();
 
     std::vector<sptr<CameraDevice>> camdeviceObj_1 = camManagerObj->GetSupportedCameras();
     ASSERT_TRUE(camdeviceObj_1.size() == 0);
+
+    camManagerObj->SetServiceProxy(nullptr);
 
     sptr<CaptureSession> captureSession = camManagerObj->CreateCaptureSession();
     EXPECT_EQ(captureSession, nullptr);
@@ -6568,6 +6633,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_059, TestSize.L
 
     sptr<CaptureOutput> videoOutput = camManagerObj->CreateVideoOutput(videoProfiles[0], pSurface);
     EXPECT_EQ(videoOutput, nullptr);
+    // CameraManager recovered
+    camManagerObj->InitCameraManager();
 }
 
 /*
@@ -6583,15 +6650,19 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_060, TestSize.L
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     ASSERT_NE(camManagerObj, nullptr);
 
-    camManagerObj->~CameraManager();
+    // CameraManager instance has been changed, need recover
+    camManagerObj->SetServiceProxy(nullptr);
 
     bool cameraMuted = camManagerObj->IsCameraMuted();
     EXPECT_EQ(cameraMuted, false);
 
+    camManagerObj->cameraObjList_.clear();
     bool cameraMuteSupported = camManagerObj->IsCameraMuteSupported();
     EXPECT_EQ(cameraMuteSupported, false);
 
     camManagerObj->MuteCamera(cameraMuted);
+    // CameraManager recovered
+    camManagerObj->InitCameraManager();
 }
 
 /*
@@ -6607,7 +6678,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_061, TestSize.L
     sptr<CameraManager> camManagerObj = CameraManager::GetInstance();
     ASSERT_NE(camManagerObj, nullptr);
 
-    camManagerObj->~CameraManager();
+    // CameraManager instance has been changed, need recover
+    camManagerObj->SetServiceProxy(nullptr);
 
     std::string cameraId = "";
     dmDeviceInfo deviceInfo = {};
@@ -6640,6 +6712,8 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_061, TestSize.L
 
     input_2 = new (std::nothrow) CameraInput(deviceObj_2, camdeviceObj_3);
     ASSERT_NE(input_2, nullptr);
+    // CameraManager recovered
+    camManagerObj->InitCameraManager();
 }
 
 /*
@@ -7647,7 +7721,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_099, TestSize.L
 {
     auto photoOutput1 = CreatePhotoOutput();
     auto photoOutput = static_cast<PhotoOutput*>(photoOutput1.GetRefPtr());
-    photoOutput->~PhotoOutput();
+    photoOutput->Release();
     photoOutput->ConfirmCapture();
 }
 
@@ -7737,9 +7811,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_102, TestSize.L
     intResult = camManagerObj->SetTorchMode(TORCH_MODE_OFF);
     EXPECT_EQ(intResult, 0);
 
-    camManagerObj->~CameraManager();
+    // CameraManager instance has been changed, need recover
+    camManagerObj->SetServiceProxy(nullptr);
     intResult = camManagerObj->SetTorchMode(TORCH_MODE_OFF);
     EXPECT_EQ(intResult, 7400201);
+    // CameraManager recovered
+    camManagerObj->InitCameraManager();
 }
 
 /*
@@ -8192,8 +8269,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_117, TestSize.L
 
     intResult = camManagerObj->PrelaunchCamera();
     EXPECT_EQ(intResult, 0);
-
-    camManagerObj->~CameraManager();
 }
 
 /*
@@ -10323,6 +10398,44 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_securecamera_moduleTest_004
             break;
         }
     }
+}
+
+HWTEST_F(CameraFrameworkModuleTest, deferred_photo_enable, TestSize.Level0)
+{
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = session_->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->IsDeferredImageDeliverySupported(
+        DeferredDeliveryImageType::DELIVERY_PHOTO);
+    if (!intResult) {
+        MEDIA_DEBUG_LOG("device not support deferred_photo");
+        return;
+    }
+    EXPECT_EQ(intResult, 0);
+
+    ((sptr<PhotoOutput>&)photoOutput)->DeferImageDeliveryFor(DeferredDeliveryImageType::DELIVERY_PHOTO);
+    
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->IsDeferredImageDeliveryEnabled(
+        DeferredDeliveryImageType::DELIVERY_PHOTO);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_DEFERRED_CAPTURE);
+
+    ((sptr<PhotoOutput>&)photoOutput)->Release();
 }
 } // namespace CameraStandard
 } // namespace OHOS

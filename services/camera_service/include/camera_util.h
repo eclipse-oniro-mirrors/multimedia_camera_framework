@@ -110,7 +110,7 @@ int32_t HdiToServiceErrorV1_2(HDI::Camera::V1_2::CamRetCode ret);
 
 std::string CreateMsg(const char* format, ...);
 
-bool IsValidTokenId(uint32_t tokenId);
+bool IsHapTokenId(uint32_t tokenId);
 
 int32_t GetVersionId(uint32_t major, uint32_t minor);
 

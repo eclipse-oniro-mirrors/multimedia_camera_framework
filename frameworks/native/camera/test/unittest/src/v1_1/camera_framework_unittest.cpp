@@ -43,6 +43,7 @@
 #include "test_common.h"
 #include "token_setproc.h"
 #include "video_session.h"
+#include "os_account_manager.h"
 
 using namespace testing::ext;
 using ::testing::A;
@@ -761,8 +762,17 @@ void CameraFrameworkUnitTest::SetUp()
 {
     // set native token
     g_num++;
-    MEDIA_ERR_LOG("CameraFrameworkUnitTest::SetUp num:%{public}d", g_num);
-    uint64_t tokenId;
+    MEDIA_DEBUG_LOG("CameraFrameworkUnitTest::SetUp num:%{public}d", g_num);
+    NativeAuthorization();
+    g_mockFlagWithoutAbt = false;
+    mockCameraHostManager = new MockHCameraHostManager(nullptr);
+    mockCameraDevice = mockCameraHostManager->cameraDevice;
+    mockStreamOperator = mockCameraDevice->streamOperator;
+    cameraManager = new FakeCameraManager(new FakeHCameraService(mockCameraHostManager));
+}
+
+void CameraFrameworkUnitTest::NativeAuthorization()
+{
     const char *perms[2];
     perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
     perms[1] = "ohos.permission.CAMERA";
@@ -776,15 +786,12 @@ void CameraFrameworkUnitTest::SetUp()
         .processName = "native_camera_tdd",
         .aplStr = "system_basic",
     };
-    tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
+    g_tokenId_ = GetAccessTokenId(&infoInstance);
+    g_uid_ = IPCSkeleton::GetCallingUid();
+    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(g_uid_, g_userId_);
+    MEDIA_DEBUG_LOG("CameraFrameworkUnitTest::NativeAuthorization g_uid:%{public}d", g_uid_);
+    SetSelfTokenID(g_tokenId_);
     OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
-
-    g_mockFlagWithoutAbt = false;
-    mockCameraHostManager = new MockHCameraHostManager(nullptr);
-    mockCameraDevice = mockCameraHostManager->cameraDevice;
-    mockStreamOperator = mockCameraDevice->streamOperator;
-    cameraManager = new FakeCameraManager(new FakeHCameraService(mockCameraHostManager));
 }
 
 void CameraFrameworkUnitTest::TearDown()
@@ -792,7 +799,7 @@ void CameraFrameworkUnitTest::TearDown()
     Mock::AllowLeak(mockCameraHostManager);
     Mock::AllowLeak(mockCameraDevice);
     Mock::AllowLeak(mockStreamOperator);
-    MEDIA_ERR_LOG("CameraFrameworkUnitTest::TearDown num:%{public}d", g_num);
+    MEDIA_DEBUG_LOG("CameraFrameworkUnitTest::TearDown num:%{public}d", g_num);
 }
 
 MATCHER_P(matchCaptureSetting, captureSetting, "Match Capture Setting")
@@ -8267,6 +8274,14 @@ HWTEST_F(CameraFrameworkUnitTest, camera_securecamera_unittest_005, TestSize.Lev
             break;
         }
     }
+}
+
+HWTEST_F(CameraFrameworkUnitTest, test_createDeferredPhotoProcessingSession, TestSize.Level0)
+{
+    sptr<DeferredPhotoProcSession> deferredProcSession;
+    deferredProcSession = cameraManager->CreateDeferredPhotoProcessingSession(g_userId_,
+        std::make_shared<TestDeferredPhotoProcSessionCallback>());
+    ASSERT_NE(deferredProcSession, nullptr);
 }
 } // CameraStandard
 } // OHOS

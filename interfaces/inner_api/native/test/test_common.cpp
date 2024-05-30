@@ -302,6 +302,23 @@ void TestMetadataOutputObjectCallback::OnMetadataObjectsAvailable(std::vector<sp
     }
 }
 
+void TestDeferredPhotoProcSessionCallback::OnProcessImageDone(const std::string& imageId,
+                                                              const uint8_t* addr,
+                                                              const long bytes)
+{
+    MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnProcessImageDone.");
+}
+
+void TestDeferredPhotoProcSessionCallback::OnError(const std::string& imageId, const DpsErrorCode errorCode)
+{
+    MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnError.");
+}
+
+void TestDeferredPhotoProcSessionCallback::OnStateChanged(const DpsStatusCode status)
+{
+    MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnStateChanged.");
+}
+
 SurfaceListener::SurfaceListener(const char* testName, SurfaceType type, int32_t &fd, sptr<IConsumerSurface> surface)
     : testName_(testName), surfaceType_(type), fd_(fd), surface_(surface) {
 }

@@ -25,6 +25,7 @@
 #include "iservice_registry.h"
 #include "bundle_mgr_interface.h"
 #include "system_ability_definition.h"
+#include "ipc_skeleton.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -181,7 +182,7 @@ std::string CreateMsg(const char* format, ...)
     return msg;
 }
 
-bool IsValidTokenId(uint32_t tokenId)
+bool IsHapTokenId(uint32_t tokenId)
 {
     return Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(tokenId) ==
         Security::AccessToken::ATokenTypeEnum::TOKEN_HAP;
@@ -351,7 +352,11 @@ bool IsSameClient(const pid_t& pid, const pid_t& pidCompared)
 bool IsInForeGround(const uint32_t callerToken)
 {
     bool isAllowed = true;
-    if (IsValidTokenId(callerToken)) {
+    if (IPCSkeleton::GetCallingUid() == 0) {
+        MEDIA_DEBUG_LOG("HCameraService::IsInForeGround isAllowed!");
+        return isAllowed;
+    }
+    if (IsHapTokenId(callerToken)) {
         isAllowed = Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken, OHOS_PERMISSION_CAMERA);
     }
     return isAllowed;
