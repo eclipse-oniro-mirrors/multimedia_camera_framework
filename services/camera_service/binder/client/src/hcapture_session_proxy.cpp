@@ -253,13 +253,14 @@ int32_t HCaptureSessionProxy::GetSessionState(CaptureSessionState &sessionState)
     MessageOption option;
 
     data.WriteInterfaceToken(GetDescriptor());
-    int error = Remote()->SendRequest(
+    int32_t res = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_GET_SESSION_STATE), data, reply, option);
-    if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCaptureSessionProxy GetSessionState failed, error: %{public}d", error);
+    if (res != ERR_NONE) {
+        MEDIA_ERR_LOG("HCaptureSessionProxy GetSessionState failed, error: %{public}d", res);
+        return res;
     }
     sessionState = static_cast<CaptureSessionState>(reply.ReadUint32());
-    return error;
+    return res;
 }
 
 int32_t HCaptureSessionProxy::GetActiveColorSpace(ColorSpace& colorSpace)
