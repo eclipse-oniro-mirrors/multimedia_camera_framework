@@ -1,2 +1,4 @@
 [cfi]
-src:*/foundation/communication/ipc/interfaces/innerkits/ipc_core/include/iremote_broker.h
+type:*OHOS::CameraStandard::IMockSessionManagerInterface*
+type:*OHOS::CameraStandard::ISessionManagerService*
+type:*OHOS::CameraStandard::ISceneSessionManager*
