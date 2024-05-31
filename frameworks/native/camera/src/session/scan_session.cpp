@@ -35,8 +35,9 @@ ScanSession::~ScanSession()
 int32_t ScanSession::AddOutput(sptr<CaptureOutput> &output)
 {
     int32_t result = CAMERA_UNKNOWN_ERROR;
-    if (inputDevice_) {
-        sptr<CameraDevice> device = inputDevice_->GetCameraDeviceInfo();
+    auto inputDevice = GetInputDevice();
+    if (inputDevice) {
+        sptr<CameraDevice> device = inputDevice->GetCameraDeviceInfo();
         sptr<CameraManager> cameraManager = CameraManager::GetInstance();
         sptr<CameraOutputCapability> outputCapability = nullptr;
         if (device != nullptr && cameraManager != nullptr) {
@@ -53,7 +54,7 @@ int32_t ScanSession::AddOutput(sptr<CaptureOutput> &output)
             return CameraErrorCode::SESSION_NOT_CONFIG;
         }
     } else {
-        MEDIA_ERR_LOG("ScanSession::AddOutput get nullptr to inputDevice_");
+        MEDIA_ERR_LOG("ScanSession::AddOutput get nullptr to inputDevice");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
     return result;
@@ -75,11 +76,12 @@ bool ScanSession::IsBrightnessStatusSupported()
         MEDIA_ERR_LOG("ScanSession::IsBrightnessStatusSupported Session is not Commited");
         return false;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ScanSession::IsBrightnessStatusSupported camera device is null");
         return false;
     }
-    sptr<CameraDevice> device = inputDevice_->GetCameraDeviceInfo();
+    sptr<CameraDevice> device = inputDevice->GetCameraDeviceInfo();
     std::shared_ptr<Camera::CameraMetadata> metadata = device->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_SUGGESTION_SUPPORTED, &item);

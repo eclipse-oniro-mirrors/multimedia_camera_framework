@@ -4842,7 +4842,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_017, TestSize.L
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_018, TestSize.Level0)
 {
-    std::shared_ptr<HStreamCaptureCallbackImpl> captureCallback = std::make_shared<HStreamCaptureCallbackImpl>();
+    std::shared_ptr<HStreamCaptureCallbackImpl> captureCallback = std::make_shared<HStreamCaptureCallbackImpl>(nullptr);
 
     int32_t captureId = 2001;
     int32_t intResult = captureCallback->OnCaptureStarted(captureId);
@@ -6144,7 +6144,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_044, TestSize.L
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test abnormal branches with empty inputDevice_
+ * CaseDescription: Test abnormal branches with empty inputDevice
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_045, TestSize.Level0)
 {
@@ -6166,7 +6166,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_045, TestSize.L
     intResult = camSession->CommitConfig();
     EXPECT_EQ(intResult, 0);
 
-    camSession->inputDevice_ = nullptr;
+    camSession->innerInputDevice_ = nullptr;
     VideoStabilizationMode mode = MIDDLE;
 
     intResult = camSession->GetActiveVideoStabilizationMode(mode);
@@ -6227,7 +6227,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_045, TestSize.L
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test abnormal branches with empty inputDevice_
+ * CaseDescription: Test abnormal branches with empty innerInputDevice_
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_046, TestSize.Level0)
 {
@@ -6249,7 +6249,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_046, TestSize.L
     intResult = camSession->CommitConfig();
     EXPECT_EQ(intResult, 0);
 
-    camSession->inputDevice_ = nullptr;
+    camSession->innerInputDevice_ = nullptr;
 
     FocusMode focusMode = camSession->GetFocusMode();
     EXPECT_EQ(focusMode, FOCUS_MODE_MANUAL);
@@ -6338,7 +6338,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_047, TestSize.L
         camSession->SetExposureBias(exposureBiasRange[0]);
     }
 
-    camSession->inputDevice_ = nullptr;
+    camSession->innerInputDevice_ = nullptr;
 
     intResult = camSession->UnlockForControl();
     EXPECT_EQ(intResult, 0);
@@ -6786,7 +6786,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_064, TestSize.L
 
     sleep(WAIT_TIME_AFTER_START);
 
-    session_->inputDevice_ = nullptr;
+    session_->innerInputDevice_ = nullptr;
     std::vector<MetadataObjectType> metadataObjectTypes = metaOutput->GetSupportedMetadataObjectTypes();
     metaOutput->SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> { MetadataObjectType::FACE });
 
@@ -6832,7 +6832,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_065, TestSize.L
     EXPECT_EQ(((sptr<PhotoOutput>&)photoOutput)->Capture(), 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 
-    session_->inputDevice_ = nullptr;
+    session_->innerInputDevice_ = nullptr;
     EXPECT_EQ(photoOutput_1->IsQuickThumbnailSupported(), 7400104);
     EXPECT_EQ(photoOutput_1->IsMirrorSupported(), false);
     EXPECT_EQ(photoOutput_1->SetThumbnail(false), 7400104);
@@ -7153,7 +7153,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_078, TestSize.L
     std::shared_ptr<OHOS::Camera::CameraMetadata> result = nullptr;
     session_->ProcessFaceRecUpdates(timestamp, result);
     EXPECT_EQ(session_->VerifyAbility(0), CAMERA_INVALID_ARG);
-    session_->inputDevice_ = nullptr;
+    session_->innerInputDevice_ = nullptr;
     session_->ProcessFaceRecUpdates(timestamp, result);
     EXPECT_EQ(session_->GetFilter(), FilterType::NONE);
     EXPECT_EQ(session_->GetSupportedFilters().empty(), true);
@@ -7200,7 +7200,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_079, TestSize.L
     intResult = session_->CommitConfig();
     EXPECT_EQ(intResult, 0);
 
-    session_->inputDevice_ = nullptr;
+    session_->innerInputDevice_ = nullptr;
 
     EXPECT_EQ(session_->GetSupportedFilters().empty(), true);
     EXPECT_EQ(session_->GetFilter(), FilterType::NONE);
@@ -7242,7 +7242,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_080, TestSize.L
     EXPECT_EQ(session_->GetSupportedBeautyTypes().empty(), true);
     intResult = session_->CommitConfig();
     EXPECT_EQ(intResult, 0);
-    session_->inputDevice_ = nullptr;
+    session_->innerInputDevice_ = nullptr;
     EXPECT_EQ(session_->GetSupportedFilters().empty(), true);
     EXPECT_EQ(session_->GetFilter(), FilterType::NONE);
     EXPECT_EQ(session_->GetSupportedBeautyTypes().empty(), true);
@@ -7316,7 +7316,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_082, TestSize.L
         session_->UnlockForControl();
         EXPECT_EQ(intResult, 0);
     }
-    session_->inputDevice_ = nullptr;
+    session_->innerInputDevice_ = nullptr;
     EXPECT_EQ(session_->VerifyAbility(0), CAMERA_INVALID_ARG);
     EXPECT_EQ(session_->Release(), 0);
 }
@@ -7441,7 +7441,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_089, TestSize.L
     EXPECT_EQ(previewOutputCallbackImpl1->OnSketchStatusChanged(SketchStatus::STOPED), CAMERA_OK);
     intResult = session_->CommitConfig();
     EXPECT_EQ(intResult, 0);
-    session_->inputDevice_ = nullptr;
+    session_->innerInputDevice_ = nullptr;
     EXPECT_EQ(session_->Release(), 0);
 }
 
@@ -7483,7 +7483,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_090, TestSize.L
     EXPECT_EQ(session_->SetColorSpace(COLOR_SPACE_UNKNOWN), 7400101);
     intResult = session_->CommitConfig();
     EXPECT_EQ(intResult, 0);
-    session_->inputDevice_ = nullptr;
+    session_->innerInputDevice_ = nullptr;
     EXPECT_EQ(session_->GetSupportedBeautyRange(beautyType).empty(), true);
     EXPECT_EQ(session_->GetBeauty(beautyType), -1);
     EXPECT_EQ(session_->GetColorEffect(), COLOR_EFFECT_NORMAL);
@@ -7735,7 +7735,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_099, TestSize.L
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_100, TestSize.Level0)
 {
-    std::shared_ptr<HStreamCaptureCallbackImpl> captureCallback = std::make_shared<HStreamCaptureCallbackImpl>();
+    std::shared_ptr<HStreamCaptureCallbackImpl> captureCallback = std::make_shared<HStreamCaptureCallbackImpl>(nullptr);
     int32_t captureId = 2001;
     int32_t intResult = captureCallback->OnCaptureStarted(captureId, 0);
     EXPECT_EQ(intResult, 0);
@@ -8193,7 +8193,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_115, TestSize.L
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_116, TestSize.Level0)
 {
-    std::shared_ptr<HStreamCaptureCallbackImpl> captureCallback = std::make_shared<HStreamCaptureCallbackImpl>();
+    std::shared_ptr<HStreamCaptureCallbackImpl> captureCallback = std::make_shared<HStreamCaptureCallbackImpl>(nullptr);
 
     int32_t captureId = 2001;
     uint64_t timestamp = 10;

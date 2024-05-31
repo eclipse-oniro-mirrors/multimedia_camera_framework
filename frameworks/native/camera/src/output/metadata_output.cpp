@@ -80,10 +80,14 @@ std::shared_ptr<MetadataStateCallback> MetadataOutput::GetAppStateCallback()
 std::vector<MetadataObjectType> MetadataOutput::GetSupportedMetadataObjectTypes()
 {
     auto captureSession = GetSession();
-    if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
+    if (captureSession == nullptr) {
         return {};
     }
-    sptr<CameraDevice> cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
+    auto inputDevice = captureSession->GetInputDevice();
+    if (inputDevice == nullptr) {
+        return {};
+    }
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
     if (cameraObj == nullptr) {
         return {};
     }
@@ -108,7 +112,7 @@ std::vector<MetadataObjectType> MetadataOutput::GetSupportedMetadataObjectTypes(
 void MetadataOutput::SetCapturingMetadataObjectTypes(std::vector<MetadataObjectType> metadataObjectTypes)
 {
     auto captureSession = GetSession();
-    if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
+    if ((captureSession == nullptr) || (captureSession->GetInputDevice() == nullptr)) {
         return;
     }
     std::set<camera_face_detect_mode_t> objectTypes;

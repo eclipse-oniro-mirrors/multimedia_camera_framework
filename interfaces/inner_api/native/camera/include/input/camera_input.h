@@ -50,8 +50,8 @@ public:
 
 class CameraInput : public CaptureInput {
 public:
-    [[deprecated]] CameraInput(sptr<ICameraDeviceService> &deviceObj, sptr<CameraInfo> &camera);
-    CameraInput(sptr<ICameraDeviceService> &deviceObj, sptr<CameraDevice> &camera);
+    [[deprecated]] explicit CameraInput(sptr<ICameraDeviceService>& deviceObj, sptr<CameraInfo>& camera);
+    explicit CameraInput(sptr<ICameraDeviceService>& deviceObj, sptr<CameraDevice>& camera);
     virtual ~CameraInput();
 
     /**

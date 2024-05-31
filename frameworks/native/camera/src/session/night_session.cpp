@@ -35,11 +35,12 @@ int32_t NightSession::GetExposureRange(std::vector<uint32_t> &exposureRange)
         MEDIA_ERR_LOG("NightSession::GetExposureRange Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("NightSession::GetExposureRange camera device is null");
         return CameraErrorCode::INVALID_ARGUMENT;
     }
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     if (metadata == nullptr) {
         return CameraErrorCode::INVALID_ARGUMENT;
     }
@@ -70,7 +71,8 @@ int32_t NightSession::SetExposure(uint32_t exposureValue)
     int32_t count = 1;
     camera_metadata_item_t item;
     MEDIA_DEBUG_LOG("NightSession::SetExposureValue exposure compensation: %{public}d", exposureValue);
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("NightSession::SetExposure camera device is null");
         return CameraErrorCode::OPERATION_NOT_ALLOWED;
     }
@@ -106,11 +108,12 @@ int32_t NightSession::GetExposure(uint32_t &exposureValue)
         MEDIA_ERR_LOG("NightSession::GetExposure Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("NightSession::GetExposure camera device is null");
         return CameraErrorCode::INVALID_ARGUMENT;
     }
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     if (metadata == nullptr) {
         return CameraErrorCode::INVALID_ARGUMENT;
     }

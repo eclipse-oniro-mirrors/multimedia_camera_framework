@@ -318,7 +318,6 @@ public:
         wptr<CaptureSession> session_;
     };
 
-    sptr<CaptureInput> inputDevice_;
     explicit CaptureSession(sptr<ICaptureSession>& captureSession);
     virtual ~CaptureSession();
 
@@ -1280,11 +1279,6 @@ public:
     void ProcessAREngineUpdates(const uint64_t timestamp,
                                     const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
 
-    inline std::shared_ptr<MetadataResultProcessor> GetMetadataResultProcessor()
-    {
-        return metadataResultProcessor_;
-    }
-
     void EnableDeferredType(DeferredDeliveryImageType deferredType, bool isEnableByUser);
     void SetUserId();
     bool IsMovingPhotoEnabled();
@@ -1295,6 +1289,18 @@ public:
     virtual bool CanSetFrameRateRange(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
     bool CanSetFrameRateRangeForOutput(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
     int32_t AddSecureOutput(sptr<CaptureOutput> &output);
+
+    inline std::shared_ptr<MetadataResultProcessor> GetMetadataResultProcessor()
+    {
+        return metadataResultProcessor_;
+    }
+
+    inline sptr<CaptureInput> GetInputDevice()
+    {
+        std::lock_guard<std::mutex> lock(inputDeviceMutex_);
+        return innerInputDevice_;
+    }
+
 protected:
     static const std::unordered_map<camera_exposure_mode_enum_t, ExposureMode> metaExposureModeMap_;
     static const std::unordered_map<ExposureMode, camera_exposure_mode_enum_t> fwkExposureModeMap_;
@@ -1313,7 +1319,7 @@ protected:
     std::map<BeautyType, std::vector<int32_t>> beautyTypeAndRanges_;
     std::map<BeautyType, int32_t> beautyTypeAndLevels_;
     std::shared_ptr<MetadataResultProcessor> metadataResultProcessor_ = nullptr;
-    bool isImageDeferred_;
+    bool isImageDeferred_ = false;
     std::atomic<bool> isMovingPhotoEnabled_ { false };
 
     std::shared_ptr<AbilityCallback> abilityCallback_;
@@ -1337,6 +1343,12 @@ protected:
         return preconfigProfiles_;
     }
 
+    inline void SetInputDevice(sptr<CaptureInput> inputDevice)
+    {
+        std::lock_guard<std::mutex> lock(inputDeviceMutex_);
+        innerInputDevice_ = inputDevice;
+    }
+
     virtual std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles(PreconfigType preconfigType);
 
 private:
@@ -1358,6 +1370,9 @@ private:
     std::vector<int32_t> skinToneBeautyRange_;
     std::mutex captureOutputSetsMutex_;
     std::set<wptr<CaptureOutput>, RefBaseCompare<CaptureOutput>> captureOutputSets_;
+
+    std::mutex inputDeviceMutex_;
+    sptr<CaptureInput> innerInputDevice_ = nullptr;
     volatile bool isSetMacroEnable_ = false;
     volatile bool isSetMoonCaptureBoostEnable_ = false;
     volatile bool isSetSecureOutput_ = false;
@@ -1375,7 +1390,7 @@ private:
     static const std::unordered_map<VideoStabilizationMode, CameraVideoStabilizationMode> fwkVideoStabModesMap_;
     static const std::unordered_map<CameraEffectSuggestionType, EffectSuggestionType> metaEffectSuggestionTypeMap_;
     static const std::unordered_map<EffectSuggestionType, CameraEffectSuggestionType> fwkEffectSuggestionTypeMap_;
-    sptr<CaptureOutput> metaOutput_;
+    sptr<CaptureOutput> metaOutput_ = nullptr;
     sptr<CaptureOutput> photoOutput_;
     std::atomic<int32_t> prevDuration_ = 0;
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;

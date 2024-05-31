@@ -300,7 +300,15 @@ int32_t VideoOutput::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
 std::vector<std::vector<int32_t>> VideoOutput::GetSupportedFrameRates()
 {
     MEDIA_DEBUG_LOG("VideoOutput::GetSupportedFrameRates called.");
-    sptr<CameraDevice> camera = GetSession()->inputDevice_->GetCameraDeviceInfo();
+    auto session = GetSession();
+    if (session == nullptr) {
+        return {};
+    }
+    auto inputDevice = session->GetInputDevice();
+    if (inputDevice == nullptr) {
+        return {};
+    }
+    sptr<CameraDevice> camera = inputDevice->GetCameraDeviceInfo();
     sptr<CameraOutputCapability> cameraOutputCapability =
                                  CameraManager::GetInstance()->GetSupportedOutputCapability(camera, SceneMode::VIDEO);
     std::vector<VideoProfile> supportedProfiles = cameraOutputCapability->GetVideoProfiles();
