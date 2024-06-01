@@ -22,14 +22,12 @@
 #include "audio_record.h"
 #include <atomic>
 #include <cstdint>
-#include "task_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace AudioStandard;
 using namespace std::chrono;
 using namespace DeferredProcessing;
-constexpr uint32_t DEFAULT_AUDIO_THREAD_NUMBER = 1;
 constexpr uint32_t DEFAULT_AUDIO_CACHE_NUMBER = 200;
 class AudioCapturerSession : public RefBase {
 public:
@@ -42,11 +40,12 @@ public:
     void GetAudioRecords(int64_t startTime, int64_t endTime, vector<sptr<AudioRecord>> &audioRecords);
 
 private:
+    bool CreateAudioCapturer();
     // Already guard by hcapture_session
     std::unique_ptr<AudioCapturer> audioCapturer_ = nullptr;
     BlockingQueue<sptr<AudioRecord>> audioBufferQueue_;
     std::atomic<bool> startAudioCapture_ { false };
-    unique_ptr<TaskManager> audioTaskManager_ = nullptr;
+    std::unique_ptr<std::thread> audioThread_ = nullptr;
 };
 } // CameraStandard
 } // OHOS

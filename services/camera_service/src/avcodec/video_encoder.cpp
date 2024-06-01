@@ -251,10 +251,10 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
         CHECK_AND_CONTINUE_LOG(!context_->outputBufferInfoQueue_.empty(),
             "Buffer queue is empty, continue, cond ret: %{public}d", condRet);
         sptr<CodecAVBufferInfo> bufferInfo = context_->outputBufferInfoQueue_.front();
-        context_->outputBufferInfoQueue_.pop();
-        context_->outputFrameCount_++;
         MEDIA_INFO_LOG("Out buffer count: %{public}u, size: %{public}d, flag: %{public}u, pts:%{public}" PRId64,
             context_->outputFrameCount_, bufferInfo->attr.size, bufferInfo->attr.flags, bufferInfo->attr.pts);
+        context_->outputBufferInfoQueue_.pop();
+        context_->outputFrameCount_++;
         lock.unlock();
         contextLock.unlock();
         if (bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_CODEC_DATA) {
@@ -279,16 +279,17 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
 
 int32_t VideoEncoder::Release()
 {
+    {
+        std::lock_guard<std::mutex> lock(encoderMutex_);
+        if (encoder_ != nullptr) {
+            OH_VideoEncoder_Destroy(encoder_);
+            encoder_ = nullptr;
+        }
+    }
     std::unique_lock<std::mutex> contextLock(contextMutex_);
     if (context_ != nullptr) {
         delete context_;
         context_ = nullptr;
-    }
-    contextLock.unlock();
-    std::lock_guard<std::mutex> lock(encoderMutex_);
-    if (encoder_ != nullptr) {
-        OH_VideoEncoder_Destroy(encoder_);
-        encoder_ = nullptr;
     }
     isStarted_ = false;
     return 0;
@@ -314,7 +315,7 @@ int32_t VideoEncoder::Configure()
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_ROTATION, rotation_);
     OH_AVFormat_SetDoubleValue(format, OH_MD_KEY_FRAME_RATE, VIDOE_FRAME_RATE);
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_VIDEO_ENCODE_BITRATE_MODE, CBR);
-    OH_AVFormat_SetIntValue(format, OH_MD_KEY_BITRATE, BITRATE_30M);
+    OH_AVFormat_SetLongValue(format, OH_MD_KEY_BITRATE, BITRATE_30M);
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_PIXEL_FORMAT, VIDOE_PIXEL_FORMAT);
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_I_FRAME_INTERVAL, 0);
 

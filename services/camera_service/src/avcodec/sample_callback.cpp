@@ -53,10 +53,10 @@ void SampleCallback::OnNeedInputBuffer(OH_AVCodec *codec, uint32_t index, OH_AVB
 void SampleCallback::OnNewOutputBuffer(OH_AVCodec *codec, uint32_t index, OH_AVBuffer *buffer, void *userData)
 {
     MEDIA_WARNING_LOG("OnNewOutputBuffer");
+    (void)codec;
     if (userData == nullptr) {
         return;
     }
-    (void)codec;
     CodecUserData *codecUserData = static_cast<CodecUserData *>(userData);
     std::unique_lock<std::mutex> lock(codecUserData->outputMutex_);
     codecUserData->outputBufferInfoQueue_.emplace(new CodecAVBufferInfo(index, buffer));

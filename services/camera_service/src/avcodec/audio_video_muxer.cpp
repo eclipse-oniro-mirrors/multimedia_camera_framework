@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include "audio_video_muxer.h"
 #include "camera_log.h"
+#include "native_mfmagic.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -33,33 +34,47 @@ AudioVideoMuxer::~AudioVideoMuxer()
 int32_t AudioVideoMuxer::Create(int32_t fd, OH_AVOutputFormat format,
     std::shared_ptr<Media::PhotoAssetProxy> photoAssetProxy)
 {
-    muxer_ = OH_AVMuxer_Create(fd, format);
+    muxer_ = AVMuxerFactory::CreateAVMuxer(fd, static_cast<Plugins::OutputFormat>(format));
+    CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "create muxer failed!");
     fd_ = fd;
     photoAssetProxy_ = photoAssetProxy;
-    CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "Create failed");
     return 0;
 }
 
 int32_t AudioVideoMuxer::Start()
 {
     CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "muxer_ is null");
-    int ret = OH_AVMuxer_Start(muxer_);
+    int32_t ret = muxer_->Start();
     CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Start failed, ret: %{public}d", ret);
     return 0;
 }
 
 int32_t AudioVideoMuxer::SetRotation(int32_t rotation)
 {
-    MEDIA_ERR_LOG("SetRotation rotation : %{public}d", rotation);
+    MEDIA_INFO_LOG("SetRotation rotation : %{public}d", rotation);
     CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "muxer_ is null");
-    int ret = OH_AVMuxer_SetRotation(muxer_, rotation);
+    std::shared_ptr<Meta> param = std::make_shared<Meta>();
+    param->Set<Tag::VIDEO_ROTATION>(static_cast<Plugins::VideoRotation>(rotation));
+    int32_t ret = muxer_->SetParameter(param);
     CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "SetRotation failed, ret: %{public}d", ret);
+    return 0;
+}
+
+int32_t AudioVideoMuxer::SetCoverTime(float timems)
+{
+    MEDIA_INFO_LOG("SetCoverTime coverTime : %{public}f", timems);
+    CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "muxer_ is null");
+    std::shared_ptr<Meta> userMeta = std::make_shared<Meta>();
+    userMeta->SetData("covertime", timems);
+    int32_t ret = muxer_->SetUserMeta(userMeta);
+    CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "SetCoverTime failed, ret: %{public}d", ret);
     return 0;
 }
 
 int32_t AudioVideoMuxer::WriteSampleBuffer(OH_AVBuffer *sample, TrackType type)
 {
     CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "muxer_ is null");
+    CHECK_AND_RETURN_RET_LOG(sample != nullptr, AV_ERR_INVALID_VAL, "input sample is nullptr!");
     int32_t ret = AV_ERR_OK;
     int trackId = -1;
     switch (type) {
@@ -75,7 +90,7 @@ int32_t AudioVideoMuxer::WriteSampleBuffer(OH_AVBuffer *sample, TrackType type)
         default:
             MEDIA_ERR_LOG("TrackType type = %{public}d not supported", type);
     }
-    ret = OH_AVMuxer_WriteSampleBuffer(muxer_, trackId, sample);
+    ret = muxer_->WriteSample(trackId, sample->buffer_);
     CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "WriteSampleBuffer failed, ret: %{public}d", ret);
     return 0;
 }
@@ -94,7 +109,8 @@ std::shared_ptr<Media::PhotoAssetProxy> AudioVideoMuxer::GetPhotoAssetProxy()
 int32_t AudioVideoMuxer::AddTrack(int &trackId, OH_AVFormat *format, TrackType type)
 {
     CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "muxer_ is null");
-    int ret = OH_AVMuxer_AddTrack(muxer_, &trackId, format);
+    CHECK_AND_RETURN_RET_LOG(format != nullptr, AV_ERR_INVALID_VAL, "input track format is nullptr!");
+    int32_t ret = muxer_->AddTrack(trackId, format->format_.GetMeta());
     switch (type) {
         case TrackType::AUDIO_TRACK:
             audioTrackId_ = trackId;
@@ -116,7 +132,7 @@ int32_t AudioVideoMuxer::AddTrack(int &trackId, OH_AVFormat *format, TrackType t
 int32_t AudioVideoMuxer::Stop()
 {
     CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "muxer_ is null");
-    int ret = OH_AVMuxer_Stop(muxer_);
+    int32_t ret = muxer_->Stop();
     CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Stop failed, ret: %{public}d", ret);
     return 0;
 }
@@ -125,7 +141,6 @@ int32_t AudioVideoMuxer::Release()
 {
     MEDIA_INFO_LOG("AudioVideoMuxer::Release enter");
     if (muxer_ != nullptr) {
-        OH_AVMuxer_Destroy(muxer_);
         muxer_ = nullptr;
         close(fd_);
     }

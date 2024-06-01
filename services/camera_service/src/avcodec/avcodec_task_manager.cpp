@@ -16,6 +16,7 @@
 #include "avcodec_task_manager.h"
 #include <algorithm>
 #include <cinttypes>
+#include <cstdint>
 #include <mutex>
 #include <unistd.h>
 #include <chrono>
@@ -42,11 +43,13 @@ namespace CameraStandard {
 
 AvcodecTaskManager::~AvcodecTaskManager()
 {
+    CAMERA_SYNC_TRACE;
     Release();
 }
 
 AvcodecTaskManager::AvcodecTaskManager(sptr<AudioCapturerSession> audioCaptureSession)
 {
+    CAMERA_SYNC_TRACE;
     audioCapturerSession_ = audioCaptureSession;
     // Create Task Manager
     taskManager_ = make_unique<TaskManager>("AvcodecTaskManager", DEFAULT_THREAD_NUMBER, false);
@@ -93,7 +96,7 @@ void AvcodecTaskManager::SetVideoFd(int32_t videoFd, shared_ptr<PhotoAssetProxy>
     cvEmpty_.notify_all();
 }
 
-sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(sptr<FrameRecord> frameRecord)
+sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>> frameRecords)
 {
     unique_lock<mutex> lock(videoFdMutex_);
     if (videoFdQueue_.empty()) {
@@ -113,10 +116,25 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(sptr<FrameRecord> frameR
     muxer->Create(fd, format, photoAssetProxy);
     OH_AVFormat *formatVideo = OH_AVFormat_Create();
     OH_AVFormat_SetStringValue(formatVideo, OH_MD_KEY_CODEC_MIME, OH_AVCODEC_MIMETYPE_VIDEO_AVC);
-    muxer->SetRotation(frameRecord->GetRotation());
-    MEDIA_INFO_LOG("CreateAVMuxer with first frame %{public}s", frameRecord->GetFrameId().c_str());
-    OH_AVFormat_SetIntValue(formatVideo, OH_MD_KEY_WIDTH, frameRecord->GetFrameSize()->width);
-    OH_AVFormat_SetIntValue(formatVideo, OH_MD_KEY_HEIGHT, frameRecord->GetFrameSize()->height);
+    muxer->SetRotation(frameRecords[0]->GetRotation());
+    bool hasCover = false;
+    for (size_t index = frameRecords.size() - 1; index >= 0; index--) {
+        auto tempFrameRecord = frameRecords[index];
+        if (tempFrameRecord != nullptr && tempFrameRecord->IsCoverFrame()) {
+            float coverTime = index * VIDEO_FRAME_INTERVAL_MS;
+            MEDIA_INFO_LOG("CreateAVMuxer with SetCoverTime: %{public}f", coverTime);
+            muxer->SetCoverTime(coverTime);
+            hasCover = true;
+            break;
+        }
+    }
+    if (!hasCover) {
+        MEDIA_WARNING_LOG("CreateAVMuxer with default coverTime");
+        muxer->SetCoverTime(VIDEO_FRAME_INTERVAL_MS);
+    }
+    MEDIA_INFO_LOG("CreateAVMuxer with first frame %{public}s", frameRecords[0]->GetFrameId().c_str());
+    OH_AVFormat_SetIntValue(formatVideo, OH_MD_KEY_WIDTH, frameRecords[0]->GetFrameSize()->width);
+    OH_AVFormat_SetIntValue(formatVideo, OH_MD_KEY_HEIGHT, frameRecords[0]->GetFrameSize()->height);
     int videoTrackId = -1;
     muxer->AddTrack(videoTrackId, formatVideo, VIDEO_TRACK);
     MEDIA_INFO_LOG("Succeed create videoTrackId %{public}d", videoTrackId);
@@ -155,7 +173,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, st
     taskManager_->SubmitTask([this, frameRecords, taskName]() {
         MEDIA_INFO_LOG("CreateAVMuxer with %{public}s %{public}s",
             frameRecords.front()->GetFrameId().c_str(), taskName.c_str());
-        sptr<AudioVideoMuxer> muxer = this->CreateAVMuxer(frameRecords[0]);
+        sptr<AudioVideoMuxer> muxer = this->CreateAVMuxer(frameRecords);
         if (muxer == nullptr) {
             MEDIA_ERR_LOG("CreateAVMuxer failed");
             return;
@@ -163,8 +181,10 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, st
         // CollectAudioBuffer
         vector<sptr<AudioRecord>> audioRecords;
         if (audioCapturerSession_) {
+            int64_t endTime = frameRecords.front()->GetTimeStamp() +
+                (int64_t)(frameRecords.size() * VIDEO_FRAME_INTERVAL_MS);
             audioCapturerSession_->GetAudioRecords(frameRecords.front()->GetTimeStamp(),
-                frameRecords.back()->GetTimeStamp(), audioRecords);
+                endTime, audioRecords);
         }
         for (size_t index = 0; index < frameRecords.size(); index++) {
             OH_AVCodecBufferAttr attr = {0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE};
@@ -207,29 +227,27 @@ void AvcodecTaskManager::CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecor
 
 void AvcodecTaskManager::Release()
 {
+    CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("AvcodecTaskManager release start");
-    videoEncoderManager_->SubmitTask([this]() {
-        if (videoEncoder_ != nullptr) {
-            videoEncoder_->Release();
-        }
-    });
-    audioEncoderManager_->SubmitTask([this]() {
-        if (audioEncoder_ != nullptr) {
-            audioEncoder_->Release();
-        }
-        unique_lock<mutex> lock(videoFdMutex_);
-        while (!videoFdQueue_.empty()) {
-            int32_t fd = videoFdQueue_.front().first;
-            MEDIA_INFO_LOG("close with videoFd: %{public}d", fd);
-            close(fd);
-            videoFdQueue_.pop();
-        }
-        MEDIA_INFO_LOG("AvcodecTaskManager release end");
-    });
+    if (videoEncoder_ != nullptr) {
+        videoEncoder_->Release();
+    }
+    if (audioEncoder_ != nullptr) {
+        audioEncoder_->Release();
+    }
+    unique_lock<mutex> lock(videoFdMutex_);
+    while (!videoFdQueue_.empty()) {
+        int32_t fd = videoFdQueue_.front().first;
+        MEDIA_INFO_LOG("close with videoFd: %{public}d", fd);
+        close(fd);
+        videoFdQueue_.pop();
+    }
+    MEDIA_INFO_LOG("AvcodecTaskManager release end");
 }
 
 void AvcodecTaskManager::Stop()
 {
+    CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("AvcodecTaskManager Stop start");
     videoEncoderManager_->SubmitTask([this]() {
         if (videoEncoder_ != nullptr) {
