@@ -80,6 +80,10 @@ sptr<IDeferredPhotoProcessingSession> SessionManager::CreateDeferredPhotoProcess
         DP_ERR_LOG("failed due to uninitialized.");
         return nullptr;
     }
+    for (auto it = photoSessionInfos_.begin(); it != photoSessionInfos_.end(); ++it) {
+        int userId = it->first;
+        DP_DEBUG_LOG("dump photoSessionInfos_ userId: %{public}d", userId);
+    }
 
     auto iter = photoSessionInfos_.find(userId);
     if (iter != photoSessionInfos_.end()) {
