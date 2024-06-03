@@ -357,11 +357,16 @@ bool VideoOutput::IsMirrorSupported()
     camera_metadata_item_t item;
     sptr<CameraDevice> cameraObj;
     auto captureSession = GetSession();
-    if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
-        MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, captureSession or inputDevice_ is nullptr");
+    if (captureSession == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, captureSession is nullptr");
         return isMirrorEnabled;
     }
-    cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
+    auto inputDevice = captureSession->GetInputDevice();
+    if (inputDevice == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, inputDevice is nullptr");
+        return isMirrorEnabled;
+    }
+    cameraObj = inputDevice->GetCameraDeviceInfo();
     if (cameraObj == nullptr) {
         MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, cameraObj is nullptr");
         return isMirrorEnabled;

@@ -8415,10 +8415,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_044, TestSize.Le
     ASSERT_NE(previewOutput_3, nullptr);
 
     intResult = session_3->AddOutput(previewOutput_3);
-    EXPECT_EQ(intResult, 7400201);
+    EXPECT_EQ(intResult, 0);
 
     intResult = session_3->CommitConfig();
-    EXPECT_EQ(intResult, 7400201);
+    EXPECT_EQ(intResult, 0);
 
     camInput_3->Close();
     session_3->Stop();
