@@ -4319,15 +4319,15 @@ bool CaptureSession::ValidateOutputProfile(Profile& outputProfile, CaptureOutput
     };
     switch (outputType) {
         case CAPTURE_OUTPUT_TYPE_PREVIEW: {
-            std::vector<Profile> profiles = inputDevice->GetCameraDeviceInfo()->modePreviewProfiles_[modeName];
+            auto profiles = inputDevice->GetCameraDeviceInfo()->modePreviewProfiles_[modeName];
             return validateOutputProfileFunc(outputProfile, profiles);
         }
         case CAPTURE_OUTPUT_TYPE_PHOTO: {
-            std::vector<Profile> profiles = inputDevice->GetCameraDeviceInfo()->modePhotoProfiles_[modeName];
+            auto profiles = inputDevice->GetCameraDeviceInfo()->modePhotoProfiles_[modeName];
             return validateOutputProfileFunc(outputProfile, profiles);
         }
         case CAPTURE_OUTPUT_TYPE_VIDEO: {
-            std::vector<VideoProfile> profiles = inputDevice->GetCameraDeviceInfo()->modeVideoProfiles_[modeName];
+            auto profiles = inputDevice->GetCameraDeviceInfo()->modeVideoProfiles_[modeName];
             return validateOutputProfileFunc(outputProfile, profiles);
         }
         default:
@@ -4495,7 +4495,7 @@ void CaptureSession::SetEffectSuggestionCallback(std::shared_ptr<EffectSuggestio
 std::shared_ptr<OHOS::Camera::CameraMetadata> CaptureSession::GetMetadata()
 {
     auto inputDevice = GetInputDevice();
-    if(inputDevice == nullptr) {
+    if (inputDevice == nullptr) {
         return nullptr;
     }
     return inputDevice->GetCameraDeviceInfo()->GetMetadata();
