@@ -52,21 +52,25 @@ using namespace OHOS::CameraStandard::DeferredProcessing;
 namespace OHOS {
 namespace CameraStandard {
 
-void DeferredUnitTest::SetUpTestCase(void) {
+void DeferredUnitTest::SetUpTestCase(void)
+{
     MEDIA_DEBUG_LOG("DeferredUnitTest::SetUpTestCase started!");
 }
 
-void DeferredUnitTest::TearDownTestCase(void) {
+void DeferredUnitTest::TearDownTestCase(void)
+{
     MEDIA_DEBUG_LOG("DeferredUnitTest::TearDownTestCase started!");
 }
 
-void DeferredUnitTest::SetUp() {
+void DeferredUnitTest::SetUp()
+{
     MEDIA_DEBUG_LOG("SetUp testName:%{public}s",
-        ::testing::UnitTest::GetInstance()->current_test_info()->name());   
+        ::testing::UnitTest::GetInstance()->current_test_info()->name());
     NativeAuthorization();
 }
 
-void DeferredUnitTest::TearDown() {
+void DeferredUnitTest::TearDown()
+{
     MEDIA_DEBUG_LOG("DeferredUnitTest::TearDown started!");
 }
 
@@ -120,4 +124,4 @@ HWTEST_F(DeferredUnitTest, testDeferredProcSession, TestSize.Level0)
     deferredProcSession->EndSynchronize();
 }
 } // CameraStandard
-} // OHOS
+} // OHOS
