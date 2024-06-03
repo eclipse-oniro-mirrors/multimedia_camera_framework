@@ -83,13 +83,8 @@ void CameraInfo::init(common_metadata_header_t* metadata)
         }
     }
 
-    ret = Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
-    if (ret == CAM_META_SUCCESS) {
-        isMirrorSupported_ = ((item.data.u8[0] == 1) || (item.data.u8[0] == 0));
-    }
-    MEDIA_INFO_LOG("camera position: %{public}d, camera type: %{public}d, camera connection type: %{public}d, "
-                    "Mirror Supported: %{public}d ",
-                   cameraPosition_, cameraType_, connectionType_, isMirrorSupported_);
+    MEDIA_INFO_LOG("camera position: %{public}d, camera type: %{public}d, camera connection type: %{public}d",
+                   cameraPosition_, cameraType_, connectionType_);
 }
 
 std::string CameraInfo::GetID()
@@ -120,11 +115,6 @@ CameraType CameraInfo::GetCameraType()
 ConnectionType CameraInfo::GetConnectionType()
 {
     return connectionType_;
-}
-
-bool CameraInfo::IsMirrorSupported()
-{
-    return isMirrorSupported_;
 }
 
 std::vector<float> CameraInfo::CalculateZoomRange()

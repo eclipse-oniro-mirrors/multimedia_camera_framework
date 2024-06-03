@@ -18,6 +18,7 @@
 
 #include "icapture_session.h"
 #include "iremote_proxy.h"
+#include <cstdint>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -62,7 +63,7 @@ public:
 
     int32_t EnableMovingPhoto(bool isEnable) override;
 
-    int32_t StartMovingPhotoCapture() override;
+    int32_t StartMovingPhotoCapture(bool isMirror, int32_t rotation) override;
 
     int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy, std::string &uri, int32_t &cameraShotType) override;
 private:

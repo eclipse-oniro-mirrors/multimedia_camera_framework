@@ -322,6 +322,65 @@ std::vector<std::vector<int32_t>> VideoOutput::GetSupportedFrameRates()
     return supportedFrameRatesRange;
 }
 
+int32_t VideoOutput::enableMirror(bool enabled)
+{
+    auto session = GetSession();
+    if (session == nullptr) {
+        MEDIA_WARNING_LOG("Can not set frame rate range without commit session");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    if (itemStream && IsMirrorSupported()) {
+        int32_t ret = itemStream->SetMirror(enabled);
+        if (ret != CAMERA_OK) {
+            MEDIA_ERR_LOG("VideoOutput::setFrameRate failed to set stream frame rate");
+            return ServiceToCameraError(ret);
+        }
+    } else {
+        MEDIA_ERR_LOG("VideoOutput::setFrameRate not supported mirror or stream is null");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+    return CameraErrorCode::SUCCESS;
+}
+ 
+bool VideoOutput::IsMirrorSupported()
+{
+    bool isMirrorEnabled = false;
+    camera_metadata_item_t item;
+    sptr<CameraDevice> cameraObj;
+    auto captureSession = GetSession();
+    if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
+        MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, captureSession or inputDevice_ is nullptr");
+        return isMirrorEnabled;
+    }
+    cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
+    if (cameraObj == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, cameraObj is nullptr");
+        return isMirrorEnabled;
+    }
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+    if (metadata == nullptr) {
+        return isMirrorEnabled;
+    }
+    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_WARNING_LOG("Can not find OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED");
+        return isMirrorEnabled;
+    }
+    int step = 2;
+    const int32_t canMirrorVideoAndPhoto = 2;
+    SceneMode currentSceneMode = captureSession->GetMode();
+    for (int i = 0; i < static_cast<int>(item.count); i += step) {
+        MEDIA_DEBUG_LOG("mode u8[%{public}d]: %{public}d, u8[%{public}d], %{public}d",
+            i, item.data.u8[i], i + 1, item.data.u8[i + 1]);
+        if (currentSceneMode == static_cast<int>(item.data.u8[i])) {
+            isMirrorEnabled = (item.data.u8[i + 1] == canMirrorVideoAndPhoto) ? true : false;
+        }
+    }
+    MEDIA_DEBUG_LOG("IsMirrorSupported isSupport: %{public}d", isMirrorEnabled);
+    return isMirrorEnabled;
+}
+
 void VideoOutput::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
@@ -336,10 +395,10 @@ void VideoOutput::CameraServerDied(pid_t pid)
 int32_t VideoOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate)
 {
     auto session = GetSession();
-        if (session == nullptr) {
-            MEDIA_WARNING_LOG("Can not set frame rate range without commit session");
-            return CameraErrorCode::SESSION_NOT_CONFIG;
-        }
+    if (session == nullptr) {
+        MEDIA_WARNING_LOG("Can not set frame rate range without commit session");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
     if (!session->CanSetFrameRateRange(minFrameRate, maxFrameRate, this)) {
         MEDIA_WARNING_LOG("Can not set frame rate range with wrong state of output");
         return CameraErrorCode::UNRESOLVED_CONFLICTS_BETWEEN_STREAMS;

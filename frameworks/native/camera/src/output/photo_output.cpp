@@ -25,6 +25,7 @@
 #include "capture_scene_const.h"
 #include "hstream_capture_callback_stub.h"
 #include "input/camera_device.h"
+#include "metadata_common_utils.h"
 #include "session/capture_session.h"
 #include "session/night_session.h"
 
@@ -166,6 +167,18 @@ void PhotoCaptureSetting::SetMirror(bool enable)
         MEDIA_ERR_LOG("PhotoCaptureSetting::SetMirror Failed to set mirroring in photo capture setting");
     }
     return;
+}
+
+bool PhotoCaptureSetting::GetMirror()
+{
+    bool isMirror;
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_CONTROL_CAPTURE_MIRROR, &item);
+    if (ret == CAM_META_SUCCESS) {
+        isMirror = static_cast<bool>(item.data.u8[0]);
+        return isMirror;
+    }
+    return false;
 }
 
 std::shared_ptr<Camera::CameraMetadata> PhotoCaptureSetting::GetCaptureMetadataSetting()
@@ -429,7 +442,8 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         MEDIA_DEBUG_LOG("Capture start");
-        captureSession->StartMovingPhotoCapture();
+        captureSession->StartMovingPhotoCapture(photoCaptureSettings->GetMirror(),
+            photoCaptureSettings->GetRotation());
         errCode = itemStream->Capture(photoCaptureSettings->GetCaptureMetadataSetting());
         MEDIA_DEBUG_LOG("Capture End");
     } else {
@@ -461,7 +475,7 @@ int32_t PhotoOutput::Capture()
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         MEDIA_DEBUG_LOG("Capture start");
-        captureSession->StartMovingPhotoCapture();
+        captureSession->StartMovingPhotoCapture(false, 0);
         errCode = itemStream->Capture(captureMetadataSetting);
         MEDIA_DEBUG_LOG("Capture end");
     } else {
@@ -599,9 +613,24 @@ bool PhotoOutput::IsMirrorSupported()
         return isMirrorEnabled;
     }
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
-    if (ret == CAM_META_SUCCESS) {
-        isMirrorEnabled = ((item.data.u8[0] == 1) || (item.data.u8[0] == 0));
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_WARNING_LOG("Can not find OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED");
+        return isMirrorEnabled;
     }
+    int step = 2;
+    const int32_t canMirrorVideoAndPhoto = 2;
+    const int32_t canMirrorPhotoOnly = 1;
+    SceneMode currentSceneMode = captureSession->GetMode();
+    for (int i = 0; i < static_cast<int>(item.count); i += step) {
+        MEDIA_DEBUG_LOG("mode u8[%{public}d]: %{public}d, u8[%{public}d], %{public}d",
+            i, item.data.u8[i], i + 1, item.data.u8[i + 1]);
+        if (currentSceneMode == static_cast<int>(item.data.u8[i])) {
+            isMirrorEnabled = (
+                item.data.u8[i + 1] == canMirrorPhotoOnly ||
+                item.data.u8[i + 1] == canMirrorVideoAndPhoto) ? true : false;
+        }
+    }
+    MEDIA_DEBUG_LOG("IsMirrorSupported isSupport: %{public}d", isMirrorEnabled);
     return isMirrorEnabled;
 }
 

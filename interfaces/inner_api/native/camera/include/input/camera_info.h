@@ -79,13 +79,6 @@ public:
     camera_foldscreen_enum_t GetCameraFoldScreenType();
 
     /**
-    * @brief Check if mirror mode supported.
-    *
-    * @return Returns True is supported.
-    */
-    bool IsMirrorSupported();
-
-    /**
     * @brief Get the supported Zoom Ratio range.
     *
     * @return Returns vector<float> of supported Zoom ratio range.
@@ -106,7 +99,6 @@ private:
     camera_type_enum_t cameraType_ = OHOS_CAMERA_TYPE_UNSPECIFIED;
     camera_connection_type_t connectionType_ = OHOS_CAMERA_CONNECTION_TYPE_BUILTIN;
     camera_foldscreen_enum_t foldScreenType_ = OHOS_CAMERA_FOLDSCREEN_OTHER;
-    bool isMirrorSupported_ = false;
     std::vector<float> zoomRatioRange_;
     std::vector<float> exposureBiasRange_;
 

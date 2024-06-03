@@ -1029,7 +1029,7 @@ public:
     /**
      * @brief startMotionPhotoCapture.
      */
-    int32_t StartMovingPhotoCapture();
+    int32_t StartMovingPhotoCapture(bool isMirror, int32_t rotation);
 
     /**
      * @brief Check current status is support moon capture boost or not.

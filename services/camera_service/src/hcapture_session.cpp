@@ -1449,10 +1449,31 @@ void HCaptureSession::StopUsingPermissionCallback(const uint32_t callingTokenId,
     }
 }
 
-int32_t HCaptureSession::StartMovingPhotoCapture()
+int32_t HCaptureSession::StartMovingPhotoCapture(bool isMirror, int32_t rotation)
 {
+    if (isMirror != isMovingPhotoMirror_) {
+        auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
+        for (auto& stream : repeatStreams) {
+            if (stream == nullptr) {
+                continue;
+            }
+            auto streamRepeat = CastStream<HStreamRepeat>(stream);
+            if (streamRepeat->GetRepeatStreamType() == RepeatStreamType::LIVEPHOTO) {
+                MEDIA_INFO_LOG("restart movingphoto stream.");
+                std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
+                streamRepeat->SetMirrorForLivePhoto(isMirror, opMode_);
+                streamRepeat->Stop();
+                streamRepeat->Start();
+                break;
+            }
+        }
+        isMovingPhotoMirror_ = isMirror;
+        // clear cache frame
+        livephotoListener_->ClearCache();
+    }
+    
     auto timestamp = high_resolution_clock::now().time_since_epoch();
-    StartRecord(std::to_string(timestamp.count()));
+    StartRecord(std::to_string(timestamp.count()), rotation);
     return CAMERA_OK;
 }
 
@@ -1581,11 +1602,11 @@ int32_t StreamOperatorCallback::OnCaptureStarted(int32_t captureId, const std::v
     return CAMERA_OK;
 }
 
-void HCaptureSession::StartRecord(const std::string taskName)
+void HCaptureSession::StartRecord(const std::string taskName, int32_t rotation)
 {
     if (isSetMotionPhoto_) {
-        taskManager_->SubmitTask([this, taskName]() {
-            this->StartOnceRecord(taskName);
+        taskManager_->SubmitTask([this, taskName, rotation]() {
+            this->StartOnceRecord(taskName, rotation);
         });
     }
 }
@@ -1593,8 +1614,9 @@ void HCaptureSession::StartRecord(const std::string taskName)
 SessionDrainImageCallback::SessionDrainImageCallback(std::vector<sptr<FrameRecord>>& frameCacheList,
                                                      wptr<MovingPhotoListener> listener,
                                                      wptr<MovingPhotoVideoCache> cache,
-                                                     std::string taskName)
-    : frameCacheList_(frameCacheList), listener_(listener), videoCache_(cache), taskName_(taskName)
+                                                     std::string taskName,
+                                                     int32_t rotation)
+    : frameCacheList_(frameCacheList), listener_(listener), videoCache_(cache), taskName_(taskName), rotation_(rotation)
 {
 }
 
@@ -1623,20 +1645,20 @@ void SessionDrainImageCallback::OnDrainImageFinish(bool isFinished)
     auto videoCache = videoCache_.promote();
     videoCache_->GetFrameCachedResult(frameCacheList_,
         std::bind(&MovingPhotoVideoCache::DoMuxerVideo, videoCache,
-        std::placeholders::_1, std::placeholders::_2), taskName_);
+        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), taskName_, rotation_);
     auto listener = listener_.promote();
     if (listener && isFinished)  {
         listener->RemoveDrainImageManager(this);
     }
 }
 
-void HCaptureSession::StartOnceRecord(string taskName)
+void HCaptureSession::StartOnceRecord(string taskName, int32_t rotation)
 {
     MEDIA_INFO_LOG("StartOnceRecord enter %{public}s", taskName.c_str());
     // frameCacheList only used by now thread
     std::vector<sptr<FrameRecord>> frameCacheList;
     sptr<SessionDrainImageCallback> imageCallback = new SessionDrainImageCallback(frameCacheList,
-        livephotoListener_, videoCache_, taskName);
+        livephotoListener_, videoCache_, taskName, rotation);
     livephotoListener_->DrainOutImage(imageCallback);
     MEDIA_INFO_LOG("StartOnceRecord end");
 }
@@ -1908,6 +1930,17 @@ void MovingPhotoListener::RemoveDrainImageManager(sptr<SessionDrainImageCallback
 {
     callbackMap_.Erase(callback);
     MEDIA_INFO_LOG("RemoveDrainImageManager drainImageManagerVec_ Start %d", callbackMap_.Size());
+}
+
+void MovingPhotoListener::ClearCache()
+{
+    MEDIA_INFO_LOG("ClearCache enter");
+    while (!recorderBufferQueue_.Empty()) {
+        MEDIA_ERR_LOG("surface_ release surface buffer");
+        sptr<FrameRecord> popFrame= recorderBufferQueue_.Pop();
+        popFrame->ReleaseSurfaceBuffer(surface_, true);
+    }
+    recorderBufferQueue_.Clear();
 }
 
 void MovingPhotoListener::StopDrainOut()

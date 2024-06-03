@@ -55,10 +55,13 @@ int HStreamRepeatStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Messa
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_UPDATE_SKETCH_RATIO):
             errCode = HandleUpdateSketchRatio(data);
             break;
-        case static_cast<uint32_t>(StreamRepeatInterfaceCode::STREAM_FRAME_RANGE_SET):
+        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_STREAM_FRAME_RANGE_SET):
             errCode = HandleSetFrameRate(data);
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ENABLE_SECURE_STREAM):
             errCode = EnableSecure(data.ReadBool());
+            break;
+        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ENABLE_STREAM_MIRROR):
+            errCode = HandleSetMirror(data);
             break;
         default:
             MEDIA_ERR_LOG("HStreamRepeatStub request code %{public}u not handled", code);
@@ -131,6 +134,17 @@ int32_t HStreamRepeatStub::HandleSetFrameRate(MessageParcel& data)
     int32_t maxFrameRate = data.ReadInt32();
  
     int error = SetFrameRate(minFrameRate, maxFrameRate);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamRepeatStub::HandleSetFrameRate failed : %{public}d", error);
+    }
+    return error;
+}
+
+int32_t HStreamRepeatStub::HandleSetMirror(MessageParcel& data)
+{
+    bool isEnable = data.ReadBool();
+ 
+    int error = SetMirror(isEnable);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamRepeatStub::HandleSetFrameRate failed : %{public}d", error);
     }

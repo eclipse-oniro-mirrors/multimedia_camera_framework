@@ -198,7 +198,7 @@ int32_t HStreamRepeatProxy::SetFrameRate(int32_t minFrameRate, int32_t maxFrameR
     data.WriteInt32(maxFrameRate);
  
     int error = Remote()->SendRequest(
-        static_cast<uint32_t>(StreamRepeatInterfaceCode::STREAM_FRAME_RANGE_SET), data, reply, option);
+        static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_STREAM_FRAME_RANGE_SET), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HStreamRepeatProxy SetFrameRate failed, error: %{public}d", error);
     }
@@ -216,7 +216,23 @@ int32_t HStreamRepeatProxy::EnableSecure(bool isEnable)
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ENABLE_SECURE_STREAM), data, reply, option);
     if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HStreamRepeatProxy Stop failed, error: %{public}d", error);
+        MEDIA_ERR_LOG("HStreamRepeatProxy EnableSecure failed, error: %{public}d", error);
+    }
+    return error;
+}
+ 
+int32_t HStreamRepeatProxy::SetMirror(bool isEnable)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+ 
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteBool(isEnable);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ENABLE_STREAM_MIRROR), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamRepeatProxy SetMirror failed, error: %{public}d", error);
     }
     return error;
 }

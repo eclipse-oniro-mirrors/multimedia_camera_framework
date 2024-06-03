@@ -96,7 +96,7 @@ void AvcodecTaskManager::SetVideoFd(int32_t videoFd, shared_ptr<PhotoAssetProxy>
     cvEmpty_.notify_all();
 }
 
-sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>> frameRecords)
+sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>> frameRecords, int32_t captureRotation)
 {
     unique_lock<mutex> lock(videoFdMutex_);
     if (videoFdQueue_.empty()) {
@@ -116,7 +116,7 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     muxer->Create(fd, format, photoAssetProxy);
     OH_AVFormat *formatVideo = OH_AVFormat_Create();
     OH_AVFormat_SetStringValue(formatVideo, OH_MD_KEY_CODEC_MIME, OH_AVCODEC_MIMETYPE_VIDEO_AVC);
-    muxer->SetRotation(frameRecords[0]->GetRotation());
+    muxer->SetRotation(frameRecords[0]->GetRotation() + captureRotation);
     bool hasCover = false;
     for (size_t index = frameRecords.size() - 1; index >= 0; index--) {
         auto tempFrameRecord = frameRecords[index];
@@ -132,7 +132,6 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
         MEDIA_WARNING_LOG("CreateAVMuxer with default coverTime");
         muxer->SetCoverTime(VIDEO_FRAME_INTERVAL_MS);
     }
-    MEDIA_INFO_LOG("CreateAVMuxer with first frame %{public}s", frameRecords[0]->GetFrameId().c_str());
     OH_AVFormat_SetIntValue(formatVideo, OH_MD_KEY_WIDTH, frameRecords[0]->GetFrameSize()->width);
     OH_AVFormat_SetIntValue(formatVideo, OH_MD_KEY_HEIGHT, frameRecords[0]->GetFrameSize()->height);
     int videoTrackId = -1;
@@ -164,16 +163,16 @@ void AvcodecTaskManager::FinishMuxer(sptr<AudioVideoMuxer> muxer)
 }
 
 
-void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, string taskName)
+void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, string taskName, int32_t captureRotation)
 {
     if (frameRecords.empty()) {
         MEDIA_ERR_LOG("DoMuxerVideo error of empty encoded frame");
         return;
     }
-    taskManager_->SubmitTask([this, frameRecords, taskName]() {
+    taskManager_->SubmitTask([this, frameRecords, taskName, captureRotation]() {
         MEDIA_INFO_LOG("CreateAVMuxer with %{public}s %{public}s",
             frameRecords.front()->GetFrameId().c_str(), taskName.c_str());
-        sptr<AudioVideoMuxer> muxer = this->CreateAVMuxer(frameRecords);
+        sptr<AudioVideoMuxer> muxer = this->CreateAVMuxer(frameRecords, captureRotation);
         if (muxer == nullptr) {
             MEDIA_ERR_LOG("CreateAVMuxer failed");
             return;

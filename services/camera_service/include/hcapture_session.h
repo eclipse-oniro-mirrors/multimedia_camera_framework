@@ -135,8 +135,6 @@ public:
     int32_t OnCaptureReady(int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp) override;
 
     virtual const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) = 0;
-    virtual void StartRecord(const std::string taskName) = 0;
-
     virtual const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId) = 0;
 
 private:
@@ -152,6 +150,7 @@ public:
     void DrainOutImage(sptr<SessionDrainImageCallback> drainImageCallback);
     void RemoveDrainImageManager(sptr<SessionDrainImageCallback> drainImageCallback);
     void StopDrainOut();
+    void ClearCache();
 private:
     sptr<Surface> surface_;
     BlockingQueue<sptr<FrameRecord>> recorderBufferQueue_;
@@ -163,7 +162,8 @@ public:
     explicit SessionDrainImageCallback(std::vector<sptr<FrameRecord>>& frameCacheList,
                                        wptr<MovingPhotoListener> listener,
                                        wptr<MovingPhotoVideoCache> cache,
-                                       string taskName);
+                                       string taskName,
+                                       int32_t rotation);
     ~SessionDrainImageCallback();
     void OnDrainImage(sptr<FrameRecord> frame) override;
     void OnDrainImageFinish(bool isFinished) override;
@@ -173,6 +173,7 @@ private:
     wptr<MovingPhotoListener> listener_;
     wptr<MovingPhotoVideoCache> videoCache_;
     string taskName_;
+    int32_t rotation_;
 };
 
 
@@ -215,16 +216,17 @@ public:
     int32_t GetopMode();
 
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
-    int32_t StartMovingPhotoCapture() override;
+    int32_t StartMovingPhotoCapture(bool isMirror, int32_t rotation) override;
     int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy, std::string &uri, int32_t &cameraShotType) override;
     const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) override;
     const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId) override;
     int32_t SetFeatureMode(int32_t featureMode) override;
-    void StartRecord(const std::string taskName) override;
+    void StartRecord(const std::string taskName, int32_t rotation);
 
 private:
     string lastDisplayName_ = "";
     int32_t saveIndex = 0;
+    volatile bool isMovingPhotoMirror_ = false;
     volatile bool isSetMotionPhoto_ = false;
     std::mutex livePhotoStreamLock_; // Guard livePhotoStreamRepeat_
     sptr<HStreamRepeat> livePhotoStreamRepeat_;
@@ -271,7 +273,7 @@ private:
     bool InitAudioCapture();
     bool StartAudioCapture();
     void ProcessAudioBuffer();
-    void StartOnceRecord(std::string taskName);
+    void StartOnceRecord(std::string taskName, int32_t rotation);
     int32_t StartPreviewStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
 
     std::string GetSessionState();

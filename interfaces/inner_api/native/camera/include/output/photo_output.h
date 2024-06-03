@@ -210,6 +210,13 @@ public:
      * @param boolean true/false to set/unset mirror respectively.
      */
     void SetMirror(bool enable);
+        
+    /**
+     * @brief Get mirror information for the photo capture settings.
+     *
+     * @return Returns the mirror information.
+     */
+    bool GetMirror();
 
     /**
      * @brief Get the photo capture settings metadata information.
