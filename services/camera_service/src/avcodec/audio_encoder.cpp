@@ -108,16 +108,17 @@ int32_t AudioEncoder::Stop()
 
 int32_t AudioEncoder::Release()
 {
+    {
+        std::lock_guard<std::mutex> lock(encoderMutex_);
+        if (encoder_ != nullptr) {
+            OH_AudioCodec_Destroy(encoder_);
+            encoder_ = nullptr;
+        }
+    }
     std::unique_lock<std::mutex> contextLock(contextMutex_);
     if (context_ != nullptr) {
         delete context_;
         context_ = nullptr;
-    }
-    contextLock.unlock();
-    std::lock_guard<std::mutex> lock(encoderMutex_);
-    if (encoder_ != nullptr) {
-        OH_AudioCodec_Destroy(encoder_);
-        encoder_ = nullptr;
     }
     isStarted_ = false;
     return 0;
@@ -133,14 +134,14 @@ void AudioEncoder::RestartAudioCodec()
 
 bool AudioEncoder::EnqueueBuffer(sptr<AudioRecord> audioRecord)
 {
-    int enququeRetryCount = 10;
     uint8_t* buffer = audioRecord->GetAudioBuffer();
     if (buffer == nullptr) {
         MEDIA_ERR_LOG("Enqueue audio buffer is empty");
         return false;
     }
-    while (enququeRetryCount > 0) {
-        enququeRetryCount--;
+    int enqueueRetryCount = 10;
+    while (enqueueRetryCount > 0) {
+        enqueueRetryCount--;
         std::unique_lock<std::mutex> contextLock(contextMutex_);
         CHECK_AND_RETURN_RET_LOG(context_ != nullptr, false, "AudioEncoder has been released");
         std::unique_lock<std::mutex> lock(context_->inputMutex_);
@@ -194,10 +195,10 @@ bool AudioEncoder::EncodeAudioBuffer(sptr<AudioRecord> audioRecord)
         sptr<CodecAVBufferInfo> bufferInfo = context_->outputBufferInfoQueue_.front();
         context_->outputBufferInfoQueue_.pop();
         context_->outputFrameCount_++;
-        lock.unlock();
-        contextLock.unlock();
         MEDIA_DEBUG_LOG("Out buffer count: %{public}u, size: %{public}d, flag: %{public}u, pts:%{public}" PRId64,
             context_->outputFrameCount_, bufferInfo->attr.size, bufferInfo->attr.flags, bufferInfo->attr.pts);
+        lock.unlock();
+        contextLock.unlock();
         OH_AVBuffer *audioBuffer = bufferInfo->GetCopyAVBuffer();
         audioRecord->CacheEncodedBuffer(audioBuffer);
         int32_t ret = FreeOutputData(bufferInfo->bufferIndex);

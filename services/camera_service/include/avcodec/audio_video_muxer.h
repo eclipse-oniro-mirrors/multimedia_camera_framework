@@ -23,6 +23,7 @@
 #include <atomic>
 #include <cstdint>
 #include <refbase.h>
+#include "avmuxer.h"
 #include "media_photo_asset_proxy.h"
 
 namespace OHOS {
@@ -32,6 +33,7 @@ enum TrackType {
     VIDEO_TRACK,
     META_TRACK
 };
+using namespace MediaAVCodec;
 class AudioVideoMuxer : public RefBase {
 public:
     explicit AudioVideoMuxer();
@@ -44,12 +46,13 @@ public:
     int32_t Stop();
     int32_t Release();
     int32_t SetRotation(int32_t rotation);
+    int32_t SetCoverTime(float timems);
     int32_t GetVideoFd();
     std::shared_ptr<Media::PhotoAssetProxy> GetPhotoAssetProxy();
     std::atomic<int32_t> releaseSignal_ = 2;
 
 private:
-    OH_AVMuxer *muxer_ = nullptr;
+    std::shared_ptr<AVMuxer> muxer_ = nullptr;
     int32_t fd_ = -1;
     std::shared_ptr<Media::PhotoAssetProxy> photoAssetProxy_;
     int audioTrackId_ = -1;

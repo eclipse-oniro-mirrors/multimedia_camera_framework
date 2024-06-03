@@ -29,18 +29,23 @@ namespace CameraStandard {
 AudioCapturerSession::AudioCapturerSession()
     : audioBufferQueue_("audioBuffer", DEFAULT_AUDIO_CACHE_NUMBER)
 {
-    audioTaskManager_ = make_unique<TaskManager>("audioCaptureTaskManager", DEFAULT_AUDIO_THREAD_NUMBER, true);
+}
+
+bool AudioCapturerSession::CreateAudioCapturer()
+{
     AudioCapturerOptions capturerOptions;
     capturerOptions.streamInfo.samplingRate = static_cast<AudioSamplingRate>(AudioSamplingRate::SAMPLE_RATE_48000);
     capturerOptions.streamInfo.encoding = AudioEncodingType::ENCODING_PCM;
     capturerOptions.streamInfo.format = AudioSampleFormat::SAMPLE_S16LE;
-    capturerOptions.streamInfo.channels = AudioChannel::STEREO;
+    capturerOptions.streamInfo.channels = AudioChannel::MONO;
     capturerOptions.capturerInfo.sourceType = SourceType::SOURCE_TYPE_MIC;
     capturerOptions.capturerInfo.capturerFlags = 0;
     audioCapturer_ = AudioCapturer::Create(capturerOptions);
     if (audioCapturer_ == nullptr) {
         MEDIA_ERR_LOG("AudioCapturerSession::Create AudioCapturer failed");
+        return false;
     }
+    return true;
 }
 
 AudioCapturerSession::~AudioCapturerSession()
@@ -48,32 +53,34 @@ AudioCapturerSession::~AudioCapturerSession()
     MEDIA_INFO_LOG("~AudioCapturerSession enter");
     audioBufferQueue_.SetActive(false);
     audioBufferQueue_.Clear();
-    Release();
+    Stop();
 }
 
 bool AudioCapturerSession::StartAudioCapture()
 {
     MEDIA_INFO_LOG("Starting moving photo audio stream");
-    if (audioCapturer_ == nullptr) {
-        MEDIA_ERR_LOG("audioCapturer is not create");
+    if (audioCapturer_ == nullptr && !CreateAudioCapturer()) {
+        MEDIA_INFO_LOG("audioCapturer is not create");
         return false;
     }
     if (!audioCapturer_->Start()) {
-        MEDIA_ERR_LOG("Start stream failed");
+        MEDIA_INFO_LOG("Start stream failed");
         audioCapturer_->Release();
         return false;
     }
-    startAudioCapture_ = true;
-    MEDIA_INFO_LOG("Capturing started");
-    AudioCapturerParams getCapturerParams;
-    if (audioCapturer_->GetParams(getCapturerParams) == 0) {
-        MEDIA_INFO_LOG("Get Audio format: %{public}d", getCapturerParams.audioSampleFormat);
-        MEDIA_INFO_LOG("Get Audio sampling rate: %{public}d", getCapturerParams.samplingRate);
-        MEDIA_INFO_LOG("Get Audio channels: %{public}d", getCapturerParams.audioChannel);
+    if (audioThread_ && audioThread_->joinable()) {
+        MEDIA_DEBUG_LOG("audioThread_ is already start");
+        startAudioCapture_ = false;
+        audioThread_->join();
+        audioThread_.reset();
+        audioThread_ = nullptr;
     }
-    audioTaskManager_->SubmitTask([this]() {
-        this->ProcessAudioBuffer();
-    });
+    audioThread_ = std::make_unique<std::thread>(&AudioCapturerSession::ProcessAudioBuffer, this);
+    startAudioCapture_ = true;
+    if (audioThread_ == nullptr) {
+        MEDIA_ERR_LOG("Create auido thread failed");
+        return false;
+    }
     return true;
 }
 
@@ -103,13 +110,21 @@ void AudioCapturerSession::ProcessAudioBuffer()
         }
         size_t bytesRead = 0;
         while (bytesRead < bufferLen) {
+            MEDIA_DEBUG_LOG("ProcessAudioBuffer loop");
+            CHECK_AND_BREAK_LOG(startAudioCapture_, "ProcessAudioBuffer loop, break out");
             int32_t len = audioCapturer_->Read(*(buffer.get() + bytesRead), bufferLen - bytesRead, true);
             if (len >= 0) {
                 bytesRead += static_cast<size_t>(len);
             } else {
-                bytesRead = static_cast<size_t>(len);
+                MEDIA_ERR_LOG("ProcessAudioBuffer loop read error: %{public}d", len);
+                startAudioCapture_ = false;
                 break;
             }
+        }
+        if (!startAudioCapture_) {
+            buffer.reset();
+            MEDIA_INFO_LOG("Audio capture work done, thread out");
+            break;
         }
         if (audioBufferQueue_.Full()) {
             sptr<AudioRecord> audioRecord = audioBufferQueue_.Pop();
@@ -127,23 +142,30 @@ void AudioCapturerSession::ProcessAudioBuffer()
 
 void AudioCapturerSession::Stop()
 {
+    CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("Audio capture stop enter");
-    if (startAudioCapture_) {
-        startAudioCapture_ = false;
-        MEDIA_INFO_LOG("Audio capture stop out");
-        if (audioCapturer_ != nullptr && audioCapturer_->Stop()) {
-            MEDIA_INFO_LOG("Audio capturer stop success");
-        }
+    if (!startAudioCapture_) {
+        MEDIA_INFO_LOG("Audio capturer already stop");
+        return;
     }
+    startAudioCapture_ = false;
+    if (audioThread_ && audioThread_->joinable()) {
+        audioThread_->join();
+        audioThread_.reset();
+        audioThread_ = nullptr;
+    }
+    MEDIA_INFO_LOG("Audio capture stop out");
+    Release();
 }
 
 void AudioCapturerSession::Release()
 {
-    Stop();
+    CAMERA_SYNC_TRACE;
     if (audioCapturer_ != nullptr) {
         MEDIA_INFO_LOG("Audio capture Release enter");
         audioCapturer_->Release();
     }
+    audioCapturer_ = nullptr;
     MEDIA_INFO_LOG("Audio capture released");
 }
 } // namespace CameraStandard

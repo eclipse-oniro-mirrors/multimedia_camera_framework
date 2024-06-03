@@ -61,6 +61,16 @@ public:
         status = STATUS_READY_CONVERT;
     }
 
+    void SetCoverFrame()
+    {
+        isCover_ = true;
+    }
+
+    bool IsCoverFrame()
+    {
+        return isCover_.load();
+    }
+
     bool IsIdle()
     {
         return status == STATUS_NONE;
@@ -88,7 +98,7 @@ public:
         videoBuffer_ = buffer;
     }
 
-    void ReleaseSurfaceBuffer(sptr<Surface> surface)
+    void ReleaseSurfaceBuffer(sptr<Surface> surface, bool reuse)
     {
         std::unique_lock<std::mutex> lock(mutex_);
         if (IsReadyConvert()) {
@@ -98,15 +108,17 @@ public:
             MEDIA_DEBUG_LOG("releaseSurfaceBuffer go %{public}p", this);
         }
         if (videoBuffer_) {
-            SurfaceError surfaceRet = surface->AttachBufferToQueue(videoBuffer_);
-            if (surfaceRet != SURFACE_ERROR_OK) {
-                MEDIA_ERR_LOG("Failed to attach buffer %{public}d", surfaceRet);
-                return;
-            }
-            surfaceRet = surface->ReleaseBuffer(videoBuffer_, -1);
-            if (surfaceRet != SURFACE_ERROR_OK) {
-                MEDIA_ERR_LOG("Failed to Release Buffer %{public}d", surfaceRet);
-                return;
+            if (reuse) {
+                SurfaceError surfaceRet = surface->AttachBufferToQueue(videoBuffer_);
+                if (surfaceRet != SURFACE_ERROR_OK) {
+                    MEDIA_ERR_LOG("Failed to attach buffer %{public}d", surfaceRet);
+                    return;
+                }
+                surfaceRet = surface->ReleaseBuffer(videoBuffer_, -1);
+                if (surfaceRet != SURFACE_ERROR_OK) {
+                    MEDIA_ERR_LOG("Failed to Release Buffer %{public}d", surfaceRet);
+                    return;
+                }
             }
             videoBuffer_ = nullptr;
             MEDIA_INFO_LOG("release buffer end %{public}s", frameId_.c_str());
@@ -196,6 +208,7 @@ private:
     static const int32_t STATUS_FINISH_ENCODE = 2;
     std::atomic<int32_t> status = STATUS_NONE;
     std::atomic<bool> isEncoded_ { false };
+    std::atomic<bool> isCover_ { false };
     shared_ptr<Size> size;
     uint32_t bufferSize;
     sptr<SurfaceBuffer> videoBuffer_;

@@ -37,7 +37,18 @@ public:
         frameId_ = std::to_string(timestamp);
         bufferSize = 0;
     }
-    ~AudioRecord() = default;
+    ~AudioRecord()
+    {
+        MEDIA_DEBUG_LOG("AudioRecord release start");
+        if (audioBuffer_ != nullptr) {
+            delete audioBuffer_;
+            audioBuffer_ = nullptr;
+        }
+        if (encodedBuffer) {
+            OH_AVBuffer_Destroy(encodedBuffer);
+            encodedBuffer = nullptr;
+        }
+    }
     OH_AVBuffer *encodedBuffer = nullptr;
 
     std::string frameId_;
