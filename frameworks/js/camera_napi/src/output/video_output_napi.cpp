@@ -18,6 +18,7 @@
 #include <uv.h>
 
 #include "camera_napi_param_parser.h"
+#include "camera_napi_security_utils.h"
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
 #include "camera_output_capability.h"
@@ -279,6 +280,8 @@ napi_value VideoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("setFrameRate", SetFrameRate),
         DECLARE_NAPI_FUNCTION("getActiveFrameRate", GetActiveFrameRate),
         DECLARE_NAPI_FUNCTION("getSupportedFrameRates", GetSupportedFrameRates),
+        DECLARE_NAPI_FUNCTION("isMirrorSupported", IsMirrorSupported),
+        DECLARE_NAPI_FUNCTION("enableMirror", EnableMirror),
         DECLARE_NAPI_FUNCTION("release", Release),
         DECLARE_NAPI_FUNCTION("on", On),
         DECLARE_NAPI_FUNCTION("once", Once),
@@ -880,6 +883,64 @@ void VideoOutputNapi::SetFrameRateRangeAsyncTask(napi_env env, void* data)
             context->errorMsg = "Failed to get range values for SetFrameRateRange";
         }
     }
+}
+
+napi_value VideoOutputNapi::IsMirrorSupported(napi_env env, napi_callback_info info)
+{
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsMirrorSupported is called!");
+        return result;
+    }
+    MEDIA_DEBUG_LOG("VideoOutputNapi::IsMirrorSupported is called");
+ 
+    VideoOutputNapi* videoOutputNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, videoOutputNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("VideoOutputNapi::IsMirrorSupported parse parameter occur error");
+        return result;
+    }
+    if (videoOutputNapi->videoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("VideoOutputNapi::IsMirrorSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return result;
+    }
+    bool isMirrorSupported = videoOutputNapi->videoOutput_->IsMirrorSupported();
+    if (isMirrorSupported) {
+        napi_get_boolean(env, true, &result);
+        return result;
+    }
+    MEDIA_ERR_LOG("VideoOutputNapi::IsMirrorSupported is not supported");
+    napi_get_boolean(env, false, &result);
+    return result;
+}
+ 
+napi_value VideoOutputNapi::EnableMirror(napi_env env, napi_callback_info info)
+{
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi EnableMirror is called!");
+        return result;
+    }
+    MEDIA_DEBUG_LOG("VideoOutputNapi::EnableMirror is called");
+    VideoOutputNapi* videoOutputNapi = nullptr;
+    bool isEnable;
+    CameraNapiParamParser jsParamParser(env, info, videoOutputNapi, isEnable);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("VideoOutputNapi::IsMirrorSupported parse parameter occur error");
+        return result;
+    }
+    if (videoOutputNapi->videoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("VideoOutputNapi::IsMirrorSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return result;
+    }
+ 
+    int32_t retCode = videoOutputNapi->videoOutput_->enableMirror(isEnable);
+    if (CameraNapiUtils::CheckError(env, retCode)) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoHighQualityPhoto fail %{public}d", retCode);
+    }
+    return result;
 }
 
 napi_value VideoOutputNapi::Release(napi_env env, napi_callback_info info)

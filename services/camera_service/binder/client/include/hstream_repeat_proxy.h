@@ -47,6 +47,8 @@ public:
 
     int32_t EnableSecure(bool isEnable = false) override;
 
+    int32_t SetMirror(bool isEnable) override;
+
 private:
     static inline BrokerDelegator<HStreamRepeatProxy> delegator_;
 };

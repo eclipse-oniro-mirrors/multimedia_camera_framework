@@ -213,6 +213,9 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     if (repeatStreamType_ == RepeatStreamType::PREVIEW) {
         OpenVideoDfxSwitch(dynamicSetting);
     }
+    if (repeatStreamType_ == RepeatStreamType::VIDEO || repeatStreamType_ == RepeatStreamType::LIVEPHOTO) {
+        UpdateVideoSettings(dynamicSetting);
+    }
     std::vector<uint8_t> captureSetting;
     OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, captureSetting);
 
@@ -515,6 +518,36 @@ int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
     return rc;
 }
 
+int32_t HStreamRepeat::SetMirror(bool isEnable)
+{
+    enableMirror_ = isEnable;
+    return CAMERA_OK;
+}
+ 
+void HStreamRepeat::SetMirrorForLivePhoto(bool isEnable, int32_t mode)
+{
+    camera_metadata_item_t item;
+    const int32_t canMirrorVideoAndPhoto = 2;
+    int32_t res = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(),
+        OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
+    bool isMirrorSupported = false;
+    if (res == CAM_META_SUCCESS) {
+        int step = 2;
+        for (int i = 0; i < static_cast<int>(item.count); i += step) {
+            MEDIA_DEBUG_LOG("mode u8[%{public}d]: %{public}d, u8[%{public}d], %{public}d",
+                i, item.data.u8[i], i + 1, item.data.u8[i + 1]);
+            if (mode == static_cast<int>(item.data.u8[i])) {
+                isMirrorSupported = (item.data.u8[i + 1] == canMirrorVideoAndPhoto) ? true : false;
+            }
+        }
+    }
+    if (isMirrorSupported) {
+        enableMirror_ = isEnable;
+    } else {
+        MEDIA_ERR_LOG("HStreamRepeat::SetMirrorForLivePhoto not supported mirror with mode:%{public}d", mode);
+    }
+}
+
 int32_t HStreamRepeat::UpdateSketchRatio(float sketchRatio)
 {
     std::lock_guard<std::mutex> lock(sketchStreamLock_);
@@ -685,6 +718,26 @@ int32_t HStreamRepeat::EnableSecure(bool isEnabled)
 {
     mEnableSecure = isEnabled;
     return CAMERA_OK;
+}
+
+void HStreamRepeat::UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings)
+{
+    bool status = false;
+    camera_metadata_item_t item;
+ 
+    if (enableMirror_) {
+        uint8_t mirror = enableMirror_;
+        MEDIA_DEBUG_LOG("HStreamRepeat::UpdateVideoSettings set Mirror");
+        int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_CAPTURE_MIRROR, &item);
+        if (ret == CAM_META_ITEM_NOT_FOUND) {
+            status = settings->addEntry(OHOS_CONTROL_CAPTURE_MIRROR, &mirror, 1);
+        } else if (ret == CAM_META_SUCCESS) {
+            status = settings->updateEntry(OHOS_CONTROL_CAPTURE_MIRROR, &mirror, 1);
+        }
+        if (!status) {
+            MEDIA_ERR_LOG("PhotoCaptureSetting::SetMirror Failed to set mirroring in photo capture setting");
+        }
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

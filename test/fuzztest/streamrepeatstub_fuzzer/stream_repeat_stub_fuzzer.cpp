@@ -126,7 +126,7 @@ void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
     RunCase(data, StreamRepeatInterfaceCode::CAMERA_STREAM_REPEAT_RELEASE);
     RunCase(data, StreamRepeatInterfaceCode::CAMERA_REMOVE_SKETCH_STREAM_REPEAT);
     RunCase(data, StreamRepeatInterfaceCode::CAMERA_UPDATE_SKETCH_RATIO);
-    RunCase(data, StreamRepeatInterfaceCode::STREAM_FRAME_RANGE_SET);
+    RunCase(data, StreamRepeatInterfaceCode::CAMERA_STREAM_FRAME_RANGE_SET);
 
     uint32_t code;
     MessageParcel reply;

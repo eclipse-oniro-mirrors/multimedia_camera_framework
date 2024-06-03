@@ -142,6 +142,21 @@ public:
      * @return Returns vector<int32_t> supported frame rate ranges.
      */
     std::vector<std::vector<int32_t>> GetSupportedFrameRates();
+
+    /**
+     * @brief Set the mirror option for the video output.
+     *
+     * @param boolean true/false to set/unset mirror respectively.
+     */
+    int32_t enableMirror(bool enabled);
+ 
+    /**
+     * @brief To check the video output support mirror or not.
+     *
+     * @return Returns true/false if the video output is support mirro or not.
+     */
+    bool IsMirrorSupported();
+
 private:
     int32_t videoFormat_;
     Size videoSize_;

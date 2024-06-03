@@ -158,13 +158,6 @@ public:
     */
     uint32_t GetCameraOrientation();
 
-    /**
-    * @brief Check if mirror mode supported.
-    *
-    * @return Returns True is supported.
-    */
-    bool IsMirrorSupported();
-
     // or can we move definition completely in session only?
     /**
     * @brief Get the supported Zoom Ratio range.
@@ -200,7 +193,6 @@ private:
     ConnectionType connectionType_ = CAMERA_CONNECTION_BUILT_IN;
     CameraFoldScreenType foldScreenType_ = CAMERA_FOLDSCREEN_UNSPECIFIED;
     uint32_t cameraOrientation_ = 0;
-    bool isMirrorSupported_ = false;
     uint32_t moduleType_ = 0;
     dmDeviceInfo dmDeviceInfo_ = {};
     std::vector<float> zoomRatioRange_;

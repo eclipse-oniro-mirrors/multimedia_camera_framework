@@ -146,8 +146,7 @@ int32_t HCameraService::GetCameras(
         res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
         uint8_t connectionType = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_CONNECTION_TYPE_BUILTIN;
         res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
-        bool isMirrorSupported = (res == CAM_META_SUCCESS) ?
-            ((item.data.u8[0] == 1) || (item.data.u8[0] == 0)) : false;
+        bool isMirrorSupported = (res == CAM_META_SUCCESS) ? (item.count != 0) : false;
         res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_MODES, &item);
         std::vector<uint8_t> supportModes = {};
         for (uint32_t i = 0; i < item.count; i++) {

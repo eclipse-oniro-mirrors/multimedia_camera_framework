@@ -43,7 +43,7 @@ private:
     int32_t HandleSetSmoothZoom(MessageParcel& data, MessageParcel& reply);
     int32_t HandleSetFeatureMode(MessageParcel& data);
     int32_t HandleEnableMovingPhoto(MessageParcel& data);
-    int32_t HandleStartMovingPhotoCapture();
+    int32_t HandleStartMovingPhotoCapture(MessageParcel& data);
     int32_t HandleCreateMediaLibrary(MessageParcel& data, MessageParcel &reply);
 };
 } // namespace CameraStandard

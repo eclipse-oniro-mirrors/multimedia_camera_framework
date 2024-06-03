@@ -85,7 +85,7 @@ int HCaptureSessionStub::OnRemoteRequest(
             errCode = HandleEnableMovingPhoto(data);
             break;
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_START_MOVING_PHOTO_CAPTURE):
-            errCode = HandleStartMovingPhotoCapture();
+            errCode = HandleStartMovingPhotoCapture(data);
             break;
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER):
             errCode = HandleCreateMediaLibrary(data, reply);
@@ -236,9 +236,11 @@ int32_t HCaptureSessionStub::HandleEnableMovingPhoto(MessageParcel &data)
     return EnableMovingPhoto(isEnabled);
 }
 
-int32_t HCaptureSessionStub::HandleStartMovingPhotoCapture()
+int32_t HCaptureSessionStub::HandleStartMovingPhotoCapture(MessageParcel &data)
 {
-    return StartMovingPhotoCapture();
+    bool isMirror = data.ReadBool();
+    int32_t rotation = data.ReadInt32();
+    return StartMovingPhotoCapture(isMirror, rotation);
 }
 
 int32_t HCaptureSessionStub::HandleCreateMediaLibrary(MessageParcel& data, MessageParcel &reply)

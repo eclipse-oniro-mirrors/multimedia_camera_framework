@@ -52,8 +52,8 @@ public:
     ~AvcodecTaskManager();
     void EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback);
     void CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecordVec, sptr<AudioVideoMuxer> muxer);
-    void DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, string taskName);
-    sptr<AudioVideoMuxer> CreateAVMuxer(vector<sptr<FrameRecord>> frameRecord);
+    void DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, string taskName, int32_t captureRotation);
+    sptr<AudioVideoMuxer> CreateAVMuxer(vector<sptr<FrameRecord>> frameRecord, int32_t captureRotation);
     void SubmitTask(function<void()> task);
     void SetVideoFd(int32_t videoFd, shared_ptr<PhotoAssetProxy> photoAssetProxy);
     void Stop();
