@@ -291,6 +291,11 @@ void CaptureSession::CameraServerDied(pid_t pid)
             appCallback_->OnError(serviceErrorType);
         }
     }
+    SessionRemoveDeathRecipient();
+}
+
+void CaptureSession::SessionRemoveDeathRecipient()
+{
     if (captureSession_ != nullptr) {
         (void)captureSession_->AsObject()->RemoveDeathRecipient(deathRecipient_);
         captureSession_ = nullptr;
@@ -302,7 +307,7 @@ CaptureSession::~CaptureSession()
 {
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::~CaptureSession()");
     inputDevice_ = nullptr;
-    captureSession_ = nullptr;
+    SessionRemoveDeathRecipient();
     changedMetadata_ = nullptr;
 }
 
@@ -928,7 +933,7 @@ int32_t CaptureSession::Release()
         MEDIA_ERR_LOG("CaptureSession::Release() captureSession_ is nullptr");
     }
     inputDevice_ = nullptr;
-    captureSession_ = nullptr;
+    SessionRemoveDeathRecipient();
     changedMetadata_ = nullptr;
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     captureSessionCallback_ = nullptr;

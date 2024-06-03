@@ -115,12 +115,17 @@ void CameraInput::CameraServerDied(pid_t pid)
     }
     std::lock_guard<std::mutex> interfaceLock(interfaceMutex_);
     {
-        if (deviceObj_ != nullptr) {
-            (void)deviceObj_->AsObject()->RemoveDeathRecipient(deathRecipient_);
-            deviceObj_ = nullptr;
-        }
-        deathRecipient_ = nullptr;
+        InputRemoveDeathRecipient();
     }
+}
+
+void CameraInput::InputRemoveDeathRecipient()
+{
+    if (deviceObj_ != nullptr) {
+        (void)deviceObj_->AsObject()->RemoveDeathRecipient(deathRecipient_);
+        deviceObj_ = nullptr;
+    }
+    deathRecipient_ = nullptr;
 }
 
 CameraInput::~CameraInput()
@@ -130,10 +135,7 @@ CameraInput::~CameraInput()
     if (cameraObj_) {
         MEDIA_INFO_LOG("CameraInput::CameraInput Destructor Camera: %{public}s", cameraObj_->GetID().c_str());
     }
-    if (deviceObj_ != nullptr) {
-        (void)deviceObj_->AsObject()->RemoveDeathRecipient(deathRecipient_);
-        deviceObj_ = nullptr;
-    }
+    InputRemoveDeathRecipient();
 }
 
 int CameraInput::Open()
@@ -204,7 +206,7 @@ int CameraInput::Close()
         MEDIA_ERR_LOG("CameraInput::Close() deviceObj_ is nullptr");
     }
     cameraObj_ = nullptr;
-    deviceObj_ = nullptr;
+    InputRemoveDeathRecipient();
     CameraDeviceSvcCallback_ = nullptr;
     return ServiceToCameraError(retCode);
 }
@@ -223,7 +225,7 @@ int CameraInput::Release()
         MEDIA_ERR_LOG("CameraInput::Release() deviceObj_ is nullptr");
     }
     cameraObj_ = nullptr;
-    deviceObj_ = nullptr;
+    InputRemoveDeathRecipient();
     CameraDeviceSvcCallback_ = nullptr;
     return ServiceToCameraError(retCode);
 }

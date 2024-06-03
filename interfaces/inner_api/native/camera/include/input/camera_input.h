@@ -340,6 +340,7 @@ private:
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
     void CameraServerDied(pid_t pid);
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
+    void InputRemoveDeathRecipient();
 };
 
 class CameraDeviceServiceCallback : public HCameraDeviceCallbackStub {
