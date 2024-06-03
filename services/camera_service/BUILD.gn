@@ -147,7 +147,7 @@ ohos_shared_library("camera_service") {
     "drivers_interface_camera:libcamera_proxy_1.2",
     "drivers_interface_camera:libcamera_proxy_1.3",
     "drivers_interface_camera:metadata",
-    "drivers_interface_display:display_commontype_idl_headers",
+    "drivers_interface_display:libdisplay_commontype_proxy_1.0",
     "drivers_interface_display:libdisplay_composer_hdi_impl",
     "drivers_interface_display:libdisplay_composer_hdi_impl_1.1",
     "graphic_2d:librender_service_client",
