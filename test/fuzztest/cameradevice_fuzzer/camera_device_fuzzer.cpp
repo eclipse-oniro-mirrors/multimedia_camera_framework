@@ -28,6 +28,8 @@ namespace CameraStandard {
 const std::u16string FORMMGR_INTERFACE_TOKEN = u"ICameraDeviceService";
 const size_t LIMITCOUNT = 4;
 const int32_t LIMITSIZE = 2;
+const int32_t NUM_10 = 10;
+const int32_t NUM_100 = 100;
 bool g_isCameraDevicePermission = false;
 sptr<HCameraHostManager> fuzzCameraHostManager = nullptr;
 HCameraDevice *fuzzCameraDevice = nullptr;
@@ -55,8 +57,8 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     }
     CameraDeviceFuzzTestGetPermission();
 
-    int32_t itemCount = 10;
-    int32_t dataSize = 100;
+    int32_t itemCount = NUM_10;
+    int32_t dataSize = NUM_100;
     int32_t *streams = reinterpret_cast<int32_t *>(rawData);
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
     ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
@@ -94,6 +96,39 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
         fuzzCameraDevice->OnRemoteRequest(code, data, reply, option);
     }
 }
+
+void CameraDeviceFuzzTest_UpdateSetting(uint8_t *rawData, size_t size)
+{
+    std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
+    fuzzCameraDevice->UpdateSetting(ability);
+
+    int32_t itemCount = 0;
+    int32_t dataSize = NUM_10;
+    ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
+    fuzzCameraDevice->UpdateSetting(ability);
+
+    itemCount = NUM_10;
+    dataSize = NUM_100;
+    int32_t *streams = reinterpret_cast<int32_t *>(rawData);
+    ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
+    ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams, size / LIMITCOUNT);
+    int32_t compensationRange[2] = {rawData[0], rawData[1]};
+    ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
+                      sizeof(compensationRange) / sizeof(compensationRange[0]));
+    float focalLength = rawData[0];
+    ability->addEntry(OHOS_ABILITY_FOCAL_LENGTH, &focalLength, 1);
+
+    int32_t sensorOrientation = rawData[0];
+    ability->addEntry(OHOS_SENSOR_ORIENTATION, &sensorOrientation, 1);
+
+    int32_t cameraPosition = rawData[0];
+    ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
+
+    const camera_rational_t aeCompensationStep[] = {{rawData[0], rawData[1]}};
+    ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
+                      sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
+    fuzzCameraDevice->UpdateSetting(ability);
+}
 } // namespace CameraStandard
 } // namespace OHOS
 
@@ -102,6 +137,7 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
 {
     /* Run your code on data */
     OHOS::CameraStandard::CameraDeviceFuzzTest(data, size);
+    OHOS::CameraStandard::CameraDeviceFuzzTest_UpdateSetting(data, size);
     return 0;
 }
 
