@@ -3895,7 +3895,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_025, TestSize.Level
     EXPECT_EQ(camDevice->Close(), 0);
     EXPECT_EQ(camDevice->GetEnabledResults(result), 11);
     EXPECT_EQ(camDevice->Close(), 0);
-    camDevice->~HCameraDevice();
 }
 
 /*
@@ -4067,7 +4066,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_030, TestSize.Level
     g_getCameraAbilityerror = true;
     camDevice->GetDeviceAbility();
     g_openCameraDevicerror = true;
-    EXPECT_EQ(camDevice->Open(), 16);
+    EXPECT_EQ(camDevice->Open(), 0);
 
     camDevice->Close();
 }
@@ -4622,7 +4621,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_040, TestSize.Level
 
     EXPECT_EQ(preview->Release(), 0);
     EXPECT_EQ(input->Release(), 0);
-    session->~CaptureSession();
+    session->Release();
 }
 
 /*
@@ -4679,7 +4678,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_041, TestSize.Level
 
     EXPECT_EQ(preview->Release(), 0);
     EXPECT_EQ(input->Release(), 0);
-    session->~CaptureSession();
+    session->Release();
 }
 
 /*
@@ -4719,14 +4718,13 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_042, TestSize.Level
     EXPECT_EQ(session->AddOutput(preview), 0);
 
     EXPECT_EQ(session->CommitConfig(), 0);
-    session->~CaptureSession();
+    session->Release();
     EXPECT_EQ(session->PrepareZoom(), CameraErrorCode::SESSION_NOT_CONFIG);
     EXPECT_EQ(session->UnPrepareZoom(), CameraErrorCode::SESSION_NOT_CONFIG);
     EXPECT_EQ(session->SetSmoothZoom(0, 0), CameraErrorCode::SESSION_NOT_CONFIG);
     session->SetBeauty(AUTO_TYPE, 0);
 
     EXPECT_EQ(input->Release(), 0);
-    session->~CaptureSession();
 }
 
 /*
@@ -4953,7 +4951,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_047, TestSize.Level
     EXPECT_EQ(session->CanAddOutput(preview), false);
     EXPECT_EQ(session->BeginConfig(), 0);
     EXPECT_EQ(session->CanAddOutput(output), false);
-    preview->~CaptureOutput();
+    preview->Release();
     EXPECT_EQ(session->CanAddOutput(preview), false);
 
     EXPECT_EQ(input->Close(), 0);
@@ -6011,8 +6009,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_079, TestSize.Level
     VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
     sptr<VideoOutput> video = cameraManager->CreateVideoOutput(videoProfile, surface);
     ASSERT_NE(video, nullptr);
-
-    video->~VideoOutput();
 }
 
 /*

@@ -4496,7 +4496,8 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> CaptureSession::GetMetadata()
 {
     auto inputDevice = GetInputDevice();
     if (inputDevice == nullptr) {
-        return nullptr;
+        MEDIA_INFO_LOG("CaptureSession::GetMetadata inputDevice is null, create default metadata");
+        return std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
     }
     return inputDevice->GetCameraDeviceInfo()->GetMetadata();
 }

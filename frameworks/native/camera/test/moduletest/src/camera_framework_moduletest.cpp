@@ -4681,7 +4681,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_015, TestSize.L
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
-    delete camSession;
+    camSession->Release();
 
     int32_t intResult = camSession->Stop();
     EXPECT_EQ(intResult, 7400201);
@@ -5707,7 +5707,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_034, TestSize.L
 {
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
-    delete camSession;
+    camSession->Release();
 
     int32_t intResult = camSession->UnlockForControl();
     EXPECT_EQ(intResult, 7400201);
@@ -5878,7 +5878,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_039, TestSize.L
 
     sptr<CaptureSession> camSession = manager_->CreateCaptureSession();
     ASSERT_NE(camSession, nullptr);
-    delete camSession;
+    camSession->Release();
 
     intResult = camSession->BeginConfig();
     EXPECT_EQ(intResult, 7400201);
@@ -10165,6 +10165,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_076, TestSize.Le
 */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_securecamera_moduleTest_001, TestSize.Level0)
 {
+    SceneMode secureMode = SceneMode::SECURE;
+    if (!IsSupportMode(secureMode)) {
+        return;
+    }
     if (session_) {
         session_->Release();
     }
@@ -10227,6 +10231,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_securecamera_moduleTest_001
 */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_securecamera_moduleTest_002, TestSize.Level0)
 {
+    SceneMode secureMode = SceneMode::SECURE;
+    if (!IsSupportMode(secureMode)) {
+        return;
+    }
     if (session_) {
         session_->Release();
     }
@@ -10284,6 +10292,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_securecamera_moduleTest_002
 */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_securecamera_moduleTest_003, TestSize.Level0)
 {
+    SceneMode secureMode = SceneMode::SECURE;
+    if (!IsSupportMode(secureMode)) {
+        return;
+    }
     if (session_) {
         session_->Release();
     }
@@ -10349,6 +10361,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_securecamera_moduleTest_003
 */
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_securecamera_moduleTest_004, TestSize.Level0)
 {
+    SceneMode secureMode = SceneMode::SECURE;
+    if (!IsSupportMode(secureMode)) {
+        return;
+    }
     if (session_) {
         session_->Release();
     }
@@ -10416,11 +10432,10 @@ HWTEST_F(CameraFrameworkModuleTest, deferred_photo_enable, TestSize.Level0)
 
     intResult = ((sptr<PhotoOutput>&)photoOutput)->IsDeferredImageDeliverySupported(
         DeferredDeliveryImageType::DELIVERY_PHOTO);
-    if (!intResult) {
+    if (intResult != 0) {
         MEDIA_DEBUG_LOG("device not support deferred_photo");
         return;
     }
-    EXPECT_EQ(intResult, 0);
 
     ((sptr<PhotoOutput>&)photoOutput)->DeferImageDeliveryFor(DeferredDeliveryImageType::DELIVERY_PHOTO);
     
