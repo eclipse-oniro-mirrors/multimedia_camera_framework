@@ -3331,7 +3331,7 @@ int32_t CaptureSession::GetBeauty(BeautyType beautyType)
 }
 
 // focus distance
-float CaptureSession::GetMinimumFocusDistance()
+float CaptureSession::GetMinimumFocusDistance() __attribute__((no_sanitize("cfi")))
 {
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("CaptureSession::GetMinimumFocusDistance Session is not Commited");
