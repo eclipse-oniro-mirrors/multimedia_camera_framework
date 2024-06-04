@@ -32,11 +32,6 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
-static const int32_t STREAM_ROTATE_90 = 90;
-static const int32_t STREAM_ROTATE_180 = 180;
-static const int32_t STREAM_ROTATE_270 = 270;
-static const int32_t STREAM_ROTATE_360 = 360;
-
 HStreamRepeat::HStreamRepeat(
     sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height, RepeatStreamType type)
     : HStreamCommon(StreamType::REPEAT, producer, format, width, height), repeatStreamType_(type)
@@ -576,7 +571,7 @@ void HStreamRepeat::DumpStreamInfo(std::string& dumpString)
     HStreamCommon::DumpStreamInfo(dumpString);
 }
 
-void HStreamRepeat::SetStreamTransform()
+void HStreamRepeat::SetStreamTransform(int disPlayRotation)
 {
     camera_metadata_item_t item;
     int ret;
@@ -610,26 +605,29 @@ void HStreamRepeat::SetStreamTransform()
         return;
     }
 
-    if (IsVerticalDevice()) {
-        ProcessCameraPosition(sensorOrientation, cameraPosition);
-    } else {
-        ret = SurfaceError::SURFACE_ERROR_OK;
-        if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
-            ret = producer_->SetTransform(GRAPHIC_FLIP_H);
-            MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform filp for wide side devices");
-        } else {
-            ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
-            MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform none rotate");
+    int mOritation = disPlayRotation;
+    if (mOritation == -1) {
+        auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
+        if (producer_ == nullptr || display == nullptr) {
+            MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed, producer is null or GetDefaultDisplay failed");
+            return;
         }
+        mOritation = static_cast<int>(display->GetRotation());
     }
+
+    int32_t streamRotation = GetStreamRotation(sensorOrientation, cameraPosition, mOritation);
+    ProcessCameraPosition(streamRotation, cameraPosition);
 }
 
-void HStreamRepeat::ProcessCameraPosition(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition)
+void HStreamRepeat::ProcessCameraPosition(int32_t& streamRotation, camera_position_enum_t& cameraPosition)
 {
     int ret = SurfaceError::SURFACE_ERROR_OK;
-    int32_t streamRotation = sensorOrientation;
     if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
         switch (streamRotation) {
+            case STREAM_ROTATE_0: {
+                ret = producer_->SetTransform(GRAPHIC_FLIP_H);
+                break;
+            }
             case STREAM_ROTATE_90: {
                 ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT90);
                 break;
@@ -646,10 +644,12 @@ void HStreamRepeat::ProcessCameraPosition(int32_t& sensorOrientation, camera_pos
                 break;
             }
         }
-        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform filp rotate %{public}d", streamRotation);
     } else {
-        streamRotation = STREAM_ROTATE_360 - sensorOrientation;
         switch (streamRotation) {
+            case STREAM_ROTATE_0: {
+                ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
+                break;
+            }
             case STREAM_ROTATE_90: {
                 ret = producer_->SetTransform(GRAPHIC_ROTATE_90);
                 break;
@@ -666,7 +666,6 @@ void HStreamRepeat::ProcessCameraPosition(int32_t& sensorOrientation, camera_pos
                 break;
             }
         }
-        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform not flip rotate %{public}d", streamRotation);
     }
     if (ret != SurfaceError::SURFACE_ERROR_OK) {
         MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed %{public}d", ret);

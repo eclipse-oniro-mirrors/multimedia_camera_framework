@@ -58,6 +58,7 @@
 #include "hcamera_restore_param.h"
 #include "camera_report_uitls.h"
 #include "media_library_manager.h"
+#include "display_manager.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -143,6 +144,9 @@ HCaptureSession::HCaptureSession(const uint32_t callingTokenId, int32_t opMode)
 HCaptureSession::~HCaptureSession()
 {
     Release(CaptureSessionReleaseType::RELEASE_TYPE_OBJ_DIED);
+    if (displayListener_) {
+        OHOS::Rosen::DisplayManager::GetInstance().UnregisterDisplayListener(displayListener_);
+    }
 }
 
 pid_t HCaptureSession::GetPid()
@@ -338,6 +342,72 @@ void HCaptureSession::StartMovingPhotoStream()
     MEDIA_INFO_LOG("HCaptureSession::StartMovingPhotoStream result:%{public}d", errorCode);
 }
 
+class DisplayRotationListener : public OHOS::Rosen::DisplayManager::IDisplayListener {
+public:
+    explicit DisplayRotationListener() {};
+    virtual ~DisplayRotationListener() = default;
+    void OnCreate(OHOS::Rosen::DisplayId) override {}
+    void OnDestroy(OHOS::Rosen::DisplayId) override {}
+    void OnChange(OHOS::Rosen::DisplayId displayId) override
+    {
+        sptr<Rosen::Display> display = Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
+        if (display == nullptr) {
+            MEDIA_INFO_LOG("Get display info failed, display:%{public}" PRIu64"", displayId);
+            display = Rosen::DisplayManager::GetInstance().GetDisplayById(0);
+            if (display == nullptr) {
+                MEDIA_INFO_LOG("Get display info failed, display is nullptr");
+                return;
+            }
+        }
+        {
+            Rosen::Rotation currentRotation = display->GetRotation();
+            std::lock_guard<std::mutex> lock(mStreamManagerLock_);
+            for (auto& repeatStream : repeatStreamList_) {
+                if (repeatStream) {
+                    repeatStream->SetStreamTransform(static_cast<int> (currentRotation));
+                }
+            }
+        }
+    }
+
+    void AddHstreamRepeatForListener(sptr<HStreamRepeat> repeatStream)
+    {
+        std::lock_guard<std::mutex> lock(mStreamManagerLock_);
+        if (repeatStream) {
+            repeatStreamList_.push_back(repeatStream);
+        }
+    }
+
+    void RemoveHstreamRepeatForListener(sptr<HStreamRepeat> repeatStream)
+    {
+        std::lock_guard<std::mutex> lock(mStreamManagerLock_);
+        if (repeatStream) {
+            repeatStreamList_.erase(std::remove(repeatStreamList_.begin(), repeatStreamList_.end(), repeatStream),
+                repeatStreamList_.end());
+        }
+    }
+
+public:
+    std::list<sptr<HStreamRepeat>> repeatStreamList_;
+    std::mutex mStreamManagerLock_;
+};
+
+void HCaptureSession::RegisterDisplayListener(sptr<HStreamRepeat> repeat)
+{
+    if (displayListener_ == nullptr) {
+        displayListener_ = new DisplayRotationListener();
+        OHOS::Rosen::DisplayManager::GetInstance().RegisterDisplayListener(displayListener_);
+    }
+    displayListener_->AddHstreamRepeatForListener(repeat);
+}
+
+void HCaptureSession::UnRegisterDisplayListener(sptr<HStreamRepeat> repeatStream)
+{
+    if (displayListener_) {
+        displayListener_->RemoveHstreamRepeatForListener(repeatStream);
+    }
+}
+
 int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> stream)
 {
     int32_t errorCode = CAMERA_INVALID_ARG;
@@ -358,7 +428,11 @@ int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> st
         if (streamType == StreamType::CAPTURE) {
             errorCode = AddOutputStream(static_cast<HStreamCapture*>(stream.GetRefPtr()));
         } else if (streamType == StreamType::REPEAT) {
-            errorCode = AddOutputStream(static_cast<HStreamRepeat*>(stream.GetRefPtr()));
+            HStreamRepeat* repeatSteam = static_cast<HStreamRepeat*>(stream.GetRefPtr());
+            if (repeatSteam != nullptr && repeatSteam->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
+                RegisterDisplayListener(repeatSteam);
+            }
+            errorCode = AddOutputStream(repeatSteam);
         } else if (streamType == StreamType::METADATA) {
             errorCode = AddOutputStream(static_cast<HStreamMetadata*>(stream.GetRefPtr()));
         }
@@ -448,7 +522,11 @@ int32_t HCaptureSession::RemoveOutput(StreamType streamType, sptr<IStreamCommon>
         if (streamType == StreamType::CAPTURE) {
             errorCode = RemoveOutputStream(static_cast<HStreamCapture*>(stream.GetRefPtr()));
         } else if (streamType == StreamType::REPEAT) {
-            errorCode = RemoveOutputStream(static_cast<HStreamRepeat*>(stream.GetRefPtr()));
+            HStreamRepeat* repeatSteam = static_cast<HStreamRepeat*>(stream.GetRefPtr());
+            if (repeatSteam != nullptr && repeatSteam->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
+                UnRegisterDisplayListener(repeatSteam);
+            }
+            errorCode = RemoveOutputStream(repeatSteam);
         } else if (streamType == StreamType::METADATA) {
             errorCode = RemoveOutputStream(static_cast<HStreamMetadata*>(stream.GetRefPtr()));
         }
