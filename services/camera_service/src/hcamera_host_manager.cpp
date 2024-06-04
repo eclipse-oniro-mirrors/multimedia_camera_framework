@@ -550,7 +550,10 @@ void HCameraHostManager::CameraHostInfo::NotifyCameraHostDied()
         MEDIA_WARNING_LOG("CameraHostInfo::NotifyCameraHostDied failed due to no callback!");
         return;
     }
-    statusCallback->OnCameraStatus("device/0", CAMERA_SERVER_UNAVAILABLE);
+    std::vector<std::string> cameraIds;
+    if (statusCallback && this->GetCameras(cameraIds) == CAMERA_OK) {
+        statusCallback->OnCameraStatus(cameraIds[0], CAMERA_SERVER_UNAVAILABLE);
+    }
 }
 
 int32_t HCameraHostManager::CameraHostInfo::OnFlashlightStatus(const std::string& cameraId, FlashlightStatus status)
