@@ -7051,11 +7051,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_069, TestSize.L
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test IsSessionConfiged branch with capturesession object null.
+ * CaseDescription: Test IsSessionConfiged branch with innerCaptureSession object null.
  */
 HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_070, TestSize.Level0)
 {
-    session_->captureSession_ = nullptr;
+    session_->innerCaptureSession_ = nullptr;
 
     EXPECT_EQ(session_->CommitConfig(), 7400102);
 

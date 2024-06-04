@@ -1301,6 +1301,12 @@ public:
         return innerInputDevice_;
     }
 
+    inline sptr<ICaptureSession> GetCaptureSession()
+    {
+        std::lock_guard<std::mutex> lock(captureSessionMutex_);
+        return innerCaptureSession_;
+    }
+
 protected:
     static const std::unordered_map<camera_exposure_mode_enum_t, ExposureMode> metaExposureModeMap_;
     static const std::unordered_map<ExposureMode, camera_exposure_mode_enum_t> fwkExposureModeMap_;
@@ -1349,12 +1355,19 @@ protected:
         innerInputDevice_ = inputDevice;
     }
 
+    inline void SetCaptureSession(sptr<ICaptureSession> captureSession)
+    {
+        std::lock_guard<std::mutex> lock(captureSessionMutex_);
+        innerCaptureSession_ = captureSession;
+    }
+
     virtual std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles(PreconfigType preconfigType);
 
 private:
     std::mutex changeMetaMutex_;
     std::mutex sessionCallbackMutex_;
-    sptr<ICaptureSession> captureSession_;
+    std::mutex captureSessionMutex_;
+    sptr<ICaptureSession> innerCaptureSession_ = nullptr;
     std::shared_ptr<SessionCallback> appCallback_;
     sptr<ICaptureSessionCallback> captureSessionCallback_;
     std::shared_ptr<ExposureCallback> exposureCallback_;
@@ -1438,6 +1451,7 @@ private:
     void FindTagId();
     bool CheckFrameRateRangeWithCurrentFps(int32_t curMinFps, int32_t curMaxFps, int32_t minFps, int32_t maxFps);
     void SessionRemoveDeathRecipient();
+    int32_t AdaptOutputVideoHighFrameRate(sptr<CaptureOutput>& output, sptr<ICaptureSession>& captureSession);
 };
 } // namespace CameraStandard
 } // namespace OHOS
