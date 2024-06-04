@@ -300,7 +300,15 @@ int32_t VideoOutput::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
 std::vector<std::vector<int32_t>> VideoOutput::GetSupportedFrameRates()
 {
     MEDIA_DEBUG_LOG("VideoOutput::GetSupportedFrameRates called.");
-    sptr<CameraDevice> camera = GetSession()->inputDevice_->GetCameraDeviceInfo();
+    auto session = GetSession();
+    if (session == nullptr) {
+        return {};
+    }
+    auto inputDevice = session->GetInputDevice();
+    if (inputDevice == nullptr) {
+        return {};
+    }
+    sptr<CameraDevice> camera = inputDevice->GetCameraDeviceInfo();
     sptr<CameraOutputCapability> cameraOutputCapability =
                                  CameraManager::GetInstance()->GetSupportedOutputCapability(camera, SceneMode::VIDEO);
     std::vector<VideoProfile> supportedProfiles = cameraOutputCapability->GetVideoProfiles();
@@ -349,11 +357,16 @@ bool VideoOutput::IsMirrorSupported()
     camera_metadata_item_t item;
     sptr<CameraDevice> cameraObj;
     auto captureSession = GetSession();
-    if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
-        MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, captureSession or inputDevice_ is nullptr");
+    if (captureSession == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, captureSession is nullptr");
         return isMirrorEnabled;
     }
-    cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
+    auto inputDevice = captureSession->GetInputDevice();
+    if (inputDevice == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, inputDevice is nullptr");
+        return isMirrorEnabled;
+    }
+    cameraObj = inputDevice->GetCameraDeviceInfo();
     if (cameraObj == nullptr) {
         MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, cameraObj is nullptr");
         return isMirrorEnabled;

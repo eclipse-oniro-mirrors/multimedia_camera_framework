@@ -54,7 +54,8 @@ std::vector<PortraitEffect> PortraitSession::GetSupportedPortraitEffects()
         MEDIA_ERR_LOG("PortraitSession::GetSupportedPortraitEffects Session is not Commited");
         return supportedPortraitEffects;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("PortraitSession::GetSupportedPortraitEffects camera device is null");
         return supportedPortraitEffects;
     }
@@ -64,7 +65,7 @@ std::vector<PortraitEffect> PortraitSession::GetSupportedPortraitEffects()
         MEDIA_ERR_LOG("PortraitSession::GetSupportedPortraitEffects abilityId is NULL");
         return supportedPortraitEffects;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     if (metadata == nullptr) {
         return supportedPortraitEffects;
     }
@@ -89,11 +90,12 @@ PortraitEffect PortraitSession::GetPortraitEffect()
         MEDIA_ERR_LOG("CaptureSession::GetPortraitEffect Session is not Commited");
         return PortraitEffect::OFF_EFFECT;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("CaptureSession::GetPortraitEffect camera device is null");
         return PortraitEffect::OFF_EFFECT;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     if (metadata == nullptr) {
         return PortraitEffect::OFF_EFFECT;
     }
@@ -172,12 +174,13 @@ std::vector<float> PortraitSession::GetSupportedVirtualApertures()
         MEDIA_ERR_LOG("GetSupportedVirtualApertures Session is not Commited");
         return supportedVirtualApertures;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("GetSupportedVirtualApertures camera device is null");
         return supportedVirtualApertures;
     }
 
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     if (metadata == nullptr) {
         return supportedVirtualApertures;
     }
@@ -200,11 +203,12 @@ float PortraitSession::GetVirtualAperture()
         MEDIA_ERR_LOG("GetVirtualAperture Session is not Commited");
         return virtualAperture;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("GetVirtualAperture camera device is null");
         return virtualAperture;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     if (metadata == nullptr) {
         return virtualAperture;
     }
@@ -264,12 +268,13 @@ std::vector<std::vector<float>> PortraitSession::GetSupportedPhysicalApertures()
         MEDIA_ERR_LOG("GetSupportedPhysicalApertures Session is not Commited");
         return supportedPhysicalApertures;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("GetSupportedPhysicalApertures camera device is null");
         return supportedPhysicalApertures;
     }
 
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     if (metadata == nullptr) {
         return supportedPhysicalApertures;
     }
@@ -310,11 +315,12 @@ float PortraitSession::GetPhysicalAperture()
         MEDIA_ERR_LOG("GetPhysicalAperture Session is not Commited");
         return physicalAperture;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("GetPhysicalAperture camera device is null");
         return physicalAperture;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     if (metadata == nullptr) {
         return physicalAperture;
     }

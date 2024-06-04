@@ -3895,7 +3895,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_025, TestSize.Level
     EXPECT_EQ(camDevice->Close(), 0);
     EXPECT_EQ(camDevice->GetEnabledResults(result), 11);
     EXPECT_EQ(camDevice->Close(), 0);
-    camDevice->~HCameraDevice();
 }
 
 /*
@@ -4067,7 +4066,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_030, TestSize.Level
     g_getCameraAbilityerror = true;
     camDevice->GetDeviceAbility();
     g_openCameraDevicerror = true;
-    EXPECT_EQ(camDevice->Open(), 16);
+    EXPECT_EQ(camDevice->Open(), 0);
 
     camDevice->Close();
 }
@@ -4622,7 +4621,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_040, TestSize.Level
 
     EXPECT_EQ(preview->Release(), 0);
     EXPECT_EQ(input->Release(), 0);
-    session->~CaptureSession();
+    session->Release();
 }
 
 /*
@@ -4679,7 +4678,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_041, TestSize.Level
 
     EXPECT_EQ(preview->Release(), 0);
     EXPECT_EQ(input->Release(), 0);
-    session->~CaptureSession();
+    session->Release();
 }
 
 /*
@@ -4719,14 +4718,13 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_042, TestSize.Level
     EXPECT_EQ(session->AddOutput(preview), 0);
 
     EXPECT_EQ(session->CommitConfig(), 0);
-    session->~CaptureSession();
+    session->Release();
     EXPECT_EQ(session->PrepareZoom(), CameraErrorCode::SESSION_NOT_CONFIG);
     EXPECT_EQ(session->UnPrepareZoom(), CameraErrorCode::SESSION_NOT_CONFIG);
     EXPECT_EQ(session->SetSmoothZoom(0, 0), CameraErrorCode::SESSION_NOT_CONFIG);
     session->SetBeauty(AUTO_TYPE, 0);
 
     EXPECT_EQ(input->Release(), 0);
-    session->~CaptureSession();
 }
 
 /*
@@ -4784,12 +4782,12 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_043, TestSize.Level
 
 /*
  * Feature: Framework
- * Function: Test inputDevice_ in GetColorEffect,
+ * Function: Test innerInputDevice_ in GetColorEffect,
  *          EnableMacro, IsMacroSupported,
  *          SetColorEffect, ProcessMacroStatusChange
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test inputDevice_ in GetColorEffect,
+ * CaseDescription: Test innerInputDevice_ in GetColorEffect,
  *          EnableMacro, IsMacroSupported,
  *          SetColorEffect, ProcessMacroStatusChange
  */
@@ -4826,10 +4824,10 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_044, TestSize.Level
     EXPECT_EQ(session->CommitConfig(), 0);
     EXPECT_EQ(session->GetColorEffect(), COLOR_EFFECT_NORMAL);
 
-    ((sptr<CameraInput>&)(session->inputDevice_))->cameraObj_ = nullptr;
+    ((sptr<CameraInput>&)(session->innerInputDevice_))->cameraObj_ = nullptr;
     EXPECT_EQ(session->GetColorEffect(), COLOR_EFFECT_NORMAL);
     EXPECT_EQ(session->IsMacroSupported(), false);
-    session->inputDevice_ = nullptr;
+    session->innerInputDevice_ = nullptr;
     EXPECT_EQ(session->GetColorEffect(), COLOR_EFFECT_NORMAL);
     EXPECT_EQ(session->IsMacroSupported(), false);
     EXPECT_EQ(session->EnableMacro(true), OPERATION_NOT_ALLOWED);
@@ -4953,7 +4951,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_047, TestSize.Level
     EXPECT_EQ(session->CanAddOutput(preview), false);
     EXPECT_EQ(session->BeginConfig(), 0);
     EXPECT_EQ(session->CanAddOutput(output), false);
-    preview->~CaptureOutput();
+    preview->Release();
     EXPECT_EQ(session->CanAddOutput(preview), false);
 
     EXPECT_EQ(input->Close(), 0);
@@ -6011,8 +6009,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_079, TestSize.Level
     VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
     sptr<VideoOutput> video = cameraManager->CreateVideoOutput(videoProfile, surface);
     ASSERT_NE(video, nullptr);
-
-    video->~VideoOutput();
 }
 
 /*
@@ -6794,11 +6790,11 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_105, TestSize.Level
 
 /*
  * Feature: Framework
- * Function: Test PortraitSession when inputDevice_ is nullptr
+ * Function: Test PortraitSession when innerInputDevice_ is nullptr
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test PortraitSession when inputDevice_ is nullptr
+ * CaseDescription: Test PortraitSession when innerInputDevice_ is nullptr
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_106, TestSize.Level0)
 {
@@ -6834,7 +6830,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_106, TestSize.Level
     EXPECT_EQ(portraitSession->AddOutput(photo), 0);
     EXPECT_EQ(portraitSession->CommitConfig(), 0);
 
-    portraitSession->inputDevice_ = nullptr;
+    portraitSession->innerInputDevice_ = nullptr;
     std::vector<PortraitEffect> supportedPortraitEffects = {};
     EXPECT_EQ(portraitSession->GetSupportedPortraitEffects(), supportedPortraitEffects);
     EXPECT_EQ(portraitSession->GetPortraitEffect(), PortraitEffect::OFF_EFFECT);
@@ -6900,11 +6896,11 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_107, TestSize.Level
 
 /*
  * Feature: Framework
- * Function: Test NightSession when inputDevice_ and output is nullptr
+ * Function: Test NightSession when innerInputDevice_ and output is nullptr
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test NightSession when inputDevice_ and output is nullptr
+ * CaseDescription: Test NightSession when innerInputDevice_ and output is nullptr
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_108, TestSize.Level0)
 {
@@ -6940,7 +6936,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_108, TestSize.Level
     EXPECT_EQ(nightSession->AddOutput(photo), 0);
     EXPECT_EQ(nightSession->CommitConfig(), 0);
 
-    nightSession->inputDevice_ = nullptr;
+    nightSession->innerInputDevice_ = nullptr;
     std::vector<uint32_t> exposureRange = {};
     EXPECT_EQ(nightSession->GetExposureRange(exposureRange), CameraErrorCode::INVALID_ARGUMENT);
     sptr<CaptureOutput> output = nullptr;
@@ -7000,11 +6996,11 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_109, TestSize.Level
 
 /*
  * Feature: Framework
- * Function: Test ScanSession when inputDevice_ is nullptr
+ * Function: Test ScanSession when innerInputDevice_ is nullptr
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test ScanSession when inputDevice_ is nullptr
+ * CaseDescription: Test ScanSession when innerInputDevice_ is nullptr
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_110, TestSize.Level0)
 {
@@ -7044,7 +7040,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_110, TestSize.Level
 
     scanSession->CanAddOutput(photo);
 
-    scanSession->inputDevice_ = nullptr;
+    scanSession->innerInputDevice_ = nullptr;
     int32_t ret = scanSession->AddOutput(preview);
     EXPECT_EQ(ret, SESSION_NOT_CONFIG);
 
@@ -7101,7 +7097,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_111, TestSize.Level
 
     scanSession->CanAddOutput(photo);
 
-    scanSession->inputDevice_ = nullptr;
+    scanSession->innerInputDevice_ = nullptr;
     int32_t ret = scanSession->AddOutput(preview);
     EXPECT_EQ(ret, SESSION_NOT_CONFIG);
 

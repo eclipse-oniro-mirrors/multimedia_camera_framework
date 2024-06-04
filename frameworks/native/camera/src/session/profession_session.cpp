@@ -109,11 +109,12 @@ int32_t ProfessionSession::GetSupportedMeteringModes(std::vector<MeteringMode> &
         MEDIA_ERR_LOG("ProfessionSession::GetSupportedMeteringModes Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::GetSupportedMeteringModes camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_METER_MODES, &item);
     if (ret != CAM_META_SUCCESS) {
@@ -192,11 +193,12 @@ int32_t ProfessionSession::GetMeteringMode(MeteringMode &meteringMode)
         MEDIA_ERR_LOG("ProfessionSession::GetMeteringMode Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::GetMeteringMode camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_METER_MODE, &item);
     if (ret != CAM_META_SUCCESS) {
@@ -218,7 +220,8 @@ int32_t ProfessionSession::GetIsoRange(std::vector<int32_t> &isoRange)
         MEDIA_ERR_LOG("ProfessionSession::GetIsoRange Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::GetIsoRange camera device is null");
         return CameraErrorCode::INVALID_ARGUMENT;
     }
@@ -270,7 +273,8 @@ int32_t ProfessionSession::SetISO(int32_t iso)
     int32_t count = 1;
     camera_metadata_item_t item;
     MEDIA_DEBUG_LOG("ProfessionSession::SetISO iso value: %{public}d", iso);
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::SetISO camera device is null");
         return CameraErrorCode::OPERATION_NOT_ALLOWED;
     }
@@ -303,11 +307,12 @@ int32_t ProfessionSession::GetISO(int32_t &iso)
         MEDIA_ERR_LOG("ProfessionSession::GetISO Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::GetISO camera device is null");
         return CameraErrorCode::INVALID_ARGUMENT;
     }
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_ISO_VALUE, &item);
     if (ret != CAM_META_SUCCESS) {
@@ -328,16 +333,17 @@ bool ProfessionSession::IsManualIsoSupported()
         MEDIA_ERR_LOG("ProfessionSession::IsManualIsoSupported Session is not Commited");
         return false;
     }
-    if (inputDevice_ == nullptr) {
+    auto inputDevice = GetInputDevice();
+    if (inputDevice == nullptr) {
         MEDIA_ERR_LOG("ProfessionSession::IsManualIsoSupported camera device is null");
         return false;
     }
-    auto deviceInfo = inputDevice_->GetCameraDeviceInfo();
+    auto deviceInfo = inputDevice->GetCameraDeviceInfo();
     if (deviceInfo == nullptr) {
         MEDIA_ERR_LOG("ProfessionSession::IsManualIsoSupported camera deviceInfo is null");
         return false;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_ISO_VALUES, &item);
     if (ret != CAM_META_SUCCESS || item.count == 0) {
@@ -355,11 +361,12 @@ int32_t ProfessionSession::GetSupportedFocusModes(std::vector<FocusMode> &suppor
         MEDIA_ERR_LOG("ProfessionSession::GetSupportedFocusModes Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::GetSupportedFocusModes camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FOCUS_MODES, &item);
     if (ret != CAM_META_SUCCESS) {
@@ -437,11 +444,12 @@ int32_t ProfessionSession::GetFocusMode(FocusMode &focusMode)
         MEDIA_ERR_LOG("ProfessionSession::GetFocusMode Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::GetFocusMode camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_MODE, &item);
     if (ret != CAM_META_SUCCESS) {
@@ -464,11 +472,12 @@ int32_t ProfessionSession::GetSupportedWhiteBalanceModes(std::vector<WhiteBalanc
         MEDIA_ERR_LOG("ProfessionSession::GetSupportedWhiteBalanceModes Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::GetSupportedWhiteBalanceModes camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AWB_MODES, &item);
     if (ret != CAM_META_SUCCESS) {
@@ -538,11 +547,12 @@ int32_t ProfessionSession::GetWhiteBalanceMode(WhiteBalanceMode &mode)
         MEDIA_ERR_LOG("ProfessionSession::GetWhiteBalanceMode Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::GetWhiteBalanceMode camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AWB_MODE, &item);
     if (ret != CAM_META_SUCCESS) {
@@ -564,11 +574,12 @@ int32_t ProfessionSession::GetManualWhiteBalanceRange(std::vector<int32_t> &whit
         MEDIA_ERR_LOG("ProfessionSession::GetManualWhiteBalanceRange Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::GetManualWhiteBalanceRange camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SENSOR_WB_VALUES, &item);
     if (ret != CAM_META_SUCCESS) {
@@ -616,7 +627,8 @@ int32_t ProfessionSession::SetManualWhiteBalance(int32_t wbValue)
     int32_t minIndex = 0;
     int32_t maxIndex = 1;
     MEDIA_DEBUG_LOG("ProfessionSession::SetManualWhiteBalance white balance: %{public}d", wbValue);
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::SetManualWhiteBalance camera device is null");
         return CameraErrorCode::OPERATION_NOT_ALLOWED;
     }
@@ -649,11 +661,12 @@ int32_t ProfessionSession::GetManualWhiteBalance(int32_t &wbValue)
         MEDIA_ERR_LOG("ProfessionSession::GetManualWhiteBalance Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::GetManualWhiteBalance camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_SENSOR_WB_VALUE, &item);
     if (ret != CAM_META_SUCCESS) {
@@ -674,11 +687,12 @@ int32_t ProfessionSession::GetSupportedExposureHintModes(std::vector<ExposureHin
         MEDIA_ERR_LOG("ProfessionSession::GetSupportedExposureHintModes Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::GetSupportedExposureHintModes camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_EXPOSURE_HINT_SUPPORTED, &item);
     if (ret != CAM_META_SUCCESS) {
@@ -738,11 +752,12 @@ int32_t ProfessionSession::GetExposureHintMode(ExposureHintMode &mode)
         MEDIA_ERR_LOG("ProfessionSession::GetExposureHintMode Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::GetExposureHintMode camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_EXPOSURE_HINT_MODE, &item);
     if (ret != CAM_META_SUCCESS) {
@@ -765,11 +780,12 @@ int32_t ProfessionSession::GetSupportedFocusAssistFlashModes(
         MEDIA_ERR_LOG("ProfessionSession::GetSupportedFocusAssistFlashModes Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::GetSupportedFocusAssistFlashModes camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FOCUS_ASSIST_FLASH_SUPPORTED_MODES, &item);
     if (ret != CAM_META_SUCCESS) {
@@ -848,11 +864,12 @@ int32_t ProfessionSession::GetFocusAssistFlashMode(FocusAssistFlashMode &mode)
         MEDIA_ERR_LOG("ProfessionSession::GetFocusAssistFlashMode Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::GetFocusAssistFlashMode camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FOCUS_ASSIST_FLASH_SUPPORTED_MODE, &item);
     if (ret != CAM_META_SUCCESS) {
@@ -875,11 +892,12 @@ int32_t ProfessionSession::GetSupportedFlashModes(std::vector<FlashMode> &suppor
         MEDIA_ERR_LOG("ProfessionSession::GetSupportedFlashModes Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::GetSupportedFlashModes camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_FLASH_MODES, &item);
     if (ret != CAM_META_SUCCESS) {
@@ -902,11 +920,12 @@ int32_t ProfessionSession::GetFlashMode(FlashMode &flashMode)
         MEDIA_ERR_LOG("ProfessionSession::GetFlashMode Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::GetFlashMode camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_FLASH_MODE, &item);
     if (ret != CAM_META_SUCCESS) {
@@ -999,11 +1018,12 @@ int32_t ProfessionSession::GetSupportedColorEffects(std::vector<ColorEffect>& su
         MEDIA_ERR_LOG("ProfessionSession::GetSupportedColorEffects Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::GetSupportedColorEffects camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SUPPORTED_COLOR_MODES, &item);
     if (ret != CAM_META_SUCCESS) {
@@ -1026,11 +1046,12 @@ int32_t ProfessionSession::GetColorEffect(ColorEffect& colorEffect)
         MEDIA_ERR_LOG("ProfessionSession::GetColorEffect Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("ProfessionSession::GetColorEffect camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_SUPPORTED_COLOR_MODES, &item);
     if (ret != CAM_META_SUCCESS || item.count == 0) {
@@ -1102,7 +1123,8 @@ int32_t ProfessionSession::GetSupportedPhysicalApertures(std::vector<std::vector
         MEDIA_ERR_LOG("GetSupportedPhysicalApertures Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("GetSupportedPhysicalApertures camera device is null");
         return CameraErrorCode::SUCCESS;
     }
@@ -1145,11 +1167,12 @@ int32_t ProfessionSession::GetPhysicalAperture(float& physicalAperture)
         MEDIA_ERR_LOG("GetPhysicalAperture Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("GetPhysicalAperture camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE, &item);
     if (ret != CAM_META_SUCCESS || item.count == 0) {
@@ -1340,8 +1363,8 @@ void ProfessionSession::ProcessPhysicalCameraSwitch(const std::shared_ptr<OHOS::
 std::shared_ptr<OHOS::Camera::CameraMetadata> ProfessionSession::GetMetadata()
 {
     std::string phyCameraId = std::to_string(physicalCameraId_.load());
-    auto physicalCameraDevice = std::find_if(supportedDevices_.begin(), supportedDevices_.end(),
-        [phyCameraId](const auto& device) -> bool {
+    auto physicalCameraDevice =
+        std::find_if(supportedDevices_.begin(), supportedDevices_.end(), [phyCameraId](const auto& device) -> bool {
             std::string cameraId = device->GetID();
             size_t delimPos = cameraId.find("/");
             if (delimPos == std::string::npos) {
@@ -1354,15 +1377,26 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> ProfessionSession::GetMetadata()
         MEDIA_DEBUG_LOG("ProfessionSession::GetMetadata physicalCameraId: device/%{public}s", phyCameraId.c_str());
         if ((*physicalCameraDevice)->GetCameraType() == CAMERA_TYPE_WIDE_ANGLE &&
             photoProfile_.GetCameraFormat() != CAMERA_FORMAT_DNG) {
-                MEDIA_DEBUG_LOG("ProfessionSession::GetMetadata using main sensor: %{public}s",
-                                inputDevice_->GetCameraDeviceInfo()->GetID().c_str());
-                return inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+            auto inputDevice = GetInputDevice();
+            if (inputDevice == nullptr) {
+                return nullptr;
             }
+            auto info = inputDevice->GetCameraDeviceInfo();
+            if (info == nullptr) {
+                return nullptr;
+            }
+            MEDIA_DEBUG_LOG("ProfessionSession::GetMetadata using main sensor: %{public}s", info->GetID().c_str());
+            return info->GetMetadata();
+        }
         return (*physicalCameraDevice)->GetMetadata();
     }
+    auto inputDevice = GetInputDevice();
+    if (inputDevice == nullptr) {
+        return nullptr;
+    }
     MEDIA_DEBUG_LOG("ProfessionSession::GetMetadata no physicalCamera, using current camera device:%{public}s",
-        inputDevice_->GetCameraDeviceInfo()->GetID().c_str());
-    return inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+        inputDevice->GetCameraDeviceInfo()->GetID().c_str());
+    return inputDevice->GetCameraDeviceInfo()->GetMetadata();
 }
 
 void ProfessionSession::ProfessionSessionMetadataResultProcessor::ProcessCallbacks(

@@ -264,7 +264,7 @@ public:
      *
      * @param isEnabled quickThumbnail is enabled.
      */
-    int32_t SetRawPhotoInfo(sptr<Surface> &surface);
+    int32_t SetRawPhotoInfo(sptr<Surface>& surface);
 
     /**
      * @brief Set the photo callback.
@@ -361,7 +361,7 @@ public:
      *
      * @return Returns true/false if the auto high quality photo is supported/not-supported respectively.
      */
-    int32_t IsAutoHighQualityPhotoSupported(int32_t &isAutoHighQualityPhotoSupported);
+    int32_t IsAutoHighQualityPhotoSupported(int32_t& isAutoHighQualityPhotoSupported);
 
     /**
      * @brief To enable the auto high quality photo.
@@ -369,7 +369,7 @@ public:
      * @return Returns the result of the auto high quality photo enable.
      */
     int32_t EnableAutoHighQualityPhoto(bool enabled);
-    
+
     /**
      * @brief To get status by callbackFlags.
      *
@@ -389,7 +389,7 @@ public:
     sptr<Surface> rawPhotoSurface_;
 
     sptr<Surface> deferredSurface_;
-    
+
 private:
     std::mutex callbackMutex_;
     uint8_t callbackFlag_ = CAPTURE_DEFERRED_PHOTO;
@@ -403,15 +403,9 @@ private:
 
 class HStreamCaptureCallbackImpl : public HStreamCaptureCallbackStub {
 public:
-    wptr<PhotoOutput> photoOutput_ = nullptr;
-    HStreamCaptureCallbackImpl() : photoOutput_(nullptr) {}
+    explicit HStreamCaptureCallbackImpl(PhotoOutput* photoOutput) : innerPhotoOutput_(photoOutput) {}
 
-    explicit HStreamCaptureCallbackImpl(PhotoOutput* photoOutput) : photoOutput_(photoOutput) {}
-
-    ~HStreamCaptureCallbackImpl()
-    {
-        photoOutput_ = nullptr;
-    }
+    ~HStreamCaptureCallbackImpl() = default;
 
     /**
      * @brief Called when camera capture started.
@@ -465,6 +459,17 @@ public:
      * @param timestamp Represents timestamp information for the photo capture callback
      */
     int32_t OnCaptureReady(const int32_t captureId, const uint64_t timestamp) override;
+
+    inline sptr<PhotoOutput> GetPhotoOutput()
+    {
+        if (innerPhotoOutput_ == nullptr) {
+            return nullptr;
+        }
+        return innerPhotoOutput_.promote();
+    }
+
+private:
+    wptr<PhotoOutput> innerPhotoOutput_ = nullptr;
 };
 } // namespace CameraStandard
 } // namespace OHOS

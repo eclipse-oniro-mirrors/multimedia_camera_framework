@@ -189,29 +189,41 @@ std::shared_ptr<Camera::CameraMetadata> PhotoCaptureSetting::GetCaptureMetadataS
 int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId)
 {
     CAMERA_SYNC_TRACE;
-    auto item = photoOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        sptr<CaptureSession> captureSession = item->GetSession();
-        switch (captureSession->GetMode()) {
-            case SceneMode::HIGH_RES_PHOTO: {
-                sptr<CameraDevice> cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
-                std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
-                camera_metadata_item_t meta;
-                int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAPTURE_EXPECT_TIME, &meta);
-                if (ret == CAM_META_SUCCESS) {
-                    item->GetApplicationCallback()->OnCaptureStarted(captureId, meta.data.ui32[1]);
-                } else {
-                    MEDIA_WARNING_LOG("Discarding OnCaptureStarted callback, mode:%{public}d."
-                        "exposureTime is not found", meta.data.ui32[0]);
-                }
-                break;
+    auto photoOutput = GetPhotoOutput();
+    if (photoOutput == nullptr) {
+        MEDIA_ERR_LOG("HStreamCaptureCallbackImpl::OnCaptureStarted photoOutput is nullptr");
+        return CAMERA_OK;
+    }
+    auto callback = photoOutput->GetApplicationCallback();
+    if (callback == nullptr) {
+        MEDIA_ERR_LOG("HStreamCaptureCallbackImpl::OnCaptureStarted callback is nullptr");
+        return CAMERA_OK;
+    }
+
+    sptr<CaptureSession> captureSession = photoOutput->GetSession();
+    switch (captureSession->GetMode()) {
+        case SceneMode::HIGH_RES_PHOTO: {
+            auto inputDevice = captureSession->GetInputDevice();
+            if (inputDevice == nullptr) {
+                MEDIA_ERR_LOG("HStreamCaptureCallbackImpl::OnCaptureStarted inputDevice is nullptr");
+                return CAMERA_OK;
             }
-            default:
-                item->GetApplicationCallback()->OnCaptureStarted(captureId);
-                break;
+            sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+            std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+            camera_metadata_item_t meta;
+            int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAPTURE_EXPECT_TIME, &meta);
+            if (ret == CAM_META_SUCCESS) {
+                photoOutput->GetApplicationCallback()->OnCaptureStarted(captureId, meta.data.ui32[1]);
+            } else {
+                MEDIA_WARNING_LOG("Discarding OnCaptureStarted callback, mode:%{public}d."
+                                  "exposureTime is not found",
+                    meta.data.ui32[0]);
+            }
+            break;
         }
-    } else {
-        MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnCaptureStarted callback");
+        default:
+            photoOutput->GetApplicationCallback()->OnCaptureStarted(captureId);
+            break;
     }
     return CAMERA_OK;
 }
@@ -219,71 +231,101 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId)
 int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId, uint32_t exposureTime)
 {
     CAMERA_SYNC_TRACE;
-    auto item = photoOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnCaptureStarted(captureId, exposureTime);
-    } else {
-        MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnCaptureStarted callback");
+    auto photoOutput = GetPhotoOutput();
+    if (photoOutput == nullptr) {
+        MEDIA_ERR_LOG("HStreamCaptureCallbackImpl::OnCaptureStarted photoOutput is nullptr");
+        return CAMERA_OK;
     }
+    auto callback = photoOutput->GetApplicationCallback();
+    if (callback == nullptr) {
+        MEDIA_ERR_LOG("HStreamCaptureCallbackImpl::OnCaptureStarted callback is nullptr");
+        return CAMERA_OK;
+    }
+    photoOutput->GetApplicationCallback()->OnCaptureStarted(captureId, exposureTime);
     return CAMERA_OK;
 }
 
 int32_t HStreamCaptureCallbackImpl::OnCaptureEnded(const int32_t captureId, const int32_t frameCount)
 {
     CAMERA_SYNC_TRACE;
-    auto item = photoOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnCaptureEnded(captureId, frameCount);
-    } else {
-        MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnCaptureEnded callback");
+    auto photoOutput = GetPhotoOutput();
+    if (photoOutput == nullptr) {
+        MEDIA_ERR_LOG("HStreamCaptureCallbackImpl::OnCaptureEnded photoOutput is nullptr");
+        return CAMERA_OK;
     }
+    auto callback = photoOutput->GetApplicationCallback();
+    if (callback == nullptr) {
+        MEDIA_ERR_LOG("HStreamCaptureCallbackImpl::OnCaptureEnded callback is nullptr");
+        return CAMERA_OK;
+    }
+    callback->OnCaptureEnded(captureId, frameCount);
     return CAMERA_OK;
 }
 
 int32_t HStreamCaptureCallbackImpl::OnCaptureError(const int32_t captureId, const int32_t errorCode)
 {
-    auto item = photoOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnCaptureError(captureId, errorCode);
-    } else {
-        MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnCaptureError callback");
+    auto photoOutput = GetPhotoOutput();
+    if (photoOutput == nullptr) {
+        MEDIA_ERR_LOG("HStreamCaptureCallbackImpl::OnCaptureError photoOutput is nullptr");
+        return CAMERA_OK;
     }
+    auto callback = photoOutput->GetApplicationCallback();
+    if (callback == nullptr) {
+        MEDIA_ERR_LOG("HStreamCaptureCallbackImpl::OnCaptureError callback is nullptr");
+        return CAMERA_OK;
+    }
+    callback->OnCaptureError(captureId, errorCode);
     return CAMERA_OK;
 }
 
 int32_t HStreamCaptureCallbackImpl::OnFrameShutter(const int32_t captureId, const uint64_t timestamp)
 {
     CAMERA_SYNC_TRACE;
-    auto item = photoOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnFrameShutter(captureId, timestamp);
-    } else {
-        MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnFrameShutter callback");
+    auto photoOutput = GetPhotoOutput();
+    if (photoOutput == nullptr) {
+        MEDIA_ERR_LOG("HStreamCaptureCallbackImpl::OnFrameShutter photoOutput is nullptr");
+        return CAMERA_OK;
     }
+    auto callback = photoOutput->GetApplicationCallback();
+    if (callback == nullptr) {
+        MEDIA_ERR_LOG("HStreamCaptureCallbackImpl::OnFrameShutter callback is nullptr");
+        return CAMERA_OK;
+    }
+    callback->OnFrameShutter(captureId, timestamp);
     return CAMERA_OK;
 }
 
 int32_t HStreamCaptureCallbackImpl::OnFrameShutterEnd(const int32_t captureId, const uint64_t timestamp)
 {
     CAMERA_SYNC_TRACE;
-    auto item = photoOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnFrameShutterEnd(captureId, timestamp);
-    } else {
-        MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnFrameShutterEnd callback");
+    auto photoOutput = GetPhotoOutput();
+    if (photoOutput == nullptr) {
+        MEDIA_ERR_LOG("HStreamCaptureCallbackImpl::OnFrameShutter photoOutput is nullptr");
+        return CAMERA_OK;
     }
+    auto callback = photoOutput->GetApplicationCallback();
+    if (callback == nullptr) {
+        MEDIA_ERR_LOG("HStreamCaptureCallbackImpl::OnFrameShutter callback is nullptr");
+        return CAMERA_OK;
+    }
+    callback->OnFrameShutterEnd(captureId, timestamp);
     return CAMERA_OK;
 }
 
 int32_t HStreamCaptureCallbackImpl::OnCaptureReady(const int32_t captureId, const uint64_t timestamp)
 {
     CAMERA_SYNC_TRACE;
-    auto item = photoOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnCaptureReady(captureId, timestamp);
-    } else {
-        MEDIA_INFO_LOG("Discarding HStreamCaptureCallbackImpl::OnCaptureReady callback");
+    auto photoOutput = GetPhotoOutput();
+    if (photoOutput == nullptr) {
+        MEDIA_ERR_LOG("HStreamCaptureCallbackImpl::OnCaptureReady photoOutput is nullptr");
+        return CAMERA_OK;
     }
+    auto callback = photoOutput->GetApplicationCallback();
+    if (callback == nullptr) {
+        MEDIA_ERR_LOG("HStreamCaptureCallbackImpl::OnCaptureReady callback is nullptr");
+        return CAMERA_OK;
+    }
+    callback->OnCaptureReady(captureId, timestamp);
     return CAMERA_OK;
 }
 
@@ -386,11 +428,16 @@ int32_t PhotoOutput::SetThumbnail(bool isEnabled)
     CAMERA_SYNC_TRACE;
     sptr<CameraDevice> cameraObj;
     auto captureSession = GetSession();
-    if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
-        MEDIA_ERR_LOG("PhotoOutput isQuickThumbnailEnabled error!, captureSession or inputDevice_ is nullptr");
+    if ((captureSession == nullptr)) {
+        MEDIA_ERR_LOG("PhotoOutput isQuickThumbnailEnabled error!, captureSession is nullptr");
         return SESSION_NOT_RUNNING;
     }
-    cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
+    auto inputDevice = captureSession->GetInputDevice();
+    if (inputDevice == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput isQuickThumbnailEnabled error!, inputDevice is nullptr");
+        return SESSION_NOT_RUNNING;
+    }
+    cameraObj = inputDevice->GetCameraDeviceInfo();
     if (cameraObj == nullptr) {
         MEDIA_ERR_LOG("PhotoOutput SetThumbnail error!, cameraObj is nullptr");
         return SESSION_NOT_RUNNING;
@@ -595,23 +642,27 @@ int32_t PhotoOutput::Release()
 
 bool PhotoOutput::IsMirrorSupported()
 {
-    bool isMirrorEnabled = false;
-    camera_metadata_item_t item;
-    sptr<CameraDevice> cameraObj;
     auto captureSession = GetSession();
-    if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
-        MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, captureSession or inputDevice_ is nullptr");
-        return isMirrorEnabled;
+    if (captureSession == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, captureSession is nullptr");
+        return false;
     }
-    cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
+    auto inputDevice = captureSession->GetInputDevice();
+    if (inputDevice == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, inputDevice is nullptr");
+        return false;
+    }
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
     if (cameraObj == nullptr) {
         MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, cameraObj is nullptr");
-        return isMirrorEnabled;
+        return false;
     }
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
     if (metadata == nullptr) {
-        return isMirrorEnabled;
+        return false;
     }
+    bool isMirrorEnabled = false;
+    camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_WARNING_LOG("Can not find OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED");
@@ -637,14 +688,17 @@ bool PhotoOutput::IsMirrorSupported()
 int32_t PhotoOutput::IsQuickThumbnailSupported()
 {
     int32_t isQuickThumbnailEnabled = -1;
-    camera_metadata_item_t item;
-    sptr<CameraDevice> cameraObj;
     auto captureSession = GetSession();
-    if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
-        MEDIA_ERR_LOG("PhotoOutput isQuickThumbnailEnabled error!, captureSession or inputDevice_ is nullptr");
+    if (captureSession == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput isQuickThumbnailEnabled error!, captureSession is nullptr");
         return SESSION_NOT_RUNNING;
     }
-    cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
+    auto inputDevice = captureSession->GetInputDevice();
+    if (inputDevice == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput isQuickThumbnailEnabled error!, inputDevice is nullptr");
+        return SESSION_NOT_RUNNING;
+    }
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
     if (cameraObj == nullptr) {
         MEDIA_ERR_LOG("PhotoOutput isQuickThumbnailEnabled error!, cameraObj is nullptr");
         return SESSION_NOT_RUNNING;
@@ -653,6 +707,7 @@ int32_t PhotoOutput::IsQuickThumbnailSupported()
     if (metadata == nullptr) {
         return SESSION_NOT_RUNNING;
     }
+    camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_QUICK_THUMBNAIL_AVAILABLE, &item);
     if (ret == CAM_META_SUCCESS) {
         isQuickThumbnailEnabled = (item.data.u8[0] == 1) ? 0 : -1;
@@ -670,11 +725,17 @@ int32_t PhotoOutput::DeferImageDeliveryFor(DeferredDeliveryImageType type)
     CAMERA_SYNC_TRACE;
     sptr<CameraDevice> cameraObj;
     auto captureSession = GetSession();
-    if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
-        MEDIA_ERR_LOG("PhotoOutput DeferImageDeliveryFor error!, captureSession or inputDevice_ is nullptr");
+    if ((captureSession == nullptr)) {
+        MEDIA_ERR_LOG("PhotoOutput DeferImageDeliveryFor error!, captureSession is nullptr");
         return SESSION_NOT_RUNNING;
     }
-    cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
+    auto inputDevice = captureSession->GetInputDevice();
+    if (inputDevice == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput DeferImageDeliveryFor error!, inputDevice is nullptr");
+        return SESSION_NOT_RUNNING;
+    }
+
+    cameraObj = inputDevice->GetCameraDeviceInfo();
     if (cameraObj == nullptr) {
         MEDIA_ERR_LOG("PhotoOutput DeferImageDeliveryFor error!, cameraObj is nullptr");
         return SESSION_NOT_RUNNING;
@@ -693,11 +754,16 @@ int32_t PhotoOutput::IsDeferredImageDeliverySupported(DeferredDeliveryImageType 
     }
     sptr<CameraDevice> cameraObj;
     auto captureSession = GetSession();
-    if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
-        MEDIA_ERR_LOG("isDeferredImageDeliverySupported error!, captureSession or inputDevice_ is nullptr");
+    if (captureSession == nullptr) {
+        MEDIA_ERR_LOG("isDeferredImageDeliverySupported error!, captureSession is nullptr");
         return SESSION_NOT_RUNNING;
     }
-    cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
+    auto inputDevice = captureSession->GetInputDevice();
+    if (inputDevice == nullptr) {
+        MEDIA_ERR_LOG("isDeferredImageDeliverySupported error!, inputDevice is nullptr");
+        return SESSION_NOT_RUNNING;
+    }
+    cameraObj = inputDevice->GetCameraDeviceInfo();
     if (cameraObj == nullptr) {
         MEDIA_ERR_LOG("isDeferredImageDeliverySupported error!, cameraObj is nullptr");
         return SESSION_NOT_RUNNING;
@@ -717,13 +783,19 @@ int32_t PhotoOutput::IsDeferredImageDeliveryEnabled(DeferredDeliveryImageType ty
 {
     MEDIA_INFO_LOG("PhotoOutput IsDeferredImageDeliveryEnabled type:%{public}d!", type);
     int32_t isEnabled = -1;
-    sptr<CameraDevice> cameraObj;
     auto captureSession = GetSession();
-    if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
-        MEDIA_ERR_LOG("PhotoOutput IsDeferredImageDeliveryEnabled error!, captureSession or inputDevice_ is nullptr");
+    if (captureSession == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput IsDeferredImageDeliveryEnabled error!, captureSession is nullptr");
         return SESSION_NOT_RUNNING;
     }
-    cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
+
+    auto inputDevice = captureSession->GetInputDevice();
+    if (inputDevice == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput IsDeferredImageDeliveryEnabled error!, inputDevice is nullptr");
+        return SESSION_NOT_RUNNING;
+    }
+
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
     if (cameraObj == nullptr) {
         MEDIA_ERR_LOG("PhotoOutput IsDeferredImageDeliveryEnabled error!, cameraObj is nullptr");
         return SESSION_NOT_RUNNING;
@@ -739,11 +811,16 @@ int32_t PhotoOutput::IsAutoHighQualityPhotoSupported(int32_t &isAutoHighQualityP
     camera_metadata_item_t item;
     sptr<CameraDevice> cameraObj;
     auto captureSession = GetSession();
-    if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
-        MEDIA_ERR_LOG("PhotoOutput IsAutoHighQualityPhotoSupported error!, captureSession or inputDevice_ is nullptr");
+    if (captureSession == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput IsAutoHighQualityPhotoSupported error!, captureSession is nullptr");
         return SESSION_NOT_RUNNING;
     }
-    cameraObj = captureSession->inputDevice_->GetCameraDeviceInfo();
+    auto inputDevice = captureSession->GetInputDevice();
+    if (inputDevice == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput IsAutoHighQualityPhotoSupported error!, inputDevice is nullptr");
+        return SESSION_NOT_RUNNING;
+    }
+    cameraObj = inputDevice->GetCameraDeviceInfo();
     if (cameraObj == nullptr) {
         MEDIA_ERR_LOG("PhotoOutput IsAutoHighQualityPhotoSupported error!, cameraObj is nullptr");
         return SESSION_NOT_RUNNING;
@@ -773,8 +850,13 @@ int32_t PhotoOutput::EnableAutoHighQualityPhoto(bool enabled)
 {
     MEDIA_DEBUG_LOG("PhotoOutput EnableAutoHighQualityPhoto");
     auto captureSession = GetSession();
-    if ((captureSession == nullptr) || (captureSession->inputDevice_ == nullptr)) {
-        MEDIA_ERR_LOG("PhotoOutput IsAutoHighQualityPhotoSupported error!, captureSession or inputDevice_ is nullptr");
+    if (captureSession == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput IsAutoHighQualityPhotoSupported error!, captureSession is nullptr");
+        return SESSION_NOT_RUNNING;
+    }
+    auto inputDevice = captureSession->GetInputDevice();
+    if (inputDevice == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutput IsAutoHighQualityPhotoSupported error!, inputDevice is nullptr");
         return SESSION_NOT_RUNNING;
     }
     int32_t isAutoHighQualityPhotoSupported;

@@ -63,11 +63,12 @@ bool SlowMotionSession::IsSlowMotionDetectionSupported()
         MEDIA_ERR_LOG("IsSlowMotionDetectionSupported Session is not Commited");
         return false;
     }
-    if (!inputDevice_ || !inputDevice_->GetCameraDeviceInfo()) {
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("IsSlowMotionDetectionSupported camera device is null");
         return false;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice_->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_MOTION_DETECTION_SUPPORT, &item);
     if (ret != CAM_META_SUCCESS) {

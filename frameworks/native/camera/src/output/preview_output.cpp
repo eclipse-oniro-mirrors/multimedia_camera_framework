@@ -437,7 +437,15 @@ int32_t PreviewOutput::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
 std::vector<std::vector<int32_t>> PreviewOutput::GetSupportedFrameRates()
 {
     MEDIA_DEBUG_LOG("PreviewOutput::GetSupportedFrameRates called.");
-    sptr<CameraDevice> camera = GetSession()->inputDevice_->GetCameraDeviceInfo();
+    auto session = GetSession();
+    if (session == nullptr) {
+        return {};
+    }
+    auto inputDevice = session->GetInputDevice();
+    if (inputDevice == nullptr) {
+        return {};
+    }
+    sptr<CameraDevice> camera = inputDevice->GetCameraDeviceInfo();
 
     sptr<CameraOutputCapability> cameraOutputCapability = CameraManager::GetInstance()->
                                                           GetSupportedOutputCapability(camera, SceneMode::VIDEO);
@@ -499,7 +507,7 @@ std::shared_ptr<Camera::CameraMetadata> PreviewOutput::GetDeviceMetadata()
         MEDIA_WARNING_LOG("PreviewOutput::GetDeviceMetadata session is null");
         return nullptr;
     }
-    auto inputDevice = session->inputDevice_;
+    auto inputDevice = session->GetInputDevice();
     if (inputDevice == nullptr) {
         MEDIA_WARNING_LOG("PreviewOutput::GetDeviceMetadata inputDevice is null");
         return nullptr;
