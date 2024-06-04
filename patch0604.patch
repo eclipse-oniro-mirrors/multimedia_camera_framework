@@ -1,0 +1,360 @@
+diff --git a/services/camera_service/include/camera_util.h b/services/camera_service/include/camera_util.h
+index 45fa1b21..93d0906a 100644
+--- a/services/camera_service/include/camera_util.h
++++ b/services/camera_service/include/camera_util.h
+@@ -37,6 +37,15 @@ class HStreamCommon;
+ static constexpr int32_t HDI_VERSION_1 = 1;
+ static constexpr int32_t HDI_VERSION_2 = 2;
+ static constexpr int32_t HDI_VERSION_3 = 3;
++static const int32_t STREAM_ROTATE_0 = 0;
++static const int32_t STREAM_ROTATE_90 = 90;
++static const int32_t STREAM_ROTATE_180 = 180;
++static const int32_t STREAM_ROTATE_270 = 270;
++static const int32_t STREAM_ROTATE_360 = 360;
++static const int32_t DISPALY_ROTATE_0 = 0;
++static const int32_t DISPALY_ROTATE_1 = 1;
++static const int32_t DISPALY_ROTATE_2 = 2;
++static const int32_t DISPALY_ROTATE_3 = 3;
+ static const std::string OHOS_PERMISSION_CAMERA = "ohos.permission.CAMERA";
+ static const std::string OHOS_PERMISSION_MANAGE_CAMERA_CONFIG = "ohos.permission.MANAGE_CAMERA_CONFIG";
+ 
+@@ -179,6 +188,7 @@ return_container_iter_string_value<Iter> Container2String(Iter first, Iter last)
+     return stringStream.str();
+ }
+ bool IsVerticalDevice();
++int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition, int& disPlayRotation);
+ } // namespace CameraStandard
+ } // namespace OHOS
+ #endif // OHOS_CAMERA_UTIL_H
+diff --git a/services/camera_service/include/hcapture_session.h b/services/camera_service/include/hcapture_session.h
+index 81bb3e93..7ca9e70c 100644
+--- a/services/camera_service/include/hcapture_session.h
++++ b/services/camera_service/include/hcapture_session.h
+@@ -65,6 +65,7 @@ using namespace DeferredProcessing;
+ using namespace Media;
+ class PermissionStatusChangeCb;
+ class CameraUseStateChangeCb;
++class DisplayRotationListener;
+ 
+ static const int32_t STREAM_NOT_FOUNT = -1;
+ 
+@@ -276,6 +277,8 @@ private:
+ 
+     std::string GetSessionState();
+ 
++    void RegisterDisplayListener(sptr<HStreamRepeat> repeat);
++    void UnRegisterDisplayListener(sptr<HStreamRepeat> repeat);
+     StateMachine stateMachine_;
+ 
+     // Make sure device thread safe,set device by {SetCameraDevice}, get device by {GetCameraDevice}
+@@ -302,6 +305,8 @@ private:
+     sptr<Surface> metaSurface_;
+     sptr<MovingPhotoVideoCache> videoCache_;
+     sptr<AvcodecTaskManager> taskManager_;
++    std::mutex displayListenerLock_;
++    sptr<DisplayRotationListener> displayListener_;
+ };
+ 
+ class PermissionStatusChangeCb : public Security::AccessToken::PermStateChangeCallbackCustomize {
+diff --git a/services/camera_service/include/hstream_repeat.h b/services/camera_service/include/hstream_repeat.h
+index 4a72c842..8574726b 100644
+--- a/services/camera_service/include/hstream_repeat.h
++++ b/services/camera_service/include/hstream_repeat.h
+@@ -73,13 +73,13 @@ public:
+     void DumpStreamInfo(std::string& dumpString) override;
+     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
+     int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate) override;
++    void SetStreamTransform(int disPlayRotation = -1);
+ 
+ private:
+     void OpenVideoDfxSwitch(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
+-    void SetStreamTransform();
+     void StartSketchStream(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
+     void UpdateSketchStatus(SketchStatus status);
+-    void ProcessCameraPosition(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
++    void ProcessCameraPosition(int32_t& streamRotation, camera_position_enum_t& cameraPosition);
+ 
+     RepeatStreamType repeatStreamType_;
+     sptr<IStreamRepeatCallback> streamRepeatCallback_;
+diff --git a/services/camera_service/src/camera_util.cpp b/services/camera_service/src/camera_util.cpp
+index 984960ca..e3d54bba 100644
+--- a/services/camera_service/src/camera_util.cpp
++++ b/services/camera_service/src/camera_util.cpp
+@@ -15,6 +15,8 @@
+ #include "camera_util.h"
+ #include <cstdint>
+ #include <securec.h>
++#include <parameter.h>
++#include <parameters.h>
+ #include "camera_log.h"
+ #include "access_token.h"
+ #include "accesstoken_kit.h"
+@@ -29,7 +31,7 @@
+ namespace OHOS {
+ namespace CameraStandard {
+ using namespace OHOS::HDI::Display::Composer::V1_1;
+-
++static bool isPhone = system::GetParameter("const.product.devicetype", "unknow") == "phone";
+ std::unordered_map<int32_t, int32_t> g_cameraToPixelFormat = {
+     {OHOS_CAMERA_FORMAT_RGBA_8888, GRAPHIC_PIXEL_FMT_RGBA_8888},
+     {OHOS_CAMERA_FORMAT_YCBCR_420_888, GRAPHIC_PIXEL_FMT_YCBCR_420_SP},
+@@ -412,6 +414,7 @@ void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::str
+         MEDIA_ERR_LOG("AddPermissionUsedRecord failed.");
+     }
+ }
++
+ bool IsVerticalDevice()
+ {
+     bool isVerticalDevice = true;
+@@ -430,5 +433,28 @@ bool IsVerticalDevice()
+                             (isScreenHorizontal && (display->GetWidth() > display->GetHeight()));
+     return isVerticalDevice;
+ }
++
++int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition, int& disPlayRotation)
++{
++    int32_t streamRotation = sensorOrientation;
++    int degrees = 0;
++
++    switch (disPlayRotation) {
++        case DISPALY_ROTATE_0: degrees = STREAM_ROTATE_0; break;
++        case DISPALY_ROTATE_1: degrees = STREAM_ROTATE_90; break;
++        case DISPALY_ROTATE_2: degrees = STREAM_ROTATE_180; break;
++        case DISPALY_ROTATE_3: degrees = STREAM_ROTATE_270; break; // 逆时针转90
++    }
++    if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
++        sensorOrientation = isPhone ? sensorOrientation : sensorOrientation + STREAM_ROTATE_90;
++        streamRotation = (STREAM_ROTATE_360 + sensorOrientation - degrees) % STREAM_ROTATE_360;
++    } else {
++        sensorOrientation = isPhone ? sensorOrientation : sensorOrientation - STREAM_ROTATE_90;
++        streamRotation = (sensorOrientation + degrees) % STREAM_ROTATE_360;
++        streamRotation = (STREAM_ROTATE_360 - streamRotation) % STREAM_ROTATE_360;
++    }
++    MEDIA_DEBUG_LOG("HStreamRepeat::SetStreamTransform filp streamRotation %{public}d, rotate %{public}d", streamRotation, disPlayRotation);
++    return streamRotation;
++}
+ } // namespace CameraStandard
+ } // namespace OHOS
+diff --git a/services/camera_service/src/hcamera_service.cpp b/services/camera_service/src/hcamera_service.cpp
+index 33457f27..d0e16e6d 100644
+--- a/services/camera_service/src/hcamera_service.cpp
++++ b/services/camera_service/src/hcamera_service.cpp
+@@ -31,7 +31,6 @@
+ 
+ #include "camera_log.h"
+ #include "camera_util.h"
+-#include "display_manager.h"
+ #include "hcamera_device_manager.h"
+ #include "ipc_skeleton.h"
+ #include "system_ability_definition.h"
+diff --git a/services/camera_service/src/hcapture_session.cpp b/services/camera_service/src/hcapture_session.cpp
+index 1ccac087..242543ae 100644
+--- a/services/camera_service/src/hcapture_session.cpp
++++ b/services/camera_service/src/hcapture_session.cpp
+@@ -58,6 +58,7 @@
+ #include "hcamera_restore_param.h"
+ #include "camera_report_uitls.h"
+ #include "media_library_manager.h"
++#include "display_manager.h"
+ 
+ using namespace OHOS::AAFwk;
+ namespace OHOS {
+@@ -143,6 +144,9 @@ HCaptureSession::HCaptureSession(const uint32_t callingTokenId, int32_t opMode)
+ HCaptureSession::~HCaptureSession()
+ {
+     Release(CaptureSessionReleaseType::RELEASE_TYPE_OBJ_DIED);
++    if (displayListener_) {
++        OHOS::Rosen::DisplayManager::GetInstance().UnregisterDisplayListener(displayListener_);
++    }
+ }
+ 
+ pid_t HCaptureSession::GetPid()
+@@ -338,6 +342,72 @@ void HCaptureSession::StartMovingPhotoStream()
+     MEDIA_INFO_LOG("HCaptureSession::StartMovingPhotoStream result:%{public}d", errorCode);
+ }
+ 
++class DisplayRotationListener : public OHOS::Rosen::DisplayManager::IDisplayListener {
++public:
++    explicit DisplayRotationListener() {};
++    virtual ~DisplayRotationListener() = default;
++    void OnCreate(OHOS::Rosen::DisplayId) override {}
++    void OnDestroy(OHOS::Rosen::DisplayId) override {}
++    void OnChange(OHOS::Rosen::DisplayId displayId) override
++    {
++        sptr<Rosen::Display> display = Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
++        if (display == nullptr) {
++            MEDIA_INFO_LOG("Get display info failed, display:%{public}" PRIu64"", displayId);
++            display = Rosen::DisplayManager::GetInstance().GetDisplayById(0);
++            if (display == nullptr) {
++                MEDIA_INFO_LOG("Get display info failed, display is nullptr");
++                return;
++            }
++        }
++        {
++            Rosen::Rotation currentRotation = display->GetRotation();
++            std::lock_guard<std::mutex> lock(mStreamManagerLock_);
++            for (auto& repeatStream : repeatStreamList_) {
++                if (repeatStream) {
++                    repeatStream->SetStreamTransform(static_cast<int> (currentRotation));
++                }
++            }
++        }
++    }
++
++    void AddHstreamRepeatForListener(sptr<HStreamRepeat> repeatStream)
++    {
++        std::lock_guard<std::mutex> lock(mStreamManagerLock_);
++        if (repeatStream) {
++            repeatStreamList_.push_back(repeatStream);
++        }
++    }
++
++    void RemoveHstreamRepeatForListener(sptr<HStreamRepeat> repeatStream)
++    {
++        std::lock_guard<std::mutex> lock(mStreamManagerLock_);
++        if (repeatStream) {
++            repeatStreamList_.erase(std::remove(repeatStreamList_.begin(), repeatStreamList_.end(), repeatStream),
++                repeatStreamList_.end());
++        }
++    }
++
++public:
++    std::list<sptr<HStreamRepeat>> repeatStreamList_;
++    std::mutex mStreamManagerLock_;
++};
++
++void HCaptureSession::RegisterDisplayListener(sptr<HStreamRepeat> repeat)
++{
++    if (displayListener_ == nullptr) {
++        displayListener_ = new DisplayRotationListener();
++        OHOS::Rosen::DisplayManager::GetInstance().RegisterDisplayListener(displayListener_);
++    }
++    displayListener_->AddHstreamRepeatForListener(repeat);
++}
++
++void HCaptureSession::UnRegisterDisplayListener(sptr<HStreamRepeat> repeatStream)
++{
++    if (displayListener_) {
++        displayListener_->RemoveHstreamRepeatForListener(repeatStream);
++    }
++}
++
+ int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> stream)
+ {
+     int32_t errorCode = CAMERA_INVALID_ARG;
+@@ -358,7 +428,11 @@ int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> st
+         if (streamType == StreamType::CAPTURE) {
+             errorCode = AddOutputStream(static_cast<HStreamCapture*>(stream.GetRefPtr()));
+         } else if (streamType == StreamType::REPEAT) {
+-            errorCode = AddOutputStream(static_cast<HStreamRepeat*>(stream.GetRefPtr()));
++            HStreamRepeat* repeatSteam = static_cast<HStreamRepeat*>(stream.GetRefPtr());
++            if (repeatSteam != nullptr && repeatSteam->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
++                RegisterDisplayListener(repeatSteam);
++            }
++            errorCode = AddOutputStream(repeatSteam);
+         } else if (streamType == StreamType::METADATA) {
+             errorCode = AddOutputStream(static_cast<HStreamMetadata*>(stream.GetRefPtr()));
+         }
+@@ -448,7 +522,11 @@ int32_t HCaptureSession::RemoveOutput(StreamType streamType, sptr<IStreamCommon>
+         if (streamType == StreamType::CAPTURE) {
+             errorCode = RemoveOutputStream(static_cast<HStreamCapture*>(stream.GetRefPtr()));
+         } else if (streamType == StreamType::REPEAT) {
+-            errorCode = RemoveOutputStream(static_cast<HStreamRepeat*>(stream.GetRefPtr()));
++            HStreamRepeat* repeatSteam = static_cast<HStreamRepeat*>(stream.GetRefPtr());
++            if (repeatSteam != nullptr && repeatSteam->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
++                UnRegisterDisplayListener(repeatSteam);
++            }
++            errorCode = RemoveOutputStream(repeatSteam);
+         } else if (streamType == StreamType::METADATA) {
+             errorCode = RemoveOutputStream(static_cast<HStreamMetadata*>(stream.GetRefPtr()));
+         }
+diff --git a/services/camera_service/src/hstream_repeat.cpp b/services/camera_service/src/hstream_repeat.cpp
+index 07983d1f..73554f53 100644
+--- a/services/camera_service/src/hstream_repeat.cpp
++++ b/services/camera_service/src/hstream_repeat.cpp
+@@ -32,11 +32,6 @@
+ namespace OHOS {
+ namespace CameraStandard {
+ using namespace OHOS::HDI::Camera::V1_0;
+-static const int32_t STREAM_ROTATE_90 = 90;
+-static const int32_t STREAM_ROTATE_180 = 180;
+-static const int32_t STREAM_ROTATE_270 = 270;
+-static const int32_t STREAM_ROTATE_360 = 360;
+-
+ HStreamRepeat::HStreamRepeat(
+     sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height, RepeatStreamType type)
+     : HStreamCommon(StreamType::REPEAT, producer, format, width, height), repeatStreamType_(type)
+@@ -544,7 +539,7 @@ void HStreamRepeat::DumpStreamInfo(std::string& dumpString)
+     HStreamCommon::DumpStreamInfo(dumpString);
+ }
+ 
+-void HStreamRepeat::SetStreamTransform()
++void HStreamRepeat::SetStreamTransform(int disPlayRotation)
+ {
+     camera_metadata_item_t item;
+     int ret;
+@@ -578,26 +573,29 @@ void HStreamRepeat::SetStreamTransform()
+         return;
+     }
+ 
+-    if (IsVerticalDevice()) {
+-        ProcessCameraPosition(sensorOrientation, cameraPosition);
+-    } else {
+-        ret = SurfaceError::SURFACE_ERROR_OK;
+-        if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
+-            ret = producer_->SetTransform(GRAPHIC_FLIP_H);
+-            MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform filp for wide side devices");
+-        } else {
+-            ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
+-            MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform none rotate");
++    int mOritation = disPlayRotation;
++    if (mOritation == -1) {
++        auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
++        if (producer_ == nullptr || display == nullptr) {
++            MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed, producer is null or GetDefaultDisplay failed");
++            return;
+         }
++        mOritation = static_cast<int>(display->GetRotation());
+     }
++
++    int32_t streamRotation = GetStreamRotation(sensorOrientation, cameraPosition, mOritation);
++    ProcessCameraPosition(streamRotation, cameraPosition);
+ }
+ 
+-void HStreamRepeat::ProcessCameraPosition(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition)
++void HStreamRepeat::ProcessCameraPosition(int32_t& streamRotation, camera_position_enum_t& cameraPosition)
+ {
+     int ret = SurfaceError::SURFACE_ERROR_OK;
+-    int32_t streamRotation = sensorOrientation;
+     if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
+         switch (streamRotation) {
++            case STREAM_ROTATE_0: {
++                ret = producer_->SetTransform(GRAPHIC_FLIP_H);
++                break;
++            }
+             case STREAM_ROTATE_90: {
+                 ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT90);
+                 break;
+@@ -614,10 +612,12 @@ void HStreamRepeat::ProcessCameraPosition(int32_t& sensorOrientation, camera_pos
+                 break;
+             }
+         }
+-        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform filp rotate %{public}d", streamRotation);
+     } else {
+-        streamRotation = STREAM_ROTATE_360 - sensorOrientation;
+         switch (streamRotation) {
++            case STREAM_ROTATE_0: {
++                ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
++                break;
++            }
+             case STREAM_ROTATE_90: {
+                 ret = producer_->SetTransform(GRAPHIC_ROTATE_90);
+                 break;
+@@ -634,7 +634,6 @@ void HStreamRepeat::ProcessCameraPosition(int32_t& sensorOrientation, camera_pos
+                 break;
+             }
+         }
+-        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform not flip rotate %{public}d", streamRotation);
+     }
+     if (ret != SurfaceError::SURFACE_ERROR_OK) {
+         MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed %{public}d", ret);
