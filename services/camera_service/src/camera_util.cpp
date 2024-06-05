@@ -15,6 +15,8 @@
 #include "camera_util.h"
 #include <cstdint>
 #include <securec.h>
+#include <parameter.h>
+#include <parameters.h>
 #include "camera_log.h"
 #include "access_token.h"
 #include "accesstoken_kit.h"
@@ -30,7 +32,7 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Display::Composer::V1_1;
-
+static bool g_isPhone = system::GetParameter("const.product.devicetype", "unknow") == "phone";
 std::unordered_map<int32_t, int32_t> g_cameraToPixelFormat = {
     {OHOS_CAMERA_FORMAT_RGBA_8888, GRAPHIC_PIXEL_FMT_RGBA_8888},
     {OHOS_CAMERA_FORMAT_YCBCR_420_888, GRAPHIC_PIXEL_FMT_YCBCR_420_SP},
@@ -435,6 +437,30 @@ bool IsVerticalDevice()
     isVerticalDevice = (isScreenVertical && (display->GetWidth() < display->GetHeight())) ||
                             (isScreenHorizontal && (display->GetWidth() > display->GetHeight()));
     return isVerticalDevice;
+}
+
+int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition, int& disPlayRotation)
+{
+    int32_t streamRotation = sensorOrientation;
+    int degrees = 0;
+
+    switch (disPlayRotation) {
+        case DISPALY_ROTATE_0: degrees = STREAM_ROTATE_0; break;
+        case DISPALY_ROTATE_1: degrees = STREAM_ROTATE_90; break;
+        case DISPALY_ROTATE_2: degrees = STREAM_ROTATE_180; break;
+        case DISPALY_ROTATE_3: degrees = STREAM_ROTATE_270; break; // 逆时针转90
+    }
+    if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
+        sensorOrientation = g_isPhone ? sensorOrientation : sensorOrientation + STREAM_ROTATE_90;
+        streamRotation = (STREAM_ROTATE_360 + sensorOrientation - degrees) % STREAM_ROTATE_360;
+    } else {
+        sensorOrientation = g_isPhone ? sensorOrientation : sensorOrientation - STREAM_ROTATE_90;
+        streamRotation = (sensorOrientation + degrees) % STREAM_ROTATE_360;
+        streamRotation = (STREAM_ROTATE_360 - streamRotation) % STREAM_ROTATE_360;
+    }
+    MEDIA_DEBUG_LOG("HStreamRepeat::SetStreamTransform filp streamRotation %{public}d, rotate %{public}d",
+        streamRotation, disPlayRotation);
+    return streamRotation;
 }
 } // namespace CameraStandard
 } // namespace OHOS
