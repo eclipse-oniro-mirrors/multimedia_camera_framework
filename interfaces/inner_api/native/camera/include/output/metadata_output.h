@@ -124,7 +124,8 @@ public:
      * @brief Releases a instance of the MetadataOutput.
      */
     int32_t Release() override;
-
+    bool reportFaceResults_ = false;
+    bool reportLastFaceResults_ = false;
     void ProcessFaceRectangles(int64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result,
         std::vector<sptr<MetadataObject>>& metaObjects, bool isNeedMirror);
     int32_t ProcessMetaObjects(int64_t timestamp, std::vector<sptr<MetadataObject>>& metaObjects,
