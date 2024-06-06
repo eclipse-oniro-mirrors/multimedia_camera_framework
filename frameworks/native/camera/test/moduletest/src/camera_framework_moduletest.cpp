@@ -10437,5 +10437,59 @@ HWTEST_F(CameraFrameworkModuleTest, deferred_photo_enable, TestSize.Level0)
 
     ((sptr<PhotoOutput>&)photoOutput)->Release();
 }
+
+/*
+ * Feature: Framework
+ * Function: Test master ai
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test master ai
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_077, TestSize.Level0)
+{
+    if (!IsSupportNow()) {
+        return;
+    }
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = session_->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    if (session_->IsEffectSuggestionSupported()) {
+
+        std::vector<EffectSuggestionType> supportedTypeList = session_->GetSupportedEffectSuggestionType();
+        EXPECT_NE(supportedTypeList.size(), 0);
+
+        session_->LockForControl();
+
+        intResult = session_->EnableEffectSuggestion(true);
+        EXPECT_EQ(intResult, 0);
+
+        std::vector<EffectSuggestionStatus> effectSuggestionStatusList =
+            {{EffectSuggestionType::EFFECT_SUGGESTION_NONE, false},
+             {EffectSuggestionType::EFFECT_SUGGESTION_PORTRAIT, true},
+             {EffectSuggestionType::EFFECT_SUGGESTION_FOOD, false},
+             {EffectSuggestionType::EFFECT_SUGGESTION_SKY, false},
+             {EffectSuggestionType::EFFECT_SUGGESTION_SUNRISE_SUNSET, false}};
+        intResult = session_->SetEffectSuggestionStatus(effectSuggestionStatusList);
+        EXPECT_EQ(intResult, 0);
+
+        intResult = session_->UpdateEffectSuggestion(EffectSuggestionType::EFFECT_SUGGESTION_PORTRAIT, false);
+        EXPECT_EQ(intResult, 0);
+
+        session_->UnlockForControl();
+    }
+}
 } // namespace CameraStandard
 } // namespace OHOS
