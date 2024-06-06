@@ -252,6 +252,11 @@ int32_t HCaptureSession::AddInput(sptr<ICameraDeviceService> cameraDevice)
         hCameraDevice->SetStreamOperatorCallback(this);
         SetCameraDevice(hCameraDevice);
         hCameraDevice->DispatchDefaultSettingToHdi();
+        auto deviceEventCallback = new DeviceEventCallback(DeviceEventCallback::StatusCallback([this]() {
+            StopUsingPermissionCallback(callerToken_, OHOS_PERMISSION_CAMERA);
+            UnregisterPermissionCallback(callerToken_);
+        }));
+        hCameraDevice->SetDeviceEventCallback(deviceEventCallback);
     });
     if (errorCode == CAMERA_OK) {
         CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::AddInput"));
@@ -470,6 +475,7 @@ int32_t HCaptureSession::RemoveInput(sptr<ICameraDeviceService> cameraDevice)
             MEDIA_INFO_LOG(
                 "HCaptureSession::RemoveInput camera id is %{public}s", currentDevice->GetCameraId().c_str());
             currentDevice->ResetDeviceSettings();
+            currentDevice->SetDeviceEventCallback(nullptr);
             SetCameraDevice(nullptr);
         } else {
             MEDIA_ERR_LOG("HCaptureSession::RemoveInput Invalid camera device");

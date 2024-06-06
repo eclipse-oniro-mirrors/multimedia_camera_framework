@@ -41,6 +41,20 @@ using OHOS::HDI::Camera::V1_0::CaptureEndedInfo;
 using OHOS::HDI::Camera::V1_0::CaptureErrorInfo;
 using OHOS::HDI::Camera::V1_0::ICameraDeviceCallback;
 using OHOS::HDI::Camera::V1_3::IStreamOperatorCallback;
+
+class DeviceEventCallback : public RefBase {
+public:
+    using StatusCallback = std::function<void()>;
+    explicit DeviceEventCallback(StatusCallback callback) : callback_(std::move(callback)) {}
+    ~DeviceEventCallback() override = default;
+    void OnError(const OHOS::HDI::Camera::V1_0::ErrorType type)
+    {
+        callback_();
+    }
+private:
+    StatusCallback callback_;
+};
+
 class HCameraDevice : public HCameraDeviceStub, public ICameraDeviceCallback, public IStreamOperatorCallback {
 public:
     explicit HCameraDevice(
@@ -116,6 +130,8 @@ public:
 
     bool CheckMovingPhotoSupported(int32_t mode);
 
+    void SetDeviceEventCallback(sptr<DeviceEventCallback> callback);
+    sptr<DeviceEventCallback> GetDeviceEventCallback();
 private:
     class FoldScreenListener;
     std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.
@@ -132,6 +148,8 @@ private:
     static std::mutex g_deviceOpenCloseMutex_;
     sptr<ICameraDeviceServiceCallback> deviceSvcCallback_;
     std::map<int32_t, wptr<ICameraServiceCallback>> statusSvcCallbacks_;
+    sptr<DeviceEventCallback> deviceEventCallback_;
+    std::mutex deviceEventCbMutex_;
 
     uint32_t callerToken_;
 

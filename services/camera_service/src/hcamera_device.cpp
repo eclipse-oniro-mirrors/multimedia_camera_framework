@@ -426,6 +426,7 @@ int32_t HCameraDevice::CloseDevice()
         std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
         deviceSvcCallback_ = nullptr;
     }
+    SetDeviceEventCallback(nullptr);
     POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str());
     MEDIA_DEBUG_LOG("HCameraDevice::CloseDevice end");
     NotifyCameraSessionStatus(false);
@@ -994,6 +995,18 @@ sptr<ICameraDeviceServiceCallback> HCameraDevice::GetDeviceServiceCallback()
     return deviceSvcCallback_;
 }
 
+void HCameraDevice::SetDeviceEventCallback(sptr<DeviceEventCallback> callback)
+{
+    std::lock_guard<std::mutex> lock(deviceEventCbMutex_);
+    deviceEventCallback_ = callback;
+}
+
+sptr<DeviceEventCallback> HCameraDevice::GetDeviceEventCallback()
+{
+    std::lock_guard<std::mutex> lock(deviceEventCbMutex_);
+    return deviceEventCallback_;
+}
+
 void HCameraDevice::UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings)
 {
     if (changedSettings == nullptr) {
@@ -1117,6 +1130,11 @@ int32_t HCameraDevice::OnError(const OHOS::HDI::Camera::V1_0::ErrorType type, co
         CAMERA_SYSEVENT_FAULT(CreateMsg("CameraDeviceServiceCallback::OnError() is called!, errorType: %d,"
                                         "errorMsg: %d",
             errorType, errorMsg));
+    }
+
+    auto deviceEventCallback = GetDeviceEventCallback();
+    if (callback != nullptr) {
+        deviceEventCallback->OnError(type);
     }
     return CAMERA_OK;
 }
