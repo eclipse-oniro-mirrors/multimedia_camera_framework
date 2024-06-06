@@ -197,7 +197,7 @@ void SessionCoordinator::OnStateChanged(int userId, DpsStatus statusCode)
     }
 }
 
-void SessionCoordinator::NotifySessionCreated(int userId, sptr<IDeferredPhotoProcessingSessionCallback> callback
+void SessionCoordinator::NotifySessionCreated(int userId, sptr<IDeferredPhotoProcessingSessionCallback> callback,
     TaskManager* taskManager)
 {
     if (callback) {
