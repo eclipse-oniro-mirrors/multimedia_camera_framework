@@ -19,6 +19,7 @@
 #include "message_parcel.h"
 #include "surface.h"
 #include "photo_proxy.h"
+#include <cstdint>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -30,6 +31,19 @@ static const char placeholder = '0';
 static const int yearWidth = 4;
 static const int otherWidth = 2;
 static const int startYear = 1900;
+
+static const std::map<int32_t, int32_t> modeMap = {
+    { 3, 23},
+    { 4, 7},
+    { 6, 33},
+    { 7, 74},
+    { 8, 47},
+    { 9, 68},
+    { 11, 2},
+    { 12, 31},
+    { 13, 33},
+    { 14, 52}
+};
 class CameraServerPhotoProxy : public PhotoProxy {
 public:
     CameraServerPhotoProxy();
@@ -46,6 +60,10 @@ public:
     PhotoFormat GetFormat() override;
     PhotoQuality GetPhotoQuality() override;
     void SetDisplayName(std::string displayName);
+    double GetLatitude() override;
+    double GetLongitude() override;
+    int32_t GetShootingMode() override;
+    void SetShootingMode(int32_t mode);
     void Release() override;
 
 private:
@@ -63,6 +81,9 @@ private:
     sptr<Surface> photoSurface_;
     std::string displayName_;
     bool isHighQuality_;
+    double latitude_;
+    double longitude_;
+    int32_t mode_;
     int32_t CameraFreeBufferHandle(BufferHandle *handle);
 };
 } // namespace CameraStandard

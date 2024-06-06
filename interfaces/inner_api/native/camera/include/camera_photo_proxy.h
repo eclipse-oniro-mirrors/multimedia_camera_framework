@@ -31,6 +31,7 @@ public:
     void ReadFromParcel(MessageParcel &parcel);
     void WriteToParcel(MessageParcel &parcel);
     void SetDeferredAttrs(std::string photoId, int32_t deferredProcType, uint64_t fileSize);
+    void SetLocation(double latitude, double longitude);
     int32_t CameraFreeBufferHandle();
 
 private:
@@ -44,6 +45,8 @@ private:
     std::string photoId_;
     int32_t deferredProcType_;
     int32_t isDeferredPhoto_;
+    double latitude_;
+    double longitude_;
     sptr<Surface> photoSurface_;
 };
 } // namespace CameraStandard

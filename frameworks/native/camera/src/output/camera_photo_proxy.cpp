@@ -72,6 +72,8 @@ void CameraPhotoProxy::ReadFromParcel(MessageParcel &parcel)
     photoHeight_ = parcel.ReadInt32();
     isHighQuality_ = parcel.ReadBool();
     fileSize_ = parcel.ReadUint64();
+    latitude_ = parcel.ReadDouble();
+    longitude_ = parcel.ReadDouble();
     bufferHandle_ = ReadBufferHandle(parcel);
     MEDIA_INFO_LOG("PhotoProxy::ReadFromParcel");
 }
@@ -109,6 +111,8 @@ void CameraPhotoProxy::WriteToParcel(MessageParcel &parcel)
     parcel.WriteInt32(photoHeight_);
     parcel.WriteBool(isHighQuality_);
     parcel.WriteUint64(fileSize_);
+    parcel.WriteDouble(latitude_);
+    parcel.WriteDouble(longitude_);
     if (bufferHandle_) {
         MEDIA_DEBUG_LOG("PhotoProxy::WriteToParcel %{public}d", bufferHandle_->fd);
         bool ret = WriteBufferHandle(parcel, *bufferHandle_);
@@ -128,6 +132,13 @@ void CameraPhotoProxy::SetDeferredAttrs(std::string photoId, int32_t deferredPro
     photoId_ = photoId;
     deferredProcType_ = deferredProcType;
     fileSize_ = fileSize;
+}
+
+void CameraPhotoProxy::SetLocation(double latitude, double longitude)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    latitude_ = latitude;
+    longitude_ = longitude;
 }
 } // namespace CameraStandard
 } // namespace OHOS

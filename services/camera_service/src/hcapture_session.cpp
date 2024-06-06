@@ -1622,6 +1622,9 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
     sptr<CameraServerPhotoProxy> cameraServerPhotoProxy = new CameraServerPhotoProxy();
     cameraServerPhotoProxy->ReadFromParcel(data);
     cameraServerPhotoProxy->SetDisplayName(CreateDisplayName());
+    cameraServerPhotoProxy->SetShootingMode(opMode_);
+    MEDIA_INFO_LOG("GetLocation latitude:%{public}f, longitude:%{public}f",
+        cameraServerPhotoProxy->GetLatitude(), cameraServerPhotoProxy->GetLongitude());
     photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraServerPhotoProxy);
     uri = photoAssetProxy->GetPhotoAssetUri();
     if (isSetMotionPhoto_) {

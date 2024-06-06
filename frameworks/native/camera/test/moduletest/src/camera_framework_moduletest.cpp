@@ -2345,7 +2345,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_034, TestSize.Le
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_035, TestSize.Level0)
 {
     std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
-    std::unique_ptr<Location> location = std::make_unique<Location>();
+    std::shared_ptr<Location> location = std::make_shared<Location>();
     location->latitude = 1;
     location->longitude = 1;
     location->altitude = 1;
@@ -2396,7 +2396,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_035, TestSize.Le
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_036, TestSize.Level0)
 {
     std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
-    std::unique_ptr<Location> location = std::make_unique<Location>();
+    std::shared_ptr<Location> location = std::make_shared<Location>();
     location->latitude = 0.0;
     location->longitude = 0.0;
     location->altitude = 0.0;
@@ -2446,7 +2446,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_036, TestSize.Le
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_037, TestSize.Level0)
 {
     std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
-    std::unique_ptr<Location> location = std::make_unique<Location>();
+    std::shared_ptr<Location> location = std::make_shared<Location>();
     location->latitude = -1;
     location->longitude = -1;
     location->altitude = -1;
@@ -2556,7 +2556,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_038, TestSize.Le
 HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_039, TestSize.Level0)
 {
     std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
-    std::unique_ptr<Location> location = std::make_unique<Location>();
+    std::shared_ptr<Location> location = std::make_shared<Location>();
     location->latitude = 12.972442;
     location->longitude = 77.580643;
     location->altitude = 0;
@@ -4775,7 +4775,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_017, TestSize.L
     photoSetting->SetRotation(rotation);
     photoSetting->SetRotation(rotation);
 
-    std::unique_ptr<Location> location = std::make_unique<Location>();
+    std::shared_ptr<Location> location = std::make_shared<Location>();
     location->latitude = 12.972442;
     location->longitude = 77.580643;
 

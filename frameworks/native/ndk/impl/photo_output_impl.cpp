@@ -142,7 +142,7 @@ Camera_ErrorCode Camera_PhotoOutput::Capture_WithCaptureSetting(Camera_PhotoCapt
     capSettings->SetRotation(static_cast<PhotoCaptureSetting::RotationConfig>(setting.rotation));
 
     if (setting.location != nullptr) {
-        std::unique_ptr<Location> location = std::make_unique<Location>();
+        std::shared_ptr<Location> location = std::make_shared<Location>();
         location->latitude = setting.location->latitude;
         location->longitude = setting.location->longitude;
         location->altitude = setting.location->altitude;

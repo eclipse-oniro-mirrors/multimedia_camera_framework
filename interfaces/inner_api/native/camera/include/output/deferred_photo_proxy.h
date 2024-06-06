@@ -48,6 +48,9 @@ public:
     int32_t GetHeight() override;
     Media::PhotoFormat GetFormat() override;
     Media::PhotoQuality GetPhotoQuality() override;
+    double GetLatitude() override;
+    double GetLongitude() override;
+    int32_t GetShootingMode() override;
     void Release() override;
 
 private:
