@@ -86,12 +86,12 @@ sptr<IDeferredPhotoProcessingSession> SessionManager::CreateDeferredPhotoProcess
         DP_INFO_LOG("SessionManager::CreateDeferredPhotoProcessorSession failed due to photoSession already existed");
         sptr<SessionInfo> sessionInfo = iter->second;
         sessionInfo->SetCallback(callback);
-        coordinator_->NotifySessionCreated(userId, callback);
+        coordinator_->NotifySessionCreated(userId, callback, taskManager);
         return sessionInfo->GetDeferredPhotoProcessingSession();
     }
     sptr<SessionInfo> sessionInfo(new SessionInfo(userId, callback, this));
     sessionInfo->CreateDeferredPhotoProcessingSession(userId, processor, taskManager, callback);
-    coordinator_->NotifySessionCreated(userId, callback);
+    coordinator_->NotifySessionCreated(userId, callback, taskManager);
     photoSessionInfos_[userId] = sessionInfo;
     return sessionInfo->GetDeferredPhotoProcessingSession();
 }

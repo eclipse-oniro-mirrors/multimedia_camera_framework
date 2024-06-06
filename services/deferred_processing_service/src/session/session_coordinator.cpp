@@ -197,11 +197,14 @@ void SessionCoordinator::OnStateChanged(int userId, DpsStatus statusCode)
     }
 }
 
-void SessionCoordinator::NotifySessionCreated(int userId, sptr<IDeferredPhotoProcessingSessionCallback> callback)
+void SessionCoordinator::NotifySessionCreated(int userId, sptr<IDeferredPhotoProcessingSessionCallback> callback
+    TaskManager* taskManager)
 {
     if (callback) {
         remoteImageCallbacksMap_[userId] = callback;
-        ProcessPendingResults(callback);
+        taskManager->SubmitTask([this, callback]() {
+            this->ProcessPendingResults(callback);
+        });
     }
 }
 
