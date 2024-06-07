@@ -39,6 +39,7 @@
 #include "preview_output.h"
 #include "scan_session.h"
 #include "secure_camera_session.h"
+#include "slow_motion_session.h"
 #include "surface.h"
 #include "test_common.h"
 #include "token_setproc.h"
@@ -334,8 +335,15 @@ public:
                 CameraFrameworkUnitTest::ABILITY_ID_THREE,
                 CameraFrameworkUnitTest::ABILITY_ID_FOUR, } } } } } };
 
+    const ModeConfig SLOW_MODE_CONFIG = { CameraFrameworkUnitTest::SLOW_MODE, {
+        { CameraFrameworkUnitTest::PREVIEW_STREAM, {
+            { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 1920, 1080, 0, 0, 0} } },
+        { CameraFrameworkUnitTest::VIDEO_STREAM, {
+            { OHOS_CAMERA_FORMAT_YCRCB_420_SP, 1920, 1080, 0, 0, 0} } }}};
+
     const ModeConfigs ABILITY_MODE_CONFIGS = ModeConfigs(std::vector<ModeConfig> { DEFAULT_MODE_CONFIG,
-        PHOTO_MODE_CONFIG, VIDEO_MODE_CONFIG, PORTRAIT_MODE_CONFIG, NIGHT_MODE_CONFIG, SCAN_MODE_CONFIG });
+        PHOTO_MODE_CONFIG, VIDEO_MODE_CONFIG, PORTRAIT_MODE_CONFIG, NIGHT_MODE_CONFIG, SCAN_MODE_CONFIG,
+        SLOW_MODE_CONFIG });
 
     uint8_t filterAbility[2] = {0, 1};
     int32_t filterControl[2] = {0, 1};
@@ -8282,6 +8290,160 @@ HWTEST_F(CameraFrameworkUnitTest, test_createDeferredPhotoProcessingSession, Tes
     deferredProcSession = cameraManager->CreateDeferredPhotoProcessingSession(g_userId_,
         std::make_shared<TestDeferredPhotoProcSessionCallback>());
     ASSERT_NE(deferredProcSession, nullptr);
+}
+
+/**
+* @tc.name    : Test IsSlowMotionDetectionSupported API
+* @tc.number  : IsSlowMotionDetectionSupported_001
+* @tc.desc    : Test IsSlowMotionDetectionSupported interface, when session is not committed.
+* @tc.require : slow motion only support videoStream & previewStrem & 1080p & 240fps
+*/
+HWTEST_F(CameraFrameworkUnitTest, IsSlowMotionDetectionSupported_001, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession(SceneMode::SLOW_MOTION);
+    ASSERT_NE(session, nullptr);
+    sptr<SlowMotionSession> slowSession = static_cast<SlowMotionSession *> (session.GetRefPtr());
+    bool result = slowSession->IsSlowMotionDetectionSupported();
+    EXPECT_EQ(false, result);
+}
+
+/**
+* @tc.name    : Test IsSlowMotionDetectionSupported API
+* @tc.number  : IsSlowMotionDetectionSupported_002
+* @tc.desc    : Test IsSlowMotionDetectionSupported interface, when camera device is null.
+* @tc.require : slow motion only support videoStream & previewStrem & 1080p & 240fps
+*/
+HWTEST_F(CameraFrameworkUnitTest, IsSlowMotionDetectionSupported_002, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession(SceneMode::SLOW_MOTION);
+    ASSERT_NE(session, nullptr);
+
+    sptr<Surface> videoSurface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = 1920;
+    videoSize.height = 1080;
+    std::vector<int32_t> videoFramerates = {0, 0};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> videoOutput = cameraManager->CreateVideoOutput(videoProfile, videoSurface);
+    ASSERT_NE(videoOutput, nullptr);
+
+    sptr<Surface> previewSurface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size previewSize;
+    previewSize.width = 1920;
+    previewSize.height = 1080;
+    Profile previewProfile = Profile(previewFormat, previewSize);
+    sptr<CaptureOutput> previewOutput = cameraManager->CreatePreviewOutput(previewProfile, previewSurface);
+    ASSERT_NE(previewOutput, nullptr);
+
+    int32_t intResult = session->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session->AddInput(input);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutputCaptureUpper = previewOutput;
+    intResult = session->AddOutput(previewOutputCaptureUpper);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> videoOutputCaptureUpper = videoOutput;
+    intResult = session->AddOutput(videoOutputCaptureUpper);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = input->Release();
+    EXPECT_EQ(intResult, 0);
+
+    sptr<SlowMotionSession> slowSession = nullptr;
+    slowSession = static_cast<SlowMotionSession *> (session.GetRefPtr());
+    bool result = slowSession->IsSlowMotionDetectionSupported();
+    EXPECT_EQ(false, result);
+}
+
+/**
+* @tc.name    : Test IsSlowMotionDetectionSupported API
+* @tc.number  : IsSlowMotionDetectionSupported_003
+* @tc.desc    : Test IsSlowMotionDetectionSupported interface, when metadata item not found.
+*               Test IsSlowMotionDetectionSupported interface, when metadata item data is 0.
+*               Test IsSlowMotionDetectionSupported interface, when metadata item data is 1.
+* @tc.require : slow motion only support videoStream & previewStrem & 1080p & 240fps
+*/
+HWTEST_F(CameraFrameworkUnitTest, IsSlowMotionDetectionSupported_003, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    camInput->GetCameraDevice()->Open();
+
+    sptr<CaptureSession> session = cameraManager->CreateCaptureSession(SceneMode::SLOW_MOTION);
+    ASSERT_NE(session, nullptr);
+
+    sptr<Surface> videoSurface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size videoSize;
+    videoSize.width = 1920;
+    videoSize.height = 1080;
+    std::vector<int32_t> videoFramerates = {0, 0};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, videoFramerates);
+    sptr<VideoOutput> videoOutput = cameraManager->CreateVideoOutput(videoProfile, videoSurface);
+    ASSERT_NE(videoOutput, nullptr);
+
+    sptr<Surface> previewSurface = Surface::CreateSurfaceAsConsumer();
+    CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
+    Size previewSize;
+    previewSize.width = 1920;
+    previewSize.height = 1080;
+    Profile previewProfile = Profile(previewFormat, previewSize);
+    sptr<CaptureOutput> previewOutput = cameraManager->CreatePreviewOutput(previewProfile, previewSurface);
+    ASSERT_NE(previewOutput, nullptr);
+
+    int32_t intResult = session->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session->AddInput(input);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutputCaptureUpper = previewOutput;
+    intResult = session->AddOutput(previewOutputCaptureUpper);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> videoOutputCaptureUpper = videoOutput;
+    intResult = session->AddOutput(videoOutputCaptureUpper);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    sptr<SlowMotionSession> slowSession = static_cast<SlowMotionSession *> (session.GetRefPtr());
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = slowSession->GetInputDevice()->GetCameraDeviceInfo()->GetMetadata();
+    uint8_t value_u8 = 0;
+    bool result = false;
+    // metadata item not found.
+    result = slowSession->IsSlowMotionDetectionSupported();
+    EXPECT_EQ(false, result);
+    // metadata item data is 0.
+    metadata->addEntry(OHOS_ABILITY_MOTION_DETECTION_SUPPORT, &value_u8, sizeof(uint8_t));
+    result = slowSession->IsSlowMotionDetectionSupported();
+    EXPECT_EQ(false, result);
+    value_u8 = 1;
+    // metadata item data is 1.
+    metadata->updateEntry(OHOS_ABILITY_MOTION_DETECTION_SUPPORT, &value_u8, sizeof(uint8_t));
+    result = slowSession->IsSlowMotionDetectionSupported();
+    EXPECT_EQ(true, result);
 }
 } // CameraStandard
 } // OHOS

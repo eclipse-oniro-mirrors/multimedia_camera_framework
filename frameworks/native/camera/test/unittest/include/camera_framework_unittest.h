@@ -40,6 +40,7 @@ public:
     static const int32_t VIDEO_MODE = 2;
     static const int32_t PORTRAIT_MODE = 3;
     static const int32_t NIGHT_MODE = 4;
+    static const int32_t SLOW_MODE = 6;
     static const int32_t SCAN_MODE = 7;
     static const int32_t MODE_FINISH = -1;
     static const int32_t STREAM_FINISH = -1;
