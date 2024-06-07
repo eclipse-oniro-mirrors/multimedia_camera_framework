@@ -8429,7 +8429,8 @@ HWTEST_F(CameraFrameworkUnitTest, IsSlowMotionDetectionSupported_003, TestSize.L
     EXPECT_EQ(intResult, 0);
 
     sptr<SlowMotionSession> slowSession = static_cast<SlowMotionSession *> (session.GetRefPtr());
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = slowSession->GetInputDevice()->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        slowSession->GetInputDevice()->GetCameraDeviceInfo()->GetMetadata();
     uint8_t value_u8 = 0;
     bool result = false;
     // metadata item not found.
