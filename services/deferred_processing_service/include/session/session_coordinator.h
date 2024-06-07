@@ -24,6 +24,7 @@
 #include "base/iimage_process_callbacks.h"
 #include "ipc_file_descriptor.h"
 #include "ideferred_photo_processing_session_callback.h"
+#include "task_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -40,7 +41,8 @@ public:
     void OnError(int userId, const std::string& imageId, DpsError errorCode);
     void OnStateChanged(int userId, DpsStatus statusCode);
     std::shared_ptr<IImageProcessCallbacks> GetImageProcCallbacks();
-    void NotifySessionCreated(int userId, sptr<IDeferredPhotoProcessingSessionCallback> callback);
+    void NotifySessionCreated(int userId, sptr<IDeferredPhotoProcessingSessionCallback> callback,
+        TaskManager* taskManager);
     void NotifyCallbackDestroyed(int userId);
 
 private:
