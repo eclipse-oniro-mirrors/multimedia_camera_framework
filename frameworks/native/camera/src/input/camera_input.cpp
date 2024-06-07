@@ -114,9 +114,7 @@ void CameraInput::CameraServerDied(pid_t pid)
         }
     }
     std::lock_guard<std::mutex> interfaceLock(interfaceMutex_);
-    {
-        InputRemoveDeathRecipient();
-    }
+    InputRemoveDeathRecipient();
 }
 
 void CameraInput::InputRemoveDeathRecipient()

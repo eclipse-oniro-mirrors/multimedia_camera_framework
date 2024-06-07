@@ -97,7 +97,7 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
     }
 }
 
-void CameraDeviceFuzzTest_UpdateSetting(uint8_t *rawData, size_t size)
+void CameraDeviceFuzzTestUpdateSetting(uint8_t *rawData, size_t size)
 {
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
     fuzzCameraDevice->UpdateSetting(ability);
@@ -137,7 +137,7 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
 {
     /* Run your code on data */
     OHOS::CameraStandard::CameraDeviceFuzzTest(data, size);
-    OHOS::CameraStandard::CameraDeviceFuzzTest_UpdateSetting(data, size);
+    OHOS::CameraStandard::CameraDeviceFuzzTestUpdateSetting(data, size);
     return 0;
 }
 

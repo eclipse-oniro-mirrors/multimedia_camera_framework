@@ -76,7 +76,7 @@ private:
             modeInfo.effectSuggestionList.resize(typeNum);
             uint32_t effectStartIndex = start + 2;
             for (int i = 0; i < typeNum; i++) {
-                modeInfo.effectSuggestionList[i] = originInfo[effectStartIndex + i];
+                modeInfo.effectSuggestionList[i] = originInfo[effectStartIndex + static_cast<uint32_t>(i)];
             }
         }
     }

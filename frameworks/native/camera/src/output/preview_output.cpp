@@ -63,9 +63,18 @@ camera_format_t GetHdiFormatFromCameraFormat(CameraFormat cameraFormat)
 static constexpr int32_t SKETCH_MIN_WIDTH = 480;
 PreviewOutput::PreviewOutput(sptr<IBufferProducer> bufferProducer)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PREVIEW, StreamType::REPEAT, bufferProducer, nullptr)
-{}
+{
+    PreviewFormat_ = 0;
+    PreviewSize_.height = 0;
+    PreviewSize_.width = 0;
+}
 
-PreviewOutput::PreviewOutput() : PreviewOutput(nullptr) {}
+PreviewOutput::PreviewOutput() : PreviewOutput(nullptr)
+{
+    PreviewFormat_ = 0;
+    PreviewSize_.height = 0;
+    PreviewSize_.width = 0;
+}
 
 PreviewOutput::~PreviewOutput()
 {
