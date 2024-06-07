@@ -259,6 +259,14 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
     photoProxy->SetDeferredAttrs(imageIdStr, deferredProcessingType, size);
     auto photoOutput = photoOutput_.promote();
     if (photoOutput && photoOutput->GetSession()) {
+        auto settings = photoOutput->GetDefaultCaptureSetting();
+        if (settings) {
+            auto location = make_shared<Location>();
+            settings->GetLocation(location);
+            MEDIA_INFO_LOG("GetLocation latitude:%{public}f, longitude:%{public}f", location->latitude,
+                location->longitude);
+            photoProxy->SetLocation(location->latitude, location->longitude);
+        }
         photoOutput->GetSession()->CreateMediaLibrary(photoProxy, uri, cameraShotType);
     }
 }

@@ -91,6 +91,8 @@ void CameraServerPhotoProxy::ReadFromParcel(MessageParcel &parcel)
     photoHeight_ = parcel.ReadInt32();
     isHighQuality_ = parcel.ReadBool();
     fileSize_ = parcel.ReadUint64();
+    latitude_ = parcel.ReadDouble();
+    longitude_ = parcel.ReadDouble();
     bufferHandle_ = ReadBufferHandle(parcel);
     MEDIA_INFO_LOG("PhotoProxy::ReadFromParcel");
 }
@@ -165,6 +167,26 @@ std::string CameraServerPhotoProxy::GetDisplayName()
 std::string CameraServerPhotoProxy::GetExtension()
 {
     return suffix;
+}
+double CameraServerPhotoProxy::GetLatitude()
+{
+    return latitude_;
+}
+double CameraServerPhotoProxy::GetLongitude()
+{
+    return longitude_;
+}
+int32_t CameraServerPhotoProxy::GetShootingMode()
+{
+    auto iter = modeMap.find(mode_);
+    if (iter != modeMap.end()) {
+        return iter->second;
+    }
+    return 0;
+}
+void CameraServerPhotoProxy::SetShootingMode(int32_t mode)
+{
+    mode_ = mode;
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -202,7 +202,14 @@ public:
      *
      * @param location value to be set.
      */
-    void SetLocation(std::unique_ptr<Location>& location);
+    void SetLocation(std::shared_ptr<Location>& location);
+    
+    /**
+     * @brief Get the GPS Location for the photo capture settings.
+     *
+     * @param location value to be set.
+     */
+    void GetLocation(std::shared_ptr<Location>& location);
 
     /**
      * @brief Set the mirror option for the photo capture.
@@ -227,6 +234,8 @@ public:
 
 private:
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureMetadataSetting_;
+    std::shared_ptr<Location> location_;
+    std::mutex locationMutex_;
 };
 
 constexpr uint8_t CAPTURE_PHOTO = 1 << 0;

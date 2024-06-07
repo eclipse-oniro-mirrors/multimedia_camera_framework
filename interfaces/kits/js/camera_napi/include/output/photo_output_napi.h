@@ -353,7 +353,7 @@ struct PhotoOutputAsyncContext : public AsyncContext {
     bool hasPhotoSettings = false;
     bool bRetBool;
     bool isSupported = false;
-    std::unique_ptr<Location> location;
+    std::shared_ptr<Location> location;
     PhotoOutputNapi* objectInfo;
     std::string surfaceId;
     ~PhotoOutputAsyncContext()

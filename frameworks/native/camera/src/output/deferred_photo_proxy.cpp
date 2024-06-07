@@ -207,5 +207,17 @@ std::string DeferredPhotoProxy::GetExtension()
 {
     return "";
 }
+double DeferredPhotoProxy::GetLatitude()
+{
+    return 0;
+}
+double DeferredPhotoProxy::GetLongitude()
+{
+    return 0;
+}
+int32_t DeferredPhotoProxy::GetShootingMode()
+{
+    return 0;
+}
 } // namespace CameraStandard
 } // namespace OHOS
