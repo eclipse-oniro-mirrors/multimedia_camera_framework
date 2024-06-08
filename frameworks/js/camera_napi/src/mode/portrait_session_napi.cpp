@@ -336,6 +336,8 @@ napi_value PortraitSessionNapi::ProcessingPhysicalApertures(napi_env env,
     napi_value result = nullptr;
     napi_create_array(env, &result);
     size_t zoomRangeSize = 2;
+    int zoomMinIndex = 0;
+    int zoomMaxIndex = 0;
     for (size_t i = 0; i < physicalApertures.size(); i++) {
         if (physicalApertures[i].size() <= zoomRangeSize) {
             continue;
@@ -345,14 +347,18 @@ napi_value PortraitSessionNapi::ProcessingPhysicalApertures(napi_env env,
         napi_value physicalApertureRange;
         napi_create_array(env, &physicalApertureRange);
         for (size_t y = 0; y < physicalApertures[i].size(); y++) {
-            if (y < zoomRangeSize) {
-                napi_value value;
-                napi_create_double(env, CameraNapiUtils::FloatToDouble(physicalApertures[i][y]), &value);
-                napi_set_element(env, zoomRange, y, value);
-                continue;
-            }
             napi_value value;
             napi_create_double(env, CameraNapiUtils::FloatToDouble(physicalApertures[i][y]), &value);
+            if (y == zoomMinIndex) {
+                napi_set_element(env, zoomRange, y, value);
+                napi_set_named_property(env, zoomRange, "min", value);
+                continue;
+            }
+            if (y == zoomMaxIndex) {
+                napi_set_element(env, zoomRange, y, value);
+                napi_set_named_property(env, zoomRange, "max", value);
+                continue;
+            }
             napi_set_element(env, physicalApertureRange, y - zoomRangeSize, value);
         }
         napi_value obj;
