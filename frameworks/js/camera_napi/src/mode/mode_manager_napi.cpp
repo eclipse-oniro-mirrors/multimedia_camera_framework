@@ -15,16 +15,28 @@
 
 #include "mode/mode_manager_napi.h"
 
+#include "camera_napi_object_types.h"
 #include "input/camera_manager_napi.h"
 #include "input/camera_napi.h"
 #include "napi/native_common.h"
-#include "output/camera_output_capability_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
 thread_local napi_ref ModeManagerNapi::sConstructor_ = nullptr;
 thread_local uint32_t ModeManagerNapi::modeManagerTaskId = MODE_MANAGER_TASKID;
+
+namespace {
+sptr<CameraDevice> GetCameraDeviceFromNapiCameraInfoObj(napi_env env, napi_value napiCameraInfoObj)
+{
+    napi_value napiCameraId = nullptr;
+    if (napi_get_named_property(env, napiCameraInfoObj, "cameraId", &napiCameraId) != napi_ok) {
+        return nullptr;
+    }
+    std::string cameraId = CameraNapiUtils::GetStringArgument(env, napiCameraId);
+    return CameraManager::GetInstance()->GetCameraDeviceFromId(cameraId);
+}
+}
 
 ModeManagerNapi::ModeManagerNapi() : env_(nullptr), wrapper_(nullptr)
 {
@@ -211,17 +223,16 @@ napi_value ModeManagerNapi::GetSupportedModes(napi_env env, napi_callback_info i
     napi_value argv[ARGS_ONE];
     napi_value thisVar = nullptr;
     napi_value jsResult = nullptr;
-    CameraDeviceNapi* cameraDeviceNapi = nullptr;
     ModeManagerNapi* modeManagerNapi = nullptr;
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
-    status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void**>(&cameraDeviceNapi));
-    if (status != napi_ok || cameraDeviceNapi == nullptr) {
+    sptr<CameraDevice> cameraInfo = GetCameraDeviceFromNapiCameraInfoObj(env, argv[PARAM0]);
+    if (cameraInfo == nullptr) {
         MEDIA_ERR_LOG("Could not able to read cameraId argument!");
         return result;
     }
-    sptr<CameraDevice> cameraInfo = cameraDeviceNapi->cameraDevice_;
+
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&modeManagerNapi));
     if (status == napi_ok && modeManagerNapi != nullptr) {
         std::vector<SceneMode> modeObjList = modeManagerNapi->modeManager_->GetSupportedModes(cameraInfo);
@@ -247,7 +258,6 @@ napi_value ModeManagerNapi::GetSupportedOutputCapability(napi_env env, napi_call
     size_t argc = ARGS_TWO;
     napi_value argv[ARGS_TWO] = {0};
     napi_value thisVar = nullptr;
-    CameraDeviceNapi* cameraDeviceNapi = nullptr;
     ModeManagerNapi* modeManagerNapi = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
@@ -258,34 +268,41 @@ napi_value ModeManagerNapi::GetSupportedOutputCapability(napi_env env, napi_call
         MEDIA_ERR_LOG("napi_unwrap() failure!");
         return result;
     }
-    status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void**>(&cameraDeviceNapi));
-    if (status != napi_ok || cameraDeviceNapi == nullptr) {
+
+    sptr<CameraDevice> cameraInfo = GetCameraDeviceFromNapiCameraInfoObj(env, argv[PARAM0]);
+    if (cameraInfo == nullptr) {
         MEDIA_ERR_LOG("Could not able to read cameraId argument!");
         return result;
     }
-    sptr<CameraDevice> cameraInfo = cameraDeviceNapi->cameraDevice_;
+
     int32_t sceneMode;
     napi_get_value_int32(env, argv[PARAM1], &sceneMode);
     MEDIA_INFO_LOG("ModeManagerNapi::GetSupportedOutputCapability mode = %{public}d", sceneMode);
+
+    sptr<CameraOutputCapability> outputCapability = nullptr;
+    auto cameraManager = CameraManager::GetInstance();
     switch (sceneMode) {
         case JS_CAPTURE:
-            result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, SceneMode::CAPTURE);
+            outputCapability = cameraManager->GetSupportedOutputCapability(cameraInfo, SceneMode::CAPTURE);
             break;
         case JS_VIDEO:
-            result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, SceneMode::VIDEO);
+            outputCapability = cameraManager->GetSupportedOutputCapability(cameraInfo, SceneMode::VIDEO);
             break;
         case JS_PORTRAIT:
-            result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, SceneMode::PORTRAIT);
+            outputCapability = cameraManager->GetSupportedOutputCapability(cameraInfo, SceneMode::PORTRAIT);
             break;
         case JS_NIGHT:
-            result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, SceneMode::NIGHT);
+            outputCapability = cameraManager->GetSupportedOutputCapability(cameraInfo, SceneMode::NIGHT);
             break;
         case JS_SECURE_CAMERA:
-            result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, SceneMode::SECURE);
+            outputCapability = cameraManager->GetSupportedOutputCapability(cameraInfo, SceneMode::SECURE);
             break;
         default:
             MEDIA_ERR_LOG("ModeManagerNapi::CreateCameraSessionInstance mode = %{public}d not supported", sceneMode);
             break;
+    }
+    if (outputCapability != nullptr) {
+        result = CameraNapiObjCameraOutputCapability(*outputCapability).GenerateNapiValue(env);
     }
     return result;
 }

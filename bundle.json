@@ -116,11 +116,9 @@
                     "//foundation/multimedia/camera_framework/interfaces/kits/js/camera_napi/include/session"
                  ],
                 "header_files": [
-                  "camera_info_napi.h",
                   "camera_input_napi.h",
                   "camera_manager_napi.h",
                   "camera_napi.h",
-                  "camera_size_napi.h",
                   "photo_output_napi.h",
                   "preview_output_napi.h",
                   "video_output_napi.h",
@@ -128,8 +126,7 @@
                   "camera_napi_utils.h",
                   "native_module_ohos_camera.h",
                   "listener_base.h",
-                  "metadata_output_napi.h",
-                  "metadata_object_napi.h"
+                  "metadata_output_napi.h"
                 ]
               }
            },

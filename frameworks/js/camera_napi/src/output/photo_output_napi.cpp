@@ -25,6 +25,7 @@
 #include "camera_error_code.h"
 #include "camera_log.h"
 #include "camera_napi_const.h"
+#include "camera_napi_object_types.h"
 #include "camera_napi_param_parser.h"
 #include "camera_napi_security_utils.h"
 #include "camera_napi_template_utils.h"
@@ -34,7 +35,6 @@
 #include "image_napi.h"
 #include "image_packer.h"
 #include "image_receiver.h"
-#include "input/camera_profile_napi.h"
 #include "ipc_skeleton.h"
 #include "js_native_api.h"
 #include "media_library_comm_napi.h"
@@ -2091,7 +2091,7 @@ napi_value PhotoOutputNapi::GetActiveProfile(napi_env env, napi_callback_info in
     if (profile == nullptr) {
         return CameraNapiUtils::GetUndefinedValue(env);
     }
-    return CameraProfileNapi::CreateCameraProfile(env, *profile);
+    return CameraNapiObjProfile(*profile).GenerateNapiValue(env);
 }
 
 void PhotoOutputNapi::RegisterQuickThumbnailCallbackListener(

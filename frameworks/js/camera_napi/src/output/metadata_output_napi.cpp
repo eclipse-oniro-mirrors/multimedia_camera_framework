@@ -17,12 +17,13 @@
 
 #include <uv.h>
 
+#include "camera_napi_metadata_utils.h"
+#include "camera_napi_object_types.h"
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
 #include "hilog/log.h"
 #include "napi/native_api.h"
 #include "napi/native_common.h"
-#include "output/metadata_object_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -87,7 +88,7 @@ static napi_value CreateMetadataObjJSArray(napi_env env,
 
     size_t j = 0;
     for (size_t i = 0; i < metadataObjList.size(); i++) {
-        metadataObj = MetadataObjectNapi::CreateMetaFaceObj(env, metadataObjList[i]);
+        metadataObj = CameraNapiObjMetadataObject(*metadataObjList[i]).GenerateNapiValue(env);
         if ((metadataObj == nullptr) || napi_set_element(env, metadataObjArray, j++, metadataObj) != napi_ok) {
             MEDIA_ERR_LOG("CreateMetadataObjJSArray: Failed to create metadata face object napi wrapper object");
             return nullptr;
@@ -366,15 +367,13 @@ static int32_t ConvertJSArrayToNative(napi_env env, size_t argc, const napi_valu
         napi_get_element(env, argv[j], j, &metadataObjectType);
         napi_typeof(env, metadataObjectType, &valueType);
         if (valueType == napi_number) {
-            bool isValid = true;
             int32_t metadataObjectTypeVal = 0;
             MetadataObjectType nativeMetadataObjType;
             napi_get_value_int32(env, metadataObjectType, &metadataObjectTypeVal);
-            MetadataObjectNapi::MapMetadataObjSupportedTypesEnumFromJS(
-                metadataObjectTypeVal, nativeMetadataObjType, isValid);
-            if (!isValid) {
-                MEDIA_ERR_LOG("Unsupported metadata object type: napi object:%{public}d",
-                    metadataObjectTypeVal);
+            nativeMetadataObjType =
+                CameraNapiMetadataUtils::MapMetadataObjSupportedTypesEnumFromJS(metadataObjectTypeVal);
+            if (nativeMetadataObjType == MetadataObjectType::INVALID) {
+                MEDIA_ERR_LOG("Unsupported metadata object type: napi object:%{public}d", metadataObjectTypeVal);
                 continue;
             }
             context->setSupportedMetadataObjectTypes.push_back(nativeMetadataObjType);
@@ -442,10 +441,13 @@ static void GetSupportedMetadataObjectTypesAsyncCallbackComplete(napi_env env, n
     size_t i;
     size_t j = 0;
     for (i = 0; i < len; i++) {
-        int32_t iProp;
-        MetadataObjectNapi::MapMetadataObjSupportedTypesEnum(context->SupportedMetadataObjectTypes[i], iProp);
+        int32_t iProp =
+            CameraNapiMetadataUtils::MapMetadataObjSupportedTypesEnum(context->SupportedMetadataObjectTypes[i]);
         napi_value value;
-        if (iProp != -1 && napi_create_int32(env, iProp, &value) == napi_ok) {
+        if (iProp == JSMetadataObjectType::INVALID) {
+            continue;
+        }
+        if (napi_create_int32(env, iProp, &value) == napi_ok) {
             napi_set_element(env, metadataObjectTypes, j, value);
             j++;
         }

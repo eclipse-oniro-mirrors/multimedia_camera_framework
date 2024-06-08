@@ -20,8 +20,10 @@
 
 #include "camera_error_code.h"
 #include "camera_log.h"
+#include "camera_manager.h"
 #include "camera_napi_const.h"
 #include "camera_napi_event_emitter.h"
+#include "camera_napi_object_types.h"
 #include "camera_napi_param_parser.h"
 #include "camera_napi_security_utils.h"
 #include "camera_napi_template_utils.h"
@@ -44,7 +46,6 @@
 #include "mode/video_session_for_sys_napi.h"
 #include "mode/video_session_napi.h"
 #include "napi/native_common.h"
-#include "output/camera_output_capability_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -72,6 +73,18 @@ const std::unordered_map<SceneMode, JsSceneMode> g_nativeToNapiSupportedMode_ = 
     {SceneMode::VIDEO,  JsSceneMode::JS_VIDEO},
     {SceneMode::SECURE,  JsSceneMode::JS_SECURE_CAMERA},
 };
+
+namespace {
+sptr<CameraDevice> GetCameraDeviceFromNapiCameraInfoObj(napi_env env, napi_value napiCameraInfoObj)
+{
+    napi_value napiCameraId = nullptr;
+    if (napi_get_named_property(env, napiCameraInfoObj, "cameraId", &napiCameraId) != napi_ok) {
+        return nullptr;
+    }
+    std::string cameraId = CameraNapiUtils::GetStringArgument(env, napiCameraId);
+    return CameraManager::GetInstance()->GetCameraDeviceFromId(cameraId);
+}
+}
 
 CameraManagerCallbackNapi::CameraManagerCallbackNapi(napi_env env): ListenerBase(env)
 {}
@@ -131,7 +144,7 @@ void CameraManagerCallbackNapi::OnCameraStatusCallback(const CameraStatusInfo& c
     napi_create_object(env_, &result[PARAM1]);
 
     if (cameraStatusInfo.cameraDevice != nullptr) {
-        napi_value cameraDeviceNapi = CameraDeviceNapi::CreateCameraObj(env_, cameraStatusInfo.cameraDevice);
+        napi_value cameraDeviceNapi = CameraNapiObjCameraDevice(*cameraStatusInfo.cameraDevice).GenerateNapiValue(env_);
         napi_set_named_property(env_, result[PARAM1], "camera", cameraDeviceNapi);
     } else {
         MEDIA_ERR_LOG("Camera info is null");
@@ -452,7 +465,6 @@ static napi_value CreateCameraJSArray(napi_env env, napi_status status,
 {
     MEDIA_DEBUG_LOG("CreateCameraJSArray is called");
     napi_value cameraArray = nullptr;
-    napi_value camera = nullptr;
 
     if (cameraObjList.empty()) {
         MEDIA_ERR_LOG("cameraObjList is empty");
@@ -461,7 +473,10 @@ static napi_value CreateCameraJSArray(napi_env env, napi_status status,
     status = napi_create_array(env, &cameraArray);
     if (status == napi_ok) {
         for (size_t i = 0; i < cameraObjList.size(); i++) {
-            camera = CameraDeviceNapi::CreateCameraObj(env, cameraObjList[i]);
+            if (cameraObjList[i] == nullptr) {
+                continue;
+            }
+            napi_value camera = CameraNapiObjCameraDevice(*cameraObjList[i]).GenerateNapiValue(env);
             if (camera == nullptr || napi_set_element(env, cameraArray, i, camera) != napi_ok) {
                 MEDIA_ERR_LOG("Failed to create camera napi wrapper object");
                 return nullptr;
@@ -576,14 +591,11 @@ napi_value CameraManagerNapi::CreateSessionInstance(napi_env env, napi_callback_
 bool ParsePrelaunchConfig(napi_env env, napi_value root, PrelaunchConfig* prelaunchConfig)
 {
     napi_value res = nullptr;
-    napi_status status;
-    CameraDeviceNapi* cameraDeviceNapi = nullptr;
     int32_t intValue;
     if (napi_get_named_property(env, root, "cameraDevice", &res) == napi_ok) {
-        status = napi_unwrap(env, res, reinterpret_cast<void**>(&cameraDeviceNapi));
-        prelaunchConfig->cameraDevice_ = cameraDeviceNapi->cameraDevice_;
-        if (status != napi_ok || prelaunchConfig->cameraDevice_ == nullptr) {
-            MEDIA_ERR_LOG("napi_unwrap() failure!");
+        prelaunchConfig->cameraDevice_ = GetCameraDeviceFromNapiCameraInfoObj(env, res);
+        if (prelaunchConfig->cameraDevice_ == nullptr) {
+            MEDIA_ERR_LOG("ParsePrelaunchConfig get camera device failure!");
         }
     } else {
         if (!CameraNapiUtils::CheckError(env, INVALID_ARGUMENT)) {
@@ -916,17 +928,17 @@ napi_value CameraManagerNapi::GetSupportedModes(napi_env env, napi_callback_info
     napi_value argv[ARGS_ONE];
     napi_value thisVar = nullptr;
     napi_value jsResult = nullptr;
-    CameraDeviceNapi* cameraDeviceNapi = nullptr;
     CameraManagerNapi* cameraManagerNapi = nullptr;
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
-    status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void**>(&cameraDeviceNapi));
-    if (status != napi_ok || cameraDeviceNapi == nullptr) {
-        MEDIA_ERR_LOG("Could not able to read cameraId argument!");
+
+    sptr<CameraDevice> cameraInfo = GetCameraDeviceFromNapiCameraInfoObj(env, argv[PARAM0]);
+    if (cameraInfo == nullptr) {
+        MEDIA_ERR_LOG("Could not able to read camera device info!");
         return result;
     }
-    sptr<CameraDevice> cameraInfo = cameraDeviceNapi->cameraDevice_;
+
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
     if (status == napi_ok && cameraManagerNapi != nullptr) {
         std::vector<SceneMode> modeObjList = cameraManagerNapi->cameraManager_->GetSupportedModes(cameraInfo);
@@ -956,34 +968,48 @@ napi_value CameraManagerNapi::GetSupportedModes(napi_env env, napi_callback_info
 napi_value CameraManagerNapi::GetSupportedOutputCapability(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("GetSupportedOutputCapability is called");
-    napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = {0};
+    napi_value argv[ARGS_TWO] = { 0 };
     napi_value thisVar = nullptr;
-    CameraDeviceNapi* cameraDeviceNapi = nullptr;
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
     napi_get_undefined(env, &result);
-    status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void**>(&cameraDeviceNapi));
-    if (status != napi_ok || cameraDeviceNapi == nullptr) {
-        MEDIA_ERR_LOG("napi_unwrap failure!");
-        return result;
+    sptr<CameraDevice> cameraInfo = GetCameraDeviceFromNapiCameraInfoObj(env, argv[PARAM0]);
+    if (cameraInfo == nullptr) {
+        MEDIA_ERR_LOG("CameraManagerNapi::GetSupportedOutputCapability get camera info fail");
+        return nullptr;
     }
-    sptr<CameraDevice> cameraInfo = cameraDeviceNapi->cameraDevice_;
+    sptr<CameraOutputCapability> outputCapability = nullptr;
     if (argc == ARGS_ONE) {
-        result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo);
+        outputCapability = CameraManager::GetInstance()->GetSupportedOutputCapability(cameraInfo);
+        if (outputCapability == nullptr) {
+            MEDIA_ERR_LOG("failed to create CreateCameraOutputCapability");
+            return nullptr;
+        }
+        if (cameraInfo->GetPosition() == CAMERA_POSITION_FRONT) {
+            uint32_t normalMode = 0;
+            if (cameraInfo->modeVideoProfiles_[normalMode].size()) {
+                MEDIA_INFO_LOG(
+                    "return align videoProfile size = %{public}zu", cameraInfo->modeVideoProfiles_[normalMode].size());
+                outputCapability->SetVideoProfiles(cameraInfo->modeVideoProfiles_[normalMode]);
+            }
+        }
     } else if (argc == ARGS_TWO) {
         int32_t jsSceneMode;
         napi_get_value_int32(env, argv[PARAM1], &jsSceneMode);
         MEDIA_INFO_LOG("CameraManagerNapi::GetSupportedOutputCapability mode = %{public}d", jsSceneMode);
         auto itr = g_jsToFwMode_.find(static_cast<JsSceneMode>(jsSceneMode));
         if (itr != g_jsToFwMode_.end()) {
-            result = CameraOutputCapabilityNapi::CreateCameraOutputCapability(env, cameraInfo, itr->second);
+            outputCapability = CameraManager::GetInstance()->GetSupportedOutputCapability(cameraInfo, itr->second);
         } else {
             MEDIA_ERR_LOG("CreateCameraSessionInstance mode = %{public}d not supported", jsSceneMode);
         }
     }
-    return result;
+    if (outputCapability == nullptr) {
+        MEDIA_ERR_LOG("CameraManagerNapi::GetSupportedOutputCapability outputCapability is nullptr");
+        return nullptr;
+    }
+    return CameraNapiObjCameraOutputCapability(*outputCapability).GenerateNapiValue(env);
 }
 
 napi_value CameraManagerNapi::IsCameraMuted(napi_env env, napi_callback_info info)
@@ -1093,13 +1119,11 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
     }
     sptr<CameraDevice> cameraInfo = nullptr;
     if (argc == ARGS_ONE) {
-        CameraDeviceNapi* cameraDeviceNapi = nullptr;
-        status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void**>(&cameraDeviceNapi));
-        if (status != napi_ok || cameraDeviceNapi == nullptr) {
-            MEDIA_ERR_LOG("napi_unwrap( ) failure!");
+        cameraInfo = GetCameraDeviceFromNapiCameraInfoObj(env, argv[PARAM0]);
+        if (cameraInfo == nullptr) {
+            MEDIA_ERR_LOG("CameraManagerNapi::CreateCameraInputInstance get camera device fail");
             return result;
         }
-        cameraInfo = cameraDeviceNapi->cameraDevice_;
     } else if (argc == ARGS_TWO) {
         int32_t numValue;
 
@@ -1253,7 +1277,6 @@ napi_value CameraManagerNapi::IsPrelaunchSupported(napi_env env, napi_callback_i
     size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
-    CameraDeviceNapi* cameraDeviceNapi = nullptr;
     CameraManagerNapi* cameraManagerNapi = nullptr;
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
@@ -1264,9 +1287,8 @@ napi_value CameraManagerNapi::IsPrelaunchSupported(napi_env env, napi_callback_i
         MEDIA_ERR_LOG("napi_unwrap( ) failure!");
         return result;
     }
-    status = napi_unwrap(env, argv[PARAM0], reinterpret_cast<void**>(&cameraDeviceNapi));
-    if (status == napi_ok && cameraDeviceNapi != nullptr) {
-        sptr<CameraDevice> cameraInfo = cameraDeviceNapi->cameraDevice_;
+    sptr<CameraDevice> cameraInfo = GetCameraDeviceFromNapiCameraInfoObj(env, argv[PARAM0]);
+    if (cameraInfo != nullptr) {
         bool isPrelaunchSupported = CameraManager::GetInstance()->IsPrelaunchSupported(cameraInfo);
         MEDIA_DEBUG_LOG("isPrelaunchSupported: %{public}d", isPrelaunchSupported);
         napi_get_boolean(env, isPrelaunchSupported, &result);

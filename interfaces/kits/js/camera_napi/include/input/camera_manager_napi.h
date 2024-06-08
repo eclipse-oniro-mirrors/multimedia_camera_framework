@@ -18,7 +18,6 @@
 
 #include "camera_napi_utils.h"
 #include "input/camera_device.h"
-#include "input/camera_info_napi.h"
 #include "input/camera_input_napi.h"
 #include "input/camera_manager.h"
 #include "listener_base.h"

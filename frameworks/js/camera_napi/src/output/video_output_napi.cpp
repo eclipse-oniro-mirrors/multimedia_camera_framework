@@ -17,12 +17,12 @@
 
 #include <uv.h>
 
+#include "camera_napi_object_types.h"
 #include "camera_napi_param_parser.h"
 #include "camera_napi_security_utils.h"
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
 #include "camera_output_capability.h"
-#include "input/camera_profile_napi.h"
 #include "napi/native_api.h"
 #include "napi/native_common.h"
 
@@ -441,7 +441,7 @@ napi_value VideoOutputNapi::GetActiveProfile(napi_env env, napi_callback_info in
     if (profile == nullptr) {
         return CameraNapiUtils::GetUndefinedValue(env);
     }
-    return CameraVideoProfileNapi::CreateCameraVideoProfile(env, *profile);
+    return CameraNapiObjVideoProfile(*profile).GenerateNapiValue(env);
 }
 
 napi_value VideoOutputNapi::CreateVideoOutput(napi_env env, VideoProfile &profile, std::string surfaceId)

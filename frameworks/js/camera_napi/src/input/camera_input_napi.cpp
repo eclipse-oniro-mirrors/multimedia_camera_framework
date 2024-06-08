@@ -23,7 +23,6 @@
 #include "camera_log.h"
 #include "camera_napi_param_parser.h"
 #include "camera_napi_utils.h"
-#include "input/camera_info_napi.h"
 #include "input/camera_napi.h"
 #include "js_native_api.h"
 #include "napi/native_common.h"
@@ -503,8 +502,8 @@ void CameraInputNapi::RegisterErrorCallbackListener(
     napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     MEDIA_INFO_LOG("CameraInputNapi::RegisterErrorCallbackListener arg size is %{public}zu", args.size());
-    CameraInputNapi* cameraDeviceNapi = nullptr;
-    CameraNapiParamParser jsParamParser(env, args, cameraDeviceNapi);
+    CameraNapiObject emptyDevice { {} };
+    CameraNapiParamParser jsParamParser(env, args, emptyDevice);
     if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "Could not able to read cameraDevice argument!")) {
         MEDIA_ERR_LOG("CameraInputNapi::RegisterErrorCallbackListener Could not able to read cameraDevice argument!");
         return;
@@ -523,8 +522,8 @@ void CameraInputNapi::UnregisterErrorCallbackListener(
     napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
     MEDIA_INFO_LOG("CameraInputNapi::UnregisterErrorCallbackListener arg size is %{public}zu", args.size());
-    CameraInputNapi* cameraDeviceNapi = nullptr;
-    CameraNapiParamParser jsParamParser(env, args, cameraDeviceNapi);
+    CameraNapiObject emptyDevice { {} };
+    CameraNapiParamParser jsParamParser(env, args, emptyDevice);
     if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "Could not able to read cameraDevice argument!")) {
         MEDIA_ERR_LOG("CameraInputNapi::UnregisterErrorCallbackListener Could not able to read cameraDevice argument!");
         return;

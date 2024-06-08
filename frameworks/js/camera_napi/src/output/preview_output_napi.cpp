@@ -22,12 +22,12 @@
 #include <uv.h>
 
 #include "camera_error_code.h"
+#include "camera_napi_object_types.h"
 #include "camera_napi_param_parser.h"
 #include "camera_napi_security_utils.h"
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
 #include "camera_output_capability.h"
-#include "input/camera_profile_napi.h"
 #include "js_native_api.h"
 #include "js_native_api_types.h"
 #include "napi/native_api.h"
@@ -643,7 +643,7 @@ napi_value PreviewOutputNapi::GetActiveProfile(napi_env env, napi_callback_info 
     if (profile == nullptr) {
         return CameraNapiUtils::GetUndefinedValue(env);
     }
-    return CameraProfileNapi::CreateCameraProfile(env, *profile);
+    return CameraNapiObjProfile(*profile).GenerateNapiValue(env);
 }
 
 napi_value PreviewOutputNapi::Release(napi_env env, napi_callback_info info)
