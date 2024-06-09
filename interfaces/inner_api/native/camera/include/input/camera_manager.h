@@ -620,11 +620,11 @@ private:
     void CreateAndSetTorchServiceCallback();
 
     sptr<CaptureSession> CreateCaptureSessionImpl(SceneMode mode, sptr<ICaptureSession> session);
-    int32_t CreateListenerObject(sptr<ICameraService>& serviceProxy);
+    int32_t CreateListenerObject();
     void CameraServerDied(pid_t pid);
 
-    int32_t CreateCameraServerDeathRecipient(sptr<ICameraService>& serviceProxy);
-    void RemoveCameraServerDeathRecipient();
+    int32_t AddServiceProxyDeathRecipient();
+    void RemoveServiceProxyDeathRecipient();
 
     void CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
         uint32_t streamIndex, ExtendInfo extendInfo);

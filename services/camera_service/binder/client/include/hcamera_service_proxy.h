@@ -40,7 +40,7 @@ public:
 
     int32_t CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService>& device) override;
 
-    int32_t SetCallback(sptr<ICameraServiceCallback>& callback) override;
+    int32_t SetCameraCallback(sptr<ICameraServiceCallback>& callback) override;
 
     int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback>& callback) override;
 

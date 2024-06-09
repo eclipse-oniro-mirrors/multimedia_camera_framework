@@ -2763,11 +2763,11 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_006, TestSize.Level
     ASSERT_NE(cameraService, nullptr);
 
     sptr<ICameraServiceCallback> callback = nullptr;
-    int32_t intResult = cameraService->SetCallback(callback);
+    int32_t intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 2);
 
     callback = new(std::nothrow) CameraStatusServiceCallback(cameraManager);
-    intResult = cameraService->SetCallback(callback);
+    intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
 
     sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
@@ -7140,11 +7140,11 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_112, TestSize.Level
     ASSERT_NE(cameraService, nullptr);
 
     sptr<ICameraServiceCallback> callback = nullptr;
-    int32_t intResult = cameraService->SetCallback(callback);
+    int32_t intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 2);
 
     callback = new(std::nothrow) CameraStatusServiceCallback(cameraManager);
-    intResult = cameraService->SetCallback(callback);
+    intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
 
     sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
@@ -7198,7 +7198,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_113, TestSize.Level
     ASSERT_NE(cameraService, nullptr);
 
     sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
-    int32_t intResult = cameraService->SetCallback(callback);
+    int32_t intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
 
     sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
@@ -7278,7 +7278,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_114, TestSize.Level
     ASSERT_NE(cameraService, nullptr);
 
     sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
-    int32_t intResult = cameraService->SetCallback(callback);
+    int32_t intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
 
     sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
@@ -7358,7 +7358,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_115, TestSize.Level
     ASSERT_NE(cameraService, nullptr);
 
     sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
-    int32_t intResult = cameraService->SetCallback(callback);
+    int32_t intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
 
     sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
@@ -7438,7 +7438,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_116, TestSize.Level
     ASSERT_NE(cameraService, nullptr);
 
     sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
-    int32_t intResult = cameraService->SetCallback(callback);
+    int32_t intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
 
     sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
@@ -7518,7 +7518,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_117, TestSize.Level
     ASSERT_NE(cameraService, nullptr);
 
     sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
-    int32_t intResult = cameraService->SetCallback(callback);
+    int32_t intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
 
     sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
@@ -7608,7 +7608,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_118, TestSize.Level
     ASSERT_NE(cameraService, nullptr);
 
     sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
-    int32_t intResult = cameraService->SetCallback(callback);
+    int32_t intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
 
     sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
@@ -7698,7 +7698,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_119, TestSize.Level
     ASSERT_NE(cameraService, nullptr);
 
     sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
-    int32_t intResult = cameraService->SetCallback(callback);
+    int32_t intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
 
     sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
@@ -7788,7 +7788,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_120, TestSize.Level
     ASSERT_NE(cameraService, nullptr);
 
     sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
-    int32_t intResult = cameraService->SetCallback(callback);
+    int32_t intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
 
     sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();

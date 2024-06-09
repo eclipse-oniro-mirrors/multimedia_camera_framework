@@ -53,7 +53,7 @@ class ICameraService : public IRemoteBroker {
 public:
     virtual int32_t CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService>& device) = 0;
 
-    virtual int32_t SetCallback(sptr<ICameraServiceCallback>& callback) = 0;
+    virtual int32_t SetCameraCallback(sptr<ICameraServiceCallback>& callback) = 0;
 
     virtual int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback>& callback) = 0;
 

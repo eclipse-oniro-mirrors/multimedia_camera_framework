@@ -20,6 +20,9 @@
 #include "iremote_broker.h"
 #include "iremote_proxy.h"
 #include "iremote_stub.h"
+#include "input/camera_death_recipient.h"
+#include <mutex>
+
 
 namespace OHOS {
 namespace CameraStandard {
@@ -27,6 +30,24 @@ class IStandardCameraListener : public IRemoteBroker {
 public:
     virtual ~IStandardCameraListener() = default;
     DECLARE_INTERFACE_DESCRIPTOR(u"IStandardCameraListener");
+
+    void AddCameraDeathRecipient(sptr<CameraDeathRecipient> &deathRecipient)
+    {
+        std::lock_guard<std::mutex> lock(deathRecipientLock_);
+        if (this->AsObject() != nullptr) {
+            (void)this->AsObject()->AddDeathRecipient(deathRecipient);
+        }
+        deathRecipient_ = deathRecipient;
+    }
+
+    void RemoveCameraDeathRecipient()
+    {
+        std::lock_guard<std::mutex> lock(deathRecipientLock_);
+        (void)this->AsObject()->RemoveDeathRecipient(deathRecipient_.promote());
+    }
+private:
+    std::mutex deathRecipientLock_;
+    wptr<CameraDeathRecipient> deathRecipient_ = nullptr;
 };
 } // namespace CameraStandard
 } // namespace OHOS
