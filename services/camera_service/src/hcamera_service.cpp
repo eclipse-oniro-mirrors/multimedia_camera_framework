@@ -33,10 +33,15 @@
 #include "camera_util.h"
 #include "hcamera_device_manager.h"
 #include "ipc_skeleton.h"
+#include "iservice_registry.h"
 #include "system_ability_definition.h"
+#include "datashare_helper.h"
+#include "datashare_predicates.h"
+#include "datashare_result_set.h"
 #include "display_manager.h"
 #include "os_account_manager.h"
 #include "camera_report_uitls.h"
+#include "uri.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -51,8 +56,16 @@ static HCameraService* g_cameraServiceInstance = nullptr;
 static sptr<HCameraService> g_cameraServiceHolder = nullptr;
 static bool g_isFoldScreen = system::GetParameter("const.window.foldscreen.type", "") != "";
 
+static const std::string SETTINGS_DATA_BASE_URI =
+    "datashare:///com.ohos.settingsdata/entry/settingsdata/SETTINGSDATA?Proxy=true";
+static const std::string SETTINGS_DATA_EXT_URI = "datashare:///com.ohos.settingsdata.DataAbility";
+static const std::string SETTINGS_DATA_FIELD_KEYWORD = "KEYWORD";
+static const std::string SETTINGS_DATA_FIELD_VALUE = "VALUE";
+static const std::string PREDICATES_STRING = "settings.camera.mute_persist";
+mutex g_dataShareHelperMutex;
+
 HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
-    : SystemAbility(systemAbilityId, runOnCreate), muteMode_(false), isRegisterSensorSuccess(false)
+    : SystemAbility(systemAbilityId, runOnCreate), muteModeStored_(false), isRegisterSensorSuccess(false)
 {
     MEDIA_INFO_LOG("HCameraService Construct begin");
     g_cameraServiceHolder = this;
@@ -65,10 +78,11 @@ HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
     CHECK_AND_RETURN_LOG(
         cameraHostManager_ != nullptr, "HCameraService OnStart failed to create HCameraHostManager obj");
     MEDIA_INFO_LOG("HCameraService Construct end");
+    serviceStatus_ = CameraServiceStatus::SERVICE_NOT_READY;
 }
 
 HCameraService::HCameraService(sptr<HCameraHostManager> cameraHostManager)
-    : cameraHostManager_(cameraHostManager), muteMode_(false), isRegisterSensorSuccess(false)
+    : cameraHostManager_(cameraHostManager), muteModeStored_(false), isRegisterSensorSuccess(false)
 {}
 
 HCameraService::~HCameraService() {}
@@ -84,13 +98,16 @@ void HCameraService::OnStart()
     DeferredProcessing::DeferredProcessingService::GetInstance().Initialize();
     DeferredProcessing::DeferredProcessingService::GetInstance().Start();
 
-    bool res = Publish(this);
-    if (res) {
-        MEDIA_INFO_LOG("HCameraService OnStart res=%{public}d", res);
-    }
 #ifdef CAMERA_USE_SENSOR
     RegisterSensorCallback();
 #endif
+    AddSystemAbilityListener(DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID);
+    cameraDataShareHelper_ = std::make_shared<CameraDataShareHelper>();
+    if (Publish(this)) {
+        MEDIA_INFO_LOG("HCameraService publish OnStart sucess");
+    } else {
+        MEDIA_INFO_LOG("HCameraService publish OnStart failed");
+    }
     MEDIA_INFO_LOG("HCameraService OnStart end");
 }
 
@@ -107,6 +124,78 @@ void HCameraService::OnStop()
     UnRegisterSensorCallback();
 #endif
     DeferredProcessing::DeferredProcessingService::GetInstance().Stop();
+}
+
+int32_t HCameraService::GetMuteModeFromDataShareHelper(bool &muteMode)
+{
+    lock_guard<mutex> lock(g_dataShareHelperMutex);
+    CHECK_AND_RETURN_RET_LOG(cameraDataShareHelper_ != nullptr, CAMERA_INVALID_ARG,
+        "GetMuteModeFromDataShareHelper NULL");
+    std::string value = "";
+    auto ret = cameraDataShareHelper_->QueryOnce(PREDICATES_STRING, value);
+    MEDIA_INFO_LOG("GetMuteModeFromDataShareHelper Query ret = %{public}d, value = %{public}s", ret, value.c_str());
+    CHECK_AND_RETURN_RET_LOG(ret == CAMERA_OK, CAMERA_INVALID_ARG, "GetMuteModeFromDataShareHelper QueryOnce fail.");
+    value = (value == "0" || value == "1") ? value : "0";
+    int32_t muteModeVal = std::stoi(value);
+    if (muteModeVal == 0 || muteModeVal == 1) {
+        muteMode = (muteModeVal == 1) ? true: false;
+    } else {
+        MEDIA_ERR_LOG("GetMuteModeFromDataShareHelper Query MuteMode invald, value = %{public}d", muteModeVal);
+        return CAMERA_INVALID_ARG;
+    }
+    this->muteModeStored_ = muteMode;
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::SetMuteModeByDataShareHelper(bool muteMode)
+{
+    lock_guard<mutex> lock(g_dataShareHelperMutex);
+    CHECK_AND_RETURN_RET_LOG(cameraDataShareHelper_ != nullptr, CAMERA_ALLOC_ERROR,
+        "GetMuteModeFromDataShareHelper NULL");
+    std::string unMuteModeStr = "0";
+    std::string muteModeStr = "1";
+    std::string value = muteMode? muteModeStr : unMuteModeStr;
+    auto ret = cameraDataShareHelper_->UpdateOnce(PREDICATES_STRING, value);
+    CHECK_AND_RETURN_RET_LOG(ret == CAMERA_OK, CAMERA_ALLOC_ERROR, "SetMuteModeByDataShareHelper UpdateOnce fail.");
+    return CAMERA_OK;
+}
+
+void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
+{
+    MEDIA_INFO_LOG("OnAddSystemAbility systemAbilityId:%{public}d", systemAbilityId);
+    bool muteMode = false;
+    int32_t ret = -1;
+    int32_t cnt = 0;
+    const int32_t retryCnt = 5;
+    const int32_t retryTimeout = 1;
+    switch (systemAbilityId) {
+        case DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID:
+            MEDIA_INFO_LOG("OnAddSystemAbility RegisterObserver start");
+            while (ret != CAMERA_OK && cnt < retryCnt) {
+                cnt++;
+                ret = GetMuteModeFromDataShareHelper(muteMode);
+                MEDIA_INFO_LOG(
+                    "OnAddSystemAbility GetMuteModeFromDataShareHelper, retry=%{public}d                         ",
+                    cnt);
+                sleep(retryTimeout);
+            }
+            this->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+            OnMute(muteMode);
+            muteModeStored_ = muteMode;
+            MEDIA_INFO_LOG("OnAddSystemAbility GetMuteModeFromDataShareHelper Success, muteMode = %{public}d, "
+                           "final retryCnt=%{public}d",
+                muteMode, cnt);
+            break;
+        default:
+            MEDIA_INFO_LOG("OnAddSystemAbility unhandled sysabilityId:%{public}d", systemAbilityId);
+            break;
+    }
+    MEDIA_INFO_LOG("OnAddSystemAbility done");
+}
+
+void HCameraService::OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
+{
+    MEDIA_DEBUG_LOG("HCameraService::OnRemoveSystemAbility systemAbilityId:%{public}d removed", systemAbilityId);
 }
 
 int32_t HCameraService::GetCameras(
@@ -307,21 +396,25 @@ int32_t HCameraService::CreateCameraDevice(string cameraId, sptr<ICameraDeviceSe
         return CAMERA_ALLOC_ERROR;
     }
 
-    lock_guard<mutex> lock(mapOperatorsLock_);
     sptr<HCameraDevice> cameraDevice = new (nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     CHECK_AND_RETURN_RET_LOG(cameraDevice != nullptr, CAMERA_ALLOC_ERROR,
         "HCameraService::CreateCameraDevice HCameraDevice allocation failed");
-
-    // when create camera device, update mute setting truely.
-    if (IsCameraMuteSupported(cameraId)) {
-        if (UpdateMuteSetting(cameraDevice, muteMode_) != CAMERA_OK) {
-            MEDIA_ERR_LOG("UpdateMuteSetting Failed, cameraId: %{public}s", cameraId.c_str());
-        }
-    } else {
-        MEDIA_ERR_LOG("HCameraService::CreateCameraDevice MuteCamera not Supported");
+    if (GetServiceStatus() != CameraServiceStatus::SERVICE_READY) {
+        return CAMERA_INVALID_STATE;
     }
-    device = cameraDevice;
-    cameraDevice->SetDeviceMuteMode(muteMode_);
+    {
+        lock_guard<mutex> lock(g_dataShareHelperMutex);
+        // when create camera device, update mute setting truely.
+        if (IsCameraMuteSupported(cameraId)) {
+            if (UpdateMuteSetting(cameraDevice, muteModeStored_) != CAMERA_OK) {
+                MEDIA_ERR_LOG("UpdateMuteSetting Failed, cameraId: %{public}s", cameraId.c_str());
+            }
+        } else {
+            MEDIA_ERR_LOG("HCameraService::CreateCameraDevice MuteCamera not Supported");
+        }
+        device = cameraDevice;
+        cameraDevice->SetDeviceMuteMode(muteModeStored_);
+    }
 #ifdef CAMERA_USE_SENSOR
     RegisterSensorCallback();
 #endif
@@ -740,22 +833,28 @@ int32_t HCameraService::UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool
 
 int32_t HCameraService::MuteCamera(bool muteMode)
 {
-    OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
-    int32_t ret = CheckPermission(OHOS_PERMISSION_MANAGE_CAMERA_CONFIG, callerToken);
+    int32_t ret = CheckPermission(OHOS_PERMISSION_MANAGE_CAMERA_CONFIG, IPCSkeleton::GetCallingTokenID());
     CHECK_AND_RETURN_RET_LOG(ret == CAMERA_OK, ret, "CheckPermission argumentis failed!");
     CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_MUTE_CAMERA,
         to_string(muteMode), CameraReportUtils::GetCallerInfo());
-    cameraHostManager_->SetMuteMode(muteMode);
-    bool oldMuteMode = muteMode_;
-    if (muteMode == oldMuteMode) {
+    {
+        lock_guard<mutex> lock(g_dataShareHelperMutex);
+        cameraHostManager_->SetMuteMode(muteMode);
+    }
+    bool currentMuteMode = muteModeStored_;
+    if (muteMode == currentMuteMode) {
         return CAMERA_OK;
     }
-    muteMode_ = muteMode;
+    muteModeStored_ = muteMode;
     sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
     pid_t activeClient = deviceManager->GetActiveClient();
     if (activeClient == -1) {
         OnMute(muteMode);
-        return CAMERA_OK;
+        int32_t retCode = SetMuteModeByDataShareHelper(muteMode);
+        if (retCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("no activeClient, SetMuteModeByDataShareHelper: ret=%{public}d", retCode);
+        }
+        return retCode;
     }
     sptr<HCameraDevice> activeDevice = deviceManager->GetCameraByPid(activeClient);
     if (activeDevice != nullptr) {
@@ -769,16 +868,43 @@ int32_t HCameraService::MuteCamera(bool muteMode)
         }
         if (ret != CAMERA_OK) {
             MEDIA_ERR_LOG("UpdateMuteSetting Failed, cameraId: %{public}s", cameraId.c_str());
-            muteMode_ = oldMuteMode;
+            muteModeStored_ = currentMuteMode;
         }
     }
     if (ret == CAMERA_OK) {
         OnMute(muteMode);
     }
     if (activeDevice != nullptr) {
-        activeDevice->SetDeviceMuteMode(muteMode_);
+        activeDevice->SetDeviceMuteMode(muteModeStored_);
     }
+    ret = SetMuteModeByDataShareHelper(muteModeStored_);
     return ret;
+}
+
+static std::map<PolicyType, Security::AccessToken::PolicyType> g_policyTypeMap_ = {
+    {PolicyType::EDM, Security::AccessToken::PolicyType::EDM},
+    {PolicyType::PRIVACY, Security::AccessToken::PolicyType::PRIVACY},
+};
+
+int32_t HCameraService::MuteCameraPersist(PolicyType policyType, bool isMute)
+{
+    int32_t ret = CheckPermission(OHOS_PERMISSION_MANAGE_CAMERA_CONFIG, IPCSkeleton::GetCallingTokenID());
+    CHECK_AND_RETURN_RET_LOG(ret == CAMERA_OK, ret, "CheckPermission arguments failed!");
+    CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_MUTE_CAMERA,
+        to_string(isMute), CameraReportUtils::GetCallerInfo());
+    if (g_policyTypeMap_.count(policyType) == 0) {
+        MEDIA_ERR_LOG("MuteCameraPersist Failed, invalid param policyType = %{public}d",
+            static_cast<int32_t>(policyType));
+        return CAMERA_INVALID_ARG;
+    }
+    const Security::AccessToken::PolicyType secPolicyType = g_policyTypeMap_[policyType];
+    const Security::AccessToken::CallerType secCaller = Security::AccessToken::CallerType::CAMERA;
+    ret = Security::AccessToken::PrivacyKit::SetMutePolicy(secPolicyType, secCaller, isMute);
+    if (ret != Security::AccessToken::RET_SUCCESS) {
+        MEDIA_ERR_LOG("MuteCameraPersist SetMutePolicy return false, policyType = %{public}d, retCode = %{public}d",
+            static_cast<int32_t>(policyType), static_cast<int32_t>(ret));
+    }
+    return MuteCamera(isMute);
 }
 
 int32_t HCameraService::PrelaunchCamera()
@@ -936,9 +1062,27 @@ bool HCameraService::IsPrelaunchSupported(string cameraId)
     return isPrelaunchSupported;
 }
 
+CameraServiceStatus HCameraService::GetServiceStatus()
+{
+    lock_guard<mutex> lock(serviceStatusMutex_);
+    return serviceStatus_;
+}
+
+void HCameraService::SetServiceStatus(CameraServiceStatus serviceStatus)
+{
+    lock_guard<mutex> lock(serviceStatusMutex_);
+    serviceStatus_ = serviceStatus;
+    MEDIA_DEBUG_LOG("HCameraService::SetServiceStatus success. serviceStatus: %{public}d", serviceStatus);
+}
+
 int32_t HCameraService::IsCameraMuted(bool& muteMode)
 {
-    muteMode = muteMode_;
+    lock_guard<mutex> lock(g_dataShareHelperMutex);
+    if (GetServiceStatus() != CameraServiceStatus::SERVICE_READY) {
+        return CAMERA_INVALID_STATE;
+    }
+    muteMode = muteModeStored_;
+
     MEDIA_DEBUG_LOG("HCameraService::IsCameraMuted success. isMuted: %{public}d", muteMode);
     return CAMERA_OK;
 }
@@ -1586,6 +1730,84 @@ int32_t HCameraService::UpdateSkinToneSetting(std::shared_ptr<OHOS::Camera::Came
         MEDIA_INFO_LOG("UpdateBeautySetting status: %{public}d", status);
     }
 
+    return CAMERA_OK;
+}
+
+std::shared_ptr<DataShare::DataShareHelper> HCameraService::CameraDataShareHelper::CreateCameraDataShareHelper()
+{
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (samgr == nullptr) {
+        MEDIA_ERR_LOG("CameraDataShareHelper GetSystemAbilityManager failed.");
+        return nullptr;
+    }
+    sptr<IRemoteObject> remoteObj = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    if (remoteObj == nullptr) {
+        MEDIA_ERR_LOG("CameraDataShareHelper GetSystemAbility Service Failed.");
+        return nullptr;
+    }
+    return DataShare::DataShareHelper::Creator(remoteObj, SETTINGS_DATA_BASE_URI, SETTINGS_DATA_EXT_URI);
+}
+
+int32_t HCameraService::CameraDataShareHelper::QueryOnce(const std::string key, std::string &value)
+{
+    auto dataShareHelper = CreateCameraDataShareHelper();
+    if (dataShareHelper == nullptr) {
+        MEDIA_INFO_LOG("dataShareHelper_ is nullptr");
+        return CAMERA_INVALID_ARG;
+    }
+
+    Uri uri(SETTINGS_DATA_BASE_URI);
+    DataShare::DataSharePredicates predicates;
+    predicates.EqualTo(SETTINGS_DATA_FIELD_KEYWORD, key);
+    std::vector<std::string> columns;
+    columns.emplace_back(SETTINGS_DATA_FIELD_VALUE);
+
+    auto resultSet = dataShareHelper->Query(uri, predicates, columns);
+    CHECK_AND_RETURN_RET_LOG(resultSet != nullptr, CAMERA_INVALID_ARG, "CameraDataShareHelper query fail");
+
+    int32_t numRows = 0;
+    resultSet->GetRowCount(numRows);
+    CHECK_AND_RETURN_RET_LOG(numRows > 0, CAMERA_INVALID_ARG, "CameraDataShareHelper query failed, row is zero.");
+
+    if (resultSet->GoToFirstRow() != DataShare::E_OK) {
+        MEDIA_INFO_LOG("CameraDataShareHelper Query failed,go to first row error");
+        resultSet->Close();
+        return CAMERA_INVALID_ARG;
+    }
+
+    int columnIndex;
+    resultSet->GetColumnIndex(SETTINGS_DATA_FIELD_VALUE, columnIndex);
+    resultSet->GetString(columnIndex, value);
+    resultSet->Close();
+    dataShareHelper->Release();
+    MEDIA_INFO_LOG("CameraDataShareHelper query success,value=%{public}s", value.c_str());
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::CameraDataShareHelper::UpdateOnce(const std::string key, std::string value)
+{
+    auto dataShareHelper = CreateCameraDataShareHelper();
+    if (dataShareHelper == nullptr) {
+        MEDIA_ERR_LOG("dataShareHelper_ is nullptr");
+        return CAMERA_INVALID_ARG;
+    }
+    Uri uri(SETTINGS_DATA_BASE_URI);
+    DataShare::DataSharePredicates predicates;
+    predicates.EqualTo(SETTINGS_DATA_FIELD_KEYWORD, key);
+
+    DataShare::DataShareValuesBucket bucket;
+    DataShare::DataShareValueObject keywordObj(key);
+    DataShare::DataShareValueObject valueObj(value);
+    bucket.Put(SETTINGS_DATA_FIELD_KEYWORD, keywordObj);
+    bucket.Put(SETTINGS_DATA_FIELD_VALUE, valueObj);
+
+    if (dataShareHelper->Update(uri, predicates, bucket) <= 0) {
+        dataShareHelper->Insert(uri, bucket);
+        MEDIA_ERR_LOG("CameraDataShareHelper Update:%{public}s failed", key.c_str());
+        return CAMERA_INVALID_ARG;
+    }
+    MEDIA_INFO_LOG("CameraDataShareHelper Update:%{public}s success", key.c_str());
+    dataShareHelper->Release();
     return CAMERA_OK;
 }
 } // namespace CameraStandard

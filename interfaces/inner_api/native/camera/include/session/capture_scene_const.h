@@ -63,6 +63,10 @@ enum SceneFeature : int32_t {
     FEATURE_ENUM_MAX
 };
 
+enum class JsPolicyType : int32_t {
+    JS_PRIVACY = 1,
+};
+
 struct SceneFeaturesMode {
 public:
     SceneFeaturesMode() = default;

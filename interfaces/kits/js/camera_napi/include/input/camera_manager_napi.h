@@ -113,6 +113,7 @@ public:
     static napi_value IsCameraMuted(napi_env env, napi_callback_info info);
     static napi_value IsCameraMuteSupported(napi_env env, napi_callback_info info);
     static napi_value MuteCamera(napi_env env, napi_callback_info info);
+    static napi_value MuteCameraPersist(napi_env env, napi_callback_info info);
     static napi_value PrelaunchCamera(napi_env env, napi_callback_info info);
     static napi_value PreSwitchCamera(napi_env env, napi_callback_info info);
     static napi_value SetPrelaunchConfig(napi_env env, napi_callback_info info);

@@ -22,6 +22,8 @@
 #include <vector>
 
 #include "camera_util.h"
+#include "common_event_support.h"
+#include "common_event_manager.h"
 #include "hcamera_device.h"
 #include "hcamera_host_manager.h"
 #include "hcamera_service_stub.h"
@@ -29,6 +31,7 @@
 #include "hstream_capture.h"
 #include "hstream_metadata.h"
 #include "hstream_repeat.h"
+#include "datashare_helper.h"
 #include "iremote_stub.h"
 #include "privacy_kit.h"
 #include "refbase.h"
@@ -57,6 +60,12 @@ struct CameraMetaInfo {
         : cameraId(cameraId), cameraType(cameraType), position(position),
           connectionType(connectionType), supportModes(supportModes), cameraAbility(cameraAbility) {}
 };
+
+enum class CameraServiceStatus : int32_t {
+    SERVICE_READY = 0,
+    SERVICE_NOT_READY,
+};
+
 class HCameraService : public SystemAbility, public HCameraServiceStub, public HCameraHostManager::StatusCallback {
     DECLARE_SYSTEM_ABILITY(HCameraService);
 
@@ -91,6 +100,7 @@ public:
     int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback>& callback) override;
     int32_t SetTorchCallback(sptr<ITorchServiceCallback>& callback) override;
     int32_t MuteCamera(bool muteMode) override;
+    int32_t MuteCameraPersist(PolicyType policyType, bool isMute) override;
     int32_t PrelaunchCamera() override;
     int32_t PreSwitchCamera(const std::string cameraId) override;
     int32_t SetPrelaunchConfig(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
@@ -106,6 +116,8 @@ public:
     void OnStop() override;
     int32_t Dump(int fd, const vector<u16string>& args) override;
 
+    CameraServiceStatus GetServiceStatus();
+    void SetServiceStatus(CameraServiceStatus);
     // HCameraHostManager::StatusCallback
     void OnCameraStatus(const string& cameraId, CameraStatus status) override;
     void OnFlashlightStatus(const string& cameraId, FlashStatus status) override;
@@ -113,7 +125,12 @@ public:
 
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager);
+    void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
+    void OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
 
+private:
+    int32_t GetMuteModeFromDataShareHelper(bool &muteMode);
+    int32_t SetMuteModeByDataShareHelper(bool muteMode);
 private:
     class ServiceHostStatus : public StatusCallback {
     public:
@@ -143,6 +160,16 @@ private:
 
     private:
         wptr<HCameraService> cameraService_;
+    };
+
+    class CameraDataShareHelper {
+    public:
+        CameraDataShareHelper() = default;
+        ~CameraDataShareHelper() = default;
+        int32_t QueryOnce(const std::string key, std::string &value);
+        int32_t UpdateOnce(const std::string key, std::string value);
+    private:
+        std::shared_ptr<DataShare::DataShareHelper> CreateCameraDataShareHelper();
     };
 
     void FillCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos,
@@ -188,6 +215,7 @@ private:
     mutex mutex_;
     mutex cameraCbMutex_;
     mutex muteCbMutex_;
+    mutex serviceStatusMutex_;
     recursive_mutex torchCbMutex_;
     TorchStatus torchStatus_ = TorchStatus::TORCH_STATUS_UNAVAILABLE;
     sptr<HCameraHostManager> cameraHostManager_;
@@ -195,13 +223,14 @@ private:
     map<uint32_t, sptr<ITorchServiceCallback>> torchServiceCallbacks_;
     map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
     map<uint32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
-    bool muteMode_;
+    bool muteModeStored_;
     bool isFoldable = false;
     bool isFoldableInit = false;
-    mutex mapOperatorsLock_;
     string preCameraId_;
     string preCameraClient_;
     bool isRegisterSensorSuccess;
+    std::shared_ptr<CameraDataShareHelper> cameraDataShareHelper_;
+    CameraServiceStatus serviceStatus_;
 #ifdef CAMERA_USE_SENSOR
     SensorUser user;
 #endif

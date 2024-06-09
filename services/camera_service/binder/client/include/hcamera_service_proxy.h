@@ -79,6 +79,8 @@ public:
 
     int32_t MuteCamera(bool muteMode) override;
 
+    int32_t MuteCameraPersist(PolicyType policyType, bool isMute) override;
+
     int32_t PrelaunchCamera() override;
 
     int32_t PreSwitchCamera(const std::string cameraId) override;

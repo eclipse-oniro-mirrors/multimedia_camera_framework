@@ -47,6 +47,7 @@ private:
     int HandleCreateMetadataOutput(MessageParcel &data, MessageParcel &reply);
     int HandleCreateVideoOutput(MessageParcel &data, MessageParcel &reply);
     int HandleMuteCamera(MessageParcel &data, MessageParcel &reply);
+    int HandleMuteCameraPersist(MessageParcel &data, MessageParcel &reply);
     int HandleIsCameraMuted(MessageParcel &data, MessageParcel &reply);
     int HandlePrelaunchCamera(MessageParcel &data, MessageParcel &reply);
     int HandlePreSwitchCamera(MessageParcel& data, MessageParcel& reply);

@@ -97,6 +97,9 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_MUTE_CAMERA):
             errCode = HCameraServiceStub::HandleMuteCamera(data, reply);
             break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_MUTE_CAMERA_PERSIST):
+            errCode = HCameraServiceStub::HandleMuteCameraPersist(data, reply);
+            break;
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_IS_CAMERA_MUTED):
             errCode = HCameraServiceStub::HandleIsCameraMuted(data, reply);
             break;
@@ -207,6 +210,18 @@ int HCameraServiceStub::HandleMuteCamera(MessageParcel& data, MessageParcel& rep
 
     int32_t ret = MuteCamera(muteMode);
     MEDIA_INFO_LOG("HCameraServiceStub HandleMuteCamera MuteCamera result: %{public}d", ret);
+    return ret;
+}
+
+int HCameraServiceStub::HandleMuteCameraPersist(MessageParcel& data, MessageParcel& reply)
+{
+    int32_t policyType = data.ReadInt32();
+    MEDIA_DEBUG_LOG("HCameraServiceStub HandleMuteCameraPersist read policyType : %{public}d", policyType);
+    bool muteMode = data.ReadBool();
+    MEDIA_DEBUG_LOG("HCameraServiceStub HandleMuteCameraPersist read muteMode : %{public}d", muteMode);
+
+    int32_t ret = MuteCameraPersist(static_cast<PolicyType>(policyType), muteMode);
+    MEDIA_INFO_LOG("HCameraServiceStub HandleMuteCameraPersist MuteCamera result: %{public}d", ret);
     return ret;
 }
 

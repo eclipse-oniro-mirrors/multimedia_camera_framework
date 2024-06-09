@@ -487,6 +487,23 @@ int32_t HCameraServiceProxy::MuteCamera(bool muteMode)
     return error;
 }
 
+int32_t HCameraServiceProxy::MuteCameraPersist(PolicyType policyType, bool muteMode)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    (void)data.WriteInt32(static_cast<int32_t>(policyType));
+    (void)data.WriteBool(muteMode);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_MUTE_CAMERA_PERSIST), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy::MuteCameraPersist failed, error: %{public}d", error);
+    }
+    return error;
+}
+
 int32_t HCameraServiceProxy::PrelaunchCamera()
 {
     MessageParcel data;
