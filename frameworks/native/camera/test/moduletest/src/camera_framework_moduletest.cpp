@@ -5235,7 +5235,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_024, TestSize.L
     ASSERT_NE(serviceProxy, nullptr);
 
     sptr<ICameraServiceCallback> callback = nullptr;
-    int32_t intResult = serviceProxy->SetCallback(callback);
+    int32_t intResult = serviceProxy->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 200);
 
     sptr<ICameraMuteServiceCallback> callback_2 = nullptr;
@@ -5294,7 +5294,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_025, TestSize.L
     ASSERT_NE(serviceProxy, nullptr);
 
     sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(manager_);
-    int32_t intResult = serviceProxy->SetCallback(callback);
+    int32_t intResult = serviceProxy->SetCameraCallback(callback);
     EXPECT_EQ(intResult, -1);
 
     sptr<ICameraMuteServiceCallback> callback_2 = new (std::nothrow) CameraMuteServiceCallback(manager_);

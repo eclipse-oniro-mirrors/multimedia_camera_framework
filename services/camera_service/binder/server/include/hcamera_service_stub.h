@@ -36,7 +36,7 @@ private:
     int HandleGetCameraIds(MessageParcel &data, MessageParcel &reply);
     int HandleGetCameraAbility(MessageParcel &data, MessageParcel &reply);
     int HandleCreateCameraDevice(MessageParcel &data, MessageParcel &reply);
-    int HandleSetCallback(MessageParcel &data, MessageParcel &reply);
+    int HandleSetCameraCallback(MessageParcel &data, MessageParcel &reply);
     int HandleSetMuteCallback(MessageParcel &data, MessageParcel &reply);
     int HandleSetTorchCallback(MessageParcel &data, MessageParcel &reply);
     int HandleCreateCaptureSession(MessageParcel &data, MessageParcel &reply);
@@ -58,12 +58,12 @@ private:
     int DestroyStubObj() override;
     int DestroyStubForPid(pid_t pid);
     void ClientDied(pid_t pid);
+    void ClearCameraListenerByPid(pid_t pid);
     int SetListenerObject(const sptr<IRemoteObject> &object) override;
     int SetListenerObject(MessageParcel &data, MessageParcel &reply);
-    virtual int32_t UnSetCallback(pid_t pid);
+    virtual int32_t UnSetAllCallback(pid_t pid);
     virtual int32_t CloseCameraForDestory(pid_t pid);
 
-    SafeMap<pid_t, sptr<CameraDeathRecipient>> deathRecipientMap_;
     SafeMap<pid_t, sptr<IStandardCameraListener>> cameraListenerMap_;
 
     typedef int (HCameraServiceStub::* HandleMethod)(MessageParcel &, MessageParcel &);

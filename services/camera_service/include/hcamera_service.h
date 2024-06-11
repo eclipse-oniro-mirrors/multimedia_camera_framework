@@ -85,9 +85,9 @@ public:
         const sptr<OHOS::IBufferProducer>& producer, int32_t format, sptr<IStreamMetadata>& metadataOutput) override;
     int32_t CreateVideoOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
         int32_t height, sptr<IStreamRepeat>& videoOutput) override;
-    int32_t SetCallback(sptr<ICameraServiceCallback>& callback) override;
-    int32_t UnSetCallback(pid_t pid) override;
+    int32_t UnSetAllCallback(pid_t pid) override;
     int32_t CloseCameraForDestory(pid_t pid) override;
+    int32_t SetCameraCallback(sptr<ICameraServiceCallback>& callback) override;
     int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback>& callback) override;
     int32_t SetTorchCallback(sptr<ITorchServiceCallback>& callback) override;
     int32_t MuteCamera(bool muteMode) override;
@@ -147,8 +147,7 @@ private:
 
     void FillCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos,
         vector<string>& cameraIds, vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList);
-    void CheckCameraMute(bool muteMode);
-
+    void OnMute(bool muteMode);
     void CameraSummary(vector<string> cameraIds, string& dumpString);
     void CameraDumpCameraInfo(std::string& dumpString, std::vector<std::string>& cameraIds,
         std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList);
@@ -174,6 +173,7 @@ private:
     int32_t UpdateFaceSlenderSetting(shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata,
         int faceSlenderValue);
     int32_t UpdateSkinToneSetting(shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata, int skinToneValue);
+    int32_t UnSetCameraCallback(pid_t pid);
     int32_t UnSetMuteCallback(pid_t pid);
     int32_t UnSetTorchCallback(pid_t pid);
     bool IsDeviceAlreadyOpen(pid_t& tempPid, string& tempCameraId, sptr<HCameraDevice>& tempDevice);
@@ -186,7 +186,7 @@ private:
     int32_t SaveCurrentParamForRestore(string cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
         EffectParam effectParam, sptr<HCaptureSession> captureSession);
     mutex mutex_;
-    mutex cbMutex_;
+    mutex cameraCbMutex_;
     mutex muteCbMutex_;
     recursive_mutex torchCbMutex_;
     TorchStatus torchStatus_ = TorchStatus::TORCH_STATUS_UNAVAILABLE;

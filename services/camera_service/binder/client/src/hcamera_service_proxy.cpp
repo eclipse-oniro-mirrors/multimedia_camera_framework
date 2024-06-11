@@ -147,14 +147,14 @@ int32_t HCameraServiceProxy::CreateCameraDevice(std::string cameraId, sptr<ICame
     return error;
 }
 
-int32_t HCameraServiceProxy::SetCallback(sptr<ICameraServiceCallback>& callback)
+int32_t HCameraServiceProxy::SetCameraCallback(sptr<ICameraServiceCallback>& callback)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
 
     if (callback == nullptr) {
-        MEDIA_ERR_LOG("HCameraServiceProxy SetCallback callback is null");
+        MEDIA_ERR_LOG("HCameraServiceProxy SetCameraCallback callback is null");
         return IPC_PROXY_ERR;
     }
 
@@ -162,9 +162,9 @@ int32_t HCameraServiceProxy::SetCallback(sptr<ICameraServiceCallback>& callback)
     data.WriteRemoteObject(callback->AsObject());
 
     int error = Remote()->SendRequest(
-        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_CALLBACK), data, reply, option);
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_CAMERA_CALLBACK), data, reply, option);
     if (error != ERR_NONE) {
-        MEDIA_ERR_LOG("HCameraServiceProxy SetCallback failed, error: %{public}d", error);
+        MEDIA_ERR_LOG("HCameraServiceProxy SetCameraCallback failed, error: %{public}d", error);
     }
 
     return error;

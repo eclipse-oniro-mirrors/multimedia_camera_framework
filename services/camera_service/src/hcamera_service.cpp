@@ -499,36 +499,47 @@ int32_t HCameraService::CreateVideoOutput(const sptr<OHOS::IBufferProducer>& pro
 
 void HCameraService::OnCameraStatus(const string& cameraId, CameraStatus status)
 {
-    lock_guard<mutex> lock(cbMutex_);
-    MEDIA_INFO_LOG("HCameraService::OnCameraStatus "
-                   "callbacks.size = %{public}zu, cameraId = %{public}s, status = %{public}d, pid = %{public}d",
-        cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid());
+    lock_guard<mutex> lock(cameraCbMutex_);
+    MEDIA_INFO_LOG("HCameraService::OnCameraStatus callbacks.size = %{public}zu, cameraId = %{public}s, "
+        "status = %{public}d, pid = %{public}d", cameraServiceCallbacks_.size(), cameraId.c_str(), status,
+        IPCSkeleton::GetCallingPid());
     for (auto it : cameraServiceCallbacks_) {
         if (it.second == nullptr) {
-            MEDIA_ERR_LOG("HCameraService::OnCameraStatus cameraServiceCallback is null, pid = %{public}d",
-                IPCSkeleton::GetCallingPid());
+            MEDIA_ERR_LOG("HCameraService::OnCameraStatus pid:%{public}d cameraServiceCallback is null", it.first);
             continue;
-        } else {
-            it.second->OnCameraStatusChanged(cameraId, status);
         }
-        CAMERA_SYSEVENT_BEHAVIOR(
-            CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d", cameraId.c_str(), status));
+        it.second->OnCameraStatusChanged(cameraId, status);
+        CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d",
+            cameraId.c_str(), status));
     }
 }
 
 void HCameraService::OnFlashlightStatus(const string& cameraId, FlashStatus status)
 {
-    lock_guard<mutex> lock(cbMutex_);
-    MEDIA_INFO_LOG("HCameraService::OnFlashlightStatus "
-                   "callbacks.size = %{public}zu, cameraId = %{public}s, status = %{public}d, pid = %{public}d",
-        cameraServiceCallbacks_.size(), cameraId.c_str(), status, IPCSkeleton::GetCallingPid());
+    lock_guard<mutex> lock(cameraCbMutex_);
+    MEDIA_INFO_LOG("HCameraService::OnFlashlightStatus callbacks.size = %{public}zu, cameraId = %{public}s, "
+        "status = %{public}d, pid = %{public}d", cameraServiceCallbacks_.size(), cameraId.c_str(), status,
+        IPCSkeleton::GetCallingPid());
     for (auto it : cameraServiceCallbacks_) {
         if (it.second == nullptr) {
-            MEDIA_ERR_LOG("HCameraService::OnCameraStatus cameraServiceCallback is null, pid = %{public}d",
-                IPCSkeleton::GetCallingPid());
+            MEDIA_ERR_LOG("HCameraService::OnCameraStatus pid:%{public}d cameraServiceCallback is null", it.first);
             continue;
-        } else {
-            it.second->OnFlashlightStatusChanged(cameraId, status);
+        }
+        it.second->OnFlashlightStatusChanged(cameraId, status);
+    }
+}
+
+void HCameraService::OnMute(bool muteMode)
+{
+    lock_guard<mutex> lock(muteCbMutex_);
+    if (!cameraMuteServiceCallbacks_.empty()) {
+        for (auto it : cameraMuteServiceCallbacks_) {
+            if (it.second == nullptr) {
+                MEDIA_ERR_LOG("HCameraService::OnMute pid:%{public}d cameraMuteServiceCallback is null", it.first);
+                continue;
+            }
+            it.second->OnCameraMute(muteMode);
+            CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraMute! current Camera muteMode:%d", muteMode));
         }
     }
 }
@@ -537,27 +548,35 @@ void HCameraService::OnTorchStatus(TorchStatus status)
 {
     lock_guard<recursive_mutex> lock(torchCbMutex_);
     torchStatus_ = status;
-    MEDIA_INFO_LOG("HCameraService::OnTorchtStatus "
-                   "callbacks.size = %{public}zu,  status = %{public}d, pid = %{public}d",
+    MEDIA_INFO_LOG("HCameraService::OnTorchtStatus callbacks.size = %{public}zu, status = %{public}d, pid = %{public}d",
         torchServiceCallbacks_.size(), status, IPCSkeleton::GetCallingPid());
     for (auto it : torchServiceCallbacks_) {
         if (it.second == nullptr) {
-            MEDIA_ERR_LOG("HCameraService::OnTorchtStatus torchServiceCallback is null, pid = %{public}d",
-                IPCSkeleton::GetCallingPid());
+            MEDIA_ERR_LOG("HCameraService::OnTorchtStatus pid:%{public}d torchServiceCallback is null", it.first);
             continue;
-        } else {
-            it.second->OnTorchStatusChange(status);
         }
+        it.second->OnTorchStatusChange(status);
     }
 }
 
-int32_t HCameraService::SetCallback(sptr<ICameraServiceCallback>& callback)
+int32_t HCameraService::CloseCameraForDestory(pid_t pid)
 {
-    lock_guard<mutex> lock(cbMutex_);
+    MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory enter");
+    sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
+    sptr<HCameraDevice> deviceNeedClose = deviceManager->GetCameraByPid(pid);
+    if (deviceNeedClose != nullptr) {
+        deviceNeedClose->Close();
+    }
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::SetCameraCallback(sptr<ICameraServiceCallback>& callback)
+{
+    lock_guard<mutex> lock(cameraCbMutex_);
     pid_t pid = IPCSkeleton::GetCallingPid();
-    MEDIA_INFO_LOG("HCameraService::SetCallback pid = %{public}d", pid);
+    MEDIA_INFO_LOG("HCameraService::SetCameraCallback pid = %{public}d", pid);
     if (callback == nullptr) {
-        MEDIA_ERR_LOG("HCameraService::SetCallback callback is null");
+        MEDIA_ERR_LOG("HCameraService::SetCameraCallback callback is null");
         return CAMERA_INVALID_ARG;
     }
     auto callbackItem = cameraServiceCallbacks_.find(pid);
@@ -569,60 +588,11 @@ int32_t HCameraService::SetCallback(sptr<ICameraServiceCallback>& callback)
     return CAMERA_OK;
 }
 
-int32_t HCameraService::CloseCameraForDestory(pid_t pid)
-{
-    sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
-    sptr<HCameraDevice> deviceNeedClose = deviceManager->GetCameraByPid(pid);
-    if (deviceNeedClose != nullptr) {
-        deviceNeedClose->Close();
-    }
-    return CAMERA_OK;
-}
-
-int32_t HCameraService::UnSetMuteCallback(pid_t pid)
-{
-    lock_guard<mutex> lock(muteCbMutex_);
-    MEDIA_INFO_LOG("HCameraService::UnSetMuteCallback pid = %{public}d, size = %{public}zu", pid,
-        cameraMuteServiceCallbacks_.size());
-    if (!cameraMuteServiceCallbacks_.empty()) {
-        MEDIA_INFO_LOG("HCameraService::UnSetMuteCallback cameraMuteServiceCallbacks_ is not empty, reset it");
-        auto it = cameraMuteServiceCallbacks_.find(pid);
-        if ((it != cameraMuteServiceCallbacks_.end()) && (it->second)) {
-            it->second = nullptr;
-            cameraMuteServiceCallbacks_.erase(it);
-        }
-    }
-
-    MEDIA_INFO_LOG("HCameraService::UnSetMuteCallback after erase pid = %{public}d, size = %{public}zu", pid,
-        cameraMuteServiceCallbacks_.size());
-    return CAMERA_OK;
-}
-
-int32_t HCameraService::UnSetCallback(pid_t pid)
-{
-    lock_guard<mutex> lock(cbMutex_);
-    MEDIA_INFO_LOG(
-        "HCameraService::UnSetCallback pid = %{public}d, size = %{public}zu", pid, cameraServiceCallbacks_.size());
-    if (!cameraServiceCallbacks_.empty()) {
-        MEDIA_INFO_LOG("HCameraService::SetStatusCallback statusSvcCallbacks_ is not empty, reset it");
-        auto it = cameraServiceCallbacks_.find(pid);
-        if ((it != cameraServiceCallbacks_.end()) && (it->second != nullptr)) {
-            it->second = nullptr;
-            cameraServiceCallbacks_.erase(it);
-        }
-    }
-    MEDIA_INFO_LOG("HCameraService::UnSetCallback after erase pid = %{public}d, size = %{public}zu", pid,
-        cameraServiceCallbacks_.size());
-    int32_t ret = CAMERA_OK;
-    ret = UnSetMuteCallback(pid);
-    UnSetTorchCallback(pid);
-    return ret;
-}
-
 int32_t HCameraService::SetMuteCallback(sptr<ICameraMuteServiceCallback>& callback)
 {
     lock_guard<mutex> lock(muteCbMutex_);
     pid_t pid = IPCSkeleton::GetCallingPid();
+    MEDIA_INFO_LOG("HCameraService::SetMuteCallback pid = %{public}d", pid);
     if (callback == nullptr) {
         MEDIA_ERR_LOG("HCameraService::SetMuteCallback callback is null");
         return CAMERA_INVALID_ARG;
@@ -635,6 +605,7 @@ int32_t HCameraService::SetTorchCallback(sptr<ITorchServiceCallback>& callback)
 {
     lock_guard<recursive_mutex> lock(torchCbMutex_);
     pid_t pid = IPCSkeleton::GetCallingPid();
+    MEDIA_INFO_LOG("HCameraService::SetTorchCallback pid = %{public}d", pid);
     if (callback == nullptr) {
         MEDIA_ERR_LOG("HCameraService::SetTorchCallback callback is null");
         return CAMERA_INVALID_ARG;
@@ -646,11 +617,48 @@ int32_t HCameraService::SetTorchCallback(sptr<ITorchServiceCallback>& callback)
     return CAMERA_OK;
 }
 
+int32_t HCameraService::UnSetCameraCallback(pid_t pid)
+{
+    lock_guard<mutex> lock(cameraCbMutex_);
+    MEDIA_INFO_LOG("HCameraService::UnSetCameraCallback pid = %{public}d, size = %{public}zu",
+        pid, cameraServiceCallbacks_.size());
+    if (!cameraServiceCallbacks_.empty()) {
+        MEDIA_INFO_LOG("HCameraService::UnSetCameraCallback cameraServiceCallbacks_ is not empty, reset it");
+        auto it = cameraServiceCallbacks_.find(pid);
+        if ((it != cameraServiceCallbacks_.end()) && (it->second != nullptr)) {
+            it->second = nullptr;
+            cameraServiceCallbacks_.erase(it);
+        }
+    }
+    MEDIA_INFO_LOG("HCameraService::UnSetCameraCallback after erase pid = %{public}d, size = %{public}zu",
+        pid, cameraServiceCallbacks_.size());
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::UnSetMuteCallback(pid_t pid)
+{
+    lock_guard<mutex> lock(muteCbMutex_);
+    MEDIA_INFO_LOG("HCameraService::UnSetMuteCallback pid = %{public}d, size = %{public}zu",
+        pid, cameraMuteServiceCallbacks_.size());
+    if (!cameraMuteServiceCallbacks_.empty()) {
+        MEDIA_INFO_LOG("HCameraService::UnSetMuteCallback cameraMuteServiceCallbacks_ is not empty, reset it");
+        auto it = cameraMuteServiceCallbacks_.find(pid);
+        if ((it != cameraMuteServiceCallbacks_.end()) && (it->second)) {
+            it->second = nullptr;
+            cameraMuteServiceCallbacks_.erase(it);
+        }
+    }
+
+    MEDIA_INFO_LOG("HCameraService::UnSetMuteCallback after erase pid = %{public}d, size = %{public}zu",
+        pid, cameraMuteServiceCallbacks_.size());
+    return CAMERA_OK;
+}
+
 int32_t HCameraService::UnSetTorchCallback(pid_t pid)
 {
     lock_guard<recursive_mutex> lock(torchCbMutex_);
-    MEDIA_INFO_LOG("HCameraService::UnSetTorchCallback pid = %{public}d, size = %{public}zu", pid,
-        torchServiceCallbacks_.size());
+    MEDIA_INFO_LOG("HCameraService::UnSetTorchCallback pid = %{public}d, size = %{public}zu",
+        pid, torchServiceCallbacks_.size());
     if (!torchServiceCallbacks_.empty()) {
         MEDIA_INFO_LOG("HCameraService::UnSetTorchCallback torchServiceCallbacks_ is not empty, reset it");
         auto it = torchServiceCallbacks_.find(pid);
@@ -660,8 +668,17 @@ int32_t HCameraService::UnSetTorchCallback(pid_t pid)
         }
     }
 
-    MEDIA_INFO_LOG("HCameraService::UnSetTorchCallback after erase pid = %{public}d, size = %{public}zu", pid,
-        torchServiceCallbacks_.size());
+    MEDIA_INFO_LOG("HCameraService::UnSetTorchCallback after erase pid = %{public}d, size = %{public}zu",
+        pid, torchServiceCallbacks_.size());
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::UnSetAllCallback(pid_t pid)
+{
+    MEDIA_INFO_LOG("HCameraService::UnSetAllCallback enter");
+    UnSetCameraCallback(pid);
+    UnSetMuteCallback(pid);
+    UnSetTorchCallback(pid);
     return CAMERA_OK;
 }
 
@@ -737,8 +754,7 @@ int32_t HCameraService::MuteCamera(bool muteMode)
     sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
     pid_t activeClient = deviceManager->GetActiveClient();
     if (activeClient == -1) {
-        lock_guard<mutex> lock(muteCbMutex_);
-        CheckCameraMute(muteMode);
+        OnMute(muteMode);
         return CAMERA_OK;
     }
     sptr<HCameraDevice> activeDevice = deviceManager->GetCameraByPid(activeClient);
@@ -756,29 +772,13 @@ int32_t HCameraService::MuteCamera(bool muteMode)
             muteMode_ = oldMuteMode;
         }
     }
-    lock_guard<mutex> lock(muteCbMutex_);
-    if (!cameraMuteServiceCallbacks_.empty() && ret == CAMERA_OK) {
-        for (auto cb : cameraMuteServiceCallbacks_) {
-            if (cb.second) {
-                cb.second->OnCameraMute(muteMode);
-            }
-            CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraMute! current Camera muteMode:%d", muteMode));
-        }
+    if (ret == CAMERA_OK) {
+        OnMute(muteMode);
     }
     if (activeDevice != nullptr) {
         activeDevice->SetDeviceMuteMode(muteMode_);
     }
     return ret;
-}
-
-void HCameraService::CheckCameraMute(bool muteMode)
-{
-    if (!cameraMuteServiceCallbacks_.empty()) {
-        for (auto cb : cameraMuteServiceCallbacks_) {
-            cb.second->OnCameraMute(muteMode);
-            CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraMute! current Camera muteMode:%d", muteMode));
-        }
-    }
 }
 
 int32_t HCameraService::PrelaunchCamera()

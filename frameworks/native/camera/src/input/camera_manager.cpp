@@ -131,7 +131,7 @@ CameraManager::CameraManager()
 CameraManager::~CameraManager()
 {
     MEDIA_INFO_LOG("CameraManager::~CameraManager() called");
-    RemoveCameraServerDeathRecipient();
+    RemoveServiceProxyDeathRecipient();
     UnSubscribeSystemAbility();
 }
 
@@ -144,13 +144,15 @@ void CameraManager::DeviceInitCallBack::OnRemoteDied()
     MEDIA_INFO_LOG("CameraManager::DeviceInitCallBack OnRemoteDied");
 }
 
-int32_t CameraManager::CreateListenerObject(sptr<ICameraService>& serviceProxy)
+int32_t CameraManager::CreateListenerObject()
 {
     MEDIA_DEBUG_LOG("CameraManager::CreateListenerObject prepare execute");
     sptr<CameraListenerStub> listenerStub = new (std::nothrow) CameraListenerStub();
     CHECK_AND_RETURN_RET_LOG(listenerStub != nullptr, CAMERA_ALLOC_ERROR, "failed to new CameraListenerStub object");
     sptr<IRemoteObject> object = listenerStub->AsObject();
     CHECK_AND_RETURN_RET_LOG(object != nullptr, CAMERA_ALLOC_ERROR, "listener object is nullptr..");
+    auto serviceProxy = GetServiceProxy();
+    CHECK_AND_RETURN_RET_LOG(serviceProxy != nullptr, CameraErrorCode::SERVICE_FATL_ERROR, "serviceProxy is null");
     return serviceProxy->SetListenerObject(object);
 }
 
@@ -856,10 +858,9 @@ void CameraManager::InitCameraManager()
         return;
     }
     SetServiceProxy(serviceProxy);
-    int32_t ret = CreateCameraServerDeathRecipient(serviceProxy);
-    CHECK_AND_RETURN_LOG(
-        ret == CameraErrorCode::SUCCESS, "CreateCameraServerDeathRecipient fail , ret = %{public}d", ret);
-    ret = CreateListenerObject(serviceProxy);
+    int32_t ret = AddServiceProxyDeathRecipient();
+    CHECK_AND_RETURN_LOG(ret == CameraErrorCode::SUCCESS, "AddServiceProxyDeathRecipient fail , ret = %{public}d", ret);
+    ret = CreateListenerObject();
     CHECK_AND_RETURN_LOG(ret == CAMERA_OK, "failed to new CameraListenerStub, ret = %{public}d", ret);
     ret = SubscribeSystemAbility();
     CHECK_AND_RETURN_LOG(ret == CameraErrorCode::SUCCESS, "failed to SubscribeSystemAbilityd");
@@ -919,6 +920,7 @@ void CameraManager::OnCameraServerAlive()
         return;
     }
     SetServiceProxy(serviceProxy);
+    AddServiceProxyDeathRecipient();
 
     if (cameraSvcCallback_ != nullptr) {
         SetCameraServiceCallback(cameraSvcCallback_);
@@ -951,7 +953,7 @@ int32_t CameraManager::DestroyStubObj()
 void CameraManager::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
-    RemoveCameraServerDeathRecipient();
+    RemoveServiceProxyDeathRecipient();
     SetServiceProxy(nullptr);
     if (cameraSvcCallback_ != nullptr) {
         MEDIA_DEBUG_LOG("cameraSvcCallback_ not nullptr");
@@ -970,16 +972,20 @@ void CameraManager::CameraServerDied(pid_t pid)
     }
 }
 
-int32_t CameraManager::CreateCameraServerDeathRecipient(sptr<ICameraService>& serviceProxy)
+int32_t CameraManager::AddServiceProxyDeathRecipient()
 {
     std::lock_guard<std::mutex> lock(deathRecipientMutex_);
     pid_t pid = 0;
     deathRecipient_ = new (std::nothrow) CameraDeathRecipient(pid);
     if (deathRecipient_ == nullptr) {
-        MEDIA_ERR_LOG("CameraManager::CreateCameraServerDeathRecipient failed to new CameraDeathRecipient");
+        MEDIA_ERR_LOG("CameraManager::AddServiceProxyDeathRecipient failed to new CameraDeathRecipient");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
-    deathRecipient_->SetNotifyCb(std::bind(&CameraManager::CameraServerDied, this, std::placeholders::_1));
+    deathRecipient_->SetNotifyCb([this](pid_t pid) {
+        this->CameraServerDied(pid);
+    });
+    auto serviceProxy = GetServiceProxy();
+    CHECK_AND_RETURN_RET_LOG(serviceProxy != nullptr, CameraErrorCode::SERVICE_FATL_ERROR, "serviceProxy is null");
     bool result = serviceProxy->AsObject()->AddDeathRecipient(deathRecipient_);
     if (!result) {
         MEDIA_ERR_LOG("failed to add deathRecipient");
@@ -988,7 +994,7 @@ int32_t CameraManager::CreateCameraServerDeathRecipient(sptr<ICameraService>& se
     return CameraErrorCode::SUCCESS;
 }
 
-void CameraManager::RemoveCameraServerDeathRecipient()
+void CameraManager::RemoveServiceProxyDeathRecipient()
 {
     std::lock_guard<std::mutex> lock(deathRecipientMutex_);
     auto serviceProxy = GetServiceProxy();
@@ -1629,7 +1635,7 @@ void CameraManager::CreateAndSetCameraServiceCallback()
     }
     int32_t retCode = CAMERA_OK;
     cameraSvcCallback_ = new(std::nothrow) CameraStatusServiceCallback(this);
-    retCode = serviceProxy->SetCallback(cameraSvcCallback_);
+    retCode = serviceProxy->SetCameraCallback(cameraSvcCallback_);
     if (retCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Set CameraStatus service Callback failed, retCode: %{public}d", retCode);
     }
@@ -1643,7 +1649,7 @@ void CameraManager::SetCameraServiceCallback(sptr<ICameraServiceCallback>& callb
         MEDIA_ERR_LOG("serviceProxy_ is null");
         return;
     }
-    retCode = serviceProxy->SetCallback(callback);
+    retCode = serviceProxy->SetCameraCallback(callback);
     if (retCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Set service Callback failed, retCode: %{public}d", retCode);
     }

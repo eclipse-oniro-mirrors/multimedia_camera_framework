@@ -21,7 +21,6 @@
 #include "camera_service_ipc_interface_code.h"
 #include "camera_util.h"
 #include "hcamera_service.h"
-#include "input/camera_death_recipient.h"
 #include "input/i_standard_camera_listener.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
@@ -32,7 +31,6 @@ namespace OHOS {
 namespace CameraStandard {
 HCameraServiceStub::HCameraServiceStub()
 {
-    deathRecipientMap_.Clear();
     cameraListenerMap_.Clear();
     MEDIA_DEBUG_LOG("0x%{public}06" PRIXPTR " Instances create", (POINTER_MASK & reinterpret_cast<uintptr_t>(this)));
 }
@@ -51,12 +49,11 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
     int32_t id = HiviewDFX::XCollie::GetInstance().SetTimer(
         "CameraServiceStub", TIME_OUT_SECONDS, nullptr, nullptr, HiviewDFX::XCOLLIE_FLAG_LOG);
     switch (code) {
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEVICE): {
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEVICE):
             errCode = HCameraServiceStub::HandleCreateCameraDevice(data, reply);
             break;
-        }
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_CALLBACK):
-            errCode = HCameraServiceStub::HandleSetCallback(data, reply);
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_CAMERA_CALLBACK):
+            errCode = HCameraServiceStub::HandleSetCameraCallback(data, reply);
             break;
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_MUTE_CALLBACK):
             errCode = HCameraServiceStub::HandleSetMuteCallback(data, reply);
@@ -82,10 +79,9 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_PHOTO_OUTPUT):
             errCode = HCameraServiceStub::HandleCreatePhotoOutput(data, reply);
             break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_PREVIEW_OUTPUT): {
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_PREVIEW_OUTPUT):
             errCode = HCameraServiceStub::HandleCreatePreviewOutput(data, reply);
             break;
-        }
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEFERRED_PREVIEW_OUTPUT):
             errCode = HCameraServiceStub::HandleCreateDeferredPreviewOutput(data, reply);
             break;
@@ -259,16 +255,16 @@ int HCameraServiceStub::HandleIsCameraMuted(MessageParcel& data, MessageParcel& 
     return ret;
 }
 
-int HCameraServiceStub::HandleSetCallback(MessageParcel& data, MessageParcel& reply)
+int HCameraServiceStub::HandleSetCameraCallback(MessageParcel& data, MessageParcel& reply)
 {
     auto remoteObject = data.ReadRemoteObject();
     CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
-        "HCameraServiceStub HandleSetCallback CameraServiceCallback is null");
+        "HCameraServiceStub HandleSetCameraCallback CameraServiceCallback is null");
 
     auto callback = iface_cast<ICameraServiceCallback>(remoteObject);
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
-                             "HCameraServiceStub HandleSetCallback callback is null");
-    return SetCallback(callback);
+                             "HCameraServiceStub HandleSetCameraCallback callback is null");
+    return SetCameraCallback(callback);
 }
 
 int HCameraServiceStub::HandleSetMuteCallback(MessageParcel& data, MessageParcel& reply)
@@ -463,7 +459,7 @@ int HCameraServiceStub::HandleSetTorchLevel(MessageParcel &data, MessageParcel &
     return errCode;
 }
 
-int32_t HCameraServiceStub::UnSetCallback(pid_t pid)
+int32_t HCameraServiceStub::UnSetAllCallback(pid_t pid)
 {
     return CAMERA_OK;
 }
@@ -475,23 +471,10 @@ int32_t HCameraServiceStub::CloseCameraForDestory(pid_t pid)
 
 int HCameraServiceStub::DestroyStubForPid(pid_t pid)
 {
-    sptr<CameraDeathRecipient> deathRecipient = nullptr;
-    sptr<IStandardCameraListener> cameraListener = nullptr;
-    if (deathRecipientMap_.Find(pid, deathRecipient)) {
-        if (deathRecipient != nullptr) {
-            deathRecipient->SetNotifyCb(nullptr);
-        }
-        deathRecipientMap_.Erase(pid);
-    }
-    if (cameraListenerMap_.Find(pid, cameraListener)) {
-        if (cameraListener != nullptr && cameraListener->AsObject() != nullptr && deathRecipient != nullptr) {
-            (void)cameraListener->AsObject()->RemoveDeathRecipient(deathRecipient);
-        }
-        cameraListenerMap_.Erase(pid);
-    }
+    UnSetAllCallback(pid);
+    ClearCameraListenerByPid(pid);
     HCaptureSession::DestroyStubObjectForPid(pid);
     CloseCameraForDestory(pid);
-    UnSetCallback(pid);
     return CAMERA_OK;
 }
 
@@ -502,35 +485,32 @@ void HCameraServiceStub::ClientDied(pid_t pid)
     (void)DestroyStubForPid(pid);
 }
 
-int HCameraServiceStub::SetListenerObject(const sptr<IRemoteObject>& object)
+void HCameraServiceStub::ClearCameraListenerByPid(pid_t pid)
 {
-    int errCode = CAMERA_OK;
-    sptr<CameraDeathRecipient> deathRecipientTmp = nullptr;
     sptr<IStandardCameraListener> cameraListenerTmp = nullptr;
-    pid_t pid = IPCSkeleton::GetCallingPid();
-    if (deathRecipientMap_.Find(pid, deathRecipientTmp)) {
-        deathRecipientMap_.Erase(pid);
-    }
     if (cameraListenerMap_.Find(pid, cameraListenerTmp)) {
-        if (cameraListenerTmp != nullptr && cameraListenerTmp->AsObject() != nullptr && deathRecipientTmp != nullptr) {
-            (void)cameraListenerTmp->AsObject()->RemoveDeathRecipient(deathRecipientTmp);
+        if (cameraListenerTmp != nullptr && cameraListenerTmp->AsObject() != nullptr) {
+            cameraListenerTmp->RemoveCameraDeathRecipient();
         }
         cameraListenerMap_.Erase(pid);
     }
+}
+
+int HCameraServiceStub::SetListenerObject(const sptr<IRemoteObject>& object)
+{
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    ClearCameraListenerByPid(pid); // Ensure cleanup before starting the listener if this is the second call
     CHECK_AND_RETURN_RET_LOG(object != nullptr, CAMERA_ALLOC_ERROR, "set listener object is nullptr");
     sptr<IStandardCameraListener> cameraListener = iface_cast<IStandardCameraListener>(object);
-    CHECK_AND_RETURN_RET_LOG(
-        cameraListener != nullptr, CAMERA_ALLOC_ERROR, "failed to convert IStandardCameraListener");
+    CHECK_AND_RETURN_RET_LOG(cameraListener != nullptr, CAMERA_ALLOC_ERROR, "failed to cast IStandardCameraListener");
     sptr<CameraDeathRecipient> deathRecipient = new (std::nothrow) CameraDeathRecipient(pid);
     CHECK_AND_RETURN_RET_LOG(deathRecipient != nullptr, CAMERA_ALLOC_ERROR, "failed to new CameraDeathRecipient");
-    deathRecipient->SetNotifyCb(std::bind(&HCameraServiceStub::ClientDied, this, std::placeholders::_1));
-    if (cameraListener->AsObject() != nullptr) {
-        (void)cameraListener->AsObject()->AddDeathRecipient(deathRecipient);
-    }
-    MEDIA_DEBUG_LOG("client pid pid:%{public}d", pid);
+    deathRecipient->SetNotifyCb([this](pid_t pid) {
+        this->ClientDied(pid);
+    });
+    cameraListener->AddCameraDeathRecipient(deathRecipient);
     cameraListenerMap_.EnsureInsert(pid, cameraListener);
-    deathRecipientMap_.EnsureInsert(pid, deathRecipient);
-    return errCode;
+    return CAMERA_OK;
 }
 
 int HCameraServiceStub::SetListenerObject(MessageParcel& data, MessageParcel& reply)
