@@ -27,7 +27,11 @@ namespace OHOS {
 namespace CameraStandard {
 VideoOutput::VideoOutput(sptr<IBufferProducer> bufferProducer)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_VIDEO, StreamType::REPEAT, bufferProducer, nullptr)
-{}
+{
+    videoFormat_ = 0;
+    videoSize_.height = 0;
+    videoSize_.width = 0;
+}
 
 VideoOutput::~VideoOutput()
 {
