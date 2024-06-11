@@ -65,7 +65,6 @@ using namespace DeferredProcessing;
 using namespace Media;
 class PermissionStatusChangeCb;
 class CameraUseStateChangeCb;
-class DisplayRotationListener;
 
 static const int32_t STREAM_NOT_FOUNT = -1;
 
@@ -279,8 +278,6 @@ private:
 
     std::string GetSessionState();
 
-    void RegisterDisplayListener(sptr<HStreamRepeat> repeat);
-    void UnRegisterDisplayListener(sptr<HStreamRepeat> repeat);
     StateMachine stateMachine_;
 
     // Make sure device thread safe,set device by {SetCameraDevice}, get device by {GetCameraDevice}
@@ -307,8 +304,6 @@ private:
     sptr<Surface> metaSurface_;
     sptr<MovingPhotoVideoCache> videoCache_;
     sptr<AvcodecTaskManager> taskManager_;
-    std::mutex displayListenerLock_;
-    sptr<DisplayRotationListener> displayListener_;
 };
 
 class PermissionStatusChangeCb : public Security::AccessToken::PermStateChangeCallbackCustomize {

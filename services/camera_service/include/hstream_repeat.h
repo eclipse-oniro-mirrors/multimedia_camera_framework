@@ -75,13 +75,13 @@ public:
     int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate) override;
     int32_t SetMirror(bool isEnable) override;
     void SetMirrorForLivePhoto(bool isEnable, int32_t mode);
-    void SetStreamTransform(int disPlayRotation = -1);
 
 private:
     void OpenVideoDfxSwitch(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
+    void SetStreamTransform();
     void StartSketchStream(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
     void UpdateSketchStatus(SketchStatus status);
-    void ProcessCameraPosition(int32_t& streamRotation, camera_position_enum_t& cameraPosition);
+    void ProcessCameraPosition(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
     void UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
 
     RepeatStreamType repeatStreamType_;
