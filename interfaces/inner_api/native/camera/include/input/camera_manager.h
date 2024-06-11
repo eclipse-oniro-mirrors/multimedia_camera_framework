@@ -476,6 +476,15 @@ public:
     void MuteCamera(bool muteMode);
 
     /**
+     * @brief Mute the camera, and the mute mode can be persisting;
+     *
+     * @param PolicyType policyType.
+     * @param bool muteMode.
+     * @return.
+     */
+    int32_t MuteCameraPersist(PolicyType policyType, bool muteMode);
+
+    /**
      * @brief register camera mute listener
      *
      * @param CameraMuteListener listener object.

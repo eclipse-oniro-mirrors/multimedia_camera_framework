@@ -42,6 +42,11 @@ struct EffectParam {
     int skinTone;
 };
 
+enum class PolicyType : int32_t {
+    EDM = 0,
+    PRIVACY = 1,
+};
+
 class ICameraBroker : public IRemoteBroker {
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"OHOS.Anco.Service.Camera");
@@ -91,6 +96,8 @@ public:
     virtual int32_t SetListenerObject(const sptr<IRemoteObject> &object) = 0;
 
     virtual int32_t MuteCamera(bool muteMode) = 0;
+
+    virtual int32_t MuteCameraPersist(PolicyType policyType, bool isMute) = 0;
 
     virtual int32_t PrelaunchCamera() = 0;
 

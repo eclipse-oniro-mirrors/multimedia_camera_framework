@@ -27,6 +27,7 @@
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
 #include "camera_output_capability.h"
+#include "capture_scene_const.h"
 #include "input/camera_napi.h"
 #include "input/camera_pre_launch_config_napi.h"
 #include "js_native_api_types.h"
@@ -314,6 +315,10 @@ const std::unordered_map<JsSceneMode, SceneMode> g_jsToFwMode_ = {
     {JsSceneMode::JS_SECURE_CAMERA, SceneMode::SECURE},
 };
 
+static std::unordered_map<JsPolicyType, PolicyType> g_jsToFwPolicyType_ = {
+    {JsPolicyType::JS_PRIVACY, PolicyType::PRIVACY},
+};
+
 CameraManagerNapi::CameraManagerNapi() : env_(nullptr), wrapper_(nullptr)
 {
     CAMERA_SYNC_TRACE;
@@ -383,6 +388,7 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isCameraMuted", IsCameraMuted),
         DECLARE_NAPI_FUNCTION("isCameraMuteSupported", IsCameraMuteSupported),
         DECLARE_NAPI_FUNCTION("muteCamera", MuteCamera),
+        DECLARE_NAPI_FUNCTION("muteCameraPersist", MuteCameraPersist),
         DECLARE_NAPI_FUNCTION("prelaunch", PrelaunchCamera),
         DECLARE_NAPI_FUNCTION("preSwitchCamera", PreSwitchCamera),
         DECLARE_NAPI_FUNCTION("isPrelaunchSupported", IsPrelaunchSupported),
@@ -1034,6 +1040,32 @@ napi_value CameraManagerNapi::MuteCamera(napi_env env, napi_callback_info info)
     bool isSupported;
     napi_get_value_bool(env, argv[PARAM0], &isSupported);
     CameraManager::GetInstance()->MuteCamera(isSupported);
+    napi_get_undefined(env, &result);
+    return result;
+}
+
+napi_value CameraManagerNapi::MuteCameraPersist(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi MuteCameraPersist is called!");
+        return nullptr;
+    }
+    MEDIA_INFO_LOG("MuteCamera is called");
+    napi_value result = nullptr;
+    size_t argc = ARGS_TWO;
+    napi_value argv[ARGS_TWO] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc == ARGS_TWO, "requires 2 parameters");
+    bool muteMode;
+    int32_t jsPolicyType;
+    napi_get_value_bool(env, argv[PARAM0], &muteMode);
+    napi_get_value_int32(env, argv[PARAM1], &jsPolicyType);
+    NAPI_ASSERT(env, g_jsToFwPolicyType_.count(static_cast<JsPolicyType>(jsPolicyType)) != 0,
+        "invalid policyType value");
+    CameraManager::GetInstance()->MuteCameraPersist(g_jsToFwPolicyType_[static_cast<JsPolicyType>(jsPolicyType)],
+        muteMode);
     napi_get_undefined(env, &result);
     return result;
 }

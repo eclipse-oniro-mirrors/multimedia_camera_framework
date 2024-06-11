@@ -300,6 +300,11 @@ static const std::unordered_map<std::string, int32_t> mapEffectSuggestionType = 
     {"EFFECT_SUGGESTION_SUNRISE_SUNSET", 4},
 };
 
+static const std::unordered_map<std::string, int32_t> mapPolicyType = {
+    {"EDM", 0},
+    {"PRIVACY", 1},
+};
+
 enum CreateAsyncCallbackModes {
     CREATE_CAMERA_MANAGER_ASYNC_CALLBACK = 10,
 };
@@ -363,6 +368,7 @@ private:
     static thread_local napi_ref restoreParamTypeRef_;
     static thread_local napi_ref exposureMeteringModeRef_;
     static thread_local napi_ref effectSuggestionTypeRef_;
+    static thread_local napi_ref policyTypeRef_;
     napi_env env_;
     napi_ref wrapper_;
 };

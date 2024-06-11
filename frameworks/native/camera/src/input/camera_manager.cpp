@@ -1868,6 +1868,21 @@ void CameraManager::MuteCamera(bool muteMode)
     }
 }
 
+int32_t CameraManager::MuteCameraPersist(PolicyType policyType, bool muteMode)
+{
+    int32_t retCode = CAMERA_OK;
+    auto serviceProxy = GetServiceProxy();
+    if (serviceProxy == nullptr) {
+        MEDIA_ERR_LOG("serviceProxy is null");
+        return SERVICE_FATL_ERROR;
+    }
+    retCode = serviceProxy->MuteCameraPersist(policyType, muteMode);
+    if (retCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("MuteCameraPersist call failed, retCode: %{public}d", retCode);
+    }
+    return ServiceToCameraError(retCode);
+}
+
 int32_t CameraManager::PrelaunchCamera()
 {
     auto serviceProxy = GetServiceProxy();
