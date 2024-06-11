@@ -20,6 +20,8 @@
 #include <shared_mutex>
 #include <iostream>
 #include <mutex>
+#include <list>
+
 #include "ipc_file_descriptor.h"
 #include "v1_2/icamera_host_callback.h"
 #include "v1_2/iimage_process_service.h"
@@ -27,7 +29,7 @@
 #include "v1_2/iimage_process_callback.h"
 #include "v1_2/types.h"
 #include "iremote_object.h"
-
+#include "deferred_photo_job.h"
 #include "iimage_process_callbacks.h"
 #include "task_manager.h"
 
@@ -81,6 +83,8 @@ private:
     sptr<OHOS::HDI::Camera::V1_2::IImageProcessSession> imageProcessSession_;
     sptr<IRemoteObject::DeathRecipient> sessionDeathRecipient_;
     std::unordered_map<std::string, uint32_t> imageId2Handle_;
+    std::unordered_map<std::string, uint32_t> imageId2CrashCount_;
+    std::list<std::string> removeNeededList_;
     int consecutiveTimeoutCount_;
 };
 } // namespace DeferredProcessing
