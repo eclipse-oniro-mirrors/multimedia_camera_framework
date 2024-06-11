@@ -19,8 +19,6 @@
 #include <refbase.h>
 
 #include "v1_3/types.h"
-
-#include "deferred_photo_job.h"
 #include "photo_post_processor.h"
 #include "iproxy_broker.h"
 #include "dp_utils.h"
@@ -34,6 +32,7 @@ namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 constexpr uint32_t MAX_CONSECUTIVE_TIMEOUT_COUNT = 3;
+constexpr uint32_t MAX_CONSECUTIVE_CRASH_COUNT = 3;
 
 DpsError MapHdiError(OHOS::HDI::Camera::V1_2::ErrorCode errorCode)
 {
@@ -219,6 +218,8 @@ PhotoPostProcessor::PhotoPostProcessor(int userId, TaskManager* taskManager, IIm
       imageProcessSession_(nullptr),
       sessionDeathRecipient_(nullptr),
       imageId2Handle_(),
+      imageId2CrashCount_(),
+      removeNeededList_(),
       consecutiveTimeoutCount_(0)
 {
     DP_DEBUG_LOG("entered");
@@ -328,7 +329,10 @@ void PhotoPostProcessor::RemoveImage(std::string imageId)
     if (imageProcessSession_) {
         int32_t ret = imageProcessSession_->RemoveImage(imageId);
         DP_INFO_LOG("removeImage, imageId: %s, ret: %{public}d", imageId.c_str(), ret);
+        imageId2CrashCount_.erase(imageId);
         DPSEventReport::GetInstance().UpdateRemoveTime(imageId, userId_);
+    } else {
+        removeNeededList_.push_back(imageId);
     }
 }
 
@@ -405,6 +409,20 @@ void PhotoPostProcessor::OnSessionDied()
     imageProcessSession_ = nullptr;
     consecutiveTimeoutCount_ = 0;
     OnStateChanged(HdiStatus::HDI_DISCONNECTED);
+    for (auto iter = imageId2Handle_.begin(); iter != imageId2Handle_.end(); iter++) {
+        std::string imageId = iter->first;
+        DP_INFO_LOG("failed to process image (%s) due to connect service failed", imageId.c_str());
+        if (imageId2CrashCount_.count(imageId) == 0) {
+            imageId2CrashCount_.emplace(imageId, 1);
+        } else {
+            imageId2CrashCount_[imageId] += 1;
+        }
+        if (imageId2CrashCount_[imageId] >= MAX_CONSECUTIVE_CRASH_COUNT) {
+            OnError(imageId, DpsError::DPS_ERROR_IMAGE_PROC_FAILED);
+        } else {
+            OnError(imageId, DpsError::DPS_ERROR_SESSION_NOT_READY_TEMPORARILY);
+        }
+    }
     ScheduleConnectService();
 }
 
@@ -428,6 +446,13 @@ bool PhotoPostProcessor::ConnectServiceIfNecessary()
         DP_INFO_LOG("Failed to CreateImageProcessSession");
         ScheduleConnectService();
         return false;
+    } else {
+        for (auto iter = removeNeededList_.begin(); iter != removeNeededList_.end(); iter++) {
+            std::string imageId = *iter;
+            int32_t ret = imageProcessSession_->RemoveImage(imageId);
+            DP_INFO_LOG("removeImage, imageId: %s, ret: %{public}d", imageId.c_str(), ret);
+        }
+        removeNeededList_.clear();
     }
     const sptr<IRemoteObject> &remote =
         OHOS::HDI::hdi_objcast<OHOS::HDI::Camera::V1_2::IImageProcessSession>(imageProcessSession_);
