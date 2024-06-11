@@ -4595,7 +4595,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_039, TestSize.Level
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test if captureSession_ == nullptr in CameraServerDied
+ * CaseDescription: Test if innerCaptureSession_ == nullptr in CameraServerDied
  */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_040, TestSize.Level0)
 {
@@ -4623,7 +4623,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_040, TestSize.Level
     session->CameraServerDied(0);
     session->appCallback_ = appCallback;
     session->CameraServerDied(0);
-    session->captureSession_ = nullptr;
+    session->innerCaptureSession_ = nullptr;
     session->CameraServerDied(0);
     session->appCallback_ = nullptr;
 
@@ -4912,7 +4912,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_046, TestSize.Level
     EXPECT_EQ(session->BeginConfig(), 0);
     EXPECT_EQ(session->CanAddInput(input), true);
     EXPECT_EQ(session->CanAddInput(input1), false);
-    session->captureSession_ = nullptr;
+    session->innerCaptureSession_ = nullptr;
     EXPECT_EQ(session->CanAddInput(input), false);
 
     EXPECT_EQ(session->AddInput(input), OPERATION_NOT_ALLOWED);

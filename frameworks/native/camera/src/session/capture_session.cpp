@@ -260,10 +260,10 @@ int32_t CaptureSessionCallback::OnError(int32_t errorCode)
     return CameraErrorCode::SUCCESS;
 }
 
-CaptureSession::CaptureSession(sptr<ICaptureSession>& captureSession) : captureSession_(captureSession)
+CaptureSession::CaptureSession(sptr<ICaptureSession>& captureSession) : innerCaptureSession_(captureSession)
 {
     metadataResultProcessor_ = std::make_shared<CaptureSessionMetadataResultProcessor>(this);
-    sptr<IRemoteObject> object = captureSession_->AsObject();
+    sptr<IRemoteObject> object = innerCaptureSession_->AsObject();
     pid_t pid = 0;
     deathRecipient_ = new (std::nothrow) CameraDeathRecipient(pid);
     CHECK_AND_RETURN_LOG(deathRecipient_ != nullptr, "failed to new CameraDeathRecipient.");
@@ -292,9 +292,10 @@ void CaptureSession::CameraServerDied(pid_t pid)
 
 void CaptureSession::SessionRemoveDeathRecipient()
 {
-    if (captureSession_ != nullptr) {
-        (void)captureSession_->AsObject()->RemoveDeathRecipient(deathRecipient_);
-        captureSession_ = nullptr;
+    auto captureSession = GetCaptureSession();
+    if (captureSession != nullptr) {
+        (void)captureSession->AsObject()->RemoveDeathRecipient(deathRecipient_);
+        SetCaptureSession(nullptr);
     }
     deathRecipient_ = nullptr;
 }
@@ -316,13 +317,14 @@ int32_t CaptureSession::BeginConfig()
 
     isColorSpaceSetted_ = false;
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    if (captureSession_) {
-        errCode = captureSession_->BeginConfig();
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
+        errCode = captureSession->BeginConfig();
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to BeginConfig!, %{public}d", errCode);
         }
     } else {
-        MEDIA_ERR_LOG("CaptureSession::BeginConfig() captureSession_ is nullptr");
+        MEDIA_ERR_LOG("CaptureSession::BeginConfig() captureSession is nullptr");
     }
     return ServiceToCameraError(errCode);
 }
@@ -347,14 +349,15 @@ int32_t CaptureSession::CommitConfig()
         SetUserId();
     }
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    if (captureSession_) {
-        errCode = captureSession_->CommitConfig();
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
+        errCode = captureSession->CommitConfig();
         MEDIA_INFO_LOG("CaptureSession::CommitConfig commit mode = %{public}d", GetMode());
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to CommitConfig!, %{public}d", errCode);
         }
     } else {
-        MEDIA_ERR_LOG("CaptureSession::CommitConfig() captureSession_ is nullptr");
+        MEDIA_ERR_LOG("CaptureSession::CommitConfig() captureSession is nullptr");
     }
     return ServiceToCameraError(errCode);
 }
@@ -388,8 +391,9 @@ void CaptureSession::SetDefaultColorSpace()
         }
     }
 
-    if (!captureSession_) {
-        MEDIA_ERR_LOG("CaptureSession::SetDefaultColorSpace() captureSession_ is nullptr");
+    auto captureSession = GetCaptureSession();
+    if (!captureSession) {
+        MEDIA_ERR_LOG("CaptureSession::SetDefaultColorSpace() captureSession is nullptr");
         return;
     }
 
@@ -413,7 +417,7 @@ void CaptureSession::SetDefaultColorSpace()
     MEDIA_INFO_LOG("CaptureSession::SetDefaultColorSpace mode = %{public}d, ColorSpace = %{public}d, "
         "captureColorSpace = %{public}d.", GetMode(), fwkColorSpace, fwkCaptureColorSpace);
 
-    int32_t errCode = captureSession_->SetColorSpace(fwkColorSpace, fwkCaptureColorSpace, false);
+    int32_t errCode = captureSession->SetColorSpace(fwkColorSpace, fwkCaptureColorSpace, false);
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("CaptureSession::SetDefaultColorSpace failed to SetColorSpace!, %{public}d",
             ServiceToCameraError(errCode));
@@ -431,10 +435,11 @@ bool CaptureSession::CanAddInput(sptr<CaptureInput>& input)
         MEDIA_ERR_LOG("CaptureSession::AddInput operation Not allowed!");
         return ret;
     }
-    if (captureSession_) {
-        captureSession_->CanAddInput(((sptr<CameraInput>&)input)->GetCameraDevice(), ret);
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
+        captureSession->CanAddInput(((sptr<CameraInput>&)input)->GetCameraDevice(), ret);
     } else {
-        MEDIA_ERR_LOG("CaptureSession::CanAddInput() captureSession_ is nullptr");
+        MEDIA_ERR_LOG("CaptureSession::CanAddInput() captureSession is nullptr");
     }
     return ret;
 }
@@ -452,8 +457,9 @@ int32_t CaptureSession::AddInput(sptr<CaptureInput>& input)
         return ServiceToCameraError(CAMERA_INVALID_ARG);
     }
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    if (captureSession_) {
-        errCode = captureSession_->AddInput(((sptr<CameraInput>&)input)->GetCameraDevice());
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
+        errCode = captureSession->AddInput(((sptr<CameraInput>&)input)->GetCameraDevice());
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to AddInput!, %{public}d", errCode);
         } else {
@@ -465,7 +471,7 @@ int32_t CaptureSession::AddInput(sptr<CaptureInput>& input)
             }
         }
     } else {
-        MEDIA_ERR_LOG("CaptureSession::AddInput() captureSession_ is nullptr");
+        MEDIA_ERR_LOG("CaptureSession::AddInput() captureSession is nullptr");
     }
     return ServiceToCameraError(errCode);
 }
@@ -701,21 +707,17 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
         MEDIA_ERR_LOG("CanAddOutput check failed!");
         return ServiceToCameraError(CAMERA_INVALID_ARG);
     }
-    if (captureSession_ == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::AddOutput() captureSession_ is nullptr");
+    auto captureSession = GetCaptureSession();
+    if (captureSession == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::AddOutput() captureSession is nullptr");
         return ServiceToCameraError(CAMERA_UNKNOWN_ERROR);
     }
-    if (GetMode() == SceneMode::VIDEO && output->GetOutputType() == CAPTURE_OUTPUT_TYPE_VIDEO) {
-        std::vector<int32_t> videoFrameRates = output->GetVideoProfile()->GetFrameRates();
-        if (videoFrameRates.empty()) {
-            MEDIA_ERR_LOG("videoFrameRates is empty!");
-            return ServiceToCameraError(CAMERA_INVALID_ARG);
-        }
-        if (videoFrameRates[0] == FRAMERATE_120 || videoFrameRates[0] == FRAMERATE_240) {
-            captureSession_->SetFeatureMode(SceneMode::HIGH_FRAME_RATE);
-        }
+    int32_t ret = AdaptOutputVideoHighFrameRate(output, captureSession);
+    if (ret != CameraErrorCode::SUCCESS) {
+        MEDIA_ERR_LOG("CaptureSession::AddOutput An Error in the AdaptOutputVideoHighFrameRate");
+        return ServiceToCameraError(CAMERA_INVALID_ARG);
     }
-    int32_t errCode = captureSession_->AddOutput(output->GetStreamType(), output->GetStream());
+    int32_t errCode = captureSession->AddOutput(output->GetStreamType(), output->GetStream());
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO) {
         photoOutput_ = output;
     }
@@ -726,6 +728,32 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
     }
     InsertOutputIntoSet(output);
     return ServiceToCameraError(errCode);
+}
+
+int32_t CaptureSession::AdaptOutputVideoHighFrameRate(sptr<CaptureOutput>& output,
+    sptr<ICaptureSession>& captureSession)
+{
+    MEDIA_INFO_LOG("Enter Into CaptureSession::AdaptOutputVideoHighFrameRate");
+    if (output == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::AdaptOutputVideoHighFrameRate output is null");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+    if (captureSession == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::AdaptOutputVideoHighFrameRate() captureSession is nullptr");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+    if (GetMode() == SceneMode::VIDEO && output->GetOutputType() == CAPTURE_OUTPUT_TYPE_VIDEO) {
+        std::vector<int32_t> videoFrameRates = output->GetVideoProfile()->GetFrameRates();
+        if (videoFrameRates.empty()) {
+            MEDIA_ERR_LOG("videoFrameRates is empty!");
+            return CameraErrorCode::INVALID_ARGUMENT;
+        }
+        if (videoFrameRates[0] == FRAMERATE_120 || videoFrameRates[0] == FRAMERATE_240) {
+            captureSession->SetFeatureMode(SceneMode::HIGH_FRAME_RATE);
+            return CameraErrorCode::SUCCESS;
+        }
+    }
+    return CameraErrorCode::SUCCESS;
 }
 
 int32_t CaptureSession::AddSecureOutput(sptr<CaptureOutput> &output)
@@ -801,8 +829,9 @@ int32_t CaptureSession::RemoveInput(sptr<CaptureInput>& input)
     }
     SetInputDevice(nullptr);
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    if (captureSession_) {
-        errCode = captureSession_->RemoveInput(device);
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
+        errCode = captureSession->RemoveInput(device);
         auto deviceInfo = input->GetCameraDeviceInfo();
         if (deviceInfo != nullptr) {
             deviceInfo->ResetMetadata();
@@ -811,7 +840,7 @@ int32_t CaptureSession::RemoveInput(sptr<CaptureInput>& input)
             MEDIA_ERR_LOG("Failed to RemoveInput!, %{public}d", errCode);
         }
     } else {
-        MEDIA_ERR_LOG("CaptureSession::RemoveInput() captureSession_ is nullptr");
+        MEDIA_ERR_LOG("CaptureSession::RemoveInput() captureSession is nullptr");
     }
     return ServiceToCameraError(errCode);
 }
@@ -858,13 +887,14 @@ int32_t CaptureSession::RemoveOutput(sptr<CaptureOutput>& output)
         return ServiceToCameraError(CAMERA_OK);
     }
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    if (captureSession_) {
-        errCode = captureSession_->RemoveOutput(output->GetStreamType(), output->GetStream());
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
+        errCode = captureSession->RemoveOutput(output->GetStreamType(), output->GetStream());
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to RemoveOutput!, %{public}d", errCode);
         }
     } else {
-        MEDIA_ERR_LOG("CaptureSession::RemoveOutput() captureSession_ is nullptr");
+        MEDIA_ERR_LOG("CaptureSession::RemoveOutput() captureSession is nullptr");
     }
     RemoveOutputFromSet(output);
     if (output->IsTagSetted(CaptureOutput::DYNAMIC_PROFILE)) {
@@ -882,13 +912,14 @@ int32_t CaptureSession::Start()
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    if (captureSession_) {
-        errCode = captureSession_->Start();
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
+        errCode = captureSession->Start();
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to Start capture session!, %{public}d", errCode);
         }
     } else {
-        MEDIA_ERR_LOG("CaptureSession::Start() captureSession_ is nullptr");
+        MEDIA_ERR_LOG("CaptureSession::Start() captureSession is nullptr");
     }
     if (GetMetaOutput()) {
         sptr<MetadataOutput> metaOutput = static_cast<MetadataOutput*>(GetMetaOutput().GetRefPtr());
@@ -909,13 +940,14 @@ int32_t CaptureSession::Stop()
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::Stop");
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    if (captureSession_) {
-        errCode = captureSession_->Stop();
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
+        errCode = captureSession->Stop();
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to Stop capture session!, %{public}d", errCode);
         }
     } else {
-        MEDIA_ERR_LOG("CaptureSession::Stop() captureSession_ is nullptr");
+        MEDIA_ERR_LOG("CaptureSession::Stop() captureSession is nullptr");
     }
     return ServiceToCameraError(errCode);
 }
@@ -925,11 +957,12 @@ int32_t CaptureSession::Release()
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::Release");
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    if (captureSession_) {
-        errCode = captureSession_->Release();
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
+        errCode = captureSession->Release();
         MEDIA_DEBUG_LOG("Release capture session, %{public}d", errCode);
     } else {
-        MEDIA_ERR_LOG("CaptureSession::Release() captureSession_ is nullptr");
+        MEDIA_ERR_LOG("CaptureSession::Release() captureSession is nullptr");
     }
     SetInputDevice(nullptr);
     SessionRemoveDeathRecipient();
@@ -951,23 +984,26 @@ int32_t CaptureSession::Release()
 void CaptureSession::SetCallback(std::shared_ptr<SessionCallback> callback)
 {
     if (callback == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::SetCallback: Unregistering application callback!");
+        MEDIA_ERR_LOG("CaptureSession::SetCallback Unregistering application callback!");
     }
     int32_t errorCode = CAMERA_OK;
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     appCallback_ = callback;
-    if (appCallback_ != nullptr && captureSession_ != nullptr) {
+    auto captureSession = GetCaptureSession();
+    if (appCallback_ != nullptr && captureSession != nullptr) {
         if (captureSessionCallback_ == nullptr) {
             captureSessionCallback_ = new (std::nothrow) CaptureSessionCallback(this);
         }
-        if (captureSession_) {
-            errorCode = captureSession_->SetCallback(captureSessionCallback_);
+        if (captureSession) {
+            errorCode = captureSession->SetCallback(captureSessionCallback_);
             if (errorCode != CAMERA_OK) {
                 MEDIA_ERR_LOG(
                     "CaptureSession::SetCallback: Failed to register callback, errorCode: %{public}d", errorCode);
                 captureSessionCallback_ = nullptr;
                 appCallback_ = nullptr;
             }
+        } else {
+            MEDIA_ERR_LOG("CaptureSession::SetCallback captureSession is nullptr");
         }
     }
     return;
@@ -977,11 +1013,14 @@ void CaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::
 {
     int32_t errorCode = CAMERA_OK;
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
-    if (captureSession_) {
-        errorCode = captureSession_->CreateMediaLibrary(photoProxy, uri, cameraShotType);
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
+        errorCode = captureSession->CreateMediaLibrary(photoProxy, uri, cameraShotType);
         if (errorCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to create media library, errorCode: %{public}d", errorCode);
         }
+    } else {
+        MEDIA_ERR_LOG("CaptureSession::CreateMediaLibrary captureSession is nullptr");
     }
 }
 
@@ -2748,8 +2787,9 @@ int32_t CaptureSession::SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoom
 
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     float duration;
-    if (captureSession_) {
-        errCode = captureSession_->SetSmoothZoom(smoothZoomType, GetMode(), targetZoomRatio, duration);
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
+        errCode = captureSession->SetSmoothZoom(smoothZoomType, GetMode(), targetZoomRatio, duration);
         MEDIA_DEBUG_LOG("CaptureSession::SetSmoothZoom duration: %{public}f ", duration);
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to SetSmoothZoom!, %{public}d", errCode);
@@ -2764,7 +2804,7 @@ int32_t CaptureSession::SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoom
             smoothZoomCallback_->OnSmoothZoom(duration);
         }
     } else {
-        MEDIA_ERR_LOG("CaptureSession::SetSmoothZoom() captureSession_ is nullptr");
+        MEDIA_ERR_LOG("CaptureSession::SetSmoothZoom() captureSession is nullptr");
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -2876,9 +2916,13 @@ void CaptureSession::SetMode(SceneMode modeName)
     currentMode_ = modeName;
     // reset deferred enable status when reset mode
     EnableDeferredType(DELIVERY_NONE, false);
-    if (captureSession_) {
-        captureSession_->SetFeatureMode(modeName);
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
+        captureSession->SetFeatureMode(modeName);
         MEDIA_INFO_LOG("CaptureSession::SetSceneMode  SceneMode = %{public}d", modeName);
+    } else {
+        MEDIA_ERR_LOG("CaptureSession::SetMode captureSession is nullptr");
+        return;
     }
     MEDIA_INFO_LOG("CaptureSession SetMode modeName = %{public}d", modeName);
 }
@@ -3493,10 +3537,13 @@ bool CaptureSession::CanSetFrameRateRangeForOutput(int32_t minFps, int32_t maxFp
 bool CaptureSession::IsSessionConfiged()
 {
     bool isSessionConfiged = false;
-    if (captureSession_) {
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
         CaptureSessionState currentState;
-        captureSession_->GetSessionState(currentState);
+        captureSession->GetSessionState(currentState);
         isSessionConfiged = (currentState == CaptureSessionState::SESSION_CONFIG_INPROGRESS);
+    } else {
+        MEDIA_ERR_LOG("CaptureSession::IsSessionConfiged captureSession is nullptr");
     }
     return isSessionConfiged;
 }
@@ -3504,11 +3551,14 @@ bool CaptureSession::IsSessionConfiged()
 bool CaptureSession::IsSessionCommited()
 {
     bool isCommitConfig = false;
-    if (captureSession_) {
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
         CaptureSessionState currentState;
-        captureSession_->GetSessionState(currentState);
+        captureSession->GetSessionState(currentState);
         isCommitConfig = (currentState == CaptureSessionState::SESSION_CONFIG_COMMITTED)
             || (currentState == CaptureSessionState::SESSION_STARTED);
+    } else {
+        MEDIA_ERR_LOG("CaptureSession::IsSessionCommited captureSession is nullptr");
     }
     return isCommitConfig;
 }
@@ -3516,10 +3566,13 @@ bool CaptureSession::IsSessionCommited()
 bool CaptureSession::IsSessionStarted()
 {
     bool isStarted = false;
-    if (captureSession_) {
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
         CaptureSessionState currentState;
-        captureSession_->GetSessionState(currentState);
+        captureSession->GetSessionState(currentState);
         isStarted = (currentState == CaptureSessionState::SESSION_STARTED);
+    } else {
+        MEDIA_ERR_LOG("CaptureSession::IsSessionStarted captureSession is nullptr");
     }
     return isStarted;
 }
@@ -3606,15 +3659,16 @@ int32_t CaptureSession::GetActiveColorSpace(ColorSpace& colorSpace)
     }
 
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
-    if (captureSession_) {
-        errCode = captureSession_->GetActiveColorSpace(colorSpace);
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
+        errCode = captureSession->GetActiveColorSpace(colorSpace);
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to GetActiveColorSpace! %{public}d", errCode);
         } else {
             MEDIA_INFO_LOG("CaptureSession::GetActiveColorSpace %{public}d", static_cast<int32_t>(colorSpace));
         }
     } else {
-        MEDIA_ERR_LOG("CaptureSession::GetActiveColorSpace() captureSession_ is nullptr");
+        MEDIA_ERR_LOG("CaptureSession::GetActiveColorSpace() captureSession is nullptr");
     }
     return ServiceToCameraError(errCode);
 }
@@ -3626,8 +3680,9 @@ int32_t CaptureSession::SetColorSpace(ColorSpace colorSpace)
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
 
-    if (!captureSession_) {
-        MEDIA_ERR_LOG("CaptureSession::SetColorSpace() captureSession_ is nullptr");
+    auto captureSession = GetCaptureSession();
+    if (!captureSession) {
+        MEDIA_ERR_LOG("CaptureSession::SetColorSpace() captureSession is nullptr");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
 
@@ -3662,7 +3717,7 @@ int32_t CaptureSession::SetColorSpace(ColorSpace colorSpace)
     }
     // 若session还未commit，则后续createStreams会把色域带下去；否则，SetColorSpace要走updateStreams
     MEDIA_DEBUG_LOG("CaptureSession::SetColorSpace, IsSessionCommited %{public}d", IsSessionCommited());
-    int32_t errCode = captureSession_->SetColorSpace(colorSpace, fwkCaptureColorSpace, IsSessionCommited());
+    int32_t errCode = captureSession->SetColorSpace(colorSpace, fwkCaptureColorSpace, IsSessionCommited());
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to SetColorSpace!, %{public}d", errCode);
     }
@@ -4148,14 +4203,15 @@ int32_t CaptureSession::EnableMovingPhoto(bool isEnable)
     if (!status) {
         MEDIA_ERR_LOG("CaptureSession::EnableMovingPhoto Failed to enable");
     }
-    if (captureSession_) {
-        int32_t errCode = captureSession_->EnableMovingPhoto(isEnable);
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
+        int32_t errCode = captureSession->EnableMovingPhoto(isEnable);
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to EnableMovingPhoto!, %{public}d", errCode);
             return errCode;
         }
     } else {
-        MEDIA_ERR_LOG("CaptureSession::EnableMovingPhoto() captureSession_ is nullptr");
+        MEDIA_ERR_LOG("CaptureSession::EnableMovingPhoto() captureSession is nullptr");
     }
     isMovingPhotoEnabled_ = isEnable;
     return CameraErrorCode::SUCCESS;
@@ -4174,11 +4230,15 @@ int32_t CaptureSession::StartMovingPhotoCapture(bool isMirror, int32_t rotation)
         MEDIA_ERR_LOG("IsMovingPhotoSupported is false");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
-    if (captureSession_) {
-        int32_t errCode = captureSession_->StartMovingPhotoCapture(isMirror, rotation);
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
+        int32_t errCode = captureSession->StartMovingPhotoCapture(isMirror, rotation);
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to StartMovingPhotoCapture!, %{public}d", errCode);
         }
+    } else {
+        MEDIA_ERR_LOG("CaptureSession::StartMovingPhotoCapture captureSession is nullptr");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     return CameraErrorCode::SUCCESS;
 }
