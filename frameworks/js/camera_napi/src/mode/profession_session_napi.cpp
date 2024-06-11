@@ -1045,7 +1045,7 @@ napi_value ProfessionSessionNapi::ProcessingPhysicalApertures(napi_env env,
     napi_create_array(env, &result);
     size_t zoomRangeSize = 2;
     int zoomMinIndex = 0;
-    int zoomMaxIndex = 0;
+    int zoomMaxIndex = 1;
     for (size_t i = 0; i < physicalApertures.size(); i++) {
         if (physicalApertures[i].size() <= zoomRangeSize) {
             continue;
