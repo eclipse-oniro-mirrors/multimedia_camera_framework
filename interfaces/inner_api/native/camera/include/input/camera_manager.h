@@ -658,6 +658,7 @@ private:
     int32_t ValidCreateOutputStream(Profile& profile, const sptr<OHOS::IBufferProducer>& producer);
     int32_t SubscribeSystemAbility();
     int32_t UnSubscribeSystemAbility();
+    void RemoveDuplicatesProfiles(std::vector<Profile>& profiles);
     inline sptr<ICameraService> GetServiceProxy()
     {
         std::lock_guard<std::mutex> lock(serviceProxyMutex_);
