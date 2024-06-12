@@ -1133,7 +1133,7 @@ int32_t HCameraDevice::OnError(const OHOS::HDI::Camera::V1_0::ErrorType type, co
     }
 
     auto deviceEventCallback = GetDeviceEventCallback();
-    if (callback != nullptr) {
+    if (deviceEventCallback != nullptr) {
         deviceEventCallback->OnError(type);
     }
     return CAMERA_OK;
