@@ -15,8 +15,6 @@
 #include "camera_util.h"
 #include <cstdint>
 #include <securec.h>
-#include <parameter.h>
-#include <parameters.h>
 #include "camera_log.h"
 #include "access_token.h"
 #include "accesstoken_kit.h"
@@ -32,7 +30,7 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Display::Composer::V1_1;
-static bool g_isPhone = system::GetParameter("const.product.devicetype", "unknow") == "phone";
+static bool g_tablet = system::GetParameter("const.product.devicetype", "unknow") == "tablet";
 std::unordered_map<int32_t, int32_t> g_cameraToPixelFormat = {
     {OHOS_CAMERA_FORMAT_RGBA_8888, GRAPHIC_PIXEL_FMT_RGBA_8888},
     {OHOS_CAMERA_FORMAT_YCBCR_420_888, GRAPHIC_PIXEL_FMT_YCBCR_420_SP},
@@ -451,10 +449,10 @@ int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& ca
         case DISPALY_ROTATE_3: degrees = STREAM_ROTATE_270; break; // 逆时针转90
     }
     if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
-        sensorOrientation = g_isPhone ? sensorOrientation : sensorOrientation + STREAM_ROTATE_90;
+        sensorOrientation = g_tablet ? sensorOrientation + STREAM_ROTATE_90 : sensorOrientation;
         streamRotation = (STREAM_ROTATE_360 + sensorOrientation - degrees) % STREAM_ROTATE_360;
     } else {
-        sensorOrientation = g_isPhone ? sensorOrientation : sensorOrientation - STREAM_ROTATE_90;
+        sensorOrientation = g_tablet ? sensorOrientation - STREAM_ROTATE_90 : sensorOrientation;
         streamRotation = (sensorOrientation + degrees) % STREAM_ROTATE_360;
         streamRotation = (STREAM_ROTATE_360 - streamRotation) % STREAM_ROTATE_360;
     }

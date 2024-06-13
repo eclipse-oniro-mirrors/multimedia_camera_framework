@@ -58,7 +58,6 @@
 #include "hcamera_restore_param.h"
 #include "camera_report_uitls.h"
 #include "media_library_manager.h"
-#include "display_manager.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -144,9 +143,6 @@ HCaptureSession::HCaptureSession(const uint32_t callingTokenId, int32_t opMode)
 HCaptureSession::~HCaptureSession()
 {
     Release(CaptureSessionReleaseType::RELEASE_TYPE_OBJ_DIED);
-    if (displayListener_) {
-        OHOS::Rosen::DisplayManager::GetInstance().UnregisterDisplayListener(displayListener_);
-    }
 }
 
 pid_t HCaptureSession::GetPid()
@@ -413,6 +409,12 @@ void HCaptureSession::UnRegisterDisplayListener(sptr<HStreamRepeat> repeatStream
     }
 }
 
+int32_t HCaptureSession::SetPreviewRotation()
+{
+    enableStreamRotate_ = true;
+    return CAMERA_OK;
+}
+
 int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> stream)
 {
     int32_t errorCode = CAMERA_INVALID_ARG;
@@ -434,8 +436,10 @@ int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> st
             errorCode = AddOutputStream(static_cast<HStreamCapture*>(stream.GetRefPtr()));
         } else if (streamType == StreamType::REPEAT) {
             HStreamRepeat* repeatSteam = static_cast<HStreamRepeat*>(stream.GetRefPtr());
-            if (repeatSteam != nullptr && repeatSteam->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
+            if (enableStreamRotate_ && repeatSteam != nullptr &&
+                repeatSteam->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
                 RegisterDisplayListener(repeatSteam);
+                repeatSteam->SetPreviewRotation();
             }
             errorCode = AddOutputStream(repeatSteam);
         } else if (streamType == StreamType::METADATA) {
@@ -529,7 +533,8 @@ int32_t HCaptureSession::RemoveOutput(StreamType streamType, sptr<IStreamCommon>
             errorCode = RemoveOutputStream(static_cast<HStreamCapture*>(stream.GetRefPtr()));
         } else if (streamType == StreamType::REPEAT) {
             HStreamRepeat* repeatSteam = static_cast<HStreamRepeat*>(stream.GetRefPtr());
-            if (repeatSteam != nullptr && repeatSteam->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
+            if (enableStreamRotate_ && repeatSteam != nullptr &&
+                repeatSteam->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
                 UnRegisterDisplayListener(repeatSteam);
             }
             errorCode = RemoveOutputStream(repeatSteam);

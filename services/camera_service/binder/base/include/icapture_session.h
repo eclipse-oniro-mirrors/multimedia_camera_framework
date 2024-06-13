@@ -94,6 +94,8 @@ public:
     virtual int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
         std::string &uri, int32_t &cameraShotType) = 0;
 
+    virtual int32_t SetPreviewRotation() = 0;
+
     DECLARE_INTERFACE_DESCRIPTOR(u"ICaptureSession");
 };
 } // namespace CameraStandard

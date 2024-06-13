@@ -31,6 +31,7 @@
 
 #include "camera_log.h"
 #include "camera_util.h"
+#include "display_manager.h"
 #include "hcamera_device_manager.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"

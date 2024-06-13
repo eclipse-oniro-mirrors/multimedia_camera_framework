@@ -393,5 +393,21 @@ int32_t HCaptureSessionProxy::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoPr
     cameraShotType = reply.ReadInt32();
     return error;
 }
+
+int32_t HCaptureSessionProxy::SetPreviewRotation()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_PREVIEW_ROTATE),
+        data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HStreamRepeatProxy SetMirror failed, error: %{public}d", error);
+    }
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS
