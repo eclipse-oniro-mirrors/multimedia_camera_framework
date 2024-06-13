@@ -36,6 +36,8 @@ CameraPhotoProxy::CameraPhotoProxy()
     bufferHandle_ = nullptr;
     fileSize_ = 0;
     isDeferredPhoto_ = 0;
+    longitude_ = -1.0;
+    latitude_ = -1.0;
 }
 
 CameraPhotoProxy::CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format,
@@ -50,6 +52,8 @@ CameraPhotoProxy::CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format,
     isHighQuality_ = isHighQuality;
     deferredProcType_ = 0;
     isDeferredPhoto_ = 0;
+    longitude_ = -1.0;
+    latitude_ = -1.0;
     MEDIA_INFO_LOG("format = %{public}d, width = %{public}d, height = %{public}d",
         format_, photoWidth, photoHeight);
 }

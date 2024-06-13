@@ -73,6 +73,7 @@ RawPhotoListener::RawPhotoListener(napi_env env,
     if (bufferProcessor_ == nullptr && rawPhotoSurface != nullptr) {
         bufferProcessor_ = std::make_shared<PhotoBufferProcessor> (rawPhotoSurface);
     }
+    captureRawPhotoCb_ = nullptr;
 }
 
 void PhotoListener::OnBufferAvailable()

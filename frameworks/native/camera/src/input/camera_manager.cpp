@@ -1167,34 +1167,28 @@ void CameraManager::InitCameraList()
         return;
     }
     std::vector<std::string> cameraIds;
-    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
-    int32_t retCode = -1;
-    sptr<CameraDevice> cameraObj = nullptr;
-    int32_t index = 0;
     std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
-    for (unsigned int i = 0; i < cameraObjList_.size(); i++) {
-        cameraObjList_[i] = nullptr;
-    }
     cameraObjList_.clear();
     GetDmDeviceInfo();
-    MEDIA_DEBUG_LOG("CameraManager::GetCameras one by one");
-    retCode = serviceProxy->GetCameraIds(cameraIds);
-    for (auto cameraId : cameraIds) {
-        std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
-        retCode = retCode | serviceProxy->GetCameraAbility(cameraId, cameraAbility);
-        cameraAbilityList.push_back(cameraAbility);
-    }
+    int32_t retCode = serviceProxy->GetCameraIds(cameraIds);
     if (retCode == CAMERA_OK) {
-        for (auto& it : cameraIds) {
+        for (auto& cameraId : cameraIds) {
+            std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
+            retCode = serviceProxy->GetCameraAbility(cameraId, cameraAbility);
+            if (retCode != CAMERA_OK) {
+                continue;
+            }
+
             dmDeviceInfo tempDmDeviceInfo;
-            if (isDistributeCamera(it, tempDmDeviceInfo)) {
+            if (isDistributeCamera(cameraId, tempDmDeviceInfo)) {
                 MEDIA_DEBUG_LOG("CameraManager::it is remoted camera");
             } else {
                 tempDmDeviceInfo.deviceName = "";
                 tempDmDeviceInfo.deviceTypeId = 0;
                 tempDmDeviceInfo.networkId = "";
             }
-            cameraObj = new(std::nothrow) CameraDevice(it, cameraAbilityList[index++], tempDmDeviceInfo);
+            sptr<CameraDevice> cameraObj =
+                new(std::nothrow) CameraDevice(cameraId, cameraAbility, tempDmDeviceInfo);
             cameraObjList_.emplace_back(cameraObj);
         }
     } else {

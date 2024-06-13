@@ -2290,7 +2290,7 @@ void CaptureSession::ProcessAREngineUpdates(const uint64_t timestamp,
             MEDIA_ERR_LOG("ProcessSensorExposureTimeChange error! divide by zero");
             return;
         }
-        uint32_t value = numerator / (denominator/1000000);
+        uint32_t value = static_cast<uint32_t>(numerator / (denominator/1000000));
         MEDIA_DEBUG_LOG("SensorExposureTime: %{public}u", value);
         arStatusInfo.exposureDurationValue = value;
     }
@@ -3907,7 +3907,7 @@ int32_t CaptureSession::GetSensorExposureTimeRange(std::vector<uint32_t> &sensor
             MEDIA_ERR_LOG("CaptureSession::GetSensorExposureTimeRange divide by 0! numerator=%{public}d", numerator);
             return CameraErrorCode::INVALID_ARGUMENT;
         }
-        value = numerator / (denominator / timeUnit);
+        value = static_cast<uint32_t>(numerator / (denominator / timeUnit));
         MEDIA_DEBUG_LOG("CaptureSession::GetSensorExposureTimeRange numerator=%{public}d, denominator=%{public}d,"
                         " value=%{public}d", numerator, denominator, value);
         sensorExposureTimeRange.emplace_back(value);
