@@ -58,6 +58,7 @@
 #include "hcamera_restore_param.h"
 #include "camera_report_uitls.h"
 #include "media_library_manager.h"
+#include "display_manager.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -143,6 +144,9 @@ HCaptureSession::HCaptureSession(const uint32_t callingTokenId, int32_t opMode)
 HCaptureSession::~HCaptureSession()
 {
     Release(CaptureSessionReleaseType::RELEASE_TYPE_OBJ_DIED);
+    if (displayListener_) {
+        OHOS::Rosen::DisplayManager::GetInstance().UnregisterDisplayListener(displayListener_);
+    }
 }
 
 pid_t HCaptureSession::GetPid()

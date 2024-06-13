@@ -37,6 +37,15 @@ class HStreamCommon;
 static constexpr int32_t HDI_VERSION_1 = 1;
 static constexpr int32_t HDI_VERSION_2 = 2;
 static constexpr int32_t HDI_VERSION_3 = 3;
+static const int32_t STREAM_ROTATE_0 = 0;
+static const int32_t STREAM_ROTATE_90 = 90;
+static const int32_t STREAM_ROTATE_180 = 180;
+static const int32_t STREAM_ROTATE_270 = 270;
+static const int32_t STREAM_ROTATE_360 = 360;
+static const int32_t DISPALY_ROTATE_0 = 0;
+static const int32_t DISPALY_ROTATE_1 = 1;
+static const int32_t DISPALY_ROTATE_2 = 2;
+static const int32_t DISPALY_ROTATE_3 = 3;
 static const std::string OHOS_PERMISSION_CAMERA = "ohos.permission.CAMERA";
 static const std::string OHOS_PERMISSION_MANAGE_CAMERA_CONFIG = "ohos.permission.MANAGE_CAMERA_CONFIG";
 
@@ -136,6 +145,8 @@ int32_t CheckPermission(std::string permissionName, uint32_t callerToken);
 void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::string permissionName);
 
 bool IsVerticalDevice();
+
+int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition, int& disPlayRotation);
 
 inline bool IsCameraDebugOn()
 {

@@ -15,6 +15,8 @@
 #include "camera_util.h"
 #include <cstdint>
 #include <securec.h>
+#include <parameter.h>
+#include <parameters.h>
 #include "camera_log.h"
 #include "access_token.h"
 #include "accesstoken_kit.h"
@@ -31,6 +33,7 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Display::Composer::V1_1;
 static bool g_tablet = system::GetParameter("const.product.devicetype", "unknow") == "tablet";
+
 std::unordered_map<int32_t, int32_t> g_cameraToPixelFormat = {
     {OHOS_CAMERA_FORMAT_RGBA_8888, GRAPHIC_PIXEL_FMT_RGBA_8888},
     {OHOS_CAMERA_FORMAT_YCBCR_420_888, GRAPHIC_PIXEL_FMT_YCBCR_420_SP},
