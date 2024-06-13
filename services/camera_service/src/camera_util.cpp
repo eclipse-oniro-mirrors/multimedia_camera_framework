@@ -111,6 +111,45 @@ std::map<int, std::string> g_cameraQuickThumbnailAvailable = {
 
 bool g_cameraDebugOn = false;
 
+int32_t HdiToCameraErrorType(OHOS::HDI::Camera::V1_3::ErrorType type)
+{
+    enum CamServiceError err = CAMERA_UNKNOWN_ERROR;
+
+    switch (type) {
+        case HDI::Camera::V1_3::FATAL_ERROR:
+            err = CAMERA_DEVICE_FATAL_ERROR;
+            break;
+        case HDI::Camera::V1_3::REQUEST_TIMEOUT:
+            err = CAMERA_DEVICE_REQUEST_TIMEOUT;
+            break;
+        case HDI::Camera::V1_3::DRIVER_ERROR:
+            err = CAMERA_DEVICE_DRIVER_ERROR;
+            break;
+        case HDI::Camera::V1_3::DEVICE_PREEMPT:
+            err = CAMERA_DEVICE_PREEMPTED;
+            break;
+        case HDI::Camera::V1_3::DEVICE_DISCONNECT:
+            err = CAMERA_DEVICE_DISCONNECT;
+            break;
+        case HDI::Camera::V1_3::SENSOR_DATA_ERROR:
+            err = CAMERA_DEVICE_SENSOR_DATA_ERROR;
+            break;
+        case HDI::Camera::V1_3::DCAMERA_ERROR_BEGIN:
+            err = CAMERA_DCAMERA_ERROR_BEGIN;
+            break;
+        case HDI::Camera::V1_3::DCAMERA_ERROR_DEVICE_IN_USE:
+            err = CAMERA_DCAMERA_ERROR_DEVICE_IN_USE;
+            break;
+        case HDI::Camera::V1_3::DCAMERA_ERROR_NO_PERMISSION:
+            err = CAMERA_DCAMERA_ERROR_NO_PERMISSION;
+            break;
+        default:
+            MEDIA_ERR_LOG("HdiToCameraType() error type from hdi: %{public}d", type);
+            break;
+    }
+    return err;
+}
+
 int32_t HdiToServiceError(OHOS::HDI::Camera::V1_0::CamRetCode ret)
 {
     enum CamServiceError err = CAMERA_UNKNOWN_ERROR;

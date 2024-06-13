@@ -40,6 +40,10 @@
 #include "system_ability_definition.h"
 #include "camera_timer.h"
 #include "camera_report_uitls.h"
+#include "common_event_manager.h"
+#include "common_event_support.h"
+#include "common_event_data.h"
+#include "want.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -104,6 +108,14 @@ HCameraDevice::~HCameraDevice()
 std::string HCameraDevice::GetCameraId()
 {
     return cameraID_;
+}
+
+int32_t HCameraDevice::GetCameraType()
+{
+    if (clientName_ == SYSTEM_CAMERA) {
+        return SYSTEM;
+    }
+    return OTHER;
 }
 
 bool HCameraDevice::IsOpenedCameraDevice()
@@ -385,6 +397,7 @@ void HCameraDevice::OpenDeviceNext()
     clientName_ = GetClientBundle(uid);
     POWERMGR_SYSEVENT_CAMERA_CONNECT(pid, uid, cameraID_.c_str(), clientName_);
     NotifyCameraSessionStatus(true);
+    NotifyCameraStatus(CAMERA_OPEN);
 }
 
 int32_t HCameraDevice::CloseDevice()
@@ -430,6 +443,7 @@ int32_t HCameraDevice::CloseDevice()
     POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str());
     MEDIA_DEBUG_LOG("HCameraDevice::CloseDevice end");
     NotifyCameraSessionStatus(false);
+    NotifyCameraStatus(CAMERA_CLOSE);
     return CAMERA_OK;
 }
 
@@ -1116,6 +1130,8 @@ sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> HCameraDevice::GetStreamOperator(
 
 int32_t HCameraDevice::OnError(const OHOS::HDI::Camera::V1_0::ErrorType type, const int32_t errorMsg)
 {
+    auto errType = static_cast<OHOS::HDI::Camera::V1_3::ErrorType>(type);
+    NotifyCameraStatus(HdiToCameraErrorType(errType));
     auto callback = GetDeviceServiceCallback();
     if (callback != nullptr) {
         int32_t errorType;
@@ -1469,7 +1485,7 @@ int32_t HCameraDevice::OnCaptureReady(int32_t captureId, const std::vector<int32
 
 void HCameraDevice::NotifyCameraSessionStatus(bool running)
 {
-    bool isSystemCamera = (clientName_ == "com.huawei.hmos.camera") ? true : false;
+    bool isSystemCamera = (clientName_ == SYSTEM_CAMERA) ? true : false;
     DeferredProcessing::DeferredProcessingService::GetInstance().NotifyCameraSessionStatus(clientUserId_, cameraID_,
         running, isSystemCamera);
     return;
@@ -1490,7 +1506,29 @@ void HCameraDevice::RemoveResourceWhenHostDied()
     }
     POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str());
     NotifyCameraSessionStatus(false);
+    NotifyCameraStatus(CAMERA_CLOSE);
     MEDIA_DEBUG_LOG("HCameraDevice::RemoveResourceWhenHostDied end");
+}
+
+void HCameraDevice::NotifyCameraStatus(int32_t state)
+{
+    OHOS::AAFwk::Want want;
+    MEDIA_DEBUG_LOG("HCameraDevice::NotifyCameraStatus strat");
+    want.SetAction(COMMON_EVENT_CAMERA_STATUS);
+    want.SetParam(CLIENT_USER_ID, clientUserId_);
+    want.SetParam(CAMERA_ID, cameraID_);
+    want.SetParam(CAMERA_STATE, state);
+    int32_t type = GetCameraType();
+    want.SetParam(IS_SYSTEM_CAMERA, type);
+    MEDIA_DEBUG_LOG(
+        "OnCameraStatusChanged userId: %{public}d, cameraId: %{public}s, state: %{public}d, cameraType: %{public}d: ",
+        clientUserId_, cameraID_.c_str(), state, type);
+    EventFwk::CommonEventData CommonEventData { want };
+    EventFwk::CommonEventPublishInfo publishInfo;
+    std::vector<std::string> permissionVec { OHOS_PERMISSION_MANAGE_CAMERA_CONFIG };
+    publishInfo.SetSubscriberPermissions(permissionVec);
+    EventFwk::CommonEventManager::PublishCommonEvent(CommonEventData, publishInfo);
+    MEDIA_DEBUG_LOG("HCameraDevice::NotifyCameraStatus end");
 }
 } // namespace CameraStandard
 } // namespace OHOS

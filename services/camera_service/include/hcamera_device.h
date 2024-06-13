@@ -80,6 +80,7 @@ public:
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetDeviceAbility();
     std::shared_ptr<OHOS::Camera::CameraMetadata> CloneCachedSettings();
     std::string GetCameraId();
+    int32_t GetCameraType();
     bool IsOpenedCameraDevice();
     int32_t GetCallerToken();
     int32_t CreateAndCommitStreams(std::vector<HDI::Camera::V1_1::StreamInfo_V1_1>& streamInfos,
@@ -129,6 +130,8 @@ public:
     int64_t GetSecureCameraSeq(uint64_t* secureSeqId);
 
     bool CheckMovingPhotoSupported(int32_t mode);
+
+    void NotifyCameraStatus(int32_t type);
 
     void SetDeviceEventCallback(sptr<DeviceEventCallback> callback);
     sptr<DeviceEventCallback> GetDeviceEventCallback();
