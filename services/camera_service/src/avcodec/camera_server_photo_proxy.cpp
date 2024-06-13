@@ -40,6 +40,9 @@ CameraServerPhotoProxy::CameraServerPhotoProxy()
     isMmaped_ = false;
     isDeferredPhoto_ = 0;
     isHighQuality_ = false;
+    mode_ = 0;
+    longitude_ = -1.0;
+    latitude_ = -1.0;
 }
 
 CameraServerPhotoProxy::~CameraServerPhotoProxy()

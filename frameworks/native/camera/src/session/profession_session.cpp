@@ -297,7 +297,7 @@ int32_t ProfessionSession::SetISO(int32_t iso)
     if (!status) {
         MEDIA_ERR_LOG("ProfessionSession::SetISO Failed to set exposure compensation");
     }
-    isoValue_ = iso;
+    isoValue_ = static_cast<uint32_t>(iso);
     return CameraErrorCode::SUCCESS;
 }
 
@@ -1272,7 +1272,7 @@ void ProfessionSession::ProcessSensorExposureTimeChange(const std::shared_ptr<OH
             return;
         }
         constexpr int32_t timeUnit = 1000000;
-        uint32_t value = numerator / (denominator / timeUnit);
+        uint32_t value = static_cast<uint32_t>(numerator / (denominator / timeUnit));
         MEDIA_DEBUG_LOG("SensorExposureTime: %{public}d", value);
         ExposureInfo info = {
             .exposureDurationValue = value,

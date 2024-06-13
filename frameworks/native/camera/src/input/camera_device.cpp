@@ -129,7 +129,7 @@ void CameraDevice::init(common_metadata_header_t* metadata)
 
     ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_SENSOR_ORIENTATION, &item);
     if (ret == CAM_META_SUCCESS) {
-        cameraOrientation_ = item.data.i32[0];
+        cameraOrientation_ = static_cast<uint32_t>(item.data.i32[0]);
     }
 
     uint32_t moduleTypeTagId;
