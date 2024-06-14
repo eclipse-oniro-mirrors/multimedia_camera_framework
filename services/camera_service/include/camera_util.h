@@ -39,6 +39,23 @@ static constexpr int32_t HDI_VERSION_2 = 2;
 static constexpr int32_t HDI_VERSION_3 = 3;
 static const std::string OHOS_PERMISSION_CAMERA = "ohos.permission.CAMERA";
 static const std::string OHOS_PERMISSION_MANAGE_CAMERA_CONFIG = "ohos.permission.MANAGE_CAMERA_CONFIG";
+static const std::string SYSTEM_CAMERA = "com.huawei.hmos.camera";
+static const std::string CLIENT_USER_ID = "clientUserId";
+static const std::string CAMERA_ID = "cameraId";
+static const std::string CAMERA_STATE = "cameraState";
+static const std::string IS_SYSTEM_CAMERA = "isSystemCamera";
+// event
+static const std::string COMMON_EVENT_CAMERA_STATUS = "usual.event.CAMERA_STATUS";
+
+enum CamType {
+    SYSTEM = 0,
+    OTHER
+};
+
+enum CamStatus {
+    CAMERA_OPEN = 0,
+    CAMERA_CLOSE
+};
 
 enum CamServiceError {
     CAMERA_OK = 0,
@@ -57,7 +74,14 @@ enum CamServiceError {
     CAMERA_OPERATION_NOT_ALLOWED,
     CAMERA_DEVICE_ERROR,
     CAMERA_NO_PERMISSION,
-    CAMERA_DEVICE_CONFLICT
+    CAMERA_DEVICE_CONFLICT,
+    CAMERA_DEVICE_FATAL_ERROR,
+    CAMERA_DEVICE_DRIVER_ERROR,
+    CAMERA_DEVICE_DISCONNECT,
+    CAMERA_DEVICE_SENSOR_DATA_ERROR,
+    CAMERA_DCAMERA_ERROR_BEGIN,
+    CAMERA_DCAMERA_ERROR_DEVICE_IN_USE,
+    CAMERA_DCAMERA_ERROR_NO_PERMISSION,
 };
 
 enum ClientPriorityLevels {
@@ -103,6 +127,8 @@ inline void DisableJeMalloc()
     mallopt(M_FLUSH_THREAD_CACHE, 0);
 #endif
 }
+
+int32_t HdiToCameraErrorType(OHOS::HDI::Camera::V1_3::ErrorType type);
 
 int32_t HdiToServiceError(OHOS::HDI::Camera::V1_0::CamRetCode ret);
 
