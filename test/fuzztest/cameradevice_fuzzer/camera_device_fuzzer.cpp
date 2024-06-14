@@ -99,18 +99,15 @@ void CameraDeviceFuzzTest(uint8_t *rawData, size_t size)
 
 void CameraDeviceFuzzTestUpdateSetting(uint8_t *rawData, size_t size)
 {
-    std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
-    fuzzCameraDevice->UpdateSetting(ability);
+    if (rawData == nullptr || size < LIMITSIZE) {
+        return;
+    }
+    CameraDeviceFuzzTestGetPermission();
 
-    int32_t itemCount = 0;
-    int32_t dataSize = NUM_10;
-    ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
-    fuzzCameraDevice->UpdateSetting(ability);
-
-    itemCount = NUM_10;
-    dataSize = NUM_100;
+    int32_t itemCount = NUM_10;
+    int32_t dataSize = NUM_100;
     int32_t *streams = reinterpret_cast<int32_t *>(rawData);
-    ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
+    auto ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
     ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams, size / LIMITCOUNT);
     int32_t compensationRange[2] = {rawData[0], rawData[1]};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
@@ -127,8 +124,15 @@ void CameraDeviceFuzzTestUpdateSetting(uint8_t *rawData, size_t size)
     const camera_rational_t aeCompensationStep[] = {{rawData[0], rawData[1]}};
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
                       sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
-    fuzzCameraDevice->UpdateSetting(ability);
+    if (fuzzCameraDevice == nullptr || fuzzCameraHostManager == nullptr) {
+        fuzzCameraHostManager = new(std::nothrow) HCameraHostManager(nullptr);
+        fuzzCameraDevice = new(std::nothrow) HCameraDevice(fuzzCameraHostManager, "", 0);
+    }
+    if (fuzzCameraDevice) {
+        fuzzCameraDevice->UpdateSetting(ability);
+    }
 }
+
 } // namespace CameraStandard
 } // namespace OHOS
 
