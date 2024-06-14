@@ -1632,6 +1632,12 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
         uint8_t filterValue = item.data.u8[0];
         defaultSettings->addEntry(OHOS_CONTROL_FILTER_TYPE, &filterValue, count);
     }
+
+    ret = OHOS::Camera::FindCameraMetadataItem(currentSetting->get(), OHOS_CONTROL_EFFECT_SUGGESTION, &item);
+    if (ret == CAM_META_SUCCESS) {
+        uint8_t enableValue = item.data.u8[0];
+        defaultSettings->addEntry(OHOS_CONTROL_EFFECT_SUGGESTION, &enableValue, count);
+    }
     return defaultSettings;
 }
 
