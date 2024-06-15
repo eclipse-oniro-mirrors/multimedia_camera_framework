@@ -39,7 +39,6 @@
 #include "datashare_helper.h"
 #include "datashare_predicates.h"
 #include "datashare_result_set.h"
-#include "display_manager.h"
 #include "os_account_manager.h"
 #include "camera_report_uitls.h"
 #include "uri.h"

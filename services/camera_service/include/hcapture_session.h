@@ -65,6 +65,7 @@ using namespace DeferredProcessing;
 using namespace Media;
 class PermissionStatusChangeCb;
 class CameraUseStateChangeCb;
+class DisplayRotationListener;
 
 static const int32_t STREAM_NOT_FOUNT = -1;
 
@@ -222,6 +223,7 @@ public:
     const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId) override;
     int32_t SetFeatureMode(int32_t featureMode) override;
     void StartRecord(const std::string taskName, int32_t rotation);
+    int32_t SetPreviewRotation() override;
 
 private:
     string lastDisplayName_ = "";
@@ -278,6 +280,8 @@ private:
 
     std::string GetSessionState();
 
+    void RegisterDisplayListener(sptr<HStreamRepeat> repeat);
+    void UnRegisterDisplayListener(sptr<HStreamRepeat> repeat);
     StateMachine stateMachine_;
 
     // Make sure device thread safe,set device by {SetCameraDevice}, get device by {GetCameraDevice}
@@ -296,6 +300,7 @@ private:
     ColorSpace currColorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
     ColorSpace currCaptureColorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
     bool isSessionStarted_ = false;
+    bool enableStreamRotate_ = false;
 
     std::mutex movingPhotoStatusLock_; // Guard movingPhotoStatus
     sptr<Surface> surface_;
@@ -304,6 +309,8 @@ private:
     sptr<Surface> metaSurface_;
     sptr<MovingPhotoVideoCache> videoCache_;
     sptr<AvcodecTaskManager> taskManager_;
+    std::mutex displayListenerLock_;
+    sptr<DisplayRotationListener> displayListener_;
 };
 
 class PermissionStatusChangeCb : public Security::AccessToken::PermStateChangeCallbackCustomize {

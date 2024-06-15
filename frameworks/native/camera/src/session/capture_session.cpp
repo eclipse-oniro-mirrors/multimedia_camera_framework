@@ -1024,6 +1024,19 @@ void CaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::
     }
 }
 
+int32_t CaptureSession::SetPreviewRotation()
+{
+    int32_t errorCode = CAMERA_OK;
+    auto captureSession = GetCaptureSession();
+    if (captureSession) {
+        errorCode = captureSession->SetPreviewRotation();
+        if (errorCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("SetPreviewRotation is failed errorCode: %{public}d", errorCode);
+        }
+    }
+    return errorCode;
+}
+
 std::shared_ptr<SessionCallback> CaptureSession::GetApplicationCallback()
 {
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);

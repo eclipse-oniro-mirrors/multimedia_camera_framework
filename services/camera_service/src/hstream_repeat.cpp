@@ -32,11 +32,6 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
-static const int32_t STREAM_ROTATE_90 = 90;
-static const int32_t STREAM_ROTATE_180 = 180;
-static const int32_t STREAM_ROTATE_270 = 270;
-static const int32_t STREAM_ROTATE_360 = 360;
-
 HStreamRepeat::HStreamRepeat(
     sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height, RepeatStreamType type)
     : HStreamCommon(StreamType::REPEAT, producer, format, width, height), repeatStreamType_(type)
@@ -548,6 +543,12 @@ void HStreamRepeat::SetMirrorForLivePhoto(bool isEnable, int32_t mode)
     }
 }
 
+int32_t HStreamRepeat::SetPreviewRotation()
+{
+    enableStreamRotate_ = true;
+    return CAMERA_OK;
+}
+
 int32_t HStreamRepeat::UpdateSketchRatio(float sketchRatio)
 {
     std::lock_guard<std::mutex> lock(sketchStreamLock_);
@@ -576,7 +577,7 @@ void HStreamRepeat::DumpStreamInfo(std::string& dumpString)
     HStreamCommon::DumpStreamInfo(dumpString);
 }
 
-void HStreamRepeat::SetStreamTransform()
+void HStreamRepeat::SetStreamTransform(int disPlayRotation)
 {
     camera_metadata_item_t item;
     int ret;
@@ -609,9 +610,29 @@ void HStreamRepeat::SetStreamTransform()
         MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed, producer is null or GetDefaultDisplay failed");
         return;
     }
+    int mOritation = disPlayRotation;
+    if (enableStreamRotate_) {
+        if (mOritation == -1) {
+            auto display = OHOS::Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
+            if (producer_ == nullptr || display == nullptr) {
+                MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed,"
+                    "producer is null or GetDefaultDisplay failed");
+                return;
+            }
+            mOritation = static_cast<int>(display->GetRotation());
+        }
+        int32_t streamRotation = GetStreamRotation(sensorOrientation, cameraPosition, mOritation);
+        ProcessCameraPosition(streamRotation, cameraPosition);
+    } else {
+        ProcessFixedTransform(sensorOrientation, cameraPosition);
+    }
+}
 
+void HStreamRepeat::ProcessFixedTransform(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition)
+{
+    int ret = SurfaceError::SURFACE_ERROR_OK;
     if (IsVerticalDevice()) {
-        ProcessCameraPosition(sensorOrientation, cameraPosition);
+        ProcessVerticalCameraPosition(sensorOrientation, cameraPosition);
     } else {
         ret = SurfaceError::SURFACE_ERROR_OK;
         if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
@@ -622,9 +643,12 @@ void HStreamRepeat::SetStreamTransform()
             MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform none rotate");
         }
     }
+    if (ret != SurfaceError::SURFACE_ERROR_OK) {
+        MEDIA_ERR_LOG("HStreamRepeat::ProcessFixedTransform failed %{public}d", ret);
+    }
 }
 
-void HStreamRepeat::ProcessCameraPosition(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition)
+void HStreamRepeat::ProcessVerticalCameraPosition(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition)
 {
     int ret = SurfaceError::SURFACE_ERROR_OK;
     int32_t streamRotation = sensorOrientation;
@@ -666,10 +690,63 @@ void HStreamRepeat::ProcessCameraPosition(int32_t& sensorOrientation, camera_pos
                 break;
             }
         }
-        MEDIA_INFO_LOG("HStreamRepeat::SetStreamTransform not flip rotate %{public}d", streamRotation);
+        MEDIA_INFO_LOG("HStreamRepeat::ProcessVerticalCameraPosition not flip rotate %{public}d", streamRotation);
     }
     if (ret != SurfaceError::SURFACE_ERROR_OK) {
-        MEDIA_ERR_LOG("HStreamRepeat::SetStreamTransform failed %{public}d", ret);
+        MEDIA_ERR_LOG("HStreamRepeat::ProcessVerticalCameraPosition failed %{public}d", ret);
+    }
+}
+
+void HStreamRepeat::ProcessCameraPosition(int32_t& streamRotation, camera_position_enum_t& cameraPosition)
+{
+    int ret = SurfaceError::SURFACE_ERROR_OK;
+    if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
+        switch (streamRotation) {
+            case STREAM_ROTATE_0: {
+                ret = producer_->SetTransform(GRAPHIC_FLIP_H);
+                break;
+            }
+            case STREAM_ROTATE_90: {
+                ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT90);
+                break;
+            }
+            case STREAM_ROTATE_180: {
+                ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT180);
+                break;
+            }
+            case STREAM_ROTATE_270: {
+                ret = producer_->SetTransform(GRAPHIC_FLIP_H_ROT270);
+                break;
+            }
+            default: {
+                break;
+            }
+        }
+    } else {
+        switch (streamRotation) {
+            case STREAM_ROTATE_0: {
+                ret = producer_->SetTransform(GRAPHIC_ROTATE_NONE);
+                break;
+            }
+            case STREAM_ROTATE_90: {
+                ret = producer_->SetTransform(GRAPHIC_ROTATE_90);
+                break;
+            }
+            case STREAM_ROTATE_180: {
+                ret = producer_->SetTransform(GRAPHIC_ROTATE_180);
+                break;
+            }
+            case STREAM_ROTATE_270: {
+                ret = producer_->SetTransform(GRAPHIC_ROTATE_270);
+                break;
+            }
+            default: {
+                break;
+            }
+        }
+    }
+    if (ret != SurfaceError::SURFACE_ERROR_OK) {
+        MEDIA_ERR_LOG("HStreamRepeat::ProcessCameraPosition failed %{public}d", ret);
     }
 }
 

@@ -90,6 +90,9 @@ int HCaptureSessionStub::OnRemoteRequest(
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER):
             errCode = HandleCreateMediaLibrary(data, reply);
             break;
+        case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_PREVIEW_ROTATE):
+            errCode = SetPreviewRotation();
+            break;
         default:
             MEDIA_ERR_LOG("HCaptureSessionStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);

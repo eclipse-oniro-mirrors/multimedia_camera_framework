@@ -66,6 +66,8 @@ public:
     int32_t StartMovingPhotoCapture(bool isMirror, int32_t rotation) override;
 
     int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy, std::string &uri, int32_t &cameraShotType) override;
+
+    int32_t SetPreviewRotation() override;
 private:
     static inline BrokerDelegator<HCaptureSessionProxy> delegator_;
 };
