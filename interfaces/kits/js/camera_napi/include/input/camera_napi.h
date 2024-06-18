@@ -166,6 +166,7 @@ static const std::unordered_map<std::string, int32_t> mapSceneMode = {
     {"MACRO_PHOTO", JS_CAPTURE_MARCO},
     {"MACRO_VIDEO", JS_VIDEO_MARCO},
     {"SECURE_PHOTO", JS_SECURE_CAMERA},
+    {"QUICK_SHOT_PHOTO", JS_QUICK_SHOT_PHOTO},
 };
 
 static const std::unordered_map<std::string, int32_t> mapPreconfigType = {
