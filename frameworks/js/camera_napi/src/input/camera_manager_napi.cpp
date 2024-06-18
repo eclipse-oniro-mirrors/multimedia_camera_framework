@@ -401,7 +401,7 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isCameraMuted", IsCameraMuted),
         DECLARE_NAPI_FUNCTION("isCameraMuteSupported", IsCameraMuteSupported),
         DECLARE_NAPI_FUNCTION("muteCamera", MuteCamera),
-        DECLARE_NAPI_FUNCTION("muteCameraPersist", MuteCameraPersist),
+        DECLARE_NAPI_FUNCTION("muteCameraPersistent", MuteCameraPersist),
         DECLARE_NAPI_FUNCTION("prelaunch", PrelaunchCamera),
         DECLARE_NAPI_FUNCTION("preSwitchCamera", PreSwitchCamera),
         DECLARE_NAPI_FUNCTION("isPrelaunchSupported", IsPrelaunchSupported),
