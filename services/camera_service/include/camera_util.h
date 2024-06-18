@@ -48,6 +48,7 @@ static const int32_t DISPALY_ROTATE_2 = 2;
 static const int32_t DISPALY_ROTATE_3 = 3;
 static const std::string OHOS_PERMISSION_CAMERA = "ohos.permission.CAMERA";
 static const std::string OHOS_PERMISSION_MANAGE_CAMERA_CONFIG = "ohos.permission.MANAGE_CAMERA_CONFIG";
+static const std::string OHOS_PERMISSION_CAMERA_CONTROL = "ohos.permission.CAMERA_CONTROL";
 static const std::string SYSTEM_CAMERA = "com.huawei.hmos.camera";
 static const std::string CLIENT_USER_ID = "clientUserId";
 static const std::string CAMERA_ID = "cameraId";

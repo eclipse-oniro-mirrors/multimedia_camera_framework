@@ -180,7 +180,7 @@ void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::stri
                 sleep(retryTimeout);
             }
             this->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
-            OnMute(muteMode);
+            MuteCamera(muteMode);
             muteModeStored_ = muteMode;
             MEDIA_INFO_LOG("OnAddSystemAbility GetMuteModeFromDataShareHelper Success, muteMode = %{public}d, "
                            "final retryCnt=%{public}d",
@@ -400,6 +400,7 @@ int32_t HCameraService::CreateCameraDevice(string cameraId, sptr<ICameraDeviceSe
     CHECK_AND_RETURN_RET_LOG(cameraDevice != nullptr, CAMERA_ALLOC_ERROR,
         "HCameraService::CreateCameraDevice HCameraDevice allocation failed");
     if (GetServiceStatus() != CameraServiceStatus::SERVICE_READY) {
+        MEDIA_ERR_LOG("HCameraService::CreateCameraDevice CameraService not ready!");
         return CAMERA_INVALID_STATE;
     }
     {
@@ -831,28 +832,26 @@ int32_t HCameraService::UpdateMuteSetting(sptr<HCameraDevice> cameraDevice, bool
     return CAMERA_OK;
 }
 
-int32_t HCameraService::MuteCamera(bool muteMode)
+int32_t HCameraService::MuteCameraFunc(bool muteMode)
 {
-    int32_t ret = CheckPermission(OHOS_PERMISSION_MANAGE_CAMERA_CONFIG, IPCSkeleton::GetCallingTokenID());
-    CHECK_AND_RETURN_RET_LOG(ret == CAMERA_OK, ret, "CheckPermission argumentis failed!");
-    CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_MUTE_CAMERA,
-        to_string(muteMode), CameraReportUtils::GetCallerInfo());
     {
         lock_guard<mutex> lock(g_dataShareHelperMutex);
         cameraHostManager_->SetMuteMode(muteMode);
     }
+    int32_t ret = CAMERA_OK;
     bool currentMuteMode = muteModeStored_;
     if (muteMode == currentMuteMode) {
         return CAMERA_OK;
     }
-    muteModeStored_ = muteMode;
     sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
     pid_t activeClient = deviceManager->GetActiveClient();
     if (activeClient == -1) {
         OnMute(muteMode);
         int32_t retCode = SetMuteModeByDataShareHelper(muteMode);
+        muteModeStored_ = muteMode;
         if (retCode != CAMERA_OK) {
             MEDIA_ERR_LOG("no activeClient, SetMuteModeByDataShareHelper: ret=%{public}d", retCode);
+            muteModeStored_ = currentMuteMode;
         }
         return retCode;
     }
@@ -875,9 +874,12 @@ int32_t HCameraService::MuteCamera(bool muteMode)
         OnMute(muteMode);
     }
     if (activeDevice != nullptr) {
-        activeDevice->SetDeviceMuteMode(muteModeStored_);
+        activeDevice->SetDeviceMuteMode(muteMode);
     }
-    ret = SetMuteModeByDataShareHelper(muteModeStored_);
+    ret = SetMuteModeByDataShareHelper(muteMode);
+    if (ret == CAMERA_OK) {
+        muteModeStored_ = muteMode;
+    }
     return ret;
 }
 
@@ -886,9 +888,18 @@ static std::map<PolicyType, Security::AccessToken::PolicyType> g_policyTypeMap_ 
     {PolicyType::PRIVACY, Security::AccessToken::PolicyType::PRIVACY},
 };
 
-int32_t HCameraService::MuteCameraPersist(PolicyType policyType, bool isMute)
+int32_t HCameraService::MuteCamera(bool muteMode)
 {
     int32_t ret = CheckPermission(OHOS_PERMISSION_MANAGE_CAMERA_CONFIG, IPCSkeleton::GetCallingTokenID());
+    CHECK_AND_RETURN_RET_LOG(ret == CAMERA_OK, ret, "CheckPermission argumentis failed!");
+    CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_MUTE_CAMERA,
+        to_string(muteMode), CameraReportUtils::GetCallerInfo());
+    return MuteCameraFunc(muteMode);
+}
+
+int32_t HCameraService::MuteCameraPersist(PolicyType policyType, bool isMute)
+{
+    int32_t ret = CheckPermission(OHOS_PERMISSION_CAMERA_CONTROL, IPCSkeleton::GetCallingTokenID());
     CHECK_AND_RETURN_RET_LOG(ret == CAMERA_OK, ret, "CheckPermission arguments failed!");
     CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_MUTE_CAMERA,
         to_string(isMute), CameraReportUtils::GetCallerInfo());
@@ -897,14 +908,16 @@ int32_t HCameraService::MuteCameraPersist(PolicyType policyType, bool isMute)
             static_cast<int32_t>(policyType));
         return CAMERA_INVALID_ARG;
     }
+    bool targetMuteMode = isMute;
     const Security::AccessToken::PolicyType secPolicyType = g_policyTypeMap_[policyType];
     const Security::AccessToken::CallerType secCaller = Security::AccessToken::CallerType::CAMERA;
     ret = Security::AccessToken::PrivacyKit::SetMutePolicy(secPolicyType, secCaller, isMute);
     if (ret != Security::AccessToken::RET_SUCCESS) {
         MEDIA_ERR_LOG("MuteCameraPersist SetMutePolicy return false, policyType = %{public}d, retCode = %{public}d",
             static_cast<int32_t>(policyType), static_cast<int32_t>(ret));
+        targetMuteMode = muteModeStored_;
     }
-    return MuteCamera(isMute);
+    return MuteCameraFunc(targetMuteMode);
 }
 
 int32_t HCameraService::PrelaunchCamera()

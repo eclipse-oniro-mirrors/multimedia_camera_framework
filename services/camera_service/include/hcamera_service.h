@@ -131,6 +131,7 @@ protected:
 private:
     int32_t GetMuteModeFromDataShareHelper(bool &muteMode);
     int32_t SetMuteModeByDataShareHelper(bool muteMode);
+    int32_t MuteCameraFunc(bool muteMode);
 private:
     class ServiceHostStatus : public StatusCallback {
     public:
