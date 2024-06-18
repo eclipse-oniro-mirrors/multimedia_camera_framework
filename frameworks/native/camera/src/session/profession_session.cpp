@@ -1209,10 +1209,11 @@ int32_t ProfessionSession::SetPhysicalAperture(float physicalAperture)
     int zoomMaxIndex = 1;
     auto it = std::find_if(physicalApertures.begin(), physicalApertures.end(),
         [&currentZoomRatio, &zoomMinIndex, &zoomMaxIndex](const std::vector<float> physicalApertureRange) {
-            return physicalApertureRange[zoomMaxIndex] > currentZoomRatio >= physicalApertureRange[zoomMinIndex];
+            return physicalApertureRange[zoomMaxIndex] > currentZoomRatio &&
+                   currentZoomRatio >= physicalApertureRange[zoomMinIndex];
         });
     float autoAperture = 0.0;
-    if ((physicalAperture != autoAperture) && (it == physicalApertures.end())) {
+    if (it == physicalApertures.end()) {
         MEDIA_ERR_LOG("current zoomRatio not supported in physical apertures zoom ratio");
         return CameraErrorCode::SUCCESS;
     }
