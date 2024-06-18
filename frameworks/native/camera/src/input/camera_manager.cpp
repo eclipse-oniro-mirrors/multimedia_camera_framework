@@ -1567,7 +1567,7 @@ void CameraManager::CreateProfile4StreamType(OutputCapStreamType streamType, uin
     for (uint32_t k = 0; k < extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfoCount; k++) {
         const auto& detailInfo = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k];
         // Skip profiles with unsupported frame rates for non-system apps
-        if ((detailInfo.fixedFps == frameRate120 || detailInfo.fixedFps == frameRate240) &&
+        if ((detailInfo.minFps == frameRate120 || detailInfo.minFps == frameRate240) &&
             streamType == OutputCapStreamType::VIDEO_STREAM && !CameraSecurity::CheckSystemApp()) {
             continue;
         }
