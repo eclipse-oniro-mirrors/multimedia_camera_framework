@@ -211,19 +211,20 @@ double CameraNapiUtils::FloatToDouble(float val)
 
 std::string CameraNapiUtils::GetStringArgument(napi_env env, napi_value value)
 {
-    std::string strValue = "";
-    size_t bufLength = 0;
-    napi_status status = napi_get_value_string_utf8(env, value, nullptr, 0, &bufLength);
-    if (status == napi_ok && bufLength > 0 && bufLength < PATH_MAX) {
-        char *buffer = static_cast<char *>(malloc((bufLength + 1) * sizeof(char)));
-        CHECK_AND_RETURN_RET_LOG(buffer != nullptr, strValue, "no memory");
-        status = napi_get_value_string_utf8(env, value, buffer, bufLength + 1, &bufLength);
-        if (status == napi_ok) {
-            MEDIA_DEBUG_LOG("argument = %{public}s", buffer);
-            strValue = buffer;
-        }
-        free(buffer);
-        buffer = nullptr;
+    napi_valuetype valueNapiType = napi_undefined;
+    napi_typeof(env, value, &valueNapiType);
+    if (valueNapiType != napi_string) {
+        return "";
+    }
+    size_t stringSize = 0;
+    napi_status status = napi_get_value_string_utf8(env, value, nullptr, 0, &stringSize);
+    if (status != napi_ok || stringSize <= 0) {
+        return "";
+    }
+    std::string strValue = std::string(stringSize, '\0');
+    status = napi_get_value_string_utf8(env, value, strValue.data(), stringSize + 1, &stringSize);
+    if (status != napi_ok || stringSize <= 0) {
+        return "";
     }
     return strValue;
 }

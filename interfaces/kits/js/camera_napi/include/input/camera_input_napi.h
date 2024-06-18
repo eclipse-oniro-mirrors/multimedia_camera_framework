@@ -20,7 +20,6 @@
 #include "camera_napi_utils.h"
 #include "input/camera_input.h"
 #include "input/camera_manager.h"
-#include "input/camera_size_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {

@@ -34,12 +34,12 @@ enum MetadataOutputErrorCode : int32_t {
     ERROR_INSUFFICIENT_RESOURCES,
 };
 
-typedef struct {
+struct Rect {
     double topLeftX;
     double topLeftY;
     double width;
     double height;
-} Rect;
+};
 
 class MetadataObject : public RefBase {
 public:

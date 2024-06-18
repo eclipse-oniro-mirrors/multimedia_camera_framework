@@ -16,7 +16,7 @@
 #include "input/camera_pre_launch_config_napi.h"
 
 #include "camera_log.h"
-#include "input/camera_info_napi.h"
+#include "camera_napi_object_types.h"
 #include "napi/native_common.h"
 
 namespace OHOS {
@@ -113,7 +113,6 @@ napi_value CameraPrelaunchConfigNapi::GetPrelaunchCameraDevice(napi_env env, nap
 {
     MEDIA_DEBUG_LOG("GetPrelaunchCameraDevice is called");
     napi_status status;
-    napi_value jsResult = nullptr;
     napi_value undefinedResult = nullptr;
     CameraPrelaunchConfigNapi* obj = nullptr;
     sptr<CameraDevice> cameraDevice;
@@ -130,10 +129,12 @@ napi_value CameraPrelaunchConfigNapi::GetPrelaunchCameraDevice(napi_env env, nap
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
     if ((status == napi_ok) && (obj != nullptr)) {
         cameraDevice = obj->prelaunchConfig_->GetCameraDevice();
-        MEDIA_INFO_LOG("GetPrelaunchCameraDevice cameraId = %{public}s",
-            obj->prelaunchConfig_->GetCameraDevice()->GetID().c_str());
-        jsResult = CameraDeviceNapi::CreateCameraObj(env, cameraDevice);
-        return jsResult;
+        if (cameraDevice == nullptr) {
+            MEDIA_ERR_LOG("cameraDevice is nullptr");
+            return undefinedResult;
+        }
+        MEDIA_INFO_LOG("GetPrelaunchCameraDevice cameraId = %{public}s", cameraDevice->GetID().c_str());
+        return CameraNapiObjCameraDevice(*cameraDevice).GenerateNapiValue(env);
     }
     MEDIA_ERR_LOG("GetPrelaunchCameraDevice call Failed!");
     return undefinedResult;

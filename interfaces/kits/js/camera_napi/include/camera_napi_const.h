@@ -95,7 +95,7 @@ enum CameraTaskId {
     DEFERRED_PHOTO_PROXY_TASKID = 0x0A000000,
 };
 
-enum JSMetadataObjectType { FACE = 0 };
+enum JSMetadataObjectType { INVALID = -1, FACE = 0 };
 
 enum CameraSteps {
     CREATE_CAMERA_INPUT_INSTANCE,
