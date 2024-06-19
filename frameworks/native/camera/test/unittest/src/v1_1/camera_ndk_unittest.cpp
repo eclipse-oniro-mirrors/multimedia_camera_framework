@@ -2222,7 +2222,7 @@ HWTEST_F(CameraNdkUnitTest, camera_fwcoveragendk_unittest_001, TestSize.Level0)
     EXPECT_EQ(ret, CAMERA_OK);
     EXPECT_NE(&camInputPosAndType, nullptr);
 
-    cameraPosition  = Camera_Position::CAMERA_POSITION_UNSPECIFIED;
+    cameraPosition  = Camera_Position::CAMERA_POSITION_FRONT;
     ret = OH_CameraManager_CreateCameraInput_WithPositionAndType(cameraManager,
                                                                  cameraPosition, cameraType, &camInputPosAndType);
     EXPECT_EQ(ret, CAMERA_OK);
