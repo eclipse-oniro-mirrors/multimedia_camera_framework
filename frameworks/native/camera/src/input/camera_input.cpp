@@ -298,6 +298,7 @@ int32_t CameraInput::UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>
         ret = deviceObj_->UpdateSetting(changedMetadata);
     } else {
         MEDIA_ERR_LOG("CameraInput::UpdateSetting() deviceObj_ is nullptr");
+        return ServiceToCameraError(CAMERA_INVALID_ARG);
     }
     if (ret != CAMERA_OK) {
         MEDIA_ERR_LOG("CameraInput::UpdateSetting Failed to update settings");
