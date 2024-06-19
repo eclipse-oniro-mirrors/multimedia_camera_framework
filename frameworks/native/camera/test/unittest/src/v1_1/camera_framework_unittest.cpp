@@ -7855,6 +7855,23 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_120, TestSize.Level
     }
     input->Close();
 }
+
+/*
+ * Feature: Framework
+ * Function: Test preconfig
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test preconfig VideoSession PRECONFIG_4K
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_121, TestSize.Level0)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    SceneMode opMode = PORTRAIT;
+    sptr<HCaptureSession> session = HCaptureSession::NewInstance(callerToken, opMode);
+    ASSERT_NE(session, nullptr);
+}
+
 /*
 * Feature: Framework
 * Function: Test normal branch that is support secure camera for open camera

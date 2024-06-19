@@ -180,6 +180,8 @@ private:
 
 class HCaptureSession : public HCaptureSessionStub, public StreamOperatorCallback {
 public:
+    static sptr<HCaptureSession> NewInstance(const uint32_t callerToken, int32_t opMode);
+    HCaptureSession();
     explicit HCaptureSession(const uint32_t callingTokenId, int32_t opMode);
     virtual ~HCaptureSession();
 
@@ -226,6 +228,7 @@ public:
     int32_t SetPreviewRotation() override;
 
 private:
+    int32_t Initialize(const uint32_t callerToken, int32_t opMode);
     string lastDisplayName_ = "";
     int32_t saveIndex = 0;
     volatile bool isMovingPhotoMirror_ = false;

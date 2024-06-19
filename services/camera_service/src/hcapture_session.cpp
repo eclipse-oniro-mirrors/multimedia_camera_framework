@@ -64,7 +64,7 @@ using namespace OHOS::AAFwk;
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Display::Composer::V1_1;
-using HDI::Camera::V1_0::CamRetCode;
+
 namespace {
 static std::map<pid_t, sptr<HCaptureSession>> g_totalSessions;
 static std::mutex g_totalSessionLock;
@@ -118,7 +118,16 @@ static const std::map<CaptureSessionState, std::string> SESSION_STATE_STRING_MAP
     {CaptureSessionState::SESSION_RELEASED, "Released"}
 };
 
-HCaptureSession::HCaptureSession(const uint32_t callingTokenId, int32_t opMode)
+sptr<HCaptureSession> HCaptureSession::NewInstance(const uint32_t callerToken, int32_t opMode)
+{
+    sptr<HCaptureSession> session = new HCaptureSession();
+    if (session->Initialize(callerToken, opMode) == CAMERA_OK) {
+        return session;
+    }
+    return nullptr;
+}
+
+int32_t HCaptureSession::Initialize(const uint32_t callerToken, int32_t opMode)
 {
     pid_ = IPCSkeleton::GetCallingPid();
     uid_ = static_cast<uint32_t>(IPCSkeleton::GetCallingUid());
@@ -133,12 +142,20 @@ HCaptureSession::HCaptureSession(const uint32_t callingTokenId, int32_t opMode)
         pidSession->Release();
     }
     TotalSessionsInsert(pid_, this);
-    callerToken_ = callingTokenId;
+    callerToken_ = callerToken;
     opMode_ = opMode;
     featureMode_ = 0;
     CameraReportUtils::GetInstance().updateModeChangePerfInfo(opMode, CameraReportUtils::GetCallerInfo());
     MEDIA_INFO_LOG(
         "HCaptureSession: camera stub services(%{public}zu). opMode_= %{public}d", TotalSessionSize(), opMode_);
+    return CAMERA_OK;
+}
+
+HCaptureSession::HCaptureSession() {}
+
+HCaptureSession::HCaptureSession(const uint32_t callingTokenId, int32_t opMode)
+{
+    Initialize(callingTokenId, opMode);
 }
 
 HCaptureSession::~HCaptureSession()

@@ -432,7 +432,7 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     MEDIA_INFO_LOG("HCameraService::CreateCaptureSession opMode_= %{public}d", opMode);
 
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCaptureSession> captureSession = new (nothrow) HCaptureSession(callerToken, opMode);
+    sptr<HCaptureSession> captureSession = HCaptureSession::NewInstance(callerToken, opMode);
     if (captureSession == nullptr) {
         rc = CAMERA_ALLOC_ERROR;
         MEDIA_ERR_LOG("HCameraService::CreateCaptureSession allocation failed");
