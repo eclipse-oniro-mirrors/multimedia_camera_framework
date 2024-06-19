@@ -955,20 +955,23 @@ void CameraManager::CameraServerDied(pid_t pid)
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
     RemoveServiceProxyDeathRecipient();
     SetServiceProxy(nullptr);
-    if (cameraSvcCallback_ != nullptr) {
-        MEDIA_DEBUG_LOG("cameraSvcCallback_ not nullptr");
-        std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
-        for (size_t i = 0; i < cameraObjList_.size(); i++) {
-            CameraStatusInfo cameraStatusInfo;
-            cameraStatusInfo.cameraDevice = cameraObjList_[i];
-            cameraStatusInfo.cameraStatus = CAMERA_SERVER_UNAVAILABLE;
-            auto listenerMap = GetCameraMngrCallbackMap();
-            listenerMap.Iterate([&](std::thread::id threadId,
-                std::shared_ptr<CameraManagerCallback> cameraManagerCallback) {
-                MEDIA_INFO_LOG("Callback cameraStatus");
+    if (cameraSvcCallback_ == nullptr) {
+        MEDIA_ERR_LOG("cameraSvcCallback_ is nullptr");
+        return;
+    }
+    std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
+    for (size_t i = 0; i < cameraObjList_.size(); i++) {
+        CameraStatusInfo cameraStatusInfo;
+        cameraStatusInfo.cameraDevice = cameraObjList_[i];
+        cameraStatusInfo.cameraStatus = CAMERA_SERVER_UNAVAILABLE;
+        auto listenerMap = GetCameraMngrCallbackMap();
+        listenerMap.Iterate([&](std::thread::id threadId,
+            std::shared_ptr<CameraManagerCallback> cameraManagerCallback) {
+            MEDIA_INFO_LOG("Callback cameraStatus");
+            if (cameraManagerCallback != nullptr) {
                 cameraManagerCallback->OnCameraStatusChanged(cameraStatusInfo);
-            });
-        }
+            }
+        });
     }
 }
 
