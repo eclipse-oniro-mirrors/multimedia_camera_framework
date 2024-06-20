@@ -571,10 +571,10 @@ RepeatStreamType HStreamRepeat::GetRepeatStreamType()
     return repeatStreamType_;
 }
 
-void HStreamRepeat::DumpStreamInfo(std::string& dumpString)
+void HStreamRepeat::DumpStreamInfo(CameraInfoDumper& infoDumper)
 {
-    dumpString += "repeat stream:\n";
-    HStreamCommon::DumpStreamInfo(dumpString);
+    infoDumper.Title("repeat stream");
+    HStreamCommon::DumpStreamInfo(infoDumper);
 }
 
 void HStreamRepeat::SetStreamTransform(int disPlayRotation)

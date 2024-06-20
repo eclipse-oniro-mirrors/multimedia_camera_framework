@@ -177,6 +177,7 @@ private:
     int32_t rotation_;
 };
 
+class CameraInfoDumper;
 
 class HCaptureSession : public HCaptureSessionStub, public StreamOperatorCallback {
 public:
@@ -208,24 +209,25 @@ public:
     int32_t SetColorSpace(ColorSpace colorSpace, ColorSpace captureColorSpace, bool isNeedUpdate) override;
     bool QueryFpsAndZoomRatio(float& currentFps, float& currentZoomRatio);
     bool QueryZoomPerformance(std::vector<float>& crossZoomAndTime, int32_t operationMode);
-    int32_t SetSmoothZoom(int32_t smoothZoomType, int32_t operationMode, float targetZoomRatio,
-        float &duration) override;
+    int32_t SetSmoothZoom(
+        int32_t smoothZoomType, int32_t operationMode, float targetZoomRatio, float& duration) override;
     int32_t EnableMovingPhoto(bool isEnable) override;
-    static void dumpSessions(std::string& dumpString);
-    void dumpSessionInfo(std::string& dumpString);
-    static void CameraSessionSummary(std::string& dumpString);
     pid_t GetPid();
     int32_t GetCurrentStreamInfos(std::vector<StreamInfo_V1_1>& streamInfos);
     int32_t GetopMode();
 
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
     int32_t StartMovingPhotoCapture(bool isMirror, int32_t rotation) override;
-    int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy, std::string &uri, int32_t &cameraShotType) override;
+    int32_t CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType) override;
     const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) override;
     const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId) override;
     int32_t SetFeatureMode(int32_t featureMode) override;
     void StartRecord(const std::string taskName, int32_t rotation);
     int32_t SetPreviewRotation() override;
+
+    void DumpSessionInfo(CameraInfoDumper& infoDumper);
+    static void DumpSessions(CameraInfoDumper& infoDumper);
+    static void DumpCameraSessionSummary(CameraInfoDumper& infoDumper);
 
 private:
     int32_t Initialize(const uint32_t callerToken, int32_t opMode);

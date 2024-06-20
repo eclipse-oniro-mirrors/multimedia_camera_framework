@@ -122,10 +122,10 @@ int32_t HStreamMetadata::ReleaseStream(bool isDelay)
     return HStreamCommon::ReleaseStream(isDelay);
 }
 
-void HStreamMetadata::DumpStreamInfo(std::string& dumpString)
+void HStreamMetadata::DumpStreamInfo(CameraInfoDumper& infoDumper)
 {
-    dumpString += "metadata stream:\n";
-    HStreamCommon::DumpStreamInfo(dumpString);
+    infoDumper.Title("metadata stream");
+    HStreamCommon::DumpStreamInfo(infoDumper);
 }
 
 int32_t HStreamMetadata::OperatePermissionCheck(uint32_t interfaceCode)

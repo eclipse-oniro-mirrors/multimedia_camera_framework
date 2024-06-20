@@ -17,25 +17,33 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cerrno>
+#include <cinttypes>
 #include <cstddef>
 #include <cstdint>
-#include <cerrno>
 #include <functional>
 #include <mutex>
 #include <new>
 #include <sched.h>
+#include <string>
 #include <sync_fence.h>
 #include <utility>
 #include <vector>
-#include <cinttypes>
+
 #include "avcodec_task_manager.h"
 #include "bundle_mgr_interface.h"
+#include "camera_info_dumper.h"
 #include "camera_log.h"
+#include "camera_report_uitls.h"
 #include "camera_server_photo_proxy.h"
 #include "camera_service_ipc_interface_code.h"
 #include "camera_util.h"
+#include "datetime_ex.h"
+#include "display/composer/v1_1/display_composer_type.h"
+#include "display_manager.h"
 #include "errors.h"
 #include "hcamera_device_manager.h"
+#include "hcamera_restore_param.h"
 #include "hstream_capture.h"
 #include "hstream_common.h"
 #include "hstream_metadata.h"
@@ -46,19 +54,14 @@
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
 #include "istream_common.h"
+#include "media_library_manager.h"
 #include "metadata_utils.h"
 #include "moving_photo_video_cache.h"
-#include "datetime_ex.h"
 #include "refbase.h"
+#include "smooth_zoom.h"
 #include "surface.h"
 #include "system_ability_definition.h"
 #include "v1_0/types.h"
-#include "display/composer/v1_1/display_composer_type.h"
-#include "smooth_zoom.h"
-#include "hcamera_restore_param.h"
-#include "camera_report_uitls.h"
-#include "media_library_manager.h"
-#include "display_manager.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -115,7 +118,8 @@ static const std::map<CaptureSessionState, std::string> SESSION_STATE_STRING_MAP
     {CaptureSessionState::SESSION_INIT, "Init"},
     {CaptureSessionState::SESSION_CONFIG_INPROGRESS, "Config_In-progress"},
     {CaptureSessionState::SESSION_CONFIG_COMMITTED, "Committed"},
-    {CaptureSessionState::SESSION_RELEASED, "Released"}
+    {CaptureSessionState::SESSION_RELEASED, "Released"},
+    {CaptureSessionState::SESSION_STARTED, "Started"}
 };
 
 sptr<HCaptureSession> HCaptureSession::NewInstance(const uint32_t callerToken, int32_t opMode)
@@ -1503,38 +1507,40 @@ int32_t HCaptureSession::SetCallback(sptr<ICaptureSessionCallback>& callback)
 
 std::string HCaptureSession::GetSessionState()
 {
-    std::map<CaptureSessionState, std::string>::const_iterator iter =
-        SESSION_STATE_STRING_MAP.find(stateMachine_.GetCurrentState());
+    auto currentState = stateMachine_.GetCurrentState();
+    std::map<CaptureSessionState, std::string>::const_iterator iter = SESSION_STATE_STRING_MAP.find(currentState);
     if (iter != SESSION_STATE_STRING_MAP.end()) {
         return iter->second;
     }
-    return nullptr;
+    return std::to_string(static_cast<uint32_t>(currentState));
 }
 
-void HCaptureSession::CameraSessionSummary(std::string& dumpString)
+void HCaptureSession::DumpCameraSessionSummary(CameraInfoDumper& infoDumper)
 {
-    dumpString += "# Number of Camera clients:[" + std::to_string(TotalSessionSize()) + "]:\n";
+    infoDumper.Msg("Number of Camera clients:[" + std::to_string(TotalSessionSize()) + "]");
 }
 
-void HCaptureSession::dumpSessions(std::string& dumpString)
+void HCaptureSession::DumpSessions(CameraInfoDumper& infoDumper)
 {
     auto totalSession = TotalSessionsCopy();
+    uint32_t index = 0;
     for (auto it = totalSession.begin(); it != totalSession.end(); it++) {
         if (it->second != nullptr) {
             sptr<HCaptureSession> session = it->second;
-            dumpString += "No. of sessions for client:[" + std::to_string(1) + "]:\n";
-            session->dumpSessionInfo(dumpString);
+            infoDumper.Title("Camera Sessions[" + std::to_string(index++) + "] Info:");
+            session->DumpSessionInfo(infoDumper);
         }
     }
 }
 
-void HCaptureSession::dumpSessionInfo(std::string& dumpString)
+void HCaptureSession::DumpSessionInfo(CameraInfoDumper& infoDumper)
 {
-    dumpString += "Client pid:[" + std::to_string(pid_)
-        + "]    Client uid:[" + std::to_string(uid_) + "]:\n";
-    dumpString += "session state:[" + GetSessionState() + "]:\n";
+    infoDumper.Msg("Client pid:[" + std::to_string(pid_)+ "]    Client uid:[" + std::to_string(uid_) + "]");
+    infoDumper.Msg("session state:[" + GetSessionState() + "]");
     for (auto& stream : streamContainer_.GetAllStreams()) {
-        stream->DumpStreamInfo(dumpString);
+        infoDumper.Push();
+        stream->DumpStreamInfo(infoDumper);
+        infoDumper.Pop();
     }
 }
 

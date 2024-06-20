@@ -14,33 +14,34 @@
  */
 
 #include "hcamera_service.h"
-#include "deferred_processing_service.h"
 
 #include <algorithm>
 #include <memory>
 #include <mutex>
+#include <parameter.h>
+#include <parameters.h>
 #include <securec.h>
+#include <string>
 #include <unordered_set>
 #include <vector>
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
-#include <parameter.h>
-#include <parameters.h>
-#include "tokenid_kit.h"
-
+#include "camera_info_dumper.h"
 #include "camera_log.h"
+#include "camera_report_uitls.h"
 #include "camera_util.h"
+#include "datashare_helper.h"
+#include "datashare_predicates.h"
+#include "datashare_result_set.h"
+#include "deferred_processing_service.h"
 #include "display_manager.h"
 #include "hcamera_device_manager.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
-#include "system_ability_definition.h"
-#include "datashare_helper.h"
-#include "datashare_predicates.h"
-#include "datashare_result_set.h"
 #include "os_account_manager.h"
-#include "camera_report_uitls.h"
+#include "system_ability_definition.h"
+#include "tokenid_kit.h"
 #include "uri.h"
 
 namespace OHOS {
@@ -63,6 +64,7 @@ static const std::string SETTINGS_DATA_FIELD_KEYWORD = "KEYWORD";
 static const std::string SETTINGS_DATA_FIELD_VALUE = "VALUE";
 static const std::string PREDICATES_STRING = "settings.camera.mute_persist";
 mutex g_dataShareHelperMutex;
+thread_local uint32_t g_dumpDepth = 0;
 
 HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
     : SystemAbility(systemAbilityId, runOnCreate), muteModeStored_(false), isRegisterSensorSuccess(false)
@@ -1129,383 +1131,393 @@ int32_t HCameraService::IsCameraMuted(bool& muteMode)
     return CAMERA_OK;
 }
 
-void HCameraService::CameraSummary(vector<string> cameraIds, string& dumpString)
+void HCameraService::DumpCameraSummary(vector<string> cameraIds, CameraInfoDumper& infoDumper)
 {
-    dumpString += "# Number of Cameras:[" + to_string(cameraIds.size()) + "]:\n";
-    dumpString += "# Number of Active Cameras:[" + to_string(1) + "]:\n";
-    HCaptureSession::CameraSessionSummary(dumpString);
+    infoDumper.Tip("--------Dump Summary Begin-------");
+    infoDumper.Title("Number of Cameras:[" + to_string(cameraIds.size()) + "]");
+    infoDumper.Title("Number of Active Cameras:[" + to_string(1) + "]");
+    infoDumper.Title("Current session summary:");
+    HCaptureSession::DumpCameraSessionSummary(infoDumper);
 }
 
-void HCameraService::CameraDumpCameraInfo(std::string& dumpString, std::vector<std::string>& cameraIds,
+void HCameraService::DumpCameraInfo(CameraInfoDumper& infoDumper, std::vector<std::string>& cameraIds,
     std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList)
 {
+    infoDumper.Tip("--------Dump CameraDevice Begin-------");
     int32_t capIdx = 0;
     for (auto& it : cameraIds) {
         auto metadata = cameraAbilityList[capIdx++];
         common_metadata_header_t* metadataEntry = metadata->get();
-        dumpString += "# Camera ID:[" + it + "]: \n";
-        CameraDumpAbility(metadataEntry, dumpString);
-        CameraDumpStreaminfo(metadataEntry, dumpString);
-        CameraDumpZoom(metadataEntry, dumpString);
-        CameraDumpFlash(metadataEntry, dumpString);
-        CameraDumpAF(metadataEntry, dumpString);
-        CameraDumpAE(metadataEntry, dumpString);
-        CameraDumpSensorInfo(metadataEntry, dumpString);
-        CameraDumpVideoStabilization(metadataEntry, dumpString);
-        CameraDumpVideoFrameRateRange(metadataEntry, dumpString);
-        CameraDumpPrelaunch(metadataEntry, dumpString);
-        CameraDumpThumbnail(metadataEntry, dumpString);
+        infoDumper.Title("Camera ID:[" + it + "]:");
+        infoDumper.Push();
+        DumpCameraAbility(metadataEntry, infoDumper);
+        DumpCameraStreamInfo(metadataEntry, infoDumper);
+        DumpCameraZoom(metadataEntry, infoDumper);
+        DumpCameraFlash(metadataEntry, infoDumper);
+        DumpCameraAF(metadataEntry, infoDumper);
+        DumpCameraAE(metadataEntry, infoDumper);
+        DumpCameraSensorInfo(metadataEntry, infoDumper);
+        DumpCameraVideoStabilization(metadataEntry, infoDumper);
+        DumpCameraVideoFrameRateRange(metadataEntry, infoDumper);
+        DumpCameraPrelaunch(metadataEntry, infoDumper);
+        DumpCameraThumbnail(metadataEntry, infoDumper);
+        infoDumper.Pop();
     }
 }
 
-void HCameraService::CameraDumpAbility(common_metadata_header_t* metadataEntry, string& dumpString)
+void HCameraService::DumpCameraAbility(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper)
 {
     camera_metadata_item_t item;
-    int ret;
-    dumpString += "    ## Camera Ability List: \n";
-
-    ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_CAMERA_POSITION, &item);
+    int ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_CAMERA_POSITION, &item);
     if (ret == CAM_META_SUCCESS) {
-        map<int, string>::const_iterator iter =
-            g_cameraPos.find(item.data.u8[0]);
+        map<int, string>::const_iterator iter = g_cameraPos.find(item.data.u8[0]);
         if (iter != g_cameraPos.end()) {
-            dumpString += "        Camera Position:["
-                + iter->second
-                + "]:    ";
+            infoDumper.Title("Camera Position:[" + iter->second + "]");
         }
     }
 
     ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_CAMERA_TYPE, &item);
     if (ret == CAM_META_SUCCESS) {
-        map<int, string>::const_iterator iter =
-            g_cameraType.find(item.data.u8[0]);
+        map<int, string>::const_iterator iter = g_cameraType.find(item.data.u8[0]);
         if (iter != g_cameraType.end()) {
-            dumpString += "Camera Type:["
-                + iter->second
-                + "]:    ";
+            infoDumper.Title("Camera Type:[" + iter->second + "]");
         }
     }
 
     ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
     if (ret == CAM_META_SUCCESS) {
-        map<int, string>::const_iterator iter =
-            g_cameraConType.find(item.data.u8[0]);
+        map<int, string>::const_iterator iter = g_cameraConType.find(item.data.u8[0]);
         if (iter != g_cameraConType.end()) {
-            dumpString += "Camera Connection Type:["
-                + iter->second
-                + "]:\n";
+            infoDumper.Title("Camera Connection Type:[" + iter->second + "]");
         }
     }
 }
 
-void HCameraService::CameraDumpStreaminfo(common_metadata_header_t* metadataEntry, string& dumpString)
+void HCameraService::DumpCameraStreamInfo(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper)
 {
     camera_metadata_item_t item;
     int ret;
     constexpr uint32_t unitLen = 3;
     uint32_t widthOffset = 1;
     uint32_t heightOffset = 2;
-    dumpString += "        ### Camera Available stream configuration List: \n";
-    ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry,
-                                               OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
+    infoDumper.Title("Camera Available stream configuration List:");
+    infoDumper.Push();
+    ret =
+        OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
     if (ret == CAM_META_SUCCESS) {
-        dumpString += "            Number Stream Info: "
-            + to_string(item.count/unitLen) + "\n";
+        infoDumper.Title("Basic Stream Info Size: " + to_string(item.count / unitLen));
         for (uint32_t index = 0; index < item.count; index += unitLen) {
-            map<int, string>::const_iterator iter =
-                g_cameraFormat.find(item.data.i32[index]);
+            map<int, string>::const_iterator iter = g_cameraFormat.find(item.data.i32[index]);
             if (iter != g_cameraFormat.end()) {
-                dumpString += "            Format:["
-                        + iter->second
-                        + "]:    ";
-                dumpString += "Size:[Width:"
-                        + to_string(item.data.i32[index + widthOffset])
-                        + " Height:"
-                        + to_string(item.data.i32[index + heightOffset])
-                        + "]:\n";
+                infoDumper.Msg("Format:[" + iter->second + "]    " +
+                               "Size:[Width:" + to_string(item.data.i32[index + widthOffset]) +
+                               " Height:" + to_string(item.data.i32[index + heightOffset]) + "]");
+            } else {
+                infoDumper.Msg("Format:[" + to_string(item.data.i32[index]) + "]    " +
+                               "Size:[Width:" + to_string(item.data.i32[index + widthOffset]) +
+                               " Height:" + to_string(item.data.i32[index + heightOffset]) + "]");
             }
         }
     }
+
+    infoDumper.Pop();
 }
 
-void HCameraService::CameraDumpZoom(common_metadata_header_t* metadataEntry, string& dumpString)
+void HCameraService::DumpCameraZoom(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper)
 {
-    dumpString += "    ## Zoom Related Info: \n";
     camera_metadata_item_t item;
     int ret;
     int32_t minIndex = 0;
     int32_t maxIndex = 1;
     uint32_t zoomRangeCount = 2;
+    infoDumper.Title("Zoom Related Info:");
+
     ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_ZOOM_CAP, &item);
-    if ((ret == CAM_META_SUCCESS) && (item.count == zoomRangeCount)) {
-        dumpString += "        Available Zoom Capability:["
-            + to_string(item.data.i32[minIndex]) + "  "
-            + to_string(item.data.i32[maxIndex])
-            + "]:\n";
+    if (ret == CAM_META_SUCCESS) {
+        infoDumper.Msg("OHOS_ABILITY_ZOOM_CAP data size:" + to_string(item.count));
+        if (item.count == zoomRangeCount) {
+            infoDumper.Msg("Available Zoom Capability:[" + to_string(item.data.i32[minIndex]) + "  " +
+                           to_string(item.data.i32[maxIndex]) + "]");
+        }
     }
 
     ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_SCENE_ZOOM_CAP, &item);
-    if ((ret == CAM_META_SUCCESS) && (item.count == zoomRangeCount)) {
-        dumpString += "        Available scene Zoom Capability:["
-            + to_string(item.data.i32[minIndex]) + "  "
-            + to_string(item.data.i32[maxIndex])
-            + "]:\n";
+    if (ret == CAM_META_SUCCESS) {
+        infoDumper.Msg("OHOS_ABILITY_SCENE_ZOOM_CAP data size:" + to_string(item.count));
+        if (item.count == zoomRangeCount) {
+            infoDumper.Msg("Available scene Zoom Capability:[" + to_string(item.data.i32[minIndex]) + "  " +
+                           to_string(item.data.i32[maxIndex]) + "]");
+        }
     }
 
     ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_ZOOM_RATIO_RANGE, &item);
-    if ((ret == CAM_META_SUCCESS) && (item.count == zoomRangeCount)) {
-        dumpString += "        Available Zoom Ratio Range:["
-            + to_string(item.data.f[minIndex])
-            + to_string(item.data.f[maxIndex])
-            + "]:\n";
-    }
-
-    ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_CONTROL_ZOOM_RATIO, &item);
     if (ret == CAM_META_SUCCESS) {
-        dumpString += "        Set Zoom Ratio:["
-            + to_string(item.data.f[0])
-            + "]:\n";
+        infoDumper.Msg("OHOS_ABILITY_ZOOM_RATIO_RANGE data size:" + to_string(item.count));
+        if (item.count == zoomRangeCount) {
+            infoDumper.Msg("Available Zoom Ratio Range:[" + to_string(item.data.f[minIndex]) +
+                           to_string(item.data.f[maxIndex]) + "]");
+        }
     }
 }
 
-void HCameraService::CameraDumpFlash(common_metadata_header_t* metadataEntry, string& dumpString)
+void HCameraService::DumpCameraFlash(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper)
 {
     camera_metadata_item_t item;
     int ret;
-    dumpString += "    ## Flash Related Info: \n";
-    dumpString += "        Available Flash Modes:[";
+    infoDumper.Title("Flash Related Info:");
     ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_FLASH_MODES, &item);
     if (ret == CAM_META_SUCCESS) {
+        string flashAbilityString = "Available Flash Modes:[ ";
         for (uint32_t i = 0; i < item.count; i++) {
-            map<int, string>::const_iterator iter =
-                g_cameraFlashMode.find(item.data.u8[i]);
+            map<int, string>::const_iterator iter = g_cameraFlashMode.find(item.data.u8[i]);
             if (iter != g_cameraFlashMode.end()) {
-                dumpString += " " + iter->second;
+                flashAbilityString.append(iter->second + " ");
             }
         }
-        dumpString += "]:\n";
-    }
-
-    ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_CONTROL_FLASH_MODE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        map<int, string>::const_iterator iter =
-            g_cameraFlashMode.find(item.data.u8[0]);
-        if (iter != g_cameraFlashMode.end()) {
-            dumpString += "        Set Flash Mode:["
-                + iter->second
-                + "]:\n";
-        }
+        flashAbilityString.append("]");
+        infoDumper.Msg(flashAbilityString);
     }
 }
 
-void HCameraService::CameraDumpAF(common_metadata_header_t* metadataEntry, string& dumpString)
+void HCameraService::DumpCameraAF(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper)
 {
     camera_metadata_item_t item;
     int ret;
-    dumpString += "    ## AF Related Info: \n";
-    dumpString += "        Available Focus Modes:[";
-
+    infoDumper.Title("AF Related Info:");
     ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_FOCUS_MODES, &item);
     if (ret == CAM_META_SUCCESS) {
+        string afAbilityString = "Available Focus Modes:[ ";
         for (uint32_t i = 0; i < item.count; i++) {
-            map<int, string>::const_iterator iter =
-                g_cameraFocusMode.find(item.data.u8[i]);
+            map<int, string>::const_iterator iter = g_cameraFocusMode.find(item.data.u8[i]);
             if (iter != g_cameraFocusMode.end()) {
-                dumpString += " " + iter->second;
+                afAbilityString.append(iter->second + " ");
             }
         }
-        dumpString += "]:\n";
-    }
-
-    ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_CONTROL_FOCUS_MODE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        map<int, string>::const_iterator iter =
-            g_cameraFocusMode.find(item.data.u8[0]);
-        if (iter != g_cameraFocusMode.end()) {
-            dumpString += "        Set Focus Mode:["
-                + iter->second
-                + "]:\n";
-        }
+        afAbilityString.append("]");
+        infoDumper.Msg(afAbilityString);
     }
 }
 
-void HCameraService::CameraDumpAE(common_metadata_header_t* metadataEntry, string& dumpString)
+void HCameraService::DumpCameraAE(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper)
 {
     camera_metadata_item_t item;
     int ret;
-    dumpString += "    ## AE Related Info: \n";
-    dumpString += "        Available Exposure Modes:[";
-
+    infoDumper.Title("AE Related Info:");
     ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_EXPOSURE_MODES, &item);
     if (ret == CAM_META_SUCCESS) {
+        string aeAbilityString = "Available Exposure Modes:[ ";
         for (uint32_t i = 0; i < item.count; i++) {
-            map<int, string>::const_iterator iter =
-                g_cameraExposureMode.find(item.data.u8[i]);
+            map<int, string>::const_iterator iter = g_cameraExposureMode.find(item.data.u8[i]);
             if (iter != g_cameraExposureMode.end()) {
-                dumpString += " " + iter->second;
+                aeAbilityString.append(iter->second + " ");
             }
         }
-        dumpString += "]:\n";
-    }
-
-    ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_CONTROL_EXPOSURE_MODE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        map<int, string>::const_iterator iter =
-            g_cameraExposureMode.find(item.data.u8[0]);
-        if (iter != g_cameraExposureMode.end()) {
-            dumpString += "        Set exposure Mode:["
-                + iter->second
-                + "]:\n";
-        }
+        aeAbilityString.append("]");
+        infoDumper.Msg(aeAbilityString);
     }
 }
 
-void HCameraService::CameraDumpSensorInfo(common_metadata_header_t* metadataEntry, string& dumpString)
+void HCameraService::DumpCameraSensorInfo(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper)
 {
     camera_metadata_item_t item;
     int ret;
-    dumpString += "    ## Sensor Info Info: \n";
     int32_t leftIndex = 0;
     int32_t topIndex = 1;
     int32_t rightIndex = 2;
     int32_t bottomIndex = 3;
+    infoDumper.Title("Sensor Related Info:");
     ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_SENSOR_INFO_ACTIVE_ARRAY_SIZE, &item);
     if (ret == CAM_META_SUCCESS) {
-        dumpString += "        Array:["
-            + to_string(item.data.i32[leftIndex]) + " "
-            + to_string(item.data.i32[topIndex]) + " "
-            + to_string(item.data.i32[rightIndex]) + " "
-            + to_string(item.data.i32[bottomIndex])
-            + "]:\n";
+        infoDumper.Msg("Array:[" +
+            to_string(item.data.i32[leftIndex]) + " " +
+            to_string(item.data.i32[topIndex]) + " " +
+            to_string(item.data.i32[rightIndex]) + " " +
+            to_string(item.data.i32[bottomIndex]) + "]:\n");
     }
 }
 
-void HCameraService::CameraDumpVideoStabilization(common_metadata_header_t* metadataEntry, string& dumpString)
+void HCameraService::DumpCameraVideoStabilization(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper)
 {
     camera_metadata_item_t item;
     int ret;
-    dumpString += "    ## Video Stabilization Related Info: \n";
-    dumpString += "        Available Video Stabilization Modes:[";
-
+    infoDumper.Title("Video Stabilization Related Info:");
     ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_VIDEO_STABILIZATION_MODES, &item);
     if (ret == CAM_META_SUCCESS) {
+        std::string infoString = "Available Video Stabilization Modes:[ ";
         for (uint32_t i = 0; i < item.count; i++) {
-            map<int, string>::const_iterator iter =
-                g_cameraVideoStabilizationMode.find(item.data.u8[i]);
+            map<int, string>::const_iterator iter = g_cameraVideoStabilizationMode.find(item.data.u8[i]);
             if (iter != g_cameraVideoStabilizationMode.end()) {
-                dumpString += " " + iter->second;
+                infoString.append(iter->second + " ");
             }
         }
-        dumpString += "]:\n";
-    }
-
-    ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &item);
-    if (ret == CAM_META_SUCCESS) {
-        map<int, string>::const_iterator iter =
-            g_cameraVideoStabilizationMode.find(item.data.u8[0]);
-        if (iter != g_cameraVideoStabilizationMode.end()) {
-            dumpString += "        Set Stabilization Mode:["
-                + iter->second
-                + "]:\n";
-        }
+        infoString.append("]:");
+        infoDumper.Msg(infoString);
     }
 }
 
-void HCameraService::CameraDumpVideoFrameRateRange(common_metadata_header_t* metadataEntry, string& dumpString)
+void HCameraService::DumpCameraVideoFrameRateRange(
+    common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper)
 {
     camera_metadata_item_t item;
     const int32_t FRAME_RATE_RANGE_STEP = 2;
     int ret;
-    dumpString += "    ## Video FrameRateRange Related Info: \n";
-    dumpString += "        Available FrameRateRange :\n";
-
+    infoDumper.Title("Video FrameRateRange Related Info:");
     ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_FPS_RANGES, &item);
     if (ret == CAM_META_SUCCESS) {
+        infoDumper.Msg("Available FrameRateRange:");
         for (uint32_t i = 0; i < (item.count - 1); i += FRAME_RATE_RANGE_STEP) {
-            dumpString += "            [ " + to_string(item.data.i32[i]) + ", " +
-                          to_string(item.data.i32[i+1]) + " ]\n";
+            infoDumper.Msg("[ " + to_string(item.data.i32[i]) + ", " + to_string(item.data.i32[i + 1]) + " ]");
         }
-        dumpString += "\n";
     }
 }
 
-void HCameraService::CameraDumpPrelaunch(common_metadata_header_t* metadataEntry, string& dumpString)
+void HCameraService::DumpCameraPrelaunch(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper)
 {
     camera_metadata_item_t item;
     int ret;
-    dumpString += "    ## Camera Prelaunch Related Info: \n";
+    infoDumper.Title("Camera Prelaunch Related Info:");
     ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_PRELAUNCH_AVAILABLE, &item);
     if (ret == CAM_META_SUCCESS) {
-        map<int, string>::const_iterator iter =
-            g_cameraPrelaunchAvailable.find(item.data.u8[0]);
+        map<int, string>::const_iterator iter = g_cameraPrelaunchAvailable.find(item.data.u8[0]);
+        bool isSupport = false;
         if (iter != g_cameraPrelaunchAvailable.end()) {
-            dumpString += "        Available Prelaunch Info:["
-                + iter->second
-                + "]:\n";
+            isSupport = true;
         }
+        std::string infoString = "Available Prelaunch Info:[";
+        infoString.append(isSupport ? "True" : "False");
+        infoString.append("]");
+        infoDumper.Msg(infoString);
     }
 }
 
-void HCameraService::CameraDumpThumbnail(common_metadata_header_t* metadataEntry, string& dumpString)
+void HCameraService::DumpCameraThumbnail(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper)
 {
     camera_metadata_item_t item;
     int ret;
-    dumpString += "    ## Camera Thumbnail Related Info: \n";
+    infoDumper.Title("Camera Thumbnail Related Info:");
     ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_STREAM_QUICK_THUMBNAIL_AVAILABLE, &item);
     if (ret == CAM_META_SUCCESS) {
-        map<int, string>::const_iterator iter =
-            g_cameraQuickThumbnailAvailable.find(item.data.u8[0]);
+        map<int, string>::const_iterator iter = g_cameraQuickThumbnailAvailable.find(item.data.u8[0]);
+        bool isSupport = false;
         if (iter != g_cameraQuickThumbnailAvailable.end()) {
-            dumpString += "        Available Thumbnail Info:["
-                + iter->second
-                + "]:\n";
+            isSupport = true;
         }
+        std::string infoString = "Available Thumbnail Info:[";
+        infoString.append(isSupport ? "True" : "False");
+        infoString.append("]");
+        infoDumper.Msg(infoString);
     }
+}
+
+void HCameraService::DumpPreconfig720P(CameraInfoDumper& infoDumper)
+{
+    infoDumper.Title("PRECONFIG_720P:");
+    infoDumper.Push();
+    infoDumper.Title("PhotoSession:");
+    infoDumper.Msg("Colorspace:DISPLAY_P3");
+    infoDumper.Msg("[Preview]\tFormat:CAMERA_FORMAT_YUV_420_SP\tSize:1280x720\tFps:1-30,prefer:30");
+    infoDumper.Msg("[Photo]\tFormat:CAMERA_FORMAT_JPEG\tSize:1280x720");
+
+    infoDumper.Title("VideoSession:");
+    infoDumper.Msg("Colorspace:BT2020_HLG_LIMIT");
+    infoDumper.Msg("[Preview]\tFormat:CAMERA_FORMAT_YCRCB_P010\tSize:1280x720\tFps:1-30,prefer:30");
+    infoDumper.Msg("[Video]\tFormat:CAMERA_FORMAT_YCRCB_P010\tSize:1280x720\tFps:1-30,prefer:30");
+    infoDumper.Msg("[Photo]\tFormat:CAMERA_FORMAT_JPEG\tSize:1280x720");
+    infoDumper.Pop();
+}
+
+void HCameraService::DumpPreconfig1080P(CameraInfoDumper& infoDumper)
+{
+    infoDumper.Title("PRECONFIG_1080P:");
+    infoDumper.Push();
+    infoDumper.Title("PhotoSession:");
+    infoDumper.Msg("Colorspace:DISPLAY_P3");
+    infoDumper.Msg("[Preview]\tFormat:CAMERA_FORMAT_YUV_420_SP\tSize:1920x1080\tFps:1-30,prefer:30");
+    infoDumper.Msg("[Photo]\tFormat:CAMERA_FORMAT_JPEG\tSize:1920x1080");
+
+    infoDumper.Title("VideoSession:");
+    infoDumper.Msg("Colorspace:BT2020_HLG_LIMIT");
+    infoDumper.Msg("[Preview]\tFormat:CAMERA_FORMAT_YCRCB_P010\tSize:1920x1080\tFps:1-30,prefer:30");
+    infoDumper.Msg("[Video]\tFormat:CAMERA_FORMAT_YCRCB_P010\tSize:1920x1080\tFps:1-30,prefer:30");
+    infoDumper.Msg("[Photo]\tFormat:CAMERA_FORMAT_JPEG\tSize:1920x1080");
+    infoDumper.Pop();
+}
+
+void HCameraService::DumpPreconfig4k(CameraInfoDumper& infoDumper)
+{
+    infoDumper.Title("PRECONFIG_4K:");
+    infoDumper.Push();
+    infoDumper.Title("PhotoSession:");
+    infoDumper.Msg("Colorspace:DISPLAY_P3");
+    infoDumper.Msg("[Preview]\tFormat:CAMERA_FORMAT_YUV_420_SP\tSize:1920x1080\tFps:1-30,prefer:30");
+    infoDumper.Msg("[Photo]\tFormat:CAMERA_FORMAT_JPEG\tSize:3840x2160");
+
+    infoDumper.Title("VideoSession:");
+    infoDumper.Msg("Colorspace:BT2020_HLG_LIMIT");
+    infoDumper.Msg("[Preview]\tFormat:CAMERA_FORMAT_YCRCB_P010\tSize:1920x1080\tFps:1-30,prefer:30");
+    infoDumper.Msg("[Video]\tFormat:CAMERA_FORMAT_YCRCB_P010\tSize:3840x2160\tFps:1-30,prefer:30");
+    infoDumper.Msg("[Photo]\tFormat:CAMERA_FORMAT_JPEG\tSize:3840x2160");
+    infoDumper.Pop();
+}
+
+void HCameraService::DumpPreconfigHighQuality(CameraInfoDumper& infoDumper)
+{
+    infoDumper.Title("PRECONFIG_HIGH_QUALITY:");
+    infoDumper.Push();
+    infoDumper.Title("PhotoSession:");
+    infoDumper.Msg("Colorspace:DISPLAY_P3");
+    infoDumper.Msg("[Preview]\tFormat:CAMERA_FORMAT_YUV_420_SP\tSize:1920x1440\tFps:1-30,prefer:30");
+    infoDumper.Msg("[Photo]\tFormat:CAMERA_FORMAT_JPEG\tSize:4096x3072");
+
+    infoDumper.Title("VideoSession:");
+    infoDumper.Msg("Colorspace:BT2020_HLG_LIMIT");
+    infoDumper.Msg("[Preview]\tFormat:CAMERA_FORMAT_YCRCB_P010\tSize:1920x1080\tFps:1-30,prefer:30");
+    infoDumper.Msg("[Video]\tFormat:CAMERA_FORMAT_YCRCB_P010\tSize:3840x2160\tFps:1-30,prefer:30");
+    infoDumper.Msg("[Photo]\tFormat:CAMERA_FORMAT_JPEG\tSize:3840x2160");
+    infoDumper.Pop();
+}
+
+void HCameraService::DumpPreconfigInfo(CameraInfoDumper& infoDumper)
+{
+    infoDumper.Tip("--------Dump PreconfigInfo Begin-------");
+    DumpPreconfig720P(infoDumper);
+    DumpPreconfig1080P(infoDumper);
+    DumpPreconfig4k(infoDumper);
+    DumpPreconfigHighQuality(infoDumper);
 }
 
 int32_t HCameraService::Dump(int fd, const vector<u16string>& args)
 {
     unordered_set<u16string> argSets;
-    u16string summary(u"summary");
-    u16string ability(u"ability");
-    u16string clientwiseinfo(u"clientwiseinfo");
-    std::u16string debugOn(u"debugOn");
     for (decltype(args.size()) index = 0; index < args.size(); ++index) {
         argSets.insert(args[index]);
     }
     std::string dumpString;
     std::vector<std::string> cameraIds;
     std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
-    int ret;
-
-    ret = GetCameras(cameraIds, cameraAbilityList);
+    int ret = GetCameras(cameraIds, cameraAbilityList);
     if ((ret != CAMERA_OK) || cameraIds.empty() || (cameraAbilityList.empty())) {
-        return CAMERA_INVALID_STATE;
+        return OHOS::UNKNOWN_ERROR;
     }
-    if (args.size() == 0 || argSets.count(summary) != 0) {
-        dumpString += "-------- Summary -------\n";
-        CameraSummary(cameraIds, dumpString);
+    CameraInfoDumper infoDumper(fd);
+    if (args.empty() || argSets.count(u16string(u"summary"))) {
+        DumpCameraSummary(cameraIds, infoDumper);
     }
-    if (args.size() == 0 || argSets.count(ability) != 0) {
-        dumpString += "-------- CameraDevice -------\n";
-        CameraDumpCameraInfo(dumpString, cameraIds, cameraAbilityList);
+    if (args.empty() || argSets.count(u16string(u"ability"))) {
+        DumpCameraInfo(infoDumper, cameraIds, cameraAbilityList);
     }
-    if (args.size() == 0 || argSets.count(clientwiseinfo) != 0) {
-        dumpString += "-------- Clientwise Info -------\n";
-        HCaptureSession::dumpSessions(dumpString);
+    if (args.empty() || argSets.count(u16string(u"preconfig"))) {
+        DumpPreconfigInfo(infoDumper);
     }
-    if (argSets.count(debugOn) != 0) {
-        dumpString += "-------- Debug On -------\n";
+    if (args.empty() || argSets.count(u16string(u"clientwiseinfo"))) {
+        infoDumper.Tip("--------Dump Clientwise Info Begin-------");
+        HCaptureSession::DumpSessions(infoDumper);
+    }
+    if (argSets.count(std::u16string(u"debugOn"))) {
         SetCameraDebugValue(true);
     }
-
-    if (dumpString.size() == 0) {
-        MEDIA_ERR_LOG("Dump string empty!");
-        return CAMERA_INVALID_STATE;
-    }
-
-    (void)write(fd, dumpString.c_str(), dumpString.size());
-    return CAMERA_OK;
+    infoDumper.Print();
+    return OHOS::NO_ERROR;
 }
 
 #ifdef CAMERA_USE_SENSOR

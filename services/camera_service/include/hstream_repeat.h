@@ -70,7 +70,7 @@ public:
     RepeatStreamType GetRepeatStreamType();
     void SetMetaProducer(sptr<OHOS::IBufferProducer> metaProducer);
     void SetMovingPhotoStartCallback(std::function<void()> callback);
-    void DumpStreamInfo(std::string& dumpString) override;
+    void DumpStreamInfo(CameraInfoDumper& infoDumper) override;
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
     int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate) override;
     int32_t SetMirror(bool isEnable) override;

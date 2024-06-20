@@ -55,7 +55,7 @@ public:
     int32_t OnFrameShutter(int32_t captureId, uint64_t timestamp);
     int32_t OnFrameShutterEnd(int32_t captureId, uint64_t timestamp);
     int32_t OnCaptureReady(int32_t captureId, uint64_t timestamp);
-    void DumpStreamInfo(std::string& dumpString) override;
+    void DumpStreamInfo(CameraInfoDumper& infoDumper) override;
     void SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_);
     void SetMode(int32_t modeName);
     int32_t GetMode();
