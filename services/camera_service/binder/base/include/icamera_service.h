@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_ICAMERA_SERVICE_H
 #define OHOS_CAMERA_ICAMERA_SERVICE_H
 
+#include <set>
 #include "camera_metadata_info.h"
 #include "icamera_service_callback.h"
 #include "icamera_device_service.h"
@@ -117,6 +118,10 @@ public:
     virtual int32_t SetPeerCallback(sptr<ICameraBroker>& callback) = 0;
 
     virtual int32_t DestroyStubObj() = 0;
+
+    virtual int32_t ProxyForFreeze(const std::set<int32_t>& pidList, bool isProxy) = 0;
+
+    virtual int32_t ResetAllFreezeStatus() = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ICameraService");
 };

@@ -591,6 +591,30 @@ int32_t HCameraService::CreateVideoOutput(const sptr<OHOS::IBufferProducer>& pro
     return rc;
 }
 
+bool HCameraService::ShouldSkipStatusUpdates(pid_t pid)
+{
+    std::lock_guard<std::mutex> lock(freezedPidListMutex_);
+    if (freezedPidList_.count(pid) == 0) {
+        return false;
+    }
+    MEDIA_INFO_LOG("ShouldSkipStatusUpdates pid = %{public}d", pid);
+    return true;
+}
+
+void HCameraService::CreateAndSaveTask(const string& cameraId, CameraStatus status, uint32_t pid)
+{
+    auto task = [cameraId, status, pid, this]() {
+        auto it = cameraServiceCallbacks_.find(pid);
+        if (it != cameraServiceCallbacks_.end()) {
+            if (it->second != nullptr) {
+                MEDIA_INFO_LOG("trigger callback due to unfreeze pid: %{public}d", pid);
+                it->second->OnCameraStatusChanged(cameraId, status);
+            }
+        }
+    };
+    delayCbtaskMap[pid] = task;
+}
+
 void HCameraService::OnCameraStatus(const string& cameraId, CameraStatus status)
 {
     lock_guard<mutex> lock(cameraCbMutex_);
@@ -602,9 +626,14 @@ void HCameraService::OnCameraStatus(const string& cameraId, CameraStatus status)
             MEDIA_ERR_LOG("HCameraService::OnCameraStatus pid:%{public}d cameraServiceCallback is null", it.first);
             continue;
         }
-        it.second->OnCameraStatusChanged(cameraId, status);
-        CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d",
-            cameraId.c_str(), status));
+        uint32_t pid = it.first;
+        if (ShouldSkipStatusUpdates(pid)) {
+            CreateAndSaveTask(cameraId, status, pid);
+        } else {
+            it.second->OnCameraStatusChanged(cameraId, status);
+            CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d",
+                cameraId.c_str(), status));
+        }
     }
 }
 
@@ -1755,6 +1784,54 @@ int32_t HCameraService::UpdateSkinToneSetting(std::shared_ptr<OHOS::Camera::Came
         MEDIA_INFO_LOG("UpdateBeautySetting status: %{public}d", status);
     }
 
+    return CAMERA_OK;
+}
+
+std::string g_toString(std::set<int32_t>& pidList)
+{
+    std::string ret = "[";
+    for (const auto& pid : pidList) {
+        ret += std::to_string(pid) + ",";
+    }
+    ret += "]";
+    return ret;
+}
+
+int32_t HCameraService::ProxyForFreeze(const std::set<int32_t>& pidList, bool isProxy)
+{
+    MEDIA_INFO_LOG("isProxy value: %{public}d", isProxy);
+    {
+        std::lock_guard<std::mutex> lock(freezedPidListMutex_);
+        if (isProxy) {
+            freezedPidList_.insert(pidList.begin(), pidList.end());
+            MEDIA_INFO_LOG("after freeze freezedPidList_:%{public}s", g_toString(freezedPidList_).c_str());
+            return CAMERA_OK;
+        } else {
+            for (auto pid : pidList) {
+                freezedPidList_.erase(pid);
+            }
+            MEDIA_INFO_LOG("after unfreeze freezedPidList_:%{public}s", g_toString(freezedPidList_).c_str());
+        }
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(cameraCbMutex_);
+        for (auto pid : pidList) {
+            auto it = delayCbtaskMap.find(pid);
+            if (it != delayCbtaskMap.end()) {
+                it->second();
+                delayCbtaskMap.erase(it);
+            }
+        }
+    }
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::ResetAllFreezeStatus()
+{
+    std::lock_guard<std::mutex> lock(freezedPidListMutex_);
+    freezedPidList_.clear();
+    MEDIA_INFO_LOG("freezedPidList_ has been clear");
     return CAMERA_OK;
 }
 

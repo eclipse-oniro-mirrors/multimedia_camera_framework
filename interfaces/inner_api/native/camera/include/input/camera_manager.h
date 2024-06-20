@@ -609,6 +609,10 @@ public:
     static const std::string surfaceFormat;
 
     void OnCameraServerAlive();
+
+    // for resource proxy
+    int32_t ProxyForFreeze(const std::set<int32_t>& pidList, bool isProxy);
+    int32_t ResetAllFreezeStatus();
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
@@ -631,7 +635,6 @@ private:
     sptr<CaptureSession> CreateCaptureSessionImpl(SceneMode mode, sptr<ICaptureSession> session);
     int32_t CreateListenerObject();
     void CameraServerDied(pid_t pid);
-
     int32_t AddServiceProxyDeathRecipient();
     void RemoveServiceProxyDeathRecipient();
 
@@ -670,10 +673,9 @@ private:
         std::lock_guard<std::mutex> lock(serviceProxyMutex_);
         serviceProxyPrivate_ = proxy;
     }
-
+    int32_t RefreshServiceProxy();
     std::mutex serviceProxyMutex_;
     sptr<ICameraService> serviceProxyPrivate_;
-
     std::mutex deathRecipientMutex_;
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
 

@@ -122,6 +122,11 @@ public:
     void OnCameraStatus(const string& cameraId, CameraStatus status) override;
     void OnFlashlightStatus(const string& cameraId, FlashStatus status) override;
     void OnTorchStatus(TorchStatus status) override;
+    // for resource proxy
+    int32_t ProxyForFreeze(const std::set<int32_t>& pidList, bool isProxy) override;
+    int32_t ResetAllFreezeStatus() override;
+    bool ShouldSkipStatusUpdates(pid_t pid);
+    void CreateAndSaveTask(const string& cameraId, CameraStatus status, uint32_t pid);
 
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager);
@@ -236,6 +241,9 @@ private:
     SensorUser user;
 #endif
     SafeMap<uint32_t, sptr<HCaptureSession>> captureSessionsManager_;
+    std::mutex freezedPidListMutex_;
+    std::set<int32_t> freezedPidList_;
+    std::map<uint32_t, std::function<void()>> delayCbtaskMap;
 };
 } // namespace CameraStandard
 } // namespace OHOS
