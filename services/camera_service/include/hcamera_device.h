@@ -49,7 +49,9 @@ public:
     ~DeviceEventCallback() override = default;
     void OnError(const OHOS::HDI::Camera::V1_0::ErrorType type)
     {
-        callback_();
+        if (type == OHOS::HDI::Camera::V1_0::DEVICE_PREEMPT || type == OHOS::HDI::Camera::V1_0::DEVICE_DISCONNECT) {
+            callback_();
+        }
     }
 private:
     StatusCallback callback_;
