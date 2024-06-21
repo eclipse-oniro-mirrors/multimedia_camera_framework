@@ -544,7 +544,10 @@ public:
 
 class FakeHCameraService : public HCameraService {
 public:
-    explicit FakeHCameraService(sptr<HCameraHostManager> hostManager) : HCameraService(hostManager) {}
+    explicit FakeHCameraService(sptr<HCameraHostManager> hostManager) : HCameraService(hostManager)
+    {
+        SetServiceStatus(CameraServiceStatus::SERVICE_READY);
+    }
     ~FakeHCameraService() {}
 };
 
@@ -2854,7 +2857,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_007, TestSize.Level
 
     status.status = 4;
     cameraHostManager->GetRegisterServStatListener()->OnReceive(status);
-
+    cameraHostManager->DeInit();
     input->Close();
 }
 
@@ -4144,7 +4147,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_031, TestSize.Level
     sptr<HCameraHostManager> cameraHostManager_2 = (sptr<HCameraHostManager> &)mockCameraHostManager_2;
 
     cameraHostManager_2->AddCameraDevice(cameraId, nullptr);
-
+    cameraHostManager->DeInit();
     input->Close();
 }
 

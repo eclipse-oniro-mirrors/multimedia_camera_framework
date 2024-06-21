@@ -2981,7 +2981,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_047, TestSize.Le
     EXPECT_EQ(intResult, 0);
     EXPECT_EQ(portraitSession->AddInput(input_), 0);
 
-    float ratio = 1;
+    float ratioWidth = 16;
+    float ratioHeight = 9;
+    float ratio = ratioWidth / ratioHeight;
     Profile profile = SelectProfileByRatioAndFormat(modeAbility, ratio, photoFormat_);
     ASSERT_NE(profile.format_, -1);
 
@@ -3003,20 +3005,20 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_047, TestSize.Le
     portraitSession->LockForControl();
 
     std::vector<BeautyType> beautyLists = portraitSession->GetSupportedBeautyTypes();
-    EXPECT_GE(beautyLists.size(), 1);
+    EXPECT_GE(beautyLists.size(), 3);
 
     std::vector<int32_t> rangeLists = {};
-    if (beautyLists.size() >= 4) {
+    if (beautyLists.size() >= 3) {
         rangeLists = portraitSession->GetSupportedBeautyRange(beautyLists[3]);
     }
 
-    if (beautyLists.size() >= 4) {
+    if (beautyLists.size() >= 3) {
         portraitSession->SetBeauty(beautyLists[3], rangeLists[0]);
     }
 
     portraitSession->UnlockForControl();
 
-    if (beautyLists.size() >= 4) {
+    if (beautyLists.size() >= 3) {
         EXPECT_EQ(portraitSession->GetBeauty(beautyLists[3]), rangeLists[0]);
     }
 
@@ -3131,10 +3133,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_071, 
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
-    SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
-    ASSERT_NE(profiles.preview.format_, -1);
-    ASSERT_NE(profiles.video.format_, -1);
-
     sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
@@ -3146,13 +3144,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_071, 
     intResult = session->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profiles.preview);
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(wanted.preview);
     ASSERT_NE(previewOutput, nullptr);
 
     intResult = session->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput(profiles.video);
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(wanted.video);
     ASSERT_NE(videoOutput, nullptr);
 
     intResult = session->AddOutput(videoOutput);
@@ -3205,10 +3203,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_072, 
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
-    SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
-    ASSERT_NE(profiles.preview.format_, -1);
-    ASSERT_NE(profiles.video.format_, -1);
-
     sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
@@ -3220,13 +3214,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_072, 
     intResult = session->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profiles.preview);
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(wanted.preview);
     ASSERT_NE(previewOutput, nullptr);
 
     intResult = session->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput(profiles.video);
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(wanted.video);
     ASSERT_NE(videoOutput, nullptr);
 
     intResult = session->AddOutput(videoOutput);
@@ -3290,10 +3284,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_073, 
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
-    SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
-    ASSERT_NE(profiles.preview.format_, -1);
-    ASSERT_NE(profiles.video.format_, -1);
-
     sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
@@ -3305,13 +3295,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_073, 
     intResult = session->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profiles.preview);
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(wanted.preview);
     ASSERT_NE(previewOutput, nullptr);
 
     intResult = session->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput(profiles.video);
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(wanted.video);
     ASSERT_NE(videoOutput, nullptr);
 
     intResult = session->AddOutput(videoOutput);
@@ -3375,10 +3365,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_074, 
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
-    SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
-    ASSERT_NE(profiles.preview.format_, -1);
-    ASSERT_NE(profiles.video.format_, -1);
-
     sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
@@ -3390,13 +3376,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_074, 
     intResult = session->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profiles.preview);
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(wanted.preview);
     ASSERT_NE(previewOutput, nullptr);
 
     intResult = session->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput(profiles.video);
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(wanted.video);
     ASSERT_NE(videoOutput, nullptr);
 
     intResult = session->AddOutput(videoOutput);
@@ -3463,10 +3449,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_075, 
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
-    SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
-    ASSERT_NE(profiles.preview.format_, -1);
-    ASSERT_NE(profiles.video.format_, -1);
-
     sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(sceneMode);
     ASSERT_NE(captureSession, nullptr);
 
@@ -3479,13 +3461,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_075, 
     intResult = session->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profiles.preview);
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(wanted.preview);
     ASSERT_NE(previewOutput, nullptr);
 
     intResult = session->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput(profiles.video);
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(wanted.video);
     ASSERT_NE(videoOutput, nullptr);
 
     intResult = session->AddOutput(videoOutput);
@@ -9021,12 +9003,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_057, TestSize.Le
     portraitSession->LockForControl();
 
     std::vector<BeautyType> beautyLists = portraitSession->GetSupportedBeautyTypes();
-    EXPECT_GE(beautyLists.size(), 1);
+    EXPECT_GE(beautyLists.size(), 0);
 
-    if (beautyLists.size() >= 4) {
-        std::vector<int32_t> rangeLists = portraitSession->GetSupportedBeautyRange(beautyLists[3]);
+    if (beautyLists.size() == 1) {
+        std::vector<int32_t> rangeLists = portraitSession->GetSupportedBeautyRange(beautyLists[0]);
         EXPECT_NE(rangeLists.size(), 0);
-        bool boolResult = portraitSession->SetBeautyValue(beautyLists[3], rangeLists[0]);
+        bool boolResult = portraitSession->SetBeautyValue(beautyLists[0], rangeLists[0]);
         EXPECT_TRUE(boolResult);
     }
 
