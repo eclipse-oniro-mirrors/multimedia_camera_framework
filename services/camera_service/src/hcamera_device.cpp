@@ -562,9 +562,9 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
     }
     std::lock_guard<std::mutex> lock(opMutex_);
     if (updateSettings_ != nullptr) {
-        int ret = CameraFwkMetadataUtils::MergeMetadata(settings, updateSettings_);
-        if (ret != CAMERA_OK) {
-            return ret;
+        bool ret = CameraFwkMetadataUtils::MergeMetadata(settings, updateSettings_);
+        if (!ret) {
+            updateSettings_ = settings;
         }
     } else {
         updateSettings_ = settings;
