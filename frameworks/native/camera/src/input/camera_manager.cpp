@@ -1173,6 +1173,7 @@ void CameraManager::InitCameraList()
     int32_t retCode = serviceProxy->GetCameraIds(cameraIds);
     if (retCode == CAMERA_OK) {
         for (auto& cameraId : cameraIds) {
+            MEDIA_DEBUG_LOG("InitCameraList cameraId= %{public}s", cameraId.c_str());
             std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
             retCode = serviceProxy->GetCameraAbility(cameraId, cameraAbility);
             if (retCode != CAMERA_OK) {
@@ -1388,16 +1389,17 @@ int CameraManager::CreateCameraInput(CameraPosition position, CameraType cameraT
     sptr<CameraInput> cameraInput = nullptr;
     std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
     for (size_t i = 0; i < cameraObjList_.size(); i++) {
+        MEDIA_DEBUG_LOG("CreateCameraInput position:%{public}d, Camera Type:%{public}d",
+            cameraObjList_[i]->GetPosition(), cameraObjList_[i]->GetCameraType());
         if ((cameraObjList_[i]->GetPosition() == position) && (cameraObjList_[i]->GetCameraType() == cameraType)) {
             cameraInput = CreateCameraInput(cameraObjList_[i]);
             break;
-        } else {
-            MEDIA_ERR_LOG("No Camera Device for Camera position:%{public}d, Camera Type:%{public}d",
-                          position, cameraType);
-            return CameraErrorCode::SERVICE_FATL_ERROR;
         }
     }
-
+    if (!cameraInput) {
+        MEDIA_ERR_LOG("No Camera Device for Camera position:%{public}d, Camera Type:%{public}d", position, cameraType);
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
     *pCameraInput = cameraInput;
 
     return CameraErrorCode::SUCCESS;
