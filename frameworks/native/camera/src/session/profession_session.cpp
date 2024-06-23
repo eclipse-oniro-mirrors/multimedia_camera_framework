@@ -226,6 +226,10 @@ int32_t ProfessionSession::GetIsoRange(std::vector<int32_t> &isoRange)
         return CameraErrorCode::INVALID_ARGUMENT;
     }
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = GetMetadata();
+    if (metadata == nullptr) {
+        MEDIA_ERR_LOG("GetIsoRange metadata is null");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_ISO_VALUES, &item);
     if (ret != CAM_META_SUCCESS || item.count == 0) {
@@ -552,7 +556,11 @@ int32_t ProfessionSession::GetWhiteBalanceMode(WhiteBalanceMode &mode)
         MEDIA_ERR_LOG("ProfessionSession::GetWhiteBalanceMode camera device is null");
         return CameraErrorCode::SUCCESS;
     }
-    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+    if (metadata == nullptr) {
+        MEDIA_ERR_LOG("GetWhiteBalanceMode metadata is null");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AWB_MODE, &item);
     if (ret != CAM_META_SUCCESS) {
@@ -1130,6 +1138,11 @@ int32_t ProfessionSession::GetSupportedPhysicalApertures(std::vector<std::vector
     }
 
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+    if (metadata == nullptr) {
+        MEDIA_ERR_LOG("GetSupportedPhysicalApertures metadata is null");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAMERA_PHYSICAL_APERTURE_RANGE, &item);
     if (ret != CAM_META_SUCCESS || item.count == 0) {
