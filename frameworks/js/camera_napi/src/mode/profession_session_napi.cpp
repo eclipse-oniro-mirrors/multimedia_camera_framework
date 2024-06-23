@@ -549,10 +549,13 @@ napi_value ProfessionSessionNapi::SetFocusAssistFlashMode(napi_env env, napi_cal
     if (status == napi_ok && professionSessionNapi != nullptr && professionSessionNapi->professionSession_ != nullptr) {
         bool value;
         napi_get_value_bool(env, argv[PARAM0], &value);
-        FocusAssistFlashMode mode = static_cast<FocusAssistFlashMode>(value);
+        FocusAssistFlashMode mode = FOCUS_ASSIST_FLASH_MODE_OFF;
+        if (value == true) {
+            mode = FOCUS_ASSIST_FLASH_MODE_AUTO;
+        }
         professionSessionNapi->professionSession_->LockForControl();
         professionSessionNapi->professionSession_->
-                SetFocusAssistFlashMode(static_cast<FocusAssistFlashMode>(mode));
+                SetFocusAssistFlashMode(mode);
         MEDIA_INFO_LOG("ProfessionSessionNapi SetFocusAssistFlashMode set focusAssistFlash %{public}d!", mode);
         professionSessionNapi->professionSession_->UnlockForControl();
     } else {
