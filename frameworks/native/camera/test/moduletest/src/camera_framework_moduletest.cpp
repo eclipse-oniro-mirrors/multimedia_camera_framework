@@ -23,6 +23,7 @@
 #include "accesstoken_kit.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
+#include "camera_metadata_operator.h"
 #include "camera_output_capability.h"
 #include "camera_util.h"
 #include "capture_scene_const.h"
@@ -41,6 +42,7 @@
 #include "night_session.h"
 #include "parameter.h"
 #include "scan_session.h"
+#include "session/photo_session.h"
 #include "session/profession_session.h"
 #include "session/secure_camera_session.h"
 #include "surface.h"
@@ -749,11 +751,10 @@ void CameraFrameworkModuleTest::GetSupportedOutputCapability()
 }
 
 Profile CameraFrameworkModuleTest::SelectProfileByRatioAndFormat(sptr<CameraOutputCapability>& modeAbility,
-                                                                 float ratio, CameraFormat format)
+                                                                 camera_rational_t ratio, CameraFormat format)
 {
     uint32_t width;
     uint32_t height;
-    float profileRatio;
     Profile profile;
     std::vector<Profile> profiles;
 
@@ -766,9 +767,7 @@ Profile CameraFrameworkModuleTest::SelectProfileByRatioAndFormat(sptr<CameraOutp
     for (int i = 0; i < profiles.size(); ++i) {
         width = profiles[i].GetSize().width;
         height = profiles[i].GetSize().height;
-        profileRatio = float(width) / float(height);
-
-        if (profileRatio == ratio) {
+        if ((width % ratio.numerator == 0) && (height % ratio.denominator == 0)) {
             profile = profiles[i];
             break;
         }
@@ -782,21 +781,33 @@ SelectProfiles CameraFrameworkModuleTest::SelectWantedProfiles(
     sptr<CameraOutputCapability>& modeAbility, const SelectProfiles wanted)
 {
     SelectProfiles ret;
+    ret.preview.format_ = CAMERA_FORMAT_INVALID;
+    ret.photo.format_ = CAMERA_FORMAT_INVALID;
+    ret.video.format_ = CAMERA_FORMAT_INVALID;
     const auto& preview = std::find_if(modeAbility->GetPreviewProfiles().begin(),
                                        modeAbility->GetPreviewProfiles().end(),
                                        [&wanted](auto& profile) { return profile == wanted.preview; });
     if (preview != modeAbility->GetPreviewProfiles().end()) {
         ret.preview = *preview;
+    } else {
+        MEDIA_ERR_LOG("preview format:%{public}d width:%{public}d height:%{public}d not support",
+            wanted.preview.format_, wanted.preview.size_.width, wanted.preview.size_.height);
     }
     const auto& photo = std::find_if(modeAbility->GetPhotoProfiles().begin(), modeAbility->GetPhotoProfiles().end(),
         [&wanted](auto& profile) { return profile == wanted.photo; });
     if (photo != modeAbility->GetPhotoProfiles().end()) {
         ret.photo = *photo;
+    } else {
+        MEDIA_ERR_LOG("photo format:%{public}d width:%{public}d height:%{public}d not support",
+            wanted.photo.format_, wanted.photo.size_.width, wanted.photo.size_.height);
     }
     const auto& video = std::find_if(modeAbility->GetVideoProfiles().begin(), modeAbility->GetVideoProfiles().end(),
         [&wanted](auto& profile) { return profile == wanted.video; });
     if (video != modeAbility->GetVideoProfiles().end()) {
         ret.video = *video;
+    } else {
+        MEDIA_ERR_LOG("video format:%{public}d width:%{public}d height:%{public}d not support",
+            wanted.video.format_, wanted.video.size_.width, wanted.video.size_.height);
     }
     return ret;
 }
@@ -1248,6 +1259,18 @@ void CameraFrameworkModuleTest::ProcessPortraitSession(sptr<PortraitSession>& po
     if (!effects.empty()) {
         EXPECT_EQ(portraitSession->GetPortraitEffect(), effects[0]);
     }
+}
+
+sptr<CameraDevice> CameraFrameworkModuleTest::ChooseCamerasByPositionAndType(CameraPosition position, CameraType type)
+{
+    sptr<CameraDevice> choosedCamera = nullptr;
+    for (auto it : cameras_) {
+        if (it->GetPosition() == position && it->GetCameraType() == type) {
+            choosedCamera = it;
+            break;
+        }
+    }
+    return choosedCamera;
 }
 
 /*
@@ -2828,9 +2851,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_045, TestSize.Le
     intResult = portraitSession->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    float ratioWidth = 16;
-    float ratioHeight = 9;
-    float ratio = ratioWidth / ratioHeight;
+    camera_rational_t ratio = {
+        .numerator = 16,
+        .denominator=9
+    };
+
     Profile profile = SelectProfileByRatioAndFormat(modeAbility, ratio, photoFormat_);
     ASSERT_NE(profile.format_, -1);
 
@@ -2894,9 +2919,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_046, TestSize.Le
     intResult = portraitSession->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    float ratioWidth = 4;
-    float ratioHeight = 3;
-    float ratio = ratioWidth / ratioHeight;
+    camera_rational_t ratio = {
+        .numerator = 4,
+        .denominator=3
+    };
+
     Profile profile = SelectProfileByRatioAndFormat(modeAbility, ratio, photoFormat_);
     ASSERT_NE(profile.format_, -1);
 
@@ -2981,9 +3008,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_047, TestSize.Le
     EXPECT_EQ(intResult, 0);
     EXPECT_EQ(portraitSession->AddInput(input_), 0);
 
-    float ratioWidth = 16;
-    float ratioHeight = 9;
-    float ratio = ratioWidth / ratioHeight;
+    camera_rational_t ratio = {
+        .numerator = 16,
+        .denominator=9
+    };
+
     Profile profile = SelectProfileByRatioAndFormat(modeAbility, ratio, photoFormat_);
     ASSERT_NE(profile.format_, -1);
 
@@ -3066,9 +3095,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_048, TestSize.Le
     intResult = portraitSession->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    float ratioWidth = 4;
-    float ratioHeight = 3;
-    float ratio = ratioWidth / ratioHeight;
+    camera_rational_t ratio = {
+        .numerator = 4,
+        .denominator=3
+    };
+
     Profile profile = SelectProfileByRatioAndFormat(modeAbility, ratio, photoFormat_);
     ASSERT_NE(profile.format_, -1);
 
@@ -3133,6 +3164,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_071, 
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
+    SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
+    ASSERT_NE(profiles.preview.format_, CAMERA_FORMAT_INVALID);
+    ASSERT_NE(profiles.photo.format_, CAMERA_FORMAT_INVALID);
+    ASSERT_NE(profiles.video.format_, CAMERA_FORMAT_INVALID);
+
     sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
@@ -3144,13 +3180,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_071, 
     intResult = session->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(wanted.preview);
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profiles.preview);
     ASSERT_NE(previewOutput, nullptr);
 
     intResult = session->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput(wanted.video);
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(profiles.video);
     ASSERT_NE(videoOutput, nullptr);
 
     intResult = session->AddOutput(videoOutput);
@@ -3203,6 +3239,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_072, 
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
+    SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
+    ASSERT_NE(profiles.preview.format_, CAMERA_FORMAT_INVALID);
+    ASSERT_NE(profiles.photo.format_, CAMERA_FORMAT_INVALID);
+    ASSERT_NE(profiles.video.format_, CAMERA_FORMAT_INVALID);
+
     sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
@@ -3214,13 +3255,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_072, 
     intResult = session->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(wanted.preview);
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profiles.preview);
     ASSERT_NE(previewOutput, nullptr);
 
     intResult = session->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput(wanted.video);
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(profiles.video);
     ASSERT_NE(videoOutput, nullptr);
 
     intResult = session->AddOutput(videoOutput);
@@ -3284,6 +3325,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_073, 
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
+    SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
+    ASSERT_NE(profiles.preview.format_, CAMERA_FORMAT_INVALID);
+    ASSERT_NE(profiles.photo.format_, CAMERA_FORMAT_INVALID);
+    ASSERT_NE(profiles.video.format_, CAMERA_FORMAT_INVALID);
+
     sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
@@ -3295,13 +3341,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_073, 
     intResult = session->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(wanted.preview);
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profiles.preview);
     ASSERT_NE(previewOutput, nullptr);
 
     intResult = session->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput(wanted.video);
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(profiles.video);
     ASSERT_NE(videoOutput, nullptr);
 
     intResult = session->AddOutput(videoOutput);
@@ -3365,6 +3411,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_074, 
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
+    SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
+    ASSERT_NE(profiles.preview.format_, CAMERA_FORMAT_INVALID);
+    ASSERT_NE(profiles.photo.format_, CAMERA_FORMAT_INVALID);
+    ASSERT_NE(profiles.video.format_, CAMERA_FORMAT_INVALID);
+
     sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
     ASSERT_NE(captureSession, nullptr);
     sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
@@ -3376,13 +3427,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_074, 
     intResult = session->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(wanted.preview);
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profiles.preview);
     ASSERT_NE(previewOutput, nullptr);
 
     intResult = session->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput(wanted.video);
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(profiles.video);
     ASSERT_NE(videoOutput, nullptr);
 
     intResult = session->AddOutput(videoOutput);
@@ -3449,6 +3500,11 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_075, 
     wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
     wanted.video.framerates_ = {30, 30};
 
+    SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
+    ASSERT_NE(profiles.preview.format_, CAMERA_FORMAT_INVALID);
+    ASSERT_NE(profiles.photo.format_, CAMERA_FORMAT_INVALID);
+    ASSERT_NE(profiles.video.format_, CAMERA_FORMAT_INVALID);
+
     sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(sceneMode);
     ASSERT_NE(captureSession, nullptr);
 
@@ -3461,13 +3517,13 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_075, 
     intResult = session->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(wanted.preview);
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profiles.preview);
     ASSERT_NE(previewOutput, nullptr);
 
     intResult = session->AddOutput(previewOutput);
     EXPECT_EQ(intResult, 0);
 
-    sptr<CaptureOutput> videoOutput = CreateVideoOutput(wanted.video);
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(profiles.video);
     ASSERT_NE(videoOutput, nullptr);
 
     intResult = session->AddOutput(videoOutput);
@@ -8979,9 +9035,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_057, TestSize.Le
     intResult = portraitSession->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    float ratioWidth = 16;
-    float ratioHeight = 9;
-    float ratio = ratioWidth / ratioHeight;
+    camera_rational_t ratio = {
+        .numerator = 16,
+        .denominator=9
+    };
 
     Profile profile = SelectProfileByRatioAndFormat(modeAbility, ratio, photoFormat_);
     ASSERT_NE(profile.format_, -1);
@@ -10059,7 +10116,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_075, TestSize.Le
     EXPECT_EQ(intResult, 0);
 
     session_->UnlockForControl();
-    
+
     float recnum;
     intResult = session_->GetFocusDistance(recnum);
     EXPECT_EQ(intResult, 0);
@@ -10420,7 +10477,7 @@ HWTEST_F(CameraFrameworkModuleTest, deferred_photo_enable, TestSize.Level0)
     }
 
     ((sptr<PhotoOutput>&)photoOutput)->DeferImageDeliveryFor(DeferredDeliveryImageType::DELIVERY_PHOTO);
-    
+
     intResult = ((sptr<PhotoOutput>&)photoOutput)->IsDeferredImageDeliveryEnabled(
         DeferredDeliveryImageType::DELIVERY_PHOTO);
     EXPECT_EQ(intResult, 0);
