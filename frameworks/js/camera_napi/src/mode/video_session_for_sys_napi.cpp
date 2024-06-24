@@ -21,18 +21,12 @@ using namespace std;
 
 thread_local napi_ref VideoSessionForSysNapi::sConstructor_ = nullptr;
 
-VideoSessionForSysNapi::VideoSessionForSysNapi() : env_(nullptr), wrapper_(nullptr)
+VideoSessionForSysNapi::VideoSessionForSysNapi() : env_(nullptr)
 {
 }
 VideoSessionForSysNapi::~VideoSessionForSysNapi()
 {
     MEDIA_DEBUG_LOG("~VideoSessionForSysNapi is called");
-    if (wrapper_ != nullptr) {
-        napi_delete_reference(env_, wrapper_);
-    }
-    if (videoSession_) {
-        videoSession_ = nullptr;
-    }
 }
 void VideoSessionForSysNapi::VideoSessionForSysNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {

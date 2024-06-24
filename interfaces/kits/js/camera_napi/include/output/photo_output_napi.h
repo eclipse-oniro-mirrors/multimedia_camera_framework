@@ -101,18 +101,15 @@ private:
     sptr<Surface> photoSurface_ = nullptr;
 };
 
-class PhotoListener : public IBufferConsumerListener {
+class PhotoListener : public IBufferConsumerListener, public ListenerBase {
 public:
     explicit PhotoListener(napi_env env, const sptr<Surface> photoSurface, wptr<PhotoOutput> photoOutput);
     ~PhotoListener() = default;
     void OnBufferAvailable() override;
-    void SaveCallbackReference(const std::string &eventType, napi_value callback);
-    void RemoveCallbackRef(napi_env env, napi_value callback, const std::string &eventType);
-    void RemoveAllCallbacks(const std::string &eventType);
+    void SaveCallback(const std::string eventName, napi_value callback);
+    void RemoveCallback(const std::string eventName, napi_value callback);
 
 private:
-    std::mutex mutex_;
-    napi_env env_;
     sptr<Surface> photoSurface_;
     wptr<PhotoOutput> photoOutput_;
     shared_ptr<PhotoBufferProcessor> bufferProcessor_;
@@ -122,35 +119,29 @@ private:
     void ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) const;
     void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const;
     void ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality) const;
-    void CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle *bufferHandle,
-        bool isHighQuality, std::string &uri, int32_t &cameraShotType) const;
-    napi_ref capturePhotoCb_;
-    napi_ref captureDeferredPhotoCb_;
-    napi_ref capturePhotoAssetCb_;
+    void CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle* bufferHandle, bool isHighQuality,
+        std::string& uri, int32_t& cameraShotType) const;
+
     uint8_t callbackFlag_ = 0;
 };
 
-class RawPhotoListener : public IBufferConsumerListener {
+class RawPhotoListener : public IBufferConsumerListener, public ListenerBase {
 public:
     explicit RawPhotoListener(napi_env env, const sptr<Surface> rawPhotoSurface);
     ~RawPhotoListener() = default;
     void OnBufferAvailable() override;
-    void SaveCallbackReference(const std::string &eventType, napi_value callback);
-    void RemoveCallbackRef(napi_env env, napi_value callback, const std::string &eventType);
-    void RemoveAllCallbacks(const std::string &eventType);
 
 private:
-    std::mutex mutex_;
-    napi_env env_;
     sptr<Surface> rawPhotoSurface_;
     shared_ptr<PhotoBufferProcessor> bufferProcessor_;
     void UpdateJSCallback(sptr<Surface> rawPhotoSurface) const;
     void UpdateJSCallbackAsync(sptr<Surface> rawPhotoSurface) const;
     void ExecuteRawPhoto(sptr<SurfaceBuffer> rawPhotoSurface) const;
-    napi_ref captureRawPhotoCb_;
 };
 
-class PhotoOutputCallback : public PhotoStateCallback, public std::enable_shared_from_this<PhotoOutputCallback> {
+class PhotoOutputCallback : public PhotoStateCallback,
+                            public ListenerBase,
+                            public std::enable_shared_from_this<PhotoOutputCallback> {
 public:
     explicit PhotoOutputCallback(napi_env env);
     ~PhotoOutputCallback() = default;
@@ -164,10 +155,6 @@ public:
     void OnCaptureError(const int32_t captureId, const int32_t errorCode) const override;
     void OnEstimatedCaptureDuration(const int32_t duration) const override;
 
-    void SaveCallbackReference(const std::string& eventType, napi_value callback, bool isOnce);
-    void RemoveCallbackRef(napi_env env, napi_value callback, const std::string& eventType);
-    void RemoveAllCallbacks(const std::string& eventType);
-
 private:
     void UpdateJSCallback(PhotoOutputEventType eventType, const CallbackInfo& info) const;
     void UpdateJSCallbackAsync(PhotoOutputEventType eventType, const CallbackInfo& info) const;
@@ -179,29 +166,6 @@ private:
     void ExecuteFrameShutterEndCb(const CallbackInfo& info) const;
     void ExecuteCaptureReadyCb(const CallbackInfo& info) const;
     void ExecuteEstimatedCaptureDurationCb(const CallbackInfo& info) const;
-
-    std::mutex mutex_;
-    napi_env env_;
-    mutable std::vector<std::shared_ptr<AutoRef>> captureStartCbList_;
-    mutable std::vector<std::shared_ptr<AutoRef>> captureStartWithInfoCbList_;
-    mutable std::vector<std::shared_ptr<AutoRef>> captureEndCbList_;
-    mutable std::vector<std::shared_ptr<AutoRef>> frameShutterCbList_;
-    mutable std::vector<std::shared_ptr<AutoRef>> frameShutterEndCbList_;
-    mutable std::vector<std::shared_ptr<AutoRef>> captureReadyCbList_;
-    mutable std::vector<std::shared_ptr<AutoRef>> errorCbList_;
-    mutable std::vector<std::shared_ptr<AutoRef>> estimatedCaptureDurationCbList_;
-};
-
-class ThumbnailListener : public IBufferConsumerListener, public ListenerBase {
-public:
-    explicit ThumbnailListener(napi_env env, const sptr<PhotoOutput> photoOutput);
-    ~ThumbnailListener() = default;
-    void OnBufferAvailable() override;
-
-private:
-    sptr<PhotoOutput> photoOutput_;
-    void UpdateJSCallback(sptr<PhotoOutput> photoOutput) const;
-    void UpdateJSCallbackAsync(sptr<PhotoOutput> photoOutput) const;
 };
 
 struct PhotoOutputCallbackInfo {
@@ -214,11 +178,22 @@ struct PhotoOutputCallbackInfo {
     {}
 };
 
+class ThumbnailListener : public IBufferConsumerListener, public ListenerBase {
+public:
+    explicit ThumbnailListener(napi_env env, const sptr<PhotoOutput> photoOutput);
+    ~ThumbnailListener() = default;
+    void OnBufferAvailable() override;
+
+private:
+    wptr<PhotoOutput> photoOutput_;
+    void UpdateJSCallback() const;
+    void UpdateJSCallbackAsync();
+};
+
 struct ThumbnailListenerInfo {
-    sptr<PhotoOutput> photoOutput_;
-    const ThumbnailListener* listener_;
-    ThumbnailListenerInfo(sptr<PhotoOutput> photoOutput, const ThumbnailListener* listener)
-        : photoOutput_(photoOutput), listener_(listener)
+    wptr<ThumbnailListener> listener_;
+    ThumbnailListenerInfo(sptr<ThumbnailListener> listener)
+        : listener_(listener)
     {}
 };
 
@@ -283,56 +258,59 @@ private:
     static void ProcessAsyncContext(napi_status status, napi_env env, napi_value result,
         unique_ptr<PhotoOutputAsyncContext> asyncContext);
 
-    void RegisterQuickThumbnailCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void RegisterQuickThumbnailCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
     void UnregisterQuickThumbnailCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterPhotoAvailableCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterPhotoAvailableCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
     void UnregisterPhotoAvailableCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterDeferredPhotoProxyAvailableCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterDeferredPhotoProxyAvailableCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce);
     void UnregisterDeferredPhotoProxyAvailableCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterPhotoAssetAvailableCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterPhotoAssetAvailableCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
     void UnregisterPhotoAssetAvailableCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterCaptureStartCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
-    void UnregisterCaptureStartCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterCaptureEndCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
-    void UnregisterCaptureEndCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterFrameShutterCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
-    void UnregisterFrameShutterCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterErrorCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
-    void UnregisterErrorCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterFrameShutterEndCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterCaptureStartCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterCaptureStartCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterCaptureEndCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterCaptureEndCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterFrameShutterCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterFrameShutterCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterErrorCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterErrorCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterFrameShutterEndCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
     void UnregisterFrameShutterEndCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterReadyCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
-    void UnregisterReadyCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterEstimatedCaptureDurationCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterReadyCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterReadyCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterEstimatedCaptureDurationCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce);
     void UnregisterEstimatedCaptureDurationCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterCaptureStartWithInfoCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterCaptureStartWithInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
     void UnregisterCaptureStartWithInfoCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<PhotoOutput> sPhotoOutput_;
     static thread_local sptr<Surface> sPhotoSurface_;
 
-    napi_env env_;
-    napi_ref wrapper_;
     sptr<PhotoOutput> photoOutput_;
     std::shared_ptr<Profile> profile_;
     bool isQuickThumbnailEnabled_ = false;

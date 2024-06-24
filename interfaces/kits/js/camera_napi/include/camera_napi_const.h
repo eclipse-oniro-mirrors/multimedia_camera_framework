@@ -20,6 +20,8 @@
 #include <cstdint>
 #include <string>
 
+#include "js_native_api.h"
+#include "js_native_api_types.h"
 #include "napi/native_api.h"
 
 namespace OHOS {
@@ -56,19 +58,6 @@ struct JSAsyncContextOutput {
     bool status;
     bool bRetBool;
     std::string funcName;
-};
-
-struct AutoRef {
-    AutoRef(napi_env env, napi_ref cb, bool isOnce) : isOnce_(isOnce), env_(env), cb_(cb) {}
-    ~AutoRef()
-    {
-        if (env_ != nullptr && cb_ != nullptr) {
-            (void)napi_delete_reference(env_, cb_);
-        }
-    }
-    bool isOnce_ = false;
-    napi_env env_;
-    napi_ref cb_;
 };
 
 enum JSQualityLevel { QUALITY_LEVEL_HIGH = 0, QUALITY_LEVEL_MEDIUM, QUALITY_LEVEL_LOW };

@@ -165,7 +165,6 @@ public:
     std::shared_ptr<AbilityCallbackListener> abilityCallback_ = nullptr;
 
     napi_env env_;
-    napi_ref wrapper_;
     sptr<ProfessionSession> professionSession_;
 
     static thread_local napi_ref sConstructor_;
@@ -173,26 +172,26 @@ public:
 protected:
     static napi_value ProcessingPhysicalApertures(napi_env env, std::vector<std::vector<float>> physicalApertures);
 
-    void RegisterExposureInfoCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void RegisterExposureInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce) override;
     void UnregisterExposureInfoCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
-    void RegisterAbilityChangeCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
+    void RegisterAbilityChangeCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce) override;
     void UnregisterAbilityChangeCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
-    void RegisterIsoInfoCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
+    void RegisterIsoInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce) override;
     void UnregisterIsoInfoCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
-    void RegisterApertureInfoCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
+    void RegisterApertureInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce) override;
     void UnregisterApertureInfoCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
-    void RegisterLuminationInfoCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
+    void RegisterLuminationInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce) override;
     void UnregisterLuminationInfoCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
 };
 }
 }

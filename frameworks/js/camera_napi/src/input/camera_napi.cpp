@@ -20,53 +20,17 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
-
 thread_local napi_ref CameraNapi::sConstructor_ = nullptr;
+thread_local napi_ref g_ignoreRef_ = nullptr;
 
-thread_local napi_ref CameraNapi::exposureModeRef_ = nullptr;
-thread_local napi_ref CameraNapi::focusModeRef_ = nullptr;
-thread_local napi_ref CameraNapi::flashModeRef_ = nullptr;
-thread_local napi_ref CameraNapi::cameraFormatRef_ = nullptr;
-thread_local napi_ref CameraNapi::cameraStatusRef_ = nullptr;
-thread_local napi_ref CameraNapi::connectionTypeRef_ = nullptr;
-thread_local napi_ref CameraNapi::cameraPositionRef_ = nullptr;
-thread_local napi_ref CameraNapi::cameraTypeRef_ = nullptr;
-thread_local napi_ref CameraNapi::imageRotationRef_ = nullptr;
-thread_local napi_ref CameraNapi::errorCameraRef_ = nullptr;
-thread_local napi_ref CameraNapi::errorCameraInputRef_ = nullptr;
-thread_local napi_ref CameraNapi::errorCaptureSessionRef_ = nullptr;
-thread_local napi_ref CameraNapi::errorPreviewOutputRef_ = nullptr;
-thread_local napi_ref CameraNapi::errorPhotoOutputRef_ = nullptr;
-thread_local napi_ref CameraNapi::errorVideoOutputRef_ = nullptr;
-thread_local napi_ref CameraNapi::errorMetadataOutputRef_ = nullptr;
-thread_local napi_ref CameraNapi::metadataObjectTypeRef_ = nullptr;
-thread_local napi_ref CameraNapi::exposureStateRef_ = nullptr;
-thread_local napi_ref CameraNapi::focusStateRef_ = nullptr;
-thread_local napi_ref CameraNapi::qualityLevelRef_ = nullptr;
-thread_local napi_ref CameraNapi::videoStabilizationModeRef_ = nullptr;
-thread_local napi_ref CameraNapi::hostNameTypeRef_ = nullptr;
-thread_local napi_ref CameraNapi::sceneModeRef_ = nullptr;
-thread_local napi_ref CameraNapi::preconfigTypeRef_ = nullptr;
-thread_local napi_ref CameraNapi::filterTypeRef_ = nullptr;
-thread_local napi_ref CameraNapi::beautyTypeRef_ = nullptr;
-thread_local napi_ref CameraNapi::portraitEffectRef_ = nullptr;
-thread_local napi_ref CameraNapi::torchModeRef_ = nullptr;
-thread_local napi_ref CameraNapi::deferredDeliveryImageTypeRef_ = nullptr;
-thread_local napi_ref CameraNapi::SmoothZoomModeRef_ = nullptr;
-thread_local napi_ref CameraNapi::colorEffectTypeRef_ = nullptr;
-thread_local napi_ref CameraNapi::restoreParamTypeRef_ = nullptr;
-thread_local napi_ref CameraNapi::effectSuggestionTypeRef_ = nullptr;
-thread_local napi_ref CameraNapi::policyTypeRef_ = nullptr;
-
-CameraNapi::CameraNapi() : env_(nullptr), wrapper_(nullptr)
+CameraNapi::CameraNapi() : env_(nullptr)
 {
+    MEDIA_INFO_LOG("CameraNapi::CameraNapi constructor");
 }
 
 CameraNapi::~CameraNapi()
 {
-    if (wrapper_ != nullptr) {
-        napi_delete_reference(env_, wrapper_);
-    }
+    MEDIA_INFO_LOG("CameraNapi::~CameraNapi destructor");
 }
 
 // Constructor callback
@@ -120,78 +84,63 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
     napi_property_descriptor camera_static_prop[] = {
         DECLARE_NAPI_STATIC_FUNCTION("getCameraManager", CreateCameraManagerInstance),
         DECLARE_NAPI_STATIC_FUNCTION("getModeManager", CreateModeManagerInstance),
-        DECLARE_NAPI_PROPERTY("FlashMode",
-            CreateObjectWithMap(env, "FlashMode", mapFlashMode, flashModeRef_)),
-        DECLARE_NAPI_PROPERTY("ExposureMode",
-            CreateObjectWithMap(env, "ExposureMode", mapExposureMode, exposureModeRef_)),
-        DECLARE_NAPI_PROPERTY("ExposureState",
-            CreateObjectWithMap(env, "ExposureState", mapExposureState, exposureStateRef_)),
-        DECLARE_NAPI_PROPERTY("FocusMode",
-            CreateObjectWithMap(env, "FocusMode", mapFocusMode, focusModeRef_)),
-        DECLARE_NAPI_PROPERTY("FocusState",
-            CreateObjectWithMap(env, "FocusState", mapFocusState, focusStateRef_)),
-        DECLARE_NAPI_PROPERTY("CameraPosition",
-            CreateObjectWithMap(env, "CameraPosition", mapCameraPosition, cameraPositionRef_)),
-        DECLARE_NAPI_PROPERTY("CameraType",
-            CreateObjectWithMap(env, "CameraType", mapCameraType, cameraTypeRef_)),
-        DECLARE_NAPI_PROPERTY("ConnectionType",
-            CreateObjectWithMap(env, "ConnectionType", mapConnectionType, connectionTypeRef_)),
-        DECLARE_NAPI_PROPERTY("CameraFormat",
-            CreateObjectWithMap(env, "CameraFormat", mapCameraFormat, cameraFormatRef_)),
-        DECLARE_NAPI_PROPERTY("CameraStatus",
-            CreateObjectWithMap(env, "CameraStatus", mapCameraStatus, cameraStatusRef_)),
-        DECLARE_NAPI_PROPERTY("ImageRotation",
-            CreateObjectWithMap(env, "ImageRotation", mapImageRotation, imageRotationRef_)),
-        DECLARE_NAPI_PROPERTY("QualityLevel",
-            CreateObjectWithMap(env, "QualityLevel", mapQualityLevel, qualityLevelRef_)),
+        DECLARE_NAPI_PROPERTY("FlashMode", CreateObjectWithMap(env, "FlashMode", mapFlashMode, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("ExposureMode", CreateObjectWithMap(env, "ExposureMode", mapExposureMode, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY(
+            "ExposureState", CreateObjectWithMap(env, "ExposureState", mapExposureState, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("FocusMode", CreateObjectWithMap(env, "FocusMode", mapFocusMode, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("FocusState", CreateObjectWithMap(env, "FocusState", mapFocusState, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY(
+            "CameraPosition", CreateObjectWithMap(env, "CameraPosition", mapCameraPosition, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("CameraType", CreateObjectWithMap(env, "CameraType", mapCameraType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY(
+            "ConnectionType", CreateObjectWithMap(env, "ConnectionType", mapConnectionType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("CameraFormat", CreateObjectWithMap(env, "CameraFormat", mapCameraFormat, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("CameraStatus", CreateObjectWithMap(env, "CameraStatus", mapCameraStatus, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY(
+            "ImageRotation", CreateObjectWithMap(env, "ImageRotation", mapImageRotation, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("QualityLevel", CreateObjectWithMap(env, "QualityLevel", mapQualityLevel, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("VideoStabilizationMode",
-            CreateObjectWithMap(env, "VideoStabilizationMode",
-                                mapVideoStabilizationMode, videoStabilizationModeRef_)),
-        DECLARE_NAPI_PROPERTY("MetadataObjectType",
-            CreateObjectWithMap(env, "MetadataObjectType", mapMetadataObjectType, metadataObjectTypeRef_)),
-        DECLARE_NAPI_PROPERTY("HostNameType",
-            CreateObjectWithMap(env, "HostNameType", mapHostNameType, hostNameTypeRef_)),
-        DECLARE_NAPI_PROPERTY("CameraMode",
-            CreateObjectWithMap(env, "SceneMode", mapSceneMode, sceneModeRef_)),
-        DECLARE_NAPI_PROPERTY("SceneMode",
-            CreateObjectWithMap(env, "SceneMode", mapSceneMode, sceneModeRef_)),
-        DECLARE_NAPI_PROPERTY("PreconfigType",
-            CreateObjectWithMap(env, "PreconfigType", mapPreconfigType, preconfigTypeRef_)),
-        DECLARE_NAPI_PROPERTY("FilterType",
-            CreateObjectWithMap(env, "FilterType", mapFilterType, filterTypeRef_)),
-        DECLARE_NAPI_PROPERTY("BeautyType",
-            CreateObjectWithMap(env, "BeautyType", mapBeautyType, beautyTypeRef_)),
-        DECLARE_NAPI_PROPERTY("PortraitEffect",
-            CreateObjectWithMap(env, "PortraitEffect", mapPortraitEffect, portraitEffectRef_)),
-        DECLARE_NAPI_PROPERTY("TorchMode",
-            CreateObjectWithMap(env, "TorchMode", mapTorchMode, torchModeRef_)),
-        DECLARE_NAPI_PROPERTY("CameraErrorCode",
-            CreateObjectWithMap(env, "CameraErrorCode", mapCameraErrorCode, errorCameraRef_)),
+            CreateObjectWithMap(env, "VideoStabilizationMode", mapVideoStabilizationMode, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY(
+            "MetadataObjectType", CreateObjectWithMap(env, "MetadataObjectType", mapMetadataObjectType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("HostNameType", CreateObjectWithMap(env, "HostNameType", mapHostNameType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("CameraMode", CreateObjectWithMap(env, "SceneMode", mapSceneMode, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("SceneMode", CreateObjectWithMap(env, "SceneMode", mapSceneMode, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY(
+            "PreconfigType", CreateObjectWithMap(env, "PreconfigType", mapPreconfigType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("FilterType", CreateObjectWithMap(env, "FilterType", mapFilterType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("BeautyType", CreateObjectWithMap(env, "BeautyType", mapBeautyType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY(
+            "PortraitEffect", CreateObjectWithMap(env, "PortraitEffect", mapPortraitEffect, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("TorchMode", CreateObjectWithMap(env, "TorchMode", mapTorchMode, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY(
+            "CameraErrorCode", CreateObjectWithMap(env, "CameraErrorCode", mapCameraErrorCode, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("CameraInputErrorCode",
-            CreateObjectWithMap(env, "CameraInputErrorCode", mapCameraInputErrorCode, errorCameraInputRef_)),
+            CreateObjectWithMap(env, "CameraInputErrorCode", mapCameraInputErrorCode, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("CaptureSessionErrorCode",
-            CreateObjectWithMap(env, "CaptureSessionErrorCode", mapCaptureSessionErrorCode, errorCaptureSessionRef_)),
+            CreateObjectWithMap(env, "CaptureSessionErrorCode", mapCaptureSessionErrorCode, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("PreviewOutputErrorCode",
-            CreateObjectWithMap(env, "PreviewOutputErrorCode", mapPreviewOutputErrorCode, errorPreviewOutputRef_)),
+            CreateObjectWithMap(env, "PreviewOutputErrorCode", mapPreviewOutputErrorCode, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("PhotoOutputErrorCode",
-            CreateObjectWithMap(env, "PhotoOutputErrorCode", mapPhotoOutputErrorCode, errorPhotoOutputRef_)),
+            CreateObjectWithMap(env, "PhotoOutputErrorCode", mapPhotoOutputErrorCode, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("VideoOutputErrorCode",
-            CreateObjectWithMap(env, "VideoOutputErrorCode", mapVideoOutputErrorCode, errorVideoOutputRef_)),
+            CreateObjectWithMap(env, "VideoOutputErrorCode", mapVideoOutputErrorCode, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("MetadataOutputErrorCode",
-            CreateObjectWithMap(env, "MetadataOutputErrorCode", mapMetadataOutputErrorCode, errorMetadataOutputRef_)),
+            CreateObjectWithMap(env, "MetadataOutputErrorCode", mapMetadataOutputErrorCode, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("DeferredDeliveryImageType",
-            CreateObjectWithMap(env, "DeferredDeliveryImageType",
-                                mapDeferredDeliveryImageType, deferredDeliveryImageTypeRef_)),
-        DECLARE_NAPI_PROPERTY("SmoothZoomMode",
-            CreateObjectWithMap(env, "SmoothZoomMode", mapSmoothZoomMode, SmoothZoomModeRef_)),
-        DECLARE_NAPI_PROPERTY("ColorEffectType",
-            CreateObjectWithMap(env, "ColorEffectType", mapColorEffectType, colorEffectTypeRef_)),
-        DECLARE_NAPI_PROPERTY("RestoreParamType",
-            CreateObjectWithMap(env, "RestoreParamType", mapRestoreParamType, restoreParamTypeRef_)),
+            CreateObjectWithMap(env, "DeferredDeliveryImageType", mapDeferredDeliveryImageType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY(
+            "SmoothZoomMode", CreateObjectWithMap(env, "SmoothZoomMode", mapSmoothZoomMode, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY(
+            "ColorEffectType", CreateObjectWithMap(env, "ColorEffectType", mapColorEffectType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY(
+            "RestoreParamType", CreateObjectWithMap(env, "RestoreParamType", mapRestoreParamType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("EffectSuggestionType",
-            CreateObjectWithMap(env, "EffectSuggestionType", mapEffectSuggestionType, effectSuggestionTypeRef_)),
-        DECLARE_NAPI_PROPERTY("PolicyType",
-            CreateObjectWithMap(env, "PolicyType", mapPolicyType, policyTypeRef_)),
+            CreateObjectWithMap(env, "EffectSuggestionType", mapEffectSuggestionType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("PolicyType", CreateObjectWithMap(env, "PolicyType", mapPolicyType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY(
+            "SceneFeatureType", CreateObjectWithMap(env, "SceneFeatureType", mapSceneFeatureType, g_ignoreRef_)),
     };
 
     status = napi_define_class(env, CAMERA_LIB_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, CameraNapiConstructor,

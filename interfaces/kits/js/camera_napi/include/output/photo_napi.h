@@ -44,7 +44,6 @@ private:
     static thread_local uint32_t photoTaskId;
 
     napi_env env_;
-    napi_ref wrapper_;
     napi_value mainImage_;
     napi_value rawImage_;
 };

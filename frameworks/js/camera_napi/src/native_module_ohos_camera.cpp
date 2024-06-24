@@ -18,8 +18,6 @@
 #include "input/camera_input_napi.h"
 #include "input/camera_manager_napi.h"
 #include "input/camera_napi.h"
-#include "input/camera_pre_launch_config_napi.h"
-#include "input/camera_setting_param_napi.h"
 #include "mode/high_res_photo_session_napi.h"
 #include "mode/macro_photo_session_napi.h"
 #include "mode/macro_video_session_napi.h"
@@ -55,8 +53,6 @@ static napi_value Export(napi_env env, napi_value exports)
     CameraSessionNapi::Init(env, exports);
     CameraManagerNapi::Init(env, exports);
     CameraNapi::Init(env, exports);
-    CameraSettingParamNapi::Init(env, exports);
-    CameraPrelaunchConfigNapi::Init(env, exports);
     MetadataOutputNapi::Init(env, exports);
     HighResPhotoSessionNapi::Init(env, exports);
     PortraitSessionNapi::Init(env, exports);

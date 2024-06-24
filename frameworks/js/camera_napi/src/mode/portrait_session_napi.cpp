@@ -23,18 +23,12 @@ using namespace std;
 
 thread_local napi_ref PortraitSessionNapi::sConstructor_ = nullptr;
 
-PortraitSessionNapi::PortraitSessionNapi() : env_(nullptr), wrapper_(nullptr)
+PortraitSessionNapi::PortraitSessionNapi() : env_(nullptr)
 {
 }
 PortraitSessionNapi::~PortraitSessionNapi()
 {
     MEDIA_DEBUG_LOG("~PortraitSessionNapi is called");
-    if (wrapper_ != nullptr) {
-        napi_delete_reference(env_, wrapper_);
-    }
-    if (portraitSession_) {
-        portraitSession_ = nullptr;
-    }
 }
 void PortraitSessionNapi::PortraitSessionNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {

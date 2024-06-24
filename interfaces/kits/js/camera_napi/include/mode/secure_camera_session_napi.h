@@ -36,7 +36,6 @@ public:
     static napi_value SecureCameraSessionNapiConstructor(napi_env env, napi_callback_info info);
     static napi_value AddSecureOutput(napi_env env, napi_callback_info info);
     napi_env env_;
-    napi_ref wrapper_;
     sptr<SecureCameraSession> secureCameraSession_;
     static thread_local napi_ref sConstructor_;
 };

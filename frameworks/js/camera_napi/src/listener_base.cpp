@@ -18,6 +18,7 @@
 
 #include "camera_log.h"
 #include "js_native_api.h"
+#include "js_native_api_types.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -31,81 +32,80 @@ ListenerBase::~ListenerBase()
     MEDIA_DEBUG_LOG("~ListenerBase is called.");
 }
 
-void ListenerBase::SaveCallbackReference(napi_value callback, bool isOnce)
+void ListenerBase::SaveCallbackReference(const std::string eventName, napi_value callback, bool isOnce)
 {
-    napi_ref callbackRef = nullptr;
-    const int32_t refCount = 1;
-    std::lock_guard<std::mutex> lock(baseCbListMutex_);
-    for (auto it = baseCbList_.begin(); it != baseCbList_.end(); ++it) {
-        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+    if (callback == nullptr) {
+        MEDIA_ERR_LOG("SaveCallbackReference:%s js callback is nullptr, save nothing", eventName.c_str());
+        return;
+    }
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env_, callback, &valueType);
+    if (valueType != napi_function) {
+        MEDIA_ERR_LOG("SaveCallbackReference:%s js callback valueType is not function", eventName.c_str());
+        return;
+    }
+    auto& callbackList = GetCallbackList(eventName);
+    std::lock_guard<std::mutex> lock(callbackList.listMutex);
+    for (auto it = callbackList.refList.begin(); it != callbackList.refList.end(); ++it) {
+        bool isSameCallback = CameraNapiUtils::IsSameNapiValue(env_, callback, it->GetCallbackFunction());
         CHECK_AND_RETURN_LOG(!isSameCallback, "SaveCallbackReference: has same callback, nothing to do");
     }
-    napi_status status = napi_create_reference(env_, callback, refCount, &callbackRef);
-    CHECK_AND_RETURN_LOG(status == napi_ok && callbackRef != nullptr, "creating reference for callback fail");
-    std::shared_ptr<AutoRef> cb = std::make_shared<AutoRef>(env_, callbackRef, isOnce);
-    baseCbList_.push_back(cb);
-    MEDIA_DEBUG_LOG("Save callback reference success, base callback list size [%{public}zu]", baseCbList_.size());
+    callbackList.refList.emplace_back(AutoRef(env_, callback, isOnce));
+    MEDIA_DEBUG_LOG("Save callback reference success, %s callback list size [%{public}zu]", eventName.c_str(),
+        callbackList.refList.size());
 }
 
-void ListenerBase::RemoveCallbackRef(napi_env env, napi_value callback)
+void ListenerBase::RemoveCallbackRef(const std::string eventName, napi_value callback)
 {
     if (callback == nullptr) {
         MEDIA_INFO_LOG("RemoveCallbackReference: js callback is nullptr, remove all callback reference");
-        RemoveAllCallbacks();
+        RemoveAllCallbacks(eventName);
         return;
     }
-    std::lock_guard<std::mutex> lock(baseCbListMutex_);
-    for (auto it = baseCbList_.begin(); it != baseCbList_.end(); ++it) {
-        bool isSameCallback = CameraNapiUtils::IsSameCallback(env_, callback, (*it)->cb_);
+    auto& callbackList = GetCallbackList(eventName);
+    std::lock_guard<std::mutex> lock(callbackList.listMutex);
+    for (auto it = callbackList.refList.begin(); it != callbackList.refList.end(); ++it) {
+        bool isSameCallback = CameraNapiUtils::IsSameNapiValue(env_, callback, it->GetCallbackFunction());
         if (isSameCallback) {
-            MEDIA_INFO_LOG("RemoveCallbackReference: find js callback, delete it");
-            napi_status status = napi_delete_reference(env, (*it)->cb_);
-            (*it)->cb_ = nullptr;
-            CHECK_AND_RETURN_LOG(status == napi_ok, "RemoveCallbackReference: delete reference for callback fail");
-            baseCbList_.erase(it);
+            MEDIA_INFO_LOG("RemoveCallbackReference: find %s callback, delete it", eventName.c_str());
+            callbackList.refList.erase(it);
             return;
         }
     }
-    MEDIA_INFO_LOG("RemoveCallbackReference: js callback no find");
+    MEDIA_INFO_LOG("RemoveCallbackReference: %s callback not find", eventName.c_str());
 }
 
-void ListenerBase::ExecuteCallback(const ExecuteCallbackNapiPara& callbackPara) const
+void ListenerBase::ExecuteCallback(const std::string eventName, const ExecuteCallbackNapiPara& callbackPara) const
 {
-    std::lock_guard<std::mutex> lock(baseCbListMutex_);
     MEDIA_DEBUG_LOG("ListenerBase::ExecuteCallback is called");
-    napi_value callback = nullptr;
-    for (auto it = baseCbList_.begin(); it != baseCbList_.end();) {
-        napi_env env = (*it)->env_;
-        napi_get_reference_value(env, (*it)->cb_, &callback);
-        napi_call_function(
-            env_, callbackPara.recv, callback, callbackPara.argc, callbackPara.argv, callbackPara.result);
-        if ((*it)->isOnce_) {
-            napi_status status = napi_delete_reference(env, (*it)->cb_);
-            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
-            (*it)->cb_ = nullptr;
-            baseCbList_.erase(it);
+    auto& callbackList = GetCallbackList(eventName);
+    std::lock_guard<std::mutex> lock(callbackList.listMutex);
+    for (auto it = callbackList.refList.begin(); it != callbackList.refList.end();) {
+        napi_call_function(env_, callbackPara.recv, it->GetCallbackFunction(), callbackPara.argc, callbackPara.argv,
+            callbackPara.result);
+        if (it->isOnce_) {
+            callbackList.refList.erase(it);
         } else {
             it++;
         }
     }
-    MEDIA_DEBUG_LOG("ListenerBase::ExecuteCallback list size [%{public}zu]", baseCbList_.size());
+    MEDIA_DEBUG_LOG("ListenerBase::ExecuteCallback, %s callback list size [%{public}zu]", eventName.c_str(),
+        callbackList.refList.size());
 }
 
-void ListenerBase::RemoveAllCallbacks()
+void ListenerBase::RemoveAllCallbacks(const std::string eventName)
 {
-    std::lock_guard<std::mutex> lock(baseCbListMutex_);
-    for (auto it = baseCbList_.begin(); it != baseCbList_.end(); ++it) {
-        napi_delete_reference(env_, (*it)->cb_);
-        (*it)->cb_ = nullptr;
-    }
-    baseCbList_.clear();
+    auto& callbackList = GetCallbackList(eventName);
+    std::lock_guard<std::mutex> lock(callbackList.listMutex);
+    callbackList.refList.clear();
     MEDIA_INFO_LOG("RemoveAllCallbacks: remove all js callbacks success");
 }
 
-size_t ListenerBase::IsEmpty()
+size_t ListenerBase::IsEmpty(const std::string eventName)
 {
-    std::lock_guard<std::mutex> lock(baseCbListMutex_);
-    return baseCbList_.empty();
+    auto& callbackList = GetCallbackList(eventName);
+    std::lock_guard<std::mutex> lock(callbackList.listMutex);
+    return callbackList.refList.empty();
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -58,16 +58,16 @@ public:
     static napi_value SetSlowMotionDetectionArea(napi_env env, napi_callback_info info);
     static napi_value EnableMotionDetection(napi_env env, napi_callback_info info);
     napi_env env_;
-    napi_ref wrapper_;
     sptr<SlowMotionSession> slowMotionSession_;
     static thread_local napi_ref sConstructor_;
     std::shared_ptr<SlowMotionStateListener> slowMotionStateListener_;
 private:
     static napi_value GetDoubleProperty(napi_env env, napi_value param, const std::string& propertyName,
         double& propertyValue);
-    void RegisterSlowMotionStateCb(napi_env env, napi_value callback,
+    void RegisterSlowMotionStateCb(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce) override;
-    void UnregisterSlowMotionStateCb(napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
+    void UnregisterSlowMotionStateCb(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
 };
 }
 }

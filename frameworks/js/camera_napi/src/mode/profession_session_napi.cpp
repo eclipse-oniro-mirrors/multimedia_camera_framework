@@ -15,6 +15,7 @@
 
 #include <cstddef>
 #include <uv.h>
+#include "camera_napi_const.h"
 #include "js_native_api.h"
 #include "mode/profession_session_napi.h"
 #include "camera_napi_security_utils.h"
@@ -25,22 +26,10 @@ using namespace std;
 
 thread_local napi_ref ProfessionSessionNapi::sConstructor_ = nullptr;
 
-ProfessionSessionNapi::ProfessionSessionNapi() : env_(nullptr), wrapper_(nullptr)
-{
-}
+ProfessionSessionNapi::ProfessionSessionNapi() : env_(nullptr) {}
 ProfessionSessionNapi::~ProfessionSessionNapi()
 {
     MEDIA_DEBUG_LOG("~ProfessionSessionNapi is called");
-    if (wrapper_ != nullptr) {
-        napi_delete_reference(env_, wrapper_);
-    }
-    if (professionSession_) {
-        professionSession_ = nullptr;
-    }
-    exposureInfoCallback_ = nullptr;
-    isoInfoCallback_ = nullptr;
-    apertureInfoCallback_ = nullptr;
-    luminationInfoCallback_ = nullptr;
 }
 
 void ProfessionSessionNapi::ProfessionSessionNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
@@ -1175,87 +1164,87 @@ napi_value ProfessionSessionNapi::SetPhysicalAperture(napi_env env, napi_callbac
 }
 
 void ProfessionSessionNapi::RegisterAbilityChangeCallbackListener(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     if (abilityCallback_ == nullptr) {
         abilityCallback_ = std::make_shared<AbilityCallbackListener>(env);
         professionSession_->SetAbilityCallback(abilityCallback_);
     }
-    abilityCallback_->SaveCallbackReference(callback, isOnce);
+    abilityCallback_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
 void ProfessionSessionNapi::UnregisterAbilityChangeCallbackListener(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
     if (abilityCallback_ == nullptr) {
         MEDIA_ERR_LOG("abilityCallback is null");
     } else {
-        abilityCallback_->RemoveCallbackRef(env, callback);
+        abilityCallback_->RemoveCallbackRef(eventName, callback);
     }
 }
 
 void ProfessionSessionNapi::RegisterExposureInfoCallbackListener(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     if (exposureInfoCallback_ == nullptr) {
         exposureInfoCallback_ = std::make_shared<ExposureInfoCallbackListener>(env);
         professionSession_->SetExposureInfoCallback(exposureInfoCallback_);
     }
-    exposureInfoCallback_->SaveCallbackReference(callback, isOnce);
+    exposureInfoCallback_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
 void ProfessionSessionNapi::UnregisterExposureInfoCallbackListener(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
     if (exposureInfoCallback_ == nullptr) {
         MEDIA_ERR_LOG("abilityCallback is null");
     } else {
-        exposureInfoCallback_->RemoveCallbackRef(env, callback);
+        exposureInfoCallback_->RemoveCallbackRef(eventName, callback);
     }
 }
 
 void ProfessionSessionNapi::RegisterIsoInfoCallbackListener(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     if (isoInfoCallback_ == nullptr) {
         isoInfoCallback_ = std::make_shared<IsoInfoCallbackListener>(env);
         professionSession_->SetIsoInfoCallback(isoInfoCallback_);
     }
-    isoInfoCallback_->SaveCallbackReference(callback, isOnce);
+    isoInfoCallback_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
 void ProfessionSessionNapi::UnregisterIsoInfoCallbackListener(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
     if (isoInfoCallback_ == nullptr) {
         MEDIA_ERR_LOG("abilityCallback is null");
     } else {
-        isoInfoCallback_->RemoveCallbackRef(env, callback);
+        isoInfoCallback_->RemoveCallbackRef(eventName, callback);
     }
 }
 
 void ProfessionSessionNapi::RegisterApertureInfoCallbackListener(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     if (apertureInfoCallback_ == nullptr) {
         apertureInfoCallback_ = std::make_shared<ApertureInfoCallbackListener>(env);
         professionSession_->SetApertureInfoCallback(apertureInfoCallback_);
     }
-    apertureInfoCallback_->SaveCallbackReference(callback, isOnce);
+    apertureInfoCallback_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
 void ProfessionSessionNapi::UnregisterApertureInfoCallbackListener(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
     if (apertureInfoCallback_ == nullptr) {
         MEDIA_ERR_LOG("apertureInfoCallback is null");
     } else {
-        apertureInfoCallback_->RemoveCallbackRef(env, callback);
+        apertureInfoCallback_->RemoveCallbackRef(eventName, callback);
     }
 }
 
 void ProfessionSessionNapi::RegisterLuminationInfoCallbackListener(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     if (luminationInfoCallback_ == nullptr) {
         ExposureHintMode mode = EXPOSURE_HINT_MODE_ON;
@@ -1266,11 +1255,11 @@ void ProfessionSessionNapi::RegisterLuminationInfoCallbackListener(
         luminationInfoCallback_ = std::make_shared<LuminationInfoCallbackListener>(env);
         professionSession_->SetLuminationInfoCallback(luminationInfoCallback_);
     }
-    luminationInfoCallback_->SaveCallbackReference(callback, isOnce);
+    luminationInfoCallback_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
 void ProfessionSessionNapi::UnregisterLuminationInfoCallbackListener(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
     if (luminationInfoCallback_ == nullptr) {
         MEDIA_ERR_LOG("abilityCallback is null");
@@ -1280,7 +1269,7 @@ void ProfessionSessionNapi::UnregisterLuminationInfoCallbackListener(
         professionSession_->SetExposureHintMode(mode);
         professionSession_->UnlockForControl();
         MEDIA_INFO_LOG("ProfessionSessionNapi SetExposureHintMode set exposureHint %{public}d!", mode);
-        luminationInfoCallback_->RemoveCallbackRef(env, callback);
+        luminationInfoCallback_->RemoveCallbackRef(eventName, callback);
     }
 }
 
@@ -1319,27 +1308,17 @@ void ExposureInfoCallbackListener::OnExposureInfoChangedCallbackAsync(ExposureIn
 void ExposureInfoCallbackListener::OnExposureInfoChangedCallback(ExposureInfo info) const
 {
     MEDIA_DEBUG_LOG("OnExposureInfoChangedCallback is called");
-    napi_value result[ARGS_TWO] = {nullptr, nullptr};
-    napi_value callback = nullptr;
+    napi_value result[ARGS_TWO] = { nullptr, nullptr };
     napi_value retVal;
-    for (auto it = baseCbList_.begin(); it != baseCbList_.end();) {
-        napi_env env = (*it)->env_;
-        napi_get_undefined(env, &result[PARAM0]);
-        napi_create_object(env, &result[PARAM1]);
-        napi_value value;
-        napi_create_uint32(env, info.exposureDurationValue, &value);
-        napi_set_named_property(env, result[PARAM1], "exposureTimeValue", value);
-        napi_get_reference_value(env, (*it)->cb_, &callback);
-        napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
-        if ((*it)->isOnce_) {
-            napi_status status = napi_delete_reference(env, (*it)->cb_);
-            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
-            (*it)->cb_ = nullptr;
-            baseCbList_.erase(it);
-        } else {
-            it++;
-        }
-    }
+
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_create_object(env_, &result[PARAM1]);
+    napi_value value;
+    napi_create_uint32(env_, info.exposureDurationValue, &value);
+    napi_set_named_property(env_, result[PARAM1], "exposureTimeValue", value);
+
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback("exposureInfo", callbackNapiPara);
 }
 
 void ExposureInfoCallbackListener::OnExposureInfoChanged(ExposureInfo info)
@@ -1383,27 +1362,16 @@ void IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync(IsoInfo info) const
 void IsoInfoCallbackListener::OnIsoInfoChangedCallback(IsoInfo info) const
 {
     MEDIA_DEBUG_LOG("OnIsoInfoChangedCallback is called");
-    napi_value result[ARGS_TWO] = {nullptr, nullptr};
-    napi_value callback = nullptr;
+    napi_value result[ARGS_TWO] = { nullptr, nullptr };
     napi_value retVal;
-    for (auto it = baseCbList_.begin(); it != baseCbList_.end();) {
-        napi_env env = (*it)->env_;
-        napi_get_undefined(env, &result[PARAM0]);
-        napi_create_object(env, &result[PARAM1]);
-        napi_value value;
-        napi_create_int32(env, CameraNapiUtils::FloatToDouble(info.isoValue), &value);
-        napi_set_named_property(env, result[PARAM1], "iso", value);
-        napi_get_reference_value(env, (*it)->cb_, &callback);
-        napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
-        if ((*it)->isOnce_) {
-            napi_status status = napi_delete_reference(env, (*it)->cb_);
-            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
-            (*it)->cb_ = nullptr;
-            baseCbList_.erase(it);
-        } else {
-            it++;
-        }
-    }
+
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_create_object(env_, &result[PARAM1]);
+    napi_value value;
+    napi_create_int32(env_, CameraNapiUtils::FloatToDouble(info.isoValue), &value);
+    napi_set_named_property(env_, result[PARAM1], "iso", value);
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback("isoInfo", callbackNapiPara);
 }
 
 void IsoInfoCallbackListener::OnIsoInfoChanged(IsoInfo info)
@@ -1447,27 +1415,16 @@ void ApertureInfoCallbackListener::OnApertureInfoChangedCallbackAsync(ApertureIn
 void ApertureInfoCallbackListener::OnApertureInfoChangedCallback(ApertureInfo info) const
 {
     MEDIA_DEBUG_LOG("OnApertureInfoChangedCallback is called");
-    napi_value result[ARGS_TWO] = {nullptr, nullptr};
-    napi_value callback = nullptr;
+    napi_value result[ARGS_TWO] = { nullptr, nullptr };
     napi_value retVal;
-    for (auto it = baseCbList_.begin(); it != baseCbList_.end();) {
-        napi_env env = (*it)->env_;
-        napi_get_undefined(env, &result[PARAM0]);
-        napi_create_object(env, &result[PARAM1]);
-        napi_value value;
-        napi_create_double(env, info.apertureValue, &value);
-        napi_set_named_property(env, result[PARAM1], "aperture", value);
-        napi_get_reference_value(env, (*it)->cb_, &callback);
-        napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
-        if ((*it)->isOnce_) {
-            napi_status status = napi_delete_reference(env, (*it)->cb_);
-            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
-            (*it)->cb_ = nullptr;
-            baseCbList_.erase(it);
-        } else {
-            it++;
-        }
-    }
+
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_create_object(env_, &result[PARAM1]);
+    napi_value value;
+    napi_create_double(env_, info.apertureValue, &value);
+    napi_set_named_property(env_, result[PARAM1], "aperture", value);
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback("apertureInfo", callbackNapiPara);
 }
 
 void ApertureInfoCallbackListener::OnApertureInfoChanged(ApertureInfo info)
@@ -1513,26 +1470,16 @@ void LuminationInfoCallbackListener::OnLuminationInfoChangedCallback(LuminationI
 {
     MEDIA_DEBUG_LOG("OnLuminationInfoChangedCallback is called");
     napi_value result[ARGS_TWO] = {nullptr, nullptr};
-    napi_value callback = nullptr;
     napi_value retVal;
-    for (auto it = baseCbList_.begin(); it != baseCbList_.end();) {
-        napi_env env = (*it)->env_;
-        napi_get_undefined(env, &result[PARAM0]);
-        napi_create_object(env, &result[PARAM1]);
-        napi_value isoValue;
-        napi_create_double(env, info.luminationValue, &isoValue);
-        napi_set_named_property(env, result[PARAM1], "lumination", isoValue);
-        napi_get_reference_value(env, (*it)->cb_, &callback);
-        napi_call_function(env_, nullptr, callback, ARGS_TWO, result, &retVal);
-        if ((*it)->isOnce_) {
-            napi_status status = napi_delete_reference(env, (*it)->cb_);
-            CHECK_AND_RETURN_LOG(status == napi_ok, "Remove once cb ref: delete reference for callback fail");
-            (*it)->cb_ = nullptr;
-            baseCbList_.erase(it);
-        } else {
-            it++;
-        }
-    }
+
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_create_object(env_, &result[PARAM1]);
+    napi_value isoValue;
+    napi_create_double(env_, info.luminationValue, &isoValue);
+    napi_set_named_property(env_, result[PARAM1], "lumination", isoValue);
+
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback("luminationInfo", callbackNapiPara);
 }
 
 void LuminationInfoCallbackListener::OnLuminationInfoChanged(LuminationInfo info)

@@ -35,7 +35,6 @@ public:
     static napi_value HighResPhotoSessionNapiConstructor(napi_env env, napi_callback_info info);
  
     napi_env env_;
-    napi_ref wrapper_;
     sptr<HighResPhotoSession> highResPhotoSession_;
     static thread_local napi_ref sConstructor_;
 };

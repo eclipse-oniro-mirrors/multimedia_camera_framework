@@ -27,22 +27,11 @@ thread_local napi_value PhotoNapi::sMainImage_ = nullptr;
 thread_local napi_value PhotoNapi::sRawImage_ = nullptr;
 thread_local uint32_t PhotoNapi::photoTaskId = PHOTO_TASKID;
 
-PhotoNapi::PhotoNapi() : env_(nullptr), wrapper_(nullptr), mainImage_(nullptr), rawImage_(nullptr)
-{
-}
+PhotoNapi::PhotoNapi() : env_(nullptr), mainImage_(nullptr), rawImage_(nullptr) {}
 
 PhotoNapi::~PhotoNapi()
 {
     MEDIA_DEBUG_LOG("~PhotoNapi is called");
-    if (wrapper_ != nullptr) {
-        napi_delete_reference(env_, wrapper_);
-    }
-    if (mainImage_) {
-        mainImage_ = nullptr;
-    }
-    if (rawImage_) {
-        rawImage_ = nullptr;
-    }
 }
 
 // Constructor callback

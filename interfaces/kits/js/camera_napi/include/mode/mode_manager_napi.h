@@ -61,7 +61,6 @@ private:
     static thread_local napi_ref sConstructor_;
 
     napi_env env_;
-    napi_ref wrapper_;
     sptr<CameraManager> modeManager_;
 
     static thread_local uint32_t modeManagerTaskId;

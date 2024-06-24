@@ -116,7 +116,7 @@ void MetadataOutputCallback::OnMetadataObjectsAvailableCallback(
     }
 
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback(callbackNapiPara);
+    ExecuteCallback("metadataObjectsAvailable", callbackNapiPara);
 }
 
 MetadataStateCallbackNapi::MetadataStateCallbackNapi(napi_env env) : ListenerBase(env) {}
@@ -168,7 +168,7 @@ void MetadataStateCallbackNapi::OnErrorCallback(const int32_t errorType) const
     napi_create_object(env_, &result);
     napi_set_named_property(env_, result, "code", propValue);
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_ONE, .argv = &result, .result = &retVal };
-    ExecuteCallback(callbackNapiPara);
+    ExecuteCallback("error", callbackNapiPara);
 }
 
 void MetadataStateCallbackNapi::OnError(const int32_t errorType) const
@@ -177,16 +177,11 @@ void MetadataStateCallbackNapi::OnError(const int32_t errorType) const
     OnErrorCallbackAsync(errorType);
 }
 
-MetadataOutputNapi::MetadataOutputNapi() : env_(nullptr), wrapper_(nullptr)
-{
-}
+MetadataOutputNapi::MetadataOutputNapi() : env_(nullptr) {}
 
 MetadataOutputNapi::~MetadataOutputNapi()
 {
     MEDIA_DEBUG_LOG("~MetadataOutputNapi is called");
-    if (wrapper_ != nullptr) {
-        napi_delete_reference(env_, wrapper_);
-    }
 }
 
 void MetadataOutputNapi::MetadataOutputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
@@ -719,42 +714,42 @@ napi_value MetadataOutputNapi::Release(napi_env env, napi_callback_info info)
 }
 
 void MetadataOutputNapi::RegisterMetadataObjectsAvailableCallbackListener(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     if (metadataOutputCallback_ == nullptr) {
         metadataOutputCallback_ = make_shared<MetadataOutputCallback>(env);
         metadataOutput_->SetCallback(metadataOutputCallback_);
     }
-    metadataOutputCallback_->SaveCallbackReference(callback, isOnce);
+    metadataOutputCallback_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
 void MetadataOutputNapi::UnregisterMetadataObjectsAvailableCallbackListener(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
     if (metadataOutputCallback_ == nullptr) {
         MEDIA_ERR_LOG("metadataOutputCallback is null");
     } else {
-        metadataOutputCallback_->RemoveCallbackRef(env, callback);
+        metadataOutputCallback_->RemoveCallbackRef(eventName, callback);
     }
 }
 
 void MetadataOutputNapi::RegisterErrorCallbackListener(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     if (metadataStateCallback_ == nullptr) {
         metadataStateCallback_ = make_shared<MetadataStateCallbackNapi>(env);
         metadataOutput_->SetCallback(metadataStateCallback_);
     }
-    metadataStateCallback_->SaveCallbackReference(callback, isOnce);
+    metadataStateCallback_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
 void MetadataOutputNapi::UnregisterErrorCallbackListener(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
     if (metadataStateCallback_ == nullptr) {
         MEDIA_ERR_LOG("metadataStateCallback is null");
     } else {
-        metadataStateCallback_->RemoveCallbackRef(env, callback);
+        metadataStateCallback_->RemoveCallbackRef(eventName, callback);
     }
 }
 

@@ -31,7 +31,7 @@
 #include "camera_output_capability.h"
 #include "capture_scene_const.h"
 #include "input/camera_napi.h"
-#include "input/camera_pre_launch_config_napi.h"
+#include "input/prelaunch_config.h"
 #include "js_native_api_types.h"
 #include "mode/high_res_photo_session_napi.h"
 #include "mode/macro_photo_session_napi.h"
@@ -159,7 +159,7 @@ void CameraManagerCallbackNapi::OnCameraStatusCallback(const CameraStatusInfo& c
         cameraStatusInfo.cameraStatus);
 
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback(callbackNapiPara);
+    ExecuteCallback("cameraStatus", callbackNapiPara);
 }
 
 void CameraManagerCallbackNapi::OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const
@@ -227,7 +227,7 @@ void CameraMuteListenerNapi::OnCameraMuteCallback(bool muteMode) const
     napi_get_boolean(env_, muteMode, &result[PARAM1]);
 
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback(callbackNapiPara);
+    ExecuteCallback("cameraMute", callbackNapiPara);
 }
 
 void CameraMuteListenerNapi::OnCameraMute(bool muteMode) const
@@ -304,7 +304,7 @@ void TorchListenerNapi::OnTorchStatusChangeCallback(const TorchStatusInfo& torch
     napi_set_named_property(env_, result[PARAM1], "torchLevel", propValue);
 
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback(callbackNapiPara);
+    ExecuteCallback("torchStatusChange", callbackNapiPara);
     napi_close_handle_scope(env_, scope);
 }
 
@@ -332,7 +332,7 @@ static std::unordered_map<JsPolicyType, PolicyType> g_jsToFwPolicyType_ = {
     {JsPolicyType::JS_PRIVACY, PolicyType::PRIVACY},
 };
 
-CameraManagerNapi::CameraManagerNapi() : env_(nullptr), wrapper_(nullptr)
+CameraManagerNapi::CameraManagerNapi() : env_(nullptr)
 {
     CAMERA_SYNC_TRACE;
 }
@@ -340,9 +340,6 @@ CameraManagerNapi::CameraManagerNapi() : env_(nullptr), wrapper_(nullptr)
 CameraManagerNapi::~CameraManagerNapi()
 {
     MEDIA_DEBUG_LOG("~CameraManagerNapi is called");
-    if (wrapper_ != nullptr) {
-        napi_delete_reference(env_, wrapper_);
-    }
 }
 
 // Constructor callback
@@ -1167,7 +1164,7 @@ void CameraManagerNapi::ProcessCameraInfo(sptr<CameraManager>& cameraManager, co
 }
 
 void CameraManagerNapi::RegisterCameraStatusCallbackListener(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     if (cameraManagerCallback_ == nullptr) {
         shared_ptr<CameraManagerCallbackNapi> cameraManagerCallback =
@@ -1178,21 +1175,21 @@ void CameraManagerNapi::RegisterCameraStatusCallbackListener(
         }
         cameraManagerCallback_ = cameraManagerCallback;
     }
-    cameraManagerCallback_->SaveCallbackReference(callback, isOnce);
+    cameraManagerCallback_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
 void CameraManagerNapi::UnregisterCameraStatusCallbackListener(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
     if (cameraManagerCallback_ == nullptr) {
         MEDIA_ERR_LOG("cameraManagerCallback is null");
     } else {
-        cameraManagerCallback_->RemoveCallbackRef(env, callback);
+        cameraManagerCallback_->RemoveCallbackRef(eventName, callback);
     }
 }
 
 void CameraManagerNapi::RegisterCameraMuteCallbackListener(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi On cameraMute is called!");
@@ -1207,11 +1204,11 @@ void CameraManagerNapi::RegisterCameraMuteCallbackListener(
         }
         cameraMuteListener_ = cameraMuteListener;
     }
-    cameraMuteListener_->SaveCallbackReference(callback, isOnce);
+    cameraMuteListener_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
 void CameraManagerNapi::UnregisterCameraMuteCallbackListener(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi On cameraMute is called!");
@@ -1220,12 +1217,12 @@ void CameraManagerNapi::UnregisterCameraMuteCallbackListener(
     if (cameraMuteListener_ == nullptr) {
         MEDIA_ERR_LOG("cameraMuteListener is null");
     } else {
-        cameraMuteListener_->RemoveCallbackRef(env, callback);
+        cameraMuteListener_->RemoveCallbackRef(eventName, callback);
     }
 }
 
 void CameraManagerNapi::RegisterTorchStatusCallbackListener(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     if (torchListener_ == nullptr) {
         shared_ptr<TorchListenerNapi> torchListener =
@@ -1236,16 +1233,16 @@ void CameraManagerNapi::RegisterTorchStatusCallbackListener(
         }
         torchListener_ = torchListener;
     }
-    torchListener_->SaveCallbackReference(callback, isOnce);
+    torchListener_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
 void CameraManagerNapi::UnregisterTorchStatusCallbackListener(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
     if (torchListener_ == nullptr) {
         MEDIA_ERR_LOG("torchListener_ is null");
     } else {
-        torchListener_->RemoveCallbackRef(env, callback);
+        torchListener_->RemoveCallbackRef(eventName, callback);
     }
 }
 

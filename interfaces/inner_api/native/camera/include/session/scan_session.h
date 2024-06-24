@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_SCAN_SESSION_H
 #define OHOS_CAMERA_SCAN_SESSION_H
  
+#include <mutex>
 #include "capture_session.h"
 #include "icapture_session.h"
  
@@ -67,7 +68,18 @@ private:
 
     void ProcessBrightnessStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
 
-private:
+    inline void SetBrightnessStatusCallback(std::shared_ptr<BrightnessStatusCallback> callback)
+    {
+        std::lock_guard<std::mutex> lock(brightnessStatusCallbackMutex_);
+        brightnessStatusCallback_ = callback;
+    }
+    inline std::shared_ptr<BrightnessStatusCallback> GetBrightnessStatusCallback()
+    {
+        std::lock_guard<std::mutex> lock(brightnessStatusCallbackMutex_);
+        return brightnessStatusCallback_;
+    }
+
+    std::mutex brightnessStatusCallbackMutex_;
     std::shared_ptr<BrightnessStatusCallback> brightnessStatusCallback_;
     bool lastBrightnessStatus_ = false;
     bool firstBrightnessStatusCome_ = false;

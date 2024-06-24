@@ -65,7 +65,7 @@ void SlowMotionStateListener::OnSlowMotionStateCb(const SlowMotionState state) c
     napi_get_undefined(env_, &result[PARAM0]);
     napi_create_int32(env_, state, &result[PARAM1]);
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback(callbackNapiPara);
+    ExecuteCallback("slowMotionStateChange", callbackNapiPara);
 }
 
 void SlowMotionStateListener::OnSlowMotionState(SlowMotionState state)
@@ -73,19 +73,13 @@ void SlowMotionStateListener::OnSlowMotionState(SlowMotionState state)
     OnSlowMotionStateCbAsync(state);
 }
 
-SlowMotionSessionNapi::SlowMotionSessionNapi() : env_(nullptr), wrapper_(nullptr)
+SlowMotionSessionNapi::SlowMotionSessionNapi() : env_(nullptr)
 {
 }
 
 SlowMotionSessionNapi::~SlowMotionSessionNapi()
 {
     MEDIA_DEBUG_LOG("~SlowMotionSessionNapi is called");
-    if (wrapper_ != nullptr) {
-        napi_delete_reference(env_, wrapper_);
-    }
-    if (slowMotionSession_) {
-        slowMotionSession_ = nullptr;
-    }
 }
 
 void SlowMotionSessionNapi::SlowMotionSessionNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
@@ -276,7 +270,7 @@ napi_value SlowMotionSessionNapi::SetSlowMotionDetectionArea(napi_env env, napi_
 }
 
 void SlowMotionSessionNapi::RegisterSlowMotionStateCb(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
     MEDIA_INFO_LOG("RegisterSlowMotionStateCb is called");
     if (slowMotionStateListener_ == nullptr) {
@@ -288,18 +282,18 @@ void SlowMotionSessionNapi::RegisterSlowMotionStateCb(
         }
         slowMotionStateListener_ = slowMotionStateListenerTemp;
     }
-    slowMotionStateListener_->SaveCallbackReference(callback, isOnce);
+    slowMotionStateListener_->SaveCallbackReference(eventName, callback, isOnce);
     MEDIA_INFO_LOG("RegisterSlowMotionStateCb success");
 }
 
 void SlowMotionSessionNapi::UnregisterSlowMotionStateCb(
-    napi_env env, napi_value callback, const std::vector<napi_value>& args)
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
     MEDIA_INFO_LOG("UnregisterSlowMotionStateCb is called");
     if (slowMotionStateListener_ == nullptr) {
         MEDIA_ERR_LOG("slowMotionStateListener_ is null");
     } else {
-        slowMotionStateListener_->RemoveCallbackRef(env, callback);
+        slowMotionStateListener_->RemoveCallbackRef(eventName, callback);
     }
 }
 

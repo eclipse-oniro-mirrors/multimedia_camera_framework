@@ -16,8 +16,12 @@
 #ifndef LISTENER_BASE_H_
 #define LISTENER_BASE_H_
 
+#include <list>
+#include <memory>
 #include <mutex>
+#include <unordered_map>
 
+#include "camera_napi_auto_ref.h"
 #include "camera_napi_utils.h"
 namespace OHOS {
 namespace CameraStandard {
@@ -32,19 +36,35 @@ public:
         const napi_value* argv;
         napi_value* result;
     };
-
-    void SaveCallbackReference(napi_value callback, bool isOnce);
-    void ExecuteCallback(const ExecuteCallbackNapiPara& callbackPara) const;
-    void RemoveCallbackRef(napi_env env, napi_value callback);
-    void RemoveAllCallbacks();
-    size_t IsEmpty();
+    virtual void SaveCallbackReference(const std::string eventName, napi_value callback, bool isOnce) final;
+    virtual void ExecuteCallback(const std::string eventName, const ExecuteCallbackNapiPara& callbackPara) const final;
+    virtual void RemoveCallbackRef(const std::string eventName, napi_value callback) final;
+    virtual void RemoveAllCallbacks(const std::string eventName) final;
+    virtual size_t IsEmpty(const std::string eventName) final;
 
 protected:
     napi_env env_ = nullptr;
 
-protected:
-    mutable std::mutex baseCbListMutex_;
-    mutable std::vector<std::shared_ptr<AutoRef>> baseCbList_;
+private:
+    struct CallbackList {
+        std::mutex listMutex;
+        std::list<AutoRef> refList;
+    };
+
+    inline CallbackList& GetCallbackList(const std::string eventName) const
+    {
+        std::lock_guard<std::mutex> lock(namedCallbackMapMutex_);
+        auto it = namedCallbackMap_.find(eventName);
+        if (it == namedCallbackMap_.end()) {
+            auto callbackList = std::make_shared<CallbackList>();
+            namedCallbackMap_.emplace(eventName, callbackList);
+            return *callbackList;
+        }
+        return *it->second;
+    }
+
+    mutable std::mutex namedCallbackMapMutex_;
+    mutable std::unordered_map<std::string, std::shared_ptr<CallbackList>> namedCallbackMap_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
