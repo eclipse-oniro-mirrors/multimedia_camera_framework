@@ -41,6 +41,7 @@
 #include "mode/photo_session_napi.h"
 #include "mode/portrait_session_napi.h"
 #include "mode/profession_session_napi.h"
+#include "mode/quick_shot_photo_session_napi.h"
 #include "mode/secure_camera_session_napi.h"
 #include "mode/slow_motion_session_napi.h"
 #include "mode/video_session_for_sys_napi.h"
@@ -66,6 +67,7 @@ const std::unordered_map<SceneMode, JsSceneMode> g_nativeToNapiSupportedModeForS
     {SceneMode::PROFESSIONAL_VIDEO,  JsSceneMode::JS_PROFESSIONAL_VIDEO},
     {SceneMode::HIGH_RES_PHOTO, JsSceneMode::JS_HIGH_RES_PHOTO},
     {SceneMode::SECURE, JsSceneMode::JS_SECURE_CAMERA},
+    {SceneMode::QUICK_SHOT_PHOTO, JsSceneMode::JS_QUICK_SHOT_PHOTO},
 };
 
 const std::unordered_map<SceneMode, JsSceneMode> g_nativeToNapiSupportedMode_ = {
@@ -326,6 +328,7 @@ const std::unordered_map<JsSceneMode, SceneMode> g_jsToFwMode_ = {
     {JsSceneMode::JS_PROFESSIONAL_VIDEO, SceneMode::PROFESSIONAL_VIDEO},
     {JsSceneMode::JS_HIGH_RES_PHOTO, SceneMode::HIGH_RES_PHOTO},
     {JsSceneMode::JS_SECURE_CAMERA, SceneMode::SECURE},
+    {JsSceneMode::JS_QUICK_SHOT_PHOTO, SceneMode::QUICK_SHOT_PHOTO},
 };
 
 static std::unordered_map<JsPolicyType, PolicyType> g_jsToFwPolicyType_ = {
@@ -576,6 +579,8 @@ napi_value CameraManagerNapi::CreateSessionInstance(napi_env env, napi_callback_
             HighResPhotoSessionNapi::CreateCameraSession(env) : nullptr; }},
         {JsSceneMode::JS_SECURE_CAMERA, [] (napi_env env) {
             return SecureCameraSessionNapi::CreateCameraSession(env); }},
+        {JsSceneMode::JS_QUICK_SHOT_PHOTO, [] (napi_env env) { return CheckSystemApp(env, true) ?
+            QuickShotPhotoSessionNapi::CreateCameraSession(env):nullptr; }},
     };
 
     napi_value result = nullptr;

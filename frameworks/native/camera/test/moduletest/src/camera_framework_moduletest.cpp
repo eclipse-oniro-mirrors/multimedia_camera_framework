@@ -15,6 +15,7 @@
 
 #include "camera_framework_moduletest.h"
 
+#include <algorithm>
 #include <cinttypes>
 #include <memory>
 #include <vector>
@@ -40,6 +41,7 @@
 #include "nativetoken_kit.h"
 #include "night_session.h"
 #include "parameter.h"
+#include "quick_shot_photo_session.h"
 #include "scan_session.h"
 #include "session/profession_session.h"
 #include "session/secure_camera_session.h"
@@ -10487,6 +10489,49 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_077, TestSize.Le
 
         session_->UnlockForControl();
     }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test quick shot photo session create.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test quick shot session photo create.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_078, TestSize.Level0)
+{
+    auto modes = manager_->GetSupportedModes(cameras_[0]);
+    auto it = std::find_if(modes.begin(), modes.end(), [](auto& mode) { return mode == SceneMode::QUICK_SHOT_PHOTO; });
+    if (it == modes.end()) {
+        ASSERT_TRUE(true);
+        return;
+    }
+
+    sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(SceneMode::QUICK_SHOT_PHOTO);
+    auto quickShotPhotoSession = static_cast<QuickShotPhotoSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(quickShotPhotoSession, nullptr);
+    int32_t intResult = quickShotPhotoSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+    intResult = quickShotPhotoSession->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = quickShotPhotoSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = quickShotPhotoSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = quickShotPhotoSession->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = quickShotPhotoSession->Stop();
+    EXPECT_EQ(intResult, 0);
 }
 } // namespace CameraStandard
 } // namespace OHOS

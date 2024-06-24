@@ -35,6 +35,7 @@
 #include "iservice_registry.h"
 #include "istream_capture.h"
 #include "istream_common.h"
+#include "quick_shot_photo_session.h"
 #include "session/capture_session.h"
 #include "session/high_res_photo_session.h"
 #include "session/macro_photo_session.h"
@@ -95,7 +96,8 @@ const std::unordered_map<OperationMode, SceneMode> g_metaToFwSupportedMode_ = {
     {OperationMode::VIDEO_MACRO, VIDEO_MACRO},
     {OperationMode::HIGH_FRAME_RATE, HIGH_FRAME_RATE},
     {OperationMode::HIGH_RESOLUTION_PHOTO, HIGH_RES_PHOTO},
-    {OperationMode::SECURE, SECURE}
+    {OperationMode::SECURE, SECURE},
+    {OperationMode::QUICK_SHOT_PHOTO, QUICK_SHOT_PHOTO}
 };
 
 const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
@@ -112,7 +114,8 @@ const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
     {VIDEO_MACRO, OperationMode::VIDEO_MACRO},
     {HIGH_FRAME_RATE, OperationMode::HIGH_FRAME_RATE},
     {HIGH_RES_PHOTO, OperationMode::HIGH_RESOLUTION_PHOTO},
-    {SECURE, OperationMode::SECURE}
+    {SECURE, OperationMode::SECURE},
+    {QUICK_SHOT_PHOTO, OperationMode::QUICK_SHOT_PHOTO}
 };
 
 const std::set<int32_t> isTemplateMode_ = {
@@ -272,6 +275,8 @@ sptr<CaptureSession> CameraManager::CreateCaptureSessionImpl(SceneMode mode, spt
             return new (std::nothrow) HighResPhotoSession(session);
         case SceneMode::SECURE:
             return new(std::nothrow) SecureCameraSession(session);
+        case SceneMode::QUICK_SHOT_PHOTO:
+            return new(std::nothrow) QuickShotPhotoSession(session);
         default:
             return new (std::nothrow) CaptureSession(session);
     }

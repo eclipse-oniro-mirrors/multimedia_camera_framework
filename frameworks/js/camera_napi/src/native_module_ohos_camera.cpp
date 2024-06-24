@@ -29,6 +29,7 @@
 #include "mode/photo_session_napi.h"
 #include "mode/portrait_session_napi.h"
 #include "mode/profession_session_napi.h"
+#include "mode/quick_shot_photo_session_napi.h"
 #include "mode/secure_camera_session_napi.h"
 #include "mode/slow_motion_session_napi.h"
 #include "mode/video_session_for_sys_napi.h"
@@ -73,6 +74,7 @@ static napi_value Export(napi_env env, napi_value exports)
     PhotoNapi::Init(env, exports);
     DeferredPhotoProxyNapi::Init(env, exports);
     SecureCameraSessionNapi::Init(env, exports);
+    QuickShotPhotoSessionNapi::Init(env, exports);
     return exports;
 }
 
