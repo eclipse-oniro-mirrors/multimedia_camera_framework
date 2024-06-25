@@ -1,2 +1,3 @@
 src:*third_party/googletest/*
 src:*foundation/multimedia/frameworks/native/camera/test/unittest/src/v1_1/*
+src:*foundation/multimedia/frameworks/native/camera/test/moduletest/src/*
