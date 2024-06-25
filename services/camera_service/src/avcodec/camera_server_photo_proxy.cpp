@@ -49,8 +49,10 @@ CameraServerPhotoProxy::~CameraServerPhotoProxy()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("~CameraServerPhotoProxy");
-    if (isMmaped_) {
+    if (isMmaped_ && !bufferHandle_) {
         munmap(fileDataAddr_, bufferHandle_->size);
+    } else {
+        MEDIA_ERR_LOG("~CameraServerPhotoProxy munmap failed");
     }
     CameraFreeBufferHandle(const_cast<BufferHandle*>(bufferHandle_));
     fileDataAddr_ = nullptr;
@@ -123,9 +125,11 @@ void* CameraServerPhotoProxy::GetFileDataAddr()
     MEDIA_INFO_LOG("PhotoProxy::GetFileDataAddr");
     std::lock_guard<std::mutex> lock(mutex_);
 
-    if (!isMmaped_) {
+    if (!isMmaped_ && !bufferHandle_) {
         MEDIA_INFO_LOG("PhotoProxy::GetFileDataAddr mmap");
         fileDataAddr_ = mmap(nullptr, bufferHandle_->size, PROT_READ | PROT_WRITE, MAP_SHARED, bufferHandle_->fd, 0);
+    } else {
+        MEDIA_ERR_LOG("PhotoProxy::GetFileDataAddr mmap failed");
     }
     return fileDataAddr_;
 }
