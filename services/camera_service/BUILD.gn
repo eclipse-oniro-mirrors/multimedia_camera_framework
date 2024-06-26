@@ -129,6 +129,7 @@ ohos_shared_library("camera_service") {
     "access_token:libaccesstoken_sdk",
     "access_token:libprivacy_sdk",
     "access_token:libtokenid_sdk",
+    "access_token:libtokensetproc_shared",
     "audio_framework:audio_capturer",
     "audio_framework:audio_client",
     "av_codec:av_codec_client",

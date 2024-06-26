@@ -20,8 +20,10 @@
 #include <thread>
 #include "audio_record.h"
 #include "camera_log.h"
-#include "sample_info.h"
 #include "datetime_ex.h"
+#include "ipc_skeleton.h"
+#include "sample_info.h"
+#include "token_setproc.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -33,6 +35,8 @@ AudioCapturerSession::AudioCapturerSession()
 
 bool AudioCapturerSession::CreateAudioCapturer()
 {
+    auto callingTokenID = IPCSkeleton::GetCallingTokenID();
+    SetFirstCallerTokenID(callingTokenID);
     AudioCapturerOptions capturerOptions;
     capturerOptions.streamInfo.samplingRate = static_cast<AudioSamplingRate>(AudioSamplingRate::SAMPLE_RATE_48000);
     capturerOptions.streamInfo.encoding = AudioEncodingType::ENCODING_PCM;
