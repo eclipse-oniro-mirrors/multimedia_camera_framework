@@ -118,6 +118,12 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_DESTROY_STUB_OBJ):
             errCode = HCameraServiceStub::DestroyStubObj();
             break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_PROXY_FOR_FREEZE):
+            errCode = HCameraServiceStub::HandleProxyForFreeze(data, reply);
+            break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_RESET_ALL_FREEZE_STATUS):
+            errCode = HCameraServiceStub::HandleResetAllFreezeStatus(data, reply);
+            break;
         case static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_ALLOW_OPEN_BY_OHSIDE):
             errCode = HCameraServiceStub::HandleAllowOpenByOHSide(data, reply);
             break;
@@ -585,6 +591,25 @@ int HCameraServiceStub::HandleSetPeerCallback(MessageParcel& data)
         MEDIA_ERR_LOG("HandleSetPeerCallback get null callback");
     }
     return SetPeerCallback(callback);
+}
+
+int HCameraServiceStub::HandleProxyForFreeze(MessageParcel& data, MessageParcel& reply)
+{
+    std::set<int32_t> pidList;
+    int32_t size = data.ReadInt32();
+    for (int32_t i = 0; i < size; i++) {
+        pidList.insert(data.ReadInt32());
+    }
+    bool isProxy = data.ReadBool();
+    MEDIA_INFO_LOG("isProxy value: %{public}d", isProxy);
+    int errCode = ProxyForFreeze(pidList, isProxy);
+    reply.WriteInt32(static_cast<int32_t>(errCode));
+    return errCode;
+}
+int HCameraServiceStub::HandleResetAllFreezeStatus(MessageParcel& data, MessageParcel& reply)
+{
+    int errCode = ResetAllFreezeStatus();
+    return errCode;
 }
 } // namespace CameraStandard
 } // namespace OHOS

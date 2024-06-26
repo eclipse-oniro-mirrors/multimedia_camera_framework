@@ -99,6 +99,10 @@ public:
     int32_t SetPeerCallback(sptr<ICameraBroker>& callback) override;
 
     int32_t DestroyStubObj() override;
+
+    int32_t ProxyForFreeze(const std::set<int32_t>& pidList, bool isProxy) override;
+
+    int32_t ResetAllFreezeStatus() override;
 private:
     static inline BrokerDelegator<HCameraServiceProxy> delegator_;
 };

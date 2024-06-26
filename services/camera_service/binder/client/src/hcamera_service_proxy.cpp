@@ -673,5 +673,43 @@ int32_t HCameraServiceProxy::DestroyStubObj()
 
     return error;
 }
+
+int32_t HCameraServiceProxy::ProxyForFreeze(const std::set<int32_t>& pidList, bool isProxy)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(pidList.size());
+    for (auto it = pidList.begin(); it != pidList.end(); it++) {
+        data.WriteInt32(*it);
+    }
+    MEDIA_INFO_LOG("isProxy value: %{public}d", isProxy);
+    data.WriteBool(isProxy);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_PROXY_FOR_FREEZE), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy ProxyForFreeze failed, error: %{public}d", error);
+    }
+
+    return error;
+}
+int32_t HCameraServiceProxy::ResetAllFreezeStatus()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_RESET_ALL_FREEZE_STATUS),
+        data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy::ResetAllFreezeStatus failed, error: %{public}d", error);
+        return error;
+    }
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS

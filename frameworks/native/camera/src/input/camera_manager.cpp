@@ -846,30 +846,37 @@ int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surfa
 void CameraManager::InitCameraManager()
 {
     CAMERA_SYNC_TRACE;
+    int32_t ret = SubscribeSystemAbility();
+    CHECK_AND_RETURN_LOG(ret == CameraErrorCode::SUCCESS, "failed to SubscribeSystemAbilityd");
+    ret = RefreshServiceProxy();
+    CHECK_AND_RETURN_LOG(ret == CameraErrorCode::SUCCESS, "RefreshServiceProxy fail , ret = %{public}d", ret);
+    ret = AddServiceProxyDeathRecipient();
+    CHECK_AND_RETURN_LOG(ret == CameraErrorCode::SUCCESS, "AddServiceProxyDeathRecipient fail , ret = %{public}d", ret);
+    ret = CreateListenerObject();
+    CHECK_AND_RETURN_LOG(ret == CAMERA_OK, "failed to new CameraListenerStub, ret = %{public}d", ret);
+    InitCameraList();
+}
+
+int32_t CameraManager::RefreshServiceProxy()
+{
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (samgr == nullptr) {
         MEDIA_ERR_LOG("Failed to get System ability manager");
-        return;
+        return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
     if (object == nullptr) {
         MEDIA_ERR_LOG("CameraManager::Init GetSystemAbility %{public}d is null", CAMERA_SERVICE_ID);
-        return;
+        return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     auto serviceProxy = iface_cast<ICameraService>(object);
     if (serviceProxy == nullptr) {
         MEDIA_ERR_LOG("serviceProxy is null.");
-        return;
+        return CameraErrorCode::SERVICE_FATL_ERROR;
     }
     SetServiceProxy(serviceProxy);
-    int32_t ret = AddServiceProxyDeathRecipient();
-    CHECK_AND_RETURN_LOG(ret == CameraErrorCode::SUCCESS, "AddServiceProxyDeathRecipient fail , ret = %{public}d", ret);
-    ret = CreateListenerObject();
-    CHECK_AND_RETURN_LOG(ret == CAMERA_OK, "failed to new CameraListenerStub, ret = %{public}d", ret);
-    ret = SubscribeSystemAbility();
-    CHECK_AND_RETURN_LOG(ret == CameraErrorCode::SUCCESS, "failed to SubscribeSystemAbilityd");
-    InitCameraList();
+    return CameraErrorCode::SUCCESS;
 }
 
 int32_t CameraManager::SubscribeSystemAbility()
@@ -908,23 +915,8 @@ int32_t CameraManager::UnSubscribeSystemAbility()
 
 void CameraManager::OnCameraServerAlive()
 {
-    sptr<IRemoteObject> object = nullptr;
-    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    if (samgr == nullptr) {
-        MEDIA_ERR_LOG("Failed to get System ability manager");
-        return;
-    }
-    object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    if (object == nullptr) {
-        MEDIA_ERR_LOG("CameraManager::Init GetSystemAbility %{public}d is null", CAMERA_SERVICE_ID);
-        return;
-    }
-    auto serviceProxy = iface_cast<ICameraService>(object);
-    if (serviceProxy == nullptr) {
-        MEDIA_ERR_LOG("serviceProxy is null.");
-        return;
-    }
-    SetServiceProxy(serviceProxy);
+    int32_t ret = RefreshServiceProxy();
+    CHECK_AND_RETURN_LOG(ret == CameraErrorCode::SUCCESS, "RefreshServiceProxy fail , ret = %{public}d", ret);
     AddServiceProxyDeathRecipient();
 
     if (cameraSvcCallback_ != nullptr) {
@@ -1959,6 +1951,36 @@ bool CameraManager::IsTorchSupported()
         }
     }
     return false;
+}
+
+int32_t CameraManager::ProxyForFreeze(const std::set<int32_t>& pidList, bool isProxy)
+{
+    int32_t retCode = CAMERA_OPERATION_NOT_ALLOWED;
+    auto serviceProxy = GetServiceProxy();
+    if (serviceProxy == nullptr) {
+        MEDIA_ERR_LOG("serviceProxy is null");
+        return ServiceToCameraError(retCode);
+    }
+    retCode = serviceProxy->ProxyForFreeze(pidList, isProxy);
+    if (retCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("ProxyForFreeze call failed, retCode: %{public}d", retCode);
+    }
+    return ServiceToCameraError(retCode);
+}
+
+int32_t CameraManager::ResetAllFreezeStatus()
+{
+    int32_t retCode = CAMERA_OPERATION_NOT_ALLOWED;
+    auto serviceProxy = GetServiceProxy();
+    if (serviceProxy == nullptr) {
+        MEDIA_ERR_LOG("serviceProxy is null");
+        return ServiceToCameraError(retCode);
+    }
+    retCode = serviceProxy->ResetAllFreezeStatus();
+    if (retCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("ResetAllFreezeStatus call failed, retCode: %{public}d", retCode);
+    }
+    return ServiceToCameraError(retCode);
 }
 
 bool CameraManager::IsTorchModeSupported(TorchMode mode)
