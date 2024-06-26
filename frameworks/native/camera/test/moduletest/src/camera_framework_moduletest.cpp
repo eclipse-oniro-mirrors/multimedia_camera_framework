@@ -784,26 +784,29 @@ SelectProfiles CameraFrameworkModuleTest::SelectWantedProfiles(
     ret.preview.format_ = CAMERA_FORMAT_INVALID;
     ret.photo.format_ = CAMERA_FORMAT_INVALID;
     ret.video.format_ = CAMERA_FORMAT_INVALID;
-    const auto& preview = std::find_if(modeAbility->GetPreviewProfiles().begin(),
-                                       modeAbility->GetPreviewProfiles().end(),
+    vector<Profile> previewProfiles = modeAbility->GetPreviewProfiles();
+    vector<Profile> photoProfiles = modeAbility->GetPhotoProfiles();
+    vector<VideoProfile> videoProfiles = modeAbility->GetVideoProfiles();
+    const auto& preview = std::find_if(previewProfiles.begin(),
+                                       previewProfiles.end(),
                                        [&wanted](auto& profile) { return profile == wanted.preview; });
-    if (preview != modeAbility->GetPreviewProfiles().end()) {
+    if (preview != previewProfiles.end()) {
         ret.preview = *preview;
     } else {
         MEDIA_ERR_LOG("preview format:%{public}d width:%{public}d height:%{public}d not support",
             wanted.preview.format_, wanted.preview.size_.width, wanted.preview.size_.height);
     }
-    const auto& photo = std::find_if(modeAbility->GetPhotoProfiles().begin(), modeAbility->GetPhotoProfiles().end(),
-        [&wanted](auto& profile) { return profile == wanted.photo; });
-    if (photo != modeAbility->GetPhotoProfiles().end()) {
+    const auto& photo = std::find_if(photoProfiles.begin(), photoProfiles.end(),
+                                     [&wanted](auto& profile) { return profile == wanted.photo; });
+    if (photo != photoProfiles.end()) {
         ret.photo = *photo;
     } else {
         MEDIA_ERR_LOG("photo format:%{public}d width:%{public}d height:%{public}d not support",
             wanted.photo.format_, wanted.photo.size_.width, wanted.photo.size_.height);
     }
-    const auto& video = std::find_if(modeAbility->GetVideoProfiles().begin(), modeAbility->GetVideoProfiles().end(),
-        [&wanted](auto& profile) { return profile == wanted.video; });
-    if (video != modeAbility->GetVideoProfiles().end()) {
+    const auto& video = std::find_if(videoProfiles.begin(), videoProfiles.end(),
+                                     [&wanted](auto& profile) { return profile == wanted.video; });
+    if (video != videoProfiles.end()) {
         ret.video = *video;
     } else {
         MEDIA_ERR_LOG("video format:%{public}d width:%{public}d height:%{public}d not support",
