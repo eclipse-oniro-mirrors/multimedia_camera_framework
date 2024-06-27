@@ -48,7 +48,9 @@ static EnumHelper<PreviewOutputEventType> PreviewOutputEventTypeHelper({
     PreviewOutputEventType::PREVIEW_INVALID_TYPE
 );
 
-class PreviewOutputCallback : public PreviewStateCallback, public std::enable_shared_from_this<PreviewOutputCallback> {
+class PreviewOutputCallback : public PreviewStateCallback,
+                              public ListenerBase,
+                              public std::enable_shared_from_this<PreviewOutputCallback> {
 public:
     explicit PreviewOutputCallback(napi_env env);
     ~PreviewOutputCallback() = default;
@@ -57,21 +59,12 @@ public:
     void OnFrameEnded(const int32_t frameCount) const override;
     void OnError(const int32_t errorCode) const override;
     void OnSketchStatusDataChanged(const SketchStatusData& sketchStatusData) const override;
-    void SaveCallbackReference(const std::string& eventType, napi_value callback, bool isOnce);
-    void RemoveCallbackRef(napi_env env, napi_value callback, const std::string& eventType);
-    void RemoveAllCallbacks(const std::string& eventType);
 
 private:
     void UpdateJSCallback(PreviewOutputEventType eventType, const int32_t value) const;
     void UpdateJSCallbackAsync(PreviewOutputEventType eventType, const int32_t value) const;
     void OnSketchStatusDataChangedAsync(SketchStatusData sketchStatusData) const;
     void OnSketchStatusDataChangedCall(SketchStatusData sketchStatusData) const;
-    std::mutex previewOutputCbMutex_;
-    napi_env env_;
-    mutable std::vector<std::shared_ptr<AutoRef>> frameStartCbList_;
-    mutable std::vector<std::shared_ptr<AutoRef>> frameEndCbList_;
-    mutable std::vector<std::shared_ptr<AutoRef>> errorCbList_;
-    mutable std::vector<std::shared_ptr<AutoRef>> sketchStatusChangedCbList_;
 };
 
 struct PreviewOutputCallbackInfo {
@@ -128,22 +121,24 @@ private:
     static napi_status CreateAsyncTask(napi_env env, napi_value resource,
         std::unique_ptr<OHOS::CameraStandard::PreviewOutputAsyncContext>& asyncContext);
 
-    void RegisterFrameStartCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
-    void UnregisterFrameStartCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterFrameEndCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
-    void UnregisterFrameEndCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterErrorCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
-    void UnregisterErrorCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterSketchStatusChangedCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void RegisterFrameStartCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterFrameStartCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterFrameEndCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterFrameEndCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterErrorCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterErrorCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterSketchStatusChangedCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
     void UnregisterSketchStatusChangedCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
     napi_env env_;
-    napi_ref wrapper_;
     sptr<PreviewOutput> previewOutput_;
     std::shared_ptr<PreviewOutputCallback> previewCallback_;
 

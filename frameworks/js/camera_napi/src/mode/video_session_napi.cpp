@@ -21,15 +21,10 @@ using namespace std;
 
 thread_local napi_ref VideoSessionNapi::sConstructor_ = nullptr;
 
-VideoSessionNapi::VideoSessionNapi() : env_(nullptr), wrapper_(nullptr)
-{
-}
+VideoSessionNapi::VideoSessionNapi() : env_(nullptr) {}
 VideoSessionNapi::~VideoSessionNapi()
 {
     MEDIA_DEBUG_LOG("~VideoSessionNapi is called");
-    if (wrapper_ != nullptr) {
-        napi_delete_reference(env_, wrapper_);
-    }
     if (videoSession_) {
         videoSession_ = nullptr;
     }

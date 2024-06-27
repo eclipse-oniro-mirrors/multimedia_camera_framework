@@ -21,18 +21,12 @@ using namespace std;
  
 thread_local napi_ref HighResPhotoSessionNapi::sConstructor_ = nullptr;
  
-HighResPhotoSessionNapi::HighResPhotoSessionNapi() : env_(nullptr), wrapper_(nullptr)
+HighResPhotoSessionNapi::HighResPhotoSessionNapi() : env_(nullptr)
 {
 }
 HighResPhotoSessionNapi::~HighResPhotoSessionNapi()
 {
     MEDIA_DEBUG_LOG("~HighResPhotoSessionNapi is called");
-    if (wrapper_ != nullptr) {
-        napi_delete_reference(env_, wrapper_);
-    }
-    if (highResPhotoSession_) {
-        highResPhotoSession_ = nullptr;
-    }
 }
 void HighResPhotoSessionNapi::HighResPhotoSessionNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {

@@ -21,18 +21,10 @@ using namespace std;
 
 thread_local napi_ref SecureCameraSessionNapi::sConstructor_ = nullptr;
 
-SecureCameraSessionNapi::SecureCameraSessionNapi() : env_(nullptr), wrapper_(nullptr)
-{
-}
+SecureCameraSessionNapi::SecureCameraSessionNapi() : env_(nullptr) {}
 SecureCameraSessionNapi::~SecureCameraSessionNapi()
 {
     MEDIA_DEBUG_LOG("~SecureCameraSessionNapi is called");
-    if (wrapper_ != nullptr) {
-        napi_delete_reference(env_, wrapper_);
-    }
-    if (secureCameraSession_) {
-        secureCameraSession_ = nullptr;
-    }
 }
 void SecureCameraSessionNapi::SecureCameraSessionNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {

@@ -144,15 +144,18 @@ private:
     static void ProcessCameraInfo(sptr<CameraManager>& cameraManager, const CameraPosition cameraPosition,
         const CameraType cameraType, sptr<CameraDevice>& cameraInfo);
 
-    void RegisterCameraStatusCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
-    void UnregisterCameraStatusCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterCameraMuteCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
-    void UnregisterCameraMuteCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterTorchStatusCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
-    void UnregisterTorchStatusCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterCameraStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterCameraStatusCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterCameraMuteCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterCameraMuteCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterTorchStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterTorchStatusCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
     std::shared_ptr<CameraManagerCallbackNapi> cameraManagerCallback_;
     std::shared_ptr<CameraMuteListenerNapi> cameraMuteListener_;
@@ -160,7 +163,6 @@ private:
     static thread_local napi_ref sConstructor_;
 
     napi_env env_;
-    napi_ref wrapper_;
     sptr<CameraManager> cameraManager_;
     static thread_local uint32_t cameraManagerTaskId;
 };

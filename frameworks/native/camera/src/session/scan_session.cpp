@@ -113,14 +113,14 @@ void ScanSession::SetBrightnessStatusReport(uint8_t state)
     }
     this->UnlockForControl();
 }
- 
+
 void ScanSession::RegisterBrightnessStatusCallback(std::shared_ptr<BrightnessStatusCallback> brightnessStatusCallback)
 {
     if (!IsSessionCommited()) {
         MEDIA_ERR_LOG("ScanSession::RegisterBrightnessStatusCallback Session is not Commited");
         return;
     }
-    brightnessStatusCallback_ = brightnessStatusCallback;
+    SetBrightnessStatusCallback(brightnessStatusCallback);
     SetBrightnessStatusReport(SWTCH_ON);
 }
  
@@ -130,14 +130,15 @@ void ScanSession::UnRegisterBrightnessStatusCallback()
         MEDIA_ERR_LOG("ScanSession::UnRegisterBrightnessStatusCallback Session is not Commited");
         return;
     }
-    brightnessStatusCallback_ = nullptr;
+    SetBrightnessStatusCallback(nullptr);
     SetBrightnessStatusReport(SWTCH_OFF);
 }
- 
+
 void ScanSession::ProcessBrightnessStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {
     MEDIA_DEBUG_LOG("Entry ProcessBrightnessStatusChange");
-    if (brightnessStatusCallback_ != nullptr) {
+    auto callback = GetBrightnessStatusCallback();
+    if (callback != nullptr) {
         camera_metadata_item_t item;
         common_metadata_header_t* metadata = result->get();
         int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_FLASH_SUGGESTION, &item);
@@ -152,18 +153,18 @@ void ScanSession::ProcessBrightnessStatusChange(const std::shared_ptr<OHOS::Came
         }
         MEDIA_DEBUG_LOG("ScanSession::ProcessBrightnessStatusChange state = %{public}d", state);
         if (!firstBrightnessStatusCome_) {
-            brightnessStatusCallback_->OnBrightnessStatusChanged(state);
+            callback->OnBrightnessStatusChanged(state);
             firstBrightnessStatusCome_ = true;
             lastBrightnessStatus_ = state;
             return;
         }
         if (state != lastBrightnessStatus_) {
-            brightnessStatusCallback_->OnBrightnessStatusChanged(state);
+            callback->OnBrightnessStatusChanged(state);
             lastBrightnessStatus_ = state;
         }
     }
 }
- 
+
 void ScanSession::ScanSessionMetadataResultProcessor::ProcessCallbacks(
     const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {

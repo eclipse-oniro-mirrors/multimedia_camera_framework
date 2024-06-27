@@ -88,19 +88,19 @@ private:
     static napi_value Stop(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
 
-    void RegisterMetadataObjectsAvailableCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void RegisterMetadataObjectsAvailableCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce);
     void UnregisterMetadataObjectsAvailableCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterErrorCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
-    void UnregisterErrorCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterErrorCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterErrorCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<MetadataOutput> sMetadataOutput_;
 
     napi_env env_;
-    napi_ref wrapper_;
     sptr<MetadataOutput> metadataOutput_;
     std::shared_ptr<MetadataOutputCallback> metadataOutputCallback_;
     std::shared_ptr<MetadataStateCallbackNapi> metadataStateCallback_;

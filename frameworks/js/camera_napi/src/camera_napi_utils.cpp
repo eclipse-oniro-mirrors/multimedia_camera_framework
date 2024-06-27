@@ -229,17 +229,19 @@ std::string CameraNapiUtils::GetStringArgument(napi_env env, napi_value value)
     return strValue;
 }
 
-bool CameraNapiUtils::IsSameCallback(napi_env env, napi_value callback, napi_ref refCallback)
+bool CameraNapiUtils::IsSameNapiValue(napi_env env, napi_value valueSrc, napi_value valueDst)
 {
+    if (valueSrc == nullptr && valueDst == nullptr) {
+        return true;
+    }
+    if (valueSrc == nullptr || valueDst == nullptr) {
+        return false;
+    }
     bool isEquals = false;
-    napi_value copyValue = nullptr;
-
-    napi_get_reference_value(env, refCallback, &copyValue);
-    if (napi_strict_equals(env, copyValue, callback, &isEquals) != napi_ok) {
+    if (napi_strict_equals(env, valueSrc, valueDst, &isEquals) != napi_ok) {
         MEDIA_ERR_LOG("get napi_strict_equals failed");
         return false;
     }
-
     return isEquals;
 }
 

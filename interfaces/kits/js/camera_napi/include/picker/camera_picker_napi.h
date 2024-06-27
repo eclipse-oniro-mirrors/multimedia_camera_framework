@@ -108,7 +108,6 @@ public:
 
 private:
     napi_env env_;
-    napi_ref wrapper_;
     static thread_local uint32_t cameraPickerTaskId;
     static thread_local napi_ref sConstructor_;
     static thread_local napi_ref mediaTypeRef_;

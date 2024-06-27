@@ -21,14 +21,11 @@ using namespace std;
 
 thread_local napi_ref MacroVideoSessionNapi::sConstructor_ = nullptr;
 
-MacroVideoSessionNapi::MacroVideoSessionNapi() : env_(nullptr), wrapper_(nullptr) {}
+MacroVideoSessionNapi::MacroVideoSessionNapi() : env_(nullptr) {}
 
 MacroVideoSessionNapi::~MacroVideoSessionNapi()
 {
     MEDIA_DEBUG_LOG("~MacroVideoSessionNapi is called");
-    if (wrapper_ != nullptr) {
-        napi_delete_reference(env_, wrapper_);
-    }
 }
 
 void MacroVideoSessionNapi::MacroVideoSessionNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)

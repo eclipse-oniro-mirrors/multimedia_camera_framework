@@ -33,7 +33,6 @@ public:
     static void MacroVideoSessionNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
 
     napi_env env_;
-    napi_ref wrapper_;
     sptr<MacroVideoSession> macroVideoSession_;
     static thread_local napi_ref sConstructor_;
 };

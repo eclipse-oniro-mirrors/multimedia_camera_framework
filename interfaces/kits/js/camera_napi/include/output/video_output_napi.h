@@ -45,7 +45,9 @@ static EnumHelper<VideoOutputEventType> VideoOutputEventTypeHelper({
     VideoOutputEventType::VIDEO_INVALID_TYPE
 );
 
-class VideoCallbackListener : public VideoStateCallback, public std::enable_shared_from_this<VideoCallbackListener> {
+class VideoCallbackListener : public VideoStateCallback,
+                              public ListenerBase,
+                              public std::enable_shared_from_this<VideoCallbackListener> {
 public:
     explicit VideoCallbackListener(napi_env env);
     ~VideoCallbackListener() = default;
@@ -53,18 +55,10 @@ public:
     void OnFrameStarted() const override;
     void OnFrameEnded(const int32_t frameCount) const override;
     void OnError(const int32_t errorCode) const override;
-    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
-    void RemoveCallbackRef(napi_env env, napi_value callback, const std::string &eventType);
-    void RemoveAllCallbacks(const std::string &eventType);
 
 private:
     void UpdateJSCallback(VideoOutputEventType eventType, const int32_t value) const;
     void UpdateJSCallbackAsync(VideoOutputEventType eventType, const int32_t value) const;
-    std::mutex videoOutputMutex_;
-    napi_env env_;
-    mutable std::vector<std::shared_ptr<AutoRef>> frameStartCbList_;
-    mutable std::vector<std::shared_ptr<AutoRef>> frameEndCbList_;
-    mutable std::vector<std::shared_ptr<AutoRef>> errorCbList_;
 };
 
 struct VideoOutputCallbackInfo {
@@ -107,21 +101,23 @@ private:
     static napi_value Release(napi_env env, napi_callback_info info);
     static void SetFrameRateRangeAsyncTask(napi_env env, void* data);
 
-    void RegisterFrameStartCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
-    void UnregisterFrameStartCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterFrameEndCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
-    void UnregisterFrameEndCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterErrorCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
-    void UnregisterErrorCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterFrameStartCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterFrameStartCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterFrameEndCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterFrameEndCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterErrorCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterErrorCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<VideoOutput> sVideoOutput_;
 
     napi_env env_;
-    napi_ref wrapper_;
     sptr<VideoOutput> videoOutput_;
     std::shared_ptr<VideoCallbackListener> videoCallback_;
     static thread_local uint32_t videoOutputTaskId;

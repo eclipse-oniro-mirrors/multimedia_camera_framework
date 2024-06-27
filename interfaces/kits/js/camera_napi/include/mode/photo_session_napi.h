@@ -34,7 +34,6 @@ public:
     static napi_value PhotoSessionNapiConstructor(napi_env env, napi_callback_info info);
 
     napi_env env_;
-    napi_ref wrapper_;
     sptr<PhotoSession> photoSession_;
     static thread_local napi_ref sConstructor_;
 };

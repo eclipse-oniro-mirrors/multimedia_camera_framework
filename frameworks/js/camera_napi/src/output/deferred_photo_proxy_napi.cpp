@@ -26,22 +26,14 @@
 namespace OHOS {
 namespace CameraStandard {
 thread_local napi_ref DeferredPhotoProxyNapi::sConstructor_ = nullptr;
-thread_local napi_value DeferredPhotoProxyNapi::sThumbnailPixelMap_ = nullptr;
 thread_local uint32_t DeferredPhotoProxyNapi::deferredPhotoProxyTaskId = DEFERRED_PHOTO_PROXY_TASKID;
-DeferredPhotoProxyNapi::DeferredPhotoProxyNapi() : env_(nullptr), wrapper_(nullptr), thumbnailPixelMap_(nullptr)
+DeferredPhotoProxyNapi::DeferredPhotoProxyNapi() : env_(nullptr)
 {
 }
 
 DeferredPhotoProxyNapi::~DeferredPhotoProxyNapi()
 {
     MEDIA_DEBUG_LOG("~DeferredPhotoProxyNapi is called");
-    if (wrapper_ != nullptr) {
-        napi_delete_reference(env_, wrapper_);
-    }
-    thumbnailPixelMap_ = nullptr;
-    if (deferredPhotoProxy_) {
-        deferredPhotoProxy_ = nullptr;
-    }
 }
 
 // Constructor callback

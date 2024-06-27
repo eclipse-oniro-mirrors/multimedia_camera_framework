@@ -306,6 +306,12 @@ static const std::unordered_map<std::string, int32_t> mapPolicyType = {
     {"PRIVACY", 1},
 };
 
+static const std::unordered_map<std::string, int32_t> mapSceneFeatureType = {
+    { "MOON_CAPTURE_BOOST", FEATURE_MOON_CAPTURE_BOOST },
+    { "TRIPOD_DETECTION", FEATURE_TRIPOD_DETECTION },
+    { "MACRO", FEATURE_MACRO },
+};
+
 enum CreateAsyncCallbackModes {
     CREATE_CAMERA_MANAGER_ASYNC_CALLBACK = 10,
 };
@@ -334,44 +340,7 @@ public:
 
 private:
     static thread_local napi_ref sConstructor_;
-
-    static thread_local napi_ref flashModeRef_;
-    static thread_local napi_ref exposureModeRef_;
-    static thread_local napi_ref exposureStateRef_;
-    static thread_local napi_ref focusModeRef_;
-    static thread_local napi_ref focusStateRef_;
-    static thread_local napi_ref cameraFormatRef_;
-    static thread_local napi_ref cameraStatusRef_;
-    static thread_local napi_ref connectionTypeRef_;
-    static thread_local napi_ref cameraPositionRef_;
-    static thread_local napi_ref cameraTypeRef_;
-    static thread_local napi_ref imageRotationRef_;
-    static thread_local napi_ref qualityLevelRef_;
-    static thread_local napi_ref videoStabilizationModeRef_;
-    static thread_local napi_ref hostNameTypeRef_;
-    static thread_local napi_ref sceneModeRef_;
-    static thread_local napi_ref preconfigTypeRef_;
-    static thread_local napi_ref filterTypeRef_;
-    static thread_local napi_ref beautyTypeRef_;
-    static thread_local napi_ref portraitEffectRef_;
-    static thread_local napi_ref torchModeRef_;
-    static thread_local napi_ref errorCameraRef_;
-    static thread_local napi_ref errorCameraInputRef_;
-    static thread_local napi_ref errorCaptureSessionRef_;
-    static thread_local napi_ref errorPreviewOutputRef_;
-    static thread_local napi_ref errorPhotoOutputRef_;
-    static thread_local napi_ref errorVideoOutputRef_;
-    static thread_local napi_ref metadataObjectTypeRef_;
-    static thread_local napi_ref errorMetadataOutputRef_;
-    static thread_local napi_ref deferredDeliveryImageTypeRef_;
-    static thread_local napi_ref SmoothZoomModeRef_;
-    static thread_local napi_ref colorEffectTypeRef_;
-    static thread_local napi_ref restoreParamTypeRef_;
-    static thread_local napi_ref exposureMeteringModeRef_;
-    static thread_local napi_ref effectSuggestionTypeRef_;
-    static thread_local napi_ref policyTypeRef_;
     napi_env env_;
-    napi_ref wrapper_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

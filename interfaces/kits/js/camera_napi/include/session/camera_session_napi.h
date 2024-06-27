@@ -122,24 +122,16 @@ struct MoonCaptureBoostStatusCallbackInfo {
     {}
 };
 
-class FeatureDetectionStatusCallbackListener : public FeatureDetectionStatusCallback {
+class FeatureDetectionStatusCallbackListener : public FeatureDetectionStatusCallback, public ListenerBase {
 public:
-    FeatureDetectionStatusCallbackListener(napi_env env) : env_(env) {};
+    FeatureDetectionStatusCallbackListener(napi_env env) : ListenerBase(env) {};
     ~FeatureDetectionStatusCallbackListener() = default;
     void OnFeatureDetectionStatusChanged(SceneFeature feature, FeatureDetectionStatus status) override;
     bool IsFeatureSubscribed(SceneFeature feature) override;
 
-    void SaveCallbackReference(SceneFeature feature, napi_value callback, bool isOnce);
-
-    void RemoveCallbackRef(SceneFeature feature, napi_value callback);
-
 private:
     void OnFeatureDetectionStatusChangedCallback(SceneFeature feature, FeatureDetectionStatus status) const;
     void OnFeatureDetectionStatusChangedCallbackAsync(SceneFeature feature, FeatureDetectionStatus status) const;
-
-    napi_env env_;
-    mutable std::mutex featureListenerMapMutex_;
-    std::unordered_map<SceneFeature, shared_ptr<ListenerBase>> featureListenerMap_;
 };
 
 struct FeatureDetectionStatusCallbackInfo {
@@ -320,7 +312,6 @@ public:
     const EmitterFunctions& GetEmitterFunctions() override;
 
     napi_env env_;
-    napi_ref wrapper_;
     sptr<CaptureSession> cameraSession_;
     std::shared_ptr<FocusCallbackListener> focusCallback_;
     std::shared_ptr<SessionCallbackListener> sessionCallback_;
@@ -351,65 +342,68 @@ public:
     static const std::vector<napi_property_descriptor> color_management_props;
     static const std::vector<napi_property_descriptor> preconfig_props;
     static const std::vector<napi_property_descriptor> effect_suggestion_props;
+
 protected:
-    virtual void RegisterSlowMotionStateCb(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void RegisterSlowMotionStateCb(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
     virtual void UnregisterSlowMotionStateCb(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+
 private:
-    void RegisterExposureCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    void RegisterExposureCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
     void UnregisterExposureCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterFocusCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterFocusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
     void UnregisterFocusCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterMacroStatusCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterMacroStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
     void UnregisterMacroStatusCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterMoonCaptureBoostCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterMoonCaptureBoostCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
     void UnregisterMoonCaptureBoostCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterFeatureDetectionStatusListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterFeatureDetectionStatusListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
     void UnregisterFeatureDetectionStatusListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterSessionErrorCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterSessionErrorCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
     void UnregisterSessionErrorCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterSmoothZoomCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterSmoothZoomCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
     void UnregisterSmoothZoomCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterEffectSuggestionCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterEffectSuggestionCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
     void UnregisterEffectSuggestionCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+
 protected:
-    virtual void RegisterExposureInfoCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void RegisterExposureInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
     virtual void UnregisterExposureInfoCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    virtual void RegisterAbilityChangeCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    virtual void RegisterAbilityChangeCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
     virtual void UnregisterAbilityChangeCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    virtual void RegisterIsoInfoCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    virtual void RegisterIsoInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
     virtual void UnregisterIsoInfoCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    virtual void RegisterApertureInfoCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    virtual void RegisterApertureInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
     virtual void UnregisterApertureInfoCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    virtual void RegisterLuminationInfoCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    virtual void RegisterLuminationInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
     virtual void UnregisterLuminationInfoCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
 };
 
 struct CameraSessionAsyncContext : public AsyncContext {

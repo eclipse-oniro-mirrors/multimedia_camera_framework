@@ -20,6 +20,7 @@
 #include "camera_napi_utils.h"
 #include "input/camera_input.h"
 #include "input/camera_manager.h"
+#include "listener_base.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -34,21 +35,17 @@ enum InputAsyncCallbackModes {
 
 struct CameraInputAsyncContext;
 
-class ErrorCallbackListener : public ErrorCallback, public std::enable_shared_from_this<ErrorCallbackListener> {
+class ErrorCallbackListener : public ErrorCallback,
+                              public ListenerBase,
+                              public std::enable_shared_from_this<ErrorCallbackListener> {
 public:
-    ErrorCallbackListener(napi_env env) : env_(env) {}
+    ErrorCallbackListener(napi_env env) : ListenerBase(env) {}
     ~ErrorCallbackListener() = default;
-    void SaveCallbackReference(const std::string &eventType, napi_value callback, bool isOnce);
-    void RemoveCallbackRef(napi_env env, napi_value args);
-    void RemoveAllCallbacks();
     void OnError(const int32_t errorType, const int32_t errorMsg) const override;
 
 private:
     void OnErrorCallback(const int32_t errorType, const int32_t errorMsg) const;
     void OnErrorCallbackAsync(const int32_t errorType, const int32_t errorMsg) const;
-    std::mutex mutex_;
-    napi_env env_;
-    mutable std::vector<std::shared_ptr<AutoRef>> cameraInputErrorCbList_;
 };
 
 struct ErrorCallbackInfo {
@@ -87,12 +84,12 @@ private:
     static void CameraInputNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
     static napi_value CameraInputNapiConstructor(napi_env env, napi_callback_info info);
 
-    void RegisterErrorCallbackListener(
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
-    void UnregisterErrorCallbackListener(napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterErrorCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterErrorCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
     napi_env env_;
-    napi_ref wrapper_;
     std::string cameraId_;
     shared_ptr<ErrorCallbackListener> errorCallback_;
 

@@ -42,21 +42,13 @@ private:
     static void DeferredPhotoAsyncTaskComplete(napi_env env, napi_status status, void* data);
 
     static thread_local napi_ref sConstructor_;
-    static thread_local napi_value sThumbnailPixelMap_;
     static thread_local uint32_t deferredPhotoProxyTaskId;
 
     napi_env env_;
-    napi_ref wrapper_;
-    napi_value thumbnailPixelMap_;
 };
 
 struct DeferredPhotoProxAsyncContext : public AsyncContext {
     DeferredPhotoProxyNapi* objectInfo;
-
-    ~DeferredPhotoProxAsyncContext()
-    {
-        objectInfo = nullptr;
-    }
 };
 } // namespace CameraStandard
 } // namespace OHOS

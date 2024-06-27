@@ -38,20 +38,14 @@ sptr<CameraDevice> GetCameraDeviceFromNapiCameraInfoObj(napi_env env, napi_value
 }
 }
 
-ModeManagerNapi::ModeManagerNapi() : env_(nullptr), wrapper_(nullptr)
+ModeManagerNapi::ModeManagerNapi() : env_(nullptr)
 {
-    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("ModeManagerNapi::ModeManagerNapi is called");
 }
 
 ModeManagerNapi::~ModeManagerNapi()
 {
     MEDIA_DEBUG_LOG("~ModeManagerNapi is called");
-    if (wrapper_ != nullptr) {
-        napi_delete_reference(env_, wrapper_);
-    }
-    if (modeManager_) {
-        modeManager_ = nullptr;
-    }
 }
 
 // Constructor callback

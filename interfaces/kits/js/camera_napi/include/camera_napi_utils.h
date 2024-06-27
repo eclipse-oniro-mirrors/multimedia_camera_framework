@@ -139,7 +139,7 @@ public:
 
     static std::string GetStringArgument(napi_env env, napi_value value);
 
-    static bool IsSameCallback(napi_env env, napi_value callback, napi_ref refCallback);
+    static bool IsSameNapiValue(napi_env env, napi_value valueSrc, napi_value valueDst);
 
     static napi_status CallPromiseFun(
         napi_env env, napi_value promiseValue, void* data, napi_callback thenCallback, napi_callback catchCallback);

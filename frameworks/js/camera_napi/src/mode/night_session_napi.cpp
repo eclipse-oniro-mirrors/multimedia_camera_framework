@@ -24,18 +24,12 @@ using namespace std;
 
 thread_local napi_ref NightSessionNapi::sConstructor_ = nullptr;
 
-NightSessionNapi::NightSessionNapi() : env_(nullptr), wrapper_(nullptr)
+NightSessionNapi::NightSessionNapi() : env_(nullptr)
 {
 }
 NightSessionNapi::~NightSessionNapi()
 {
     MEDIA_DEBUG_LOG("~NightSessionNapi is called");
-    if (wrapper_ != nullptr) {
-        napi_delete_reference(env_, wrapper_);
-    }
-    if (nightSession_) {
-        nightSession_ = nullptr;
-    }
 }
 void NightSessionNapi::NightSessionNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint)
 {

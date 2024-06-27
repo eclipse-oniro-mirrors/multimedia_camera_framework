@@ -38,7 +38,6 @@ public:
     static napi_value GetExposure(napi_env env, napi_callback_info info);
     static napi_value SetExposure(napi_env env, napi_callback_info info);
     napi_env env_;
-    napi_ref wrapper_;
     sptr<NightSession> nightSession_;
     static thread_local napi_ref sConstructor_;
 };
