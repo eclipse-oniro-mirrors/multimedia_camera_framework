@@ -280,11 +280,6 @@ int32_t HCaptureSession::AddInput(sptr<ICameraDeviceService> cameraDevice)
         hCameraDevice->SetStreamOperatorCallback(this);
         SetCameraDevice(hCameraDevice);
         hCameraDevice->DispatchDefaultSettingToHdi();
-        auto deviceEventCallback = new DeviceEventCallback(DeviceEventCallback::StatusCallback([this]() {
-            StopUsingPermissionCallback(callerToken_, OHOS_PERMISSION_CAMERA);
-            UnregisterPermissionCallback(callerToken_);
-        }));
-        hCameraDevice->SetDeviceEventCallback(deviceEventCallback);
     });
     if (errorCode == CAMERA_OK) {
         CAMERA_SYSEVENT_STATISTIC(CreateMsg("CaptureSession::AddInput"));
@@ -511,7 +506,6 @@ int32_t HCaptureSession::RemoveInput(sptr<ICameraDeviceService> cameraDevice)
             MEDIA_INFO_LOG(
                 "HCaptureSession::RemoveInput camera id is %{public}s", currentDevice->GetCameraId().c_str());
             currentDevice->ResetDeviceSettings();
-            currentDevice->SetDeviceEventCallback(nullptr);
             SetCameraDevice(nullptr);
         } else {
             MEDIA_ERR_LOG("HCaptureSession::RemoveInput Invalid camera device");
@@ -1230,15 +1224,6 @@ int32_t HCaptureSession::Start()
             return;
         }
 
-        if (IsHapTokenId(callerToken_)) {
-            if (!Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA)) {
-                MEDIA_ERR_LOG("Start session is not allowed!");
-                errorCode = CAMERA_OPERATION_NOT_ALLOWED;
-                return;
-            }
-            StartUsingPermissionCallback(callerToken_, OHOS_PERMISSION_CAMERA);
-            RegisterPermissionCallback(callerToken_, OHOS_PERMISSION_CAMERA);
-        }
         std::shared_ptr<OHOS::Camera::CameraMetadata> settings = nullptr;
         auto cameraDevice = GetCameraDevice();
         if (cameraDevice != nullptr) {
@@ -1400,8 +1385,6 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
             cameraDevice->Release();
             SetCameraDevice(nullptr);
         }
-        StopUsingPermissionCallback(callerToken_, OHOS_PERMISSION_CAMERA);
-        UnregisterPermissionCallback(callerToken_);
 
         // Clear current session
         MEDIA_DEBUG_LOG(
@@ -1456,33 +1439,6 @@ int32_t HCaptureSession::OperatePermissionCheck(uint32_t interfaceCode)
             break;
     }
     return CAMERA_OK;
-}
-
-void HCaptureSession::RegisterPermissionCallback(const uint32_t callingTokenId, const std::string permissionName)
-{
-    Security::AccessToken::PermStateChangeScope scopeInfo;
-    scopeInfo.permList = {permissionName};
-    scopeInfo.tokenIDs = {callingTokenId};
-    callbackPtr_ = std::make_shared<PermissionStatusChangeCb>(this, scopeInfo);
-    MEDIA_DEBUG_LOG("after tokenId:%{public}d register", callingTokenId);
-    int32_t res = Security::AccessToken::AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr_);
-    if (res != CAMERA_OK) {
-        MEDIA_ERR_LOG("RegisterPermStateChangeCallback failed.");
-    }
-}
-
-void HCaptureSession::UnregisterPermissionCallback(const uint32_t callingTokenId)
-{
-    if (callbackPtr_ == nullptr) {
-        MEDIA_ERR_LOG("callbackPtr_ is null.");
-        return;
-    }
-    int32_t res = Security::AccessToken::AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr_);
-    if (res != CAMERA_OK) {
-        MEDIA_ERR_LOG("UnRegisterPermStateChangeCallback failed.");
-    }
-    callbackPtr_ = nullptr;
-    MEDIA_DEBUG_LOG("after tokenId:%{public}d unregister", callingTokenId);
 }
 
 void HCaptureSession::DestroyStubObjectForPid(pid_t pid)
@@ -1541,34 +1497,6 @@ void HCaptureSession::DumpSessionInfo(CameraInfoDumper& infoDumper)
         infoDumper.Push();
         stream->DumpStreamInfo(infoDumper);
         infoDumper.Pop();
-    }
-}
-
-void HCaptureSession::StartUsingPermissionCallback(const uint32_t callingTokenId, const std::string permissionName)
-{
-    AddCameraPermissionUsedRecord(callingTokenId, permissionName);
-    if (cameraUseCallbackPtr_) {
-        MEDIA_ERR_LOG("has StartUsingPermissionCallback!");
-        return;
-    }
-    cameraUseCallbackPtr_ = std::make_shared<CameraUseStateChangeCb>(this);
-    int32_t res =
-        Security::AccessToken::PrivacyKit::StartUsingPermission(callingTokenId, permissionName, cameraUseCallbackPtr_);
-    MEDIA_DEBUG_LOG("after StartUsingPermissionCallback tokenId:%{public}d", callingTokenId);
-    if (res != CAMERA_OK) {
-        MEDIA_ERR_LOG("StartUsingPermissionCallback failed.");
-    }
-}
-
-void HCaptureSession::StopUsingPermissionCallback(const uint32_t callingTokenId, const std::string permissionName)
-{
-    MEDIA_DEBUG_LOG("enter StopUsingPermissionCallback tokenId:%{public}d", callingTokenId);
-    int32_t res = Security::AccessToken::PrivacyKit::StopUsingPermission(callingTokenId, permissionName);
-    if (res != CAMERA_OK) {
-        MEDIA_ERR_LOG("StopUsingPermissionCallback failed.");
-    }
-    if (cameraUseCallbackPtr_) {
-        cameraUseCallbackPtr_ = nullptr;
     }
 }
 
@@ -1682,28 +1610,11 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
     return CAMERA_OK;
 }
 
-void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result)
-{
-    auto item = captureSession_.promote();
-    if ((result.permStateChangeType == 0) && (item != nullptr)) {
-        item->Release(CaptureSessionReleaseType::RELEASE_TYPE_SECURE);
-    }
-}
-
 int32_t HCaptureSession::SetFeatureMode(int32_t featureMode)
 {
     MEDIA_INFO_LOG("SetFeatureMode is called!");
     featureMode_ = featureMode;
     return CAMERA_OK;
-}
-
-void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessTokenID tokenId, bool isShowing)
-{
-    MEDIA_INFO_LOG("enter CameraUseStateChangeNotify tokenId:%{public}d", tokenId);
-    auto item = captureSession_.promote();
-    if ((isShowing == false) && (item != nullptr)) {
-        item->Release(CaptureSessionReleaseType::RELEASE_TYPE_SECURE);
-    }
 }
 
 int32_t StreamOperatorCallback::OnCaptureStarted(int32_t captureId, const std::vector<int32_t>& streamIds)

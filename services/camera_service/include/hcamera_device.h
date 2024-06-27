@@ -21,8 +21,7 @@
 #include <atomic>
 #include <mutex>
 
-#include "accesstoken_kit.h"
-#include "privacy_kit.h"
+#include "camera_privacy.h"
 #include "v1_0/icamera_device_callback.h"
 #include "camera_metadata_info.h"
 #include "camera_util.h"
@@ -41,22 +40,6 @@ using OHOS::HDI::Camera::V1_0::CaptureEndedInfo;
 using OHOS::HDI::Camera::V1_0::CaptureErrorInfo;
 using OHOS::HDI::Camera::V1_0::ICameraDeviceCallback;
 using OHOS::HDI::Camera::V1_3::IStreamOperatorCallback;
-
-class DeviceEventCallback : public RefBase {
-public:
-    using StatusCallback = std::function<void()>;
-    explicit DeviceEventCallback(StatusCallback callback) : callback_(std::move(callback)) {}
-    ~DeviceEventCallback() override = default;
-    void OnError(const OHOS::HDI::Camera::V1_0::ErrorType type)
-    {
-        if (type == OHOS::HDI::Camera::V1_0::DEVICE_PREEMPT || type == OHOS::HDI::Camera::V1_0::DEVICE_DISCONNECT) {
-            callback_();
-        }
-    }
-private:
-    StatusCallback callback_;
-};
-
 class HCameraDevice : public HCameraDeviceStub, public ICameraDeviceCallback, public IStreamOperatorCallback {
 public:
     explicit HCameraDevice(
@@ -115,6 +98,18 @@ public:
         return proxyStreamOperatorCallback_.promote();
     }
 
+    inline void SetCameraPrivacy(sptr<CameraPrivacy> cameraPrivacy)
+    {
+        std::lock_guard<std::mutex> lock(cameraPrivacyMutex_);
+        cameraPrivacy_ = cameraPrivacy;
+    }
+
+    inline sptr<CameraPrivacy> GetCameraPrivacy()
+    {
+        std::lock_guard<std::mutex> lock(cameraPrivacyMutex_);
+        return cameraPrivacy_;
+    }
+
     inline int32_t GenerateHdiStreamId()
     {
         return hdiStreamIdGenerator_.fetch_add(1);
@@ -135,8 +130,6 @@ public:
 
     void NotifyCameraStatus(int32_t type);
 
-    void SetDeviceEventCallback(sptr<DeviceEventCallback> callback);
-    sptr<DeviceEventCallback> GetDeviceEventCallback();
 private:
     class FoldScreenListener;
     std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.
@@ -153,11 +146,10 @@ private:
     static std::mutex g_deviceOpenCloseMutex_;
     sptr<ICameraDeviceServiceCallback> deviceSvcCallback_;
     std::map<int32_t, wptr<ICameraServiceCallback>> statusSvcCallbacks_;
-    sptr<DeviceEventCallback> deviceEventCallback_;
-    std::mutex deviceEventCbMutex_;
 
     uint32_t callerToken_;
-
+    std::mutex cameraPrivacyMutex_;
+    sptr<CameraPrivacy> cameraPrivacy_;
     std::mutex proxyStreamOperatorCallbackMutex_;
     wptr<IStreamOperatorCallback> proxyStreamOperatorCallback_;
 
@@ -196,7 +188,9 @@ private:
     void UnPrepareZoom();
     int32_t OpenDevice(bool isEnableSecCam = false);
     int32_t CloseDevice();
-    void OpenDeviceNext();
+    void HandleFoldableDevice();
+    int32_t HandlePrivacyBeforeOpenDevice();
+    void HandlePrivacyAfterCloseDevice();
     void DebugLogForZoom(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForSmoothZoom(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForVideoStabilizationMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,

@@ -25,7 +25,6 @@
 #include <refbase.h>
 #include <unordered_map>
 #include <unordered_set>
-#include "accesstoken_kit.h"
 #include "camera_util.h"
 #include "hcamera_device.h"
 #include "hcapture_session_stub.h"
@@ -35,9 +34,6 @@
 #include "icapture_session.h"
 #include "istream_common.h"
 #include "camera_photo_proxy.h"
-#include "perm_state_change_callback_customize.h"
-#include "privacy_kit.h"
-#include "state_customized_cbk.h"
 #include "surface.h"
 #include "v1_0/istream_operator.h"
 #include "v1_1/istream_operator.h"
@@ -257,11 +253,6 @@ private:
     int32_t UnlinkInputAndOutputs();
 
     void ReleaseStreams();
-    void RegisterPermissionCallback(const uint32_t callingTokenId, const std::string permissionName);
-    void UnregisterPermissionCallback(const uint32_t callingTokenId);
-    void StartUsingPermissionCallback(const uint32_t callingTokenId, const std::string permissionName);
-    void StopUsingPermissionCallback(const uint32_t callingTokenId, const std::string permissionName);
-
     void ClearSketchRepeatStream();
     void ExpandSketchRepeatStream();
     void ExpandMovingPhotoRepeatStream();
@@ -298,8 +289,6 @@ private:
     pid_t pid_;
     uid_t uid_;
     uint32_t callerToken_;
-    std::shared_ptr<PermissionStatusChangeCb> callbackPtr_;
-    std::shared_ptr<CameraUseStateChangeCb> cameraUseCallbackPtr_;
     int32_t opMode_;
     int32_t featureMode_;
     ColorSpace currColorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
@@ -318,28 +307,7 @@ private:
     sptr<DisplayRotationListener> displayListener_;
 };
 
-class PermissionStatusChangeCb : public Security::AccessToken::PermStateChangeCallbackCustomize {
-public:
-    explicit PermissionStatusChangeCb(
-        wptr<HCaptureSession> session, const Security::AccessToken::PermStateChangeScope& scopeInfo)
-        : PermStateChangeCallbackCustomize(scopeInfo), captureSession_(session)
-    {}
-    virtual ~PermissionStatusChangeCb() = default;
-    void PermStateChangeCallback(Security::AccessToken::PermStateChangeInfo& result) override;
 
-private:
-    wptr<HCaptureSession> captureSession_;
-};
-
-class CameraUseStateChangeCb : public Security::AccessToken::StateCustomizedCbk {
-public:
-    explicit CameraUseStateChangeCb(wptr<HCaptureSession> session) : captureSession_(session) {}
-    virtual ~CameraUseStateChangeCb() = default;
-    void StateChangeNotify(Security::AccessToken::AccessTokenID tokenId, bool isShowing) override;
-
-private:
-    wptr<HCaptureSession> captureSession_;
-};
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_H_CAPTURE_SESSION_H
