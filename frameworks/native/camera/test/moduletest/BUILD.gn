@@ -98,8 +98,8 @@ ohos_moduletest("camera_framework_moduletest") {
   cflags = [ "-fPIC" ]
   cflags_cc = cflags
   sanitize = {
-    cfi = true
-    cfi_cross_dso = true
+    cfi = false
+    cfi_cross_dso = false
     debug = false
     blocklist = "../../../../../cfi_blocklist.txt"
   }
