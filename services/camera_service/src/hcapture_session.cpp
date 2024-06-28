@@ -151,7 +151,14 @@ int32_t HCaptureSession::Initialize(const uint32_t callerToken, int32_t opMode)
     return CAMERA_OK;
 }
 
-HCaptureSession::HCaptureSession() {}
+HCaptureSession::HCaptureSession()
+{
+    pid_ = 0;
+    uid_ = 0;
+    callerToken_ = 0;
+    opMode_ = 0;
+    featureMode_ = 0;
+}
 
 HCaptureSession::HCaptureSession(const uint32_t callingTokenId, int32_t opMode)
 {
