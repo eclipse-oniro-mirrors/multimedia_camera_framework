@@ -1051,7 +1051,6 @@ void CameraFrameworkModuleTest::SetUpInit()
 
 void CameraFrameworkModuleTest::SetUp()
 {
-    // ::testing::UnitTest::GetInstance()->current_test_info()->name());
     MEDIA_INFO_LOG("SetUp");
     SetUpInit();
     // set hap token please use SetHapToken();
