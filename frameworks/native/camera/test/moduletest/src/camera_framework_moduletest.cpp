@@ -1013,7 +1013,7 @@ bool CameraFrameworkModuleTest::IsSupportMode(SceneMode mode)
 
 void CameraFrameworkModuleTest::SetUpTestCase(void)
 {
-    MEDIA_ERR_LOG("SetUpTestCase of camera test case!");
+    MEDIA_INFO_LOG("SetUpTestCase of camera test case!");
     // set native token
     SetNativeToken();
     // set hap token please use SetHapToken();
@@ -1021,12 +1021,12 @@ void CameraFrameworkModuleTest::SetUpTestCase(void)
 
 void CameraFrameworkModuleTest::TearDownTestCase(void)
 {
-    MEDIA_ERR_LOG("TearDownTestCase of camera test case!");
+    MEDIA_INFO_LOG("TearDownTestCase of camera test case!");
 }
 
 void CameraFrameworkModuleTest::SetUpInit()
 {
-    MEDIA_ERR_LOG("SetUpInit of camera test case!");
+    MEDIA_INFO_LOG("SetUpInit of camera test case!");
     g_photoEvents.reset();
     g_previewEvents.reset();
     g_videoEvents.reset();
@@ -1051,8 +1051,8 @@ void CameraFrameworkModuleTest::SetUpInit()
 
 void CameraFrameworkModuleTest::SetUp()
 {
-    MEDIA_ERR_LOG("SetUp testName:%{public}s",
-        ::testing::UnitTest::GetInstance()->current_test_info()->name());
+    // ::testing::UnitTest::GetInstance()->current_test_info()->name());
+    MEDIA_INFO_LOG("SetUp");
     SetUpInit();
     // set hap token please use SetHapToken();
     manager_ = CameraManager::GetInstance();
@@ -1106,8 +1106,7 @@ void CameraFrameworkModuleTest::SetUp()
 
 void CameraFrameworkModuleTest::TearDown()
 {
-    MEDIA_ERR_LOG("TearDown start testName:%{public}s",
-        ::testing::UnitTest::GetInstance()->current_test_info()->name());
+    MEDIA_INFO_LOG("TearDown start");
     if (session_) {
         session_->Release();
     }
@@ -1119,8 +1118,7 @@ void CameraFrameworkModuleTest::TearDown()
         camInput->Close();
         input_->Release();
     }
-    MEDIA_ERR_LOG("TearDown end testName:%{public}s",
-        ::testing::UnitTest::GetInstance()->current_test_info()->name());
+    MEDIA_INFO_LOG("TearDown end");
 }
 
 void CameraFrameworkModuleTest::SetNativeToken()
