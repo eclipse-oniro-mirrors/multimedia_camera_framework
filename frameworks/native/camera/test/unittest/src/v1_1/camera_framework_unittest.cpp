@@ -6573,11 +6573,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_099, TestSize.Level
     SceneMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
     ASSERT_NE(camSession, nullptr);
-
-    const uint32_t callingTokenId = 0;
-    const std::string permissionName = "camera";
-    camSession->RegisterPermissionCallback(callingTokenId, permissionName);
-    camSession->StartUsingPermissionCallback(callingTokenId, permissionName);
 }
 
 /*
@@ -6602,13 +6597,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_100, TestSize.Level
 
     camSession->isSessionStarted_ = true;
     camSession->RestartStreams();
-
-    const uint32_t callingTokenId = 0;
-    const std::string permissionName = "camera";
-    std::shared_ptr<CameraUseStateChangeCb> cameraUseStateChangeCb =
-        std::make_shared<CameraUseStateChangeCb>(camSession);
-    camSession->cameraUseCallbackPtr_ = cameraUseStateChangeCb;
-    camSession->StartUsingPermissionCallback(callingTokenId, permissionName);
 }
 
 /*

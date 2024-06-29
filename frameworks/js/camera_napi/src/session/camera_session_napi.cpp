@@ -164,6 +164,7 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::effect_suggestion
     DECLARE_NAPI_FUNCTION("isEffectSuggestionSupported", CameraSessionNapi::IsEffectSuggestionSupported),
     DECLARE_NAPI_FUNCTION("enableEffectSuggestion", CameraSessionNapi::EnableEffectSuggestion),
     DECLARE_NAPI_FUNCTION("getSupportedEffectSuggestionType", CameraSessionNapi::GetSupportedEffectSuggestionType),
+    DECLARE_NAPI_FUNCTION("getSupportedEffectSuggestionTypes", CameraSessionNapi::GetSupportedEffectSuggestionType),
     DECLARE_NAPI_FUNCTION("setEffectSuggestionStatus", CameraSessionNapi::SetEffectSuggestionStatus),
     DECLARE_NAPI_FUNCTION("updateEffectSuggestion", CameraSessionNapi::UpdateEffectSuggestion)
 };

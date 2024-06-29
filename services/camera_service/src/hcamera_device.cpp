@@ -95,6 +95,8 @@ HCameraDevice::HCameraDevice(
     MEDIA_INFO_LOG("HCameraDevice::HCameraDevice Contructor Camera: %{public}s", cameraID.c_str());
     isOpenedCameraDevice_.store(false);
     CameraTimer::GetInstance()->IncreaseUserCount();
+    sptr<CameraPrivacy> cameraPrivacy = new CameraPrivacy(this, callingTokenId);
+    SetCameraPrivacy(cameraPrivacy);
 }
 
 HCameraDevice::~HCameraDevice()
@@ -102,6 +104,7 @@ HCameraDevice::~HCameraDevice()
     UnPrepareZoom();
     CameraTimer::GetInstance()->Unregister(zoomTimerId_);
     CameraTimer::GetInstance()->DecreaseUserCount();
+    SetCameraPrivacy(nullptr);
     MEDIA_INFO_LOG("HCameraDevice::~HCameraDevice Destructor Camera: %{public}s", cameraID_.c_str());
 }
 
@@ -319,26 +322,25 @@ int32_t HCameraDevice::Close()
 
 int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
 {
-    MEDIA_DEBUG_LOG("HCameraDevice::OpenDevice start");
+    MEDIA_INFO_LOG("HCameraDevice::OpenDevice start cameraId: %{public}s", cameraID_.c_str());
     CAMERA_SYNC_TRACE;
-    int32_t errorCode;
-    MEDIA_INFO_LOG("HCameraDevice::OpenDevice Opening camera device: %{public}s", cameraID_.c_str());
-
-    {
-        bool canOpenDevice = CanOpenCamera();
-        if (!canOpenDevice) {
-            MEDIA_ERR_LOG("refuse to turning on the camera");
-            return CAMERA_DEVICE_CONFLICT;
-        }
-        CameraReportUtils::GetInstance().SetOpenCamPerfStartInfo(cameraID_.c_str(), CameraReportUtils::GetCallerInfo());
-        errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_, isEnableSecCam);
-        if (errorCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");
-        } else {
-            ResetHdiStreamId();
-            isOpenedCameraDevice_.store(true);
-            HCameraDeviceManager::GetInstance()->AddDevice(IPCSkeleton::GetCallingPid(), this);
-        }
+    int32_t errorCode = HandlePrivacyBeforeOpenDevice();
+    if (errorCode != CAMERA_OK) {
+        return errorCode;
+    }
+    bool canOpenDevice = CanOpenCamera();
+    if (!canOpenDevice) {
+        MEDIA_ERR_LOG("refuse to turning on the camera");
+        return CAMERA_DEVICE_CONFLICT;
+    }
+    CameraReportUtils::GetInstance().SetOpenCamPerfStartInfo(cameraID_.c_str(), CameraReportUtils::GetCallerInfo());
+    errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_, isEnableSecCam);
+    if (errorCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCameraDevice::OpenDevice Failed to open camera");
+    } else {
+        ResetHdiStreamId();
+        isOpenedCameraDevice_.store(true);
+        HCameraDeviceManager::GetInstance()->AddDevice(IPCSkeleton::GetCallingPid(), this);
     }
     errorCode = InitStreamOperator();
     if (errorCode != CAMERA_OK) {
@@ -347,25 +349,57 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
     std::lock_guard<std::mutex> lockSetting(opMutex_);
     if (hdiCameraDevice_ != nullptr) {
         cameraHostManager_->AddCameraDevice(cameraID_, this);
-        if (updateSettings_ != nullptr) {
+        if (updateSettings_ != nullptr || deviceMuteMode_) {
+            if (deviceMuteMode_) {
+                CreateMuteSetting(updateSettings_);
+            }
             errorCode = UpdateDeviceSetting();
             if (errorCode != CAMERA_OK) {
                 return errorCode;
             }
             errorCode = HdiToServiceError((CamRetCode)(hdiCameraDevice_->SetResultMode(ON_CHANGED)));
-        } else {
-            if (deviceMuteMode_) {
-                CreateMuteSetting(updateSettings_);
-                errorCode = UpdateDeviceSetting();
-                if (errorCode != CAMERA_OK) {
-                    return errorCode;
-                }
-                errorCode = HdiToServiceError((CamRetCode)(hdiCameraDevice_->SetResultMode(ON_CHANGED)));
-            }
         }
     }
-    OpenDeviceNext();
+    HandleFoldableDevice();
+    int pid = IPCSkeleton::GetCallingPid();
+    int uid = IPCSkeleton::GetCallingUid();
+    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, clientUserId_);
+    clientName_ = GetClientBundle(uid);
+    POWERMGR_SYSEVENT_CAMERA_CONNECT(pid, uid, cameraID_.c_str(), clientName_);
+    NotifyCameraSessionStatus(true);
+    NotifyCameraStatus(CAMERA_OPEN);
+    MEDIA_INFO_LOG("HCameraDevice::OpenDevice end cameraId: %{public}s", cameraID_.c_str());
     return errorCode;
+}
+
+int32_t HCameraDevice::HandlePrivacyBeforeOpenDevice()
+{
+    MEDIA_DEBUG_LOG("enter HandlePrivacyBeforeOpenDevice");
+    if (IsHapTokenId(callerToken_)) {
+        auto cameraPrivacy = GetCameraPrivacy();
+        if (cameraPrivacy == nullptr) {
+            MEDIA_ERR_LOG("cameraPrivacy is null");
+            return CAMERA_OPERATION_NOT_ALLOWED;
+        }
+        if (!cameraPrivacy->IsAllowUsingCamera()) {
+            MEDIA_ERR_LOG("OpenDevice is not allowed!");
+            return CAMERA_OPERATION_NOT_ALLOWED;
+        }
+        cameraPrivacy->AddCameraPermissionUsedRecord();
+        cameraPrivacy->StartUsingPermissionCallback();
+        cameraPrivacy->RegisterPermissionCallback();
+    }
+    return CAMERA_OK;
+}
+
+void HCameraDevice::HandlePrivacyAfterCloseDevice()
+{
+    MEDIA_DEBUG_LOG("enter handlePrivacyAfterCloseDevice");
+    auto cameraPrivacy = GetCameraPrivacy();
+    if (cameraPrivacy != nullptr) {
+        cameraPrivacy->StopUsingPermissionCallback();
+        cameraPrivacy->UnregisterPermissionCallback();
+    }
 }
 
 int32_t HCameraDevice::UpdateDeviceSetting()
@@ -383,21 +417,13 @@ int32_t HCameraDevice::UpdateDeviceSetting()
     return CAMERA_OK;
 }
 
-void HCameraDevice::OpenDeviceNext()
+void HCameraDevice::HandleFoldableDevice()
 {
     bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
     MEDIA_DEBUG_LOG("HCameraDevice::OpenDevice isFoldable is %d", isFoldable);
     if (isFoldable) {
         RegisterFoldStatusListener();
     }
-    MEDIA_DEBUG_LOG("HCameraDevice::OpenDevice end");
-    int pid = IPCSkeleton::GetCallingPid();
-    int uid = IPCSkeleton::GetCallingUid();
-    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, clientUserId_);
-    clientName_ = GetClientBundle(uid);
-    POWERMGR_SYSEVENT_CAMERA_CONNECT(pid, uid, cameraID_.c_str(), clientName_);
-    NotifyCameraSessionStatus(true);
-    NotifyCameraStatus(CAMERA_OPEN);
 }
 
 int32_t HCameraDevice::CloseDevice()
@@ -423,6 +449,7 @@ int32_t HCameraDevice::CloseDevice()
             HCameraDeviceManager::GetInstance()->RemoveDevice();
             MEDIA_INFO_LOG("Closing camera device: %{public}s end", cameraID_.c_str());
             hdiCameraDevice_ = nullptr;
+            HandlePrivacyAfterCloseDevice();
         } else {
             MEDIA_INFO_LOG("hdiCameraDevice is null");
         }
@@ -439,7 +466,6 @@ int32_t HCameraDevice::CloseDevice()
         std::lock_guard<std::mutex> lock(deviceSvcCbMutex_);
         deviceSvcCallback_ = nullptr;
     }
-    SetDeviceEventCallback(nullptr);
     POWERMGR_SYSEVENT_CAMERA_DISCONNECT(cameraID_.c_str());
     MEDIA_DEBUG_LOG("HCameraDevice::CloseDevice end");
     NotifyCameraSessionStatus(false);
@@ -1009,18 +1035,6 @@ sptr<ICameraDeviceServiceCallback> HCameraDevice::GetDeviceServiceCallback()
     return deviceSvcCallback_;
 }
 
-void HCameraDevice::SetDeviceEventCallback(sptr<DeviceEventCallback> callback)
-{
-    std::lock_guard<std::mutex> lock(deviceEventCbMutex_);
-    deviceEventCallback_ = callback;
-}
-
-sptr<DeviceEventCallback> HCameraDevice::GetDeviceEventCallback()
-{
-    std::lock_guard<std::mutex> lock(deviceEventCbMutex_);
-    return deviceEventCallback_;
-}
-
 void HCameraDevice::UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings)
 {
     if (changedSettings == nullptr) {
@@ -1146,11 +1160,6 @@ int32_t HCameraDevice::OnError(const OHOS::HDI::Camera::V1_0::ErrorType type, co
         CAMERA_SYSEVENT_FAULT(CreateMsg("CameraDeviceServiceCallback::OnError() is called!, errorType: %d,"
                                         "errorMsg: %d",
             errorType, errorMsg));
-    }
-
-    auto deviceEventCallback = GetDeviceEventCallback();
-    if (deviceEventCallback != nullptr) {
-        deviceEventCallback->OnError(type);
     }
     return CAMERA_OK;
 }
