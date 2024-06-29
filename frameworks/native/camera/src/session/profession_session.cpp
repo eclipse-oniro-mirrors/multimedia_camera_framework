@@ -1219,14 +1219,12 @@ int32_t ProfessionSession::SetPhysicalAperture(float physicalAperture)
     // accurately currentZoomRatio need smoothing zoom done
     float currentZoomRatio = GetZoomRatio();
     int zoomMinIndex = 0;
-    int zoomMaxIndex = 1;
-    auto it = std::find_if(physicalApertures.begin(), physicalApertures.end(),
-        [&currentZoomRatio, &zoomMinIndex, &zoomMaxIndex](const std::vector<float> physicalApertureRange) {
-            return physicalApertureRange[zoomMaxIndex] > currentZoomRatio &&
-                   currentZoomRatio >= physicalApertureRange[zoomMinIndex];
+    auto it = std::find_if(physicalApertures.rbegin(), physicalApertures.rend(),
+        [&currentZoomRatio, &zoomMinIndex](const std::vector<float> physicalApertureRange) {
+            return (currentZoomRatio - physicalApertureRange[zoomMinIndex]) >= -std::numeric_limits<float>::epsilon();
         });
     float autoAperture = 0.0;
-    if (it == physicalApertures.end()) {
+    if (it == physicalApertures.rend()) {
         MEDIA_ERR_LOG("current zoomRatio not supported in physical apertures zoom ratio");
         return CameraErrorCode::SUCCESS;
     }

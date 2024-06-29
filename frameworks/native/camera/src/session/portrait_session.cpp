@@ -348,12 +348,11 @@ void PortraitSession::SetPhysicalAperture(const float physicalAperture)
     std::vector<std::vector<float>> physicalApertures = GetSupportedPhysicalApertures();
     float currentZoomRatio = GetZoomRatio();
     int zoomMinIndex = 0;
-    int zoomMaxIndex = 1;
-    auto it = std::find_if(physicalApertures.begin(), physicalApertures.end(),
-        [&currentZoomRatio, &zoomMinIndex, &zoomMaxIndex](const std::vector<float> physicalApertureRange) {
-            return physicalApertureRange[zoomMaxIndex] > currentZoomRatio >= physicalApertureRange[zoomMinIndex];
+    auto it = std::find_if(physicalApertures.rbegin(), physicalApertures.rend(),
+        [&currentZoomRatio, &zoomMinIndex](const std::vector<float> physicalApertureRange) {
+            return (currentZoomRatio - physicalApertureRange[zoomMinIndex]) >= -std::numeric_limits<float>::epsilon();
         });
-    if (it == physicalApertures.end()) {
+    if (it == physicalApertures.rend()) {
         MEDIA_ERR_LOG("current zoomRatio not supported in physical apertures zoom ratio");
         return;
     }

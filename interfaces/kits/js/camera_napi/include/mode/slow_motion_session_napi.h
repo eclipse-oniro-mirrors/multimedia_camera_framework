@@ -56,7 +56,6 @@ public:
     static napi_value SlowMotionSessionNapiConstructor(napi_env env, napi_callback_info info);
     static napi_value IsSlowMotionDetectionSupported(napi_env env, napi_callback_info info);
     static napi_value SetSlowMotionDetectionArea(napi_env env, napi_callback_info info);
-    static napi_value EnableMotionDetection(napi_env env, napi_callback_info info);
     napi_env env_;
     sptr<SlowMotionSession> slowMotionSession_;
     static thread_local napi_ref sConstructor_;
