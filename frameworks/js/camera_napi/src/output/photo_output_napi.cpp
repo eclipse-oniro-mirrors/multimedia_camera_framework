@@ -86,13 +86,14 @@ void PhotoListener::OnBufferAvailable()
     UpdateJSCallbackAsync(photoSurface_);
 }
 
-void PhotoListener::ExecutePhoto(sptr<SurfaceBuffer> surfaceBuffer) const
+void PhotoListener::ExecutePhoto(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp) const
 {
     MEDIA_INFO_LOG("ExecutePhoto");
     napi_value result[ARGS_TWO] = {nullptr, nullptr};
     napi_value retVal;
     napi_value mainImage = nullptr;
-    std::shared_ptr<Media::NativeImage> image = std::make_shared<Media::NativeImage>(surfaceBuffer, bufferProcessor_);
+    std::shared_ptr<Media::NativeImage> image = std::make_shared<Media::NativeImage>(surfaceBuffer,
+        bufferProcessor_, timestamp);
     napi_get_undefined(env_, &result[PARAM0]);
     napi_get_undefined(env_, &result[PARAM1]);
     mainImage = Media::ImageNapi::Create(env_, image);
@@ -277,7 +278,7 @@ void PhotoListener::UpdateJSCallback(sptr<Surface> photoSurface) const
     if ((callbackFlag_ & CAPTURE_PHOTO_ASSET) != 0) {
         ExecutePhotoAsset(surfaceBuffer, isDegradedImage == 0);
     } else if (isDegradedImage == 0 && (callbackFlag_ & CAPTURE_PHOTO) != 0) {
-        ExecutePhoto(surfaceBuffer);
+        ExecutePhoto(surfaceBuffer, timestamp);
     } else if (isDegradedImage != 0 && (callbackFlag_ & CAPTURE_DEFERRED_PHOTO) != 0) {
         ExecuteDeferredPhoto(surfaceBuffer);
     } else {
