@@ -66,6 +66,8 @@ enum class CameraServiceStatus : int32_t {
     SERVICE_NOT_READY,
 };
 
+class CameraInfoDumper;
+
 class HCameraService : public SystemAbility, public HCameraServiceStub, public HCameraHostManager::StatusCallback {
     DECLARE_SYSTEM_ABILITY(HCameraService);
 
@@ -181,20 +183,27 @@ private:
     void FillCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos,
         vector<string>& cameraIds, vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList);
     void OnMute(bool muteMode);
-    void CameraSummary(vector<string> cameraIds, string& dumpString);
-    void CameraDumpCameraInfo(std::string& dumpString, std::vector<std::string>& cameraIds,
+
+    void DumpCameraSummary(vector<string> cameraIds, CameraInfoDumper& infoDumper);
+    void DumpCameraInfo(CameraInfoDumper& infoDumper, std::vector<std::string>& cameraIds,
         std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList);
-    void CameraDumpAbility(common_metadata_header_t* metadataEntry, string& dumpString);
-    void CameraDumpStreaminfo(common_metadata_header_t* metadataEntry, string& dumpString);
-    void CameraDumpZoom(common_metadata_header_t* metadataEntry, string& dumpString);
-    void CameraDumpFlash(common_metadata_header_t* metadataEntry, string& dumpString);
-    void CameraDumpAF(common_metadata_header_t* metadataEntry, string& dumpString);
-    void CameraDumpAE(common_metadata_header_t* metadataEntry, string& dumpString);
-    void CameraDumpSensorInfo(common_metadata_header_t* metadataEntry, string& dumpString);
-    void CameraDumpVideoStabilization(common_metadata_header_t* metadataEntry, string& dumpString);
-    void CameraDumpVideoFrameRateRange(common_metadata_header_t* metadataEntry, string& dumpString);
-    void CameraDumpPrelaunch(common_metadata_header_t* metadataEntry, string& dumpString);
-    void CameraDumpThumbnail(common_metadata_header_t* metadataEntry, string& dumpString);
+    void DumpCameraAbility(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
+    void DumpCameraStreamInfo(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
+    void DumpCameraZoom(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
+    void DumpCameraFlash(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
+    void DumpCameraAF(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
+    void DumpCameraAE(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
+    void DumpCameraSensorInfo(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
+    void DumpCameraVideoStabilization(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
+    void DumpCameraVideoFrameRateRange(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
+    void DumpCameraPrelaunch(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
+    void DumpCameraThumbnail(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
+    void DumpPreconfigInfo(CameraInfoDumper& infoDumper);
+    void DumpPreconfig720P(CameraInfoDumper& infoDumper);
+    void DumpPreconfig1080P(CameraInfoDumper& infoDumper);
+    void DumpPreconfig4k(CameraInfoDumper& infoDumper);
+    void DumpPreconfigHighQuality(CameraInfoDumper& infoDumper);
+
     vector<shared_ptr<CameraMetaInfo>> ChooseDeFaultCameras(vector<shared_ptr<CameraMetaInfo>> cameraInfos);
     vector<shared_ptr<CameraMetaInfo>> ChoosePhysicalCameras(const vector<shared_ptr<CameraMetaInfo>>& cameraInfos,
         const vector<shared_ptr<CameraMetaInfo>>& choosedCameras);

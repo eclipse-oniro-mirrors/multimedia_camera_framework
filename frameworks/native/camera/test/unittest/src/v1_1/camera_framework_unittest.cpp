@@ -3469,9 +3469,9 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_017, TestSize.Level
     sptr<ICaptureSessionCallback> callback1 = nullptr;
     camSession->SetCallback(callback1);
 
-    std::string dumpString = "HCaptureSession";
-    camSession->dumpSessionInfo(dumpString);
-    camSession->dumpSessions(dumpString);
+    CameraInfoDumper infoDumper(0);
+    camSession->DumpSessionInfo(infoDumper);
+    camSession->DumpSessions(infoDumper);
 
     input->Close();
     camSession->Release();
@@ -3921,7 +3921,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_026, TestSize.Level
     int32_t format = 0;
     int32_t width = 0;
     int32_t height = 0;
-    std::string  dumpString ="HStreamRepeat";
+    CameraInfoDumper infoDumper(0);
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
     sptr<IStreamRepeatCallback> callback = nullptr;
     sptr<OHOS::IBufferProducer> producer = nullptr;
@@ -3934,7 +3934,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_026, TestSize.Level
     EXPECT_EQ(streamRepeat->SetCallback(callback), CAMERA_INVALID_ARG);
     EXPECT_EQ(streamRepeat->OnFrameError(BUFFER_LOST), 0);
     EXPECT_EQ(streamRepeat->AddDeferredSurface(producer), CAMERA_INVALID_ARG);
-    streamRepeat->DumpStreamInfo(dumpString);
+    streamRepeat->DumpStreamInfo(infoDumper);
     EXPECT_EQ(streamRepeat->AddDeferredSurface(producer1), CAMERA_INVALID_STATE);
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata1 = nullptr;
@@ -3942,7 +3942,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_026, TestSize.Level
     streamRepeat->LinkInput(mockStreamOperator, metadata1);
     mockStreamOperator = nullptr;
     streamRepeat->LinkInput(mockStreamOperator, metadata);
-    streamRepeat->DumpStreamInfo(dumpString);
+    streamRepeat->DumpStreamInfo(infoDumper);
     EXPECT_EQ(streamRepeat->Stop(), CAMERA_INVALID_STATE);
 }
 
@@ -3957,6 +3957,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_026, TestSize.Level
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_027, TestSize.Level0)
 {
     int32_t format = 0;
+    CameraInfoDumper infoDumper(0);
     std::string  dumpString ="HStreamMetadata";
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
@@ -3970,7 +3971,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_027, TestSize.Level
     streamMetadata->LinkInput(mockStreamOperator, metadata);
     streamMetadata->Stop();
     streamMetadata->Start();
-    streamMetadata->DumpStreamInfo(dumpString);
+    streamMetadata->DumpStreamInfo(infoDumper);
     streamMetadata->Start();
     streamMetadata->Stop();
 }
@@ -4013,7 +4014,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_029, TestSize.Level
     int32_t captureId = 0;
     int32_t frameCount = 0;
     uint64_t timestamp = 0;
-    std::string  dumpString ="hstream_capture";
+    CameraInfoDumper infoDumper(0);
     std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
     sptr<IStreamCaptureCallback> callback = nullptr;
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
@@ -4024,7 +4025,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_029, TestSize.Level
     EXPECT_EQ(streamCapture->SetThumbnail(false, producer1), CAMERA_OK);
     EXPECT_EQ(streamCapture->SetThumbnail(false, producer), CAMERA_OK);
     EXPECT_EQ(streamCapture->SetThumbnail(true, producer1), CAMERA_OK);
-    streamCapture->DumpStreamInfo(dumpString);
+    streamCapture->DumpStreamInfo(infoDumper);
     EXPECT_EQ(streamCapture->SetThumbnail(true, producer), CAMERA_OK);
     streamCapture->SetRotation(metadata);
     mockStreamOperator = nullptr;
@@ -4037,7 +4038,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_029, TestSize.Level
     EXPECT_EQ(streamCapture->OnFrameShutter(captureId, timestamp), CAMERA_OK);
     EXPECT_EQ(streamCapture->OnFrameShutterEnd(captureId, timestamp), CAMERA_OK);
     EXPECT_EQ(streamCapture->OnCaptureReady(captureId, timestamp), CAMERA_OK);
-    streamCapture->DumpStreamInfo(dumpString);
+    streamCapture->DumpStreamInfo(infoDumper);
 
     EXPECT_EQ(streamCapture->Release(),  0);
 }

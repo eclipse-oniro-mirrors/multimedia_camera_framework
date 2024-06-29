@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <mutex>
 #include <set>
+#include <string>
 
 #include "camera_log.h"
 #include "camera_util.h"
@@ -222,36 +223,46 @@ int32_t HStreamCommon::ReleaseStream(bool isDelay)
     return CAMERA_OK;
 }
 
-void HStreamCommon::DumpStreamInfo(std::string& dumpString)
+void HStreamCommon::DumpStreamInfo(CameraInfoDumper& infoDumper)
 {
     StreamInfo_V1_1 curStreamInfo;
     SetStreamInfo(curStreamInfo);
-    dumpString += "stream info: \n";
-    std::string bufferProducerId = "    Buffer producer Id:[";
+    std::string streamInfo = "Buffer producer Id:";
     {
         std::lock_guard<std::mutex> lock(producerLock_);
         if (curStreamInfo.v1_0.bufferQueue_ && curStreamInfo.v1_0.bufferQueue_->producer_) {
-            bufferProducerId += std::to_string(curStreamInfo.v1_0.bufferQueue_->producer_->GetUniqueId());
+            streamInfo.append("[" + std::to_string(curStreamInfo.v1_0.bufferQueue_->producer_->GetUniqueId()) + "]");
         } else {
-            bufferProducerId += "empty";
+            streamInfo.append("[empty]");
         }
     }
-    dumpString += bufferProducerId;
-    dumpString += "]    stream Id:[" + std::to_string(curStreamInfo.v1_0.streamId_);
-    std::map<int, std::string>::const_iterator iter =
-        g_cameraFormat.find(format_);
+    streamInfo.append("    stream Id:[" + std::to_string(curStreamInfo.v1_0.streamId_) + "]");
+    std::map<int, std::string>::const_iterator iter = g_cameraFormat.find(format_);
     if (iter != g_cameraFormat.end()) {
-        dumpString += "]    format:[" + iter->second;
+        streamInfo.append("    format:[" + iter->second + "]");
     }
-    dumpString += "]    width:[" + std::to_string(curStreamInfo.v1_0.width_);
-    dumpString += "]    height:[" + std::to_string(curStreamInfo.v1_0.height_);
-    dumpString += "]    dataspace:[" + std::to_string(curStreamInfo.v1_0.dataspace_);
-    dumpString += "]    StreamType:[" + std::to_string(curStreamInfo.v1_0.intent_);
-    dumpString += "]    TunnelMode:[" + std::to_string(curStreamInfo.v1_0.tunneledMode_);
-    dumpString += "]    Encoding Type:[" + std::to_string(curStreamInfo.v1_0.encodeType_) + "]:\n";
-    if (curStreamInfo.v1_0.bufferQueue_) {
-        delete curStreamInfo.v1_0.bufferQueue_;
+    streamInfo.append("  width:[" + std::to_string(curStreamInfo.v1_0.width_) + "]");
+    streamInfo.append("  height:[" + std::to_string(curStreamInfo.v1_0.height_) + "]");
+    streamInfo.append("  dataspace:[" + std::to_string(curStreamInfo.v1_0.dataspace_) + "]");
+    streamInfo.append("  StreamType:[" + std::to_string(curStreamInfo.v1_0.intent_) + "]");
+    streamInfo.append("  TunnelMode:[" + std::to_string(curStreamInfo.v1_0.tunneledMode_) + "]");
+    streamInfo.append("  Encoding Type:[" + std::to_string(curStreamInfo.v1_0.encodeType_) + "]");
+
+    infoDumper.Msg(streamInfo);
+    infoDumper.Push();
+    infoDumper.Title("Stream Extened Info");
+    for (auto& extInfo : curStreamInfo.extendedStreamInfos) {
+        auto bufferQueue = extInfo.bufferQueue;
+        infoDumper.Msg("type:" + std::to_string(static_cast<int32_t>(extInfo.type)) +
+                       "  width:" + std::to_string(static_cast<int32_t>(extInfo.width)) +
+                       "  height:" + std::to_string(static_cast<int32_t>(extInfo.height)) +
+                       "  format:" + std::to_string(static_cast<int32_t>(extInfo.format)) +
+                       "  dataspace:" + std::to_string(static_cast<int32_t>(extInfo.dataspace)) +
+                       "  producer:" + ((bufferQueue == nullptr || bufferQueue->producer_ == nullptr)
+                               ? "empty"
+                               : std::to_string(bufferQueue->producer_->GetUniqueId())));
     }
+    infoDumper.Pop();
 }
 
 void HStreamCommon::PrintCaptureDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_)

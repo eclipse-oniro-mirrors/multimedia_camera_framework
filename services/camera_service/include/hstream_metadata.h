@@ -38,7 +38,7 @@ public:
     int32_t Release() override;
     int32_t Start() override;
     int32_t Stop() override;
-    void DumpStreamInfo(std::string& dumpString) override;
+    void DumpStreamInfo(CameraInfoDumper& infoDumper) override;
 
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
 };

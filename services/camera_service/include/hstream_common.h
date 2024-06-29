@@ -24,6 +24,7 @@
 
 #include "camera/v1_2/types.h"
 #include "camera/v1_3/types.h"
+#include "camera_info_dumper.h"
 #include "camera_metadata_info.h"
 #include "icapture_session.h"
 #include "istream_common.h"
@@ -48,7 +49,7 @@ public:
     virtual int32_t UnlinkInput();
     virtual void SetStreamInfo(StreamInfo_V1_1& streamInfo) = 0;
     virtual int32_t ReleaseStream(bool isDelay) = 0;
-    virtual void DumpStreamInfo(std::string& dumpString) = 0;
+    virtual void DumpStreamInfo(CameraInfoDumper& infoDumper) = 0;
 
     virtual void SetColorSpace(ColorSpace colorSpace) final;
     virtual int32_t StopStream() final;

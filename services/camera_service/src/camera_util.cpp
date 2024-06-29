@@ -70,7 +70,12 @@ std::map<int, std::string> g_cameraFormat = {
     {1, "RGBA_8888"},
     {2, "YCBCR_420_888"},
     {3, "YCRCB_420_SP"},
-    {4, "JPEG"},
+    {4, "YCBCR_420_SP"},
+    {5, "JPEG"},
+    {6, "YCBCR_P010"},
+    {7, "YCRCB_P010"},
+    {8, "DNG"},
+    {9, "422_YUYV"},
 };
 
 std::map<int, std::string> g_cameraFocusMode = {

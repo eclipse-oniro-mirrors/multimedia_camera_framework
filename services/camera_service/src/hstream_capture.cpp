@@ -458,16 +458,15 @@ int32_t HStreamCapture::OnCaptureReady(int32_t captureId, uint64_t timestamp)
     return CAMERA_OK;
 }
 
-void HStreamCapture::DumpStreamInfo(std::string& dumpString)
+void HStreamCapture::DumpStreamInfo(CameraInfoDumper& infoDumper)
 {
-    dumpString += "capture stream:\n";
-    dumpString += "ThumbnailSwitch:[" + std::to_string(thumbnailSwitch_);
+    infoDumper.Title("capture stream");
+    infoDumper.Msg("ThumbnailSwitch:[" + std::to_string(thumbnailSwitch_) + "]");
     if (thumbnailBufferQueue_) {
-        dumpString += "] ThumbnailBuffer producer Id:["
-            + std::to_string(thumbnailBufferQueue_->producer_->GetUniqueId());
+        infoDumper.Msg(
+            "ThumbnailBuffer producer Id:[" + std::to_string(thumbnailBufferQueue_->producer_->GetUniqueId()) + "]");
     }
-    dumpString += "]\n";
-    HStreamCommon::DumpStreamInfo(dumpString);
+    HStreamCommon::DumpStreamInfo(infoDumper);
 }
 
 int32_t HStreamCapture::OperatePermissionCheck(uint32_t interfaceCode)
