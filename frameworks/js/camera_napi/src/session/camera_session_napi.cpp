@@ -3450,9 +3450,6 @@ const CameraSessionNapi::EmitterFunctions& CameraSessionNapi::GetEmitterFunction
         { "smoothZoomInfoAvailable", {
             &CameraSessionNapi::RegisterSmoothZoomCallbackListener,
             &CameraSessionNapi::UnregisterSmoothZoomCallbackListener } },
-        { "slowMotionStateChange", {
-            &CameraSessionNapi::RegisterSlowMotionStateCb,
-            &CameraSessionNapi::UnregisterSlowMotionStateCb } },
         { "slowMotionStatus", {
             &CameraSessionNapi::RegisterSlowMotionStateCb,
             &CameraSessionNapi::UnregisterSlowMotionStateCb } },

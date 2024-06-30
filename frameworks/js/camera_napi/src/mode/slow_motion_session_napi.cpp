@@ -65,7 +65,7 @@ void SlowMotionStateListener::OnSlowMotionStateCb(const SlowMotionState state) c
     napi_get_undefined(env_, &result[PARAM0]);
     napi_create_int32(env_, state, &result[PARAM1]);
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("slowMotionStateChange", callbackNapiPara);
+    ExecuteCallback("slowMotionStatus", callbackNapiPara);
 }
 
 void SlowMotionStateListener::OnSlowMotionState(SlowMotionState state)
@@ -97,9 +97,6 @@ napi_value SlowMotionSessionNapi::Init(napi_env env, napi_value exports)
     napi_status status;
     napi_value ctorObj;
     std::vector<napi_property_descriptor> slow_motion_props = {
-        DECLARE_NAPI_FUNCTION("isMotionDetectionSupported", IsSlowMotionDetectionSupported),
-        DECLARE_NAPI_FUNCTION("startMotionMonitoring", SetSlowMotionDetectionArea),
-        DECLARE_NAPI_FUNCTION("enableMotionDetection", EnableMotionDetection),
         DECLARE_NAPI_FUNCTION("isSlowMotionDetectionSupported", IsSlowMotionDetectionSupported),
         DECLARE_NAPI_FUNCTION("setSlowMotionDetectionArea", SetSlowMotionDetectionArea)
     };
@@ -295,39 +292,6 @@ void SlowMotionSessionNapi::UnregisterSlowMotionStateCb(
     } else {
         slowMotionStateListener_->RemoveCallbackRef(eventName, callback);
     }
-}
-
-napi_value SlowMotionSessionNapi::EnableMotionDetection(napi_env env, napi_callback_info info)
-{
-    MEDIA_DEBUG_LOG("EnableMotionDetection is called");
-    napi_value result = CameraNapiUtils::GetUndefinedValue(env);
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi EnableMotionDetection is called!");
-        return result;
-    }
-    bool isEnable;
-    SlowMotionSessionNapi* slowMotionSessionNapi = nullptr;
-    CameraNapiParamParser jsParamParser(env, info, slowMotionSessionNapi, isEnable);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("EnableMotionDetection parse parameter occur error");
-        return result;
-    }
-
-    if (slowMotionSessionNapi->slowMotionSession_ != nullptr) {
-        MEDIA_INFO_LOG("EnableMotionDetection:%{public}d", isEnable);
-        slowMotionSessionNapi->slowMotionSession_->LockForControl();
-        int32_t retCode = slowMotionSessionNapi->slowMotionSession_->EnableMotionDetection(isEnable);
-        slowMotionSessionNapi->slowMotionSession_->UnlockForControl();
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            MEDIA_ERR_LOG("EnableMotionDetection fail %{public}d", retCode);
-            return result;
-        }
-    } else {
-        MEDIA_ERR_LOG("EnableMotionDetection get native object fail");
-        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
-        return result;
-    }
-    return result;
 }
 } // namespace CameraStandard
 } // namespace OHOS
