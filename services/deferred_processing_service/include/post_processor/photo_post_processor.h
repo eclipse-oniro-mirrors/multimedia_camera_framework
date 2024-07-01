@@ -21,6 +21,7 @@
 #include <iostream>
 #include <mutex>
 #include <list>
+#include <atomic>
 
 #include "ipc_file_descriptor.h"
 #include "v1_2/icamera_host_callback.h"
@@ -64,6 +65,18 @@ public:
     void OnSessionDied();
     int GetUserId();
 
+    inline sptr<OHOS::HDI::Camera::V1_2::IImageProcessSession> GetImageProcessSession()
+    {
+        std::lock_guard<std::mutex> lock(imageProcessSessionMutex_);
+        return innerImageProcessSession_;
+    }
+
+    inline void SetImageProcessSession(sptr<OHOS::HDI::Camera::V1_2::IImageProcessSession> ImageProcessSession)
+    {
+        std::lock_guard<std::mutex> lock(imageProcessSessionMutex_);
+        innerImageProcessSession_ = ImageProcessSession;
+    }
+
 private:
     class PhotoProcessListener;
     class SessionDeathRecipient;
@@ -76,16 +89,20 @@ private:
     void DisconnectServiceIfNecessary();
     void ScheduleConnectService();
     std::mutex mutex_;
+    std::mutex imageProcessSessionMutex_;
+    std::mutex imageId2HandleMutex_;
+    std::mutex imageId2CrashCountMutex_;
+    std::mutex removeNeededListMutex_;
     int userId_;
     TaskManager* taskManager_;
     std::shared_ptr<IImageProcessCallbacks> imageProcessCallacks_;
     sptr<PhotoProcessListener> listener_;
-    sptr<OHOS::HDI::Camera::V1_2::IImageProcessSession> imageProcessSession_;
+    sptr<OHOS::HDI::Camera::V1_2::IImageProcessSession> innerImageProcessSession_;
     sptr<IRemoteObject::DeathRecipient> sessionDeathRecipient_;
     std::unordered_map<std::string, uint32_t> imageId2Handle_;
     std::unordered_map<std::string, uint32_t> imageId2CrashCount_;
     std::list<std::string> removeNeededList_;
-    int consecutiveTimeoutCount_;
+    std::atomic<int> consecutiveTimeoutCount_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard
