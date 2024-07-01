@@ -67,7 +67,7 @@ public:
     void Release() override;
 
 private:
-    const BufferHandle* bufferHandle_;
+    BufferHandle* bufferHandle_;
     int32_t format_;
     int32_t photoWidth_;
     int32_t photoHeight_;
