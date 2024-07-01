@@ -603,26 +603,31 @@ bool HCameraService::ShouldSkipStatusUpdates(pid_t pid)
     return true;
 }
 
-void HCameraService::CreateAndSaveTask(const string& cameraId, CameraStatus status, uint32_t pid)
+void HCameraService::CreateAndSaveTask(const string& cameraId, CameraStatus status, uint32_t pid,
+    const string& bundleName)
 {
-    auto task = [cameraId, status, pid, this]() {
+    auto task = [cameraId, status, pid, &bundleName, this]() {
         auto it = cameraServiceCallbacks_.find(pid);
         if (it != cameraServiceCallbacks_.end()) {
             if (it->second != nullptr) {
                 MEDIA_INFO_LOG("trigger callback due to unfreeze pid: %{public}d", pid);
-                it->second->OnCameraStatusChanged(cameraId, status);
+                it->second->OnCameraStatusChanged(cameraId, status, bundleName);
             }
         }
     };
     delayCbtaskMap[pid] = task;
 }
 
-void HCameraService::OnCameraStatus(const string& cameraId, CameraStatus status)
+void HCameraService::OnCameraStatus(const string& cameraId, CameraStatus status, CallbackInvoker invoker)
 {
     lock_guard<mutex> lock(cameraCbMutex_);
+    std::string bundleName = "";
+    if (invoker == CallbackInvoker::APPLICATION) {
+        bundleName = GetClientBundle(IPCSkeleton::GetCallingUid());
+    }
     MEDIA_INFO_LOG("HCameraService::OnCameraStatus callbacks.size = %{public}zu, cameraId = %{public}s, "
-        "status = %{public}d, pid = %{public}d", cameraServiceCallbacks_.size(), cameraId.c_str(), status,
-        IPCSkeleton::GetCallingPid());
+        "status = %{public}d, pid = %{public}d, bundleName = %{public}s", cameraServiceCallbacks_.size(),
+        cameraId.c_str(), status, IPCSkeleton::GetCallingPid(), bundleName.c_str());
     for (auto it : cameraServiceCallbacks_) {
         if (it.second == nullptr) {
             MEDIA_ERR_LOG("HCameraService::OnCameraStatus pid:%{public}d cameraServiceCallback is null", it.first);
@@ -630,9 +635,9 @@ void HCameraService::OnCameraStatus(const string& cameraId, CameraStatus status)
         }
         uint32_t pid = it.first;
         if (ShouldSkipStatusUpdates(pid)) {
-            CreateAndSaveTask(cameraId, status, pid);
+            CreateAndSaveTask(cameraId, status, pid, bundleName);
         } else {
-            it.second->OnCameraStatusChanged(cameraId, status);
+            it.second->OnCameraStatusChanged(cameraId, status, bundleName);
             CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d",
                 cameraId.c_str(), status));
         }

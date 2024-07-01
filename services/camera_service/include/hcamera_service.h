@@ -32,6 +32,7 @@
 #include "hstream_metadata.h"
 #include "hstream_repeat.h"
 #include "datashare_helper.h"
+#include "icamera_service_callback.h"
 #include "iremote_stub.h"
 #include "privacy_kit.h"
 #include "refbase.h"
@@ -121,14 +122,15 @@ public:
     CameraServiceStatus GetServiceStatus();
     void SetServiceStatus(CameraServiceStatus);
     // HCameraHostManager::StatusCallback
-    void OnCameraStatus(const string& cameraId, CameraStatus status) override;
+    void OnCameraStatus(const string& cameraId, CameraStatus status,
+                        CallbackInvoker invoker) override;
     void OnFlashlightStatus(const string& cameraId, FlashStatus status) override;
     void OnTorchStatus(TorchStatus status) override;
     // for resource proxy
     int32_t ProxyForFreeze(const std::set<int32_t>& pidList, bool isProxy) override;
     int32_t ResetAllFreezeStatus() override;
     bool ShouldSkipStatusUpdates(pid_t pid);
-    void CreateAndSaveTask(const string& cameraId, CameraStatus status, uint32_t pid);
+    void CreateAndSaveTask(const string& cameraId, CameraStatus status, uint32_t pid, const string& bundleName);
 
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager);
@@ -144,11 +146,11 @@ private:
     public:
         explicit ServiceHostStatus(wptr<HCameraService> cameraService) : cameraService_(cameraService) {};
         virtual ~ServiceHostStatus() = default;
-        void OnCameraStatus(const std::string& cameraId, CameraStatus status) override
+        void OnCameraStatus(const std::string& cameraId, CameraStatus status, CallbackInvoker invoker) override
         {
             auto cameraService = cameraService_.promote();
             if (cameraService != nullptr) {
-                cameraService->OnCameraStatus(cameraId, status);
+                cameraService->OnCameraStatus(cameraId, status, invoker);
             }
         }
         void OnFlashlightStatus(const std::string& cameraId, FlashStatus status) override

@@ -66,6 +66,7 @@ struct CameraStatusInfo {
     sptr<CameraInfo> cameraInfo;
     sptr<CameraDevice> cameraDevice;
     CameraStatus cameraStatus;
+    std::string bundleName;
     ~CameraStatusInfo()
     {
         cameraInfo = nullptr;
@@ -717,7 +718,8 @@ private:
 class CameraStatusServiceCallback : public HCameraServiceCallbackStub {
 public:
     explicit CameraStatusServiceCallback(sptr<CameraManager> cameraManager) : cameraManager_(cameraManager) {}
-    int32_t OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status) override;
+    int32_t OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status,
+        const std::string& bundleName) override;
     int32_t OnFlashlightStatusChanged(const std::string& cameraId, const FlashStatus status) override;
 
 private:

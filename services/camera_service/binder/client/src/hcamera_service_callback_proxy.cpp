@@ -22,7 +22,8 @@ namespace CameraStandard {
 HCameraServiceCallbackProxy::HCameraServiceCallbackProxy(const sptr<IRemoteObject> &impl)
     : IRemoteProxy<ICameraServiceCallback>(impl) { }
 
-int32_t HCameraServiceCallbackProxy::OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status)
+int32_t HCameraServiceCallbackProxy::OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status,
+    const std::string& bundleName)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -33,6 +34,7 @@ int32_t HCameraServiceCallbackProxy::OnCameraStatusChanged(const std::string& ca
     data.WriteInterfaceToken(GetDescriptor());
     data.WriteString(cameraId);
     data.WriteInt32(status);
+    data.WriteString(bundleName);
 
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CameraServiceCallbackInterfaceCode::CAMERA_CALLBACK_STATUS_CHANGED),

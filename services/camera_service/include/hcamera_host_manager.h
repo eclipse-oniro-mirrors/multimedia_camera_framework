@@ -48,7 +48,8 @@ public:
     class StatusCallback {
     public:
         virtual ~StatusCallback() = default;
-        virtual void OnCameraStatus(const std::string& cameraId, CameraStatus status) = 0;
+        virtual void OnCameraStatus(const std::string& cameraId, CameraStatus status,
+            CallbackInvoker invoker = CallbackInvoker::CAMERA_HOST) = 0;
         virtual void OnFlashlightStatus(const std::string& cameraId, FlashStatus status) = 0;
         virtual void OnTorchStatus(TorchStatus status) = 0;
     };
@@ -141,12 +142,12 @@ private:
 class RegisterServStatListener : public HDI::ServiceManager::V1_0::ServStatListenerStub {
 public:
     using StatusCallback = std::function<void(const HDI::ServiceManager::V1_0::ServiceStatus&)>;
-    
+
     explicit RegisterServStatListener(StatusCallback callback) : callback_(std::move(callback)) {
     }
-    
+
     ~RegisterServStatListener() override = default;
-    
+
     void OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status) override;
 
 private:
