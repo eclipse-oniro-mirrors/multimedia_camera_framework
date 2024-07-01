@@ -1118,7 +1118,7 @@ bool HCaptureSession::QueryZoomPerformance(std::vector<float>& crossZoomAndTime,
         return false;
     } else if (retFindMeta == CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("HCaptureSession::QueryZoomPerformance() zoom performance count %{public}d.", zoomItem.count);
-        for (int i = 0; i <= static_cast<int>(zoomItem.count); i++) {
+        for (int i = 0; i < static_cast<int>(zoomItem.count); i++) {
             MEDIA_DEBUG_LOG(
                 "HCaptureSession::QueryZoomPerformance() zoom performance value %{public}d.", zoomItem.data.ui32[i]);
         }
