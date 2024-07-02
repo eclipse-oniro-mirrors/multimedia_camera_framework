@@ -294,6 +294,7 @@ int32_t CameraInput::UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>
         return ret;
     }
 
+    std::lock_guard<std::mutex> lock(interfaceMutex_);
     if (deviceObj_) {
         ret = deviceObj_->UpdateSetting(changedMetadata);
     } else {
@@ -305,7 +306,6 @@ int32_t CameraInput::UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>
         return ret;
     }
 
-    size_t length;
     uint32_t count = changedMetadata->get()->item_count;
     uint8_t* data = OHOS::Camera::GetMetadataData(changedMetadata->get());
     camera_metadata_item_entry_t* itemEntry = OHOS::Camera::GetMetadataItems(changedMetadata->get());
@@ -317,7 +317,7 @@ int32_t CameraInput::UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>
     for (uint32_t i = 0; i < count; i++, itemEntry++) {
         bool status = false;
         camera_metadata_item_t item;
-        length = OHOS::Camera::CalculateCameraMetadataItemDataSize(itemEntry->data_type, itemEntry->count);
+        size_t length = OHOS::Camera::CalculateCameraMetadataItemDataSize(itemEntry->data_type, itemEntry->count);
         ret = OHOS::Camera::FindCameraMetadataItem(baseMetadata->get(), itemEntry->item, &item);
         if (ret == CAM_META_SUCCESS) {
             status = baseMetadata->updateEntry(itemEntry->item,
