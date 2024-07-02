@@ -312,6 +312,14 @@ public:
     static napi_value GetActiveVideoStabilizationMode(napi_env env, napi_callback_info info);
     static napi_value SetVideoStabilizationMode(napi_env env, napi_callback_info info);
 
+    static napi_value GetSupportedVirtualApertures(napi_env env, napi_callback_info info);
+    static napi_value GetVirtualAperture(napi_env env, napi_callback_info info);
+    static napi_value SetVirtualAperture(napi_env env, napi_callback_info info);
+
+    static napi_value GetSupportedPhysicalApertures(napi_env env, napi_callback_info info);
+    static napi_value GetPhysicalAperture(napi_env env, napi_callback_info info);
+    static napi_value SetPhysicalAperture(napi_env env, napi_callback_info info);
+
     static napi_value LockForControl(napi_env env, napi_callback_info info);
     static napi_value UnlockForControl(napi_env env, napi_callback_info info);
 
@@ -352,6 +360,7 @@ public:
     static const std::vector<napi_property_descriptor> color_management_props;
     static const std::vector<napi_property_descriptor> preconfig_props;
     static const std::vector<napi_property_descriptor> effect_suggestion_props;
+    static const std::vector<napi_property_descriptor> aperture_props;
     static const std::vector<napi_property_descriptor> auto_wb_props;
     static const std::vector<napi_property_descriptor> manual_wb_props;
 protected:

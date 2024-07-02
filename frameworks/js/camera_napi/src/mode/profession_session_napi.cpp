@@ -72,9 +72,6 @@ const std::vector<napi_property_descriptor> ProfessionSessionNapi::pro_session_p
     DECLARE_NAPI_FUNCTION("getExposureHintMode", ProfessionSessionNapi::GetExposureHintMode),
     DECLARE_NAPI_FUNCTION("setExposureHintMode", ProfessionSessionNapi::SetExposureHintMode),
 
-    DECLARE_NAPI_FUNCTION("getSupportedPhysicalApertures", ProfessionSessionNapi::GetSupportedPhysicalApertures),
-    DECLARE_NAPI_FUNCTION("getPhysicalAperture", ProfessionSessionNapi::GetPhysicalAperture),
-    DECLARE_NAPI_FUNCTION("setPhysicalAperture", ProfessionSessionNapi::SetPhysicalAperture),
     DECLARE_NAPI_FUNCTION("on", ProfessionSessionNapi::On),
     DECLARE_NAPI_FUNCTION("once", ProfessionSessionNapi::Once),
     DECLARE_NAPI_FUNCTION("off", ProfessionSessionNapi::Off),
@@ -97,7 +94,8 @@ napi_value ProfessionSessionNapi::Init(napi_env env, napi_value exports)
         CameraSessionNapi::auto_wb_props, CameraSessionNapi::manual_wb_props,
         CameraSessionNapi::focus_props, ProfessionSessionNapi::manual_iso_props,
         ProfessionSessionNapi::auto_wb_props, ProfessionSessionNapi::manual_wb_props,
-        ProfessionSessionNapi::pro_session_props, manual_exposure_props, pro_manual_focus_props};
+        ProfessionSessionNapi::pro_session_props, aperture_props,
+        manual_exposure_props, pro_manual_focus_props };
     std::vector<napi_property_descriptor> professional_session_props =
         CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, PROFESSIONAL_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -757,140 +755,6 @@ napi_value ProfessionSessionNapi::SetExposureHintMode(napi_env env, napi_callbac
         professionSessionNapi->professionSession_->UnlockForControl();
     } else {
         MEDIA_ERR_LOG("SetExposureHintMode call Failed!");
-    }
-    return result;
-}
-
-//Aperture
-napi_value ProfessionSessionNapi::ProcessingPhysicalApertures(napi_env env,
-    std::vector<std::vector<float>> physicalApertures)
-{
-    napi_value result = nullptr;
-    napi_create_array(env, &result);
-    size_t zoomRangeSize = 2;
-    size_t zoomMinIndex = 0;
-    size_t zoomMaxIndex = 1;
-    for (size_t i = 0; i < physicalApertures.size(); i++) {
-        if (physicalApertures[i].size() <= zoomRangeSize) {
-            continue;
-        }
-        napi_value zoomRange;
-        napi_create_array(env, &zoomRange);
-        napi_value physicalApertureRange;
-        napi_create_array(env, &physicalApertureRange);
-        for (size_t y = 0; y < physicalApertures[i].size(); y++) {
-            napi_value value;
-            napi_create_double(env, CameraNapiUtils::FloatToDouble(physicalApertures[i][y]), &value);
-            if (y == zoomMinIndex) {
-                napi_set_element(env, zoomRange, y, value);
-                napi_set_named_property(env, zoomRange, "min", value);
-                continue;
-            }
-            if (y == zoomMaxIndex) {
-                napi_set_element(env, zoomRange, y, value);
-                napi_set_named_property(env, zoomRange, "max", value);
-                continue;
-            }
-            napi_set_element(env, physicalApertureRange, y - zoomRangeSize, value);
-        }
-        napi_value obj;
-        napi_create_object(env, &obj);
-        napi_set_named_property(env, obj, "zoomRange", zoomRange);
-        napi_set_named_property(env, obj, "apertures", physicalApertureRange);
-        napi_set_element(env, result, i, obj);
-    }
-    return result;
-}
-
-napi_value ProfessionSessionNapi::GetSupportedPhysicalApertures(napi_env env, napi_callback_info info)
-{
-    MEDIA_DEBUG_LOG("GetSupportedPhysicalApertures is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
-    status = napi_create_array(env, &result);
-    if (status != napi_ok) {
-        MEDIA_ERR_LOG("napi_create_array call Failed!");
-        return result;
-    }
-    ProfessionSessionNapi* professionSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&professionSessionNapi));
-    if (status == napi_ok && professionSessionNapi != nullptr && professionSessionNapi->professionSession_ != nullptr) {
-        std::vector<std::vector<float>> physicalApertures = {};
-        int32_t retCode = professionSessionNapi->professionSession_->GetSupportedPhysicalApertures(physicalApertures);
-        MEDIA_INFO_LOG("GetSupportedPhysicalApertures len = %{public}zu", physicalApertures.size());
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
-        if (!physicalApertures.empty()) {
-            result = ProcessingPhysicalApertures(env, physicalApertures);
-        }
-    } else {
-        MEDIA_ERR_LOG("GetSupportedPhysicalApertures call Failed!");
-    }
-    return result;
-}
-
-napi_value ProfessionSessionNapi::GetPhysicalAperture(napi_env env, napi_callback_info info)
-{
-    MEDIA_DEBUG_LOG("GetPhysicalAperture is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
-    ProfessionSessionNapi* professionSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&professionSessionNapi));
-    if (status == napi_ok && professionSessionNapi != nullptr && professionSessionNapi->professionSession_ != nullptr) {
-        float physicalAperture = 0.0;
-        int32_t retCode = professionSessionNapi->professionSession_->GetPhysicalAperture(physicalAperture);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
-        napi_create_double(env, CameraNapiUtils::FloatToDouble(physicalAperture), &result);
-    } else {
-        MEDIA_ERR_LOG("GetPhysicalAperture call Failed!");
-    }
-    return result;
-}
-
-napi_value ProfessionSessionNapi::SetPhysicalAperture(napi_env env, napi_callback_info info)
-{
-    MEDIA_DEBUG_LOG("SetPhysicalAperture is called");
-    CAMERA_SYNC_TRACE;
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
-    ProfessionSessionNapi* professionSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&professionSessionNapi));
-    if (status == napi_ok && professionSessionNapi != nullptr && professionSessionNapi->professionSession_ != nullptr) {
-        double physicalAperture;
-        napi_get_value_double(env, argv[PARAM0], &physicalAperture);
-        professionSessionNapi->professionSession_->LockForControl();
-        int32_t retCode = professionSessionNapi->professionSession_->SetPhysicalAperture((float)physicalAperture);
-        MEDIA_INFO_LOG("SetPhysicalAperture set physicalAperture %{public}f!", ConfusingNumber(physicalAperture));
-        professionSessionNapi->professionSession_->UnlockForControl();
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
-    } else {
-        MEDIA_ERR_LOG("SetPhysicalAperture call Failed!");
     }
     return result;
 }

@@ -33,6 +33,7 @@
 #include "input/camera_napi.h"
 #include "input/prelaunch_config.h"
 #include "js_native_api_types.h"
+#include "mode/aperture_video_session_napi.h"
 #include "mode/high_res_photo_session_napi.h"
 #include "mode/macro_photo_session_napi.h"
 #include "mode/macro_video_session_napi.h"
@@ -68,6 +69,7 @@ const std::unordered_map<SceneMode, JsSceneMode> g_nativeToNapiSupportedModeForS
     {SceneMode::HIGH_RES_PHOTO, JsSceneMode::JS_HIGH_RES_PHOTO},
     {SceneMode::SECURE, JsSceneMode::JS_SECURE_CAMERA},
     {SceneMode::QUICK_SHOT_PHOTO, JsSceneMode::JS_QUICK_SHOT_PHOTO},
+    {SceneMode::APERTURE_VIDEO, JsSceneMode::JS_APERTURE_VIDEO},
     {SceneMode::PANORAMA_PHOTO, JsSceneMode::JS_PANORAMA_PHOTO},
 };
 
@@ -427,6 +429,7 @@ const std::unordered_map<JsSceneMode, SceneMode> g_jsToFwMode_ = {
     {JsSceneMode::JS_HIGH_RES_PHOTO, SceneMode::HIGH_RES_PHOTO},
     {JsSceneMode::JS_SECURE_CAMERA, SceneMode::SECURE},
     {JsSceneMode::JS_QUICK_SHOT_PHOTO, SceneMode::QUICK_SHOT_PHOTO},
+    {JsSceneMode::JS_APERTURE_VIDEO, SceneMode::APERTURE_VIDEO},
     {JsSceneMode::JS_PANORAMA_PHOTO, SceneMode::PANORAMA_PHOTO},
 };
 
@@ -677,6 +680,8 @@ napi_value CameraManagerNapi::CreateSessionInstance(napi_env env, napi_callback_
             return SecureCameraSessionNapi::CreateCameraSession(env); }},
         {JsSceneMode::JS_QUICK_SHOT_PHOTO, [] (napi_env env) { return CheckSystemApp(env, true) ?
             QuickShotPhotoSessionNapi::CreateCameraSession(env):nullptr; }},
+        {JsSceneMode::JS_APERTURE_VIDEO, [] (napi_env env) { return CheckSystemApp(env, true) ?
+            ApertureVideoSessionNapi::CreateCameraSession(env):nullptr; }},
         {JsSceneMode::JS_PANORAMA_PHOTO, [] (napi_env env) { return CheckSystemApp(env, true) ?
             PanoramaSessionNapi::CreateCameraSession(env):nullptr; }},
     };

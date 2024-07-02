@@ -30,6 +30,7 @@
 #include "capture_scene_const.h"
 #include "capture_session.h"
 #include "js_native_api.h"
+#include "js_native_api_types.h"
 #include "listener_base.h"
 #include "napi/native_api.h"
 #include "napi/native_common.h"
@@ -182,6 +183,57 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::manual_wb_props =
     DECLARE_NAPI_FUNCTION("getWhiteBalance", CameraSessionNapi::GetManualWhiteBalance),
     DECLARE_NAPI_FUNCTION("setWhiteBalance", CameraSessionNapi::SetManualWhiteBalance),
 };
+
+const std::vector<napi_property_descriptor> CameraSessionNapi::aperture_props = {
+    DECLARE_NAPI_FUNCTION("getSupportedVirtualApertures", CameraSessionNapi::GetSupportedVirtualApertures),
+    DECLARE_NAPI_FUNCTION("getVirtualAperture", CameraSessionNapi::GetVirtualAperture),
+    DECLARE_NAPI_FUNCTION("setVirtualAperture", CameraSessionNapi::SetVirtualAperture),
+
+    DECLARE_NAPI_FUNCTION("getSupportedPhysicalApertures", CameraSessionNapi::GetSupportedPhysicalApertures),
+    DECLARE_NAPI_FUNCTION("getPhysicalAperture", CameraSessionNapi::GetPhysicalAperture),
+    DECLARE_NAPI_FUNCTION("setPhysicalAperture", CameraSessionNapi::SetPhysicalAperture)
+};
+
+namespace {
+napi_value ProcessingPhysicalApertures(napi_env env, std::vector<std::vector<float>> physicalApertures)
+{
+    napi_value result = nullptr;
+    napi_create_array(env, &result);
+    size_t zoomRangeSize = 2;
+    size_t zoomMinIndex = 0;
+    size_t zoomMaxIndex = 1;
+    for (size_t i = 0; i < physicalApertures.size(); i++) {
+        if (physicalApertures[i].size() <= zoomRangeSize) {
+            continue;
+        }
+        napi_value zoomRange;
+        napi_create_array(env, &zoomRange);
+        napi_value physicalApertureRange;
+        napi_create_array(env, &physicalApertureRange);
+        for (size_t y = 0; y < physicalApertures[i].size(); y++) {
+            napi_value value;
+            napi_create_double(env, CameraNapiUtils::FloatToDouble(physicalApertures[i][y]), &value);
+            if (y == zoomMinIndex) {
+                napi_set_element(env, zoomRange, y, value);
+                napi_set_named_property(env, zoomRange, "min", value);
+                continue;
+            }
+            if (y == zoomMaxIndex) {
+                napi_set_element(env, zoomRange, y, value);
+                napi_set_named_property(env, zoomRange, "max", value);
+                continue;
+            }
+            napi_set_element(env, physicalApertureRange, y - zoomRangeSize, value);
+        }
+        napi_value obj;
+        napi_create_object(env, &obj);
+        napi_set_named_property(env, obj, "zoomRange", zoomRange);
+        napi_set_named_property(env, obj, "apertures", physicalApertureRange);
+        napi_set_element(env, result, i, obj);
+    }
+    return result;
+}
+} // namespace
 
 void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state) const
 {
@@ -3389,6 +3441,198 @@ napi_value CameraSessionNapi::SetManualWhiteBalance(napi_env env, napi_callback_
         MEDIA_ERR_LOG("SetManualWhiteBalance call Failed!");
     }
     return result;
+}
+
+napi_value CameraSessionNapi::GetSupportedVirtualApertures(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi GetSupportedVirtualApertures is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("GetSupportedVirtualApertures is called");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::GetSupportedVirtualApertures parse parameter occur error");
+        return nullptr;
+    }
+
+    napi_status status;
+    napi_value result = nullptr;
+    status = napi_create_array(env, &result);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("napi_create_array call Failed!");
+        return nullptr;
+    }
+
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        std::vector<float> virtualApertures = {};
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetSupportedVirtualApertures(virtualApertures);
+        MEDIA_INFO_LOG("GetSupportedVirtualApertures virtualApertures len = %{public}zu", virtualApertures.size());
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        if (!virtualApertures.empty()) {
+            for (size_t i = 0; i < virtualApertures.size(); i++) {
+                float virtualAperture = virtualApertures[i];
+                napi_value value;
+                napi_create_double(env, CameraNapiUtils::FloatToDouble(virtualAperture), &value);
+                napi_set_element(env, result, i, value);
+            }
+        }
+    } else {
+        MEDIA_ERR_LOG("GetSupportedVirtualApertures call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetVirtualAperture(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi GetVirtualAperture is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("GetVirtualAperture is called");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::GetVirtualAperture parse parameter occur error");
+        return nullptr;
+    }
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        float virtualAperture;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetVirtualAperture(virtualAperture);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        napi_value result;
+        napi_create_double(env, CameraNapiUtils::FloatToDouble(virtualAperture), &result);
+        return result;
+    } else {
+        MEDIA_ERR_LOG("GetVirtualAperture call Failed!");
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value CameraSessionNapi::SetVirtualAperture(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi SetVirtualAperture is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("SetVirtualAperture is called");
+    double virtualAperture;
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, virtualAperture);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::SetVirtualAperture parse parameter occur error");
+        return nullptr;
+    }
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        cameraSessionNapi->cameraSession_->LockForControl();
+        cameraSessionNapi->cameraSession_->SetVirtualAperture((float)virtualAperture);
+        MEDIA_INFO_LOG("SetVirtualAperture set virtualAperture %{public}f!", virtualAperture);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+    } else {
+        MEDIA_ERR_LOG("SetVirtualAperture call Failed!");
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value CameraSessionNapi::GetSupportedPhysicalApertures(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi GetSupportedPhysicalApertures is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("GetSupportedPhysicalApertures is called");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::GetSupportedPhysicalApertures parse parameter occur error");
+        return nullptr;
+    }
+
+    napi_status status;
+    napi_value result = nullptr;
+    status = napi_create_array(env, &result);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("napi_create_array call Failed!");
+        return nullptr;
+    }
+
+    if (status == napi_ok && cameraSessionNapi->cameraSession_ != nullptr) {
+        std::vector<std::vector<float>> physicalApertures = {};
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetSupportedPhysicalApertures(physicalApertures);
+        MEDIA_INFO_LOG("GetSupportedPhysicalApertures len = %{public}zu", physicalApertures.size());
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        if (!physicalApertures.empty()) {
+            result = ProcessingPhysicalApertures(env, physicalApertures);
+        }
+    } else {
+        MEDIA_ERR_LOG("GetSupportedPhysicalApertures call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetPhysicalAperture(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi GetPhysicalAperture is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("GetPhysicalAperture is called");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::GetPhysicalAperture parse parameter occur error");
+        return nullptr;
+    }
+
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        float physicalAperture = 0.0;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetPhysicalAperture(physicalAperture);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        napi_value result = nullptr;
+        napi_create_double(env, CameraNapiUtils::FloatToDouble(physicalAperture), &result);
+        return result;
+    } else {
+        MEDIA_ERR_LOG("GetPhysicalAperture call Failed!");
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value CameraSessionNapi::SetPhysicalAperture(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi SetPhysicalAperture is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("SetPhysicalAperture is called");
+    double physicalAperture;
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, physicalAperture);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::SetPhysicalAperture parse parameter occur error");
+        return nullptr;
+    }
+
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int32_t retCode = cameraSessionNapi->cameraSession_->SetPhysicalAperture((float)physicalAperture);
+        MEDIA_INFO_LOG("SetPhysicalAperture set physicalAperture %{public}f!", ConfusingNumber(physicalAperture));
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+    } else {
+        MEDIA_ERR_LOG("SetPhysicalAperture call Failed!");
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
 }
 
 void CameraSessionNapi::RegisterExposureCallbackListener(
