@@ -45,6 +45,13 @@ enum class CallbackInvoker : int32_t {
     APPLICATION,
 };
 
+enum FoldStatus {
+    UNKNOWN_FOLD = 0,
+    EXPAND,
+    FOLDED,
+    HALF_FOLD
+};
+
 class ICameraServiceCallback : public IRemoteBroker {
 public:
     virtual int32_t OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status,
@@ -66,6 +73,13 @@ public:
     virtual int32_t OnTorchStatusChange(const TorchStatus status) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ITorchServiceCallback");
+};
+
+class IFoldServiceCallback : public IRemoteBroker {
+public:
+    virtual int32_t OnFoldStatusChanged(const FoldStatus status) = 0;
+
+    DECLARE_INTERFACE_DESCRIPTOR(u"IFoldServiceCallback");
 };
 } // namespace CameraStandard
 } // namespace OHOS

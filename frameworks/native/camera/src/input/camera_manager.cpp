@@ -29,6 +29,7 @@
 #include "capture_scene_const.h"
 #include "deferred_photo_proc_session.h"
 #include "device_manager_impl.h"
+#include "display_manager.h"
 #include "dps_metadata_info.h"
 #include "icamera_util.h"
 #include "ipc_skeleton.h"
@@ -116,6 +117,12 @@ const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
     {HIGH_RES_PHOTO, OperationMode::HIGH_RESOLUTION_PHOTO},
     {SECURE, OperationMode::SECURE},
     {QUICK_SHOT_PHOTO, OperationMode::QUICK_SHOT_PHOTO}
+};
+
+const std::unordered_map<CameraFoldStatus, FoldStatus> g_metaToFwCameraFoldStatus_ = {
+    {OHOS_CAMERA_FOLD_STATUS_NONFOLDABLE, UNKNOWN_FOLD},
+    {OHOS_CAMERA_FOLD_STATUS_EXPANDED,  EXPAND},
+    {OHOS_CAMERA_FOLD_STATUS_FOLDED,  FOLDED}
 };
 
 const std::set<int32_t> isTemplateMode_ = {
@@ -1079,6 +1086,23 @@ shared_ptr<TorchListener> CameraManager::GetTorchListener()
     return listener;
 }
 
+void CameraManager::RegisterFoldListener(shared_ptr<FoldListener> listener)
+{
+    if (foldSvcCallback_ == nullptr) {
+        CreateAndSetFoldServiceCallback();
+    }
+    std::thread::id threadId = std::this_thread::get_id();
+    foldListenerMap_.EnsureInsert(threadId, listener);
+}
+
+shared_ptr<FoldListener> CameraManager::GetFoldListener()
+{
+    std::thread::id threadId = std::this_thread::get_id();
+    std::shared_ptr<FoldListener> listener = nullptr;
+    foldListenerMap_.Find(threadId, listener);
+    return listener;
+}
+
 SafeMap<std::thread::id, std::shared_ptr<CameraManagerCallback>> CameraManager::GetCameraMngrCallbackMap()
 {
     return cameraMngrCallbackMap_;
@@ -1090,6 +1114,11 @@ SafeMap<std::thread::id, std::shared_ptr<CameraMuteListener>> CameraManager::Get
 SafeMap<std::thread::id, std::shared_ptr<TorchListener>> CameraManager::GetTorchListenerMap()
 {
     return torchListenerMap_;
+}
+
+SafeMap<std::thread::id, std::shared_ptr<FoldListener>> CameraManager::GetFoldListenerMap()
+{
+    return foldListenerMap_;
 }
 
 sptr<CameraDevice> CameraManager::GetCameraDeviceFromId(std::string cameraId)
@@ -1206,7 +1235,34 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
-    return cameraObjList_;
+    bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
+    if (!isFoldable) {
+        return cameraObjList_;
+    }
+    auto curFoldStatus = (FoldStatus)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
+    if (curFoldStatus == FoldStatus::HALF_FOLD) {
+        curFoldStatus = FoldStatus::FOLDED;
+    }
+    MEDIA_INFO_LOG("fold status: %{public}d", curFoldStatus);
+    std::vector<sptr<CameraDevice>> cameraDeviceList;
+    for (size_t i = 0; i < cameraObjList_.size(); i++) {
+        if (cameraObjList_[i]->GetPosition() == CAMERA_POSITION_BACK) {
+            cameraDeviceList.emplace_back(cameraObjList_[i]);
+        }
+        auto supportedFoldStatus = cameraObjList_[i]->GetSupportedFoldStatus();
+        FoldStatus foldStatusTemp = FoldStatus::UNKNOWN_FOLD;
+        auto it = g_metaToFwCameraFoldStatus_.find(static_cast<CameraFoldStatus>(supportedFoldStatus));
+        if (it != g_metaToFwCameraFoldStatus_.end()) {
+            foldStatusTemp = it->second;
+        } else {
+            MEDIA_INFO_LOG("No supported fold status is found, fold status: %{public}d", curFoldStatus);
+            cameraDeviceList.emplace_back(cameraObjList_[i]);
+        }
+        if (foldStatusTemp == curFoldStatus) {
+            cameraDeviceList.emplace_back(cameraObjList_[i]);
+        }
+    }
+    return cameraDeviceList;
 }
 
 std::vector<SceneMode> CameraManager::GetSupportedModes(sptr<CameraDevice>& camera)
@@ -1715,6 +1771,37 @@ int32_t TorchServiceCallback::OnTorchStatusChange(const TorchStatus status)
     return CAMERA_OK;
 }
 
+int32_t FoldServiceCallback::OnFoldStatusChanged(const FoldStatus status)
+{
+    MEDIA_DEBUG_LOG("FoldStatus is %{public}d", status);
+    auto cameraManager = cameraManager_.promote();
+    if (cameraManager == nullptr) {
+        MEDIA_INFO_LOG("cameraManager is nullptr");
+        return CAMERA_OK;
+    }
+
+    FoldStatusInfo foldStatusInfo;
+    foldStatusInfo.foldStatus = status;
+    foldStatusInfo.supportedCameras = cameraManager->GetSupportedCameras();
+    auto listenerMap = cameraManager->GetFoldListenerMap();
+    MEDIA_DEBUG_LOG("FoldListenerMap size %{public}d", listenerMap.Size());
+    if (listenerMap.IsEmpty()) {
+        return CAMERA_OK;
+    }
+
+    listenerMap.Iterate([&](std::thread::id threadId, std::shared_ptr<FoldListener> foldListener) {
+        if (foldListener != nullptr) {
+            foldListener->OnFoldStatusChanged(foldStatusInfo);
+        } else {
+            std::ostringstream oss;
+            oss << threadId;
+            MEDIA_INFO_LOG(
+                "OnFoldStatusChanged not registered!, Ignore the callback: thread:%{public}s", oss.str().c_str());
+        }
+    });
+    return CAMERA_OK;
+}
+
 void CameraManager::SetTorchServiceCallback(sptr<ITorchServiceCallback>& callback)
 {
     int32_t retCode = CAMERA_OK;
@@ -1746,6 +1833,40 @@ void CameraManager::CreateAndSetTorchServiceCallback()
     retCode = serviceProxy->SetTorchCallback(torchSvcCallback_);
     if (retCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Set Torch service Callback failed, retCode: %{public}d", retCode);
+    }
+}
+
+void CameraManager::SetFoldServiceCallback(sptr<IFoldServiceCallback>& callback)
+{
+    int32_t retCode = CAMERA_OK;
+    auto serviceProxy = GetServiceProxy();
+    if (serviceProxy == nullptr) {
+        MEDIA_ERR_LOG("serviceProxy is null");
+        return;
+    }
+    retCode = serviceProxy->SetFoldStatusCallback(callback);
+    if (retCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("Set Fold service Callback failed, retCode: %{public}d", retCode);
+    }
+    return;
+}
+
+void CameraManager::CreateAndSetFoldServiceCallback()
+{
+    if (foldSvcCallback_ != nullptr) {
+        MEDIA_ERR_LOG("foldSvcCallback_ is not nullptr");
+        return;
+    }
+    auto serviceProxy = GetServiceProxy();
+    if (serviceProxy == nullptr) {
+        MEDIA_ERR_LOG("serviceProxy is null");
+        return;
+    }
+    int32_t retCode = CAMERA_OK;
+    foldSvcCallback_ = new(std::nothrow) FoldServiceCallback(this);
+    retCode = serviceProxy->SetFoldStatusCallback(foldSvcCallback_);
+    if (retCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("Set Fold service Callback failed, retCode: %{public}d", retCode);
     }
 }
 

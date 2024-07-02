@@ -105,13 +105,6 @@ enum DeviceType {
     FOLD_TYPE
 };
 
-enum FoldStatus {
-    UNKNOWN_FOLD = 0,
-    EXPAND,
-    FOLDED,
-    HALF_FOLD
-};
-
 enum FallingState {
     FALLING_STATE = 1008,
 };

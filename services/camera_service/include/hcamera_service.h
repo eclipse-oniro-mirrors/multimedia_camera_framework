@@ -24,6 +24,7 @@
 #include "camera_util.h"
 #include "common_event_support.h"
 #include "common_event_manager.h"
+#include "display_manager.h"
 #include "hcamera_device.h"
 #include "hcamera_host_manager.h"
 #include "hcamera_service_stub.h"
@@ -58,8 +59,8 @@ struct CameraMetaInfo {
     shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
     CameraMetaInfo(string cameraId, uint8_t cameraType, uint8_t position, uint8_t connectionType,
         std::vector<uint8_t> supportModes, shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
-        : cameraId(cameraId), cameraType(cameraType), position(position),
-          connectionType(connectionType), supportModes(supportModes), cameraAbility(cameraAbility) {}
+        : cameraId(cameraId), cameraType(cameraType), position(position), connectionType(connectionType),
+        supportModes(supportModes), cameraAbility(cameraAbility) {}
 };
 
 enum class CameraServiceStatus : int32_t {
@@ -69,7 +70,8 @@ enum class CameraServiceStatus : int32_t {
 
 class CameraInfoDumper;
 
-class HCameraService : public SystemAbility, public HCameraServiceStub, public HCameraHostManager::StatusCallback {
+class HCameraService : public SystemAbility, public HCameraServiceStub, public HCameraHostManager::StatusCallback,
+    public OHOS::Rosen::DisplayManager::IFoldStatusListener {
     DECLARE_SYSTEM_ABILITY(HCameraService);
 
 public:
@@ -102,6 +104,7 @@ public:
     int32_t SetCameraCallback(sptr<ICameraServiceCallback>& callback) override;
     int32_t SetMuteCallback(sptr<ICameraMuteServiceCallback>& callback) override;
     int32_t SetTorchCallback(sptr<ITorchServiceCallback>& callback) override;
+    int32_t SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback) override;
     int32_t MuteCamera(bool muteMode) override;
     int32_t MuteCameraPersist(PolicyType policyType, bool isMute) override;
     int32_t PrelaunchCamera() override;
@@ -131,7 +134,11 @@ public:
     int32_t ResetAllFreezeStatus() override;
     bool ShouldSkipStatusUpdates(pid_t pid);
     void CreateAndSaveTask(const string& cameraId, CameraStatus status, uint32_t pid, const string& bundleName);
-
+    void CreateAndSaveTask(FoldStatus status, uint32_t pid);
+    void OnFoldStatusChanged(OHOS::Rosen::FoldStatus foldStatus) override;
+    int32_t UnSetFoldStatusCallback(pid_t pid);
+    void RegisterFoldStatusListener();
+    void UnRegisterFoldStatusListener();
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager);
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
@@ -184,6 +191,8 @@ private:
 
     void FillCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos,
         vector<string>& cameraIds, vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList);
+    shared_ptr<CameraMetaInfo>GetCameraMetaInfo(std::string &cameraId,
+        shared_ptr<OHOS::Camera::CameraMetadata>cameraAbility);
     void OnMute(bool muteMode);
 
     void DumpCameraSummary(vector<string> cameraIds, CameraInfoDumper& infoDumper);
@@ -220,8 +229,6 @@ private:
     int32_t UnSetCameraCallback(pid_t pid);
     int32_t UnSetMuteCallback(pid_t pid);
     int32_t UnSetTorchCallback(pid_t pid);
-    bool IsDeviceAlreadyOpen(pid_t& tempPid, string& tempCameraId, sptr<HCameraDevice>& tempDevice);
-    int32_t DeviceClose(sptr<HCameraDevice> cameraDevice);
 #ifdef CAMERA_USE_SENSOR
     void RegisterSensorCallback();
     void UnRegisterSensorCallback();
@@ -234,10 +241,13 @@ private:
     mutex muteCbMutex_;
     mutex serviceStatusMutex_;
     recursive_mutex torchCbMutex_;
+    recursive_mutex foldCbMutex_;
     TorchStatus torchStatus_ = TorchStatus::TORCH_STATUS_UNAVAILABLE;
+    FoldStatus preFoldStatus_ = FoldStatus::UNKNOWN_FOLD;
     sptr<HCameraHostManager> cameraHostManager_;
     std::shared_ptr<StatusCallback> statusCallback_;
     map<uint32_t, sptr<ITorchServiceCallback>> torchServiceCallbacks_;
+    map<uint32_t, sptr<IFoldServiceCallback>> foldServiceCallbacks_;
     map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
     map<uint32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
     bool muteModeStored_;
@@ -255,6 +265,7 @@ private:
     std::mutex freezedPidListMutex_;
     std::set<int32_t> freezedPidList_;
     std::map<uint32_t, std::function<void()>> delayCbtaskMap;
+    std::map<uint32_t, std::function<void()>> delayFoldStatusCbTaskMap;
 };
 } // namespace CameraStandard
 } // namespace OHOS

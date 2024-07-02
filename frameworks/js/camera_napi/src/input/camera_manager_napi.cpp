@@ -316,6 +316,103 @@ void TorchListenerNapi::OnTorchStatusChange(const TorchStatusInfo &torchStatusIn
     OnTorchStatusChangeCallbackAsync(torchStatusInfo);
 }
 
+FoldListenerNapi::FoldListenerNapi(napi_env env): ListenerBase(env)
+{
+    MEDIA_DEBUG_LOG("FoldListenerNapi is called.");
+}
+
+FoldListenerNapi::~FoldListenerNapi()
+{
+    MEDIA_DEBUG_LOG("~FoldListenerNapi is called.");
+}
+
+void FoldListenerNapi::OnFoldStatusChangedCallbackAsync(const FoldStatusInfo &foldStatusInfo) const
+{
+    MEDIA_DEBUG_LOG("OnFoldStatusChangedCallbackAsync is called");
+    uv_loop_s* loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (!loop) {
+        MEDIA_ERR_LOG("Failed to get event loop");
+        return;
+    }
+    uv_work_t* work = new(std::nothrow) uv_work_t;
+    if (!work) {
+        MEDIA_ERR_LOG("Failed to allocate work");
+        return;
+    }
+    std::unique_ptr<FoldStatusChangeCallbackInfo> callbackInfo =
+        std::make_unique<FoldStatusChangeCallbackInfo>(foldStatusInfo, this);
+    work->data = callbackInfo.get();
+    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+        FoldStatusChangeCallbackInfo* callbackInfo = reinterpret_cast<FoldStatusChangeCallbackInfo *>(work->data);
+        if (callbackInfo) {
+            callbackInfo->listener_->OnFoldStatusChangedCallback(callbackInfo->info_);
+            delete callbackInfo;
+        }
+        delete work;
+    }, uv_qos_user_initiated);
+    if (ret) {
+        MEDIA_ERR_LOG("Failed to execute work");
+        delete work;
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void FoldListenerNapi::OnFoldStatusChangedCallback(const FoldStatusInfo& foldStatusInfo) const
+{
+    MEDIA_DEBUG_LOG("OnFoldStatusChangedCallback is called");
+    napi_handle_scope scope = nullptr;
+    napi_open_handle_scope(env_, &scope);
+    if (scope == nullptr) {
+        MEDIA_ERR_LOG("scope is null");
+        return;
+    }
+    napi_value result[ARGS_TWO];
+    napi_value retVal = nullptr;
+    napi_value propValue = nullptr;
+    napi_value errCode;
+
+    napi_create_object(env_, &result[PARAM0]);
+    napi_create_object(env_, &result[PARAM1]);
+    napi_create_int32(env_, foldStatusInfo.foldStatus, &propValue);
+    napi_set_named_property(env_, result[PARAM1], "foldStatus", propValue);
+    if (napi_create_array(env_, &propValue) != napi_ok) {
+        MEDIA_ERR_LOG("Failed to create array napi wrapper object");
+        return;
+    }
+    auto supportedCameras = foldStatusInfo.supportedCameras;
+    if (!supportedCameras.empty()) {
+        napi_create_int32(env_, 0, &errCode);
+        napi_set_named_property(env_, result[PARAM0], "code", errCode);
+        for (size_t i = 0; i < supportedCameras.size(); i++) {
+            if (supportedCameras[i] == nullptr) {
+                MEDIA_ERR_LOG("cameraDevice is null");
+                continue;
+            }
+            napi_value camera = CameraNapiObjCameraDevice(*supportedCameras[i]).GenerateNapiValue(env_);
+            if (napi_set_element(env_, propValue, i, camera) != napi_ok) {
+                MEDIA_ERR_LOG("Failed to create profile napi wrapper object");
+                return;
+            }
+        }
+    } else {
+        MEDIA_ERR_LOG("supportedCameras is empty");
+        napi_create_int32(env_, CameraErrorCode::SERVICE_FATL_ERROR, &errCode);
+        napi_set_named_property(env_, result[PARAM0], "code", errCode);
+    }
+    napi_set_named_property(env_, result[PARAM1], "supportedCameras", propValue);
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback("foldStatusChanged", callbackNapiPara);
+    napi_close_handle_scope(env_, scope);
+}
+
+void FoldListenerNapi::OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const
+{
+    MEDIA_DEBUG_LOG("OnFoldStatusChanged is called");
+    OnFoldStatusChangedCallbackAsync(foldStatusInfo);
+}
+
 const std::unordered_map<JsSceneMode, SceneMode> g_jsToFwMode_ = {
     {JsSceneMode::JS_CAPTURE, SceneMode::CAPTURE},
     {JsSceneMode::JS_VIDEO, SceneMode::VIDEO},
@@ -1251,6 +1348,31 @@ void CameraManagerNapi::UnregisterTorchStatusCallbackListener(
     }
 }
 
+void CameraManagerNapi::RegisterFoldStatusCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (foldListener_ == nullptr) {
+        shared_ptr<FoldListenerNapi> foldListener =
+            std::static_pointer_cast<FoldListenerNapi>(cameraManager_->GetFoldListener());
+        if (foldListener == nullptr) {
+            foldListener = make_shared<FoldListenerNapi>(env);
+            cameraManager_->RegisterFoldListener(foldListener);
+        }
+        foldListener_ = foldListener;
+    }
+    foldListener_->SaveCallbackReference(eventName, callback, isOnce);
+}
+
+void CameraManagerNapi::UnregisterFoldStatusCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (foldListener_ == nullptr) {
+        MEDIA_ERR_LOG("torchListener_ is null");
+    } else {
+        foldListener_->RemoveCallbackRef(eventName, callback);
+    }
+}
+
 const CameraManagerNapi::EmitterFunctions& CameraManagerNapi::GetEmitterFunctions()
 {
     static const EmitterFunctions funMap = {
@@ -1262,7 +1384,10 @@ const CameraManagerNapi::EmitterFunctions& CameraManagerNapi::GetEmitterFunction
             &CameraManagerNapi::UnregisterCameraMuteCallbackListener } },
         { "torchStatusChange", {
             &CameraManagerNapi::RegisterTorchStatusCallbackListener,
-            &CameraManagerNapi::UnregisterTorchStatusCallbackListener } } };
+            &CameraManagerNapi::UnregisterTorchStatusCallbackListener } },
+        { "foldStatusChanged", {
+            &CameraManagerNapi::RegisterFoldStatusCallbackListener,
+            &CameraManagerNapi::UnregisterFoldStatusCallbackListener } } };
     return funMap;
 }
 
