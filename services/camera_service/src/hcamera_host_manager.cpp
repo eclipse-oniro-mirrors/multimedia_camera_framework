@@ -17,6 +17,7 @@
 #include <memory>
 
 #include "hcamera_device.h"
+#include "icamera_service_callback.h"
 #include "v1_2/icamera_host_callback.h"
 #include "metadata_utils.h"
 #include "camera_util.h"
@@ -785,7 +786,7 @@ void HCameraHostManager::AddCameraDevice(const std::string& cameraId, sptr<ICame
     cameraDevices_[cameraId] = cameraDevice;
     auto statusCallback = statusCallback_.lock();
     if (statusCallback != nullptr) {
-        statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_UNAVAILABLE);
+        statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_UNAVAILABLE, CallbackInvoker::APPLICATION);
     }
 }
 
@@ -800,7 +801,7 @@ void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId)
     cameraDevices_.erase(cameraId);
     auto statusCallback = statusCallback_.lock();
     if (statusCallback) {
-        statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_AVAILABLE);
+        statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_AVAILABLE, CallbackInvoker::APPLICATION);
     }
     MEDIA_DEBUG_LOG("HCameraHostManager::RemoveCameraDevice end");
 }

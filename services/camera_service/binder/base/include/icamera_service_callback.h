@@ -40,9 +40,15 @@ enum TorchStatus {
     TORCH_STATUS_UNAVAILABLE
 };
 
+enum class CallbackInvoker : int32_t {
+    CAMERA_HOST = 1,
+    APPLICATION,
+};
+
 class ICameraServiceCallback : public IRemoteBroker {
 public:
-    virtual int32_t OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status) = 0;
+    virtual int32_t OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status,
+        const std::string& bundleName = "") = 0;
     virtual int32_t OnFlashlightStatusChanged(const std::string& cameraId, const FlashStatus status) = 0;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ICameraServiceCallback");

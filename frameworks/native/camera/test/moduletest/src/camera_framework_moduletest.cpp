@@ -147,7 +147,8 @@ public:
     {
         const std::string cameraID = cameraDeviceInfo.cameraDevice->GetID();
         const CameraStatus cameraStatus = cameraDeviceInfo.cameraStatus;
-
+        EXPECT_TRUE(true)<<"OnCameraStatusChanged:CameraId="<<cameraID<<",CameraStatus="<<cameraDeviceInfo.cameraStatus
+            <<",bundleName="<<cameraDeviceInfo.bundleName<<endl;
         switch (cameraStatus) {
             case CAMERA_STATUS_UNAVAILABLE: {
                 MEDIA_DEBUG_LOG(
@@ -10589,6 +10590,22 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_078, TestSize.Le
 
     intResult = quickShotPhotoSession->Stop();
     EXPECT_EQ(intResult, 0);
+}
+/*
+ * Feature: Framework
+ * Function: Test cameraStatus with bundleName
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test master ai
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_079, TestSize.Level0)
+{
+    if (!IsSupportNow()) {
+        return;
+    }
+    constexpr int32_t waitForCallbackTime = 5;
+    sleep(waitForCallbackTime);
 }
 } // namespace CameraStandard
 } // namespace OHOS

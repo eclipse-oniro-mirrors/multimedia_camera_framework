@@ -356,7 +356,7 @@ public:
     int32_t effectControl[2] = {0, 1};
     class MockStatusCallback : public StatusCallback {
     public:
-        void OnCameraStatus(const std::string& cameraId, CameraStatus status) override
+        void OnCameraStatus(const std::string& cameraId, CameraStatus status, CallbackInvoker invoker) override
         {
             MEDIA_DEBUG_LOG("MockStatusCallback::OnCameraStatus");
             return;
@@ -5611,7 +5611,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_066, TestSize.Level
     EXPECT_EQ(metadatOutput->Start(), CameraErrorCode::SESSION_NOT_CONFIG);
     EXPECT_EQ(metadatOutput->Stop(), CameraErrorCode::SERVICE_FATL_ERROR);
     metadatOutput->Release();
-    
+
     input->Close();
 }
 
@@ -5881,7 +5881,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_075, TestSize.Level
     SketchWrapper *sketchWrapper = new (std::nothrow)
         SketchWrapper(previewOutput->GetStream(), sketchSize);
     ASSERT_NE(sketchWrapper, nullptr);
-    
+
     auto modeName = session->GetFeaturesMode();
     int ret = sketchWrapper->Init(deviceMetadata, modeName);
     EXPECT_EQ(ret, CAMERA_OK);
@@ -5933,7 +5933,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_076, TestSize.Level
     SketchWrapper *sketchWrapper = new (std::nothrow)
         SketchWrapper(previewOutput->GetStream(), sketchSize);
     ASSERT_NE(sketchWrapper, nullptr);
-    
+
     auto modeName = session->GetFeaturesMode();
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
     camera_metadata_item_t item;

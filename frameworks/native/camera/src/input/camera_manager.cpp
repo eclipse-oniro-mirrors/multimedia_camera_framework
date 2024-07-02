@@ -159,7 +159,8 @@ int32_t CameraManager::CreateListenerObject()
     return serviceProxy->SetListenerObject(object);
 }
 
-int32_t CameraStatusServiceCallback::OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status)
+int32_t CameraStatusServiceCallback::OnCameraStatusChanged(const std::string& cameraId, const CameraStatus status,
+    const std::string& bundleName)
 {
     MEDIA_INFO_LOG("cameraId: %{public}s, status: %{public}d", cameraId.c_str(), status);
     auto cameraManager = cameraManager_.promote();
@@ -183,6 +184,8 @@ int32_t CameraStatusServiceCallback::OnCameraStatusChanged(const std::string& ca
         cameraManager->InitCameraList();
     }
     cameraStatusInfo.cameraStatus = status;
+    cameraStatusInfo.bundleName = bundleName;
+
     if (cameraStatusInfo.cameraDevice) {
         listenerMap.Iterate([&](std::thread::id threadId,
                                 std::shared_ptr<CameraManagerCallback> cameraManagerCallback) {
