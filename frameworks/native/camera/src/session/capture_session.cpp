@@ -1742,11 +1742,11 @@ float CaptureSession::GetExposureValue()
     int32_t stepNumerator = item.data.r->numerator;
     int32_t stepDenominator = item.data.r->denominator;
     float exposureValue = 0;
-    if (stepDenominator != 0 && stepNumerator != 0) {
+    if (stepDenominator != 0) {
         float step = static_cast<float>(stepNumerator) / static_cast<float>(stepDenominator);
         exposureValue = step * exposureCompensation;
     } else {
-        MEDIA_ERR_LOG("stepDenominator: %{public}d stepNumerator: %{public}d", stepDenominator, stepNumerator);
+        MEDIA_ERR_LOG("stepDenominator: %{public}d", stepDenominator);
     }
     MEDIA_DEBUG_LOG("exposureValue: %{public}f", exposureValue);
 
@@ -1780,10 +1780,6 @@ int32_t CaptureSession::GetExposureValue(float& exposureValue)
     }
     int32_t stepNumerator = item.data.r->numerator;
     int32_t stepDenominator = item.data.r->denominator;
-    if (stepDenominator == 0 || stepNumerator == 0) {
-        MEDIA_ERR_LOG("stepDenominator: %{public}d stepNumerator: %{public}d", stepDenominator, stepNumerator);
-        return 0;
-    }
     float step = static_cast<float>(stepNumerator) / static_cast<float>(stepDenominator);
 
     exposureValue = step * exposureCompensation;
@@ -2303,7 +2299,7 @@ void CaptureSession::ProcessAREngineUpdates(const uint64_t timestamp,
         int32_t numerator = item.data.r->numerator;
         int32_t denominator = item.data.r->denominator;
         MEDIA_DEBUG_LOG("SensorExposureTime: %{public}d/%{public}d", numerator, denominator);
-        if (denominator == 0 || numerator == 0) {
+        if (denominator == 0) {
             MEDIA_ERR_LOG("ProcessSensorExposureTimeChange error! divide by zero");
             return;
         }
@@ -3606,10 +3602,6 @@ int32_t CaptureSession::CalculateExposureValue(float exposureValue)
 
     int32_t stepNumerator = item.data.r->numerator;
     int32_t stepDenominator = item.data.r->denominator;
-    if (stepNumerator == 0 || stepDenominator == 0) {
-        MEDIA_ERR_LOG("CaptureSession::stepNumerator or stepDenominator is zero");
-        return CameraErrorCode::OPERATION_NOT_ALLOWED;
-    }
     float stepsPerEv = static_cast<float>(stepDenominator) / static_cast<float>(stepNumerator);
     MEDIA_DEBUG_LOG("Exposure step numerator: %{public}d, denominatormax: %{public}d, stepsPerEv: %{public}f",
         stepNumerator, stepDenominator, stepsPerEv);
@@ -3924,7 +3916,7 @@ int32_t CaptureSession::GetSensorExposureTimeRange(std::vector<uint32_t> &sensor
     for (uint32_t i = 0; i < item.count; i++) {
         numerator = item.data.r[i].numerator;
         denominator = item.data.r[i].denominator;
-        if (denominator == 0 || numerator == 0) {
+        if (denominator == 0) {
             MEDIA_ERR_LOG("CaptureSession::GetSensorExposureTimeRange divide by 0! numerator=%{public}d", numerator);
             return CameraErrorCode::INVALID_ARGUMENT;
         }
