@@ -243,6 +243,7 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
     int32_t retryCount = 10;
     while (retryCount > 0) {
         retryCount--;
+        MEDIA_DEBUG_LOG("EncodeSurfaceBuffer needRestoreNumber %{public}d", needRestoreNumber);
         std::unique_lock<std::mutex> contextLock(contextMutex_);
         CHECK_AND_RETURN_RET_LOG(context_ != nullptr, false, "VideoEncoder has been released");
         std::unique_lock<std::mutex> lock(context_->outputMutex_);
@@ -257,13 +258,21 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
         context_->outputFrameCount_++;
         lock.unlock();
         contextLock.unlock();
-        if (bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_CODEC_DATA) {
+        if (needRestoreNumber == IDR_FRAME_COUNT && bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_CODEC_DATA) {
             // first return IDR frame
             OH_AVBuffer *IDRBuffer = bufferInfo->GetCopyAVBuffer();
             frameRecord->CacheIDRBuffer(IDRBuffer);
-        } else {
+        } else if (needRestoreNumber == 1 && bufferInfo->attr.flags == AVCODEC_BUFFER_FLAGS_SYNC_FRAME) {
             // then return I frame
-            bufferInfo->AddCopyAVBuffer(frameRecord->encodedBuffer);
+            OH_AVBuffer *tempBuffer = bufferInfo->AddCopyAVBuffer(frameRecord->encodedBuffer);
+            if (tempBuffer != nullptr) {
+                frameRecord->encodedBuffer = tempBuffer;
+            }
+        } else {
+            MEDIA_ERR_LOG("Flag is not acceptted number: %{public}d", needRestoreNumber);
+            int32_t ret = FreeOutputData(bufferInfo->bufferIndex);
+            CHECK_AND_BREAK_LOG(ret == 0, "FreeOutputData failed");
+            continue;
         }
         int32_t ret = FreeOutputData(bufferInfo->bufferIndex);
         CHECK_AND_BREAK_LOG(ret == 0, "FreeOutputData failed");

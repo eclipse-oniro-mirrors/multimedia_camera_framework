@@ -50,6 +50,7 @@ constexpr int32_t CACHE_FRAME_COUNT = 45;
 constexpr int32_t BUFFER_RELEASE_EXPIREATION_TIME = 150;
 constexpr int32_t BUFFER_ENCODE_EXPIREATION_TIME = 10;
 constexpr OH_AVPixelFormat VIDOE_PIXEL_FORMAT = AV_PIXEL_FORMAT_NV21;
+constexpr int32_t IDR_FRAME_COUNT = 2;
 
 class CodecAVBufferInfo : public RefBase {
 public:
@@ -66,12 +67,11 @@ public:
 
     OH_AVBuffer *GetCopyAVBuffer()
     {
-        int32_t capacity = OH_AVBuffer_GetCapacity(buffer);
-        MEDIA_INFO_LOG("CodecBufferInfo deep copy enter %{public}d", capacity);
-        OH_AVBuffer *destBuffer = OH_AVBuffer_Create(capacity);
+        MEDIA_INFO_LOG("CodecBufferInfo OH_AVBuffer_Create with size: %{public}d", attr.size);
+        OH_AVBuffer *destBuffer = OH_AVBuffer_Create(attr.size);
         auto sourceAddr = OH_AVBuffer_GetAddr(buffer);
         auto destAddr = OH_AVBuffer_GetAddr(destBuffer);
-        errno_t cpyRet = memcpy_s(reinterpret_cast<void *>(destAddr), capacity,
+        errno_t cpyRet = memcpy_s(reinterpret_cast<void *>(destAddr), attr.size,
                                   reinterpret_cast<void *>(sourceAddr), attr.size);
         if (cpyRet != 0) {
             MEDIA_ERR_LOG("CodecBufferInfo memcpy_s failed. %{public}d", cpyRet);
@@ -83,25 +83,38 @@ public:
         return destBuffer;
     }
 
-    void AddCopyAVBuffer(OH_AVBuffer *IDRBuffer)
+    OH_AVBuffer *AddCopyAVBuffer(OH_AVBuffer *IDRBuffer)
     {
         if (IDRBuffer == nullptr) {
-            return;
+            MEDIA_WARNING_LOG("AddCopyAVBuffer without IDRBuffer!");
+            return IDRBuffer;
         }
-        int32_t capacity = OH_AVBuffer_GetCapacity(buffer);
-        MEDIA_INFO_LOG("CodecBufferInfo deep copy enter %{public}d", capacity);
+        OH_AVCodecBufferAttr IDRAttr = {0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE};
         OH_AVCodecBufferAttr destAttr = {0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE};
-        OH_AVBuffer_GetBufferAttr(IDRBuffer, &destAttr);
-        auto sourceAddr = OH_AVBuffer_GetAddr(buffer);
-        auto destAddr = OH_AVBuffer_GetAddr(IDRBuffer) + destAttr.size;
-        errno_t cpyRet = memcpy_s(reinterpret_cast<void *>(destAddr), capacity,
-                                  reinterpret_cast<void *>(sourceAddr), attr.size);
+        OH_AVBuffer_GetBufferAttr(IDRBuffer, &IDRAttr);
+        int32_t destBufferSize = IDRAttr.size + attr.size;
+        OH_AVBuffer *destBuffer = OH_AVBuffer_Create(destBufferSize);
+        auto destAddr = OH_AVBuffer_GetAddr(destBuffer);
+        auto sourceIDRAddr = OH_AVBuffer_GetAddr(IDRBuffer);
+        
+        errno_t cpyRet = memcpy_s(reinterpret_cast<void *>(destAddr), destBufferSize,
+                                  reinterpret_cast<void *>(sourceIDRAddr), IDRAttr.size);
         if (cpyRet != 0) {
-            MEDIA_ERR_LOG("CodecBufferInfo memcpy_s failed. %{public}d", cpyRet);
+            MEDIA_ERR_LOG("CodecBufferInfo memcpy_s IDR frame failed. %{public}d", cpyRet);
         }
-        destAttr.size = destAttr.size + attr.size;
-        destAttr.flags &= attr.flags;
-        OH_AVBuffer_SetBufferAttr(IDRBuffer, &destAttr);
+        destAddr = destAddr + IDRAttr.size;
+        auto sourceAddr = OH_AVBuffer_GetAddr(buffer);
+        cpyRet = memcpy_s(reinterpret_cast<void *>(destAddr), attr.size,
+                          reinterpret_cast<void *>(sourceAddr), attr.size);
+        if (cpyRet != 0) {
+            MEDIA_ERR_LOG("CodecBufferInfo memcpy_s I frame failed. %{public}d", cpyRet);
+        }
+        OH_AVBuffer_Destroy(IDRBuffer);
+        destAttr.size = destBufferSize;
+        destAttr.flags = IDRAttr.flags | attr.flags;
+        MEDIA_INFO_LOG("CodecBufferInfo deep copy with size: %{public}d, %{public}d", destBufferSize, destAttr.flags);
+        OH_AVBuffer_SetBufferAttr(destBuffer, &destAttr);
+        return destBuffer;
     }
 };
 
