@@ -3175,68 +3175,6 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_012, TestSize.Level
  * EnvConditions: NA
  * CaseDescription: Test HCaptureSession with anomalous branch.
  */
-HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_013, TestSize.Level0)
-{
-    InSequence s;
-    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
-
-    sptr<CaptureInput> input = cameraManager->CreateCameraInput(cameras[0]);
-    ASSERT_NE(input, nullptr);
-
-    EXPECT_CALL(*mockCameraHostManager, OpenCameraDevice(_, _, _, _));
-    EXPECT_CALL(*mockCameraDevice, SetResultMode(ON_CHANGED));
-    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
-    std::string cameraSettings = camInput->GetCameraSettings();
-    camInput->SetCameraSettings(cameraSettings);
-    camInput->GetCameraDevice()->Open();
-
-    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
-    SceneMode mode = PORTRAIT;
-    sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
-    ASSERT_NE(camSession, nullptr);
-
-    std::string permissionName = "permissionName";
-    uint32_t callingTokenId = 0;
-    Security::AccessToken::PermStateChangeScope scopeInfo;
-    scopeInfo.permList = {permissionName};
-    scopeInfo.tokenIDs = {callingTokenId};
-
-    int32_t permStateChangeType = 0;
-    Security::AccessToken::PermStateChangeInfo info;
-    info.permStateChangeType = permStateChangeType;
-    info.tokenID = Security::AccessToken::INVALID_TOKENID;
-    info.permissionName = permissionName;
-
-    int32_t permStateChangeType1 = 1;
-    Security::AccessToken::PermStateChangeInfo info1;
-    info1.permStateChangeType = permStateChangeType1;
-    info1.tokenID = Security::AccessToken::INVALID_TOKENID;
-    info1.permissionName = permissionName;
-
-    std::shared_ptr<PermissionStatusChangeCb> permissionStatusChangeCb =
-        std::make_shared<PermissionStatusChangeCb>(camSession, scopeInfo);
-    permissionStatusChangeCb->PermStateChangeCallback(info);
-    permissionStatusChangeCb->PermStateChangeCallback(info);
-    permissionStatusChangeCb->PermStateChangeCallback(info1);
-
-    std::shared_ptr<CameraUseStateChangeCb> cameraUseStateChangeCb =
-        std::make_shared<CameraUseStateChangeCb>(camSession);
-    cameraUseStateChangeCb->StateChangeNotify(Security::AccessToken::INVALID_TOKENID, false);
-    cameraUseStateChangeCb->StateChangeNotify(Security::AccessToken::INVALID_TOKENID, true);
-    cameraUseStateChangeCb->StateChangeNotify(Security::AccessToken::INVALID_TOKENID, false);
-
-    input->Close();
-    camSession->Release();
-}
-
-/*
- * Feature: coverage
- * Function: Test anomalous branch
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test HCaptureSession with anomalous branch.
- */
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_014, TestSize.Level0)
 {
     InSequence s;

@@ -108,5 +108,27 @@ int32_t HTorchServiceCallbackProxy::OnTorchStatusChange(const TorchStatus status
     }
     return error;
 }
+
+HFoldServiceCallbackProxy::HFoldServiceCallbackProxy(const sptr<IRemoteObject> &impl)
+    : IRemoteProxy<IFoldServiceCallback>(impl) { }
+
+int32_t HFoldServiceCallbackProxy::OnFoldStatusChanged(const FoldStatus status)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    option.SetFlags(option.TF_ASYNC);
+    int error = ERR_NONE;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteInt32(status);
+    error = Remote()->SendRequest(
+        static_cast<uint32_t>(FoldServiceCallbackInterfaceCode::FOLD_CALLBACK_FOLD_STATUS_CHANGE),
+        data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceCallbackProxy OnFoldStatusChanged failed, error: %{public}d", error);
+    }
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS

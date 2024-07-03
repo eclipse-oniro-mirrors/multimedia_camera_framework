@@ -312,6 +312,12 @@ static const std::unordered_map<std::string, int32_t> mapSceneFeatureType = {
     { "MACRO", FEATURE_MACRO },
 };
 
+static const std::unordered_map<std::string, int32_t> mapFoldStatus = {
+    {"FOLD_STATUS_NONFOLDABLE", 0},
+    {"FOLD_STATUS_EXPANDED", 1},
+    {"FOLD_STATUS_FOLDED", 2}
+};
+
 enum CreateAsyncCallbackModes {
     CREATE_CAMERA_MANAGER_ASYNC_CALLBACK = 10,
 };

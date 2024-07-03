@@ -69,6 +69,16 @@ enum TorchServiceCallbackInterfaceCode {
 };
 
 /**
+ * @brief Fold service callback remote request code for IPC.
+ *
+ * @since 1.0
+ * @version 1.0
+ */
+enum FoldServiceCallbackInterfaceCode {
+    FOLD_CALLBACK_FOLD_STATUS_CHANGE = 0
+};
+
+/**
  * @brief Camera service remote request code for IPC.
  *
  * @since 1.0
@@ -79,6 +89,7 @@ enum CameraServiceInterfaceCode {
     CAMERA_SERVICE_SET_CAMERA_CALLBACK,
     CAMERA_SERVICE_SET_MUTE_CALLBACK,
     CAMERA_SERVICE_SET_TORCH_CALLBACK,
+    CAMERA_SERVICE_SET_FOLD_CALLBACK,
     CAMERA_SERVICE_GET_CAMERAS,
     CAMERA_SERVICE_CREATE_CAPTURE_SESSION,
     CAMERA_SERVICE_CREATE_PHOTO_OUTPUT,

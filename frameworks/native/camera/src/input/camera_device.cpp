@@ -140,10 +140,14 @@ void CameraDevice::init(common_metadata_header_t* metadata)
         }
     }
 
+    ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLD_STATUS, &item);
+
+    foldStatus_ = (ret == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLD_STATUS_NONFOLDABLE;
+
     MEDIA_INFO_LOG("camera position: %{public}d, camera type: %{public}d, camera connection type: %{public}d, "
                    "camera foldScreen type: %{public}d, camera orientation: %{public}d, "
-                   "moduleType: %{public}u", cameraPosition_, cameraType_, connectionType_,
-                   foldScreenType_, cameraOrientation_, moduleType_);
+                   "moduleType: %{public}u, foldStatus: %{public}d", cameraPosition_, cameraType_, connectionType_,
+                   foldScreenType_, cameraOrientation_, moduleType_, foldStatus_);
 }
 
 std::string CameraDevice::GetID()
@@ -284,6 +288,11 @@ std::vector<float> CameraDevice::GetExposureBiasRange()
     MEDIA_DEBUG_LOG("Exposure hdi compensation min: %{public}d, max: %{public}d", range[minIndex], range[maxIndex]);
     exposureBiasRange_ = { range[minIndex], range[maxIndex] };
     return exposureBiasRange_;
+}
+
+uint32_t CameraDevice::GetSupportedFoldStatus()
+{
+    return foldStatus_;
 }
 } // namespace CameraStandard
 } // namespace OHOS

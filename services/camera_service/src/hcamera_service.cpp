@@ -35,7 +35,6 @@
 #include "datashare_predicates.h"
 #include "datashare_result_set.h"
 #include "deferred_processing_service.h"
-#include "display_manager.h"
 #include "hcamera_device_manager.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
@@ -79,6 +78,10 @@ HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
     cameraHostManager_ = new (std::nothrow) HCameraHostManager(statusCallback_);
     CHECK_AND_RETURN_LOG(
         cameraHostManager_ != nullptr, "HCameraService OnStart failed to create HCameraHostManager obj");
+    bool isFoldScreen = system::GetParameter("const.window.foldscreen.type", "") != "";
+    if (isFoldScreen) {
+        RegisterFoldStatusListener();
+    }
     MEDIA_INFO_LOG("HCameraService Construct end");
     serviceStatus_ = CameraServiceStatus::SERVICE_NOT_READY;
 }
@@ -87,7 +90,10 @@ HCameraService::HCameraService(sptr<HCameraHostManager> cameraHostManager)
     : cameraHostManager_(cameraHostManager), muteModeStored_(false), isRegisterSensorSuccess(false)
 {}
 
-HCameraService::~HCameraService() {}
+HCameraService::~HCameraService()
+{
+    UnRegisterFoldStatusListener();
+}
 
 void HCameraService::OnStart()
 {
@@ -219,37 +225,47 @@ int32_t HCameraService::GetCameras(
             MEDIA_ERR_LOG("HCameraService::GetCameraAbility failed");
             return ret;
         }
-        camera_metadata_item_t item;
-        common_metadata_header_t* metadata = cameraAbility->get();
-        int32_t res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_POSITION, &item);
-        uint8_t cameraPosition = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_POSITION_OTHER;
-        res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLDSCREEN_TYPE, &item);
-        uint8_t foldType = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLDSCREEN_OTHER;
-        if (isFoldable && cameraPosition == OHOS_CAMERA_POSITION_FRONT && foldType == OHOS_CAMERA_FOLDSCREEN_OTHER) {
+        auto cameraMetaInfo = GetCameraMetaInfo(id, cameraAbility);
+        if (cameraMetaInfo == nullptr) {
             continue;
         }
-        if (isFoldable && cameraPosition == OHOS_CAMERA_POSITION_FRONT && foldType == OHOS_CAMERA_FOLDSCREEN_INNER) {
-            cameraPosition = POSITION_FOLD_INNER;
-        }
-        res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_TYPE, &item);
-        uint8_t cameraType = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_TYPE_UNSPECIFIED;
-        res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
-        uint8_t connectionType = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_CONNECTION_TYPE_BUILTIN;
-        res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
-        bool isMirrorSupported = (res == CAM_META_SUCCESS) ? (item.count != 0) : false;
-        res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_MODES, &item);
-        std::vector<uint8_t> supportModes = {};
-        for (uint32_t i = 0; i < item.count; i++) {
-            supportModes.push_back(item.data.u8[i]);
-        }
-        CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager GetCameras camera ID:%s, Camera position:%d, "
-                                            "Camera Type:%d, Connection Type:%d, Mirror support:%d",
-            id.c_str(), cameraPosition, cameraType, connectionType, isMirrorSupported));
-        cameraInfos.emplace_back(make_shared<CameraMetaInfo>(id, cameraType, cameraPosition,
-            connectionType, supportModes, cameraAbility));
+        cameraInfos.emplace_back(cameraMetaInfo);
     }
     FillCameras(cameraInfos, cameraIds, cameraAbilityList);
     return ret;
+}
+
+shared_ptr<CameraMetaInfo>HCameraService::GetCameraMetaInfo(std::string &cameraId,
+    shared_ptr<OHOS::Camera::CameraMetadata>cameraAbility)
+{
+    camera_metadata_item_t item;
+    common_metadata_header_t* metadata = cameraAbility->get();
+    int32_t res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_POSITION, &item);
+    uint8_t cameraPosition = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_POSITION_OTHER;
+    res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLDSCREEN_TYPE, &item);
+    uint8_t foldType = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLDSCREEN_OTHER;
+    if (isFoldable && cameraPosition == OHOS_CAMERA_POSITION_FRONT && foldType == OHOS_CAMERA_FOLDSCREEN_OTHER) {
+        return nullptr;
+    }
+    if (isFoldable && cameraPosition == OHOS_CAMERA_POSITION_FRONT && foldType == OHOS_CAMERA_FOLDSCREEN_INNER) {
+        cameraPosition = POSITION_FOLD_INNER;
+    }
+    res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_TYPE, &item);
+    uint8_t cameraType = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_TYPE_UNSPECIFIED;
+    res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
+    uint8_t connectionType = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_CONNECTION_TYPE_BUILTIN;
+    res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
+    bool isMirrorSupported = (res == CAM_META_SUCCESS) ? (item.count != 0) : false;
+    res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_MODES, &item);
+    std::vector<uint8_t> supportModes = {};
+    for (uint32_t i = 0; i < item.count; i++) {
+        supportModes.push_back(item.data.u8[i]);
+    }
+    CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager GetCameras camera ID:%s, Camera position:%d, "
+                                        "Camera Type:%d, Connection Type:%d, Mirror support:%d",
+        cameraId.c_str(), cameraPosition, cameraType, connectionType, isMirrorSupported));
+    return make_shared<CameraMetaInfo>(cameraId, cameraType, cameraPosition,
+        connectionType, supportModes, cameraAbility);
 }
 
 void HCameraService::FillCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos,
@@ -618,6 +634,20 @@ void HCameraService::CreateAndSaveTask(const string& cameraId, CameraStatus stat
     delayCbtaskMap[pid] = task;
 }
 
+void HCameraService::CreateAndSaveTask(FoldStatus status, uint32_t pid)
+{
+    auto task = [status, pid, this]() {
+        auto it = foldServiceCallbacks_.find(pid);
+        if (it != foldServiceCallbacks_.end()) {
+            if (it->second != nullptr) {
+                MEDIA_INFO_LOG("trigger callback due to unfreeze pid: %{public}d", pid);
+                it->second->OnFoldStatusChanged(status);
+            }
+        }
+    };
+    delayFoldStatusCbTaskMap[pid] = task;
+}
+
 void HCameraService::OnCameraStatus(const string& cameraId, CameraStatus status, CallbackInvoker invoker)
 {
     lock_guard<mutex> lock(cameraCbMutex_);
@@ -689,6 +719,40 @@ void HCameraService::OnTorchStatus(TorchStatus status)
     }
 }
 
+void HCameraService::OnFoldStatusChanged(OHOS::Rosen::FoldStatus foldStatus)
+{
+    MEDIA_INFO_LOG("OnFoldStatusChanged preFoldStatus = %{public}d, foldStatus = %{public}d, pid = %{public}d",
+        preFoldStatus_, foldStatus, IPCSkeleton::GetCallingPid());
+    auto curFoldStatus = (FoldStatus)foldStatus;
+    if ((curFoldStatus == FoldStatus::HALF_FOLD && preFoldStatus_ == FoldStatus::EXPAND) ||
+        (curFoldStatus == FoldStatus::EXPAND && preFoldStatus_ == FoldStatus::HALF_FOLD)) {
+        preFoldStatus_ = curFoldStatus;
+        return;
+    }
+    preFoldStatus_ = curFoldStatus;
+    if (curFoldStatus == FoldStatus::HALF_FOLD) {
+        curFoldStatus = FoldStatus::EXPAND;
+    }
+    lock_guard<recursive_mutex> lock(foldCbMutex_);
+    if (foldServiceCallbacks_.empty()) {
+        MEDIA_INFO_LOG("OnFoldStatusChanged foldServiceCallbacks is empty");
+        return;
+    }
+    MEDIA_INFO_LOG("OnFoldStatusChanged foldStatusCallback size = %{public}zu", foldServiceCallbacks_.size());
+    for (auto it : foldServiceCallbacks_) {
+        if (it.second == nullptr) {
+            MEDIA_ERR_LOG("OnFoldStatusChanged pid:%{public}d foldStatusCallbacks is null", it.first);
+            continue;
+        }
+        uint32_t pid = it.first;
+        if (ShouldSkipStatusUpdates(pid)) {
+            CreateAndSaveTask(curFoldStatus, pid);
+        } else {
+            it.second->OnFoldStatusChanged(curFoldStatus);
+        }
+    }
+}
+
 int32_t HCameraService::CloseCameraForDestory(pid_t pid)
 {
     MEDIA_INFO_LOG("HCameraService::CloseCameraForDestory enter");
@@ -744,6 +808,19 @@ int32_t HCameraService::SetTorchCallback(sptr<ITorchServiceCallback>& callback)
 
     MEDIA_INFO_LOG("HCameraService::SetTorchCallback notify pid = %{public}d", pid);
     callback->OnTorchStatusChange(torchStatus_);
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback)
+{
+    lock_guard<recursive_mutex> lock(foldCbMutex_);
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    MEDIA_INFO_LOG("HCameraService::SetFoldStatusCallback pid = %{public}d", pid);
+    if (callback == nullptr) {
+        MEDIA_ERR_LOG("HCameraService::SetFoldStatusCallback callback is null");
+        return CAMERA_INVALID_ARG;
+    }
+    foldServiceCallbacks_.insert(make_pair(pid, callback));
     return CAMERA_OK;
 }
 
@@ -803,12 +880,49 @@ int32_t HCameraService::UnSetTorchCallback(pid_t pid)
     return CAMERA_OK;
 }
 
+int32_t HCameraService::UnSetFoldStatusCallback(pid_t pid)
+{
+    lock_guard<recursive_mutex> lock(foldCbMutex_);
+    MEDIA_INFO_LOG("HCameraService::UnSetFoldStatusCallback pid = %{public}d, size = %{public}zu",
+        pid, foldServiceCallbacks_.size());
+    if (!foldServiceCallbacks_.empty()) {
+        MEDIA_INFO_LOG("HCameraService::UnSetFoldStatusCallback foldServiceCallbacks_ is not empty, reset it");
+        auto it = foldServiceCallbacks_.find(pid);
+        if ((it != foldServiceCallbacks_.end()) && (it->second)) {
+            it->second = nullptr;
+            foldServiceCallbacks_.erase(it);
+        }
+    }
+    MEDIA_INFO_LOG("HCameraService::UnSetFoldStatusCallback after erase pid = %{public}d, size = %{public}zu",
+        pid, foldServiceCallbacks_.size());
+    return CAMERA_OK;
+}
+
+void HCameraService::RegisterFoldStatusListener()
+{
+    MEDIA_INFO_LOG("RegisterFoldStatusListener is called");
+    auto ret = OHOS::Rosen::DisplayManager::GetInstance().RegisterFoldStatusListener(this);
+    if (ret != OHOS::Rosen::DMError::DM_OK) {
+        MEDIA_ERR_LOG("RegisterFoldStatusListener failed");
+    }
+}
+
+void HCameraService::UnRegisterFoldStatusListener()
+{
+    MEDIA_INFO_LOG("UnRegisterFoldStatusListener is called");
+    auto ret = OHOS::Rosen::DisplayManager::GetInstance().UnregisterFoldStatusListener(this);
+    if (ret != OHOS::Rosen::DMError::DM_OK) {
+        MEDIA_ERR_LOG("UnRegisterFoldStatusListener failed");
+    }
+}
+
 int32_t HCameraService::UnSetAllCallback(pid_t pid)
 {
     MEDIA_INFO_LOG("HCameraService::UnSetAllCallback enter");
     UnSetCameraCallback(pid);
     UnSetMuteCallback(pid);
     UnSetTorchCallback(pid);
+    UnSetFoldStatusCallback(pid);
     return CAMERA_OK;
 }
 

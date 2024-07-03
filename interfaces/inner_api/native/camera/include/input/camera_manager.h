@@ -80,6 +80,11 @@ struct TorchStatusInfo {
     float torchLevel;
 };
 
+struct FoldStatusInfo {
+    FoldStatus foldStatus;
+    std::vector<sptr<CameraDevice>> supportedCameras;
+};
+
 typedef enum OutputCapStreamType {
     PREVIEW = 0,
     VIDEO_STREAM = 1,
@@ -109,6 +114,13 @@ public:
     TorchListener() = default;
     virtual ~TorchListener() = default;
     virtual void OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) const = 0;
+};
+
+class FoldListener {
+public:
+    FoldListener() = default;
+    virtual ~FoldListener() = default;
+    virtual void OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const = 0;
 };
 
 class CameraServiceSystemAbilityListener : public SystemAbilityStatusChangeStub {
@@ -544,9 +556,27 @@ public:
      */
     std::shared_ptr<TorchListener> GetTorchListener();
 
+    /**
+     * @brief register fold status listener
+     *
+     * @param FoldListener listener object.
+     * @return.
+     */
+    void RegisterFoldListener(std::shared_ptr<FoldListener> listener);
+
+    /**
+     * @brief get the camera fold listener
+     *
+     * @return FoldListener point..
+     */
+    std::shared_ptr<FoldListener> GetFoldListener();
+
     SafeMap<std::thread::id, std::shared_ptr<CameraManagerCallback>> GetCameraMngrCallbackMap();
     SafeMap<std::thread::id, std::shared_ptr<CameraMuteListener>> GetCameraMuteListenerMap();
     SafeMap<std::thread::id, std::shared_ptr<TorchListener>> GetTorchListenerMap();
+
+    SafeMap<std::thread::id, std::shared_ptr<FoldListener>> GetFoldListenerMap();
+
     /**
      * @brief check device if support torch
      *
@@ -629,9 +659,11 @@ private:
     void SetCameraServiceCallback(sptr<ICameraServiceCallback>& callback);
     void SetCameraMuteServiceCallback(sptr<ICameraMuteServiceCallback>& callback);
     void SetTorchServiceCallback(sptr<ITorchServiceCallback>& callback);
+    void SetFoldServiceCallback(sptr<IFoldServiceCallback>& callback);
     void CreateAndSetCameraServiceCallback();
     void CreateAndSetCameraMuteServiceCallback();
     void CreateAndSetTorchServiceCallback();
+    void CreateAndSetFoldServiceCallback();
 
     sptr<CaptureSession> CreateCaptureSessionImpl(SceneMode mode, sptr<ICaptureSession> session);
     int32_t CreateListenerObject();
@@ -685,10 +717,12 @@ private:
     sptr<ICameraServiceCallback> cameraSvcCallback_;
     sptr<ICameraMuteServiceCallback> cameraMuteSvcCallback_;
     sptr<ITorchServiceCallback> torchSvcCallback_;
+    sptr<IFoldServiceCallback> foldSvcCallback_;
 
     SafeMap<std::thread::id, std::shared_ptr<CameraManagerCallback>> cameraMngrCallbackMap_;
     SafeMap<std::thread::id, std::shared_ptr<CameraMuteListener>> cameraMuteListenerMap_;
     SafeMap<std::thread::id, std::shared_ptr<TorchListener>> torchListenerMap_;
+    SafeMap<std::thread::id, std::shared_ptr<FoldListener>> foldListenerMap_;
 
     std::vector<sptr<CameraDevice>> cameraObjList_ = {};
     std::vector<sptr<CameraInfo>> dcameraObjList_ = {};
@@ -730,6 +764,15 @@ class TorchServiceCallback : public HTorchServiceCallbackStub {
 public:
     explicit TorchServiceCallback(sptr<CameraManager> cameraManager) : cameraManager_(cameraManager) {}
     int32_t OnTorchStatusChange(const TorchStatus status) override;
+
+private:
+    wptr<CameraManager> cameraManager_ = nullptr;
+};
+
+class FoldServiceCallback : public HFoldServiceCallbackStub {
+public:
+    explicit FoldServiceCallback(sptr<CameraManager> cameraManager) : cameraManager_(cameraManager) {}
+    int32_t OnFoldStatusChanged(const FoldStatus status) override;
 
 private:
     wptr<CameraManager> cameraManager_ = nullptr;

@@ -53,6 +53,16 @@ public:
 private:
     static inline BrokerDelegator<HTorchServiceCallbackProxy> delegator_;
 };
+
+class HFoldServiceCallbackProxy : public IRemoteProxy<IFoldServiceCallback> {
+public:
+    explicit HFoldServiceCallbackProxy(const sptr<IRemoteObject> &impl);
+    virtual ~HFoldServiceCallbackProxy() = default;
+
+    int32_t OnFoldStatusChanged(const FoldStatus foldStatus) override;
+private:
+    static inline BrokerDelegator<HFoldServiceCallbackProxy> delegator_;
+};
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_HCAMERA_SERVICE_CALLBACK_PROXY_H

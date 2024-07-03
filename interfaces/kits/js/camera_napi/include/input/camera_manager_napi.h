@@ -102,6 +102,27 @@ struct TorchStatusChangeCallbackInfo {
     }
 };
 
+class FoldListenerNapi : public FoldListener, public ListenerBase {
+public:
+    explicit FoldListenerNapi(napi_env env);
+    virtual ~FoldListenerNapi();
+    void OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const override;
+private:
+    void OnFoldStatusChangedCallback(const FoldStatusInfo &foldStatusInfo) const;
+    void OnFoldStatusChangedCallbackAsync(const FoldStatusInfo &foldStatusInfo) const;
+};
+
+struct FoldStatusChangeCallbackInfo {
+    FoldStatusInfo info_;
+    const FoldListenerNapi* listener_;
+    FoldStatusChangeCallbackInfo(FoldStatusInfo info, const FoldListenerNapi* listener)
+        : info_(info), listener_(listener) {}
+    ~FoldStatusChangeCallbackInfo()
+    {
+        listener_ = nullptr;
+    }
+};
+
 class CameraManagerNapi : public CameraNapiEventEmitter<CameraManagerNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
@@ -156,10 +177,15 @@ private:
         const std::vector<napi_value>& args, bool isOnce);
     void UnregisterTorchStatusCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterFoldStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterFoldStatusCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
     std::shared_ptr<CameraManagerCallbackNapi> cameraManagerCallback_;
     std::shared_ptr<CameraMuteListenerNapi> cameraMuteListener_;
     std::shared_ptr<TorchListenerNapi> torchListener_;
+    std::shared_ptr<FoldListenerNapi> foldListener_;
     static thread_local napi_ref sConstructor_;
 
     napi_env env_;

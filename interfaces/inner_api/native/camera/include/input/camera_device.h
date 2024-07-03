@@ -179,6 +179,19 @@ public:
     * @return moduleType sensor module type.
     */
     uint32_t GetModuleType();
+
+    /**
+    * @brief Get the supported fold status of the device
+    * @return The supported fold status of the device
+    *
+    * foldStatus enum values:
+    *   0: OHOS_CAMERA_FOLD_STATUS_NONFOLDABLE
+    *   1: OHOS_CAMERA_FOLD_STATUS_EXPANDED
+    *   2: OHOS_CAMERA_FOLD_STATUS_FOLDED
+    *   3: OHOS_CAMERA_FOLD_STATUS_EXPANDED + OHOS_CAMERA_FOLD_STATUS_FOLDED
+    */
+    uint32_t GetSupportedFoldStatus();
+
     std::unordered_map<int32_t, std::vector<Profile>> modePreviewProfiles_ = {};
     std::unordered_map<int32_t, std::vector<Profile>> modePhotoProfiles_ = {};
     std::unordered_map<int32_t, std::vector<VideoProfile>> modeVideoProfiles_ = {};
@@ -194,6 +207,7 @@ private:
     CameraFoldScreenType foldScreenType_ = CAMERA_FOLDSCREEN_UNSPECIFIED;
     uint32_t cameraOrientation_ = 0;
     uint32_t moduleType_ = 0;
+    uint32_t foldStatus_ = 0;
     dmDeviceInfo dmDeviceInfo_ = {};
     std::vector<float> zoomRatioRange_;
     std::vector<float> exposureBiasRange_;

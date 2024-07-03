@@ -87,6 +87,30 @@ int HTorchServiceCallbackStub::HandleOnTorchStatusChange(MessageParcel& data)
     return OnTorchStatusChange((TorchStatus)status);
 }
 
+int HFoldServiceCallbackStub::OnRemoteRequest(
+    uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
+{
+    int errCode = -1;
+    CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
+    switch (code) {
+        case static_cast<uint32_t>(FoldServiceCallbackInterfaceCode::FOLD_CALLBACK_FOLD_STATUS_CHANGE):
+            errCode = HFoldServiceCallbackStub::HandleOnFoldStatusChanged(data);
+            break;
+        default:
+            MEDIA_ERR_LOG("HFoldServiceCallbackStub request code %{public}u not handled", code);
+            errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+            break;
+    }
+    return errCode;
+}
+
+int HFoldServiceCallbackStub::HandleOnFoldStatusChanged(MessageParcel& data)
+{
+    int32_t status = data.ReadInt32();
+
+    return OnFoldStatusChanged((FoldStatus)status);
+}
+
 int HCameraMuteServiceCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {

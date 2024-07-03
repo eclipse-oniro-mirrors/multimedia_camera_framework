@@ -61,6 +61,9 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_CALLBACK):
             errCode = HCameraServiceStub::HandleSetTorchCallback(data, reply);
             break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_FOLD_CALLBACK):
+            errCode = HCameraServiceStub::HandleSetFoldStatusCallback(data, reply);
+            break;
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_CAMERAS):
             errCode = HCameraServiceStub::HandleGetCameras(data, reply);
             break;
@@ -310,6 +313,18 @@ int HCameraServiceStub::HandleSetTorchCallback(MessageParcel& data, MessageParce
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
                              "HCameraServiceStub HandleSetTorchCallback callback is null");
     return SetTorchCallback(callback);
+}
+
+int HCameraServiceStub::HandleSetFoldStatusCallback(MessageParcel& data, MessageParcel& reply)
+{
+    auto remoteObject = data.ReadRemoteObject();
+    CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HCameraServiceStub HandleSetFoldStatusCallback FoldServiceCallback is null");
+
+    auto callback = iface_cast<IFoldServiceCallback>(remoteObject);
+    CHECK_AND_RETURN_RET_LOG(callback != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HCameraServiceStub HandleSetFoldStatusCallback callback is null");
+    return SetFoldStatusCallback(callback);
 }
 
 int HCameraServiceStub::HandleCreateCaptureSession(MessageParcel& data, MessageParcel& reply)

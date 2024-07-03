@@ -39,6 +39,7 @@ private:
     int HandleSetCameraCallback(MessageParcel &data, MessageParcel &reply);
     int HandleSetMuteCallback(MessageParcel &data, MessageParcel &reply);
     int HandleSetTorchCallback(MessageParcel &data, MessageParcel &reply);
+    int HandleSetFoldStatusCallback(MessageParcel &data, MessageParcel &reply);
     int HandleCreateCaptureSession(MessageParcel &data, MessageParcel &reply);
     int HandleCreateDeferredPhotoProcessingSession(MessageParcel &data, MessageParcel &reply);
     int HandleCreatePhotoOutput(MessageParcel &data, MessageParcel &reply);

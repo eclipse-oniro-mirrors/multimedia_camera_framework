@@ -76,6 +76,7 @@ ohos_unittest("camera_framework_unittest_v1_1") {
     "media_library:media_library_manager",
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
+    "window_manager:libdm",
   ]
 
   defines = [ "private=public" ]
@@ -159,6 +160,7 @@ ohos_unittest("camera_ndk_unittest_v1_1") {
     "media_library:media_library_manager",
     "safwk:system_ability_fwk",
     "sensor:sensor_interface_native",
+    "window_manager:libdm",
   ]
 
   defines = [ "private=public" ]
@@ -259,6 +261,7 @@ ohos_unittest("camera_framework_deferred_unittest") {
     "media_library:media_library_manager",
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
+    "window_manager:libdm",
   ]
 
   defines = [ "private=public" ]

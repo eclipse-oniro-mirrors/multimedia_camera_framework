@@ -215,6 +215,28 @@ int32_t HCameraServiceProxy::SetTorchCallback(sptr<ITorchServiceCallback>& callb
     return error;
 }
 
+int32_t HCameraServiceProxy::SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    if (callback == nullptr) {
+        MEDIA_ERR_LOG("HCameraServiceProxy SetFoldStatusCallback callback is null");
+        return IPC_PROXY_ERR;
+    }
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteRemoteObject(callback->AsObject());
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_FOLD_CALLBACK), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy SetFoldStatusCallback failed, error: %{public}d", error);
+    }
+
+    return error;
+}
+
 int32_t HCameraServiceProxy::CreateCaptureSession(sptr<ICaptureSession>& session, int32_t operationMode)
 {
     MessageParcel data;

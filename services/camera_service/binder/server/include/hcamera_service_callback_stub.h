@@ -48,6 +48,15 @@ public:
 private:
     int HandleOnTorchStatusChange(MessageParcel& data);
 };
+
+class HFoldServiceCallbackStub : public IRemoteStub<IFoldServiceCallback> {
+public:
+    int OnRemoteRequest(uint32_t code, MessageParcel &data,
+                        MessageParcel &reply, MessageOption &option) override;
+
+private:
+    int HandleOnFoldStatusChanged(MessageParcel& data);
+};
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_HCAMERA_SERVICE_CALLBACK_STUB_H
