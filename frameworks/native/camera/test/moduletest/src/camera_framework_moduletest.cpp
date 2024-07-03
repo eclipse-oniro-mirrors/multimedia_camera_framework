@@ -8647,6 +8647,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_051, TestSize.Le
     EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 1);
     g_previewEvents.reset();
 
+    sleep(WAIT_TIME_AFTER_START);
     auto statusSize = g_sketchStatus.size();
     EXPECT_EQ(statusSize, 2);
     if (statusSize == 2) {
@@ -9633,6 +9634,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_067, TestSize.Le
     EXPECT_EQ(g_previewEvents[static_cast<int>(CAM_PREVIEW_EVENTS::CAM_PREVIEW_SKETCH_STATUS_CHANGED)], 1);
     g_previewEvents.reset();
 
+    sleep(WAIT_TIME_AFTER_START);
     auto statusSize = g_sketchStatus.size();
     EXPECT_EQ(statusSize, 2);
     if (statusSize == 2) {
