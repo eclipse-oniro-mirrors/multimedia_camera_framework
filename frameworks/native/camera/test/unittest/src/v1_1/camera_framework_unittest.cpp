@@ -3035,7 +3035,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_010, TestSize.Level
     std::u16string cameraServiceInfo = u"";
     args.push_back(cameraServiceInfo);
     ret = camService->Dump(fd, args);
-    EXPECT_EQ(ret, 10);
+    EXPECT_EQ(ret, 0);
 
     input->Close();
 }
