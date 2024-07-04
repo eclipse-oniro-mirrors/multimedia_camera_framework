@@ -189,8 +189,6 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, st
             OH_AVCodecBufferAttr attr = {0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE};
             OH_AVBuffer *buffer = frameRecords[index]->encodedBuffer;
             OH_AVBuffer_GetBufferAttr(buffer, &attr);
-            MEDIA_DEBUG_LOG("DoMuxerVideo frameRecord addr %{public}s videoBuffer addr %{public}p size: %{public}d",
-                frameRecords[index]->GetFrameId().c_str(), OH_AVBuffer_GetAddr(buffer), attr.size);
             attr.pts = index * VIDEO_FRAME_INTERVAL;
             OH_AVBuffer_SetBufferAttr(buffer, &attr);
             muxer->WriteSampleBuffer(buffer, VIDEO_TRACK);
