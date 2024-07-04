@@ -59,6 +59,7 @@ private:
     int HandleSetPeerCallback(MessageParcel& data);
     int HandleProxyForFreeze(MessageParcel& data, MessageParcel& reply);
     int HandleResetAllFreezeStatus(MessageParcel& data, MessageParcel& reply);
+    int HandleGetDmDeviceInfo(MessageParcel& data, MessageParcel& reply);
     int DestroyStubObj() override;
     int DestroyStubForPid(pid_t pid);
     void ClientDied(pid_t pid);

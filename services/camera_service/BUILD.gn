@@ -184,6 +184,12 @@ ohos_shared_library("camera_service") {
     defines += [ "CAMERA_USE_SENSOR" ]
   }
 
+  if (defined(global_parts_info) &&
+      defined(global_parts_info.distributedhardware_device_manager)) {
+    external_deps += [ "device_manager:devicemanagersdk" ]
+    defines += [ "DEVICE_MANAGER" ]
+  }
+
   include_dirs += [
     "//drivers/peripheral/camera/interfaces/include",
     "//drivers/peripheral/camera/interfaces/hdi_ipc",

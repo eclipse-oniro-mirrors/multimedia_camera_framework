@@ -733,5 +733,21 @@ int32_t HCameraServiceProxy::ResetAllFreezeStatus()
     }
     return error;
 }
+int32_t HCameraServiceProxy::GetDmDeviceInfo(std::vector<std::string> &deviceInfos)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_DM_DEVICE_INFOS), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy GetDmDeviceInfo failed, error: %{public}d", error);
+        return error;
+    }
+    reply.ReadStringVector(&deviceInfos);
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS
