@@ -123,6 +123,7 @@ struct FoldStatusChangeCallbackInfo {
     }
 };
 
+struct CameraNapiObject;
 class CameraManagerNapi : public CameraNapiEventEmitter<CameraManagerNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
@@ -164,6 +165,10 @@ private:
     static napi_value CameraManagerNapiConstructor(napi_env env, napi_callback_info info);
     static void ProcessCameraInfo(sptr<CameraManager>& cameraManager, const CameraPosition cameraPosition,
         const CameraType cameraType, sptr<CameraDevice>& cameraInfo);
+    static void GetSupportedOutputCapabilityAdaptNormalMode(
+        SceneMode fwkMode, sptr<CameraDevice>& cameraInfo, sptr<CameraOutputCapability>& outputCapability);
+    static sptr<CameraDevice> GetSupportedOutputCapabilityGetCameraInfo(
+        napi_env env, napi_callback_info info, CameraManagerNapi*& cameraManagerNapi, int32_t& jsSceneMode);
 
     void RegisterCameraStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
