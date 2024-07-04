@@ -494,6 +494,7 @@ bool PhotoPostProcessor::ConnectServiceIfNecessary()
         ScheduleConnectService();
         return false;
     } else {
+        SetImageProcessSession(imageProcessSession);
         std::lock_guard<std::mutex> removeNeededListLock(removeNeededListMutex_);
         for (auto iter = removeNeededList_.begin(); iter != removeNeededList_.end(); iter++) {
             std::string imageId = *iter;
