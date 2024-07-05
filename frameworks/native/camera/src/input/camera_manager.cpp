@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <cstring>
 #include <mutex>
+#include <nlohmann/json.hpp>
 #include <ostream>
 #include <sstream>
 
@@ -28,7 +29,6 @@
 #include "camera_util.h"
 #include "capture_scene_const.h"
 #include "deferred_photo_proc_session.h"
-#include "device_manager_impl.h"
 #include "display_manager.h"
 #include "dps_metadata_info.h"
 #include "icamera_util.h"
@@ -143,15 +143,6 @@ CameraManager::~CameraManager()
     MEDIA_INFO_LOG("CameraManager::~CameraManager() called");
     RemoveServiceProxyDeathRecipient();
     UnSubscribeSystemAbility();
-}
-
-class CameraManager::DeviceInitCallBack : public DistributedHardware::DmInitCallback {
-    void OnRemoteDied() override;
-};
-
-void CameraManager::DeviceInitCallBack::OnRemoteDied()
-{
-    MEDIA_INFO_LOG("CameraManager::DeviceInitCallBack OnRemoteDied");
 }
 
 int32_t CameraManager::CreateListenerObject()
@@ -1153,31 +1144,47 @@ std::vector<sptr<CameraInfo>> CameraManager::GetCameras()
     dcameraObjList_.clear();
     return dcameraObjList_;
 }
+
 bool CameraManager::GetDmDeviceInfo()
 {
-    std::vector <DistributedHardware::DmDeviceInfo> deviceInfos;
-    auto &deviceManager = DistributedHardware::DeviceManager::GetInstance();
-    std::shared_ptr<DistributedHardware::DmInitCallback> initCallback = std::make_shared<DeviceInitCallBack>();
-    std::string pkgName = std::to_string(IPCSkeleton::GetCallingPid());
-    const string extraInfo = "";
-    deviceManager.InitDeviceManager(pkgName, initCallback);
-    deviceManager.RegisterDevStateCallback(pkgName, extraInfo, NULL);
-    deviceManager.GetTrustedDeviceList(pkgName, extraInfo, deviceInfos);
-    deviceManager.UnInitDeviceManager(pkgName);
-    int size = static_cast<int>(deviceInfos.size());
-    MEDIA_INFO_LOG("CameraManager::size=%{public}d", size);
-    if (size > 0) {
-        distributedCamInfo_.resize(size);
-        for (int i = 0; i < size; i++) {
-            distributedCamInfo_[i].deviceName = deviceInfos[i].deviceName;
-            distributedCamInfo_[i].deviceTypeId = deviceInfos[i].deviceTypeId;
-            distributedCamInfo_[i].networkId = deviceInfos[i].networkId;
-        }
-        return true;
-    } else {
+    auto serviceProxy = GetServiceProxy();
+    if (serviceProxy == nullptr) {
+        MEDIA_ERR_LOG("serviceProxy is null, returning empty list!");
         return false;
     }
+
+    std::vector<std::string> deviceInfos;
+    int32_t retCode = serviceProxy->GetDmDeviceInfo(deviceInfos);
+    if (retCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("CameraManager::GetDmDeviceInfo failed!, retCode: %{public}d", retCode);
+        return false;
+    }
+
+    int size = static_cast<int>(deviceInfos.size());
+    MEDIA_INFO_LOG("CameraManager::GetDmDeviceInfo size=%{public}d", size);
+    if (size < 0) {
+        return false;
+    }
+
+    distributedCamInfo_.resize(size);
+    for (int i = 0; i < size; i++) {
+        std::string deviceInfoStr = deviceInfos[i];
+        MEDIA_INFO_LOG("CameraManager::GetDmDeviceInfo deviceInfo: %{public}s", deviceInfoStr.c_str());
+        if (!nlohmann::json::accept(deviceInfoStr)) {
+            MEDIA_ERR_LOG("Failed to verify the deviceInfo format, deviceInfo is: %{public}s", deviceInfoStr.c_str());
+        } else {
+            nlohmann::json deviceInfoJson = nlohmann::json::parse(deviceInfoStr);
+            if (deviceInfoJson.contains("deviceName") && deviceInfoJson.contains("deviceTypeId") &&
+                deviceInfoJson.contains("networkId")) {
+                distributedCamInfo_[i].deviceName = deviceInfoJson["deviceName"];
+                distributedCamInfo_[i].deviceTypeId = deviceInfoJson["deviceTypeId"];
+                distributedCamInfo_[i].networkId = deviceInfoJson["networkId"];
+            }
+        }
+    }
+    return true;
 }
+
 bool CameraManager::isDistributeCamera(std::string cameraId, dmDeviceInfo &deviceInfo)
 {
     MEDIA_INFO_LOG("CameraManager::cameraId = %{public}s", cameraId.c_str());

@@ -17,6 +17,7 @@
 #define OHOS_CAMERA_H_CAMERA_SERVICE_H
 #include <iostream>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <set>
 #include <shared_mutex>
 #include <vector>
@@ -132,6 +133,7 @@ public:
     // for resource proxy
     int32_t ProxyForFreeze(const std::set<int32_t>& pidList, bool isProxy) override;
     int32_t ResetAllFreezeStatus() override;
+    int32_t GetDmDeviceInfo(std::vector<std::string> &deviceInfos) override;
     bool ShouldSkipStatusUpdates(pid_t pid);
     void CreateAndSaveTask(const string& cameraId, CameraStatus status, uint32_t pid, const string& bundleName);
     void CreateAndSaveTask(FoldStatus status, uint32_t pid);
@@ -148,6 +150,9 @@ private:
     int32_t GetMuteModeFromDataShareHelper(bool &muteMode);
     int32_t SetMuteModeByDataShareHelper(bool muteMode);
     int32_t MuteCameraFunc(bool muteMode);
+#ifdef DEVICE_MANAGER
+    class DeviceInitCallBack;
+#endif
 private:
     class ServiceHostStatus : public StatusCallback {
     public:

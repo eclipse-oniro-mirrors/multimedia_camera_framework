@@ -136,6 +136,9 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_SET_PEER_CALLBACK):
             errCode = HCameraServiceStub::HandleSetPeerCallback(data);
             break;
+        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_DM_DEVICE_INFOS):
+            errCode = HCameraServiceStub::HandleGetDmDeviceInfo(data, reply);
+            break;
         default:
             MEDIA_ERR_LOG("HCameraServiceStub request code %{public}d not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -625,9 +628,19 @@ int HCameraServiceStub::HandleProxyForFreeze(MessageParcel& data, MessageParcel&
     reply.WriteInt32(static_cast<int32_t>(errCode));
     return errCode;
 }
+
 int HCameraServiceStub::HandleResetAllFreezeStatus(MessageParcel& data, MessageParcel& reply)
 {
     int errCode = ResetAllFreezeStatus();
+    return errCode;
+}
+
+int HCameraServiceStub::HandleGetDmDeviceInfo(MessageParcel& data, MessageParcel& reply)
+{
+    std::vector<std::string> deviceInfos;
+    int errCode = GetDmDeviceInfo(deviceInfos);
+    CHECK_AND_RETURN_RET_LOG(reply.WriteStringVector(deviceInfos), IPC_STUB_WRITE_PARCEL_ERR,
+        "HCameraServiceStub HandleGetDmDeviceInfo WriteStringVector failed");
     return errCode;
 }
 } // namespace CameraStandard

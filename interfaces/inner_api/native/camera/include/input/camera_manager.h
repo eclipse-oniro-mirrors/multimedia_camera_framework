@@ -728,7 +728,6 @@ private:
     std::vector<sptr<CameraInfo>> dcameraObjList_ = {};
     std::vector<dmDeviceInfo> distributedCamInfo_;
     std::map<std::string, dmDeviceInfo> distributedCamInfoAndId_;
-    class DeviceInitCallBack;
 
     std::map<std::string, std::vector<Profile>> modePhotoProfiles_ = {};
     std::map<std::string, std::vector<Profile>> modePreviewProfiles_ = {};

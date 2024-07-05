@@ -35,6 +35,9 @@
 #include "datashare_predicates.h"
 #include "datashare_result_set.h"
 #include "deferred_processing_service.h"
+#ifdef DEVICE_MANAGER
+#include "device_manager_impl.h"
+#endif
 #include "hcamera_device_manager.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
@@ -94,6 +97,17 @@ HCameraService::~HCameraService()
 {
     UnRegisterFoldStatusListener();
 }
+
+#ifdef DEVICE_MANAGER
+class HCameraService::DeviceInitCallBack : public DistributedHardware::DmInitCallback {
+    void OnRemoteDied() override;
+};
+
+void HCameraService::DeviceInitCallBack::OnRemoteDied()
+{
+    MEDIA_INFO_LOG("CameraManager::DeviceInitCallBack OnRemoteDied");
+}
+#endif
 
 void HCameraService::OnStart()
 {
@@ -1963,6 +1977,35 @@ int32_t HCameraService::ResetAllFreezeStatus()
     std::lock_guard<std::mutex> lock(freezedPidListMutex_);
     freezedPidList_.clear();
     MEDIA_INFO_LOG("freezedPidList_ has been clear");
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::GetDmDeviceInfo(std::vector<std::string> &deviceInfos)
+{
+#ifdef DEVICE_MANAGER
+    std::vector <DistributedHardware::DmDeviceInfo> deviceInfoList;
+    auto &deviceManager = DistributedHardware::DeviceManager::GetInstance();
+    std::shared_ptr<DistributedHardware::DmInitCallback> initCallback = std::make_shared<DeviceInitCallBack>();
+    std::string pkgName = std::to_string(IPCSkeleton::GetCallingTokenID());
+    const string extraInfo = "";
+    deviceManager.InitDeviceManager(pkgName, initCallback);
+    deviceManager.RegisterDevStateCallback(pkgName, extraInfo, NULL);
+    deviceManager.GetTrustedDeviceList(pkgName, extraInfo, deviceInfoList);
+    deviceManager.UnInitDeviceManager(pkgName);
+    int size = static_cast<int>(deviceInfoList.size());
+    MEDIA_INFO_LOG("HCameraService::GetDmDeviceInfo size=%{public}d", size);
+    if (size > 0) {
+        for (int i = 0; i < size; i++) {
+            nlohmann::json deviceInfo;
+            deviceInfo["deviceName"] = deviceInfoList[i].deviceName;
+            deviceInfo["deviceTypeId"] = deviceInfoList[i].deviceTypeId;
+            deviceInfo["networkId"] = deviceInfoList[i].networkId;
+            std::string deviceInfoStr = deviceInfo.dump();
+            MEDIA_INFO_LOG("HCameraService::GetDmDeviceInfo deviceInfo:%{public}s", deviceInfoStr.c_str());
+            deviceInfos.emplace_back(deviceInfoStr);
+        }
+    }
+#endif
     return CAMERA_OK;
 }
 
