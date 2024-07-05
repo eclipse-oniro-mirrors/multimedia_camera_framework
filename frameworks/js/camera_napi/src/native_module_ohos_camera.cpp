@@ -23,6 +23,7 @@
 #include "mode/macro_video_session_napi.h"
 #include "mode/mode_manager_napi.h"
 #include "mode/night_session_napi.h"
+#include "mode/panorama_session_napi.h"
 #include "mode/photo_session_for_sys_napi.h"
 #include "mode/photo_session_napi.h"
 #include "mode/portrait_session_napi.h"
@@ -56,6 +57,7 @@ static napi_value Export(napi_env env, napi_value exports)
     CameraNapi::Init(env, exports);
     MetadataOutputNapi::Init(env, exports);
     HighResPhotoSessionNapi::Init(env, exports);
+    PanoramaSessionNapi::Init(env, exports);
     PortraitSessionNapi::Init(env, exports);
     ProfessionSessionNapi::Init(env, exports);
     NightSessionNapi::Init(env, exports);

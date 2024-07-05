@@ -127,6 +127,19 @@ enum EffectSuggestionType {
     EFFECT_SUGGESTION_SUNRISE_SUNSET
 };
 
+typedef enum {
+    AWB_MODE_AUTO = 0,
+    AWB_MODE_CLOUDY_DAYLIGHT,
+    AWB_MODE_INCANDESCENT,
+    AWB_MODE_FLUORESCENT,
+    AWB_MODE_DAYLIGHT,
+    AWB_MODE_OFF,
+    AWB_MODE_LOCKED,
+    AWB_MODE_WARM_FLUORESCENT,
+    AWB_MODE_TWILIGHT,
+    AWB_MODE_SHADE,
+} WhiteBalanceMode;
+
 typedef struct {
     float x;
     float y;
@@ -1290,6 +1303,65 @@ public:
     bool CanSetFrameRateRangeForOutput(int32_t minFps, int32_t maxFps, CaptureOutput* curOutput);
     int32_t AddSecureOutput(sptr<CaptureOutput> &output);
 
+    // White Balance
+    /**
+    * @brief Get Metering mode.
+     * @param vector of Metering Mode.
+     * @return errCode.
+     */
+    int32_t GetSupportedWhiteBalanceModes(std::vector<WhiteBalanceMode>& modes);
+
+    /**
+     * @brief Query whether given white-balance mode supported.
+     *
+     * @param camera_focus_mode_enum_t white-balance mode to query.
+     * @param bool True if supported false otherwise.
+     * @return errCode.
+     */
+    int32_t IsWhiteBalanceModeSupported(WhiteBalanceMode mode, bool &isSupported);
+
+    /**
+     * @brief Set WhiteBalanceMode.
+     * @param mode WhiteBalanceMode to be set.
+     * @return errCode.
+     */
+    int32_t SetWhiteBalanceMode(WhiteBalanceMode mode);
+
+    /**
+     * @brief Get WhiteBalanceMode.
+     * @param mode current WhiteBalanceMode .
+     * @return Returns errCode.
+     */
+    int32_t GetWhiteBalanceMode(WhiteBalanceMode& mode);
+
+    /**
+     * @brief Get ManualWhiteBalance Range.
+     * @param whiteBalanceRange supported Manual WhiteBalance range .
+     * @return Returns errCode.
+     */
+    int32_t GetManualWhiteBalanceRange(std::vector<int32_t> &whiteBalanceRange);
+
+    /**
+     * @brief Is Manual WhiteBalance Supported.
+     * @param isSupported is Support Manual White Balance .
+     * @return Returns errCode.
+     */
+    int32_t IsManualWhiteBalanceSupported(bool &isSupported);
+
+    /**
+     * @brief Set Manual WhiteBalance.
+     * @param wbValue WhiteBalance value to be set.
+     * @return Returns errCode.
+     */
+    int32_t SetManualWhiteBalance(int32_t wbValue);
+
+    /**
+     * @brief Get ManualWhiteBalance.
+     * @param wbValue WhiteBalance value to be get.
+     * @return Returns errCode.
+     */
+    int32_t GetManualWhiteBalance(int32_t &wbValue);
+
     inline std::shared_ptr<MetadataResultProcessor> GetMetadataResultProcessor()
     {
         return metadataResultProcessor_;
@@ -1321,6 +1393,12 @@ protected:
 
     static const std::unordered_map<camera_xmage_color_type_t, ColorEffect> metaColorEffectMap_;
     static const std::unordered_map<ColorEffect, camera_xmage_color_type_t> fwkColorEffectMap_;
+
+    static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode>
+        metaWhiteBalanceModeMap_;
+    static const std::unordered_map<WhiteBalanceMode, camera_awb_mode_t>
+        fwkWhiteBalanceModeMap_;
+
     std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
     Profile photoProfile_;
     Profile previewProfile_;

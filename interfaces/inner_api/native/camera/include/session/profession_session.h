@@ -51,18 +51,6 @@ typedef enum {
 } FocusAssistFlashMode;
 
 typedef enum {
-    AWB_MODE_AUTO = 0,
-    AWB_MODE_CLOUDY_DAYLIGHT,
-    AWB_MODE_INCANDESCENT,
-    AWB_MODE_FLUORESCENT,
-    AWB_MODE_DAYLIGHT,
-    AWB_MODE_OFF,
-    AWB_MODE_WARM_FLUORESCENT,
-    AWB_MODE_TWILIGHT,
-    AWB_MODE_SHADE,
-} WhiteBalanceMode;
-
-typedef enum {
     EXPOSURE_HINT_MODE_OFF = 0,
     EXPOSURE_HINT_MODE_ON,
     EXPOSURE_HINT_UNSUPPORTED,
@@ -207,65 +195,6 @@ public:
      *
      * @param CaptureOutput to be added to session.
      */
-
-// White Balance
-    /**
-     * @brief Get Metering mode.
-     * @param vector of Metering Mode.
-     * @return errCode.
-     */
-    int32_t GetSupportedWhiteBalanceModes(std::vector<WhiteBalanceMode>& modes);
-
-    /**
-     * @brief Query whether given white-balance mode supported.
-     *
-     * @param camera_focus_mode_enum_t white-balance mode to query.
-     * @param bool True if supported false otherwise.
-     * @return errCode.
-     */
-    int32_t IsWhiteBalanceModeSupported(WhiteBalanceMode mode, bool &isSupported);
-
-    /**
-     * @brief Set WhiteBalanceMode.
-     * @param mode WhiteBalanceMode to be set.
-     * @return errCode.
-     */
-    int32_t SetWhiteBalanceMode(WhiteBalanceMode mode);
-
-    /**
-     * @brief Get WhiteBalanceMode.
-     * @param mode current WhiteBalanceMode .
-     * @return Returns errCode.
-     */
-    int32_t GetWhiteBalanceMode(WhiteBalanceMode& mode);
-
-    /**
-     * @brief Get ManualWhiteBalance Range.
-     * @param whiteBalanceRange supported Manual WhiteBalance range .
-     * @return Returns errCode.
-     */
-    int32_t GetManualWhiteBalanceRange(std::vector<int32_t> &whiteBalanceRange);
-
-    /**
-     * @brief Is Manual WhiteBalance Supported.
-     * @param isSupported is Support Manual White Balance .
-     * @return Returns errCode.
-     */
-    int32_t IsManualWhiteBalanceSupported(bool &isSupported);
-
-    /**
-     * @brief Set Manual WhiteBalance.
-     * @param wbValue WhiteBalance value to be set.
-     * @return Returns errCode.
-     */
-    int32_t SetManualWhiteBalance(int32_t wbValue);
-
-    /**
-     * @brief Get ManualWhiteBalance.
-     * @param wbValue WhiteBalance value to be get.
-     * @return Returns errCode.
-     */
-    int32_t GetManualWhiteBalance(int32_t &wbValue);
 
 // ExposureHint mode
     /**
@@ -467,11 +396,6 @@ protected:
         metaFocusAssistFlashModeMap_;
     static const std::unordered_map<FocusAssistFlashMode, camera_focus_assist_flash_mode_enum_t>
         fwkFocusAssistFlashModeMap_;
-
-    static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode>
-        metaWhiteBalanceModeMap_;
-    static const std::unordered_map<WhiteBalanceMode, camera_awb_mode_t>
-        fwkWhiteBalanceModeMap_;
 
     static const std::unordered_map<camera_exposure_hint_mode_enum_t, ExposureHintMode> metaExposureHintModeMap_;
     static const std::unordered_map<ExposureHintMode, camera_exposure_hint_mode_enum_t> fwkExposureHintModeMap_;

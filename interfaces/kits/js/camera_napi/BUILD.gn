@@ -59,6 +59,7 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/macro_video_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/mode_manager_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/night_session_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/panorama_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/photo_session_for_sys_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/photo_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/portrait_session_napi.cpp",

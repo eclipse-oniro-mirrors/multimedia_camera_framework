@@ -94,6 +94,7 @@ ohos_shared_library("camera_framework") {
     "src/session/macro_photo_session.cpp",
     "src/session/macro_video_session.cpp",
     "src/session/night_session.cpp",
+    "src/session/panorama_session.cpp",
     "src/session/photo_session.cpp",
     "src/session/portrait_session.cpp",
     "src/session/profession_session.cpp",

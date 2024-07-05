@@ -177,6 +177,9 @@ napi_value ModeManagerNapi::CreateCameraSessionInstance(napi_env env, napi_callb
         case JS_SECURE_CAMERA:
             result = SecureCameraSessionNapi::CreateCameraSession(env);
             break;
+        case JsSceneMode::JS_PANORAMA_PHOTO:
+            result = PanoramaSessionNapi::CreateCameraSession(env);
+            break;
         default:
             MEDIA_ERR_LOG("ModeManagerNapi::CreateCameraSessionInstance mode = %{public}d not supported", jsModeName);
             break;

@@ -68,6 +68,7 @@ const std::unordered_map<SceneMode, JsSceneMode> g_nativeToNapiSupportedModeForS
     {SceneMode::HIGH_RES_PHOTO, JsSceneMode::JS_HIGH_RES_PHOTO},
     {SceneMode::SECURE, JsSceneMode::JS_SECURE_CAMERA},
     {SceneMode::QUICK_SHOT_PHOTO, JsSceneMode::JS_QUICK_SHOT_PHOTO},
+    {SceneMode::PANORAMA_PHOTO, JsSceneMode::JS_PANORAMA_PHOTO},
 };
 
 const std::unordered_map<SceneMode, JsSceneMode> g_nativeToNapiSupportedMode_ = {
@@ -426,6 +427,7 @@ const std::unordered_map<JsSceneMode, SceneMode> g_jsToFwMode_ = {
     {JsSceneMode::JS_HIGH_RES_PHOTO, SceneMode::HIGH_RES_PHOTO},
     {JsSceneMode::JS_SECURE_CAMERA, SceneMode::SECURE},
     {JsSceneMode::JS_QUICK_SHOT_PHOTO, SceneMode::QUICK_SHOT_PHOTO},
+    {JsSceneMode::JS_PANORAMA_PHOTO, SceneMode::PANORAMA_PHOTO},
 };
 
 static std::unordered_map<JsPolicyType, PolicyType> g_jsToFwPolicyType_ = {
@@ -675,6 +677,8 @@ napi_value CameraManagerNapi::CreateSessionInstance(napi_env env, napi_callback_
             return SecureCameraSessionNapi::CreateCameraSession(env); }},
         {JsSceneMode::JS_QUICK_SHOT_PHOTO, [] (napi_env env) { return CheckSystemApp(env, true) ?
             QuickShotPhotoSessionNapi::CreateCameraSession(env):nullptr; }},
+        {JsSceneMode::JS_PANORAMA_PHOTO, [] (napi_env env) { return CheckSystemApp(env, true) ?
+            PanoramaSessionNapi::CreateCameraSession(env):nullptr; }},
     };
 
     napi_value result = nullptr;

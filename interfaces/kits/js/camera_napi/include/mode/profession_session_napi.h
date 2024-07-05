@@ -124,16 +124,6 @@ public:
     static napi_value GetExposureDuration(napi_env env, napi_callback_info info);
     static napi_value SetExposureDuration(napi_env env, napi_callback_info info);
 
-    static napi_value GetSupportedWhiteBalanceModes(napi_env env, napi_callback_info info);
-    static napi_value IsWhiteBalanceModeSupported(napi_env env, napi_callback_info info);
-    static napi_value GetWhiteBalanceMode(napi_env env, napi_callback_info info);
-    static napi_value SetWhiteBalanceMode(napi_env env, napi_callback_info info);
-
-    static napi_value GetManualWhiteBalanceRange(napi_env env, napi_callback_info info);
-    static napi_value IsManualWhiteBalanceSupported(napi_env env, napi_callback_info info);
-    static napi_value GetManualWhiteBalance(napi_env env, napi_callback_info info);
-    static napi_value SetManualWhiteBalance(napi_env env, napi_callback_info info);
-
     static napi_value GetSupportedExposureHintModes(napi_env env, napi_callback_info info);
     static napi_value GetExposureHintMode(napi_env env, napi_callback_info info);
     static napi_value SetExposureHintMode(napi_env env, napi_callback_info info);
@@ -154,8 +144,6 @@ public:
     static const std::vector<napi_property_descriptor> manual_exposure_funcs;
     static const std::vector<napi_property_descriptor> manual_focus_funcs;
     static const std::vector<napi_property_descriptor> manual_iso_props;
-    static const std::vector<napi_property_descriptor> auto_wb_props;
-    static const std::vector<napi_property_descriptor> manual_wb_props;
     static const std::vector<napi_property_descriptor> pro_session_props;
 
     std::shared_ptr<ExposureInfoCallbackListener> exposureInfoCallback_ = nullptr;

@@ -169,6 +169,20 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::effect_suggestion
     DECLARE_NAPI_FUNCTION("updateEffectSuggestion", CameraSessionNapi::UpdateEffectSuggestion)
 };
 
+const std::vector<napi_property_descriptor> CameraSessionNapi::auto_wb_props = {
+    DECLARE_NAPI_FUNCTION("getSupportedWhiteBalanceModes", CameraSessionNapi::GetSupportedWhiteBalanceModes),
+    DECLARE_NAPI_FUNCTION("isWhiteBalanceModeSupported", CameraSessionNapi::IsWhiteBalanceModeSupported),
+    DECLARE_NAPI_FUNCTION("getWhiteBalanceMode", CameraSessionNapi::GetWhiteBalanceMode),
+    DECLARE_NAPI_FUNCTION("setWhiteBalanceMode", CameraSessionNapi::SetWhiteBalanceMode),
+};
+
+const std::vector<napi_property_descriptor> CameraSessionNapi::manual_wb_props = {
+    DECLARE_NAPI_FUNCTION("getWhiteBalanceRange", CameraSessionNapi::GetManualWhiteBalanceRange),
+    DECLARE_NAPI_FUNCTION("isManualWhiteBalanceSupported", CameraSessionNapi::IsManualWhiteBalanceSupported),
+    DECLARE_NAPI_FUNCTION("getWhiteBalance", CameraSessionNapi::GetManualWhiteBalance),
+    DECLARE_NAPI_FUNCTION("setWhiteBalance", CameraSessionNapi::SetManualWhiteBalance),
+};
+
 void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state) const
 {
     MEDIA_DEBUG_LOG("OnExposureStateCallbackAsync is called");
@@ -3077,7 +3091,6 @@ napi_value CameraSessionNapi::SetEffectSuggestionStatus(napi_env env, napi_callb
     return result;
 }
 
-
 napi_value CameraSessionNapi::UpdateEffectSuggestion(napi_env env, napi_callback_info info)
 {
     if (!CameraNapiSecurity::CheckSystemApp(env, false)) {
@@ -3119,6 +3132,261 @@ napi_value CameraSessionNapi::UpdateEffectSuggestion(napi_env env, napi_callback
         if (retCode != 0 && !CameraNapiUtils::CheckError(env, retCode)) {
             return result;
         }
+    }
+    return result;
+}
+
+// ------------------------------------------------auto_awb_props-------------------------------------------------------
+napi_value CameraSessionNapi::GetSupportedWhiteBalanceModes(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetSupportedWhiteBalanceModes is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    status = napi_create_array(env, &result);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("napi_create_array call Failed!");
+        return result;
+    }
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        std::vector<WhiteBalanceMode> whiteBalanceModes;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetSupportedWhiteBalanceModes(whiteBalanceModes);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+
+        MEDIA_INFO_LOG("ProfessionSessionNapi::GetSupportedWhiteBalanceModes len = %{public}zu",
+            whiteBalanceModes.size());
+        if (!whiteBalanceModes.empty()) {
+            for (size_t i = 0; i < whiteBalanceModes.size(); i++) {
+                WhiteBalanceMode whiteBalanceMode = whiteBalanceModes[i];
+                napi_value value;
+                napi_create_int32(env, whiteBalanceMode, &value);
+                napi_set_element(env, result, i, value);
+            }
+        }
+    } else {
+        MEDIA_ERR_LOG("GetSupportedWhiteBalanceModes call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::IsWhiteBalanceModeSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("IsWhiteBalanceModeSupported is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        int32_t value;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        WhiteBalanceMode mode = (WhiteBalanceMode)value;
+        bool isSupported;
+        int32_t retCode = cameraSessionNapi->cameraSession_->IsWhiteBalanceModeSupported(mode, isSupported);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("IsWhiteBalanceModeSupported call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetWhiteBalanceMode(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetWhiteBalanceMode is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        WhiteBalanceMode whiteBalanceMode;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetWhiteBalanceMode(whiteBalanceMode);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        napi_create_int32(env, whiteBalanceMode, &result);
+    } else {
+        MEDIA_ERR_LOG("GetWhiteBalanceMode call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::SetWhiteBalanceMode(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetWhiteBalanceMode is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        int32_t value;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        WhiteBalanceMode mode = (WhiteBalanceMode)value;
+        cameraSessionNapi->cameraSession_->LockForControl();
+        cameraSessionNapi->cameraSession_->SetWhiteBalanceMode(mode);
+        MEDIA_INFO_LOG("ProfessionSessionNapi::SetWhiteBalanceMode set mode:%{public}d", value);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+    } else {
+        MEDIA_ERR_LOG("SetWhiteBalanceMode call Failed!");
+    }
+    return result;
+}
+
+// -----------------------------------------------manual_awb_props------------------------------------------------------
+napi_value CameraSessionNapi::GetManualWhiteBalanceRange(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetManualWhiteBalanceRange is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        std::vector<int32_t> whiteBalanceRange = {};
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetManualWhiteBalanceRange(whiteBalanceRange);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        MEDIA_INFO_LOG("ProfessionSessionNapi::GetManualWhiteBalanceRange len = %{public}zu", whiteBalanceRange.size());
+
+        if (!whiteBalanceRange.empty() && napi_create_array(env, &result) == napi_ok) {
+            for (size_t i = 0; i < whiteBalanceRange.size(); i++) {
+                int32_t iso = whiteBalanceRange[i];
+                napi_value value;
+                napi_create_int32(env, iso, &value);
+                napi_set_element(env, result, i, value);
+            }
+        } else {
+            MEDIA_ERR_LOG("whiteBalanceRange is empty or failed to create array!");
+        }
+    } else {
+        MEDIA_ERR_LOG("GetManualWhiteBalanceRange call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::IsManualWhiteBalanceSupported(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsManualIsoSupported is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("IsManualIsoSupported is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        bool isSupported;
+        int32_t retCode = cameraSessionNapi->cameraSession_->IsManualWhiteBalanceSupported(isSupported);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("IsManualIsoSupported call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetManualWhiteBalance(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetISO is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        int32_t wbValue;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetManualWhiteBalance(wbValue);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        napi_create_int32(env, wbValue, &result);
+    } else {
+        MEDIA_ERR_LOG("GetISO call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::SetManualWhiteBalance(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetManualWhiteBalance is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        int32_t wbValue;
+        napi_get_value_int32(env, argv[PARAM0], &wbValue);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        cameraSessionNapi->cameraSession_->SetManualWhiteBalance(wbValue);
+        MEDIA_INFO_LOG("ProfessionSessionNapi::SetManualWhiteBalance set wbValue:%{public}d", wbValue);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+    } else {
+        MEDIA_ERR_LOG("SetManualWhiteBalance call Failed!");
     }
     return result;
 }
