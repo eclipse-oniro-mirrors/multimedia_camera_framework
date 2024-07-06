@@ -249,6 +249,31 @@ const std::unordered_map<EffectSuggestionType, CameraEffectSuggestionType>
     {EFFECT_SUGGESTION_SUNRISE_SUNSET, OHOS_CAMERA_EFFECT_SUGGESTION_SUNRISE_SUNSET}
 };
 
+// WhiteBalanceMode
+const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> CaptureSession::metaWhiteBalanceModeMap_ = {
+    { OHOS_CAMERA_AWB_MODE_OFF, AWB_MODE_OFF },
+    { OHOS_CAMERA_AWB_MODE_AUTO, AWB_MODE_AUTO },
+    { OHOS_CAMERA_AWB_MODE_INCANDESCENT, AWB_MODE_INCANDESCENT },
+    { OHOS_CAMERA_AWB_MODE_FLUORESCENT, AWB_MODE_FLUORESCENT },
+    { OHOS_CAMERA_AWB_MODE_WARM_FLUORESCENT, AWB_MODE_WARM_FLUORESCENT },
+    { OHOS_CAMERA_AWB_MODE_DAYLIGHT, AWB_MODE_DAYLIGHT },
+    { OHOS_CAMERA_AWB_MODE_CLOUDY_DAYLIGHT, AWB_MODE_CLOUDY_DAYLIGHT },
+    { OHOS_CAMERA_AWB_MODE_TWILIGHT, AWB_MODE_TWILIGHT },
+    { OHOS_CAMERA_AWB_MODE_SHADE, AWB_MODE_SHADE },
+};
+
+const std::unordered_map<WhiteBalanceMode, camera_awb_mode_t> CaptureSession::fwkWhiteBalanceModeMap_ = {
+    { AWB_MODE_OFF, OHOS_CAMERA_AWB_MODE_OFF },
+    { AWB_MODE_AUTO, OHOS_CAMERA_AWB_MODE_AUTO },
+    { AWB_MODE_INCANDESCENT, OHOS_CAMERA_AWB_MODE_INCANDESCENT },
+    { AWB_MODE_FLUORESCENT, OHOS_CAMERA_AWB_MODE_FLUORESCENT },
+    { AWB_MODE_WARM_FLUORESCENT, OHOS_CAMERA_AWB_MODE_WARM_FLUORESCENT },
+    { AWB_MODE_DAYLIGHT, OHOS_CAMERA_AWB_MODE_DAYLIGHT },
+    { AWB_MODE_CLOUDY_DAYLIGHT, OHOS_CAMERA_AWB_MODE_CLOUDY_DAYLIGHT },
+    { AWB_MODE_TWILIGHT, OHOS_CAMERA_AWB_MODE_TWILIGHT },
+    { AWB_MODE_SHADE, OHOS_CAMERA_AWB_MODE_SHADE },
+};
+
 int32_t CaptureSessionCallback::OnError(int32_t errorCode)
 {
     MEDIA_INFO_LOG("CaptureSessionCallback::OnError() is called!, errorCode: %{public}d", errorCode);
@@ -3971,7 +3996,7 @@ int32_t CaptureSession::SetSensorExposureTime(uint32_t exposureTime)
     constexpr int32_t timeUnit = 1000000;
     camera_rational_t value = {.numerator = exposureTime, .denominator = timeUnit};
     if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_SENSOR_EXPOSURE_TIME, value)) {
-        MEDIA_ERR_LOG("ProfessionSession::SetSensorExposureTime Failed to set exposure compensation");
+        MEDIA_ERR_LOG("CaptureSession::SetSensorExposureTime Failed to set exposure compensation");
     }
     exposureDurationValue_ = exposureTime;
     return CameraErrorCode::SUCCESS;
@@ -4861,6 +4886,247 @@ int32_t CaptureSession::UpdateEffectSuggestion(EffectSuggestionType effectSugges
     if (!status) {
         MEDIA_ERR_LOG("CaptureSession::UpdateEffectSuggestion Failed to set effectSuggestionType");
         return CameraErrorCode::SUCCESS;
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+// white balance mode
+int32_t CaptureSession::GetSupportedWhiteBalanceModes(std::vector<WhiteBalanceMode> &supportedWhiteBalanceModes)
+{
+    supportedWhiteBalanceModes.clear();
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedWhiteBalanceModes Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedWhiteBalanceModes camera device is null");
+        return CameraErrorCode::SUCCESS;
+    }
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AWB_MODES, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("CaptureSession::GetSupportedWhiteBalanceModes Failed with return code %{public}d", ret);
+        return CameraErrorCode::SUCCESS;
+    }
+    for (uint32_t i = 0; i < item.count; i++) {
+        auto itr = metaWhiteBalanceModeMap_.find(static_cast<camera_awb_mode_t>(item.data.u8[i]));
+        if (itr != metaWhiteBalanceModeMap_.end()) {
+            supportedWhiteBalanceModes.emplace_back(itr->second);
+        }
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::IsWhiteBalanceModeSupported(WhiteBalanceMode mode, bool &isSupported)
+{
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::IsFocusModeSupported Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (mode == AWB_MODE_LOCKED) {
+        isSupported = true;
+        return CameraErrorCode::SUCCESS;
+    }
+    std::vector<WhiteBalanceMode> vecSupportedWhiteBalanceModeList;
+    (void)this->GetSupportedWhiteBalanceModes(vecSupportedWhiteBalanceModeList);
+    if (find(vecSupportedWhiteBalanceModeList.begin(), vecSupportedWhiteBalanceModeList.end(),
+        mode) != vecSupportedWhiteBalanceModeList.end()) {
+        isSupported = true;
+        return CameraErrorCode::SUCCESS;
+    }
+    isSupported = false;
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::SetWhiteBalanceMode(WhiteBalanceMode mode)
+{
+    CAMERA_SYNC_TRACE;
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::SetWhiteBalanceMode Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::SetWhiteBalanceMode Need to call LockForControl() "
+                      "before setting camera properties");
+        return CameraErrorCode::SUCCESS;
+    }
+    if (mode == AWB_MODE_LOCKED) {
+        if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_AWB_LOCK, OHOS_CAMERA_AWB_LOCK_ON)) {
+            MEDIA_ERR_LOG("CaptureSession::SetWhiteBalanceMode Failed to lock whiteBalance");
+        }
+        return CameraErrorCode::SUCCESS;
+    }
+    if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_AWB_LOCK, OHOS_CAMERA_AWB_LOCK_OFF)) {
+        MEDIA_ERR_LOG("CaptureSession::SetWhiteBalanceMode Failed to unlock whiteBalance");
+    }
+    camera_awb_mode_t whiteBalanceMode = OHOS_CAMERA_AWB_MODE_OFF;
+    auto itr = fwkWhiteBalanceModeMap_.find(mode);
+    if (itr == fwkWhiteBalanceModeMap_.end()) {
+        MEDIA_ERR_LOG("CaptureSession::SetWhiteBalanceMode Unknown exposure mode");
+    } else {
+        whiteBalanceMode = itr->second;
+    }
+    MEDIA_DEBUG_LOG("CaptureSession::SetWhiteBalanceMode WhiteBalance mode: %{public}d", whiteBalanceMode);
+    // no manual wb mode need set maunual value to 0
+    if (mode != AWB_MODE_OFF) {
+        SetManualWhiteBalance(0);
+    }
+    if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_AWB_MODE, whiteBalanceMode)) {
+        MEDIA_ERR_LOG("CaptureSession::SetWhiteBalanceMode Failed to set WhiteBalance mode");
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::GetWhiteBalanceMode(WhiteBalanceMode &mode)
+{
+    mode = AWB_MODE_OFF;
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::GetWhiteBalanceMode Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetWhiteBalanceMode camera device is null");
+        return CameraErrorCode::SUCCESS;
+    }
+    std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+    if (metadata == nullptr) {
+        MEDIA_ERR_LOG("GetWhiteBalanceMode metadata is null");
+        return CameraErrorCode::INVALID_ARGUMENT;
+    }
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AWB_LOCK, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("CaptureSession::GetWhiteBalanceMode Failed with return code %{public}d", ret);
+        return CameraErrorCode::SUCCESS;
+    }
+    if (item.data.u8[0] == OHOS_CAMERA_AWB_LOCK_ON) {
+        mode = AWB_MODE_LOCKED;
+        return CameraErrorCode::SUCCESS;
+    }
+    ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AWB_MODE, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("CaptureSession::GetWhiteBalanceMode Failed with return code %{public}d", ret);
+        return CameraErrorCode::SUCCESS;
+    }
+    auto itr = metaWhiteBalanceModeMap_.find(static_cast<camera_awb_mode_t>(item.data.u8[0]));
+    if (itr != metaWhiteBalanceModeMap_.end()) {
+        mode = itr->second;
+        return CameraErrorCode::SUCCESS;
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+// manual white balance
+int32_t CaptureSession::GetManualWhiteBalanceRange(std::vector<int32_t> &whiteBalanceRange)
+{
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::GetManualWhiteBalanceRange Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetManualWhiteBalanceRange camera device is null");
+        return CameraErrorCode::SUCCESS;
+    }
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SENSOR_WB_VALUES, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("CaptureSession::GetManualWhiteBalanceRange Failed with return code %{public}d", ret);
+        return CameraErrorCode::SUCCESS;
+    }
+
+    for (uint32_t i = 0; i < item.count; i++) {
+        whiteBalanceRange.emplace_back(item.data.i32[i]);
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::IsManualWhiteBalanceSupported(bool &isSupported)
+{
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::IsManualWhiteBalanceSupported Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    std::vector<int32_t> whiteBalanceRange;
+    this->GetManualWhiteBalanceRange(whiteBalanceRange);
+    constexpr int32_t rangeSize = 2;
+    isSupported = (whiteBalanceRange.size() == rangeSize);
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::SetManualWhiteBalance(int32_t wbValue)
+{
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::SetManualWhiteBalance Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::SetManualWhiteBalance Need to call LockForControl() "
+            "before setting camera properties");
+        return CameraErrorCode::SUCCESS;
+    }
+    WhiteBalanceMode mode;
+    GetWhiteBalanceMode(mode);
+    //WhiteBalanceMode::OFF
+    if (mode != WhiteBalanceMode::AWB_MODE_OFF) {
+        MEDIA_ERR_LOG("CaptureSession::SetManualWhiteBalance Need to set WhiteBalanceMode off");
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
+    }
+    int32_t minIndex = 0;
+    int32_t maxIndex = 1;
+    MEDIA_DEBUG_LOG("CaptureSession::SetManualWhiteBalance white balance: %{public}d", wbValue);
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::SetManualWhiteBalance camera device is null");
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
+    }
+    std::vector<int32_t> whiteBalanceRange;
+    this->GetManualWhiteBalanceRange(whiteBalanceRange);
+    if (whiteBalanceRange.empty()) {
+        MEDIA_ERR_LOG("CaptureSession::SetManualWhiteBalance Bias range is empty");
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
+    }
+
+    if (wbValue != 0 && wbValue < whiteBalanceRange[minIndex]) {
+        MEDIA_DEBUG_LOG("CaptureSession::SetManualWhiteBalance wbValue:"
+                        "%{public}d is lesser than minimum wbValue: %{public}d", wbValue, whiteBalanceRange[minIndex]);
+        wbValue = whiteBalanceRange[minIndex];
+    } else if (wbValue > whiteBalanceRange[maxIndex]) {
+        MEDIA_DEBUG_LOG("CaptureSession::SetManualWhiteBalance wbValue: "
+                        "%{public}d is greater than maximum wbValue: %{public}d", wbValue, whiteBalanceRange[maxIndex]);
+        wbValue = whiteBalanceRange[maxIndex];
+    }
+    if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_SENSOR_WB_VALUE, wbValue)) {
+        MEDIA_ERR_LOG("SetManualWhiteBalance Failed to SetManualWhiteBalance");
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+
+int32_t CaptureSession::GetManualWhiteBalance(int32_t &wbValue)
+{
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("CaptureSession::GetManualWhiteBalance Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("CaptureSession::GetManualWhiteBalance camera device is null");
+        return CameraErrorCode::SUCCESS;
+    }
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_SENSOR_WB_VALUE, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("CaptureSession::GetManualWhiteBalance Failed with return code %{public}d", ret);
+        return CameraErrorCode::SUCCESS;
+    }
+    if (item.count != 0) {
+        wbValue = item.data.i32[0];
     }
     return CameraErrorCode::SUCCESS;
 }

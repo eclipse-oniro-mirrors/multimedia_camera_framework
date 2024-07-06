@@ -42,6 +42,7 @@
 #include "session/macro_photo_session.h"
 #include "session/macro_video_session.h"
 #include "session/night_session.h"
+#include "session/panorama_session.h"
 #include "session/photo_session.h"
 #include "session/portrait_session.h"
 #include "session/profession_session.h"
@@ -98,7 +99,8 @@ const std::unordered_map<OperationMode, SceneMode> g_metaToFwSupportedMode_ = {
     {OperationMode::HIGH_FRAME_RATE, HIGH_FRAME_RATE},
     {OperationMode::HIGH_RESOLUTION_PHOTO, HIGH_RES_PHOTO},
     {OperationMode::SECURE, SECURE},
-    {OperationMode::QUICK_SHOT_PHOTO, QUICK_SHOT_PHOTO}
+    {OperationMode::QUICK_SHOT_PHOTO, QUICK_SHOT_PHOTO},
+    {OperationMode::PANORAMA_PHOTO, PANORAMA_PHOTO}
 };
 
 const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
@@ -116,7 +118,8 @@ const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
     {HIGH_FRAME_RATE, OperationMode::HIGH_FRAME_RATE},
     {HIGH_RES_PHOTO, OperationMode::HIGH_RESOLUTION_PHOTO},
     {SECURE, OperationMode::SECURE},
-    {QUICK_SHOT_PHOTO, OperationMode::QUICK_SHOT_PHOTO}
+    {QUICK_SHOT_PHOTO, OperationMode::QUICK_SHOT_PHOTO},
+    {PANORAMA_PHOTO, OperationMode::PANORAMA_PHOTO}
 };
 
 const std::unordered_map<CameraFoldStatus, FoldStatus> g_metaToFwCameraFoldStatus_ = {
@@ -278,6 +281,8 @@ sptr<CaptureSession> CameraManager::CreateCaptureSessionImpl(SceneMode mode, spt
             return new(std::nothrow) SecureCameraSession(session);
         case SceneMode::QUICK_SHOT_PHOTO:
             return new(std::nothrow) QuickShotPhotoSession(session);
+        case SceneMode::PANORAMA_PHOTO:
+            return new(std::nothrow) PanoramaSession(session);
         default:
             return new (std::nothrow) CaptureSession(session);
     }

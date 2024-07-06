@@ -284,6 +284,16 @@ public:
     static napi_value IsFeatureSupported(napi_env env, napi_callback_info info);
     static napi_value EnableFeature(napi_env env, napi_callback_info info);
 
+    static napi_value GetSupportedWhiteBalanceModes(napi_env env, napi_callback_info info);
+    static napi_value IsWhiteBalanceModeSupported(napi_env env, napi_callback_info info);
+    static napi_value GetWhiteBalanceMode(napi_env env, napi_callback_info info);
+    static napi_value SetWhiteBalanceMode(napi_env env, napi_callback_info info);
+
+    static napi_value GetManualWhiteBalanceRange(napi_env env, napi_callback_info info);
+    static napi_value IsManualWhiteBalanceSupported(napi_env env, napi_callback_info info);
+    static napi_value GetManualWhiteBalance(napi_env env, napi_callback_info info);
+    static napi_value SetManualWhiteBalance(napi_env env, napi_callback_info info);
+
     static napi_value BeginConfig(napi_env env, napi_callback_info info);
     static napi_value CommitConfig(napi_env env, napi_callback_info info);
 
@@ -342,7 +352,8 @@ public:
     static const std::vector<napi_property_descriptor> color_management_props;
     static const std::vector<napi_property_descriptor> preconfig_props;
     static const std::vector<napi_property_descriptor> effect_suggestion_props;
-
+    static const std::vector<napi_property_descriptor> auto_wb_props;
+    static const std::vector<napi_property_descriptor> manual_wb_props;
 protected:
     virtual void RegisterSlowMotionStateCb(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);

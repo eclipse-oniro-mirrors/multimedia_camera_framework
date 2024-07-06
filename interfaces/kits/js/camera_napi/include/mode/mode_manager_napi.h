@@ -26,6 +26,7 @@
 #include "output/photo_output_napi.h"
 #include "output/preview_output_napi.h"
 #include "output/video_output_napi.h"
+#include "panorama_session_napi.h"
 #include "photo_session_napi.h"
 #include "portrait_session_napi.h"
 #include "secure_camera_session_napi.h"
