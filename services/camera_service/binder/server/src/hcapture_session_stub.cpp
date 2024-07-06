@@ -17,6 +17,7 @@
 #include "camera_log.h"
 #include "camera_server_photo_proxy.h"
 #include "camera_util.h"
+#include "camera_xcollie.h"
 #include "ipc_skeleton.h"
 #include "camera_service_ipc_interface_code.h"
 #include "camera_photo_proxy.h"
@@ -61,7 +62,10 @@ int HCaptureSessionStub::OnRemoteRequest(
             errCode = Stop();
             break;
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_RELEASE):
-            errCode = Release();
+            {
+                CameraXCollie cameraXCollie("hcaptureSessionStub::Release");
+                errCode = Release();
+            }
             break;
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_CALLBACK):
             errCode = HandleSetCallback(data);
