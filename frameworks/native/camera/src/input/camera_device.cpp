@@ -174,9 +174,6 @@ const std::shared_ptr<OHOS::Camera::CameraMetadata> CameraDevice::GetCameraAbili
 
 CameraPosition CameraDevice::GetPosition()
 {
-    if (cameraPosition_ == CAMERA_POSITION_FRONT && foldScreenType_ == CAMERA_FOLDSCREEN_INNER) {
-        cameraPosition_ = CAMERA_POSITION_FOLD_INNER;
-    }
     return cameraPosition_;
 }
 
