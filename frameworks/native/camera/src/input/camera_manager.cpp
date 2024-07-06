@@ -1253,13 +1253,14 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
     }
     auto curFoldStatus = (FoldStatus)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
     if (curFoldStatus == FoldStatus::HALF_FOLD) {
-        curFoldStatus = FoldStatus::FOLDED;
+        curFoldStatus = FoldStatus::EXPAND;
     }
     MEDIA_INFO_LOG("fold status: %{public}d", curFoldStatus);
     std::vector<sptr<CameraDevice>> cameraDeviceList;
     for (size_t i = 0; i < cameraObjList_.size(); i++) {
         if (cameraObjList_[i]->GetPosition() == CAMERA_POSITION_BACK) {
             cameraDeviceList.emplace_back(cameraObjList_[i]);
+            continue;
         }
         auto supportedFoldStatus = cameraObjList_[i]->GetSupportedFoldStatus();
         FoldStatus foldStatusTemp = FoldStatus::UNKNOWN_FOLD;
@@ -1269,6 +1270,7 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
         } else {
             MEDIA_INFO_LOG("No supported fold status is found, fold status: %{public}d", curFoldStatus);
             cameraDeviceList.emplace_back(cameraObjList_[i]);
+            continue;
         }
         if (foldStatusTemp == curFoldStatus) {
             cameraDeviceList.emplace_back(cameraObjList_[i]);
