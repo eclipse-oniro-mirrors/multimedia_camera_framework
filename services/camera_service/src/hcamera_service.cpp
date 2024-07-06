@@ -679,12 +679,11 @@ void HCameraService::OnCameraStatus(const string& cameraId, CameraStatus status,
         }
         uint32_t pid = it.first;
         if (ShouldSkipStatusUpdates(pid)) {
-            CreateAndSaveTask(cameraId, status, pid, bundleName);
-        } else {
-            it.second->OnCameraStatusChanged(cameraId, status, bundleName);
-            CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d",
-                cameraId.c_str(), status));
+            continue;
         }
+        it.second->OnCameraStatusChanged(cameraId, status, bundleName);
+        CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d",
+            cameraId.c_str(), status));
     }
 }
 
@@ -699,6 +698,10 @@ void HCameraService::OnFlashlightStatus(const string& cameraId, FlashStatus stat
             MEDIA_ERR_LOG("HCameraService::OnCameraStatus pid:%{public}d cameraServiceCallback is null", it.first);
             continue;
         }
+        uint32_t pid = it.first;
+        if (ShouldSkipStatusUpdates(pid)) {
+            continue;
+        }
         it.second->OnFlashlightStatusChanged(cameraId, status);
     }
 }
@@ -710,6 +713,10 @@ void HCameraService::OnMute(bool muteMode)
         for (auto it : cameraMuteServiceCallbacks_) {
             if (it.second == nullptr) {
                 MEDIA_ERR_LOG("HCameraService::OnMute pid:%{public}d cameraMuteServiceCallback is null", it.first);
+                continue;
+            }
+            uint32_t pid = it.first;
+            if (ShouldSkipStatusUpdates(pid)) {
                 continue;
             }
             it.second->OnCameraMute(muteMode);
@@ -727,6 +734,10 @@ void HCameraService::OnTorchStatus(TorchStatus status)
     for (auto it : torchServiceCallbacks_) {
         if (it.second == nullptr) {
             MEDIA_ERR_LOG("HCameraService::OnTorchtStatus pid:%{public}d torchServiceCallback is null", it.first);
+            continue;
+        }
+        uint32_t pid = it.first;
+        if (ShouldSkipStatusUpdates(pid)) {
             continue;
         }
         it.second->OnTorchStatusChange(status);
@@ -760,10 +771,9 @@ void HCameraService::OnFoldStatusChanged(OHOS::Rosen::FoldStatus foldStatus)
         }
         uint32_t pid = it.first;
         if (ShouldSkipStatusUpdates(pid)) {
-            CreateAndSaveTask(curFoldStatus, pid);
-        } else {
-            it.second->OnFoldStatusChanged(curFoldStatus);
+            continue;
         }
+        it.second->OnFoldStatusChanged(curFoldStatus);
     }
 }
 
