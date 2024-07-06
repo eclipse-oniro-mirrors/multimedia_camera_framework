@@ -204,9 +204,7 @@ bool CameraNapiUtils::CheckError(napi_env env, int32_t retCode)
 double CameraNapiUtils::FloatToDouble(float val)
 {
     const double precision = 1000000.0;
-    val *= precision;
-    double result = static_cast<double>(val / precision);
-    return result;
+    return std::round(val * precision) / precision;
 }
 
 std::string CameraNapiUtils::GetStringArgument(napi_env env, napi_value value)

@@ -3995,7 +3995,7 @@ int32_t CaptureSession::SetSensorExposureTime(uint32_t exposureTime)
     }
     constexpr int32_t timeUnit = 1000000;
     camera_rational_t value = {.numerator = exposureTime, .denominator = timeUnit};
-    if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_SENSOR_EXPOSURE_TIME, value)) {
+    if (!AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_SENSOR_EXPOSURE_TIME, &value, 1)) {
         MEDIA_ERR_LOG("CaptureSession::SetSensorExposureTime Failed to set exposure compensation");
     }
     exposureDurationValue_ = exposureTime;
@@ -4597,7 +4597,12 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> CaptureSession::GetMetadata()
         MEDIA_INFO_LOG("CaptureSession::GetMetadata inputDevice is null, create default metadata");
         return std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
     }
-    return inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    auto deviceInfo = inputDevice->GetCameraDeviceInfo();
+    if (deviceInfo == nullptr) {
+        MEDIA_INFO_LOG("CaptureSession::GetMetadata deviceInfo is null, create default metadata");
+        return std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    }
+    return deviceInfo->GetMetadata();
 }
 
 int32_t CaptureSession::SetARMode(bool isEnable)
@@ -4952,16 +4957,18 @@ int32_t CaptureSession::SetWhiteBalanceMode(WhiteBalanceMode mode)
                       "before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
+    uint8_t awbLock = OHOS_CAMERA_AWB_LOCK_OFF;
     if (mode == AWB_MODE_LOCKED) {
-        if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_AWB_LOCK, OHOS_CAMERA_AWB_LOCK_ON)) {
+        awbLock = OHOS_CAMERA_AWB_LOCK_ON;
+        if (!AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_AWB_LOCK, &awbLock, 1)) {
             MEDIA_ERR_LOG("CaptureSession::SetWhiteBalanceMode Failed to lock whiteBalance");
         }
         return CameraErrorCode::SUCCESS;
     }
-    if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_AWB_LOCK, OHOS_CAMERA_AWB_LOCK_OFF)) {
+    if (!AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_AWB_LOCK, &awbLock, 1)) {
         MEDIA_ERR_LOG("CaptureSession::SetWhiteBalanceMode Failed to unlock whiteBalance");
     }
-    camera_awb_mode_t whiteBalanceMode = OHOS_CAMERA_AWB_MODE_OFF;
+    uint8_t whiteBalanceMode = OHOS_CAMERA_AWB_MODE_OFF;
     auto itr = fwkWhiteBalanceModeMap_.find(mode);
     if (itr == fwkWhiteBalanceModeMap_.end()) {
         MEDIA_ERR_LOG("CaptureSession::SetWhiteBalanceMode Unknown exposure mode");
@@ -4973,7 +4980,7 @@ int32_t CaptureSession::SetWhiteBalanceMode(WhiteBalanceMode mode)
     if (mode != AWB_MODE_OFF) {
         SetManualWhiteBalance(0);
     }
-    if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_AWB_MODE, whiteBalanceMode)) {
+    if (!AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_AWB_MODE, &whiteBalanceMode, 1)) {
         MEDIA_ERR_LOG("CaptureSession::SetWhiteBalanceMode Failed to set WhiteBalance mode");
     }
     return CameraErrorCode::SUCCESS;
@@ -5066,12 +5073,12 @@ int32_t CaptureSession::SetManualWhiteBalance(int32_t wbValue)
     }
     if (changedMetadata_ == nullptr) {
         MEDIA_ERR_LOG("CaptureSession::SetManualWhiteBalance Need to call LockForControl() "
-            "before setting camera properties");
+                      "before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
     WhiteBalanceMode mode;
     GetWhiteBalanceMode(mode);
-    //WhiteBalanceMode::OFF
+    // WhiteBalanceMode::OFF
     if (mode != WhiteBalanceMode::AWB_MODE_OFF) {
         MEDIA_ERR_LOG("CaptureSession::SetManualWhiteBalance Need to set WhiteBalanceMode off");
         return CameraErrorCode::OPERATION_NOT_ALLOWED;
@@ -5093,19 +5100,20 @@ int32_t CaptureSession::SetManualWhiteBalance(int32_t wbValue)
 
     if (wbValue != 0 && wbValue < whiteBalanceRange[minIndex]) {
         MEDIA_DEBUG_LOG("CaptureSession::SetManualWhiteBalance wbValue:"
-                        "%{public}d is lesser than minimum wbValue: %{public}d", wbValue, whiteBalanceRange[minIndex]);
+                        "%{public}d is lesser than minimum wbValue: %{public}d",
+            wbValue, whiteBalanceRange[minIndex]);
         wbValue = whiteBalanceRange[minIndex];
     } else if (wbValue > whiteBalanceRange[maxIndex]) {
         MEDIA_DEBUG_LOG("CaptureSession::SetManualWhiteBalance wbValue: "
-                        "%{public}d is greater than maximum wbValue: %{public}d", wbValue, whiteBalanceRange[maxIndex]);
+                        "%{public}d is greater than maximum wbValue: %{public}d",
+            wbValue, whiteBalanceRange[maxIndex]);
         wbValue = whiteBalanceRange[maxIndex];
     }
-    if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_SENSOR_WB_VALUE, wbValue)) {
+    if (!AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_SENSOR_WB_VALUE, &wbValue, 1)) {
         MEDIA_ERR_LOG("SetManualWhiteBalance Failed to SetManualWhiteBalance");
     }
     return CameraErrorCode::SUCCESS;
 }
-
 
 int32_t CaptureSession::GetManualWhiteBalance(int32_t &wbValue)
 {
@@ -5128,6 +5136,215 @@ int32_t CaptureSession::GetManualWhiteBalance(int32_t &wbValue)
     if (item.count != 0) {
         wbValue = item.data.i32[0];
     }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::GetSupportedVirtualApertures(std::vector<float>& apertures)
+{
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("GetSupportedVirtualApertures Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("GetSupportedVirtualApertures camera device is null");
+        return CameraErrorCode::SUCCESS;
+    }
+
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    if (metadata == nullptr) {
+        return CameraErrorCode::SUCCESS;
+    }
+    camera_metadata_item_t item;
+    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAMERA_VIRTUAL_APERTURE_RANGE, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("GetSupportedVirtualApertures Failed with return code %{public}d", ret);
+        return CameraErrorCode::SUCCESS;
+    }
+    for (uint32_t i = 0; i < item.count; i++) {
+        apertures.emplace_back(item.data.f[i]);
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::GetVirtualAperture(float& aperture)
+{
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("GetVirtualAperture Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("GetVirtualAperture camera device is null");
+        return CameraErrorCode::SUCCESS;
+    }
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    if (metadata == nullptr) {
+        return CameraErrorCode::SUCCESS;
+    }
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_CAMERA_VIRTUAL_APERTURE_VALUE, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("GetVirtualAperture Failed with return code %{public}d", ret);
+        return CameraErrorCode::SUCCESS;
+    }
+    aperture = item.data.f[0];
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::SetVirtualAperture(const float virtualAperture)
+{
+    CAMERA_SYNC_TRACE;
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("SetVirtualAperture Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG("SetVirtualAperture changedMetadata_ is NULL");
+        return CameraErrorCode::SUCCESS;
+    }
+    std::vector<float> supportedVirtualApertures {};
+    GetSupportedVirtualApertures(supportedVirtualApertures);
+    auto res = std::find_if(supportedVirtualApertures.begin(), supportedVirtualApertures.end(),
+        [&virtualAperture](const float item) { return FloatIsEqual(virtualAperture, item); });
+    if (res == supportedVirtualApertures.end()) {
+        MEDIA_ERR_LOG("current virtualAperture is not supported");
+        return CameraErrorCode::SUCCESS;
+    }
+    bool status = false;
+    uint32_t count = 1;
+    camera_metadata_item_t item;
+    MEDIA_DEBUG_LOG("SetVirtualAperture virtualAperture: %{public}f", virtualAperture);
+
+    int32_t ret =
+        Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_CAMERA_VIRTUAL_APERTURE_VALUE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = changedMetadata_->addEntry(OHOS_CONTROL_CAMERA_VIRTUAL_APERTURE_VALUE, &virtualAperture, count);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = changedMetadata_->updateEntry(OHOS_CONTROL_CAMERA_VIRTUAL_APERTURE_VALUE, &virtualAperture, count);
+    }
+
+    if (!status) {
+        MEDIA_ERR_LOG("SetVirtualAperture Failed to set virtualAperture");
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::GetSupportedPhysicalApertures(std::vector<std::vector<float>>& supportedPhysicalApertures)
+{
+    // The data structure of the supportedPhysicalApertures object is { {zoomMin, zoomMax,
+    // physicalAperture1, physicalAperture2···}, }.
+    supportedPhysicalApertures.clear();
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("GetSupportedPhysicalApertures Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("GetSupportedPhysicalApertures camera device is null");
+        return CameraErrorCode::SUCCESS;
+    }
+
+    std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CAMERA_PHYSICAL_APERTURE_RANGE, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("GetSupportedPhysicalApertures Failed with return code %{public}d", ret);
+        return CameraErrorCode::SUCCESS;
+    }
+    std::vector<float> chooseModeRange = ParsePhysicalApertureRangeByMode(item, GetMode());
+    constexpr int32_t minPhysicalApertureMetaSize = 3;
+    if (chooseModeRange.size() < minPhysicalApertureMetaSize) {
+        MEDIA_ERR_LOG("GetSupportedPhysicalApertures Failed meta format error");
+        return CameraErrorCode::SUCCESS;
+    }
+    int32_t deviceCntPos = 1;
+    int32_t supportedDeviceCount = static_cast<int32_t>(chooseModeRange[deviceCntPos]);
+    if (supportedDeviceCount == 0) {
+        MEDIA_ERR_LOG("GetSupportedPhysicalApertures Failed meta device count is 0");
+        return CameraErrorCode::SUCCESS;
+    }
+    std::vector<float> tempPhysicalApertures = {};
+    for (uint32_t i = 2; i < chooseModeRange.size(); i++) {
+        if (chooseModeRange[i] == -1) {
+            supportedPhysicalApertures.emplace_back(tempPhysicalApertures);
+            vector<float>().swap(tempPhysicalApertures);
+            continue;
+        }
+        tempPhysicalApertures.emplace_back(chooseModeRange[i]);
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::GetPhysicalAperture(float& physicalAperture)
+{
+    physicalAperture = 0.0;
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("GetPhysicalAperture Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    auto inputDevice = GetInputDevice();
+    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
+        MEDIA_ERR_LOG("GetPhysicalAperture camera device is null");
+        return CameraErrorCode::SUCCESS;
+    }
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE, &item);
+    if (ret != CAM_META_SUCCESS || item.count == 0) {
+        MEDIA_ERR_LOG("GetPhysicalAperture Failed with return code %{public}d", ret);
+        return CameraErrorCode::SUCCESS;
+    }
+    physicalAperture = item.data.f[0];
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::SetPhysicalAperture(float physicalAperture)
+{
+    CAMERA_SYNC_TRACE;
+    if (!IsSessionCommited()) {
+        MEDIA_ERR_LOG("SetPhysicalAperture Session is not Commited");
+        return CameraErrorCode::SESSION_NOT_CONFIG;
+    }
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG("SetPhysicalAperture changedMetadata_ is NULL");
+        return CameraErrorCode::SUCCESS;
+    }
+    MEDIA_DEBUG_LOG(
+        "CaptureSession::SetPhysicalAperture physicalAperture = %{public}f", ConfusingNumber(physicalAperture));
+    std::vector<std::vector<float>> physicalApertures;
+    GetSupportedPhysicalApertures(physicalApertures);
+    // physicalApertures size is one, means not support change
+    if (physicalApertures.size() == 1) {
+        MEDIA_ERR_LOG("SetPhysicalAperture not support");
+        return CameraErrorCode::SUCCESS;
+    }
+    // accurately currentZoomRatio need smoothing zoom done
+    float currentZoomRatio = GetZoomRatio();
+    int zoomMinIndex = 0;
+    auto it = std::find_if(physicalApertures.rbegin(), physicalApertures.rend(),
+        [&currentZoomRatio, &zoomMinIndex](const std::vector<float> physicalApertureRange) {
+            return (currentZoomRatio - physicalApertureRange[zoomMinIndex]) >= -std::numeric_limits<float>::epsilon();
+        });
+    float autoAperture = 0.0;
+    if (it == physicalApertures.rend()) {
+        MEDIA_ERR_LOG("current zoomRatio not supported in physical apertures zoom ratio");
+        return CameraErrorCode::SUCCESS;
+    }
+    int physicalAperturesIndex = 2;
+    auto res = std::find_if(std::next((*it).begin(), physicalAperturesIndex), (*it).end(),
+        [&physicalAperture](
+            const float physicalApertureTemp) { return FloatIsEqual(physicalAperture, physicalApertureTemp); });
+    if ((physicalAperture != autoAperture) && res == (*it).end()) {
+        MEDIA_ERR_LOG("current physicalAperture is not supported");
+        return CameraErrorCode::SUCCESS;
+    }
+    if (!AddOrUpdateMetadata(
+        changedMetadata_->get(), OHOS_CONTROL_CAMERA_PHYSICAL_APERTURE_VALUE, &physicalAperture, 1)) {
+        MEDIA_ERR_LOG("SetPhysicalAperture Failed to set physical aperture");
+        return CameraErrorCode::SUCCESS;
+    }
+    apertureValue_ = physicalAperture;
     return CameraErrorCode::SUCCESS;
 }
 } // namespace CameraStandard

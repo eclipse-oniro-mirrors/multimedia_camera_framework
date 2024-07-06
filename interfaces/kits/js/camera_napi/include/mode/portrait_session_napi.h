@@ -37,20 +37,10 @@ public:
     static napi_value GetPortraitEffect(napi_env env, napi_callback_info info);
     static napi_value SetPortraitEffect(napi_env env, napi_callback_info info);
 
-    static napi_value GetSupportedVirtualApertures(napi_env env, napi_callback_info info);
-    static napi_value GetVirtualAperture(napi_env env, napi_callback_info info);
-    static napi_value SetVirtualAperture(napi_env env, napi_callback_info info);
-
-    static napi_value GetSupportedPhysicalApertures(napi_env env, napi_callback_info info);
-    static napi_value GetPhysicalAperture(napi_env env, napi_callback_info info);
-    static napi_value SetPhysicalAperture(napi_env env, napi_callback_info info);
-
     napi_env env_;
     sptr<PortraitSession> portraitSession_;
 
     static thread_local napi_ref sConstructor_;
-private:
-    static napi_value ProcessingPhysicalApertures(napi_env env, std::vector<std::vector<float>> physicalApertures);
 };
 }
 }

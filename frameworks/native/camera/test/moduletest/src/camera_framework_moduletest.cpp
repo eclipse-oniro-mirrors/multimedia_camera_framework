@@ -22,6 +22,7 @@
 #include <thread>
 
 #include "accesstoken_kit.h"
+#include "aperture_video_session.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
 #include "camera_metadata_operator.h"
@@ -29,6 +30,7 @@
 #include "camera_util.h"
 #include "capture_scene_const.h"
 #include "capture_session.h"
+#include "gtest/gtest.h"
 #include "hap_token_info.h"
 #include "hcamera_device.h"
 #include "hcamera_device_callback_proxy.h"
@@ -10608,6 +10610,62 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_079, TestSize.Le
     }
     constexpr int32_t waitForCallbackTime = 5;
     sleep(waitForCallbackTime);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test aperture video session create.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test aperture video session create.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_080, TestSize.Level0)
+{
+    auto modes = manager_->GetSupportedModes(cameras_[0]);
+    auto it = std::find_if(modes.begin(), modes.end(), [](auto& mode) { return mode == SceneMode::APERTURE_VIDEO; });
+    if (it == modes.end()) {
+        ASSERT_TRUE(true);
+        return;
+    }
+    auto outputCapability = manager_->GetSupportedOutputCapability(cameras_[0], SceneMode::APERTURE_VIDEO);
+    ASSERT_NE(outputCapability, nullptr);
+    auto previewProfiles = outputCapability->GetPreviewProfiles();
+    ASSERT_TRUE(!previewProfiles.empty());
+
+    auto videoProfiles = outputCapability->GetVideoProfiles();
+    ASSERT_TRUE(!videoProfiles.empty());
+
+    sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(SceneMode::APERTURE_VIDEO);
+    auto apertureVideoSession = static_cast<ApertureVideoSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(apertureVideoSession, nullptr);
+    int32_t intResult = apertureVideoSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+    intResult = apertureVideoSession->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(previewProfiles[0]);
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = apertureVideoSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfiles[0]);
+    ASSERT_NE(videoOutput, nullptr);
+
+    intResult = apertureVideoSession->AddOutput(videoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = apertureVideoSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = apertureVideoSession->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = apertureVideoSession->Stop();
+    EXPECT_EQ(intResult, 0);
 }
 } // namespace CameraStandard
 } // namespace OHOS

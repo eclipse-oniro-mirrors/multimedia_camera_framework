@@ -14,7 +14,9 @@
  */
 
 #include "metadata_common_utils.h"
+#include "camera_metadata_operator.h"
 #include "camera_util.h"
+#include <cstdint>
 #include <memory>
 
 #include "camera_log.h"
@@ -201,6 +203,19 @@ std::vector<float> ParsePhysicalApertureRangeByMode(const camera_metadata_item_t
     }
 
     return *it;
+}
+
+std::shared_ptr<camera_metadata_item_t> GetMetadataItem(const common_metadata_header_t* src, uint32_t tag)
+{
+    if (src == nullptr) {
+        return nullptr;
+    }
+    auto item = std::make_shared<camera_metadata_item_t>();
+    int32_t ret = OHOS::Camera::CameraMetadata::FindCameraMetadataItem(src, tag, item.get());
+    if (ret != CAM_META_SUCCESS) {
+        return nullptr;
+    }
+    return item;
 }
 } // namespace CameraStandard
 } // namespace OHOS

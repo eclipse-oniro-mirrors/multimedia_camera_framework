@@ -128,10 +128,6 @@ public:
     static napi_value GetExposureHintMode(napi_env env, napi_callback_info info);
     static napi_value SetExposureHintMode(napi_env env, napi_callback_info info);
 
-    static napi_value GetSupportedPhysicalApertures(napi_env env, napi_callback_info info);
-    static napi_value GetPhysicalAperture(napi_env env, napi_callback_info info);
-    static napi_value SetPhysicalAperture(napi_env env, napi_callback_info info);
-
     static napi_value GetSupportedFocusAssistFlashModes(napi_env env, napi_callback_info info);
     static napi_value IsFocusAssistFlashModeSupported(napi_env env, napi_callback_info info);
     static napi_value GetFocusAssistFlashMode(napi_env env, napi_callback_info info);
@@ -158,8 +154,6 @@ public:
     static thread_local napi_ref sConstructor_;
 
 protected:
-    static napi_value ProcessingPhysicalApertures(napi_env env, std::vector<std::vector<float>> physicalApertures);
-
     void RegisterExposureInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce) override;
     void UnregisterExposureInfoCallbackListener(

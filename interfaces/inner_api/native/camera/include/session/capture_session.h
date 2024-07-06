@@ -1274,6 +1274,48 @@ public:
      */
     void ProcessEffectSuggestionTypeUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
 
+    /**
+     * @brief Get the supported virtual apertures.
+     * @param apertures returns the array of virtual aperture.
+     * @return Error code.
+     */
+    int32_t GetSupportedVirtualApertures(std::vector<float>& apertures);
+
+    /**
+     * @brief Get the virtual aperture.
+     * @param aperture returns the current virtual aperture.
+     * @return Error code.
+     */
+    int32_t GetVirtualAperture(float& aperture);
+
+    /**
+     * @brief Set the virtual aperture.
+     * @param virtualAperture set virtual aperture value.
+     * @return Error code.
+     */
+    int32_t SetVirtualAperture(const float virtualAperture);
+
+    /**
+     * @brief Get the supported physical apertures.
+     * @param apertures returns the array of physical aperture.
+     * @return Error code.
+     */
+    int32_t GetSupportedPhysicalApertures(std::vector<std::vector<float>>& apertures);
+
+    /**
+     * @brief Get the physical aperture.
+     * @param aperture returns current physical aperture.
+     * @return Error code.
+     */
+    int32_t GetPhysicalAperture(float& aperture);
+
+    /**
+     * @brief Set the physical aperture.
+     * @param physicalAperture set physical aperture value.
+     * @return Error code.
+     */
+    int32_t SetPhysicalAperture(float physicalAperture);
+
     void SetMode(SceneMode modeName);
     SceneMode GetMode();
     SceneFeaturesMode GetFeaturesMode();
@@ -1410,6 +1452,8 @@ protected:
 
     std::shared_ptr<AbilityCallback> abilityCallback_;
     std::atomic<uint32_t> exposureDurationValue_ = 0;
+
+    float apertureValue_ = 0.0;
 
     inline void ClearPreconfigProfiles()
     {

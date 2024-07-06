@@ -139,26 +139,6 @@ public:
      */
     bool IsManualIsoSupported();
 
-//Apertures
-    /**
-     * @brief Get the supported physical apertures.
-     *
-     * @return Returns the array of physical aperture.
-     */
-    int32_t GetSupportedPhysicalApertures(std::vector<std::vector<float>>& apertures);
-
-    /**
-     * @brief Get the physical aperture.
-     *
-     * @return Returns current physical aperture.
-     */
-    int32_t GetPhysicalAperture(float& aperture);
-
-    /**
-     * @brief Set the physical aperture.
-     */
-    int32_t SetPhysicalAperture(float physicalAperture);
-
 // Focus mode
     /**
      * @brief Get Metering mode.
@@ -409,7 +389,6 @@ private:
     std::atomic<uint8_t> physicalCameraId_ = 0;
     uint32_t isoValue_ = 0;
     float luminationValue_ = 0.0;
-    float apertureValue_ = 0.0;
     std::vector<sptr<CameraDevice> > supportedDevices_;
 };
 

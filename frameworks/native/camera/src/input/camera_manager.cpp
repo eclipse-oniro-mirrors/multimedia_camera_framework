@@ -23,6 +23,7 @@
 #include <ostream>
 #include <sstream>
 
+#include "aperture_video_session.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
 #include "camera_security_utils.h"
@@ -100,6 +101,7 @@ const std::unordered_map<OperationMode, SceneMode> g_metaToFwSupportedMode_ = {
     {OperationMode::HIGH_RESOLUTION_PHOTO, HIGH_RES_PHOTO},
     {OperationMode::SECURE, SECURE},
     {OperationMode::QUICK_SHOT_PHOTO, QUICK_SHOT_PHOTO},
+    {OperationMode::APERTURE_VIDEO, APERTURE_VIDEO},
     {OperationMode::PANORAMA_PHOTO, PANORAMA_PHOTO}
 };
 
@@ -119,6 +121,7 @@ const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
     {HIGH_RES_PHOTO, OperationMode::HIGH_RESOLUTION_PHOTO},
     {SECURE, OperationMode::SECURE},
     {QUICK_SHOT_PHOTO, OperationMode::QUICK_SHOT_PHOTO},
+    {APERTURE_VIDEO, OperationMode::APERTURE_VIDEO},
     {PANORAMA_PHOTO, OperationMode::PANORAMA_PHOTO}
 };
 
@@ -278,11 +281,13 @@ sptr<CaptureSession> CameraManager::CreateCaptureSessionImpl(SceneMode mode, spt
         case SceneMode::HIGH_RES_PHOTO:
             return new (std::nothrow) HighResPhotoSession(session);
         case SceneMode::SECURE:
-            return new(std::nothrow) SecureCameraSession(session);
+            return new (std::nothrow) SecureCameraSession(session);
         case SceneMode::QUICK_SHOT_PHOTO:
-            return new(std::nothrow) QuickShotPhotoSession(session);
+            return new (std::nothrow) QuickShotPhotoSession(session);
+        case SceneMode::APERTURE_VIDEO:
+            return new (std::nothrow) ApertureVideoSession(session);
         case SceneMode::PANORAMA_PHOTO:
-            return new(std::nothrow) PanoramaSession(session);
+            return new (std::nothrow) PanoramaSession(session);
         default:
             return new (std::nothrow) CaptureSession(session);
     }
