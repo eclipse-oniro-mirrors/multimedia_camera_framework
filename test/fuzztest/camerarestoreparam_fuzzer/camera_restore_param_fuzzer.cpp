@@ -96,7 +96,8 @@ void CameraRestoreParamFuzzer::Test(uint8_t *rawData, size_t size)
     fuzz->SetStreamInfo(streamInfos);
     
     data.RewindRead(0);
-    const void *objectId = data.ReadBuffer(1);
+    auto obj = std::make_unique<int32_t>(data.ReadInt32());
+    const void *objectId = obj.get();
     fuzz->IncStrongRef(objectId);
     fuzz->IncWeakRef(objectId);
     fuzz->AttemptIncStrong(objectId);
