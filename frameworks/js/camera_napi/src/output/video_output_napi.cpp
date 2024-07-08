@@ -152,7 +152,9 @@ napi_value VideoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("on", On),
         DECLARE_NAPI_FUNCTION("once", Once),
         DECLARE_NAPI_FUNCTION("off", Off),
-        DECLARE_NAPI_FUNCTION("getActiveProfile", GetActiveProfile)
+        DECLARE_NAPI_FUNCTION("getActiveProfile", GetActiveProfile),
+        DECLARE_NAPI_FUNCTION("getSupportedVideoMetaTypes", GetSupportedVideoMetaTypes),
+        DECLARE_NAPI_FUNCTION("attachMetaSurface", AttachMetaSurface)
     };
 
     status = napi_define_class(env, CAMERA_VIDEO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -308,6 +310,88 @@ napi_value VideoOutputNapi::GetActiveProfile(napi_env env, napi_callback_info in
         return CameraNapiUtils::GetUndefinedValue(env);
     }
     return CameraNapiObjVideoProfile(*profile).GenerateNapiValue(env);
+}
+
+static napi_value CreateJSArray(napi_env env, napi_status status, std::vector<VideoMetaType> nativeArray)
+{
+    MEDIA_DEBUG_LOG("CreateJSArray is called");
+    napi_value jsArray = nullptr;
+    napi_value item = nullptr;
+ 
+    if (nativeArray.empty()) {
+        MEDIA_ERR_LOG("nativeArray is empty");
+    }
+ 
+    status = napi_create_array(env, &jsArray);
+    if (status == napi_ok) {
+        for (size_t i = 0; i < nativeArray.size(); i++) {
+            napi_create_int32(env, nativeArray[i], &item);
+            if (napi_set_element(env, jsArray, i, item) != napi_ok) {
+                MEDIA_ERR_LOG("Failed to create profile napi wrapper object");
+                return nullptr;
+            }
+        }
+    }
+    return jsArray;
+}
+ 
+napi_value VideoOutputNapi::GetSupportedVideoMetaTypes(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetSupportedVideoMetaTypes is called");
+    napi_status status;
+    napi_value result;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+ 
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, (argc == ARGS_ZERO), "requires no parameter.");
+ 
+    napi_get_undefined(env, &result);
+    VideoOutputNapi* videoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&videoOutputNapi));
+    if (status == napi_ok && videoOutputNapi != nullptr) {
+        std::vector<VideoMetaType> videoMetaType = videoOutputNapi->videoOutput_->GetSupportedVideoMetaTypes();
+        result = CreateJSArray(env, status, videoMetaType);
+    } else {
+        MEDIA_ERR_LOG("GetSupportedVideoMetaTypes call failed!");
+    }
+    return result;
+}
+ 
+napi_value VideoOutputNapi::AttachMetaSurface(napi_env env, napi_callback_info info)
+{
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result;
+    size_t argc = ARGS_TWO;
+    napi_value argv[ARGS_TWO] = {0};
+    napi_value thisVar = nullptr;
+ 
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+ 
+    napi_get_undefined(env, &result);
+    VideoOutputNapi* videoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&videoOutputNapi));
+    if (status == napi_ok && videoOutputNapi != nullptr) {
+        char buffer[PATH_MAX];
+        size_t surfaceId;
+        napi_get_value_string_utf8(env, argv[PARAM0], buffer, PATH_MAX, &surfaceId);
+        uint32_t videoMetaType;
+        napi_get_value_uint32(env, argv[PARAM1], &videoMetaType);
+ 
+        uint64_t iSurfaceId;
+        std::istringstream iss((std::string(buffer)));
+        iss >> iSurfaceId;
+        sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
+        if (surface == nullptr) {
+            MEDIA_ERR_LOG("failed to get surface from SurfaceUtils");
+        }
+        videoOutputNapi->videoOutput_->AttachMetaSurface(surface, static_cast<VideoMetaType>(videoMetaType));
+    } else {
+        MEDIA_ERR_LOG("VideoOutputNapi::AttachMetaSurface failed!");
+    }
+    return result;
 }
 
 napi_value VideoOutputNapi::CreateVideoOutput(napi_env env, VideoProfile &profile, std::string surfaceId)

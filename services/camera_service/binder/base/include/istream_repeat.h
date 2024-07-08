@@ -48,6 +48,8 @@ public:
     
     virtual int32_t SetMirror(bool isEnable) = 0;
 
+    virtual int32_t AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType) = 0;
+
     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamRepeat");
 };
 } // namespace CameraStandard

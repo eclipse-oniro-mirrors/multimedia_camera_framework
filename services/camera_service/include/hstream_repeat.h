@@ -29,6 +29,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+using OHOS::HDI::Camera::V1_0::BufferProducerSequenceable;
 enum class RepeatStreamType {
     PREVIEW,
     VIDEO,
@@ -50,6 +51,7 @@ public:
     int32_t LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator,
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility) override;
     void SetStreamInfo(StreamInfo_V1_1& streamInfo) override;
+    void SetVideoStreamInfo(StreamInfo_V1_1& streamInfo);
     int32_t ReleaseStream(bool isDelay) override;
     int32_t Release() override;
     int32_t Start() override;
@@ -77,6 +79,7 @@ public:
     void SetMirrorForLivePhoto(bool isEnable, int32_t mode);
     int32_t SetPreviewRotation(std::string &deviceClass);
     void SetStreamTransform(int disPlayRotation = -1);
+    int32_t AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType) override;
 
 private:
     void OpenVideoDfxSwitch(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
@@ -106,6 +109,7 @@ private:
     std::mutex movingPhotoCallbackLock_;
     std::function<void()> startMovingPhotoCallback_;
     std::vector<int32_t> streamFrameRateRange_ = {};
+    sptr<BufferProducerSequenceable> metaSurfaceBufferQueue_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

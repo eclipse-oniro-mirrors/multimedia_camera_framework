@@ -63,6 +63,21 @@ int32_t HStreamRepeat::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> 
     return CAMERA_OK;
 }
 
+void HStreamRepeat::SetVideoStreamInfo(StreamInfo_V1_1& streamInfo)
+{
+    streamInfo.v1_0.intent_ = StreamIntent::VIDEO;
+    streamInfo.v1_0.encodeType_ = ENCODE_TYPE_H264;
+    MEDIA_INFO_LOG("HStreamRepeat::SetVideoStreamInfo Enter");
+    HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo {
+        .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(
+            HDI::Camera::V1_3::ExtendedStreamInfoType::EXTENDED_STREAM_INFO_MAKER_INFO),
+        .width = 0, .height = 0, .format = 0, .dataspace = 0, .bufferQueue = nullptr
+    };
+    extendedStreamInfo.bufferQueue = metaSurfaceBufferQueue_;
+    MEDIA_INFO_LOG("HStreamRepeat::SetVideoStreamInfo end");
+    streamInfo.extendedStreamInfos = { extendedStreamInfo };
+}
+
 void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
 {
     HStreamCommon::SetStreamInfo(streamInfo);
@@ -77,8 +92,7 @@ void HStreamRepeat::SetStreamInfo(StreamInfo_V1_1& streamInfo)
             streamInfo.extendedStreamInfos = { metaExtendedStreamInfo };
             break;
         case RepeatStreamType::VIDEO:
-            streamInfo.v1_0.intent_ = StreamIntent::VIDEO;
-            streamInfo.v1_0.encodeType_ = ENCODE_TYPE_H264;
+            SetVideoStreamInfo(streamInfo);
             break;
         case RepeatStreamType::PREVIEW:
             streamInfo.v1_0.intent_ = StreamIntent::PREVIEW;
@@ -829,6 +843,17 @@ void HStreamRepeat::UpdateFrameRateSettings(std::shared_ptr<OHOS::Camera::Camera
             MEDIA_ERR_LOG("HStreamRepeat::SetFrameRate Failed to set frame range");
         }
     }
+}
+
+int32_t HStreamRepeat::AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType)
+{
+    MEDIA_INFO_LOG("HStreamRepeat::AttachMetaSurface called");
+    {
+        CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, CAMERA_INVALID_ARG,
+            "HStreamRepeat::AttachMetaSurface producer is null");
+        metaSurfaceBufferQueue_ = new BufferProducerSequenceable(producer);
+    }
+    return CAMERA_OK;
 }
 } // namespace CameraStandard
 } // namespace OHOS

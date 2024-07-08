@@ -236,5 +236,25 @@ int32_t HStreamRepeatProxy::SetMirror(bool isEnable)
     }
     return error;
 }
+
+int32_t HStreamRepeatProxy::AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, IPC_PROXY_ERR,
+        "HStreamRepeatProxy AttachMetaSurface producer is null");
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteRemoteObject(producer->AsObject());
+    data.WriteInt32(videoMetaType);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ATTACH_META_SURFACE), data, reply, option);
+    CHECK_ERROR_RETURN_RET_LOG(error != ERR_NONE, error,
+        "HStreamRepeatProxy::AttachMetaSurface failed, error: %{public}d", error);
+
+    return error;
+}
 } // namespace CameraStandard
 } // namespace OHOS
