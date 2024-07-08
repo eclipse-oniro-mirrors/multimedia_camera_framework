@@ -20,12 +20,11 @@
 #include "camera_log.h"
 #include "camera_service_ipc_interface_code.h"
 #include "camera_util.h"
+#include "camera_xcollie.h"
 #include "hcamera_service.h"
 #include "input/i_standard_camera_listener.h"
 #include "ipc_skeleton.h"
 #include "metadata_utils.h"
-#include "xcollie/xcollie.h"
-#include "xcollie/xcollie_define.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -45,9 +44,7 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
     DisableJeMalloc();
     int errCode = -1;
     CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
-    const int TIME_OUT_SECONDS = 10;
-    int32_t id = HiviewDFX::XCollie::GetInstance().SetTimer(
-        "CameraServiceStub", TIME_OUT_SECONDS, nullptr, nullptr, HiviewDFX::XCOLLIE_FLAG_LOG);
+    CameraXCollie cameraXCollie("CameraServiceStub");
     switch (code) {
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEVICE):
             errCode = HCameraServiceStub::HandleCreateCameraDevice(data, reply);
@@ -144,7 +141,6 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
             break;
     }
-    HiviewDFX::XCollie::GetInstance().CancelTimer(id);
 
     return errCode;
 }
