@@ -1634,6 +1634,8 @@ int32_t StreamOperatorCallback::OnCaptureStarted(int32_t captureId, const std::v
             CameraReportUtils::GetInstance().SetSwitchCamPerfEndInfo();
         } else if (curStream->GetStreamType() == StreamType::CAPTURE) {
             CastStream<HStreamCapture>(curStream)->OnCaptureStarted(captureId);
+            int invalidExposureTime = -1;
+            CastStream<HStreamCapture>(curStream)->OnCaptureStarted(captureId, invalidExposureTime);
         }
     }
     return CAMERA_OK;
