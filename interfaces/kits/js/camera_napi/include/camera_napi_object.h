@@ -293,7 +293,7 @@ private:
         if (res != napi_ok) {
             return res;
         }
-        auto stringValue = **variantAddrPointer;
+        auto& stringValue = **variantAddrPointer;
         stringValue.resize(stringSize);
         res = napi_get_value_string_utf8(env, napiValue, stringValue.data(), stringSize + 1, &stringSize);
         return res;
