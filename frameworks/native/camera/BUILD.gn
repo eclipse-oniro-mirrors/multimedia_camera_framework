@@ -137,8 +137,6 @@ ohos_shared_library("camera_framework") {
   ]
 
   external_deps = [
-    "ability_base:base",
-    "ability_base:want",
     "access_token:libtokenid_sdk",
     "c_utils:utils",
     "data_share:datashare_common",
