@@ -1954,6 +1954,9 @@ std::string g_toString(std::set<int32_t>& pidList)
 
 int32_t HCameraService::ProxyForFreeze(const std::set<int32_t>& pidList, bool isProxy)
 {
+    if (IPCSkeleton::GetCallingUid() != 0) {
+        return CAMERA_OPERATION_NOT_ALLOWED;
+    }
     MEDIA_INFO_LOG("isProxy value: %{public}d", isProxy);
     {
         std::lock_guard<std::mutex> lock(freezedPidListMutex_);
@@ -1984,6 +1987,9 @@ int32_t HCameraService::ProxyForFreeze(const std::set<int32_t>& pidList, bool is
 
 int32_t HCameraService::ResetAllFreezeStatus()
 {
+    if (IPCSkeleton::GetCallingUid() != 0) {
+        return CAMERA_OPERATION_NOT_ALLOWED;
+    }
     std::lock_guard<std::mutex> lock(freezedPidListMutex_);
     freezedPidList_.clear();
     MEDIA_INFO_LOG("freezedPidList_ has been clear");
