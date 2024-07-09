@@ -1614,8 +1614,6 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     if (profileMode != fallbackMode) {
         ParseCapability(camera, fallbackMode, item, metadata);
     }
-
-    RemoveDuplicatesProfiles(previewProfiles_);
     cameraOutputCapability->SetPhotoProfiles(photoProfiles_);
     MEDIA_INFO_LOG("SetPhotoProfiles size = %{public}zu", photoProfiles_.size());
     cameraOutputCapability->SetPreviewProfiles(previewProfiles_);
@@ -2204,17 +2202,6 @@ void CameraManager::SetCameraManagerNull()
 {
     MEDIA_INFO_LOG("CameraManager::SetCameraManagerNull() called");
     g_cameraManager = nullptr;
-}
-
-void CameraManager::RemoveDuplicatesProfiles(std::vector<Profile>& profiles)
-{
-    std::vector<Profile> uniqueProfiles;
-    for (const auto& profile : profiles) {
-        if (std::find(uniqueProfiles.begin(), uniqueProfiles.end(), profile) == uniqueProfiles.end()) {
-            uniqueProfiles.push_back(profile);
-        }
-    }
-    profiles = uniqueProfiles;
 }
 } // namespace CameraStandard
 } // namespace OHOS

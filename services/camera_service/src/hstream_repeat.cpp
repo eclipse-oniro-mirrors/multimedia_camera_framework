@@ -211,6 +211,9 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     if (repeatStreamType_ == RepeatStreamType::VIDEO || repeatStreamType_ == RepeatStreamType::LIVEPHOTO) {
         UpdateVideoSettings(dynamicSetting);
     }
+    if (repeatStreamType_ == RepeatStreamType::PREVIEW || repeatStreamType_ == RepeatStreamType::VIDEO) {
+        UpdateFrameRateSettings(dynamicSetting);
+    }
     std::vector<uint8_t> captureSetting;
     OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, captureSetting);
 
@@ -466,25 +469,28 @@ int32_t HStreamRepeat::RemoveSketchStreamRepeat()
 
 int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
 {
+    streamFrameRateRange_ = {minFrameRate, maxFrameRate};
+    std::vector<uint8_t> ability;
     std::vector<uint8_t> repeatSettings;
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
-        std::vector<int32_t> streamFrameRateRange = {minFrameRate, maxFrameRate};
-        std::shared_ptr<OHOS::Camera::CameraMetadata> dynamicSetting = cameraAbility_;
+        OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
+        std::shared_ptr<OHOS::Camera::CameraMetadata> dynamicSetting = nullptr;
+        OHOS::Camera::MetadataUtils::ConvertVecToMetadata(ability, dynamicSetting);
         camera_metadata_item_t item;
         int ret = OHOS::Camera::FindCameraMetadataItem(dynamicSetting->get(), OHOS_CONTROL_FPS_RANGES, &item);
         bool status = false;
         if (ret == CAM_META_ITEM_NOT_FOUND) {
-            MEDIA_DEBUG_LOG("CaptureSession::SetFrameRate Failed to find frame range");
-            status = dynamicSetting->addEntry(OHOS_CONTROL_FPS_RANGES, streamFrameRateRange.data(),
-                                              streamFrameRateRange.size());
+            MEDIA_DEBUG_LOG("HStreamRepeat::SetFrameRate Failed to find frame range");
+            status = dynamicSetting->addEntry(
+                OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
         } else if (ret == CAM_META_SUCCESS) {
-            MEDIA_DEBUG_LOG("CaptureSession::SetFrameRate success to find frame range");
+            MEDIA_DEBUG_LOG("HStreamRepeat::SetFrameRate success to find frame range");
             status = dynamicSetting->updateEntry(
-                OHOS_CONTROL_FPS_RANGES, streamFrameRateRange.data(), streamFrameRateRange.size());
+                OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
         }
         if (!status) {
-            MEDIA_ERR_LOG("CaptureSession::SetFrameRate Failed to set frame range");
+            MEDIA_ERR_LOG("HStreamRepeat::SetFrameRate Failed to set frame range");
         }
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(dynamicSetting, repeatSettings);
     }
@@ -813,6 +819,28 @@ void HStreamRepeat::UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMeta
         }
         if (!status) {
             MEDIA_ERR_LOG("PhotoCaptureSetting::SetMirror Failed to set mirroring in photo capture setting");
+        }
+    }
+}
+
+void HStreamRepeat::UpdateFrameRateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings)
+{
+    bool status = false;
+    camera_metadata_item_t item;
+ 
+    if (streamFrameRateRange_.size() != 0) {
+        int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_FPS_RANGES, &item);
+        if (ret == CAM_META_ITEM_NOT_FOUND) {
+            MEDIA_DEBUG_LOG("HStreamRepeat::SetFrameRate Failed to find frame range");
+            status = settings->addEntry(
+                OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
+        } else if (ret == CAM_META_SUCCESS) {
+            MEDIA_DEBUG_LOG("HStreamRepeat::SetFrameRate success to find frame range");
+            status = settings->updateEntry(
+                OHOS_CONTROL_FPS_RANGES, streamFrameRateRange_.data(), streamFrameRateRange_.size());
+        }
+        if (!status) {
+            MEDIA_ERR_LOG("HStreamRepeat::SetFrameRate Failed to set frame range");
         }
     }
 }

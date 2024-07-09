@@ -86,6 +86,7 @@ private:
     void ProcessVerticalCameraPosition(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition);
     void ProcessCameraPosition(int32_t& streamRotation, camera_position_enum_t& cameraPosition);
     void UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
+    void UpdateFrameRateSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings);
 
     RepeatStreamType repeatStreamType_;
     sptr<IStreamRepeatCallback> streamRepeatCallback_;
@@ -103,6 +104,7 @@ private:
     sptr<OHOS::IBufferProducer> metaProducer_;
     std::mutex movingPhotoCallbackLock_;
     std::function<void()> startMovingPhotoCallback_;
+    std::vector<int32_t> streamFrameRateRange_ = {};
 };
 } // namespace CameraStandard
 } // namespace OHOS
