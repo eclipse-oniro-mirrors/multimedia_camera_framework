@@ -94,6 +94,7 @@ ohos_shared_library("camera_service") {
     "//foundation/multimedia/camera_framework/services/camera_service/binder/client/include",
     "//foundation/multimedia/camera_framework/services/camera_service/binder/server/include",
     "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include",
+    "//foundation/multimedia/camera_framework/interfaces/inner_api/native/camera/include/utils/",
     "//foundation/window/window_manager/interfaces/innerkits/dm",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include",
