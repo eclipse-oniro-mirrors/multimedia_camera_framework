@@ -1196,6 +1196,8 @@ napi_value CameraManagerNapi::GetSupportedOutputCapability(napi_env env, napi_ca
         return nullptr;
     }
     auto outputCapability = cameraManagerNapi->cameraManager_->GetSupportedOutputCapability(cameraInfo, fwkMode);
+    RemoveDuplicatesProfiles(outputCapability);
+    MEDIA_DEBUG_LOG("set preview size:%{public}zu", outputCapability->GetPreviewProfiles().size());
     if (outputCapability == nullptr) {
         MEDIA_ERR_LOG("failed to create CreateCameraOutputCapability");
         return nullptr;
@@ -1350,6 +1352,18 @@ void CameraManagerNapi::ProcessCameraInfo(sptr<CameraManager>& cameraManager, co
             break;
         }
     }
+}
+
+void CameraManagerNapi::RemoveDuplicatesProfiles(sptr<CameraOutputCapability>& Abilitys)
+{
+    std::vector<Profile> profiles = Abilitys->GetPreviewProfiles();
+    std::vector<Profile> uniqueProfiles;
+    for (const auto& profile : profiles) {
+        if (std::find(uniqueProfiles.begin(), uniqueProfiles.end(), profile) == uniqueProfiles.end()) {
+            uniqueProfiles.push_back(profile);
+        }
+    }
+    Abilitys->SetPreviewProfiles(uniqueProfiles);
 }
 
 void CameraManagerNapi::RegisterCameraStatusCallbackListener(
