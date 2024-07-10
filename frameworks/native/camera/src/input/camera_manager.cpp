@@ -2094,36 +2094,6 @@ bool CameraManager::IsTorchSupported()
     return false;
 }
 
-int32_t CameraManager::ProxyForFreeze(const std::set<int32_t>& pidList, bool isProxy)
-{
-    int32_t retCode = CAMERA_OPERATION_NOT_ALLOWED;
-    auto serviceProxy = GetServiceProxy();
-    if (serviceProxy == nullptr) {
-        MEDIA_ERR_LOG("serviceProxy is null");
-        return ServiceToCameraError(retCode);
-    }
-    retCode = serviceProxy->ProxyForFreeze(pidList, isProxy);
-    if (retCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("ProxyForFreeze call failed, retCode: %{public}d", retCode);
-    }
-    return ServiceToCameraError(retCode);
-}
-
-int32_t CameraManager::ResetAllFreezeStatus()
-{
-    int32_t retCode = CAMERA_OPERATION_NOT_ALLOWED;
-    auto serviceProxy = GetServiceProxy();
-    if (serviceProxy == nullptr) {
-        MEDIA_ERR_LOG("serviceProxy is null");
-        return ServiceToCameraError(retCode);
-    }
-    retCode = serviceProxy->ResetAllFreezeStatus();
-    if (retCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("ResetAllFreezeStatus call failed, retCode: %{public}d", retCode);
-    }
-    return ServiceToCameraError(retCode);
-}
-
 bool CameraManager::IsTorchModeSupported(TorchMode mode)
 {
     return mode == TorchMode::TORCH_MODE_OFF || mode == TorchMode::TORCH_MODE_ON;

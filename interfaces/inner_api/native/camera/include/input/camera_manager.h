@@ -641,9 +641,6 @@ public:
 
     void OnCameraServerAlive();
 
-    // for resource proxy
-    int32_t ProxyForFreeze(const std::set<int32_t>& pidList, bool isProxy);
-    int32_t ResetAllFreezeStatus();
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
