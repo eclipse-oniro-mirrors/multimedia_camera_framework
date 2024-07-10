@@ -438,7 +438,7 @@ void HCaptureSession::UnRegisterDisplayListener(sptr<HStreamRepeat> repeatStream
 
 int32_t HCaptureSession::SetPreviewRotation()
 {
-    enableStreamRotate_ = true;
+    enableStreamRotate_ = false;
     return CAMERA_OK;
 }
 
