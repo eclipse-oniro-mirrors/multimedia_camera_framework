@@ -1036,6 +1036,7 @@ void CaptureSession::SetCallback(std::shared_ptr<SessionCallback> callback)
 
 void CaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType)
 {
+    CAMERA_SYNC_TRACE;
     int32_t errorCode = CAMERA_OK;
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     auto captureSession = GetCaptureSession();

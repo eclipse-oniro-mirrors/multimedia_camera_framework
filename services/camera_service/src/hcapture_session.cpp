@@ -1560,6 +1560,7 @@ std::string HCaptureSession::CreateDisplayName()
 int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
     std::string &uri, int32_t &cameraShotType)
 {
+    CAMERA_SYNC_TRACE;
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (samgr == nullptr) {
