@@ -234,6 +234,8 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId)
             break;
         }
         default:
+            int32_t invalidExposureTime = -1;
+            photoOutput->GetApplicationCallback()->OnCaptureStarted(captureId, invalidExposureTime);
             photoOutput->GetApplicationCallback()->OnCaptureStarted(captureId);
             break;
     }
