@@ -101,7 +101,7 @@ void ListenerBase::RemoveAllCallbacks(const std::string eventName)
     MEDIA_INFO_LOG("RemoveAllCallbacks: remove all js callbacks success");
 }
 
-size_t ListenerBase::IsEmpty(const std::string eventName)
+bool ListenerBase::IsEmpty(const std::string eventName) const
 {
     auto& callbackList = GetCallbackList(eventName);
     std::lock_guard<std::mutex> lock(callbackList.listMutex);

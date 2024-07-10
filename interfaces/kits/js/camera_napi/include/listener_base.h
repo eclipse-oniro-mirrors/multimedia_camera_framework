@@ -40,7 +40,7 @@ public:
     virtual void ExecuteCallback(const std::string eventName, const ExecuteCallbackNapiPara& callbackPara) const final;
     virtual void RemoveCallbackRef(const std::string eventName, napi_value callback) final;
     virtual void RemoveAllCallbacks(const std::string eventName) final;
-    virtual size_t IsEmpty(const std::string eventName) final;
+    virtual bool IsEmpty(const std::string eventName) const final;
 
 protected:
     napi_env env_ = nullptr;
