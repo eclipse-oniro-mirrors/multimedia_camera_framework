@@ -551,7 +551,7 @@ void HStreamRepeat::SetMirrorForLivePhoto(bool isEnable, int32_t mode)
 
 int32_t HStreamRepeat::SetPreviewRotation()
 {
-    enableStreamRotate_ = true;
+    enableStreamRotate_ = false;
     return CAMERA_OK;
 }
 
