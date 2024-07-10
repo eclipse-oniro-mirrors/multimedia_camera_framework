@@ -53,8 +53,9 @@ void MovingPhotoVideoCache::CacheFrame(sptr<FrameRecord> frameRecord)
     frameRecord->SetStatusReadyConvertStatus();
     std::lock_guard<std::mutex> lock(taskManagerLock_);
     if (taskManager_) {
+        auto thisPtr = sptr<MovingPhotoVideoCache>(this);
         taskManager_->EncodeVideoBuffer(frameRecord, std::bind(&MovingPhotoVideoCache::OnImageEncoded,
-        this, std::placeholders::_1,  std::placeholders::_2));
+        thisPtr, std::placeholders::_1,  std::placeholders::_2));
     }
 }
 
@@ -68,8 +69,9 @@ void MovingPhotoVideoCache::DoMuxerVideo(std::vector<sptr<FrameRecord>> frameRec
     std::lock_guard<std::mutex> lock(taskManagerLock_);
     if (taskManager_) {
         taskManager_->DoMuxerVideo(frameRecords, taskName, rotation);
-        taskManager_->SubmitTask([this]() {
-            this->ClearCallbackHandler();
+        auto thisPtr = sptr<MovingPhotoVideoCache>(this);
+        taskManager_->SubmitTask([thisPtr]() {
+            thisPtr->ClearCallbackHandler();
         });
     }
 }

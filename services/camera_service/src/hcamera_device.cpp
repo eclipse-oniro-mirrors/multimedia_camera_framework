@@ -554,7 +554,13 @@ void HCameraDevice::ResetZoomTimer()
     }
     MEDIA_INFO_LOG("register zoom timer callback");
     uint32_t waitMs = 5 * 1000;
-    zoomTimerId_ = CameraTimer::GetInstance()->Register([this]() { UnPrepareZoom(); }, waitMs, true);
+    auto thisPtr = wptr<HCameraDevice>(this);
+    zoomTimerId_ = CameraTimer::GetInstance()->Register([thisPtr]() {
+        auto devicePtr = thisPtr.promote();
+        if (devicePtr != nullptr) {
+            devicePtr->UnPrepareZoom();
+        }
+    }, waitMs, true);
 }
 
 void HCameraDevice::UnPrepareZoom()

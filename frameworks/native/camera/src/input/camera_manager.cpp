@@ -992,8 +992,12 @@ int32_t CameraManager::AddServiceProxyDeathRecipient()
         MEDIA_ERR_LOG("CameraManager::AddServiceProxyDeathRecipient failed to new CameraDeathRecipient");
         return CameraErrorCode::SERVICE_FATL_ERROR;
     }
-    deathRecipient_->SetNotifyCb([this](pid_t pid) {
-        this->CameraServerDied(pid);
+    auto thisPtr = wptr<CameraManager>(this);
+    deathRecipient_->SetNotifyCb([thisPtr](pid_t pid) {
+        auto cameraManagerPtr = thisPtr.promote();
+        if (cameraManagerPtr != nullptr) {
+            cameraManagerPtr->CameraServerDied(pid);
+        }
     });
     auto serviceProxy = GetServiceProxy();
     CHECK_AND_RETURN_RET_LOG(serviceProxy != nullptr, CameraErrorCode::SERVICE_FATL_ERROR, "serviceProxy is null");

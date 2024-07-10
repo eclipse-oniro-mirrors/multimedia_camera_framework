@@ -273,6 +273,7 @@ private:
     void ProcessAudioBuffer();
     void StartOnceRecord(std::string taskName, int32_t rotation);
     int32_t StartPreviewStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
+    void StartMovingPhoto(sptr<HStreamRepeat>& curStreamRepeat);
 
     std::string GetSessionState();
 
