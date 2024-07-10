@@ -64,11 +64,17 @@ public:
 
     bool operator <= (const CameraProcessPriority& rhs) const
     {
+        if (this->processUid_ < maxSysUid_ && rhs.processUid_ < maxSysUid_) {
+            return true;
+        }
         return !(*this > rhs);
     }
 
     bool operator >= (const CameraProcessPriority& rhs) const
     {
+        if (this->processUid_ < maxSysUid_ && rhs.processUid_ < maxSysUid_) {
+            return false;
+        }
         return !(*this < rhs);
     }
 
