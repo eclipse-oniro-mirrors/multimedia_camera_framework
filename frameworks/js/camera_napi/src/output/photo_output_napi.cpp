@@ -151,6 +151,12 @@ void PhotoListener::ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) cons
     std::string imageIdStr = std::to_string(imageId);
     deferredPhotoProxy = new(std::nothrow) DeferredPhotoProxy(newBufferHandle, imageIdStr, deferredProcessingType,
         thumbnailWidth, thumbnailHeight);
+    if (deferredPhotoProxy == nullptr) {
+        napi_value errorCode;
+        napi_create_int32(env_, CameraErrorCode::SERVICE_FATL_ERROR, &errorCode);
+        result[PARAM0] = errorCode;
+        MEDIA_ERR_LOG("failed to new deferredPhotoProxy!");
+    }
     result[PARAM1] = DeferredPhotoProxyNapi::CreateDeferredPhotoProxy(env_, deferredPhotoProxy);
 
     ExecuteCallbackNapiPara callbackPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };

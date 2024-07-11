@@ -717,6 +717,10 @@ void HCaptureSession::ExpandMovingPhotoRepeatStream()
             surface_ = Surface::CreateSurfaceAsConsumer("movingPhoto");
             surface_->SetDefaultUsage(BUFFER_USAGE_VIDEO_ENCODER);
             livephotoListener_ = new(std::nothrow) MovingPhotoListener(surface_);
+            if (livephotoListener_ == nullptr) {
+                MEDIA_ERR_LOG("failed to new livephotoListener_!");
+                continue;
+            }
             metaSurface_ = Surface::CreateSurfaceAsConsumer("movingPhotoMeta");
             surface_->RegisterConsumerListener((sptr<IBufferConsumerListener> &)livephotoListener_);
             surface_->SetDefaultWidthAndHeight(streamRepeat->width_, streamRepeat->height_);

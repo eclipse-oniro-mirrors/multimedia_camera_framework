@@ -1239,6 +1239,10 @@ void CameraManager::InitCameraList()
             }
             sptr<CameraDevice> cameraObj =
                 new(std::nothrow) CameraDevice(cameraId, cameraAbility, tempDmDeviceInfo);
+            if (cameraObj == nullptr) {
+                MEDIA_ERR_LOG("failed to new CameraDevice!");
+                continue;
+            }
             cameraObjList_.emplace_back(cameraObj);
         }
     } else {
