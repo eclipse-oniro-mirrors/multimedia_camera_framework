@@ -17,7 +17,9 @@
 #define OHOS_CAMERA_CAMERA_DEVICE_H
 
 #include <iostream>
+#include <memory>
 #include <refbase.h>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 
@@ -191,6 +193,31 @@ public:
     *   3: OHOS_CAMERA_FOLD_STATUS_EXPANDED + OHOS_CAMERA_FOLD_STATUS_FOLDED
     */
     uint32_t GetSupportedFoldStatus();
+
+    template<typename T, typename = std::enable_if_t<std::is_same_v<T, Profile> || std::is_same_v<T, VideoProfile>>>
+    std::shared_ptr<T> GetMaxSizeProfile(std::vector<T>& profiles, float profileRatioValue, CameraFormat format)
+    {
+        if (profileRatioValue <= 0) {
+            return nullptr;
+        }
+        std::shared_ptr<T> maxSizeProfile = nullptr;
+        for (auto& profile : profiles) {
+            if (profile.size_.width == 0 || profile.size_.height == 0) {
+                continue;
+            }
+            if (profile.format_ != format) {
+                continue;
+            }
+            float ratio = ((float)profile.size_.width) / profile.size_.height;
+            if (abs(ratio - profileRatioValue) / profileRatioValue > 0.05f) { // 0.05f is 5% tolerance
+                continue;
+            }
+            if (maxSizeProfile == nullptr || profile.size_.width > maxSizeProfile->size_.width) {
+                maxSizeProfile = std::make_shared<T>(profile);
+            }
+        }
+        return maxSizeProfile;
+    }
 
     std::unordered_map<int32_t, std::vector<Profile>> modePreviewProfiles_ = {};
     std::unordered_map<int32_t, std::vector<Profile>> modePhotoProfiles_ = {};

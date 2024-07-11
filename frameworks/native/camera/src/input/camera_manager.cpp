@@ -447,7 +447,7 @@ sptr<PhotoOutput> CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBuffe
     return photoOutput;
 }
 
-int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer>& surface, sptr<PhotoOutput>* pPhotoOutput)
+int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface, sptr<PhotoOutput>* pPhotoOutput)
 {
     CAMERA_SYNC_TRACE;
     sptr<IStreamCapture> streamCapture = nullptr;
@@ -815,7 +815,7 @@ int32_t CameraManager::CreateVideoOutputStream(
     return CameraErrorCode::SUCCESS;
 }
 
-int CameraManager::CreateVideoOutputWithoutProfile(sptr<Surface>& surface, sptr<VideoOutput>* pVideoOutput)
+int CameraManager::CreateVideoOutputWithoutProfile(sptr<Surface> surface, sptr<VideoOutput>* pVideoOutput)
 {
     CAMERA_SYNC_TRACE;
     sptr<VideoOutput> videoOutput = nullptr;

@@ -178,6 +178,12 @@ static const std::unordered_map<std::string, int32_t> mapPreconfigType = {
     {"PRECONFIG_HIGH_QUALITY", PRECONFIG_HIGH_QUALITY},
 };
 
+static const std::unordered_map<std::string, int32_t> mapPreconfigRatio = {
+    { "PRECONFIG_RATIO_1_1", ProfileSizeRatio::RATIO_1_1 },
+    { "PRECONFIG_RATIO_4_3", ProfileSizeRatio::RATIO_4_3 },
+    { "PRECONFIG_RATIO_16_9", ProfileSizeRatio::RATIO_16_9 },
+};
+
 static const std::unordered_map<std::string, int32_t> mapFilterType = {
     {"NONE", 0},
     {"CLASSIC", 1},

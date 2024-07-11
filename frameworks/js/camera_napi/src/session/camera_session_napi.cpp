@@ -23,10 +23,12 @@
 #include <vector>
 
 #include "camera_error_code.h"
+#include "camera_napi_const.h"
 #include "camera_napi_param_parser.h"
 #include "camera_napi_security_utils.h"
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
+#include "camera_output_capability.h"
 #include "capture_scene_const.h"
 #include "capture_session.h"
 #include "js_native_api.h"
@@ -2953,33 +2955,55 @@ napi_value CameraSessionNapi::EnableFeature(napi_env env, napi_callback_info inf
 napi_value CameraSessionNapi::CanPreconfig(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("CanPreconfig is called");
+    size_t argSize = CameraNapiUtils::GetNapiArgs(env, info);
     int32_t configType;
+    int32_t profileSizeRatio = 0;
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, configType);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("CameraSessionNapi::CanPreconfig parse parameter occur error");
-        return nullptr;
+    if (argSize == ARGS_ONE) {
+        CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, configType);
+        if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+            MEDIA_ERR_LOG("CameraSessionNapi::CanPreconfig parse parameter occur error");
+            return nullptr;
+        }
+    } else {
+        CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, configType, profileSizeRatio);
+        if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+            MEDIA_ERR_LOG("CameraSessionNapi::CanPreconfig parse 2 parameter occur error");
+            return nullptr;
+        }
     }
-    MEDIA_INFO_LOG("CameraSessionNapi::CanPreconfig: %{public}d", configType);
-    bool result = cameraSessionNapi->cameraSession_->CanPreconfig(static_cast<PreconfigType>(configType));
+
+    MEDIA_INFO_LOG("CameraSessionNapi::CanPreconfig: %{public}d, ratioType:%{public}d", configType, profileSizeRatio);
+    bool result = cameraSessionNapi->cameraSession_->CanPreconfig(
+        static_cast<PreconfigType>(configType), static_cast<ProfileSizeRatio>(profileSizeRatio));
     return CameraNapiUtils::GetBooleanValue(env, result);
 }
 
 napi_value CameraSessionNapi::Preconfig(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("Preconfig is called");
+    size_t argSize = CameraNapiUtils::GetNapiArgs(env, info);
     int32_t configType;
+    int32_t profileSizeRatio = 0;
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, configType);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("CameraSessionNapi::Preconfig parse parameter occur error");
-        return nullptr;
+    if (argSize == ARGS_ONE) {
+        CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, configType);
+        if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+            MEDIA_ERR_LOG("CameraSessionNapi::Preconfig parse parameter occur error");
+            return nullptr;
+        }
+    } else {
+        CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, configType, profileSizeRatio);
+        if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+            MEDIA_ERR_LOG("CameraSessionNapi::Preconfig parse 2 parameter occur error");
+            return nullptr;
+        }
     }
-    int32_t retCode = cameraSessionNapi->cameraSession_->Preconfig(static_cast<PreconfigType>(configType));
+    int32_t retCode = cameraSessionNapi->cameraSession_->Preconfig(
+        static_cast<PreconfigType>(configType), static_cast<ProfileSizeRatio>(profileSizeRatio));
     if (!CameraNapiUtils::CheckError(env, retCode)) {
         return nullptr;
     }
-
     return CameraNapiUtils::GetUndefinedValue(env);
 }
 
