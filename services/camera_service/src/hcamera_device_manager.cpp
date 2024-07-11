@@ -22,6 +22,7 @@
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
 #include "hcamera_device_manager.h"
+#include <mutex>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -146,7 +147,18 @@ void HCameraDeviceManager::SetPeerCallback(sptr<ICameraBroker>& callback)
         MEDIA_ERR_LOG("HCameraDeviceManager::SetPeerCallback failed to set peer callback");
         return;
     }
+    std::lock_guard<std::mutex> lick(peerCbMutex_);
     PeerCallback_ = callback;
+}
+
+void HCameraDeviceManager::UnsetPeerCallback()
+{
+    std::lock_guard<std::mutex> lick(peerCbMutex_);
+    if (PeerCallback_ == nullptr) {
+        MEDIA_ERR_LOG("HCameraDeviceManager::UnsetPeerCallback failed to unset peer callback");
+        return;
+    }
+    PeerCallback_ = nullptr;
 }
 
 bool HCameraDeviceManager::GetConflictDevices(sptr<HCameraDevice> &cameraNeedEvict,

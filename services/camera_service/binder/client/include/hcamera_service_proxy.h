@@ -28,6 +28,7 @@ public:
     ~HCameraProxy() = default;
 
     int32_t NotifyCloseCamera(std::string cameraId) override;
+    int32_t NotifyMuteCamera(bool muteMode) override;
 private:
     static inline BrokerDelegator<HCameraProxy> delegator_;
 };
@@ -99,6 +100,8 @@ public:
     int32_t NotifyCameraState(std::string cameraId, int32_t state) override;
 
     int32_t SetPeerCallback(sptr<ICameraBroker>& callback) override;
+
+    int32_t UnsetPeerCallback() override;
 
     int32_t DestroyStubObj() override;
 

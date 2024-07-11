@@ -133,6 +133,9 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
         case static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_SET_PEER_CALLBACK):
             errCode = HCameraServiceStub::HandleSetPeerCallback(data);
             break;
+        case static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_UNSET_PEER_CALLBACK):
+            errCode = HCameraServiceStub::HandleUnsetPeerCallback(data);
+            break;
         case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_DM_DEVICE_INFOS):
             errCode = HCameraServiceStub::HandleGetDmDeviceInfo(data, reply);
             break;
@@ -605,6 +608,12 @@ int HCameraServiceStub::HandleSetPeerCallback(MessageParcel& data)
         MEDIA_ERR_LOG("HandleSetPeerCallback get null callback");
     }
     return SetPeerCallback(callback);
+}
+
+int HCameraServiceStub::HandleUnsetPeerCallback(MessageParcel& data)
+{
+    MEDIA_INFO_LOG("HandleUnsetPeerCallback called");
+    return UnsetPeerCallback();
 }
 
 int HCameraServiceStub::HandleProxyForFreeze(MessageParcel& data, MessageParcel& reply)

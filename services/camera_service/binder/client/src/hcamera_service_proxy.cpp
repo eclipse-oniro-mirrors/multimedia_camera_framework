@@ -41,6 +41,24 @@ int32_t HCameraProxy::NotifyCloseCamera(std::string cameraId)
     return error;
 }
 
+int32_t HCameraProxy::NotifyMuteCamera(bool muteMode)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+    data.WriteBool(muteMode);
+    option.SetFlags(option.TF_SYNC);
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_NOTIFY_MUTE_CAMERA), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy NotifyMuteCamera failed, error: %{public}d", error);
+    }
+    MEDIA_DEBUG_LOG("HCameraServiceProxy NotifyMuteCamera");
+    return error;
+}
+
 HCameraServiceProxy::HCameraServiceProxy(const sptr<IRemoteObject> &impl)
     : IRemoteProxy<ICameraService>(impl) { }
 
@@ -675,6 +693,23 @@ int32_t HCameraServiceProxy::SetPeerCallback(sptr<ICameraBroker>& callback)
         static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_SET_PEER_CALLBACK), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceProxy SetCallback failed, error: %{public}d", error);
+    }
+
+    return error;
+}
+
+int32_t HCameraServiceProxy::UnsetPeerCallback()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(GetDescriptor());
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_SET_PEER_CALLBACK), data, reply, option);
+    if (error != ERR_NONE) {
+        MEDIA_ERR_LOG("HCameraServiceProxy UnsetPeerCallback failed, error: %{public}d", error);
     }
 
     return error;

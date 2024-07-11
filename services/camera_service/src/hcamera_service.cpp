@@ -196,13 +196,11 @@ void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::stri
             while (ret != CAMERA_OK && cnt < retryCnt) {
                 cnt++;
                 ret = GetMuteModeFromDataShareHelper(muteMode);
-                MEDIA_INFO_LOG(
-                    "OnAddSystemAbility GetMuteModeFromDataShareHelper, retry=%{public}d                         ",
-                    cnt);
+                MEDIA_INFO_LOG("OnAddSystemAbility GetMuteModeFromDataShareHelper, retry=%{public}d", cnt);
                 sleep(retryTimeout);
             }
             this->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
-            MuteCamera(muteMode);
+            MuteCameraFunc(muteMode);
             muteModeStored_ = muteMode;
             MEDIA_INFO_LOG("OnAddSystemAbility GetMuteModeFromDataShareHelper Success, muteMode = %{public}d, "
                            "final retryCnt=%{public}d",
@@ -723,6 +721,10 @@ void HCameraService::OnMute(bool muteMode)
             CAMERA_SYSEVENT_BEHAVIOR(CreateMsg("OnCameraMute! current Camera muteMode:%d", muteMode));
         }
     }
+    if (peerCallback_ != nullptr) {
+        MEDIA_INFO_LOG("HCameraService::NotifyMuteCamera peerCallback current camera muteMode:%{public}d", muteMode);
+        peerCallback_->NotifyMuteCamera(muteMode);
+    }
 }
 
 void HCameraService::OnTorchStatus(TorchStatus status)
@@ -814,6 +816,10 @@ int32_t HCameraService::SetMuteCallback(sptr<ICameraMuteServiceCallback>& callba
     if (callback == nullptr) {
         MEDIA_ERR_LOG("HCameraService::SetMuteCallback callback is null");
         return CAMERA_INVALID_ARG;
+    }
+    Security::AccessToken::AccessTokenID callingToken = IPCSkeleton::GetCallingTokenID();
+    if (Security::AccessToken::AccessTokenKit::GetTokenType(callingToken) == Security::AccessToken::TOKEN_NATIVE) {
+        callback->OnCameraMute(muteModeStored_);
     }
     cameraMuteServiceCallbacks_.insert(make_pair(pid, callback));
     return CAMERA_OK;
@@ -1223,7 +1229,21 @@ int32_t HCameraService::SetPeerCallback(sptr<ICameraBroker>& callback)
     if (callback == nullptr) {
         return CAMERA_INVALID_ARG;
     }
+    peerCallback_ = callback;
+    MEDIA_INFO_LOG("HCameraService::SetPeerCallback current muteMode:%{public}d", muteModeStored_);
+    callback->NotifyMuteCamera(muteModeStored_);
     HCameraDeviceManager::GetInstance()->SetPeerCallback(callback);
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::UnsetPeerCallback()
+{
+    MEDIA_INFO_LOG("UnsetPeerCallback callback");
+    if (peerCallback_ == nullptr) {
+        return CAMERA_INVALID_ARG;
+    }
+    peerCallback_ = nullptr;
+    HCameraDeviceManager::GetInstance()->UnsetPeerCallback();
     return CAMERA_OK;
 }
 

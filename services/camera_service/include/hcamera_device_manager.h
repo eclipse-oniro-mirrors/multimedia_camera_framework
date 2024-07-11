@@ -196,6 +196,8 @@ public:
 
     void SetPeerCallback(sptr<ICameraBroker>& callback);
 
+    void UnsetPeerCallback();
+
     SafeMap<std::string, int32_t> &GetCameraStateOfASide();
 
     /**
@@ -213,6 +215,7 @@ private:
     SafeMap<std::string, int32_t> stateOfACamera_;
     std::mutex mapMutex_;
     sptr<ICameraBroker> PeerCallback_;
+    std::mutex peerCbMutex_;
     std::string GetACameraId();
     bool IsAllowOpen(pid_t activeClient);
     void UpdateProcessState(int32_t& activeState, int32_t& requestState,
