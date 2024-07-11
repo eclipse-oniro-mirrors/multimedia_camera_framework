@@ -608,9 +608,23 @@ void PhotoOutputCallback::ExecuteCaptureStartCb(const CallbackInfo& info) const
     napi_value result[ARGS_TWO] = { nullptr, nullptr };
     napi_value retVal;
     napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_int32(env_, info.captureID, &result[PARAM1]);
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback(CONST_CAPTURE_START, callbackNapiPara);
+    if (IsEmpty(CONST_CAPTURE_START_WITH_INFO)) {
+        napi_create_int32(env_, info.captureID, &result[PARAM1]);
+        ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO,
+            .argv = result, .result = &retVal };
+        ExecuteCallback(CONST_CAPTURE_START, callbackNapiPara);
+    } else {
+        napi_value propValue;
+        napi_create_object(env_, &result[PARAM1]);
+        napi_create_int32(env_, info.captureID, &propValue);
+        napi_set_named_property(env_, result[PARAM1], "captureId", propValue);
+        int32_t invalidExposureTime = -1;
+        napi_create_int32(env_, invalidExposureTime, &propValue);
+        napi_set_named_property(env_, result[PARAM1], "time", propValue);
+        ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO,
+            .argv = result, .result = &retVal };
+        ExecuteCallback(CONST_CAPTURE_START_WITH_INFO, callbackNapiPara);
+    }
 }
 
 void PhotoOutputCallback::ExecuteCaptureStartWithInfoCb(const CallbackInfo& info) const
