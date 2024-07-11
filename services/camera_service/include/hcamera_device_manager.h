@@ -214,7 +214,7 @@ private:
     SafeMap<pid_t, sptr<HCameraDeviceHolder>> pidToCameras_;
     SafeMap<std::string, int32_t> stateOfACamera_;
     std::mutex mapMutex_;
-    sptr<ICameraBroker> PeerCallback_;
+    sptr<ICameraBroker> peerCallback_;
     std::mutex peerCbMutex_;
     std::string GetACameraId();
     bool IsAllowOpen(pid_t activeClient);

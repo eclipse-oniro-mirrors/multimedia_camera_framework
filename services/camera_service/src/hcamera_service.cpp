@@ -193,10 +193,12 @@ void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::stri
     switch (systemAbilityId) {
         case DISTRIBUTED_KV_DATA_SERVICE_ABILITY_ID:
             MEDIA_INFO_LOG("OnAddSystemAbility RegisterObserver start");
-            while (ret != CAMERA_OK && cnt < retryCnt) {
-                cnt++;
+            while (cnt++ < retryCnt) {
                 ret = GetMuteModeFromDataShareHelper(muteMode);
-                MEDIA_INFO_LOG("OnAddSystemAbility GetMuteModeFromDataShareHelper, retry=%{public}d", cnt);
+                MEDIA_INFO_LOG("OnAddSystemAbility GetMuteModeFromDataShareHelper, tryCount=%{public}d", cnt);
+                if (ret == CAMERA_OK) {
+                    break;
+                }
                 sleep(retryTimeout);
             }
             this->SetServiceStatus(CameraServiceStatus::SERVICE_READY);
@@ -817,8 +819,11 @@ int32_t HCameraService::SetMuteCallback(sptr<ICameraMuteServiceCallback>& callba
         MEDIA_ERR_LOG("HCameraService::SetMuteCallback callback is null");
         return CAMERA_INVALID_ARG;
     }
-    Security::AccessToken::AccessTokenID callingToken = IPCSkeleton::GetCallingTokenID();
-    if (Security::AccessToken::AccessTokenKit::GetTokenType(callingToken) == Security::AccessToken::TOKEN_NATIVE) {
+    // If the callback set by the SA caller is later than the camera service is started,
+    // the callback cannot be triggered to obtain the mute state. Therefore,
+    // when the SA sets the callback, the callback is triggered immediately to return the mute state.
+    constexpr int32_t maxSaUid = 10000;
+    if (IPCSkeleton::GetCallingUid() > 0 && IPCSkeleton::GetCallingUid() < maxSaUid) {
         callback->OnCameraMute(muteModeStored_);
     }
     cameraMuteServiceCallbacks_.insert(make_pair(pid, callback));

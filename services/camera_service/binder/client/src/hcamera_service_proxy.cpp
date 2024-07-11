@@ -707,7 +707,7 @@ int32_t HCameraServiceProxy::UnsetPeerCallback()
     data.WriteInterfaceToken(GetDescriptor());
 
     int error = Remote()->SendRequest(
-        static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_SET_PEER_CALLBACK), data, reply, option);
+        static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_UNSET_PEER_CALLBACK), data, reply, option);
     if (error != ERR_NONE) {
         MEDIA_ERR_LOG("HCameraServiceProxy UnsetPeerCallback failed, error: %{public}d", error);
     }
