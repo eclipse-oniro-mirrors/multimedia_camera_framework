@@ -144,14 +144,15 @@ void HCameraDevice::CreateMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetada
 int32_t HCameraDevice::ResetDeviceSettings()
 {
     CAMERA_SYNC_TRACE;
+    sptr<OHOS::HDI::Camera::V1_2::ICameraDevice> hdiCameraDeviceV1_2;
     MEDIA_INFO_LOG("HCameraDevice::ResetDeviceSettings enter");
     {
         std::lock_guard<std::mutex> lock(opMutex_);
         if (hdiCameraDevice_ == nullptr) {
             return CAMERA_OK;
         }
+        hdiCameraDeviceV1_2 = HDI::Camera::V1_2::ICameraDevice::CastFrom(hdiCameraDevice_);
     }
-    auto hdiCameraDeviceV1_2 = HDI::Camera::V1_2::ICameraDevice::CastFrom(hdiCameraDevice_);
     if (hdiCameraDeviceV1_2 != nullptr) {
         int32_t errCode = hdiCameraDeviceV1_2->Reset();
         if (errCode != HDI::Camera::V1_0::CamRetCode::NO_ERROR) {
