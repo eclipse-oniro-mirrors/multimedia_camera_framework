@@ -1244,9 +1244,6 @@ int32_t HCameraService::SetPeerCallback(sptr<ICameraBroker>& callback)
 int32_t HCameraService::UnsetPeerCallback()
 {
     MEDIA_INFO_LOG("UnsetPeerCallback callback");
-    if (peerCallback_ == nullptr) {
-        return CAMERA_INVALID_ARG;
-    }
     peerCallback_ = nullptr;
     HCameraDeviceManager::GetInstance()->UnsetPeerCallback();
     return CAMERA_OK;
