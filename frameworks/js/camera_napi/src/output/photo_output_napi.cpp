@@ -162,6 +162,7 @@ void PhotoListener::ExecuteDeferredPhoto(sptr<SurfaceBuffer> surfaceBuffer) cons
 
 void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const
 {
+    CAMERA_SYNC_TRACE;
     BufferRequestConfig requestConfig = {
         .width = surfaceBuffer->GetWidth(),
         .height = surfaceBuffer->GetHeight(),
@@ -182,6 +183,7 @@ void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Su
 
 void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality) const
 {
+    CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("ExecutePhotoAsset");
     napi_value result[ARGS_TWO] = { nullptr, nullptr };
     napi_value retVal;
@@ -214,6 +216,7 @@ void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool is
 void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle *bufferHandle,
     bool isHighQuality, std::string &uri, int32_t &cameraShotType) const
 {
+    CAMERA_SYNC_TRACE;
     int64_t imageId = 0;
     int32_t deferredProcessingType;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::imageId, imageId);
@@ -261,6 +264,7 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
 
 void PhotoListener::UpdateJSCallback(sptr<Surface> photoSurface) const
 {
+    CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("PhotoListener UpdateJSCallback enter");
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
@@ -288,6 +292,7 @@ void PhotoListener::UpdateJSCallback(sptr<Surface> photoSurface) const
 
 void PhotoListener::UpdateJSCallbackAsync(sptr<Surface> photoSurface) const
 {
+    CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("PhotoListener UpdateJSCallbackAsync enter");
     uv_loop_s* loop = nullptr;
     napi_get_uv_event_loop(env_, &loop);
