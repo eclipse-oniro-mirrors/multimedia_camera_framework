@@ -77,6 +77,10 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
         MEDIA_INFO_LOG("CameraInput::CameraInput Contructor Camera: %{public}s", cameraObj_->GetID().c_str());
     }
     CameraDeviceSvcCallback_ = new(std::nothrow) CameraDeviceServiceCallback(this);
+    if (CameraDeviceSvcCallback_ == nullptr) {
+        MEDIA_ERR_LOG("failed to new CameraDeviceSvcCallback_!");
+        return;
+    }
     if (deviceObj_) {
         deviceObj_->SetCallback(CameraDeviceSvcCallback_);
     } else {

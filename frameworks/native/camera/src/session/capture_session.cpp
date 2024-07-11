@@ -1018,6 +1018,10 @@ void CaptureSession::SetCallback(std::shared_ptr<SessionCallback> callback)
     if (appCallback_ != nullptr && captureSession != nullptr) {
         if (captureSessionCallback_ == nullptr) {
             captureSessionCallback_ = new (std::nothrow) CaptureSessionCallback(this);
+            if (captureSessionCallback_ == nullptr) {
+                MEDIA_ERR_LOG("failed to new captureSessionCallback_!");
+                return;
+            }
         }
         if (captureSession) {
             errorCode = captureSession->SetCallback(captureSessionCallback_);

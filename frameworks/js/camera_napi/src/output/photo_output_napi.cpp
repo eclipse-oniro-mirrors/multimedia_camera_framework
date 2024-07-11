@@ -244,6 +244,10 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
     sptr<CameraPhotoProxy> photoProxy;
     std::string imageIdStr = std::to_string(imageId);
     photoProxy = new(std::nothrow) CameraPhotoProxy(bufferHandle, format, photoWidth, photoHeight, isHighQuality);
+    if (photoProxy == nullptr) {
+        MEDIA_ERR_LOG("failed to new photoProxy");
+        return;
+    }
     photoProxy->SetDeferredAttrs(imageIdStr, deferredProcessingType, size);
     auto photoOutput = photoOutput_.promote();
     if (photoOutput && photoOutput->GetSession()) {
@@ -1834,6 +1838,10 @@ void PhotoOutputNapi::RegisterPhotoAvailableCallbackListener(
     if (photoListener_ == nullptr) {
         MEDIA_INFO_LOG("new photoListener and register surface consumer listener");
         sptr<PhotoListener> photoListener = new (std::nothrow) PhotoListener(env, sPhotoSurface_, photoOutput_);
+        if (photoListener == nullptr) {
+            MEDIA_ERR_LOG("photoListener is null!");
+            return;
+        }
         SurfaceError ret = sPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener);
         if (ret != SURFACE_ERROR_OK) {
             MEDIA_ERR_LOG("register surface consumer listener failed!");
@@ -1852,6 +1860,10 @@ void PhotoOutputNapi::RegisterPhotoAvailableCallbackListener(
         }
         sptr<RawPhotoListener> rawPhotoListener =
             new (std::nothrow) RawPhotoListener(env, photoOutput_->rawPhotoSurface_);
+        if (rawPhotoListener == nullptr) {
+            MEDIA_ERR_LOG("failed to new rawPhotoListener");
+            return;
+        }
         SurfaceError ret =
             photoOutput_->rawPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)rawPhotoListener);
         if (ret != SURFACE_ERROR_OK) {
@@ -1883,6 +1895,10 @@ void PhotoOutputNapi::RegisterDeferredPhotoProxyAvailableCallbackListener(
     if (photoListener_ == nullptr) {
         MEDIA_INFO_LOG("new deferred photoListener and register surface consumer listener");
         sptr<PhotoListener> photoListener = new (std::nothrow) PhotoListener(env, sPhotoSurface_, photoOutput_);
+        if (photoListener == nullptr) {
+            MEDIA_ERR_LOG("failed to new photoListener!");
+            return;
+        }
         SurfaceError ret = sPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener);
         if (ret != SURFACE_ERROR_OK) {
             MEDIA_ERR_LOG("register surface consumer listener failed!");
@@ -1910,6 +1926,10 @@ void PhotoOutputNapi::RegisterPhotoAssetAvailableCallbackListener(
     if (photoListener_ == nullptr) {
         MEDIA_INFO_LOG("new photoListener and register surface consumer listener");
         sptr<PhotoListener> photoListener = new (std::nothrow) PhotoListener(env, sPhotoSurface_, photoOutput_);
+        if (photoListener == nullptr) {
+            MEDIA_ERR_LOG("failed to new photoListener!");
+            return;
+        }
         SurfaceError ret = sPhotoSurface_->RegisterConsumerListener((sptr<IBufferConsumerListener>&)photoListener);
         if (ret != SURFACE_ERROR_OK) {
             MEDIA_ERR_LOG("register surface consumer listener failed!");

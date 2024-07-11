@@ -314,6 +314,10 @@ sptr<CaptureSession> CameraManager::CreateCaptureSession(SceneMode mode)
     MEDIA_INFO_LOG("CameraManager::CreateCaptureSession proxy execute end, %{public}d", retCode);
     if (retCode == CAMERA_OK && session != nullptr) {
         sptr<CaptureSession> captureSession = CreateCaptureSessionImpl(mode, session);
+        if (captureSession == nullptr) {
+            MEDIA_ERR_LOG("failed to new captureSession!");
+            return nullptr;
+        }
         captureSession->SetMode(mode);
         return captureSession;
     }
@@ -337,6 +341,10 @@ int CameraManager::CreateCaptureSession(sptr<CaptureSession> *pCaptureSession)
     if (retCode == CAMERA_OK) {
         if (session != nullptr) {
             captureSession = new(std::nothrow) CaptureSession(session);
+            if (captureSession == nullptr) {
+                MEDIA_ERR_LOG("failed to new captureSession!");
+                return CameraErrorCode::SERVICE_FATL_ERROR;
+            }
         } else {
             MEDIA_ERR_LOG("Failed to CreateCaptureSession with session is null");
             return CameraErrorCode::SERVICE_FATL_ERROR;
@@ -393,7 +401,15 @@ int CameraManager::CreateDeferredPhotoProcessingSession(int userId,
     }
 
     deferredPhotoProcSession = new(std::nothrow) DeferredPhotoProcSession(userId, callback);
+    if (deferredPhotoProcSession == nullptr) {
+        MEDIA_ERR_LOG("failed to new deferredPhotoProcSession!");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
     remoteCallback = new(std::nothrow) DeferredPhotoProcessingSessionCallback(deferredPhotoProcSession);
+    if (remoteCallback == nullptr) {
+        MEDIA_ERR_LOG("failed to new remoteCallback!");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
 
     retCode = serviceProxy->CreateDeferredPhotoProcessingSession(userId, remoteCallback, session);
     if (retCode == CAMERA_OK) {
@@ -734,8 +750,16 @@ int CameraManager::CreateMetadataOutput(sptr<MetadataOutput>& pMetadataOutput)
         return ServiceToCameraError(retCode);
     }
     pMetadataOutput = new (std::nothrow) MetadataOutput(surface, streamMetadata);
+    if (pMetadataOutput == nullptr) {
+        MEDIA_ERR_LOG("failed to new pMetadataOutput!");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
     pMetadataOutput->SetStream(streamMetadata);
     sptr<IBufferConsumerListener> bufferConsumerListener = new (std::nothrow) MetadataObjectListener(pMetadataOutput);
+    if (bufferConsumerListener == nullptr) {
+        MEDIA_ERR_LOG("failed to new bufferConsumerListener!");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
     SurfaceError ret = surface->RegisterConsumerListener(bufferConsumerListener);
     if (ret != SURFACE_ERROR_OK) {
         MEDIA_ERR_LOG("MetadataOutputSurface consumer listener registration failed:%{public}d", ret);
@@ -1436,6 +1460,10 @@ int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInpu
         int ret = CreateCameraDevice(camera->GetID(), &deviceObj);
         if (ret == CameraErrorCode::SUCCESS) {
             cameraInput = new(std::nothrow) CameraInput(deviceObj, camera);
+            if (cameraInput == nullptr) {
+                MEDIA_ERR_LOG("failed to new cameraInput!");
+                return CameraErrorCode::SERVICE_FATL_ERROR;
+            }
         } else {
             MEDIA_ERR_LOG("Returning null in CreateCameraInput");
             return ret;
@@ -1592,9 +1620,12 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     int32_t modeName) __attribute__((no_sanitize("cfi")))
 {
     MEDIA_DEBUG_LOG("GetSupportedOutputCapability mode = %{public}d", modeName);
+    if (camera == nullptr) {
+        return nullptr;
+    }
     sptr<CameraOutputCapability> cameraOutputCapability = nullptr;
     cameraOutputCapability = new(std::nothrow) CameraOutputCapability();
-    if (camera == nullptr || cameraOutputCapability == nullptr) {
+    if (cameraOutputCapability == nullptr) {
         return nullptr;
     }
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = camera->GetMetadata();
@@ -1708,6 +1739,10 @@ void CameraManager::CreateAndSetCameraServiceCallback()
     }
     int32_t retCode = CAMERA_OK;
     cameraSvcCallback_ = new(std::nothrow) CameraStatusServiceCallback(this);
+    if (cameraSvcCallback_ == nullptr) {
+        MEDIA_ERR_LOG("failed to new cameraSvcCallback_!");
+        return;
+    }
     retCode = serviceProxy->SetCameraCallback(cameraSvcCallback_);
     if (retCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Set CameraStatus service Callback failed, retCode: %{public}d", retCode);
@@ -1847,6 +1882,10 @@ void CameraManager::CreateAndSetTorchServiceCallback()
     }
     int32_t retCode = CAMERA_OK;
     torchSvcCallback_ = new(std::nothrow) TorchServiceCallback(this);
+    if (torchSvcCallback_ == nullptr) {
+        MEDIA_ERR_LOG("failed to new torchSvcCallback_!");
+        return;
+    }
     retCode = serviceProxy->SetTorchCallback(torchSvcCallback_);
     if (retCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Set Torch service Callback failed, retCode: %{public}d", retCode);
@@ -1881,6 +1920,10 @@ void CameraManager::CreateAndSetFoldServiceCallback()
     }
     int32_t retCode = CAMERA_OK;
     foldSvcCallback_ = new(std::nothrow) FoldServiceCallback(this);
+    if (foldSvcCallback_ == nullptr) {
+        MEDIA_ERR_LOG("failed to new foldSvcCallback_!");
+        return;
+    }
     retCode = serviceProxy->SetFoldStatusCallback(foldSvcCallback_);
     if (retCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Set Fold service Callback failed, retCode: %{public}d", retCode);
@@ -1925,6 +1968,10 @@ void CameraManager::CreateAndSetCameraMuteServiceCallback()
     }
     int32_t retCode = CAMERA_OK;
     cameraMuteSvcCallback_ = new(std::nothrow) CameraMuteServiceCallback(this);
+    if (cameraMuteSvcCallback_ == nullptr) {
+        MEDIA_ERR_LOG("failed to new cameraMuteSvcCallback_!");
+        return;
+    }
     retCode = serviceProxy->SetMuteCallback(cameraMuteSvcCallback_);
     if (retCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Set Mute service Callback failed, retCode: %{public}d", retCode);
