@@ -24,7 +24,7 @@ namespace OHOS {
 namespace CameraStandard {
 class CameraInfoDumper {
 public:
-    explicit CameraInfoDumper(int outFd) : outFd_(outFd) {}
+    explicit CameraInfoDumper(int outFd) : outFd_(outFd), depth_(0) {}
     void Title(const char* msg);
     void Title(const std::string msg);
     void Msg(const char* msg);
