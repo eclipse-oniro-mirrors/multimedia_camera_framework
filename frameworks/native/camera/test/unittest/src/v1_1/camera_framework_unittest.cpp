@@ -2778,6 +2778,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_006, TestSize.Level
     EXPECT_EQ(intResult, 2);
 
     callback = new(std::nothrow) CameraStatusServiceCallback(cameraManager);
+    ASSERT_NE(callback, nullptr);
     intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
 
@@ -2789,6 +2790,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_006, TestSize.Level
     EXPECT_EQ(intResult, 2);
 
     callback_2 = new(std::nothrow) CameraMuteServiceCallback(cameraManager);
+    ASSERT_NE(callback_2, nullptr);
     intResult = cameraService->SetMuteCallback(callback_2);
     EXPECT_EQ(intResult, 0);
 
@@ -3146,6 +3148,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_012, TestSize.Level
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer1 = Surface->GetProducer();
     auto streamRepeat = new (std::nothrow) HStreamRepeat(producer1, format, width, height, RepeatStreamType::PREVIEW);
+    ASSERT_NE(streamRepeat, nullptr);
 
     std::shared_ptr<PhotoCaptureSetting> photoSetting = std::make_shared<PhotoCaptureSetting>();
     photoSetting->SetRotation(PhotoCaptureSetting::Rotation_90);
@@ -3204,8 +3207,11 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_014, TestSize.Level
     sptr<IBufferProducer> producer = Surface->GetProducer();
 
     auto streamRepeat = new (std::nothrow) HStreamRepeat(producer, 4, 1280, 960, RepeatStreamType::PREVIEW);
+    ASSERT_NE(streamRepeat, nullptr);
     auto streamRepeat1 = new (std::nothrow) HStreamRepeat(producer, 3, 640, 480, RepeatStreamType::PREVIEW);
+    ASSERT_NE(streamRepeat1, nullptr);
     sptr<HStreamCapture> streamCapture = new (std::nothrow) HStreamCapture(producer, 4, 1280, 960);
+    ASSERT_NE(streamCapture, nullptr);
 
     EXPECT_EQ(camSession->AddOutput(StreamType::REPEAT, streamRepeat), 0);
     EXPECT_EQ(camSession->AddOutput(StreamType::REPEAT, streamRepeat1), 0);
@@ -3255,6 +3261,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_015, TestSize.Level
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     SceneMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
+    ASSERT_NE(camSession, nullptr);
 
     camSession->BeginConfig();
     camSession->Start();
@@ -3268,6 +3275,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_015, TestSize.Level
     sptr<HStreamCapture> streamCapture1 = new (std::nothrow) HStreamCapture(producer, 3, 640, 480);
     sptr<HStreamRepeat> streamRepeat =
         new (std::nothrow) HStreamRepeat(producer, 4, 1280, 960, RepeatStreamType::PREVIEW);
+    ASSERT_NE(streamRepeat, nullptr);
 
     EXPECT_EQ(camSession->AddOutput(StreamType::CAPTURE, streamCapture), 0);
     EXPECT_EQ(camSession->AddOutput(StreamType::CAPTURE, streamCapture1), 0);
@@ -3318,6 +3326,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_016, TestSize.Level
 
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, PORTRAIT);
+    ASSERT_NE(camSession, nullptr);
 
     EXPECT_EQ(camSession->CommitConfig(), CAMERA_INVALID_STATE);
     camSession->BeginConfig();
@@ -3326,6 +3335,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_016, TestSize.Level
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer = Surface->GetProducer();
     sptr<HStreamCapture> streamCapture= new(std::nothrow) HStreamCapture(producer, 0, 0, 0);
+    ASSERT_NE(streamCapture, nullptr);
 
     sptr<ICameraDeviceService> cameraDevice = camInput->GetCameraDevice();
     EXPECT_EQ(camSession->AddInput(cameraDevice), 0);
@@ -3384,13 +3394,16 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_017, TestSize.Level
     sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
     sptr<HCaptureSession> camSession1 = new (std::nothrow) HCaptureSession(12, mode);
     ASSERT_NE(camSession, nullptr);
+    ASSERT_NE(camSession1, nullptr);
     EXPECT_EQ(camSession->Start(), CAMERA_INVALID_STATE);
     camSession1->Start();
 
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer = Surface->GetProducer();
     sptr<HStreamRepeat> streamRepeat = new (std::nothrow) HStreamRepeat(producer, 0, 0, 0, RepeatStreamType::PREVIEW);
+    ASSERT_NE(streamRepeat, nullptr);
     sptr<HStreamMetadata> streamMetadata= new(std::nothrow) HStreamMetadata(producer, 0);
+    ASSERT_NE(streamMetadata, nullptr);
     EXPECT_EQ(camSession->AddOutput(StreamType::REPEAT, streamRepeat), CAMERA_INVALID_STATE);
     EXPECT_EQ(camSession->RemoveOutput(StreamType::REPEAT, streamRepeat), CAMERA_INVALID_STATE);
 
@@ -3822,10 +3835,12 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_025, TestSize.Level
     std::string cameraId = cameras[0]->GetID();
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
 
     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = nullptr;
     sptr<CameraInput> input = cameraManager->CreateCameraInput(cameras[0]);
     sptr<ICameraDeviceServiceCallback> callback1 = new(std::nothrow) CameraDeviceServiceCallback(input);
+    ASSERT_NE(callback1, nullptr);
 
     camDevice->EnableResult(result);
     camDevice->DisableResult(result);
@@ -3867,6 +3882,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_026, TestSize.Level
     sptr<IBufferProducer> producer1 = Surface->GetProducer();
     sptr<HStreamRepeat> streamRepeat =
         new (std::nothrow) HStreamRepeat(nullptr, format, width, height, RepeatStreamType::PREVIEW);
+    ASSERT_NE(streamRepeat, nullptr);
 
     EXPECT_EQ(streamRepeat->Start(), CAMERA_INVALID_STATE);
     EXPECT_EQ(streamRepeat->SetCallback(callback), CAMERA_INVALID_ARG);
@@ -3901,6 +3917,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_027, TestSize.Level
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer = Surface->GetProducer();
     sptr<HStreamMetadata> streamMetadata= new(std::nothrow) HStreamMetadata(producer, format);
+    ASSERT_NE(streamMetadata, nullptr);
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata1 = nullptr;
     streamMetadata->LinkInput(mockStreamOperator, metadata);
@@ -3930,6 +3947,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_028, TestSize.Level
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer = Surface->GetProducer();
     sptr<HStreamMetadata> streamMetadata= new(std::nothrow) HStreamMetadata(producer, format);
+    ASSERT_NE(streamMetadata, nullptr);
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
     streamMetadata->Start();
     streamMetadata->LinkInput(mockStreamOperator, metadata);
@@ -3959,6 +3977,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_029, TestSize.Level
     sptr<IBufferProducer> producer = Surface->GetProducer();
     sptr<OHOS::IBufferProducer> producer1 = nullptr;
     sptr<HStreamCapture> streamCapture= new(std::nothrow) HStreamCapture(producer, format, width, height);
+    ASSERT_NE(streamCapture, nullptr);
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
     EXPECT_EQ(streamCapture->SetThumbnail(false, producer1), CAMERA_OK);
     EXPECT_EQ(streamCapture->SetThumbnail(false, producer), CAMERA_OK);
@@ -4002,11 +4021,14 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_030, TestSize.Level
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     uint32_t callerToken1 = 3;
     sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
     sptr<HCameraDevice> camDevice1 = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken1);
+    ASSERT_NE(camDevice1, nullptr);
 
     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator = nullptr;
     sptr<CameraInput> input = cameraManager->CreateCameraInput(cameras[0]);
     sptr<ICameraDeviceServiceCallback> callback1 = new(std::nothrow) CameraDeviceServiceCallback(input);
+    ASSERT_NE(callback1, nullptr);
     camDevice->EnableResult(result);
     camDevice->DisableResult(result);
 
@@ -4083,6 +4105,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_031, TestSize.Level
     std::make_shared<MockHCameraHostManager::MockStatusCallback>();
     sptr<MockHCameraHostManager> mockCameraHostManager_2 =
         new (std::nothrow) MockHCameraHostManager(mockStatusCallback);
+    ASSERT_NE(mockCameraHostManager_2, nullptr);
     sptr<HCameraHostManager> cameraHostManager_2 = (sptr<HCameraHostManager> &)mockCameraHostManager_2;
 
     cameraHostManager_2->AddCameraDevice(cameraId, nullptr);
@@ -5238,6 +5261,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_054, TestSize.Level
 HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_055, TestSize.Level0)
 {
     sptr<ICameraServiceCallback> callback = new(std::nothrow) CameraStatusServiceCallback(cameraManager);
+    ASSERT_NE(callback, nullptr);
     cameraManager->cameraSvcCallback_  = callback;
 
     pid_t pid = 0;
@@ -5981,6 +6005,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_080, TestSize.Level
     std::string cameraId = cameras[0]->GetID();
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings;
     EXPECT_EQ(camDevice->UpdateSettingOnce(settings), CAMERA_INVALID_ARG);
 }
@@ -6005,6 +6030,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_081, TestSize.Level
     std::string cameraId = cameras[0]->GetID();
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings = cameras[0]->GetMetadata();
     EXPECT_EQ(camDevice->UpdateSettingOnce(settings), 0);
 
@@ -6032,7 +6058,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_082, TestSize.Level
     std::string cameraId = cameras[0]->GetID();
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCameraDevice> camDevice = new(std::nothrow) HCameraDevice(cameraHostManager, cameraId, callerToken);
-
+    ASSERT_NE(camDevice, nullptr);
     camDevice->UnRegisterFoldStatusListener();
     camDevice->RegisterFoldStatusListener();
     camDevice->UnRegisterFoldStatusListener();
@@ -6072,7 +6098,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_083, TestSize.Level
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCameraDevice> camDevice = new(std::nothrow)
         HCameraDevice(cameraHostManager, cameraId, callerToken);
-
+    ASSERT_NE(camDevice, nullptr);
     camDevice->hdiCameraDevice_ = nullptr;
     EXPECT_EQ(camDevice->InitStreamOperator(), CAMERA_UNKNOWN_ERROR);
 }
@@ -6098,7 +6124,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_084, TestSize.Level
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCameraDevice> camDevice = new(std::nothrow)
         HCameraDevice(cameraHostManager, cameraId, callerToken);
-
+    ASSERT_NE(camDevice, nullptr);
     std::vector<HDI::Camera::V1_1::StreamInfo_V1_1> streamInfos = {};
     camDevice->CreateStreams(streamInfos);
 
@@ -6129,7 +6155,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_085, TestSize.Level
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCameraDevice> camDevice = new(std::nothrow)
         HCameraDevice(cameraHostManager, cameraId, callerToken);
-
+    ASSERT_NE(camDevice, nullptr);
     std::vector<StreamInfo_V1_1> streamInfos = {};
     EXPECT_EQ(camDevice->UpdateStreams(streamInfos), CAMERA_UNKNOWN_ERROR);
 }
@@ -6155,7 +6181,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_086, TestSize.Level
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCameraDevice> camDevice = new(std::nothrow)
         HCameraDevice(cameraHostManager, cameraId, callerToken);
-
+    ASSERT_NE(camDevice, nullptr);
     int32_t captureId = 0;
     const std::vector<int32_t> streamIds = {1, 2};
     EXPECT_EQ(camDevice->OnCaptureStarted(captureId, streamIds), CAMERA_INVALID_STATE);
@@ -6193,7 +6219,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_087, TestSize.Level
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCameraDevice> camDevice = new(std::nothrow)
         HCameraDevice(cameraHostManager, cameraId, callerToken);
-
+    ASSERT_NE(camDevice, nullptr);
     int32_t captureId = 0;
     const std::vector<int32_t> streamIds = {1, 2};
     EXPECT_EQ(camDevice->OnCaptureStarted(captureId, streamIds), CAMERA_INVALID_STATE);
@@ -6233,7 +6259,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_088, TestSize.Level
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCameraDevice> camDevice = new(std::nothrow)
         HCameraDevice(cameraHostManager, cameraId, callerToken);
-
+    ASSERT_NE(camDevice, nullptr);
     int32_t captureId = 0;
     CaptureErrorInfo it1;
     it1.streamId_ = 2;
@@ -6274,7 +6300,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_089, TestSize.Level
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCameraDevice> camDevice = new(std::nothrow)
         HCameraDevice(cameraHostManager, cameraId, callerToken);
-
+    ASSERT_NE(camDevice, nullptr);
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = cameras[0]->GetMetadata();
     camDevice->CheckOnResultData(nullptr);
     camDevice->CheckOnResultData(cameraResult);
@@ -6298,9 +6324,10 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_090, TestSize.Level
     sptr<IBufferProducer> producer = Surface->GetProducer();
     auto streamRepeat = new (std::nothrow)
         HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
+    ASSERT_NE(streamRepeat, nullptr);
     sptr<HStreamRepeat> streamRepeat1 =
         new (std::nothrow) HStreamRepeat(producer, 4, 1280, 960, RepeatStreamType::PREVIEW);
-
+    ASSERT_NE(streamRepeat1, nullptr);
     SketchStatus status = SketchStatus::STARTED;
     streamRepeat->repeatStreamType_ = RepeatStreamType::SKETCH;
     streamRepeat->parentStreamRepeat_ = streamRepeat1;
@@ -6325,7 +6352,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_091, TestSize.Level
     sptr<IBufferProducer> producer = Surface->GetProducer();
     auto streamRepeat = new (std::nothrow)
         HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
-
+    ASSERT_NE(streamRepeat, nullptr);
     SketchStatus status = SketchStatus::STARTED;
     EXPECT_EQ(streamRepeat->OnSketchStatusChanged(status), 0);
 }
@@ -6348,7 +6375,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_092, TestSize.Level
     sptr<IBufferProducer> producer = Surface->GetProducer();
     auto streamRepeat = new (std::nothrow)
         HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
-
+    ASSERT_NE(streamRepeat, nullptr);
     sptr<IStreamRepeat> sketchStream = nullptr;
     float sketchRatio = 0;
     EXPECT_EQ(streamRepeat->ForkSketchStreamRepeat(0, 1, sketchStream, sketchRatio), CAMERA_INVALID_ARG);
@@ -6373,7 +6400,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_093, TestSize.Level
     sptr<IBufferProducer> producer = Surface->GetProducer();
     auto streamRepeat = new (std::nothrow)
         HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
-
+    ASSERT_NE(streamRepeat, nullptr);
     float sketchRatio = 0;
     streamRepeat->sketchStreamRepeat_ = nullptr;
     EXPECT_EQ(streamRepeat->RemoveSketchStreamRepeat(), 0);
@@ -6398,7 +6425,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_094, TestSize.Level
     sptr<IBufferProducer> producer = Surface->GetProducer();
     auto streamRepeat = new (std::nothrow)
         HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
-
+    ASSERT_NE(streamRepeat, nullptr);
     uint32_t interfaceCode = 5;
     EXPECT_EQ(streamRepeat->OperatePermissionCheck(interfaceCode), 0);
 }
@@ -6607,7 +6634,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_103, TestSize.Level
     sptr<IBufferProducer> producer = Surface->GetProducer();
     auto streamRepeat = new (std::nothrow)
         HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
-
+    ASSERT_NE(streamRepeat, nullptr);
     StreamInfo_V1_1 streamInfo;
     streamRepeat->repeatStreamType_ = RepeatStreamType::SKETCH;
     streamRepeat->SetStreamInfo(streamInfo);
@@ -7102,6 +7129,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_112, TestSize.Level
     EXPECT_EQ(intResult, 2);
 
     callback = new(std::nothrow) CameraStatusServiceCallback(cameraManager);
+    ASSERT_NE(callback, nullptr);
     intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
 
@@ -7113,6 +7141,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_112, TestSize.Level
     EXPECT_EQ(intResult, 2);
 
     callback_2 = new(std::nothrow) CameraMuteServiceCallback(cameraManager);
+    ASSERT_NE(callback_2, nullptr);
     intResult = cameraService->SetMuteCallback(callback_2);
     EXPECT_EQ(intResult, 0);
 
@@ -7156,6 +7185,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_113, TestSize.Level
     ASSERT_NE(cameraService, nullptr);
 
     sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
+    ASSERT_NE(callback, nullptr);
     int32_t intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
 
@@ -7236,6 +7266,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_114, TestSize.Level
     ASSERT_NE(cameraService, nullptr);
 
     sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
+    ASSERT_NE(callback, nullptr);
     int32_t intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
 
@@ -7316,6 +7347,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_115, TestSize.Level
     ASSERT_NE(cameraService, nullptr);
 
     sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
+    ASSERT_NE(callback, nullptr);
     int32_t intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
 
@@ -7396,6 +7428,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_116, TestSize.Level
     ASSERT_NE(cameraService, nullptr);
 
     sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
+    ASSERT_NE(callback, nullptr);
     int32_t intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
 
@@ -7476,6 +7509,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_117, TestSize.Level
     ASSERT_NE(cameraService, nullptr);
 
     sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
+    ASSERT_NE(callback, nullptr);
     int32_t intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
 
@@ -7566,6 +7600,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_118, TestSize.Level
     ASSERT_NE(cameraService, nullptr);
 
     sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
+    ASSERT_NE(callback, nullptr);
     int32_t intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
 
@@ -7656,6 +7691,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_119, TestSize.Level
     ASSERT_NE(cameraService, nullptr);
 
     sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
+    ASSERT_NE(callback, nullptr);
     int32_t intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
 
@@ -7746,6 +7782,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_120, TestSize.Level
     ASSERT_NE(cameraService, nullptr);
 
     sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(cameraManager);
+    ASSERT_NE(callback, nullptr);
     int32_t intResult = cameraService->SetCameraCallback(callback);
     EXPECT_EQ(intResult, 0);
 
