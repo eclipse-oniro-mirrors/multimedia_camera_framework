@@ -170,7 +170,7 @@ int32_t DeferredPhotoProcSession::SetDeferredPhotoSession(
     deathRecipient_ = new(std::nothrow) CameraDeathRecipient(pid);
     CHECK_AND_RETURN_RET_LOG(deathRecipient_ != nullptr, CAMERA_ALLOC_ERROR, "failed to new CameraDeathRecipient.");
 
-    deathRecipient_->SetNotifyCb(std::bind(&DeferredPhotoProcSession::CameraServerDied, this, std::placeholders::_1));
+    deathRecipient_->SetNotifyCb([this](pid_t pid) { CameraServerDied(pid); });
     bool result = object->AddDeathRecipient(deathRecipient_);
     if (!result) {
         MEDIA_ERR_LOG("failed to add deathRecipient");

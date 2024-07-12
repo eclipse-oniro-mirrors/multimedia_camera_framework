@@ -54,8 +54,8 @@ void MovingPhotoVideoCache::CacheFrame(sptr<FrameRecord> frameRecord)
     std::lock_guard<std::mutex> lock(taskManagerLock_);
     if (taskManager_) {
         auto thisPtr = sptr<MovingPhotoVideoCache>(this);
-        taskManager_->EncodeVideoBuffer(frameRecord, std::bind(&MovingPhotoVideoCache::OnImageEncoded,
-        thisPtr, std::placeholders::_1,  std::placeholders::_2));
+        taskManager_->EncodeVideoBuffer(frameRecord,
+            [thisPtr](sptr<FrameRecord> frameRecord, bool encodeResult) { thisPtr->OnImageEncoded(frameRecord, encodeResult); });
     }
 }
 

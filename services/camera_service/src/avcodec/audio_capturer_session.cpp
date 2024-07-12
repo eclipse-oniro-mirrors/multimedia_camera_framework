@@ -79,7 +79,7 @@ bool AudioCapturerSession::StartAudioCapture()
         audioThread_.reset();
         audioThread_ = nullptr;
     }
-    audioThread_ = std::make_unique<std::thread>(&AudioCapturerSession::ProcessAudioBuffer, this);
+    audioThread_ = std::make_unique<std::thread>([this]() { this->ProcessAudioBuffer(); });
     startAudioCapture_ = true;
     if (audioThread_ == nullptr) {
         MEDIA_ERR_LOG("Create auido thread failed");

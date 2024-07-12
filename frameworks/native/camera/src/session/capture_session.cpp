@@ -293,7 +293,7 @@ CaptureSession::CaptureSession(sptr<ICaptureSession>& captureSession) : innerCap
     deathRecipient_ = new (std::nothrow) CameraDeathRecipient(pid);
     CHECK_AND_RETURN_LOG(deathRecipient_ != nullptr, "failed to new CameraDeathRecipient.");
 
-    deathRecipient_->SetNotifyCb(std::bind(&CaptureSession::CameraServerDied, this, std::placeholders::_1));
+    deathRecipient_->SetNotifyCb([this](int32_t pid) { CameraServerDied(pid); });
     bool result = object->AddDeathRecipient(deathRecipient_);
     if (!result) {
         MEDIA_ERR_LOG("failed to add deathRecipient");
