@@ -1223,6 +1223,7 @@ int32_t CaptureSession::UnlockForControl()
 {
     if (changedMetadata_ == nullptr) {
         MEDIA_ERR_LOG("CaptureSession::UnlockForControl Need to call LockForControl() before UnlockForControl()");
+        changeMetaMutex_.unlock();
         return ServiceToCameraError(CAMERA_INVALID_ARG);
     }
     MEDIA_DEBUG_LOG("CaptureSession::UnlockForControl Called");
