@@ -1240,6 +1240,18 @@ int32_t HCaptureSession::Start()
     return errorCode;
 }
 
+void HCaptureSession::StartMovingPhoto(sptr<HStreamRepeat>& curStreamRepeat)
+{
+    auto thisPtr = wptr<HCaptureSession>(this);
+    curStreamRepeat->SetMovingPhotoStartCallback([thisPtr]() {
+        auto sessionPtr = thisPtr.promote();
+        if (sessionPtr != nullptr) {
+            MEDIA_INFO_LOG("StartMovingPhotoStream when addDeferedSurface");
+            sessionPtr->StartMovingPhotoStream();
+        }
+    });
+}
+
 int32_t HCaptureSession::StartPreviewStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
 {
     int32_t errorCode = CAMERA_OK;
@@ -1255,10 +1267,7 @@ int32_t HCaptureSession::StartPreviewStream(const std::shared_ptr<OHOS::Camera::
         errorCode = curStreamRepeat->Start(settings);
         hasDerferedPreview = curStreamRepeat->producer_ == nullptr;
         if (isSetMotionPhoto_ && hasDerferedPreview) {
-            curStreamRepeat->SetMovingPhotoStartCallback([this]() {
-                MEDIA_INFO_LOG("StartMovingPhotoStream when addDeferedSurface");
-                this->StartMovingPhotoStream();
-            });
+            StartMovingPhoto(curStreamRepeat);
         }
         if (errorCode != CAMERA_OK) {
             MEDIA_ERR_LOG("HCaptureSession::Start(), Failed to start preview, rc: %{public}d", errorCode);

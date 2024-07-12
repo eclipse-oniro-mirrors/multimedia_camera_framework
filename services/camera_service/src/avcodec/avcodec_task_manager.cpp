@@ -246,14 +246,15 @@ void AvcodecTaskManager::Stop()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("AvcodecTaskManager Stop start");
-    videoEncoderManager_->SubmitTask([this]() {
-        if (videoEncoder_ != nullptr) {
-            videoEncoder_->Stop();
+    auto thisPtr = sptr<AvcodecTaskManager>(this);
+    videoEncoderManager_->SubmitTask([thisPtr]() {
+        if (thisPtr->videoEncoder_ != nullptr) {
+            thisPtr->videoEncoder_->Stop();
         }
     });
-    audioEncoderManager_->SubmitTask([this]() {
-        if (audioEncoder_ != nullptr) {
-            audioEncoder_->Stop();
+    audioEncoderManager_->SubmitTask([thisPtr]() {
+        if (thisPtr->audioEncoder_ != nullptr) {
+            thisPtr->audioEncoder_->Stop();
         }
         MEDIA_INFO_LOG("AvcodecTaskManager Stop end");
     });

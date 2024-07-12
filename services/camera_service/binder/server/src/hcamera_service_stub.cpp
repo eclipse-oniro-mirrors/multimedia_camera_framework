@@ -540,8 +540,12 @@ int HCameraServiceStub::SetListenerObject(const sptr<IRemoteObject>& object)
     CHECK_AND_RETURN_RET_LOG(cameraListener != nullptr, CAMERA_ALLOC_ERROR, "failed to cast IStandardCameraListener");
     sptr<CameraDeathRecipient> deathRecipient = new (std::nothrow) CameraDeathRecipient(pid);
     CHECK_AND_RETURN_RET_LOG(deathRecipient != nullptr, CAMERA_ALLOC_ERROR, "failed to new CameraDeathRecipient");
-    deathRecipient->SetNotifyCb([this](pid_t pid) {
-        this->ClientDied(pid);
+    auto thisPtr = wptr<HCameraServiceStub>(this);
+    deathRecipient->SetNotifyCb([thisPtr](pid_t pid) {
+        auto serviceStubPtr = thisPtr.promote();
+        if (serviceStubPtr != nullptr) {
+            serviceStubPtr->ClientDied(pid);
+        }
     });
     cameraListener->AddCameraDeathRecipient(deathRecipient);
     cameraListenerMap_.EnsureInsert(pid, cameraListener);
