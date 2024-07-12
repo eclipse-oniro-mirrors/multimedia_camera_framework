@@ -53,6 +53,7 @@ public:
     DECLARE_INTERFACE_DESCRIPTOR(u"OHOS.Anco.Service.Camera");
 
     virtual int32_t NotifyCloseCamera(std::string cameraId) = 0;
+    virtual int32_t NotifyMuteCamera(bool muteMode) = 0;
 };
 
 class ICameraService : public IRemoteBroker {
@@ -118,6 +119,8 @@ public:
     virtual int32_t NotifyCameraState(std::string cameraId, int32_t state) = 0;
 
     virtual int32_t SetPeerCallback(sptr<ICameraBroker>& callback) = 0;
+
+    virtual int32_t UnsetPeerCallback() = 0;
 
     virtual int32_t DestroyStubObj() = 0;
 

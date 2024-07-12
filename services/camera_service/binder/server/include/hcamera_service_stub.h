@@ -57,6 +57,7 @@ private:
     int HandleAllowOpenByOHSide(MessageParcel& data, MessageParcel& reply);
     int HandleNotifyCameraState(MessageParcel& data);
     int HandleSetPeerCallback(MessageParcel& data);
+    int HandleUnsetPeerCallback(MessageParcel& data);
     int HandleProxyForFreeze(MessageParcel& data, MessageParcel& reply);
     int HandleResetAllFreezeStatus(MessageParcel& data, MessageParcel& reply);
     int HandleGetDmDeviceInfo(MessageParcel& data, MessageParcel& reply);

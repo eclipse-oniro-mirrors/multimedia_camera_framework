@@ -22,6 +22,7 @@
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
 #include "hcamera_device_manager.h"
+#include <mutex>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -146,7 +147,14 @@ void HCameraDeviceManager::SetPeerCallback(sptr<ICameraBroker>& callback)
         MEDIA_ERR_LOG("HCameraDeviceManager::SetPeerCallback failed to set peer callback");
         return;
     }
-    PeerCallback_ = callback;
+    std::lock_guard<std::mutex> lock(peerCbMutex_);
+    peerCallback_ = callback;
+}
+
+void HCameraDeviceManager::UnsetPeerCallback()
+{
+    std::lock_guard<std::mutex> lock(peerCbMutex_);
+    peerCallback_ = nullptr;
 }
 
 bool HCameraDeviceManager::GetConflictDevices(sptr<HCameraDevice> &cameraNeedEvict,
@@ -236,11 +244,11 @@ bool HCameraDeviceManager::IsAllowOpen(pid_t pidOfOpenRequest)
     MEDIA_INFO_LOG("HCameraDeviceManager::isAllowOpen has a client open in A proxy");
     if (pidOfOpenRequest != -1) {
         std::string cameraId = GetACameraId();
-        if (PeerCallback_ == nullptr) {
+        if (peerCallback_ == nullptr) {
             MEDIA_ERR_LOG("HCameraDeviceManager::isAllowOpen falied to close peer device");
             return false;
         } else {
-            PeerCallback_->NotifyCloseCamera(cameraId);
+            peerCallback_->NotifyCloseCamera(cameraId);
             MEDIA_ERR_LOG("HCameraDeviceManager::isAllowOpen success to close peer device");
         }
         return true;

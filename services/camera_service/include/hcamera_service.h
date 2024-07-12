@@ -118,6 +118,7 @@ public:
     int32_t AllowOpenByOHSide(std::string cameraId, int32_t state, bool &canOpenCamera) override;
     int32_t NotifyCameraState(std::string cameraId, int32_t state) override;
     int32_t SetPeerCallback(sptr<ICameraBroker>& callback) override;
+    int32_t UnsetPeerCallback() override;
     void OnDump() override;
     void OnStart() override;
     void OnStop() override;
@@ -263,6 +264,7 @@ private:
     bool isRegisterSensorSuccess;
     std::shared_ptr<CameraDataShareHelper> cameraDataShareHelper_;
     CameraServiceStatus serviceStatus_;
+    sptr<ICameraBroker> peerCallback_;
 #ifdef CAMERA_USE_SENSOR
     SensorUser user;
 #endif
