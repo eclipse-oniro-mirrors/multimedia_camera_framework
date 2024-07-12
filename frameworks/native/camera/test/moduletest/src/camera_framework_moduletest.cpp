@@ -517,11 +517,11 @@ sptr<CaptureOutput> CameraFrameworkModuleTest::CreateVideoOutput(int32_t width, 
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     sptr<SurfaceListener> videoSurfaceListener =
         new (std::nothrow) SurfaceListener("Video", SurfaceType::VIDEO, g_videoFd, surface);
-    surface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)videoSurfaceListener);
     if (videoSurfaceListener == nullptr) {
         MEDIA_ERR_LOG("Failed to create new SurfaceListener");
         return nullptr;
     }
+    surface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)videoSurfaceListener);
     sptr<IBufferProducer> videoProducer = surface->GetProducer();
     sptr<Surface> videoSurface = Surface::CreateSurfaceAsProducer(videoProducer);
     VideoProfile videoProfile = videoProfiles[0];
@@ -535,11 +535,11 @@ sptr<CaptureOutput> CameraFrameworkModuleTest::CreateVideoOutput(VideoProfile& v
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     sptr<SurfaceListener> videoSurfaceListener =
         new (std::nothrow) SurfaceListener("Video", SurfaceType::VIDEO, g_videoFd, surface);
-    surface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)videoSurfaceListener);
     if (videoSurfaceListener == nullptr) {
         MEDIA_ERR_LOG("Failed to create new SurfaceListener");
         return nullptr;
     }
+    surface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)videoSurfaceListener);
     sptr<IBufferProducer> videoProducer = surface->GetProducer();
     sptr<Surface> videoSurface = Surface::CreateSurfaceAsProducer(videoProducer);
     sptr<CaptureOutput> videoOutput = nullptr;
@@ -722,8 +722,8 @@ void CameraFrameworkModuleTest::ConfigVideoSession(sptr<CaptureOutput> &previewO
     sptr<IConsumerSurface> surface = IConsumerSurface::Create();
     sptr<SurfaceListener> videoSurfaceListener =
         new (std::nothrow) SurfaceListener("Video", SurfaceType::VIDEO, g_videoFd, surface);
-    surface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)videoSurfaceListener);
     ASSERT_NE(videoSurfaceListener, nullptr);
+    surface->RegisterConsumerListener((sptr<IBufferConsumerListener>&)videoSurfaceListener);
 
     sptr<IBufferProducer> videoProducer = surface->GetProducer();
     sptr<Surface> videoSurface = Surface::CreateSurfaceAsProducer(videoProducer);
@@ -4635,10 +4635,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_012, TestSize.L
     ASSERT_NE(camSession, nullptr);
 
     sptr<CaptureSessionCallback> capSessionCallback = new (std::nothrow) CaptureSessionCallback();
+    ASSERT_NE(capSessionCallback, nullptr);
     int32_t onError = capSessionCallback->OnError(CAMERA_DEVICE_PREEMPTED);
     EXPECT_EQ(onError, 0);
-
+    capSessionCallback = nullptr;
     capSessionCallback = new (std::nothrow) CaptureSessionCallback(camSession);
+    ASSERT_NE(capSessionCallback, nullptr);
     onError = capSessionCallback->OnError(CAMERA_DEVICE_PREEMPTED);
     EXPECT_EQ(onError, 0);
 
@@ -4647,7 +4649,9 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_012, TestSize.L
 
     callback = std::make_shared<AppSessionCallback>();
     camSession->SetCallback(callback);
+    capSessionCallback = nullptr;
     capSessionCallback = new (std::nothrow) CaptureSessionCallback(camSession);
+    ASSERT_NE(capSessionCallback, nullptr);
     onError = capSessionCallback->OnError(CAMERA_DEVICE_PREEMPTED);
     EXPECT_EQ(onError, 0);
 }
@@ -4940,6 +4944,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_018, TestSize.L
     photoOutput_1->SetCallback(callback);
 
     sptr<HStreamCaptureCallbackImpl> captureCallback_2 = new (std::nothrow) HStreamCaptureCallbackImpl(photoOutput_1);
+    ASSERT_NE(captureCallback_2, nullptr);
 
     intResult = captureCallback_2->OnCaptureEnded(captureId, frameCount);
     EXPECT_EQ(intResult, 0);
@@ -5005,6 +5010,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_019, TestSize.L
     previewOutput_1->SetCallback(callback);
 
     sptr<PreviewOutputCallbackImpl> repeatCallback_2 = new (std::nothrow) PreviewOutputCallbackImpl(previewOutput_1);
+    ASSERT_NE(repeatCallback_2, nullptr);
 
     intResult = repeatCallback_2->OnFrameEnded(frameCount);
     EXPECT_EQ(intResult, 0);
@@ -5218,6 +5224,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_022, TestSize.L
     videoOutput_1->SetCallback(callback);
 
     sptr<VideoOutputCallbackImpl> repeatCallback_2 = new (std::nothrow) VideoOutputCallbackImpl(videoOutput_1);
+    ASSERT_NE(repeatCallback_2, nullptr);
 
     intResult = repeatCallback->OnFrameStarted();
     EXPECT_EQ(intResult, 0);
@@ -5337,10 +5344,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_025, TestSize.L
     ASSERT_NE(serviceProxy, nullptr);
 
     sptr<ICameraServiceCallback> callback = new (std::nothrow) CameraStatusServiceCallback(manager_);
+    ASSERT_NE(callback, nullptr);
     int32_t intResult = serviceProxy->SetCameraCallback(callback);
     EXPECT_EQ(intResult, -1);
 
     sptr<ICameraMuteServiceCallback> callback_2 = new (std::nothrow) CameraMuteServiceCallback(manager_);
+    ASSERT_NE(callback_2, nullptr);
     serviceProxy->SetMuteCallback(callback_2);
     EXPECT_EQ(intResult, -1);
 
@@ -5806,10 +5815,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_036, TestSize.L
     FlashStatus status = FLASH_STATUS_OFF;
 
     sptr<CameraStatusServiceCallback> camServiceCallback = new (std::nothrow) CameraStatusServiceCallback(nullptr);
+    ASSERT_NE(camServiceCallback, nullptr);
     int32_t cameraStatusChanged = camServiceCallback->OnFlashlightStatusChanged(cameraIdtest, status);
     EXPECT_EQ(cameraStatusChanged, 0);
 
     sptr<CameraDeviceServiceCallback> camDeviceSvcCallback = new (std::nothrow) CameraDeviceServiceCallback();
+    ASSERT_NE(camDeviceSvcCallback, nullptr);
     int32_t onError = camDeviceSvcCallback->OnError(CAMERA_DEVICE_PREEMPTED, 0);
     EXPECT_EQ(onError, 0);
 
@@ -5825,19 +5836,26 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_036, TestSize.L
     sptr<CameraInput> camInput_1 = new (std::nothrow) CameraInput(deviceObj, camdeviceObj);
     ASSERT_NE(camInput_1, nullptr);
 
+    camDeviceSvcCallback = nullptr;
     camDeviceSvcCallback = new (std::nothrow) CameraDeviceServiceCallback(camInput_1);
+    ASSERT_NE(camDeviceSvcCallback, nullptr);
     onResult = camDeviceSvcCallback->OnResult(0, result);
     EXPECT_EQ(onResult, 0);
 
     sptr<CameraInput> camInput_2 = new (std::nothrow) CameraInput(deviceObj, cameras_[0]);
+    ASSERT_NE(camInput_2, nullptr);
+    camDeviceSvcCallback = nullptr;
     camDeviceSvcCallback = new (std::nothrow) CameraDeviceServiceCallback(camInput_2);
+    ASSERT_NE(camDeviceSvcCallback, nullptr);
     onError = camDeviceSvcCallback->OnError(CAMERA_DEVICE_PREEMPTED, 0);
     EXPECT_EQ(onError, 0);
 
     std::shared_ptr<AppCallback> callback = std::make_shared<AppCallback>();
     camInput_2->SetErrorCallback(callback);
 
+    camDeviceSvcCallback = nullptr;
     camDeviceSvcCallback = new (std::nothrow) CameraDeviceServiceCallback(camInput_2);
+    ASSERT_NE(camDeviceSvcCallback, nullptr);
     onError = camDeviceSvcCallback->OnError(CAMERA_DEVICE_PREEMPTED, 0);
     EXPECT_EQ(onError, 0);
 
@@ -6580,6 +6598,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_052, TestSize.L
 
     sptr<HCameraDeviceCallbackProxy> deviceCallback = (sptr<HCameraDeviceCallbackProxy>&)callback;
     deviceCallback = new (std::nothrow) HCameraDeviceCallbackProxy(object);
+    ASSERT_NE(deviceCallback, nullptr);
 
     uint64_t timestamp = 10;
     std::shared_ptr<OHOS::Camera::CameraMetadata> result = nullptr;
@@ -7132,6 +7151,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_071, TestSize.L
     int32_t height = 0;
     sptr<HStreamRepeat> streamRepeat =
         new (std::nothrow) HStreamRepeat(nullptr, format, width, height, RepeatStreamType::PREVIEW);
+    ASSERT_NE(streamRepeat, nullptr);
     EXPECT_EQ(streamRepeat->SetCallback(repeatCallback), CAMERA_OK);
     EXPECT_EQ(streamRepeat->OnFrameError(BUFFER_LOST), CAMERA_OK);
     EXPECT_EQ(streamRepeat->OnFrameError(0), CAMERA_OK);
@@ -7163,6 +7183,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_072, TestSize.L
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer = Surface->GetProducer();
     sptr<HStreamCapture> streamCapture = new (std::nothrow) HStreamCapture(producer, format, width, height);
+    ASSERT_NE(streamCapture, nullptr);
     EXPECT_EQ(streamCapture->SetCallback(captureCallback), CAMERA_OK);
     EXPECT_EQ(streamCapture->OnCaptureEnded(captureId, frameCount), CAMERA_OK);
     EXPECT_EQ(streamCapture->OnCaptureError(captureId, frameCount), CAMERA_OK);
@@ -8276,6 +8297,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_116, TestSize.L
     photoOutput_1->SetCallback(callback);
 
     sptr<HStreamCaptureCallbackImpl> captureCallback_2 = new (std::nothrow) HStreamCaptureCallbackImpl(photoOutput_1);
+    ASSERT_NE(captureCallback_2, nullptr);
 
     intResult = captureCallback_2->OnFrameShutterEnd(captureId, timestamp);
     EXPECT_EQ(intResult, 0);
