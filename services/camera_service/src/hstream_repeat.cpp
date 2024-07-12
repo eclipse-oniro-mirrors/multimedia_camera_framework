@@ -529,8 +529,16 @@ void HStreamRepeat::SetMirrorForLivePhoto(bool isEnable, int32_t mode)
 {
     camera_metadata_item_t item;
     const int32_t canMirrorVideoAndPhoto = 2;
-    int32_t res = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(),
-        OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
+    int32_t res;
+    {
+        std::lock_guard<std::mutex> lock(cameraAbilityLock_);
+        if (cameraAbility_ == nullptr) {
+            return;
+        }
+        res = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(),
+            OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
+    }
+
     bool isMirrorSupported = false;
     if (res == CAM_META_SUCCESS) {
         int step = 2;

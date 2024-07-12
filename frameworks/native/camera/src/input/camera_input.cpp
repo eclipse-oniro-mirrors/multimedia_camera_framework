@@ -94,8 +94,13 @@ CameraInput::CameraInput(sptr<ICameraDeviceService> &deviceObj,
     pid_t pid = 0;
     deathRecipient_ = new(std::nothrow) CameraDeathRecipient(pid);
     CHECK_AND_RETURN_LOG(deathRecipient_ != nullptr, "failed to new CameraDeathRecipient.");
-
-    deathRecipient_->SetNotifyCb(std::bind(&CameraInput::CameraServerDied, this, std::placeholders::_1));
+    auto thisPtr = wptr<CameraInput>(this);
+    deathRecipient_->SetNotifyCb([thisPtr](pid_t pid) {
+        auto ptr = thisPtr.promote();
+        if (ptr != nullptr) {
+            ptr->CameraServerDied(pid);
+        }
+    });
     bool result = object->AddDeathRecipient(deathRecipient_);
     if (!result) {
         MEDIA_ERR_LOG("failed to add deathRecipient");

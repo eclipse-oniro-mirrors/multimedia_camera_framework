@@ -80,7 +80,14 @@ int32_t HStreamMetadata::Start()
     captureInfo.captureSetting_ = ability;
     captureInfo.enableShutterCallback_ = false;
     MEDIA_INFO_LOG("HStreamMetadata::Start Starting with capture ID: %{public}d", preparedCaptureId);
-    HStreamCommon::PrintCaptureDebugLog(cameraAbility_);
+    {
+        std::lock_guard<std::mutex> lock(cameraAbilityLock_);
+        if (cameraAbility_ == nullptr) {
+            MEDIA_ERR_LOG("HStreamMetadata::Start cameraAbility_ is null");
+            return CAMERA_INVALID_STATE;
+        }
+        HStreamCommon::PrintCaptureDebugLog(cameraAbility_);
+    }
     CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfo, true));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         ResetCaptureId();
