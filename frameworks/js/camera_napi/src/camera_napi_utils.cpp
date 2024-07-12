@@ -216,12 +216,12 @@ std::string CameraNapiUtils::GetStringArgument(napi_env env, napi_value value)
     }
     size_t stringSize = 0;
     napi_status status = napi_get_value_string_utf8(env, value, nullptr, 0, &stringSize);
-    if (status != napi_ok || stringSize <= 0) {
+    if (status != napi_ok || stringSize == 0) {
         return "";
     }
     std::string strValue = std::string(stringSize, '\0');
     status = napi_get_value_string_utf8(env, value, strValue.data(), stringSize + 1, &stringSize);
-    if (status != napi_ok || stringSize <= 0) {
+    if (status != napi_ok || stringSize == 0) {
         return "";
     }
     return strValue;
