@@ -1102,6 +1102,10 @@ void HCameraHostManager::AddCameraHost(const std::string& svcName)
     auto statusCallback = statusCallback_.lock();
     sptr<HCameraHostManager::CameraHostInfo> cameraHost =
         new (std::nothrow) HCameraHostManager::CameraHostInfo(statusCallback, cameraHostDeadCallback_, svcName);
+    if (cameraHost == nullptr) {
+        MEDIA_ERR_LOG("failed to new cameraHost!");
+        return;
+    }
     if (!cameraHost->Init()) {
         MEDIA_ERR_LOG("HCameraHostManager::AddCameraHost failed due to init failure");
         return;
