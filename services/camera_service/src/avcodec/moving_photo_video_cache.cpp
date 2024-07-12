@@ -79,6 +79,10 @@ void MovingPhotoVideoCache::OnImageEncoded(sptr<FrameRecord> frameRecord, bool e
 {
     std::lock_guard<std::mutex> lock(callbackVecLock_);
     for (auto cachedFrameCallbackHandle : cachedFrameCallbackHandles_) {
+        if (cachedFrameCallbackHandle == nullptr) {
+            MEDIA_ERR_LOG("MovingPhotoVideoCache::OnImageEncoded with null cachedFrameCallbackHandle");
+            continue;
+        }
         cachedFrameCallbackHandle->OnCacheFrameFinish(frameRecord, encodeResult);
     }
 }
