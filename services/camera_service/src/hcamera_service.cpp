@@ -1025,9 +1025,6 @@ int32_t HCameraService::MuteCameraFunc(bool muteMode)
     }
     int32_t ret = CAMERA_OK;
     bool currentMuteMode = muteModeStored_;
-    if (muteMode == currentMuteMode) {
-        return CAMERA_OK;
-    }
     sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
     pid_t activeClient = deviceManager->GetActiveClient();
     if (activeClient == -1) {
