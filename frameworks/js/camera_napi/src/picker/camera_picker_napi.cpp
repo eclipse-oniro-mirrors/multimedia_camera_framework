@@ -253,13 +253,15 @@ static std::shared_ptr<UIExtensionCallback> StartCameraAbility(
 {
     auto uiExtCallback = std::make_shared<UIExtensionCallback>(abilityContext);
     OHOS::Ace::ModalUIExtensionCallbacks extensionCallbacks = {
-        [uiExtCallback](void* data) { uiExtCallback->OnRelease(data); },
-        [uiExtCallback](int32_t resultCode, void* data) { uiExtCallback->OnResult(resultCode, data); },
-        [uiExtCallback](void* data) { uiExtCallback->OnReceive(data); },
-        [uiExtCallback](int32_t errorCode, const char* errorMessage, void* data) {
-            uiExtCallback->OnError(errorCode, errorMessage, data); },
-        [uiExtCallback](void* data) { uiExtCallback->OnRemoteReady(data); },
-        [uiExtCallback]() { uiExtCallback->OnDestroy(); }
+        [uiExtCallback](int32_t releaseCode) { uiExtCallback->OnRelease(releaseCode); },
+        [uiExtCallback](int32_t resultCode, const OHOS::AAFwk::Want& result) {
+            uiExtCallback->OnResult(resultCode, result); },
+        [uiExtCallback](const OHOS::AAFwk::WantParams& request) { uiExtCallback->OnReceive(request); },
+        [uiExtCallback](int32_t errorCode, const std::string& name, const std::string& message) {
+            uiExtCallback->OnError(errorCode, name, message); },
+        [uiExtCallback](const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy) {
+            uiExtCallback->OnRemoteReady(uiProxy); },
+        [uiExtCallback]() { uiExtCallback->OnDestroy(); 
     };
     Ace::ModalUIExtensionConfig config;
     auto uiContent = abilityContext->GetUIContent();

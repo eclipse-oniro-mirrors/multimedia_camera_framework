@@ -1699,7 +1699,7 @@ void SessionDrainImageCallback::OnDrainImageFinish(bool isFinished)
         videoCache->DoMuxerVideo(frameRecords, taskName, rotation); },
         taskName_, rotation_);
     auto listener = listener_.promote();
-    if (listener && isFinished)  {
+    if (listener && isFinished) {
         listener->RemoveDrainImageManager(this);
     }
 }
