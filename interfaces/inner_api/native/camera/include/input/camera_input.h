@@ -284,6 +284,10 @@ public:
     *
     * @return Returns camera info.
     */
+    void SetCameraDeviceInfo(sptr<CameraDevice> CameraObj);
+    /**
+    *@brief set the cameraObj.
+    */
     sptr<CameraDevice> GetCameraDeviceInfo() override;
 
     /**
@@ -329,8 +333,13 @@ public:
 
     int32_t GetCameraAllVendorTags(std::vector<vendorTag_t> &infos);
 
+    bool MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata,
+        std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata);
+
 private:
     std::mutex errorCallbackMutex_;
+    std::mutex cameraDeviceInfoMutex_;
+    std::mutex resultCallbackMutex_;
     sptr<ICameraDeviceService> deviceObj_;
     sptr<CameraDevice> cameraObj_;
     std::shared_ptr<ResultCallback> resultCallback_;
