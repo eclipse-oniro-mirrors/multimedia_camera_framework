@@ -19,6 +19,7 @@
 #include "camera_log.h"
 #include "input/camera_device.h"
 #include "metadata_common_utils.h"
+#include "capture_scene_const.h"
 
 using namespace std;
 
@@ -252,21 +253,43 @@ std::vector<float> CameraDevice::GetZoomRatioRange()
     return zoomRatioRange_;
 }
 
+void CameraDevice::SetProfile(sptr<CameraOutputCapability> capability)
+{
+    if (capability == nullptr) {
+        return;
+    }
+    modePreviewProfiles_[NORMAL] = capability->GetPreviewProfiles();
+    modePhotoProfiles_[NORMAL] = capability->GetPhotoProfiles();
+    modeVideoProfiles_[NORMAL] = capability->GetVideoProfiles();
+    modePreviewProfiles_[CAPTURE] = capability->GetPreviewProfiles();
+    modePhotoProfiles_[CAPTURE] = capability->GetPhotoProfiles();
+    modePreviewProfiles_[VIDEO] = capability->GetPreviewProfiles();
+    modePhotoProfiles_[VIDEO] = capability->GetPhotoProfiles();
+    modeVideoProfiles_[VIDEO] = capability->GetVideoProfiles();
+}
+
+void CameraDevice::SetProfile(sptr<CameraOutputCapability> capability, int32_t modeName)
+{
+    if (capability == nullptr) {
+        return;
+    }
+    modePreviewProfiles_[modeName] = capability->GetPreviewProfiles();
+    modePhotoProfiles_[modeName] = capability->GetPhotoProfiles();
+    modeVideoProfiles_[modeName] = capability->GetVideoProfiles();
+}
+
 std::vector<float> CameraDevice::GetExposureBiasRange()
 {
     int32_t minIndex = 0;
     int32_t maxIndex = 1;
-    std::vector<int32_t> range;
+    uint32_t biasRangeCount = 2;
 
     if (!exposureBiasRange_.empty()) {
         return exposureBiasRange_;
     }
 
-    int ret;
-    uint32_t biasRangeCount = 2;
     camera_metadata_item_t item;
-    auto metadata = GetMetadata();
-    ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AE_COMPENSATION_RANGE, &item);
+    int ret = Camera::FindCameraMetadataItem(GetMetadata()->get(), OHOS_ABILITY_AE_COMPENSATION_RANGE, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_ERR_LOG("Failed to get exposure compensation range with return code %{public}d", ret);
         return {};
@@ -275,15 +298,16 @@ std::vector<float> CameraDevice::GetExposureBiasRange()
         MEDIA_ERR_LOG("Invalid exposure compensation range count: %{public}d", item.count);
         return {};
     }
+    int32_t minRange = item.data.i32[minIndex];
+    int32_t maxRange = item.data.i32[maxIndex];
 
-    range = { item.data.i32[minIndex], item.data.i32[maxIndex] };
-    if (range[minIndex] > range[maxIndex]) {
-        MEDIA_ERR_LOG(
-            "Invalid exposure compensation range. min: %{public}d, max: %{public}d", range[minIndex], range[maxIndex]);
+    if (minRange > maxRange) {
+        MEDIA_ERR_LOG("Invalid exposure compensation range. min: %{public}d, max: %{public}d", minRange, maxRange);
         return {};
     }
-    MEDIA_DEBUG_LOG("Exposure hdi compensation min: %{public}d, max: %{public}d", range[minIndex], range[maxIndex]);
-    exposureBiasRange_ = { range[minIndex], range[maxIndex] };
+
+    MEDIA_DEBUG_LOG("Exposure hdi compensation min: %{public}d, max: %{public}d", minRange, maxRange);
+    exposureBiasRange_ = { static_cast<float>(minRange), static_cast<float>(maxRange) };
     return exposureBiasRange_;
 }
 

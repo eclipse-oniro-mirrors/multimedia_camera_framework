@@ -26,6 +26,8 @@
 #include "camera_metadata_info.h"
 #include "output/camera_output_capability.h"
 #include "output/capture_output.h"
+#include "ability/camera_ability.h"
+#include "ability/camera_ability_parse_util.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -174,6 +176,10 @@ public:
     * @return Returns vector<int32_t> of supported exposure compensation range.
     */
     std::vector<float> GetExposureBiasRange();
+
+    void SetProfile(sptr<CameraOutputCapability> cameraOutputCapability);
+    
+    void SetProfile(sptr<CameraOutputCapability> cameraOutputCapability, int32_t modename);
 
     /**
     * @brief Get sensor module type

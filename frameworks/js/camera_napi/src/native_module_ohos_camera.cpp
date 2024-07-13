@@ -42,6 +42,7 @@
 #include "output/preview_output_napi.h"
 #include "output/video_output_napi.h"
 #include "session/camera_session_napi.h"
+#include "ability/camera_ability_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -68,6 +69,12 @@ static napi_value Export(napi_env env, napi_value exports)
     PhotoSessionForSysNapi::Init(env, exports);
     VideoSessionNapi::Init(env, exports);
     VideoSessionForSysNapi::Init(env, exports);
+    PhotoAbilityNapi::Init(env, exports);
+    VideoAbilityNapi::Init(env, exports);
+    PortraitPhotoAbilityNapi::Init(env, exports);
+    PhotoConflictAbilityNapi::Init(env, exports);
+    VideoConflictAbilityNapi::Init(env, exports);
+    PortraitPhotoConflictAbilityNapi::Init(env, exports);
     SlowMotionSessionNapi::Init(env, exports);
     MacroPhotoSessionNapi::Init(env, exports);
     MacroVideoSessionNapi::Init(env, exports);

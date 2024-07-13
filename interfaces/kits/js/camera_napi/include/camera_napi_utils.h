@@ -180,6 +180,8 @@ public:
     static napi_value CreateSupportFrameRatesJSArray(
         napi_env env, std::vector<std::vector<int32_t>> supportedFrameRatesRange);
 
+    static napi_value ProcessingPhysicalApertures(napi_env env, std::vector<std::vector<float>> physicalApertures);
+
 private:
     explicit CameraNapiUtils() {};
 

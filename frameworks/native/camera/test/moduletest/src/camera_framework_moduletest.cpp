@@ -50,6 +50,9 @@
 #include "scan_session.h"
 #include "session/photo_session.h"
 #include "session/profession_session.h"
+#include "session/photo_session.h"
+#include "session/video_session.h"
+#include "session/portrait_session.h"
 #include "session/secure_camera_session.h"
 #include "session/time_lapse_photo_session.h"
 #include "surface.h"
@@ -3872,6 +3875,115 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_scan_055, TestSi
 
 /*
  * Feature: Framework
+ * Function: Test photo ability function.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photo ability function.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_ability001, TestSize.Level0)
+{
+    SceneMode photoMode = SceneMode::CAPTURE;
+    if (!IsSupportMode(photoMode)) {
+        return;
+    }
+    sptr<CameraManager> cameraMgr = CameraManager::GetInstance();
+    ASSERT_NE(cameraMgr, nullptr);
+
+    sptr<CameraOutputCapability> capability = cameraMgr->GetSupportedOutputCapability(cameras_[0], photoMode);
+    ASSERT_NE(capability, nullptr);
+
+    sptr<CaptureSession> captureSession = cameraMgr->CreateCaptureSession(photoMode);
+    ASSERT_NE(captureSession, nullptr);
+
+    sptr<PhotoSession> photoSession = static_cast<PhotoSession *>(captureSession.GetRefPtr());
+    ASSERT_NE(photoSession, nullptr);
+
+    std::vector<sptr<CameraOutputCapability>> cocList = photoSession->GetCameraOutputCapabilities(cameras_[0]);
+    ASSERT_TRUE(cocList.size() != 0);
+    auto previewProfiles = cocList[0]->GetPreviewProfiles();
+    auto photoProfiles = cocList[0]->GetPhotoProfiles();
+    auto videoProfiles = cocList[0]->GetVideoProfiles();
+
+    auto photoAbilityList = photoSession->GetSessionAbilities(previewProfiles, photoProfiles, videoProfiles);
+    std::vector<sptr<CameraAbility>> photoConflictAbilityList = photoSession->GetSessionConflictAbilities();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test portrait photo ability function.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test portrait photo ability function.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_ability002, TestSize.Level0)
+{
+    SceneMode portraitMode = SceneMode::PORTRAIT;
+    if (!IsSupportMode(portraitMode)) {
+        return;
+    }
+
+    sptr<CameraManager> cameraMgr = CameraManager::GetInstance();
+    ASSERT_NE(cameraMgr, nullptr);
+
+    sptr<CameraOutputCapability> capability = cameraMgr->GetSupportedOutputCapability(cameras_[0], portraitMode);
+    ASSERT_NE(capability, nullptr);
+
+    sptr<CaptureSession> captureSession = cameraMgr->CreateCaptureSession(portraitMode);
+    ASSERT_NE(captureSession, nullptr);
+
+    sptr<PortraitSession> portraitSession = static_cast<PortraitSession *>(captureSession.GetRefPtr());
+    ASSERT_NE(portraitSession, nullptr);
+
+    std::vector<sptr<CameraOutputCapability>> cocList = portraitSession->GetCameraOutputCapabilities(cameras_[0]);
+    ASSERT_TRUE(cocList.size() != 0);
+    auto previewProfiles = cocList[0]->GetPreviewProfiles();
+    auto photoProfiles = cocList[0]->GetPhotoProfiles();
+    auto videoProfiles = cocList[0]->GetVideoProfiles();
+    auto portraitAbilityList = portraitSession->GetSessionAbilities(previewProfiles, photoProfiles, videoProfiles);
+
+    std::vector<sptr<CameraAbility>> portraitConflictAbilityList = portraitSession->GetSessionConflictAbilities();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test video ability function.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test video ability function.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_ability003, TestSize.Level0)
+{
+    SceneMode videoMode = SceneMode::VIDEO;
+    if (!IsSupportMode(videoMode)) {
+        return;
+    }
+    sptr<CameraManager> cameraMgr = CameraManager::GetInstance();
+    ASSERT_NE(cameraMgr, nullptr);
+
+    sptr<CameraOutputCapability> capability = cameraMgr->GetSupportedOutputCapability(cameras_[0], videoMode);
+    ASSERT_NE(capability, nullptr);
+
+    sptr<CaptureSession> captureSession = cameraMgr->CreateCaptureSession(videoMode);
+    ASSERT_NE(captureSession, nullptr);
+
+    sptr<VideoSession> videoSession = static_cast<VideoSession *>(captureSession.GetRefPtr());
+    ASSERT_NE(videoSession, nullptr);
+
+    std::vector<sptr<CameraOutputCapability>> cocList = videoSession->GetCameraOutputCapabilities(cameras_[0]);
+    ASSERT_TRUE(cocList.size() != 0);
+    auto previewProfiles = cocList[0]->GetPreviewProfiles();
+    auto photoProfiles = cocList[0]->GetPhotoProfiles();
+    auto videoProfiles = cocList[0]->GetVideoProfiles();
+    auto videoAbilityList = videoSession->GetSessionAbilities(previewProfiles, photoProfiles, videoProfiles);
+
+    std::vector<sptr<CameraAbility>> videoConflictAbilityList = videoSession->GetSessionConflictAbilities();
+}
+
+/*
+ * Feature: Framework
  * Function: Test anomalous branch.
  * SubFunction: NA
  * FunctionPoints: NA
@@ -7347,7 +7459,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_081, TestSize.L
     EXPECT_EQ(camSession->VerifyAbility(0), CAMERA_INVALID_ARG);
     EXPECT_EQ(camSession->GetActiveColorSpace(colorSpace), CameraErrorCode::SESSION_NOT_CONFIG);
     camSession->SetColorEffect(COLOR_EFFECT_NORMAL);
-    EXPECT_EQ(camSession->IsMacroSupported(), false);
 }
 
 /*
@@ -7373,17 +7484,16 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_082, TestSize.L
     EXPECT_EQ(session_->VerifyAbility(0), CAMERA_INVALID_ARG);
     EXPECT_EQ(session_->GetActiveColorSpace(colorSpace), CAMERA_OK);
     session_->SetColorEffect(COLOR_EFFECT_NORMAL);
-    EXPECT_EQ(session_->IsMacroSupported(), false);
     intResult = session_->CommitConfig();
     EXPECT_EQ(intResult, 0);
-    EXPECT_EQ(session_->GetActiveColorSpace(colorSpace), CAMERA_OK);
-    session_->SetColorEffect(COLOR_EFFECT_NORMAL);
     if (session_->IsMacroSupported()) {
         session_->LockForControl();
         intResult = session_->EnableMacro(false);
         session_->UnlockForControl();
         EXPECT_EQ(intResult, 0);
     }
+    EXPECT_EQ(session_->GetActiveColorSpace(colorSpace), CAMERA_OK);
+    session_->SetColorEffect(COLOR_EFFECT_NORMAL);
     session_->innerInputDevice_ = nullptr;
     EXPECT_EQ(session_->VerifyAbility(0), CAMERA_INVALID_ARG);
     EXPECT_EQ(session_->Release(), 0);
@@ -8961,9 +9071,6 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_055, TestSize.Le
     intResult = session_->AddOutput(output);
     EXPECT_EQ(intResult, 0);
 
-    bool isMacroSupported = session_->IsMacroSupported();
-    EXPECT_FALSE(isMacroSupported);
-
     intResult = session_->EnableMacro(true);
     EXPECT_EQ(intResult, 7400102);
 
@@ -8973,12 +9080,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_055, TestSize.Le
     intResult = session_->CommitConfig();
     EXPECT_EQ(intResult, 0);
 
-    isMacroSupported = session_->IsMacroSupported();
-    if (!isMacroSupported) {
+    if (session_->IsMacroSupported()) {
+        session_->LockForControl();
         intResult = session_->EnableMacro(false);
-        EXPECT_EQ(intResult, 7400102);
+        session_->UnlockForControl();
+        EXPECT_EQ(intResult, 0);
     }
-
     session_->SetMacroStatusCallback(std::make_shared<AppCallback>());
 
     intResult = session_->Start();
@@ -11274,6 +11381,5 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_085, TestSize.Le
 
     nightSession->Stop();
 }
-
 } // namespace CameraStandard
 } // namespace OHOS

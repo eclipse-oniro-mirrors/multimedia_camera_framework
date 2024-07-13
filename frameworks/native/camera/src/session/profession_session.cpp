@@ -319,8 +319,8 @@ int32_t ProfessionSession::GetSupportedFocusModes(std::vector<FocusMode> &suppor
         return CameraErrorCode::SUCCESS;
     }
     for (uint32_t i = 0; i < item.count; i++) {
-        auto itr = metaFocusModeMap_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[i]));
-        if (itr != metaFocusModeMap_.end()) {
+        auto itr = g_metaFocusModeMap_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[i]));
+        if (itr != g_metaFocusModeMap_.end()) {
             supportedFocusModes.emplace_back(itr->second);
         }
     }
@@ -350,8 +350,8 @@ int32_t ProfessionSession::SetFocusMode(FocusMode focusMode)
     CHECK_AND_RETURN_RET_LOG(changedMetadata_ != nullptr, CameraErrorCode::SUCCESS,
         "ProfessionSession::SetFocusMode Need to call LockForControl() before setting camera properties");
     uint8_t focus = FOCUS_MODE_LOCKED;
-    auto itr = fwkFocusModeMap_.find(focusMode);
-    if (itr == fwkFocusModeMap_.end()) {
+    auto itr = g_fwkFocusModeMap_.find(focusMode);
+    if (itr == g_fwkFocusModeMap_.end()) {
         MEDIA_ERR_LOG("ProfessionSession::SetFocusMode Unknown exposure mode");
     } else {
         focus = itr->second;
@@ -391,8 +391,8 @@ int32_t ProfessionSession::GetFocusMode(FocusMode &focusMode)
         MEDIA_ERR_LOG("ProfessionSession::GetFocusMode Failed with return code %{public}d", ret);
         return CameraErrorCode::SUCCESS;
     }
-    auto itr = metaFocusModeMap_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[0]));
-    if (itr != metaFocusModeMap_.end()) {
+    auto itr = g_metaFocusModeMap_.find(static_cast<camera_focus_mode_enum_t>(item.data.u8[0]));
+    if (itr != g_metaFocusModeMap_.end()) {
         focusMode = itr->second;
         return CameraErrorCode::SUCCESS;
     }
@@ -596,8 +596,8 @@ int32_t ProfessionSession::GetSupportedFlashModes(std::vector<FlashMode> &suppor
         return CameraErrorCode::SUCCESS;
     }
     for (uint32_t i = 0; i < item.count; i++) {
-        auto itr = metaFlashModeMap_.find(static_cast<camera_flash_mode_enum_t>(item.data.u8[i]));
-        if (itr != metaFlashModeMap_.end()) {
+        auto itr = g_metaFlashModeMap_.find(static_cast<camera_flash_mode_enum_t>(item.data.u8[i]));
+        if (itr != g_metaFlashModeMap_.end()) {
             supportedFlashModes.emplace_back(itr->second);
         }
     }
@@ -619,8 +619,8 @@ int32_t ProfessionSession::GetFlashMode(FlashMode &flashMode)
         MEDIA_ERR_LOG("ProfessionSession::GetFlashMode Failed with return code %{public}d", ret);
         return CameraErrorCode::SUCCESS;
     }
-    auto itr = metaFlashModeMap_.find(static_cast<camera_flash_mode_enum_t>(item.data.u8[0]));
-    if (itr != metaFlashModeMap_.end()) {
+    auto itr = g_metaFlashModeMap_.find(static_cast<camera_flash_mode_enum_t>(item.data.u8[0]));
+    if (itr != g_metaFlashModeMap_.end()) {
         flashMode = itr->second;
         return CameraErrorCode::SUCCESS;
     }
@@ -635,9 +635,9 @@ int32_t ProfessionSession::SetFlashMode(FlashMode flashMode)
         "ProfessionSession::SetFlashMode Session is not Commited");
     CHECK_AND_RETURN_RET_LOG(changedMetadata_ != nullptr, CameraErrorCode::SUCCESS,
         "ProfessionSession::SetFlashMode Need to call LockForControl() before setting camera properties");
-    uint8_t flash = fwkFlashModeMap_.at(FLASH_MODE_CLOSE);
-    auto itr = fwkFlashModeMap_.find(flashMode);
-    if (itr == fwkFlashModeMap_.end()) {
+    uint8_t flash = g_fwkFlashModeMap_.at(FLASH_MODE_CLOSE);
+    auto itr = g_fwkFlashModeMap_.find(flashMode);
+    if (itr == g_fwkFlashModeMap_.end()) {
         MEDIA_ERR_LOG("ProfessionSession::SetExposureMode Unknown exposure mode");
     } else {
         flash = itr->second;
@@ -706,8 +706,8 @@ int32_t ProfessionSession::GetSupportedColorEffects(std::vector<ColorEffect>& su
         return CameraErrorCode::SUCCESS;
     }
     for (uint32_t i = 0; i < item.count; i++) {
-        auto itr = metaColorEffectMap_.find(static_cast<camera_xmage_color_type_t>(item.data.u8[i]));
-        if (itr != metaColorEffectMap_.end()) {
+        auto itr = g_metaColorEffectMap_.find(static_cast<camera_xmage_color_type_t>(item.data.u8[i]));
+        if (itr != g_metaColorEffectMap_.end()) {
             supportedColorEffects.emplace_back(itr->second);
         }
     }
@@ -729,8 +729,8 @@ int32_t ProfessionSession::GetColorEffect(ColorEffect& colorEffect)
         MEDIA_ERR_LOG("ProfessionSession::GetColorEffect Failed with return code %{public}d", ret);
         return CameraErrorCode::SUCCESS;
     }
-    auto itr = metaColorEffectMap_.find(static_cast<camera_xmage_color_type_t>(item.data.u8[0]));
-    if (itr != metaColorEffectMap_.end()) {
+    auto itr = g_metaColorEffectMap_.find(static_cast<camera_xmage_color_type_t>(item.data.u8[0]));
+    if (itr != g_metaColorEffectMap_.end()) {
         colorEffect = itr->second;
     }
     return CameraErrorCode::SUCCESS;
@@ -744,8 +744,8 @@ int32_t ProfessionSession::SetColorEffect(ColorEffect colorEffect)
     CHECK_AND_RETURN_RET_LOG(changedMetadata_ != nullptr, CameraErrorCode::SUCCESS,
         "ProfessionSession::SetFlashMode Need to call LockForControl() before setting camera properties");
     uint8_t colorEffectTemp = ColorEffect::COLOR_EFFECT_NORMAL;
-    auto itr = fwkColorEffectMap_.find(colorEffect);
-    if (itr == fwkColorEffectMap_.end()) {
+    auto itr = g_fwkColorEffectMap_.find(colorEffect);
+    if (itr == g_fwkColorEffectMap_.end()) {
         MEDIA_ERR_LOG("ProfessionSession::SetColorEffect unknown is color effect");
     } else {
         colorEffectTemp = itr->second;

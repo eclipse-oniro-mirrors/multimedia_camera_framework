@@ -47,6 +47,7 @@ ohos_shared_library("camera_napi") {
     "${multimedia_image_framework_path}/interfaces/innerkits/include",
   ]
   sources = [
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/ability/camera_ability_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_metadata_utils.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_object_types.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/camera_napi_security_utils.cpp",

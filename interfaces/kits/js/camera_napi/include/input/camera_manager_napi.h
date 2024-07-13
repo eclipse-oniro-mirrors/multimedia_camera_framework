@@ -169,7 +169,10 @@ private:
         SceneMode fwkMode, sptr<CameraDevice>& cameraInfo, sptr<CameraOutputCapability>& outputCapability);
     static sptr<CameraDevice> GetSupportedOutputCapabilityGetCameraInfo(
         napi_env env, napi_callback_info info, CameraManagerNapi*& cameraManagerNapi, int32_t& jsSceneMode);
-    static void RemoveDuplicatesProfiles(sptr<CameraOutputCapability>& profiles);
+
+    static void RemoveDuplicatesProfile(sptr<CameraOutputCapability>& outputCapability);
+    template <typename T>
+    static void RemoveDuplicatesProfile(std::vector<T>& profiles);
 
     void RegisterCameraStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);

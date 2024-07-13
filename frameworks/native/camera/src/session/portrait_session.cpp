@@ -25,14 +25,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-const std::unordered_map<camera_portrait_effect_type_t, PortraitEffect> PortraitSession::metaToFwPortraitEffect_ = {
-    {OHOS_CAMERA_PORTRAIT_EFFECT_OFF, OFF_EFFECT},
-    {OHOS_CAMERA_PORTRAIT_CIRCLES, CIRCLES},
-    {OHOS_CAMERA_PORTRAIT_HEART, HEART},
-    {OHOS_CAMERA_PORTRAIT_ROTATED, ROTATED},
-    {OHOS_CAMERA_PORTRAIT_STUDIO, STUDIO},
-    {OHOS_CAMERA_PORTRAIT_THEATER, THEATER},
-};
 
 const std::unordered_map<PortraitEffect, camera_portrait_effect_type_t> PortraitSession::fwToMetaPortraitEffect_ = {
     {OFF_EFFECT, OHOS_CAMERA_PORTRAIT_EFFECT_OFF},
@@ -65,8 +57,8 @@ std::vector<PortraitEffect> PortraitSession::GetSupportedPortraitEffects()
     ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SCENE_PORTRAIT_EFFECT_TYPES, &item);
     CHECK_AND_RETURN_RET(ret == CAM_META_SUCCESS && item.count != 0, supportedPortraitEffects);
     for (uint32_t i = 0; i < item.count; i++) {
-        auto itr = metaToFwPortraitEffect_.find(static_cast<camera_portrait_effect_type_t>(item.data.u8[i]));
-        if (itr != metaToFwPortraitEffect_.end()) {
+        auto itr = g_metaToFwPortraitEffect_.find(static_cast<camera_portrait_effect_type_t>(item.data.u8[i]));
+        if (itr != g_metaToFwPortraitEffect_.end()) {
             supportedPortraitEffects.emplace_back(itr->second);
         }
     }
@@ -86,8 +78,8 @@ PortraitEffect PortraitSession::GetPortraitEffect()
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, PortraitEffect::OFF_EFFECT,
         "CaptureSession::GetPortraitEffect Failed with return code %{public}d", ret);
-    auto itr = metaToFwPortraitEffect_.find(static_cast<camera_portrait_effect_type_t>(item.data.u8[0]));
-    if (itr != metaToFwPortraitEffect_.end()) {
+    auto itr = g_metaToFwPortraitEffect_.find(static_cast<camera_portrait_effect_type_t>(item.data.u8[0]));
+    if (itr != g_metaToFwPortraitEffect_.end()) {
         return itr->second;
     }
     return PortraitEffect::OFF_EFFECT;
@@ -106,11 +98,9 @@ void PortraitSession::SetPortraitEffect(PortraitEffect portraitEffect)
     CHECK_ERROR_RETURN_LOG(itr == portraitEffects.end(),
         "CaptureSession::SetPortraitEffect::GetSupportedPortraitEffects abilityId is NULL");
     uint8_t effect = 0;
-    for (auto itr2 = fwToMetaPortraitEffect_.cbegin(); itr2 != fwToMetaPortraitEffect_.cend(); itr2++) {
-        if (portraitEffect == itr2->first) {
-            effect = static_cast<uint8_t>(itr2->second);
-            break;
-        }
+    auto itr2 = fwToMetaPortraitEffect_.find(portraitEffect);
+    if (itr2 != fwToMetaPortraitEffect_.end()) {
+        effect = static_cast<uint8_t>(itr2->second);
     }
     bool status = false;
     int32_t ret;
