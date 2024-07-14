@@ -52,7 +52,7 @@ sptr<HCameraDeviceManager> &HCameraDeviceManager::GetInstance()
         std::unique_lock<std::mutex> lock(instanceMutex_);
         if (HCameraDeviceManager::cameraDeviceManager_ == nullptr) {
             MEDIA_INFO_LOG("Initializing camera device manager instance");
-            HCameraDeviceManager::cameraDeviceManager_ = new(std::nothrow) HCameraDeviceManager();
+            HCameraDeviceManager::cameraDeviceManager_ = new HCameraDeviceManager();
             MEDIA_INFO_LOG("RegisterWindowManagerAgent start");
             int32_t windowRet = CameraWindowManagerClient::GetInstance()->RegisterWindowManagerAgent();
             if (windowRet != 0) {

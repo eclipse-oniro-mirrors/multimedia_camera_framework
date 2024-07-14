@@ -38,7 +38,7 @@ sptr<CameraWindowManagerClient>& CameraWindowManagerClient::GetInstance()
         std::unique_lock<std::mutex> lock(instanceMutex_);
         if (cameraWindowManagerClient_ == nullptr) {
             MEDIA_INFO_LOG("Initializing CameraWindowManagerClient instance");
-            cameraWindowManagerClient_ = new(std::nothrow) CameraWindowManagerClient();
+            cameraWindowManagerClient_ = new CameraWindowManagerClient();
         }
     }
     return cameraWindowManagerClient_;
