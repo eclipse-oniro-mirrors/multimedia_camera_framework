@@ -275,7 +275,7 @@ public:
      * @param pPhotoOutput pointer to photo output instance.
      * @return Returns error code.
      */
-    int CreatePhotoOutputWithoutProfile(sptr<IBufferProducer>& surface, sptr<PhotoOutput>* pPhotoOutput);
+    int CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface, sptr<PhotoOutput>* pPhotoOutput);
 
     /**
      * @brief Create photo output instance using surface.
@@ -318,7 +318,7 @@ public:
      * @param pVideoOutput pointer to video output instance.
      * @return Returns error code.
      */
-    int CreateVideoOutputWithoutProfile(sptr<Surface>& surface, sptr<VideoOutput>* pVideoOutput);
+    int CreateVideoOutputWithoutProfile(sptr<Surface> surface, sptr<VideoOutput>* pVideoOutput);
 
     /**
      * @brief Create video output instance using surface.

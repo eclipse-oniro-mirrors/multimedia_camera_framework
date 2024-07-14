@@ -86,6 +86,11 @@ public:
     sptr<CaptureOutput> CreatePreviewOutput(int32_t width = PREVIEW_DEFAULT_WIDTH,
                                             int32_t height = PREVIEW_DEFAULT_HEIGHT);
     sptr<CaptureOutput> CreateVideoOutput(int32_t width = VIDEO_DEFAULT_WIDTH, int32_t height = VIDEO_DEFAULT_HEIGHT);
+
+    void TestPhotoSessionPreconfig(
+        sptr<CaptureInput>& input, PreconfigType preconfigType, ProfileSizeRatio profileSizeRatio);
+    void TestVideoSessionPreconfig(
+        sptr<CaptureInput>& input, PreconfigType preconfigType, ProfileSizeRatio profileSizeRatio);
 };
 } // CameraStandard
 } // OHOS

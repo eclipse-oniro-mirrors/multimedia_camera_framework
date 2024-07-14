@@ -25,7 +25,7 @@ namespace CameraStandard {
 class PhotoSession : public CaptureSession {
 public:
     explicit PhotoSession(sptr<ICaptureSession> &photoSession): CaptureSession(photoSession) {}
-    ~PhotoSession();
+    ~PhotoSession() = default;
 
     /**
      * @brief Determine if the given Ouput can be added to session.
@@ -38,22 +38,29 @@ public:
      * @brief Check the preconfig type is supported or not.
      *
      * @param preconfigType The target preconfig type.
+     * @param preconfigRatio The target ratio enum
      *
      * @return True if the preconfig type is supported, false otherwise.
      */
-    bool CanPreconfig(PreconfigType preconfigType) override;
+    bool CanPreconfig(PreconfigType preconfigType, ProfileSizeRatio preconfigRatio) override;
 
     /**
      * @brief Set the preconfig type.
      *
      * @param preconfigType The target preconfig type.
+     * @param preconfigRatio The target ratio enum
      *
      * @return Camera error code.
      */
-    int32_t Preconfig(PreconfigType preconfigType) override;
+    int32_t Preconfig(PreconfigType preconfigType, ProfileSizeRatio preconfigRatio) override;
 
 protected:
-    std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles(PreconfigType preconfigType) override;
+    std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles(
+        PreconfigType preconfigType, ProfileSizeRatio preconfigRatio) override;
+
+private:
+    bool IsPhotoProfileLegal(sptr<CameraDevice>& device, Profile& photoProfile);
+    bool IsPreviewProfileLegal(sptr<CameraDevice>& device, Profile& previewProfile);
 };
 } // namespace CameraStandard
 } // namespace OHOS

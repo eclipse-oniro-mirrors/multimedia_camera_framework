@@ -55,6 +55,7 @@ ohos_shared_library("camera_service") {
     "src/hcamera_device.cpp",
     "src/hcamera_device_manager.cpp",
     "src/hcamera_host_manager.cpp",
+    "src/hcamera_preconfig.cpp",
     "src/hcamera_restore_param.cpp",
     "src/hcamera_service.cpp",
     "src/hcapture_session.cpp",
