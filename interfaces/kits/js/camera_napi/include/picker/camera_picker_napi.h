@@ -23,7 +23,9 @@
 #include "ability_context.h"
 #include "camera_device.h"
 #include "camera_napi_utils.h"
+#include "context.h"
 #include "ui_content.h"
+#include "ui_extension_ability/ui_extension_context.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -34,19 +36,83 @@ typedef struct {
     int videoDuration;
 } PickerProfile;
 
+enum class PickerContextType : uint32_t { UNKNOWN, UI_EXTENSION, ABILITY };
+struct PickerContextProxy {
+    PickerContextProxy(std::shared_ptr<AbilityRuntime::Context> context) : mContext_(context)
+    {
+        if (AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(context) != nullptr) {
+            type_ = PickerContextType::UI_EXTENSION;
+        } else if (AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(context) != nullptr) {
+            type_ = PickerContextType::ABILITY;
+        } else {
+            type_ = PickerContextType::UNKNOWN;
+        }
+    }
+
+    PickerContextType GetType()
+    {
+        return type_;
+    }
+
+    std::string GetBundleName()
+    {
+        auto context = mContext_.lock();
+        if (context != nullptr) {
+            return context->GetBundleName();
+        }
+        return "";
+    }
+
+    Ace::UIContent* GetUIContent()
+    {
+        auto context = mContext_.lock();
+        if (context == nullptr) {
+            return nullptr;
+        }
+        switch (type_) {
+            case PickerContextType::UI_EXTENSION: {
+                auto ctx = AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(context);
+                if (ctx != nullptr) {
+                    return ctx->GetUIContent();
+                }
+                break;
+            }
+            case PickerContextType::ABILITY: {
+                auto ctx = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(context);
+                if (ctx != nullptr) {
+                    return ctx->GetUIContent();
+                }
+                break;
+            }
+            default:
+                // Do nothing
+                break;
+        }
+        return nullptr;
+    }
+
+private:
+    std::weak_ptr<AbilityRuntime::Context> mContext_;
+    PickerContextType type_ = PickerContextType::UNKNOWN;
+};
+
 enum class PickerMediaType : uint32_t { PHOTO, VIDEO };
 
 class UIExtensionCallback {
 public:
-    explicit UIExtensionCallback(std::shared_ptr<OHOS::AbilityRuntime::AbilityContext> abilityContext);
-    void SetSessionId(int32_t sessionId);
+    explicit UIExtensionCallback(std::shared_ptr<PickerContextProxy> contextProxy);
     void OnRelease(int32_t releaseCode);
     void OnResult(int32_t resultCode, const OHOS::AAFwk::Want& result);
     void OnReceive(const OHOS::AAFwk::WantParams& request);
     void OnError(int32_t code, const std::string& name, const std::string& message);
     void OnRemoteReady(const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy);
     void OnDestroy();
-    void SendMessageBack();
+    void CloseWindow();
+
+    inline void SetSessionId(int32_t sessionId)
+    {
+        sessionId_ = sessionId;
+    }
 
     inline void WaitResultLock()
     {
@@ -81,12 +147,12 @@ public:
     }
 
 private:
-    bool SetErrorCode(int32_t code);
+    bool FinishPicker(int32_t code);
     int32_t sessionId_ = 0;
     int32_t resultCode_ = 0;
     std::string resultUri_ = "";
     std::string resultMode_ = "";
-    std::weak_ptr<OHOS::AbilityRuntime::AbilityContext> abilityContext_;
+    std::shared_ptr<PickerContextProxy> contextProxy_;
     std::condition_variable cbFinishCondition_;
     std::mutex cbMutex_;
     bool isCallbackReturned_ = false;
@@ -118,7 +184,7 @@ struct CameraPickerAsyncContext : public AsyncContext {
     std::string errorMsg;
     PickerProfile pickerProfile;
     AAFwk::Want want;
-    std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
+    std::shared_ptr<PickerContextProxy> contextProxy;
     std::shared_ptr<UIExtensionCallback> uiExtCallback;
     int32_t resultCode;
     bool bRetBool;
