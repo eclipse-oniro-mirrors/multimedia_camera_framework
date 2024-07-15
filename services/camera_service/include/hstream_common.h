@@ -112,6 +112,8 @@ protected:
     std::mutex streamOperatorLock_;
     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator_ = nullptr;
 
+    int32_t captureIdForConfirmCapture_ = CAPTURE_ID_UNSET;
+
 private:
     StreamType streamType_;
     int32_t fwkStreamId_ = STREAM_ID_UNSET;

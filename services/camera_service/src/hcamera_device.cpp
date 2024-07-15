@@ -714,6 +714,8 @@ void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::C
     DebugLogForAeRegions(settings, OHOS_CONTROL_AE_REGIONS);
     DebugLogForAeExposureCompensation(settings, OHOS_CONTROL_AE_EXPOSURE_COMPENSATION);
     DebugLogForFlashMode(settings, OHOS_CONTROL_FLASH_MODE);
+    DebugLogForLightPaintingType(settings, OHOS_CONTROL_LIGHT_PAINTING_TYPE);
+    DebugLogForTriggerLighting(settings, OHOS_CONTROL_LIGHT_PAINTING_FLASH);
 }
 
 void HCameraDevice::DebugLogForZoom(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
@@ -951,6 +953,34 @@ void HCameraDevice::DebugLogForFlashMode(const std::shared_ptr<OHOS::Camera::Cam
     int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
     if (ret != CAM_META_SUCCESS) {
         MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_FLASH_MODE tag");
+    } else {
+        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FLASHMODE,
+            std::to_string(item.data.u8[0]), caller_);
+    }
+}
+
+void HCameraDevice::DebugLogForLightPaintingType(
+    const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
+{
+    // debug log for flash mode
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_LIGHT_PAINTING_TYPE tag");
+    } else {
+        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FLASHMODE,
+            std::to_string(item.data.u8[0]), caller_);
+    }
+}
+ 
+void HCameraDevice::DebugLogForTriggerLighting(
+    const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
+{
+    // debug log for flash mode
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_LIGHT_PAINTING_FLASH tag");
     } else {
         CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FLASHMODE,
             std::to_string(item.data.u8[0]), caller_);

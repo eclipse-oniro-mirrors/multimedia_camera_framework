@@ -37,6 +37,7 @@
 #include "iservice_registry.h"
 #include "istream_capture.h"
 #include "istream_common.h"
+#include "light_painting_session.h"
 #include "quick_shot_photo_session.h"
 #include "session/capture_session.h"
 #include "session/high_res_photo_session.h"
@@ -102,7 +103,8 @@ const std::unordered_map<OperationMode, SceneMode> g_metaToFwSupportedMode_ = {
     {OperationMode::SECURE, SECURE},
     {OperationMode::QUICK_SHOT_PHOTO, QUICK_SHOT_PHOTO},
     {OperationMode::APERTURE_VIDEO, APERTURE_VIDEO},
-    {OperationMode::PANORAMA_PHOTO, PANORAMA_PHOTO}
+    {OperationMode::PANORAMA_PHOTO, PANORAMA_PHOTO},
+    {OperationMode::LIGHT_PAINTING, LIGHT_PAINTING},
 };
 
 const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
@@ -122,7 +124,8 @@ const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
     {SECURE, OperationMode::SECURE},
     {QUICK_SHOT_PHOTO, OperationMode::QUICK_SHOT_PHOTO},
     {APERTURE_VIDEO, OperationMode::APERTURE_VIDEO},
-    {PANORAMA_PHOTO, OperationMode::PANORAMA_PHOTO}
+    {PANORAMA_PHOTO, OperationMode::PANORAMA_PHOTO},
+    {LIGHT_PAINTING, OperationMode::LIGHT_PAINTING},
 };
 
 const std::unordered_map<CameraFoldStatus, FoldStatus> g_metaToFwCameraFoldStatus_ = {
@@ -288,6 +291,8 @@ sptr<CaptureSession> CameraManager::CreateCaptureSessionImpl(SceneMode mode, spt
             return new (std::nothrow) ApertureVideoSession(session);
         case SceneMode::PANORAMA_PHOTO:
             return new (std::nothrow) PanoramaSession(session);
+        case SceneMode::LIGHT_PAINTING:
+            return new (std::nothrow) LightPaintingSession(session);
         default:
             return new (std::nothrow) CaptureSession(session);
     }

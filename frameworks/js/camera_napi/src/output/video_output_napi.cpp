@@ -803,7 +803,7 @@ napi_value VideoOutputNapi::EnableMirror(napi_env env, napi_callback_info info)
     }
  
     int32_t retCode = videoOutputNapi->videoOutput_->enableMirror(isEnable);
-    if (CameraNapiUtils::CheckError(env, retCode)) {
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
         MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoHighQualityPhoto fail %{public}d", retCode);
     }
     return result;

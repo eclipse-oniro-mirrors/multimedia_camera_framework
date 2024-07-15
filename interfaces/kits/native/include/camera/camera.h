@@ -114,6 +114,11 @@ typedef enum Camera_ErrorCode {
     CAMERA_DEVICE_PREEMPTED = 7400109,
 
     /**
+     * Unresolved conflicts between streams
+     */
+    UNRESOLVED_CONFLICTS_BETWEEN_STREAMS = 7400110,
+
+    /**
      * Camera service fatal error.
      */
     CAMERA_SERVICE_FATAL_ERROR = 7400201

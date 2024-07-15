@@ -42,6 +42,7 @@
 #include "js_native_api_types.h"
 #include "mode/aperture_video_session_napi.h"
 #include "mode/high_res_photo_session_napi.h"
+#include "mode/light_painting_session_napi.h"
 #include "mode/macro_photo_session_napi.h"
 #include "mode/macro_video_session_napi.h"
 #include "mode/night_session_napi.h"
@@ -161,6 +162,7 @@ const std::unordered_map<SceneMode, JsSceneMode> g_nativeToNapiSupportedModeForS
     {SceneMode::QUICK_SHOT_PHOTO, JsSceneMode::JS_QUICK_SHOT_PHOTO},
     {SceneMode::APERTURE_VIDEO, JsSceneMode::JS_APERTURE_VIDEO},
     {SceneMode::PANORAMA_PHOTO, JsSceneMode::JS_PANORAMA_PHOTO},
+    {SceneMode::LIGHT_PAINTING, JsSceneMode::JS_LIGHT_PAINTING},
 };
 
 const std::unordered_map<SceneMode, JsSceneMode> g_nativeToNapiSupportedMode_ = {
@@ -510,6 +512,7 @@ const std::unordered_map<JsSceneMode, SceneMode> g_jsToFwMode_ = {
     {JsSceneMode::JS_QUICK_SHOT_PHOTO, SceneMode::QUICK_SHOT_PHOTO},
     {JsSceneMode::JS_APERTURE_VIDEO, SceneMode::APERTURE_VIDEO},
     {JsSceneMode::JS_PANORAMA_PHOTO, SceneMode::PANORAMA_PHOTO},
+    {JsSceneMode::JS_LIGHT_PAINTING, SceneMode::LIGHT_PAINTING},
 };
 
 static std::unordered_map<JsPolicyType, PolicyType> g_jsToFwPolicyType_ = {
@@ -762,6 +765,8 @@ napi_value CameraManagerNapi::CreateSessionInstance(napi_env env, napi_callback_
             ApertureVideoSessionNapi::CreateCameraSession(env):nullptr; }},
         {JsSceneMode::JS_PANORAMA_PHOTO, [] (napi_env env) { return CheckSystemApp(env, true) ?
             PanoramaSessionNapi::CreateCameraSession(env):nullptr; }},
+        {JsSceneMode::JS_LIGHT_PAINTING, [] (napi_env env) { return CheckSystemApp(env, true) ?
+            LightPaintingSessionNapi::CreateCameraSession(env) : nullptr; }},
     };
 
     napi_value result = nullptr;
