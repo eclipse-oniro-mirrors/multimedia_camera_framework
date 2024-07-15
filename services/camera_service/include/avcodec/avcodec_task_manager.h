@@ -57,6 +57,8 @@ public:
     void SubmitTask(function<void()> task);
     void SetVideoFd(int32_t videoFd, shared_ptr<PhotoAssetProxy> photoAssetProxy);
     void Stop();
+    unique_ptr<TaskManager>& GetTaskManager();
+    unique_ptr<TaskManager>& GetEncoderManager();
 
 private:
     void FinishMuxer(sptr<AudioVideoMuxer> muxer);
@@ -64,11 +66,12 @@ private:
     unique_ptr<VideoEncoder> videoEncoder_ = nullptr;
     unique_ptr<AudioEncoder> audioEncoder_ = nullptr;
     unique_ptr<TaskManager> taskManager_ = nullptr;
-    unique_ptr<TaskManager> audioEncoderManager_ = nullptr;
     unique_ptr<TaskManager> videoEncoderManager_ = nullptr;
     sptr<AudioCapturerSession> audioCapturerSession_ = nullptr;
     condition_variable cvEmpty_;
     mutex videoFdMutex_;
+    mutex taskManagerMutex_;
+    mutex encoderManagerMutex_;
     queue<std::pair<int32_t, shared_ptr<PhotoAssetProxy>>> videoFdQueue_;
 };
 } // CameraStandard

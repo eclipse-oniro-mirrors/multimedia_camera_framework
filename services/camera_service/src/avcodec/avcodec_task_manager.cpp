@@ -52,16 +52,32 @@ AvcodecTaskManager::AvcodecTaskManager(sptr<AudioCapturerSession> audioCaptureSe
     CAMERA_SYNC_TRACE;
     audioCapturerSession_ = audioCaptureSession;
     // Create Task Manager
-    taskManager_ = make_unique<TaskManager>("AvcodecTaskManager", DEFAULT_THREAD_NUMBER, false);
-    audioEncoderManager_ = make_unique<TaskManager>("AudioTaskManager", DEFAULT_ENCODER_THREAD_NUMBER, true);
-    videoEncoderManager_ = make_unique<TaskManager>("VideoTaskManager", DEFAULT_ENCODER_THREAD_NUMBER, true);
     videoEncoder_ = make_unique<VideoEncoder>();
     audioEncoder_ = make_unique<AudioEncoder>();
 }
 
+unique_ptr<TaskManager>& AvcodecTaskManager::GetTaskManager()
+{
+    lock_guard<mutex> lock(taskManagerMutex_);
+    if (taskManager_ == nullptr) {
+        taskManager_ = make_unique<TaskManager>("AvcodecTaskManager", DEFAULT_THREAD_NUMBER, false);
+    }
+    return taskManager_;
+}
+
+unique_ptr<TaskManager>& AvcodecTaskManager::GetEncoderManager()
+{
+    lock_guard<mutex> lock(encoderManagerMutex_);
+    if (videoEncoderManager_ == nullptr) {
+        videoEncoderManager_ = make_unique<TaskManager>("VideoTaskManager", DEFAULT_ENCODER_THREAD_NUMBER, true);
+    }
+    return videoEncoderManager_;
+}
+
+
 void AvcodecTaskManager::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback)
 {
-    videoEncoderManager_->SubmitTask([this, frameRecord, cacheCallback]() {
+    GetEncoderManager()->SubmitTask([this, frameRecord, cacheCallback]() {
         bool isEncodeSuccess = false;
         if (!videoEncoder_ && !frameRecord) {
             return;
@@ -85,7 +101,7 @@ void AvcodecTaskManager::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheC
 
 void AvcodecTaskManager::SubmitTask(function<void()> task)
 {
-    taskManager_->SubmitTask(task);
+    GetTaskManager()->SubmitTask(task);
 }
 
 void AvcodecTaskManager::SetVideoFd(int32_t videoFd, shared_ptr<PhotoAssetProxy> photoAssetProxy)
@@ -169,7 +185,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, st
         MEDIA_ERR_LOG("DoMuxerVideo error of empty encoded frame");
         return;
     }
-    taskManager_->SubmitTask([this, frameRecords, taskName, captureRotation]() {
+    GetTaskManager()->SubmitTask([this, frameRecords, taskName, captureRotation]() {
         MEDIA_INFO_LOG("CreateAVMuxer with %{public}s %{public}s",
             frameRecords.front()->GetFrameId().c_str(), taskName.c_str());
         sptr<AudioVideoMuxer> muxer = this->CreateAVMuxer(frameRecords, captureRotation);
@@ -247,12 +263,10 @@ void AvcodecTaskManager::Stop()
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("AvcodecTaskManager Stop start");
     auto thisPtr = sptr<AvcodecTaskManager>(this);
-    videoEncoderManager_->SubmitTask([thisPtr]() {
+    GetEncoderManager()->SubmitTask([thisPtr]() {
         if (thisPtr->videoEncoder_ != nullptr) {
             thisPtr->videoEncoder_->Stop();
         }
-    });
-    audioEncoderManager_->SubmitTask([thisPtr]() {
         if (thisPtr->audioEncoder_ != nullptr) {
             thisPtr->audioEncoder_->Stop();
         }
