@@ -55,7 +55,8 @@ void MovingPhotoVideoCache::CacheFrame(sptr<FrameRecord> frameRecord)
     if (taskManager_) {
         auto thisPtr = sptr<MovingPhotoVideoCache>(this);
         taskManager_->EncodeVideoBuffer(frameRecord, [thisPtr](sptr<FrameRecord> frameRecord, bool encodeResult) {
-            thisPtr->OnImageEncoded(frameRecord, encodeResult); };
+            thisPtr->OnImageEncoded(frameRecord, encodeResult);
+        });
     }
 }
 
