@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
+#include "dfx/camera_xcollie.h"
 #include "input/camera_napi.h"
-
 #include "napi/native_common.h"
 
 namespace OHOS {
@@ -181,6 +181,7 @@ napi_status CameraNapi::AddNamedProperty(napi_env env, napi_value object,
 napi_value CameraNapi::CreateCameraManagerInstance(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CreateCameraManagerInstance is called");
+    CameraXCollie cameraXCollie("CameraNapi::CreateCameraManagerInstance");
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE] = {0};

@@ -35,6 +35,7 @@
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
 #include "camera_output_capability.h"
+#include "dfx/camera_xcollie.h"
 #include "capture_scene_const.h"
 #include "input/camera_napi.h"
 #include "input/prelaunch_config.h"
@@ -1657,6 +1658,7 @@ napi_value CameraManagerNapi::IsTorchModeSupported(napi_env env, napi_callback_i
 napi_value CameraManagerNapi::GetTorchMode(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("GetTorchMode is called");
+    CameraXCollie cameraXCollie("CameraManagerNapi::GetTorchMode");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -1709,6 +1711,7 @@ napi_value CameraManagerNapi::SetTorchMode(napi_env env, napi_callback_info info
 
 napi_value CameraManagerNapi::On(napi_env env, napi_callback_info info)
 {
+    CameraXCollie cameraXCollie("CameraManagerNapi::On");
     return ListenerTemplate<CameraManagerNapi>::On(env, info);
 }
 
