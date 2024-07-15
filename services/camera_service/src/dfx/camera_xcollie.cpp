@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "camera_xcollie.h"
+#include "dfx/camera_xcollie.h"
 #include "camera_log.h"
 
 #ifdef HICOLLIE_ENABLE
