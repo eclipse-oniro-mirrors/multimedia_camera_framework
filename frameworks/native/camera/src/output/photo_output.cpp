@@ -725,7 +725,8 @@ int32_t PhotoOutput::IsQuickThumbnailSupported()
         isQuickThumbnailEnabled = (item.data.u8[0] == 1) ? 0 : -1;
     }
     const int32_t nightMode = 4;
-    if (captureSession->GetMode() == nightMode && (cameraObj->GetPosition() != CAMERA_POSITION_FRONT)) {
+    if ((captureSession->GetMode() == nightMode && (cameraObj->GetPosition() != CAMERA_POSITION_FRONT)) ||
+        captureSession->GetMode() == LIGHT_PAINTING) {
         isQuickThumbnailEnabled = -1;
     }
     return isQuickThumbnailEnabled;

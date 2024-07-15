@@ -20,6 +20,7 @@
 #include "input/camera_napi.h"
 #include "mode/aperture_video_session_napi.h"
 #include "mode/high_res_photo_session_napi.h"
+#include "mode/light_painting_session_napi.h"
 #include "mode/macro_photo_session_napi.h"
 #include "mode/macro_video_session_napi.h"
 #include "mode/mode_manager_napi.h"
@@ -75,6 +76,7 @@ static napi_value Export(napi_env env, napi_value exports)
     SecureCameraSessionNapi::Init(env, exports);
     QuickShotPhotoSessionNapi::Init(env, exports);
     ApertureVideoSessionNapi::Init(env, exports);
+    LightPaintingSessionNapi::Init(env, exports);
     return exports;
 }
 

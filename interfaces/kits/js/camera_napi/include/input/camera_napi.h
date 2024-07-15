@@ -169,6 +169,7 @@ static const std::unordered_map<std::string, int32_t> mapSceneMode = {
     {"QUICK_SHOT_PHOTO", JS_QUICK_SHOT_PHOTO},
     {"APERTURE_VIDEO", JS_APERTURE_VIDEO},
     {"PANORAMA_PHOTO", JS_PANORAMA_PHOTO},
+    {"LIGHT_PAINTING", JS_LIGHT_PAINTING },
 };
 
 static const std::unordered_map<std::string, int32_t> mapPreconfigType = {
@@ -229,6 +230,7 @@ static const std::unordered_map<std::string, int32_t> mapCameraErrorCode = {
     {"CONFLICT_CAMERA", 7400107},
     {"DEVICE_DISABLED", 7400108},
     {"DEVICE_PREEMPTED", 7400109},
+    {"UNRESOLVED_CONFLICTS_BETWEEN_STREAMS", 7400110},
     {"SERVICE_FATAL_ERROR", 7400201}
 };
 
@@ -324,6 +326,13 @@ static const std::unordered_map<std::string, int32_t> mapFoldStatus = {
     {"FOLD_STATUS_NONFOLDABLE", 0},
     {"FOLD_STATUS_EXPANDED", 1},
     {"FOLD_STATUS_FOLDED", 2}
+};
+
+static const std::unordered_map<std::string, int32_t> mapLightPaintingType = {
+    {"CAR", 0},
+    {"STAR", 1},
+    {"WATER", 2},
+    {"LIGHT", 3},
 };
 
 enum CreateAsyncCallbackModes {

@@ -276,6 +276,22 @@ const std::unordered_map<WhiteBalanceMode, camera_awb_mode_t> CaptureSession::fw
     { AWB_MODE_SHADE, OHOS_CAMERA_AWB_MODE_SHADE },
 };
 
+const std::unordered_map<LightPaintingType, CameraLightPaintingType>
+    CaptureSession::fwkLightPaintingTypeMap_ = {
+    {CAR, OHOS_CAMERA_LIGHT_PAINTING_CAR},
+    {STAR, OHOS_CAMERA_LIGHT_PAINTING_STAR},
+    {WATER, OHOS_CAMERA_LIGHT_PAINTING_WATER},
+    {LIGHT, OHOS_CAMERA_LIGHT_PAINTING_LIGHT}
+};
+ 
+const std::unordered_map<CameraLightPaintingType, LightPaintingType>
+    CaptureSession::metaLightPaintingTypeMap_ = {
+    {OHOS_CAMERA_LIGHT_PAINTING_CAR, CAR},
+    {OHOS_CAMERA_LIGHT_PAINTING_STAR, STAR},
+    {OHOS_CAMERA_LIGHT_PAINTING_WATER, WATER},
+    {OHOS_CAMERA_LIGHT_PAINTING_LIGHT, LIGHT}
+};
+
 int32_t CaptureSessionCallback::OnError(int32_t errorCode)
 {
     MEDIA_INFO_LOG("CaptureSessionCallback::OnError() is called!, errorCode: %{public}d", errorCode);

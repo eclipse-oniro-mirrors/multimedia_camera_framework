@@ -154,6 +154,7 @@ int32_t HStreamCommon::StopStream()
 int32_t HStreamCommon::PrepareCaptureId()
 {
     curCaptureID_ = GenerateCaptureId();
+    captureIdForConfirmCapture_ = curCaptureID_;
     return CAMERA_OK;
 }
 

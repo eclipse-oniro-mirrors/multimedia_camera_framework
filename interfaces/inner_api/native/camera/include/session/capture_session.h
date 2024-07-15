@@ -143,6 +143,13 @@ typedef enum {
     AWB_MODE_SHADE,
 } WhiteBalanceMode;
 
+enum LightPaintingType {
+    CAR = 0,
+    STAR,
+    WATER,
+    LIGHT
+};
+
 typedef struct {
     float x;
     float y;
@@ -1445,6 +1452,9 @@ protected:
         metaWhiteBalanceModeMap_;
     static const std::unordered_map<WhiteBalanceMode, camera_awb_mode_t>
         fwkWhiteBalanceModeMap_;
+    
+    static const std::unordered_map<LightPaintingType, CameraLightPaintingType> fwkLightPaintingTypeMap_;
+    static const std::unordered_map<CameraLightPaintingType, LightPaintingType> metaLightPaintingTypeMap_;
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
     Profile photoProfile_;
