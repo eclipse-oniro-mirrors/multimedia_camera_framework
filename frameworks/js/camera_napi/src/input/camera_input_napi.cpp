@@ -23,6 +23,7 @@
 #include "camera_log.h"
 #include "camera_napi_const.h"
 #include "camera_napi_param_parser.h"
+#include "camera_napi_security_utils.h"
 #include "camera_napi_utils.h"
 #include "input/camera_napi.h"
 #include "js_native_api.h"
@@ -89,6 +90,69 @@ void ErrorCallbackListener::OnError(const int32_t errorType, const int32_t error
 {
     MEDIA_DEBUG_LOG("OnError is called!, errorType: %{public}d", errorType);
     OnErrorCallbackAsync(errorType, errorMsg);
+}
+
+void OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallback(const uint8_t isCameraOcclusionDetect) const
+{
+    MEDIA_DEBUG_LOG("OnCameraOcclusionDetectedCallback is called");
+    napi_value result[ARGS_TWO];
+    napi_value retVal;
+    napi_value propValue;
+ 
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_create_object(env_, &result[PARAM1]);
+    if (isCameraOcclusionDetect) {
+        napi_get_boolean(env_, true, &propValue);
+    } else {
+        napi_get_boolean(env_, false, &propValue);
+    }
+    napi_set_named_property(env_, result[PARAM1], "isCameraOccluded", propValue);
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback("cameraOcclusionDetect", callbackNapiPara);
+}
+ 
+void OcclusionDetectCallbackListener::OnCameraOcclusionDetectedCallbackAsync(
+    const uint8_t isCameraOcclusionDetect) const
+{
+    MEDIA_DEBUG_LOG("OnCameraOcclusionDetectedCallbackAsync is called");
+    uv_loop_s* loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (!loop) {
+        MEDIA_ERR_LOG("failed to get event loop");
+        return;
+    }
+    uv_work_t* work = new(std::nothrow) uv_work_t;
+    if (!work) {
+        MEDIA_ERR_LOG("failed to allocate work");
+        return;
+    }
+    std::unique_ptr<CameraOcclusionDetectResult> callbackInfo =
+        std::make_unique<CameraOcclusionDetectResult>(isCameraOcclusionDetect, shared_from_this());
+    work->data = callbackInfo.get();
+    int ret = uv_queue_work_with_qos(loop, work, [] (uv_work_t* work) {}, [] (uv_work_t* work, int status) {
+        CameraOcclusionDetectResult* callbackInfo = reinterpret_cast<CameraOcclusionDetectResult *>(work->data);
+        if (callbackInfo) {
+            auto listener = callbackInfo->listener_.lock();
+            if (listener) {
+                listener->OnCameraOcclusionDetectedCallback(callbackInfo->isCameraOccluded_);
+            }
+            delete callbackInfo;
+        }
+        delete work;
+    }, uv_qos_user_initiated);
+    if (ret) {
+        MEDIA_ERR_LOG("failed to execute work");
+        delete work;
+    } else {
+        callbackInfo.release();
+    }
+}
+ 
+void OcclusionDetectCallbackListener::OnCameraOcclusionDetected(const uint8_t isCameraOcclusionDetect) const
+{
+    MEDIA_DEBUG_LOG("OnCameraOcclusionDetected is called!, isCameraOcclusionDetect: %{public}d",
+        isCameraOcclusionDetect);
+    OnCameraOcclusionDetectedCallbackAsync(isCameraOcclusionDetect);
 }
 
 CameraInputNapi::CameraInputNapi() : env_(nullptr)
@@ -472,12 +536,45 @@ void CameraInputNapi::UnregisterErrorCallbackListener(
     MEDIA_INFO_LOG("CameraInputNapi::UnregisterErrorCallbackListener success");
 }
 
+void CameraInputNapi::RegisterOcclusionDetectCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi UnregisterErrorCallbackListener is called");
+        return;
+    }
+    if (occlusionDetectCallback_ == nullptr) {
+        occlusionDetectCallback_ = make_shared<OcclusionDetectCallbackListener>(env);
+        cameraInput_->SetOcclusionDetectCallback(occlusionDetectCallback_);
+    }
+    occlusionDetectCallback_->SaveCallbackReference(eventName, callback, isOnce);
+    MEDIA_INFO_LOG("CameraInputNapi::RegisterErrorCallbackListener success");
+}
+ 
+void CameraInputNapi::UnregisterOcclusionDetectCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi UnregisterErrorCallbackListener is called");
+        return;
+    }
+    if (occlusionDetectCallback_ == nullptr) {
+        MEDIA_ERR_LOG("errorCallback is null");
+        return;
+    }
+    occlusionDetectCallback_->RemoveCallbackRef(eventName, callback);
+    MEDIA_INFO_LOG("CameraInputNapi::UnregisterErrorCallbackListener success");
+}
+
 const CameraInputNapi::EmitterFunctions& CameraInputNapi::GetEmitterFunctions()
 {
     static const EmitterFunctions funMap = {
         { "error", {
             &CameraInputNapi::RegisterErrorCallbackListener,
-            &CameraInputNapi::UnregisterErrorCallbackListener } } };
+            &CameraInputNapi::UnregisterErrorCallbackListener } },
+        { "cameraOcclusionDetect", {
+            &CameraInputNapi::RegisterOcclusionDetectCallbackListener,
+            &CameraInputNapi::UnregisterOcclusionDetectCallbackListener } } };
     return funMap;
 }
 

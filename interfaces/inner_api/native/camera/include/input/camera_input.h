@@ -40,6 +40,13 @@ public:
     virtual void OnError(const int32_t errorType, const int32_t errorMsg) const = 0;
 };
 
+class CameraOcclusionDetectCallback {
+public:
+    CameraOcclusionDetectCallback() = default;
+    virtual ~CameraOcclusionDetectCallback() = default;
+    virtual void OnCameraOcclusionDetected(const uint8_t isCameraOcclusionDetect) const = 0;
+};
+
 class ResultCallback {
 public:
     ResultCallback() = default;
@@ -247,6 +254,14 @@ public:
     void SetResultCallback(std::shared_ptr<ResultCallback> resultCallback);
 
     /**
+    * @brief Set the CameraOcclusionDetect callback.
+    * which will be called when CameraOcclusionDetect callback .
+    *
+    * @param The CameraOcclusionDetect pointer.
+    */
+    void SetOcclusionDetectCallback(std::shared_ptr<CameraOcclusionDetectCallback> cameraOcclusionDetectCallback);
+
+    /**
     * @brief Release camera input.
     */
     int Release() override;
@@ -278,6 +293,13 @@ public:
     * @return Returns ResultCallback pointer.
     */
     std::shared_ptr<ResultCallback>  GetResultCallback();
+
+    /**
+    * @brief Get CameraOcclusionDetectCallback pointer.
+    *
+    * @return Returns CameraOcclusionDetectCallback pointer.
+    */
+    std::shared_ptr<CameraOcclusionDetectCallback>  GetOcclusionDetectCallback();
 
     /**
     * @brief get the camera info associated with the device.
@@ -335,6 +357,7 @@ private:
     sptr<CameraDevice> cameraObj_;
     std::shared_ptr<ResultCallback> resultCallback_;
     std::shared_ptr<ErrorCallback> errorCallback_;
+    std::shared_ptr<CameraOcclusionDetectCallback> cameraOcclusionDetectCallback_;
     sptr<ICameraDeviceServiceCallback> CameraDeviceSvcCallback_;
     std::mutex interfaceMutex_;
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;

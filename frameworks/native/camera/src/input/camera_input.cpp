@@ -64,6 +64,17 @@ int32_t CameraDeviceServiceCallback::OnResult(const uint64_t timestamp,
     if (camInputSptr->GetResultCallback() != nullptr) {
         camInputSptr->GetResultCallback()->OnResult(timestamp, result);
     }
+    camera_metadata_item item;
+    int32_t retCode = OHOS::Camera::FindCameraMetadataItem(result->get(),
+        OHOS_STATUS_CAMERA_OCCLUSION_DETECTION, &item);
+    if (retCode == CAM_META_SUCCESS && item.count != 0) {
+        MEDIA_DEBUG_LOG("OHOS_STATUS_CAMERA_OCCLUSION_DETECTION is not null or zero");
+        if (camInputSptr != nullptr && camInputSptr->GetOcclusionDetectCallback() != nullptr) {
+            camInputSptr->GetOcclusionDetectCallback()->OnCameraOcclusionDetected(item.data.i32[0]);
+        } else {
+            MEDIA_INFO_LOG("CameraDeviceServiceCallback::OnCameraOcclusionDetected not set!, Discarding callback");
+        }
+    }
     camInputSptr->ProcessCallbackUpdates(timestamp, result);
     return CAMERA_OK;
 }
@@ -256,6 +267,18 @@ void CameraInput::SetResultCallback(std::shared_ptr<ResultCallback> resultCallba
     resultCallback_ = resultCallback;
     return;
 }
+
+void CameraInput::SetOcclusionDetectCallback(
+    std::shared_ptr<CameraOcclusionDetectCallback> cameraOcclusionDetectCallback)
+{
+    if (cameraOcclusionDetectCallback == nullptr) {
+        MEDIA_ERR_LOG("SetOcclusionDetectCallback:SetOcclusionDetectCallback error cameraOcclusionDetectCallback");
+    }
+    MEDIA_DEBUG_LOG("CameraInput::SetOcclusionDetectCallback callback");
+    cameraOcclusionDetectCallback_ = cameraOcclusionDetectCallback;
+    return;
+}
+
 std::string CameraInput::GetCameraId()
 {
     return cameraObj_->GetID();
@@ -271,11 +294,18 @@ std::shared_ptr<ErrorCallback> CameraInput::GetErrorCallback()
     std::lock_guard<std::mutex> lock(errorCallbackMutex_);
     return errorCallback_;
 }
+
 std::shared_ptr<ResultCallback> CameraInput::GetResultCallback()
 {
     MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::GetResultCallback");
     return resultCallback_;
 }
+
+std::shared_ptr<CameraOcclusionDetectCallback> CameraInput::GetOcclusionDetectCallback()
+{
+    return cameraOcclusionDetectCallback_;
+}
+
 sptr<CameraDevice> CameraInput::GetCameraDeviceInfo()
 {
     return cameraObj_;
