@@ -56,6 +56,26 @@ struct ErrorCallbackInfo {
         : errorType_(errorType), errorMsg_(errorMsg), listener_(listener) {}
 };
 
+class OcclusionDetectCallbackListener : public CameraOcclusionDetectCallback,
+                              public ListenerBase,
+                              public std::enable_shared_from_this<OcclusionDetectCallbackListener> {
+public:
+    OcclusionDetectCallbackListener(napi_env env) : ListenerBase(env) {}
+    ~OcclusionDetectCallbackListener() = default;
+    void OnCameraOcclusionDetected(const uint8_t isCameraOcclusionDetect) const override;
+ 
+private:
+    void OnCameraOcclusionDetectedCallback(const uint8_t isCameraOcclusionDetect) const;
+    void OnCameraOcclusionDetectedCallbackAsync(const uint8_t isCameraOcclusionDetect) const;
+};
+ 
+struct CameraOcclusionDetectResult {
+    uint8_t isCameraOccluded_;
+    weak_ptr<const OcclusionDetectCallbackListener> listener_;
+    CameraOcclusionDetectResult(uint8_t isCameraOccluded, shared_ptr<const OcclusionDetectCallbackListener> listener)
+        : isCameraOccluded_(isCameraOccluded), listener_(listener) {}
+};
+
 class CameraInputNapi : public CameraNapiEventEmitter<CameraInputNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
@@ -88,10 +108,15 @@ private:
         const std::vector<napi_value>& args, bool isOnce);
     void UnregisterErrorCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterOcclusionDetectCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterOcclusionDetectCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
     napi_env env_;
     std::string cameraId_;
     shared_ptr<ErrorCallbackListener> errorCallback_;
+    shared_ptr<OcclusionDetectCallbackListener> occlusionDetectCallback_;
 
     static thread_local napi_ref sConstructor_;
     static thread_local std::string sCameraId_;
