@@ -261,7 +261,7 @@ static std::shared_ptr<UIExtensionCallback> StartCameraAbility(
             uiExtCallback->OnError(errorCode, name, message); },
         [uiExtCallback](const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy) {
             uiExtCallback->OnRemoteReady(uiProxy); },
-        [uiExtCallback]() { uiExtCallback->OnDestroy(); 
+        [uiExtCallback]() { uiExtCallback->OnDestroy(); }
     };
     Ace::ModalUIExtensionConfig config;
     auto uiContent = abilityContext->GetUIContent();

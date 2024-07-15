@@ -186,6 +186,5 @@ CachedFrameSet CachedFrameCallbackHandle::GetCacheRecord()
     std::lock_guard<std::mutex> lock(cacheFrameMutex_);
     return cacheRecords_;
 }
-
 } // CameraStandard
 } // OHOS
