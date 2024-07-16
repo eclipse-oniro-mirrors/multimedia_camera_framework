@@ -35,14 +35,16 @@ const int32_t PHOTO_HEIGHT = 960;
 const int32_t PHOTO_FORMAT = 2000;
 const uint32_t INVALID_CODE = 9999;
 const std::u16string FORMMGR_INTERFACE_TOKEN = u"IStreamCapture";
+const int32_t ITEM_CAP = 10;
+const int32_t DATA_CAP = 100;
 
 bool g_hasPermission = false;
 HStreamCaptureStub *fuzz = nullptr;
 
 std::shared_ptr<OHOS::Camera::CameraMetadata> MakeMetadata(uint8_t *rawData, size_t size)
 {
-    int32_t itemCount = 10;
-    int32_t dataSize = 100;
+    int32_t itemCount = ITEM_CAP;
+    int32_t dataSize = DATA_CAP;
     int32_t *streams = reinterpret_cast<int32_t *>(rawData);
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
     ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
@@ -141,6 +143,21 @@ void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
 void Test_HandleCapture(uint8_t *rawData, size_t size)
 {
     MessageParcel data;
+    // tagCount
+    data.WriteUint32(1);
+    // itemCapacity
+    data.WriteUint32(ITEM_CAP);
+    // dataCapacity
+    data.WriteUint32(DATA_CAP);
+    // item.index
+    data.WriteUint32(0);
+    // item.item
+    data.WriteUint32(1);
+    // item.data_type
+    data.WriteUint32(0);
+    // item.count
+    data.WriteUint32(1);
+    data.WriteInt32(1);
     data.WriteRawData(rawData, size);
     data.RewindRead(0);
     fuzz->HandleCapture(data);
