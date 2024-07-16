@@ -1217,8 +1217,9 @@ bool CameraManager::GetDmDeviceInfo()
             MEDIA_ERR_LOG("Failed to verify the deviceInfo format, deviceInfo is: %{public}s", deviceInfoStr.c_str());
         } else {
             nlohmann::json deviceInfoJson = nlohmann::json::parse(deviceInfoStr);
-            if (deviceInfoJson.contains("deviceName") && deviceInfoJson.contains("deviceTypeId") &&
-                deviceInfoJson.contains("networkId")) {
+            if ((deviceInfoJson.contains("deviceName") && deviceInfoJson.contains("deviceTypeId") &&
+                deviceInfoJson.contains("networkId")) && (deviceInfoJson["deviceName"].is_string() &&
+                deviceInfoJson["networkId"].is_string())) {
                 distributedCamInfo_[i].deviceName = deviceInfoJson["deviceName"];
                 distributedCamInfo_[i].deviceTypeId = deviceInfoJson["deviceTypeId"];
                 distributedCamInfo_[i].networkId = deviceInfoJson["networkId"];
