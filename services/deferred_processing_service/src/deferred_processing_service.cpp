@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <mutex>
 #include <vector>
 #include <shared_mutex>
 #include <iostream>
@@ -88,6 +89,7 @@ sptr<IDeferredPhotoProcessingSession> DeferredProcessingService::CreateDeferredP
 
 TaskManager* DeferredProcessingService::GetPhotoTaskManager(int userId)
 {
+    std::lock_guard<std::mutex> lock(taskManagerMutex_);
     DP_INFO_LOG("entered, userId: %{public}d", userId);
     if (photoTaskManagerMap_.count(userId) == 0) {
         constexpr uint32_t numThreads = 1;
