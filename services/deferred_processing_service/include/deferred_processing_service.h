@@ -15,6 +15,7 @@
 
 #ifndef OHOS_CAMERA_DPS_DEFERRED_PROCESSING_SERVICE_H
 #define OHOS_CAMERA_DPS_DEFERRED_PROCESSING_SERVICE_H
+#include <mutex>
 #include <vector>
 #include <shared_mutex>
 #include <iostream>
@@ -46,6 +47,7 @@ private:
     std::shared_ptr<SessionManager> sessionManager_;
     std::unique_ptr<SchedulerManager> schedulerManager_;
     std::unordered_map<int, std::shared_ptr<TaskManager>> photoTaskManagerMap_;
+    std::mutex taskManagerMutex_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard
