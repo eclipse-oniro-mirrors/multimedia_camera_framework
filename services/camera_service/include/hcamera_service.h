@@ -215,11 +215,6 @@ private:
     void DumpCameraVideoFrameRateRange(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
     void DumpCameraPrelaunch(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
     void DumpCameraThumbnail(common_metadata_header_t* metadataEntry, CameraInfoDumper& infoDumper);
-    void DumpPreconfigInfo(CameraInfoDumper& infoDumper);
-    void DumpPreconfig720P(CameraInfoDumper& infoDumper);
-    void DumpPreconfig1080P(CameraInfoDumper& infoDumper);
-    void DumpPreconfig4k(CameraInfoDumper& infoDumper);
-    void DumpPreconfigHighQuality(CameraInfoDumper& infoDumper);
 
     vector<shared_ptr<CameraMetaInfo>> ChooseDeFaultCameras(vector<shared_ptr<CameraMetaInfo>> cameraInfos);
     vector<shared_ptr<CameraMetaInfo>> ChoosePhysicalCameras(const vector<shared_ptr<CameraMetaInfo>>& cameraInfos,

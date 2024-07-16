@@ -16,9 +16,40 @@
 
 namespace OHOS {
 namespace CameraStandard {
+float GetTargetRatio(ProfileSizeRatio sizeRatio, float unspecifiedValue)
+{
+    switch (sizeRatio) {
+        case RATIO_1_1:
+            return RATIO_VALUE_1_1;
+        case RATIO_4_3:
+            return RATIO_VALUE_4_3;
+        case RATIO_16_9:
+            return RATIO_VALUE_16_9;
+        case UNSPECIFIED:
+            return unspecifiedValue;
+        default:
+            return unspecifiedValue;
+    }
+    return unspecifiedValue;
+}
+
+bool IsProfileSameRatio(Profile& srcProfile, ProfileSizeRatio sizeRatio, float unspecifiedValue)
+{
+    if (srcProfile.size_.height == 0 || srcProfile.size_.width == 0) {
+        return false;
+    }
+    float srcRatio = ((float)srcProfile.size_.width) / srcProfile.size_.height;
+    float targetRatio = GetTargetRatio(sizeRatio, unspecifiedValue);
+    if (targetRatio <= 0) {
+        return false;
+    }
+    return abs(srcRatio - targetRatio) / targetRatio <= 0.05f; // 0.05f is 5% tolerance
+}
+
 Profile::Profile(CameraFormat format, Size size) : format_(format), size_(size) {}
 Profile::Profile(CameraFormat format, Size size, Fps fps, std::vector<uint32_t> abilityId)
-    : format_(format), size_(size), fps_(fps), abilityId_(abilityId) {}
+    : format_(format), size_(size), fps_(fps), abilityId_(abilityId)
+{}
 CameraFormat Profile::GetCameraFormat()
 {
     return format_;
@@ -82,5 +113,5 @@ void CameraOutputCapability::SetSupportedMetadataObjectType(std::vector<Metadata
 {
     metadataObjTypes_ = metadataObjType;
 }
-} // CameraStandard
-} // OHOS
+} // namespace CameraStandard
+} // namespace OHOS

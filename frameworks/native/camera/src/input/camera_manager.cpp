@@ -37,6 +37,7 @@
 #include "iservice_registry.h"
 #include "istream_capture.h"
 #include "istream_common.h"
+#include "light_painting_session.h"
 #include "quick_shot_photo_session.h"
 #include "session/capture_session.h"
 #include "session/high_res_photo_session.h"
@@ -102,7 +103,8 @@ const std::unordered_map<OperationMode, SceneMode> g_metaToFwSupportedMode_ = {
     {OperationMode::SECURE, SECURE},
     {OperationMode::QUICK_SHOT_PHOTO, QUICK_SHOT_PHOTO},
     {OperationMode::APERTURE_VIDEO, APERTURE_VIDEO},
-    {OperationMode::PANORAMA_PHOTO, PANORAMA_PHOTO}
+    {OperationMode::PANORAMA_PHOTO, PANORAMA_PHOTO},
+    {OperationMode::LIGHT_PAINTING, LIGHT_PAINTING},
 };
 
 const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
@@ -122,7 +124,8 @@ const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
     {SECURE, OperationMode::SECURE},
     {QUICK_SHOT_PHOTO, OperationMode::QUICK_SHOT_PHOTO},
     {APERTURE_VIDEO, OperationMode::APERTURE_VIDEO},
-    {PANORAMA_PHOTO, OperationMode::PANORAMA_PHOTO}
+    {PANORAMA_PHOTO, OperationMode::PANORAMA_PHOTO},
+    {LIGHT_PAINTING, OperationMode::LIGHT_PAINTING},
 };
 
 const std::unordered_map<CameraFoldStatus, FoldStatus> g_metaToFwCameraFoldStatus_ = {
@@ -288,6 +291,8 @@ sptr<CaptureSession> CameraManager::CreateCaptureSessionImpl(SceneMode mode, spt
             return new (std::nothrow) ApertureVideoSession(session);
         case SceneMode::PANORAMA_PHOTO:
             return new (std::nothrow) PanoramaSession(session);
+        case SceneMode::LIGHT_PAINTING:
+            return new (std::nothrow) LightPaintingSession(session);
         default:
             return new (std::nothrow) CaptureSession(session);
     }
@@ -447,7 +452,7 @@ sptr<PhotoOutput> CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBuffe
     return photoOutput;
 }
 
-int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer>& surface, sptr<PhotoOutput>* pPhotoOutput)
+int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface, sptr<PhotoOutput>* pPhotoOutput)
 {
     CAMERA_SYNC_TRACE;
     sptr<IStreamCapture> streamCapture = nullptr;
@@ -815,7 +820,7 @@ int32_t CameraManager::CreateVideoOutputStream(
     return CameraErrorCode::SUCCESS;
 }
 
-int CameraManager::CreateVideoOutputWithoutProfile(sptr<Surface>& surface, sptr<VideoOutput>* pVideoOutput)
+int CameraManager::CreateVideoOutputWithoutProfile(sptr<Surface> surface, sptr<VideoOutput>* pVideoOutput)
 {
     CAMERA_SYNC_TRACE;
     sptr<VideoOutput> videoOutput = nullptr;
@@ -1169,7 +1174,7 @@ sptr<CameraManager>& CameraManager::GetInstance()
         std::lock_guard<std::mutex> lock(g_instanceMutex);
         if (CameraManager::g_cameraManager == nullptr) {
             MEDIA_INFO_LOG("Initializing camera manager for first time!");
-            CameraManager::g_cameraManager = new (std::nothrow) CameraManager();
+            CameraManager::g_cameraManager = new CameraManager();
             CameraManager::g_cameraManager->InitCameraManager();
         }
     }
@@ -1212,8 +1217,9 @@ bool CameraManager::GetDmDeviceInfo()
             MEDIA_ERR_LOG("Failed to verify the deviceInfo format, deviceInfo is: %{public}s", deviceInfoStr.c_str());
         } else {
             nlohmann::json deviceInfoJson = nlohmann::json::parse(deviceInfoStr);
-            if (deviceInfoJson.contains("deviceName") && deviceInfoJson.contains("deviceTypeId") &&
-                deviceInfoJson.contains("networkId")) {
+            if ((deviceInfoJson.contains("deviceName") && deviceInfoJson.contains("deviceTypeId") &&
+                deviceInfoJson.contains("networkId")) && (deviceInfoJson["deviceName"].is_string() &&
+                deviceInfoJson["networkId"].is_string())) {
                 distributedCamInfo_[i].deviceName = deviceInfoJson["deviceName"];
                 distributedCamInfo_[i].deviceTypeId = deviceInfoJson["deviceTypeId"];
                 distributedCamInfo_[i].networkId = deviceInfoJson["networkId"];

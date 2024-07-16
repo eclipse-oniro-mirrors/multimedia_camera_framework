@@ -18,14 +18,17 @@
 
 #include <cstdint>
 #include <iostream>
-#include <vector>
 #include <refbase.h>
+#include <vector>
 
 #include "istream_repeat_callback.h"
 #include "metadata_type.h"
 
 namespace OHOS {
 namespace CameraStandard {
+static constexpr float RATIO_VALUE_1_1 = 1.0f;
+static constexpr float RATIO_VALUE_4_3 = 4.0f / 3;
+static constexpr float RATIO_VALUE_16_9 = 16.0f / 9;
 typedef struct {
     uint32_t width;
     uint32_t height;
@@ -48,6 +51,13 @@ enum CameraFormat {
     CAMERA_FORMAT_JPEG = 2000,
     CAMERA_FORMAT_YCBCR_P010 = 2001,
     CAMERA_FORMAT_YCRCB_P010 = 2002
+};
+
+enum ProfileSizeRatio : int32_t {
+    UNSPECIFIED,
+    RATIO_1_1,
+    RATIO_4_3,
+    RATIO_16_9
 };
 
 class Profile {
@@ -88,8 +98,10 @@ public:
     std::vector<uint32_t> GetAbilityId();
 
     CameraFormat format_ = CAMERA_FORMAT_INVALID;
-    Size size_ = {0, 0};
-    Fps fps_ = {0, 0, 0};
+    Size size_ = { 0, 0 };
+    bool sizeFollowSensorMax_ = false;
+    ProfileSizeRatio sizeRatio_ = UNSPECIFIED;
+    Fps fps_ = { 0, 0, 0 };
     std::vector<uint32_t> abilityId_ = {};
 };
 
@@ -113,6 +125,9 @@ public:
 
     std::vector<int32_t> framerates_ = {};
 };
+
+float GetTargetRatio(ProfileSizeRatio sizeRatio, float unspecifiedValue);
+bool IsProfileSameRatio(Profile& srcProfile, ProfileSizeRatio sizeRatio, float unspecifiedValue);
 
 class CameraOutputCapability : public RefBase {
 public:

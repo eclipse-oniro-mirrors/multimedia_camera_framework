@@ -114,9 +114,12 @@ enum PreconfigType : int32_t {
 };
 
 struct PreconfigProfiles {
+public:
+    explicit PreconfigProfiles(ColorSpace colorSpace) : colorSpace(colorSpace) {}
     Profile previewProfile;
     Profile photoProfile;
     VideoProfile videoProfile;
+    ColorSpace colorSpace;
 };
 
 enum EffectSuggestionType {
@@ -139,6 +142,13 @@ typedef enum {
     AWB_MODE_TWILIGHT,
     AWB_MODE_SHADE,
 } WhiteBalanceMode;
+
+enum LightPaintingType {
+    CAR = 0,
+    STAR,
+    WATER,
+    LIGHT
+};
 
 typedef struct {
     float x;
@@ -1119,19 +1129,21 @@ public:
      * @brief Check the preconfig type is supported or not.
      *
      * @param preconfigType The target preconfig type.
+     * @param preconfigRatio The target ratio enum
      *
      * @return True if the preconfig type is supported, false otherwise.
      */
-    virtual bool CanPreconfig(PreconfigType preconfigType);
+    virtual bool CanPreconfig(PreconfigType preconfigType, ProfileSizeRatio preconfigRatio);
 
     /**
      * @brief Set the preconfig type.
      *
      * @param preconfigType The target preconfig type.
+     * @param preconfigRatio The target ratio enum
      *
      * @return Camera error code.
      */
-    virtual int32_t Preconfig(PreconfigType preconfigType);
+    virtual int32_t Preconfig(PreconfigType preconfigType, ProfileSizeRatio preconfigRatio);
 
     /**
      * @brief Get whether or not commit config.
@@ -1440,6 +1452,9 @@ protected:
         metaWhiteBalanceModeMap_;
     static const std::unordered_map<WhiteBalanceMode, camera_awb_mode_t>
         fwkWhiteBalanceModeMap_;
+    
+    static const std::unordered_map<LightPaintingType, CameraLightPaintingType> fwkLightPaintingTypeMap_;
+    static const std::unordered_map<CameraLightPaintingType, LightPaintingType> metaLightPaintingTypeMap_;
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata_;
     Profile photoProfile_;
@@ -1485,7 +1500,8 @@ protected:
         innerCaptureSession_ = captureSession;
     }
 
-    virtual std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles(PreconfigType preconfigType);
+    virtual std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles(
+        PreconfigType preconfigType, ProfileSizeRatio preconfigRatio);
 
 private:
     std::mutex changeMetaMutex_;
@@ -1560,6 +1576,10 @@ private:
     int32_t ConfigurePreviewOutput(sptr<CaptureOutput>& output);
     int32_t ConfigurePhotoOutput(sptr<CaptureOutput>& output);
     int32_t ConfigureVideoOutput(sptr<CaptureOutput>& output);
+    std::shared_ptr<Profile> GetMaxSizePhotoProfile(ProfileSizeRatio sizeRatio);
+    std::shared_ptr<Profile> GetPreconfigPreviewProfile();
+    std::shared_ptr<Profile> GetPreconfigPhotoProfile();
+    std::shared_ptr<VideoProfile> GetPreconfigVideoProfile();
     void CameraServerDied(pid_t pid);
     void InsertOutputIntoSet(sptr<CaptureOutput>& output);
     void RemoveOutputFromSet(sptr<CaptureOutput>& output);

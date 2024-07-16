@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include <mutex>
 #include <vector>
 #include <shared_mutex>
 #include <iostream>
@@ -84,7 +85,7 @@ sptr<IDeferredPhotoProcessingSession> SessionManager::CreateDeferredPhotoProcess
         int userId = it->first;
         DP_DEBUG_LOG("dump photoSessionInfos_ userId: %{public}d", userId);
     }
-
+    std::lock_guard<std::mutex> lock(mutex_);
     auto iter = photoSessionInfos_.find(userId);
     if (iter != photoSessionInfos_.end()) {
         DP_INFO_LOG("SessionManager::CreateDeferredPhotoProcessorSession failed due to photoSession already existed");

@@ -53,6 +53,7 @@
 #include "system_ability_definition.h"
 #include "test_common.h"
 #include "token_setproc.h"
+#include "video_session.h"
 
 using namespace testing::ext;
 using namespace OHOS::HDI::Camera::V1_0;
@@ -10688,6 +10689,62 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_080, TestSize.Le
 
     intResult = apertureVideoSession->Stop();
     EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test photo session preconfig.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photoSession CanPreconfig interface.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_081, TestSize.Level0)
+{
+    if (!IsSupportNow()) {
+        return;
+    }
+    sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
+    auto photoSession = static_cast<PhotoSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(photoSession, nullptr);
+    PreconfigType preconfigTypes[] = { PRECONFIG_720P, PRECONFIG_1080P, PRECONFIG_4K, PRECONFIG_HIGH_QUALITY };
+    ProfileSizeRatio preconfigRatios[] = { UNSPECIFIED, RATIO_1_1, RATIO_4_3, RATIO_16_9 };
+    for (auto type : preconfigTypes) {
+        for (auto ratio : preconfigRatios) {
+            if (!photoSession->CanPreconfig(type, ratio)) {
+                int ret = photoSession->Preconfig(type, ratio);
+                ASSERT_EQ(ret, 0);
+            }
+        }
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test video session preconfig.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test videoSession CanPreconfig interface.
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_082, TestSize.Level0)
+{
+    if (!IsSupportNow()) {
+        return;
+    }
+    sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(SceneMode::VIDEO);
+    auto videoSession = static_cast<VideoSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(videoSession, nullptr);
+    PreconfigType preconfigTypes[] = { PRECONFIG_720P, PRECONFIG_1080P, PRECONFIG_4K, PRECONFIG_HIGH_QUALITY };
+    ProfileSizeRatio preconfigRatios[] = { UNSPECIFIED, RATIO_1_1, RATIO_4_3, RATIO_16_9 };
+    for (auto type : preconfigTypes) {
+        for (auto ratio : preconfigRatios) {
+            if (!videoSession->CanPreconfig(type, ratio)) {
+                int ret = videoSession->Preconfig(type, ratio);
+                ASSERT_EQ(ret, 0);
+            }
+        }
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

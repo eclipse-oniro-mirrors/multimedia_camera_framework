@@ -21,10 +21,12 @@
 #include <mutex>
 #include <sys/types.h>
 
+#include "camera_device.h"
 #include "camera_device_ability_items.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
 #include "camera_metadata_operator.h"
+#include "camera_output_capability.h"
 #include "camera_util.h"
 #include "capture_output.h"
 #include "capture_scene_const.h"
@@ -274,6 +276,22 @@ const std::unordered_map<WhiteBalanceMode, camera_awb_mode_t> CaptureSession::fw
     { AWB_MODE_SHADE, OHOS_CAMERA_AWB_MODE_SHADE },
 };
 
+const std::unordered_map<LightPaintingType, CameraLightPaintingType>
+    CaptureSession::fwkLightPaintingTypeMap_ = {
+    {CAR, OHOS_CAMERA_LIGHT_PAINTING_CAR},
+    {STAR, OHOS_CAMERA_LIGHT_PAINTING_STAR},
+    {WATER, OHOS_CAMERA_LIGHT_PAINTING_WATER},
+    {LIGHT, OHOS_CAMERA_LIGHT_PAINTING_LIGHT}
+};
+ 
+const std::unordered_map<CameraLightPaintingType, LightPaintingType>
+    CaptureSession::metaLightPaintingTypeMap_ = {
+    {OHOS_CAMERA_LIGHT_PAINTING_CAR, CAR},
+    {OHOS_CAMERA_LIGHT_PAINTING_STAR, STAR},
+    {OHOS_CAMERA_LIGHT_PAINTING_WATER, WATER},
+    {OHOS_CAMERA_LIGHT_PAINTING_LIGHT, LIGHT}
+};
+
 int32_t CaptureSessionCallback::OnError(int32_t errorCode)
 {
     MEDIA_INFO_LOG("CaptureSessionCallback::OnError() is called!, errorCode: %{public}d", errorCode);
@@ -293,7 +311,7 @@ CaptureSession::CaptureSession(sptr<ICaptureSession>& captureSession) : innerCap
     deathRecipient_ = new (std::nothrow) CameraDeathRecipient(pid);
     CHECK_AND_RETURN_LOG(deathRecipient_ != nullptr, "failed to new CameraDeathRecipient.");
 
-    deathRecipient_->SetNotifyCb(std::bind(&CaptureSession::CameraServerDied, this, std::placeholders::_1));
+    deathRecipient_->SetNotifyCb([this](pid_t pid) { CameraServerDied(pid); });
     bool result = object->AddDeathRecipient(deathRecipient_);
     if (!result) {
         MEDIA_ERR_LOG("failed to add deathRecipient");
@@ -365,7 +383,12 @@ int32_t CaptureSession::CommitConfig()
 
     MEDIA_INFO_LOG("CaptureSession::CommitConfig isColorSpaceSetted_ = %{public}d", isColorSpaceSetted_);
     if (!isColorSpaceSetted_) {
-        SetDefaultColorSpace();
+        auto preconfigProfiles = GetPreconfigProfiles();
+        if (preconfigProfiles != nullptr) {
+            SetColorSpace(preconfigProfiles->colorSpace);
+        } else {
+            SetDefaultColorSpace();
+        }
     }
     // DELIVERY_PHOTO for default when commit
     if (photoOutput_ && !isDeferTypeSetted_) {
@@ -587,24 +610,96 @@ int32_t CaptureSession::ConfigurePreviewOutput(sptr<CaptureOutput>& output)
             MEDIA_ERR_LOG("CaptureSession::ConfigurePreviewOutput previewProfile is not null, is that output in use?");
             return CameraErrorCode::SERVICE_FATL_ERROR;
         }
-        auto preconfigProfiles = GetPreconfigProfiles();
-        if (preconfigProfiles == nullptr) {
-            MEDIA_ERR_LOG("CaptureSession::ConfigurePreviewOutput profile is nullptr, preconfig profile is nullptr");
+        auto preconfigPreviewProfile = GetPreconfigPreviewProfile();
+        if (preconfigPreviewProfile == nullptr) {
+            MEDIA_ERR_LOG("CaptureSession::ConfigurePreviewOutput preconfigPreviewProfile is nullptr");
             return CameraErrorCode::SERVICE_FATL_ERROR;
         }
-        output->SetPreviewProfile(preconfigProfiles->previewProfile);
+        output->SetPreviewProfile(*preconfigPreviewProfile);
         int32_t res = output->CreateStream();
         if (res != CameraErrorCode::SUCCESS) {
             MEDIA_ERR_LOG("CaptureSession::ConfigurePreviewOutput createStream from preconfig fail! %{public}d", res);
             return res;
         }
         MEDIA_INFO_LOG("CaptureSession::ConfigurePreviewOutput createStream from preconfig success");
-        previewProfile_ = preconfigProfiles->previewProfile;
+        previewProfile_ = *preconfigPreviewProfile;
     } else {
         previewProfile_ = *previewProfile;
     }
     SetGuessMode(SceneMode::CAPTURE);
     return CameraErrorCode::SUCCESS;
+}
+
+std::shared_ptr<Profile> CaptureSession::GetMaxSizePhotoProfile(ProfileSizeRatio sizeRatio)
+{
+    auto inputDevice = GetInputDevice();
+    if (inputDevice == nullptr) {
+        return nullptr;
+    }
+    auto cameraInfo = inputDevice->GetCameraDeviceInfo();
+    if (cameraInfo == nullptr || cameraInfo->GetCameraType() != CAMERA_TYPE_DEFAULT) {
+        return nullptr;
+    }
+    SceneMode sceneMode = GetMode();
+    if (sceneMode == SceneMode::CAPTURE) {
+        auto it = cameraInfo->modePhotoProfiles_.find(SceneMode::CAPTURE);
+        if (it == cameraInfo->modePhotoProfiles_.end()) {
+            return nullptr;
+        }
+        float photoRatioValue = GetTargetRatio(sizeRatio, RATIO_VALUE_4_3);
+        return cameraInfo->GetMaxSizeProfile<Profile>(it->second, photoRatioValue, CameraFormat::CAMERA_FORMAT_JPEG);
+    } else if (sceneMode == SceneMode::VIDEO) {
+        auto it = cameraInfo->modePhotoProfiles_.find(SceneMode::VIDEO);
+        if (it == cameraInfo->modePhotoProfiles_.end()) {
+            return nullptr;
+        }
+        float photoRatioValue = GetTargetRatio(sizeRatio, RATIO_VALUE_16_9);
+        return cameraInfo->GetMaxSizeProfile<Profile>(it->second, photoRatioValue, CameraFormat::CAMERA_FORMAT_JPEG);
+    } else {
+        return nullptr;
+    }
+    return nullptr;
+}
+
+std::shared_ptr<Profile> CaptureSession::GetPreconfigPreviewProfile()
+{
+    auto preconfigProfiles = GetPreconfigProfiles();
+    if (preconfigProfiles == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::GetPreconfigPreviewProfile preconfigProfiles is nullptr");
+        return nullptr;
+    }
+    return std::make_shared<Profile>(preconfigProfiles->previewProfile);
+}
+
+std::shared_ptr<Profile> CaptureSession::GetPreconfigPhotoProfile()
+{
+    auto preconfigProfiles = GetPreconfigProfiles();
+    if (preconfigProfiles == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::GetPreconfigPhotoProfile preconfigProfiles is nullptr");
+        return nullptr;
+    }
+    if (preconfigProfiles->photoProfile.sizeFollowSensorMax_) {
+        auto maxSizePhotoProfile = GetMaxSizePhotoProfile(preconfigProfiles->photoProfile.sizeRatio_);
+        if (maxSizePhotoProfile == nullptr) {
+            MEDIA_ERR_LOG("CaptureSession::GetPreconfigPhotoProfile maxSizePhotoProfile is null");
+            return nullptr;
+        }
+        MEDIA_INFO_LOG("CaptureSession::GetPreconfigPhotoProfile preconfig maxSizePhotoProfile %{public}dx%{public}d "
+                       ",format:%{public}d",
+            maxSizePhotoProfile->size_.width, maxSizePhotoProfile->size_.height, maxSizePhotoProfile->format_);
+        return maxSizePhotoProfile;
+    }
+    return std::make_shared<Profile>(preconfigProfiles->photoProfile);
+}
+
+std::shared_ptr<VideoProfile> CaptureSession::GetPreconfigVideoProfile()
+{
+    auto preconfigProfiles = GetPreconfigProfiles();
+    if (preconfigProfiles == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::GetPreconfigVideoProfile preconfigProfiles is nullptr");
+        return nullptr;
+    }
+    return std::make_shared<VideoProfile>(preconfigProfiles->videoProfile);
 }
 
 int32_t CaptureSession::ConfigurePhotoOutput(sptr<CaptureOutput>& output)
@@ -616,19 +711,19 @@ int32_t CaptureSession::ConfigurePhotoOutput(sptr<CaptureOutput>& output)
             MEDIA_ERR_LOG("CaptureSession::ConfigurePhotoOutput photoProfile is not null, is that output in use?");
             return CameraErrorCode::SERVICE_FATL_ERROR;
         }
-        auto preconfigProfiles = GetPreconfigProfiles();
-        if (preconfigProfiles == nullptr) {
-            MEDIA_INFO_LOG("CaptureSession::ConfigurePhotoOutput profile is nullptr, preconfig profile is nullptr");
+        auto preconfigPhotoProfile = GetPreconfigPhotoProfile();
+        if (preconfigPhotoProfile == nullptr) {
+            MEDIA_ERR_LOG("CaptureSession::ConfigurePhotoOutput preconfigPhotoProfile is null");
             return CameraErrorCode::SERVICE_FATL_ERROR;
         }
-        output->SetPhotoProfile(preconfigProfiles->photoProfile);
+        output->SetPhotoProfile(*preconfigPhotoProfile);
         int32_t res = output->CreateStream();
         if (res != CameraErrorCode::SUCCESS) {
             MEDIA_ERR_LOG("CaptureSession::ConfigurePhotoOutput createStream from preconfig fail! %{public}d", res);
             return res;
         }
         MEDIA_INFO_LOG("CaptureSession::ConfigurePhotoOutput createStream from preconfig success");
-        photoProfile_ = preconfigProfiles->photoProfile;
+        photoProfile_ = *preconfigPhotoProfile;
     } else {
         photoProfile_ = *photoProfile;
     }
@@ -645,13 +740,13 @@ int32_t CaptureSession::ConfigureVideoOutput(sptr<CaptureOutput>& output)
             MEDIA_ERR_LOG("CaptureSession::ConfigureVideoOutput videoProfile is not null, is that output in use?");
             return CameraErrorCode::SERVICE_FATL_ERROR;
         }
-        auto preconfigProfiles = GetPreconfigProfiles();
-        if (preconfigProfiles == nullptr) {
-            MEDIA_INFO_LOG("CaptureSession::ConfigureVideoOutput profile is nullptr, preconfig profile is nullptr");
+        auto preconfigVideoProfile = GetPreconfigVideoProfile();
+        if (preconfigVideoProfile == nullptr) {
+            MEDIA_INFO_LOG("CaptureSession::ConfigureVideoOutput preconfigVideoProfile is nullptr");
             return CameraErrorCode::SERVICE_FATL_ERROR;
         }
-        videoProfile = std::make_shared<VideoProfile>(preconfigProfiles->videoProfile);
-        output->SetVideoProfile(preconfigProfiles->videoProfile);
+        videoProfile = preconfigVideoProfile;
+        output->SetVideoProfile(*preconfigVideoProfile);
         int32_t res = output->CreateStream();
         if (res != CameraErrorCode::SUCCESS) {
             MEDIA_ERR_LOG("CaptureSession::ConfigureVideoOutput createStream from preconfig fail! %{public}d", res);
@@ -816,13 +911,16 @@ bool CaptureSession::CanAddOutput(sptr<CaptureOutput>& output)
     std::shared_ptr<Profile> profilePtr = nullptr;
     switch (outputType) {
         case CAPTURE_OUTPUT_TYPE_PREVIEW:
-            profilePtr = output->GetPreviewProfile();
+            profilePtr = output->IsTagSetted(CaptureOutput::DYNAMIC_PROFILE) ? GetPreconfigPreviewProfile()
+                                                                             : output->GetPreviewProfile();
             break;
         case CAPTURE_OUTPUT_TYPE_PHOTO:
-            profilePtr = output->GetPhotoProfile();
+            profilePtr = output->IsTagSetted(CaptureOutput::DYNAMIC_PROFILE) ? GetPreconfigPhotoProfile()
+                                                                             : output->GetPhotoProfile();
             break;
         case CAPTURE_OUTPUT_TYPE_VIDEO:
-            profilePtr = output->GetVideoProfile();
+            profilePtr = output->IsTagSetted(CaptureOutput::DYNAMIC_PROFILE) ? GetPreconfigVideoProfile()
+                                                                             : output->GetVideoProfile();
             break;
         default:
             MEDIA_ERR_LOG("CaptureSession::CanAddOutput CaptureOutputType unknown");
@@ -4440,21 +4538,22 @@ bool CaptureSession::ValidateOutputProfile(Profile& outputProfile, CaptureOutput
     }
 }
 
-bool CaptureSession::CanPreconfig(PreconfigType preconfigType)
+bool CaptureSession::CanPreconfig(PreconfigType preconfigType, ProfileSizeRatio preconfigRatio)
 {
     // Default implementation return false. Only photo session and video session override this method.
     MEDIA_ERR_LOG("CaptureSession::CanPreconfig is not valid! Did you set the correct mode?");
     return false;
 }
 
-int32_t CaptureSession::Preconfig(PreconfigType preconfigType)
+int32_t CaptureSession::Preconfig(PreconfigType preconfigType, ProfileSizeRatio preconfigRatio)
 {
     // Default implementation throw error. Only photo session and video session override this method.
     MEDIA_ERR_LOG("CaptureSession::Preconfig is not valid! Did you set the correct mode?");
     return CAMERA_UNSUPPORTED;
 }
 
-std::shared_ptr<PreconfigProfiles> CaptureSession::GeneratePreconfigProfiles(PreconfigType preconfigType)
+std::shared_ptr<PreconfigProfiles> CaptureSession::GeneratePreconfigProfiles(
+    PreconfigType preconfigType, ProfileSizeRatio preconfigRatio)
 {
     // Default implementation return nullptr. Only photo session and video session override this method.
     MEDIA_ERR_LOG("CaptureSession::GeneratePreconfigProfiles is not valid! Did you set the correct mode?");

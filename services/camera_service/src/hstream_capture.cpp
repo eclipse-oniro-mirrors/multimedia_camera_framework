@@ -168,6 +168,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfoPhoto, false));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         ResetCaptureId();
+        captureIdForConfirmCapture_ = CAPTURE_ID_UNSET;
         MEDIA_ERR_LOG("HStreamCapture::Capture failed with error Code: %{public}d", rc);
         CameraReportUtils::ReportCameraError(
             "HStreamCapture::Capture", rc, true, CameraReportUtils::GetCallerInfo());
@@ -327,7 +328,7 @@ int32_t HStreamCapture::ConfirmCapture()
     if (streamOperator == nullptr) {
         return CAMERA_INVALID_STATE;
     }
-    auto preparedCaptureId = GetPreparedCaptureId();
+    auto preparedCaptureId = captureIdForConfirmCapture_;
     MEDIA_INFO_LOG("HStreamCapture::ConfirmCapture with capture ID: %{public}d", preparedCaptureId);
     sptr<OHOS::HDI::Camera::V1_2::IStreamOperator> streamOperatorV1_2 =
         OHOS::HDI::Camera::V1_2::IStreamOperator::CastFrom(streamOperator);
@@ -343,6 +344,7 @@ int32_t HStreamCapture::ConfirmCapture()
         ret = HdiToServiceErrorV1_2(rc);
     }
     ResetCaptureId();
+    captureIdForConfirmCapture_ = CAPTURE_ID_UNSET;
     return ret;
 }
 
@@ -404,6 +406,7 @@ int32_t HStreamCapture::OnCaptureEnded(int32_t captureId, int32_t frameCount)
         MEDIA_INFO_LOG("HStreamCapture::OnCaptureEnded capturId = %{public}d already used, need release",
                        preparedCaptureId);
         ResetCaptureId();
+        captureIdForConfirmCapture_ = CAPTURE_ID_UNSET;
     }
     return CAMERA_OK;
 }
@@ -427,6 +430,7 @@ int32_t HStreamCapture::OnCaptureError(int32_t captureId, int32_t errorCode)
         MEDIA_INFO_LOG("HStreamCapture::OnCaptureError capturId = %{public}d already used, need release",
                        preparedCaptureId);
         ResetCaptureId();
+        captureIdForConfirmCapture_ = CAPTURE_ID_UNSET;
     }
     return CAMERA_OK;
 }

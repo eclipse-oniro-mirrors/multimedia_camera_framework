@@ -35,6 +35,7 @@
 #include "datashare_predicates.h"
 #include "datashare_result_set.h"
 #include "deferred_processing_service.h"
+#include "hcamera_preconfig.h"
 #ifdef DEVICE_MANAGER
 #include "device_manager_impl.h"
 #endif
@@ -1025,9 +1026,6 @@ int32_t HCameraService::MuteCameraFunc(bool muteMode)
     }
     int32_t ret = CAMERA_OK;
     bool currentMuteMode = muteModeStored_;
-    if (muteMode == currentMuteMode) {
-        return CAMERA_OK;
-    }
     sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
     pid_t activeClient = deviceManager->GetActiveClient();
     if (activeClient == -1) {
@@ -1574,83 +1572,6 @@ void HCameraService::DumpCameraThumbnail(common_metadata_header_t* metadataEntry
     }
 }
 
-void HCameraService::DumpPreconfig720P(CameraInfoDumper& infoDumper)
-{
-    infoDumper.Title("PRECONFIG_720P:");
-    infoDumper.Push();
-    infoDumper.Title("PhotoSession:");
-    infoDumper.Msg("Colorspace:DISPLAY_P3");
-    infoDumper.Msg("[Preview]\tFormat:CAMERA_FORMAT_YUV_420_SP\tSize:1280x720\tFps:1-30,prefer:30");
-    infoDumper.Msg("[Photo]\tFormat:CAMERA_FORMAT_JPEG\tSize:1280x720");
-
-    infoDumper.Title("VideoSession:");
-    infoDumper.Msg("Colorspace:BT2020_HLG_LIMIT");
-    infoDumper.Msg("[Preview]\tFormat:CAMERA_FORMAT_YCRCB_P010\tSize:1280x720\tFps:1-30,prefer:30");
-    infoDumper.Msg("[Video]\tFormat:CAMERA_FORMAT_YCRCB_P010\tSize:1280x720\tFps:1-30,prefer:30");
-    infoDumper.Msg("[Photo]\tFormat:CAMERA_FORMAT_JPEG\tSize:1280x720");
-    infoDumper.Pop();
-}
-
-void HCameraService::DumpPreconfig1080P(CameraInfoDumper& infoDumper)
-{
-    infoDumper.Title("PRECONFIG_1080P:");
-    infoDumper.Push();
-    infoDumper.Title("PhotoSession:");
-    infoDumper.Msg("Colorspace:DISPLAY_P3");
-    infoDumper.Msg("[Preview]\tFormat:CAMERA_FORMAT_YUV_420_SP\tSize:1920x1080\tFps:1-30,prefer:30");
-    infoDumper.Msg("[Photo]\tFormat:CAMERA_FORMAT_JPEG\tSize:1920x1080");
-
-    infoDumper.Title("VideoSession:");
-    infoDumper.Msg("Colorspace:BT2020_HLG_LIMIT");
-    infoDumper.Msg("[Preview]\tFormat:CAMERA_FORMAT_YCRCB_P010\tSize:1920x1080\tFps:1-30,prefer:30");
-    infoDumper.Msg("[Video]\tFormat:CAMERA_FORMAT_YCRCB_P010\tSize:1920x1080\tFps:1-30,prefer:30");
-    infoDumper.Msg("[Photo]\tFormat:CAMERA_FORMAT_JPEG\tSize:1920x1080");
-    infoDumper.Pop();
-}
-
-void HCameraService::DumpPreconfig4k(CameraInfoDumper& infoDumper)
-{
-    infoDumper.Title("PRECONFIG_4K:");
-    infoDumper.Push();
-    infoDumper.Title("PhotoSession:");
-    infoDumper.Msg("Colorspace:DISPLAY_P3");
-    infoDumper.Msg("[Preview]\tFormat:CAMERA_FORMAT_YUV_420_SP\tSize:1920x1080\tFps:1-30,prefer:30");
-    infoDumper.Msg("[Photo]\tFormat:CAMERA_FORMAT_JPEG\tSize:3840x2160");
-
-    infoDumper.Title("VideoSession:");
-    infoDumper.Msg("Colorspace:BT2020_HLG_LIMIT");
-    infoDumper.Msg("[Preview]\tFormat:CAMERA_FORMAT_YCRCB_P010\tSize:1920x1080\tFps:1-30,prefer:30");
-    infoDumper.Msg("[Video]\tFormat:CAMERA_FORMAT_YCRCB_P010\tSize:3840x2160\tFps:1-30,prefer:30");
-    infoDumper.Msg("[Photo]\tFormat:CAMERA_FORMAT_JPEG\tSize:3840x2160");
-    infoDumper.Pop();
-}
-
-void HCameraService::DumpPreconfigHighQuality(CameraInfoDumper& infoDumper)
-{
-    infoDumper.Title("PRECONFIG_HIGH_QUALITY:");
-    infoDumper.Push();
-    infoDumper.Title("PhotoSession:");
-    infoDumper.Msg("Colorspace:DISPLAY_P3");
-    infoDumper.Msg("[Preview]\tFormat:CAMERA_FORMAT_YUV_420_SP\tSize:1920x1440\tFps:1-30,prefer:30");
-    infoDumper.Msg("[Photo]\tFormat:CAMERA_FORMAT_JPEG\tSize:4096x3072");
-
-    infoDumper.Title("VideoSession:");
-    infoDumper.Msg("Colorspace:BT2020_HLG_LIMIT");
-    infoDumper.Msg("[Preview]\tFormat:CAMERA_FORMAT_YCRCB_P010\tSize:1920x1080\tFps:1-30,prefer:30");
-    infoDumper.Msg("[Video]\tFormat:CAMERA_FORMAT_YCRCB_P010\tSize:3840x2160\tFps:1-30,prefer:30");
-    infoDumper.Msg("[Photo]\tFormat:CAMERA_FORMAT_JPEG\tSize:3840x2160");
-    infoDumper.Pop();
-}
-
-void HCameraService::DumpPreconfigInfo(CameraInfoDumper& infoDumper)
-{
-    infoDumper.Tip("--------Dump PreconfigInfo Begin-------");
-    DumpPreconfig720P(infoDumper);
-    DumpPreconfig1080P(infoDumper);
-    DumpPreconfig4k(infoDumper);
-    DumpPreconfigHighQuality(infoDumper);
-}
-
 int32_t HCameraService::Dump(int fd, const vector<u16string>& args)
 {
     unordered_set<u16string> argSets;
@@ -1672,7 +1593,8 @@ int32_t HCameraService::Dump(int fd, const vector<u16string>& args)
         DumpCameraInfo(infoDumper, cameraIds, cameraAbilityList);
     }
     if (args.empty() || argSets.count(u16string(u"preconfig"))) {
-        DumpPreconfigInfo(infoDumper);
+        infoDumper.Tip("--------Dump PreconfigInfo Begin-------");
+        DumpPreconfigInfo(infoDumper, cameraHostManager_);
     }
     if (args.empty() || argSets.count(u16string(u"clientwiseinfo"))) {
         infoDumper.Tip("--------Dump Clientwise Info Begin-------");

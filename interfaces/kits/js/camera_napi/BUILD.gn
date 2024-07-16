@@ -56,6 +56,7 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/listener_base.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/aperture_video_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/high_res_photo_session_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/light_painting_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/macro_photo_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/macro_video_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/mode_manager_napi.cpp",
@@ -78,6 +79,7 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/preview_output_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/video_output_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/session/camera_session_napi.cpp",
+    "${multimedia_camera_framework_path}/services/camera_service/src/dfx/camera_xcollie.cpp",
   ]
   deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
   external_deps = [

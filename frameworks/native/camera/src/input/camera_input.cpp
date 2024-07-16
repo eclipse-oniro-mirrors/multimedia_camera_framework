@@ -65,6 +65,17 @@ int32_t CameraDeviceServiceCallback::OnResult(const uint64_t timestamp,
     if (camInputSptr->GetResultCallback() != nullptr) {
         camInputSptr->GetResultCallback()->OnResult(timestamp, result);
     }
+    camera_metadata_item item;
+    int32_t retCode = OHOS::Camera::FindCameraMetadataItem(result->get(),
+        OHOS_STATUS_CAMERA_OCCLUSION_DETECTION, &item);
+    if (retCode == CAM_META_SUCCESS && item.count != 0) {
+        MEDIA_DEBUG_LOG("OHOS_STATUS_CAMERA_OCCLUSION_DETECTION is not null or zero");
+        if (camInputSptr != nullptr && camInputSptr->GetOcclusionDetectCallback() != nullptr) {
+            camInputSptr->GetOcclusionDetectCallback()->OnCameraOcclusionDetected(item.data.i32[0]);
+        } else {
+            MEDIA_INFO_LOG("CameraDeviceServiceCallback::OnCameraOcclusionDetected not set!, Discarding callback");
+        }
+    }
     camInputSptr->ProcessCallbackUpdates(timestamp, result);
     return CAMERA_OK;
 }
@@ -266,11 +277,22 @@ void CameraInput::SetCameraDeviceInfo(sptr<CameraDevice> cameraObj)
     cameraObj_ = cameraObj;
     return;
 }
+
+void CameraInput::SetOcclusionDetectCallback(
+    std::shared_ptr<CameraOcclusionDetectCallback> cameraOcclusionDetectCallback)
+{
+    if (cameraOcclusionDetectCallback == nullptr) {
+        MEDIA_ERR_LOG("SetOcclusionDetectCallback:SetOcclusionDetectCallback error cameraOcclusionDetectCallback");
+    }
+    MEDIA_DEBUG_LOG("CameraInput::SetOcclusionDetectCallback callback");
+    cameraOcclusionDetectCallback_ = cameraOcclusionDetectCallback;
+    return;
+}
+
 std::string CameraInput::GetCameraId()
 {
     auto cameraObject = GetCameraDeviceInfo();
-    if (cameraObject == nullptr)
-    {
+    if (cameraObject == nullptr) {
         MEDIA_DEBUG_LOG("cameraObject is null");
         return nullptr;
     }
@@ -288,12 +310,19 @@ std::shared_ptr<ErrorCallback> CameraInput::GetErrorCallback()
     std::lock_guard<std::mutex> lock(errorCallbackMutex_);
     return errorCallback_;
 }
+
 std::shared_ptr<ResultCallback> CameraInput::GetResultCallback()
 {
     std::lock_guard<std::mutex> lock(resultCallbackMutex_);
     MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::GetResultCallback");
     return resultCallback_;
 }
+
+std::shared_ptr<CameraOcclusionDetectCallback> CameraInput::GetOcclusionDetectCallback()
+{
+    return cameraOcclusionDetectCallback_;
+}
+
 sptr<CameraDevice> CameraInput::GetCameraDeviceInfo()
 {
     std::lock_guard<std::mutex> lock(cameraDeviceInfoMutex_);
@@ -335,15 +364,13 @@ int32_t CameraInput::UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>
     }
 
     auto cameraObject = GetCameraDeviceInfo();
-    if (cameraObject == nullptr)
-    {
+    if (cameraObject == nullptr) {
         MEDIA_DEBUG_LOG("cameraObject is null");
         return CAMERA_INVALID_ARG;
     }
     std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObject->GetMetadata();
     bool mergeResult = MergeMetadata(changedMetadata, baseMetadata);
-    if (!mergeResult)
-    {
+    if (!mergeResult) {
         MEDIA_DEBUG_LOG("CameraInput::UpdateSetting() baseMetadata or itemEntry is nullptr");
         return CAMERA_INVALID_ARG;
     }
@@ -392,8 +419,7 @@ bool CameraInput::MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetada
 std::string CameraInput::GetCameraSettings()
 {
     auto cameraObject = GetCameraDeviceInfo();
-    if (cameraObject == nullptr)
-    {
+    if (cameraObject == nullptr) {
         MEDIA_DEBUG_LOG("cameraObject is null");
         return nullptr;
     }

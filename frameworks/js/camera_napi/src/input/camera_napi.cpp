@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
+#include "dfx/camera_xcollie.h"
 #include "input/camera_napi.h"
-
 #include "napi/native_common.h"
 
 namespace OHOS {
@@ -109,6 +109,8 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("SceneMode", CreateObjectWithMap(env, "SceneMode", mapSceneMode, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY(
             "PreconfigType", CreateObjectWithMap(env, "PreconfigType", mapPreconfigType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY(
+            "PreconfigRatio", CreateObjectWithMap(env, "PreconfigRatio", mapPreconfigRatio, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("FilterType", CreateObjectWithMap(env, "FilterType", mapFilterType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("BeautyType", CreateObjectWithMap(env, "BeautyType", mapBeautyType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY(
@@ -141,8 +143,9 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("PolicyType", CreateObjectWithMap(env, "PolicyType", mapPolicyType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY(
             "SceneFeatureType", CreateObjectWithMap(env, "SceneFeatureType", mapSceneFeatureType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("FoldStatus", CreateObjectWithMap(env, "FoldStatus", mapFoldStatus, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY(
-            "FoldStatus", CreateObjectWithMap(env, "FoldStatus", mapFoldStatus, g_ignoreRef_)),
+            "LightPaintingType", CreateObjectWithMap(env, "LightPaintingType", mapLightPaintingType, g_ignoreRef_)),
     };
 
     status = napi_define_class(env, CAMERA_LIB_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, CameraNapiConstructor,
@@ -178,6 +181,7 @@ napi_status CameraNapi::AddNamedProperty(napi_env env, napi_value object,
 napi_value CameraNapi::CreateCameraManagerInstance(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CreateCameraManagerInstance is called");
+    CameraXCollie cameraXCollie("CameraNapi::CreateCameraManagerInstance");
     napi_value result = nullptr;
     size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE] = {0};
