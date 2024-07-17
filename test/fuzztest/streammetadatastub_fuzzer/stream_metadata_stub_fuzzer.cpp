@@ -104,7 +104,7 @@ void Test(uint8_t *rawData, size_t size)
 void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
 {
     MessageParcel data;
-    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    data.WriteInterfaceToken(fuzz->GetDescriptor());
     auto metadata = MakeMetadata(rawData, size);
     if (!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(metadata, data))) {
         return;

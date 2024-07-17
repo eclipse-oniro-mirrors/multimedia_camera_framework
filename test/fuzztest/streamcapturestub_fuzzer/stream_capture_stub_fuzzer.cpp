@@ -166,6 +166,12 @@ void Test_HandleCapture(uint8_t *rawData, size_t size)
 void Test_HandleSetThumbnail(uint8_t *rawData, size_t size)
 {
     MessageParcel data;
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    if (photoSurface == nullptr) {
+        return;
+    }
+    sptr<IRemoteObject> producer = photoSurface->GetProducer()->AsObject();
+    data.WriteRemoteObject(producer);
     data.WriteRawData(rawData, size);
     data.RewindRead(0);
     fuzz->HandleSetThumbnail(data);
@@ -182,6 +188,12 @@ void Test_HandleSetRawPhotoInfo(uint8_t *rawData, size_t size)
 void Test_HandleEnableDeferredType(uint8_t *rawData, size_t size)
 {
     MessageParcel data;
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    if (photoSurface == nullptr) {
+        return;
+    }
+    sptr<IRemoteObject> producer = photoSurface->GetProducer()->AsObject();
+    data.WriteRemoteObject(producer);
     data.WriteRawData(rawData, size);
     data.RewindRead(0);
     fuzz->HandleEnableDeferredType(data);
@@ -190,6 +202,8 @@ void Test_HandleEnableDeferredType(uint8_t *rawData, size_t size)
 void Test_HandleSetCallback(uint8_t *rawData, size_t size)
 {
     MessageParcel data;
+    sptr<IRemoteObject> callback = new IStreamCaptureCallbackMock();
+    data.WriteRemoteObject(callback);
     data.WriteRawData(rawData, size);
     data.RewindRead(0);
     fuzz->HandleSetCallback(data);
