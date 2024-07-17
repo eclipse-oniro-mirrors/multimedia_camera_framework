@@ -26,6 +26,7 @@
 #include "hstream_common.h"
 #include "v1_0/istream_operator.h"
 #include "v1_2/istream_operator.h"
+#include "safe_map.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -56,18 +57,17 @@ public:
     int32_t OnFrameShutterEnd(int32_t captureId, uint64_t timestamp);
     int32_t OnCaptureReady(int32_t captureId, uint64_t timestamp);
     void DumpStreamInfo(CameraInfoDumper& infoDumper) override;
-    void SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_);
+    void SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_, int32_t captureId);
     void SetMode(int32_t modeName);
     int32_t GetMode();
     int32_t IsDeferredPhotoEnabled() override;
     int32_t IsDeferredVideoEnabled() override;
-
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
+    SafeMap<int32_t, int32_t> rotationMap_ = {};
 
 private:
     void ProcessCaptureInfoPhoto(CaptureInfo& captureInfoPhoto,
-        const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings);
-
+        const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings, int32_t captureId);
     sptr<IStreamCaptureCallback> streamCaptureCallback_;
     std::mutex callbackLock_;
     int32_t thumbnailSwitch_;

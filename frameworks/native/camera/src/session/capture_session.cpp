@@ -1136,14 +1136,15 @@ void CaptureSession::SetCallback(std::shared_ptr<SessionCallback> callback)
     return;
 }
 
-void CaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType)
+void CaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
+    int64_t timestamp)
 {
     CAMERA_SYNC_TRACE;
     int32_t errorCode = CAMERA_OK;
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     auto captureSession = GetCaptureSession();
     if (captureSession) {
-        errorCode = captureSession->CreateMediaLibrary(photoProxy, uri, cameraShotType);
+        errorCode = captureSession->CreateMediaLibrary(photoProxy, uri, cameraShotType, timestamp);
         if (errorCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to create media library, errorCode: %{public}d", errorCode);
         }

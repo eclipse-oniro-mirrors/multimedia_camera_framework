@@ -39,7 +39,7 @@ public:
     explicit AudioVideoMuxer();
     ~AudioVideoMuxer();
 
-    int32_t Create(int32_t fd, OH_AVOutputFormat format, std::shared_ptr<Media::PhotoAssetProxy> photoAssetProxy);
+    int32_t Create(OH_AVOutputFormat format, std::shared_ptr<Media::PhotoAssetProxy> photoAssetProxy);
     int32_t AddTrack(int &trackId, OH_AVFormat *format, TrackType type);
     int32_t Start();
     int32_t WriteSampleBuffer(OH_AVBuffer *sample, TrackType type);

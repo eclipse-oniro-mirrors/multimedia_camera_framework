@@ -92,7 +92,7 @@ public:
     virtual int32_t StartMovingPhotoCapture(bool isMirror, int32_t rotation) = 0;
 
     virtual int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
-        std::string &uri, int32_t &cameraShotType) = 0;
+        std::string &uri, int32_t &cameraShotType, int64_t timestamp) = 0;
 
     virtual int32_t SetPreviewRotation() = 0;
 

@@ -133,6 +133,7 @@ public:
 
     virtual const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) = 0;
     virtual const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId) = 0;
+    virtual void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp) = 0;
 
 private:
     std::mutex cbMutex_;
@@ -159,7 +160,7 @@ public:
     explicit SessionDrainImageCallback(std::vector<sptr<FrameRecord>>& frameCacheList,
                                        wptr<MovingPhotoListener> listener,
                                        wptr<MovingPhotoVideoCache> cache,
-                                       string taskName,
+                                       uint64_t timestamp,
                                        int32_t rotation);
     ~SessionDrainImageCallback();
     void OnDrainImage(sptr<FrameRecord> frame) override;
@@ -169,7 +170,7 @@ private:
     std::vector<sptr<FrameRecord>> frameCacheList_;
     wptr<MovingPhotoListener> listener_;
     wptr<MovingPhotoVideoCache> videoCache_;
-    string taskName_;
+    uint64_t timestamp_;
     int32_t rotation_;
 };
 
@@ -214,11 +215,13 @@ public:
 
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
     int32_t StartMovingPhotoCapture(bool isMirror, int32_t rotation) override;
-    int32_t CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType) override;
+    int32_t CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
+        int64_t timestamp) override;
     const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) override;
     const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId) override;
     int32_t SetFeatureMode(int32_t featureMode) override;
-    void StartRecord(const std::string taskName, int32_t rotation);
+    void StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp) override;
+    void StartRecord(uint64_t timestamp, int32_t rotation);
     int32_t SetPreviewRotation() override;
 
     void DumpSessionInfo(CameraInfoDumper& infoDumper);
@@ -271,9 +274,10 @@ private:
     bool InitAudioCapture();
     bool StartAudioCapture();
     void ProcessAudioBuffer();
-    void StartOnceRecord(std::string taskName, int32_t rotation);
+    void StartOnceRecord(uint64_t timestamp, int32_t rotation);
     int32_t StartPreviewStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void StartMovingPhoto(sptr<HStreamRepeat>& curStreamRepeat);
+    int32_t GetSensorOritation();
 
     std::string GetSessionState();
 

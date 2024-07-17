@@ -78,7 +78,7 @@ void SampleCallback::OnInputBufferAvailable(OH_AVCodec *codec, uint32_t index, O
         return;
     }
     (void)codec;
-    CodecUserData *codecAudioData = static_cast<CodecUserData *>(userData);
+    sptr<CodecUserData> codecAudioData = static_cast<CodecUserData *>(userData);
     std::unique_lock<std::mutex> lock(codecAudioData->inputMutex_);
     codecAudioData->inputBufferInfoQueue_.emplace(new CodecAVBufferInfo(index, buffer));
     codecAudioData->inputCond_.notify_all();
@@ -88,7 +88,10 @@ void SampleCallback::OnOutputBufferAvailable(OH_AVCodec *codec, uint32_t index, 
 {
     MEDIA_WARNING_LOG("OnOutputBufferAvailable");
     (void)codec;
-    CodecUserData *codecAudioData = static_cast<CodecUserData *>(userData);
+    if (userData == nullptr) {
+        return;
+    }
+    sptr<CodecUserData> codecAudioData = static_cast<CodecUserData *>(userData);
     std::unique_lock<std::mutex> lock(codecAudioData->outputMutex_);
     codecAudioData->outputBufferInfoQueue_.emplace(new CodecAVBufferInfo(index, buffer));
     codecAudioData->outputCond_.notify_all();

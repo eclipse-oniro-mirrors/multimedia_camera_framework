@@ -115,11 +115,6 @@ int32_t AudioEncoder::Release()
             encoder_ = nullptr;
         }
     }
-    std::unique_lock<std::mutex> contextLock(contextMutex_);
-    if (context_ != nullptr) {
-        delete context_;
-        context_ = nullptr;
-    }
     isStarted_ = false;
     return 0;
 }
@@ -226,11 +221,12 @@ bool AudioEncoder::EncodeAudioBuffer(vector<sptr<AudioRecord>> audioRecords)
 }
 
 
-int32_t AudioEncoder::SetCallback(CodecUserData *codecUserData)
+int32_t AudioEncoder::SetCallback(sptr<CodecUserData> codecUserData)
 {
     int32_t ret = OH_AudioCodec_RegisterCallback(encoder_,
         {SampleCallback::OnCodecError, SampleCallback::OnOutputFormatChanged,
-         SampleCallback::OnInputBufferAvailable, SampleCallback::OnOutputBufferAvailable}, codecUserData);
+        SampleCallback::OnInputBufferAvailable, SampleCallback::OnOutputBufferAvailable},
+        static_cast<void *>(codecUserData));
     CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Set callback failed, ret: %{public}d", ret);
     return 0;
 }

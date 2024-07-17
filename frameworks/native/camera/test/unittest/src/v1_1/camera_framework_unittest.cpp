@@ -4039,7 +4039,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_029, TestSize.Level
     EXPECT_EQ(streamCapture->SetThumbnail(true, producer1), CAMERA_OK);
     streamCapture->DumpStreamInfo(infoDumper);
     EXPECT_EQ(streamCapture->SetThumbnail(true, producer), CAMERA_OK);
-    streamCapture->SetRotation(metadata);
+    streamCapture->SetRotation(metadata, captureId);
     mockStreamOperator = nullptr;
     streamCapture->LinkInput(mockStreamOperator, metadata);
     EXPECT_EQ(streamCapture->Capture(metadata),  CAMERA_INVALID_STATE);

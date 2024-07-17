@@ -38,7 +38,7 @@ public:
     int32_t Release();
 
 private:
-    int32_t SetCallback(CodecUserData *codecAudioData);
+    int32_t SetCallback(sptr<CodecUserData> codecUserData);
     void RestartAudioCodec();
     int32_t Configure();
     bool EnqueueBuffer(sptr<AudioRecord> audioRecord);
@@ -47,7 +47,7 @@ private:
     std::mutex encoderMutex_;
     OH_AVCodec *encoder_ = nullptr;
     std::mutex contextMutex_;
-    CodecUserData *context_ = nullptr;
+    sptr<CodecUserData> context_ = nullptr;
     std::mutex serialMutex_;
 };
 } // CameraStandard

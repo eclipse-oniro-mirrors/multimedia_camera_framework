@@ -42,6 +42,7 @@ HStreamCapture::HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t for
 
 HStreamCapture::~HStreamCapture()
 {
+    rotationMap_.Clear();
     MEDIA_INFO_LOG(
         "HStreamCapture::~HStreamCapture deconstruct, format:%{public}d size:%{public}dx%{public}d streamId:%{public}d",
         format_, width_, height_, GetFwkStreamId());
@@ -150,7 +151,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     }
     CaptureInfo captureInfoPhoto;
     captureInfoPhoto.streamIds_ = { GetHdiStreamId() };
-    ProcessCaptureInfoPhoto(captureInfoPhoto, captureSettings);
+    ProcessCaptureInfoPhoto(captureInfoPhoto, captureSettings, preparedCaptureId);
     
     auto callingTokenId = IPCSkeleton::GetCallingTokenID();
     const std::string permissionName = "ohos.permission.CAMERA";
@@ -208,7 +209,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
 }
 
 void HStreamCapture::ProcessCaptureInfoPhoto(CaptureInfo& captureInfoPhoto,
-    const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings)
+    const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings, int32_t captureId)
 {
     if (!OHOS::Camera::GetCameraMetadataItemCount(captureSettings->get())) {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
@@ -221,7 +222,7 @@ void HStreamCapture::ProcessCaptureInfoPhoto(CaptureInfo& captureInfoPhoto,
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(captureInfoPhoto.captureSetting_, captureMetadataSetting_);
     if (captureMetadataSetting_ != nullptr) {
         // convert rotation with application set rotation
-        SetRotation(captureMetadataSetting_);
+        SetRotation(captureMetadataSetting_, captureId);
 
         // update settings
         std::vector<uint8_t> finalSetting;
@@ -230,7 +231,8 @@ void HStreamCapture::ProcessCaptureInfoPhoto(CaptureInfo& captureInfoPhoto,
     }
 }
 
-void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_)
+void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_,
+    int32_t captureId)
 {
     // set orientation for capture
     // sensor orientation, counter-clockwise rotation
@@ -263,7 +265,7 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
         rotationValue = item.data.i32[0];
     }
     MEDIA_INFO_LOG("set rotation app rotationValue %{public}d", rotationValue);
-
+    rotationMap_.EnsureInsert(captureId, rotationValue);
     // real rotation
     int32_t rotation = sensorOrientation + rotationValue;
     if (rotation >= CAPTURE_ROTATE_360) {

@@ -1148,6 +1148,29 @@ bool HCaptureSession::QueryZoomPerformance(std::vector<float>& crossZoomAndTime,
     return true;
 }
 
+int32_t HCaptureSession::GetSensorOritation()
+{
+    auto cameraDevice = GetCameraDevice();
+    int32_t sensorOrientation = 0;
+    if (cameraDevice == nullptr) {
+        MEDIA_ERR_LOG("HCaptureSession::GetSensorOritation() cameraDevice is null");
+        return sensorOrientation;
+    }
+    std::shared_ptr<OHOS::Camera::CameraMetadata> ability = cameraDevice->GetDeviceAbility();
+    if (ability == nullptr) {
+        return sensorOrientation;
+    }
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_SENSOR_ORIENTATION, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_ERR_LOG("HCaptureSession::GetSensorOritation get sensor orientation failed");
+        return sensorOrientation;
+    }
+    sensorOrientation = item.data.i32[0];
+    MEDIA_INFO_LOG("HCaptureSession::GetSensorOritation sensor orientation %{public}d", sensorOrientation);
+    return sensorOrientation;
+}
+
 int32_t HCaptureSession::SetSmoothZoom(
     int32_t smoothZoomType, int32_t operationMode, float targetZoomRatio, float& duration)
 {
@@ -1515,6 +1538,9 @@ void HCaptureSession::DumpSessionInfo(CameraInfoDumper& infoDumper)
 
 int32_t HCaptureSession::StartMovingPhotoCapture(bool isMirror, int32_t rotation)
 {
+    if (!isSetMotionPhoto_) {
+        return CAMERA_OK;
+    }
     if (isMirror != isMovingPhotoMirror_) {
         auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
         for (auto& stream : repeatStreams) {
@@ -1535,10 +1561,17 @@ int32_t HCaptureSession::StartMovingPhotoCapture(bool isMirror, int32_t rotation
         // clear cache frame
         livephotoListener_->ClearCache();
     }
-    
-    auto timestamp = high_resolution_clock::now().time_since_epoch();
-    StartRecord(std::to_string(timestamp.count()), rotation);
     return CAMERA_OK;
+}
+
+void HCaptureSession::StartMovingPhotoEncode(int32_t rotation, uint64_t timestamp)
+{
+    if (!isSetMotionPhoto_) {
+        return;
+    }
+    int32_t realRotation = GetSensorOritation() + rotation;
+    realRotation = realRotation > ROTATION_360 ? realRotation - ROTATION_360 : realRotation;
+    StartRecord(timestamp, realRotation);
 }
 
 std::string HCaptureSession::CreateDisplayName()
@@ -1571,7 +1604,7 @@ std::string HCaptureSession::CreateDisplayName()
 }
 
 int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
-    std::string &uri, int32_t &cameraShotType)
+    std::string &uri, int32_t &cameraShotType, int64_t timestamp)
 {
     CAMERA_SYNC_TRACE;
     sptr<IRemoteObject> object = nullptr;
@@ -1614,12 +1647,9 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
         cameraServerPhotoProxy->GetLatitude(), cameraServerPhotoProxy->GetLongitude());
     photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraServerPhotoProxy);
     uri = photoAssetProxy->GetPhotoAssetUri();
-    if (isSetMotionPhoto_) {
-        int32_t videoFd = photoAssetProxy->GetVideoFd();
-        MEDIA_DEBUG_LOG("videFd:%{public}d", videoFd);
-        if (taskManager_) {
-            taskManager_->SetVideoFd(videoFd, photoAssetProxy);
-        }
+    if (isSetMotionPhoto_ && taskManager_) {
+        MEDIA_INFO_LOG("taskManager setVideoFd start");
+        taskManager_->SetVideoFd(timestamp, photoAssetProxy);
     }
     return CAMERA_OK;
 }
@@ -1653,11 +1683,11 @@ int32_t StreamOperatorCallback::OnCaptureStarted(int32_t captureId, const std::v
     return CAMERA_OK;
 }
 
-void HCaptureSession::StartRecord(const std::string taskName, int32_t rotation)
+void HCaptureSession::StartRecord(uint64_t timestamp, int32_t rotation)
 {
     if (isSetMotionPhoto_) {
-        taskManager_->SubmitTask([this, taskName, rotation]() {
-            this->StartOnceRecord(taskName, rotation);
+        taskManager_->SubmitTask([this, timestamp, rotation]() {
+            this->StartOnceRecord(timestamp, rotation);
         });
     }
 }
@@ -1665,9 +1695,10 @@ void HCaptureSession::StartRecord(const std::string taskName, int32_t rotation)
 SessionDrainImageCallback::SessionDrainImageCallback(std::vector<sptr<FrameRecord>>& frameCacheList,
                                                      wptr<MovingPhotoListener> listener,
                                                      wptr<MovingPhotoVideoCache> cache,
-                                                     std::string taskName,
+                                                     uint64_t timestamp,
                                                      int32_t rotation)
-    : frameCacheList_(frameCacheList), listener_(listener), videoCache_(cache), taskName_(taskName), rotation_(rotation)
+    : frameCacheList_(frameCacheList), listener_(listener), videoCache_(cache), timestamp_(timestamp),
+      rotation_(rotation)
 {
 }
 
@@ -1697,9 +1728,9 @@ void SessionDrainImageCallback::OnDrainImageFinish(bool isFinished)
     videoCache_->GetFrameCachedResult(
         frameCacheList_,
         [videoCache](const std::vector<sptr<FrameRecord>>& frameRecords,
-                     const std::string& taskName,
-                     int32_t rotation) { videoCache->DoMuxerVideo(frameRecords, taskName, rotation); },
-        taskName_,
+                     uint64_t timestamp,
+                     int32_t rotation) { videoCache->DoMuxerVideo(frameRecords, timestamp, rotation); },
+        timestamp_,
         rotation_);
     auto listener = listener_.promote();
     if (listener && isFinished) {
@@ -1707,13 +1738,13 @@ void SessionDrainImageCallback::OnDrainImageFinish(bool isFinished)
     }
 }
 
-void HCaptureSession::StartOnceRecord(string taskName, int32_t rotation)
+void HCaptureSession::StartOnceRecord(uint64_t timestamp, int32_t rotation)
 {
-    MEDIA_INFO_LOG("StartOnceRecord enter %{public}s", taskName.c_str());
+    MEDIA_INFO_LOG("StartOnceRecord enter");
     // frameCacheList only used by now thread
     std::vector<sptr<FrameRecord>> frameCacheList;
     sptr<SessionDrainImageCallback> imageCallback = new SessionDrainImageCallback(frameCacheList,
-        livephotoListener_, videoCache_, taskName, rotation);
+        livephotoListener_, videoCache_, timestamp, rotation);
     livephotoListener_->DrainOutImage(imageCallback);
     MEDIA_INFO_LOG("StartOnceRecord end");
 }
@@ -1774,7 +1805,9 @@ int32_t StreamOperatorCallback::OnCaptureError(int32_t captureId, const std::vec
         } else if (curStream->GetStreamType() == StreamType::REPEAT) {
             CastStream<HStreamRepeat>(curStream)->OnFrameError(errInfo.error_);
         } else if (curStream->GetStreamType() == StreamType::CAPTURE) {
-            CastStream<HStreamCapture>(curStream)->OnCaptureError(captureId, errInfo.error_);
+            auto captureStream = CastStream<HStreamCapture>(curStream);
+            captureStream->rotationMap_.Erase(captureId);
+            captureStream->OnCaptureError(captureId, errInfo.error_);
         }
     }
     return CAMERA_OK;
@@ -1788,7 +1821,11 @@ int32_t StreamOperatorCallback::OnFrameShutter(
     for (auto& streamId : streamIds) {
         sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);
         if ((curStream != nullptr) && (curStream->GetStreamType() == StreamType::CAPTURE)) {
-            CastStream<HStreamCapture>(curStream)->OnFrameShutter(captureId, timestamp);
+            auto captureStream = CastStream<HStreamCapture>(curStream);
+            int32_t rotation = 0;
+            captureStream->rotationMap_.Find(captureId, rotation);
+            StartMovingPhotoEncode(rotation, timestamp);
+            captureStream->OnFrameShutter(captureId, timestamp);
         } else {
             MEDIA_ERR_LOG("StreamOperatorCallback::OnFrameShutter StreamId: %{public}d not found", streamId);
             return CAMERA_INVALID_ARG;
@@ -1800,12 +1837,14 @@ int32_t StreamOperatorCallback::OnFrameShutter(
 int32_t StreamOperatorCallback::OnFrameShutterEnd(
     int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
 {
-    MEDIA_DEBUG_LOG("StreamOperatorCallback::OnFrameShutterEnd");
+    MEDIA_INFO_LOG("StreamOperatorCallback::OnFrameShutterEnd ts is:%{public}" PRId64, timestamp);
     std::lock_guard<std::mutex> lock(cbMutex_);
     for (auto& streamId : streamIds) {
         sptr<HStreamCommon> curStream = GetHdiStreamByStreamID(streamId);
         if ((curStream != nullptr) && (curStream->GetStreamType() == StreamType::CAPTURE)) {
-            CastStream<HStreamCapture>(curStream)->OnFrameShutterEnd(captureId, timestamp);
+            auto captureStream = CastStream<HStreamCapture>(curStream);
+            captureStream->rotationMap_.Erase(captureId);
+            captureStream->OnFrameShutterEnd(captureId, timestamp);
         } else {
             MEDIA_ERR_LOG("StreamOperatorCallback::OnFrameShutterEnd StreamId: %{public}d not found", streamId);
             return CAMERA_INVALID_ARG;
@@ -2039,7 +2078,7 @@ void MovingPhotoListener::OnBufferAvailable()
     }
     MEDIA_DEBUG_LOG("surface_ push buffer %{public}d x %{public}d, stride is %{public}d",
         buffer->GetSurfaceBufferWidth(), buffer->GetSurfaceBufferHeight(), buffer->GetStride());
-    sptr<FrameRecord> frameRecord = new FrameRecord(buffer, NanosecToMillisec(timestamp), surface_->GetTransform());
+    sptr<FrameRecord> frameRecord = new FrameRecord(buffer, timestamp, surface_->GetTransform());
     recorderBufferQueue_.Push(frameRecord);
     vector<sptr<SessionDrainImageCallback>> callbacks;
     callbackMap_.Iterate([frameRecord, &callbacks](const sptr<SessionDrainImageCallback> callback,

@@ -52,10 +52,10 @@ public:
     ~AvcodecTaskManager();
     void EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback);
     void CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecordVec, sptr<AudioVideoMuxer> muxer);
-    void DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, string taskName, int32_t captureRotation);
-    sptr<AudioVideoMuxer> CreateAVMuxer(vector<sptr<FrameRecord>> frameRecord, int32_t captureRotation);
+    void DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, uint64_t taskName, int32_t captureRotation);
+    sptr<AudioVideoMuxer> CreateAVMuxer(vector<sptr<FrameRecord>> frameRecords, int32_t captureRotation);
     void SubmitTask(function<void()> task);
-    void SetVideoFd(int32_t videoFd, shared_ptr<PhotoAssetProxy> photoAssetProxy);
+    void SetVideoFd(int64_t timestamp, shared_ptr<PhotoAssetProxy> photoAssetProxy);
     void Stop();
     unique_ptr<TaskManager>& GetTaskManager();
     unique_ptr<TaskManager>& GetEncoderManager();
@@ -72,7 +72,7 @@ private:
     mutex videoFdMutex_;
     mutex taskManagerMutex_;
     mutex encoderManagerMutex_;
-    queue<std::pair<int32_t, shared_ptr<PhotoAssetProxy>>> videoFdQueue_;
+    queue<std::pair<int64_t, shared_ptr<PhotoAssetProxy>>> videoFdQueue_;
 };
 } // CameraStandard
 } // OHOS
