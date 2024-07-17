@@ -372,7 +372,7 @@ int32_t HCaptureSessionProxy::StartMovingPhotoCapture(bool isMirror, int32_t rot
 }
 
 int32_t HCaptureSessionProxy::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
-    std::string &uri, int32_t &cameraShotType)
+    std::string &uri, int32_t &cameraShotType, int64_t timestamp)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -383,6 +383,7 @@ int32_t HCaptureSessionProxy::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoPr
     }
     data.WriteInterfaceToken(GetDescriptor());
     photoProxy->WriteToParcel(data);
+    data.WriteInt64(timestamp);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_CREATE_MEDIA_LIBRARY_MANAGER),
         data, reply, option);

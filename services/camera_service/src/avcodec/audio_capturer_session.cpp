@@ -77,7 +77,6 @@ bool AudioCapturerSession::StartAudioCapture()
         startAudioCapture_ = false;
         audioThread_->join();
         audioThread_.reset();
-        audioThread_ = nullptr;
     }
     audioThread_ = std::make_unique<std::thread>([this]() { this->ProcessAudioBuffer(); });
     startAudioCapture_ = true;
@@ -156,7 +155,6 @@ void AudioCapturerSession::Stop()
     if (audioThread_ && audioThread_->joinable()) {
         audioThread_->join();
         audioThread_.reset();
-        audioThread_ = nullptr;
     }
     MEDIA_INFO_LOG("Audio capture stop out");
     Release();

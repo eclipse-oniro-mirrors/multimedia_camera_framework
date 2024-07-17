@@ -31,13 +31,13 @@ AudioVideoMuxer::~AudioVideoMuxer()
     MEDIA_INFO_LOG("~AudioVideoMuxer enter");
 }
 
-int32_t AudioVideoMuxer::Create(int32_t fd, OH_AVOutputFormat format,
-    std::shared_ptr<Media::PhotoAssetProxy> photoAssetProxy)
+int32_t AudioVideoMuxer::Create(OH_AVOutputFormat format, std::shared_ptr<Media::PhotoAssetProxy> photoAssetProxy)
 {
-    muxer_ = AVMuxerFactory::CreateAVMuxer(fd, static_cast<Plugins::OutputFormat>(format));
-    CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "create muxer failed!");
-    fd_ = fd;
     photoAssetProxy_ = photoAssetProxy;
+    fd_ = photoAssetProxy_->GetVideoFd();
+    MEDIA_INFO_LOG("CreateAVMuxer with videoFd: %{public}d", fd_);
+    muxer_ = AVMuxerFactory::CreateAVMuxer(fd_, static_cast<Plugins::OutputFormat>(format));
+    CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "create muxer failed!");
     return 0;
 }
 
@@ -65,7 +65,7 @@ int32_t AudioVideoMuxer::SetCoverTime(float timems)
     MEDIA_INFO_LOG("SetCoverTime coverTime : %{public}f", timems);
     CHECK_AND_RETURN_RET_LOG(muxer_ != nullptr, 1, "muxer_ is null");
     std::shared_ptr<Meta> userMeta = std::make_shared<Meta>();
-    userMeta->SetData("covertime", timems);
+    userMeta->SetData("com.openharmony.covertime", timems);
     int32_t ret = muxer_->SetUserMeta(userMeta);
     CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "SetCoverTime failed, ret: %{public}d", ret);
     return 0;

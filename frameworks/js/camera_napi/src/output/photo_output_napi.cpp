@@ -187,7 +187,7 @@ void PhotoListener::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Su
     }
 }
 
-void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality) const
+void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality, int64_t timestamp) const
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("ExecutePhotoAsset");
@@ -206,13 +206,11 @@ void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool is
         MEDIA_ERR_LOG("invalid bufferHandle");
     }
     newSurfaceBuffer->Map();
-    auto photoOutput = photoOutput_.promote();
     string uri = "";
     int32_t cameraShotType = 0;
-    CreateMediaLibrary(surfaceBuffer, bufferHandle, isHighQuality, uri, cameraShotType);
+    CreateMediaLibrary(surfaceBuffer, bufferHandle, isHighQuality, uri, cameraShotType, timestamp);
     MEDIA_INFO_LOG("CreateMediaLibrary result %{public}s, type %{public}d", uri.c_str(), cameraShotType);
     result[PARAM1] = Media::MediaLibraryCommNapi::CreatePhotoAssetNapi(env_, uri, cameraShotType);
-
     ExecuteCallbackNapiPara callbackPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
     ExecuteCallback(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callbackPara);
     // return buffer to buffer queue
@@ -220,7 +218,7 @@ void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool is
 }
 
 void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle *bufferHandle,
-    bool isHighQuality, std::string &uri, int32_t &cameraShotType) const
+    bool isHighQuality, std::string &uri, int32_t &cameraShotType, int64_t timestamp) const
 {
     CAMERA_SYNC_TRACE;
     int64_t imageId = 0;
@@ -268,7 +266,7 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
                 location->longitude);
             photoProxy->SetLocation(location->latitude, location->longitude);
         }
-        photoOutput->GetSession()->CreateMediaLibrary(photoProxy, uri, cameraShotType);
+        photoOutput->GetSession()->CreateMediaLibrary(photoProxy, uri, cameraShotType, timestamp);
     }
 }
 
@@ -285,12 +283,12 @@ void PhotoListener::UpdateJSCallback(sptr<Surface> photoSurface) const
         MEDIA_ERR_LOG("PhotoListener Failed to acquire surface buffer");
         return;
     }
-
+    MEDIA_INFO_LOG("PhotoListener::UpdateJSCallback ts is:%{public}" PRId64, timestamp);
     int32_t isDegradedImage;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::isDegradedImage, isDegradedImage);
     MEDIA_INFO_LOG("PhotoListener UpdateJSCallback isDegradedImage:%{public}d", isDegradedImage);
     if ((callbackFlag_ & CAPTURE_PHOTO_ASSET) != 0) {
-        ExecutePhotoAsset(surfaceBuffer, isDegradedImage == 0);
+        ExecutePhotoAsset(surfaceBuffer, isDegradedImage == 0, timestamp);
     } else if (isDegradedImage == 0 && (callbackFlag_ & CAPTURE_PHOTO) != 0) {
         ExecutePhoto(surfaceBuffer, timestamp);
     } else if (isDegradedImage != 0 && (callbackFlag_ & CAPTURE_DEFERRED_PHOTO) != 0) {
