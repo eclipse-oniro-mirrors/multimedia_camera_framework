@@ -41,6 +41,7 @@
 #include "input/camera_manager.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
+#include "light_painting_session.h"
 #include "nativetoken_kit.h"
 #include "night_session.h"
 #include "parameter.h"
@@ -10745,6 +10746,115 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_082, TestSize.Le
             }
         }
     }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Callback for Occlusion Detection
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Callback for Occlusion Detection
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_083, TestSize.Level0)
+{
+    sptr<CameraInput> input = (sptr<CameraInput>&)input_;
+    sptr<ICameraDeviceService> deviceObj = input->GetCameraDevice();
+    ASSERT_NE(deviceObj, nullptr);
+
+    sptr<CameraDevice> camdeviceObj = nullptr;
+    sptr<CameraInput> camInput_1 = new CameraInput(deviceObj, camdeviceObj);
+    ASSERT_NE(camInput_1, nullptr);
+
+    sptr<CameraDeviceServiceCallback> callback = new CameraDeviceServiceCallback(camInput_1);
+
+    uint64_t timestamp = 10;
+    const int32_t DEFAULT_ITEMS = 10;
+    const int32_t DEFAULT_DATA_LENGTH = 100;
+    int32_t count = 1;
+    int32_t isOcclusionDetected = 1;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> result =
+        std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    bool status = result->addEntry(OHOS_STATUS_CAMERA_OCCLUSION_DETECTION, &isOcclusionDetected, count);
+    ASSERT_TRUE(status);
+
+    int32_t intResult = callback->OnResult(timestamp, result);
+    sleep(WAIT_TIME_AFTER_START);
+    EXPECT_EQ(intResult, 0);
+
+    result = std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    intResult = callback->OnResult(timestamp, result);
+    EXPECT_EQ(intResult, 0);
+}
+
+/* Feature: Framework
+ * Function: Test profession session metering mode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test profession session metering mode
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_084, TestSize.Level0)
+{
+    SceneMode sceneMode = SceneMode::LIGHT_PAINTING;
+    if (!IsSupportMode(sceneMode)) {
+        return;
+    }
+    sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(cameraManagerObj, nullptr);
+
+    std::vector<SceneMode> sceneModes = cameraManagerObj->GetSupportedModes(cameras_[0]);
+    ASSERT_TRUE(sceneModes.size() != 0);
+
+    sptr<CameraOutputCapability> modeAbility =
+        cameraManagerObj->GetSupportedOutputCapability(cameras_[0], sceneMode);
+    ASSERT_NE(modeAbility, nullptr);
+
+    SelectProfiles wanted;
+    wanted.preview.size_ = {1920, 1080};
+    wanted.preview.format_ = CAMERA_FORMAT_YUV_420_SP;
+
+    SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
+    ASSERT_NE(profiles.preview.format_, CAMERA_FORMAT_INVALID);
+
+    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<LightPaintingSession> session = static_cast<LightPaintingSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(session, nullptr);
+
+    int32_t intResult = session->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profiles.preview);
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    std::vector<LightPaintingType> supportedType;
+    session->GetSupportedLightPaintings(supportedType);
+    EXPECT_NE(supportedType.size(), 0);
+
+    LightPaintingType setType = LightPaintingType::LIGHT;
+    session->LockForControl();
+    intResult = session->SetLightPainting(setType);
+    session->UnlockForControl();
+    EXPECT_EQ(intResult, 0);
+
+    LightPaintingType defaultType;
+    intResult = session->GetLightPainting(defaultType);
+    EXPECT_EQ(defaultType, setType);
+
+    session->LockForControl();
+    intResult = session->TriggerLighting();
+    session->UnlockForControl();
+    EXPECT_EQ(intResult, 0);
 }
 } // namespace CameraStandard
 } // namespace OHOS
