@@ -24,9 +24,7 @@ std::shared_ptr<TimeBroker> TimeBroker::Create(std::string name)
 {
     DP_DEBUG_LOG("(%s) created.", name.c_str());
     auto timeBroker = std::make_shared<TimeBroker>(std::move(name));
-    if (timeBroker) {
-        timeBroker->Initialize();
-    }
+    timeBroker->Initialize();
     return timeBroker;
 }
 

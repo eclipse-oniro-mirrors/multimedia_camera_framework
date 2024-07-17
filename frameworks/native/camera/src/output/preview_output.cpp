@@ -305,9 +305,6 @@ int32_t PreviewOutput::CreateSketchWrapper(Size sketchSize)
         return ServiceToCameraError(CAMERA_INVALID_STATE);
     }
     auto wrapper = std::make_shared<SketchWrapper>(GetStream(), sketchSize);
-    if (wrapper == nullptr) {
-        return ServiceToCameraError(CAMERA_ALLOC_ERROR);
-    }
     sketchWrapper_ = wrapper;
     auto metadata = GetDeviceMetadata();
     int32_t retCode = wrapper->Init(metadata, session->GetFeaturesMode());

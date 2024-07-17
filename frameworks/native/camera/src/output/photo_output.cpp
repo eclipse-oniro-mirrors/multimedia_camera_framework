@@ -116,9 +116,6 @@ void PhotoCaptureSetting::SetRotation(PhotoCaptureSetting::RotationConfig rotati
 void PhotoCaptureSetting::SetGpsLocation(double latitude, double longitude)
 {
     std::shared_ptr<Location> location = std::make_shared<Location>();
-    if (location == nullptr) {
-        return;
-    }
     location->latitude = latitude;
     location->longitude = longitude;
     location->altitude = 0;

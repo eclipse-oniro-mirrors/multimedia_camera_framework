@@ -269,8 +269,8 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
     if (rotation >= CAPTURE_ROTATE_360) {
         rotation = rotation - CAPTURE_ROTATE_360;
     }
-    uint8_t connectType = 0;
     {
+        uint8_t connectType = 0;
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
         if (cameraAbility_ == nullptr) {
             return;

@@ -142,7 +142,7 @@ public:
     }
 
 private:
-    void getStreamCount(int32_t* originInfo, ExtendInfo& transferedInfo)
+    void getStreamCount(const int32_t* originInfo, ExtendInfo& transferedInfo)
     {
         for (uint32_t i = 0; i < modeCount_; i++) {
             for (uint32_t j = modeStartIndex_[i]; j < modeEndIndex_[i]; j++) {
@@ -164,7 +164,7 @@ private:
         return;
     }
 
-    void getStreamInfo(int32_t* originInfo, ModeInfo& modeInfo)
+    void getStreamInfo(const int32_t* originInfo, ModeInfo& modeInfo)
     {
         modeInfo.streamInfo.resize(modeInfo.streamTypeCount);
         for (uint32_t j = 0; j < modeInfo.streamTypeCount; j++) {
@@ -515,8 +515,8 @@ void DumpPreconfigInfo(CameraInfoDumper& infoDumper, sptr<HCameraHostManager>& h
         hostManager->GetCameraAbility(cameraId, cameraInfo.ability);
         cameraInfos.emplace_back(cameraInfo);
     }
-    for (auto& typePair : preconfigTypeMap) {
-        for (auto& ratioPair : preconfigRatioMap) {
+    for (const auto& typePair : preconfigTypeMap) {
+        for (const auto& ratioPair : preconfigRatioMap) {
             PhotoSessionPreconfig photoPreconfig;
             VideoSessionPreconfig videoPreconfig;
             switch (ratioPair.first) {
