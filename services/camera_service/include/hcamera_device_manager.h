@@ -17,6 +17,7 @@
 #define OHOS_CAMERA_H_CAMERA_DEVICE_MANAGER_H
 
 #include <refbase.h>
+#include <set>
 #include "hcamera_device.h"
 #include "camera_util.h"
 #include "mem_mgr_client.h"
@@ -104,8 +105,9 @@ private:
 class HCameraDeviceHolder : public RefBase {
 public:
     HCameraDeviceHolder(int32_t pid, int32_t uid, int32_t state, int32_t focusState,
-        sptr<HCameraDevice> device, uint32_t accessTokenId)
-        :pid_(pid), uid_(uid), state_(state), focusState_(focusState), accessTokenId_(accessTokenId), device_(device)
+        sptr<HCameraDevice> device, uint32_t accessTokenId, int32_t cost, const std::set<std::string> &conflicting)
+        :pid_(pid), uid_(uid), state_(state), focusState_(focusState), accessTokenId_(accessTokenId), device_(device),
+        cost_(cost), conflicting_(conflicting)
     {
         processPriority_ = new CameraProcessPriority(uid, state, focusState);
     }
@@ -136,6 +138,24 @@ public:
     
     sptr<CameraProcessPriority> GetPriority() const {return processPriority_;}
 
+    int32_t GetCost() const{ return cost_; }
+
+    bool IsConflicting(const std::string &cameraId) const
+    {
+        std::string curCameraId = device_->GetCameraId();
+        if (cameraId == curCameraId) {
+            return true;
+        }
+        for (const auto &x : conflicting_) {
+            if (cameraId == x) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    std::set<std::string> GetConflicting() const { return conflicting_; }
+
 private:
     int32_t pid_;
     int32_t uid_;
@@ -144,10 +164,18 @@ private:
     uint32_t accessTokenId_;
     sptr<CameraProcessPriority> processPriority_;
     sptr<HCameraDevice> device_;
+    int32_t cost_;
+    std::set<std::string> conflicting_;
 };
 
 class HCameraDeviceManager : public RefBase {
 public:
+    /**
+    * @brief the default maxinum "cost" allowed before evicting.
+    *
+    */
+    static constexpr int32_t DEFAULT_MAX_COST = 100;
+
     ~HCameraDeviceManager();
     /**
     * @brief Get camera device manager instance.
@@ -169,7 +197,7 @@ public:
     *
     * @param device Device that have been turned off.
     */
-    void RemoveDevice();
+    void RemoveDevice(const std::string &cameraId);
 
     /**
     * @brief Get cameraHolder by active process pid.
@@ -207,17 +235,29 @@ public:
     * @param cameraIdRequestOpen device is requested to turn on.
     */
     bool GetConflictDevices(sptr<HCameraDevice> &camerasNeedEvict, sptr<HCameraDevice> cameraIdRequestOpen);
+
+    /**
+    * @brief handle active camera evictions in camera device manager.
+    *
+    * @param evictedClients Devices that need to be shut down.
+    * @param cameraRequestOpen device is requested to turn on.
+    */
+    bool HandleCameraEvictions(std::vector<sptr<HCameraDeviceHolder>> &evictedClients, sptr<HCameraDeviceHolder> &cameraRequestOpen);
 private:
     HCameraDeviceManager();
     static sptr<HCameraDeviceManager> cameraDeviceManager_;
     static std::mutex instanceMutex_;
     SafeMap<pid_t, sptr<HCameraDeviceHolder>> pidToCameras_;
     SafeMap<std::string, int32_t> stateOfACamera_;
+    // LRU ordered, most recent at end
+    std::vector<sptr<HCameraDeviceHolder>> activeCameras_;
     std::mutex mapMutex_;
     sptr<ICameraBroker> peerCallback_;
     std::mutex peerCbMutex_;
     std::string GetACameraId();
     bool IsAllowOpen(pid_t activeClient);
+    int32_t GetCurrentCost() const
+    std::vector<sptr<HCameraDeviceHolder>> WouldEvict(sptr<HCameraDeviceHolder> &cameraRequestOpen);
     void UpdateProcessState(int32_t& activeState, int32_t& requestState,
         uint32_t activeAccessTokenId, uint32_t requestAccessTokenId);
     void PrintClientInfo(sptr<HCameraDeviceHolder> activeCameraHolder, sptr<HCameraDeviceHolder> requestCameraHolder);

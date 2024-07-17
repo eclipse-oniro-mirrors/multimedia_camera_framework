@@ -68,21 +68,36 @@ void HCameraDeviceManager::AddDevice(pid_t pid, sptr<HCameraDevice> device)
 {
     MEDIA_INFO_LOG("HCameraDeviceManager::AddDevice start");
     std::lock_guard<std::mutex> lock(mapMutex_);
+    int32_t cost = 0;
+    std::set<std::string> conflicting;
     int32_t uidOfRequestProcess = IPCSkeleton::GetCallingUid();
     int32_t pidOfRequestProcess = IPCSkeleton::GetCallingPid();
     uint32_t accessTokenIdOfRequestProc = IPCSkeleton::GetCallingTokenID();
     sptr<HCameraDeviceHolder> cameraHolder = new HCameraDeviceHolder(
         pidOfRequestProcess, uidOfRequestProcess, FOREGROUND_STATE_OF_PROCESS,
-        FOCUSED_STATE_OF_PROCESS, device, accessTokenIdOfRequestProc);
+        FOCUSED_STATE_OF_PROCESS, device, accessTokenIdOfRequestProc, cost, conflicting);
     pidToCameras_.EnsureInsert(pid, cameraHolder);
+    activeCameras_.push_back(cameraHolder);
     MEDIA_INFO_LOG("HCameraDeviceManager::AddDevice end");
 }
 
-void HCameraDeviceManager::RemoveDevice()
+void HCameraDeviceManager::RemoveDevice(std::string &cameraId)
 {
-    MEDIA_INFO_LOG("HCameraDeviceManager::RemoveDevice start");
+    MEDIA_INFO_LOG("HCameraDeviceManager::RemoveDevice cameraId=%{public}s start", cameraId.c_str());
     std::lock_guard<std::mutex> lock(mapMutex_);
-    pidToCameras_.Clear();
+    if (activeCameras_.empty()) {
+        return;
+    }
+    auto it = std::find_if(activeCameras_.begin(), activeCameras_.end(), [&](const sptr<HCameraDeviceHolder> &x) {
+        const std::string &curCameraId = x->GetDevice()->GetCameraId();
+        return cameraId == curCameraId;
+    });
+    if (it == activeCameras_.end()) {
+         MEDIA_ERR_LOG("HCameraDeviceManager::RemoveDevice error");
+         return;
+    }
+    pidToCameras_.Erase((*it)->GetPid());
+    activeCameras_.erase(it);
     MEDIA_INFO_LOG("HCameraDeviceManager::RemoveDevice end");
 }
 
@@ -213,9 +228,12 @@ bool HCameraDeviceManager::GetConflictDevices(sptr<HCameraDevice> &cameraNeedEvi
     activeCameraHolder->SetState(activeState);
     activeCameraHolder->SetFocusState(focusStateOfActiveProcess);
 
+    int32_t cost = 0;
+    std::set<std::string> conflicting;
+
     sptr<HCameraDeviceHolder> requestCameraHolder = new HCameraDeviceHolder(
         pidOfOpenRequest, uidOfOpenRequest, requestState,
-        focusStateOfRequestProcess, cameraRequestOpen, accessTokenIdOfRequestProc);
+        focusStateOfRequestProcess, cameraRequestOpen, accessTokenIdOfRequestProc, cost, conflicting);
     
     PrintClientInfo(activeCameraHolder, requestCameraHolder);
     if (*(activeCameraHolder->GetPriority()) <= *(requestCameraHolder->GetPriority())) {
@@ -224,6 +242,141 @@ bool HCameraDeviceManager::GetConflictDevices(sptr<HCameraDevice> &cameraNeedEvi
     } else {
         return false;
     }
+}
+
+bool HCameraDeviceManager::HandleCameraEvictions(std::vector<sptr<HCameraDeviceHolder>> &evictedClients,
+    sptr<HCameraDeviceHolder> &cameraRequestOpen)
+{
+    pid_t pidOfActiveClient = GetActiveClient();
+    int32_t activeState = CameraAppManagerClient::GetInstance()->GetProcessState(pidOfActiveClient);
+    pid_t pidOfOpenRequest = IPCSkeleton::GetCallingPid();
+    int32_t requestState = CameraAppManagerClient::GetInstance()->GetProcessState(pidOfOpenRequest);
+    const std::string &cameraId = cameraRequestOpen->GetDevice()->GetCameraId();
+    uint32_t accessTokenIdOfRequestProc = IPCSkeleton::GetCallingTokenID();
+    MEDIA_INFO_LOG("HCameraDeviceManager::HandleCameraEvictions camera ID %{public}s active pid: %{public}d, state: %{public}d,"
+        "request pid: %{public}d state: %{public}d", cameraId.c_str(), pidOfActiveClient, activeState, pidOfOpenRequest, requestState);
+
+    pid_t focusWindowPid = -1;
+    CameraWindowManagerClient::GetInstance()->GetFocusWindowInfo(focusWindowPid);
+    if (focusWindowPid == -1) {
+        MEDIA_INFO_LOG("HCameraDeviceManager::HandleCameraEvictions GetFocusWindowInfo faild");
+    }
+
+     int32_t focusStateOfRequestProcess = focusWindowPid ==
+        pidOfOpenRequest ? FOCUSED_STATE_OF_PROCESS : UNFOCUSED_STATE_OF_PROCESS;
+    cameraRequestOpen->SetState(activeState);
+    cameraRequestOpen->SetFocusState(focusStateOfRequestProcess);
+    MEDIA_INFO_LOG("HCameraDeviceManager::HandleCameraEvictions focusStateOfRequestProcess = %{public}s", focusStateOfRequestProcess);
+
+    // Find Camera Device that would be evicted
+    std::vector<sptr<HCameraDeviceHolder>> evicted = WouldEvict(cameraRequestOpen);
+
+    // If the incoming client was 'evicted,' higher priority clients have the camera in the
+    // background, so we cannot do evictions
+    if (std::find(evicted.begin(), evicted.end(), cameraRequestOpen) != evicted.end()) {
+        MEDIA_INFO_LOG("HCameraDeviceManager::HandleCameraEvictions (PID %{public}d) rejected (existing client(s) with higher priority).", pidOfOpenRequest);
+        return false;
+    }
+    for (auto &x : evicted) {
+        if (x == nullptr) {
+            MEDIA_ERR_LOG("HCameraDeviceManager::HandleCameraEvictions Invalid state: Null client in active client list.");
+            continue;
+        }
+        MEDIA_INFO_LOG("HCameraDeviceManager::HandleCameraEvictions evicting conflicting client for camera ID %s",
+            x->GetDevice()->GetCameraId().c_str());
+        evictedClients.push_back(x);
+    }
+    MEDIA_INFO_LOG("HCameraDeviceManager::HandleCameraEvictions end camera ID %{public}s", cameraId.c_str());
+    return true;
+}
+
+std::vector<sptr<HCameraDeviceHolder>> HCameraDeviceManager::WouldEvict(sptr<HCameraDeviceHolder> &cameraRequestOpen) {
+
+    std::vector<sptr<HCameraDeviceHolder>> evictList;
+
+    // Disallow null clients, return input
+    if (cameraRequestOpen == nullptr) {
+        evictList.push_back(cameraRequestOpen);
+        return evictList;
+    }
+    const std::string &cameraId = cameraRequestOpen->GetDevice()->GetCameraId();
+    int32_t cost = cameraRequestOpen->GetCost();
+    sptr<CameraProcessPriority> requestPriority = cameraRequestOpen->GetPriority();
+    int32_t owner = cameraRequestOpen->GetPid();
+    int64_t totalCost = GetCurrentCost() + cost;
+    MEDIA_INFO_LOG("requestCamera: uid:%{public}s pid:%{public}d, processState:%{public}d,"
+        "focusState: %{public}d cameraId:%{public}s, cost:%{public}d, totalCost:%{public}d",
+        requestPriority->GetUid(), cameraRequestOpen->GetPid(),
+        requestPriority->GetState(), requestPriority->GetFocusState(),
+        cameraId.c_str(), cost, totalCost);
+
+    // Determine the MRU of the owners tied for having the highest priority
+    int32_t highestPriorityOwner = owner;
+    sptr<CameraProcessPriority> highestPriority = requestPriority;
+    for (const auto &x : activeCameras_) { 
+        sptr<CameraProcessPriority> curPriority = x->GetPriority();
+        if (*curPriority <= *highestPriority) {
+            highestPriority = curPriority;
+            highestPriorityOwner = x->GetPid();
+        }
+    }
+    if (*highestPriority == *priority) {
+        // Switch back owner if the incoming client has the highest priority, as it is MRU
+        highestPriorityOwner = owner;
+    }
+    // Build eviction list of clients to remove
+    for (const auto &x : activeCameras_) {
+        const std::string &curCameraId = x->GetDevice()->GetCameraId();
+        int32_t curCost = x->GetCost();
+        sptr<CameraProcessPriority> curPriority = x->GetPriority();
+        int32_t curOwner = i->GetPid();
+
+        bool conflicting = (curCameraId == cameraId || x->IsConflicting(cameraId) || 
+                            cameraRequestOpen->IsConflicting(curCameraId));
+        
+        MEDIA_INFO_LOG("curCamera: uid:%{public}s pid:%{public}d, processState:%{public}d,"
+        "focusState: %{public}d cameraId:%{public}s, cost:%{public}d, totalCost:%{public}d conflicting:%{public}d",
+        x->GetPriority()->GetUid(), x->GetPid(),
+        x->GetPriority()->GetState(), x->GetPriority()->GetFocusState(),
+        x->GetDevice()->GetCameraId().c_str(), cost, totalCost, conflicting);
+        // Find evicted clients
+        if (conflicting && *curPriority >= *priority) {
+            // Pre-existing conflicting client with higher priority exists
+            evictList.clear();
+            evictList.push_back(client);
+            return evictList;
+        } else if (conflicting || ((totalCost > DEFAULT_MAX_COST && curCost > 0) && 
+                    (*curPriority < *priority) &&
+                    !(highestPriorityOwner == owner && owner == curOwner))) {
+            // Add a pre-existing client to the eviction list if:
+            // - We are adding a client with higher priority that conflicts with this one.
+            // - The total cost including the incoming client's is more than the allowable
+            //   maximum, and the client has a non-zero cost, lower priority, and a different
+            //   owner than the incoming client when the incoming client has the
+            //   highest priority.
+            MEDIA_INFO_LOG("HCameraDeviceManager::WouldEvict evict curCamera");
+            evictList.push_back(i);
+            totalCost -= curCost;
+        }
+    }
+    MEDIA_INFO_LOG("HCameraDeviceManager::WouldEvict  totalCost:%{public}d", totalCost);
+    // If the total cost is too high, return the input unless the input has the highest priority
+    if (totalCost > DEFAULT_MAX_COST) {
+        evictList.clear();
+        evictList.push_back(cameraRequestOpen);
+        return evictList;
+    }
+    return evictList;
+}
+
+int32_t HCameraDeviceManager::GetCurrentCost() const
+{
+    int64_t totalCost = 0;
+    for (const auto &x : activeCameras_) { 
+        totalCost += x->GetCost();
+    }
+    MEDIA_INFO_LOG("HCameraDeviceManager::GetCurrentCost:%{public}d", totalCost);
+    return totalCost;
 }
 
 std::string HCameraDeviceManager::GetACameraId()
