@@ -31,7 +31,6 @@ const int32_t PHOTO_WIDTH = 1280;
 const int32_t PHOTO_HEIGHT = 960;
 const int32_t PHOTO_FORMAT = 2000;
 const uint32_t INVALID_CODE = 9999;
-const uint32_t CAMERA_ADD_DEFERRED = 4;
 const std::u16string FORMMGR_INTERFACE_TOKEN = u"IStreamCapture";
 
 std::shared_ptr<OHOS::Camera::CameraMetadata> MakeMetadata(uint8_t *rawData, size_t size)
@@ -116,7 +115,7 @@ void RunCase(MessageParcel &data, StreamRepeatInterfaceCode sric)
 void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
 {
     MessageParcel data;
-    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    data.WriteInterfaceToken(fuzz->GetDescriptor());
     auto metadata = MakeMetadata(rawData, size);
     if (!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(metadata, data))) {
         return;
@@ -127,31 +126,33 @@ void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
     RunCase(data, StreamRepeatInterfaceCode::CAMERA_REMOVE_SKETCH_STREAM_REPEAT);
     RunCase(data, StreamRepeatInterfaceCode::CAMERA_UPDATE_SKETCH_RATIO);
     RunCase(data, StreamRepeatInterfaceCode::CAMERA_STREAM_FRAME_RANGE_SET);
+    RunCase(data, StreamRepeatInterfaceCode::CAMERA_ENABLE_SECURE_STREAM);
+    RunCase(data, StreamRepeatInterfaceCode::CAMERA_ENABLE_STREAM_MIRROR);
 
-    uint32_t code;
+    int32_t code;
     MessageParcel reply;
     MessageOption option;
 
-    code = static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_STREAM_REPEAT_SET_CALLBACK);
+    code = StreamRepeatInterfaceCode::CAMERA_STREAM_REPEAT_SET_CALLBACK;
     data.RewindWrite(0);
-    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    data.WriteInterfaceToken(fuzz->GetDescriptor());
     data.WriteRawData(rawData, size);
     data.RewindRead(0);
     fuzz->OnRemoteRequest(code, data, reply, option);
 
-    code = static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_FORK_SKETCH_STREAM_REPEAT);
+    code = StreamRepeatInterfaceCode::CAMERA_ADD_DEFERRED_SURFACE;
     data.RewindWrite(0);
-    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    data.WriteInterfaceToken(fuzz->GetDescriptor());
+    data.WriteRawData(rawData, size);
+    data.RewindRead(0);
+    fuzz->OnRemoteRequest(code, data, reply, option);
+
+    code = StreamRepeatInterfaceCode::CAMERA_FORK_SKETCH_STREAM_REPEAT;
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(fuzz->GetDescriptor());
     data.WriteInt32(PHOTO_WIDTH);
     data.WriteInt32(PHOTO_HEIGHT);
     data.WriteFloat(1.0f);
-    data.WriteRawData(rawData, size);
-    data.RewindRead(0);
-    fuzz->OnRemoteRequest(code, data, reply, option);
-
-    code = CAMERA_ADD_DEFERRED;
-    data.RewindWrite(0);
-    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
     data.WriteRawData(rawData, size);
     data.RewindRead(0);
     fuzz->OnRemoteRequest(code, data, reply, option);
