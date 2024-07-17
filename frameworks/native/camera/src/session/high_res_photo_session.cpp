@@ -30,10 +30,8 @@ HighResPhotoSession::~HighResPhotoSession()
 bool HighResPhotoSession::CanAddOutput(sptr<CaptureOutput> &output)
 {
     MEDIA_DEBUG_LOG("Enter Into HighResPhotoSession::CanAddOutput");
-    if (!IsSessionConfiged() || output == nullptr) {
-        MEDIA_ERR_LOG("HighResPhotoSession::CanAddOutput operation is Not allowed!");
-        return false;
-    }
+    CHECK_AND_RETURN_RET_LOG(IsSessionConfiged() && output != nullptr, false, 
+        "HighResPhotoSession::CanAddOutput operation is Not allowed!");
     return output->GetOutputType() != CAPTURE_OUTPUT_TYPE_VIDEO &&
         CaptureSession::CanAddOutput(output);
 }

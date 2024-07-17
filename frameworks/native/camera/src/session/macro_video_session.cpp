@@ -25,19 +25,15 @@ MacroVideoSession::MacroVideoSession(sptr<ICaptureSession>& captureSession) : Ca
 bool MacroVideoSession::CanAddOutput(sptr<CaptureOutput>& output)
 {
     MEDIA_DEBUG_LOG("Enter Into MacroVideoSession::CanAddOutput");
-    if (!IsSessionConfiged() || output == nullptr) {
-        MEDIA_ERR_LOG("MacroVideoSession::CanAddOutput operation is Not allowed!");
-        return false;
-    }
+    CHECK_AND_RETURN_RET_LOG(IsSessionConfiged() && output != nullptr, false, 
+        "MacroVideoSession::CanAddOutput operation is Not allowed!");
     return CaptureSession::CanAddOutput(output);
 }
 
 int32_t MacroVideoSession::CommitConfig()
 {
     int32_t ret = CaptureSession::CommitConfig();
-    if (ret != CameraErrorCode::SUCCESS) {
-        return ret;
-    }
+    CHECK_AND_RETURN_RET(ret == CameraErrorCode::SUCCESS, ret);
     LockForControl();
     ret = EnableMacro(true);
     UnlockForControl();
