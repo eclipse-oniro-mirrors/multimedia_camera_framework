@@ -54,12 +54,13 @@ int32_t CameraDeviceServiceCallback::OnResult(const uint64_t timestamp,
         MEDIA_ERR_LOG("CameraDeviceServiceCallback::OnResult() camInput_ is null!");
         return CAMERA_OK;
     }
-    if (camInputSptr->GetCameraDeviceInfo() == nullptr) {
+    auto cameraObject = camInputSptr->GetCameraDeviceInfo();
+    if (cameraObject == nullptr) {
         MEDIA_ERR_LOG("CameraDeviceServiceCallback::OnResult() camInput_->GetCameraDeviceInfo() is null!");
     } else {
         MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::OnResult()"
                         "is called!, cameraId: %{public}s, timestamp: %{public}"
-                        PRIu64, camInputSptr->GetCameraDeviceInfo()->GetID().c_str(), timestamp);
+                        PRIu64, cameraObject->GetID().c_str(), timestamp);
     }
     if (camInputSptr->GetResultCallback() != nullptr) {
         camInputSptr->GetResultCallback()->OnResult(timestamp, result);
@@ -178,8 +179,9 @@ int CameraInput::Open(bool isEnableSecureCamera, uint64_t* secureSeqId)
     MEDIA_DEBUG_LOG("Enter Into CameraInput::OpenSecureCamera");
     int32_t retCode = CAMERA_UNKNOWN_ERROR;
     bool isSupportSecCamera = false;
-    if (isEnableSecureCamera && cameraObj_) {
-        std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObj_->GetMetadata();
+    auto cameraObject = GetCameraDeviceInfo();
+    if (isEnableSecureCamera && cameraObject) {
+        std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObject->GetMetadata();
         if (baseMetadata == nullptr) {
             MEDIA_ERR_LOG("CameraInput::GetMetaSetting Failed to find baseMetadata");
             return retCode;
@@ -223,7 +225,7 @@ int CameraInput::Close()
     } else {
         MEDIA_ERR_LOG("CameraInput::Close() deviceObj_ is nullptr");
     }
-    cameraObj_ = nullptr;
+    SetCameraDeviceInfo(nullptr);
     InputRemoveDeathRecipient();
     CameraDeviceSvcCallback_ = nullptr;
     return ServiceToCameraError(retCode);
@@ -242,7 +244,7 @@ int CameraInput::Release()
     } else {
         MEDIA_ERR_LOG("CameraInput::Release() deviceObj_ is nullptr");
     }
-    cameraObj_ = nullptr;
+    SetCameraDeviceInfo(nullptr);
     InputRemoveDeathRecipient();
     CameraDeviceSvcCallback_ = nullptr;
     return ServiceToCameraError(retCode);
@@ -264,7 +266,15 @@ void CameraInput::SetResultCallback(std::shared_ptr<ResultCallback> resultCallba
         MEDIA_ERR_LOG("SetResultCallback: Unregistering error resultCallback");
     }
     MEDIA_DEBUG_LOG("CameraInput::setresult callback");
+    std::lock_guard<std::mutex> lock(resultCallbackMutex_);
     resultCallback_ = resultCallback;
+    return;
+}
+void CameraInput::SetCameraDeviceInfo(sptr<CameraDevice> cameraObj)
+{
+    MEDIA_ERR_LOG("CameraInput::SetCameraDeviceInfo");
+    std::lock_guard<std::mutex> lock(cameraDeviceInfoMutex_);
+    cameraObj_ = cameraObj;
     return;
 }
 
@@ -281,7 +291,13 @@ void CameraInput::SetOcclusionDetectCallback(
 
 std::string CameraInput::GetCameraId()
 {
-    return cameraObj_->GetID();
+    auto cameraObject = GetCameraDeviceInfo();
+    if (cameraObject == nullptr) {
+        MEDIA_DEBUG_LOG("cameraObject is null");
+        return nullptr;
+    }
+    
+    return cameraObject->GetID();
 }
 
 sptr<ICameraDeviceService> CameraInput::GetCameraDevice()
@@ -297,6 +313,7 @@ std::shared_ptr<ErrorCallback> CameraInput::GetErrorCallback()
 
 std::shared_ptr<ResultCallback> CameraInput::GetResultCallback()
 {
+    std::lock_guard<std::mutex> lock(resultCallbackMutex_);
     MEDIA_DEBUG_LOG("CameraDeviceServiceCallback::GetResultCallback");
     return resultCallback_;
 }
@@ -308,6 +325,7 @@ std::shared_ptr<CameraOcclusionDetectCallback> CameraInput::GetOcclusionDetectCa
 
 sptr<CameraDevice> CameraInput::GetCameraDeviceInfo()
 {
+    std::lock_guard<std::mutex> lock(cameraDeviceInfoMutex_);
     return cameraObj_;
 }
 
@@ -345,39 +363,67 @@ int32_t CameraInput::UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>
         return ret;
     }
 
-    uint32_t count = changedMetadata->get()->item_count;
-    uint8_t* data = OHOS::Camera::GetMetadataData(changedMetadata->get());
-    camera_metadata_item_entry_t* itemEntry = OHOS::Camera::GetMetadataItems(changedMetadata->get());
-    std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObj_->GetMetadata();
-    if (baseMetadata == nullptr || itemEntry == nullptr) {
-        MEDIA_ERR_LOG("CameraInput::UpdateSetting() baseMetadata or itemEntry is nullptr");
+    auto cameraObject = GetCameraDeviceInfo();
+    if (cameraObject == nullptr) {
+        MEDIA_DEBUG_LOG("cameraObject is null");
         return CAMERA_INVALID_ARG;
     }
-    for (uint32_t i = 0; i < count; i++, itemEntry++) {
+    std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObject->GetMetadata();
+    bool mergeResult = MergeMetadata(changedMetadata, baseMetadata);
+    if (!mergeResult) {
+        MEDIA_DEBUG_LOG("CameraInput::UpdateSetting() baseMetadata or itemEntry is nullptr");
+        return CAMERA_INVALID_ARG;
+    }
+    
+    return CAMERA_OK;
+}
+
+bool CameraInput::MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata,
+    std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata)
+{
+    if (srcMetadata == nullptr || dstMetadata == nullptr) {
+        return false;
+    }
+    auto srcHeader = srcMetadata->get();
+    if (srcHeader == nullptr) {
+        return false;
+    }
+    auto dstHeader = dstMetadata->get();
+    if (dstHeader == nullptr) {
+        return false;
+    }
+    auto srcItemCount = srcHeader->item_count;
+    camera_metadata_item_t srcItem;
+    for (uint32_t index = 0; index < srcItemCount; index++) {
+        int ret = OHOS::Camera::GetCameraMetadataItem(srcHeader, index, &srcItem);
+        if (ret != CAM_META_SUCCESS) {
+            MEDIA_ERR_LOG("Failed to get metadata item at index: %{public}d", index);
+            return false;
+        }
         bool status = false;
-        camera_metadata_item_t item;
-        size_t length = OHOS::Camera::CalculateCameraMetadataItemDataSize(itemEntry->data_type, itemEntry->count);
-        ret = OHOS::Camera::FindCameraMetadataItem(baseMetadata->get(), itemEntry->item, &item);
-        if (ret == CAM_META_SUCCESS) {
-            status = baseMetadata->updateEntry(itemEntry->item,
-                                               (length == 0) ? itemEntry->data.value : (data + itemEntry->data.offset),
-                                               itemEntry->count);
-        } else if (ret == CAM_META_ITEM_NOT_FOUND) {
-            status = baseMetadata->addEntry(itemEntry->item,
-                                            (length == 0) ? itemEntry->data.value : (data + itemEntry->data.offset),
-                                            itemEntry->count);
+        uint32_t currentIndex;
+        ret = OHOS::Camera::FindCameraMetadataItemIndex(dstHeader, srcItem.item, &currentIndex);
+        if (ret == CAM_META_ITEM_NOT_FOUND) {
+            status = dstMetadata->addEntry(srcItem.item, srcItem.data.u8, srcItem.count);
+        } else if (ret == CAM_META_SUCCESS) {
+            status = dstMetadata->updateEntry(srcItem.item, srcItem.data.u8, srcItem.count);
         }
         if (!status) {
-            MEDIA_ERR_LOG("CameraInput::UpdateSetting Failed to add/update metadata item: %{public}d",
-                          itemEntry->item);
+            MEDIA_ERR_LOG("Failed to update metadata item: %{public}d", srcItem.item);
+            return false;
         }
     }
-    return CAMERA_OK;
+    return true;
 }
 
 std::string CameraInput::GetCameraSettings()
 {
-    return OHOS::Camera::MetadataUtils::EncodeToString(cameraObj_->GetMetadata());
+    auto cameraObject = GetCameraDeviceInfo();
+    if (cameraObject == nullptr) {
+        MEDIA_DEBUG_LOG("cameraObject is null");
+        return nullptr;
+    }
+    return OHOS::Camera::MetadataUtils::EncodeToString(cameraObject->GetMetadata());
 }
 
 int32_t CameraInput::SetCameraSettings(std::string setting)
@@ -392,11 +438,12 @@ int32_t CameraInput::SetCameraSettings(std::string setting)
 
 std::shared_ptr<camera_metadata_item_t> CameraInput::GetMetaSetting(uint32_t metaTag)
 {
-    if (cameraObj_ ==nullptr) {
+    auto cameraObject = GetCameraDeviceInfo();
+    if (cameraObject == nullptr) {
         MEDIA_ERR_LOG("CameraInput::GetMetaSetting cameraObj has release!");
         return nullptr;
     }
-    std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObj_->GetMetadata();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObject->GetMetadata();
     if (baseMetadata == nullptr) {
         MEDIA_ERR_LOG("CameraInput::GetMetaSetting Failed to find baseMetadata");
         return nullptr;
