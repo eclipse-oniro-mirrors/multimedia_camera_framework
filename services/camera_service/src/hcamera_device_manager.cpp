@@ -81,7 +81,7 @@ void HCameraDeviceManager::AddDevice(pid_t pid, sptr<HCameraDevice> device)
     MEDIA_INFO_LOG("HCameraDeviceManager::AddDevice end");
 }
 
-void HCameraDeviceManager::RemoveDevice(std::string &cameraId)
+void HCameraDeviceManager::RemoveDevice(const std::string &cameraId)
 {
     MEDIA_INFO_LOG("HCameraDeviceManager::RemoveDevice cameraId=%{public}s start", cameraId.c_str());
     std::lock_guard<std::mutex> lock(mapMutex_);
@@ -303,7 +303,7 @@ std::vector<sptr<HCameraDeviceHolder>> HCameraDeviceManager::WouldEvict(sptr<HCa
     int32_t cost = cameraRequestOpen->GetCost();
     sptr<CameraProcessPriority> requestPriority = cameraRequestOpen->GetPriority();
     int32_t owner = cameraRequestOpen->GetPid();
-    int64_t totalCost = GetCurrentCost() + cost;
+    int32_t totalCost = GetCurrentCost() + cost;
     MEDIA_INFO_LOG("requestCamera: uid:%{public}s pid:%{public}d, processState:%{public}d,"
         "focusState: %{public}d cameraId:%{public}s, cost:%{public}d, totalCost:%{public}d",
         requestPriority->GetUid(), cameraRequestOpen->GetPid(),
