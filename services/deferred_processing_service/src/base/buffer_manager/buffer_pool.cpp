@@ -26,7 +26,7 @@ std::shared_ptr<BufferPool> BufferPool::Create(int32_t capacity, int64_t msgSize
 {
     // DPS_LOG
     auto pool = std::make_shared<BufferPool>(capacity, msgSize);
-    if (pool && pool->Initialize()) {
+    if (pool->Initialize()) {
         pool = nullptr;
     }
     return pool;

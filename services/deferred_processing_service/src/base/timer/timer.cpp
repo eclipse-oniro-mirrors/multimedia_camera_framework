@@ -34,7 +34,7 @@ std::shared_ptr<Timer> Timer::Create(const std::string& name, TimerType timerTyp
         }
     };
     auto timer = std::make_shared<MakeSharedHelper>(name, timerType, intervalMs, std::move(callback));
-    if (timer && !timer->Initialize()) {
+    if (!timer->Initialize()) {
         timer.reset();
     }
     return timer;

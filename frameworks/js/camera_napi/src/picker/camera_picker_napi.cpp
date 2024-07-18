@@ -76,7 +76,7 @@ static std::shared_ptr<PickerContextProxy> GetAbilityContext(napi_env env, napi_
         return nullptr;
     }
     auto contextProxy = std::make_shared<PickerContextProxy>(context);
-    if (contextProxy == nullptr || contextProxy->GetType() == PickerContextType::UNKNOWN) {
+    if (contextProxy->GetType() == PickerContextType::UNKNOWN) {
         MEDIA_ERR_LOG("GetAbilityContext AbilityRuntime convert context failed");
         return nullptr;
     }

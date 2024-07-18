@@ -28,10 +28,6 @@ namespace {
 std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles1_1(PreconfigType preconfigType)
 {
     std::shared_ptr<PreconfigProfiles> configs = std::make_shared<PreconfigProfiles>(ColorSpace::BT709);
-    if (configs == nullptr) {
-        MEDIA_ERR_LOG("VideoSession::GeneratePreconfigProfiles1_1 create preconfig profiles occur error");
-        return nullptr;
-    }
     configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 2304, .height = 2304 } };
     switch (preconfigType) {
         case PRECONFIG_720P:
@@ -74,10 +70,6 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles1_1(PreconfigType pr
 std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles4_3(PreconfigType preconfigType)
 {
     std::shared_ptr<PreconfigProfiles> configs = std::make_shared<PreconfigProfiles>(ColorSpace::BT709);
-    if (configs == nullptr) {
-        MEDIA_ERR_LOG("VideoSession::GeneratePreconfigProfiles4_3 create preconfig profiles occur error");
-        return nullptr;
-    }
     configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 3072, .height = 2304 } };
     switch (preconfigType) {
         case PRECONFIG_720P:
@@ -120,10 +112,6 @@ std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles4_3(PreconfigType pr
 std::shared_ptr<PreconfigProfiles> GeneratePreconfigProfiles16_9(PreconfigType preconfigType)
 {
     std::shared_ptr<PreconfigProfiles> configs = std::make_shared<PreconfigProfiles>(ColorSpace::BT709);
-    if (configs == nullptr) {
-        MEDIA_ERR_LOG("VideoSession::GeneratePreconfigProfiles4_3 create preconfig profiles occur error");
-        return nullptr;
-    }
     configs->photoProfile = { CameraFormat::CAMERA_FORMAT_JPEG, { .width = 4096, .height = 2304 } };
     switch (preconfigType) {
         case PRECONFIG_720P:
