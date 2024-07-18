@@ -485,14 +485,12 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     auto captureSession = GetSession();
-    if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
-        MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, session not runing");
-        return CameraErrorCode::SESSION_NOT_RUNNING;
-    }
-    if (GetStream() == nullptr) {
-        MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, GetStream is nullptr");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr || !captureSession->IsSessionCommited(),
+        CameraErrorCode::SESSION_NOT_CONFIG,
+        "PhotoOutput Failed to Capture with setting, session not commited");
+    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr,
+        CameraErrorCode::SERVICE_FATL_ERROR,
+        "PhotoOutput Failed to Capture! with setting, GetStream is nullptr");
     defaultCaptureSetting_ = photoCaptureSettings;
     auto itemStream = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
@@ -515,14 +513,12 @@ int32_t PhotoOutput::Capture()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     auto captureSession = GetSession();
-    if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
-        MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, session not runing");
-        return CameraErrorCode::SESSION_NOT_RUNNING;
-    }
-    if (GetStream() == nullptr) {
-        MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, GetStream is nullptr");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr || !captureSession->IsSessionCommited(),
+        CameraErrorCode::SESSION_NOT_CONFIG,
+        "PhotoOutput Failed to Capture, session not commited");
+    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr,
+        CameraErrorCode::SERVICE_FATL_ERROR,
+        "PhotoOutput Failed to Capture, GetStream is nullptr");
     int32_t items = 0;
     int32_t dataLength = 0;
     std::shared_ptr<Camera::CameraMetadata> captureMetadataSetting =
@@ -547,14 +543,12 @@ int32_t PhotoOutput::CancelCapture()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     auto captureSession = GetSession();
-    if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
-        MEDIA_ERR_LOG("PhotoOutput Failed to Capture!, session not runing");
-        return CameraErrorCode::SESSION_NOT_RUNNING;
-    }
-    if (GetStream() == nullptr) {
-        MEDIA_ERR_LOG("PhotoOutput Failed to CancelCapture!, GetStream is nullptr");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr || !captureSession->IsSessionCommited(),
+        CameraErrorCode::SESSION_NOT_CONFIG,
+        "PhotoOutput Failed to CancelCapture, session not commited");
+    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr,
+        CameraErrorCode::SERVICE_FATL_ERROR,
+        "PhotoOutput Failed to CancelCapture, GetStream is nullptr");
     auto itemStream = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
@@ -572,14 +566,12 @@ int32_t PhotoOutput::ConfirmCapture()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     auto captureSession = GetSession();
-    if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
-        MEDIA_ERR_LOG("PhotoOutput Failed to ConfirmCapture!, session not runing");
-        return CameraErrorCode::SESSION_NOT_RUNNING;
-    }
-    if (GetStream() == nullptr) {
-        MEDIA_ERR_LOG("PhotoOutput Failed to ConfirmCapture!, GetStream is nullptr");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr || !captureSession->IsSessionCommited(),
+        CameraErrorCode::SESSION_NOT_CONFIG,
+        "PhotoOutput Failed to ConfirmCapture, session not commited");
+    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr,
+        CameraErrorCode::SERVICE_FATL_ERROR,
+        "PhotoOutput Failed to ConfirmCapture, GetStream is nullptr");
     auto itemStream = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {

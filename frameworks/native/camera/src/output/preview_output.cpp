@@ -203,14 +203,12 @@ int32_t PreviewOutput::Start()
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into PreviewOutput::Start");
     auto captureSession = GetSession();
-    if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
-        MEDIA_ERR_LOG("PreviewOutput Failed to Start!, session not config");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
-    if (GetStream() == nullptr) {
-        MEDIA_ERR_LOG("PreviewOutput Failed to Start!, GetStream is nullptr");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr || !captureSession->IsSessionCommited(),
+        CameraErrorCode::SESSION_NOT_CONFIG,
+        "PreviewOutput Failed to Start, session not commited");
+    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr,
+        CameraErrorCode::SERVICE_FATL_ERROR,
+        "PreviewOutput Failed to Start, GetStream is nullptr");
     auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
@@ -354,10 +352,9 @@ int32_t PreviewOutput::EnableSketch(bool isEnable)
 int32_t PreviewOutput::AttachSketchSurface(sptr<Surface> sketchSurface)
 {
     auto captureSession = GetSession();
-    if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
-        MEDIA_ERR_LOG("PreviewOutput AttachSketchSurface!, session not commited");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr || !captureSession->IsSessionCommited(),
+        CameraErrorCode::SESSION_NOT_CONFIG,
+        "PreviewOutput Failed to AttachSketchSurface, session not commited");
     if (sketchWrapper_ == nullptr) {
         return CameraErrorCode::INVALID_ARGUMENT;
     }
@@ -480,10 +477,9 @@ int32_t PreviewOutput::StartSketch()
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
 
     auto captureSession = GetSession();
-    if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
-        MEDIA_ERR_LOG("PreviewOutput Failed StartSketch!, session not commited");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr || !captureSession->IsSessionCommited(),
+        CameraErrorCode::SESSION_NOT_CONFIG,
+        "PreviewOutput Failed to StartSketch, session not commited");
     if (sketchWrapper_ != nullptr) {
         errCode = sketchWrapper_->StartSketchStream();
     }
@@ -495,11 +491,9 @@ int32_t PreviewOutput::StopSketch()
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
 
     auto captureSession = GetSession();
-    if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
-        MEDIA_ERR_LOG("PreviewOutput Failed StopSketch!, session not commited");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
-
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr || !captureSession->IsSessionCommited(),
+        CameraErrorCode::SESSION_NOT_CONFIG,
+        "PreviewOutput Failed to StopSketch, session not commited");
     if (sketchWrapper_ != nullptr) {
         errCode = sketchWrapper_->StopSketchStream();
     }

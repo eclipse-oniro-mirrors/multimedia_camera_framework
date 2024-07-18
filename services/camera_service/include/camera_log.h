@@ -55,6 +55,14 @@
         }                                              \
     } while (0)
 
+#define CHECK_ERROR_RETURN_RET_LOG(cond, ret, fmt, ...)  \
+    do {                                                 \
+        if (cond) {                                      \
+            MEDIA_ERR_LOG(fmt, ##__VA_ARGS__);           \
+            return ret;                                  \
+        }                                                \
+    } while (0)
+
 #define CHECK_AND_RETURN_LOG(cond, fmt, ...)           \
     do {                                               \
         if (!(cond)) {                                 \
@@ -63,9 +71,24 @@
         }                                              \
     } while (0)
 
+#define CHECK_ERROR_RETURN_LOG(cond, fmt, ...)         \
+    do {                                               \
+        if (cond) {                                    \
+            MEDIA_ERR_LOG(fmt, ##__VA_ARGS__);         \
+            return;                                    \
+        }                                              \
+    } while (0)
+
 #define CHECK_AND_PRINT_LOG(cond, fmt, ...)            \
     do {                                               \
         if (!(cond)) {                                 \
+            MEDIA_ERR_LOG(fmt, ##__VA_ARGS__);         \
+        }                                              \
+    } while (0)
+
+#define CHECK_ERROR_PRINT_LOG(cond, fmt, ...)          \
+    do {                                               \
+        if (cond) {                                 \
             MEDIA_ERR_LOG(fmt, ##__VA_ARGS__);         \
         }                                              \
     } while (0)
@@ -80,7 +103,7 @@
 #define CHECK_AND_BREAK_LOG(cond, fmt, ...)                                 \
     if (1) {                                                                \
         if (!(cond)) {                                                      \
-            MEDIA_WARNING_LOG(fmt, ##__VA_ARGS__);                               \
+            MEDIA_WARNING_LOG(fmt, ##__VA_ARGS__);                          \
             break;                                                          \
         }                                                                   \
     } else void (0)
@@ -88,7 +111,7 @@
 #define CHECK_AND_CONTINUE_LOG(cond, fmt, ...)                              \
     if (1) {                                                                \
         if (!(cond)) {                                                      \
-            MEDIA_WARNING_LOG(fmt, ##__VA_ARGS__);                               \
+            MEDIA_WARNING_LOG(fmt, ##__VA_ARGS__);                          \
             continue;                                                       \
         }                                                                   \
     } else void (0)
