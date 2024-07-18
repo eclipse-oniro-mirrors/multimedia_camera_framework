@@ -477,6 +477,7 @@ int32_t HStreamRepeat::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(cameraAbility_, ability);
         std::shared_ptr<OHOS::Camera::CameraMetadata> dynamicSetting = nullptr;
         OHOS::Camera::MetadataUtils::ConvertVecToMetadata(ability, dynamicSetting);
+        CHECK_AND_RETURN_RET(dynamicSetting != nullptr, CAMERA_INVALID_ARG);
         camera_metadata_item_t item;
         int ret = OHOS::Camera::FindCameraMetadataItem(dynamicSetting->get(), OHOS_CONTROL_FPS_RANGES, &item);
         bool status = false;
