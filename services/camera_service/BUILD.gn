@@ -125,9 +125,7 @@ ohos_shared_library("camera_service") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
   }
 
-  deps = [
-    "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service"
-  ]
+  deps = [ "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service" ]
 
   external_deps = [
     "ability_base:want",
