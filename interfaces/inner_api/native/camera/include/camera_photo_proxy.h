@@ -30,7 +30,7 @@ public:
     virtual ~CameraPhotoProxy();
     void ReadFromParcel(MessageParcel &parcel);
     void WriteToParcel(MessageParcel &parcel);
-    void SetDeferredAttrs(std::string photoId, int32_t deferredProcType, uint64_t fileSize);
+    void SetDeferredAttrs(std::string photoId, int32_t deferredProcType, uint64_t fileSize, int32_t imageFormat);
     void SetLocation(double latitude, double longitude);
     int32_t CameraFreeBufferHandle();
 
@@ -48,6 +48,7 @@ private:
     double latitude_;
     double longitude_;
     sptr<Surface> photoSurface_;
+    int32_t imageFormat_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -43,6 +43,7 @@ CameraServerPhotoProxy::CameraServerPhotoProxy()
     mode_ = 0;
     longitude_ = -1.0;
     latitude_ = -1.0;
+    imageFormat_ = 0;
 }
 
 CameraServerPhotoProxy::~CameraServerPhotoProxy()
@@ -93,6 +94,7 @@ void CameraServerPhotoProxy::ReadFromParcel(MessageParcel &parcel)
     fileSize_ = parcel.ReadUint64();
     latitude_ = parcel.ReadDouble();
     longitude_ = parcel.ReadDouble();
+    imageFormat_ = parcel.ReadInt32();
     bufferHandle_ = ReadBufferHandle(parcel);
     MEDIA_INFO_LOG("PhotoProxy::ReadFromParcel");
 }
@@ -152,7 +154,14 @@ int32_t CameraServerPhotoProxy::GetHeight()
 
 PhotoFormat CameraServerPhotoProxy::GetFormat()
 {
-    return isHighQuality_ ? Media::PhotoFormat::JPG : Media::PhotoFormat::RGBA;
+    if (isHighQuality_) {
+        return Media::PhotoFormat::JPG;
+    }
+    auto iter = formatMap.find(imageFormat_);
+    if (iter != formatMap.end()) {
+        return iter->second;
+    }
+    return Media::PhotoFormat::RGBA;
 }
 
 PhotoQuality CameraServerPhotoProxy::GetPhotoQuality()

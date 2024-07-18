@@ -44,6 +44,10 @@ static const std::map<int32_t, int32_t> modeMap = {
     { 13, 33},
     { 14, 52}
 };
+static const std::map<int32_t, PhotoFormat> formatMap = {
+    {0, PhotoFormat::RGBA},
+    {1, PhotoFormat::JPG}
+};
 class CameraServerPhotoProxy : public PhotoProxy {
 public:
     CameraServerPhotoProxy();
@@ -84,6 +88,7 @@ private:
     double latitude_;
     double longitude_;
     int32_t mode_;
+    int32_t imageFormat_;
     int32_t CameraFreeBufferHandle(BufferHandle *handle);
 };
 } // namespace CameraStandard

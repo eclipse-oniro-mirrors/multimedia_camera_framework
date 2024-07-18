@@ -246,7 +246,10 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
         MEDIA_INFO_LOG("ExtraGet dataSize %{public}d", extraDataSize);
         size = static_cast<uint64_t>(extraDataSize);
     }
-    MEDIA_INFO_LOG("width:%{public}d, height:%{public}d, size:%{public}" PRId64, photoWidth, photoHeight, size);
+    int32_t deferredImageFormat = 0;
+    res = surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredImageFormat, deferredImageFormat);
+    MEDIA_INFO_LOG("deferredImageFormat:%{public}d, width:%{public}d, height:%{public}d, size:%{public}" PRId64, 
+        deferredImageFormat, photoWidth, photoHeight, size);
     int32_t format = bufferHandle->format;
     sptr<CameraPhotoProxy> photoProxy;
     std::string imageIdStr = std::to_string(imageId);
@@ -255,7 +258,7 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
         MEDIA_ERR_LOG("failed to new photoProxy");
         return;
     }
-    photoProxy->SetDeferredAttrs(imageIdStr, deferredProcessingType, size);
+    photoProxy->SetDeferredAttrs(imageIdStr, deferredProcessingType, size, deferredImageFormat);
     auto photoOutput = photoOutput_.promote();
     if (photoOutput && photoOutput->GetSession()) {
         auto settings = photoOutput->GetDefaultCaptureSetting();
