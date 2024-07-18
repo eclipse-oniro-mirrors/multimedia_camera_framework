@@ -22,6 +22,26 @@
 using namespace std;
 using namespace OHOS;
 using namespace OHOS::CameraStandard;
+const std::unordered_map<SceneMode, Camera_SceneMode> g_fwModeToNdk_ = {
+    {SceneMode::CAPTURE, Camera_SceneMode::NORMAL_PHOTO},
+    {SceneMode::VIDEO, Camera_SceneMode::NORMAL_VIDEO},
+    {SceneMode::SECURE, Camera_SceneMode::SECURE_PHOTO},
+};
+const std::unordered_map<Camera_SceneMode, SceneMode> g_ndkToFwMode_ = {
+    {Camera_SceneMode::NORMAL_PHOTO, SceneMode::CAPTURE},
+    {Camera_SceneMode::NORMAL_VIDEO, SceneMode::VIDEO},
+    {Camera_SceneMode::SECURE_PHOTO, SceneMode::SECURE},
+};
+const std::unordered_map<CameraPosition, Camera_Position> g_FwkCameraPositionToNdk_ = {
+    {CameraPosition::CAMERA_POSITION_UNSPECIFIED, Camera_Position::CAMERA_POSITION_UNSPECIFIED},
+    {CameraPosition::CAMERA_POSITION_BACK, Camera_Position::CAMERA_POSITION_BACK},
+    {CameraPosition::CAMERA_POSITION_FRONT, Camera_Position::CAMERA_POSITION_FRONT},
+};
+const std::unordered_map<Camera_Position, CameraPosition> g_NdkCameraPositionToFwk_ = {
+    {Camera_Position::CAMERA_POSITION_UNSPECIFIED, CameraPosition::CAMERA_POSITION_UNSPECIFIED},
+    {Camera_Position::CAMERA_POSITION_BACK, CameraPosition::CAMERA_POSITION_BACK},
+    {Camera_Position::CAMERA_POSITION_FRONT, CameraPosition::CAMERA_POSITION_FRONT},
+};
 
 class InnerCameraManagerCallback : public CameraManagerCallback {
 public:
@@ -45,7 +65,12 @@ public:
         statusInfo.camera = camera_;
         MEDIA_INFO_LOG("cameraId is %{public}s", cameraStatusInfo.cameraDevice->GetID().data());
         statusInfo.camera->cameraId = cameraStatusInfo.cameraDevice->GetID().data();
-        statusInfo.camera->cameraPosition = static_cast<Camera_Position>(cameraStatusInfo.cameraDevice->GetPosition());
+        auto itr = g_FwkCameraPositionToNdk_.find(cameraStatusInfo.cameraDevice->GetPosition());
+        if (itr != g_FwkCameraPositionToNdk_.end()) {
+            statusInfo.camera->cameraPosition = itr->second;
+        } else {
+            MEDIA_ERR_LOG("OnCameraStatusChanged cameraPosition not found!");
+        }
         statusInfo.camera->cameraType = static_cast<Camera_Type>(cameraStatusInfo.cameraDevice->GetCameraType());
         statusInfo.camera->connectionType =
             static_cast<Camera_Connection>(cameraStatusInfo.cameraDevice->GetConnectionType());
@@ -118,7 +143,12 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, ui
         }
         strlcpy(dst, src, dstSize);
         outCameras[index].cameraId = dst;
-        outCameras[index].cameraPosition = static_cast<Camera_Position>(cameraObjList[index]->GetPosition());
+        auto itr = g_FwkCameraPositionToNdk_.find(cameraObjList[index]->GetPosition());
+        if (itr != g_FwkCameraPositionToNdk_.end()) {
+            outCameras[index].cameraPosition = itr->second;
+        } else {
+            MEDIA_ERR_LOG("Camera_Manager::GetSupportedCameras cameraPosition not found!");
+        }
         outCameras[index].cameraType = static_cast<Camera_Type>(cameraObjList[index]->GetCameraType());
         outCameras[index].connectionType = static_cast<Camera_Connection>(cameraObjList[index]->GetConnectionType());
     }
@@ -144,34 +174,17 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
     Camera_OutputCapability** cameraOutputCapability)
 {
     Camera_OutputCapability* outCapability = new Camera_OutputCapability;
-    if (!outCapability) {
-        MEDIA_ERR_LOG("Failed to allocate memory for Camera_OutputCapability！");
-        return CAMERA_SERVICE_FATAL_ERROR;
-    }
-    sptr<CameraDevice> cameraDevice = nullptr;
-    std::vector<sptr<CameraDevice>> cameraObjList = CameraManager::GetInstance()->GetSupportedCameras();
-        MEDIA_ERR_LOG("GetSupportedCameraOutputCapability cameraInfo is null, the cameraObjList size is %{public}zu",
-            cameraObjList.size());
-        for (size_t index = 0; index < cameraObjList.size(); index++) {
-            MEDIA_ERR_LOG("GetSupportedCameraOutputCapability for");
-            sptr<CameraDevice> innerCameraDevice = cameraObjList[index];
-            if (innerCameraDevice == nullptr) {
-                MEDIA_ERR_LOG("GetSupportedCameraOutputCapability innerCameraDevice == null");
-                continue;
-            }
-            if (innerCameraDevice->GetPosition() == static_cast<CameraPosition>(camera->cameraPosition) &&
-                innerCameraDevice->GetCameraType() == static_cast<CameraType>(camera->cameraType)) {
-                MEDIA_ERR_LOG("GetSupportedCameraOutputCapability position:%{public}d, type:%{public}d ",
-                    innerCameraDevice->GetPosition(), innerCameraDevice->GetCameraType());
-                cameraDevice = innerCameraDevice;
+    CHECK_AND_RETURN_RET_LOG(outCapability != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_Manager::GetSupportedCameraOutputCapability failed to allocate memory for outCapability!");
 
-                break;
-            }
-        }
+    sptr<CameraDevice> cameraDevice = CameraManager::GetInstance()->GetCameraDeviceFromId(camera->cameraId);
+    CHECK_AND_RETURN_RET_LOG(cameraDevice != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Camera_Manager::GetSupportedCameraOutputCapability get cameraDevice fail!");
+
     sptr<CameraOutputCapability> innerCameraOutputCapability =
         CameraManager::GetInstance()->GetSupportedOutputCapability(cameraDevice);
     if (innerCameraOutputCapability == nullptr) {
-        MEDIA_ERR_LOG("GetSupportedCameraOutputCapability innerCameraOutputCapability is null");
+        MEDIA_ERR_LOG("Camera_Manager::GetSupportedCameraOutputCapability innerCameraOutputCapability is null!");
         delete outCapability;
         return CAMERA_INVALID_ARGUMENT;
     }
@@ -293,6 +306,47 @@ Camera_ErrorCode Camera_Manager::GetSupportedMetadataTypeList(Camera_OutputCapab
     return CAMERA_OK;
 }
 
+Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapabilityWithSceneMode(const Camera_Device* camera,
+    Camera_SceneMode sceneMode, Camera_OutputCapability** cameraOutputCapability)
+{
+    sptr<CameraDevice> cameraDevice = CameraManager::GetInstance()->GetCameraDeviceFromId(camera->cameraId);
+    CHECK_AND_RETURN_RET_LOG(cameraDevice != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Camera_Manager::GetSupportedCameraOutputCapabilityWithSceneMode get cameraDevice fail!");
+
+    auto itr = g_ndkToFwMode_.find(static_cast<Camera_SceneMode>(sceneMode));
+    CHECK_AND_RETURN_RET_LOG(itr != g_ndkToFwMode_.end(), CAMERA_INVALID_ARGUMENT,
+        "Camera_Manager::GetSupportedCameraOutputCapabilityWithSceneMode "
+        "sceneMode = %{public}d not supported!", sceneMode);
+
+    SceneMode innerSceneMode = static_cast<SceneMode>(itr->second);
+    sptr<CameraOutputCapability> innerCameraOutputCapability =
+        CameraManager::GetInstance()->GetSupportedOutputCapability(cameraDevice, innerSceneMode);
+    CHECK_AND_RETURN_RET_LOG(innerCameraOutputCapability != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Camera_Manager::GetSupportedCameraOutputCapabilityWithSceneMode innerCameraOutputCapability is null!");
+
+    Camera_OutputCapability* outCapability = new Camera_OutputCapability;
+    CHECK_AND_RETURN_RET_LOG(outCapability != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_Manager::GetSupportedCameraOutputCapabilityWithSceneMode failed to allocate memory for outCapability!");
+    std::vector<Profile> previewProfiles = innerCameraOutputCapability->GetPreviewProfiles();
+    std::vector<Profile> uniquePreviewProfiles;
+    for (const auto& profile : previewProfiles) {
+        if (std::find(uniquePreviewProfiles.begin(), uniquePreviewProfiles.end(),
+            profile) == uniquePreviewProfiles.end()) {
+            uniquePreviewProfiles.push_back(profile);
+        }
+    }
+    std::vector<Profile> photoProfiles = innerCameraOutputCapability->GetPhotoProfiles();
+    std::vector<VideoProfile> videoProfiles = innerCameraOutputCapability->GetVideoProfiles();
+    std::vector<MetadataObjectType> metadataTypeList =
+        innerCameraOutputCapability->GetSupportedMetadataObjectType();
+    GetSupportedPreviewProfiles(outCapability, uniquePreviewProfiles);
+    GetSupportedPhotoProfiles(outCapability, photoProfiles);
+    GetSupportedVideoProfiles(outCapability, videoProfiles);
+    GetSupportedMetadataTypeList(outCapability, metadataTypeList);
+    *cameraOutputCapability = outCapability;
+    return CAMERA_OK;
+}
+
 Camera_ErrorCode Camera_Manager::DeleteSupportedCameraOutputCapability(Camera_OutputCapability* cameraOutputCapability)
 {
     if (cameraOutputCapability != nullptr) {
@@ -341,11 +395,9 @@ Camera_ErrorCode Camera_Manager::IsCameraMuted(bool* isCameraMuted)
 
 Camera_ErrorCode Camera_Manager::CreateCaptureSession(Camera_CaptureSession** captureSession)
 {
-    sptr<CaptureSession> innerCaptureSession = nullptr;
-    int32_t retCode = CameraManager::GetInstance()->CreateCaptureSession(&innerCaptureSession);
-    if (retCode != CameraErrorCode::SUCCESS) {
-        return CAMERA_SERVICE_FATAL_ERROR;
-    }
+    sptr<CaptureSession> innerCaptureSession = CameraManager::GetInstance()->CreateCaptureSession(SceneMode::CAPTURE);
+    CHECK_AND_RETURN_RET_LOG(innerCaptureSession != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_Manager::CreateCaptureSession create innerCaptureSession fail!");
     Camera_CaptureSession* outSession = new Camera_CaptureSession(innerCaptureSession);
     *captureSession = outSession;
     return CAMERA_OK;
@@ -353,21 +405,9 @@ Camera_ErrorCode Camera_Manager::CreateCaptureSession(Camera_CaptureSession** ca
 
 Camera_ErrorCode Camera_Manager::CreateCameraInput(const Camera_Device* camera, Camera_Input** cameraInput)
 {
-    sptr<CameraDevice> cameraDevice = nullptr;
-    std::vector<sptr<CameraDevice>> cameraObjList = CameraManager::GetInstance()->GetSupportedCameras();
-        MEDIA_DEBUG_LOG("cameraInfo is null, the cameraObjList size is %{public}zu",
-            cameraObjList.size());
-        for (size_t index = 0; index < cameraObjList.size(); index++) {
-            sptr<CameraDevice> innerCameraDevice = cameraObjList[index];
-            if (innerCameraDevice == nullptr) {
-                continue;
-            }
-            if (innerCameraDevice->GetPosition() == static_cast<CameraPosition>(camera->cameraPosition) &&
-                innerCameraDevice->GetCameraType() == static_cast<CameraType>(camera->cameraType)) {
-                cameraDevice = innerCameraDevice;
-                break;
-            }
-        }
+    sptr<CameraDevice> cameraDevice = CameraManager::GetInstance()->GetCameraDeviceFromId(camera->cameraId);
+    CHECK_AND_RETURN_RET_LOG(cameraDevice != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Camera_Manager::CreateCameraInput get cameraDevice fail!");
 
     sptr<CameraInput> innerCameraInput = nullptr;
     int32_t retCode = CameraManager::GetInstance()->CreateCameraInput(cameraDevice, &innerCameraInput);
@@ -384,7 +424,13 @@ Camera_ErrorCode Camera_Manager::CreateCameraInputWithPositionAndType(Camera_Pos
 {
     MEDIA_ERR_LOG("Camera_Manager CreateCameraInputWithPositionAndType is called");
     sptr<CameraInput> innerCameraInput = nullptr;
-    CameraPosition innerPosition = static_cast<CameraPosition>(position);
+    CameraPosition innerPosition = CameraPosition::CAMERA_POSITION_UNSPECIFIED;
+    auto itr = g_NdkCameraPositionToFwk_.find(position);
+    if (itr != g_NdkCameraPositionToFwk_.end()) {
+        innerPosition = itr->second;
+    } else {
+        MEDIA_ERR_LOG("Camera_Manager::CreateCameraInputWithPositionAndType innerPosition not found!");
+    }
     CameraType innerType = static_cast<CameraType>(type);
 
     innerCameraInput = CameraManager::GetInstance()->CreateCameraInput(innerPosition, innerType);
@@ -515,9 +561,7 @@ Camera_ErrorCode Camera_Manager::GetCameraOrientation(Camera_Device* camera, uin
         if (innerCameraDevice == nullptr) {
             continue;
         }
-        if (innerCameraDevice->GetPosition() == static_cast<CameraPosition>(camera->cameraPosition) &&
-            innerCameraDevice->GetCameraType() == static_cast<CameraType>(camera->cameraType) &&
-            innerCameraDevice->GetID() == camera->cameraId) {
+        if (innerCameraDevice->GetID() == camera->cameraId) {
             cameraDevice = innerCameraDevice;
             break;
         }
@@ -529,4 +573,53 @@ Camera_ErrorCode Camera_Manager::GetCameraOrientation(Camera_Device* camera, uin
         *orientation = cameraDevice->GetCameraOrientation();
         return CAMERA_OK;
     }
+}
+
+Camera_ErrorCode Camera_Manager::GetSupportedSceneModes(Camera_Device* camera,
+    Camera_SceneMode** sceneModes, uint32_t* size)
+{
+    sptr<CameraDevice> cameraDevice = CameraManager::GetInstance()->GetCameraDeviceFromId(camera->cameraId);
+    CHECK_AND_RETURN_RET_LOG(cameraDevice != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Camera_Manager::GetSupportedSceneModes get cameraDevice fail!");
+
+    std::vector<SceneMode> innerSceneMode = CameraManager::GetInstance()->GetSupportedModes(cameraDevice);
+    for (auto it = innerSceneMode.begin(); it != innerSceneMode.end(); it++) {
+        if (*it == SCAN) {
+            innerSceneMode.erase(it);
+            break;
+        }
+    }
+    if (innerSceneMode.empty()) {
+        innerSceneMode.emplace_back(CAPTURE);
+        innerSceneMode.emplace_back(VIDEO);
+    }
+    MEDIA_INFO_LOG("Camera_Manager::GetSupportedSceneModes size = [%{public}zu]", innerSceneMode.size());
+
+    std::vector<Camera_SceneMode> cameraSceneMode;
+    for (size_t index = 0; index < innerSceneMode.size(); index++) {
+        auto itr = g_fwModeToNdk_.find(static_cast<SceneMode>(innerSceneMode[index]));
+        if (itr != g_fwModeToNdk_.end()) {
+            cameraSceneMode.push_back(static_cast<Camera_SceneMode>(itr->second));
+        }
+    }
+
+    Camera_SceneMode* sceneMode = new Camera_SceneMode[cameraSceneMode.size()];
+    CHECK_AND_RETURN_RET_LOG(sceneMode != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_Manager::GetSupportedSceneModes allocate memory for sceneMode fail!");
+    for (size_t index = 0; index < cameraSceneMode.size(); index++) {
+        sceneMode[index] = cameraSceneMode[index];
+    }
+
+    *sceneModes = sceneMode;
+    *size = cameraSceneMode.size();
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::DeleteSupportedSceneModes(Camera_SceneMode* sceneModes)
+{
+    if (sceneModes != nullptr) {
+        delete[] sceneModes;
+    }
+
+    return CAMERA_OK;
 }

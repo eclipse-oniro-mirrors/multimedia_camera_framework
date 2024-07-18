@@ -16,6 +16,7 @@
 #ifndef OHOS_CAPTURE_SESSION_IMPL_H
 #define OHOS_CAPTURE_SESSION_IMPL_H
 
+#include "input/camera_manager.h"
 #include "kits/native/include/camera/camera.h"
 #include "kits/native/include/camera/capture_session.h"
 #include "session/capture_session.h"
@@ -113,6 +114,14 @@ public:
     Camera_ErrorCode Stop();
 
     Camera_ErrorCode Release();
+
+    Camera_ErrorCode CanAddInput(Camera_Input* cameraInput, bool* isSuccess);
+
+    Camera_ErrorCode CanAddPreviewOutput(Camera_PreviewOutput* previewOutput, bool* isSuccess);
+
+    Camera_ErrorCode CanAddPhotoOutput(Camera_PhotoOutput* photoOutput, bool* isSuccess);
+
+    Camera_ErrorCode CanAddVideoOutput(Camera_VideoOutput* cameraOutput, bool* isSuccess);
 
 private:
     OHOS::sptr<OHOS::CameraStandard::CaptureSession> innerCaptureSession_;

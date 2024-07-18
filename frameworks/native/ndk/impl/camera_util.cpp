@@ -60,6 +60,9 @@ Camera_ErrorCode FrameworkToNdkCameraError(int32_t ret)
         case CameraErrorCode::SERVICE_FATL_ERROR:
             err = CAMERA_SERVICE_FATAL_ERROR;
             break;
+        case CameraErrorCode::UNRESOLVED_CONFLICTS_BETWEEN_STREAMS:
+            err = CAMERA_UNRESOLVED_CONFLICTS_WITH_CURRENT_CONFIGURATIONS;
+            break;
         default:
             MEDIA_ERR_LOG("ServiceToCameraError() error code from service: %{public}d", ret);
             break;
