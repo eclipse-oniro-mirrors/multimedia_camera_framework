@@ -70,6 +70,7 @@ void HCameraDeviceManager::AddDevice(pid_t pid, sptr<HCameraDevice> device)
     std::lock_guard<std::mutex> lock(mapMutex_);
     int32_t cost = 0;
     std::set<std::string> conflicting;
+    device->GetCameraResourceCost(cost, conflicting);
     int32_t uidOfRequestProcess = IPCSkeleton::GetCallingUid();
     int32_t pidOfRequestProcess = IPCSkeleton::GetCallingPid();
     uint32_t accessTokenIdOfRequestProc = IPCSkeleton::GetCallingTokenID();
