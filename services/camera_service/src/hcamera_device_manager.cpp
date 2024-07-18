@@ -266,7 +266,7 @@ bool HCameraDeviceManager::HandleCameraEvictions(std::vector<sptr<HCameraDeviceH
         pidOfOpenRequest ? FOCUSED_STATE_OF_PROCESS : UNFOCUSED_STATE_OF_PROCESS;
     cameraRequestOpen->SetState(activeState);
     cameraRequestOpen->SetFocusState(focusStateOfRequestProcess);
-    MEDIA_INFO_LOG("HCameraDeviceManager::HandleCameraEvictions focusStateOfRequestProcess = %{public}s", focusStateOfRequestProcess);
+    MEDIA_INFO_LOG("HCameraDeviceManager::HandleCameraEvictions focusStateOfRequestProcess = %{public}d", focusStateOfRequestProcess);
 
     // Find Camera Device that would be evicted
     std::vector<sptr<HCameraDeviceHolder>> evicted = WouldEvict(cameraRequestOpen);
