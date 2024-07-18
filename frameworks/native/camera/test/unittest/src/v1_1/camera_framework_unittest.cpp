@@ -34,6 +34,7 @@
 #include "metadata_utils.h"
 #include "nativetoken_kit.h"
 #include "night_session.h"
+#include "panorama_session.h"
 #include "photo_output.h"
 #include "photo_session.h"
 #include "preview_output.h"
@@ -8030,6 +8031,118 @@ HWTEST_F(CameraFrameworkUnitTest, IsSlowMotionDetectionSupported_003, TestSize.L
     metadata->updateEntry(OHOS_ABILITY_MOTION_DETECTION_SUPPORT, &value_u8, sizeof(uint8_t));
     result = slowSession->IsSlowMotionDetectionSupported();
     EXPECT_EQ(true, result);
+}
+/*
+ * Feature: Framework
+ * Function: Test PanoramaSession preview
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PanoramaSession preview
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_panorama_unittest_001, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    for (sptr<CameraDevice> camDevice : cameras) {
+        std::vector<SceneMode> modes = cameraManager->GetSupportedModes(camDevice);
+        if (find(modes.begin(), modes.end(), SceneMode::PANORAMA_PHOTO) != modes.end()) {
+            sptr<CaptureInput> input = cameraManager->CreateCameraInput(camDevice);
+            ASSERT_NE(input, nullptr);
+
+            sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+            std::string cameraSettings = camInput->GetCameraSettings();
+            camInput->SetCameraSettings(cameraSettings);
+            camInput->GetCameraDevice()->Open();
+
+            sptr<CaptureSession> session = cameraManager->CreateCaptureSession(SceneMode::PANORAMA_PHOTO);
+            sptr<PanoramaSession> panoramaSession = static_cast<PanoramaSession *> (session.GetRefPtr());
+            ASSERT_NE(panoramaSession, nullptr);
+
+            sptr<Surface> previewSurface = Surface::CreateSurfaceAsConsumer();
+            CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
+            Size previewSize;
+            previewSize.width = 1920;
+            previewSize.height = 1080;
+            Profile previewProfile = Profile(previewFormat, previewSize);
+            sptr<CaptureOutput> previewOutput = cameraManager->CreatePreviewOutput(previewProfile, previewSurface);
+            ASSERT_NE(previewOutput, nullptr);
+
+            int32_t intResult = panoramaSession->BeginConfig();
+            EXPECT_EQ(intResult, 0);
+
+            intResult = panoramaSession->AddInput(input);
+            EXPECT_EQ(intResult, 0);
+
+            sptr<CaptureOutput> previewOutputCaptureUpper = previewOutput;
+            intResult = panoramaSession->AddOutput(previewOutputCaptureUpper);
+            EXPECT_EQ(intResult, 0);
+
+            intResult = panoramaSession->CommitConfig();
+            EXPECT_EQ(intResult, 0);
+
+            panoramaSession->Release();
+            camInput->Close();
+        }
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PanoramaSession set white balance lock
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PanoramaSession set white balance lock
+ */
+HWTEST_F(CameraFrameworkUnitTest, camera_panorama_unittest_002, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager->GetSupportedCameras();
+    for (sptr<CameraDevice> camDevice : cameras) {
+        std::vector<SceneMode> modes = cameraManager->GetSupportedModes(camDevice);
+        if (find(modes.begin(), modes.end(), SceneMode::PANORAMA_PHOTO) != modes.end()) {
+            sptr<CaptureInput> input = cameraManager->CreateCameraInput(camDevice);
+            ASSERT_NE(input, nullptr);
+
+            sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+            std::string cameraSettings = camInput->GetCameraSettings();
+            camInput->SetCameraSettings(cameraSettings);
+            camInput->GetCameraDevice()->Open();
+
+            sptr<CaptureSession> session = cameraManager->CreateCaptureSession(SceneMode::PANORAMA_PHOTO);
+            sptr<PanoramaSession> panoramaSession = static_cast<PanoramaSession *> (session.GetRefPtr());
+            ASSERT_NE(panoramaSession, nullptr);
+
+            sptr<Surface> previewSurface = Surface::CreateSurfaceAsConsumer();
+            CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
+            Size previewSize;
+            previewSize.width = 1920;
+            previewSize.height = 1080;
+            Profile previewProfile = Profile(previewFormat, previewSize);
+            sptr<CaptureOutput> previewOutput = cameraManager->CreatePreviewOutput(previewProfile, previewSurface);
+            ASSERT_NE(previewOutput, nullptr);
+
+            int32_t intResult = panoramaSession->BeginConfig();
+            EXPECT_EQ(intResult, 0);
+
+            intResult = panoramaSession->AddInput(input);
+            EXPECT_EQ(intResult, 0);
+
+            sptr<CaptureOutput> previewOutputCaptureUpper = previewOutput;
+            intResult = panoramaSession->AddOutput(previewOutputCaptureUpper);
+            EXPECT_EQ(intResult, 0);
+
+            intResult = panoramaSession->CommitConfig();
+            EXPECT_EQ(intResult, 0);
+
+            panoramaSession->SetWhiteBalanceMode(AWB_MODE_LOCKED);
+            WhiteBalanceMode mode;
+            panoramaSession->GetWhiteBalanceMode(mode);
+            EXPECT_EQ(AWB_MODE_LOCKED, mode);
+
+            panoramaSession->Release();
+            camInput->Close();
+        }
+    }
 }
 } // CameraStandard
 } // OHOS
