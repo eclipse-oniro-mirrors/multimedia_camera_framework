@@ -171,7 +171,7 @@ void PhotoPostProcessor::PhotoProcessListener::ReportEvent(const std::string& im
 int32_t PhotoPostProcessor::PhotoProcessListener::OnError(const std::string& imageId,
     OHOS::HDI::Camera::V1_2::ErrorCode errorCode)
 {
-    DP_INFO_LOG("entered, imageId: %s", imageId.c_str());
+    DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
     DpsError dpsErrorCode = MapHdiError(errorCode);
     photoPostProcessor_->OnError(imageId, dpsErrorCode);
     return 0;
@@ -298,15 +298,15 @@ void PhotoPostProcessor::SetDefaultExecutionMode()
     if (imageProcessSession) {
         int32_t ret = imageProcessSession->SetExecutionMode(
             static_cast<OHOS::HDI::Camera::V1_2::ExecutionMode>(OHOS::HDI::Camera::V1_3::ExecutionMode::DEFAULT));
-        DP_INFO_LOG("setExecutionMode, ret: %d", ret);
+        DP_INFO_LOG("setExecutionMode, ret: %{public}d", ret);
     }
 }
 
 void PhotoPostProcessor::ProcessImage(std::string imageId)
 {
-    DP_INFO_LOG("entered, imageId: %s", imageId.c_str());
+    DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
     if (!ConnectServiceIfNecessary()) {
-        DP_INFO_LOG("failed to process image (%s) due to connect service failed", imageId.c_str());
+        DP_INFO_LOG("failed to process image (%{public}s) due to connect service failed", imageId.c_str());
         OnError(imageId, DpsError::DPS_ERROR_SESSION_NOT_READY_TEMPORARILY);
         return;
     }
@@ -335,11 +335,11 @@ void PhotoPostProcessor::ProcessImage(std::string imageId)
 void PhotoPostProcessor::RemoveImage(std::string imageId)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    DP_INFO_LOG("entered, imageId: %s", imageId.c_str());
+    DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
     auto imageProcessSession = GetImageProcessSession();
     if (imageProcessSession) {
         int32_t ret = imageProcessSession->RemoveImage(imageId);
-        DP_INFO_LOG("removeImage, imageId: %s, ret: %{public}d", imageId.c_str(), ret);
+        DP_INFO_LOG("removeImage, imageId: %{public}s, ret: %{public}d", imageId.c_str(), ret);
         std::lock_guard<std::mutex> imageId2CrashCountLock(imageId2CrashCountMutex_);
         imageId2CrashCount_.erase(imageId);
         DPSEventReport::GetInstance().UpdateRemoveTime(imageId, userId_);
@@ -373,7 +373,7 @@ void PhotoPostProcessor::Reset()
 
 void PhotoPostProcessor::OnProcessDone(const std::string& imageId, std::shared_ptr<BufferInfo>  bufferInfo)
 {
-    DP_INFO_LOG("entered, imageId: %s", imageId.c_str());
+    DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
     consecutiveTimeoutCount_ = 0;
     uint32_t callbackHandle = 0;
     bool isRemovedCallback = false;
@@ -398,7 +398,7 @@ void PhotoPostProcessor::OnProcessDone(const std::string& imageId, std::shared_p
 
 void PhotoPostProcessor::OnError(const std::string& imageId, DpsError errorCode)
 {
-    DP_INFO_LOG("entered, imageId: %s", imageId.c_str());
+    DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
     uint32_t callbackHandle = 0;
     bool isRemovedCallback = false;
     {
@@ -446,7 +446,7 @@ void PhotoPostProcessor::OnSessionDied()
     {
         std::lock_guard<std::mutex> imageId2HandleLock(imageId2HandleMutex_);
         for (auto& pair : imageId2Handle_) {
-            DP_INFO_LOG("failed to process image (%s) due to connect service failed", pair.first.c_str());
+            DP_INFO_LOG("failed to process image (%{public}s) due to connect service failed", pair.first.c_str());
             std::lock_guard<std::mutex> imageId2CrashCountLock(imageId2CrashCountMutex_);
             auto crashIt = imageId2CrashCount_.find(pair.first);
             if (crashIt == imageId2CrashCount_.end()) {
@@ -499,7 +499,7 @@ bool PhotoPostProcessor::ConnectServiceIfNecessary()
         for (auto iter = removeNeededList_.begin(); iter != removeNeededList_.end(); iter++) {
             std::string imageId = *iter;
             int32_t ret = imageProcessSession->RemoveImage(imageId);
-            DP_INFO_LOG("removeImage, imageId: %s, ret: %{public}d", imageId.c_str(), ret);
+            DP_INFO_LOG("removeImage, imageId: %{public}s, ret: %{public}d", imageId.c_str(), ret);
         }
         removeNeededList_.clear();
     }

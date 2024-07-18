@@ -155,14 +155,16 @@ std::shared_ptr<IImageProcessCallbacks> SessionCoordinator::GetImageProcCallback
 void SessionCoordinator::OnProcessDone(int userId, const std::string& imageId,
     sptr<IPCFileDescriptor> ipcFd, long dataSize)
 {
+    DP_INFO_LOG("entered, userId: %{public}d, map size: %{public}d.",
+        userId, static_cast<int32_t>(remoteImageCallbacksMap_.size()));
     auto iter = remoteImageCallbacksMap_.find(userId);
     if (iter != remoteImageCallbacksMap_.end()) {
         auto wpCallback = iter->second;
         sptr<IDeferredPhotoProcessingSessionCallback> spCallback = wpCallback.promote();
-        DP_INFO_LOG("entered, imageId: %s", imageId.c_str());
+        DP_INFO_LOG("entered, imageId: %{public}s", imageId.c_str());
         spCallback->OnProcessImageDone(imageId, ipcFd, dataSize);
     } else {
-        DP_INFO_LOG("callback is null, cache request, imageId: %s.", imageId.c_str());
+        DP_INFO_LOG("callback is null, cache request, imageId: %{public}s.", imageId.c_str());
         pendingImageResults_.push_back({CallbackType::ON_PROCESS_DONE, userId, imageId, ipcFd, dataSize});
     }
     return;
@@ -177,7 +179,8 @@ void SessionCoordinator::OnError(int userId, const std::string& imageId, DpsErro
         DP_INFO_LOG("entered, userId: %{public}d", userId);
         spCallback->OnError(imageId, MapDpsErrorCode(errorCode));
     } else {
-        DP_INFO_LOG("callback is null, cache request, imageId: %s, errorCode: %{public}d.", imageId.c_str(), errorCode);
+        DP_INFO_LOG("callback is null, cache request, imageId: %{public}s, errorCode: %{public}d.",
+            imageId.c_str(), errorCode);
         pendingImageResults_.push_back({CallbackType::ON_ERROR, userId, imageId, nullptr, 0, errorCode});
     }
 }
