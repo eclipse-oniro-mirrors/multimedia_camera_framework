@@ -256,7 +256,7 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
     }
     int32_t deferredImageFormat = 0;
     res = surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredImageFormat, deferredImageFormat);
-    MEDIA_INFO_LOG("deferredImageFormat:%{public}d, width:%{public}d, height:%{public}d, size:%{public}" PRId64, 
+    MEDIA_INFO_LOG("deferredImageFormat:%{public}d, width:%{public}d, height:%{public}d, size:%{public}" PRId64,
         deferredImageFormat, photoWidth, photoHeight, size);
     int32_t format = bufferHandle->format;
     sptr<CameraPhotoProxy> photoProxy;
@@ -1412,15 +1412,12 @@ napi_value PhotoOutputNapi::BurstCapture(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("SystemApi EnableAutoHighQualityPhoto is called!");
         return result;
     }
-
     napi_status status;
     size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE] = { 0 };
     napi_value thisVar = nullptr;
     napi_value resource = nullptr;
-
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
     napi_get_undefined(env, &result);
     unique_ptr<PhotoOutputAsyncContext> asyncContext = make_unique<PhotoOutputAsyncContext>();
     if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, PHOTO_OUT_BURST_CAPTURE)) {

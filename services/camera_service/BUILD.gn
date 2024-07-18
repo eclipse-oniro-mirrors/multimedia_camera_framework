@@ -126,8 +126,7 @@ ohos_shared_library("camera_service") {
   }
 
   deps = [
-    "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
-    "//third_party/e2fsprogs:libext2_uuid"
+    "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service"
   ]
 
   external_deps = [
@@ -183,6 +182,8 @@ ohos_shared_library("camera_service") {
     "window_manager:libdm",
     "window_manager:libwm",
   ]
+
+  public_external_deps = [ "e2fsprogs:libext2_uuid" ]
 
   defines = []
   if (use_sensor) {
