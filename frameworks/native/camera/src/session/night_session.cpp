@@ -31,19 +31,13 @@ NightSession::~NightSession()
 int32_t NightSession::GetExposureRange(std::vector<uint32_t> &exposureRange)
 {
     exposureRange.clear();
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("NightSession::GetExposureRange Session is not Commited");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "NightSession::GetExposureRange Session is not Commited");
     auto inputDevice = GetInputDevice();
-    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
-        MEDIA_ERR_LOG("NightSession::GetExposureRange camera device is null");
-        return CameraErrorCode::INVALID_ARGUMENT;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::INVALID_ARGUMENT,
+        "NightSession::GetExposureRange camera device is null");
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
-    if (metadata == nullptr) {
-        return CameraErrorCode::INVALID_ARGUMENT;
-    }
+    CHECK_AND_RETURN_RET(metadata != nullptr, CameraErrorCode::INVALID_ARGUMENT);
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_NIGHT_MODE_SUPPORTED_EXPOSURE_TIME, &item);
     if (ret != CAM_META_SUCCESS || item.count == 0) {
@@ -58,30 +52,21 @@ int32_t NightSession::GetExposureRange(std::vector<uint32_t> &exposureRange)
 
 int32_t NightSession::SetExposure(uint32_t exposureValue)
 {
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("NightSession::SetExposure Session is not Commited");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
-    if (changedMetadata_ == nullptr) {
-        MEDIA_ERR_LOG("NightSession::SetExposureValue Need to call LockForControl() "
-            "before setting camera properties");
-        return CameraErrorCode::SUCCESS;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "NightSession::SetExposure Session is not Commited");
+    CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+        "NightSession::SetExposureValue Need to call LockForControl() before setting camera properties");
     bool status = false;
     int32_t count = 1;
     camera_metadata_item_t item;
     MEDIA_DEBUG_LOG("NightSession::SetExposureValue exposure compensation: %{public}d", exposureValue);
     auto inputDevice = GetInputDevice();
-    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
-        MEDIA_ERR_LOG("NightSession::SetExposure camera device is null");
-        return CameraErrorCode::OPERATION_NOT_ALLOWED;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
+        CameraErrorCode::OPERATION_NOT_ALLOWED, "NightSession::SetExposure camera device is null");
 
     std::vector<uint32_t> exposureRange;
-    if ((GetExposureRange(exposureRange) != CameraErrorCode::SUCCESS) && exposureRange.empty()) {
-        MEDIA_ERR_LOG("NightSession::SetExposureValue range is empty");
-        return CameraErrorCode::OPERATION_NOT_ALLOWED;
-    }
+    CHECK_ERROR_RETURN_RET_LOG((GetExposureRange(exposureRange) != CameraErrorCode::SUCCESS) && exposureRange.empty(),
+        CameraErrorCode::OPERATION_NOT_ALLOWED, "NightSession::SetExposureValue range is empty");
     const uint32_t autoLongExposure = 0;
     if (std::find(exposureRange.begin(), exposureRange.end(), exposureValue) == exposureRange.end() &&
             exposureValue != autoLongExposure) {
@@ -104,19 +89,13 @@ int32_t NightSession::SetExposure(uint32_t exposureValue)
 
 int32_t NightSession::GetExposure(uint32_t &exposureValue)
 {
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("NightSession::GetExposure Session is not Commited");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "NightSession::GetExposure Session is not Commited");
     auto inputDevice = GetInputDevice();
-    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
-        MEDIA_ERR_LOG("NightSession::GetExposure camera device is null");
-        return CameraErrorCode::INVALID_ARGUMENT;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::INVALID_ARGUMENT,
+        "NightSession::GetExposure camera device is null");
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
-    if (metadata == nullptr) {
-        return CameraErrorCode::INVALID_ARGUMENT;
-    }
+    CHECK_AND_RETURN_RET(metadata != nullptr, CameraErrorCode::INVALID_ARGUMENT);
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_MANUAL_EXPOSURE_TIME, &item);
     if (ret != CAM_META_SUCCESS) {
@@ -133,10 +112,8 @@ void NightSession::NightSessionMetadataResultProcessor::ProcessCallbacks(
 {
     MEDIA_INFO_LOG("CaptureSession::NightSessionMetadataResultProcessor ProcessCallbacks");
     auto session = session_.promote();
-    if (session == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::NightSessionMetadataResultProcessor ProcessCallbacks but session is null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(session == nullptr,
+        "CaptureSession::NightSessionMetadataResultProcessor ProcessCallbacks but session is null");
 
     session->ProcessFaceRecUpdates(timestamp, result);
     session->ProcessAutoFocusUpdates(result);
@@ -146,10 +123,8 @@ bool NightSession::CanAddOutput(sptr<CaptureOutput>& output)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into NightSession::CanAddOutput");
-    if (!IsSessionConfiged() || output == nullptr) {
-        MEDIA_ERR_LOG("NightSession::CanAddOutput operation is Not allowed!");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionConfiged() || output == nullptr, false,
+        "NightSession::CanAddOutput operation is Not allowed!");
     return output->GetOutputType() != CAPTURE_OUTPUT_TYPE_VIDEO && CaptureSession::CanAddOutput(output);
 }
 } // CameraStandard

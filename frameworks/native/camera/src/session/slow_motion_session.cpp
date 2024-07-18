@@ -37,10 +37,8 @@ void SlowMotionSession::SlowMotionSessionMetadataResultProcessor::ProcessCallbac
 {
     MEDIA_INFO_LOG("SlowMotionSessionMetadataResultProcessor::ProcessCallbacks is called");
     auto session = session_.promote();
-    if (session == nullptr) {
-        MEDIA_ERR_LOG("SlowMotionSessionMetadataResultProcessor ProcessCallbacks but session is null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(session == nullptr,
+        "SlowMotionSessionMetadataResultProcessor ProcessCallbacks but session is null");
 
     session->OnSlowMotionStateChange(result);
 }
@@ -59,15 +57,11 @@ bool SlowMotionSession::IsSlowMotionDetectionSupported()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("IsSlowMotionDetectionSupported is called");
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("IsSlowMotionDetectionSupported Session is not Commited");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), false,
+        "IsSlowMotionDetectionSupported Session is not Commited");
     auto inputDevice = GetInputDevice();
-    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
-        MEDIA_ERR_LOG("IsSlowMotionDetectionSupported camera device is null");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), false,
+        "IsSlowMotionDetectionSupported camera device is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_MOTION_DETECTION_SUPPORT, &item);
@@ -76,11 +70,7 @@ bool SlowMotionSession::IsSlowMotionDetectionSupported()
         return false;
     }
     MEDIA_INFO_LOG("IsSlowMotionDetectionSupported value: %{public}u", item.data.u8[0]);
-    if (item.data.u8[0] == 0) {
-        return false;
-    } else if (item.data.u8[0] == 1) {
-        return true;
-    }
+    CHECK_AND_RETURN_RET(item.data.u8[0] != 1, true);
     return false;
 }
 
@@ -99,20 +89,13 @@ void SlowMotionSession::SetSlowMotionDetectionArea(Rect rect)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("SetSlowMotionDetectionArea is called");
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("SetSlowMotionDetectionArea Session is not Commited");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!IsSessionCommited(),
+        "SetSlowMotionDetectionArea Session is not Commited");
     this->LockForControl();
-    if (changedMetadata_ == nullptr) {
-        MEDIA_ERR_LOG("SetSlowMotionDetectionArea changedMetadata is null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(changedMetadata_ == nullptr,
+        "SetSlowMotionDetectionArea Session is not Commited");
     int32_t retCode = EnableMotionDetection(true);
-    if (retCode != CameraErrorCode::SUCCESS) {
-        MEDIA_ERR_LOG("EnableMotionDetection call failed");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(retCode != CameraErrorCode::SUCCESS, "EnableMotionDetection call failed");
     MEDIA_INFO_LOG("topLeftX: %{public}f, topLeftY: %{public}f, width: %{public}f, height: %{public}f",
         rect.topLeftX, rect.topLeftY, rect.width, rect.height);
     NormalizeRect(rect);
@@ -138,10 +121,7 @@ void SlowMotionSession::SetSlowMotionDetectionArea(Rect rect)
 void SlowMotionSession::OnSlowMotionStateChange(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult)
 {
     std::shared_ptr<SlowMotionStateCallback> appCallback = GetApplicationCallback();
-    if (appCallback == nullptr) {
-        MEDIA_ERR_LOG("OnSlowMotionStateChange appCallback is null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(appCallback == nullptr, "OnSlowMotionStateChange appCallback is null");
     SlowMotionState state = SlowMotionState::DISABLE;
     if (cameraResult != nullptr) {
         camera_metadata_item_t item;
@@ -169,10 +149,7 @@ void SlowMotionSession::OnSlowMotionStateChange(std::shared_ptr<OHOS::Camera::Ca
 
 void SlowMotionSession::SetCallback(std::shared_ptr<SlowMotionStateCallback> callback)
 {
-    if (callback == nullptr) {
-        MEDIA_ERR_LOG("SlowMotionSession::SetCallback callback is null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(callback == nullptr, "SlowMotionSession::SetCallback callback is null");
     std::lock_guard<std::mutex> lock(stateCallbackMutex_);
     slowMotionStateCallback_ = callback;
 }
@@ -187,10 +164,8 @@ int32_t SlowMotionSession::EnableMotionDetection(bool isEnable)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter EnableMotionDetection, isEnable:%{public}d", isEnable);
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("EnableMotionDetection session not commited");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "EnableMotionDetection session not commited");
     bool status = false;
     int32_t ret;
     camera_metadata_item_t item;
