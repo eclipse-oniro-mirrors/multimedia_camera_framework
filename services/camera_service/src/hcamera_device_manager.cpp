@@ -356,7 +356,7 @@ std::vector<sptr<HCameraDeviceHolder>> HCameraDeviceManager::WouldEvict(sptr<HCa
 
 int32_t HCameraDeviceManager::GetCurrentCost() const
 {
-    int64_t totalCost = 0;
+    int32_t totalCost = 0;
     for (const auto &x : activeCameras_) {
         totalCost += x->GetCost();
     }
