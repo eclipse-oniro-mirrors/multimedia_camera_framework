@@ -42,6 +42,9 @@ public:
     Camera_ErrorCode GetSupportedCameraOutputCapability(const Camera_Device* camera,
         Camera_OutputCapability** cameraOutputCapability);
 
+    Camera_ErrorCode GetSupportedCameraOutputCapabilityWithSceneMode(const Camera_Device* camera,
+        Camera_SceneMode sceneMode, Camera_OutputCapability** cameraOutputCapability);
+
     Camera_ErrorCode DeleteSupportedCameraOutputCapability(Camera_OutputCapability* cameraOutputCapability);
 
     Camera_ErrorCode IsCameraMuted(bool* isCameraMuted);
@@ -66,6 +69,11 @@ public:
         Camera_MetadataOutput** metadataOutput);
 
     static Camera_ErrorCode GetCameraOrientation(Camera_Device* cameras, uint32_t* orientation);
+
+    static Camera_ErrorCode GetSupportedSceneModes(Camera_Device* camera,
+        Camera_SceneMode** sceneModes, uint32_t* size);
+
+    Camera_ErrorCode DeleteSupportedSceneModes(Camera_SceneMode* sceneModes);
 
 private:
     Camera_ErrorCode GetSupportedPreviewProfiles(Camera_OutputCapability* outCapability,
