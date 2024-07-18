@@ -252,8 +252,9 @@ bool HCameraDeviceManager::HandleCameraEvictions(std::vector<sptr<HCameraDeviceH
     pid_t pidOfOpenRequest = IPCSkeleton::GetCallingPid();
     int32_t requestState = CameraAppManagerClient::GetInstance()->GetProcessState(pidOfOpenRequest);
     const std::string &cameraId = cameraRequestOpen->GetDevice()->GetCameraId();
-    MEDIA_INFO_LOG("camera ID %{public}s active pid: %{public}d, state: %{public}d, request pid: %{public}d",
-                   "state: %{public}d", cameraId.c_str(), pidOfActiveClient, activeState, pidOfOpenRequest, requestState);
+    MEDIA_INFO_LOG("camera ID %{public}s active pid: %{public}d, state: %{public}d, request pid: %{public}d,"
+                   "state: %{public}d", cameraId.c_str(), pidOfActiveClient, activeState, pidOfOpenRequest,
+                   requestState);
 
     pid_t focusWindowPid = -1;
     CameraWindowManagerClient::GetInstance()->GetFocusWindowInfo(focusWindowPid);
@@ -310,7 +311,7 @@ std::vector<sptr<HCameraDeviceHolder>> HCameraDeviceManager::WouldEvict(sptr<HCa
             highestPriorityOwner = x->GetPid();
         }
     }
-    if (*highestPriority == *priority) {
+    if (*highestPriority == *requestPriority) {
         // Switch back owner if the incoming client has the highest priority, as it is MRU
         highestPriorityOwner = owner;
     }
@@ -323,7 +324,6 @@ std::vector<sptr<HCameraDeviceHolder>> HCameraDeviceManager::WouldEvict(sptr<HCa
 
         bool conflicting = (curCameraId == cameraId || x->IsConflicting(cameraId) ||
                             cameraRequestOpen->IsConflicting(curCameraId));
-
         // Find evicted clients
         if (conflicting && *curPriority >= *requestPriority) {
             // Pre-existing conflicting client with higher priority exists
