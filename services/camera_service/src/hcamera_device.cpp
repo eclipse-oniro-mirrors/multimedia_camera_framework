@@ -1400,11 +1400,11 @@ bool HCameraDevice::CanOpenCamera()
         int32_t pidOfRequestProcess = IPCSkeleton::GetCallingPid();
         uint32_t accessTokenIdOfRequestProc = IPCSkeleton::GetCallingTokenID();
 
-        sprt<HCameraDeviceHolder> cameraRequestOpen = new HcameraDeviceHolder(
+        sptr<HCameraDeviceHolder> cameraRequestOpen = new HCameraDeviceHolder(
             pidOfRequestProcess, uidOfRequestProcess, 0, 0, this, accessTokenIdOfRequestProc, cost, conflicting);
 
         std::vector<sptr<HCameraDeviceHolder>> evictedClients;
-        boot ret = HCameraDeviceManager::GetInstance()->HandleCameraEvictions(evictedClients, cameraRequestOpen);
+        bool ret = HCameraDeviceManager::GetInstance()->HandleCameraEvictions(evictedClients, cameraRequestOpen);
         // close evicted clients
         for (auto &camera : evictedClients) {
             MEDIA_DEBUG_LOG("HCameraDevice::CanOpenCamera open current device need to close");
@@ -1427,7 +1427,7 @@ bool HCameraDevice::GetCameraResourceCost(int32_t &cost, std::set<std::string> &
 {
     sptr<OHOS::HDI::Camera::V1_3::ICameraDevice> hdiCameraDeviceV1_3;
     int32_t versionRes = cameraHostManager_->GetVersionByCamera(cameraID_);
-    boot needCloseDevice = false;
+    bool needCloseDevice = false;
     if (hdiCameraDevice_ == nullptr) {
         int32_t errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_, false);
         if (errorCode != CAMERA_OK || hdiCameraDevice_ == nullptr) {
