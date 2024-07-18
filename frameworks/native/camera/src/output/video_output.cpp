@@ -116,14 +116,12 @@ int32_t VideoOutput::Start()
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into VideoOutput::Start");
     auto captureSession = GetSession();
-    if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
-        MEDIA_ERR_LOG("VideoOutput Failed to Start!, session not config");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
-    if (GetStream() == nullptr) {
-        MEDIA_ERR_LOG("VideoOutput Failed to Start!, GetStream is nullptr");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr || !captureSession->IsSessionCommited(),
+        CameraErrorCode::SESSION_NOT_CONFIG,
+        "VideoOutput Failed to Start, session not commited");
+    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr,
+        CameraErrorCode::SERVICE_FATL_ERROR,
+        "VideoOutput Failed to Start!, GetStream is nullptr");
     auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {

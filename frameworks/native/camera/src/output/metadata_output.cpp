@@ -148,15 +148,13 @@ int32_t MetadataOutput::CreateStream()
 int32_t MetadataOutput::Start()
 {
     auto captureSession = GetSession();
-    if (captureSession == nullptr || !captureSession->IsSessionCommited()) {
-        MEDIA_ERR_LOG("MetadataOutput Failed to Start!, session not config");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr || !captureSession->IsSessionCommited(),
+        CameraErrorCode::SESSION_NOT_CONFIG,
+        "MetadataOutput Failed to Start!, session not commited");
     auto stream = GetStream();
-    if (stream == nullptr) {
-        MEDIA_ERR_LOG("MetadataOutput Failed to Start!, GetStream is nullptr");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(stream == nullptr,
+        CameraErrorCode::SERVICE_FATL_ERROR,
+        "MetadataOutput Failed to Start!, GetStream is nullptr");
     int32_t errCode = static_cast<IStreamMetadata*>(stream.GetRefPtr())->Start();
     if (errCode != CAMERA_OK) {
         MEDIA_ERR_LOG("Failed to Start MetadataOutput!, errCode: %{public}d", errCode);
