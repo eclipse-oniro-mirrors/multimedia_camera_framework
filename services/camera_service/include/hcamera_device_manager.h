@@ -242,7 +242,8 @@ public:
     * @param evictedClients Devices that need to be shut down.
     * @param cameraRequestOpen device is requested to turn on.
     */
-    bool HandleCameraEvictions(std::vector<sptr<HCameraDeviceHolder>> &evictedClients, sptr<HCameraDeviceHolder> &cameraRequestOpen);
+    bool HandleCameraEvictions(std::vector<sptr<HCameraDeviceHolder>> &evictedClients,
+                               sptr<HCameraDeviceHolder> &cameraRequestOpen);
 private:
     HCameraDeviceManager();
     static sptr<HCameraDeviceManager> cameraDeviceManager_;
