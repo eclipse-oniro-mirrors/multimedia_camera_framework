@@ -20,6 +20,7 @@
 #include <iostream>
 #include <atomic>
 #include <mutex>
+#include <set>
 
 #include "camera_privacy.h"
 #include "v1_0/icamera_device_callback.h"
@@ -129,6 +130,8 @@ public:
     bool CheckMovingPhotoSupported(int32_t mode);
 
     void NotifyCameraStatus(int32_t type);
+
+    bool GetCameraResourceCost(int32_t &cost, std::set<std::string> &conflicting);
 
 private:
     class FoldScreenListener;

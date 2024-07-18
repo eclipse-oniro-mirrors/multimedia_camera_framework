@@ -447,7 +447,7 @@ int32_t HCameraDevice::CloseDevice()
             hdiCameraDevice_->Close();
             ResetCachedSettings();
             ResetDeviceOpenLifeCycleSettings();
-            HCameraDeviceManager::GetInstance()->RemoveDevice();
+            HCameraDeviceManager::GetInstance()->RemoveDevice(cameraID_);
             MEDIA_INFO_LOG("Closing camera device: %{public}s end", cameraID_.c_str());
             hdiCameraDevice_ = nullptr;
             HandlePrivacyAfterCloseDevice();
@@ -1393,6 +1393,26 @@ int32_t HCameraDevice::CreateAndCommitStreams(std::vector<HDI::Camera::V1_1::Str
 
 bool HCameraDevice::CanOpenCamera()
 {
+    int32_t cost;
+    std::set<std::string> conflicting;
+    if (GetCameraResourceCost(cost, conflicting)) {
+        int32_t uidOfRequestProcess = IPCSkeleton::GetCallingUid();
+        int32_t pidOfRequestProcess = IPCSkeleton::GetCallingPid();
+        uint32_t accessTokenIdOfRequestProc = IPCSkeleton::GetCallingTokenID();
+
+        sptr<HCameraDeviceHolder> cameraRequestOpen = new HCameraDeviceHolder(
+            pidOfRequestProcess, uidOfRequestProcess, 0, 0, this, accessTokenIdOfRequestProc, cost, conflicting);
+
+        std::vector<sptr<HCameraDeviceHolder>> evictedClients;
+        bool ret = HCameraDeviceManager::GetInstance()->HandleCameraEvictions(evictedClients, cameraRequestOpen);
+        // close evicted clients
+        for (auto &camera : evictedClients) {
+            MEDIA_DEBUG_LOG("HCameraDevice::CanOpenCamera open current device need to close");
+            camera->GetDevice()->OnError(DEVICE_PREEMPT, 0);
+            camera->GetDevice()->CloseDevice();
+        }
+        return ret;
+    }
     sptr<HCameraDevice> cameraNeedEvict;
     bool ret = HCameraDeviceManager::GetInstance()->GetConflictDevices(cameraNeedEvict, this);
     if (cameraNeedEvict != nullptr) {
@@ -1401,6 +1421,39 @@ bool HCameraDevice::CanOpenCamera()
         cameraNeedEvict->CloseDevice();
     }
     return ret;
+}
+
+bool HCameraDevice::GetCameraResourceCost(int32_t &cost, std::set<std::string> &conflicting)
+{
+    sptr<OHOS::HDI::Camera::V1_3::ICameraDevice> hdiCameraDeviceV1_3;
+    int32_t versionRes = cameraHostManager_->GetVersionByCamera(cameraID_);
+    bool needCloseDevice = false;
+    if (hdiCameraDevice_ == nullptr) {
+        int32_t errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_, false);
+        if (errorCode != CAMERA_OK || hdiCameraDevice_ == nullptr) {
+            MEDIA_ERR_LOG("OpenCameraDevice failed");
+        } else {
+            needCloseDevice = true;
+        }
+    }
+    if (versionRes >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
+        hdiCameraDeviceV1_3 = OHOS::HDI::Camera::V1_3::ICameraDevice::CastFrom(hdiCameraDevice_);
+    }
+    bool isSuccess = false;
+    OHOS::HDI::Camera::V1_3::CameraDeviceResourceCost resourceCost;
+    if (hdiCameraDeviceV1_3 != nullptr &&
+        hdiCameraDeviceV1_3->GetResourceCost(resourceCost) == HDI::Camera::V1_0::CamRetCode::NO_ERROR) {
+        cost = resourceCost.resourceCost_;
+        for (size_t i = 0; i < resourceCost.conflictingDevices_.size(); i++) {
+            conflicting.emplace(resourceCost.conflictingDevices_[i]);
+        }
+        isSuccess = true;
+    }
+    if (needCloseDevice) {
+        hdiCameraDevice_->Close();
+        hdiCameraDevice_ = nullptr;
+    }
+    return isSuccess;
 }
 
 int32_t HCameraDevice::UpdateStreams(std::vector<StreamInfo_V1_1>& streamInfos)
@@ -1545,7 +1598,7 @@ void HCameraDevice::RemoveResourceWhenHostDied()
     if (isFoldable) {
         UnRegisterFoldStatusListener();
     }
-    HCameraDeviceManager::GetInstance()->RemoveDevice();
+    HCameraDeviceManager::GetInstance()->RemoveDevice(cameraID_);
     if (cameraHostManager_) {
         cameraHostManager_->RemoveCameraDevice(cameraID_);
         cameraHostManager_->UpdateRestoreParamCloseTime(clientName_, cameraID_);
