@@ -1439,7 +1439,7 @@ bool HCameraDevice::GetCameraResourceCost(int32_t &cost, std::set<std::string> &
     if (versionRes >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
         hdiCameraDeviceV1_3 = OHOS::HDI::Camera::V1_3::ICameraDevice::CastFrom(hdiCameraDevice_);
     }
-    bool isSucess = false;
+    bool isSuccess = false;
     OHOS::HDI::Camera::V1_3::CameraDeviceResourceCost resourceCost;
     if (hdiCameraDeviceV1_3 != nullptr &&
         hdiCameraDeviceV1_3->GetResourceCost(resourceCost) == HDI::Camera::V1_0::CamRetCode::NO_ERROR) {
@@ -1447,13 +1447,13 @@ bool HCameraDevice::GetCameraResourceCost(int32_t &cost, std::set<std::string> &
         for (size_t i = 0; i < resourceCost.conflictingDevices_.size(); i++) {
             conflicting.emplace(resourceCost.conflictingDevices_[i]);
         }
-        isSucess = true;
+        isSuccess = true;
     }
     if (needCloseDevice) {
         hdiCameraDevice_->Close();
         hdiCameraDevice_ = nullptr;
     }
-    return isSucess;
+    return isSuccess;
 }
 
 int32_t HCameraDevice::UpdateStreams(std::vector<StreamInfo_V1_1>& streamInfos)
