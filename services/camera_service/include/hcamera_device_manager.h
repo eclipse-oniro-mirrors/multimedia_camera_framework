@@ -256,7 +256,7 @@ private:
     std::mutex peerCbMutex_;
     std::string GetACameraId();
     bool IsAllowOpen(pid_t activeClient);
-    int32_t GetCurrentCost() const
+    int32_t GetCurrentCost() const;
     std::vector<sptr<HCameraDeviceHolder>> WouldEvict(sptr<HCameraDeviceHolder> &cameraRequestOpen);
     void UpdateProcessState(int32_t& activeState, int32_t& requestState,
         uint32_t activeAccessTokenId, uint32_t requestAccessTokenId);
