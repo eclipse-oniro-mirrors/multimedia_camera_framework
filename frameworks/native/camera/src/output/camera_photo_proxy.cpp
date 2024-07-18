@@ -27,6 +27,7 @@ namespace CameraStandard {
 
 CameraPhotoProxy::CameraPhotoProxy()
 {
+    MEDIA_INFO_LOG("CameraPhotoProxy no args");
     format_ = 0;
     photoId_ = "";
     deferredProcType_ = 0;
@@ -39,10 +40,11 @@ CameraPhotoProxy::CameraPhotoProxy()
     longitude_ = -1.0;
     latitude_ = -1.0;
     imageFormat_ = 0;
+    captureId_ = 0;
 }
 
 CameraPhotoProxy::CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format,
-    int32_t photoWidth, int32_t photoHeight, bool isHighQuality)
+    int32_t photoWidth, int32_t photoHeight, bool isHighQuality, int32_t captureId)
 {
     MEDIA_INFO_LOG("CameraPhotoProxy");
     bufferHandle_ = bufferHandle;
@@ -56,6 +58,7 @@ CameraPhotoProxy::CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format,
     longitude_ = -1.0;
     latitude_ = -1.0;
     imageFormat_ = 0;
+    captureId_ = captureId;
     MEDIA_INFO_LOG("format = %{public}d, width = %{public}d, height = %{public}d",
         format_, photoWidth, photoHeight);
 }
@@ -80,6 +83,7 @@ void CameraPhotoProxy::ReadFromParcel(MessageParcel &parcel)
     fileSize_ = parcel.ReadUint64();
     latitude_ = parcel.ReadDouble();
     longitude_ = parcel.ReadDouble();
+    captureId_ = parcel.ReadInt32();
     imageFormat_ = parcel.ReadInt32();
     bufferHandle_ = ReadBufferHandle(parcel);
     MEDIA_INFO_LOG("PhotoProxy::ReadFromParcel");
@@ -87,6 +91,7 @@ void CameraPhotoProxy::ReadFromParcel(MessageParcel &parcel)
 
 int32_t CameraPhotoProxy::CameraFreeBufferHandle()
 {
+    MEDIA_ERR_LOG("CameraFreeBufferHandle start");
     std::lock_guard<std::mutex> lock(mutex_);
     if (bufferHandle_ == nullptr) {
         MEDIA_ERR_LOG("CameraFreeBufferHandle with nullptr handle");
@@ -120,6 +125,7 @@ void CameraPhotoProxy::WriteToParcel(MessageParcel &parcel)
     parcel.WriteUint64(fileSize_);
     parcel.WriteDouble(latitude_);
     parcel.WriteDouble(longitude_);
+    parcel.WriteInt32(captureId_);
     parcel.WriteInt32(imageFormat_);
     if (bufferHandle_) {
         MEDIA_DEBUG_LOG("PhotoProxy::WriteToParcel %{public}d", bufferHandle_->fd);

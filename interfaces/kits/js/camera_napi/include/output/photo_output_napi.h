@@ -120,7 +120,7 @@ private:
     void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const;
     void ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool isHighQuality, int64_t timestamp) const;
     void CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle* bufferHandle, bool isHighQuality,
-        std::string& uri, int32_t& cameraShotType, int64_t timestamp) const;
+        std::string& uri, int32_t& cameraShotType, std::string &burstKey, int64_t timestamp) const;
 
     uint8_t callbackFlag_ = 0;
 };
@@ -222,6 +222,7 @@ public:
     static napi_value GetDefaultCaptureSetting(napi_env env, napi_callback_info info);
 
     static napi_value Capture(napi_env env, napi_callback_info info);
+    static napi_value BurstCapture(napi_env env, napi_callback_info info);
     static napi_value ConfirmCapture(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
     static napi_value IsMirrorSupported(napi_env env, napi_callback_info info);

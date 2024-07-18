@@ -32,6 +32,7 @@ namespace OHOS {
 namespace CameraStandard {
 using OHOS::HDI::Camera::V1_0::BufferProducerSequenceable;
 using namespace OHOS::HDI::Camera::V1_0;
+constexpr const char* BURST_UUID_UNSET = "";
 class HStreamCapture : public HStreamCaptureStub, public HStreamCommon {
 public:
     HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height);
@@ -64,8 +65,19 @@ public:
     int32_t IsDeferredVideoEnabled() override;
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
     SafeMap<int32_t, int32_t> rotationMap_ = {};
+    bool IsBurstCapture(int32_t captureId) const;
+    bool IsBurstCover(int32_t captureId) const;
+    std::string GetBurstKey(int32_t captureId) const;
+    void SetBurstImages(int32_t captureId, std::string imageId);
 
 private:
+    int32_t CheckBurstCapture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings,
+                              const int32_t &preparedCaptureId);
+    int32_t PrepareBurst(int32_t captureId);
+    void ResetBurst();
+    void ResetBurstKey(int32_t captureId);
+    void CheckResetBurstKey(int32_t captureId);
+    void EndBurstCapture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureMetadataSetting_);
     void ProcessCaptureInfoPhoto(CaptureInfo& captureInfoPhoto,
         const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings, int32_t captureId);
     sptr<IStreamCaptureCallback> streamCaptureCallback_;
@@ -77,6 +89,12 @@ private:
     int32_t deferredPhotoSwitch_;
     int32_t deferredVideoSwitch_;
     std::atomic<bool> isCaptureReady_ = true;
+    std::string curBurstKey_ = BURST_UUID_UNSET;
+    bool isBursting_ = false;
+    std::map<int32_t, std::vector<std::string>> burstImagesMap_;
+    std::map<int32_t, std::string> burstkeyMap_;
+    std::map<int32_t, int32_t> burstNumMap_;
+    int32_t burstNum_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

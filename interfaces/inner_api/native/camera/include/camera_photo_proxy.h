@@ -26,7 +26,7 @@ class CameraPhotoProxy : public RefBase {
 public:
     CameraPhotoProxy();
     CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format, int32_t photoWidth,
-        int32_t photoHeight, bool isHighQuality);
+        int32_t photoHeight, bool isHighQuality, int32_t captureId);
     virtual ~CameraPhotoProxy();
     void ReadFromParcel(MessageParcel &parcel);
     void WriteToParcel(MessageParcel &parcel);
@@ -47,6 +47,7 @@ private:
     int32_t isDeferredPhoto_;
     double latitude_;
     double longitude_;
+    int32_t captureId_;
     sptr<Surface> photoSurface_;
     int32_t imageFormat_;
 };

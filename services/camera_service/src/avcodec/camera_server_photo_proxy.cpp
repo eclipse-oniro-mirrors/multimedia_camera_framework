@@ -43,6 +43,9 @@ CameraServerPhotoProxy::CameraServerPhotoProxy()
     mode_ = 0;
     longitude_ = -1.0;
     latitude_ = -1.0;
+    captureId_ = 0;
+    burstKey_ = "";
+    isCoverPhoto_ = false;
     imageFormat_ = 0;
 }
 
@@ -94,21 +97,29 @@ void CameraServerPhotoProxy::ReadFromParcel(MessageParcel &parcel)
     fileSize_ = parcel.ReadUint64();
     latitude_ = parcel.ReadDouble();
     longitude_ = parcel.ReadDouble();
+    captureId_ = parcel.ReadInt32();
     imageFormat_ = parcel.ReadInt32();
     bufferHandle_ = ReadBufferHandle(parcel);
-    MEDIA_INFO_LOG("PhotoProxy::ReadFromParcel");
+    MEDIA_INFO_LOG("CameraServerPhotoProxy::ReadFromParcel");
+}
+
+int32_t CameraServerPhotoProxy::GetCaptureId()
+{
+    MEDIA_INFO_LOG("CameraServerPhotoProxy::GetCaptureId captureId:%{public}d", captureId_);
+    std::lock_guard<std::mutex> lock(mutex_);
+    return captureId_;
 }
 
 std::string CameraServerPhotoProxy::GetPhotoId()
 {
-    MEDIA_INFO_LOG("PhotoProxy::GetPhotoId photoId: = %{public}s", photoId_.c_str());
+    MEDIA_INFO_LOG("CameraServerPhotoProxy::GetPhotoId photoId:%{public}s", photoId_.c_str());
     std::lock_guard<std::mutex> lock(mutex_);
     return photoId_;
 }
 
 Media::DeferredProcType CameraServerPhotoProxy::GetDeferredProcType()
 {
-    MEDIA_INFO_LOG("PhotoProxy::GetDeferredProcType");
+    MEDIA_DEBUG_LOG("CameraServerPhotoProxy::GetDeferredProcType");
     std::lock_guard<std::mutex> lock(mutex_);
     if (deferredProcType_ == 0) {
         return Media::DeferredProcType::BACKGROUND;
@@ -119,25 +130,25 @@ Media::DeferredProcType CameraServerPhotoProxy::GetDeferredProcType()
 
 void* CameraServerPhotoProxy::GetFileDataAddr()
 {
-    MEDIA_INFO_LOG("PhotoProxy::GetFileDataAddr");
+    MEDIA_INFO_LOG("CameraServerPhotoProxy::GetFileDataAddr");
     std::lock_guard<std::mutex> lock(mutex_);
     if (bufferHandle_ == nullptr) {
         MEDIA_ERR_LOG("CameraServerPhotoProxy::GetFileDataAddr bufferHandle_ is nullptr");
         return fileDataAddr_;
     }
     if (!isMmaped_) {
-        MEDIA_INFO_LOG("PhotoProxy::GetFileDataAddr mmap");
+        MEDIA_INFO_LOG("CameraServerPhotoProxy::GetFileDataAddr mmap");
         fileDataAddr_ = mmap(nullptr, bufferHandle_->size, PROT_READ, MAP_SHARED, bufferHandle_->fd, 0);
         isMmaped_ = true;
     } else {
-        MEDIA_ERR_LOG("PhotoProxy::GetFileDataAddr mmap failed");
+        MEDIA_ERR_LOG("CameraServerPhotoProxy::GetFileDataAddr mmap failed");
     }
     return fileDataAddr_;
 }
 
 size_t CameraServerPhotoProxy::GetFileSize()
 {
-    MEDIA_INFO_LOG("PhotoProxy::GetFileSize");
+    MEDIA_INFO_LOG("CameraServerPhotoProxy::GetFileSize");
     std::lock_guard<std::mutex> lock(mutex_);
     return fileSize_;
 }
@@ -154,7 +165,12 @@ int32_t CameraServerPhotoProxy::GetHeight()
 
 PhotoFormat CameraServerPhotoProxy::GetFormat()
 {
+    if (!burstKey_.empty()) {
+        MEDIA_INFO_LOG("CameraServerPhotoProxy get jpg format for burst");
+        return Media::PhotoFormat::JPG;
+    }
     if (isHighQuality_) {
+        MEDIA_INFO_LOG("CameraServerPhotoProxy get jpg format");
         return Media::PhotoFormat::JPG;
     }
     auto iter = formatMap.find(imageFormat_);
@@ -171,7 +187,7 @@ PhotoQuality CameraServerPhotoProxy::GetPhotoQuality()
 
 void CameraServerPhotoProxy::Release()
 {
-    MEDIA_INFO_LOG("CameraPhotoProxy release enter");
+    MEDIA_INFO_LOG("CameraServerPhotoProxy release enter");
     if (isMmaped_ && bufferHandle_ != nullptr) {
         munmap(fileDataAddr_, bufferHandle_->size);
     } else {
@@ -179,7 +195,7 @@ void CameraServerPhotoProxy::Release()
     }
 }
 
-std::string CameraServerPhotoProxy::GetDisplayName()
+std::string CameraServerPhotoProxy::GetTitle()
 {
     return displayName_;
 }
@@ -207,6 +223,26 @@ int32_t CameraServerPhotoProxy::GetShootingMode()
 void CameraServerPhotoProxy::SetShootingMode(int32_t mode)
 {
     mode_ = mode;
+}
+
+std::string CameraServerPhotoProxy::GetBurstKey()
+{
+    MEDIA_DEBUG_LOG("CameraServerPhotoProxy GetBurstKey");
+    return burstKey_;
+}
+
+bool CameraServerPhotoProxy::IsCoverPhoto()
+{
+    MEDIA_DEBUG_LOG("CameraServerPhotoProxy IsCoverPhoto");
+    return isCoverPhoto_;
+}
+
+void CameraServerPhotoProxy::SetBurstInfo(std::string burstKey, bool isCoverPhoto)
+{
+    MEDIA_INFO_LOG("CameraServerPhotoProxy SetBurstInfo");
+    burstKey_ = burstKey;
+    isCoverPhoto_ = isCoverPhoto;
+    isHighQuality_ = true; // tell media lib disable deferred photo
 }
 } // namespace CameraStandard
 } // namespace OHOS
