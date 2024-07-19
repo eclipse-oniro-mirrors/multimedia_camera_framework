@@ -121,6 +121,36 @@ Camera_ErrorCode OH_PhotoOutput_IsMirrorSupported(Camera_PhotoOutput* photoOutpu
     return photoOutput->IsMirrorSupported(isSupported);
 }
 
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_PhotoOutput_GetActiveProfile(Camera_PhotoOutput* photoOutput, Camera_Profile** profile)
+{
+    MEDIA_DEBUG_LOG("OH_PhotoOutput_GetActiveProfile is called.");
+    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, photoOutput is null!");
+    CHECK_AND_RETURN_RET_LOG(profile != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, profile is null!");
+
+    return photoOutput->GetActiveProfile(profile);
+}
+
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_PhotoOutput_DeleteProfile(Camera_Profile* profile)
+{
+    MEDIA_DEBUG_LOG("OH_PhotoOutput_DeleteProfile is called.");
+    CHECK_AND_RETURN_RET_LOG(profile != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, profile is null!");
+
+    delete profile;
+    profile = nullptr;
+    return CAMERA_OK;
+}
+
 #ifdef __cplusplus
 }
 #endif

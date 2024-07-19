@@ -188,6 +188,20 @@ Camera_ErrorCode OH_CameraManager_CreatePreviewOutput(Camera_Manager* cameraMana
     return cameraManager->CreatePreviewOutput(profile, surfaceId, previewOutput);
 }
 
+Camera_ErrorCode OH_CameraManager_CreatePreviewOutputUsedInPreconfig(Camera_Manager* cameraManager,
+    const char* surfaceId, Camera_PreviewOutput** previewOutput)
+{
+    MEDIA_DEBUG_LOG("OH_CameraManager_CreatePreviewOutputUsedInPreconfig is called.");
+    CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, cameraManager is null!");
+    CHECK_AND_RETURN_RET_LOG(surfaceId != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, surfaceId is null!");
+    CHECK_AND_RETURN_RET_LOG(previewOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, previewOutput is null!");
+
+    return cameraManager->CreatePreviewOutputUsedInPreconfig(surfaceId, previewOutput);
+}
+
 Camera_ErrorCode OH_CameraManager_CreatePhotoOutput(Camera_Manager* cameraManager, const Camera_Profile* profile,
     const char* surfaceId, Camera_PhotoOutput** photoOutput)
 {
@@ -204,6 +218,20 @@ Camera_ErrorCode OH_CameraManager_CreatePhotoOutput(Camera_Manager* cameraManage
     return cameraManager->CreatePhotoOutput(profile, surfaceId, photoOutput);
 }
 
+Camera_ErrorCode OH_CameraManager_CreatePhotoOutputUsedInPreconfig(Camera_Manager* cameraManager,
+    const char* surfaceId, Camera_PhotoOutput** photoOutput)
+{
+    MEDIA_DEBUG_LOG("OH_CameraManager_CreatePhotoOutputUsedInPreconfig is called.");
+    CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, cameraManager is null!");
+    CHECK_AND_RETURN_RET_LOG(surfaceId != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, surfaceId is null!");
+    CHECK_AND_RETURN_RET_LOG(photoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, photoOutput is null!");
+
+    return cameraManager->CreatePhotoOutputUsedInPreconfig(surfaceId, photoOutput);
+}
+
 Camera_ErrorCode OH_CameraManager_CreateVideoOutput(Camera_Manager* cameraManager, const Camera_VideoProfile* profile,
     const char* surfaceId, Camera_VideoOutput** videoOutput)
 {
@@ -217,6 +245,20 @@ Camera_ErrorCode OH_CameraManager_CreateVideoOutput(Camera_Manager* cameraManage
         "Invaild argument, videoOutput is null!");
 
     return cameraManager->CreateVideoOutput(profile, surfaceId, videoOutput);
+}
+
+Camera_ErrorCode OH_CameraManager_CreateVideoOutputUsedInPreconfig(Camera_Manager* cameraManager,
+    const char* surfaceId, Camera_VideoOutput** videoOutput)
+{
+    MEDIA_DEBUG_LOG("OH_CameraManager_CreateVideoOutputUsedInPreconfig is called.");
+    CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, cameraManager is null!");
+    CHECK_AND_RETURN_RET_LOG(surfaceId != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, surfaceId is null!");
+    CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, videoOutput is null!");
+
+    return cameraManager->CreateVideoOutputUsedInPreconfig(surfaceId, videoOutput);
 }
 
 Camera_ErrorCode OH_CameraManager_CreateMetadataOutput(Camera_Manager* cameraManager,

@@ -39,6 +39,8 @@ public:
 
     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> GetInnerPhotoOutput();
 
+    Camera_ErrorCode GetActiveProfile(Camera_Profile** profile);
+
 private:
     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> innerPhotoOutput_;
 };

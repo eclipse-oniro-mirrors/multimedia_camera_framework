@@ -37,6 +37,8 @@ public:
 
     OHOS::sptr<OHOS::CameraStandard::PreviewOutput> GetInnerPreviewOutput();
 
+    Camera_ErrorCode GetActiveProfile(Camera_Profile** profile);
+
 private:
     OHOS::sptr<OHOS::CameraStandard::PreviewOutput> innerPreviewOutput_;
 };

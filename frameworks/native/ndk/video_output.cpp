@@ -104,6 +104,36 @@ Camera_ErrorCode OH_VideoOutput_Release(Camera_VideoOutput* videoOutput)
     return retCode;
 }
 
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_VideoOutput_GetActiveProfile(Camera_VideoOutput* videoOutput, Camera_VideoProfile** profile)
+{
+    MEDIA_DEBUG_LOG("OH_VideoOutput_GetActiveProfile is called.");
+    CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, videoOutput is null!");
+    CHECK_AND_RETURN_RET_LOG(profile != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, profile is null!");
+
+    return videoOutput->GetVideoProfile(profile);
+}
+
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_VideoOutput_DeleteProfile(Camera_VideoProfile* profile)
+{
+    MEDIA_DEBUG_LOG("OH_VideoOutput_DeleteProfile is called.");
+    CHECK_AND_RETURN_RET_LOG(profile != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, profile is null!");
+
+    delete profile;
+    profile = nullptr;
+    return CAMERA_OK;
+}
+
 #ifdef __cplusplus
 }
 #endif
