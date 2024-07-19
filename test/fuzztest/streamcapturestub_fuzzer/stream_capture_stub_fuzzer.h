@@ -20,65 +20,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class IRemoteObjectMock : public IRemoteObject {
-public:
-    int32_t GetObjectRefCount()
-    {
-        return 0;
-    }
-    int SendRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
-    {
-        return 0;
-    }
-    bool AddDeathRecipient(const sptr<DeathRecipient> &recipient)
-    {
-        return true;
-    }
-    bool RemoveDeathRecipient(const sptr<DeathRecipient> &recipient)
-    {
-        return true;
-    }
-    int Dump(int fd, const std::vector<std::u16string> &args)
-    {
-        return 0;
-    }
-};
-
-class IStreamCaptureCallbackMock : public IStreamCaptureCallback, public IRemoteObjectMock {
-public:
-    int32_t OnCaptureStarted(int32_t captureId)
-    {
-        return 0;
-    }
-    int32_t OnCaptureStarted(int32_t captureId, uint32_t exposureTime)
-    {
-        return 0;
-    }
-    int32_t OnCaptureEnded(int32_t captureId, int32_t frameCount)
-    {
-        return 0;
-    }
-    int32_t OnCaptureError(int32_t captureId, int32_t errorType)
-    {
-        return 0;
-    }
-    int32_t OnFrameShutter(int32_t captureId, uint64_t timestamp)
-    {
-        return 0;
-    }
-    int32_t OnFrameShutterEnd(int32_t captureId, uint64_t timestamp)
-    {
-        return 0;
-    }
-    int32_t OnCaptureReady(int32_t captureId, uint64_t timestamp)
-    {
-        return 0;
-    }
-    sptr<IRemoteObject> AsObject()
-    {
-        return this;
-    }
-};
 namespace StreamCaptureStubFuzzer {
 
 void Test(uint8_t *rawData, size_t size);

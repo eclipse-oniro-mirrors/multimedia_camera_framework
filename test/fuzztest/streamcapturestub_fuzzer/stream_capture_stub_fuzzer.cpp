@@ -15,6 +15,7 @@
 
 #include "stream_capture_stub_fuzzer.h"
 #include "hstream_capture.h"
+#include "iservice_registry.h"
 #include "message_parcel.h"
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
@@ -105,6 +106,7 @@ void Test(uint8_t *rawData, size_t size)
     Test_HandleSetRawPhotoInfo(rawData, size);
     Test_HandleEnableDeferredType(rawData, size);
     Test_HandleSetCallback(rawData, size);
+    fuzz->Release();
 }
 
 void Request(MessageParcel &data, MessageParcel &reply, MessageOption &option, StreamCaptureInterfaceCode scic)
@@ -180,14 +182,6 @@ void Test_HandleSetThumbnail(uint8_t *rawData, size_t size)
 void Test_HandleSetRawPhotoInfo(uint8_t *rawData, size_t size)
 {
     MessageParcel data;
-    data.WriteRawData(rawData, size);
-    data.RewindRead(0);
-    fuzz->HandleSetRawPhotoInfo(data);
-}
-
-void Test_HandleEnableDeferredType(uint8_t *rawData, size_t size)
-{
-    MessageParcel data;
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     if (photoSurface == nullptr) {
         return;
@@ -196,14 +190,24 @@ void Test_HandleEnableDeferredType(uint8_t *rawData, size_t size)
     data.WriteRemoteObject(producer);
     data.WriteRawData(rawData, size);
     data.RewindRead(0);
+    fuzz->HandleSetRawPhotoInfo(data);
+}
+
+void Test_HandleEnableDeferredType(uint8_t *rawData, size_t size)
+{
+    MessageParcel data;
+    data.WriteRawData(rawData, size);
+    data.RewindRead(0);
     fuzz->HandleEnableDeferredType(data);
 }
 
 void Test_HandleSetCallback(uint8_t *rawData, size_t size)
 {
     MessageParcel data;
-    sptr<IRemoteObject> callback = new IStreamCaptureCallbackMock();
-    data.WriteRemoteObject(callback);
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    static const int32_t AUDIO_POLICY_SERVICE_ID = 3009;
+    auto object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
+    data.WriteRemoteObject(object);
     data.WriteRawData(rawData, size);
     data.RewindRead(0);
     fuzz->HandleSetCallback(data);

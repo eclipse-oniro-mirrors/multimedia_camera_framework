@@ -22,6 +22,59 @@ namespace OHOS {
 namespace CameraStandard {
 namespace StreamRepeatStubFuzzer {
 
+class HStreamRepeatStubMock : public HStreamRepeatStub {
+public:
+    int32_t RemoveSketchStreamRepeat() override
+    {
+        return 0;
+    }
+    int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate) override
+    {
+        return 0;
+    }
+    int32_t EnableSecure(bool isEnable = false) override
+    {
+        return 0;
+    }
+    int32_t SetMirror(bool isEnable) override
+    {
+        return 0;
+    }
+    int32_t OperatePermissionCheck(uint32_t interfaceCode) override
+    {
+        return 0;
+    }
+    int32_t Start() override
+    {
+        return 0;
+    }
+    int32_t Stop() override
+    {
+        return 0;
+    }
+    int32_t SetCallback(sptr<IStreamRepeatCallback>& callback) override
+    {
+        return 0;
+    }
+    int32_t Release() override
+    {
+        return 0;
+    }
+    int32_t AddDeferredSurface(const sptr<OHOS::IBufferProducer>& producer) override
+    {
+        return 0;
+    }
+    int32_t ForkSketchStreamRepeat(int32_t width, int32_t height,
+        sptr<IStreamRepeat>& sketchStream, float sketchRatio) override
+    {
+        return 0;
+    }
+    int32_t UpdateSketchRatio(float sketchRatio) override
+    {
+        return 0;
+    }
+};
+
 void Test(uint8_t *rawData, size_t size);
 void Test_OnRemoteRequest(uint8_t *rawData, size_t size);
 
