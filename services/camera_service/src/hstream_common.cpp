@@ -268,6 +268,8 @@ void HStreamCommon::DumpStreamInfo(CameraInfoDumper& infoDumper)
 
 void HStreamCommon::PrintCaptureDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_)
 {
+    CHECK_AND_RETURN_LOG(captureMetadataSetting_ != nullptr,
+        "HStreamCapture::PrintCaptureDebugLog captureMetadataSetting_ is nullptr");
     camera_metadata_item_t item;
     int result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_JPEG_QUALITY, &item);
     if (result != CAM_META_SUCCESS) {

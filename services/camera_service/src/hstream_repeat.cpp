@@ -813,6 +813,7 @@ int32_t HStreamRepeat::EnableSecure(bool isEnabled)
 
 void HStreamRepeat::UpdateVideoSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> settings)
 {
+    CHECK_AND_RETURN_LOG(settings != nullptr, "HStreamRepeat::UpdateVideoSettings settings is nullptr");
     bool status = false;
     camera_metadata_item_t item;
  
