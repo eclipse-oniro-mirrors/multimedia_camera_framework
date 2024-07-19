@@ -329,10 +329,10 @@ int32_t VideoEncoder::Configure()
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_I_FRAME_INTERVAL, 0);
 
     int ret = OH_VideoEncoder_Configure(encoder_, format);
-    CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Config failed, ret: %{public}d", ret);
-
     OH_AVFormat_Destroy(format);
     format = nullptr;
+    CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Config failed, ret: %{public}d", ret);
+
     return 0;
 }
 } // CameraStandard
