@@ -65,8 +65,8 @@ public:
 
     int32_t StartMovingPhotoCapture(bool isMirror, int32_t rotation) override;
 
-    int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy, std::string &uri, int32_t &cameraShotType,
-        int64_t timestamp) override;
+    int32_t CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
+        std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) override;
 
     int32_t SetPreviewRotation() override;
 private:

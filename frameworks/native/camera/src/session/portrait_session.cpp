@@ -50,31 +50,20 @@ PortraitSession::~PortraitSession()
 std::vector<PortraitEffect> PortraitSession::GetSupportedPortraitEffects()
 {
     std::vector<PortraitEffect> supportedPortraitEffects = {};
-    if (!(IsSessionCommited() || IsSessionConfiged())) {
-        MEDIA_ERR_LOG("PortraitSession::GetSupportedPortraitEffects Session is not Commited");
-        return supportedPortraitEffects;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!(IsSessionCommited() || IsSessionConfiged()), supportedPortraitEffects,
+        "PortraitSession::GetSupportedPortraitEffects Session is not Commited");
     auto inputDevice = GetInputDevice();
-    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
-        MEDIA_ERR_LOG("PortraitSession::GetSupportedPortraitEffects camera device is null");
-        return supportedPortraitEffects;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), supportedPortraitEffects,
+        "PortraitSession::GetSupportedPortraitEffects camera device is null");
 
     int ret = VerifyAbility(static_cast<uint32_t>(OHOS_ABILITY_SCENE_PORTRAIT_EFFECT_TYPES));
-    if (ret != CAMERA_OK) {
-        MEDIA_ERR_LOG("PortraitSession::GetSupportedPortraitEffects abilityId is NULL");
-        return supportedPortraitEffects;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, supportedPortraitEffects,
+        "PortraitSession::GetSupportedPortraitEffects abilityId is NULL");
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
-    if (metadata == nullptr) {
-        return supportedPortraitEffects;
-    }
+    CHECK_AND_RETURN_RET(metadata != nullptr, supportedPortraitEffects);
     camera_metadata_item_t item;
     ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SCENE_PORTRAIT_EFFECT_TYPES, &item);
-    if (ret != CAM_META_SUCCESS || item.count == 0) {
-        MEDIA_ERR_LOG("PortraitSession::GetSupportedPortraitEffects Failed with return code %{public}d", ret);
-        return supportedPortraitEffects;
-    }
+    CHECK_AND_RETURN_RET(ret == CAM_META_SUCCESS && item.count != 0, supportedPortraitEffects);
     for (uint32_t i = 0; i < item.count; i++) {
         auto itr = metaToFwPortraitEffect_.find(static_cast<camera_portrait_effect_type_t>(item.data.u8[i]));
         if (itr != metaToFwPortraitEffect_.end()) {
@@ -86,19 +75,13 @@ std::vector<PortraitEffect> PortraitSession::GetSupportedPortraitEffects()
 
 PortraitEffect PortraitSession::GetPortraitEffect()
 {
-    if (!(IsSessionCommited() || IsSessionConfiged())) {
-        MEDIA_ERR_LOG("CaptureSession::GetPortraitEffect Session is not Commited");
-        return PortraitEffect::OFF_EFFECT;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!(IsSessionCommited() || IsSessionConfiged()), PortraitEffect::OFF_EFFECT,
+        "CaptureSession::GetPortraitEffect Session is not Commited");
     auto inputDevice = GetInputDevice();
-    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
-        MEDIA_ERR_LOG("CaptureSession::GetPortraitEffect camera device is null");
-        return PortraitEffect::OFF_EFFECT;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), PortraitEffect::OFF_EFFECT,
+        "CaptureSession::GetPortraitEffect camera device is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
-    if (metadata == nullptr) {
-        return PortraitEffect::OFF_EFFECT;
-    }
+    CHECK_AND_RETURN_RET(metadata != nullptr, PortraitEffect::OFF_EFFECT);
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &item);
     if (ret != CAM_META_SUCCESS || item.count == 0) {
@@ -115,21 +98,15 @@ PortraitEffect PortraitSession::GetPortraitEffect()
 void PortraitSession::SetPortraitEffect(PortraitEffect portraitEffect)
 {
     CAMERA_SYNC_TRACE;
-    if (!(IsSessionCommited() || IsSessionConfiged())) {
-        MEDIA_ERR_LOG("CaptureSession::SetPortraitEffect Session is not Commited");
-        return;
-    }
-    if (changedMetadata_ == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::SetPortraitEffect changedMetadata_ is NULL");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!(IsSessionCommited() || IsSessionConfiged()),
+        "CaptureSession::SetPortraitEffect Session is not Commited");
+    CHECK_ERROR_RETURN_LOG(changedMetadata_ == nullptr,
+        "CaptureSession::SetPortraitEffect changedMetadata_ is NULL");
 
     std::vector<PortraitEffect> portraitEffects= GetSupportedPortraitEffects();
     auto itr = std::find(portraitEffects.begin(), portraitEffects.end(), portraitEffect);
-    if (itr == portraitEffects.end()) {
-        MEDIA_ERR_LOG("CaptureSession::SetPortraitEffect::GetSupportedPortraitEffects abilityId is NULL");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(itr == portraitEffects.end(),
+        "CaptureSession::SetPortraitEffect::GetSupportedPortraitEffects abilityId is NULL");
     uint8_t effect = 0;
     for (auto itr2 = fwToMetaPortraitEffect_.cbegin(); itr2 != fwToMetaPortraitEffect_.cend(); itr2++) {
         if (portraitEffect == itr2->first) {
@@ -160,10 +137,8 @@ bool PortraitSession::CanAddOutput(sptr<CaptureOutput> &output)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into PortraitSession::CanAddOutput");
-    if (!IsSessionConfiged() || output == nullptr) {
-        MEDIA_ERR_LOG("PortraitSession::CanAddOutput operation is Not allowed!");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionConfiged() || output == nullptr, false,
+        "PortraitSession::CanAddOutput operation is Not allowed!");
     return output->GetOutputType() != CAPTURE_OUTPUT_TYPE_VIDEO && CaptureSession::CanAddOutput(output);
 }
 } // CameraStandard

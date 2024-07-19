@@ -195,6 +195,24 @@ std::shared_ptr<Camera::CameraMetadata> PhotoCaptureSetting::GetCaptureMetadataS
     return captureMetadataSetting_;
 }
 
+void PhotoCaptureSetting::SetBurstCaptureState(uint8_t burstState)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("SetBurstCaptureState");
+    bool status = false;
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_CONTROL_BURST_CAPTURE, &item);
+    if (ret == CAM_META_ITEM_NOT_FOUND) {
+        status = captureMetadataSetting_->addEntry(OHOS_CONTROL_BURST_CAPTURE, &burstState, 1);
+    } else if (ret == CAM_META_SUCCESS) {
+        status = captureMetadataSetting_->updateEntry(OHOS_CONTROL_BURST_CAPTURE, &burstState, 1);
+    }
+    if (!status) {
+        MEDIA_ERR_LOG("PhotoCaptureSetting::SetBurstCaptureState Failed");
+    }
+    return;
+}
+
 int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId)
 {
     CAMERA_SYNC_TRACE;

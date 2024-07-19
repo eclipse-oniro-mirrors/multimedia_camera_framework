@@ -26,10 +26,8 @@ Camera_ErrorCode OH_CaptureSession_RegisterCallback(Camera_CaptureSession* sessi
 {
     CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT, "Invaild argument, session is null!");
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT, "Invaild argument, callback is null!");
-    CHECK_AND_RETURN_RET_LOG(callback->onFocusStateChange!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback onFocusStateChange is null!");
-    CHECK_AND_RETURN_RET_LOG(callback->onError!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback onError is null!");
+    CHECK_AND_RETURN_RET_LOG(callback->onFocusStateChange != nullptr || callback->onError != nullptr,
+        CAMERA_INVALID_ARGUMENT, "Invaild argument, callback onFocusStateChange and onError are null!");
 
     session->RegisterCallback(callback);
     return CAMERA_OK;
@@ -40,19 +38,18 @@ Camera_ErrorCode OH_CaptureSession_UnregisterCallback(Camera_CaptureSession* ses
 {
     CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT, "Invaild argument, session is null!");
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, CAMERA_INVALID_ARGUMENT, "Invaild argument, callback is null!");
-    CHECK_AND_RETURN_RET_LOG(callback->onFocusStateChange!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback onFocusStateChange is null!");
-    CHECK_AND_RETURN_RET_LOG(callback->onError!= nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, callback onError is null!");
+    CHECK_AND_RETURN_RET_LOG(callback->onFocusStateChange != nullptr || callback->onError != nullptr,
+        CAMERA_INVALID_ARGUMENT, "Invaild argument, callback onFocusStateChange and onError are null!");
 
     session->UnregisterCallback(callback);
     return CAMERA_OK;
 }
+
 Camera_ErrorCode OH_CaptureSession_SetSessionMode(Camera_CaptureSession* session, Camera_SceneMode sceneMode)
 {
     CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT, "Invaild argument, session is null!");
-    session->SetSessionMode(sceneMode);
-    return CAMERA_OK;
+
+    return session->SetSessionMode(sceneMode);
 }
 
 Camera_ErrorCode OH_CaptureSession_AddSecureOutput(Camera_CaptureSession* session, Camera_PreviewOutput* previewOutput)
@@ -438,6 +435,105 @@ Camera_ErrorCode OH_CaptureSession_GetExposureBias(Camera_CaptureSession* sessio
     CHECK_AND_RETURN_RET_LOG(exposureBias != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, exposureBias is null!");
     return session->GetExposureBias(exposureBias);
+}
+
+Camera_ErrorCode OH_CaptureSession_CanAddInput(Camera_CaptureSession* session,
+    Camera_Input* cameraInput, bool* isSuccess)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_CanAddInput is called");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, session is null!");
+    CHECK_AND_RETURN_RET_LOG(cameraInput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, cameraInput is null!");
+    CHECK_AND_RETURN_RET_LOG(isSuccess != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, isSuccess is null!");
+
+    return session->CanAddInput(cameraInput, isSuccess);
+}
+
+Camera_ErrorCode OH_CaptureSession_CanAddPreviewOutput(Camera_CaptureSession* session,
+    Camera_PreviewOutput* cameraOutput, bool* isSuccess)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_CanAddPreviewOutput is called");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, session is null!");
+    CHECK_AND_RETURN_RET_LOG(cameraOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, cameraOutput is null!");
+    CHECK_AND_RETURN_RET_LOG(isSuccess != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, isSuccess is null!");
+
+    return session->CanAddPreviewOutput(cameraOutput, isSuccess);
+}
+
+Camera_ErrorCode OH_CaptureSession_CanAddPhotoOutput(Camera_CaptureSession* session,
+    Camera_PhotoOutput* cameraOutput, bool* isSuccess)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_CanAddPhotoOutput is called");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, session is null!");
+    CHECK_AND_RETURN_RET_LOG(cameraOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, cameraOutput is null!");
+    CHECK_AND_RETURN_RET_LOG(isSuccess != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, isSuccess is null!");
+
+    return session->CanAddPhotoOutput(cameraOutput, isSuccess);
+}
+
+Camera_ErrorCode OH_CaptureSession_CanAddVideoOutput(Camera_CaptureSession* session,
+    Camera_VideoOutput* cameraOutput, bool* isSuccess)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_CanAddVideoOutput is called");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, session is null!");
+    CHECK_AND_RETURN_RET_LOG(cameraOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, cameraOutput is null!");
+    CHECK_AND_RETURN_RET_LOG(isSuccess != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, isSuccess is null!");
+
+    return session->CanAddVideoOutput(cameraOutput, isSuccess);
+}
+
+Camera_ErrorCode OH_CaptureSession_CanPreconfig(Camera_CaptureSession* session,
+    Camera_PreconfigType preconfigType, bool* canPreconfig)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_CanPreconfig is called.");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, session is null!");
+    CHECK_AND_RETURN_RET_LOG(canPreconfig != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, canPreconfig is null!");
+
+    return session->CanPreconfig(preconfigType, canPreconfig);
+}
+
+Camera_ErrorCode OH_CaptureSession_CanPreconfigWithRatio(Camera_CaptureSession* session,
+    Camera_PreconfigType preconfigType, Camera_PreconfigRatio preconfigRatio, bool* canPreconfig)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_CanPreconfigWithRatio is called.");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, session is null!");
+    CHECK_AND_RETURN_RET_LOG(canPreconfig != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, canPreconfig is null!");
+
+    return session->CanPreconfigWithRatio(preconfigType, preconfigRatio, canPreconfig);
+}
+
+Camera_ErrorCode OH_CaptureSession_Preconfig(Camera_CaptureSession* session, Camera_PreconfigType preconfigType)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_Preconfig is called.");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, session is null!");
+
+    return session->Preconfig(preconfigType);
+}
+
+Camera_ErrorCode OH_CaptureSession_PreconfigWithRatio(Camera_CaptureSession* session,
+    Camera_PreconfigType preconfigType, Camera_PreconfigRatio preconfigRatio)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_PreconfigWithRatio is called.");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, session is null!");
+
+    return session->PreconfigWithRatio(preconfigType, preconfigRatio);
 }
 
 #ifdef __cplusplus

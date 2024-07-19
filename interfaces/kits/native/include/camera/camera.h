@@ -114,9 +114,10 @@ typedef enum Camera_ErrorCode {
     CAMERA_DEVICE_PREEMPTED = 7400109,
 
     /**
-     * Unresolved conflicts between streams
+     * Unresolved conflicts with current configurations.
+     * @since 12
      */
-    UNRESOLVED_CONFLICTS_BETWEEN_STREAMS = 7400110,
+    CAMERA_UNRESOLVED_CONFLICTS_WITH_CURRENT_CONFIGURATIONS = 7400110,
 
     /**
      * Camera service fatal error.
@@ -160,10 +161,19 @@ typedef enum Camera_Status {
  */
 typedef enum Camera_SceneMode {
     /**
-     * Secure camera mode..
-     * @since 12
+     * Normal photo mode.
      */
-    SECURE_PHOTO = 12,
+    NORMAL_PHOTO = 1,
+
+    /**
+     * Normal video mode.
+     */
+    NORMAL_VIDEO = 2,
+
+    /**
+     * Secure camera mode.
+     */
+    SECURE_PHOTO = 12
 } Camera_SceneMode;
 
 /**
@@ -265,7 +275,19 @@ typedef enum Camera_Format {
     /**
      * JPEG Format.
      */
-    CAMERA_FORMAT_JPEG = 2000
+    CAMERA_FORMAT_JPEG = 2000,
+
+    /**
+     * YCBCR P010 Format.
+     * @since 12
+     */
+    CAMERA_FORMAT_YCBCR_P010 = 2001,
+
+    /**
+     * YCRCB P010 Format.
+     * @since 12
+     */
+    CAMERA_FORMAT_YCRCB_P010 = 2002
 } Camera_Format;
 
 /**
@@ -468,6 +490,94 @@ typedef enum Camera_MetadataObjectType {
 } Camera_MetadataObjectType;
 
 /**
+ * @brief Enum for torch mode.
+ *
+ * @since 12
+ * @version 1.0
+ */
+typedef enum Camera_TorchMode {
+    /**
+     * The device torch is always off.
+     */
+    OFF = 0,
+
+    /**
+     * The device torch is always on.
+     */
+    ON = 1,
+
+    /**
+     * The device continuously monitors light levels and
+     * uses the torch when necessary.
+     */
+    AUTO = 2
+} Camera_TorchMode;
+
+/**
+ * @brief Enum for smooth zoom mode.
+ *
+ * @since 12
+ * @version 1.0
+ */
+typedef enum Camera_SmoothZoomMode {
+    /**
+     * Normal zoom mode.
+     */
+    NORMAL = 0
+} Camera_SmoothZoomMode;
+
+/**
+ * @brief Enum for preconfig type.
+ *
+ * @since 12
+ * @version 1.0
+ */
+typedef enum Camera_PreconfigType {
+    /**
+     * The preconfig type is 720P.
+     */
+    PRECONFIG_720P = 0,
+
+    /**
+     * The preconfig type is 1080P.
+     */
+    PRECONFIG_1080P = 1,
+
+    /**
+     * The preconfig type is 4K.
+     */
+    PRECONFIG_4K = 2,
+
+    /**
+     * The preconfig type is high quality.
+     */
+    PRECONFIG_HIGH_QUALITY = 3
+} Camera_PreconfigType;
+
+/**
+ * @brief Enum for preconfig ratio.
+ *
+ * @since 12
+ * @version 1.0
+ */
+typedef enum Camera_PreconfigRatio {
+    /**
+     * The preconfig ratio is 1:1.
+     */
+    PRECONFIG_RATIO_1_1 = 0,
+
+    /**
+     * The preconfig ratio 4:3.
+     */
+    PRECONFIG_RATIO_4_3 = 1,
+
+    /**
+     * The preconfig ratio 16:9.
+     */
+    PRECONFIG_RATIO_16_9 = 2
+} Camera_PreconfigRatio;
+
+/**
  * @brief Size parameter.
  *
  * @since 11
@@ -657,11 +767,11 @@ typedef struct Camera_Point {
 } Camera_Point;
 
 /**
-* @brief Photo capture location.
-*
-* @since 11
-* @version 1.0
-*/
+ * @brief Photo capture location.
+ *
+ * @since 11
+ * @version 1.0
+ */
 typedef struct Camera_Location {
     /**
      * Latitude.
@@ -793,6 +903,73 @@ typedef struct Camera_MetadataObject {
      */
     Camera_Rect* boundingBox;
 } Camera_MetadataObject;
+
+/**
+ * @brief Torch Status Info.
+ *
+ * @since 12
+ * @version 1.0
+ */
+typedef struct Camera_TorchStatusInfo {
+    /**
+     * is torch available.
+     */
+    bool isTorchAvailable;
+
+    /**
+     * is torch active.
+     */
+    bool isTorchActive;
+
+    /**
+     * the current torch brightness level.
+     */
+    int32_t torchLevel;
+} Camera_TorchStatusInfo;
+
+/**
+ * @brief SmoothZoomInfo object.
+ *
+ * @since 12
+ * @version 1.0
+ */
+typedef struct Camera_SmoothZoomInfo {
+    /**
+     * The duration of smooth zoom.
+     */
+    int32_t duration;
+} Camera_SmoothZoomInfo;
+
+/**
+ * @brief Capture start info.
+ *
+ * @since 12
+ * @version 1.0
+ */
+typedef struct Camera_CaptureStartInfo {
+    /**
+     * Capture id.
+     */
+    int32_t captureId;
+
+    /**
+     * Time(in milliseconds) is the shutter time for the photo.
+     */
+    int64_t time;
+} Camera_CaptureStartInfo;
+
+/**
+ * @brief Frame shutter end callback info.
+ *
+ * @since 12
+ * @version 1.0
+ */
+typedef struct Camera_FrameShutterEndInfo {
+    /**
+     * Capture id.
+     */
+    int32_t captureId;
+} Camera_FrameShutterEndInfo;
 
 /**
  * @brief Creates a CameraManager instance.

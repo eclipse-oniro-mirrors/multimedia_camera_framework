@@ -141,6 +141,22 @@ Camera_ErrorCode OH_CameraManager_GetSupportedCameraOutputCapability(Camera_Mana
     const Camera_Device* camera, Camera_OutputCapability** cameraOutputCapability);
 
 /**
+ * @brief Gets supported output capability for specific camera and specific sceneMode.
+ *
+ * @param cameraManager the {@link Camera_Manager} instance.
+ * @param camera the {@link Camera_Device} to be queryed.
+ * @param sceneMode the {@link Camera_SceneMode} to be queryed.
+ * @param cameraOutputCapability the supported {@link Camera_OutputCapability} will be filled
+ *        if the method call succeeds.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 12
+ */
+Camera_ErrorCode OH_CameraManager_GetSupportedCameraOutputCapabilityWithSceneMode(Camera_Manager* cameraManager,
+    const Camera_Device* camera, Camera_SceneMode sceneMode, Camera_OutputCapability** cameraOutputCapability);
+
+/**
  * @brief Delete the supported output capability.
  *
  * @param cameraManager the {@link Camera_Manager} instance.
@@ -224,6 +240,20 @@ Camera_ErrorCode OH_CameraManager_CreatePreviewOutput(Camera_Manager* cameraMana
     const char* surfaceId, Camera_PreviewOutput** previewOutput);
 
 /**
+ * @brief Create a preview output instance used in preconfig.
+ *
+ * @param cameraManager the {@link Camera_Manager} instance.
+ * @param surfaceId the which use to create {@link Camera_PreviewOutput}.
+ * @param previewOutput the {@link Camera_PreviewOutput} will be created if the method call succeeds.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 12
+ */
+Camera_ErrorCode OH_CameraManager_CreatePreviewOutputUsedInPreconfig(Camera_Manager* cameraManager,
+    const char* surfaceId, Camera_PreviewOutput** previewOutput);
+
+/**
  * @brief Create a photo output instance.
  *
  * @param cameraManager the {@link Camera_Manager} instance.
@@ -236,6 +266,20 @@ Camera_ErrorCode OH_CameraManager_CreatePreviewOutput(Camera_Manager* cameraMana
  * @since 11
  */
 Camera_ErrorCode OH_CameraManager_CreatePhotoOutput(Camera_Manager* cameraManager, const Camera_Profile* profile,
+    const char* surfaceId, Camera_PhotoOutput** photoOutput);
+
+/**
+ * @brief Create a photo output instance used in preconfig.
+ *
+ * @param cameraManager the {@link Camera_Manager} instance.
+ * @param surfaceId the which use to create {@link Camera_PhotoOutput}.
+ * @param photoOutput the {@link Camera_PhotoOutput} will be created if the method call succeeds.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 12
+ */
+Camera_ErrorCode OH_CameraManager_CreatePhotoOutputUsedInPreconfig(Camera_Manager* cameraManager,
     const char* surfaceId, Camera_PhotoOutput** photoOutput);
 
 /**
@@ -254,6 +298,20 @@ Camera_ErrorCode OH_CameraManager_CreateVideoOutput(Camera_Manager* cameraManage
     const char* surfaceId, Camera_VideoOutput** videoOutput);
 
 /**
+ * @brief Create a video output instance used in preconfig.
+ *
+ * @param cameraManager the {@link Camera_Manager} instance.
+ * @param surfaceId the which use to create {@link Camera_VideoOutput}.
+ * @param videoOutput the {@link Camera_VideoOutput} will be created if the method call succeeds.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 12
+ */
+Camera_ErrorCode OH_CameraManager_CreateVideoOutputUsedInPreconfig(Camera_Manager* cameraManager,
+    const char* surfaceId, Camera_VideoOutput** videoOutput);
+
+/**
  * @brief Create a metadata output instance.
  *
  * @param cameraManager the {@link Camera_Manager} instance.
@@ -266,6 +324,32 @@ Camera_ErrorCode OH_CameraManager_CreateVideoOutput(Camera_Manager* cameraManage
  */
 Camera_ErrorCode OH_CameraManager_CreateMetadataOutput(Camera_Manager* cameraManager,
     const Camera_MetadataObjectType* profile, Camera_MetadataOutput** metadataOutput);
+
+/**
+ * @brief Gets supported scene mode for specific camera.
+ *
+ * @param camera the {@link Camera_Device} to be queryed.
+ * @param sceneModes the supported {@link Camera_SceneMode} will be filled if the method call succeeds.
+ * @param size the size of supported {@link Camera_SceneMode} list will be filled if the method call succeeds.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 12
+ */
+Camera_ErrorCode OH_CameraManager_GetSupportedSceneModes(Camera_Device* camera,
+    Camera_SceneMode** sceneModes, uint32_t* size);
+
+/**
+ * @brief Delete the supported scene mode.
+ *
+ * @param cameraManager the {@link Camera_Manager} instance.
+ * @param sceneModes the {@link Camera_SceneMode} to be deleted.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 12
+ */
+Camera_ErrorCode OH_CameraManager_DeleteSupportedSceneModes(Camera_Manager* cameraManager,
+    Camera_SceneMode* sceneModes);
 
 #ifdef __cplusplus
 }

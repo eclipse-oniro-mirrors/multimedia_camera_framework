@@ -440,10 +440,7 @@ void CaptureSession::SetDefaultColorSpace()
     }
 
     auto captureSession = GetCaptureSession();
-    if (!captureSession) {
-        MEDIA_ERR_LOG("CaptureSession::SetDefaultColorSpace() captureSession is nullptr");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!captureSession, "CaptureSession::SetDefaultColorSpace() captureSession is nullptr");
 
     ColorSpace fwkColorSpace;
     ColorSpace fwkCaptureColorSpace;
@@ -479,10 +476,8 @@ bool CaptureSession::CanAddInput(sptr<CaptureInput>& input)
     CAMERA_SYNC_TRACE;
     bool ret = false;
     MEDIA_INFO_LOG("Enter Into CaptureSession::CanAddInput");
-    if (!IsSessionConfiged() || input == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::AddInput operation Not allowed!");
-        return ret;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionConfiged() || input == nullptr, ret,
+        "CaptureSession::AddInput operation Not allowed!");
     auto captureSession = GetCaptureSession();
     if (captureSession) {
         captureSession->CanAddInput(((sptr<CameraInput>&)input)->GetCameraDevice(), ret);
@@ -528,10 +523,8 @@ void CaptureSession::UpdateDeviceDeferredability()
 {
     MEDIA_DEBUG_LOG("UpdateDeviceDeferredability begin.");
     auto inputDevice = GetInputDevice();
-    if (inputDevice == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::UpdateDeviceDeferredability inputDevice is nullptr");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(inputDevice == nullptr,
+        "CaptureSession::UpdateDeviceDeferredability inputDevice is nullptr");
     inputDevice->GetCameraDeviceInfo()->modeDeferredType_ = {};
     camera_metadata_item_t item;
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
@@ -557,10 +550,7 @@ void CaptureSession::FindTagId()
         std::vector<vendorTag_t> vendorTagInfos;
         sptr<CameraInput> camInput = (sptr<CameraInput>&)inputDevice;
         int32_t ret = camInput->GetCameraAllVendorTags(vendorTagInfos);
-        if (ret != CAMERA_OK) {
-            MEDIA_ERR_LOG("Failed to GetCameraAllVendorTags");
-            return;
-        }
+        CHECK_ERROR_RETURN_LOG(ret != CAMERA_OK, "Failed to GetCameraAllVendorTags");
         for (auto info : vendorTagInfos) {
             std::string tagName = info.tagName;
             if (tagName == "hwSensorName") {
@@ -581,10 +571,8 @@ void CaptureSession::FindTagId()
 bool CaptureSession::CheckFrameRateRangeWithCurrentFps(int32_t curMinFps, int32_t curMaxFps,
                                                        int32_t minFps, int32_t maxFps)
 {
-    if (minFps == 0 || curMinFps == 0) {
-        MEDIA_WARNING_LOG("CaptureSession::CheckFrameRateRangeWithCurrentFps can not set zero!");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(minFps == 0 || curMinFps == 0, false,
+        "CaptureSession::CheckFrameRateRangeWithCurrentFps can not set zero!");
     if (curMinFps == curMaxFps && minFps == maxFps &&
         (minFps % curMinFps == 0 || curMinFps % minFps == 0)) {
         return true;
@@ -606,15 +594,11 @@ int32_t CaptureSession::ConfigurePreviewOutput(sptr<CaptureOutput>& output)
     MEDIA_INFO_LOG("CaptureSession::ConfigurePreviewOutput enter");
     auto previewProfile = output->GetPreviewProfile();
     if (output->IsTagSetted(CaptureOutput::DYNAMIC_PROFILE)) {
-        if (previewProfile != nullptr) {
-            MEDIA_ERR_LOG("CaptureSession::ConfigurePreviewOutput previewProfile is not null, is that output in use?");
-            return CameraErrorCode::SERVICE_FATL_ERROR;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(previewProfile != nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+            "CaptureSession::ConfigurePreviewOutput previewProfile is not null, is that output in use?");
         auto preconfigPreviewProfile = GetPreconfigPreviewProfile();
-        if (preconfigPreviewProfile == nullptr) {
-            MEDIA_ERR_LOG("CaptureSession::ConfigurePreviewOutput preconfigPreviewProfile is nullptr");
-            return CameraErrorCode::SERVICE_FATL_ERROR;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(preconfigPreviewProfile == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+            "CaptureSession::ConfigurePreviewOutput preconfigPreviewProfile is nullptr");
         output->SetPreviewProfile(*preconfigPreviewProfile);
         int32_t res = output->CreateStream();
         if (res != CameraErrorCode::SUCCESS) {
@@ -736,15 +720,11 @@ int32_t CaptureSession::ConfigureVideoOutput(sptr<CaptureOutput>& output)
     MEDIA_INFO_LOG("CaptureSession::ConfigureVideoOutput enter");
     auto videoProfile = output->GetVideoProfile();
     if (output->IsTagSetted(CaptureOutput::DYNAMIC_PROFILE)) {
-        if (videoProfile != nullptr) {
-            MEDIA_ERR_LOG("CaptureSession::ConfigureVideoOutput videoProfile is not null, is that output in use?");
-            return CameraErrorCode::SERVICE_FATL_ERROR;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(videoProfile != nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+            "CaptureSession::ConfigureVideoOutput videoProfile is not null, is that output in use?");
         auto preconfigVideoProfile = GetPreconfigVideoProfile();
-        if (preconfigVideoProfile == nullptr) {
-            MEDIA_INFO_LOG("CaptureSession::ConfigureVideoOutput preconfigVideoProfile is nullptr");
-            return CameraErrorCode::SERVICE_FATL_ERROR;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(preconfigVideoProfile == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+            "CaptureSession::ConfigureVideoOutput preconfigVideoProfile is nullptr");
         videoProfile = preconfigVideoProfile;
         output->SetVideoProfile(*preconfigVideoProfile);
         int32_t res = output->CreateStream();
@@ -814,10 +794,9 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
         return ServiceToCameraError(CAMERA_INVALID_ARG);
     }
 
-    if (ConfigureOutput(output) != CameraErrorCode::SUCCESS) {
-        MEDIA_ERR_LOG("CaptureSession::AddOutput ConfigureOutput fail!");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ConfigureOutput(output) != CameraErrorCode::SUCCESS,
+        CameraErrorCode::SERVICE_FATL_ERROR,
+        "CaptureSession::AddOutput ConfigureOutput fail!");
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_METADATA) {
         MEDIA_INFO_LOG("CaptureSession::AddOutput MetadataOutput");
         metaOutput_ = output;
@@ -828,15 +807,11 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output)
         return ServiceToCameraError(CAMERA_INVALID_ARG);
     }
     auto captureSession = GetCaptureSession();
-    if (captureSession == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::AddOutput() captureSession is nullptr");
-        return ServiceToCameraError(CAMERA_UNKNOWN_ERROR);
-    }
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, ServiceToCameraError(CAMERA_UNKNOWN_ERROR),
+        "CaptureSession::AddOutput() captureSession is nullptr");
     int32_t ret = AdaptOutputVideoHighFrameRate(output, captureSession);
-    if (ret != CameraErrorCode::SUCCESS) {
-        MEDIA_ERR_LOG("CaptureSession::AddOutput An Error in the AdaptOutputVideoHighFrameRate");
-        return ServiceToCameraError(CAMERA_INVALID_ARG);
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CameraErrorCode::SUCCESS, ServiceToCameraError(CAMERA_INVALID_ARG),
+        "CaptureSession::AddOutput An Error in the AdaptOutputVideoHighFrameRate");
     int32_t errCode = captureSession->AddOutput(output->GetStreamType(), output->GetStream());
     if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO) {
         photoOutput_ = output;
@@ -854,20 +829,14 @@ int32_t CaptureSession::AdaptOutputVideoHighFrameRate(sptr<CaptureOutput>& outpu
     sptr<ICaptureSession>& captureSession)
 {
     MEDIA_INFO_LOG("Enter Into CaptureSession::AdaptOutputVideoHighFrameRate");
-    if (output == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::AdaptOutputVideoHighFrameRate output is null");
-        return CameraErrorCode::INVALID_ARGUMENT;
-    }
-    if (captureSession == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::AdaptOutputVideoHighFrameRate() captureSession is nullptr");
-        return CameraErrorCode::INVALID_ARGUMENT;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(output == nullptr, CameraErrorCode::INVALID_ARGUMENT,
+        "CaptureSession::AdaptOutputVideoHighFrameRate output is null");
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, CameraErrorCode::INVALID_ARGUMENT,
+        "CaptureSession::AdaptOutputVideoHighFrameRate() captureSession is nullptr");
     if (GetMode() == SceneMode::VIDEO && output->GetOutputType() == CAPTURE_OUTPUT_TYPE_VIDEO) {
         std::vector<int32_t> videoFrameRates = output->GetVideoProfile()->GetFrameRates();
-        if (videoFrameRates.empty()) {
-            MEDIA_ERR_LOG("videoFrameRates is empty!");
-            return CameraErrorCode::INVALID_ARGUMENT;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(videoFrameRates.empty(), CameraErrorCode::INVALID_ARGUMENT,
+            "videoFrameRates is empty!");
         if (videoFrameRates[0] == FRAMERATE_120 || videoFrameRates[0] == FRAMERATE_240) {
             captureSession->SetFeatureMode(SceneMode::HIGH_FRAME_RATE);
             return CameraErrorCode::SUCCESS;
@@ -880,13 +849,9 @@ int32_t CaptureSession::AddSecureOutput(sptr<CaptureOutput> &output)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("Enter Into SecureCameraSession::AddSecureOutput");
-    if (currentMode_ != SceneMode::SECURE) {
-        return CAMERA_OPERATION_NOT_ALLOWED;
-    }
-    if (!IsSessionConfiged() || output == nullptr || isSetSecureOutput_) {
-        MEDIA_ERR_LOG("SecureCameraSession::AddSecureOutput operation is Not allowed!");
-        return CAMERA_OPERATION_NOT_ALLOWED;
-    }
+    CHECK_AND_RETURN_RET(currentMode_ == SceneMode::SECURE, CAMERA_OPERATION_NOT_ALLOWED);
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionConfiged() || output == nullptr || isSetSecureOutput_,
+        CAMERA_OPERATION_NOT_ALLOWED, "SecureCameraSession::AddSecureOutput operation is Not allowed!");
     sptr<IStreamCommon> stream = output->GetStream();
     IStreamRepeat* repeatStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
     repeatStream->EnableSecure(true);
@@ -898,10 +863,8 @@ bool CaptureSession::CanAddOutput(sptr<CaptureOutput>& output)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::CanAddOutput");
-    if (!IsSessionConfiged() || output == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::CanAddOutput operation Not allowed!");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionConfiged() || output == nullptr, false,
+        "CaptureSession::CanAddOutput operation Not allowed!");
     auto inputDevice = GetInputDevice();
     if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("CaptureSession::CanAddOutput Failed inputDevice is nullptr");
@@ -946,10 +909,8 @@ int32_t CaptureSession::RemoveInput(sptr<CaptureInput>& input)
         return ServiceToCameraError(CAMERA_INVALID_ARG);
     }
     auto device = ((sptr<CameraInput>&)input)->GetCameraDevice();
-    if (device == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::RemoveInput device is null");
-        return ServiceToCameraError(CAMERA_INVALID_ARG);
-    }
+    CHECK_ERROR_RETURN_RET_LOG(device == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG),
+        "CaptureSession::RemoveInput device is null");
     SetInputDevice(nullptr);
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     auto captureSession = GetCaptureSession();
@@ -1137,14 +1098,14 @@ void CaptureSession::SetCallback(std::shared_ptr<SessionCallback> callback)
 }
 
 void CaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
-    int64_t timestamp)
+                                        std::string &burstKey, int64_t timestamp)
 {
     CAMERA_SYNC_TRACE;
     int32_t errorCode = CAMERA_OK;
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     auto captureSession = GetCaptureSession();
     if (captureSession) {
-        errorCode = captureSession->CreateMediaLibrary(photoProxy, uri, cameraShotType, timestamp);
+        errorCode = captureSession->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
         if (errorCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to create media library, errorCode: %{public}d", errorCode);
         }
@@ -4714,14 +4675,10 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> CaptureSession::GetMetadata()
 int32_t CaptureSession::SetARMode(bool isEnable)
 {
     MEDIA_INFO_LOG("CaptureSession::SetARMode");
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("CaptureSession::SetARMode Session is not Commited");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
-    if (changedMetadata_ == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::SetARMode Need to call LockForControl() before setting camera properties");
-        return CameraErrorCode::SUCCESS;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::SetARMode Session is not Commited");
+    CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+        "CaptureSession::SetARMode Need to call LockForControl() before setting camera properties");
 
     bool status = false;
     uint32_t count = 1;
@@ -4734,25 +4691,20 @@ int32_t CaptureSession::SetARMode(bool isEnable)
         status = changedMetadata_->updateEntry(HAL_CUSTOM_AR_MODE, &value, count);
     }
 
-    if (!status) {
-        MEDIA_ERR_LOG("CaptureSession::SetARMode Failed to set ar mode");
-        return CameraErrorCode::SUCCESS;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!status, CameraErrorCode::SUCCESS,
+        "CaptureSession::SetARMode Failed to set ar mode");
     return CameraErrorCode::SUCCESS;
 }
 
 int32_t CaptureSession::GetSensorSensitivityRange(std::vector<int32_t> &sensitivityRange)
 {
     MEDIA_INFO_LOG("CaptureSession::GetSensorSensitivityRange");
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("CaptureSession::GetSensorSensitivity fail due to Session is not Commited");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::GetSensorSensitivity fail due to Session is not Commited");
     auto inputDevice = GetInputDevice();
-    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
-        MEDIA_ERR_LOG("CaptureSession::GetSensorSensitivity fail due to camera device is null");
-        return CameraErrorCode::INVALID_ARGUMENT;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
+        CameraErrorCode::INVALID_ARGUMENT,
+        "CaptureSession::GetSensorSensitivity fail due to camera device is null");
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_SENSOR_INFO_SENSITIVITY_RANGE, &item);
@@ -4771,24 +4723,18 @@ int32_t CaptureSession::GetSensorSensitivityRange(std::vector<int32_t> &sensitiv
 int32_t CaptureSession::SetSensorSensitivity(uint32_t sensitivity)
 {
     MEDIA_INFO_LOG("CaptureSession::SetSensorSensitivity");
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("CaptureSession::SetSensorSensitivity Session is not Commited");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
-    if (changedMetadata_ == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::SetSensorSensitivity Need to call LockForControl() "
-            "before setting camera properties");
-        return CameraErrorCode::SUCCESS;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::SetSensorSensitivity Session is not Commited");
+    CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+        "CaptureSession::SetSensorSensitivity Need to call LockForControl() before setting camera properties");
     bool status = false;
     int32_t count = 1;
     camera_metadata_item_t item;
     MEDIA_DEBUG_LOG("CaptureSession::SetSensorSensitivity sensitivity: %{public}d", sensitivity);
     auto inputDevice = GetInputDevice();
-    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
-        MEDIA_ERR_LOG("CaptureSession::SetSensorSensitivity camera device is null");
-        return CameraErrorCode::OPERATION_NOT_ALLOWED;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
+        CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "CaptureSession::SetSensorSensitivity camera device is null");
 
     int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), HAL_CUSTOM_SENSOR_SENSITIVITY, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
@@ -4805,15 +4751,12 @@ int32_t CaptureSession::SetSensorSensitivity(uint32_t sensitivity)
 int32_t CaptureSession::GetModuleType(uint32_t &moduleType)
 {
     MEDIA_INFO_LOG("CaptureSession::GetModuleType");
-    if (!(IsSessionCommited() || IsSessionConfiged())) {
-        MEDIA_ERR_LOG("CaptureSession::GetModuleType fail due to Session is not Commited");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::GetModuleType fail due to Session is not Commited");
     auto inputDevice = GetInputDevice();
-    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
-        MEDIA_ERR_LOG("CaptureSession::GetModuleType fail due to camera device is null");
-        return CameraErrorCode::INVALID_ARGUMENT;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
+        CameraErrorCode::INVALID_ARGUMENT,
+        "CaptureSession::GetModuleType fail due to camera device is null");
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), HAL_CUSTOM_SENSOR_MODULE_TYPE, &item);
@@ -4841,14 +4784,10 @@ bool CaptureSession::IsEffectSuggestionSupported()
 int32_t CaptureSession::EnableEffectSuggestion(bool isEnable)
 {
     MEDIA_DEBUG_LOG("Enter EnableEffectSuggestion, isEnable:%{public}d", isEnable);
-    if (!IsEffectSuggestionSupported()) {
-        MEDIA_ERR_LOG("EnableEffectSuggestion IsEffectSuggestionSupported is false");
-        return CameraErrorCode::OPERATION_NOT_ALLOWED;
-    }
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("CaptureSession Failed EnableEffectSuggestion!, session not commited");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsEffectSuggestionSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "EnableEffectSuggestion IsEffectSuggestionSupported is false");
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession Failed EnableEffectSuggestion!, session not commited");
     bool status = false;
     int32_t ret;
     camera_metadata_item_t item;
@@ -4869,15 +4808,11 @@ int32_t CaptureSession::EnableEffectSuggestion(bool isEnable)
 EffectSuggestionInfo CaptureSession::GetSupportedEffectSuggestionInfo()
 {
     EffectSuggestionInfo effectSuggestionInfo = {};
-    if (!(IsSessionCommited() || IsSessionConfiged())) {
-        MEDIA_ERR_LOG("CaptureSession::GetSupportedEffectSuggestionInfo Session is not Commited");
-        return effectSuggestionInfo;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!(IsSessionCommited() || IsSessionConfiged()), effectSuggestionInfo,
+        "CaptureSession::GetSupportedEffectSuggestionInfo Session is not Commited");
     auto inputDevice = GetInputDevice();
-    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
-        MEDIA_ERR_LOG("CaptureSession::GetSupportedEffectSuggestionInfo camera device is null");
-        return effectSuggestionInfo;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), effectSuggestionInfo,
+        "CaptureSession::GetSupportedEffectSuggestionInfo camera device is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_EFFECT_SUGGESTION_SUPPORTED, &item);
@@ -4896,10 +4831,8 @@ std::vector<EffectSuggestionType> CaptureSession::GetSupportedEffectSuggestionTy
 {
     std::vector<EffectSuggestionType> supportedEffectSuggestionList = {};
     EffectSuggestionInfo effectSuggestionInfo = this->GetSupportedEffectSuggestionInfo();
-    if (effectSuggestionInfo.modeCount == 0) {
-        MEDIA_ERR_LOG("CaptureSession::GetSupportedEffectSuggestionType Failed, effectSuggestionInfo is null");
-        return supportedEffectSuggestionList;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(effectSuggestionInfo.modeCount == 0, supportedEffectSuggestionList,
+        "CaptureSession::GetSupportedEffectSuggestionType Failed, effectSuggestionInfo is null");
 
     for (uint32_t i = 0; i < effectSuggestionInfo.modeCount; i++) {
         if (GetMode() != effectSuggestionInfo.modeInfo[i].modeType) {
@@ -4924,14 +4857,10 @@ std::vector<EffectSuggestionType> CaptureSession::GetSupportedEffectSuggestionTy
 int32_t CaptureSession::SetEffectSuggestionStatus(std::vector<EffectSuggestionStatus> effectSuggestionStatusList)
 {
     MEDIA_DEBUG_LOG("Enter SetEffectSuggestionStatus");
-    if (!IsEffectSuggestionSupported()) {
-        MEDIA_ERR_LOG("SetEffectSuggestionStatus IsEffectSuggestionSupported is false");
-        return CameraErrorCode::OPERATION_NOT_ALLOWED;
-    }
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("CaptureSession Failed SetEffectSuggestionStatus!, session not commited");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsEffectSuggestionSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "SetEffectSuggestionStatus IsEffectSuggestionSupported is false");
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession Failed SetEffectSuggestionStatus!, session not commited");
     bool status = false;
     int32_t ret;
     camera_metadata_item_t item;
@@ -4965,15 +4894,10 @@ int32_t CaptureSession::SetEffectSuggestionStatus(std::vector<EffectSuggestionSt
 int32_t CaptureSession::UpdateEffectSuggestion(EffectSuggestionType effectSuggestionType, bool isEnable)
 {
     CAMERA_SYNC_TRACE;
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("CaptureSession::UpdateEffectSuggestion Session is not Commited");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
-    if (changedMetadata_ == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::UpdateEffectSuggestion Need to call LockForControl()"
-            "before setting camera properties");
-        return CameraErrorCode::SUCCESS;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::UpdateEffectSuggestion Session is not Commited");
+    CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+        "CaptureSession::UpdateEffectSuggestion Need to call LockForControl() before setting camera properties");
     uint8_t type = fwkEffectSuggestionTypeMap_.at(EffectSuggestionType::EFFECT_SUGGESTION_NONE);
     auto itr = fwkEffectSuggestionTypeMap_.find(effectSuggestionType);
     if (itr == fwkEffectSuggestionTypeMap_.end()) {
@@ -4994,10 +4918,8 @@ int32_t CaptureSession::UpdateEffectSuggestion(EffectSuggestionType effectSugges
         status = changedMetadata_->updateEntry(OHOS_CONTROL_EFFECT_SUGGESTION_TYPE, vec.data(), vec.size());
     }
 
-    if (!status) {
-        MEDIA_ERR_LOG("CaptureSession::UpdateEffectSuggestion Failed to set effectSuggestionType");
-        return CameraErrorCode::SUCCESS;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!status, CameraErrorCode::SUCCESS,
+        "CaptureSession::UpdateEffectSuggestion Failed to set effectSuggestionType");
     return CameraErrorCode::SUCCESS;
 }
 

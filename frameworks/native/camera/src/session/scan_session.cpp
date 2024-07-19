@@ -36,51 +36,39 @@ int32_t ScanSession::AddOutput(sptr<CaptureOutput> &output)
 {
     int32_t result = CAMERA_UNKNOWN_ERROR;
     auto inputDevice = GetInputDevice();
-    if (inputDevice) {
-        sptr<CameraDevice> device = inputDevice->GetCameraDeviceInfo();
-        sptr<CameraManager> cameraManager = CameraManager::GetInstance();
-        sptr<CameraOutputCapability> outputCapability = nullptr;
-        if (device != nullptr && cameraManager != nullptr) {
-            outputCapability = cameraManager->GetSupportedOutputCapability(device, SceneMode::SCAN);
-        } else {
-            MEDIA_ERR_LOG("ScanSession::AddOutput get nullptr to device or cameraManager");
-            return CameraErrorCode::DEVICE_DISABLED;
-        }
-        if ((outputCapability != nullptr && outputCapability->GetPreviewProfiles().size() != 0 &&
-            output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW)) {
-            result = CaptureSession::AddOutput(output);
-        } else {
-            MEDIA_ERR_LOG("ScanSession::AddOutput can not add current type of output");
-            return CameraErrorCode::SESSION_NOT_CONFIG;
-        }
-    } else {
-        MEDIA_ERR_LOG("ScanSession::AddOutput get nullptr to inputDevice");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+        "ScanSession::AddOutput get nullptr to inputDevice");
+
+    sptr<CameraDevice> device = inputDevice->GetCameraDeviceInfo();
+    sptr<CameraManager> cameraManager = CameraManager::GetInstance();
+    sptr<CameraOutputCapability> outputCapability = nullptr;
+
+    CHECK_AND_RETURN_RET_LOG(device != nullptr && cameraManager != nullptr, CameraErrorCode::DEVICE_DISABLED,
+        "ScanSession::AddOutput get nullptr to device or cameraManager");
+    outputCapability = cameraManager->GetSupportedOutputCapability(device, SceneMode::SCAN);
+
+    CHECK_AND_RETURN_RET_LOG((outputCapability != nullptr && outputCapability->GetPreviewProfiles().size() != 0 &&
+        output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PREVIEW), CameraErrorCode::SESSION_NOT_CONFIG,
+        "ScanSession::AddOutput can not add current type of output");
+    result = CaptureSession::AddOutput(output);
     return result;
 }
 
 bool ScanSession::CanAddOutput(sptr<CaptureOutput> &output)
 {
     MEDIA_DEBUG_LOG("Enter Into ScanSession::CanAddOutput");
-    if (!IsSessionConfiged() || output == nullptr) {
-        MEDIA_ERR_LOG("ScanSession::CanAddOutput operation is Not allowed!");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionConfiged() || output == nullptr, false,
+        "ScanSession::CanAddOutput operation is Not allowed!");
     return output->GetOutputType() != CAPTURE_OUTPUT_TYPE_VIDEO && CaptureSession::CanAddOutput(output);
 }
 
 bool ScanSession::IsBrightnessStatusSupported()
 {
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("ScanSession::IsBrightnessStatusSupported Session is not Commited");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), false,
+        "ScanSession::IsBrightnessStatusSupported Session is not Commited");
     auto inputDevice = GetInputDevice();
-    if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
-        MEDIA_ERR_LOG("ScanSession::IsBrightnessStatusSupported camera device is null");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), false,
+        "ScanSession::IsBrightnessStatusSupported camera device is null");
     sptr<CameraDevice> device = inputDevice->GetCameraDeviceInfo();
     std::shared_ptr<Camera::CameraMetadata> metadata = device->GetMetadata();
     camera_metadata_item_t item;
@@ -116,20 +104,16 @@ void ScanSession::SetBrightnessStatusReport(uint8_t state)
 
 void ScanSession::RegisterBrightnessStatusCallback(std::shared_ptr<BrightnessStatusCallback> brightnessStatusCallback)
 {
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("ScanSession::RegisterBrightnessStatusCallback Session is not Commited");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!IsSessionCommited(),
+        "ScanSession::RegisterBrightnessStatusCallback Session is not Commited");
     SetBrightnessStatusCallback(brightnessStatusCallback);
     SetBrightnessStatusReport(SWTCH_ON);
 }
  
 void ScanSession::UnRegisterBrightnessStatusCallback()
 {
-    if (!IsSessionCommited()) {
-        MEDIA_ERR_LOG("ScanSession::UnRegisterBrightnessStatusCallback Session is not Commited");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(!IsSessionCommited(),
+        "ScanSession::UnRegisterBrightnessStatusCallback Session is not Commited");
     SetBrightnessStatusCallback(nullptr);
     SetBrightnessStatusReport(SWTCH_OFF);
 }
@@ -142,10 +126,8 @@ void ScanSession::ProcessBrightnessStatusChange(const std::shared_ptr<OHOS::Came
         camera_metadata_item_t item;
         common_metadata_header_t* metadata = result->get();
         int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_FLASH_SUGGESTION, &item);
-        if (ret != CAM_META_SUCCESS) {
-            MEDIA_DEBUG_LOG("ScanSession::ProcessBrightnessStatusChange get brightness status failed");
-            return;
-        }
+        CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS,
+            "ScanSession::ProcessBrightnessStatusChange get brightness status failed");
         bool state = true;
         uint32_t brightnessStatus = item.data.ui32[0];
         if (brightnessStatus == 1) {
@@ -170,10 +152,8 @@ void ScanSession::ScanSessionMetadataResultProcessor::ProcessCallbacks(
 {
     MEDIA_DEBUG_LOG("ScanSession::ScanSessionMetadataResultProcessor ProcessCallbacks");
     auto session = session_.promote();
-    if (session == nullptr) {
-        MEDIA_ERR_LOG("ScanSession::ScanSessionMetadataResultProcessor ProcessCallbacks but session is null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(session == nullptr,
+        "ScanSession::ScanSessionMetadataResultProcessor ProcessCallbacks but session is null");
     session->ProcessAutoFocusUpdates(result);
     session->ProcessBrightnessStatusChange(result);
 }

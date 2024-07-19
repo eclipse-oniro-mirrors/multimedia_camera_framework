@@ -195,10 +195,10 @@ int32_t DeferredPhotoProxy::GetHeight()
 
 void DeferredPhotoProxy::Release()
 {
-    MEDIA_INFO_LOG("CameraPhotoProxy release start");
+    MEDIA_INFO_LOG("DeferredPhotoProxy release start");
 }
 
-std::string DeferredPhotoProxy::GetDisplayName()
+std::string DeferredPhotoProxy::GetTitle()
 {
     return "";
 }
@@ -214,6 +214,14 @@ double DeferredPhotoProxy::GetLatitude()
 double DeferredPhotoProxy::GetLongitude()
 {
     return 0;
+}
+std::string DeferredPhotoProxy::GetBurstKey()
+{
+    return "";
+}
+bool DeferredPhotoProxy::IsCoverPhoto()
+{
+    return false;
 }
 int32_t DeferredPhotoProxy::GetShootingMode()
 {
