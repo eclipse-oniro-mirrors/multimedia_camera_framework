@@ -215,8 +215,8 @@ public:
 
     int32_t OperatePermissionCheck(uint32_t interfaceCode) override;
     int32_t StartMovingPhotoCapture(bool isMirror, int32_t rotation) override;
-    int32_t CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
-        int64_t timestamp) override;
+    int32_t CreateMediaLibrary(sptr<CameraPhotoProxy>& photoProxy,
+        std::string& uri, int32_t& cameraShotType, std::string& burstKey, int64_t timestamp) override;
     const sptr<HStreamCommon> GetStreamByStreamID(int32_t streamId) override;
     const sptr<HStreamCommon> GetHdiStreamByStreamID(int32_t streamId) override;
     int32_t SetFeatureMode(int32_t featureMode) override;

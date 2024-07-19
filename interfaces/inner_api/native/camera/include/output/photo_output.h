@@ -226,6 +226,11 @@ public:
     bool GetMirror();
 
     /**
+     * @brief Set burst capture state.
+     */
+    void SetBurstCaptureState(uint8_t burstState);
+
+    /**
      * @brief Get the photo capture settings metadata information.
      *
      * @return Returns the pointer where CameraMetadata information is present.

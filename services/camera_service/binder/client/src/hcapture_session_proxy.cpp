@@ -372,7 +372,7 @@ int32_t HCaptureSessionProxy::StartMovingPhotoCapture(bool isMirror, int32_t rot
 }
 
 int32_t HCaptureSessionProxy::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
-    std::string &uri, int32_t &cameraShotType, int64_t timestamp)
+    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -392,6 +392,7 @@ int32_t HCaptureSessionProxy::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoPr
     }
     uri = reply.ReadString();
     cameraShotType = reply.ReadInt32();
+    burstKey = reply.ReadString();
     return error;
 }
 

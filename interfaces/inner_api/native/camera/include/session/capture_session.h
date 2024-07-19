@@ -420,8 +420,9 @@ public:
      * @param uri get uri for medialibary.
      * @param cameraShotType get cameraShotType for medialibary.
      */
+
     void CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::string &uri, int32_t &cameraShotType,
-                            int64_t timestamp);
+                            std::string &burstKey, int64_t timestamp);
 
     /**
      * @brief Get the application callback information.

@@ -181,6 +181,8 @@ ohos_shared_library("camera_service") {
     "window_manager:libwm",
   ]
 
+  public_external_deps = [ "e2fsprogs:libext2_uuid" ]
+
   defines = []
   if (use_sensor) {
     external_deps += [ "sensor:sensor_interface_native" ]
