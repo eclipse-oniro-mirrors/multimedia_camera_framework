@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <cinttypes>
+#include <cstdint>
 #include <memory>
 #include <vector>
 #include <thread>
@@ -50,6 +51,7 @@
 #include "session/photo_session.h"
 #include "session/profession_session.h"
 #include "session/secure_camera_session.h"
+#include "session/time_lapse_photo_session.h"
 #include "surface.h"
 #include "system_ability_definition.h"
 #include "test_common.h"
@@ -10856,5 +10858,335 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_084, TestSize.Le
     session->UnlockForControl();
     EXPECT_EQ(intResult, 0);
 }
+
+/*
+* Feature: Framework
+* Function: Test TimeLapsePhoto Init Session
+* SubFunction: NA
+* FunctionPoints: NA
+* EnvConditions: NA
+* CaseDescription: Test TimeLapsePhoto Init Session
+*/
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_timelapsephoto_001, TestSize.Level0)
+{
+    if (session_) {
+        session_->Release();
+    }
+    SceneMode sceneMode = SceneMode::TIMELAPSE_PHOTO;
+    if (!IsSupportMode(sceneMode)) {
+        return;
+    }
+    sptr<CameraManager> cameraManager = CameraManager::GetInstance();
+    ASSERT_NE(cameraManager, nullptr);
+    std::vector<SceneMode> sceneModes = cameraManager->GetSupportedModes(cameras_[0]);
+    ASSERT_NE(sceneModes.size(), 0);
+    sptr<CameraOutputCapability> capability = cameraManager->GetSupportedOutputCapability(cameras_[0], sceneMode);
+    ASSERT_NE(capability, nullptr);
+    SelectProfiles wanted;
+    wanted.preview.size_ = {640, 480};
+    wanted.preview.format_ = CAMERA_FORMAT_YUV_420_SP;
+    wanted.photo.size_ = {640, 480};
+    wanted.photo.format_ = CAMERA_FORMAT_JPEG;
+    wanted.video.size_ = {640, 480};
+    wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
+    wanted.video.framerates_ = {30, 30};
+    sptr<CaptureSession> captureSession = cameraManager->CreateCaptureSession(sceneMode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<TimeLapsePhotoSession> session = reinterpret_cast<TimeLapsePhotoSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(session, nullptr);
+    int32_t status = session->BeginConfig();
+    EXPECT_EQ(status, 0);
+    if (input_) {
+        input_->Release();
+    }
+    input_ = cameraManager->CreateCameraInput(cameras_[0]);
+    ASSERT_NE(input_, nullptr);
+    status = session->AddInput(input_);
+    EXPECT_EQ(status, 0);
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(wanted.preview);
+    ASSERT_NE(previewOutput, nullptr);
+    status = session->AddOutput(previewOutput);
+    EXPECT_EQ(status, 0);
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput(wanted.photo);
+    ASSERT_NE(photoOutput, nullptr);
+    status = session->AddOutput(photoOutput);
+    EXPECT_EQ(status, 0);
+    status = session->CommitConfig();
+    EXPECT_EQ(status, 0);
+    session_ = session;
+    ASSERT_NE(session_, nullptr);
+}
+
+/*
+* Feature: Framework
+* Function: Test TimeLapsePhoto callback OnExposureInfoChanged/SetIsoInfoCallback
+* SubFunction: NA
+* FunctionPoints: NA
+* EnvConditions: NA
+* CaseDescription: Test TimeLapsePhoto callback OnExposureInfoChanged/OnIsoInfoChanged
+*/
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_timelapsephoto_002, TestSize.Level0)
+{
+    sptr<TimeLapsePhotoSession> session = reinterpret_cast<TimeLapsePhotoSession*>(session_.GetRefPtr());
+    ASSERT_NE(session, nullptr);
+    auto meta = make_shared<OHOS::Camera::CameraMetadata>(10, 1000);
+
+    class ExposureInfoCallbackMock : public ExposureInfoCallback {
+    public:
+        void OnExposureInfoChanged(ExposureInfo info) override
+        {
+            EXPECT_EQ(info.exposureDurationValue, 1);
+        }
+    };
+    session->SetExposureInfoCallback(make_shared<ExposureInfoCallbackMock>());
+    static const camera_rational_t r = {
+        .denominator = 1000000,
+        .numerator = 1,
+    };
+    EXPECT_EQ(meta->addEntry(OHOS_STATUS_SENSOR_EXPOSURE_TIME, &r, 1), true);
+    session->ProcessExposureChange(meta);
+
+    class IsoInfoCallbackMock : public IsoInfoCallback {
+    public:
+        void OnIsoInfoChanged(IsoInfo info) override
+        {
+            EXPECT_EQ(info.isoValue, 1);
+        }
+    };
+    session->SetIsoInfoCallback(make_shared<IsoInfoCallbackMock>());
+    static const uint32_t iso = 1;
+    EXPECT_EQ(meta->addEntry(OHOS_STATUS_ISO_VALUE, &iso, 1), true);
+    session->ProcessIsoInfoChange(meta);
+}
+
+/*
+* Feature: Framework
+* Function: Test TimeLapsePhoto callback OnLuminationInfoChanged/OnTryAEInfoChanged/OnPhysicalCameraSwitch
+* SubFunction: NA
+* FunctionPoints: NA
+* EnvConditions: NA
+* CaseDescription: Test TimeLapsePhoto callback OnLuminationInfoChanged/OnTryAEInfoChanged/OnPhysicalCameraSwitch
+*/
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_timelapsephoto_003, TestSize.Level0)
+{
+    sptr<TimeLapsePhotoSession> session = reinterpret_cast<TimeLapsePhotoSession*>(session_.GetRefPtr());
+    ASSERT_NE(session, nullptr);
+    auto meta = make_shared<OHOS::Camera::CameraMetadata>(10, 1000);
+    
+    static const float fVal = 1.0f;
+    class LuminationInfoCallbackMock : public LuminationInfoCallback {
+    public:
+        void OnLuminationInfoChanged(LuminationInfo info) override
+        {
+            EXPECT_EQ(info.luminationValue, fVal);
+        }
+    };
+    session->SetLuminationInfoCallback(make_shared<LuminationInfoCallbackMock>());
+    EXPECT_EQ(meta->addEntry(OHOS_STATUS_ALGO_MEAN_Y, &fVal, 1), true);
+    session->ProcessLuminationChange(meta);
+
+    static const int32_t value = 1;
+    class TryAEInfoCallbackMock : public TryAEInfoCallback {
+    public:
+        void OnTryAEInfoChanged(TryAEInfo info) override
+        {
+            EXPECT_EQ(info.isTryAEDone, true);
+            EXPECT_EQ(info.isTryAEHintNeeded, true);
+            EXPECT_EQ(info.previewType, TimeLapsePreviewType::DARK);
+            EXPECT_EQ(info.captureInterval, 1);
+        }
+    };
+    session->SetTryAEInfoCallback(make_shared<TryAEInfoCallbackMock>());
+    EXPECT_EQ(meta->addEntry(OHOS_STATUS_TIME_LAPSE_TRYAE_DONE, &value, 1), true);
+    EXPECT_EQ(meta->addEntry(OHOS_STATUS_TIME_LAPSE_TRYAE_HINT, &value, 1), true);
+    EXPECT_EQ(meta->addEntry(OHOS_STATUS_TIME_LAPSE_PREVIEW_TYPE, &value, 1), true);
+    EXPECT_EQ(meta->addEntry(OHOS_STATUS_TIME_LAPSE_CAPTURE_INTERVAL, &value, 1), true);
+    session->ProcessSetTryAEChange(meta);
+
+    EXPECT_EQ(meta->addEntry(OHOS_CAMERA_MACRO_STATUS, &value, 1), true);
+    session->ProcessPhysicalCameraSwitch(meta);
+}
+
+/*
+* Feature: Framework
+* Function: Test TimeLapsePhoto functions
+* SubFunction: NA
+* FunctionPoints: NA
+* EnvConditions: NA
+* CaseDescription: Test TimeLapsePhoto functions
+*/
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_timelapsephoto_004, TestSize.Level0)
+{
+    sptr<TimeLapsePhotoSession> session = reinterpret_cast<TimeLapsePhotoSession*>(session_.GetRefPtr());
+    ASSERT_NE(session, nullptr);
+    int32_t status;
+
+    bool isTryAENeeded;
+    status = session->IsTryAENeeded(isTryAENeeded);
+    EXPECT_EQ(status, 0);
+    if (isTryAENeeded) {
+        status = session->StartTryAE();
+        EXPECT_EQ(status, 0);
+        status = session->StopTryAE();
+        EXPECT_EQ(status, 0);
+    }
+    vector<int32_t> range;
+    status = session->GetSupportedTimeLapseIntervalRange(range);
+    EXPECT_EQ(status, 0);
+    if (!range.empty()) {
+        status = session->SetTimeLapseInterval(range[0]);
+        EXPECT_EQ(status, 0);
+        int32_t interval;
+        status = session->GetTimeLapseInterval(interval);
+        EXPECT_EQ(status, 0);
+        EXPECT_EQ(interval, range[0]);
+    }
+    status = session->SetTimeLapseRecordState(TimeLapseRecordState::RECORDING);
+    EXPECT_EQ(status, 0);
+    status = session->SetTimeLapseRecordState(TimeLapseRecordState::IDLE);
+    EXPECT_EQ(status, 0);
+    status = session->SetTimeLapsePreviewType(TimeLapsePreviewType::DARK);
+    EXPECT_EQ(status, 0);
+    status = session->SetTimeLapsePreviewType(TimeLapsePreviewType::LIGHT);
+    EXPECT_EQ(status, 0);
+    status = session->SetExposureHintMode(ExposureHintMode::EXPOSURE_HINT_MODE_OFF);
+    EXPECT_EQ(status, 0);
+    status = session->SetExposureHintMode(ExposureHintMode::EXPOSURE_HINT_MODE_ON);
+    EXPECT_EQ(status, 0);
+    status = session->SetExposureHintMode(ExposureHintMode::EXPOSURE_HINT_UNSUPPORTED);
+    EXPECT_EQ(status, 0);
+}
+
+/*
+* Feature: Framework
+* Function: Test TimeLapsePhoto ManualExposure
+* SubFunction: NA
+* FunctionPoints: NA
+* EnvConditions: NA
+* CaseDescription: Test TimeLapsePhoto ManualExposure
+*/
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_timelapsephoto_005, TestSize.Level0)
+{
+    sptr<TimeLapsePhotoSession> session = reinterpret_cast<TimeLapsePhotoSession*>(session_.GetRefPtr());
+    ASSERT_NE(session, nullptr);
+    int32_t status;
+    // ManualExposure
+    vector<uint32_t> exposureRange;
+    status = session->GetSupportedExposureRange(exposureRange);
+    EXPECT_EQ(status, 0);
+    if (!exposureRange.empty()) {
+        status = session->SetExposure(exposureRange[0]);
+        EXPECT_EQ(status, 0);
+        uint32_t exposure;
+        status = session->GetExposure(exposure);
+        EXPECT_EQ(status, 0);
+        EXPECT_EQ(exposure, exposureRange[0]);
+    }
+    vector<MeteringMode> modes;
+    status = session->GetSupportedMeteringModes(modes);
+    EXPECT_EQ(status, 0);
+    if (!modes.empty()) {
+        bool supported;
+        int32_t i = METERING_MODE_CENTER_WEIGHTED;
+        for (;i <= METERING_MODE_SPOT; i++) {
+            status = session->IsExposureMeteringModeSupported(METERING_MODE_CENTER_WEIGHTED, supported);
+            EXPECT_EQ(status, 0);
+            if (status == 0 && supported) {
+                break;
+            }
+        }
+        if (supported) {
+            status = session->SetExposureMeteringMode(static_cast<MeteringMode>(i));
+            EXPECT_EQ(status, 0);
+            MeteringMode mode;
+            status = session->GetExposureMeteringMode(mode);
+            EXPECT_EQ(status, 0);
+            EXPECT_EQ(mode, i);
+        }
+    }
+}
+
+/*
+* Feature: Framework
+* Function: Test TimeLapsePhoto ManualIso
+* SubFunction: NA
+* FunctionPoints: NA
+* EnvConditions: NA
+* CaseDescription: Test TimeLapsePhoto ManualIso
+*/
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_timelapsephoto_006, TestSize.Level0)
+{
+    sptr<TimeLapsePhotoSession> session = reinterpret_cast<TimeLapsePhotoSession*>(session_.GetRefPtr());
+    ASSERT_NE(session, nullptr);
+    int32_t status;
+    // ManualIso
+    bool isManualIsoSupported;
+    status = session->IsManualIsoSupported(isManualIsoSupported);
+    EXPECT_EQ(status, 0);
+    if (isManualIsoSupported) {
+        vector<int32_t> isoRange;
+        status = session->GetIsoRange(isoRange);
+        EXPECT_EQ(status, 0);
+        if (!isoRange.empty()) {
+            status = session->SetIso(isoRange[0]);
+            EXPECT_EQ(status, 0);
+            int32_t iso;
+            status = session->GetIso(iso);
+            EXPECT_EQ(status, 0);
+            EXPECT_EQ(iso, isoRange[0]);
+        }
+    }
+}
+
+/*
+* Feature: Framework
+* Function: Test TimeLapsePhoto WhiteBalance
+* SubFunction: NA
+* FunctionPoints: NA
+* EnvConditions: NA
+* CaseDescription: Test TimeLapsePhoto WhiteBalance
+*/
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_timelapsephoto_007, TestSize.Level0)
+{
+    sptr<TimeLapsePhotoSession> session = reinterpret_cast<TimeLapsePhotoSession*>(session_.GetRefPtr());
+    ASSERT_NE(session, nullptr);
+    int32_t status;
+    // WhiteBalance
+    vector<WhiteBalanceMode> modes;
+    status = session->GetSupportedWhiteBalanceModes(modes);
+    EXPECT_EQ(status, 0);
+    if (!modes.empty()) {
+        bool isWhiteBalanceModeSupported;
+        status = session->IsWhiteBalanceModeSupported(modes[0], isWhiteBalanceModeSupported);
+        EXPECT_EQ(status, 0);
+        if (isWhiteBalanceModeSupported) {
+            status = session->SetWhiteBalanceMode(modes[0]);
+            EXPECT_EQ(status, 0);
+            WhiteBalanceMode mode;
+            status = session->GetWhiteBalanceMode(mode);
+            EXPECT_EQ(status, 0);
+            EXPECT_EQ(mode, modes[0]);
+        }
+    }
+    vector<int32_t> wbRange;
+    status = session->GetWhiteBalanceRange(wbRange);
+    EXPECT_EQ(status, 0);
+    if (!wbRange.empty()) {
+        status = session->SetWhiteBalance(wbRange[0]);
+        EXPECT_EQ(status, 0);
+        int32_t wb;
+        status = session->GetWhiteBalance(wb);
+        EXPECT_EQ(status, 0);
+        EXPECT_EQ(wb, wbRange[0]);
+    }
+    vector<int32_t> mwbRange;
+    status = session->GetManualWhiteBalanceRange(mwbRange);
+    EXPECT_EQ(status, 0);
+    if (!mwbRange.empty()) {
+        status = session->SetManualWhiteBalance(mwbRange[0]);
+        EXPECT_EQ(status, 0);
+    }
+}
+
 } // namespace CameraStandard
 } // namespace OHOS

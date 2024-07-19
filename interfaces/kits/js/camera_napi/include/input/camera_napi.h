@@ -170,6 +170,7 @@ static const std::unordered_map<std::string, int32_t> mapSceneMode = {
     {"APERTURE_VIDEO", JS_APERTURE_VIDEO},
     {"PANORAMA_PHOTO", JS_PANORAMA_PHOTO},
     {"LIGHT_PAINTING", JS_LIGHT_PAINTING },
+    {"TIMELAPSE_PHOTO", JS_TIMELAPSE_PHOTO},
 };
 
 static const std::unordered_map<std::string, int32_t> mapPreconfigType = {
@@ -333,6 +334,16 @@ static const std::unordered_map<std::string, int32_t> mapLightPaintingType = {
     {"STAR", 1},
     {"WATER", 2},
     {"LIGHT", 3},
+};
+
+static const std::unordered_map<std::string, int32_t> mapTimeLapseRecordState = {
+    {"IDLE", 0},
+    {"RECORDING", 1},
+};
+
+static const std::unordered_map<std::string, int32_t> mapTimeLapsePreviewType = {
+    {"DARK", 1},
+    {"LIGHT", 2},
 };
 
 enum CreateAsyncCallbackModes {

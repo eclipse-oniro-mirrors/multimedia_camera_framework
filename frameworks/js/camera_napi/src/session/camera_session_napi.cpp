@@ -3959,55 +3959,74 @@ void CameraSessionNapi::UnregisterSlowMotionStateCb(
         env, CameraErrorCode::OPERATION_NOT_ALLOWED, "this type callback can not be unregistered in current session!");
 }
 
+void CameraSessionNapi::RegisterTryAEInfoCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be registered in current session!");
+}
+
+void CameraSessionNapi::UnregisterTryAEInfoCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be unregistered in current session!");
+}
+
+const CameraSessionNapi::EmitterFunctions CameraSessionNapi::fun_map_ = {
+    { "exposureStateChange", {
+        &CameraSessionNapi::RegisterExposureCallbackListener,
+        &CameraSessionNapi::UnregisterExposureCallbackListener} },
+    { "focusStateChange", {
+        &CameraSessionNapi::RegisterFocusCallbackListener,
+        &CameraSessionNapi::UnregisterFocusCallbackListener } },
+    { "macroStatusChanged", {
+        &CameraSessionNapi::RegisterMacroStatusCallbackListener,
+        &CameraSessionNapi::UnregisterMacroStatusCallbackListener } },
+    { "moonCaptureBoostStatus", {
+        &CameraSessionNapi::RegisterMoonCaptureBoostCallbackListener,
+        &CameraSessionNapi::UnregisterMoonCaptureBoostCallbackListener } },
+    { "featureDetection", {
+        &CameraSessionNapi::RegisterFeatureDetectionStatusListener,
+        &CameraSessionNapi::UnregisterFeatureDetectionStatusListener } },
+    { "featureDetectionStatus", {
+        &CameraSessionNapi::RegisterFeatureDetectionStatusListener,
+        &CameraSessionNapi::UnregisterFeatureDetectionStatusListener } },
+    { "error", {
+        &CameraSessionNapi::RegisterSessionErrorCallbackListener,
+        &CameraSessionNapi::UnregisterSessionErrorCallbackListener } },
+    { "smoothZoomInfoAvailable", {
+        &CameraSessionNapi::RegisterSmoothZoomCallbackListener,
+        &CameraSessionNapi::UnregisterSmoothZoomCallbackListener } },
+    { "slowMotionStatus", {
+        &CameraSessionNapi::RegisterSlowMotionStateCb,
+        &CameraSessionNapi::UnregisterSlowMotionStateCb } },
+    { "exposureInfo", {
+        &CameraSessionNapi::RegisterExposureInfoCallbackListener,
+        &CameraSessionNapi::UnregisterExposureInfoCallbackListener} },
+    { "isoInfo", {
+        &CameraSessionNapi::RegisterIsoInfoCallbackListener,
+        &CameraSessionNapi::UnregisterIsoInfoCallbackListener } },
+    { "apertureInfo", {
+        &CameraSessionNapi::RegisterApertureInfoCallbackListener,
+        &CameraSessionNapi::UnregisterApertureInfoCallbackListener } },
+    { "luminationInfo", {
+        &CameraSessionNapi::RegisterLuminationInfoCallbackListener,
+        &CameraSessionNapi::UnregisterLuminationInfoCallbackListener } },
+    { "abilityChange", {
+        &CameraSessionNapi::RegisterAbilityChangeCallbackListener,
+        &CameraSessionNapi::UnregisterAbilityChangeCallbackListener } },
+    { "effectSuggestionChange", {
+        &CameraSessionNapi::RegisterEffectSuggestionCallbackListener,
+        &CameraSessionNapi::UnregisterEffectSuggestionCallbackListener } },
+    { "tryAEInfo", {
+        &CameraSessionNapi::RegisterTryAEInfoCallbackListener,
+        &CameraSessionNapi::UnregisterTryAEInfoCallbackListener } },
+};
+
 const CameraSessionNapi::EmitterFunctions& CameraSessionNapi::GetEmitterFunctions()
 {
-    static const EmitterFunctions funMap = {
-        { "exposureStateChange", {
-            &CameraSessionNapi::RegisterExposureCallbackListener,
-            &CameraSessionNapi::UnregisterExposureCallbackListener} },
-        { "focusStateChange", {
-            &CameraSessionNapi::RegisterFocusCallbackListener,
-            &CameraSessionNapi::UnregisterFocusCallbackListener } },
-        { "macroStatusChanged", {
-            &CameraSessionNapi::RegisterMacroStatusCallbackListener,
-            &CameraSessionNapi::UnregisterMacroStatusCallbackListener } },
-        { "moonCaptureBoostStatus", {
-            &CameraSessionNapi::RegisterMoonCaptureBoostCallbackListener,
-            &CameraSessionNapi::UnregisterMoonCaptureBoostCallbackListener } },
-        { "featureDetection", {
-            &CameraSessionNapi::RegisterFeatureDetectionStatusListener,
-            &CameraSessionNapi::UnregisterFeatureDetectionStatusListener } },
-        { "featureDetectionStatus", {
-            &CameraSessionNapi::RegisterFeatureDetectionStatusListener,
-            &CameraSessionNapi::UnregisterFeatureDetectionStatusListener } },
-        { "error", {
-            &CameraSessionNapi::RegisterSessionErrorCallbackListener,
-            &CameraSessionNapi::UnregisterSessionErrorCallbackListener } },
-        { "smoothZoomInfoAvailable", {
-            &CameraSessionNapi::RegisterSmoothZoomCallbackListener,
-            &CameraSessionNapi::UnregisterSmoothZoomCallbackListener } },
-        { "slowMotionStatus", {
-            &CameraSessionNapi::RegisterSlowMotionStateCb,
-            &CameraSessionNapi::UnregisterSlowMotionStateCb } },
-        { "exposureInfo", {
-            &CameraSessionNapi::RegisterExposureInfoCallbackListener,
-            &CameraSessionNapi::UnregisterExposureInfoCallbackListener} },
-        { "isoInfo", {
-            &CameraSessionNapi::RegisterIsoInfoCallbackListener,
-            &CameraSessionNapi::UnregisterIsoInfoCallbackListener } },
-        { "apertureInfo", {
-            &CameraSessionNapi::RegisterApertureInfoCallbackListener,
-            &CameraSessionNapi::UnregisterApertureInfoCallbackListener } },
-        { "luminationInfo", {
-            &CameraSessionNapi::RegisterLuminationInfoCallbackListener,
-            &CameraSessionNapi::UnregisterLuminationInfoCallbackListener } },
-        { "abilityChange", {
-            &CameraSessionNapi::RegisterAbilityChangeCallbackListener,
-            &CameraSessionNapi::UnregisterAbilityChangeCallbackListener } },
-        { "effectSuggestionChange", {
-            &CameraSessionNapi::RegisterEffectSuggestionCallbackListener,
-            &CameraSessionNapi::UnregisterEffectSuggestionCallbackListener } } };
-    return funMap;
+    return fun_map_;
 }
 
 napi_value CameraSessionNapi::On(napi_env env, napi_callback_info info)

@@ -51,7 +51,7 @@ napi_value CameraNapi::CameraNapiConstructor(napi_env env, napi_callback_info in
             status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
                                CameraNapi::CameraNapiDestructor, nullptr, nullptr);
             if (status == napi_ok) {
-                obj.release();
+                (void)obj.release();
                 return thisVar;
             } else {
                 MEDIA_ERR_LOG("CameraNapiConstructor Failure wrapping js to native napi");
@@ -146,6 +146,10 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("FoldStatus", CreateObjectWithMap(env, "FoldStatus", mapFoldStatus, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY(
             "LightPaintingType", CreateObjectWithMap(env, "LightPaintingType", mapLightPaintingType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("TimeLapseRecordState",
+            CreateObjectWithMap(env, "TimeLapseRecordState", mapTimeLapseRecordState, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("TimeLapsePreviewType",
+            CreateObjectWithMap(env, "TimeLapsePreviewType", mapTimeLapsePreviewType, g_ignoreRef_)),
     };
 
     status = napi_define_class(env, CAMERA_LIB_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, CameraNapiConstructor,
