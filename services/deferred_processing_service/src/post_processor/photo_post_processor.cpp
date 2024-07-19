@@ -137,6 +137,10 @@ int32_t PhotoPostProcessor::PhotoProcessListener::OnProcessDone(const std::strin
 {
     DP_INFO_LOG("entered");
     auto bufferHandle = buffer.imageHandle->GetBufferHandle();
+    if (bufferHandle == nullptr) {
+        DP_ERR_LOG("bufferHandle is null");
+        return 0;
+    }
     int hdiFd = bufferHandle->fd;
     DP_DEBUG_LOG("entered, hdiFd: %{public}d", hdiFd);
     int fd = dup(hdiFd);

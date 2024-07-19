@@ -203,6 +203,7 @@ bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrame
         OH_AVFormat *format = OH_AVFormat_Create();
         OH_AVFormat_SetIntValue(format, OH_MD_KEY_REQUEST_I_FRAME, true);
         OH_VideoEncoder_SetParameter(encoder_, format);
+        OH_AVFormat_Destroy(format);
     }
     sptr<SurfaceBuffer> buffer = frameRecord->GetSurfaceBuffer();
     if (buffer == nullptr) {
