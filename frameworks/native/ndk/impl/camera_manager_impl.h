@@ -59,11 +59,17 @@ public:
     Camera_ErrorCode CreatePreviewOutput(const Camera_Profile* profile, const char* surfaceId,
         Camera_PreviewOutput** previewOutput);
 
+    Camera_ErrorCode CreatePreviewOutputUsedInPreconfig(const char* surfaceId, Camera_PreviewOutput** previewOutput);
+
     Camera_ErrorCode CreatePhotoOutput(const Camera_Profile* profile, const char* surfaceId,
         Camera_PhotoOutput** photoOutput);
 
+    Camera_ErrorCode CreatePhotoOutputUsedInPreconfig(const char* surfaceId, Camera_PhotoOutput** photoOutput);
+
     Camera_ErrorCode CreateVideoOutput(const Camera_VideoProfile* profile, const char* surfaceId,
         Camera_VideoOutput** videoOutput);
+
+    Camera_ErrorCode CreateVideoOutputUsedInPreconfig(const char* surfaceId, Camera_VideoOutput** videoOutput);
 
     Camera_ErrorCode CreateMetadataOutput(const Camera_MetadataObjectType* type,
         Camera_MetadataOutput** metadataOutput);

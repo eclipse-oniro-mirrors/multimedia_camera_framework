@@ -676,6 +676,60 @@ Camera_ErrorCode OH_CaptureSession_CanAddPhotoOutput(Camera_CaptureSession* sess
 Camera_ErrorCode OH_CaptureSession_CanAddVideoOutput(Camera_CaptureSession* session,
     Camera_VideoOutput* cameraOutput, bool* isSuccess);
 
+/**
+ * @brief Check the preconfig type is supported or not.
+ *
+ * @param session the {@link Camera_CaptureSession} instance.
+ * @param preconfigType The type {@link Camera_PreconfigType} to check support for.
+ * @param canPreconfig The result of whether preconfiguration supported.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 12
+ */
+Camera_ErrorCode OH_CaptureSession_CanPreconfig(Camera_CaptureSession* session,
+    Camera_PreconfigType preconfigType, bool* canPreconfig);
+
+/**
+ * @brief Check the preconfig type with ratio is supported or not.
+ *
+ * @param session the {@link Camera_CaptureSession} instance.
+ * @param preconfigType The type {@link Camera_PreconfigType} to check support for.
+ * @param preconfigRatio The ratio {@link Camera_PreconfigRatio} to check support for.
+ * @param canPreconfig The result of whether preconfiguration supported.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 12
+ */
+Camera_ErrorCode OH_CaptureSession_CanPreconfigWithRatio(Camera_CaptureSession* session,
+    Camera_PreconfigType preconfigType, Camera_PreconfigRatio preconfigRatio, bool* canPreconfig);
+
+/**
+ * @brief Set the preconfig type.
+ *
+ * @param session the {@link Camera_CaptureSession} instance.
+ * @param preconfigType The type {@link Camera_PreconfigType} to check support for.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if the internal preconfiguration fails.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 12
+ */
+Camera_ErrorCode OH_CaptureSession_Preconfig(Camera_CaptureSession* session,
+    Camera_PreconfigType preconfigType);
+
+/**
+ * @brief Set the preconfig type with ratio.
+ *
+ * @param session the {@link Camera_CaptureSession} instance.
+ * @param preconfigType The type {@link Camera_PreconfigType} to check support for.
+ * @param preconfigRatio The ratio {@link Camera_PreconfigRatio} to check support for.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if the internal preconfiguration fails.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 12
+ */
+Camera_ErrorCode OH_CaptureSession_PreconfigWithRatio(Camera_CaptureSession* session,
+    Camera_PreconfigType preconfigType, Camera_PreconfigRatio preconfigRatio);
+
 #ifdef __cplusplus
 }
 #endif

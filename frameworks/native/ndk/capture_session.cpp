@@ -493,6 +493,49 @@ Camera_ErrorCode OH_CaptureSession_CanAddVideoOutput(Camera_CaptureSession* sess
     return session->CanAddVideoOutput(cameraOutput, isSuccess);
 }
 
+Camera_ErrorCode OH_CaptureSession_CanPreconfig(Camera_CaptureSession* session,
+    Camera_PreconfigType preconfigType, bool* canPreconfig)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_CanPreconfig is called.");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, session is null!");
+    CHECK_AND_RETURN_RET_LOG(canPreconfig != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, canPreconfig is null!");
+
+    return session->CanPreconfig(preconfigType, canPreconfig);
+}
+
+Camera_ErrorCode OH_CaptureSession_CanPreconfigWithRatio(Camera_CaptureSession* session,
+    Camera_PreconfigType preconfigType, Camera_PreconfigRatio preconfigRatio, bool* canPreconfig)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_CanPreconfigWithRatio is called.");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, session is null!");
+    CHECK_AND_RETURN_RET_LOG(canPreconfig != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, canPreconfig is null!");
+
+    return session->CanPreconfigWithRatio(preconfigType, preconfigRatio, canPreconfig);
+}
+
+Camera_ErrorCode OH_CaptureSession_Preconfig(Camera_CaptureSession* session, Camera_PreconfigType preconfigType)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_Preconfig is called.");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, session is null!");
+
+    return session->Preconfig(preconfigType);
+}
+
+Camera_ErrorCode OH_CaptureSession_PreconfigWithRatio(Camera_CaptureSession* session,
+    Camera_PreconfigType preconfigType, Camera_PreconfigRatio preconfigRatio)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_PreconfigWithRatio is called.");
+    CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, session is null!");
+
+    return session->PreconfigWithRatio(preconfigType, preconfigRatio);
+}
+
 #ifdef __cplusplus
 }
 #endif

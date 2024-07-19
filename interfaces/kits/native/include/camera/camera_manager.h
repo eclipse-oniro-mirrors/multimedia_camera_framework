@@ -240,6 +240,20 @@ Camera_ErrorCode OH_CameraManager_CreatePreviewOutput(Camera_Manager* cameraMana
     const char* surfaceId, Camera_PreviewOutput** previewOutput);
 
 /**
+ * @brief Create a preview output instance used in preconfig.
+ *
+ * @param cameraManager the {@link Camera_Manager} instance.
+ * @param surfaceId the which use to create {@link Camera_PreviewOutput}.
+ * @param previewOutput the {@link Camera_PreviewOutput} will be created if the method call succeeds.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 12
+ */
+Camera_ErrorCode OH_CameraManager_CreatePreviewOutputUsedInPreconfig(Camera_Manager* cameraManager,
+    const char* surfaceId, Camera_PreviewOutput** previewOutput);
+
+/**
  * @brief Create a photo output instance.
  *
  * @param cameraManager the {@link Camera_Manager} instance.
@@ -255,6 +269,20 @@ Camera_ErrorCode OH_CameraManager_CreatePhotoOutput(Camera_Manager* cameraManage
     const char* surfaceId, Camera_PhotoOutput** photoOutput);
 
 /**
+ * @brief Create a photo output instance used in preconfig.
+ *
+ * @param cameraManager the {@link Camera_Manager} instance.
+ * @param surfaceId the which use to create {@link Camera_PhotoOutput}.
+ * @param photoOutput the {@link Camera_PhotoOutput} will be created if the method call succeeds.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 12
+ */
+Camera_ErrorCode OH_CameraManager_CreatePhotoOutputUsedInPreconfig(Camera_Manager* cameraManager,
+    const char* surfaceId, Camera_PhotoOutput** photoOutput);
+
+/**
  * @brief Create a video output instance.
  *
  * @param cameraManager the {@link Camera_Manager} instance.
@@ -267,6 +295,20 @@ Camera_ErrorCode OH_CameraManager_CreatePhotoOutput(Camera_Manager* cameraManage
  * @since 11
  */
 Camera_ErrorCode OH_CameraManager_CreateVideoOutput(Camera_Manager* cameraManager, const Camera_VideoProfile* profile,
+    const char* surfaceId, Camera_VideoOutput** videoOutput);
+
+/**
+ * @brief Create a video output instance used in preconfig.
+ *
+ * @param cameraManager the {@link Camera_Manager} instance.
+ * @param surfaceId the which use to create {@link Camera_VideoOutput}.
+ * @param videoOutput the {@link Camera_VideoOutput} will be created if the method call succeeds.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 12
+ */
+Camera_ErrorCode OH_CameraManager_CreateVideoOutputUsedInPreconfig(Camera_Manager* cameraManager,
     const char* surfaceId, Camera_VideoOutput** videoOutput);
 
 /**

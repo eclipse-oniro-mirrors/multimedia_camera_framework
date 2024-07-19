@@ -27,6 +27,17 @@ const std::unordered_map<Camera_SceneMode, SceneMode> g_ndkToFwMode_ = {
     {Camera_SceneMode::NORMAL_VIDEO, SceneMode::VIDEO},
     {Camera_SceneMode::SECURE_PHOTO, SceneMode::SECURE},
 };
+const std::unordered_map<Camera_PreconfigType, PreconfigType> g_ndkToFwPreconfig = {
+    {Camera_PreconfigType::PRECONFIG_720P, PreconfigType::PRECONFIG_720P},
+    {Camera_PreconfigType::PRECONFIG_1080P, PreconfigType::PRECONFIG_1080P},
+    {Camera_PreconfigType::PRECONFIG_4K, PreconfigType::PRECONFIG_4K},
+    {Camera_PreconfigType::PRECONFIG_HIGH_QUALITY, PreconfigType::PRECONFIG_HIGH_QUALITY}
+};
+const std::unordered_map<Camera_PreconfigRatio, ProfileSizeRatio> g_ndkToFwPreconfigRatio = {
+    {Camera_PreconfigRatio::PRECONFIG_RATIO_1_1, ProfileSizeRatio::RATIO_1_1},
+    {Camera_PreconfigRatio::PRECONFIG_RATIO_4_3, ProfileSizeRatio::RATIO_4_3},
+    {Camera_PreconfigRatio::PRECONFIG_RATIO_16_9, ProfileSizeRatio::RATIO_16_9}
+};
 
 class InnerCaptureSessionCallback : public SessionCallback, public FocusCallback {
 public:
@@ -521,4 +532,57 @@ Camera_ErrorCode Camera_CaptureSession::CanAddVideoOutput(Camera_VideoOutput* vi
     sptr<CaptureOutput> innerVideoOutput = videoOutput->GetInnerVideoOutput();
     *isSuccess = innerCaptureSession_->CanAddOutput(innerVideoOutput);
     return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::CanPreconfig(Camera_PreconfigType preconfigType, bool* canPreconfig)
+{
+    auto itr = g_ndkToFwPreconfig.find(preconfigType);
+    if (itr == g_ndkToFwPreconfig.end()) {
+        MEDIA_ERR_LOG("Camera_CaptureSession::CanPreconfig preconfigType: [%{public}d] is invalid!", preconfigType);
+        *canPreconfig = false;
+        return CAMERA_INVALID_ARGUMENT;
+    }
+
+    *canPreconfig = innerCaptureSession_->CanPreconfig(itr->second, ProfileSizeRatio::UNSPECIFIED);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::CanPreconfigWithRatio(Camera_PreconfigType preconfigType,
+    Camera_PreconfigRatio preconfigRatio, bool* canPreconfig)
+{
+    auto type = g_ndkToFwPreconfig.find(preconfigType);
+    auto ratio = g_ndkToFwPreconfigRatio.find(preconfigRatio);
+    if (type == g_ndkToFwPreconfig.end() || ratio == g_ndkToFwPreconfigRatio.end()) {
+        MEDIA_ERR_LOG("Camera_CaptureSession::CanPreconfigWithRatio preconfigType: [%{public}d] "
+            "or preconfigRatio: [%{public}d] is invalid!", preconfigType, preconfigRatio);
+        *canPreconfig = false;
+        return CAMERA_INVALID_ARGUMENT;
+    }
+
+    *canPreconfig = innerCaptureSession_->CanPreconfig(type->second, ratio->second);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::Preconfig(Camera_PreconfigType preconfigType)
+{
+    auto itr = g_ndkToFwPreconfig.find(preconfigType);
+    CHECK_AND_RETURN_RET_LOG(itr != g_ndkToFwPreconfig.end(), CAMERA_INVALID_ARGUMENT,
+        "Camera_CaptureSession::Preconfig preconfigType: [%{public}d] is invalid!", preconfigType);
+
+    int32_t ret = innerCaptureSession_->Preconfig(itr->second, ProfileSizeRatio::UNSPECIFIED);
+    return FrameworkToNdkCameraError(ret);
+}
+
+Camera_ErrorCode Camera_CaptureSession::PreconfigWithRatio(Camera_PreconfigType preconfigType,
+    Camera_PreconfigRatio preconfigRatio)
+{
+    auto type = g_ndkToFwPreconfig.find(preconfigType);
+    auto ratio = g_ndkToFwPreconfigRatio.find(preconfigRatio);
+    CHECK_AND_RETURN_RET_LOG(type != g_ndkToFwPreconfig.end(), CAMERA_INVALID_ARGUMENT,
+        "Camera_CaptureSession::PreconfigWithRatio preconfigType: [%{public}d] is invalid!", preconfigType);
+    CHECK_AND_RETURN_RET_LOG(ratio != g_ndkToFwPreconfigRatio.end(), CAMERA_INVALID_ARGUMENT,
+        "Camera_CaptureSession::PreconfigWithRatio preconfigRatio: [%{public}d] is invalid!", preconfigRatio);
+
+    int32_t ret = innerCaptureSession_->Preconfig(type->second, ratio->second);
+    return FrameworkToNdkCameraError(ret);
 }

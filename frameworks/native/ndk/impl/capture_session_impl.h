@@ -123,6 +123,15 @@ public:
 
     Camera_ErrorCode CanAddVideoOutput(Camera_VideoOutput* cameraOutput, bool* isSuccess);
 
+    Camera_ErrorCode CanPreconfig(Camera_PreconfigType preconfigType, bool* canPreconfig);
+
+    Camera_ErrorCode CanPreconfigWithRatio(Camera_PreconfigType preconfigType, Camera_PreconfigRatio preconfigRatio,
+        bool* canPreconfig);
+
+    Camera_ErrorCode Preconfig(Camera_PreconfigType preconfigType);
+
+    Camera_ErrorCode PreconfigWithRatio(Camera_PreconfigType preconfigType, Camera_PreconfigRatio preconfigRatio);
+
 private:
     OHOS::sptr<OHOS::CameraStandard::CaptureSession> innerCaptureSession_;
 };

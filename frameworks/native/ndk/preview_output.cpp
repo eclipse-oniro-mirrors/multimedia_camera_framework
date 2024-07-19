@@ -105,6 +105,37 @@ Camera_ErrorCode OH_PreviewOutput_Release(Camera_PreviewOutput* previewOutput)
     }
     return retCode;
 }
+
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_PreviewOutput_GetActiveProfile(Camera_PreviewOutput* previewOutput, Camera_Profile** profile)
+{
+    MEDIA_DEBUG_LOG("OH_PreviewOutput_GetActiveProfile is called.");
+    CHECK_AND_RETURN_RET_LOG(previewOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, previewOutput is null!");
+    CHECK_AND_RETURN_RET_LOG(profile != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, profile is null!");
+
+    return previewOutput->GetActiveProfile(profile);
+}
+
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_PreviewOutput_DeleteProfile(Camera_Profile* profile)
+{
+    MEDIA_DEBUG_LOG("OH_PreviewOutput_DeleteProfile is called.");
+    CHECK_AND_RETURN_RET_LOG(profile != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, profile is null!");
+
+    delete profile;
+    profile = nullptr;
+    return CAMERA_OK;
+}
+
 #ifdef __cplusplus
 }
 #endif
