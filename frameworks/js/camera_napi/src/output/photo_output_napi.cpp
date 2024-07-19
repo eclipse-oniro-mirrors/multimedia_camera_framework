@@ -221,6 +221,10 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
     bool isHighQuality, std::string &uri, int32_t &cameraShotType, int64_t timestamp) const
 {
     CAMERA_SYNC_TRACE;
+    if (bufferHandle == nullptr) {
+        MEDIA_ERR_LOG("bufferHandle is nullptr");
+        return;
+    }
     int64_t imageId = 0;
     int32_t deferredProcessingType;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::imageId, imageId);
@@ -247,10 +251,6 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
         size = static_cast<uint64_t>(extraDataSize);
     }
     MEDIA_INFO_LOG("width:%{public}d, height:%{public}d, size:%{public}" PRId64, photoWidth, photoHeight, size);
-    if (bufferHandle == nullptr) {
-        MEDIA_ERR_LOG("bufferHandle is nullptr");
-        return;
-    }
     int32_t format = bufferHandle->format;
     sptr<CameraPhotoProxy> photoProxy;
     std::string imageIdStr = std::to_string(imageId);
