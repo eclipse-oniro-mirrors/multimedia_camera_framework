@@ -101,9 +101,7 @@ static sptr<HCaptureSession> TotalSessionsGet(pid_t pid)
 {
     std::lock_guard<std::mutex> lock(g_totalSessionLock);
     auto it = g_totalSessions.find(pid);
-    if (it != g_totalSessions.end()) {
-        return it->second;
-    }
+    CHECK_AND_RETURN_RET(it == g_totalSessions.end(), it->second);
     return nullptr;
 }
 
@@ -125,9 +123,7 @@ static const std::map<CaptureSessionState, std::string> SESSION_STATE_STRING_MAP
 sptr<HCaptureSession> HCaptureSession::NewInstance(const uint32_t callerToken, int32_t opMode)
 {
     sptr<HCaptureSession> session = new HCaptureSession();
-    if (session->Initialize(callerToken, opMode) == CAMERA_OK) {
-        return session;
-    }
+    CHECK_AND_RETURN_RET(session->Initialize(callerToken, opMode) != CAMERA_OK, session);
     return nullptr;
 }
 
@@ -176,9 +172,7 @@ pid_t HCaptureSession::GetPid()
 
 int32_t HCaptureSession::GetopMode()
 {
-    if (featureMode_) {
-        return featureMode_;
-    }
+    CHECK_AND_RETURN_RET(!featureMode_, featureMode_);
     return opMode_;
 }
 
@@ -285,21 +279,15 @@ int32_t HCaptureSession::AddInput(sptr<ICameraDeviceService> cameraDevice)
 
 int32_t HCaptureSession::AddOutputStream(sptr<HStreamCommon> stream)
 {
-    if (stream == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSession::AddOutputStream stream is null");
-        return CAMERA_INVALID_ARG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CAMERA_INVALID_ARG,
+        "HCaptureSession::AddOutputStream stream is null");
     MEDIA_INFO_LOG("HCaptureSession::AddOutputStream streamId:%{public}d streamType:%{public}d",
         stream->GetFwkStreamId(), stream->GetStreamType());
-    if (stream->GetFwkStreamId() == STREAM_ID_UNSET) {
-        MEDIA_ERR_LOG("HCaptureSession::AddOutputStream stream is released!");
-        return CAMERA_INVALID_ARG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(stream->GetFwkStreamId() == STREAM_ID_UNSET, CAMERA_INVALID_ARG,
+        "HCaptureSession::AddOutputStream stream is released!");
     bool isAddSuccess = streamContainer_.AddStream(stream);
-    if (!isAddSuccess) {
-        MEDIA_ERR_LOG("HCaptureSession::AddOutputStream add stream fail");
-        return CAMERA_INVALID_SESSION_CFG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!isAddSuccess, CAMERA_INVALID_SESSION_CFG,
+        "HCaptureSession::AddOutputStream add stream fail");
     if (stream->GetStreamType() == StreamType::CAPTURE) {
         auto captureStream = CastStream<HStreamCapture>(stream);
         captureStream->SetMode(opMode_);
@@ -517,17 +505,13 @@ int32_t HCaptureSession::RemoveInput(sptr<ICameraDeviceService> cameraDevice)
 int32_t HCaptureSession::RemoveOutputStream(sptr<HStreamCommon> stream)
 {
     CAMERA_SYNC_TRACE;
-    if (stream == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSession::RemoveOutputStream stream is null");
-        return CAMERA_INVALID_ARG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(stream == nullptr, CAMERA_INVALID_ARG,
+        "HCaptureSession::RemoveOutputStream stream is null");
     MEDIA_INFO_LOG("HCaptureSession::RemoveOutputStream,streamType:%{public}d, streamId:%{public}d",
         stream->GetStreamType(), stream->GetFwkStreamId());
     bool isRemoveSuccess = streamContainer_.RemoveStream(stream);
-    if (!isRemoveSuccess) {
-        MEDIA_ERR_LOG("HCaptureSession::RemoveOutputStream Invalid output");
-        return CAMERA_INVALID_SESSION_CFG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!isRemoveSuccess, CAMERA_INVALID_SESSION_CFG,
+        "HCaptureSession::RemoveOutputStream Invalid output");
     return CAMERA_OK;
 }
 
@@ -572,19 +556,15 @@ int32_t HCaptureSession::RemoveOutput(StreamType streamType, sptr<IStreamCommon>
 
 int32_t HCaptureSession::ValidateSessionInputs()
 {
-    if (GetCameraDevice() == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSession::ValidateSessionInputs No inputs present");
-        return CAMERA_INVALID_SESSION_CFG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(GetCameraDevice() == nullptr, CAMERA_INVALID_SESSION_CFG,
+        "HCaptureSession::ValidateSessionInputs No inputs present");
     return CAMERA_OK;
 }
 
 int32_t HCaptureSession::ValidateSessionOutputs()
 {
-    if (streamContainer_.Size() == 0) {
-        MEDIA_ERR_LOG("HCaptureSession::ValidateSessionOutputs No outputs present");
-        return CAMERA_INVALID_SESSION_CFG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(streamContainer_.Size() == 0, CAMERA_INVALID_SESSION_CFG,
+        "HCaptureSession::ValidateSessionOutputs No outputs present");
     return CAMERA_OK;
 }
 
@@ -595,22 +575,16 @@ int32_t HCaptureSession::LinkInputAndOutputs()
     sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> streamOperator;
     auto device = GetCameraDevice();
     MEDIA_INFO_LOG("HCaptureSession::LinkInputAndOutputs prepare execute");
-    if (device == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSession::LinkInputAndOutputs device is null");
-        return CAMERA_INVALID_SESSION_CFG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(device == nullptr, CAMERA_INVALID_SESSION_CFG,
+        "HCaptureSession::LinkInputAndOutputs device is null");
     auto settings = device->GetDeviceAbility();
-    if (settings == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSession::LinkInputAndOutputs deviceAbility is null");
-        return CAMERA_UNKNOWN_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(settings == nullptr, CAMERA_UNKNOWN_ERROR,
+        "HCaptureSession::LinkInputAndOutputs deviceAbility is null");
     streamOperator = device->GetStreamOperator();
     auto allStream = streamContainer_.GetAllStreams();
     MEDIA_INFO_LOG("HCaptureSession::LinkInputAndOutputs allStream size:%{public}zu", allStream.size());
-    if (!IsValidMode(opMode_, settings)) {
-        MEDIA_ERR_LOG("HCaptureSession::LinkInputAndOutputs IsValidMode false");
-        return CAMERA_INVALID_SESSION_CFG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsValidMode(opMode_, settings), CAMERA_INVALID_SESSION_CFG,
+        "HCaptureSession::LinkInputAndOutputs IsValidMode false");
     for (auto& stream : allStream) {
         rc = stream->LinkInput(streamOperator, settings);
         if (rc == CAMERA_OK) {
@@ -619,10 +593,7 @@ int32_t HCaptureSession::LinkInputAndOutputs()
         MEDIA_INFO_LOG(
             "HCaptureSession::LinkInputAndOutputs streamType:%{public}d, streamId:%{public}d ,hdiStreamId:%{public}d",
             stream->GetStreamType(), stream->GetFwkStreamId(), stream->GetHdiStreamId());
-        if (rc != CAMERA_OK) {
-            MEDIA_ERR_LOG("HCaptureSession::LinkInputAndOutputs() Failed to link Output, %{public}d", rc);
-            return rc;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(rc != CAMERA_OK, rc, "HCaptureSession::LinkInputAndOutputs IsValidMode false");
         StreamInfo_V1_1 curStreamInfo;
         stream->SetStreamInfo(curStreamInfo);
         allStreamInfos.push_back(curStreamInfo);
@@ -739,10 +710,8 @@ int32_t HCaptureSession::CreateMovingPhotoStreamRepeat(
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(livePhotoStreamLock_);
-    if (width <= 0 || height <= 0) {
-        MEDIA_ERR_LOG("HCameraService::CreateLivePhotoStreamRepeat args is illegal");
-        return CAMERA_INVALID_ARG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(width <= 0 || height <= 0, CAMERA_INVALID_ARG,
+        "HCameraService::CreateLivePhotoStreamRepeat args is illegal");
     if (livePhotoStreamRepeat_ != nullptr) {
         livePhotoStreamRepeat_->Release();
     }
@@ -757,18 +726,16 @@ int32_t HCaptureSession::CreateMovingPhotoStreamRepeat(
 const sptr<HStreamCommon> HCaptureSession::GetStreamByStreamID(int32_t streamId)
 {
     auto stream = streamContainer_.GetStream(streamId);
-    if (stream == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSession::GetStreamByStreamID get stream fail, streamId is:%{public}d", streamId);
-    }
+    CHECK_ERROR_PRINT_LOG(stream == nullptr,
+        "HCaptureSession::GetStreamByStreamID get stream fail, streamId is:%{public}d", streamId);
     return stream;
 }
 
 const sptr<HStreamCommon> HCaptureSession::GetHdiStreamByStreamID(int32_t streamId)
 {
     auto stream = streamContainer_.GetHdiStream(streamId);
-    if (stream == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSession::GetHdiStreamByStreamID get stream fail, streamId is:%{public}d", streamId);
-    }
+    CHECK_ERROR_PRINT_LOG(stream == nullptr,
+        "HCaptureSession::GetHdiStreamByStreamID get stream fail, streamId is:%{public}d", streamId);
     return stream;
 }
 
@@ -907,10 +874,8 @@ int32_t HCaptureSession::GetActiveColorSpace(ColorSpace& colorSpace)
 int32_t HCaptureSession::SetColorSpace(ColorSpace colorSpace, ColorSpace captureColorSpace, bool isNeedUpdate)
 {
     int32_t result = CAMERA_OK;
-    if (colorSpace == currColorSpace_ && captureColorSpace == currCaptureColorSpace_) {
-        MEDIA_INFO_LOG("HCaptureSession::SetColorSpace() colorSpace no need to update.");
-        return result;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(colorSpace == currColorSpace_ && captureColorSpace == currCaptureColorSpace_, result,
+        "HCaptureSession::SetColorSpace() colorSpace no need to update.");
     stateMachine_.StateGuard(
         [&result, this, &colorSpace, &captureColorSpace, &isNeedUpdate](CaptureSessionState currentState) {
             if (!(currentState == CaptureSessionState::SESSION_CONFIG_INPROGRESS ||
@@ -1007,10 +972,8 @@ int32_t HCaptureSession::UpdateStreamInfos()
     CancelStreamsAndGetStreamInfos(streamInfos);
 
     auto cameraDevice = GetCameraDevice();
-    if (cameraDevice == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSession::UpdateStreamInfos() cameraDevice is null");
-        return CAMERA_UNKNOWN_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(cameraDevice == nullptr, CAMERA_UNKNOWN_ERROR,
+        "HCaptureSession::UpdateStreamInfos() cameraDevice is null");
     int errorCode = cameraDevice->UpdateStreams(streamInfos);
     if (errorCode == CAMERA_OK) {
         RestartStreams();
@@ -1059,10 +1022,8 @@ int32_t HCaptureSession::GetSessionState(CaptureSessionState& sessionState)
 bool HCaptureSession::QueryFpsAndZoomRatio(float& currentFps, float& currentZoomRatio)
 {
     auto cameraDevice = GetCameraDevice();
-    if (cameraDevice == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSession::QueryFpsAndZoomRatio() cameraDevice is null");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(cameraDevice == nullptr, false,
+        "HCaptureSession::QueryFpsAndZoomRatio() cameraDevice is null");
     int32_t DEFAULT_ITEMS = 2;
     int32_t DEFAULT_DATA_LENGTH = 100;
     std::shared_ptr<OHOS::Camera::CameraMetadata> metaIn =
@@ -1100,10 +1061,8 @@ bool HCaptureSession::QueryFpsAndZoomRatio(float& currentFps, float& currentZoom
 bool HCaptureSession::QueryZoomPerformance(std::vector<float>& crossZoomAndTime, int32_t operationMode)
 {
     auto cameraDevice = GetCameraDevice();
-    if (cameraDevice == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSession::QueryZoomPerformance() cameraDevice is null");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(cameraDevice == nullptr, false,
+        "HCaptureSession::QueryZoomPerformance() cameraDevice is null");
     // query zoom performance. begin
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability = cameraDevice->GetDeviceAbility();
     camera_metadata_item_t zoomItem;
@@ -1144,20 +1103,14 @@ int32_t HCaptureSession::GetSensorOritation()
 {
     auto cameraDevice = GetCameraDevice();
     int32_t sensorOrientation = 0;
-    if (cameraDevice == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSession::GetSensorOritation() cameraDevice is null");
-        return sensorOrientation;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(cameraDevice == nullptr, sensorOrientation,
+        "HCaptureSession::GetSensorOritation() cameraDevice is null");
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability = cameraDevice->GetDeviceAbility();
-    if (ability == nullptr) {
-        return sensorOrientation;
-    }
+    CHECK_AND_RETURN_RET(ability != nullptr, sensorOrientation);
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_SENSOR_ORIENTATION, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("HCaptureSession::GetSensorOritation get sensor orientation failed");
-        return sensorOrientation;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, sensorOrientation,
+        "HCaptureSession::GetSensorOritation get sensor orientation failed");
     sensorOrientation = item.data.i32[0];
     MEDIA_INFO_LOG("HCaptureSession::GetSensorOritation sensor orientation %{public}d", sensorOrientation);
     return sensorOrientation;
@@ -1168,10 +1121,8 @@ int32_t HCaptureSession::SetSmoothZoom(
 {
     constexpr int32_t ZOOM_RATIO_MULTIPLE = 100;
     auto cameraDevice = GetCameraDevice();
-    if (cameraDevice == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSession::SetSmoothZoom device is null");
-        return CAMERA_UNKNOWN_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(cameraDevice == nullptr, CAMERA_UNKNOWN_ERROR,
+        "HCaptureSession::SetSmoothZoom device is null");
     float currentFps = 30.0f;
     float currentZoomRatio = 1.0f;
     QueryFpsAndZoomRatio(currentFps, currentZoomRatio);
@@ -1184,10 +1135,7 @@ int32_t HCaptureSession::SetSmoothZoom(
     int indexAdded = targetZoomRatio > currentZoomRatio ? 1 : 2;
     auto zoomAlgorithm = SmoothZoom::GetZoomAlgorithm(static_cast<SmoothZoomType>(smoothZoomType));
     auto array = zoomAlgorithm->GetZoomArray(currentZoomRatio, targetZoomRatio, frameIntervalMs);
-    if (array.empty()) {
-        MEDIA_ERR_LOG("HCaptureSession::SetSmoothZoom array is empty");
-        return CAMERA_UNKNOWN_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(array.empty(), CAMERA_UNKNOWN_ERROR, "HCaptureSession::SetSmoothZoom array is empty");
     for (int i = 0; i < static_cast<int>(crossZoomAndTime.size()); i = i + dataLenPerPoint) {
         float crossZoom = crossZoomAndTime[i];
         if ((crossZoom - currentZoomRatio) * (crossZoom - targetZoomRatio) > 0) {
@@ -1601,20 +1549,12 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
     CAMERA_SYNC_TRACE;
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    if (samgr == nullptr) {
-        MEDIA_ERR_LOG("Failed to get System ability manager");
-        return CAMERA_UNKNOWN_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, CAMERA_UNKNOWN_ERROR, "Failed to get System ability manager");
     object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    if (object == nullptr) {
-        MEDIA_ERR_LOG("object is null");
-        return CAMERA_UNKNOWN_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(object == nullptr, CAMERA_UNKNOWN_ERROR, "object is null");
     auto mediaLibraryManager = Media::MediaLibraryManager::GetMediaLibraryManager();
-    if (mediaLibraryManager == nullptr) {
-        MEDIA_ERR_LOG("Error to init mediaLibraryManager");
-        return CAMERA_UNKNOWN_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(mediaLibraryManager == nullptr, CAMERA_UNKNOWN_ERROR,
+        "Error to init mediaLibraryManager");
     mediaLibraryManager->InitMediaLibraryManager(object);
     const static int32_t INVALID_UID = -1;
     const static int32_t BASE_USER_RANGE = 200000;

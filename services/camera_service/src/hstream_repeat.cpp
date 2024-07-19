@@ -55,10 +55,8 @@ int32_t HStreamRepeat::LinkInput(sptr<OHOS::HDI::Camera::V1_0::IStreamOperator> 
         "HStreamRepeat::LinkInput streamId:%{public}d ,repeatStreamType:%{public}d",
         GetFwkStreamId(), repeatStreamType_);
     int32_t ret = HStreamCommon::LinkInput(streamOperator, cameraAbility);
-    if (ret != CAMERA_OK) {
-        MEDIA_ERR_LOG("HStreamRepeat::LinkInput err, streamId:%{public}d ,err:%{public}d", GetFwkStreamId(), ret);
-        return ret;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ret,
+        "HStreamRepeat::LinkInput err, streamId:%{public}d ,err:%{public}d", GetFwkStreamId(), ret);
     if (repeatStreamType_ != RepeatStreamType::VIDEO) {
         SetStreamTransform();
     }
@@ -170,23 +168,15 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
 {
     CAMERA_SYNC_TRACE;
     auto streamOperator = GetStreamOperator();
-    if (streamOperator == nullptr) {
-        return CAMERA_INVALID_STATE;
-    }
-
+    CHECK_AND_RETURN_RET(streamOperator != nullptr, CAMERA_INVALID_STATE);
     auto preparedCaptureId = GetPreparedCaptureId();
-    if (preparedCaptureId != CAPTURE_ID_UNSET) {
-        MEDIA_ERR_LOG("HStreamRepeat::Start, Already started with captureID: %{public}d", preparedCaptureId);
-        return CAMERA_INVALID_STATE;
-    }
-
+    CHECK_ERROR_RETURN_RET_LOG(preparedCaptureId != CAPTURE_ID_UNSET, CAMERA_INVALID_STATE,
+        "HStreamRepeat::Start, Already started with captureID: %{public}d", preparedCaptureId);
     // If current is sketch stream, check parent is start or not.
     if (repeatStreamType_ == RepeatStreamType::SKETCH) {
         auto parentRepeat = parentStreamRepeat_.promote();
-        if (parentRepeat == nullptr || parentRepeat->GetPreparedCaptureId() == CAPTURE_ID_UNSET) {
-            MEDIA_ERR_LOG("HStreamRepeat::Start sketch parent state is illegal");
-            return CAMERA_INVALID_STATE;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(parentRepeat == nullptr || parentRepeat->GetPreparedCaptureId() == CAPTURE_ID_UNSET,
+            CAMERA_INVALID_STATE, "HStreamRepeat::Start sketch parent state is illegal");
     }
 
     int32_t ret = PrepareCaptureId();
@@ -195,6 +185,8 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
         MEDIA_ERR_LOG("HStreamRepeat::Start Failed to allocate a captureId");
         return ret;
     }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK || preparedCaptureId == CAPTURE_ID_UNSET, ret,
+        "HStreamRepeat::Start Failed to allocate a captureId");
     UpdateSketchStatus(SketchStatus::STARTING);
 
     std::vector<uint8_t> ability;
@@ -259,18 +251,14 @@ int32_t HStreamRepeat::Stop()
 {
     CAMERA_SYNC_TRACE;
     auto streamOperator = GetStreamOperator();
-    if (streamOperator == nullptr) {
-        MEDIA_INFO_LOG("HStreamRepeat::Stop streamOperator is null");
-        return CAMERA_INVALID_STATE;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_INVALID_STATE,
+        "HStreamRepeat::Stop streamOperator is null");
     auto preparedCaptureId = GetPreparedCaptureId();
     MEDIA_INFO_LOG("HStreamRepeat::Start streamId:%{public}d hdiStreamId:%{public}d With capture ID: %{public}d, "
                    "repeatStreamType:%{public}d",
         GetFwkStreamId(), GetHdiStreamId(), preparedCaptureId, repeatStreamType_);
-    if (preparedCaptureId == CAPTURE_ID_UNSET) {
-        MEDIA_ERR_LOG("HStreamRepeat::Stop, Stream not started yet");
-        return CAMERA_INVALID_STATE;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(preparedCaptureId == CAPTURE_ID_UNSET, CAMERA_INVALID_STATE,
+        "HStreamRepeat::Stop, Stream not started yet");
     UpdateSketchStatus(SketchStatus::STOPPING);
     int32_t ret = CAMERA_OK;
     {
@@ -315,10 +303,7 @@ int32_t HStreamRepeat::ReleaseStream(bool isDelay)
 
 int32_t HStreamRepeat::SetCallback(sptr<IStreamRepeatCallback>& callback)
 {
-    if (callback == nullptr) {
-        MEDIA_ERR_LOG("HStreamRepeat::SetCallback callback is null");
-        return CAMERA_INVALID_ARG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARG, "HStreamRepeat::SetCallback callback is null");
     std::lock_guard<std::mutex> lock(callbackLock_);
     streamRepeatCallback_ = callback;
     return CAMERA_OK;
@@ -393,18 +378,14 @@ int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& pro
     MEDIA_INFO_LOG("HStreamRepeat::AddDeferredSurface called");
     {
         std::lock_guard<std::mutex> lock(producerLock_);
-        if (producer == nullptr) {
-            MEDIA_ERR_LOG("HStreamRepeat::AddDeferredSurface producer is null");
-            return CAMERA_INVALID_ARG;
-        }
+        CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, CAMERA_INVALID_ARG,
+            "HStreamRepeat::AddDeferredSurface producer is null");
         producer_ = producer;
     }
     SetStreamTransform();
     auto streamOperator = GetStreamOperator();
-    if (streamOperator == nullptr) {
-        MEDIA_ERR_LOG("HStreamRepeat::CreateAndHandleDeferredStreams(), streamOperator_ == null");
-        return CAMERA_INVALID_STATE;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(streamOperator == nullptr, CAMERA_INVALID_STATE,
+        "HStreamRepeat::CreateAndHandleDeferredStreams(), streamOperator_ == null");
     MEDIA_INFO_LOG("HStreamRepeat::AttachBufferQueue start streamId:%{public}d, hdiStreamId:%{public}d",
         GetFwkStreamId(), GetHdiStreamId());
     sptr<BufferProducerSequenceable> bufferProducerSequenceable;
@@ -431,17 +412,14 @@ int32_t HStreamRepeat::ForkSketchStreamRepeat(
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::mutex> lock(sketchStreamLock_);
-    if (width <= 0 || height <= 0) {
-        MEDIA_ERR_LOG("HCameraService::ForkSketchStreamRepeat args is illegal");
-        return CAMERA_INVALID_ARG;
-    }
-
+    CHECK_ERROR_RETURN_RET_LOG(width <= 0 || height <= 0, CAMERA_INVALID_ARG,
+        "HCameraService::ForkSketchStreamRepeat args is illegal");
     if (sketchStreamRepeat_ != nullptr) {
         sketchStreamRepeat_->Release();
     }
 
     auto streamRepeat = new (std::nothrow) HStreamRepeat(nullptr, format_, width, height, RepeatStreamType::SKETCH);
-    CHECK_AND_RETURN_RET_LOG(streamRepeat != nullptr, CAMERA_ALLOC_ERROR,
+    CHECK_ERROR_RETURN_RET_LOG(streamRepeat == nullptr, CAMERA_ALLOC_ERROR,
         "HStreamRepeat::ForkSketchStreamRepeat HStreamRepeat allocation failed");
     MEDIA_DEBUG_LOG(
         "HStreamRepeat::ForkSketchStreamRepeat para is:%{public}dx%{public}d,%{public}f", width, height, sketchRatio);

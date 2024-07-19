@@ -128,27 +128,16 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("HStreamCapture::Capture Entry, streamId:%{public}d", GetFwkStreamId());
     auto streamOperator = GetStreamOperator();
-    if (streamOperator == nullptr) {
-        return CAMERA_INVALID_STATE;
-    }
-
-    if (isCaptureReady_ == false) {
-        MEDIA_ERR_LOG("HStreamCapture::Capture failed due to capture not ready");
-        return CAMERA_OPERATION_NOT_ALLOWED;
-    }
-
+    CHECK_AND_RETURN_RET(streamOperator != nullptr, CAMERA_INVALID_STATE);
+    CHECK_ERROR_RETURN_RET_LOG(isCaptureReady_ == false, CAMERA_OPERATION_NOT_ALLOWED,
+        "HStreamCapture::Capture failed due to capture not ready");
     auto preparedCaptureId = GetPreparedCaptureId();
-    if (preparedCaptureId != CAPTURE_ID_UNSET) {
-        MEDIA_ERR_LOG("HStreamCapture::Capture, Already started with captureID: %{public}d", preparedCaptureId);
-        return CAMERA_INVALID_STATE;
-    }
-
+    CHECK_ERROR_RETURN_RET_LOG(preparedCaptureId != CAPTURE_ID_UNSET, CAMERA_INVALID_STATE,
+        "HStreamCapture::Capture, Already started with captureID: %{public}d", preparedCaptureId);
     int32_t ret = PrepareCaptureId();
     preparedCaptureId = GetPreparedCaptureId();
-    if (ret != CAMERA_OK || preparedCaptureId == CAPTURE_ID_UNSET) {
-        MEDIA_ERR_LOG("HStreamCapture::Capture Failed to allocate a captureId");
-        return ret;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK || preparedCaptureId == CAPTURE_ID_UNSET, ret,
+        "HStreamCapture::Capture Failed to allocate a captureId");
     CaptureInfo captureInfoPhoto;
     captureInfoPhoto.streamIds_ = { GetHdiStreamId() };
     ProcessCaptureInfoPhoto(captureInfoPhoto, captureSettings, preparedCaptureId);
@@ -327,17 +316,13 @@ int32_t HStreamCapture::ConfirmCapture()
 {
     CAMERA_SYNC_TRACE;
     auto streamOperator = GetStreamOperator();
-    if (streamOperator == nullptr) {
-        return CAMERA_INVALID_STATE;
-    }
+    CHECK_AND_RETURN_RET(streamOperator != nullptr, CAMERA_INVALID_STATE);
     auto preparedCaptureId = captureIdForConfirmCapture_;
     MEDIA_INFO_LOG("HStreamCapture::ConfirmCapture with capture ID: %{public}d", preparedCaptureId);
     sptr<OHOS::HDI::Camera::V1_2::IStreamOperator> streamOperatorV1_2 =
         OHOS::HDI::Camera::V1_2::IStreamOperator::CastFrom(streamOperator);
-    if (streamOperatorV1_2 == nullptr) {
-        MEDIA_ERR_LOG("HStreamCapture::ConfirmCapture streamOperatorV1_2 castFrom failed!");
-        return CAMERA_UNKNOWN_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(streamOperatorV1_2 == nullptr, CAMERA_UNKNOWN_ERROR,
+        "HStreamCapture::ConfirmCapture streamOperatorV1_2 castFrom failed!");
     OHOS::HDI::Camera::V1_2::CamRetCode rc =
         (OHOS::HDI::Camera::V1_2::CamRetCode)(streamOperatorV1_2->ConfirmCapture(preparedCaptureId));
     int32_t ret = 0;
@@ -366,10 +351,7 @@ int32_t HStreamCapture::ReleaseStream(bool isDelay)
 
 int32_t HStreamCapture::SetCallback(sptr<IStreamCaptureCallback> &callback)
 {
-    if (callback == nullptr) {
-        MEDIA_ERR_LOG("HStreamCapture::SetCallback callback is null");
-        return CAMERA_INVALID_ARG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetCallback input is null");
     std::lock_guard<std::mutex> lock(callbackLock_);
     streamCaptureCallback_ = callback;
     return CAMERA_OK;
