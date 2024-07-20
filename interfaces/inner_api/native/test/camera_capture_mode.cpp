@@ -19,7 +19,7 @@
 #include "input/camera_input.h"
 #include "input/camera_manager.h"
 #include "output/camera_output_capability.h"
-
+#include "portrait_session.h"
 #include "camera_log.h"
 #include "surface.h"
 #include "test_common.h"

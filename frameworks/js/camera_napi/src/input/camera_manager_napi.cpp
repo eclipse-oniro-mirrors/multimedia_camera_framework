@@ -35,7 +35,7 @@
 #include "camera_napi_template_utils.h"
 #include "camera_napi_utils.h"
 #include "camera_output_capability.h"
-#include "dfx/camera_xcollie.h"
+#include "camera_xcollie.h"
 #include "capture_scene_const.h"
 #include "input/camera_napi.h"
 #include "input/prelaunch_config.h"

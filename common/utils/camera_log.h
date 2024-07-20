@@ -16,7 +16,7 @@
 #ifndef OHOS_CAMERA_LOG_H
 #define OHOS_CAMERA_LOG_H
 
-#include <stdio.h>
+#include <cstdio>
 #include <cinttypes>
 #include "hilog/log.h"
 #include "hisysevent.h"

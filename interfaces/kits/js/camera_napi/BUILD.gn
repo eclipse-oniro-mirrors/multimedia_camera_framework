@@ -37,6 +37,7 @@ ohos_shared_library("camera_napi") {
 
   public_configs = [ ":camera_napi_public_config" ]
   include_dirs = [
+    "${multimedia_camera_framework_path}/common/utils",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include",
     "${multimedia_camera_framework_path}/services/camera_service/include",
     "${multimedia_camera_framework_path}/frameworks/native/camera/include",
@@ -79,17 +80,18 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/preview_output_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/video_output_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/session/camera_session_napi.cpp",
-    "${multimedia_camera_framework_path}/services/camera_service/src/dfx/camera_xcollie.cpp",
   ]
-  deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework" ]
+  deps = [
+    "${multimedia_camera_framework_path}/common:camera_utils",
+    "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
+  ]
   external_deps = [
-    "c_utils:utils",
     "data_share:datashare_common",
     "data_share:datashare_consumer",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
     "graphic_surface:surface",
-    "hilog:libhilog",
+    "hicollie:libhicollie",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "image_framework:image",

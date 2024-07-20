@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "dfx/camera_xcollie.h"
+#include "camera_xcollie.h"
 #include "camera_log.h"
 
 #ifdef HICOLLIE_ENABLE
@@ -21,8 +21,8 @@
 #endif
 
 namespace OHOS {
-CameraXCollie::CameraXCollie(const std::string& tag, uint32_t timeoutSeconds,
-    std::function<void(void *)> func, void* arg, uint32_t flag)
+CameraXCollie::CameraXCollie(const std::string& tag, uint32_t flag, uint32_t timeoutSeconds,
+    std::function<void(void *)> func, void* arg)
 {
     tag_ = tag;
 #ifdef HICOLLIE_ENABLE

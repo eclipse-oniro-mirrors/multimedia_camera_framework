@@ -22,6 +22,7 @@ ohos_fuzztest("CameraDeviceFuzzTest") {
   include_dirs = [
     "${driver_disply_path}/interfaces/include",
     "${graphic_surface_path}/surface/include",
+    "${multimedia_camera_framework_path}/common/utils",
     "${multimedia_camera_framework_path}/services/camera_service/include",
     "${multimedia_camera_framework_path}/services/camera_service/binder/base/include",
     "${multimedia_camera_framework_path}/services/camera_service/binder/client/include",
