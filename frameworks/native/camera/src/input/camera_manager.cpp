@@ -52,6 +52,7 @@
 #include "session/slow_motion_session.h"
 #include "session/video_session.h"
 #include "session/secure_camera_session.h"
+#include "session/time_lapse_photo_session.h"
 #include "system_ability_definition.h"
 
 using namespace std;
@@ -105,6 +106,7 @@ const std::unordered_map<OperationMode, SceneMode> g_metaToFwSupportedMode_ = {
     {OperationMode::APERTURE_VIDEO, APERTURE_VIDEO},
     {OperationMode::PANORAMA_PHOTO, PANORAMA_PHOTO},
     {OperationMode::LIGHT_PAINTING, LIGHT_PAINTING},
+    {OperationMode::TIMELAPSE_PHOTO, TIMELAPSE_PHOTO},
 };
 
 const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
@@ -126,6 +128,7 @@ const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
     {APERTURE_VIDEO, OperationMode::APERTURE_VIDEO},
     {PANORAMA_PHOTO, OperationMode::PANORAMA_PHOTO},
     {LIGHT_PAINTING, OperationMode::LIGHT_PAINTING},
+    {TIMELAPSE_PHOTO, OperationMode::TIMELAPSE_PHOTO},
 };
 
 const std::unordered_map<CameraFoldStatus, FoldStatus> g_metaToFwCameraFoldStatus_ = {
@@ -293,6 +296,8 @@ sptr<CaptureSession> CameraManager::CreateCaptureSessionImpl(SceneMode mode, spt
             return new (std::nothrow) PanoramaSession(session);
         case SceneMode::LIGHT_PAINTING:
             return new (std::nothrow) LightPaintingSession(session);
+        case SceneMode::TIMELAPSE_PHOTO:
+            return new(std::nothrow) TimeLapsePhotoSession(session, cameraObjList_);
         default:
             return new (std::nothrow) CaptureSession(session);
     }

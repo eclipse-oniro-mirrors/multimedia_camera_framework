@@ -104,6 +104,7 @@ ohos_shared_library("camera_framework") {
     "src/session/scan_session.cpp",
     "src/session/secure_camera_session.cpp",
     "src/session/slow_motion_session.cpp",
+    "src/session/time_lapse_photo_session.cpp",
     "src/session/video_session.cpp",
     "src/utils/camera_buffer_handle_utils.cpp",
     "src/utils/camera_security_utils.cpp",

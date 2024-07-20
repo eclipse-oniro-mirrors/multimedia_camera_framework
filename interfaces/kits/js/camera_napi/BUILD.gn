@@ -69,6 +69,7 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/quick_shot_photo_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/secure_camera_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/slow_motion_session_napi.cpp",
+    "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/time_lapse_photo_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/video_session_for_sys_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/mode/video_session_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/native_module_ohos_camera.cpp",

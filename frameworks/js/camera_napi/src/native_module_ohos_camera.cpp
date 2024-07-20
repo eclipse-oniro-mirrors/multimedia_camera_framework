@@ -33,6 +33,7 @@
 #include "mode/quick_shot_photo_session_napi.h"
 #include "mode/secure_camera_session_napi.h"
 #include "mode/slow_motion_session_napi.h"
+#include "mode/time_lapse_photo_session_napi.h"
 #include "mode/video_session_for_sys_napi.h"
 #include "mode/video_session_napi.h"
 #include "output/deferred_photo_proxy_napi.h"
@@ -77,6 +78,8 @@ static napi_value Export(napi_env env, napi_value exports)
     QuickShotPhotoSessionNapi::Init(env, exports);
     ApertureVideoSessionNapi::Init(env, exports);
     LightPaintingSessionNapi::Init(env, exports);
+    TimeLapsePhotoSessionNapi::Init(env, exports);
+    TryAEInfoNapi::Init(env, exports);
     return exports;
 }
 
