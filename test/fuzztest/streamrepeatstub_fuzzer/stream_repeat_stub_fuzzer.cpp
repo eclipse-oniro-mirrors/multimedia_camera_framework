@@ -17,53 +17,14 @@
 #include "nativetoken_kit.h"
 #include "token_setproc.h"
 #include "accesstoken_kit.h"
-#include "hstream_repeat.h"
 #include "iconsumer_surface.h"
 #include "metadata_utils.h"
 #include "camera_service_ipc_interface_code.h"
-#include <cstdint>
-
-namespace {
-
-const int32_t LIMITSIZE = 2;
-const size_t LIMITCOUNT = 4;
-const int32_t PHOTO_WIDTH = 1280;
-const int32_t PHOTO_HEIGHT = 960;
-const int32_t PHOTO_FORMAT = 2000;
-const uint32_t INVALID_CODE = 9999;
-const std::u16string FORMMGR_INTERFACE_TOKEN = u"IStreamCapture";
-
-std::shared_ptr<OHOS::Camera::CameraMetadata> MakeMetadata(uint8_t *rawData, size_t size)
-{
-    int32_t itemCount = 10;
-    int32_t dataSize = 100;
-    int32_t *streams = reinterpret_cast<int32_t *>(rawData);
-    std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
-    ability = std::make_shared<OHOS::Camera::CameraMetadata>(itemCount, dataSize);
-    ability->addEntry(OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS, streams, size / LIMITCOUNT);
-    int32_t compensationRange[2] = {rawData[0], rawData[1]};
-    ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_RANGE, compensationRange,
-                      sizeof(compensationRange) / sizeof(compensationRange[0]));
-    float focalLength = rawData[0];
-    ability->addEntry(OHOS_ABILITY_FOCAL_LENGTH, &focalLength, 1);
-
-    int32_t sensorOrientation = rawData[0];
-    ability->addEntry(OHOS_SENSOR_ORIENTATION, &sensorOrientation, 1);
-
-    int32_t cameraPosition = rawData[0];
-    ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
-
-    const camera_rational_t aeCompensationStep[] = {{rawData[0], rawData[1]}};
-    ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
-                      sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
-    return ability;
-}
-
-}
 
 namespace OHOS {
 namespace CameraStandard {
 namespace StreamRepeatStubFuzzer {
+const int32_t LIMITSIZE = 2;
 
 bool g_hasPermission = false;
 HStreamRepeatStub *fuzz = nullptr;
@@ -89,77 +50,28 @@ void Test(uint8_t *rawData, size_t size)
     if (rawData == nullptr || size < LIMITSIZE) {
         return;
     }
-    CheckPermission();
-
     if (fuzz == nullptr) {
-        sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-        if (photoSurface == nullptr) {
-            return;
-        }
-        sptr<IBufferProducer> producer = photoSurface->GetProducer();
-        fuzz = new HStreamRepeat(producer, PHOTO_FORMAT,
-            PHOTO_WIDTH, PHOTO_HEIGHT, RepeatStreamType::PREVIEW);
+        fuzz = new HStreamRepeatStubMock();
     }
-
     Test_OnRemoteRequest(rawData, size);
 }
 
-void RunCase(MessageParcel &data, StreamRepeatInterfaceCode sric)
+void RunCase(MessageParcel &data, uint32_t code)
 {
     MessageParcel reply;
     MessageOption option;
     data.RewindRead(0);
-    fuzz->OnRemoteRequest(static_cast<uint32_t>(sric), data, reply, option);
+    fuzz->OnRemoteRequest(code, data, reply, option);
 }
 
 void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
 {
     MessageParcel data;
-    data.WriteInterfaceToken(fuzz->GetDescriptor());
-    auto metadata = MakeMetadata(rawData, size);
-    if (!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(metadata, data))) {
-        return;
+    data.WriteRawData(rawData, size);
+    static const int32_t MAX_CODE = 20;
+    for (int32_t i = 0; i < MAX_CODE; i++) {
+        RunCase(data, i);
     }
-    RunCase(data, StreamRepeatInterfaceCode::CAMERA_START_VIDEO_RECORDING);
-    RunCase(data, StreamRepeatInterfaceCode::CAMERA_STOP_VIDEO_RECORDING);
-    RunCase(data, StreamRepeatInterfaceCode::CAMERA_STREAM_REPEAT_RELEASE);
-    RunCase(data, StreamRepeatInterfaceCode::CAMERA_REMOVE_SKETCH_STREAM_REPEAT);
-    RunCase(data, StreamRepeatInterfaceCode::CAMERA_UPDATE_SKETCH_RATIO);
-    RunCase(data, StreamRepeatInterfaceCode::CAMERA_STREAM_FRAME_RANGE_SET);
-    RunCase(data, StreamRepeatInterfaceCode::CAMERA_ENABLE_SECURE_STREAM);
-    RunCase(data, StreamRepeatInterfaceCode::CAMERA_ENABLE_STREAM_MIRROR);
-
-    int32_t code;
-    MessageParcel reply;
-    MessageOption option;
-
-    code = StreamRepeatInterfaceCode::CAMERA_STREAM_REPEAT_SET_CALLBACK;
-    data.RewindWrite(0);
-    data.WriteInterfaceToken(fuzz->GetDescriptor());
-    data.WriteRawData(rawData, size);
-    data.RewindRead(0);
-    fuzz->OnRemoteRequest(code, data, reply, option);
-
-    code = StreamRepeatInterfaceCode::CAMERA_ADD_DEFERRED_SURFACE;
-    data.RewindWrite(0);
-    data.WriteInterfaceToken(fuzz->GetDescriptor());
-    data.WriteRawData(rawData, size);
-    data.RewindRead(0);
-    fuzz->OnRemoteRequest(code, data, reply, option);
-
-    code = StreamRepeatInterfaceCode::CAMERA_FORK_SKETCH_STREAM_REPEAT;
-    data.RewindWrite(0);
-    data.WriteInterfaceToken(fuzz->GetDescriptor());
-    data.WriteInt32(PHOTO_WIDTH);
-    data.WriteInt32(PHOTO_HEIGHT);
-    data.WriteFloat(1.0f);
-    data.WriteRawData(rawData, size);
-    data.RewindRead(0);
-    fuzz->OnRemoteRequest(code, data, reply, option);
-
-    code = INVALID_CODE;
-    data.RewindRead(0);
-    fuzz->OnRemoteRequest(code, data, reply, option);
 }
 
 } // namespace StreamRepeatStubFuzzer

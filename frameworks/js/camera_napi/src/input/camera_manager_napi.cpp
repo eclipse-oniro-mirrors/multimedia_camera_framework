@@ -54,6 +54,7 @@
 #include "mode/quick_shot_photo_session_napi.h"
 #include "mode/secure_camera_session_napi.h"
 #include "mode/slow_motion_session_napi.h"
+#include "mode/time_lapse_photo_session_napi.h"
 #include "mode/video_session_for_sys_napi.h"
 #include "mode/video_session_napi.h"
 #include "napi/native_common.h"
@@ -164,6 +165,7 @@ const std::unordered_map<SceneMode, JsSceneMode> g_nativeToNapiSupportedModeForS
     {SceneMode::APERTURE_VIDEO, JsSceneMode::JS_APERTURE_VIDEO},
     {SceneMode::PANORAMA_PHOTO, JsSceneMode::JS_PANORAMA_PHOTO},
     {SceneMode::LIGHT_PAINTING, JsSceneMode::JS_LIGHT_PAINTING},
+    {SceneMode::TIMELAPSE_PHOTO, JsSceneMode::JS_TIMELAPSE_PHOTO},
 };
 
 const std::unordered_map<SceneMode, JsSceneMode> g_nativeToNapiSupportedMode_ = {
@@ -514,6 +516,7 @@ const std::unordered_map<JsSceneMode, SceneMode> g_jsToFwMode_ = {
     {JsSceneMode::JS_APERTURE_VIDEO, SceneMode::APERTURE_VIDEO},
     {JsSceneMode::JS_PANORAMA_PHOTO, SceneMode::PANORAMA_PHOTO},
     {JsSceneMode::JS_LIGHT_PAINTING, SceneMode::LIGHT_PAINTING},
+    {JsSceneMode::JS_TIMELAPSE_PHOTO, SceneMode::TIMELAPSE_PHOTO},
 };
 
 static std::unordered_map<JsPolicyType, PolicyType> g_jsToFwPolicyType_ = {
@@ -768,6 +771,8 @@ napi_value CameraManagerNapi::CreateSessionInstance(napi_env env, napi_callback_
             PanoramaSessionNapi::CreateCameraSession(env):nullptr; }},
         {JsSceneMode::JS_LIGHT_PAINTING, [] (napi_env env) { return CheckSystemApp(env, true) ?
             LightPaintingSessionNapi::CreateCameraSession(env) : nullptr; }},
+        {JsSceneMode::JS_TIMELAPSE_PHOTO, [] (napi_env env) {
+            return TimeLapsePhotoSessionNapi::CreateCameraSession(env); }},
     };
 
     napi_value result = nullptr;

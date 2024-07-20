@@ -527,6 +527,57 @@ typedef enum Camera_SmoothZoomMode {
 } Camera_SmoothZoomMode;
 
 /**
+ * @brief Enum for preconfig type.
+ *
+ * @since 12
+ * @version 1.0
+ */
+typedef enum Camera_PreconfigType {
+    /**
+     * The preconfig type is 720P.
+     */
+    PRECONFIG_720P = 0,
+
+    /**
+     * The preconfig type is 1080P.
+     */
+    PRECONFIG_1080P = 1,
+
+    /**
+     * The preconfig type is 4K.
+     */
+    PRECONFIG_4K = 2,
+
+    /**
+     * The preconfig type is high quality.
+     */
+    PRECONFIG_HIGH_QUALITY = 3
+} Camera_PreconfigType;
+
+/**
+ * @brief Enum for preconfig ratio.
+ *
+ * @since 12
+ * @version 1.0
+ */
+typedef enum Camera_PreconfigRatio {
+    /**
+     * The preconfig ratio is 1:1.
+     */
+    PRECONFIG_RATIO_1_1 = 0,
+
+    /**
+     * The preconfig ratio 4:3.
+     */
+    PRECONFIG_RATIO_4_3 = 1,
+
+    /**
+     * The preconfig ratio 16:9.
+     */
+    PRECONFIG_RATIO_16_9 = 2
+} Camera_PreconfigRatio;
+
+/**
  * @brief Size parameter.
  *
  * @since 11

@@ -1657,6 +1657,7 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
     int32_t ret = 0;
     camera_metadata_item_t item;
     defaultSettings->addEntry(OHOS_CONTROL_ZOOM_RATIO, &zoomRatio, count);
+    defaultSettings->addEntry(OHOS_CONTROL_TIME_LAPSE_RECORD_STATE, &ret, count);
     std::shared_ptr<OHOS::Camera::CameraMetadata> currentSetting = activeDevice->CloneCachedSettings();
     CHECK_ERROR_RETURN_RET_LOG(currentSetting == nullptr, defaultSettings,
         "HCameraService::CreateDefaultSettingForRestore:currentSetting is null");

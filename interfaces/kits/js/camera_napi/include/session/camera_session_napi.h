@@ -403,27 +403,37 @@ private:
     void UnregisterEffectSuggestionCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
+    static const EmitterFunctions fun_map_;
 protected:
-    virtual void RegisterExposureInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
-    virtual void UnregisterExposureInfoCallbackListener(
-        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    virtual void RegisterAbilityChangeCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
-    virtual void UnregisterAbilityChangeCallbackListener(
-        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    virtual void RegisterIsoInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
-    virtual void UnregisterIsoInfoCallbackListener(
-        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    virtual void RegisterApertureInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
-    virtual void UnregisterApertureInfoCallbackListener(
-        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    virtual void RegisterLuminationInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
-    virtual void UnregisterLuminationInfoCallbackListener(
-        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    virtual void RegisterExposureInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterExposureInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+
+    virtual void RegisterAbilityChangeCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterAbilityChangeCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+
+    virtual void RegisterIsoInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterIsoInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+
+    virtual void RegisterApertureInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterApertureInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+
+    virtual void RegisterLuminationInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterLuminationInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
+
+    virtual void RegisterTryAEInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+    virtual void UnregisterTryAEInfoCallbackListener(const std::string& eventName,
+        napi_env env, napi_value callback, const std::vector<napi_value>& args);
 };
 
 struct CameraSessionAsyncContext : public AsyncContext {

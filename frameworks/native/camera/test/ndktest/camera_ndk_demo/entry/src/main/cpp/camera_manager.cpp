@@ -97,7 +97,6 @@ Camera_ErrorCode NDKCamera::ReleaseCamera(void)
     if (previewOutput_) {
         (void)PreviewOutputStop();
         (void)PreviewOutputRelease();
-        (void)OH_CaptureSession_RemovePreviewOutput(captureSession_, previewOutput_);
     }
     if (photoOutput_) {
         (void)PhotoOutputRelease();

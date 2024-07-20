@@ -33,12 +33,13 @@ enum JsSceneMode : int32_t {
     JS_SLOW_MOTION = 7,
     JS_CAPTURE_MARCO = 8,
     JS_VIDEO_MARCO = 9,
+    JS_LIGHT_PAINTING = 10,
     JS_HIGH_RES_PHOTO = 11,
     JS_SECURE_CAMERA = 12,
     JS_QUICK_SHOT_PHOTO = 13,
-    JS_PANORAMA_PHOTO = 14,
-    JS_APERTURE_VIDEO = 15,
-    JS_LIGHT_PAINTING = 16,
+    JS_APERTURE_VIDEO = 14,
+    JS_PANORAMA_PHOTO = 15,
+    JS_TIMELAPSE_PHOTO = 16,
 };
 
 enum SceneMode : int32_t {
@@ -60,6 +61,7 @@ enum SceneMode : int32_t {
     QUICK_SHOT_PHOTO = 16,
     LIGHT_PAINTING = 17,
     PANORAMA_PHOTO = 18,
+    TIMELAPSE_PHOTO = 19,
     APERTURE_VIDEO = 20,
 };
 

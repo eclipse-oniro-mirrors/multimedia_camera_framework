@@ -1532,19 +1532,18 @@ std::string HCaptureSession::CreateDisplayName()
     }
     if (lastDisplayName_ == formattedTime) {
         saveIndex++;
-        formattedTime = formattedTime + connector + std::to_string(saveIndex) + suffix;
-        MEDIA_INFO_LOG("GetDisplayName is %{private}s", formattedTime.c_str());
+        formattedTime = formattedTime + connector + std::to_string(saveIndex);
+        MEDIA_INFO_LOG("CreateDisplayName is %{private}s", formattedTime.c_str());
         return formattedTime;
     }
     lastDisplayName_ = formattedTime;
-    formattedTime = formattedTime + suffix;
     saveIndex = 0;
-    MEDIA_INFO_LOG("GetDisplayName is %{private}s", formattedTime.c_str());
+    MEDIA_INFO_LOG("CreateDisplayName is %{private}s", formattedTime.c_str());
     return formattedTime;
 }
 
 int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
-    std::string &uri, int32_t &cameraShotType, int64_t timestamp)
+    std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
 {
     CAMERA_SYNC_TRACE;
     sptr<IRemoteObject> object = nullptr;
@@ -1567,7 +1566,6 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
         IPCSkeleton::GetCallingTokenID());
     auto type = isSetMotionPhoto_ ? CameraShotType::MOVING_PHOTO : CameraShotType::IMAGE;
     cameraShotType = static_cast<int32_t>(type);
-    auto photoAssetProxy = mediaLibraryManager->CreatePhotoAssetProxy(type, uid, userId);
     MessageParcel data;
     photoProxy->WriteToParcel(data);
     photoProxy->CameraFreeBufferHandle();
@@ -1575,8 +1573,43 @@ int32_t HCaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoProxy,
     cameraServerPhotoProxy->ReadFromParcel(data);
     cameraServerPhotoProxy->SetDisplayName(CreateDisplayName());
     cameraServerPhotoProxy->SetShootingMode(opMode_);
+    int32_t captureId = cameraServerPhotoProxy->GetCaptureId();
+    std::string imageId = cameraServerPhotoProxy->GetPhotoId();
+    bool isBursting = false;
+    bool isCoverPhoto = false;
+    auto captureStreams = streamContainer_.GetStreams(StreamType::CAPTURE);
+    for (auto& stream : captureStreams) {
+        MEDIA_INFO_LOG("for captureStreams");
+        if (stream == nullptr) {
+            continue;
+        }
+        MEDIA_INFO_LOG("CreateMediaLibrary get captureStream");
+        auto streamCapture = CastStream<HStreamCapture>(stream);
+        isBursting = streamCapture->IsBurstCapture(captureId);
+        if (isBursting) {
+            burstKey = streamCapture->GetBurstKey(captureId);
+            streamCapture->SetBurstImages(captureId, imageId);
+            isCoverPhoto = streamCapture->IsBurstCover(captureId);
+            MEDIA_INFO_LOG("CreateMediaLibrary isBursting burstKey:%{public}s isCoverPhoto:%{public}d",
+                burstKey.c_str(), isCoverPhoto);
+            type = CameraShotType::BURST;
+            cameraShotType = static_cast<int32_t>(CameraShotType::BURST);
+            cameraServerPhotoProxy->SetBurstInfo(burstKey, isCoverPhoto);
+            break;
+        }
+        MEDIA_INFO_LOG("CreateMediaLibrary not Bursting");
+    }
+    
     MEDIA_INFO_LOG("GetLocation latitude:%{public}f, longitude:%{public}f",
         cameraServerPhotoProxy->GetLatitude(), cameraServerPhotoProxy->GetLongitude());
+    if (cameraServerPhotoProxy->GetPhotoQuality() == Media::PhotoQuality::HIGH) {
+        MEDIA_INFO_LOG("CreateMediaLibrary Media::PhotoQuality::HIGH");
+    }
+    if (cameraServerPhotoProxy->GetFormat() == Media::PhotoFormat::JPG) {
+        MEDIA_INFO_LOG("CreateMediaLibrary Media::PhotoFormat::JPG");
+    }
+
+    auto photoAssetProxy = mediaLibraryManager->CreatePhotoAssetProxy(type, uid, userId);
     photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraServerPhotoProxy);
     uri = photoAssetProxy->GetPhotoAssetUri();
     if (isSetMotionPhoto_ && taskManager_) {

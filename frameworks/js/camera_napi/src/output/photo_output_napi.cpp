@@ -57,6 +57,7 @@ thread_local uint32_t PhotoOutputNapi::photoOutputTaskId = CAMERA_PHOTO_OUTPUT_T
 static uv_sem_t g_captureStartSem;
 static bool g_isSemInited;
 static std::mutex g_photoImageMutex;
+static int32_t g_captureId;
 
 PhotoListener::PhotoListener(napi_env env, const sptr<Surface> photoSurface, wptr<PhotoOutput> photoOutput)
     : ListenerBase(env), photoSurface_(photoSurface), photoOutput_(photoOutput)
@@ -208,9 +209,12 @@ void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool is
     newSurfaceBuffer->Map();
     string uri = "";
     int32_t cameraShotType = 0;
-    CreateMediaLibrary(surfaceBuffer, bufferHandle, isHighQuality, uri, cameraShotType, timestamp);
-    MEDIA_INFO_LOG("CreateMediaLibrary result %{public}s, type %{public}d", uri.c_str(), cameraShotType);
-    result[PARAM1] = Media::MediaLibraryCommNapi::CreatePhotoAssetNapi(env_, uri, cameraShotType);
+
+    std::string burstKey = "";
+    CreateMediaLibrary(surfaceBuffer, bufferHandle, isHighQuality, uri, cameraShotType, burstKey, timestamp);
+    MEDIA_INFO_LOG("CreateMediaLibrary result uri:%{public}s cameraShotType:%{public}d burstKey:%{public}s",
+        uri.c_str(), cameraShotType, burstKey.c_str());
+    result[PARAM1] = Media::MediaLibraryCommNapi::CreatePhotoAssetNapi(env_, uri, cameraShotType, burstKey);
     ExecuteCallbackNapiPara callbackPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
     ExecuteCallback(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callbackPara);
     // return buffer to buffer queue
@@ -218,16 +222,20 @@ void PhotoListener::ExecutePhotoAsset(sptr<SurfaceBuffer> surfaceBuffer, bool is
 }
 
 void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, BufferHandle *bufferHandle,
-    bool isHighQuality, std::string &uri, int32_t &cameraShotType, int64_t timestamp) const
+    bool isHighQuality, std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) const
 {
     CAMERA_SYNC_TRACE;
-    int64_t imageId = 0;
-    int32_t deferredProcessingType;
-    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::imageId, imageId);
-    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredProcessingType, deferredProcessingType);
-    MEDIA_ERR_LOG("PhotoListener ExecutePhotoAsset imageId:%{public}" PRId64 ", deferredProcessingType:%{public}d",
-                  imageId, deferredProcessingType);
     // get buffer handle and photo info
+    int32_t captureId;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
+    int64_t imageId = 0;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::imageId, imageId);
+    int32_t deferredProcessingType;
+    surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredProcessingType, deferredProcessingType);
+    MEDIA_INFO_LOG(
+        "PhotoListener ExecutePhotoAsset captureId:%{public}d "
+        "imageId:%{public}" PRId64 ", deferredProcessingType:%{public}d",
+        captureId, imageId, deferredProcessingType);
     int32_t photoWidth;
     int32_t photoHeight;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::CameraStandard::dataWidth, photoWidth);
@@ -246,16 +254,20 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
         MEDIA_INFO_LOG("ExtraGet dataSize %{public}d", extraDataSize);
         size = static_cast<uint64_t>(extraDataSize);
     }
-    MEDIA_INFO_LOG("width:%{public}d, height:%{public}d, size:%{public}" PRId64, photoWidth, photoHeight, size);
+    int32_t deferredImageFormat = 0;
+    res = surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::deferredImageFormat, deferredImageFormat);
+    MEDIA_INFO_LOG("deferredImageFormat:%{public}d, width:%{public}d, height:%{public}d, size:%{public}" PRId64,
+        deferredImageFormat, photoWidth, photoHeight, size);
     int32_t format = bufferHandle->format;
     sptr<CameraPhotoProxy> photoProxy;
     std::string imageIdStr = std::to_string(imageId);
-    photoProxy = new(std::nothrow) CameraPhotoProxy(bufferHandle, format, photoWidth, photoHeight, isHighQuality);
+    photoProxy = new(std::nothrow) CameraPhotoProxy(bufferHandle, format, photoWidth, photoHeight,
+                                                    isHighQuality, captureId);
     if (photoProxy == nullptr) {
         MEDIA_ERR_LOG("failed to new photoProxy");
         return;
     }
-    photoProxy->SetDeferredAttrs(imageIdStr, deferredProcessingType, size);
+    photoProxy->SetDeferredAttrs(imageIdStr, deferredProcessingType, size, deferredImageFormat);
     auto photoOutput = photoOutput_.promote();
     if (photoOutput && photoOutput->GetSession()) {
         auto settings = photoOutput->GetDefaultCaptureSetting();
@@ -266,7 +278,7 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
                 location->longitude);
             photoProxy->SetLocation(location->latitude, location->longitude);
         }
-        photoOutput->GetSession()->CreateMediaLibrary(photoProxy, uri, cameraShotType, timestamp);
+        photoOutput->GetSession()->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
     }
 }
 
@@ -481,7 +493,13 @@ void UpdateJSExecute(uv_work_t* work)
 {
     PhotoOutputCallbackInfo* callbackInfo = reinterpret_cast<PhotoOutputCallbackInfo*>(work->data);
     if (callbackInfo) {
-        if (callbackInfo->eventType_ == PhotoOutputEventType::CAPTURE_FRAME_SHUTTER) {
+        if (callbackInfo->eventType_ == PhotoOutputEventType::CAPTURE_START ||
+            callbackInfo->eventType_ == PhotoOutputEventType::CAPTURE_START_WITH_INFO) {
+            g_captureId = callbackInfo->info_.captureID;
+            MEDIA_DEBUG_LOG("UpdateJSExecute CAPTURE_START g_captureId:%{public}d", g_captureId);
+        }
+        if (callbackInfo->eventType_ == PhotoOutputEventType::CAPTURE_FRAME_SHUTTER &&
+            g_captureId != callbackInfo->info_.captureID) {
             uv_sem_wait(&g_captureStartSem);
         }
     }
@@ -888,6 +906,7 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("enableMovingPhoto", EnableMovingPhoto),
         DECLARE_NAPI_FUNCTION("getDefaultCaptureSetting", GetDefaultCaptureSetting),
         DECLARE_NAPI_FUNCTION("capture", Capture),
+        DECLARE_NAPI_FUNCTION("burstCapture", BurstCapture),
         DECLARE_NAPI_FUNCTION("confirmCapture", ConfirmCapture),
         DECLARE_NAPI_FUNCTION("release", Release),
         DECLARE_NAPI_FUNCTION("isMirrorSupported", IsMirrorSupported),
@@ -1360,6 +1379,11 @@ void PhotoOutputNapi::ProcessContext(PhotoOutputAsyncContext* context)
             capSettings->SetLocation(context->location);
         }
 
+        if (context->funcName == "PhotoOutputNapi::BurstCapture") {
+            MEDIA_ERR_LOG("ProcessContext BurstCapture");
+            uint8_t burstState = 1; // 0:end 1:start
+            capSettings->SetBurstCaptureState(burstState);
+        }
         context->errorCode = photoOutput->Capture(capSettings);
     } else {
         context->errorCode = photoOutput->Capture();
@@ -1377,6 +1401,61 @@ void PhotoOutputNapi::ProcessAsyncContext(napi_status status, napi_env env, napi
         napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
         asyncContext.release();
     }
+}
+
+napi_value PhotoOutputNapi::BurstCapture(napi_env env, napi_callback_info info)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("BurstCapture is called");
+    napi_value result = nullptr;
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi EnableAutoHighQualityPhoto is called!");
+        return result;
+    }
+    napi_status status;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = { 0 };
+    napi_value thisVar = nullptr;
+    napi_value resource = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    napi_get_undefined(env, &result);
+    unique_ptr<PhotoOutputAsyncContext> asyncContext = make_unique<PhotoOutputAsyncContext>();
+    if (!CameraNapiUtils::CheckInvalidArgument(env, argc, ARGS_ONE, argv, PHOTO_OUT_BURST_CAPTURE)) {
+        asyncContext->isInvalidArgument = true;
+        asyncContext->status = false;
+        asyncContext->errorCode = INVALID_ARGUMENT;
+    }
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext->objectInfo));
+    if (status == napi_ok && asyncContext->objectInfo != nullptr) {
+        if (!asyncContext->isInvalidArgument) {
+            result = ConvertJSArgsToNative(env, argc, argv, *asyncContext);
+        }
+        CAMERA_NAPI_CHECK_NULL_PTR_RETURN_UNDEFINED(env, result, result, "Failed to obtain arguments");
+        CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
+        CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "BurstCapture");
+        status = napi_create_async_work(
+            env, nullptr, resource,
+            [](napi_env env, void* data) {
+                PhotoOutputAsyncContext* context = static_cast<PhotoOutputAsyncContext*>(data);
+                // Start async trace
+                context->funcName = "PhotoOutputNapi::BurstCapture";
+                context->taskId = CameraNapiUtils::IncreamentAndGet(photoOutputTaskId);
+                if (context->isInvalidArgument) {
+                    return;
+                }
+                CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
+                if (context->objectInfo == nullptr) {
+                    context->status = false;
+                    return;
+                }
+                ProcessContext(context);
+            },
+            CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
+        ProcessAsyncContext(status, env, result, std::move(asyncContext));
+    } else {
+        MEDIA_ERR_LOG("BurstCapture call Failed!");
+    }
+    return result;
 }
 
 napi_value PhotoOutputNapi::ConfirmCapture(napi_env env, napi_callback_info info)

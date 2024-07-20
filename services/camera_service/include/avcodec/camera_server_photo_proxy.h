@@ -25,7 +25,7 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace Media;
 static const std::string prefix = "IMG_";
-static const std::string suffix = ".jpg";
+static const std::string suffix = "jpg";
 static const std::string connector = "_";
 static const char placeholder = '0';
 static const int yearWidth = 4;
@@ -44,12 +44,16 @@ static const std::map<int32_t, int32_t> modeMap = {
     { 13, 33},
     { 14, 52}
 };
+static const std::map<int32_t, PhotoFormat> formatMap = {
+    {0, PhotoFormat::RGBA},
+    {1, PhotoFormat::JPG}
+};
 class CameraServerPhotoProxy : public PhotoProxy {
 public:
     CameraServerPhotoProxy();
     virtual ~CameraServerPhotoProxy();
     void ReadFromParcel(MessageParcel &parcel);
-    std::string GetDisplayName() override;
+    std::string GetTitle() override;
     std::string GetExtension() override;
     std::string GetPhotoId() override;
     Media::DeferredProcType GetDeferredProcType() override;
@@ -65,6 +69,10 @@ public:
     int32_t GetShootingMode() override;
     void SetShootingMode(int32_t mode);
     void Release() override;
+    std::string GetBurstKey() override;
+    bool IsCoverPhoto() override;
+    void SetBurstInfo(std::string burstKey, bool isCoverPhoto);
+    int32_t GetCaptureId();
 
 private:
     BufferHandle* bufferHandle_;
@@ -84,6 +92,10 @@ private:
     double latitude_;
     double longitude_;
     int32_t mode_;
+    int32_t captureId_;
+    std::string burstKey_;
+    bool isCoverPhoto_;
+    int32_t imageFormat_;
     int32_t CameraFreeBufferHandle(BufferHandle *handle);
 };
 } // namespace CameraStandard

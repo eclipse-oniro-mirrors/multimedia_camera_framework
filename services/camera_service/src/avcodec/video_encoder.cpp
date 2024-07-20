@@ -203,6 +203,7 @@ bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord, int32_t keyFrame
         OH_AVFormat *format = OH_AVFormat_Create();
         OH_AVFormat_SetIntValue(format, OH_MD_KEY_REQUEST_I_FRAME, true);
         OH_VideoEncoder_SetParameter(encoder_, format);
+        OH_AVFormat_Destroy(format);
     }
     sptr<SurfaceBuffer> buffer = frameRecord->GetSurfaceBuffer();
     if (buffer == nullptr) {
@@ -329,10 +330,10 @@ int32_t VideoEncoder::Configure()
     OH_AVFormat_SetIntValue(format, OH_MD_KEY_I_FRAME_INTERVAL, 0);
 
     int ret = OH_VideoEncoder_Configure(encoder_, format);
-    CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Config failed, ret: %{public}d", ret);
-
     OH_AVFormat_Destroy(format);
     format = nullptr;
+    CHECK_AND_RETURN_RET_LOG(ret == AV_ERR_OK, 1, "Config failed, ret: %{public}d", ret);
+
     return 0;
 }
 } // CameraStandard

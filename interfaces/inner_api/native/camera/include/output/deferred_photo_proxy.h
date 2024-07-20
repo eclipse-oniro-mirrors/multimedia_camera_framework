@@ -38,7 +38,7 @@ public:
     virtual ~DeferredPhotoProxy();
     void ReadFromParcel(MessageParcel &parcel);
     void WriteToParcel(MessageParcel &parcel);
-    std::string GetDisplayName() override;
+    std::string GetTitle() override;
     std::string GetExtension() override;
     std::string GetPhotoId() override;
     Media::DeferredProcType GetDeferredProcType() override;
@@ -52,6 +52,8 @@ public:
     double GetLongitude() override;
     int32_t GetShootingMode() override;
     void Release() override;
+    std::string GetBurstKey() override;
+    bool IsCoverPhoto() override;
 
 private:
     uint8_t* buffer_;

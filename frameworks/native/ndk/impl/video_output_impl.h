@@ -37,6 +37,8 @@ public:
 
     OHOS::sptr<OHOS::CameraStandard::VideoOutput> GetInnerVideoOutput();
 
+    Camera_ErrorCode GetVideoProfile(Camera_VideoProfile** profile);
+
 private:
     OHOS::sptr<OHOS::CameraStandard::VideoOutput> innerVideoOutput_;
 };

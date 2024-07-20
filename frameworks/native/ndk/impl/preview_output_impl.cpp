@@ -21,6 +21,13 @@
 using namespace std;
 using namespace OHOS;
 using namespace OHOS::CameraStandard;
+const std::unordered_map<CameraFormat, Camera_Format> g_fwToNdkCameraFormat = {
+    {CameraFormat::CAMERA_FORMAT_RGBA_8888, Camera_Format::CAMERA_FORMAT_RGBA_8888},
+    {CameraFormat::CAMERA_FORMAT_YUV_420_SP, Camera_Format::CAMERA_FORMAT_YUV_420_SP},
+    {CameraFormat::CAMERA_FORMAT_JPEG, Camera_Format::CAMERA_FORMAT_JPEG},
+    {CameraFormat::CAMERA_FORMAT_YCBCR_P010, Camera_Format::CAMERA_FORMAT_YCBCR_P010},
+    {CameraFormat::CAMERA_FORMAT_YCRCB_P010, Camera_Format::CAMERA_FORMAT_YCRCB_P010}
+};
 
 class InnerPreviewOutputCallback : public PreviewStateCallback {
 public:
@@ -108,4 +115,27 @@ Camera_ErrorCode Camera_PreviewOutput::Release()
 sptr<PreviewOutput> Camera_PreviewOutput::GetInnerPreviewOutput()
 {
     return innerPreviewOutput_;
+}
+
+Camera_ErrorCode Camera_PreviewOutput::GetActiveProfile(Camera_Profile** profile)
+{
+    auto previewOutputProfile = innerPreviewOutput_->GetPreviewProfile();
+    CHECK_AND_RETURN_RET_LOG(previewOutputProfile != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_PreviewOutput::GetActiveProfile failed to get preview profile!");
+
+    CameraFormat cameraFormat = previewOutputProfile->GetCameraFormat();
+    auto itr = g_fwToNdkCameraFormat.find(cameraFormat);
+    CHECK_AND_RETURN_RET_LOG(itr != g_fwToNdkCameraFormat.end(), CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_PreviewOutput::GetActiveProfile Unsupported camera format %{public}d", cameraFormat);
+
+    Camera_Profile* newProfile = new Camera_Profile;
+    CHECK_AND_RETURN_RET_LOG(newProfile != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_PreviewOutput::GetActiveProfile failed to allocate memory for camera profile!");
+
+    newProfile->format = itr->second;
+    newProfile->size.width = previewOutputProfile->GetSize().width;
+    newProfile->size.height = previewOutputProfile->GetSize().height;
+
+    *profile = newProfile;
+    return CAMERA_OK;
 }

@@ -20,6 +20,13 @@
 using namespace std;
 using namespace OHOS;
 using namespace OHOS::CameraStandard;
+const std::unordered_map<CameraFormat, Camera_Format> g_fwToNdkCameraFormat = {
+    {CameraFormat::CAMERA_FORMAT_RGBA_8888, Camera_Format::CAMERA_FORMAT_RGBA_8888},
+    {CameraFormat::CAMERA_FORMAT_YUV_420_SP, Camera_Format::CAMERA_FORMAT_YUV_420_SP},
+    {CameraFormat::CAMERA_FORMAT_JPEG, Camera_Format::CAMERA_FORMAT_JPEG},
+    {CameraFormat::CAMERA_FORMAT_YCBCR_P010, Camera_Format::CAMERA_FORMAT_YCBCR_P010},
+    {CameraFormat::CAMERA_FORMAT_YCRCB_P010, Camera_Format::CAMERA_FORMAT_YCRCB_P010}
+};
 
 class InnerPhotoOutputCallback : public PhotoStateCallback {
 public:
@@ -172,4 +179,27 @@ Camera_ErrorCode Camera_PhotoOutput::IsMirrorSupported(bool* isSupported)
 sptr<PhotoOutput> Camera_PhotoOutput::GetInnerPhotoOutput()
 {
     return innerPhotoOutput_;
+}
+
+Camera_ErrorCode Camera_PhotoOutput::GetActiveProfile(Camera_Profile** profile)
+{
+    auto photoOutputProfile = innerPhotoOutput_->GetPhotoProfile();
+    CHECK_AND_RETURN_RET_LOG(photoOutputProfile != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_PhotoOutput::GetActiveProfile failed to get photo profile!");
+
+    CameraFormat cameraFormat = photoOutputProfile->GetCameraFormat();
+    auto itr = g_fwToNdkCameraFormat.find(cameraFormat);
+    CHECK_AND_RETURN_RET_LOG(itr != g_fwToNdkCameraFormat.end(), CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_PhotoOutput::GetActiveProfile unsupported camera format %{public}d", cameraFormat);
+
+    Camera_Profile* newProfile = new Camera_Profile;
+    CHECK_AND_RETURN_RET_LOG(newProfile != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_PhotoOutput::GetActiveProfile failed to allocate memory for camera profile!");
+
+    newProfile->format = itr->second;
+    newProfile->size.width = photoOutputProfile->GetSize().width;
+    newProfile->size.height = photoOutputProfile->GetSize().height;
+
+    *profile = newProfile;
+    return CAMERA_OK;
 }

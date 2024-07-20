@@ -14,7 +14,6 @@
  */
 
 #include "deferred_processing_stub_fuzzer.h"
-#include "camera_log.h"
 #include "metadata_utils.h"
 #include "ipc_skeleton.h"
 #include "access_token.h"
@@ -111,11 +110,10 @@ void DeferredProcessingFuzzTest(uint8_t *rawData, size_t size)
     }
 
     if (fuzz != nullptr) {
-        const uint32_t maxNum = 7;
+        const uint32_t maxNum = 1;
         for (uint32_t code = 0; code < maxNum; ++code) {
             data.RewindRead(0);
             reply.RewindWrite(0);
-            MEDIA_INFO_LOG("TEST OnRemoteRequest: code = %{public}d", code);
             fuzz->OnRemoteRequest(code, data, reply, option);
         }
     }

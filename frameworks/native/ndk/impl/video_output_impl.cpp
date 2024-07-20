@@ -20,6 +20,13 @@
 using namespace std;
 using namespace OHOS;
 using namespace OHOS::CameraStandard;
+const std::unordered_map<CameraFormat, Camera_Format> g_fwToNdkCameraFormat = {
+    {CameraFormat::CAMERA_FORMAT_RGBA_8888, Camera_Format::CAMERA_FORMAT_RGBA_8888},
+    {CameraFormat::CAMERA_FORMAT_YUV_420_SP, Camera_Format::CAMERA_FORMAT_YUV_420_SP},
+    {CameraFormat::CAMERA_FORMAT_JPEG, Camera_Format::CAMERA_FORMAT_JPEG},
+    {CameraFormat::CAMERA_FORMAT_YCBCR_P010, Camera_Format::CAMERA_FORMAT_YCBCR_P010},
+    {CameraFormat::CAMERA_FORMAT_YCRCB_P010, Camera_Format::CAMERA_FORMAT_YCRCB_P010}
+};
 
 class InnerVideoOutputCallback : public VideoStateCallback {
 public:
@@ -104,4 +111,33 @@ Camera_ErrorCode Camera_VideoOutput::Release()
 sptr<VideoOutput> Camera_VideoOutput::GetInnerVideoOutput()
 {
     return innerVideoOutput_;
+}
+
+Camera_ErrorCode Camera_VideoOutput::GetVideoProfile(Camera_VideoProfile** profile)
+{
+    auto videoOutputProfile = innerVideoOutput_->GetVideoProfile();
+    CHECK_AND_RETURN_RET_LOG(videoOutputProfile != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_VideoOutput::GetVideoProfile failed to get video profile!");
+
+    CameraFormat cameraFormat = videoOutputProfile->GetCameraFormat();
+    auto itr = g_fwToNdkCameraFormat.find(cameraFormat);
+    CHECK_AND_RETURN_RET_LOG(itr != g_fwToNdkCameraFormat.end(), CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_VideoOutput::GetVideoProfile unsupported camera format %{public}d", cameraFormat);
+
+    auto frames = videoOutputProfile->GetFrameRates();
+    CHECK_AND_RETURN_RET_LOG(frames.size() > 1, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_VideoOutput::GetVideoProfile the current video profile is not configured correctly!");
+
+    Camera_VideoProfile* newProfile = new Camera_VideoProfile;
+    CHECK_AND_RETURN_RET_LOG(newProfile != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_VideoOutput::GetVideoProfile failed to allocate memory for video profile!");
+
+    newProfile->format = itr->second;
+    newProfile->range.min = static_cast<uint32_t>(frames[0]);
+    newProfile->range.max = static_cast<uint32_t>(frames[1]);
+    newProfile->size.width = videoOutputProfile->GetSize().width;
+    newProfile->size.height = videoOutputProfile->GetSize().height;
+
+    *profile = newProfile;
+    return CAMERA_OK;
 }

@@ -26,11 +26,11 @@ class CameraPhotoProxy : public RefBase {
 public:
     CameraPhotoProxy();
     CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format, int32_t photoWidth,
-        int32_t photoHeight, bool isHighQuality);
+        int32_t photoHeight, bool isHighQuality, int32_t captureId);
     virtual ~CameraPhotoProxy();
     void ReadFromParcel(MessageParcel &parcel);
     void WriteToParcel(MessageParcel &parcel);
-    void SetDeferredAttrs(std::string photoId, int32_t deferredProcType, uint64_t fileSize);
+    void SetDeferredAttrs(std::string photoId, int32_t deferredProcType, uint64_t fileSize, int32_t imageFormat);
     void SetLocation(double latitude, double longitude);
     int32_t CameraFreeBufferHandle();
 
@@ -47,7 +47,9 @@ private:
     int32_t isDeferredPhoto_;
     double latitude_;
     double longitude_;
+    int32_t captureId_;
     sptr<Surface> photoSurface_;
+    int32_t imageFormat_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
