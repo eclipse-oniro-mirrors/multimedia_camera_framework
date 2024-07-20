@@ -54,10 +54,10 @@ enum CameraFormat {
 };
 
 enum ProfileSizeRatio : int32_t {
-    UNSPECIFIED,
-    RATIO_1_1,
-    RATIO_4_3,
-    RATIO_16_9
+    UNSPECIFIED = -1,
+    RATIO_1_1 = 0,
+    RATIO_4_3 = 1,
+    RATIO_16_9 = 2,
 };
 
 class Profile {
