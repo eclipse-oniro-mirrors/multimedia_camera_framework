@@ -11188,5 +11188,91 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_timelapsephoto_0
     }
 }
 
+/* Feature: Framework
+ * Function: Test preview/capture with night session's beauty
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test preview/capture with night session's beauty
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_085, TestSize.Level0)
+{
+    SceneMode nightMode = SceneMode::NIGHT;
+    if (!IsSupportMode(nightMode)) {
+        return;
+    }
+    sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(cameraManagerObj, nullptr);
+
+    std::vector<SceneMode> modes = cameraManagerObj->GetSupportedModes(cameras_[1]);
+    ASSERT_TRUE(modes.size() != 0);
+
+    sptr<CameraOutputCapability> modeAbility =
+        cameraManagerObj->GetSupportedOutputCapability(cameras_[1], nightMode);
+    ASSERT_NE(modeAbility, nullptr);
+
+    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(nightMode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<NightSession> nightSession = static_cast<NightSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(nightSession, nullptr);
+    int32_t intResult = nightSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = nightSession->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    float ratioWidth = 640;
+    float ratioHeight = 480;
+    float ratio = ratioWidth / ratioHeight;
+    Profile profile = SelectProfileByRatioAndFormat(modeAbility, ratio, photoFormat_);
+    ASSERT_NE(profile.format_, -1);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput(profile);
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = nightSession->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    profile = SelectProfileByRatioAndFormat(modeAbility, ratio, previewFormat_);
+    ASSERT_NE(profile.format_, -1);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profile);
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = nightSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    EXPECT_EQ(nightSession->CommitConfig(), 0);
+
+    nightSession->LockForControl();
+
+    std::vector<BeautyType> beautyLists = nightSession->GetSupportedBeautyTypes();
+    EXPECT_GE(beautyLists.size(), 1);
+
+    std::vector<int32_t> rangeLists = {};
+    if (beautyLists.size() >= 1) {
+        rangeLists = nightSession->GetSupportedBeautyRange(beautyLists[0]);
+    }
+
+    if (beautyLists.size() >= 1) {
+        nightSession->SetBeauty(beautyLists[0], rangeLists[0]);
+    }
+
+    nightSession->UnlockForControl();
+
+    if (beautyLists.size() >= 1) {
+        EXPECT_EQ(nightSession->GetBeauty(beautyLists[0]), rangeLists[0]);
+    }
+
+    EXPECT_EQ(nightSession->Start(), 0);
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_CAPTURE);
+
+    nightSession->Stop();
+}
+
 } // namespace CameraStandard
 } // namespace OHOS
