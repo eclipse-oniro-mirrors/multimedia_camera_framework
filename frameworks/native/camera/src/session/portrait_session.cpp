@@ -60,7 +60,7 @@ std::vector<PortraitEffect> PortraitSession::GetSupportedPortraitEffects()
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, supportedPortraitEffects,
         "PortraitSession::GetSupportedPortraitEffects abilityId is NULL");
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
-    CHECK_AND_RETURN_RET(metadata != nullptr, supportedPortraitEffects);
+    CHECK_ERROR_RETURN_RET(metadata == nullptr, supportedPortraitEffects);
     camera_metadata_item_t item;
     ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SCENE_PORTRAIT_EFFECT_TYPES, &item);
     CHECK_AND_RETURN_RET(ret == CAM_META_SUCCESS && item.count != 0, supportedPortraitEffects);
@@ -84,10 +84,8 @@ PortraitEffect PortraitSession::GetPortraitEffect()
     CHECK_AND_RETURN_RET(metadata != nullptr, PortraitEffect::OFF_EFFECT);
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_PORTRAIT_EFFECT_TYPE, &item);
-    if (ret != CAM_META_SUCCESS || item.count == 0) {
-        MEDIA_ERR_LOG("CaptureSession::GetPortraitEffect Failed with return code %{public}d", ret);
-        return PortraitEffect::OFF_EFFECT;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, PortraitEffect::OFF_EFFECT,
+        "CaptureSession::GetPortraitEffect Failed with return code %{public}d", ret);
     auto itr = metaToFwPortraitEffect_.find(static_cast<camera_portrait_effect_type_t>(item.data.u8[0]));
     if (itr != metaToFwPortraitEffect_.end()) {
         return itr->second;

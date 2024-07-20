@@ -63,6 +63,13 @@
         }                                                \
     } while (0)
 
+#define CHECK_ERROR_RETURN(cond, fmt, ...)            \
+    do {                                              \
+        if (cond) {                                   \
+            return;                                   \
+        }                                             \
+    } while (0)
+
 #define CHECK_AND_RETURN_LOG(cond, fmt, ...)           \
     do {                                               \
         if (!(cond)) {                                 \
@@ -88,7 +95,7 @@
 
 #define CHECK_ERROR_PRINT_LOG(cond, fmt, ...)          \
     do {                                               \
-        if (cond) {                                 \
+        if (cond) {                                    \
             MEDIA_ERR_LOG(fmt, ##__VA_ARGS__);         \
         }                                              \
     } while (0)
@@ -96,6 +103,13 @@
 #define CHECK_AND_RETURN_RET(cond, ret)                \
     do {                                               \
         if (!(cond)) {                                 \
+            return ret;                                \
+        }                                              \
+    } while (0)
+
+#define CHECK_ERROR_RETURN_RET(cond, ret)              \
+    do {                                               \
+        if (cond) {                                    \
             return ret;                                \
         }                                              \
     } while (0)

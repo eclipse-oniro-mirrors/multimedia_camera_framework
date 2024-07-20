@@ -24,10 +24,8 @@ QuickShotPhotoSession::QuickShotPhotoSession(sptr<ICaptureSession>& captureSessi
 bool QuickShotPhotoSession::CanAddOutput(sptr<CaptureOutput>& output)
 {
     MEDIA_DEBUG_LOG("Enter Into QuickShotPhotoSession::CanAddOutput");
-    if (!IsSessionConfiged() || output == nullptr) {
-        MEDIA_ERR_LOG("QuickShotPhotoSession::CanAddOutput operation is Not allowed!");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionConfiged() || output == nullptr, false,
+        "QuickShotPhotoSession::CanAddOutput operation is not allowed!");
     return output->GetOutputType() != CAPTURE_OUTPUT_TYPE_VIDEO && CaptureSession::CanAddOutput(output);
 }
 } // namespace CameraStandard

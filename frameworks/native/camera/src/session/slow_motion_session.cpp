@@ -69,6 +69,8 @@ bool SlowMotionSession::IsSlowMotionDetectionSupported()
         MEDIA_ERR_LOG("IsSlowMotionDetectionSupported Failed with return code %{public}d", ret);
         return false;
     }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, false,
+        "IsSlowMotionDetectionSupported Failed with return code %{public}d", ret);
     MEDIA_INFO_LOG("IsSlowMotionDetectionSupported value: %{public}u", item.data.u8[0]);
     CHECK_AND_RETURN_RET(item.data.u8[0] != 1, true);
     return false;
