@@ -181,10 +181,6 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
 
     int32_t ret = PrepareCaptureId();
     preparedCaptureId = GetPreparedCaptureId();
-    if (ret != CAMERA_OK || preparedCaptureId == CAPTURE_ID_UNSET) {
-        MEDIA_ERR_LOG("HStreamRepeat::Start Failed to allocate a captureId");
-        return ret;
-    }
     CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK || preparedCaptureId == CAPTURE_ID_UNSET, ret,
         "HStreamRepeat::Start Failed to allocate a captureId");
     UpdateSketchStatus(SketchStatus::STARTING);
