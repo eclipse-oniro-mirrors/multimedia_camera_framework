@@ -76,14 +76,10 @@ int32_t SketchWrapper::UpdateSketchRatio(float sketchRatio)
 {
     // SketchRatio value could be negative value
     MEDIA_DEBUG_LOG("Enter Into SketchWrapper::UpdateSketchRatio");
-    if (sketchStream_ == nullptr) {
-        return CAMERA_INVALID_STATE;
-    }
+    CHECK_ERROR_RETURN_RET(sketchStream_ == nullptr, CAMERA_INVALID_STATE);
     sptr<IStreamCommon> hostStream = hostStream_.promote();
-    if (hostStream == nullptr) {
-        MEDIA_ERR_LOG("SketchWrapper::UpdateSketchRatio hostStream is null");
-        return CAMERA_INVALID_STATE;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(hostStream == nullptr, CAMERA_INVALID_STATE,
+        "SketchWrapper::UpdateSketchRatio hostStream is null");
     IStreamRepeat* repeatStream = static_cast<IStreamRepeat*>(hostStream.GetRefPtr());
     int32_t ret = repeatStream->UpdateSketchRatio(sketchRatio);
     if (ret == CAMERA_OK) {
@@ -101,9 +97,7 @@ int32_t SketchWrapper::Destroy()
         sketchStream_ = nullptr;
     }
     sptr<IStreamCommon> hostStream = hostStream_.promote();
-    if (hostStream == nullptr) {
-        return CAMERA_INVALID_STATE;
-    }
+    CHECK_ERROR_RETURN_RET(hostStream == nullptr, CAMERA_INVALID_STATE);
     IStreamRepeat* repeatStream = static_cast<IStreamRepeat*>(hostStream.GetRefPtr());
     return repeatStream->RemoveSketchStreamRepeat();
 }
@@ -141,9 +135,7 @@ void SketchWrapper::SetPreviewStateCallback(std::shared_ptr<PreviewStateCallback
 void SketchWrapper::OnSketchStatusChanged(const SceneFeaturesMode& sceneFeaturesMode)
 {
     auto callback = previewStateCallback_.lock();
-    if (callback == nullptr) {
-        return;
-    }
+    CHECK_ERROR_RETURN(callback == nullptr);
     float sketchReferenceRatio = GetSketchReferenceFovRatio(sceneFeaturesMode, currentZoomRatio_);
     std::lock_guard<std::mutex> lock(sketchStatusChangeMutex_);
     if (currentSketchStatusData_.sketchRatio != sketchReferenceRatio) {
@@ -161,9 +153,7 @@ void SketchWrapper::OnSketchStatusChanged(const SceneFeaturesMode& sceneFeatures
 void SketchWrapper::OnSketchStatusChanged(SketchStatus sketchStatus, const SceneFeaturesMode& sceneFeaturesMode)
 {
     auto callback = previewStateCallback_.lock();
-    if (callback == nullptr) {
-        return;
-    }
+    CHECK_ERROR_RETURN(callback == nullptr);
     float sketchReferenceRatio = GetSketchReferenceFovRatio(sceneFeaturesMode, currentZoomRatio_);
     std::lock_guard<std::mutex> lock(sketchStatusChangeMutex_);
     if (currentSketchStatusData_.status != sketchStatus ||
@@ -204,20 +194,13 @@ SceneFeaturesMode SketchWrapper::GetSceneFeaturesModeFromModeData(float modeFloa
 
 void SketchWrapper::UpdateSketchEnableRatio(std::shared_ptr<Camera::CameraMetadata>& deviceMetadata)
 {
-    if (deviceMetadata == nullptr) {
-        MEDIA_ERR_LOG("SketchWrapper::UpdateSketchEnableRatio deviceMetadata is null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(deviceMetadata == nullptr, "SketchWrapper::UpdateSketchEnableRatio deviceMetadata is null");
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(deviceMetadata->get(), OHOS_ABILITY_SKETCH_ENABLE_RATIO, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("SketchWrapper::UpdateSketchEnableRatio get sketch enable ratio failed");
-        return;
-    }
-    if (item.count <= 0) {
-        MEDIA_ERR_LOG("SketchWrapper::UpdateSketchEnableRatio sketch enable ratio count <= 0");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS,
+        "SketchWrapper::UpdateSketchEnableRatio get sketch enable ratio failed");
+    CHECK_ERROR_RETURN_LOG(item.count <= 0, "SketchWrapper::UpdateSketchEnableRatio sketch enable ratio count <= 0");
+
     constexpr int32_t dataGroupSize = 2; // 2 data as a group: key,value
     constexpr int32_t valueOffset = 1;   // 1 is value offset
     uint32_t groupCount = item.count / dataGroupSize;
@@ -270,17 +253,13 @@ void SketchWrapper::InsertSketchEnableRatioMapValue(SceneFeaturesMode& sceneFeat
 
 void SketchWrapper::UpdateSketchReferenceFovRatio(std::shared_ptr<Camera::CameraMetadata>& deviceMetadata)
 {
-    if (deviceMetadata == nullptr) {
-        MEDIA_ERR_LOG("SketchWrapper::UpdateSketchReferenceFovRatio deviceMetadata is null");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(deviceMetadata == nullptr,
+        "SketchWrapper::UpdateSketchReferenceFovRatio deviceMetadata is null");
     camera_metadata_item_t item;
     int ret =
         OHOS::Camera::FindCameraMetadataItem(deviceMetadata->get(), OHOS_ABILITY_SKETCH_REFERENCE_FOV_RATIO, &item);
-    if (ret != CAM_META_SUCCESS || item.count <= 0) {
-        MEDIA_ERR_LOG("SketchWrapper::UpdateSketchReferenceFovRatio get sketch reference fov ratio failed");
-        return;
-    }
+    CHECK_ERROR_RETURN_LOG(ret != CAM_META_SUCCESS || item.count <= 0,
+        "SketchWrapper::UpdateSketchReferenceFovRatio get sketch reference fov ratio failed");
     UpdateSketchReferenceFovRatio(item);
 }
 
@@ -325,16 +304,12 @@ void SketchWrapper::UpdateSketchReferenceFovRatio(camera_metadata_item_t& metada
 bool SketchWrapper::GetMoonCaptureBoostAbilityItem(
     std::shared_ptr<Camera::CameraMetadata>& deviceMetadata, camera_metadata_item_t& metadataItem)
 {
-    if (deviceMetadata == nullptr) {
-        MEDIA_ERR_LOG("SketchWrapper::GetMoonCaptureBoostAbilityItem deviceMetadata is null");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(deviceMetadata == nullptr, false,
+        "SketchWrapper::GetMoonCaptureBoostAbilityItem deviceMetadata is null");
     int ret =
         OHOS::Camera::FindCameraMetadataItem(deviceMetadata->get(), OHOS_ABILITY_MOON_CAPTURE_BOOST, &metadataItem);
-    if (ret != CAM_META_SUCCESS || metadataItem.count <= 0) {
-        MEDIA_ERR_LOG("SketchWrapper::GetMoonCaptureBoostAbilityItem get OHOS_ABILITY_MOON_CAPTURE_BOOST failed");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || metadataItem.count <= 0, false,
+        "SketchWrapper::GetMoonCaptureBoostAbilityItem get OHOS_ABILITY_MOON_CAPTURE_BOOST failed");
     return true;
 }
 

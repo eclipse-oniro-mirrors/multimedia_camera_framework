@@ -152,7 +152,9 @@ std::vector<float> CameraInfo::CalculateZoomRange()
 
 std::vector<float> CameraInfo::GetZoomRatioRange()
 {
-    CHECK_ERROR_RETURN_RET(!zoomRatioRange_.empty(), zoomRatioRange_);
+    if (!zoomRatioRange_.empty()) {
+        return zoomRatioRange_;
+    }
 
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata_->get(), OHOS_ABILITY_ZOOM_RATIO_RANGE, &item);
@@ -175,7 +177,10 @@ std::vector<float> CameraInfo::GetZoomRatioRange()
 
 std::vector<float> CameraInfo::GetExposureBiasRange()
 {
-    CHECK_ERROR_RETURN_RET(!exposureBiasRange_.empty(), exposureBiasRange_);
+    if (!exposureBiasRange_.empty()) {
+        return exposureBiasRange_;
+    }
+
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata_->get(), OHOS_ABILITY_AE_COMPENSATION_RANGE, &item);
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, {},

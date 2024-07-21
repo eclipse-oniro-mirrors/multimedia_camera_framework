@@ -30,7 +30,7 @@ int32_t LightPaintingSession::GetSupportedLightPaintings(std::vector<LightPainti
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "LightPaintingSession::GetSupportedLightPaintings Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), 
+    CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
         CameraErrorCode::SESSION_NOT_CONFIG,
         "LightPaintingSession::GetSupportedLightPaintings camera device is null");
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();

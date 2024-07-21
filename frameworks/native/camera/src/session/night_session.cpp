@@ -66,7 +66,7 @@ int32_t NightSession::SetExposure(uint32_t exposureValue)
     CHECK_ERROR_RETURN_RET_LOG((GetExposureRange(exposureRange) != CameraErrorCode::SUCCESS) && exposureRange.empty(),
         CameraErrorCode::OPERATION_NOT_ALLOWED, "NightSession::SetExposure range is empty");
     const uint32_t autoLongExposure = 0;
-    bool result = (std::find(exposureRange.begin(), exposureRange.end(), exposureValue) == exposureRange.end());
+    bool result = std::find(exposureRange.begin(), exposureRange.end(), exposureValue) == exposureRange.end();
     CHECK_ERROR_RETURN_RET_LOG(result && exposureValue != autoLongExposure, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "NightSession::SetExposure value(%{public}d)is not supported!", exposureValue);
     uint32_t exposureCompensation = exposureValue;

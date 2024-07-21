@@ -646,7 +646,7 @@ int32_t TimeLapsePhotoSession::SetIso(int32_t iso)
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
         CameraErrorCode::OPERATION_NOT_ALLOWED, "TimeLapsePhotoSession::SetIso camera device is null");
-    MEDIA_DEBUG_LOG("%{public}s: iso = %{public}d", __FUNCTION__, iso);
+    MEDIA_DEBUG_LOG("TimeLapsePhotoSession::SetIso: iso = %{public}d", iso);
     std::vector<int32_t> isoRange;
     CHECK_ERROR_RETURN_RET_LOG((GetIsoRange(isoRange) != CameraErrorCode::SUCCESS) && isoRange.empty(),
         CameraErrorCode::OPERATION_NOT_ALLOWED, "TimeLapsePhotoSession::SetIso range is empty");
@@ -766,10 +766,6 @@ int32_t TimeLapsePhotoSession::GetSupportedWhiteBalanceModes(std::vector<WhiteBa
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDevice->GetCameraDeviceInfo()->GetMetadata();
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AWB_MODES, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("%{public}s: Failed with return code %{public}d", __FUNCTION__, ret);
-        return CameraErrorCode::SUCCESS;
-    }
     CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "TimeLapsePhotoSession::GetSupportedWhiteBalanceModes Failed with return code %{public}d", ret);
     for (uint32_t i = 0; i < item.count; i++) {

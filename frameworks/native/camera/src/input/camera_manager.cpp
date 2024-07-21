@@ -177,7 +177,9 @@ int32_t CameraStatusServiceCallback::OnCameraStatusChanged(const std::string& ca
     CHECK_ERROR_RETURN_RET_LOG(cameraManager == nullptr, CAMERA_OK, "OnCameraStatusChanged CameraManager is nullptr");
     auto listenerMap = cameraManager->GetCameraMngrCallbackMap();
     MEDIA_DEBUG_LOG("CameraMngrCallbackMap size %{public}d", listenerMap.Size());
-    CHECK_ERROR_RETURN_RET(listenerMap.IsEmpty(), CAMERA_OK);
+    if (listenerMap.IsEmpty()) {
+        return CAMERA_OK;
+    }
 
     CameraStatusInfo cameraStatusInfo;
     if (status == CAMERA_STATUS_APPEAR) {
@@ -214,7 +216,9 @@ int32_t CameraStatusServiceCallback::OnFlashlightStatusChanged(const std::string
         "OnFlashlightStatusChanged CameraManager is nullptr");
     auto listenerMap = cameraManager->GetCameraMngrCallbackMap();
     MEDIA_DEBUG_LOG("CameraMngrCallbackMap size %{public}d", listenerMap.Size());
-    CHECK_ERROR_RETURN_RET(listenerMap.IsEmpty(), CAMERA_OK);
+    if (listenerMap.IsEmpty()) {
+        return CAMERA_OK;
+    }
 
     listenerMap.Iterate([&](std::thread::id threadId, std::shared_ptr<CameraManagerCallback> cameraManagerCallback) {
         if (cameraManagerCallback != nullptr) {
@@ -309,7 +313,8 @@ sptr<CaptureSession> CameraManager::CreateCaptureSession(SceneMode mode)
     MEDIA_INFO_LOG("CameraManager::CreateCaptureSession proxy execute end, %{public}d", retCode);
     if (retCode == CAMERA_OK && session != nullptr) {
         sptr<CaptureSession> captureSession = CreateCaptureSessionImpl(mode, session);
-        CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, nullptr, "CreateCaptureSession(mode) failed to new captureSession!");
+        CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, nullptr,
+            "CreateCaptureSession(mode) failed to new captureSession!");
         captureSession->SetMode(mode);
         return captureSession;
     }
@@ -356,10 +361,6 @@ int CameraManager::CreateDeferredPhotoProcessingSession(int userId,
     sptr<DeferredPhotoProcSession> *pDeferredPhotoProcSession)
 {
     CAMERA_SYNC_TRACE;
-    sptr<DeferredProcessing::IDeferredPhotoProcessingSession> session = nullptr;
-    sptr<DeferredProcessing::IDeferredPhotoProcessingSessionCallback> remoteCallback = nullptr;
-    sptr<DeferredPhotoProcSession> deferredPhotoProcSession = nullptr;
-
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_ERROR_RETURN_RET_LOG(samgr == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateDeferredPhotoProcessingSession Failed to get System ability manager");
@@ -370,20 +371,23 @@ int CameraManager::CreateDeferredPhotoProcessingSession(int userId,
     CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateDeferredPhotoProcessingSession serviceProxy is null");
 
-    deferredPhotoProcSession = new(std::nothrow) DeferredPhotoProcSession(userId, callback);
+    sptr<DeferredPhotoProcSession> deferredPhotoProcSession =
+        new(std::nothrow) DeferredPhotoProcSession(userId, callback);
     CHECK_ERROR_RETURN_RET_LOG(deferredPhotoProcSession == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateDeferredPhotoProcessingSession failed to new deferredPhotoProcSession!");
-    remoteCallback = new(std::nothrow) DeferredPhotoProcessingSessionCallback(deferredPhotoProcSession);
+    sptr<DeferredProcessing::IDeferredPhotoProcessingSessionCallback> remoteCallback =
+        new(std::nothrow) DeferredPhotoProcessingSessionCallback(deferredPhotoProcSession);
     CHECK_ERROR_RETURN_RET_LOG(remoteCallback == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateDeferredPhotoProcessingSession failed to new remoteCallback!");
 
+    sptr<DeferredProcessing::IDeferredPhotoProcessingSession> session = nullptr;
     int32_t retCode = serviceProxy->CreateDeferredPhotoProcessingSession(userId, remoteCallback, session);
     CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "Failed to get photo session!, %{public}d", retCode);
     CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CreateDeferredPhotoProcessingSession Failed to CreateDeferredPhotoProcessingSession as session is null");
-    deferredPhotoProcSession->SetDeferredPhotoSession(session);
 
+    deferredPhotoProcSession->SetDeferredPhotoSession(session);
     *pDeferredPhotoProcSession = deferredPhotoProcSession;
     return CameraErrorCode::SUCCESS;
 }
@@ -686,9 +690,6 @@ int CameraManager::CreateVideoOutputWithoutProfile(sptr<Surface> surface, sptr<V
 int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surface, sptr<VideoOutput> *pVideoOutput)
 {
     CAMERA_SYNC_TRACE;
-    
-    sptr<VideoOutput> videoOutput = nullptr;
-
     auto serviceProxy = GetServiceProxy();
     CHECK_ERROR_RETURN_RET_LOG((serviceProxy == nullptr) || (surface == nullptr), CameraErrorCode::INVALID_ARGUMENT,
         "CameraManager::CreateVideoOutput serviceProxy is null or VideoOutputSurface/profile is null");
@@ -704,7 +705,7 @@ int CameraManager::CreateVideoOutput(VideoProfile &profile, sptr<Surface> &surfa
     CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
         "CameraManager::CreateVideoOutput Failed to get stream capture object from hcamera service! "
         "%{public}d", retCode);
-    videoOutput = new(std::nothrow) VideoOutput(surface->GetProducer());
+    sptr<VideoOutput> videoOutput = new(std::nothrow) VideoOutput(surface->GetProducer());
     CHECK_ERROR_RETURN_RET(videoOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR);
     videoOutput->SetStream(streamRepeat);
     videoOutput->SetOutputFormat(profile.GetCameraFormat());
@@ -864,10 +865,6 @@ int CameraManager::CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceSe
 {
     CAMERA_SYNC_TRACE;
     auto serviceProxy = GetServiceProxy();
-    if (serviceProxy == nullptr || cameraId.empty()) {
-        MEDIA_ERR_LOG("serviceProxy is null or CameraID is empty: %{public}s", cameraId.c_str());
-        return CameraErrorCode::INVALID_ARGUMENT;
-    }
     CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr || cameraId.empty(), CameraErrorCode::INVALID_ARGUMENT,
         "CameraManager::CreateCameraDevice serviceProxy is null or CameraID is empty: %{public}s", cameraId.c_str());
     sptr<ICameraDeviceService> device = nullptr;

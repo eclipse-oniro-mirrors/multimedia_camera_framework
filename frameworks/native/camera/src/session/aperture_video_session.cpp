@@ -61,7 +61,9 @@ int32_t ApertureVideoSession::CommitConfig()
     updateStabilizationAutoResult =
         AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_VIDEO_STABILIZATION_MODE, &autoStabilization, 1);
     UnlockForControl();
-    CHECK_ERROR_RETURN_RET(updateStabilizationAutoResult, CameraErrorCode::SUCCESS);
+    if (updateStabilizationAutoResult) {
+        return CameraErrorCode::SUCCESS;
+    }
     MEDIA_ERR_LOG("ApertureVideoSession::CommitConfig add STABILIZATION fail");
     return CameraErrorCode::SERVICE_FATL_ERROR;
 }

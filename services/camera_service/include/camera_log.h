@@ -63,7 +63,7 @@
         }                                                \
     } while (0)
 
-#define CHECK_ERROR_RETURN(cond, fmt, ...)            \
+#define CHECK_ERROR_RETURN(cond)                      \
     do {                                              \
         if (cond) {                                   \
             return;                                   \
