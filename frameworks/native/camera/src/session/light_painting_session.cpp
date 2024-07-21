@@ -73,11 +73,10 @@ int32_t LightPaintingSession::SetLightPainting(const LightPaintingType type)
         "LightPaintingSession::SetLightPainting unknown type of LightPainting.");
     lightPainting = itr->second;
     bool status = false;
-    int32_t ret;
     uint32_t count = 1;
     camera_metadata_item_t item;
     MEDIA_DEBUG_LOG("LightPaintingSession::SetLightPainting: %{public}d", type);
-    ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_LIGHT_PAINTING_TYPE, &item);
+    int32_t ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_LIGHT_PAINTING_TYPE, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
         MEDIA_DEBUG_LOG("LightPaintingSession::SetLightPainting failed to find OHOS_CONTROL_LIGHT_PAINTING_TYPE");
         status = changedMetadata_->addEntry(OHOS_CONTROL_LIGHT_PAINTING_TYPE, &lightPainting, count);

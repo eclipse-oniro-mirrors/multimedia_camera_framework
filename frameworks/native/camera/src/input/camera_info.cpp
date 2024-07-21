@@ -119,42 +119,27 @@ ConnectionType CameraInfo::GetConnectionType()
 
 std::vector<float> CameraInfo::CalculateZoomRange()
 {
-    int32_t ret;
+    camera_metadata_item_t item;
+    int32_t ret = Camera::FindCameraMetadataItem(metadata_->get(), OHOS_ABILITY_ZOOM_CAP, &item);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, {},
+        "Failed to get zoom cap with return code %{public}d", ret);
+    uint32_t zoomRangeCount = 2;
+    CHECK_ERROR_RETURN_RET_LOG(item.count != zoomRangeCount, {}, "Invalid zoom cap count: %{public}d", item.count);
     int32_t minIndex = 0;
     int32_t maxIndex = 1;
-    uint32_t zoomRangeCount = 2;
     constexpr float factor = 100.0;
-    float minZoom;
-    float maxZoom;
-    float tempZoom;
-    camera_metadata_item_t item;
-
-    ret = Camera::FindCameraMetadataItem(metadata_->get(), OHOS_ABILITY_ZOOM_CAP, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("Failed to get zoom cap with return code %{public}d", ret);
-        return {};
-    }
-    if (item.count != zoomRangeCount) {
-        MEDIA_ERR_LOG("Invalid zoom cap count: %{public}d", item.count);
-        return {};
-    }
     MEDIA_DEBUG_LOG("Zoom cap min: %{public}d, max: %{public}d",
                     item.data.i32[minIndex], item.data.i32[maxIndex]);
-    minZoom = item.data.i32[minIndex] / factor;
-    maxZoom = item.data.i32[maxIndex] / factor;
+    float minZoom = item.data.i32[minIndex] / factor;
+    float maxZoom = item.data.i32[maxIndex] / factor;
 
     ret = Camera::FindCameraMetadataItem(metadata_->get(), OHOS_ABILITY_SCENE_ZOOM_CAP, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("Failed to get scene zoom cap with return code %{public}d", ret);
-        return {};
-    }
-    if (item.count != zoomRangeCount) {
-        MEDIA_ERR_LOG("Invalid zoom cap count: %{public}d", item.count);
-        return {};
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, {},
+        "Failed to get scene zoom cap with return code %{public}d", ret);
+    CHECK_ERROR_RETURN_RET_LOG(item.count != zoomRangeCount, {}, "Invalid zoom cap count: %{public}d", item.count);
     MEDIA_DEBUG_LOG("Scene zoom cap min: %{public}d, max: %{public}d",
                     item.data.i32[minIndex], item.data.i32[maxIndex]);
-    tempZoom = item.data.i32[minIndex] / factor;
+    float tempZoom = item.data.i32[minIndex] / factor;
     if (minZoom < tempZoom) {
         minZoom = tempZoom;
     }
@@ -167,33 +152,21 @@ std::vector<float> CameraInfo::CalculateZoomRange()
 
 std::vector<float> CameraInfo::GetZoomRatioRange()
 {
+    CHECK_ERROR_RETURN_RET(!zoomRatioRange_.empty(), zoomRatioRange_);
+
+    camera_metadata_item_t item;
+    int32_t ret = Camera::FindCameraMetadataItem(metadata_->get(), OHOS_ABILITY_ZOOM_RATIO_RANGE, &item);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, {},
+        "Failed to get zoom ratio range with return code %{public}d", ret);
+    uint32_t zoomRangeCount = 2;
+    CHECK_ERROR_RETURN_RET_LOG(item.count != zoomRangeCount, {},
+        "Invalid zoom ratio range count: %{public}d", item.count);
     int32_t minIndex = 0;
     int32_t maxIndex = 1;
-    std::vector<float> range;
+    std::vector<float> range = {item.data.f[minIndex], item.data.f[maxIndex]};
+    CHECK_ERROR_RETURN_RET_LOG(range[minIndex] > range[maxIndex], {},
+        "Invalid zoom range. min: %{public}f, max: %{public}f", range[minIndex], range[maxIndex]);
 
-    if (!zoomRatioRange_.empty()) {
-        return zoomRatioRange_;
-    }
-
-    int ret;
-    uint32_t zoomRangeCount = 2;
-    camera_metadata_item_t item;
-
-    ret = Camera::FindCameraMetadataItem(metadata_->get(), OHOS_ABILITY_ZOOM_RATIO_RANGE, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("Failed to get zoom ratio range with return code %{public}d", ret);
-        return {};
-    }
-    if (item.count != zoomRangeCount) {
-        MEDIA_ERR_LOG("Invalid zoom ratio range count: %{public}d", item.count);
-        return {};
-    }
-    range = {item.data.f[minIndex], item.data.f[maxIndex]};
-
-    if (range[minIndex] > range[maxIndex]) {
-        MEDIA_ERR_LOG("Invalid zoom range. min: %{public}f, max: %{public}f", range[minIndex], range[maxIndex]);
-        return {};
-    }
     MEDIA_DEBUG_LOG("Zoom range min: %{public}f, max: %{public}f", range[minIndex], range[maxIndex]);
 
     zoomRatioRange_ = range;
@@ -202,42 +175,24 @@ std::vector<float> CameraInfo::GetZoomRatioRange()
 
 std::vector<float> CameraInfo::GetExposureBiasRange()
 {
+    CHECK_ERROR_RETURN_RET(!exposureBiasRange_.empty(), exposureBiasRange_);
+    camera_metadata_item_t item;
+    int32_t ret = Camera::FindCameraMetadataItem(metadata_->get(), OHOS_ABILITY_AE_COMPENSATION_RANGE, &item);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, {},
+        "Failed to get exposure compensation range with return code %{public}d", ret);
+    uint32_t biasRangeCount = 2;
+    CHECK_ERROR_RETURN_RET_LOG(item.count != biasRangeCount, {},
+        "Invalid exposure compensation range count: %{public}d", item.count);
     int32_t minIndex = 0;
     int32_t maxIndex = 1;
-    std::vector<int32_t> range;
-
-    if (!exposureBiasRange_.empty()) {
-        return exposureBiasRange_;
-    }
-
-    int ret;
-    uint32_t biasRangeCount = 2;
-    camera_metadata_item_t item;
-
-    ret = Camera::FindCameraMetadataItem(metadata_->get(), OHOS_ABILITY_AE_COMPENSATION_RANGE, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("Failed to get exposure compensation range with return code %{public}d", ret);
-        return {};
-    }
-    if (item.count != biasRangeCount) {
-        MEDIA_ERR_LOG("Invalid exposure compensation range count: %{public}d", item.count);
-        return {};
-    }
-
-    range = {item.data.i32[minIndex], item.data.i32[maxIndex]};
-    if (range[minIndex] > range[maxIndex]) {
-        MEDIA_ERR_LOG("Invalid exposure compensation range. min: %{public}d, max: %{public}d",
-                      range[minIndex], range[maxIndex]);
-        return {};
-    }
+    std::vector<int32_t> range = {item.data.i32[minIndex], item.data.i32[maxIndex]};
+    CHECK_ERROR_RETURN_RET_LOG(range[minIndex] > range[maxIndex], {},
+        "Invalid exposure compensation range. min: %{public}d, max: %{public}d", range[minIndex], range[maxIndex]);
     MEDIA_DEBUG_LOG("Exposure hdi compensation min: %{public}d, max: %{public}d", range[minIndex], range[maxIndex]);
 
     ret = Camera::FindCameraMetadataItem(metadata_->get(), OHOS_ABILITY_AE_COMPENSATION_STEP, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_ERR_LOG("Failed to get exposure compensation step with return code %{public}d", ret);
-        return {};
-    }
-
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, {},
+        "Failed to get exposure compensation step with return code %{public}d", ret);
     int32_t stepNumerator = item.data.r->numerator;
     int32_t stepDenominator = item.data.r->denominator;
     float step = static_cast<float>(stepNumerator) / static_cast<float>(stepDenominator);
