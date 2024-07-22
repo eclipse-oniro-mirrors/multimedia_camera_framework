@@ -138,6 +138,8 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
             "ColorEffectType", CreateObjectWithMap(env, "ColorEffectType", mapColorEffectType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY(
             "RestoreParamType", CreateObjectWithMap(env, "RestoreParamType", mapRestoreParamType, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("ExposureMeteringMode",
+            CreateObjectWithMap(env, "ExposureMeteringMode", mapExposureMeteringMode, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("EffectSuggestionType",
             CreateObjectWithMap(env, "EffectSuggestionType", mapEffectSuggestionType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("PolicyType", CreateObjectWithMap(env, "PolicyType", mapPolicyType, g_ignoreRef_)),
