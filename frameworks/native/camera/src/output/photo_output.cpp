@@ -455,8 +455,8 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(),
-        CameraErrorCode::SESSION_NOT_CONFIG, "PhotoOutput Failed to Capture with setting, session not commited");
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionStarted(),
+        CameraErrorCode::SESSION_NOT_RUNNING, "PhotoOutput Failed to Capture with setting, session not started");
     CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr,
         CameraErrorCode::SERVICE_FATL_ERROR, "PhotoOutput Failed to Capture with setting, GetStream is nullptr");
     defaultCaptureSetting_ = photoCaptureSettings;
@@ -479,8 +479,8 @@ int32_t PhotoOutput::Capture()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(),
-        CameraErrorCode::SESSION_NOT_CONFIG, "PhotoOutput Failed to Capture, session not commited");
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionStarted(),
+        CameraErrorCode::SESSION_NOT_RUNNING, "PhotoOutput Failed to Capture, session not started");
     CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "PhotoOutput Failed to Capture, GetStream is nullptr");
     int32_t items = 0;
@@ -505,8 +505,8 @@ int32_t PhotoOutput::CancelCapture()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(),
-        CameraErrorCode::SESSION_NOT_CONFIG, "PhotoOutput Failed to CancelCapture, session not commited");
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionStarted(),
+        CameraErrorCode::SESSION_NOT_RUNNING, "PhotoOutput Failed to CancelCapture, session not started");
     CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr,
         CameraErrorCode::SERVICE_FATL_ERROR, "PhotoOutput Failed to CancelCapture, GetStream is nullptr");
     auto itemStream = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
@@ -524,8 +524,8 @@ int32_t PhotoOutput::ConfirmCapture()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     auto session = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(),
-        CameraErrorCode::SESSION_NOT_CONFIG, "PhotoOutput Failed to ConfirmCapture, session not commited");
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionStarted(),
+        CameraErrorCode::SESSION_NOT_RUNNING, "PhotoOutput Failed to ConfirmCapture, session not started");
     CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "PhotoOutput Failed to ConfirmCapture, GetStream is nullptr");
     auto itemStream = static_cast<IStreamCapture*>(GetStream().GetRefPtr());
