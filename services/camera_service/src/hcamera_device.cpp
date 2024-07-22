@@ -44,6 +44,7 @@
 #include "common_event_support.h"
 #include "common_event_data.h"
 #include "want.h"
+#include "parameters.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -1425,6 +1426,9 @@ bool HCameraDevice::CanOpenCamera()
 
 bool HCameraDevice::GetCameraResourceCost(int32_t &cost, std::set<std::string> &conflicting)
 {
+    if (system::GetParameter("const.camera.multicamera.enable", "false") != "true") {
+        return false;
+    }
     sptr<OHOS::HDI::Camera::V1_3::ICameraDevice> hdiCameraDeviceV1_3;
     int32_t versionRes = cameraHostManager_->GetVersionByCamera(cameraID_);
     bool needCloseDevice = false;
