@@ -11221,9 +11221,10 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_085, TestSize.Le
     intResult = nightSession->AddInput(input_);
     EXPECT_EQ(intResult, 0);
 
-    float ratioWidth = 640;
-    float ratioHeight = 480;
-    float ratio = ratioWidth / ratioHeight;
+    camera_rational_t ratio = {
+        .numerator = 4,
+        .denominator=3
+    };
     Profile profile = SelectProfileByRatioAndFormat(modeAbility, ratio, photoFormat_);
     ASSERT_NE(profile.format_, -1);
 
