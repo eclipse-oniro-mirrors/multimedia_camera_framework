@@ -17,12 +17,14 @@
 #define OHOS_CAMERA_XCOLLIE_H
 
 #include <string>
+#include "xcollie/xcollie_define.h"
 
 namespace OHOS {
 class CameraXCollie {
 public:
-    CameraXCollie(const std::string& tag, uint32_t timeoutSeconds = 10,
-        std::function<void(void *)> func = nullptr, void* arg = nullptr, uint32_t flag = 1);
+    explicit CameraXCollie(const std::string& tag,
+      uint32_t flag = (HiviewDFX::XCOLLIE_FLAG_LOG | HiviewDFX::XCOLLIE_FLAG_RECOVERY),
+      uint32_t timeoutSeconds = 10, std::function<void(void *)> func = nullptr, void* arg = nullptr);
     ~CameraXCollie();
 
     void CancelCameraXCollie();

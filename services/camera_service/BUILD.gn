@@ -51,7 +51,6 @@ ohos_shared_library("camera_service") {
     "src/camera_timer.cpp",
     "src/camera_util.cpp",
     "src/dfx/camera_report_uitls.cpp",
-    "src/dfx/camera_xcollie.cpp",
     "src/hcamera_device.cpp",
     "src/hcamera_device_manager.cpp",
     "src/hcamera_host_manager.cpp",
@@ -83,6 +82,7 @@ ohos_shared_library("camera_service") {
     "//drivers/peripheral/display/interfaces/include",
     "${graphic_surface_path}/surface/include",
     "//foundation/multimedia/camera_framework/services/camera_service/include",
+    "${multimedia_camera_framework_path}/common/utils",
     "${multimedia_camera_framework_path}/services/camera_service/binder/base/include/window_manager_service_utils",
     "${multimedia_camera_framework_path}/services/camera_service/binder/client/include/window_manager_service_proxy",
     "${multimedia_camera_framework_path}/services/camera_service/binder/server/include/window_manager_service_callback_stub",
@@ -125,7 +125,10 @@ ohos_shared_library("camera_service") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
   }
 
-  deps = [ "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service" ]
+  deps = [
+    "${multimedia_camera_framework_path}/common:camera_utils",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service:deferred_processing_service",
+  ]
 
   external_deps = [
     "ability_base:want",

@@ -16,6 +16,7 @@
 #include "hcamera_device_stub.h"
 #include "camera_log.h"
 #include "camera_util.h"
+#include "camera_xcollie.h"
 #include "metadata_utils.h"
 #include "camera_service_ipc_interface_code.h"
 #include "ipc_skeleton.h"
@@ -36,10 +37,16 @@ int HCameraDeviceStub::OnRemoteRequest(
             break;
         }
         case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_CLOSE):
-            errCode = Close();
+            {
+                CameraXCollie cameraXCollie("HCameraDeviceStub::Close");
+                errCode = Close();
+            }
             break;
         case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_RELEASE):
-            errCode = Release();
+            {
+                CameraXCollie cameraXCollie("HCameraDeviceStub::Release");
+                errCode = Release();
+            }
             break;
         case static_cast<uint32_t>(CameraDeviceInterfaceCode::CAMERA_DEVICE_SET_CALLBACK):
             errCode = HCameraDeviceStub::HandleSetCallback(data);
@@ -151,6 +158,7 @@ int32_t HCameraDeviceStub::HandleDisableResult(MessageParcel &data)
 
 int32_t HCameraDeviceStub::HandleOpenSecureCameraResults(MessageParcel &data, MessageParcel &reply)
 {
+    CameraXCollie cameraXCollie("HandleOpenSecureCameraResults");
     int32_t errorCode;
     if (data.ReadBool()) {
         uint64_t secureSeqId = 0L;

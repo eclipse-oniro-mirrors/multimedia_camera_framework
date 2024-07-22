@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "dfx/camera_xcollie.h"
+#include "camera_xcollie.h"
 #include "input/camera_napi.h"
 #include "napi/native_common.h"
 
