@@ -40,10 +40,8 @@ int32_t NightSession::GetExposureRange(std::vector<uint32_t> &exposureRange)
     CHECK_AND_RETURN_RET(metadata != nullptr, CameraErrorCode::INVALID_ARGUMENT);
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_NIGHT_MODE_SUPPORTED_EXPOSURE_TIME, &item);
-    if (ret != CAM_META_SUCCESS || item.count == 0) {
-        MEDIA_ERR_LOG("CaptureSession::GetFilter Failed with return code %{public}d", ret);
-        return CameraErrorCode::INVALID_ARGUMENT;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::INVALID_ARGUMENT,
+        "NightSession::GetExposureRange Failed with return code %{public}d", ret);
     for (uint32_t i = 0; i < item.count; i++) {
         exposureRange.emplace_back(item.data.ui32[i]);
     }
@@ -55,25 +53,22 @@ int32_t NightSession::SetExposure(uint32_t exposureValue)
     CHECK_ERROR_RETURN_RET_LOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "NightSession::SetExposure Session is not Commited");
     CHECK_ERROR_RETURN_RET_LOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
-        "NightSession::SetExposureValue Need to call LockForControl() before setting camera properties");
+        "NightSession::SetExposure Need to call LockForControl() before setting camera properties");
     bool status = false;
     int32_t count = 1;
     camera_metadata_item_t item;
-    MEDIA_DEBUG_LOG("NightSession::SetExposureValue exposure compensation: %{public}d", exposureValue);
+    MEDIA_DEBUG_LOG("NightSession::SetExposure exposure compensation: %{public}d", exposureValue);
     auto inputDevice = GetInputDevice();
     CHECK_ERROR_RETURN_RET_LOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
         CameraErrorCode::OPERATION_NOT_ALLOWED, "NightSession::SetExposure camera device is null");
 
     std::vector<uint32_t> exposureRange;
     CHECK_ERROR_RETURN_RET_LOG((GetExposureRange(exposureRange) != CameraErrorCode::SUCCESS) && exposureRange.empty(),
-        CameraErrorCode::OPERATION_NOT_ALLOWED, "NightSession::SetExposureValue range is empty");
+        CameraErrorCode::OPERATION_NOT_ALLOWED, "NightSession::SetExposure range is empty");
     const uint32_t autoLongExposure = 0;
-    if (std::find(exposureRange.begin(), exposureRange.end(), exposureValue) == exposureRange.end() &&
-            exposureValue != autoLongExposure) {
-        MEDIA_ERR_LOG("NightSession::SetExposureValue value(%{public}d)is not supported!", exposureValue);
-        return CameraErrorCode::OPERATION_NOT_ALLOWED;
-    }
-
+    bool result = std::find(exposureRange.begin(), exposureRange.end(), exposureValue) == exposureRange.end();
+    CHECK_ERROR_RETURN_RET_LOG(result && exposureValue != autoLongExposure, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "NightSession::SetExposure value(%{public}d)is not supported!", exposureValue);
     uint32_t exposureCompensation = exposureValue;
     int ret = Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_MANUAL_EXPOSURE_TIME, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
@@ -82,7 +77,7 @@ int32_t NightSession::SetExposure(uint32_t exposureValue)
         status = changedMetadata_->updateEntry(OHOS_CONTROL_MANUAL_EXPOSURE_TIME, &exposureCompensation, count);
     }
     if (!status) {
-        MEDIA_ERR_LOG("NightSession::SetExposureValue Failed to set exposure compensation");
+        MEDIA_ERR_LOG("NightSession::SetExposure Failed to set exposure compensation");
     }
     return CameraErrorCode::SUCCESS;
 }
@@ -102,6 +97,8 @@ int32_t NightSession::GetExposure(uint32_t &exposureValue)
         MEDIA_ERR_LOG("NightSession::GetExposure Failed with return code %{public}d", ret);
         return CameraErrorCode::INVALID_ARGUMENT;
     }
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, CameraErrorCode::INVALID_ARGUMENT,
+        "NightSession::GetExposure Failed with return code %{public}d", ret);
     exposureValue = item.data.ui32[0];
     MEDIA_DEBUG_LOG("exposureValue: %{public}d", exposureValue);
     return CameraErrorCode::SUCCESS;

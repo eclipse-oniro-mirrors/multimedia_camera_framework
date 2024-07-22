@@ -115,20 +115,16 @@ int32_t VideoOutput::Start()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into VideoOutput::Start");
-    auto captureSession = GetSession();
-    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr || !captureSession->IsSessionCommited(),
-        CameraErrorCode::SESSION_NOT_CONFIG,
-        "VideoOutput Failed to Start, session not commited");
+    auto session = GetSession();
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr || !session->IsSessionCommited(),
+        CameraErrorCode::SESSION_NOT_CONFIG, "VideoOutput Failed to Start, session not commited");
     CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr,
-        CameraErrorCode::SERVICE_FATL_ERROR,
-        "VideoOutput Failed to Start!, GetStream is nullptr");
+        CameraErrorCode::SERVICE_FATL_ERROR, "VideoOutput Failed to Start!, GetStream is nullptr");
     auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Start();
-        if (errCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("VideoOutput Failed to Start!, errCode: %{public}d", errCode);
-        }
+        CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "VideoOutput Failed to Start!, errCode: %{public}d", errCode);
     } else {
         MEDIA_ERR_LOG("VideoOutput::Start() itemStream is nullptr");
     }
@@ -139,17 +135,13 @@ int32_t VideoOutput::Stop()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into VideoOutput::Stop");
-    if (GetStream() == nullptr) {
-        MEDIA_ERR_LOG("VideoOutput Failed to Stop!, GetStream is nullptr");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "VideoOutput Failed to Stop!, GetStream is nullptr");
     auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
         errCode = itemStream->Stop();
-        if (errCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("VideoOutput Failed to Stop!, errCode: %{public}d", errCode);
-        }
+        CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "VideoOutput Failed to Stop!, errCode: %{public}d", errCode);
     } else {
         MEDIA_ERR_LOG("VideoOutput::Stop() itemStream is nullptr");
     }
@@ -160,10 +152,8 @@ int32_t VideoOutput::Resume()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into VideoOutput::Resume");
-    if (GetStream() == nullptr) {
-        MEDIA_ERR_LOG("VideoOutput Failed to Resume!, GetStream is nullptr");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "VideoOutput Failed to Resume!, GetStream is nullptr");
     auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
@@ -178,10 +168,8 @@ int32_t VideoOutput::Pause()
 {
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into VideoOutput::Pause");
-    if (GetStream() == nullptr) {
-        MEDIA_ERR_LOG("VideoOutput Failed to Pause!, GetStream is nullptr");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "VideoOutput Failed to Pause!, GetStream is nullptr");
     auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
@@ -195,29 +183,21 @@ int32_t VideoOutput::Pause()
 int32_t VideoOutput::CreateStream()
 {
     auto stream = GetStream();
-    if (stream != nullptr) {
-        MEDIA_ERR_LOG("VideoOutput::CreateStream stream is not null");
-        return CameraErrorCode::OPERATION_NOT_ALLOWED;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(stream != nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "VideoOutput::CreateStream stream is not null");
     auto producer = GetBufferProducer();
-    if (producer == nullptr) {
-        MEDIA_ERR_LOG("VideoOutput::CreateStream producer is null");
-        return CameraErrorCode::OPERATION_NOT_ALLOWED;
-    }
-
+    CHECK_ERROR_RETURN_RET_LOG(producer == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "VideoOutput::CreateStream producer is not null");
     sptr<IStreamRepeat> streamPtr = nullptr;
     auto videoProfile = GetVideoProfile();
-    if (videoProfile == nullptr) {
-        MEDIA_ERR_LOG("VideoOutput::CreateStream photoProfile is null");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
-
-    int32_t res = CameraManager::GetInstance()->CreateVideoOutputStream(streamPtr, *videoProfile, GetBufferProducer());
-    if (res != CameraErrorCode::SUCCESS) {
-        MEDIA_ERR_LOG("VideoOutput::CreateStream fail! error code :%{public}d", res);
-    }
+    CHECK_ERROR_RETURN_RET_LOG(videoProfile == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "VideoOutput::CreateStream video profile is not null");
+    int32_t retCode =
+        CameraManager::GetInstance()->CreateVideoOutputStream(streamPtr, *videoProfile, GetBufferProducer());
+    CHECK_ERROR_PRINT_LOG(retCode != CameraErrorCode::SUCCESS,
+        "VideoOutput::CreateStream fail! error code :%{public}d", retCode);
     SetStream(streamPtr);
-    return res;
+    return retCode;
 }
 
 int32_t VideoOutput::Release()
@@ -229,10 +209,8 @@ int32_t VideoOutput::Release()
     }
     std::lock_guard<std::mutex> lock(asyncOpMutex_);
     MEDIA_DEBUG_LOG("Enter Into VideoOutput::Release");
-    if (GetStream() == nullptr) {
-        MEDIA_ERR_LOG("VideoOutput Failed to Release!, GetStream is nullptr");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(GetStream() == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "VideoOutput Failed to Release!, GetStream is nullptr");
     auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     if (itemStream) {
@@ -240,9 +218,7 @@ int32_t VideoOutput::Release()
     } else {
         MEDIA_ERR_LOG("VideoOutput::Release() itemStream is nullptr");
     }
-    if (errCode != CAMERA_OK) {
-        MEDIA_ERR_LOG("Failed to release VideoOutput!, errCode: %{public}d", errCode);
-    }
+    CHECK_ERROR_PRINT_LOG(errCode != CAMERA_OK, "Failed to release VideoOutput!, errCode: %{public}d", errCode);
     CaptureOutput::Release();
     return ServiceToCameraError(errCode);
 }
@@ -279,21 +255,14 @@ void VideoOutput::SetSize(Size size)
 int32_t VideoOutput::SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate)
 {
     int32_t result = canSetFrameRateRange(minFrameRate, maxFrameRate);
-    if (result != CameraErrorCode::SUCCESS) {
-        return result;
-    }
-
-    if (minFrameRate == videoFrameRateRange_[0] && maxFrameRate == videoFrameRateRange_[1]) {
-        MEDIA_WARNING_LOG("The frame rate does not need to be set.");
-        return CameraErrorCode::INVALID_ARGUMENT;
-    }
+    CHECK_ERROR_RETURN_RET(result != CameraErrorCode::SUCCESS, result);
+    CHECK_ERROR_RETURN_RET_LOG(minFrameRate == videoFrameRateRange_[0] && maxFrameRate == videoFrameRateRange_[1],
+        CameraErrorCode::INVALID_ARGUMENT, "VideoOutput::SetFrameRate The frame rate does not need to be set.");
     auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
     if (itemStream) {
         int32_t ret = itemStream->SetFrameRate(minFrameRate, maxFrameRate);
-        if (ret != CAMERA_OK) {
-            MEDIA_ERR_LOG("VideoOutput::setFrameRate failed to set stream frame rate");
-            return ServiceToCameraError(ret);
-        }
+        CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK, ServiceToCameraError(ret),
+            "VideoOutput::setFrameRate failed to set stream frame rate");
         SetFrameRateRange(minFrameRate, maxFrameRate);
     }
     return CameraErrorCode::SUCCESS;
@@ -303,13 +272,10 @@ std::vector<std::vector<int32_t>> VideoOutput::GetSupportedFrameRates()
 {
     MEDIA_DEBUG_LOG("VideoOutput::GetSupportedFrameRates called.");
     auto session = GetSession();
-    if (session == nullptr) {
-        return {};
-    }
+    CHECK_ERROR_RETURN_RET(session == nullptr, {});
     auto inputDevice = session->GetInputDevice();
-    if (inputDevice == nullptr) {
-        return {};
-    }
+    CHECK_ERROR_RETURN_RET(inputDevice == nullptr, {});
+
     sptr<CameraDevice> camera = inputDevice->GetCameraDeviceInfo();
     sptr<CameraOutputCapability> cameraOutputCapability =
                                  CameraManager::GetInstance()->GetSupportedOutputCapability(camera, SceneMode::VIDEO);
@@ -335,56 +301,37 @@ std::vector<std::vector<int32_t>> VideoOutput::GetSupportedFrameRates()
 int32_t VideoOutput::enableMirror(bool enabled)
 {
     auto session = GetSession();
-    if (session == nullptr) {
-        MEDIA_WARNING_LOG("Can not set frame rate range without commit session");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+        "Can not enable mirror, session is not config");
     auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
-    if (itemStream && IsMirrorSupported()) {
-        int32_t ret = itemStream->SetMirror(enabled);
-        if (ret != CAMERA_OK) {
-            MEDIA_ERR_LOG("VideoOutput::setFrameRate failed to set stream frame rate");
-            return ServiceToCameraError(ret);
-        }
-    } else {
-        MEDIA_ERR_LOG("VideoOutput::setFrameRate not supported mirror or stream is null");
-        return CameraErrorCode::INVALID_ARGUMENT;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!itemStream || !IsMirrorSupported(), CameraErrorCode::INVALID_ARGUMENT,
+        "VideoOutput::enableMirror not supported mirror or stream is null");
+    int32_t retCode = itemStream->SetMirror(enabled);
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAMERA_OK, ServiceToCameraError(retCode),
+        "VideoOutput::enableMirror failed to set mirror");
     return CameraErrorCode::SUCCESS;
 }
  
 bool VideoOutput::IsMirrorSupported()
 {
-    bool isMirrorEnabled = false;
-    camera_metadata_item_t item;
-    sptr<CameraDevice> cameraObj;
-    auto captureSession = GetSession();
-    if (captureSession == nullptr) {
-        MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, captureSession is nullptr");
-        return isMirrorEnabled;
-    }
-    auto inputDevice = captureSession->GetInputDevice();
-    if (inputDevice == nullptr) {
-        MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, inputDevice is nullptr");
-        return isMirrorEnabled;
-    }
-    cameraObj = inputDevice->GetCameraDeviceInfo();
-    if (cameraObj == nullptr) {
-        MEDIA_ERR_LOG("PhotoOutput IsMirrorSupported error!, cameraObj is nullptr");
-        return isMirrorEnabled;
-    }
+    auto session = GetSession();
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, false, "VideoOutput IsMirrorSupported error!, session is nullptr");
+    auto inputDevice = session->GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, false,
+        "VideoOutput IsMirrorSupported error!, inputDevice is nullptr");
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, false,
+        "VideoOutput IsMirrorSupported error!, cameraObj is nullptr");
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
-    if (metadata == nullptr) {
-        return isMirrorEnabled;
-    }
-    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
-    if (ret != CAM_META_SUCCESS) {
-        MEDIA_WARNING_LOG("Can not find OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED");
-        return isMirrorEnabled;
-    }
+    CHECK_ERROR_RETURN_RET(metadata == nullptr, false);
+    camera_metadata_item_t item;
+    int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
+    CHECK_ERROR_RETURN_RET_LOG(retCode != CAM_META_SUCCESS, false,
+        "VideoOutput Can not find OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED");
     int step = 2;
     const int32_t canMirrorVideoAndPhoto = 2;
-    SceneMode currentSceneMode = captureSession->GetMode();
+    bool isMirrorEnabled = false;
+    SceneMode currentSceneMode = session->GetMode();
     for (int i = 0; i < static_cast<int>(item.count); i += step) {
         MEDIA_DEBUG_LOG("mode u8[%{public}d]: %{public}d, u8[%{public}d], %{public}d",
             i, item.data.u8[i], i + 1, item.data.u8[i + 1]);
@@ -410,14 +357,11 @@ void VideoOutput::CameraServerDied(pid_t pid)
 int32_t VideoOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFrameRate)
 {
     auto session = GetSession();
-    if (session == nullptr) {
-        MEDIA_WARNING_LOG("Can not set frame rate range without commit session");
-        return CameraErrorCode::SESSION_NOT_CONFIG;
-    }
-    if (!session->CanSetFrameRateRange(minFrameRate, maxFrameRate, this)) {
-        MEDIA_WARNING_LOG("Can not set frame rate range with wrong state of output");
-        return CameraErrorCode::UNRESOLVED_CONFLICTS_BETWEEN_STREAMS;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(session == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+        "VideoOutput canSetFrameRateRange error!, session is nullptr");
+    CHECK_ERROR_RETURN_RET_LOG(!session->CanSetFrameRateRange(minFrameRate, maxFrameRate, this),
+        CameraErrorCode::UNRESOLVED_CONFLICTS_BETWEEN_STREAMS,
+        "VideoOutput canSetFrameRateRange Can not set frame rate range with wrong state of output");
     int32_t minIndex = 0;
     int32_t maxIndex = 1;
     std::vector<std::vector<int32_t>> supportedFrameRange = GetSupportedFrameRates();

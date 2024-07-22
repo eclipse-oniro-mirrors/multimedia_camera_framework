@@ -30,40 +30,30 @@ ApertureVideoSession::ApertureVideoSession(sptr<ICaptureSession>& captureSession
 bool ApertureVideoSession::CanAddOutput(sptr<CaptureOutput>& output)
 {
     MEDIA_DEBUG_LOG("Enter Into ApertureVideoSession::CanAddOutput");
-    if (!IsSessionConfiged() || output == nullptr) {
-        MEDIA_ERR_LOG("ApertureVideoSession::CanAddOutput operation is Not allowed!");
-        return false;
-    }
-    if (output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO) {
-        MEDIA_ERR_LOG("ApertureVideoSession::CanAddOutput add photo output is not allowed!");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsSessionConfiged() || output == nullptr, false,
+        "ApertureVideoSession::CanAddOutput operation is not allowed!");
+    CHECK_ERROR_RETURN_RET_LOG(output->GetOutputType() == CAPTURE_OUTPUT_TYPE_PHOTO, false,
+        "ApertureVideoSession::CanAddOutput add photo output is not allowed!");
     return CaptureSession::CanAddOutput(output);
 }
 
 int32_t ApertureVideoSession::CommitConfig()
 {
     int32_t ret = CaptureSession::CommitConfig();
-    if (ret != CameraErrorCode::SUCCESS) {
-        return ret;
-    }
+    CHECK_ERROR_RETURN_RET(ret != CameraErrorCode::SUCCESS, ret);
 
     auto ability = GetMetadata();
     auto item = GetMetadataItem(ability->get(), OHOS_ABILITY_VIDEO_STABILIZATION_MODES);
-    if (item == nullptr || item->count == 0) {
-        // Not support stabilization, return success.
-        return CameraErrorCode::SUCCESS;
-    }
+    // Not support stabilization, return success.
+    CHECK_ERROR_RETURN_RET(item == nullptr || item->count == 0, CameraErrorCode::SUCCESS);
     bool isSupportAuto = false;
     for (uint32_t i = 0; i < item->count; i++) {
         if (static_cast<camera_video_stabilization_mode>(item->data.u8[i]) == OHOS_CAMERA_VIDEO_STABILIZATION_AUTO) {
             isSupportAuto = true;
         }
     }
-    if (!isSupportAuto) {
-        // Not support OHOS_CONTROL_VIDEO_STABILIZATION_MODE, return success.
-        return CameraErrorCode::SUCCESS;
-    }
+    // Not support OHOS_CONTROL_VIDEO_STABILIZATION_MODE, return success.
+    CHECK_ERROR_RETURN_RET(!isSupportAuto, CameraErrorCode::SUCCESS);
 
     bool updateStabilizationAutoResult = false;
     LockForControl();
