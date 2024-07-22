@@ -255,16 +255,13 @@ void AvcodecTaskManager::Stop()
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("AvcodecTaskManager Stop start");
-    auto thisPtr = sptr<AvcodecTaskManager>(this);
-    GetEncoderManager()->SubmitTask([thisPtr]() {
-        if (thisPtr->videoEncoder_ != nullptr) {
-            thisPtr->videoEncoder_->Stop();
-        }
-        if (thisPtr->audioEncoder_ != nullptr) {
-            thisPtr->audioEncoder_->Stop();
-        }
-        MEDIA_INFO_LOG("AvcodecTaskManager Stop end");
-    });
+    if (videoEncoder_ != nullptr) {
+        videoEncoder_->Release();
+    }
+    if (audioEncoder_ != nullptr) {
+        audioEncoder_->Release();
+    }
+    MEDIA_INFO_LOG("AvcodecTaskManager Stop end");
 }
 } // CameraStandard
 } // OHOS
