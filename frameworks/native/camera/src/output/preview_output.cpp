@@ -396,6 +396,7 @@ std::vector<std::vector<int32_t>> PreviewOutput::GetSupportedFrameRates()
 
     sptr<CameraOutputCapability> cameraOutputCapability = CameraManager::GetInstance()->
                                                           GetSupportedOutputCapability(camera, SceneMode::VIDEO);
+    CHECK_ERROR_RETURN_RET(cameraOutputCapability == nullptr, {});
     std::vector<Profile> supportedProfiles = cameraOutputCapability->GetPreviewProfiles();
     supportedProfiles.erase(std::remove_if(
         supportedProfiles.begin(), supportedProfiles.end(),
