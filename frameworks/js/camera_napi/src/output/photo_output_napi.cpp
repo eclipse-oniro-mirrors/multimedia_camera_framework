@@ -225,6 +225,10 @@ void PhotoListener::CreateMediaLibrary(sptr<SurfaceBuffer> surfaceBuffer, Buffer
     bool isHighQuality, std::string &uri, int32_t &cameraShotType, std::string &burstKey, int64_t timestamp) const
 {
     CAMERA_SYNC_TRACE;
+    if (bufferHandle == nullptr) {
+        MEDIA_ERR_LOG("bufferHandle is nullptr");
+        return;
+    }
     // get buffer handle and photo info
     int32_t captureId;
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureId, captureId);
