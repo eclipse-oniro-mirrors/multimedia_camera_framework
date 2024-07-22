@@ -1513,7 +1513,7 @@ void CameraManager::CreateAndSetCameraServiceCallback()
     CHECK_ERROR_RETURN_LOG(serviceProxy == nullptr,
         "CameraManager::CreateAndSetCameraServiceCallback serviceProxy is null");
     cameraSvcCallback_ = new(std::nothrow) CameraStatusServiceCallback(this);
-    CHECK_ERROR_RETURN_LOG(cameraSvcCallback_ != nullptr,
+    CHECK_ERROR_RETURN_LOG(cameraSvcCallback_ == nullptr,
         "CameraManager::CreateAndSetCameraServiceCallback failed to new cameraSvcCallback_!");
     int32_t retCode = serviceProxy->SetCameraCallback(cameraSvcCallback_);
     CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK,
@@ -1634,7 +1634,7 @@ void CameraManager::CreateAndSetTorchServiceCallback()
     CHECK_ERROR_RETURN_LOG(serviceProxy == nullptr,
         "CameraManager::CreateAndSetTorchServiceCallback serviceProxy is null");
     torchSvcCallback_ = new(std::nothrow) TorchServiceCallback(this);
-    CHECK_ERROR_RETURN_LOG(torchSvcCallback_ != nullptr,
+    CHECK_ERROR_RETURN_LOG(torchSvcCallback_ == nullptr,
         "CameraManager::CreateAndSetTorchServiceCallback failed to new torchSvcCallback_!");
     int32_t retCode = serviceProxy->SetTorchCallback(torchSvcCallback_);
     CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK,
@@ -1660,7 +1660,7 @@ void CameraManager::CreateAndSetFoldServiceCallback()
     CHECK_ERROR_RETURN_LOG(serviceProxy == nullptr,
         "CameraManager::CreateAndSetFoldServiceCallback serviceProxy is null");
     foldSvcCallback_ = new(std::nothrow) FoldServiceCallback(this);
-    CHECK_ERROR_RETURN_LOG(foldSvcCallback_ != nullptr,
+    CHECK_ERROR_RETURN_LOG(foldSvcCallback_ == nullptr,
         "CameraManager::CreateAndSetFoldServiceCallback failed to new foldSvcCallback_!");
     int32_t retCode = serviceProxy->SetFoldStatusCallback(foldSvcCallback_);
     CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK,
@@ -1697,7 +1697,7 @@ void CameraManager::CreateAndSetCameraMuteServiceCallback()
     CHECK_ERROR_RETURN_LOG(serviceProxy == nullptr,
         "CameraManager::CreateAndSetCameraMuteServiceCallback serviceProxy is null");
     cameraMuteSvcCallback_ = new(std::nothrow) CameraMuteServiceCallback(this);
-    CHECK_ERROR_RETURN_LOG(cameraMuteSvcCallback_ != nullptr,
+    CHECK_ERROR_RETURN_LOG(cameraMuteSvcCallback_ == nullptr,
         "CameraManager::CreateAndSetCameraMuteServiceCallback failed to new cameraMuteSvcCallback_!");
     int32_t retCode = serviceProxy->SetMuteCallback(cameraMuteSvcCallback_);
     CHECK_ERROR_PRINT_LOG(retCode != CAMERA_OK,
