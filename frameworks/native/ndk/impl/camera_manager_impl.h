@@ -79,7 +79,7 @@ public:
     static Camera_ErrorCode GetSupportedSceneModes(Camera_Device* camera,
         Camera_SceneMode** sceneModes, uint32_t* size);
 
-    Camera_ErrorCode DeleteSupportedSceneModes(Camera_SceneMode* sceneModes);
+    Camera_ErrorCode DeleteSceneModes(Camera_SceneMode* sceneModes);
 
 private:
     Camera_ErrorCode GetSupportedPreviewProfiles(Camera_OutputCapability* outCapability,

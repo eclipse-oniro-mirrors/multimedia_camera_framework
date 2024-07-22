@@ -115,13 +115,13 @@ public:
 
     Camera_ErrorCode Release();
 
-    Camera_ErrorCode CanAddInput(Camera_Input* cameraInput, bool* isSuccess);
+    Camera_ErrorCode CanAddInput(Camera_Input* cameraInput, bool* isSuccessful);
 
-    Camera_ErrorCode CanAddPreviewOutput(Camera_PreviewOutput* previewOutput, bool* isSuccess);
+    Camera_ErrorCode CanAddPreviewOutput(Camera_PreviewOutput* previewOutput, bool* isSuccessful);
 
-    Camera_ErrorCode CanAddPhotoOutput(Camera_PhotoOutput* photoOutput, bool* isSuccess);
+    Camera_ErrorCode CanAddPhotoOutput(Camera_PhotoOutput* photoOutput, bool* isSuccessful);
 
-    Camera_ErrorCode CanAddVideoOutput(Camera_VideoOutput* cameraOutput, bool* isSuccess);
+    Camera_ErrorCode CanAddVideoOutput(Camera_VideoOutput* cameraOutput, bool* isSuccessful);
 
     Camera_ErrorCode CanPreconfig(Camera_PreconfigType preconfigType, bool* canPreconfig);
 

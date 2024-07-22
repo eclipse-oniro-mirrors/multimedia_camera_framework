@@ -438,59 +438,59 @@ Camera_ErrorCode OH_CaptureSession_GetExposureBias(Camera_CaptureSession* sessio
 }
 
 Camera_ErrorCode OH_CaptureSession_CanAddInput(Camera_CaptureSession* session,
-    Camera_Input* cameraInput, bool* isSuccess)
+    Camera_Input* cameraInput, bool* isSuccessful)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_CanAddInput is called");
     CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, session is null!");
     CHECK_AND_RETURN_RET_LOG(cameraInput != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, cameraInput is null!");
-    CHECK_AND_RETURN_RET_LOG(isSuccess != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, isSuccess is null!");
+    CHECK_AND_RETURN_RET_LOG(isSuccessful != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, isSuccessful is null!");
 
-    return session->CanAddInput(cameraInput, isSuccess);
+    return session->CanAddInput(cameraInput, isSuccessful);
 }
 
 Camera_ErrorCode OH_CaptureSession_CanAddPreviewOutput(Camera_CaptureSession* session,
-    Camera_PreviewOutput* cameraOutput, bool* isSuccess)
+    Camera_PreviewOutput* cameraOutput, bool* isSuccessful)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_CanAddPreviewOutput is called");
     CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, session is null!");
     CHECK_AND_RETURN_RET_LOG(cameraOutput != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, cameraOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(isSuccess != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, isSuccess is null!");
+    CHECK_AND_RETURN_RET_LOG(isSuccessful != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, isSuccessful is null!");
 
-    return session->CanAddPreviewOutput(cameraOutput, isSuccess);
+    return session->CanAddPreviewOutput(cameraOutput, isSuccessful);
 }
 
 Camera_ErrorCode OH_CaptureSession_CanAddPhotoOutput(Camera_CaptureSession* session,
-    Camera_PhotoOutput* cameraOutput, bool* isSuccess)
+    Camera_PhotoOutput* cameraOutput, bool* isSuccessful)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_CanAddPhotoOutput is called");
     CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, session is null!");
     CHECK_AND_RETURN_RET_LOG(cameraOutput != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, cameraOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(isSuccess != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, isSuccess is null!");
+    CHECK_AND_RETURN_RET_LOG(isSuccessful != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, isSuccessful is null!");
 
-    return session->CanAddPhotoOutput(cameraOutput, isSuccess);
+    return session->CanAddPhotoOutput(cameraOutput, isSuccessful);
 }
 
 Camera_ErrorCode OH_CaptureSession_CanAddVideoOutput(Camera_CaptureSession* session,
-    Camera_VideoOutput* cameraOutput, bool* isSuccess)
+    Camera_VideoOutput* cameraOutput, bool* isSuccessful)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_CanAddVideoOutput is called");
     CHECK_AND_RETURN_RET_LOG(session != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, session is null!");
     CHECK_AND_RETURN_RET_LOG(cameraOutput != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, cameraOutput is null!");
-    CHECK_AND_RETURN_RET_LOG(isSuccess != nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invaild argument, isSuccess is null!");
+    CHECK_AND_RETURN_RET_LOG(isSuccessful != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, isSuccessful is null!");
 
-    return session->CanAddVideoOutput(cameraOutput, isSuccess);
+    return session->CanAddVideoOutput(cameraOutput, isSuccessful);
 }
 
 Camera_ErrorCode OH_CaptureSession_CanPreconfig(Camera_CaptureSession* session,
