@@ -1435,7 +1435,7 @@ public:
         return innerCaptureSession_;
     }
 
-    int32_t SetPreviewRotation();
+    int32_t SetPreviewRotation(std::string &deviceClass);
 
 protected:
     static const std::unordered_map<camera_exposure_mode_enum_t, ExposureMode> metaExposureModeMap_;

@@ -416,9 +416,10 @@ void HCaptureSession::UnRegisterDisplayListener(sptr<HStreamRepeat> repeatStream
     }
 }
 
-int32_t HCaptureSession::SetPreviewRotation()
+int32_t HCaptureSession::SetPreviewRotation(std::string &deviceClass)
 {
-    enableStreamRotate_ = false;
+    enableStreamRotate_ = true;
+    deviceClass_ = deviceClass;
     return CAMERA_OK;
 }
 
@@ -446,7 +447,7 @@ int32_t HCaptureSession::AddOutput(StreamType streamType, sptr<IStreamCommon> st
             if (enableStreamRotate_ && repeatSteam != nullptr &&
                 repeatSteam->GetRepeatStreamType() == RepeatStreamType::PREVIEW) {
                 RegisterDisplayListener(repeatSteam);
-                repeatSteam->SetPreviewRotation();
+                repeatSteam->SetPreviewRotation(deviceClass_);
             }
             errorCode = AddOutputStream(repeatSteam);
         } else if (streamType == StreamType::METADATA) {

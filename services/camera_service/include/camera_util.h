@@ -166,7 +166,8 @@ void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::str
 
 bool IsVerticalDevice();
 
-int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition, int& disPlayRotation);
+int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition, int& disPlayRotation,
+    std::string& deviceClass);
 
 inline bool IsCameraDebugOn()
 {

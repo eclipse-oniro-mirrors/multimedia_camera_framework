@@ -1114,12 +1114,12 @@ void CaptureSession::CreateMediaLibrary(sptr<CameraPhotoProxy> photoProxy, std::
     }
 }
 
-int32_t CaptureSession::SetPreviewRotation()
+int32_t CaptureSession::SetPreviewRotation(std::string &deviceClass)
 {
     int32_t errorCode = CAMERA_OK;
     auto captureSession = GetCaptureSession();
     if (captureSession) {
-        errorCode = captureSession->SetPreviewRotation();
+        errorCode = captureSession->SetPreviewRotation(deviceClass);
         if (errorCode != CAMERA_OK) {
             MEDIA_ERR_LOG("SetPreviewRotation is failed errorCode: %{public}d", errorCode);
         }

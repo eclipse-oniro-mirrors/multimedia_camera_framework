@@ -95,7 +95,10 @@ int HCaptureSessionStub::OnRemoteRequest(
             errCode = HandleCreateMediaLibrary(data, reply);
             break;
         case static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_PREVIEW_ROTATE):
-            errCode = SetPreviewRotation();
+            {
+                std::string deviceClass = data.ReadString();
+                errCode = SetPreviewRotation(deviceClass);
+            }
             break;
         default:
             MEDIA_ERR_LOG("HCaptureSessionStub request code %{public}u not handled", code);
