@@ -67,6 +67,7 @@ static const std::string SETTINGS_DATA_FIELD_KEYWORD = "KEYWORD";
 static const std::string SETTINGS_DATA_FIELD_VALUE = "VALUE";
 static const std::string PREDICATES_STRING = "settings.camera.mute_persist";
 mutex g_dataShareHelperMutex;
+mutex g_dmDeviceInfoMutex;
 thread_local uint32_t g_dumpDepth = 0;
 
 HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
@@ -1870,6 +1871,7 @@ int32_t HCameraService::ResetAllFreezeStatus()
 int32_t HCameraService::GetDmDeviceInfo(std::vector<std::string> &deviceInfos)
 {
 #ifdef DEVICE_MANAGER
+    lock_guard<mutex> lock(g_dmDeviceInfoMutex);
     std::vector <DistributedHardware::DmDeviceInfo> deviceInfoList;
     auto &deviceManager = DistributedHardware::DeviceManager::GetInstance();
     std::shared_ptr<DistributedHardware::DmInitCallback> initCallback = std::make_shared<DeviceInitCallBack>();
