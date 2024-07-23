@@ -76,11 +76,11 @@ Camera_ErrorCode OH_CameraInput_Release(Camera_Input* cameraInput)
     CHECK_AND_RETURN_RET_LOG(cameraInput != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, cameraInput is null!");
 
-    Camera_ErrorCode retCode = cameraInput->Release();
+    cameraInput->Release();
     if (cameraInput != nullptr) {
         delete cameraInput;
     }
-    return retCode;
+    return CAMERA_OK;
 }
 
 #ifdef __cplusplus
