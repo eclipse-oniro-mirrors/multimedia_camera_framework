@@ -173,13 +173,12 @@ Camera_ErrorCode Camera_Manager::DeleteSupportedCameras(Camera_Device* cameras, 
 Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera_Device* camera,
     Camera_OutputCapability** cameraOutputCapability)
 {
-    Camera_OutputCapability* outCapability = new Camera_OutputCapability;
-    CHECK_AND_RETURN_RET_LOG(outCapability != nullptr, CAMERA_SERVICE_FATAL_ERROR,
-        "Camera_Manager::GetSupportedCameraOutputCapability failed to allocate memory for outCapability!");
-
     sptr<CameraDevice> cameraDevice = CameraManager::GetInstance()->GetCameraDeviceFromId(camera->cameraId);
     CHECK_AND_RETURN_RET_LOG(cameraDevice != nullptr, CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::GetSupportedCameraOutputCapability get cameraDevice fail!");
+    Camera_OutputCapability* outCapability = new Camera_OutputCapability;
+    CHECK_AND_RETURN_RET_LOG(outCapability != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_Manager::GetSupportedCameraOutputCapability failed to allocate memory for outCapability!");
 
     sptr<CameraOutputCapability> innerCameraOutputCapability =
         CameraManager::GetInstance()->GetSupportedOutputCapability(cameraDevice);
