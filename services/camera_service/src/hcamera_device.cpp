@@ -645,6 +645,7 @@ void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::C
     DebugLogForAeRegions(settings, OHOS_CONTROL_AE_REGIONS);
     DebugLogForAeExposureCompensation(settings, OHOS_CONTROL_AE_EXPOSURE_COMPENSATION);
     DebugLogForFlashMode(settings, OHOS_CONTROL_FLASH_MODE);
+    DebugLogForFrameRateRange(settings, OHOS_CONTROL_FPS_RANGES);
     DebugLogForLightPaintingType(settings, OHOS_CONTROL_LIGHT_PAINTING_TYPE);
     DebugLogForTriggerLighting(settings, OHOS_CONTROL_LIGHT_PAINTING_FLASH);
 }
@@ -915,6 +916,21 @@ void HCameraDevice::DebugLogForTriggerLighting(
     } else {
         CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FLASHMODE,
             std::to_string(item.data.u8[0]), caller_);
+    }
+}
+
+void HCameraDevice::DebugLogForFrameRateRange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
+{
+    // debug log for frame rate range
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_FPS_RANGES tag");
+    } else {
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_FPS_RANGES value = %{public}d",
+            item.data.i32[0]);
+        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FRAMERATERANGE,
+            std::to_string(item.data.i32[0]), caller_);
     }
 }
 

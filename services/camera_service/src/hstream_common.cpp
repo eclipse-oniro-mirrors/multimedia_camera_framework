@@ -297,6 +297,18 @@ void HStreamCommon::PrintCaptureDebugLog(const std::shared_ptr<OHOS::Camera::Cam
         CameraReportUtils::GetInstance().UpdateImagingInfo(DFX_PHOTO_SETTING_ROTATION,
             std::to_string(item.data.i32[0]));
     }
+
+    // debug log for video frame rate range
+    CallerInfo caller = CameraReportUtils::GetCallerInfo();
+    result = OHOS::Camera::FindCameraMetadataItem(captureMetadataSetting_->get(), OHOS_CONTROL_FPS_RANGES, &item);
+    if (result != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HStreamCapture::Failed to find OHOS_CONTROL_FPS_RANGES tag");
+    } else {
+        MEDIA_DEBUG_LOG("HStreamCapture::find OHOS_CONTROL_FPS_RANGES value = %{public}d",
+            item.data.i32[0]);
+        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_FRAMERATERANGE,
+            std::to_string(item.data.i32[0]), caller);
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -213,6 +213,7 @@ private:
     void DebugLogForAeExposureCompensation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
         uint32_t tag);
     void DebugLogForFlashMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForFrameRateRange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForLightPaintingType(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForTriggerLighting(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void CreateMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
