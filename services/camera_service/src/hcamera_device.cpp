@@ -919,7 +919,8 @@ void HCameraDevice::DebugLogForTriggerLighting(
     }
 }
 
-void HCameraDevice::DebugLogForFrameRateRange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag)
+void HCameraDevice::DebugLogForFrameRateRange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
+                                              uint32_t tag)
 {
     // debug log for frame rate range
     camera_metadata_item_t item;
