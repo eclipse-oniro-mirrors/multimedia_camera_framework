@@ -684,7 +684,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedSceneModes(Camera_Device* camera,
     return CAMERA_OK;
 }
 
-Camera_ErrorCode Camera_Manager::DeleteSupportedSceneModes(Camera_SceneMode* sceneModes)
+Camera_ErrorCode Camera_Manager::DeleteSceneModes(Camera_SceneMode* sceneModes)
 {
     if (sceneModes != nullptr) {
         delete[] sceneModes;

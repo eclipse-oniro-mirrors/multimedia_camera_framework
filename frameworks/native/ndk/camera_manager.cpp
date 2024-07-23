@@ -297,15 +297,15 @@ Camera_ErrorCode OH_CameraManager_GetSupportedSceneModes(Camera_Device* camera,
     return Camera_Manager::GetSupportedSceneModes(camera, sceneModes, size);
 }
 
-Camera_ErrorCode OH_CameraManager_DeleteSupportedSceneModes(Camera_Manager* cameraManager, Camera_SceneMode* sceneModes)
+Camera_ErrorCode OH_CameraManager_DeleteSceneModes(Camera_Manager* cameraManager, Camera_SceneMode* sceneModes)
 {
-    MEDIA_DEBUG_LOG("OH_CameraManager_DeleteSupportedSceneModes is called.");
+    MEDIA_DEBUG_LOG("OH_CameraManager_DeleteSceneModes is called.");
     CHECK_AND_RETURN_RET_LOG(cameraManager != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, cameraManager is null!");
     CHECK_AND_RETURN_RET_LOG(sceneModes != nullptr, CAMERA_INVALID_ARGUMENT,
         "Invaild argument, sceneModes is null!");
 
-    return cameraManager->DeleteSupportedSceneModes(sceneModes);
+    return cameraManager->DeleteSceneModes(sceneModes);
 }
 
 #ifdef __cplusplus

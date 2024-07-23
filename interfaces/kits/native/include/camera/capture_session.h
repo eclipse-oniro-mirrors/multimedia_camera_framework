@@ -629,52 +629,52 @@ Camera_ErrorCode OH_CaptureSession_SetVideoStabilizationMode(Camera_CaptureSessi
  *
  * @param session the {@link Camera_CaptureSession} instance.
  * @param cameraInput the target {@link Camera_Input} to set.
- * @param isSuccess the result of whether the camera input can be added into the session.
+ * @param isSuccessful the result of whether the camera input can be added into the session.
  * @return {@link #CAMERA_OK} if the method call succeeds.
  *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
  * @since 12
  */
 Camera_ErrorCode OH_CaptureSession_CanAddInput(Camera_CaptureSession* session,
-    Camera_Input* cameraInput, bool* isSuccess);
+    Camera_Input* cameraInput, bool* isSuccessful);
 
 /**
  * @brief Determines whether the camera preview output can be added into the session.
  *
  * @param session the {@link Camera_CaptureSession} instance.
  * @param cameraOutput the target {@link Camera_PreviewOutput} to set.
- * @param isSuccess the result of whether the camera preview output can be added into the session.
+ * @param isSuccessful the result of whether the camera preview output can be added into the session.
  * @return {@link #CAMERA_OK} if the method call succeeds.
  *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
  * @since 12
  */
 Camera_ErrorCode OH_CaptureSession_CanAddPreviewOutput(Camera_CaptureSession* session,
-    Camera_PreviewOutput* cameraOutput, bool* isSuccess);
+    Camera_PreviewOutput* cameraOutput, bool* isSuccessful);
 
 /**
  * @brief Determines whether the camera photo output can be added into the session.
  *
  * @param session the {@link Camera_CaptureSession} instance.
  * @param cameraOutput the target {@link Camera_PhotoOutput} to set.
- * @param isSuccess the result of whether the camera photo output can be added into the session.
+ * @param isSuccessful the result of whether the camera photo output can be added into the session.
  * @return {@link #CAMERA_OK} if the method call succeeds.
  *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
  * @since 12
  */
 Camera_ErrorCode OH_CaptureSession_CanAddPhotoOutput(Camera_CaptureSession* session,
-    Camera_PhotoOutput* cameraOutput, bool* isSuccess);
+    Camera_PhotoOutput* cameraOutput, bool* isSuccessful);
 
 /**
  * @brief Determines whether the camera video output can be added into the session.
  *
  * @param session the {@link Camera_CaptureSession} instance.
  * @param cameraOutput the target {@link Camera_VideoOutput} to set.
- * @param isSuccess the result of whether the camera video output can be added into the session.
+ * @param isSuccessful the result of whether the camera video output can be added into the session.
  * @return {@link #CAMERA_OK} if the method call succeeds.
  *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
  * @since 12
  */
 Camera_ErrorCode OH_CaptureSession_CanAddVideoOutput(Camera_CaptureSession* session,
-    Camera_VideoOutput* cameraOutput, bool* isSuccess);
+    Camera_VideoOutput* cameraOutput, bool* isSuccessful);
 
 /**
  * @brief Check the preconfig type is supported or not.

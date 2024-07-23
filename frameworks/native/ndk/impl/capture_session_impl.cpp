@@ -506,31 +506,31 @@ Camera_ErrorCode Camera_CaptureSession::Release()
     return FrameworkToNdkCameraError(ret);
 }
 
-Camera_ErrorCode Camera_CaptureSession::CanAddInput(Camera_Input* cameraInput, bool* isSuccess)
+Camera_ErrorCode Camera_CaptureSession::CanAddInput(Camera_Input* cameraInput, bool* isSuccessful)
 {
     sptr<CaptureInput> innerCameraInput = cameraInput->GetInnerCameraInput();
-    *isSuccess = innerCaptureSession_->CanAddInput(innerCameraInput);
+    *isSuccessful = innerCaptureSession_->CanAddInput(innerCameraInput);
     return CAMERA_OK;
 }
 
-Camera_ErrorCode Camera_CaptureSession::CanAddPreviewOutput(Camera_PreviewOutput* previewOutput, bool* isSuccess)
+Camera_ErrorCode Camera_CaptureSession::CanAddPreviewOutput(Camera_PreviewOutput* previewOutput, bool* isSuccessful)
 {
     sptr<CaptureOutput> innerPreviewOutput = previewOutput->GetInnerPreviewOutput();
-    *isSuccess = innerCaptureSession_->CanAddOutput(innerPreviewOutput);
+    *isSuccessful = innerCaptureSession_->CanAddOutput(innerPreviewOutput);
     return CAMERA_OK;
 }
 
-Camera_ErrorCode Camera_CaptureSession::CanAddPhotoOutput(Camera_PhotoOutput* photoOutput, bool* isSuccess)
+Camera_ErrorCode Camera_CaptureSession::CanAddPhotoOutput(Camera_PhotoOutput* photoOutput, bool* isSuccessful)
 {
     sptr<CaptureOutput> innerPhotoOutput = photoOutput->GetInnerPhotoOutput();
-    *isSuccess = innerCaptureSession_->CanAddOutput(innerPhotoOutput);
+    *isSuccessful = innerCaptureSession_->CanAddOutput(innerPhotoOutput);
     return CAMERA_OK;
 }
 
-Camera_ErrorCode Camera_CaptureSession::CanAddVideoOutput(Camera_VideoOutput* videoOutput, bool* isSuccess)
+Camera_ErrorCode Camera_CaptureSession::CanAddVideoOutput(Camera_VideoOutput* videoOutput, bool* isSuccessful)
 {
     sptr<CaptureOutput> innerVideoOutput = videoOutput->GetInnerVideoOutput();
-    *isSuccess = innerCaptureSession_->CanAddOutput(innerVideoOutput);
+    *isSuccessful = innerCaptureSession_->CanAddOutput(innerVideoOutput);
     return CAMERA_OK;
 }
 

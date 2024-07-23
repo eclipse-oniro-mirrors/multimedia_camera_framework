@@ -340,7 +340,7 @@ Camera_ErrorCode OH_CameraManager_GetSupportedSceneModes(Camera_Device* camera,
     Camera_SceneMode** sceneModes, uint32_t* size);
 
 /**
- * @brief Delete the supported scene mode.
+ * @brief Delete the scene mode.
  *
  * @param cameraManager the {@link Camera_Manager} instance.
  * @param sceneModes the {@link Camera_SceneMode} to be deleted.
@@ -348,8 +348,7 @@ Camera_ErrorCode OH_CameraManager_GetSupportedSceneModes(Camera_Device* camera,
  *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
  * @since 12
  */
-Camera_ErrorCode OH_CameraManager_DeleteSupportedSceneModes(Camera_Manager* cameraManager,
-    Camera_SceneMode* sceneModes);
+Camera_ErrorCode OH_CameraManager_DeleteSceneModes(Camera_Manager* cameraManager, Camera_SceneMode* sceneModes);
 
 #ifdef __cplusplus
 }
