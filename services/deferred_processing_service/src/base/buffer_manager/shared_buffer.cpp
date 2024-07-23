@@ -14,172 +14,89 @@
  */
 
 #include "shared_buffer.h"
-#include <ashmem.h>
-#include <fcntl.h>
-#include <securec.h>
+
+#include <cerrno>
 #include <unistd.h>
-#include <fstream>
+
+#include "dp_log.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-std::unique_ptr<SharedBuffer> SharedBuffer::Create(const std::string& name, int64_t capacity)
+SharedBuffer::SharedBuffer(int64_t capacity)
+    : capacity_(capacity)
 {
-    // DPS_LOG
-    auto buffer = std::make_unique<SharedBuffer>(name, capacity);
-    if (buffer && buffer->Initialize() == false) {
-        buffer = nullptr;
-    }
-    return buffer;
-}
-
-SharedBuffer::SharedBuffer(const std::string& name, int64_t capacity)
-    : name_(name), capacity_(capacity), ipcFd_(), size_(0), addr_(nullptr), pinned_(false)
-{
-    // DPS_LOG
+    DP_DEBUG_LOG("entered, capacity = %{public}ld", static_cast<long>(capacity_));
 }
 
 SharedBuffer::~SharedBuffer()
 {
-    // DPS_LOG
-    DeallocAshMem();
+    DP_DEBUG_LOG("entered.");
+    DeallocAshmem();
 }
 
-SharedBuffer::Initialize()
+int32_t SharedBuffer::Initialize()
 {
-    // DPS_LOG
-    bool ret = AllocateAshmemUnlocked();
-    if (ret) {
-        pinned_ = true;
-    }
-    return ret;
-}
-
-const std::string& SharedBuffer::GetName()
-{
-    return name_;
-}
-
-int SharedBuffer::GetFd()
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    return ipcFd_.get();
+    return AllocateAshmemUnlocked();
 }
 
 int64_t SharedBuffer::GetSize()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    return size_;
-}
-
-int64_t SharedBuffer::GetCapacity()
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    return capacity_;
-}
-
-const IPCFileDescriptor& SharedBuffer::GetIpcFileDescriptor()
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    return ipcFd_;
-}
-
-bool SharedBuffer::CopyFrom(uint8_t* addr, int64_t bytes)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    // DPS_LOG
-    if (!IsAshmemValid() || !pinned_.load() || bytes > capacity_) {
-        return false;
+    if (ashmem_ != nullptr) {
+        return ashmem_->GetAshmemSize();
     }
-    auto ret = memcpy_s(addr_, capacity_, addr, bytes);
-    if (ret == 0) {
-        size_ = bytes;
-    } else {
-        // DPS_LOG
-    }
-    return ret == 0;
+    return INVALID_FD;
+}
+
+int32_t SharedBuffer::CopyFrom(uint8_t* address, int64_t bytes)
+{
+    DP_CHECK_AND_RETURN_RET_LOG(bytes <= capacity_, DP_INVALID_PARAM,
+        "buffer failed due to invalid size: %{public}ld, capacity: %{public}ld",
+        static_cast<long>(bytes), static_cast<long>(capacity_));
+    DP_CHECK_AND_RETURN_RET_LOG(ashmem_ != nullptr, DP_INIT_FAIL, "ashmem is nullptr.");
+    DP_DEBUG_LOG("capacity: %{public}ld, bytes: %{public}ld",
+        static_cast<long>(capacity_), static_cast<long>(bytes));
+    auto ret = ashmem_->WriteToAshmem(address, bytes, 0);
+    DP_CHECK_AND_RETURN_RET_LOG(ret, DP_ERR, "copy failed.");
+    return DP_OK;
 }
 
 void SharedBuffer::Reset()
 {
-    // DPS_LOG
-    size_ = 0;
     auto offset = lseek(GetFd(), 0, SEEK_SET);
-    if (offset != 0) {
-        // DPS_LOG
+    DP_CHECK_AND_PRINT_LOG(offset == DP_OK, "failed to reset, error = %{public}s.", std::strerror(errno));
+    DP_INFO_LOG("reset success.");
+}
+
+int32_t SharedBuffer::AllocateAshmemUnlocked()
+{
+    std::string_view name = "DPS ShareMemory";
+    ashmem_ = Ashmem::CreateAshmem(name.data(), capacity_);
+    DP_CHECK_AND_RETURN_RET_LOG(ashmem_ != nullptr, DP_INIT_FAIL,
+        "buffer create ashmem failed. capacity: %{public}ld", static_cast<long>(capacity_));
+    int fd = ashmem_->GetAshmemFd();
+    DP_DEBUG_LOG("size: %{public}ld, fd: %{public}d", static_cast<long>(capacity_), fd);
+    auto ret = ashmem_->MapReadAndWriteAshmem();
+    DP_CHECK_AND_RETURN_RET_LOG(ret, DP_MEM_MAP_FAILED, "mmap failed.");
+    return DP_OK;
+}
+
+void SharedBuffer::DeallocAshmem()
+{
+    if (ashmem_ != nullptr) {
+        ashmem_->UnmapAshmem();
+        ashmem_->CloseAshmem();
+        ashmem_ = nullptr;
+        DP_DEBUG_LOG("dealloc ashmem capacity(%{public}ld) success.", static_cast<long>(capacity_));
     }
 }
 
-void SharedBuffer::Dump(const std::string& fileName)
+int SharedBuffer::GetFd() const
 {
-    // DPS_LOG
-    std::ofstream out(filename.c_str(), std::ios::out | std::ios::binary);
-    if (out.is_open()) {
-        out.write(static_cast<char*>(addr_), size_);
-    } else {
-        // DPS_LOG
+    if (ashmem_ != nullptr) {
+        return ashmem_->GetAshmemFd();
     }
-}
-
-bool SharedBuffer::IsAshmemValid()
-{
-    return ashmem_valid(ipcFd_.get()) > 0;
-}
-
-void SharedBuffer::BeginAccess()
-{
-    if (pinned_.load()) {
-        return;
-    }
-    int fd = ipcFd_.get();
-    auto ret = ashmem_pin_region(fd, 0, 0);
-    if (ret >= 0) {
-        pinned_ = true;
-    } else {
-        // DPS_LOG
-    }
-}
-
-void SharedBuffer::EndAccess()
-{
-    if (pinned_.load()) {
-        return;
-    }
-    int fd = ipcFd_.get();
-    auto ret = ashmem_unpin_region(fd, 0, 0);
-    if (ret >= 0) {
-        pinned_ = false;
-    } else {
-        // DPS_LOG
-    }
-}
-
-bool SharedBuffer::AllocateAshmemUnlocked()
-{
-    int fd = ashmem_create_region(name_.c_str(), capacity_);
-    if (fd < 0) {
-        return false;
-    }
-    ipcFd_.SetFd(fd); // please trfer to the SetFd function of class IPCfiledescriptor
-    addr_ = mmap(nullptr, capacity_, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if (addr_ == MAP_FAILED) {
-        return false;
-    }
-    if (ashmem_set_prot_region(fd, PROT_READ) < 0) {
-        // DPS_LOG
-        DeallocAshMem();
-        return false;
-    }
-    return true;
-}
-
-void SharedBuffer::DeallocAshMem()
-{
-    // DPS_LOG
-    std::lock_guard<std::mutex> lock(mutex_);
-    munmap(addr_, capacity_);
-    addr_ = nullptr;
-    size_ = 0;
+    return INVALID_FD;
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

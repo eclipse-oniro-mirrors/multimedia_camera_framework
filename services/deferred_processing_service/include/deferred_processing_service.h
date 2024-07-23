@@ -15,11 +15,7 @@
 
 #ifndef OHOS_CAMERA_DPS_DEFERRED_PROCESSING_SERVICE_H
 #define OHOS_CAMERA_DPS_DEFERRED_PROCESSING_SERVICE_H
-#include <mutex>
-#include <vector>
-#include <shared_mutex>
-#include <iostream>
-#include <refbase.h>
+
 #include "session_manager.h"
 #include "scheduler_manager.h"
 #include "task_manager.h"
@@ -36,13 +32,14 @@ public:
     void Start();
     void Stop();
     ~DeferredProcessingService();
-    sptr<IDeferredPhotoProcessingSession> CreateDeferredPhotoProcessingSession(int userId,
+    sptr<IDeferredPhotoProcessingSession> CreateDeferredPhotoProcessingSession(const int32_t userId,
         const sptr<IDeferredPhotoProcessingSessionCallback> callbacks);
-    void NotifyCameraSessionStatus(int userId, const std::string& cameraId, bool running, bool isSystemCamera);
+    void NotifyCameraSessionStatus(const int32_t userId,
+        const std::string& cameraId, bool running, bool isSystemCamera);
 
 private:
     DeferredProcessingService();
-    TaskManager* GetPhotoTaskManager(int userId);
+    TaskManager* GetPhotoTaskManager(const int32_t userId);
     std::atomic<bool> initialized_;
     std::shared_ptr<SessionManager> sessionManager_;
     std::unique_ptr<SchedulerManager> schedulerManager_;

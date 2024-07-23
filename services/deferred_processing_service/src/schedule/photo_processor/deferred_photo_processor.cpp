@@ -14,13 +14,14 @@
  */
 
 #include "deferred_photo_processor.h"
+
 #include "dp_log.h"
 #include "dps_event_report.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-DeferredPhotoProcessor::DeferredPhotoProcessor(int userId, TaskManager* taskManager,
+DeferredPhotoProcessor::DeferredPhotoProcessor(const int32_t userId, TaskManager* taskManager,
     std::shared_ptr<PhotoJobRepository> repository, std::shared_ptr<IImageProcessCallbacks> callbacks)
     : userId_(userId),
       taskManager_(taskManager),
@@ -109,7 +110,7 @@ void DeferredPhotoProcessor::CancelProcessImage(const std::string& imageId)
     return;
 }
 
-void DeferredPhotoProcessor::OnProcessDone(int userId, const std::string& imageId,
+void DeferredPhotoProcessor::OnProcessDone(const int32_t userId, const std::string& imageId,
     std::shared_ptr<BufferInfo> bufferInfo)
 {
     DP_INFO_LOG("entered");
@@ -119,23 +120,20 @@ void DeferredPhotoProcessor::OnProcessDone(int userId, const std::string& imageI
         if ((repository_->GetJobPriority(imageId) != PhotoJobPriority::HIGH)) {
             DP_INFO_LOG("not high quality and not high priority, need retry");
             repository_->SetJobPending(imageId);
-            bufferInfo->ReleaseBuffer();
             return;
         } else {
             DP_INFO_LOG("not high quality, but high priority, and process as normal job before, need retry");
             if (repository_->GetJobRunningPriority(imageId) != PhotoJobPriority::HIGH) {
                 repository_->SetJobPending(imageId);
-                bufferInfo->ReleaseBuffer();
                 return;
             }
         }
     }
     repository_->SetJobCompleted(imageId);
-    callbacks_->OnProcessDone(userId, imageId, bufferInfo);
-    return;
+    callbacks_->OnProcessDone(userId, imageId, std::move(bufferInfo));
 }
 
-void DeferredPhotoProcessor::OnError(int userId, const std::string& imageId, DpsError errorCode)
+void DeferredPhotoProcessor::OnError(const int32_t userId, const std::string& imageId, DpsError errorCode)
 {
     DP_INFO_LOG("entered");
     if (errorCode == DpsError::DPS_ERROR_IMAGE_PROC_INTERRUPTED &&
@@ -161,7 +159,7 @@ void DeferredPhotoProcessor::OnError(int userId, const std::string& imageId, Dps
     return;
 }
 
-void DeferredPhotoProcessor::OnStateChanged(int userId, DpsStatus statusCode)
+void DeferredPhotoProcessor::OnStateChanged(const int32_t userId, DpsStatus statusCode)
 {
     (void)(userId);
     (void)(statusCode);

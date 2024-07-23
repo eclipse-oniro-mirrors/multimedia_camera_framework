@@ -13,15 +13,15 @@
  * limitations under the License.
  */
 
-#include <unistd.h>
-
 #include "buffer_info.h"
+
+#include <unistd.h>
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-BufferInfo::BufferInfo(sptr<IPCFileDescriptor> ipcFileDescriptor, long dataSize, bool isHighQuality)
-    : ipcFileDescriptor_(ipcFileDescriptor),
+BufferInfo::BufferInfo(const std::shared_ptr<SharedBuffer>& sharedBuffer, int32_t dataSize, bool isHighQuality)
+    : sharedBuffer_(sharedBuffer),
       dataSize_(dataSize),
       isHighQuality_(isHighQuality)
 {
@@ -29,15 +29,15 @@ BufferInfo::BufferInfo(sptr<IPCFileDescriptor> ipcFileDescriptor, long dataSize,
 
 BufferInfo::~BufferInfo()
 {
-    ipcFileDescriptor_ = nullptr;
+    sharedBuffer_ = nullptr;
 }
 
 sptr<IPCFileDescriptor> BufferInfo::GetIPCFileDescriptor()
 {
-    return ipcFileDescriptor_;
+    return sptr<IPCFileDescriptor>::MakeSptr(sharedBuffer_->GetFd());
 }
 
-long BufferInfo::GetDataSize()
+int32_t BufferInfo::GetDataSize()
 {
     return dataSize_;
 }
@@ -46,14 +46,6 @@ bool BufferInfo::IsHighQuality()
 {
     return isHighQuality_;
 }
-
-void BufferInfo::ReleaseBuffer()
-{
-    if (ipcFileDescriptor_) {
-        close(ipcFileDescriptor_->GetFd());
-    }
-    return;
-}
-} //namespace DeferredProcessing
+} // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

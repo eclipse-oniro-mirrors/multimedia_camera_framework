@@ -15,15 +15,9 @@
 
 #ifndef OHOS_CAMERA_DPS_SESSION_MANAGER_H
 #define OHOS_CAMERA_DPS_SESSION_MANAGER_H
-#include <vector>
-#include <unordered_map>
-#include <shared_mutex>
-#include <iostream>
-#include <refbase.h>
+
 #include "session_info.h"
 #include "session_coordinator.h"
-#include "ideferred_photo_processing_session.h"
-#include "ideferred_photo_processing_session_callback.h"
 #include "task_manager.h"
 #include "deferred_photo_processor.h"
 
@@ -38,17 +32,17 @@ public:
     void Initialize();
     void Start();
     void Stop();
-    sptr<IDeferredPhotoProcessingSession> CreateDeferredPhotoProcessingSession(int userId,
-        const sptr<IDeferredPhotoProcessingSessionCallback> callback,
+    sptr<IDeferredPhotoProcessingSession> CreateDeferredPhotoProcessingSession(
+        const int32_t userId, const sptr<IDeferredPhotoProcessingSessionCallback> callback,
         std::shared_ptr<DeferredPhotoProcessor> processor, TaskManager* taskManager);
     std::shared_ptr<IImageProcessCallbacks> GetImageProcCallbacks();
     sptr<IDeferredPhotoProcessingSession> GetDeferredPhotoProcessingSession();
-    void OnCallbackDied(int userId);
+    void OnCallbackDied(const int32_t userId);
 
 private:
     std::mutex mutex_;
     std::atomic<bool> initialized_;
-    std::unordered_map<int, sptr<SessionInfo>> photoSessionInfos_;
+    std::unordered_map<int32_t, sptr<SessionInfo>> photoSessionInfos_;
     std::unique_ptr<SessionCoordinator> coordinator_;
 };
 } // namespace DeferredProcessing

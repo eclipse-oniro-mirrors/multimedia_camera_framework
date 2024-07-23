@@ -14,7 +14,7 @@
  */
 
 #include "photo_job_repository.h"
-#include "deferred_photo_job.h"
+
 #include "dp_log.h"
 #include "dps_event_report.h"
 #include "steady_clock.h"
@@ -23,7 +23,7 @@ namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 
-PhotoJobRepository::PhotoJobRepository(int userId)
+PhotoJobRepository::PhotoJobRepository(const int32_t userId)
     : userId_(userId),
       runningNum_(0),
       offlineJobMap_(),

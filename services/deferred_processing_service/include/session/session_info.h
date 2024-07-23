@@ -15,10 +15,7 @@
 
 #ifndef OHOS_CAMERA_DPS_SESSION_INFO_H
 #define OHOS_CAMERA_DPS_SESSION_INFO_H
-#include <vector>
-#include <shared_mutex>
-#include <iostream>
-#include <refbase.h>
+
 #include "ideferred_photo_processing_session_callback.h"
 #include "deferred_photo_processing_session.h"
 #include "deferred_photo_processor.h"
@@ -30,11 +27,11 @@ class SessionManager;
 
 class SessionInfo : public RefBase {
 public:
-    SessionInfo(int userId, const sptr<IDeferredPhotoProcessingSessionCallback>& callback,
+    SessionInfo(const int32_t userId, const sptr<IDeferredPhotoProcessingSessionCallback>& callback,
         SessionManager* sessionManager);
     virtual ~SessionInfo();
 
-    sptr<IDeferredPhotoProcessingSession> CreateDeferredPhotoProcessingSession(int userId,
+    sptr<IDeferredPhotoProcessingSession> CreateDeferredPhotoProcessingSession(const int32_t userId,
         std::shared_ptr<DeferredPhotoProcessor> processor, TaskManager* taskManager,
         sptr<IDeferredPhotoProcessingSessionCallback> callback);
     sptr<IDeferredPhotoProcessingSession> GetDeferredPhotoProcessingSession();
@@ -44,7 +41,7 @@ public:
 
 private:
     class CallbackDeathRecipient;
-    int userId_;
+    const int32_t userId_;
     sptr<IDeferredPhotoProcessingSessionCallback> callback_;
     SessionManager* sessionManager_;
     sptr<IDeferredPhotoProcessingSession> session_;

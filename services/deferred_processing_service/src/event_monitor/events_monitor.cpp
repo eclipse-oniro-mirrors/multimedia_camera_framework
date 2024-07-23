@@ -12,15 +12,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+ 
+#include "events_monitor.h"
 
 #include <securec.h>
-#include "events_monitor.h"
+
 #include "dp_log.h"
 #include "dp_utils.h"
-#include <if_system_ability_manager.h>
-#include <ipc_skeleton.h>
-#include <iservice_registry.h>
-#include <system_ability_definition.h>
 #ifdef CAMERA_USE_THERMAL
 #include "thermal_mgr_client.h"
 #endif
@@ -88,8 +86,8 @@ void EventsMonitor::Initialize()
     initialized_ = true;
 }
 
-void EventsMonitor::RegisterEventsListener(int userId, const std::vector<EventType> &events,
-                                           const std::shared_ptr<IEventsListener> &listener)
+void EventsMonitor::RegisterEventsListener(const int32_t userId, const std::vector<EventType> &events,
+    const std::shared_ptr<IEventsListener> &listener)
 {
     DP_INFO_LOG("RegisterEventsListener enter.");
     std::lock_guard<std::mutex> lock(mutex_);
@@ -103,7 +101,7 @@ void EventsMonitor::RegisterEventsListener(int userId, const std::vector<EventTy
     userIdToeventListeners_[userId] = eventListeners_;
 }
 
-void EventsMonitor::RegisterTaskManager(int userId, TaskManager *taskManager)
+void EventsMonitor::RegisterTaskManager(const int32_t userId, TaskManager *taskManager)
 {
     DP_INFO_LOG("RegisterTaskManager enter.");
     auto taskIter = userIdToTaskManager.find(userId);
@@ -121,7 +119,7 @@ void EventsMonitor::SetRegisterThermalStatus(bool isHasRegistered)
     mIsRegistered = isHasRegistered;
 }
 
-void EventsMonitor::UnRegisterListener(int userId, TaskManager *taskManager)
+void EventsMonitor::UnRegisterListener(const int32_t userId, TaskManager *taskManager)
 {
     DP_INFO_LOG("UnRegisterListener enter.");
     auto taskIter = userIdToTaskManager.find(userId);
@@ -139,7 +137,7 @@ void EventsMonitor::UnRegisterListener(int userId, TaskManager *taskManager)
     }
 }
 
-void EventsMonitor::NotifyThermalLevel(int level)
+void EventsMonitor::NotifyThermalLevel(int32_t level)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     DP_INFO_LOG("notify : %{public}d.", level);
@@ -152,7 +150,7 @@ void EventsMonitor::NotifyThermalLevel(int level)
     }
 }
 
-void EventsMonitor::NotifyCameraSessionStatus(int userId,
+void EventsMonitor::NotifyCameraSessionStatus(const int32_t userId,
     const std::string &cameraId, bool running, bool isSystemCamera)
 {
     DP_INFO_LOG("entered, userId: %{public}d, cameraId: %s, running: %{public}d, isSystemCamera: %{public}d: ",
@@ -219,24 +217,24 @@ void EventsMonitor::NotifySystemPressureLevel(SystemPressureLevel level)
     }
 }
 
-void EventsMonitor::NotifyObserversUnlocked(int userId, EventType event, int value)
+void EventsMonitor::NotifyObserversUnlocked(const int32_t userId, EventType event, int32_t value)
 {
     DP_INFO_LOG("entered.");
     auto taskIter = userIdToTaskManager.find(userId);
-    if (taskIter != userIdToTaskManager.end()) {
-        std::vector<TaskManager*> taskvect = userIdToTaskManager[userId];
-        for (auto it = taskvect.begin(); it != taskvect.end();) {
-            if (*it) {
-                (*it)->SubmitTask([userId, event, value]() {
-                    EventsMonitor::GetInstance().NotifyEventToObervers(userId, event, value);
-                });
-            }
-            ++it;
+    DP_CHECK_AND_RETURN_LOG(taskIter != userIdToTaskManager.end(), "notify failed because no match userId");
+    
+    std::vector<TaskManager*> taskvect = userIdToTaskManager[userId];
+    for (auto it = taskvect.begin(); it != taskvect.end();) {
+        if (*it) {
+            (*it)->SubmitTask([userId, event, value]() {
+                EventsMonitor::GetInstance().NotifyEventToObervers(userId, event, value);
+            });
         }
+        ++it;
     }
 }
 
-void EventsMonitor::NotifyEventToObervers(int userId, EventType event, int value)
+void EventsMonitor::NotifyEventToObervers(const int32_t userId, EventType event, int32_t value)
 {
     DP_INFO_LOG("entered.");
     auto eventListeners = userIdToeventListeners_.find(userId);
@@ -267,7 +265,7 @@ void EventsMonitor::ScheduleRegisterThermalListener()
     });
 }
 
-void EventsMonitor::NotifyObservers(EventType event, int value, int userId)
+void EventsMonitor::NotifyObservers(EventType event, int value, int32_t userId)
 {
     DP_INFO_LOG("entered.");
     std::lock_guard<std::mutex> lock(mutex_);
@@ -365,6 +363,6 @@ SystemPressureLevel ThermalLevelSubscriber::MapEventLevel(int level)
     }
     return eventLevel;
 }
-}
+} // namsespace DeferredProcessingService
 } // namespace CameraStandard
 } // namespace OHOS

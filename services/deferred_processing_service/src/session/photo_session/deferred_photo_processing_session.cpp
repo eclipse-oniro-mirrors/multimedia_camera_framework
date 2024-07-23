@@ -13,21 +13,17 @@
  * limitations under the License.
  */
 
-#include <vector>
-#include <shared_mutex>
-#include <iostream>
-#include <set>
-#include <memory>
+#include "deferred_photo_processing_session.h"
+
 #include "dp_log.h"
 #include "basic_definitions.h"
-#include "deferred_photo_processing_session.h"
 #include "dps_event_report.h"
 #include "steady_clock.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-DeferredPhotoProcessingSession::DeferredPhotoProcessingSession(int userId,
+DeferredPhotoProcessingSession::DeferredPhotoProcessingSession(const int32_t userId,
     std::shared_ptr<DeferredPhotoProcessor> processor, TaskManager* taskManager,
     sptr<IDeferredPhotoProcessingSessionCallback> callback)
     : userId_(userId),
@@ -171,16 +167,6 @@ int32_t DeferredPhotoProcessingSession::CancelProcessImage(const std::string ima
 
     ReportEvent(imageId, DeferredProcessingServiceInterfaceCode::DPS_CANCEL_PROCESS_IMAGE);
     return 0;
-}
-
-sptr<IDeferredPhotoProcessingSession> CreateDeferredProcessingSession(int userId,
-    std::shared_ptr<DeferredPhotoProcessor> processor, TaskManager* taskManager,
-    sptr<IDeferredPhotoProcessingSessionCallback> callback)
-{
-    DP_INFO_LOG("CreateDeferredProcessingSession successful.");
-    sptr<IDeferredPhotoProcessingSession> session(new DeferredPhotoProcessingSession(userId, processor,
-        taskManager, callback));
-    return session;
 }
 
 void DeferredPhotoProcessingSession::ReportEvent(const std::string& imageId, int32_t event)

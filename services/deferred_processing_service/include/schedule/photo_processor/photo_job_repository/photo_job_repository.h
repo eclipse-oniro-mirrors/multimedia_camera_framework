@@ -16,18 +16,9 @@
 #ifndef OHOS_CAMERA_DPS_PHOTO_JOB_REPOSITORY_H
 #define OHOS_CAMERA_DPS_PHOTO_JOB_REPOSITORY_H
 
-#include <unordered_map>
-#include <map>
-#include <list>
-#include <deque>
-#include <vector>
-#include <string>
-#include <set>
-#include <mutex>
-
 #include "deferred_photo_job.h"
 #include "iphoto_job_repository_listener.h"
-#include <deferred_processing_service_ipc_interface_code.h>
+#include "deferred_processing_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -35,7 +26,7 @@ namespace DeferredProcessing {
 
 class PhotoJobRepository {
 public:
-    PhotoJobRepository(int userId);
+    PhotoJobRepository(const int32_t userId);
     ~PhotoJobRepository();
     void AddDeferredJob(const std::string& imageId, bool discardable, DpsMetadata& metadata);
     void RemoveDeferredJob(const std::string& imageId, bool restorable);
@@ -68,7 +59,7 @@ private:
     void ReportEvent(DeferredPhotoJobPtr jobPtr, DeferredProcessingServiceInterfaceCode event);
 
     std::recursive_mutex mutex_;
-    int userId_;
+    const int32_t userId_;
     int runningNum_;
     std::unordered_map<std::string, DeferredPhotoJobPtr> offlineJobMap_;
     std::unordered_map<std::string, DeferredPhotoJobPtr> backgroundJobMap_;
