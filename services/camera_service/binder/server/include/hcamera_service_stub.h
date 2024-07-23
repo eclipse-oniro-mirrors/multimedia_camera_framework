@@ -55,9 +55,9 @@ private:
     int HandleSetPrelaunchConfig(MessageParcel &data, MessageParcel &reply);
     int HandleSetTorchLevel(MessageParcel &data, MessageParcel &reply);
     int HandleAllowOpenByOHSide(MessageParcel& data, MessageParcel& reply);
-    int HandleNotifyCameraState(MessageParcel& data, MessageParcel& reply);
-    int HandleSetPeerCallback(MessageParcel& data, MessageParcel& reply);
-    int HandleUnsetPeerCallback(MessageParcel& data, MessageParcel& reply);
+    int HandleNotifyCameraState(MessageParcel& data);
+    int HandleSetPeerCallback(MessageParcel& data);
+    int HandleUnsetPeerCallback(MessageParcel& data);
     int HandleProxyForFreeze(MessageParcel& data, MessageParcel& reply);
     int HandleResetAllFreezeStatus(MessageParcel& data, MessageParcel& reply);
     int HandleGetDmDeviceInfo(MessageParcel& data, MessageParcel& reply);
@@ -69,13 +69,10 @@ private:
     int SetListenerObject(MessageParcel &data, MessageParcel &reply);
     virtual int32_t UnSetAllCallback(pid_t pid);
     virtual int32_t CloseCameraForDestory(pid_t pid);
-    void InitHandlers();
 
     SafeMap<pid_t, sptr<IStandardCameraListener>> cameraListenerMap_;
 
     typedef int (HCameraServiceStub::* HandlerFunc)(MessageParcel&, MessageParcel&);
-    typedef int (HCameraServiceStub::* NoParamHandlerFunc)();
-    std::unordered_map<uint32_t, HandlerFunc> handlers_ = {};
 };
 } // namespace CameraStandard
 } // namespace OHOS
