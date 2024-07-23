@@ -32,7 +32,7 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Display::Composer::V1_1;
-static bool g_tablet = system::GetParameter("const.product.devicetype", "unknow") == "tablet";
+static bool g_tablet = false;
 
 std::unordered_map<int32_t, int32_t> g_cameraToPixelFormat = {
     {OHOS_CAMERA_FORMAT_RGBA_8888, GRAPHIC_PIXEL_FMT_RGBA_8888},
@@ -484,7 +484,8 @@ bool IsVerticalDevice()
     return isVerticalDevice;
 }
 
-int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition, int& disPlayRotation)
+int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition, int& disPlayRotation,
+    std::string& deviceClass)
 {
     int32_t streamRotation = sensorOrientation;
     int degrees = 0;
@@ -495,6 +496,8 @@ int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& ca
         case DISPALY_ROTATE_2: degrees = STREAM_ROTATE_180; break;
         case DISPALY_ROTATE_3: degrees = STREAM_ROTATE_270; break; // 逆时针转90
     }
+
+    g_tablet = (deviceClass == "tablet");
     if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
         sensorOrientation = g_tablet ? sensorOrientation + STREAM_ROTATE_90 : sensorOrientation;
         streamRotation = (STREAM_ROTATE_360 + sensorOrientation - degrees) % STREAM_ROTATE_360;

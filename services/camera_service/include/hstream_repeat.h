@@ -75,7 +75,7 @@ public:
     int32_t SetFrameRate(int32_t minFrameRate, int32_t maxFrameRate) override;
     int32_t SetMirror(bool isEnable) override;
     void SetMirrorForLivePhoto(bool isEnable, int32_t mode);
-    int32_t SetPreviewRotation();
+    int32_t SetPreviewRotation(std::string &deviceClass);
     void SetStreamTransform(int disPlayRotation = -1);
 
 private:
@@ -101,6 +101,7 @@ private:
     bool mEnableSecure = false;
     bool enableMirror_ = false;
     bool enableStreamRotate_ = false;
+    std::string deviceClass_ = "phone";
     sptr<OHOS::IBufferProducer> metaProducer_;
     std::mutex movingPhotoCallbackLock_;
     std::function<void()> startMovingPhotoCallback_;

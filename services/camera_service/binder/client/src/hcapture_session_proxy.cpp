@@ -396,13 +396,14 @@ int32_t HCaptureSessionProxy::CreateMediaLibrary(sptr<CameraPhotoProxy> &photoPr
     return error;
 }
 
-int32_t HCaptureSessionProxy::SetPreviewRotation()
+int32_t HCaptureSessionProxy::SetPreviewRotation(std::string &deviceClass)
 {
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
 
     data.WriteInterfaceToken(GetDescriptor());
+    data.WriteString(deviceClass);
     int error = Remote()->SendRequest(
         static_cast<uint32_t>(CaptureSessionInterfaceCode::CAMERA_CAPTURE_SESSION_SET_PREVIEW_ROTATE),
         data, reply, option);

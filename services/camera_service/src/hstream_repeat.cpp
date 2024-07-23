@@ -533,9 +533,10 @@ void HStreamRepeat::SetMirrorForLivePhoto(bool isEnable, int32_t mode)
     }
 }
 
-int32_t HStreamRepeat::SetPreviewRotation()
+int32_t HStreamRepeat::SetPreviewRotation(std::string &deviceClass)
 {
-    enableStreamRotate_ = false;
+    enableStreamRotate_ = true;
+    deviceClass_ = deviceClass;
     return CAMERA_OK;
 }
 
@@ -611,7 +612,7 @@ void HStreamRepeat::SetStreamTransform(int disPlayRotation)
             }
             mOritation = static_cast<int>(display->GetRotation());
         }
-        int32_t streamRotation = GetStreamRotation(sensorOrientation, cameraPosition, mOritation);
+        int32_t streamRotation = GetStreamRotation(sensorOrientation, cameraPosition, mOritation, deviceClass_);
         ProcessCameraPosition(streamRotation, cameraPosition);
     } else {
         ProcessFixedTransform(sensorOrientation, cameraPosition);
