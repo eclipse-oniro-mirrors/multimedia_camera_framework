@@ -1446,7 +1446,7 @@ int32_t HCameraDevice::OnCaptureEnded(int32_t captureId, const std::vector<Captu
 }
 
 int32_t HCameraDevice::OnCaptureEndedExt(int32_t captureId,
-    const std::vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfo>& infos)
+    const std::vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt>& infos)
 {
     auto streamOperatorCallback = GetStreamOperatorCallback();
     CHECK_AND_RETURN_RET(streamOperatorCallback != nullptr, CAMERA_INVALID_STATE);
