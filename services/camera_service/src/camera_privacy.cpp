@@ -26,7 +26,7 @@ void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::Pe
 {
     auto device = cameraDevice_.promote();
     if ((result.permStateChangeType == 0) && (device != nullptr)) {
-        device->Close();
+        device->CloseDevice();
     }
 }
 
@@ -35,7 +35,7 @@ void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessToke
     MEDIA_INFO_LOG("enter CameraUseStateChangeNotify tokenId:%{public}d", tokenId);
     auto device = cameraDevice_.promote();
     if ((isShowing == false) && (device != nullptr)) {
-        device->Close();
+        device->CloseDevice();
     }
 }
 

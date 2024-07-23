@@ -34,3 +34,4 @@ if (defined(global_parts_info) &&
 }
 
 gen_camera_picker = true
+hicollie_enable = true
