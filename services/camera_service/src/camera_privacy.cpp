@@ -29,7 +29,7 @@ void PermissionStatusChangeCb::PermStateChangeCallback(Security::AccessToken::Pe
         " permissionName:%{public}s", result.permStateChangeType, result.tokenID, result.permissionName.c_str());
     auto device = cameraDevice_.promote();
     if ((result.permStateChangeType == 0) && (device != nullptr)) {
-        device->Close();
+        device->CloseDevice();
         device->OnError(DEVICE_PREEMPT, 0);
     }
 }
@@ -39,7 +39,7 @@ void CameraUseStateChangeCb::StateChangeNotify(Security::AccessToken::AccessToke
     MEDIA_INFO_LOG("enter CameraUseStateChangeNotify tokenId:%{public}d", tokenId);
     auto device = cameraDevice_.promote();
     if ((isShowing == false) && (device != nullptr)) {
-        device->Close();
+        device->CloseDevice();
     }
 }
 

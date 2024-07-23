@@ -33,10 +33,16 @@ ohos_source_set("camera_utils") {
 
   external_deps = [
     "c_utils:utils",
-    "hicollie:libhicollie",
     "hilog:libhilog",
     "hitrace:hitrace_meter",
   ]
+
+  defines = []
+
+  if (hicollie_enable) {
+    external_deps += [ "hicollie:libhicollie" ]
+    defines += [ "HICOLLIE_ENABLE" ]
+  }
 
   public_configs = [ ":camera_utils_config" ]
   part_name = "camera_framework"

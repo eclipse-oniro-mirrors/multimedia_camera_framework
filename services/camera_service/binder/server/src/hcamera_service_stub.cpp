@@ -30,8 +30,47 @@ namespace OHOS {
 namespace CameraStandard {
 HCameraServiceStub::HCameraServiceStub()
 {
-    cameraListenerMap_.Clear();
+    InitHandlers();
     MEDIA_DEBUG_LOG("0x%{public}06" PRIXPTR " Instances create", (POINTER_MASK & reinterpret_cast<uintptr_t>(this)));
+}
+
+void HCameraServiceStub::InitHandlers()
+{
+    handlers_ = {
+        {static_cast<uint32_t>(CAMERA_SERVICE_CREATE_DEVICE), &HCameraServiceStub::HandleCreateCameraDevice},
+        {static_cast<uint32_t>(CAMERA_SERVICE_SET_CAMERA_CALLBACK), &HCameraServiceStub::HandleSetCameraCallback},
+        {static_cast<uint32_t>(CAMERA_SERVICE_SET_MUTE_CALLBACK), &HCameraServiceStub::HandleSetMuteCallback},
+        {static_cast<uint32_t>(CAMERA_SERVICE_SET_TORCH_CALLBACK), &HCameraServiceStub::HandleSetTorchCallback},
+        {static_cast<uint32_t>(CAMERA_SERVICE_SET_FOLD_CALLBACK), &HCameraServiceStub::HandleSetFoldStatusCallback},
+        {static_cast<uint32_t>(CAMERA_SERVICE_GET_CAMERAS), &HCameraServiceStub::HandleGetCameras},
+        {static_cast<uint32_t>(CAMERA_SERVICE_GET_CAMERA_IDS), &HCameraServiceStub::HandleGetCameraIds},
+        {static_cast<uint32_t>(CAMERA_SERVICE_GET_CAMERA_ABILITY), &HCameraServiceStub::HandleGetCameraAbility},
+        {static_cast<uint32_t>(CAMERA_SERVICE_CREATE_CAPTURE_SESSION), &HCameraServiceStub::HandleCreateCaptureSession},
+        {static_cast<uint32_t>(CAMERA_SERVICE_CREATE_DEFERRED_PHOTO_PROCESSING_SESSION),
+            &HCameraServiceStub::HandleCreateDeferredPhotoProcessingSession},
+        {static_cast<uint32_t>(CAMERA_SERVICE_CREATE_PHOTO_OUTPUT), &HCameraServiceStub::HandleCreatePhotoOutput},
+        {static_cast<uint32_t>(CAMERA_SERVICE_CREATE_PREVIEW_OUTPUT), &HCameraServiceStub::HandleCreatePreviewOutput},
+        {static_cast<uint32_t>(CAMERA_SERVICE_CREATE_DEFERRED_PREVIEW_OUTPUT),
+            &HCameraServiceStub::HandleCreateDeferredPreviewOutput},
+        {static_cast<uint32_t>(CAMERA_SERVICE_CREATE_VIDEO_OUTPUT), &HCameraServiceStub::HandleCreateVideoOutput},
+        {static_cast<uint32_t>(CAMERA_SERVICE_SET_LISTENER_OBJ), &HCameraServiceStub::SetListenerObject},
+        {static_cast<uint32_t>(CAMERA_SERVICE_CREATE_METADATA_OUTPUT), &HCameraServiceStub::HandleCreateMetadataOutput},
+        {static_cast<uint32_t>(CAMERA_SERVICE_MUTE_CAMERA), &HCameraServiceStub::HandleMuteCamera},
+        {static_cast<uint32_t>(CAMERA_SERVICE_MUTE_CAMERA_PERSIST), &HCameraServiceStub::HandleMuteCameraPersist},
+        {static_cast<uint32_t>(CAMERA_SERVICE_IS_CAMERA_MUTED), &HCameraServiceStub::HandleIsCameraMuted},
+        {static_cast<uint32_t>(CAMERA_SERVICE_PRE_LAUNCH_CAMERA), &HCameraServiceStub::HandlePrelaunchCamera},
+        {static_cast<uint32_t>(CAMERA_SERVICE_SET_PRE_LAUNCH_CAMERA), &HCameraServiceStub::HandleSetPrelaunchConfig},
+        {static_cast<uint32_t>(CAMERA_SERVICE_SET_TORCH_LEVEL), &HCameraServiceStub::HandleSetTorchLevel},
+        {static_cast<uint32_t>(CAMERA_SERVICE_PRE_SWITCH_CAMERA), &HCameraServiceStub::HandlePreSwitchCamera},
+        {static_cast<uint32_t>(CAMERA_SERVICE_PROXY_FOR_FREEZE), &HCameraServiceStub::HandleProxyForFreeze},
+        {static_cast<uint32_t>(CAMERA_SERVICE_RESET_ALL_FREEZE_STATUS),
+            &HCameraServiceStub::HandleResetAllFreezeStatus},
+        {static_cast<uint32_t>(CAMERA_SERVICE_GET_DM_DEVICE_INFOS), &HCameraServiceStub::HandleGetDmDeviceInfo},
+        {static_cast<uint32_t>(CAMERA_SERVICE_NOTIFY_CAMERA_STATE), &HCameraServiceStub::HandleNotifyCameraState},
+        {static_cast<uint32_t>(CAMERA_SERVICE_SET_PEER_CALLBACK), &HCameraServiceStub::HandleSetPeerCallback},
+        {static_cast<uint32_t>(CAMERA_SERVICE_UNSET_PEER_CALLBACK), &HCameraServiceStub::HandleUnsetPeerCallback},
+        {static_cast<uint32_t>(CAMERA_SERVICE_ALLOW_OPEN_BY_OHSIDE), &HCameraServiceStub::HandleAllowOpenByOHSide},
+    };
 }
 
 HCameraServiceStub::~HCameraServiceStub()
@@ -44,105 +83,24 @@ int HCameraServiceStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Mess
     DisableJeMalloc();
     int errCode = -1;
     CHECK_AND_RETURN_RET(data.ReadInterfaceToken() == GetDescriptor(), errCode);
-    CameraXCollie cameraXCollie("CameraServiceStub");
-    switch (code) {
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEVICE):
-            errCode = HCameraServiceStub::HandleCreateCameraDevice(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_CAMERA_CALLBACK):
-            errCode = HCameraServiceStub::HandleSetCameraCallback(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_MUTE_CALLBACK):
-            errCode = HCameraServiceStub::HandleSetMuteCallback(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_CALLBACK):
-            errCode = HCameraServiceStub::HandleSetTorchCallback(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_FOLD_CALLBACK):
-            errCode = HCameraServiceStub::HandleSetFoldStatusCallback(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_CAMERAS):
-            errCode = HCameraServiceStub::HandleGetCameras(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_CAMERA_IDS):
-            errCode = HCameraServiceStub::HandleGetCameraIds(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_CAMERA_ABILITY):
-            errCode = HCameraServiceStub::HandleGetCameraAbility(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_CAPTURE_SESSION):
-            errCode = HCameraServiceStub::HandleCreateCaptureSession(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEFERRED_PHOTO_PROCESSING_SESSION):
-            errCode = HCameraServiceStub::HandleCreateDeferredPhotoProcessingSession(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_PHOTO_OUTPUT):
-            errCode = HCameraServiceStub::HandleCreatePhotoOutput(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_PREVIEW_OUTPUT):
-            errCode = HCameraServiceStub::HandleCreatePreviewOutput(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_DEFERRED_PREVIEW_OUTPUT):
-            errCode = HCameraServiceStub::HandleCreateDeferredPreviewOutput(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_VIDEO_OUTPUT):
-            errCode = HCameraServiceStub::HandleCreateVideoOutput(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_LISTENER_OBJ):
-            errCode = HCameraServiceStub::SetListenerObject(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_CREATE_METADATA_OUTPUT):
-            errCode = HCameraServiceStub::HandleCreateMetadataOutput(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_MUTE_CAMERA):
-            errCode = HCameraServiceStub::HandleMuteCamera(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_MUTE_CAMERA_PERSIST):
-            errCode = HCameraServiceStub::HandleMuteCameraPersist(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_IS_CAMERA_MUTED):
-            errCode = HCameraServiceStub::HandleIsCameraMuted(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_PRE_LAUNCH_CAMERA):
-            errCode = HCameraServiceStub::HandlePrelaunchCamera(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_PRE_LAUNCH_CAMERA):
-            errCode = HCameraServiceStub::HandleSetPrelaunchConfig(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_SET_TORCH_LEVEL):
-            errCode = HCameraServiceStub::HandleSetTorchLevel(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_PRE_SWITCH_CAMERA):
-            errCode = HCameraServiceStub::HandlePreSwitchCamera(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_DESTROY_STUB_OBJ):
-            errCode = HCameraServiceStub::DestroyStubObj();
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_PROXY_FOR_FREEZE):
-            errCode = HCameraServiceStub::HandleProxyForFreeze(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_RESET_ALL_FREEZE_STATUS):
-            errCode = HCameraServiceStub::HandleResetAllFreezeStatus(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_ALLOW_OPEN_BY_OHSIDE):
-            errCode = HCameraServiceStub::HandleAllowOpenByOHSide(data, reply);
-            break;
-        case static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_NOTIFY_CAMERA_STATE):
-            errCode = HCameraServiceStub::HandleNotifyCameraState(data);
-            break;
-        case static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_SET_PEER_CALLBACK):
-            errCode = HCameraServiceStub::HandleSetPeerCallback(data);
-            break;
-        case static_cast<uint32_t>(CameraServiceDHInterfaceCode::CAMERA_SERVICE_UNSET_PEER_CALLBACK):
-            errCode = HCameraServiceStub::HandleUnsetPeerCallback(data);
-            break;
-        case static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_GET_DM_DEVICE_INFOS):
-            errCode = HCameraServiceStub::HandleGetDmDeviceInfo(data, reply);
-            break;
-        default:
+
+    CameraXCollie cameraXCollie = CameraXCollie("CameraServiceStub");
+    if (code == static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_IS_CAMERA_MUTED)) {
+        cameraXCollie.CancelCameraXCollie();
+    }
+    if (code == static_cast<uint32_t>(CameraServiceInterfaceCode::CAMERA_SERVICE_DESTROY_STUB_OBJ)) {
+        errCode = DestroyStubObj(); // Special case for no-param method
+    } else {
+        // Check if the request code is in the handlers map
+        auto handlerIt = handlers_.find(code);
+        if (handlerIt != handlers_.end()) {
+            // Call the corresponding handler function
+            errCode = (this->*(handlerIt->second))(data, reply);
+        } else {
+            // If no handler is found, delegate to the base class
             MEDIA_ERR_LOG("HCameraServiceStub request code %{public}d not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
-            break;
+        }
     }
 
     return errCode;
@@ -585,7 +543,7 @@ int HCameraServiceStub::DestroyStubObj()
     return CAMERA_OK;
 }
 
-int HCameraServiceStub::HandleNotifyCameraState(MessageParcel& data)
+int HCameraServiceStub::HandleNotifyCameraState(MessageParcel& data, MessageParcel& reply)
 {
     std::string cameraId = data.ReadString();
     int32_t state = data.ReadInt32();
@@ -597,7 +555,7 @@ int HCameraServiceStub::HandleNotifyCameraState(MessageParcel& data)
     return errCode;
 }
 
-int HCameraServiceStub::HandleSetPeerCallback(MessageParcel& data)
+int HCameraServiceStub::HandleSetPeerCallback(MessageParcel& data, MessageParcel& reply)
 {
     auto remoteObject = data.ReadRemoteObject();
     CHECK_AND_RETURN_RET_LOG(remoteObject != nullptr, IPC_STUB_INVALID_DATA_ERR,
@@ -614,7 +572,7 @@ int HCameraServiceStub::HandleSetPeerCallback(MessageParcel& data)
     return SetPeerCallback(callback);
 }
 
-int HCameraServiceStub::HandleUnsetPeerCallback(MessageParcel& data)
+int HCameraServiceStub::HandleUnsetPeerCallback(MessageParcel& data, MessageParcel& reply)
 {
     MEDIA_INFO_LOG("HandleUnsetPeerCallback called");
     return UnsetPeerCallback();

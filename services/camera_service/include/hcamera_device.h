@@ -133,6 +133,8 @@ public:
 
     bool GetCameraResourceCost(int32_t &cost, std::set<std::string> &conflicting);
 
+    int32_t CloseDevice();
+
 private:
     class FoldScreenListener;
     std::mutex opMutex_; // Lock the operations updateSettings_, streamOperator_, and hdiCameraDevice_.
@@ -190,7 +192,6 @@ private:
     void CheckZoomChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void UnPrepareZoom();
     int32_t OpenDevice(bool isEnableSecCam = false);
-    int32_t CloseDevice();
     void HandleFoldableDevice();
     int32_t HandlePrivacyBeforeOpenDevice();
     void HandlePrivacyAfterCloseDevice();
@@ -213,6 +214,7 @@ private:
     void DebugLogForAeExposureCompensation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
         uint32_t tag);
     void DebugLogForFlashMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForFrameRateRange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForLightPaintingType(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForTriggerLighting(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void CreateMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);

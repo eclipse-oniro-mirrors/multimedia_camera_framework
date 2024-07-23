@@ -164,7 +164,6 @@ ohos_shared_library("camera_service") {
     "graphic_2d:librender_service_client",
     "graphic_surface:surface",
     "hdf_core:libhdi",
-    "hicollie:libhicollie",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
@@ -196,6 +195,11 @@ ohos_shared_library("camera_service") {
       defined(global_parts_info.distributedhardware_device_manager)) {
     external_deps += [ "device_manager:devicemanagersdk" ]
     defines += [ "DEVICE_MANAGER" ]
+  }
+
+  if (hicollie_enable) {
+    external_deps += [ "hicollie:libhicollie" ]
+    defines += [ "HICOLLIE_ENABLE" ]
   }
 
   include_dirs += [

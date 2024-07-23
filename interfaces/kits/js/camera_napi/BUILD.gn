@@ -82,6 +82,7 @@ ohos_shared_library("camera_napi") {
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/output/video_output_napi.cpp",
     "${multimedia_camera_framework_path}/frameworks/js/camera_napi/src/session/camera_session_napi.cpp",
   ]
+
   deps = [
     "${multimedia_camera_framework_path}/common:camera_utils",
     "${multimedia_camera_framework_path}/frameworks/native/camera:camera_framework",
@@ -92,7 +93,6 @@ ohos_shared_library("camera_napi") {
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libcamera_proxy_1.1",
     "graphic_surface:surface",
-    "hicollie:libhicollie",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "image_framework:image",
@@ -103,6 +103,14 @@ ohos_shared_library("camera_napi") {
     "media_library:medialibrary_nutils",
     "napi:ace_napi",
   ]
+
+  defines = []
+
+  if (hicollie_enable) {
+    external_deps += [ "hicollie:libhicollie" ]
+    defines += [ "HICOLLIE_ENABLE" ]
+  }
+
   sanitize = {
     cfi = true
     cfi_cross_dso = true
