@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef STREAM_REPEAT_STUB_FUZZER_H
-#define STREAM_REPEAT_STUB_FUZZER_H
+#ifndef CAMERA_INPUT_FUZZER_H
+#define CAMERA_INPUT_FUZZER_H
 
 #include "hstream_repeat_stub.h"
 #include "input/camera_input.h"
@@ -22,6 +22,17 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace CameraInputFuzzer {
+
+class ResultCallbackMock : public ResultCallback {
+public:
+    void OnResult(const uint64_t timestamp,
+    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) const override {}
+};
+
+class ErrorCallbackMock : public ErrorCallback {
+public:
+    void OnError(const int32_t errorType, const int32_t errorMsg) const override {}
+};
 
 void Test(uint8_t *rawData, size_t size);
 void TestInput(sptr<CameraInput> input, uint8_t *rawData, size_t size);

@@ -42,22 +42,6 @@ void Test(uint8_t *rawData, size_t size)
     TestInput(input, rawData, size);
 }
 
-class ErrorCallbackMock : public ErrorCallback {
-public:
-    void OnError(const int32_t errorType, const int32_t errorMsg) const override {}
-};
-
-class ResultCallbackMock : public ResultCallback {
-public:
-    void OnResult(const uint64_t timestamp,
-    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) const override {}
-};
-
-class CameraOcclusionDetectCallbackMock : public CameraOcclusionDetectCallback {
-public:
-    void OnCameraOcclusionDetected(const uint8_t isCameraOcclusionDetect) const override {}
-};
-
 void TestInput(sptr<CameraInput> input, uint8_t *rawData, size_t size)
 {
     MessageParcel data;
@@ -69,7 +53,8 @@ void TestInput(sptr<CameraInput> input, uint8_t *rawData, size_t size)
     input->Open(data.ReadBool(), &secureSeqId);
     input->SetErrorCallback(make_shared<ErrorCallbackMock>());
     input->SetResultCallback(make_shared<ResultCallbackMock>());
-    input->SetOcclusionDetectCallback(make_shared<CameraOcclusionDetectCallbackMock>());
+    shared_ptr<CameraOcclusionDetectCallback> codCallback;
+    input->SetOcclusionDetectCallback(codCallback);
     input->GetCameraId();
     input->GetCameraDevice();
     input->GetErrorCallback();
