@@ -95,6 +95,50 @@ typedef void (*OH_PhotoOutput_OnFrameEnd)(Camera_PhotoOutput* photoOutput, int32
 typedef void (*OH_PhotoOutput_OnError)(Camera_PhotoOutput* photoOutput, Camera_ErrorCode errorCode);
 
 /**
+ * @brief Photo output capture end callback.
+ *
+ * @param photoOutput the {@link Camera_PhotoOutput} which deliver the callback.
+ * @param frameCount the frameCount which is delivered by the callback.
+ * @since 12
+ */
+typedef void (*OH_PhotoOutput_CaptureEnd) (Camera_PhotoOutput* photoOutput, int32_t frameCount);
+
+/**
+ * @brief Photo output capture start with infomation callback.
+ *
+ * @param photoOutput the {@link Camera_PhotoOutput} which deliver the callback.
+ * @param Info the {@link Camera_CaptureStartInfo} which is delivered by the callback..
+ * @since 12
+ */
+typedef void (*OH_PhotoOutput_CaptureStartWithInfo) (Camera_PhotoOutput* photoOutput, Camera_CaptureStartInfo* Info);
+
+/**
+ * @brief Photo output eframe shutter end callback.
+ *
+ * @param photoOutput the {@link Camera_PhotoOutput} which deliver the callback.
+ * @param Info the {@link Camera_CaptureStartInfo} which is delivered by the callback.
+ * @since 12
+ */
+typedef void (*OH_PhotoOutput_OnFrameShutterEnd) (Camera_PhotoOutput* photoOutput, Camera_FrameShutterInfo* Info);
+
+/**
+ * @brief Photo output capture ready callback.
+ *
+ * @param photoOutput the {@link Camera_PhotoOutput} which deliver the callback.
+ * @since 12
+ */
+typedef void (*OH_PhotoOutput_CaptureReady) (Camera_PhotoOutput* photoOutput);
+
+/**
+ * @brief Photo output estimated capture duration callback.
+ *
+ * @param photoOutput the {@link Camera_PhotoOutput} which deliver the callback.
+ * @param duration the duration which is delivered by the callback.
+ * @since 12
+ */
+typedef void (*OH_PhotoOutput_EstimatedCaptureDuration) (Camera_PhotoOutput* photoOutput, int64_t duration);
+
+/**
  * @brief A listener for photo output.
  *
  * @see OH_PhotoOutput_RegisterCallback
@@ -144,6 +188,126 @@ Camera_ErrorCode OH_PhotoOutput_RegisterCallback(Camera_PhotoOutput* photoOutput
  * @since 11
  */
 Camera_ErrorCode OH_PhotoOutput_UnregisterCallback(Camera_PhotoOutput* photoOutput, PhotoOutput_Callbacks* callback);
+
+/**
+ * @brief Register capture start event callback.
+ *
+ * @param photoOutput the {@link Camera_PhotoOutput} instance.
+ * @param callback the {@link OH_PhotoOutput_CaptureStartWithInfo} to be registered.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 12
+ */
+Camera_ErrorCode OH_PhotoOutput_RegisterCaptureStartWithInfoCallback(Camera_PhotoOutput* photoOutput,
+    OH_PhotoOutput_CaptureStartWithInfo callback);
+
+/**
+ * @brief Unregister capture start event callback.
+ *
+ * @param photoOutput the {@link Camera_PhotoOutput} instance.
+ * @param callback the {@link OH_PhotoOutput_CaptureStartWithInfo} to be unregistered.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 12
+ */
+Camera_ErrorCode OH_PhotoOutput_UnregisterCaptureStartWithInfoCallback(Camera_PhotoOutput* photoOutput,
+    OH_PhotoOutput_CaptureStartWithInfo callback);
+
+/**
+ * @brief Register capture end event callback.
+ *
+ * @param photoOutput the {@link Camera_PhotoOutput} instance.
+ * @param callback the {@link OH_PhotoOutput_CaptureEnd} to be registered.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 12
+ */
+Camera_ErrorCode OH_PhotoOutput_RegisterCaptureEndCallback(Camera_PhotoOutput* photoOutput,
+    OH_PhotoOutput_CaptureEnd callback);
+
+/**
+ * @brief Unregister capture end event callback.
+ *
+ * @param photoOutput the {@link Camera_PhotoOutput} instance.
+ * @param callback the {@link OH_PhotoOutput_CaptureEnd} to be unregistered.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 12
+ */
+Camera_ErrorCode OH_PhotoOutput_UnregisterCaptureEndCallback(Camera_PhotoOutput* photoOutput,
+    OH_PhotoOutput_CaptureEnd callback);
+
+/**
+ * @brief Register frame shutter end event callback.
+ *
+ * @param photoOutput the {@link Camera_PhotoOutput} instance.
+ * @param callback the {@link OH_PhotoOutput_OnFrameShutterEnd} to be registered.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 12
+ */
+Camera_ErrorCode OH_PhotoOutput_RegisterFrameShutterEndCallback(Camera_PhotoOutput* photoOutput,
+    OH_PhotoOutput_OnFrameShutterEnd callback);
+
+/**
+ * @brief Unregister frame shutter end event callback.
+ *
+ * @param photoOutput the {@link Camera_PhotoOutput} instance.
+ * @param callback the {@link OH_PhotoOutput_OnFrameShutterEnd} to be unregistered.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 12
+ */
+Camera_ErrorCode OH_PhotoOutput_UnregisterFrameShutterEndCallback(Camera_PhotoOutput* photoOutput,
+    OH_PhotoOutput_OnFrameShutterEnd callback);
+
+/**
+ * @brief Register capture ready event callback. After receiving the callback, can proceed to the next capture.
+ *
+ * @param photoOutput the {@link Camera_PhotoOutput} instance.
+ * @param callback the {@link OH_PhotoOutput_CaptureReady} to be registered.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 12
+ */
+Camera_ErrorCode OH_PhotoOutput_RegisterCaptureReadyCallback(Camera_PhotoOutput* photoOutput,
+    OH_PhotoOutput_CaptureReady callback);
+
+/**
+ * @brief Unregister capture ready event callback.
+ *
+ * @param photoOutput the {@link Camera_PhotoOutput} instance.
+ * @param callback the {@link OH_PhotoOutput_CaptureReady} to be unregistered.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 12
+ */
+Camera_ErrorCode OH_PhotoOutput_UnregisterCaptureReadyCallback(Camera_PhotoOutput* photoOutput,
+    OH_PhotoOutput_CaptureReady callback);
+
+/**
+ * @brief Register estimated capture duration event callback.
+ *
+ * @param photoOutput the {@link Camera_PhotoOutput} instance.
+ * @param callback the {@link OH_PhotoOutput_EstimatedCaptureDuration} to be registered.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 12
+ */
+Camera_ErrorCode OH_PhotoOutput_RegisterEstimatedCaptureDurationCallback(Camera_PhotoOutput* photoOutput,
+    OH_PhotoOutput_EstimatedCaptureDuration callback);
+
+/**
+ * @brief Unregister estimated capture duration event callback.
+ *
+ * @param photoOutput the {@link Camera_PhotoOutput} instance.
+ * @param callback the {@link OH_PhotoOutput_EstimatedCaptureDuration} to be unregistered.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 12
+ */
+Camera_ErrorCode OH_PhotoOutput_UnregisterEstimatedCaptureDurationCallback(Camera_PhotoOutput* photoOutput,
+    OH_PhotoOutput_EstimatedCaptureDuration callback);
 
 /**
  * @brief Capture photo.

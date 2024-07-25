@@ -39,6 +39,14 @@ public:
 
     Camera_ErrorCode GetActiveProfile(Camera_Profile** profile);
 
+    Camera_ErrorCode GetSupportedFrameRates(Camera_FrameRateRange** frameRateRange, uint32_t* size);
+
+    Camera_ErrorCode DeleteFrameRates(Camera_FrameRateRange* frameRateRange);
+
+    Camera_ErrorCode SetFrameRate(int32_t minFps, int32_t maxFps);
+
+    Camera_ErrorCode GetActiveFrameRate(Camera_FrameRateRange* frameRateRange);
+
 private:
     OHOS::sptr<OHOS::CameraStandard::PreviewOutput> innerPreviewOutput_;
 };

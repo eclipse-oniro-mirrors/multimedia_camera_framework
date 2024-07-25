@@ -134,6 +134,64 @@ Camera_ErrorCode OH_VideoOutput_DeleteProfile(Camera_VideoProfile* profile)
     return CAMERA_OK;
 }
 
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_VideoOutput_GetSupportedFrameRates(Camera_VideoOutput* videoOutput,
+    Camera_FrameRateRange** frameRateRange, uint32_t* size)
+{
+    CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, videoOutput is null!");
+    CHECK_AND_RETURN_RET_LOG(frameRateRange != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, frameRateRange is null!");
+    CHECK_AND_RETURN_RET_LOG(size != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, size is null!");
+
+    return videoOutput->GetSupportedFrameRates(frameRateRange, size);
+}
+
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_VideoOutput_DeleteFrameRates(Camera_VideoOutput* videoOutput,
+    Camera_FrameRateRange* frameRateRange)
+{
+    CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, videoOutput is null!");
+    CHECK_AND_RETURN_RET_LOG(frameRateRange != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, frameRateRange is null!");
+
+    return videoOutput->DeleteFrameRates(frameRateRange);
+}
+
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_VideoOutput_SetFrameRate(Camera_VideoOutput* videoOutput,
+    int32_t minFps, int32_t maxFps)
+{
+    CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, videoOutput is null!");
+
+    return videoOutput->SetFrameRate(minFps, maxFps);
+}
+/**
+ * @since 12
+ * @version 1.0
+ */
+Camera_ErrorCode OH_VideoOutput_GetActiveFrameRate(Camera_VideoOutput* videoOutput,
+    Camera_FrameRateRange* frameRateRange)
+{
+    CHECK_AND_RETURN_RET_LOG(videoOutput != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, videoOutput is null!");
+    CHECK_AND_RETURN_RET_LOG(frameRateRange != nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invaild argument, frameRateRange is null!");
+
+    return videoOutput->GetActiveFrameRate(frameRateRange);
+}
 #ifdef __cplusplus
 }
 #endif

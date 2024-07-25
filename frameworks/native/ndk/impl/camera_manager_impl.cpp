@@ -42,6 +42,11 @@ const std::unordered_map<Camera_Position, CameraPosition> g_NdkCameraPositionToF
     {Camera_Position::CAMERA_POSITION_BACK, CameraPosition::CAMERA_POSITION_BACK},
     {Camera_Position::CAMERA_POSITION_FRONT, CameraPosition::CAMERA_POSITION_FRONT},
 };
+const std::unordered_map<Camera_TorchMode, TorchMode> g_ndkToFwTorchMode_ = {
+    {Camera_TorchMode::OFF, TorchMode::TORCH_MODE_OFF},
+    {Camera_TorchMode::ON, TorchMode::TORCH_MODE_ON},
+    {Camera_TorchMode::AUTO, TorchMode::TORCH_MODE_AUTO}
+};
 
 class InnerCameraManagerCallback : public CameraManagerCallback {
 public:
@@ -93,6 +98,29 @@ private:
     Camera_Device* camera_;
 };
 
+class InnerCameraManagerTorchStatusCallback : public TorchListener {
+public:
+    InnerCameraManagerTorchStatusCallback(Camera_Manager* cameraManager,
+        OH_CameraManager_TorchStatusCallback torchStatusCallback)
+        : cameraManager_(cameraManager), torchStatusCallback_(torchStatusCallback) {};
+    ~InnerCameraManagerTorchStatusCallback() = default;
+
+    void OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) const override
+    {
+        MEDIA_DEBUG_LOG("OnTorchStatusChange is called!");
+        if (cameraManager_ != nullptr && torchStatusCallback_ != nullptr) {
+            Camera_TorchStatusInfo statusInfo;
+            statusInfo.isTorchAvailable = torchStatusInfo.isTorchAvailable;
+            statusInfo.isTorchActive = torchStatusInfo.isTorchActive;
+            statusInfo.torchLevel = torchStatusInfo.torchLevel;
+            torchStatusCallback_(cameraManager_, &statusInfo);
+        }
+    }
+private:
+    Camera_Manager* cameraManager_;
+    OH_CameraManager_TorchStatusCallback torchStatusCallback_ = nullptr;
+};
+
 Camera_Manager::Camera_Manager()
 {
     MEDIA_DEBUG_LOG("Camera_Manager Constructor is called");
@@ -118,6 +146,22 @@ Camera_ErrorCode Camera_Manager::RegisterCallback(CameraManager_Callbacks* callb
 Camera_ErrorCode Camera_Manager::UnregisterCallback(CameraManager_Callbacks* callback)
 {
     cameraManager_->SetCallback(nullptr);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::RegisterTorchStatusCallback(OH_CameraManager_TorchStatusCallback torchStatusCallback)
+{
+    shared_ptr<InnerCameraManagerTorchStatusCallback> innerTorchStatusCallback =
+                make_shared<InnerCameraManagerTorchStatusCallback>(this, torchStatusCallback);
+    CHECK_AND_RETURN_RET_LOG(innerTorchStatusCallback != nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "create innerTorchStatusCallback failed!");
+    cameraManager_->RegisterTorchListener(innerTorchStatusCallback);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::UnregisterTorchStatusCallback(OH_CameraManager_TorchStatusCallback torchStatusCallback)
+{
+    cameraManager_->RegisterTorchListener(nullptr);
     return CAMERA_OK;
 }
 
@@ -690,4 +734,40 @@ Camera_ErrorCode Camera_Manager::DeleteSceneModes(Camera_SceneMode* sceneModes)
     }
 
     return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::IsTorchSupported(bool* isTorchSupported)
+{
+    MEDIA_DEBUG_LOG("Camera_Manager::IsTorchSupported is called");
+
+    *isTorchSupported = CameraManager::GetInstance()->IsTorchSupported();
+    MEDIA_DEBUG_LOG("IsTorchSupported[%{public}d]", *isTorchSupported);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::IsTorchSupportedByTorchMode(Camera_TorchMode torchMode, bool* isTorchSupported)
+{
+    MEDIA_DEBUG_LOG("Camera_Manager::IsTorchSupportedByTorchMode is called");
+
+    auto itr = g_ndkToFwTorchMode_.find(torchMode);
+    if (itr == g_ndkToFwTorchMode_.end()) {
+        MEDIA_ERR_LOG("torchMode[%{public}d] is invalid", torchMode);
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    *isTorchSupported = CameraManager::GetInstance()->IsTorchModeSupported(itr->second);
+    MEDIA_DEBUG_LOG("IsTorchSupportedByTorchMode[%{public}d]", *isTorchSupported);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::SetTorchMode(Camera_TorchMode torchMode)
+{
+    MEDIA_DEBUG_LOG("Camera_Manager::SetTorchMode is called");
+
+    auto itr = g_ndkToFwTorchMode_.find(torchMode);
+    if (itr == g_ndkToFwTorchMode_.end()) {
+        MEDIA_ERR_LOG("torchMode[%{public}d] is invalid", torchMode);
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    int32_t ret = CameraManager::GetInstance()->SetTorchMode(itr->second);
+    return FrameworkToNdkCameraError(ret);
 }
