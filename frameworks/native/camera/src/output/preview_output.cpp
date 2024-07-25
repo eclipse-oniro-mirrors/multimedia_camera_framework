@@ -627,6 +627,7 @@ int32_t PreviewOutput::canSetFrameRateRange(int32_t minFrameRate, int32_t maxFra
     int32_t maxIndex = 1;
     std::vector<std::vector<int32_t>> supportedFrameRange = GetSupportedFrameRates();
     for (auto item : supportedFrameRange) {
+        MEDIA_ERR_LOG("canSetFrameRateRange item0:%{public}d item1:%{public}d!", item[minIndex], item[maxIndex]);
         if (item[minIndex] <= minFrameRate && item[maxIndex] >= maxFrameRate) {
             return CameraErrorCode::SUCCESS;
         }

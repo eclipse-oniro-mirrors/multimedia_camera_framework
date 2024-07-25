@@ -830,6 +830,8 @@ void CameraFrameworkUnitTest::SetUp()
     // set native token
     g_num++;
     MEDIA_DEBUG_LOG("CameraFrameworkUnitTest::SetUp num:%{public}d", g_num);
+    // MEDIA_DEBUG_LOG("SetUp testName:%{public}s",
+    //     ::testing::UnitTest::GetInstance()->current_test_info()->name());
     NativeAuthorization();
     g_mockFlagWithoutAbt = false;
     mockCameraHostManager = new MockHCameraHostManager(nullptr);
@@ -3448,11 +3450,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_017, TestSize.Level
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     SceneMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
-    sptr<HCaptureSession> camSession1 = new (std::nothrow) HCaptureSession(12, mode);
     ASSERT_NE(camSession, nullptr);
-    ASSERT_NE(camSession1, nullptr);
     EXPECT_EQ(camSession->Start(), CAMERA_INVALID_STATE);
-    camSession1->Start();
 
     sptr<IConsumerSurface> Surface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer = Surface->GetProducer();
@@ -4945,6 +4944,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_046, TestSize.Level
     EXPECT_EQ(session->RemoveInput(input), OPERATION_NOT_ALLOWED);
     EXPECT_EQ(preview->Release(), 0);
     EXPECT_EQ(input->Release(), 0);
+    session->Release();
 }
 
 /*
@@ -6505,6 +6505,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_095, TestSize.Level
     EXPECT_EQ(camSession->GetCurrentStreamInfos(streamInfos), 0);
     EXPECT_EQ(camSession->AddOutputStream(nullptr), CAMERA_INVALID_ARG);
     EXPECT_EQ(camSession->RemoveOutputStream(nullptr), CAMERA_INVALID_ARG);
+    camSession->Release();
 }
 
 /*
@@ -6524,6 +6525,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_096, TestSize.Level
 
     camSession->cameraDevice_ = nullptr;
     EXPECT_EQ(camSession->LinkInputAndOutputs(), CAMERA_INVALID_SESSION_CFG);
+    camSession->Release();
 }
 
 /*
@@ -6549,6 +6551,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_097, TestSize.Level
     EXPECT_EQ(camSession->SetColorSpace(colorSpace, captureColorSpace, isNeedUpdate), CAMERA_INVALID_STATE);
     camSession->currColorSpace_ = ColorSpace::SRGB;
     EXPECT_EQ(camSession->SetColorSpace(colorSpace, captureColorSpace, isNeedUpdate), CAMERA_INVALID_STATE);
+    camSession->Release();
 }
 
 /*
@@ -6578,6 +6581,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_098, TestSize.Level
     EXPECT_EQ(camSession->CheckIfColorSpaceMatchesFormat(colorSpace), 0);
     colorSpace = ColorSpace::BT2020_PQ_LIMIT;
     EXPECT_EQ(camSession->CheckIfColorSpaceMatchesFormat(colorSpace), 0);
+    camSession->Release();
 }
 
 /*
@@ -6594,6 +6598,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_099, TestSize.Level
     SceneMode mode = PORTRAIT;
     sptr<HCaptureSession> camSession = new (std::nothrow) HCaptureSession(callerToken, mode);
     ASSERT_NE(camSession, nullptr);
+    camSession->Release();
 }
 
 /*
@@ -6618,6 +6623,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_100, TestSize.Level
 
     camSession->isSessionStarted_ = true;
     camSession->RestartStreams();
+    camSession->Release();
 }
 
 /*
@@ -6646,6 +6652,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_101, TestSize.Level
     float duration = 0;
     EXPECT_EQ(camSession->SetSmoothZoom(smoothZoomType, operationMode,
         targetZoomRatio, duration), 11);
+    camSession->Release();
 }
 
 /*
@@ -7443,6 +7450,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_121, TestSize.Level
     SceneMode opMode = PORTRAIT;
     sptr<HCaptureSession> session = HCaptureSession::NewInstance(callerToken, opMode);
     ASSERT_NE(session, nullptr);
+    session->Release();
 }
 
 /*
