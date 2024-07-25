@@ -773,6 +773,19 @@ void HCameraDevice::DebugLogForBeautySkinTone(const std::shared_ptr<OHOS::Camera
     }
 }
 
+void HCameraDevice::DebugLogForBeautyControlType(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
+    uint32_t tag)
+{
+    // debug log for beauty control type
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
+    if (ret != CAM_META_SUCCESS) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_BEAUTY_TYPE tag");
+    } else {
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_BEAUTY_TYPE value=%{public}d", item.data.u8[0]);
+    }
+}
+
 void HCameraDevice::DebugLogForPortraitEffect(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
     uint32_t tag)
 {

@@ -1591,7 +1591,7 @@ private:
     bool IsModeWithVideoStream();
     void SetDefaultColorSpace();
     void UpdateDeviceDeferredability();
-    void ProcessProfilesAbilityId(const int32_t portraitMode);
+    void ProcessProfilesAbilityId(const SceneMode supportModes);
     int32_t ProcessCaptureColorSpace(ColorSpaceInfo colorSpaceInfo, ColorSpace& fwkCaptureColorSpace);
     void ProcessFocusDistanceUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
     void FindTagId();
