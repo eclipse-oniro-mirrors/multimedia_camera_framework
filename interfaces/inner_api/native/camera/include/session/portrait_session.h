@@ -29,15 +29,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-enum PortraitEffect {
-    OFF_EFFECT = 0,
-    CIRCLES = 1,
-    HEART = 2,
-    ROTATED = 3,
-    STUDIO = 4,
-    THEATER = 5,
-};
-
 class CaptureOutput;
 class PortraitSession : public CaptureSession {
 public:
@@ -70,7 +61,6 @@ public:
      */
     bool CanAddOutput(sptr<CaptureOutput>& output) override;
 private:
-    static const std::unordered_map<camera_portrait_effect_type_t, PortraitEffect> metaToFwPortraitEffect_;
     static const std::unordered_map<PortraitEffect, camera_portrait_effect_type_t> fwToMetaPortraitEffect_;
 };
 } // namespace CameraStandard

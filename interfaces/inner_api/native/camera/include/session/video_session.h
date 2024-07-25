@@ -19,7 +19,7 @@
 #include "camera_output_capability.h"
 #include "capture_session.h"
 #include "icapture_session.h"
- 
+
 namespace OHOS {
 namespace CameraStandard {
 class VideoSession : public CaptureSession {

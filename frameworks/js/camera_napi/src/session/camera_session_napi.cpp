@@ -37,6 +37,7 @@
 #include "napi/native_api.h"
 #include "napi/native_common.h"
 #include "output/photo_output_napi.h"
+#include "camera_napi_object_types.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -163,6 +164,15 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::preconfig_props =
     DECLARE_NAPI_FUNCTION("preconfig", CameraSessionNapi::Preconfig)
 };
 
+const std::vector<napi_property_descriptor> CameraSessionNapi::camera_output_capability_props = {
+    DECLARE_NAPI_FUNCTION("getCameraOutputCapabilities", CameraSessionNapi::GetCameraOutputCapabilities)
+};
+
+const std::vector<napi_property_descriptor> CameraSessionNapi::camera_ability_props = {
+    DECLARE_NAPI_FUNCTION("getSessionAbilities", CameraSessionNapi::GetSessionAbilities),
+    DECLARE_NAPI_FUNCTION("getSessionConflictAbilities", CameraSessionNapi::GetSessionConflictAbilities)
+};
+
 const std::vector<napi_property_descriptor> CameraSessionNapi::effect_suggestion_props = {
     DECLARE_NAPI_FUNCTION("isEffectSuggestionSupported", CameraSessionNapi::IsEffectSuggestionSupported),
     DECLARE_NAPI_FUNCTION("enableEffectSuggestion", CameraSessionNapi::EnableEffectSuggestion),
@@ -195,47 +205,6 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::aperture_props = 
     DECLARE_NAPI_FUNCTION("getPhysicalAperture", CameraSessionNapi::GetPhysicalAperture),
     DECLARE_NAPI_FUNCTION("setPhysicalAperture", CameraSessionNapi::SetPhysicalAperture)
 };
-
-namespace {
-napi_value ProcessingPhysicalApertures(napi_env env, std::vector<std::vector<float>> physicalApertures)
-{
-    napi_value result = nullptr;
-    napi_create_array(env, &result);
-    size_t zoomRangeSize = 2;
-    size_t zoomMinIndex = 0;
-    size_t zoomMaxIndex = 1;
-    for (size_t i = 0; i < physicalApertures.size(); i++) {
-        if (physicalApertures[i].size() <= zoomRangeSize) {
-            continue;
-        }
-        napi_value zoomRange;
-        napi_create_array(env, &zoomRange);
-        napi_value physicalApertureRange;
-        napi_create_array(env, &physicalApertureRange);
-        for (size_t y = 0; y < physicalApertures[i].size(); y++) {
-            napi_value value;
-            napi_create_double(env, CameraNapiUtils::FloatToDouble(physicalApertures[i][y]), &value);
-            if (y == zoomMinIndex) {
-                napi_set_element(env, zoomRange, y, value);
-                napi_set_named_property(env, zoomRange, "min", value);
-                continue;
-            }
-            if (y == zoomMaxIndex) {
-                napi_set_element(env, zoomRange, y, value);
-                napi_set_named_property(env, zoomRange, "max", value);
-                continue;
-            }
-            napi_set_element(env, physicalApertureRange, y - zoomRangeSize, value);
-        }
-        napi_value obj;
-        napi_create_object(env, &obj);
-        napi_set_named_property(env, obj, "zoomRange", zoomRange);
-        napi_set_named_property(env, obj, "apertures", physicalApertureRange);
-        napi_set_element(env, result, i, obj);
-    }
-    return result;
-}
-} // namespace
 
 void ExposureCallbackListener::OnExposureStateCallbackAsync(ExposureState state) const
 {
@@ -745,7 +714,7 @@ napi_value CameraSessionNapi::Init(napi_env env, napi_value exports)
     std::vector<std::vector<napi_property_descriptor>> descriptors = { camera_process_props, stabilization_props,
         flash_props, auto_exposure_props, focus_props, zoom_props, filter_props, beauty_props, color_effect_props,
         macro_props, moon_capture_boost_props, features_props, color_management_props, manual_focus_props,
-        preconfig_props };
+        preconfig_props, camera_output_capability_props };
     std::vector<napi_property_descriptor> camera_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, CAMERA_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                CameraSessionNapiConstructor, nullptr,
@@ -1581,12 +1550,11 @@ napi_value CameraSessionNapi::HasFlash(napi_env env, napi_callback_info info)
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
-        std::vector<FlashMode> flashModes;
-        int retCode = cameraSessionNapi->cameraSession_->GetSupportedFlashModes(flashModes);
+        bool isSupported = false;
+        int retCode = cameraSessionNapi->cameraSession_->HasFlash(isSupported);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
         }
-        bool isSupported = !(flashModes.empty());
         napi_get_boolean(env, isSupported, &result);
     } else {
         MEDIA_ERR_LOG("HasFlash call Failed!");
@@ -3007,6 +2975,268 @@ napi_value CameraSessionNapi::Preconfig(napi_env env, napi_callback_info info)
     return CameraNapiUtils::GetUndefinedValue(env);
 }
 
+napi_value CameraSessionNapi::GetCameraOutputCapabilities(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("GetCameraOutputCapabilities is called");
+
+    size_t argSize = CameraNapiUtils::GetNapiArgs(env, info);
+    if (argSize != ARGS_ONE) {
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "Invalid argument.");
+        return nullptr;
+    }
+
+    std::string cameraId;
+    CameraNapiObject cameraInfoObj { { { "cameraId", &cameraId } } };
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, cameraInfoObj);
+
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "Create cameraInput invalid argument!")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::GetCameraOutputCapabilities invalid argument");
+        return nullptr;
+    }
+
+    sptr<CameraDevice> cameraInfo = CameraManager::GetInstance()->GetCameraDeviceFromId(cameraId);
+    if (cameraInfo == nullptr) {
+        MEDIA_ERR_LOG("cameraInfo is null");
+        CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "cameraInfo is null.");
+        return nullptr;
+    }
+
+    std::vector<sptr<CameraOutputCapability>> caplist =
+        cameraSessionNapi->cameraSession_->GetCameraOutputCapabilities(cameraInfo);
+    if (caplist.empty()) {
+        MEDIA_ERR_LOG("caplist is empty");
+        return nullptr;
+    }
+
+    napi_value capArray;
+    napi_status status = napi_create_array(env, &capArray);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("Failed to create napi array");
+        return nullptr;
+    }
+
+    for (size_t i = 0; i < caplist.size(); i++) {
+        if (caplist[i] == nullptr) {
+            continue;
+        }
+        caplist[i]->RemoveDuplicatesProfiles();
+        napi_value cap = CameraNapiObjCameraOutputCapability(*caplist[i]).GenerateNapiValue(env);
+        if (cap == nullptr || napi_set_element(env, capArray, i, cap) != napi_ok) {
+            MEDIA_ERR_LOG("Failed to create camera napi wrapper object");
+            return nullptr;
+        }
+    }
+
+    return capArray;
+}
+
+void ParseSize(napi_env env, napi_value root, Size& size)
+{
+    MEDIA_DEBUG_LOG("ParseSize is called");
+    napi_value res = nullptr;
+    if (napi_get_named_property(env, root, "width", &res) == napi_ok) {
+        napi_get_value_uint32(env, res, &size.width);
+    }
+
+    if (napi_get_named_property(env, root, "height", &res) == napi_ok) {
+        napi_get_value_uint32(env, res, &size.height);
+    }
+}
+
+void ParseProfile(napi_env env, napi_value root, Profile& profile)
+{
+    MEDIA_DEBUG_LOG("ParseProfile is called");
+    napi_value res = nullptr;
+
+    if (napi_get_named_property(env, root, "size", &res) == napi_ok) {
+        ParseSize(env, res, profile.size_);
+    }
+
+    int32_t intValue = 0;
+    if (napi_get_named_property(env, root, "format", &res) == napi_ok) {
+        napi_get_value_int32(env, res, &intValue);
+        profile.format_ = static_cast<CameraFormat>(intValue);
+    }
+}
+
+void ParseVideoProfile(napi_env env, napi_value root, VideoProfile& profile)
+{
+    MEDIA_DEBUG_LOG("ParseVideoProfile is called");
+    napi_value res = nullptr;
+
+    if (napi_get_named_property(env, root, "size", &res) == napi_ok) {
+        ParseSize(env, res, profile.size_);
+    }
+
+    int32_t intValue = 0;
+    if (napi_get_named_property(env, root, "format", &res) == napi_ok) {
+        napi_get_value_int32(env, res, &intValue);
+        profile.format_ = static_cast<CameraFormat>(intValue);
+    }
+
+    if (napi_get_named_property(env, root, "frameRateRange", &res) == napi_ok) {
+        const int32_t LENGTH = 2;
+        std::vector<int32_t> rateRanges(LENGTH);
+        napi_value value;
+
+        if (napi_get_named_property(env, res, "min", &value) == napi_ok) {
+            napi_get_value_int32(env, value, &rateRanges[0]);
+        }
+        if (napi_get_named_property(env, res, "max", &value) == napi_ok) {
+            napi_get_value_int32(env, value, &rateRanges[1]);
+        }
+        profile.framerates_ = rateRanges;
+    }
+}
+
+
+void ParseProfileList(napi_env env, napi_value arrayParam, std::vector<Profile> &profiles)
+{
+    uint32_t length = 0;
+    napi_get_array_length(env, arrayParam, &length);
+    for (uint32_t i = 0; i < length; ++i) {
+        napi_value value;
+        napi_get_element(env, arrayParam, i, &value);
+        Profile profile; // 在栈上创建 Profile 对象
+        ParseProfile(env, value, profile);
+        profiles.push_back(profile);
+    }
+}
+
+void ParseVideoProfileList(napi_env env, napi_value arrayParam, std::vector<VideoProfile> &profiles)
+{
+    uint32_t length = 0;
+    napi_get_array_length(env, arrayParam, &length);
+    for (uint32_t i = 0; i < length; ++i) {
+        napi_value value;
+        napi_get_element(env, arrayParam, i, &value);
+        VideoProfile profile;
+        ParseVideoProfile(env, value, profile);
+        profiles.push_back(profile);
+    }
+}
+
+void ParseCameraOutputCapability(napi_env env, napi_value root,
+                                 std::vector<Profile>& previewProfiles,
+                                 std::vector<Profile>& photoProfiles,
+                                 std::vector<VideoProfile>& videoProfiles)
+{
+    previewProfiles.clear();
+    photoProfiles.clear();
+    videoProfiles.clear();
+    napi_value res = nullptr;
+
+    if (napi_get_named_property(env, root, "previewProfiles", &res) == napi_ok) {
+        ParseProfileList(env, res, previewProfiles);
+    }
+    if (napi_get_named_property(env, root, "photoProfiles", &res) == napi_ok) {
+        ParseProfileList(env, res, photoProfiles);
+    }
+    if (napi_get_named_property(env, root, "videoProfiles", &res) == napi_ok) {
+        ParseVideoProfileList(env, res, videoProfiles);
+    }
+}
+
+napi_value CameraSessionNapi::GetSessionAbilities(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("GetSessionAbilities is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    std::vector<Profile> previewProfiles;
+    std::vector<Profile> photoProfiles;
+    std::vector<VideoProfile> videoProfiles;
+    ParseCameraOutputCapability(env, argv[PARAM0], previewProfiles, photoProfiles, videoProfiles);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status != napi_ok || cameraSessionNapi == nullptr) {
+        MEDIA_ERR_LOG("napi_unwrap failure!");
+        return nullptr;
+    }
+    SceneMode mode = cameraSessionNapi->cameraSession_->GetMode();
+    auto cameraAbilityList = cameraSessionNapi->cameraSession_->GetSessionAbilities(
+        previewProfiles, photoProfiles, videoProfiles);
+    result = CreateAbilitiesJSArray(env, mode, cameraAbilityList, false);
+    return result;
+}
+
+napi_value CameraSessionNapi::GetSessionConflictAbilities(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("GetSessionConflictAbilities is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status != napi_ok || cameraSessionNapi == nullptr) {
+        MEDIA_ERR_LOG("napi_unwrap failure!");
+        return nullptr;
+    }
+    SceneMode mode = cameraSessionNapi->cameraSession_->GetMode();
+    auto conflictAbilityList = cameraSessionNapi->cameraSession_->GetSessionConflictAbilities();
+    result = CreateAbilitiesJSArray(env, mode, conflictAbilityList, true);
+    return result;
+}
+
+napi_value CameraSessionNapi::CreateAbilitiesJSArray(
+    napi_env env, SceneMode mode, std::vector<sptr<CameraAbility>> abilityList, bool isConflict)
+{
+    MEDIA_DEBUG_LOG("create conflict ability is called");
+    napi_value abilityArray = nullptr;
+    napi_value ability = nullptr;
+    napi_status status;
+
+    if (abilityList.empty()) {
+        MEDIA_ERR_LOG("abilityArray is empty");
+    }
+
+    status = napi_create_array(env, &abilityArray);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("napi_create_array failed");
+        return abilityArray;
+    }
+
+    using CreateFunc = std::function<napi_value(napi_env, sptr<CameraAbility>)>;
+    CreateFunc createFunc;
+    if (mode == SceneMode::PORTRAIT) {
+        createFunc = isConflict ? PortraitPhotoConflictAbilityNapi::CreatePortraitPhotoConflictAbility
+                                : PortraitPhotoAbilityNapi::CreatePortraitPhotoAbility;
+    } else if (mode == SceneMode::CAPTURE) {
+        createFunc = isConflict ? PhotoConflictAbilityNapi::CreatePhotoConflictAbility
+                                : PhotoAbilityNapi::CreatePhotoAbility;
+    } else if (mode == SceneMode::VIDEO) {
+        createFunc = isConflict ? VideoConflictAbilityNapi::CreateVideoConflictAbility
+                                : VideoAbilityNapi::CreateVideoAbility;
+    } else {
+        MEDIA_ERR_LOG("mode: %{public}d not suppport", static_cast<int32_t>(mode));
+        return nullptr;
+    }
+
+    size_t j = 0;
+    for (size_t i = 0; i < abilityList.size(); i++) {
+        ability = createFunc(env, abilityList[i]);
+        if ((ability == nullptr) || napi_set_element(env, abilityArray, j++, ability) != napi_ok) {
+            MEDIA_ERR_LOG("failed to create conflict ability object napi wrapper object");
+            return nullptr;
+        }
+    }
+    MEDIA_INFO_LOG("create conflict ability count = %{public}zu", j);
+    return abilityArray;
+}
+
 napi_value CameraSessionNapi::IsEffectSuggestionSupported(napi_env env, napi_callback_info info)
 {
     if (!CameraNapiSecurity::CheckSystemApp(env, false)) {
@@ -3593,7 +3823,7 @@ napi_value CameraSessionNapi::GetSupportedPhysicalApertures(napi_env env, napi_c
             return nullptr;
         }
         if (!physicalApertures.empty()) {
-            result = ProcessingPhysicalApertures(env, physicalApertures);
+            result = CameraNapiUtils::ProcessingPhysicalApertures(env, physicalApertures);
         }
     } else {
         MEDIA_ERR_LOG("GetSupportedPhysicalApertures call Failed!");

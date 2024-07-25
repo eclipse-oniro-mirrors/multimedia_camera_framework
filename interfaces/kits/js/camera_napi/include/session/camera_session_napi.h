@@ -32,6 +32,7 @@
 #include "output/preview_output_napi.h"
 #include "output/video_output_napi.h"
 #include "session/capture_session.h"
+#include "ability/camera_ability_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -327,6 +328,12 @@ public:
     static napi_value Once(napi_env env, napi_callback_info info);
     static napi_value Off(napi_env env, napi_callback_info info);
 
+    static napi_value GetCameraOutputCapabilities(napi_env env, napi_callback_info info);
+
+    static napi_value GetSessionAbilities(napi_env env, napi_callback_info info);
+    static napi_value GetSessionConflictAbilities(napi_env env, napi_callback_info info);
+    static napi_value CreateAbilitiesJSArray(
+        napi_env env, SceneMode mode, std::vector<sptr<CameraAbility>> abilityList, bool isConflict);
     const EmitterFunctions& GetEmitterFunctions() override;
 
     napi_env env_;
@@ -344,6 +351,8 @@ public:
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<CaptureSession> sCameraSession_;
     static thread_local uint32_t cameraSessionTaskId;
+    static const std::vector<napi_property_descriptor> camera_output_capability_props;
+    static const std::vector<napi_property_descriptor> camera_ability_props;
     static const std::vector<napi_property_descriptor> camera_process_props;
     static const std::vector<napi_property_descriptor> stabilization_props;
     static const std::vector<napi_property_descriptor> flash_props;
@@ -363,6 +372,7 @@ public:
     static const std::vector<napi_property_descriptor> aperture_props;
     static const std::vector<napi_property_descriptor> auto_wb_props;
     static const std::vector<napi_property_descriptor> manual_wb_props;
+
 protected:
     virtual void RegisterSlowMotionStateCb(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);

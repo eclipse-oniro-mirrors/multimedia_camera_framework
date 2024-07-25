@@ -19,7 +19,7 @@
 #include <cstdint>
 #include "capture_session.h"
 #include "icapture_session.h"
- 
+
 namespace OHOS {
 namespace CameraStandard {
 class PhotoSession : public CaptureSession {

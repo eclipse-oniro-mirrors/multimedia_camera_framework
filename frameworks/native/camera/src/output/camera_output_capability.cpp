@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 #include "output/camera_output_capability.h"
+#include "camera_log.h"
+#include "camera_util.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -47,9 +49,11 @@ bool IsProfileSameRatio(Profile& srcProfile, ProfileSizeRatio sizeRatio, float u
 }
 
 Profile::Profile(CameraFormat format, Size size) : format_(format), size_(size) {}
+Profile::Profile(CameraFormat format, Size size, int32_t specId) : format_(format), size_(size), specId_(specId) {}
 Profile::Profile(CameraFormat format, Size size, Fps fps, std::vector<uint32_t> abilityId)
-    : format_(format), size_(size), fps_(fps), abilityId_(abilityId)
-{}
+    : format_(format), size_(size), fps_(fps), abilityId_(abilityId) {}
+Profile::Profile(CameraFormat format, Size size, Fps fps, std::vector<uint32_t> abilityId, int32_t specId)
+    : format_(format), size_(size), fps_(fps), abilityId_(abilityId), specId_(specId) {}
 CameraFormat Profile::GetCameraFormat()
 {
     return format_;
@@ -65,13 +69,148 @@ Size Profile::GetSize()
     return size_;
 }
 
+Fps Profile::GetFps()
+{
+    return fps_;
+}
+
+int32_t Profile::GetSpecId()
+{
+    return specId_;
+}
+
+void Profile::DumpProfile(std::string name) const
+{
+    std::string abilityIdStr = Container2String(abilityId_.begin(), abilityId_.end());
+    MEDIA_DEBUG_LOG("%{public}s format : %{public}d, width: %{public}d, height: %{public}d, "
+                    "support ability: %{public}s, fixedFps: %{public}d, minFps: %{public}d, maxFps: %{public}d",
+                    name.c_str(), format_, size_.width, size_.height, abilityIdStr.c_str(),
+                    fps_.fixedFps, fps_.minFps, fps_.maxFps);
+}
+
+void VideoProfile::DumpVideoProfile(std::string name) const
+{
+    std::string frameratesStr = Container2String(framerates_.begin(), framerates_.end());
+    MEDIA_DEBUG_LOG("%{public}s format : %{public}d, width: %{public}d, height: %{public}d framerates: %{public}s",
+                    name.c_str(), format_, size_.width, size_.height, frameratesStr.c_str());
+}
+
 VideoProfile::VideoProfile(CameraFormat format, Size size, std::vector<int32_t> framerates) : Profile(format, size)
 {
     framerates_ = framerates;
 }
+
+VideoProfile::VideoProfile(
+    CameraFormat format, Size size, std::vector<int32_t> framerates, int32_t specId) : Profile(format, size, specId)
+{
+    framerates_ = framerates;
+}
+
 std::vector<int32_t> VideoProfile::GetFrameRates()
 {
     return framerates_;
+}
+
+bool CameraOutputCapability::IsMatchPreviewProfiles(std::vector<Profile>& previewProfiles)
+{
+    if (previewProfiles.empty()) {
+        MEDIA_DEBUG_LOG("IsMatchPreviewProfiles previewProfiles is empty, can match");
+        return true;
+    }
+    if (previewProfiles_.empty()) {
+        MEDIA_DEBUG_LOG("IsMatchPreviewProfiles OutputCapability previewProfiles_ is empty, cant match");
+        return false;
+    }
+    for (auto& profile : previewProfiles) {
+        auto it = std::find(previewProfiles_.begin(), previewProfiles_.end(), profile);
+        if (it == previewProfiles_.end()) {
+            MEDIA_DEBUG_LOG("IsMatchPreviewProfiles previewProfile [format : %{public}d, width: %{public}d, "
+                "height: %{public}d] cant match", profile.GetCameraFormat(), profile.GetSize().width,
+                profile.GetSize().height);
+            return false;
+        }
+    }
+    MEDIA_DEBUG_LOG("IsMatchPreviewProfiles all previewProfiles can match");
+    return true;
+}
+
+bool CameraOutputCapability::IsMatchPhotoProfiles(std::vector<Profile>& photoProfiles)
+{
+    if (photoProfiles.empty()) {
+        MEDIA_DEBUG_LOG("IsMatchPhotoProfiles photoProfiles is empty, can match");
+        return true;
+    }
+    if (photoProfiles_.empty()) {
+        MEDIA_DEBUG_LOG("IsMatchPhotoProfiles OutputCapability photoProfiles_ is empty, cant match");
+        return false;
+    }
+    for (auto& profile : photoProfiles) {
+        auto it = std::find(photoProfiles_.begin(), photoProfiles_.end(), profile);
+        if (it == photoProfiles_.end()) {
+            MEDIA_DEBUG_LOG("IsMatchPhotoProfiles photoProfile [format : %{public}d, width: %{public}d,"
+                "height: %{public}d] cant match", profile.GetCameraFormat(), profile.GetSize().width,
+                profile.GetSize().height);
+            return false;
+        }
+    }
+    MEDIA_DEBUG_LOG("IsMatchPhotoProfiles all photoProfiles can match");
+    return true;
+}
+
+bool CameraOutputCapability::IsMatchVideoProfiles(std::vector<VideoProfile>& videoProfiles)
+{
+    if (videoProfiles.empty()) {
+        MEDIA_DEBUG_LOG("IsMatchVideoProfiles videoProfiles is empty, can match");
+        return true;
+    }
+    if (videoProfiles_.empty()) {
+        MEDIA_DEBUG_LOG("IsMatchVideoProfiles OutputCapability videoProfiles_ is empty, cant match");
+        return false;
+    }
+    for (auto& profile : videoProfiles) {
+        auto it = std::find_if(videoProfiles_.begin(), videoProfiles_.end(), [&profile](VideoProfile& profile_) {
+            return profile_.GetCameraFormat() == profile.GetCameraFormat() &&
+                   profile_.GetSize().width == profile.GetSize().width &&
+                   profile_.GetSize().height == profile.GetSize().height &&
+                   profile_.framerates_[0] <= profile.framerates_[0] &&
+                   profile_.framerates_[1] >= profile.framerates_[1];
+        });
+        if (it == videoProfiles_.end()) {
+            std::string frameratesStr = Container2String(profile.framerates_.begin(), profile.framerates_.end());
+            MEDIA_DEBUG_LOG("IsMatchVideoProfiles videoProfile [format : %{public}d, width: %{public}d,"
+                "height: %{public}d framerates: %{public}s] cant match", profile.GetCameraFormat(),
+                profile.GetSize().width, profile.GetSize().height, frameratesStr.c_str());
+            return false;
+        }
+    }
+    MEDIA_DEBUG_LOG("IsMatchVideoProfiles all videoProfiles can match");
+    return true;
+}
+
+void CameraOutputCapability::RemoveDuplicatesProfiles()
+{
+    size_t previewSize = previewProfiles_.size();
+    size_t photoSize = photoProfiles_.size();
+    size_t videoSize = videoProfiles_.size();
+    RemoveDuplicatesProfile(previewProfiles_);
+    RemoveDuplicatesProfile(photoProfiles_);
+    RemoveDuplicatesProfile(videoProfiles_);
+    MEDIA_DEBUG_LOG("after remove duplicates preview size: %{public}zu -> %{public}zu, "
+                    "photo size: %{public}zu -> %{public}zu, video size:%{public}zu -> %{public}zu",
+                    previewSize, previewProfiles_.size(), photoSize, photoProfiles_.size(),
+                    videoSize, videoProfiles_.size());
+}
+
+template <typename T>
+void CameraOutputCapability::RemoveDuplicatesProfile(std::vector<T>& profiles)
+{
+    std::vector<T> uniqueProfiles;
+    for (const auto& profile : profiles) {
+        if (std::find(uniqueProfiles.begin(), uniqueProfiles.end(), profile) == uniqueProfiles.end()) {
+            uniqueProfiles.push_back(profile);
+        }
+    }
+    profiles = uniqueProfiles;
 }
 
 std::vector<Profile> CameraOutputCapability::GetPhotoProfiles()

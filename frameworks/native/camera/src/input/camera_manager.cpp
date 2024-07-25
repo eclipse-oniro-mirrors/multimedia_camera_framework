@@ -54,6 +54,7 @@
 #include "session/secure_camera_session.h"
 #include "session/time_lapse_photo_session.h"
 #include "system_ability_definition.h"
+#include "ability/camera_ability_parse_util.h"
 
 using namespace std;
 namespace OHOS {
@@ -1082,8 +1083,28 @@ void CameraManager::InitCameraList()
     } else {
         MEDIA_ERR_LOG("Get camera device failed!, retCode: %{public}d", retCode);
     }
-
+    SetProfile(cameraObjList_);
     AlignVideoFpsProfile(cameraObjList_);
+}
+
+void CameraManager::SetProfile(std::vector<sptr<CameraDevice>>& cameraObjList)
+{
+    for (auto& cameraObj : cameraObjList) {
+        if (cameraObj == nullptr) {
+            continue;
+        }
+        std::vector<SceneMode> supportedModes = GetSupportedModes(cameraObj);
+        if (supportedModes.empty()) {
+            auto capability = GetSupportedOutputCapability(cameraObj);
+            cameraObj->SetProfile(capability);
+        } else {
+            supportedModes.emplace_back(NORMAL);
+            for (const auto &modeName : supportedModes) {
+                auto capability = GetSupportedOutputCapability(cameraObj, modeName);
+                cameraObj->SetProfile(capability, modeName);
+            }
+        }
+    }
 }
 
 std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
@@ -1149,7 +1170,6 @@ void CameraManager::AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& camera
     std::vector<VideoProfile> backVideoProfiles = {};
     sptr<CameraDevice> frontCamera = nullptr;
     for (auto& camera : cameraObjList) {
-        SetProfile(camera);
         if (camera->GetPosition() == CAMERA_POSITION_FRONT) {
             frontVideoProfiles = camera->modeVideoProfiles_[normalMode];
             frontCamera = camera;
@@ -1186,38 +1206,6 @@ void CameraManager::AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& camera
                            "w(%{public}d),h(%{public}d) fps min(%{public}d),min(%{public}d)",
                            frontProfile.GetSize().width, frontProfile.GetSize().height,
                            frontProfile.framerates_[minIndex], frontProfile.framerates_[maxIndex]);
-        }
-    }
-}
-
-void CameraManager::SetProfile(sptr<CameraDevice>& cameraObj)
-{
-    if (cameraObj == nullptr) {
-        return;
-    }
-    std::vector<SceneMode> supportedModes = GetSupportedModes(cameraObj);
-    sptr<CameraOutputCapability> capability = nullptr;
-    if (supportedModes.empty()) {
-        capability = GetSupportedOutputCapability(cameraObj);
-        if (capability != nullptr) {
-            cameraObj->modePreviewProfiles_[NORMAL] = capability->GetPreviewProfiles();
-            cameraObj->modePhotoProfiles_[NORMAL] = capability->GetPhotoProfiles();
-            cameraObj->modeVideoProfiles_[NORMAL] = capability->GetVideoProfiles();
-            cameraObj->modePreviewProfiles_[CAPTURE] = capability->GetPreviewProfiles();
-            cameraObj->modePhotoProfiles_[CAPTURE] = capability->GetPhotoProfiles();
-            cameraObj->modePreviewProfiles_[VIDEO] = capability->GetPreviewProfiles();
-            cameraObj->modePhotoProfiles_[VIDEO] = capability->GetPhotoProfiles();
-            cameraObj->modeVideoProfiles_[VIDEO] = capability->GetVideoProfiles();
-        }
-    } else {
-        supportedModes.emplace_back(NORMAL);
-        for (const auto &modeName : supportedModes) {
-            capability = GetSupportedOutputCapability(cameraObj, modeName);
-            if (capability != nullptr) {
-                cameraObj->modePreviewProfiles_[modeName] = capability->GetPreviewProfiles();
-                cameraObj->modePhotoProfiles_[modeName] = capability->GetPhotoProfiles();
-                cameraObj->modeVideoProfiles_[modeName] = capability->GetVideoProfiles();
-            }
         }
     }
 }
@@ -1386,14 +1374,78 @@ void CameraManager::ParseExtendCapability(const int32_t modeName, const camera_m
     }
 }
 
+void CameraManager::ParseProfileLevel(const int32_t modeName, const camera_metadata_item_t& item)
+    __attribute__((no_sanitize("cfi")))
+{
+    std::vector<SpecInfo> specInfos;
+    ProfileLevelInfo modeInfo = {};
+    if (CameraSecurity::CheckSystemApp() && modeName == SceneMode::VIDEO) {
+        CameraAbilityParseUtil::GetModeInfo(SceneMode::HIGH_FRAME_RATE, item, modeInfo);
+        specInfos.insert(specInfos.end(), modeInfo.specInfos.begin(), modeInfo.specInfos.end());
+    }
+    CameraAbilityParseUtil::GetModeInfo(modeName, item, modeInfo);
+    specInfos.insert(specInfos.end(), modeInfo.specInfos.begin(), modeInfo.specInfos.end());
+    for (SpecInfo& specInfo :specInfos) {
+        MEDIA_INFO_LOG("modeName: %{public}d specId: %{public}d", modeName, specInfo.specId);
+        for (StreamInfo &streamInfo : specInfo.streamInfos) {
+            CreateProfileLevel4StreamType(specInfo.specId, streamInfo);
+        }
+    }
+}
+
+void CameraManager::CreateProfileLevel4StreamType(
+    int32_t specId, StreamInfo &streamInfo) __attribute__((no_sanitize("cfi")))
+{
+    auto getCameraFormat = [&](camera_format_t format) -> CameraFormat {
+        auto itr = metaToFwCameraFormat_.find(format);
+        if (itr != metaToFwCameraFormat_.end()) {
+            return itr->second;
+        } else {
+            MEDIA_ERR_LOG("CreateProfile4StreamType failed format = %{public}d", format);
+            return CAMERA_FORMAT_INVALID;
+        }
+    };
+
+    OutputCapStreamType streamType = static_cast<OutputCapStreamType>(streamInfo.streamType);
+
+    for (const auto &detailInfo : streamInfo.detailInfos) {
+        CameraFormat format = getCameraFormat(static_cast<camera_format_t>(detailInfo.format));
+        if (format == CAMERA_FORMAT_INVALID) {
+            continue;
+        }
+        Size size{detailInfo.width, detailInfo.height};
+        Fps fps{detailInfo.fixedFps, detailInfo.minFps, detailInfo.maxFps};
+        std::vector<uint32_t> abilityId = detailInfo.abilityIds;
+        std::string abilityIds = Container2String(abilityId.begin(), abilityId.end());
+        if (streamType == OutputCapStreamType::PREVIEW) {
+            Profile previewProfile = Profile(format, size, fps, abilityId, specId);
+            previewProfiles_.push_back(previewProfile);
+            previewProfile.DumpProfile("preview");
+        } else if (streamType == OutputCapStreamType::STILL_CAPTURE) {
+            Profile snapProfile = Profile(format, size, fps, abilityId, specId);
+            photoProfiles_.push_back(snapProfile);
+            snapProfile.DumpProfile("photo");
+        } else if (streamType == OutputCapStreamType::VIDEO_STREAM) {
+            std::vector<int32_t> frameRates = {fps.minFps, fps.maxFps};
+            VideoProfile vidProfile = VideoProfile(format, size, frameRates, specId);
+            vidProfiles_.push_back(vidProfile);
+            vidProfile.DumpVideoProfile("video");
+        }
+    }
+}
+
 void CameraManager::ParseCapability(sptr<CameraDevice>& camera, const int32_t modeName, camera_metadata_item_t& item,
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
 {
-    if (g_isCapabilitySupported(metadata, item, OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS)) {
+    if (g_isCapabilitySupported(metadata, item, OHOS_ABILITY_AVAILABLE_PROFILE_LEVEL)) {
         std::vector<SceneMode> supportedModes = GetSupportedModes(camera);
         int32_t mode = (supportedModes.empty() && isTemplateMode_.count(modeName)) ? SceneMode::NORMAL : modeName;
-        MEDIA_INFO_LOG(
-            "GetSupportedOutputCapability by device = %{public}s, mode = %{public}d", camera->GetID().c_str(), mode);
+        MEDIA_INFO_LOG("ParseProfileLevel by device = %{public}s, mode = %{public}d", camera->GetID().c_str(), mode);
+        ParseProfileLevel(mode, item);
+    } else if (g_isCapabilitySupported(metadata, item, OHOS_ABILITY_STREAM_AVAILABLE_EXTEND_CONFIGURATIONS)) {
+        std::vector<SceneMode> supportedModes = GetSupportedModes(camera);
+        int32_t mode = (supportedModes.empty() && isTemplateMode_.count(modeName)) ? SceneMode::NORMAL : modeName;
+        MEDIA_INFO_LOG("ParseCapability by device = %{public}s, mode = %{public}d", camera->GetID().c_str(), mode);
         ParseExtendCapability(mode, item);
     } else if (g_isCapabilitySupported(metadata, item, OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS)) {
         ParseBasicCapability(metadata, item);
@@ -1432,9 +1484,19 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
         cameraOutputCapability->SetVideoProfiles(vidProfiles_);
     }
     MEDIA_INFO_LOG("SetVideoProfiles size = %{public}zu", vidProfiles_.size());
+
+    std::vector<MetadataObjectType> objectTypes = {};
+    GetSupportedMetadataObjectType(metadata->get(), objectTypes);
+    cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
+
+    return cameraOutputCapability;
+}
+
+void CameraManager::GetSupportedMetadataObjectType(common_metadata_header_t* metadata,
+                                                   std::vector<MetadataObjectType> objectTypes)
+{
     camera_metadata_item_t metadataItem;
-    vector<MetadataObjectType> objectTypes = {};
-    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_STATISTICS_FACE_DETECT_MODE, &metadataItem);
+    int32_t ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATISTICS_FACE_DETECT_MODE, &metadataItem);
     if (ret == CAM_META_SUCCESS) {
         for (uint32_t index = 0; index < metadataItem.count; index++) {
             if (metadataItem.data.u8[index] == OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE) {
@@ -1442,9 +1504,6 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
             }
         }
     }
-    cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
-
-    return cameraOutputCapability;
 }
 
 void CameraManager::CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
@@ -1476,31 +1535,17 @@ void CameraManager::CreateProfile4StreamType(OutputCapStreamType streamType, uin
         std::string abilityIds = Container2String(abilityId.begin(), abilityId.end());
         if (streamType == OutputCapStreamType::PREVIEW) {
             Profile previewProfile = Profile(format, size, fps, abilityId);
-            MEDIA_DEBUG_LOG("preview format : %{public}d, width: %{public}d, height: %{public}d"
-                            "support ability: %{public}s, streamType: %{public}d, fixedFps: %{public}d,"
-                            " minFps: %{public}d, maxFps: %{public}d",
-                            previewProfile.GetCameraFormat(), previewProfile.GetSize().width,
-                            previewProfile.GetSize().height, abilityIds.c_str(), streamType, fps.fixedFps, fps.minFps,
-                            fps.maxFps);
-            previewProfile.fps_.fixedFps = fps.fixedFps;
-            previewProfile.fps_.minFps = fps.minFps;
-            previewProfile.fps_.maxFps = fps.maxFps;
             previewProfiles_.push_back(previewProfile);
+            previewProfile.DumpProfile("preview");
         } else if (streamType == OutputCapStreamType::STILL_CAPTURE) {
             Profile snapProfile = Profile(format, size, fps, abilityId);
-            MEDIA_DEBUG_LOG("photo format : %{public}d, width: %{public}d, height: %{public}d"
-                            "support ability: %{public}s",
-                            snapProfile.GetCameraFormat(), snapProfile.GetSize().width,
-                            snapProfile.GetSize().height, abilityIds.c_str());
             photoProfiles_.push_back(snapProfile);
+            snapProfile.DumpProfile("photo");
         } else if (streamType == OutputCapStreamType::VIDEO_STREAM) {
             std::vector<int32_t> frameRates = {fps.minFps, fps.maxFps};
             VideoProfile vidProfile = VideoProfile(format, size, frameRates);
-            MEDIA_DEBUG_LOG("video format : %{public}d, width: %{public}d, height: %{public}d"
-                            "support ability: %{public}s",
-                            vidProfile.GetCameraFormat(), vidProfile.GetSize().width,
-                            vidProfile.GetSize().height, abilityIds.c_str());
             vidProfiles_.push_back(vidProfile);
+            vidProfile.DumpVideoProfile("video");
         }
     }
 }

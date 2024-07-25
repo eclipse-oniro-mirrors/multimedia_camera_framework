@@ -373,5 +373,44 @@ napi_value CameraNapiUtils::CreateSupportFrameRatesJSArray(
     }
     return supportedFrameRateArray;
 }
+
+napi_value CameraNapiUtils::ProcessingPhysicalApertures(napi_env env, std::vector<std::vector<float>> physicalApertures)
+{
+    napi_value result = nullptr;
+    napi_create_array(env, &result);
+    size_t zoomRangeSize = 2;
+    size_t zoomMinIndex = 0;
+    size_t zoomMaxIndex = 1;
+    for (size_t i = 0; i < physicalApertures.size(); i++) {
+        if (physicalApertures[i].size() <= zoomRangeSize) {
+            continue;
+        }
+        napi_value zoomRange;
+        napi_create_array(env, &zoomRange);
+        napi_value physicalApertureRange;
+        napi_create_array(env, &physicalApertureRange);
+        for (size_t y = 0; y < physicalApertures[i].size(); y++) {
+            napi_value value;
+            napi_create_double(env, CameraNapiUtils::FloatToDouble(physicalApertures[i][y]), &value);
+            if (y == zoomMinIndex) {
+                napi_set_element(env, zoomRange, y, value);
+                napi_set_named_property(env, zoomRange, "min", value);
+                continue;
+            }
+            if (y == zoomMaxIndex) {
+                napi_set_element(env, zoomRange, y, value);
+                napi_set_named_property(env, zoomRange, "max", value);
+                continue;
+            }
+            napi_set_element(env, physicalApertureRange, y - zoomRangeSize, value);
+        }
+        napi_value obj;
+        napi_create_object(env, &obj);
+        napi_set_named_property(env, obj, "zoomRange", zoomRange);
+        napi_set_named_property(env, obj, "apertures", physicalApertureRange);
+        napi_set_element(env, result, i, obj);
+    }
+    return result;
+}
 } // namespace CameraStandard
 } // namespace OHOS

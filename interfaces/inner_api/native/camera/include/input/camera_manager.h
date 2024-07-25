@@ -668,6 +668,10 @@ private:
     int32_t AddServiceProxyDeathRecipient();
     void RemoveServiceProxyDeathRecipient();
 
+    void ParseProfileLevel(const int32_t modeName, const camera_metadata_item_t& item);
+    void CreateProfileLevel4StreamType(int32_t specId, StreamInfo &streamInfo);
+    void GetSupportedMetadataObjectType(
+        common_metadata_header_t* metadata, std::vector<MetadataObjectType> objectTypes);
     void CreateProfile4StreamType(OutputCapStreamType streamType, uint32_t modeIndex,
         uint32_t streamIndex, ExtendInfo extendInfo);
     static const std::unordered_map<camera_format_t, CameraFormat> metaToFwCameraFormat_;
@@ -676,7 +680,7 @@ private:
     void ParseBasicCapability(
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, const camera_metadata_item_t& item);
     void AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& cameraObjList);
-    void SetProfile(sptr<CameraDevice>& cameraObj);
+    void SetProfile(std::vector<sptr<CameraDevice>>& cameraObjList);
     SceneMode GetFallbackConfigMode(SceneMode profileMode);
     void ParseCapability(sptr<CameraDevice>& camera, const int32_t modeName, camera_metadata_item_t& item,
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
@@ -727,6 +731,7 @@ private:
 
     std::map<std::string, std::vector<Profile>> modePhotoProfiles_ = {};
     std::map<std::string, std::vector<Profile>> modePreviewProfiles_ = {};
+
     std::vector<Profile> photoProfiles_ = {};
     std::vector<Profile> previewProfiles_ = {};
     std::vector<VideoProfile> vidProfiles_ = {};

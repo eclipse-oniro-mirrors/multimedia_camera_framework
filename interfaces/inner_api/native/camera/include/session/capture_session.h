@@ -41,34 +41,13 @@
 #include "output/camera_output_capability.h"
 #include "output/capture_output.h"
 #include "refbase.h"
-#include "color_space_info_parse.h"
 #include "effect_suggestion_info_parse.h"
 #include "capture_scene_const.h"
+#include "ability/camera_ability.h"
+#include "ability/camera_ability_parse_util.h"
 
 namespace OHOS {
 namespace CameraStandard {
-
-enum ExposureMode {
-    EXPOSURE_MODE_UNSUPPORTED = -1,
-    EXPOSURE_MODE_LOCKED = 0,
-    EXPOSURE_MODE_AUTO,
-    EXPOSURE_MODE_CONTINUOUS_AUTO
-};
-
-enum FlashMode {
-    FLASH_MODE_CLOSE = 0,
-    FLASH_MODE_OPEN,
-    FLASH_MODE_AUTO,
-    FLASH_MODE_ALWAYS_OPEN,
-};
-
-enum FocusMode {
-    FOCUS_MODE_MANUAL = 0,
-    FOCUS_MODE_CONTINUOUS_AUTO,
-    FOCUS_MODE_AUTO,
-    FOCUS_MODE_LOCKED,
-};
-
 enum FocusState {
     FOCUS_STATE_SCAN = 0,
     FOCUS_STATE_FOCUSED,
@@ -90,20 +69,6 @@ enum FilterType {
     MORI = 6,
     FAIR = 7,
     PINK = 8,
-};
-
-enum BeautyType {
-    AUTO_TYPE = 0,
-    SKIN_SMOOTH = 1,
-    FACE_SLENDER = 2,
-    SKIN_TONE = 3,
-};
-
-enum ColorEffect {
-    COLOR_EFFECT_NORMAL = 0,
-    COLOR_EFFECT_BRIGHT,
-    COLOR_EFFECT_SOFT,
-    COLOR_EFFECT_BLACK_WHITE,
 };
 
 enum PreconfigType : int32_t {
@@ -307,14 +272,6 @@ public:
 struct EffectSuggestionStatus {
     EffectSuggestionType type;
     bool status;
-};
-
-enum VideoStabilizationMode {
-    OFF = 0,
-    LOW,
-    MIDDLE,
-    HIGH,
-    AUTO
 };
 
 inline bool FloatIsEqual(float x, float y)
@@ -1239,6 +1196,36 @@ public:
      */
     std::shared_ptr<ARCallback> GetARCallback();
 
+    /**
+     * @brief Get Session Abilities.
+     *
+     * @param previewProfiles to be searched.
+     * @param photoProfiles to be searched.
+     * @param videoProfiles to be searched.
+     */
+    std::vector<sptr<CameraAbility>> GetSessionAbilities(std::vector<Profile>& previewProfiles,
+                                                         std::vector<Profile>& photoProfiles,
+                                                         std::vector<VideoProfile>& videoProfiles,
+                                                         bool isForApp = true);
+
+    /**
+     * @brief Get Session Conflict Abilities.
+     *
+     */
+    std::vector<sptr<CameraAbility>> GetSessionConflictAbilities();
+
+    /**
+     * @brief Get CameraOutput Capabilities.
+     *
+     */
+    std::vector<sptr<CameraOutputCapability>> GetCameraOutputCapabilities(sptr<CameraDevice> &camera);
+
+    /**
+     * @brief CreateCameraAbilityContainer.
+     *
+     */
+    void CreateCameraAbilityContainer();
+
      /**
      * @brief Get whether effectSuggestion Supported.
      *
@@ -1287,6 +1274,13 @@ public:
      * @param result metadata got from callback from service layer.
      */
     void ProcessEffectSuggestionTypeUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
+
+    /**
+     * @brief Get the supported portrait effects.
+     *
+     * @return Returns the array of portraiteffect.
+     */
+    std::vector<PortraitEffect> GetSupportedPortraitEffects();
 
     /**
      * @brief Get the supported virtual apertures.
@@ -1438,23 +1432,10 @@ public:
     int32_t SetPreviewRotation(std::string &deviceClass);
 
 protected:
-    static const std::unordered_map<camera_exposure_mode_enum_t, ExposureMode> metaExposureModeMap_;
-    static const std::unordered_map<ExposureMode, camera_exposure_mode_enum_t> fwkExposureModeMap_;
 
-    static const std::unordered_map<camera_focus_mode_enum_t, FocusMode> metaFocusModeMap_;
-    static const std::unordered_map<FocusMode, camera_focus_mode_enum_t> fwkFocusModeMap_;
+    static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;
+    static const std::unordered_map<WhiteBalanceMode, camera_awb_mode_t> fwkWhiteBalanceModeMap_;
 
-    static const std::unordered_map<camera_flash_mode_enum_t, FlashMode> metaFlashModeMap_;
-    static const std::unordered_map<FlashMode, camera_flash_mode_enum_t> fwkFlashModeMap_;
-
-    static const std::unordered_map<camera_xmage_color_type_t, ColorEffect> metaColorEffectMap_;
-    static const std::unordered_map<ColorEffect, camera_xmage_color_type_t> fwkColorEffectMap_;
-
-    static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode>
-        metaWhiteBalanceModeMap_;
-    static const std::unordered_map<WhiteBalanceMode, camera_awb_mode_t>
-        fwkWhiteBalanceModeMap_;
-    
     static const std::unordered_map<LightPaintingType, CameraLightPaintingType> fwkLightPaintingTypeMap_;
     static const std::unordered_map<CameraLightPaintingType, LightPaintingType> metaLightPaintingTypeMap_;
 
@@ -1494,6 +1475,12 @@ protected:
     {
         std::lock_guard<std::mutex> lock(inputDeviceMutex_);
         innerInputDevice_ = inputDevice;
+    }
+
+    inline sptr<CameraAbilityContainer> GetCameraAbilityContainer()
+    {
+        std::lock_guard<std::mutex> lock(abilityContainerMutex_);
+        return cameraAbilityContainer_;
     }
 
     inline void SetCaptureSession(sptr<ICaptureSession> captureSession)
@@ -1536,13 +1523,8 @@ private:
 
     static const std::unordered_map<camera_filter_type_t, FilterType> metaFilterTypeMap_;
     static const std::unordered_map<FilterType, camera_filter_type_t> fwkFilterTypeMap_;
-    static const std::unordered_map<camera_beauty_type_t, BeautyType> metaBeautyTypeMap_;
-    static const std::unordered_map<BeautyType, camera_beauty_type_t> fwkBeautyTypeMap_;
-    static const std::unordered_map<BeautyType, camera_device_metadata_tag_t> fwkBeautyAbilityMap_;
     static const std::unordered_map<BeautyType, camera_device_metadata_tag_t> fwkBeautyControlMap_;
     static const std::unordered_map<camera_device_metadata_tag_t, BeautyType> metaBeautyControlMap_;
-    static const std::unordered_map<CameraVideoStabilizationMode, VideoStabilizationMode> metaVideoStabModesMap_;
-    static const std::unordered_map<VideoStabilizationMode, CameraVideoStabilizationMode> fwkVideoStabModesMap_;
     static const std::unordered_map<CameraEffectSuggestionType, EffectSuggestionType> metaEffectSuggestionTypeMap_;
     static const std::unordered_map<EffectSuggestionType, CameraEffectSuggestionType> fwkEffectSuggestionTypeMap_;
     sptr<CaptureOutput> metaOutput_ = nullptr;
@@ -1562,6 +1544,17 @@ private:
     uint32_t HAL_CUSTOM_LENS_FOCUS_DISTANCE = 0;
     uint32_t HAL_CUSTOM_SENSOR_SENSITIVITY = 0;
 
+    std::mutex abilityContainerMutex_;
+    sptr<CameraAbilityContainer> cameraAbilityContainer_ = nullptr;
+    atomic<bool> supportSpecSearch_ = false;
+    void CheckSpecSearch();
+    void PopulateProfileLists(std::vector<Profile>& photoProfileList,
+                              std::vector<Profile>& previewProfileList,
+                              std::vector<VideoProfile>& videoProfileList);
+    void PopulateSpecIdMaps(sptr<CameraDevice> device, int32_t modeName,
+                            std::map<int32_t, std::vector<Profile>>& specIdPreviewMap,
+                            std::map<int32_t, std::vector<Profile>>& specIdPhotoMap,
+                            std::map<int32_t, std::vector<VideoProfile>>& specIdVideoMap);
     // Make sure you know what you are doing, you'd better to use {GetMode()} function instead of this variable.
     SceneMode currentMode_ = SceneMode::NORMAL;
     SceneMode guessMode_ = SceneMode::NORMAL;

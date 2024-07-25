@@ -18,6 +18,7 @@
 #include <queue>
 #include <vector>
 #include <iostream>
+#include <cstdint>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -33,8 +34,6 @@ typedef struct EffectSuggestionInfo {
     std::vector<EffectSuggestionModeInfo> modeInfo;
 } EffectSuggestionInfo;
 
-constexpr static int32_t MODE_END = -1;
-
 class EffectSuggestionInfoParse {
 public:
     void GetEffectSuggestionInfo(int32_t* originInfo, uint32_t count, EffectSuggestionInfo& effectSuggestionInfo)
@@ -48,6 +47,7 @@ public:
 private:
     void ResizeModeInfo(int32_t* originInfo, uint32_t count, EffectSuggestionInfo& effectSuggestionInfo)
     {
+        int32_t MODE_END = -1;
         uint32_t i = 0;
         uint32_t j = i + 1;
         while (j < count) {

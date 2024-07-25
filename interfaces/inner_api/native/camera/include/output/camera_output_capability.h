@@ -63,7 +63,9 @@ enum ProfileSizeRatio : int32_t {
 class Profile {
 public:
     Profile(CameraFormat format, Size size);
+    Profile(CameraFormat format, Size size, int32_t specId);
     Profile(CameraFormat format, Size size, Fps fps, std::vector<uint32_t> abilityId);
+    Profile(CameraFormat format, Size size, Fps fps, std::vector<uint32_t> abilityId, int32_t specId);
     Profile() = default;
     Profile& operator=(const Profile& profile)
     {
@@ -95,7 +97,14 @@ public:
      * @return resolution of the profile.
      */
     Size GetSize();
+
+    Fps GetFps();
+
     std::vector<uint32_t> GetAbilityId();
+
+    int32_t GetSpecId();
+
+    void DumpProfile(std::string name) const;
 
     CameraFormat format_ = CAMERA_FORMAT_INVALID;
     Size size_ = { 0, 0 };
@@ -103,11 +112,13 @@ public:
     ProfileSizeRatio sizeRatio_ = UNSPECIFIED;
     Fps fps_ = { 0, 0, 0 };
     std::vector<uint32_t> abilityId_ = {};
+    int32_t specId_;
 };
 
 class VideoProfile : public Profile {
 public:
     VideoProfile(CameraFormat format, Size size, std::vector<int32_t> framerates);
+    VideoProfile(CameraFormat format, Size size, std::vector<int32_t> framerates, int32_t specId);
     VideoProfile() = default;
     virtual ~VideoProfile() = default;
     VideoProfile& operator=(const VideoProfile& rhs)
@@ -115,6 +126,13 @@ public:
         Profile::operator=(rhs);
         this->framerates_ = rhs.framerates_;
         return *this;
+    }
+
+    bool operator==(const VideoProfile& profile)
+    {
+        return this->format_ == profile.format_ && this->size_.width == profile.size_.width &&
+            this->size_.height == profile.size_.height && this->framerates_[0] == profile.framerates_[0] &&
+            this->framerates_[1] == profile.framerates_[1];
     }
     /**
      * @brief Get supported framerates of the profile.
@@ -124,6 +142,8 @@ public:
     std::vector<int32_t> GetFrameRates();
 
     std::vector<int32_t> framerates_ = {};
+
+    void DumpVideoProfile(std::string name) const;
 };
 
 float GetTargetRatio(ProfileSizeRatio sizeRatio, float unspecifiedValue);
@@ -190,11 +210,20 @@ public:
      */
     void SetSupportedMetadataObjectType(std::vector<MetadataObjectType> metadataObjTypes);
 
+    int32_t specId_ = -1;
+
+    bool IsMatchPreviewProfiles(std::vector<Profile>& previewProfiles);
+    bool IsMatchPhotoProfiles(std::vector<Profile>& photoProfiles);
+    bool IsMatchVideoProfiles(std::vector<VideoProfile>& videoProfiles);
+    void RemoveDuplicatesProfiles();
 private:
     std::vector<Profile> photoProfiles_ = {};
     std::vector<Profile> previewProfiles_ = {};
     std::vector<VideoProfile> videoProfiles_ = {};
     std::vector<MetadataObjectType> metadataObjTypes_ = {};
+
+    template <typename T>
+    void RemoveDuplicatesProfile(std::vector<T>& profiles);
 };
 } // namespace CameraStandard
 } // namespace OHOS

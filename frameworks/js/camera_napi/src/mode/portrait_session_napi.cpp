@@ -14,8 +14,9 @@
  */
 
 #include "mode/portrait_session_napi.h"
-
+#include "ability/camera_ability_napi.h"
 #include "napi/native_common.h"
+#include "camera_napi_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -48,9 +49,11 @@ napi_value PortraitSessionNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getPortraitEffect", GetPortraitEffect),
         DECLARE_NAPI_FUNCTION("setPortraitEffect", SetPortraitEffect),
     };
+
     std::vector<std::vector<napi_property_descriptor>> descriptors = {camera_process_props,
         flash_props, auto_exposure_props, focus_props, zoom_props, filter_props, beauty_props,
-        color_effect_props, macro_props, color_management_props, portrait_props, aperture_props};
+        color_effect_props, macro_props, color_management_props, portrait_props, aperture_props,
+        camera_output_capability_props, camera_ability_props};
     std::vector<napi_property_descriptor> portrait_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, PORTRAIT_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                PortraitSessionNapiConstructor, nullptr,
