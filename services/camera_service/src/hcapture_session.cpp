@@ -1757,6 +1757,13 @@ int32_t StreamOperatorCallback::OnCaptureEnded(int32_t captureId, const std::vec
     return CAMERA_OK;
 }
 
+int32_t StreamOperatorCallback::OnCaptureEndedExt(int32_t captureId,
+    const std::vector<OHOS::HDI::Camera::V1_3::CaptureEndedInfoExt>& infos)
+{
+    MEDIA_INFO_LOG("StreamOperatorCallback::OnCaptureEndedExt");
+    return CAMERA_OK;
+}
+
 int32_t StreamOperatorCallback::OnCaptureError(int32_t captureId, const std::vector<CaptureErrorInfo>& infos)
 {
     MEDIA_INFO_LOG("StreamOperatorCallback::OnCaptureError");
