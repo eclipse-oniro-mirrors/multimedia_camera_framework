@@ -204,6 +204,7 @@ private:
     void DebugLogForBeautySkinSmooth(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForBeautyFaceSlender(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForBeautySkinTone(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForBeautyControlType(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForPortraitEffect(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
 
     void DebugLogForFocusMode(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);

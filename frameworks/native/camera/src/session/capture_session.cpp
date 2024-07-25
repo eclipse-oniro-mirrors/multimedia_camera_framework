@@ -3080,18 +3080,22 @@ vector<SceneFeaturesMode> CaptureSession::GetSubFeatureMods()
 
 int32_t CaptureSession::VerifyAbility(uint32_t ability)
 {
-    int32_t portraitMode = 3;
-    if (GetMode() != portraitMode) {
-        MEDIA_ERR_LOG("CaptureSession::VerifyAbility need PortraitMode");
+    SceneMode matchMode = SceneMode::NORMAL;
+    std::vector<SceneMode> supportModes = {SceneMode::VIDEO, SceneMode::PORTRAIT, SceneMode::NIGHT};
+    auto mode = std::find(supportModes.begin(), supportModes.end(), GetMode());
+    if (mode != supportModes.end()) {
+        matchMode = *mode;
+    } else {
+        MEDIA_ERR_LOG("CaptureSession::VerifyAbility need VIDEO or PORTRAIT or NIGHT");
         return CAMERA_INVALID_ARG;
-    };
+    }
     auto inputDevice = GetInputDevice();
     if (!inputDevice || !inputDevice->GetCameraDeviceInfo()) {
         MEDIA_ERR_LOG("CaptureSession::VerifyAbility camera device is null");
         return CAMERA_INVALID_ARG;
     }
 
-    ProcessProfilesAbilityId(portraitMode);
+    ProcessProfilesAbilityId(matchMode);
 
     std::vector<uint32_t> photoAbilityId = previewProfile_.GetAbilityId();
     std::vector<uint32_t> previewAbilityId = previewProfile_.GetAbilityId();
@@ -3105,11 +3109,11 @@ int32_t CaptureSession::VerifyAbility(uint32_t ability)
     return CAMERA_OK;
 }
 
-void CaptureSession::ProcessProfilesAbilityId(const int32_t portraitMode)
+void CaptureSession::ProcessProfilesAbilityId(const SceneMode supportModes)
 {
     auto inputDevice = GetInputDevice();
-    std::vector<Profile> photoProfiles = inputDevice->GetCameraDeviceInfo()->modePhotoProfiles_[portraitMode];
-    std::vector<Profile> previewProfiles = inputDevice->GetCameraDeviceInfo()->modePreviewProfiles_[portraitMode];
+    std::vector<Profile> photoProfiles = inputDevice->GetCameraDeviceInfo()->modePhotoProfiles_[supportModes];
+    std::vector<Profile> previewProfiles = inputDevice->GetCameraDeviceInfo()->modePreviewProfiles_[supportModes];
     for (auto i : photoProfiles) {
         std::string abilityIds = "";
         for (auto id : i.GetAbilityId()) {
@@ -3122,6 +3126,7 @@ void CaptureSession::ProcessProfilesAbilityId(const int32_t portraitMode)
             i.GetSize().height == photoProfile_.GetSize().height) {
             if (i.GetAbilityId().empty()) {
                 MEDIA_INFO_LOG("VerifyAbility::CreatePhotoOutput:: this size'abilityId is not exist");
+                continue;
             }
             photoProfile_.abilityId_ = i.GetAbilityId();
             break;
@@ -3139,6 +3144,7 @@ void CaptureSession::ProcessProfilesAbilityId(const int32_t portraitMode)
             i.GetSize().height == previewProfile_.GetSize().height) {
             if (i.GetAbilityId().empty()) {
                 MEDIA_INFO_LOG("VerifyAbility::CreatePreviewOutput:: this size'abilityId is not exist");
+                continue;
             }
             previewProfile_.abilityId_ = i.GetAbilityId();
             break;
