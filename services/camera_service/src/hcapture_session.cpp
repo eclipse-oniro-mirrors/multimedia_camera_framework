@@ -2014,8 +2014,8 @@ void MovingPhotoListener::StopDrainOut()
 
 void MovingPhotoListener::OnBufferAvailable()
 {
-    MEDIA_DEBUG_LOG("surface_ OnBufferAvailable %{public}u, transform %{public}d",
-        surface_->GetQueueSize(), surface_->GetTransform());
+    MEDIA_DEBUG_LOG("surface_ OnBufferAvailable %{public}u, transform %{public}d", surface_->GetQueueSize(),
+        surface_->GetTransform());
 
     if (!surface_) {
         MEDIA_ERR_LOG("streamRepeat surface is null");
@@ -2037,14 +2037,18 @@ void MovingPhotoListener::OnBufferAvailable()
     }
     if (recorderBufferQueue_.Full()) {
         MEDIA_DEBUG_LOG("surface_ release surface buffer");
-        sptr<FrameRecord> popFrame= recorderBufferQueue_.Pop();
+        sptr<FrameRecord> popFrame = recorderBufferQueue_.Pop();
         popFrame->ReleaseSurfaceBuffer(surface_, true);
         MEDIA_DEBUG_LOG("surface_ release surface buffer: %{public}s, refCount: %{public}d",
             popFrame->GetFrameId().c_str(), popFrame->GetSptrRefCount());
     }
     MEDIA_DEBUG_LOG("surface_ push buffer %{public}d x %{public}d, stride is %{public}d",
         buffer->GetSurfaceBufferWidth(), buffer->GetSurfaceBufferHeight(), buffer->GetStride());
-    sptr<FrameRecord> frameRecord = new FrameRecord(buffer, timestamp, surface_->GetTransform());
+    sptr<FrameRecord> frameRecord = new (std::nothrow) FrameRecord(buffer, timestamp, surface_->GetTransform());
+    if (frameRecord == nullptr) {
+        MEDIA_ERR_LOG("MovingPhotoListener::OnBufferAvailable create FrameRecord fail!");
+        return;
+    }
     recorderBufferQueue_.Push(frameRecord);
     vector<sptr<SessionDrainImageCallback>> callbacks;
     callbackMap_.Iterate([frameRecord, &callbacks](const sptr<SessionDrainImageCallback> callback,
