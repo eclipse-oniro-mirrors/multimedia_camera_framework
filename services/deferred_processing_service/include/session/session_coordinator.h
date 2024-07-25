@@ -15,16 +15,12 @@
 
 #ifndef OHOS_CAMERA_DPS_SESSION_COORDINATOR_H
 #define OHOS_CAMERA_DPS_SESSION_COORDINATOR_H
-#include <vector>
-#include <shared_mutex>
-#include <iostream>
-#include <refbase.h>
-#include <deque>
-#include <map>
-#include "base/iimage_process_callbacks.h"
+
+#include "iimage_process_callbacks.h"
 #include "ipc_file_descriptor.h"
 #include "ideferred_photo_processing_session_callback.h"
 #include "task_manager.h"
+#include <cstdint>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -37,13 +33,14 @@ public:
     void Start();
     void Stop();
 
-    void OnProcessDone(int userId, const std::string& imageId, sptr<IPCFileDescriptor> ipcFd, long dataSize);
-    void OnError(int userId, const std::string& imageId, DpsError errorCode);
-    void OnStateChanged(int userId, DpsStatus statusCode);
+    void OnProcessDone(const int32_t userId, const std::string& imageId,
+        const sptr<IPCFileDescriptor>& ipcFd, const int32_t dataSize);
+    void OnError(const int32_t userId, const std::string& imageId, DpsError errorCode);
+    void OnStateChanged(const int32_t userId, DpsStatus statusCode);
     std::shared_ptr<IImageProcessCallbacks> GetImageProcCallbacks();
-    void NotifySessionCreated(int userId, sptr<IDeferredPhotoProcessingSessionCallback> callback,
+    void NotifySessionCreated(const int32_t userId, sptr<IDeferredPhotoProcessingSessionCallback> callback,
         TaskManager* taskManager);
-    void NotifyCallbackDestroyed(int userId);
+    void NotifyCallbackDestroyed(const int32_t userId);
 
 private:
     class ImageProcCallbacks;
@@ -56,7 +53,7 @@ private:
 
     struct ImageResult {
         CallbackType callbackType;
-        int userId;
+        const int32_t userId;
         std::string imageId;
         sptr<IPCFileDescriptor> ipcFd;
         long dataSize;
@@ -66,7 +63,7 @@ private:
 
     void ProcessPendingResults(sptr<IDeferredPhotoProcessingSessionCallback> callback);
     std::shared_ptr<IImageProcessCallbacks> imageProcCallbacks_;
-    std::map<int, wptr<IDeferredPhotoProcessingSessionCallback>> remoteImageCallbacksMap_;
+    std::map<int32_t, wptr<IDeferredPhotoProcessingSessionCallback>> remoteImageCallbacksMap_;
     std::deque<ImageResult> pendingImageResults_;
 };
 } // namespace DeferredProcessing

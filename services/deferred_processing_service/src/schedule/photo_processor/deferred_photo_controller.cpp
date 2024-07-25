@@ -14,6 +14,7 @@
  */
 
 #include "deferred_photo_controller.h"
+
 #include "dp_utils.h"
 #include "dp_log.h"
 #include "events_monitor.h"
@@ -89,7 +90,7 @@ private:
     DeferredPhotoController* controller_;
 };
 
-DeferredPhotoController::DeferredPhotoController(int userId, std::shared_ptr<PhotoJobRepository> repository,
+DeferredPhotoController::DeferredPhotoController(const int32_t userId, std::shared_ptr<PhotoJobRepository> repository,
     std::shared_ptr<DeferredPhotoProcessor> processor)
     : userId_(userId),
       callbackHandle_(0),

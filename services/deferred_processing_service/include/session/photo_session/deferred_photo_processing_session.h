@@ -15,10 +15,7 @@
 
 #ifndef OHOS_CAMERA_DPS_DEFERRED_PHOTO_PROCESSING_SESSION_H
 #define OHOS_CAMERA_DPS_DEFERRED_PHOTO_PROCESSING_SESSION_H
-#include <vector>
-#include <shared_mutex>
-#include <iostream>
-#include <unordered_map>
+
 #include "deferred_photo_processing_session_stub.h"
 #include "ideferred_photo_processing_session_callback.h"
 #include "task_manager.h"
@@ -40,7 +37,8 @@ public:
         bool discardable_;
         DpsMetadata metadata_;
     };
-    DeferredPhotoProcessingSession(int userId, std::shared_ptr<DeferredPhotoProcessor> deferredPhotoProcessor,
+    DeferredPhotoProcessingSession(
+        const int32_t userId, std::shared_ptr<DeferredPhotoProcessor> deferredPhotoProcessor,
         TaskManager* taskManager, sptr<IDeferredPhotoProcessingSessionCallback> callback);
 
     ~DeferredPhotoProcessingSession();
@@ -54,7 +52,7 @@ public:
 
 private:
     void ReportEvent(const std::string& imageId, int32_t event);
-    int userId_;
+    const int32_t userId_;
     std::atomic<bool> inSync_;
     std::shared_ptr<DeferredPhotoProcessor> processor_;
     TaskManager* taskManager_;

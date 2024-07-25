@@ -16,7 +16,7 @@
 #ifndef OHOS_CAMERA_DPS_SCHEDULE_CONTROLLER_H
 #define OHOS_CAMERA_DPS_SCHEDULE_CONTROLLER_H
 
-#include <memory>
+#include "set"
 
 #include "iimage_process_callbacks.h"
 #include "photo_job_repository.h"
@@ -27,8 +27,8 @@ namespace CameraStandard {
 namespace DeferredProcessing {
 class DeferredPhotoProcessor : public IImageProcessCallbacks {
 public:
-    DeferredPhotoProcessor(int userId, TaskManager* taskManager, std::shared_ptr<PhotoJobRepository> repository,
-        std::shared_ptr<IImageProcessCallbacks> callbacks);
+    DeferredPhotoProcessor(const int32_t userId, TaskManager* taskManager,
+        std::shared_ptr<PhotoJobRepository> repository, std::shared_ptr<IImageProcessCallbacks> callbacks);
     ~DeferredPhotoProcessor();
     void Initialize();
 
@@ -40,9 +40,10 @@ public:
 
     void SetCallback(IImageProcessCallbacks callbacks);
 
-    void OnProcessDone(int userId, const std::string& imageId, std::shared_ptr<BufferInfo> bufferInfo) override;
-    void OnError(int userId, const std::string& imageId, DpsError errorCode) override;
-    void OnStateChanged(int userId, DpsStatus statusCode) override;
+    void OnProcessDone(const int32_t userId,
+        const std::string& imageId, std::shared_ptr<BufferInfo> bufferInfo) override;
+    void OnError(const int32_t userId, const std::string& imageId, DpsError errorCode) override;
+    void OnStateChanged(const int32_t userId, DpsStatus statusCode) override;
     void NotifyScheduleState(DpsStatus status);
 
     void PostProcess(DeferredPhotoWorkPtr work);
@@ -54,7 +55,7 @@ public:
 private:
     bool IsFatalError(DpsError errorCode);
 
-    int userId_;
+    const int32_t userId_;
     TaskManager* taskManager_;
     std::shared_ptr<PhotoJobRepository> repository_;
     std::shared_ptr<PhotoPostProcessor> postProcessor_;

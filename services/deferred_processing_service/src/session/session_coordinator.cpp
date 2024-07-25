@@ -12,12 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <vector>
-#include <shared_mutex>
-#include <iostream>
-#include "dp_log.h"
+
 #include "session_coordinator.h"
-#include "iimage_process_callbacks.h"
+
+#include "dp_log.h"
 #include "buffer_info.h"
 #include "dps_event_report.h"
 #include "steady_clock.h"
@@ -91,24 +89,24 @@ public:
         coordinator_ = nullptr;
     }
 
-    void OnProcessDone(const int userId, const std::string& imageId,
-        const std::shared_ptr<BufferInfo> bufferInfo) override
+    void OnProcessDone(const int32_t userId, const std::string& imageId,
+        std::shared_ptr<BufferInfo> bufferInfo) override
     {
         sptr<IPCFileDescriptor> ipcFd = bufferInfo->GetIPCFileDescriptor();
-        long dataSize = bufferInfo->GetDataSize();
+        int32_t dataSize = bufferInfo->GetDataSize();
         if (coordinator_) {
             coordinator_->OnProcessDone(userId, imageId, ipcFd, dataSize);
         }
     }
 
-    void OnError(int userId, const std::string& imageId, DpsError errorCode) override
+    void OnError(const int32_t userId, const std::string& imageId, DpsError errorCode) override
     {
         if (coordinator_) {
             coordinator_->OnError(userId, imageId, errorCode);
         }
     }
 
-    void OnStateChanged(int userId, DpsStatus statusCode) override
+    void OnStateChanged(const int32_t userId, DpsStatus statusCode) override
     {
         if (coordinator_) {
             coordinator_->OnStateChanged(userId, statusCode);
@@ -152,8 +150,8 @@ std::shared_ptr<IImageProcessCallbacks> SessionCoordinator::GetImageProcCallback
     return imageProcCallbacks_;
 }
 
-void SessionCoordinator::OnProcessDone(int userId, const std::string& imageId,
-    sptr<IPCFileDescriptor> ipcFd, long dataSize)
+void SessionCoordinator::OnProcessDone(const int32_t userId, const std::string& imageId,
+    const sptr<IPCFileDescriptor>& ipcFd, const int32_t dataSize)
 {
     DP_INFO_LOG("entered, userId: %{public}d, map size: %{public}d.",
         userId, static_cast<int32_t>(remoteImageCallbacksMap_.size()));
@@ -170,7 +168,7 @@ void SessionCoordinator::OnProcessDone(int userId, const std::string& imageId,
     return;
 }
 
-void SessionCoordinator::OnError(int userId, const std::string& imageId, DpsError errorCode)
+void SessionCoordinator::OnError(const int32_t userId, const std::string& imageId, DpsError errorCode)
 {
     auto iter = remoteImageCallbacksMap_.find(userId);
     if (iter != remoteImageCallbacksMap_.end()) {
@@ -185,7 +183,7 @@ void SessionCoordinator::OnError(int userId, const std::string& imageId, DpsErro
     }
 }
 
-void SessionCoordinator::OnStateChanged(int userId, DpsStatus statusCode)
+void SessionCoordinator::OnStateChanged(const int32_t userId, DpsStatus statusCode)
 {
     auto iter = remoteImageCallbacksMap_.find(userId);
     if (iter != remoteImageCallbacksMap_.end()) {
@@ -200,8 +198,8 @@ void SessionCoordinator::OnStateChanged(int userId, DpsStatus statusCode)
     }
 }
 
-void SessionCoordinator::NotifySessionCreated(int userId, sptr<IDeferredPhotoProcessingSessionCallback> callback,
-    TaskManager* taskManager)
+void SessionCoordinator::NotifySessionCreated(const int32_t userId,
+    sptr<IDeferredPhotoProcessingSessionCallback> callback, TaskManager* taskManager)
 {
     if (callback) {
         remoteImageCallbacksMap_[userId] = callback;
@@ -232,7 +230,7 @@ void SessionCoordinator::ProcessPendingResults(sptr<IDeferredPhotoProcessingSess
     }
 }
 
-void SessionCoordinator::NotifyCallbackDestroyed(int userId)
+void SessionCoordinator::NotifyCallbackDestroyed(const int32_t userId)
 {
     if (remoteImageCallbacksMap_.count(userId) != 0) {
         DP_INFO_LOG("session userId: %{public}d destroyed.", userId);

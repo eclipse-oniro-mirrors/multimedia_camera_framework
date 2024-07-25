@@ -14,6 +14,7 @@
  */
 
 #include "scheduler_manager.h"
+
 #include "dp_log.h"
 
 namespace OHOS {
@@ -43,8 +44,8 @@ void SchedulerManager::Initialize()
     return;
 }
 
-std::shared_ptr<DeferredPhotoProcessor> SchedulerManager::GetPhotoProcessor(int userId, TaskManager* taskManager,
-    std::shared_ptr<IImageProcessCallbacks> callbacks)
+std::shared_ptr<DeferredPhotoProcessor> SchedulerManager::GetPhotoProcessor(const int32_t userId,
+    TaskManager* taskManager, std::shared_ptr<IImageProcessCallbacks> callbacks)
 {
     DP_INFO_LOG("entered");
     if (photoProcessors_.count(userId) == 0) {
@@ -54,7 +55,7 @@ std::shared_ptr<DeferredPhotoProcessor> SchedulerManager::GetPhotoProcessor(int 
 }
 
 
-void SchedulerManager::CreatePhotoProcessor(int userId, TaskManager* taskManager,
+void SchedulerManager::CreatePhotoProcessor(const int32_t userId, TaskManager* taskManager,
     std::shared_ptr<IImageProcessCallbacks> callbacks)
 {
     DP_INFO_LOG("entered");

@@ -13,23 +13,16 @@
  * limitations under the License.
  */
 
-#include <vector>
-#include <shared_mutex>
-#include <iostream>
+#include "session_info.h"
+
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
-#include "session_info.h"
 #include "session_manager.h"
-#include "utils/dp_log.h"
-#include "ideferred_photo_processing_session.h"
+#include "dp_log.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-extern sptr<IDeferredPhotoProcessingSession> CreateDeferredProcessingSession(int userId,
-    std::shared_ptr<DeferredPhotoProcessor> processor, TaskManager* taskManager,
-    sptr<IDeferredPhotoProcessingSessionCallback> callback);
-
 class SessionInfo::CallbackDeathRecipient : public IRemoteObject::DeathRecipient {
 public:
     explicit CallbackDeathRecipient(SessionInfo* sessionInfo)
@@ -52,7 +45,7 @@ private:
     SessionInfo* sessionInfo_;
 };
 
-SessionInfo::SessionInfo(int userId, const sptr<IDeferredPhotoProcessingSessionCallback>& callback,
+SessionInfo::SessionInfo(const int32_t userId, const sptr<IDeferredPhotoProcessingSessionCallback>& callback,
     SessionManager* sessionManager)
     : userId_(userId),
       callback_(callback),
@@ -70,12 +63,12 @@ SessionInfo::~SessionInfo()
     sessionManager_ = nullptr;
 }
 
-sptr<IDeferredPhotoProcessingSession> SessionInfo::CreateDeferredPhotoProcessingSession(int userId,
+sptr<IDeferredPhotoProcessingSession> SessionInfo::CreateDeferredPhotoProcessingSession(const int32_t userId,
     std::shared_ptr<DeferredPhotoProcessor> processor, TaskManager* taskManager,
     sptr<IDeferredPhotoProcessingSessionCallback> callback)
 {
-    DP_INFO_LOG("SessionInfo::CreateDeferredPhotoProcessingSession enter.");
-    session_ = CreateDeferredProcessingSession(userId, processor, taskManager, callback);
+    session_ = sptr<DeferredPhotoProcessingSession>::MakeSptr(userId, processor, taskManager, callback);
+    DP_INFO_LOG("CreateDeferredProcessingSession successful.");
     return session_;
 }
 

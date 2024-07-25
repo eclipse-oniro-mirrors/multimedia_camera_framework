@@ -23,6 +23,7 @@ ohos_shared_library("deferred_processing_service") {
     "binder/server/src/deferred_photo_processing_session_callback_stub.cpp",
     "binder/server/src/deferred_photo_processing_session_stub.cpp",
     "src/base/buffer_info.cpp",
+    "src/base/buffer_manager/shared_buffer.cpp",
     "src/base/task_manager/task_group/base_task_group.cpp",
     "src/base/task_manager/task_group/delayed_task_group.cpp",
     "src/base/task_manager/task_group/task_group.cpp",

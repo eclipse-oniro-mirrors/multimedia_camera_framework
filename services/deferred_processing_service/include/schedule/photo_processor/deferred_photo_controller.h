@@ -16,10 +16,6 @@
 #ifndef OHOS_CAMERA_DPS_DEFERRED_PHOTO_CONTROLLER_H
 #define OHOS_CAMERA_DPS_DEFERRED_PHOTO_CONTROLLER_H
 
-#include <vector>
-#include <shared_mutex>
-#include <iostream>
-
 #include "basic_definitions.h"
 #include "photo_job_repository.h"
 #include "user_initiated_strategy.h"
@@ -33,7 +29,7 @@ namespace CameraStandard {
 namespace DeferredProcessing {
 class DeferredPhotoController {
 public:
-    DeferredPhotoController(int userId, std::shared_ptr<PhotoJobRepository> repository,
+    DeferredPhotoController(const int32_t userId, std::shared_ptr<PhotoJobRepository> repository,
         std::shared_ptr<DeferredPhotoProcessor> processor);
     ~DeferredPhotoController();
     void Initialize();
@@ -54,7 +50,7 @@ private:
     void NotifyScheduleState(bool scheduling);
 
     std::recursive_mutex mutex_;
-    int userId_;
+    const int32_t userId_;
     uint32_t callbackHandle_;
     bool isWaitForUser_;
     DpsStatus scheduleState_;

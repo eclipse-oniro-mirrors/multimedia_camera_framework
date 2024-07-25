@@ -13,13 +13,9 @@
  * limitations under the License.
  */
 
-#include <mutex>
-#include <vector>
-#include <shared_mutex>
-#include <iostream>
 #include "session_manager.h"
+
 #include "system_ability_definition.h"
-#include "session_info.h"
 #include "dp_log.h"
 #include "dp_utils.h"
 
@@ -72,7 +68,7 @@ void SessionManager::Stop()
     return;
 }
 
-sptr<IDeferredPhotoProcessingSession> SessionManager::CreateDeferredPhotoProcessingSession(int userId,
+sptr<IDeferredPhotoProcessingSession> SessionManager::CreateDeferredPhotoProcessingSession(const int32_t userId,
     const sptr<IDeferredPhotoProcessingSessionCallback> callback, std::shared_ptr<DeferredPhotoProcessor> processor,
     TaskManager* taskManager)
 {
@@ -82,8 +78,7 @@ sptr<IDeferredPhotoProcessingSession> SessionManager::CreateDeferredPhotoProcess
         return nullptr;
     }
     for (auto it = photoSessionInfos_.begin(); it != photoSessionInfos_.end(); ++it) {
-        int userId = it->first;
-        DP_DEBUG_LOG("dump photoSessionInfos_ userId: %{public}d", userId);
+        DP_DEBUG_LOG("dump photoSessionInfos_ userId: %{public}d", it->first);
     }
     std::lock_guard<std::mutex> lock(mutex_);
     auto iter = photoSessionInfos_.find(userId);
@@ -107,7 +102,7 @@ std::shared_ptr<IImageProcessCallbacks> SessionManager::GetImageProcCallbacks()
     return coordinator_->GetImageProcCallbacks();
 }
 
-void SessionManager::OnCallbackDied(int userId)
+void SessionManager::OnCallbackDied(const int32_t userId)
 {
     if (photoSessionInfos_.count(userId) != 0) {
         coordinator_->NotifyCallbackDestroyed(userId);

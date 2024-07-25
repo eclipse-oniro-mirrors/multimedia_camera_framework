@@ -16,6 +16,7 @@
 #ifndef OHOS_DEFERRED_PROCESSING_SERVICE_BASIC_DEFINITIONS_H
 #define OHOS_DEFERRED_PROCESSING_SERVICE_BASIC_DEFINITIONS_H
 
+#include <cstdint>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -105,7 +106,7 @@ enum SessionType : int32_t {
     PHOTO_SESSION = 0,
     VDIIDEO_SESSION
 };
-} //namespace DeferredProcessing
+} // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_DEFERRED_PROCESSING_SERVICE_BASIC_DEFINITIONS_H

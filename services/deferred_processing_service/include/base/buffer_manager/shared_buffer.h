@@ -13,51 +13,35 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_DEFERRED_PROCESSING_SERVICE_SHARED_BUFFER_H
-#define OHOS_DEFERRED_PROCESSING_SERVICE_SHARED_BUFFER_H
+#ifndef OHOS_CAMERA_DPS_SHARED_BUFFER_H
+#define OHOS_CAMERA_DPS_SHARED_BUFFER_H
 
-#include <memory>
-#include <string>
-#include <mutex>
-#include "ipc_file_descriptor.h"
+#include <ashmem.h>
+
+#include "ibuffer.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-class SharedBuffer {
+class SharedBuffer : public IBuffer {
 public:
-    static std::unique_ptr<SharedBuffer> Create(const std::string& name, int64_t capacity);
+    explicit SharedBuffer(int64_t capacity);
     ~SharedBuffer();
-    const std::string& GetName();
-    int GetFd();
-    int64_t GetSize();
-    int64_t GetCapacity();
-    const IPCFileDescriptor& GetIpcFileDescriptor();
-    bool CopyFrom(uint8_t* addr, int64_t bytes);
-    void Reset();
-    void Dump(const std::string& fileName);
+
+    int32_t Initialize();
+    int64_t GetSize() override;
+    int32_t CopyFrom(uint8_t* address, int64_t bytes) override;
+    void Reset() override;
+    int GetFd() const override;
 
 private:
-    friend std::unique_ptr<SharedBuffer> std::make_unique<SharedBuffer>(const std::string&, int64_t&);
-    friend class BufferPool;
-    SharedBuffer(const std::string& name, int64_t capacity);
-    bool Initialize();
-    bool IsAshmemValid();
-    void BeginAccess();
-    void EndAccess();
-    bool AllocateAshmemUnlocked();
-    void DeallocAshMem();
+    int32_t AllocateAshmemUnlocked();
+    void DeallocAshmem();
 
-    const std::string name_;
     const int64_t capacity_;
-    std::mutex mutex_;
-    IPCFileDescriptor ipcFd_;
-    int64_t size_;
-    void* addr_;
-    std::atomic<bool> pinned_;
+    sptr<Ashmem> ashmem_ {nullptr};
 };
-using SharedBufferPtr = std::shared_ptr<SharedBuffer>;
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_DEFERRED_PROCESSING_SERVICE_SHARED_BUFFER_H
+#endif // OHOS_CAMERA_DPS_SHARED_BUFFER_H

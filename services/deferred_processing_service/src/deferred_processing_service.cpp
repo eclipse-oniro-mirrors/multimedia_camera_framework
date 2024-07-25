@@ -12,12 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <mutex>
-#include <vector>
-#include <shared_mutex>
-#include <iostream>
-#include "utils/dp_log.h"
+
 #include "deferred_processing_service.h"
+
+#include "dp_log.h"
 #include "events_monitor.h"
 
 namespace OHOS {
@@ -75,7 +73,7 @@ void DeferredProcessingService::Stop()
 }
 
 sptr<IDeferredPhotoProcessingSession> DeferredProcessingService::CreateDeferredPhotoProcessingSession(
-    int userId, const sptr<IDeferredPhotoProcessingSessionCallback> callbacks)
+    const int32_t userId, const sptr<IDeferredPhotoProcessingSessionCallback> callbacks)
 {
     DP_INFO_LOG("DeferredProcessingService::CreateDeferredPhotoProcessingSession create session, userId: %{public}d",
         userId);
@@ -87,7 +85,7 @@ sptr<IDeferredPhotoProcessingSession> DeferredProcessingService::CreateDeferredP
     return session;
 }
 
-TaskManager* DeferredProcessingService::GetPhotoTaskManager(int userId)
+TaskManager* DeferredProcessingService::GetPhotoTaskManager(const int32_t userId)
 {
     std::lock_guard<std::mutex> lock(taskManagerMutex_);
     DP_INFO_LOG("entered, userId: %{public}d", userId);
@@ -102,7 +100,7 @@ TaskManager* DeferredProcessingService::GetPhotoTaskManager(int userId)
     return photoTaskManagerMap_[userId].get();
 }
 
-void DeferredProcessingService::NotifyCameraSessionStatus(int userId, const std::string& cameraId,
+void DeferredProcessingService::NotifyCameraSessionStatus(const int32_t userId, const std::string& cameraId,
     bool running, bool isSystemCamera)
 {
     DP_INFO_LOG("entered, userId: %{public}d, cameraId: %s, running: %{public}d, isSystemCamera: %{public}d: ",

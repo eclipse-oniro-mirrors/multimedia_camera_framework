@@ -16,14 +16,10 @@
 #ifndef OHOS_CAMERA_DPS_PHOTO_POST_PROCESSOR_H
 #define OHOS_CAMERA_DPS_PHOTO_POST_PROCESSOR_H
 
-#include <vector>
-#include <shared_mutex>
-#include <iostream>
-#include <mutex>
 #include <list>
-#include <atomic>
 
 #include "ipc_file_descriptor.h"
+#include "safe_map.h"
 #include "v1_2/icamera_host_callback.h"
 #include "v1_2/iimage_process_service.h"
 #include "v1_2/iimage_process_session.h"
@@ -51,8 +47,9 @@ enum class IveStateCode : int32_t {
 
 class PhotoPostProcessor {
 public:
-    PhotoPostProcessor(int userId, TaskManager* taskManager, IImageProcessCallbacks* callbacks);
+    PhotoPostProcessor(const int32_t userId, TaskManager* taskManager, IImageProcessCallbacks* callbacks);
     ~PhotoPostProcessor();
+
     void Initialize();
     int GetConcurrency(ExecutionMode mode);
     bool GetPendingImages(std::vector<std::string>& pendingImages);
@@ -63,19 +60,7 @@ public:
     void Interrupt();
     void Reset();
     void OnSessionDied();
-    int GetUserId();
-
-    inline sptr<OHOS::HDI::Camera::V1_2::IImageProcessSession> GetImageProcessSession()
-    {
-        std::lock_guard<std::mutex> lock(imageProcessSessionMutex_);
-        return innerImageProcessSession_;
-    }
-
-    inline void SetImageProcessSession(sptr<OHOS::HDI::Camera::V1_2::IImageProcessSession> ImageProcessSession)
-    {
-        std::lock_guard<std::mutex> lock(imageProcessSessionMutex_);
-        innerImageProcessSession_ = ImageProcessSession;
-    }
+    int32_t GetUserId();
 
 private:
     class PhotoProcessListener;
@@ -84,22 +69,19 @@ private:
     void OnProcessDone(const std::string& imageId, std::shared_ptr<BufferInfo> bufferInfo);
     void OnError(const std::string& imageId,  DpsError errorCode);
     void OnStateChanged(HdiStatus HdiStatus);
-
     bool ConnectServiceIfNecessary();
     void DisconnectServiceIfNecessary();
     void ScheduleConnectService();
+    void StopTimer(const std::string& imageId);
+
     std::mutex mutex_;
-    std::mutex imageProcessSessionMutex_;
-    std::mutex imageId2HandleMutex_;
-    std::mutex imageId2CrashCountMutex_;
-    std::mutex removeNeededListMutex_;
-    int userId_;
+    const int32_t userId_;
     TaskManager* taskManager_;
-    std::shared_ptr<IImageProcessCallbacks> imageProcessCallacks_;
+    std::shared_ptr<IImageProcessCallbacks> processCallacks_;
     sptr<PhotoProcessListener> listener_;
-    sptr<OHOS::HDI::Camera::V1_2::IImageProcessSession> innerImageProcessSession_;
+    sptr<OHOS::HDI::Camera::V1_2::IImageProcessSession> session_;
     sptr<IRemoteObject::DeathRecipient> sessionDeathRecipient_;
-    std::unordered_map<std::string, uint32_t> imageId2Handle_;
+    SafeMap<std::string, uint32_t> imageId2Handle_;
     std::unordered_map<std::string, uint32_t> imageId2CrashCount_;
     std::list<std::string> removeNeededList_;
     std::atomic<int> consecutiveTimeoutCount_;

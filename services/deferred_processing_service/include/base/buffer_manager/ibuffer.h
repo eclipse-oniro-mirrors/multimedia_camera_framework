@@ -13,29 +13,28 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_DEFERRED_PROCESSING_SERVICE_BUFFER_INFO_H
-#define OHOS_DEFERRED_PROCESSING_SERVICE_BUFFER_INFO_H
+#ifndef OHOS_CAMERA_DPS_I_BUFFER_H
+#define OHOS_CAMERA_DPS_I_BUFFER_H
 
-#include "ipc_file_descriptor.h"
-#include "shared_buffer.h"
+#include <cstdint>
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-class BufferInfo {
+constexpr int INVALID_FD = -1;
+
+class IBuffer {
 public:
-    BufferInfo(const std::shared_ptr<SharedBuffer>& sharedBuffer, int32_t dataSize, bool isHighQuality);
-    ~BufferInfo();
-    sptr<IPCFileDescriptor> GetIPCFileDescriptor();
-    int32_t GetDataSize();
-    bool IsHighQuality();
+    IBuffer() = default;
+    virtual ~IBuffer() = default;
 
 private:
-    std::shared_ptr<SharedBuffer> sharedBuffer_;
-    const int32_t dataSize_;
-    const bool isHighQuality_;
+    virtual int64_t GetSize() = 0;
+    virtual int32_t CopyFrom(uint8_t* address, int64_t bytes) = 0;
+    virtual void Reset() = 0;
+    virtual int GetFd() const = 0;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_DEFERRED_PROCESSING_SERVICE_BUFFER_INFO_H
+#endif // OHOS_CAMERA_DPS_I_BUFFER_H

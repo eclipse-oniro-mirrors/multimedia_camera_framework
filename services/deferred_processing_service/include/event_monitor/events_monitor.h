@@ -15,12 +15,8 @@
 
 #ifndef OHOS_DEFERRED_PROCESSING_SERVICE_EVENTS_MONITOR_H
 #define OHOS_DEFERRED_PROCESSING_SERVICE_EVENTS_MONITOR_H
-#include <set>
-#include <shared_mutex>
-#include <iostream>
-#include <any>
+
 #include "ievents_listener.h"
-#include "basic_definitions.h"
 #include "task_manager.h"
 #include "common_event_manager.h"
 #include "common_event_support.h"
@@ -45,32 +41,33 @@ public:
     explicit EventsMonitor();
     ~EventsMonitor();
     void Initialize();
-    void NotifyCameraSessionStatus(int userId, const std::string& cameraId, bool running, bool isSystemCamera);
+    void NotifyCameraSessionStatus(const int32_t userId,
+        const std::string& cameraId, bool running, bool isSystemCamera);
     void NotifyMediaLibraryStatus(bool available);
     void NotifyImageEnhanceStatus(int32_t status);
     void NotifySystemPressureLevel(SystemPressureLevel level);
-    void NotifyThermalLevel(int level);
-    void NotifyEventToObervers(int userId, EventType event, int value);
-    void RegisterTaskManager(int userId, TaskManager* taskManager);
+    void NotifyThermalLevel(int32_t level);
+    void NotifyEventToObervers(const int32_t userId, EventType event, int32_t value);
+    void RegisterTaskManager(const int32_t userId, TaskManager* taskManager);
     void RegisterThermalLevel();
     void UnRegisterThermalLevel();
-    void RegisterEventsListener(int userId, const std::vector<EventType>& events,
+    void RegisterEventsListener(const int32_t userId, const std::vector<EventType>& events,
         const std::shared_ptr<IEventsListener>& listener);
-    void UnRegisterListener(int userId, TaskManager* taskManager);
+    void UnRegisterListener(const int32_t userId, TaskManager* taskManager);
     void SetRegisterThermalStatus(bool isHasRegistered);
     void ScheduleRegisterThermalListener();
-    void NotifyObservers(EventType event, int value, int userId = 0);
+    void NotifyObservers(EventType event, int value, int32_t userId = 0);
 
 private:
     class ThermalMgrDeathRecipient;
-    void NotifyObserversUnlocked(int userId, EventType event, int value);
+    void NotifyObserversUnlocked(const int32_t userId, EventType event, int32_t value);
     void ConnectThermalSvr();
 
     std::mutex mutex_;
     bool initialized_;
     std::atomic<int> numActiveSessions_;
-    std::map<int, std::vector<TaskManager*>> userIdToTaskManager;
-    std::map<int, std::map<EventType, std::vector<std::weak_ptr<IEventsListener>>>> userIdToeventListeners_;
+    std::map<int32_t, std::vector<TaskManager*>> userIdToTaskManager;
+    std::map<int32_t, std::map<EventType, std::vector<std::weak_ptr<IEventsListener>>>> userIdToeventListeners_;
     bool mIsRegistered;
     sptr<IRemoteObject::DeathRecipient> deathRecipient_ = nullptr;
     std::shared_ptr<ThermalLevelSubscriber> thermalLevelSubscriber_ = nullptr;
@@ -79,7 +76,7 @@ private:
     sptr<OHOS::PowerMgr::IThermalSrv> thermalSrv_ = nullptr;
 #endif
 };
-}
+} // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_DEFERRED_PROCESSING_SERVICE_EVENTS_MONITOR_H
