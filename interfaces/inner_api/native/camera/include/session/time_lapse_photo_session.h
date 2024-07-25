@@ -70,6 +70,12 @@ public:
         metadataResultProcessor_ = make_shared<TimeLapsePhotoSessionMetadataResultProcessor>(this);
         supportedDevices_.resize(devices.size());
         std::copy(devices.begin(), devices.end(), supportedDevices_.begin());
+        luminationValue_ = 0.0;
+        info_.isTryAEHintNeeded = false;
+        info_.captureInterval = 0;
+        info_.previewType = TimeLapsePreviewType::DARK;
+        info_.isTryAEDone = false;
+        iso_ = 0;
     }
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetMetadata() override;
 
