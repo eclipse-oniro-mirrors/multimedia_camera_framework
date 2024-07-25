@@ -57,7 +57,7 @@ napi_value LightPaintingSessionNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("triggerLighting", TriggerLighting)
     };
     std::vector<std::vector<napi_property_descriptor>> descriptors = {camera_process_props,
-        color_effect_props, focus_props, zoom_props, light_painting_props};
+        color_effect_props, focus_props, manual_focus_props, zoom_props, light_painting_props};
     std::vector<napi_property_descriptor> light_painting_session_props =
         CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, LIGHT_PAINTING_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
