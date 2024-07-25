@@ -666,7 +666,7 @@ int32_t TimeLapsePhotoSession::SetIso(int32_t iso)
     if (!status) {
         MEDIA_ERR_LOG("%{public}s: Failed to set iso value", __FUNCTION__);
     }
-    iso_ = iso;
+    iso_ = static_cast<uint32_t>(iso);
     return CameraErrorCode::SUCCESS;
 }
 
