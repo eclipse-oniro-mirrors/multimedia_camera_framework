@@ -62,6 +62,7 @@
 #include "surface.h"
 #include "system_ability_definition.h"
 #include "v1_0/types.h"
+#include "parameters.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -132,7 +133,17 @@ int32_t HCaptureSession::Initialize(const uint32_t callerToken, int32_t opMode)
     pid_ = IPCSkeleton::GetCallingPid();
     uid_ = static_cast<uint32_t>(IPCSkeleton::GetCallingUid());
     MEDIA_DEBUG_LOG("HCaptureSession: camera stub services(%{public}zu) pid(%{public}d).", TotalSessionSize(), pid_);
-
+    if (system::GetParameter("const.camera.multicamera.enable", "false") != "true") {
+        auto pidSession = TotalSessionsGet(pid_);
+        if (pidSession != nullptr) {
+            auto disconnectDevice = pidSession->GetCameraDevice();
+            if (disconnectDevice != nullptr) {
+                disconnectDevice->OnError(HDI::Camera::V1_0::DEVICE_PREEMPT, 0);
+            }
+            MEDIA_ERR_LOG("HCaptureSession::HCaptureSession doesn't support multiple sessions per pid");
+            pidSession->Release();
+        }
+    }
     TotalSessionsInsert(pid_, this);
     callerToken_ = callerToken;
     opMode_ = opMode;

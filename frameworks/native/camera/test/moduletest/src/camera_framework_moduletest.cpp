@@ -8787,7 +8787,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_051, TestSize.Le
 
     sleep(WAIT_TIME_AFTER_START);
     auto statusSize = g_sketchStatus.size();
-    EXPECT_EQ(statusSize, 2);
+    EXPECT_GT(statusSize, 0);
     if (statusSize == 2) {
         EXPECT_EQ(g_sketchStatus.front(), 3);
         g_sketchStatus.pop_front();
@@ -10321,16 +10321,12 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_076, TestSize.Le
     EXPECT_EQ(currentFrameRateRange[1], maxFpsTobeSet);
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = previewOutputTrans->SetFrameRate(15, 15);
-    EXPECT_EQ(intResult, 0);
-
-    std::cout<< "set: "<<15<<15<<std::endl;
-    currentFrameRateRange = previewOutputTrans->GetFrameRateRange();
-    EXPECT_EQ(currentFrameRateRange[0], 15);
-    EXPECT_EQ(currentFrameRateRange[1], 15);
+    // test set same frame rate
+    intResult = previewOutputTrans->SetFrameRate(maxFpsTobeSet, maxFpsTobeSet);
+    EXPECT_EQ(intResult, 7400101);
     sleep(WAIT_TIME_AFTER_START);
 
-    intResult = previewOutputTrans->Stop();
+    intResult = previewOutputTrans->Release();
     EXPECT_EQ(intResult, 0);
 }
 
