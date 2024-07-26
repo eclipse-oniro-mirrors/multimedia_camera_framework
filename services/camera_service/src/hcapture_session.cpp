@@ -1179,6 +1179,8 @@ void HCaptureSession::ProcessMetaZoomArray(
 {
     std::shared_ptr<OHOS::Camera::CameraMetadata> metaZoomArray = std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
     uint32_t zoomCount = static_cast<uint32_t>(zoomAndTimeArray.size());
+    MEDIA_INFO_LOG("HCaptureSession::ProcessMetaZoomArray() zoomArray size: %{public}zu, zoomCount: %{public}u",
+        zoomAndTimeArray.size(), zoomCount);
     metaZoomArray->addEntry(OHOS_CONTROL_SMOOTH_ZOOM_RATIOS, zoomAndTimeArray.data(), zoomCount);
     cameraDevice->UpdateSettingOnce(metaZoomArray);
 }
