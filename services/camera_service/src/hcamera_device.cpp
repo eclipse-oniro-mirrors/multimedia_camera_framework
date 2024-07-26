@@ -303,11 +303,12 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
 {
     MEDIA_INFO_LOG("HCameraDevice::OpenDevice start cameraId: %{public}s", cameraID_.c_str());
     CAMERA_SYNC_TRACE;
-    int32_t errorCode = HandlePrivacyBeforeOpenDevice();
+    int32_t errorCode = CheckPermissionBeforeOpenDevice();
     CHECK_AND_RETURN_RET(errorCode == CAMERA_OK, errorCode);
     bool canOpenDevice = CanOpenCamera();
     CHECK_ERROR_RETURN_RET_LOG(!canOpenDevice, CAMERA_DEVICE_CONFLICT,
         "HCameraDevice::Refuse to turning on the camera");
+    HandlePrivacyBeforeOpenDevice();
     CameraReportUtils::GetInstance().SetOpenCamPerfStartInfo(cameraID_.c_str(), CameraReportUtils::GetCallerInfo());
     errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_, isEnableSecCam);
     if (errorCode != CAMERA_OK) {
@@ -344,19 +345,27 @@ int32_t HCameraDevice::OpenDevice(bool isEnableSecCam)
     return errorCode;
 }
 
-int32_t HCameraDevice::HandlePrivacyBeforeOpenDevice()
+int32_t HCameraDevice::CheckPermissionBeforeOpenDevice()
 {
-    MEDIA_DEBUG_LOG("enter HandlePrivacyBeforeOpenDevice");
+    MEDIA_DEBUG_LOG("enter checkPermissionBeforeOpenDevice");
     if (IsHapTokenId(callerToken_)) {
         auto cameraPrivacy = GetCameraPrivacy();
         CHECK_ERROR_RETURN_RET_LOG(cameraPrivacy == nullptr, CAMERA_OPERATION_NOT_ALLOWED, "cameraPrivacy is null");
         CHECK_ERROR_RETURN_RET_LOG(!cameraPrivacy->IsAllowUsingCamera(), CAMERA_OPERATION_NOT_ALLOWED,
             "OpenDevice is not allowed!");
+    }
+    return CAMERA_OK;
+}
+
+void HCameraDevice::HandlePrivacyBeforeOpenDevice()
+{
+    MEDIA_DEBUG_LOG("enter HandlePrivacyBeforeOpenDevice");
+    auto cameraPrivacy = GetCameraPrivacy();
+    if (cameraPrivacy != nullptr) {
         cameraPrivacy->AddCameraPermissionUsedRecord();
         cameraPrivacy->StartUsingPermissionCallback();
         cameraPrivacy->RegisterPermissionCallback();
     }
-    return CAMERA_OK;
 }
 
 void HCameraDevice::HandlePrivacyAfterCloseDevice()
