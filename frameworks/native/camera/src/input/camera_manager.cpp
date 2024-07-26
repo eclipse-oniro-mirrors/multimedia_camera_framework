@@ -40,6 +40,7 @@
 #include "light_painting_session.h"
 #include "quick_shot_photo_session.h"
 #include "session/capture_session.h"
+#include "session/fluorescence_photo_session.h"
 #include "session/high_res_photo_session.h"
 #include "session/macro_photo_session.h"
 #include "session/macro_video_session.h"
@@ -108,6 +109,7 @@ const std::unordered_map<OperationMode, SceneMode> g_metaToFwSupportedMode_ = {
     {OperationMode::PANORAMA_PHOTO, PANORAMA_PHOTO},
     {OperationMode::LIGHT_PAINTING, LIGHT_PAINTING},
     {OperationMode::TIMELAPSE_PHOTO, TIMELAPSE_PHOTO},
+    {OperationMode::FLUORESCENCE_PHOTO, FLUORESCENCE_PHOTO},
 };
 
 const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
@@ -130,6 +132,7 @@ const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
     {PANORAMA_PHOTO, OperationMode::PANORAMA_PHOTO},
     {LIGHT_PAINTING, OperationMode::LIGHT_PAINTING},
     {TIMELAPSE_PHOTO, OperationMode::TIMELAPSE_PHOTO},
+    {FLUORESCENCE_PHOTO, OperationMode::FLUORESCENCE_PHOTO},
 };
 
 const std::unordered_map<CameraFoldStatus, FoldStatus> g_metaToFwCameraFoldStatus_ = {
@@ -145,6 +148,30 @@ const std::set<int32_t> isTemplateMode_ = {
 const std::set<int32_t> isPhotoMode_ = {
     SceneMode::CAPTURE, SceneMode::PORTRAIT
 };
+
+bool ConvertMetaToFwkMode(const OperationMode opMode, SceneMode &scMode)
+{
+    auto it = g_metaToFwSupportedMode_.find(opMode);
+    if (it != g_metaToFwSupportedMode_.end()) {
+        scMode = it->second;
+        MEDIA_DEBUG_LOG("ConvertMetaToFwkMode OperationMode = %{public}d to SceneMode %{public}d", opMode, scMode);
+        return true;
+    }
+    MEDIA_ERR_LOG("ConvertMetaToFwkMode OperationMode = %{public}d err", opMode);
+    return false;
+}
+
+bool ConvertFwkToMetaMode(const SceneMode scMode, OperationMode &opMode)
+{
+    auto it = g_fwToMetaSupportedMode_.find(scMode);
+    if (it != g_fwToMetaSupportedMode_.end()) {
+        opMode = it->second;
+        MEDIA_DEBUG_LOG("ConvertFwkToMetaMode SceneMode %{public}d to OperationMode = %{public}d", scMode, opMode);
+        return true;
+    }
+    MEDIA_ERR_LOG("ConvertFwkToMetaMode SceneMode = %{public}d err", scMode);
+    return false;
+}
 
 CameraManager::CameraManager()
 {
@@ -291,6 +318,8 @@ sptr<CaptureSession> CameraManager::CreateCaptureSessionImpl(SceneMode mode, spt
             return new (std::nothrow) LightPaintingSession(session);
         case SceneMode::TIMELAPSE_PHOTO:
             return new(std::nothrow) TimeLapsePhotoSession(session, cameraObjList_);
+        case SceneMode::FLUORESCENCE_PHOTO:
+            return new(std::nothrow) FluorescencePhotoSession(session);
         default:
             return new (std::nothrow) CaptureSession(session);
     }
@@ -305,13 +334,13 @@ sptr<CaptureSession> CameraManager::CreateCaptureSession(SceneMode mode)
     auto serviceProxy = GetServiceProxy();
     CHECK_ERROR_RETURN_RET_LOG(serviceProxy == nullptr, nullptr, "CreateCaptureSession(mode) serviceProxy is nullptr");
     OperationMode opMode = OperationMode::NORMAL;
-    auto it = g_fwToMetaSupportedMode_.find(mode);
-    if (it != g_fwToMetaSupportedMode_.end()) {
-        opMode = it->second;
+    if (!ConvertFwkToMetaMode(mode, opMode)) {
+        MEDIA_ERR_LOG("CameraManager::CreateCaptureSession ConvertFwkToMetaMode mode: %{public}d fail", mode);
     }
     MEDIA_INFO_LOG("CameraManager::CreateCaptureSession prepare proxy execute");
     retCode = serviceProxy->CreateCaptureSession(session, opMode);
-    MEDIA_INFO_LOG("CameraManager::CreateCaptureSession proxy execute end, %{public}d", retCode);
+    MEDIA_INFO_LOG("CameraManager::CreateCaptureSession proxy execute end, mode %{public}d ret %{public}d",
+        mode, retCode);
     if (retCode == CAMERA_OK && session != nullptr) {
         sptr<CaptureSession> captureSession = CreateCaptureSessionImpl(mode, session);
         CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, nullptr,
@@ -1152,9 +1181,9 @@ std::vector<SceneMode> CameraManager::GetSupportedModes(sptr<CameraDevice>& came
     CHECK_ERROR_RETURN_RET_LOG(retCode != CAM_META_SUCCESS || item.count == 0, supportedModes,
         "CameraManager::GetSupportedModes Failed with return code %{public}d", retCode);
     for (uint32_t i = 0; i < item.count; i++) {
-        auto itr = g_metaToFwSupportedMode_.find(static_cast<OperationMode>(item.data.u8[i]));
-        if (itr != g_metaToFwSupportedMode_.end()) {
-            supportedModes.emplace_back(itr->second);
+        SceneMode scMode = SceneMode::NORMAL;
+        if (ConvertMetaToFwkMode(static_cast<OperationMode>(item.data.u8[i]), scMode)) {
+            supportedModes.emplace_back(scMode);
         }
     }
     MEDIA_INFO_LOG("CameraManager::GetSupportedModes supportedModes size: %{public}zu", supportedModes.size());
@@ -1352,7 +1381,11 @@ void CameraManager::ParseExtendCapability(const int32_t modeName, const camera_m
     modeStreamParse->getModeInfo(item.data.i32, item.count, extendInfo); // 解析tag中带的数据信息意义
     if (modeName == SceneMode::VIDEO) {
         for (uint32_t i = 0; i < extendInfo.modeCount; i++) {
-            if (SceneMode::HIGH_FRAME_RATE == extendInfo.modeInfo[i].modeName) {
+            SceneMode scMode = SceneMode::NORMAL;
+            if (!ConvertMetaToFwkMode(static_cast<OperationMode>(extendInfo.modeInfo[i].modeName), scMode)) {
+                MEDIA_ERR_LOG("ParseExtendCapability mode = %{public}d", extendInfo.modeInfo[i].modeName);
+            }
+            if (SceneMode::HIGH_FRAME_RATE == scMode) {
                 for (uint32_t j = 0; j < extendInfo.modeInfo[i].streamTypeCount; j++) {
                     OutputCapStreamType streamType =
                         static_cast<OutputCapStreamType>(extendInfo.modeInfo[i].streamInfo[j].streamType);
@@ -1363,7 +1396,11 @@ void CameraManager::ParseExtendCapability(const int32_t modeName, const camera_m
         }
     }
     for (uint32_t i = 0; i < extendInfo.modeCount; i++) {
-        if (modeName == extendInfo.modeInfo[i].modeName) {
+        SceneMode scMode = SceneMode::NORMAL;
+        if (!ConvertMetaToFwkMode(static_cast<OperationMode>(extendInfo.modeInfo[i].modeName), scMode)) {
+            MEDIA_ERR_LOG("ParseExtendCapability mode = %{public}d", extendInfo.modeInfo[i].modeName);
+        }
+        if (modeName == scMode) {
             for (uint32_t j = 0; j < extendInfo.modeInfo[i].streamTypeCount; j++) {
                 OutputCapStreamType streamType =
                     static_cast<OutputCapStreamType>(extendInfo.modeInfo[i].streamInfo[j].streamType);
