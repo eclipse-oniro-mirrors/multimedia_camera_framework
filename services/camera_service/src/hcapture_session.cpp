@@ -2014,13 +2014,12 @@ void MovingPhotoListener::StopDrainOut()
 
 void MovingPhotoListener::OnBufferAvailable()
 {
-    MEDIA_DEBUG_LOG("surface_ OnBufferAvailable %{public}u, transform %{public}d", surface_->GetQueueSize(),
-        surface_->GetTransform());
-
     if (!surface_) {
         MEDIA_ERR_LOG("streamRepeat surface is null");
         return;
     }
+    MEDIA_DEBUG_LOG("surface_ OnBufferAvailable %{public}u, transform %{public}d", surface_->GetQueueSize(),
+        surface_->GetTransform());
     int64_t timestamp;
     OHOS::Rect damage;
     sptr<SurfaceBuffer> buffer;
