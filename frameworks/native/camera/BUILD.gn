@@ -96,6 +96,7 @@ ohos_shared_library("camera_framework") {
     "src/session/aperture_video_session.cpp",
     "src/session/capture_session.cpp",
     "src/session/features/moon_capture_boost_feature.cpp",
+    "src/session/fluorescence_photo_session.cpp",
     "src/session/high_res_photo_session.cpp",
     "src/session/light_painting_session.cpp",
     "src/session/macro_photo_session.cpp",
