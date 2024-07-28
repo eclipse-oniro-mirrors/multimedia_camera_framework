@@ -863,7 +863,7 @@ int32_t HCameraHostManager::Prelaunch(const std::string& cameraId, std::string c
     }
     int32_t res = cameraHostInfo->Prelaunch(cameraRestoreParam, muteMode_);
     if (res == 0 && cameraRestoreParam->GetRestoreParamType() !=
-        RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS) {
+        RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS) {
         return CAMERA_OK;
     }
     // 使用后删除存储的动态数据

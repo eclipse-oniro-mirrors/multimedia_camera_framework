@@ -1612,7 +1612,7 @@ int32_t HCameraService::SaveCurrentParamForRestore(std::string cameraId, Restore
     cameraRestoreParam->SetStartActiveTime(activeTime);
     int foldStatus = static_cast<int>(OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus());
     cameraRestoreParam->SetFoldStatus(foldStatus);
-    if (captureSession == nullptr) {
+    if (captureSession == nullptr || restoreParamType == NO_NEED_RESTORE_PARAM_OHOS) {
         cameraHostManager_->SaveRestoreParam(cameraRestoreParam);
         return rc;
     }
