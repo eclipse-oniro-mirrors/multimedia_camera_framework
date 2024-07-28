@@ -2668,8 +2668,9 @@ int32_t CaptureSession::SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoom
     float duration;
     auto captureSession = GetCaptureSession();
     if (captureSession) {
+        MEDIA_INFO_LOG("CaptureSession::SetSmoothZoom Zoom ratio: %{public}f", targetZoomRatio);
         errCode = captureSession->SetSmoothZoom(smoothZoomType, GetMode(), targetZoomRatio, duration);
-        MEDIA_DEBUG_LOG("CaptureSession::SetSmoothZoom duration: %{public}f ", duration);
+        MEDIA_INFO_LOG("CaptureSession::SetSmoothZoom duration: %{public}f ", duration);
         if (errCode != CAMERA_OK) {
             MEDIA_ERR_LOG("Failed to SetSmoothZoom!, %{public}d", errCode);
         } else {
