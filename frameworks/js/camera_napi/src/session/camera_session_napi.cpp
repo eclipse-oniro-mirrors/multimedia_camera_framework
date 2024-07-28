@@ -2506,7 +2506,11 @@ napi_value CameraSessionNapi::GetBeauty(napi_env env, napi_callback_info info)
 
 napi_value CameraSessionNapi::SetBeauty(napi_env env, napi_callback_info info)
 {
+<<<<<<< HEAD
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
+=======
+        if (!CameraNapiSecurity::CheckSystemApp(env)) {
+>>>>>>> 425b5411bd8f88cf084c07359b6b2ad304c7bb89
         MEDIA_ERR_LOG("SystemApi IsMacroSupported is called!");
         return nullptr;
     }
