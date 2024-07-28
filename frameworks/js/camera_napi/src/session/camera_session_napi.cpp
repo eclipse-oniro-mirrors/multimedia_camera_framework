@@ -2392,6 +2392,10 @@ napi_value CameraSessionNapi::SetFilter(napi_env env, napi_callback_info info)
 
 napi_value CameraSessionNapi::GetSupportedBeautyTypes(napi_env env, napi_callback_info info)
 {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsMacroSupported is called!");
+        return nullptr;
+    }
     MEDIA_DEBUG_LOG("GetSupportedBeautyTypes is called");
     napi_status status;
     napi_value result = nullptr;
@@ -2429,6 +2433,10 @@ napi_value CameraSessionNapi::GetSupportedBeautyTypes(napi_env env, napi_callbac
 
 napi_value CameraSessionNapi::GetSupportedBeautyRange(napi_env env, napi_callback_info info)
 {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsMacroSupported is called!");
+        return nullptr;
+    }
     MEDIA_DEBUG_LOG("GetSupportedBeautyRange is called");
     napi_status status;
     napi_value result = nullptr;
@@ -2469,6 +2477,10 @@ napi_value CameraSessionNapi::GetSupportedBeautyRange(napi_env env, napi_callbac
 
 napi_value CameraSessionNapi::GetBeauty(napi_env env, napi_callback_info info)
 {
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsMacroSupported is called!");
+        return nullptr;
+    }
     MEDIA_DEBUG_LOG("GetBeauty is called");
     napi_status status;
     napi_value result = nullptr;
@@ -2494,6 +2506,10 @@ napi_value CameraSessionNapi::GetBeauty(napi_env env, napi_callback_info info)
 
 napi_value CameraSessionNapi::SetBeauty(napi_env env, napi_callback_info info)
 {
+        if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsMacroSupported is called!");
+        return nullptr;
+    }
     MEDIA_DEBUG_LOG("SetBeauty is called");
     napi_status status;
     napi_value result = nullptr;
