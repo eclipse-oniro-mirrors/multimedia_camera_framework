@@ -76,25 +76,30 @@ void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
     HStreamCommon::SetStreamInfo(streamInfo);
     streamInfo.v1_0.intent_ = STILL_CAPTURE;
     streamInfo.v1_0.encodeType_ = ENCODE_TYPE_JPEG;
-    HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo;
-    // quickThumbnial do not need these param
-    extendedStreamInfo.width = 0;
-    extendedStreamInfo.height = 0;
-    extendedStreamInfo.format = 0;
-    extendedStreamInfo.dataspace = 0;
     if (format_ == OHOS_CAMERA_FORMAT_DNG) {
         MEDIA_INFO_LOG("HStreamCapture::SetStreamInfo Set DNG info, streamId:%{public}d", GetFwkStreamId());
-        extendedStreamInfo.type =
-            static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_RAW);
-        extendedStreamInfo.width = width_;
-        extendedStreamInfo.height = height_;
-        extendedStreamInfo.format = format_;
-        extendedStreamInfo.bufferQueue = rawBufferQueue_;
-    } else {
-        extendedStreamInfo.type = HDI::Camera::V1_1::EXTENDED_STREAM_INFO_QUICK_THUMBNAIL;
-        extendedStreamInfo.bufferQueue = thumbnailBufferQueue_;
+        HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo = {
+            .type =
+                static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_RAW),
+            .width = width_,
+            .height = height_,
+            .format = format_,
+            .dataspace = 0,
+            .bufferQueue = rawBufferQueue_,
+        };
+        streamInfo.extendedStreamInfos.push_back(extendedStreamInfo);
     }
-    streamInfo.extendedStreamInfos = {extendedStreamInfo};
+    if (thumbnailSwitch_) {
+        HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo = {
+            .type = HDI::Camera::V1_1::EXTENDED_STREAM_INFO_QUICK_THUMBNAIL,
+            .width = 0,
+            .height = 0,
+            .format = 0,
+            .dataspace = 0,
+            .bufferQueue = thumbnailBufferQueue_,
+        };
+        streamInfo.extendedStreamInfos.push_back(extendedStreamInfo);
+    }
 }
 
 int32_t HStreamCapture::SetThumbnail(bool isEnabled, const sptr<OHOS::IBufferProducer> &producer)
