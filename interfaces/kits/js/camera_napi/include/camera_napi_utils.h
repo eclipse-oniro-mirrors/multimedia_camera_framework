@@ -27,6 +27,8 @@
 #undef NAPI_ASSERT
 #endif
 
+#define CAMERA_NAPI_VALUE napi_value
+
 #define NAPI_ASSERT(env, assertion, message) NAPI_ASSERT_BASE(env, assertion, message, nullptr)
 
 #define CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar)        \

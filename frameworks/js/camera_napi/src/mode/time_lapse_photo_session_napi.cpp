@@ -84,8 +84,8 @@ napi_value TryAEInfoNapi::Init(napi_env env, napi_value exports)
 
 napi_value TryAEInfoNapi::NewInstance(napi_env env)
 {
-    napi_value result = nullptr;
-    napi_value constructor;
+    CAMERA_NAPI_VALUE result = nullptr;
+    CAMERA_NAPI_VALUE constructor;
     if (napi_get_reference_value(env, sConstructor_, &constructor) == napi_ok) {
         napi_new_instance(env, constructor, 0, nullptr, &result);
     }
