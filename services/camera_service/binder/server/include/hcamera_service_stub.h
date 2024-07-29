@@ -15,6 +15,7 @@
 
 #ifndef OHOS_CAMERA_HCAMERA_SERVICE_STUB_H
 #define OHOS_CAMERA_HCAMERA_SERVICE_STUB_H
+#define EXPORT_API __attribute__((visibility("default")))
 
 #include "camera_util.h"
 #include "icamera_service.h"
@@ -24,7 +25,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class HCameraServiceStub : public IRemoteStub<ICameraService> {
+class EXPORT_API HCameraServiceStub : public IRemoteStub<ICameraService> {
 public:
     HCameraServiceStub();
     ~HCameraServiceStub();

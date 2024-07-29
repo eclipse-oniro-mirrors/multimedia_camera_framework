@@ -15,13 +15,14 @@
 
 #ifndef OHOS_CAMERA_HCAMERA_SERVICE_CALLBACK_PROXY_H
 #define OHOS_CAMERA_HCAMERA_SERVICE_CALLBACK_PROXY_H
+#define EXPORT_API __attribute__((visibility("default")))
 
 #include "iremote_proxy.h"
 #include "icamera_service_callback.h"
 
 namespace OHOS {
 namespace CameraStandard {
-class HCameraServiceCallbackProxy : public IRemoteProxy<ICameraServiceCallback> {
+class EXPORT_API HCameraServiceCallbackProxy : public IRemoteProxy<ICameraServiceCallback> {
 public:
     explicit HCameraServiceCallbackProxy(const sptr<IRemoteObject> &impl);
     virtual ~HCameraServiceCallbackProxy() = default;
@@ -34,7 +35,7 @@ private:
     static inline BrokerDelegator<HCameraServiceCallbackProxy> delegator_;
 };
 
-class HCameraMuteServiceCallbackProxy : public IRemoteProxy<ICameraMuteServiceCallback> {
+class EXPORT_API HCameraMuteServiceCallbackProxy : public IRemoteProxy<ICameraMuteServiceCallback> {
 public:
     explicit HCameraMuteServiceCallbackProxy(const sptr<IRemoteObject> &impl);
     virtual ~HCameraMuteServiceCallbackProxy() = default;
@@ -44,7 +45,7 @@ private:
     static inline BrokerDelegator<HCameraMuteServiceCallbackProxy> delegator_;
 };
 
-class HTorchServiceCallbackProxy : public IRemoteProxy<ITorchServiceCallback> {
+class EXPORT_API HTorchServiceCallbackProxy : public IRemoteProxy<ITorchServiceCallback> {
 public:
     explicit HTorchServiceCallbackProxy(const sptr<IRemoteObject> &impl);
     virtual ~HTorchServiceCallbackProxy() = default;
@@ -54,7 +55,7 @@ private:
     static inline BrokerDelegator<HTorchServiceCallbackProxy> delegator_;
 };
 
-class HFoldServiceCallbackProxy : public IRemoteProxy<IFoldServiceCallback> {
+class EXPORT_API HFoldServiceCallbackProxy : public IRemoteProxy<IFoldServiceCallback> {
 public:
     explicit HFoldServiceCallbackProxy(const sptr<IRemoteObject> &impl);
     virtual ~HFoldServiceCallbackProxy() = default;

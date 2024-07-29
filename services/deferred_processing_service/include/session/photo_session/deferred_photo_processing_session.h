@@ -15,6 +15,7 @@
 
 #ifndef OHOS_CAMERA_DPS_DEFERRED_PHOTO_PROCESSING_SESSION_H
 #define OHOS_CAMERA_DPS_DEFERRED_PHOTO_PROCESSING_SESSION_H
+#define EXPORT_API __attribute__((visibility("default")))
 
 #include "deferred_photo_processing_session_stub.h"
 #include "ideferred_photo_processing_session_callback.h"
@@ -37,7 +38,7 @@ public:
         bool discardable_;
         DpsMetadata metadata_;
     };
-    DeferredPhotoProcessingSession(
+    EXPORT_API DeferredPhotoProcessingSession(
         const int32_t userId, std::shared_ptr<DeferredPhotoProcessor> deferredPhotoProcessor,
         TaskManager* taskManager, sptr<IDeferredPhotoProcessingSessionCallback> callback);
 

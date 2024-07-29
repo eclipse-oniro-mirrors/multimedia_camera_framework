@@ -15,6 +15,7 @@
 
 #ifndef OHOS_CAMERA_H_STREAM_REPEAT_H
 #define OHOS_CAMERA_H_STREAM_REPEAT_H
+#define EXPORT_API __attribute__((visibility("default")))
 
 #include <cstdint>
 #include <functional>
@@ -42,7 +43,7 @@ enum class RepeatStreamStatus {
     STARTED
 };
 
-class HStreamRepeat : public HStreamRepeatStub, public HStreamCommon {
+class EXPORT_API HStreamRepeat : public HStreamRepeatStub, public HStreamCommon {
 public:
     HStreamRepeat(
         sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height, RepeatStreamType type);

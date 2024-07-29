@@ -70,6 +70,7 @@ ohos_shared_library("camera_service") {
   cflags = [
     "-fPIC",
     "-Wall",
+    "-fvisibility=hidden",
   ]
   sanitize = {
     cfi = true

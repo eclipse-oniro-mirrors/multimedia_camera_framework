@@ -15,6 +15,7 @@
 
 #ifndef OHOS_CAMERA_H_STREAM_METADATA_H
 #define OHOS_CAMERA_H_STREAM_METADATA_H
+#define EXPORT_API __attribute__((visibility("default")))
 
 #include "camera_metadata_info.h"
 #include "hstream_metadata_stub.h"
@@ -26,7 +27,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class HStreamMetadata : public HStreamMetadataStub, public HStreamCommon {
+class EXPORT_API HStreamMetadata : public HStreamMetadataStub, public HStreamCommon {
 public:
     HStreamMetadata(sptr<OHOS::IBufferProducer> producer, int32_t format);
     ~HStreamMetadata();
