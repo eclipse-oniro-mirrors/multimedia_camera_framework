@@ -1152,8 +1152,8 @@ int32_t HCameraHostManager::GetCameraResourceCost(const std::string& cameraId,
 {
     auto cameraHostInfo = FindCameraHostInfo(cameraId);
     CHECK_ERROR_RETURN_RET_LOG(cameraHostInfo == nullptr, CAMERA_INVALID_ARG,
-        "HCameraHostManager::CameraDeviceResourceCost failed with invalid device info");
-    return cameraHostInfo->CameraDeviceResourceCost(cameraId, resourceCost);
+        "HCameraHostManager::GetCameraResourceCost failed with invalid device info");
+    return cameraHostInfo->GetCameraResourceCost(cameraId, resourceCost);
 }
 
 void RegisterServStatListener::OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status)
