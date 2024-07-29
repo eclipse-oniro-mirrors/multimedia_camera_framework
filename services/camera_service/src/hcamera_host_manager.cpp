@@ -94,6 +94,9 @@ public:
         std::shared_ptr<OHOS::Camera::CameraMetadata> cameraSettings, std::string& cameraId);
     void NotifyDeviceStateChangeInfo(int notifyType, int deviceState);
 
+    int32_t GetCameraResourceCost(const std::string& cameraId,
+        OHOS::HDI::Camera::V1_3::CameraDeviceResourceCost& resourceCost);
+
     // CameraHostCallbackStub
     int32_t OnCameraStatus(const std::string& cameraId, HDI::Camera::V1_0::CameraStatus status) override;
     int32_t OnFlashlightStatus(const std::string& cameraId, FlashlightStatus status) override;
@@ -480,6 +483,17 @@ void HCameraHostManager::CameraHostInfo::NotifyDeviceStateChangeInfo(int notifyT
         MEDIA_DEBUG_LOG("CameraHostInfo::NotifyDeviceStateChangeInfo ICameraHost V1_2");
         cameraHostProxyV1_2_->NotifyDeviceStateChangeInfo(notifyType, deviceState);
     }
+}
+
+int32_t HCameraHostManager::CameraHostInfo::GetCameraResourceCost(const std::string& cameraId,
+    OHOS::HDI::Camera::V1_3::CameraDeviceResourceCost& resourceCost)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (cameraHostProxyV1_3_ != nullptr &&
+        cameraHostProxyV1_3_->GetCameraResourceCost(cameraId, resourceCost) == HDI::Camera::V1_0::CamRetCode::NO_ERROR) {
+        return CAMERA_OK
+    }
+    return CAMERA_UNSUPPORTED;
 }
 
 int32_t HCameraHostManager::CameraHostInfo::OnCameraStatus(
@@ -1130,6 +1144,15 @@ bool HCameraHostManager::IsCameraHostInfoAdded(const std::string& svcName)
 void HCameraHostManager::SetMuteMode(bool muteMode)
 {
     muteMode_ = muteMode;
+}
+
+int32_t HCameraHostManager::GetCameraResourceCost(const std::string& cameraId,
+    OHOS::HDI::Camera::V1_3::CameraDeviceResourceCost& resourceCost)
+{
+    auto cameraHostInfo = FindCameraHostInfo(cameraId);
+    CHECK_ERROR_RETURN_RET_LOG(cameraHostInfo == nullptr, CAMERA_INVALID_ARG,
+        "HCameraHostManager::CameraDeviceResourceCost failed with invalid device info");
+    return cameraHostInfo->CameraDeviceResourceCost(cameraId, resourceCost);
 }
 
 void RegisterServStatListener::OnReceive(const HDI::ServiceManager::V1_0::ServiceStatus& status)
