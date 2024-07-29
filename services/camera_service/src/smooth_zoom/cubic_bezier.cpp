@@ -38,7 +38,7 @@ std::vector<float> CubicBezier::GetZoomArray(const float& currentZoom, const flo
     const float& frameInterval)
 {
     float duration = GetDuration(currentZoom, targetZoom);
-    MEDIA_DEBUG_LOG("CubicBezier::GetZoomArray duration is:%{public}f", duration);
+    MEDIA_INFO_LOG("CubicBezier::GetZoomArray duration is:%{public}f", duration);
     std::vector<float> result;
     if (duration == 0 || frameInterval == 0) {
         return result;

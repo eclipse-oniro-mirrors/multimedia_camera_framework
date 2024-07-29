@@ -1057,7 +1057,7 @@ bool HCaptureSession::QueryFpsAndZoomRatio(float& currentFps, float& currentZoom
         return false;
     } else if (retFindMeta == CAM_META_SUCCESS) {
         currentZoomRatio = static_cast<float>(item.data.ui32[0]);
-        MEDIA_DEBUG_LOG("HCaptureSession::QueryFpsAndZoomRatio() current zoom %{public}d.", item.data.ui32[0]);
+        MEDIA_INFO_LOG("HCaptureSession::QueryFpsAndZoomRatio() current zoom %{public}d.", item.data.ui32[0]);
     }
     retFindMeta = OHOS::Camera::FindCameraMetadataItem(metaOut->get(), OHOS_STATUS_CAMERA_CURRENT_FPS, &item);
     if (retFindMeta == CAM_META_ITEM_NOT_FOUND) {
@@ -1065,7 +1065,7 @@ bool HCaptureSession::QueryFpsAndZoomRatio(float& currentFps, float& currentZoom
         return false;
     } else if (retFindMeta == CAM_META_SUCCESS) {
         currentFps = static_cast<float>(item.data.ui32[0]);
-        MEDIA_DEBUG_LOG("HCaptureSession::QueryFpsAndZoomRatio() current fps %{public}d.", item.data.ui32[0]);
+        MEDIA_INFO_LOG("HCaptureSession::QueryFpsAndZoomRatio() current fps %{public}d.", item.data.ui32[0]);
     }
     return true;
 }
