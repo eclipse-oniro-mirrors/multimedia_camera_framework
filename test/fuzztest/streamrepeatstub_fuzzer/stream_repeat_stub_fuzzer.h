@@ -73,6 +73,10 @@ public:
     {
         return 0;
     }
+    int32_t AttachMetaSurface(const sptr<OHOS::IBufferProducer>& producer, int32_t videoMetaType) override
+    {
+        return 0;
+    }
 };
 
 void Test(uint8_t *rawData, size_t size);

@@ -344,6 +344,50 @@ bool VideoOutput::IsMirrorSupported()
     return isMirrorEnabled;
 }
 
+std::vector<VideoMetaType> VideoOutput::GetSupportedVideoMetaTypes()
+{
+    std::vector<VideoMetaType> vecto = {};
+    if (IsTagSupported(OHOS_ABILITY_AVAILABLE_EXTENDED_STREAM_INFO_TYPES)) {
+        vecto.push_back(VideoMetaType::VIDEO_META_MAKER_INFO);
+    }
+    return vecto;
+}
+ 
+bool VideoOutput::IsTagSupported(camera_device_metadata_tag tag)
+{
+    camera_metadata_item_t item;
+    sptr<CameraDevice> cameraObj;
+    auto captureSession = GetSession();
+    CHECK_ERROR_RETURN_RET_LOG(captureSession == nullptr, false,
+        "VideoOutput isTagEnabled error!, captureSession is nullptr");
+    auto inputDevice = captureSession->GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, false,
+        "VideoOutput isTagEnabled error!, inputDevice is nullptr");
+    cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(cameraObj == nullptr, false,
+        "VideoOutput isTagEnabled error!, cameraObj is nullptr");
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+    CHECK_ERROR_RETURN_RET(metadata == nullptr, false);
+    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), tag, &item);
+    CHECK_ERROR_RETURN_RET_LOG(ret != CAM_META_SUCCESS, false, "Can not find this tag");
+    MEDIA_DEBUG_LOG("This tag is Supported");
+    return true;
+}
+ 
+void VideoOutput::AttachMetaSurface(sptr<Surface> surface, VideoMetaType videoMetaType)
+{
+    auto itemStream = static_cast<IStreamRepeat*>(GetStream().GetRefPtr());
+    int32_t errCode = CAMERA_UNKNOWN_ERROR;
+    if (itemStream) {
+        errCode = itemStream->AttachMetaSurface(surface->GetProducer(), videoMetaType);
+        if (errCode != CAMERA_OK) {
+            MEDIA_ERR_LOG("VideoOutput Failed to Attach Meta Surface!, errCode: %{public}d", errCode);
+        }
+    } else {
+        MEDIA_ERR_LOG("VideoOutput::AttachMetaSurface() itemStream is nullptr");
+    }
+}
+
 void VideoOutput::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);

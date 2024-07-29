@@ -28,6 +28,11 @@
 
 namespace OHOS {
 namespace CameraStandard {
+
+enum VideoMetaType {
+    VIDEO_META_MAKER_INFO = 0,
+};
+
 class VideoStateCallback {
 public:
     VideoStateCallback() = default;
@@ -156,6 +161,26 @@ public:
      * @return Returns true/false if the video output is support mirro or not.
      */
     bool IsMirrorSupported();
+
+        /**
+     * @brief Querying the supported video auxiliary stream types.
+     *
+     * @return Returns the supported video auxiliary stream types.
+     */
+    std::vector<VideoMetaType> GetSupportedVideoMetaTypes();
+ 
+    /**
+     * @brief Check whether the tag is supported.
+     *
+     * @return Returns true/false if the tag is support or not.
+     */
+    bool IsTagSupported(camera_device_metadata_tag tag);
+ 
+    /**
+     * @brief Sets the surface of the presentation.
+     *
+     */
+    void AttachMetaSurface(sptr<Surface> surface, VideoMetaType videoMetaType);
 
 private:
     int32_t videoFormat_;

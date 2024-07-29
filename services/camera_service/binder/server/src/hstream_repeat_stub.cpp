@@ -57,11 +57,15 @@ int HStreamRepeatStub::OnRemoteRequest(uint32_t code, MessageParcel& data, Messa
             break;
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_STREAM_FRAME_RANGE_SET):
             errCode = HandleSetFrameRate(data);
+            break;
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ENABLE_SECURE_STREAM):
             errCode = EnableSecure(data.ReadBool());
             break;
         case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ENABLE_STREAM_MIRROR):
             errCode = HandleSetMirror(data);
+            break;
+        case static_cast<uint32_t>(StreamRepeatInterfaceCode::CAMERA_ATTACH_META_SURFACE):
+            errCode = HandleAttachMetaSurface(data);
             break;
         default:
             MEDIA_ERR_LOG("HStreamRepeatStub request code %{public}u not handled", code);
@@ -149,6 +153,24 @@ int32_t HStreamRepeatStub::HandleSetMirror(MessageParcel& data)
         MEDIA_ERR_LOG("HStreamRepeatStub::HandleSetFrameRate failed : %{public}d", error);
     }
     return error;
+}
+
+int32_t HStreamRepeatStub::HandleAttachMetaSurface(MessageParcel& data)
+{
+    sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
+    int32_t videoMetaType = data.ReadInt32();
+
+    CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
+        "HStreamRepeatStub HandleAttachMetaSurface BufferProducer is null");
+
+    sptr<OHOS::IBufferProducer> producer = iface_cast<OHOS::IBufferProducer>(remoteObj);
+    CHECK_AND_RETURN_RET_LOG(producer != nullptr, IPC_STUB_INVALID_DATA_ERR,
+                             "HStreamRepeatStub HandleAttachMetaSurface producer is null");
+    int errCode = AttachMetaSurface(producer, videoMetaType);
+    CHECK_ERROR_RETURN_RET_LOG(errCode != ERR_NONE, errCode,
+        "HStreamRepeatStub::HandleAttachMetaSurface add deferred surface failed : %{public}d", errCode);
+
+    return errCode;
 }
 } // namespace CameraStandard
 } // namespace OHOS
