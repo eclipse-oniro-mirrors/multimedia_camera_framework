@@ -1832,9 +1832,8 @@ std::string g_toString(std::set<int32_t>& pidList)
 
 int32_t HCameraService::ProxyForFreeze(const std::set<int32_t>& pidList, bool isProxy)
 {
-    if (IPCSkeleton::GetCallingUid() != 0) {
-        return CAMERA_OPERATION_NOT_ALLOWED;
-    }
+    constexpr int32_t maxSaUid = 10000;
+    CHECK_ERROR_RETURN_RET_LOG(IPCSkeleton::GetCallingUid() >= maxSaUid, CAMERA_OPERATION_NOT_ALLOWED, "not allow");
     MEDIA_INFO_LOG("isProxy value: %{public}d", isProxy);
     {
         std::lock_guard<std::mutex> lock(freezedPidListMutex_);
