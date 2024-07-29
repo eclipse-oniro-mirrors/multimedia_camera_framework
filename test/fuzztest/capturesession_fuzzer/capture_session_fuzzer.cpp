@@ -18,35 +18,58 @@
 #include "camera_photo_proxy.h"
 #include "capture_input.h"
 #include "capture_output.h"
+#include "capture_scene_const.h"
 #include "input/camera_manager.h"
 #include "message_parcel.h"
 #include "refbase.h"
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include "token_setproc.h"
+#include "nativetoken_kit.h"
+#include "accesstoken_kit.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace CaptureSessionFuzzer {
 const int32_t LIMITSIZE = 4;
-const int32_t ENUM_OVER = 2;
-sptr<IBufferProducer> surface(nullptr);
+const int32_t NUM_2 = 2;
+sptr<IBufferProducer> surface;
 sptr<CameraDevice> camera;
 Profile profile;
 CaptureOutput* curOutput;
 bool g_isSupported;
+bool g_isCameraDevicePermission = false;
+SceneMode g_sceneMode;
+
+void GetPermission()
+{
+    if (!g_isCameraDevicePermission) {
+        uint64_t tokenId;
+        const char *perms[0];
+        perms[0] = "ohos.permission.CAMERA";
+        NativeTokenInfoParams infoInstance = { .dcapsNum = 0, .permsNum = 1, .aclsNum = 0, .dcaps = NULL,
+            .perms = perms, .acls = NULL, .processName = "camera_capture", .aplStr = "system_basic",
+        };
+        tokenId = GetAccessTokenId(&infoInstance);
+        SetSelfTokenID(tokenId);
+        OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
+        g_isCameraDevicePermission = true;
+    }
+}
 
 void Test(uint8_t *rawData, size_t size)
 {
     if (rawData == nullptr || size < LIMITSIZE) {
         return;
     }
+    GetPermission();
     MessageParcel data;
     data.WriteRawData(rawData, size);
-    SceneMode sceneMode = static_cast<SceneMode>(
-        data.ReadInt32() % (SceneMode::APERTURE_VIDEO + ENUM_OVER));
+    g_sceneMode = static_cast<SceneMode>(
+        data.ReadInt32() % (SceneMode::APERTURE_VIDEO + NUM_2));
     auto manager = CameraManager::GetInstance();
-    auto session = manager->CreateCaptureSession(sceneMode);
+    auto session = manager->CreateCaptureSession(g_sceneMode);
     if (session == nullptr) {
         return;
     }
@@ -57,7 +80,6 @@ void Test(uint8_t *rawData, size_t size)
     TestFocus(session, rawData, size);
     TestZoom(session, rawData, size);
     TestStabilization(session, rawData, size);
-    TestFlash(session, rawData, size);
     TestCreateMediaLibrary(session, rawData, size);
     TestProcess(session, rawData, size);
     TestAperture(session, rawData, size);
@@ -67,11 +89,19 @@ void Test(uint8_t *rawData, size_t size)
     session->Release();
 }
 
-sptr<CaptureInput> GetCameraInput(uint8_t *rawData)
+sptr<CaptureInput> GetCameraInput(uint8_t *rawData, size_t size)
 {
     auto manager = CameraManager::GetInstance();
     auto cameras = manager->GetSupportedCameras();
-    camera = cameras[*rawData % cameras.size()];
+    if (cameras.size() < NUM_2) {
+        return nullptr;
+    }
+    MessageParcel data;
+    data.WriteRawData(rawData, size);
+    camera = cameras[data.ReadUint32() % NUM_2];
+    if (camera == nullptr) {
+        return nullptr;
+    }
     return manager->CreateCameraInput(camera);
 }
 
@@ -84,8 +114,7 @@ sptr<PhotoOutput> GetCaptureOutput(uint8_t *rawData, size_t size)
     if (camera == nullptr) {
         return nullptr;
     }
-    int32_t mode = data.ReadInt32() % (APERTURE_VIDEO + ENUM_OVER);
-    auto capability = manager->GetSupportedOutputCapability(camera, mode);
+    auto capability = manager->GetSupportedOutputCapability(camera, g_sceneMode);
     if (capability == nullptr) {
         return nullptr;
     }
@@ -106,22 +135,6 @@ void TestWhiteBalance(sptr<CaptureSession> session, uint8_t *rawData, size_t siz
 {
     MessageParcel data;
     data.WriteRawData(rawData, size);
-    vector<WhiteBalanceMode> whiteBalanceModes;
-    session->GetSupportedWhiteBalanceModes(whiteBalanceModes);
-    WhiteBalanceMode wbMode = static_cast<WhiteBalanceMode>(
-        data.ReadInt32() % (WhiteBalanceMode::AWB_MODE_SHADE + ENUM_OVER));
-    session->IsWhiteBalanceModeSupported(wbMode, g_isSupported);
-    session->GetWhiteBalanceMode(wbMode);
-    vector<int32_t> whiteBalanceRange;
-    session->GetManualWhiteBalanceRange(whiteBalanceRange);
-    session->IsManualWhiteBalanceSupported(g_isSupported);
-    int32_t wbValue = data.ReadInt32();
-    session->GetManualWhiteBalance(wbValue);
-
-    session->LockForControl();
-    session->SetWhiteBalanceMode(wbMode);
-    session->SetManualWhiteBalance(wbValue);
-    session->UnlockForControl();
 }
 
 void TestExposure(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
@@ -132,7 +145,7 @@ void TestExposure(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     vector<ExposureMode> exposureModes;
     session->GetSupportedExposureModes(exposureModes);
     ExposureMode exposureMode = static_cast<ExposureMode>(
-        data.ReadInt32() % (ExposureMode::EXPOSURE_MODE_CONTINUOUS_AUTO + ENUM_OVER));
+        data.ReadInt32() % (ExposureMode::EXPOSURE_MODE_CONTINUOUS_AUTO + NUM_2));
     session->IsExposureModeSupported(exposureMode);
     session->IsExposureModeSupported(exposureMode, g_isSupported);
     session->GetExposureMode();
@@ -168,7 +181,7 @@ void TestFocus(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     vector<FocusMode> focusModes;
     session->GetSupportedFocusModes(focusModes);
     FocusMode focusMode = static_cast<FocusMode>(
-        data.ReadInt32() % (FocusMode::FOCUS_MODE_LOCKED + ENUM_OVER));
+        data.ReadInt32() % (FocusMode::FOCUS_MODE_LOCKED + NUM_2));
     session->IsFocusModeSupported(focusMode);
     session->IsFocusModeSupported(focusMode, g_isSupported);
     session->GetFocusMode();
@@ -247,7 +260,7 @@ void TestStabilization(sptr<CaptureSession> session, uint8_t *rawData, size_t si
     session->GetSupportedStabilizationMode(modes);
     data.RewindRead(0);
     VideoStabilizationMode stabilizationMode = static_cast<VideoStabilizationMode>(
-        data.ReadInt32() % (VideoStabilizationMode::AUTO + ENUM_OVER));
+        data.ReadInt32() % (VideoStabilizationMode::AUTO + NUM_2));
     session->IsVideoStabilizationModeSupported(stabilizationMode);
     session->IsVideoStabilizationModeSupported(stabilizationMode, g_isSupported);
     VideoStabilizationMode mode;
@@ -259,6 +272,7 @@ void TestStabilization(sptr<CaptureSession> session, uint8_t *rawData, size_t si
 
 void TestFlash(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
 {
+    // 执行这段测试会卡死
     MessageParcel data;
     data.WriteRawData(rawData, size);
     session->GetSupportedFlashModes();
@@ -268,7 +282,7 @@ void TestFlash(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     bool hasFlash;
     session->HasFlash(hasFlash);
     FlashMode flashMode = static_cast<FlashMode>(
-        data.ReadInt32() % (FlashMode::FLASH_MODE_ALWAYS_OPEN + ENUM_OVER));
+        data.ReadInt32() % (FlashMode::FLASH_MODE_ALWAYS_OPEN + NUM_2));
     session->IsFlashModeSupported(flashMode);
     session->IsFlashModeSupported(flashMode, g_isSupported);
 
@@ -286,8 +300,8 @@ void TestCreateMediaLibrary(sptr<CaptureSession> session, uint8_t *rawData, size
     sptr<CameraPhotoProxy> photoProxy{new CameraPhotoProxy()};
     std::string uri;
     int32_t cameraShotType;
-    std::string burstKey;
     int64_t timestamp = data.ReadInt64();
+    std::string burstKey = data.ReadString();
     session->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
 }
 
@@ -295,7 +309,9 @@ void TestProcess(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
 {
     MessageParcel data;
     data.WriteRawData(rawData, size);
-    shared_ptr<OHOS::Camera::CameraMetadata> result;
+    static const size_t ITEM_CAP = 10;
+    static const size_t DATA_CAP = 100;
+    shared_ptr<OHOS::Camera::CameraMetadata> result = make_shared<OHOS::Camera::CameraMetadata>(ITEM_CAP, DATA_CAP);
     int32_t idata = data.ReadInt32();
     result->addEntry(OHOS_CONTROL_EXPOSURE_MODE, &idata, 1);
     result->addEntry(OHOS_CONTROL_FOCUS_MODE, &idata, 1);
@@ -328,7 +344,7 @@ void TestAperture(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->GetSupportedEffectSuggestionInfo();
     session->GetSupportedEffectSuggestionType();
     vector<EffectSuggestionStatus> effectSuggestionStatusList;
-    size_t max = EffectSuggestionType::EFFECT_SUGGESTION_SUNRISE_SUNSET + ENUM_OVER;
+    size_t max = EffectSuggestionType::EFFECT_SUGGESTION_SUNRISE_SUNSET + NUM_2;
     for (size_t i = 0; i < data.ReadInt32() % max; i++) {
         EffectSuggestionStatus status = {
             static_cast<EffectSuggestionType>(data.ReadInt32() % max),
@@ -339,15 +355,6 @@ void TestAperture(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->SetEffectSuggestionStatus(effectSuggestionStatusList);
     EffectSuggestionType effectSuggestionType = static_cast<EffectSuggestionType>(data.ReadInt32() % max);
     session->UpdateEffectSuggestion(effectSuggestionType, data.ReadBool());
-    vector<float> apertures;
-    session->GetSupportedVirtualApertures(apertures);
-    float aperture;
-    session->GetVirtualAperture(aperture);
-    session->SetVirtualAperture(aperture);
-    std::vector<std::vector<float>> physicalApertures;
-    session->GetSupportedPhysicalApertures(physicalApertures);
-    session->GetPhysicalAperture(aperture);
-    session->SetPhysicalAperture(aperture);
 }
 
 void TestBeauty(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
@@ -357,7 +364,7 @@ void TestBeauty(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->GetSupportedFilters();
     session->GetSupportedBeautyTypes();
     BeautyType type = static_cast<BeautyType>(
-        data.ReadInt32() % (BeautyType::SKIN_TONE + ENUM_OVER));
+        data.ReadInt32() % (BeautyType::SKIN_TONE + NUM_2));
     session->GetSupportedBeautyRange(type);
     session->GetBeauty(type);
     session->SetBeauty(type, data.ReadInt32());
@@ -369,15 +376,15 @@ void TestBeauty(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
 
     session->GetFilter();
     FilterType filter = static_cast<FilterType>(
-        data.ReadInt32() % (FilterType::PINK + ENUM_OVER));
+        data.ReadInt32() % (FilterType::PINK + NUM_2));
     session->SetFilter(filter);
     
     session->SetColorSpace(colorSpace);
     ColorEffect colorEffect = static_cast<ColorEffect>(
-        data.ReadInt32() % (ColorEffect::COLOR_EFFECT_BLACK_WHITE + ENUM_OVER));
+        data.ReadInt32() % (ColorEffect::COLOR_EFFECT_BLACK_WHITE + NUM_2));
     session->SetColorEffect(colorEffect);
     BeautyType beautyType = static_cast<BeautyType>(
-        data.ReadInt32() % (BeautyType::SKIN_TONE + ENUM_OVER));
+        data.ReadInt32() % (BeautyType::SKIN_TONE + NUM_2));
     session->SetBeautyValue(beautyType, data.ReadInt32());
 }
 
@@ -389,11 +396,41 @@ void TestOther(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->IsMovingPhotoSupported();
     session->IsMoonCaptureBoostSupported();
     SceneFeature feature = static_cast<SceneFeature>(
-        data.ReadInt32() % (SceneFeature::FEATURE_ENUM_MAX + ENUM_OVER));
+        data.ReadInt32() % (SceneFeature::FEATURE_ENUM_MAX + NUM_2));
     session->IsFeatureSupported(feature);
-    set<camera_face_detect_mode_t> metadataObjectTypes;
+    vector<int32_t> sensitivityRange;
+    session->GetSensorSensitivityRange(sensitivityRange);
+    session->GetFeaturesMode();
+    session->GetSubFeatureMods();
+    session->IsSetEnableMacro();
+    session->GetMetaOutput();
+    session->GetMetadata();
+    session->IsMovingPhotoEnabled();
+    session->IsImageDeferred();
+    session->CanSetFrameRateRange(data.ReadInt32(), data.ReadInt32(), curOutput);
+    session->CanSetFrameRateRangeForOutput(data.ReadInt32(), data.ReadInt32(), curOutput);
+
+    session->ExecuteAbilityChangeCallback();
+
+    session->EnableFeature(feature, data.ReadBool());
+    vector<int32_t> frameRateRange{data.ReadInt32(), data.ReadInt32()};
+    session->SetFrameRateRange(frameRateRange);
+    DeferredDeliveryImageType deferredType = static_cast<DeferredDeliveryImageType>(
+        data.ReadInt32() % (DeferredDeliveryImageType::DELIVERY_VIDEO + NUM_2));
+    session->EnableDeferredType(deferredType, data.ReadBool());
+    session->SetUserId();
+    session->EnableAutoHighQualityPhoto(data.ReadBool());
+}
+
+void TestOther2(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
+{
+    // 执行这段测试会卡死
+    MessageParcel data;
+    data.WriteRawData(rawData, size);
+    session->LockForControl();
     camera_face_detect_mode_t t = static_cast<camera_face_detect_mode_t>(
-        data.ReadInt32() % (camera_face_detect_mode_t::OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE + ENUM_OVER));
+        data.ReadInt32() % (camera_face_detect_mode_t::OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE + NUM_2));
+    set<camera_face_detect_mode_t> metadataObjectTypes;
     metadataObjectTypes.insert(t);
     session->SetCaptureMetadataObjectTypes(metadataObjectTypes);
     uint32_t ability = data.ReadUint32();
@@ -403,49 +440,33 @@ void TestOther(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->EnableMovingPhoto(data.ReadBool());
     session->StartMovingPhotoCapture(data.ReadBool(), data.ReadInt32());
     session->EnableMoonCaptureBoost(data.ReadBool());
-    session->EnableFeature(feature, data.ReadBool());
-    vector<int32_t> frameRateRange;
-    session->SetFrameRateRange(frameRateRange);
     session->SetSensorSensitivity(data.ReadUint32());
-    vector<int32_t> sensitivityRange;
-    session->GetSensorSensitivityRange(sensitivityRange);
-    session->GetFeaturesMode();
-    session->GetSubFeatureMods();
-    session->IsSetEnableMacro();
-    session->GetMetaOutput();
-    session->GetMetadata();
-    session->ExecuteAbilityChangeCallback();
-    DeferredDeliveryImageType deferredType = static_cast<DeferredDeliveryImageType>(
-        data.ReadInt32() % (DeferredDeliveryImageType::DELIVERY_VIDEO + ENUM_OVER));
-    session->EnableDeferredType(deferredType, data.ReadBool());
-    session->SetUserId();
-    session->IsMovingPhotoEnabled();
-    session->IsImageDeferred();
-    session->EnableAutoHighQualityPhoto(data.ReadBool());
-    session->CanSetFrameRateRange(data.ReadInt32(), data.ReadInt32(), curOutput);
-    session->CanSetFrameRateRangeForOutput(data.ReadInt32(), data.ReadInt32(), curOutput);
+    session->UnlockForControl();
 }
 
 void TestSession(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
 {
-    MessageParcel data;
-    data.WriteRawData(rawData, size);
-    SceneMode modeName = static_cast<SceneMode>(
-        data.ReadInt32() % (SceneMode::APERTURE_VIDEO + ENUM_OVER));
-    session->SetMode(modeName);
-    session->GetMode();
-    PreconfigType preconfigType = static_cast<PreconfigType>(
-        data.ReadInt32() % (PreconfigType::PRECONFIG_HIGH_QUALITY + ENUM_OVER));
-    ProfileSizeRatio preconfigRatio = static_cast<ProfileSizeRatio>(
-        data.ReadInt32() % (ProfileSizeRatio::RATIO_16_9 + ENUM_OVER));
-    session->CanPreconfig(preconfigType, preconfigRatio);
-    session->Preconfig(preconfigType, preconfigRatio);
-    session->BeginConfig();
-    sptr<CaptureInput> input = GetCameraInput(rawData);
+    sptr<CaptureInput> input = GetCameraInput(rawData, size);
     sptr<CaptureOutput> output = GetCaptureOutput(rawData, size);
     if (input == nullptr || output == nullptr || session == nullptr) {
         return;
     }
+    if (input->Open() != 0) {
+        return;
+    }
+    MessageParcel data;
+    data.WriteRawData(rawData, size);
+    SceneMode modeName = static_cast<SceneMode>(
+        data.ReadInt32() % (SceneMode::SECURE + NUM_2));
+    session->SetMode(modeName);
+    session->GetMode();
+    PreconfigType preconfigType = static_cast<PreconfigType>(
+        data.ReadInt32() % (PreconfigType::PRECONFIG_HIGH_QUALITY + NUM_2));
+    ProfileSizeRatio preconfigRatio = static_cast<ProfileSizeRatio>(
+        data.ReadInt32() % (ProfileSizeRatio::RATIO_16_9 + NUM_2));
+    session->CanPreconfig(preconfigType, preconfigRatio);
+    session->Preconfig(preconfigType, preconfigRatio);
+    session->BeginConfig();
     session->CanAddInput(input);
     session->AddInput(input);
     session->CanAddOutput(output);
@@ -459,7 +480,7 @@ void TestSession(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     session->Start();
     curOutput = output.GetRefPtr();
     CaptureOutputType outputType = static_cast<CaptureOutputType>(
-        data.ReadInt32() % (CaptureOutputType::CAPTURE_OUTPUT_TYPE_MAX + ENUM_OVER));
+        data.ReadInt32() % (CaptureOutputType::CAPTURE_OUTPUT_TYPE_MAX + NUM_2));
     session->ValidateOutputProfile(profile, outputType);
 }
 

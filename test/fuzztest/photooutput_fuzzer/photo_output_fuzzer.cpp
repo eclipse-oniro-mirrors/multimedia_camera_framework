@@ -16,49 +16,83 @@
 #include "photo_output_fuzzer.h"
 #include "camera_device.h"
 #include "camera_output_capability.h"
+#include "capture_scene_const.h"
 #include "input/camera_manager.h"
 #include "message_parcel.h"
 #include <cstdint>
 #include <memory>
+#include "token_setproc.h"
+#include "nativetoken_kit.h"
+#include "accesstoken_kit.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace PhotoOutputFuzzer {
 const int32_t LIMITSIZE = 4;
+const int32_t CAM_NUM = 2;
+bool g_isCameraDevicePermission = false;
 
-sptr<IBufferProducer> surface(nullptr);
+void GetPermission()
+{
+    if (!g_isCameraDevicePermission) {
+        uint64_t tokenId;
+        const char *perms[0];
+        perms[0] = "ohos.permission.CAMERA";
+        NativeTokenInfoParams infoInstance = { .dcapsNum = 0, .permsNum = 1, .aclsNum = 0, .dcaps = NULL,
+            .perms = perms, .acls = NULL, .processName = "camera_capture", .aplStr = "system_basic",
+        };
+        tokenId = GetAccessTokenId(&infoInstance);
+        SetSelfTokenID(tokenId);
+        OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
+        g_isCameraDevicePermission = true;
+    }
+}
 
 void Test(uint8_t *rawData, size_t size)
 {
     if (rawData == nullptr || size < LIMITSIZE) {
         return;
     }
+    GetPermission();
     auto manager = CameraManager::GetInstance();
+    if (manager == nullptr) {
+        return;
+    }
     auto cameras = manager->GetSupportedCameras();
+    if (cameras.size() < CAM_NUM) {
+        return;
+    }
     MessageParcel data;
     data.WriteRawData(rawData, size);
-    sptr<CameraDevice> camera = cameras[data.ReadUint32() % cameras.size()];
+    auto camera = cameras[data.ReadUint32() % CAM_NUM];
     if (camera == nullptr) {
         return;
     }
-    int32_t mode = data.ReadInt32() % (APERTURE_VIDEO + 1 + 1);
+    int32_t mode = data.ReadInt32() % (SceneMode::APERTURE_VIDEO + 1 + 1);
     auto capability = manager->GetSupportedOutputCapability(camera, mode);
     if (capability == nullptr) {
         return;
     }
     auto profiles = capability->GetPhotoProfiles();
+    if (profiles.empty()) {
+        return;
+    }
     Profile profile = profiles[data.ReadUint32() % profiles.size()];
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     if (photoSurface == nullptr) {
         return;
     }
-    surface = photoSurface->GetProducer();
-    if (surface == nullptr) {
+    sptr<IBufferProducer> producer = photoSurface->GetProducer();
+    if (producer == nullptr) {
         return;
     }
-    auto output = manager->CreatePhotoOutput(profile, surface);
+    auto output = manager->CreatePhotoOutput(profile, producer);
+    if (output == nullptr) {
+        return;
+    }
     TestOutput(output, rawData, size);
 }
+
 void TestOutput(sptr<PhotoOutput> output, uint8_t *rawData, size_t size)
 {
     MessageParcel data;
@@ -68,7 +102,15 @@ void TestOutput(sptr<PhotoOutput> output, uint8_t *rawData, size_t size)
     output->SetThumbnailListener(listener);
     data.RewindRead(0);
     output->SetThumbnail(data.ReadBool());
-    sptr<Surface> sf = Surface::CreateSurfaceAsProducer(surface);
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    if (photoSurface == nullptr) {
+        return;
+    }
+    sptr<IBufferProducer> producer = photoSurface->GetProducer();
+    if (producer == nullptr) {
+        return;
+    }
+    sptr<Surface> sf = Surface::CreateSurfaceAsProducer(producer);
     output->SetRawPhotoInfo(sf);
     output->Capture(make_shared<PhotoCaptureSetting>());
     output->Capture();
