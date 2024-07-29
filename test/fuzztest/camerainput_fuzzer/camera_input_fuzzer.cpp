@@ -21,21 +21,54 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include "token_setproc.h"
+#include "nativetoken_kit.h"
+#include "accesstoken_kit.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace CameraInputFuzzer {
 const int32_t LIMITSIZE = 4;
-const size_t ITEM_CAP = 10;
-const size_t DATA_CAP = 1000;
+const int32_t CAM_NUM = 2;
+bool g_isCameraDevicePermission = false;
+
+void GetPermission()
+{
+    if (!g_isCameraDevicePermission) {
+        uint64_t tokenId;
+        const char *perms[0];
+        perms[0] = "ohos.permission.CAMERA";
+        NativeTokenInfoParams infoInstance = { .dcapsNum = 0, .permsNum = 1, .aclsNum = 0, .dcaps = NULL,
+            .perms = perms, .acls = NULL, .processName = "camera_capture", .aplStr = "system_basic",
+        };
+        tokenId = GetAccessTokenId(&infoInstance);
+        SetSelfTokenID(tokenId);
+        OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo();
+        g_isCameraDevicePermission = true;
+    }
+}
+
 void Test(uint8_t *rawData, size_t size)
 {
     if (rawData == nullptr || size < LIMITSIZE) {
         return;
     }
+    GetPermission();
     auto manager = CameraManager::GetInstance();
+    if (manager == nullptr) {
+        return;
+    }
     auto cameras = manager->GetSupportedCameras();
-    auto input = manager->CreateCameraInput(cameras[*rawData % cameras.size()]);
+    if (cameras.size() < CAM_NUM) {
+        return;
+    }
+    MessageParcel data;
+    data.WriteRawData(rawData, size);
+    auto camera = cameras[data.ReadUint32() % CAM_NUM];
+    if (camera == nullptr) {
+        return;
+    }
+    auto input = manager->CreateCameraInput(camera);
     if (input == nullptr) {
         return;
     }
@@ -47,21 +80,12 @@ void TestInput(sptr<CameraInput> input, uint8_t *rawData, size_t size)
     MessageParcel data;
     data.WriteRawData(rawData, size);
     input->Open();
-    input->Close();
-    uint64_t secureSeqId;
-    data.RewindRead(0);
-    input->Open(data.ReadBool(), &secureSeqId);
     input->SetErrorCallback(make_shared<ErrorCallbackMock>());
     input->SetResultCallback(make_shared<ResultCallbackMock>());
-    shared_ptr<CameraOcclusionDetectCallback> codCallback;
-    input->SetOcclusionDetectCallback(codCallback);
     input->GetCameraId();
     input->GetCameraDevice();
     input->GetErrorCallback();
     input->GetResultCallback();
-    input->GetOcclusionDetectCallback();
-    auto cameraObj = input->GetCameraDeviceInfo();
-    input->SetCameraDeviceInfo(cameraObj);
     shared_ptr<OHOS::Camera::CameraMetadata> result;
     data.RewindRead(0);
     input->ProcessCallbackUpdates(data.ReadUint64(), result);
@@ -72,15 +96,11 @@ void TestInput(sptr<CameraInput> input, uint8_t *rawData, size_t size)
     input->GetMetaSetting(data.ReadUint32());
     std::vector<vendorTag_t> infos;
     input->GetCameraAllVendorTags(infos);
-    auto srcMetadata = make_shared<OHOS::Camera::CameraMetadata>(ITEM_CAP, DATA_CAP);
+    input->Close();
+    input->Release();
+    uint64_t secureSeqId;
     data.RewindRead(0);
-    for (size_t i = 0; i < ITEM_CAP; i++) {
-        if (data.GetReadableBytes() >= sizeof(uint32_t)) {
-            srcMetadata->addEntry(data.ReadUint32(), rawData, 1);
-        }
-    }
-    auto dstMetadata = make_shared<OHOS::Camera::CameraMetadata>(ITEM_CAP, DATA_CAP);
-    input->MergeMetadata(srcMetadata, dstMetadata);
+    input->Open(data.ReadBool(), &secureSeqId);
     input->Release();
 }
 

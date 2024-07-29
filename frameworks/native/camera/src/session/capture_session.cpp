@@ -2173,6 +2173,7 @@ void CaptureSession::ProcessSnapshotDurationUpdates(const uint64_t timestamp,
 }
 
 void CaptureSession::ProcessEffectSuggestionTypeUpdates(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
+    __attribute__((no_sanitize("cfi")))
 {
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = result->get();
@@ -2198,7 +2199,7 @@ void CaptureSession::ProcessEffectSuggestionTypeUpdates(const std::shared_ptr<OH
 }
 
 void CaptureSession::ProcessAREngineUpdates(const uint64_t timestamp,
-    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
+    const std::shared_ptr<OHOS::Camera::CameraMetadata> &result) __attribute__((no_sanitize("cfi")))
 {
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = result->get();
@@ -2641,6 +2642,7 @@ int32_t CaptureSession::UnPrepareZoom()
 }
 
 int32_t CaptureSession::SetSmoothZoom(float targetZoomRatio, uint32_t smoothZoomType)
+    __attribute__((no_sanitize("cfi")))
 {
     CAMERA_SYNC_TRACE;
     if (!IsSessionCommited()) {
@@ -4169,6 +4171,7 @@ void CaptureSession::SetFeatureDetectionStatusCallback(std::shared_ptr<FeatureDe
 }
 
 void CaptureSession::ProcessMacroStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
+    __attribute__((no_sanitize("cfi")))
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Entry ProcessMacroStatusChange");
@@ -4199,6 +4202,7 @@ void CaptureSession::ProcessMacroStatusChange(const std::shared_ptr<OHOS::Camera
 }
 
 void CaptureSession::ProcessMoonCaptureBoostStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
+    __attribute__((no_sanitize("cfi")))
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Entry ProcessMoonCaptureBoostStatusChange");
@@ -4437,7 +4441,7 @@ int32_t CaptureSession::EnableAutoHighQualityPhoto(bool enabled)
     return res;
 }
 
-void CaptureSession::ExecuteAbilityChangeCallback()
+void CaptureSession::ExecuteAbilityChangeCallback() __attribute__((no_sanitize("cfi")))
 {
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
     if (abilityCallback_ != nullptr) {

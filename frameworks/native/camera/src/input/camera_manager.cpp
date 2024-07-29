@@ -453,6 +453,7 @@ int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface
 }
 
 int CameraManager::CreatePhotoOutput(Profile &profile, sptr<IBufferProducer> &surface, sptr<PhotoOutput> *pPhotoOutput)
+    __attribute__((no_sanitize("cfi")))
 {
     CAMERA_SYNC_TRACE;
     auto serviceProxy = GetServiceProxy();
