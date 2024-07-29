@@ -490,7 +490,8 @@ int32_t HCameraHostManager::CameraHostInfo::GetCameraResourceCost(const std::str
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (cameraHostProxyV1_3_ != nullptr &&
-        cameraHostProxyV1_3_->GetCameraResourceCost(cameraId, resourceCost) == HDI::Camera::V1_0::CamRetCode::NO_ERROR) {
+        cameraHostProxyV1_3_->GetCameraResourceCost(cameraId, resourceCost) ==
+        HDI::Camera::V1_0::CamRetCode::NO_ERROR) {
         return CAMERA_OK
     }
     return CAMERA_UNSUPPORTED;
