@@ -315,7 +315,8 @@ void TestProcess(sptr<CaptureSession> session, uint8_t *rawData, size_t size)
     int32_t idata = data.ReadInt32();
     result->addEntry(OHOS_CONTROL_EXPOSURE_MODE, &idata, 1);
     result->addEntry(OHOS_CONTROL_FOCUS_MODE, &idata, 1);
-    result->addEntry(OHOS_STATUS_SENSOR_EXPOSURE_TIME, &idata, 1);
+    camera_rational_t cr = {data.ReadInt32(), data.ReadInt32()};
+    result->addEntry(OHOS_STATUS_SENSOR_EXPOSURE_TIME, &cr, 1);
     result->addEntry(CAMERA_POSITION_FRONT, &idata, 1);
     result->addEntry(OHOS_CAMERA_CUSTOM_SNAPSHOT_DURATION, &idata, 1);
     result->addEntry(OHOS_CAMERA_MACRO_STATUS, &idata, 1);
