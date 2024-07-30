@@ -3279,17 +3279,24 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_072, 
     intResult = session->AddOutput(videoOutput);
     EXPECT_EQ(intResult, 0);
 
-
     intResult = session->CommitConfig();
     EXPECT_EQ(intResult, 0);
+
+    MeteringMode meteringMode = METERING_MODE_CENTER_WEIGHTED;
+    bool isSupported;
+    intResult = session->IsMeteringModeSupported(meteringMode, isSupported);
+    EXPECT_EQ(intResult, 0);
+    EXPECT_EQ(isSupported, true);
+
     std::vector<MeteringMode> modes = {};
     intResult = session->GetSupportedMeteringModes(modes);
     EXPECT_EQ(intResult, 0);
     EXPECT_NE(modes.size(), 0);
 
+    session->LockForControl();
     intResult = session->SetMeteringMode(modes[0]);
+    session->UnlockForControl();
     EXPECT_EQ(intResult, 0);
-    MeteringMode meteringMode = METERING_MODE_CENTER_WEIGHTED;
     intResult = session->GetMeteringMode(meteringMode);
     EXPECT_EQ(intResult, 0);
 
@@ -3365,17 +3372,24 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_073, 
     intResult = session->AddOutput(videoOutput);
     EXPECT_EQ(intResult, 0);
 
-
     intResult = session->CommitConfig();
     EXPECT_EQ(intResult, 0);
+
+    FocusAssistFlashMode mode = FocusAssistFlashMode::FOCUS_ASSIST_FLASH_MODE_DEFAULT;
+    bool isSupported;
+    intResult = session->IsFocusAssistFlashModeSupported(mode, isSupported);
+    EXPECT_EQ(intResult, 0);
+    EXPECT_EQ(isSupported, true);
+
     std::vector<FocusAssistFlashMode> modes = {};
     intResult = session->GetSupportedFocusAssistFlashModes(modes);
     EXPECT_EQ(intResult, 0);
     EXPECT_NE(modes.size(), 0);
 
+    session->LockForControl();
     intResult = session->SetFocusAssistFlashMode(modes[0]);
+    session->UnlockForControl();
     EXPECT_EQ(intResult, 0);
-    FocusAssistFlashMode mode;
     intResult = session->GetFocusAssistFlashMode(mode);
     EXPECT_EQ(intResult, 0);
 
@@ -3595,6 +3609,98 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_075, 
         session->GetManualWhiteBalanceRange(whiteBalanceRange);
         ASSERT_EQ(whiteBalanceRange.size() < 2, true);
     }
+}
+/* Feature: Framework
+ * Function: Test profession session focus mode
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test profession session focus mode
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_076, TestSize.Level0)
+{
+    SceneMode sceneMode = SceneMode::PROFESSIONAL_VIDEO;
+    if (!IsSupportMode(sceneMode)) {
+        return;
+    }
+    sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(cameraManagerObj, nullptr);
+
+    std::vector<SceneMode> sceneModes = cameraManagerObj->GetSupportedModes(cameras_[0]);
+    ASSERT_TRUE(sceneModes.size() != 0);
+
+    sptr<CameraOutputCapability> modeAbility =
+        cameraManagerObj->GetSupportedOutputCapability(cameras_[0], sceneMode);
+    ASSERT_NE(modeAbility, nullptr);
+
+    SelectProfiles wanted;
+    wanted.preview.size_ = {640, 480};
+    wanted.preview.format_ = CAMERA_FORMAT_YUV_420_SP;
+    wanted.photo.size_ = {640, 480};
+    wanted.photo.format_ = CAMERA_FORMAT_JPEG;
+    wanted.video.size_ = {640, 480};
+    wanted.video.format_ = CAMERA_FORMAT_YUV_420_SP;
+    wanted.video.framerates_ = {30, 30};
+
+    SelectProfiles profiles = SelectWantedProfiles(modeAbility, wanted);
+    ASSERT_NE(profiles.preview.format_, CAMERA_FORMAT_INVALID);
+    ASSERT_NE(profiles.photo.format_, CAMERA_FORMAT_INVALID);
+    ASSERT_NE(profiles.video.format_, CAMERA_FORMAT_INVALID);
+
+    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<ProfessionSession> session = static_cast<ProfessionSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(session, nullptr);
+
+    int32_t intResult = session->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profiles.preview);
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(profiles.video);
+    ASSERT_NE(videoOutput, nullptr);
+
+    intResult = session->AddOutput(videoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    FocusMode focusMode = FocusMode::FOCUS_MODE_MANUAL;
+    bool isSupported;
+    intResult = session->IsFocusModeSupported(focusMode, isSupported);
+    EXPECT_EQ(intResult, 0);
+    EXPECT_EQ(isSupported, true);
+
+    std::vector<focusMode> modes = {};
+    intResult = session->GetSupportedFocusModes(modes);
+    EXPECT_EQ(intResult, 0);
+    EXPECT_NE(modes.size(), 0);
+
+    session->LockForControl();
+    intResult = session->SetFocusMode(modes[0]);
+    session->UnlockForControl();
+    EXPECT_EQ(intResult, 0);
+    intResult = session->GetFocusMode(focusMode);
+    EXPECT_EQ(intResult, 0);
+
+    EXPECT_EQ(focusMode, modes[0]);
+    intResult = session->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_RECORDING);
+    intResult = ((sptr<VideoOutput>&)videoOutput)->Stop();
+    session->Stop();
 }
 
 /*
