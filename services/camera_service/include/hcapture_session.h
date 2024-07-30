@@ -22,6 +22,7 @@
 #include <functional>
 #include <iostream>
 #include <list>
+#include <memory>
 #include <mutex>
 #include <refbase.h>
 #include <unordered_map>
@@ -35,6 +36,7 @@
 #include "icapture_session.h"
 #include "istream_common.h"
 #include "camera_photo_proxy.h"
+#include "moving_photo/moving_photo_surface_wrapper.h"
 #include "surface.h"
 #include "v1_0/istream_operator.h"
 #include "v1_1/istream_operator.h"
@@ -143,17 +145,18 @@ private:
 };
 
 class SessionDrainImageCallback;
-class MovingPhotoListener : public IBufferConsumerListener {
+class MovingPhotoListener : public MovingPhotoSurfaceWrapper::SurfaceBufferListener {
 public:
-    explicit MovingPhotoListener(sptr<Surface> surface);
-    ~MovingPhotoListener();
-    void OnBufferAvailable() override;
+    explicit MovingPhotoListener(sptr<MovingPhotoSurfaceWrapper> surfaceWrapper);
+    ~MovingPhotoListener() override;
+    void OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t timestamp, GraphicTransformType transform) override;
     void DrainOutImage(sptr<SessionDrainImageCallback> drainImageCallback);
     void RemoveDrainImageManager(sptr<SessionDrainImageCallback> drainImageCallback);
     void StopDrainOut();
     void ClearCache();
+
 private:
-    sptr<Surface> surface_;
+    sptr<MovingPhotoSurfaceWrapper> movingPhotoSurfaceWrapper_;
     BlockingQueue<sptr<FrameRecord>> recorderBufferQueue_;
     SafeMap<sptr<SessionDrainImageCallback>, sptr<DrainImageManager>> callbackMap_;
 };
@@ -305,10 +308,8 @@ private:
     bool enableStreamRotate_ = false;
     std::string deviceClass_ = "phone";
     std::mutex movingPhotoStatusLock_; // Guard movingPhotoStatus
-    sptr<Surface> surface_;
     sptr<MovingPhotoListener> livephotoListener_;
     sptr<AudioCapturerSession> audioCapturerSession_;
-    sptr<Surface> metaSurface_;
     sptr<MovingPhotoVideoCache> videoCache_;
     sptr<AvcodecTaskManager> taskManager_;
     std::mutex displayListenerLock_;
