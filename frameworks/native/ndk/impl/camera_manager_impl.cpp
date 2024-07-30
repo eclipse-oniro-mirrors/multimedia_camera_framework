@@ -404,6 +404,7 @@ Camera_ErrorCode Camera_Manager::CreateCaptureSession(Camera_CaptureSession** ca
 
 Camera_ErrorCode Camera_Manager::CreateCameraInput(const Camera_Device* camera, Camera_Input** cameraInput)
 {
+    MEDIA_ERR_LOG("CameraId is: %{public}s", camera->cameraId.c_str());
     sptr<CameraDevice> cameraDevice = CameraManager::GetInstance()->GetCameraDeviceFromId(camera->cameraId);
     CHECK_AND_RETURN_RET_LOG(cameraDevice != nullptr, CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::CreateCameraInput get cameraDevice fail!");
