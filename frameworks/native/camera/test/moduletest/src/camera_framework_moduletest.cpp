@@ -3679,7 +3679,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_profession_076, 
     EXPECT_EQ(intResult, 0);
     EXPECT_EQ(isSupported, true);
 
-    std::vector<focusMode> modes = {};
+    std::vector<FocusMode> modes = {};
     intResult = session->GetSupportedFocusModes(modes);
     EXPECT_EQ(intResult, 0);
     EXPECT_NE(modes.size(), 0);
