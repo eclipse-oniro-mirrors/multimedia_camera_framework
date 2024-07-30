@@ -46,6 +46,7 @@
 #include "token_setproc.h"
 #include "video_session.h"
 #include "os_account_manager.h"
+#include "output/metadata_output.h"
 
 using namespace testing::ext;
 using ::testing::A;
@@ -654,6 +655,14 @@ public:
     void OnError(int32_t errorCode) const
     {
         MEDIA_DEBUG_LOG("AppMetadataCallback::OnError %{public}d", errorCode);
+    }
+};
+
+class TestSlowMotionStateCallback : public SlowMotionStateCallback {
+public:
+    void OnSlowMotionState(const SlowMotionState state)
+    {
+        MEDIA_INFO_LOG("TestSlowMotionStateCallback OnSlowMotionState.");
     }
 };
 
@@ -8039,6 +8048,16 @@ HWTEST_F(CameraFrameworkUnitTest, IsSlowMotionDetectionSupported_003, TestSize.L
     metadata->updateEntry(OHOS_ABILITY_MOTION_DETECTION_SUPPORT, &value_u8, sizeof(uint8_t));
     result = slowSession->IsSlowMotionDetectionSupported();
     EXPECT_EQ(true, result);
+    Rect rect;
+    rect.topLeftX = 0.1;
+    rect.topLeftY = 0.1;
+    rect.width = 0.8;
+    rect.height = 0.8;
+    slowSession->SetSlowMotionDetectionArea(rect);
+
+    std::shared_ptr<TestSlowMotionStateCallback> callback = std::make_shared<TestSlowMotionStateCallback>();
+    slowSession->SetCallback(callback);
+    EXPECT_EQ(slowSession->GetApplicationCallback(), callback);
 }
 /*
  * Feature: Framework

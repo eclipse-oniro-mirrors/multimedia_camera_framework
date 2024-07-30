@@ -11377,5 +11377,55 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_085, TestSize.Le
 
     nightSession->Stop();
 }
+
+HWTEST_F(CameraFrameworkModuleTest, test_moving_photo, TestSize.Level0)
+{
+    if (session_) {
+        MEDIA_INFO_LOG("old session exist, need release");
+        session_->Release();
+    }
+    session_ = manager_->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(session_, nullptr);
+
+    bool isSupported = session_->IsMovingPhotoSupported();
+    EXPECT_EQ(isSupported, false);
+
+    int32_t intResult = session_->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = session_->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    isSupported = session_->IsMovingPhotoSupported();
+    EXPECT_EQ(isSupported, true);
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_START);
+
+    session_->LockForControl();
+    intResult = session_->EnableMovingPhoto(true);
+    EXPECT_EQ(intResult, 0);
+    session_->UnlockForControl();
+
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_CAPTURE);
+}
 } // namespace CameraStandard
 } // namespace OHOS

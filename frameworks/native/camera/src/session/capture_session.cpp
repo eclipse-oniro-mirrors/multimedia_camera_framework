@@ -4058,15 +4058,11 @@ bool CaptureSession::IsMovingPhotoSupported()
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter IsMovingPhotoSupported");
     auto inputDevice = GetInputDevice();
-    if (inputDevice == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::IsMovingPhotoSupported camera device is null");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(inputDevice == nullptr, false,
+        "CaptureSession::IsMovingPhotoSupported camera device is null");
     auto deviceInfo = inputDevice->GetCameraDeviceInfo();
-    if (deviceInfo == nullptr) {
-        MEDIA_ERR_LOG("CaptureSession::IsMovingPhotoSupported camera deviceInfo is null");
-        return false;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(deviceInfo == nullptr, false,
+        "CaptureSession::IsMovingPhotoSupported camera deviceInfo is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
     camera_metadata_item_t metadataItem;
     vector<int32_t> modes = {};
@@ -4088,14 +4084,10 @@ int32_t CaptureSession::EnableMovingPhoto(bool isEnable)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("Enter EnableMovingPhoto, isEnable:%{public}d", isEnable);
-    if (!IsMovingPhotoSupported()) {
-        MEDIA_ERR_LOG("IsMovingPhotoSupported is false");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
-    if (!(IsSessionConfiged() || IsSessionCommited())) {
-        MEDIA_ERR_LOG("CaptureSession Failed EnableMovingPhoto!, session not configed");
-        return CameraErrorCode::SERVICE_FATL_ERROR;
-    }
+    CHECK_ERROR_RETURN_RET_LOG(!IsMovingPhotoSupported(), CameraErrorCode::SERVICE_FATL_ERROR,
+        "IsMovingPhotoSupported is false");
+    CHECK_ERROR_RETURN_RET_LOG(!(IsSessionConfiged() || IsSessionCommited()), CameraErrorCode::SERVICE_FATL_ERROR,
+        "CaptureSession Failed EnableMovingPhoto!, session not configed");
     bool status = false;
     int32_t ret;
     camera_metadata_item_t item;
@@ -4106,19 +4098,11 @@ int32_t CaptureSession::EnableMovingPhoto(bool isEnable)
     } else if (ret == CAM_META_SUCCESS) {
         status = changedMetadata_->updateEntry(OHOS_CONTROL_MOVING_PHOTO, &enableValue, 1);
     }
-    if (!status) {
-        MEDIA_ERR_LOG("CaptureSession::EnableMovingPhoto Failed to enable");
-    }
+    CHECK_ERROR_PRINT_LOG(!status, "CaptureSession::EnableMovingPhoto Failed to enable");
     auto captureSession = GetCaptureSession();
-    if (captureSession) {
-        int32_t errCode = captureSession->EnableMovingPhoto(isEnable);
-        if (errCode != CAMERA_OK) {
-            MEDIA_ERR_LOG("Failed to EnableMovingPhoto!, %{public}d", errCode);
-            return errCode;
-        }
-    } else {
-        MEDIA_ERR_LOG("CaptureSession::EnableMovingPhoto() captureSession is nullptr");
-    }
+    CHECK_ERROR_PRINT_LOG(captureSession == nullptr, "CaptureSession::EnableMovingPhoto() captureSession is nullptr");
+    int32_t errCode = captureSession->EnableMovingPhoto(isEnable);
+    CHECK_ERROR_RETURN_RET_LOG(errCode != CAMERA_OK, errCode, "Failed to EnableMovingPhoto!, %{public}d", errCode);
     isMovingPhotoEnabled_ = isEnable;
     return CameraErrorCode::SUCCESS;
 }
