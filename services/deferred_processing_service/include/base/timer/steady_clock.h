@@ -15,6 +15,7 @@
 
 #ifndef OHOS_DEFERRED_PROCESSING_SERVICE_STEADY_CLOCK_H
 #define OHOS_DEFERRED_PROCESSING_SERVICE_STEADY_CLOCK_H
+#define EXPORT_API __attribute__((visibility("default")))
 
 #include <cstdint>
 #include <functional>
@@ -31,7 +32,7 @@ namespace CameraStandard {
 namespace DeferredProcessing {
 class SteadyClock {
 public:
-    static uint64_t GetTimestampMilli();
+    EXPORT_API static uint64_t GetTimestampMilli();
     static uint64_t GetTimestampMicro();
     static uint64_t GetElapsedTimeMs(uint64_t startMs);
     static std::chrono::milliseconds GetRemainingTimeMs(uint64_t expirationTimeMs);

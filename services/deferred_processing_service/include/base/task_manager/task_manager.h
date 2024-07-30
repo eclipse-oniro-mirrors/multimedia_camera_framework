@@ -15,6 +15,7 @@
 
 #ifndef OHOS_DEFERRED_PROCESSING_SERVICE_TASK_MANAGER_H
 #define OHOS_DEFERRED_PROCESSING_SERVICE_TASK_MANAGER_H
+#define EXPORT_API __attribute__((visibility("default")))
 
 #include <atomic>
 #include <cstdint>
@@ -29,14 +30,14 @@ namespace CameraStandard {
 namespace DeferredProcessing {
 class TaskManager {
 public:
-    TaskManager(const std::string& name, uint32_t  numThreads, bool serial);
-    ~TaskManager();
+    EXPORT_API TaskManager(const std::string& name, uint32_t  numThreads, bool serial);
+    EXPORT_API ~TaskManager();
     void CreateDelayedTaskGroupIfNeed();
     void BeginBackgroundTasks();
     void EndBackgroundTasks();
     bool RegisterTaskGroup(const std::string& name, TaskFunc func, bool serial, TaskGroupHandle& handle);
     bool DeregisterTaskGroup(const std::string& name, TaskGroupHandle& handle);
-    bool SubmitTask(std::function<void()> task);
+    EXPORT_API bool SubmitTask(std::function<void()> task);
     bool SubmitTask(std::function<void()> task, uint32_t delayMilli);
     bool SubmitTask(TaskGroupHandle handle, std::any param = std::any());
 

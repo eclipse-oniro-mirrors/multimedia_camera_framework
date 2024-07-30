@@ -15,13 +15,14 @@
 
 #ifndef OHOS_CAMERA_HCAMERA_DEVICE_CALLBACK_PROXY_H
 #define OHOS_CAMERA_HCAMERA_DEVICE_CALLBACK_PROXY_H
+#define EXPORT_API __attribute__((visibility("default")))
 
 #include "iremote_proxy.h"
 #include "icamera_device_service_callback.h"
 
 namespace OHOS {
 namespace CameraStandard {
-class HCameraDeviceCallbackProxy : public IRemoteProxy<ICameraDeviceServiceCallback> {
+class EXPORT_API HCameraDeviceCallbackProxy : public IRemoteProxy<ICameraDeviceServiceCallback> {
 public:
     explicit HCameraDeviceCallbackProxy(const sptr<IRemoteObject> &impl);
     virtual ~HCameraDeviceCallbackProxy() = default;

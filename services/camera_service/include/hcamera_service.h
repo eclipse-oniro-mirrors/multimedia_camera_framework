@@ -15,6 +15,8 @@
 
 #ifndef OHOS_CAMERA_H_CAMERA_SERVICE_H
 #define OHOS_CAMERA_H_CAMERA_SERVICE_H
+#define EXPORT_API __attribute__((visibility("default")))
+
 #include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
@@ -71,8 +73,9 @@ enum class CameraServiceStatus : int32_t {
 
 class CameraInfoDumper;
 
-class HCameraService : public SystemAbility, public HCameraServiceStub, public HCameraHostManager::StatusCallback,
-    public OHOS::Rosen::DisplayManager::IFoldStatusListener {
+class EXPORT_API HCameraService
+    : public SystemAbility, public HCameraServiceStub, public HCameraHostManager::StatusCallback,
+      public OHOS::Rosen::DisplayManager::IFoldStatusListener {
     DECLARE_SYSTEM_ABILITY(HCameraService);
 
 public:

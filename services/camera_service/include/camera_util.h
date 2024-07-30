@@ -15,6 +15,7 @@
 
 #ifndef OHOS_CAMERA_UTIL_H
 #define OHOS_CAMERA_UTIL_H
+#define EXPORT_API __attribute__((visibility("default")))
 
 #include <cstdint>
 #include <iterator>
@@ -133,11 +134,11 @@ inline void DisableJeMalloc()
 
 int32_t HdiToCameraErrorType(OHOS::HDI::Camera::V1_3::ErrorType type);
 
-int32_t HdiToServiceError(OHOS::HDI::Camera::V1_0::CamRetCode ret);
+EXPORT_API int32_t HdiToServiceError(OHOS::HDI::Camera::V1_0::CamRetCode ret);
 
 int32_t HdiToServiceErrorV1_2(HDI::Camera::V1_2::CamRetCode ret);
 
-std::string CreateMsg(const char* format, ...);
+EXPORT_API std::string CreateMsg(const char* format, ...);
 
 bool IsHapTokenId(uint32_t tokenId);
 
@@ -158,9 +159,9 @@ bool IsSameClient(const pid_t& pid, const pid_t& pidCompared);
 
 bool IsInForeGround(const uint32_t callerToken);
 
-bool IsCameraNeedClose(const uint32_t callerToken, const pid_t& pid, const pid_t& pidCompared);
+EXPORT_API bool IsCameraNeedClose(const uint32_t callerToken, const pid_t& pid, const pid_t& pidCompared);
 
-int32_t CheckPermission(std::string permissionName, uint32_t callerToken);
+EXPORT_API int32_t CheckPermission(std::string permissionName, uint32_t callerToken);
 
 void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::string permissionName);
 

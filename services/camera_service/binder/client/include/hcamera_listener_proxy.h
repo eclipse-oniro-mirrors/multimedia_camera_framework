@@ -15,6 +15,7 @@
 
 #ifndef CAMERA_LISTENER_PROXY_H
 #define CAMERA_LISTENER_PROXY_H
+#define EXPORT_API __attribute__((visibility("default")))
 
 #include "input/i_standard_camera_listener.h"
 #include "input/camera_death_recipient.h"
@@ -22,7 +23,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class CameraListenerProxy : public IRemoteProxy<IStandardCameraListener>, public NoCopyable {
+class EXPORT_API CameraListenerProxy : public IRemoteProxy<IStandardCameraListener>, public NoCopyable {
 public:
     explicit CameraListenerProxy(const sptr<IRemoteObject> &impl);
     virtual ~CameraListenerProxy();

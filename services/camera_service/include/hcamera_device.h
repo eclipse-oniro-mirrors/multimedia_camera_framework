@@ -15,6 +15,7 @@
 
 #ifndef OHOS_CAMERA_H_CAMERA_DEVICE_H
 #define OHOS_CAMERA_H_CAMERA_DEVICE_H
+#define EXPORT_API __attribute__((visibility("default")))
 
 #include <cstdint>
 #include <iostream>
@@ -41,7 +42,8 @@ using OHOS::HDI::Camera::V1_0::CaptureEndedInfo;
 using OHOS::HDI::Camera::V1_0::CaptureErrorInfo;
 using OHOS::HDI::Camera::V1_0::ICameraDeviceCallback;
 using OHOS::HDI::Camera::V1_3::IStreamOperatorCallback;
-class HCameraDevice : public HCameraDeviceStub, public ICameraDeviceCallback, public IStreamOperatorCallback {
+class EXPORT_API HCameraDevice
+    : public HCameraDeviceStub, public ICameraDeviceCallback, public IStreamOperatorCallback {
 public:
     explicit HCameraDevice(
         sptr<HCameraHostManager>& cameraHostManager, std::string cameraID, const uint32_t callingTokenId);

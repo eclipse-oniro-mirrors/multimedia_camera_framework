@@ -15,13 +15,14 @@
 
 #ifndef OHOS_CAMERA_HSTREAM_CAPTURE_CALLBACK_PROXY_H
 #define OHOS_CAMERA_HSTREAM_CAPTURE_CALLBACK_PROXY_H
+#define EXPORT_API __attribute__((visibility("default")))
 
 #include "iremote_proxy.h"
 #include "istream_capture_callback.h"
 
 namespace OHOS {
 namespace CameraStandard {
-class HStreamCaptureCallbackProxy : public IRemoteProxy<IStreamCaptureCallback> {
+class EXPORT_API HStreamCaptureCallbackProxy : public IRemoteProxy<IStreamCaptureCallback> {
 public:
     explicit HStreamCaptureCallbackProxy(const sptr<IRemoteObject> &impl);
 

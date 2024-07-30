@@ -15,6 +15,7 @@
 
 #ifndef OHOS_CAMERA_H_STREAM_CAPTURE_H
 #define OHOS_CAMERA_H_STREAM_CAPTURE_H
+#define EXPORT_API __attribute__((visibility("default")))
 
 #include <atomic>
 #include <cstdint>
@@ -33,7 +34,7 @@ namespace CameraStandard {
 using OHOS::HDI::Camera::V1_0::BufferProducerSequenceable;
 using namespace OHOS::HDI::Camera::V1_0;
 constexpr const char* BURST_UUID_UNSET = "";
-class HStreamCapture : public HStreamCaptureStub, public HStreamCommon {
+class EXPORT_API HStreamCapture : public HStreamCaptureStub, public HStreamCommon {
 public:
     HStreamCapture(sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height);
     ~HStreamCapture();

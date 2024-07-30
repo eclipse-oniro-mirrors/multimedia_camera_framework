@@ -15,6 +15,7 @@
 
 #ifndef OHOS_CAMERA_H_CAPTURE_SESSION_H
 #define OHOS_CAMERA_H_CAPTURE_SESSION_H
+#define EXPORT_API __attribute__((visibility("default")))
 
 #include <atomic>
 #include <cstdint>
@@ -178,7 +179,7 @@ private:
 
 class CameraInfoDumper;
 
-class HCaptureSession : public HCaptureSessionStub, public StreamOperatorCallback {
+class EXPORT_API HCaptureSession : public HCaptureSessionStub, public StreamOperatorCallback {
 public:
     static sptr<HCaptureSession> NewInstance(const uint32_t callerToken, int32_t opMode);
     HCaptureSession();

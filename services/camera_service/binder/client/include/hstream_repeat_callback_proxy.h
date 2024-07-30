@@ -15,6 +15,7 @@
 
 #ifndef OHOS_CAMERA_HSTREAM_REPEAT_CALLBACK_PROXY_H
 #define OHOS_CAMERA_HSTREAM_REPEAT_CALLBACK_PROXY_H
+#define EXPORT_API __attribute__((visibility("default")))
 
 #include <cstdint>
 #include "istream_repeat_callback.h"
@@ -22,7 +23,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class HStreamRepeatCallbackProxy : public IRemoteProxy<IStreamRepeatCallback> {
+class EXPORT_API HStreamRepeatCallbackProxy : public IRemoteProxy<IStreamRepeatCallback> {
 public:
     explicit HStreamRepeatCallbackProxy(const sptr<IRemoteObject> &impl);
 

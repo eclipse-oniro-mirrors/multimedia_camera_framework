@@ -15,6 +15,7 @@
 
 #ifndef OHOS_CAMERA_HSTREAM_CAPTURE_STUB_H
 #define OHOS_CAMERA_HSTREAM_CAPTURE_STUB_H
+#define EXPORT_API __attribute__((visibility("default")))
 
 #include <cstdint>
 
@@ -24,7 +25,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class HStreamCaptureStub : public IRemoteStub<IStreamCapture>, public ICameraIpcChecker {
+class EXPORT_API HStreamCaptureStub : public IRemoteStub<IStreamCapture>, public ICameraIpcChecker {
 public:
     int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;
 

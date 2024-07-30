@@ -15,6 +15,7 @@
 
 #ifndef OHOS_CAMERA_H_CAMERA_HOST_MANAGER_H
 #define OHOS_CAMERA_H_CAMERA_HOST_MANAGER_H
+#define EXPORT_API __attribute__((visibility("default")))
 
 #include <refbase.h>
 #include <iostream>
@@ -43,7 +44,7 @@
 namespace OHOS {
 namespace CameraStandard {
 using OHOS::HDI::Camera::V1_0::ICameraDeviceCallback;
-class HCameraHostManager : public RefBase {
+class EXPORT_API HCameraHostManager : public RefBase {
 public:
     class StatusCallback {
     public:

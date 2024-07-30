@@ -15,13 +15,14 @@
 
 #ifndef OHOS_CAMERA_HCAPTURE_SESSION_CALLBACK_PROXY_H
 #define OHOS_CAMERA_HCAPTURE_SESSION_CALLBACK_PROXY_H
+#define EXPORT_API __attribute__((visibility("default")))
 
 #include "iremote_proxy.h"
 #include "icapture_session_callback.h"
 
 namespace OHOS {
 namespace CameraStandard {
-class HCaptureSessionCallbackProxy : public IRemoteProxy<ICaptureSessionCallback> {
+class EXPORT_API HCaptureSessionCallbackProxy : public IRemoteProxy<ICaptureSessionCallback> {
 public:
     explicit HCaptureSessionCallbackProxy(const sptr<IRemoteObject> &impl);
     virtual ~HCaptureSessionCallbackProxy() = default;

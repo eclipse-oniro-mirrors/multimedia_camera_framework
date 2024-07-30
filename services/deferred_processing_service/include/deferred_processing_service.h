@@ -15,6 +15,7 @@
 
 #ifndef OHOS_CAMERA_DPS_DEFERRED_PROCESSING_SERVICE_H
 #define OHOS_CAMERA_DPS_DEFERRED_PROCESSING_SERVICE_H
+#define EXPORT_API __attribute__((visibility("default")))
 
 #include "session_manager.h"
 #include "scheduler_manager.h"
@@ -25,16 +26,16 @@ namespace CameraStandard {
 namespace DeferredProcessing {
 class DeferredProcessingService : public RefBase {
 public:
-    static DeferredProcessingService& GetInstance();
+    EXPORT_API static DeferredProcessingService& GetInstance();
     DeferredProcessingService(const DeferredProcessingService& other) = delete;
     DeferredProcessingService& operator=(const DeferredProcessingService& other) = delete;
-    void Initialize();
-    void Start();
-    void Stop();
+    EXPORT_API void Initialize();
+    EXPORT_API void Start();
+    EXPORT_API void Stop();
     ~DeferredProcessingService();
-    sptr<IDeferredPhotoProcessingSession> CreateDeferredPhotoProcessingSession(const int32_t userId,
+    EXPORT_API sptr<IDeferredPhotoProcessingSession> CreateDeferredPhotoProcessingSession(const int32_t userId,
         const sptr<IDeferredPhotoProcessingSessionCallback> callbacks);
-    void NotifyCameraSessionStatus(const int32_t userId,
+    EXPORT_API void NotifyCameraSessionStatus(const int32_t userId,
         const std::string& cameraId, bool running, bool isSystemCamera);
 
 private:
