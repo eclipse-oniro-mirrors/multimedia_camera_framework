@@ -1105,10 +1105,7 @@ static napi_value CreateJSArray(napi_env env, std::vector<SceneMode> nativeArray
             auto itr = nativeToNapiMap.find(nativeArray[i]);
             if (itr != nativeToNapiMap.end()) {
                 napi_create_int32(env, itr->second, &item);
-            }
-            if (napi_set_element(env, jsArray, i, item) != napi_ok) {
-                MEDIA_ERR_LOG("Failed to create profile napi wrapper object");
-                return nullptr;
+                napi_set_element(env, jsArray, i, item);
             }
         }
     }
