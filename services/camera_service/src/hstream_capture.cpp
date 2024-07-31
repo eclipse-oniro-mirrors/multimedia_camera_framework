@@ -86,10 +86,10 @@ void HStreamCapture::SetStreamInfo(StreamInfo_V1_1 &streamInfo)
         MEDIA_INFO_LOG("HStreamCapture::SetStreamInfo Set DNG info, streamId:%{public}d", GetFwkStreamId());
         extendedStreamInfo.type =
             static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(HDI::Camera::V1_3::EXTENDED_STREAM_INFO_RAW);
-        extendedStreamInfo.bufferQueue = rawBufferQueue_;
         extendedStreamInfo.width = width_;
         extendedStreamInfo.height = height_;
         extendedStreamInfo.format = format_;
+        extendedStreamInfo.bufferQueue = rawBufferQueue_;
     } else {
         extendedStreamInfo.type = HDI::Camera::V1_1::EXTENDED_STREAM_INFO_QUICK_THUMBNAIL;
         extendedStreamInfo.bufferQueue = thumbnailBufferQueue_;
