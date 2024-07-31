@@ -11427,5 +11427,190 @@ HWTEST_F(CameraFrameworkModuleTest, test_moving_photo, TestSize.Level0)
     EXPECT_EQ(intResult, 0);
     sleep(WAIT_TIME_AFTER_CAPTURE);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test !IsSessionCommited() && !IsSessionConfiged()
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test IsSessionCommited() || IsSessionConfiged() with abnormal branches in CaptureSession
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_086, TestSize.Level0)
+{
+    if (!IsSupportNow()) {
+        return;
+    }
+    sptr<CaptureSession> captureSession = manager_->CreateCaptureSession(SceneMode::CAPTURE);
+    ASSERT_NE(captureSession, nullptr);
+    std::vector<float> virtualApertures = {};
+    float aperture;
+    EXPECT_EQ(captureSession->GetSupportedVirtualApertures(virtualApertures), SESSION_NOT_CONFIG);
+    EXPECT_EQ(captureSession->GetVirtualAperture(aperture), SESSION_NOT_CONFIG);
+    EXPECT_EQ(captureSession->SetVirtualAperture(aperture), SESSION_NOT_CONFIG);  
+}
+
+/* Feature: Framework
+ * Function: Test preview/capture with capture session's VirtualAperture
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test preview/capture with capture session's VirtualAperture
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_087, TestSize.Level0)
+{
+    SceneMode captureMode = SceneMode::CAPTURE;
+    if (!IsSupportMode(captureMode)) {
+        return;
+    }
+    if (session_) {
+        MEDIA_INFO_LOG("old session exist, need release");
+        session_->Release();
+    }
+    sptr<CameraManager> modeManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(modeManagerObj, nullptr);
+
+    std::vector<SceneMode> modes = modeManagerObj->GetSupportedModes(cameras_[0]);
+    ASSERT_TRUE(modes.size() != 0);
+
+
+    sptr<CameraOutputCapability> modeAbility =
+        modeManagerObj->GetSupportedOutputCapability(cameras_[0], captureMode);
+    ASSERT_NE(modeAbility, nullptr);
+
+    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(captureMode);
+    ASSERT_NE(captureSession, nullptr);
+
+    int32_t intResult = captureSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = captureSession->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    camera_rational_t ratio = {
+        .numerator = 16,
+        .denominator=9
+    };
+
+    Profile profile = SelectProfileByRatioAndFormat(modeAbility, ratio, photoFormat_);
+    ASSERT_NE(profile.format_, -1);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput(profile);
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = captureSession->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    profile = SelectProfileByRatioAndFormat(modeAbility, ratio, previewFormat_);
+    ASSERT_NE(profile.format_, -1);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profile);
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = captureSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = captureSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    captureSession->LockForControl();
+
+    std::vector<float> virtualApertures = {};
+    EXPECT_EQ(captureSession->GetSupportedVirtualApertures(virtualApertures), 0);
+    EXPECT_EQ(captureSession->SetVirtualAperture(virtualApertures[0]), 0);
+
+    captureSession->UnlockForControl();
+    float aperture;
+    EXPECT_EQ(captureSession->GetVirtualAperture(aperture), 0);
+    EXPECT_EQ(aperture, virtualApertures[0]);
+
+    intResult = captureSession->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = ((sptr<PhotoOutput>&)photoOutput)->Capture();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_CAPTURE);
+
+    captureSession->Stop();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test abnormal branches with empty inputDevice and empty metadata
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_088, TestSize.Level0)
+{
+    SceneMode captureMode = SceneMode::CAPTURE;
+    if (!IsSupportMode(captureMode)) {
+        return;
+    }
+    if (session_) {
+        MEDIA_INFO_LOG("old session exist, need release");
+        session_->Release();
+    }
+    sptr<CameraManager> modeManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(modeManagerObj, nullptr);
+
+    std::vector<SceneMode> modes = modeManagerObj->GetSupportedModes(cameras_[0]);
+    ASSERT_TRUE(modes.size() != 0);
+
+
+    sptr<CameraOutputCapability> modeAbility =
+        modeManagerObj->GetSupportedOutputCapability(cameras_[0], captureMode);
+    ASSERT_NE(modeAbility, nullptr);
+
+    sptr<CaptureSession> captureSession = modeManagerObj->CreateCaptureSession(captureMode);
+    ASSERT_NE(captureSession, nullptr);
+
+    int32_t intResult = captureSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = captureSession->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    camera_rational_t ratio = {
+        .numerator = 16,
+        .denominator=9
+    };
+
+    Profile profile = SelectProfileByRatioAndFormat(modeAbility, ratio, photoFormat_);
+    ASSERT_NE(profile.format_, -1);
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput(profile);
+    ASSERT_NE(photoOutput, nullptr);
+
+    intResult = captureSession->AddOutput(photoOutput);
+    EXPECT_EQ(intResult, 0);
+
+    profile = SelectProfileByRatioAndFormat(modeAbility, ratio, previewFormat_);
+    ASSERT_NE(profile.format_, -1);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profile);
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = captureSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = captureSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    std::vector<float> virtualApertures = {};
+    float aperture;
+    (captureSession->innerInputDevice_)->GetCameraDeviceInfo()->cachedMetadata_ = nullptr;
+    EXPECT_EQ(captureSession->GetSupportedVirtualApertures(virtualApertures), 0);
+    EXPECT_EQ(captureSession->GetVirtualAperture(aperture), 0);
+    EXPECT_EQ(captureSession->SetVirtualAperture(aperture), 0);
+
+    captureSession->innerInputDevice_ = nullptr;
+    EXPECT_EQ(captureSession->GetSupportedVirtualApertures(virtualApertures), 0);
+    EXPECT_EQ(captureSession->GetVirtualAperture(aperture), 0);
+    EXPECT_EQ(captureSession->SetVirtualAperture(aperture), 0);
+
+}
 } // namespace CameraStandard
 } // namespace OHOS
