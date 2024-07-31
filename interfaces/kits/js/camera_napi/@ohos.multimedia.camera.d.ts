@@ -78,6 +78,39 @@ declare namespace camera {
   }
 
   /**
+   * Enum for fold status.
+   *
+   * @enum { number }
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 12
+   */
+  enum FoldStatus {
+    /**
+     * Non-foldable status.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    NON_FOLDABLE = 0,
+
+    /**
+     * Expanded status.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    EXPANDED = 1,
+
+    /**
+     * Folded status.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    FOLDED = 2
+  }
+
+  /**
    * Profile for camera streams.
    *
    * @typedef Profile
@@ -635,6 +668,26 @@ declare namespace camera {
     off(type: 'cameraStatus', callback?: AsyncCallback<CameraStatusInfo>): void;
 
     /**
+     * Subscribes fold status change event callback.
+     *
+     * @param { 'foldStatusChanged' } type - Event type.
+     * @param { AsyncCallback<FoldStatusInfo> } callback - Callback used to get the fold status change.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    on(type: 'foldStatusChange', callback: AsyncCallback<FoldStatusInfo>): void;
+
+    /**
+     * Unsubscribes from fold status change event callback.
+     *
+     * @param { 'foldStatusChanged' } type - Event type.
+     * @param { AsyncCallback<FoldStatusInfo> } callback - Callback used to get the fold status change.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    off(type: 'foldStatusChange', callback?: AsyncCallback<FoldStatusInfo>): void;
+
+    /**
      * Subscribes camera mute change event callback.
      *
      * @param { 'cameraMute' } type - Event type.
@@ -870,6 +923,35 @@ declare namespace camera {
   }
 
   /**
+   * Fold status info.
+   *
+   * @typedef FoldStatusInfo
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @since 12
+   */
+  interface FoldStatusInfo {
+    /**
+     * Gets supported camera devices under the current fold status.
+     *
+     * @type { Array<CameraDevice> }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    supportedCameras: Array<CameraDevice>;
+
+    /**
+     * Current fold status.
+     *
+     * @type { FoldStatus }
+     * @readonly
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @since 12
+     */
+    foldStatus: FoldStatus;
+  }
+
+  /**
    * Enum for camera position.
    *
    * @enum { number }
@@ -906,6 +988,7 @@ declare namespace camera {
      *
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @since 11
+     * @deprecated since 12
      */
     CAMERA_POSITION_FOLD_INNER = 3
   }

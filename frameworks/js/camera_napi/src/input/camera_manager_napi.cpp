@@ -491,7 +491,7 @@ void FoldListenerNapi::OnFoldStatusChangedCallback(const FoldStatusInfo& foldSta
     }
     napi_set_named_property(env_, result[PARAM1], "supportedCameras", propValue);
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("foldStatusChanged", callbackNapiPara);
+    ExecuteCallback("foldStatusChange", callbackNapiPara);
     napi_close_handle_scope(env_, scope);
 }
 
@@ -1485,7 +1485,7 @@ const CameraManagerNapi::EmitterFunctions& CameraManagerNapi::GetEmitterFunction
         { "torchStatusChange", {
             &CameraManagerNapi::RegisterTorchStatusCallbackListener,
             &CameraManagerNapi::UnregisterTorchStatusCallbackListener } },
-        { "foldStatusChanged", {
+        { "foldStatusChange", {
             &CameraManagerNapi::RegisterFoldStatusCallbackListener,
             &CameraManagerNapi::UnregisterFoldStatusCallbackListener } } };
     return funMap;
