@@ -134,8 +134,8 @@ const std::unordered_map<SceneMode, OperationMode> g_fwToMetaSupportedMode_ = {
 
 const std::unordered_map<CameraFoldStatus, FoldStatus> g_metaToFwCameraFoldStatus_ = {
     {OHOS_CAMERA_FOLD_STATUS_NONFOLDABLE, UNKNOWN_FOLD},
-    {OHOS_CAMERA_FOLD_STATUS_EXPANDED,  EXPAND},
-    {OHOS_CAMERA_FOLD_STATUS_FOLDED,  FOLDED}
+    {OHOS_CAMERA_FOLD_STATUS_EXPANDED, EXPAND},
+    {OHOS_CAMERA_FOLD_STATUS_FOLDED, FOLDED}
 };
 
 const std::set<int32_t> isTemplateMode_ = {
@@ -1107,13 +1107,23 @@ void CameraManager::SetProfile(std::vector<sptr<CameraDevice>>& cameraObjList)
     }
 }
 
+bool CameraManager::GetIsFoldable()
+{
+    return OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
+}
+
+FoldStatus CameraManager::GetFoldStatus()
+{
+    return (FoldStatus)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
+}
+
 std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
 {
     CAMERA_SYNC_TRACE;
     std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
-    bool isFoldable = OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
+    bool isFoldable = GetIsFoldable();
     CHECK_ERROR_RETURN_RET(!isFoldable, cameraObjList_);
-    auto curFoldStatus = (FoldStatus)OHOS::Rosen::DisplayManager::GetInstance().GetFoldStatus();
+    auto curFoldStatus = GetFoldStatus();
     if (curFoldStatus == FoldStatus::HALF_FOLD) {
         curFoldStatus = FoldStatus::EXPAND;
     }

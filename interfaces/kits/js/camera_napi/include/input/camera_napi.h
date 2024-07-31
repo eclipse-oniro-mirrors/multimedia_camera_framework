@@ -324,9 +324,9 @@ static const std::unordered_map<std::string, int32_t> mapSceneFeatureType = {
 };
 
 static const std::unordered_map<std::string, int32_t> mapFoldStatus = {
-    {"FOLD_STATUS_NONFOLDABLE", 0},
-    {"FOLD_STATUS_EXPANDED", 1},
-    {"FOLD_STATUS_FOLDED", 2}
+    {"NON_FOLDABLE", 0},
+    {"EXPANDED", 1},
+    {"FOLDED", 2}
 };
 
 static const std::unordered_map<std::string, int32_t> mapLightPaintingType = {

@@ -641,6 +641,10 @@ public:
 
     void OnCameraServerAlive();
 
+    virtual bool GetIsFoldable();
+
+    virtual FoldStatus GetFoldStatus();
+
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
