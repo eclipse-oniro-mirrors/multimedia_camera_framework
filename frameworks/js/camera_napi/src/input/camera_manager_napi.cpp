@@ -505,6 +505,13 @@ const std::unordered_map<JsSceneMode, SceneMode> g_jsToFwMode_ = {
     {JsSceneMode::JS_NORMAL, SceneMode::NORMAL},
     {JsSceneMode::JS_CAPTURE, SceneMode::CAPTURE},
     {JsSceneMode::JS_VIDEO, SceneMode::VIDEO},
+    {JsSceneMode::JS_SECURE_CAMERA, SceneMode::SECURE},
+};
+
+const std::unordered_map<JsSceneMode, SceneMode> g_jsToFwMode4Sys_ = {
+    {JsSceneMode::JS_NORMAL, SceneMode::NORMAL},
+    {JsSceneMode::JS_CAPTURE, SceneMode::CAPTURE},
+    {JsSceneMode::JS_VIDEO, SceneMode::VIDEO},
     {JsSceneMode::JS_PORTRAIT, SceneMode::PORTRAIT},
     {JsSceneMode::JS_NIGHT, SceneMode::NIGHT},
     {JsSceneMode::JS_SLOW_MOTION, SceneMode::SLOW_MOTION},
@@ -1175,6 +1182,10 @@ sptr<CameraDevice> CameraManagerNapi::GetSupportedOutputCapabilityGetCameraInfo(
                  .AssertStatus(INVALID_ARGUMENT, "GetSupportedOutputCapability 2 args parse error")) {
             return nullptr;
         }
+        if (jsSceneMode == JsSceneMode::JS_NORMAL) {
+            CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "invalid js mode");
+            return nullptr;
+        }
     } else {
         CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "Args size error");
         return nullptr;
@@ -1201,8 +1212,12 @@ napi_value CameraManagerNapi::GetSupportedOutputCapability(napi_env env, napi_ca
         return cachedResult;
     }
     SceneMode fwkMode = SceneMode::NORMAL;
-    auto itr = g_jsToFwMode_.find(static_cast<JsSceneMode>(jsSceneMode));
-    if (itr != g_jsToFwMode_.end()) {
+    std::unordered_map<JsSceneMode, SceneMode> jsToFwModeMap = g_jsToFwMode_;
+    if (CameraNapiSecurity::CheckSystemApp(env, false)) {
+        jsToFwModeMap = g_jsToFwMode4Sys_;
+    }
+    auto itr = jsToFwModeMap.find(static_cast<JsSceneMode>(jsSceneMode));
+    if (itr != jsToFwModeMap.end()) {
         fwkMode = itr->second;
     } else {
         MEDIA_ERR_LOG("CreateCameraSessionInstance mode = %{public}d not supported", jsSceneMode);
