@@ -1101,11 +1101,13 @@ static napi_value CreateJSArray(napi_env env, std::vector<SceneMode> nativeArray
         nativeToNapiMap = g_nativeToNapiSupportedModeForSystem_;
     }
     if (status == napi_ok) {
+        uint8_t index = 0;
         for (size_t i = 0; i < nativeArray.size(); i++) {
             auto itr = nativeToNapiMap.find(nativeArray[i]);
             if (itr != nativeToNapiMap.end()) {
                 napi_create_int32(env, itr->second, &item);
-                napi_set_element(env, jsArray, i, item);
+                napi_set_element(env, jsArray, index, item);
+                index++;
             }
         }
     }
