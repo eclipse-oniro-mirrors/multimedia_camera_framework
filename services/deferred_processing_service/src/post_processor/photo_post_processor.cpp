@@ -484,7 +484,7 @@ void PhotoPostProcessor::DisconnectServiceIfNecessary()
 void PhotoPostProcessor::ScheduleConnectService()
 {
     DP_INFO_LOG("entered.");
-    if (session_ != nullptr) {
+    if (session_ == nullptr) {
         constexpr uint32_t delayMilli = 10 * 1000;
         uint32_t callbackHandle;
         GetGlobalWatchdog().StartMonitor(callbackHandle, delayMilli, [this](uint32_t handle) {
