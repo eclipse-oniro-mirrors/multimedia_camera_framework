@@ -119,6 +119,9 @@ public:
 
     void SetMuteMode(bool muteMode);
 
+    int32_t GetCameraResourceCost(const std::string& cameraId,
+        OHOS::HDI::Camera::V1_3::CameraDeviceResourceCost& resourceCost);
+
 private:
     struct CameraDeviceInfo;
     class CameraHostInfo;

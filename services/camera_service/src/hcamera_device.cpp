@@ -1369,38 +1369,17 @@ bool HCameraDevice::CanOpenCamera()
 
 bool HCameraDevice::GetCameraResourceCost(int32_t &cost, std::set<std::string> &conflicting)
 {
-    if (system::GetParameter("const.camera.multicamera.enable", "false") != "true") {
+    OHOS::HDI::Camera::V1_3::CameraDeviceResourceCost resourceCost;
+    int32_t errorCode = cameraHostManager_->GetCameraResourceCost(cameraID_, resourceCost);
+    if (errorCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("GetCameraResourceCost failed");
         return false;
     }
-    sptr<OHOS::HDI::Camera::V1_3::ICameraDevice> hdiCameraDeviceV1_3;
-    int32_t versionRes = cameraHostManager_->GetVersionByCamera(cameraID_);
-    bool needCloseDevice = false;
-    if (hdiCameraDevice_ == nullptr) {
-        int32_t errorCode = cameraHostManager_->OpenCameraDevice(cameraID_, this, hdiCameraDevice_, false);
-        if (errorCode != CAMERA_OK || hdiCameraDevice_ == nullptr) {
-            MEDIA_ERR_LOG("OpenCameraDevice failed");
-        } else {
-            needCloseDevice = true;
-        }
+    cost = resourceCost.resourceCost_;
+    for (size_t i = 0; i < resourceCost.conflictingDevices_.size(); i++) {
+        conflicting.emplace(resourceCost.conflictingDevices_[i]);
     }
-    if (versionRes >= GetVersionId(HDI_VERSION_1, HDI_VERSION_3)) {
-        hdiCameraDeviceV1_3 = OHOS::HDI::Camera::V1_3::ICameraDevice::CastFrom(hdiCameraDevice_);
-    }
-    bool isSuccess = false;
-    OHOS::HDI::Camera::V1_3::CameraDeviceResourceCost resourceCost;
-    if (hdiCameraDeviceV1_3 != nullptr &&
-        hdiCameraDeviceV1_3->GetResourceCost(resourceCost) == HDI::Camera::V1_0::CamRetCode::NO_ERROR) {
-        cost = resourceCost.resourceCost_;
-        for (size_t i = 0; i < resourceCost.conflictingDevices_.size(); i++) {
-            conflicting.emplace(resourceCost.conflictingDevices_[i]);
-        }
-        isSuccess = true;
-    }
-    if (needCloseDevice) {
-        hdiCameraDevice_->Close();
-        hdiCameraDevice_ = nullptr;
-    }
-    return isSuccess;
+    return true;
 }
 
 int32_t HCameraDevice::UpdateStreams(std::vector<StreamInfo_V1_1>& streamInfos)
