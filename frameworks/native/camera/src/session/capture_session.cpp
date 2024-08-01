@@ -1550,8 +1550,9 @@ int32_t CaptureSession::SetExposureMode(ExposureMode exposureMode)
     }
     uint8_t exposure = g_fwkExposureModeMap_.at(EXPOSURE_MODE_LOCKED);
     auto itr = g_fwkExposureModeMap_.find(exposureMode);
-    if (itr == g_fwkExposureModeMap_.end()) {
+    if (itr == g_fwkExposureModeMap_.end() || !IsExposureModeSupported(exposureMode)) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureMode Unknown exposure mode");
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
     } else {
         exposure = itr->second;
     }
@@ -1900,8 +1901,9 @@ int32_t CaptureSession::SetFocusMode(FocusMode focusMode)
     }
     uint8_t focus = FOCUS_MODE_LOCKED;
     auto itr = g_fwkFocusModeMap_.find(focusMode);
-    if (itr == g_fwkFocusModeMap_.end()) {
+    if (itr == g_fwkFocusModeMap_.end() || !IsFocusModeSupported(focusMode)) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureMode Unknown exposure mode");
+        retrun CameraErrorCode::OPERATION_NOT_ALLOWED;
     } else {
         focus = itr->second;
     }
@@ -2352,8 +2354,9 @@ int32_t CaptureSession::SetFlashMode(FlashMode flashMode)
     }
     uint8_t flash = g_fwkFlashModeMap_.at(FLASH_MODE_CLOSE);
     auto itr = g_fwkFlashModeMap_.find(flashMode);
-    if (itr == g_fwkFlashModeMap_.end()) {
+    if (itr == g_fwkFlashModeMap_.end() || !IsFlashModeSupported(flashMode)) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureMode Unknown exposure mode");
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
     } else {
         flash = itr->second;
     }
