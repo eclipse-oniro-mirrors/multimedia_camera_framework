@@ -1433,7 +1433,7 @@ int32_t CaptureSession::IsVideoStabilizationModeSupported(VideoStabilizationMode
         MEDIA_ERR_LOG("CaptureSession::IsVideoStabilizationModeSupported Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
-    if((!CameraSecurity::CheckSystemApp()) && (stabilizationMode == VideoStabilizationMode::HIGH)) {
+    if ((!CameraSecurity::CheckSystemApp()) && (stabilizationMode == VideoStabilizationMode::HIGH)) {
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
     std::vector<VideoStabilizationMode> stabilizationModes = GetSupportedStabilizationMode();
