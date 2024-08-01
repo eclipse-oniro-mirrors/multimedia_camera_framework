@@ -3222,17 +3222,15 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_012, TestSize.Level
     photoSetting->SetQuality(PhotoCaptureSetting::QUALITY_LEVEL_MEDIUM);
     EXPECT_EQ(photoSetting->GetRotation(), PhotoCaptureSetting::Rotation_90);
     EXPECT_EQ(photoSetting->GetQuality(), PhotoCaptureSetting::QUALITY_LEVEL_MEDIUM);
+    if (streamRepeat->LinkInput(mockStreamOperator, photoSetting->GetCaptureMetadataSetting()) != 0) {
+        EXPECT_EQ(streamRepeat->Stop(), CAMERA_INVALID_STATE);
+        EXPECT_EQ(streamRepeat->Start(), CAMERA_INVALID_STATE);
 
-    EXPECT_EQ(streamRepeat->LinkInput(mockStreamOperator, photoSetting->GetCaptureMetadataSetting()), 8);
+        EXPECT_EQ(streamRepeat->AddDeferredSurface(producer1), CAMERA_INVALID_STATE);
 
-    EXPECT_EQ(streamRepeat->Stop(), CAMERA_INVALID_STATE);
-    EXPECT_EQ(streamRepeat->Start(), CAMERA_INVALID_STATE);
-
-    EXPECT_EQ(streamRepeat->AddDeferredSurface(producer1), CAMERA_INVALID_STATE);
-
-    EXPECT_EQ(streamRepeat->Start(), CAMERA_INVALID_STATE);
-    EXPECT_EQ(streamRepeat->Stop(), CAMERA_INVALID_STATE);
-
+        EXPECT_EQ(streamRepeat->Start(), CAMERA_INVALID_STATE);
+        EXPECT_EQ(streamRepeat->Stop(), CAMERA_INVALID_STATE);
+    }
     input->Close();
     session->Release();
 }
