@@ -79,7 +79,6 @@ class CameraService {
   private cameraInput: camera.CameraInput | undefined = undefined;
   private previewOutput: camera.PreviewOutput | undefined = undefined;
   private photoOutPut: camera.PhotoOutput | undefined = undefined;
-  private captureSession: camera.CaptureSession | undefined = undefined;
   private photoSession: camera.PhotoSession | undefined = undefined;
   private videoSession: camera.VideoSession | undefined = undefined;
   private portraitSession: camera.PortraitPhotoSession | undefined = undefined;
@@ -465,10 +464,8 @@ class CameraService {
           break;
         case CameraMode.VIDEO:
           await this.videoSessionFlowFn(); break;
-        case CameraMode.NORMAL:
-          await this.photoSessionFlowFn(); break;
         default:
-          await this.sessionFlowFn();
+          await this.photoSessionFlowFn();
           break;
       }
       this.testAbilityFunction();
@@ -1182,29 +1179,35 @@ class CameraService {
   }
 
   /**
-   * 会话流程
+   * 拍照会话流程
    */
-  async sessionFlowFn(): Promise<void> {
+  async photoSessionFlowFn(): Promise<void> {
     try {
+      Logger.info(TAG, 'photoSessionFlowFn start');
       // 创建CaptureSession实例
-      this.captureSession = this.cameraManager.createCaptureSession();
+      this.photoSession = this.cameraManager.createSession(camera.SceneMode.NORMAL_PHOTO);
       // 监听焦距的状态变化
       this.onFocusStateChange();
-      // 监听能力值发生变化
-      this.onAbilityChange();
       // 监听拍照会话的错误事件
       this.onCaptureSessionErrorChange();
       // 开始配置会话
-      this.captureSession.beginConfig();
+      this.photoSession.beginConfig();
       // 把CameraInput加入到会话
-      this.captureSession.addInput(this.cameraInput);
+      this.photoSession.addInput(this.cameraInput);
       // 把previewOutput加入到会话
-      this.captureSession.addOutput(this.previewOutput);
-      if (this.cameraMode === CameraMode.SUPER_STAB || this.cameraMode === CameraMode.VIDEO) {
-        this.captureSession.addOutput(this.videoOutput);
-      }
+      this.photoSession.addOutput(this.previewOutput);
       // 把photoOutPut加入到会话
-      this.captureSession.addOutput(this.photoOutPut);
+      this.photoSession.addOutput(this.photoOutPut);
+
+      // hdr 拍照
+      let hdrPhotoBol: boolean = (this.globalContext.getObject('cameraConfig') as CameraConfig).hdrPhotoBol;
+      Logger.info(TAG, 'hdrPhotoBol:' + hdrPhotoBol);
+      if (hdrPhotoBol) {
+        this.setColorSpace(this.photoSession, colorSpaceManager.ColorSpace.DISPLAY_P3);
+      } else {
+        this.setColorSpace(this.photoSession, colorSpaceManager.ColorSpace.SRGB);
+      }
+
       if (this.captureMode === CaptureMode.NEW_DEFERRED_PHOTO) {
         if (this.isDeferredImageDeliverySupported(camera.DeferredDeliveryImageType.PHOTO)) {
           this.deferImageDeliveryFor(camera.DeferredDeliveryImageType.PHOTO);
@@ -1352,71 +1355,6 @@ class CameraService {
     } catch (error) {
       let err = error as BusinessError;
       Logger.error(TAG, `videoSessionFlowFn fail : ${JSON.stringify(err)}`);
-    }
-  }
-
-  async videoSessionFlowFn(): Promise<void> {
-    try {
-      // 创建CaptureSession实例
-      this.videoSession = this.cameraManager.createSession(camera.SceneMode.NORMAL_VIDEO);
-      // 监听焦距的状态变化
-      this.onFocusStateChange();
-      // 监听能力值发生变化
-      this.onAbilityChange();
-      // 监听拍照会话的错误事件
-      this.onCaptureSessionErrorChange();
-      // 开始配置会话
-      this.videoSession.beginConfig();
-      // 把CameraInput加入到会话
-      this.videoSession.addInput(this.cameraInput);
-      // 把previewOutput加入到会话
-      this.videoSession.addOutput(this.previewOutput);
-      this.videoSession.addOutput(this.videoOutput);
-      // 把photoOutPut加入到会话
-      this.videoSession.addOutput(this.photoOutPut);
-      // 提交配置信息
-      await this.videoSession.commitConfig();
-      Logger.info(TAG, 'sessionFlowFn success');
-    } catch (error) {
-      let err = error as BusinessError;
-      Logger.error(TAG, `sessionFlowFn fail : ${JSON.stringify(err)}`);
-    }
-  }
-
-  async photoSessionFlowFn(): Promise<void> {
-    try {
-      // 创建CaptureSession实例
-      this.photoSession = this.cameraManager.createSession(camera.SceneMode.NORMAL_PHOTO);
-      // 监听焦距的状态变化
-      this.onFocusStateChange();
-      // 监听能力值发生变化
-      this.onAbilityChange();
-      // 监听拍照会话的错误事件
-      this.onCaptureSessionErrorChange();
-      // 开始配置会话
-      this.photoSession.beginConfig();
-      // 把CameraInput加入到会话
-      this.photoSession.addInput(this.cameraInput);
-      // 把previewOutput加入到会话
-      this.photoSession.addOutput(this.previewOutput);
-      // 把photoOutPut加入到会话
-      this.photoSession.addOutput(this.photoOutPut);
-
-      // hdr 拍照
-      let hdrPhotoBol: boolean = (this.globalContext.getObject('cameraConfig') as CameraConfig).hdrPhotoBol;
-      Logger.info(TAG, 'hdrPhotoBol:' + hdrPhotoBol);
-      if (hdrPhotoBol) {
-        this.setColorSpace(this.photoSession, colorSpaceManager.ColorSpace.DISPLAY_P3);
-      } else {
-        this.setColorSpace(this.photoSession, colorSpaceManager.ColorSpace.SRGB);
-      }
-
-      // 提交配置信息
-      await this.photoSession.commitConfig();
-      Logger.info(TAG, 'sessionFlowFn success');
-    } catch (error) {
-      let err = error as BusinessError;
-      Logger.error(TAG, `sessionFlowFn fail : ${JSON.stringify(err)}`);
     }
   }
  
