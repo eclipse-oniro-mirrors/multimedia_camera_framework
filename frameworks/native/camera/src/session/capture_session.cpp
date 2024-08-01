@@ -1417,7 +1417,7 @@ int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabili
 bool CaptureSession::IsVideoStabilizationModeSupported(VideoStabilizationMode stabilizationMode)
 {
     if((!CameraSecurity::CheckSystemApp()) && (stabilizationMode == VideoStabilizationMode::HIGH)) {
-        return CameraErrorCode::SESSION_NOT_CONFIG;
+        return false;
     }
     std::vector<VideoStabilizationMode> stabilizationModes = GetSupportedStabilizationMode();
     if (std::find(stabilizationModes.begin(), stabilizationModes.end(), stabilizationMode) !=
