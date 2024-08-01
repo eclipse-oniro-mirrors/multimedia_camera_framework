@@ -23,6 +23,7 @@ import photoAccessHelper from '@ohos.file.photoAccessHelper';
 import fs from '@ohos.file.fs';
 import { GlobalContext } from '../common/GlobalContext';
 import type { CameraConfig } from '../common/CameraConfig';
+import colorSpaceManager from '@ohos.graphics.colorSpaceManager';
 
 const cameraSize = {
   width: 1280,
@@ -398,6 +399,8 @@ class CameraService {
     let profiles;
     if (this.cameraMode === CameraMode.PORTRAIT) {
       profiles = this.cameraManager.getSupportedOutputCapability(this.cameras[cameraDeviceIndex], camera.SceneMode.PORTRAIT_PHOTO);
+    } else if (this.cameraMode === CameraMode.VIDEO) {
+      profiles = this.cameraManager.getSupportedOutputCapability(this.cameras[cameraDeviceIndex], camera.SceneMode.NORMAL_VIDEO);
     } else {
       profiles = this.cameraManager.getSupportedOutputCapability(this.cameras[cameraDeviceIndex]);
     }
@@ -672,7 +675,11 @@ class CameraService {
    */
   isVideoStabilizationModeSupportedFn(videoStabilizationMode: camera.VideoStabilizationMode): boolean {
     // 查询是否支持指定的视频防抖模式
-    let isVideoStabilizationModeSupported: boolean = this.captureSession.isVideoStabilizationModeSupported(videoStabilizationMode);
+    Logger.info(TAG, `isVideoStabilizationModeSupportedFn[0]`);
+    let session: camera.PortraitPhotoSession | camera.Session | camera.NightPhotoSession = this.getSession();
+    Logger.info(TAG, `isVideoStabilizationModeSupportedFn[1]`);
+    let isVideoStabilizationModeSupported: boolean = session.isVideoStabilizationModeSupported(videoStabilizationMode);
+    Logger.info(TAG, `isVideoStabilizationModeSupportedFn[2]`);
     Logger.info(TAG, `isVideoStabilizationModeSupported success: ${JSON.stringify(isVideoStabilizationModeSupported)}`);
     return isVideoStabilizationModeSupported;
   }
@@ -680,8 +687,9 @@ class CameraService {
   setVideoStabilizationMode(videoStabilizationMode: camera.VideoStabilizationMode): void {
     // 设置视频防抖
     Logger.info(TAG, `setVideoStabilizationMode: ${videoStabilizationMode}`);
-    this.captureSession.setVideoStabilizationMode(videoStabilizationMode);
-    let nowVideoStabilizationMod: camera.VideoStabilizationMode = this.captureSession.getActiveVideoStabilizationMode();
+    let session: camera.PortraitPhotoSession | camera.Session | camera.NightPhotoSession = this.getSession();
+    session.setVideoStabilizationMode(videoStabilizationMode);
+    let nowVideoStabilizationMod: camera.VideoStabilizationMode = session.getActiveVideoStabilizationMode();
     Logger.info(TAG, `getActiveVideoStabilizationMode nowVideoStabilizationMod: ${nowVideoStabilizationMod}`);
   }
 
@@ -824,6 +832,10 @@ class CameraService {
     await this.prepareAVRecorder();
     let videoId = await this.getAVRecorderSurfaceId();
     Logger.debug(TAG, `createVideoOutput videoProfileObj: ${JSON.stringify(this.videoProfileObj)}`);
+    let hdrVideoBol: boolean = (this.globalContext.getObject('cameraConfig') as CameraConfig).hdrVideoBol;
+    if (this.cameraMode === CameraMode.VIDEO && hdrVideoBol) {
+       this.videoProfileObj.format = camera.CameraFormat.CAMERA_FORMAT_YCRCB_P010;
+    }
     this.videoOutput = this.cameraManager.createVideoOutput(this.videoProfileObj, videoId);
     Logger.info(TAG, 'createVideoOutput end');
   }
@@ -971,14 +983,24 @@ class CameraService {
         this.videoOutput = null;
       }
     }
-    if (this.captureSession) {
+    if (this.photoSession) {
       try {
-        await this.captureSession.release();
+        await this.photoSession.release();
       } catch (error) {
         let err = error as BusinessError;
-        Logger.error(TAG, `captureSession release fail: error: ${JSON.stringify(err)}`);
+        Logger.error(TAG, `photoSession release fail: error: ${JSON.stringify(err)}`);
       } finally {
-        this.captureSession = null;
+        this.photoSession = null;
+      }
+    }
+    if (this.videoSession) {
+      try {
+        await this.videoSession.release();
+      } catch (error) {
+        let err = error as BusinessError;
+        Logger.error(TAG, `videoSession release fail: error: ${JSON.stringify(err)}`);
+      } finally {
+        this.videoSession = null;
       }
     }
     if (this.portraitSession) {
@@ -1075,6 +1097,10 @@ class CameraService {
    */
   createPreviewOutputFn(photoProfileObj: camera.Profile, surfaceId: string): void {
     try {
+      let hdrVideoBol: boolean = (this.globalContext.getObject('cameraConfig') as CameraConfig).hdrVideoBol;
+      if (this.cameraMode === CameraMode.VIDEO && hdrVideoBol) {
+        photoProfileObj.format = camera.CameraFormat.CAMERA_FORMAT_YCRCB_P010;
+      }
       this.previewOutput = this.cameraManager.createPreviewOutput(photoProfileObj, surfaceId);
       Logger.info(TAG, `createPreviewOutput success: ${this.previewOutput}`);
     } catch (error) {
@@ -1133,9 +1159,9 @@ class CameraService {
   configMoonCaptureBoost(): void {
     try {
       this.isMoonCaptureBoostSupported =
-        this.captureSession.isSceneFeatureSupported(camera.SceneFeatureType.MOON_CAPTURE_BOOST);
+        this.photoSession.isSceneFeatureSupported(camera.SceneFeatureType.MOON_CAPTURE_BOOST);
       if (this.isMoonCaptureBoostSupported) {
-        this.captureSession.on('featureDetectionStatus', camera.SceneFeatureType.MOON_CAPTURE_BOOST,
+        this.photoSession.on('featureDetectionStatus', camera.SceneFeatureType.MOON_CAPTURE_BOOST,
           (error, statusObject) => {
             Logger.info(TAG,
               `on featureDetectionStatus featureType:${statusObject.featureType} detected:${statusObject.detected}`);
@@ -1187,11 +1213,11 @@ class CameraService {
       }
 
       // 提交配置信息
-      await this.captureSession.commitConfig();
+      await this.photoSession.commitConfig();
 
       // 处理变焦条信息
       try {
-        let range: Array<number> = this.captureSession.getZoomRatioRange();
+        let range: Array<number> = this.photoSession.getZoomRatioRange();
         Logger.info(TAG, `getZoomRatioRange:${range}`);
         if (range) {
           AppStorage.setOrCreate('zoomRatioMin', range[0]);
@@ -1201,10 +1227,10 @@ class CameraService {
         let err = error as BusinessError;
         Logger.error(TAG, `getZoomRatioRange fail: error code ${err.code}`);
       }
-      
+
       // 获取当前模式等效焦距
       try {
-        let zoomPointInfo: Array<ZoomPointInfo> = this.captureSession.getZoomPointInfos();
+        let zoomPointInfo: Array<ZoomPointInfo> = this.photoSession.getZoomPointInfos();
         if (zoomPointInfo) {
           Logger.info(TAG, `getZoomPointInfos zoomRatio:${zoomPointInfo[0].zoomRatio} equivalentFocalLength:${zoomPointInfo[0].equivalentFocalLength}`);
           AppStorage.setOrCreate('equivalentFocalLength', zoomPointInfo[0].equivalentFocalLength);
@@ -1224,7 +1250,7 @@ class CameraService {
         this.setColorEffect(this.colorEffect);
       }
       // 开始会话工作
-      await this.captureSession.start();
+      await this.photoSession.start();
       if (this.cameraMode === CameraMode.SUPER_STAB) {
         let isSupported = this.isVideoStabilizationModeSupportedFn(camera.VideoStabilizationMode.HIGH);
         if (isSupported) {
@@ -1232,10 +1258,100 @@ class CameraService {
         }
       }
       this.isFocusMode((this.globalContext.getObject('cameraConfig') as CameraConfig).focusMode);
-      Logger.info(TAG, 'sessionFlowFn success');
+      Logger.info(TAG, 'photoSessionFlowFn success');
     } catch (error) {
       let err = error as BusinessError;
-      Logger.error(TAG, `sessionFlowFn fail : ${JSON.stringify(err)}`);
+      Logger.error(TAG, `photoSessionFlowFn fail : ${JSON.stringify(err)}`);
+    }
+  }
+
+  /**
+   * 会话流程
+   */
+  async videoSessionFlowFn(): Promise<void> {
+    try {
+      Logger.info(TAG, 'videoSessionFlowFn start');
+      // 创建CaptureSession实例
+      this.videoSession = this.cameraManager.createSession(camera.SceneMode.NORMAL_VIDEO);
+
+      // 监听焦距的状态变化
+      this.onFocusStateChange();
+      // 监听拍照会话的错误事件
+      this.onCaptureSessionErrorChange();
+      // 开始配置会话
+      this.videoSession.beginConfig();
+      // 把CameraInput加入到会话
+      this.videoSession.addInput(this.cameraInput);
+      // 把previewOutput加入到会话
+      this.videoSession.addOutput(this.previewOutput);
+
+      this.videoSession.addOutput(this.videoOutput);
+
+      // 提交配置信息
+      await this.videoSession.commitConfig();
+
+      // hdr 录像
+      let hdrVideoBol: boolean = (this.globalContext.getObject('cameraConfig') as CameraConfig).hdrVideoBol;
+      Logger.info(TAG, 'hdrVideoBol:' + hdrVideoBol);
+
+      if (hdrVideoBol) {
+        let isSupportedVideoStabilization = this.isVideoStabilizationModeSupportedFn(camera.VideoStabilizationMode.HIGH);
+        if (isSupportedVideoStabilization) {
+          this.setVideoStabilizationMode(camera.VideoStabilizationMode.HIGH);
+          this.setColorSpace(this.videoSession, colorSpaceManager.ColorSpace.BT2020_HLG_LIMIT);
+        } else {
+          Logger.info(TAG, 'VideoStabilization not support');
+        }
+      } else {
+        this.setColorSpace(this.videoSession, colorSpaceManager.ColorSpace.BT709_LIMIT);
+      }
+
+      // 处理变焦条信息
+      try {
+        let range: Array<number> = this.videoSession.getZoomRatioRange();
+        Logger.info(TAG, `getZoomRatioRange:${range}`);
+        if (range) {
+          AppStorage.setOrCreate('zoomRatioMin', range[0]);
+          AppStorage.setOrCreate('zoomRatioMax', range[1]);
+        }
+      } catch (error) {
+        let err = error as BusinessError;
+        Logger.error(TAG, `getZoomRatioRange fail: error code ${err.code}`);
+      }
+
+      // 获取当前模式等效焦距
+      try {
+        let zoomPointInfo: Array<ZoomPointInfo> = this.videoSession.getZoomPointInfos();
+        if (zoomPointInfo) {
+          Logger.info(TAG, `getZoomPointInfos zoomRatio:${zoomPointInfo[0].zoomRatio} equivalentFocalLength:${zoomPointInfo[0].equivalentFocalLength}`);
+          AppStorage.setOrCreate('equivalentFocalLength', zoomPointInfo[0].equivalentFocalLength);
+        }
+      } catch (error) {
+        let err = error as BusinessError;
+        Logger.error(TAG, `getZoomPointInfos fail: error code ${err.code}`);
+      }
+
+      AppStorage.setOrCreate('colorEffectComponentIsHidden', this.getSupportedColorEffects().length > 0 ? false : true);
+      AppStorage.setOrCreate('deferredPhotoComponentIsHidden', false);
+      AppStorage.setOrCreate('moonCaptureComponentIsShow', false);
+
+      if (this.colorEffect) {
+        this.setColorEffect(this.colorEffect);
+      }
+
+      // 开始会话工作
+      await this.videoSession.start();
+
+      if (this.cameraMode === CameraMode.SUPER_STAB) {
+        let isSupported = this.isVideoStabilizationModeSupportedFn(camera.VideoStabilizationMode.HIGH);
+        if (isSupported) {
+          this.setVideoStabilizationMode(camera.VideoStabilizationMode.HIGH);
+        }
+      }
+      this.isFocusMode((this.globalContext.getObject('cameraConfig') as CameraConfig).focusMode);
+    } catch (error) {
+      let err = error as BusinessError;
+      Logger.error(TAG, `videoSessionFlowFn fail : ${JSON.stringify(err)}`);
     }
   }
 
@@ -1285,6 +1401,16 @@ class CameraService {
       this.photoSession.addOutput(this.previewOutput);
       // 把photoOutPut加入到会话
       this.photoSession.addOutput(this.photoOutPut);
+
+      // hdr 拍照
+      let hdrPhotoBol: boolean = (this.globalContext.getObject('cameraConfig') as CameraConfig).hdrPhotoBol;
+      Logger.info(TAG, 'hdrPhotoBol:' + hdrPhotoBol);
+      if (hdrPhotoBol) {
+        this.setColorSpace(this.photoSession, colorSpaceManager.ColorSpace.DISPLAY_P3);
+      } else {
+        this.setColorSpace(this.photoSession, colorSpaceManager.ColorSpace.SRGB);
+      }
+
       // 提交配置信息
       await this.photoSession.commitConfig();
       Logger.info(TAG, 'sessionFlowFn success');
@@ -1470,6 +1596,23 @@ class CameraService {
     }
   }
 
+  setColorSpace(session: camera.PhotoSession | camera.VideoSession, colorSpace: colorSpaceManager.ColorSpace): void {
+    try {
+      let colorSpaces: Array<colorSpaceManager.ColorSpace> = session.getSupportedColorSpaces();
+      Logger.info(TAG, `supportedColorSpaces: ${JSON.stringify(colorSpaces)}`);
+      let isSupportedUseColorSpaces = colorSpaces.indexOf(colorSpace);
+      if (isSupportedUseColorSpaces) {
+        Logger.info(TAG, `setColorSpace: ${colorSpace}`);
+        session.setColorSpace(colorSpace);
+        Logger.info(TAG, `activeColorSpace: ${session.getActiveColorSpace()}`);
+        return;
+      }
+    } catch (error) {
+      let err = error as BusinessError;
+      Logger.error(TAG, `setColorSpace fail : ${JSON.stringify(err)}`);
+    }
+  }
+
   setPortraitEffect(): void {
     try {
       this.portraitSession.setPortraitEffect(camera.PortraitEffect.CIRCLES);
@@ -1509,7 +1652,7 @@ class CameraService {
 
   setColorEffect(colorEffect: camera.ColorEffectType): void {
     Logger.info(TAG, 'setColorEffect is called.');
-    if (this.captureSession || this.portraitSession || this.nightSession) {
+    if (this.photoSession || this.videoSession || this.portraitSession || this.nightSession) {
       let res: Array<camera.ColorEffectType> | undefined = [];
       res = this.getSupportedColorEffects();
       let session: camera.PortraitPhotoSession | camera.CaptureSession | camera.NightPhotoSession = this.getSession();
@@ -1531,17 +1674,15 @@ class CameraService {
   getColorEffect(): camera.ColorEffectType | undefined {
     Logger.info(TAG, 'getColorEffect is called.');
     let colorEffect: camera.ColorEffectType | undefined = undefined;
-    if (this.captureSession || this.portraitSession || this.nightSession) {
-      let session: camera.PortraitPhotoSession | camera.CaptureSession | camera.NightPhotoSession = this.getSession();
-      if (!session) {
-        return colorEffect;
-      }
-      try {
-        colorEffect = session.getColorEffect();
-      } catch (error) {
-        let err = error as BusinessError;
-        Logger.error(TAG, `setColorEffect fail: error code ${err.code}`);
-      }
+    let session: camera.PortraitPhotoSession | camera.CaptureSession | camera.NightPhotoSession = this.getSession();
+    if (!session) {
+      return colorEffect;
+    }
+    try {
+      colorEffect = session.getColorEffect();
+    } catch (error) {
+      let err = error as BusinessError;
+      Logger.error(TAG, `setColorEffect fail: error code ${err.code}`);
     }
     return colorEffect;
   }
@@ -1549,14 +1690,12 @@ class CameraService {
   getSupportedColorEffects(): Array<camera.ColorEffectType> | undefined {
     Logger.info(TAG, 'getSupportedColorEffects is called.');
     let res: Array<camera.ColorEffectType> | undefined = [];
-    if (this.captureSession || this.portraitSession || this.nightSession) {
-      let session: camera.PortraitPhotoSession | camera.CaptureSession | camera.NightPhotoSession = this.getSession();
-      if (!session) {
-        return res;
-      }
-      res = session.getSupportedColorEffects();
-      Logger.info(TAG, `getSupportedColorEffects length: ${res.length}`);
+    let session: camera.PortraitPhotoSession | camera.CaptureSession | camera.NightPhotoSession = this.getSession();
+    if (!session) {
+      return res;
     }
+    res = session.getSupportedColorEffects();
+    Logger.info(TAG, `getSupportedColorEffects length: ${res.length}`);
     return res;
   }
 
