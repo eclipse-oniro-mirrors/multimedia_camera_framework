@@ -38,7 +38,7 @@ int HStreamCaptureStub::OnRemoteRequest(
             errCode = CancelCapture();
             break;
         case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_CONFIRM):
-            errCode = ConfirmCapture();
+            errCode = HStreamCaptureStub::HandleConfirmCapture(data);
             break;
         case static_cast<uint32_t>(StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_SET_CALLBACK):
             errCode = HStreamCaptureStub::HandleSetCallback(data);
@@ -78,6 +78,12 @@ int32_t HStreamCaptureStub::HandleCapture(MessageParcel &data)
     return Capture(metadata);
 }
 
+int32_t HStreamCaptureStub::HandleConfirmCapture(MessageParcel &data)
+{
+    CHECK_AND_RETURN_RET(CheckSystemApp(), CAMERA_NO_PERMISSION);
+    return ConfirmCapture();
+}
+
 int32_t HStreamCaptureStub::HandleSetThumbnail(MessageParcel &data)
 {
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
@@ -94,6 +100,7 @@ int32_t HStreamCaptureStub::HandleSetThumbnail(MessageParcel &data)
 
 int32_t HStreamCaptureStub::HandleSetRawPhotoInfo(MessageParcel &data)
 {
+    CHECK_AND_RETURN_RET(CheckSystemApp(), CAMERA_NO_PERMISSION);
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
     CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
         "HStreamCaptureStub HandleCreatePhotoOutput BufferProducer is null");
@@ -105,6 +112,7 @@ int32_t HStreamCaptureStub::HandleSetRawPhotoInfo(MessageParcel &data)
 
 int32_t HStreamCaptureStub::HandleEnableDeferredType(MessageParcel &data)
 {
+    CHECK_AND_RETURN_RET(CheckSystemApp(), CAMERA_NO_PERMISSION);
     int32_t type = data.ReadInt32();
     int32_t ret = DeferImageDeliveryFor(type);
     MEDIA_DEBUG_LOG("HStreamCaptureStub HandleEnableDeferredType result: %{public}d", ret);
