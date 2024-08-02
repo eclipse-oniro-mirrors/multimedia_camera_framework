@@ -1910,7 +1910,7 @@ int32_t CaptureSession::SetFocusMode(FocusMode focusMode)
     auto itr = g_fwkFocusModeMap_.find(focusMode);
     if (itr == g_fwkFocusModeMap_.end() || !IsFocusModeSupported(focusMode)) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureMode Unknown exposure mode");
-        retrun CameraErrorCode::OPERATION_NOT_ALLOWED;
+        return CameraErrorCode::OPERATION_NOT_ALLOWED;
     } else {
         focus = itr->second;
     }
