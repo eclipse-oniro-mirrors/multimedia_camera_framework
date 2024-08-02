@@ -170,6 +170,8 @@ bool IsVerticalDevice();
 int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition, int& disPlayRotation,
     std::string& deviceClass);
 
+bool CheckSystemApp();
+
 inline bool IsCameraDebugOn()
 {
     return g_cameraDebugOn;

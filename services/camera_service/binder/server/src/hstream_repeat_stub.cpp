@@ -90,6 +90,7 @@ int32_t HStreamRepeatStub::HandleSetCallback(MessageParcel& data)
 
 int32_t HStreamRepeatStub::HandleAddDeferredSurface(MessageParcel& data)
 {
+    CHECK_AND_RETURN_RET(CheckSystemApp(), CAMERA_NO_PERMISSION);
     sptr<IRemoteObject> remoteObj = data.ReadRemoteObject();
 
     CHECK_AND_RETURN_RET_LOG(remoteObj != nullptr, IPC_STUB_INVALID_DATA_ERR,
@@ -109,6 +110,7 @@ int32_t HStreamRepeatStub::HandleAddDeferredSurface(MessageParcel& data)
 
 int32_t HStreamRepeatStub::HandleForkSketchStreamRepeat(MessageParcel& data, MessageParcel& reply)
 {
+    CHECK_AND_RETURN_RET(CheckSystemApp(), CAMERA_NO_PERMISSION);
     sptr<IStreamRepeat> sketchStream = nullptr;
     int32_t width = data.ReadInt32();
     int32_t height = data.ReadInt32();
@@ -125,6 +127,7 @@ int32_t HStreamRepeatStub::HandleForkSketchStreamRepeat(MessageParcel& data, Mes
 
 int32_t HStreamRepeatStub::HandleUpdateSketchRatio(MessageParcel& data)
 {
+    CHECK_AND_RETURN_RET(CheckSystemApp(), CAMERA_NO_PERMISSION);
     float sketchRatio = data.ReadFloat();
     // SketchRatio value could be negative value
     CHECK_AND_RETURN_RET_LOG(sketchRatio <= SKETCH_RATIO_MAX_VALUE, IPC_STUB_INVALID_DATA_ERR,

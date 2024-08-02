@@ -236,6 +236,7 @@ int HCaptureSessionStub::HandleSetSmoothZoom(MessageParcel &data, MessageParcel 
 
 int HCaptureSessionStub::HandleSetFeatureMode(MessageParcel &data)
 {
+    CHECK_AND_RETURN_RET(CheckSystemApp(), CAMERA_NO_PERMISSION);
     int featureMode = static_cast<int>(data.ReadUint32());
     return SetFeatureMode(featureMode);
 }
