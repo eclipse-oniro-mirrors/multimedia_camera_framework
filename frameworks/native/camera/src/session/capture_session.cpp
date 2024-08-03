@@ -4070,7 +4070,7 @@ bool CaptureSession::IsMovingPhotoSupported()
     camera_metadata_item_t metadataItem;
     vector<int32_t> modes = {};
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_MOVING_PHOTO, &metadataItem);
-    if (ret == CAM_META_SUCCESS) {
+    if (ret == CAM_META_SUCCESS && metadataItem.count > 0) {
         uint32_t step = 3;
         for (uint32_t index = 0; index < metadataItem.count - 1;) {
             if (metadataItem.data.i32[index + 1] == 1) {

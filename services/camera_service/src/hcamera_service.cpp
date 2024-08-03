@@ -1464,7 +1464,7 @@ void HCameraService::DumpCameraVideoFrameRateRange(
     int ret;
     infoDumper.Title("Video FrameRateRange Related Info:");
     ret = OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_FPS_RANGES, &item);
-    if (ret == CAM_META_SUCCESS) {
+    if (ret == CAM_META_SUCCESS && item.count > 0) {
         infoDumper.Msg("Available FrameRateRange:");
         for (uint32_t i = 0; i < (item.count - 1); i += FRAME_RATE_RANGE_STEP) {
             infoDumper.Msg("[ " + to_string(item.data.i32[i]) + ", " + to_string(item.data.i32[i + 1]) + " ]");
