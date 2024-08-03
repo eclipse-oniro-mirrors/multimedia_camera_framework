@@ -29,6 +29,7 @@
 #include "camera_output_capability.h"
 #include "camera_util.h"
 #include "capture_output.h"
+#include "camera_security_utils.h"
 #include "capture_scene_const.h"
 #include "features/moon_capture_boost_feature.h"
 #include "hcapture_session_callback_stub.h"
@@ -1392,8 +1393,9 @@ int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabili
         MEDIA_ERR_LOG("CaptureSession::SetVideoStabilizationMode Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
+    CHECK_AND_RETURN_RET(IsVideoStabilizationModeSupported(stabilizationMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
     auto itr = g_fwkVideoStabModesMap_.find(stabilizationMode);
-    if ((itr == g_fwkVideoStabModesMap_.end()) || !IsVideoStabilizationModeSupported(stabilizationMode)) {
+    if ((itr == g_fwkVideoStabModesMap_.end())) {
         MEDIA_ERR_LOG("CaptureSession::SetVideoStabilizationMode Mode: %{public}d not supported", stabilizationMode);
         stabilizationMode = OFF;
     }
@@ -1416,6 +1418,8 @@ int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabili
 
 bool CaptureSession::IsVideoStabilizationModeSupported(VideoStabilizationMode stabilizationMode)
 {
+    CHECK_ERROR_RETURN_RET((!CameraSecurity::CheckSystemApp()) && (stabilizationMode == VideoStabilizationMode::HIGH),
+        false);
     std::vector<VideoStabilizationMode> stabilizationModes = GetSupportedStabilizationMode();
     if (std::find(stabilizationModes.begin(), stabilizationModes.end(), stabilizationMode) !=
         stabilizationModes.end()) {
@@ -1430,6 +1434,8 @@ int32_t CaptureSession::IsVideoStabilizationModeSupported(VideoStabilizationMode
         MEDIA_ERR_LOG("CaptureSession::IsVideoStabilizationModeSupported Session is not Commited");
         return CameraErrorCode::SESSION_NOT_CONFIG;
     }
+    CHECK_ERROR_RETURN_RET((!CameraSecurity::CheckSystemApp()) && (stabilizationMode == VideoStabilizationMode::HIGH),
+        CameraErrorCode::OPERATION_NOT_ALLOWED);
     std::vector<VideoStabilizationMode> stabilizationModes = GetSupportedStabilizationMode();
     if (std::find(stabilizationModes.begin(), stabilizationModes.end(), stabilizationMode) !=
         stabilizationModes.end()) {
@@ -1548,6 +1554,7 @@ int32_t CaptureSession::SetExposureMode(ExposureMode exposureMode)
         MEDIA_ERR_LOG("CaptureSession::SetExposureMode Need to call LockForControl() before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
+    CHECK_AND_RETURN_RET(IsExposureModeSupported(exposureMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
     uint8_t exposure = g_fwkExposureModeMap_.at(EXPOSURE_MODE_LOCKED);
     auto itr = g_fwkExposureModeMap_.find(exposureMode);
     if (itr == g_fwkExposureModeMap_.end()) {
@@ -1899,9 +1906,10 @@ int32_t CaptureSession::SetFocusMode(FocusMode focusMode)
         return CameraErrorCode::SUCCESS;
     }
     uint8_t focus = FOCUS_MODE_LOCKED;
+    CHECK_AND_RETURN_RET(IsFocusModeSupported(focusMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
     auto itr = g_fwkFocusModeMap_.find(focusMode);
     if (itr == g_fwkFocusModeMap_.end()) {
-        MEDIA_ERR_LOG("CaptureSession::SetExposureMode Unknown exposure mode");
+        MEDIA_ERR_LOG("CaptureSession::SetFocusMode Unknown exposure mode");
     } else {
         focus = itr->second;
     }
@@ -2350,10 +2358,11 @@ int32_t CaptureSession::SetFlashMode(FlashMode flashMode)
         MEDIA_ERR_LOG("CaptureSession::SetFlashMode Need to call LockForControl() before setting camera properties");
         return CameraErrorCode::SUCCESS;
     }
+    CHECK_AND_RETURN_RET(IsFlashModeSupported(flashMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
     uint8_t flash = g_fwkFlashModeMap_.at(FLASH_MODE_CLOSE);
     auto itr = g_fwkFlashModeMap_.find(flashMode);
     if (itr == g_fwkFlashModeMap_.end()) {
-        MEDIA_ERR_LOG("CaptureSession::SetExposureMode Unknown exposure mode");
+        MEDIA_ERR_LOG("CaptureSession::SetFlashMode Unknown exposure mode");
     } else {
         flash = itr->second;
     }
