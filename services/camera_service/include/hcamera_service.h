@@ -75,7 +75,7 @@ class CameraInfoDumper;
 
 class EXPORT_API HCameraService
     : public SystemAbility, public HCameraServiceStub, public HCameraHostManager::StatusCallback,
-      public OHOS::Rosen::DisplayManager::IFoldStatusListener {
+    public OHOS::Rosen::DisplayManager::IFoldStatusListener {
     DECLARE_SYSTEM_ABILITY(HCameraService);
 
 public:

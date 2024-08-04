@@ -1314,12 +1314,12 @@ int CameraManager::CreateCameraInput(CameraPosition position, CameraType cameraT
 {
     CAMERA_SYNC_TRACE;
     sptr<CameraInput> cameraInput = nullptr;
-    std::lock_guard<std::recursive_mutex> lock(cameraListMutex_);
-    for (size_t i = 0; i < cameraObjList_.size(); i++) {
+    std::vector<sptr<CameraDevice>> cameraDeviceList = GetSupportedCameras();
+    for (size_t i = 0; i < cameraDeviceList.size(); i++) {
         MEDIA_DEBUG_LOG("CreateCameraInput position:%{public}d, Camera Type:%{public}d",
-            cameraObjList_[i]->GetPosition(), cameraObjList_[i]->GetCameraType());
-        if ((cameraObjList_[i]->GetPosition() == position) && (cameraObjList_[i]->GetCameraType() == cameraType)) {
-            cameraInput = CreateCameraInput(cameraObjList_[i]);
+            cameraDeviceList[i]->GetPosition(), cameraDeviceList[i]->GetCameraType());
+        if ((cameraDeviceList[i]->GetPosition() == position) && (cameraDeviceList[i]->GetCameraType() == cameraType)) {
+            cameraInput = CreateCameraInput(cameraDeviceList[i]);
             break;
         }
     }
@@ -1559,11 +1559,12 @@ void CameraManager::CreateProfile4StreamType(OutputCapStreamType streamType, uin
 {
     const int frameRate120 = 120;
     const int frameRate240 = 240;
+    bool isSystemApp = CameraSecurity::CheckSystemApp();
     for (uint32_t k = 0; k < extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfoCount; k++) {
         const auto& detailInfo = extendInfo.modeInfo[modeIndex].streamInfo[streamIndex].detailInfo[k];
         // Skip profiles with unsupported frame rates for non-system apps
         if ((detailInfo.minFps == frameRate120 || detailInfo.minFps == frameRate240) &&
-            streamType == OutputCapStreamType::VIDEO_STREAM && !CameraSecurity::CheckSystemApp()) {
+            streamType == OutputCapStreamType::VIDEO_STREAM && !isSystemApp) {
             continue;
         }
         CameraFormat format = CAMERA_FORMAT_INVALID;
