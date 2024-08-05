@@ -100,6 +100,21 @@ public:
         cvFull_.notify_one();
         return el;
     }
+    T Front()
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        if (!isActive_) {
+            return {};
+        }
+        if (que_.empty()) {
+            cvEmpty_.wait(lock, [this] { return !isActive_ || !que_.empty(); });
+        }
+        if (!isActive_) {
+            return {};
+        }
+        T el = que_.front();
+        return el;
+    }
     T Pop(int timeoutMs)
     {
         std::unique_lock<std::mutex> lock(mutex_);
