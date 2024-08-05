@@ -153,12 +153,15 @@ public:
     void DrainOutImage(sptr<SessionDrainImageCallback> drainImageCallback);
     void RemoveDrainImageManager(sptr<SessionDrainImageCallback> drainImageCallback);
     void StopDrainOut();
-    void ClearCache();
+    void ClearCache(uint64_t timestamp);
+    void SetClearFlag();
 
 private:
     sptr<MovingPhotoSurfaceWrapper> movingPhotoSurfaceWrapper_;
     BlockingQueue<sptr<FrameRecord>> recorderBufferQueue_;
     SafeMap<sptr<SessionDrainImageCallback>, sptr<DrainImageManager>> callbackMap_;
+    std::atomic<bool> isNeededClear_ { false };
+    int64_t shutterTime_;
 };
 
 class SessionDrainImageCallback : public DrainImageCallback {

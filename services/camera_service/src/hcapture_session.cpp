@@ -1502,14 +1502,12 @@ int32_t HCaptureSession::StartMovingPhotoCapture(bool isMirror, int32_t rotation
                 MEDIA_INFO_LOG("restart movingphoto stream.");
                 std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
                 streamRepeat->SetMirrorForLivePhoto(isMirror, opMode_);
-                streamRepeat->Stop();
-                streamRepeat->Start();
+                // set clear cache flag
+                livephotoListener_->SetClearFlag();
                 break;
             }
         }
         isMovingPhotoMirror_ = isMirror;
-        // clear cache frame
-        livephotoListener_->ClearCache();
     }
     return CAMERA_OK;
 }
@@ -1720,6 +1718,7 @@ void HCaptureSession::StartOnceRecord(uint64_t timestamp, int32_t rotation)
     std::vector<sptr<FrameRecord>> frameCacheList;
     sptr<SessionDrainImageCallback> imageCallback = new SessionDrainImageCallback(frameCacheList,
         livephotoListener_, videoCache_, timestamp, rotation);
+    livephotoListener_->ClearCache(timestamp);
     livephotoListener_->DrainOutImage(imageCallback);
     MEDIA_INFO_LOG("StartOnceRecord end");
 }
@@ -1991,11 +1990,6 @@ MovingPhotoListener::MovingPhotoListener(sptr<MovingPhotoSurfaceWrapper> surface
 
 MovingPhotoListener::~MovingPhotoListener()
 {
-    while (!recorderBufferQueue_.Empty()) {
-        MEDIA_ERR_LOG("surface_ release surface buffer");
-        sptr<FrameRecord> popFrame= recorderBufferQueue_.Pop();
-        popFrame->ReleaseSurfaceBuffer(nullptr);
-    }
     recorderBufferQueue_.SetActive(false);
     recorderBufferQueue_.Clear();
     MEDIA_ERR_LOG("HStreamRepeat::LivePhotoListener ~ end");
@@ -2007,15 +2001,31 @@ void MovingPhotoListener::RemoveDrainImageManager(sptr<SessionDrainImageCallback
     MEDIA_INFO_LOG("RemoveDrainImageManager drainImageManagerVec_ Start %d", callbackMap_.Size());
 }
 
-void MovingPhotoListener::ClearCache()
+void MovingPhotoListener::ClearCache(uint64_t timestamp)
 {
+    if (!isNeededClear_.load()) {
+        return;
+    }
     MEDIA_INFO_LOG("ClearCache enter");
+    shutterTime_ = static_cast<int64_t>(timestamp);
     while (!recorderBufferQueue_.Empty()) {
-        MEDIA_ERR_LOG("surface_ release surface buffer");
-        sptr<FrameRecord> popFrame = recorderBufferQueue_.Pop();
+        sptr<FrameRecord> popFrame = recorderBufferQueue_.Front();
+        MEDIA_DEBUG_LOG("surface_ release surface buffer %{public}llu, timestamp %{public}llu",
+            (long long unsigned)popFrame->GetTimeStamp(), (long long unsigned)timestamp);
+        if (popFrame->GetTimeStamp() > shutterTime_) {
+            isNeededClear_ = false;
+            MEDIA_INFO_LOG("ClearCache end");
+            return;
+        }
+        recorderBufferQueue_.Pop();
         popFrame->ReleaseSurfaceBuffer(movingPhotoSurfaceWrapper_);
     }
-    recorderBufferQueue_.Clear();
+}
+
+void MovingPhotoListener::SetClearFlag()
+{
+    MEDIA_INFO_LOG("need clear cache!");
+    isNeededClear_ = true;
 }
 
 void MovingPhotoListener::StopDrainOut()
@@ -2029,6 +2039,7 @@ void MovingPhotoListener::StopDrainOut()
 
 void MovingPhotoListener::OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t timestamp, GraphicTransformType transform)
 {
+    MEDIA_DEBUG_LOG("OnBufferArrival timestamp %{public}llu", (long long unsigned)timestamp);
     if (recorderBufferQueue_.Full()) {
         MEDIA_DEBUG_LOG("surface_ release surface buffer");
         sptr<FrameRecord> popFrame = recorderBufferQueue_.Pop();
@@ -2042,6 +2053,16 @@ void MovingPhotoListener::OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t ti
     if (frameRecord == nullptr) {
         MEDIA_ERR_LOG("MovingPhotoListener::OnBufferAvailable create FrameRecord fail!");
         return;
+    }
+    if (isNeededClear_) {
+        if (timestamp < shutterTime_) {
+            frameRecord->ReleaseSurfaceBuffer(movingPhotoSurfaceWrapper_);
+            MEDIA_INFO_LOG("Drop this frame in cache");
+            return;
+        } else {
+            isNeededClear_ = false;
+            MEDIA_INFO_LOG("ClearCache end");
+        }
     }
     recorderBufferQueue_.Push(frameRecord);
     vector<sptr<SessionDrainImageCallback>> callbacks;

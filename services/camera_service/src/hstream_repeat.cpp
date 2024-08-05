@@ -178,13 +178,13 @@ void HStreamRepeat::StartSketchStream(std::shared_ptr<OHOS::Camera::CameraMetada
     MEDIA_DEBUG_LOG("HStreamRepeat::StartSketchStream Exit");
 }
 
-int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> settings)
+int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> settings, bool isUpdateSeetings)
 {
     CAMERA_SYNC_TRACE;
     auto streamOperator = GetStreamOperator();
     CHECK_AND_RETURN_RET(streamOperator != nullptr, CAMERA_INVALID_STATE);
     auto preparedCaptureId = GetPreparedCaptureId();
-    CHECK_ERROR_RETURN_RET_LOG(preparedCaptureId != CAPTURE_ID_UNSET, CAMERA_INVALID_STATE,
+    CHECK_ERROR_RETURN_RET_LOG(!isUpdateSeetings && preparedCaptureId != CAPTURE_ID_UNSET, CAMERA_INVALID_STATE,
         "HStreamRepeat::Start, Already started with captureID: %{public}d", preparedCaptureId);
     // If current is sketch stream, check parent is start or not.
     if (repeatStreamType_ == RepeatStreamType::SKETCH) {
@@ -192,11 +192,12 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
         CHECK_ERROR_RETURN_RET_LOG(parentRepeat == nullptr || parentRepeat->GetPreparedCaptureId() == CAPTURE_ID_UNSET,
             CAMERA_INVALID_STATE, "HStreamRepeat::Start sketch parent state is illegal");
     }
-
-    int32_t ret = PrepareCaptureId();
-    preparedCaptureId = GetPreparedCaptureId();
-    CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK || preparedCaptureId == CAPTURE_ID_UNSET, ret,
-        "HStreamRepeat::Start Failed to allocate a captureId");
+    if (!isUpdateSeetings) {
+        int32_t ret = PrepareCaptureId();
+        preparedCaptureId = GetPreparedCaptureId();
+        CHECK_ERROR_RETURN_RET_LOG(ret != CAMERA_OK || preparedCaptureId == CAPTURE_ID_UNSET, ret,
+            "HStreamRepeat::Start Failed to allocate a captureId");
+    }
     UpdateSketchStatus(SketchStatus::STARTING);
 
     std::vector<uint8_t> ability;
@@ -231,6 +232,7 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
         const std::string permissionName = "ohos.permission.CAMERA";
         AddCameraPermissionUsedRecord(callingTokenId, permissionName);
     }
+    int32_t ret = 0;
     {
         std::lock_guard<std::mutex> startStopLock(streamStartStopLock_);
         HStreamCommon::PrintCaptureDebugLog(dynamicSetting);
@@ -545,6 +547,7 @@ void HStreamRepeat::SetMirrorForLivePhoto(bool isEnable, int32_t mode)
     } else {
         MEDIA_ERR_LOG("HStreamRepeat::SetMirrorForLivePhoto not supported mirror with mode:%{public}d", mode);
     }
+    Start(nullptr, true);
 }
 
 int32_t HStreamRepeat::SetPreviewRotation(std::string &deviceClass)
