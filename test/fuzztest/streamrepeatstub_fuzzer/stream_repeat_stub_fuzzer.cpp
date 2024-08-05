@@ -50,6 +50,7 @@ void Test(uint8_t *rawData, size_t size)
     if (rawData == nullptr || size < LIMITSIZE) {
         return;
     }
+    CheckPermission();
     if (fuzz == nullptr) {
         fuzz = new HStreamRepeatStubMock();
     }
