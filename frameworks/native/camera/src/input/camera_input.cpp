@@ -256,6 +256,7 @@ void CameraInput::SetOcclusionDetectCallback(
     CHECK_ERROR_PRINT_LOG(cameraOcclusionDetectCallback == nullptr,
         "SetOcclusionDetectCallback: SetOcclusionDetectCallback error cameraOcclusionDetectCallback");
     MEDIA_DEBUG_LOG("CameraInput::SetOcclusionDetectCallback callback");
+    std::lock_guard<std::mutex> lock(occlusionCallbackMutex_);
     cameraOcclusionDetectCallback_ = cameraOcclusionDetectCallback;
     return;
 }
@@ -287,6 +288,7 @@ std::shared_ptr<ResultCallback> CameraInput::GetResultCallback()
 
 std::shared_ptr<CameraOcclusionDetectCallback> CameraInput::GetOcclusionDetectCallback()
 {
+    std::lock_guard<std::mutex> lock(occlusionCallbackMutex_);
     return cameraOcclusionDetectCallback_;
 }
 

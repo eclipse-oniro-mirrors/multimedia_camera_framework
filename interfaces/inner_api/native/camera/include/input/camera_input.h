@@ -362,6 +362,7 @@ private:
     std::mutex errorCallbackMutex_;
     std::mutex cameraDeviceInfoMutex_;
     std::mutex resultCallbackMutex_;
+    std::mutex occlusionCallbackMutex_;
     sptr<ICameraDeviceService> deviceObj_;
     sptr<CameraDevice> cameraObj_;
     std::shared_ptr<ResultCallback> resultCallback_;
