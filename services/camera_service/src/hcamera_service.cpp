@@ -601,35 +601,6 @@ bool HCameraService::ShouldSkipStatusUpdates(pid_t pid)
     return true;
 }
 
-void HCameraService::CreateAndSaveTask(const string& cameraId, CameraStatus status, uint32_t pid,
-    const string& bundleName)
-{
-    auto task = [cameraId, status, pid, &bundleName, this]() {
-        auto it = cameraServiceCallbacks_.find(pid);
-        if (it != cameraServiceCallbacks_.end()) {
-            if (it->second != nullptr) {
-                MEDIA_INFO_LOG("trigger callback due to unfreeze pid: %{public}d", pid);
-                it->second->OnCameraStatusChanged(cameraId, status, bundleName);
-            }
-        }
-    };
-    delayCbtaskMap[pid] = task;
-}
-
-void HCameraService::CreateAndSaveTask(FoldStatus status, uint32_t pid)
-{
-    auto task = [status, pid, this]() {
-        auto it = foldServiceCallbacks_.find(pid);
-        if (it != foldServiceCallbacks_.end()) {
-            if (it->second != nullptr) {
-                MEDIA_INFO_LOG("trigger callback due to unfreeze pid: %{public}d", pid);
-                it->second->OnFoldStatusChanged(status);
-            }
-        }
-    };
-    delayFoldStatusCbTaskMap[pid] = task;
-}
-
 void HCameraService::OnCameraStatus(const string& cameraId, CameraStatus status, CallbackInvoker invoker)
 {
     lock_guard<mutex> lock(cameraCbMutex_);

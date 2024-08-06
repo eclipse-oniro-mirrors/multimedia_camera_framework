@@ -321,6 +321,7 @@ static const std::unordered_map<std::string, int32_t> mapPolicyType = {
 static const std::unordered_map<std::string, int32_t> mapSceneFeatureType = {
     { "MOON_CAPTURE_BOOST", FEATURE_MOON_CAPTURE_BOOST },
     { "TRIPOD_DETECTION", FEATURE_TRIPOD_DETECTION },
+    { "LOW_LIGHT_BOOST", FEATURE_LOW_LIGHT_BOOST },
     { "MACRO", FEATURE_MACRO },
 };
 

@@ -644,7 +644,7 @@ int HCameraServiceStub::HandleProxyForFreeze(MessageParcel& data, MessageParcel&
         pidList.insert(data.ReadInt32());
     }
     bool isProxy = data.ReadBool();
-    MEDIA_INFO_LOG("isProxy value: %{public}d", isProxy);
+    MEDIA_DEBUG_LOG("isProxy value: %{public}d", isProxy);
     int ret = ProxyForFreeze(pidList, isProxy);
     reply.WriteInt32(static_cast<int32_t>(ret));
 

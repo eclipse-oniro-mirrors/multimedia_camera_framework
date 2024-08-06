@@ -8903,6 +8903,59 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_120, TestSize.L
 
 /*
  * Feature: Framework
+ * Function: Test anomalous branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: test low light boost
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_scenefeature_test_001, TestSize.Level0)
+{
+
+    session_->SetMode(SceneMode::CAPTURE);
+    int32_t intResult = session_->BeginConfig();
+
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session_->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session_->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    bool isLowLightBoostSupported = session_->IsFeatureSupported(FEATURE_LOW_LIGHT_BOOST);
+
+    if (isLowLightBoostSupported) {
+        intResult = session_->EnableFeature(FEATURE_LOW_LIGHT_BOOST, true);
+        EXPECT_EQ(intResult, 7400103);
+    }
+
+    intResult = session_->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    isLowLightBoostSupported = session_->IsFeatureSupported(FEATURE_LOW_LIGHT_BOOST);
+    if (isLowLightBoostSupported) {
+        session_->SetFeatureDetectionStatusCallback(std::make_shared<AppCallback>());
+        session_->LockForControl();
+        intResult = session_->EnableLowLightDetection(true);
+        session_->UnlockForControl();
+        EXPECT_EQ(intResult, 0);
+    }
+
+    intResult = session_->Start();
+    EXPECT_EQ(intResult, 0);
+
+    sleep(WAIT_TIME_AFTER_START);
+
+    intResult = session_->Stop();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
  * Function: Test camera preempted.
  * SubFunction: NA
  * FunctionPoints: NA

@@ -2199,6 +2199,7 @@ void CaptureSession::CaptureSessionMetadataResultProcessor::ProcessCallbacks(
     session->ProcessAutoFocusUpdates(result);
     session->ProcessMacroStatusChange(result);
     session->ProcessMoonCaptureBoostStatusChange(result);
+    session->ProcessLowLightBoostStatusChange(result);
     session->ProcessSnapshotDurationUpdates(timestamp, result);
     session->ProcessAREngineUpdates(timestamp, result);
     session->ProcessEffectSuggestionTypeUpdates(result);
@@ -2750,6 +2751,7 @@ SceneFeaturesMode CaptureSession::GetFeaturesMode()
     sceneFeaturesMode.SetSceneMode(GetMode());
     sceneFeaturesMode.SwitchFeature(FEATURE_MACRO, isSetMacroEnable_);
     sceneFeaturesMode.SwitchFeature(FEATURE_MOON_CAPTURE_BOOST, isSetMoonCaptureBoostEnable_);
+    sceneFeaturesMode.SwitchFeature(FEATURE_LOW_LIGHT_BOOST, isSetLowLightBoostEnable_);
     return sceneFeaturesMode;
 }
 
@@ -3837,6 +3839,64 @@ int32_t CaptureSession::EnableMoonCaptureBoost(bool isEnable)
     return CameraErrorCode::SUCCESS;
 }
 
+bool CaptureSession::IsLowLightBoostSupported()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter IsLowLightBoostSupported");
+    CHECK_ERROR_RETURN_RET_LOG(!(IsSessionConfiged() || IsSessionCommited()), false,
+        "CaptureSession::IsLowLightBoostSupported Session is not Commited!");
+    auto inputDevice = GetInputDevice();
+    CHECK_ERROR_RETURN_RET_LOG(
+        inputDevice == nullptr, false, "CaptureSession::IsLowLightBoostSupported camera device is null");
+    auto deviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_ERROR_RETURN_RET_LOG(
+        deviceInfo == nullptr, false, "CaptureSession::IsLowLightBoostSupported camera deviceInfo is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_LOW_LIGHT_BOOST, &item);
+    if (ret != CAM_META_SUCCESS || item.count <= 0) {
+        MEDIA_ERR_LOG("CaptureSession::IsLowLightBoostSupported Failed with return code %{public}d", ret);
+        return false;
+    }
+    const uint32_t step = 3;
+    for (uint32_t i = 0; i < item.count - 1; i += step) {
+        if (GetMode() == item.data.i32[i] && item.data.i32[i + 1] == 1) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int32_t CaptureSession::EnableLowLightBoost(bool isEnable)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter EnableLowLightBoost, isEnable:%{public}d", isEnable);
+    CHECK_AND_RETURN_RET_LOG(
+        IsLowLightBoostSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED, "Not support LowLightBoost");
+    CHECK_AND_RETURN_RET_LOG(IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG, "Session is not Commited!");
+    uint8_t enableValue = static_cast<uint8_t>(isEnable ? 1 : 0);
+    if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LOW_LIGHT_BOOST, &enableValue, 1)) {
+        MEDIA_ERR_LOG("CaptureSession::EnableLowLightBoost failed to enable low light boost");
+    } else {
+        isSetLowLightBoostEnable_ = isEnable;
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::EnableLowLightDetection(bool isEnable)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Enter EnableLowLightDetection, isEnable:%{public}d", isEnable);
+    CHECK_AND_RETURN_RET_LOG(
+        IsLowLightBoostSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED, "Not support LowLightBoost");
+    CHECK_AND_RETURN_RET_LOG(IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG, "Session is not Commited!");
+    uint8_t enableValue = static_cast<uint8_t>(isEnable ? 1 : 0);
+    if (!AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LOW_LIGHT_DETECT, &enableValue, 1)) {
+        MEDIA_ERR_LOG("CaptureSession::EnableLowLightDetection failed to enable low light detect");
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
 bool CaptureSession::IsFeatureSupported(SceneFeature feature)
 {
     switch (static_cast<SceneFeature>(feature)) {
@@ -3845,6 +3905,9 @@ bool CaptureSession::IsFeatureSupported(SceneFeature feature)
             break;
         case FEATURE_MOON_CAPTURE_BOOST:
             return IsMoonCaptureBoostSupported();
+            break;
+        case FEATURE_LOW_LIGHT_BOOST:
+            return IsLowLightBoostSupported();
             break;
         default:
             MEDIA_ERR_LOG("CaptureSession::IsFeatureSupported sceneFeature is unhandled %{public}d", feature);
@@ -3863,6 +3926,9 @@ int32_t CaptureSession::EnableFeature(SceneFeature feature, bool isEnable)
             break;
         case FEATURE_MOON_CAPTURE_BOOST:
             retCode = EnableMoonCaptureBoost(isEnable);
+            break;
+        case FEATURE_LOW_LIGHT_BOOST:
+            retCode = EnableLowLightBoost(isEnable);
             break;
         default:
             retCode = INVALID_ARGUMENT;
@@ -4044,6 +4110,37 @@ void CaptureSession::ProcessMoonCaptureBoostStatusChange(const std::shared_ptr<O
         }
         featureStatusCallback->OnFeatureDetectionStatusChanged(SceneFeature::FEATURE_MOON_CAPTURE_BOOST, detectStatus);
     }
+}
+
+void CaptureSession::ProcessLowLightBoostStatusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("Entry ProcessLowLightBoostStatusChange");
+
+    auto featureStatusCallback = GetFeatureDetectionStatusCallback();
+    if (featureStatusCallback == nullptr ||
+        !featureStatusCallback->IsFeatureSubscribed(SceneFeature::FEATURE_LOW_LIGHT_BOOST)) {
+        MEDIA_DEBUG_LOG("CaptureSession::ProcessLowLightBoostStatusChange featureStatusCallback is null");
+        return;
+    }
+
+    camera_metadata_item_t item;
+    common_metadata_header_t* metadata = result->get();
+    int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_LOW_LIGHT_DETECTION, &item);
+    if (ret != CAM_META_SUCCESS || item.count <= 0) {
+        MEDIA_DEBUG_LOG("Camera not support low light detection");
+        return;
+    }
+    auto isLowLightActive = static_cast<bool>(item.data.u8[0]);
+    MEDIA_DEBUG_LOG("LowLight active: %{public}d", isLowLightActive);
+
+    auto detectStatus = isLowLightActive ? FeatureDetectionStatusCallback::FeatureDetectionStatus::ACTIVE
+                                         : FeatureDetectionStatusCallback::FeatureDetectionStatus::IDLE;
+    if (!featureStatusCallback->UpdateStatus(SceneFeature::FEATURE_LOW_LIGHT_BOOST, detectStatus)) {
+        MEDIA_DEBUG_LOG("Feature detect LowLight mode: no change");
+        return;
+    }
+    featureStatusCallback->OnFeatureDetectionStatusChanged(SceneFeature::FEATURE_LOW_LIGHT_BOOST, detectStatus);
 }
 
 bool CaptureSession::IsSetEnableMacro()
