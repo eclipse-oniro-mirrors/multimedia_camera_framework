@@ -25,5 +25,6 @@ group("camera_fuzz_test") {
     "fuzztest/streamcapturestub_fuzzer:fuzztest",
     "fuzztest/streammetadatastub_fuzzer:fuzztest",
     "fuzztest/streamrepeatstub_fuzzer:fuzztest",
+    "fuzztest/timelapsephotosession_fuzzer:fuzztest",
   ]
 }

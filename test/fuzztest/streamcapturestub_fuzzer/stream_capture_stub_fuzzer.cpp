@@ -14,6 +14,7 @@
  */
 
 #include "stream_capture_stub_fuzzer.h"
+#include "foundation/multimedia/camera_framework/common/utils/camera_log.h"
 #include "hstream_capture.h"
 #include "iservice_registry.h"
 #include "message_parcel.h"
@@ -93,9 +94,7 @@ void Test(uint8_t *rawData, size_t size)
 
     if (fuzz == nullptr) {
         sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-        if (photoSurface == nullptr) {
-            return;
-        }
+        CHECK_AND_RETURN_LOG(photoSurface, "StreamCaptureStubFuzzer: Create photoSurface Error");
         sptr<IBufferProducer> producer = photoSurface->GetProducer();
         fuzz = new HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
     }
@@ -122,9 +121,8 @@ void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
     data.RewindWrite(0);
     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
     auto metadata = MakeMetadata(rawData, size);
-    if (!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(metadata, data))) {
-        return;
-    }
+    CHECK_AND_RETURN_LOG(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(metadata, data),
+        "StreamCaptureStubFuzzer: EncodeCameraMetadata Error");
     MessageParcel reply;
     MessageOption option;
     Request(data, reply, option, StreamCaptureInterfaceCode::CAMERA_STREAM_CAPTURE_START);
@@ -169,9 +167,7 @@ void Test_HandleSetThumbnail(uint8_t *rawData, size_t size)
 {
     MessageParcel data;
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    if (photoSurface == nullptr) {
-        return;
-    }
+    CHECK_AND_RETURN_LOG(photoSurface, "StreamCaptureStubFuzzer: Create photoSurface Error");
     sptr<IRemoteObject> producer = photoSurface->GetProducer()->AsObject();
     data.WriteRemoteObject(producer);
     data.WriteRawData(rawData, size);
@@ -183,9 +179,7 @@ void Test_HandleSetRawPhotoInfo(uint8_t *rawData, size_t size)
 {
     MessageParcel data;
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    if (photoSurface == nullptr) {
-        return;
-    }
+    CHECK_AND_RETURN_LOG(photoSurface, "StreamCaptureStubFuzzer: Create photoSurface Error");
     sptr<IRemoteObject> producer = photoSurface->GetProducer()->AsObject();
     data.WriteRemoteObject(producer);
     data.WriteRawData(rawData, size);
