@@ -48,6 +48,7 @@
 #include "parameter.h"
 #include "quick_shot_photo_session.h"
 #include "scan_session.h"
+#include "session/panorama_session.h"
 #include "session/photo_session.h"
 #include "session/profession_session.h"
 #include "session/photo_session.h"
