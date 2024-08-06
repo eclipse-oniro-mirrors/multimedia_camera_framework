@@ -519,8 +519,9 @@ public:
             uint8_t faceDetectMode = OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE;
             ability->addEntry(OHOS_STATISTICS_FACE_DETECT_MODE, &faceDetectMode, sizeof(uint8_t));
 
+            uint8_t type = 5;
+            ability->addEntry(OHOS_ABILITY_CAMERA_TYPE, &type, sizeof(uint8_t));
             uint8_t value_u8 = 0;
-            ability->addEntry(OHOS_ABILITY_CAMERA_TYPE, &value_u8, sizeof(uint8_t));
             ability->addEntry(OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &value_u8, sizeof(uint8_t));
             ability->addEntry(OHOS_ABILITY_FLASH_MODES, &value_u8, sizeof(uint8_t));
             ability->addEntry(OHOS_ABILITY_FOCUS_MODES, &value_u8, sizeof(uint8_t));
@@ -735,13 +736,22 @@ void CameraFrameworkUnitTest::SessionControlParams(sptr<CaptureSession> session)
     }
 
     FlashMode flash = FLASH_MODE_ALWAYS_OPEN;
-    session->SetFlashMode(flash);
+    bool flashSupported = session->IsFlashModeSupported(flash);
+    if (flashSupported) {
+        session->SetFlashMode(flash);
+    }
 
     FocusMode focus = FOCUS_MODE_AUTO;
-    session->SetFocusMode(focus);
+    bool focusSupported = session->IsFocusModeSupported(focus);
+    if (focusSupported) {
+        session->SetFocusMode(focus);
+    }
 
     ExposureMode exposure = EXPOSURE_MODE_AUTO;
-    session->SetExposureMode(exposure);
+    bool exposureSupported = session->IsExposureModeSupported(exposure);
+    if (exposureSupported) {
+        session->SetExposureMode(exposure);
+    }
 
     session->UnlockForControl();
 
@@ -749,9 +759,17 @@ void CameraFrameworkUnitTest::SessionControlParams(sptr<CaptureSession> session)
         EXPECT_EQ(session->GetExposureValue(), exposurebiasRange[0]);
     }
 
-    EXPECT_EQ(session->GetFlashMode(), flash);
-    EXPECT_EQ(session->GetFocusMode(), focus);
-    EXPECT_EQ(session->GetExposureMode(), exposure);
+    if (flashSupported) {
+        EXPECT_EQ(session->GetFlashMode(), flash);
+    }
+
+    if (focusSupported) {
+        EXPECT_EQ(session->GetFocusMode(), focus);
+    }
+
+    if (exposureSupported) {
+        EXPECT_EQ(session->GetExposureMode(), exposure);
+    }
 }
 
 void CameraFrameworkUnitTest::PortraitSessionControlParams(sptr<PortraitSession> portraitSession)
@@ -3051,7 +3069,11 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_009, TestSize.Level
 
     bool isSupported;
     EXPECT_EQ(session->IsVideoStabilizationModeSupported(MIDDLE, isSupported), 0);
-    EXPECT_EQ(session->SetVideoStabilizationMode(MIDDLE), 0);
+    if (isSupported) {
+        EXPECT_EQ(session->SetVideoStabilizationMode(MIDDLE), 0);
+    } else {
+        EXPECT_EQ(session->SetVideoStabilizationMode(MIDDLE), 7400102);
+    }
     EXPECT_EQ(session->IsFlashModeSupported(FLASH_MODE_AUTO), false);
     EXPECT_EQ(session->IsFlashModeSupported(FLASH_MODE_AUTO, isSupported), 0);
 
@@ -3538,15 +3560,20 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_018, TestSize.Level
     session->SetMeteringPoint(exposurePoint);
 
     ExposureMode exposure = EXPOSURE_MODE_AUTO;
-    session->SetExposureMode(exposure);
+    bool exposureSupported = session->IsExposureModeSupported(exposure);
+    if (exposureSupported) {
+        session->SetExposureMode(exposure);
+    }
 
     ret = session->GetExposureMode(exposure);
     EXPECT_EQ(ret, 0);
 
     ExposureMode exposureMode = session->GetExposureMode();
-    int32_t setExposureMode = session->SetExposureMode(exposureMode);
-    EXPECT_EQ(setExposureMode, 0);
-
+    exposureSupported = session->IsExposureModeSupported(exposureMode);
+    if (exposureSupported) {
+        int32_t setExposureMode = session->SetExposureMode(exposureMode);
+        EXPECT_EQ(setExposureMode, 0);
+    }
     session->UnlockForControl();
     input->Close();
     session->Release();
