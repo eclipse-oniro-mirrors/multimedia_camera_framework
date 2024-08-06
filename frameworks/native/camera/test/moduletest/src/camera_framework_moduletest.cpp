@@ -48,6 +48,7 @@
 #include "parameter.h"
 #include "quick_shot_photo_session.h"
 #include "scan_session.h"
+#include "session/panorama_session.h"
 #include "session/photo_session.h"
 #include "session/profession_session.h"
 #include "session/photo_session.h"
@@ -11893,6 +11894,63 @@ HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_088, TestSize.Le
     EXPECT_EQ(captureSession->GetVirtualAperture(aperture), 0);
     EXPECT_EQ(captureSession->SetVirtualAperture(aperture), 0);
 
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Init PanoramaSession
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Init PanoramaSession
+ */
+HWTEST_F(CameraFrameworkModuleTest, camera_framework_moduletest_panorama, TestSize.Level0)
+{
+    SceneMode sceneMode = SceneMode::PANORAMA_PHOTO;
+    if (!IsSupportMode(sceneMode)) {
+        return;
+    }
+    sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(cameraManagerObj, nullptr);
+
+    std::vector<SceneMode> sceneModes = cameraManagerObj->GetSupportedModes(cameras_[0]);
+    ASSERT_TRUE(sceneModes.size() != 0);
+
+    sptr<CameraOutputCapability> modeAbility =
+        cameraManagerObj->GetSupportedOutputCapability(cameras_[0], sceneMode);
+    ASSERT_NE(modeAbility, nullptr);
+
+    SelectProfiles profiles;
+    profiles.preview.size_ = {1920, 1080};
+    profiles.preview.format_ = CAMERA_FORMAT_YUV_420_SP;
+
+    ASSERT_NE(profiles.preview.format_, CAMERA_FORMAT_INVALID);
+
+    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(sceneMode);
+    ASSERT_NE(captureSession, nullptr);
+    sptr<PanoramaSession> session = static_cast<PanoramaSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(session, nullptr);
+
+    int32_t intResult = session->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(profiles.preview);
+    ASSERT_NE(previewOutput, nullptr);
+
+    intResult = session->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session->Start();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = session->Stop();
+    EXPECT_EQ(intResult, 0);
 }
 } // namespace CameraStandard
 } // namespace OHOS
