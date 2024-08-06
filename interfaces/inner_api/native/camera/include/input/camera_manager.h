@@ -742,6 +742,7 @@ private:
     sptr<CameraInput> cameraInput_;
     TorchMode torchMode_ = TorchMode::TORCH_MODE_OFF;
     sptr<CameraServiceSystemAbilityListener> saListener_ = nullptr;
+    std::string foldScreenType_;
 };
 
 class CameraMuteServiceCallback : public HCameraMuteServiceCallbackStub {
