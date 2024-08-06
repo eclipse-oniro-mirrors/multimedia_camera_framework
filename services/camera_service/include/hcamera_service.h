@@ -58,12 +58,13 @@ struct CameraMetaInfo {
     uint8_t cameraType;
     uint8_t position;
     uint8_t connectionType;
+    uint8_t foldStatus;
     std::vector<uint8_t> supportModes;
     shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
-    CameraMetaInfo(string cameraId, uint8_t cameraType, uint8_t position, uint8_t connectionType,
+    CameraMetaInfo(string cameraId, uint8_t cameraType, uint8_t position, uint8_t connectionType, uint8_t foldStatus,
         std::vector<uint8_t> supportModes, shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
         : cameraId(cameraId), cameraType(cameraType), position(position), connectionType(connectionType),
-        supportModes(supportModes), cameraAbility(cameraAbility) {}
+        foldStatus(foldStatus), supportModes(supportModes), cameraAbility(cameraAbility) {}
 };
 
 enum class CameraServiceStatus : int32_t {

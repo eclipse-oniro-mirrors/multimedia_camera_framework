@@ -22,6 +22,7 @@
 #include <nlohmann/json.hpp>
 #include <ostream>
 #include <sstream>
+#include <parameters.h>
 
 #include "aperture_video_session.h"
 #include "camera_error_code.h"
@@ -761,6 +762,7 @@ void CameraManager::InitCameraManager()
     retCode = CreateListenerObject();
     CHECK_ERROR_RETURN_LOG(retCode != CAMERA_OK, "failed to new CameraListenerStub, ret = %{public}d", retCode);
     InitCameraList();
+    foldScreenType_ = system::GetParameter("const.window.foldscreen.type", "");
 }
 
 int32_t CameraManager::RefreshServiceProxy()
@@ -1139,7 +1141,7 @@ void CameraManager::SetProfile(std::vector<sptr<CameraDevice>>& cameraObjList)
 
 bool CameraManager::GetIsFoldable()
 {
-    return OHOS::Rosen::DisplayManager::GetInstance().IsFoldable();
+    return !foldScreenType_.empty();
 }
 
 FoldStatus CameraManager::GetFoldStatus()
@@ -1160,10 +1162,6 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
     MEDIA_INFO_LOG("fold status: %{public}d", curFoldStatus);
     std::vector<sptr<CameraDevice>> cameraDeviceList;
     for (size_t i = 0; i < cameraObjList_.size(); i++) {
-        if (cameraObjList_[i]->GetPosition() == CAMERA_POSITION_BACK) {
-            cameraDeviceList.emplace_back(cameraObjList_[i]);
-            continue;
-        }
         auto supportedFoldStatus = cameraObjList_[i]->GetSupportedFoldStatus();
         FoldStatus foldStatusTemp = FoldStatus::UNKNOWN_FOLD;
         auto it = g_metaToFwCameraFoldStatus_.find(static_cast<CameraFoldStatus>(supportedFoldStatus));

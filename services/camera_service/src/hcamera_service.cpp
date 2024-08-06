@@ -55,6 +55,7 @@ constexpr int32_t SENSOR_SUCCESS = 0;
 constexpr int32_t POSTURE_INTERVAL = 1000000;
 #endif
 constexpr uint8_t POSITION_FOLD_INNER = 3;
+constexpr uint32_t FACE_CLIENT_UID = 1088;
 static std::mutex g_cameraServiceInstanceMutex;
 static HCameraService* g_cameraServiceInstance = nullptr;
 static sptr<HCameraService> g_cameraServiceHolder = nullptr;
@@ -253,9 +254,6 @@ shared_ptr<CameraMetaInfo>HCameraService::GetCameraMetaInfo(std::string &cameraI
     uint8_t cameraPosition = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_POSITION_OTHER;
     res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLDSCREEN_TYPE, &item);
     uint8_t foldType = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLDSCREEN_OTHER;
-    if (isFoldable && cameraPosition == OHOS_CAMERA_POSITION_FRONT && foldType == OHOS_CAMERA_FOLDSCREEN_OTHER) {
-        return nullptr;
-    }
     if (isFoldable && cameraPosition == OHOS_CAMERA_POSITION_FRONT && foldType == OHOS_CAMERA_FOLDSCREEN_INNER) {
         cameraPosition = POSITION_FOLD_INNER;
     }
@@ -265,16 +263,18 @@ shared_ptr<CameraMetaInfo>HCameraService::GetCameraMetaInfo(std::string &cameraI
     uint8_t connectionType = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_CONNECTION_TYPE_BUILTIN;
     res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
     bool isMirrorSupported = (res == CAM_META_SUCCESS) ? (item.count != 0) : false;
+    res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLD_STATUS, &item);
+    uint8_t foldStatus = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLD_STATUS_NONFOLDABLE;
     res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_MODES, &item);
     std::vector<uint8_t> supportModes = {};
     for (uint32_t i = 0; i < item.count; i++) {
         supportModes.push_back(item.data.u8[i]);
     }
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager GetCameras camera ID:%s, Camera position:%d, "
-                                        "Camera Type:%d, Connection Type:%d, Mirror support:%d",
-        cameraId.c_str(), cameraPosition, cameraType, connectionType, isMirrorSupported));
-    return make_shared<CameraMetaInfo>(cameraId, cameraType, cameraPosition,
-        connectionType, supportModes, cameraAbility);
+                                        "Camera Type:%d, Connection Type:%d, Mirror support:%d, Fold status %d",
+        cameraId.c_str(), cameraPosition, cameraType, connectionType, isMirrorSupported, foldStatus));
+    return make_shared<CameraMetaInfo>(cameraId, cameraType, cameraPosition, connectionType,
+        foldStatus, supportModes, cameraAbility);
 }
 
 void HCameraService::FillCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos,
@@ -288,6 +288,7 @@ void HCameraService::FillCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos
         cameraAbilityList.emplace_back(camera->cameraAbility);
     }
     if (IPCSkeleton::GetCallingUid() == 0 ||
+        IPCSkeleton::GetCallingUid() == FACE_CLIENT_UID ||
         OHOS::Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(IPCSkeleton::GetCallingFullTokenID())) {
         vector<shared_ptr<CameraMetaInfo>> physicalCameras = ChoosePhysicalCameras(cameraInfos, choosedCameras);
         for (const auto& camera: physicalCameras) {
@@ -388,7 +389,8 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<s
             [camera](const auto& defaultCamera) {
                 return (camera->connectionType != OHOS_CAMERA_CONNECTION_TYPE_USB_PLUGIN &&
                     defaultCamera->position == camera->position &&
-                    defaultCamera->connectionType == camera->connectionType);
+                    defaultCamera->connectionType == camera->connectionType &&
+                    defaultCamera->foldStatus == camera->foldStatus);
             })
         ) {
             MEDIA_INFO_LOG("ChooseDeFaultCameras alreadly has default camera");
