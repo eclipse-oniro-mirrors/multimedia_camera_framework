@@ -7070,7 +7070,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_059, TestSize.L
     ASSERT_NE(camManagerObj, nullptr);
 
     // CameraManager instance has been changed, need recover
-    camManagerObj->cameraObjList_.clear();
+    camManagerObj->ClearCameraDeviceListCache();
 
     std::vector<sptr<CameraDevice>> camdeviceObj_1 = camManagerObj->GetSupportedCameras();
     ASSERT_TRUE(camdeviceObj_1.size() == 0);
@@ -7117,7 +7117,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_060, TestSize.L
     bool cameraMuted = camManagerObj->IsCameraMuted();
     EXPECT_EQ(cameraMuted, false);
 
-    camManagerObj->cameraObjList_.clear();
+    camManagerObj->ClearCameraDeviceListCache();
     bool cameraMuteSupported = camManagerObj->IsCameraMuteSupported();
     EXPECT_EQ(cameraMuteSupported, false);
 

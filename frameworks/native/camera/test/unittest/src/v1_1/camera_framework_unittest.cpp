@@ -5277,7 +5277,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_052, TestSize.Level
     SceneMode mode = PORTRAIT;
     cameraManager->SetServiceProxy(nullptr);
     cameraManager->CreateCaptureSession(mode);
-    cameraManager->InitCameraList();
+    cameraManager->ClearCameraDeviceListCache();
 
     TorchMode mode1 = TorchMode::TORCH_MODE_OFF;
     TorchMode mode2 = TorchMode::TORCH_MODE_ON;
@@ -5302,7 +5302,8 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_053, TestSize.Level
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = cameras[0]->GetMetadata();
     camera_metadata_item_t item;
     OHOS::Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
-    cameraManager->ParseBasicCapability(metadata, item);
+    CameraManager::ProfilesWrapper wrapper = {};
+    cameraManager->ParseBasicCapability(wrapper, metadata, item);
 }
 
 /*
@@ -5335,7 +5336,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_054, TestSize.Level
     ret = cameraManager->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS,
         activeTime, effectParam);
     EXPECT_EQ(ret, 7400201);
-    cameraManager->cameraObjList_ = {};
+    cameraManager->cameraDeviceList_ = {};
     bool isTorchSupported = cameraManager->IsTorchSupported();
     EXPECT_EQ(isTorchSupported, false);
 }
@@ -5364,7 +5365,7 @@ HWTEST_F(CameraFrameworkUnitTest, camera_fwcoverage_unittest_055, TestSize.Level
     sptr<ICameraMuteServiceCallback> cameraMuteServiceCallback = nullptr;
     cameraManager->SetCameraMuteServiceCallback(cameraMuteServiceCallback);
 
-    cameraManager->cameraObjList_ = {};
+    cameraManager->cameraDeviceList_ = {};
     string cameraId = "";
     cameraManager->GetCameraDeviceFromId(cameraId);
     bool isTorchSupported = cameraManager->IsTorchSupported();
