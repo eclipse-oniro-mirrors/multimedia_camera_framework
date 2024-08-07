@@ -1155,6 +1155,10 @@ int32_t HCaptureSession::SetSmoothZoom(
             continue;
         }
         float waitMs = crossZoomAndTime[i + indexAdded];
+        if (std::fabs(currentZoomRatio - crossZoom) <= std::numeric_limits<float>::epsilon() &&
+            currentZoomRatio > targetZoomRatio) {
+            waitTime = crossZoomAndTime[i + indexAdded];
+        }
         for (int j = 0; j < static_cast<int>(array.size()); j++) {
             if (static_cast<int>(array[j] - crossZoom) * static_cast<int>(array[0] - crossZoom) < 0) {
                 waitTime = fmax(waitMs - frameIntervalMs * j, waitTime);
