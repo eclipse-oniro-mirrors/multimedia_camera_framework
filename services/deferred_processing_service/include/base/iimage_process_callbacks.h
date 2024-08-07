@@ -27,9 +27,10 @@ namespace DeferredProcessing {
 class IImageProcessCallbacks {
 public:
     virtual ~IImageProcessCallbacks() = default;
-    virtual void OnProcessDone(int userId, const std::string& imageId, std::shared_ptr<BufferInfo> bufferInfo) = 0;
-    virtual void OnError(int userId, const std::string& imageId, DpsError errorCode) = 0;
-    virtual void OnStateChanged(int userId, DpsStatus statusCode) = 0;
+    virtual void OnProcessDone(const int32_t userId,
+        const std::string& imageId, std::shared_ptr<BufferInfo> bufferInfo) = 0;
+    virtual void OnError(const int32_t userId, const std::string& imageId, DpsError errorCode) = 0;
+    virtual void OnStateChanged(const int32_t userId, DpsStatus statusCode) = 0;
 };
 } //namespace DeferredProcessing
 } // namespace CameraStandard
