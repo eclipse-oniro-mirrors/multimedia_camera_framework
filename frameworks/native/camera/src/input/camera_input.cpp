@@ -48,6 +48,7 @@ int32_t CameraDeviceServiceCallback::OnError(const int32_t errorType, const int3
 int32_t CameraDeviceServiceCallback::OnResult(const uint64_t timestamp,
                                               const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
 {
+    CHECK_ERROR_RETURN_RET_LOG(result == nullptr, CAMERA_INVALID_ARG, "OnResult get null meta from server");
     std::lock_guard<std::mutex> lock(deviceCallbackMutex_);
     auto camInputSptr = camInput_.promote();
     CHECK_ERROR_RETURN_RET_LOG(camInputSptr == nullptr, CAMERA_OK,
