@@ -202,21 +202,43 @@ int32_t HCaptureSession::GetCurrentStreamInfos(std::vector<StreamInfo_V1_1>& str
     return CAMERA_OK;
 }
 
+void HCaptureSession::DynamicConfigStream()
+{
+    isDynamicConfiged_ = false;
+    MEDIA_INFO_LOG("HCaptureSession::DynamicConfigStream enter. currentState = %{public}s",
+        GetSessionState().c_str());
+    auto currentState = stateMachine_.GetCurrentState();
+    if (currentState == CaptureSessionState::SESSION_STARTED ||
+        currentState == CaptureSessionState::SESSION_CONFIG_COMMITTED) {
+        isDynamicConfiged_ = true;
+        MEDIA_INFO_LOG("HCaptureSession::DynamicConfigStream support dynamic stream config");
+    }
+}
+
+bool HCaptureSession::IsNeedDynamicConfig()
+{
+    return isDynamicConfiged_;
+}
+
 int32_t HCaptureSession::BeginConfig()
 {
     CAMERA_SYNC_TRACE;
     int32_t errCode;
     MEDIA_INFO_LOG("HCaptureSession::BeginConfig prepare execute");
     stateMachine_.StateGuard([&errCode, this](const CaptureSessionState state) {
+        DynamicConfigStream();
         bool isStateValid = stateMachine_.Transfer(CaptureSessionState::SESSION_CONFIG_INPROGRESS);
         if (!isStateValid) {
             MEDIA_ERR_LOG("HCaptureSession::BeginConfig in invalid state %{public}d", state);
             errCode = CAMERA_INVALID_STATE;
+            isDynamicConfiged_ = false;
             return;
         }
-        UnlinkInputAndOutputs();
-        ClearSketchRepeatStream();
-        ClearMovingPhotoRepeatStream();
+        if (!IsNeedDynamicConfig()) {
+            UnlinkInputAndOutputs();
+            ClearSketchRepeatStream();
+            ClearMovingPhotoRepeatStream();
+        }
     });
     if (errCode == CAMERA_OK) {
         MEDIA_INFO_LOG("HCaptureSession::BeginConfig execute success");
@@ -494,6 +516,11 @@ int32_t HCaptureSession::RemoveInput(sptr<ICameraDeviceService> cameraDevice)
             errorCode = CAMERA_INVALID_STATE;
             return;
         }
+        if (IsNeedDynamicConfig()) {
+            UnlinkInputAndOutputs();
+            ClearSketchRepeatStream();
+            ClearMovingPhotoRepeatStream();
+        }
         auto currentDevice = GetCameraDevice();
         if (currentDevice != nullptr && cameraDevice->AsObject() == currentDevice->AsObject()) {
             // Do not close device while remove input!
@@ -602,7 +629,9 @@ int32_t HCaptureSession::LinkInputAndOutputs()
     for (auto& stream : allStream) {
         rc = stream->LinkInput(streamOperator, settings);
         if (rc == CAMERA_OK) {
-            stream->SetHdiStreamId(device->GenerateHdiStreamId());
+            if (stream->GetHdiStreamId() == STREAM_ID_UNSET) {
+                stream->SetHdiStreamId(device->GenerateHdiStreamId());
+            }
         }
         MEDIA_INFO_LOG(
             "HCaptureSession::LinkInputAndOutputs streamType:%{public}d, streamId:%{public}d ,hdiStreamId:%{public}d",
@@ -824,6 +853,17 @@ void HCaptureSession::StopMovingPhoto() __attribute__((no_sanitize("cfi")))
     }
 }
 
+int32_t HCaptureSession::ValidateSession()
+{
+    int32_t errorCode = CAMERA_OK;
+    errorCode = ValidateSessionInputs();
+    if (errorCode != CAMERA_OK) {
+        return errorCode;
+    }
+    errorCode = ValidateSessionOutputs();
+    return errorCode;
+}
+
 int32_t HCaptureSession::CommitConfig()
 {
     CAMERA_SYNC_TRACE;
@@ -836,17 +876,15 @@ int32_t HCaptureSession::CommitConfig()
             errorCode = CAMERA_INVALID_STATE;
             return;
         }
-        errorCode = ValidateSessionInputs();
+        errorCode = ValidateSession();
         if (errorCode != CAMERA_OK) {
             return;
         }
-        errorCode = ValidateSessionOutputs();
-        if (errorCode != CAMERA_OK) {
-            return;
+        if (!IsNeedDynamicConfig()) {
+            // expand moving photo always
+            ExpandMovingPhotoRepeatStream();
+            ExpandSketchRepeatStream();
         }
-        // expand moving photo always
-        ExpandMovingPhotoRepeatStream();
-        ExpandSketchRepeatStream();
         auto device = GetCameraDevice();
         if (device == nullptr) {
             MEDIA_ERR_LOG("HCaptureSession::CommitConfig() Failed to commit config. camera device is null");
@@ -1244,6 +1282,9 @@ int32_t HCaptureSession::StartPreviewStream(const std::shared_ptr<OHOS::Camera::
         auto curStreamRepeat = CastStream<HStreamRepeat>(item);
         auto repeatType = curStreamRepeat->GetRepeatStreamType();
         if (repeatType != RepeatStreamType::PREVIEW) {
+            continue;
+        }
+        if (curStreamRepeat->GetPreparedCaptureId() != CAPTURE_ID_UNSET) {
             continue;
         }
         errorCode = curStreamRepeat->Start(settings);
