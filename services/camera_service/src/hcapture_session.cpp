@@ -1989,7 +1989,8 @@ std::list<sptr<HStreamCommon>> StreamContainer::GetAllStreams()
 }
 
 MovingPhotoListener::MovingPhotoListener(sptr<MovingPhotoSurfaceWrapper> surfaceWrapper)
-    : movingPhotoSurfaceWrapper_(surfaceWrapper), recorderBufferQueue_("videoBuffer", CACHE_FRAME_COUNT)
+    : movingPhotoSurfaceWrapper_(surfaceWrapper), recorderBufferQueue_("videoBuffer", CACHE_FRAME_COUNT),
+    shutterTime_(0)
 {}
 
 MovingPhotoListener::~MovingPhotoListener()
