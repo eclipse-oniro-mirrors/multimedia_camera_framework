@@ -350,9 +350,9 @@ SystemPressureLevel ThermalLevelSubscriber::MapEventLevel(int level)
     switch (level) {
         case LEVEL_0:
         case LEVEL_1:
-        case LEVEL_2:
             eventLevel = SystemPressureLevel::NOMINAL;
             break;
+        case LEVEL_2:
         case LEVEL_3:
         case LEVEL_4:
             eventLevel = SystemPressureLevel::FAIR;
