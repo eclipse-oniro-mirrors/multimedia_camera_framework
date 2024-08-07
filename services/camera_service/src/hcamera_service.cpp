@@ -84,10 +84,6 @@ HCameraService::HCameraService(int32_t systemAbilityId, bool runOnCreate)
     cameraHostManager_ = new (std::nothrow) HCameraHostManager(statusCallback_);
     CHECK_AND_RETURN_LOG(
         cameraHostManager_ != nullptr, "HCameraService OnStart failed to create HCameraHostManager obj");
-    bool isFoldScreen = system::GetParameter("const.window.foldscreen.type", "") != "";
-    if (isFoldScreen) {
-        RegisterFoldStatusListener();
-    }
     MEDIA_INFO_LOG("HCameraService Construct end");
     serviceStatus_ = CameraServiceStatus::SERVICE_NOT_READY;
 }
@@ -96,10 +92,7 @@ HCameraService::HCameraService(sptr<HCameraHostManager> cameraHostManager)
     : cameraHostManager_(cameraHostManager), muteModeStored_(false), isRegisterSensorSuccess(false)
 {}
 
-HCameraService::~HCameraService()
-{
-    UnRegisterFoldStatusListener();
-}
+HCameraService::~HCameraService() {}
 
 #ifdef DEVICE_MANAGER
 class HCameraService::DeviceInitCallBack : public DistributedHardware::DmInitCallback {
@@ -821,6 +814,10 @@ int32_t HCameraService::SetTorchCallback(sptr<ITorchServiceCallback>& callback)
 int32_t HCameraService::SetFoldStatusCallback(sptr<IFoldServiceCallback>& callback)
 {
     lock_guard<recursive_mutex> lock(foldCbMutex_);
+    isFoldable = isFoldableInit ? isFoldable : g_isFoldScreen;
+    if (isFoldable) {
+        RegisterFoldStatusListener();
+    }
     pid_t pid = IPCSkeleton::GetCallingPid();
     MEDIA_INFO_LOG("HCameraService::SetFoldStatusCallback pid = %{public}d", pid);
     CHECK_ERROR_RETURN_RET_LOG(callback == nullptr, CAMERA_INVALID_ARG,
@@ -907,7 +904,8 @@ void HCameraService::RegisterFoldStatusListener()
 {
     MEDIA_INFO_LOG("RegisterFoldStatusListener is called");
     auto ret = OHOS::Rosen::DisplayManager::GetInstance().RegisterFoldStatusListener(this);
-    CHECK_ERROR_PRINT_LOG(ret != OHOS::Rosen::DMError::DM_OK, "RegisterFoldStatusListener failed");
+    CHECK_ERROR_RETURN_LOG(ret != OHOS::Rosen::DMError::DM_OK, "RegisterFoldStatusListener failed");
+    isFoldRegister = true;
 }
 
 void HCameraService::UnRegisterFoldStatusListener()
@@ -915,6 +913,7 @@ void HCameraService::UnRegisterFoldStatusListener()
     MEDIA_INFO_LOG("UnRegisterFoldStatusListener is called");
     auto ret = OHOS::Rosen::DisplayManager::GetInstance().UnregisterFoldStatusListener(this);
     CHECK_ERROR_PRINT_LOG(ret != OHOS::Rosen::DMError::DM_OK, "UnRegisterFoldStatusListener failed");
+    isFoldRegister = false;
 }
 
 int32_t HCameraService::UnSetAllCallback(pid_t pid)
@@ -1844,13 +1843,13 @@ int32_t HCameraService::ProxyForFreeze(const std::set<int32_t>& pidList, bool is
         std::lock_guard<std::mutex> lock(freezedPidListMutex_);
         if (isProxy) {
             freezedPidList_.insert(pidList.begin(), pidList.end());
-            MEDIA_INFO_LOG("after freeze freezedPidList_:%{public}s", g_toString(freezedPidList_).c_str());
+            MEDIA_DEBUG_LOG("after freeze freezedPidList_:%{public}s", g_toString(freezedPidList_).c_str());
             return CAMERA_OK;
         } else {
             for (auto pid : pidList) {
                 freezedPidList_.erase(pid);
             }
-            MEDIA_INFO_LOG("after unfreeze freezedPidList_:%{public}s", g_toString(freezedPidList_).c_str());
+            MEDIA_DEBUG_LOG("after unfreeze freezedPidList_:%{public}s", g_toString(freezedPidList_).c_str());
         }
     }
 

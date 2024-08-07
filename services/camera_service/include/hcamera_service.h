@@ -264,6 +264,7 @@ private:
     std::shared_ptr<CameraDataShareHelper> cameraDataShareHelper_;
     CameraServiceStatus serviceStatus_;
     sptr<ICameraBroker> peerCallback_;
+    bool isFoldRegister = false;
 #ifdef CAMERA_USE_SENSOR
     SensorUser user;
 #endif
