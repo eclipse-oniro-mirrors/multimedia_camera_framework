@@ -6225,7 +6225,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_036, TestSize.L
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> result = nullptr;
     int32_t onResult = camDeviceSvcCallback->OnResult(0, result);
-    EXPECT_EQ(onResult, 0);
+    EXPECT_EQ(onResult, CAMERA_INVALID_ARG);
 
     sptr<CameraInput> input = (sptr<CameraInput>&)input_;
     sptr<ICameraDeviceService> deviceObj = input->GetCameraDevice();
@@ -6239,7 +6239,7 @@ HWTEST_F(CameraFrameworkModuleTest, camera_fwcoverage_moduletest_036, TestSize.L
     camDeviceSvcCallback = new (std::nothrow) CameraDeviceServiceCallback(camInput_1);
     ASSERT_NE(camDeviceSvcCallback, nullptr);
     onResult = camDeviceSvcCallback->OnResult(0, result);
-    EXPECT_EQ(onResult, 0);
+    EXPECT_EQ(onResult, CAMERA_INVALID_ARG);
 
     sptr<CameraInput> camInput_2 = new (std::nothrow) CameraInput(deviceObj, cameras_[0]);
     ASSERT_NE(camInput_2, nullptr);

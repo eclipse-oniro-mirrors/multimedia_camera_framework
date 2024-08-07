@@ -1205,6 +1205,7 @@ void HCameraDevice::CheckOnResultData(std::shared_ptr<OHOS::Camera::CameraMetada
 
 int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint8_t>& result)
 {
+    CHECK_ERROR_RETURN_RET_LOG(result.size() == 0, CAMERA_INVALID_ARG, "onResult get null meta from HAL");
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult = nullptr;
     OHOS::Camera::MetadataUtils::ConvertVecToMetadata(result, cameraResult);
     if (IsCameraDebugOn()) {
