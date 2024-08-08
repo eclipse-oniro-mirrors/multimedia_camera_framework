@@ -538,7 +538,7 @@ void HCameraHostManager::CameraHostInfo::NotifyCameraHostDied()
     std::vector<std::string> cameraIds;
     if (statusCallback && this->GetCameras(cameraIds) == CAMERA_OK) {
         for (const auto& cameraId : cameraIds) {
-            statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_UNAVAILABLE);
+            statusCallback->OnCameraStatus(cameraId, CAMERA_SERVER_UNAVAILABLE);
         }
     }
 }
